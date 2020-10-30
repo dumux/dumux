@@ -247,8 +247,7 @@ private:
     {
         PrimaryVariables values(0.0);
         const Scalar sw = 0.0;
-        using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
-        const Scalar pc = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(globalPos), sw);
+        const Scalar pc = this->spatialParams().fluidMatrixInteractionAtPos(globalPos).pc(sw);
         values[pressureIdx] = nonwettingReferencePressure() - pc;
         values.setState(bothPhases);
         return values;

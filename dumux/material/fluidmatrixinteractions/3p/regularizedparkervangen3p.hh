@@ -25,6 +25,8 @@
 #ifndef REGULARIZED_PARKERVANGEN_3P_HH
 #define REGULARIZED_PARKERVANGEN_3P_HH
 
+#warning "This header is deprecated. Removal after 3.3. Use new material laws."
+
 #include <algorithm>
 
 #include "parkervangen3p.hh"

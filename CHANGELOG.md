@@ -15,14 +15,18 @@ Differences Between DuMu<sup>x</sup> 3.3 and DuMu<sup>x</sup> 3.2
   In order to use this, include `<dumux/io/format.hh>`. `format`, `format_to`, `format_to_n`, `formatted_size` are available in the `Dumux::Fmt` namespace.
   The string formatting is documented [here](https://en.cppreference.com/w/cpp/utility/format/formatter#Standard_format_specification) and follows the Python string formatting rules.
   The function are documented on [cppreference](https://en.cppreference.com/w/cpp/utility/format).
+ - The usage of laws for pc-Sw and kr-Sw has been completely revised. A caller does not have to pass a `parameters` object to the laws anymore. The `spatialParams` now provide a `fluidMatrixInteraction` function which bundles an arbitrary number of
+ different interaction laws such as a pc-Sw and kr-Sw curve and interfacial areas.
+ New pre-cached spline laws were added which can help to increase efficiency. The usage of the old interface is deprecated and warnings will be raised. The old interface will be removed after the release of 3.3.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
-
+- __Flash/Constraintsolver__: The flashes depending on material laws are immediately required to use new-style material laws (fluidMatrixInteraction interface in spatialparams)
+- __Box interface solver__: The box interface solver immediately requires the new material law interface without deprecation period. Use the new class `BoxMaterialInterfaces` and update your spatial params to use the new fluidmatrixinteraction interface to be able to use the box interface solver in version 3.3.
 - For the "sequential" models, the property `BoundaryTypes` has been simply renamed to `SequentialBoundaryTypes`
 - __Quadmath__: Dumux::Quad has been removed without deprecation. Use Dune::Float128 instead.
 - Within the RANS group, two additional runtime parameters have been included 'IsFlatWallBounded' and 'WriteFlatWallBoundedFields'.
 For both the K-Epsilon and Zero-eq RANS models the 'IsFlatWallBounded' runtime parameter should be set as True,
-as wall topology is not supported for these models with our geometric contraints. If not set as true, the geometry
+as wall topology is not supported for these models with our geometric constraints. If not set as true, the geometry
 will be checked before the model is run. If either the runtime parameter or the geometry check indicate non-flat walls,
 the model will terminate. To add FlatWallBounded specific output to the vtk output, WriteFlatWallBoundedFields can be set as True.
 - __1d3d coupling__: The kernel coupling manager has been replaced with the one from Koch et al (2020) JCP https://doi.org/10.1016/j.jcp.2020.109370

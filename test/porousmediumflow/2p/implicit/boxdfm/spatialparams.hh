@@ -28,11 +28,9 @@
 #include <dumux/discretization/method.hh>
 
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 
-#include <dumux/porousmediumflow/2p/boxmaterialinterfaceparams.hh>
+#include <dumux/porousmediumflow/2p/boxmaterialinterfaces.hh>
 
 namespace Dumux {
 
@@ -41,7 +39,8 @@ namespace Dumux {
  * \brief The spatial params for the incompressible 2p test.
  */
 template<class GridGeometry, class Scalar>
-class TwoPTestSpatialParams : public FVSpatialParams< GridGeometry, Scalar, TwoPTestSpatialParams<GridGeometry, Scalar> >
+class TwoPTestSpatialParams
+: public FVSpatialParams< GridGeometry, Scalar, TwoPTestSpatialParams<GridGeometry, Scalar> >
 {
     using ThisType = TwoPTestSpatialParams<GridGeometry, Scalar>;
     using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
@@ -55,25 +54,16 @@ class TwoPTestSpatialParams : public FVSpatialParams< GridGeometry, Scalar, TwoP
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
+    using PcKrSw = FluidMatrix::BrooksCoreyDefault<Scalar>;
+    using MaterialInterfaces = BoxMaterialInterfaces<GridGeometry, PcKrSw>;
 public:
-    using MaterialLaw = EffToAbsLaw< RegularizedBrooksCorey<Scalar> >;
-    using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
-    TwoPTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry) : ParentType(gridGeometry)
-    {
-        // residual saturations
-        matrixMaterialParams_.setSwr(0.18);
-        matrixMaterialParams_.setSnr(0.0);
-        fractureMaterialParams_.setSwr(0.05);
-        fractureMaterialParams_.setSnr(0.0);
-
-        // parameters for the Brooks-Corey law
-        matrixMaterialParams_.setPe(1e4);
-        matrixMaterialParams_.setLambda(2);
-        fractureMaterialParams_.setPe(1e3);
-        fractureMaterialParams_.setLambda(2);
-    }
+    TwoPTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
+    , pcKrSwMatrix_("SpatialParams.Matrix")
+    , pcKrSwFracture_("SpatialParams.Fracture")
+    {}
 
     /*!
      * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
@@ -115,24 +105,23 @@ public:
     }
 
     /*!
-     * \brief Returns the parameter object for the Brooks-Corey material law.
+     * \brief  Returns the fluid-matrix interaction law.
      *
      * In this test, we use element-wise distributed material parameters.
      *
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
-     * \return The material parameters object
      */
     template<class ElementSolution>
-    const MaterialLawParams& materialLawParams(const Element& element,
-                                               const SubControlVolume& scv,
-                                               const ElementSolution& elemSol) const
+    auto fluidMatrixInteraction(const Element& element,
+                                const SubControlVolume& scv,
+                                const ElementSolution& elemSol) const
     {
         if (scv.isOnFracture())
-            return fractureMaterialParams_;
+            return makeFluidMatrixInteraction(pcKrSwFracture_);
         else
-            return matrixMaterialParams_;
+            return makeFluidMatrixInteraction(pcKrSwMatrix_);
     }
 
     /*!
@@ -147,21 +136,18 @@ public:
 
     //! Updates the map of which material parameters are associated with a nodal dof.
     template<class SolutionVector>
-    void updateMaterialInterfaceParams(const SolutionVector& x)
-    {
-        materialInterfaceParams_.update(this->gridGeometry(), *this, x);
-    }
+    void updateMaterialInterfaces(const SolutionVector& x)
+    { materialInterfaces_ = std::make_unique<MaterialInterfaces>(this->gridGeometry(), *this, x); }
 
     //! Returns the material parameters associated with a nodal dof
-    const BoxMaterialInterfaceParams<ThisType>& materialInterfaceParams() const
-    { return materialInterfaceParams_; }
+    const MaterialInterfaces& materialInterfaces() const
+    { return *materialInterfaces_; }
 
 private:
-    MaterialLawParams matrixMaterialParams_;
-    MaterialLawParams fractureMaterialParams_;
+    PcKrSw pcKrSwMatrix_;
+    PcKrSw pcKrSwFracture_;
 
-    // Determines the parameters associated with the dofs at material interfaces
-    BoxMaterialInterfaceParams<ThisType> materialInterfaceParams_;
+    std::unique_ptr<MaterialInterfaces> materialInterfaces_;
 
     static constexpr Scalar eps_ = 1.5e-7;
 };

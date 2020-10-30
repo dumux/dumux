@@ -28,8 +28,7 @@
 #include <dumux/material/spatialparams/fv.hh>
 
 // We include all laws which are needed to define the interaction between the solid matrix and the fluids, e.g. laws for capillary pressure saturation relationships.
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 
 // ### The spatial parameters class
 // In the TwoPTestSpatialParams class we define all functions needed to describe the porous matrix, e.g. porosity and permeability. We inherit from the `FVSpatialParams` class, which is the base class for multiphase porous medium flow applications.
@@ -51,11 +50,9 @@ class TwoPTestSpatialParams
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
+    using PcKrSwCurve = FluidMatrix::VanGenuchtenDefault<Scalar>;
 
 public:
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
     // [[/codeblock]]
 
@@ -63,31 +60,18 @@ public:
     // [[codeblock]]
     TwoPTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
+    , pcKrSwLens_("SpatialParams.Lens") // read params from input file
+    , pcKrSwOuter_("SpatialParams.Outer") // read params from input file
     {
         // We get the position of the lens from the params.input file.
         // The lens is defined by the position of the lower left and the upper right corner
         lensLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensLowerLeft");
         lensUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensUpperRight");
 
-        // We set the parameters for the material law (here Van-Genuchten Law).
-        // First we set the residual saturations for the wetting phase and the nonwetting phase.
-        // lensMaterialParams_ define the material parameters for the lens while
-        // outerMaterialParams_ define material params for the rest of the domain.
-        lensMaterialParams_.setSwr(0.18);
-        lensMaterialParams_.setSnr(0.0);
-        outerMaterialParams_.setSwr(0.05);
-        outerMaterialParams_.setSnr(0.0);
-
-        //We set the parameters for the Van Genuchten law alpha and n
-        lensMaterialParams_.setVgAlpha(0.00045);
-        lensMaterialParams_.setVgn(7.3);
-        outerMaterialParams_.setVgAlpha(0.0037);
-        outerMaterialParams_.setVgn(4.7);
-
-        //Here, we get the permeabilities from the params.input file.
-        //In case that no parameter is set, the default parameters (9.05e-12 and 4.6e-10) are used
-        lensK_ = getParam<Scalar>("SpatialParams.lensK", 9.05e-12);
-        outerK_ = getParam<Scalar>("SpatialParams.outerK", 4.6e-10);
+        // Here, we get the permeabilities from the params.input file.
+        // In case that no parameter is set, the default parameters (9.05e-12 and 4.6e-10) are used
+        lensK_ = getParam<Scalar>("SpatialParams.Lens.Permeability", 9.05e-12);
+        outerK_ = getParam<Scalar>("SpatialParams.Outer.Permeability", 4.6e-10);
     }
      // [[/codeblock]]
 
@@ -112,13 +96,13 @@ public:
 
     // We set the parameter object for the Van Genuchten material law.
     template<class ElementSolution>
-    const MaterialLawParams& materialLawParams(const Element& element,
-                                               const SubControlVolume& scv,
-                                               const ElementSolution& elemSol) const
+    auto fluidMatrixInteraction(const Element& element,
+                                const SubControlVolume& scv,
+                                const ElementSolution& elemSol) const
     {
         if (isInLens_(element.geometry().center()))
-            return lensMaterialParams_;
-        return outerMaterialParams_;
+            return makeFluidMatrixInteraction(pcKrSwLens_);
+        return makeFluidMatrixInteraction(pcKrSwOuter_);
     }
 
 
@@ -147,8 +131,9 @@ private:
 
     Scalar lensK_;
     Scalar outerK_;
-    MaterialLawParams lensMaterialParams_;
-    MaterialLawParams outerMaterialParams_;
+
+    const PcKrSwCurve pcKrSwLens_;
+    const PcKrSwCurve pcKrSwOuter_;
 
     static constexpr Scalar eps_ = 1.5e-7;
 };

@@ -24,14 +24,14 @@
 #ifndef DUMUX_WATER_AIR_SPATIAL_PARAMS_HH
 #define DUMUX_WATER_AIR_SPATIAL_PARAMS_HH
 
+#include <dumux/common/math.hh>
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/io/ploteffectivediffusivitymodel.hh>
-#include <dumux/io/plotmateriallaw.hh>
+#include <dumux/io/plotpckrsw.hh>
 #include <dumux/io/plotthermalconductivitymodel.hh>
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 
 namespace Dumux {
 
@@ -52,15 +52,16 @@ class WaterAirSpatialParams
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
+    using PcKrSwCurve = FluidMatrix::BrooksCoreyDefault<Scalar>;
+
 public:
     //! Export the type used for the permeability
     using PermeabilityType = Scalar;
-    //! Export the type used for the material law
-    using MaterialLaw = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
-    using MaterialLawParams = typename MaterialLaw::Params;
+
 
     WaterAirSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
+    , pcKrSwCurve_("SpatialParams")
     {
         layerBottom_ = 22.0;
 
@@ -72,18 +73,6 @@ public:
         finePorosity_ = 0.3;
         coarsePorosity_ = 0.3;
 
-        // residual saturations
-        fineMaterialParams_.setSwr(0.2);
-        fineMaterialParams_.setSnr(0.0);
-        coarseMaterialParams_.setSwr(0.2);
-        coarseMaterialParams_.setSnr(0.0);
-
-        // parameters for the Brooks-Corey law
-        fineMaterialParams_.setPe(1e4);
-        coarseMaterialParams_.setPe(1e4);
-        fineMaterialParams_.setLambda(2.0);
-        coarseMaterialParams_.setLambda(2.0);
-
         plotFluidMatrixInteractions_ = getParam<bool>("Output.PlotFluidMatrixInteractions");
     }
 
@@ -93,18 +82,21 @@ public:
      */
     void plotMaterialLaw()
     {
-        PlotMaterialLaw<Scalar, MaterialLaw> plotMaterialLaw;
         GnuplotInterface<Scalar> gnuplot(plotFluidMatrixInteractions_);
         gnuplot.setOpenPlotWindow(plotFluidMatrixInteractions_);
-        plotMaterialLaw.addpcswcurve(gnuplot, fineMaterialParams_, 0.2, 1.0, "fine", "w lp");
-        plotMaterialLaw.addpcswcurve(gnuplot, coarseMaterialParams_, 0.2, 1.0, "coarse", "w l");
+
+        const auto sw = linspace(0.2, 1.0, 1000);
+
+        const auto pc = samplePcSw(pcKrSwCurve_, sw);
+        Gnuplot::addPcSw(gnuplot, sw, pc, "pc-Sw", "w lp");
         gnuplot.setOption("set xrange [0:1]");
         gnuplot.setOption("set label \"residual\\nsaturation\" at 0.1,100000 center");
         gnuplot.plot("pc-Sw");
 
         gnuplot.resetAll();
-        plotMaterialLaw.addkrcurves(gnuplot, fineMaterialParams_, 0.2, 1.0, "fine");
-        plotMaterialLaw.addkrcurves(gnuplot, coarseMaterialParams_, 0.2, 1.0, "coarse");
+
+        const auto [krw, krn] = sampleRelPerms(makeFluidMatrixInteraction(pcKrSwCurve_), sw); // test wrapped law
+        Gnuplot::addRelPerms(gnuplot, sw, krw, krn, "kr-Sw", "w lp");
         gnuplot.plot("kr");
     }
 
@@ -134,19 +126,13 @@ public:
             return coarsePorosity_;
     }
 
-
     /*!
-     * \brief Returns the parameter object for the Brooks-Corey material law
-     * which depends on the position
-     *
-     * \param globalPos The global position
+     * \brief Returns the fluid-matrix interaction law at a given location
+     * \param globalPos The global coordinates for the given location
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
-        if (isFineMaterial_(globalPos))
-            return fineMaterialParams_;
-        else
-            return coarseMaterialParams_;
+        return makeFluidMatrixInteraction(pcKrSwCurve_);
     }
 
     /*!
@@ -170,8 +156,7 @@ private:
     Scalar finePorosity_;
     Scalar coarsePorosity_;
 
-    MaterialLawParams fineMaterialParams_;
-    MaterialLawParams coarseMaterialParams_;
+    const PcKrSwCurve pcKrSwCurve_;
 
     bool plotFluidMatrixInteractions_;
 };

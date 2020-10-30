@@ -274,7 +274,7 @@ private:
             Scalar pc = 9.81 * 1000.0 * (y - (-5E-4*x+5));
             if (pc < 0.0) pc = 0.0;
 
-            sw = invertPcgw_(pc, this->spatialParams().materialLawParamsAtPos(globalPos));
+            sw = invertPcgw_(pc, this->spatialParams().fluidMatrixInteractionAtPos(globalPos));
             if (sw < swr) sw = swr;
             if (sw > 1.-sgr) sw = 1.-sgr;
 
@@ -289,10 +289,9 @@ private:
         return values;
     }
 
-    template<class MaterialLawParams>
-    static Scalar invertPcgw_(Scalar pcIn, const MaterialLawParams &pcParams)
+    template<class FluidMatrixInteraction>
+    static Scalar invertPcgw_(Scalar pcIn, const FluidMatrixInteraction& fluidmatrixinteraction)
     {
-        using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
         Scalar lower,upper;
         int k;
         int maxIt = 50;
@@ -302,7 +301,7 @@ private:
         for (k=1; k<=25; k++)
         {
             sw = 0.5*(upper+lower);
-            pcgw = MaterialLaw::pcgw(pcParams, sw);
+            pcgw = fluidmatrixinteraction.pcgw(sw, 0.0/*sn*/);
             Scalar delta = pcgw-pcIn;
             if (delta<0.) delta*=-1.;
             if (delta<bisLimit)

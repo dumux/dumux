@@ -28,6 +28,8 @@
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
 #include <dumux/porousmediumflow/sequential/mimetic/properties.hh>
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 
 /*!
@@ -57,7 +59,6 @@ class MimeticOperatorAssemblerTwoP: public CROperatorAssemblerTwoP<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
 
     using CellData = GetPropType<TypeTag, Properties::CellData>;
-    using MaterialLaw = GetPropType<TypeTag, Properties::MaterialLaw>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::SequentialBoundaryTypes>;
@@ -247,14 +248,18 @@ public:
                         PrimaryVariables boundValues(0.0);
                         problem.dirichlet(boundValues, intersection);
 
+                        // old material law interface is deprecated: Replace this by
+                        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
+                        // after the release of 3.3, when the deprecated interface is no longer supported
+                        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element);
+
                         if (velocityW[idxInInside] >= 0.)
                         {
                             mobilityW = cellData.mobility(wPhaseIdx);
                         }
                         else
                         {
-                            mobilityW = MaterialLaw::krw(problem.spatialParams().materialLawParams(element),
-                                    boundValues[saturationIdx]) / viscosityW;
+                            mobilityW = fluidMatrixInteraction.krw(boundValues[saturationIdx]) / viscosityW;
                         }
 
                         if (velocityNw[idxInInside] >= 0.)
@@ -263,8 +268,7 @@ public:
                         }
                         else
                         {
-                            mobilityNw = MaterialLaw::krn(problem.spatialParams().materialLawParams(element),
-                                    boundValues[saturationIdx]) / viscosityNw;
+                            mobilityNw = fluidMatrixInteraction.krn(boundValues[saturationIdx]) / viscosityNw;
                         }
                     }
                     else

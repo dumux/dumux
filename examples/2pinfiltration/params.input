@@ -11,6 +11,16 @@ Refinement = 1
 LensLowerLeft = 1.0 2.0 # [m] coordinates of the lower left lens corner
 LensUpperRight = 4.0 3.0 # [m] coordinates of the upper right lens corner
 
+[SpatialParams.Lens]
+Swr = 0.18
+VanGenuchtenN = 7.3
+VanGenuchtenAlpha = 0.00045
+
+[SpatialParams.Outer]
+Swr = 0.05
+VanGenuchtenN = 4.7
+VanGenuchtenAlpha = 0.0037
+
 [Problem]
 Name = 2padaptive # name passed to the output routines
 

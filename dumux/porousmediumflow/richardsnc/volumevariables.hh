@@ -33,6 +33,8 @@
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 
 /*!
@@ -93,13 +95,17 @@ public:
         //////////
         // specify the other parameters
         //////////
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-        relativePermeabilityWetting_ = MaterialLaw::krw(materialParams, fluidState_.saturation(0));
+
+        // old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+
+        relativePermeabilityWetting_ = fluidMatrixInteraction.krw(fluidState_.saturation(0));
 
         // precompute the minimum capillary pressure (entry pressure)
         // needed to make sure we don't compute unphysical capillary pressures and thus saturations
-        minPc_ = MaterialLaw::endPointPc(materialParams);
+        minPc_ = fluidMatrixInteraction.endPointPc();
         pn_ = problem.nonwettingReferencePressure();
         //porosity
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, ParentType::numFluidComponents());
@@ -150,7 +156,11 @@ public:
     {
         EnergyVolVars::updateTemperature(elemSol, problem, element, scv, fluidState, solidState);
 
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+        // old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+
         const auto& priVars = elemSol[scv.localDofIndex()];
 
         // set the wetting pressure
@@ -160,10 +170,9 @@ public:
         // make sure that we the capillary pressure is not smaller than the minimum pc
         // this would possibly return unphysical values from regularized material laws
         using std::max;
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        const Scalar pc = max(MaterialLaw::endPointPc(materialParams),
+        const Scalar pc = max(fluidMatrixInteraction.endPointPc(),
                               problem.nonwettingReferencePressure() - fluidState.pressure(0));
-        const Scalar sw = MaterialLaw::sw(materialParams, pc);
+        const Scalar sw = fluidMatrixInteraction.sw(pc);
         fluidState.setSaturation(0, sw);
 
         // set the mole/mass fractions

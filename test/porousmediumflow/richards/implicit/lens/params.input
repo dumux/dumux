@@ -21,3 +21,15 @@ Type = bicgstabsolver
 Type = amg
 AmgMaxLevel = 2
 AmgAccumulationMode = atOnce
+
+[SpatialParams.Lens]
+Swr = 0.18
+Snr = 0.0
+VanGenuchtenAlpha = 0.00045
+VanGenuchtenN = 7.3
+
+[SpatialParams.OuterDomain]
+Swr = 0.05
+Snr = 0.0
+VanGenuchtenAlpha = 0.0037
+VanGenuchtenN = 4.7

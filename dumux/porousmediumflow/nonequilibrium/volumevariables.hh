@@ -36,6 +36,8 @@
 #include <dumux/common/dimensionlessnumbers.hh>
 #include <dumux/common/parameters.hh>
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 
 /*!
@@ -176,24 +178,23 @@ public:
                                const Element& element,
                                const Scv& scv)
     {
-        // obtain (standard) material parameters (needed for the residual saturations)
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-
-        //obtain parameters for interfacial area constitutive relations
-        const auto& aWettingNonwettingSurfaceParams = problem.spatialParams().aWettingNonwettingSurfaceParams(element, scv, elemSol);
-
         const Scalar pc = fluidState.pressure(phase1Idx) - fluidState.pressure(phase0Idx);
         const Scalar Sw = fluidState.saturation(phase0Idx);
 
-        using AwnSurface = typename Problem::SpatialParams::AwnSurface;
-        const auto awn = AwnSurface::interfacialArea(aWettingNonwettingSurfaceParams, materialParams, Sw, pc);
+        // old material law interface is deprecated: Replace this by
+        // const auto& wettingNonwettingInterfacialArea = spatialParams.wettingNonwettingInterfacialArea(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makeInterfacialArea(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+
+        const auto awn = fluidMatrixInteraction.wettingNonwettingInterface().area(Sw, pc);
         interfacialArea_[phase0Idx][phase1Idx] = awn;
         interfacialArea_[phase1Idx][phase0Idx] = interfacialArea_[phase0Idx][phase1Idx];
         interfacialArea_[phase0Idx][phase0Idx] = 0.;
 
-        using AnsSurface = typename Problem::SpatialParams::AnsSurface;
-        const auto& aNonwettingSolidSurfaceParams = problem.spatialParams().aNonwettingSolidSurfaceParams(element, scv, elemSol);
-        const auto ans = AnsSurface::interfacialArea(aNonwettingSolidSurfaceParams, materialParams, Sw, pc);
+        // old material law interface is deprecated: Replace this by
+        // const auto& nonwettingSolidInterfacialArea = spatialParams.nonwettingSolidInterfacialArea(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto ans = fluidMatrixInteraction.nonwettingSolidInterface().area(Sw, pc);
 
         // Switch for using a a_{wn} relations that has some "maximum capillary pressure" as parameter
         // That value is obtained by regularization of the pc(Sw) function.
@@ -201,15 +202,17 @@ public:
         if (computeAwsFromAnsAndPcMax)
         {
             // I know the solid surface from the pore network. But it is more consistent to use the fit value.
-            const Scalar pcMax = aWettingNonwettingSurfaceParams.pcMax();
-            const auto solidSurface = AnsSurface::interfacialArea(aNonwettingSolidSurfaceParams, materialParams, /*Sw=*/0., pcMax);
+            const Scalar pcMax = fluidMatrixInteraction.wettingNonwettingInterface().basicParams().pcMax();
+            const auto solidSurface = fluidMatrixInteraction.nonwettingSolidInterface().area(/*Sw=*/0., pcMax);
             interfacialArea_[phase0Idx][sPhaseIdx] = solidSurface - ans;
         }
         else
         {
-            using AwsSurface = typename Problem::SpatialParams::AwsSurface;
-            const auto& aWettingSolidSurfaceParams = problem.spatialParams().aWettingSolidSurfaceParams(element, scv, elemSol);
-            interfacialArea_[phase0Idx][sPhaseIdx] = AwsSurface::interfacialArea(aWettingSolidSurfaceParams, materialParams, Sw, pc);
+            // old material law interface is deprecated: Replace this by
+            // const auto& wettingSolidInterfacialArea = spatialParams.wettingSolidInterfacialArea(element, scv, elemSol);
+            // after the release of 3.3, when the deprecated interface is no longer supported
+            const auto fluidMatrixInteraction = Deprecated::makeInterfacialArea(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+            interfacialArea_[phase0Idx][sPhaseIdx] = fluidMatrixInteraction.wettingSolidInterface().area(Sw, pc);
         }
 
         interfacialArea_[sPhaseIdx][phase0Idx] = interfacialArea_[phase0Idx][sPhaseIdx];
@@ -536,16 +539,17 @@ public:
                                const Scv& scv)
     {
         // obtain parameters for awnsurface and material law
-        const auto& awnSurfaceParams = problem.spatialParams().aWettingNonwettingSurfaceParams(element, scv, elemSol) ;
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol) ;
+        // old material law interface is deprecated: Replace this by
+        // const auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makeInterfacialArea(Scalar{}, problem.spatialParams(), element, scv, elemSol);
 
         const auto Sw = fluidState.saturation(phase0Idx) ;
         const auto pc = fluidState.pressure(phase1Idx) - fluidState.pressure(phase0Idx);
 
         // when we only consider chemical non-equilibrium there is only mass transfer between
-        // the fluid phases, so in 2p only interfacial area between wetting and nonwetting
-        using AwnSurface = typename Problem::SpatialParams::AwnSurface;
-        interfacialArea_ = AwnSurface::interfacialArea(awnSurfaceParams, materialParams, Sw, pc);
+        // the fluid phases, so in 2p only interfacial area between wetting and non-wetting
+        interfacialArea_ = fluidMatrixInteraction.wettingNonwettingInterface().area(Sw, pc);
     }
 
     /*!
@@ -720,24 +724,20 @@ public:
                                const Element& element,
                                const Scv& scv)
     {
-        // obtain (standard) material parameters (needed for the residual saturations)
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-
-        //obtain parameters for interfacial area constitutive relations
-        const auto& aWettingNonwettingSurfaceParams = problem.spatialParams().aWettingNonwettingSurfaceParams(element, scv, elemSol);
-
         const Scalar pc = fluidState.pressure(phase1Idx) - fluidState.pressure(phase0Idx);
         const Scalar Sw = fluidState.saturation(phase0Idx);
 
-        using AwnSurface = typename Problem::SpatialParams::AwnSurface;
-        const auto awn = AwnSurface::interfacialArea(aWettingNonwettingSurfaceParams, materialParams, Sw, pc);
+        // old material law interface is deprecated: Replace this by
+        // const auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makeInterfacialArea(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+
+        const auto awn = fluidMatrixInteraction.wettingNonwettingInterface().area(Sw, pc);
         interfacialArea_[phase0Idx][phase1Idx] = awn;
         interfacialArea_[phase1Idx][phase0Idx] = interfacialArea_[phase0Idx][phase1Idx];
         interfacialArea_[phase0Idx][phase0Idx] = 0.;
 
-        using AnsSurface = typename Problem::SpatialParams::AnsSurface;
-        const auto& aNonwettingSolidSurfaceParams = problem.spatialParams().aNonwettingSolidSurfaceParams(element, scv, elemSol);
-        const auto ans = AnsSurface::interfacialArea(aNonwettingSolidSurfaceParams, materialParams, Sw, pc);
+        const auto ans = fluidMatrixInteraction.nonwettingSolidInterface().area(Sw, pc);
 
         // Switch for using a a_{wn} relations that has some "maximum capillary pressure" as parameter.
         // That value is obtained by regularization of the pc(Sw) function.
@@ -745,16 +745,12 @@ public:
         if (computeAwsFromAnsAndPcMax)
         {
             // I know the solid surface from the pore network. But it is more consistent to use the fit value.
-            const Scalar pcMax = aWettingNonwettingSurfaceParams.pcMax();
-            const auto solidSurface = AnsSurface::interfacialArea(aNonwettingSolidSurfaceParams, materialParams, /*Sw=*/0., pcMax);
+            const Scalar pcMax = fluidMatrixInteraction.wettingNonwettingInterface().basicParams().pcMax();
+            const auto solidSurface = fluidMatrixInteraction.nonwettingSolidInterface().area(/*Sw=*/0., pcMax);
             interfacialArea_[phase0Idx][sPhaseIdx] = solidSurface - ans;
         }
         else
-        {
-            using AwsSurface = typename Problem::SpatialParams::AwsSurface;
-            const auto& aWettingSolidSurfaceParams = problem.spatialParams().aWettingSolidSurfaceParams(element, scv, elemSol);
-            interfacialArea_[phase0Idx][sPhaseIdx] = AwsSurface::interfacialArea(aWettingSolidSurfaceParams, materialParams, Sw, pc);
-        }
+            interfacialArea_[phase0Idx][sPhaseIdx] = fluidMatrixInteraction.wettingSolidInterface().area(Sw, pc);
 
         interfacialArea_[sPhaseIdx][phase0Idx] = interfacialArea_[phase0Idx][sPhaseIdx];
         interfacialArea_[sPhaseIdx][sPhaseIdx] = 0.;

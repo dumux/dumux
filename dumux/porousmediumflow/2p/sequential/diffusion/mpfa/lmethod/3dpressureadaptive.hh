@@ -89,7 +89,6 @@ class FvMpfaL3dPressure2pAdaptive: public FvMpfaL3dPressure2p<TypeTag>
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 

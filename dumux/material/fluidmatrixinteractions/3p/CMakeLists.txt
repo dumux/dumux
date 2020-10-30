@@ -1,8 +1,10 @@
 install(FILES
 efftoabslaw.hh
 efftoabslawparams.hh
+napladsorption.hh
 parkervangen3p.hh
 parkervangen3pparams.hh
+parkervangenuchten.hh
 regularizedparkervangen3p.hh
 regularizedparkervangen3pparams.hh
 thermalconductivitysomerton3p.hh

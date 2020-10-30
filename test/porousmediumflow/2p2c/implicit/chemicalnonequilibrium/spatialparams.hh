@@ -28,16 +28,11 @@
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/spatialparams/fvnonequilibrium.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedlinearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/interfacialarea/interfacialarea.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/interfacialarea/pcmax.hh>
 
-// material laws for interfacial area
-#include <dumux/material/fluidmatrixinteractions/2pia/efftoabslawia.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepolynomial2ndorder.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepcmaxfct.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfaceexpswpcto3.hh>
 namespace Dumux {
 
 /**
@@ -61,49 +56,30 @@ class TwoPTwoCChemicalNonequilibriumSpatialParams
 
     enum {dimWorld=GridView::dimensionworld};
 
-    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
+    using PcKrSwCurve = FluidMatrix::BrooksCoreyDefault<Scalar>;
 
+    using WettingNonwettingInterfacialArea = FluidMatrix::InterfacialArea<Scalar,
+                                                                          FluidMatrix::InterfacialAreaPcMax,
+                                                                          FluidMatrix::WettingNonwettingInterfacialAreaPcSw>;
 public:
     //! Export permeability type
     using PermeabilityType = Scalar;
-    //! Export the type used for the material law
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
-    using EffectiveIALawAwn = AwnSurfacePcMaxFct<Scalar>;
-    using AwnSurface = EffToAbsLawIA<EffectiveIALawAwn, MaterialLawParams>;
-    using AwnSurfaceParams = typename AwnSurface::Params;
 
     TwoPTwoCChemicalNonequilibriumSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
+    , permeability_(1e-11)
+    , porosity_(0.4)
+    , pcKrSwCurve_("SpatialParams")
     {
-        // intrinsic permeabilities
-        coarseK_ = 1e-11;
-
-        // the porosity
-        porosity_ = 0.4;
-
-         // residual saturations
-        coarseMaterialParams_.setSwr(0.2);
-        coarseMaterialParams_.setSnr(0.1);
-
-        // parameters for the Brooks-Corey law
-        coarseMaterialParams_.setPe(1e4);
-        coarseMaterialParams_.setLambda(2.0);
-
-        aWettingNonwettingA1_ = getParam<Scalar>("SpatialParams.WettingNonwettingAreaA1");
-        aWettingNonwettingA2_ = getParam<Scalar>("SpatialParams.WettingNonwettingAreaA2");
-        aWettingNonwettingA3_ = getParam<Scalar>("SpatialParams.WettingNonwettingAreaA3");
-
-        // wetting-non wetting: surface which goes to zero on the edges, but is a polynomial
-        aWettingNonwettingSurfaceParams_.setA1(aWettingNonwettingA1_);
-        aWettingNonwettingSurfaceParams_.setA2(aWettingNonwettingA2_);
-        aWettingNonwettingSurfaceParams_.setA3(aWettingNonwettingA3_);
-        // determine maximum capillary pressure for wetting-nonwetting surface
-        using TwoPLaw = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
-        pcMax_ = TwoPLaw::pc(coarseMaterialParams_, /*sw = */0.0);
-        aWettingNonwettingSurfaceParams_.setPcMax(pcMax_);
-        characteristicLength_ =getParam<Scalar>("SpatialParams.MeanPoreSize");
+        characteristicLength_ = getParam<Scalar>("SpatialParams.MeanPoreSize");
         factorMassTransfer_ = getParam<Scalar>("SpatialParams.MassTransferFactor");
+
+        auto anwParams = WettingNonwettingInterfacialArea::makeBasicParams("SpatialParams.WettingNonwettingArea");
+
+        // determine maximum capillary pressure for wetting-nonwetting surface
+        anwParams.setPcMax(pcKrSwCurve_.pc(/*sw = */0.0));
+
+        aNw_ = std::make_unique<WettingNonwettingInterfacialArea>(anwParams);
     }
 
     template<class ElementSolution>
@@ -111,7 +87,7 @@ public:
                                   const SubControlVolume& scv,
                                   const ElementSolution& elemSol) const
     {
-        return coarseK_;
+        return permeability_;
     }
 
     /*!
@@ -126,52 +102,12 @@ public:
     }
 
     /*!
-     * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
-     *
-     * \param globalPos The global position of the sub-control volume.
-     * \return The material parameters object
+     * \brief Returns the fluid-matrix interaction law at a given location
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
-        return coarseMaterialParams_;
+        return makeFluidMatrixInteraction(pcKrSwCurve_, *aNw_);
     }
-
-    /*!\brief Returns a reference to the container object for the
-     *        parametrization of the surface between wetting and nonwetting phase.
-     *
-     * The position is determined based on the coordinate of
-     * the vertex belonging to the considered sub-control volume.
-     *
-     * \param element The finite element
-     * \param scv The sub-control volume
-     * \param elemSol The element solution
-     */
-    template<class ElementSolution>
-    const AwnSurfaceParams& aWettingNonwettingSurfaceParams(const Element &element,
-                                                            const SubControlVolume &scv,
-                                                            const ElementSolution &elemSol) const
-    {
-        return aWettingNonwettingSurfaceParams_ ;
-    }
-
-    /*!\brief Returns the maximum capillary pressure for the given pc-Sw curve
-     *
-     * Of course physically there is no such thing as a maximum capillary pressure.
-     * The parametrization (VG/BC) goes to infinity and physically there is only one pressure
-     * for single phase conditions.
-     * Here, this is used for fitting the interfacial area surface: the capillary pressure,
-     * where the interfacial area is zero.
-     * Technically this value is obtained as the capillary pressure of saturation zero.
-     * This value of course only exists for the case of a regularized pc-Sw relation.
-     * \param element The finite element
-     * \param scv The sub-control volume
-     * \param elemSol The element solution
-     */
-    template<class ElementSolution>
-    const Scalar pcMax(const Element &element,
-                       const SubControlVolume &scv,
-                       const ElementSolution &elemSol) const
-    { return aWettingNonwettingSurfaceParams_.pcMax() ; }
 
     /*!
      * \brief Returns the characteristic length for the mass transfer.
@@ -201,18 +137,12 @@ public:
 
 private:
 
-    Scalar coarseK_;
-    Scalar porosity_;
-    MaterialLawParams coarseMaterialParams_;
+    const Scalar permeability_;
+    const Scalar porosity_;
     static constexpr Scalar eps_ = 1e-6;
 
-    AwnSurfaceParams aWettingNonwettingSurfaceParams_;
-    Scalar pcMax_ ;
-
-    // interfacial area parameters
-    Scalar aWettingNonwettingA1_ ;
-    Scalar aWettingNonwettingA2_ ;
-    Scalar aWettingNonwettingA3_ ;
+    const PcKrSwCurve pcKrSwCurve_;
+    std::unique_ptr<const WettingNonwettingInterfacialArea> aNw_;
 
     Scalar factorMassTransfer_ ;
     Scalar characteristicLength_ ;

@@ -197,7 +197,6 @@ class CombustionProblemOneComponent: public PorousMediumFlowProblem<TypeTag>
     using Indices = typename ModelTraits::Indices;
 
     enum {dimWorld = GridView::dimensionworld};
-    enum {numPhases = ModelTraits::numFluidPhases()};
     enum {numComponents = ModelTraits::numFluidComponents()};
     enum {s0Idx = Indices::s0Idx};
     enum {p0Idx = Indices::p0Idx};
@@ -210,6 +209,8 @@ class CombustionProblemOneComponent: public PorousMediumFlowProblem<TypeTag>
     enum {nPhaseIdx = FluidSystem::nPhaseIdx};
     enum {wCompIdx = FluidSystem::H2OIdx};
     enum {nCompIdx = FluidSystem::N2Idx};
+
+    static constexpr auto numPhases = ModelTraits::numFluidPhases();
 
     // formulations
     static constexpr auto pressureFormulation = ModelTraits::pressureFormulation();
@@ -448,16 +449,11 @@ private:
         //////////////////////////////////////
         priVars[energyEq0Idx] = thisTemperature;
         priVars[energyEqSolidIdx] = thisTemperature;
-        std::vector<Scalar> capPress(numPhases);
 
         //obtain pc according to saturation
-        const auto &materialParams =
-        this->spatialParams().materialLawParamsAtPos(globalPos);
-        using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
-        using MPAdapter = MPAdapter<MaterialLaw, numPhases>;
-
         const int wettingPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
-        MPAdapter::capillaryPressures(capPress, materialParams, fluidState, wettingPhaseIdx);
+        const auto& fm = this->spatialParams().fluidMatrixInteractionAtPos(globalPos);
+        const auto capPress = fm.capillaryPressures(fluidState, wettingPhaseIdx);
 
         Scalar p[numPhases];
 

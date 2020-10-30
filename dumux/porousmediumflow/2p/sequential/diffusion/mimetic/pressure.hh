@@ -32,6 +32,8 @@
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mimetic/operator.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mimetic/mimetic.hh>
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 
 /*!
@@ -67,7 +69,6 @@ template<class TypeTag> class MimeticPressure2P
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
@@ -515,13 +516,16 @@ void MimeticPressure2P<TypeTag>::updateMaterialLaws()
 
             CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
-            Scalar satW = cellData.saturation(wPhaseIdx);
+            const Scalar satW = cellData.saturation(wPhaseIdx);
+
+            // old material law interface is deprecated: Replace this by
+            // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
+            // after the release of 3.3, when the deprecated interface is no longer supported
+            const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
 
             // initialize mobilities
-            Scalar mobilityW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(element), satW)
-                    / viscosity_[wPhaseIdx];
-            Scalar mobilityNw = MaterialLaw::krn(problem_.spatialParams().materialLawParams(element), satW)
-                    / viscosity_[nPhaseIdx];
+            const Scalar mobilityW = fluidMatrixInteraction.krw(satW) / viscosity_[wPhaseIdx];
+            const Scalar mobilityNw = fluidMatrixInteraction.krn(satW) / viscosity_[nPhaseIdx];
 
             // initialize mobilities
             cellData.setMobility(wPhaseIdx, mobilityW);

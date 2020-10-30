@@ -11,3 +11,9 @@ LiquidKinematicViscosity = 1.0
 
 [Grid]
 File = ./grids/test_transport.dgf
+
+[SpatialParams]
+Swr = 0
+Snr = 0
+LinearPcEntry = 0
+LinearPcMax = 0

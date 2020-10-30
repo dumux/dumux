@@ -26,12 +26,8 @@
 #ifndef DUMUX_SALINIZATION_SPATIAL_PARAMETERS_HH
 #define DUMUX_SALINIZATION_SPATIAL_PARAMETERS_HH
 
-#include <dumux/io/gnuplotinterface.hh>
-#include <dumux/io/plotmateriallaw.hh>
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/porosityprecipitation.hh>
 #include <dumux/material/fluidmatrixinteractions/permeabilitykozenycarman.hh>
 
@@ -55,38 +51,21 @@ class SalinizationSpatialParams
     using ParentType = FVSpatialParams<GridGeometry, Scalar,
                                        SalinizationSpatialParams<GridGeometry, Scalar>>;
 
-    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
+    using PcKrSwCurve = FluidMatrix::VanGenuchtenDefault<Scalar>;
 
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
 public:
     // type used for the permeability (i.e. tensor or scalar)
     using PermeabilityType = Scalar;
-    //! Export the material law type used
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
 
     SalinizationSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
+    , pcKrSwCurve_("SpatialParams")
     {
         solubilityLimit_       = getParam<Scalar>("SpatialParams.SolubilityLimit", 0.26);
         referencePorosity_     = getParam<Scalar>("SpatialParams.referencePorosity", 0.11);
         referencePermeability_ = getParam<Scalar>("SpatialParams.referencePermeability", 2.23e-14);
-        irreducibleLiqSat_     = getParam<Scalar>("SpatialParams.IrreducibleLiqSat", 0.2);
-        irreducibleGasSat_     = getParam<Scalar>("SpatialParams.IrreducibleGasSat", 1e-3);
-        vgAlpha_               = getParam<Scalar>("SpatialParams.VGAlpha", 1.5);
-        vgn_                   = getParam<Scalar>("SpatialParams.VGn", 4.0);
-
-        plotFluidMatrixInteractions_ = getParam<bool>("Output.PlotFluidMatrixInteractions");
-
-        //Van Genuchen parameters
-        // residual saturations
-        materialParams_.setSwr(irreducibleLiqSat_);
-        materialParams_.setSnr(irreducibleGasSat_);
-
-        //Van Genuchen parameters
-        materialParams_.setVgAlpha(vgAlpha_ );
-        materialParams_.setVgn(vgn_);
     }
 
     /*!
@@ -150,9 +129,14 @@ public:
     Scalar theta(const SubControlVolume &scv) const
     { return 10.0; }
 
-    // return the brooks-corey context depending on the position
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
-    { return materialParams_; }
+    /*!
+     * \brief Returns the fluid-matrix interaction law at a given location
+     * \param globalPos A global coordinate vector
+     */
+    auto fluidMatrixInteractionAtPos(const GlobalPosition &globalPos) const
+    {
+        return makeFluidMatrixInteraction(pcKrSwCurve_);
+    }
 
     // define which phase is to be considered as the wetting phase
     template<class FluidSystem>
@@ -161,19 +145,13 @@ public:
 
 private:
 
-    MaterialLawParams materialParams_;
+    const PcKrSwCurve pcKrSwCurve_;
 
     PermeabilityKozenyCarman<PermeabilityType> permLaw_;
 
     Scalar solubilityLimit_;
     Scalar referencePorosity_;
     PermeabilityType referencePermeability_ = 0.0;
-    Scalar irreducibleLiqSat_;
-    Scalar irreducibleGasSat_;
-    Scalar vgAlpha_;
-    Scalar vgn_ ;
-
-    bool plotFluidMatrixInteractions_;
 };
 
 } // end namespace Dumux

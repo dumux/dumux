@@ -27,8 +27,6 @@
 #include <dumux/common/properties.hh>
 #include <dumux/material/spatialparams/sequentialfv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
 namespace Dumux
 {
@@ -51,16 +49,6 @@ struct TestTransportSpatialParams {};
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TestTransportSpatialParams> { using type = TestTransportSpatialParams<TypeTag>; };
 
-// Set the material law
-template<class TypeTag>
-struct MaterialLaw<TypeTag, TTag::TestTransportSpatialParams>
-{
-private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using RawMaterialLaw = LinearMaterial<Scalar>;
-public:
-    using type = EffToAbsLaw<RawMaterialLaw>;
-};
 }
 
 /*!
@@ -77,10 +65,12 @@ class TestTransportSpatialParams: public SequentialFVSpatialParams<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using Element = typename Grid::Traits::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+    using PcKrSwCurve = FluidMatrix::LinearMaterialDefault<Scalar>;
 
 public:
-    using MaterialLaw = GetPropType<TypeTag, Properties::MaterialLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
+
 
     Scalar intrinsicPermeability (const Element& element) const
     {
@@ -92,28 +82,21 @@ public:
         return 0.2;
     }
 
-
-    // return the parameter object for the Brooks-Corey material law which depends on the position
-    const MaterialLawParams& materialLawParams(const Element &element) const
+    /*!
+     * \brief Returns the fluid-matrix interaction law at a given location
+     * \param globalPos A global coordinate vector
+     */
+    auto fluidMatrixInteractionAtPos(const GlobalPosition &globalPos) const
     {
-            return materialLawParams_;
+        return makeFluidMatrixInteraction(pcKrSwCurve_);
     }
-
 
     TestTransportSpatialParams(const Problem& problem)
-    : ParentType(problem)
-    {
-        // residual saturations
-        materialLawParams_.setSwr(0.0);
-        materialLawParams_.setSnr(0.0);
-
-        // parameters for the linear entry pressures function
-        materialLawParams_.setEntryPc(0);
-        materialLawParams_.setMaxPc(0);
-    }
+    : ParentType(problem), pcKrSwCurve_("SpatialParams")
+    {}
 
 private:
-    MaterialLawParams materialLawParams_;
+    const PcKrSwCurve pcKrSwCurve_;
 };
 
 } // end namespace

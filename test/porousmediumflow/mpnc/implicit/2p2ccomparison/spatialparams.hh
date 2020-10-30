@@ -27,10 +27,8 @@
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedlinearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
-
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
+#include <dumux/material/fluidmatrixinteractions/mp/mpadapter.hh>
 
 namespace Dumux {
 
@@ -53,14 +51,16 @@ class MPNCComparisonSpatialParams
                                        MPNCComparisonSpatialParams<GridGeometry, Scalar>>;
 
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
-    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
+
+    using PcKrSwCurve = FluidMatrix::BrooksCoreyDefault<Scalar>;
+    using MPAdapter = Dumux::FluidMatrix::MPAdapter<PcKrSwCurve, 2>;
 
 public:
     using PermeabilityType = Scalar;
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
 
-    MPNCComparisonSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry) : ParentType(gridGeometry)
+    MPNCComparisonSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
+    , pcKrSw_("SpatialParams")
     {
         // intrinsic permeabilities
         coarseK_ = 1e-12;
@@ -68,18 +68,6 @@ public:
 
         // the porosity
         porosity_ = 0.3;
-
-        // residual saturations
-        fineMaterialParams_.setSwr(0.2);
-        fineMaterialParams_.setSnr(0.0);
-        coarseMaterialParams_.setSwr(0.2);
-        coarseMaterialParams_.setSnr(0.0);
-
-        // parameters for the Brooks-Corey law
-        fineMaterialParams_.setPe(1e4);
-        coarseMaterialParams_.setPe(1e4);
-        fineMaterialParams_.setLambda(2.0);
-        coarseMaterialParams_.setLambda(2.0);
     }
 
     template<class ElementSolution>
@@ -95,7 +83,6 @@ public:
 
     /*!
      * \brief Defines the porosity \f$[-]\f$ of the soil
-     *
      * \param globalPos The global Position
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
@@ -105,23 +92,16 @@ public:
 
     /*!
      * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
-     *
      * \param globalPos The global position of the sub-control volume.
-     * \return The material parameters object
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
-        if (isFineMaterial_(globalPos))
-            return fineMaterialParams_;
-        else
-            return coarseMaterialParams_;
+        return makeFluidMatrixInteraction(MPAdapter(pcKrSw_));
     }
 
     /*!
      * \brief Function for defining which phase is to be considered as the wetting phase.
-     *
      * \param globalPos The global position
-     * \return The wetting phase index
      */
     template<class FluidSystem>
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
@@ -144,8 +124,7 @@ private:
     Scalar coarseK_;
     Scalar fineK_;
     Scalar porosity_;
-    MaterialLawParams fineMaterialParams_;
-    MaterialLawParams coarseMaterialParams_;
+    PcKrSwCurve pcKrSw_;
     static constexpr Scalar eps_ = 1e-6;
 };
 

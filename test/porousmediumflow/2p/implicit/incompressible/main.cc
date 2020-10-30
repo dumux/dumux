@@ -151,7 +151,7 @@ int main(int argc, char** argv)
 
     // maybe update the interface parameters
     if (ENABLEINTERFACESOLVER)
-        problem->spatialParams().updateMaterialInterfaceParams(x);
+        problem->spatialParams().updateMaterialInterfaces(x);
 
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;

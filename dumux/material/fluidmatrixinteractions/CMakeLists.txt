@@ -9,6 +9,7 @@ add_subdirectory(mp)
 install(FILES
 diffusivityconstanttortuosity.hh
 diffusivitymillingtonquirk.hh
+fluidmatrixinteraction.hh
 permeabilitykozenycarman.hh
 porositydeformation.hh
 porosityprecipitation.hh
