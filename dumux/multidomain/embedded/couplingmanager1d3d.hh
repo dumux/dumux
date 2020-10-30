@@ -38,12 +38,14 @@ class Embedded1d3dCouplingManager;
 /*!
  * \ingroup EmbeddedCoupling
  * \brief The coupling mode
+ * \deprecated Will be removed after 3.3
  */
-enum class [[deprecated("Removed after 3.3. Use the new tags.")]] EmbeddedCouplingMode
+enum class EmbeddedCouplingMode
 { line, average, cylindersources, kernel };
 
+// deprecated and will be removed after 3.3
 template<class MDTraits, EmbeddedCouplingMode mode>
-struct [[deprecated("Removed after 3.3. Use Embedded1d3dCouplingManager.")]] EmbeddedCouplingManager1d3d;
+struct EmbeddedCouplingManager1d3d;
 
 } // end namespace Dumux
 
