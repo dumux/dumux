@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/monotonecubicspline.hh>
+#include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/materiallaw.hh>
 
 namespace Dumux::FluidMatrix {
@@ -43,6 +44,7 @@ namespace Dumux::FluidMatrix {
  */
 template <class S, bool approximatePcSwInverse = false>
 class DataSplineTwoPMaterialLaw
+: public Adapter<DataSplineTwoPMaterialLaw<S, approximatePcSwInverse>, PcKrSw>
 {
 public:
 
