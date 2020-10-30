@@ -7,6 +7,7 @@ install(FILES
 adaptivegridrestart.hh
 container.hh
 defaultiofields.hh
+format.hh
 gnuplotinterface.hh
 loadsolution.hh
 name.hh
