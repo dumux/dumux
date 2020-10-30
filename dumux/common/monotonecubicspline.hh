@@ -77,7 +77,7 @@ public:
         // check some requirements
         assert (x.size() == y.size());
         assert (x.size() >=2);
-        assert (std::is_sorted(x.begin(), x.end()));
+        assert (std::is_sorted(x.begin(), x.end()) || std::is_sorted(x.rbegin(), x.rend()));
 
         // save a copy of the control points
         x_ = x;
@@ -87,7 +87,8 @@ public:
         numPoints_ = x.size();
 
         // whether we are increasing
-        increasing_ = y_.back() > y_.front();
+        increasingX_ = x_.back() > x_.front();
+        increasingY_ = y_.back() > y_.front();
 
         // the slope at every control point
         m_.resize(numPoints_);
@@ -114,21 +115,12 @@ public:
      */
     Scalar eval(const Scalar x) const
     {
-        if (x <= x_.front())
+        if ((x <= x_.front() && increasingX_) || (x >= x_.front() && !increasingX_))
             return y_.front() + m_.front()*(x - x_.front());
-        else if (x > x_.back())
+        else if ((x > x_.back() && increasingX_) || (x < x_.back() && !increasingX_))
             return y_.back() + m_.back()*(x - x_.back());
-        else
-        {
-            const auto lookUpIndex = std::distance(x_.begin(), std::lower_bound(x_.begin(), x_.end(), x));
-            assert(lookUpIndex != 0);
 
-            // interpolate parametrization parameter t in [0,1]
-            const auto h = (x_[lookUpIndex] - x_[lookUpIndex-1]);
-            const auto t = (x - x_[lookUpIndex-1])/h;
-            return y_[lookUpIndex-1]*Basis::h00(t) + h*m_[lookUpIndex-1]*Basis::h10(t)
-                   + y_[lookUpIndex]*Basis::h01(t) + h*m_[lookUpIndex]*Basis::h11(t);
-        }
+        return eval_(x);
     }
 
     /*!
@@ -138,22 +130,12 @@ public:
      */
     Scalar evalDerivative(const Scalar x) const
     {
-        if (x <= x_.front())
+        if ((x <= x_.front() && increasingX_) || (x >= x_.front() && !increasingX_))
             return m_.front();
-        else if (x > x_.back())
+        else if ((x > x_.back() && increasingX_) || (x < x_.back() && !increasingX_))
             return m_.back();
-        else
-        {
-            const auto lookUpIndex = std::distance(x_.begin(), std::lower_bound(x_.begin(), x_.end(), x));
-            assert(lookUpIndex != 0);
 
-            // interpolate parametrization parameter t in [0,1]
-            const auto h = (x_[lookUpIndex] - x_[lookUpIndex-1]);
-            const auto t = (x - x_[lookUpIndex-1])/h;
-            const auto dtdx = 1.0/h;
-            return y_[lookUpIndex-1]*Basis::dh00(t)*dtdx + m_[lookUpIndex-1]*Basis::dh10(t)
-                   + y_[lookUpIndex]*Basis::dh01(t)*dtdx + m_[lookUpIndex]*Basis::dh11(t);
-        }
+        return evalDerivative_(x);
     }
 
     /*!
@@ -164,40 +146,39 @@ public:
      */
     Scalar evalInverse(const Scalar y) const
     {
-        if (increasing_)
-        {
-            if (y <= y_.front())
-                return x_.front() + (y - y_.front())/m_.front();
-            else if (y > y_.back())
-                return x_.back() + (y - y_.back())/m_.back();
-            else
-            {
-                const auto lookUpIndex = std::distance(y_.begin(), std::lower_bound(y_.begin(), y_.end(), y));
-                assert(lookUpIndex != 0);
+        if ((y <= y_.front() && increasingY_) || (y >= y_.front() && !increasingY_))
+            return x_.front() + (y - y_.front())/m_.front();
+        else if ((y > y_.back() && increasingY_) || (y < y_.back() && !increasingY_))
+            return x_.back() + (y - y_.back())/m_.back();
 
-                return evalInverse_(y, lookUpIndex);
-            }
-        }
-
-        else
-        {
-            if (y >= y_.front())
-                return x_.front() + (y - y_.front())/m_.front();
-            else if (y < y_.back())
-                return x_.back() + (y - y_.back())/m_.back();
-            else
-            {
-                const auto lookUpIndex = y_.size() - std::distance(y_.rbegin(), std::lower_bound(y_.rbegin(), y_.rend(), y));
-                assert(lookUpIndex != 0);
-
-                return evalInverse_(y, lookUpIndex);
-            }
-        }
+        return evalInverse_(y);
     }
 
 private:
-    Scalar evalInverse_(const Scalar y, const std::size_t lookUpIndex) const
+    Scalar eval_(const Scalar x) const
     {
+        // interpolate parametrization parameter t in [0,1]
+        const auto lookUpIndex = lookUpIndex_(x_, x, increasingX_);
+        const auto h = (x_[lookUpIndex] - x_[lookUpIndex-1]);
+        const auto t = (x - x_[lookUpIndex-1])/h;
+        return y_[lookUpIndex-1]*Basis::h00(t) + h*m_[lookUpIndex-1]*Basis::h10(t)
+               + y_[lookUpIndex]*Basis::h01(t) + h*m_[lookUpIndex]*Basis::h11(t);
+    }
+
+    Scalar evalDerivative_(const Scalar x) const
+    {
+        // interpolate parametrization parameter t in [0,1]
+        const auto lookUpIndex = lookUpIndex_(x_, x, increasingX_);
+        const auto h = (x_[lookUpIndex] - x_[lookUpIndex-1]);
+        const auto t = (x - x_[lookUpIndex-1])/h;
+        const auto dtdx = 1.0/h;
+        return y_[lookUpIndex-1]*Basis::dh00(t)*dtdx + m_[lookUpIndex-1]*Basis::dh10(t)
+               + y_[lookUpIndex]*Basis::dh01(t)*dtdx + m_[lookUpIndex]*Basis::dh11(t);
+    }
+
+    Scalar evalInverse_(const Scalar y) const
+    {
+        const auto lookUpIndex = lookUpIndex_(y_, y, increasingY_);
         auto localPolynomial = [&](const auto x) {
             // interpolate parametrization parameter t in [0,1]
             const auto h = (x_[lookUpIndex] - x_[lookUpIndex-1]);
@@ -211,11 +192,31 @@ private:
         return findScalarRootBrent(x_[lookUpIndex-1]-eps, x_[lookUpIndex]+eps, localPolynomial);
     }
 
+    auto lookUpIndex_(const std::vector<Scalar>& vec, const Scalar v, bool increasing) const
+    {
+        return increasing ? lookUpIndexIncreasing_(vec, v) : lookUpIndexDecreasing_(vec, v);
+    }
+
+    auto lookUpIndexIncreasing_(const std::vector<Scalar>& vec, const Scalar v) const
+    {
+        const auto lookUpIndex = std::distance(vec.begin(), std::lower_bound(vec.begin(), vec.end(), v));
+        assert(lookUpIndex != 0);
+        return lookUpIndex;
+    }
+
+    auto lookUpIndexDecreasing_(const std::vector<Scalar>& vec, const Scalar v) const
+    {
+        const auto lookUpIndex = vec.size() - std::distance(vec.rbegin(), std::lower_bound(vec.rbegin(), vec.rend(), v));
+        assert(lookUpIndex != 0);
+        return lookUpIndex;
+    }
+
     std::vector<Scalar> x_; //!< the x-coordinates
     std::vector<Scalar> y_; //!< the y-coordinates
     std::vector<Scalar> m_; //!< the slope for each control point
     std::size_t numPoints_; //!< the number of control points
-    bool increasing_; //!< if we are increasing monotone or not
+    bool increasingX_; //!< if we are increasing monotone or not
+    bool increasingY_; //!< if we are increasing monotone or not
 };
 
 } // end namespace Dumux
