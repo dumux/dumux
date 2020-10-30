@@ -292,7 +292,7 @@ public:
         Scalar betaNw() const { return betaNw_; }
         void setBetaNw(Scalar betaNw) { betaNw_ = betaNw; }
 
-        Scalar betaGn() const { return betaNw_; }
+        Scalar betaGn() const { return betaGn_; }
         void setBetaGn(Scalar betaGn) { betaGn_ = betaGn; }
 
         Scalar betaGw() const { return betaGw_; }
