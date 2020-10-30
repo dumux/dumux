@@ -48,8 +48,10 @@ namespace Dumux {
 
 namespace Detail {
 // helper struct and function detecting if the fluid matrix interaction features a adsorptionModel() function
+#ifndef DOXYGEN // hide from doxygen
 template <class FluidMatrixInteraction>
 using AdsorptionModelDetector = decltype(std::declval<FluidMatrixInteraction>().adsorptionModel());
+#endif // DOXYGEN
 
 template<class FluidMatrixInteraction>
 static constexpr bool hasAdsorptionModel()
