@@ -15,6 +15,8 @@ INPUT                 += @srcdir@/mainpage.txt \
                          @top_srcdir@/dumux \
                          @srcdir@/extradoc/parameterlist.txt
 
+EXCLUDE               += @top_srcdir@/dumux/io/format/fmt
+
 EXAMPLE_PATH          += @srcdir@/extradoc
 
 IMAGE_PATH             = @srcdir@/images
