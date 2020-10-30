@@ -102,7 +102,7 @@ public:
     }
 
     /*!
-     * \brief Returns the parameters for the material law at a given location
+     * \brief Returns the fluid-matrix interaction law at a given location
      */
     auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {

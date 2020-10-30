@@ -102,7 +102,7 @@ public:
     { return 0.4; }
 
     /*!
-     * \brief Returns the parameters for the material law for the sub-control volume
+     * \brief Returns the fluid-matrix interaction law for the sub-control volume
      *
      * This method is not actually required by the Richards model, but provided
      * for the convenience of the RichardsLensProblem
@@ -122,7 +122,7 @@ public:
     }
 
     /*!
-     * \brief Returns the parameters for the material law at a given location
+     * \brief Returns the fluid-matrix interaction law at a given location
      *
      * This method is not actually required by the Richards model, but provided
      * for the convenience of the RichardsLensProblem

@@ -196,7 +196,7 @@ public:
     }
 
     /*!
-     * \brief Returns the parameters for the material law at a given location
+     * \brief Returns the fluid-matrix interaction law at a given location
      * \param globalPos A global coordinate vector
      */
     const NonwettingSolidInterfacialArea& nonwettingSolidInterfacialAreaAtPos(const GlobalPosition &globalPos) const
@@ -209,7 +209,7 @@ public:
     }
 
     /*!
-     * \brief Returns the parameters for the material law at a given location
+     * \brief Returns the fluid-matrix interaction law at a given location
      * \param globalPos A global coordinate vector
      */
     const WettingSolidInterfacialArea& wettingSolidInterfacialAreaAtPos(const GlobalPosition &globalPos) const
@@ -218,7 +218,7 @@ public:
     }
 
     /*!
-     * \brief Returns the parameters for the material law at a given location
+     * \brief Returns the fluid-matrix interaction law at a given location
      * \param globalPos A global coordinate vector
      */
     const WettingNonwettingInterfacialArea& wettingNonwettingInterfacialAreaAtPos(const GlobalPosition &globalPos) const
@@ -232,7 +232,7 @@ public:
     }
 
     /*!
-     * \brief Returns the parameters for the material law at a given location
+     * \brief Returns the fluid-matrix interaction law at a given location
      */
     template<class ElementSolution>
     auto fluidMatrixInteraction(const Element& element,
@@ -243,7 +243,7 @@ public:
     }
 
     /*!
-     * \brief Returns the parameters for the material law at a given location
+     * \brief Returns the fluid-matrix interaction law at a given location
      */
     auto fluidMatrixInteractionAtPos(const GlobalPosition &globalPos) const
     {

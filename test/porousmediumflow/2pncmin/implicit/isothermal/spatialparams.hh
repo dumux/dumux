@@ -129,7 +129,7 @@ public:
     { return 10.0; }
 
     /*!
-     * \brief Returns the parameters for the material law at a given location
+     * \brief Returns the fluid-matrix interaction law at a given location
      * \param globalPos A global coordinate vector
      */
     auto fluidMatrixInteractionAtPos(const GlobalPosition &globalPos) const
