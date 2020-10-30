@@ -1,7 +1,7 @@
 add_subdirectory(sequential)
 
 install(FILES
-boxmaterialinterfaceparams.hh
+boxmaterialinterfaces.hh
 formulation.hh
 gridadaptindicator.hh
 griddatatransfer.hh
