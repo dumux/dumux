@@ -93,13 +93,13 @@ public:
         porosityFF_                 = getParam<Scalar>("SpatialParams.FreeFlow.porosity");
         intrinsicPermeabilityFF_    = getParam<Scalar>("SpatialParams.FreeFlow.permeability");
 
-        aWettingNonWettingA1_ = getParam<Scalar>("SpatialParams.soil.aWettingNonWettingA1");
-        aWettingNonWettingA2_ = getParam<Scalar>("SpatialParams.soil.aWettingNonWettingA2");
-        aWettingNonWettingA3_ = getParam<Scalar>("SpatialParams.soil.aWettingNonWettingA3");
+        aWettingNonwettingA1_ = getParam<Scalar>("SpatialParams.soil.aWettingNonwettingA1");
+        aWettingNonwettingA2_ = getParam<Scalar>("SpatialParams.soil.aWettingNonwettingA2");
+        aWettingNonwettingA3_ = getParam<Scalar>("SpatialParams.soil.aWettingNonwettingA3");
 
-        aNonWettingSolidA1_ = getParam<Scalar>("SpatialParams.soil.aNonWettingSolidA1");
-        aNonWettingSolidA2_ = getParam<Scalar>("SpatialParams.soil.aNonWettingSolidA2");
-        aNonWettingSolidA3_ = getParam<Scalar>("SpatialParams.soil.aNonWettingSolidA3");
+        aNonwettingSolidA1_ = getParam<Scalar>("SpatialParams.soil.aNonwettingSolidA1");
+        aNonwettingSolidA2_ = getParam<Scalar>("SpatialParams.soil.aNonwettingSolidA2");
+        aNonwettingSolidA3_ = getParam<Scalar>("SpatialParams.soil.aNonwettingSolidA3");
 
         BCPd_           = getParam<Scalar>("SpatialParams.soil.BCPd");
         BClambda_       = getParam<Scalar>("SpatialParams.soil.BClambda");
@@ -138,28 +138,28 @@ public:
          */
         using TwoPLaw = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
         const auto pcMax = TwoPLaw::pc(materialParamsPM_, /*sw = */0.0);
-        aWettingNonWettingSurfaceParams_.setPcMax(pcMax);
+        aWettingNonwettingSurfaceParams_.setPcMax(pcMax);
 
         // wetting-non wetting: surface which goes to zero on the edges, but is a polynomial
-        aWettingNonWettingSurfaceParams_.setA1(aWettingNonWettingA1_);
-        aWettingNonWettingSurfaceParams_.setA2(aWettingNonWettingA2_);
-        aWettingNonWettingSurfaceParams_.setA3(aWettingNonWettingA3_);
+        aWettingNonwettingSurfaceParams_.setA1(aWettingNonwettingA1_);
+        aWettingNonwettingSurfaceParams_.setA2(aWettingNonwettingA2_);
+        aWettingNonwettingSurfaceParams_.setA3(aWettingNonwettingA3_);
 
-        // non-wetting-solid
-        aNonWettingSolidSurfaceParams_.setA1(aNonWettingSolidA1_);
-        aNonWettingSolidSurfaceParams_.setA2(aNonWettingSolidA2_);
-        aNonWettingSolidSurfaceParams_.setA3(aNonWettingSolidA3_);
-
-        // dummys for free flow: no interface where there is only one phase
-        aWettingNonWettingSurfaceParamsFreeFlow_.setA1(0.);
-        aWettingNonWettingSurfaceParamsFreeFlow_.setA2(0.);
-        aWettingNonWettingSurfaceParamsFreeFlow_.setA3(0.);
-        aWettingNonWettingSurfaceParamsFreeFlow_.setPcMax(42.); // not needed because it is anyways zero;
+        // nonwetting-solid
+        aNonwettingSolidSurfaceParams_.setA1(aNonwettingSolidA1_);
+        aNonwettingSolidSurfaceParams_.setA2(aNonwettingSolidA2_);
+        aNonwettingSolidSurfaceParams_.setA3(aNonwettingSolidA3_);
 
         // dummys for free flow: no interface where there is only one phase
-        aNonWettingSolidSurfaceParamsFreeFlow_.setA1(0.);
-        aNonWettingSolidSurfaceParamsFreeFlow_.setA2(0.);
-        aNonWettingSolidSurfaceParamsFreeFlow_.setA3(0.);
+        aWettingNonwettingSurfaceParamsFreeFlow_.setA1(0.);
+        aWettingNonwettingSurfaceParamsFreeFlow_.setA2(0.);
+        aWettingNonwettingSurfaceParamsFreeFlow_.setA3(0.);
+        aWettingNonwettingSurfaceParamsFreeFlow_.setPcMax(42.); // not needed because it is anyways zero;
+
+        // dummys for free flow: no interface where there is only one phase
+        aNonwettingSolidSurfaceParamsFreeFlow_.setA1(0.);
+        aNonwettingSolidSurfaceParamsFreeFlow_.setA2(0.);
+        aNonwettingSolidSurfaceParamsFreeFlow_.setA3(0.);
     }
 
     template<class ElementSolution>
@@ -216,7 +216,7 @@ public:
     }
 
     /*!\brief Returns a reference to the container object for the
-     *        parametrization of the surface between wetting and non-Wetting phase.
+     *        parametrization of the surface between wetting and nonwetting phase.
      *
      * The position is determined based on the coordinate of
      * the vertex belonging to the considered sub-control volume.
@@ -226,20 +226,20 @@ public:
      * \param elemSol The element solution
      */
     template<class ElementSolution>
-    const AwnSurfaceParams& aWettingNonWettingSurfaceParams(const Element &element,
+    const AwnSurfaceParams& aWettingNonwettingSurfaceParams(const Element &element,
                                                             const SubControlVolume &scv,
                                                             const ElementSolution &elemSol) const
     {
         const auto& globalPos =  scv.dofPosition();
         if (inFF_(globalPos) )
-            return aWettingNonWettingSurfaceParamsFreeFlow_  ;
+            return aWettingNonwettingSurfaceParamsFreeFlow_  ;
         else if (inPM_(globalPos))
-            return aWettingNonWettingSurfaceParams_ ;
+            return aWettingNonwettingSurfaceParams_ ;
         else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
     /*!\brief Returns a reference to the container object for the
-     *        parametrization of the surface between non-Wetting and solid phase.
+     *        parametrization of the surface between nonwetting and solid phase.
      *
      *        The position is determined based on the coordinate of
      *        the vertex belonging to the considered sub-control volume.
@@ -248,15 +248,15 @@ public:
      * \param elemSol The element solution
      */
     template<class ElementSolution>
-    const AnsSurfaceParams& aNonWettingSolidSurfaceParams(const Element &element,
+    const AnsSurfaceParams& aNonwettingSolidSurfaceParams(const Element &element,
                                                           const SubControlVolume &scv,
                                                           const ElementSolution &elemSol) const
     {
         const auto& globalPos =  scv.dofPosition();
         if (inFF_(globalPos) )
-            return aNonWettingSolidSurfaceParamsFreeFlow_  ;
+            return aNonwettingSolidSurfaceParamsFreeFlow_  ;
         else if (inPM_(globalPos))
-            return aNonWettingSolidSurfaceParams_ ;
+            return aNonwettingSolidSurfaceParams_ ;
         else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
@@ -368,10 +368,10 @@ private:
     static constexpr Scalar eps_  = 1e-6;
     Scalar heightDomain_ ;
 
-    AwnSurfaceParams aWettingNonWettingSurfaceParams_;
-    AnsSurfaceParams aNonWettingSolidSurfaceParams_ ;
-    AwnSurfaceParams aWettingNonWettingSurfaceParamsFreeFlow_;
-    AnsSurfaceParams aNonWettingSolidSurfaceParamsFreeFlow_ ;
+    AwnSurfaceParams aWettingNonwettingSurfaceParams_;
+    AnsSurfaceParams aNonwettingSolidSurfaceParams_ ;
+    AwnSurfaceParams aWettingNonwettingSurfaceParamsFreeFlow_;
+    AnsSurfaceParams aNonwettingSolidSurfaceParamsFreeFlow_ ;
 
     // Porous Medium Domain
     Scalar intrinsicPermeabilityPM_ ;
@@ -389,13 +389,13 @@ private:
     MaterialLawParams materialParamsFF_ ;
 
     // interfacial area parameters
-    Scalar aWettingNonWettingA1_ ;
-    Scalar aWettingNonWettingA2_ ;
-    Scalar aWettingNonWettingA3_ ;
+    Scalar aWettingNonwettingA1_ ;
+    Scalar aWettingNonwettingA2_ ;
+    Scalar aWettingNonwettingA3_ ;
 
-    Scalar aNonWettingSolidA1_;
-    Scalar aNonWettingSolidA2_;
-    Scalar aNonWettingSolidA3_;
+    Scalar aNonwettingSolidA1_;
+    Scalar aNonwettingSolidA2_;
+    Scalar aNonwettingSolidA3_;
 
     // capillary pressures parameters
     Scalar BCPd_ ;

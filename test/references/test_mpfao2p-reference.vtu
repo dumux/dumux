@@ -85,7 +85,7 @@
           -9.7322e-06 2.30537e-08 0 -6.83606e-06 1.54882e-06 0 -1.98406e-06 8.97655e-07 0 2.12407e-06 8.89776e-07 0
           6.78288e-06 1.52252e-06 0 9.34179e-06 -6.54876e-08 0 9.68521e-06 2.02873e-07 0 1.02844e-05 9.65329e-08 0
         </DataArray>
-        <DataArray type="Float32" Name="non-wetting-velocity" NumberOfComponents="3" format="ascii">
+        <DataArray type="Float32" Name="nonwetting-velocity" NumberOfComponents="3" format="ascii">
           0 -1.63362e-17 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 -1.15405e-36 0
           0 -1.71867e-38 0 1.60642e-26 -8.76095e-11 0 -7.45218e-19 -2.01923e-08 0 0 -1.40243e-28 0

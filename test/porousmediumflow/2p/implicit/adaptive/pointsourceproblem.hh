@@ -59,7 +59,7 @@ public:
      */
     void addPointSources(std::vector<PointSource>& pointSources) const
     {
-        // inject 2 kg/s of non-wetting phase at position (1, 1);
+        // inject 2 kg/s of nonwetting phase at position (1, 1);
         pointSources.push_back(PointSource({0.502, 3.02}, {0, 0.1}));
     }
 };

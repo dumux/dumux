@@ -150,7 +150,7 @@ private:
              break;
          }
 
-             //for time step criterion if the non-wetting phase velocity is used
+             //for time step criterion if the nonwetting phase velocity is used
          case nPhaseIdx:
          {
              if (flux >= 0)

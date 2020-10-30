@@ -67,7 +67,7 @@ public:
      *
      * This formulation is semi-empirical and fitted to quartz sand.
      * This gives an interpolation of the effective thermal conductivities of a porous medium
-     * filled with the non-wetting phase and a porous medium filled with the wetting phase.
+     * filled with the nonwetting phase and a porous medium filled with the wetting phase.
      * These two effective conductivities are computed as geometric mean of the solid and the
      * fluid conductivities and interpolated with the Kersten number.<br>
      * Johansen, O. 1975. Thermal conductivity of soils. Ph.D. diss. Norwegian Univ.
@@ -97,7 +97,7 @@ private:
      *
      * \param Sw The saturation of the wetting phase
      * \param lambdaW The thermal conductivity of the wetting phase in \f$\mathrm{[W/(m K)]}\f$
-     * \param lambdaN The thermal conductivity of the non-wetting phase in \f$\mathrm{[W/(m K)]}\f$
+     * \param lambdaN The thermal conductivity of the nonwetting phase in \f$\mathrm{[W/(m K)]}\f$
      * \param lambdaSolid The thermal conductivity of the solid phase in \f$\mathrm{[W/(m K)]}\f$
      * \param porosity The porosity
      * \param rhoSolid The density of solid phase in \f$\mathrm{[kg/m^3]}\f$

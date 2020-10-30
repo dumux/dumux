@@ -61,7 +61,7 @@
  * \f$g\f$ is the potential of the gravity field.
  *
  * In contrast to the full two-phase model, the Richards model assumes
- * gas as the non-wetting fluid and that it exhibits a much lower
+ * gas as the nonwetting fluid and that it exhibits a much lower
  * viscosity than the (liquid) wetting phase. (For example at
  * atmospheric pressure and at room temperature, the viscosity of air
  * is only about \f$1\%\f$ of the viscosity of liquid water.) As a

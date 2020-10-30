@@ -130,7 +130,7 @@ public:
      * \brief Returns the molar fraction \f$x^\kappa_\alpha\f$ of the component \f$\kappa\f$ in fluid phase \f$\alpha\f$ in \f$\mathrm{[-]}\f$.
      *
      * This is either set to 1 or 0 depending on the phase presence for the
-     * non-wetting phase in general.
+     * nonwetting phase in general.
      * It is set to the mole fraction of water or 1-moleFractionWater
      * if the considered component is the main component of the wetting phase.
      * \param phaseIdx the index of the phase

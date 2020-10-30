@@ -90,18 +90,18 @@ public:
         coarseMaterialParams_.setPe(1e4);
         coarseMaterialParams_.setLambda(2.0);
 
-        aWettingNonWettingA1_ = getParam<Scalar>("SpatialParams.WettingNonWettingAreaA1");
-        aWettingNonWettingA2_ = getParam<Scalar>("SpatialParams.WettingNonWettingAreaA2");
-        aWettingNonWettingA3_ = getParam<Scalar>("SpatialParams.WettingNonWettingAreaA3");
+        aWettingNonwettingA1_ = getParam<Scalar>("SpatialParams.WettingNonwettingAreaA1");
+        aWettingNonwettingA2_ = getParam<Scalar>("SpatialParams.WettingNonwettingAreaA2");
+        aWettingNonwettingA3_ = getParam<Scalar>("SpatialParams.WettingNonwettingAreaA3");
 
         // wetting-non wetting: surface which goes to zero on the edges, but is a polynomial
-        aWettingNonWettingSurfaceParams_.setA1(aWettingNonWettingA1_);
-        aWettingNonWettingSurfaceParams_.setA2(aWettingNonWettingA2_);
-        aWettingNonWettingSurfaceParams_.setA3(aWettingNonWettingA3_);
+        aWettingNonwettingSurfaceParams_.setA1(aWettingNonwettingA1_);
+        aWettingNonwettingSurfaceParams_.setA2(aWettingNonwettingA2_);
+        aWettingNonwettingSurfaceParams_.setA3(aWettingNonwettingA3_);
         // determine maximum capillary pressure for wetting-nonwetting surface
         using TwoPLaw = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
         pcMax_ = TwoPLaw::pc(coarseMaterialParams_, /*sw = */0.0);
-        aWettingNonWettingSurfaceParams_.setPcMax(pcMax_);
+        aWettingNonwettingSurfaceParams_.setPcMax(pcMax_);
         characteristicLength_ =getParam<Scalar>("SpatialParams.MeanPoreSize");
         factorMassTransfer_ = getParam<Scalar>("SpatialParams.MassTransferFactor");
     }
@@ -137,7 +137,7 @@ public:
     }
 
     /*!\brief Returns a reference to the container object for the
-     *        parametrization of the surface between wetting and non-Wetting phase.
+     *        parametrization of the surface between wetting and nonwetting phase.
      *
      * The position is determined based on the coordinate of
      * the vertex belonging to the considered sub-control volume.
@@ -147,11 +147,11 @@ public:
      * \param elemSol The element solution
      */
     template<class ElementSolution>
-    const AwnSurfaceParams& aWettingNonWettingSurfaceParams(const Element &element,
+    const AwnSurfaceParams& aWettingNonwettingSurfaceParams(const Element &element,
                                                             const SubControlVolume &scv,
                                                             const ElementSolution &elemSol) const
     {
-        return aWettingNonWettingSurfaceParams_ ;
+        return aWettingNonwettingSurfaceParams_ ;
     }
 
     /*!\brief Returns the maximum capillary pressure for the given pc-Sw curve
@@ -171,7 +171,7 @@ public:
     const Scalar pcMax(const Element &element,
                        const SubControlVolume &scv,
                        const ElementSolution &elemSol) const
-    { return aWettingNonWettingSurfaceParams_.pcMax() ; }
+    { return aWettingNonwettingSurfaceParams_.pcMax() ; }
 
     /*!
      * \brief Returns the characteristic length for the mass transfer.
@@ -206,13 +206,13 @@ private:
     MaterialLawParams coarseMaterialParams_;
     static constexpr Scalar eps_ = 1e-6;
 
-    AwnSurfaceParams aWettingNonWettingSurfaceParams_;
+    AwnSurfaceParams aWettingNonwettingSurfaceParams_;
     Scalar pcMax_ ;
 
     // interfacial area parameters
-    Scalar aWettingNonWettingA1_ ;
-    Scalar aWettingNonWettingA2_ ;
-    Scalar aWettingNonWettingA3_ ;
+    Scalar aWettingNonwettingA1_ ;
+    Scalar aWettingNonwettingA2_ ;
+    Scalar aWettingNonwettingA3_ ;
 
     Scalar factorMassTransfer_ ;
     Scalar characteristicLength_ ;

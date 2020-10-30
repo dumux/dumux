@@ -215,7 +215,7 @@ public:
     }
 
     /*!
-     * \brief The relative permeability for the non-wetting phase of
+     * \brief The relative permeability for the nonwetting phase of
      *        the medium as implied by the Brooks-Corey
      *        parameterization.
      *
@@ -223,7 +223,7 @@ public:
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
-     * \return Relative permeability of the non-wetting phase calculated as implied by Brooks & Corey.
+     * \return Relative permeability of the nonwetting phase calculated as implied by Brooks & Corey.
      *
      * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
      *       by clamping the input.
@@ -242,7 +242,7 @@ public:
 
     /*!
      * \brief The derivative of the relative permeability for the
-     *        non-wetting phase in regard to the wetting saturation of
+     *        nonwetting phase in regard to the wetting saturation of
      *        the medium as implied by the Brooks-Corey
      *        parameterization.
      *
@@ -250,7 +250,7 @@ public:
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen,
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
-     * \return Derivative of the relative permeability of the non-wetting phase w.r.t. effective wetting phase
+     * \return Derivative of the relative permeability of the nonwetting phase w.r.t. effective wetting phase
      *                  saturation calculated as implied by Brooks & Corey.
      *
      * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,

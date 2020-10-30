@@ -377,7 +377,7 @@ public:
 
     /*!
      * \brief   Regularized version of the  relative permeability
-     *          for the non-wetting phase of
+     *          for the nonwetting phase of
      *          the medium implied by the van Genuchten
      *          parameterization.
      *
@@ -392,7 +392,7 @@ public:
     static Scalar krn(const Params &params, Scalar swe)
     {
         // retrieve the low threshold saturation for the unregularized
-        // relative permeability curve of the non-wetting phase from
+        // relative permeability curve of the nonwetting phase from
         // the parameters
         const Scalar swThLow = params.krnLowSw();
 
@@ -413,7 +413,7 @@ public:
 
     /*!
      * \brief A regularized version of the derivative of the relative permeability
-     *        for the non-wetting phase in regard to the wetting saturation of
+     *        for the nonwetting phase in regard to the wetting saturation of
      *        the medium as implied by the van Genuchten parameterization.
      *
      * \copydetails VanGenuchten::dkrw_dswe()
@@ -421,7 +421,7 @@ public:
     static Scalar dkrn_dswe(const Params &params, Scalar swe)
     {
         // retrieve the low threshold saturation for the unregularized
-        // relative permeability curve of the non-wetting phase from
+        // relative permeability curve of the nonwetting phase from
         // the parameters
         const Scalar swThLow = params.krnLowSw();
 

@@ -74,7 +74,7 @@ public:
 
         // residual saturations
         materialParams_.setSwr(0.12); // air is wetting phase
-        materialParams_.setSnr(0.0); // water is non-wetting
+        materialParams_.setSnr(0.0); // water is nonwetting
 
         //parameters for the vanGenuchten law
         materialParams_.setVgAlpha(6.66e-5); // alpha = 1/pcb

@@ -76,9 +76,9 @@ public:
     using ParentType::ParentType;
 
     /*!
-     * \brief Adds storage derivatives for wetting and non-wetting phase
+     * \brief Adds storage derivatives for wetting and nonwetting phase
      *
-     * Compute storage derivatives for the wetting and the non-wetting phase with respect to \f$p_w\f$
+     * Compute storage derivatives for the wetting and the nonwetting phase with respect to \f$p_w\f$
      * and \f$S_n\f$.
      *
      * \param partialDerivatives The partial derivatives
@@ -114,7 +114,7 @@ public:
     }
 
     /*!
-     * \brief Adds source derivatives for wetting and non-wetting phase.
+     * \brief Adds source derivatives for wetting and nonwetting phase.
      *
      * \param partialDerivatives The partial derivatives
      * \param problem The problem
@@ -133,9 +133,9 @@ public:
     { /* TODO maybe forward to problem for the user to implement the source derivatives?*/ }
 
     /*!
-     * \brief Adds flux derivatives for wetting and non-wetting phase for cell-centered FVM using TPFA
+     * \brief Adds flux derivatives for wetting and nonwetting phase for cell-centered FVM using TPFA
      *
-     * Compute derivatives for the wetting and the non-wetting phase flux with respect to \f$p_w\f$
+     * Compute derivatives for the wetting and the nonwetting phase flux with respect to \f$p_w\f$
      * and \f$S_n\f$.
      *
      * \param derivativeMatrices The partial derivatives
@@ -238,23 +238,23 @@ public:
         dI_dI[conti0EqIdx+0][saturationIdx] += rho_mu_flux_w*dKrw_dSn_inside*insideWeight_w;
         dI_dJ[conti0EqIdx+0][saturationIdx] += rho_mu_flux_w*dKrw_dSn_outside*outsideWeight_w;
 
-        // partial derivative of the non-wetting phase flux w.r.t. p_w
+        // partial derivative of the nonwetting phase flux w.r.t. p_w
         dI_dI[conti0EqIdx+1][pressureIdx] += tij_up_n;
         dI_dJ[conti0EqIdx+1][pressureIdx] -= tij_up_n;
 
-        // partial derivative of the non-wetting phase flux w.r.t. S_n (relative permeability derivative contribution)
+        // partial derivative of the nonwetting phase flux w.r.t. S_n (relative permeability derivative contribution)
         dI_dI[conti0EqIdx+1][saturationIdx] += rho_mu_flux_n*dKrn_dSn_inside*insideWeight_n;
         dI_dJ[conti0EqIdx+1][saturationIdx] += rho_mu_flux_n*dKrn_dSn_outside*outsideWeight_n;
 
-        // partial derivative of the non-wetting phase flux w.r.t. S_n (capillary pressure derivative contribution)
+        // partial derivative of the nonwetting phase flux w.r.t. S_n (capillary pressure derivative contribution)
         dI_dI[conti0EqIdx+1][saturationIdx] += tij_up_n*dpc_dSn_inside;
         dI_dJ[conti0EqIdx+1][saturationIdx] -= tij_up_n*dpc_dSn_outside;
     }
 
     /*!
-     * \brief Adds flux derivatives for wetting and non-wetting phase for box method
+     * \brief Adds flux derivatives for wetting and nonwetting phase for box method
      *
-     * Compute derivatives for the wetting and the non-wetting phase flux with respect to \f$p_w\f$
+     * Compute derivatives for the wetting and the nonwetting phase flux with respect to \f$p_w\f$
      * and \f$S_n\f$.
      *
      * \param A The Jacobian Matrix
@@ -355,7 +355,7 @@ public:
             dI_dJ_inside[globalJ][conti0EqIdx+0][pressureIdx] += tj_up_w;
             dI_dJ_outside[globalJ][conti0EqIdx+0][pressureIdx] -= tj_up_w;
 
-            // partial derivative of the non-wetting phase flux w.r.t. p_w
+            // partial derivative of the nonwetting phase flux w.r.t. p_w
             const auto tj_up_n = tj*up_n;
             dI_dJ_inside[globalJ][conti0EqIdx+1][pressureIdx] += tj_up_n;
             dI_dJ_outside[globalJ][conti0EqIdx+1][pressureIdx] -= tj_up_n;
@@ -371,13 +371,13 @@ public:
                 dI_dJ_inside[globalJ][conti0EqIdx+0][saturationIdx] += dFluxW_dSnJ;
                 dI_dJ_outside[globalJ][conti0EqIdx+0][saturationIdx] -= dFluxW_dSnJ;
 
-                // partial derivative of the non-wetting phase flux w.r.t. S_n (k_rn contribution)
+                // partial derivative of the nonwetting phase flux w.r.t. S_n (k_rn contribution)
                 const auto dKrn_dSn_inside = -1.0*MaterialLaw::dkrn_dsw(insideMaterialParams, insideSw);
                 const auto dFluxN_dSnJ_krn = rho_mu_flux_n*dKrn_dSn_inside*insideWeight_n;
                 dI_dJ_inside[globalJ][conti0EqIdx+1][saturationIdx] += dFluxN_dSnJ_krn;
                 dI_dJ_outside[globalJ][conti0EqIdx+1][saturationIdx] -= dFluxN_dSnJ_krn;
 
-                // partial derivative of the non-wetting phase flux w.r.t. S_n (p_c contribution)
+                // partial derivative of the nonwetting phase flux w.r.t. S_n (p_c contribution)
                 const auto dFluxN_dSnJ_pc = -1.0*tj_up_n*MaterialLaw::dpc_dsw(insideMaterialParams, insideSw);
                 dI_dJ_inside[globalJ][conti0EqIdx+1][saturationIdx] += dFluxN_dSnJ_pc;
                 dI_dJ_outside[globalJ][conti0EqIdx+1][saturationIdx] -= dFluxN_dSnJ_pc;
@@ -412,9 +412,9 @@ public:
     }
 
     /*!
-     * \brief Adds cell-centered Dirichlet flux derivatives for wetting and non-wetting phase
+     * \brief Adds cell-centered Dirichlet flux derivatives for wetting and nonwetting phase
      *
-     * Compute derivatives for the wetting and the non-wetting phase flux with respect to \f$p_w\f$
+     * Compute derivatives for the wetting and the nonwetting phase flux with respect to \f$p_w\f$
      * and \f$S_n\f$.
      *
      * \param derivativeMatrices The matrices containing the derivatives
@@ -482,19 +482,19 @@ public:
         // partial derivative of the wetting phase flux w.r.t. S_n
         dI_dI[conti0EqIdx+0][saturationIdx] += rhow_muw*flux_w*dKrw_dSn_inside*insideWeight_w;
 
-        // partial derivative of the non-wetting phase flux w.r.t. p_w
+        // partial derivative of the nonwetting phase flux w.r.t. p_w
         const auto up_n = rhonKrn_mun_inside*insideWeight_n + rhonKrn_mun_outside*outsideWeight_n;
         dI_dI[conti0EqIdx+1][pressureIdx] += tij*up_n;
 
-        // partial derivative of the non-wetting phase flux w.r.t. S_n (relative permeability derivative contribution)
+        // partial derivative of the nonwetting phase flux w.r.t. S_n (relative permeability derivative contribution)
         dI_dI[conti0EqIdx+1][saturationIdx] += rhon_mun*flux_n*dKrn_dSn_inside*insideWeight_n;
 
-        // partial derivative of the non-wetting phase flux w.r.t. S_n (capillary pressure derivative contribution)
+        // partial derivative of the nonwetting phase flux w.r.t. S_n (capillary pressure derivative contribution)
         dI_dI[conti0EqIdx+1][saturationIdx] += tij*dpc_dSn_inside*up_n;
     }
 
     /*!
-     * \brief Adds Robin flux derivatives for wetting and non-wetting phase
+     * \brief Adds Robin flux derivatives for wetting and nonwetting phase
      *
      * \param derivativeMatrices The matrices containing the derivatives
      * \param problem The problem

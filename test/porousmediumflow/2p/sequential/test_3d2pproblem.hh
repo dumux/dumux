@@ -109,8 +109,8 @@ struct AdaptionIndicator<TypeTag, TTag::ThreeDTwoPTest> { using type = GridAdapt
  *
  * \brief test problem for the sequential 2p models in 3d
  *
- * Standard setting: one eighth of a nine-spot waterflood problem. The domain of size 1 x 1 x 1 m is initially saturated by a non-wetting fluid.
- * Water is injected in the corner of the origin (0,0,0) and non-wetting fluid produced in the upper corner at (1,1,1).
+ * Standard setting: one eighth of a nine-spot waterflood problem. The domain of size 1 x 1 x 1 m is initially saturated by a nonwetting fluid.
+ * Water is injected in the corner of the origin (0,0,0) and nonwetting fluid produced in the upper corner at (1,1,1).
  *
  * To run the simulation execute the following line in shell:
  * <tt>./test_3d2p</tt>.

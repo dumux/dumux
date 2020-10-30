@@ -165,12 +165,12 @@ public:
     { return 273.15 + 10; }; // -> 10°C
 
     /*!
-     * \brief Returns the reference pressure [Pa] of the non-wetting
+     * \brief Returns the reference pressure [Pa] of the nonwetting
      *        fluid phase within a finite volume
      *
      * This problem assumes a constant reference pressure of 1 bar.
      */
-    Scalar nonWettingReferencePressure() const
+    Scalar nonwettingReferencePressure() const
     { return 1.0e5; };
 
     // \}
@@ -249,7 +249,7 @@ private:
         const Scalar sw = 0.0;
         using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
         const Scalar pc = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(globalPos), sw);
-        values[pressureIdx] = nonWettingReferencePressure() - pc;
+        values[pressureIdx] = nonwettingReferencePressure() - pc;
         values.setState(bothPhases);
         return values;
     }

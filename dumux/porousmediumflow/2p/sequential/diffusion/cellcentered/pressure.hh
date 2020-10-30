@@ -59,7 +59,7 @@ namespace Dumux {
    p_c - \sum f_\alpha \varrho_\alpha {\textbf g}\right)\right] = q,
  \f]
  *
- * for the non-wetting (\f$ n \f$) phase pressure as primary variable it yields
+ * for the nonwetting (\f$ n \f$) phase pressure as primary variable it yields
  \f[
   - \text{div}\,  \left[\lambda \boldsymbol K  \left(\textbf{grad}\, p_n - f_w \textbf{grad}\,
     p_c - \sum f_\alpha \varrho_\alpha {\textbf g}\right)\right] = q,
@@ -90,7 +90,7 @@ namespace Dumux {
  * \left[\lambda \boldsymbol{K} \left(\textbf{grad}\, p_w + f_n \, \textbf{grad}\, p_c - \sum f_\alpha \varrho_\alpha
  * {\textbf g}\right)\right] = q,
  * \f]
- * and for a non-wetting (\f$ n \f$) phase pressure as primary variable as
+ * and for a nonwetting (\f$ n \f$) phase pressure as primary variable as
  *  \f[
  *  \phi \left( \varrho_w  \frac{\partial S_w}{\partial t} + \varrho_n \frac{\partial S_n}{\partial t}\right) - \text{div}\,
  * \left[\lambda \boldsymbol{K}  \left(\textbf{grad}\, p_n - f_w \textbf{grad}\, p_c - \sum f_\alpha \varrho_\alpha

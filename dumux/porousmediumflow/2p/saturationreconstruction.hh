@@ -31,11 +31,11 @@ namespace Dumux {
 
 /*!
  * \ingroup TwoPModel
- * \brief Class that computes the non-wetting saturation in an scv from the saturation
+ * \brief Class that computes the nonwetting saturation in an scv from the saturation
  *        at the global degree of freedom.
  *
  * This is only necessary in conjunction with the box scheme where the degrees of
- * freedom lie on material interfaces. There the non-wetting phase saturation is
+ * freedom lie on material interfaces. There the nonwetting phase saturation is
  * generally discontinuous.
  */
 template<DiscretizationMethod M, bool enableReconstruction>
@@ -43,7 +43,7 @@ class TwoPScvSaturationReconstruction
 {
 public:
     /*!
-     * \brief Compute the non-wetting phase saturation in an scv
+     * \brief Compute the nonwetting phase saturation in an scv
      *
      * \note In the default case, we don't reconstruct anything. We do
      *       Reconstruction is only done when using the box method
@@ -53,7 +53,7 @@ public:
      * \param element The finite element the scv is embedded in
      * \param scv The sub-control volume for which the saturation is computed
      * \param elemSol The solution at all dofs inside this element
-     * \param Sn The non-wetting phase saturation at the global dof
+     * \param Sn The nonwetting phase saturation at the global dof
      */
     template<class SpatialParams, class Element, class Scv, class ElemSol>
     static typename ElemSol::PrimaryVariables::value_type
@@ -71,13 +71,13 @@ class TwoPScvSaturationReconstruction<DiscretizationMethod::box, /*enableReconst
 {
 public:
     /*!
-     * \brief Compute the non-wetting phase saturation in an scv
+     * \brief Compute the nonwetting phase saturation in an scv
      *
      * \param spatialParams Class encapsulating the spatial parameters
      * \param element The finite element the scv is embedded in
      * \param scv The sub-control volume for which the saturation is computed
      * \param elemSol The solution at all dofs inside this element
-     * \param Sn The non-wetting phase saturation at the global dof
+     * \param Sn The nonwetting phase saturation at the global dof
      */
     template<class SpatialParams, class Element, class Scv, class ElemSol>
     static typename ElemSol::PrimaryVariables::value_type

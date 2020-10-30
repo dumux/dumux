@@ -71,13 +71,13 @@ public:
     { swr_ = v; }
 
     /*!
-     * \brief Return the residual non-wetting saturation.
+     * \brief Return the residual nonwetting saturation.
      */
     Scalar snr() const
     { return snr_; }
 
     /*!
-     * \brief Set the residual non-wetting saturation.
+     * \brief Set the residual nonwetting saturation.
      */
     void setSnr(Scalar v)
     { snr_ = v; }

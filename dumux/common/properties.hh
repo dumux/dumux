@@ -181,7 +181,7 @@ struct EnableBoxInterfaceSolver { using type = UndefinedProperty; };
 template<class TypeTag, class MyTypeTag>
 struct Chemistry { using type = UndefinedProperty; };                           //!< The chemistry class with which solves equlibrium reactions
 template<class TypeTag, class MyTypeTag>
-struct SetMoleFractionsForFirstPhase { using type = UndefinedProperty; };       //!< Set the mole fraction in the wetting or non-wetting phase
+struct SetMoleFractionsForFirstPhase { using type = UndefinedProperty; };       //!< Set the mole fraction in the wetting or nonwetting phase
 
 //////////////////////////////////////////////////////////////
 // Additional properties used by the richards model

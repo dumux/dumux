@@ -194,9 +194,9 @@ public:
     }
 
     /*!
-     * \brief The capillary pressure-saturation curve for the gas and non-wetting phase
+     * \brief The capillary pressure-saturation curve for the gas and nonwetting phase
      * \param params Array of parameters
-     * \param ste Effective total liquid (wetting + non-wetting) saturation
+     * \param ste Effective total liquid (wetting + nonwetting) saturation
      */
     static Scalar pcgn(const Params &params, Scalar ste)
     {
@@ -251,7 +251,7 @@ public:
     /*!
      * \brief This function ensures a continuous transition from 2 to 3 phases and vice versa
      * \param params Array of parameters
-     * \param sne Effective non-wetting liquid saturation
+     * \param sne Effective nonwetting liquid saturation
      */
     static Scalar pcAlpha(const Params &params, Scalar sne)
     {
@@ -314,7 +314,7 @@ public:
     }
 
     /*!
-     * \brief The relative permeability for the non-wetting phase
+     * \brief The relative permeability for the nonwetting phase
      *        after the Model of Parker et al. (1987).
      *
      * See model 7 in "Comparison of the Three-Phase Oil Relative Permeability Models"
@@ -326,8 +326,8 @@ public:
      *
      * \param params Array of parameters.
      * \param swe Effective wetting phase saturation
-     * \param sn Absolute non-wetting liquid saturation
-     * \param ste Effective total liquid (wetting + non-wetting) saturation
+     * \param sn Absolute nonwetting liquid saturation
+     * \param ste Effective total liquid (wetting + nonwetting) saturation
      */
     static Scalar krn(const Params &params, Scalar swe, Scalar sn, Scalar ste)
     {
@@ -344,7 +344,7 @@ public:
 
 
     /*!
-     * \brief The relative permeability for the non-wetting phase
+     * \brief The relative permeability for the nonwetting phase
      *        of the medium implied by van Genuchten's
      *        parameterization.
      *
@@ -353,7 +353,7 @@ public:
      * MOJDEH  DELSHAD and GARY A. POPE, Transport in Porous Media 4 (1989), 59-83.)
      *
      * \param params Array of parameters.
-     * \param ste Effective total liquid (wetting + non-wetting) saturation
+     * \param ste Effective total liquid (wetting + nonwetting) saturation
      */
     static Scalar krg(const Params &params, const Scalar ste)
     {
@@ -394,8 +394,8 @@ public:
      * \param params Array of parameters.
      * \param phaseIdx Indicator, The saturation of all phases.
      * \param swe Effective wetting phase saturation
-     * \param sn Absolute non-wetting liquid saturation
-     * \param ste Effective total liquid (wetting + non-wetting) saturation
+     * \param sn Absolute nonwetting liquid saturation
+     * \param ste Effective total liquid (wetting + nonwetting) saturation
      */
     static Scalar kr(const Params &params, const int phaseIdx, const Scalar swe, const Scalar sn, const Scalar ste)
     {

@@ -66,9 +66,9 @@ public:
     static constexpr int numPhases = 2;
 
     static constexpr int wPhaseIdx = 0; // index of the wetting phase
-    static constexpr int nPhaseIdx = 1; // index of the non-wetting phase
+    static constexpr int nPhaseIdx = 1; // index of the nonwetting phase
     static constexpr int phase0Idx = 0; // index of the wetting phase
-    static constexpr int phase1Idx = 1; // index of the non-wetting phase
+    static constexpr int phase1Idx = 1; // index of the nonwetting phase
 
     // export component indices to indicate the main component
     // of the corresponding phase at atmospheric pressure 1 bar
@@ -76,7 +76,7 @@ public:
     static constexpr int wCompIdx = wPhaseIdx;
     static constexpr int nCompIdx = nPhaseIdx;
     static constexpr int comp0Idx = 0; // index of the wetting phase
-    static constexpr int comp1Idx = 1; // index of the non-wetting phase
+    static constexpr int comp1Idx = 1; // index of the nonwetting phase
 
     /*!
      * \brief Returns the human readable name of a fluid phase

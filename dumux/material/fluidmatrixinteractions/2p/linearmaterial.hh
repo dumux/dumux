@@ -149,13 +149,13 @@ public:
     }
 
     /*!
-     * \brief The relative permeability for the non-wetting phase.
+     * \brief The relative permeability for the nonwetting phase.
      *
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \param swe Effective saturation of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$ conversion from absolute saturation happened in EffToAbsLaw.
-     * \return Relative permeability of the non-wetting phase calculated as linear relation.
+     * \return Relative permeability of the nonwetting phase calculated as linear relation.
      */
     static Scalar krn(const Params &params, Scalar swe)
     {

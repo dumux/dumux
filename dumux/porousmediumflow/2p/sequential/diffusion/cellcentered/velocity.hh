@@ -35,7 +35,7 @@ namespace Dumux {
  * \brief Determines the velocity from a finite volume solution of the  pressure equation of a sequential model (IMPES).
  *
  * Calculates phase velocities or total velocity from a known pressure field applying a finite volume discretization.
- * The wetting or the non-wetting phase pressure, or the global pressure has to be given as piecewise constant cell values.
+ * The wetting or the nonwetting phase pressure, or the global pressure has to be given as piecewise constant cell values.
  * The phase velocities are calculated following  Darcy's law as
  \f[
  v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \textbf{K}
@@ -46,7 +46,7 @@ namespace Dumux {
  * \f$ \varrho_\alpha \f$ the phase density and \f$ {\textbf g} \f$ the gravitational acceleration vector.
  * The total velocity is either calculated as sum of the phase velocities
  * \f[
- * \boldsymbol v_{total} = \boldsymbol v_{wetting}+\boldsymbol v_{non-wetting},
+ * \boldsymbol v_{total} = \boldsymbol v_{wetting}+\boldsymbol v_{nonwetting},
  * \f]
  * or with a given global pressure
  * \f[
@@ -295,7 +295,7 @@ public:
             else
             {
                 writer.attachCellData(velocity, "wetting-velocity", dim);
-                writer.attachCellData(velocitySecondPhase, "non-wetting-velocity", dim);
+                writer.attachCellData(velocitySecondPhase, "nonwetting-velocity", dim);
             }
         }
 

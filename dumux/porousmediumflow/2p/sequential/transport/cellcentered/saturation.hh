@@ -55,7 +55,7 @@ namespace Dumux {
  * \phi \frac{\partial S_n}{\partial t} + f_n \text{div}\, \boldsymbol{v}_{t} - f_n \lambda_w \boldsymbol{K}\left(\textbf{grad}\,
  * p_c - (\varrho_n-\varrho_w) {\textbf g} \right)= q_\alpha,
  * \f]
- * if the non-wetting phase saturation is the primary transport variable.
+ * if the nonwetting phase saturation is the primary transport variable.
  *
  *  The total velocity formulation is only implemented for incompressible fluids and \f$ f_\alpha \f$
  *  is the fractional flow function, \f$ \lambda_\alpha \f$ is the mobility, \f$ \boldsymbol K \f$

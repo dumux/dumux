@@ -156,7 +156,7 @@ public:
     }
 
     /*!
-     * \brief The relative permeability for the non-wetting phase.
+     * \brief The relative permeability for the nonwetting phase.
      *
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
