@@ -107,7 +107,7 @@ public:
     }
 
     /*!
-     * \brief Returns the parameters for the material law at a given location
+     * \brief Returns the fluid-matrix interaction law at a given location
      *
      * \param globalPos The global coordinates for the given location
      */

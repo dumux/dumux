@@ -87,7 +87,7 @@ public:
     { return 0.4; }
 
     /*!
-     * \brief Returns the parameters for the material law for the sub-control volume
+     * \brief Returns the fluid-matrix interaction law for the sub-control volume
      *
      * \param element The current finite element
      * \param scv The sub-control volume
@@ -103,7 +103,7 @@ public:
     }
 
     /*!
-     * \brief Returns the parameters for the material law at a given location
+     * \brief Returns the fluid-matrix interaction law at a given location
      *
      * \param globalPos The global coordinates for the given location
      */
