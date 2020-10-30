@@ -18,7 +18,7 @@ Differences Between DuMu<sup>x</sup> 3.3 and DuMu<sup>x</sup> 3.2
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Flash/Constraintsolver__: The flashes depending on material laws are immediately required to use new-style material laws (fluidMatrixInteraction interface in spatialparams)
-
+- __Box interface solver__: The box interface solver immediately requires the new material law interface without deprecation period. Use the new class `BoxMaterialInterfaces` and update your spatial params to use the new fluidmatrixinteraction interface to be able to use the box interface solver in version 3.3.
 - For the "sequential" models, the property `BoundaryTypes` has been simply renamed to `SequentialBoundaryTypes`
 - __Quadmath__: Dumux::Quad has been removed without deprecation. Use Dune::Float128 instead.
 - Within the RANS group, two additional runtime parameters have been included 'IsFlatWallBounded' and 'WriteFlatWallBoundedFields'.
@@ -72,7 +72,6 @@ An additional new option is `Vtk.CoordPrecision` which changes the precision of 
 - __Van Genuchten__: Corrected VanGenuchten-Mualem exponent in the nonwetting saturation formula (`1/3` instead of `1/2` (or `l`, see above))
 - __Van Genuchten__: Corrected VanGenuchten-Mualem implementation of `dkrn/dSw`
 - __Brooks-Corey__: Corrected Brooks-Corey implementation of `dkrn/dSw` and added the derivatives for the regularized version
-- __Box interface solver__: The box interface solver immediately requires the new material law interface without deprecation period. Use the new class `BoxMaterialInterfaces` and update your spatial params to use the new fluidmatrixinteraction interface to be able to use the box interface solver in version 3.3.
 - __AMGBackend__: The internal structure of the AMGBackend and the ParallelISTLHelper has been overhauled, as only used by the AMG, we did not make the changes backwards-compatible
 - The global default parameters for linear solvers have been removed and moved to the class `LinearSolver`.
 This only affects users that directly obtain this parameter via `getParam` somewhere in the code.
