@@ -1,3 +1,4 @@
+add_subdirectory(interfacialarea)
 add_subdirectory(thermalconductivity)
 
 install(FILES
@@ -12,6 +13,7 @@ heatpipelawparams.hh
 linearmaterial.hh
 linearmaterialparams.hh
 materiallaw.hh
+noregularization.hh
 regularizedbrookscorey.hh
 regularizedbrookscoreyparams.hh
 regularizedlinearmaterial.hh
