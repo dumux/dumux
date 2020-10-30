@@ -60,13 +60,13 @@ struct ParkerVanGenuchten3PEffToAbsPolicy
         { swr_ = v; }
 
         /*!
-         * \brief Return the residual non-wetting saturation.
+         * \brief Return the residual nonwetting saturation.
          */
         Scalar snr() const
         { return snr_; }
 
         /*!
-         * \brief Set the residual non-wetting saturation.
+         * \brief Set the residual nonwetting saturation.
          */
         void setSnr(Scalar v)
         { snr_ = v; }
@@ -127,11 +127,11 @@ struct ParkerVanGenuchten3PEffToAbsPolicy
     /*!
      * \brief Convert an effective wetting saturation to an absolute one.
      *
-     * \param swe Effective saturation of the non-wetting phase \f$\mathrm{[\overline{S}_n]}\f$.
+     * \param swe Effective saturation of the nonwetting phase \f$\mathrm{[\overline{S}_n]}\f$.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
-     * \return Absolute saturation of the non-wetting phase.
+     * \return Absolute saturation of the nonwetting phase.
      */
     template<class Scalar>
     static Scalar sweToSw(const Scalar swe, const Params<Scalar>& params)
@@ -168,13 +168,13 @@ struct ParkerVanGenuchten3PEffToAbsPolicy
     }
 
     /*!
-     * \brief Convert an absolute non-wetting saturation to an effective one.
+     * \brief Convert an absolute nonwetting saturation to an effective one.
      *
-     * \param sn Absolute saturation of the non-wetting phase \f$\mathrm{[{S}_n]}\f$.
+     * \param sn Absolute saturation of the nonwetting phase \f$\mathrm{[{S}_n]}\f$.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen,
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
-     * \return Effective saturation of the non-wetting phase.
+     * \return Effective saturation of the nonwetting phase.
      */
     template<class Scalar>
     static Scalar snToSne(const Scalar sn, const Params<Scalar>& params)
@@ -189,7 +189,7 @@ struct ParkerVanGenuchten3PEffToAbsPolicy
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen,
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
-     * \return Effective saturation of the non-wetting phase.
+     * \return Effective saturation of the nonwetting phase.
      */
     template<class Scalar>
     static Scalar stToSte(const Scalar st, const Params<Scalar>& params)
@@ -200,11 +200,11 @@ struct ParkerVanGenuchten3PEffToAbsPolicy
     /*!
      * \brief Convert an effective wetting saturation to an absolute one.
      *
-     * \param ste Effective total liquid (wetting + non-wetting) saturation
+     * \param ste Effective total liquid (wetting + nonwetting) saturation
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
-     * \return Absolute saturation of the non-wetting phase.
+     * \return Absolute saturation of the nonwetting phase.
      */
     template<class Scalar>
     static Scalar steToSt(const Scalar ste, const Params<Scalar>& params)
@@ -243,12 +243,10 @@ struct ParkerVanGenuchten3PEffToAbsPolicy
 
 /*!
  * \ingroup Fluidmatrixinteractions
- * \brief Implementation of van Genuchten's capillary pressure <->
- *        saturation relation. This class bundles the "raw" curves
+ * \brief Implementation of Parker/vanGenuchten's capillary pressure <->
+ *        saturation relation for three phases. This class bundles the "raw" curves
  *        as static members and doesn't concern itself converting
  *        absolute to effective saturations and vince versa.
- *
- * \sa VanGenuchten, VanGenuchtenThreephase
  */
 class ParkerVanGenuchten3P
 {
@@ -257,13 +255,16 @@ public:
     /*!
      * \brief The parameter type
      * \tparam Scalar The scalar type
-     * \note The van Genuchten laws are parameterized with four parameters: \f$\mathrm{n, m, \alpha, l}\f$.
+     * \note The Parker/vanGenuchten laws are parameterized with four parameters: \f$\mathrm{n, m, \alpha, l}\f$.
      *
      * - \f$\mathrm{\alpha}\f$ shape parameter \f$\mathrm{[1/Pa]}\f$
-     * - \f$\mathrm{m}\f$ shape parameter \f$\mathrm{[-]}\f$
      * - \f$\mathrm{n}\f$ shape parameter \f$\mathrm{[-]}\f$
-     * - \f$\mathrm{l}\f$ pore-connectivity parameter \f$\mathrm{[-]}\f$ of Mualem's relative permeability curve
-     *
+     * - \f$\mathrm{swr}\f$ wetting phase residual saturation \f$\mathrm{[-]}\f$
+     * - \f$\mathrm{swr}\f$ nonwetting phase residual saturation \f$\mathrm{[-]}\f$
+     * - \f$\mathrm{betaNw}\f$ scaling parameter \f$\mathrm{[-]}\f$
+     * - \f$\mathrm{betaGn}\f$ scaling parameter \f$\mathrm{[-]}\f$
+     * - \f$\mathrm{betaGw}\f$ scaling parameter \f$\mathrm{[-]}\f$
+     * - \f$\mathrm{regardSnr}\f$ determines whether snr is considered for krn or not
      */
     template<class Scalar>
     struct Params
@@ -338,12 +339,10 @@ public:
                               betaNw, betaGn, betaGw, regardSnr );
     }
 
-
     /*!
      * \brief The capillary pressure-saturation curve for the gas and wetting phase
      * \param params Array of parameters
      * \param swe Effective wetting phase saturation
-     *
      */
     template<class Scalar>
     static Scalar pcgw(Scalar swe, const Params<Scalar>& params)
@@ -365,9 +364,9 @@ public:
     }
 
     /*!
-     * \brief The capillary pressure-saturation curve for the gas and non-wetting phase
+     * \brief The capillary pressure-saturation curve for the gas and nonwetting phase
      * \param params Array of parameters
-     * \param ste Effective total liquid (wetting + non-wetting) saturation
+     * \param ste Effective total liquid (wetting + nonwetting) saturation
      */
     template<class Scalar>
     static Scalar pcgn(const Scalar ste, const Params<Scalar>& params)
@@ -404,8 +403,8 @@ public:
     /*!
      * \brief Returns the partial derivative of the capillary
      *        pressure to the effective saturation.
+     * \param swe Effective wetting phase saturation
      * \param params Array of parameters
-     * \param swe Effective wetting phase saturation for regularization
      */
     template<class Scalar>
     static Scalar dpcgw_dswe(const Scalar swe, const Params<Scalar>& params)
@@ -419,8 +418,8 @@ public:
     /*!
      * \brief Returns the partial derivative of the capillary
      *        pressure to the effective saturation.
+     * \param swe Effective wetting phase saturation
      * \param params Array of parameters
-     * \param swe Effective wetting phase saturation for regularization
      */
     template<class Scalar>
     static Scalar dpcnw_dswe(const Scalar swe, const Params<Scalar>& params)
@@ -434,8 +433,8 @@ public:
     /*!
      * \brief Returns the partial derivative of the capillary
      *        pressure to the effective saturation.
+     * \param ste Effective total liquid (wetting + nonwetting) saturation
      * \param params Array of parameters
-     * \param ste Effective total liquid (wetting + non-wetting) saturation  for regularization
      */
     template<class Scalar>
     static Scalar dpcgn_dste(const Scalar ste, const Params<Scalar>& params)
@@ -455,8 +454,8 @@ public:
      * (see p61. in "Comparison of the Three-Phase Oil Relative Permeability Models"
      * MOJDEH  DELSHAD and GARY A. POPE, Transport in Porous Media 4 (1989), 59-83.) \cite delshad1989 <BR>
      *
-     * \param params Array of parameters.
      * \param swe Effective wetting phase saturation
+     * \param params Array of parameters.
      */
     template<class Scalar>
     static Scalar krw(const Scalar swe, const Params<Scalar>& params)
@@ -468,7 +467,7 @@ public:
     }
 
     /*!
-     * \brief The relative permeability for the non-wetting phase
+     * \brief The relative permeability for the nonwetting phase
      *        after the Model of Parker et al. (1987).
      *
      * See model 7 in "Comparison of the Three-Phase Oil Relative Permeability Models"
@@ -481,8 +480,8 @@ public:
      *
      * \param params Array of parameters.
      * \param swe Effective wetting phase saturation
-     * \param sn Absolute non-wetting liquid saturation
-     * \param ste Effective total liquid (wetting + non-wetting) saturation
+     * \param sn Absolute nonwetting liquid saturation
+     * \param ste Effective total liquid (wetting + nonwetting) saturation
      */
     template<class Scalar>
     static Scalar krn(const Scalar swe, const Scalar sn, const Scalar ste, const Params<Scalar>& params)
@@ -508,7 +507,7 @@ public:
     }
 
     /*!
-     * \brief The relative permeability for the non-wetting phase
+     * \brief The relative permeability for the nonwetting phase
      *        of the medium implied by van Genuchten's
      *        parameterization.
      *
@@ -517,7 +516,7 @@ public:
      * MOJDEH  DELSHAD and GARY A. POPE, Transport in Porous Media 4 (1989), 59-83.) \cite delshad1989 <BR>
      *
      * \param params Array of parameters.
-     * \param ste Effective total liquid (wetting + non-wetting) saturation
+     * \param ste Effective total liquid (wetting + nonwetting) saturation
      */
     template<class Scalar>
     static Scalar krg(const Scalar ste, const Params<Scalar>& params)
@@ -536,8 +535,6 @@ public:
      *
      * \param ste The mobile total liquid saturation.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen, and then the params container
-     *                  is constructed accordingly. Afterwards the values are set there, too.
      */
     template<class Scalar>
     static Scalar dkrg_dste(const Scalar ste, const Params<Scalar>& params)
@@ -557,7 +554,7 @@ public:
      * \param params Array of parameters.
      * \param phaseIdx Indicator, The saturation of all phases.
      * \param swe Effective wetting phase saturation
-     * \param sne Effective non-wetting saturation
+     * \param sne Effective nonwetting saturation
      */
     template<class Scalar>
     static Scalar kr(const int phaseIdx, const Scalar swe, const Scalar sne, const Params<Scalar>& params)
@@ -580,8 +577,8 @@ private:
     /*!
      * \brief The standard van Genuchten two-phase pc-S relation either with respect to
      *        the effective wetting phase saturation Swe or the effective total liquid saturation Ste.
+     * \param se Effective wetting phase or total liquid saturation
      * \param params Array of parameters.
-     * \param se Effective wetting phase ortotal liquid saturation
      */
     template<class Scalar>
     const static Scalar pc_(const Scalar se, const Params<Scalar>& params)
@@ -594,7 +591,7 @@ private:
 
 /*!
  * \ingroup Fluidmatrixinteractions
- * \brief A regularization for the VanGenuchten material law
+ * \brief A regularization for the ParkerVanGenuchten3PRegularization material law
  * \note Regularization can be turned of by setting the threshold parameters
  *       out of range (runtime) or by replacing
  *       this class by NoRegularization (compile time).
@@ -641,28 +638,28 @@ public:
 
         /*!
          * \brief Set the threshold saturation below which the relative
-         *        permeability of the non-wetting phase gets regularized.
+         *        permeability of the nonwetting phase gets regularized.
          */
         void setKrnLowSwe(Scalar krnLowSwe)
         { krnLowSwe_ = krnLowSwe; }
 
         /*!
          * \brief Threshold saturation below which the relative
-         *        permeability of the non-wetting phase gets regularized.
+         *        permeability of the nonwetting phase gets regularized.
          */
         Scalar krnLowSwe() const
         { return krnLowSwe_; }
 
         /*!
          * \brief Set the threshold saturation below which the relative
-         *        permeability of the non-wetting phase gets regularized.
+         *        permeability of the nonwetting phase gets regularized.
          */
         void setKrgLowSte(Scalar krgLowSte)
         { krgLowSte_ = krgLowSte; }
 
         /*!
          * \brief Threshold saturation below which the relative
-         *        permeability of the non-wetting phase gets regularized.
+         *        permeability of the nonwetting phase gets regularized.
          */
         Scalar krgLowSte() const
         { return krgLowSte_; }
@@ -748,11 +745,11 @@ private:
     }
 
     /*!
-     * \brief The regularized capillary pressure-saturation curve or the gas and wetting phase
+     * \brief The regularized capillary pressure-saturation curve for the gas and wetting phase
      * regularized part:
-     *  - low saturation:  extend the \f$\mathrm{p_c(S_w)}\f$ curve with the slope at the regularization point (i.e. no kink).
-     *  - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
-     *                     with a spline and continue linearly for \f$\mathrm{\overline{S}_w > 1}\f$
+     *  - low saturation:  extend the \f$\mathrm{p_{cgw}(S_{we})}\f$ curve with the slope at the regularization point (i.e. no kink).
+     *  - high saturation: connect the high regularization point with
+     *                     with a spline and continue linearly for \f$\mathrm{S_{we} > 1}\f$
      * \param swe Effective wetting phase saturation
      */
     OptionalScalar<Scalar> pcgw(Scalar swe) const
@@ -780,6 +777,14 @@ private:
             return {}; // no regularization
     }
 
+    /*!
+     * \brief The regularized capillary pressure-saturation curve for the nonwetting and wetting phase
+     * regularized part:
+     *  - low saturation:  extend the \f$\mathrm{p_{cnw}(S_{we})}\f$ curve with the slope at the regularization point (i.e. no kink).
+     *  - high saturation: connect the high regularization point with
+     *                     with a spline and continue linearly for \f$\mathrm{S_{we} > 1}\f$
+     * \param swe Effective wetting phase saturation
+     */
     OptionalScalar<Scalar> pcnw(Scalar swe) const
     {
         // if specified, a constant value is used for regularization
@@ -802,6 +807,14 @@ private:
             return {}; // no regularization
     }
 
+    /*!
+     * \brief The regularized capillary pressure-saturation curve for the gas and nonwetting phase
+     * regularized part:
+     *  - low saturation:  extend the \f$\mathrm{p_{cgn}(S_{te})}\f$ curve with the slope at the regularization point (i.e. no kink).
+     *  - high saturation: connect the high regularization point with
+     *                     with a spline and continue linearly for \f$\mathrm{S_{te} > 1}\f$
+     * \param ste Effective total liquid (sw + sn) saturation
+     */
     OptionalScalar<Scalar> pcgn(Scalar ste) const
     {
         // if specified, a constant value is used for regularization
@@ -829,7 +842,7 @@ private:
 
     /*!
      * \brief This function ensures a continuous transition from 2 to 3 phases and vice versa
-     * \param sne Effective non-wetting liquid saturation
+     * \param sne Effective nonwetting liquid saturation
      */
     OptionalScalar<Scalar> pcAlpha(Scalar sne) const
     {
@@ -853,10 +866,10 @@ private:
 
 
     /*!
-     * \brief The regularized relative permeability for the non-wetting phase
+     * \brief The regularized relative permeability for the nonwetting phase
      * \param swe Effective wetting phase saturation
-     * \param sn Non-wetting saturation
-     * \param ste Effective total (wetting + non-wetting) saturation
+     * \param sn Nonwetting saturation
+     * \param ste Effective total (wetting + nonwetting) saturation
      */
     OptionalScalar<Scalar> krn(Scalar swe, const Scalar sn, Scalar ste) const
     {
@@ -872,7 +885,7 @@ private:
 
     /*!
      * \brief The regularized relative permeability for the gas phase
-     * \param ste Effective total (wetting + non-wetting) saturation
+     * \param ste Effective total (wetting + nonwetting) saturation
      */
     OptionalScalar<Scalar> krg(const Scalar ste) const
     {
@@ -913,7 +926,7 @@ private:
      * \brief The relative permeability for a phase.
      * \param phaseIdx Indicator, The saturation of all phases.
      * \param swe Effective wetting phase saturation
-     * \param sne Effective non-wetting saturation
+     * \param sne Effective nonwetting saturation
      */
     OptionalScalar<Scalar> kr(const int phaseIdx, const Scalar swe, const Scalar sne) const
     {
@@ -940,8 +953,6 @@ private:
         const auto dst_dste = MaterialLaw::EffToAbs::dst_dste(m->effToAbsParams());
 
         baseLawParamsPtr_ = &m->basicParams();
-
-
 
         // pcgw
         pcgwLowSwePcgwValue_ = m->template pcgw<false>(lowSw, 0.0);
@@ -1097,7 +1108,7 @@ public:
     }
 
     /*!
-     * \brief The capillary pressure-saturation curve for the non-wetting and wetting phase
+     * \brief The capillary pressure-saturation curve for the nonwetting and wetting phase
      */
     template<bool enableRegularization = isRegularized()>
     Scalar pcnw(const Scalar sw, const Scalar /*dummySn*/) const
@@ -1114,9 +1125,9 @@ public:
     }
 
     /*!
-     * \brief The capillary pressure-saturation curve for the gas and non-wetting phase
+     * \brief The capillary pressure-saturation curve for the gas and nonwetting phase
      * \param sw Wetting saturation
-     * \param sn Non-wetting saturation
+     * \param sn Nonwetting saturation
      */
     template<bool enableRegularization = isRegularized()>
     Scalar pcgn(const Scalar sw, const Scalar sn) const
@@ -1202,7 +1213,7 @@ public:
     /*!
      * \brief The relative permeability for the wetting phase
      * \param sw Wetting saturation
-     * \param sn Non-wetting saturation
+     * \param sn Nonwetting saturation
      */
     template<bool enableRegularization = isRegularized()>
     Scalar krw(const Scalar sw, const Scalar sn) const
@@ -1219,9 +1230,9 @@ public:
     }
 
     /*!
-     * \brief The relative permeability for the non-wetting phase
+     * \brief The relative permeability for the nonwetting phase
      * \param sw Wetting saturation
-     * \param sn Non-wetting saturation
+     * \param sn Nonwetting saturation
      */
     template<bool enableRegularization = isRegularized()>
     Scalar krn(const Scalar sw, const Scalar sn) const
@@ -1239,9 +1250,9 @@ public:
     }
 
     /*!
-     * \brief The relative permeability for the non-wetting phase
+     * \brief The relative permeability for the nonwetting phase
      * \param sw Wetting saturation
-     * \param sn Non-wetting saturation
+     * \param sn Nonwetting saturation
      */
     template<bool enableRegularization = isRegularized()>
     Scalar krg(const Scalar sw, const Scalar sn) const
@@ -1258,10 +1269,10 @@ public:
     }
 
     /*!
-     * \brief The relative permeability for the non-wetting phase
+     * \brief The relative permeability for the nonwetting phase
      * \param phaseIdx Indicator, The saturation of all phases.
      * \param sw Wetting saturation
-     * \param sn Non-wetting saturation
+     * \param sn Nonwetting saturation
      */
     template<bool enableRegularization = isRegularized()>
     Scalar kr(const int phaseIdx, const Scalar sw, const Scalar sn) const
@@ -1280,8 +1291,8 @@ public:
     }
 
     /*!
-     * \brief The derivative of the relative permeability for the non-wetting phase w.r.t. saturation
-     * \param st Total (wetting + non-wetting) saturation
+     * \brief The derivative of the relative permeability for the nonwetting phase w.r.t. saturation
+     * \param st Total (wetting + nonwetting) saturation
      */
     template<bool enableRegularization = isRegularized()>
     Scalar dkrg_dst(const Scalar st) const
