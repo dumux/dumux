@@ -18,6 +18,7 @@ Differences Between DuMu<sup>x</sup> 3.3 and DuMu<sup>x</sup> 3.2
  - The usage of laws for pc-Sw and kr-Sw has been completely revised. A caller does not have to pass a `parameters` object to the laws anymore. The `spatialParams` now provide a `fluidMatrixInteraction` function which bundles an arbitrary number of
  different interaction laws such as a pc-Sw and kr-Sw curve and interfacial areas.
  New pre-cached spline laws were added which can help to increase efficiency. The usage of the old interface is deprecated and warnings will be raised. The old interface will be removed after the release of 3.3.
+ - The RANS models now include variable densities. Compositional or nonisothermal RANS models could produce slightly different, more accurate, results.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Flash/Constraintsolver__: The flashes depending on material laws are immediately required to use new-style material laws (fluidMatrixInteraction interface in spatialparams)
