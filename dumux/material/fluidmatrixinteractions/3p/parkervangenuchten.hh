@@ -753,6 +753,7 @@ private:
      *  - low saturation:  extend the \f$\mathrm{p_c(S_w)}\f$ curve with the slope at the regularization point (i.e. no kink).
      *  - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
      *                     with a spline and continue linearly for \f$\mathrm{\overline{S}_w > 1}\f$
+     * \param swe Effective wetting phase saturation
      */
     OptionalScalar<Scalar> pcgw(Scalar swe) const
     {
@@ -838,6 +839,7 @@ private:
 
     /*!
      * \brief The regularized relative permeability for the wetting phase
+     * \param swe Effective wetting phase saturation
      */
     OptionalScalar<Scalar> krw(const Scalar swe) const
     {
@@ -852,6 +854,9 @@ private:
 
     /*!
      * \brief The regularized relative permeability for the non-wetting phase
+     * \param swe Effective wetting phase saturation
+     * \param sn Non-wetting saturation
+     * \param ste Effective total (wetting + non-wetting) saturation
      */
     OptionalScalar<Scalar> krn(Scalar swe, const Scalar sn, Scalar ste) const
     {
@@ -867,6 +872,7 @@ private:
 
     /*!
      * \brief The regularized relative permeability for the gas phase
+     * \param ste Effective total (wetting + non-wetting) saturation
      */
     OptionalScalar<Scalar> krg(const Scalar ste) const
     {
@@ -1109,6 +1115,8 @@ public:
 
     /*!
      * \brief The capillary pressure-saturation curve for the gas and non-wetting phase
+     * \param sw Wetting saturation
+     * \param sn Non-wetting saturation
      */
     template<bool enableRegularization = isRegularized()>
     Scalar pcgn(const Scalar sw, const Scalar sn) const
@@ -1193,6 +1201,8 @@ public:
 
     /*!
      * \brief The relative permeability for the wetting phase
+     * \param sw Wetting saturation
+     * \param sn Non-wetting saturation
      */
     template<bool enableRegularization = isRegularized()>
     Scalar krw(const Scalar sw, const Scalar sn) const
@@ -1210,6 +1220,8 @@ public:
 
     /*!
      * \brief The relative permeability for the non-wetting phase
+     * \param sw Wetting saturation
+     * \param sn Non-wetting saturation
      */
     template<bool enableRegularization = isRegularized()>
     Scalar krn(const Scalar sw, const Scalar sn) const
@@ -1228,6 +1240,8 @@ public:
 
     /*!
      * \brief The relative permeability for the non-wetting phase
+     * \param sw Wetting saturation
+     * \param sn Non-wetting saturation
      */
     template<bool enableRegularization = isRegularized()>
     Scalar krg(const Scalar sw, const Scalar sn) const
@@ -1245,6 +1259,9 @@ public:
 
     /*!
      * \brief The relative permeability for the non-wetting phase
+     * \param phaseIdx Indicator, The saturation of all phases.
+     * \param sw Wetting saturation
+     * \param sn Non-wetting saturation
      */
     template<bool enableRegularization = isRegularized()>
     Scalar kr(const int phaseIdx, const Scalar sw, const Scalar sn) const
@@ -1264,6 +1281,7 @@ public:
 
     /*!
      * \brief The derivative of the relative permeability for the non-wetting phase w.r.t. saturation
+     * \param st Total (wetting + non-wetting) saturation
      */
     template<bool enableRegularization = isRegularized()>
     Scalar dkrg_dst(const Scalar st) const
