@@ -200,14 +200,14 @@ private:
     auto lookUpIndexIncreasing_(const std::vector<Scalar>& vec, const Scalar v) const
     {
         const auto lookUpIndex = std::distance(vec.begin(), std::lower_bound(vec.begin(), vec.end(), v));
-        assert(lookUpIndex != 0);
+        assert(lookUpIndex != 0 && lookUpIndex < vec.size());
         return lookUpIndex;
     }
 
     auto lookUpIndexDecreasing_(const std::vector<Scalar>& vec, const Scalar v) const
     {
-        const auto lookUpIndex = vec.size() - std::distance(vec.rbegin(), std::lower_bound(vec.rbegin(), vec.rend(), v));
-        assert(lookUpIndex != 0);
+        const auto lookUpIndex = vec.size() - std::distance(vec.rbegin(), std::upper_bound(vec.rbegin(), vec.rend(), v));
+        assert(lookUpIndex != 0 && lookUpIndex < vec.size());
         return lookUpIndex;
     }
 
