@@ -800,6 +800,9 @@ private:
         if (swe < pcLowSwe_)
             return pcnwLowSwePcnwValue_ + pcnwDerivativeLowSw_*(swe - pcLowSwe_);
 
+         else if (swe > 1.0)
+            return pcnwDerivativeHighSweEnd_*(swe - 1.0);
+
         else if (swe > pcHighSwe_)
             return pcnwSpline_.eval(swe);
 
@@ -832,6 +835,9 @@ private:
         const Scalar pcHighSte = pcHighSwe_;
         if (ste < pcLowSte)
             return pcgnLowStePcgnValue_ + pcgnDerivativeLowSt_*(ste - pcLowSte);
+
+        else if (ste > 1.0)
+            return pcgnDerivativeHighSteEnd_*(ste - 1.0);
 
         else if (ste > pcHighSte)
             return pcgnSpline_.eval(ste);
@@ -978,11 +984,11 @@ private:
         pcgnLowStePcgnValue_ = m->template pcgn<false>(lowSw, 0.0);
         pcgnDerivativeLowSt_ = m->template dpcgn_dst<false>(lowSw, 0.0)*dst_dste;
         pcgnHighSwePcgnValue_ = m->template pcgn<false>(highSw, 0.0);
-        pcgnDerivativeHighSweThreshold_ = m->template dpcgn_dst<false>(highSw, 0.0);
-        pcgnDerivativeHighSweEnd_ = 2.0*(0.0 - m->template pcgn<false>(highSw, 0.0))/(1.0 - highSwe);
+        pcgnDerivativeHighSteThreshold_ = m->template dpcgn_dst<false>(highSw, 0.0);
+        pcgnDerivativeHighSteEnd_ = 2.0*(0.0 - m->template pcgn<false>(highSw, 0.0))/(1.0 - highSwe);
         pcgnSpline_ = Spline<Scalar>(highSwe, 1.0, // x0, x1
                                      pcgnHighSwePcgnValue_, 0, // y0, y1
-                                     pcgnDerivativeHighSweThreshold_, pcgnDerivativeHighSweEnd_); // m0, m1
+                                     pcgnDerivativeHighSteThreshold_, pcgnDerivativeHighSteEnd_); // m0, m1
 
     }
 
@@ -1013,8 +1019,8 @@ private:
     Scalar pcgnLowStePcgnValue_;
     Scalar pcgnHighSwePcgnValue_;
     Scalar pcgnDerivativeLowSt_;
-    Scalar pcgnDerivativeHighSweThreshold_;
-    Scalar pcgnDerivativeHighSweEnd_;
+    Scalar pcgnDerivativeHighSteThreshold_;
+    Scalar pcgnDerivativeHighSteEnd_;
 
     // pcnw
     Scalar pcnwLowSwePcnwValue_;
