@@ -25,6 +25,7 @@
 #define DUMUX_MATERIAL_FLUIDMATRIX_TWO_P_INTERFACIAL_AREA_HH
 
 #include <dumux/common/parameters.hh>
+#include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabsdefaultpolicy.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/noregularization.hh>
 

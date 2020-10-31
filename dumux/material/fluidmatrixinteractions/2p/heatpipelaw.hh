@@ -174,6 +174,7 @@ private:
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/spline.hh>
+#include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabsdefaultpolicy.hh>
 
 namespace Dumux::FluidMatrix {

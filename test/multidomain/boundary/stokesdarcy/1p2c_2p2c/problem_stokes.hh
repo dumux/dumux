@@ -36,6 +36,8 @@
 #include <dumux/material/fluidsystems/1padapter.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
 
+#include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
+
 namespace Dumux {
 template <class TypeTag>
 class StokesSubProblem;

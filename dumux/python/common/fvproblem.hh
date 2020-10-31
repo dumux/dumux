@@ -33,6 +33,7 @@
 #include <dune/python/pybind11/pybind11.h>
 
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/python/common/boundarytypes.hh>
 
 namespace Dumux::Python {
