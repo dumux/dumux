@@ -25,10 +25,11 @@
 #define PARKER_VANGENUCHTEN_3P_HH
 
 #include <algorithm>
+#include <dumux/common/optionalscalar.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/common/spline.hh>
 #include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/noregularization.hh>
-#include <dumux/common/optionalscalar.hh>
-#include <dumux/common/spline.hh>
 
 namespace Dumux::FluidMatrix {
 

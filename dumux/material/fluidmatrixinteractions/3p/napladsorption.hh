@@ -26,6 +26,8 @@
 
 #include <algorithm>
 #include <dune/common/float_cmp.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
 
 namespace Dumux::FluidMatrix {
 

@@ -26,6 +26,9 @@
 #ifndef DUMUX_MATERIAL_FLUIDMATRIX_TWOP_EFF_TO_ABS_DEFAULT_POLICY_HH
 #define DUMUX_MATERIAL_FLUIDMATRIX_TWOP_EFF_TO_ABS_DEFAULT_POLICY_HH
 
+#include <dune/common/float_cmp.hh>
+#include <dumux/common/parameters.hh>
+
 namespace Dumux::FluidMatrix {
 
 /*!

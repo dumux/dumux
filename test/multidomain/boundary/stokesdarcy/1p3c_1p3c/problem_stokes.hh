@@ -33,6 +33,8 @@
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
 
+#include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
+
 #include <dumux/flux/maxwellstefanslaw.hh>
 
 #include "h2n2co2fluidsystem.hh"
