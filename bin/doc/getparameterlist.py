@@ -6,9 +6,6 @@ for usage of getParam or getParamFromGroup.
 """
 
 import os
-import itertools
-from collections import OrderedDict
-from shutil import copyfile
 
 # find the content of the given string between the first matching pair of opening/closing keys
 def getEnclosedContent(string, openKey, closeKey):
