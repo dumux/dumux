@@ -48,6 +48,7 @@
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/common/timeloop.hh>
 #include <dumux/common/pdesolver.hh>
+#include <dumux/io/format.hh>
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
 #include <dumux/linear/matrixconverter.hh>
 #include <dumux/assembly/partialreassembler.hh>
@@ -311,9 +312,11 @@ public:
                 this->assembler().resetTimeStep(uCurrentIter);
 
                 if (verbosity_ >= 1)
-                    std::cout << "Newton solver did not converge with dt = "
-                              << timeLoop.timeStepSize() << " seconds. Retrying with time step of "
-                              << timeLoop.timeStepSize() * retryTimeStepReductionFactor_ << " seconds\n";
+                {
+                    const auto dt = timeLoop.timeStepSize();
+                    std::cout << Fmt::format("Newton solver did not converge with dt = {} seconds. ", dt)
+                              << Fmt::format("Retrying with time step of dt = {} seconds.\n", dt*retryTimeStepReductionFactor_);
+                }
 
                 // try again with dt = dt * retryTimeStepReductionFactor_
                 timeLoop.setTimeStepSize(timeLoop.timeStepSize() * retryTimeStepReductionFactor_);
@@ -321,9 +324,9 @@ public:
 
             else
             {
-                DUNE_THROW(NumericalProblem, "Newton solver didn't converge after "
-                                             << maxTimeStepDivisions_ << " time-step divisions. dt="
-                                             << timeLoop.timeStepSize() << '\n');
+                DUNE_THROW(NumericalProblem,
+                    Fmt::format("Newton solver didn't converge after {} time-step divisions; dt = {}.\n",
+                                maxTimeStepDivisions_, timeLoop.timeStepSize()));
             }
         }
     }
@@ -336,8 +339,8 @@ public:
     {
         const bool converged = solve_(uCurrentIter);
         if (!converged)
-            DUNE_THROW(NumericalProblem, "Newton solver didn't converge after "
-                                         << numSteps_ << " iterations.\n");
+            DUNE_THROW(NumericalProblem,
+                Fmt::format("Newton solver didn't converge after {} iterations.\n", numSteps_));
     }
 
     /*!
@@ -463,8 +466,7 @@ public:
                 ++numLinearSolverBreakdowns_;
             }
             else if (!convergedRemote) {
-                DUNE_THROW(NumericalProblem,
-                           "Linear solver did not converge on a remote process");
+                DUNE_THROW(NumericalProblem, "Linear solver did not converge on a remote process");
                 ++numLinearSolverBreakdowns_; // we keep correct count for process 0
             }
         }
@@ -574,22 +576,15 @@ public:
             if (enableDynamicOutput_)
                 std::cout << '\r'; // move cursor to beginning of line
 
-            auto width = std::to_string(maxSteps_).size();
-            std::cout << "Newton iteration " << std::setw(width) << numSteps_ << " done";
-
-            auto formatFlags = std::cout.flags();
-            auto prec = std::cout.precision();
-            std::cout << std::scientific << std::setprecision(3);
+            const auto width = Fmt::formatted_size("{}", maxSteps_);
+            std::cout << Fmt::format("Newton iteration {:{}} done", numSteps_, width);
 
             if (enableShiftCriterion_)
-                std::cout << ", maximum relative shift = " << shift_;
+                std::cout << Fmt::format(", maximum relative shift = {:.4e}", shift_);
             if (enableResidualCriterion_ && enableAbsoluteResidualCriterion_)
-                std::cout << ", residual = " << residualNorm_;
+                std::cout << Fmt::format(", residual = {:.4e}", residualNorm_);
             else if (enableResidualCriterion_)
-                std::cout << ", residual reduction = " << reduction_;
-
-            std::cout.flags(formatFlags);
-            std::cout.precision(prec);
+                std::cout << Fmt::format(", residual reduction = {:.4e}", reduction_);
 
             std::cout << endIterMsgStream_.str() << "\n";
         }
@@ -996,11 +991,10 @@ private:
 
             if (verbosity_ >= 1) {
                 const auto elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
-                std::cout << "Assemble/solve/update time: "
-                          <<  assembleTimer.elapsed() << "(" << 100*assembleTimer.elapsed()/elapsedTot << "%)/"
-                          <<  solveTimer.elapsed() << "(" << 100*solveTimer.elapsed()/elapsedTot << "%)/"
-                          <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"
-                          << "\n";
+                std::cout << Fmt::format("Assemble/solve/update time: {:.2g}({:.2f}%)/{:.2g}({:.2f}%)/{:.2g}({:.2f}%)\n",
+                                         assembleTimer.elapsed(), 100*assembleTimer.elapsed()/elapsedTot,
+                                         solveTimer.elapsed(), 100*solveTimer.elapsed()/elapsedTot,
+                                         updateTimer.elapsed(), 100*updateTimer.elapsed()/elapsedTot);
             }
             return true;
 
@@ -1066,7 +1060,7 @@ private:
             computeResidualReduction_(uCurrentIter);
 
             if (reduction_ < lastReduction_ || lambda <= 0.125) {
-                endIterMsgStream_ << ", residual reduction " << lastReduction_ << "->"  << reduction_ << "@lambda=" << lambda;
+                endIterMsgStream_ << Fmt::format(", residual reduction {:.4e}->{:.4e}@lambda={:.4f}", lastReduction_, reduction_, lambda);
                 return;
             }
 
