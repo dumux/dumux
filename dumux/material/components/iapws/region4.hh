@@ -70,11 +70,11 @@ public:
             0.65017534844798e3
         };
 
-        Scalar sigma = temperature + n[8]/(temperature - n[9]);
+        const Scalar sigma = temperature + n[8]/(temperature - n[9]);
 
-        Scalar A = (sigma + n[0])*sigma + n[1];
-        Scalar B = (n[2]*sigma + n[3])*sigma + n[4];
-        Scalar C = (n[5]*sigma + n[6])*sigma + n[7];
+        const Scalar A = (sigma + n[0])*sigma + n[1];
+        const Scalar B = (n[2]*sigma + n[3])*sigma + n[4];
+        const Scalar C = (n[5]*sigma + n[6])*sigma + n[7];
 
         using std::sqrt;
         Scalar tmp = 2*C/(sqrt(B*B - 4*A*C) - B);
@@ -103,17 +103,15 @@ public:
 
         using std::pow;
         using Dune::power;
-        Scalar beta = pow((pressure/1e6 /*from Pa to MPa*/), (1./4.));
-        Scalar beta2 = power(beta, 2);
-        Scalar E = beta2 + n[2] * beta + n[5];
-        Scalar F = n[0]*beta2 + n[3]*beta + n[6];
-        Scalar G = n[1]*beta2 + n[4]*beta + n[7];
+        const Scalar beta = pow((pressure/1e6 /*from Pa to MPa*/), (1./4.));
+        const Scalar beta2 = power(beta, 2);
+        const Scalar E = beta2 + n[2] * beta + n[5];
+        const Scalar F = n[0]*beta2 + n[3]*beta + n[6];
+        const Scalar G = n[1]*beta2 + n[4]*beta + n[7];
 
         using std::sqrt;
-        Scalar D = ( 2.*G)/(-F -sqrt(power(F,2) - 4.*E*G));
-        Scalar temperature = (n[9] + D - sqrt(power(n[9]+D , 2) - 4.* (n[8] + n[9]*D)) ) * 0.5;
-
-        return temperature;
+        const Scalar D = ( 2.*G)/(-F -sqrt(power(F,2) - 4.*E*G));
+        return (n[9] + D - sqrt(power(n[9]+D , 2) - 4.* (n[8] + n[9]*D)) ) * 0.5;
     }
 };
 
