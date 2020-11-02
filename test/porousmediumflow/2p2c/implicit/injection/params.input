@@ -24,3 +24,13 @@ TemperatureHigh = 314.15 # [Pa] upper temperature limit for tabularization
 PriVarNamesState1 = p_liq x^N2_liq
 PriVarNamesState2 = p_liq x^H2O_gas
 PriVarNamesState3 = p_liq S_gas
+
+[SpatialParams]
+FineMaterial.Swr = 0.2
+FineMaterial.Snr = 0.0
+FineMaterial.BrooksCoreyPcEntry = 1e4
+FineMaterial.BrooksCoreyLambda = 2.0
+CoarseMaterial.Swr = 0.2
+CoarseMaterial.Snr = 0.0
+CoarseMaterial.BrooksCoreyPcEntry = 1e4
+CoarseMaterial.BrooksCoreyLambda = 2.0

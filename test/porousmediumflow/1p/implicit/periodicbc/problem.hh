@@ -28,9 +28,6 @@
 #if HAVE_DUNE_SPGRID
 #include <dune/grid/spgrid.hh>
 #endif
-#if HAVE_DUNE_ALUGRID
-#include <dune/alugrid/grid.hh>
-#endif
 
 #include <dumux/common/boundarytypes.hh>
 
@@ -66,9 +63,10 @@ struct OnePIncompressibleBox { using InheritsFrom = std::tuple<OnePIncompressibl
 } // end namespace TTag
 
 // Set the grid type
+#if HAVE_DUNE_SPGRID
 template<class TypeTag>
 struct Grid<TypeTag, TTag::OnePIncompressible> { using type = Dune::SPGrid<double, 2>; };
-// struct Grid<TypeTag, TTag::OnePIncompressible> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
+#endif
 
 // Set the problem type
 template<class TypeTag>

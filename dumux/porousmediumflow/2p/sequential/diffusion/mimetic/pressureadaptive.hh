@@ -32,6 +32,8 @@
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mimetic/operatoradaptive.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mimetic/mimeticadaptive.hh>
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 
 /*!
@@ -45,7 +47,7 @@ namespace Dumux {
  * This could be a wetting (w) phase pressure leading to
  * \f[ - \text{div}\,  \left[\lambda \boldsymbol{K} \left(\text{grad}\, p_w + f_n \text{grad}\, p_c
  *     + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right)\right] = q, \f]
- * a non-wetting (n) phase pressure yielding
+ * a nonwetting (n) phase pressure yielding
  * \f[ - \text{div}\,  \left[\lambda \boldsymbol{K}  \left(\text{grad}\, p_n - f_w \text{grad}\, p_c
  *     + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right)\right] = q, \f]
  * or a global pressure leading to
@@ -67,7 +69,6 @@ template<class TypeTag> class MimeticPressure2PAdaptive
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
@@ -420,7 +421,7 @@ public:
             }
 
             writer.attachCellData(*velocityWetting, "wetting-velocity", dim);
-            writer.attachCellData(*velocityNonwetting, "non-wetting-velocity", dim);
+            writer.attachCellData(*velocityNonwetting, "nonwetting-velocity", dim);
             }
     }
 
@@ -532,13 +533,16 @@ void MimeticPressure2PAdaptive<TypeTag>::updateMaterialLaws()
 
         CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
-        Scalar satW = cellData.saturation(wPhaseIdx);
+        const Scalar satW = cellData.saturation(wPhaseIdx);
+
+        // old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
 
         // initialize mobilities
-        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(element), satW)
-                / viscosity_[wPhaseIdx];
-        Scalar mobilityNw = MaterialLaw::krn(problem_.spatialParams().materialLawParams(element), satW)
-                / viscosity_[nPhaseIdx];
+        const Scalar mobilityW = fluidMatrixInteraction.krw(satW) / viscosity_[wPhaseIdx];
+        const Scalar mobilityNw = fluidMatrixInteraction.krn(satW) / viscosity_[nPhaseIdx];
 
         // initialize mobilities
         cellData.setMobility(wPhaseIdx, mobilityW);

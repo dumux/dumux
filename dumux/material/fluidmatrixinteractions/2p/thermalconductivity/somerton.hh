@@ -66,7 +66,7 @@ public:
      * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974) \cite somerton1974 <BR>
      *
      * This gives an interpolation of the effective thermal conductivities of a porous medium
-     * filled with the non-wetting phase and a porous medium filled with the wetting phase.
+     * filled with the nonwetting phase and a porous medium filled with the wetting phase.
      * These two effective conductivities are computed as geometric mean of the solid and the
      * fluid conductivities and interpolated with the square root of the wetting saturation.
      * See f.e. Ebigbo, A.: Thermal Effects of Carbon Dioxide Sequestration in the Subsurface, Diploma thesis \cite ebigbo2005 .

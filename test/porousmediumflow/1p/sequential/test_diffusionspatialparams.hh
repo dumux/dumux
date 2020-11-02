@@ -28,7 +28,6 @@
 #include <dumux/porousmediumflow/sequential/properties.hh>
 #include <dumux/material/spatialparams/sequentialfv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
 namespace Dumux
 {
@@ -48,16 +47,6 @@ struct TestDiffusionSpatialParams {};
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TestDiffusionSpatialParams> { using type = TestDiffusionSpatialParams<TypeTag>; };
 
-// Set the material law
-template<class TypeTag>
-struct MaterialLaw<TypeTag, TTag::TestDiffusionSpatialParams>
-{
-private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using RawMaterialLaw = LinearMaterial<Scalar>;
-public:
-    using type = EffToAbsLaw<RawMaterialLaw>;
-};
 }
 
 /*!
@@ -84,9 +73,9 @@ class TestDiffusionSpatialParams: public SequentialFVSpatialParams<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FieldMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
+    using PcKrSwCurve = FluidMatrix::LinearMaterialDefault<Scalar>;
+
 public:
-    using MaterialLaw = GetPropType<TypeTag, Properties::MaterialLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
 
     const FieldMatrix& intrinsicPermeability (const Element& element) const
     {
@@ -98,11 +87,14 @@ public:
         return 0.2;
     }
 
-
-    // return the parameter object for the Brooks-Corey material law which depends on the position
-    const MaterialLawParams& materialLawParams(const Element &element) const
+    /*!
+     * \brief Returns the fluid-matrix interaction law at a given location
+     *
+     * \param globalPos The global coordinates for the given location
+     */
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
-            return materialLawParams_;
+        return makeFluidMatrixInteraction(pcKrSwCurve_);
     }
 
     void initialize(const double delta)
@@ -140,16 +132,11 @@ public:
     }
 
     TestDiffusionSpatialParams(const Problem& problem)
-    : ParentType(problem),gridView_(problem.gridView()), indexSet_(problem.gridView().indexSet()), permeability_(0)
-    {
-        // residual saturations
-        materialLawParams_.setSwr(0.0);
-        materialLawParams_.setSnr(0.0);
-
-        // parameters for the linear entry pressure function
-        materialLawParams_.setEntryPc(0);
-        materialLawParams_.setMaxPc(0);
-    }
+    : ParentType(problem),gridView_(problem.gridView())
+    , indexSet_(problem.gridView().indexSet())
+    , pcKrSwCurve_("SpatialParams")
+    , permeability_(0)
+    {}
 
 private:
     void perm (FieldMatrix& perm, const GlobalPosition& globalPos) const
@@ -163,7 +150,7 @@ private:
 
     const GridView gridView_;
     const IndexSet& indexSet_;
-    MaterialLawParams materialLawParams_;
+    const PcKrSwCurve pcKrSwCurve_;
     std::vector<FieldMatrix> permeability_;
     double delta_;
 };

@@ -24,3 +24,9 @@ MaxRelativeShift = 1e-13
 SolidDensity = 2700
 SolidThermalConductivity = 2.8
 SolidHeatCapacity = 790
+
+[SpatialParams]
+BrooksCoreyPcEntry = 1e4
+BrooksCoreyLambda = 2
+Swr = 0.2
+Snr = 0.0

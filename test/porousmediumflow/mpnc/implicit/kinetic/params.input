@@ -44,16 +44,16 @@ Swr = 0 #
 Snr = 0 #
 specificSolidsurface = 4022.994# (1/m)
 
-aWettingNonWettingA1 = -1.603e-01 #
-aWettingNonWettingA2 = 1.429e-05 #
-aWettingNonWettingA3 = 1.915e-01 #
+aWettingNonwettingA1 = -1.603e-01 #
+aWettingNonwettingA2 = 1.429e-05 #
+aWettingNonwettingA3 = 1.915e-01 #
 
 BCPd = 2.290e+03 #
 BClambda = 2.740e+00 #
 
-aNonWettingSolidA1 = 1.369e+03 #
-aNonWettingSolidA2 = -3.782e+00 #
-aNonWettingSolidA3 = 1.063e-09 #
+aNonwettingSolidA1 = 1.369e+03 #
+aNonwettingSolidA2 = -3.782e+00 #
+aNonwettingSolidA3 = 1.063e-09 #
 
 [SourceSink]
 heatIntoSolid = 0  #

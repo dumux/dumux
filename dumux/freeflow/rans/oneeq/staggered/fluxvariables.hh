@@ -96,7 +96,7 @@ public:
         // calculate advective flux
         auto upwindTermK = [](const auto& volVars)
         {
-            return volVars.viscosityTilde();
+            return volVars.viscosityTilde() * volVars.density();
         };
 
         flux[viscosityTildeEqIdx]
@@ -109,9 +109,9 @@ public:
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         // effective diffusion coefficients
-        Scalar insideCoeff = (insideVolVars.kinematicViscosity() + insideVolVars.viscosityTilde())
+        Scalar insideCoeff = (insideVolVars.viscosity() + insideVolVars.viscosityTilde() * insideVolVars.density())
                              / insideVolVars.sigma();
-        Scalar outsideCoeff = (outsideVolVars.kinematicViscosity() + outsideVolVars.viscosityTilde())
+        Scalar outsideCoeff = (outsideVolVars.viscosity() + outsideVolVars.viscosityTilde() * outsideVolVars.density())
                               / outsideVolVars.sigma();
 
         // scale by extrusion factor

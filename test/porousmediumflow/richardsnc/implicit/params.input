@@ -25,3 +25,13 @@ AddVelocity = true
 
 [Newton]
 EnableChop = false
+
+[SpatialParams]
+Lens.Swr = 0.18
+Lens.Snr = 0.0
+Lens.VanGenuchtenAlpha = 0.00045
+Lens.VanGenuchtenN = 7.3
+OuterDomain.Swr = 0.05
+OuterDomain.Snr = 0.0
+OuterDomain.VanGenuchtenAlpha = 0.0037
+OuterDomain.VanGenuchtenN = 4.7

@@ -62,7 +62,7 @@ private:
      *
      * \param sw The saturation of the wetting phase
      * \param lambdaW The thermal conductivity of the wetting phase in \f$\mathrm{[W/(m K)]}\f$
-     * \param lambdaN The thermal conductivity of the non-wetting phase in \f$\mathrm{[W/(m K)]}\f$
+     * \param lambdaN The thermal conductivity of the nonwetting phase in \f$\mathrm{[W/(m K)]}\f$
      * \param lambdaSolid The thermal conductivity of the solid phase in \f$\mathrm{[W/(m K)]}\f$
      * \param porosity The porosity
      *

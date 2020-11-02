@@ -10,15 +10,24 @@ Differences Between DuMu<sup>x</sup> 3.3 and DuMu<sup>x</sup> 3.2
 - Basic support for Python bindings has been added. Python bindings are an experimental feature
   and might undergo unannounced API changes until further notice. This concerns the files in the folders `python` and `dumux/python`. To activate
     - add `-DDUNE_ENABLE_PYTHONBINDINGS=TRUE` and `-DCMAKE_POSITION_INDEPENDENT_CODE=TRUE` to your CMAKE_FLAGS and run dunecontrol
-    - run `python3 dune-common/bin/setup_dunepy.py`
+    - run `python3 dune-common/bin/setup-dunepy.py`
+- We now include a basic version of the [fmt-library](https://github.com/fmtlib/fmt) which implements `std::format` (coming with C++20) with the need for C++20.
+  In order to use this, include `<dumux/io/format.hh>`. `format`, `format_to`, `format_to_n`, `formatted_size` are available in the `Dumux::Fmt` namespace.
+  The string formatting is documented [here](https://en.cppreference.com/w/cpp/utility/format/formatter#Standard_format_specification) and follows the Python string formatting rules.
+  The function are documented on [cppreference](https://en.cppreference.com/w/cpp/utility/format).
+ - The usage of laws for pc-Sw and kr-Sw has been completely revised. A caller does not have to pass a `parameters` object to the laws anymore. The `spatialParams` now provide a `fluidMatrixInteraction` function which bundles an arbitrary number of
+ different interaction laws such as a pc-Sw and kr-Sw curve and interfacial areas.
+ New pre-cached spline laws were added which can help to increase efficiency. The usage of the old interface is deprecated and warnings will be raised. The old interface will be removed after the release of 3.3.
+ - The RANS models now include variable densities. Compositional or nonisothermal RANS models could produce slightly different, more accurate, results.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
-
+- __Flash/Constraintsolver__: The flashes depending on material laws are immediately required to use new-style material laws (fluidMatrixInteraction interface in spatialparams)
+- __Box interface solver__: The box interface solver immediately requires the new material law interface without deprecation period. Use the new class `BoxMaterialInterfaces` and update your spatial params to use the new fluidmatrixinteraction interface to be able to use the box interface solver in version 3.3.
 - For the "sequential" models, the property `BoundaryTypes` has been simply renamed to `SequentialBoundaryTypes`
 - __Quadmath__: Dumux::Quad has been removed without deprecation. Use Dune::Float128 instead.
 - Within the RANS group, two additional runtime parameters have been included 'IsFlatWallBounded' and 'WriteFlatWallBoundedFields'.
 For both the K-Epsilon and Zero-eq RANS models the 'IsFlatWallBounded' runtime parameter should be set as True,
-as wall topology is not supported for these models with our geometric contraints. If not set as true, the geometry
+as wall topology is not supported for these models with our geometric constraints. If not set as true, the geometry
 will be checked before the model is run. If either the runtime parameter or the geometry check indicate non-flat walls,
 the model will terminate. To add FlatWallBounded specific output to the vtk output, WriteFlatWallBoundedFields can be set as True.
 - __1d3d coupling__: The kernel coupling manager has been replaced with the one from Koch et al (2020) JCP https://doi.org/10.1016/j.jcp.2020.109370
@@ -64,7 +73,7 @@ An additional new option is `Vtk.CoordPrecision` which changes the precision of 
 ### Immediate interface changes not allowing/requiring a deprecation period
 
 - Remove `Grid.HeapSize` as dune-ugrid removed the according feature as well.
-- __Van Genuchten__: Corrected VanGenuchten-Mualem exponent in the non-wetting saturation formula (`1/3` instead of `1/2` (or `l`, see above))
+- __Van Genuchten__: Corrected VanGenuchten-Mualem exponent in the nonwetting saturation formula (`1/3` instead of `1/2` (or `l`, see above))
 - __Van Genuchten__: Corrected VanGenuchten-Mualem implementation of `dkrn/dSw`
 - __Brooks-Corey__: Corrected Brooks-Corey implementation of `dkrn/dSw` and added the derivatives for the regularized version
 - __AMGBackend__: The internal structure of the AMGBackend and the ParallelISTLHelper has been overhauled, as only used by the AMG, we did not make the changes backwards-compatible
@@ -1345,7 +1354,7 @@ Differences Between DuMu<sup>x</sup> 2.2 and DuMu<sup>x</sup> 2.3
     test/decoupled/2p. They work in parallel only if the AMGBackend is used
     as linear solver. No dynamic loadbalancing can be done yet.
 
-  - The MPNC model can use either the most wetting or the most non-wetting phase
+  - The MPNC model can use either the most wetting or the most nonwetting phase
     pressure as primary variable. This is controlled via the property
     "PressureFormulation."
 

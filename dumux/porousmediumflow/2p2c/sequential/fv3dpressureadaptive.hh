@@ -90,7 +90,6 @@ template<class TypeTag> class FV3dPressure2P2CAdaptive
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using BoundaryTypes = GetPropType<TypeTag, Properties::SequentialBoundaryTypes>;

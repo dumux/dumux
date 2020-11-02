@@ -15,3 +15,7 @@ RefinementRatio = 0
 GMResRestart = 80
 MaxIterations = 1000
 ResidualReduction = 1e-8
+
+[SpatialParams]
+LinearPcEntry = 0
+LinearPcMax = 0

@@ -26,6 +26,8 @@
 #ifndef DUMUX_EFF_TO_ABS_LAW_PARAMS_HH
 #define DUMUX_EFF_TO_ABS_LAW_PARAMS_HH
 
+#warning "This header is deprecated. Removal after 3.3. Use new material laws."
+
 namespace Dumux {
 
 /*!
@@ -58,13 +60,13 @@ public:
     { EffLawParams::setSwr(v); }
 
     /*!
-     * \brief Return the residual non-wetting saturation.
+     * \brief Return the residual nonwetting saturation.
      */
     Scalar snr() const
     { return EffLawParams::snr(); }
 
     /*!
-     * \brief Set the residual non-wetting saturation.
+     * \brief Set the residual nonwetting saturation.
      */
     void setSnr(Scalar v)
     { EffLawParams::setSnr(v); }

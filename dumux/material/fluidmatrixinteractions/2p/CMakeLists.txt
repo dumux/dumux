@@ -1,20 +1,27 @@
+add_subdirectory(interfacialarea)
 add_subdirectory(thermalconductivity)
 
 install(FILES
 brookscorey.hh
 brookscoreyparams.hh
+datasplinemateriallaw.hh
+efftoabsdefaultpolicy.hh
 efftoabslaw.hh
 efftoabslawparams.hh
 heatpipelaw.hh
 heatpipelawparams.hh
 linearmaterial.hh
 linearmaterialparams.hh
+materiallaw.hh
+noregularization.hh
 regularizedbrookscorey.hh
 regularizedbrookscoreyparams.hh
 regularizedlinearmaterial.hh
 regularizedlinearmaterialparams.hh
 regularizedvangenuchten.hh
 regularizedvangenuchtenparams.hh
+smoothedlinearlaw.hh
+splinemateriallaw.hh
 thermalconductivityjohansen.hh
 thermalconductivitysimplefluidlumping.hh
 thermalconductivitysomerton.hh

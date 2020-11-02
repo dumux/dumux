@@ -131,7 +131,7 @@ int main(int argc, char** argv)
     auto xOld = x;
 
     // update the interface parameters
-    problem->spatialParams().updateMaterialInterfaceParams(x);
+    problem->spatialParams().updateMaterialInterfaces(x);
 
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;

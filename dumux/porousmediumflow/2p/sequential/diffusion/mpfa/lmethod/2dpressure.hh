@@ -29,6 +29,8 @@
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 #include "2dtransmissibilitycalculator.hh"
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 
 /*!
@@ -82,7 +84,6 @@ class FvMpfaL2dPressure2p: public FVPressure<TypeTag>
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
@@ -1664,19 +1665,20 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
 
                             }
 
-                            Scalar pcBound = MaterialLaw::pc(
-                                    problem_.spatialParams().materialLawParams(element), satWBound);
+                            // old material law interface is deprecated: Replace this by
+                            // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
+                            // after the release of 3.3, when the deprecated interface is no longer supported
+                            const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
+
+                            Scalar pcBound = fluidMatrixInteraction.pc(satWBound);
 
                             Scalar gravityDiffBound = (problem_.bBoxMax() - globalPosFace) * gravity_
                                     * (density_[nPhaseIdx] - density_[wPhaseIdx]);
 
                             pcBound += gravityDiffBound;
 
-                            Dune::FieldVector<Scalar, numPhases> lambdaBound(
-                                    MaterialLaw::krw(problem_.spatialParams().materialLawParams(element),
-                                            satWBound));
-                            lambdaBound[nPhaseIdx] = MaterialLaw::krn(
-                                    problem_.spatialParams().materialLawParams(element), satWBound);
+                            Dune::FieldVector<Scalar, numPhases> lambdaBound(fluidMatrixInteraction.krw(satWBound));
+                            lambdaBound[nPhaseIdx] = fluidMatrixInteraction.krn(satWBound);
                             lambdaBound[wPhaseIdx] /= viscosity_[wPhaseIdx];
                             lambdaBound[nPhaseIdx] /= viscosity_[nPhaseIdx];
 
@@ -1840,15 +1842,18 @@ void FvMpfaL2dPressure2p<TypeTag>::updateMaterialLaws()
 
         Scalar satW = cellData.saturation(wPhaseIdx);
 
-        Scalar pc = MaterialLaw::pc(problem_.spatialParams().materialLawParams(element), satW);
+        // old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
+
+        const Scalar pc = fluidMatrixInteraction.pc(satW);
 
         cellData.setCapillaryPressure(pc);
 
         // initialize mobilities
-        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(element), satW)
-                / viscosity_[wPhaseIdx];
-        Scalar mobilityNw = MaterialLaw::krn(problem_.spatialParams().materialLawParams(element), satW)
-                / viscosity_[nPhaseIdx];
+        const Scalar mobilityW = fluidMatrixInteraction.krw(satW) / viscosity_[wPhaseIdx];
+        const Scalar mobilityNw = fluidMatrixInteraction.krn(satW) / viscosity_[nPhaseIdx];
 
         // initialize mobilities
         cellData.setMobility(wPhaseIdx, mobilityW);

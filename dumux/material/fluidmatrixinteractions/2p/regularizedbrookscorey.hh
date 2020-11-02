@@ -25,6 +25,8 @@
 #ifndef REGULARIZED_BROOKS_COREY_HH
 #define REGULARIZED_BROOKS_COREY_HH
 
+#warning "This header is deprecated. Removal after 3.3. Use new material laws."
+
 #include "brookscorey.hh"
 #include "regularizedbrookscoreyparams.hh"
 
@@ -284,7 +286,7 @@ public:
 
     /*!
      * \brief   Regularized version of the  relative permeability
-     *          for the non-wetting phase of
+     *          for the nonwetting phase of
      *          the medium implied by the Brooks-Corey
      *          parameterization.
      *
@@ -308,7 +310,7 @@ public:
 
     /*!
      * \brief A regularized version of the derivative of the relative permeability
-     *        for the non-wetting phase in regard to the wetting saturation of
+     *        for the nonwetting phase in regard to the wetting saturation of
      *        the medium as implied by the Brooks-Corey parameterization.
      *
      * \copydetails BrooksCorey::dkrn_dswe()

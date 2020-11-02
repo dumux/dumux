@@ -31,6 +31,10 @@
 #include <dune/common/float_cmp.hh>
 #include <dune/grid/yaspgrid.hh>
 
+#ifndef GRID_DIM
+#define GRID_DIM 3
+#endif
+
 #if HAVE_DUNE_SUBGRID && GRID_DIM == 3
 #include <dune/subgrid/subgrid.hh>
 #endif

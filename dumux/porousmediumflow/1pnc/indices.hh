@@ -38,7 +38,7 @@ struct OnePNCIndices
 {
     //! Reference index for mass conservation equation.
     static constexpr int conti0EqIdx = 0;
-    //! Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
+    //! Index for wetting/nonwetting phase pressure (depending on formulation) in a solution vector
     static constexpr int pressureIdx = 0;
 };
 

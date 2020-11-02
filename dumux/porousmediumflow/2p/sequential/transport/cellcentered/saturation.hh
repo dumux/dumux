@@ -27,6 +27,8 @@
 #include <dumux/porousmediumflow/2p/sequential/transport/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/transport.hh>
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 
 /*!
@@ -55,7 +57,7 @@ namespace Dumux {
  * \phi \frac{\partial S_n}{\partial t} + f_n \text{div}\, \boldsymbol{v}_{t} - f_n \lambda_w \boldsymbol{K}\left(\textbf{grad}\,
  * p_c - (\varrho_n-\varrho_w) {\textbf g} \right)= q_\alpha,
  * \f]
- * if the non-wetting phase saturation is the primary transport variable.
+ * if the nonwetting phase saturation is the primary transport variable.
  *
  *  The total velocity formulation is only implemented for incompressible fluids and \f$ f_\alpha \f$
  *  is the fractional flow function, \f$ \lambda_\alpha \f$ is the mobility, \f$ \boldsymbol K \f$
@@ -92,7 +94,6 @@ class FVSaturation2P: public FVTransport<TypeTag>
     using GravityFlux = GetPropType<TypeTag, Properties::GravityFlux>;
 
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
@@ -803,7 +804,12 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
         }
         }
 
-        Scalar pcBound = MaterialLaw::pc(problem_.spatialParams().materialLawParams(elementI), satWBound);
+        // old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(elementI.geometry().center());
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), elementI);
+
+        const Scalar pcBound = fluidMatrixInteraction.pc(satWBound);
 
         Scalar lambdaW = 0;
         Scalar lambdaNw = 0;
@@ -821,12 +827,12 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
         {
             if (compressibility_)
             {
-                lambdaW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(elementI), satWBound)
+                lambdaW = fluidMatrixInteraction.krw(satWBound)
                         / FluidSystem::viscosity(cellDataI.fluidState(), wPhaseIdx);
             }
             else
             {
-                lambdaW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(elementI), satWBound)
+                lambdaW = fluidMatrixInteraction.krw(satWBound)
                         / viscosity_[wPhaseIdx];
             }
         }
@@ -843,12 +849,12 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
         {
             if (compressibility_)
             {
-                lambdaNw = MaterialLaw::krn(problem_.spatialParams().materialLawParams(elementI), satWBound)
+                lambdaNw = fluidMatrixInteraction.krn(satWBound)
                         / FluidSystem::viscosity(cellDataI.fluidState(), nPhaseIdx);
             }
             else
             {
-                lambdaNw = MaterialLaw::krn(problem_.spatialParams().materialLawParams(elementI), satWBound)
+                lambdaNw = fluidMatrixInteraction.krn(satWBound)
                         / viscosity_[nPhaseIdx];
             }
         }
@@ -1196,13 +1202,18 @@ void FVSaturation2P<TypeTag>::updateMaterialLaws()
         //determine phase saturations from primary saturation variable
         Scalar satW = cellData.saturation(wPhaseIdx);
 
-        Scalar pc = MaterialLaw::pc(problem_.spatialParams().materialLawParams(element), satW);
+        // old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(elementI.geometry().center());
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
+
+        const Scalar pc = fluidMatrixInteraction.pc(satW);
 
         cellData.setCapillaryPressure(pc);
 
         // initialize mobilities
-        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(element), satW) / viscosity_[wPhaseIdx];
-        Scalar mobilityNw = MaterialLaw::krn(problem_.spatialParams().materialLawParams(element), satW) / viscosity_[nPhaseIdx];
+        const Scalar mobilityW = fluidMatrixInteraction.krw(satW) / viscosity_[wPhaseIdx];
+        const Scalar mobilityNw = fluidMatrixInteraction.krn(satW) / viscosity_[nPhaseIdx];
 
         // initialize mobilities
         cellData.setMobility(wPhaseIdx, mobilityW);

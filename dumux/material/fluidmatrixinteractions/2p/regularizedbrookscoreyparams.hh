@@ -25,6 +25,8 @@
 #ifndef DUMUX_REGULARIZED_BROOKS_COREY_PARAMS_HH
 #define DUMUX_REGULARIZED_BROOKS_COREY_PARAMS_HH
 
+#warning "This header is deprecated. Removal after 3.3. Use new material laws."
+
 #include <dune/common/float_cmp.hh>
 
 #include "brookscoreyparams.hh"
@@ -37,7 +39,7 @@ namespace Dumux {
  *          the Brooks-Corey capillary pressure model.
  */
 template <class ScalarT>
-class RegularizedBrooksCoreyParams : public BrooksCoreyParams<ScalarT>
+class [[deprecated("Use new material laws! Removal after 3.3")]] RegularizedBrooksCoreyParams : public BrooksCoreyParams<ScalarT>
 {
     using BrooksCoreyParams = Dumux::BrooksCoreyParams<ScalarT>;
 

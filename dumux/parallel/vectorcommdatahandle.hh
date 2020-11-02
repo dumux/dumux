@@ -71,14 +71,14 @@ namespace Detail {
  * \ingroup Parallel
  * \brief A data handle class to exchange entries of a vector
  */
-template<class Mapper, class Vector, int entityCodim, class ScatterOperator>
+template<class Mapper, class Vector, int entityCodim,
+         class ScatterOperator, class DataT = typename Vector::value_type>
 class VectorCommDataHandle
-  : public Dune::CommDataHandleIF<VectorCommDataHandle<Mapper,Vector, entityCodim, ScatterOperator>,
-                                  typename Vector::value_type>
+  : public Dune::CommDataHandleIF<VectorCommDataHandle<Mapper, Vector, entityCodim, ScatterOperator, DataT>, DataT>
 {
 public:
   //! export type of data for message buffer
-  using DataType = typename Vector::value_type;
+  using DataType = DataT;
 
   VectorCommDataHandle(const Mapper& mapper, Vector& vector)
   : mapper_(mapper), vector_(vector)
@@ -122,17 +122,17 @@ protected:
   Vector& vector_;
 };
 
-template<class Mapper, class Vector, int codim>
-using VectorCommDataHandleEqual = VectorCommDataHandle<Mapper,Vector, codim, Detail::SetEqual>;
+template<class Mapper, class Vector, int codim, class DataType = typename Vector::value_type>
+using VectorCommDataHandleEqual = VectorCommDataHandle<Mapper, Vector, codim, Detail::SetEqual, DataType>;
 
-template<class Mapper, class Vector, int codim>
-using VectorCommDataHandleSum = VectorCommDataHandle<Mapper,Vector, codim, Detail::Sum>;
+template<class Mapper, class Vector, int codim, class DataType = typename Vector::value_type>
+using VectorCommDataHandleSum = VectorCommDataHandle<Mapper, Vector, codim, Detail::Sum, DataType>;
 
-template<class Mapper, class Vector, int codim>
-using VectorCommDataHandleMin = VectorCommDataHandle<Mapper,Vector, codim, Detail::Min>;
+template<class Mapper, class Vector, int codim, class DataType = typename Vector::value_type>
+using VectorCommDataHandleMin = VectorCommDataHandle<Mapper, Vector, codim, Detail::Min, DataType>;
 
-template<class Mapper, class Vector, int codim>
-using VectorCommDataHandleMax = VectorCommDataHandle<Mapper,Vector, codim, Detail::Max>;
+template<class Mapper, class Vector, int codim, class DataType = typename Vector::value_type>
+using VectorCommDataHandleMax = VectorCommDataHandle<Mapper, Vector, codim, Detail::Max, DataType>;
 
 } // end namespace Dumux
 

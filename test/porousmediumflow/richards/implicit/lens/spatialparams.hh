@@ -26,8 +26,7 @@
 #define DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
 
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 
 #include <dumux/porousmediumflow/richards/model.hh>
 
@@ -51,32 +50,19 @@ class RichardsLensSpatialParams
 
     enum { dimWorld = GridView::dimensionworld };
 
+    using PcKrSwCurve = FluidMatrix::VanGenuchtenDefault<Scalar>;
+
 public:
-    using MaterialLaw = EffToAbsLaw<RegularizedVanGenuchten<Scalar>>;
-    using MaterialLawParams = typename MaterialLaw::Params;
     // export permeability type
     using PermeabilityType = Scalar;
 
     RichardsLensSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
+    , pcKrSwCurveLens_("SpatialParams.Lens")
+    , pcKrSwCurveOuterDomain_("SpatialParams.OuterDomain")
     {
-
         lensLowerLeft_ = {1.0, 2.0};
         lensUpperRight_ = {4.0, 3.0};
-
-        // residual saturations
-        lensMaterialParams_.setSwr(0.18);
-        lensMaterialParams_.setSnr(0.0);
-        outerMaterialParams_.setSwr(0.05);
-        outerMaterialParams_.setSnr(0.0);
-
-        // parameters for the Van Genuchten law
-        // alpha and n
-        lensMaterialParams_.setVgAlpha(0.00045);
-        lensMaterialParams_.setVgn(7.3);
-        outerMaterialParams_.setVgAlpha(0.0037);
-        outerMaterialParams_.setVgn(4.7);
-
         lensK_ = 1e-12;
         outerK_ = 5e-12;
     }
@@ -102,7 +88,7 @@ public:
     { return 0.4; }
 
     /*!
-     * \brief Returns the parameters for the material law for the sub-control volume
+     * \brief Returns the fluid-matrix interaction law for the sub-control volume
      *
      * This method is not actually required by the Richards model, but provided
      * for the convenience of the RichardsLensProblem
@@ -112,28 +98,23 @@ public:
      * \param elemSol The current element solution
      */
     template<class ElementSolution>
-    const MaterialLawParams& materialLawParams(const Element& element,
-                                               const SubControlVolume& scv,
-                                               const ElementSolution& elemSol) const
+    auto fluidMatrixInteraction(const Element& element,
+                                const SubControlVolume& scv,
+                                const ElementSolution& elemSol) const
     {
         const auto& globalPos = scv.dofPosition();
-
-        return materialLawParamsAtPos(globalPos);
+        return fluidMatrixInteractionAtPos(globalPos);
     }
 
     /*!
-     * \brief Returns the parameters for the material law at a given location
-     *
-     * This method is not actually required by the Richards model, but provided
-     * for the convenience of the RichardsLensProblem
-     *
+     * \brief Returns the fluid-matrix interaction law at a given location
      * \param globalPos The global coordinates for the given location
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
         if (isInLens_(globalPos))
-            return lensMaterialParams_;
-        return outerMaterialParams_;
+            return makeFluidMatrixInteraction(pcKrSwCurveLens_);
+        return makeFluidMatrixInteraction(pcKrSwCurveOuterDomain_);
     }
 
 private:
@@ -153,8 +134,8 @@ private:
 
     Scalar lensK_;
     Scalar outerK_;
-    MaterialLawParams lensMaterialParams_;
-    MaterialLawParams outerMaterialParams_;
+    const PcKrSwCurve pcKrSwCurveLens_;
+    const PcKrSwCurve pcKrSwCurveOuterDomain_;
 };
 
 } // end namespace Dumux

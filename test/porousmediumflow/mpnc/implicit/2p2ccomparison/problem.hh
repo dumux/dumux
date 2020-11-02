@@ -261,20 +261,16 @@ private:
         // set pressure of the gas phase
         fs.setPressure(gasPhaseIdx, 1e5);
         // calulate the capillary pressure
-        const auto& matParams =
-            this->spatialParams().materialLawParamsAtPos(globalPos);
-        PhaseVector pc;
-        using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
-        using MPAdapter = MPAdapter<MaterialLaw, numPhases>;
-
+        const auto& fm =
+            this->spatialParams().fluidMatrixInteractionAtPos(globalPos);
         const int wPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
-        MPAdapter::capillaryPressures(pc, matParams, fs, wPhaseIdx);
+        const auto pc = fm.capillaryPressures(fs, wPhaseIdx);
         fs.setPressure(liquidPhaseIdx,
                        fs.pressure(gasPhaseIdx) + pc[liquidPhaseIdx] - pc[gasPhaseIdx]);
 
         // make the fluid state consistent with local thermodynamic
         // equilibrium
-         using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
+        using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
 
         ParameterCache paramCache;
         MiscibleMultiPhaseComposition::solve(fs, paramCache);

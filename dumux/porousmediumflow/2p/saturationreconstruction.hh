@@ -31,11 +31,11 @@ namespace Dumux {
 
 /*!
  * \ingroup TwoPModel
- * \brief Class that computes the non-wetting saturation in an scv from the saturation
+ * \brief Class that computes the nonwetting saturation in an scv from the saturation
  *        at the global degree of freedom.
  *
  * This is only necessary in conjunction with the box scheme where the degrees of
- * freedom lie on material interfaces. There the non-wetting phase saturation is
+ * freedom lie on material interfaces. There the nonwetting phase saturation is
  * generally discontinuous.
  */
 template<DiscretizationMethod M, bool enableReconstruction>
@@ -43,7 +43,7 @@ class TwoPScvSaturationReconstruction
 {
 public:
     /*!
-     * \brief Compute the non-wetting phase saturation in an scv
+     * \brief Compute the nonwetting phase saturation in an scv
      *
      * \note In the default case, we don't reconstruct anything. We do
      *       Reconstruction is only done when using the box method
@@ -53,7 +53,7 @@ public:
      * \param element The finite element the scv is embedded in
      * \param scv The sub-control volume for which the saturation is computed
      * \param elemSol The solution at all dofs inside this element
-     * \param Sn The non-wetting phase saturation at the global dof
+     * \param sn The nonwetting phase saturation at the global dof
      */
     template<class SpatialParams, class Element, class Scv, class ElemSol>
     static typename ElemSol::PrimaryVariables::value_type
@@ -61,8 +61,8 @@ public:
                   const Element& element,
                   const Scv& scv,
                   const ElemSol& elemSol,
-                  typename ElemSol::PrimaryVariables::value_type Sn)
-    { return Sn; }
+                  typename ElemSol::PrimaryVariables::value_type sn)
+    { return sn; }
 };
 
 //! Specialization for the box scheme with the interface solver enabled
@@ -71,13 +71,13 @@ class TwoPScvSaturationReconstruction<DiscretizationMethod::box, /*enableReconst
 {
 public:
     /*!
-     * \brief Compute the non-wetting phase saturation in an scv
+     * \brief Compute the nonwetting phase saturation in an scv
      *
      * \param spatialParams Class encapsulating the spatial parameters
      * \param element The finite element the scv is embedded in
      * \param scv The sub-control volume for which the saturation is computed
      * \param elemSol The solution at all dofs inside this element
-     * \param Sn The non-wetting phase saturation at the global dof
+     * \param sn The nonwetting phase saturation at the global dof
      */
     template<class SpatialParams, class Element, class Scv, class ElemSol>
     static typename ElemSol::PrimaryVariables::value_type
@@ -85,23 +85,25 @@ public:
                   const Element& element,
                   const Scv& scv,
                   const ElemSol& elemSol,
-                  typename ElemSol::PrimaryVariables::value_type Sn)
+                  typename ElemSol::PrimaryVariables::value_type sn)
     {
         // if this dof doesn't lie on a material interface, simply return Sn
-        if (!spatialParams.materialInterfaceParams().isOnMaterialInterface(scv))
-            return Sn;
+        const auto& materialInterfaces = spatialParams.materialInterfaces();
+        if (!materialInterfaces.isOnMaterialInterface(scv))
+            return sn;
 
-        using MaterialLaw = typename SpatialParams::MaterialLaw;
         // compute capillary pressure using material parameters associated with the dof
-        const auto& ifMaterialParams = spatialParams.materialInterfaceParams().getDofParams(scv);
-        const auto pc = MaterialLaw::pc(ifMaterialParams, /*Sw=*/1.0 - Sn);
+        const auto& interfacePcSw = materialInterfaces.pcSwAtDof(scv);
+        const auto pc = interfacePcSw.pc(/*ww=*/1.0 - sn);
 
         // reconstruct by inverting the pc-sw curve
-        const auto& materialLawParams = spatialParams.materialLawParams(element, scv, elemSol);
-        const auto pcMin = MaterialLaw::endPointPc(materialLawParams);
+        const auto& pcSw = spatialParams.fluidMatrixInteraction(element, scv, elemSol).pcSwCurve();
+        const auto pcMin = pcSw.endPointPc();
 
-        if (pc < pcMin && pcMin > 0.0) return 0.0;
-        else return 1.0 - MaterialLaw::sw(materialLawParams, pc);
+        if (pc < pcMin && pcMin > 0.0)
+            return 0.0;
+        else
+            return 1.0 - pcSw.sw(pc);
     }
 };
 

@@ -63,7 +63,6 @@ template<class TypeTag> class FvMpfaL2dVelocity2pAdaptive : public FvMpfaL2dVelo
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 

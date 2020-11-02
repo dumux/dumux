@@ -26,6 +26,8 @@
 #ifndef DUMUX_EFF_TO_ABS_LAW_PARAMS_HH
 #define DUMUX_EFF_TO_ABS_LAW_PARAMS_HH
 
+#warning "This header is deprecated. Removal after 3.3. Use new material laws."
+
 #include <dune/common/float_cmp.hh>
 
 namespace Dumux {
@@ -37,7 +39,7 @@ namespace Dumux {
  *        saturations.
  */
 template <class EffLawParamsT>
-class EffToAbsLawParams : public EffLawParamsT
+class [[deprecated("Use new material laws! Removal after 3.3")]] EffToAbsLawParams : public EffLawParamsT
 {
     using EffLawParams = EffLawParamsT;
 public:
@@ -71,13 +73,13 @@ public:
     { swr_ = v; }
 
     /*!
-     * \brief Return the residual non-wetting saturation.
+     * \brief Return the residual nonwetting saturation.
      */
     Scalar snr() const
     { return snr_; }
 
     /*!
-     * \brief Set the residual non-wetting saturation.
+     * \brief Set the residual nonwetting saturation.
      */
     void setSnr(Scalar v)
     { snr_ = v; }

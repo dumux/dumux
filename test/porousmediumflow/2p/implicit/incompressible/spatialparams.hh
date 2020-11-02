@@ -26,10 +26,8 @@
 #define DUMUX_INCOMPRESSIBLE_TWOP_TEST_SPATIAL_PARAMS_HH
 
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
-
-#include <dumux/porousmediumflow/2p/boxmaterialinterfaceparams.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
+#include <dumux/porousmediumflow/2p/boxmaterialinterfaces.hh>
 
 namespace Dumux {
 
@@ -51,36 +49,24 @@ class TwoPTestSpatialParams
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
+    using PcKrSw = FluidMatrix::VanGenuchtenDefault<Scalar>;
+    using MaterialInterfaces = BoxMaterialInterfaces<GridGeometry, PcKrSw>;
 
 public:
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
     TwoPTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
+    , lensPcKrSw_("SpatialParams.Lens")
+    , outerPcKrSw_("SpatialParams.Outer")
     {
         lensIsOilWet_ = getParam<bool>("SpatialParams.LensIsOilWet", false);
 
         lensLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensLowerLeft");
         lensUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensUpperRight");
 
-        // residual saturations
-        lensMaterialParams_.setSwr(0.18);
-        lensMaterialParams_.setSnr(0.0);
-        outerMaterialParams_.setSwr(0.05);
-        outerMaterialParams_.setSnr(0.0);
-
-        // parameters for the Van Genuchten law
-        // alpha and n
-        lensMaterialParams_.setVgAlpha(0.00045);
-        lensMaterialParams_.setVgn(7.3);
-        outerMaterialParams_.setVgAlpha(0.0037);
-        outerMaterialParams_.setVgn(4.7);
-
-        lensK_ = getParam<Scalar>("SpatialParams.lensK", 9.05e-12);
-        outerK_ = getParam<Scalar>("SpatialParams.outerK", 4.6e-10);
+        lensK_ = getParam<Scalar>("SpatialParams.Lens.Permeability", 9.05e-12);
+        outerK_ = getParam<Scalar>("SpatialParams.Outer.Permeability", 4.6e-10);
     }
 
     /*!
@@ -123,14 +109,14 @@ public:
      * \return The material parameters object
      */
     template<class ElementSolution>
-    const MaterialLawParams& materialLawParams(const Element& element,
-                                               const SubControlVolume& scv,
-                                               const ElementSolution& elemSol) const
+    auto fluidMatrixInteraction(const Element& element,
+                                const SubControlVolume& scv,
+                                const ElementSolution& elemSol) const
     {
         // do not use different parameters in the test with inverted wettability
         if (isInLens_(element.geometry().center()) && !lensIsOilWet_)
-            return lensMaterialParams_;
-        return outerMaterialParams_;
+            return makeFluidMatrixInteraction(lensPcKrSw_);
+        return makeFluidMatrixInteraction(outerPcKrSw_);
     }
 
     /*!
@@ -149,15 +135,15 @@ public:
 
     //! Updates the map of which material parameters are associated with a nodal dof.
     template<class SolutionVector>
-    void updateMaterialInterfaceParams(const SolutionVector& x)
+    void updateMaterialInterfaces(const SolutionVector& x)
     {
         if (GridGeometry::discMethod == DiscretizationMethod::box)
-            materialInterfaceParams_.update(this->gridGeometry(), *this, x);
+            materialInterfaces_ = std::make_unique<MaterialInterfaces>(this->gridGeometry(), *this, x);
     }
 
     //! Returns the material parameters associated with a nodal dof
-    const BoxMaterialInterfaceParams<ThisType>& materialInterfaceParams() const
-    { return materialInterfaceParams_; }
+    const MaterialInterfaces& materialInterfaces() const
+    { return *materialInterfaces_; }
 
     //! Returns whether or not the lens is oil wet
     bool lensIsOilWet() const { return lensIsOilWet_; }
@@ -178,11 +164,11 @@ private:
 
     Scalar lensK_;
     Scalar outerK_;
-    MaterialLawParams lensMaterialParams_;
-    MaterialLawParams outerMaterialParams_;
 
-    // Determines the parameters associated with the dofs at material interfaces
-    BoxMaterialInterfaceParams<ThisType> materialInterfaceParams_;
+    const PcKrSw lensPcKrSw_;
+    const PcKrSw outerPcKrSw_;
+
+    std::unique_ptr<MaterialInterfaces> materialInterfaces_;
 
     static constexpr Scalar eps_ = 1.5e-7;
 };

@@ -70,7 +70,7 @@
  *      as long as \f$ 0 < S_\alpha < 1\f$</li>.
  *  <li> Only wetting phase is present: The mole fraction of, e.g., air in the wetting phase \f$x^a_w\f$ is used,
  *      as long as the maximum mole fraction is not exceeded \f$(x^a_w<x^a_{w,max})\f$</li>
- *  <li> Only non-wetting phase is present: The mole fraction of, e.g., water in the non-wetting phase, \f$x^w_n\f$, is used,
+ *  <li> Only nonwetting phase is present: The mole fraction of, e.g., water in the nonwetting phase, \f$x^w_n\f$, is used,
  *      as long as the maximum mole fraction is not exceeded \f$(x^w_n<x^w_{n,max})\f$</li>
  * </ul>
  */
@@ -148,7 +148,7 @@ private:
     static constexpr bool enableIS = getPropValue<TypeTag, Properties::EnableBoxInterfaceSolver>();
     static_assert(FSY::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p2c model!");
     static_assert(FSY::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p2c model!");
-    // class used for scv-wise reconstruction of non-wetting phase saturations
+    // class used for scv-wise reconstruction of nonwetting phase saturations
     using SR = TwoPScvSaturationReconstruction<DM, enableIS>;
     using BaseTraits = TwoPVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, SR>;
 
@@ -197,7 +197,7 @@ private:
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     static constexpr auto DM = GetPropType<TypeTag, Properties::GridGeometry>::discMethod;
     static constexpr bool enableIS = getPropValue<TypeTag, Properties::EnableBoxInterfaceSolver>();
-    // class used for scv-wise reconstruction of non-wetting phase saturations
+    // class used for scv-wise reconstruction of nonwetting phase saturations
     using SR = TwoPScvSaturationReconstruction<DM, enableIS>;
     using BaseTraits = TwoPVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, SR>;
 
@@ -300,7 +300,7 @@ private:
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     static constexpr auto DM = GetPropType<TypeTag, Properties::GridGeometry>::discMethod;
     static constexpr bool enableIS = getPropValue<TypeTag, Properties::EnableBoxInterfaceSolver>();
-    // class used for scv-wise reconstruction of non-wetting phase saturations
+    // class used for scv-wise reconstruction of nonwetting phase saturations
     using SR = TwoPScvSaturationReconstruction<DM, enableIS>;
     using BaseTraits = TwoPVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, SR>;
 
@@ -370,7 +370,7 @@ private:
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
     static constexpr auto DM = GetPropType<TypeTag, Properties::GridGeometry>::discMethod;
     static constexpr bool enableIS = getPropValue<TypeTag, Properties::EnableBoxInterfaceSolver>();
-    // class used for scv-wise reconstruction of non-wetting phase saturations
+    // class used for scv-wise reconstruction of nonwetting phase saturations
     using SR = TwoPScvSaturationReconstruction<DM, enableIS>;
     using BaseTraits = TwoPVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, SR>;
 

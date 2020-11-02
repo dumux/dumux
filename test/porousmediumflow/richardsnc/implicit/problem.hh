@@ -144,9 +144,8 @@ public:
         pumpRate_ = getParam<Scalar>("Problem.PumpRate"); // in kg/s
 
         // for initial conditions
-        const Scalar sw = 0.4; // start with 80% saturation on top
-        using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
-        pcTop_ = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(this->gridGeometry().bBoxMax()), sw);
+        const Scalar sw = 0.4; // start with 40% saturation on top
+        pcTop_ = this->spatialParams().fluidMatrixInteractionAtPos(this->gridGeometry().bBoxMax()).pc(sw);
 
         // for post time step mass balance
         accumulatedSource_ = 0.0;
@@ -211,12 +210,12 @@ public:
     { return 273.15 + 10; }; // -> 10°C
 
     /*!
-     * \brief Returns the reference pressure [Pa] of the non-wetting
+     * \brief Returns the reference pressure [Pa] of the nonwetting
      *        fluid phase within a finite volume
      *
      * This problem assumes a constant reference pressure of 1 bar.
      */
-    Scalar nonWettingReferencePressure() const
+    Scalar nonwettingReferencePressure() const
     { return 1.0e5; };
 
     // \}
@@ -327,7 +326,7 @@ private:
 
         PrimaryVariables values(0.0);
         //! Hydrostatic pressure profile
-        values[pressureIdx] = (nonWettingReferencePressure() - pcTop_)
+        values[pressureIdx] = (nonwettingReferencePressure() - pcTop_)
                                - 9.81*1000*(globalPos[dimWorld-1] - this->gridGeometry().bBoxMax()[dimWorld-1]);
         values[compIdx] = xTracer;
         return values;

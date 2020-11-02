@@ -28,11 +28,9 @@
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh>
+#include <dumux/material/fluidmatrixinteractions/3p/parkervangenuchten.hh>
 #include <dumux/io/gnuplotinterface.hh>
-#include <dumux/io/plotmateriallaw3p.hh>
+#include <dumux/common/enumerate.hh>
 
 namespace Dumux {
 /*!
@@ -53,18 +51,15 @@ class InfiltrationThreePSpatialParams
 
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
-    using EffectiveLaw = RegularizedParkerVanGen3P<Scalar>;
+    using ThreePhasePcKrSw = FluidMatrix::ParkerVanGenuchten3PDefault<Scalar>;
 
 public:
     //! Export permeability type
     using PermeabilityType = Scalar;
 
-    //! Get the material law from the property system
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
-
     InfiltrationThreePSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
+    , pcKrSwCurve_("SpatialParams")
     {
         // intrinsic permeabilities
         fineK_ = getParam<Scalar>("SpatialParams.permeability");
@@ -72,22 +67,6 @@ public:
 
         // porosities
         porosity_ = getParam<Scalar>("SpatialParams.porosity");
-        vGAlpha_ = getParam<Scalar>("SpatialParams.vanGenuchtenAlpha");
-        vGN_ = getParam<Scalar>("SpatialParams.vanGenuchtenN");
-        // residual saturations
-        materialParams_.setSwr(0.12);
-        materialParams_.setSnr(0.07);
-        materialParams_.setSgr(0.03);
-
-        // parameters for the 3phase van Genuchten law
-        materialParams_.setVgAlpha(vGAlpha_);
-        materialParams_.setVgn(vGN_);
-        materialParams_.setKrRegardsSnr(false);
-
-        // parameters for adsorption
-        materialParams_.setKdNAPL(0.);
-        materialParams_.setRhoBulk(1500.);
-
         plotFluidMatrixInteractions_ =  getParam<bool>("Output.PlotFluidMatrixInteractions");
     }
 
@@ -99,15 +78,40 @@ public:
     {
         GnuplotInterface<Scalar> gnuplot(plotFluidMatrixInteractions_);
         gnuplot.setOpenPlotWindow(plotFluidMatrixInteractions_);
-        PlotMaterialLaw<Scalar, MaterialLaw> plotMaterialLaw(plotFluidMatrixInteractions_);
+
+        const Scalar sg = 0.2; // assume a fixed gas saturation
+        auto swRange = linspace(0.2, 1.0, 1000);
+
+        // assume fixed sn = 0.2 for pcgw curve
+        auto pcgw = swRange;
+        std::transform(swRange.begin(), swRange.end(), pcgw.begin(), [&](auto x){ return this->pcKrSwCurve_.pcgw(x, 0.2); });
 
         gnuplot.resetAll();
-        plotMaterialLaw.addpc(gnuplot, materialParams_);
-        gnuplot.plot("pc");
+        gnuplot.setXlabel("Sw");
+        gnuplot.setYlabel("pcgw");
+        gnuplot.addDataSetToPlot(swRange, pcgw, "pcgw", "w l");
+        gnuplot.plot("pcgw-sw");
+
+        // plot kr
+        swRange = linspace(0.2, 0.8, 1000);
+        auto krw = swRange;
+        auto krn = swRange;
+        auto krg = swRange;
+        for (const auto& [i, sw] : enumerate(swRange))
+        {
+            const Scalar sn = 1.0 - sg - sw;
+            krw[i] = pcKrSwCurve_.krw(sw, sn);
+            krn[i] = pcKrSwCurve_.krn(sw, sn);
+            krg[i] = pcKrSwCurve_.krg(sw, sn);
+        }
 
         gnuplot.resetAll();
-        plotMaterialLaw.addkr(gnuplot, materialParams_);
-        gnuplot.plot("kr");
+        gnuplot.setXlabel("Sw");
+        gnuplot.setYlabel("kr");
+        gnuplot.addDataSetToPlot(swRange, krw, "krw", "w l");
+        gnuplot.addDataSetToPlot(swRange, krn, "krn", "w l");
+        gnuplot.addDataSetToPlot(swRange, krg, "krg", "w l");
+        gnuplot.plot("kr-sw");
     }
 
       /*!
@@ -139,29 +143,26 @@ public:
     }
 
     /*!
-     * \brief Returns the parameter object for the Brooks-Corey material law
+     * \brief Returns the fluid-matrix interaction law at a given location
      *
-     * \param globalPos The global position
+     * \param globalPos The global coordinates for the given location
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
-        return materialParams_;
+        return makeFluidMatrixInteraction(pcKrSwCurve_);
     }
+
 private:
     bool isFineMaterial_(const GlobalPosition &globalPos) const
-    { return
-            70. - eps_ <= globalPos[0] && globalPos[0] <= 85. + eps_ &&
-            7.0 - eps_ <= globalPos[1] && globalPos[1] <= 7.50 + eps_;
+    {
+        return 70. - eps_ <= globalPos[0] && globalPos[0] <= 85. + eps_ &&
+               7.0 - eps_ <= globalPos[1] && globalPos[1] <= 7.50 + eps_;
     }
 
     Scalar fineK_;
     Scalar coarseK_;
-
     Scalar porosity_;
-    Scalar vGN_;
-    Scalar vGAlpha_;
-
-    MaterialLawParams materialParams_;
+    const ThreePhasePcKrSw pcKrSwCurve_;
 
     bool plotFluidMatrixInteractions_;
 

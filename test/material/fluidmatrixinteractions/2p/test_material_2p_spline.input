@@ -1,0 +1,9 @@
+[MaterialLaw]
+VanGenuchtenAlpha = 2.956e-4
+VanGenuchtenN = 1.5
+SplineSweInterval = 0.1 0.9
+SplineNumSwSamples = 100
+
+[Plot]
+EnablePlot = false
+Range = 0.05 1.0

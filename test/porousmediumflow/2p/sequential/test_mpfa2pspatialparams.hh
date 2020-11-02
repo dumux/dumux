@@ -25,9 +25,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/material/spatialparams/sequentialfv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
-
+#include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 
 namespace Dumux
 {
@@ -46,17 +44,12 @@ struct Test2PSpatialParams {};
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::Test2PSpatialParams> { using type = Test2PSpatialParams<TypeTag>; };
 
-// Set the material law
-template<class TypeTag>
-struct MaterialLaw<TypeTag, TTag::Test2PSpatialParams>
-{
-private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using RawMaterialLaw = RegularizedBrooksCorey<Scalar>;
-public:
-    using type = EffToAbsLaw<RawMaterialLaw>;
-};
 }
+
+// forward declaration
+template<class Scalar>
+class LinearMaterialDefault;
+class LinearMaterial;
 
 /*!
  * \ingroup SequentialTwoPTests
@@ -81,9 +74,14 @@ class Test2PSpatialParams: public SequentialFVSpatialParams<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FieldMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
+    using PcKrSwCurve = FluidMatrix::BrooksCoreyDefault<Scalar>;
+
 public:
-    using MaterialLaw = GetPropType<TypeTag, Properties::MaterialLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
+
+    static constexpr bool pcSwCurveIsLinear()
+    {
+        return std::is_same_v<PcKrSwCurve, LinearMaterial> || std::is_same_v<PcKrSwCurve, LinearMaterialDefault>;
+    }
 
     const FieldMatrix& intrinsicPermeabilityAtPos(const GlobalPosition& globalPos) const
     {
@@ -108,17 +106,17 @@ public:
 #endif
     }
 
-    // return the brooks-corey context depending on the position
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    /*!
+     * \brief Returns the fluid-matrix interaction law at a given location
+     *
+     * \param globalPos The global coordinates for the given location
+     */
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
-        if (isLensOne(globalPos))
-            return materialLawParamsLenses_;
-        else if (isLensTwo(globalPos))
-            return materialLawParamsLenses_;
-        else if (isLensThree(globalPos))
-            return materialLawParamsLenses_;
+        if (isLensOne(globalPos) || isLensTwo(globalPos) || isLensThree(globalPos))
+            return makeFluidMatrixInteraction(*pcKrSwCurveLenses_);
         else
-            return materialLawParamsBackground_;
+            return makeFluidMatrixInteraction(*pcKrSwCurveBackground_);
     }
 
     Test2PSpatialParams(const Problem& problem) :
@@ -126,53 +124,25 @@ public:
             lensOneLowerLeft_(0), lensOneUpperRight_(0), lensTwoLowerLeft_(0), lensTwoUpperRight_(0), lensThreeLowerLeft_(0), lensThreeUpperRight_(0)
     {
 #if PROBLEM == 0
-        // residual saturations
-        materialLawParamsBackground_.setSwr(0.2);
-        materialLawParamsBackground_.setSnr(0.2);
+        typename PcKrSwCurve::BasicParams params(0/*pe*/, 2/*lambda*/);
+        typename PcKrSwCurve::EffToAbsParams effToAbsParams(0.2/*swr*/, 0.2/*snr*/);
+        pcKrSwCurveBackground_ = std::make_unique<PcKrSwCurve>(params, effToAbsParams);
+        pcKrSwCurveLenses_ = std::make_unique<PcKrSwCurve>(params, effToAbsParams);
 
-        materialLawParamsLenses_.setSwr(0.2);
-        materialLawParamsLenses_.setSnr(0.2);
-
-        //parameters for Brooks-Corey law
-
-        // entry pressures function
-        materialLawParamsBackground_.setPe(0.);
-        materialLawParamsLenses_.setPe(0.);
 #elif PROBLEM == 1
-        // residual saturations
-        materialLawParamsBackground_.setSwr(0.);
-        materialLawParamsBackground_.setSnr(0.);
+        typename PcKrSwCurve::BasicParams params(5000/*pe*/, 2/*lambda*/);
+        typename PcKrSwCurve::EffToAbsParams effToAbsParams(0/*swr*/, 0/*snr*/);
+        pcKrSwCurveBackground_ = std::make_unique<PcKrSwCurve>(params, effToAbsParams);
+        pcKrSwCurveLenses_ = std::make_unique<PcKrSwCurve>(params, effToAbsParams);
 
-        materialLawParamsLenses_.setSwr(0.);
-        materialLawParamsLenses_.setSnr(0.);
-
-        //parameters for Brooks-Corey law
-
-        // entry pressures function
-        materialLawParamsBackground_.setPe(5000.);
-        materialLawParamsLenses_.setPe(5000.);
 #else
-        // residual saturations
-        materialLawParamsBackground_.setSwr(0.);
-        materialLawParamsBackground_.setSnr(0.);
-
-        materialLawParamsLenses_.setSwr(0.);
-        materialLawParamsLenses_.setSnr(0.);
-
-        //parameters for Brooks-Corey law
-
-        // entry pressures
-        materialLawParamsBackground_.setPe(getParam<Scalar>("SpatialParams.BackgroundEntryPressure", 0.0));
-        materialLawParamsLenses_.setPe(getParam<Scalar>("SpatialParams.LenseEntryPressure", 0.0));
-#endif
-
-        // Brooks-Corey shape parameters
-#if PROBLEM == 2
-        materialLawParamsBackground_.setLambda(getParam<Scalar>("SpatialParams.BackgroundLambda", 3.0));
-        materialLawParamsLenses_.setLambda(getParam<Scalar>("SpatialParams.LenseLambda", 2.0));
-#else
-        materialLawParamsBackground_.setLambda(2.0);
-        materialLawParamsLenses_.setLambda(2.0);
+        typename PcKrSwCurve::BasicParams paramsBackground(getParam<Scalar>("SpatialParams.BackgroundEntryPressure", 0.0),
+                                                           getParam<Scalar>("SpatialParams.BackgroundLambda", 3.0));
+        typename PcKrSwCurve::BasicParams paramsLenses(getParam<Scalar>("SpatialParams.LenseEntryPressure", 0.0),
+                                                           getParam<Scalar>("SpatialParams.LenseLambda", 2.0));
+        typename PcKrSwCurve::EffToAbsParams effToAbsParams(0/*swr*/, 0/*snr*/);
+        pcKrSwCurveBackground_ = std::make_unique<PcKrSwCurve>(paramsBackground, effToAbsParams);
+        pcKrSwCurveLenses_ = std::make_unique<PcKrSwCurve>(paramsLenses, effToAbsParams);
 #endif
 
 #if PROBLEM == 0
@@ -240,8 +210,9 @@ private:
         return true;
     }
 
-    MaterialLawParams materialLawParamsBackground_;
-    MaterialLawParams materialLawParamsLenses_;
+    std::unique_ptr<PcKrSwCurve> pcKrSwCurveBackground_;
+    std::unique_ptr<PcKrSwCurve> pcKrSwCurveLenses_;
+
     FieldMatrix permBackground_;
     FieldMatrix permLenses_;
     GlobalPosition lensOneLowerLeft_;

@@ -29,8 +29,7 @@
 
 #include <dumux/io/grid/griddata.hh>
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 
 #include <dumux/porousmediumflow/co2/model.hh>
 
@@ -57,18 +56,17 @@ class HeterogeneousSpatialParams
 
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
-    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
+    using PcKrSwCurve = FluidMatrix::BrooksCoreyDefault<Scalar>;
 
 public:
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
     HeterogeneousSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry,
                                std::shared_ptr<const GridData<Grid>> gridData)
-    : ParentType(gridGeometry), gridData_(gridData)
+    : ParentType(gridGeometry)
+    , gridData_(gridData)
+    , pcKrSwCurve_("SpatialParams")
     {
-
         // Set the permeability for the layers
         barrierTopK_ = 1e-17; //sqm
         barrierMiddleK_ = 1e-15; //sqm
@@ -78,12 +76,6 @@ public:
         barrierTopPorosity_ = 0.001;
         barrierMiddlePorosity_ = 0.05;
         reservoirPorosity_ = 0.2;
-
-        // Same material parameters for every layer
-        materialParams_.setSwr(0.2);
-        materialParams_.setSwr(0.05);
-        materialParams_.setLambda(2.0);
-        materialParams_.setPe(1e4);
     }
 
     /*!
@@ -175,15 +167,12 @@ public:
 
 
     /*!
-     * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
+     * \brief Returns the fluid-matrix interaction law at a given location
      *
-     * \param globalPos The position of the center of the element
-     * \return The material parameters object
+     * \param globalPos The global coordinates for the given location
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
-    {
-        return materialParams_;
-    }
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
+    {   return makeFluidMatrixInteraction(pcKrSwCurve_); }
 
     /*!
      * \brief Function for defining which phase is to be considered as the wetting phase.
@@ -211,8 +200,8 @@ private:
     Scalar barrierMiddleK_;
     Scalar reservoirK_;
 
-    MaterialLawParams materialParams_;
     std::vector<int> paramIdx_;
+    const PcKrSwCurve pcKrSwCurve_;
 };
 
 } // end namespace Dumux

@@ -102,7 +102,6 @@ public:
         ParentType::updateStaticWallProperties();
         // update size and initial values of the global vectors
         matchingPointIdx_.resize(this->gridGeometry().elementMapper().size(), 0);
-        storedDensity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
         storedDissipation_.resize(this->gridGeometry().elementMapper().size(), 0.0);
         storedTurbulentKineticEnergy_.resize(this->gridGeometry().elementMapper().size(), 0.0);
         storedDynamicEddyViscosity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
@@ -138,7 +137,6 @@ public:
                 VolumeVariables volVars;
                 volVars.update(elemSol, asImp_(), element, scv);
                 storedDynamicEddyViscosity_[elementIdx] = volVars.calculateEddyViscosity();
-                storedDensity_[elementIdx] = volVars.density();
             }
         }
 
@@ -255,7 +253,7 @@ public:
         unsigned int wallNormalAxis = asImp_().wallNormalAxis(elementIdx);
         unsigned int flowDirectionAxis = asImp_().flowDirectionAxis(elementIdx);
         Scalar velocityGradient = asImp_().velocityGradient(elementIdx, flowDirectionAxis, wallNormalAxis);
-        return mixingLength * mixingLength * abs(velocityGradient) * storedDensity(elementIdx);
+        return mixingLength * mixingLength * abs(velocityGradient) * asImp_().storedDensity(elementIdx);
     }
 
     //! \brief Returns the wall shear stress velocity
@@ -302,8 +300,7 @@ public:
     {
         using std::log;
         Scalar velocityNominal = uStarNominal(elementIdx) * (1.0 / asImp_().karmanConstant() * log(yPlusNominal(elementIdx)) + 5.0);
-        return uStarNominal(elementIdx) * uStarNominal(elementIdx)
-               * velocity / velocityNominal;
+        return uStarNominal(elementIdx) * uStarNominal(elementIdx) * velocity / velocityNominal;
     }
 
     //! \brief Checks whether a wall function should be used
@@ -328,7 +325,7 @@ public:
     {
         unsigned int elementIdx = asImp_().gridGeometry().elementMapper().index(element);
         return FacePrimaryVariables(asImp_().tangentialMomentumWallFunction(elementIdx, elemFaceVars[scvf].velocitySelf())
-                                    * elemVolVars[scvf.insideScvIdx()].density());
+                                    * asImp_().storedDensity(elementIdx) );
     }
 
     //! \brief Returns the flux for non-isothermal and compositional RANS models
@@ -469,9 +466,6 @@ public:
         return useStoredEddyViscosity;
     }
 
-    Scalar storedDensity(const int elementIdx) const
-    { return storedDensity_[elementIdx]; }
-
     Scalar storedDissipation(const int elementIdx) const
     { return storedDissipation_[elementIdx]; }
 
@@ -489,7 +483,6 @@ public:
 
 private:
     std::vector<unsigned int> matchingPointIdx_;
-    std::vector<Scalar> storedDensity_;
     std::vector<Scalar> storedDissipation_;
     std::vector<Scalar> storedTurbulentKineticEnergy_;
     std::vector<Scalar> storedDynamicEddyViscosity_;

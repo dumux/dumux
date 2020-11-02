@@ -39,6 +39,7 @@ public:
     using Scalar = ScalarT;
     enum { numPhases = numPhasesV };
 
+    [[deprecated("Use FluidMatrix::MPLinearMaterial. Class will be removed after 3.3.")]]
     MpLinearMaterialParams()
     {
         for (int i = 0; i < numPhases; ++i) {

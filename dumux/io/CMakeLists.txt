@@ -1,4 +1,5 @@
 add_subdirectory(grid)
+add_subdirectory(format)
 add_subdirectory(vtk)
 add_subdirectory(xml)
 
@@ -6,12 +7,14 @@ install(FILES
 adaptivegridrestart.hh
 container.hh
 defaultiofields.hh
+format.hh
 gnuplotinterface.hh
 loadsolution.hh
 name.hh
 ploteffectivediffusivitymodel.hh
 plotmateriallaw.hh
 plotmateriallaw3p.hh
+plotpckrsw.hh
 plotthermalconductivitymodel.hh
 pointcloudvtkwriter.hh
 rasterimagereader.hh

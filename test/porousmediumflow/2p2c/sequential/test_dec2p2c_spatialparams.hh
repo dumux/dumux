@@ -28,7 +28,6 @@
 #include <dumux/porousmediumflow/2p2c/sequential/properties.hh>
 #include <dumux/material/spatialparams/sequentialfv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
 namespace Dumux
 {
@@ -47,16 +46,6 @@ struct Test2P2CSpatialParams {};
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::Test2P2CSpatialParams> { using type = Test2P2CSpatialParams<TypeTag>; };
 
-// Set the material law
-template<class TypeTag>
-struct MaterialLaw<TypeTag, TTag::Test2P2CSpatialParams>
-{
-private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using RawMaterialLaw = LinearMaterial<Scalar>;
-public:
-    using type = EffToAbsLaw<RawMaterialLaw>;
-};
 }
 
 /*!
@@ -72,12 +61,13 @@ class Test2P2CSpatialParams : public SequentialFVSpatialParams<TypeTag>
 
     enum { dim = GridView::dimension };
     using Element = typename GridView::Traits::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using FieldMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
+    using PcKrSwCurve = FluidMatrix::LinearMaterialDefault<Scalar>;
+
 public:
-    using MaterialLaw = GetPropType<TypeTag, Properties::MaterialLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
 
     const FieldMatrix& intrinsicPermeability (const Element& element) const
     {
@@ -89,23 +79,22 @@ public:
         return 0.2;
     }
 
-
-    // return the parameter object for the Brooks-Corey material law which depends on the position
-    const MaterialLawParams& materialLawParams(const Element &element) const
+    /*!
+     * \brief Returns the fluid-matrix interaction law at a given location
+     *
+     * \param globalPos The global coordinates for the given location
+     */
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
-            return materialLawParams_;
+        return makeFluidMatrixInteraction(*pcKrSwCurve_);
     }
 
-
-    Test2P2CSpatialParams(const Problem& problem) : SequentialFVSpatialParams<TypeTag>(problem),
-            constPermeability_(0)
+    Test2P2CSpatialParams(const Problem& problem)
+    : SequentialFVSpatialParams<TypeTag>(problem)
+    , constPermeability_(0)
     {
-        // residual saturations
-        materialLawParams_.setSwr(0);
-        materialLawParams_.setSnr(0);
-
-        materialLawParams_.setEntryPc(0);
-        materialLawParams_.setMaxPc(10000);
+        typename PcKrSwCurve::BasicParams params(0/*pcEntry*/, 10000/*pcMax*/);
+        pcKrSwCurve_ = std::make_unique<PcKrSwCurve>(params);
 
         for(int i = 0; i < dim; i++)
         {
@@ -114,8 +103,8 @@ public:
     }
 
 private:
-    MaterialLawParams materialLawParams_;
     FieldMatrix constPermeability_;
+    std::unique_ptr<const PcKrSwCurve> pcKrSwCurve_;
 
 };
 

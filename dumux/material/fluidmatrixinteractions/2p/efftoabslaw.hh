@@ -26,6 +26,8 @@
 #ifndef DUMUX_EFF_TO_ABS_LAW_HH
 #define DUMUX_EFF_TO_ABS_LAW_HH
 
+#warning "This header is deprecated. Removal after 3.3. Use new material laws."
+
 #include "efftoabslawparams.hh"
 
 namespace Dumux {
@@ -178,14 +180,14 @@ public:
     }
 
     /*!
-     * \brief The relative permeability for the non-wetting phase.
+     * \brief The relative permeability for the nonwetting phase.
      *
      * \param sw Absolute saturation of the wetting phase \f$\mathrm{[{S}_w]}\f$. It is converted to effective saturation
      *                  and then handed over to the material law actually used for calculation.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen,
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
-     * \return          Relative permeability of the non-wetting phase calculated as implied by
+     * \return          Relative permeability of the nonwetting phase calculated as implied by
      *                  EffLaw e.g. Brooks & Corey, van Genuchten, linear... .
      */
     static Scalar krn(const Params &params, Scalar sw)
@@ -195,7 +197,7 @@ public:
 
     /*!
      * \brief Returns the partial derivative of the relative permeability
-     *        of the non-wetting phase with respect to the wetting saturation.
+     *        of the nonwetting phase with respect to the wetting saturation.
      *
      * \param sw Absolute saturation of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$.
      * \param params A container object that is populated with the appropriate coefficients
@@ -221,13 +223,13 @@ public:
     }
 
     /*!
-     * \brief Convert an absolute non-wetting saturation to an effective one.
+     * \brief Convert an absolute nonwetting saturation to an effective one.
      *
-     * \param sn Absolute saturation of the non-wetting phase \f$\mathrm{[{S}_n]}\f$.
+     * \param sn Absolute saturation of the nonwetting phase \f$\mathrm{[{S}_n]}\f$.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen,
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
-     * \return Effective saturation of the non-wetting phase.
+     * \return Effective saturation of the nonwetting phase.
      */
     static Scalar snToSne(const Params &params, Scalar sn)
     {
@@ -237,23 +239,23 @@ public:
     /*!
      * \brief Convert an effective wetting saturation to an absolute one.
      *
-     * \param swe Effective saturation of the non-wetting phase \f$\mathrm{[\overline{S}_n]}\f$.
+     * \param swe Effective saturation of the nonwetting phase \f$\mathrm{[\overline{S}_n]}\f$.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen,
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
-     * \return Absolute saturation of the non-wetting phase.
+     * \return Absolute saturation of the nonwetting phase.
      */
     static Scalar sweToSw(const Params &params, Scalar swe)
     { return swe*(1. - params.swr() - params.snr()) + params.swr(); }
 
     /*!
-     * \brief Convert an effective non-wetting saturation to an absolute one.
+     * \brief Convert an effective nonwetting saturation to an absolute one.
      *
-     * \param sne Effective saturation of the non-wetting phase \f$\mathrm{[{S}_n]}\f$.
+     * \param sne Effective saturation of the nonwetting phase \f$\mathrm{[{S}_n]}\f$.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen,
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
-     * \return Absolute saturation of the non-wetting phase.
+     * \return Absolute saturation of the nonwetting phase.
      */
     static Scalar sneToSn(const Params &params, Scalar sne)
     { return sne*(1. - params.swr() - params.snr()) + params.snr(); }

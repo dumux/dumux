@@ -119,7 +119,7 @@ public:
                                                 phaseIdx,
                                                 this->elemFluxVarsCache());
         else
-            return {0.0};
+            return Dune::FieldVector<Scalar, numComponents>(0.0);
     }
 
     /*!

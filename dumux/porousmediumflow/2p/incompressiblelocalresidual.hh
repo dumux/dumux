@@ -38,6 +38,8 @@
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/2p/formulation.hh>
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 
 /*!
@@ -76,9 +78,9 @@ public:
     using ParentType::ParentType;
 
     /*!
-     * \brief Adds storage derivatives for wetting and non-wetting phase
+     * \brief Adds storage derivatives for wetting and nonwetting phase
      *
-     * Compute storage derivatives for the wetting and the non-wetting phase with respect to \f$p_w\f$
+     * Compute storage derivatives for the wetting and the nonwetting phase with respect to \f$p_w\f$
      * and \f$S_n\f$.
      *
      * \param partialDerivatives The partial derivatives
@@ -114,7 +116,7 @@ public:
     }
 
     /*!
-     * \brief Adds source derivatives for wetting and non-wetting phase.
+     * \brief Adds source derivatives for wetting and nonwetting phase.
      *
      * \param partialDerivatives The partial derivatives
      * \param problem The problem
@@ -133,9 +135,9 @@ public:
     { /* TODO maybe forward to problem for the user to implement the source derivatives?*/ }
 
     /*!
-     * \brief Adds flux derivatives for wetting and non-wetting phase for cell-centered FVM using TPFA
+     * \brief Adds flux derivatives for wetting and nonwetting phase for cell-centered FVM using TPFA
      *
-     * Compute derivatives for the wetting and the non-wetting phase flux with respect to \f$p_w\f$
+     * Compute derivatives for the wetting and the nonwetting phase flux with respect to \f$p_w\f$
      * and \f$S_n\f$.
      *
      * \param derivativeMatrices The partial derivatives
@@ -169,7 +171,6 @@ public:
         static_assert(ModelTraits::priVarFormulation() == TwoPFormulation::p0s1,
                       "2p/incompressiblelocalresidual.hh: Analytic differentiation has to be checked for p1-s0 formulation!");
 
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
 
         // evaluate the current wetting phase Darcy flux and resulting upwind weights
@@ -189,12 +190,23 @@ public:
         const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
         const auto& insideVolVars = curElemVolVars[insideScvIdx];
         const auto& outsideVolVars = curElemVolVars[outsideScvIdx];
-        const auto& insideMaterialParams = problem.spatialParams().materialLawParams(element,
-                                                                                     insideScv,
-                                                                                     elementSolution<FVElementGeometry>(insideVolVars.priVars()));
-        const auto& outsideMaterialParams = problem.spatialParams().materialLawParams(outsideElement,
-                                                                                      outsideScv,
-                                                                                      elementSolution<FVElementGeometry>(outsideVolVars.priVars()));
+
+        // old material law interface is deprecated: Replace this by
+        // const auto& insidefluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element,
+        //                                                                                           insideScv,
+        //                                                                                           elementSolution<FVElementGeometry>(insideVolVars.priVars()));
+        // const auto& outsidefluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(outsideElement,
+        //                                                                                            outsideScv,
+        //                                                                                            elementSolution<FVElementGeometry>(outsideVolVars.priVars()));
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto& insidefluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(),
+                                                                          element,
+                                                                          insideScv,
+                                                                          elementSolution<FVElementGeometry>(insideVolVars.priVars()));
+        const auto& outsidefluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(),
+                                                                           outsideElement,
+                                                                           outsideScv,
+                                                                           elementSolution<FVElementGeometry>(outsideVolVars.priVars()));
 
         // get references to the two participating derivative matrices
         auto& dI_dI = derivativeMatrices[insideScvIdx];
@@ -213,12 +225,12 @@ public:
         // derivative w.r.t. to Sn is the negative of the one w.r.t. Sw
         const auto insideSw = insideVolVars.saturation(0);
         const auto outsideSw = outsideVolVars.saturation(0);
-        const auto dKrw_dSn_inside = -1.0*MaterialLaw::dkrw_dsw(insideMaterialParams, insideSw);
-        const auto dKrw_dSn_outside = -1.0*MaterialLaw::dkrw_dsw(outsideMaterialParams, outsideSw);
-        const auto dKrn_dSn_inside = -1.0*MaterialLaw::dkrn_dsw(insideMaterialParams, insideSw);
-        const auto dKrn_dSn_outside = -1.0*MaterialLaw::dkrn_dsw(outsideMaterialParams, outsideSw);
-        const auto dpc_dSn_inside = -1.0*MaterialLaw::dpc_dsw(insideMaterialParams, insideSw);
-        const auto dpc_dSn_outside = -1.0*MaterialLaw::dpc_dsw(outsideMaterialParams, outsideSw);
+        const auto dKrw_dSn_inside = -1.0*insidefluidMatrixInteraction.dkrw_dsw(insideSw);
+        const auto dKrw_dSn_outside = -1.0*outsidefluidMatrixInteraction.dkrw_dsw(outsideSw);
+        const auto dKrn_dSn_inside = -1.0*insidefluidMatrixInteraction.dkrn_dsw(insideSw);
+        const auto dKrn_dSn_outside = -1.0*outsidefluidMatrixInteraction.dkrn_dsw(outsideSw);
+        const auto dpc_dSn_inside = -1.0*insidefluidMatrixInteraction.dpc_dsw(insideSw);
+        const auto dpc_dSn_outside = -1.0*outsidefluidMatrixInteraction.dpc_dsw(outsideSw);
 
         const auto tij = elemFluxVarsCache[scvf].advectionTij();
 
@@ -238,23 +250,23 @@ public:
         dI_dI[conti0EqIdx+0][saturationIdx] += rho_mu_flux_w*dKrw_dSn_inside*insideWeight_w;
         dI_dJ[conti0EqIdx+0][saturationIdx] += rho_mu_flux_w*dKrw_dSn_outside*outsideWeight_w;
 
-        // partial derivative of the non-wetting phase flux w.r.t. p_w
+        // partial derivative of the nonwetting phase flux w.r.t. p_w
         dI_dI[conti0EqIdx+1][pressureIdx] += tij_up_n;
         dI_dJ[conti0EqIdx+1][pressureIdx] -= tij_up_n;
 
-        // partial derivative of the non-wetting phase flux w.r.t. S_n (relative permeability derivative contribution)
+        // partial derivative of the nonwetting phase flux w.r.t. S_n (relative permeability derivative contribution)
         dI_dI[conti0EqIdx+1][saturationIdx] += rho_mu_flux_n*dKrn_dSn_inside*insideWeight_n;
         dI_dJ[conti0EqIdx+1][saturationIdx] += rho_mu_flux_n*dKrn_dSn_outside*outsideWeight_n;
 
-        // partial derivative of the non-wetting phase flux w.r.t. S_n (capillary pressure derivative contribution)
+        // partial derivative of the nonwetting phase flux w.r.t. S_n (capillary pressure derivative contribution)
         dI_dI[conti0EqIdx+1][saturationIdx] += tij_up_n*dpc_dSn_inside;
         dI_dJ[conti0EqIdx+1][saturationIdx] -= tij_up_n*dpc_dSn_outside;
     }
 
     /*!
-     * \brief Adds flux derivatives for wetting and non-wetting phase for box method
+     * \brief Adds flux derivatives for wetting and nonwetting phase for box method
      *
-     * Compute derivatives for the wetting and the non-wetting phase flux with respect to \f$p_w\f$
+     * Compute derivatives for the wetting and the nonwetting phase flux with respect to \f$p_w\f$
      * and \f$S_n\f$.
      *
      * \param A The Jacobian Matrix
@@ -288,7 +300,6 @@ public:
         static_assert(ModelTraits::priVarFormulation() == TwoPFormulation::p0s1,
                       "2p/incompressiblelocalresidual.hh: Analytic differentiation has to be checked for p0-s1 formulation!");
 
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
 
         // evaluate the current wetting phase Darcy flux and resulting upwind weights
@@ -310,8 +321,22 @@ public:
 
         const auto elemSol = elementSolution(element, curElemVolVars, fvGeometry);
 
-        const auto& insideMaterialParams = problem.spatialParams().materialLawParams(element, insideScv, elemSol);
-        const auto& outsideMaterialParams = problem.spatialParams().materialLawParams(element, outsideScv, elemSol);
+        // old material law interface is deprecated: Replace this by
+        // const auto& insidefluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element,
+        //                                                                                           insideScv,
+        //                                                                                           elemSol);
+        // const auto& outsidefluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element,
+        //                                                                                            outsideScv,
+        //                                                                                            elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto& insidefluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(),
+                                                                          element,
+                                                                          insideScv,
+                                                                          elemSol);
+        const auto& outsidefluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(),
+                                                                           element,
+                                                                           outsideScv,
+                                                                           elemSol);
 
         // some quantities to be reused (rho & mu are constant and thus equal for all cells)
         static const auto rho_w = insideVolVars.density(0);
@@ -355,7 +380,7 @@ public:
             dI_dJ_inside[globalJ][conti0EqIdx+0][pressureIdx] += tj_up_w;
             dI_dJ_outside[globalJ][conti0EqIdx+0][pressureIdx] -= tj_up_w;
 
-            // partial derivative of the non-wetting phase flux w.r.t. p_w
+            // partial derivative of the nonwetting phase flux w.r.t. p_w
             const auto tj_up_n = tj*up_n;
             dI_dJ_inside[globalJ][conti0EqIdx+1][pressureIdx] += tj_up_n;
             dI_dJ_outside[globalJ][conti0EqIdx+1][pressureIdx] -= tj_up_n;
@@ -366,19 +391,19 @@ public:
             {
                 // partial derivative of the wetting phase flux w.r.t. S_n
                 const auto insideSw = insideVolVars.saturation(0);
-                const auto dKrw_dSn_inside = -1.0*MaterialLaw::dkrw_dsw(insideMaterialParams, insideSw);
+                const auto dKrw_dSn_inside = -1.0*insidefluidMatrixInteraction.dkrw_dsw(insideSw);
                 const auto dFluxW_dSnJ = rho_mu_flux_w*dKrw_dSn_inside*insideWeight_w;
                 dI_dJ_inside[globalJ][conti0EqIdx+0][saturationIdx] += dFluxW_dSnJ;
                 dI_dJ_outside[globalJ][conti0EqIdx+0][saturationIdx] -= dFluxW_dSnJ;
 
-                // partial derivative of the non-wetting phase flux w.r.t. S_n (k_rn contribution)
-                const auto dKrn_dSn_inside = -1.0*MaterialLaw::dkrn_dsw(insideMaterialParams, insideSw);
+                // partial derivative of the nonwetting phase flux w.r.t. S_n (k_rn contribution)
+                const auto dKrn_dSn_inside = -1.0*insidefluidMatrixInteraction.dkrn_dsw(insideSw);
                 const auto dFluxN_dSnJ_krn = rho_mu_flux_n*dKrn_dSn_inside*insideWeight_n;
                 dI_dJ_inside[globalJ][conti0EqIdx+1][saturationIdx] += dFluxN_dSnJ_krn;
                 dI_dJ_outside[globalJ][conti0EqIdx+1][saturationIdx] -= dFluxN_dSnJ_krn;
 
-                // partial derivative of the non-wetting phase flux w.r.t. S_n (p_c contribution)
-                const auto dFluxN_dSnJ_pc = -1.0*tj_up_n*MaterialLaw::dpc_dsw(insideMaterialParams, insideSw);
+                // partial derivative of the nonwetting phase flux w.r.t. S_n (p_c contribution)
+                const auto dFluxN_dSnJ_pc = -1.0*tj_up_n*insidefluidMatrixInteraction.dpc_dsw(insideSw);
                 dI_dJ_inside[globalJ][conti0EqIdx+1][saturationIdx] += dFluxN_dSnJ_pc;
                 dI_dJ_outside[globalJ][conti0EqIdx+1][saturationIdx] -= dFluxN_dSnJ_pc;
             }
@@ -386,25 +411,34 @@ public:
             {
                 // see comments for (globalJ == insideScvIdx)
                 const auto outsideSw = outsideVolVars.saturation(0);
-                const auto dKrw_dSn_outside = -1.0*MaterialLaw::dkrw_dsw(outsideMaterialParams, outsideSw);
+                const auto dKrw_dSn_outside = -1.0*outsidefluidMatrixInteraction.dkrw_dsw(outsideSw);
                 const auto dFluxW_dSnJ = rho_mu_flux_w*dKrw_dSn_outside*outsideWeight_w;
                 dI_dJ_inside[globalJ][conti0EqIdx+0][saturationIdx] += dFluxW_dSnJ;
                 dI_dJ_outside[globalJ][conti0EqIdx+0][saturationIdx] -= dFluxW_dSnJ;
 
-                const auto dKrn_dSn_outside = -1.0*MaterialLaw::dkrn_dsw(outsideMaterialParams, outsideSw);
+                const auto dKrn_dSn_outside = -1.0*outsidefluidMatrixInteraction.dkrn_dsw(outsideSw);
                 const auto dFluxN_dSnJ_krn = rho_mu_flux_n*dKrn_dSn_outside*outsideWeight_n;
                 dI_dJ_inside[globalJ][conti0EqIdx+1][saturationIdx] += dFluxN_dSnJ_krn;
                 dI_dJ_outside[globalJ][conti0EqIdx+1][saturationIdx] -= dFluxN_dSnJ_krn;
 
-                const auto dFluxN_dSnJ_pc = -1.0*tj_up_n*MaterialLaw::dpc_dsw(outsideMaterialParams, outsideSw);
+                const auto dFluxN_dSnJ_pc = -1.0*tj_up_n*outsidefluidMatrixInteraction.dpc_dsw(outsideSw);
                 dI_dJ_inside[globalJ][conti0EqIdx+1][saturationIdx] += dFluxN_dSnJ_pc;
                 dI_dJ_outside[globalJ][conti0EqIdx+1][saturationIdx] -= dFluxN_dSnJ_pc;
             }
             else
             {
-                const auto& paramsJ = problem.spatialParams().materialLawParams(element, scvJ, elemSol);
+                // old material law interface is deprecated: Replace this by
+                // const auto& fluidMatrixInteractionJ = problem.spatialParams().fluidMatrixInteraction(element,
+                //                                                                                      scvJ,
+                //                                                                                      elemSol);
+
+                // after the release of 3.3, when the deprecated interface is no longer supported
+                const auto& fluidMatrixInteractionJ = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(),
+                                                                             element,
+                                                                             scvJ,
+                                                                             elemSol);
                 const auto swJ = curElemVolVars[scvJ].saturation(0);
-                const auto dFluxN_dSnJ_pc = tj_up_n*MaterialLaw::dpc_dsw(paramsJ, swJ);
+                const auto dFluxN_dSnJ_pc = tj_up_n*fluidMatrixInteractionJ.dpc_dsw(swJ);
                 dI_dJ_inside[globalJ][conti0EqIdx+1][saturationIdx] -= dFluxN_dSnJ_pc;
                 dI_dJ_outside[globalJ][conti0EqIdx+1][saturationIdx] += dFluxN_dSnJ_pc;
             }
@@ -412,9 +446,9 @@ public:
     }
 
     /*!
-     * \brief Adds cell-centered Dirichlet flux derivatives for wetting and non-wetting phase
+     * \brief Adds cell-centered Dirichlet flux derivatives for wetting and nonwetting phase
      *
-     * Compute derivatives for the wetting and the non-wetting phase flux with respect to \f$p_w\f$
+     * Compute derivatives for the wetting and the nonwetting phase flux with respect to \f$p_w\f$
      * and \f$S_n\f$.
      *
      * \param derivativeMatrices The matrices containing the derivatives
@@ -434,7 +468,6 @@ public:
                                        const ElementFluxVariablesCache& elemFluxVarsCache,
                                        const SubControlVolumeFace& scvf) const
     {
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
 
         // evaluate the current wetting phase Darcy flux and resulting upwind weights
@@ -451,9 +484,16 @@ public:
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = curElemVolVars[insideScvIdx];
         const auto& outsideVolVars = curElemVolVars[scvf.outsideScvIdx()];
-        const auto& insideMaterialParams = problem.spatialParams().materialLawParams(element,
-                                                                                     insideScv,
-                                                                                     elementSolution<FVElementGeometry>(insideVolVars.priVars()));
+
+        // old material law interface is deprecated: Replace this by
+        // const auto& insidefluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element,
+        //                                                                                           insideScv,
+        //                                                                                           elementSolution<FVElementGeometry>(insideVolVars.priVars()));
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto& insidefluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(),
+                                                                          element,
+                                                                          insideScv,
+                                                                          elementSolution<FVElementGeometry>(insideVolVars.priVars()));
 
         // some quantities to be reused (rho & mu are constant and thus equal for all cells)
         static const auto rho_w = insideVolVars.density(0);
@@ -470,9 +510,9 @@ public:
 
         // derivative w.r.t. to Sn is the negative of the one w.r.t. Sw
         const auto insideSw = insideVolVars.saturation(0);
-        const auto dKrw_dSn_inside = -1.0*MaterialLaw::dkrw_dsw(insideMaterialParams, insideSw);
-        const auto dKrn_dSn_inside = -1.0*MaterialLaw::dkrn_dsw(insideMaterialParams, insideSw);
-        const auto dpc_dSn_inside = -1.0*MaterialLaw::dpc_dsw(insideMaterialParams, insideSw);
+        const auto dKrw_dSn_inside = -1.0*insidefluidMatrixInteraction.dkrw_dsw(insideSw);
+        const auto dKrn_dSn_inside = -1.0*insidefluidMatrixInteraction.dkrn_dsw(insideSw);
+        const auto dpc_dSn_inside = -1.0*insidefluidMatrixInteraction.dpc_dsw(insideSw);
 
         const auto tij = elemFluxVarsCache[scvf].advectionTij();
         // partial derivative of the wetting phase flux w.r.t. p_w
@@ -482,19 +522,19 @@ public:
         // partial derivative of the wetting phase flux w.r.t. S_n
         dI_dI[conti0EqIdx+0][saturationIdx] += rhow_muw*flux_w*dKrw_dSn_inside*insideWeight_w;
 
-        // partial derivative of the non-wetting phase flux w.r.t. p_w
+        // partial derivative of the nonwetting phase flux w.r.t. p_w
         const auto up_n = rhonKrn_mun_inside*insideWeight_n + rhonKrn_mun_outside*outsideWeight_n;
         dI_dI[conti0EqIdx+1][pressureIdx] += tij*up_n;
 
-        // partial derivative of the non-wetting phase flux w.r.t. S_n (relative permeability derivative contribution)
+        // partial derivative of the nonwetting phase flux w.r.t. S_n (relative permeability derivative contribution)
         dI_dI[conti0EqIdx+1][saturationIdx] += rhon_mun*flux_n*dKrn_dSn_inside*insideWeight_n;
 
-        // partial derivative of the non-wetting phase flux w.r.t. S_n (capillary pressure derivative contribution)
+        // partial derivative of the nonwetting phase flux w.r.t. S_n (capillary pressure derivative contribution)
         dI_dI[conti0EqIdx+1][saturationIdx] += tij*dpc_dSn_inside*up_n;
     }
 
     /*!
-     * \brief Adds Robin flux derivatives for wetting and non-wetting phase
+     * \brief Adds Robin flux derivatives for wetting and nonwetting phase
      *
      * \param derivativeMatrices The matrices containing the derivatives
      * \param problem The problem

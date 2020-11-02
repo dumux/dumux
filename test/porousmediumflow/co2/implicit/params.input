@@ -22,3 +22,9 @@ InjectionRate = 3e-3 # [kg/sq/s]
 
 [Brine]
 Salinity = 1e-1
+
+[SpatialParams]
+BrooksCoreyPcEntry = 1e4
+BrooksCoreyLambda = 2.0
+Swr = 0.05
+Snr = 0.0
