@@ -91,58 +91,51 @@ def getParamsFromFile(file):
     return parameters
 
 # search all *.hh files for parameters
+# TODO: allow runtime args with extensions and folder(s) to be checked
 parameters = []
 rootDir = os.path.dirname(os.path.abspath(__file__)) + "/../../dumux"
 for root, _, files in os.walk(rootDir):
     for file in files:
         if os.path.splitext(file)[1] == ".hh" and os.path.splitext(file)[0] != 'parameters':
-            parameters.append(getParamsFromFile(os.path.join(root, file)))
+            parameters.extend(getParamsFromFile(os.path.join(root, file)))
 
-# flatten the list
-parameters = list(itertools.chain.from_iterable(parameters))
-
-tableEntriesWithoutGroup = []
-tableEntriesWithGroup = []
-previousGroupEntry = None
-for entry in sorted(parameters, key=lambda p: p['paramName']):
-    paramName = entry['paramName'].split('.')
-    if len(paramName) == 1:
-        group = None
+# make sorted dictionary of the entries
+# treat duplicates (could have differing default values or type names - e.g. via aliases)
+parameterDict = {}
+for params in parameters:
+    key = params['paramName']
+    if key in parameterDict:
+        parameterDict[key]['defaultValue'].append(params['defaultValue'])
+        parameterDict[key]['paramType'].append(params['paramType'])
     else:
-        group = paramName[0].strip('"')
+        parameterDict[key] = params
+        parameterDict[key]['defaultValue'] = [params['defaultValue']]
+        parameterDict[key]['paramType'] = [params['paramType']]
+sortedParameterDict = {key: value for key, value in sorted(parameterDict.items())}
 
-    groupEntry = group if group else '-'
+tableEntriesWithGroup = []
+tableEntriesWithoutGroup = []
+previousGroupEntry = None
+
+for key in sortedParameterDict:
+
+    entry = sortedParameterDict[key]
+    hasGroup = True if entry['paramName'].count('.') != 0 else False
+    groupEntry = '-' if not hasGroup else entry['paramName'].split('.')[0]
+    paramName = entry['paramName'] if not hasGroup else entry['paramName'].partition('.')[2]
+
+    # TODO: selection scheme in case of multiple occurrences? For now we use the first one
+    paramType = entry['paramType'][0]
+    defaultValue = entry['defaultValue'][0] if entry['defaultValue'][0] != None else ''
+
     if groupEntry != previousGroupEntry:
         previousGroupEntry = groupEntry
-        if groupEntry != '-':
-            groupEntry = '\\b ' + groupEntry
-
-    paramType = entry['paramType']
-    paramName = '.'.join(paramName[1:]).strip('"') if group else paramName[0].strip('"')
-
-    defaultValue = entry['defaultValue']
-    if not defaultValue:
-        defaultValue = ''
+        if hasGroup: groupEntry = '\\b ' + groupEntry
 
     tableEntry = ' * | {} | {} | {} | {} | TODO: explanation |'.format(groupEntry, paramName , paramType , defaultValue)
 
-    if group:
-        tableEntriesWithGroup.append(tableEntry)
-    else:
-        tableEntriesWithoutGroup.append(tableEntry)
-
-
-# Remove duplicates. This does not work if one of the duplicate entries is the first in a group due to \b.
-# We deal with this case later.
-tableEntriesWithoutGroup = list(OrderedDict.fromkeys(tableEntriesWithoutGroup))
-tableEntriesWithGroup = list(OrderedDict.fromkeys(tableEntriesWithGroup))
-
-# Remove left-over duplicates from above
-for i, entry in enumerate(tableEntriesWithGroup):
-    if '\\b' in entry:
-        entry = entry.replace('\\b ', '')
-        if entry == tableEntriesWithGroup[i+1]:
-            del tableEntriesWithGroup[i+1]
+    if hasGroup: tableEntriesWithGroup.append(tableEntry)
+    else: tableEntriesWithoutGroup.append(tableEntry)
 
 # combine entries
 tableEntries = tableEntriesWithoutGroup + tableEntriesWithGroup
