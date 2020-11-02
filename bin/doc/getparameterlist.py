@@ -137,9 +137,6 @@ for key in sortedParameterDict:
 # combine entries
 tableEntries = tableEntriesWithoutGroup + tableEntriesWithGroup
 
-# make a backup of the old parameterlist.txt file
-copyfile(rootDir + '/../doc/doxygen/extradoc/parameterlist.txt', rootDir + '/../doc/doxygen/extradoc/parameterlist_old.txt')
-
 header = """/*!
  *\\file
  *\ingroup Parameter
