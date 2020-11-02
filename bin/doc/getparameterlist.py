@@ -80,7 +80,7 @@ def getParamsFromFile(file):
 
     # print encountered errors
     if errors:
-        print('\n\n{} paramter{} in file {} could not be retrieved automatically. Please check them yourself:'.format(len(errors), 's' if len(errors) > 1 else '', file))
+        print('\n\n{} parameter{} in file {} could not be retrieved automatically. Please check them yourself:'.format(len(errors), 's' if len(errors) > 1 else '', file))
         for lineIdx in errors:
             print("\n\t-> line {}: {}".format(lineIdx, errors[lineIdx]['line']))
             print("\t\t-> error message: {}".format(errors[lineIdx]['message']))
@@ -108,15 +108,19 @@ for params in parameters:
         parameterDict[key] = params
         parameterDict[key]['defaultValue'] = [params['defaultValue']]
         parameterDict[key]['paramType'] = [params['paramType']]
-sortedParameterDict = {key: value for key, value in sorted(parameterDict.items())}
+parameterDict = {key: value for key, value in sorted(parameterDict.items())}
 
-tableEntriesWithGroup = []
-tableEntriesWithoutGroup = []
-previousGroupEntry = None
+# determine actual entries (from duplicates)
+# and determine maximum occurring column widths
+maxGroupWidth = 0
+maxParamWidth = 0
+maxTypeWidth = 0
+maxDefaultWidth = 0
 
-for key in sortedParameterDict:
+tableEntryData = []
+for key in parameterDict:
 
-    entry = sortedParameterDict[key]
+    entry = parameterDict[key]
     hasGroup = True if entry['paramName'].count('.') != 0 else False
     groupEntry = '-' if not hasGroup else entry['paramName'].split('.')[0]
     paramName = entry['paramName'] if not hasGroup else entry['paramName'].partition('.')[2]
@@ -125,13 +129,34 @@ for key in sortedParameterDict:
     paramType = entry['paramType'][0]
     defaultValue = entry['defaultValue'][0] if entry['defaultValue'][0] != None else ''
 
+    maxGroupWidth = max(maxGroupWidth, len(groupEntry)+3) # +3 because \b will be added later
+    maxParamWidth = max(maxParamWidth, len(paramName))
+    maxTypeWidth = max(maxTypeWidth, len(paramType))
+    maxDefaultWidth = max(maxDefaultWidth, len(defaultValue))
+    tableEntryData.append({'group': groupEntry, 'name': paramName, 'type': paramType, 'default': defaultValue})
+
+# generate actual table entries
+tableEntriesWithGroup = []
+tableEntriesWithoutGroup = []
+previousGroupEntry = None
+
+for data in tableEntryData:
+
+    groupEntry = data['group']
+    paramName = data['name']
+    paramType = data['type']
+    defaultValue = data['default']
+
     if groupEntry != previousGroupEntry:
         previousGroupEntry = groupEntry
-        if hasGroup: groupEntry = '\\b ' + groupEntry
+        if groupEntry != '-': groupEntry = '\\b ' + groupEntry
 
-    tableEntry = ' * | {} | {} | {} | {} | TODO: explanation |'.format(groupEntry, paramName , paramType , defaultValue)
+    tableEntry = ' * | {} | {} | {} | {} | TODO: explanation |'.format(groupEntry.ljust(maxGroupWidth),
+                                                                       paramName.ljust(maxParamWidth),
+                                                                       paramType.ljust(maxTypeWidth),
+                                                                       defaultValue.ljust(maxDefaultWidth))
 
-    if hasGroup: tableEntriesWithGroup.append(tableEntry)
+    if groupEntry != '-': tableEntriesWithGroup.append(tableEntry)
     else: tableEntriesWithoutGroup.append(tableEntry)
 
 # combine entries
@@ -146,11 +171,24 @@ header = """/*!
  * The listed run-time parameters are available in general,
  * but we point out that a certain model might not be able
  * to use every parameter!
- *
- * | Group       | Parameter    | Type       | Default Value     | Explanation |
- * | :-          | :-           | :-         | :-                | :-          |
- * | -           | ParameterFile | std::string| executable.input  | name of the parameter file |
-"""
+ *\n"""
+header += " * | " + "Group".ljust(maxGroupWidth)
+header +=   " | " + "Parameter".ljust(maxParamWidth)
+header +=   " | " + "Type".ljust(maxTypeWidth)
+header +=   " | " + "Default Value".ljust(maxDefaultWidth)
+header +=   " | Explanation |\n"
+
+header += " * | " + ":-".ljust(maxGroupWidth)
+header +=   " | " + ":-".ljust(maxParamWidth)
+header +=   " | " + ":-".ljust(maxTypeWidth)
+header +=   " | " + ":-".ljust(maxDefaultWidth)
+header +=   " | :-         |\n"
+
+header += " * | " + "".ljust(maxGroupWidth)
+header +=   " | " + "ParameterFile".ljust(maxParamWidth)
+header +=   " | " + "std::string".ljust(maxTypeWidth)
+header +=   " | " + "executable.input".ljust(maxDefaultWidth)
+header +=   " | :-         |\n"
 
 # overwrite the old parameterlist.txt file
 with open(rootDir + '/../doc/doxygen/extradoc/parameterlist.txt', "w") as outputfile:
