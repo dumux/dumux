@@ -20,8 +20,8 @@ The \Dumux course material is available online:
 \url{https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course}. \par
 In order to download this repository, which acts as an additional module to
 the \Dumux base, you can download an installation script with the following command:
-\begin{lstlisting}[style=Bash]
-$ wget https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course/raw/releases/3.3/scripts/install.sh
+\begin{lstlisting}[style=Bash,escapechar=\%]
+$ wget https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course/raw/releases/%\DumuxVersion%/scripts/install.sh
 \end{lstlisting}
 This script will install \texttt{dumux}, it's Dune dependencies, and the \texttt{dumux-course}
 repository. Within the directory \texttt{dumux-course} there are a series of exercises
@@ -29,5 +29,5 @@ and slides describing the previously described examples. The course can also be 
 dumux installation using the \texttt{installExternal.sh} script and the argument \texttt{course}.\par
 %
 The \Dumux course will be updated with each \Dumux release.
-The above script will download the correct version (\textbf{releases/3.3}) of both
+The above script will download the correct version (\textbf{releases/\DumuxVersion}) of both
 the \texttt{dumux} and \texttt{dumux-course} module.

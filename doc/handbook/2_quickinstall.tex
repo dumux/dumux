@@ -16,8 +16,8 @@ setting up a {\Dune}/{\Dumux} directory tree and configures all modules with CMa
 First, you will have to download this script. To do this, first navigate to the directory where you
 want to install \Dumux and \Dune (a single root folder \texttt{DUMUX} will be produced, so you do
 not need to provide one). Then use \texttt{wget} to download the script with the following command:
-\begin{lstlisting}[style=Bash]
-$ wget https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/releases/3.3/bin/installdumux.py
+\begin{lstlisting}[style=Bash,escapechar=\%]
+$ wget https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/releases/%\DumuxVersion%/bin/installdumux.py
 \end{lstlisting}
 
 After the download is complete, execute the script. This can be done with
@@ -26,7 +26,7 @@ $ python installdumux.py
 \end{lstlisting}
 
 This script will download each of the \Dune-modules that \Dumux depends on at their 2.7 release,
-as well as \Dumux's 3.3 release. After these individual modules are downloaded, \Dune and \Dumux
+as well as \Dumux's \DumuxVersion release. After these individual modules are downloaded, \Dune and \Dumux
 are automatically configured using the command-line script \texttt{dunecontrol}, located in
 \texttt{dune-common/bin/dunecontrol}, optimized using configure options defined in the \texttt{cmake.opts}
 file located in \texttt{dumux/cmake.opts}. The commands beneath the \texttt{\# run dunecontrol} in
@@ -62,8 +62,8 @@ paraview *pvd
 These commands are compiled into \texttt{test\_dumux.sh}, which you can download and run
 from the same directory from which you ran \texttt{installDumux.sh}.
 
-\begin{lstlisting}[style=Bash]
-$ wget https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/releases/3.3/bin/util/test_dumux.sh
+\begin{lstlisting}[style=Bash,escapechar=\%]
+$ wget https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/releases/%\DumuxVersion%/bin/util/test_dumux.sh
 $ wget sh test_dumux.sh
 \end{lstlisting}
 
