@@ -3,8 +3,8 @@ DtInitial = 1 # [s]
 TEnd = 2 # [s]
 
 [Grid]
-UpperRight = 10 1
-Cells = 100 50
+UpperRight = 10 2
+Cells = 100 100
 
 [Problem]
 Name = test_channel_stokes_coupled # name passed to the output routines
@@ -51,7 +51,7 @@ DiffCoeff = 0.2
 InitialConcentration = 1.0
 StartingRadius = 0.4
 DirichletRadius = 0.4
-K = 1
-n = 10
+K = 1.0
+n = 10.0
 Reaction = 0.0
 AdvectiveTransport = 0.0

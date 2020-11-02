@@ -52,7 +52,7 @@ struct NavierStokesUpwindTerms
 {
     static auto transportFlux(const int compIdx)
     { return [compIdx](const auto& volVars) { return volVars.concentration(compIdx)
-                                                * (volVars.phasefield(1) + 1e-8)
+                                                //* (volVars.phasefield(1) + 1e-8)
                                                     ; }; }
 
     // TODO: add phasefield to mass flux
@@ -246,8 +246,11 @@ public:
         if (scvf.isFrontal())
         {
             // pressure contribution
-            flux[scvf.directionIndex()] = (pressure - problem.referencePressure(element, fvGeometry, scvf)) * scvf.directionSign();
+            flux[scvf.directionIndex()] = (pressure - problem.referencePressure(element, fvGeometry, scvf)) * scvf.directionSign()
+                * (problem.phasefield(element, fvGeometry, scvf) + 1e-8)
+                ;
 
+            // TODO: Phasefield
             if (problem.enableInertiaTerms())
             {
                 const auto v = elemVolVars[scvf.insideScvIdx()].velocity();
@@ -291,7 +294,7 @@ public:
             // viscous terms
             const static Scalar delta = getParam<Scalar>("Phasefield.delta");
             const Scalar mu = problem.effectiveViscosity(element, fvGeometry, scvf)
-                * (problem.phasefield(element, fvGeometry, scvf) + delta)
+                * (problem.elementPhasefield(element, fvGeometry, scvf) + delta)
                 ;
 
             // lateral face normal to boundary (integration point touches boundary)
@@ -308,6 +311,7 @@ public:
                                               * scvf.directionSign();
 
             // advective terms
+            // TODO: Phasefield?
             if (problem.enableInertiaTerms())
             {
                 const auto transportingVelocity = [&]()

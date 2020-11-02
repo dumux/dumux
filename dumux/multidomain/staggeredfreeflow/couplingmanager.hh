@@ -207,17 +207,6 @@ public:
     // \{
 
     /*!
-     * \brief Returns an approximation of the phasefield at the cell of a given sub control volume face.
-     */
-    //Scalar cellPhasefield(const Element<freeFlowMomentumIdx>& element,
-    //                  const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
-    //                  const SubControlVolumeFace<freeFlowMomentumIdx>& scvf) const
-    //{
-    //    const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx);
-    //    return this->curSol()[freeFlowMassIdx][fvGeometry.elementIdx()][phi1Idx];
-    //}
-
-    /*!
      * \brief Returns the phasefield at a given sub control volume face.
      */
     Scalar phasefield(const Element<freeFlowMomentumIdx>& element,
@@ -245,6 +234,42 @@ public:
         const auto& massScv = (*scvs(momentumCouplingContext_[0].fvGeometry).begin());
         return considerPreviousTimeStep ? momentumCouplingContext_[0].prevElemVolVars[massScv].phasefield(1)
                                         : momentumCouplingContext_[0].curElemVolVars[massScv].phasefield(1);
+    }
+
+    /*!
+     * \brief Returns an approximation of the phasefield for the element of a given sub control
+     * volume face.
+     */
+    Scalar elementPhasefield(const Element<freeFlowMomentumIdx>& element,
+                            const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
+                            const SubControlVolumeFace<freeFlowMomentumIdx>& scvf) const
+    {
+        const auto ownCellPhasefield = phasefield(element, fvGeometry, scvf);
+        return ownCellPhasefield;
+        //assert (scvf.boundary() && scvf.isFrontal());
+
+        bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
+
+        for (const auto is : intersections(fvGeometry.gridGeometry().gridView(), element))
+        {
+            if ((scvf.isFrontal() && (is.centerUnitOuterNormal() * scvf.unitOuterNormal() + 1) < 1e-9)
+                || (scvf.isLateral() && (is.centerUnitOuterNormal() * scvf.unitOuterNormal() < 1e-9)))
+            {
+                if (is.boundary())
+                    continue;
+                const auto& outsideElement = is.outside();
+                if (outsideElement == element)
+                    continue;
+                const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(outsideElement);
+                const auto& outsideScv = momentumCouplingContext_[0].fvGeometry.scv(eIdx);
+                const auto phi =
+                    momentumCouplingContext_[0].curElemVolVars[outsideScv].phasefield(1);
+
+                return (ownCellPhasefield + phi)/2.0;
+            }
+        }
+        return ownCellPhasefield;
+        DUNE_THROW(Dune::InvalidStateException, "No intersection found");
     }
 
     /*!

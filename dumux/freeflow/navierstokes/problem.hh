@@ -281,6 +281,21 @@ public:
             return couplingManager_->phasefield(element, scv, isPreviousTimeStep);
     }
 
+    /*!
+     * \brief Returns an approximation to the phasefield at a momentum-dof of a given sub control
+     * volume face.
+     * \note  Overload this if a fixed phasefield shall be prescribed.
+     */
+    Scalar elementPhasefield(const Element& element,
+                   const FVElementGeometry& fvGeometry,
+                   const SubControlVolumeFace& scvf) const
+    {
+        if constexpr (std::is_empty_v<CouplingManager>)
+            return asImp_().phasefieldAtPos(scvf.ipGlobal());
+        else
+            return couplingManager_->elementPhasefield(element, fvGeometry, scvf);
+    }
+
     //auto getInsideAndOutsidePhasefield(const Element& element,
     //                                const FVElementGeometry& fvGeometry,
     //                                const SubControlVolumeFace& scvf,
