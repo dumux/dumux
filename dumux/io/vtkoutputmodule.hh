@@ -183,7 +183,7 @@ public:
         //! output
         timer.stop();
         if (verbose_)
-            std::cout << Fmt::format("Writing output for problem \"{}\". Took {:.4g} seconds.\n", name_, timer.elapsed());
+            std::cout << Fmt::format("Writing output for problem \"{}\". Took {:.2g} seconds.\n", name_, timer.elapsed());
     }
 
 protected:
