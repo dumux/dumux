@@ -36,8 +36,7 @@
 #include <dumux/material/components/liquid.hh>
 #include <dumux/material/components/gas.hh>
 
-namespace Dumux {
-namespace Components {
+namespace Dumux::Components {
 
 /*!
  * \ingroup Components
@@ -440,8 +439,6 @@ public:
 template <class Scalar, class H2O>
 struct IsAqueous<Brine<Scalar, H2O>> : public std::true_type {};
 
-} // end namespace Components
-
-} // end namespace Dumux
+} // end namespace Dumux::Components
 
 #endif

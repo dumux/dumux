@@ -24,13 +24,14 @@
 #ifndef DUMUX_BINARY_COEFF_AIR_XYLENE_HH
 #define DUMUX_BINARY_COEFF_AIR_XYLENE_HH
 
+#include <algorithm>
+
 #include <dune/common/math.hh>
 
 #include <dumux/material/components/air.hh>
 #include <dumux/material/components/xylene.hh>
 
-namespace Dumux {
-namespace BinaryCoeff {
+namespace Dumux::BinaryCoeff {
 
 /*!
  * \ingroup Binarycoefficients
@@ -63,12 +64,9 @@ public:
         using Air = Dumux::Components::Air<Scalar>;
         using Xylene = Dumux::Components::Xylene<Scalar>;
 
-        using std::min;
-        using std::max;
-        temperature = max(temperature, 1e-9); // regularization
-        temperature = min(temperature, 500.0); // regularization
-        pressure = max(pressure, 0.0); // regularization
-        pressure = min(pressure, 1e8); // regularization
+        using std::clamp;
+        temperature = clamp(temperature, 1e-9, 500.0); // regularization
+        pressure = clamp(pressure, 0.0, 1e8); // regularization
 
         using std::pow;
         using Dune::power;
@@ -85,6 +83,7 @@ public:
         const Scalar T_scal_x = 1.15*Tb_x;
         const Scalar T_scal_ax = sqrt(T_scal_a*T_scal_x);
 
+        using std::max;
         Scalar T_star = temperature/T_scal_ax;
         T_star = max(T_star, 1e-5); // regularization
 
@@ -112,7 +111,6 @@ public:
     }
 };
 
-} // end namespace BinaryCoeff
-} // end namespace Dumux
+} // end namespace Dumux::BinaryCoeff
 
 #endif

@@ -99,8 +99,8 @@ public:
      */
     static Scalar viscosity(Scalar temperature, Scalar rho)
     {
-        Scalar rhoBar = rho/322.0;
-        Scalar TBar = temperature/criticalTemperature;
+        const Scalar rhoBar = rho/322.0;
+        const Scalar TBar = temperature/criticalTemperature;
 
         // muBar = muBar_1
         constexpr Scalar Hij[6][7] = {
@@ -160,41 +160,41 @@ public:
      */
     static Scalar thermalConductivityIAPWS(const Scalar T, const Scalar rho)
     {
-        Scalar thcond_tstar   = 647.26 ;
-        Scalar thcond_rhostar = 317.7 ;
+        constexpr Scalar thcond_tstar   = 647.26 ;
+        constexpr Scalar thcond_rhostar = 317.7 ;
         /*static constexpr Scalar thcond_kstar   = 1.0 ;*/
 
-        Scalar thcond_b0      = -0.397070 ;
-        Scalar thcond_b1      = 0.400302 ;
-        Scalar thcond_b2      = 1.060000 ;
-        Scalar thcond_B1      = -0.171587 ;
-        Scalar thcond_B2      = 2.392190 ;
+        constexpr Scalar thcond_b0      = -0.397070 ;
+        constexpr Scalar thcond_b1      = 0.400302 ;
+        constexpr Scalar thcond_b2      = 1.060000 ;
+        constexpr Scalar thcond_B1      = -0.171587 ;
+        constexpr Scalar thcond_B2      = 2.392190 ;
 
-        Scalar thcond_c1      = 0.642857 ;
-        Scalar thcond_c2      = -4.11717 ;
-        Scalar thcond_c3      = -6.17937 ;
-        Scalar thcond_c4      = 0.00308976 ;
-        Scalar thcond_c5      = 0.0822994 ;
-        Scalar thcond_c6      = 10.0932 ;
+        constexpr Scalar thcond_c1      = 0.642857 ;
+        constexpr Scalar thcond_c2      = -4.11717 ;
+        constexpr Scalar thcond_c3      = -6.17937 ;
+        constexpr Scalar thcond_c4      = 0.00308976 ;
+        constexpr Scalar thcond_c5      = 0.0822994 ;
+        constexpr Scalar thcond_c6      = 10.0932 ;
 
-        Scalar thcond_d1      = 0.0701309 ;
-        Scalar thcond_d2      = 0.0118520 ;
-        Scalar thcond_d3      = 0.00169937 ;
-        Scalar thcond_d4      = -1.0200 ;
+        constexpr Scalar thcond_d1      = 0.0701309 ;
+        constexpr Scalar thcond_d2      = 0.0118520 ;
+        constexpr Scalar thcond_d3      = 0.00169937 ;
+        constexpr Scalar thcond_d4      = -1.0200 ;
         constexpr unsigned int thcond_a_count = 4;
-        Scalar thcond_a[thcond_a_count] = {
+        constexpr Scalar thcond_a[thcond_a_count] = {
             0.0102811
             ,0.0299621
             ,0.0156146
             ,-0.00422464
         };
 
-        Scalar Tbar = T / thcond_tstar;
-        Scalar rhobar = rho / thcond_rhostar;
+        const Scalar Tbar = T / thcond_tstar;
+        const Scalar rhobar = rho / thcond_rhostar;
 
         /* fast implementation... minimised calls to 'pow' routine... */
         using std::sqrt;
-        Scalar Troot = sqrt(Tbar);
+        const Scalar Troot = sqrt(Tbar);
         Scalar Tpow = Troot;
         Scalar lam = 0;
 
@@ -211,19 +211,13 @@ public:
         using std::abs;
         using std::pow;
         using Dune::power;
-        Scalar DTbar = abs(Tbar - 1) + thcond_c4;
-        Scalar DTbarpow = pow(DTbar, 3./5);
-        Scalar Q = 2. + thcond_c5 / DTbarpow;
+        const Scalar DTbar = abs(Tbar - 1) + thcond_c4;
+        const Scalar DTbarpow = pow(DTbar, 3./5);
+        const Scalar Q = 2. + thcond_c5 / DTbarpow;
+        const Scalar S = (Tbar >= 1) ? 1. / DTbar : thcond_c6 / DTbarpow;
 
-        Scalar S;
-        if(Tbar >= 1){
-            S = 1. / DTbar;
-        }else{
-            S = thcond_c6 / DTbarpow;
-        }
-
-        Scalar rhobar18 = pow(rhobar, 1.8);
-        Scalar rhobarQ = pow(rhobar, Q);
+        const Scalar rhobar18 = pow(rhobar, 1.8);
+        const Scalar rhobarQ = pow(rhobar, Q);
 
         lam +=
             (thcond_d1 / power(Tbar,10) + thcond_d2) * rhobar18 *
