@@ -125,9 +125,22 @@ for key in parameterDict:
     groupEntry = '-' if not hasGroup else entry['paramName'].split('.')[0]
     paramName = entry['paramName'] if not hasGroup else entry['paramName'].partition('.')[2]
 
-    # TODO: selection scheme in case of multiple occurrences? For now we use the first one
+    # In case of multiple occurrences, we use the first entry that is not None and print the others for possible manual editing
     paramType = entry['paramType'][0]
-    defaultValue = entry['defaultValue'][0] if entry['defaultValue'][0] != None else ''
+    defaultValue = next((e for e in entry['defaultValue'] if e), '-')
+
+    hasMultiplePT = True if not all(pt == paramType for pt in entry['paramType']) else False
+    hasMultipleDV = True if not all(dv == (defaultValue if defaultValue != '-' else None) for dv in entry['defaultValue']) else False
+    if hasMultiplePT or hasMultipleDV:
+        print('\nFound multiple occurrences of parameter ' + paramName + ' with differing specifications: ')
+    if hasMultiplePT:
+        print(' -> Specified type names:')
+        for typeName in entry['paramType']: print(' '*8 + typeName)
+        print(' ---> For the parameters list, ' + paramType + ' has been chosen. Please adapt manually if desired.')
+    if hasMultipleDV:
+        print(' -> Specified default values:')
+        for default in entry['defaultValue']: print(' '*8 + (default if default else '- (none given)'))
+        print(' ---> For the parameters list, ' + defaultValue + ' has been chosen. Please adapt manually if desired.')
 
     maxGroupWidth = max(maxGroupWidth, len(groupEntry)+3) # +3 because \b will be added later
     maxParamWidth = max(maxParamWidth, len(paramName))
