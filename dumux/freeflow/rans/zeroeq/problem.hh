@@ -26,7 +26,7 @@
 
 #include <string>
 
-#include <dune/common/power.hh>
+#include <dune/common/math.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/staggeredfvproblem.hh>
 #include <dumux/discretization/localview.hh>
@@ -131,8 +131,8 @@ public:
         using std::abs;
         using std::exp;
         using std::min;
-        using std::pow;
         using std::sqrt;
+        using Dune::power;
         const Scalar aPlus = 26.0;
         const Scalar k = 0.0168;
         const Scalar cCP = 1.6;
@@ -188,7 +188,7 @@ public:
             Scalar yFMax = storedYFMax[asImp_().wallElementIndex(elementIdx)];
             Scalar fMax = storedFMax[asImp_().wallElementIndex(elementIdx)];
             Scalar fWake = min(yFMax * fMax, cWake * yFMax * deltaU * deltaU / fMax);
-            Scalar fKleb = 1.0 / (1.0 + 5.5 * Dune::power(cKleb * effectiveWallDistance / yFMax, 6));
+            Scalar fKleb = 1.0 / (1.0 + 5.5 * power(cKleb * effectiveWallDistance / yFMax, 6));
             kinematicEddyViscosityOuter[elementIdx] = k * cCP * fWake * fKleb;
 
             kinematicEddyViscosityDifference[elementIdx]

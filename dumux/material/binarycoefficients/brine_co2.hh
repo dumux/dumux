@@ -24,6 +24,8 @@
 #ifndef DUMUX_BINARY_COEFF_BRINE_CO2_HH
 #define DUMUX_BINARY_COEFF_BRINE_CO2_HH
 
+#include <dune/common/math.hh>
+
 #include <dumux/common/parameters.hh>
 #include <dumux/material/components/brine.hh>
 #include <dumux/material/components/h2o.hh>
@@ -433,8 +435,8 @@ public:
         const Scalar phiCO2 = fugacityCoeffCO2_(temperature, pgCO2, rhoCO2);
 
         using std::log;
-        using std::pow;
-        const Scalar exponent = A - log(phiCO2) + 2*B*mol_NaCl + C*pow(mol_NaCl,2);
+        using Dune::power;
+        const Scalar exponent = A - log(phiCO2) + 2*B*mol_NaCl + C*power(mol_NaCl,2);
 
         using std::exp;
         const Scalar mol_CO2w = pgCO2 / (1e5 * exp(exponent)); /* paper: equation (6) */

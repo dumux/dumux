@@ -24,12 +24,13 @@
 #ifndef DUMUX_CO2_HH
 #define DUMUX_CO2_HH
 
-#include <dumux/common/exceptions.hh>
-#include <dumux/material/constants.hh>
-
 #include <cmath>
 #include <iostream>
 
+#include <dune/common/math.hh>
+
+#include <dumux/common/exceptions.hh>
+#include <dumux/material/constants.hh>
 #include <dumux/material/components/base.hh>
 #include <dumux/material/components/liquid.hh>
 #include <dumux/material/components/gas.hh>
@@ -366,9 +367,9 @@ public:
         /* dmu : excess viscosity at elevated density */
         rho = gasDensity(temperature, pressure); /* CO2 mass density [kg/m^3] */
 
-        using std::pow;
-        dmu = d11*rho + d21*rho*rho + d64*pow(rho,6)/(TStar*TStar*TStar)
-            + d81*pow(rho,8) + d82*pow(rho,8)/TStar;
+        using Dune::power;
+        dmu = d11*rho + d21*rho*rho + d64*power(rho,6)/(TStar*TStar*TStar)
+            + d81*power(rho,8) + d82*power(rho,8)/TStar;
 
         visco_CO2 = (mu0 + dmu)/1.0E6;   /* conversion to [Pa s] */
 

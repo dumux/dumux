@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <dune/common/math.hh>
 #include "frictionlaw.hh"
 
 namespace Dumux {
@@ -64,11 +65,12 @@ public:
     Dune::FieldVector<Scalar, 2> shearStress(const VolumeVariables& volVars) const final
     {
         using std::pow;
+        using Dune::power;
         using std::hypot;
 
         Dune::FieldVector<Scalar, 2> shearStress(0.0);
 
-        Scalar roughnessHeight = pow(25.68/(1.0/manningN_),6.0);
+        Scalar roughnessHeight = power(25.68/(1.0/manningN_),6);
         roughnessHeight = this->limitRoughH(roughnessHeight, volVars.waterDepth());
         const Scalar c = pow((volVars.waterDepth() + roughnessHeight),1.0/6.0) * 1.0/(manningN_);
         const Scalar uv = hypot(volVars.velocity(0),volVars.velocity(1));

@@ -24,6 +24,8 @@
 #ifndef DUMUX_BINARY_COEFF_AIR_XYLENE_HH
 #define DUMUX_BINARY_COEFF_AIR_XYLENE_HH
 
+#include <dune/common/math.hh>
+
 #include <dumux/material/components/air.hh>
 #include <dumux/material/components/xylene.hh>
 
@@ -69,6 +71,7 @@ public:
         pressure = min(pressure, 1e8); // regularization
 
         using std::pow;
+        using Dune::power;
         using std::sqrt;
         using std::exp;
         const Scalar M_x = 1e3*Xylene::molarMass(); // [g/mol] molecular weight of xylene
@@ -90,7 +93,7 @@ public:
         const Scalar B_ = 0.00217 - 0.0005*sqrt(1.0/M_a + 1.0/M_x);
         const Scalar Mr = (M_a + M_x)/(M_a*M_x);
         const Scalar D_ax = (B_*pow(temperature,1.5)*sqrt(Mr))
-                           /(1e-5*pressure*pow(sigma_ax, 2.0)*Omega); // [cm^2/s]
+                           /(1e-5*pressure*power(sigma_ax, 2)*Omega); // [cm^2/s]
 
         return D_ax*1e-4;   //  [m^2/s]
     }

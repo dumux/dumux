@@ -24,6 +24,8 @@
 #ifndef DUMUX_BINARY_COEFF_H2O_XYLENE_HH
 #define DUMUX_BINARY_COEFF_H2O_XYLENE_HH
 
+#include <dune/common/math.hh>
+
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/xylene.hh>
 
@@ -78,6 +80,7 @@ public:
         using std::sqrt;
         using std::exp;
         using std::pow;
+        using Dune::power;
         const Scalar M_x = 1e3*Xylene::molarMass(); // [g/mol] molecular weight of xylene
         const Scalar M_w = 1e3*H2O::molarMass(); // [g/mol] molecular weight of water
         const Scalar Tb_x = 412.9;        // [K] boiling temperature of xylene
@@ -99,7 +102,7 @@ public:
         const Scalar  B_ = 0.00217 - 0.0005*sqrt(1.0/M_w + 1.0/M_x);
         const Scalar Mr = (M_w + M_x)/(M_w*M_x);
         const Scalar D_wx = (B_*pow(temperature,1.6)*sqrt(Mr))
-                           /(1e-5*pressure*pow(sigma_wx, 2.0)*Omega); // [cm^2/s]
+                           /(1e-5*pressure*power(sigma_wx, 2)*Omega); // [cm^2/s]
 
         return D_wx*1e-4; // [m^2/s]
     }

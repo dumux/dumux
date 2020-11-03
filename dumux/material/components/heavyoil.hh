@@ -24,12 +24,13 @@
 #ifndef DUMUX_HEAVYOIL_HH
 #define DUMUX_HEAVYOIL_HH
 
-#include <dumux/material/idealgas.hh>
-#include <dumux/material/constants.hh>
+#include <dune/common/math.hh>
 
+#include <dumux/material/constants.hh>
 #include <dumux/material/components/base.hh>
-#include <dumux/material/components/liquid.hh>
 #include <dumux/material/components/gas.hh>
+#include <dumux/material/components/liquid.hh>
+#include <dumux/material/idealgas.hh>
 
 namespace Dumux {
 namespace Components {
@@ -122,8 +123,8 @@ public:
         Scalar deltaSpecificGravity = log(refComponentSpecificGravity()/specificGravity());
         Scalar deltaMolecularWeight = log(refComponentMolecularWeight()/molecularWeight());
 
-        using std::pow;
-        return A*pow(deltaSpecificGravity,2) + B*deltaSpecificGravity + C*pow(deltaMolecularWeight,2) + D*deltaMolecularWeight
+        using Dune::power;
+        return A*power(deltaSpecificGravity,2) + B*deltaSpecificGravity + C*power(deltaMolecularWeight,2) + D*deltaMolecularWeight
                 + E*deltaSpecificGravity*deltaMolecularWeight;
     }
 
@@ -139,8 +140,8 @@ public:
         Scalar deltaSpecificGravity = log(refComponentSpecificGravity()/specificGravity());
         Scalar deltaMolecularWeight = log(refComponentMolecularWeight()/molecularWeight());
 
-        using std::pow;
-        return A*pow(deltaSpecificGravity,2) + B*deltaSpecificGravity + C*pow(deltaMolecularWeight,2) + D*deltaMolecularWeight
+        using Dune::power;
+        return A*power(deltaSpecificGravity,2) + B*deltaSpecificGravity + C*power(deltaMolecularWeight,2) + D*deltaMolecularWeight
                 + E*deltaSpecificGravity*deltaMolecularWeight;
     }
 
@@ -156,8 +157,8 @@ public:
         Scalar deltaSpecificGravity = log(refComponentSpecificGravity()/specificGravity());
         Scalar deltaMolecularWeight = log(refComponentMolecularWeight()/molecularWeight());
 
-        using std::pow;
-        return A*pow(deltaSpecificGravity,2) + B*deltaSpecificGravity + C*pow(deltaMolecularWeight,2) + D*deltaMolecularWeight
+        using Dune::power;
+        return A*power(deltaSpecificGravity,2) + B*deltaSpecificGravity + C*power(deltaMolecularWeight,2) + D*deltaMolecularWeight
                 + E*deltaSpecificGravity*deltaMolecularWeight;
     }
 
@@ -199,8 +200,8 @@ public:
     */
     static Scalar boilingTemperature()
     {
-        using std::pow;
-        return refComponentBoilingTemperature() * pow((1 + 2*perbutationFactorBoilingTemperature())/(1 - 2*perbutationFactorBoilingTemperature()),2);
+        using Dune::power;
+        return refComponentBoilingTemperature() * power((1 + 2*perbutationFactorBoilingTemperature())/(1 - 2*perbutationFactorBoilingTemperature()),2);
     }
 
     /*!
@@ -208,8 +209,8 @@ public:
      */
     static Scalar criticalTemperature()
     {
-        using std::pow;
-        return refComponentCriticalTemperature() * pow((1 + 2*perbutationFactorCriticalTemperature())/(1 - 2*perbutationFactorCriticalTemperature()),2);
+        using Dune::power;
+        return refComponentCriticalTemperature() * power((1 + 2*perbutationFactorCriticalTemperature())/(1 - 2*perbutationFactorCriticalTemperature()),2);
     }
 
     /*!
@@ -217,8 +218,8 @@ public:
      */
     static Scalar criticalPressure()
     {
-        using std::pow;
-        return refComponentCriticalPressure() * pow((1 + 2*perbutationFactorCriticalPressure())/(1 - 2*perbutationFactorCriticalPressure()),2);
+        using Dune::power;
+        return refComponentCriticalPressure() * power((1 + 2*perbutationFactorCriticalPressure())/(1 - 2*perbutationFactorCriticalPressure()),2);
     }
 
     /*!
@@ -450,7 +451,8 @@ public:
         Scalar API = 9;
 
         using std::pow;
-        return ((pow(10,0.10231*pow(API,2)-3.9464*API+46.5037))*(pow(temperatureFahrenheit,-0.04542*pow(API,2)+1.70405*API-19.18)))*0.001;
+        using Dune::power;
+        return ((pow(10,0.10231*power(API,2)-3.9464*API+46.5037))*(pow(temperatureFahrenheit,-0.04542*power(API,2)+1.70405*API-19.18)))*0.001;
 
     }
     /*!

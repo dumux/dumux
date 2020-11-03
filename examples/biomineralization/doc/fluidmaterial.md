@@ -558,6 +558,8 @@ and the "brine" fluidsystem assuming water and a single salt determining the bri
 we include all necessary components
 
 ```cpp
+#include <dune/common/math.hh>
+
 #include <dumux/material/fluidsystems/base.hh>
 #include <dumux/material/constants.hh>
 #include <dumux/material/components/h2o.hh>
@@ -757,13 +759,14 @@ of each phase depending on temperature, pressure, and phase composition
                            + fluidState.massFraction(phaseIdx, CaIdx);
 
         using std::pow;
+        using Dune::power;
         using std::exp;
         using std::max;
         const Scalar T = max(temperature, 275.0);
         const Scalar salinity = max(0.0, xNaCl);
 
         const Scalar T_C = T - 273.15;
-        const Scalar A = ((0.42*pow((pow(salinity, 0.8)-0.17), 2)) + 0.045)*pow(T_C, 0.8);
+        const Scalar A = ((0.42*power((pow(salinity, 0.8)-0.17), 2)) + 0.045)*pow(T_C, 0.8);
         const Scalar mu_brine = 0.1 + (0.333*salinity) + (1.65+(91.9*salinity*salinity*salinity))*exp(-A); // [cP]
         assert(mu_brine > 0.0);
         return mu_brine/1000.0; // [Pa·s]
