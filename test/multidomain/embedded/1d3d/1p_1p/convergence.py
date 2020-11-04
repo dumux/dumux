@@ -59,8 +59,6 @@ table1 = [["", "", "", "", "", "", ""] for i in range(len(cells)+1)]
 table2 = [["", "", "", "", "", "", ""] for i in range(len(cells)+1)]
 table3 = [["", "", "", "", "", "", ""] for i in range(len(cells)+1)]
 
-dpi = 300.0
-fig, axes = plt.subplots(1, 3, dpi=dpi, figsize=(8, 4))
 for exec, result in res.items():
     p3d = []
     p1d = []
@@ -140,9 +138,13 @@ for exec, result in res.items():
 try:
     import matplotlib
     import matplotlib.pyplot as plt
+
     plt.style.use('ggplot')
     font = {'family': 'sans-serif', 'weight': 'normal', 'size': 8}
     matplotlib.rc('font', **font)
+
+    dpi = 300.0
+    fig, axes = plt.subplots(1, 3, dpi=dpi, figsize=(8, 4))
 
     x = np.linspace(np.min(hR), np.max(hR), 10)
     axes[0].plot(x, np.power(x*radius*0.4, 1.5), "--k", label=r"$\Delta$ 1.5")
