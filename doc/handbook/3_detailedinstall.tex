@@ -4,7 +4,7 @@ In a second step of the installation, all modules are configured with CMake
 (section \ref{buildIt}).
 After successful installation of \Dumux, we guide you to start a test application,
 described in section \ref{quick-start-guide}.
-In section \ref{sec:build-doc} we explain how to build the \Dumux documentation.
+In section \ref{sec:build-doc}, we explain how to build the \Dumux documentation.
 Lastly, section \ref{sec:external-modules-libraries} provides details on optional libraries and modules.
 
 In a technical sense \Dumux is a module of \Dune.
@@ -16,7 +16,7 @@ Details regarding the installation of \Dune are provided on the \Dune website \c
 \label{sc:ObtainingSourceCode}
 The \Dumux release and trunk (developer tree) are based on the most recent
 \Dune release 2.7, comprising the core modules \texttt{dune-common}, \texttt{dune-geometry},
-\texttt{dune-grid}, \texttt{dune-istl} and \texttt{dune-localfunctions}. We also support the previous \Dune release 2.6. 
+\texttt{dune-grid}, \texttt{dune-istl} and \texttt{dune-localfunctions}.
 For working with \Dumux, these modules are required.
 All \Dune modules, including the \Dumux module, get extracted into a common root directory, as it
 is done in an ordinary \Dune installation.
@@ -27,7 +27,7 @@ the modules were obtained, a version number is added to the module name).
 The name of each \Dune module is defined in the file \texttt{dune.module}, which is
 in the root directory of the respective module. This should not be changed by the user.
 
-In section \ref{sec:prerequisites} we list some prerequisites for running \Dune and \Dumux.
+In section \ref{sec:prerequisites}, we list some prerequisites for running \Dune and \Dumux.
 Please check in said paragraph whether you can fulfill them before continuing.
 
 \paragraph{Obtaining \Dune and \Dumux from software repositories}
@@ -47,7 +47,7 @@ Then, enter the previously created directory and check out the desired modules.
 As you see below, the check-out uses two different servers for getting the sources,
 one for \Dune and one for \Dumux.
 
-\begin{lstlisting}[style=Bash]
+\begin{lstlisting}[style=Bash,escapechar=\%]
 $ mkdir DUMUX
 $ cd DUMUX
 $ git clone -b releases/2.7 https://gitlab.dune-project.org/core/dune-common.git
@@ -55,14 +55,14 @@ $ git clone -b releases/2.7 https://gitlab.dune-project.org/core/dune-geometry.g
 $ git clone -b releases/2.7 https://gitlab.dune-project.org/core/dune-grid.git
 $ git clone -b releases/2.7 https://gitlab.dune-project.org/core/dune-istl.git
 $ git clone -b releases/2.7 https://gitlab.dune-project.org/core/dune-localfunctions.git
-$ git clone -b releases/3.2 https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
+$ git clone -b releases/%\DumuxVersion% https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
 \end{lstlisting}
 
 The newest and maybe unstable developments of \Dune and \Dumux are also provided in these repositories and can be found in the \emph{master} branch.
 Please check the \Dune website \cite{DUNE-HP} for further information on the \Dune development. We always try to keep up with the latest developments of \Dune.
 However, the current \Dumux release is based on the stable 2.7 release and it might not compile without further adaptations using the newest versions of \Dune.
 
-Furthermore, if you wish to install the optional \Dune Grid-Howto which provides a tutorial
+Furthermore, if you wish to install the optional \Dune Grid-Howto, which provides a tutorial
 on the Dune grid interface, act similar.
 
 %TODO:currently, no DUNE patches necessary! Uncomment this section in case this changes again in the future.
@@ -180,8 +180,8 @@ This should also work for other \Dune modules.
 
 \subsection{Handbook}
 To build the \Dumux handbook go into the \texttt{build-}directory and
-run \texttt{make doc} or \texttt{make 0\_dumux-handbook\_pdf}. The pdf can then be found
-in \texttt{MODULE\_BUILD\_DIRECTORY/doc/handbook/0\_dumux-handbook.pdf}.
+run \texttt{make doc} or \texttt{make doc\_handbook\_0\_\\dumux-handbook\_pdf}. The pdf can then be found
+in \texttt{MODULE\_BUILD\_DIRECTORY/doc/handbook/0\_dumux\\-handbook.pdf}.
 
 \section{External Libraries and Modules} \label{sec:external-modules-libraries}
 The libraries described below provide additional functionality but are not generally required to run \Dumux.
@@ -279,4 +279,4 @@ Maintaining backwards compatibility means for all changes made to the dumux mast
 
 Despite the goal of maintaining backwards compatibility across minor releases,
 for more complicated changes, this is to be decided upon on a case-by-case basis, due to limited developer resources.
-In the case that implementing full backwards compatibility for an update is not feasible, or would require unreasonable resources, the degree of backwards compatibility be decided by a vote in one of the monthly core developer meetings.
+In the case that implementing full backwards compatibility for an update is not feasible, or would require unreasonable resources, the degree of backwards compatibility will be decided by a vote in one of the monthly core developer meetings.
