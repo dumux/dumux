@@ -262,8 +262,8 @@ public:
                 return rhsRybak_(globalPos);
             case TestCase::Schneider:
                 return rhsSchneiderEtAl_(globalPos);
-            case TestCase::BJSymmetrized:
-                return rhsBJSymmetrized_(globalPos);
+            case TestCase::Cao:
+                return rhsCao_(globalPos);
             case TestCase::NewICNonSymmetrized:
                 return rhsNewICNonSymmetrized_(globalPos);
             default:
@@ -303,8 +303,8 @@ public:
                 return analyticalSolutionRybak_(globalPos);
             case TestCase::Schneider:
                 return analyticalSolutionSchneiderEtAl_(globalPos);
-            case TestCase::BJSymmetrized:
-                return analyticalSolutionBJSymmetrized_(globalPos);
+            case TestCase::Cao:
+                return analyticalSolutionCao_(globalPos);
             case TestCase::NewICNonSymmetrized:
                 return analyticalSolutionNewICNonSymmetrized_(globalPos);
             default:
@@ -430,25 +430,28 @@ private:
     }
 
     // exact solution for BJ-IC with symmetrized stress tensor (by Elissa Eggenweiler)
-    Dune::FieldVector<Scalar, 3> analyticalSolutionBJSymmetrized_(const GlobalPosition& globalPos) const
+    Dune::FieldVector<Scalar, 3> analyticalSolutionCao_(const GlobalPosition& globalPos) const
     {
         Dune::FieldVector<Scalar, 3> sol(0.0);
         const Scalar x = globalPos[0];
-        const Scalar y = globalPos[1];
+        // Transform interface to y = 1
+        const Scalar y = globalPos[1] - 1;
 
         using std::exp; using std::sin; using std::cos;
-        sol[velocityXIdx] = 2.0*x*x + 2.0*x*y - 6.0*x - 2.0*y*y + 3.0*y - 5.0;
-        sol[velocityYIdx] = 1.0*x*x + 4.0*x*y - 9.0*x - 1.0*y*y - 1.0;
-        sol[pressureIdx] = -x*(x-1.0)*(y-1.0) + 1.0/3.0*(y-1.0)*(y-1.0)*(y-1.0) + 4.0 + 2.0*y + x*x;
+        sol[velocityXIdx] = M_PI*M_PI*(-y + cos(M_PI*(y - 1)))*cos(M_PI*x);
+        sol[velocityYIdx] = -(M_PI*sin(M_PI*x) - 2)*(M_PI*sin(M_PI*(y - 1)) + 1);
+        sol[pressureIdx]  = (2-M_PI*sin(M_PI*x))*(-y+cos(M_PI*(1-y)));
         return sol;
     }
 
     // exact solution for BJ-IC with symmetrized stress tensor (by Elissa Eggenweiler)
-    NumEqVector rhsBJSymmetrized_(const GlobalPosition& globalPos) const
+    NumEqVector rhsCao_(const GlobalPosition& globalPos) const
     {
         const Scalar x = globalPos[0];
-        using std::sin;
-        return NumEqVector(8.0*x - 6.0);
+        // Transform interface to y = 1
+        const Scalar y = globalPos[1] - 1;
+        using std::exp; using std::sin; using std::cos;
+        return NumEqVector(M_PI*M_PI*(M_PI*(y - cos(M_PI*(y - 1)))*sin(M_PI*x) - (M_PI*sin(M_PI*x) - 2)*cos(M_PI*(y - 1))));
     }
 
 
