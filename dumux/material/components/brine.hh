@@ -123,7 +123,7 @@ public:
         Scalar pi = 0;
         using std::log;
         if (ThisType::salinity() < 0.26) // here we have hard coded the solubility limit for NaCl
-            pi = (R * temperature * log(1- ThisType::salinity())); // simplified version of Eq 2.29 in Vishal Jambhekar's Promo
+            pi = (R * temperature * log(1- ThisType::salinity())); // simplified version of Eq 2.29 in Vishal Jambhekar's dissertation (http://dx.doi.org/10.18419/opus-8979)
         else
             pi = (R * temperature * log(0.74));
         using std::exp;
