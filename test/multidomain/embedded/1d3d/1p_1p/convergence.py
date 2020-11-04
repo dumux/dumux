@@ -12,17 +12,7 @@
 import numpy as np
 import subprocess
 import sys
-import multiprocessing as mp
 import os
-import matplotlib
-import matplotlib.pyplot as plt
-plt.style.use('ggplot')
-
-font = {'family' : 'sans-serif',
-        'weight' : 'normal',
-        'size'   : 8}
-
-matplotlib.rc('font', **font)
 
 def make_program_call(executable, args):
     call = ['./' + executable]
@@ -117,25 +107,6 @@ def print_table(table):
     for row in table:
         print(" & ".join(row) + "\\\\")
 
-x = np.linspace(np.min(hR), np.max(hR), 10)
-axes[0].plot(x, np.power(x*radius*0.4, 1.5), "--k", label=r"$\Delta$ 1.5")
-axes[0].plot(x, np.power(x*radius*0.3, 2), "-.k", label=r"$\Delta$ 2")
-axes[1].plot(x, np.power(x*radius*0.4, 1.5), "--k", label=r"$\Delta$ 1.5")
-axes[1].plot(x, np.power(x*radius*0.3, 2), "-.k", label=r"$\Delta$ 2")
-axes[2].plot(x, np.power(x*radius*2.5, 2), "--k", label=r"$\Delta$ 2")
-axes[2].plot(x, np.power(x*radius*1.2, 2.5), "-.k", label=r"$\Delta$ 2.5")
-
-for ax in axes:
-    ax.set_xscale("log")
-    ax.set_xlabel("$h/r_v$")
-    ax.set_xlim([np.max(hR), np.min(hR)])
-    ax.xaxis.set_minor_formatter(plt.NullFormatter())
-    ax.set_yscale("log")
-    ax.legend()
-
-fig.tight_layout(rect=[0.03, 0.07, 1, 0.93], pad=0.4, w_pad=2.0, h_pad=1.0)
-fig.savefig("rates_r01.pdf")
-
 print("p3d")
 print_table(table1)
 print("p1d")
@@ -162,3 +133,35 @@ for exec, result in res.items():
         print("\nWrong convergence rates for case {}".format(exec))
         print("Expected {}, obtained {}".format(reference[exec], [rate3d, rate1d, rateq]))
         sys.exit(1)
+
+#############################################
+# create plot from paper (Figure 5)
+#############################################
+try:
+    import matplotlib
+    import matplotlib.pyplot as plt
+    plt.style.use('ggplot')
+    font = {'family': 'sans-serif', 'weight': 'normal', 'size': 8}
+    matplotlib.rc('font', **font)
+
+    x = np.linspace(np.min(hR), np.max(hR), 10)
+    axes[0].plot(x, np.power(x*radius*0.4, 1.5), "--k", label=r"$\Delta$ 1.5")
+    axes[0].plot(x, np.power(x*radius*0.3, 2), "-.k", label=r"$\Delta$ 2")
+    axes[1].plot(x, np.power(x*radius*0.4, 1.5), "--k", label=r"$\Delta$ 1.5")
+    axes[1].plot(x, np.power(x*radius*0.3, 2), "-.k", label=r"$\Delta$ 2")
+    axes[2].plot(x, np.power(x*radius*2.5, 2), "--k", label=r"$\Delta$ 2")
+    axes[2].plot(x, np.power(x*radius*1.2, 2.5), "-.k", label=r"$\Delta$ 2.5")
+
+    for ax in axes:
+        ax.set_xscale("log")
+        ax.set_xlabel("$h/r_v$")
+        ax.set_xlim([np.max(hR), np.min(hR)])
+        ax.xaxis.set_minor_formatter(plt.NullFormatter())
+        ax.set_yscale("log")
+        ax.legend()
+
+    fig.tight_layout(rect=[0.03, 0.07, 1, 0.93], pad=0.4, w_pad=2.0, h_pad=1.0)
+    fig.savefig("rates_r01.pdf")
+
+except ImportError:
+    print("Skipping plot: matplotlib has not been found.")
