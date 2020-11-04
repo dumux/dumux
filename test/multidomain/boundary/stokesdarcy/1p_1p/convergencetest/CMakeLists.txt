@@ -56,10 +56,11 @@ dune_add_test(NAME test_md_boundary_darcy1pbox_stokes1p_convtest_bj
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ./convergencetest.py
               CMD_ARGS  test_md_boundary_darcy1pbox_freeflow1p_convtest params.input
-                          -Problem.TestCase BJSymmetrized
+                          -Problem.TestCase Cao
                           -Problem.SlipCondition BJ
+                          -Darcy.SpatialParams.AlphaBeaversJoseph -1
                           -Darcy.SpatialParams.Porosity 1.0
-                          -Darcy.SpatialParams.Permeability "1.0 1.0 2.0")
+                          -Darcy.SpatialParams.Permeability "1.0 1.0 0.0")
 
 dune_add_test(NAME test_md_boundary_darcy1p_stokes1p_newic
               TARGET test_md_boundary_darcy1pbox_freeflow1p_convtest

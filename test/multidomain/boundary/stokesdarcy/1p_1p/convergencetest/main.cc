@@ -300,8 +300,8 @@ int main(int argc, char** argv)
             return TestCase::Rybak;
         else if (testCaseName == "Schneider")
             return TestCase::Schneider;
-        else if (testCaseName == "BJSymmetrized")
-            return TestCase::BJSymmetrized;
+        else if (testCaseName == "Cao")
+            return TestCase::Cao;
         else if (testCaseName == "NewICNonSymmetrized")
             return TestCase::NewICNonSymmetrized;
         else

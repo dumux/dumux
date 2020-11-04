@@ -67,14 +67,14 @@ public:
         alphaBJ_ = getParam<Scalar>("Darcy.SpatialParams.AlphaBeaversJoseph");
         porosity_ = getParam<Scalar>("Darcy.SpatialParams.Porosity", 0.4);
 
-        if(testCase_ == TestCase::BJSymmetrized || testCase_ == TestCase::NewICNonSymmetrized)
+        if(testCase_ == TestCase::Cao || testCase_ == TestCase::NewICNonSymmetrized)
         {
             std::vector<Scalar> permeability = getParam<std::vector<Scalar>>("Darcy.SpatialParams.Permeability");
             K_[0][0] =            permeability[0];
             K_[1][1] =            permeability[1];
             K_[0][1] = K_[1][0] = permeability[2];
         }
-        else
+        else if(!(testCase_ == TestCase::Schneider))
         {
             Scalar permeability = getParam<Scalar>("Darcy.SpatialParams.Permeability");
             K_[0][0] = permeability;
