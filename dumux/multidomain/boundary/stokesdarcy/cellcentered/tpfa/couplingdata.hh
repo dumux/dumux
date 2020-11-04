@@ -57,6 +57,8 @@ class StokesDarcyCouplingDataTpfaBase : public StokesDarcyCouplingDataImplementa
     static constexpr auto freeFlowIdx = CouplingManager::freeFlowIdx;
     static constexpr auto porousMediumIdx = CouplingManager::porousMediumIdx;
 
+    using VelocityVector = typename Element<freeFlowIdx>::Geometry::GlobalCoordinate;
+
     using AdvectionType = GetPropType<SubDomainTypeTag<porousMediumIdx>, Properties::AdvectionType>;
     using DarcysLaw = DarcysLawImplementation<SubDomainTypeTag<porousMediumIdx>, GridGeometry<porousMediumIdx>::discMethod>;
     using ForchheimersLaw = ForchheimersLawImplementation<SubDomainTypeTag<porousMediumIdx>, GridGeometry<porousMediumIdx>::discMethod>;
@@ -105,6 +107,14 @@ public:
         momentumFlux *= scvf.directionSign();
 
         return momentumFlux;
+    }
+
+    /*!
+    * \brief Returns the averaged velocity vector at the interface of the porous medium according to darcys law
+    */
+    VelocityVector porousMediumVelocity(const Element<freeFlowIdx>& element, const SubControlVolumeFace<freeFlowIdx>& scvf) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "The calculation of tangential interface velocities is not implemented for Tpfa");
     }
 
 protected:
