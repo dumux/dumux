@@ -414,7 +414,8 @@ private:
         return source;
     }
 
-    // exact solution for BJ-IC with symmetrized stress tensor (by Elissa Eggenweiler)
+    // see Cao et al., 2011: "Robin–Robin domain decomposition methods for the steady-state Stokes–Darcy system with
+    // the Beavers–Joseph interface condition"
     PrimaryVariables analyticalSolutionCao_(const GlobalPosition& globalPos) const
     {
         PrimaryVariables sol(0.0);
@@ -429,7 +430,8 @@ private:
         return sol;
     }
 
-    // exact solution for BJ-IC with symmetrized stress tensor (by Elissa Eggenweiler)
+    // see Cao et al., 2011: "Robin–Robin domain decomposition methods for the steady-state Stokes–Darcy system with
+    // the Beavers–Joseph interface condition"
     NumEqVector rhsCao_(const GlobalPosition& globalPos) const
     {
         const Scalar x = globalPos[0];
