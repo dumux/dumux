@@ -237,7 +237,7 @@ auto makePcKrSw(const Scalar& scalar,
 {
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     constexpr bool hasNew = decltype(isValid(HasNewFIAIF<Element, Scv, ElemSol>()).template check<SpatialParams>())::value;
-    constexpr bool hasNewAtPos = decltype(isValid(HasNewFIAIFAtPos<GlobalPosition>()).template check<SpatialParams>())::value;
+    [[maybe_unused]] constexpr bool hasNewAtPos = decltype(isValid(HasNewFIAIFAtPos<GlobalPosition>()).template check<SpatialParams>())::value;
     if constexpr (hasNew)
         return sp.fluidMatrixInteraction(element, scv, elemSol);
     else if constexpr (hasNewAtPos)
