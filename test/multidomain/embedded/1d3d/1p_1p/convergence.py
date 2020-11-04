@@ -59,28 +59,21 @@ table1 = [["", "", "", "", "", "", ""] for i in range(len(cells)+1)]
 table2 = [["", "", "", "", "", "", ""] for i in range(len(cells)+1)]
 table3 = [["", "", "", "", "", "", ""] for i in range(len(cells)+1)]
 
-for exec, result in res.items():
-    p3d = []
-    p1d = []
-    q = []
-    h = []
+def get_errors(result):
+    p3d, p1d, q, h = [], [], [], []
     for cells, norms in sorted(result.items()):
         h.append(norms[1])
         p3d.append(norms[2])
         p1d.append(norms[3])
         q.append(norms[4])
+    return (p3d, p1d, q, h)
+
+for exec, result in res.items():
+    p3d, p1d, q, h = get_errors(result=result)
 
     rates3d = [(np.log10(p3d[i+1])-np.log10(p3d[i]))/(np.log10(h[i+1])-np.log10(h[i])) for i in range(len(p3d)-1)]
     rates1d = [(np.log10(p1d[i+1])-np.log10(p1d[i]))/(np.log10(h[i+1])-np.log10(h[i])) for i in range(len(p1d)-1)]
     ratesq = [(np.log10(q[i+1])-np.log10(q[i]))/(np.log10(h[i+1])-np.log10(h[i])) for i in range(len(q)-1)]
-
-    hR = np.array(h)/radius
-    axes[0].plot(hR, p3d, "--" + marker[exec], label=label[exec])
-    axes[0].set_title(r"$\vert\vert p^\mathbb{M}_{t,e} -p^\mathbb{M}_t \vert\vert_2$")
-    axes[1].plot(hR, p1d, "--" + marker[exec], label=label[exec])
-    axes[1].set_title(r"$\vert\vert p_{v,e} - p_v \vert\vert_2$")
-    axes[2].plot(hR, q, "--" + marker[exec], label=label[exec])
-    axes[2].set_title(r"$\vert\vert q_e - q \vert\vert_2$")
 
     ofs = method[exec]
     for i in range(len(h)):
@@ -145,6 +138,16 @@ try:
 
     dpi = 300.0
     fig, axes = plt.subplots(1, 3, dpi=dpi, figsize=(8, 4))
+
+    for exec, result in res.items():
+        p3d, p1d, q, h = get_errors(result=result)
+        hR = np.array(h)/radius
+        axes[0].plot(hR, p3d, "--" + marker[exec], label=label[exec])
+        axes[0].set_title(r"$\vert\vert p^\mathbb{M}_{t,e} -p^\mathbb{M}_t \vert\vert_2$")
+        axes[1].plot(hR, p1d, "--" + marker[exec], label=label[exec])
+        axes[1].set_title(r"$\vert\vert p_{v,e} - p_v \vert\vert_2$")
+        axes[2].plot(hR, q, "--" + marker[exec], label=label[exec])
+        axes[2].set_title(r"$\vert\vert q_e - q \vert\vert_2$")
 
     x = np.linspace(np.min(hR), np.max(hR), 10)
     axes[0].plot(x, np.power(x*radius*0.4, 1.5), "--k", label=r"$\Delta$ 1.5")
