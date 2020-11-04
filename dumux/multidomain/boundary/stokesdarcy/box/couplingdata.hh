@@ -63,7 +63,7 @@ class StokesDarcyCouplingDataBoxBase : public StokesDarcyCouplingDataImplementat
     static constexpr auto freeFlowIdx = CouplingManager::freeFlowIdx;
     static constexpr auto porousMediumIdx = CouplingManager::porousMediumIdx;
 
-    using VelocityVector = typename Element<freeFlowIdx>::Geometry::GlobalCoordinate;;
+    using VelocityVector = typename Element<freeFlowIdx>::Geometry::GlobalCoordinate;
     template<std::size_t id> using BoundaryTypes = typename ProblemTraits<Problem<id>>::BoundaryTypes;
     using StokesVelocityGradients = StaggeredVelocityGradients<Scalar, GridGeometry<freeFlowIdx>, BoundaryTypes<freeFlowIdx>, Indices<freeFlowIdx>>;
 
