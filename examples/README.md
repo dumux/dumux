@@ -112,3 +112,20 @@ You learn how to
 <figure><img src="biomineralization/img/pore_scale_w_processes_named.png" alt="biomin result"/></figure></td>
 </a></td>
 </tr></table>
+
+### [:open_file_folder: Example 7: Lid-driven cavity](liddrivencavity/README.md)
+
+<table><tr><td>
+
+In this example, we simulate laminar incompressible flow in a cavity with the Navier-Stokes equations.
+You learn how to
+
+* solve a single-phase Navier-Stokes flow problem
+* compare the results of Stokes flow (Re = 1) and Navier-Stokes flow (Re = 1000)
+* compare the numerical results with the reference data using the plotting library `matplotlib`
+
+</td>
+<td width="20%"><a href="liddrivencavity/README.md">
+<figure><img src="liddrivencavity/img/setup.png" alt="liddriven result"/></figure></td>
+</a></td>
+</tr></table>
