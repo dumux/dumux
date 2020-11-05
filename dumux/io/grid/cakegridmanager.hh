@@ -83,7 +83,7 @@ public:
      * - Axial : min/max value for axial coordinate
      *   Adding 0, 1 (or 2 in 3D) specifies in which direction (x, y and z, respectively)
      *   the radial, angular and axial direction are oriented
-     * - Cells : number of cells array for x-coordinate (Again, an added 0, 1 or 3 specifies x, y or z
+     * - Cells : number of cells array for x-coordinate (Again, an added 0, 1 or 2 specifies x, y or z)
      * - Grading : grading factor array for x-coordinate (Same here)
      * - Verbosity : whether the grid construction should output to standard out
      *
