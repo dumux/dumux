@@ -50,7 +50,7 @@
  * | -                        | SmoothedLinearLawPe                      | Scalar                            | -                                  | The entry pressure used in the smoothed linear law. |
  * | -                        | Snr                                      | Scalar                            | 0.0                                | Residual non-wetting phase saturation. |
  * | -                        | SplineNumSwSamples                       | Scalar                            | 30                                 | Number of sample points from which the wetting saturation spline is built. |
- * | -                        | SplineSweInterval                        | std::array<Scalar, 2>             | defaultInterval                    | Effective wetting saturation interval for spline material law. |
+ * | -                        | SplineSweInterval                        | std::array<Scalar, 2>             | std::array<Scalar, 2> default{{ 0.01, 1.0 }} | Effective wetting saturation interval for spline material law. |
  * | -                        | SwData                                   | std::vector<Scalar>               | -                                  | Wetting saturation pressure data for spline material law. |
  * | -                        | Swr                                      | Scalar                            | 0.0                                | Residual wetting phase saturation. |
  * | -                        | ThreePNAPLAdsorptionKdNAPL               | Scalar                            | -                                  | kd parameter for the adsportion of NAPL in a 3 phase simulation. |
@@ -84,7 +84,7 @@
  * | Component                | LiquidDiffusionCoefficient               | Scalar                            | 1.0                                | Diffusion coefficient for the constant component in liquid water |
  * | Component                | LiquidKinematicViscosity                 | Scalar                            | -                                  | The liquid kinematic viscosity |
  * | Component                | MolarMass                                | Scalar                            | -                                  | The mass in one mole of the component |
- * | Component                | Name                                     | std::string                       | "component"                        | A human readable name for the component |
+ * | Component                | Name                                     | std::string                       | component                          | A human readable name for the component |
  * | Component                | SolidDensity                             | Scalar                            | -                                  | The density of the component in solid state |
  * | Component                | SolidHeatCapacity                        | Scalar                            | -                                  | Specific isobaric heat capacity of the component as a solid |
  * | Component                | SolidThermalConductivity                 | Scalar                            | -                                  | Thermal conductivity of the component as a solid |
@@ -103,8 +103,8 @@
  * | ElectroChemistry         | TransportNumberH20                       | Scalar                            | -                                  | The water transport number to calculate the osmotic term in the membrane. |
  * | ElectroChemistry         | pO2Inlet                                 | Scalar                            | -                                  | The oxygen pressure at the inlet. |
  * | \b FacetCoupling         | Xi                                       | Scalar                            | 1.0                                | The xi factor for coupling conditions |
- * | \b Flux                  | DifferencingScheme                       | std::string                       | "Minmod"                           | Choice of a staggered TVD method |
- * | Flux                     | TvdApproach                              | std::string                       | "Uniform"                          | If you use a staggered grid with a TVD approach: For a uniform grid "Uniform" is fine. For a nonuniform grid decide between "Li" and "Hou" (two literature-based methods). |
+ * | \b Flux                  | DifferencingScheme                       | std::string                       | Minmod                             | Choice of a staggered TVD method |
+ * | Flux                     | TvdApproach                              | std::string                       | Uniform                            | If you use a staggered grid with a TVD approach: For a uniform grid "Uniform" is fine. For a nonuniform grid decide between "Li" and "Hou" (two literature-based methods). |
  * | Flux                     | UpwindWeight                             | Scalar                            | -                                  | Upwind weight in staggered upwind method |
  * | \b FluxLimiterLET        | LowerWaterDepth                          | Scalar                            | 1e-5                               | The lower water depth |
  * | FluxLimiterLET           | UpperWaterDepth                          | Scalar                            | 1e-3                               | The upper water depth |
@@ -117,13 +117,13 @@
  * | \b Grid                  | Angular0/1/2                             | std::vector<Scalar>               | -                                  | min/max value for angular coordinate. Cake grids can be created by either specifying Radial,Angular or Axial in all coordinate directions. |
  * | Grid                     | Axial0/1/2                               | std::vector<Scalar>               | -                                  | min/max value for axial coordinate. Cake grids can be created by either specifying Radial,Angular or Axial in all coordinate directions. |
  * | Grid                     | BoundarySegments                         | bool                              | false                              | For the dune gmsh reader: Whether to insert boundary segments into the grid |
- * | Grid                     | CellType                                 | std::string                       | "Cube"                             | "Cube" or "Simplex" to be used for structured grids |
+ * | Grid                     | CellType                                 | std::string                       | Cube                               | "Cube" or "Simplex" to be used for structured grids |
  * | Grid                     | Cells                                    | std::array<int, dim>              | -                                  | The number of elements in a structured uniform grid in x, y and z direction |
  * | Grid                     | Cells0                                   | std::vector<int>                  | -                                  | For a grid with zones, number of cells of the leftmost zone, number of cells of the second-leftmost zone, ..., number of cells of the rightmost zone, spaceseparated. (assuming x-axis points to the right) |
  * | Grid                     | Cells1                                   | std::vector<int>                  | -                                  | Spaceseparated list of the number of cells per zone in y-direction (see more details for x-direction in Cells1). |
  * | Grid                     | Cells2                                   | std::vector<int>                  | -                                  | Spaceseparated list of the number of cells per zone in z-direction (see more details for x-direction in Cells1). |
- * | Grid                     | ClosureType                              | std::string                       | "Green"                            | Decide whether to add a green closure to locally refined grid sections or not: "Green" (Standard red/green refinement) or "None" (No closure, results in nonconforming meshes) |
- * | Grid                     | Coordinates                              | std::vector<typename Grid::ctype> | -                                  | To construct a 1D grid with just a coordinates vector |
+ * | Grid                     | ClosureType                              | std::string                       | Green                              | Decide whether to add a green closure to locally refined grid sections or not: "Green" (Standard red/green refinement) or "None" (No closure, results in nonconforming meshes) |
+ * | Grid                     | Coordinates                              | std::vector<ctype>                | -                                  | To construct a 1D grid with just a coordinates vector |
  * | Grid                     | DomainMarkers                            | bool                              | false                              | Whether the grid managers work with domain markers. |
  * | Grid                     | File                                     | std::string                       | -                                  | A DGF or gmsh file to load from |
  * | Grid                     | GmshPhysicalEntityThreshold              | std::size_t                       | 0                                  |  |
@@ -132,7 +132,7 @@
  * | Grid                     | Grading2                                 | std::vector<Scalar>               | -                                  | For a grid with zones, grading factors for the z-zones. |
  * | Grid                     | Image                                    | std::string                       | -                                  | The image file if the sub grid is constructed from a raster image |
  * | Grid                     | KeepPhysicalOverlap                      | bool                              | true                               | Whether to keep the physical overlap in physical size or in number of cells upon refinement |
- * | Grid                     | LeftBoundary                             | CoordinateType                    | 0.0                                | The start coordinate of a 1D grid |
+ * | Grid                     | LeftBoundary                             | Scalar                            | 0.0                                | The start coordinate of a 1D grid |
  * | Grid                     | LowerLeft                                | GlobalPosition                    | -                                  | The lowerLeft corner of a structured grid |
  * | Grid                     | Marker                                   | bool                              | 0                                  | To customize the subgrid generation. |
  * | Grid                     | Overlap                                  | int                               | 1                                  | The overlap size in cells |
@@ -143,8 +143,8 @@
  * | Grid                     | Positions2                               | std::vector<ctype>                | -                                  | For a grid with zones, z-positions for zoning in z (more details in Positions0 for x).|
  * | Grid                     | Radial0/1/2                              | std::vector<Scalar>               | -                                  | min/max value for radial coordinate. Cake grids can be created by either specifying Radial,Angular or Axial in all coordinate directions. |
  * | Grid                     | Refinement                               | int                               | 0                                  | The number of global refines to perform |
- * | Grid                     | RefinementType                           | std::string                       | "Local"                            | e.g. UGGrid "Local" (New level consists only of the refined elements and the closure) or "Copy" (New level consists of the refined elements and the unrefined ones, too) |
- * | Grid                     | RightBoundary                            | CoordinateType                    | -                                  | The end coordinate of a 1D grid |
+ * | Grid                     | RefinementType                           | std::string                       | Local                              | e.g. UGGrid "Local" (New level consists only of the refined elements and the closure) or "Copy" (New level consists of the refined elements and the unrefined ones, too) |
+ * | Grid                     | RightBoundary                            | Scalar                            | -                                  | The end coordinate of a 1D grid |
  * | Grid                     | UpperRight                               | GlobalPosition                    | -                                  | The upperright corner of a structured grid |
  * | Grid                     | Verbosity                                | bool                              | false                              | Whether the grid construction should output to standard out |
  * | \b GridAdapt             | AdaptionInterval                         | int                               | 1                                  | The time step interval for adaption |
@@ -260,7 +260,7 @@
  * | Problem                  | Name                                     | std::string                       | -                                  | Set a name for a problem |
  * | Problem                  | SandGrainRoughness                       | Scalar                            | -                                  | The sand grain roughness |
  * | Problem                  | UsePrimaryVariableSwitch                 | bool                              | -                                  | Whether to perform variable switch at a degree of freedom location |
- * | \b RANS                  | EddyViscosityModel                       | std::string                       | "vanDriest"                        | Choose the eddy viscosity model |
+ * | \b RANS                  | EddyViscosityModel                       | std::string                       | vanDriest                          | Choose the eddy viscosity model |
  * | RANS                     | FlowDirectionAxis                        | int                               | 0                                  | The flow direction axis |
  * | RANS                     | IsFlatWallBounded                        | bool                              | false                              | Set to true, if geometry consists of flat walls |
  * | RANS                     | TurbulentPrandtlNumber                   | Scalar                            | 1.0                                | The turbulent Prandtl number |
@@ -282,8 +282,8 @@
  * | TimeManager              | TEnd                                     | Scalar                            | -                                  | The end time |
  * | \b Vtk                   | AddProcessRank                           | bool                              | -                                  | Whether to add a process rank |
  * | Vtk                      | AddVelocity                              | bool                              | true                               | Whether to enable velocity output |
- * | Vtk                      | CoordPrecision                           | std::string                       | precisionString                    | The output precision of coordinates. |
+ * | Vtk                      | CoordPrecision                           | std::string                       | value set to Vtk.Precision before  | The output precision of coordinates. |
  * | Vtk                      | OutputLevel                              | int                               | -                                  | in sequential models: indicates which values the VTK output contains, e.g. if the OutputLevel is zero, only primary variables are written |
- * | Vtk                      | Precision                                | std::string                       | "Float32"                          | Precision of the vtk output |
+ * | Vtk                      | Precision                                | std::string                       | Float32                            | Precision of the vtk output |
  * | Vtk                      | WriteFaceData                            | bool                              | false                              | For the staggered grid approach, write face-related data into vtp files. |
  */
