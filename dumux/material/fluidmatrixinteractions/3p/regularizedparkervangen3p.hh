@@ -375,7 +375,7 @@ public:
         }
 
         // For very low gas saturations:
-        // We use a scaling factor that decreases the gas phase permeability quite fast a very low gas phase
+        // We use a scaling factor that decreases the gas phase permeability quite fast at very low gas phase
         // saturations, thus making that phase virtually immobile.
         // This prevents numerical issues related to the degeneration of the gas phase mass balance for the 3p3c model
         // at very low gas phase saturations.
