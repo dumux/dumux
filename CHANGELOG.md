@@ -20,6 +20,7 @@ Differences Between DuMu<sup>x</sup> 3.3 and DuMu<sup>x</sup> 3.2
  different interaction laws such as a pc-Sw and kr-Sw curve and interfacial areas.
  New pre-cached spline laws were added which can help to increase efficiency. The usage of the old interface is deprecated and warnings will be raised. The old interface will be removed after the release of 3.3.
  - The RANS models now include variable densities. Compositional or nonisothermal RANS models could produce slightly different, more accurate, results.
+ - We have added another free-flow example dealing with lid-driven cavity flow.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Flash/Constraintsolver__: The flashes depending on material laws are immediately required to use new-style material laws (fluidMatrixInteraction interface in spatialparams)
