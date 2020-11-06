@@ -190,16 +190,14 @@
 #       :multi:
 #       :argname: condition
 #
-#       A number of conditions that CMake should evaluate before adding this
-#       test. If one of the conditions fails, the test should be shown
-#       as skipped in the test summary. Use this feature instead of guarding
-#       the call to :code:`dumux_add_test` with an :code:`if` clause.
+#       A number of conditions that CMake should evaluate. 
+#       Uses the same mechanics that `dumux_add_test` uses to evaluate its CMAKE_GUARD argument.
 #
 #       The passed condition can be a complex expression like
 #       `( A OR B ) AND ( C OR D )`. Mind the spaces around the parentheses.
 #
-#       Example: Write CMAKE_GUARD dune-foo_FOUND if you want your test to only
-#       build and run when the dune-foo module is present.
+#       Example: Write CMAKE_GUARD dune-foo_FOUND if you want to set a variable
+#       that is only true if the module dune-foo has been found.
 #
 
 # Note: This forwards to dune_add_test but enables another layer in case we need to support
