@@ -3,24 +3,24 @@ Differences Between DuMu<sup>x</sup> 3.3 and DuMu<sup>x</sup> 3.2
 
 ### Improvements and Enhancements
 
-- __Dune version__: DuMu<sup>x</sup> now requires Dune >=2.7
-- The DuMu<sup>x</sup> install script has been translated to Python to improve portability. The old shell script will be removed after release 3.3.
-- The velocity reconstruction for immiscible porous-media models has been improved, leading to slightly
+- __Requirements__: DuMu<sup>x</sup> now requires Dune >=2.7 and CMake >= 3.13.
+- __New way to use material laws__: The usage of laws for pc-Sw and kr-Sw has been completely revised. A caller does not have to pass a `parameters` object to the laws anymore. The `spatialParams` now provide a `fluidMatrixInteraction` function which bundles an arbitrary number of
+ different interaction laws such as a pc-Sw and kr-Sw curve and interfacial areas.
+ New pre-cached spline laws were added which can help to increase efficiency. The usage of the old interface is deprecated and warnings will be raised. The old interface will be removed after the release of 3.3.
+- __New example__: We have added another free-flow example dealing with lid-driven cavity flow.
+- __Install script written in Python__: The DuMu<sup>x</sup> install script has been translated to Python to improve portability. The old shell script will be removed after release 3.3.
+- __Improved velocity reconstruction__: The velocity reconstruction for immiscible porous-media models has been improved, leading to slightly
   different velocity fields in the vicinity of Neumann boundaries.
-- Basic support for Python bindings has been added. Python bindings are an experimental feature
+- __Python bindings (experimental)__: Basic support for Python bindings has been added. Python bindings are an experimental feature
   and might undergo unannounced API changes until further notice. This concerns the files in the folders `python` and `dumux/python`. To activate
     - add `-DDUNE_ENABLE_PYTHONBINDINGS=TRUE` and `-DCMAKE_POSITION_INDEPENDENT_CODE=TRUE` to your CMAKE_FLAGS and run dunecontrol
     - run `python3 dune-common/bin/setup-dunepy.py`
     - adapt your PYTHONPATH environment variable as described [here](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/tree/master/python)
-- We now include a basic version of the [fmt-library](https://github.com/fmtlib/fmt) which implements `std::format` (coming with C++20) with the need for C++20.
+- __fmt-library__: We now include a basic version of the [fmt-library](https://github.com/fmtlib/fmt) which implements `std::format` (coming with C++20) without the need for C++20.
   In order to use this, include `<dumux/io/format.hh>`. `format`, `format_to`, `format_to_n`, `formatted_size` are available in the `Dumux::Fmt` namespace.
   The string formatting is documented [here](https://en.cppreference.com/w/cpp/utility/format/formatter#Standard_format_specification) and follows the Python string formatting rules.
-  The function are documented on [cppreference](https://en.cppreference.com/w/cpp/utility/format).
- - The usage of laws for pc-Sw and kr-Sw has been completely revised. A caller does not have to pass a `parameters` object to the laws anymore. The `spatialParams` now provide a `fluidMatrixInteraction` function which bundles an arbitrary number of
- different interaction laws such as a pc-Sw and kr-Sw curve and interfacial areas.
- New pre-cached spline laws were added which can help to increase efficiency. The usage of the old interface is deprecated and warnings will be raised. The old interface will be removed after the release of 3.3.
- - The RANS models now include variable densities. Compositional or nonisothermal RANS models could produce slightly different, more accurate, results.
- - We have added another free-flow example dealing with lid-driven cavity flow.
+  The functions are documented on [cppreference](https://en.cppreference.com/w/cpp/utility/format).
+ - __RANS__: The RANS models now include variable densities. Compositional or nonisothermal RANS models could produce slightly different, more accurate, results.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Flash/Constraintsolver__: The flashes depending on material laws are immediately required to use new-style material laws (fluidMatrixInteraction interface in spatialparams)
