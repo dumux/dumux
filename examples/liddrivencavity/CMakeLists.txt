@@ -5,7 +5,7 @@ set(DUMUX_EXAMPLE_LDC_CMAKE_GUARDS "( HAVE_UMFPACK )")
 dumux_add_test(NAME example_ff_liddrivencavity
                SOURCES main.cc
                LABELS freeflow navierstokes example
-               CMAKE_GUARD DUMUX_EXAMPLE_LDC_CMAKE_GUARDS
+               CMAKE_GUARD ${DUMUX_EXAMPLE_LDC_CMAKE_GUARDS}
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_closedsystem_ldc_re1-reference.vtu
@@ -24,7 +24,16 @@ dumux_add_test(NAME example_ff_liddrivencavity_re1000
                              -Grid.Cells \"64 64\" -TimeLoop.TEnd 50")
 
 # test plot script (only if UMFPack is available and the tests above were actually run)
-if(DUMUX_EXAMPLE_LDC_CMAKE_GUARDS)
+
+set(DUMUX_SKIP_EXAMPLE_LDC FALSE)
+foreach(condition ${DUMUX_EXAMPLE_LDC_CMAKE_GUARDS})
+  separate_arguments(condition)
+  if(NOT (${condition}))
+    set(DUMUX_SKIP_EXAMPLE_LDC TRUE)
+  endif()
+endforeach()
+
+if(NOT ${DUMUX_SKIP_EXAMPLE_LDC})
     dumux_add_test(NAME example_ff_liddrivencavity_plot
                    TARGET example_ff_liddrivencavity
                    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/run_and_plot.py
