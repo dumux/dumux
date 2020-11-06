@@ -1,29 +1,6 @@
 # Dumux wrapper for the module that provides tools for testing the Dune way.
 # We have a wrapper to have to possibily of supporting multiple Dune versions.
 #
-# .. cmake_function:: dumux_declare_test_label
-#
-#    .. cmake_brief::
-#
-#       Declare labels for :ref:`dumux_add_test`.
-#
-#    .. cmake_param:: LABELS
-#       :multi:
-#
-#       The names of labels to declare.  Label names must be nonempty and
-#       consist only of alphanumeric characters plus :code:`-` and :code:`_`
-#       to make sure it is easy to construct regular expressions from them for
-#       :code:`ctest -L ${label_regex}`.
-#
-#    Labels need to be declared to ensure that the target
-#    :code:`build_${label}_tests` exists.  They will normally be declared
-#    on-demand by :ref:`dumux_add_test`.  But sometimes it is useful to be able to
-#    run :code:`make build_${label}_tests` whether or not any tests with that
-#    label exists in a module.  For these cases :ref:`dune_declare_test_label` can
-#    be called explicitly.
-#
-#    The label :code:`quick` is always predeclared.
-#
 # .. cmake_function:: dumux_add_test
 #
 #    .. cmake_brief::
@@ -203,122 +180,50 @@
 #    build all tests during `make all`. Note, that this may take quite some time for some modules.
 #    If not in use, you have to build tests through the target :code:`build_tests`.
 #
+# .. cmake_function:: dumux_evaluate_cmake_guard
+#
+#    .. cmake_brief::
+#
+#       Fills the passed variable with TRUE if all guards evaluate to TRUE and FALSE otherwise
+#
+#    .. cmake_param:: CMAKE_GUARD
+#       :multi:
+#       :argname: condition
+#
+#       A number of conditions that CMake should evaluate. 
+#       Uses the same mechanics that `dumux_add_test` uses to evaluate its CMAKE_GUARD argument.
+#
+#       The passed condition can be a complex expression like
+#       `( A OR B ) AND ( C OR D )`. Mind the spaces around the parentheses.
+#
+#       Example: Write CMAKE_GUARD dune-foo_FOUND if you want to set a variable
+#       that is only true if the module dune-foo has been found.
+#
 
-# Note: This is a copy of dune_declare_test_label to be backwards compatible with Dune 2.6 but enable labels
-function(dumux_declare_test_label)
+# Note: This forwards to dune_add_test but enables another layer in case we need to support
+# future Dune features with older Dune versions supported by Dumux
+function(dumux_add_test)
+  dune_add_test(${ARGV})
+endfunction()
+
+# Evaluate test guards like dune_add_test internally does
+function(dumux_evaluate_cmake_guard GUARD_LETS_YOU_PASS)
   include(CMakeParseArguments)
-  set(OPTIONS)
-  set(SINGLEARGS)
-  set(MULTIARGS LABELS)
-  cmake_parse_arguments(arg "${OPTIONS}" "${SINGLEARGS}" "${MULTIARGS}" ${ARGN})
+  set(MULTIARGS CMAKE_GUARD)
+  cmake_parse_arguments(EVALGUARD "${OPTIONS}" "${SINGLEARGS}" "${MULTIARGS}" ${ARGN})
 
-  if( (DEFINED arg_UNPARSED_ARGUMENTS) AND NOT ( arg_UNPARSED_ARGUMENTS STREQUAL "" ) )
-    message(FATAL_ERROR "Unhandled extra arguments given to dumux_declare_test_label(): "
-      "<${arg_UNPARSED_ARGUMENTS}>")
+  # Check whether the parser produced any errors
+  if(EVALGUARD_UNPARSED_ARGUMENTS)
+    message(WARNING "Unrecognized arguments ('${EVALGUARD_UNPARSED_ARGUMENTS}') for dumux_evaluate_cmake_guard!")
   endif()
 
-  foreach(label IN LISTS arg_LABELS)
-    # Make sure the label is not empty, and does not contain any funny
-    # characters, in particular regex characters
-    if(NOT (label MATCHES "[-_0-9a-zA-Z]+"))
-      message(FATAL_ERROR "Refusing to add label \"${label}\" since it is "
-        "empty or contains funny characters (characters other than "
-        "alphanumeric ones and \"-\" or \"_\"; the intent of this restriction "
-        "is to make construction of the argument to \"ctest -L\" easier")
-    endif()
-    set(target "build_${label}_tests")
-    if(NOT TARGET "${target}")
-      add_custom_target("${target}")
+  # determine if all condition of the guard are met
+  set(${GUARD_LETS_YOU_PASS} TRUE PARENT_SCOPE)
+  set(FAILED_CONDITION_PRINTING "")
+  foreach(condition ${ADDTEST_CMAKE_GUARD})
+    separate_arguments(condition)
+    if(NOT (${condition}))
+      set(${GUARD_LETS_YOU_PASS} FALSE PARENT_SCOPE)
     endif()
   endforeach()
-endfunction(dumux_declare_test_label)
-
-# predefine "quick" test label so build_quick_tests can be built
-# unconditionally
-dumux_declare_test_label(LABELS quick)
-
-# Note: This is a copy of dune_declare_test_label to be backwards compatible with Dune 2.6 but enable labels
-# After labels are available on a release branch this can simply forward to dune_add_test
-function(dumux_add_test)
-  # for new versions just forward to dune_add_test
-  if(DUNE_COMMON_VERSION VERSION_GREATER 2.6.0)
-    dune_add_test(${ARGV})
-
-  # otherwise deal with labels separately (backwards-compatibilty layer with Dune 2.6.0)
-  else()
-    include(CMakeParseArguments)
-    set(OPTIONS EXPECT_COMPILE_FAIL EXPECT_FAIL SKIP_ON_77 COMPILE_ONLY)
-    set(SINGLEARGS NAME TARGET TIMEOUT)
-    set(MULTIARGS SOURCES COMPILE_DEFINITIONS COMPILE_FLAGS LINK_LIBRARIES CMD_ARGS MPI_RANKS COMMAND CMAKE_GUARD LABELS)
-    cmake_parse_arguments(ADDTEST "${OPTIONS}" "${SINGLEARGS}" "${MULTIARGS}" ${ARGN})
-
-    # Check whether the parser produced any errors
-    if(ADDTEST_UNPARSED_ARGUMENTS)
-      message(WARNING "Unrecognized arguments ('${ADDTEST_UNPARSED_ARGUMENTS}') for dumux_add_test!")
-    endif()
-
-    # remove labels from the argument list
-    set(FORWARD_ARGS ${ARGV})
-    if(ADDTEST_LABELS)
-      string(REPLACE "LABELS;${ADDTEST_LABELS}" "" FORWARD_ARGS "${FORWARD_ARGS}")
-      # replace head or trailing ";"
-      string(REGEX REPLACE ";^" "" FORWARD_ARGS "${FORWARD_ARGS}")
-      string(REGEX REPLACE ";$" "" FORWARD_ARGS "${FORWARD_ARGS}")
-    endif()
-
-    # foward to dune function
-    dune_add_test(${FORWARD_ARGS})
-
-    # take care of labels afterwards
-    if(NOT ADDTEST_NAME)
-      # try deducing the test name from the executable name
-      if(ADDTEST_TARGET)
-        set(ADDTEST_NAME ${ADDTEST_TARGET})
-      endif()
-      # try deducing the test name form the source name
-      if(ADDTEST_SOURCES)
-        list(LENGTH ADDTEST_SOURCES len)
-        get_filename_component(ADDTEST_NAME ${ADDTEST_SOURCES} NAME_WE)
-      endif()
-    endif()
-
-    if(ADDTEST_SOURCES)
-      set(ADDTEST_TARGET ${ADDTEST_NAME})
-    endif()
-
-    # possibly set default for mpi ranks
-    if(NOT ADDTEST_MPI_RANKS)
-      set(ADDTEST_MPI_RANKS 1)
-    endif()
-
-    # Discard all parallel tests if MPI was not found
-    if(NOT MPI_FOUND)
-      set(DUNE_MAX_TEST_CORES 1)
-    endif()
-
-    # make sure each label exists and its name is acceptable
-    dumux_declare_test_label(LABELS ${ADDTEST_LABELS})
-
-    # Have build_${label}_tests depend on the given target in
-    # order to trigger the build correctly
-    if(NOT ADDTEST_EXPECT_COMPILE_FAIL)
-      foreach(label IN LISTS ADDTEST_LABELS)
-        add_dependencies(build_${label}_tests ${ADDTEST_TARGET})
-      endforeach()
-    endif()
-
-    # Add one test for each specified processor number
-    foreach(procnum ${ADDTEST_MPI_RANKS})
-      if((NOT "${procnum}" GREATER "${DUNE_MAX_TEST_CORES}") AND (NOT ADDTEST_COMPILE_ONLY))
-        set(ACTUAL_NAME ${ADDTEST_NAME})
-
-        if(NOT ${procnum} STREQUAL "1")
-          set(ACTUAL_NAME "${ACTUAL_NAME}-mpi-${procnum}")
-        endif()
-
-        # Set the labels on the test
-        set_tests_properties(${ACTUAL_NAME} PROPERTIES LABELS "${ADDTEST_LABELS}")
-      endif()
-    endforeach()
-  endif()
 endfunction()
