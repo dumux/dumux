@@ -81,8 +81,8 @@ show_message("(1/3) Step completed. All prerequistes found.")
 #################################################################
 #################################################################
 # make a new folder containing everything
-os.makedirs("./DUMUX", exist_ok=True)
-os.chdir("DUMUX")
+os.makedirs("./dumux", exist_ok=True)
+os.chdir("dumux")
 
 show_message("(2/3) Cloning repositories. This may take a while. Make sure to be connected to the internet...")
 
@@ -127,7 +127,7 @@ show_message("(3/3) Step completed. Succesfully configured and built dune and du
 #################################################################
 #################################################################
 show_message("(Installation complete) To test if everything works, please run the following commands (can be copied to command line):\n\n"
-             "  cd DUMUX/dumux/build-cmake/test/porousmediumflow/1p/implicit/isothermal\n"
+             "  cd dumux/dumux/build-cmake/test/porousmediumflow/1p/implicit/isothermal\n"
              "  make test_1p_tpfa\n"
              "  ./test_1p_tpfa\n"
              "  paraview *pvd\n")
