@@ -24,11 +24,13 @@ dumux_add_test(NAME example_ff_liddrivencavity_re1000
                              -Grid.Cells \"64 64\" -TimeLoop.TEnd 50")
 
 # test plot script
-dumux_add_test(NAME example_ff_liddrivencavity_plot
-               TARGET example_ff_liddrivencavity
-               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/run_and_plot.py
-               CMD_ARGS -s -n)
+dune_symlink_to_source_files(run_and_plot.py)
+dune_python_add_test(NAME example_ff_liddrivencavity_plot
+                     COMMAND ${PYTHON_EXECUTABLE} run_and_plot.py -s -n
+                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 set_tests_properties(example_ff_liddrivencavity_plot
                      PROPERTIES LABELS example
                      DEPENDS "example_ff_liddrivencavity;example_ff_liddrivencavity_re1000")
+
+set_tests_properties(example_ff_liddrivencavity_plot PROPERTIES SKIP_RETURN_CODE 127)
