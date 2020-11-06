@@ -15,4 +15,4 @@ InjectionRate = 0.1 # injection rate in kg/s
 Swr = 0.0
 Snr = 0.0
 VanGenuchtenAlpha = 0.00045
-VanGenuchtenN = 7.3;
+VanGenuchtenN = 7.3
