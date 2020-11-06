@@ -26,11 +26,9 @@ for re in reynolds:
     if not args['skipsim']:
         subprocess.run(['make', 'example_ff_liddrivencavity'], check=True)
         subprocess.run(['./example_ff_liddrivencavity', 'params_re' + str(re) + '.input'], check=True)
-    try:
-        y[str(re)], vx[str(re)] = np.genfromtxt('example_ff_liddrivencavity_re' + str(re) + '_vx' + '.log', skip_header= True).T
-        x[str(re)], vy[str(re)] = np.genfromtxt('example_ff_liddrivencavity_re' + str(re) + '_vy' + '.log', skip_header= True).T
-    except OSError:
-        sys.exit(127)
+
+    y[str(re)], vx[str(re)] = np.genfromtxt('example_ff_liddrivencavity_re' + str(re) + '_vx' + '.log', skip_header= True).T
+    x[str(re)], vy[str(re)] = np.genfromtxt('example_ff_liddrivencavity_re' + str(re) + '_vy' + '.log', skip_header= True).T
 
 ####################################################
 #### reference #####################################
