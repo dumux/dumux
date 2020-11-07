@@ -60,10 +60,6 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Your MaterialLaw does not support multiple pore body shapes.");
 
         setParams();
-
-        typename LocalRules::BasicParams basicParams;
-
-        localRules_ = std::make_unique<LocalRules>(basicParams);
     }
 
     void setParams()
@@ -156,28 +152,9 @@ public:
                                 const SubControlVolume& scv,
                                 const ElementSolution& elemSol) const
     {
-        localRules_->updateParams(*this, element, scv, elemSol);
-        return makeFluidMatrixInteraction(*localRules_);
+        const auto params = LocalRules::makeParams(*this, element, scv, elemSol);
+        return makeFluidMatrixInteraction(LocalRules(params));
     }
-
-    // /*!
-    //  * \brief Returns the parameter object for the PNM material law
-    //  *
-    //  * \param element The finite element
-    //  * \param fvGeometry The finite volume geometry of the element
-    //  * \param scvIdx The local index of the sub-control volume
-    //  */
-    // template<class ElementSolutionVector>
-    // MaterialLawParams materialLawParams(const Element& element,
-    //                                     const SubControlVolume& scv,
-    //                                     const ElementSolutionVector& elemSol) const
-    // {
-    //     static const Scalar surfaceTension = getParam<Scalar>("SpatialParameters.SurfaceTension", 0.0725); // TODO
-    //     const Scalar contactAngle = this->asImp_().contactAngle(element, scv, elemSol);
-    //     const Scalar poreRadius = this->asImp_().poreRadius(element, scv, elemSol);
-    //     const auto poreShape = this->gridGeometry().poreGeometry(scv.dofIndex());
-    //     return MaterialLaw::makeParams(poreRadius, contactAngle, surfaceTension, poreShape);
-    // }
 
     const Dune::ReservedVector<Scalar, 4>& cornerHalfAngles(const Element& element) const
     {
@@ -193,7 +170,6 @@ public:
 private:
 
     std::vector<Dune::ReservedVector<Scalar, 4>> cornerHalfAngles_;
-    mutable std::unique_ptr<LocalRules> localRules_;
 };
 
 // TODO docme
