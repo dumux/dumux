@@ -47,6 +47,20 @@ struct TwoPLocalRulesCubeJoekarNiasar
     template<class Scalar>
     struct Params
     {
+        Params() = default;
+
+        template<class SpatialParams, class Element, class SubControlVolume, class ElemSol>
+        Params(const SpatialParams& spatialParams,
+               const Element& element,
+               const SubControlVolume& scv,
+               const ElemSol& elemSol)
+        : shape_(spatialParams.gridGeometry().poreGeometry()[scv.dofIndex()])
+        , radius_(spatialParams.poreRadius(element, scv, elemSol))
+        {
+            static const Scalar surfaceTension = getParam<Scalar>("SpatialParams.SurfaceTension", 0.0725); // TODO
+            surfaceTension_ = surfaceTension;
+        }
+
         template<class SpatialParams, class Element, class SubControlVolume, class ElemSol>
         void update(const SpatialParams& spatialParams,
                     const Element& element,
@@ -59,7 +73,6 @@ struct TwoPLocalRulesCubeJoekarNiasar
 
             static const Scalar surfaceTension = getParam<Scalar>("SpatialParams.SurfaceTension", 0.0725); // TODO
             surfaceTension_ = surfaceTension;
-            updated_ = true;
         }
 
         Pore::Shape poreShape() const { return shape_; }
@@ -67,9 +80,6 @@ struct TwoPLocalRulesCubeJoekarNiasar
         Scalar poreRadius() const { return radius_; }
 
         Scalar surfaceTension() const { return surfaceTension_; }
-
-        bool isUpdated() const
-        { return updated_; }
 
         bool operator== (const Params& p) const
         {
@@ -82,8 +92,17 @@ struct TwoPLocalRulesCubeJoekarNiasar
         Pore::Shape shape_;
         Scalar radius_;
         Scalar surfaceTension_;
-        bool updated_ = false;
     };
+
+    template<class SpatialParams, class Element, class SubControlVolume, class ElemSol>
+    static auto makeParams(const SpatialParams& spatialParams,
+                           const Element& element,
+                           const SubControlVolume& scv,
+                           const ElemSol& elemSol)
+    {
+        using Scalar = std::decay_t<decltype(spatialParams.poreRadius(element, scv, elemSol))>;
+        return Params<Scalar>(spatialParams, element, scv, elemSol);
+    }
 
     static constexpr bool supportsMultipleGeometries()
     { return false; }
