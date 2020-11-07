@@ -158,7 +158,7 @@ public:
         // If a global phase pressure difference (pn,inlet - pw,outlet) is specified and the saturation shall also be fixed, apply:
         // pw,inlet = pw,outlet = 1e5; pn,outlet = pw,outlet + pc(S=0) = pw,outlet; pn,inlet = pw,inlet + pc_
         if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
-            values[snIdx] = 1.0 - GetPropType<TypeTag, Properties::SpatialParams>::MaterialLaw::sw(this->spatialParams().materialLawParams(element, scv, 0/*dummy value*/), pc_);
+            values[snIdx] = 1.0 - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).sw(pc_);
 
 #if !ISOTHERMAL
         if(isInletPore_(scv))
