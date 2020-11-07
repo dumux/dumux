@@ -30,14 +30,44 @@
 #include "baselocalrules.hh"
 #include "localrulesforcube.hh"
 
-namespace Dumux
-{
+namespace Dumux::FluidMatrix {
 
 template<class ScalarT, class LocalRulesForCube = TwoPLocalRulesCubeJoekarNiasarDefault<ScalarT>>
-class MultiShapeTwoPLocalRules
+class MultiShapeTwoPLocalRules : public Adapter<MultiShapeTwoPLocalRules<ScalarT, LocalRulesForCube>, PcKrSw>
 {
+public:
     using Scalar = ScalarT;
-    using Params = TwoPLocalRulesBase::Params<Scalar>;
+
+    struct BasicParams
+    {
+        template<class SpatialParams, class Element, class SubControlVolume, class ElemSol>
+        BasicParams(const SpatialParams& spatialParams,
+                    const Element& element,
+                    const SubControlVolume& scv,
+                    const ElemSol& elemSol)
+        {
+            shape_ = spatialParams.gridGeometry().poreGeometry(scv.dofIndex());
+
+            switch (shape_)
+            {
+                case Pore::Shape::cube:
+                    cubeParams_ = std::make_unique<typename LocalRulesForCube::BasicParams>(spatialParams, element, scv, elemSol);
+                    break;
+                default:
+                    DUNE_THROW(Dune::NotImplemented, "Invalid shape");
+            }
+        }
+
+        typename LocalRulesForCube::BasicParams cubeParams() const
+        { return *cubeParams_; }
+
+        Pore::Shape poreShape() const
+        { return shape_; }
+
+    private:
+        std::unique_ptr<typename LocalRulesForCube::BasicParams> cubeParams_;
+        Pore::Shape shape_;
+    };
 
     static constexpr bool supportsMultipleGeometries()
     { return true; }
@@ -48,19 +78,105 @@ class MultiShapeTwoPLocalRules
     static constexpr int numFluidPhases()
     { return 2; }
 
-    /*!
-     * \brief The capillary pressure-saturation curve
-     */
-    template<bool enableRegularization = isRegularized()>
-    Scalar pc(const Scalar sw) const
+    template<class SpatialParams, class Element, class SubControlVolume, class ElemSol>
+    static BasicParams makeParams(const SpatialParams& spatialParams,
+                                  const Element& element,
+                                  const SubControlVolume& scv,
+                                  const ElemSol& elemSol)
     {
-        switch (params.shape)
+        return BasicParams(spatialParams, element, scv, elemSol);
+    }
+
+    MultiShapeTwoPLocalRules(const BasicParams& baseParams,
+                             //const RegularizationParams& regParams = {}, TODO
+                             const std::string& paramGroup = "")
+    {
+        shape_ = baseParams.poreShape();
+        switch (shape_)
         {
             case Pore::Shape::cube:
-                return RegularizedLocalRulesForCube::pc(params, sw);
+                localRulesForCube_ = std::make_shared<LocalRulesForCube>(baseParams.cubeParams());
+                break;
             default:
                 DUNE_THROW(Dune::NotImplemented, "Invalid shape");
         }
+    }
+
+
+    template<class SpatialParams, class Element, class SubControlVolume, class ElemSol>
+    void updateParams(const SpatialParams& spatialParams,
+                      const Element& element,
+                      const SubControlVolume& scv,
+                      const ElemSol& elemSol)
+    {
+        shape_ = spatialParams.gridGeometry().poreGeometry(scv.dofIndex());
+        switch (shape_)
+        {
+            case Pore::Shape::cube:
+                return localRulesForCube_->updateParams(spatialParams, element, scv, elemSol);
+            default:
+                DUNE_THROW(Dune::NotImplemented, "Invalid shape");
+        }
+    }
+
+    /*!
+     * \brief The capillary pressure-saturation curve
+     */
+    Scalar pc(const Scalar sw) const
+    {
+        switch (shape_)
+        {
+            case Pore::Shape::cube:
+                return localRulesForCube_->pc(sw);
+            default:
+                DUNE_THROW(Dune::NotImplemented, "Invalid shape");
+        }
+    }
+
+    /*!
+     * \brief The capillary pressure-saturation curve
+     */
+    Scalar sw(const Scalar pc) const
+    {
+        switch (shape_)
+        {
+            case Pore::Shape::cube:
+                return localRulesForCube_->sw(pc);
+            default:
+                DUNE_THROW(Dune::NotImplemented, "Invalid shape");
+        }
+    }
+
+    /*!
+     * \brief The relative permeability for the wetting phase
+     */
+    Scalar krw(const Scalar sw) const
+    {
+        return 1.0;
+    }
+
+    /*!
+     * \brief The derivative of the relative permeability for the wetting phase w.r.t. saturation
+     */
+    Scalar dkrw_dsw(const Scalar sw) const
+    {
+        return 0;
+    }
+
+    /*!
+     * \brief The relative permeability for the non-wetting phase
+     */
+    Scalar krn(const Scalar sw) const
+    {
+        return 1.0;
+    }
+
+    /*!
+     * \brief The derivative of the relative permeability for the non-wetting phase w.r.t. saturation
+     */
+    Scalar dkrn_dsw(const Scalar sw) const
+    {
+        return 0.0;
     }
 
 
@@ -68,7 +184,11 @@ class MultiShapeTwoPLocalRules
 
 private:
 
-    LocalRulesForCube localRulesForCube_;
+    // std::unique_ptr<int> test_; // this clashes with fluidmatrixinteraction
+
+    std::shared_ptr<LocalRulesForCube> localRulesForCube_;
+
+    Pore::Shape shape_;
 
 
 
