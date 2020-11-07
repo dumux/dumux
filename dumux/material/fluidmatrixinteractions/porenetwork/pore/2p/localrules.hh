@@ -33,8 +33,8 @@
 namespace Dumux
 {
 
-template<class ScalarT, class LocalRulesForCube = TwoPLocalRulesCubeJoekarNiasar<ScalarT>>
-struct TwoPLocalRules : public TwoPLocalRulesBase
+template<class ScalarT, class LocalRulesForCube = TwoPLocalRulesCubeJoekarNiasarDefault<ScalarT>>
+class MultiShapeTwoPLocalRules
 {
     using Scalar = ScalarT;
     using Params = TwoPLocalRulesBase::Params<Scalar>;
@@ -43,77 +43,34 @@ struct TwoPLocalRules : public TwoPLocalRulesBase
     { return true; }
 
     /*!
+     * \brief Return the number of fluid phases
+     */
+    static constexpr int numFluidPhases()
+    { return 2; }
+
+    /*!
      * \brief The capillary pressure-saturation curve
-     *
-     * \param sw Saturation of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$
-     * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
-     *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
      */
-    static Scalar pc(const Params& params, const Scalar sw)
+    template<bool enableRegularization = isRegularized()>
+    Scalar pc(const Scalar sw) const
     {
         switch (params.shape)
         {
             case Pore::Shape::cube:
-                return LocalRulesForCube::pc(params, sw);
+                return RegularizedLocalRulesForCube::pc(params, sw);
             default:
                 DUNE_THROW(Dune::NotImplemented, "Invalid shape");
         }
     }
 
-    /*!
-     * \brief The wetting-phase saturation of a pore body
-     *
-     * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
-     *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
-     */
-    static Scalar sw(const Params& params, const Scalar pc)
-    {
-        switch (params.shape)
-        {
-            case Pore::Shape::cube:
-                return LocalRulesForCube::sw(params, pc);
-            default:
-                DUNE_THROW(Dune::NotImplemented, "Invalid shape");
-        }
-    }
 
-    /*!
-     * \brief The partial derivative of the capillary
-     *        pressure w.r.t. the wetting phase saturation.
-     *
-     * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     * \param sw Saturation of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$
-     */
-    static Scalar dpc_dsw(const Params& params, const Scalar sw)
-    {
-        switch (params.shape)
-        {
-            case Pore::Shape::cube:
-                return LocalRulesForCube::dpc_dsw(params, sw);
-            default:
-                DUNE_THROW(Dune::NotImplemented, "Invalid shape");
-        }
-    }
 
-    /*!
-     * \brief DOCU
-     *
-     *
-     * \param sw Saturation of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$
-     * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     */
-    static Scalar dsw_dpc(const Params& params, const Scalar pc)
-    {
-        switch (params.shape)
-        {
-            case Pore::Shape::cube:
-                return LocalRulesForCube::dsw_dpc(params, pc);
-            default:
-                DUNE_THROW(Dune::NotImplemented, "Invalid shape");
-        }
-    }
+
+private:
+
+    LocalRulesForCube localRulesForCube_;
+
+
 
 };
 
