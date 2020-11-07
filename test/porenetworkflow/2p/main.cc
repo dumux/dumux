@@ -106,11 +106,11 @@ int main(int argc, char** argv)
     const auto poresToPlot = getParam<std::vector<std::size_t>>("PlotMaterialLaw.PoresToPlot", std::vector<std::size_t>{});
     const auto sRange = getParam<std::array<double, 2>>("PlotMaterialLaw.SaturationRange", std::array<double, 2>{0, 1});
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    PlotLocalRules<typename SpatialParams::MaterialLaw, Scalar> plot;
-    plot.plotPcOverSw<typename GridVariables::VolumeVariables>(poresToPlot, *problem, sRange[0], sRange[1]);
-
-    const auto throatsToPlot = getParam<std::vector<std::size_t>>("PlotMaterialLaw.ThroatsToPlot", std::vector<std::size_t>{});
-    plot.plotTransmissibilities<GridVariables>(throatsToPlot, *problem);
+    // PlotLocalRules<typename SpatialParams::MaterialLaw, Scalar> plot;
+    // plot.plotPcOverSw<typename GridVariables::VolumeVariables>(poresToPlot, *problem, sRange[0], sRange[1]);
+    //
+    // const auto throatsToPlot = getParam<std::vector<std::size_t>>("PlotMaterialLaw.ThroatsToPlot", std::vector<std::size_t>{});
+    // plot.plotTransmissibilities<GridVariables>(throatsToPlot, *problem);
 
     // get some time loop parameters
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
