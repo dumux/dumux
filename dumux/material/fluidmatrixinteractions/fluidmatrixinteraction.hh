@@ -50,7 +50,7 @@ struct FluidMatrixInteraction : public Laws...
 template<class... Laws>
 auto makeFluidMatrixInteraction(Laws&&... laws)
 {
-    return FluidMatrixInteraction(wrap(std::forward<decltype(laws)>(laws))...);
+    return FluidMatrixInteraction(wrap(std::forward<Laws>(laws))...);
 }
 
 } // end namespace Dumux
