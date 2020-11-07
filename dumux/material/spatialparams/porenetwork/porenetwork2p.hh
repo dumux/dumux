@@ -41,27 +41,29 @@ namespace Dumux
 /**
  * \brief The base class for spatial parameters for pore network models.
  */
-template<class GridGeometry, class Scalar, class MaterialLawT, class Implementation>
+template<class GridGeometry, class Scalar, class LocalRules, class Implementation>
 class PNMTwoPBaseSpatialParams
-: public PNMBaseSpatialParams<GridGeometry, Scalar, PNMTwoPBaseSpatialParams<GridGeometry, Scalar, MaterialLawT, Implementation>>
+: public PNMBaseSpatialParams<GridGeometry, Scalar, PNMTwoPBaseSpatialParams<GridGeometry, Scalar, LocalRules, Implementation>>
 {
-    using ParentType = PNMBaseSpatialParams<GridGeometry, Scalar, PNMTwoPBaseSpatialParams<GridGeometry, Scalar, MaterialLawT, Implementation>>;
+    using ParentType = PNMBaseSpatialParams<GridGeometry, Scalar, PNMTwoPBaseSpatialParams<GridGeometry, Scalar, LocalRules, Implementation>>;
     using GridView = typename GridGeometry::GridView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
 
-    using MaterialLaw = MaterialLawT;
-    using MaterialLawParams = typename MaterialLaw::Params;
 
     PNMTwoPBaseSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
-        if (!gridGeometry->useSameGeometryForAllPores() && MaterialLawT::supportsMultipleGeometries())
+        if (!gridGeometry->useSameGeometryForAllPores() && LocalRules::supportsMultipleGeometries())
             DUNE_THROW(Dune::InvalidStateException, "Your MaterialLaw does not support multiple pore body shapes.");
 
         setParams();
+
+        typename LocalRules::BasicParams basicParams;
+
+        localRules_ = std::make_unique<LocalRules>(basicParams);
     }
 
     void setParams()
@@ -140,23 +142,42 @@ public:
     }
 
     /*!
-     * \brief Returns the parameter object for the PNM material law
+     * \brief Returns the parameter object for the Brooks-Corey material law.
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
+     * In this test, we use element-wise distributed material parameters.
+     *
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return The material parameters object
      */
-    template<class ElementSolutionVector>
-    MaterialLawParams materialLawParams(const Element& element,
-                                        const SubControlVolume& scv,
-                                        const ElementSolutionVector& elemSol) const
+    template<class ElementSolution>
+    auto fluidMatrixInteraction(const Element& element,
+                                const SubControlVolume& scv,
+                                const ElementSolution& elemSol) const
     {
-        static const Scalar surfaceTension = getParam<Scalar>("SpatialParameters.SurfaceTension", 0.0725); // TODO
-        const Scalar contactAngle = this->asImp_().contactAngle(element, scv, elemSol);
-        const Scalar poreRadius = this->asImp_().poreRadius(element, scv, elemSol);
-        const auto poreShape = this->gridGeometry().poreGeometry(scv.dofIndex());
-        return MaterialLaw::makeParams(poreRadius, contactAngle, surfaceTension, poreShape);
+        localRules_->updateParams(*this, element, scv, elemSol);
+        return makeFluidMatrixInteraction(*localRules_);
     }
+
+    // /*!
+    //  * \brief Returns the parameter object for the PNM material law
+    //  *
+    //  * \param element The finite element
+    //  * \param fvGeometry The finite volume geometry of the element
+    //  * \param scvIdx The local index of the sub-control volume
+    //  */
+    // template<class ElementSolutionVector>
+    // MaterialLawParams materialLawParams(const Element& element,
+    //                                     const SubControlVolume& scv,
+    //                                     const ElementSolutionVector& elemSol) const
+    // {
+    //     static const Scalar surfaceTension = getParam<Scalar>("SpatialParameters.SurfaceTension", 0.0725); // TODO
+    //     const Scalar contactAngle = this->asImp_().contactAngle(element, scv, elemSol);
+    //     const Scalar poreRadius = this->asImp_().poreRadius(element, scv, elemSol);
+    //     const auto poreShape = this->gridGeometry().poreGeometry(scv.dofIndex());
+    //     return MaterialLaw::makeParams(poreRadius, contactAngle, surfaceTension, poreShape);
+    // }
 
     const Dune::ReservedVector<Scalar, 4>& cornerHalfAngles(const Element& element) const
     {
@@ -172,6 +193,7 @@ public:
 private:
 
     std::vector<Dune::ReservedVector<Scalar, 4>> cornerHalfAngles_;
+    mutable std::unique_ptr<LocalRules> localRules_;
 };
 
 // TODO docme

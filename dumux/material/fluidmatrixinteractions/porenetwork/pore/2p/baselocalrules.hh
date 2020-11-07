@@ -26,130 +26,187 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/porenetworkflow/common/poreproperties.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/noregularization.hh>
+#include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
 
-namespace Dumux
-{
+namespace Dumux::FluidMatrix {
 
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Base class for all standard pore-local pc-Sw curves.
  */
-struct TwoPLocalRulesBase
+template<class ScalarType,
+         class BaseLaw,
+         class Regularization = NoRegularization>
+class TwoPLocalRulesBase : public Adapter<TwoPLocalRulesBase<ScalarType, BaseLaw, Regularization>, PcKrSw>
 {
-    /*!
-     * \brief The parameter type used for all standard pore-local pc-Sw curves.
-     *
-     * \note For sake of compatibility, we need to have one unique set of parameters for different types of curves,
-     *       even if this means that some parameters might be unused for certain laws, pore geometries, etc.
-     *
-     * \tparam Scalar The scalar type
-     */
-    template<class Scalar>
-    struct Params
-    {
-        Scalar poreRadius, contactAngle, surfaceTension;
-        Pore::Shape shape;
-    };
+public:
 
-    /*!
-     * \brief Convenience function to create parameters for standard pore-local pc-Sw curves.
-     *
-     * \tparam Scalar The scalar type
-     */
-    template<class Scalar>
-    static Params<Scalar> makeParams(const Scalar poreRadius, const Scalar contactAngle,
-                                     const Scalar surfaceTension, const Pore::Shape shape)
+    using Scalar = ScalarType;
+
+    using BasicParams = typename BaseLaw::template Params<Scalar>;
+    using RegularizationParams = typename Regularization::template Params<Scalar>;
+
+    static constexpr bool supportsMultipleGeometries()
+    { return BaseLaw::supportsMultipleGeometries(); }
+
+    template<class SpatialParams, class Element, class SubControlVolume, class ElemSol>
+    void updateParams(const SpatialParams& spatialParams,
+                      const Element& element,
+                      const SubControlVolume& scv,
+                      const ElemSol& elemSol)
     {
-        return Params<Scalar>{poreRadius, contactAngle, surfaceTension, shape};
+        basicParams_.update(spatialParams, element, scv, elemSol);
+        regularization_.updateParams(spatialParams, element, scv, elemSol);
     }
 
-    //! This is just for compatibility with the REV-scale models.
-    //! Could be removed if the pore-network models' volume variables
-    //! do not inherit from the REV-scale volume variables.
-    template<class... Args>
-    static double krw(Args&&...)
-    { return 1.0; }
-
-    //! This is just for compatibility with the REV-scale models.
-    //! Could be removed if the pore-network models' volume variables
-    //! do not inherit from the REV-scale volume variables.
-    template<class... Args>
-    static double krn(Args&&...)
-    { return 1.0; }
-
-    //! This is just for compatibility with the REV-scale models.
-    //! Could be removed if the pore-network models' volume variables
-    //! do not inherit from the REV-scale volume variables.
-    template<class... Args>
-    static double dkrw_dsw(Args&&...)
-    { return 0.0; }
-
-    //! This is just for compatibility with the REV-scale models.
-    //! Could be removed if the pore-network models' volume variables
-    //! do not inherit from the REV-scale volume variables.
-    template<class... Args>
-    static double dkrn_dsw(Args&&...)
-    { return 0.0; }
-
-};
-
-/*!
- * \ingroup Fluidmatrixinteractions
- * \brief Base class for all regularized standard pore-local pc-Sw curves.
- */
-struct RegularizedTwoPLocalRulesBase : public TwoPLocalRulesBase
-{
     /*!
-     * \brief The available options for regularizing the pc-SW curve at high wetting-phase saturations.
+     * \brief Return the number of fluid phases
      */
-    enum class HighSwRegularizationMethod
-    {
-        linear, spline, powerLaw
-    };
+    static constexpr int numFluidPhases()
+    { return 2; }
 
     /*!
-     * \brief The parameter type used for all regularized standard pore-local pc-Sw curves.
-     *
-     * \note For sake of compatibility, we need to have one unique set of parameters for different types of curves,
-     *       even if this means that some parameters might be unused for certain laws, pore geometries, etc.
-     *
-     * \tparam Scalar The scalar type
+     * \brief Return whether this law is regularized
      */
-    template<class Scalar>
-    struct Params : public TwoPLocalRulesBase::Params<Scalar>
-    {
-        Scalar lowSw, highSw;
-        HighSwRegularizationMethod highSwRegularizationMethod;
-    };
+    static constexpr bool isRegularized()
+    { return !std::is_same<Regularization, NoRegularization>::value; }
 
     /*!
-     * \brief Convenience function to create parameters for regularized standard pore-local pc-Sw curves.
-     *
-     * \tparam Scalar The scalar type
+     * \brief Construct from parameter structs
+     * \note More efficient constructor but you need to ensure all parameters are initialized
      */
-    template<class Scalar>
-    static Params<Scalar> makeParams(const Scalar poreRadius, const Scalar contactAngle,
-                                     const Scalar surfaceTension, const Pore::Shape shape)
+    TwoPLocalRulesBase(const BasicParams& baseParams = {},
+                       const RegularizationParams& regParams = {},
+                       const std::string& paramGroup = "")
+    : basicParams_(baseParams)
+
     {
-        static const Scalar lowSw = getParam<Scalar>("Regularization.LowSw", 1e-2);
-        static const Scalar highSw = getParam<Scalar>("Regularization.HighSw", 0.95);
-        static const auto highSwRegularizationMethod = []()
+        if constexpr (isRegularized())
+            regularization_.init(this, regParams, paramGroup);
+    }
+
+    /*!
+     * \brief The capillary pressure-saturation curve
+     */
+    template<bool enableRegularization = isRegularized()>
+    Scalar pc(const Scalar sw) const
+    {
+        if constexpr (enableRegularization)
         {
-            const auto input = getParam<std::string>("Regularization.HighSwRegularizationMethod", "Linear");
-            if (input == "Linear")
-                return HighSwRegularizationMethod::linear;
-            else if (input == "Spline")
-                return HighSwRegularizationMethod::spline;
-            else if (input == "PowerLaw")
-                return HighSwRegularizationMethod::powerLaw;
-            else
-                DUNE_THROW(Dune::InvalidStateException, input << " is not a valid regularization method");
-        }();
+            const auto regularized = regularization_.pc(sw);
+            if (regularized)
+                return regularized.value();
+        }
 
-        return Params<Scalar>{{poreRadius, contactAngle, surfaceTension, shape}, lowSw, highSw, highSwRegularizationMethod};
+        return BaseLaw::pc(sw, basicParams_);
     }
+
+    /*!
+     * \brief The partial derivative of the capillary pressure w.r.t. the saturation
+     */
+    template<bool enableRegularization = isRegularized()>
+    Scalar dpc_dsw(const Scalar sw) const
+    {
+        if constexpr (enableRegularization)
+        {
+            const auto regularized = regularization_.dpc_dsw(sw);
+            if (regularized)
+                return regularized.value();
+        }
+
+        return BaseLaw::dpc_dsw(sw, basicParams_);
+    }
+
+    /*!
+     * \brief The saturation-capillary pressure curve
+     */
+    template<bool enableRegularization = isRegularized()>
+    Scalar sw(const Scalar pc) const
+    {
+        if constexpr (enableRegularization)
+        {
+            const auto regularized = regularization_.sw(pc);
+            if (regularized)
+                return regularized.value();
+        }
+
+        return BaseLaw::sw(pc, basicParams_);
+    }
+
+    /*!
+     * \brief The partial derivative of the saturation to the capillary pressure
+     */
+    template<bool enableRegularization = isRegularized()>
+    Scalar dsw_dpc(const Scalar pc) const
+    {
+        if constexpr (enableRegularization)
+        {
+            const auto regularized = regularization_.dswe_dpc(pc);
+            if (regularized)
+                return regularized.value();
+        }
+
+        return BaseLaw::dswe_dpc(pc, basicParams_);
+    }
+
+    /*!
+     * \brief The relative permeability for the wetting phase
+     */
+    template<bool enableRegularization = isRegularized()>
+    Scalar krw(const Scalar sw) const
+    {
+        return 1.0;
+    }
+
+    /*!
+     * \brief The derivative of the relative permeability for the wetting phase w.r.t. saturation
+     */
+    template<bool enableRegularization = isRegularized()>
+    Scalar dkrw_dsw(const Scalar sw) const
+    {
+        return 0;
+    }
+
+    /*!
+     * \brief The relative permeability for the non-wetting phase
+     */
+    template<bool enableRegularization = isRegularized()>
+    Scalar krn(const Scalar sw) const
+    {
+        return 1.0;
+    }
+
+    /*!
+     * \brief The derivative of the relative permeability for the non-wetting phase w.r.t. saturation
+     */
+    template<bool enableRegularization = isRegularized()>
+    Scalar dkrn_dsw(const Scalar sw) const
+    {
+        return 0.0;
+    }
+
+    /*!
+     * \brief Equality comparison with another instance
+     */
+    bool operator== (const TwoPLocalRulesBase& o) const
+    {
+        return basicParams_ == o.basicParams_
+               && regularization_ == o.regularization_;
+    }
+
+    /*!
+     * \brief Return the base law's parameters
+     */
+    const BasicParams& basicParams() const
+    { return basicParams_; }
+
+
+private:
+    BasicParams basicParams_;
+    Regularization regularization_;
 };
 
-}
+} // end namespace Dumux
 
 #endif
