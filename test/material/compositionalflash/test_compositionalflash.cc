@@ -113,7 +113,7 @@ void checkCompositionalFlash(const FluidState &fsRef)
 
     // call flash for testing
     FluidState fsFlash;
-    flash.concentrationFlash2p2c(fsFlash, Z0, phasePressures, 0/*dummy*/, fsRef.temperature(0));
+    flash.concentrationFlash2p2c(fsFlash, Z0, phasePressures, fsRef.temperature(0));
 
     // compare the "flashed" fluid state with the reference one
     checkSame<Scalar>(fsRef, fsFlash);
@@ -142,7 +142,7 @@ void checkCompositionalFlashSequential(const FluidState &fsRef, int refPhaseIdx)
 
     // call flash for testing
     Dumux::CompositionalFluidState<Scalar, FluidSystem> fsFlash;
-    flash.concentrationFlash2p2c(fsFlash, Z0, phasePressures, 0/*dummy*/, fsRef.temperature(0));
+    flash.concentrationFlash2p2c(fsFlash, Z0, phasePressures, fsRef.temperature(0));
 
     // compare the "flashed" fluid state with the reference one
     checkSame<Scalar>(fsRef, fsFlash);
@@ -349,7 +349,7 @@ int main()
     pressures[liquidPhaseIdx] = fsRef.pressure(liquidPhaseIdx);
     pressures[gasPhaseIdx] = fsRef.pressure(gasPhaseIdx);
     Dumux::CompositionalFlash<Scalar, FluidSystem>::saturationFlash2p2c(fsRef, fsRef.saturation(liquidPhaseIdx),
-                                                                        pressures, 0/*dummy*/, fsRef.temperature(0));
+                                                                        pressures, fsRef.temperature(0));
 
     // check the flash calculation
     checkCompositionalFlash<Scalar, FluidSystem>(fsRef);
