@@ -50,7 +50,7 @@ struct FluidMatrixInteraction : public Laws...
 template<class... Laws>
 auto makeFluidMatrixInteraction(Laws&&... laws)
 {
-    return FluidMatrixInteraction(wrap(std::forward<decltype(laws)>(laws))...);
+    return FluidMatrixInteraction(wrap(std::forward<Laws>(laws))...);
 }
 
 } // end namespace Dumux
@@ -79,7 +79,7 @@ class PcKrSw
 public:
     using Scalar = typename std::decay_t<T>::Scalar;
 
-    using PcKrSwType = const T;
+    using PcKrSwType = T;
 
     PcKrSw(T&& impl) : impl_(std::forward<T>(impl)) {}
 
@@ -97,7 +97,7 @@ public:
     const T& krSwCurve()  const { return impl_; }
 
 private:
-    const T impl_;
+    T impl_;
 };
 
 /*!
@@ -129,7 +129,7 @@ public:
     const T& multiPhasePcKrS() const { return impl_; }
 
 private:
-    const T impl_;
+    T impl_;
 };
 
 /*!
@@ -149,9 +149,9 @@ template<class T>
 struct ThreePhasePcKrSw
 {
     using Scalar = typename std::decay_t<T>::Scalar;
-    using value_type = const T;
+    using value_type = T;
 
-    using PcKrSwType = const T;
+    using PcKrSwType = T;
 
     ThreePhasePcKrSw(T&& impl) : impl_(std::forward<T>(impl)) {}
 
@@ -168,7 +168,7 @@ struct ThreePhasePcKrSw
     const T& pcSwCurve() const { return impl_; }
     const T& krSwCurve()  const { return impl_; }
 private:
-    const T impl_;
+    T impl_;
 };
 
 /*!
@@ -191,7 +191,7 @@ public:
     WettingNonwettingInterfacialAreaPcSw(T&& impl) : impl_(std::forward<T>(impl)) {}
     const T& wettingNonwettingInterface() const { return impl_; }
 private:
-    const T impl_;
+    T impl_;
 };
 
 /*!
@@ -214,7 +214,7 @@ public:
     WettingSolidInterfacialAreaPcSw(T&& impl) : impl_(std::forward<T>(impl)) {}
     const T& wettingSolidInterface() const { return impl_; }
 private:
-    const T impl_;
+    T impl_;
 };
 
 /*!
@@ -237,7 +237,7 @@ public:
     NonwettingSolidInterfacialAreaPcSw(T&& impl) : impl_(std::forward<T>(impl)) {}
     const T& nonwettingSolidInterface() const { return impl_; }
 private:
-    const T impl_;
+    T impl_;
 };
 
 /*!
@@ -263,7 +263,7 @@ public:
     Adsorption(T&& impl) : impl_(std::forward<T>(impl)) {}
     const T& adsorptionModel() const { return impl_; }
 private:
-    const T impl_;
+    T impl_;
 };
 
 /*!
