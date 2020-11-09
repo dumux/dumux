@@ -8,8 +8,8 @@ UpperRight = 6.28 6.28
 Cells = 62 62
 Positions0 = 0 1.57 2.512 4.082 5.024 6.28
 Positions1 = 0 1.57 2.512 4.082 5.024 6.28
-Cells0 = 3 5 4 5 3
-Cells1 = 3 5 4 5 3
+Cells0 = 4 5 4 5 4
+Cells1 = 4 5 4 5 4
 Grading0 = 1 1 1 1 1
 Grading1 = 1 1 1 1 1
 
