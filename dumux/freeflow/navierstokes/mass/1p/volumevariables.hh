@@ -75,6 +75,7 @@ public:
     {
         ParentType::update(elemSol, problem, element, scv);
         completeFluidState(elemSol, problem, element,scv, fluidState_);
+        EnergyVolumeVariables::updateEffectiveThermalConductivity();
     }
 
     /*!
@@ -96,7 +97,6 @@ public:
                             FluidState& fluidState)
     {
         fluidState.setTemperature(/*phaseIdx=*/0, EnergyVolumeVariables::getTemperature(elemSol, problem, element, scv));
-        EnergyVolumeVariables::updateEffectiveThermalConductivity();
 
         const auto& priVars = elemSol[scv.localDofIndex()];
         fluidState.setPressure(/*phaseIdx=*/0, priVars[Indices::pressureIdx]);
