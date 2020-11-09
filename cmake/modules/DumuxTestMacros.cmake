@@ -190,7 +190,7 @@
 #       :multi:
 #       :argname: condition
 #
-#       A number of conditions that CMake should evaluate. 
+#       A number of conditions that CMake should evaluate.
 #       Uses the same mechanics that `dumux_add_test` uses to evaluate its CMAKE_GUARD argument.
 #
 #       The passed condition can be a complex expression like
