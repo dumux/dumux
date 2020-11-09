@@ -178,9 +178,9 @@ public:
             auto upwindTerm = NavierStokesUpwindTerms::energyFlux();
             flux[Traits::Indices::energyEqIdx] = upwind(upwindTerm);
         }
-
-        // add advective fluxes based on physical type of model
-        ModelSpecificFlux<Traits>::addAdvectiveFlux(flux, upwind);
+        else
+            // add advective fluxes based on physical type of model
+            ModelSpecificFlux<Traits>::addAdvectiveFlux(flux, upwind);
     }
 
     /*!
@@ -255,7 +255,8 @@ public:
         if constexpr (VolumeVariables::FluidSystem::isCompressible(0/*phaseIdx*/) /*TODO viscosityIsConstant*/ || NumEqVector::size() > 1)
         {
             static const bool verbose = getParamFromGroup<bool>(problem.paramGroup(), "Flux.EnableOutflowReversalWarning", true);
-            if (verbose && !insideIsUpstream)
+            using std::abs;
+            if (verbose && !insideIsUpstream && abs(volumeFlux) > 1e-10)
             {
                 std::cout << "velo " << velocity << ", flux " << volumeFlux << std::endl;
                 std::cout << "\n ********** WARNING ********** \n\n"
