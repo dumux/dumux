@@ -220,7 +220,7 @@ function(dumux_evaluate_cmake_guard GUARD_LETS_YOU_PASS)
   # determine if all condition of the guard are met
   set(${GUARD_LETS_YOU_PASS} TRUE PARENT_SCOPE)
   set(FAILED_CONDITION_PRINTING "")
-  foreach(condition ${ADDTEST_CMAKE_GUARD})
+  foreach(condition ${EVALGUARD_CMAKE_GUARD})
     separate_arguments(condition)
     if(NOT (${condition}))
       set(${GUARD_LETS_YOU_PASS} FALSE PARENT_SCOPE)
