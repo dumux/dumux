@@ -32,6 +32,24 @@
 
 namespace Dumux {
 
+namespace Detail {
+
+struct EmptyHeatCondType {};
+
+template<bool b, class Traits>
+struct HeatCondType
+{
+    using type = EmptyHeatCondType;
+};
+
+template<class Traits>
+struct HeatCondType<true, Traits>
+{
+    using type = typename Traits::HeatConductionType;
+};
+
+}
+
 /*!
  * \ingroup NIModel
  * \brief The isothermal base class
@@ -45,6 +63,7 @@ class NavierStokesEnergyVolumeVariables
 public:
     using FluidState = typename Traits::FluidState;
     using FluidSystem = typename Traits::FluidSystem;
+    using HeatConductionType = typename Detail::HeatCondType<enableEnergyBalance, Traits>::type;
 
     /*!
     * \brief Returns the temperature at a given sub-control volume
