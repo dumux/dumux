@@ -115,6 +115,32 @@ dumux_add_test(NAME test_ff_stokes2c_advection_new
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes2c_advection-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c_advection_new-00010.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c_advection_new-00009.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c_mole_new params_advection.input
                              -Problem.Name test_ff_stokes2c_advection_new")
+
+add_executable(test_ff_stokes2cni_new EXCLUDE_FROM_ALL main_new.cc)
+target_compile_definitions(test_ff_stokes2cni_new PUBLIC "NONISOTHERMAL=1")
+
+dumux_add_test(NAME test_ff_stokes2cni_advection_new
+              TARGET test_ff_stokes2cni_new
+              LABELS freeflow navierstokes
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes2cni_advection-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2cni_advection_new-00009.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2cni_new params_advectionni.input
+                             -Problem.Name test_ff_stokes2cni_advection_new")
+
+dumux_add_test(NAME test_ff_stokes2cni_diffusion_new
+              TARGET test_ff_stokes2cni_new
+              LABELS freeflow navierstokes
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes2cni_diffusion-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2cni_diffusion_new-00014.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2cni_new params_diffusionni.input
+                             -Problem.Name test_ff_stokes2cni_diffusion_new"
+                             --zeroThreshold {"velocity_liq \(m/s\)":1e-13})

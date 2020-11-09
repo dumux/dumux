@@ -142,9 +142,6 @@ int main(int argc, char** argv) try
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(restartTime, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
-    if (getParam<Scalar>("Problem.InletVelocity") > 1e-6)
-        timeLoop->setCheckPoint({200.0, 210.0});
-
     massProblem->setTimeLoop(timeLoop);
     momentumProblem->setTimeLoop(timeLoop);
 

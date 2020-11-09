@@ -55,11 +55,11 @@ namespace Properties {
 namespace TTag {
 struct ChannelNCTest {};
 struct ChannelNCTestMomentum { using InheritsFrom = std::tuple<ChannelNCTest, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
-// #if !NONISOTHERMAL
+#if !NONISOTHERMAL
 struct ChannelNCTestMass { using InheritsFrom = std::tuple<ChannelNCTest, NavierStokesMassOnePNC, CCTpfaModel>; };
-// #else
-// struct ChannelNCTest { using InheritsFrom = std::tuple<NavierStokesNCNI, StaggeredFreeFlowModel>; };
-// #endif
+#else
+struct ChannelNCTestMass { using InheritsFrom = std::tuple<ChannelNCTest, NavierStokesMassOnePNCNI, CCTpfaModel>; };
+#endif
 } // end namespace TTag
 
 // Select the fluid system
@@ -144,9 +144,6 @@ public:
     {
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
         FluidSystem::init();
-
-        if constexpr (!ParentType::isMomentumProblem())
-            deltaP_.resize(this->gridGeometry().numDofs());
     }
 
    /*!
@@ -312,36 +309,6 @@ public:
         return values;
     }
 
-   /*!
-     * \brief Adds additional VTK output data to the VTKWriter.
-     *
-     * Function is called by the output module on every write.
-     *
-     * \param gridVariables The grid variables
-     * \param sol The solution vector
-     */
-    template<class GridVariables, class SolutionVector>
-    void calculateDeltaP(const GridVariables& gridVariables, const SolutionVector& sol)
-    {
-        for (const auto& element : elements(this->gridGeometry().gridView()))
-        {
-            auto fvGeometry = localView(this->gridGeometry());
-            fvGeometry.bindElement(element);
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                auto ccDofIdx = scv.dofIndex();
-
-                auto elemVolVars = localView(gridVariables.curGridVolVars());
-                elemVolVars.bindElement(element, fvGeometry, sol);
-
-                deltaP_[ccDofIdx] = elemVolVars[scv].pressure() - 1.1e5;
-            }
-        }
-    }
-
-    auto& getDeltaP() const
-    { return deltaP_; }
-
     // \}
 
     void setTimeLoop(TimeLoopPtr timeLoop)
@@ -369,7 +336,6 @@ private:
     const Scalar eps_;
     Scalar inletVelocity_;
     TimeLoopPtr timeLoop_;
-    std::vector<Scalar> deltaP_;
 };
 } // end namespace Dumux
 
