@@ -90,6 +90,7 @@ public:
         };
 
         diffCoefficient_.update(getDiffusionCoefficient);
+        EnergyVolumeVariables::updateEffectiveThermalConductivity();
     }
 
     /*!
