@@ -64,6 +64,8 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/freeflow/navierstokes/energy/model.hh>
 #include <dumux/flux/fickslaw.hh>
+#include <dumux/freeflow/navierstokes/scalarfluxvariablescachefiller.hh>
+
 
 namespace Dumux {
 
@@ -242,20 +244,26 @@ struct FluxVariables<TypeTag, TTag::NavierStokesMassOnePNC>
 { using type = NavierStokesMassOnePNCFluxVariables<TypeTag>; };
 
 template<class TypeTag>
+struct SolutionDependentMolecularDiffusion<TypeTag, TTag::NavierStokesMassOnePNC> { static constexpr bool value = true; };
+
+
+template<class TypeTag>
 struct FluxVariablesCache<TypeTag, TTag::NavierStokesMassOnePNC>
 {
-    struct Cache : public GetPropType<TypeTag, Properties::MolecularDiffusionType>::Cache
-    {
-
-    };
-
-    using type = Cache;
-
-    // using type = FluxVariablesCaching::EmptyCache<GetPropType<TypeTag, Properties::Scalar>>;
+    struct type : public GetPropType<TypeTag, Properties::MolecularDiffusionType>::Cache
+    {};
 };
 
 template<class TypeTag>
-struct FluxVariablesCacheFiller<TypeTag, TTag::NavierStokesMassOnePNC> { using type = FluxVariablesCaching::EmptyCacheFiller; };
+struct FluxVariablesCacheFiller<TypeTag, TTag::NavierStokesMassOnePNC>
+{
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    static constexpr bool diffusionIsSolDependent = getPropValue<TypeTag, Properties::SolutionDependentMolecularDiffusion>();
+    static constexpr bool heatConductionIsSolDependent = false; // no heat conduction
+
+    using type = FreeFlowScalarFluxVariablesCacheFiller<Problem, ModelTraits, diffusionIsSolDependent, heatConductionIsSolDependent>;
+};
 
 // ! The specific I/O fields
 template<class TypeTag>

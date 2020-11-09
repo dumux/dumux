@@ -53,6 +53,8 @@ public:
     using FluidSystem = typename Traits::FluidSystem;
     //! export the fluid state type
     using FluidState = typename Traits::FluidState;
+    //! export the diffusion type
+    using MolecularDiffusionType = typename Traits::DiffusionType;
     //! export the indices type
     using Indices = typename Traits::ModelTraits::Indices;
 
