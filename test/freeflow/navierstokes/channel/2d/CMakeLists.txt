@@ -154,9 +154,9 @@ dumux_add_test(NAME test_ff_stokesni_channel_convection_new
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS       --script fuzzy
                               --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokesni_channel_convection-reference.vtu
-                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokesni_channel_convection-00005.vtu
+                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokesni_channel_convection_new-00005.vtu
                               --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokesni_channel_new params_convection.input
-                              -Problem.Name test_ff_stokesni_channel_convection")
+                              -Problem.Name test_ff_stokesni_channel_convection_new")
 
 dumux_add_test(NAME test_ff_stokesni_channel_conduction_new
                TARGET test_ff_stokesni_channel_new
@@ -165,7 +165,7 @@ dumux_add_test(NAME test_ff_stokesni_channel_conduction_new
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS       --script fuzzy
                               --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokesni_channel_conduction-reference.vtu
-                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokesni_channel_conduction-00004.vtu
+                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokesni_channel_conduction_new-00004.vtu
                               --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokesni_channel_new params_conduction.input
-                              -Problem.Name test_ff_stokesni_channel_conduction"
+                              -Problem.Name test_ff_stokesni_channel_conduction_new"
                               --zeroThreshold {"velocity_liq \(m/s\)":1e-20})
