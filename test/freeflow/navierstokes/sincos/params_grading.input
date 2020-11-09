@@ -6,15 +6,15 @@ TEnd = 1.0 # [s]
 LowerLeft = 0 0
 UpperRight = 6.28 6.28
 Cells = 62 62
-Positions0 = 0 6.28
-Positions1 = 0 6.28
-Cells0 = 62
-Cells1 = 62
-Grading0 = 1
-Grading1 = 1
+Positions0 = 0 1.57 2.512 4.082 5.024 6.28
+Positions1 = 0 1.57 2.512 4.082 5.024 6.28
+Cells0 = 3 5 4 5 3
+Cells1 = 3 5 4 5 3
+Grading0 = 1 1 1 1 1
+Grading1 = 1 1 1 1 1
 
 [Problem]
-Name = test_ff_sincos
+Name = grading
 EnableGravity = false
 PrintL2Error = true
 EnableInertiaTerms = true

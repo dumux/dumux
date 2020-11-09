@@ -68,7 +68,7 @@ struct FluidSystem<TypeTag, TTag::KovasznayTest>
 template<class TypeTag>
 struct Grid<TypeTag, TTag::KovasznayTest>
 {
-    using HostGrid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >;
+    using HostGrid = Dune::YaspGrid<2, Dune::TensorProductCoordinates<double, 2> >;
 
 #if HAVE_DUNE_SUBGRID
     using type = Dune::SubGrid<HostGrid::dimension, HostGrid>;

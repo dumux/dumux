@@ -63,7 +63,7 @@ struct FluidSystem<TypeTag, TTag::DoneaTest>
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::DoneaTest> { using type = Dune::YaspGrid<2>; };
+struct Grid<TypeTag, TTag::DoneaTest> { using type = Dune::YaspGrid<2,Dune::TensorProductCoordinates<double, 2>>; };
 
 // Set the problem property
 template<class TypeTag>

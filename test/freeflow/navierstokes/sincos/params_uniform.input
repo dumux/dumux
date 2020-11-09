@@ -8,13 +8,13 @@ UpperRight = 6.28 6.28
 Cells = 62 62
 Positions0 = 0 6.28
 Positions1 = 0 6.28
-Cells0 = 62
-Cells1 = 62
+Cells0 = 20
+Cells1 = 20
 Grading0 = 1
 Grading1 = 1
 
 [Problem]
-Name = test_ff_sincos
+Name = uniform
 EnableGravity = false
 PrintL2Error = true
 EnableInertiaTerms = true

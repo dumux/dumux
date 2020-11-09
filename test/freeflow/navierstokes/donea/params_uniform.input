@@ -1,12 +1,12 @@
 [Grid]
 UpperRight = 1 1
 Cells = 40 40
-Positions0 = 0 .1 .9 1
-Positions1 = 0 .1 .9 1
-Cells0 = 2 10 2
-Cells1 = 2 10 2
-Grading0 = 2 1 -2
-Grading1 = 2 1 -2
+Positions0 = 0 1
+Positions1 = 0  1
+Cells0 = 14
+Cells1 = 14
+Grading0 = 1
+Grading1 = 1
 
 [Problem]
 Name = test_donea # name passed to the output routines

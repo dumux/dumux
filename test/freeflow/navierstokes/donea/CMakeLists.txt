@@ -22,4 +22,4 @@ dumux_add_test(NAME test_ff_stokes_donea
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea params.input
                              -Problem.Name test_ff_stokes_donea")
 
-dune_symlink_to_source_files(FILES "params.input")
+add_input_file_links()

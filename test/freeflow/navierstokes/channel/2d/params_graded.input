@@ -5,15 +5,15 @@ TEnd = 2 # [s]
 [Grid]
 UpperRight = 10 1
 Cells = 100 50
-Positions0 = 0 10# 10
-Positions1 = 0 1
-Cells0 = 10 #10
-Cells1 = 10
-Grading0 = 1 #1
-Grading1 = 1
+Positions0 = 0 10
+Positions1 = 0 0.1 0.9 1
+Cells0 = 20
+Cells1 = 5 10 5
+Grading0 = 1
+Grading1 = 2 1 -2
 
 [Problem]
-Name = test_channel_stokes # name passed to the output routines
+Name = graded # name passed to the output routines
 InletVelocity = 1
 EnableGravity = false
 EnableInertiaTerms = false

@@ -10,7 +10,7 @@ Grading0 = 1
 Grading1 = 1
 
 [Problem]
-Name = test_kovasznay # name passed to the output routines
+Name = uniform # name passed to the output routines
 EnableGravity = false
 PrintL2Error = true
 EnableInertiaTerms = true

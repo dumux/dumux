@@ -67,7 +67,7 @@ struct FluidSystem<TypeTag, TTag::ChannelTest>
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::ChannelTest> { using type = Dune::YaspGrid<2>; };
+struct Grid<TypeTag, TTag::ChannelTest> { using type = Dune::YaspGrid<2,Dune::TensorProductCoordinates<double, 2>>; };
 
 // Set the problem property
 template<class TypeTag>
@@ -144,7 +144,7 @@ public:
         useVelocityProfile_ = getParam<bool>("Problem.UseVelocityProfile", false);
         outletPressure_ = getParam<Scalar>("Problem.OutletPressure", 1.1e5);
 
-        hasAnalyticalSolution_ = (outletCondition_ == OutletCondition::neumannXneumannY);
+        hasAnalyticalSolution_ = true;
         if (hasAnalyticalSolution_)
             createAnalyticalSolution_();
     }
@@ -407,7 +407,7 @@ public:
 
     bool hasAnalyticalSolution()
     {
-        return hasAnalyticalSolution_;
+        return true; //hasAnalyticalSolution_;
     }
 
 private:

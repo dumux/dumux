@@ -40,4 +40,4 @@ dumux_add_test(NAME test_ff_navierstokes_kovasznay_higherorder_staircase
                              -Flux.TvdApproach Hou
                              -Flux.DifferencingScheme Vanleer")
 
-dune_symlink_to_source_files(FILES "params.input")
+add_input_file_links()

@@ -1,5 +1,5 @@
 dune_symlink_to_source_files(FILES "convergencetest.py")
-dune_symlink_to_source_files(FILES "params.input")
+add_input_file_links()
 
 dumux_add_test(NAME test_ff_navierstokes_sincos
               SOURCES main.cc

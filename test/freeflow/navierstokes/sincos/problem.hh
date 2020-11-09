@@ -60,7 +60,7 @@ public:
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::SincosTest> { using type = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
+struct Grid<TypeTag, TTag::SincosTest> { using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<double, 2>>; };
 
 // Set the problem property
 template<class TypeTag>
