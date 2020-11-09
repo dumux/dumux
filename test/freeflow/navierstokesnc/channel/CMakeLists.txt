@@ -94,4 +94,27 @@ dumux_add_test(NAME test_ff_stokes2c_diffusion_mass_new
                              --zeroThreshold {"velocity_liq \(m/s\)":1e-22})
 
 add_executable(test_ff_stokes2c_mole_new EXCLUDE_FROM_ALL main_new.cc)
-target_compile_definitions(test_ff_stokes2c_mass_new PUBLIC "USE_MASS=0")
+target_compile_definitions(test_ff_stokes2c_mole_new PUBLIC "USE_MASS=0")
+
+dumux_add_test(NAME test_ff_stokes2c_diffusion_mole_new
+              TARGET test_ff_stokes2c_mole_new
+              LABELS freeflow navierstokes
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes2c_diffusion-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c_diffusion_mole_new-00015.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c_mole_new params_diffusion.input
+                             -Problem.Name test_ff_stokes2c_diffusion_mole_new"
+                             --zeroThreshold {"velocity_liq \(m/s\)":1e-22})
+
+dumux_add_test(NAME test_ff_stokes2c_advection_new
+              TARGET test_ff_stokes2c_mole_new
+              LABELS freeflow navierstokes
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes2c_advection-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c_advection_new-00010.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c_mole_new params_advection.input
+                             -Problem.Name test_ff_stokes2c_advection_new")
