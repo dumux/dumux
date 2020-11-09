@@ -284,7 +284,7 @@ public:
 
 //! Add temperature to the output
 template<class TypeTag>
-struct IOFields<TypeTag, TTag::NavierStokesMassOnePNCNI> { using type = NavierStokesEnergyIOFields<NavierStokesIOFields>; };
+struct IOFields<TypeTag, TTag::NavierStokesMassOnePNCNI> { using type = NavierStokesEnergyIOFields<NavierStokesMassOnePNCIOFields<NavierStokesIOFields>>; };
 
 //! The model traits of the non-isothermal model
 template<class TypeTag>
@@ -305,10 +305,22 @@ private:
     static_assert(!FSY::isMiscible(), "The Navier-Stokes model only works with immiscible fluid systems.");
 
     using BaseTraits = NavierStokesMassOnePNCVolumeVariablesTraits<PV, FSY, FST, MT>;
+
+    using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
     using ETCM = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
-    struct NITraits : public BaseTraits { using EffectiveThermalConductivityModel = ETCM; };
+    using HCT = GetPropType<TypeTag, Properties::HeatConductionType>;
+
+    struct NCNITraits : public BaseTraits
+    {
+        using DiffusionType = DT;
+        using EffectiveDiffusivityModel = EDM;
+        using EffectiveThermalConductivityModel = ETCM;
+        using HeatConductionType = HCT;
+    };
+
 public:
-    using type = NavierStokesMassOnePNCVolumeVariables<NITraits>;
+    using type = NavierStokesMassOnePNCVolumeVariables<NCNITraits>;
 };
 
 //! Use the average for effective conductivities
@@ -323,7 +335,6 @@ struct ThermalConductivityModel<TypeTag, TTag::NavierStokesMassOnePNCNI>
             return volVars.fluidThermalConductivity();
         }
     };
-    // using type = ThermalConductivityAverage<GetPropType<TypeTag, Properties::Scalar>>;
 };
 
 template<class TypeTag>
@@ -333,66 +344,27 @@ struct HeatConductionType<TypeTag, TTag::NavierStokesMassOnePNCNI>
 template<class TypeTag>
 struct FluxVariablesCache<TypeTag, TTag::NavierStokesMassOnePNCNI>
 {
-    struct Cache : public GetPropType<TypeTag, Properties::HeatConductionType>::Cache
-    {
-
-    };
-
-    using type = Cache;
+    struct type
+    : public GetPropType<TypeTag, Properties::MolecularDiffusionType>::Cache
+    , public GetPropType<TypeTag, Properties::HeatConductionType>::Cache
+    {};
 };
 
 template<class TypeTag>
 struct FluxVariablesCacheFiller<TypeTag, TTag::NavierStokesMassOnePNCNI>
 {
-    class Filler : public GetPropType<TypeTag, Properties::HeatConductionType>::Cache::Filler
-    {
-        using Problem = GetPropType<TypeTag, Properties::Problem>;
-        using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-        using GridView = typename GridGeometry::GridView;
-        using Element = typename GridView::template Codim<0>::Entity;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    static constexpr bool diffusionIsSolDependent = getPropValue<TypeTag, Properties::SolutionDependentMolecularDiffusion>();
+    static constexpr bool heatConductionIsSolDependent = getPropValue<TypeTag, Properties::SolutionDependentHeatConduction>();
 
-        using FVElementGeometry = typename GridGeometry::LocalView;
-        using SubControlVolume = typename GridGeometry::SubControlVolume;
-        using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
-        using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-
-    public:
-        static constexpr bool isSolDependent = getPropValue<TypeTag, Properties::SolutionDependentHeatConduction>();
-
-        Filler(const Problem& problem)
-        : problemPtr_(&problem) {}
-
-        template<class FluxVariablesCacheContainer, class FluxVariablesCache>
-        void fill(FluxVariablesCacheContainer& fluxVarsCacheContainer,
-                  FluxVariablesCache& scvfFluxVarsCache,
-                  const Element& element,
-                  const FVElementGeometry& fvGeometry,
-                  const ElementVolumeVariables& elemVolVars,
-                  const SubControlVolumeFace& scvf,
-                  bool forceUpdateAll = false)
-        {
-            using HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>;
-            using HeatConductionFiller = typename HeatConductionType::Cache::Filler;
-
-            // forward to the filler of the diffusive quantities
-            HeatConductionFiller::fill(scvfFluxVarsCache, problem(), element, fvGeometry, elemVolVars, scvf, *this);
-        }
-
-    private:
-        const Problem& problem() const
-        { return *problemPtr_; }
-
-        const Problem* problemPtr_;
-    };
-
-    using type = Filler;
+    using type = FreeFlowScalarFluxVariablesCacheFiller<Problem, ModelTraits, diffusionIsSolDependent, heatConductionIsSolDependent>;
 };
 
 template<class TypeTag>
 struct SolutionDependentHeatConduction<TypeTag, TTag::NavierStokesMassOnePNCNI> { static constexpr bool value = true; };
 
 } // end namespace Properties
-// }
 
 } // end namespace Dumux
 
