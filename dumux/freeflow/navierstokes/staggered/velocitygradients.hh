@@ -151,10 +151,25 @@ public:
                 DUNE_THROW(Dune::InvalidStateException, "Invalid lateral boundary type at " << lateralScvf.center());
         }();
 
+        int localOppositeSubFaceIdx = (localSubFaceIdx % 2) ? (localSubFaceIdx - 1) : (localSubFaceIdx + 1);
+
+        Scalar factor;
+
+        bool enableVelocityGradientFactor = getParamFromGroup<bool>(problem.paramGroup(),"FreeFlow.EnableVelocityGradientFactor", false);
+
+        if (enableVelocityGradientFactor)
+        {
+            factor = 2* scvf.area() / (scvf.parallelDofsDistance(localSubFaceIdx, 0) + scvf.parallelDofsDistance(localOppositeSubFaceIdx, 0));
+        }
+        else
+        {
+            factor = 1.;
+        }
+
         // The velocity gradient already accounts for the orientation
         // of the staggered face's outer normal vector. This also correctly accounts for the reduced
         // distance used in the gradient if the lateral scvf lies on a boundary.
-        return (outerParallelVelocity - innerParallelVelocity)
+        return factor * (outerParallelVelocity - innerParallelVelocity)
                / scvf.parallelDofsDistance(localSubFaceIdx, 0) * lateralScvf.directionSign();
     }
 
