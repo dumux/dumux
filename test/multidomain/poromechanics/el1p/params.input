@@ -1,7 +1,7 @@
 [Grid]
 LowerLeft = 0 0
 UpperRight = 1 1
-Cells = 10 10
+Cells = 50 50
 
 [Problem]
 InjectionRate = 1e-3
