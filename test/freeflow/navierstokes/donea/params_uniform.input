@@ -3,13 +3,13 @@ UpperRight = 1 1
 Cells = 40 40
 Positions0 = 0 1
 Positions1 = 0  1
-Cells0 = 14
-Cells1 = 14
+Cells0 = 10
+Cells1 = 10
 Grading0 = 1
 Grading1 = 1
 
 [Problem]
-Name = test_donea # name passed to the output routines
+Name = uniform # name passed to the output routines
 EnableGravity = false
 PrintL2Error = true
 EnableInertiaTerms = false
@@ -17,6 +17,9 @@ EnableInertiaTerms = false
 [Component]
 LiquidDensity  = 1.0
 LiquidKinematicViscosity = 1.0
+
+[FreeFlow]
+EnableVelocityGradientFactor = true
 
 [ Newton ]
 MaxSteps = 10
