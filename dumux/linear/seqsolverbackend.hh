@@ -1278,7 +1278,7 @@ private:
  * | C  D |
  */
 template <class LinearSolverTraitsTuple>
-class BlockDiagAMGBiCGSTABSolver : public LinearSolver
+class BlockDiagAMGGMResSolver : public LinearSolver
 {
     template<class M, std::size_t i>
     using DiagBlockType = std::decay_t<decltype(std::declval<M>()[Dune::index_constant<i>{}][Dune::index_constant<i>{}])>;
@@ -1317,10 +1317,10 @@ public:
     using LinearSolver::LinearSolver;
 
     template<class GridView, class DofMapper, class String>
-    BlockDiagAMGBiCGSTABSolver(const GridView& gridView,
+    BlockDiagAMGGMResSolver(const GridView& gridView,
                                const DofMapper& dofMapper,
                                const String& paramGroup = "")
-    : BlockDiagAMGBiCGSTABSolver(gridView, dofMapper, paramGroup, std::make_index_sequence<numBlocks>{})
+    : BlockDiagAMGGMResSolver(gridView, dofMapper, paramGroup, std::make_index_sequence<numBlocks>{})
     {}
 
     // Solve saddle-point problem using a Schur complement based preconditioner
@@ -1347,7 +1347,7 @@ public:
     }
 
     std::string name() const
-    { return "block-diagonal AMG preconditioned BiCGSTAB solver"; }
+    { return "block-diagonal AMG preconditioned GMRes solver"; }
 
 private:
 
@@ -1466,8 +1466,9 @@ private:
         TupleScalarProduct<Vector, decltype(scalarProducts)> sp(scalarProducts);
 
         auto rank = Dune::MPIHelper::getCollectiveCommunication().rank();
-        Dune::BiCGSTABSolver<Vector> solver(op, sp, prec, this->residReduction(),
-                                            this->maxIter(), rank == 0 ? this->verbosity() : 0);
+        static const int restartGMRes = getParamFromGroup<double>(this->paramGroup(), "LinearSolver.GMResRestart", 10);
+        Dune::RestartedGMResSolver<Vector> solver(op, sp, prec, this->residReduction(), restartGMRes,
+                                                  this->maxIter(), rank == 0 ? this->verbosity() : 0);
 
         auto bTmp(b);
         solver.apply(x, bTmp, result_);
@@ -1516,8 +1517,9 @@ private:
 
         Dune::MatrixAdapter<Matrix, Vector, Vector> op(m);
 
-        Dune::BiCGSTABSolver<Vector> solver(op, prec, this->residReduction(),
-                                            this->maxIter(), this->verbosity());
+        static const int restartGMRes = getParamFromGroup<double>(this->paramGroup(), "LinearSolver.GMResRestart", 10);
+        Dune::RestartedGMResSolver<Vector> solver(op, prec, this->residReduction(), restartGMRes,
+                                                  this->maxIter(), this->verbosity());
 
         auto bTmp(b);
         solver.apply(x, bTmp, result_);
@@ -1548,7 +1550,7 @@ private:
     }
 
     template<class GridView, class DofMapper, class String, std::size_t... Is>
-    BlockDiagAMGBiCGSTABSolver(const GridView& gridView,
+    BlockDiagAMGGMResSolver(const GridView& gridView,
                                const DofMapper& dofMapper,
                                const String& paramGroup,
                                std::index_sequence<Is...> is)
