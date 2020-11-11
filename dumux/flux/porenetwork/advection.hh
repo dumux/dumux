@@ -92,7 +92,7 @@ public:
             // The transmissibility is with respect to the effective throat length (potentially dropping the pore body radii).
             // For gravity, we need to consider the total throat length (i.e., the cell-center to cell-center distance).
             // This might cause some inconsistencies TODO: is there a better way?
-            volumeFlow += transmissibility * element.geometry().volume() * rho * g;
+            volumeFlow += transmissibility * fluxVarsCache.poreToPoreDistance() * rho * g;
         }
 
         return volumeFlow;
