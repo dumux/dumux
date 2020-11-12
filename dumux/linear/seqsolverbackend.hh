@@ -1327,7 +1327,8 @@ class BlockDiagAMGGMResSolver : public LinearSolver
                                                             std::make_index_sequence<numBlocks>
                                                            >::type;
 
-    using real_type = typename Dune::ScalarProduct<Vector>::real_type;
+    using Category = Dune::SolverCategory::Category;
+    using Scalar = typename Dune::ScalarProduct<Vector>::real_type;
 
 public:
     using LinearSolver::LinearSolver;
@@ -1361,9 +1362,31 @@ public:
         firstCall_ = true;
     }
 
-    real_type norm(const Vector& v)
+    Scalar norm(const Vector& x) const
     {
-        return scalarProduct_.norm(v);
+#if HAVE_MPI
+        auto y(x); // make a copy because the vector needs to be made consistent
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(x)), [&](const auto i)
+        {
+            if (categories_[i] == Dune::SolverCategory::nonoverlapping)
+            {
+                using GV = typename LinearSolverTraits<i>::GridView;
+                using DM = typename LinearSolverTraits<i>::DofMapper;
+                using PVHelper = ParallelVectorHelper<GV, DM, LinearSolverTraits<i>::dofCodim>;
+
+                const auto& parHelper = *std::get<i>(parHelpers_);
+
+                PVHelper vectorHelper(parHelper.gridView(), parHelper.dofMapper());
+
+                vectorHelper.makeNonOverlappingConsistent(y[i]);
+            }
+        });
+
+        return scalarProduct_.norm(y);
+#else
+        return scalarProduct_.norm(x);
+#endif
     }
 
     std::string name() const
@@ -1373,10 +1396,8 @@ private:
 
 #if HAVE_MPI
     template <class ParallelTraits, class Comm, class SP, class PH>
-    void prepareCommAndScalarProduct_(std::shared_ptr<Comm>& comm, SP& scalarProduct, PH& parHelper)
+    void prepareCommAndScalarProduct_(std::shared_ptr<Comm>& comm, SP& scalarProduct, PH& parHelper, Category& category)
     {
-        Dune::SolverCategory::Category category;
-
         if constexpr (ParallelTraits::isNonOverlapping)
             category = Dune::SolverCategory::nonoverlapping;
         else
@@ -1461,20 +1482,17 @@ private:
 
             auto& comm = std::get<i>(comms_);
             auto& linearOperator = std::get<i>(linearOperators);
-            auto& scalarProduct = std::get<i>(scalarProducts_);
             auto& parHelper = *std::get<i>(parHelpers_);
 
             if (LSTraits::isNonOverlapping(parHelper.gridView()))
             {
                 using PTraits = typename LSTraits::template ParallelNonoverlapping<DiagBlock, RHSBlock>;
-                prepareCommAndScalarProduct_<PTraits>(comm, scalarProduct, parHelper);
                 prepareAlgebra_<LSTraits, PTraits>(diagBlock, rhsBlock, comm, linearOperator,
                                                    parHelper, std::get<i>(preconditioners));
             }
             else
             {
                 using PTraits = typename LSTraits::template ParallelOverlapping<DiagBlock, RHSBlock>;
-                prepareCommAndScalarProduct_<PTraits>(comm, scalarProduct, parHelper);
                 prepareAlgebra_<LSTraits, PTraits>(diagBlock, rhsBlock, comm, linearOperator,
                                                    parHelper, std::get<i>(preconditioners));
             }
@@ -1580,12 +1598,12 @@ private:
             if (LSTraits::isNonOverlapping(parHelper.gridView()))
             {
                 using PTraits = typename LSTraits::template ParallelNonoverlapping<DiagBlock, RHSBlock>;
-                prepareCommAndScalarProduct_<PTraits>(comm, scalarProduct, parHelper);
+                prepareCommAndScalarProduct_<PTraits>(comm, scalarProduct, parHelper, categories_[i]);
             }
             else
             {
                 using PTraits = typename LSTraits::template ParallelOverlapping<DiagBlock, RHSBlock>;
-                prepareCommAndScalarProduct_<PTraits>(comm, scalarProduct, parHelper);
+                prepareCommAndScalarProduct_<PTraits>(comm, scalarProduct, parHelper, categories_[i]);
             }
         });
 
@@ -1596,6 +1614,7 @@ private:
     CommTuple comms_;
     ScalarProductTuple scalarProducts_;
     TupleScalarProduct<Vector, ScalarProductTuple> scalarProduct_;
+    std::array<Category, numBlocks> categories_;
     Dune::InverseOperatorResult result_;
     bool isParallel_;
     bool firstCall_;
