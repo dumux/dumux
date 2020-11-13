@@ -28,6 +28,7 @@
 #include <dune/common/float_cmp.hh>
 #include <dune/common/indices.hh>
 #include <dune/common/version.hh>
+#include <dune/istl/operators.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/paamg/amg.hh>
 
@@ -332,6 +333,159 @@ private:
 };
 
 DUMUX_REGISTER_PRECONDITIONER("uzawa", Dumux::MultiTypeBlockMatrixPreconditionerTag, Dune::defaultPreconditionerBlockLevelCreator<Dumux::SeqUzawa, 1>());
+
+template <class LinearSolverTraitsTuple, class Matrix, class Vector>
+class BlockDiagAMGPreconditioner : public Dune::Preconditioner<Vector, Vector>
+{
+    template<std::size_t i>
+    using DiagBlockType = std::decay_t<decltype(std::declval<Matrix>()[Dune::index_constant<i>{}][Dune::index_constant<i>{}])>;
+
+    template<std::size_t i>
+    using VecBlockType = std::decay_t<decltype(std::declval<Vector>()[Dune::index_constant<i>{}])>;
+
+    template<std::size_t i>
+    using LinearSolverTraits = std::tuple_element_t<i, LinearSolverTraitsTuple>;
+
+    template<std::size_t i>
+    using LinearOperator = Dune::LinearOperator<VecBlockType<i>, VecBlockType<i>>;
+
+    template<std::size_t i>
+    using LinearOperatorSP = std::shared_ptr<LinearOperator<i>>;
+
+    static constexpr auto numBlocks = std::tuple_size_v<LinearSolverTraitsTuple>;
+    using LinearOperatorTuple = typename makeFromIndexedType<std::tuple,
+                                                             LinearOperatorSP,
+                                                             std::make_index_sequence<numBlocks>
+                                                            >::type;
+
+    template<std::size_t i>
+    using Preconditioner = Dune::Preconditioner<VecBlockType<i>, VecBlockType<i>>;
+
+    template<std::size_t i>
+    using PreconditionerSP = std::shared_ptr<Preconditioner<i>>;
+
+    using PreconditionerTuple = typename makeFromIndexedType<std::tuple,
+                                                             PreconditionerSP,
+                                                             std::make_index_sequence<numBlocks>
+                                                            >::type;
+
+public:
+    template <class Comms, class ParHelpers>
+    BlockDiagAMGPreconditioner(Matrix& m, Vector& b, const Comms& comms, const ParHelpers& parHelpers)
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(b)), [&](const auto i)
+        {
+            auto& diagBlock = m[Dune::index_constant<i>{}][Dune::index_constant<i>{}];
+            auto& rhsBlock = b[Dune::index_constant<i>{}];
+
+            using LSTraits = LinearSolverTraits<i>;
+            using DiagBlock = DiagBlockType<i>;
+            using RHSBlock = VecBlockType<i>;
+
+            auto& comm = std::get<i>(comms);
+            auto& linearOperator = std::get<i>(lopTuple_);
+            auto& parHelper = *std::get<i>(parHelpers);
+
+            if (LSTraits::isNonOverlapping(parHelper.gridView()))
+            {
+                using PTraits = typename LSTraits::template ParallelNonoverlapping<DiagBlock, RHSBlock>;
+                prepareAlgebra_<LSTraits, PTraits>(diagBlock, rhsBlock, comm, linearOperator,
+                                                   parHelper, std::get<i>(precTuple_));
+            }
+            else
+            {
+                using PTraits = typename LSTraits::template ParallelOverlapping<DiagBlock, RHSBlock>;
+                prepareAlgebra_<LSTraits, PTraits>(diagBlock, rhsBlock, comm, linearOperator,
+                                                   parHelper, std::get<i>(precTuple_));
+            }
+        });
+    }
+
+    void pre (Vector& v, Vector& d) final
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(v)), [&](const auto i)
+        {
+            std::get<i>(precTuple_)->pre(v[i], d[i]);
+        });
+    }
+
+    void apply (Vector& v, const Vector& d) final
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(v)), [&](const auto i)
+        {
+            std::get<i>(precTuple_)->apply(v[i], d[i]);
+        });
+    }
+
+    void post (Vector& v) final
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(v)), [&](const auto i)
+        {
+            std::get<i>(precTuple_)->post(v[i]);
+        });
+    }
+
+    Dune::SolverCategory::Category category() const final
+    {
+        if (std::get<0>(precTuple_)->category() == Dune::SolverCategory::sequential)
+            return Dune::SolverCategory::sequential;
+
+        return Dune::SolverCategory::overlapping;
+    }
+
+    const LinearOperatorTuple& linearOperators() const
+    { return lopTuple_; }
+
+private:
+    template <class SolverTraits, class ParallelTraits,
+              class MatrixBlock, class VectorBlock, class Comm, class LOP, class PH, class Prec>
+    void prepareAlgebra_(MatrixBlock& diagBlock, VectorBlock& rhsBlock, const std::shared_ptr<Comm>& comm,
+                         LOP& linearOperator, const PH& parHelper, Prec& preconditioner)
+    {
+        if constexpr (ParallelTraits::isNonOverlapping)
+        {
+            using GridView = typename SolverTraits::GridView;
+            using DofMapper = typename SolverTraits::DofMapper;
+            static constexpr int dofCodim = SolverTraits::dofCodim;
+            ParallelMatrixHelper<MatrixBlock, GridView, DofMapper, dofCodim> matrixHelper(parHelper.gridView(), parHelper.dofMapper());
+            matrixHelper.extendMatrix(diagBlock, [&parHelper](auto idx){ return parHelper.isGhost(idx); });
+            matrixHelper.sumEntries(diagBlock);
+
+            ParallelVectorHelper<GridView, DofMapper, dofCodim> vectorHelper(parHelper.gridView(), parHelper.dofMapper());
+            vectorHelper.makeNonOverlappingConsistent(rhsBlock);
+        }
+
+        linearOperator = std::make_shared<typename ParallelTraits::LinearOperator>(diagBlock, *comm);
+
+        using SeqSmoother = Dune::SeqSSOR<MatrixBlock, VectorBlock, VectorBlock>;
+        using Smoother = typename ParallelTraits::template Preconditioner<SeqSmoother>;
+        using SmootherArgs = typename Dune::Amg::SmootherTraits<Smoother>::Arguments;
+        SmootherArgs args;
+        args.iterations = 1;
+        args.relaxationFactor = 1;
+
+        Dune::Amg::Parameters params(15, 2000, 1.2, 1.6, Dune::Amg::atOnceAccu);
+        params.setDefaultValuesIsotropic(SolverTraits::GridView::dimension);
+
+        using Criterion = Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<MatrixBlock, Dune::Amg::FirstDiagonal>>;
+        Criterion criterion(params);
+
+        // Cast the linear operator from a pointer to the base class
+        // to a pointer to the actually employed derived class.
+        using ParallelLinearOperator = typename ParallelTraits::LinearOperator;
+        auto lop = std::dynamic_pointer_cast<ParallelLinearOperator>(linearOperator);
+
+        using AMG = Dune::Amg::AMG<ParallelLinearOperator, VectorBlock, Smoother, Comm>;
+        preconditioner = std::make_shared<AMG>(*lop, criterion, args, *comm);
+    }
+
+    PreconditionerTuple precTuple_;
+    LinearOperatorTuple lopTuple_;
+};
 
 } // end namespace Dumux
 
