@@ -13,6 +13,7 @@ dumux_add_test(NAME test_shallowwater_bowl
 dumux_add_test(NAME test_shallowwater_bowl_parallel
                TARGET test_shallowwater_bowl
                LABELS shallowwater
+               TIMEOUT 1500
                CMAKE_GUARD MPI_FOUND
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS   --script fuzzy
