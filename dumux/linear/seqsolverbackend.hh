@@ -382,54 +382,6 @@ private:
 };
 
 
-template<class Vector, class PreconditionerTuple>
-class TuplePreconditioner : public Dune::Preconditioner<Vector, Vector>
-{
-public:
-    TuplePreconditioner(const PreconditionerTuple& precTuple)
-    : precTuple_(precTuple)
-    {}
-
-    void pre (Vector& v, Vector& d) final
-    {
-        using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(v)), [&](const auto i)
-        {
-            std::get<i>(precTuple_)->pre(v[i], d[i]);
-        });
-    }
-
-    void apply (Vector& v, const Vector& d) final
-    {
-        using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(v)), [&](const auto i)
-        {
-            std::get<i>(precTuple_)->apply(v[i], d[i]);
-        });
-    }
-
-    void post (Vector& v) final
-    {
-        using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(v)), [&](const auto i)
-        {
-            std::get<i>(precTuple_)->post(v[i]);
-        });
-    }
-
-    Dune::SolverCategory::Category category() const final
-    {
-        if (std::get<0>(precTuple_)->category() == Dune::SolverCategory::sequential)
-            return Dune::SolverCategory::sequential;
-
-        return Dune::SolverCategory::overlapping;
-    }
-
-private:
-    PreconditionerTuple precTuple_;
-};
-
-
 template<class Vector, class Matrix, class LinearOperatorTuple>
 class TupleLinearOperator: public Dune::LinearOperator<Vector, Vector> {
 public:
@@ -575,16 +527,10 @@ class BlockDiagAMGGMResSolver : public LinearSolver
     using CommSP = std::shared_ptr<Comm<i>>;
 
     template<std::size_t i>
-    using LinearOperator = Dune::LinearOperator<VecBlockType<i>, VecBlockType<i>>;
-
-    template<std::size_t i>
-    using Preconditioner = Dune::Preconditioner<VecBlockType<i>, VecBlockType<i>>;
-
-    template<std::size_t i>
-    using ParallelHelperSP = std::shared_ptr<ParallelISTLHelper<LinearSolverTraits<i>>>;
-
-    template<std::size_t i>
     using ParallelHelper = ParallelISTLHelper<LinearSolverTraits<i>>;
+
+    template<std::size_t i>
+    using ParallelHelperSP = std::shared_ptr<ParallelHelper<i>>;
 
     static constexpr auto numBlocks = std::tuple_size_v<LinearSolverTraitsTuple>;
     using ParallelHelperTuple = typename makeFromIndexedType<std::tuple,
@@ -613,15 +559,21 @@ public:
     : BlockDiagAMGGMResSolver(gridView, dofMapper, paramGroup, std::make_index_sequence<numBlocks>{})
     {}
 
-    // Solve saddle-point problem using a Schur complement based preconditioner
     bool solve(Matrix& m, Vector& x, Vector& b)
     {
-#if HAVE_MPI
-        solveSequentialOrParallel_(m, x, b);
-#else
-        solveSequential_(m, x, b);
-#endif
-        firstCall_ = false;
+        using Prec = BlockDiagAMGPreconditioner<LinearSolverTraitsTuple, Matrix, Vector>;
+        Prec prec(m, b, comms_, parHelpers_);
+
+        TupleLinearOperator<Vector, Matrix, decltype(prec.linearOperators())> op(prec.linearOperators(), m);
+
+        auto rank = Dune::MPIHelper::getCollectiveCommunication().rank();
+        static const int restartGMRes = getParamFromGroup<double>(this->paramGroup(), "LinearSolver.GMResRestart", 10);
+        Dune::RestartedGMResSolver<Vector> solver(op, scalarProduct_, prec, this->residReduction(), restartGMRes,
+                                                  this->maxIter(), rank == 0 ? this->verbosity() : 0);
+
+        auto bTmp(b);
+        solver.apply(x, bTmp, result_);
+
         return result_.converged;
     }
 
@@ -630,17 +582,11 @@ public:
       return result_;
     }
 
-    void reset()
-    {
-        firstCall_ = true;
-    }
-
     Scalar norm(const Vector& x) const
     {
-#if HAVE_MPI
         auto y(x); // make a copy because the vector needs to be made consistent
         using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(x)), [&](const auto i)
+        forEach(std::make_index_sequence<numBlocks>{}, [&](const auto i)
         {
             if (categories_[i] == Dune::SolverCategory::nonoverlapping)
             {
@@ -657,9 +603,6 @@ public:
         });
 
         return scalarProduct_.norm(y);
-#else
-        return scalarProduct_.norm(x);
-#endif
     }
 
     std::string name() const
@@ -667,7 +610,6 @@ public:
 
 private:
 
-#if HAVE_MPI
     template <class ParallelTraits, class Comm, class SP, class PH>
     void prepareCommAndScalarProduct_(std::shared_ptr<Comm>& comm, SP& scalarProduct, PH& parHelper, Category& category)
     {
@@ -852,13 +794,10 @@ private:
                                const String& paramGroup,
                                std::index_sequence<Is...> is)
     : parHelpers_(std::make_tuple(std::make_shared<ParallelHelper<Is>>(std::get<Is>(gridView), std::get<Is>(dofMapper))...))
-    , comms_(std::make_tuple(std::make_shared<Comm<Is>>()...))
-    , scalarProducts_(std::make_tuple(std::make_shared<ScalarProduct<Is>>()...))
     , scalarProduct_(scalarProducts_)
-    , isParallel_(Dune::MPIHelper::getCollectiveCommunication().size() > 1)
     {
         using namespace Dune::Hybrid;
-        forEach(std::make_index_sequence<Matrix::N()>{}, [&](const auto i)
+        forEach(std::make_index_sequence<numBlocks>{}, [&](const auto i)
         {
             using LSTraits = LinearSolverTraits<i>;
             using DiagBlock = DiagBlockType<i>;
@@ -879,8 +818,6 @@ private:
                 prepareCommAndScalarProduct_<PTraits>(comm, scalarProduct, parHelper, categories_[i]);
             }
         });
-
-        reset();
     }
 
     ParallelHelperTuple parHelpers_;
@@ -889,8 +826,6 @@ private:
     TupleScalarProduct<Vector, ScalarProductTuple> scalarProduct_;
     std::array<Category, numBlocks> categories_;
     Dune::InverseOperatorResult result_;
-    bool isParallel_;
-    bool firstCall_;
 };
 
 // \}
