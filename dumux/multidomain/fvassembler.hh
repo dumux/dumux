@@ -38,6 +38,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/jacobianpattern.hh>
+#include <dumux/linear/parallelhelpers.hh>
 
 #include "couplingjacobianpattern.hh"
 #include "subdomaincclocalassembler.hh"
@@ -226,35 +227,27 @@ public:
         setResidualSize(residual);
         assembleResidual(residual, curSol);
 
+        // calculate the squared norm of the residual
+        Scalar resultSquared = 0.0;
+
         // for box communicate the residual with the neighboring processes
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(residual)), [&](const auto domainId)
         {
             const auto gridGeometry = std::get<domainId>(gridGeometryTuple_);
-            if (GridGeometry<domainId>::discMethod == DiscretizationMethod::box
-                && gridGeometry->gridView().comm().size() > 1)
+            if constexpr (GridGeometry<domainId>::discMethod == DiscretizationMethod::box)
             {
-                using VertexMapper = typename GridGeometry<domainId>::VertexMapper;
-                using SolutionVector = std::remove_reference_t<decltype(residual[domainId])>;
-                using DataHandle = VectorCommDataHandleSum<VertexMapper, SolutionVector,
-                                                           GridGeometry<domainId>::GridView::dimension>;
-                DataHandle sumResidualHandle(gridGeometry->vertexMapper(), residual[domainId]);
-                gridGeometry->gridView().communicate(sumResidualHandle,
-                                                     Dune::InteriorBorder_InteriorBorder_Interface,
-                                                     Dune::ForwardCommunication);
+                using GV = typename GridGeometry<domainId>::GridView;
+                using DM = typename GridGeometry<domainId>::VertexMapper;
+                using PVHelper = ParallelVectorHelper<GV, DM, GV::dimension>;
+
+                PVHelper vectorHelper(gridGeometry->gridView(), gridGeometry->vertexMapper());
+
+                vectorHelper.makeNonOverlappingConsistent(residual[domainId]);
             }
-        });
 
-        // calculate the squared norm of the residual
-        Scalar resultSquared = 0.0;
-
-        // add up the result across processes
-        using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(residual)), [&](const auto domainId)
-        {
             Scalar localNormSquared = residual[domainId].two_norm2();
 
-            const auto gridGeometry = std::get<domainId>(gridGeometryTuple_);
             if (gridGeometry->gridView().comm().size() > 1)
             {
                 localNormSquared = gridGeometry->gridView().comm().sum(localNormSquared);
