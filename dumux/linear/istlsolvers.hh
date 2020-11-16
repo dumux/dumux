@@ -530,15 +530,17 @@ namespace Dumux {
  */
 using SuperLUIstlSolver = DirectIstlSolver<Dune::SuperLU>;
 
-
+/*!
+ * \ingroup Linear
+ * \brief linear solvers preconditioned by a block-diagonal AMG
+ */
 template<class LinearSolverTraitsTuple, class InverseOperator, class Matrix>
 class BlockDiagAMGPreconditionedSolver : public LinearSolver
 {
     using Vector = typename InverseOperator::domain_type;
     using Scalar = typename InverseOperator::real_type;
-
-    template<std::size_t i>
-    using DiagBlockType = std::decay_t<decltype(std::declval<Matrix>()[Dune::index_constant<i>{}][Dune::index_constant<i>{}])>;
+    using Category = Dune::SolverCategory::Category;
+    static constexpr auto numBlocks = std::tuple_size_v<LinearSolverTraitsTuple>;
 
     template<std::size_t i>
     using VecBlockType = std::decay_t<decltype(std::declval<Vector>()[Dune::index_constant<i>{}])>;
@@ -547,56 +549,49 @@ class BlockDiagAMGPreconditionedSolver : public LinearSolver
     using LinearSolverTraits = std::tuple_element_t<i, LinearSolverTraitsTuple>;
 
     template<std::size_t i>
-    using ScalarProduct = Dune::ScalarProduct<VecBlockType<i>>;
+    using ScalarProduct = std::shared_ptr<Dune::ScalarProduct<VecBlockType<i>>>;
+    using ScalarProductTuple = typename makeFromIndexedType<std::tuple,
+                                                            ScalarProduct,
+                                                            std::make_index_sequence<numBlocks>
+                                                           >::type;
 
     template<std::size_t i>
-    using ScalarProductSP = std::shared_ptr<ScalarProduct<i>>;
-
-    template<std::size_t i>
-    using Comm = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>, int>;
-
-    template<std::size_t i>
-    using CommSP = std::shared_ptr<Comm<i>>;
+    using Comm = std::shared_ptr<Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>, int>>;
+    using CommTuple = typename makeFromIndexedType<std::tuple,
+                                                   Comm,
+                                                   std::make_index_sequence<numBlocks>
+                                                  >::type;
 
     template<std::size_t i>
     using ParallelHelper = ParallelISTLHelper<LinearSolverTraits<i>>;
-
     template<std::size_t i>
     using ParallelHelperSP = std::shared_ptr<ParallelHelper<i>>;
-
-    static constexpr auto numBlocks = std::tuple_size_v<LinearSolverTraitsTuple>;
     using ParallelHelperTuple = typename makeFromIndexedType<std::tuple,
                                                              ParallelHelperSP,
                                                              std::make_index_sequence<numBlocks>
                                                             >::type;
-    using CommTuple = typename makeFromIndexedType<std::tuple,
-                                                   CommSP,
-                                                   std::make_index_sequence<numBlocks>
-                                                  >::type;
-    using ScalarProductTuple = typename makeFromIndexedType<std::tuple,
-                                                            ScalarProductSP,
-                                                            std::make_index_sequence<numBlocks>
-                                                           >::type;
-
-    using Category = Dune::SolverCategory::Category;
 
 public:
-    using LinearSolver::LinearSolver;
-
-    template<class GridView, class DofMapper>
-    BlockDiagAMGPreconditionedSolver(const GridView& gridView,
-                                     const DofMapper& dofMapper,
+    /*!
+     * \brief Constructs the linear solver
+     * \param gridViews a tuple of grid views
+     * \param dofMappers a tuple of dof mappers
+     * \param paramGroup parameter group
+     */
+    template<class GridViewTuple, class DofMapperTuple>
+    BlockDiagAMGPreconditionedSolver(const GridViewTuple& gridViews,
+                                     const DofMapperTuple& dofMappers,
                                      const std::string& paramGroup = "")
-    : BlockDiagAMGPreconditionedSolver(gridView, dofMapper, paramGroup, std::make_index_sequence<numBlocks>{})
+    : BlockDiagAMGPreconditionedSolver(gridViews, dofMappers, paramGroup, std::make_index_sequence<numBlocks>{})
     {}
 
-    bool solve(Matrix& m, Vector& x, Vector& b)
+    bool solve(Matrix& A, Vector& x, Vector& b)
     {
         using Prec = BlockDiagAMGPreconditioner<LinearSolverTraitsTuple, Matrix, Vector>;
-        auto prec = std::make_shared<Prec>(m, b, comms_, parHelpers_);
+        auto prec = std::make_shared<Prec>(A, b, comms_, parHelpers_);
 
         using LOP = TupleLinearOperator<Vector, Matrix, decltype(prec->linearOperators())>;
-        auto op = std::make_shared<LOP>(prec->linearOperators(), m);
+        auto op = std::make_shared<LOP>(prec->linearOperators(), A);
 
         auto rank = Dune::MPIHelper::getCollectiveCommunication().rank();
         if (rank != 0)
@@ -655,12 +650,12 @@ private:
         scalarProduct = std::make_shared<typename ParallelTraits::ScalarProduct>(*comm);
     }
 
-    template<class GridView, class DofMapper, std::size_t... Is>
-    BlockDiagAMGPreconditionedSolver(const GridView& gridView,
-                                     const DofMapper& dofMapper,
+    template<class GridViewTuple, class DofMapperTuple, std::size_t... Is>
+    BlockDiagAMGPreconditionedSolver(const GridViewTuple& gridViews,
+                                     const DofMapperTuple& dofMappers,
                                      const std::string& paramGroup,
                                      std::index_sequence<Is...> is)
-    : parHelpers_(std::make_tuple(std::make_shared<ParallelHelper<Is>>(std::get<Is>(gridView), std::get<Is>(dofMapper))...))
+    : parHelpers_(std::make_tuple(std::make_shared<ParallelHelper<Is>>(std::get<Is>(gridViews), std::get<Is>(dofMappers))...))
     {
         params_ = LinearSolverParameters<LinearSolverTraits<0>>::createParameterTree(paramGroup);
 
@@ -668,7 +663,7 @@ private:
         forEach(std::make_index_sequence<numBlocks>{}, [&](const auto i)
         {
             using LSTraits = LinearSolverTraits<i>;
-            using DiagBlock = DiagBlockType<i>;
+            using DiagBlock = std::decay_t<decltype(std::declval<Matrix>()[i][i])>;
             using RHSBlock = VecBlockType<i>;
 
             auto& comm = std::get<i>(comms_);
