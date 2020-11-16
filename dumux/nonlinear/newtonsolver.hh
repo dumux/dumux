@@ -444,12 +444,18 @@ public:
         {
             if (numSteps_ == 0)
             {
-                Scalar norm2 = b.two_norm2();
-                if (comm_.size() > 1)
-                    norm2 = comm_.sum(norm2);
+                if constexpr (Detail::hasNorm<LinearSolver, SolutionVector>())
+                    initialResidual_ = this->linearSolver().norm(b);
 
-                using std::sqrt;
-                initialResidual_ = sqrt(norm2);
+                else
+                {
+                    Scalar norm2 = b.two_norm2();
+                    if (comm_.size() > 1)
+                        norm2 = comm_.sum(norm2);
+
+                    using std::sqrt;
+                    initialResidual_ = sqrt(norm2);
+                }
             }
 
             // solve by calling the appropriate implementation depending on whether the linear solver
@@ -789,7 +795,10 @@ protected:
     void computeResidualReduction_(const SolutionVector &uCurrentIter)
     {
         if constexpr (Detail::hasNorm<LinearSolver, SolutionVector>())
-            residualNorm_ = this->linearSolver().norm(uCurrentIter);
+        {
+            this->assembler().assembleResidual(uCurrentIter);
+            residualNorm_ = this->linearSolver().norm(this->assembler().residual());
+        }
         else
             residualNorm_ = this->assembler().residualNorm(uCurrentIter);
 
