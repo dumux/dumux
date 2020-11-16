@@ -27,8 +27,10 @@
 #include <dumux/assembly/coloring.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/typetraits/matrix.hh>
+#include <dumux/common/typetraits/utility.hh>
 #include <dumux/linear/istlsolverregistry.hh>
 #include <dumux/parallel/parallel_for.hh>
+#include <dumux/linear/parallelhelpers.hh>
 
 namespace Dumux {
 
