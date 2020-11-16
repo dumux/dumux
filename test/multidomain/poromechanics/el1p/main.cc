@@ -151,8 +151,7 @@ int main(int argc, char** argv)
     using LinearSolver = BlockDiagAMGGMResSolver<LSTraits, typename Assembler::JacobianMatrix, SolutionVector>;
     auto views = std::make_tuple(leafGridView, leafGridView);
     auto mappers = std::make_tuple(onePFvGridGeometry->dofMapper(), poroMechFvGridGeometry->dofMapper());
-    auto groups = std::make_tuple(std::string("OneP"), std::string("PoroElastic"));
-    auto linearSolver = std::make_shared<LinearSolver>(views, mappers, groups);
+    auto linearSolver = std::make_shared<LinearSolver>(views, mappers);
 
     // the non-linear solver
     using NewtonSolver = Dumux::MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;

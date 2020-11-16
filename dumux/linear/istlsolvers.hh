@@ -531,9 +531,12 @@ namespace Dumux {
 using SuperLUIstlSolver = DirectIstlSolver<Dune::SuperLU>;
 
 
-template <class LinearSolverTraitsTuple, class Matrix, class Vector>
-class BlockDiagAMGGMResSolver : public LinearSolver
+template<class LinearSolverTraitsTuple, class InverseOperator, class Matrix>
+class BlockDiagAMGPreconditionedSolver : public LinearSolver
 {
+    using Vector = typename InverseOperator::domain_type;
+    using Scalar = typename InverseOperator::real_type;
+
     template<std::size_t i>
     using DiagBlockType = std::decay_t<decltype(std::declval<Matrix>()[Dune::index_constant<i>{}][Dune::index_constant<i>{}])>;
 
@@ -576,29 +579,29 @@ class BlockDiagAMGGMResSolver : public LinearSolver
                                                            >::type;
 
     using Category = Dune::SolverCategory::Category;
-    using Scalar = typename Dune::ScalarProduct<Vector>::real_type;
 
 public:
     using LinearSolver::LinearSolver;
 
-    template<class GridView, class DofMapper, class String>
-    BlockDiagAMGGMResSolver(const GridView& gridView,
-                            const DofMapper& dofMapper,
-                            const String& paramGroup = "")
-    : BlockDiagAMGGMResSolver(gridView, dofMapper, paramGroup, std::make_index_sequence<numBlocks>{})
+    template<class GridView, class DofMapper>
+    BlockDiagAMGPreconditionedSolver(const GridView& gridView,
+                                     const DofMapper& dofMapper,
+                                     const std::string& paramGroup = "")
+    : BlockDiagAMGPreconditionedSolver(gridView, dofMapper, paramGroup, std::make_index_sequence<numBlocks>{})
     {}
 
     bool solve(Matrix& m, Vector& x, Vector& b)
     {
         using Prec = BlockDiagAMGPreconditioner<LinearSolverTraitsTuple, Matrix, Vector>;
-        Prec prec(m, b, comms_, parHelpers_);
+        auto prec = std::make_shared<Prec>(m, b, comms_, parHelpers_);
 
-        TupleLinearOperator<Vector, Matrix, decltype(prec.linearOperators())> op(prec.linearOperators(), m);
+        using LOP = TupleLinearOperator<Vector, Matrix, decltype(prec->linearOperators())>;
+        auto op = std::make_shared<LOP>(prec->linearOperators(), m);
 
         auto rank = Dune::MPIHelper::getCollectiveCommunication().rank();
-        static const int restartGMRes = getParamFromGroup<double>(this->paramGroup(), "LinearSolver.GMResRestart", 10);
-        Dune::RestartedGMResSolver<Vector> solver(op, scalarProduct_, prec, this->residReduction(), restartGMRes,
-                                                  this->maxIter(), rank == 0 ? this->verbosity() : 0);
+        if (rank != 0)
+            params_["verbose"] = "0";
+        InverseOperator solver(op, scalarProduct_, prec, params_);
 
         auto bTmp(b);
         solver.apply(x, bTmp, result_);
@@ -631,7 +634,7 @@ public:
             }
         });
 
-        return scalarProduct_.norm(y);
+        return scalarProduct_->norm(y);
     }
 
     std::string name() const
@@ -652,14 +655,15 @@ private:
         scalarProduct = std::make_shared<typename ParallelTraits::ScalarProduct>(*comm);
     }
 
-    template<class GridView, class DofMapper, class String, std::size_t... Is>
-    BlockDiagAMGGMResSolver(const GridView& gridView,
-                               const DofMapper& dofMapper,
-                               const String& paramGroup,
-                               std::index_sequence<Is...> is)
+    template<class GridView, class DofMapper, std::size_t... Is>
+    BlockDiagAMGPreconditionedSolver(const GridView& gridView,
+                                     const DofMapper& dofMapper,
+                                     const std::string& paramGroup,
+                                     std::index_sequence<Is...> is)
     : parHelpers_(std::make_tuple(std::make_shared<ParallelHelper<Is>>(std::get<Is>(gridView), std::get<Is>(dofMapper))...))
-    , scalarProduct_(scalarProducts_)
     {
+        params_ = LinearSolverParameters<LinearSolverTraits<0>>::createParameterTree(paramGroup);
+
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<numBlocks>{}, [&](const auto i)
         {
@@ -682,15 +686,30 @@ private:
                 prepareCommAndScalarProduct_<PTraits>(comm, scalarProduct, parHelper, categories_[i]);
             }
         });
+
+        scalarProduct_ = std::make_shared<TupleScalarProduct<Vector, ScalarProductTuple>>(scalarProducts_);
     }
 
     ParallelHelperTuple parHelpers_;
     CommTuple comms_;
     ScalarProductTuple scalarProducts_;
-    TupleScalarProduct<Vector, ScalarProductTuple> scalarProduct_;
+    std::shared_ptr<TupleScalarProduct<Vector, ScalarProductTuple>> scalarProduct_;
     std::array<Category, numBlocks> categories_;
     Dune::InverseOperatorResult result_;
+    Dune::ParameterTree params_;
 };
+
+template<class LinearSolverTraitsTuple, class Matrix, class Vector>
+using BlockDiagAMGBiCGSTABSolver = BlockDiagAMGPreconditionedSolver<LinearSolverTraitsTuple,
+                                                                    Dune::BiCGSTABSolver<Vector>,
+                                                                    Matrix
+                                                                   >;
+
+template<class LinearSolverTraitsTuple, class Matrix, class Vector>
+using BlockDiagAMGGMResSolver = BlockDiagAMGPreconditionedSolver<LinearSolverTraitsTuple,
+                                                                 Dune::RestartedGMResSolver<Vector>,
+                                                                 Matrix
+                                                                >;
 
 } // end namespace Dumux
 
