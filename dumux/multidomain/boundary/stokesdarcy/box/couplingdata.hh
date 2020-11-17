@@ -27,6 +27,7 @@
 
 #include <dune/geometry/quadraturerules.hh>
 
+#include <dumux/common/math.hh>
 #include <dumux/common/typetraits/problem.hh>
 #include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
 #include <dumux/multidomain/couplingmanager.hh>
@@ -274,12 +275,12 @@ public:
                         const auto& epsInterface = this->couplingManager().problem(freeFlowIdx).epsInterface(scvf);
                         const auto& M = this->couplingManager().problem(freeFlowIdx).matrixNTangential(scvf);
                         //Add the integrated segment velocity to the sum: v+= -w_k * sqrt(det(A^T*A))*eps**2*M/mu*gradP
-                        M.usmv(qp.weight()*data.segmentGeometry.integrationElement(ipLocal)/data.volVars.viscosity(darcyPhaseIdx)*epsInterface*epsInterface, gradP, velocity);
+                        velocity += mv(M, mv(qp.weight()*data.segmentGeometry.integrationElement(ipLocal)/data.volVars.viscosity(darcyPhaseIdx)*epsInterface*epsInterface, gradP));
                     }
                     else
                     {
                         //add the integrated segment velocity to the sum: v+= -weight_k * sqrt(det(A^T*A))*K/mu*gradP
-                        K.usmv(-qp.weight()*data.segmentGeometry.integrationElement(ipLocal)/data.volVars.viscosity(darcyPhaseIdx), gradP, velocity);
+                        velocity += mv(K, mv(-qp.weight()*data.segmentGeometry.integrationElement(ipLocal)/data.volVars.viscosity(darcyPhaseIdx), gradP));
                     }
                 }
                 intersectionLength += data.segmentGeometry.volume();
