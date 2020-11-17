@@ -241,7 +241,20 @@ struct EffectiveDiffusivityModel<TypeTag, TTag::NavierStokesMassOnePNC>
 //! The flux variables
 template<class TypeTag>
 struct FluxVariables<TypeTag, TTag::NavierStokesMassOnePNC>
-{ using type = NavierStokesMassOnePNCFluxVariables<TypeTag>; };
+{
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+
+    struct FluxTypes
+    {
+        using MolecularDiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
+    };
+
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+
+    using type = NavierStokesMassOnePNCFluxVariables<Problem, ModelTraits, FluxTypes, ElementVolumeVariables, ElementFluxVariablesCache>;
+};
 
 template<class TypeTag>
 struct SolutionDependentMolecularDiffusion<TypeTag, TTag::NavierStokesMassOnePNC> { static constexpr bool value = true; };
@@ -340,6 +353,25 @@ struct ThermalConductivityModel<TypeTag, TTag::NavierStokesMassOnePNCNI>
 template<class TypeTag>
 struct HeatConductionType<TypeTag, TTag::NavierStokesMassOnePNCNI>
 { using type = FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>; };
+
+//! The flux variables
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::NavierStokesMassOnePNCNI>
+{
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+
+    struct FluxTypes
+    {
+        using MolecularDiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
+        using HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>;
+    };
+
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+
+    using type = NavierStokesMassOnePNCFluxVariables<Problem, ModelTraits, FluxTypes, ElementVolumeVariables, ElementFluxVariablesCache>;
+};
 
 template<class TypeTag>
 struct FluxVariablesCache<TypeTag, TTag::NavierStokesMassOnePNCNI>
