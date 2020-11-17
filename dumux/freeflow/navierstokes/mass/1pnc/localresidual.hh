@@ -133,77 +133,7 @@ public:
     {
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-        static constexpr auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
-        // get upwind weights into local scope
-        NumEqVector flux(0.0);
-        static constexpr auto phaseIdx = 0;
-
-        const auto massOrMoleDensity = [](const auto& volVars, const int phaseIdx)
-        { return useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };
-
-        const auto massOrMoleFraction= [](const auto& volVars, const int phaseIdx, const int compIdx)
-        { return useMoles ? volVars.moleFraction(phaseIdx, compIdx) : volVars.massFraction(phaseIdx, compIdx); };
-
-        // get the diffusive flux of each component
-        const auto diffusiveFluxes = fluxVars.molecularDiffusionFlux(phaseIdx);
-
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-        {
-            // get equation index
-            const auto eqIdx = Indices::conti0EqIdx + compIdx;
-
-            // the physical quantities for which we perform upwinding
-            const auto upwindTerm = [&massOrMoleDensity, &massOrMoleFraction, phaseIdx = phaseIdx, compIdx] (const auto& volVars)
-            { return massOrMoleDensity(volVars, phaseIdx)*massOrMoleFraction(volVars, phaseIdx, compIdx); };
-
-            if (eqIdx != replaceCompEqIdx)
-            {
-                // advective fluxes
-                flux[eqIdx] += fluxVars.advectiveFlux(upwindTerm);
-
-                // diffusive fluxes (only for the component balances)
-                //check for the reference system and adapt units of the diffusive flux accordingly.
-                if constexpr (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
-                    flux[eqIdx] += useMoles ? diffusiveFluxes[compIdx]/FluidSystem::molarMass(compIdx)
-                                        : diffusiveFluxes[compIdx];
-                else if constexpr (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
-                    flux[eqIdx] += useMoles ? diffusiveFluxes[compIdx]
-                                        : diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
-                else
-                    DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
-            }
-        }
-
-        // in case one balance is substituted by the total mole balance
-        if constexpr(useTotalMoleOrMassBalance)
-        {
-            // the physical quantities for which we perform upwinding
-            const auto upwindTerm = [&massOrMoleDensity, phaseIdx = phaseIdx] (const auto& volVars)
-            { return massOrMoleDensity(volVars, phaseIdx); };
-
-            flux[replaceCompEqIdx] += fluxVars.advectiveFlux(upwindTerm);
-
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            {
-                //check for the reference system and adapt units of the diffusive flux accordingly.
-                if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
-                    flux[replaceCompEqIdx] += useMoles ? diffusiveFluxes[compIdx]/FluidSystem::molarMass(compIdx) : diffusiveFluxes[compIdx];
-                else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
-                    flux[replaceCompEqIdx] += useMoles ? diffusiveFluxes[compIdx]
-                                            : diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
-                else
-                    DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
-            }
-        }
-
-        //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
-        EnergyLocalResidual::heatConvectionFlux(flux, fluxVars);
-
-
-        //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
-        EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
-
-        return flux;
+        return fluxVars.flux(0);
     }
 };
 
