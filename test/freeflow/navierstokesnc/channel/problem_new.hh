@@ -37,7 +37,8 @@
 #include <dumux/material/fluidsystems/1padapter.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
 
-#include <dumux/freeflow/navierstokes/fluxhelper.hh>
+#include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
+#include <dumux/freeflow/navierstokes/scalarfluxhelper.hh>
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1pnc/model.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
@@ -196,9 +197,9 @@ public:
         else
         {
             values.setAllNeumann();
-
-            if (isInlet_(globalPos))
-                values.setAllDirichlet();
+            //
+            // if (isInlet_(globalPos))
+            //     values.setAllDirichlet();
         }
 
         return values;
@@ -262,12 +263,89 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            values = NavierStokesBoundaryFluxHelper<ModelTraits>::fixedPressureMomentumFlux(*this, element, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, 1.1e+5, true /*zeroNormalVelocityGradient*/);
+            using FluxHelper = NavierStokesMomentumBoundaryFluxHelper;
+            values = FluxHelper::fixedPressureMomentumFlux(*this, element, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, 1.1e+5, true /*zeroNormalVelocityGradient*/);
         }
         else
         {
+            using FluxHelper = NavierStokesScalarBoundaryFluxHelper<ModelTraits, OnePNCFlux>;
             if (isOutlet_(scvf.ipGlobal()))
-                values = NavierStokesBoundaryFluxHelper<ModelTraits>::scalarOutflowFlux(*this, element, fvGeometry, scvf, elemVolVars);
+                values = FluxHelper::scalarOutflowFlux(*this, element, fvGeometry, scvf, elemVolVars);
+
+            if (isInlet_(scvf.ipGlobal()))
+            {
+                using Problem = GetPropType<TypeTag, Properties::Problem>;
+                struct Fu
+                {
+
+                    Fu(const Problem& p, const Element& e, const FVElementGeometry& f,  const ElementVolumeVariables& eVV, const SubControlVolumeFace& s, const PrimaryVariables& priVars) : insideVolVars(&eVV[s.insideScvIdx()])
+                    {
+                        numScv_ = p.gridGeometry().numScv();
+
+
+                        auto elemSol = elementSolution<FVElementGeometry>(std::move(priVars));
+                        outsideVolVars.update(elemSol, p, e, f.scv(s.insideScvIdx()));
+                    }
+
+                    using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
+
+                    //! operator for the access with an index
+                    const VolumeVariables& operator [](const std::size_t scvIdx) const
+                    {
+                        // return *insideVolVars;
+                        if (scvIdx < numScv_)
+                            return *insideVolVars;
+                        else
+                            return outsideVolVars;
+                    }
+
+                    //! operator for the access with an scv
+                    const VolumeVariables& operator [](const SubControlVolume& scv) const
+                    {
+                        if (scv.dofIndex() < numScv_)
+                            return *insideVolVars;
+                        else
+                            return outsideVolVars;
+                    }
+
+                private:
+                    const VolumeVariables* insideVolVars;
+                    VolumeVariables outsideVolVars;
+                    std::size_t numScv_;
+                };
+
+
+                using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+
+                struct FluxTypes
+                {
+                    using MolecularDiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
+                    using HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>;
+                };
+
+
+                using FluxVariables = NavierStokesMassOnePNCFluxVariables<Problem, ModelTraits, FluxTypes, Fu, ElementFluxVariablesCache>;
+
+                auto priVars = elemVolVars[scvf.insideScvIdx()].priVars();
+
+                if (time() >= 10.0 || inletVelocity_  < eps_)
+                {
+                    priVars[1] = 1e-3;
+                    priVars[Indices::temperatureIdx] = 293.15;
+                }
+                else
+                {
+                    priVars[1] = 0;
+                    priVars[Indices::temperatureIdx] = 283.15;
+                }
+
+                Fu fu(*this, element, fvGeometry, elemVolVars, scvf, priVars);
+                FluxVariables fluxVars;
+                fluxVars.init(*this, element, fvGeometry, fu, scvf, elemFluxVarsCache);
+                values = fluxVars.flux();
+
+                values /= scvf.area();
+            }
         }
 
         return values;
