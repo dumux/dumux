@@ -189,7 +189,17 @@ public:
 
 //! The flux variables
 template<class TypeTag>
-struct FluxVariables<TypeTag, TTag::NavierStokesMassOneP> { using type = NavierStokesMassOnePFluxVariables<TypeTag>; };
+struct FluxVariables<TypeTag, TTag::NavierStokesMassOneP>
+{
+private:
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    struct DiffusiveFluxTypes {}; // no diffusion
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+public:
+    using type = NavierStokesMassOnePFluxVariables<Problem, ModelTraits, DiffusiveFluxTypes, ElementVolumeVariables, ElementFluxVariablesCache>;
+};
 
 template<class TypeTag>
 struct FluxVariablesCache<TypeTag, TTag::NavierStokesMassOneP> { using type = FluxVariablesCaching::EmptyCache<GetPropType<TypeTag, Properties::Scalar>>; };
@@ -265,6 +275,26 @@ struct ThermalConductivityModel<TypeTag, TTag::NavierStokesMassOnePNI>
 template<class TypeTag>
 struct HeatConductionType<TypeTag, TTag::NavierStokesMassOnePNI>
 { using type = FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>; };
+
+//! The flux variables
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::NavierStokesMassOnePNI>
+{
+private:
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+
+    struct DiffusiveFluxTypes
+    {
+        using HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>;
+    };
+
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+
+public:
+    using type = NavierStokesMassOnePFluxVariables<Problem, ModelTraits, DiffusiveFluxTypes, ElementVolumeVariables, ElementFluxVariablesCache>;
+};
 
 template<class TypeTag>
 struct FluxVariablesCache<TypeTag, TTag::NavierStokesMassOnePNI>
