@@ -52,7 +52,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Extrusion = Extrusion_t<GridGeometry>;
     using GridView = typename GridGeometry::GridView;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    // using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementFluxVarsCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
@@ -66,7 +66,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
     public:
         //! Function to fill a TpfaFicksLawCache of a given scvf
         //! This interface has to be met by any diffusion-related cache filler class
-        template<class FluxVariablesCacheFiller>
+        template<class ElementVolumeVariables, class FluxVariablesCacheFiller>
         static void fill(FluxVariablesCache& scvfFluxVarsCache,
                          const Problem& problem,
                          const Element& element,
@@ -85,6 +85,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
     public:
         using Filler = TpfaFouriersLawCacheFiller;
 
+        template<class ElementVolumeVariables>
         void updateHeatConduction(const Problem& problem,
                                   const Element& element,
                                   const FVElementGeometry& fvGeometry,
@@ -115,6 +116,7 @@ public:
      *       and solid phases, and uses an effective thermal conductivity
      *       for the overall aggregate.
      */
+    template<class ElementVolumeVariables>
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
@@ -134,6 +136,7 @@ public:
     }
 
     //! Compute transmissibilities
+    template<class ElementVolumeVariables>
     static Scalar calculateTransmissibility(const Problem& problem,
                                             const Element& element,
                                             const FVElementGeometry& fvGeometry,
@@ -182,6 +185,7 @@ public:
 private:
 
     //! compute the temperature at branching facets for network grids
+    template<class ElementVolumeVariables>
     static Scalar branchingFacetTemperature_(const Problem& problem,
                                              const Element& element,
                                              const FVElementGeometry& fvGeometry,
