@@ -110,20 +110,7 @@ public:
     {
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-
-        NumEqVector flux;
-
-        // the physical quantities for which we perform upwinding
-        auto upwindTerm = [](const auto& volVars) { return volVars.density(); };
-        flux = fluxVars.advectiveFlux(upwindTerm);
-
-        //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
-        EnergyLocalResidual::heatConvectionFlux(flux, fluxVars);
-
-        //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
-        EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
-
-        return flux;
+        return fluxVars.flux(0);
     }
 };
 
