@@ -57,7 +57,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa, referenceSys
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Extrusion = Extrusion_t<GridGeometry>;
     using GridView = typename GridGeometry::GridView;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    // using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
@@ -78,7 +78,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa, referenceSys
     public:
         //! Function to fill a TpfaFicksLawCache of a given scvf
         //! This interface has to be met by any diffusion-related cache filler class
-        template<class FluxVariablesCacheFiller>
+        template<class ElementVolumeVariables, class FluxVariablesCacheFiller>
         static void fill(FluxVariablesCache& scvfFluxVarsCache,
                          unsigned int phaseIdx, unsigned int compIdx,
                          const Problem& problem,
@@ -98,6 +98,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa, referenceSys
     public:
         using Filler = TpfaFicksLawCacheFiller;
 
+        template<class ElementVolumeVariables>
         void updateDiffusion(const Problem& problem,
                              const Element& element,
                              const FVElementGeometry& fvGeometry,
@@ -134,6 +135,7 @@ public:
      *        The computed fluxes are given in mole/s or kg/s, depending
      *        on the template parameter ReferenceSystemFormulation.
      */
+    template<class ElementVolumeVariables>
     static ComponentFluxVector flux(const Problem& problem,
                                     const Element& element,
                                     const FVElementGeometry& fvGeometry,
@@ -179,6 +181,7 @@ public:
     }
 
     //! compute diffusive transmissibilities
+    template<class ElementVolumeVariables>
     static Scalar calculateTransmissibility(const Problem& problem,
                                             const Element& element,
                                             const FVElementGeometry& fvGeometry,
@@ -238,6 +241,7 @@ public:
 
 private:
     //! compute the mole/mass fraction at branching facets for network grids
+    template<class ElementVolumeVariables>
     static Scalar branchingFacetX(const Problem& problem,
                                   const Element& element,
                                   const FVElementGeometry& fvGeometry,
@@ -266,6 +270,7 @@ private:
     }
 
     //! compute the density at branching facets for network grids as arithmetic mean
+    template<class ElementVolumeVariables>
     static Scalar branchingFacetDensity(const ElementVolumeVariables& elemVolVars,
                                         const SubControlVolumeFace& scvf,
                                         const int phaseIdx,
