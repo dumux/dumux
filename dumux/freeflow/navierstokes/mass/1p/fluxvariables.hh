@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup NavierStokesModel
- * \copydoc Dumux::NavierStokesFluxVariablesImpl
+ * \copydoc Dumux::NavierStokesMassOnePFluxVariables
  */
 #ifndef DUMUX_NAVIERSTOKES_MASS_1P_FLUXVARIABLES_HH
 #define DUMUX_NAVIERSTOKES_MASS_1P_FLUXVARIABLES_HH
@@ -35,47 +35,55 @@ namespace Dumux {
 
 /*!
  * \ingroup NavierStokesModel
- * \brief The flux variables class for the Navier-Stokes model using the staggered grid discretization.
+ * \brief The flux variables class for the single-phase flow Navier-Stokes model.
  */
-template<class TypeTag, class UpwindScheme = UpwindScheme<GetPropType<TypeTag, Properties::GridGeometry>>>
+template<class Problem,
+         class ModelTraits,
+         class FluxTs,
+         class ElementVolumeVariables,
+         class ElementFluxVariablesCache,
+         class UpwindScheme = UpwindScheme<typename ProblemTraits<Problem>::GridGeometry>>
 class NavierStokesMassOnePFluxVariables
-: public NavierStokesScalarConservationModelFluxVariables<TypeTag, UpwindScheme>
+: public NavierStokesScalarConservationModelFluxVariables<Problem,
+                                                          ModelTraits,
+                                                          FluxTs,
+                                                          ElementVolumeVariables,
+                                                          ElementFluxVariablesCache,
+                                                          UpwindScheme>
 {
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using ParentType = NavierStokesScalarConservationModelFluxVariables<Problem,
+                                                                        ModelTraits,
+                                                                        FluxTs,
+                                                                        ElementVolumeVariables,
+                                                                        ElementFluxVariablesCache,
+                                                                        UpwindScheme>;
 
-    using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
-    using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
-    using VolumeVariables = typename GridVolumeVariables::VolumeVariables;
-
-    using GridFluxVariablesCache = typename GridVariables::GridFluxVariablesCache;
-    using FluxVariablesCache = typename GridFluxVariablesCache::FluxVariablesCache;
-
-    using GridGeometry = typename GridVariables::GridGeometry;
-    using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-
-
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GridView = typename GridGeometry::GridView;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-    using Indices = typename ModelTraits::Indices;
-
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
+    using NumEqVector = typename VolumeVariables::PrimaryVariables;
 
 public:
 
+    /*!
+     * \brief Returns the advective mass flux in kg/s.
+     */
+    NumEqVector advectiveFlux(int phaseIdx = 0) const
+    {
+        auto upwindTerm = [](const VolumeVariables& volVars) { return volVars.density(); };
+        return NumEqVector{ParentType::advectiveFlux(upwindTerm)};
+    }
 
-
-    // TODO mass diffusion, compositional
-
-
+    /*!
+     * \brief Returns all fluxes for the single-phase flow Navier-Stokes model: the
+     *        advective mass flux in kg/s and the energy flux in J/s (for nonisothermal models).
+     */
+    NumEqVector flux(int phaseIdx = 0) const
+    {
+        NumEqVector flux = advectiveFlux(phaseIdx);
+        ParentType::addHeatFlux(flux);
+        return flux;
+    }
 };
 
 } // end namespace Dumux
 
-#endif // DUMUX_NAVIERSTOKES_STAGGERED_FLUXVARIABLES_HH
+#endif
