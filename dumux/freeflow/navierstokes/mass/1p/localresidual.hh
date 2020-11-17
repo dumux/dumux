@@ -24,17 +24,13 @@
 #ifndef DUMUX_NAVIERSTOKES_MASS_1P_LOCAL_RESIDUAL_HH
 #define DUMUX_NAVIERSTOKES_MASS_1P_LOCAL_RESIDUAL_HH
 
-#include <dumux/assembly/cclocalresidual.hh>
 #include <dumux/common/properties.hh>
-#include <dumux/common/math.hh>
-#include <dumux/freeflow/navierstokes/energy/localresidual.hh>
 
 namespace Dumux {
 
-
 /*!
  * \ingroup NavierStokesModel
- * \brief Element-wise calculation of the Navier-Stokes residual for models using the staggered discretization
+ * \brief Element-wise calculation of the Navier-Stokes residual for single-phase flow.
  */
 template<class TypeTag>
 class NavierStokesMassOnePLocalResidual : public GetPropType<TypeTag, Properties::BaseLocalResidual>
@@ -56,27 +52,16 @@ class NavierStokesMassOnePLocalResidual : public GetPropType<TypeTag, Properties
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-    using EnergyLocalResidual = NavierStokesEnergyLocalResidual<ModelTraits>;
-
-    static_assert(GridGeometry::discMethod == DiscretizationMethod::cctpfa);
 
 public:
     //! Use the parent type's constructor
     using ParentType::ParentType;
 
     /*!
-     * \brief Calculate the source term of the equation
-     *
-     * \param problem The problem to solve
-     * \param scv The sub-control volume over which we integrate the storage term
-     * \param volVars The volume variables associated with the scv
-     * \note has to be implemented by the model specific residual class
-     *
+     * \brief Calculate the storage term of the equation
      */
     NumEqVector computeStorage(const Problem& problem,
                                const SubControlVolume& scv,
@@ -85,8 +70,9 @@ public:
         NumEqVector storage(0.0);
         storage[ModelTraits::Indices::conti0EqIdx] = volVars.density();
 
-        //! The energy storage in the fluid phase
-        EnergyLocalResidual::fluidPhaseStorage(storage, volVars);
+        // consider energy storage for non-isothermal models
+        if constexpr (ModelTraits::enableEnergyBalance())
+            storage[ModelTraits::Indices::energyEqIdx] = volVars.density() * volVars.internalEnergy();
 
         return storage;
     }
@@ -110,20 +96,7 @@ public:
     {
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-
-        NumEqVector flux;
-
-        // the physical quantities for which we perform upwinding
-        auto upwindTerm = [](const auto& volVars) { return volVars.density(); };
-        flux = fluxVars.advectiveFlux(upwindTerm);
-
-        //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
-        EnergyLocalResidual::heatConvectionFlux(flux, fluxVars);
-
-        //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
-        EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
-
-        return flux;
+        return fluxVars.flux(0);
     }
 };
 
