@@ -19,59 +19,176 @@
 /*!
  * \file
  * \ingroup NavierStokesModel
- * \copydoc Dumux::NavierStokesFluxVariablesImpl
+ * \copydoc Dumux::NavierStokesMassOnePNCFluxVariables
  */
 #ifndef DUMUX_NAVIERSTOKES_MASS_1PNC_FLUXVARIABLES_HH
 #define DUMUX_NAVIERSTOKES_MASS_1PNC_FLUXVARIABLES_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/common/exceptions.hh>
-#include <dumux/common/parameters.hh>
+#include <dumux/common/typetraits/problem.hh>
 #include <dumux/flux/upwindscheme.hh>
-#include <dumux/freeflow/navierstokes/scalarvolumevariables.hh>
 #include <dumux/freeflow/navierstokes/scalarfluxvariables.hh>
 
 namespace Dumux {
 
 /*!
  * \ingroup NavierStokesModel
- * \brief The flux variables class for the Navier-Stokes model using the staggered grid discretization.
+ * \brief The flux variables class for the single-phase flow,
+ *        multi-component Navier-Stokes model.
  */
-template<class TypeTag, class UpwindScheme = UpwindScheme<GetPropType<TypeTag, Properties::GridGeometry>>>
+template<class Problem,
+         class ModelTraits,
+         class FluxTs,
+         class ElementVolumeVariables,
+         class ElementFluxVariablesCache,
+         class UpwindScheme = UpwindScheme<typename ProblemTraits<Problem>::GridGeometry>>
 class NavierStokesMassOnePNCFluxVariables
-: public NavierStokesScalarConservationModelFluxVariables<TypeTag, UpwindScheme>
+: public NavierStokesScalarConservationModelFluxVariables<Problem,
+                                                          ModelTraits,
+                                                          FluxTs,
+                                                          ElementVolumeVariables,
+                                                          ElementFluxVariablesCache,
+                                                          UpwindScheme>
 {
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
+    using NumEqVector = typename VolumeVariables::PrimaryVariables;
+    using Scalar = typename VolumeVariables::PrimaryVariables::value_type;
+    using Indices = typename ModelTraits::Indices;
 
     static constexpr bool enableMolecularDiffusion = ModelTraits::enableMolecularDiffusion();
+    static constexpr auto replaceCompEqIdx = ModelTraits::replaceCompEqIdx();
+    static constexpr bool useTotalMoleOrMassBalance = replaceCompEqIdx < ModelTraits::numFluidComponents();
+
+    using FluidSystem = typename VolumeVariables::FluidSystem;
+
+    using ParentType = NavierStokesScalarConservationModelFluxVariables<Problem,
+                                                                        ModelTraits,
+                                                                        FluxTs,
+                                                                        ElementVolumeVariables,
+                                                                        ElementFluxVariablesCache,
+                                                                        UpwindScheme>;
 
 public:
 
     static constexpr auto numComponents = ModelTraits::numFluidComponents();
     static constexpr bool useMoles = ModelTraits::useMoles();
-    using MolecularDiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
+    using MolecularDiffusionType = typename FluxTs::MolecularDiffusionType;
 
     /*!
      * \brief Returns the diffusive fluxes computed by the respective law.
      */
-    Dune::FieldVector<Scalar, numComponents> molecularDiffusionFlux(int phaseIdx = 0) const
+    NumEqVector molecularDiffusionFlux(int phaseIdx = 0) const
     {
+        NumEqVector result(0.0);
         if constexpr (enableMolecularDiffusion)
-            return MolecularDiffusionType::flux(this->problem(),
-                                                this->element(),
-                                                this->fvGeometry(),
-                                                this->elemVolVars(),
-                                                this->scvFace(),
-                                                phaseIdx,
-                                                this->elemFluxVarsCache());
-        else
-            return {0.0};
+        {
+            const auto diffusiveFluxes = MolecularDiffusionType::flux(this->problem(),
+                                                                      this->element(),
+                                                                      this->fvGeometry(),
+                                                                      this->elemVolVars(),
+                                                                      this->scvFace(),
+                                                                      phaseIdx,
+                                                                      this->elemFluxVarsCache());
+
+            static constexpr auto referenceSystemFormulation = MolecularDiffusionType::referenceSystemFormulation();
+
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            {
+                // get equation index
+                const auto eqIdx = Indices::conti0EqIdx + compIdx;
+                if (eqIdx == replaceCompEqIdx)
+                    continue;
+
+                //check for the reference system and adapt units of the diffusive flux accordingly.
+                if constexpr (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+                    result[eqIdx] += useMoles ? diffusiveFluxes[compIdx]/FluidSystem::molarMass(compIdx)
+                                        : diffusiveFluxes[compIdx];
+                else if constexpr (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
+                    result[eqIdx] += useMoles ? diffusiveFluxes[compIdx]
+                                        : diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
+                else
+                    DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
+            }
+
+            // in case one balance is substituted by the total mole balance
+            if constexpr(useTotalMoleOrMassBalance)
+            {
+                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                {
+                    //check for the reference system and adapt units of the diffusive flux accordingly.
+                    if constexpr (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+                        result[replaceCompEqIdx] += useMoles ? diffusiveFluxes[compIdx]/FluidSystem::molarMass(compIdx) : diffusiveFluxes[compIdx];
+                    else if constexpr (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
+                        result[replaceCompEqIdx] += useMoles ? diffusiveFluxes[compIdx]
+                                                : diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
+                    else
+                        DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
+                }
+            }
+        }
+
+        return result;
     }
 
+    /*!
+     * \brief Returns the advective mass flux in kg/s
+     *        or the advective mole flux in mole/s.
+     */
+    NumEqVector advectiveFlux(int phaseIdx = 0) const
+    {
+        NumEqVector result(0.0);
+
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+        {
+            // get equation index
+            const auto eqIdx = Indices::conti0EqIdx + compIdx;
+
+            if (eqIdx != replaceCompEqIdx)
+            {
+                // the physical quantities for which we perform upwinding
+                const auto upwindTerm = [this, phaseIdx = phaseIdx, compIdx] (const auto& volVars)
+                { return massOrMoleDensity_(volVars, phaseIdx, compIdx) * massOrMoleFraction_(volVars, phaseIdx, compIdx); };
+
+                // advective fluxes
+                result[eqIdx] += ParentType::advectiveFlux(upwindTerm);
+            }
+            else
+            {
+                // in case one balance is substituted by the total mole balance
+                if constexpr(useTotalMoleOrMassBalance)
+                {
+                    // the physical quantities for which we perform upwinding
+                    const auto upwindTerm = [this, phaseIdx = phaseIdx, compIdx] (const auto& volVars)
+                    { return massOrMoleDensity_(volVars, phaseIdx, compIdx); };
+
+                    result[replaceCompEqIdx] += ParentType::advectiveFlux(upwindTerm);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /*!
+     * \brief Returns all fluxes for the single-phase flow, multi-component
+     *        Navier-Stokes model: the advective mass flux in kg/s
+     *        or the advective mole flux in mole/s and the energy flux
+     *        in J/s (for nonisothermal models).
+     */
+    NumEqVector flux(int phaseIdx = 0) const
+    {
+        NumEqVector flux = molecularDiffusionFlux(phaseIdx) + advectiveFlux(phaseIdx);
+        ParentType::addHeatFlux(flux);
+        return flux;
+    }
+
+private:
+    Scalar massOrMoleDensity_(const VolumeVariables& volVars, const int phaseIdx, const int compIdx) const
+    { return useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };
+
+    Scalar massOrMoleFraction_(const VolumeVariables& volVars, const int phaseIdx, const int compIdx) const
+    { return useMoles ? volVars.moleFraction(phaseIdx, compIdx) : volVars.massFraction(phaseIdx, compIdx); };
 };
 
 } // end namespace Dumux
 
-#endif // DUMUX_NAVIERSTOKES_STAGGERED_FLUXVARIABLES_HH
+#endif
