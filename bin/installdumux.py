@@ -7,7 +7,7 @@ import os
 import sys
 import subprocess
 from distutils.spawn import find_executable
-from pkg_resources import parse_version
+from distutils.version import LooseVersion
 
 def show_message(message):
     print("*" * 120)
@@ -18,7 +18,7 @@ def show_message(message):
 def check_cpp_version():
     requiredversion = "7"
     result = subprocess.check_output(["g++", "-dumpversion"]).decode().strip()
-    if parse_version(result) < parse_version(requiredversion):
+    if LooseVersion(result) < LooseVersion(requiredversion):
         print("-- An error occured while checking for prerequistes.")
         raise Exception("g++ greater than or equal to {} is required for dumux releases >=3.2!".format(requiredversion))
 
