@@ -33,7 +33,8 @@
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/components/simpleh2o.hh>
 
-#include <dumux/freeflow/navierstokes/fluxhelper.hh>
+#include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
+#include <dumux/freeflow/navierstokes/scalarfluxhelper.hh>
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
@@ -263,21 +264,25 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
+            using FluxHelper = NavierStokesMomentumBoundaryFluxHelper;
+
             if (outletCondition_ == OutletCondition::doNothing)
-                values = NavierStokesBoundaryFluxHelper<ModelTraits>::fixedPressureMomentumFlux(*this, element, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure_, false /*zeroNormalVelocityGradient*/);
+                values = FluxHelper::fixedPressureMomentumFlux(*this, element, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure_, false /*zeroNormalVelocityGradient*/);
             else if (outletCondition_ == OutletCondition::outflow)
-                values = NavierStokesBoundaryFluxHelper<ModelTraits>::fixedPressureMomentumFlux(*this, element, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure_, true /*zeroNormalVelocityGradient*/);
+                values = FluxHelper::fixedPressureMomentumFlux(*this, element, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure_, true /*zeroNormalVelocityGradient*/);
             else
             {
                 assert(outletCondition_ == OutletCondition::neumannXneumannY);
-                values = NavierStokesBoundaryFluxHelper<ModelTraits>::fixedPressureMomentumFlux(*this, element, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure_, false /*zeroNormalVelocityGradient*/);
+                values = FluxHelper::fixedPressureMomentumFlux(*this, element, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure_, false /*zeroNormalVelocityGradient*/);
                 values[Indices::momentumYBalanceIdx] = -dudy(scvf.ipGlobal()[1], inletVelocity_) * this->effectiveViscosity(element, fvGeometry, scvf) * scvf.directionSign();
             }
         }
         else
         {
+            using FluxHelper = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>;
+
             if (isOutlet_(scvf.ipGlobal()))
-                values = NavierStokesBoundaryFluxHelper<ModelTraits>::scalarOutflowFlux(*this, element, fvGeometry, scvf, elemVolVars);
+                values = FluxHelper::scalarOutflowFlux(*this, element, fvGeometry, scvf, elemVolVars);
         }
 
         return values;
