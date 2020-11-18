@@ -35,6 +35,9 @@ USE_MATHJAX            = YES
 
 EXCLUDE_PATTERNS       =
 
+# exclude symbols from the standard library (cleaner dependency graphs)
+EXCLUDE_SYMBOLS        = std::*
+
 ALIASES               += "warning=\xrefitem warning \"Warning List\" \"Warning List\""
 
 # enable client side searching
