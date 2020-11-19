@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Linear
- * \brief Dumux preconditioners for iterative solvers
+ * \brief Preconditioners for iterative solvers
  */
 #ifndef DUMUX_LINEAR_PRECONDITIONERS_HH
 #define DUMUX_LINEAR_PRECONDITIONERS_HH
@@ -336,6 +336,10 @@ private:
 
 DUMUX_REGISTER_PRECONDITIONER("uzawa", Dumux::MultiTypeBlockMatrixPreconditionerTag, Dune::defaultPreconditionerBlockLevelCreator<Dumux::SeqUzawa, 1>());
 
+/*!
+ * \ingroup Linear
+ * \brief Block-diagonal AMG for multi-type block matrices
+ */
 template <class LinearSolverTraitsTuple, class Matrix, class Vector>
 class BlockDiagAMGPreconditioner : public Dune::Preconditioner<Vector, Vector>
 {
@@ -372,6 +376,13 @@ class BlockDiagAMGPreconditioner : public Dune::Preconditioner<Vector, Vector>
                                                             >::type;
 
 public:
+    /*! \brief Construct the preconditioner
+     *
+     *  \param m matrix
+     *  \param b right hand side
+     *  \param comms tuple of communicators corresponding to the matrix/vector blocks
+     *  \param parHelpers tuple of parallel helpers
+     */
     template <class Comms, class ParHelpers>
     BlockDiagAMGPreconditioner(Matrix& m, Vector& b, const Comms& comms, const ParHelpers& parHelpers)
     {
@@ -386,61 +397,81 @@ public:
             using RHSBlock = VecBlockType<i>;
 
             auto& comm = std::get<i>(comms);
-            auto& linearOperator = std::get<i>(lopTuple_);
+            auto& linearOperator = std::get<i>(linearOperators_);
             auto& parHelper = *std::get<i>(parHelpers);
 
             if (LSTraits::isNonOverlapping(parHelper.gridView()))
             {
                 using PTraits = typename LSTraits::template ParallelNonoverlapping<DiagBlock, RHSBlock>;
                 prepareAlgebra_<LSTraits, PTraits>(diagBlock, rhsBlock, comm, linearOperator,
-                                                   parHelper, std::get<i>(precTuple_));
+                                                   parHelper, std::get<i>(preconditioners_));
             }
             else
             {
                 using PTraits = typename LSTraits::template ParallelOverlapping<DiagBlock, RHSBlock>;
                 prepareAlgebra_<LSTraits, PTraits>(diagBlock, rhsBlock, comm, linearOperator,
-                                                   parHelper, std::get<i>(precTuple_));
+                                                   parHelper, std::get<i>(preconditioners_));
             }
         });
     }
 
+    /*! \brief Prepare the preconditioner
+     */
     void pre (Vector& v, Vector& d) final
     {
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(v)), [&](const auto i)
         {
-            std::get<i>(precTuple_)->pre(v[i], d[i]);
+            std::get<i>(preconditioners_)->pre(v[i], d[i]);
         });
     }
 
+    /*! \brief Apply the preconditioner
+     */
     void apply (Vector& v, const Vector& d) final
     {
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(v)), [&](const auto i)
         {
-            std::get<i>(precTuple_)->apply(v[i], d[i]);
+            std::get<i>(preconditioners_)->apply(v[i], d[i]);
         });
     }
 
+    /*! \brief Clean up
+     */
     void post (Vector& v) final
     {
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(v)), [&](const auto i)
         {
-            std::get<i>(precTuple_)->post(v[i]);
+            std::get<i>(preconditioners_)->post(v[i]);
         });
     }
 
+    /*! \brief Category of the preconditioner
+     *
+     *  While each component may be of a different category,
+     *  overlapping is selected in parallel for the overall
+     *  preconditioner because no adequate value exists. Has to be
+     *  consistent with the categories for the linear operator
+     *  and the scalar product.
+     */
     Dune::SolverCategory::Category category() const final
     {
-        if (std::get<0>(precTuple_)->category() == Dune::SolverCategory::sequential)
+        if (std::get<0>(preconditioners_)->category() == Dune::SolverCategory::sequential)
             return Dune::SolverCategory::sequential;
 
         return Dune::SolverCategory::overlapping;
     }
 
+    /*! \brief Return the linear operators corresponding to the diagonal blocks
+     *
+     *  The operators are required for defining the preconditioner blocks.
+     *  They are exported here because they are also needed for defining an
+     *  overall linear operator for the preconditioned solver.
+     */
     const LinearOperatorTuple& linearOperators() const
-    { return lopTuple_; }
+    { return linearOperators_; }
 
 private:
     template <class SolverTraits, class ParallelTraits,
@@ -485,8 +516,8 @@ private:
         preconditioner = std::make_shared<AMG>(*lop, criterion, args, *comm);
     }
 
-    PreconditionerTuple precTuple_;
-    LinearOperatorTuple lopTuple_;
+    PreconditionerTuple preconditioners_;
+    LinearOperatorTuple linearOperators_;
 };
 
 } // end namespace Dumux

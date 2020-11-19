@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Linear
- * \brief Dumux linear operators for iterative solvers
+ * \brief Scalar products for iterative solvers
  */
 #ifndef DUMUX_LINEAR_SCALARPRODUCTS_HH
 #define DUMUX_LINEAR_SCALARPRODUCTS_HH
@@ -32,6 +32,17 @@
 
 namespace Dumux {
 
+/*!
+ * \ingroup Linear
+ * \brief A scalar product based on a tuple of scalar products
+ *
+ * \tparam Vector usually a MultiTypeBlockVector
+ * \tparam ScalarProductTuple tuple of scalar products
+ *
+ * Vector and ScalarProductTuple have to be consistent in the sense
+ * that a tuple element implements the scalar product for a corresponding
+ * subtype of Vector.
+ */
 template<class Vector, class ScalarProductTuple>
 class TupleScalarProduct : public Dune::ScalarProduct<Vector>
 {
@@ -39,18 +50,17 @@ class TupleScalarProduct : public Dune::ScalarProduct<Vector>
     using real_type = typename Dune::ScalarProduct<Vector>::real_type;
 
 public:
-    /*!
-     * \param comm The communication object for syncing overlap and copy
-     * data points.
-     * \param cat parallel solver category (nonoverlapping or overlapping)
+    /*! \brief Construct the scalar product
+     *
+     *  \param sps tuple of scalar products
      */
     TupleScalarProduct (const ScalarProductTuple& sps)
-    : sps_(sps)
+    : scalarProducts_(sps)
     {}
 
-    /*! \brief Dot product of two vectors.
-     *       It is assumed that the vectors are consistent on the interior+border
-     *       partition.
+    /*! \brief Dot product of two vectors
+     *
+     *  Each vector component must be consistent on the interior+border partition.
      */
     field_type dot (const Vector& x, const Vector& y) const override
     {
@@ -59,14 +69,15 @@ public:
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(x)), [&](const auto i)
         {
-            result += std::get<i>(sps_)->dot(x[i], y[i]);
+            result += std::get<i>(scalarProducts_)->dot(x[i], y[i]);
         });
 
         return result;
     }
 
-    /*! \brief Norm of a right-hand side vector.
-     *       The vector must be consistent on the interior+border partition
+    /*! \brief Norm of a right-hand side vector
+     *
+     *  Each vector component must be consistent on the interior+border partition.
      */
     real_type norm (const Vector& x) const override
     {
@@ -74,14 +85,24 @@ public:
         return sqrt(dot(x, x));
     }
 
-    //! Category of the scalar product (see SolverCategory::Category)
+    /*! \brief Category of the scalar product
+     *
+     *  While each component may be of a different category,
+     *  overlapping is selected in parallel for the overall
+     *  product because no adequate value exists. Has to be
+     *  consistent with the categories for the linear operator
+     *  and the preconditioner.
+     */
     Dune::SolverCategory::Category category() const
     {
+        if (std::get<0>(scalarProducts_)->category() == Dune::SolverCategory::sequential)
+            return Dune::SolverCategory::sequential;
+
         return Dune::SolverCategory::overlapping;
     }
 
 private:
-    const ScalarProductTuple& sps_;
+    const ScalarProductTuple& scalarProducts_;
 };
 
 } // end namespace Dumux

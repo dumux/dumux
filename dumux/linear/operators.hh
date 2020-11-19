@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Linear
- * \brief Dumux linear operators for iterative solvers
+ * \brief Linear operators for iterative solvers
  */
 #ifndef DUMUX_LINEAR_OPERATORS_HH
 #define DUMUX_LINEAR_OPERATORS_HH
@@ -32,6 +32,18 @@
 
 namespace Dumux {
 
+/*!
+ * \ingroup Linear
+ * \brief A linear operator based on a tuple of linear operators
+ *
+ * \tparam Vector usually a MultiTypeBlockVector
+ * \tparam Matrix usually a MultiTypeBlockMatrix
+ * \tparam LinearOperatorTuple tuple of linear operators
+ *
+ * Vector, Matrix and LinearOperatorTuple have to be consistent in the sense
+ * that a tuple element implements the linear operator for a corresponding
+ * diagonal block of a Matrix and block of a Vector.
+ */
 template<class Vector, class Matrix, class LinearOperatorTuple>
 class TupleLinearOperator: public Dune::LinearOperator<Vector, Vector> {
 public:
@@ -42,54 +54,75 @@ public:
     //! The field type of the operator.
     typedef typename Vector::field_type field_type;
 
+    /*! \brief Construct the linear operator
+     *
+     *  \param lops tuple of linear operators
+     *  \param m matrix
+     *
+     *  The linear operator tuple and the matrix are both needed.
+     *  The first realizes the action of the diagonal blocks and additionally
+     *  carries the parallel information. With the second, the action of the
+     *  off-diagonal blocks is implemented.
+     */
     TupleLinearOperator (const LinearOperatorTuple& lops, const Matrix& m)
-    : lops_(lops), m_(m)
+    : linearOperators_(lops), matrix_(m)
     {}
 
-    /*! \brief apply operator to x:  \f$ y = A(x) \f$
-     *          The input vector is consistent and the output must also be
-     *       consistent on the interior+border partition.
+    /*! \brief Apply operator to x:  \f$ y = A(x) \f$
+     *
+     *  The input vector is consistent and the output must also be
+     *  consistent on the interior+border partition.
      */
     void apply (const Vector& x, Vector& y) const override
     {
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(x)), [&](const auto i)
         {
-            std::get<i>(lops_)->apply(x[i], y[i]);
+            std::get<i>(linearOperators_)->apply(x[i], y[i]);
 
             forEach(integralRange(Dune::Hybrid::size(x)), [&](const auto j)
             {
                 if (i != j)
-                    m_[i][j].umv(x[j], y[i]);
+                    matrix_[i][j].umv(x[j], y[i]);
             });
         });
     }
 
-    //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
+    //! Apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
     void applyscaleadd (field_type alpha, const Vector& x, Vector& y) const override
     {
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(x)), [&](const auto i)
         {
-            std::get<i>(lops_)->applyscaleadd(alpha, x[i], y[i]);
+            std::get<i>(linearOperators_)->applyscaleadd(alpha, x[i], y[i]);
 
             forEach(integralRange(Dune::Hybrid::size(x)), [&](const auto j)
             {
                 if (i != j)
-                    m_[i][j].usmv(alpha, x[j], y[i]);
+                    matrix_[i][j].usmv(alpha, x[j], y[i]);
             });
         });
     }
 
-    //! Category of the linear operator (see SolverCategory::Category)
+    /*! \brief Category of the linear operator
+     *
+     *  While each component may be of a different category,
+     *  overlapping is selected in parallel for the overall
+     *  operator because no adequate value exists. Has to be
+     *  consistent with the categories for the scalar product
+     *  and the preconditioner.
+     */
     Dune::SolverCategory::Category category() const
     {
+        if (std::get<0>(linearOperators_)->category() == Dune::SolverCategory::sequential)
+            return Dune::SolverCategory::sequential;
+
         return Dune::SolverCategory::overlapping;
     }
 
 private:
-    const LinearOperatorTuple& lops_;
-    const Matrix& m_;
+    const LinearOperatorTuple& linearOperators_;
+    const Matrix& matrix_;
 };
 
 } // end namespace Dumux

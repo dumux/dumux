@@ -532,7 +532,7 @@ using SuperLUIstlSolver = DirectIstlSolver<Dune::SuperLU>;
 
 /*!
  * \ingroup Linear
- * \brief linear solvers preconditioned by a block-diagonal AMG
+ * \brief Linear solvers preconditioned by a block-diagonal AMG
  */
 template<class LinearSolverTraitsTuple, class InverseOperator, class Matrix>
 class BlockDiagAMGPreconditionedSolver : public LinearSolver
@@ -573,7 +573,8 @@ class BlockDiagAMGPreconditionedSolver : public LinearSolver
 
 public:
     /*!
-     * \brief Constructs the linear solver
+     * \brief Construct the linear solver
+     *
      * \param gridViews a tuple of grid views
      * \param dofMappers a tuple of dof mappers
      * \param paramGroup parameter group
@@ -585,6 +586,13 @@ public:
     : BlockDiagAMGPreconditionedSolver(gridViews, dofMappers, paramGroup, std::make_index_sequence<numBlocks>{})
     {}
 
+    /*!
+     * \brief Solve a linear system
+     *
+     * \param A the matrix
+     * \param x the seeked solution vector, containing an initial guess
+     * \param b the right hand side vector
+     */
     bool solve(Matrix& A, Vector& x, Vector& b)
     {
         using Prec = BlockDiagAMGPreconditioner<LinearSolverTraitsTuple, Matrix, Vector>;
@@ -604,11 +612,23 @@ public:
         return result_.converged;
     }
 
+    /*!
+     * \brief Result containing the convergence history
+     */
     const Dune::InverseOperatorResult& result() const
     {
       return result_;
     }
 
+    /*!
+     * \brief Calculate the norm of a right-hand side vector
+     *
+     * \param x vector for which the norm will be calculated
+     *
+     * The norm calculation employs the scalar product after
+     * possibly making the parts consistent that correspond
+     * to a non-overlapping distribution in the parallel regime.
+     */
     Scalar norm(const Vector& x) const
     {
         auto y(x); // make a copy because the vector needs to be made consistent
@@ -632,6 +652,9 @@ public:
         return scalarProduct_->norm(y);
     }
 
+    /*!
+     * \brief Name of the solver
+     */
     std::string name() const
     { return "block-diagonal AMG preconditioned GMRes solver"; }
 
