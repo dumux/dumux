@@ -977,6 +977,20 @@ private:
                     convergenceWriter_->write(uCurrentIter, deltaU, this->assembler().residual());
                 }
 
+                // If we have a large number of maximum Newton iterations it may
+                // sense to check if the solver still converges to zero.
+                // This way the number of wasted iteration can be decreased.
+                if(checkConvergenceMonotony_)
+                {
+                    if( (lastShift_-shift_)*(lastShift_-shift_)/(lastShift_*lastShift_) < 0.00000001 && numSteps_> 5)
+                    {
+                        totalWastedIter_ += numSteps_;
+                        std::cout << "Maximum relative shift did not decrease, retry with smaller time step." << '\n';
+                        newtonFail(uCurrentIter);
+                        return false;
+                    }
+                }
+
                 // detect if the method has converged
                 converged = newtonConverged();
             }
@@ -1210,6 +1224,7 @@ private:
         enableResidualCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableResidualCriterion") || enableAbsoluteResidualCriterion_;
         satisfyResidualAndShiftCriterion_ = getParamFromGroup<bool>(group, "Newton.SatisfyResidualAndShiftCriterion");
         enableDynamicOutput_ = getParamFromGroup<bool>(group, "Newton.EnableDynamicOutput", true);
+        checkConvergenceMonotony_ = getParamFromGroup<bool>(group, "Newton.CheckConvergenceMonotony", false);
 
         if (!enableShiftCriterion_ && !enableResidualCriterion_)
         {
@@ -1297,6 +1312,7 @@ private:
     bool enableResidualCriterion_;
     bool satisfyResidualAndShiftCriterion_;
     bool enableDynamicOutput_;
+    bool checkConvergenceMonotony_;
 
     //! the parameter group for getting parameters from the parameter tree
     std::string paramGroup_;
