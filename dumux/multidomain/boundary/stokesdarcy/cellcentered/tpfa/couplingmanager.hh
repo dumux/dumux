@@ -102,6 +102,11 @@ private:
         std::size_t darcyScvfIdx;
         std::size_t stokesScvfIdx;
         VolumeVariables<porousMediumIdx> volVars;
+
+        auto permeability() const
+        {
+            return volVars.permeability();
+        }
     };
 
     struct StationaryDarcyCouplingContext
