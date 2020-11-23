@@ -1,0 +1,68 @@
+stages:
+  - trigger pipelines
+  - trigger downstream modules
+
+variables:
+  IMAGE_REGISTRY_URL: $CI_REGISTRY/dumux-repositories/dumux-docker-ci
+
+# rules for pipelines:
+# - pipelines are triggered for commits to master, tags, merge requests
+# - Within merge requests, we require to start the pipeline manually
+#   by clicking play for the trigger
+.default-trigger:
+  stage: trigger pipelines
+  trigger:
+    include:
+      - local: .gitlab-ci/default.yml
+    strategy: depend
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "pipeline"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+
+.scheduled-trigger:
+  extends: .default-trigger
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
+###################################
+# pipelines with different setups #
+full-dune-2.7-gcc:
+  extends: .default-trigger
+  variables:
+    IMAGE: $IMAGE_REGISTRY_URL/full:dune-2.7-gcc-ubuntu-20.04
+
+minimal-dune-2.7-gcc:
+  extends: .default-trigger
+  variables:
+    IMAGE: $IMAGE_REGISTRY_URL/minimal:dune-2.7-gcc-ubuntu-20.04
+
+full-dune-2.7-clang:
+  extends: .default-trigger
+  variables:
+    IMAGE: $IMAGE_REGISTRY_URL/full:dune-2.7-clang-ubuntu-20.04
+
+##################################
+# additional scheduled pipelines #
+full-dune-master-gcc:
+  extends: .scheduled-trigger
+  variables:
+    IMAGE: $IMAGE_REGISTRY_URL/full:dune-master-gcc-ubuntu-20.04
+
+full-dune-master-clang:
+  extends: .scheduled-trigger
+  variables:
+    IMAGE: $IMAGE_REGISTRY_URL/full:dune-master-clang-ubuntu-20.04
+
+###################################
+# triggers for downstream modules #
+trigger lecture:
+    stage: trigger downstream modules
+    trigger:
+      project: dumux-repositories/dumux-lecture
+      # TODO: replace by master once development in lecture is finished
+      branch: feature/test-dumux-trigger
+      strategy: depend
+    variables:
+      DUMUX_BRANCH_NAME: $CI_COMMIT_BRANCH
