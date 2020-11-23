@@ -205,10 +205,11 @@ public:
                 const auto darcyPhaseIdx = couplingPhaseIdx(porousMediumIdx);
                 const auto& elemVolVars = *(data.elementVolVars);
                 const auto& darcyFvGeometry = data.fvGeometry;
+                const auto& darcyScvf = darcyFvGeometry.scvf(data.darcyScvfIdx);
                 const auto& localBasis = darcyFvGeometry.feLocalBasis();
 
                 // darcy Permeability
-                const auto& K = data.volVars.permeability();
+                const auto& K = data.permeability();
 
                 // do second order integration as box provides linear functions
                 const auto& rule = Dune::QuadratureRules<Scalar, darcyDim-1>::rule(data.segmentGeometry.type(), 2);
@@ -247,12 +248,12 @@ public:
                         const auto& epsInterface = this->couplingManager().problem(freeFlowIdx).epsInterface(scvf);
                         const auto& M = this->couplingManager().problem(freeFlowIdx).matrixNTangential(scvf);
                         //Add the integrated segment velocity to the sum: v+= -w_k * sqrt(det(A^T*A))*eps**2*M/mu*gradP
-                        velocity += mv(M, mv(qp.weight()*data.segmentGeometry.integrationElement(ipLocal)/data.volVars.viscosity(darcyPhaseIdx)*epsInterface*epsInterface, gradP));
+                        velocity += mv(M, mv(qp.weight()*data.segmentGeometry.integrationElement(ipLocal)/elemVolVars[darcyScvf.insideScvIdx()].viscosity(darcyPhaseIdx)*epsInterface*epsInterface, gradP));
                     }
                     else
                     {
                         //add the integrated segment velocity to the sum: v+= -weight_k * sqrt(det(A^T*A))*K/mu*gradP
-                        velocity += mv(K, mv(-qp.weight()*data.segmentGeometry.integrationElement(ipLocal)/data.volVars.viscosity(darcyPhaseIdx), gradP));
+                        velocity += mv(K, mv(-qp.weight()*data.segmentGeometry.integrationElement(ipLocal)/elemVolVars[darcyScvf.insideScvIdx()].viscosity(darcyPhaseIdx), gradP));
                     }
                 }
                 intersectionLength += data.segmentGeometry.volume();
