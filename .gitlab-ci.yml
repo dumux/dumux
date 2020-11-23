@@ -1,15 +1,14 @@
 stages:
-    - trigger
+    - trigger downstream
 
 # trigger lecture pipeline after commits to master
 trigger lecture:
-    stage: trigger
-    image: ubuntu:focal
+    stage: trigger downstream
+    # TODO: Replace by general rules
     rules:
-      # todo: replace by master branch ($CI_DEFAULT_BRANCH)
       - if: $CI_COMMIT_BRANCH == "feature/ci-trigger-lecture-build"
-    script:
-      - apt-get update
-      - apt-get install --yes curl
-      # todo substitute ref by master once branch is merged
-      - curl --request POST --form "token=$CI_JOB_TOKEN" --form "ref=feature/test-ci" https://git.iws.uni-stuttgart.de/api/v4/projects/33/trigger/pipeline
+    trigger:
+      project: dumux-repositories/dumux-lecture
+      # TODO: replace by master
+      branch: feature/ci-parallel-pipelines
+      strategy: depend
