@@ -9,6 +9,8 @@ trigger lecture:
       - if: $CI_COMMIT_BRANCH == "feature/ci-trigger-lecture-build"
     trigger:
       project: dumux-repositories/dumux-lecture
-      # TODO: replace by master
-      branch: feature/ci-parallel-pipelines
+      # TODO:##  replace by master
+      branch: feature/test-dumux-trigger
       strategy: depend
+    variables:
+      DUMUX_BRANCH_NAME: $CI_COMMIT_BRANCH
