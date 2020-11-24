@@ -89,13 +89,10 @@ public:
 
         Scalar momentumFlux(0.0);
         const auto& stokesContext = this->couplingManager().stokesCouplingContext(element, scvf);
-        const auto darcyPhaseIdx = couplingPhaseIdx(porousMediumIdx);
 
         // - p_pm * n_pm = p_pm * n_ff
-        const Scalar darcyPressure = stokesContext.volVars.pressure(darcyPhaseIdx);
-
         if constexpr (numPhasesDarcy > 1)
-            momentumFlux = darcyPressure;
+            momentumFlux = stokesContext.volVars.pressure(couplingPhaseIdx(porousMediumIdx));
         else // use pressure reconstruction for single phase models
             momentumFlux = pressureAtInterface_(element, scvf, stokesElemFaceVars, stokesContext);
         // TODO: generalize for permeability tensors
