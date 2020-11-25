@@ -3,17 +3,17 @@ DtInitial = 1 # [s]
 TEnd = 2 # [s]
 
 [Grid]
-UpperRight = 10 2
-Cells = 100 100
+UpperRight = 10 1
+Cells = 10 5
 
 [Problem]
-Name = test_channel_stokes_coupled # name passed to the output routines
+Name = test_channel_stokes_new # name passed to the output routines
 InletVelocity = 1
 EnableGravity = false
 EnableInertiaTerms = false
 OutletCondition = Outflow
 PrintMatrix = false
-UseVelocityProfile = false
+UseVelocityProfile = true
 
 [Component]
 LiquidDensity = 1.0

@@ -318,6 +318,7 @@ public:
                    const FVElementGeometry& fvGeometry,
                    const SubControlVolumeFace& scvf) const
     {
+        return 1.0;
         if constexpr (std::is_empty_v<CouplingManager>)
             return asImp_().densityAtPos(scvf.ipGlobal());
         else
@@ -332,6 +333,7 @@ public:
                    const SubControlVolume& scv,
                    const bool isPreviousTimeStep = false) const
     {
+        return 1.0;
         if constexpr (std::is_empty_v<CouplingManager>)
             return asImp_().densityAtPos(scv.dofPosition());
         else

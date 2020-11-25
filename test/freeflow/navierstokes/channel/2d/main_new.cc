@@ -237,10 +237,20 @@ int main(int argc, char** argv) try
     else
     {
         // time loop
+        assembler->assembleResidual(x);
+        auto res = assembler->residual();
+        auto res_mom = res[momentumIdx];
+        std::ofstream fout;
+        fout.open("res_mom_new.txt");
+        Dune::printvector(fout, res_mom, "", "");
+        fout.close();
         timeLoop->start(); do
         {
             // solve the non-linear system with time step control
             nonLinearSolver.solve(x, *timeLoop);
+            auto A = assembler->jacobian();
+            auto A_mom = A[momentumIdx][momentumIdx];
+            Dune::writeMatrixToMatlab(A_mom, "a_mom_matrix_new.mat");
 
             // make the new solution the old solution
             xOld = x;

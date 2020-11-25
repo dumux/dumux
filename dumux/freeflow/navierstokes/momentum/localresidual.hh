@@ -102,7 +102,7 @@ public:
         // TODO: factor (phi1 + delta), inside derivative
         const static Scalar delta = getParam<Scalar>("Phasefield.delta");
         return problem.density(element, scv, isPreviousStorage) * volVars.velocity()
-                * (problem.phasefield(element,scv)+delta)
+                * (problem.phasefield(element, scv, isPreviousStorage)+delta)
                 ;
     }
 

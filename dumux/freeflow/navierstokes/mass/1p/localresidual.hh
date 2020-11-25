@@ -94,8 +94,9 @@ public:
         NumEqVector storage(0.0);
         const Scalar xi = getParam<Scalar>("Phasefield.xi");
         const Scalar delta = getParam<Scalar>("Phasefield.delta");
-        storage[Indices::conti0EqIdx] = volVars.density() * (volVars.phasefield(1) + delta)
-            + volVars.phasefield(1);
+        //storage[Indices::conti0EqIdx] = volVars.density() * (volVars.phasefield(1) + delta)
+        //    + volVars.phasefield(1);
+        storage[Indices::conti0EqIdx] = 0.0;//volVars.density();
 
         //! The energy storage in the fluid phase
         EnergyLocalResidual::fluidPhaseStorage(storage, volVars);
