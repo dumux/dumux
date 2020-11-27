@@ -270,19 +270,16 @@ class CCTpfaDarcysLaw<ScalarType, GridGeometry, /*isNetwork*/ false>
     }
 
 private:
-    template<class Problem, class VolumeVariables,
-             std::enable_if_t<!Problem::SpatialParams::evaluatePermeabilityAtScvfIP(), int> = 0>
+    template<class Problem, class VolumeVariables>
     static decltype(auto) getPermeability_(const Problem& problem,
                                            const VolumeVariables& volVars,
                                            const GlobalPosition& scvfIpGlobal)
-    { return volVars.permeability(); }
-
-    template<class Problem, class VolumeVariables,
-             std::enable_if_t<Problem::SpatialParams::evaluatePermeabilityAtScvfIP(), int> = 0>
-    static decltype(auto) getPermeability_(const Problem& problem,
-                                           const VolumeVariables& volVars,
-                                           const GlobalPosition& scvfIpGlobal)
-    { return problem.spatialParams().permeabilityAtPos(scvfIpGlobal); }
+    {
+        if constexpr (Problem::SpatialParams::evaluatePermeabilityAtScvfIP())
+            return problem.spatialParams().permeabilityAtPos(scvfIpGlobal);
+        else
+            return volVars.permeability();
+    }
 };
 
 /*!
@@ -511,19 +508,16 @@ public:
     }
 
 private:
-    template<class Problem, class VolumeVariables,
-             std::enable_if_t<!Problem::SpatialParams::evaluatePermeabilityAtScvfIP(), int> = 0>
+    template<class Problem, class VolumeVariables>
     static decltype(auto) getPermeability_(const Problem& problem,
                                            const VolumeVariables& volVars,
                                            const GlobalPosition& scvfIpGlobal)
-    { return volVars.permeability(); }
-
-    template<class Problem, class VolumeVariables,
-             std::enable_if_t<Problem::SpatialParams::evaluatePermeabilityAtScvfIP(), int> = 0>
-    static decltype(auto) getPermeability_(const Problem& problem,
-                                           const VolumeVariables& volVars,
-                                           const GlobalPosition& scvfIpGlobal)
-    { return problem.spatialParams().permeabilityAtPos(scvfIpGlobal); }
+    {
+        if constexpr (Problem::SpatialParams::evaluatePermeabilityAtScvfIP())
+            return problem.spatialParams().permeabilityAtPos(scvfIpGlobal);
+        else
+            return volVars.permeability();
+    }
 };
 
 } // end namespace Dumux
