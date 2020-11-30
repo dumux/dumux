@@ -178,6 +178,11 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::FCStaggered>
     }
 };
 
+//! Face-centered diamond scheme
+template<class GridGeometry>
+struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::FCDiamond>
+: public LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::FCStaggered> {};
+
 //! Cell-centered mpfa: use overlapping model
 template<class GridGeometry>
 struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::CCMpfa>
