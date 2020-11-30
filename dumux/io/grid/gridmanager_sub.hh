@@ -70,6 +70,7 @@ class SubGridManagerBase
 {
     static constexpr int dim = HostGrid::dimension;
     using HostElement = typename HostGrid::template Codim<0>::Entity;
+    using GlobalPosition = typename HostElement::Geometry::GlobalCoordinate;
 
 public:
     using Grid = Dune::SubGrid<dim, HostGrid>;
@@ -153,6 +154,16 @@ protected:
         hostGridManager_->init(paramGroup);
     }
 
+    void initHostGrid_(const GlobalPosition& lowerLeft,
+                       const GlobalPosition& upperRight,
+                       const std::array<int, dim>& cells,
+                       const std::string& paramGroup,
+                       const int overlap = 1)
+    {
+        hostGridManager_ = std::make_unique<HostGridManager>();
+        hostGridManager_->init(lowerLeft, upperRight, cells, paramGroup, overlap);
+    }
+
     /*!
      * \brief Returns a reference to the host grid.
      */
@@ -230,20 +241,24 @@ private:
     template<class Img>
     void createGridFromImage_(const Img& img, const std::string& paramGroup)
     {
-        // check if the number of cells matches
-        std::array<int, dim> cells; cells.fill(1);
-        cells = getParamFromGroup<std::array<int, dim>>(paramGroup, "Grid.Cells", cells);
+        // Check for the keyword "Refinement" - this would lead to a refinement
+        // of the host grid such that its number of cells would not fit with the number of
+        // the image's pixels anymore. We need to refine the subgrid itself after it has been
+        // constructed from the unrefined hostgrid, using a different keyword (see below).
+        if (hasParamInGroup(paramGroup, "Grid.Refinement"))
+            DUNE_THROW(Dune::InvalidStateException, "Grid.Refinement not allowed for image grids. Use Grid.Refine instead");
 
-        if (img.header().nCols != cells[0])
-            DUNE_THROW(Dune::GridError, "Host grid has wrong number of cells in x-direction. Expected "
-                         << img.header().nCols << ", got " << cells[0]);
-        if (img.header().nRows != cells[1])
-            DUNE_THROW(Dune::GridError, "Host grid has wrong number of cells in y-direction. Expected "
-                         << img.header().nRows << ", got " << cells[1]);
+        // get the corner coordinates
+        using Element = typename ParentType::Grid::template Codim<0>::Entity;
+        using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+        const auto upperRight = getParamFromGroup<GlobalPosition>(paramGroup, "Grid.UpperRight");
+        const auto lowerLeft = getParamFromGroup<GlobalPosition>(paramGroup, "Grid.LowerLeft", GlobalPosition(0.0));
 
+        // get the number of cells
+        const std::array<int, dim> cells{static_cast<int>(img.header().nCols), static_cast<int>(img.header().nRows)};
 
         // construct the host grid
-        this->initHostGrid_(paramGroup);
+        this->initHostGrid_(lowerLeft, upperRight, cells, paramGroup);
 
         // check if the marker is customized, per default
         // we mark all cells that are encoded as 0
@@ -258,6 +273,19 @@ private:
 
         // create the grid
         this->gridPtr() = this->createGrid_(this->hostGrid_(), elementSelector, paramGroup);
+
+        // refine the grid (no refinement by default)
+        const auto numRefinements = getParamFromGroup<std::size_t>(paramGroup, "Grid.Refine", 0);
+        for (int i = 0; i < numRefinements; ++i)
+        {
+            for (const auto& e : elements(this->gridPtr()->leafGridView()))
+                this->gridPtr()->mark(1, e);
+
+            this->gridPtr()->preAdapt();
+            this->gridPtr()->adapt();
+            this->gridPtr()->postAdapt();
+        }
+
         this->loadBalance();
     }
 };
