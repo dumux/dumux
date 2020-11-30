@@ -72,6 +72,13 @@ struct LocalAssemblerChooser<DiscretizationMethods::FCStaggered>
     using type = FaceCenteredLocalAssembler<TypeTag, Impl, diffMethod, isImplicit>;
 };
 
+template<>
+struct LocalAssemblerChooser<DiscretizationMethods::FCDiamond>
+{
+    template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
+    using type = FaceCenteredLocalAssembler<TypeTag, Impl, diffMethod, isImplicit>;
+};
+
 template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
 using LocalAssemblerChooser_t = typename LocalAssemblerChooser<
     typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod

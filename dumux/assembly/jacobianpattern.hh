@@ -206,10 +206,13 @@ Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
 
 /*!
  * \ingroup Assembly
- * \brief Helper function to generate Jacobian pattern for the face-centered staggered method
+ * \brief Helper function to generate Jacobian pattern for the face-centered methods
  */
 template<bool isImplicit, class GridGeometry,
-         typename std::enable_if_t<( (GridGeometry::discMethod == DiscretizationMethods::fcstaggered) ), int> = 0>
+         typename std::enable_if_t<(
+             GridGeometry::discMethod == DiscretizationMethods::fcstaggered
+             || GridGeometry::discMethod == DiscretizationMethods::fcdiamond
+         ), int> = 0>
 Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
 {
     // resize the jacobian and the residual
