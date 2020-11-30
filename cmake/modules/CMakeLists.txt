@@ -7,7 +7,6 @@ set(modules
   FindGLPK.cmake
   FindGstat.cmake
   FindNLOPT.cmake
-  FindPVPython.cmake
-  FindValgrind.cmake)
+  FindPVPython.cmake)
 include(GNUInstallDirs)
 install(FILES ${modules} DESTINATION ${DUNE_INSTALL_MODULEDIR})
