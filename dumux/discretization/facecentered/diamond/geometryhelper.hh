@@ -127,9 +127,42 @@ public:
         return numInteriorScvf_;
     }
 
+    template<int d = dimWorld, std::enable_if_t<(d==3), int> = 0>
     GlobalPosition normal(typename ScvPairStorage::value_type scvPair, LocalScvfIndexType localScvfIdx)
     {
-        return GlobalPosition(0.0);
+        const auto& p = pScvf_[localScvfIdx];
+        auto normal = Dumux::crossProduct(p[1]-p[0], p[2]-p[0]);
+        normal /= normal.two_norm();
+
+        const auto refElement = referenceElement(elementGeometry_);
+        GlobalPosition v = elementGeometry_.global(refElement.position(scvPair.second, 1))
+                          -elementGeometry_.global(refElement.position(scvPair.first,  1));
+
+        const auto s = v*normal;
+        if (std::signbit(s))
+            normal *= -1;
+
+        return normal;
+    }
+
+    template<int d = dimWorld, std::enable_if_t<(d==2), int> = 0>
+    GlobalPosition normal(typename ScvPairStorage::value_type scvPair, LocalScvfIndexType localScvfIdx)
+    {
+        //! obtain normal vector by 90° counter-clockwise rotation of t
+        const auto& p = pScvf_[localScvfIdx];
+        const auto t = p[1] - p[0];
+        GlobalPosition normal({-t[1], t[0]});
+        normal /= normal.two_norm();
+
+        const auto refElement = referenceElement(elementGeometry_);
+        GlobalPosition v = elementGeometry_.global(refElement.position(scvPair.first, 1))
+                          -elementGeometry_.global(refElement.position(scvPair.second,  1));
+
+        const auto s = v*normal;
+        if (std::signbit(s))
+            normal *= -1;
+
+        return normal;
     }
 
 private:
