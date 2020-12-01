@@ -455,9 +455,8 @@ public:
                 swap(compIIdx, compJIdx);
             }
             //! \todo TODO implement binary coefficients
-            // http://webserver.dmt.upm.es/~isidoro/dat1/Mass%20diffusivity%20data.htm
+            // http://webserver.dmt.upm.es/~isidoro/dat1/Mass%20diffusivity%20data.pdf
             // The link above was given as a reference in brine_air fluid system.
-            // Doesn't work anymore though...
             if (compJIdx == NaClIdx)
                 return 0.12e-9;
             else
