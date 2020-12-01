@@ -100,12 +100,32 @@ public:
                                             const std::array<GridIndexType, 2> globalScvIndices,
                                             const LocalIndexType localScvfIdx,
                                             const GridIndexType globalScvfIdx,
-                                            const bool boundary)
+                                            const bool boundary = false)
     : corners_(corners)
     , geometry_(Geometry(T::geometryType(), corners_))
     , center_(geometry_.value().center())
     , ipGlobal_(geometry_.value().center())
     , unitOuterNormal_(normal)
+    , localScvIndices_(localScvIndices)
+    , globalScvIndices_(globalScvIndices)
+    , localScvfIdx_(localScvfIdx)
+    , area_(geometry_.value().volume())
+    , globalScvfIdx_(globalScvfIdx)
+    , boundary_(boundary) {}
+
+    template<class Intersection>
+    FaceCenteredDiamondSubControlVolumeFace(const CornerStorage& corners,
+                                            const Intersection& intersection,
+                                            const std::array<LocalIndexType, 2> localScvIndices,
+                                            const std::array<GridIndexType, 2> globalScvIndices,
+                                            const LocalIndexType localScvfIdx,
+                                            const GridIndexType globalScvfIdx,
+                                            const bool boundary = true)
+    : corners_(corners)
+    , geometry_(Geometry(intersection.geometry().type(), corners_))
+    , center_(geometry_.value().center())
+    , ipGlobal_(geometry_.value().center())
+    , unitOuterNormal_(intersection.centerUnitOuterNormal())
     , localScvIndices_(localScvIndices)
     , globalScvIndices_(globalScvIndices)
     , localScvfIdx_(localScvfIdx)

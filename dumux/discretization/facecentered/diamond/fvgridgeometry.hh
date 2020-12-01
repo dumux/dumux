@@ -215,6 +215,11 @@ public:
             const auto eIdx = this->elementMapper().index(element);
             const auto& globalScvIndices = scvIndicesOfElement_[eIdx];
 
+            LocalIndexType localScvfIdx = 0;
+            std::vector<GridIndexType> scvfsIndexSet;
+            // scvfs are given for each codim 2 entity
+            scvfsIndexSet.resize(dim==1 ? 2 : 2*geometryHelper.numInteriorScvf() + numBoundaryScvfOfElement_[eIdx]);
+
             for (const auto& intersection : intersections(this->gridView(), element))
             {
                 const auto dofIndex = intersectionMapper().globalIntersectionIndex(element, intersection.indexInInside());
@@ -246,6 +251,21 @@ public:
                     }
                 }
 
+                if (onDomainBoundary_(intersection))
+                {
+                    LocalIndexType isIdx = intersection.indexInInside();
+                    const auto corners = geometryHelper.getBoundaryScvfCorners(intersection);
+                    scvfsIndexSet[localScvfIdx] = scvfIdx++;
+
+                    scvfs_.emplace_back(corners,
+                                        intersection,
+                                        std::array{isIdx, isIdx},
+                                        std::array{globalScvIndices[isIdx], globalScvIndices[isIdx]},
+                                        localScvfIdx,
+                                        scvfsIndexSet[localScvfIdx]);
+                    ++localScvfIdx;
+                }
+
                 // the sub control volume
                 scvs_.emplace_back(geometryHelper.getScvCorners(intersection.indexInInside()),
                                    intersectionGeometry.center(),
@@ -256,10 +276,6 @@ public:
                                    onDomainBoundary_(intersection));
             }
 
-            LocalIndexType localScvfIdx = 0;
-            std::vector<GridIndexType> scvfsIndexSet;
-            // scvfs are given for each codim 2 entity
-            scvfsIndexSet.resize(dim==1 ? 2 : 2*geometryHelper.numInteriorScvf() + numBoundaryScvfOfElement_[eIdx]);
             for(LocalIndexType idx=0; idx < geometryHelper.numInteriorScvf(); ++idx)
             {
                 const auto corners = geometryHelper.getScvfCorners(idx);
@@ -273,8 +289,7 @@ public:
                                     std::array{scvPair.first, scvPair.second},
                                     std::array{globalScvIndices[scvPair.first], globalScvIndices[scvPair.second]},
                                     localScvfIdx,
-                                    scvfsIndexSet[localScvfIdx],
-                                    false);
+                                    scvfsIndexSet[localScvfIdx]);
                 ++localScvfIdx;
 
                 // We duplicate the scvfs because assembly is currently always done with respect to insideScv
@@ -284,8 +299,7 @@ public:
                                     std::array{scvPair.second, scvPair.first},
                                     std::array{globalScvIndices[scvPair.second], globalScvIndices[scvPair.first]},
                                     localScvfIdx,
-                                    scvfsIndexSet[localScvfIdx],
-                                    false);
+                                    scvfsIndexSet[localScvfIdx]);
                 ++localScvfIdx;
             }
 

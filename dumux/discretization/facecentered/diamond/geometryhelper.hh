@@ -101,15 +101,15 @@ public:
         return pScvf_[localScvfIdx];
     }
 
-    // //! Create the sub control volume face geometries on the boundary
-    // ScvfCornerStorage getBoundaryScvfCorners() const
-    // {
-    //     ScvfCornerStorage corners;
-    //     std::copy(p_.begin(), p_.end()-1,
-    //               std::back_inserter(corners));
+    //! Create the sub control volume face geometries on the boundary
+    ScvfCornerStorage getBoundaryScvfCorners(const Intersection& is) const
+    {
+        ScvfCornerStorage corners;
+        std::copy(pScv_[is.indexInInside()].begin(), pScv_[is.indexInInside()].end()-1,
+                  std::back_inserter(corners));
 
-    //     return corners;
-    // }
+        return corners;
+    }
 
     typename ScvPairStorage::value_type getFaceScvPair(LocalScvfIndexType localScvfIdx)
     {
