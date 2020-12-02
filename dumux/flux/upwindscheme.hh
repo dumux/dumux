@@ -61,19 +61,28 @@ public:
                         const UpwindTermFunction& upwindTerm,
                         Scalar flux, int phaseIdx)
     {
+        return flux * multiplier(elemVolVars, scvf, upwindTerm, flux, phaseIdx);
+    }
+
+    template<class ElemVolVars, class SubControlVolumeFace, class UpwindTermFunction, class Scalar>
+    static Scalar multiplier(const ElemVolVars& elemVolVars,
+                             const SubControlVolumeFace& scvf,
+                             const UpwindTermFunction& upwindTerm,
+                             Scalar flux, int phaseIdx)
+    {
         // TODO: pass this from outside?
-        static const Scalar upwindWeight = getParam<Scalar>("Flux.UpwindWeight");
+        static const Scalar upwindWeight = getParamFromGroup<Scalar>(elemVolVars.gridVolVars().problem().paramGroup(), "Flux.UpwindWeight");
 
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         using std::signbit;
         if (signbit(flux)) // if sign of flux is negative
-            return flux*(upwindWeight*upwindTerm(outsideVolVars)
-                         + (1.0 - upwindWeight)*upwindTerm(insideVolVars));
+            return (upwindWeight*upwindTerm(outsideVolVars)
+                    + (1.0 - upwindWeight)*upwindTerm(insideVolVars));
         else
-            return flux*(upwindWeight*upwindTerm(insideVolVars)
-                         + (1.0 - upwindWeight)*upwindTerm(outsideVolVars));
+            return (upwindWeight*upwindTerm(insideVolVars)
+                    + (1.0 - upwindWeight)*upwindTerm(outsideVolVars));
     }
 };
 
@@ -175,18 +184,28 @@ public:
                         const UpwindTermFunction& upwindTerm,
                         Scalar flux, int phaseIdx)
     {
-        static const Scalar upwindWeight = getParam<Scalar>("Flux.UpwindWeight");
+        return flux * multiplier(elemVolVars, scvf, upwindTerm, flux, phaseIdx);
+    }
+
+    template<class ElemVolVars, class SubControlVolumeFace, class UpwindTermFunction, class Scalar>
+    static Scalar multiplier(const ElemVolVars& elemVolVars,
+                             const SubControlVolumeFace& scvf,
+                             const UpwindTermFunction& upwindTerm,
+                             Scalar flux, int phaseIdx)
+    {
+        // TODO: pass this from outside?
+        static const Scalar upwindWeight = getParamFromGroup<Scalar>(elemVolVars.gridVolVars().problem().paramGroup(), "Flux.UpwindWeight");
 
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         using std::signbit;
         if (signbit(flux)) // if sign of flux is negative
-            return flux*(upwindWeight*upwindTerm(outsideVolVars)
-                         + (1.0 - upwindWeight)*upwindTerm(insideVolVars));
+            return (upwindWeight*upwindTerm(outsideVolVars)
+                    + (1.0 - upwindWeight)*upwindTerm(insideVolVars));
         else
-            return flux*(upwindWeight*upwindTerm(insideVolVars)
-                         + (1.0 - upwindWeight)*upwindTerm(outsideVolVars));
+            return (upwindWeight*upwindTerm(insideVolVars)
+                    + (1.0 - upwindWeight)*upwindTerm(outsideVolVars));
     }
 };
 

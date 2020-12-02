@@ -413,8 +413,7 @@ private:
 
         // The fluxvariables expect a value on which an upwinding of the mobility is performed.
         // We therefore divide by the mobility here.
-        const auto fluxSign = std::copysign(1.0, velocity * scvf.unitOuterNormal());
-        const auto forchheimerUpwindMobility = fluxSign* UpwindScheme::apply(elemVolVars, scvf, upwindTerm, fluxSign, phaseIdx);
+        const auto forchheimerUpwindMobility = UpwindScheme::multiplier(elemVolVars, scvf, upwindTerm, velocity * scvf.unitOuterNormal(), phaseIdx);
 
         // Do not divide by zero. If the mobility is zero, the resulting flux with upwinding will be zero anyway.
         if (forchheimerUpwindMobility > 0.0)
@@ -441,8 +440,7 @@ private:
 
          // residual += c_F rho / mu abs(v) sqrt(K) v
          auto upwindTerm = [phaseIdx](const auto& volVars){ return volVars.density(phaseIdx) / volVars.viscosity(phaseIdx); };
-         const auto fluxSign = std::copysign(1.0, oldVelocity * scvf.unitOuterNormal());
-         const Scalar rhoOverMu = fluxSign * UpwindScheme::apply(elemVolVars, scvf, upwindTerm, fluxSign, phaseIdx);
+         const Scalar rhoOverMu = UpwindScheme::multiplier(elemVolVars, scvf, upwindTerm, oldVelocity * scvf.unitOuterNormal(), phaseIdx);
          sqrtK.usmv(forchCoeff * rhoOverMu * oldVelocity.two_norm(), oldVelocity, residual);
      }
 
@@ -473,8 +471,7 @@ private:
         // phase has a velocity of zero (kr=0).
         // f = sqrtK * vTimesV (this is  a matrix)
         // f *= forchCoeff density / |velocity| / viscosity (multiply all entries with scalars)
-        const auto fluxSign = std::copysign(1.0, velocity * scvf.unitOuterNormal());
-        const Scalar rhoOverMu = fluxSign * UpwindScheme::apply(elemVolVars, scvf, upwindTerm, fluxSign, phaseIdx);
+        const Scalar rhoOverMu = UpwindScheme::multiplier(elemVolVars, scvf, upwindTerm, velocity * scvf.unitOuterNormal(), phaseIdx);
         if (absV > 1e-20)
         {
             for (int i = 0; i < dim; i++)
