@@ -77,6 +77,7 @@ public:
 
         useSameGeometryForAllPores_ = true;
         useSameShapeForAllThroats_ = true;
+        overwriteGridDataWithShapeSpecificValues_ = false;
 
         // first check if the same geometry shall be used for all entities ...
         if (hasParamInGroup(gridData.paramGroup(), "Grid.ThroatCrossSectionShape"))
@@ -85,6 +86,7 @@ public:
             const auto throatGeometry = Throat::shapeFromString(throatGeometryInput);
             throatGeometry_.resize(1);
             throatGeometry_[0] = throatGeometry;
+            overwriteGridDataWithShapeSpecificValues_  = getParamFromGroup<bool>(gridData.paramGroup(), "Grid.OverwriteGridDataWithShapeSpecificValues", true);
 
             std::cout << "Using '" << throatGeometryInput << "' as cross-sectional shape for all throats." << std::endl;
         }
@@ -367,8 +369,8 @@ private:
     template<class GridData>
     Scalar getThroatCrossSectionalArea_(const GridData& gridData, const Element& element, const std::size_t eIdx) const
     {
-        static const bool gridHasThroatCrossSectionalArea = gridData.gridHasVertexParameter("ThroatCrossSectionalArea");
-        if (gridHasThroatCrossSectionalArea)
+        static const bool gridHasThroatCrossSectionalArea = gridData.gridHasElementParameter("ThroatCrossSectionalArea");
+        if (gridHasThroatCrossSectionalArea && !overwriteGridDataWithShapeSpecificValues_)
         {
             static const auto throatAreaIdx = gridData.parameterIndex("ThroatCrossSectionalArea");
             return gridData.parameters(element)[throatAreaIdx];
@@ -389,8 +391,8 @@ private:
     template<class GridData>
     Scalar getThroatShapeFactor_(const GridData& gridData, const Element& element, const std::size_t eIdx) const
     {
-        static const bool gridHasThroatShapeFactor = gridData.gridHasVertexParameter("ThroatShapeFactor");
-        if (gridHasThroatShapeFactor)
+        static const bool gridHasThroatShapeFactor = gridData.gridHasElementParameter("ThroatShapeFactor");
+        if (gridHasThroatShapeFactor && !overwriteGridDataWithShapeSpecificValues_)
         {
             static const auto throatShapeFactorIdx = gridData.parameterIndex("ThroatShapeFactor");
             return gridData.parameters(element)[throatShapeFactorIdx];
@@ -453,6 +455,7 @@ private:
     std::vector<Scalar> throatCrossSectionalArea_;
     bool useSameGeometryForAllPores_;
     bool useSameShapeForAllThroats_;
+    bool overwriteGridDataWithShapeSpecificValues_;
 };
 
 /*!
