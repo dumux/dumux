@@ -22,7 +22,7 @@
  * \brief The properties for the incompressible test
  */
 
-#ifndef DUMUX_COMPRESSIBLE_ONEP_TEST_PROPERTIES_HH
+#ifndef DUMUX_COMPRESSIBLE_ONEP_TEST_PROPERTIES_HH
 #define DUMUX_COMPRESSIBLE_ONEP_TEST_PROPERTIES_HH
 
 #include <dune/grid/yaspgrid.hh>
@@ -85,5 +85,4 @@ struct EnableGridFluxVariablesCache<TypeTag, TTag::OnePCompressible> { static co
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::OnePCompressible> { static constexpr bool value = false; };
 }
-
 #endif

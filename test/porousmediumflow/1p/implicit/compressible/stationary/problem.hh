@@ -25,73 +25,12 @@
 #ifndef DUMUX_COMPRESSIBLE_ONEP_TEST_PROBLEM_HH
 #define DUMUX_COMPRESSIBLE_ONEP_TEST_PROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
-
-#include <dumux/material/components/h2o.hh>
-#include <dumux/material/components/tabulatedcomponent.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 
 #include <dumux/common/boundarytypes.hh>
-
-#include <dumux/discretization/cctpfa.hh>
-#include <dumux/discretization/ccmpfa.hh>
-#include <dumux/discretization/box.hh>
-
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/1p/model.hh>
-
-#include "spatialparams.hh"
-
-namespace Dumux {
-// forward declarations
-template<class TypeTag> class OnePTestProblem;
-
-namespace Properties {
-// create the type tag nodes
-// Create new type tags
-namespace TTag {
-struct OnePCompressible { using InheritsFrom = std::tuple<OneP>; };
-struct OnePCompressibleTpfa { using InheritsFrom = std::tuple<OnePCompressible, CCTpfaModel>; };
-struct OnePCompressibleMpfa { using InheritsFrom = std::tuple<OnePCompressible, CCMpfaModel>; };
-struct OnePCompressibleBox { using InheritsFrom = std::tuple<OnePCompressible, BoxModel>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePCompressible> { using type = Dune::YaspGrid<2>; };
-
-// Set the problem type
-template<class TypeTag>
-struct Problem<TypeTag, TTag::OnePCompressible> { using type = OnePTestProblem<TypeTag>; };
-
-// set the spatial params
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::OnePCompressible>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = OnePTestSpatialParams<GridGeometry, Scalar>;
-};
-
-// the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::OnePCompressible>
-{
-private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
-    using type = FluidSystems::OnePLiquid<Scalar, Components::TabulatedComponent<Components::H2O<Scalar>>>;
-};
-
-// Disable caching (for testing purposes)
-template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::OnePCompressible> { static constexpr bool value = false; };
-template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::OnePCompressible> { static constexpr bool value = false; };
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::OnePCompressible> { static constexpr bool value = false; };
-} // end namespace Properties
-
+namespace Dumux{
 /*!
  * \ingroup OnePTests
  * \brief  Test problem for the compressible one-phase model.
