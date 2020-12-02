@@ -29,7 +29,7 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/foamgrid/foamgrid.hh>
 
-#include "problem.hh"
+#include "properties.hh"
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>

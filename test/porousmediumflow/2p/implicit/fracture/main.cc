@@ -42,7 +42,7 @@
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_foam.hh>
 
-#include "problem.hh"
+#include "properties.hh"
 
 ////////////////////////
 // the main function

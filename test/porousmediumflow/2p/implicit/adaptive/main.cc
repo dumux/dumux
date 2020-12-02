@@ -58,7 +58,7 @@
 // Use the incompressible or point source problem for this adaptive test
 #include <test/porousmediumflow/2p/implicit/incompressible/problem.hh>
 #include "pointsourceproblem.hh"
-#include "problem.hh"
+#include "properties.hh"
 
 // Type tags for the adaptive versions of the two-phase incompressible problem
 namespace Dumux {

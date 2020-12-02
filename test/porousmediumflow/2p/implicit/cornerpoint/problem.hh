@@ -24,23 +24,11 @@
 #ifndef DUMUX_TWOP_CORNERPOINT_TEST_PROBLEM_HH
 #define DUMUX_TWOP_CORNERPOINT_TEST_PROBLEM_HH
 
-#if HAVE_OPM_GRID
-#include <opm/grid/CpGrid.hpp>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 
 #include <dumux/common/boundarytypes.hh>
-
-#include <dumux/discretization/cctpfa.hh>
-
-#include <dumux/material/components/trichloroethene.hh>
-#include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/material/fluidsystems/2pimmiscible.hh>
-
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/2p/model.hh>
-#include <dumux/porousmediumflow/2p/incompressiblelocalresidual.hh>
-
-#include "spatialparams.hh"
 
 namespace Dumux {
 // forward declarations
@@ -266,8 +254,5 @@ private:
 
 } // end namespace Dumux
 
-#else
-#warning "The opm-grid module is needed to use this class!"
-#endif
 
 #endif

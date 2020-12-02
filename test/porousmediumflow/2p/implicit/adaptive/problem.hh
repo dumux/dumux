@@ -28,8 +28,6 @@
 
 #include "../incompressible/problem.hh"
 
-#include <dumux/io/container.hh>
-
 namespace Dumux {
 
 /*!
