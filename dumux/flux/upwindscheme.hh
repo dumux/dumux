@@ -52,15 +52,20 @@ public:
                         const UpwindTermFunction& upwindTerm,
                         Scalar flux, int phaseIdx)
     {
-        // TODO: pass this from outside?
-        static const Scalar upwindWeight = getParamFromGroup<Scalar>(fluxVars.problem().paramGroup(), "Flux.UpwindWeight");
+        return apply(fluxVars.elemVolVars(), fluxVars.scvFace(), upwindTerm, flux, phaseIdx);
+    }
 
-        const auto& elemVolVars = fluxVars.elemVolVars();
-        const auto& scvf = fluxVars.scvFace();
-        const auto& insideScv = fluxVars.fvGeometry().scv(scvf.insideScvIdx());
-        const auto& outsideScv = fluxVars.fvGeometry().scv(scvf.outsideScvIdx());
-        const auto& insideVolVars = elemVolVars[insideScv];
-        const auto& outsideVolVars = elemVolVars[outsideScv];
+    template<class ElemVolVars, class SubControlVolumeFace, class UpwindTermFunction, class Scalar>
+    static Scalar apply(const ElemVolVars& elemVolVars,
+                        const SubControlVolumeFace& scvf,
+                        const UpwindTermFunction& upwindTerm,
+                        Scalar flux, int phaseIdx)
+    {
+        // TODO: pass this from outside?
+        static const Scalar upwindWeight = getParam<Scalar>("Flux.UpwindWeight");
+
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         using std::signbit;
         if (signbit(flux)) // if sign of flux is negative
@@ -89,7 +94,6 @@ public:
           Scalar flux, int phaseIdx)
     {
         using std::signbit;
-        static const Scalar upwindWeight = getParam<Scalar>("Flux.UpwindWeight");
 
         // the volume variables of the inside sub-control volume
         const auto& scvf = fluxVars.scvFace();
@@ -151,13 +155,7 @@ public:
         else
         {
             // upwind scheme
-            const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-            if (signbit(flux))
-                return flux*(upwindWeight*upwindTerm(outsideVolVars)
-                             + (1.0 - upwindWeight)*upwindTerm(insideVolVars));
-            else
-                return flux*(upwindWeight*upwindTerm(insideVolVars)
-                             + (1.0 - upwindWeight)*upwindTerm(outsideVolVars));
+            return apply(elemVolVars, scvf, upwindTerm, flux, phaseIdx);
         }
     }
 
@@ -168,10 +166,17 @@ public:
           const UpwindTermFunction& upwindTerm,
           Scalar flux, int phaseIdx)
     {
+        return apply(fluxVars.elemVolVars(), fluxVars.scvFace(), upwindTerm, flux, phaseIdx);
+    }
+
+    template<class ElemVolVars, class SubControlVolumeFace, class UpwindTermFunction, class Scalar>
+    static Scalar apply(const ElemVolVars& elemVolVars,
+                        const SubControlVolumeFace& scvf,
+                        const UpwindTermFunction& upwindTerm,
+                        Scalar flux, int phaseIdx)
+    {
         static const Scalar upwindWeight = getParam<Scalar>("Flux.UpwindWeight");
 
-        const auto& scvf = fluxVars.scvFace();
-        const auto& elemVolVars = fluxVars.elemVolVars();
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
