@@ -242,8 +242,7 @@ private:
     void createGridFromImage_(const Img& img, const std::string& paramGroup)
     {
         // get the corner coordinates
-        using Element = typename ParentType::Grid::template Codim<0>::Entity;
-        using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+        using GlobalPosition = typename ParentType::Grid::template Codim<0>::Geometry::GlobalCoordinate;
         const auto upperRight = getParamFromGroup<GlobalPosition>(paramGroup, "Grid.UpperRight");
         const auto lowerLeft = getParamFromGroup<GlobalPosition>(paramGroup, "Grid.LowerLeft", GlobalPosition(0.0));
 
@@ -266,11 +265,12 @@ private:
             // host grid element which fits with the image's indices
             if (element.hasFather())
             {
-                auto father = element;
-                while(father.hasFather())
-                    father = father.father();
+                auto level0Element = element.father();
+                while (level0Element.hasFather())
+                    level0Element = level0Element.father();
 
-                eIdx = this->hostGrid_().levelGridView(father.level()).indexSet().index(father);
+                assert(level0Element.level() == 0);
+                eIdx = this->hostGrid_().levelGridView(0).indexSet().index(level0Element);
             }
 
             return img[eIdx] == marked;
