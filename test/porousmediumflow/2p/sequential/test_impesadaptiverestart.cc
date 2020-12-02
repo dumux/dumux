@@ -27,7 +27,7 @@
 #if HAVE_DUNE_ALUGRID
 
 #include <dumux/common/properties.hh>
-#include "test_impesadaptiveproblem.hh"
+#include "test_impesadaptiveproperties.hh"
 #include <dumux/common/start.hh>
 
 ////////////////////////

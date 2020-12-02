@@ -29,7 +29,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 
-#include "test_mpfa2pproblem.hh"
+#include "test_mpfa2pproperties.hh"
 
 ////////////////////////
 // the main function

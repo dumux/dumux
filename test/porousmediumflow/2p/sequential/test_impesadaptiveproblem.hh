@@ -29,55 +29,12 @@
 #endif
 
 #include <dumux/common/properties.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/material/components/simpleh2o.hh>
+#include <dumux/common/parameters.hh>
 
 #include <dumux/porousmediumflow/2p/sequential/impes/problem.hh>
-#include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressurepropertiesadaptive.hh>
-#include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/properties.hh>
-
-#include "test_impesadaptivespatialparams.hh"
-
-#include<dumux/porousmediumflow/2p/sequential/transport/cellcentered/evalcflfluxcoats.hh>
 
 namespace Dumux
 {
-
-template<class TypeTag>
-class TestIMPESAdaptiveProblem;
-
-//////////
-// Specify the properties
-//////////
-namespace Properties
-{
-// Create new type tags
-namespace TTag {
-struct TestIMPESAdaptive { using InheritsFrom = std::tuple<TestIMPESAdaptiveSpatialParams, IMPESTwoPAdaptive, FVTransportTwoP, FVPressureTwoPAdaptive>; };
-struct TestIMPESAdaptiveRestart { using InheritsFrom = std::tuple<TestIMPESAdaptive>; };
-} // end namespace TTag
-
-// Set the grid type
-#if HAVE_DUNE_ALUGRID
-template<class TypeTag>
-struct Grid<TypeTag, TTag::TestIMPESAdaptive> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
-#endif
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::TestIMPESAdaptive> { using type = TestIMPESAdaptiveProblem<TypeTag>; };
-
-// Set the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::TestIMPESAdaptive>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
-    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
-    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
-};
-}
-
 /*!
  * \ingroup SequentialTwoPTests
  * \brief test problem for the sequential 2p model

@@ -24,59 +24,14 @@
 #ifndef DUMUX_TEST_TRANSPORT_PROBLEM_HH
 #define DUMUX_TEST_TRANSPORT_PROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-
 #include <dumux/common/properties.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/material/components/constant.hh>
+#include <dumux/common/parameters.hh>
 
-#include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/properties.hh>
 #include <dumux/porousmediumflow/2p/sequential/transport/problem.hh>
 
-#include "test_transportspatialparams.hh"
 
 namespace Dumux
 {
-/*!
- * \ingroup SequentialTwoPTests
- * \brief test problem for the explicit transport model
- */
-template<class TypeTag>
-class TestTransportProblem;
-
-//////////
-// Specify the properties
-//////////
-namespace Properties
-{
-// Create new type tags
-namespace TTag {
-struct TransportTest { using InheritsFrom = std::tuple<TestTransportSpatialParams, FVTransportTwoP>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::TransportTest> { using type = Dune::YaspGrid<2>; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::TransportTest> { using type = TestTransportProblem<TypeTag>; };
-
-// Set the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::TransportTest>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
-    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
-    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
-};
-
-template<class TypeTag>
-struct VelocityFormulation<TypeTag, TTag::TransportTest> { static constexpr int value = SequentialTwoPCommonIndices::velocityTotal; };
-}
-
 /*!
  * \ingroup IMPETtests
  *

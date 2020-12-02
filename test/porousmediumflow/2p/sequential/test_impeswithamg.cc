@@ -25,7 +25,7 @@
 #include <config.h>
 
 #include <dumux/common/properties.hh>
-#include "test_impesproblem.hh"
+#include "test_impesproperties.hh"
 #include <dumux/common/start.hh>
 
 /*!

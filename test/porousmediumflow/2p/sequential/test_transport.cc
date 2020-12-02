@@ -27,7 +27,7 @@
 #include <iostream>
 
 #include <dumux/common/properties.hh>
-#include "test_transportproblem.hh"
+#include "test_transportproperties.hh"
 #include <dumux/common/start.hh>
 
 /*!

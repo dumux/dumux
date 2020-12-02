@@ -24,93 +24,16 @@
 #ifndef DUMUX_TEST_MPFA2P_PROBLEM_HH
 #define DUMUX_TEST_MPFA2P_PROBLEM_HH
 
-#if HAVE_UG
-#include <dune/grid/uggrid.hh>
-#endif
-#include <dune/grid/yaspgrid.hh>
-
 #include <dumux/common/properties.hh>
-#include <dumux/material/fluidsystems/2pimmiscible.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/trichloroethene.hh>
+#include <dumux/common/parameters.hh>
 
-#include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressureproperties.hh>
-#include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressurepropertiesadaptive.hh>
-#include <dumux/porousmediumflow/2p/sequential/diffusion/mpfa/omethod/2dpressureproperties.hh>
-#include <dumux/porousmediumflow/2p/sequential/diffusion/mpfa/lmethod/2dpressureproperties.hh>
-#include <dumux/porousmediumflow/2p/sequential/diffusion/mpfa/lmethod/2dpressurepropertiesadaptive.hh>
-#include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/properties.hh>
 #include <dumux/porousmediumflow/2p/sequential/impes/problem.hh>
 
-
-#include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/evalcflfluxcoats.hh>
-#include <dumux/porousmediumflow/2p/sequential/impes/gridadaptionindicatorlocal.hh>
-
-#include "test_mpfa2pspatialparams.hh"
 #include "buckleyleverettanalyticsolution.hh"
 #include "mcwhorteranalyticsolution.hh"
 
 namespace Dumux
 {
-
-template<class TypeTag>
-class MPFATwoPTestProblem;
-
-//////////
-// Specify the properties
-//////////
-namespace Properties
-{
-
-// Create new type tags
-namespace TTag {
-struct MPFATwoPTest { using InheritsFrom = std::tuple<Test2PSpatialParams>; };
-struct FVTwoPTest { using InheritsFrom = std::tuple<MPFATwoPTest, IMPESTwoP, FVTransportTwoP, FVPressureTwoP>; };
-struct FVAdaptiveTwoPTest { using InheritsFrom = std::tuple<MPFATwoPTest, IMPESTwoPAdaptive, FVTransportTwoP, FVPressureTwoPAdaptive>; };
-struct MPFAOTwoPTest { using InheritsFrom = std::tuple<MPFATwoPTest, IMPESTwoP, FVTransportTwoP, FvMpfaO2dPressureTwoP>; };
-struct MPFALTwoPTest { using InheritsFrom = std::tuple<MPFATwoPTest, IMPESTwoP, FVTransportTwoP, FvMpfaL2dPressureTwoP>; };
-struct MPFALAdaptiveTwoPTest { using InheritsFrom = std::tuple<MPFATwoPTest, IMPESTwoPAdaptive, FVTransportTwoP, FvMpfaL2dPressureTwoPAdaptive>; };
-
-} // end namespace TTag
-
-// Set the grid type
-#if HAVE_UG
-template<class TypeTag>
-struct Grid<TypeTag, TTag::MPFATwoPTest> { using type = Dune::UGGrid<2>; };
-#else
-template<class TypeTag>
-struct Grid<TypeTag, TTag::MPFATwoPTest> { using type = Dune::YaspGrid<2>; };
-#endif
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::MPFATwoPTest> { using type = MPFATwoPTestProblem<TypeTag>; };
-
-// Set the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::MPFATwoPTest>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
-#if PROBLEM == 2
-    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Trichloroethene<Scalar> >;
-#else
-    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
-#endif
-    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
-};
-
-#if PROBLEM == 1
-template<class TypeTag>
-struct Formulation<TypeTag, TTag::MPFATwoPTest> { static constexpr int value = SequentialTwoPCommonIndices::pnsw; };
-#endif
-
-template<class TypeTag>
-struct EvalCflFluxFunction<TypeTag, TTag::MPFATwoPTest> { using type = EvalCflFluxCoats<TypeTag>; };
-template<class TypeTag>
-struct AdaptionIndicator<TypeTag, TTag::MPFATwoPTest> { using type = GridAdaptionIndicator2PLocal<TypeTag>; };
-}
 
 /*!
  * \ingroup SequentialTwoPTests
