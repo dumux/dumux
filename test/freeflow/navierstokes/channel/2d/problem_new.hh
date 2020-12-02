@@ -242,8 +242,9 @@ public:
 #endif
             const static Scalar xi = getParam<Scalar>("Phasefield.xi");
             const static Scalar rad = getParam<Scalar>("Phasefield.DirichletRadius");
+            const static Scalar S = getParam<Scalar>("Phasefield.DirichletScaling");
             const Scalar s = (globalPos[1]-1.0)*(globalPos[1]-1.0)-rad*rad;
-            values[Indices::phiIdx] = 1.0;//(1.0 + std::exp(9*s/xi));
+            values[Indices::phiIdx] = 1.0/(1.0 + std::exp(S*s/xi));
             values[Indices::uIdx] = 1.0;
          }
 
@@ -350,7 +351,8 @@ public:
             const static Scalar xi = getParam<Scalar>("Phasefield.xi");
             const static Scalar rad = getParam<Scalar>("Phasefield.StartingRadius");
             const Scalar s = (globalPos[1]-1.0)*(globalPos[1]-1.0)-rad*rad;
-            values[Indices::phiIdx] = 1.0;//(1.0 + std::exp(9*s/xi));
+            const static Scalar S = getParam<Scalar>("Phasefield.StartingScaling");
+            values[Indices::phiIdx] = 1.0/(1.0 + std::exp(S*s/xi));
             values[Indices::uIdx] = getParam<Scalar>("Phasefield.InitialConcentration");
         }
 

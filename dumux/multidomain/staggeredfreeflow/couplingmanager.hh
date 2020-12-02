@@ -213,14 +213,18 @@ public:
                       const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
                       const SubControlVolumeFace<freeFlowMomentumIdx>& scvf) const
     {
-        //bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
-        //const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
-        //const auto& outsideMomentumScv = fvGeometry.scv(scvf.outsideScvIdx());
-        //const auto& insideMassPhasefield =
-        //    this->curSol()[freeFlowMassIdx][scvf.insideScvIdx()][phi1Idx];
-        //const auto& outsideMassPhasefield =
-        //    this->curSol()[freeFlowMassIdx][scvf.outsideScvIdx()][phi1Idx];
-        return 1;//0.5*(insideMassPhasefield + outsideMassPhasefield);
+        bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
+        const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& outsideMomentumScv = fvGeometry.scv(scvf.outsideScvIdx());
+        const auto& insideMassScv = momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
+        const auto& insideMassPhasefield =
+            momentumCouplingContext_[0].curElemVolVars[insideMassScv].phasefield(1);
+        if (scvf.boundary())
+            return insideMassPhasefield;
+        const auto& outsideMassScv = momentumCouplingContext_[0].fvGeometry.scv(outsideMomentumScv.elementIndex());
+        const auto& outsideMassPhasefield =
+            momentumCouplingContext_[0].curElemVolVars[outsideMassScv].phasefield(1);
+        return 0.5*(insideMassPhasefield + outsideMassPhasefield);
     }
 
     /*!
@@ -251,24 +255,24 @@ public:
 
         bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
 
-        //for (const auto is : intersections(fvGeometry.gridGeometry().gridView(), element))
-        //{
-        //    if ((scvf.isFrontal() && (is.centerUnitOuterNormal() * scvf.unitOuterNormal() + 1) < 1e-9)
-        //        || (scvf.isLateral() && (is.centerUnitOuterNormal() * scvf.unitOuterNormal() < 1e-9)))
-        //    {
-        //        if (is.boundary())
-        //            continue;
-        //        const auto& outsideElement = is.outside();
-        //        if (outsideElement == element)
-        //            continue;
-        //        const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(outsideElement);
-        //        const auto& outsideScv = momentumCouplingContext_[0].fvGeometry.scv(eIdx);
-        //        const auto phi =
-        //            momentumCouplingContext_[0].curElemVolVars[outsideScv].phasefield(1);
+        for (const auto is : intersections(fvGeometry.gridGeometry().gridView(), element))
+        {
+            if ((scvf.isFrontal() && (is.centerUnitOuterNormal() * scvf.unitOuterNormal() + 1) < 1e-9)
+                    || (scvf.isLateral() && (is.centerUnitOuterNormal() * scvf.unitOuterNormal() < 1e-9)) )
+            {
+                if (is.boundary())
+                    continue;
+                const auto& outsideElement = is.outside();
+                if (outsideElement == element)
+                    continue;
+                const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(outsideElement);
+                const auto& outsideScv = momentumCouplingContext_[0].fvGeometry.scv(eIdx);
+                const auto phi =
+                    momentumCouplingContext_[0].curElemVolVars[outsideScv].phasefield(1);
 
-        //        return (ownCellPhasefield + phi)/2.0;
-        //    }
-        //}
+                return (ownCellPhasefield + phi)/2.0;
+            }
+        }
         return ownCellPhasefield;
         DUNE_THROW(Dune::InvalidStateException, "No intersection found");
     }

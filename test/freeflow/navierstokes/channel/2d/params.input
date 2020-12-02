@@ -3,8 +3,8 @@ DtInitial = 1 # [s]
 TEnd = 2 # [s]
 
 [Grid]
-UpperRight = 10 1
-Cells = 10 5
+UpperRight = 10 2
+Cells = 50 20
 
 [Problem]
 Name = test_channel_stokes_new # name passed to the output routines
@@ -44,13 +44,15 @@ NumericDifference.BaseEpsilon =  1e-3
 EnableDilatationTerm = false
 
 [Phasefield]
-xi = 0.4
+xi = 0.5
 delta = 1e-8
 sigma = 3.75e-3
 DiffCoeff = 0.2
 InitialConcentration = 1.0
-StartingRadius = 0.4
-DirichletRadius = 0.4
+StartingRadius = 0.5
+StartingScaling = 3.0
+DirichletRadius = 0.5
+DirichletScaling = 3.0
 K = 1.0
 n = 10.0
 Reaction = 0.0
