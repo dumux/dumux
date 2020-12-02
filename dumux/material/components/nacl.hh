@@ -79,11 +79,11 @@ public:
     }
 
     /*!
-     * \brief The specific heat capacity \f$\mathrm{[J/molK]}\f$ of NaCl.
+     * \brief The specific heat capacity \f$\mathrm{[J/kg K]}\f$ of NaCl.
      */
     static Scalar solidHeatCapacity(Scalar temperature)
     {
-        return 50.50;
+        return 50.50/molarMass();
     }
 
     /*!
