@@ -99,6 +99,7 @@ int main(int argc, char** argv) try
     VtkOutputFields::initOutputModule(vtkWriter);
     vtkWriter.addField(gridGeometry->poreVolume(), "poreVolume", PNMVtkOutputModule<TypeTag>::FieldType::vertex);
     vtkWriter.addField(gridGeometry->throatShapeFactor(), "throatShapeFactor", PNMVtkOutputModule<TypeTag>::FieldType::element);
+    vtkWriter.addField(gridGeometry->throatCrossSectionalArea(), "throatCrossSectionalArea", PNMVtkOutputModule<TypeTag>::FieldType::element);
 
     // ### Instantiate the solver
     // We use the `LinearPDESolver` class, which is instantiated on the basis
