@@ -378,38 +378,6 @@ SCRIPT_DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$SCRIPT_DIR" ]]; then
   SCRIPT_DIR="$PWD";
 fi
-# create install script
-touch $MODULE_NAME/install$MODULE_NAME.sh
-. "$SCRIPT_DIR/getusedversions.sh"
-# execute function from script
-echo "Extracting Git status of dependencies and creating patches"
-echo "## Dependencies on other DUNE modules" >>$MODULE_NAME/$README_FILE
-echo "" >>$MODULE_NAME/$README_FILE
-echo "| module | branch | commit hash |" >> $MODULE_NAME/$README_FILE
-echo "|:-------|:-------|:------------|" >> $MODULE_NAME/$README_FILE
-for MOD in $DEPENDING_MODULE_NAMES
-do
-  if [ $MOD != $MODULE_NAME ]; then
-    MODULE_DIR=${MOD%*/}
-    VERSION_OUTPUT=$(getVersionGit $MODULE_DIR $(pwd)/$MODULE_NAME/install$MODULE_NAME.sh)
-    echo "$VERSION_OUTPUT"
-    grep "Error:" <<< $VERSION_OUTPUT > /dev/null
-    EXIT_CODE=$?
-    if [[ $EXIT_CODE == 0 ]]; then
-      exit
-    fi
-    VERSION_OUTPUT=$(echo "$VERSION_OUTPUT" | tr -s " ")
-    DEPENDENCY_NAME=$(cut -d " " -f1 <<< $VERSION_OUTPUT)
-    BRANCH_NAME=$(cut -d " " -f2 <<< $VERSION_OUTPUT)
-    COMMIT_HASH=$(cut -d " " -f3 <<< $VERSION_OUTPUT)
-    echo "| $DEPENDENCY_NAME | $BRANCH_NAME | $COMMIT_HASH |" >> $MODULE_NAME/$README_FILE
-  fi
-done
-
-# move patches folder into module if existing
-if [[ -d patches ]]; then
-  mv patches $MODULE_NAME
-fi
 
 # output guidence for users
 echo ""
