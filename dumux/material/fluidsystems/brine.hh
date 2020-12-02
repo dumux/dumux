@@ -440,6 +440,10 @@ public:
      * \param phaseIdx Index of the fluid phase
      * \param compIIdx Index of the component i
      * \param compJIdx Index of the component j
+     *
+     * The implemented value for NaCl is for a molar concentration of 2.5984 mol/l and a temperature of 25°C, see Rard and Miller, 1979 \cite Rard1979.
+     * Dependent on the salt concentration the coefficient can vary between 1.47e-9 m^2/s and 1.6e-9 m^2/s, see Rard and Miller, 1979.
+     * It also depends on temperature, values for different temparatures can e.g. found here: Alanis et al., 2000 \cite Alanis2000.
      */
     template <class FluidState>
     static Scalar binaryDiffusionCoefficient(const FluidState& fluidState,
@@ -454,11 +458,9 @@ public:
                 using std::swap;
                 swap(compIIdx, compJIdx);
             }
-            //! \todo TODO implement binary coefficients
-            // http://webserver.dmt.upm.es/~isidoro/dat1/Mass%20diffusivity%20data.pdf
-            // The link above was given as a reference in brine_air fluid system.
+
             if (compJIdx == NaClIdx)
-                return 0.12e-9;
+                return 1.54e-9;
             else
                 DUNE_THROW(Dune::NotImplemented, "Binary diffusion coefficient of components "
                                                  << compIIdx << " and " << compJIdx
