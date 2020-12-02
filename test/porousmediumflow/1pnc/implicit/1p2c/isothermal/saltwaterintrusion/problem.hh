@@ -26,55 +26,13 @@
 #ifndef DUMUX_SALTWATERINTRUSION_TEST_PROBLEM_HH
 #define DUMUX_SALTWATERINTRUSION_TEST_PROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 
 #include <dumux/common/boundarytypes.hh>
-
-#include <dumux/discretization/box.hh>
-#include <dumux/porousmediumflow/1pnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include <dumux/material/fluidsystems/brine.hh>
-#include "../../spatialparams.hh"
-
 namespace Dumux {
-
-template <class TypeTag>
-class SaltWaterIntrusionTestProblem;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct SaltWaterIntrusionTest { using InheritsFrom = std::tuple<OnePNC, BoxModel>; };
-} // end namespace TTag
-
-// Use a structured yasp grid
-template<class TypeTag>
-struct Grid<TypeTag, TTag::SaltWaterIntrusionTest> { using type = Dune::YaspGrid<2>; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::SaltWaterIntrusionTest> { using type = SaltWaterIntrusionTestProblem<TypeTag>; };
-
-// Set fluid configuration
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::SaltWaterIntrusionTest>
-{ using type = FluidSystems::Brine< GetPropType<TypeTag, Properties::Scalar> >; };
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::SaltWaterIntrusionTest>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = OnePNCTestSpatialParams<GridGeometry, Scalar>;
-};
-
-// Use mass fractions to set salinity conveniently
-template<class TypeTag>
-struct UseMoles<TypeTag, TTag::SaltWaterIntrusionTest> { static constexpr bool value = false; };
-
-} // end namespace Properties
 
 /*!
  * \ingroup OnePNCTests
