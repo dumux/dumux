@@ -29,24 +29,6 @@
 #include "../timeindependent/problem.hh"
 
 namespace Dumux {
-template <class TypeTag>
-class OnePSingularityProblemTimeDependent;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct OnePSingularityTimeDependentCCTpfa { using InheritsFrom = std::tuple<OnePSingularityCCTpfa>; };
-} // end namespace TTag
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::OnePSingularityTimeDependentCCTpfa> { using type = OnePSingularityProblemTimeDependent<TypeTag>; };
-
-// point source
-template<class TypeTag>
-struct PointSource<TypeTag, TTag::OnePSingularityTimeDependentCCTpfa> { using type = SolDependentPointSource<TypeTag>; };
-}
-
 /*!
  * \ingroup OnePTests
  * \brief  Test problem for the one-phase model:
