@@ -45,12 +45,7 @@
 #include "problem.hh"
 #include "../../spatialparams.hh"
 
-namespace Dumux {
-
-template <class TypeTag>
-class OnePTwoCNITransientBCProblem;
-
-namespace Properties {
+namespace Dumux::Properties {
 // Create new type tags
 namespace TTag {
 struct OnePTwoCNITransientBC { using InheritsFrom = std::tuple<OnePNCNI>; };
