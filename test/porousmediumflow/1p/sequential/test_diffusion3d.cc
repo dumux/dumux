@@ -39,7 +39,7 @@
 
 #include <dumux/io/grid/gridmanager.hh>
 
-#include "test_diffusionproblem3d.hh"
+#include "test_diffusionproperties3d.hh"
 #include "resultevaluation3d.hh"
 
 namespace Dumux

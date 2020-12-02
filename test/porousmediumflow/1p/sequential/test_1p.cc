@@ -24,7 +24,7 @@
  */
 #include <config.h>
 
-#include "test_1pproblem.hh"
+#include "test_1pproperties.hh"
 #include <dumux/common/properties.hh>
 #include <dumux/common/start.hh>
 

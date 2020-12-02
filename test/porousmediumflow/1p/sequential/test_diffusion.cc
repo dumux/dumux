@@ -31,7 +31,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/io/grid/gridmanager.hh>
 
-#include "test_diffusionproblem.hh"
+#include "test_diffusionproperties.hh"
 #include "resultevaluation.hh"
 
 ////////////////////////

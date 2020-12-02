@@ -22,71 +22,12 @@
 #ifndef DUMUX_TEST_DIFFUSION_3D_PROBLEM_HH
 #define DUMUX_TEST_DIFFUSION_3D_PROBLEM_HH
 
-#include <dune/alugrid/grid.hh>
-
-#include <dumux/material/components/constant.hh>
-
 #include <dumux/common/properties.hh>
-#include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressureproperties.hh>
-#include <dumux/porousmediumflow/2p/sequential/diffusion/mpfa/lmethod/3dpressureproperties.hh>
-#include <dumux/porousmediumflow/2p/sequential/diffusion/mimetic/pressureproperties.hh>
-
+#include <dumux/common/parameters.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/problem.hh>
-#include <dumux/porousmediumflow/sequential/cellcentered/velocity.hh>
-
-#include <dumux/linear/seqsolverbackend.hh>
-
-#include "test_diffusionspatialparams3d.hh"
 
 namespace Dumux
 {
-/*!
- * \ingroup IMPETtests
- */
-template<class TypeTag>
-class TestDiffusion3DProblem;
-
-//////////
-// Specify the properties
-//////////
-namespace Properties
-{
-// Create new type tags
-namespace TTag {
-struct DiffusionTest { using InheritsFrom = std::tuple<TestDiffusionSpatialParams3d, SequentialTwoP>; };
-
-// set the types for the 2PFA FV method
-struct FVTest { using InheritsFrom = std::tuple<DiffusionTest, FVPressureTwoP>; };
-
-// set the types for the MPFA-L FV method
-struct FVMPFAL3DTestTypeTag { using InheritsFrom = std::tuple<DiffusionTest, FvMpfaL3dPressureTwoP>; };
-
-// set the types for the mimetic FD method
-struct MimeticTest { using InheritsFrom = std::tuple<DiffusionTest, MimeticPressureTwoP>; };
-
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::DiffusionTest> { using type = Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>; };
-
-template<class TypeTag>
-struct Problem<TypeTag, TTag::DiffusionTest> { using type = TestDiffusion3DProblem<TypeTag>; };
-
-// Set the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::DiffusionTest>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
-    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
-    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
-};
-
-template<class TypeTag>
-struct LinearSolver<TypeTag, TTag::DiffusionTest> { using type = UMFPackBackend; };
-
-}
 
 /*!
  * \ingroup SequentialProblems

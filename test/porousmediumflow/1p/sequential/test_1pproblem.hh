@@ -24,53 +24,12 @@
 #ifndef DUMUX_TEST_1P_PROBLEM_HH
 #define DUMUX_TEST_1P_PROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 
-#include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/material/components/constant.hh>
-
-#include <dumux/porousmediumflow/1p/sequential/diffusion/cellcentered/pressureproperties.hh>
 #include <dumux/porousmediumflow/1p/sequential/diffusion/problem.hh>
-#include <dumux/porousmediumflow/sequential/cellcentered/velocity.hh>
-
-#include "test_1pspatialparams.hh"
-
 namespace Dumux
 {
-
-template<class TypeTag>
-class TestProblemOneP;
-
-//////////
-// Specify the properties
-//////////
-namespace Properties
-{
-// Create new type tags
-namespace TTag {
-struct TestOneP { using InheritsFrom = std::tuple<FVPressureOneP>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::TestOneP> { using type = Dune::YaspGrid<2>; };
-
-// the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::TestOneP>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
-};
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::TestOneP> { using type = TestOnePSpatialParams<TypeTag>; };
-
-//Set the problem
-template<class TypeTag>
-struct Problem<TypeTag, TTag::TestOneP> { using type = TestProblemOneP<TypeTag>; };
-}
 
 /*!
  * \ingroup IMPETtests

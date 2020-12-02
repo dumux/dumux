@@ -24,102 +24,11 @@
 #ifndef DUMUX_TEST_2P_PROBLEM_HH
 #define DUMUX_TEST_2P_PROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
-#include <dune/grid/utility/structuredgridfactory.hh>
-
-#include <dumux/material/components/constant.hh>
-
-#include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressureproperties.hh>
-#include <dumux/porousmediumflow/2p/sequential/diffusion/mpfa/omethod/2dpressureproperties.hh>
-#include <dumux/porousmediumflow/2p/sequential/diffusion/mimetic/pressureproperties.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/problem.hh>
-#include <dumux/porousmediumflow/sequential/cellcentered/velocity.hh>
-
-#include "test_diffusionspatialparams.hh"
 
 namespace Dumux {
-
-/*!
- * \ingroup IMPETtests
- */
-template<class TypeTag>
-class TestDiffusionProblem;
-
-//////////
-// Specify the properties
-//////////
-namespace Properties
-{
-//// set the types for the 2PFA FV method
-// Create new type tags
-namespace TTag {
-
-struct FVVelocity2PTestTypeTag { using InheritsFrom = std::tuple<TestDiffusionSpatialParams, FVPressureTwoP>; };
-
-// set the types for the MPFA-O FV method
-struct FVMPFAOVelocity2PTestTypeTag { using InheritsFrom = std::tuple<TestDiffusionSpatialParams, FvMpfaO2dPressureTwoP>; };
-
-// set the types for the mimetic FD method
-struct MimeticPressure2PTestTypeTag { using InheritsFrom = std::tuple<TestDiffusionSpatialParams, MimeticPressureTwoP>; };
-} // end namespace TTag
-
-template<class TypeTag>
-struct Problem<TypeTag, TTag::FVVelocity2PTestTypeTag> { using type = TestDiffusionProblem<TypeTag>; };
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::FVVelocity2PTestTypeTag> { using type = Dune::YaspGrid<2>; };
-
-// Set the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::FVVelocity2PTestTypeTag>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
-    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
-    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
-};
-
-//template<class TypeTag>
-// struct LinearSolver<TypeTag, TTag::FVMPFAOVelocity2PTestTypeTag> { using type = ILUnBiCGSTABBackend; };
-template<class TypeTag>
-struct LinearSolver<TypeTag, TTag::FVMPFAOVelocity2PTestTypeTag> { using type = SSORBiCGSTABBackend; };
-template<class TypeTag>
-struct Problem<TypeTag, TTag::FVMPFAOVelocity2PTestTypeTag> { using type = TestDiffusionProblem<TypeTag>; };
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::FVMPFAOVelocity2PTestTypeTag> { using type = Dune::YaspGrid<2>; };
-
-// Set the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::FVMPFAOVelocity2PTestTypeTag>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
-    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
-    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
-};
-
-
-template<class TypeTag>
-struct Problem<TypeTag, TTag::MimeticPressure2PTestTypeTag> { using type = TestDiffusionProblem<TypeTag>; };
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::MimeticPressure2PTestTypeTag> { using type = Dune::YaspGrid<2>; };
-
-// Set the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::MimeticPressure2PTestTypeTag>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
-    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
-    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
-};
-
-} // end namespace Properties
-
 /*!
  * \ingroup SequentialProblems
  *
