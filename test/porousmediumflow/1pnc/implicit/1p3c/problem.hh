@@ -31,6 +31,7 @@
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
+#include <dumux/io/gnuplotinterface.hh>
 namespace Dumux {
 
 

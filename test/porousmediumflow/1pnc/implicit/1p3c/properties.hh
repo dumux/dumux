@@ -43,7 +43,7 @@
 #include "problem.hh"
 #include "../1p2c/spatialparams.hh"
 
-#include <dumux/io/gnuplotinterface.hh>
+
 #include <dumux/flux/maxwellstefanslaw.hh>
 
 namespace Dumux::Properties {
