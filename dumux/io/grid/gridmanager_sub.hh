@@ -241,13 +241,6 @@ private:
     template<class Img>
     void createGridFromImage_(const Img& img, const std::string& paramGroup)
     {
-        // Check for the keyword "Refinement" - this would lead to a refinement
-        // of the host grid such that its number of cells would not fit with the number of
-        // the image's pixels anymore. We need to refine the subgrid itself after it has been
-        // constructed from the unrefined hostgrid, using a different keyword (see below).
-        if (hasParamInGroup(paramGroup, "Grid.Refinement"))
-            DUNE_THROW(Dune::InvalidStateException, "Grid.Refinement not allowed for image grids. Use Grid.Refine instead");
-
         // get the corner coordinates
         using Element = typename ParentType::Grid::template Codim<0>::Entity;
         using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -267,24 +260,24 @@ private:
         // Create the selector
         auto elementSelector = [this, &img, &marked](const auto& element)
         {
-            const auto eIdx = this->hostGrid_().leafGridView().indexSet().index(element);
+            auto eIdx = this->hostGrid_().leafGridView().indexSet().index(element);
+
+            // if the hostgrid was refined, get the index of the original, un-refined
+            // host grid element which fits with the image's indices
+            if (element.hasFather())
+            {
+                auto father = element;
+                while(father.hasFather())
+                    father = father.father();
+
+                eIdx = this->hostGrid_().levelGridView(father.level()).indexSet().index(father);
+            }
+
             return img[eIdx] == marked;
         };
 
         // create the grid
         this->gridPtr() = this->createGrid_(this->hostGrid_(), elementSelector, paramGroup);
-
-        // refine the grid (no refinement by default)
-        const auto numRefinements = getParamFromGroup<std::size_t>(paramGroup, "Grid.Refine", 0);
-        for (int i = 0; i < numRefinements; ++i)
-        {
-            for (const auto& e : elements(this->gridPtr()->leafGridView()))
-                this->gridPtr()->mark(1, e);
-
-            this->gridPtr()->preAdapt();
-            this->gridPtr()->adapt();
-            this->gridPtr()->postAdapt();
-        }
 
         this->loadBalance();
     }
