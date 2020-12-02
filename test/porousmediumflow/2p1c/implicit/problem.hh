@@ -25,66 +25,13 @@
 #ifndef DUMUX_STEAM_INJECTIONPROBLEM_HH
 #define DUMUX_STEAM_INJECTIONPROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 
 #include <dumux/common/boundarytypes.hh>
-#include <dumux/discretization/cctpfa.hh>
-#include <dumux/discretization/box.hh>
-#include <dumux/porousmediumflow/2p1c/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include <dumux/material/fluidsystems/2p1c.hh>
-
-#include <dumux/material/components/tabulatedcomponent.hh>
-#include <dumux/material/components/h2o.hh>
-
-#include "spatialparams.hh"
-
 namespace Dumux {
-template <class TypeTag>
-class InjectionProblem;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct InjectionProblem { using InheritsFrom = std::tuple<TwoPOneCNI>; };
-struct TwoPOneCNIBox { using InheritsFrom = std::tuple<InjectionProblem, BoxModel>; };
-struct TwoPOneCNICCTpfa { using InheritsFrom = std::tuple<InjectionProblem, CCTpfaModel>; };
-} // end namespace TTag
-
-template<class TypeTag>
-struct Grid<TypeTag, TTag::InjectionProblem> { using type = Dune::YaspGrid<2>; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::InjectionProblem> { using type = InjectionProblem<TypeTag>; };
-
-
-// Set fluid configuration
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::InjectionProblem>
-{
-private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using H2OType = Dumux::Components::TabulatedComponent<Dumux::Components::H2O<Scalar> >;
-public:
-    using type = Dumux::FluidSystems::TwoPOneC<Scalar, H2OType >;
-};
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::InjectionProblem>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = InjectionProblemSpatialParams<GridGeometry, Scalar>;
-};
-
-//Define whether spurious cold-water flow into the steam is blocked
-template<class TypeTag>
-struct UseBlockingOfSpuriousFlow<TypeTag, TTag::InjectionProblem> { static constexpr bool value = true; };
-} // end namespace Properties
-
 /*!
  * \ingroup TwoPOneCTests
  * \brief Non-isothermal 2D problem where steam is injected on the lower left side of the domain.
