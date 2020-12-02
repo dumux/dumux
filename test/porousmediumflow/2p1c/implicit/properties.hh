@@ -38,11 +38,7 @@
 
 #include "problem.hh"
 #include "spatialparams.hh"
-namespace Dumux {
-template <class TypeTag>
-class InjectionProblem;
-
-namespace Properties {
+namespace Dumux::Properties {
 // Create new type tags
 namespace TTag {
 struct InjectionProblem { using InheritsFrom = std::tuple<TwoPOneCNI>; };
