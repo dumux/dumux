@@ -40,6 +40,6 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::OnePInternalDirichlet>
 { using type = OnePTestProblemInternalDirichlet<TypeTag>; };
 
-}
+} // end namespace Properties
 
 #endif
