@@ -24,70 +24,12 @@
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_CONVERGENCETEST_PROBLEM_HH
 #define DUMUX_INCOMPRESSIBLE_ONEP_CONVERGENCETEST_PROBLEM_HH
 
-#include <cmath>
-#include <dune/grid/yaspgrid.hh>
-#include <dune/geometry/quadraturerules.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 
 #include <dumux/common/boundarytypes.hh>
-
-#include <dumux/discretization/cctpfa.hh>
-#include <dumux/discretization/ccmpfa.hh>
-#include <dumux/discretization/box.hh>
-
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/1p/model.hh>
-#include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
-
-#include <dumux/material/components/constant.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
-
-#include "spatialparams.hh"
-
 namespace Dumux {
-// forward declarations
-template<class TypeTag> class OnePTestProblem;
-
-namespace Properties {
-
-// create the type tag nodes
-namespace TTag {
-struct OnePIncompressible { using InheritsFrom = std::tuple<OneP>; };
-struct OnePIncompressibleTpfa { using InheritsFrom = std::tuple<OnePIncompressible, CCTpfaModel>; };
-struct OnePIncompressibleMpfa { using InheritsFrom = std::tuple<OnePIncompressible, CCMpfaModel>; };
-struct OnePIncompressibleBox { using InheritsFrom = std::tuple<OnePIncompressible, BoxModel>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePIncompressible> { using type = Dune::YaspGrid<2>; };
-
-// Set the problem type
-template<class TypeTag>
-struct Problem<TypeTag, TTag::OnePIncompressible> { using type = OnePTestProblem<TypeTag>; };
-
-// set the spatial params
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::OnePIncompressible>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = OnePTestSpatialParams<GridGeometry, Scalar>;
-};
-
-// use the incompressible local residual (provides analytic jacobian)
-template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::OnePIncompressible> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
-
-// the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::OnePIncompressible>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<0, Scalar> >;
-};
-
-} // end namespace Properties
-
 /*!
  * \ingroup OnePTests
  * \brief problem setup for the convergence test
