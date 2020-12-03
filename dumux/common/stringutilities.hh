@@ -60,6 +60,41 @@ std::vector<std::string_view> tokenize(std::string_view str, std::string_view de
     return tokens;
 }
 
+/*
+ * \brief Split a string at a given seperator string
+ * \ingroup Common
+ * \param str a string to be split
+ * \param delim a set of delimiter characters separating the tokens
+ * \param removeEmpty if empty string between two separator should be removed from the result
+ * \note this works without copying the original string, make sure that string
+ *       does not go out of scope!
+ *
+ * Examples:
+ *  - split("| Hello | world |", "|") -> {"", " Hello ", " world ", ""}
+ *  - split("| Hello | world |", "|", true) -> {" Hello ", " world "}
+ *  - split("blafoobla", "foo") -> {"bla", "bla"}
+ *  - split("blafoobla", "bla") -> {"", "foo", ""}
+ *  - split("blafoobla", "bla", true) -> {"foo"}
+ */
+std::vector<std::string_view> split(std::string_view str, std::string_view delim, bool removeEmpty = false)
+{
+    const auto token = [&](std::size_t pos){
+        const auto end = str.find(delim, pos);
+        return std::make_pair(pos, end);
+    };
+
+    std::vector<std::string_view> split;
+    for (auto [start, end] = token(0); start != std::string::npos; std::tie(start, end) = token(start))
+    {
+        if (auto&& sub = str.substr(start, end-start); !removeEmpty || !sub.empty())
+            split.emplace_back(std::move(sub));
+
+        // skip to after the delimiter
+        start = (end != std::string::npos) ? end + delim.size() : end;
+    }
+    return split;
+}
+
 } // end namespace Dumux
 
 #endif
