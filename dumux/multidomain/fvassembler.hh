@@ -38,6 +38,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/jacobianpattern.hh>
+#include <dumux/linear/parallelhelpers.hh>
 
 #include "couplingjacobianpattern.hh"
 #include "subdomaincclocalassembler.hh"
@@ -220,17 +221,60 @@ public:
     }
 
     //! compute the residual and return it's vector norm
-    //! TODO: this needs to be adapted in parallel
     Scalar residualNorm(const SolutionVector& curSol)
     {
         ResidualType residual;
         setResidualSize(residual);
         assembleResidual(residual, curSol);
 
-        // calculate the square norm of the residual
-        const Scalar result2 = residual.two_norm2();
+        // calculate the squared norm of the residual
+        Scalar resultSquared = 0.0;
+
+        // issue a warning if the caluclation is used in parallel with overlap
+        static bool warningIssued = false;
+
+        // for box communicate the residual with the neighboring processes
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(residual)), [&](const auto domainId)
+        {
+            const auto gridGeometry = std::get<domainId>(gridGeometryTuple_);
+            const auto& gridView = gridGeometry->gridView();
+
+            if (gridView.overlapSize(0) == 0)
+            {
+                if constexpr (GridGeometry<domainId>::discMethod == DiscretizationMethod::box)
+                {
+                    using GV = typename GridGeometry<domainId>::GridView;
+                    using DM = typename GridGeometry<domainId>::VertexMapper;
+                    using PVHelper = ParallelVectorHelper<GV, DM, GV::dimension>;
+
+                    PVHelper vectorHelper(gridView, gridGeometry->vertexMapper());
+
+                    vectorHelper.makeNonOverlappingConsistent(residual[domainId]);
+                }
+            }
+            else if (!warningIssued)
+            {
+                if (gridView.comm().rank() == 0)
+                    std::cout << "\nWarning: norm calculation adds entries corresponding to\n"
+                              << "overlapping entities multiple times. Please use the norm\n"
+                              << "function provided by a linear solver instead." << std::endl;
+
+                warningIssued = true;
+            }
+
+            Scalar localNormSquared = residual[domainId].two_norm2();
+
+            if (gridView.comm().size() > 1)
+            {
+                localNormSquared = gridView.comm().sum(localNormSquared);
+            }
+
+            resultSquared += localNormSquared;
+        });
+
         using std::sqrt;
-        return sqrt(result2);
+        return sqrt(resultSquared);
     }
 
     /*!
