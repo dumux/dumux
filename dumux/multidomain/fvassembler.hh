@@ -230,27 +230,44 @@ public:
         // calculate the squared norm of the residual
         Scalar resultSquared = 0.0;
 
+        // issue a warning if the caluclation is used in parallel with overlap
+        static bool warningIssued = false;
+
         // for box communicate the residual with the neighboring processes
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(residual)), [&](const auto domainId)
         {
             const auto gridGeometry = std::get<domainId>(gridGeometryTuple_);
-            if constexpr (GridGeometry<domainId>::discMethod == DiscretizationMethod::box)
+            const auto& gridView = gridGeometry->gridView();
+
+            if (gridView.overlapSize(0) == 0)
             {
-                using GV = typename GridGeometry<domainId>::GridView;
-                using DM = typename GridGeometry<domainId>::VertexMapper;
-                using PVHelper = ParallelVectorHelper<GV, DM, GV::dimension>;
+                if constexpr (GridGeometry<domainId>::discMethod == DiscretizationMethod::box)
+                {
+                    using GV = typename GridGeometry<domainId>::GridView;
+                    using DM = typename GridGeometry<domainId>::VertexMapper;
+                    using PVHelper = ParallelVectorHelper<GV, DM, GV::dimension>;
 
-                PVHelper vectorHelper(gridGeometry->gridView(), gridGeometry->vertexMapper());
+                    PVHelper vectorHelper(gridView, gridGeometry->vertexMapper());
 
-                vectorHelper.makeNonOverlappingConsistent(residual[domainId]);
+                    vectorHelper.makeNonOverlappingConsistent(residual[domainId]);
+                }
+            }
+            else if (!warningIssued)
+            {
+                if (gridView.comm().rank() == 0)
+                    std::cout << "\nWarning: norm calculation adds entries corresponding to\n"
+                              << "overlapping entities multiple times. Please use the norm\n"
+                              << "function provided by a linear solver instead." << std::endl;
+
+                warningIssued = true;
             }
 
             Scalar localNormSquared = residual[domainId].two_norm2();
 
-            if (gridGeometry->gridView().comm().size() > 1)
+            if (gridView.comm().size() > 1)
             {
-                localNormSquared = gridGeometry->gridView().comm().sum(localNormSquared);
+                localNormSquared = gridView.comm().sum(localNormSquared);
             }
 
             resultSquared += localNormSquared;

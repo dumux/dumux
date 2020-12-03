@@ -167,15 +167,29 @@ public:
         ResidualType residual(numDofs());
         assembleResidual(residual, curSol);
 
-        // for box communicate the residual with the neighboring processes
-        if (isBox && gridView().comm().size() > 1)
+        // issue a warning if the caluclation is used in parallel with overlap
+        static bool warningIssued = false;
+
+        if (gridView().overlapSize(0) == 0)
         {
-            using VertexMapper = typename GridGeometry::VertexMapper;
-            VectorCommDataHandleSum<VertexMapper, SolutionVector, GridGeometry::GridView::dimension>
-                sumResidualHandle(gridGeometry_->vertexMapper(), residual);
-            gridView().communicate(sumResidualHandle,
-                                   Dune::InteriorBorder_InteriorBorder_Interface,
-                                   Dune::ForwardCommunication);
+            if constexpr (isBox)
+            {
+                using DM = typename GridGeometry::VertexMapper;
+                using PVHelper = ParallelVectorHelper<GridView, DM, GridView::dimension>;
+
+                PVHelper vectorHelper(gridView(), gridGeometry_->vertexMapper());
+
+                vectorHelper.makeNonOverlappingConsistent(residual);
+            }
+        }
+        else if (!warningIssued)
+        {
+            if (gridView().comm().rank() == 0)
+                std::cout << "\nWarning: norm calculation adds entries corresponding to\n"
+                << "overlapping entities multiple times. Please use the norm\n"
+                << "function provided by a linear solver instead." << std::endl;
+
+            warningIssued = true;
         }
 
         // calculate the square norm of the residual
