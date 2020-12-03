@@ -4,6 +4,7 @@ add_subdirectory(math)
 add_subdirectory(parameters)
 add_subdirectory(propertysystem)
 add_subdirectory(spline)
+add_subdirectory(stringutilities)
 add_subdirectory(timeloop)
 add_subdirectory(typetraits)
 
