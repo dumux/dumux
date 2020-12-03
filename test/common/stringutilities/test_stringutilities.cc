@@ -49,6 +49,20 @@ int main(int argc, char* argv[]) try
     str = "| hello | world |\n\n";
     checkTokens("Test 8: ", Dumux::tokenize(str, "| \n"), {"hello", "world"});
 
+
+    // split
+    std::cout << "------------\nDumux::split\n---------------\n";
+
+    str = "bla&foo&bar";
+    checkTokens("Test 1: ", Dumux::split(str, "&"), {"bla", "foo", "bar"});
+
+    str = "fooborfoo";
+    checkTokens("Test 2: ", Dumux::split(str, "bor"), {"foo", "foo"});
+
+    str = "fooborfoo";
+    checkTokens("Test 3a: ", Dumux::split(str, "foo"), {"", "bor", ""});
+    checkTokens("Test 3b: ", Dumux::split(str, "foo", true), {"bor"});
+
     return 0;
 }
 catch (const std::exception& e)
