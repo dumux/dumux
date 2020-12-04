@@ -284,10 +284,13 @@ private:
     std::string name_;
 };
 
-template<class LinearSolverTraits, class Matrix, class Vector>
-using ILUBiCGSTABIstlSolver = IstlLinearSolver<LinearSolverTraits,
-                                               Dune::BiCGSTABSolver<Vector>,
-                                               Dune::SeqILU<Matrix, Vector, Vector, Detail::preconditionerBlockLevel<Matrix>()>
+template<class LSTraits, class LATraits>
+using ILUBiCGSTABIstlSolver = IstlLinearSolver<LSTraits,
+                                               Dune::BiCGSTABSolver<typename LATraits::Vector>,
+                                               Dune::SeqILU<typename LATraits::Matrix,
+                                                            typename LATraits::Vector,
+                                                            typename LATraits::Vector,
+                                                            Detail::preconditionerBlockLevel<typename LATraits::Matrix>()>
                                                >;
 
 } // end namespace Dumux
