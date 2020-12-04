@@ -251,11 +251,8 @@ public:
                 std::getline(infile, inputLine);
                 ++lineNumber;
 
-                const auto isComment = [](const auto& s)
-                { return (s.find("#") != std::string::npos); };
-
                 // Skip comments.
-                if (isComment(inputLine))
+                if (isComment_(inputLine))
                     continue;
 
                 const auto tokens = tokenize(inputLine, " ");
@@ -393,14 +390,16 @@ private:
         while (!infile.eof())
         {
             std::getline(infile, inputLine);
-            inputLine.erase(std::remove(inputLine.begin(), inputLine.end(), '\n'), inputLine.end());
-            inputLine.erase(std::remove(inputLine.begin(), inputLine.end(), ' '), inputLine.end());
-            if (!inputLine.empty())
+            if (!isComment_(inputLine))
             {
-                for (const auto& value : inputLine)
+                inputLine.erase(std::remove_if(inputLine.begin(), inputLine.end(), [](unsigned char c){ return std::isspace(c); }), inputLine.end());
+                if (!inputLine.empty())
                 {
-                    assert(value == '0' || value == '1');
-                    data.push_back(value - '0');  // convert char to int
+                    for (const auto& value : inputLine)
+                    {
+                        assert(value == '0' || value == '1');
+                        data.push_back(value - '0');  // convert char to int
+                    }
                 }
             }
         }
@@ -421,6 +420,28 @@ private:
     {
         std::vector<bool> data(numPixel_(headerData));
 
+        // Skip potentially remaining comments in header section
+        // before reading binary content. We detect a comment by
+        // reading a line with std::getline and checking the resulting string.
+        // We continue reading new lines until no more comments are found. Then we
+        // need to set infile's current position to one line before the actual binary
+        // content, otherwise the following steps will fail.
+        std::string inputLine;
+        while (!infile.eof())
+        {
+            // store position before calling std::getline
+            const auto lastPos = infile.tellg();
+            std::getline(infile, inputLine);
+
+            // stop the loop if no more comment is found and go back one line
+            if (!isComment_(inputLine))
+            {
+                infile.seekg(lastPos);
+                break;
+            }
+        }
+
+        // read actual binary content
         std::size_t nBytes = 0;
         std::size_t bitIndex = 0;
         using Bit = std::uint8_t;
@@ -539,6 +560,14 @@ private:
     static std::size_t numPixel_(const HeaderData& headerData)
     {
         return headerData.nRows*headerData.nCols;
+    }
+
+    /*!
+     * \brief Returns true if a given line is a comment (starting with #)
+     */
+    static bool isComment_(const std::string_view line)
+    {
+        return line[0] == '#';
     }
 };
 
