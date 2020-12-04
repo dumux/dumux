@@ -53,6 +53,7 @@
 #include <dumux/io/format.hh>
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
 #include <dumux/linear/matrixconverter.hh>
+#include <dumux/linear/algebratraits.hh>
 #include <dumux/assembly/partialreassembler.hh>
 
 #include "newtonconvergencewriter.hh"
