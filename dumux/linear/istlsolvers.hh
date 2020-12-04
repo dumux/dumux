@@ -26,6 +26,7 @@
 
 #include <memory>
 
+#include <dune/common/version.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/parallel/indexset.hh>
 #include <dune/common/parallel/mpicommunication.hh>

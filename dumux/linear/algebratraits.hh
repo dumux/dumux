@@ -24,8 +24,23 @@
 #ifndef DUMUX_LINEAR_ALGEBRA_TRAITS_HH
 #define DUMUX_LINEAR_ALGEBRA_TRAITS_HH
 
+#include <utility>
+#include <type_traits>
+
+#include <dune/istl/bvector.hh>
+#include <dune/common/std/type_traits.hh>
 
 namespace Dumux {
+
+namespace Detail {
+
+template<class T, std::enable_if_t<Dune::IsNumber<std::decay_t<T>>::value, int> = 0>
+constexpr std::size_t blockSize() { return 1; }
+
+template<class T, std::enable_if_t<!Dune::IsNumber<std::decay_t<T>>::value, int> = 0>
+constexpr std::size_t blockSize() { return std::decay_t<T>::size(); }
+
+} // end namespace Detail
 
 template<class M, class V>
 struct LinearAlgebraTraits
@@ -37,8 +52,14 @@ struct LinearAlgebraTraits
 template<class Assembler>
 struct LinearAlgebraTraitsFromAssembler
 {
+private:
+    using VectorPossiblyWithState = typename Assembler::ResidualType;
+    using Scalar = std::decay_t<decltype(std::declval<VectorPossiblyWithState>()[0][0])>;
+    static constexpr auto blockSize = Detail::blockSize<decltype(std::declval<VectorPossiblyWithState>()[0])>();
+    using BlockType = Dune::FieldVector<Scalar, blockSize>;
+public:
+    using Vector = Dune::BlockVector<BlockType>;
     using Matrix = typename Assembler::JacobianMatrix;
-    using Vector = typename Assembler::ResidualType;
 };
 
 } // end namespace Dumux
