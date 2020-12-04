@@ -35,7 +35,7 @@ namespace Dumux {
      */
     enum class DiscretizationMethod
     {
-        none, box, cctpfa, ccmpfa, staggered, fem, fcstaggered
+        none, box, cctpfa, ccmpfa, staggered, fem, fcstaggered, fcdiamond
     };
 
 } // end namespace Dumux

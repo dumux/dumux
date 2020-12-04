@@ -104,7 +104,7 @@ class FaceCenteredDiamondFVGridGeometry<GV, true, Traits>
 
 public:
     //! export discretization method
-    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::fcstaggered;
+    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::fcdiamond;
     static constexpr bool cachingEnabled = true;
 
     //! export the type of the fv element geometry (the local view type)

@@ -72,6 +72,13 @@ struct LocalAssemblerChooser<DiscretizationMethod::fcstaggered>
     using type = FaceCenteredLocalAssembler<TypeTag, Impl, dM, isImplicit>;
 };
 
+template<>
+struct LocalAssemblerChooser<DiscretizationMethod::fcdiamond>
+{
+    template<class TypeTag, class Impl, DiffMethod dM, bool isImplicit>
+    using type = FaceCenteredLocalAssembler<TypeTag, Impl, dM, isImplicit>;
+};
+
 
 /*!
  * \ingroup Assembly
