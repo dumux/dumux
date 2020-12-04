@@ -76,21 +76,27 @@ public:
             priVars_[scv.indexInElement()] = elemVolVars[scv].priVars();
     }
 
-    // //! Constructor with a primary variable object
-    // FaceCenteredDiamondElementSolution(PrimaryVariables&& priVars)
-    // {
-    //     priVars_[0] = std::move(priVars);
-    //     for (int i = 1; i < priVars_.size(); ++i)
-    //        priVars_[i] = priVars_[0];
-    // }
+    //! Constructor with a primary variable object
+    FaceCenteredDiamondElementSolution(const Element& element,
+                                       PrimaryVariables&& priVars,
+                                       const FVElementGeometry& fvGeometry)
+    {
+        priVars_.resize(fvGeometry.numScv());
+        priVars_[0] = std::move(priVars);
+        for (int i = 1; i < priVars_.size(); ++i)
+           priVars_[i] = priVars_[0];
+    }
 
-    // //! Constructor with a primary variable object
-    // FaceCenteredDiamondElementSolution(const PrimaryVariables& priVars)
-    // {
-    //     priVars_[0] = priVars;
-    //     for (int i = 1; i < priVars_.size(); ++i)
-    //        priVars_[i] = priVars_[0];
-    // }
+    //! Constructor with a primary variable object
+    FaceCenteredDiamondElementSolution(const Element& element,
+                                       const PrimaryVariables& priVars,
+                                       const FVElementGeometry& fvGeometry)
+    {
+        priVars_.resize(fvGeometry.numScv());
+        priVars_[0] = priVars;
+        for (int i = 1; i < priVars_.size(); ++i)
+           priVars_[i] = priVars_[0];
+    }
 
     //! extract the element solution from the solution vector using a mapper
     template<class SolutionVector>
