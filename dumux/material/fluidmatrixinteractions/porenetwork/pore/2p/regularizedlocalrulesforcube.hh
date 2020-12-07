@@ -130,7 +130,7 @@ public:
                 return sp.eval(sw);
             }
             else
-                DUNE_THROW(Dune::NotImplemented, "Regularization not method not implemented");
+                DUNE_THROW(Dune::NotImplemented, "Regularization method not implemented");
         }
         else // regularized part above sw = 1.0
             return linearCurveForHighSw();
@@ -178,7 +178,7 @@ public:
                                             0, 0, 0, pc);
             }
             else
-                DUNE_THROW(Dune::NotImplemented, "Regularization not method not implemented");
+                DUNE_THROW(Dune::NotImplemented, "Regularization method not implemented");
         }
 
         return LocalRules::sw(params, pc);
@@ -196,23 +196,76 @@ public:
     {   // TODO!!!!
         assert(0 <= sw && sw <= 1);
         assert(params.shape == Pore::Shape::cube);
-        using std::exp;
-        const Scalar sigma = params.surfaceTension;
-        const Scalar poreRadius = params.poreRadius;
-        const Scalar e = exp(6.83*sw);
-        return -(13.66*sigma*e) / (poreRadius*(e-1.0)*(e-1.0));
+        const Scalar highSw = params.highSw;
+        if (sw < lowSw)
+        {
+            return LocalRules::dpc_dsw(params, params.lowSw);
+        }
+        if (sw <= highSw)
+        {
+            return LocalRules::dpc_dsw(params, sw); //standart
+        }
+        else if (sw <= 1.0) // regularized part below sw = 1.0
+        {
+            using std::pow;
+            if (params.highSwRegularizationMethod == HighSwRegularizationMethod::powerLaw)
+                return LocalRules::pc(params, highSw) * -1.0/3.0 /(pow(1.0-highSw, 1.0/3.0)*pow(1-sw,2.0/3.0));
+
+            else if (params.highSwRegularizationMethod == HighSwRegularizationMethod::linear)
+            {
+                const Scalar slopeHighSw = -LocalRules::pc(params, highSw) / (1.0-highSw);
+                return slopeHighSw;
+            }
+
+            else if (params.highSwRegularizationMethod == HighSwRegularizationMethod::spline)
+            {
+                // TODO (set zero due to slope of spline at highSw and sw=1.0)
+                return 0.0;
+            }
+            else
+                DUNE_THROW(Dune::NotImplemented, "Regularization method not implemented");
+        }
     }
 
     /*!
-     * \brief DOCU
-     *
+     * \brief The partial derivative of the wetting phase
+     *        saturation w.r.t. the capillary pressure.
      *
      * \param sw Saturation of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      */
-    static Scalar dsw_dpc(const Params& params, const Scalar sw)
-    {
-        return 0; // TODO
+    static Scalar dsw_dpc(const Params& params, const Scalar pc)
+    {   // TODO!!!!
+        assert(params.shape == Pore::Shape::cube);
+        const Scalar sigma = params.surfaceTension;
+        const Scalar poreRadius = params.poreRadius;
+        return -2*sigma/(6.83*pc*(poreRadius*pc-2*sigma));
+        // low saturation, high pc:
+        if (pc > pcLowSw)
+            return 1/mLow_(params);
+
+        // high saturation, low pc:
+        if (pc < pcHighSw)
+        {
+            if (params.highSwRegularizationMethod == HighSwRegularizationMethod::powerLaw)
+            {
+                return -3.0*pc*pc/(pcHighSw * pcHighSw * pcHighSw);
+            }
+            else if (params.highSwRegularizationMethod == HighSwRegularizationMethod::linear)
+            {
+                const Scalar slopeHighSw = -pcHighSw / (1.0-highSw);
+                return 1/slopeHighSw;
+            }
+            else if (params.highSwRegularizationMethod == HighSwRegularizationMethod::spline)
+            {
+                // TODO (set large value due to slope of spline at highSw and sw=1.0)
+                return 1e8;
+            }
+            else
+                DUNE_THROW(Dune::NotImplemented, "Regularization method not implemented");
+        }
+
+        return LocalRules::dsw_dpc(params, pc);
     }
 
 
