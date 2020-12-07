@@ -352,26 +352,6 @@ public:
                 ++localScvfIdx;
             }
 
-            // // the frontal sub control volume face at a domain boundary (coincides with element face)
-            // if (onDomainBoundary_(intersection))
-            // {
-            //     ++numBoundaryScvf_;
-            //     const auto boundaryCenter = intersectionGeometry.center();
-            //     scvfs_.emplace_back(boundaryCenter,
-            //                         boundaryCenter,
-            //                         std::array{localScvIdx, localOppositeScvIdx}, // TODO outside boundary, periodic, parallel?
-            //                         std::array{globalScvIndices[localScvIdx], globalScvIndices[localScvIdx]}, // TODO outside boundary, periodic, parallel?
-            //                         localScvfIdx,
-            //                         intersectionGeometry.volume(),
-            //                         directionIdx,
-            //                         sign(intersection.centerUnitOuterNormal()[directionIdx]),
-            //                         globalScvfIndices[localScvfIdx],
-            //                         0, // should not be used
-            //                         SubControlVolumeFace::FaceType::frontal,
-            //                         true);
-            //     ++localScvfIdx;
-            //     hasBoundaryScvf_[eIdx] = true;
-            // }
             scvfIndicesOfElement_[eIdx] = std::move(scvfsIndexSet);
         }
 
