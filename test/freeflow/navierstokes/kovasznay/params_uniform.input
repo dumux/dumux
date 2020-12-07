@@ -15,6 +15,9 @@ EnableGravity = false
 PrintL2Error = true
 EnableInertiaTerms = true
 
+[FreeFlow]
+EnableVelocityGradientFactor = false
+
 [Component]
 LiquidDensity = 1
 LiquidKinematicViscosity = 0.025

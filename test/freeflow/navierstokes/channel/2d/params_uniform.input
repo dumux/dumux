@@ -7,8 +7,8 @@ UpperRight = 10 1
 Cells = 100 50
 Positions0 = 0 10
 Positions1 = 0 1
-Cells0 = 20
-Cells1 = 20
+Cells0 = 10
+Cells1 = 10
 Grading0 = 1
 Grading1 = 1
 
@@ -32,6 +32,7 @@ MaxRelativeShift = 1e-8
 
 [Vtk]
 WriteFaceData = false
+Precision = Float64
 
 [Assembly]
 NumericDifference.BaseEpsilon =  1e-3

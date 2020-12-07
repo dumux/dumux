@@ -225,6 +225,9 @@ int main(int argc, char** argv)
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
+    // initialize the output flux files
+    darcyProblem->initMethod1(sol[darcyIdx], *darcyGridVariables, timeLoop->timeStepSize(), timeLoop->time());
+
     // time loop
     timeLoop->start(); do
     {
@@ -236,6 +239,9 @@ int main(int argc, char** argv)
         darcyProblem->printWaterMass(sol[darcyIdx], *darcyGridVariables, timeLoop->timeStepSize());
         stokesGridVariables->advanceTimeStep();
         darcyGridVariables->advanceTimeStep();
+
+        // Method 1: Water Balance
+        darcyProblem->fluxMethod1(sol[darcyIdx], *darcyGridVariables, timeLoop->timeStepSize(), timeLoop->time());
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();

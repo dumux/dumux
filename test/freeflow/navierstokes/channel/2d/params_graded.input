@@ -6,11 +6,11 @@ TEnd = 2 # [s]
 UpperRight = 10 1
 Cells = 100 50
 Positions0 = 0 10
-Positions1 = 0 0.1 0.9 1
-Cells0 = 20
-Cells1 = 3 16 2
+Positions1 = 0 .5 1
+Cells0 = 10
+Cells1 = 5 5
 Grading0 = 1
-Grading1 = 1 1 1
+Grading1 =  1.2 -1.2
 
 [Problem]
 Name = graded # name passed to the output routines
@@ -30,8 +30,12 @@ LiquidKinematicViscosity = 1.0
 MaxSteps = 10
 MaxRelativeShift = 1e-8
 
+[FreeFlow]
+EnableVelocityGradientFactor = true
+
 [Vtk]
 WriteFaceData = false
+Precision = Float64
 
 [Assembly]
 NumericDifference.BaseEpsilon =  1e-3

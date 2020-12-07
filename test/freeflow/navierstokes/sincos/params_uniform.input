@@ -20,6 +20,9 @@ PrintL2Error = true
 EnableInertiaTerms = true
 IsStationary = true
 
+[FreeFlow]
+EnableVelocityGradientFactor = false
+
 [Component]
 LiquidDensity = 1.0
 LiquidKinematicViscosity = 0.1

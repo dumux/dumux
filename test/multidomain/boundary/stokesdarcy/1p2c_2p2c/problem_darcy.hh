@@ -317,6 +317,97 @@ public:
     const CouplingManager& couplingManager() const
     { return *couplingManager_; }
 
+//    >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+//
+//    Method 1: Calculates the total mass of water in the darcy domain.
+//              Evaporation rate is calculated as the change of water mass over time.
+//              Only produces a "global" evaporation rate, not a local rate.
+//              This is placed in the Darcy Problem.
+//
+//    >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    /*!
+     * \brief Initialize the problem.
+     */
+    template<class SolutionVector, class GridVariables>
+    void initMethod1(const SolutionVector& curSol,
+                     const GridVariables& gridVariables,
+                     Scalar timeStepSize,
+                     Scalar time)
+    {
+        initialWaterContent_ = evaluateWaterMassStorageTerm(curSol, gridVariables, timeStepSize, time);
+        lastWaterMass_ = initialWaterContent_;
+
+        storageFileName_ = "storage_" + outputName_ + ".csv";
+        storageFile_.open(storageFileName_/*, std::ios::app*/);
+        storageFile_ << "#Time[s]" << ";"
+                     << "WaterMass[kg]" << ";"
+                     << "WaterMassLoss[kg]" << ";"
+                     << "EvaporationRate[mm/d]"
+                     << std::endl;
+        storageFile_.close();
+    }
+
+    /*!
+     * \brief Evaluate the exchange processes after each timestep.
+     */
+    template<class SolutionVector, class GridVariables>
+    void fluxMethod1(const SolutionVector& curSol,
+                    const GridVariables& gridVariables,
+                    Scalar timeStepSize,
+                    Scalar time)
+    { evaluateWaterMassStorageTerm(curSol, gridVariables, timeStepSize, time); }
+
+    /*!
+     * \brief Calculate the total water mass storage exchange.
+     */
+    template<class SolutionVector, class GridVariables>
+    Scalar evaluateWaterMassStorageTerm(const SolutionVector& curSol,
+                                        const GridVariables& gridVariables,
+                                        Scalar timeStepSize,
+                                        Scalar time)
+    {
+        // compute the mass in the entire domain
+        Scalar waterMass = 0.0;
+
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            auto fvGeometry = localView(this->gridGeometry());
+            fvGeometry.bindElement(element);
+
+            auto elemVolVars = localView(gridVariables.curGridVolVars());
+            elemVolVars.bindElement(element, fvGeometry, curSol);
+
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                const auto& volVars = elemVolVars[scv];
+                for(int phaseIdx = 0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+                {
+                    // insert calculation of the water mass here
+                    waterMass += volVars.massFraction(phaseIdx, FluidSystem::H2OIdx) * volVars.density(phaseIdx)
+                                 * volVars.saturation(phaseIdx) * volVars.porosity()
+                                 * scv.volume() * volVars.extrusionFactor();
+                }
+            }
+        }
+        Scalar cumMassLoss = initialWaterContent_ - waterMass;
+        Scalar evaporationRate = (lastWaterMass_ - waterMass) * 86400
+                                 / (this->gridGeometry().bBoxMax()[0] - this->gridGeometry().bBoxMin()[0])
+                                 / timeStepSize;
+        lastWaterMass_ = waterMass;
+        storageFile_.open(this->storageFileName_, std::ios::app);
+        storageFile_ << time << ";"
+                     << waterMass << ";"
+                     << cumMassLoss << ";"
+                     << evaporationRate
+                     << "\n";
+        storageFile_.close();
+
+        std::cout << "Mass of water is: " << waterMass << "\n";
+        std::cout << "Evaporation rate is: " << evaporationRate << "\n";
+        std::cout << "\n";
+        return waterMass;
+    }
+
 private:
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_; }
@@ -339,6 +430,13 @@ private:
 
     std::shared_ptr<CouplingManager> couplingManager_;
     DiffusionCoefficientAveragingType diffCoeffAvgType_;
+
+    std::string outputName_;
+    std::string storageFileName_;
+    std::ofstream storageFile_;
+
+    Scalar initialWaterContent_ = 0.0;
+    Scalar lastWaterMass_ = 0.0;
 };
 } // end namespace Dumux
 

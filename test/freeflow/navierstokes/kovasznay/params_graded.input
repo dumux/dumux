@@ -19,6 +19,9 @@ EnableInertiaTerms = true
 LiquidDensity = 1
 LiquidKinematicViscosity = 0.025
 
+[FreeFlow]
+EnableVelocityGradientFactor = true
+
 [ Newton ]
 MaxSteps = 10
 MaxRelativeShift = 1e-5
