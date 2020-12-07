@@ -26,6 +26,12 @@
 
 #include <memory>
 
+#include <dune/geometry/type.hh>
+#include <dune/localfunctions/crouzeixraviart.hh>
+#include <dune/localfunctions/rannacherturek.hh>
+#include <dune/localfunctions/common/virtualinterface.hh>
+#include <dune/localfunctions/common/virtualwrappers.hh>
+
 #include <dumux/common/defaultmappertraits.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/common/intersectionmapper.hh>
@@ -43,6 +49,47 @@
 
 
 namespace Dumux {
+
+
+template< class CoordScalar, class Scalar, unsigned int dim>
+class NonconformingFECache
+{
+    using RT = Dune::RannacherTurekLocalFiniteElement<CoordScalar, Scalar, dim>;
+    using CR = Dune::CrouzeixRaviartLocalFiniteElement<CoordScalar, Scalar, dim>;
+
+public:
+        /** \brief Default constructor */
+    NonconformingFECache()
+    {}
+
+    /** \brief Type of the finite elements stored in this cache */
+    using FiniteElementType = Dune::LocalFiniteElementVirtualInterface<typename RT::Traits::LocalBasisType::Traits>;
+
+    //! Get local finite element for given GeometryType
+    // We allow simplex and cubic grid cells
+    const FiniteElementType& get(const Dune::GeometryType& gt) const
+    {
+        if (gt.isSimplex())
+        {
+            if(!crBasis_)
+                crBasis_ = std::unique_ptr<FiniteElementType>(new Dune::LocalFiniteElementVirtualImp<CR>(CR()));
+            return *crBasis_;
+        }
+        else if (gt.isCube())
+        {
+            if(!rtBasis_)
+                rtBasis_ = std::unique_ptr<FiniteElementType>(new Dune::LocalFiniteElementVirtualImp<RT>(RT()));
+            return *rtBasis_;
+        }
+        else
+            DUNE_THROW(Dune::NotImplemented,"Nonconforming local finite element not available for geometry type " << gt );
+
+    }
+
+private:
+    mutable std::unique_ptr<FiniteElementType> rtBasis_;
+    mutable std::unique_ptr<FiniteElementType> crBasis_;
+};
 
 /*!
  * \ingroup XXX
@@ -119,6 +166,8 @@ public:
     using GeometryHelper = typename Traits::GeometryHelper;
     //! export the type of extrusion
     using Extrusion = Extrusion_t<Traits>;
+    //! export the finite element cache type
+    using FeCache = NonconformingFECache<Scalar, Scalar, dim>;
 
     //! Constructor
     FaceCenteredDiamondFVGridGeometry(const GridView& gridView, const std::string& paramGroup = "")
@@ -329,6 +378,10 @@ public:
         connectivityMap_.update(*this);
     }
 
+    //! The finite element cache for creating local FE bases
+    const FeCache& feCache() const
+    { return feCache_; }
+
     //! Get a sub control volume with a global scv index
     const SubControlVolume& scv(GridIndexType scvIdx) const
     { return scvs_[scvIdx]; }
@@ -405,6 +458,8 @@ private:
 
         // a map for periodic boundary vertices
     std::unordered_map<GridIndexType, GridIndexType> periodicFaceMap_;
+
+    const FeCache feCache_;
 };
 
 /*!

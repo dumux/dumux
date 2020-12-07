@@ -45,7 +45,7 @@ class FaceCenteredDiamondFVElementGeometry<GG, /*cachingEnabled*/true>
     using ThisType = FaceCenteredDiamondFVElementGeometry<GG, /*cachingEnabled*/true>;
     using GridView = typename GG::GridView;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
-
+    using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
 public:
     //! export type of subcontrol volume face
     using SubControlVolume = typename GG::SubControlVolume;
@@ -59,7 +59,7 @@ public:
     // static constexpr std::size_t maxNumElementScvfs = 2*GridView::dimension;
 
     FaceCenteredDiamondFVElementGeometry(const GridGeometry& gridGeometry)
-    : gridGeometry_(&gridGeometry)
+    : gridGeometryPtr_(&gridGeometry)
     {}
 
     //! Get a sub control volume  with a global scv index
@@ -124,6 +124,12 @@ public:
         return Dune::IteratorRange<ScvfIterator>(begin, end);
     }
 
+    //! Get a local finite element basis
+    const FeLocalBasis& feLocalBasis() const
+    {
+        return gridGeometry().feCache().get(elemGeometryType_).localBasis();
+    }
+
     //! number of sub control volumes in this fv element geometry
     std::size_t numScv() const
     {
@@ -149,6 +155,7 @@ public:
     //! Bind only element-local
     void bindElement(const Element& element)
     {
+        elemGeometryType_ = element.type();
         elementPtr_ = &element;
         eIdx_ = gridGeometry().elementMapper().index(element);
     }
@@ -156,8 +163,8 @@ public:
     //! The grid geometry we are a restriction of
     const GridGeometry& gridGeometry() const
     {
-        assert(gridGeometry_);
-        return *gridGeometry_;
+        assert(gridGeometryPtr_);
+        return *gridGeometryPtr_;
     }
 
     std::size_t elementIndex() const
@@ -175,9 +182,10 @@ private:
         return gridGeometry().scvfIndicesOfElement(eIdx_);
     }
 
+    Dune::GeometryType elemGeometryType_;
     const Element* elementPtr_; //TODO maybe remove
     GridIndexType eIdx_;
-    const GridGeometry* gridGeometry_;
+    const GridGeometry* gridGeometryPtr_;
 };
 
 
@@ -206,6 +214,7 @@ class FaceCenteredDiamondFVElementGeometry<GG, /*cachingEnabled*/false>
     static_assert(numFacesWithoutRearBoundaryFaces == 12); //TODO remove
 
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
+    using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
 
 public:
     //! export type of subcontrol volume face
@@ -215,7 +224,7 @@ public:
     using GridGeometry = GG;
 
     FaceCenteredDiamondFVElementGeometry(const GridGeometry& faceGridGeometry)
-    : gridGeometry_(&faceGridGeometry)
+    : gridGeometryPtr_(&faceGridGeometry)
     {}
 
     //! Get a sub control volume face with a local scv index
@@ -255,14 +264,14 @@ public:
     void bind(const Element& element)
     {
         // TODO!
-
+        elemGeometryType_ = element.type();
     }
 
     //! The grid geometry we are a restriction of
     const GridGeometry& gridGeometry() const
     {
-        assert(gridGeometry_);
-        return *gridGeometry_;
+        assert(gridGeometryPtr_);
+        return *gridGeometryPtr_;
     }
 
 private:
@@ -280,7 +289,8 @@ private:
     std::array<SubControlVolume, numElementFaces> scvs_;
     std::array<std::size_t, numElementFaces> globalToLocalScvIdx_;
 
-    const GridGeometry* gridGeometry_;
+    Dune::GeometryType elemGeometryType_;
+    const GridGeometry* gridGeometryPtr_;
 };
 
 } // end namespace
