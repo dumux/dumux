@@ -1,0 +1,5 @@
+P1
+# we expect this to fail because line three contains more than just the two dimensions
+2 2 1
+0
+0 1

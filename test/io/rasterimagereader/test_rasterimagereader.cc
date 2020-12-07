@@ -90,6 +90,35 @@ int main(int argc, char** argv)
 
     std::cout << std::endl;
 
+    // test file where the dimensions are given in the same line as the magic number and comments are present
+    const std::vector<bool> reference{1,0,0,1};
+
+    if (!isEqual(reference, NetPBMReader::readPBM("blackwhite_dim_firstline.pbm", false)))
+    {
+        std::cout << "Reading black/white with dimension in first line failed" << std::endl;
+        return 1;
+    }
+    if (!isEqual(reference, NetPBMReader::readPBM("blackwhite_dim_firstline.pbm", false)))
+    {
+        std::cout << "Reading black/white (binary) with dimension in first line failed" << std::endl;
+        return 1;
+    }
+
+    // test error message for poorly formatted file
+    try
+    {
+        NetPBMReader::readPBM("blackwhite_fail.pbm", false);
+    }
+    catch(const Dune::IOError& e)
+    {
+        const auto tokens = tokenize(e.what(), "]:");
+        if (tokens.back() != " Expecting only dimensions (2 numbers) in line 3")
+        {
+            std::cout << e.what() << std::endl;
+            return 1;
+        }
+    }
+
     //////////////////////////////////////////////////
     // Test the gray scale image reader
     //////////////////////////////////////////////////
@@ -124,6 +153,21 @@ int main(int argc, char** argv)
     {
         std::cout << "Reading black/white (binary) failed" << std::endl;
         return 1;
+    }
+
+    // test error message for poorly formatted file
+    try
+    {
+        NetPBMReader::readPBM("grayscale_fail_binary.pgm", false);
+    }
+    catch(const Dune::IOError& e)
+    {
+        const auto tokens = tokenize(e.what(), "]:");
+        if (tokens.back() != " Expecting only intensity (one number) in line 4")
+        {
+            std::cout << e.what() << std::endl;
+            return 1;
+        }
     }
 
     return 0;
