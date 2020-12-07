@@ -75,6 +75,7 @@ public:
         throatRadius_ = problem.spatialParams().throatRadius(element, elemVolVars);
         throatLength_ = problem.spatialParams().throatLength(element, elemVolVars);
         invaded_ = invaded;
+        poreToPoreDistance_ = element.geometry().volume();
 
         // get the non-wetting phase index
         using FluidSystem = typename ElementVolumeVariables::VolumeVariables::FluidSystem;
@@ -173,6 +174,9 @@ public:
     const auto& wettingLayerFlowVariables() const
     { return wettingLayerCache_; }
 
+    Scalar poreToPoreDistance() const
+    { return poreToPoreDistance_; }
+
 private:
     Throat::Shape throatCrossSectionShape_;
     Scalar throatShapeFactor_;
@@ -187,6 +191,7 @@ private:
     bool invaded_;
     NumCornerVector wettingLayerArea_;
     std::size_t nPhaseIdx_;
+    Scalar poreToPoreDistance_;
 
     typename AdvectionType::Transmissibility::SinglePhaseCache singlePhaseCache_;
     typename AdvectionType::Transmissibility::NonWettingPhaseCache nonWettingPhaseCache_;

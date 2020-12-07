@@ -64,6 +64,7 @@ public:
         throatCrossSectionalArea_ = problem.spatialParams().throatCrossSectionalArea(element, elemVolVars);
         throatLength_ = problem.spatialParams().throatLength(element, elemVolVars);
         throatRadius_ = problem.spatialParams().throatRadius(element, elemVolVars);
+        poreToPoreDistance_ = element.geometry().volume();
 
         cache_.fill(problem, element, fvGeometry, scvf, elemVolVars, *this, /*phaseIdx*/0);
         transmissibility_ = AdvectionType::calculateTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, *this, /*phaseIdx*/0);
@@ -90,6 +91,9 @@ public:
     const auto& singlePhaseFlowVariables() const
     { return cache_; }
 
+    Scalar poreToPoreDistance() const
+    { return poreToPoreDistance_; }
+
 private:
     Throat::Shape throatCrossSectionShape_;
     Scalar throatShapeFactor_;
@@ -97,6 +101,7 @@ private:
     Scalar throatCrossSectionalArea_;
     Scalar throatLength_;
     Scalar throatRadius_;
+    Scalar poreToPoreDistance_;
 
     typename AdvectionType::Transmissibility::SinglePhaseCache cache_;
 };
