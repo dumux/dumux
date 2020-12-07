@@ -80,11 +80,11 @@ namespace Dumux {
  * \ingroup Linear
  * \brief Base class for linear solvers
  */
-template<class LinearSolverTraits,
-         class InverseOperator, class Preconditioner,
-         class Matrix = typename Preconditioner::matrix_type>
+template<class LinearSolverTraits, class LinearAlgebraTraits,
+         class InverseOperator, class Preconditioner>
 class IstlLinearSolver
 {
+    using Matrix = typename LinearAlgebraTraits::Matrix;
     using XVector = typename InverseOperator::domain_type;
     using BVector = typename InverseOperator::range_type;
     using Scalar = typename InverseOperator::real_type;
@@ -286,7 +286,7 @@ private:
 };
 
 template<class LSTraits, class LATraits>
-using ILUBiCGSTABIstlSolver = IstlLinearSolver<LSTraits,
+using ILUBiCGSTABIstlSolver = IstlLinearSolver<LSTraits, LATraits,
                                                Dune::BiCGSTABSolver<typename LATraits::Vector>,
                                                Dune::SeqILU<typename LATraits::Matrix,
                                                             typename LATraits::Vector,
