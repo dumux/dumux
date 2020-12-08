@@ -22,8 +22,8 @@
 
 // ## Upscaling helper class (`upscalinghelper.hh`)
 //
-#include <array>
 #include <vector>
+#include <dune/common/exceptions.hh>
 // This file contains the __upscaling helper class__ which considers the volume flux leaving
 // the pore network in flow direction in order to find the upscaled Darcy permeability-
 // [[content]]
@@ -46,14 +46,30 @@ public:
     UpscalingHelper(const Assembler& assembler)
     : assembler_(assembler)
     {
-        for (int dimIdx = 0; dimIdx < dimWorld; ++dimIdx)
-            sideLength_[dimIdx] = assembler.gridGeometry().bBoxMax()[dimIdx] - assembler.gridGeometry().bBoxMin()[dimIdx];
+        // The dimensions of the domain must be known in order to calculate the permeability.
+        // One can either specify the domain size (e.g., based on the size of the sample used for the CT-scan image) ....
+        sideLength_ = getParam<std::vector<Scalar>>("Problem.SideLength", std::vector<Scalar>{});
+        if (!sideLength_.empty())
+        {
+            if (sideLength_.size() != dimWorld)
+                DUNE_THROW(Dune::IOError, "Problem.SideLength must have exactly " << dimWorld << " entries");
+        }
+        // ... or get the size automatically based on the bounding box the pore network.
+        else
+        {
+            std::cout << "Automatically determining side lengths of REV based on bounding box of pore network" << std::endl;
+            sideLength_.resize(dimWorld);
+            for (int dimIdx = 0; dimIdx < dimWorld; ++dimIdx)
+                sideLength_[dimIdx] = assembler.gridGeometry().bBoxMax()[dimIdx] - assembler.gridGeometry().bBoxMin()[dimIdx];
+        }
     }
+    // [[/codeblock]]
 
     // #### Calculate the intrinsic permeability
     // This function first evaluates the mass flux leaving the network in the direction of the applied pressure gradient.
     // Afterwards, the mass flux is converted into an area specify volume flux from which finally the intrinsic Darcy
     // permeability K [m^2] can be evaluated.
+    // [[codeblock]]
     template<class SolutionVector>
     void doUpscaling(const SolutionVector& x, const int direction) const
     {
@@ -85,10 +101,11 @@ public:
         tmp << "; K = " << K << " m^2" << std::endl;
         tmp << "\n########################################\n" << std::endl;
     }
+    // [[/codeblock]]
 
 private:
     const Assembler& assembler_;
-    std::array<Scalar, dimWorld> sideLength_;
+    std::vector<Scalar> sideLength_;
 };
 
 } // end namespace Dumux
