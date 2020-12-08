@@ -21,8 +21,8 @@ The code documentation is structured as follows:
 
 
 ```cpp
-#include <array>
 #include <vector>
+#include <dune/common/exceptions.hh>
 ```
 
 This file contains the __upscaling helper class__ which considers the volume flux leaving
@@ -39,7 +39,6 @@ leaving the network.
 ```
 
 ### A helper class to find the upscaled intrinsic Darcy permeability.
-[[codeblock]]
 
 ```cpp
 namespace Dumux {
@@ -55,8 +54,22 @@ public:
     UpscalingHelper(const Assembler& assembler)
     : assembler_(assembler)
     {
-        for (int dimIdx = 0; dimIdx < dimWorld; ++dimIdx)
-            sideLength_[dimIdx] = assembler.gridGeometry().bBoxMax()[dimIdx] - assembler.gridGeometry().bBoxMin()[dimIdx];
+        // The dimensions of the domain must be known in order to calculate the permeability.
+        // One can either specify the domain size (e.g., based on the size of the sample used for the CT-scan image) ....
+        sideLength_ = getParam<std::vector<Scalar>>("Problem.SideLength", std::vector<Scalar>{});
+        if (!sideLength_.empty())
+        {
+            if (sideLength_.size() != dimWorld)
+                DUNE_THROW(Dune::IOError, "Problem.SideLength must have exactly " << dimWorld << " entries");
+        }
+        // ... or get the size automatically based on the bounding box the pore network.
+        else
+        {
+            std::cout << "Automatically determining side lengths of REV based on bounding box of pore network" << std::endl;
+            sideLength_.resize(dimWorld);
+            for (int dimIdx = 0; dimIdx < dimWorld; ++dimIdx)
+                sideLength_[dimIdx] = assembler.gridGeometry().bBoxMax()[dimIdx] - assembler.gridGeometry().bBoxMin()[dimIdx];
+        }
     }
 ```
 
@@ -72,19 +85,13 @@ permeability K [m^2] can be evaluated.
         const auto boundaryFlux = PoreNetworkModelBoundaryFlux<Assembler>(assembler_, x);
         const auto outletPoreLabel = 2 + 2*direction;
         const auto massFlux = boundaryFlux.getFlux(std::vector<int>{outletPoreLabel});
-```
 
-create temporary stringstream with fixed scientifc formatting without affecting std::cout
-
-```cpp
+        // create temporary stringstream with fixed scientifc formatting without affecting std::cout
         std::ostream tmp(std::cout.rdbuf());
         tmp << std::fixed << std::scientific;
         static constexpr char dirNames[] = "xyz";
-```
 
-convert mass to volume flux
-
-```cpp
+        // convert mass to volume flux
         static const Scalar density = getParam<Scalar>("Component.LiquidDensity");
         static const Scalar dynamicViscosity = getParam<Scalar>("Component.LiquidKinematicViscosity") * density;
         static const auto pressureGradient = getParam<Scalar>("Problem.PressureGradient");
@@ -103,10 +110,14 @@ convert mass to volume flux
         tmp << "; K = " << K << " m^2" << std::endl;
         tmp << "\n########################################\n" << std::endl;
     }
+```
+
+
+```cpp
 
 private:
     const Assembler& assembler_;
-    std::array<Scalar, dimWorld> sideLength_;
+    std::vector<Scalar> sideLength_;
 };
 
 } // end namespace Dumux
