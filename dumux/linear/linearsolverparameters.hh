@@ -34,6 +34,14 @@
 
 namespace Dumux {
 
+namespace Detail {
+template <typename T>
+using GVDetector = typename T::GridView;
+
+template <typename T>
+using hasGridView = Dune::Std::is_detected<GVDetector, T>;
+}
+
 template<class LinearSolverTraits>
 class LinearSolverParameters
 {
@@ -62,7 +70,10 @@ public:
         params["preconditioner.relaxation"] = "1.0";
         params["preconditioner.verbosity"] = "0";
         params["preconditioner.defaultAggregationSizeMode"] = "isotropic";
-        params["preconditioner.defaultAggregationDimension"] = std::to_string(LinearSolverTraits::GridView::dimension);
+        if constexpr (Detail::hasGridView<LinearSolverTraits>::value)
+            params["preconditioner.defaultAggregationDimension"] = std::to_string(LinearSolverTraits::GridView::dimension);
+        else
+            params["preconditioner.defaultAggregationDimension"] = 3;
         params["preconditioner.maxLevel"] = "100";
         params["ParameterGroup"] = paramGroup;
         params["preconditioner.ParameterGroup"] = paramGroup;

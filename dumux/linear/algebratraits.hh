@@ -30,6 +30,8 @@
 #include <dune/istl/bvector.hh>
 #include <dune/common/std/type_traits.hh>
 
+#include<dumux/common/typetraits/vector.hh>
+
 namespace Dumux {
 
 namespace Detail {
@@ -49,8 +51,8 @@ struct LinearAlgebraTraits
     using Vector = V;
 };
 
-template<class Assembler>
-struct LinearAlgebraTraitsFromAssembler
+template<class Assembler, bool isMultiTypeBlockVector>
+struct LATraitsFromAssemblerImpl
 {
 private:
     using VectorPossiblyWithState = typename Assembler::ResidualType;
@@ -61,6 +63,17 @@ public:
     using Vector = Dune::BlockVector<BlockType>;
     using Matrix = typename Assembler::JacobianMatrix;
 };
+
+template<class Assembler>
+struct LATraitsFromAssemblerImpl<Assembler, true>
+{
+    using Vector = typename Assembler::ResidualType;
+    using Matrix = typename Assembler::JacobianMatrix;
+};
+
+template<class Assembler>
+using LinearAlgebraTraitsFromAssembler = LATraitsFromAssemblerImpl<Assembler,
+                                                                   isMultiTypeBlockVector<typename Assembler::ResidualType>::value>;
 
 } // end namespace Dumux
 

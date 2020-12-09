@@ -57,6 +57,14 @@ struct SequentialSolverTraits
     using Preconditioner = SeqPreconditioner;
 };
 
+struct SeqLinearSolverTraits
+{
+    template<class Matrix, class Vector>
+    using Sequential = SequentialSolverTraits<Matrix, Vector>;
+
+    static constexpr bool canCommunicate = false;
+};
+
 #if HAVE_MPI
 template <class MType, class VType>
 struct NonoverlappingSolverTraits
