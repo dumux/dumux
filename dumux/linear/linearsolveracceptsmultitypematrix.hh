@@ -24,7 +24,10 @@
 #ifndef DUMUX_LINEAR_SOLVER_ACCEPTS_MULTITYPEMATRIX_HH
 #define DUMUX_LINEAR_SOLVER_ACCEPTS_MULTITYPEMATRIX_HH
 
+#include <dune/istl/preconditioners.hh>
+
 #include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/istlsolvers.hh>
 
 namespace Dumux {
 
@@ -63,6 +66,12 @@ struct linearSolverAcceptsMultiTypeMatrix<SuperLUBackend> : public std::false_ty
 template<>
 struct linearSolverAcceptsMultiTypeMatrix<UMFPackBackend> : public std::false_type {};
 #endif // HAVE_UMFPACK
+
+template<class Prec>
+struct preconditionerAcceptsMultiTypeMatrix : public std::true_type {};
+
+template<class M, class X, class Y>
+struct preconditionerAcceptsMultiTypeMatrix<Dune::SeqILU<M, X, Y>> : public std::false_type {};
 
 } // end namespace Dumux
 

@@ -38,7 +38,10 @@
 #include <dune/istl/scalarproducts.hh>
 
 #include <dumux/common/typetraits/matrix.hh>
+#include <dumux/common/typetraits/vector.hh>
 #include <dumux/linear/linearsolverparameters.hh>
+#include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
+#include <dumux/linear/matrixconverter.hh>
 #include <dumux/linear/parallelhelpers.hh>
 
 namespace Dumux::Detail {
@@ -55,8 +58,8 @@ constexpr std::size_t preconditionerBlockLevel() noexcept
     return isMultiTypeBlockMatrix<M>::value ? 2 : 1;
 }
 
-template<class LinearSolverTraits>
-Dune::SolverCategory::Category solverCategory(const typename LinearSolverTraits::GridView& gridView)
+template<class LinearSolverTraits, class GridView>
+Dune::SolverCategory::Category solverCategory(const GridView& gridView)
 {
     if constexpr (LinearSolverTraits::canCommunicate)
     {
@@ -85,12 +88,15 @@ template<class LinearSolverTraits, class LinearAlgebraTraits,
 class IstlLinearSolver
 {
     using Matrix = typename LinearAlgebraTraits::Matrix;
-    using XVector = typename InverseOperator::domain_type;
-    using BVector = typename InverseOperator::range_type;
+    using XVector = typename LinearAlgebraTraits::Vector;
+    using BVector = typename LinearAlgebraTraits::Vector;
     using Scalar = typename InverseOperator::real_type;
 #if HAVE_MPI
     using Comm = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>, int>;
-    using ScalarProduct = Dune::ScalarProduct<XVector>;
+    using ScalarProduct = Dune::ScalarProduct<typename InverseOperator::domain_type>;
+    using ParallelHelper = std::conditional_t<isMultiTypeBlockVector<XVector>::value,
+                                              double,
+                                              ParallelISTLHelper<LinearSolverTraits>>;
 #endif
 
 public:
@@ -110,8 +116,9 @@ public:
     /*!
      * \brief Constructor for parallel and sequential solvers
      */
-    IstlLinearSolver(const typename LinearSolverTraits::GridView& gridView,
-                     const typename LinearSolverTraits::DofMapper& dofMapper,
+    template <class GridView, class DofMapper>
+    IstlLinearSolver(const GridView& gridView,
+                     const DofMapper& dofMapper,
                      const std::string& paramGroup = "")
     {
         initializeParameters_(paramGroup);
@@ -135,10 +142,11 @@ public:
     /*!
      * \brief Constructor with custom scalar product and communication
      */
+    template <class GridView, class DofMapper>
     IstlLinearSolver(std::shared_ptr<Comm> communication,
                      std::shared_ptr<ScalarProduct> scalarProduct,
-                     const typename LinearSolverTraits::GridView& gridView,
-                     const typename LinearSolverTraits::DofMapper& dofMapper,
+                     const GridView& gridView,
+                     const DofMapper& dofMapper,
                      const std::string& paramGroup = "")
     {
         initializeParameters_(paramGroup);
@@ -165,20 +173,27 @@ public:
     Scalar norm(const XVector& x) const
     {
 #if HAVE_MPI
-        if (solverCategory_ == Dune::SolverCategory::nonoverlapping)
+        if constexpr (LinearSolverTraits::canCommunicate)
         {
-            auto y(x); // make a copy because the vector needs to be made consistent
-            using GV = typename LinearSolverTraits::GridView;
-            using DM = typename LinearSolverTraits::DofMapper;
-            ParallelVectorHelper<GV, DM, LinearSolverTraits::dofCodim> vectorHelper(parallelHelper_->gridView(), parallelHelper_->dofMapper());
-            vectorHelper.makeNonOverlappingConsistent(y);
+            if (solverCategory_ == Dune::SolverCategory::nonoverlapping)
+            {
+                auto y(x); // make a copy because the vector needs to be made consistent
+                using GV = typename LinearSolverTraits::GridView;
+                using DM = typename LinearSolverTraits::DofMapper;
+                ParallelVectorHelper<GV, DM, LinearSolverTraits::dofCodim> vectorHelper(parallelHelper_->gridView(), parallelHelper_->dofMapper());
+                vectorHelper.makeNonOverlappingConsistent(y);
+                return scalarProduct_->norm(y);
+            }
+        }
+#endif
+        if constexpr (!preconditionerAcceptsMultiTypeMatrix<Preconditioner>::value
+                      && isMultiTypeBlockVector<XVector>::value)
+        {
+            auto y = VectorConverter<XVector>::multiTypeToBlockVector(x);
             return scalarProduct_->norm(y);
         }
         else
-#endif
-        {
             return scalarProduct_->norm(x);
-        }
     }
 
     const Dune::InverseOperatorResult& result() const
@@ -203,13 +218,46 @@ private:
 
     bool solveSequential_(Matrix& A, XVector& x, BVector& b)
     {
-        // construct solver from linear operator
-        using SequentialTraits = typename LinearSolverTraits::template Sequential<Matrix, XVector>;
-        auto linearOperator = std::make_shared<typename SequentialTraits::LinearOperator>(A);
-        auto solver = constructPreconditionedSolver_(linearOperator);
+        if constexpr (preconditionerAcceptsMultiTypeMatrix<Preconditioner>::value
+                      || !isMultiTypeBlockMatrix<Matrix>::value)
+        {
+            // construct solver from linear operator
+            using SequentialTraits = typename LinearSolverTraits::template Sequential<Matrix, XVector>;
+            auto linearOperator = std::make_shared<typename SequentialTraits::LinearOperator>(A);
+            auto solver = constructPreconditionedSolver_(linearOperator);
 
-        // solve linear system
-        solver.apply(x, b, result_);
+            // solve linear system
+            solver.apply(x, b, result_);
+        }
+        else
+        {
+            // create the bcrs matrix the IterativeSolver backend can handle
+            auto M = MatrixConverter<Matrix>::multiTypeToBCRSMatrix(A);
+
+            // get the new matrix sizes
+            const std::size_t numRows = M.N();
+            assert(numRows == M.M());
+
+            // create the vector the IterativeSolver backend can handle
+            auto bTmp = VectorConverter<BVector>::multiTypeToBlockVector(b);
+            assert(bTmp.size() == numRows);
+
+            // create a blockvector to which the linear solver writes the solution
+            using VectorBlock = typename Dune::FieldVector<Scalar, 1>;
+            using BlockVector = typename Dune::BlockVector<VectorBlock>;
+            BlockVector y(numRows);
+
+            auto linearOperator = std::make_shared<Dune::MatrixAdapter<decltype(M), decltype(y), decltype(bTmp)>>(M);
+            auto solver = constructPreconditionedSolver_(linearOperator);
+
+            // solve linear system
+            solver.apply(y, bTmp, result_);
+
+            // copy back the result y into x
+            if(result_.converged)
+                VectorConverter<XVector>::retrieveValues(x, y);
+        }
+
         return result_.converged;
     }
 
@@ -221,7 +269,6 @@ private:
         // TODO: This can be adapted once the situation in Dune ISTL changes.
         if constexpr (isMultiTypeBlockMatrix<Matrix>::value)
             return solveSequential_(A, x, b);
-
         else
         {
             switch (solverCategory_)
@@ -274,7 +321,7 @@ private:
     }
 
 #if HAVE_MPI
-    std::unique_ptr<ParallelISTLHelper<LinearSolverTraits>> parallelHelper_;
+    std::unique_ptr<ParallelHelper> parallelHelper_;
     std::shared_ptr<Comm> communication_;
 #endif
     Dune::SolverCategory::Category solverCategory_;
@@ -285,14 +332,34 @@ private:
     std::string name_;
 };
 
+template<class LSTraits, class LATraits, bool isMultiType>
+struct ILUBiCGSTABIstlSolverImpl;
+
 template<class LSTraits, class LATraits>
-using ILUBiCGSTABIstlSolver = IstlLinearSolver<LSTraits, LATraits,
-                                               Dune::BiCGSTABSolver<typename LATraits::Vector>,
-                                               Dune::SeqILU<typename LATraits::Matrix,
-                                                            typename LATraits::Vector,
-                                                            typename LATraits::Vector,
-                                                            Detail::preconditionerBlockLevel<typename LATraits::Matrix>()>
-                                               >;
+struct ILUBiCGSTABIstlSolverImpl<LSTraits, LATraits, false>
+{
+    using type = IstlLinearSolver<LSTraits, LATraits,
+                                  Dune::BiCGSTABSolver<typename LATraits::Vector>,
+                                  Dune::SeqILU<typename LATraits::Matrix,
+                                               typename LATraits::Vector,
+                                               typename LATraits::Vector>
+                                 >;
+};
+
+template<class LSTraits, class LATraits>
+struct ILUBiCGSTABIstlSolverImpl<LSTraits, LATraits, true>
+{
+    using type =  IstlLinearSolver<LSTraits, LATraits,
+                                   Dune::BiCGSTABSolver<decltype(VectorConverter<typename LATraits::Vector>::multiTypeToBlockVector(std::declval<typename LATraits::Vector>()))>,
+                                   Dune::SeqILU<decltype(MatrixConverter<typename LATraits::Matrix>::multiTypeToBCRSMatrix(std::declval<typename LATraits::Matrix>())),
+                                                decltype(VectorConverter<typename LATraits::Vector>::multiTypeToBlockVector(std::declval<typename LATraits::Vector>())),
+                                                decltype(VectorConverter<typename LATraits::Vector>::multiTypeToBlockVector(std::declval<typename LATraits::Vector>()))>
+                                  >;
+};
+
+template<class LSTraits, class LATraits>
+using ILUBiCGSTABIstlSolver = typename ILUBiCGSTABIstlSolverImpl<LSTraits, LATraits,
+                                                                 isMultiTypeBlockVector<typename LATraits::Vector>::value>::type;
 
 } // end namespace Dumux
 
