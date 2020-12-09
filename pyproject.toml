@@ -1,0 +1,3 @@
+[build-system]
+requires = ['setuptools', 'wheel', 'scikit-build', 'cmake', 'ninja', 'requests', 'dune-common>=2.8.0.dev0', 'dune-grid>=2.8.0.dev0', 'dune-localfunctions>=2.8.0.dev0', 'dune-istl>=2.8.0.dev0', 'dune-alugrid>=2.8.0.dev0']
+build-backend = 'setuptools.build_meta'

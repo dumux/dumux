@@ -43,3 +43,8 @@ __pycache__
 
 # always consider reference solutions
 !*reference.vtu
+
+# ignore files generated during python setup.py sdist
+MANIFEST
+_skbuild/
+dist
