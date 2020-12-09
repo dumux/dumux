@@ -50,7 +50,8 @@
 
 namespace Dumux {
 
-
+// So-called nonnonforming finite element spaces, where the local basis is only continuous
+// at given points on the faces.
 template< class CoordScalar, class Scalar, unsigned int dim>
 class NonconformingFECache
 {
