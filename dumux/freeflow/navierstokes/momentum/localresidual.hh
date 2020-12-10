@@ -133,6 +133,9 @@ public:
         const static Scalar n = getParam<Scalar>("Phasefield.n");
         source += -K/xi * (1-problem.phasefield(element, scv))*n /
             (problem.phasefield(element, scv) + n) * elemVolVars[scv].velocity();
+        source += 0.5 * problem.density(element, scv) *
+            (problem.phasefield(element, scv, false) - problem.phasefield(element, scv, true))
+            /problem.timestepsize();
 
         // Axisymmetric problems in 2D feature an extra source terms arising from the transformation to cylindrical coordinates.
         // See Ferziger/Peric: Computational methods for fluid dynamics chapter 8.

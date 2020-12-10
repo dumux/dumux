@@ -124,7 +124,8 @@ public:
         const static Scalar xi = getParam<Scalar>("Phasefield.xi");
         const static Scalar react = getParam<Scalar>("Phasefield.Reaction");
         Scalar f_P = react * (priVars[uIdx] - 1.0);
-        source[Indices::phasefieldEqIdx] = 16.0 * sigma * (
+        source[Indices::phasefieldEqIdx] =
+            16.0 * sigma * (
             priVars[phi1Idx] * (1 - priVars[phi1Idx]) * (1 - 2 * priVars[phi1Idx])
             )
             - 4 * xi * priVars[phi1Idx] * (1-priVars[phi1Idx]) * f_P

@@ -3,14 +3,14 @@ DtInitial = 1 # [s]
 TEnd = 2 # [s]
 
 [Grid]
-UpperRight = 10 2
-Cells = 50 20
+UpperRight = 5 2
+Cells = 50 40
 
 [Problem]
-Name = test_channel_stokes_new # name passed to the output routines
-InletVelocity = 1
+Name = test_channel_navier_stokes_new # name passed to the output routines
+InletVelocity = 30
 EnableGravity = false
-EnableInertiaTerms = false
+EnableInertiaTerms = true
 OutletCondition = Outflow
 PrintMatrix = false
 UseVelocityProfile = true
@@ -44,16 +44,16 @@ NumericDifference.BaseEpsilon =  1e-3
 EnableDilatationTerm = false
 
 [Phasefield]
-xi = 0.5
+xi = 0.25
 delta = 1e-8
 sigma = 3.75e-3
 DiffCoeff = 0.2
 InitialConcentration = 1.0
-StartingRadius = 0.5
+StartingRadius = 0.3
 StartingScaling = 3.0
 DirichletRadius = 0.5
 DirichletScaling = 3.0
-K = 1.0
+K = 100.0
 n = 10.0
 Reaction = 0.0
 AdvectiveTransport = 0.0
