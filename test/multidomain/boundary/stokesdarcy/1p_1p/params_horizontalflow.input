@@ -1,6 +1,6 @@
 [Darcy.Grid]
 UpperRight = 1 1.2
-Cells = 20 20
+Cells = 20 24
 
 [Stokes.Grid]
 LowerLeft = 0 1
