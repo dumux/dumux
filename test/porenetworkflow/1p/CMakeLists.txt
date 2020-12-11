@@ -1,4 +1,5 @@
 add_subdirectory(nonisothermal)
+add_subdirectory(noncreepingflow)
 
 add_input_file_links()
 dune_symlink_to_source_files(FILES grids)
