@@ -1,0 +1,16 @@
+[Grid]
+File = ./../grids/pnm_converted.dgf
+PoreGeometry = Cube
+ThroatCrossSectionShape = Square
+
+[Problem]
+Name = test_pnm_1p_noncreepingflow # name passed to the output routines
+EnableGravity = false
+
+[Vtk]
+AddVelocity = 0
+
+[Newton]
+MaxSteps = 500
+TargetSteps = 6
+MaxRelativeShift = 1e-8
