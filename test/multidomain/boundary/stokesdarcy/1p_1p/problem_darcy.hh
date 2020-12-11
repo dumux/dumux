@@ -63,7 +63,10 @@ struct FluidSystem<TypeTag, TTag::DarcyOneP>
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::DarcyOneP> { using type = Dune::YaspGrid<2>; };
+struct Grid<TypeTag, TTag::DarcyOneP> {
+    using HostGrid = Dune::YaspGrid<2>;
+    using type = Dune::SubGrid<HostGrid::dimension, HostGrid>;
+};
 
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::DarcyOneP>

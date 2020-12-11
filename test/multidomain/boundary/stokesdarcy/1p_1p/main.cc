@@ -94,11 +94,34 @@ int main(int argc, char** argv)
     // for both sub-domains
     using DarcyGridManager = Dumux::GridManager<GetPropType<DarcyTypeTag, Properties::Grid>>;
     DarcyGridManager darcyGridManager;
-    darcyGridManager.init("Darcy"); // pass parameter group
+
+    // create a grid
+    // cut out elements within the stair-case region
+    auto darcySelector = [&](const auto& element)
+    {
+        const auto globalPos = element.geometry().center();
+        const auto x = globalPos[0];
+        const auto y = globalPos[1];
+
+        return (y<1.0 && x < 0.5) || (x>0.5 && y<1.2);
+    };
+
+    darcyGridManager.init(darcySelector, "Darcy"); // pass parameter group
 
     using StokesGridManager = Dumux::GridManager<GetPropType<StokesTypeTag, Properties::Grid>>;
     StokesGridManager stokesGridManager;
-    stokesGridManager.init("Stokes"); // pass parameter group
+
+    // cut out elements within the stair-case region
+    auto stokesSelector = [&](const auto& element)
+    {
+        const auto globalPos = element.geometry().center();
+        const auto x = globalPos[0];
+        const auto y = globalPos[1];
+
+        return y>1.2 || (x < 0.5 && y>1);
+    };
+
+    stokesGridManager.init(stokesSelector, "Stokes");
 
     // we compute on the leaf grid view
     const auto& darcyGridView = darcyGridManager.grid().leafGridView();
