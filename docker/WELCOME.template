@@ -1,0 +1,9 @@
+
+*********************************************************
+Welcome to the dumux-pub Docker container "${modName}"!
+
+You can run pre-compiled examples in the sub-folders of PATH_TO_MODULES/dumux-lecture/build-cmake/,
+or compile them there using make <example>.
+
+Note that the container does not have graphics support, but copying the output (e.g. VTK files) to the folder
+/dumux/shared will make them available outside this container on the host for display.
