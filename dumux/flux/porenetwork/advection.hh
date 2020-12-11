@@ -148,6 +148,184 @@ public:
     }
 };
 
+/*!
+ * \file
+ * \ingroup PoreNetworkFlux
+ * \brief Non-creeping flow flux law to describe the advective flux for pore-network models based on El-Zehairy et al.(2019).
+ */
+template <class ScalarT, class... TransmissibilityLawTypes>
+class PoreNetworkNonCreepingFlow
+{
+public:
+    //! Export the Scalar type
+    using Scalar = ScalarT;
+
+    //! Export the creeping flow transmissibility law
+    using TransmissibilityCreepingFlow = Detail::Transmissibility<TransmissibilityLawTypes...>;
+
+    //! Inherit transmissibility from creeping flow transmissibility law to cache non-creeping flow-related parameters
+    class Transmissibility: public TransmissibilityCreepingFlow
+    {
+    public:
+        class SinglePhaseCache : public TransmissibilityCreepingFlow::SinglePhaseCache
+        {
+            using ParentType = typename TransmissibilityCreepingFlow::SinglePhaseCache;
+        public:
+            using Scalar = ScalarT;
+
+            template<class Problem, class Element, class FVElementGeometry, class ElementVolumeVariables, class FluxVariablesCache>
+            void fill(const Problem& problem,
+                    const Element& element,
+                    const FVElementGeometry& fvGeometry,
+                    const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                    const ElementVolumeVariables& elemVolVars,
+                    const FluxVariablesCache& fluxVarsCache,
+                    const int phaseIdx)
+            {
+                ParentType::fill(problem, element, fvGeometry,scvf, elemVolVars, fluxVarsCache, phaseIdx);
+                const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
+
+                for (const auto& scv : scvs(fvGeometry))
+                {
+                    const auto localIdx = scv.indexInElement();
+                    const Scalar throatToPoreAreaRatio = fluxVarsCache.throatCrossSectionalArea() / problem.spatialParams().poreCrossSectionalArea(element, scv, elemSol);
+                    const Scalar kd = problem.spatialParams().kd(element, scv, elemSol);
+                    const Scalar alpha = problem.spatialParams().alpha(element, scv, elemSol);
+
+                    expansionCoefficient_[localIdx] = getExpansionCoefficient_(throatToPoreAreaRatio, kd, alpha);
+                    contractionCoefficient_[localIdx] = getContractionCoefficient_(throatToPoreAreaRatio, kd, alpha);
+                }
+            }
+
+            Scalar expansionCoefficient(int i) const
+            { return expansionCoefficient_[i]; }
+
+            Scalar contractionCoefficient(int i) const
+            { return contractionCoefficient_[i]; }
+
+        private:
+
+            Scalar getExpansionCoefficient_(const Scalar throatToPoreAreaRatio, const Scalar kd, const Scalar alpha) const
+            {
+                return throatToPoreAreaRatio*throatToPoreAreaRatio*(2*kd-alpha)+alpha-2*kd*throatToPoreAreaRatio-(1-throatToPoreAreaRatio*throatToPoreAreaRatio);
+            }
+
+            Scalar getContractionCoefficient_(const Scalar throatToPoreAreaRatio, const Scalar kd, const Scalar alpha) const
+            {
+                const Scalar contractionAreaRatio = getContractionAreaRatio_(throatToPoreAreaRatio);
+                return (1-(throatToPoreAreaRatio*throatToPoreAreaRatio*alpha-2*kd/*+1-throatToPoreAreaRatio*throatToPoreAreaRatio*/)*contractionAreaRatio*contractionAreaRatio-2*contractionAreaRatio)/(contractionAreaRatio*contractionAreaRatio);
+            }
+
+            Scalar getContractionAreaRatio_(const Scalar throatToPoreAreaRatio) const
+            {
+                return 1-(1-throatToPoreAreaRatio)/(2.08*(1-throatToPoreAreaRatio)+0.5371);
+            }
+
+            std::array<Scalar, 2> expansionCoefficient_;
+            std::array<Scalar, 2> contractionCoefficient_;
+        };
+    };
+
+    /*!
+     * \brief Returns the advective flux of a fluid phase
+     *        across the given sub-control volume face (corresponding to a pore throat).
+     * \note The flux is given in N*m, and can be converted
+     *       into a volume flux (m^3/s) or mass flux (kg/s) by applying an upwind scheme
+     *       for the mobility (1/viscosity) or the product of density and mobility, respectively.
+     */
+    template<class Problem, class Element, class FVElementGeometry,
+             class ElementVolumeVariables, class SubControlVolumeFace, class ElemFluxVarsCache>
+    static Scalar flux(const Problem& problem,
+                       const Element& element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolumeFace& scvf,
+                       const int phaseIdx,
+                       const ElemFluxVarsCache& elemFluxVarsCache)
+    {
+        const auto& fluxVarsCache = elemFluxVarsCache[scvf];
+
+        // Get the inside and outside volume variables
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+        const auto& insideVolVars = elemVolVars[insideScv];
+        const auto& outsideVolVars = elemVolVars[outsideScv];
+
+        // calculate the pressure difference
+        const Scalar deltaP = insideVolVars.pressure(phaseIdx) - outsideVolVars.pressure(phaseIdx);
+        const Scalar creepingFlowTransMissibility = fluxVarsCache.transmissibility(phaseIdx);
+        const Scalar throatCrossSectionalArea = fluxVarsCache.throatCrossSectionalArea();
+
+        assert(scvf.insideScvIdx() == 0);
+        assert(scvf.outsideScvIdx() == 1);
+
+        Scalar A0;
+        Scalar mu; // TODO upwinding?
+        //! Use contraction and expansion coeffiecient according to flow direction
+        if (deltaP > 0)
+        {
+            const Scalar Kc = fluxVarsCache.singlePhaseFlowVariables().contractionCoefficient(0);
+            const Scalar Ke = fluxVarsCache.singlePhaseFlowVariables().expansionCoefficient(1);
+            A0 = (Kc * elemVolVars[0].density() + Ke * elemVolVars[1].density()) / (2.0*throatCrossSectionalArea*throatCrossSectionalArea);
+            mu = elemVolVars[0].viscosity();
+        }
+        else
+        {
+            const Scalar Kc = fluxVarsCache.singlePhaseFlowVariables().contractionCoefficient(1);
+            const Scalar Ke = fluxVarsCache.singlePhaseFlowVariables().expansionCoefficient(0);
+            A0 = (Kc * elemVolVars[1].density() + Ke * elemVolVars[0].density()) / (2.0*throatCrossSectionalArea*throatCrossSectionalArea);
+            mu = elemVolVars[1].viscosity();
+        }
+
+        const Scalar B0 = 1/creepingFlowTransMissibility * mu;
+        const Scalar C0 = -deltaP;
+
+        using std::sqrt;
+        const auto tmp = B0*B0 - 4*A0*C0;
+        //! Use creeping flow calculation if under the square root operator is negative
+        if (tmp < 0)
+            return creepingFlowTransMissibility*deltaP;
+        else
+            return mu*(-B0 + sqrt(tmp)) / (2*A0);
+
+        //TODO: gravity
+
+    }
+
+    /*!
+     * \brief Returns the throat conductivity
+     *
+     * \param problem The problem
+     * \param element The element
+     * \param ElementVolumeVariables The element volume variables
+     */
+    template<class Problem, class Element, class FVElementGeometry, class ElementVolumeVariables, class FluxVariablesCache>
+    static Scalar calculateTransmissibility(const Problem& problem,
+                                            const Element& element,
+                                            const FVElementGeometry& fvGeometry,
+                                            const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                            const ElementVolumeVariables& elemVolVars,
+                                            const FluxVariablesCache& fluxVarsCache,
+                                            const int phaseIdx)
+    {
+        static_assert(ElementVolumeVariables::VolumeVariables::numFluidPhases() == 1);
+        return Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, phaseIdx);
+    }
+
+    template<class Problem, class Element, class FVElementGeometry, class ElementVolumeVariables, class FluxVariablesCache>
+    static std::array<Scalar, 2> calculateTransmissibilities(const Problem& problem,
+                                                             const Element& element,
+                                                             const FVElementGeometry& fvGeometry,
+                                                             const ElementVolumeVariables& elemVolVars,
+                                                             const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                                             const FluxVariablesCache& fluxVarsCache)
+    {
+        static_assert(ElementVolumeVariables::VolumeVariables::numFluidPhases() == 1);
+        const Scalar t = calculateTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, 0);
+        return std::array<Scalar, 2>{t, -t};
+    }
+
+};
 
 } // end namespace
 
