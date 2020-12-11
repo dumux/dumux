@@ -9,5 +9,5 @@ dune_add_test(NAME test_pnm_1p_noncreeping_flow
               COMMAND ${dumux_INCLUDE_DIRS}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_1p_noncreeping_flow-reference.vtp
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_1p_noncreeping_flow-00014.vtp
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_1p_noncreeping_flow-00000.vtp
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_pnm_1p_noncreeping_flow")
