@@ -144,7 +144,9 @@ public:
         useVelocityProfile_ = getParam<bool>("Problem.UseVelocityProfile", false);
         outletPressure_ = getParam<Scalar>("Problem.OutletPressure", 1.1e5);
 
-        hasAnalyticalSolution_ = (outletCondition_ == OutletCondition::neumannXneumannY);
+        const bool isStationary = getParam<bool>("Problem.IsStationary", false);
+
+        hasAnalyticalSolution_ = isStationary && useVelocityProfile_ && (outletCondition_ != OutletCondition::doNothing);
         if (hasAnalyticalSolution_)
             createAnalyticalSolution_();
     }
