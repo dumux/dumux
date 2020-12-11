@@ -6,9 +6,11 @@
 # (c) 2016 Thomas Fetzer
 # (c) 2016 Christoph Grüninger
 #
+# NOTE: This script is deprecated and will be removed after release 3.4.
+#       Please use the corresponding Python script "getusedversions.py"
 
 if [ "$1" = "-h" ]; then
-  echo "USAGE: ./getDumuxDuneVersions.sh"
+  echo "USAGE: ./getusedversions.sh"
   echo; exit
 fi
 
@@ -86,6 +88,7 @@ function getVersionGit
 # run script from command line
 # suppressed for use of external script when variable set accordingly
 if [ "$CALL_FROM_EXTERNAL_SCRIPT" != "yes" ]; then
+  echo "NOTE: This script is deprecated, please use getusedversions.py instead!"
   echo "# DUNE/DUMUX VERSIONS" > $OUTFILE
 
   echo "Creating file containing the version numbers:"
