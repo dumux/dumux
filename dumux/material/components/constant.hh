@@ -160,8 +160,7 @@ public:
      * \param temperature temperature of phase in \f$\mathrm{[K]}\f$
      * \param pressure pressure of phase in \f$\mathrm{[Pa]}\f$
      */
-    static const Scalar liquidEnthalpy(Scalar temperature,
-                                       Scalar pressure)
+    static Scalar liquidEnthalpy(Scalar temperature, Scalar pressure)
     {
         static const Scalar enthalpy = getParamFromGroup<Scalar>(std::to_string(id), "Component.LiquidEnthalpy");
         return enthalpy;
