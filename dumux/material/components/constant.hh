@@ -144,6 +144,42 @@ public:
     }
 
     /*!
+     * \brief Thermal conductivity of the component \f$\mathrm{[W/(m*K)]}\f$ as a liquid.
+     * \param temperature temperature of phase in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of phase in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidThermalConductivity(Scalar temperature, Scalar pressure)
+    {
+        static const Scalar thermalConductivity = getParamFromGroup<Scalar>(std::to_string(id), "Component.LiquidThermalConductivity");
+        return thermalConductivity;
+    }
+
+    /*!
+     * \brief Specific enthalpy of the component \f$\mathrm{[J/kg]}\f$ as a liquid.
+     *
+     * \param temperature temperature of phase in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of phase in \f$\mathrm{[Pa]}\f$
+     */
+    static const Scalar liquidEnthalpy(Scalar temperature,
+                                       Scalar pressure)
+    {
+        static const Scalar enthalpy = getParamFromGroup<Scalar>(std::to_string(id), "Component.LiquidEnthalpy");
+        return enthalpy;
+    }
+
+    /*!
+     * \brief Specific isobaric heat capacity of the component \f$\mathrm{[J/(kg*K)]}\f$ as a liquid.
+     *
+     * \param temperature temperature of phase in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of phase in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidHeatCapacity(Scalar temperature, Scalar pressure)
+    {
+        static const Scalar heatCapacity = getParamFromGroup<Scalar>(std::to_string(id), "Component.LiquidHeatCapacity");
+        return heatCapacity;
+    }
+
+    /*!
      * \brief Sets the gas density in \f$\mathrm{[kg/m^3]}\f$.
      *
      * \param temperature phase temperature in \f$\mathrm{[K]}\f$
