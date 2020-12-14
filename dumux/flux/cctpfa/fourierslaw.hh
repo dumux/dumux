@@ -53,6 +53,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
     using Extrusion = Extrusion_t<GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementFluxVarsCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
@@ -114,6 +115,39 @@ public:
      * \note This law assumes thermal equilibrium between the fluid
      *       and solid phases, and uses an effective thermal conductivity
      *       for the overall aggregate.
+     *       This overload allows to explicitly specify the inside and outside volume variables
+     *       which can be useful to evaluate conductive fluxes at boundaries with given outside values.
+     *       This only works if scvf.numOutsideScv() == 1.
+     *
+     */
+    static Scalar flux(const Problem& problem,
+                       const Element& element,
+                       const FVElementGeometry& fvGeometry,
+                       const VolumeVariables& insideVolVars,
+                       const VolumeVariables& outsideVolVars,
+                       const SubControlVolumeFace& scvf,
+                       const ElementFluxVarsCache& elemFluxVarsCache)
+    {
+        if constexpr (isMixedDimensional_)
+            if (scvf.numOutsideScv() != 1)
+                DUNE_THROW(Dune::Exception, "This flux overload requires scvf.numOutsideScv() == 1");
+
+        // heat conductivities are always solution dependent (?)
+        Scalar tij = elemFluxVarsCache[scvf].heatConductionTij();
+
+        // get the inside/outside temperatures
+        const auto tInside = insideVolVars.temperature();
+        const auto tOutside = outsideVolVars.temperature();
+
+        return tij*(tInside - tOutside);
+    }
+
+    /*!
+     * \brief Returns the heat flux within the porous medium
+     *        (in J/s) across the given sub-control volume face.
+     * \note This law assumes thermal equilibrium between the fluid
+     *       and solid phases, and uses an effective thermal conductivity
+     *       for the overall aggregate.
      */
     static Scalar flux(const Problem& problem,
                        const Element& element,
@@ -163,7 +197,7 @@ public:
 
             const auto outsideLambda = outsideVolVars.effectiveThermalConductivity();
             Scalar tj;
-            if (dim == dimWorld)
+            if constexpr (dim == dimWorld)
                 // assume the normal vector from outside is anti parallel so we save flipping a vector
                 tj = -1.0*computeTpfaTransmissibility(scvf, outsideScv, outsideLambda, outsideVolVars.extrusionFactor());
             else
@@ -207,6 +241,8 @@ private:
         }
         return sumTempTi/sumTi;
     }
+
+    static constexpr bool isMixedDimensional_ = static_cast<int>(GridView::dimension) < static_cast<int>(GridView::dimensionworld);
 };
 
 } // end namespace Dumux
