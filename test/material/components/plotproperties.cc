@@ -368,15 +368,17 @@ int main(int argc, char *argv[])
         plotStuff< Components::ChlorideIon<double> >(openPlotWindow);
     else if (compName == "Constant")
     {
-        Parameters::init([](auto& params){ params["Component.LiquidDensity"] = "1e3"; });
-        Parameters::init([](auto& params){ params["Component.LiquidKinematicViscosity"] = "1e-3"; });
-        Parameters::init([](auto& params){ params["Component.LiquidThermalConductivity"] = "0.679"; });
-        Parameters::init([](auto& params){ params["Component.LiquidHeatCapacity"] = "4.2e3"; });
-        Parameters::init([](auto& params){ params["Component.GasDensity"] = "1"; });
-        Parameters::init([](auto& params){ params["Component.GasKinematicViscosity"] = "1"; });
-        Parameters::init([](auto& params){ params["Component.SolidDensity"] = "1e3"; });
-        Parameters::init([](auto& params){ params["Component.SolidThermalConductivity"] = "0.679"; });
-        Parameters::init([](auto& params){ params["Component.SolidHeatCapacity"] = "4.2e3"; });
+        Parameters::init([](auto& params){
+            params["Component.LiquidDensity"] = "1e3";
+            params["Component.LiquidKinematicViscosity"] = "1e-3";
+            params["Component.LiquidThermalConductivity"] = "0.679";
+            params["Component.LiquidHeatCapacity"] = "4.2e3";
+            params["Component.GasDensity"] = "1";
+            params["Component.GasKinematicViscosity"] = "1";
+            params["Component.SolidDensity"] = "1e3";
+            params["Component.SolidThermalConductivity"] = "0.679";
+            params["Component.SolidHeatCapacity"] = "4.2e3";
+        });
         plotStuff< Components::Constant<1, double> >(openPlotWindow);
     }
     else if (compName == "Glucose")
