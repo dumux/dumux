@@ -43,6 +43,7 @@
 #include <dumux/material/components/carbonateion.hh>
 #include <dumux/material/components/ch4.hh>
 #include <dumux/material/components/chlorideion.hh>
+#include <dumux/material/components/constant.hh>
 #include <dumux/material/components/co2.hh>
 #include <dumux/material/components/glucose.hh>
 #include <dumux/material/components/granite.hh>
@@ -365,6 +366,21 @@ int main(int argc, char *argv[])
         plotStuff< Components::CH4<double> >(openPlotWindow);
     else if (compName == "ChlorideIon")
         plotStuff< Components::ChlorideIon<double> >(openPlotWindow);
+    else if (compName == "Constant")
+    {
+        Parameters::init([](auto& params){
+            params["Component.LiquidDensity"] = "1e3";
+            params["Component.LiquidKinematicViscosity"] = "1e-3";
+            params["Component.LiquidThermalConductivity"] = "0.679";
+            params["Component.LiquidHeatCapacity"] = "4.2e3";
+            params["Component.GasDensity"] = "1";
+            params["Component.GasKinematicViscosity"] = "1";
+            params["Component.SolidDensity"] = "1e3";
+            params["Component.SolidThermalConductivity"] = "0.679";
+            params["Component.SolidHeatCapacity"] = "4.2e3";
+        });
+        plotStuff< Components::Constant<1, double> >(openPlotWindow);
+    }
     else if (compName == "Glucose")
         plotStuff< Components::Glucose<double> >(openPlotWindow);
     else if (compName == "Granite")
