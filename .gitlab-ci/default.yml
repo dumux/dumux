@@ -27,3 +27,6 @@ test dumux:
   needs:
     - job: build dumux
       artifacts: true
+  artifacts:
+    reports:
+      junit: junit/dumux-cmake.xml
