@@ -25,8 +25,6 @@
 #ifndef DUMUX_LINEAR_PARALLELHELPERS_HH
 #define DUMUX_LINEAR_PARALLELHELPERS_HH
 
-#if HAVE_MPI
-
 #include <dune/geometry/dimension.hh>
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/grid/common/partitionset.hh>
@@ -788,5 +786,4 @@ void prepareLinearAlgebraParallel(Matrix& A, Vector& b,
 
 } // end namespace Dumux
 
-#endif // HAVE_MPI
 #endif
