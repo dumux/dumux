@@ -65,4 +65,4 @@ trigger lecture:
       branch: feature/test-dumux-trigger
       strategy: depend
     variables:
-      DUMUX_BRANCH_NAME: $CI_COMMIT_BRANCH
+      DUMUX_BRANCH: $CI_COMMIT_BRANCH
