@@ -41,9 +41,11 @@ namespace Dumux {
  * \brief A parallel helper class providing a nonoverlapping
  *        decomposition of all degrees of freedom
  */
-// operator that resets result to zero at constrained DOFS
+template<class LinearSolverTraits, bool canCommunicate>
+class ParallelISTLHelperImpl;
+
 template<class LinearSolverTraits>
-class ParallelISTLHelper
+class ParallelISTLHelperImpl<LinearSolverTraits, true>
 {
     using GridView = typename LinearSolverTraits::GridView;
     using DofMapper = typename LinearSolverTraits::DofMapper;
@@ -276,7 +278,7 @@ class ParallelISTLHelper
 
 public:
 
-    ParallelISTLHelper(const GridView& gridView, const DofMapper& mapper)
+    ParallelISTLHelperImpl(const GridView& gridView, const DofMapper& mapper)
     : gridView_(gridView), mapper_(mapper)
     {
         if constexpr (Detail::canCommunicate<typename GridView::Traits::Grid, dofCodim>)
@@ -423,7 +425,15 @@ private:
     std::vector<std::size_t> isOwned_; //!< vector to identify unique decomposition
     std::vector<std::size_t> isGhost_; //!< vector to identify ghost dofs
 
-}; // class ParallelISTLHelper
+}; // class ParallelISTLHelperImpl
+
+template<class LinearSolverTraits>
+class ParallelISTLHelperImpl<LinearSolverTraits, false>
+{};
+
+template<class LinearSolverTraits>
+using ParallelISTLHelper = ParallelISTLHelperImpl<LinearSolverTraits,
+                                                  LinearSolverTraits::canCommunicate>;
 
 template<class GridView, class DofMapper, int dofCodim>
 class ParallelVectorHelper
