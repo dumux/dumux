@@ -91,6 +91,9 @@ class IstlLinearSolver
     using XVector = typename LinearAlgebraTraits::Vector;
     using BVector = typename LinearAlgebraTraits::Vector;
     using Scalar = typename InverseOperator::real_type;
+    static constexpr bool convertMatrixAndVector
+        = !preconditionerAcceptsMultiTypeMatrix<Preconditioner>::value
+          && isMultiTypeBlockVector<XVector>::value;
 #if HAVE_MPI
     using Comm = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>, int>;
     using ScalarProduct = Dune::ScalarProduct<typename InverseOperator::domain_type>;
@@ -184,8 +187,7 @@ public:
             }
         }
 #endif
-        if constexpr (!preconditionerAcceptsMultiTypeMatrix<Preconditioner>::value
-                      && isMultiTypeBlockVector<XVector>::value)
+        if constexpr (convertMatrixAndVector)
         {
             auto y = VectorConverter<XVector>::multiTypeToBlockVector(x);
             return scalarProduct_->norm(y);
@@ -216,18 +218,7 @@ private:
 
     bool solveSequential_(Matrix& A, XVector& x, BVector& b)
     {
-        if constexpr (preconditionerAcceptsMultiTypeMatrix<Preconditioner>::value
-                      || !isMultiTypeBlockMatrix<Matrix>::value)
-        {
-            // construct solver from linear operator
-            using SequentialTraits = typename LinearSolverTraits::template Sequential<Matrix, XVector>;
-            auto linearOperator = std::make_shared<typename SequentialTraits::LinearOperator>(A);
-            auto solver = constructPreconditionedSolver_(linearOperator);
-
-            // solve linear system
-            solver.apply(x, b, result_);
-        }
-        else
+        if constexpr (convertMatrixAndVector)
         {
             // create the bcrs matrix the IterativeSolver backend can handle
             auto M = MatrixConverter<Matrix>::multiTypeToBCRSMatrix(A);
@@ -254,6 +245,16 @@ private:
             // copy back the result y into x
             if(result_.converged)
                 VectorConverter<XVector>::retrieveValues(x, y);
+        }
+        else
+        {
+            // construct solver from linear operator
+            using SequentialTraits = typename LinearSolverTraits::template Sequential<Matrix, XVector>;
+            auto linearOperator = std::make_shared<typename SequentialTraits::LinearOperator>(A);
+            auto solver = constructPreconditionedSolver_(linearOperator);
+
+            // solve linear system
+            solver.apply(x, b, result_);
         }
 
         return result_.converged;
@@ -347,12 +348,12 @@ struct ILUBiCGSTABIstlSolverImpl<LSTraits, LATraits, false>
 template<class LSTraits, class LATraits>
 struct ILUBiCGSTABIstlSolverImpl<LSTraits, LATraits, true>
 {
-    using type =  IstlLinearSolver<LSTraits, LATraits,
-                                   Dune::BiCGSTABSolver<decltype(VectorConverter<typename LATraits::Vector>::multiTypeToBlockVector(std::declval<typename LATraits::Vector>()))>,
-                                   Dune::SeqILU<decltype(MatrixConverter<typename LATraits::Matrix>::multiTypeToBCRSMatrix(std::declval<typename LATraits::Matrix>())),
-                                                decltype(VectorConverter<typename LATraits::Vector>::multiTypeToBlockVector(std::declval<typename LATraits::Vector>())),
-                                                decltype(VectorConverter<typename LATraits::Vector>::multiTypeToBlockVector(std::declval<typename LATraits::Vector>()))>
-                                  >;
+    using type = IstlLinearSolver<LSTraits, LATraits,
+                                  Dune::BiCGSTABSolver<typename LATraits::SingleTypeVector>,
+                                  Dune::SeqILU<typename LATraits::SingleTypeMatrix,
+                                               typename LATraits::SingleTypeVector,
+                                               typename LATraits::SingleTypeVector>
+                                 >;
 };
 
 template<class LSTraits, class LATraits>
