@@ -30,7 +30,8 @@
 #include <dune/istl/bvector.hh>
 #include <dune/common/std/type_traits.hh>
 
-#include<dumux/common/typetraits/vector.hh>
+#include <dumux/common/typetraits/vector.hh>
+#include <dumux/linear/matrixconverter.hh>
 
 namespace Dumux {
 
@@ -69,6 +70,8 @@ struct LATraitsFromAssemblerImpl<Assembler, true>
 {
     using Vector = typename Assembler::ResidualType;
     using Matrix = typename Assembler::JacobianMatrix;
+    using SingleTypeVector = decltype(VectorConverter<Vector>::multiTypeToBlockVector(std::declval<Vector>()));
+    using SingleTypeMatrix = decltype(MatrixConverter<Matrix>::multiTypeToBCRSMatrix(std::declval<Matrix>()));
 };
 
 template<class Assembler>
