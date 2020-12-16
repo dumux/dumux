@@ -39,7 +39,7 @@ template <typename T>
 using GVDetector = typename T::GridView;
 
 template <typename T>
-using hasGridView = Dune::Std::is_detected<GVDetector, T>;
+constexpr bool hasGridView = Dune::Std::is_detected<GVDetector, T>::value;
 }
 
 /*!
@@ -74,7 +74,7 @@ public:
         params["preconditioner.relaxation"] = "1.0";
         params["preconditioner.verbosity"] = "0";
         params["preconditioner.defaultAggregationSizeMode"] = "isotropic";
-        if constexpr (Detail::hasGridView<LinearSolverTraits>::value)
+        if constexpr (Detail::hasGridView<LinearSolverTraits>)
             params["preconditioner.defaultAggregationDimension"] = std::to_string(LinearSolverTraits::GridView::dimension);
         else
             params["preconditioner.defaultAggregationDimension"] = 3;
