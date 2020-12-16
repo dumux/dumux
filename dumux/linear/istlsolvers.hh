@@ -94,9 +94,7 @@ class IstlLinearSolver
 #if HAVE_MPI
     using Comm = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>, int>;
     using ScalarProduct = Dune::ScalarProduct<typename InverseOperator::domain_type>;
-    using ParallelHelper = std::conditional_t<isMultiTypeBlockVector<XVector>::value,
-                                              double,
-                                              ParallelISTLHelper<LinearSolverTraits>>;
+    using ParallelHelper = ParallelISTLHelper<LinearSolverTraits>;
 #endif
 
 public:
