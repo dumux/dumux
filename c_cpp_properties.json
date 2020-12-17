@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/../dune-common/",
+                "${workspaceFolder}/../dune-geometry/",
+                "${workspaceFolder}/../dune-grid/",
+                "${workspaceFolder}/../dune-istl/",
+                "${workspaceFolder}/../dune-localfunctions/",
+                "${workspaceFolder}/../dune-spgrid/",
+                "${workspaceFolder}/../dune-subgrid/",
+                "${workspaceFolder}/../pn15-dataint/",
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-x64"
+        }
+    ],
+    "version": 4
+}

@@ -17,21 +17,22 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/grid/io/file/vtk.hh>
-#include <dune/istl/io.hh>
 
-#include <dumux/assembly/staggeredfvassembler.hh>
-#include <dumux/assembly/diffmethod.hh>
 #include <dumux/common/initialize.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
-#include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
-#include <dumux/nonlinear/newtonsolver.hh>
+
+#include <dumux/multidomain/newtonsolver.hh>
+#include <dumux/multidomain/fvassembler.hh>
+#include <dumux/multidomain/traits.hh>
+
+#include <dumux/io/vtkoutputmodule.hh>
+#include <dumux/freeflow/navierstokes/velocityoutput.hh>
 
 #include "properties.hh"
 
@@ -54,7 +55,7 @@ int main(int argc, char** argv)
     Parameters::init(argc, argv);
 
     // try to create a grid (from the given grid file or the input file)
-    GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
+    GridManager<GetPropType<MassTypeTag, Properties::Grid>> gridManager;
     gridManager.init();
 
     ////////////////////////////////////////////////////////////
@@ -68,9 +69,15 @@ int main(int argc, char** argv)
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
 
-    // the problem (initial and boundary conditions)
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(gridGeometry);
+    // the coupling manager
+    using CouplingManager = GetPropType<MomentumTypeTag, Properties::CouplingManager>;
+    auto couplingManager = std::make_shared<CouplingManager>();
+
+    // the problem (boundary conditions)
+    using MomentumProblem = GetPropType<MomentumTypeTag, Properties::Problem>;
+    auto momentumProblem = std::make_shared<MomentumProblem>(momentumGridGeometry, couplingManager);
+    using MassProblem = GetPropType<MassTypeTag, Properties::Problem>;
+    auto massProblem = std::make_shared<MassProblem>(massGridGeometry, couplingManager);
 
     // get some time loop parameters
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -84,7 +91,10 @@ int main(int argc, char** argv)
     problem->setTimeLoop(timeLoop);
 
     // the solution vector
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    constexpr auto momentumIdx = CouplingManager::freeFlowMomentumIndex;
+    constexpr auto massIdx = CouplingManager::freeFlowMassIndex;
+    using Traits = MultiDomainTraits<MomentumTypeTag, MassTypeTag>;
+    using SolutionVector = typename Traits::SolutionVector;
     SolutionVector x;
     x[GridGeometry::cellCenterIdx()].resize(gridGeometry->numCellCenterDofs());
     x[GridGeometry::faceIdx()].resize(gridGeometry->numFaceDofs());

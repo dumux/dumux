@@ -13,7 +13,7 @@ EnableGravity = false
 EnableInertiaTerms = false
 
 [Assembly]
-NumericDifference.BaseEpsilon = 1e-8
+NumericDifference.BaseEpsilon = 1e-4
 
 [Vtk]
 WriteFaceData = false
