@@ -201,11 +201,11 @@ public:
                 }
             }
 
-            Scalar expansionCoefficient(int i) const
-            { return expansionCoefficient_[i]; }
+            Scalar expansionCoefficient(int downstreamIdx) const
+            { return expansionCoefficient_[downstreamIdx]; }
 
-            Scalar contractionCoefficient(int i) const
-            { return contractionCoefficient_[i]; }
+            Scalar contractionCoefficient(int upstreamIdx) const
+            { return contractionCoefficient_[upstreamIdx]; }
 
         private:
 
@@ -264,38 +264,29 @@ public:
 
         // calculate the pressure difference
         const Scalar deltaP = insideVolVars.pressure(phaseIdx) - outsideVolVars.pressure(phaseIdx);
-        const Scalar creepingFlowTransMissibility = fluxVarsCache.transmissibility(phaseIdx);
+        const Scalar creepingFlowTransmissibility = fluxVarsCache.transmissibility(phaseIdx);
         const Scalar throatCrossSectionalArea = fluxVarsCache.throatCrossSectionalArea();
 
         assert(scvf.insideScvIdx() == 0);
         assert(scvf.outsideScvIdx() == 1);
 
-        Scalar A0;
-        Scalar mu; // TODO upwinding?
-        //! Use contraction and expansion coeffiecient according to flow direction
-        if (deltaP > 0)
-        {
-            const Scalar Kc = fluxVarsCache.singlePhaseFlowVariables().contractionCoefficient(0);
-            const Scalar Ke = fluxVarsCache.singlePhaseFlowVariables().expansionCoefficient(1);
-            A0 = (Kc * elemVolVars[0].density() + Ke * elemVolVars[1].density()) / (2.0*throatCrossSectionalArea*throatCrossSectionalArea);
-            mu = elemVolVars[0].viscosity();
-        }
-        else
-        {
-            const Scalar Kc = fluxVarsCache.singlePhaseFlowVariables().contractionCoefficient(1);
-            const Scalar Ke = fluxVarsCache.singlePhaseFlowVariables().expansionCoefficient(0);
-            A0 = (Kc * elemVolVars[1].density() + Ke * elemVolVars[0].density()) / (2.0*throatCrossSectionalArea*throatCrossSectionalArea);
-            mu = elemVolVars[1].viscosity();
-        }
+        // determine the flow direction to predict contraction and expansion
+        const auto [upstreamIdx, downstreamIdx] = deltaP > 0 ? std::pair(0, 1) : std::pair(1, 0);
 
-        const Scalar B0 = 1/creepingFlowTransMissibility * mu;
+        const Scalar contractionCoefficient = fluxVarsCache.singlePhaseFlowVariables().contractionCoefficient(upstreamIdx);
+        const Scalar expansionCoefficient = fluxVarsCache.singlePhaseFlowVariables().expansionCoefficient(downstreamIdx);
+        const Scalar mu = elemVolVars[upstreamIdx].viscosity();
+
+        const Scalar A0 = (contractionCoefficient * elemVolVars[upstreamIdx].density() + expansionCoefficient * elemVolVars[downstreamIdx].density())
+                          / (2.0 * throatCrossSectionalArea * throatCrossSectionalArea);
+        const Scalar B0 = mu / creepingFlowTransmissibility;
         const Scalar C0 = -deltaP;
 
         using std::sqrt;
         const auto tmp = B0*B0 - 4*A0*C0;
         //! Use creeping flow calculation if under the square root operator is negative
         if (tmp < 0)
-            return creepingFlowTransMissibility*deltaP;
+            return creepingFlowTransmissibility * deltaP;
         else
             return mu*(-B0 + sqrt(tmp)) / (2*A0);
 
