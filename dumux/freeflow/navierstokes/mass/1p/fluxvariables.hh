@@ -24,12 +24,10 @@
 #ifndef DUMUX_NAVIERSTOKES_MASS_1P_FLUXVARIABLES_HH
 #define DUMUX_NAVIERSTOKES_MASS_1P_FLUXVARIABLES_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/common/exceptions.hh>
-#include <dumux/common/parameters.hh>
 #include <dumux/flux/upwindscheme.hh>
-#include <dumux/freeflow/navierstokes/scalarvolumevariables.hh>
 #include <dumux/freeflow/navierstokes/scalarfluxvariables.hh>
+
+#include "advectiveflux.hh"
 
 namespace Dumux {
 
@@ -68,8 +66,10 @@ public:
      */
     NumEqVector advectiveFlux(int phaseIdx = 0) const
     {
-        auto upwindTerm = [](const VolumeVariables& volVars) { return volVars.density(); };
-        return NumEqVector{ParentType::advectiveFlux(upwindTerm)};
+        NumEqVector result(0.0);
+        const auto upwinding = [this](const auto& term) { return ParentType::advectiveFlux(term); };
+        AdvectiveFlux<ModelTraits>::addAdvectiveFlux(result, upwinding);
+        return result;
     }
 
     /*!
