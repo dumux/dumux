@@ -189,11 +189,15 @@ public:
                 {
                     const auto localIdx = scv.indexInElement();
                     const Scalar throatToPoreAreaRatio = fluxVarsCache.throatCrossSectionalArea() / problem.spatialParams().poreCrossSectionalArea(element, scv, elemSol);
-                    const Scalar kd = problem.spatialParams().kd(element, scv, elemSol);
-                    const Scalar alpha = problem.spatialParams().alpha(element, scv, elemSol);
 
-                    expansionCoefficient_[localIdx] = getExpansionCoefficient_(throatToPoreAreaRatio, kd, alpha);
-                    contractionCoefficient_[localIdx] = getContractionCoefficient_(throatToPoreAreaRatio, kd, alpha);
+                    // dimensionless momentum coefficient
+                    const Scalar momentumCoefficient = problem.spatialParams().momentumCoefficient(element, scv, elemSol);
+
+                    // dimensionless kinetik-energy coefficient
+                    const Scalar kineticEnergyCoefficient = problem.spatialParams().kineticEnergyCoefficient(element, scv, elemSol);
+
+                    expansionCoefficient_[localIdx] = getExpansionCoefficient_(throatToPoreAreaRatio, momentumCoefficient, kineticEnergyCoefficient);
+                    contractionCoefficient_[localIdx] = getContractionCoefficient_(throatToPoreAreaRatio, momentumCoefficient, kineticEnergyCoefficient);
                 }
             }
 
@@ -205,15 +209,22 @@ public:
 
         private:
 
-            Scalar getExpansionCoefficient_(const Scalar throatToPoreAreaRatio, const Scalar kd, const Scalar alpha) const
+            Scalar getExpansionCoefficient_(const Scalar throatToPoreAreaRatio, const Scalar momentumCoefficient, const Scalar kineticEnergyCoefficient) const
             {
-                return throatToPoreAreaRatio*throatToPoreAreaRatio*(2*kd-alpha)+alpha-2*kd*throatToPoreAreaRatio-(1-throatToPoreAreaRatio*throatToPoreAreaRatio);
+                Scalar expansionCoefficient = throatToPoreAreaRatio * throatToPoreAreaRatio * (2 * momentumCoefficient - kineticEnergyCoefficient)
+                                              + kineticEnergyCoefficient - 2 * momentumCoefficient * throatToPoreAreaRatio
+                                              - (1 - throatToPoreAreaRatio * throatToPoreAreaRatio);
+
+                return expansionCoefficient;
             }
 
-            Scalar getContractionCoefficient_(const Scalar throatToPoreAreaRatio, const Scalar kd, const Scalar alpha) const
+            Scalar getContractionCoefficient_(const Scalar throatToPoreAreaRatio, const Scalar momentumCoefficient, const Scalar kineticEnergyCoefficient) const
             {
                 const Scalar contractionAreaRatio = getContractionAreaRatio_(throatToPoreAreaRatio);
-                return (1-(throatToPoreAreaRatio*throatToPoreAreaRatio*alpha-2*kd/*+1-throatToPoreAreaRatio*throatToPoreAreaRatio*/)*contractionAreaRatio*contractionAreaRatio-2*contractionAreaRatio)/(contractionAreaRatio*contractionAreaRatio);
+                Scalar contractionCoefficient = (1 - (throatToPoreAreaRatio * throatToPoreAreaRatio * kineticEnergyCoefficient - 2 * momentumCoefficient /*+1-throatToPoreAreaRatio*throatToPoreAreaRatio*/)
+                                                     * contractionAreaRatio * contractionAreaRatio - 2 * contractionAreaRatio) / (contractionAreaRatio * contractionAreaRatio);
+
+                return contractionCoefficient;
             }
 
             Scalar getContractionAreaRatio_(const Scalar throatToPoreAreaRatio) const

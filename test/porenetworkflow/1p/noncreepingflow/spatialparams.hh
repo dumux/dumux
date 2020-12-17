@@ -71,14 +71,16 @@ public:
         return this->gridGeometry().poreRadius(scv.dofIndex());
     }
 
+    // dimensionless kinetic-energy coeffiecient which for non-creeping flow is equal to 1.0
     template<class ElementSolutionVector>
-    Scalar alpha(const Element& element,
+    Scalar kineticEnergyCoefficient(const Element& element,
                  const SubControlVolume& scv,
                  const ElementSolutionVector& elemSol) const
     { return 1.0; }
 
+    // dimensionless momentum coeffiecient which for non-creeping flow is equal to 1.0
     template<class ElementSolutionVector>
-    Scalar kd(const Element& element,
+    Scalar momentumCoefficient(const Element& element,
               const SubControlVolume& scv,
               const ElementSolutionVector& elemSol) const
     { return 1.0; }
