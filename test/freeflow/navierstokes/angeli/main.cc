@@ -156,7 +156,6 @@ int main(int argc, char** argv)
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    // the non-linear solver
     using NewtonSolver = Dumux::MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 

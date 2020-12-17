@@ -50,22 +50,19 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/properties/model.hh>
+
+#include <dumux/flux/fickslaw.hh>
+#include <dumux/flux/fourierslaw.hh>
+#include "dumux/freeflow/navierstokes/iofields.hh"
+#include <dumux/freeflow/navierstokes/energy/model.hh>
+#include <dumux/freeflow/navierstokes/scalarfluxvariablescachefiller.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 
 #include "localresidual.hh"
 #include "volumevariables.hh"
 #include "fluxvariables.hh"
 #include "indices.hh"
-#include "./../../iofields.hh"
 #include "iofields.hh"
-
-#include <dumux/flux/cctpfa/fourierslaw.hh>
-
-#include <dumux/discretization/method.hh>
-#include <dumux/freeflow/navierstokes/energy/model.hh>
-#include <dumux/flux/fickslaw.hh>
-#include <dumux/freeflow/navierstokes/scalarfluxvariablescachefiller.hh>
-
 
 namespace Dumux {
 
@@ -355,7 +352,7 @@ struct ThermalConductivityModel<TypeTag, TTag::NavierStokesMassOnePNCNI>
 
 template<class TypeTag>
 struct HeatConductionType<TypeTag, TTag::NavierStokesMassOnePNCNI>
-{ using type = FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>; };
+{ using type = FouriersLaw<TypeTag>; };
 
 //! The flux variables
 template<class TypeTag>
