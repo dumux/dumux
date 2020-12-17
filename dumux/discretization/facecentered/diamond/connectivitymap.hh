@@ -57,10 +57,12 @@ public:
             // restrict the FvGeometry locally and bind to the element
             auto fvGeometry = localView(gridGeometry);
             fvGeometry.bind(element);
+            const auto scvIndices = gridGeometry.scvIndicesOfElement(gridGeometry.elementMapper().index(element));
 
-            // loop over sub control faces
+            // loop over sub control faces and all all scvs except the own
             for (const auto& scv : scvs(fvGeometry))
-                map_[scv.index()] = gridGeometry.scvIndicesOfElement(gridGeometry.elementMapper().index(element));
+                std::copy_if(scvIndices.begin(), scvIndices.end(), std::back_inserter(map_[scv.index()]),
+                             [&scv](GridIndexType idx) { return idx != scv.index(); });
         }
 
         // make stencils unique
