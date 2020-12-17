@@ -293,6 +293,7 @@ public:
         assert(!(considerPreviousTimeStep && !isTransient_));
         bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, scv.elementIndex());
         const auto& massScv = (*scvs(momentumCouplingContext_[0].fvGeometry).begin());
+
         return considerPreviousTimeStep ? momentumCouplingContext_[0].prevElemVolVars[massScv].density()
                                         : momentumCouplingContext_[0].curElemVolVars[massScv].density();
     }
@@ -452,13 +453,13 @@ public:
             fvGeometry.bind(elementI);
 
             auto curElemVolVars = localView(gridVars_(freeFlowMassIdx).curGridVolVars());
-            curElemVolVars.bind(elementI, fvGeometry, this->curSol());
+            curElemVolVars.bind(elementI, fvGeometry, this->curSol()[freeFlowMassIdx]);
 
             auto prevElemVolVars = isTransient_ ? localView(gridVars_(freeFlowMassIdx).prevGridVolVars())
                                                 : localView(gridVars_(freeFlowMassIdx).curGridVolVars());
 
             if (isTransient_)
-                prevElemVolVars.bindElement(elementI, fvGeometry, *prevSol_);
+                prevElemVolVars.bindElement(elementI, fvGeometry, (*prevSol_)[freeFlowMassIdx]);
 
             momentumCouplingContext_.emplace_back(MomentumCouplingContext{std::move(fvGeometry), std::move(curElemVolVars), std::move(prevElemVolVars), eIdx});
         }
@@ -466,10 +467,10 @@ public:
         {
             momentumCouplingContext_[0].eIdx = eIdx;
             momentumCouplingContext_[0].fvGeometry.bind(elementI);
-            momentumCouplingContext_[0].curElemVolVars.bind(elementI, momentumCouplingContext_[0].fvGeometry, this->curSol());
+            momentumCouplingContext_[0].curElemVolVars.bind(elementI, momentumCouplingContext_[0].fvGeometry, this->curSol()[freeFlowMassIdx]);
 
             if (isTransient_)
-                momentumCouplingContext_[0].prevElemVolVars.bindElement(elementI, momentumCouplingContext_[0].fvGeometry, *prevSol_);
+                momentumCouplingContext_[0].prevElemVolVars.bindElement(elementI, momentumCouplingContext_[0].fvGeometry, (*prevSol_)[freeFlowMassIdx]);
         }
     }
 

@@ -26,7 +26,7 @@
 
 
 #include <dumux/common/math.hh>
-#include <dumux/common/properties.hh>
+#include <dumux/common/typetraits/problem.hh>
 #include <dumux/flux/fluxvariablesbase.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/method.hh>
@@ -36,18 +36,24 @@ namespace Dumux {
 
 /*!
  * \ingroup NavierStokesModel
- * \brief The flux variables class for the Navier-Stokes model using the staggered grid discretization.
+ * \brief The flux variables base class for scalar quantities balanced in the Navier-Stokes model.
  */
-template<class TypeTag, class UpwindScheme = UpwindScheme<GetPropType<TypeTag, Properties::GridGeometry>>>
+template<class Problem,
+         class ModelTraits,
+         class FluxTypes,
+         class ElementVolumeVariables,
+         class ElementFluxVariablesCache,
+         class UpwindScheme = UpwindScheme<typename ProblemTraits<Problem>::GridGeometry>>
 class NavierStokesScalarConservationModelFluxVariables
-: public FluxVariablesBase<GetPropType<TypeTag, Properties::Problem>,
-                           typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView,
-                           typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView,
-                           typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView>
+: public FluxVariablesBase<Problem,
+                           typename ProblemTraits<Problem>::GridGeometry::LocalView,
+                           ElementVolumeVariables,
+                           ElementFluxVariablesCache>
 {
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    static constexpr bool enableAdvection = true; // TODO
-    using Extrusion = Extrusion_t<GetPropType<TypeTag, Properties::GridGeometry>>;
+    using Scalar = typename ElementVolumeVariables::VolumeVariables::PrimaryVariables::value_type;
+    using GridGeometry = typename ProblemTraits<Problem>::GridGeometry;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<typename ProblemTraits<Problem>::GridGeometry>;
 
 public:
 
@@ -57,7 +63,7 @@ public:
     template<typename FunctionType>
     Scalar advectiveFlux(const FunctionType& upwindTerm) const
     {
-        if constexpr (enableAdvection)
+        if constexpr (ModelTraits::enableAdvection())
         {
             const auto& scvf = this->scvFace();
             const auto velocity = this->problem().faceVelocity(this->element(), this->fvGeometry(), scvf);
@@ -69,14 +75,13 @@ public:
     }
 
     /*!
-     * \brief Returns the conductive flux computed by the respective law.
-     * \note This overload is used in models considering local thermal equilibrium
+     * \brief Returns the conductive energy flux computed by the respective law.
      */
     Scalar heatConductionFlux() const
     {
-        if constexpr (GetPropType<TypeTag, Properties::ModelTraits>::enableEnergyBalance())
+        if constexpr (ModelTraits::enableEnergyBalance())
         {
-            using HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>;
+            using HeatConductionType = typename FluxTypes::HeatConductionType;
             return HeatConductionType::flux(this->problem(),
                                             this->element(),
                                             this->fvGeometry(),
@@ -88,19 +93,48 @@ public:
             return 0.0;
     }
 
+    /*!
+     * \brief Returns the advective energy flux.
+     */
+    Scalar heatAdvectionFlux() const
+    {
+        if constexpr (ModelTraits::enableEnergyBalance())
+        {
+            const auto upwindTerm = [](const auto& volVars) { return volVars.density() * volVars.enthalpy(); };
+            return advectiveFlux(upwindTerm);
+        }
+        else
+            return 0.0;
+    }
+
+    /*!
+     * \brief Returns the total energy flux.
+     */
+    Scalar heatFlux() const
+    {
+        return heatConductionFlux() + heatAdvectionFlux();
+    }
+
+    /*!
+     * \brief Adds the energy flux to a given flux vector.
+     */
+    template<class NumEqVector>
+    void addHeatFlux(NumEqVector& flux) const
+    {
+        if constexpr (ModelTraits::enableEnergyBalance())
+            flux[ModelTraits::Indices::energyEqIdx] = heatFlux();
+    }
+
 private:
 
-    template<class ElementVolumeVariables, class SubControlVolumeFace>
     Scalar extrusionFactor_(const ElementVolumeVariables& elemVolVars, const SubControlVolumeFace& scvf) const
     {
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
         return harmonicMean(insideVolVars.extrusionFactor(), outsideVolVars.extrusionFactor());
     }
-
-
 };
 
 } // end namespace Dumux
 
-#endif // DUMUX_NAVIERSTOKES_STAGGERED_FLUXVARIABLES_HH
+#endif

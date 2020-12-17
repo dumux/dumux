@@ -19,10 +19,10 @@
 /*!
  * \file
  * \ingroup NavierStokesModel
- * \copydoc Dumux::NavierStokesResidualImpl
+ * \copydoc Dumux::NavierStokesMassOnePNCLocalResidual
  */
-#ifndef DUMUX_NAVIERSTOKES_MASS_1P_LOCAL_RESIDUAL_HH
-#define DUMUX_NAVIERSTOKES_MASS_1P_LOCAL_RESIDUAL_HH
+#ifndef DUMUX_NAVIERSTOKES_MASS_1PNC_LOCAL_RESIDUAL_HH
+#define DUMUX_NAVIERSTOKES_MASS_1PNC_LOCAL_RESIDUAL_HH
 
 #include <dumux/common/properties.hh>
 
@@ -30,13 +30,14 @@ namespace Dumux {
 
 /*!
  * \ingroup NavierStokesModel
- * \brief Element-wise calculation of the Navier-Stokes residual for single-phase flow.
+ * \brief Element-wise calculation of the Navier-Stokes residual for multicomponent single-phase flow.
  */
 template<class TypeTag>
-class NavierStokesMassOnePLocalResidual : public GetPropType<TypeTag, Properties::BaseLocalResidual>
+class NavierStokesMassOnePNCLocalResidual : public GetPropType<TypeTag, Properties::BaseLocalResidual>
 {
     using ParentType = GetPropType<TypeTag, Properties::BaseLocalResidual>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
     using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
     using VolumeVariables = typename GridVolumeVariables::VolumeVariables;
@@ -53,8 +54,15 @@ class NavierStokesMassOnePLocalResidual : public GetPropType<TypeTag, Properties
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+
+    static_assert(GridGeometry::discMethod == DiscretizationMethod::cctpfa);
+    static constexpr bool useMoles = ModelTraits::useMoles();
+    static constexpr auto numComponents = ModelTraits::numFluidComponents();
+
+    static constexpr int replaceCompEqIdx = ModelTraits::replaceCompEqIdx();
+    static constexpr bool useTotalMoleOrMassBalance = replaceCompEqIdx < numComponents;
 
 public:
     //! Use the parent type's constructor
@@ -68,7 +76,24 @@ public:
                                const VolumeVariables& volVars) const
     {
         NumEqVector storage(0.0);
-        storage[ModelTraits::Indices::conti0EqIdx] = volVars.density();
+
+        const Scalar density = useMoles ? volVars.molarDensity() : volVars.density();
+
+        // compute storage term of all components
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+        {
+            const int eqIdx = compIdx;
+
+            const Scalar massOrMoleFraction = useMoles ? volVars.moleFraction(compIdx) : volVars.massFraction(compIdx);
+            const Scalar s =  density * massOrMoleFraction;
+
+            if (eqIdx != ModelTraits::replaceCompEqIdx())
+                storage[eqIdx] += s;
+        }
+
+        // in case one balance is substituted by the total mass balance
+        if constexpr (useTotalMoleOrMassBalance)
+            storage[ModelTraits::replaceCompEqIdx()] = density;
 
         // consider energy storage for non-isothermal models
         if constexpr (ModelTraits::enableEnergyBalance())
@@ -78,7 +103,7 @@ public:
     }
 
     /*!
-     * \brief Evaluatex the mass flux over a face of a sub control volume.
+     * \brief Evaluatex the mass or mole flux over a face of a sub control volume.
      *
      * \param problem The problem
      * \param element The element
