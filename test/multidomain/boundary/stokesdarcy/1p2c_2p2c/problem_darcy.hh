@@ -208,7 +208,12 @@ public:
         values.setAllNeumann();
 
         if (couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
-            values.setAllCouplingNeumann();
+        {
+            if (couplingManager().couplingMode() == CouplingManager::CouplingMode::reconstructPorousMediumPressure)
+                values.setAllCouplingNeumann();
+            else // CouplingMode::reconstructFreeFlowNormalStress
+                values.setCouplingDirichlet(Indices::pressureIdx);
+        }
 
         return values;
     }
@@ -221,12 +226,16 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
+    PrimaryVariables dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
     {
-        PrimaryVariables values(0.0);
-        values = initialAtPos(scvf.center());
-
-        return values;
+        if (couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
+        {
+            PrimaryVariables values(0.0);
+            values[Indices::pressureIdx] = couplingManager().couplingData().freeFlowInterfaceStress(element, scvf);
+            return values;
+        }
+        else
+            return initialAtPos(scvf.center());
     }
 
     /*!

@@ -207,9 +207,15 @@ public:
 
         if (couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
         {
-            values.setCouplingNeumann(Indices::conti0EqIdx);
+            if (couplingManager().couplingMode() == CouplingManager::CouplingMode::reconstructPorousMediumPressure)
+            {
+                values.setCouplingNeumann(Indices::conti0EqIdx);
+                values.setCouplingNeumann(Indices::momentumYBalanceIdx);
+            }
+            else // CouplingMode::reconstructFreeFlowNormalStress
+                values.setCouplingDirichlet(Indices::velocityYIdx);
+
             values.setCouplingNeumann(Indices::conti0EqIdx + 1);
-            values.setCouplingNeumann(Indices::momentumYBalanceIdx);
             values.setBeaversJoseph(Indices::momentumXBalanceIdx);
         }
         return values;
@@ -218,13 +224,29 @@ public:
     /*!
      * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      */
-    PrimaryVariables dirichletAtPos(const GlobalPosition& pos) const
-    {
-        PrimaryVariables values(0.0);
-        values = initialAtPos(pos);
+     PrimaryVariables dirichletAtPos(const GlobalPosition& pos) const
+     {
+         PrimaryVariables values(0.0);
+         values = initialAtPos(pos);
 
-        return values;
-    }
+         return values;
+     }
+
+     using ParentType::dirichlet;
+
+     PrimaryVariables dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
+     {
+         if (couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
+         {
+             PrimaryVariables values(0.0);
+             values[Indices::velocityYIdx] = couplingManager().couplingData().porousMediumInterfaceVelocity(element, scvf);
+             return values;
+         }
+         else
+             return dirichletAtPos(scvf.center());
+     }
+
+
 
     /*!
      * \brief Evaluates the boundary conditions for a Neumann control volume.
@@ -262,9 +284,10 @@ public:
 #endif
         }
 
-        if(couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
+        if (couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
         {
-            values[Indices::momentumYBalanceIdx] = couplingManager().couplingData().momentumCouplingCondition(element, fvGeometry, elemVolVars, elemFaceVars, scvf);
+            if (couplingManager().couplingMode() == CouplingManager::CouplingMode::reconstructPorousMediumPressure)
+                values[Indices::momentumYBalanceIdx] = couplingManager().couplingData().momentumCouplingCondition(element, fvGeometry, elemVolVars, elemFaceVars, scvf);
 
             const auto massFlux = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, elemFaceVars, scvf, diffCoeffAvgType_);
             values[Indices::conti0EqIdx] = massFlux[0];
