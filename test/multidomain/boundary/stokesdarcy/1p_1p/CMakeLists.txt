@@ -17,6 +17,35 @@ dumux_add_test(NAME test_md_boundary_darcy1p_stokes1p_horizontal
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p_stokes1p params_horizontalflow.input
                                    -Vtk.OutputName test_md_boundary_darcy1p_stokes1p_horizontal")
 
+dumux_add_test(NAME test_md_boundary_darcy1p_stokes1p_horizontal_reconstruct_ff_stress
+              LABELS multidomain multidomain_boundary stokesdarcy 1p navierstokes
+              TARGET test_md_boundary_darcy1p_stokes1p
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_darcy1p_stokes1p_horizontal_stokes-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p_stokes1p_horizontal_reconstruct_ff_stress_stokes-00001.vtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_darcy1p_stokes1p_horizontal_darcy-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p_stokes1p_horizontal_reconstruct_ff_stress_darcy-00001.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p_stokes1p params_horizontalflow.input
+                                   -Problem.CouplingMode ReconstructFreeFlowNormalStress
+                                   -Vtk.OutputName test_md_boundary_darcy1p_stokes1p_horizontal_reconstruct_ff_stress")
+
+dumux_add_test(NAME test_md_boundary_darcy1p_stokes1p_vertical_reconstruct_ff_stress
+              LABELS multidomain multidomain_boundary stokesdarcy 1p navierstokes
+              TARGET test_md_boundary_darcy1p_stokes1p
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_darcy1p_stokes1p_vertical_stokes-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p_stokes1p_vertical_reconstruct_ff_stress_stokes-00001.vtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_darcy1p_stokes1p_vertical_darcy-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p_stokes1p_vertical_reconstruct_ff_stress_darcy-00001.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p_stokes1p params_verticalflow.input
+                                   -Problem.CouplingMode ReconstructFreeFlowNormalStress
+                                   -Vtk.OutputName test_md_boundary_darcy1p_stokes1p_vertical_reconstruct_ff_stress"
+                        --zeroThreshold {"velocity_liq \(m/s\)_0":6e-17})
+
 dumux_add_test(NAME test_md_boundary_darcy1p_stokes1p_vertical
               LABELS multidomain multidomain_boundary stokesdarcy 1p navierstokes
               TARGET test_md_boundary_darcy1p_stokes1p
