@@ -150,7 +150,7 @@ public:
             if (couplingManager().couplingMode() == CouplingManager::CouplingMode::reconstructPorousMediumPressure)
                 values.setAllCouplingNeumann();
             else // CouplingMode::reconstructFreeFlowNormalStress
-                values.setCouplingDirichlet(0);
+                values.setCouplingDirichlet(Indices::pressureIdx);
         }
 
         if (verticalFlow_)
