@@ -43,7 +43,6 @@ class FaceCenteredDiamondElementSolution
     using GridGeometry = typename FVElementGeometry::GridGeometry;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using LocalIndexType = typename FVElementGeometry::SubControlVolume::LocalIndexType;
 
 public:
     //! export the primary variables type
@@ -113,13 +112,15 @@ public:
     }
 
     //! bracket operator const access
-    const PrimaryVariables& operator [](LocalIndexType localScvIdx) const
+    template<typename IndexType>
+    const PrimaryVariables& operator [](IndexType localScvIdx) const
     {
         return priVars_[localScvIdx];
     }
 
     //! bracket operator
-    PrimaryVariables& operator [](LocalIndexType localScvIdx)
+    template<typename IndexType>
+    PrimaryVariables& operator [](IndexType localScvIdx)
     {
          return priVars_[localScvIdx];
     }

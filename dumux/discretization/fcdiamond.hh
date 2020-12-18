@@ -30,7 +30,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/typetraits/problem.hh>
 
-#include <dumux/assembly/fcdiamondlocalresidual.hh
+#include <dumux/assembly/fcdiamondlocalresidual.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvproperties.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
@@ -105,9 +105,9 @@ public:
     using type = FVGridVariables<GG, GVV, GFVC>;
 };
 
-//! Set the BaseLocalResidual to BoxLocalResidual
+//! Set the BaseLocalResidual to DiamondLocalResidual
 template<class TypeTag>
-struct BaseLocalResidual<TypeTag, TTag::FaceCenteredDiamondModel> { using type = FaceCenteredLocalResidual<TypeTag>; };
+struct BaseLocalResidual<TypeTag, TTag::FaceCenteredDiamondModel> { using type = FaceCenteredDiamondLocalResidual<TypeTag>; };
 
 //! Set the default for the ElementBoundaryTypes
 template<class TypeTag>
@@ -125,7 +125,7 @@ public:
 namespace Detail {
 
 template<class Problem>
-struct ProblemTraits<Problem, DiscretizationMethod::fcstaggered>
+struct ProblemTraits<Problem, DiscretizationMethod::fcdiamond>
 {
 private:
     using GG = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;

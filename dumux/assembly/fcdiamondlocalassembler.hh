@@ -41,7 +41,7 @@ namespace Dumux {
 
 namespace Detail {
 
-struct NoOp
+struct NoOperator
 {
     template<class... Args>
     constexpr void operator()(Args&&...) const {}
@@ -87,7 +87,7 @@ public:
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix. The element residual is written into the right hand side.
      */
-    template <class PartialReassembler = DefaultPartialReassembler, class CouplingFunction = Detail::NoOp>
+    template <class PartialReassembler = DefaultPartialReassembler, class CouplingFunction = Detail::NoOperator>
     void assembleJacobianAndResidual(JacobianMatrix& jac, SolutionVector& res, GridVariables& gridVariables,
                                      const PartialReassembler* partialReassembler,
                                      const CouplingFunction& maybeAssembleCouplingBlocks = CouplingFunction())
@@ -364,7 +364,6 @@ public:
         {
             // dof index and corresponding actual pri vars
             const auto dofIdx = scv.dofIndex();
-            const auto scvIdx = scv.index();
             auto& curVolVars = this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv);
             const VolumeVariables origVolVars(curVolVars);
 
@@ -394,7 +393,7 @@ public:
                 {
                                         // don't add derivatives for green vertices
                     if (!partialReassembler
-                        || partialReassembler->vertexColor(scvJ.dofIndex()) != EntityColor::green)
+                        || partialReassembler->dofColor(scvJ.dofIndex()) != EntityColor::green)
                     {
                         for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
                         {

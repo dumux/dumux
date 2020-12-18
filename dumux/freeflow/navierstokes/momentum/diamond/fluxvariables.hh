@@ -42,7 +42,7 @@ namespace Dumux {
  * \brief The flux variables class for the Navier-Stokes model using the staggered grid discretization.
  */
 template<class TypeTag>
-class NavierStokesMomentumFluxVariables
+class NavierStokesMomentumDiamondFluxVariables
 {
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
@@ -67,7 +67,6 @@ class NavierStokesMomentumFluxVariables
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
-    using VelocityGradients = StaggeredVelocityGradients;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using Extrusion = Extrusion_t<GridGeometry>;
@@ -86,7 +85,7 @@ class NavierStokesMomentumFluxVariables
 
 public:
 
-    NavierStokesMomentumFluxVariables(const Problem& problem,
+    NavierStokesMomentumDiamondFluxVariables(const Problem& problem,
                                       const Element& element,
                                       const FVElementGeometry& fvGeometry,
                                       const SubControlVolumeFace& scvFace,
@@ -188,7 +187,7 @@ public:
         localBasis.evaluateJacobian(ipLocal, shapeJacobian);
 
         // compute the gradN at for every scv/dof
-        std::vector<GlobalPosition> gradN(fvGeometry.numScv(),0.0);
+        std::vector<GlobalPosition> gradN(fvGeometry.numScv(), GlobalPosition(0));
         for (const auto& scv: scvs(fvGeometry))
             jacInvT.mv(shapeJacobian[scv.localDofIndex()][0], gradN[scv.indexInElement()]);
 
@@ -200,7 +199,7 @@ public:
         static const bool enableUnsymmetrizedVelocityGradient
             = getParamFromGroup<bool>(this->problem().paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
 
-        result = enableUnsymmetrizedVelocityGradient ? gradV*scvf.unitOuterNormal() : (gradV + getTransposed(gradV))*scvf.unitOuterNormal();
+        result = enableUnsymmetrizedVelocityGradient ? mv(gradV,scvf.unitOuterNormal()) : mv(gradV + getTransposed(gradV),scvf.unitOuterNormal());
 
         const auto mu = this->problem().effectiveViscosity(this->element(), this->fvGeometry(), this->scvFace());
         result *= -mu * Extrusion::area(scvf) * extrusionFactor_(elemVolVars, scvf);
@@ -208,13 +207,6 @@ public:
         static const bool enableDilatationTerm = getParamFromGroup<bool>(this->problem().paramGroup(), "FreeFlow.EnableDilatationTerm", false);
         if (enableDilatationTerm)
         {
-            Scalar divergence = 0.0;
-            for (const auto& scv : scvs(fvGeometry))
-            {
-                const auto frontalScvf  = *(scvfs(fvGeometry, scv).begin());
-                assert(frontalScvf.isFrontal() && !frontalScvf.boundary());
-                divergence += VelocityGradients::velocityGradII(fvGeometry, frontalScvf, elemVolVars);
-            }
             result += 2.0/3.0 * mu * trace(gradV) * scvf.unitOuterNormal() * Extrusion::area(scvf) * extrusionFactor_(elemVolVars, scvf);;
         }
 
@@ -239,7 +231,7 @@ public:
         // The multiplication by scvf.area() aims at having a reference value of the same order of magnitude as the actual pressure contribution.
         const auto referencePressure = this->problem().referencePressure(this->element(), this->fvGeometry(), scvf);
         // TODO why not using the same area and extrusion for both pressures?
-        result *= (pressure*Extrusion::area(scvf)* extrusionFactor_(this->elemVolVars(), scvf);
+        result *= (pressure*Extrusion::area(scvf)* extrusionFactor_(this->elemVolVars(), scvf)
                    - referencePressure*scvf.area());
 
         return result;

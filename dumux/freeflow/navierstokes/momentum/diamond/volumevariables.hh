@@ -37,7 +37,7 @@ class NavierStokesMomentumDiamondVolumeVariables
 {
     using Scalar = typename Traits::PrimaryVariables::value_type;
 
-    static_assert(Traits::PrimaryVariables::dimension == Traits::dim());
+    static_assert(Traits::PrimaryVariables::dimension == Traits::ModelTraits::dim());
 
 public:
     //! export the type used for the primary variables

@@ -185,6 +185,11 @@ private:
     }
 };
 
+//! Face-centered diamond scheme
+template<class GridGeometry>
+struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::fcdiamond>
+: public LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::fcstaggered> {};
+
 //! Cell-centered mpfa: use overlapping model
 template<class GridGeometry>
 struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::ccmpfa>

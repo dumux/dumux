@@ -27,7 +27,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/method.hh>
-#include <dumux/assembly/fclocalresidual.hh>
+#include <dumux/assembly/fcdiamondlocalresidual.hh>
 #include <dune/common/hybridutilities.hh>
 
 namespace Dumux {
@@ -46,10 +46,10 @@ static constexpr bool isRotationalExtrusion<RotationalExtrusion<radialAxis>> = t
  */
 template<class TypeTag>
 class NavierStokesMomentumDiamondResidual
-: public FaceCenteredLocalResidual<TypeTag>
+: public FaceCenteredDiamondLocalResidual<TypeTag>
 {
-    using ParentType = FaceCenteredLocalResidual<TypeTag>;
-    friend class FaceCenteredLocalResidual<TypeTag>;
+    using ParentType = FaceCenteredDiamondLocalResidual<TypeTag>;
+    friend class FaceCenteredDiamondLocalResidual<TypeTag>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
@@ -122,7 +122,7 @@ public:
                               const SubControlVolume& scv) const
     {
         NumEqVector source = ParentType::computeSource(problem, element, fvGeometry, elemVolVars, scv);
-        source += problem.gravity()[scv.directionIndex()] * problem.density(element, scv);
+        source += problem.gravity() * problem.density(element, scv);
 
         // TODO Axisymmetric problems
 
@@ -187,8 +187,6 @@ public:
                                            const SubControlVolumeFace& scvf) const
     {
         assert(elemBcTypes.hasNeumann());
-
-        const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
 
         NumEqVector flux = this->asImp().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache, elemBcTypes);
 
