@@ -162,14 +162,30 @@ int main(int argc, char** argv)
 
     auto solOld = sol;
 
-    couplingManager->init(stokesProblem, darcyProblem, sol);
-
     // the grid variables
     using StokesGridVariables = GetPropType<StokesTypeTag, Properties::GridVariables>;
     auto stokesGridVariables = std::make_shared<StokesGridVariables>(stokesProblem, stokesFvGridGeometry);
-    stokesGridVariables->init(stokesSol);
     using DarcyGridVariables = GetPropType<DarcyTypeTag, Properties::GridVariables>;
     auto darcyGridVariables = std::make_shared<DarcyGridVariables>(darcyProblem, darcyFvGridGeometry);
+
+    const auto couplingMode = []
+    {
+        const auto mode = getParam<std::string>("Problem.CouplingMode", "ReconstructPorousMediumPressure");
+        if (mode == "ReconstructPorousMediumPressure")
+            return CouplingManager::CouplingMode::reconstructPorousMediumPressure;
+        else if (mode == "ReconstructFreeFlowNormalStress")
+            return CouplingManager::CouplingMode::reconstructFreeFlowNormalStress;
+        else
+            DUNE_THROW(Dune::InvalidStateException, mode << " is not a valid coupling mode. Use ReconstructPorousMediumPressure or ReconstructFreeFlowNormalStress");
+    }();
+
+    couplingManager->init(stokesProblem, darcyProblem,
+                          std::make_tuple(stokesGridVariables->faceGridVariablesPtr(),
+                                          stokesGridVariables->cellCenterGridVariablesPtr(),
+                                          darcyGridVariables),
+                          sol, couplingMode);
+
+    stokesGridVariables->init(stokesSol);
     darcyGridVariables->init(sol[darcyIdx]);
 
     // intialize the vtk output module
