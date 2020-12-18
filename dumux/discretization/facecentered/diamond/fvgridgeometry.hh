@@ -373,7 +373,8 @@ private:
                                         std::array{isIdx, isIdx},
                                         std::array{globalScvIndices[isIdx], globalScvIndices[isIdx]},
                                         localScvfIdx,
-                                        scvfsIndexSet[localScvfIdx]);
+                                        scvfsIndexSet[localScvfIdx],
+                                        true);
                     ++localScvfIdx;
                 }
 

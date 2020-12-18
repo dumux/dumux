@@ -45,6 +45,7 @@
 #include "subdomainboxlocalassembler.hh"
 #include "subdomainstaggeredlocalassembler.hh"
 #include "subdomainfclocalassembler.hh"
+#include "subdomainfcdiamondlocalassembler.hh"
 
 #include <dumux/discretization/method.hh>
 
@@ -133,6 +134,12 @@ private:
 
     template<std::size_t id>
     struct SubDomainAssemblerType<DiscretizationMethods::FCStaggered, id>
+    {
+        using type = SubDomainFaceCenteredLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
+    };
+
+    template<std::size_t id>
+    struct SubDomainAssemblerType<DiscretizationMethods::FCDiamond, id>
     {
         using type = SubDomainFaceCenteredLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
     };
@@ -558,7 +565,9 @@ private:
     template<std::size_t i, class JacRow, class Sol, class GG>
     void enforcePeriodicConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Sol& res, const GG& gridGeometry, const Sol& curSol)
     {
-        if constexpr (GG::discMethod == DiscretizationMethods::box || GG::discMethod == DiscretizationMethods::fcstaggered)
+        if constexpr (GG::discMethod == DiscretizationMethods::box
+            || GG::discMethod == DiscretizationMethods::fcstaggered
+            || GG::discMethod == DiscretizationMethods::fcdiamond)
         {
             for (const auto& m : gridGeometry.periodicVertexMap())
             {
