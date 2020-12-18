@@ -130,7 +130,7 @@ public:
     { return MultiPhaseFluidSystem::phaseName(phase); }
 
     /*!
-     * \brief There is only one phase, so not mass transfer between phases can occur
+     * \brief There is only one phase, so no mass transfer between phases can occur
      */
     static constexpr bool isMiscible()
     { return false; }
