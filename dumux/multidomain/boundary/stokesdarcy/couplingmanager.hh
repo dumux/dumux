@@ -734,7 +734,7 @@ private:
     void printCouplingMode_() const
     {
         const std::string mode = couplingMode() == CouplingMode::reconstructPorousMediumPressure ? "porous medium pressure" : "free-flow normal stress";
-        std::cout << "Coupling mode: reconstruct " << mode << std::endl;
+        std::cout << "\n **** Coupling mode: reconstruct " << mode << " ****\n" << std::endl;
     }
 
 
