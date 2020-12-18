@@ -838,10 +838,10 @@ public:
         NumEqVector flux(0.0);
         const auto& darcyContext = this->couplingManager().darcyCouplingContext(element, scvf);
         const auto& darcyVolVars = darcyElemVolVars[scvf.insideScvIdx()];
-        const auto& stokesVolVars = darcyContext.volVars;
+        const auto& stokesVolVars = darcyContext.volVars.value();
         const auto& outsideScv = (*scvs(darcyContext.fvGeometry).begin());
 
-        const Scalar velocity = darcyContext.velocity * scvf.unitOuterNormal();
+        const Scalar velocity = darcyContext.velocity.value() * scvf.unitOuterNormal();
         const bool insideIsUpstream = velocity > 0.0;
 
         return massFlux_(darcyIdx, stokesIdx, fvGeometry,
@@ -887,9 +887,9 @@ public:
     {
         const auto& darcyContext = this->couplingManager().darcyCouplingContext(element, scvf);
         const auto& darcyVolVars = darcyElemVolVars[scvf.insideScvIdx()];
-        const auto& stokesVolVars = darcyContext.volVars;
+        const auto& stokesVolVars = darcyContext.volVars.value();
 
-        const Scalar velocity = darcyContext.velocity * scvf.unitOuterNormal();
+        const Scalar velocity = darcyContext.velocity.value() * scvf.unitOuterNormal();
         const bool insideIsUpstream = velocity > 0.0;
 
         return energyFlux_(darcyIdx, stokesIdx, fvGeometry, darcyContext.fvGeometry, scvf,
