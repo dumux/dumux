@@ -53,7 +53,7 @@ public:
     using Element = typename GridView::template Codim<0>::Entity;
     using GridGeometry = GG;
 
-        //! the maximum number of scvs per element
+    //! the maximum number of scvs per element
     static constexpr std::size_t maxNumElementScvs = 2*GridView::dimension;
     // //! the maximum number of scvfs per element (use cubes for maximum)
     // static constexpr std::size_t maxNumElementScvfs = 2*GridView::dimension;
@@ -69,6 +69,19 @@ public:
     //! Get a sub control volume face with a global scvf index
     const SubControlVolumeFace& scvf(GridIndexType scvfIdx) const
     { return gridGeometry().scvf(scvfIdx); }
+
+
+     //! Return the sub control volume face on the boundary for a given sub control volume
+     // Each scv has maximum one boundary scvf
+     const SubControlVolumeFace& boundaryScvf(const SubControlVolume& scv) const
+     {
+         assert(scv.boundary());
+
+         // boundary scvfs come first in the container
+         auto scvfIter = scvfs(*this, scv).begin();
+         assert(scvfIter->boundary());
+         return *scvfIter;
+     }
 
     //! iterator range for sub control volumes. Iterates over
     //! all scvs of the bound element (not including neighbor scvs)

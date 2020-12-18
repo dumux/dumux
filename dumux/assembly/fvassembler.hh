@@ -38,6 +38,7 @@
 #include "boxlocalassembler.hh"
 #include "cclocalassembler.hh"
 #include "fclocalassembler.hh"
+#include "fcdiamondlocalassembler.hh"
 
 namespace Dumux {
 
@@ -76,7 +77,7 @@ template<>
 struct LocalAssemblerChooser<DiscretizationMethod::fcdiamond>
 {
     template<class TypeTag, class Impl, DiffMethod dM, bool isImplicit>
-    using type = FaceCenteredLocalAssembler<TypeTag, Impl, dM, isImplicit>;
+    using type = FaceCenteredDiamondLocalAssembler<TypeTag, Impl, dM, isImplicit>;
 };
 
 

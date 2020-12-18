@@ -45,6 +45,7 @@
 #include "subdomainboxlocalassembler.hh"
 #include "subdomainstaggeredlocalassembler.hh"
 #include "subdomainfclocalassembler.hh"
+#include "subdomainfcdiamondlocalassembler.hh"
 
 #include <dumux/discretization/method.hh>
 
@@ -133,6 +134,12 @@ private:
 
     template<std::size_t id>
     struct SubDomainAssemblerType<DiscretizationMethod::fcstaggered, id>
+    {
+        using type = SubDomainFaceCenteredLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
+    };
+
+    template<std::size_t id>
+    struct SubDomainAssemblerType<DiscretizationMethod::fcdiamond, id>
     {
         using type = SubDomainFaceCenteredLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
     };
@@ -555,7 +562,9 @@ private:
     }
 
     template<std::size_t i, class JacRow, class Sol, class GG>
-    std::enable_if_t<GG::discMethod == DiscretizationMethod::box || GG::discMethod == DiscretizationMethod::fcstaggered, void>
+    std::enable_if_t<GG::discMethod == DiscretizationMethod::box
+                     || GG::discMethod == DiscretizationMethod::fcstaggered
+                     || GG::discMethod == DiscretizationMethod::fcdiamond, void>
     enforcePeriodicConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Sol& res, const GG& gridGeometry, const Sol& curSol)
     {
         for (const auto& m : gridGeometry.periodicVertexMap())
@@ -594,7 +603,9 @@ private:
     }
 
     template<std::size_t i, class JacRow, class Sol, class GG>
-    std::enable_if_t<GG::discMethod != DiscretizationMethod::box && GG::discMethod != DiscretizationMethod::fcstaggered, void>
+    std::enable_if_t<GG::discMethod != DiscretizationMethod::box
+                     && GG::discMethod != DiscretizationMethod::fcstaggered
+                     && GG::discMethod != DiscretizationMethod::fcdiamond, void>
     enforcePeriodicConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Sol& res, const GG& gridGeometry, const Sol& curSol) {}
 
     //! pointer to the problem to be solved
