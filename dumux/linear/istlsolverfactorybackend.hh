@@ -44,6 +44,7 @@
 #include <dune/istl/solverfactory.hh>
 
 #include <dumux/common/typetraits/matrix.hh>
+#include <dumux/common/typetraits/vector.hh>
 #include <dumux/linear/solver.hh>
 #include <dumux/linear/parallelhelpers.hh>
 #include <dumux/linear/istlsolverregistry.hh>
@@ -404,7 +405,7 @@ public:
     Scalar norm(const Vector& x) const
     {
 #if HAVE_MPI
-        if constexpr (LinearSolverTraits::canCommunicate)
+        if constexpr (LinearSolverTraits::canCommunicate && !isMultiTypeBlockVector<Vector>::value)
         {
             if (solverCategory_ == Dune::SolverCategory::nonoverlapping)
             {
