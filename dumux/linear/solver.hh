@@ -25,6 +25,7 @@
 #define DUMUX_LINEAR_SOLVER_HH
 
 #include <dune/common/exceptions.hh>
+#include <dune/istl/scalarproducts.hh>
 #include <dumux/common/parameters.hh>
 
 namespace Dumux {
@@ -69,6 +70,17 @@ public:
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
         DUNE_THROW(Dune::NotImplemented, "Linear solver doesn't implement a solve method!");
+    }
+
+    template<class Vector>
+    auto norm(const Vector& x) const
+    {
+        if (Dune::MPIHelper::getCollectiveCommunication().size() > 1)
+            DUNE_THROW(Dune::NotImplemented, "norm in parallel");
+
+        static const Dune::SeqScalarProduct<Vector> sp;
+
+        return sp.norm(x);
     }
 
     //! the name of the linear solver
