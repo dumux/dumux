@@ -78,9 +78,7 @@ public:
         if (Dune::MPIHelper::getCollectiveCommunication().size() > 1)
             DUNE_THROW(Dune::NotImplemented, "norm in parallel");
 
-        static const Dune::SeqScalarProduct<Vector> sp;
-
-        return sp.norm(x);
+        return Dune::SeqScalarProduct<Vector>().norm(x);
     }
 
     //! the name of the linear solver
