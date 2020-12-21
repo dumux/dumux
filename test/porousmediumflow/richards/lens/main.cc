@@ -38,6 +38,7 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/initialize.hh>
 #include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/algebratraits.hh>
 
 #if DUNE_VERSION_GTE(DUNE_ISTL,2,8)
 #include <dumux/linear/istlsolverfactorybackend.hh>
@@ -152,11 +153,8 @@ int main(int argc, char** argv)
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
-#if DUNE_VERSION_GTE(DUNE_ISTL,2,8)
-    using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>>;
-#else
-    using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
-#endif
+    using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>,
+                                                  LinearAlgebraTraitsFromAssembler<Assembler>>;
 
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 
