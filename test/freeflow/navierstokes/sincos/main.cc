@@ -43,6 +43,7 @@
 
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/algebratraits.hh>
 #include <dumux/linear/istlsolverfactorybackend.hh>
 
 #include <dumux/multidomain/fvassembler.hh>
