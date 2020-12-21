@@ -27,7 +27,6 @@
 #include <dune/istl/preconditioners.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
-#include <dumux/linear/istlsolvers.hh>
 
 namespace Dumux {
 
