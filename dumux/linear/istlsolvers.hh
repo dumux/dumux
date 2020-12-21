@@ -43,6 +43,7 @@
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
 #include <dumux/linear/matrixconverter.hh>
 #include <dumux/linear/parallelhelpers.hh>
+#include <dumux/linear/solvercategory.hh>
 
 namespace Dumux::Detail {
 
@@ -56,23 +57,6 @@ template<class M>
 constexpr std::size_t preconditionerBlockLevel() noexcept
 {
     return isMultiTypeBlockMatrix<M>::value ? 2 : 1;
-}
-
-template<class LinearSolverTraits, class GridView>
-Dune::SolverCategory::Category solverCategory(const GridView& gridView)
-{
-    if constexpr (LinearSolverTraits::canCommunicate)
-    {
-        if (gridView.comm().size() <= 1)
-            return Dune::SolverCategory::sequential;
-
-        if (LinearSolverTraits::isNonOverlapping(gridView))
-            return Dune::SolverCategory::nonoverlapping;
-        else
-            return Dune::SolverCategory::overlapping;
-    }
-    else
-        return Dune::SolverCategory::sequential;
 }
 
 } // end namespace Dumux::Detail
