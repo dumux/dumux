@@ -41,8 +41,8 @@ namespace Dumux {
  * \brief A parallel helper class providing a nonoverlapping
  *        decomposition of all degrees of freedom
  */
-template<class LinearSolverTraits, bool canCommunicate>
-class ParallelISTLHelperImpl;
+template<class LinearSolverTraits, bool canCommunicate = false>
+class ParallelISTLHelperImpl {};
 
 template<class LinearSolverTraits>
 class ParallelISTLHelperImpl<LinearSolverTraits, true>
@@ -426,10 +426,6 @@ private:
     std::vector<std::size_t> isGhost_; //!< vector to identify ghost dofs
 
 }; // class ParallelISTLHelperImpl
-
-template<class LinearSolverTraits>
-class ParallelISTLHelperImpl<LinearSolverTraits, false>
-{};
 
 template<class LinearSolverTraits>
 using ParallelISTLHelper = ParallelISTLHelperImpl<LinearSolverTraits,
