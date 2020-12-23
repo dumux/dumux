@@ -81,9 +81,12 @@ public:
      {
          assert(scv.boundary());
 
-         // frontal boundary faces are always stored directly after the interior boundary face (which comes first in the container)
+         // frontal boundary faces are always stored after the lateral faces
          auto scvfIter = scvfs(*this, scv).begin();
-         ++scvfIter;
+         const auto end = scvfs(*this, scv).end();
+         while (!(scvfIter->isFrontal() && scvfIter->boundary()) && (scvfIter != end))
+             ++scvfIter;
+
          assert(scvfIter->isFrontal());
          assert(scvfIter->boundary());
          return *scvfIter;

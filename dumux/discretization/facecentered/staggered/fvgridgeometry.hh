@@ -223,6 +223,9 @@ public:
             // a temporary map to store pairs of common entities
             std::unordered_map<GridIndexType, Dune::ReservedVector<GridIndexType, 2>> commonEntityIdxToScvfsMap;
 
+            // keep track of frontal boundary scvfs
+            std::size_t numFrontalBoundaryScvfs = 0;
+
             SmallLocalIndexType localScvIdx = 0;
             for (const auto& intersection : intersections(this->gridView(), element))
             {
@@ -230,14 +233,6 @@ public:
 
                 // the frontal sub control volume face at the element center
                 scvfsIndexSet.push_back(scvfIdx++);
-
-                // handle physical domain boundary
-                if (onDomainBoundary_(intersection))
-                {
-                    ++numBoundaryScv_; // frontal face
-                    numBoundaryScv_ += numLateralScvfsPerScv; // boundary scvs for lateral faces
-                    scvfsIndexSet.push_back(scvfIdx++); // the frontal sub control volume face on the boundary coincides with element face
-                }
 
                 if constexpr(dim > 1)
                 {
@@ -257,8 +252,20 @@ public:
                     }
                 }
 
+                // handle physical domain boundary
+                if (onDomainBoundary_(intersection))
+                {
+                    ++numBoundaryScv_; // frontal face
+                    numBoundaryScv_ += numLateralScvfsPerScv; // boundary scvs for lateral faces
+                    ++numFrontalBoundaryScvfs;
+                }
+
                 ++localScvIdx;
             }
+
+            // add global indices of frontal boundary scvfs last
+            for (std::size_t i = 0; i < numFrontalBoundaryScvfs; ++i)
+                scvfsIndexSet.push_back(scvfIdx++);
 
             // Save the scv indices belonging to this element to build up fv element geometries fast
             const auto eIdx = this->elementMapper().index(element);
@@ -355,27 +362,6 @@ public:
                                     false);
                 ++localScvfIdx;
 
-                // the frontal sub control volume face at a domain boundary (coincides with element face)
-                if (onDomainBoundary_(intersection))
-                {
-                    ++numBoundaryScvf_;
-                    const auto boundaryCenter = intersectionGeometry.center();
-                    scvfs_.emplace_back(boundaryCenter,
-                                        boundaryCenter,
-                                        std::array{localScvIdx, localOppositeScvIdx}, // TODO outside boundary, periodic, parallel?
-                                        std::array{globalScvIndices[localScvIdx], globalScvIndices[localScvIdx]}, // TODO outside boundary, periodic, parallel?
-                                        localScvfIdx,
-                                        intersectionGeometry.volume(),
-                                        directionIdx,
-                                        sign(intersection.centerUnitOuterNormal()[directionIdx]),
-                                        globalScvfIndices[localScvfIdx],
-                                        0, // should not be used
-                                        SubControlVolumeFace::FaceType::frontal,
-                                        true);
-                    ++localScvfIdx;
-                    hasBoundaryScvf_[eIdx] = true;
-                }
-
                 // the lateral sub control volume faces
                 const auto lateralFaceIndices = geometryHelper.localLaterFaceIndices(localScvIdx);
                 for (const auto lateralFacetIndex : lateralFaceIndices)
@@ -441,6 +427,37 @@ public:
                         ++numBoundaryScvf_;
                         hasBoundaryScvf_[eIdx] = true;
                     }
+                } // end loop over lateral facets
+
+                ++localScvIdx;
+            } // end first loop over intersections
+
+            // do a second loop over all intersections to add frontal boundary faces
+            localScvIdx = 0;
+            for (const auto& intersection : intersections(this->gridView(), element))
+            {
+                // the frontal sub control volume face at a domain boundary (coincides with element face)
+                if (onDomainBoundary_(intersection))
+                {
+                    ++numBoundaryScvf_;
+                    const auto localOppositeScvIdx = geometryHelper.localOppositeIdx(localScvIdx);
+                    const auto intersectionGeometry = intersection.geometry();
+                    const auto boundaryCenter = intersectionGeometry.center();
+                    const auto directionIdx = Dumux::directionIndex(intersection.centerUnitOuterNormal());
+                    scvfs_.emplace_back(boundaryCenter,
+                                        boundaryCenter,
+                                        std::array{localScvIdx, localOppositeScvIdx}, // TODO outside boundary, periodic, parallel?
+                                        std::array{globalScvIndices[localScvIdx], globalScvIndices[localScvIdx]}, // TODO outside boundary, periodic, parallel?
+                                        localScvfIdx,
+                                        intersectionGeometry.volume(),
+                                        directionIdx,
+                                        sign(intersection.centerUnitOuterNormal()[directionIdx]),
+                                        globalScvfIndices[localScvfIdx],
+                                        0, // should not be used
+                                        SubControlVolumeFace::FaceType::frontal,
+                                        true);
+                    ++localScvfIdx;
+                    hasBoundaryScvf_[eIdx] = true;
                 }
 
                 ++localScvIdx;
