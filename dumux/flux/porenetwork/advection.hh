@@ -277,18 +277,23 @@ public:
         const Scalar expansionCoefficient = fluxVarsCache.singlePhaseFlowVariables().expansionCoefficient(downstreamIdx);
         const Scalar mu = elemVolVars[upstreamIdx].viscosity();
 
+        //! A0q^2 + B0q + C0 = 0
+        //! attention: the q, volumetric flowrate, calculated here is always positive and its sign need to be determined based on flow direction
+        //! this approach is taken to prevent the term under the square root becoming negative
         const Scalar A0 = (contractionCoefficient * elemVolVars[upstreamIdx].density() + expansionCoefficient * elemVolVars[downstreamIdx].density())
                           / (2.0 * throatCrossSectionalArea * throatCrossSectionalArea);
         const Scalar B0 = mu / creepingFlowTransmissibility;
-        const Scalar C0 = -deltaP;
+        const Scalar C0 = (upstreamIdx == 0) ? -deltaP: deltaP;
 
         using std::sqrt;
-        const auto tmp = B0*B0 - 4*A0*C0;
-        //! Use creeping flow calculation if under the square root operator is negative
-        if (tmp < 0)
-            return creepingFlowTransmissibility * deltaP;
+        const auto tmp0 = B0*B0 - 4*A0*C0;
+        const auto q = (-B0 + sqrt(tmp0)) / (2*A0);
+
+        //! give the volume flowrate proper sign based on flow direction
+        if (upstreamIdx == 0)
+            return mu * q;
         else
-            return mu*(-B0 + sqrt(tmp)) / (2*A0);
+            return -mu * q;
 
         //TODO: gravity
 

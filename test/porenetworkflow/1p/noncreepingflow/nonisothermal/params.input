@@ -19,3 +19,8 @@ AddVelocity = 0
 SolidHeatCapacity = 1.0 # for compatibility
 SolidDensity = 1.0 # for compatibility
 SolidThermalConductivity = 1.0 # for compatibility
+
+[Newton]
+MaxSteps = 500
+TargetSteps = 6
+MaxRelativeShift = 1e-8

@@ -12,6 +12,6 @@ EnableGravity = false
 AddVelocity = 0
 
 [Newton]
-MaxSteps = 100
+MaxSteps = 500
 TargetSteps = 6
 MaxRelativeShift = 1e-8
