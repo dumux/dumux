@@ -35,7 +35,8 @@
 #include <dune/subgrid/subgrid.hh>
 #endif
 
-#include <dumux/freeflow/navierstokes/fluxhelper.hh>
+#include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
+#include <dumux/freeflow/navierstokes/scalarfluxhelper.hh>
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
@@ -250,12 +251,12 @@ public:
         if constexpr (ParentType::isMomentumProblem())
         {
             const auto p = isInlet_(globalPos) ? 1e5 + deltaP_ : 1e5;
-            values = NavierStokesBoundaryFluxHelper<ModelTraits>::fixedPressureMomentumFlux(*this, element, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, p);
+            values = NavierStokesMomentumBoundaryFluxHelper::fixedPressureMomentumFlux(*this, element, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, p);
         }
         else
         {
             if (isInlet_(globalPos) || isOutlet_(globalPos))
-                values = NavierStokesBoundaryFluxHelper<ModelTraits>::scalarOutflowFlux(*this, element, fvGeometry, scvf, elemVolVars);
+                values = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>::scalarOutflowFlux(*this, element, fvGeometry, scvf, elemVolVars);
         }
 
         return values;
