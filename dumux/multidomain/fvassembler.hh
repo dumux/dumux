@@ -151,6 +151,7 @@ public:
     , gridVariablesTuple_(gridVariables)
     , timeLoop_()
     , isStationaryProblem_(true)
+    , warningIssued_(false)
     {
         static_assert(isImplicit(), "Explicit assembler for stationary problem doesn't make sense!");
         std::cout << "Instantiated assembler for a stationary problem." << std::endl;
@@ -174,6 +175,7 @@ public:
     , timeLoop_(timeLoop)
     , prevSol_(&prevSol)
     , isStationaryProblem_(false)
+    , warningIssued_(false)
     {
         std::cout << "Instantiated assembler for an instationary problem." << std::endl;
     }
@@ -230,9 +232,6 @@ public:
         // calculate the squared norm of the residual
         Scalar resultSquared = 0.0;
 
-        // issue a warning if the caluclation is used in parallel with overlap
-        static bool warningIssued = false;
-
         // for box communicate the residual with the neighboring processes
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(residual)), [&](const auto domainId)
@@ -253,14 +252,14 @@ public:
                     vectorHelper.makeNonOverlappingConsistent(residual[domainId]);
                 }
             }
-            else if (!warningIssued)
+            else if (!warningIssued_)
             {
                 if (gridView.comm().rank() == 0)
                     std::cout << "\nWarning: norm calculation adds entries corresponding to\n"
                               << "overlapping entities multiple times. Please use the norm\n"
                               << "function provided by a linear solver instead." << std::endl;
 
-                warningIssued = true;
+                warningIssued_ = true;
             }
 
             Scalar localNormSquared = residual[domainId].two_norm2();
@@ -564,6 +563,9 @@ private:
     //! shared pointers to the jacobian matrix and residual
     std::shared_ptr<JacobianMatrix> jacobian_;
     std::shared_ptr<SolutionVector> residual_;
+
+    //! Issue a warning if the calculation is used in parallel with overlap. This could be a static local variable if it wasn't for g++7 yielding a linker error.
+    bool warningIssued_;
 };
 
 } // end namespace Dumux
