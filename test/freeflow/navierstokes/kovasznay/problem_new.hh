@@ -183,12 +183,12 @@ public:
      */
     PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
     {
-        Scalar x = globalPos[0];
-        Scalar y = globalPos[1];
+        const Scalar x = globalPos[0];
         PrimaryVariables values;
 
         if constexpr (ParentType::isMomentumProblem())
         {
+            const Scalar y = globalPos[1];
             values[Indices::velocityXIdx] = 1.0 - std::exp(lambda_ * x) * std::cos(2.0 * M_PI * y);
             values[Indices::velocityYIdx] = 0.5 * lambda_ / M_PI * std::exp(lambda_ * x) * std::sin(2.0 * M_PI * y);
         }
