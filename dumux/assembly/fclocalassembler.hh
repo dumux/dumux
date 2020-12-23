@@ -364,7 +364,6 @@ public:
         {
             // dof index and corresponding actual pri vars
             const auto dofIdx = scv.dofIndex();
-            const auto scvIdx = scv.index();
             auto& curVolVars = this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv);
             const VolumeVariables origVolVars(curVolVars);
 
@@ -403,11 +402,8 @@ public:
                     if (!this->assembler().isStationaryProblem())
                         evalStorage(residual, scv);
 
-                    for (const auto& scvf : scvfs(fvGeometry)) // TODO allow iteration over scvfs of scv
-                    {
-                        if (scvf.insideScvIdx() == scvIdx)
-                            evalFlux(residual, scvf);
-                    }
+                    for (const auto& scvf : scvfs(fvGeometry, scv))
+                        evalFlux(residual, scvf);
 
                     return residual;
                 };
@@ -464,23 +460,24 @@ public:
                         curOtherVolVars.update(otherElemSol, problem, otherElement, scvJ);
                         this->asImp_().maybeUpdateCouplingContext(scvJ, otherElemSol, pvIdx);
 
-                        ElementResidualVector residual(element.subEntities(2));
+                        ElementResidualVector residual(element.subEntities(1));
                         residual = 0;
 
-                        for (const auto& scvf : scvfs(fvGeometry))
+                        for (const auto& scvf : scvfs(fvGeometry, scv))
                         {
-                            if (scvf.insideScvIdx() == scvIdx)
+                            if (scvf.outsideScvIdx() == scvJ.index())
                             {
-                                if (scvf.outsideScvIdx() == scvJ.index())
-                                {
-                                    evalFlux(residual, scvf);
-                                    return residual;
-                                }
+                                evalFlux(residual, scvf);
+                                return residual;
+                            }
 
+                            // also consider lateral faces outside the own element for face-centered staggered schemes
+                            if constexpr (GridGeometry::discMethod == DiscretizationMethod::fcstaggered)
+                            {
                                 if (scvf.isLateral())
                                 {
-                                    const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
-                                    if (orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
+                                    if (const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
+                                        orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
                                     {
                                         evalFlux(residual, scvf);
                                         return residual;
@@ -492,26 +489,27 @@ public:
                         DUNE_THROW(Dune::InvalidStateException, "No scvf found");
                     };
 
-                    // get original fluxes
+                    // get original flux from the neighbor
                     const auto origFluxResidual = [&]()
                     {
-                        ElementResidualVector result(element.subEntities(2));
+                        ElementResidualVector result(element.subEntities(1));
                         result = 0;
 
-                        for (const auto& scvf : scvfs(fvGeometry))
+                        for (const auto& scvf : scvfs(fvGeometry, scv))
                         {
-                            if (scvf.insideScvIdx() == scvIdx)
+                            if (scvf.outsideScvIdx() == scvJ.index())
                             {
-                                if (scvf.outsideScvIdx() == scvJ.index())
-                                {
-                                    evalFlux(result, scvf);
-                                    return result;
-                                }
+                                evalFlux(result, scvf);
+                                return result;
+                            }
 
+                            // also consider lateral faces outside the own element for face-centered staggered schemes
+                            if constexpr (GridGeometry::discMethod == DiscretizationMethod::fcstaggered)
+                            {
                                 if (scvf.isLateral())
                                 {
-                                    const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
-                                    if (orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
+                                    if (const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
+                                        orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
                                     {
                                         evalFlux(result, scvf);
                                         return result;
@@ -545,29 +543,33 @@ public:
                                 A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
                         }
 
-                        // treat normal/parallel scvs for parallel runs TODO description, put in function
-                        if (problem.gridGeometry().gridView().comm().size() > 1 && element.partitionType() == Dune::InteriorEntity)
+                        // also consider lateral faces outside the own element for face-centered staggered schemes
+                        if constexpr (GridGeometry::discMethod == DiscretizationMethod::fcstaggered)
                         {
-                            const auto& myfacet = element.template subEntity <1> (scv.indexInElement());
-                            if (myfacet.partitionType() == 1) // TODO
+                            // treat normal/parallel scvs for parallel runs TODO description, put in function
+                            if (problem.gridGeometry().gridView().comm().size() > 1 && element.partitionType() == Dune::InteriorEntity)
                             {
-                                for (const auto& scvf : scvfs(fvGeometry, scv))
+                                const auto& myfacet = element.template subEntity <1> (scv.indexInElement());
+                                if (myfacet.partitionType() == 1) // TODO
                                 {
-                                    if (scvf.isFrontal() || scvf.boundary())
-                                        continue;
-
-                                    // parallel scvs TODO drawing
-                                    if (scvf.outsideScvIdx() == scvJ.index())
-                                        A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
-                                    else
+                                    for (const auto& scvf : scvfs(fvGeometry, scv))
                                     {
-                                        // normal scvs
-                                        const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
-                                        if (orthogonalScvf.boundary())
+                                        if (scvf.isFrontal() || scvf.boundary())
                                             continue;
 
-                                        if (orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
+                                        // parallel scvs TODO drawing
+                                        if (scvf.outsideScvIdx() == scvJ.index())
                                             A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
+                                        else
+                                        {
+                                            // normal scvs
+                                            const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
+                                            if (orthogonalScvf.boundary())
+                                                continue;
+
+                                            if (orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
+                                                A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
+                                        }
                                     }
                                 }
                             }
@@ -590,6 +592,7 @@ public:
 
         return origResiduals;
     }
+
 };
 
 
