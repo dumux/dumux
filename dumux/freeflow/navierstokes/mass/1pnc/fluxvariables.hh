@@ -168,7 +168,8 @@ public:
     NumEqVector advectiveFlux(int phaseIdx = 0) const
     {
         NumEqVector result(0.0);
-        const auto upwinding = [this](const auto& term) { return ParentType::advectiveFlux(term); };
+        // g++ requires to capture 'this' by value
+        const auto upwinding = [this](const auto& term) { return this->getAdvectiveFlux(term); };
         AdvectiveFlux<ModelTraits>::addAdvectiveFlux(result, upwinding);
         return result;
     }
@@ -183,7 +184,8 @@ public:
     {
         const auto diffusiveFlux = molecularDiffusionFlux(phaseIdx);
         NumEqVector flux = diffusiveFlux;
-        const auto upwinding = [this](const auto& term) { return ParentType::advectiveFlux(term); };
+        // g++ requires to capture 'this' by value
+        const auto upwinding = [this](const auto& term) { return this->getAdvectiveFlux(term); };
         AdvectiveFlux<ModelTraits>::addAdvectiveFlux(flux, upwinding);
 
         if constexpr (ModelTraits::enableEnergyBalance())
