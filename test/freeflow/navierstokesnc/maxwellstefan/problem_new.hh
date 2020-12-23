@@ -22,7 +22,7 @@
  * \brief Channel flow test for the multi-component staggered grid (Navier-)Stokes model.
  */
 
-#ifndef DUMUX_CHANNEL_MAXWELL_STEFAN_TEST_PROBLEM_NEWHH
+#ifndef DUMUX_CHANNEL_MAXWELL_STEFAN_TEST_PROBLEM_NEW_HH
 #define DUMUX_CHANNEL_MAXWELL_STEFAN_TEST_PROBLEM_NEW_HH
 
 #include <dune/grid/yaspgrid.hh>
@@ -242,10 +242,6 @@ class MaxwellStefanNCTestProblem : public NavierStokesProblem<TypeTag>
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
-    static constexpr auto compOneIdx =  Indices::conti0EqIdx;
-    static constexpr auto compTwoIdx =  Indices::conti0EqIdx + FluidSystem::N2Idx;
-    static constexpr auto compThreeIdx = Indices::conti0EqIdx + FluidSystem::CO2Idx;
-
 public:
     MaxwellStefanNCTestProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(gridGeometry, couplingManager)
@@ -315,6 +311,9 @@ public:
 
         if constexpr (!ParentType::isMomentumProblem())
         {
+            static constexpr auto compTwoIdx = Indices::conti0EqIdx + FluidSystem::N2Idx;
+            static constexpr auto compThreeIdx = Indices::conti0EqIdx + FluidSystem::CO2Idx;
+
             initialValues[Indices::pressureIdx] = 1.1e+5;
             if (globalPos[0] < 0.5)
             {
