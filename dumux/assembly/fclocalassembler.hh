@@ -356,8 +356,11 @@ public:
         // create the element solution
         auto elemSol = elementSolution(element, curSol, fvGeometry.gridGeometry());
 
+        // one residual per element facet
+        const auto numElementResiduals = element.subEntities(1);
+
         // create the vector storing the partial derivatives
-        ElementResidualVector partialDerivs(element.subEntities(2));
+        ElementResidualVector partialDerivs(numElementResiduals);
 
         // calculation of the derivatives
         for (auto&& scv : scvs(fvGeometry))
@@ -394,7 +397,7 @@ public:
                     curVolVars.update(elemSol, problem, element, scv);
                     this->asImp_().maybeUpdateCouplingContext(scv, elemSol, pvIdx);
 
-                    ElementResidualVector residual(element.subEntities(2));
+                    ElementResidualVector residual(numElementResiduals);
                     residual = 0;
 
                     evalSource(residual, scv);
@@ -439,7 +442,7 @@ public:
             const auto& otherScvIndices = fvGeometry.gridGeometry().connectivityMap()[scv.index()];
             for (const auto globalJ : otherScvIndices)
             {
-                ElementResidualVector partialDerivsFluxOnly(element.subEntities(2));
+                ElementResidualVector partialDerivsFluxOnly(numElementResiduals);
                 partialDerivsFluxOnly = 0;
 
                 const auto scvJ = fvGeometry.scv(globalJ);
@@ -460,7 +463,7 @@ public:
                         curOtherVolVars.update(otherElemSol, problem, otherElement, scvJ);
                         this->asImp_().maybeUpdateCouplingContext(scvJ, otherElemSol, pvIdx);
 
-                        ElementResidualVector residual(element.subEntities(1));
+                        ElementResidualVector residual(numElementResiduals);
                         residual = 0;
 
                         for (const auto& scvf : scvfs(fvGeometry, scv))
@@ -492,7 +495,7 @@ public:
                     // get original flux from the neighbor
                     const auto origFluxResidual = [&]()
                     {
-                        ElementResidualVector result(element.subEntities(1));
+                        ElementResidualVector result(numElementResiduals);
                         result = 0;
 
                         for (const auto& scvf : scvfs(fvGeometry, scv))
@@ -656,7 +659,7 @@ public:
         auto elemSol = elementSolution(element, curSol, fvGeometry.gridGeometry());
 
         // create the vector storing the partial derivatives
-        ElementResidualVector partialDerivs(element.subEntities(2));
+        ElementResidualVector partialDerivs(element.subEntities(1));
 
         // calculation of the derivatives
         for (auto&& scv : scvs(fvGeometry))
