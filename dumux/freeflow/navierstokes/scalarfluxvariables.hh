@@ -61,7 +61,7 @@ public:
      * \brief Returns the advective flux computed by the respective law.
      */
     template<typename FunctionType>
-    Scalar advectiveFlux(const FunctionType& upwindTerm) const
+    Scalar getAdvectiveFlux(const FunctionType& upwindTerm) const
     {
         if constexpr (ModelTraits::enableAdvection())
         {
