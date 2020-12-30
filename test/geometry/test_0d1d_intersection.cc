@@ -49,12 +49,23 @@ void testIntersections(std::vector<bool>& returns)
         GlobalPosition p5 = a - (b - a);
         GlobalPosition p6(0.5*scaling);
 
+        GlobalPosition delta = b - a;
+        delta *= 1.5e-7;
+        GlobalPosition p7 = a - delta;
+        GlobalPosition p8 = b + delta;
+        GlobalPosition p9 = a + delta;
+        GlobalPosition p10 = b - delta;
+
         returns.push_back(testIntersection(a, b, p1, true));
         returns.push_back(testIntersection(a, b, p2, true));
         returns.push_back(testIntersection(a, b, p3, true));
         returns.push_back(testIntersection(a, b, p4));
         returns.push_back(testIntersection(a, b, p5));
         returns.push_back(testIntersection(a, b, p6));
+        returns.push_back(testIntersection(a, b, p7));
+        returns.push_back(testIntersection(a, b, p8));
+        returns.push_back(testIntersection(a, b, p9, true));
+        returns.push_back(testIntersection(a, b, p10, true));
     }
 }
 
