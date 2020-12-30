@@ -62,6 +62,8 @@ void testIntersections(std::vector<bool>& returns)
         returns.push_back(testIntersection(a, b, p4));
         returns.push_back(testIntersection(a, b, p5));
         returns.push_back(testIntersection(a, b, p6));
+
+        // test cases where the point is just on or just outside the segment
         returns.push_back(testIntersection(a, b, p7));
         returns.push_back(testIntersection(a, b, p8));
         returns.push_back(testIntersection(a, b, p9, true));
