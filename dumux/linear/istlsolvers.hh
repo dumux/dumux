@@ -61,6 +61,7 @@ constexpr std::size_t preconditionerBlockLevel() noexcept
 
 } // end namespace Dumux::Detail
 
+
 namespace Dumux {
 
 /*!
@@ -315,34 +316,19 @@ private:
     std::string name_;
 };
 
-template<class LSTraits, class LATraits, bool isMultiType>
-struct ILUBiCGSTABIstlSolverImpl;
 
+/*!
+ * \ingroup Linear
+ * \brief An ILU preconditioned BiCGSTAB solver using dune-istl
+ */
 template<class LSTraits, class LATraits>
-struct ILUBiCGSTABIstlSolverImpl<LSTraits, LATraits, false>
-{
-    using type = IstlLinearSolver<LSTraits, LATraits,
-                                  Dune::BiCGSTABSolver<typename LATraits::Vector>,
-                                  Dune::SeqILU<typename LATraits::Matrix,
-                                               typename LATraits::Vector,
-                                               typename LATraits::Vector>
-                                 >;
-};
-
-template<class LSTraits, class LATraits>
-struct ILUBiCGSTABIstlSolverImpl<LSTraits, LATraits, true>
-{
-    using type = IstlLinearSolver<LSTraits, LATraits,
-                                  Dune::BiCGSTABSolver<typename LATraits::SingleTypeVector>,
-                                  Dune::SeqILU<typename LATraits::SingleTypeMatrix,
-                                               typename LATraits::SingleTypeVector,
-                                               typename LATraits::SingleTypeVector>
-                                 >;
-};
-
-template<class LSTraits, class LATraits>
-using ILUBiCGSTABIstlSolver = typename ILUBiCGSTABIstlSolverImpl<LSTraits, LATraits,
-                                                                 isMultiTypeBlockVector<typename LATraits::Vector>::value>::type;
+using ILUBiCGSTABIstlSolver =
+    IstlLinearSolver<LSTraits, LATraits,
+        Dune::BiCGSTABSolver<typename LATraits::SingleTypeVector>,
+        Dune::SeqILU<typename LATraits::SingleTypeMatrix,
+                     typename LATraits::SingleTypeVector,
+                     typename LATraits::SingleTypeVector>
+    >;
 
 } // end namespace Dumux
 
