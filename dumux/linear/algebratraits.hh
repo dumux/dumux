@@ -33,9 +33,7 @@
 #include <dumux/common/typetraits/vector.hh>
 #include <dumux/linear/matrixconverter.hh>
 
-namespace Dumux {
-
-namespace Detail {
+namespace Dumux::Detail {
 
 template<class T, std::enable_if_t<Dune::IsNumber<std::decay_t<T>>::value, int> = 0>
 constexpr std::size_t blockSize() { return 1; }
@@ -43,16 +41,7 @@ constexpr std::size_t blockSize() { return 1; }
 template<class T, std::enable_if_t<!Dune::IsNumber<std::decay_t<T>>::value, int> = 0>
 constexpr std::size_t blockSize() { return std::decay_t<T>::size(); }
 
-} // end namespace Detail
-
-template<class M, class V>
-struct LinearAlgebraTraits
-{
-    using Matrix = M;
-    using Vector = V;
-};
-
-template<class Assembler, bool isMultiTypeBlockVector>
+template<class Assembler, bool isMultiType = false>
 struct LATraitsFromAssemblerImpl
 {
 private:
@@ -63,6 +52,8 @@ private:
 public:
     using Vector = Dune::BlockVector<BlockType>;
     using Matrix = typename Assembler::JacobianMatrix;
+    using SingleTypeVector = Vector;
+    using SingleTypeMatrix = Matrix;
 };
 
 template<class Assembler>
@@ -74,9 +65,30 @@ struct LATraitsFromAssemblerImpl<Assembler, true>
     using SingleTypeMatrix = decltype(MatrixConverter<Matrix>::multiTypeToBCRSMatrix(std::declval<Matrix>()));
 };
 
+} // end namespace Dumux::Detail
+
+namespace Dumux {
+
+/*
+ * \ingroup Linear
+ * \brief Traits providing linear algebra types (vector, matrix)
+ */
+template<class M, class V, class STM = M, class STV = V>
+struct LinearAlgebraTraits
+{
+    using Matrix = M;
+    using Vector = V;
+    using SingleTypeMatrix = STM;
+    using SingleTypeVector = STV;
+};
+
+/*
+ * \ingroup Linear
+ * \brief Helper to extract linear algebra types from an assembler
+ */
 template<class Assembler>
-using LinearAlgebraTraitsFromAssembler = LATraitsFromAssemblerImpl<Assembler,
-                                                                   isMultiTypeBlockVector<typename Assembler::ResidualType>::value>;
+using LinearAlgebraTraitsFromAssembler
+    = Detail::LATraitsFromAssemblerImpl<Assembler, isMultiTypeBlockVector<typename Assembler::ResidualType>::value>;
 
 } // end namespace Dumux
 
