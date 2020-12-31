@@ -159,8 +159,7 @@ public:
      * \param temperature temperature of phase in \f$\mathrm{[K]}\f$
      * \param pressure pressure of phase in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar liquidInternalEnergy(Scalar temperature,
-                                       Scalar pressure)
+    static Scalar liquidInternalEnergy(Scalar temperature, Scalar pressure)
     {
         // u = c * dT for incompressible fluids
         const Scalar heatCapacity = liquidHeatCapacity(temperature, pressure);
