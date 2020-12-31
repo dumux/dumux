@@ -162,10 +162,10 @@ public:
     static Scalar liquidInternalEnergy(Scalar temperature,
                                        Scalar pressure)
     {
-        // u = cv * dT for incompressible fluids
-        const Scalar cv = liquidHeatCapacity(temperature, pressure);
-        static const Scalar tRef = getParamFromGroup<Scalar>(std::to_string(id), "Component.ReferenceTemperature", 273.15);
-        return cv * (temperature - tRef);
+        // u = c * dT for incompressible fluids
+        const Scalar heatCapacity = liquidHeatCapacity(temperature, pressure);
+        static const Scalar tRef = getParamFromGroup<Scalar>(std::to_string(id), "Component.ReferenceTemperature", 293.15);
+        return heatCapacity * (temperature - tRef);
     }
 
     /*!
