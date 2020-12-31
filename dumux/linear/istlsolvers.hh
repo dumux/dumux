@@ -59,6 +59,39 @@ constexpr std::size_t preconditionerBlockLevel() noexcept
     return isMultiTypeBlockMatrix<M>::value ? 2 : 1;
 }
 
+template<template<class,class,class,int> class Preconditioner, int blockLevel = 1>
+class IstlDefaultBlockLevelPreconditionerFactory
+{
+public:
+    template<class TL, class M>
+    auto operator() (TL typeList, const M& matrix, const Dune::ParameterTree& config)
+    {
+        using Matrix = typename Dune::TypeListElement<0, decltype(typeList)>::type;
+        using Domain = typename Dune::TypeListElement<1, decltype(typeList)>::type;
+        using Range = typename Dune::TypeListElement<2, decltype(typeList)>::type;
+        std::shared_ptr<Dune::Preconditioner<Domain, Range>> preconditioner
+            = std::make_shared<Preconditioner<Matrix, Domain, Range, blockLevel>>(matrix, config);
+        return preconditioner;
+    }
+};
+
+template<template<class,class,class> class Preconditioner>
+class IstlDefaultPreconditionerFactory
+{
+    template<class TL, class M>
+    auto operator() (TL typeList, const M& matrix, const Dune::ParameterTree& config)
+    {
+        using Matrix = typename Dune::TypeListElement<0, decltype(typeList)>::type;
+        using Domain = typename Dune::TypeListElement<1, decltype(typeList)>::type;
+        using Range = typename Dune::TypeListElement<2, decltype(typeList)>::type;
+        std::shared_ptr<Dune::Preconditioner<Domain, Range>> preconditioner
+            = std::make_shared<Preconditioner<Matrix, Domain, Range>>(matrix, config);
+        return preconditioner;
+    }
+};
+
+using IstlAmgPreconditionerFactory = Dune::AMGCreator;
+
 } // end namespace Dumux::Detail
 
 
@@ -69,7 +102,7 @@ namespace Dumux {
  * \brief Base class for linear solvers
  */
 template<class LinearSolverTraits, class LinearAlgebraTraits,
-         class InverseOperator, class Preconditioner>
+         class InverseOperator, class PreconditionerFactory>
 class IstlLinearSolver
 {
     using Matrix = typename LinearAlgebraTraits::Matrix;
@@ -77,7 +110,7 @@ class IstlLinearSolver
     using BVector = typename LinearAlgebraTraits::Vector;
     using Scalar = typename InverseOperator::real_type;
     static constexpr bool convertMatrixAndVector
-        = !preconditionerAcceptsMultiTypeMatrix<Preconditioner>::value
+        = !preconditionerAcceptsMultiTypeMatrix<PreconditionerFactory>::value
           && isMultiTypeBlockVector<XVector>::value;
 #if HAVE_MPI
     using Comm = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>, int>;
@@ -295,7 +328,8 @@ private:
     {
         const auto& params = params_.sub("preconditioner");
         using Prec = Dune::Preconditioner<typename LinearOperator::domain_type, typename LinearOperator::range_type>;
-        std::shared_ptr<Prec> prec = std::make_shared<Preconditioner>(op, params);
+        using TL = Dune::TypeList<typename LinearOperator::matrix_type, typename LinearOperator::domain_type, typename LinearOperator::range_type>;
+        std::shared_ptr<Prec> prec = PreconditionerFactory{}(TL{}, op, params);
 
 #if HAVE_MPI && DUNE_VERSION_GT(DUNE_ISTL,2,7)
         if (prec->category() != op->category() && prec->category() == Dune::SolverCategory::sequential)
@@ -325,9 +359,7 @@ template<class LSTraits, class LATraits>
 using ILUBiCGSTABIstlSolver =
     IstlLinearSolver<LSTraits, LATraits,
         Dune::BiCGSTABSolver<typename LATraits::SingleTypeVector>,
-        Dune::SeqILU<typename LATraits::SingleTypeMatrix,
-                     typename LATraits::SingleTypeVector,
-                     typename LATraits::SingleTypeVector>
+        Detail::IstlDefaultBlockLevelPreconditionerFactory<Dune::SeqILU>
     >;
 
 } // end namespace Dumux
