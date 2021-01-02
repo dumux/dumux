@@ -40,7 +40,6 @@
 #include <dumux/common/typetraits/matrix.hh>
 #include <dumux/common/typetraits/vector.hh>
 #include <dumux/linear/linearsolverparameters.hh>
-#include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
 #include <dumux/linear/matrixconverter.hh>
 #include <dumux/linear/parallelhelpers.hh>
 #include <dumux/linear/solvercategory.hh>
@@ -99,19 +98,19 @@ namespace Dumux {
 
 /*!
  * \ingroup Linear
- * \brief Base class for linear solvers
+ * \brief Standard dune-istl iterative linear solvers
  */
 template<class LinearSolverTraits, class LinearAlgebraTraits,
-         class InverseOperator, class PreconditionerFactory>
-class IstlLinearSolver
+         class InverseOperator, class PreconditionerFactory,
+         bool convertMultiTypeLATypes = false>
+class IstlIterativeLinearSolver
 {
     using Matrix = typename LinearAlgebraTraits::Matrix;
     using XVector = typename LinearAlgebraTraits::Vector;
     using BVector = typename LinearAlgebraTraits::Vector;
     using Scalar = typename InverseOperator::real_type;
-    static constexpr bool convertMatrixAndVector
-        = !preconditionerAcceptsMultiTypeMatrix<PreconditionerFactory>::value
-          && isMultiTypeBlockVector<XVector>::value;
+    static constexpr bool convertMultiTypeVectorAndMatrix
+        = convertMultiTypeLATypes && isMultiTypeBlockVector<XVector>::value;
 #if HAVE_MPI
     using Comm = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>, int>;
     using ScalarProduct = Dune::ScalarProduct<typename InverseOperator::domain_type>;
@@ -122,7 +121,7 @@ public:
     /*!
      * \brief Constructor for sequential solvers
      */
-    IstlLinearSolver(const std::string& paramGroup = "")
+    IstlIterativeLinearSolver(const std::string& paramGroup = "")
     {
         if (Dune::MPIHelper::getCollectiveCommunication().size() > 1)
             DUNE_THROW(Dune::InvalidStateException, "Using sequential constructor for parallel run. Use signature with gridView and dofMapper!");
@@ -136,9 +135,9 @@ public:
      * \brief Constructor for parallel and sequential solvers
      */
     template <class GridView, class DofMapper>
-    IstlLinearSolver(const GridView& gridView,
-                     const DofMapper& dofMapper,
-                     const std::string& paramGroup = "")
+    IstlIterativeLinearSolver(const GridView& gridView,
+                              const DofMapper& dofMapper,
+                              const std::string& paramGroup = "")
     {
         initializeParameters_(paramGroup);
 #if HAVE_MPI
@@ -162,7 +161,7 @@ public:
      * \brief Constructor with custom scalar product and communication
      */
     template <class GridView, class DofMapper>
-    IstlLinearSolver(std::shared_ptr<Comm> communication,
+    IstlIterativeLinearSolver(std::shared_ptr<Comm> communication,
                      std::shared_ptr<ScalarProduct> scalarProduct,
                      const GridView& gridView,
                      const DofMapper& dofMapper,
@@ -205,7 +204,7 @@ public:
             }
         }
 #endif
-        if constexpr (convertMatrixAndVector)
+        if constexpr (convertMultiTypeVectorAndMatrix)
         {
             auto y = VectorConverter<XVector>::multiTypeToBlockVector(x);
             return scalarProduct_->norm(y);
@@ -236,7 +235,7 @@ private:
 
     bool solveSequential_(Matrix& A, XVector& x, BVector& b)
     {
-        if constexpr (convertMatrixAndVector)
+        if constexpr (convertMultiTypeVectorAndMatrix)
         {
             // create the bcrs matrix the IterativeSolver backend can handle
             auto M = MatrixConverter<Matrix>::multiTypeToBCRSMatrix(A);
@@ -354,12 +353,25 @@ private:
 /*!
  * \ingroup Linear
  * \brief An ILU preconditioned BiCGSTAB solver using dune-istl
+ *
+ * Solver: The BiCGSTAB (stabilized biconjugate gradients method) solver has
+ * faster and smoother convergence than the original BiCG. It can be applied to
+ * nonsymmetric matrices.\n
+ * See: Van der Vorst, H. A. (1992). "Bi-CGSTAB: A Fast and Smoothly Converging
+ * Variant of Bi-CG for the Solution of Nonsymmetric Linear Systems".
+ * SIAM J. Sci. and Stat. Comput. 13 (2): 631–644. doi:10.1137/0913035.
+ *
+ * Preconditioner: ILU(n) incomplete LU factorization. The order n indicates
+ * fill-in. It can be damped by the relaxation parameter
+ * LinearSolver.PreconditionerRelaxation.\n
+ * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template<class LSTraits, class LATraits>
 using ILUBiCGSTABIstlSolver =
-    IstlLinearSolver<LSTraits, LATraits,
+    IstlIterativeLinearSolver<LSTraits, LATraits,
         Dune::BiCGSTABSolver<typename LATraits::SingleTypeVector>,
-        Detail::IstlDefaultBlockLevelPreconditionerFactory<Dune::SeqILU>
+        Detail::IstlDefaultBlockLevelPreconditionerFactory<Dune::SeqILU>,
+        /*accepts multi-type istl types?*/ false
     >;
 
 /*!
