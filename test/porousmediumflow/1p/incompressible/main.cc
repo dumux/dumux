@@ -32,7 +32,9 @@
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/vtk.hh>
 
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/algebratraits.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/pdesolver.hh>
 
 #include <dumux/common/properties.hh>
@@ -143,7 +145,8 @@ int main(int argc, char** argv)
     using Assembler = FVAssembler<TypeTag, NUMDIFFMETHOD>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
-    using LinearSolver = SSORCGBackend;
+    using LinearSolver = AMGCGIstlSolver<LinearSolverTraits<GridGeometry>,
+                                         LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // solver the linear problem

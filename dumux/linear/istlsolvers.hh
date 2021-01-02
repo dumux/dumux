@@ -387,6 +387,17 @@ using AMGBiCGSTABIstlSolver =
         Detail::IstlAmgPreconditionerFactory
     >;
 
+/*!
+ * \ingroup Linear
+ * \brief An AMG preconditioned CG solver using dune-istl
+ */
+template<class LSTraits, class LATraits>
+using AMGCGIstlSolver =
+    IstlIterativeLinearSolver<LSTraits, LATraits,
+        Dune::CGSolver<typename LATraits::SingleTypeVector>,
+        Detail::IstlAmgPreconditionerFactory
+    >;
+
 
 /*!
  * \ingroup Linear
