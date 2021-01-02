@@ -25,7 +25,7 @@
 #include <config.h>
 
 #ifndef LINEARSOLVER
-#define LINEARSOLVER SSORCGBackend
+#define LINEARSOLVER AMGCGIstlSolver<LinearSolverTraits<GridGeometry>,LinearAlgebraTraitsFromAssembler<Assembler>>
 #endif
 
 #include <ctime>
@@ -36,7 +36,10 @@
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/vtk.hh>
 
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/algebratraits.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/pdesolver.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
