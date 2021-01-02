@@ -26,8 +26,6 @@
 
 #warning "This header is deprecated and will be removed after release 3.4."
 
-#include <dumux/linear/seqsolverbackend.hh>
-
 namespace Dumux {
 
 //! The default
@@ -38,30 +36,44 @@ struct linearSolverAcceptsMultiTypeMatrix : public std::true_type {};
 //! Those are all with ILU preconditioner that doesn't support the additional block level
 //! And the direct solvers that have BCRS Matrix hardcoded
 
+class ILUnBiCGSTABBackend;
+
 template<>
 struct linearSolverAcceptsMultiTypeMatrix<ILUnBiCGSTABBackend> : public std::false_type {};
+
+class ILUnCGBackend;
 
 template<>
 struct linearSolverAcceptsMultiTypeMatrix<ILUnCGBackend> : public std::false_type {};
 
+class ILU0BiCGSTABBackend;
+
 template<>
 struct linearSolverAcceptsMultiTypeMatrix<ILU0BiCGSTABBackend> : public std::false_type {};
+
+class ILU0CGBackend;
 
 template<>
 struct linearSolverAcceptsMultiTypeMatrix<ILU0CGBackend> : public std::false_type {};
 
+class ILU0RestartedGMResBackend;
+
 template<>
 struct linearSolverAcceptsMultiTypeMatrix<ILU0RestartedGMResBackend> : public std::false_type {};
+
+class ILUnRestartedGMResBackend;
 
 template<>
 struct linearSolverAcceptsMultiTypeMatrix<ILUnRestartedGMResBackend> : public std::false_type {};
 
 #if HAVE_SUPERLU
+class SuperLUBackend;
 template<>
 struct linearSolverAcceptsMultiTypeMatrix<SuperLUBackend> : public std::false_type {};
 #endif // HAVE_SUPERLU
 
 #if HAVE_UMFPACK
+class UMFPackBackend;
 template<>
 struct linearSolverAcceptsMultiTypeMatrix<UMFPackBackend> : public std::false_type {};
 #endif // HAVE_UMFPACK
