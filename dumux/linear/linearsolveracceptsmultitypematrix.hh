@@ -24,6 +24,8 @@
 #ifndef DUMUX_LINEAR_SOLVER_ACCEPTS_MULTITYPEMATRIX_HH
 #define DUMUX_LINEAR_SOLVER_ACCEPTS_MULTITYPEMATRIX_HH
 
+#warning "This header is deprecated and will be removed after release 3.4."
+
 #include <dumux/linear/seqsolverbackend.hh>
 
 namespace Dumux {
