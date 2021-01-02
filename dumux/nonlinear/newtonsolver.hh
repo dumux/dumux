@@ -1213,6 +1213,7 @@ private:
      *
      */
     template<class LS = LinearSolver, class V = SolutionVector>
+    [[deprecated("After 3.4 Newton will no longer support conversion of multitype matrices for solvers that don't support this feature!")]]
     typename std::enable_if_t<!linearSolverAcceptsMultiTypeMatrix<LS>() &&
                               isMultiTypeBlockVector<V>(), bool>
     solveLinearSystemImpl_(LinearSolver& ls,
