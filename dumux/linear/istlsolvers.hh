@@ -39,10 +39,12 @@
 
 #include <dumux/common/typetraits/matrix.hh>
 #include <dumux/common/typetraits/vector.hh>
+#include <dumux/linear/algebratraits.hh>
 #include <dumux/linear/linearsolverparameters.hh>
 #include <dumux/linear/matrixconverter.hh>
 #include <dumux/linear/parallelhelpers.hh>
 #include <dumux/linear/solvercategory.hh>
+#include <dumux/linear/solver.hh>
 
 namespace Dumux::Detail {
 
@@ -385,6 +387,156 @@ using AMGBiCGSTABIstlSolver =
         Detail::IstlAmgPreconditionerFactory
     >;
 
+
+/*!
+ * \ingroup Linear
+ * \brief Direct dune-istl linear solvers
+ */
+template<template<class M> class Solver>
+class DirectIstlSolver : public LinearSolver
+{
+public:
+    using LinearSolver::LinearSolver;
+
+    template<class Matrix, class Vector>
+    bool solve(const Matrix& A, Vector& x, const Vector& b)
+    {
+        // support dune-istl multi-type block vector/matrix
+        if constexpr (isMultiTypeBlockVector<Vector>())
+        {
+            auto [AA, xx, bb] = convertIstlMultiTypeToBCRSSystem_(A, x, b);
+            bool converged = solve_(AA, xx, bb);
+            if (converged)
+                VectorConverter<Vector>::retrieveValues(x, xx);
+            return converged;
+        }
+
+        /*
+           Copy vectors into standard istl block vector.
+           This is necessary for all model _not_ using a FieldVector<Scalar, blockSize>
+           Could be avoided for vectors that already have the right type using another if constexpr branch
+           but it shouldn't impact performance too much
+         */
+        else
+        {
+            constexpr auto blockSize = Detail::blockSize<decltype(b[0])>();
+            using Scalar = std::decay_t<decltype(b[0][0])>;
+            using BlockType = Dune::FieldVector<Scalar, blockSize>;
+            Dune::BlockVector<BlockType> xTmp; xTmp.resize(b.size());
+            Dune::BlockVector<BlockType> bTmp(xTmp);
+
+            bTmp = b;
+            bool converged = solve_(A, xTmp, bTmp);
+            if (converged)
+                x  = xTmp;
+            return converged;
+        }
+    }
+
+    std::string name() const
+    {
+        return "Direct solver";
+    }
+
+    const Dune::InverseOperatorResult& result() const
+    {
+        return result_;
+    }
+
+private:
+    Dune::InverseOperatorResult result_;
+
+    template<class Matrix, class Vector>
+    bool solve_(const Matrix& A, Vector& x, const Vector& b)
+    {
+        static_assert(isBCRSMatrix<Matrix>::value, "Direct solver only works with BCRS matrices!");
+        using BlockType = typename Matrix::block_type;
+        static_assert(BlockType::rows == BlockType::cols, "Matrix block must be quadratic!");
+        constexpr auto blockSize = BlockType::rows;
+
+        Solver<Matrix> solver(A, this->verbosity() > 0);
+
+        Vector bTmp(b);
+        solver.apply(x, bTmp, result_);
+
+        int size = x.size();
+        for (int i = 0; i < size; i++)
+        {
+            for (int j = 0; j < blockSize; j++)
+            {
+                using std::isnan;
+                using std::isinf;
+                if (isnan(x[i][j]) || isinf(x[i][j]))
+                {
+                    result_.converged = false;
+                    break;
+                }
+            }
+        }
+
+        return result_.converged;
+    }
+
+    template<class Matrix, class Vector>
+    auto convertIstlMultiTypeToBCRSSystem_(const Matrix& A, Vector& x, const Vector& b)
+    {
+        const auto AA = MatrixConverter<Matrix>::multiTypeToBCRSMatrix(A);
+
+        // get the new matrix sizes
+        const std::size_t numRows = AA.N();
+        assert(numRows == AA.M());
+
+        // create the vector the IterativeSolver backend can handle
+        const auto bb = VectorConverter<Vector>::multiTypeToBlockVector(b);
+        assert(bb.size() == numRows);
+
+        // create a blockvector to which the linear solver writes the solution
+        using VectorBlock = typename Dune::FieldVector<Scalar, 1>;
+        using BlockVector = typename Dune::BlockVector<VectorBlock>;
+        BlockVector xx(numRows);
+
+        return std::make_tuple(std::move(AA), std::move(xx), std::move(bb));
+    }
+};
+
 } // end namespace Dumux
+
+#if HAVE_SUPERLU
+#include <dune/istl/superlu.hh>
+
+namespace Dumux {
+
+/*!
+ * \ingroup Linear
+ * \brief Direct linear solver using the SuperLU library.
+ *
+ * See: Li, X. S. (2005). "An overview of SuperLU: Algorithms, implementation,
+ * and user interface." ACM Transactions on Mathematical Software (TOMS) 31(3): 302-325.
+ * http://crd-legacy.lbl.gov/~xiaoye/SuperLU/
+ */
+using SuperLUIstlSolver = DirectIstlSolver<Dune::SuperLU>;
+
+} // end namespace Dumux
+
+#endif // HAVE_SUPERLU
+
+#if HAVE_UMFPACK
+#include <dune/istl/umfpack.hh>
+
+namespace Dumux {
+
+/*!
+ * \ingroup Linear
+ * \brief Direct linear solver using the UMFPack library.
+ *
+ * See: Davis, Timothy A. (2004). "Algorithm 832". ACM Transactions on
+ * Mathematical Software 30 (2): 196–199. doi:10.1145/992200.992206.
+ * http://faculty.cse.tamu.edu/davis/suitesparse.html
+ */
+using UMFPackIstlSolver = DirectIstlSolver<Dune::UMFPack>;
+
+} // end namespace Dumux
+
+#endif // HAVE_UMFPACK
 
 #endif
