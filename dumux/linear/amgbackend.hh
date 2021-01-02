@@ -25,6 +25,8 @@
 #ifndef DUMUX_PARALLEL_AMGBACKEND_HH
 #define DUMUX_PARALLEL_AMGBACKEND_HH
 
+#warning "This header is deprecated. Use the AMG solver from dumux/linear/istlsolvers.hh"
+
 #include <memory>
 
 #include <dune/common/exceptions.hh>
@@ -39,14 +41,12 @@
 #include <dumux/linear/solver.hh>
 #include <dumux/linear/parallelhelpers.hh>
 #include <dumux/linear/solvercategory.hh>
-#include <dumux/linear/istlsolvers.hh>
 
 namespace Dumux {
 
-namespace Detail {
-
+// OLD AMG Backend. Use the new one from dumux/linear/istlsolvers.hh
 template <class LinearSolverTraits>
-class OldAMGBiCGSTABBackend : public LinearSolver
+class AMGBiCGSTABBackend : public LinearSolver
 {
 public:
     /*!
@@ -54,8 +54,8 @@ public:
      *
      * \param paramGroup the parameter group for parameter lookup
      */
-    [[deprecated("Use new AMGBiCGSTABBackend<LinearSolverTraits, LinearAlgebraTraits> with 2nd template parameter.")]]
-    OldAMGBiCGSTABBackend(const std::string& paramGroup = "")
+    [[deprecated("Use new AMGBiCGSTABIstlSolver<LinearSolverTraits, LinearAlgebraTraits> with 2nd template parameter from dumux/linear/istlsolvers.hh.")]]
+    AMGBiCGSTABBackend(const std::string& paramGroup = "")
     : LinearSolver(paramGroup)
     , isParallel_(Dune::MPIHelper::getCommunication().size() > 1)
     {
@@ -72,10 +72,10 @@ public:
      * \param dofMapper an index mapper for dof entities
      * \param paramGroup the parameter group for parameter lookup
      */
-    [[deprecated("Use new AMGBiCGSTABBackend<LinearSolverTraits, LinearAlgebraTraits> with 2nd template parameter.")]]
-    OldAMGBiCGSTABBackend(const typename LinearSolverTraits::GridView& gridView,
-                          const typename LinearSolverTraits::DofMapper& dofMapper,
-                          const std::string& paramGroup = "")
+    [[deprecated("Use new AMGBiCGSTABIstlSolver<LinearSolverTraits, LinearAlgebraTraits> with 2nd template parameter from dumux/linear/istlsolvers.hh.")]]
+    AMGBiCGSTABBackend(const typename LinearSolverTraits::GridView& gridView,
+                       const typename LinearSolverTraits::DofMapper& dofMapper,
+                       const std::string& paramGroup = "")
     : LinearSolver(paramGroup)
 #if HAVE_MPI
     , isParallel_(Dune::MPIHelper::getCommunication().size() > 1)
@@ -251,41 +251,6 @@ private:
     Dune::InverseOperatorResult result_;
     bool isParallel_ = false;
 };
-
-/*!
- * \ingroup Linear
- * \brief An AMG preconditioned BiCGSTAB solver using dune-istl
- */
-template<class LSTraits, class LATraits>
-using NewAMGBiCGSTABBackend =
-    IstlLinearSolver<LSTraits, LATraits,
-        Dune::BiCGSTABSolver<typename LATraits::SingleTypeVector>,
-        Detail::IstlAmgPreconditionerFactory
-    >;
-
-template<int i>
-struct AMGImplHelper
-{
-    template<class LSTraits, class LATraits>
-    using type = NewAMGBiCGSTABBackend<LSTraits, LATraits>;
-};
-
-template<>
-struct AMGImplHelper<1>
-{
-    template<class T>
-    using type = OldAMGBiCGSTABBackend<T>;
-};
-
-} // end namespace Detail
-
-/*!
- * \ingroup Linear
- * \brief A linear solver based on the ISTL AMG preconditioner
- *        and the ISTL BiCGSTAB solver.
- */
-template<class ...T>
-using AMGBiCGSTABBackend = typename Detail::AMGImplHelper<sizeof...(T)>::template type<T...>;
 
 } // end namespace Dumux
 

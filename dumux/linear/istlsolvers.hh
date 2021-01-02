@@ -31,11 +31,11 @@
 #include <dune/common/parallel/indexset.hh>
 #include <dune/common/parallel/mpicommunication.hh>
 #include <dune/grid/common/capabilities.hh>
-#include <dune/istl/paamg/amg.hh>
-#include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/scalarproducts.hh>
+#include <dune/istl/paamg/amg.hh>
+#include <dune/istl/paamg/pinfo.hh>
 
 #include <dumux/common/typetraits/matrix.hh>
 #include <dumux/common/typetraits/vector.hh>
@@ -360,6 +360,17 @@ using ILUBiCGSTABIstlSolver =
     IstlLinearSolver<LSTraits, LATraits,
         Dune::BiCGSTABSolver<typename LATraits::SingleTypeVector>,
         Detail::IstlDefaultBlockLevelPreconditionerFactory<Dune::SeqILU>
+    >;
+
+/*!
+ * \ingroup Linear
+ * \brief An AMG preconditioned BiCGSTAB solver using dune-istl
+ */
+template<class LSTraits, class LATraits>
+using AMGBiCGSTABIstlSolver =
+    IstlIterativeLinearSolver<LSTraits, LATraits,
+        Dune::BiCGSTABSolver<typename LATraits::SingleTypeVector>,
+        Detail::IstlAmgPreconditionerFactory
     >;
 
 } // end namespace Dumux
