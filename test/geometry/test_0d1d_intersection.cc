@@ -68,6 +68,14 @@ void testIntersections(std::vector<bool>& returns)
         returns.push_back(testIntersection(a, b, p8));
         returns.push_back(testIntersection(a, b, p9, true));
         returns.push_back(testIntersection(a, b, p10, true));
+
+        // test segment that is not axis-parallel
+        const GlobalPosition a2(scaling);
+        const GlobalPosition b2(scaling*2.0);
+
+        GlobalPosition p11 = a2;
+        p11[dimWorld-1] += (b2-a2).two_norm()*1.5e-7;
+        returns.push_back(testIntersection(a2, b2, p11));
     }
 }
 
