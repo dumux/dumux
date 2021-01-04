@@ -204,8 +204,8 @@ public:
         {
             if constexpr (isMixedDimensional_)
             {
-                scvf.numOutsideScvs() == 1 ? 0.5*(rhoInside + rhoOutside)
-                                         : branchingFacetDensity_(elemVolVars, scvf, phaseIdx, rhoInside);
+                return scvf.numOutsideScvs() == 1 ? 0.5*(rhoInside + rhoOutside)
+                                                  : branchingFacetDensity_(elemVolVars, scvf, phaseIdx, rhoInside);
             }
             else
                 return 0.5*(rhoInside + rhoOutside);
