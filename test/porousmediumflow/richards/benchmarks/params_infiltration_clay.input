@@ -1,0 +1,41 @@
+[TimeLoop]
+DtInitial = 1 # [s]
+TEnd = 8640 17280 43200 # [s]
+MaxTimeStepSize = 40 # [s]
+
+[Grid]
+Cells0 = 300
+Grading0 = 1.0
+Positions0 = -2.0 0
+
+[Analytical]
+WaterContentRefDepth = -24.41 # cm determined with 1500 cells
+WaterContentRefTime = 0.1 # days
+WaterContentSurface = 0.40
+PlotLimits = 2.0 -5.0
+
+[Flux]
+UpwindWeight = 0.5
+
+[Problem]
+Name = test_richards_benchmark_infiltration_clay
+EnableGravity = true
+InitialHeadInCm = -400.0
+CriticalSurfaceHeadInCm = 0
+SurfaceFluxMilliMeterPerDay = -1000.0
+
+[Newton]
+MaxRelativeShift = 1e-6
+
+[SpatialParams]
+Name = clay
+Swr = 0.25
+Snr = 0.0
+VanGenuchtenPcLowSweThreshold = 0.0
+VanGenuchtenPcHighSweThreshold = 1.0
+VanGenuchtenKrwHighSweThreshold = 0.9999
+VanGenuchtenAlpha = 1.01936799e-4
+VanGenuchtenN = 1.1
+VanGenuchtenL = 0.5
+Porosity = 0.40
+Permeability = 1.1798241e-13
