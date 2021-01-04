@@ -159,7 +159,7 @@ bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
 
 /*!
  * \ingroup Geometry
- * \brief Find out whether a point is inside a interval (p0, p1, p2, p3) (dimworld is 3)
+ * \brief Find out whether a point is inside a interval (p0, p1) (dimworld is 2 or 3)
  * \note We assume the given interval has non-zero length and use it to scale the epsilon
  */
 template<class ctype, int dimworld, typename std::enable_if_t<(dimworld == 3 || dimworld == 2), int> = 0>
@@ -186,7 +186,7 @@ bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
 
 /*!
  * \ingroup Geometry
- * \brief Find out whether a point is inside a interval (p0, p1, p2, p3) (dimworld is 1)
+ * \brief Find out whether a point is inside a interval (p0, p1) (dimworld is 1)
  */
 template<class ctype, int dimworld, typename std::enable_if_t<(dimworld == 1), int> = 0>
 bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
