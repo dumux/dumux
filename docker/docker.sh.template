@@ -3,7 +3,7 @@
 # TODO set the image name here to a global address
 #      after adding your container to your modules container registry
 # e.g. git.iws.uni-stuttgart.de:4567/dumux-pub/koch2017a
-PUB_IMAGE_NAME=${dockerTag}
+IMAGE_NAME=${dockerTag}
 
 # the host directory ...
 SHARED_DIR_HOST="$$(pwd)"
@@ -13,16 +13,16 @@ SHARED_DIR_CONTAINER="/dumux/shared"
 help ()
 {
     echo ""
-    echo "Usage: pubtable_${dockerTag}.sh <command> [options]"
+    echo "Usage: docker_${dockerTag}.sh <command> [options]"
     echo ""
-    echo "  pubtable_${dockerTag}.sh open [image]      - open a pub table."
-    echo "  pubtable_${dockerTag}.sh help              - display this message."
+    echo "  docker_${dockerTag}.sh open [image]      - run a container from the image."
+    echo "  docker_${dockerTag}.sh help              - display this message."
     echo ""
     echo "Optionally supply a Docker image name to the open command."
     echo ""
 }
 
-# open a pub table. Only argument is the Docker image.
+# start a container. Only argument is the Docker image.
 open()
 {
     IMAGE="$$1"
@@ -30,13 +30,13 @@ open()
                 -e HOST_UID=$$(id -u $$USER) \
                 -e HOST_GID=$$(id -g $$USER) \
                 -v $$SHARED_DIR_HOST:$$SHARED_DIR_CONTAINER \
-                --name dumuxpub_${dockerTag} \
+                --name dumux_${dockerTag} \
                 $$IMAGE /bin/bash
 }
 
 # Check if user specified valid command otherwise print help message
 if [ "$$1" == "open" ]; then
-    IMAGE="$$2" : $${IMAGE:="$$PUB_IMAGE_NAME"}
+    IMAGE="$$2" : $${IMAGE:="$$IMAGE_NAME"}
     open $$IMAGE
 else
     help

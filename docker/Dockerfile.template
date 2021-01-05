@@ -59,7 +59,7 @@ VOLUME /dumux/shared
 # This is the message printed on entry
 COPY WELCOME /dumux/WELCOME
 
-# Install the dumux-pub module and its dependencies
+# Install the dumux module and its dependencies
 # This expects the install script to do everything from clone to configure
 COPY ${instScript} /dumux/${instScript}
 RUN ./${instScript} && rm -f /dumux/${instScript}

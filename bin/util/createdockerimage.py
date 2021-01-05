@@ -84,12 +84,12 @@ target = os.path.join(os.getcwd(), 'docker/README.md')
 substituteAndWrite(template, target, {'modName': moduleName, 'dockerTag': dockerTag})
 print("--> Created README.md on how to use the docker image.")
 
-# write pub table file (make it executable after creation)
-template = os.path.join(templateFolder, 'pubtable.sh.template')
-target = os.path.join(os.getcwd(), 'docker/pubtable_{}.sh'.format(dockerTag))
+# write helper file for container spin-up (make it executable after creation)
+template = os.path.join(templateFolder, 'docker.sh.template')
+target = os.path.join(os.getcwd(), 'docker/docker_{}.sh'.format(dockerTag))
 substituteAndWrite(template, target, {'dockerTag': dockerTag})
 os.system("chmod +x " + target)
-print("--> Created pub table script to spin up the docker container.")
+print("--> Created helper script to spin up the docker container.")
 
 # write the docker file
 template = os.path.join(templateFolder, 'Dockerfile.template')
@@ -118,7 +118,7 @@ if build == "y" or build == "Y":
     print()
     print("Successfully built docker image: " + dockerTag + ". Have a look at docker/README.md.")
     print("Check the container running docker run -it " + dockerTag + " /bin/bash in the same")
-    print("directory as the Dockerfile and try using the convenience script pubtable_" + dockerTag + ".sh")
+    print("directory as the Dockerfile and try using the convenience script docker_" + dockerTag + ".sh")
     print("See docker/README.md for more information.")
 else:
     print("You can build your Docker image later by running docker build -f Dockerfile -t " + dockerTag)
