@@ -10,8 +10,7 @@ It was originally written to solve the problem that the bash shell script could 
 So the whole design philosophy is to maximize the portability, i.e. write in a cross-platform style.
 """
 
-# def somes function to print the help message, explanations, guidience.
-
+# def the function to print the help message
 def show_helpmesseage():
     print("\n""USAGE: "+os.path.basename(__file__)+" module_dir FOLDER_1 [FOLDER_2 ...]\n\n"
           "module_dir is the folder containing the DUNE module from which you\n"
@@ -110,6 +109,7 @@ else:
     print( os.path.basename(__file__) + ": Found new module " + module_name)
 print("Determining required headers...",end="")
 os.chdir(module_name)
+module_path=os.getcwd()
 
 # extract all headers
 import re
@@ -121,13 +121,13 @@ def search_headers(c_file):
     f = open(c_file,'r')
     content = f.read()
     f.close()
-    all_info = re.findall(r'(?<=#include <).+?(?=>)',content)
-    # all_info_problem = re.findall(r'(?<=#include ").+?(?=")',content)
-    # all_info = all_info_dumux + all_info_problem
+    all_info_dumux = re.findall(r'(?<=#include <).+?(?=>)',content)
+    all_info_problem = re.findall(r'(?<=#include ").+?(?=")',content)
+    all_info = all_info_dumux + all_info_problem
     if all_info == []:
         sys.exit(1)
     else:
-        for one_info in all_info:
+        for one_info in all_info_dumux:
             if one_info.startswith("dumux"):
                 b = os.path.join(module_full_path, one_info)
             else:
@@ -135,6 +135,13 @@ def search_headers(c_file):
             all_file.append(b)
             thread_ = threading.Thread(target = search_headers, args = (b, ))
             thread_.start()
+
+#         for one_info in all_info_problem:
+#             b = os.path.join(module_full_path, one_info)
+# #TODO: need the absolute path of b here
+#             all_file.append(b)
+#             thread_ = threading.Thread(target = search_headers, args = (b, ))
+#             thread_.start()
 
 for source in all_sources:
     source_abspath = module_full_path+source
@@ -159,6 +166,149 @@ shutil.rmtree('dune')
 shutil.rmtree('src')
 
 # set CMake File for each directory
+path = module_path
+os.chdir(path)
+READ_CHAR_ENCODING = "utf-8"
+WRITE_CHAR_ENCODING = "utf-8"
+NEW_LINE = "\n"
+INDENTATION = "    "
+
+CMAKE_LISTS_FILE = "CMakeLists.txt"
+INSTALL_SUFFIX_LIST = [".hh"]
+UNINSTALL_SUFFIX_LIST = [".cc"]
+
+def __generate_new_content(lines, pattern, replace_str):
+    index = lines.find(pattern)
+    if index != -1:
+        content = lines[0: index] + NEW_LINE
+        if replace_str != "":
+            content += replace_str + NEW_LINE
+
+        flag = True
+        while flag:
+            index = lines.find(")", index)
+            if index != -1:
+                lines = lines[index + 1:]
+            else:
+                break
+
+            index = lines.find(pattern)
+            if index != -1:
+                content += lines[0: index] + NEW_LINE
+            else:
+                content += lines + NEW_LINE
+                flag = False
+
+    else:
+        if replace_str == "":
+            content = lines
+        else:
+            if pattern == "add_subdirectory(":
+                content = replace_str + NEW_LINE + lines
+            else:
+                content = lines + NEW_LINE + replace_str
+    return content
+
+def __generate_subdirectory_content(dirs):
+    content = ""
+    for name in dirs:
+        content += "add_subdirectory(" + name + ")" + NEW_LINE
+
+    return content
+
+def __generate_install_content(header_files, destination):
+    if len(header_files) == 0:
+        return ""
+
+    content = "install(FILES" + NEW_LINE
+    for header_file in header_files:
+        content += INDENTATION + header_file + NEW_LINE
+    content += "DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}" + destination + ")" + NEW_LINE
+
+    return content
+
+
+def __generate_content(cmake_list_txt_file, dirs, header_files, destination):
+    subdirectory_content = __generate_subdirectory_content(dirs)
+    install_content = __generate_install_content(header_files, destination)
+
+    if os.path.exists(cmake_list_txt_file):
+        with open(cmake_list_txt_file, "r", encoding=READ_CHAR_ENCODING) as f:
+            content = "".join(f.readlines()).strip()
+            f.close()
+
+        content = __generate_new_content(content, "add_subdirectory(", subdirectory_content)
+        return __generate_new_content(content, "install(FILE", install_content)
+
+    else:
+        if subdirectory_content == "":
+            return install_content
+        else:
+            return subdirectory_content + NEW_LINE + install_content
+
+
+def __generate_cmake_lists_txt(cmake_list_txt_file, dirs, header_files, destination):
+    content = __generate_content(cmake_list_txt_file, dirs, header_files, destination)
+
+    with open(cmake_list_txt_file, "w", encoding=WRITE_CHAR_ENCODING) as f:
+        if content != "":
+            f.write(content)
+        f.close()
+
+
+def __check_dir(root_dir):
+    if not os.path.exists(root_dir):
+        print("root path" + str(root_dir) + "is not exist!")
+        return False
+    if not os.path.isdir(root_dir):
+        print("root path" + str(root_dir) + "is not dir!")
+        return False
+    return True
+
+
+def __check_str(root_dir):
+    if root_dir is None or root_dir.strip() == "":
+        print("root path is None!")
+        return None
+
+    root_dir = root_dir.strip()
+    if root_dir.endswith(os.sep):
+        root_dir = root_dir[:-1]
+
+    return root_dir
+
+
+def generate_cmake_lists_txt_file(root_dir):
+    root_dir = __check_str(root_dir)
+    if root_dir is None:
+        return
+
+    if not __check_dir(root_dir):
+        return
+
+    drop_len = len(root_dir)
+
+    for parent, dirs, files in os.walk(root_dir):
+        destination = parent[drop_len:]
+        header_files = []
+        cmake_list_txt_file = os.path.join(parent, CMAKE_LISTS_FILE)
+        is_set_install = True
+
+        for name in files:
+            for suffix in UNINSTALL_SUFFIX_LIST:
+                if name.endswith(suffix):
+                    is_set_install = False
+
+            if not is_set_install:
+                header_files = []
+                break
+
+            for suffix in INSTALL_SUFFIX_LIST:
+                if name.endswith(suffix):
+                    header_files.append(name)
+        __generate_cmake_lists_txt(cmake_list_txt_file, dirs, header_files, destination)
+
+generate_cmake_lists_txt_file(path)
 
 # move patches folder into module if existing
 if (os.path.isdir("patches") ):
