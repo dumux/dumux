@@ -1,0 +1,51 @@
+# Simple pore network model
+
+[TimeLoop]
+DtInitial = 1e-5 # [s]
+TEnd = 100 # [s]
+#MaxTimeStepSize = 1e-5#0.0001
+
+[Grid]
+File = ./grids/10x10.dgf
+PoreGeometry = Cube
+ThroatCrossSectionShape = Square
+ElementParameters = ThroatRadius ThroatLength ThroatLabel
+
+
+
+[Problem]
+Name = test_pnm2p # name passed to the output routines
+Verbose = true
+VtpOutputFrequency = -1 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occured. -1 writes every step
+InitialPc = 5000 # [Pa]
+FinalPc = 5000 # [Pa]
+NumSteps = 200 # the number of episodes to run
+EpisodeLength = 1 # if set to 0: steady state automatically detected and episode length adapted [s]
+                  # if only 1 step is set, this specifies the simulation end time
+
+[Vtk]
+AddVelocity = 1
+
+[Water]
+Viscosity = 1e-3 # [Pa*s]
+Density = 1e3 # [kg/m^3]
+
+[Air]
+Viscosity = 1e-4 # [Pa*s]
+Density = 1 # [kg/m^3]
+
+[Newton]
+MaxSteps = 10
+TargetSteps = 4
+MaxRelativeShift = 1e-5
+#UseLineSearch = true
+#EnableResidualCriterion = true
+#WriteConvergence = true
+
+
+[Implicit]
+MaxTimeStepDivisions = 20
+
+
+[PlotMaterialLaw]
+# PoreRadius = Min

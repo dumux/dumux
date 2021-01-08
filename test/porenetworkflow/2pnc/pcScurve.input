@@ -1,0 +1,52 @@
+# Simple pore network model
+
+[TimeLoop]
+DtInitial = 1e-5 # [s]
+TEnd = 1e12 # [s]
+MaxTimeStepSize = 1e-1
+
+[Grid]
+File = ./grids/pnm_converted.dgf
+# UpperRight = 1e-2 1e-2 1e-2
+# Cells = 4 4 4
+# ParameterType = lognormal
+# MeanPoreRadius = 1e-4
+# StandardDeviationPoreRadius = 1e-5
+# DeletionProbability = 0.6 0.6 0.6 0.6 0.6 0.6 0.6 0.6 0.6 0.6 0.6 0.6 0.6
+# BoundaryFaceMarker = 2 3 1 0 0 0
+
+[Problem]
+Name = pcScurve # name passed to the output routines
+Verbose = true
+VtpOutputFrequency = 0 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occured
+InitialPc = 3800 # [Pa]
+FinalPc = 4300 # [Pa]
+NumSteps = 100 # the number of episodes to run
+EpisodeLength = 0 # if set to 0: steady state automatically detected and episode length adapted [s]
+                  # if only 1 step is set, this specifies the simulation end time
+
+[Vtk]
+AddVelocity = 1
+
+[Water]
+Viscosity = 1e-3 # [Pa*s]
+Density = 1e3 # [kg/m^3]
+
+[Air]
+Viscosity = 1e-4 # [Pa*s]
+Density = 1 # [kg/m^3]
+
+[Newton]
+MaxSteps = 10
+TargetSteps = 4
+MaxRelativeShift = 1e-5
+#UseLineSearch = true
+#EnableResidualCriterion = true
+#WriteConvergence = true
+
+
+[Implicit]
+MaxTimeStepDivisions = 20
+
+[TimeManager]
+#Restart = 0
