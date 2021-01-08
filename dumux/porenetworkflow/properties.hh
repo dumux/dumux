@@ -29,6 +29,7 @@
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/porenetwork/gridgeometry.hh>
 #include <dumux/flux/porenetwork/fourierslaw.hh>
+#include <dumux/flux/porenetwork/fickslaw.hh>
 #include <dumux/porousmediumflow/fluxvariables.hh>
 
 #include <dumux/porenetworkflow/common/labels.hh>
@@ -77,6 +78,17 @@ private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = PNMGridGeometry<Scalar, GridView, enableCache>;
+};
+
+//! We use fick's law as the default for the diffusive fluxes
+template<class TypeTag>
+struct MolecularDiffusionType<TypeTag, TTag::PoreNetworkModel>
+{
+private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+public:
+    using type = Dumux::PNMFicksLaw<Scalar, ModelTraits::numFluidPhases(), ModelTraits::numFluidComponents()>;
 };
 
 template<class TypeTag>

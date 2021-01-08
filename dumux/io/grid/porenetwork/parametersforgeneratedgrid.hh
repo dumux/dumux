@@ -5,7 +5,7 @@
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
- *   the Free Software Foundation, either version 3 of the License, or       *
+ *   the Free Software Foundation, either version 2 of the License, or       *
  *   (at your option) any later version.                                     *
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
@@ -149,6 +149,12 @@ public:
         // get helper function for pore volume
         const auto poreVolume = poreVolumeHelper_(getParameter);
 
+        const bool useDeprecatedBehavior = getParamFromGroup<bool>(paramGroup_, "Grid.UseDeprecatedRandomParameterBehavior", false);
+        if (useDeprecatedBehavior)
+        {
+            std::cout << "\n*** WARNING: You are using the deprecated assignment of random pore radii which yields different results compared to the new implementation. Will be removed soon! **** \n" << std::endl;
+        }
+
         // treat the pore body parameters (label, radius and maybe regionId)
         for (const auto& vertex : vertices(gridView_))
         {
@@ -170,26 +176,26 @@ public:
                     setParameter(vertex, "PoreRadius", value);
             };
 
-            if (numSubregions == 0) // assign radius if no subregions are specified
-                setRadiusAndLogIfCapped(defaultPoreRadius(vertex, poreLabel));
-            else // assign region ids and radii to vertices if they are within a subregion
-            {
-                // default value for vertices not belonging to a subregion
-                setParameter(vertex, "PoreRegionId", -1);
-                setRadiusAndLogIfCapped(defaultPoreRadius(vertex, poreLabel));
+        if (numSubregions == 0) // assign radius if no subregions are specified
+            setRadiusAndLogIfCapped(defaultPoreRadius(vertex, poreLabel));
+        else // assign region ids and radii to vertices if they are within a subregion
+        {
+            // default value for vertices not belonging to a subregion
+            setParameter(vertex, "PoreRegionId", -1);
+            setRadiusAndLogIfCapped(defaultPoreRadius(vertex, poreLabel));
 
-                for (int id = 0; id < numSubregions; ++id)
+            for (int id = 0; id < numSubregions; ++id)
+            {
+                const auto& subregion = internalBoundingBoxes[id];
+                if (intersectsPointGeometry(vertex.geometry().center(), subregion))
                 {
-                    const auto& subregion = internalBoundingBoxes[id];
-                    if (intersectsPointGeometry(vertex.geometry().center(), subregion))
-                    {
-                        setParameter(vertex, "PoreRegionId", id);
-                        setRadiusAndLogIfCapped(subregionPoreRadius[id](vertex, poreLabel));
-                    }
+                    setParameter(vertex, "PoreRegionId", id);
+                    setRadiusAndLogIfCapped(subregionPoreRadius[id](vertex, poreLabel));
                 }
             }
+        }
 
-            setParameter(vertex, "PoreVolume", poreVolume(vertex, poreLabel));
+        setParameter(vertex, "PoreVolume", poreVolume(vertex, poreLabel));
         }
 
         // treat throat parameters
@@ -210,6 +216,30 @@ public:
         {
             if (numSubregions == 0) // assign values if no subregions are specified
             {
+                if (useDeprecatedBehavior) // TODO remove the if condition and the complete block within
+                {
+                    // This is the old way of iterating over vertices. We now iterate directly over them (whithout going over the elements first)
+                    // which changes the order of assiging values to them and therefore the behavior of the random generator
+                    typedef typename GridView::template Codim<dim>::Entity PNMVertex;
+                    const std::array<PNMVertex, 2> vertices = {element.template subEntity<dim>(0), element.template subEntity<dim>(1)};
+                    for (int i = 0; i < 2; ++i)
+                    {
+                        auto vertex = vertices[i];
+                        const Scalar poreRadius = defaultPoreRadius(vertex, getParameter(vertex, "PoreLabel"));
+                        const auto vIdxGlobal = gridView_.indexSet().subIndex(element, i, dim);
+
+                        if (poreRadius > maxPoreRadius[vIdxGlobal])
+                        {
+                            poreRadiusLimited[vIdxGlobal] = true;
+                            setParameter(vertex, "PoreRadius", maxPoreRadius[vIdxGlobal]);
+                        }
+                        else
+                            setParameter(vertex, "PoreRadius", poreRadius);
+
+                        setParameter(vertex, "PoreVolume", poreVolume(vertex, getParameter(vertex, "PoreLabel")));
+                    }
+                }
+
                 setParameter(element, "ThroatRadius", defaultThroatRadius(element));
                 setParameter(element, "ThroatLength", defaultThroatLength(element));
             }
@@ -524,10 +554,42 @@ private:
         // check for a user-specified fixed throat radius
         const Scalar inputThroatRadius = getParamFromGroup<Scalar>(paramGroup, "Grid.ThroatRadius", -1.0);
 
-        // shape parameter for calculation of throat radius
-        const Scalar throatN = getParamFromGroup<Scalar>(paramGroup, "Grid.ThroatRadiusN", 0.1);
+         // shape parameter for calculation of throat radius
+        const Scalar throatN = getParamFromGroup<Scalar>(paramGroup, "Grid.ThroatRadiusN", -1.0); //default 0.1?
 
-        auto getThroatRadius = [&, paramGroup, inputThroatRadius, throatN](const Element& element)
+        // prepare random number generation for lognormal parameter distribution
+        std::mt19937 generatorThroat;
+
+        // lognormal random number distribution
+        std::lognormal_distribution<> throatRadiusDist;
+
+        if (inputThroatRadius < 0.0 and throatN < 0.0)
+        {
+            const auto type = getParamFromGroup<std::string>(paramGroup, "Grid.ParameterType");
+            if (type != "lognormal")
+                DUNE_THROW(Dune::InvalidStateException, "Unknown parameter type " << type);
+
+            // allow to specify a seed to get reproducible results
+            const auto seed = getParamFromGroup<unsigned int>(paramGroup, "Grid.ParameterRandomNumberSeed", std::random_device{}());
+            generatorThroat.seed(seed);
+
+            // if we use a distribution, get the mean and standard deviation from input file
+            const Scalar meanThroatRadius = getParamFromGroup<Scalar>(paramGroup, "Grid.MeanThroatRadius");
+            const Scalar stddevThroatRadius = getParamFromGroup<Scalar>(paramGroup, "Grid.StandardDeviationThroatRadius");
+            const Scalar variance = stddevThroatRadius*stddevThroatRadius;
+
+            using std::log;
+            using std::sqrt;
+            const Scalar muThroat = log(meanThroatRadius/sqrt(1.0 + variance/(meanThroatRadius*meanThroatRadius)));
+            const Scalar sigmaThroat = sqrt(log(1.0 + variance/(meanThroatRadius*meanThroatRadius)));
+
+            std::lognormal_distribution<>::param_type paramsThroat(muThroat, sigmaThroat);
+            throatRadiusDist.param(paramsThroat);
+
+        }
+
+
+        auto getThroatRadius = [&, paramGroup, inputThroatRadius, throatN, throatRadiusDist, generatorThroat](const Element& element) mutable
         {
             const Scalar delta = element.geometry().volume();
             typedef typename GridView::template Codim<dim>::Entity PNMVertex;
@@ -536,11 +598,15 @@ private:
             // the element parameters (throat radius and length)
             if (inputThroatRadius > 0.0)
                 return inputThroatRadius;
-            else
+            else if (throatN > 0.0)
             {
                 const Scalar poreRadius0 = getParameter(vertices[0], "PoreRadius");
                 const Scalar poreRadius1 = getParameter(vertices[1], "PoreRadius");
                 return Throat::averagedRadius(poreRadius0, poreRadius1, delta, throatN);
+            }
+            else
+            {
+                return throatRadiusDist(generatorThroat);
             }
         };
 

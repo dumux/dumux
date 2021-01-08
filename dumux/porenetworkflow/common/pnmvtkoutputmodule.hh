@@ -99,10 +99,8 @@ public:
 
             auto elemVolVars = localView(this->gridVariables().curGridVolVars());
             auto elemFluxVarsCache = localView(this->gridVariables().gridFluxVarsCache());
-
             elemVolVars.bind(element, fvElementGeometry, this->sol());
             elemFluxVarsCache.bind(element, fvElementGeometry, elemVolVars);
-
             // treat the throat flux related data
             std::size_t dataIdx = 0;
             for (auto&& scvf : scvfs(fvElementGeometry))
@@ -118,10 +116,8 @@ public:
                 }
             }
         }
-
         // call the ParentType's write method to write out all data
         ParentType::write(time, type);
-
         // empty the data containers in order to save some memory
         auto clearAndShrink = [] (auto& data)
         {

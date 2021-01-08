@@ -91,6 +91,21 @@ public:
     template<class FS, class ElementSolutionVector>
     int wettingPhase(const Element&, const SubControlVolume& scv, const ElementSolutionVector& elemSol) const
     { return 0; }
+//TEMP_START
+    Scalar interfaceConfig(const SubControlVolume& scv) const
+    {
+        if (this->gridGeometry().poreLabel(scv.dofIndex()) == 1) //Labels::source)
+        {
+            //std::cout<< "droplet pore" << std::endl;
+            return 1.0; //droplet
+        }
+        else
+        {
+            //std::cout<< "no droplet pore" << std::endl;
+            return 0.0; //rectangular
+        }
+    }
+//TEMP_END
 
     template<class ElementVolumeVariables>
     Scalar contactAngle(const Element& element,
@@ -155,7 +170,8 @@ public:
         const Scalar contactAngle = this->asImp_().contactAngle(element, scv, elemSol);
         const Scalar poreRadius = this->asImp_().poreRadius(element, scv, elemSol);
         const auto poreShape = this->gridGeometry().poreGeometry(scv.dofIndex());
-        return MaterialLaw::makeParams(poreRadius, contactAngle, surfaceTension, poreShape);
+        const auto droplet = interfaceConfig(scv); //TEMP 0.0;
+        return MaterialLaw::makeParams(poreRadius, contactAngle, surfaceTension, poreShape, droplet);
     }
 
     const Dune::ReservedVector<Scalar, 4>& cornerHalfAngles(const Element& element) const

@@ -49,6 +49,7 @@ struct TwoPLocalRulesBase
     {
         Scalar poreRadius, contactAngle, surfaceTension;
         Pore::Shape shape;
+        Scalar droplet;
     };
 
     /*!
@@ -58,9 +59,9 @@ struct TwoPLocalRulesBase
      */
     template<class Scalar>
     static Params<Scalar> makeParams(const Scalar poreRadius, const Scalar contactAngle,
-                                     const Scalar surfaceTension, const Pore::Shape shape)
+                                     const Scalar surfaceTension, const Pore::Shape shape, const Scalar droplet)
     {
-        return Params<Scalar>{poreRadius, contactAngle, surfaceTension, shape};
+        return Params<Scalar>{poreRadius, contactAngle, surfaceTension, shape, droplet};
     }
 
     //! This is just for compatibility with the REV-scale models.
@@ -129,7 +130,7 @@ struct RegularizedTwoPLocalRulesBase : public TwoPLocalRulesBase
      */
     template<class Scalar>
     static Params<Scalar> makeParams(const Scalar poreRadius, const Scalar contactAngle,
-                                     const Scalar surfaceTension, const Pore::Shape shape)
+                                     const Scalar surfaceTension, const Pore::Shape shape, const Scalar droplet)
     {
         static const Scalar lowSw = getParam<Scalar>("Regularization.LowSw", 1e-2);
         static const Scalar highSw = getParam<Scalar>("Regularization.HighSw", 0.95);
@@ -146,7 +147,7 @@ struct RegularizedTwoPLocalRulesBase : public TwoPLocalRulesBase
                 DUNE_THROW(Dune::InvalidStateException, input << " is not a valid regularization method");
         }();
 
-        return Params<Scalar>{{poreRadius, contactAngle, surfaceTension, shape}, lowSw, highSw, highSwRegularizationMethod};
+        return Params<Scalar>{{poreRadius, contactAngle, surfaceTension, shape, droplet}, lowSw, highSw, highSwRegularizationMethod};
     }
 };
 
