@@ -133,7 +133,7 @@ public:
         const static Scalar n = getParam<Scalar>("Phasefield.n");
         source += -K/xi * (1-problem.phasefield(element, scv))*n /
             (problem.phasefield(element, scv) + n) * elemVolVars[scv].velocity();
-        source += 0.5 * problem.density(element, scv) *
+        source += 0.5 * problem.density(element, scv) * elemVolVars[scv].velocity() *
             (problem.phasefield(element, scv, false) - problem.phasefield(element, scv, true))
             /problem.timestepsize();
 

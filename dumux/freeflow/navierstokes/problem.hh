@@ -296,19 +296,19 @@ public:
             return couplingManager_->elementPhasefield(element, fvGeometry, scvf);
     }
 
-    //auto getInsideAndOutsidePhasefield(const Element& element,
-    //                                const FVElementGeometry& fvGeometry,
-    //                                const SubControlVolumeFace& scvf,
-    //                                const bool isPreviousTimeStep = false) const
-    //{
-    //    if constexpr (std::is_empty_v<CouplingManager>)
-    //    {
-    //        const auto phi = asImp_().phasefieldAtPos(scvf.ipGlobal());
-    //        return std::make_pair(phi, phi);
-    //    }
-    //    else
-    //        return couplingManager_->getInsideAndOutsidePhasefield(element, fvGeometry, scvf, isPreviousTimeStep);
-    //}
+    auto getInsideAndOutsidePhasefield(const Element& element,
+                                    const FVElementGeometry& fvGeometry,
+                                    const SubControlVolumeFace& scvf,
+                                    const bool isPreviousTimeStep = false) const
+    {
+        if constexpr (std::is_empty_v<CouplingManager>)
+        {
+            const auto phi = asImp_().phasefieldAtPos(scvf.ipGlobal());
+            return std::make_pair(phi, phi);
+        }
+        else
+            return couplingManager_->getInsideAndOutsidePhasefield(element, fvGeometry, scvf, isPreviousTimeStep);
+    }
 
     /*!
      * \brief Returns the density at a given sub control volume face.

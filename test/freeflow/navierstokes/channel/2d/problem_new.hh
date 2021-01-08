@@ -225,9 +225,12 @@ public:
          const auto& globalPos = scvf.ipGlobal();
          PrimaryVariables values = initialAtPos(globalPos);
 
+         const static auto bcType = getParam<std::string>("Phasefield.Scenario");
          if constexpr (ParentType::isMomentumProblem())
          {
-             values[Indices::velocityXIdx] = parabolicProfile(globalPos[1], inletVelocity_);
+             const static Scalar rad = (bcType == "ThinChannel") ?
+                 getParam<Scalar>("Phasefield.DirichletRadius") : 1.0;
+             values[Indices::velocityXIdx] = parabolicProfile(globalPos[1], inletVelocity_, rad);
              if (!useVelocityProfile_ && isInlet_(globalPos))
                 values[Indices::velocityXIdx] = inletVelocity_;
          }
@@ -243,9 +246,17 @@ public:
             const static Scalar xi = getParam<Scalar>("Phasefield.xi");
             const static Scalar rad = getParam<Scalar>("Phasefield.DirichletRadius");
             const static Scalar S = getParam<Scalar>("Phasefield.DirichletScaling");
-            const Scalar s = (globalPos[1]-1.0)*(globalPos[1]-1.0)-rad*rad;
-            values[Indices::phiIdx] = 1.0;//(1.0 + std::exp(S*s/xi));
-            values[Indices::uIdx] = 1.0;
+            const static Scalar u_in = getParam<Scalar>("Phasefield.InletConcentration");
+            if (bcType == "ThinChannel")
+            {
+                const Scalar s = (globalPos[1]-1.0)*(globalPos[1]-1.0)-rad*rad;
+                values[Indices::phiIdx] = 1.0/(1.0 + std::exp(S*s/xi));
+            }
+            else
+            {
+                values[Indices::phiIdx] = 1.0;
+            }
+            values[Indices::uIdx] = u_in;
          }
 
          return values;
@@ -297,10 +308,14 @@ public:
      * \param y The position where the velocity is evaluated.
      * \param vMax The profile's maxmium velocity.
      */
-    Scalar parabolicProfile(const Scalar y, const Scalar vMax) const
+    Scalar parabolicProfile(const Scalar y, const Scalar vMax, const Scalar radius = 1.0) const
     {
-        const Scalar yMin = this->gridGeometry().bBoxMin()[1];
-        const Scalar yMax = this->gridGeometry().bBoxMax()[1];
+        const Scalar bMin = this->gridGeometry().bBoxMin()[1];
+        const Scalar bMax = this->gridGeometry().bBoxMax()[1];
+        const Scalar yMin = bMin/2.0 * (1.0 + radius) + bMax/2.0 * (1.0 - radius);
+        const Scalar yMax = bMax/2.0 * (1.0 + radius) + bMin/2.0 * (1.0 - radius);
+        if (y < yMin || y > yMax)
+            return 0.0;
         return  vMax * (y - yMin)*(yMax - y) / (0.25*(yMax - yMin)*(yMax - yMin));
     }
 
@@ -333,12 +348,17 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables values;
+        const static auto icType = getParam<std::string>("Phasefield.Scenario");
 
         if constexpr (ParentType::isMomentumProblem())
         {
             values[Indices::velocityYIdx] = 0.0;
             if (useVelocityProfile_)
-                values[Indices::velocityXIdx] = parabolicProfile(globalPos[1], inletVelocity_);
+            {
+                const static Scalar rad = (icType == "ThinChannel") ?
+                    getParam<Scalar>("Phasefield.DirichletRadius") : 1.0;
+                values[Indices::velocityXIdx] = parabolicProfile(globalPos[1], inletVelocity_, rad);
+            }
             else
                 values[Indices::velocityXIdx] = inletVelocity_;
         }
@@ -350,10 +370,24 @@ public:
 #endif
             const static Scalar xi = getParam<Scalar>("Phasefield.xi");
             const static Scalar rad = getParam<Scalar>("Phasefield.StartingRadius");
-            const Scalar s = (globalPos[1]-0.95)*(globalPos[1]-0.95) +
-                (globalPos[0]-1.0)*(globalPos[0]-1.0) -rad*rad;
             const static Scalar S = getParam<Scalar>("Phasefield.StartingScaling");
-            values[Indices::phiIdx] = 1.0/(1.0 + std::exp(S*-s/xi));
+            const static Scalar grainX = getParam<Scalar>("Phasefield.GrainX");
+            const static Scalar grainY = getParam<Scalar>("Phasefield.GrainY");
+            if (icType == "ThinChannel")
+            {
+                const Scalar s = (globalPos[1]-1.0)*(globalPos[1]-1.0) -rad*rad;
+                values[Indices::phiIdx] = 1.0/(1.0 + std::exp(S*s/xi));
+            }
+            else if (icType == "Grain")
+            {
+                const Scalar s = (globalPos[1]-grainY)*(globalPos[1]-grainY) +
+                    (globalPos[0]-grainX)*(globalPos[0]-grainX) -rad*rad;
+                values[Indices::phiIdx] = 1.0/(1.0 + std::exp(S*-s/xi));
+            }
+            else
+            {
+                values[Indices::phiIdx] = 1.0;
+            }
             values[Indices::uIdx] = getParam<Scalar>("Phasefield.InitialConcentration");
         }
 

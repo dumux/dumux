@@ -280,31 +280,31 @@ public:
     /*!
      * \brief Returns the phasefield inside and outside a given sub control volume face.
      */
-    //auto getInsideAndOutsidePhasefield(const Element<freeFlowMomentumIdx>& element,
-    //                                const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
-    //                                const SubControlVolumeFace<freeFlowMomentumIdx>& scvf,
-    //                                const bool considerPreviousTimeStep = false) const
-    //{
-    //    assert(!(considerPreviousTimeStep && !isTransient_));
-    //    bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
-    //    const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
-    //    const auto& insideMassScv = momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
+    auto getInsideAndOutsidePhasefield(const Element<freeFlowMomentumIdx>& element,
+                                    const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
+                                    const SubControlVolumeFace<freeFlowMomentumIdx>& scvf,
+                                    const bool considerPreviousTimeStep = false) const
+    {
+        assert(!(considerPreviousTimeStep && !isTransient_));
+        bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
+        const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& insideMassScv = momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
 
-    //    auto result = [&](const auto& elemVolVars)
-    //    {
-    //        if (scvf.boundary())
-    //            return std::make_pair(elemVolVars[insideMassScv].phasefield(1), elemVolVars[insideMassScv].phasefield(1));
-    //        else
-    //        {
-    //            const auto& outsideMomentumScv = fvGeometry.scv(scvf.outsideScvIdx());
-    //            const auto& outsideMassScv = momentumCouplingContext_[0].fvGeometry.scv(outsideMomentumScv.elementIndex());
-    //            return std::make_pair(elemVolVars[insideMassScv].phasefield(1), elemVolVars[outsideMassScv].phasefield(1));
-    //        }
-    //    };
+        auto result = [&](const auto& elemVolVars)
+        {
+            if (scvf.boundary())
+                return std::make_pair(elemVolVars[insideMassScv].phasefield(1), elemVolVars[insideMassScv].phasefield(1));
+            else
+            {
+                const auto& outsideMomentumScv = fvGeometry.scv(scvf.outsideScvIdx());
+                const auto& outsideMassScv = momentumCouplingContext_[0].fvGeometry.scv(outsideMomentumScv.elementIndex());
+                return std::make_pair(elemVolVars[insideMassScv].phasefield(1), elemVolVars[outsideMassScv].phasefield(1));
+            }
+        };
 
-    //    return considerPreviousTimeStep ? result(momentumCouplingContext_[0].prevElemVolVars)
-    //                                    : result(momentumCouplingContext_[0].curElemVolVars);
-    //}
+        return considerPreviousTimeStep ? result(momentumCouplingContext_[0].prevElemVolVars)
+                                        : result(momentumCouplingContext_[0].curElemVolVars);
+    }
 
     /*!
      * \brief Returns the pressure at a given sub control volume face.

@@ -254,7 +254,8 @@ public:
             if (problem.enableInertiaTerms())
             {
                 const auto v = elemVolVars[scvf.insideScvIdx()].velocity();
-                flux[scvf.directionIndex()] += v*v * problem.density(element, fvGeometry, scvf) * scvf.directionSign();
+                flux[scvf.directionIndex()] += v*v * problem.density(element, fvGeometry, scvf) *
+                    scvf.directionSign() * problem.phasefield(element, fvGeometry, scvf);
             }
         }
 
@@ -284,7 +285,8 @@ public:
                                    << "Double check your neumann() function to avoid ambiguities in your domain corners.");
 
                     const auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
-                    flux[scv.directionIndex()] = neumannFluxes[scv.directionIndex()];
+                    flux[scv.directionIndex()] = neumannFluxes[scv.directionIndex()] *
+                        problem.phasefield(element, fvGeometry, scvf);
                     recursionPreventionMutex.unlock();
 
                     return flux;
@@ -354,11 +356,12 @@ public:
                 // lateral face normal to boundary (integration point touches boundary)
                 if (scv.boundary())
                 {
+                    const auto phi = problem.getInsideAndOutsidePhasefield(element, fvGeometry, scvf);
                     const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity()
-                        * (problem.phasefield(element, fvGeometry.scv(scvf.insideScvIdx())) + 1e-8)
+                        * (phi.first + 1e-8)
                         ;
                     const auto outerVelocity = elemVolVars[scvf.outsideScvIdx()].velocity()
-                        * (problem.phasefield(element, fvGeometry.scv(scvf.outsideScvIdx())) + 1e-8)
+                        * ( phi.second + 1e-8)
                         ;
                     const auto rho = problem.getInsideAndOutsideDensity(element, fvGeometry, scvf);
 

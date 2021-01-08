@@ -94,6 +94,7 @@ public:
         NumEqVector storage(0.0);
         const Scalar xi = getParam<Scalar>("Phasefield.xi");
         const Scalar delta = getParam<Scalar>("Phasefield.delta");
+        const Scalar mineralMolarDensity = getParam<Scalar>("Phasefield.MineralMolarDensity");
         //storage[Indices::conti0EqIdx] = volVars.density() * (volVars.phasefield(1) + delta)
         //    + volVars.phasefield(1);
         storage[Indices::conti0EqIdx] = 0.0;//volVars.density();
@@ -102,10 +103,10 @@ public:
         EnergyLocalResidual::fluidPhaseStorage(storage, volVars);
         //PhasefieldLocalResidual::fluidPhaseStorage(storage, volVars);
         const auto& priVars = volVars.priVars();
-        const Scalar b = 2.0 * 1.0;
+        const Scalar b = mineralMolarDensity * 1.0;
         storage[Indices::phasefieldEqIdx] = xi * xi * priVars[phi1Idx];
-        storage[Indices::uTransportEqIdx] = (priVars[phi1Idx] + delta) * priVars[uIdx]
-            - priVars[phi1Idx] * b
+        storage[Indices::uTransportEqIdx] = (priVars[phi1Idx] + delta) *
+            (priVars[uIdx] - priVars[phi1Idx] * b)
             ;
             // + priVars[phi2Idx] * b_D
 
@@ -123,12 +124,14 @@ public:
         const static Scalar sigma = getParam<Scalar>("Phasefield.sigma");
         const static Scalar xi = getParam<Scalar>("Phasefield.xi");
         const static Scalar react = getParam<Scalar>("Phasefield.Reaction");
+        const Scalar mineralMolarDensity = getParam<Scalar>("Phasefield.MineralMolarDensity");
         Scalar f_P = react * (priVars[uIdx] - 1.0);
         source[Indices::phasefieldEqIdx] =
-            16.0 * sigma * (
-            priVars[phi1Idx] * (1 - priVars[phi1Idx]) * (1 - 2 * priVars[phi1Idx])
+            // - gamma P'
+            - 16.0 * sigma * (
+            priVars[phi1Idx] * (1.0 - priVars[phi1Idx]) * (1.0 - 2.0 * priVars[phi1Idx])
             )
-            - 4 * xi * priVars[phi1Idx] * (1-priVars[phi1Idx]) * f_P
+            - 4.0 * xi * priVars[phi1Idx] * (1.0 - priVars[phi1Idx]) * f_P
             ;
 
         return source;
