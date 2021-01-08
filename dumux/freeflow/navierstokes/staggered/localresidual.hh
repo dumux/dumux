@@ -86,6 +86,8 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
+    static constexpr bool normalizePressure = getPropValue<TypeTag, Properties::NormalizePressure>();
+
     using CellCenterResidual = CellCenterPrimaryVariables;
     using FaceResidual = FacePrimaryVariables;
 
@@ -192,7 +194,11 @@ public:
                 // Pressure term (needed because we incorporate pressure in terms of a surface integral).
                 // grad(p) becomes div(pI) + (p/r)*n_r in cylindrical coordinates. The second term
                 // is new with respect to Cartesian coordinates and handled below as a source term.
-                source += insideVolVars.pressure()/r;
+                const Scalar pressure =
+                    normalizePressure ? insideVolVars.pressure() - problem.initial(scvf)[Indices::pressureIdx]
+                                      : insideVolVars.pressure();
+
+                source += pressure/r;
             }
         }
 

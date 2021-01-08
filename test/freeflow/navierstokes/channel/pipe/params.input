@@ -9,8 +9,7 @@ Grading1 = 1
 [Problem]
 Name = test_ff_stokes_channel_pipe
 MeanInletVelocity = 0.1 # [m/s]
-
-[Problem]
+InitialPressure = 1.0e5 # [Pa]
 EnableGravity = false
 EnableInertiaTerms = false
 
