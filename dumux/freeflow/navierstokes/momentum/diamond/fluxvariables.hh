@@ -194,7 +194,7 @@ public:
         Tensor gradV(0.0);
         for (int dir = 0; dir < dim; ++dir)
             for (const auto& scv : scvs(fvGeometry))
-                gradV[dir].axpy(elemVolVars[scv.indexInElement()].velocity(dir), gradN[scv.indexInElement()]);
+                gradV[dir].axpy(elemVolVars[scv].velocity(dir), gradN[scv.indexInElement()]);
 
         static const bool enableUnsymmetrizedVelocityGradient
             = getParamFromGroup<bool>(this->problem().paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
