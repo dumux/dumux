@@ -107,7 +107,7 @@ public:
      * \param mat The matrix to operate on.
      * \param params Collection of paramters.
      */
-#if DUNE_VERSION_GT(DUNE_ISTL,2,7)
+#if DUNE_VERSION_GTE(DUNE_ISTL,2,8)
     SeqUzawa(const std::shared_ptr<const Dune::AssembledLinearOperator<M,X,Y>>& op, const Dune::ParameterTree& params)
     : matrix_(op->getmat())
 #else
