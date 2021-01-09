@@ -161,7 +161,7 @@ public:
         using MatrixAdapter = Dune::MatrixAdapter<Matrix, Vector, Vector>;
         const auto linearOperator = std::make_shared<MatrixAdapter>(A);
 
-#if DUNE_VERSION_GT(DUNE_ISTL,2,7)
+#if DUNE_VERSION_GTE(DUNE_ISTL,2,8)
         auto precond = std::make_shared<Preconditioner>(linearOperator, params.sub("preconditioner"));
 #else
         auto precond = std::make_shared<Preconditioner>(A, params.sub("preconditioner"));
