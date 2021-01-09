@@ -42,7 +42,7 @@
 
 #include <dumux/linear/linearsolvertraits.hh>
 
-#if DUNE_VERSION_GT_REV(DUNE_ISTL,2,7,0)
+#if DUNE_VERSION_GTE(DUNE_ISTL,2,8)
 #include <dumux/linear/istlsolverfactorybackend.hh>
 #else
 #include <dumux/linear/amgbackend.hh>
@@ -130,7 +130,7 @@ int main(int argc, char** argv)
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
-#if DUNE_VERSION_GT_REV(DUNE_ISTL,2,7,0)
+#if DUNE_VERSION_GTE(DUNE_ISTL,2,8)
     using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>>;
 #else
     using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
