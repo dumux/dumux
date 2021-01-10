@@ -184,7 +184,7 @@ public:
         }
         else if (!warningIssued)
         {
-            if (gridView().comm().rank() == 0)
+            if (gridView().comm().size() > 1 && gridView().comm().rank() == 0)
                 std::cout << "\nWarning: norm calculation adds entries corresponding to\n"
                 << "overlapping entities multiple times. Please use the norm\n"
                 << "function provided by a linear solver instead." << std::endl;
