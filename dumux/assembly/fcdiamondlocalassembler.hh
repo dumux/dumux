@@ -391,7 +391,7 @@ public:
                 // update the global stiffness matrix with the current partial derivatives
                 for (auto&& scvJ : scvs(fvGeometry))
                 {
-                                        // don't add derivatives for green vertices
+                    // don't add derivatives for green vertices
                     if (!partialReassembler
                         || partialReassembler->dofColor(scvJ.dofIndex()) != EntityColor::green)
                     {
@@ -401,8 +401,7 @@ public:
                             // the residual of equation 'eqIdx' at dof 'i'
                             // depending on the primary variable 'pvIdx' at dof
                             // 'col'.
-                            // if (element.partitionType() == Dune::InteriorEntity)
-                            A[dofIdx][dofIdx][eqIdx][pvIdx] += partialDerivs[scv.localDofIndex()][eqIdx];
+                            A[scvJ.dofIndex()][dofIdx][eqIdx][pvIdx] += partialDerivs[scvJ.localDofIndex()][eqIdx];
                         }
                     }
                 }
@@ -412,8 +411,6 @@ public:
                 // restore the original element solution
                 elemSol[scv.localDofIndex()][pvIdx] = curSol[scv.dofIndex()][pvIdx];
                 this->asImp_().maybeUpdateCouplingContext(scv, elemSol, pvIdx);
-                // TODO additional dof dependencies
-
             }
         }
 

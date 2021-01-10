@@ -61,7 +61,7 @@ public:
 
         priVars_.resize(fvGeometry.numScv());
         for (const auto& scv : scvs(fvGeometry))
-            priVars_[scv.indexInElement()] = sol[scv.dofIndex()];
+            priVars_[scv.localDofIndex()] = sol[scv.dofIndex()];
     }
 
     //! Constructor with element, element volume variables and fv element geometry
@@ -72,7 +72,7 @@ public:
     {
         priVars_.resize(fvGeometry.numScv());
         for (const auto& scv : scvs(fvGeometry))
-            priVars_[scv.indexInElement()] = elemVolVars[scv].priVars();
+            priVars_[scv.localDofIndex()] = elemVolVars[scv].priVars();
     }
 
     //! Constructor with a primary variable object
@@ -108,7 +108,7 @@ public:
 
         priVars_.resize(fvGeometry.numScv());
         for (const auto& scv : scvs(fvGeometry))
-            priVars_[scv.indexInElement()] = sol[scv.dofIndex()];
+            priVars_[scv.localDofIndex()] = sol[scv.dofIndex()];
     }
 
     //! bracket operator const access
