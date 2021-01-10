@@ -167,6 +167,7 @@ public:
         ResidualType residual(numDofs());
         assembleResidual(residual, curSol);
 
+#if HAVE_MPI
         // issue a warning if the caluclation is used in parallel with overlap
         static bool warningIssued = false;
 
@@ -176,7 +177,6 @@ public:
             {
                 using DM = typename GridGeometry::VertexMapper;
                 using PVHelper = ParallelVectorHelper<GridView, DM, GridView::dimension>;
-
                 PVHelper vectorHelper(gridView(), gridGeometry_->vertexMapper());
 
                 vectorHelper.makeNonOverlappingConsistent(residual);
@@ -191,7 +191,7 @@ public:
 
             warningIssued = true;
         }
-
+#endif
         // calculate the square norm of the residual
         Scalar result2 = residual.two_norm2();
         if (gridView().comm().size() > 1)
