@@ -31,7 +31,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
 #include <dumux/discretization/method.hh>
-#include <dumux/parallel/vectorcommdatahandle.hh>
+#include <dumux/linear/parallelhelpers.hh>
 
 #include "jacobianpattern.hh"
 #include "diffmethod.hh"
