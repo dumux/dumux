@@ -52,13 +52,14 @@ class HyperPyramidGeometryHelper
 
 public:
     HyperPyramidGeometryHelper(const Element& element)
-    : elementGeometry_(element.geometry())
-    , center_(elementGeometry_.center())
     {
-        const auto refElement = referenceElement(elementGeometry_);
+        const auto elementGeom = element.geometry();
+        center_ = elementGeom.center();
+        const auto refElement = referenceElement(elementGeom);
 
         // loop over all faces
         pScv_.resize(element.subEntities(1));
+        scvDofPos_.resize(element.subEntities(1));
         for(int idx=0; idx<element.subEntities(1); ++idx)
         {
             const auto numVertices = refElement.size(idx, 1, 2);
@@ -66,9 +67,11 @@ public:
             for (int localVIdx = 0; localVIdx < numVertices; ++localVIdx)
             {
                 const auto vIdx = refElement.subEntity(idx, 1, localVIdx, 2);
-                pScv_[idx].push_back(elementGeometry_.corner(vIdx));
+                pScv_[idx].push_back(elementGeom.corner(vIdx));
             }
             pScv_[idx].push_back(center_);
+
+            scvDofPos_[idx] = elementGeom.global(refElement.position(idx, 1));
         }
 
         // loop over all faces
@@ -81,12 +84,12 @@ public:
             for (int localVIdx = 0; localVIdx < numVertices; ++localVIdx)
             {
                 const auto vIdx = refElement.subEntity(idx, 2, localVIdx, dim);
-                pScvf_[idx].push_back(elementGeometry_.corner(vIdx));
+                pScvf_[idx].push_back(elementGeom.corner(vIdx));
             }
             pScvf_[idx].push_back(center_);
         }
 
-        scvPairs_ = std::move(scvPairs(elementGeometry_.corners()));
+        scvPairs_ = std::move(scvPairs(elementGeom.corners()));
     }
 
     //! Create a vector with the scv corners
@@ -134,9 +137,7 @@ public:
         auto normal = Dumux::crossProduct(p[1]-p[0], p[2]-p[0]);
         normal /= normal.two_norm();
 
-        const auto refElement = referenceElement(elementGeometry_);
-        GlobalPosition v = elementGeometry_.global(refElement.position(scvPair.second, 1))
-                          -elementGeometry_.global(refElement.position(scvPair.first,  1));
+        GlobalPosition v = scvDofPos_[scvPair.second]  - scvDofPos_[scvPair.first];
 
         const auto s = v*normal;
         if (std::signbit(s))
@@ -154,9 +155,7 @@ public:
         GlobalPosition normal({-t[1], t[0]});
         normal /= normal.two_norm();
 
-        const auto refElement = referenceElement(elementGeometry_);
-        GlobalPosition v = elementGeometry_.global(refElement.position(scvPair.first, 1))
-                          -elementGeometry_.global(refElement.position(scvPair.second,  1));
+        GlobalPosition v = scvDofPos_[scvPair.second]  - scvDofPos_[scvPair.first];
 
         const auto s = v*normal;
         if (std::signbit(s))
@@ -231,10 +230,10 @@ private:
         }
     }
 
-    const typename Element::Geometry& elementGeometry_; //!< Reference to the element geometry
     GlobalPosition center_;
     std::vector<ScvCornerStorage> pScv_;
     std::vector<ScvfCornerStorage> pScvf_;
+    std::vector<GlobalPosition> scvDofPos_;
     ScvPairStorage scvPairs_;
     LocalScvfIndexType numInteriorScvf_;
 };
