@@ -90,16 +90,16 @@ public:
         numSwSamples_ = getParamFromGroup<Scalar>(paramGroup, "SplineNumSwSamples", 30);
 
         pcSpline_ = makeSweSpline_(
-            [this](const auto s){ return TwoPMaterialLaw::pc(s); },
+            [&](const auto s){ return TwoPMaterialLaw::pc(s); },
             approximatePcSwInverse
         );
 
         krwSpline_ = makeSweSpline_(
-            [this](const auto s){ return TwoPMaterialLaw::krw(s); }
+            [&](const auto s){ return TwoPMaterialLaw::krw(s); }
         );
 
         krnSpline_ = makeSweSpline_(
-            [this](const auto s){ return TwoPMaterialLaw::krn(s); }
+            [&](const auto s){ return TwoPMaterialLaw::krn(s); }
         );
     }
 
