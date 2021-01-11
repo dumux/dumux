@@ -21,6 +21,9 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_parallel
                                      ${CMAKE_CURRENT_BINARY_DIR}/s0004-donea_momentum_1.pvtu
                              --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum")
 
+dumux_add_test(NAME test_donea_momentum_diamond
+               SOURCES main_momentum_diamond.cc)
+
 dumux_add_test(NAME test_ff_stokes_donea_nocaching
               LABELS freeflow navierstokes
               SOURCES main.cc
