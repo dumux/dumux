@@ -1,6 +1,9 @@
 dumux_add_test(NAME test_ff_stokes_donea_momentum
                SOURCES main_new_momentum.cc)
 
+dumux_add_test(NAME test_donea_momentum_diamond
+               SOURCES main_momentum_diamond.cc)
+
 dumux_add_test(NAME test_ff_stokes_donea_nocaching
               LABELS freeflow navierstokes
               SOURCES main.cc
