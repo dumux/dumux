@@ -70,6 +70,13 @@ public:
     MultiDomainFVGridVariables() = default;
 
     /*!
+     * \brief Construction from an existing tuple
+     */
+    MultiDomainFVGridVariables(const TupleType& tuple)
+    : gridVars_(tuple)
+    {}
+
+    /*!
      * \brief Contruct the grid variables
      * \param gridGeometries a tuple of grid geometry shared pointers
      * \param problems a tuple of problem shared pointers
