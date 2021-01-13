@@ -14,6 +14,7 @@ add_executable(test_richards_benchmark_tpfa EXCLUDE_FROM_ALL main.cc)
 
 dumux_add_test(NAME test_richards_benchmark_infiltration_tpfa
                TARGET test_richards_benchmark_tpfa
+               CMAKE_GUARD HAVE_UMFPACK
                LABELS porousmediumflow richards
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS --script fuzzyData
@@ -47,6 +48,7 @@ dumux_add_test(NAME test_richards_benchmark_infiltration_tpfa
 
 dumux_add_test(NAME test_richards_benchmark_evaporation_tpfa
                TARGET test_richards_benchmark_tpfa
+               CMAKE_GUARD HAVE_UMFPACK
                LABELS porousmediumflow richards
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS --script fuzzyData
