@@ -48,3 +48,4 @@ __pycache__
 MANIFEST
 _skbuild/
 dist
+*.egg-info
