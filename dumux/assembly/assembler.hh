@@ -159,7 +159,7 @@ public:
             auto elemVars = this->prepareElemVariables_(gridVariables, element, ggLocalView);
 
             using LocalAssembler = Dumux::LocalAssembler<ThisType, diffMethod>;
-            LocalAssembler localAssembler(element, ggLocalView, elemVars);
+            LocalAssembler localAssembler(element, ggLocalView, elemVars, stageParams_);
             localAssembler.assembleJacobianAndResidual(*jacobian_, *residual_, partialReassembler);
         });
 
@@ -187,7 +187,7 @@ public:
             auto elemVars = this->prepareElemVariables_(gridVariables, element, ggLocalView);
 
             using LocalAssembler = Dumux::LocalAssembler<ThisType, diffMethod>;
-            LocalAssembler localAssembler(element, ggLocalView, elemVars);
+            LocalAssembler localAssembler(element, ggLocalView, elemVars, stageParams_);
             localAssembler.assembleJacobianAndResidual(*jacobian_);
         });
 
@@ -220,7 +220,7 @@ public:
             auto elemVars = this->prepareElemVariables_(gridVariables, element, ggLocalView);
 
             using LocalAssembler = Dumux::LocalAssembler<ThisType, diffMethod>;
-            LocalAssembler localAssembler(element, ggLocalView, elemVars);
+            LocalAssembler localAssembler(element, ggLocalView, elemVars, stageParams_);
             localAssembler.assembleResidual(r);
         });
     }
