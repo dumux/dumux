@@ -355,6 +355,14 @@ protected:
                                                           origResiduals, eps_(elemSol[localI][pvIdx], pvIdx),
                                                           numDiffMethod);
 
+                // TODO: Distinguish between implicit/explicit here. For explicit schemes,
+                //       no entries between different scvs of an element are reserved. Thus,
+                //       we currently get an error when using explicit schemes.
+                // TODO: Doesn't this mean we only have to evaluate the residual for a single
+                //       scv instead of calling evalLocalResidual()? That computes the residuals
+                //       and derivs for all other scvs of the element, too, which are never used.
+                //       Note: this is the same in the current implementation of master.
+                //       Should we try to optimize this for explicit schemes? Or adjust the Jacobian pattern?
                 // update the global stiffness matrix with the current partial derivatives
                 for (const auto& scvJ : scvs(fvGeometry()))
                 {
