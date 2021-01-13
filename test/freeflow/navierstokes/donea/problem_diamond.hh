@@ -28,7 +28,12 @@
 #define ENABLECACHING 0
 #endif
 
+#ifndef GRIDTYPE
+#define GRIDTYPE Dune::YaspGrid<2>
+#endif
+
 #include <dune/grid/yaspgrid.hh>
+#include <dune/alugrid/grid.hh>
 
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
@@ -71,7 +76,7 @@ struct FluidSystem<TypeTag, TTag::DoneaTestNew>
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::DoneaTestNew> { using type = Dune::YaspGrid<2>; };
+struct Grid<TypeTag, TTag::DoneaTestNew> { using type = GRIDTYPE; };
 
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::DoneaTestNew> { static constexpr bool value = true; };
