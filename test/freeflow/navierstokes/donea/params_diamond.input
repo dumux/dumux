@@ -1,0 +1,28 @@
+[Grid]
+UpperRight = 1 1
+Cells = 10 10
+Refinement = 0
+
+[Problem]
+Name = test_donea # name passed to the output routines
+EnableGravity = false
+PrintL2Error = true
+EnableInertiaTerms = false
+PrintMatrix = false
+
+[Component]
+LiquidDensity  = 1.0
+LiquidKinematicViscosity = 1.0
+
+[ Newton ]
+MaxSteps = 10
+MaxRelativeShift = 1e-5
+
+[Vtk]
+WriteFaceData = false
+
+[FreeFlow]
+EnableUnsymmetrizedVelocityGradient = true
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-8
