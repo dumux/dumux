@@ -1,8 +1,12 @@
 dumux_add_test(NAME test_ff_stokes_donea_momentum
                SOURCES main_new_momentum.cc)
 
-dumux_add_test(NAME test_donea_momentum_diamond
+dumux_add_test(NAME test_donea_momentum_diamond_rt
                SOURCES main_momentum_diamond.cc)
+
+dumux_add_test(NAME test_donea_momentum_diamond_cr
+               SOURCES main_momentum_diamond.cc
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>)
 
 dumux_add_test(NAME test_ff_stokes_donea_nocaching
               LABELS freeflow navierstokes
@@ -40,4 +44,4 @@ dumux_add_test(NAME test_ff_stokes_donea_new
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_new params.input
                              -Problem.Name test_ff_stokes_donea_new")
 
-dune_symlink_to_source_files(FILES "params.input")
+dune_symlink_to_source_files(FILES "params.input" "params_diamond.input" )
