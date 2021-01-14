@@ -25,12 +25,14 @@
 #ifndef DUMUX_LINEAR_PARALLELHELPERS_HH
 #define DUMUX_LINEAR_PARALLELHELPERS_HH
 
+#include <dune/common/exceptions.hh>
 #include <dune/geometry/dimension.hh>
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/grid/common/partitionset.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/paamg/pinfo.hh>
 #include <dumux/parallel/vectorcommdatahandle.hh>
+#include <dumux/common/gridcapabilities.hh>
 
 namespace Dumux {
 
@@ -277,7 +279,10 @@ public:
     ParallelISTLHelper(const GridView& gridView, const DofMapper& mapper)
     : gridView_(gridView), mapper_(mapper)
     {
-        initGhostsAndOwners_();
+        if constexpr (Detail::canCommunicate<typename GridView::Traits::Grid, dofCodim>)
+            initGhostsAndOwners_();
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Cannot initialize parallel helper for a grid that cannot communicate codim-" << dofCodim << "-entities.");
     }
 
     bool isGhost(std::size_t i) const
@@ -292,56 +297,61 @@ public:
     template<class Comm>
     void createParallelIndexSet(Comm& comm) const
     {
-        if (gridView_.comm().size() <= 1)
+        if constexpr (Detail::canCommunicate<typename GridView::Traits::Grid, dofCodim>)
         {
-            comm.remoteIndices().template rebuild<false>();
-            return;
-        }
-
-        // First find out which dofs we share with other processors
-        std::vector<int> isShared(mapper_.size(), false);
-
-        SharedGatherScatter sgs(isShared, mapper_);
-        gridView_.communicate(sgs, Dune::All_All_Interface, Dune::ForwardCommunication);
-
-        // Count shared dofs that we own
-        using GlobalIndex = typename Comm::ParallelIndexSet::GlobalIndex;
-        GlobalIndex count = 0;
-        for (std::size_t i = 0; i < isShared.size(); ++i)
-            if (isShared[i] && isOwned_[i] == 1)
-                ++count;
-
-        std::vector<GlobalIndex> counts(gridView_.comm().size());
-        gridView_.comm().allgather(&count, 1, counts.data());
-
-        // Compute start index start_p = \sum_{i=0}^{i<p} counts_i
-        const int rank = gridView_.comm().rank();
-        auto start = std::accumulate(counts.begin(), counts.begin() + rank, GlobalIndex(0));
-
-        std::vector<GlobalIndex> globalIndices(mapper_.size(), std::numeric_limits<GlobalIndex>::max());
-
-        for (std::size_t i = 0; i < globalIndices.size(); ++i)
-        {
-            if (isOwned_[i] == 1 && isShared[i])
+            if (gridView_.comm().size() <= 1)
             {
-                globalIndices[i] = start; // GlobalIndex does not implement postfix ++
-                ++start;
+                comm.remoteIndices().template rebuild<false>();
+                return;
             }
+
+            // First find out which dofs we share with other processors
+            std::vector<int> isShared(mapper_.size(), false);
+
+            SharedGatherScatter sgs(isShared, mapper_);
+            gridView_.communicate(sgs, Dune::All_All_Interface, Dune::ForwardCommunication);
+
+            // Count shared dofs that we own
+            using GlobalIndex = typename Comm::ParallelIndexSet::GlobalIndex;
+            GlobalIndex count = 0;
+            for (std::size_t i = 0; i < isShared.size(); ++i)
+                if (isShared[i] && isOwned_[i] == 1)
+                    ++count;
+
+            std::vector<GlobalIndex> counts(gridView_.comm().size());
+            gridView_.comm().allgather(&count, 1, counts.data());
+
+            // Compute start index start_p = \sum_{i=0}^{i<p} counts_i
+            const int rank = gridView_.comm().rank();
+            auto start = std::accumulate(counts.begin(), counts.begin() + rank, GlobalIndex(0));
+
+            std::vector<GlobalIndex> globalIndices(mapper_.size(), std::numeric_limits<GlobalIndex>::max());
+
+            for (std::size_t i = 0; i < globalIndices.size(); ++i)
+            {
+                if (isOwned_[i] == 1 && isShared[i])
+                {
+                    globalIndices[i] = start; // GlobalIndex does not implement postfix ++
+                    ++start;
+                }
+            }
+
+            // publish global indices for the shared DOFS to other processors.
+            GlobalIndexGatherScatter<GlobalIndex> gigs(globalIndices, mapper_);
+            gridView_.communicate(gigs, Dune::All_All_Interface, Dune::ForwardCommunication);
+
+            resizeIndexSet_(comm, globalIndices);
+
+            // Compute neighbours using communication
+            std::set<int> neighbours;
+            NeighbourGatherScatter ngs(mapper_, gridView_.comm().rank(), neighbours);
+            gridView_.communicate(ngs, Dune::All_All_Interface, Dune::ForwardCommunication);
+            comm.remoteIndices().setNeighbours(neighbours);
+
+            comm.remoteIndices().template rebuild<false>();
         }
-
-        // publish global indices for the shared DOFS to other processors.
-        GlobalIndexGatherScatter<GlobalIndex> gigs(globalIndices, mapper_);
-        gridView_.communicate(gigs, Dune::All_All_Interface, Dune::ForwardCommunication);
-
-        resizeIndexSet_(comm, globalIndices);
-
-        // Compute neighbours using communication
-        std::set<int> neighbours;
-        NeighbourGatherScatter ngs(mapper_, gridView_.comm().rank(), neighbours);
-        gridView_.communicate(ngs, Dune::All_All_Interface, Dune::ForwardCommunication);
-        comm.remoteIndices().setNeighbours(neighbours);
-
-        comm.remoteIndices().template rebuild<false>();
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Cannot build parallel index set for a grid that cannot communicate codim-" << dofCodim << "-entities.");
     }
 
     //! Return the dofMapper
@@ -427,10 +437,15 @@ public:
     template<class Block, class Alloc>
     void makeNonOverlappingConsistent(Dune::BlockVector<Block, Alloc>& v) const
     {
-        VectorCommDataHandleSum<DofMapper, Dune::BlockVector<Block, Alloc>, dofCodim, Block> gs(mapper_, v);
-        if (gridView_.comm().size() > 1)
-            gridView_.communicate(gs, Dune::InteriorBorder_InteriorBorder_Interface,
-                                  Dune::ForwardCommunication);
+        if constexpr (Detail::canCommunicate<typename GridView::Traits::Grid, dofCodim>)
+        {
+            VectorCommDataHandleSum<DofMapper, Dune::BlockVector<Block, Alloc>, dofCodim, Block> gs(mapper_, v);
+            if (gridView_.comm().size() > 1)
+                gridView_.communicate(gs, Dune::InteriorBorder_InteriorBorder_Interface,
+                                    Dune::ForwardCommunication);
+        }
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Cannot call makeNonOverlappingConsistent for a grid that cannot communicate codim-" << dofCodim << "-entities.");
     }
 
 private:
@@ -682,40 +697,45 @@ public:
     template<class IsGhostFunc>
     void extendMatrix(Matrix& A, const IsGhostFunc& isGhost)
     {
-        if (gridView_.comm().size() <= 1)
-            return;
-
-        Matrix tmp(A);
-        std::size_t nnz = 0;
-        // get entries from other processes
-        std::vector<std::set<int>> sparsity;
-        MatrixPatternExchange<IsGhostFunc> datahandle(mapper_, idToIndex_, indexToID_, A, sparsity, isGhost);
-        gridView_.communicate(datahandle, Dune::InteriorBorder_InteriorBorder_Interface,
-                                          Dune::ForwardCommunication);
-        // add own entries, count number of nonzeros
-        for (auto rowIt = A.begin(); rowIt != A.end(); ++rowIt)
+        if constexpr (Detail::canCommunicate<Grid, dofCodim>)
         {
-            for (auto colIt = A[rowIt.index()].begin(); colIt != A[rowIt.index()].end(); ++colIt)
-                if (!sparsity[rowIt.index()].count(colIt.index()))
-                    sparsity[rowIt.index()].insert(colIt.index());
+            if (gridView_.comm().size() <= 1)
+                return;
 
-            nnz += sparsity[rowIt.index()].size();
+            Matrix tmp(A);
+            std::size_t nnz = 0;
+            // get entries from other processes
+            std::vector<std::set<int>> sparsity;
+            MatrixPatternExchange<IsGhostFunc> datahandle(mapper_, idToIndex_, indexToID_, A, sparsity, isGhost);
+            gridView_.communicate(datahandle, Dune::InteriorBorder_InteriorBorder_Interface,
+                                            Dune::ForwardCommunication);
+            // add own entries, count number of nonzeros
+            for (auto rowIt = A.begin(); rowIt != A.end(); ++rowIt)
+            {
+                for (auto colIt = A[rowIt.index()].begin(); colIt != A[rowIt.index()].end(); ++colIt)
+                    if (!sparsity[rowIt.index()].count(colIt.index()))
+                        sparsity[rowIt.index()].insert(colIt.index());
+
+                nnz += sparsity[rowIt.index()].size();
+            }
+
+            A.setSize(tmp.N(), tmp.N(), nnz);
+            A.setBuildMode(Matrix::row_wise);
+            auto citer = A.createbegin();
+            for (auto i = sparsity.begin(), end = sparsity.end(); i!=end; ++i, ++citer)
+            {
+                for (auto si = i->begin(), send = i->end(); si!=send; ++si)
+                    citer.insert(*si);
+            }
+
+            // set matrix old values
+            A = 0;
+            for (auto rowIt = tmp.begin(); rowIt != tmp.end(); ++rowIt)
+                for (auto colIt = tmp[rowIt.index()].begin(); colIt != tmp[rowIt.index()].end(); ++colIt)
+                    A[rowIt.index()][colIt.index()] = tmp[rowIt.index()][colIt.index()];
         }
-
-        A.setSize(tmp.N(), tmp.N(), nnz);
-        A.setBuildMode(Matrix::row_wise);
-        auto citer = A.createbegin();
-        for (auto i = sparsity.begin(), end = sparsity.end(); i!=end; ++i, ++citer)
-        {
-            for (auto si = i->begin(), send = i->end(); si!=send; ++si)
-                citer.insert(*si);
-        }
-
-        // set matrix old values
-        A = 0;
-        for (auto rowIt = tmp.begin(); rowIt != tmp.end(); ++rowIt)
-            for (auto colIt = tmp[rowIt.index()].begin(); colIt != tmp[rowIt.index()].end(); ++colIt)
-                A[rowIt.index()][colIt.index()] = tmp[rowIt.index()][colIt.index()];
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Cannot call extendMatrix for a grid that cannot communicate codim-" << dofCodim << "-entities.");
     }
 
     /*!
@@ -724,12 +744,17 @@ public:
      */
     void sumEntries(Matrix& A)
     {
-        if (gridView_.comm().size() <= 1)
-            return;
+        if constexpr (Detail::canCommunicate<Grid, dofCodim>)
+        {
+            if (gridView_.comm().size() <= 1)
+                return;
 
-        MatrixEntryExchange datahandle(mapper_, idToIndex_, indexToID_, A);
-        gridView_.communicate(datahandle, Dune::InteriorBorder_InteriorBorder_Interface,
-                                          Dune::ForwardCommunication);
+            MatrixEntryExchange datahandle(mapper_, idToIndex_, indexToID_, A);
+            gridView_.communicate(datahandle, Dune::InteriorBorder_InteriorBorder_Interface,
+                                            Dune::ForwardCommunication);
+        }
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Cannot call sumEntries for a grid that cannot communicate codim-" << dofCodim << "-entities.");
     }
 
 private:
