@@ -42,6 +42,7 @@
 #include <dumux/discretization/facecentered/staggered/geometryhelper.hh>
 #include <dumux/discretization/facecentered/staggered/connectivitymap.hh>
 #include <dumux/discretization/facecentered/staggered/normalaxis.hh>
+#include <dumux/freeflow/staggeredupwindmethods.hh>
 
 namespace Dumux {
 
@@ -74,6 +75,7 @@ struct FaceCenteredStaggeredDefaultGridGeometryTraits : public DefaultMapperTrai
  */
 template<class GridView,
          bool cachingEnabled = false,
+         int upwOrder = 1,
          class Traits = FaceCenteredStaggeredDefaultGridGeometryTraits<GridView>>
 class FaceCenteredStaggeredFVGridGeometry;
 
@@ -83,11 +85,11 @@ class FaceCenteredStaggeredFVGridGeometry;
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element. Specialization in case the FVElementGeometries are stored.
  */
-template<class GV, class Traits>
-class FaceCenteredStaggeredFVGridGeometry<GV, true, Traits>
+template<class GV, int upwOrder, class Traits>
+class FaceCenteredStaggeredFVGridGeometry<GV, true, upwOrder, Traits>
 : public BaseGridGeometry<GV, Traits>
 {
-    using ThisType = FaceCenteredStaggeredFVGridGeometry<GV, true, Traits>;
+    using ThisType = FaceCenteredStaggeredFVGridGeometry<GV, true, upwOrder, Traits>;
     using ParentType = BaseGridGeometry<GV, Traits>;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
@@ -119,6 +121,10 @@ public:
     static constexpr DiscretizationMethod discMethod = DiscretizationMethod::fcstaggered;
     static constexpr bool cachingEnabled = true;
 
+    static constexpr int upwindSchemeOrder = upwOrder;
+    static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
+    using UpwindScheme = StaggeredUpwindMethods<Scalar, upwindSchemeOrder>;
+
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, true>;
     //! export the type of sub control volume
@@ -136,6 +142,7 @@ public:
     FaceCenteredStaggeredFVGridGeometry(const GridView& gridView, const std::string& paramGroup = "")
     : ParentType(gridView)
     , intersectionMapper_(gridView)
+    , staggeredUpwindMethods_(paramGroup)
     {
         // Check if the overlap size is what we expect
         if (!CheckOverlapSize<DiscretizationMethod::fcstaggered>::isValid(gridView))
@@ -671,6 +678,9 @@ public:
     GridIndexType lateralOrthogonalScvf(const SubControlVolumeFace& scvf) const
     { return lateralOrthogonalScvf_[scvf.index()]; }
 
+    const UpwindScheme& staggeredUpwindMethods() const
+    { return staggeredUpwindMethods_; }
+
 private:
 
     void update_()
@@ -852,6 +862,7 @@ private:
     std::size_t numScvf_;
     std::size_t numBoundaryScv_;
     std::size_t numBoundaryScvf_;
+
     std::vector<bool> hasBoundaryScvf_;
 
     std::vector<GridIndexType> lateralOrthogonalScvf_;
@@ -860,6 +871,8 @@ private:
     // a map for periodic boundary vertices
     std::unordered_map<GridIndexType, GridIndexType> periodicFaceMap_;
     std::unordered_map<GridIndexType, GridIndexType> outsideVolVarIndices_;
+
+    const UpwindScheme staggeredUpwindMethods_;
 };
 
 } // end namespace Dumux

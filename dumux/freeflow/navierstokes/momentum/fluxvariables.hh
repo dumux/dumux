@@ -35,7 +35,7 @@
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/method.hh>
 
-// #include "staggeredupwindhelper.hh"
+#include "upwindschemehelper.hh"
 #include "velocitygradients.hh"
 
 namespace Dumux {
@@ -77,8 +77,11 @@ class NavierStokesMomentumFluxVariables
 
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
 
-public:
+    using UpwindScheme = typename GridGeometry::UpwindScheme;
+    static constexpr int upwindSchemeOrder = GridGeometry::upwindSchemeOrder;
+    static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
 
+public:
     NavierStokesMomentumFluxVariables(const Problem& problem,
                                       const Element& element,
                                       const FVElementGeometry& fvGeometry,
@@ -93,6 +96,7 @@ public:
     , elemVolVarsPtr_(&elemVolVars)
     , elemFluxVarsCachePtr_(&elemFluxVarsCache)
     , elemBcTypesPtr_(&elemBcTypes)
+    , staggeredUpwindMethods_(fvGeometry.staggeredUpwindMethods())
     {
         static_assert(
             std::decay_t<decltype(problem.dirichlet(element, scvFace))>::size()
@@ -121,6 +125,9 @@ public:
 
     const ElementBoundaryTypes& elemBcTypes() const
     { return *elemBcTypesPtr_; }
+
+    const UpwindScheme& staggeredUpwindMethods() const
+    { return staggeredUpwindMethods_; }
 
     /*!
      * \brief Returns the diffusive momentum flux due to viscous forces
@@ -468,6 +475,7 @@ private:
     const ElementVolumeVariables* elemVolVarsPtr_;          //!< Pointer to the current element volume variables
     const ElementFluxVariablesCache* elemFluxVarsCachePtr_; //!< Pointer to the current element flux variables cache
     const ElementBoundaryTypes* elemBcTypesPtr_; //!< Pointer to element boundary types
+
 };
 
 } // end namespace Dumux

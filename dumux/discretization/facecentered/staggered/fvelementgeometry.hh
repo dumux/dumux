@@ -60,8 +60,10 @@ public:
     //! export type of subcontrol volume face
     using SubControlVolume = typename GG::SubControlVolume;
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
+    using Scalar = typename SubControlVolume::Traits::Scalar;
     using Element = typename GridView::template Codim<0>::Entity;
     using GridGeometry = GG;
+    using UpwindScheme = typename GridGeometry::UpwindScheme;
 
     //! the maximum number of scvs per element
     static constexpr std::size_t maxNumElementScvs = 2*GridView::dimension;
@@ -71,6 +73,9 @@ public:
     FaceCenteredStaggeredFVElementGeometry(const GridGeometry& gridGeometry)
     : gridGeometry_(&gridGeometry)
     {}
+
+    const UpwindScheme& staggeredUpwindMethods() const
+    { return gridGeometry().staggeredUpwindMethods(); }
 
     //! Get a sub control volume  with a global scv index
     const SubControlVolume& scv(GridIndexType scvIdx) const
