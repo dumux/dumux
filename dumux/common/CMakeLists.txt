@@ -21,6 +21,7 @@ enumerate.hh
 exceptions.hh
 fixedlengthspline_.hh
 fvproblem.hh
+gridcapabilities.hh
 indextraits.hh
 integrate.hh
 intersectionmapper.hh
