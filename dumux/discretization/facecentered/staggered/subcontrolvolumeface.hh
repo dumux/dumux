@@ -97,7 +97,8 @@ public:
     , globalScvfIdx_(globalScvfIdx)
     , scvfIdxWithCommonEntity_(scvfIdxWithCommonEntity)
     , faceType_(faceType)
-    , boundary_(boundary) {}
+    , boundary_(boundary)
+    {}
 
     //! The center of the sub control volume face
     const GlobalPosition& center() const
@@ -167,7 +168,6 @@ private:
     FaceType faceType_;
     bool boundary_;
 };
-
 
 } // end namespace Dumux
 

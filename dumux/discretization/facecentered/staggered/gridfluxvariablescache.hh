@@ -79,7 +79,9 @@ public:
     //! export the type of the local view
     using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
 
-    FaceCenteredStaggeredGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
+    FaceCenteredStaggeredGridFluxVariablesCache(const Problem& problem)
+    : problemPtr_(&problem)
+    {}
 
     // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
     template<class GridGeometry, class GridVolumeVariables, class SolutionVector>
@@ -138,7 +140,6 @@ class FaceCenteredStaggeredGridFluxVariablesCache<P, FVC, FVCF, false, Traits>
 {
     using Problem = typename Traits::Problem;
     using ThisType = FaceCenteredStaggeredGridFluxVariablesCache<P, FVC, FVCF, false, Traits>;
-
 public:
     //! export the flux variable cache type
     using FluxVariablesCache = typename Traits::FluxVariablesCache;
@@ -149,7 +150,9 @@ public:
     //! export the type of the local view
     using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
 
-    FaceCenteredStaggeredGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
+    FaceCenteredStaggeredGridFluxVariablesCache(const Problem& problem)
+    : problemPtr_(&problem)
+    {}
 
     template<class GridGeometry, class GridVolumeVariables, class SolutionVector>
     void update(const GridGeometry& gridGeometry,

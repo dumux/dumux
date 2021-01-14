@@ -410,8 +410,8 @@ public:
                     const auto lateralDirIdx = directionIndex(laterUnitOuterNormal);
                     scvfs_.emplace_back(lateralFaceCenter,
                                         integrationPointPosition,
-                                        localScvIndices, // TODO higher order
-                                        globalScvIndicesForLateralFace, // TODO higher order
+                                        localScvIndices,
+                                        globalScvIndicesForLateralFace,
                                         localScvfIdx,
                                         lateralFacetGeometry.volume()*0.5,
                                         lateralDirIdx,

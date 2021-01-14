@@ -87,7 +87,8 @@ public:
     , directionIdx_(dirIdx)
     , directionSign_(dirSign)
     , eIdx_(eIdx)
-    , boundary_(boundary) {}
+    , boundary_(boundary)
+    {}
 
     //! The center of the sub control volume
     const GlobalPosition& center() const
@@ -136,7 +137,6 @@ private:
     GridIndexType eIdx_;
     bool boundary_;
 };
-
 
 } // end namespace Dumux
 

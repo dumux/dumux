@@ -40,8 +40,6 @@
 #include <dumux/discretization/facecentered/staggered/gridfluxvariablescache.hh>
 #include <dumux/discretization/facecentered/staggered/elementboundarytypes.hh>
 
-
-
 namespace Dumux {
 
 // forward declarations
