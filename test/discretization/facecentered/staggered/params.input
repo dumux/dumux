@@ -1,3 +1,5 @@
 [Grid]
-Cells = 5 5
-UpperRight = 10 10
+Positions0 = 0 1 3 6 10 15
+Positions1 = 0 5 9 12 14 15
+Cells0 = 1 1 1 1 1
+Cells1 = 1 1 1 1 1
