@@ -58,10 +58,11 @@ template<class TypeTag>
 struct GridGeometry<TypeTag, TTag::FaceCenteredStaggeredModel>
 {
 private:
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
     using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+    static constexpr int upwindSchemeOrder = getPropValue<TypeTag, Properties::UpwindSchemeOrder>();
 public:
-    using type = FaceCenteredStaggeredFVGridGeometry<GridView, enableCache>;
+    using type = FaceCenteredStaggeredFVGridGeometry<GridView, enableCache, upwindSchemeOrder>;
 };
 
 //! The grid volume variables vector class
@@ -117,6 +118,9 @@ private:
 public:
     using type = FaceCenteredStaggeredElementBoundaryTypes<BoundaryTypes>;
 };
+
+template<class TypeTag>
+struct UpwindSchemeOrder<TypeTag, TTag::FaceCenteredStaggeredModel> { static constexpr int value = 1; }; // Set the order of the upwinding scheme to 1 by default.
 
 } // namespace Properties
 

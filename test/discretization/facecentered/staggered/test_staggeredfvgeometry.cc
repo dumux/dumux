@@ -71,11 +71,13 @@ int main (int argc, char *argv[]) try
     constexpr int dimworld = Grid::dimensionworld;
 
     using GlobalPosition = typename Dune::FieldVector<Grid::ctype, dimworld>;
-    using GridGeometry = FaceCenteredStaggeredFVGridGeometry<typename Grid::LeafGridView, /*enable caching=*/ true>;
+    using GridGeometry = FaceCenteredStaggeredFVGridGeometry<typename Grid::LeafGridView,
+                                                             /*enable caching=*/ true,
+                                                             /*upwindSchemeOrder*/ 2>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    constexpr bool useHigherOrder = true; // do this properly with setProp
+    constexpr bool useHigherOrder = GridGeometry::useHigherOrder;
 
     // make a grid
     GlobalPosition lower = getParam<GlobalPosition>("Grid.LowerLeft", GlobalPosition(0.0));
