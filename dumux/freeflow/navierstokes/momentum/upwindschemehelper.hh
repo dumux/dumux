@@ -82,7 +82,110 @@ public:
     , upwindScheme_(upwindScheme)
     {}
 
+    /*!
+     * \brief Returns the momentum in the frontal directon.
+     *
+     *        Checks if the model has higher order methods enabled and if the scvf in
+     *        question is far enough from the boundary such that higher order methods can be employed.
+     *        Then the corresponding set of momenta are collected and the prescribed
+     *        upwinding method is used to calculate the momentum.
+     */
+    Scalar computeUpwindFrontalMomentum(const bool selfIsUpstream) const
+    {
+        const auto density = problem_.density(element_, fvGeometry_, scvf_);
+
+        // for higher order schemes do higher order upwind reconstruction
+        if constexpr (useHigherOrder)
+        {
+            // only second order is implemented so far
+            if (canDoFrontalSecondOrder_(selfIsUpstream))
+            {
+                const auto distances = getFrontalDistances_(selfIsUpstream);
+                const auto upwindMomenta = getFrontalSecondOrderUpwindMomenta_(density, selfIsUpstream);
+                return upwindScheme_.tvd(upwindMomenta, distances, selfIsUpstream, upwindScheme_.tvdApproach());
+            }
+        }
+
+        // otherwise apply first order upwind scheme
+        const auto upwindMomenta = getFrontalFirstOrderUpwindMomenta_(density, selfIsUpstream);
+        return upwindScheme_.upwind(upwindMomenta[0], upwindMomenta[1]);
+    }
 private:
+    /*!
+     * \brief Returns whether or not the face in question is far enough from the wall to handle higher order methods.
+     *
+     *        Evaluates which face is upstream.
+     *        If the face is upstream, and the scvf has a forward neighbor, higher order methods are possible.
+     *        If the face is downstream, and the scvf has a backwards neighbor, higher order methods are possible.
+     *        Otherwise, higher order methods are not possible.
+     */
+    bool canDoFrontalSecondOrder_(bool selfIsUpstream) const
+    {
+        static_assert(useHigherOrder, "Should only be reached if higher order methods are enabled");
+        // Depending on selfIsUpstream I have to check if I have a forward or a backward neighbor to retrieve
+        return selfIsUpstream ? fvGeometry_.hasForwardNeighbor(scvf_) : fvGeometry_.hasBackwardNeighbor(scvf_);
+    }
+
+    /*!
+     * \brief Returns an array of the three momenta needed for second order upwinding methods.
+     */
+    std::array<Scalar, 3> getFrontalSecondOrderUpwindMomenta_(const Scalar density, bool selfIsUpstream) const
+    {
+        static_assert(useHigherOrder, "Should only be reached if higher order methods are enabled");
+        const auto momentumSelf = elemVolVars_[scvf_.insideScvIdx()].velocity() * density;
+        const auto momentumOpposite = elemVolVars_[scvf_.outsideScvIdx()].velocity() * density;
+        if (selfIsUpstream)
+        {
+            const auto momentumForward =  elemVolVars_[fvGeometry_.forwardScvIdx(scvf_)].velocity() * density;
+            return {momentumOpposite, momentumSelf, momentumForward};
+        }
+        else
+        {
+            const auto momentumBackward = elemVolVars_[fvGeometry_.backwardScvIdx(scvf_)].velocity() * density;
+            return {momentumSelf, momentumOpposite, momentumBackward};
+        }
+    }
+
+    /*!
+     * \brief Returns an array of the two momenta needed for first order upwinding method
+     */
+    std::array<Scalar, 2> getFrontalFirstOrderUpwindMomenta_(const Scalar density, bool selfIsUpstream) const
+    {
+        const auto momentumSelf = elemVolVars_[scvf_.insideScvIdx()].velocity() * density;
+        const auto momentumOpposite = elemVolVars_[scvf_.outsideScvIdx()].velocity() * density;
+        if (selfIsUpstream)
+            return {momentumOpposite, momentumSelf};
+        else
+            return {momentumSelf, momentumOpposite};
+    }
+
+    /*!
+     * \brief Returns an array of distances needed for non-uniform higher order upwind schemes
+     * Depending on selfIsUpstream the downstream and the (up)upstream distances are saved.
+     * distances {upstream to downstream distance, up-upstream to upstream distance, downstream staggered cell size}
+     */
+    std::array<Scalar, 3> getFrontalDistances_(const bool selfIsUpstream) const
+    {
+        static_assert(useHigherOrder, "Should only be reached if higher order methods are enabled");
+
+        if (selfIsUpstream)
+        {
+            std::array<Scalar, 3> distances;
+            distances[0] = fvGeometry_.selfToOppositeDistance(scvf_);
+            distances[1] = fvGeometry_.selfToForwardDistance(scvf_);
+            distances[2] = 0.5 * (fvGeometry_.selfToOppositeDistance(scvf_) + fvGeometry_.oppositeToBackwardDistance(scvf_));
+            return distances;
+        }
+        else
+        {
+            std::array<Scalar, 3> distances;
+            distances[0] = fvGeometry_.selfToOppositeDistance(scvf_);
+            distances[1] = fvGeometry_.oppositeToBackwardDistance(scvf_);
+            distances[2] = 0.5 * (fvGeometry_.selfToOppositeDistance(scvf_) + fvGeometry_.selfToForwardDistance(scvf_));
+            return distances;
+        }
+    }
+
     const Element& element_;
     const FVElementGeometry& fvGeometry_;
     const Problem& problem_;
