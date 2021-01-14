@@ -76,7 +76,6 @@ namespace {
     template<class GlobalPosition>
     void drawArrow(std::ofstream& plotfile, const GlobalPosition& center, const double elementRadius, const double scale, const int direction)
     {
-        std::cout << "elementRadius "<< elementRadius << ", scale "<< scale;
         double size = elementRadius * scale;
         GlobalPosition start = center;
         if (direction == 0)
@@ -86,7 +85,6 @@ namespace {
 
         std::string shift = direction ? " 0.0," + std::to_string(size) : std::to_string(size) + ",0.0";
         std::string options = direction ? "lw 1 lc rgb \"red\"" : "lw 1 lc rgb \"blue\"";
-        std::cout <<", shift "<< shift << "\n";
 
         plotfile << "set arrow from ";
         plotfile << start[0] << "," << start[1];
