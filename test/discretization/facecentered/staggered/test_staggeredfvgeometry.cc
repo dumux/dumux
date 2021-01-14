@@ -193,15 +193,28 @@ int main (int argc, char *argv[])
                         std::cout << "-- -- The frontal scvf has the index " << scvf.index() << "\n";
                         std::cout << "-- -- The \"self\" velocity is located at scv " << scvf.insideScvIdx() << "\n";
                         std::cout << "-- -- The \"opposite\" velocity is located at scv " << scvf.outsideScvIdx() << "\n";
+                        std::cout << "-- -- These dofs are located " << fvGeometry.selfToOppositeDistance(scvf) << " units away from each other \n";
                         if constexpr (useHigherOrder)
                         {
-                            // do higher order stuff
-//    PSUEDO                if(scvf.hasForwardNeighbor())
-//    CODE                      std::cout << "-- -- The \"forward\" velocity is located at scv " << scvf.forwardScvIdx() << "\n";
-//    PSUEDO                if(scvf.hasBackwardNeighbor())
-//    CODE                      std::cout << "-- -- The \"backward\" velocity is located at scv " << scvf.backwardScvIdx() << "\n";
+                            // Find the dofs located at the forward and backward axial scvs
+                            if (fvGeometry.hasForwardNeighbor(scvf))
+                            {
+                                std::cout << "-- -- [Higher Order] The \"forward\" velocity is located at scv "
+                                          << fvGeometry.forwardScvIdx(scvf) << "\n";
+                                std::cout << "-- -- [Higher Order] The \"forward\" dof is located " << fvGeometry.selfToForwardDistance(scvf)
+                                          << " units from the self dof \n";
+                            }
+
+                            if (fvGeometry.hasBackwardNeighbor(scvf))
+                            {
+                                std::cout << "-- -- [Higher Order] The \"backward\" velocity is located at scv "
+                                          << fvGeometry.backwardScvIdx(scvf) << "\n";
+                                std::cout << "-- -- [Higher Order] The \"backward\" dof is located " << fvGeometry.oppositeToBackwardDistance(scvf)
+                                          << " units from the opposite dof \n";
+                            }
                         }
                     }
+
                     int latCount = 0;
                     std::cout << "-- When evaluating the advective flux across the LATERAL face(s) the following scvfs and dofs are involved: \n";
                     for (auto&& scvf : scvfs(fvGeometry, scv))

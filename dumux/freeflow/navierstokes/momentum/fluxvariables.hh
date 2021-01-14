@@ -345,20 +345,22 @@ public:
         const auto& scvf = this->scvFace();
         assert(scvf.isFrontal());
 
-        const auto& problem = this->problem();
+        // Get the average velocity at the center of the element (i.e. the location of the staggered face).
         const auto& elemVolVars = this->elemVolVars();
         const auto velocitySelf = elemVolVars[scvf.insideScvIdx()].velocity();
         const auto velocityOpposite = elemVolVars[scvf.outsideScvIdx()].velocity();
-
-        // Get the average velocity at the center of the element (i.e. the location of the staggered face).
         const Scalar transportingVelocity = (velocitySelf + velocityOpposite) * 0.5;
-        const Scalar density = this->problem().density(this->element(), this->fvGeometry(), scvf);
-        const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
 
-        // TODO use higher order helper
-        static const auto upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
-        const Scalar transportedMomentum = selfIsUpstream ? (upwindWeight * velocitySelf + (1.0 - upwindWeight) * velocityOpposite) * density
-                                                          : (upwindWeight * velocityOpposite + (1.0 - upwindWeight) * velocitySelf) * density;
+        const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
+        FaceCenteredStaggeredUpwindHelper<TypeTag, upwindSchemeOrder> upwindHelper(this->element(),
+                                                                                   this->fvGeometry(),
+                                                                                   this->problem(),
+                                                                                   scvf,
+                                                                                   elemVolVars,
+                                                                                   this->elemBcTypes(),
+                                                                                   this->fvGeometry().staggeredUpwindMethods());
+
+        const Scalar transportedMomentum = upwindHelper.computeUpwindFrontalMomentum(selfIsUpstream);
 
         return  transportingVelocity * transportedMomentum * scvf.directionSign() * Extrusion::area(scvf) * extrusionFactor_(elemVolVars, scvf);
     }
