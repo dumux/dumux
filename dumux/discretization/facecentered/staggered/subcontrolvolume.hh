@@ -85,7 +85,8 @@ public:
                                           const GridIndexType dofIdx,
                                           const SmallLocalIndexType dofAxis,
                                           const std::int_least8_t dirSign,
-                                          const GridIndexType eIdx,
+                                          const GridIndexType elementIdx,
+                                          const GridIndexType neighborElementIdx,
                                           const bool boundary)
     : center_(center)
     , dofPosition_(dofPosition)
@@ -95,7 +96,8 @@ public:
     , dofIdx_(dofIdx)
     , dofAxis_(dofAxis)
     , directionSign_(dirSign)
-    , eIdx_(eIdx)
+    , elementIdx_(elementIdx)
+    , neighborElementIdx_(neighborElementIdx)
     , boundary_(boundary)
     {
         if constexpr (std::is_same_v<Corners, CornerStorage>)
@@ -125,7 +127,10 @@ public:
     { return globalIndex_; }
 
     GridIndexType elementIndex() const
-    { return eIdx_; }
+    { return elementIdx_; }
+
+    GridIndexType neighborElementIdx() const
+    { return neighborElementIdx_; }
 
     SmallLocalIndexType indexInElement() const
     { return indexInElement_; }
@@ -164,7 +169,8 @@ private:
     GridIndexType dofIdx_;
     SmallLocalIndexType dofAxis_;
     std::int_least8_t directionSign_;
-    GridIndexType eIdx_;
+    GridIndexType elementIdx_;
+    GridIndexType neighborElementIdx_;
     bool boundary_;
 };
 

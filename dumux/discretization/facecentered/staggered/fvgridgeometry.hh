@@ -123,7 +123,8 @@ class FaceCenteredStaggeredFVGridGeometry<GV, true, upwOrder, Traits>
     static constexpr auto numScvsPerElement = numFacesPerElement;
     static constexpr auto numLateralScvfsPerScv = 2 * (dim - 1);
     static constexpr auto numLateralScvfsPerElement = numFacesPerElement*numLateralScvfsPerScv;
-
+    static constexpr auto maxNumFrontalScvfsPerScv = 2; // one central, one potential boundary
+    static constexpr auto maxNumScvfsPerScv = maxNumFrontalScvfsPerScv + numLateralScvfsPerScv;
     static constexpr auto maxNumScvfsPerElement = numLateralScvfsPerElement  // number of lateral faces
                                                 + numFacesPerElement  // number of central frontal faces
                                                 + numFacesPerElement; // number of potential frontal faces on boundary
@@ -226,7 +227,7 @@ public:
             std::array<GridIndexType, numScvsPerElement> scvsIndexSet;
 
             std::vector<GridIndexType> scvfsIndexSet;
-            scvfsIndexSet.reserve(1/*frontal in element*/ + 1 /*frontal on boundary*/ + numLateralScvfsPerScv);
+            scvfsIndexSet.reserve(maxNumScvfsPerScv);
 
             // a temporary map to store pairs of common entities
             std::unordered_map<GridIndexType, Dune::ReservedVector<GridIndexType, 2>> commonEntityIdxToScvfsMap;
@@ -301,7 +302,7 @@ public:
             const auto eIdx = this->elementMapper().index(element);
             const auto& globalScvIndices = scvIndicesOfElement_[eIdx];
             const auto& globalScvfIndices = scvfIndicesOfElement_[eIdx];
-            scvfOfScvInfo_[eIdx].reserve(globalScvfIndices.size());
+            scvfOfScvInfo_[eIdx].reserve(maxNumScvfsPerScv);
 
             SmallLocalIndexType localScvIdx = 0; // also corresponds to local element face index (one scv per face)
             SmallLocalIndexType localScvfIdx = 0;
@@ -316,6 +317,14 @@ public:
 
                 // store the local index of the first scvf corresponding to the scv on the current intersection
                 scvfOfScvInfo_[eIdx].push_back(localScvfIdx);
+
+                // store neighbor Element Index for higher order dofs
+                auto neighborElementIndex = -1;
+                if (intersection.neighbor())
+                {
+                    const auto& neighborElement = intersection.outside();
+                    neighborElementIndex = this->elementMapper().index(neighborElement);
+                }
 
                 // handle periodic boundaries
                 if (onPeriodicBoundary_(intersection))
@@ -372,6 +381,7 @@ public:
                                    directionIdx,
                                    sign(intersection.centerUnitOuterNormal()[directionIdx]),
                                    this->elementMapper().index(element),
+                                   neighborElementIndex,
                                    onDomainBoundary_(intersection));
 
                 // the frontal sub control volume face at the element center
@@ -418,8 +428,8 @@ public:
                             {
                                 const auto parallelElemIdx = this->elementMapper().index(lateralIntersection.outside());
                                 const auto localOutsideScvIdx = geometryHelper.localFaceIndexInOtherElement(localScvIdx);
-                                const auto& globalScvIndicesOfNeighborElement = scvIndicesOfElement_[parallelElemIdx];
-                                return globalScvIndicesOfNeighborElement[localOutsideScvIdx];
+                                const auto& globalScvIndicesOfParallelElement = scvIndicesOfElement_[parallelElemIdx];
+                                return globalScvIndicesOfParallelElement[localOutsideScvIdx];
                             }
                             else
                                 return numInteriorScvs + outSideBoundaryVolVarIdx_++;

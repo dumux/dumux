@@ -54,10 +54,11 @@ public:
     using GridGeometry = GG;
     using UpwindScheme = typename GridGeometry::UpwindScheme;
 
-        //! the maximum number of scvs per element
-    static constexpr std::size_t maxNumElementScvs = 2*GridView::dimension;
-    // //! the maximum number of scvfs per element (use cubes for maximum)
-    // static constexpr std::size_t maxNumElementScvfs = 2*GridView::dimension;
+    //! the maximum number of scvs per element
+    static constexpr auto dim = GridView::dimension;
+    static constexpr std::size_t maxNumElementScvs = 2*dim; // (2, 4, 6)
+    //! the maximum number of scvfs per element
+    static constexpr std::size_t maxNumElementScvfs = maxNumElementScvs * maxNumElementScvs; // (4, 16, 36)
 
     FaceCenteredStaggeredFVElementGeometry(const GridGeometry& gridGeometry)
     : gridGeometry_(&gridGeometry)
