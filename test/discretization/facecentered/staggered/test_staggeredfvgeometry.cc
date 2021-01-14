@@ -30,6 +30,8 @@
 #include <dune/common/test/iteratortest.hh>
 #include <dune/grid/utility/structuredgridfactory.hh>
 #include <dune/grid/yaspgrid.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/io/grid/gridmanager.hh>
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/intersectionmapper.hh>
@@ -65,7 +67,9 @@ int main (int argc, char *argv[])
 
     std::cout << "Checking the FVGeometries, SCVs and SCV faces" << std::endl;
 
-    using Grid = Dune::YaspGrid<2>;
+    using Grid = Dune::YaspGrid<2, Dune::TensorProductCoordinates<double, 2> >;
+    GridManager<Grid> gridManager;
+    gridManager.init();
 
     constexpr int dim = Grid::dimension;
     constexpr int dimworld = Grid::dimensionworld;
@@ -80,13 +84,11 @@ int main (int argc, char *argv[])
     constexpr bool useHigherOrder = GridGeometry::useHigherOrder;
 
     // make a grid
-    GlobalPosition lower = getParam<GlobalPosition>("Grid.LowerLeft", GlobalPosition(0.0));
-    GlobalPosition upper = getParam<GlobalPosition>("Grid.UpperRight", GlobalPosition(1.0));
-    const auto cells = getParam<std::array<unsigned int, dim>>("Grid.Cells", std::array<unsigned int, dim>{1,1});
-    std::shared_ptr<Grid> grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lower, upper, cells);
-    auto leafGridView = grid->leafGridView();
-
+    const auto& leafGridView = gridManager.grid().leafGridView();
     GridGeometry gridGeometry(leafGridView);
+
+    if constexpr (dim == 2 && dimworld == 2)
+        Dumux::drawGridGeometry(gridGeometry, "FaceCenteredIndicies", 4000, true, true);
 
     // iterate over elements. For every element get fv geometry and loop over scvs and scvfaces
     auto fvGeometry = localView(gridGeometry);
