@@ -69,6 +69,23 @@ public:
     const SubControlVolumeFace& scvf(GridIndexType scvfIdx) const
     { return gridGeometry().scvf(scvfIdx); }
 
+    {
+    //! Return the frontal sub control volume face on a the boundary for a given sub control volume
+    const SubControlVolumeFace& frontalScvfOnBoundary(const SubControlVolume& scv) const
+    {
+        assert(scv.boundary());
+
+        // frontal boundary faces are always stored after the lateral faces
+        auto scvfIter = scvfs(*this, scv).begin();
+        const auto end = scvfs(*this, scv).end();
+        while (!(scvfIter->isFrontal() && scvfIter->boundary()) && (scvfIter != end))
+            ++scvfIter;
+
+        assert(scvfIter->isFrontal());
+        assert(scvfIter->boundary());
+        return *scvfIter;
+    }
+
     //! Return a the lateral sub control volume face which is orthogonal to the given sub control volume face
     const SubControlVolumeFace& lateralOrthogonalScvf(const SubControlVolumeFace& scvf) const
     {
@@ -78,21 +95,8 @@ public:
         return gridGeometry().scvf(otherGlobalIdx);
     }
 
-     //! Return the frontal sub control volume face on a the boundary for a given sub control volume
-     const SubControlVolumeFace& frontalScvfOnBoundary(const SubControlVolume& scv) const
-     {
-         assert(scv.boundary());
 
-         // frontal boundary faces are always stored after the lateral faces
-         auto scvfIter = scvfs(*this, scv).begin();
-         const auto end = scvfs(*this, scv).end();
-         while (!(scvfIter->isFrontal() && scvfIter->boundary()) && (scvfIter != end))
-             ++scvfIter;
 
-         assert(scvfIter->isFrontal());
-         assert(scvfIter->boundary());
-         return *scvfIter;
-     }
 
     //! iterator range for sub control volumes. Iterates over
     //! all scvs of the bound element (not including neighbor scvs)

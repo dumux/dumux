@@ -168,7 +168,6 @@ private:
     bool boundary_;
 };
 
-
 } // end namespace Dumux
 
 #endif // DUMUX_DISCRETIZATION_FACECENTERED_STAGGERED_SUBCONTROLVOLUME_HH

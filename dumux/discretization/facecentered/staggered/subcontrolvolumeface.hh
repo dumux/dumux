@@ -196,7 +196,6 @@ private:
     bool boundary_;
 };
 
-
 } // end namespace Dumux
 
 #endif

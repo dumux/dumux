@@ -56,7 +56,8 @@ public:
     using FluxVariablesCache = typename GFVC::FluxVariablesCache;
 
     FaceCenteredStaggeredElementFluxVariablesCache(const GridFluxVariablesCache& global)
-    : gridFluxVarsCachePtr_(&global) {}
+    : gridFluxVarsCachePtr_(&global)
+    {}
 
     // Function is called by the BoxLocalJacobian prior to flux calculations on the element.
     // We assume the FVGeometries to be bound at this point
@@ -114,7 +115,8 @@ public:
     using FluxVariablesCache = typename GFVC::FluxVariablesCache;
 
     FaceCenteredStaggeredElementFluxVariablesCache(const GridFluxVariablesCache& global)
-    : gridFluxVarsCachePtr_(&global) {}
+    : gridFluxVarsCachePtr_(&global)
+    {}
 
     // Function is called by the BoxLocalJacobian prior to flux calculations on the element.
     // We assume the FVGeometries to be bound at this point

@@ -446,7 +446,7 @@ public:
                     scvfs_.emplace_back(lateralFaceCenter,
                                         integrationPointPosition,
                                         std::move(lateralCorners),
-                                        globalScvIndicesForLateralFace, // TODO higher order
+                                        globalScvIndicesForLateralFace,
                                         localScvfIdx,
                                         lateralFacetGeometry.volume()*0.5,
                                         lateralDirIdx,
