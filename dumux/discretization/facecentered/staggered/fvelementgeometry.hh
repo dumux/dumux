@@ -63,6 +63,7 @@ public:
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     using Scalar = typename SubControlVolume::Traits::Scalar;
     using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using GridGeometry = GG;
     using UpwindScheme = typename GridGeometry::UpwindScheme;
 
@@ -165,6 +166,22 @@ public:
         return (opposingLateralFaces[0].center() - opposingLateralFaces[1].center()).two_norm();
     }
 
+    //! Returns the frontal length of the scv (half of selfToOppositeDistance)
+    Scalar scvFrontalLength(const SubControlVolume& scv) const
+    {
+        auto fvGeometry = localView(gridGeometry());
+        const auto& element = fvGeometry.gridGeometry().element(scv.elementIndex());
+        fvGeometry.bind(element);
+
+        GlobalPosition frontalFaceLocation(0.0);
+        for (auto&& scvf : scvfs(fvGeometry, scv))
+        {
+            if (scvf.isFrontal() && !scvf.boundary())
+                frontalFaceLocation = scvf.center();
+        }
+
+        return (scv.dofPosition() - frontalFaceLocation).two_norm();
+    }
 
     /////////////////////////
     /// forward neighbors ///
@@ -401,6 +418,16 @@ public:
                  hasCornerParallelNeighbor(lateralScvf) );
     }
 
+    GlobalPosition cornerBoundaryPosition(const SubControlVolumeFace& lateralScvf) const
+    {
+        assert(lateralScvf.isLateral());
+        assert(hasCornerParallelNeighbor(lateralScvf) || hasHalfParallelNeighbor(lateralScvf) || lateralScvf.boundary());
+
+        const auto& selfScv = scv(lateralScvf.insideScvIdx());
+        const Scalar halfFaceLength = scvFrontalLength(selfScv) / 2.0;
+        const GlobalPosition shift = selfScv.innerUnitNormal() * halfFaceLength;
+        return lateralScvf.center() + shift;
+    }
 
     //! iterator range for sub control volumes. Iterates over
     //! all scvs of the bound element (not including neighbor scvs)
