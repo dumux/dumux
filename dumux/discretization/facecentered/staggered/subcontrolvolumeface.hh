@@ -55,6 +55,20 @@ struct FaceCenteredDefaultScvfGeometryTraits
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 };
 
+/*!
+ * \ingroup FaceCenteredStaggeredDiscretization
+ * \brief Helper function to turn a given scvf into a fake boundary face with it's center at a new location
+ */
+template<class FaceCenteredStaggeredSubControlVolumeFace>
+FaceCenteredStaggeredSubControlVolumeFace makeFaceCenteredSCVF(const FaceCenteredStaggeredSubControlVolumeFace& scvf,
+                                                               const typename FaceCenteredStaggeredSubControlVolumeFace::GlobalPosition& newCenter)
+{
+    auto bf = scvf;
+    bf.setCenter(newCenter);
+    bf.setBoundary(true);
+    return bf;
+}
+
 template<class GridView, class T = FaceCenteredDefaultScvfGeometryTraits<GridView>>
 class FaceCenteredStaggeredSubControlVolumeFace
 {
@@ -153,6 +167,14 @@ public:
 
     std::size_t scvfIdxWithCommonEntity() const
     { return scvfIdxWithCommonEntity_; }
+
+    //! set the center to a different position
+    void setCenter(const GlobalPosition& center)
+    { center_ = center; }
+
+    //! set the boundary flag for psuedo faces on corners
+    void setBoundary(bool boundaryFlag)
+    { boundary_ = boundaryFlag; }
 
 private:
     GlobalPosition center_;

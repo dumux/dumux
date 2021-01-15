@@ -234,6 +234,27 @@ int main (int argc, char *argv[]) try
                 }
             }
         }
+        else if (eIdx == 20)
+        {
+            auto fvGeometry = localView(gridGeometry);
+            fvGeometry.bind(element);
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                auto scvIdx = scv.index();
+                if (scvIdx == 83)
+                {
+                    for (auto&& scvf : scvfs(fvGeometry, scv))
+                    {
+                        if (scvf.index() == 263)
+                        {
+                            std::cout << "\n \n Checking the corner geometry in the case of a boundary \n";
+                            std::cout << "scvf center is located at: " << scvf.center()
+                                      << " and the shifted scvf boundary corner is located at: " << fvGeometry.cornerBoundaryPosition(scvf) << "\n";
+                        }
+                    }
+                }
+            }
+        }
         else if (eIdx == 22)
         {
             auto fvGeometry = localView(gridGeometry);

@@ -127,6 +127,13 @@ public:
     std::int_least8_t directionSign() const
     { return directionSign_; }
 
+    GlobalPosition innerUnitNormal() const
+    {
+        GlobalPosition innerUnitNormal(0.0);
+        innerUnitNormal[directionIndex()] = directionSign();
+        return innerUnitNormal;
+    }
+
     bool boundary() const
     { return boundary_; }
 
