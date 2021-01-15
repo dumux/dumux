@@ -44,6 +44,7 @@ class FaceCenteredStaggeredFVElementGeometry<GG, /*cachingEnabled*/true>
     using ThisType = FaceCenteredStaggeredFVElementGeometry<GG, /*cachingEnabled*/true>;
     using GridView = typename GG::GridView;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
 
 public:
     //! export type of subcontrol volume face
@@ -117,7 +118,44 @@ public:
         return gridGeometry().scvf(otherGlobalIdx);
     }
 
+    //! Return a the lateral scvf opposite to the given sub control volume face
+    const SubControlVolumeFace& oppositeLateralScvf(const SubControlVolumeFace& lateralScvf) const
+    {
+        assert(lateralScvf.isLateral());
+        const auto& selfScv = scv(lateralScvf.insideScvIdx());
+        GridIndexType oppositeLateralScvfIdx = -1;
 
+        for (auto&& scvf : scvfs(*this, selfScv))
+        {
+            if (scvf.isLateral() // must be a lateral face
+                && scvf.localIndex() != lateralScvf.localIndex() // should not be the same face
+                && scvf.normalAxis() == lateralScvf.normalAxis() /* should have the same normal direction index*/)
+            {
+                oppositeLateralScvfIdx = scvf.index();
+            }
+        }
+        return scvf(oppositeLateralScvfIdx);
+    }
+
+    //! Returns the lateral length of the scv in a certain direction
+    Scalar scvLateralLength(const SubControlVolume& scv, const LocalIndexType& normalAxis) const
+    {
+        auto fvGeometry = localView(gridGeometry());
+        const auto& element = fvGeometry.gridGeometry().element(scv.elementIndex());
+        fvGeometry.bind(element);
+
+        std::array<SubControlVolumeFace,2> opposingLateralFaces;
+        LocalIndexType i = 0;
+        for (auto&& scvf : scvfs(fvGeometry, scv))
+        {
+            if (scvf.isLateral() && scvf.normalAxis() == normalAxis ) // find a lateral face on the correct axis (there are 2)
+            {
+                opposingLateralFaces[i] = scvf;
+                i++;
+            }
+        }
+        return (opposingLateralFaces[0].center() - opposingLateralFaces[1].center()).two_norm();
+    }
 
 
     /////////////////////////
@@ -254,6 +292,53 @@ public:
         }
 
         return scvf(index);
+    }
+
+    //////////////////////////
+    /// Parallel Distances ///
+    //////////////////////////
+
+    Scalar selfToParallelDistance(const SubControlVolumeFace& lateralScvf) const
+    {
+        assert(lateralScvf.isLateral());
+
+        // if there is no parallel neighbor, the distance from the dof to the boundary is used
+        if (!hasParallelNeighbor(lateralScvf))
+            return insideScvLateralLength(lateralScvf) / 2.0;
+
+        const auto& selfScv = scv(lateralScvf.insideScvIdx());
+        const auto& parallelScv = scv(parallelScvIdx(lateralScvf));
+        return (parallelScv.dofPosition() - selfScv.dofPosition()).two_norm();
+    }
+
+    Scalar paralleltoSecondParallelDistance(const SubControlVolumeFace& lateralScvf) const
+    {
+        assert(lateralScvf.isLateral());
+        assert(hasParallelNeighbor(lateralScvf));
+
+        // if there is no second parallel neighbor, the distance from the parallel dof to the boundary is used
+        if (!hasSecondParallelNeighbor(lateralScvf))
+            return outsideScvLateralLength(lateralScvf) / 2.0;
+
+        const auto& parallelScv = scv(parallelScvIdx(lateralScvf));
+        const auto& secondParallelScv = scv(secondParallelScvIdx(lateralScvf));
+        return (secondParallelScv.dofPosition() - parallelScv.dofPosition()).two_norm();
+    }
+
+    Scalar insideScvLateralLength(const SubControlVolumeFace& lateralScvf) const
+    {
+        assert(lateralScvf.isLateral());
+        const auto& selfScv = scv(lateralScvf.insideScvIdx());
+        return scvLateralLength(selfScv, lateralScvf.normalAxis());
+    }
+
+    Scalar outsideScvLateralLength(const SubControlVolumeFace& lateralScvf) const
+    {
+        assert(lateralScvf.isLateral());
+        assert(hasParallelNeighbor(lateralScvf));
+
+        const auto& outsideScv = scv(lateralScvf.outsideScvIdx());
+        return scvLateralLength(outsideScv, lateralScvf.normalAxis());
     }
 
 
