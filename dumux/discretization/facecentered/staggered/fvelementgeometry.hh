@@ -85,11 +85,21 @@ public:
     const SubControlVolumeFace& scvf(GridIndexType scvfIdx) const
     { return gridGeometry().scvf(scvfIdx); }
 
-    //! Return a the lateral sub control volume face which is orthogonal to the given sub control volume face
-    const SubControlVolumeFace& lateralOrthogonalScvf(const SubControlVolumeFace& scvf) const
+    //! Return the scv in the neighbor element with the same local index
+    SubControlVolume nextCorrespondingScv(const SubControlVolume& startScv, const LocalIndexType& targetLocalScvIndex ) const
     {
-        assert(scvf.isLateral());
-        return gridGeometry().scvf(gridGeometry().lateralOrthogonalScvf(scvf));
+        assert(!(startScv.boundary()));
+
+        GridIndexType scvIndex = -1;
+        auto nextFVGeometry = localView(gridGeometry());
+        const auto& nextElement = nextFVGeometry.gridGeometry().element(startScv.neighborElementIdx());
+        nextFVGeometry.bind(nextElement);
+        for (auto&& neighborElementScv : scvs(nextFVGeometry))
+        {
+            if ( neighborElementScv.localDofIndex() == targetLocalScvIndex)
+                scvIndex = neighborElementScv.index();
+        }
+        return scv(scvIndex);
     }
 
     //! Return the frontal sub control volume face on a the boundary for a given sub control volume
@@ -106,6 +116,56 @@ public:
         assert(scvfIter->isFrontal());
         assert(scvfIter->boundary());
         return *scvfIter;
+    }
+
+    //! Return a the lateral sub control volume face which is orthogonal to the given sub control volume face
+    const SubControlVolumeFace& lateralOrthogonalScvf(const SubControlVolumeFace& scvf) const
+    {
+        assert(scvf.isLateral());
+        return gridGeometry().scvf(gridGeometry().lateralOrthogonalScvf(scvf));
+    }
+
+
+
+
+    /////////////////////////
+    /// forward neighbors ///
+    /////////////////////////
+
+    bool hasForwardNeighbor(const SubControlVolumeFace& frontalScvf) const
+    {
+        assert(frontalScvf.isFrontal());
+        const auto& selfScv = scv(frontalScvf.insideScvIdx());
+        return !selfScv.boundary();
+    }
+
+    GridIndexType forwardScvIdx(const SubControlVolumeFace& frontalScvf) const
+    {
+        assert(frontalScvf.isFrontal());
+        assert(hasForwardNeighbor(frontalScvf));
+        const auto& selfScv = scv(frontalScvf.insideScvIdx());
+        const auto& nextScv = nextCorrespondingScv(selfScv, selfScv.indexInElement());
+        return nextScv.index();
+    }
+
+    //////////////////////////
+    /// backward neighbors ///
+    //////////////////////////
+
+    bool hasBackwardNeighbor(const SubControlVolumeFace& frontalScvf) const
+    {
+        assert(frontalScvf.isFrontal());
+        const auto& oppositeScv = scv(frontalScvf.outsideScvIdx());
+        return !oppositeScv.boundary();
+    }
+
+    GridIndexType backwardScvIdx(const SubControlVolumeFace& frontalScvf) const
+    {
+        assert(frontalScvf.isFrontal());
+        assert(hasBackwardNeighbor(frontalScvf));
+        const auto& oppositeScv = scv(frontalScvf.outsideScvIdx());
+        const auto& nextScv = nextCorrespondingScv(oppositeScv, oppositeScv.indexInElement());
+        return nextScv.index();
     }
 
     //! iterator range for sub control volumes. Iterates over
