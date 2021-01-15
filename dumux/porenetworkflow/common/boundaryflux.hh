@@ -31,34 +31,30 @@
 
 namespace Dumux
 {
-template<class Assembler>
+template<class GridVariables, class LocalResidual, class SolutionVector>
 class PoreNetworkModelBoundaryFlux
 {
-    using Scalar = typename Assembler::Scalar;
-    using GridGeometry = typename Assembler::GridGeometry;
+    using GridGeometry = std::decay_t<decltype(std::declval<LocalResidual>().problem().gridGeometry())>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using Problem = typename Assembler::Problem;
-    using BoundaryTypes = std::decay_t<decltype(std::declval<Problem>().boundaryTypes(std::declval<Element>(), std::declval<SubControlVolume>()))>;
+    using BoundaryTypes = std::decay_t<decltype(std::declval<LocalResidual>().problem().boundaryTypes(std::declval<Element>(), std::declval<SubControlVolume>()))>;
     using ElementBoundaryTypes = BoxElementBoundaryTypes<BoundaryTypes>;
 
-    using SolutionVector = typename Assembler::ResidualType;;
     using NumEqVector = typename SolutionVector::block_type;
-    using GridVariables = typename Assembler::GridVariables;
-
-    static constexpr auto dim = GridView::dimension;
 
 public:
+    // export the Scalar type
+    using Scalar = typename GridVariables::Scalar;
 
-    PoreNetworkModelBoundaryFlux(const Assembler& assembler,
+    PoreNetworkModelBoundaryFlux(const GridVariables& gridVariables,
+                                 const LocalResidual& localResidual,
                                  const SolutionVector& sol)
-    : assembler_(assembler)
-    , problem_(assembler.problem())
-    , gridVariables_(assembler.gridVariables())
+    : localResidual_(localResidual)
+    , gridVariables_(gridVariables)
     , sol_(sol)
-    , isStationary_(assembler.isStationaryProblem()) {}
+    , isStationary_(localResidual.isStationary()) {}
 
     /*!
      * \brief Returns the cumulative flux in \f$\mathrm{[\frac{kg}{s}]}\f$ of several pore throats for a given list of pore labels to consider
@@ -72,7 +68,7 @@ public:
         // helper lambda to decide which scvs to consider for flux calculation
         auto restriction = [&] (const SubControlVolume& scv)
         {
-            const Label poreLabel = problem_.gridGeometry().poreLabel(scv.dofIndex());
+            const Label poreLabel = localResidual_.problem().gridGeometry().poreLabel(scv.dofIndex());
             return std::any_of(labels.begin(), labels.end(),
                                [&](const Label l){ return l == poreLabel; });
         };
@@ -80,7 +76,7 @@ public:
         NumEqVector flux(0.0);
 
         // sum up the fluxes
-        for (const auto& element : elements(problem_.gridGeometry().gridView()))
+        for (const auto& element : elements(localResidual_.problem().gridGeometry().gridView()))
             flux += getFlux(element, restriction, verbose);
 
         return flux;
@@ -95,15 +91,15 @@ public:
      */
     NumEqVector getFlux(const std::string minMax, const int coord, const bool verbose = false) const
     {
-        if(!(minMax == "min" || minMax == "max"))
+        if (!(minMax == "min" || minMax == "max"))
             DUNE_THROW(Dune::InvalidStateException,
                     "second argument must be either 'min' or 'max' (string) !");
 
         const Scalar eps = 1e-6; //TODO
         auto onMeasuringBoundary = [&] (const Scalar pos)
         {
-            return ( (minMax == "min" && pos < problem_.gridGeometry().bBoxMin()[coord] + eps) ||
-                     (minMax == "max" && pos > problem_.gridGeometry().bBoxMax()[coord] - eps) );
+            return ( (minMax == "min" && pos < localResidual_.problem().gridGeometry().bBoxMin()[coord] + eps) ||
+                     (minMax == "max" && pos > localResidual_.problem().gridGeometry().bBoxMax()[coord] - eps) );
         };
 
         // helper lambda to decide which scvs to consider for flux calculation
@@ -112,14 +108,14 @@ public:
             bool considerAllDirections = coord < 0 ? true : false;
 
             //only consider SCVs on the boundary
-            bool considerScv = problem_.gridGeometry().dofOnBoundary(scv.dofIndex()) && onMeasuringBoundary(scv.dofPosition()[coord]);
+            bool considerScv = localResidual_.problem().gridGeometry().dofOnBoundary(scv.dofIndex()) && onMeasuringBoundary(scv.dofPosition()[coord]);
 
             //check whether a vertex lies on a boundary and also check whether this boundary shall be
             // considered for the flux calculation
             if(considerScv && !considerAllDirections)
             {
                 const auto& pos = scv.dofPosition();
-                if (!(pos[coord] < problem_.gridGeometry().bBoxMin()[coord] + eps || pos[coord] > problem_.gridGeometry().bBoxMax()[coord] -eps ))
+                if (!(pos[coord] < localResidual_.problem().gridGeometry().bBoxMin()[coord] + eps || pos[coord] > localResidual_.problem().gridGeometry().bBoxMax()[coord] -eps ))
                 considerScv = false;
             }
 
@@ -129,7 +125,7 @@ public:
         NumEqVector flux(0.0);
 
         // sum up the fluxes
-        for(const auto& element : elements(problem_.gridGeometry().gridView()))
+        for(const auto& element : elements(localResidual_.problem().gridGeometry().gridView()))
             flux += getFlux(element, restriction, verbose);
 
         return flux;
@@ -152,7 +148,7 @@ public:
         // by default, all coordinate directions are considered for the definition of a boundary
 
         // make sure FVElementGeometry and volume variables are bound to the element
-        auto fvGeometry = localView(problem_.gridGeometry());
+        auto fvGeometry = localView(localResidual_.problem().gridGeometry());
         fvGeometry.bind(element);
 
         auto curElemVolVars = localView(gridVariables_.curGridVolVars());
@@ -166,14 +162,12 @@ public:
         elemFluxVarsCache.bindElement(element, fvGeometry, curElemVolVars);
 
         ElementBoundaryTypes elemBcTypes;
-        elemBcTypes.update(problem_, element, fvGeometry);
+        elemBcTypes.update(localResidual_.problem(), element, fvGeometry);
 
-        const auto localResidual = assembler_.localResidual();
-
-        auto residual = localResidual.evalFluxAndSource(element, fvGeometry, curElemVolVars, elemFluxVarsCache, elemBcTypes);
+        auto residual = localResidual_.evalFluxAndSource(element, fvGeometry, curElemVolVars, elemFluxVarsCache, elemBcTypes);
 
         if (!isStationary_)
-            residual += localResidual.evalStorage(element, fvGeometry, prevElemVolVars, curElemVolVars);
+            residual += localResidual_.evalStorage(element, fvGeometry, prevElemVolVars, curElemVolVars);
 
         for(auto&& scv : scvs(fvGeometry))
         {
@@ -195,14 +189,11 @@ public:
     }
 
 private:
-    const Assembler& assembler_;
-    const Problem& problem_;
+    const LocalResidual localResidual_; // store a copy of the local residual
     const GridVariables& gridVariables_;
     const SolutionVector& sol_;
-
     bool isStationary_;
 };
-
 
 } // end namespace
 
