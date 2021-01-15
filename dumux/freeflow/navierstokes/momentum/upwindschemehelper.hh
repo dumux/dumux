@@ -52,14 +52,12 @@ class FaceCenteredStaggeredUpwindHelper
     using FVElementGeometry = typename GridGeometry::LocalView;
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
     using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
-    using VolumeVariables = typename GridVolumeVariables::VolumeVariables;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
 
     using UpwindScheme = StaggeredUpwindMethods<Scalar, upwindSchemeOrder>;
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
@@ -70,16 +68,13 @@ public:
                                       const FVElementGeometry& fvGeometry,
                                       const Problem& problem,
                                       const SubControlVolumeFace& scvf,
-                                      const ElementVolumeVariables& elemVolVars,
-                                      const ElementBoundaryTypes& elemBcTypes,
-                                      const UpwindScheme& upwindScheme)
+                                      const ElementVolumeVariables& elemVolVars)
     : element_(element)
     , fvGeometry_(fvGeometry)
     , problem_(problem)
     , scvf_(scvf)
     , elemVolVars_(elemVolVars)
-    , elemBcTypes_(elemBcTypes)
-    , upwindScheme_(upwindScheme)
+    , upwindScheme_(fvGeometry.staggeredUpwindMethods())
     {}
 
     /*!
@@ -110,6 +105,42 @@ public:
         const auto upwindMomenta = getFrontalFirstOrderUpwindMomenta_(density, selfIsUpstream);
         return upwindScheme_.upwind(upwindMomenta[0], upwindMomenta[1]);
     }
+
+    /*!
+     * \brief Returns the momentum in the lateral directon.
+     *
+     *        Evaluates which face is upstream.
+     *        Checks if the model has higher order methods enabled and if the scvf in
+     *        question is far enough from the boundary such that higher order methods can be employed.
+     *        Then the corresponding set of momenta are collected and the prescribed
+     *        upwinding method is used to calculate the momentum.
+     */
+    Scalar computeUpwindLateralMomentum(const bool selfIsUpstream) const
+    {
+        // Check whether the own or the neighboring element is upstream.
+        // Get the transporting velocity, located at the scvf perpendicular to the current scvf where the dof
+        // of interest is located.
+
+        // collect the inside and outside densities
+        const auto densityPair = problem_.getInsideAndOutsideDensity(element_, fvGeometry_, scvf_);
+
+        // for higher order schemes do higher order upwind reconstruction
+        if constexpr (useHigherOrder)
+        {
+            // only second order is implemented so far
+            if (canDoLateralSecondOrder_(selfIsUpstream))
+            {
+                const auto distances = getLateralDistances_(selfIsUpstream);
+                const auto upwindMomenta = getLateralSecondOrderUpwindMomenta_(densityPair, selfIsUpstream);
+                return upwindScheme_.tvd(upwindMomenta, distances, selfIsUpstream, upwindScheme_.tvdApproach());
+            }
+        }
+
+        // otherwise apply first order upwind scheme
+        const auto upwindMomenta = getLateralFirstOrderUpwindMomenta_(densityPair, selfIsUpstream);
+        return upwindScheme_.upwind(upwindMomenta[0], upwindMomenta[1]);
+    }
+
 private:
     /*!
      * \brief Returns whether or not the face in question is far enough from the wall to handle higher order methods.
@@ -186,6 +217,123 @@ private:
         }
     }
 
+    /*!
+     * \brief Check if a second order approximation for the lateral part of the advective term can be used
+     *
+     * This helper function checks if the scvf of interest is not too near to the
+     * boundary so that a dof upstream with respect to the upstream dof is available.
+     */
+    bool canDoLateralSecondOrder_(const bool selfIsUpstream) const
+    {
+        static_assert(useHigherOrder, "Should only be reached if higher order methods are enabled");
+        // If the self velocity is upstream, the downstream velocity can be assigned or retrieved
+        // from the boundary, even if there is no parallel neighbor.
+        // If the self velocity is downstream and there is no parallel neighbor I cannot use a second order approximation.
+        return selfIsUpstream || fvGeometry_.hasParallelNeighbor(scvf_);
+    }
+
+    /*!
+     * \brief Returns an array of the three momenta needed for second order upwinding methods. (Lateral)
+     */
+    template<class DensityPair>
+    std::array<Scalar, 3> getLateralSecondOrderUpwindMomenta_(const DensityPair densityPair,
+                                                              const bool selfIsUpstream) const
+    {
+        assert(scvf_.isLateral());
+        static_assert(useHigherOrder, "Should only be reached if higher order methods are enabled");
+
+        // If the lateral face lies on a boundary, we assume that the parallel velocity on the boundary is actually known,
+        // thus we always use this value for the computation of the transported momentum.
+        if ( fvGeometry_.lateralFaceContactsBoundary(scvf_) )
+        {
+            const Scalar boundaryMomentum = getParallelVelocityFromBoundary_(scvf_)  * densityPair.first;
+            return {boundaryMomentum, boundaryMomentum, boundaryMomentum};
+        }
+
+        std::array<Scalar, 3> momenta;
+        if (selfIsUpstream)
+        {
+            momenta[0] = elemVolVars_[fvGeometry_.parallelScvIdx(scvf_)].velocity() * densityPair.first;
+            momenta[1] = elemVolVars_[scvf_.insideScvIdx()].velocity() * densityPair.first;
+
+            // The "upstream-upstream" velocity is either retrieved from the opposite parallel neighbor or from the boundary.
+            const auto& oppositeLateralScvf = fvGeometry_.oppositeLateralScvf(scvf_);
+            if (fvGeometry_.hasParallelNeighbor(oppositeLateralScvf) && !fvGeometry_.lateralFaceContactsBoundary(oppositeLateralScvf))
+                momenta[2] = elemVolVars_[fvGeometry_.parallelScvIdx(oppositeLateralScvf)].velocity() * densityPair.first;
+            else
+                momenta[2] = getParallelVelocityFromOppositeBoundary_(scvf_) * densityPair.first;
+
+            return momenta;
+        }
+        else
+        {
+            momenta[0] = elemVolVars_[scvf_.insideScvIdx()].velocity() * densityPair.second;
+            momenta[1] = elemVolVars_[fvGeometry_.parallelScvIdx(scvf_)].velocity() * densityPair.second;
+
+            // If there is another parallel neighbor I can assign the "upstream-upstream" velocity, otherwise I retrieve it from the boundary.
+            if (fvGeometry_.hasSecondParallelNeighbor(scvf_) && !fvGeometry_.lateralFaceContactsBoundary(fvGeometry_.outerParallelLateralScvf(scvf_)) )
+                momenta[2] = elemVolVars_[fvGeometry_.secondParallelScvIdx(scvf_)].velocity() * densityPair.second;
+            else
+                momenta[2] = getParallelVelocityFromOutsideParallelBoundary_(scvf_) * densityPair.second;
+
+            return momenta;
+        }
+    }
+
+   /*!
+    * \brief Returns an array of momenta needed for basic upwinding methods.
+    */
+    template<class DensityPair>
+    std::array<Scalar, 2> getLateralFirstOrderUpwindMomenta_(const DensityPair densityPair,
+                                                             const bool selfIsUpstream) const
+    {
+        assert(scvf_.isLateral());
+
+        // use the Dirichlet velocity as for transported momentum if the lateral face is on a Dirichlet boundary
+        if (fvGeometry_.lateralFaceContactsBoundary(scvf_))
+        {
+                const Scalar boundaryMomentum =  getParallelVelocityFromBoundary_(scvf_) * densityPair.first;
+                return {boundaryMomentum, boundaryMomentum};
+        }
+
+        const Scalar momentumSelf = elemVolVars_[scvf_.insideScvIdx()].velocity() * densityPair.first;
+        const Scalar momentumParallel =  elemVolVars_[scvf_.outsideScvIdx()].velocity()* densityPair.second;
+        if (selfIsUpstream)
+            return {momentumParallel, momentumSelf};
+        else
+            return {momentumSelf, momentumParallel};
+    }
+
+   /*!
+    * \brief Returns an array of distances needed for non-uniform higher order upwind schemes
+    * computes lateral distances {upstream to downstream distance, up-upstream to upstream distance, downstream staggered cell size}
+    */
+    std::array<Scalar, 3> getLateralDistances_(const bool selfIsUpstream) const
+    {
+        static_assert(useHigherOrder, "Should only be reached if higher order methods are enabled");
+        assert(scvf_.isLateral());
+
+        std::array<Scalar, 3> distances;
+        if (selfIsUpstream)
+        {
+            distances[0] = fvGeometry_.selfToParallelDistance(scvf_);
+            distances[1] = fvGeometry_.selfToParallelDistance(fvGeometry_.oppositeLateralScvf(scvf_));
+
+            if (fvGeometry_.hasParallelNeighbor(scvf_))
+                distances[2] = fvGeometry_.outsideScvLateralLength(scvf_);
+            else
+                distances[2] = fvGeometry_.insideScvLateralLength(scvf_) / 2.0;
+
+            return distances;
+        }
+        else
+        {
+            distances[0] = fvGeometry_.selfToParallelDistance(scvf_);
+            distances[1] = fvGeometry_.paralleltoSecondParallelDistance(scvf_);
+            distances[2] = fvGeometry_.outsideScvLateralLength(scvf_);
+            return distances;
+        }
+    }
 
    /*!
     * \brief Return the parallel velocity for lateral faces on the boundary
@@ -205,7 +353,9 @@ private:
     {
         assert(lateralScvf.boundary() || fvGeometry_.hasHalfParallelNeighbor(lateralScvf) || fvGeometry_.hasCornerParallelNeighbor(lateralScvf));
 
-        const auto& lateralFaceBcTypes = elemBcTypes_[lateralScvf.localIndex()];
+        const auto& scv = fvGeometry_.scv(lateralScvf.insideScvIdx());
+        const auto& element = fvGeometry_.gridGeometry().element(scv.elementIndex());
+        const auto& lateralFaceBcTypes = problem_.boundaryTypes(element, lateralScvf);
 
         // In the case there is a neumann condition for momentum at the face in question, we force a zero gradient condition
         // This would include cases such as a "symmetry" condition, or a dirichlet pressure condition
@@ -221,7 +371,6 @@ private:
 
         if (lateralFaceBcTypes.isDirichlet(scv.dofAxis()))
         {
-            const auto& element = fvGeometry_.gridGeometry().element(scv.elementIndex());
             const auto& tempCornerFace = makeCornerFace_(lateralScvf);
             return problem_.dirichlet(element, tempCornerFace)[scv.dofAxis()];
         }
@@ -307,7 +456,6 @@ private:
     const Problem& problem_;
     const SubControlVolumeFace& scvf_;
     const ElementVolumeVariables& elemVolVars_;
-    const ElementBoundaryTypes& elemBcTypes_;
     const UpwindScheme& upwindScheme_;
 };
 
