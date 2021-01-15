@@ -168,6 +168,42 @@ public:
         return nextScv.index();
     }
 
+    /////////////////////////
+    /// Frontal Distances ///
+    /////////////////////////
+
+    Scalar selfToOppositeDistance(const SubControlVolumeFace& frontalScvf) const
+    {
+        assert(frontalScvf.isFrontal());
+        const auto& selfScv = scv(frontalScvf.insideScvIdx());
+        const auto& outsideScv = scv(frontalScvf.outsideScvIdx());
+        return (selfScv.dofPosition() - outsideScv.dofPosition()).two_norm();
+    }
+
+    Scalar selfToForwardDistance(const SubControlVolumeFace& frontalScvf) const
+    {
+        assert(frontalScvf.isFrontal());
+
+        const auto& selfScv = scv(frontalScvf.insideScvIdx());
+        if (selfScv.boundary())
+            return 0.0;
+
+        const auto& forwardScv = nextCorrespondingScv(selfScv, selfScv.indexInElement());
+        return (selfScv.dofPosition() - forwardScv.dofPosition()).two_norm();
+    }
+
+    Scalar oppositeToBackwardDistance(const SubControlVolumeFace& frontalScvf) const
+    {
+        assert(frontalScvf.isFrontal());
+        const auto& outsideScv = scv(frontalScvf.outsideScvIdx());
+        if (outsideScv.boundary())
+            return 0.0;
+
+        const auto& backwardScv = nextCorrespondingScv(outsideScv, outsideScv.indexInElement());
+        return (outsideScv.dofPosition() - backwardScv.dofPosition()).two_norm();
+    }
+
+
     //! iterator range for sub control volumes. Iterates over
     //! all scvs of the bound element (not including neighbor scvs)
     //! This is a free function found by means of ADL
