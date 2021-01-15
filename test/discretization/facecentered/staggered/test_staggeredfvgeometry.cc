@@ -219,6 +219,24 @@ int main (int argc, char *argv[]) try
                         latCount++;
                     }
 
+        else if (eIdx == 22)
+        {
+            auto fvGeometry = localView(gridGeometry);
+            fvGeometry.bind(element);
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                auto scvIdx = scv.index();
+                if (scvIdx == 89)
+                {
+                    for (auto&& scvf : scvfs(fvGeometry, scv))
+                    {
+                        if (scvf.index() == 284)
+                        {
+                            std::cout << "\n \n Checking the outer parallel lateral face \n";
+                            std::cout << "scvf index is : " << scvf.index()
+                                      << " and the outer parallel lateral face index is: " << fvGeometry.outerParallelLateralScvf(scvf).index() << "\n";
+                        }
+                    }
                 }
             }
         }

@@ -195,6 +195,67 @@ public:
         return (outsideScv.dofPosition() - backwardScv.dofPosition()).two_norm();
     }
 
+    //////////////////////////
+    /// Parallel Neighbors ///
+    //////////////////////////
+
+    bool hasParallelNeighbor(const SubControlVolumeFace& lateralScvf) const
+    {
+        assert(lateralScvf.isLateral());
+        return !lateralScvf.boundary();
+    }
+
+    bool hasSecondParallelNeighbor(const SubControlVolumeFace& lateralScvf) const
+    {
+        assert(lateralScvf.isLateral());
+        assert(hasParallelNeighbor(lateralScvf));
+
+        const auto& orthogonalScvf = lateralOrthogonalScvf(lateralScvf);
+        const auto& orthagonalScv = scv(orthogonalScvf.insideScvIdx());
+        const auto& nextOrthagonalScv = nextCorrespondingScv(orthagonalScv, orthagonalScv.indexInElement());
+        return !nextOrthagonalScv.boundary();
+    }
+
+    GridIndexType parallelScvIdx(const SubControlVolumeFace& lateralScvf) const
+    {
+        assert(lateralScvf.isLateral());
+        assert(hasParallelNeighbor(lateralScvf));
+        return lateralScvf.outsideScvIdx();
+    }
+
+    GridIndexType secondParallelScvIdx(const SubControlVolumeFace& lateralScvf) const
+    {
+        assert(lateralScvf.isLateral());
+        assert(hasSecondParallelNeighbor(lateralScvf));
+
+        const auto& selfScv = scv(lateralScvf.insideScvIdx());
+        const auto& orthogonalScvf = lateralOrthogonalScvf(lateralScvf);
+        const auto& orthagonalScv = scv(orthogonalScvf.insideScvIdx());
+        const auto& nextOrthagonalScv = nextCorrespondingScv(orthagonalScv, orthagonalScv.indexInElement());
+        const auto& secondParallelScv = nextCorrespondingScv(nextOrthagonalScv, selfScv.indexInElement());
+        return secondParallelScv.index();
+    }
+
+    SubControlVolumeFace outerParallelLateralScvf(const SubControlVolumeFace& lateralScvf) const
+    {
+        assert(lateralScvf.isLateral());
+        assert(hasParallelNeighbor(lateralScvf));
+
+        const auto& parallelScv = scv(lateralScvf.outsideScvIdx());
+
+        auto fvGeometry = localView(gridGeometry());
+        const auto& element = fvGeometry.gridGeometry().element(parallelScv.elementIndex());
+        fvGeometry.bind(element);
+        GridIndexType index = -1;
+        for (auto&& scvf : scvfs(fvGeometry, parallelScv))
+        {
+            if (scvf.localIndex() == lateralScvf.localIndex())
+                index = scvf.index();
+        }
+
+        return scvf(index);
+    }
+
 
     //! iterator range for sub control volumes. Iterates over
     //! all scvs of the bound element (not including neighbor scvs)
