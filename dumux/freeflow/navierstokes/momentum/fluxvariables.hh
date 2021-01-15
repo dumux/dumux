@@ -417,31 +417,17 @@ public:
             return (insideVolume*innerTransportingVelocity + outsideVolume*outerTransportingVelocity) / (insideVolume + outsideVolume);
         }();
 
-        const Scalar transportedMomentum = [&]()
-        {
-            // use the Dirichlet velocity as for transported momentum if the lateral face is on a Dirichlet boundary
-            if (scvf.boundary())
-            {
-                if (const auto& scv = fvGeometry.scv(scvf.insideScvIdx()); this->elemBcTypes()[scvf.localIndex()].isDirichlet(scv.directionIndex()))
-                    return problem.dirichlet(this->element(), scvf)[scv.directionIndex()] * this->problem().density(this->element(), scv);
-            }
+        const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
 
-            const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
+        FaceCenteredStaggeredUpwindHelper<TypeTag, upwindSchemeOrder> upwindHelper(this->element(),
+                                                                                   fvGeometry,
+                                                                                   problem,
+                                                                                   scvf,
+                                                                                   elemVolVars,
+                                                                                   this->elemBcTypes(),
+                                                                                   fvGeometry.staggeredUpwindMethods());
 
-            const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity();
-            const auto outerVelocity = elemVolVars[scvf.outsideScvIdx()].velocity();
-
-            const auto rho = this->problem().getInsideAndOutsideDensity(this->element(), fvGeometry, scvf);
-
-            const auto insideMomentum = innerVelocity * rho.first;
-            const auto outsideMomentum = outerVelocity * rho.second;
-
-            // TODO use higher order helper
-            static const auto upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
-
-            return selfIsUpstream ? (upwindWeight * insideMomentum + (1.0 - upwindWeight) * outsideMomentum)
-                                  : (upwindWeight * outsideMomentum + (1.0 - upwindWeight) * insideMomentum);
-        }();
+        const Scalar transportedMomentum = upwindHelper.computeUpwindLateralMomentum(selfIsUpstream);
 
         return  transportingVelocity * transportedMomentum * scvf.directionSign() * Extrusion::area(scvf) * extrusionFactor_(elemVolVars, scvf);
     }
