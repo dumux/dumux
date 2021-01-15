@@ -223,17 +223,30 @@ int main (int argc, char *argv[])
                             continue;
 
                         // Write out the indicies for the transported velocity calculation
-                        std::string firstOrSecond = (latCount < 1) ? "first" : "second";
+                        std::string firstOrSecond = (latCount < 1) ? "first " : "second ";
                         std::cout << "-- -- The " << firstOrSecond << "lateral scvf has the index " << scvf.index() << "\n";
-                        std::cout << "-- -- - The \"inner\" transported velocity is located at scv " << scvf.insideScvIdx() << "\n";
-                        std::cout << "-- -- - The \"outer\" transported velocity is located at scv " << scvf.outsideScvIdx() << "\n";
+                        std::cout << "-- -- - The \"inner parallel\" transported velocity is located at scv " << scvf.insideScvIdx() << "\n";
+                        std::cout << "-- -- - The \"inner parallel\" scv is " << fvGeometry.insideScvLateralLength(scvf)
+                                  << " units in length "<< "\n";
+                        if (fvGeometry.hasParallelNeighbor(scvf))
+                        {
+                            std::cout << "-- -- - The \"1st outer parallel\" transported velocity is located at scv " << scvf.outsideScvIdx() << "\n";
+                            std::cout << "-- -- - The \"1st outer parallel\" dof is located " << fvGeometry.selfToParallelDistance(scvf)
+                                      << " units away from the self dof \n";
+                            std::cout << "-- -- - The \"1st outer parallel\" Scv is " << fvGeometry.outsideScvLateralLength(scvf)
+                                      << " units in length "<< "\n";
+                        }
                         if constexpr (useHigherOrder)
                         {
-                            // do higher order stuff for transported velocity
-//  PSUEDO                  if (scvf.hasSecondParallelNeighbor())
-//  CODE                        std::cout << "-- -- - The \"second outer\" transported velocity is located at scv " << scvf.secondOuterScvIdx() << "\n";
-
-                            // const auto& firstParallelScv = fvGeometry.scv(scvf.outsideScvIdx());
+                            // Find the dofs related to the second parallel scvs
+                            if (fvGeometry.hasSecondParallelNeighbor(scvf))
+                            {
+                                std::cout << "-- -- - [Higher Order] The \"2nd outer parallel\" transported velocity is located at scv "
+                                          << fvGeometry.secondParallelScvIdx(scvf) << "\n";
+                                std::cout << "-- -- - [Higher Order] The \"2nd outer parallel\" dof is located "
+                                          << fvGeometry.paralleltoSecondParallelDistance(scvf)
+                                          << " units away from the first parallel dof \n";
+                            }
                         }
                         // Write out the indicies for the transporting velocity calculation
                         const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
@@ -242,7 +255,9 @@ int main (int argc, char *argv[])
                         std::cout << "-- -- - The \"outer transporting velocity is located at scv " << orthogonalScvf.outsideScvIdx() << "\n";
                         latCount++;
                     }
-
+                }
+            }
+        }
         else if (eIdx == 22)
         {
             auto fvGeometry = localView(gridGeometry);
