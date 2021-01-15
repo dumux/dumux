@@ -186,6 +186,122 @@ private:
         }
     }
 
+
+   /*!
+    * \brief Return the parallel velocity for lateral faces on the boundary
+    *
+    *   =====================
+    *   ----------LLLLLLL (*)      /  (scv) frontal face
+    *   -       / ssssssss -       s  current Scv
+    *   -       / ssssssss -       L  current lateral face
+    *   -       / ssssssss x       -- element boundaries
+    *   -       / ssssssss -       x  dof position
+    *   -       / ssssssss -       == domain boundary
+    *   --------------------       (*) queried velocity's location
+    *
+    *   Calls the problem to retrieve a fixed value set on the boundary.
+    */
+    Scalar getParallelVelocityFromBoundary_(const SubControlVolumeFace& lateralScvf) const
+    {
+        assert(lateralScvf.boundary() || fvGeometry_.hasHalfParallelNeighbor(lateralScvf) || fvGeometry_.hasCornerParallelNeighbor(lateralScvf));
+
+        const auto& lateralFaceBcTypes = elemBcTypes_[lateralScvf.localIndex()];
+
+        // In the case there is a neumann condition for momentum at the face in question, we force a zero gradient condition
+        // This would include cases such as a "symmetry" condition, or a dirichlet pressure condition
+        // In the case of a zero gradient condition, we return the velocity at the scv dof, forcing a zero gradient
+        const bool useZeroGradient = lateralFaceBcTypes.hasNeumann();
+        if (useZeroGradient)
+            return elemVolVars_[lateralScvf.insideScvIdx()].velocity();
+
+// TODO: Adapt to new BJS interface (Pseudo code)
+//         const bool hasBJS = lateralFaceBcTypes.hasBeaversJoesephSlipVelocityCondition();
+//         if (hasBJS)
+//             return object.beaversJoesephSlipVelocity(x,y,z);
+
+        if (lateralFaceBcTypes.isDirichlet(scv.dofAxis()))
+        {
+            const auto& element = fvGeometry_.gridGeometry().element(scv.elementIndex());
+            const auto& tempCornerFace = makeCornerFace_(lateralScvf);
+            return problem_.dirichlet(element, tempCornerFace)[scv.dofAxis()];
+        }
+
+        // Neumann conditions are not implemented well, throw this error in the case this other cases are skipped
+        DUNE_THROW(Dune::InvalidStateException,
+                   "Something went wrong with the boundary conditions for the momentum equations at global position " << lateralScvf.center());
+    }
+
+    SubControlVolumeFace makeCornerFace_(const SubControlVolumeFace& lateralScvf) const
+    {
+        assert(lateralScvf.boundary() || fvGeometry_.hasHalfParallelNeighbor(lateralScvf) || fvGeometry_.hasCornerParallelNeighbor(lateralScvf));
+        const GlobalPosition& cornerPosition = fvGeometry_.cornerBoundaryPosition(lateralScvf);
+        return makeFaceCenteredSCVF(lateralScvf, cornerPosition);
+    }
+
+   /*!
+    * \brief Return a velocity value from the opposite face's boundary a boundary for which the boundary conditions have to be checked.
+    */
+    Scalar getParallelVelocityFromOppositeBoundary_(const SubControlVolumeFace& lateralScvf) const
+    {
+        //   ----------LLLLLLLL--       /  (scv) frontal face
+        //   -       / ssssssss -       s  current Scv
+        //   -       / ssssssss -       L  current lateral face
+        //   -       / ssssssss x       -- element boundaries
+        //   -       / ssssssss -       x  dof position
+        //   -       / ssssssss -       O  opposite lateral face
+        //   ----------OOOOOOOO--       == domain boundary
+        //    ================ (*)      (*) queried velocity's location
+
+        // A ghost subface at the boundary is created, featuring the location of the sub face's center
+        const auto& oppositeLateralScvf = fvGeometry_.oppositeLateralScvf(scvf_);
+        return getParallelVelocityFromBoundary_(oppositeLateralScvf);
+    }
+
+    /*!
+     * \brief Return a velocity value from the outer parallel cell's boundary for which the boundary conditions have to be checked.
+     */
+    Scalar getParallelVelocityFromOutsideParallelBoundary_(const SubControlVolumeFace& lateralScvf) const
+    {
+        //                \=
+        //   \==========\ (*) \==   /    (scv) frontal face
+        //   ---------------        s    current Scv
+        //   -       ppppp -        p    parallel Scv
+        //   -       ppppp x        L    current lateral face
+        //   -       ppppp -        x    dof position
+        //   --------LLLLL--        \==\ possible domain boundary
+        //   -     / sssss -        --   element boundaries
+        //   -     / sssss x        (*)  queried velocity's location
+        //   -     / sssss -
+        //   ---------------
+
+        // Collect the outer lateral face and check to make sure it is on a boundary
+        const auto& outerLateralFace = fvGeometry_.outerParallelLateralScvf(lateralScvf);
+        assert(outerLateralFace.boundary() || fvGeometry_.hasHalfParallelNeighbor(outerLateralFace) || fvGeometry_.hasCornerParallelNeighbor(outerLateralFace));
+
+        const auto& parallelScv = fvGeometry_.scv(outerLateralFace.insideScvIdx());
+        const auto& parallelElement = fvGeometry_.gridGeometry().element(parallelScv.elementIndex());
+        const auto& boundaryTypes = problem_.boundaryTypes(parallelElement, outerLateralFace);
+
+        // if there is a neumann boundary condition, we assume a zero gradient, and take the
+        if (boundaryTypes.hasNeumann())
+            return elemVolVars_[parallelScv.dofIndex()].velocity();
+
+// TODO: Adapt to new BJS interface (Pseudo code)
+//         const bool hasBJS = lateralFaceBcTypes.hasBeaversJoesephSlipVelocityCondition();
+//         if (hasBJS)
+//             return object.beaversJoesephSlipVelocity(x,y,z);
+
+        if (boundaryTypes.isDirichlet(parallelScv.dofAxis()))
+        {
+            const auto& tempCornerFace = makeCornerFace_(outerLateralFace);
+            return problem_.dirichlet(parallelElement, tempCornerFace)[parallelScv.dofAxis()];
+        }
+
+        // Neumann conditions are not implemented well, throw this error in the case this other cases are skipped
+        DUNE_THROW(Dune::InvalidStateException,
+                   "Something went wrong with the boundary conditions for the momentum equations at global position " << outerLateralFace.center());
+    }
+
     const Element& element_;
     const FVElementGeometry& fvGeometry_;
     const Problem& problem_;
