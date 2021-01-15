@@ -341,6 +341,58 @@ public:
         return scvLateralLength(outsideScv, lateralScvf.normalAxis());
     }
 
+    /////////////////////////
+    /// Half/Corner Bools ///
+    /////////////////////////
+
+    /*     "Half Parallel Neighbor"                                  "Corner Parallel Neighbor"
+     *
+     *   -----------                                              --------------------
+     *   |    pppp b                                              |    pppp p        |
+     *   |    pppp b                s: selfScv,                   |    pppp p        |        s: selfScv,
+     *   |    pppp b                L: lateralScvf                |    pppp p        |        L: lateralScvf
+     *   -----LLLL * bbbbbbbb       p: parallelScv                -----LLLL * bbbbbbbb        p: parallelScv
+     *   |    ssss s        |       b: domain boundary            |    ssss b                 b: domain boundary
+     *   |    ssss s        |                                     |    ssss b
+     *   |    ssss s        |                                     |    ssss b
+     *   --------------------                                     -----------
+     */
+
+    bool hasHalfParallelNeighbor(const SubControlVolumeFace& lateralScvf) const
+    {
+        assert(lateralScvf.isLateral());
+        const auto& selfScv = scv(lateralScvf.insideScvIdx());
+        if (!lateralScvf.boundary() && !selfScv.boundary())
+        {
+            const auto& parallelScv = scv(parallelScvIdx(lateralScvf));
+            if (parallelScv.boundary())
+                return true;
+        }
+
+        return false;
+    }
+
+    bool hasCornerParallelNeighbor(const SubControlVolumeFace& lateralScvf) const
+    {
+        assert(lateralScvf.isLateral());
+        const auto& selfScv = scv(lateralScvf.insideScvIdx());
+        if (!lateralScvf.boundary() && selfScv.boundary())
+        {
+            const auto& parallelScv = scv(parallelScvIdx(lateralScvf));
+            if (!parallelScv.boundary())
+                return true;
+        }
+
+        return false;
+    }
+
+    bool lateralFaceContactsBoundary(const SubControlVolumeFace& lateralScvf) const
+    {
+        return ( lateralScvf.boundary() ||
+                 hasHalfParallelNeighbor(lateralScvf) ||
+                 hasCornerParallelNeighbor(lateralScvf) );
+    }
+
 
     //! iterator range for sub control volumes. Iterates over
     //! all scvs of the bound element (not including neighbor scvs)
