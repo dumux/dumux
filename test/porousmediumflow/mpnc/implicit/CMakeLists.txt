@@ -1,4 +1,0 @@
-add_subdirectory(2p2ccomparison)
-add_subdirectory(kinetic)
-add_subdirectory(obstacle)
-add_subdirectory(thermalnonequilibrium)
