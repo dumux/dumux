@@ -27,6 +27,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <dumux/common/typetraits/problem.hh>
 #include <dumux/discretization/box/elementboundarytypes.hh>
 
 namespace Dumux
@@ -34,12 +35,13 @@ namespace Dumux
 template<class GridVariables, class LocalResidual, class SolutionVector>
 class PoreNetworkModelBoundaryFlux
 {
-    using GridGeometry = std::decay_t<decltype(std::declval<LocalResidual>().problem().gridGeometry())>;
+    using Problem = std::decay_t<decltype(std::declval<LocalResidual>().problem())>;
+    using GridGeometry = typename ProblemTraits<Problem>::GridGeometry;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using BoundaryTypes = std::decay_t<decltype(std::declval<LocalResidual>().problem().boundaryTypes(std::declval<Element>(), std::declval<SubControlVolume>()))>;
+    using BoundaryTypes = typename ProblemTraits<Problem>::BoundaryTypes;
     using ElementBoundaryTypes = BoxElementBoundaryTypes<BoundaryTypes>;
 
     using NumEqVector = typename SolutionVector::block_type;
@@ -112,7 +114,7 @@ public:
 
             //check whether a vertex lies on a boundary and also check whether this boundary shall be
             // considered for the flux calculation
-            if(considerScv && !considerAllDirections)
+            if (considerScv && !considerAllDirections)
             {
                 const auto& pos = scv.dofPosition();
                 if (!(pos[coord] < localResidual_.problem().gridGeometry().bBoxMin()[coord] + eps || pos[coord] > localResidual_.problem().gridGeometry().bBoxMax()[coord] -eps ))
@@ -125,7 +127,7 @@ public:
         NumEqVector flux(0.0);
 
         // sum up the fluxes
-        for(const auto& element : elements(localResidual_.problem().gridGeometry().gridView()))
+        for (const auto& element : elements(localResidual_.problem().gridGeometry().gridView()))
             flux += getFlux(element, restriction, verbose);
 
         return flux;
@@ -169,20 +171,18 @@ public:
         if (!isStationary_)
             residual += localResidual_.evalStorage(element, fvGeometry, prevElemVolVars, curElemVolVars);
 
-        for(auto&& scv : scvs(fvGeometry))
+        for (auto&& scv : scvs(fvGeometry))
         {
             // compute the boundary flux using the local residual of the element's scv on the boundary
-            if(considerScv(scv))
+            if (considerScv(scv))
             {
                 // The flux must be substracted:
                 // On an inlet boundary, the flux part of the local residual will be positive, since all fluxes will leave the SCV towards to interior domain.
                 // For the domain itself, however, the sign has to be negative, since mass is entering the system.
                 flux -= residual[scv.indexInElement()];
 
-                if(verbose)
-                {
+                if (verbose)
                     std::cout << "SCV of element " << scv.elementIndex()  << " at vertex " << scv.dofIndex() << " has flux: " << residual[scv.indexInElement()] << std::endl;
-                }
             }
         }
         return flux;
