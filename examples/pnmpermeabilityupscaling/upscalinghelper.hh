@@ -20,62 +20,30 @@
 #ifndef DUMUX_PNM_ONEP_PERMEABILITY_UPSCALING_HELPER_HH
 #define DUMUX_PNM_ONEP_PERMEABILITY_UPSCALING_HELPER_HH
 
-// ## Upscaling helper class (`upscalinghelper.hh`)
+// ## Upscaling helper struct (`upscalinghelper.hh`)
 //
 #include <vector>
-#include <dune/common/exceptions.hh>
-// This file contains the __upscaling helper class__ which considers the volume flux leaving
+// This file contains the __upscaling helper struct__ which considers the volume flux leaving
 // the pore network in flow direction in order to find the upscaled Darcy permeability-
 // [[content]]
-// We include the boundary flux helper class in order to conveniently determine the mass and volume flux
-// leaving the network.
-#include <dumux/porenetworkflow/common/boundaryflux.hh>
 
-// ### A helper class to find the upscaled intrinsic Darcy permeability.
+// ### A helper struct to find the upscaled intrinsic Darcy permeability.
 // [[codeblock]]
 namespace Dumux {
 
-template<class Assembler>
-class UpscalingHelper
+struct UpscalingHelper
 {
-    using Scalar = typename Assembler::Scalar;
-    using GridView = typename Assembler::GridGeometry::GridView;
-    static constexpr auto dimWorld = GridView::dimensionworld;
-public:
-
-    UpscalingHelper(const Assembler& assembler)
-    : assembler_(assembler)
-    {
-        // The dimensions of the domain must be known in order to calculate the permeability.
-        // One can either specify the domain size (e.g., based on the size of the sample used for the CT-scan image) ....
-        sideLength_ = getParam<std::vector<Scalar>>("Problem.SideLength", std::vector<Scalar>{});
-        if (!sideLength_.empty())
-        {
-            if (sideLength_.size() != dimWorld)
-                DUNE_THROW(Dune::IOError, "Problem.SideLength must have exactly " << dimWorld << " entries");
-        }
-        // ... or get the size automatically based on the bounding box the pore network.
-        else
-        {
-            std::cout << "Automatically determining side lengths of REV based on bounding box of pore network" << std::endl;
-            sideLength_.resize(dimWorld);
-            for (int dimIdx = 0; dimIdx < dimWorld; ++dimIdx)
-                sideLength_[dimIdx] = assembler.gridGeometry().bBoxMax()[dimIdx] - assembler.gridGeometry().bBoxMin()[dimIdx];
-        }
-    }
     // [[/codeblock]]
 
     // #### Calculate the intrinsic permeability
     // This function first evaluates the mass flux leaving the network in the direction of the applied pressure gradient.
     // Afterwards, the mass flux is converted into an area specify volume flux from which finally the intrinsic Darcy
     // permeability K [m^2] can be evaluated.
-    // [[codeblock]]
-    template<class SolutionVector>
-    void doUpscaling(const SolutionVector& x, const int direction) const
+    template<class Problem, class Scalar>
+    static Scalar getDarcyPermeability(const Problem& problem, const Scalar totalMassFlux)
     {
-        const auto boundaryFlux = PoreNetworkModelBoundaryFlux<Assembler>(assembler_, x);
-        const auto outletPoreLabel = 2 + 2*direction;
-        const auto massFlux = boundaryFlux.getFlux(std::vector<int>{outletPoreLabel});
+        // get the domain side lengths from the problem
+        auto sideLengths = problem.sideLengths();
 
         // create temporary stringstream with fixed scientifc formatting without affecting std::cout
         std::ostream tmp(std::cout.rdbuf());
@@ -83,29 +51,37 @@ public:
         static constexpr char dirNames[] = "xyz";
 
         // convert mass to volume flux
-        static const Scalar density = getParam<Scalar>("Component.LiquidDensity");
-        static const Scalar dynamicViscosity = getParam<Scalar>("Component.LiquidKinematicViscosity") * density;
-        static const auto pressureGradient = getParam<Scalar>("Problem.PressureGradient");
-        const auto volumeFlux = massFlux / density;
+        const auto volumeFlux = totalMassFlux / problem.liquidDensity();;
 
-        auto length = sideLength_;
-        length[direction] = 1.0;
-        const auto outflowArea = std::accumulate(length.begin(), length.end(), 1.0, std::multiplies<Scalar>());
+        sideLengths[problem.direction()] = 1.0;
+        const auto outflowArea = std::accumulate(sideLengths.begin(), sideLengths.end(), 1.0, std::multiplies<Scalar>());
         const auto vDarcy = volumeFlux / outflowArea;
-        const auto K = vDarcy / pressureGradient * dynamicViscosity;
+        const auto K = vDarcy / problem.pressureGradient() * problem.liquidDynamicViscosity();
         tmp << "\n########################################\n" << std::endl;
-        tmp << dirNames[direction] << "-direction";
+        tmp << dirNames[problem.direction()] << "-direction";
         tmp << ": Area = " << outflowArea << " m^2";
-        tmp << "; Massflux = " << massFlux << " kg/s";
+        tmp << "; Massflux = " << totalMassFlux << " kg/s";
         tmp << "; v_Darcy = " << vDarcy << " m/s";
         tmp << "; K = " << K << " m^2" << std::endl;
         tmp << "\n########################################\n" << std::endl;
+
+        return K;
+    }
+
+    // #### Determine the domain's side lengths automatically based on the bounding box of the network.
+    template<class GridGeometry>
+    static auto getSideLengths(const GridGeometry& gridGeometry)
+    {
+        using GlobalPosition = typename GridGeometry::GlobalCoordinate;
+        GlobalPosition result;
+
+        std::cout << "Automatically determining side lengths of REV based on bounding box of pore network" << std::endl;
+        for (int dimIdx = 0; dimIdx < GridGeometry::GridView::dimensionworld; ++dimIdx)
+            result[dimIdx] = gridGeometry.bBoxMax()[dimIdx] - gridGeometry.bBoxMin()[dimIdx];
+
+        return result;
     }
     // [[/codeblock]]
-
-private:
-    const Assembler& assembler_;
-    std::vector<Scalar> sideLength_;
 };
 
 } // end namespace Dumux

@@ -27,6 +27,8 @@
 
 #include <iostream>
 
+#include <dune/common/float_cmp.hh> // for floating point comparison
+
 #include <dumux/common/properties.hh> // for GetPropType
 #include <dumux/common/parameters.hh> // for getParam
 
@@ -40,6 +42,7 @@
 
 #include <dumux/io/grid/porenetwork/gridmanager.hh> // for pore-network grid
 #include <dumux/porenetworkflow/common/pnmvtkoutputmodule.hh>
+#include <dumux/porenetworkflow/common/boundaryflux.hh> // for getting the total mass flux leaving the network
 
 #include "upscalinghelper.hh"
 #include "properties.hh"
@@ -117,14 +120,30 @@ int main(int argc, char** argv) try
     solver.setVerbose(false); // suppress output during solve()
     // [[/codeblock]]
 
-    // ### Solution of the problem and error computation
+    // ### Prepare the upscaling procedure.
+    // ### Specify the directions for which the permeability shall be determined (default: x, y, z for 3D)
+    // [[codeblock]]
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     const auto defaultDirections = GridView::dimensionworld == 3 ? std::vector<int>{0, 1, 2}
                                                                  : std::vector<int>{0, 1};
     const auto directions = getParam<std::vector<int>>("Problem.Directions", defaultDirections);
 
-    // ### Helper class to evaluate the permeability
-    const auto upscalinghelper = UpscalingHelper(*assembler);
+    // set up a helper class to determine the total mass flux leaving the network
+    const auto boundaryFlux = PoreNetworkModelBoundaryFlux(*gridVariables, assembler->localResidual(), x);
+
+    // Set the side lengths used for applying the pressure gradient and calculating the REV outflow area.
+    // One can either specify these values manually (could be more accurate) or let the UpscalingHelper struct
+    // determine it automatically based on the network's bounding box.
+    const auto sideLengths = [&]()
+    {
+        using GlobalPosition = typename GridGeometry::GlobalCoordinate;
+        if (hasParam("Problem.SideLength"))
+            return getParam<GlobalPosition>("Problem.SideLength");
+        else
+            return UpscalingHelper::getSideLengths(*gridGeometry);
+    }();
+
+    problem->setSideLengths(sideLengths);
 
     // [[/codeblock]]
 
@@ -145,11 +164,26 @@ int main(int argc, char** argv) try
         // write the vtu file for the given direction
         vtkWriter.write(dimIdx);
 
+        // get the Scalar type
+        using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+
         // calculate the permeability
-        upscalinghelper.doUpscaling(x, dimIdx);
+        const Scalar totalFluidMassFlux = boundaryFlux.getFlux(std::vector<int>{problem->outletPoreLabel()})[0];
+        const Scalar K = UpscalingHelper::getDarcyPermeability(*problem, totalFluidMassFlux);
+
+        // optionally compare with reference data
+        static const auto referenceData = getParam<std::vector<Scalar>>("Problem.ReferenceData", std::vector<Scalar>{});
+        if (!referenceData.empty())
+        {
+            static const Scalar eps = getParam<Scalar>("Problem.TestEpsilon");
+            if (Dune::FloatCmp::ne<Scalar>(K, referenceData[dimIdx]), eps)
+            {
+                std::cerr << "Calculated permeability of " << K << " does not match with reference value of " << referenceData[dimIdx] << std::endl;
+                return 1;
+            }
+        }
     }
     // [[/codeblock]]
-
 
     // program end, return with 0 exit code (success)
     return 0;

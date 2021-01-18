@@ -4,8 +4,6 @@ dune_add_test(NAME example_pnm1p_permeabilityupscaling
               LABELS porousmediumflow 1p example
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS  --script fuzzy
-                        --files ${CMAKE_SOURCE_DIR}/test/references/example_rotationsymmetry-reference.vtp
-                                ${CMAKE_CURRENT_BINARY_DIR}/example_rotationsymmetry-00000.vtp
-                        --command "${CMAKE_CURRENT_BINARY_DIR}/example_1p_rotationsymmetry params.input -Problem.Name example_rotationsymmetry")
+              COMMAND ${CMAKE_CURRENT_BINARY_DIR}/example_pnm1p_permeabilityupscaling
+              CMD_ARGS -Problem.ReferenceData "3.310596e-13 3.258913e-13 3.057024e-13"
+                       -Problem.TestEpsilon 0)

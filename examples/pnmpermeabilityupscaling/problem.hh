@@ -48,7 +48,6 @@ class UpscalingProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = Dumux::BoundaryTypes<PrimaryVariables::size()>;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    static constexpr int dimworld = GridGeometry::GridView::dimensionworld;
 
 public:
     // In the constructor, we obtain a number of parameters, related to fluid
@@ -60,9 +59,6 @@ public:
     {
         // the applied pressure gradient
         pressureGradient_ = getParam<Scalar>("Problem.PressureGradient");
-
-        for (int i = 0; i < dimworld; ++i)
-            lenght_[i] = this->gridGeometry().bBoxMax()[i] - this->gridGeometry().bBoxMin()[i];
 
         eps_ = getParam<Scalar>("Problem.Epsilon", 1e-7);
         useLabels_ = getParam<bool>("Problem.UseLabels", true);
@@ -108,7 +104,7 @@ public:
         PrimaryVariables values(0.0);
 
         if (isInletPore_(scv))
-            values[Indices::pressureIdx] = pressureGradient_ * lenght_[direction_];
+            values[Indices::pressureIdx] = pressureGradient_ * length_[direction_];
         else
             values[Indices::pressureIdx] = 0.0;
 
@@ -122,31 +118,82 @@ public:
     void setDirection(int directionIdx)
     { direction_ = directionIdx; }
 
+    /*!
+     * \brief Sets the current direction in which the pressure gradient is applied.
+     */
+    int direction() const
+    { return direction_; }
+
+    /*!
+     * \brief Sets the side lengths to consider for the upscaling process.
+     * \param sideLengths The side lengths to consider.
+     */
+    void setSideLengths(const GlobalPosition& sideLengths)
+    { length_ = sideLengths; }
+
+    /*!
+     * \brief Returns the side lengths to consider for the upscaling process.
+     */
+    const GlobalPosition& sideLengths() const
+    { return length_; }
+
+    /*!
+     * \brief Returns the liquid mass density.
+     */
+    Scalar liquidDensity() const
+    {
+        static const Scalar liquidDensity = getParam<Scalar>("Component.LiquidDensity");
+        return liquidDensity;
+    }
+
+    /*!
+     * \brief Returns the liquid dynamic viscosity-
+     */
+    Scalar liquidDynamicViscosity() const
+    {
+        static const Scalar liquidDynamicViscosity = getParam<Scalar>("Component.LiquidKinematicViscosity") * liquidDensity();
+        return liquidDynamicViscosity;
+    }
+
+    /*!
+     * \brief Returns the applied pressure gradient.
+     */
+    Scalar pressureGradient() const
+    { return pressureGradient_; }
+
+    /*!
+     * \brief Returns the label of outlet pores assuming a previously set direction.
+     */
+    int outletPoreLabel() const
+    {
+        static constexpr std::array<int, 3> label = {2, 4, 6};
+        return label[direction_];
+    }
+
+    /*!
+     * \brief Returns the label of inlet pores assuming a previously set direction.
+     */
+    int inletPoreLabel() const
+    {
+        static constexpr std::array<int, 3> label = {1, 3, 5};
+        return label[direction_];
+    }
 
 private:
 
     bool isInletPore_(const SubControlVolume& scv) const
     {
-        const auto poreLabel = this->gridGeometry().poreLabel(scv.dofIndex());
-
-        if (poreLabel < 0)
-            return false;
 
         if (useLabels_)
-            return poreLabel == 1 + 2*direction_;
+            return inletPoreLabel() == this->gridGeometry().poreLabel(scv.dofIndex());
         else
             return scv.dofPosition()[direction_] < this->gridGeometry().bBoxMin()[direction_] + eps_;
     }
 
     bool isOutletPore_(const SubControlVolume& scv) const
     {
-        const auto poreLabel = this->gridGeometry().poreLabel(scv.dofIndex());
-
-        if (poreLabel < 0)
-            return false;
-
         if (useLabels_)
-            return poreLabel == 2 + 2*direction_;
+            return outletPoreLabel() == this->gridGeometry().poreLabel(scv.dofIndex());
         else
             return scv.dofPosition()[direction_] > this->gridGeometry().bBoxMax()[direction_] - eps_;
     }
@@ -155,7 +202,7 @@ private:
     Scalar eps_;
     Scalar pressureGradient_;
     int direction_;
-    std::array<Scalar, dimworld> lenght_;
+    GlobalPosition length_;
     bool useLabels_;
 };
 
