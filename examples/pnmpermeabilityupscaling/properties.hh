@@ -66,9 +66,7 @@ struct PNMUpscaling { using InheritsFrom = std::tuple<PNMOneP>; };
 // In the following piece of code, mandatory `properties` for which no meaningful
 // default can be set, are specialized for our type tag `PNMUpscaling`.
 // [[codeblock]]
-// We use a structured 1D grid with an offset. This allows us to define the
-// computational domain to be between the radii $`r_1`$ and $`r_2`$ as illustrated
-// in the beginning of the documentation of this example
+// We use `dune-foamgrid`, which is especially tailored for 1D networks.
 template<class TypeTag>
 struct Grid<TypeTag, TTag::PNMUpscaling>
 { using type = Dune::FoamGrid<1, 3>; };

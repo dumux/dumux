@@ -79,9 +79,7 @@ In the following piece of code, mandatory `properties` for which no meaningful
 default can be set, are specialized for our type tag `PNMUpscaling`.
 
 ```cpp
-// We use a structured 1D grid with an offset. This allows us to define the
-// computational domain to be between the radii $`r_1`$ and $`r_2`$ as illustrated
-// in the beginning of the documentation of this example
+// We use `dune-foamgrid`, which is especially tailored for 1D networks.
 template<class TypeTag>
 struct Grid<TypeTag, TTag::PNMUpscaling>
 { using type = Dune::FoamGrid<1, 3>; };
@@ -167,6 +165,12 @@ namespace Dumux {
 template<class TypeTag>
 class UpscalingProblem : public PorousMediumFlowProblem<TypeTag>
 {
+```
+
+<details><summary> Click to show convenience aliases</summary>
+
+```cpp
+
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
@@ -177,15 +181,13 @@ class UpscalingProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = Dumux::BoundaryTypes<PrimaryVariables::size()>;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    static constexpr int dimworld = GridGeometry::GridView::dimensionworld;
-
-public:
 ```
 
-In the constructor, we obtain a number of parameters, related to fluid
-properties and boundary conditions, from the input file.
+</details>
+#### The constructor of our problem.
 
 ```cpp
+public:
     template<class SpatialParams>
     UpscalingProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<SpatialParams> spatialParams)
     : ParentType(gridGeometry, spatialParams)
@@ -193,14 +195,17 @@ properties and boundary conditions, from the input file.
         // the applied pressure gradient
         pressureGradient_ = getParam<Scalar>("Problem.PressureGradient");
 
-        for (int i = 0; i < dimworld; ++i)
-            lenght_[i] = this->gridGeometry().bBoxMax()[i] - this->gridGeometry().bBoxMin()[i];
-
-        eps_ = getParam<Scalar>("Problem.Epsilon", 1e-7);
+        // We can either use pore labels (given in the grid file) to identify inlet and outlet pores
+        // or use the network's bounding box to find these pores automatically. Using labels is usually much
+        // more accurate, so this is the default here.
         useLabels_ = getParam<bool>("Problem.UseLabels", true);
+
+        // an epsilon value for the bounding box approach
+        eps_ = getParam<Scalar>("Problem.Epsilon", 1e-7);
     }
 ```
 
+#### Temperature
 We need to specify a constant temperature for our isothermal problem.
 Fluid properties that depend on temperature will be calculated with this value.
 
@@ -209,94 +214,130 @@ Fluid properties that depend on temperature will be calculated with this value.
     { return 283.15; }
 ```
 
-#### Specify the types of boundary conditions
-This function is used to define the type of boundary conditions used depending on the location.
-Two types of boundary  conditions can be specified: Dirichlet or Neumann boundary condition.
-On a Dirichlet boundary, the values of the primary variables need to be fixed. On a Neumann
-boundary condition, values for derivatives need to be fixed. Here, we use Dirichlet boundary
-conditions on all boundaries.
+#### Boundary conditions
+This function is used to define the __type of boundary conditions__ used depending on the location.
+Here, we use Dirichlet boundary conditions (fixed pressures) at the inlet and outlet and Neumann
+boundary conditions at all remaining boundaries. Note that the PNM only supports Neumann no-flow boundaries.
+The specify a certain mass flux, we would have to use a source term on the boundary pores (which is not done in this example).
 
 ```cpp
     BoundaryTypes boundaryTypes(const Element &element, const SubControlVolume& scv) const
     {
         BoundaryTypes bcTypes;
 
+        // fix the pressure at the inlet and outlet pores
         if (isInletPore_(scv)|| isOutletPore_(scv))
-        {
             bcTypes.setAllDirichlet();
-        }
-        else // neuman for the remaining boundaries
+        else // Neumann (no-flow) for the remaining boundaries
             bcTypes.setAllNeumann();
 
         return bcTypes;
     }
+```
 
-    /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
-     *
-     * \param values The dirichlet values for the primary variables
-     * \param vertex The vertex (pore body) for which the condition is evaluated
-     *
-     */
-     PrimaryVariables dirichlet(const Element &element,
-                                const SubControlVolume &scv) const
+The following function specifies the __values on Dirichlet boundaries__ (pressures).
+We set 0 Pa at the outlet and a value based on the given pressure gradient
+and the length of the domain at the inlet.
+
+```cpp
+     PrimaryVariables dirichlet(const Element& element,
+                                const SubControlVolume& scv) const
      {
         PrimaryVariables values(0.0);
 
         if (isInletPore_(scv))
-            values[Indices::pressureIdx] = pressureGradient_ * lenght_[direction_];
+            values[Indices::pressureIdx] = pressureGradient_ * length_[direction_];
         else
             values[Indices::pressureIdx] = 0.0;
 
         return values;
     }
+```
 
-    /*!
-     * \brief Sets the current direction in which the pressure gradient is applied
-     * \param directionIdx The index of the direction (0:x, 1:y, 2:z)
-     */
+#### Upscaling
+<details><summary> Click to show auxiliary functions needed for the upscaling process</summary>
+
+```cpp
+
+    // Set the current direction (0:x, 1:y, 2:z) in which the pressure gradient is applied
     void setDirection(int directionIdx)
     { direction_ = directionIdx; }
 
+    // Get the current direction in which the pressure gradient is applied.
+    int direction() const
+    { return direction_; }
+
+    // Set the side lengths to consider for the upscaling process.
+    void setSideLengths(const GlobalPosition& sideLengths)
+    { length_ = sideLengths; }
+
+    // Return the side lengths to consider for the upscaling process.
+    const GlobalPosition& sideLengths() const
+    { return length_; }
+
+    // Return the liquid mass density.
+    Scalar liquidDensity() const
+    {
+        static const Scalar liquidDensity = getParam<Scalar>("Component.LiquidDensity");
+        return liquidDensity;
+    }
+
+    // Return the liquid dynamic viscosity-
+    Scalar liquidDynamicViscosity() const
+    {
+        static const Scalar liquidDynamicViscosity = getParam<Scalar>("Component.LiquidKinematicViscosity") * liquidDensity();
+        return liquidDynamicViscosity;
+    }
+
+    // Return the applied pressure gradient.
+    Scalar pressureGradient() const
+    { return pressureGradient_; }
+
+
+    // Return the label of inlet pores assuming a previously set direction.
+    int inletPoreLabel() const
+    {
+        static constexpr std::array<int, 3> label = {1, 3, 5};
+        return label[direction_];
+    }
+
+    // Return the label of outlet pores assuming a previously set direction.
+    int outletPoreLabel() const
+    {
+        static constexpr std::array<int, 3> label = {2, 4, 6};
+        return label[direction_];
+    }
 
 private:
 
     bool isInletPore_(const SubControlVolume& scv) const
     {
-        const auto poreLabel = this->gridGeometry().poreLabel(scv.dofIndex());
-
-        if (poreLabel < 0)
-            return false;
-
         if (useLabels_)
-            return poreLabel == 1 + 2*direction_;
+            return inletPoreLabel() == this->gridGeometry().poreLabel(scv.dofIndex());
         else
             return scv.dofPosition()[direction_] < this->gridGeometry().bBoxMin()[direction_] + eps_;
     }
 
     bool isOutletPore_(const SubControlVolume& scv) const
     {
-        const auto poreLabel = this->gridGeometry().poreLabel(scv.dofIndex());
-
-        if (poreLabel < 0)
-            return false;
-
         if (useLabels_)
-            return poreLabel == 2 + 2*direction_;
+            return outletPoreLabel() == this->gridGeometry().poreLabel(scv.dofIndex());
         else
             return scv.dofPosition()[direction_] > this->gridGeometry().bBoxMax()[direction_] - eps_;
     }
-```
 
-private data members
-
-```cpp
+    // private data members
     Scalar eps_;
     Scalar pressureGradient_;
     int direction_;
-    std::array<Scalar, dimworld> lenght_;
+    GlobalPosition length_;
     bool useLabels_;
+```
+
+</details>
+
+```cpp
+
 };
 
 } // end namespace Dumux

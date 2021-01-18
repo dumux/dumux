@@ -22,23 +22,19 @@
 
 // ## Upscaling helper struct (`upscalinghelper.hh`)
 //
-#include <vector>
 // This file contains the __upscaling helper struct__ which considers the volume flux leaving
-// the pore network in flow direction in order to find the upscaled Darcy permeability-
+// the pore network in flow direction in order to find the upscaled Darcy permeability.
 // [[content]]
 
-// ### A helper struct to find the upscaled intrinsic Darcy permeability.
-// [[codeblock]]
 namespace Dumux {
 
 struct UpscalingHelper
 {
-    // [[/codeblock]]
-
-    // #### Calculate the intrinsic permeability
+    // ### Calculate the intrinsic permeability
     // This function first evaluates the mass flux leaving the network in the direction of the applied pressure gradient.
     // Afterwards, the mass flux is converted into an area specify volume flux from which finally the intrinsic Darcy
     // permeability K [m^2] can be evaluated.
+    // [[codeblock]]
     template<class Problem, class Scalar>
     static Scalar getDarcyPermeability(const Problem& problem, const Scalar totalMassFlux)
     {
@@ -67,8 +63,10 @@ struct UpscalingHelper
 
         return K;
     }
+    // [[/codeblock]]
 
-    // #### Determine the domain's side lengths automatically based on the bounding box of the network.
+    // ### Determine the domain's side lengths automatically based on the bounding box of the network.
+    // [[codeblock]]
     template<class GridGeometry>
     static auto getSideLengths(const GridGeometry& gridGeometry)
     {

@@ -11,7 +11,7 @@ __In this example, you will learn how to__
 __Result__.
 As a result of the simulation of this example, you will get the intrinsic single-phase permeabilities for each spatial direction K$`_x`$, K$`_y`$, K$`_z`$ [m$`^2`$]
 as direct output into your terminal.
-Additionally, the output contains the values of the auxillary parameters: cross-sectional area, mass flux intgrated ober the cross-sectional area, and the resulting Darcy velocity as in the example below for the x-direction permeability K$`_x`$:
+Additionally, the output contains the values of the auxiliary parameters: cross-sectional area, mass flux integrated over the cross-sectional area, and the resulting Darcy velocity as in the example below for the x-direction permeability K$`_x`$:
 
 ```
 
@@ -19,7 +19,7 @@ x-direction: Area = 1.600000e-07 m^2; Massflux = 5.296954e-13 kg/s; v_Darcy = 3.
 
 ```
 
-The pressure distribution throughout the pore network as well as pore-network characteristics will also be written to a vtp output file that can be viewed with paraview.
+The pressure distribution throughout the pore network as well as pore-network characteristics will also be written to a vtp output file that can be viewed with ParaView.
 Figure 1 shows the pressure distribution within the pore network for the case of flow in x-direction.
 
 <figure>
@@ -37,20 +37,20 @@ __Table of contents__. This description is structured as follows:
 ## Problem setup
 
 We consider a single-phase problem within a randomly generated pore network of 20 pores cubed. Note that some pores have been deleted.
-To calculate the upsacled permeability, a pressure difference of 4000 Pa is applied sequentially in every direction
+To calculate the upscaled permeability, a pressure difference of 4000 Pa is applied sequentially in every direction
 and the upscaled Darcy permeability is calculated.
-Figure 2 illustrates the setup, showing additionally the individual pore throat transmissivities:
+Figure 2 illustrates the setup, showing additionally the individual pore throat transmissibilities:
 <figure>
     <center>
-        <img src="img/setup.png" alt="Pore-network: throat transmissibility" width="60%"/>
-        <figcaption> <b> Fig.2 </b> - Pore-throat transmissibility distribution within the pore network. </figcaption>
+        <img src="img/setup.png" alt="Pore-network: throat transmissibilities" width="60%"/>
+        <figcaption> <b> Fig.2 </b> - Pore-throat transmissibilities distribution within the pore network. </figcaption>
     </center>
 </figure>
 
 ## Mathematical and numerical model
 
 In this example we are using the single-phase pore-network model of DuMu<sup>x</sup>, which considers a Hagen-Poiseuille-type law to relate the volume flow from on pore body to another to discrete pressure drops $`\Delta p = p_i - p_j`$ between the pore bodies.
-We reuqire mass conservation at each pore body $`i`$:
+We require mass conservation at each pore body $`i`$:
 
 ```math
  \sum_j Q_{ij} = 0,
@@ -60,9 +60,6 @@ where $Q_{ij}$ is the discrete volume flow rate in a throat connecting pore bodi
 ```math
  Q_{ij} = g_{ij} (p_i - p_j).
 ```
-
-
-
 
 # Implementation & Post processing
 

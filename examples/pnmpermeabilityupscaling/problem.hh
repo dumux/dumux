@@ -38,6 +38,7 @@ namespace Dumux {
 template<class TypeTag>
 class UpscalingProblem : public PorousMediumFlowProblem<TypeTag>
 {
+    // [[details]] convenience aliases
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
@@ -48,11 +49,11 @@ class UpscalingProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = Dumux::BoundaryTypes<PrimaryVariables::size()>;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    // [[/details]]
 
-public:
-    // In the constructor, we obtain a number of parameters, related to fluid
-    // properties and boundary conditions, from the input file.
+    // #### The constructor of our problem.
     // [[codeblock]]
+public:
     template<class SpatialParams>
     UpscalingProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<SpatialParams> spatialParams)
     : ParentType(gridGeometry, spatialParams)
@@ -60,46 +61,48 @@ public:
         // the applied pressure gradient
         pressureGradient_ = getParam<Scalar>("Problem.PressureGradient");
 
-        eps_ = getParam<Scalar>("Problem.Epsilon", 1e-7);
+        // We can either use pore labels (given in the grid file) to identify inlet and outlet pores
+        // or use the network's bounding box to find these pores automatically. Using labels is usually much
+        // more accurate, so this is the default here.
         useLabels_ = getParam<bool>("Problem.UseLabels", true);
+
+        // an epsilon value for the bounding box approach
+        eps_ = getParam<Scalar>("Problem.Epsilon", 1e-7);
     }
     // [[/codeblock]]
 
+    // #### Temperature
     // We need to specify a constant temperature for our isothermal problem.
     // Fluid properties that depend on temperature will be calculated with this value.
     Scalar temperature() const
     { return 283.15; }
 
-    // #### Specify the types of boundary conditions
-    // This function is used to define the type of boundary conditions used depending on the location.
-    // Two types of boundary  conditions can be specified: Dirichlet or Neumann boundary condition.
-    // On a Dirichlet boundary, the values of the primary variables need to be fixed. On a Neumann
-    // boundary condition, values for derivatives need to be fixed. Here, we use Dirichlet boundary
-    // conditions on all boundaries.
+    // #### Boundary conditions
+    // This function is used to define the __type of boundary conditions__ used depending on the location.
+    // Here, we use Dirichlet boundary conditions (fixed pressures) at the inlet and outlet and Neumann
+    // boundary conditions at all remaining boundaries. Note that the PNM only supports Neumann no-flow boundaries.
+    // The specify a certain mass flux, we would have to use a source term on the boundary pores (which is not done in this example).
+    // [[codeblock]]
     BoundaryTypes boundaryTypes(const Element &element, const SubControlVolume& scv) const
     {
         BoundaryTypes bcTypes;
 
+        // fix the pressure at the inlet and outlet pores
         if (isInletPore_(scv)|| isOutletPore_(scv))
-        {
             bcTypes.setAllDirichlet();
-        }
-        else // neuman for the remaining boundaries
+        else // Neumann (no-flow) for the remaining boundaries
             bcTypes.setAllNeumann();
 
         return bcTypes;
     }
+    // [[/codeblock]]
 
-    /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
-     *
-     * \param values The dirichlet values for the primary variables
-     * \param vertex The vertex (pore body) for which the condition is evaluated
-     *
-     */
-     PrimaryVariables dirichlet(const Element &element,
-                                const SubControlVolume &scv) const
+    // The following function specifies the __values on Dirichlet boundaries__ (pressures).
+    // We set 0 Pa at the outlet and a value based on the given pressure gradient
+    // and the length of the domain at the inlet.
+    // [[codeblock]]
+     PrimaryVariables dirichlet(const Element& element,
+                                const SubControlVolume& scv) const
      {
         PrimaryVariables values(0.0);
 
@@ -110,72 +113,59 @@ public:
 
         return values;
     }
+    // [[/codeblock]]
 
-    /*!
-     * \brief Sets the current direction in which the pressure gradient is applied
-     * \param directionIdx The index of the direction (0:x, 1:y, 2:z)
-     */
+    // #### Upscaling
+
+    // [[details]] auxiliary functions needed for the upscaling process
+    // [[codeblock]]
+
+    // Set the current direction (0:x, 1:y, 2:z) in which the pressure gradient is applied
     void setDirection(int directionIdx)
     { direction_ = directionIdx; }
 
-    /*!
-     * \brief Sets the current direction in which the pressure gradient is applied.
-     */
+    // Get the current direction in which the pressure gradient is applied.
     int direction() const
     { return direction_; }
 
-    /*!
-     * \brief Sets the side lengths to consider for the upscaling process.
-     * \param sideLengths The side lengths to consider.
-     */
+    // Set the side lengths to consider for the upscaling process.
     void setSideLengths(const GlobalPosition& sideLengths)
     { length_ = sideLengths; }
 
-    /*!
-     * \brief Returns the side lengths to consider for the upscaling process.
-     */
+    // Return the side lengths to consider for the upscaling process.
     const GlobalPosition& sideLengths() const
     { return length_; }
 
-    /*!
-     * \brief Returns the liquid mass density.
-     */
+    // Return the liquid mass density.
     Scalar liquidDensity() const
     {
         static const Scalar liquidDensity = getParam<Scalar>("Component.LiquidDensity");
         return liquidDensity;
     }
 
-    /*!
-     * \brief Returns the liquid dynamic viscosity-
-     */
+    // Return the liquid dynamic viscosity-
     Scalar liquidDynamicViscosity() const
     {
         static const Scalar liquidDynamicViscosity = getParam<Scalar>("Component.LiquidKinematicViscosity") * liquidDensity();
         return liquidDynamicViscosity;
     }
 
-    /*!
-     * \brief Returns the applied pressure gradient.
-     */
+    // Return the applied pressure gradient.
     Scalar pressureGradient() const
     { return pressureGradient_; }
 
-    /*!
-     * \brief Returns the label of outlet pores assuming a previously set direction.
-     */
-    int outletPoreLabel() const
-    {
-        static constexpr std::array<int, 3> label = {2, 4, 6};
-        return label[direction_];
-    }
 
-    /*!
-     * \brief Returns the label of inlet pores assuming a previously set direction.
-     */
+    // Return the label of inlet pores assuming a previously set direction.
     int inletPoreLabel() const
     {
         static constexpr std::array<int, 3> label = {1, 3, 5};
+        return label[direction_];
+    }
+
+    // Return the label of outlet pores assuming a previously set direction.
+    int outletPoreLabel() const
+    {
+        static constexpr std::array<int, 3> label = {2, 4, 6};
         return label[direction_];
     }
 
@@ -183,7 +173,6 @@ private:
 
     bool isInletPore_(const SubControlVolume& scv) const
     {
-
         if (useLabels_)
             return inletPoreLabel() == this->gridGeometry().poreLabel(scv.dofIndex());
         else
@@ -204,6 +193,9 @@ private:
     int direction_;
     GlobalPosition length_;
     bool useLabels_;
+
+    // [[/codeblock]]
+    // [[/details]]
 };
 
 } // end namespace Dumux

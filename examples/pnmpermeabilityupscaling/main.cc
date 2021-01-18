@@ -121,19 +121,21 @@ int main(int argc, char** argv) try
     // [[/codeblock]]
 
     // ### Prepare the upscaling procedure.
-    // ### Specify the directions for which the permeability shall be determined (default: x, y, z for 3D)
+    // Specify the directions for which the permeability shall be determined (default: x, y, z for 3D).
     // [[codeblock]]
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     const auto defaultDirections = GridView::dimensionworld == 3 ? std::vector<int>{0, 1, 2}
                                                                  : std::vector<int>{0, 1};
     const auto directions = getParam<std::vector<int>>("Problem.Directions", defaultDirections);
+    // [[/codeblock]]
 
-    // set up a helper class to determine the total mass flux leaving the network
+    // Set up a helper class to determine the total mass flux leaving the network
     const auto boundaryFlux = PoreNetworkModelBoundaryFlux(*gridVariables, assembler->localResidual(), x);
 
     // Set the side lengths used for applying the pressure gradient and calculating the REV outflow area.
-    // One can either specify these values manually (could be more accurate) or let the UpscalingHelper struct
+    // One can either specify these values manually (usually more accurate) or let the UpscalingHelper struct
     // determine it automatically based on the network's bounding box.
+    // [[codeblock]]
     const auto sideLengths = [&]()
     {
         using GlobalPosition = typename GridGeometry::GlobalCoordinate;
@@ -143,12 +145,14 @@ int main(int argc, char** argv) try
             return UpscalingHelper::getSideLengths(*gridGeometry);
     }();
 
+    // pass the side lengths to the problem
     problem->setSideLengths(sideLengths);
-
     // [[/codeblock]]
 
-    // This procedure is now repeated for the number of refinements as specified
-    // in the input file.
+    // ### The actual upscaling procedure
+
+    // Iterate over all directions specified before, apply the pressure gradient, calculated the mass flux
+    // and finally determine the permeability.
     // [[codeblock]]
     for (int dimIdx : directions)
     {
@@ -183,7 +187,6 @@ int main(int argc, char** argv) try
             }
         }
     }
-    // [[/codeblock]]
 
     // program end, return with 0 exit code (success)
     return 0;
