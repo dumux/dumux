@@ -56,7 +56,7 @@
 #include <dumux/porousmediumflow/2p/gridadaptindicator.hh>
 
 // Use the incompressible or point source problem for this adaptive test
-#include <test/porousmediumflow/2p/implicit/incompressible/problem.hh>
+#include <test/porousmediumflow/2p/incompressible/problem.hh>
 #include "pointsourceproblem.hh"
 #include "problem.hh"
 

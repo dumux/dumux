@@ -30,7 +30,7 @@
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/vtk.hh>
 
-#include <test/porousmediumflow/2p/implicit/incompressible/problem.hh>
+#include <test/porousmediumflow/2p/incompressible/problem.hh>
 #include "problem_tracer.hh"
 
 #include <dumux/common/properties.hh>

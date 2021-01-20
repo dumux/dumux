@@ -62,7 +62,7 @@
 #include <dumux/material/fluidstates/temperatureoverlay.hh>
 
 // for co2, include the tables of the co2 test
-#include <test/porousmediumflow/co2/implicit/co2tables.hh>
+#include <test/porousmediumflow/co2/co2tables.hh>
 
 int main()
 {

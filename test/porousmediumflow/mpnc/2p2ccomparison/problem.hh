@@ -36,7 +36,7 @@
 
 #include <dumux/porousmediumflow/mpnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
-#include <test/porousmediumflow/2p2c/implicit/mpnccomparison/iofields.hh>
+#include <test/porousmediumflow/2p2c/mpnccomparison/iofields.hh>
 
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/fluidstates/compositional.hh>

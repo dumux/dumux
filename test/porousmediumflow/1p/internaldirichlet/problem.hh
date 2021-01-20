@@ -27,7 +27,7 @@
 
 #include <bitset>
 #include <dumux/common/boundarytypes.hh>
-#include <test/porousmediumflow/1p/implicit/incompressible/problem.hh>
+#include <test/porousmediumflow/1p/incompressible/problem.hh>
 
 namespace Dumux {
 // forward declarations

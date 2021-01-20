@@ -1,1 +1,2 @@
-add_subdirectory(implicit)
+add_subdirectory(isothermal)
+add_subdirectory(nonisothermal)

@@ -127,7 +127,7 @@ show_message("(3/3) Step completed. Succesfully configured and built dune and du
 #################################################################
 #################################################################
 show_message("(Installation complete) To test if everything works, please run the following commands (can be copied to command line):\n\n"
-             "  cd dumux/dumux/build-cmake/test/porousmediumflow/1p/implicit/isothermal\n"
+             "  cd dumux/dumux/build-cmake/test/porousmediumflow/1p/isothermal\n"
              "  make test_1p_tpfa\n"
              "  ./test_1p_tpfa\n"
              "  paraview *pvd\n")
