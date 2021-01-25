@@ -24,6 +24,25 @@ Differences Between DuMu<sup>x</sup> 3.3 and DuMu<sup>x</sup> 3.2
     - add `-DDUNE_ENABLE_PYTHONBINDINGS=TRUE` and `-DCMAKE_POSITION_INDEPENDENT_CODE=TRUE` to your CMAKE_FLAGS and run dunecontrol
     - run `python3 dune-common/bin/setup-dunepy.py`
     - adapt your PYTHONPATH environment variable as described [here](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/tree/master/python)
+- __Obtain DuMux via pip__: The Dumux source code can now be installed using `pip install dumux`. This works for the Python bindings as well as the C++ source code. Matching Dune modules are also installed. Currently not all dune modules have Python packages available. We recommend trying this new feature in a virtual environment by typing
+```sh
+python3 -m virtualenv venv
+source venv/bin/activate
+pip install dumux
+```
+To test the setup you can use the following Python script
+```py
+from dune.grid import structuredGrid
+from dumux.discretization import GridGeometry
+
+gridView = structuredGrid([0,0],[1,1],[5,5])
+
+gridGeometry = GridGeometry(gridView, discMethod="cctpfa")
+gridGeometry.update()
+
+print("The total number of scvs is {}".format(gridGeometry.numScv()))
+print("The total number of scvfs is {}".format(gridGeometry.numScvf()))
+```
 - __fmt-library__: We now include a basic version of the [fmt-library](https://github.com/fmtlib/fmt) which implements `std::format` (coming with C++20) without the need for C++20.
   In order to use this, include `<dumux/io/format.hh>`. `format`, `format_to`, `format_to_n`, `formatted_size` are available in the `Dumux::Fmt` namespace.
   The string formatting is documented [here](https://en.cppreference.com/w/cpp/utility/format/formatter#Standard_format_specification) and follows the Python string formatting rules.
