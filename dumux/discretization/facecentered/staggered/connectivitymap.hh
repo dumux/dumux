@@ -36,13 +36,15 @@ namespace Dumux {
  * \brief Stores the dof indices corresponding to the neighboring scvs
  *        that contribute to the derivative calculation.
  */
-template<class GridGeometry>
+template<class GridGeometry, int upwindSchemeOrder>
 class FaceCenteredStaggeredConnectivityMap
 {
     using GridView = typename GridGeometry::GridView;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using Stencil = std::vector<GridIndexType>;
     using Map = std::vector<Stencil>;
+    static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
+    static_assert(upwindSchemeOrder <= 2, "Not implemented: Order higher than 2!");
 
 public:
 
@@ -90,7 +92,18 @@ public:
                 if (scvf.isFrontal())
                 {
                     if (!scvf.boundary()) // opposite dof
+                    {
                         map_[ownScvIndex].push_back(fvGeometry.scv(scvf.outsideScvIdx()).index());
+                        if constexpr (useHigherOrder)
+                        {
+                            // add the forward SCV index, if possible
+                            if (fvGeometry.hasForwardNeighbor(scvf))
+                                map_[ownScvIndex].push_back(fvGeometry.forwardScvIdx(scvf));
+                            // add the backward SCV index, if possible
+                            if (fvGeometry.hasBackwardNeighbor(scvf))
+                                map_[ownScvIndex].push_back(fvGeometry.backwardScvIdx(scvf));
+                        }
+                    }
                     else
                     {
                         // treat frontal faces on boundaries
