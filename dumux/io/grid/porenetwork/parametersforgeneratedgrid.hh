@@ -164,10 +164,10 @@ public:
                 if (value > maxPoreRadius[vIdxGlobal])
                 {
                     poreRadiusLimited[vIdxGlobal] = true;
-                    setParameter(vertex, "PoreRadius", maxPoreRadius[vIdxGlobal]);
+                    setParameter(vertex, "PoreInscribedRadius", maxPoreRadius[vIdxGlobal]);
                 }
                 else
-                    setParameter(vertex, "PoreRadius", value);
+                    setParameter(vertex, "PoreInscribedRadius", value);
             };
 
             if (numSubregions == 0) // assign radius if no subregions are specified
@@ -472,7 +472,7 @@ private:
         const auto poreVolume = [&] (const auto& vertex, const auto vIdx)
         {
             static const auto geometry = Pore::shapeFromString(getParamFromGroup<std::string>(paramGroup_, "Grid.PoreGeometry"));
-            const Scalar r = getParameter(vertex, "PoreRadius");
+            const Scalar r = getParameter(vertex, "PoreInscribedRadius");
             Scalar volume = 0.0;
 
             if (geometry == Pore::Shape::cylinder)
@@ -538,8 +538,8 @@ private:
                 return inputThroatRadius;
             else
             {
-                const Scalar poreRadius0 = getParameter(vertices[0], "PoreRadius");
-                const Scalar poreRadius1 = getParameter(vertices[1], "PoreRadius");
+                const Scalar poreRadius0 = getParameter(vertices[0], "PoreInscribedRadius");
+                const Scalar poreRadius1 = getParameter(vertices[1], "PoreInscribedRadius");
                 return Throat::averagedRadius(poreRadius0, poreRadius1, delta, throatN);
             }
         };
@@ -569,7 +569,7 @@ private:
             {
                 typedef typename GridView::template Codim<dim>::Entity PNMVertex;
                 const std::array<PNMVertex, 2> vertices = {element.template subEntity<dim>(0), element.template subEntity<dim>(1)};
-                const Scalar result = delta - getParameter(vertices[0], "PoreRadius") - getParameter(vertices[1], "PoreRadius");
+                const Scalar result = delta - getParameter(vertices[0], "PoreInscribedRadius") - getParameter(vertices[1], "PoreInscribedRadius");
                 if (result <= 0.0)
                     DUNE_THROW(Dune::GridError, "Pore radii are so large they intersect! Something went wrong at element " << gridView_.indexSet().index(element));
                 else
