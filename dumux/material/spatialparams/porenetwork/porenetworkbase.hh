@@ -90,11 +90,20 @@ public:
    }
 
    template<class ElementSolutionVector>
+   Scalar poreInscribedRadius(const Element& element,
+                     const SubControlVolume& scv,
+                     const ElementSolutionVector& elemSol) const
+   {
+       return gridGeometry().poreInscribedRadius(scv.dofIndex());
+   }
+
+   template<class ElementSolutionVector>
+   [[deprecated("Use poreInscribedRadius")]]
    Scalar poreRadius(const Element& element,
                      const SubControlVolume& scv,
                      const ElementSolutionVector& elemSol) const
    {
-       return gridGeometry().poreRadius(scv.dofIndex());
+       return gridGeometry().poreInscribedRadius(scv.dofIndex());
    }
 
     /*!
