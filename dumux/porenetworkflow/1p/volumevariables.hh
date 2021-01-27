@@ -61,19 +61,23 @@ public:
     {
         ParentType::update(elemSol, problem, element, scv);
 
-        poreRadius_ = problem.spatialParams().poreRadius(element, scv, elemSol);
+        inscribedPoreRadius_ = problem.spatialParams().poreInscribedRadius(element, scv, elemSol);
         poreVolume_ = problem.gridGeometry().poreVolume(scv.dofIndex()) * this->porosity();
     }
 
+    [[deprecated("Use poreInscribedRadius")]]
     Scalar poreRadius() const
-    { return poreRadius_; }
+    { return inscribedPoreRadius_; }
+
+    Scalar poreInscribedRadius() const
+    { return inscribedPoreRadius_; }
 
     Scalar poreVolume() const
     { return poreVolume_; }
 
 protected:
 
-    Scalar poreRadius_;
+    Scalar inscribedPoreRadius_;
     Scalar poreVolume_;
 };
 
