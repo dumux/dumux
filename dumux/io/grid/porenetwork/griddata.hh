@@ -323,7 +323,7 @@ private:
     {
         if (!isDgfData_)
         {
-            vertexParameterNames_ = StringVector{"PoreRadius", "PoreVolume", "PoreLabel"};
+            vertexParameterNames_ = StringVector{"PoreInscribedRadius", "PoreVolume", "PoreLabel"};
             elementParameterNames_ = StringVector{"ThroatRadius", "ThroatLength", "ThroatLabel"};
             if (numSubregions_ > 0)
             {
