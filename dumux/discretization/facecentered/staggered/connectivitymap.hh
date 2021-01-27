@@ -114,6 +114,7 @@ public:
                                 map_[scv.index()].push_back(ownScvIndex);
                         }
                     }
+
                 }
                 else // lateral face
                 {
@@ -123,9 +124,16 @@ public:
                     //           |c|
                     //           |v|
                     //           |f|
-                    if (!scvf.boundary())
-                        map_[ownScvIndex].push_back(fvGeometry.scv(scvf.outsideScvIdx()).index());
-
+                    if (fvGeometry.hasParallelNeighbor(scvf))
+                    {
+                        map_[ownScvIndex].push_back(fvGeometry.parallelScvIdx(scvf));
+                        if constexpr (useHigherOrder)
+                        {
+                            // add the second parallel SCV index, if possible
+                            if (fvGeometry.hasSecondParallelNeighbor(scvf))
+                                map_[ownScvIndex].push_back(fvGeometry.secondParallelScvIdx(scvf));
+                        }
+                    }
 
                     // the normal DOF scv
                     //
