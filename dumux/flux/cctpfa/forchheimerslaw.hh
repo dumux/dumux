@@ -50,7 +50,7 @@ class ForchheimersLawImplementation;
  * \tparam GridGeometry the grid geometry
  * \tparam isNetwork whether we are computing on a network grid embedded in a higher world dimension
  */
-template<class Scalar, class GridGeometry, class FluxVariables, bool isNetwork>
+template<class Scalar, class GridGeometry, class UpwindScheme, bool isNetwork>
 class CCTpfaForchheimersLaw;
 
 /*!
@@ -62,7 +62,7 @@ template <class TypeTag>
 class ForchheimersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
 : public CCTpfaForchheimersLaw<GetPropType<TypeTag, Properties::Scalar>,
                                GetPropType<TypeTag, Properties::GridGeometry>,
-                               GetPropType<TypeTag, Properties::FluxVariables>,
+                               typename GetPropType<TypeTag, Properties::FluxVariables>::UpwindScheme,
                               (GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension < GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimensionworld)>
 {};
 
@@ -137,10 +137,10 @@ private:
  * \ingroup CCTpfaFlux
  * \brief Specialization of the CCTpfaForchheimersLaw grids where dim=dimWorld
  */
-template<class ScalarType, class GridGeometry, class FluxVariables>
-class CCTpfaForchheimersLaw<ScalarType, GridGeometry, FluxVariables, /*isNetwork*/ false>
+template<class ScalarType, class GridGeometry, class UpwindScheme>
+class CCTpfaForchheimersLaw<ScalarType, GridGeometry, UpwindScheme, /*isNetwork*/ false>
 {
-    using ThisType = CCTpfaForchheimersLaw<ScalarType, GridGeometry, FluxVariables, /*isNetwork*/ false>;
+    using ThisType = CCTpfaForchheimersLaw<ScalarType, GridGeometry, UpwindScheme, /*isNetwork*/ false>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
@@ -156,7 +156,6 @@ class CCTpfaForchheimersLaw<ScalarType, GridGeometry, FluxVariables, /*isNetwork
     using DimWorldMatrix = Dune::FieldMatrix<ScalarType, dimWorld, dimWorld>;
 
     using DarcysLaw = CCTpfaDarcysLaw<ScalarType, GridGeometry, /*isNetwork*/ false>;
-    using UpwindScheme = typename FluxVariables::UpwindScheme;
 
   public:
     //! state the scalar type of the law
@@ -533,8 +532,8 @@ private:
  * \ingroup CCTpfaFlux
  * \brief Specialization of the CCTpfaForchheimersLaw grids where dim<dimWorld
  */
-template<class ScalarType, class GridGeometry, class FluxVariables>
-class CCTpfaForchheimersLaw<ScalarType, GridGeometry, FluxVariables, /*isNetwork*/ true>
+template<class ScalarType, class GridGeometry, class UpwindScheme>
+class CCTpfaForchheimersLaw<ScalarType, GridGeometry, UpwindScheme, /*isNetwork*/ true>
 {
     static_assert(AlwaysFalse<ScalarType>::value, "Forchheimer not implemented for network grids");
 };
