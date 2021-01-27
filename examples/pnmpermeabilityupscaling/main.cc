@@ -180,7 +180,7 @@ int main(int argc, char** argv) try
         if (!referenceData.empty())
         {
             static const Scalar eps = getParam<Scalar>("Problem.TestEpsilon");
-            if (Dune::FloatCmp::ne<Scalar>(K, referenceData[dimIdx]), eps)
+            if (Dune::FloatCmp::ne<Scalar>(K, referenceData[dimIdx], eps))
             {
                 std::cerr << "Calculated permeability of " << K << " does not match with reference value of " << referenceData[dimIdx] << std::endl;
                 return 1;
