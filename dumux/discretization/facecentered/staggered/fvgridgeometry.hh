@@ -77,8 +77,8 @@ struct FaceCenteredStaggeredDefaultGridGeometryTraits : public DefaultMapperTrai
         bool isValid = false;
     };
 
-    template<class GridGeometry>
-    using ConnectivityMap = FaceCenteredStaggeredConnectivityMap<GridGeometry>;
+    template<class GridGeometry, int upwindSchemeOrder>
+    using ConnectivityMap = FaceCenteredStaggeredConnectivityMap<GridGeometry, upwindSchemeOrder>;
 
     template<class GridGeometry, bool enableCache>
     using LocalView = FaceCenteredStaggeredFVElementGeometry<GridGeometry, enableCache>;
@@ -114,7 +114,7 @@ class FaceCenteredStaggeredFVGridGeometry<GV, true, upwOrder, Traits>
     using Element = typename GV::template Codim<0>::Entity;
 
     using IntersectionMapper = typename Traits::IntersectionMapper;
-    using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType>;
+    using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType, upwOrder>;
 
     using Scalar = typename GV::ctype;
 
