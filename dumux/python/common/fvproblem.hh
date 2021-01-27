@@ -90,7 +90,7 @@ public:
                                const SubControlVolume &scv) const
     {
         if constexpr (!isBox)
-            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scvf) called for cell-centered method.");
+            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scv) called for cell-centered method.");
         else
             return pyProblem_.attr("dirichlet")(element, scv).template cast<PrimaryVariables>();
     }
@@ -131,7 +131,7 @@ public:
     template<class Entity>
     PrimaryVariables initial(const Entity& entity) const
     {
-        return pyProblem_.attr("intial")(entity).template cast<PrimaryVariables>();
+        return pyProblem_.attr("initial")(entity).template cast<PrimaryVariables>();
     }
 
     template<class ElementSolution>
