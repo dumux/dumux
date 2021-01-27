@@ -29,6 +29,8 @@
 // (https://gitlab.dune-project.org/core/dune-grid/issues/78),
 // it should be guarded by a DUNE_VERSION macro and removed later.
 
+#include <dune/grid/common/capabilities.hh>
+
 #if HAVE_UG
 namespace Dune {
 template<int dim>
