@@ -99,7 +99,7 @@ public:
 
         // get the vertex parameters
         const auto numPores = gridView.size(dim);
-        poreRadius_.resize(numPores);
+        poreInscribedRadius_.resize(numPores);
         poreLabel_.resize(numPores);
         poreVolume_.resize(numPores);
 
@@ -122,12 +122,12 @@ public:
 
         for (const auto& vertex : vertices(gridView))
         {
-            static const auto poreRadiusIdx = gridData.parameterIndex("PoreRadius");
+            static const auto poreInscribedRadiusIdx = gridData.parameterIndex("PoreInscribedRadius");
             static const auto poreLabelIdx = gridData.parameterIndex("PoreLabel");
             const auto vIdx = gridView.indexSet().index(vertex);
             const auto& params = gridData.parameters(vertex);
-            poreRadius_[vIdx] = params[poreRadiusIdx];
-            assert(poreRadius_[vIdx] > 0.0);
+            poreInscribedRadius_[vIdx] = params[poreInscribedRadiusIdx];
+            assert(poreInscribedRadius_[vIdx] > 0.0);
             poreLabel_[vIdx] = params[poreLabelIdx];
 
             if (!useSameGeometryForAllPores())
@@ -212,12 +212,22 @@ public:
     { return poreLabel_; }
 
     //! Returns the radius of the pore
+    [[deprecated("Use poreInscribedRadius")]]
     Scalar poreRadius(const GridIndex dofIdxGlobal) const
-    { return poreRadius_[dofIdxGlobal]; }
+    { return poreInscribedRadius_[dofIdxGlobal]; }
+
+    //! Returns the inscribed radius of the pore
+    Scalar poreInscribedRadius(const GridIndex dofIdxGlobal) const
+    { return poreInscribedRadius_[dofIdxGlobal]; }
 
     //! Returns the vector of pore radii
+    [[deprecated("Use poreInscribedRadius")]]
     const std::vector<Scalar>& poreRadius() const
-    { return poreRadius_; }
+    { return poreInscribedRadius_; }
+
+    //! Returns the vector of inscribed pore radii
+    const std::vector<Scalar>& poreInscribedRadius() const
+    { return poreInscribedRadius_; }
 
     //! Returns the volume of the pore
     Scalar poreVolume(const GridIndex dofIdxGlobal) const
@@ -271,7 +281,7 @@ public:
             // if a vector of pore geometries is requested (e.g., for vtk output),
             // resize the container and fill it with the same value everywhere
             const auto poreGeo = poreGeometry_[0];
-            poreGeometry_.resize(poreRadius_.size(), poreGeo);
+            poreGeometry_.resize(poreInscribedRadius_.size(), poreGeo);
         }
 
         return poreGeometry_;
@@ -358,10 +368,10 @@ private:
             {
                 static const Scalar fixedHeight = getParamFromGroup<Scalar>(gridData.paramGroup(), "Grid.PoreHeight", -1.0);
                 const Scalar h = fixedHeight > 0.0 ? fixedHeight : gridData.getParameter(vertex, "PoreHeight");
-                return Pore::volume(Pore::Shape::cylinder, poreRadius(vIdx), h);
+                return Pore::volume(Pore::Shape::cylinder, poreInscribedRadius(vIdx), h);
             }
             else
-                return Pore::volume(poreGeometry(vIdx), poreRadius(vIdx));
+                return Pore::volume(poreGeometry(vIdx), poreInscribedRadius(vIdx));
         }
     }
 
@@ -443,7 +453,7 @@ private:
     }
 
     mutable std::vector<Pore::Shape> poreGeometry_;
-    std::vector<Scalar> poreRadius_;
+    std::vector<Scalar> poreInscribedRadius_;
     std::vector<Scalar> poreVolume_;
     std::vector<Label> poreLabel_; // 0:no, 1:general, 2:coupling1, 3:coupling2, 4:inlet, 5:outlet
     std::vector<SmallLocalIndex> coordinationNumber_;
