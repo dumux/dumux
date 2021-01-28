@@ -53,68 +53,59 @@ int main(int argc, char* argv[])
     constexpr int dimworld = 3;
     using Point = Dune::FieldVector<double, dimworld>;
 
-    Point a{0.0, 0.0, 0.1};
-    Point b{1.0, 0.0, 0.0};
-    Point c{0.0, 1.0, 0.0};
-
-    Point p0{0.5, 0.5, -1.0};
-    Point q0{0.5, 0.5, 1.0};
-
-    testSegTriangle(a, b, c, p0, q0);
-    testSegTriangle(a, b, c, q0, p0);
-
-    Point p1 = a;
-    Point q1 = b;
-
-    testSegTriangle(a, b, c, p1, q1, false);
-    testSegTriangle(a, b, c, q1, p1, false);
-
-    Point p2{0.0, 0.0, 0.0};
-    Point q2{0.0, 0.0, 0.2};
-
-    testSegTriangle(a, b, c, p2, q2);
-
     using Geometry3D = Dune::MultiLinearGeometry<double, 3, dimworld>;
     using Geometry2D = Dune::MultiLinearGeometry<double, 2, dimworld>;
     using Test = Dumux::GeometryIntersection<Geometry3D, Geometry2D>;
     typename Test::Intersection intersectionPolygon;
 
     std::vector<Dune::FieldVector<double, dimworld>> cubeCorners({
-        {0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {1.0, 1.0, 0.0},
-        {0.0, 0.0, 1.0}, {1.0, 0.0, 1.0}, {0.0, 1.0, 1.0}, {1.0, 1.0, 1.0}
-    });
+        {1.7837834300248889274, 1,                      0.49999996467938950806},
+        {1.7835132521830019403, 1,                      0.54545451802928024421},
+        {1.7662934121967939216, 0.9617398865062183333,  0.48484841728616778767},
+        {1.7574133143618040354, 0.94260982975932738892, 0.49999992026450240656},
+        {1.7935699809263809801, 0.97237560778921372506, 0.47177679079232959225},
+        {1.7983281674561839569, 0.95856341168382064311, 0.48039248052374511344},
+        {1.7780058298299370456, 0.95058662072157407152, 0.46746892371917841968},
+        {1.7759899038176580888, 0.93411549429543205836, 0.47177676118240491343} });
 
     std::vector<Dune::FieldVector<double, dimworld>> quadCorners({
-        {0.0, 0.0, 0.5}, {1.0, 0.0, 0.5}, {0.0, 1.0, 0.5}, {1.0, 1.0, 0.5}
-    });
-
-    std::vector<Dune::FieldVector<double, dimworld>> triCorners({
-        {-0.1, -0.1, 0.3}, {1.1, -0.1, 0.3}, {0.5, 2.0, 0.8}
-    });
+        {1.8749999999999489297, 1, 0.49999999999913791182},
+        {1.9166666666666329899, 1, 0.58333333333253922781},
+        {1.7499999999998980815, 1, 0.49999999999958189001},
+        {1.8749999999999489297, 1, 0.62499999999946176388} });
 
     Geometry3D cube(Dune::GeometryTypes::cube(dimworld), cubeCorners);
     Geometry2D quad(Dune::GeometryTypes::cube(dimworld-1), quadCorners);
-    Geometry2D tri(Dune::GeometryTypes::simplex(dimworld-1), triCorners);
+
+    // write out cube
+    std::vector<std::vector<unsigned int>> faceCornerIndices({
+        {0, 1, 3, 2},
+        {0, 1, 5, 4},
+        {1, 3, 7, 5},
+        {0, 2, 6, 4},
+        {2, 3, 7, 6},
+        {4, 5, 7, 6}
+    });
+    for (unsigned int i = 0; i < 6; ++i)
+    {
+        std::vector<Point> corners;
+        for (unsigned int c = 0; c < 4; ++c)
+            corners.emplace_back(cubeCorners[faceCornerIndices[i][c]]);
+        const auto t = Dumux::triangulate<2, dimworld>(corners);
+        Dumux::writeVTKPolyDataTriangle(t, "cube_face_" + std::to_string(i));
+    }
+
+    // write out quadrilateral
+    std::vector<Point> quadRearrange({quadCorners[0], quadCorners[1], quadCorners[3], quadCorners[2]});
+    const auto quadTriangulation = Dumux::triangulate<2, dimworld>(quadRearrange);
+    Dumux::writeVTKPolyDataTriangle(quadTriangulation, "quad");
 
     if (Test::intersection(cube, quad, intersectionPolygon))
     {
         const auto triangulation = Dumux::triangulate<2, dimworld>(intersectionPolygon);
         Dumux::writeVTKPolyDataTriangle(triangulation, "quad_intersections");
-        if (triangulation.size() != 4)
-            DUNE_THROW(Dune::InvalidStateException, "Found " << triangulation.size() << " instead of 4 intersections!");
+        DUNE_THROW(Dune::InvalidStateException, "Found unexpected intersection!");
     }
-    else
-        DUNE_THROW(Dune::InvalidStateException, "No intersections found!");
-
-    if (Test::intersection(cube, tri, intersectionPolygon))
-    {
-        const auto triangulation = Dumux::triangulate<2, dimworld>(intersectionPolygon);
-        Dumux::writeVTKPolyDataTriangle(triangulation, "tri_intersections");
-        if (triangulation.size() != 6)
-            DUNE_THROW(Dune::InvalidStateException, "Found " << triangulation.size() << " instead of 6 intersections!");
-    }
-    else
-        DUNE_THROW(Dune::InvalidStateException, "No intersections found!");
 
     std::cout << "All tests passed!" << std::endl;
 

@@ -24,6 +24,7 @@
 #define DUMUX_GEOMETRY_INTERSECTION_HH
 
 #include <tuple>
+#include <iomanip>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/promotiontraits.hh>
@@ -871,10 +872,18 @@ public:
             if (intersectsPointGeometry(geo1.corner(i), geo2))
                 points.emplace_back(geo1.corner(i));
 
+        std::cout << "Points 3d in 2d: \n";
+        for(const auto p : points)
+            std::cout << std::setprecision(20) << p << std::endl;
+
         // add 2d geometry corners that are inside the 3d geometry
         for (int i = 0; i < geo2.corners(); ++i)
             if (intersectsPointGeometry(geo2.corner(i), geo1))
                 points.emplace_back(geo2.corner(i));
+
+        std::cout << "Points now after 2d in 3d: \n";
+        for(const auto p : points)
+            std::cout << std::setprecision(20) <<p << std::endl;
 
         // get some geometry types
         using PolyhedronFaceGeometry = Dune::MultiLinearGeometry<ctype, 2, dimworld>;
@@ -897,7 +906,10 @@ public:
             using PolySegTest = GeometryIntersection<Geometry2, SegGeometry, PointPolicy>;
             typename PolySegTest::Intersection polySegIntersection;
             if (PolySegTest::intersection(geo2, segGeo, polySegIntersection))
+            {
+                std::cout << "Polyhed edge - polygon isection: " << std::setprecision(20) << polySegIntersection << std::endl;
                 points.emplace_back(polySegIntersection);
+            }
         }
 
         // add intersection points of all polygon faces (codim 1) with the polyhedron faces
@@ -925,18 +937,22 @@ public:
                 }
             }();
 
+            std::cout << "Polyhedron face " << i << std::endl;
             for (int j = 0; j < refElement2.size(1); ++j)
             {
                 const auto localEdgeGeom = refElement2.template geometry<1>(j);
                 const auto p = geo2.global(localEdgeGeom.corner(0));
                 const auto q = geo2.global(localEdgeGeom.corner(1));
-
+                std::cout << "Checking polygon edge " << j << ": " << std::setprecision(20) <<p << " -> " << q << std::endl;
                 const auto segGeo = SegGeometry(Dune::GeometryTypes::line, std::vector<Point>{p, q});
 
                 using PolySegTest = GeometryIntersection<PolyhedronFaceGeometry, SegGeometry, PointPolicy>;
                 typename PolySegTest::Intersection polySegIntersection;
                 if (PolySegTest::intersection(faceGeo, segGeo, polySegIntersection))
+                {
+                    std::cout << "Found intersection: " << std::setprecision(20) << polySegIntersection << std::endl;
                     points.emplace_back(polySegIntersection);
+                }
             }
         }
 
@@ -945,6 +961,7 @@ public:
 
         // remove duplicates
         const auto eps = (geo1.corner(0) - geo1.corner(1)).two_norm()*eps_;
+        std::cout << "Chosen epsilon value = " << eps << std::endl;
         std::sort(points.begin(), points.end(), [&eps](const auto& a, const auto& b) -> bool
         {
             using std::abs;
@@ -956,10 +973,17 @@ public:
             return (b-a).two_norm() < eps;
         });
 
+        std::cout << "Points before removal: \n";
+        for(const auto p : points)
+            std::cout << std::setprecision(20) <<p << std::endl;
+
         points.erase(removeIt, points.end());
 
         // return false if we don't have more than three unique points
         if (points.size() < 3) return false;
+        std::cout << "Points after removal: \n";
+        for(const auto p : points)
+            std::cout << std::setprecision(20) <<p << std::endl;
 
         // intersection polygon is convex hull of above points
         intersection = grahamConvexHull<2>(points);
