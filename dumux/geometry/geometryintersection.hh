@@ -959,6 +959,10 @@ public:
         // return if no intersection points were found
         if (points.empty()) return false;
 
+        std::cout << "Points before sort: \n";
+        for(const auto p : points)
+            std::cout << std::setprecision(20) <<p << std::endl;
+
         // remove duplicates
         const auto eps = (geo1.corner(0) - geo1.corner(1)).two_norm()*eps_;
         std::cout << "Chosen epsilon value = " << eps << std::endl;
