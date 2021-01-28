@@ -25,6 +25,7 @@
 #define DUMUX_IO_GRID_MANAGER_SUB_HH
 
 #include <memory>
+#include <utility>
 
 #include <dune/common/shared_ptr.hh>
 #include <dune/common/concept.hh>
@@ -241,13 +242,25 @@ private:
     template<class Img>
     void createGridFromImage_(const Img& img, const std::string& paramGroup)
     {
-        // get the corner coordinates
-        using GlobalPosition = typename ParentType::Grid::template Codim<0>::Geometry::GlobalCoordinate;
-        const auto upperRight = getParamFromGroup<GlobalPosition>(paramGroup, "Grid.UpperRight");
-        const auto lowerLeft = getParamFromGroup<GlobalPosition>(paramGroup, "Grid.LowerLeft", GlobalPosition(0.0));
-
         // get the number of cells
         const std::array<int, dim> cells{static_cast<int>(img.header().nCols), static_cast<int>(img.header().nRows)};
+
+        // get the corner coordinates
+        const auto [lowerLeft, upperRight] = [&]()
+        {
+            using GlobalPosition = typename ParentType::Grid::template Codim<0>::Geometry::GlobalCoordinate;
+            const auto lowerLeft = getParamFromGroup<GlobalPosition>(paramGroup, "Grid.LowerLeft", GlobalPosition(0.0));
+            if (hasParamInGroup(paramGroup, "Grid.PixelDimensions"))
+            {
+                auto upperRight = getParamFromGroup<GlobalPosition>(paramGroup, "Grid.PixelDimensions");
+                for (int i = 0; i < upperRight.size(); ++i)
+                    upperRight[i] *= cells[i];
+                upperRight += lowerLeft;
+                return std::make_pair(lowerLeft, upperRight);
+            }
+            else
+                return std::make_pair(lowerLeft, getParamFromGroup<GlobalPosition>(paramGroup, "Grid.UpperRight"));
+        }();
 
         // construct the host grid
         this->initHostGrid_(lowerLeft, upperRight, cells, paramGroup);
