@@ -355,7 +355,7 @@ private:
     {
         // Get the volume flux based on Darcy's law. The value returned by this method needs to be multiplied with the
         // mobility (upwinding).
-        Scalar flux = DarcysLaw::flux(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, elemFluxVarsCache);
+        const auto flux = DarcysLaw::flux(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, elemFluxVarsCache);
         auto upwindTerm = [phaseIdx](const auto& volVars){ return volVars.mobility(phaseIdx); };
         const auto darcyFlux = UpwindScheme::apply(elemVolVars, scvf, upwindTerm, flux, phaseIdx);
 
