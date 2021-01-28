@@ -111,6 +111,7 @@ public:
     : ParentType(gridGeometry)
     {
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
+        rho_ = getParam<Scalar>("Component.LiquidDensity", 1.0);
     }
 
    /*!
@@ -191,7 +192,7 @@ public:
 
         PrimaryVariables values;
 
-        values[Indices::pressureIdx] = - 0.25 * std::exp(-10.0 * kinematicViscosity_ * M_PI * M_PI * t) * M_PI * M_PI * (4.0 * std::cos(2.0 * M_PI * x) + std::cos(4.0 * M_PI * y));
+        values[Indices::pressureIdx] = - 0.25 * std::exp(-10.0 * kinematicViscosity_ * M_PI * M_PI * t) * M_PI * M_PI * (4.0 * std::cos(2.0 * M_PI * x) + std::cos(4.0 * M_PI * y))*rho_;
         values[Indices::velocityXIdx] = - 2.0 * M_PI * std::exp(- 5.0 * kinematicViscosity_ * M_PI * M_PI * t) * std::cos(M_PI * x) * std::sin(2.0 * M_PI * y);
         values[Indices::velocityYIdx] = M_PI * std::exp(- 5.0 * kinematicViscosity_ * M_PI * M_PI * t) * std::sin(M_PI * x) * std::cos(2.0 * M_PI * y);
 
@@ -243,6 +244,7 @@ public:
 
 private:
     Scalar kinematicViscosity_;
+    Scalar rho_;
     Scalar time_ = 0;
     Scalar timeStepSize_ = 0;
 };
