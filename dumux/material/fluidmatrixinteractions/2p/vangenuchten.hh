@@ -848,11 +848,13 @@ private:
         pcLowSwePcValue_ = m->template pc<false>(lowSw);
         pcHighSwePcValue_ = m->template pc<false>(highSw);
 
-        pcSpline_ = Spline<Scalar>(highSwe, 1.0, // x0, x1
-                                   pcHighSwePcValue_, 0, // y0, y1
-                                   pcDerivativeHighSweThreshold_, pcDerivativeHighSweEnd_); // m0, m1
-
-
+        // Only initialize regularization spline if given parameters are in
+        // the admissible range. When constructing with non-sensible parameters
+        // the spline construction might fail (e.g. highSwe == 1.0)
+        if (highSwe < 1.0)
+            pcSpline_ = Spline<Scalar>(highSwe, 1.0, // x0, x1
+                                       pcHighSwePcValue_, 0, // y0, y1
+                                       pcDerivativeHighSweThreshold_, pcDerivativeHighSweEnd_); // m0, m1
     }
 
     template<class MaterialLaw>
@@ -868,14 +870,15 @@ private:
         const auto krnLowSw = m->template krn<false>(lowSw);
         const auto dkrnLowSw = m->template dkrn_dsw<false>(lowSw)*dsw_dswe;
 
-        krwSpline_ = Spline<Scalar>(highSwe, 1.0, // x0, x1
-                                    krwHighSw, 1.0, // y0, y1
-                                    dkrwHighSw, 0.0); // m0, m1
+        if (highSwe < 1.0)
+            krwSpline_ = Spline<Scalar>(highSwe, 1.0, // x0, x1
+                                        krwHighSw, 1.0, // y0, y1
+                                        dkrwHighSw, 0.0); // m0, m1
 
-        krnSpline_ = Spline<Scalar>(0.0, lowSwe, // x0, x1
-                                    1.0, krnLowSw, // y0, y1
-                                    0.0, dkrnLowSw); // m0, m1
-
+        if (lowSwe > 0.0)
+            krnSpline_ = Spline<Scalar>(0.0, lowSwe, // x0, x1
+                                        1.0, krnLowSw, // y0, y1
+                                        0.0, dkrnLowSw); // m0, m1
     }
 
     Scalar pcLowSwe_, pcHighSwe_;
