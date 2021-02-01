@@ -280,22 +280,22 @@ public:
 
 private:
     Scalar f1_(Scalar x) const
-    { return x*(1-x); /*x - x^2*/ }
+    { return x*(1.-x); /*x - x^2*/ }
 
     Scalar df1_(Scalar x) const
-    { return 1 - 2*x; }
+    { return 1. - 2.*x; }
 
     Scalar f2_(Scalar x) const
     { return f1_(x)*f1_(x); /*=x^2*(1-2x+x^2)=x^2-2x^3+x^4*/ }
 
     Scalar df2_(Scalar x) const
-    { return 2*x - 6*x*x + 4*x*x*x; }
+    { return 2.*x - 6.*x*x + 4.*x*x*x; }
 
     Scalar ddf2_(Scalar x) const
-    { return 2 - 12*x + 12*x*x; }
+    { return 2. - 12.*x + 12.*x*x; }
 
     Scalar dddf2_(Scalar x) const
-    { return - 12 + 24*x; }
+    { return - 12. + 24.*x; }
 
     Scalar dxP_ (Scalar x, Scalar y) const
     { return df1_(x); }
