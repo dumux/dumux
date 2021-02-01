@@ -49,7 +49,7 @@ int main(int argc, char** argv)
     // print the image
     for (const auto& row: printableBlackAndWhiteImage)
     {
-        for (const auto& col : row)
+        for (bool col : row)
             std::cout << col << " ";
         std::cout << std::endl;
     }
@@ -131,7 +131,7 @@ int main(int argc, char** argv)
     // print the image
     for (const auto& row: printableGrayScaleImage)
     {
-        for (const auto& col : row)
+        for (bool col : row)
             std::cout << std::setw(3) << +col << " ";
         std::cout << std::endl;
     }
