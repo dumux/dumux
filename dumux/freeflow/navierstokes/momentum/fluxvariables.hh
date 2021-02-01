@@ -78,8 +78,6 @@ class NavierStokesMomentumFluxVariables
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
 
     using UpwindScheme = typename GridGeometry::UpwindScheme;
-    static constexpr int upwindSchemeOrder = GridGeometry::upwindSchemeOrder;
-    static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
 
 public:
     NavierStokesMomentumFluxVariables(const Problem& problem,
@@ -96,7 +94,6 @@ public:
     , elemVolVarsPtr_(&elemVolVars)
     , elemFluxVarsCachePtr_(&elemFluxVarsCache)
     , elemBcTypesPtr_(&elemBcTypes)
-    , staggeredUpwindMethods_(fvGeometry.staggeredUpwindMethods())
     {
         static_assert(
             std::decay_t<decltype(problem.dirichlet(element, scvFace))>::size()
@@ -125,9 +122,6 @@ public:
 
     const ElementBoundaryTypes& elemBcTypes() const
     { return *elemBcTypesPtr_; }
-
-    const UpwindScheme& staggeredUpwindMethods() const
-    { return staggeredUpwindMethods_; }
 
     /*!
      * \brief Returns the diffusive momentum flux due to viscous forces
