@@ -634,7 +634,7 @@ public:
         if (swe <= pcLowSwe_)
             return pcLowSwePcValue_ + pcDerivativeLowSw_*(swe - pcLowSwe_);
 
-        else if (swe > 1.0)
+        else if (swe > 1.0 - std::numeric_limits<Scalar>::epsilon())
             return pcDerivativeHighSwEnd_*(swe - 1.0) + entryPressure_;
 
         else
@@ -649,7 +649,7 @@ public:
         if (swe < pcLowSwe_)
             return pcDerivativeLowSw_;
 
-        else if (swe > 1.0)
+        else if (swe > 1.0 - std::numeric_limits<Scalar>::epsilon())
             return pcDerivativeHighSwEnd_;
 
         else
