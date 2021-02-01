@@ -286,7 +286,7 @@ private:
     Scalar f_(Scalar t) const
     {
         if (isStationary_)
-            return 1.;
+            return 1.0;
         else
             return std::sin(2.0 * t);
     }
@@ -294,9 +294,9 @@ private:
     Scalar df_(Scalar t) const
     {
         if (isStationary_)
-            return 0.;
+            return 0.0;
         else
-            return 2.*std::cos(2.0 * t);
+            return 2.0 * std::cos(2.0 * t);
     }
 
     Scalar f1_(Scalar x) const

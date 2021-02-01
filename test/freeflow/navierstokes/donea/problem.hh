@@ -157,8 +157,8 @@ public:
         Scalar x = globalPos[0];
         Scalar y = globalPos[1];
 
-        source[Indices::momentumXBalanceIdx] = -2.*mu_*dxxU_(x,y) - mu_*dyyU_(x,y) - mu_*dxyV_(x,y) + dxP_(x,y);
-        source[Indices::momentumYBalanceIdx] = -2.*mu_*dyyV_(x,y) - mu_*dxyU_(x,y) - mu_*dxxV_(x,y) + dyP_(x,y);
+        source[Indices::momentumXBalanceIdx] = -2.0*mu_*dxxU_(x,y) - mu_*dyyU_(x,y) - mu_*dxyV_(x,y) + dxP_(x,y);
+        source[Indices::momentumYBalanceIdx] = -2.0*mu_*dyyV_(x,y) - mu_*dxyU_(x,y) - mu_*dxxV_(x,y) + dyP_(x,y);
         return source;
     }
     // \}
@@ -280,28 +280,28 @@ public:
 
 private:
     Scalar f1_(Scalar x) const
-    { return x*(1-x); /*x - x^2*/ }
+    { return x*(1.0-x); /*x - x^2*/ }
 
     Scalar df1_(Scalar x) const
-    { return 1 - 2*x; }
+    { return 1.0 - 2.0*x; }
 
     Scalar f2_(Scalar x) const
     { return f1_(x)*f1_(x); /*=x^2*(1-2x+x^2)=x^2-2x^3+x^4*/ }
 
     Scalar df2_(Scalar x) const
-    { return 2*x - 6*x*x + 4*x*x*x; }
+    { return 2.0*x - 6.0*x*x + 4.0*x*x*x; }
 
     Scalar ddf2_(Scalar x) const
-    { return 2 - 12*x + 12*x*x; }
+    { return 2.0 - 12.0*x + 12.0*x*x; }
 
     Scalar dddf2_(Scalar x) const
-    { return - 12 + 24*x; }
+    { return - 12.0 + 24.0*x; }
 
     Scalar dxP_ (Scalar x, Scalar y) const
     { return df1_(x); }
 
     Scalar dyP_ (Scalar x, Scalar y) const
-    { return 0.; }
+    { return 0.0; }
 
     Scalar dxU_ (Scalar x, Scalar y) const
     { return df2_(x)*df2_(y); }
