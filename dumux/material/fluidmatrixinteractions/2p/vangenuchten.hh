@@ -693,10 +693,10 @@ private:
         // newton solver (if the derivative is calculated numerically)
         // in order to get the saturation moving to the right
         // direction if it temporarily is in an 'illegal' range.
-        if (swe < pcLowSwe_)
+        if (swe <= pcLowSwe_)
             return pcLowSwePcValue_ + pcDerivativeLowSw_*(swe - pcLowSwe_);
 
-        else if (swe > 1.0 - std::numeric_limits<Scalar>::epsilon())
+        else if (swe >= 1.0)
             return pcDerivativeHighSweEnd_*(swe - 1.0);
 
         else if (swe > pcHighSwe_)
@@ -711,10 +711,10 @@ private:
      */
     OptionalScalar<Scalar> dpc_dswe(const Scalar swe) const
     {
-        if (swe < pcLowSwe_)
+        if (swe <= pcLowSwe_)
             return pcDerivativeLowSw_;
 
-        else if (swe > 1.0 - std::numeric_limits<Scalar>::epsilon())
+        else if (swe >= 1.0)
             return pcDerivativeHighSweEnd_;
 
         else if (swe > pcHighSwe_)
@@ -731,14 +731,14 @@ private:
     {
         if (pc <= 0.0)
         {
-            if (pcHighSwe_ > 1.0 - std::numeric_limits<Scalar>::epsilon())
+            if (pcHighSwe_ >= 1.0)
                 return 1.0;
             else
                 return pc/pcDerivativeHighSweEnd_ + 1.0;
         }
 
         // invert spline
-        else if (pc <  pcHighSwePcValue_)
+        else if (pc <= pcHighSwePcValue_)
             return pcSpline_.intersectInterval(pcHighSwe_, 1.0, 0.0, 0.0, 0.0, pc);
 
         else if (pc >= pcLowSwePcValue_)
@@ -755,14 +755,14 @@ private:
     {
         if (pc <= 0.0)
         {
-            if (pcHighSwe_ > 1.0 - std::numeric_limits<Scalar>::epsilon())
+            if (pcHighSwe_ >= 1.0)
                 return 0.0;
             else
                 return 1.0/pcDerivativeHighSweEnd_;
         }
 
         // derivative of the inverse of the function is one over derivative of the function
-        else if (pc <  pcHighSwePcValue_)
+        else if (pc <= pcHighSwePcValue_)
             return 1.0/pcSpline_.evalDerivative(pcSpline_.intersectInterval(pcHighSwe_, 1.0, 0.0, 0.0, 0.0, pc));
 
         else if (pc >= pcLowSwePcValue_)
@@ -777,11 +777,11 @@ private:
      */
     OptionalScalar<Scalar> krw(const Scalar swe) const
     {
-        if (swe < 0.0)
+        if (swe <= 0.0)
             return 0.0;
-        else if (swe > 1.0 - std::numeric_limits<Scalar>::epsilon())
+        else if (swe >= 1.0)
             return 1.0;
-        else if (swe > krwHighSwe_)
+        else if (swe >= krwHighSwe_)
             return krwSpline_.eval(swe);
         else
             return {}; // no regularization
@@ -792,11 +792,11 @@ private:
      */
     OptionalScalar<Scalar> dkrw_dswe(const Scalar swe) const
     {
-        if (swe < 0.0)
+        if (swe <= 0.0)
             return 0.0;
-        else if (swe > 1.0 - std::numeric_limits<Scalar>::epsilon())
+        else if (swe >= 1.0)
             return 0.0;
-        else if (swe > krwHighSwe_)
+        else if (swe >= krwHighSwe_)
             return krwSpline_.evalDerivative(swe);
         else
             return {}; // no regularization
@@ -807,11 +807,11 @@ private:
      */
     OptionalScalar<Scalar> krn(const Scalar swe) const
     {
-        if (swe < 0.0)
+        if (swe <= 0.0)
             return 1.0;
-        else if (swe > 1.0 - std::numeric_limits<Scalar>::epsilon())
+        else if (swe >= 1.0)
             return 0.0;
-        else if (swe < krnLowSwe_)
+        else if (swe <= krnLowSwe_)
             return krnSpline_.eval(swe);
         else
             return {}; // no regularization
@@ -822,11 +822,11 @@ private:
      */
     OptionalScalar<Scalar> dkrn_dswe(const Scalar swe) const
     {
-        if (swe < 0.0)
+        if (swe <= 0.0)
             return 0.0;
-        else if (swe > 1.0 - std::numeric_limits<Scalar>::epsilon())
+        else if (swe >= 1.0)
             return 0.0;
-        else if (swe < krnLowSwe_)
+        else if (swe <= krnLowSwe_)
             return krnSpline_.evalDerivative(swe);
         else
             return {}; // no regularization
