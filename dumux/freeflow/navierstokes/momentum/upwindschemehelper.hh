@@ -43,7 +43,7 @@ namespace Dumux {
  * \ingroup NavierStokesModel
  * \brief The upwinding variables class for the Navier-Stokes model using the staggered grid discretization.
  */
-template<class TypeTag, int upwindSchemeOrder>
+template<class TypeTag>
 class FaceCenteredStaggeredUpwindHelper
 {
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -59,9 +59,10 @@ class FaceCenteredStaggeredUpwindHelper
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using UpwindScheme = StaggeredUpwindMethods<Scalar, upwindSchemeOrder>;
-    static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
+    static constexpr int upwindSchemeOrder = GridGeometry::upwindSchemeOrder;
     static_assert(upwindSchemeOrder <= 2, "Not implemented: Order higher than 2!");
+    static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
+    using UpwindScheme = StaggeredUpwindMethods<Scalar, upwindSchemeOrder>;
 
 public:
     FaceCenteredStaggeredUpwindHelper(const Element& element,
