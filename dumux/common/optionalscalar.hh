@@ -48,7 +48,7 @@ struct OptionalScalar
     T value() const
     { return value_; }
 
-    operator bool() const
+    explicit operator bool() const
     {
         using std::isnan;
         return !isnan(value_);
