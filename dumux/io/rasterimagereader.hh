@@ -328,7 +328,7 @@ public:
 
         std::size_t rowIdx = 0;
         std::size_t colIdx = 0;
-        for (const auto& val : result)
+        for (const auto val : result)
         {
             image[rowIdx][colIdx] = val;
 
@@ -354,7 +354,7 @@ public:
         std::vector<OutputValueType> data;
         data.reserve(image.size()*image[0].size());
         for (const auto& row: image)
-            for (const auto& col : row)
+            for (const auto col : row)
                 data.push_back(col);
 
         return data;
