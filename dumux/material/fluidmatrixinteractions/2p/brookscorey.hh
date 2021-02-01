@@ -634,7 +634,7 @@ public:
         if (swe <= pcLowSwe_)
             return pcLowSwePcValue_ + pcDerivativeLowSw_*(swe - pcLowSwe_);
 
-        else if (swe > 1.0 - std::numeric_limits<Scalar>::epsilon())
+        else if (swe >= 1.0)
             return pcDerivativeHighSwEnd_*(swe - 1.0) + entryPressure_;
 
         else
@@ -646,10 +646,10 @@ public:
      */
     OptionalScalar<Scalar> dpc_dswe(const Scalar swe) const
     {
-        if (swe < pcLowSwe_)
+        if (swe <= pcLowSwe_)
             return pcDerivativeLowSw_;
 
-        else if (swe > 1.0 - std::numeric_limits<Scalar>::epsilon())
+        else if (swe >= 1.0)
             return pcDerivativeHighSwEnd_;
 
         else
@@ -704,7 +704,7 @@ public:
      */
     OptionalScalar<Scalar> dkrw_dswe(const Scalar swe) const
     {
-        if (swe < 0.0)
+        if (swe <= 0.0)
             return 0.0;
         else if (swe >= 1.0)
             return 0.0;
