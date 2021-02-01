@@ -36,15 +36,14 @@ namespace Dumux {
  * \brief Stores the dof indices corresponding to the neighboring scvs
  *        that contribute to the derivative calculation.
  */
-template<class GridGeometry, int upwindSchemeOrder>
+template<class GridGeometry>
 class FaceCenteredStaggeredConnectivityMap
 {
     using GridView = typename GridGeometry::GridView;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using Stencil = std::vector<GridIndexType>;
     using Map = std::vector<Stencil>;
-    static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
-    static_assert(upwindSchemeOrder <= 2, "Not implemented: Order higher than 2!");
+    static constexpr bool useHigherOrder = GridGeometry::useHigherOrder;
 
 public:
 

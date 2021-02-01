@@ -78,8 +78,6 @@ class NavierStokesMomentumFluxVariables
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
 
     using UpwindScheme = typename GridGeometry::UpwindScheme;
-    static constexpr int upwindSchemeOrder = GridGeometry::upwindSchemeOrder;
-    static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
 
 public:
     NavierStokesMomentumFluxVariables(const Problem& problem,
@@ -96,7 +94,6 @@ public:
     , elemVolVarsPtr_(&elemVolVars)
     , elemFluxVarsCachePtr_(&elemFluxVarsCache)
     , elemBcTypesPtr_(&elemBcTypes)
-    , staggeredUpwindMethods_(fvGeometry.staggeredUpwindMethods())
     {}
 
     const Problem& problem() const
@@ -119,9 +116,6 @@ public:
 
     const ElementBoundaryTypes& elemBcTypes() const
     { return *elemBcTypesPtr_; }
-
-    const UpwindScheme& staggeredUpwindMethods() const
-    { return staggeredUpwindMethods_; }
 
     /*!
      * \brief Returns the diffusive momentum flux due to viscous forces
@@ -339,7 +333,7 @@ public:
         const Scalar transportingVelocity = (velocitySelf + velocityOpposite) * 0.5;
 
         const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
-        FaceCenteredStaggeredUpwindHelper<TypeTag, upwindSchemeOrder> upwindHelper(this->element(),
+        FaceCenteredStaggeredUpwindHelper<TypeTag> upwindHelper(this->element(),
                                                                                    this->fvGeometry(),
                                                                                    this->problem(),
                                                                                    scvf,
@@ -419,7 +413,7 @@ public:
 
         const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
 
-        FaceCenteredStaggeredUpwindHelper<TypeTag, upwindSchemeOrder> upwindHelper(this->element(),
+        FaceCenteredStaggeredUpwindHelper<TypeTag> upwindHelper(this->element(),
                                                                                    fvGeometry,
                                                                                    problem,
                                                                                    scvf,
@@ -450,10 +444,6 @@ private:
     const ElementVolumeVariables* elemVolVarsPtr_;          //!< Pointer to the current element volume variables
     const ElementFluxVariablesCache* elemFluxVarsCachePtr_; //!< Pointer to the current element flux variables cache
     const ElementBoundaryTypes* elemBcTypesPtr_; //!< Pointer to element boundary types
-    const UpwindScheme& staggeredUpwindMethods_;
-
-
-
 
 
 
