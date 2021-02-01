@@ -279,7 +279,6 @@ public:
 #include <algorithm>
 
 #include <dumux/common/parameters.hh>
-#include <dumux/common/spline.hh>
 #include <dumux/common/optionalscalar.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/materiallaw.hh>
 
@@ -592,7 +591,6 @@ public:
         S pcLowSwe_ = 0.01;
     };
 
-    //! Initialize the spline
     template<class MaterialLaw>
     void init(const MaterialLaw* m, const std::string& paramGroup)
     {
@@ -624,8 +622,7 @@ public:
      * \brief The regularized capillary pressure-saturation curve
      * regularized part:
      *  - low saturation:  extend the \f$\mathrm{p_c(S_w)}\f$ curve with the slope at the regularization point (i.e. no kink).
-     *  - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
-     *                     with a spline and continue linearly for \f$\mathrm{\overline{S}_w > 1}\f$
+     *  - high saturation: continue linearly
      */
     OptionalScalar<Scalar> pc(const Scalar swe) const
     {
