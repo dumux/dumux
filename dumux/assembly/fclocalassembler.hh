@@ -315,6 +315,8 @@ class FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*impl
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 
+    static constexpr bool useHigherOrder = GridGeometry::useHigherOrder;
+
     static constexpr auto numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
     static constexpr bool enableGridFluxVarsCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
 
@@ -468,27 +470,62 @@ public:
 
                         for (const auto& scvf : scvfs(fvGeometry, scv))
                         {
+                            // evaluates Parallel and opposite dofs
                             if (scvf.outsideScvIdx() == scvJ.index())
                             {
                                 evalFlux(residual, scvf);
                                 return residual;
                             }
 
-                            // also consider lateral faces outside the own element for face-centered staggered schemes
                             if constexpr (GridGeometry::discMethod == DiscretizationMethod::fcstaggered)
                             {
+                                // also consider lateral faces inside/outside the own element for face-centered staggered schemes
                                 if (scvf.isLateral())
                                 {
                                     if (const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
-                                        orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
+                                        orthogonalScvf.insideScvIdx() == scvJ.index() // inner normal
+                                        || orthogonalScvf.outsideScvIdx() == scvJ.index()) // outer normal
                                     {
                                         evalFlux(residual, scvf);
                                         return residual;
                                     }
                                 }
+
+                                // Higher Order additional evaluations
+                                if constexpr (useHigherOrder)
+                                {
+                                    if (scvf.isFrontal() && fvGeometry.hasForwardNeighbor(scvf))
+                                    {
+                                        if (fvGeometry.forwardScvIdx(scvf) == scvJ.index())
+                                        {
+                                            evalFlux(residual, scvf);
+                                            return residual;
+                                        }
+                                    }
+
+                                    if (scvf.isFrontal() && fvGeometry.hasBackwardNeighbor(scvf))
+                                    {
+                                        if (fvGeometry.backwardScvIdx(scvf) == scvJ.index())
+                                        {
+                                            evalFlux(residual, scvf);
+                                            return residual;
+                                        }
+                                    }
+
+                                    if (scvf.isLateral() && fvGeometry.hasParallelNeighbor(scvf))
+                                    {
+                                        if (fvGeometry.hasSecondParallelNeighbor(scvf))
+                                        {
+                                            if (fvGeometry.secondParallelScvIdx(scvf) == scvJ.index())
+                                            {
+                                                evalFlux(residual, scvf);
+                                                return residual;
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
-
                         DUNE_THROW(Dune::InvalidStateException, "No scvf found");
                     };
 
@@ -500,22 +537,58 @@ public:
 
                         for (const auto& scvf : scvfs(fvGeometry, scv))
                         {
+                            // evaluates Parallel and opposite dofs
                             if (scvf.outsideScvIdx() == scvJ.index())
                             {
                                 evalFlux(result, scvf);
                                 return result;
                             }
 
-                            // also consider lateral faces outside the own element for face-centered staggered schemes
                             if constexpr (GridGeometry::discMethod == DiscretizationMethod::fcstaggered)
                             {
+                                // also consider lateral faces inside/outside the own element for face-centered staggered schemes
                                 if (scvf.isLateral())
                                 {
                                     if (const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
-                                        orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
+                                        orthogonalScvf.insideScvIdx() == scvJ.index() // inner normal
+                                        || orthogonalScvf.outsideScvIdx() == scvJ.index()) // outer normal
                                     {
                                         evalFlux(result, scvf);
                                         return result;
+                                    }
+                                }
+
+                                // Higher Order additional evaluations
+                                if constexpr (useHigherOrder)
+                                {
+                                    if (scvf.isFrontal() && fvGeometry.hasForwardNeighbor(scvf))
+                                    {
+                                        if (fvGeometry.forwardScvIdx(scvf) == scvJ.index())
+                                        {
+                                            evalFlux(result, scvf);
+                                            return result;
+                                        }
+                                    }
+
+                                    if (scvf.isFrontal() && fvGeometry.hasBackwardNeighbor(scvf))
+                                    {
+                                        if (fvGeometry.backwardScvIdx(scvf) == scvJ.index())
+                                        {
+                                            evalFlux(result, scvf);
+                                            return result;
+                                        }
+                                    }
+
+                                    if (scvf.isLateral() && fvGeometry.hasParallelNeighbor(scvf))
+                                    {
+                                        if (fvGeometry.hasSecondParallelNeighbor(scvf))
+                                        {
+                                            if (fvGeometry.secondParallelScvIdx(scvf) == scvJ.index())
+                                            {
+                                                evalFlux(result, scvf);
+                                                return result;
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -557,6 +630,24 @@ public:
                                 {
                                     for (const auto& scvf : scvfs(fvGeometry, scv))
                                     {
+                                        // Higher order frontal scvs
+                                        if constexpr (useHigherOrder)
+                                        {
+                                            // forward scvs
+                                            if (scvf.isFrontal() && fvGeometry.hasForwardNeighbor(scvf))
+                                            {
+                                                if (fvGeometry.forwardScvIdx(scvf) == scvJ.index())
+                                                    A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
+                                            }
+
+                                            // backward scvs
+                                            if (scvf.isFrontal() && fvGeometry.hasBackwardNeighbor(scvf))
+                                            {
+                                                if (fvGeometry.backwardScvIdx(scvf) == scvJ.index())
+                                                    A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
+                                            }
+                                        }
+
                                         if (scvf.isFrontal() || scvf.boundary())
                                             continue;
 
@@ -572,6 +663,20 @@ public:
 
                                             if (orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
                                                 A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
+
+                                            // Higher order lateral scvs
+                                            if constexpr (useHigherOrder)
+                                            {
+                                                // Second parallel scvs
+                                                if (scvf.isLateral() && fvGeometry.hasParallelNeighbor(scvf))
+                                                {
+                                                    if (fvGeometry.hasSecondParallelNeighbor(scvf))
+                                                    {
+                                                        if (fvGeometry.secondParallelScvIdx(scvf) == scvJ.index())
+                                                            A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
