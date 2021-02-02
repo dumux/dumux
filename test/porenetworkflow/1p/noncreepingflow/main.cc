@@ -108,7 +108,7 @@ int main(int argc, char** argv) try
     auto r = std::make_shared<SolutionVector>();
     assembler->setLinearSystem(A, r);
 
-    const auto boundaryFlux = PoreNetworkModelBoundaryFlux(*assembler, x);
+    //const auto boundaryFlux = PoreNetworkModelBoundaryFlux(*assembler, x);
 
     Dune::Timer timer;
     // assemble the local jacobian and the residual
@@ -140,7 +140,7 @@ int main(int argc, char** argv) try
     vtkWriter.write(0.0);
     outputTimer.stop();
 
-    std::cout << "cumulative outflux is: " << boundaryFlux.getFlux("max", 0, true) << std::endl;
+    //std::cout << "cumulative outflux is: " << boundaryFlux.getFlux("max", 0, true) << std::endl;
 
     if (mpiHelper.rank() == 0)
         std::cout << " took " << outputTimer.elapsed() << " seconds." << std::endl;

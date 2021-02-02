@@ -137,7 +137,7 @@ int main(int argc, char** argv) try
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // helper class to calculate the boundary flux
-    const auto boundaryFlux = PoreNetworkModelBoundaryFlux(*assembler, x);
+    //const auto boundaryFlux = PoreNetworkModelBoundaryFlux(*assembler, x);
 
     // time loop
     timeLoop->start(); do
@@ -151,7 +151,7 @@ int main(int argc, char** argv) try
         // make the new solution the old solution
         xOld = x;
 
-        std::cout << "cumulative outflux is: " << boundaryFlux.getFlux("max", 0, true) << std::endl;
+        //std::cout << "cumulative outflux is: " << boundaryFlux.getFlux("max", 0, true) << std::endl;
 
         gridVariables->advanceTimeStep();
 
