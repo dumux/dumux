@@ -24,6 +24,8 @@
 #ifndef DUMUX_COMMON_GRID_CAPABILITIES_HH
 #define DUMUX_COMMON_GRID_CAPABILITIES_HH
 
+#include <dune/grid/common/capabilities.hh>
+
 // TODO: The following is a temporary solution to make canCommunicate work.
 // Once it is resolved upstream
 // (https://gitlab.dune-project.org/core/dune-grid/issues/78),
