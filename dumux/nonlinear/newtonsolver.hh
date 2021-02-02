@@ -912,7 +912,7 @@ private:
             while (newtonProceed(uCurrentIter, converged))
             {
                 // notify the solver that we're about to start
-                // a new timestep
+                // a new iteration
                 newtonBeginStep(uCurrentIter);
 
                 // make the current solution to the old one
