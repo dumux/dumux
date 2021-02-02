@@ -963,6 +963,15 @@ public:
         for(const auto p : points)
             std::cout << std::setprecision(20) <<p << std::endl;
 
+        std::cout << "Point connection lengths: \n";
+        for(const auto p1 : points)
+            for(const auto p2 : points)
+                std::cout << "p1/p2:" << std::setprecision(20)
+                                      << p1 << " / "
+                                      << p2 << " -> "
+                                      << std::setprecision(30)
+                                      << (p2-p1).two_norm() << std::endl;
+
         // remove duplicates
         const auto eps = (geo1.corner(0) - geo1.corner(1)).two_norm()*eps_;
         std::cout << "Chosen epsilon value = " << eps << std::endl;
