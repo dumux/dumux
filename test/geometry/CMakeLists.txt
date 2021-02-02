@@ -20,3 +20,4 @@ dune_symlink_to_source_files(FILES ball.msh)
 dumux_add_test(SOURCES test_intersectionentityset.cc
                CMAKE_GUARD dune-alugrid_FOUND
                LABELS unit)
+set(CMAKE_BUILD_TYPE Debug)

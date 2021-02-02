@@ -103,6 +103,16 @@ int main(int argc, char* argv[])
     if (Test::intersection(cube, quad, intersectionPolygon))
     {
         const auto triangulation = Dumux::triangulate<2, dimworld>(intersectionPolygon);
+
+        // try to make a dune geometry with the result
+        for (const auto& t : triangulation)
+        {
+            // might run into an assertion
+            std::vector<Point> corners(t.begin(), t.end());
+            Geometry2D triangle(Dune::GeometryTypes::simplex(dimworld-1), corners);
+            std::cout << "Volume: " << triangle.volume() << std::endl;
+        }
+
         Dumux::writeVTKPolyDataTriangle(triangulation, "quad_intersections");
         DUNE_THROW(Dune::InvalidStateException, "Found unexpected intersection!");
     }
