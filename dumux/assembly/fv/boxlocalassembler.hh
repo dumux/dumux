@@ -156,6 +156,7 @@ public:
         {
             res[scvI.dofIndex()][eqIdx] = elemVariables().elemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
 
+            // TODO: Skip this for explicit schemes?
             auto& row = jac[scvI.dofIndex()];
             for (auto col = row.begin(); col != row.end(); ++col)
                 row[col.index()][eqIdx] = 0.0;
@@ -333,6 +334,7 @@ protected:
             const auto globalI = scvI.dofIndex();
             const auto localI = scvI.localDofIndex();
 
+            // TODO: How to handle the case of caching?
             const auto origCurVolVars = curElemVolVars[scvI];
             auto& curVolVars = curElemVolVars[scvI];
 
