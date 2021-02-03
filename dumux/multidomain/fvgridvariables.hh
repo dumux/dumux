@@ -41,7 +41,6 @@ namespace Dumux {
 template<class MDTraits>
 class MultiDomainFVGridVariables
 {
-    using SolutionVector = typename MDTraits::SolutionVector;
     static constexpr std::size_t numSubDomains = MDTraits::numSubDomains;
 
     template<std::size_t i>
@@ -53,6 +52,9 @@ class MultiDomainFVGridVariables
     using Problems = typename MDTraits::template TupleOfSharedPtrConst<Problem>;
 
 public:
+    //! export the solution vector type required for update
+    using SolutionVector = typename MDTraits::SolutionVector;
+
     //! export base types of the stored type
     template<std::size_t i>
     using Type = typename MDTraits::template SubDomain<i>::GridVariables;
@@ -94,6 +96,7 @@ public:
     //! initialize all variables
     void init(const SolutionVector& sol)
     {
+        dofs_ = sol;
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<numSubDomains>{}, [&](auto&& id)
         {
@@ -104,6 +107,8 @@ public:
     //! update all variables
     void update(const SolutionVector& sol, bool forceFluxCacheUpdate = false)
     {
+        // TODO: This should update the coupling manager?
+        dofs_ = sol;
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<numSubDomains>{}, [&](auto&& id)
         {
@@ -114,6 +119,7 @@ public:
     //! update all variables after grid adaption
     void updateAfterGridAdaption(const SolutionVector& sol)
     {
+        dofs_ = sol;
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<numSubDomains>{}, [&](auto&& id)
         {
@@ -137,6 +143,7 @@ public:
     //! resets state to the one before time integration
     void resetTimeStep(const SolutionVector& sol)
     {
+        dofs_ = sol;
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<numSubDomains>{}, [&](auto&& id)
         {
@@ -164,6 +171,9 @@ public:
     void set(PtrType<i> p, Dune::index_constant<i> id = Dune::index_constant<i>{})
     { Dune::Hybrid::elementAt(gridVars_, id) = p; }
 
+    const SolutionVector& dofs() const { return dofs_; }
+    SolutionVector& dofs() { return dofs_; }
+
     /*!
      * \brief return the grid variables tuple we are wrapping
      * \note the copy is not expensive since it is a tuple of shared pointers
@@ -172,9 +182,10 @@ public:
     { return gridVars_; }
 
 private:
-
     //! a tuple of pointes to all grid variables
     TupleType gridVars_;
+
+    SolutionVector dofs_;
 };
 
 } // end namespace Dumux
