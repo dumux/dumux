@@ -94,7 +94,7 @@ int main(int argc, char** argv)
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     // the linear solver
-    using LinearSolver = UMFPackBackend;
+    using LinearSolver = SSORCGBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the system solver
