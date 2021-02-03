@@ -215,7 +215,10 @@ protected:
         {
             const auto flux = Operators::flux(problem, element_, fvGeometry_, evv, efvc, scvf);
             r[fvGeometry_.scv(scvf.insideScvIdx()).localDofIndex()] += flux;
-            r[fvGeometry_.scv(scvf.outsideScvIdx()).localDofIndex()] -= flux;
+
+            // We expects that for scvf.numOutsideScvs() > 1 outside faces are visited separately!
+            if (scvf.numOutsideScvs() == 1)
+                r[fvGeometry_.scv(scvf.outsideScvIdx()).localDofIndex()] -= flux;
         }
 
         // boundary faces
