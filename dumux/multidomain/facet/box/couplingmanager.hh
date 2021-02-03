@@ -359,6 +359,11 @@ public:
         typename LocalResidual<bulkId>::ElementResidualVector res(fvGeometry.numScv());
         res = 0.0;
 
+        ElementBoundaryTypes<bulkId> elemBCTypes;
+        elemBCTypes.update(this->problem(bulkId), bulkLocalAssembler.element(), bulkLocalAssembler.fvGeometry());
+
+        LocalResidual<bulkId> localResidual(&(this->problem(bulkId)));
+
         // compute fluxes across the coupling scvfs
         const auto& couplingScvfs = map.find(bulkContext_.elementIdx)->second.dofToCouplingScvfMap.at(dofIdxGlobalJ);
         for (auto scvfIdx : couplingScvfs)
@@ -368,9 +373,9 @@ public:
             res[insideScv.localDofIndex()] += evalBulkFluxes_( bulkLocalAssembler.element(),
                                                                bulkLocalAssembler.fvGeometry(),
                                                                bulkLocalAssembler.curElemVolVars(),
-                                                               bulkLocalAssembler.elemBcTypes(),
+                                                               elemBCTypes,
                                                                bulkLocalAssembler.elemFluxVarsCache(),
-                                                               bulkLocalAssembler.localResidual(),
+                                                               localResidual,
                                                                std::array<GridIndexType<bulkId>, 1>({scvfIdx}) );
         }
 
@@ -479,7 +484,7 @@ public:
             {
                 const auto& ldGridGeometry = this->problem(lowDimId).gridGeometry();
 
-                const auto& ldSol = Assembler::isImplicit() ? this->curSol()[lowDimId] : assembler.prevSol()[lowDimId];
+                const auto& ldSol = this->curSol()[lowDimId];
                 const auto elemJ = ldGridGeometry.element(lowDimElemIdx);
                 auto fvGeom = localView(ldGridGeometry);
                 fvGeom.bindElement(elemJ);
@@ -538,7 +543,7 @@ public:
                 auto bulkElemVolVars = localView(assembler.gridVariables(bulkId).curGridVolVars());
                 auto bulkElemFluxVarsCache = localView(assembler.gridVariables(bulkId).gridFluxVarsCache());
 
-                const auto& bulkSol = Assembler::isImplicit() ? this->curSol()[bulkId] : assembler.prevSol()[bulkId];
+                const auto& bulkSol = this->curSol()[bulkId];
                 const auto curBulkElem = bulkGridGeom.element(embedments[i].first);
                 bulkFvGeom.bind(curBulkElem);
                 bulkElemVolVars.bind(curBulkElem, bulkFvGeom, bulkSol);
@@ -552,7 +557,7 @@ public:
             }
 
             // finally, set the local residual
-            lowDimContext_.bulkLocalResidual = std::make_unique< LocalResidual<bulkId> >(assembler.localResidual(bulkId));
+            lowDimContext_.bulkLocalResidual = std::make_unique< LocalResidual<bulkId> >( &(this->problem(bulkId)) );
         }
     }
 

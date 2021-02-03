@@ -29,10 +29,22 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/geometry/quadraturerules.hh>
 
+#include <dumux/common/properties.hh>
+
+namespace Dumux::Properties {
+    // property forward declaration
+    // TODO: We need this in MDTraits such that the MDAssembler
+    //       can extract the local operator from the sub-typetags.
+    //       Thus, we need to introduce this property for all models?
+    //       Should this be circumvented somehow? (In standard models one can
+    //       select the operator in the main file so far...)
+    template<class TypeTag, class MyTypeTag>
+    struct LocalOperator { using type = UndefinedProperty; };
+} // end namespace Dumux::Properties
+
 #include "problem_bulk.hh"
 #include "problem_lowdim.hh"
 
-#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
 
@@ -43,7 +55,7 @@
 #include <dumux/linear/seqsolverbackend.hh>
 
 #include <dumux/multidomain/newtonsolver.hh>
-#include <dumux/multidomain/fvassembler.hh>
+#include <dumux/multidomain/assembler.hh>
 #include <dumux/multidomain/traits.hh>
 
 #include <dumux/multidomain/facet/gridmanager.hh>
@@ -52,6 +64,10 @@
 #include <dumux/multidomain/facet/codimonegridadapter.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
+
+#include <dumux/assembly/fv/localoperator.hh>
+#include <dumux/porousmediumflow/immiscible/operators.hh>
+#include <dumux/timestepping/multistagemethods.hh>
 
 // obtain/define some types to be used below in the property definitions and in main
 template< class BulkTypeTag, class LowDimTypeTag >
@@ -69,6 +85,24 @@ public:
 namespace Dumux {
 namespace Properties {
 
+template<class TT>
+struct SDOperator
+{
+private:
+    using ModelTraits = GetPropType<TT, Properties::ModelTraits>;
+    using FluxVariables = GetPropType<TT, Properties::FluxVariables>;
+    using ElemVariables = typename GetPropType<TT, Properties::GridVariables>::LocalView;
+    using ImmiscibleOperators = FVImmiscibleOperators<ModelTraits, FluxVariables, ElemVariables>;
+
+public:
+    using Type = FVLocalOperator<ElemVariables, ImmiscibleOperators>;
+};
+
+template<class TypeTag>
+struct LocalOperator<TypeTag, TTag::OnePBulkBox> { using type = typename SDOperator<TTag::OnePBulkBox>::Type; };
+template<class TypeTag>
+struct LocalOperator<TypeTag, TTag::OnePLowDimBox> { using type = typename SDOperator<TTag::OnePLowDimBox>::Type; };
+
 // set cm property for the box test
 using BoxTraits = TestTraits<Properties::TTag::OnePBulkBox, Properties::TTag::OnePLowDimBox>;
 template<class TypeTag>
@@ -77,11 +111,11 @@ template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::OnePLowDimBox> { using type = typename BoxTraits::CouplingManager; };
 
 // set cm property for the tpfa test
-using TpfaTraits = TestTraits<Properties::TTag::OnePBulkTpfa, Properties::TTag::OnePLowDimTpfa>;
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePBulkTpfa> { using type = typename TpfaTraits::CouplingManager; };
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePLowDimTpfa> { using type = typename TpfaTraits::CouplingManager; };
+// using TpfaTraits = TestTraits<Properties::TTag::OnePBulkTpfa, Properties::TTag::OnePLowDimTpfa>;
+// template<class TypeTag>
+// struct CouplingManager<TypeTag, TTag::OnePBulkTpfa> { using type = typename TpfaTraits::CouplingManager; };
+// template<class TypeTag>
+// struct CouplingManager<TypeTag, TTag::OnePLowDimTpfa> { using type = typename TpfaTraits::CouplingManager; };
 
 } // end namespace Properties
 } // end namespace Dumux
@@ -326,10 +360,8 @@ int main(int argc, char** argv)
     }
 
     // the assembler
-    using Assembler = MultiDomainFVAssembler<MDTraits, CouplingManager, DiffMethod::numeric, /*implicit?*/true>;
-    auto assembler = std::make_shared<Assembler>( std::make_tuple(bulkProblem, lowDimProblem),
-                                                  std::make_tuple(bulkFvGridGeometry, lowDimFvGridGeometry),
-                                                  std::make_tuple(bulkGridVariables, lowDimGridVariables),
+    using Assembler = MultiDomainAssembler<MDTraits, CouplingManager, DiffMethod::numeric>;
+    auto assembler = std::make_shared<Assembler>( std::make_tuple(bulkFvGridGeometry, lowDimFvGridGeometry),
                                                   couplingManager);
 
     // the linear solver
@@ -341,7 +373,14 @@ int main(int argc, char** argv)
     auto newtonSolver = std::make_shared<NewtonSolver>(assembler, linearSolver, couplingManager);
 
     // linearize & solve
-    newtonSolver->solve(x);
+    auto mdGridVars = MultiDomainFVGridVariables<MDTraits>(std::make_tuple(bulkGridVariables, lowDimGridVariables));
+    mdGridVars.update(x);
+    newtonSolver->solve(mdGridVars);
+
+    // update solution vector used here in main
+    // with the new assembly we wouldn't need to care about a
+    // solution vector, we'd only need to have grid variables
+    x = mdGridVars.dofs();
 
     // update grid variables for output
     bulkGridVariables->update(x[bulkId]);
