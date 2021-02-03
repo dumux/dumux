@@ -90,16 +90,16 @@ public:
         numSwSamples_ = getParamFromGroup<Scalar>(paramGroup, "SplineNumSwSamples", 30);
 
         pcSpline_ = makeSweSpline_(
-            [&](const auto s){ return TwoPMaterialLaw::pc(s); },
+            [&](const Scalar s){ return TwoPMaterialLaw::pc(s); },
             approximatePcSwInverse
         );
 
         krwSpline_ = makeSweSpline_(
-            [&](const auto s){ return TwoPMaterialLaw::krw(s); }
+            [&](const Scalar s){ return TwoPMaterialLaw::krw(s); }
         );
 
         krnSpline_ = makeSweSpline_(
-            [&](const auto s){ return TwoPMaterialLaw::krn(s); }
+            [&](const Scalar s){ return TwoPMaterialLaw::krn(s); }
         );
     }
 
@@ -229,14 +229,13 @@ public:
 
 private:
     template<class Function>
-    auto makeSweSpline_(const Function& f, bool invert = false) const
+    std::unique_ptr<MonotoneCubicSpline<Scalar>>
+    makeSweSpline_(const Function& f, bool invert = false) const
     {
         const auto sw = linspace(swInterval_[0], swInterval_[1], numSwSamples_);
 
         auto values = sw;
-        std::transform(sw.begin(), sw.end(), values.begin(),
-            [&](auto s){ return f(s); }
-        );
+        std::transform(sw.begin(), sw.end(), values.begin(), f);
 
         if (invert)
             return std::make_unique<MonotoneCubicSpline<Scalar>>(values, sw);
