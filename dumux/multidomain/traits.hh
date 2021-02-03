@@ -181,6 +181,7 @@ public:
         using GridVariables =GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>;
         using IOFields = GetPropType<SubDomainTypeTag<id>, Properties::IOFields>;
         using SolutionVector = GetPropType<SubDomainTypeTag<id>, Properties::SolutionVector>;
+        using LocalOperator = GetPropType<SubDomainTypeTag<id>, Properties::LocalOperator>;
     };
 
     //\}
