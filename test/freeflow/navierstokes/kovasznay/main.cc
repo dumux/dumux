@@ -136,7 +136,7 @@ int main(int argc, char** argv)
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     // the linear solver
-    using LinearSolver = Dumux::UzawaBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
+    using LinearSolver = Dumux::UzawaBiCGSTABBackend<LinearSolverTraits<GridGeometry>>; // if rho \neq 1, use UMFPack rather than BIGCStab
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver

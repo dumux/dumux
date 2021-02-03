@@ -130,6 +130,7 @@ public:
     {
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
         std::cout<< "upwindSchemeOrder is: " << GridGeometry::upwindStencilOrder() << "\n";
+        rho_ = getParam<Scalar>("Component.LiquidDensity", 1.0);
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
         Scalar reynoldsNumber = 1.0 / kinematicViscosity_;
         lambda_ = 0.5 * reynoldsNumber
@@ -241,7 +242,7 @@ public:
         Scalar y = globalPos[1];
 
         PrimaryVariables values;
-        values[Indices::pressureIdx] = 0.5 * (1.0 - std::exp(2.0 * lambda_ * x));
+        values[Indices::pressureIdx] = rho_ * 0.5 * (1.0 - std::exp(2.0 * lambda_ * x));
         values[Indices::velocityXIdx] = 1.0 - std::exp(lambda_ * x) * std::cos(2.0 * M_PI * y);
         values[Indices::velocityYIdx] = 0.5 * lambda_ / M_PI * std::exp(lambda_ * x) * std::sin(2.0 * M_PI * y);
 
@@ -337,6 +338,7 @@ private:
 
     static constexpr Scalar eps_=1e-6;
 
+    Scalar rho_;
     Scalar kinematicViscosity_;
     Scalar lambda_;
     bool printL2Error_;
