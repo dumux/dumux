@@ -45,6 +45,7 @@ template<class Traits>
 class CouplingManager
 {
     template<std::size_t id> using SubDomainTypeTag = typename Traits::template SubDomain<id>::TypeTag;
+    template<std::size_t id> using SubDomainSolutionVector = GetPropType<SubDomainTypeTag<id>, Properties::SolutionVector>;
     template<std::size_t id> using PrimaryVariables = GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>;
     template<std::size_t id> using GridView = typename GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
@@ -268,6 +269,14 @@ public:
         else
             DUNE_THROW(Dune::InvalidStateException, "The problem pointer was not set or has already expired. Use setSubProblems() before calling this function");
     }
+
+    /*!
+     * \brief Return a reference to the current solution in a subdomain
+     * \param domainIdx The domain index
+     */
+    template<std::size_t i>
+    const SubDomainSolutionVector<i>& dofs(Dune::index_constant<i> domainId) const
+    { return curSol_[domainId]; }
 
 protected:
 
