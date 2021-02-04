@@ -50,4 +50,5 @@ timeloop.hh
 timemanager.hh
 valgrind.hh
 variablelengthspline_.hh
+variables.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/common)
