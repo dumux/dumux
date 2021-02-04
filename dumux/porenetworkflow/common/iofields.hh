@@ -43,7 +43,7 @@ public:
 
         out.addField(out.problem().gridGeometry().poreLabel(), "poreLabel", OutputModule::FieldType::vertex);
 
-        out.addVolumeVariable([](const auto& volVars){ return volVars.poreRadius(); }, "poreRadius");
+        out.addVolumeVariable([](const auto& volVars){ return volVars.poreInscribedRadius(); }, "poreInscribedRadius");
 
         out.addField(out.problem().gridGeometry().throatLabel(), "throatLabel", OutputModule::FieldType::element);
 
