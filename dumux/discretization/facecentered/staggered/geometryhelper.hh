@@ -41,6 +41,12 @@ class YaspGrid;
 
 namespace Dumux {
 
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief Helper used for navigating through staggered elements and sub Entities
+ *
+ * \image html localScvfToElementMappingStaggered.svg
+ */
 template<class GridView, class Implementation>
 class FaceCenteredStaggeredGeometryHelperBase
 {
