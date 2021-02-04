@@ -75,23 +75,24 @@ public:
                 const Scv& scv)
     {
         ParentType::update(elemSol, problem, element, scv);
-        poreRadius_ = problem.spatialParams().poreRadius(element, scv, elemSol);
+        poreInscribedRadius_ = problem.spatialParams().poreInscribedRadius(element, scv, elemSol);
         poreVolume_ = problem.gridGeometry().poreVolume(scv.dofIndex()) * this->porosity();
         surfaceTension_ = 0.0725; // the value of water/air TODO make general
     }
 
+    [[deprecated("Use poreInscribedRadius")]]
     Scalar poreRadius() const
-    { return poreRadius_; }
+    { return poreInscribedRadius_; }
 
-    Scalar poreVolume() const
-    { return poreVolume_; }
+    Scalar poreInscribedRadius() const
+    { return poreInscribedRadius_; }
 
     Scalar surfaceTension() const
     { return surfaceTension_; }
 
 protected:
 
-    Scalar poreRadius_;
+    Scalar poreInscribedRadius_;
     Scalar poreVolume_;
     Scalar surfaceTension_;
 };
