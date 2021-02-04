@@ -106,7 +106,7 @@ int main(int argc, char** argv) try
     auto r = std::make_shared<SolutionVector>();
     assembler->setLinearSystem(A, r);
 
-    const auto boundaryFlux = PoreNetworkModelBoundaryFlux(*assembler, x);
+    const auto boundaryFlux = PoreNetworkModelBoundaryFlux(*gridVariables, assembler->localResidual(), x);
 
     Dune::Timer timer;
     // assemble the local jacobian and the residual

@@ -11,7 +11,7 @@
           99990.2 99990.2 99990.2 99990.2 99990.2 99990.2 99990.2 99990.2 99990.2 99990.2 99990.2 99990.2
           99990.2 99990.2 99990.2 99990.2
         </DataArray>
-        <DataArray type="Float32" Name="poreRadius" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="poreInscribedRadius" NumberOfComponents="1" format="ascii">
           2e-05 2e-05 2e-05 2e-05 2e-05 2e-05 2e-05 2e-05 2e-05 2e-05 2e-05 2e-05
           2e-05 2e-05 2e-05 2e-05 2e-05 2e-05 2e-05 2e-05 2e-05 2e-05 2e-05 2e-05
           2e-05 2e-05 2e-05 2e-05 2e-05 2e-05 2e-05 2e-05 2e-05 2e-05 2e-05 2e-05
