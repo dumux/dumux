@@ -6,4 +6,4 @@ dune_add_test(NAME example_pnm1p_permeabilityupscaling
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/example_pnm1p_permeabilityupscaling
               CMD_ARGS -Problem.ReferenceData "3.310596e-13 3.258913e-13 3.057024e-13"
-                       -Problem.TestEpsilon 0)
+                       -Problem.TestEpsilon 1e-6)

@@ -75,7 +75,7 @@ public:
                       const ElementSolutionVector& elemSol) const
     {
         // we assume the pore length to be equal to the inscribed pore radius
-        return this->asImp_().poreRadius(element, scv, elemSol);
+        return this->asImp_().poreInscribedRadius(element, scv, elemSol);
     }
 
     template<class ElementSolutionVector>
@@ -92,7 +92,7 @@ public:
                                   const SubControlVolume& scv,
                                   const ElementSolutionVector& elemSol) const
     {
-        const Scalar r = this->asImp_().poreRadius(element, scv, elemSol);
+        const Scalar r = this->asImp_().poreInscribedRadius(element, scv, elemSol);
 
         // we assume the pore cross sectional area to be equal to the area of
         // circle with the pore's inscribed radius
