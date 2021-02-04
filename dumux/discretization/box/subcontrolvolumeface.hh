@@ -189,9 +189,9 @@ public:
         return scvIndices_[0];
     }
 
-    //! index of the outside sub control volume for spatial param evaluation
-    // This results in undefined behaviour if boundary is true
-    LocalIndexType outsideScvIdx() const
+    //! Index of the i-th outside sub control volume or boundary scv index.
+    // Results in undefined behaviour if (boundary == true and i != 0) or i >= numOutsideScvs()
+    LocalIndexType outsideScvIdx(int i = 0) const
     {
         assert(!boundary());
         return scvIndices_[1];
