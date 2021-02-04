@@ -190,11 +190,17 @@ public:
     }
 
     //! Index of the i-th outside sub control volume or boundary scv index.
-    // Results in undefined behaviour if (boundary == true and i != 0) or i >= numOutsideScvs()
+    // Results in undefined behaviour if i >= numOutsideScvs()
     LocalIndexType outsideScvIdx(int i = 0) const
     {
         assert(!boundary());
         return scvIndices_[1];
+    }
+
+    //! The number of scvs on the outside of this face
+    std::size_t numOutsideScvs() const
+    {
+        return static_cast<std::size_t>(!boundary());
     }
 
     //! The local index of this sub control volume face
