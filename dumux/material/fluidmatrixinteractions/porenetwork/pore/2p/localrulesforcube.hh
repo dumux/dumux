@@ -55,7 +55,7 @@ struct TwoPLocalRulesCubeJoekarNiasar
                const SubControlVolume& scv,
                const ElemSol& elemSol)
         : shape_(spatialParams.gridGeometry().poreGeometry()[scv.dofIndex()])
-        , radius_(spatialParams.poreRadius(element, scv, elemSol))
+        , radius_(spatialParams.poreInscribedRadius(element, scv, elemSol))
         {
             static const Scalar surfaceTension = getParam<Scalar>("SpatialParams.SurfaceTension", 0.0725); // TODO
             surfaceTension_ = surfaceTension;
