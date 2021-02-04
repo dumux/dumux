@@ -106,7 +106,7 @@ public:
 
     //! Update the state to a new solution
     void update(const SolutionVector& x)
-    {  x_ = x; }
+    { x_ = x; }
 
     //! Update the time level only
     void updateTime(const TimeLevel& t)
