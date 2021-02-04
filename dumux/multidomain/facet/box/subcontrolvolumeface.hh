@@ -131,11 +131,11 @@ public:
     Scalar area() const
     { return area_; }
 
-    //! returns bolean if the sub control volume face is on the boundary
+    //! returns true if the sub control volume face is on the boundary
     bool boundary() const
     { return boundary_; }
 
-    //! returns bolean if the sub control volume face is on an interior boundary
+    //! returns true if the sub control volume face is on an interior boundary
     bool interiorBoundary() const
     { return interiorBoundary_; }
 
@@ -144,7 +144,7 @@ public:
     const GlobalPosition& unitOuterNormal() const
     { return unitOuterNormal_; }
 
-    //! index of the inside sub control volume for spatial param evaluation
+    //! index of the inside sub control volume
     LocalIndexType insideScvIdx() const
     { return scvIndices_[0]; }
 
@@ -152,12 +152,18 @@ public:
     GridIndexType index() const
     { return scvfIndex_; }
 
-    //! index of the outside sub control volume for spatial param evaluation
-    //! This results in undefined behaviour if boundary is true
-    LocalIndexType outsideScvIdx() const
+    //! Index of the i-th outside sub control volume or boundary scv index.
+    // Results in undefined behaviour if i >= numOutsideScvs()
+    LocalIndexType outsideScvIdx(int i = 0) const
     {
-        assert(!boundary());
+        assert(!boundary() && !interiorBoundary());
         return scvIndices_[1];
+    }
+
+    //! The number of scvs on the outside of this face
+    std::size_t numOutsideScvs() const
+    {
+        return static_cast<std::size_t>(!(boundary() || interiorBoundary()));
     }
 
     //! returns the element-local index of the facet this scvf is embedded in.
