@@ -172,7 +172,7 @@ public:
         return area_;
     }
 
-    //! returns bolean if the sub control volume face is on the boundary
+    //! returns true if the sub control volume face is on the boundary
     bool boundary() const
     {
         return boundary_;
@@ -183,7 +183,7 @@ public:
         return unitOuterNormal_;
     }
 
-    //! index of the inside sub control volume for spatial param evaluation
+    //! index of the inside sub control volume
     LocalIndexType insideScvIdx() const
     {
         return scvIndices_[0];
