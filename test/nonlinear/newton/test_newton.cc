@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <cassert>
 #include <iomanip>
 
 #include <dune/common/exceptions.hh>
@@ -60,12 +61,6 @@ public:
 
     ResidualType& residual() { return res_; }
 
-    double residualNorm(const ResidualType& sol)
-    {
-        assembleResidual(sol);
-        return res_[0];
-    }
-
 private:
     JacobianMatrix jac_;
     ResidualType res_;
@@ -77,10 +72,18 @@ public:
     void setResidualReduction(double residualReduction) {}
 
     template<class Vector>
-    bool solve (const double& A, Vector& x, const Vector& b) const
+    bool solve(const double& A, Vector& x, const Vector& b) const
     {
         x[0] = b[0]/A;
         return true;
+    }
+
+    double norm(const Dune::BlockVector<double>& residual) const
+    {
+        assert(residual.size() == 1);
+
+        using std::abs;
+        return abs(residual[0]);
     }
 };
 
