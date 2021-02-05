@@ -64,9 +64,6 @@ public:
     static std::size_t size(const DofVector& d)
     { return 1; }
 
-    static DofVector makeDofVector(const DofVector& d)
-    { return d; }
-
     static DofVector makeZeroDofVector(std::size_t size)
     { return 0.0; }
 };
@@ -84,9 +81,6 @@ public:
 
     static std::size_t size(const DofVector& d)
     { return d.size(); }
-
-    static DofVector makeDofVector(const DofVector& d)
-    { return d; }
 
     static DofVector makeZeroDofVector(std::size_t size)
     { DofVector d; d.resize(size); return d; }
@@ -116,9 +110,6 @@ public:
         });
         return result;
     }
-
-    static DofVector makeDofVector(const DofVector& d)
-    { return d; }
 
     static DofVector makeZeroDofVector(const VectorSizeInfo& size)
     {
