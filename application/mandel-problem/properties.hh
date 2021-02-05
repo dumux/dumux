@@ -26,6 +26,7 @@
 
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/geomechanics/poroelastic/model.hh>
 
@@ -39,28 +40,22 @@ namespace Properties{
 ////////////////////////////
 //////Fluid Problem/////////
 ////////////////////////////
+
 namespace TTag {
-struct TestMandelFluid { using InheritsFrom = std::tuple<> };
-}
-////////////////////////////
-/////Solid Problem//////////
-////////////////////////////
-namespace TTag {
-// Create new type tags
-struct TestMandelSolid { using InheritsFrom = std::tuple<PoroElastic, BoxModel>; };
+struct MandelOnePSub { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
 } // end namespace TTag
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::TestMandelSolid> { using type = Dune::YaspGrid<2>; };
+struct Grid<TypeTag, TTag::MandelOnePSub> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::TestMandelSolid> { using type = Dumux::MandelSolidProblem<TypeTag>; };
+struct Problem<TypeTag, TTag::MandelOnePSub> { using type = Dumux::MandelOnePSubProblem<TypeTag>; };
 
 // The fluid phase consists of water
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::TestPoroElastic>
+struct FluidSystem<TypeTag, TTag::MandelOnePSub>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = Dumux::FluidSystems::OnePLiquid< Scalar,
@@ -69,7 +64,40 @@ struct FluidSystem<TypeTag, TTag::TestPoroElastic>
 };
 
 template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::TestPoroElastic>
+struct SpatialParams<TypeTag, TTag::MandelOnePSub>
+{
+    using type = PoroElasticSpatialParams< GetPropType<TypeTag, Properties::Scalar>,
+                                           GetPropType<TypeTag, Properties::GridGeometry> >;
+};
+////////////////////////////
+/////Solid Problem//////////
+////////////////////////////
+
+namespace TTag {
+// Create new type tags
+struct MandelPoreSub { using InheritsFrom = std::tuple<PoroElastic, BoxModel>; };
+} // end namespace TTag
+
+// Set the grid type
+template<class TypeTag>
+struct Grid<TypeTag, TTag::MandelPoreSub> { using type = Dune::YaspGrid<2>; };
+
+// Set the problem property
+template<class TypeTag>
+struct Problem<TypeTag, TTag::MandelPoreSub> { using type = Dumux::MandelPoreProblem<TypeTag>; };
+
+// The fluid phase consists of water
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::MandelPoreSub>
+{
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using type = Dumux::FluidSystems::OnePLiquid< Scalar,
+                                                  Dumux::Components::h2O<Scalar>
+                                                  >;
+};
+
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::MandelPoreSub>
 {
     using type = PoroElasticSpatialParams< GetPropType<TypeTag, Properties::Scalar>,
                                            GetPropType<TypeTag, Properties::GridGeometry> >;

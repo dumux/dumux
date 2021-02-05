@@ -1,0 +1,33 @@
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 1
+Cells = 10 10
+
+[Problem]
+InjectionRate = 1e-3
+EnableGravity = false
+
+[PoroElastic.Problem]
+Name = poroelastic # name passed to the output routines
+
+[OneP.Problem]
+Name = onep # name passed to the output routines
+
+[SpatialParams]
+Permeability = 1e-12 # [m^2]
+InitialPorosity = 0.2 # [-]
+
+[LinearSolver]
+ResidualReduction = 1e-20
+MaxIterations = 2000
+
+[Newton]
+MaxRelativeShift = 1e-10
+
+[Component]
+SolidDensity = 2700
+LiquidDensity  = 1.0
+LiquidKinematicViscosity = 1.0
+
+[Vtk]
+OutputName = test_md_poromechanics_el1p
