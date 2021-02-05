@@ -573,7 +573,7 @@ public:
 
         else
         {
-            auto uCurrentIter = Backend::makeDofVector(uLastIter);
+            auto uCurrentIter = uLastIter;
             uCurrentIter -= deltaU;
             solutionChanged_(vars, uCurrentIter);
 
@@ -972,8 +972,8 @@ private:
             newtonBegin(vars);
 
             // the given solution is the initial guess
-            auto uLastIter = Backend::makeDofVector(Backend::getDofVector(vars));
-            auto deltaU = Backend::makeDofVector(Backend::getDofVector(vars));
+            auto uLastIter = Backend::getDofVector(vars);
+            auto deltaU = Backend::getDofVector(vars);
 
             // setup timers
             Dune::Timer assembleTimer(false);
@@ -1140,7 +1140,7 @@ private:
 
         while (true)
         {
-            auto uCurrentIter = Backend::makeDofVector(deltaU);
+            auto uCurrentIter = deltaU;
             uCurrentIter *= -lambda;
             uCurrentIter += uLastIter;
             solutionChanged_(vars, uCurrentIter);
