@@ -32,8 +32,9 @@ class MockScalarAssembler
 {
 public:
     using ResidualType = Dune::BlockVector<double>;
-    using Scalar = double;
+    using Variables = ResidualType;
     using JacobianMatrix = double;
+    using Scalar = double;
 
     void setLinearSystem() {}
 
@@ -64,8 +65,6 @@ public:
         assembleResidual(sol);
         return res_[0];
     }
-
-    void updateGridVariables(const ResidualType& sol) {}
 
 private:
     JacobianMatrix jac_;
