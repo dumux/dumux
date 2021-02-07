@@ -45,6 +45,25 @@ class PoreNetworkModelBoundaryFlux
     using ElementBoundaryTypes = BoxElementBoundaryTypes<BoundaryTypes>;
 
     using NumEqVector = typename SolutionVector::block_type;
+    static constexpr auto numEq = NumEqVector::dimension;
+
+    //! result struct that holds both the total flux and the flux per pore
+    struct Result
+    {
+        NumEqVector totalFlux;
+        std::unordered_map<std::size_t, NumEqVector> fluxPerPore;
+
+        //! make the total flux printable to e.g. std::cout
+        friend std::ostream& operator<< (std::ostream& stream, const Result& result)
+        {
+            stream << result.totalFlux;
+            return stream;
+        }
+
+        //! make the total flux assignable to NumEqVector through implicit conversion
+        operator NumEqVector() const
+        { return totalFlux; }
+    };
 
 public:
     // export the Scalar type
@@ -56,7 +75,12 @@ public:
     : localResidual_(localResidual)
     , gridVariables_(gridVariables)
     , sol_(sol)
-    , isStationary_(localResidual.isStationary()) {}
+    , isStationary_(localResidual.isStationary())
+    {
+        const auto numDofs = localResidual_.problem().gridGeometry().numDofs();
+        isConsidered_.resize(numDofs, false);
+        boundaryFluxes_.resize(numDofs);
+    }
 
     /*!
      * \brief Returns the cumulative flux in \f$\mathrm{[\frac{kg}{s}]}\f$ of several pore throats for a given list of pore labels to consider
@@ -65,7 +89,7 @@ public:
      * \param verbose If set true, the fluxes at all individual SCVs are printed
      */
     template<class Label>
-    NumEqVector getFlux(const std::vector<Label>& labels, const bool verbose = false) const
+    Result getFlux(const std::vector<Label>& labels, const bool verbose = false) const
     {
         // helper lambda to decide which scvs to consider for flux calculation
         auto restriction = [&] (const SubControlVolume& scv)
@@ -75,13 +99,22 @@ public:
                                [&](const Label l){ return l == poreLabel; });
         };
 
-        NumEqVector flux(0.0);
+        std::fill(boundaryFluxes_.begin(), boundaryFluxes_.end(), NumEqVector(0.0));
+        std::fill(isConsidered_.begin(), isConsidered_.end(), false);
 
         // sum up the fluxes
         for (const auto& element : elements(localResidual_.problem().gridGeometry().gridView()))
-            flux += getFlux(element, restriction, verbose);
+            getFlux(element, restriction, verbose);
 
-        return flux;
+        Result result;
+        result.totalFlux = std::accumulate(boundaryFluxes_.begin(), boundaryFluxes_.end(), NumEqVector(0.0));;
+        for (int i = 0; i < isConsidered_.size(); ++i)
+        {
+            if (isConsidered_[i])
+                result.fluxPerPore[i] = boundaryFluxes_[i];
+        }
+
+        return result;
     }
 
     /*!
@@ -91,7 +124,7 @@ public:
      * \param coord x, y or z coordinate at which bBoxMin or bBoxMax is evaluated
      * \param verbose If set true, the fluxes at all individual SCVs are printed
      */
-    NumEqVector getFlux(const std::string minMax, const int coord, const bool verbose = false) const
+    Result getFlux(const std::string minMax, const int coord, const bool verbose = false) const
     {
         if (!(minMax == "min" || minMax == "max"))
             DUNE_THROW(Dune::InvalidStateException,
@@ -124,13 +157,23 @@ public:
             return considerScv;
         };
 
-        NumEqVector flux(0.0);
+        std::fill(boundaryFluxes_.begin(), boundaryFluxes_.end(), NumEqVector(0.0));
+        std::fill(isConsidered_.begin(), isConsidered_.end(), false);
 
         // sum up the fluxes
         for (const auto& element : elements(localResidual_.problem().gridGeometry().gridView()))
-            flux += getFlux(element, restriction, verbose);
+            getFlux(element, restriction, verbose);
 
-        return flux;
+        Result result;
+        result.totalFlux = std::accumulate(boundaryFluxes_.begin(), boundaryFluxes_.end(), NumEqVector(0.0));;
+        for (int i = 0; i < isConsidered_.size(); ++i)
+        {
+            if (isConsidered_[i])
+                result.fluxPerPore[i] = boundaryFluxes_[i];
+        }
+
+        return result;
+
     }
 
     /*!
@@ -176,10 +219,14 @@ public:
             // compute the boundary flux using the local residual of the element's scv on the boundary
             if (considerScv(scv))
             {
+                isConsidered_[scv.dofIndex()] = true;
+
                 // The flux must be substracted:
                 // On an inlet boundary, the flux part of the local residual will be positive, since all fluxes will leave the SCV towards to interior domain.
                 // For the domain itself, however, the sign has to be negative, since mass is entering the system.
                 flux -= residual[scv.indexInElement()];
+
+                boundaryFluxes_[scv.dofIndex()] -= residual[scv.indexInElement()];
 
                 if (verbose)
                     std::cout << "SCV of element " << scv.elementIndex()  << " at vertex " << scv.dofIndex() << " has flux: " << residual[scv.indexInElement()] << std::endl;
@@ -193,6 +240,8 @@ private:
     const GridVariables& gridVariables_;
     const SolutionVector& sol_;
     bool isStationary_;
+    mutable std::vector<bool> isConsidered_;
+    mutable std::vector<NumEqVector> boundaryFluxes_;
 };
 
 } // end namespace
