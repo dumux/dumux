@@ -292,8 +292,11 @@ public:
      */
     void solve(Variables& vars, TimeLoop& timeLoop) override
     {
-        if (this->assembler().isStationaryProblem())
-            DUNE_THROW(Dune::InvalidStateException, "Using time step control with stationary problem makes no sense!");
+        if constexpr (!assemblerExportsVariables)
+        {
+            if (this->assembler().isStationaryProblem())
+                DUNE_THROW(Dune::InvalidStateException, "Using time step control with stationary problem makes no sense!");
+        }
 
         // try solving the non-linear system
         for (std::size_t i = 0; i <= maxTimeStepDivisions_; ++i)
@@ -306,28 +309,33 @@ public:
 
             else if (!converged && i < maxTimeStepDivisions_)
             {
-                // set solution to previous solution
-                Backend::update(vars, this->assembler().prevSol());
-
-                // if this is true, we assume old-style assemblers/grid variables
-                // TODO: reset time step is more efficient as it simply copies
-                //       prevVolVars into curVolVars. Above (in the new style)
-                //       there is an update. We should think about how to achieve
-                //       this more efficiently.
-                // TODO: Is there a test with time step reductions? It should
-                //       probably be tested if this works properly.
-                if (!assemblerExportsVariables)
-                    this->assembler().resetTimeStep(Backend::getDofVector(vars));
-
-                if (verbosity_ >= 1)
+                if constexpr (assemblerExportsVariables)
+                    DUNE_THROW(Dune::NotImplemented, "Time step reset for new assembly methods");
+                else
                 {
-                    const auto dt = timeLoop.timeStepSize();
-                    std::cout << Fmt::format("Newton solver did not converge with dt = {} seconds. ", dt)
-                              << Fmt::format("Retrying with time step of dt = {} seconds.\n", dt*retryTimeStepReductionFactor_);
-                }
+                    // set solution to previous solution
+                    Backend::update(vars, this->assembler().prevSol());
 
-                // try again with dt = dt * retryTimeStepReductionFactor_
-                timeLoop.setTimeStepSize(timeLoop.timeStepSize() * retryTimeStepReductionFactor_);
+                    // if this is true, we assume old-style assemblers/grid variables
+                    // TODO: reset time step is more efficient as it simply copies
+                    //       prevVolVars into curVolVars. Above (in the new style)
+                    //       there will probably be an update. We should think about
+                    //       how to achieve this efficiently.
+                    // TODO: Is there a test with time step reductions? It should
+                    //       probably be tested if this works properly.
+                    if (!assemblerExportsVariables)
+                        this->assembler().resetTimeStep(Backend::getDofVector(vars));
+
+                    if (verbosity_ >= 1)
+                    {
+                        const auto dt = timeLoop.timeStepSize();
+                        std::cout << Fmt::format("Newton solver did not converge with dt = {} seconds. ", dt)
+                                  << Fmt::format("Retrying with time step of dt = {} seconds.\n", dt*retryTimeStepReductionFactor_);
+                    }
+
+                    // try again with dt = dt * retryTimeStepReductionFactor_
+                    timeLoop.setTimeStepSize(timeLoop.timeStepSize() * retryTimeStepReductionFactor_);
+                }
             }
 
             else
