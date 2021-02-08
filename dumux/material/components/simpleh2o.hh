@@ -107,25 +107,23 @@ public:
         if (T < tripleTemperature())
             return 0; // water is solid: We don't take sublimation into account
 
-        static const Scalar n[10] = {
+        constexpr Scalar n[10] = {
             0.11670521452767e4, -0.72421316703206e6, -0.17073846940092e2,
             0.12020824702470e5, -0.32325550322333e7, 0.14915108613530e2,
             -0.48232657361591e4, 0.40511340542057e6, -0.23855557567849,
             0.65017534844798e3
         };
 
-        Scalar sigma = T + n[8]/(T - n[9]);
+        const Scalar sigma = T + n[8]/(T - n[9]);
 
-        Scalar A = (sigma + n[0])*sigma + n[1];
-        Scalar B = (n[2]*sigma + n[3])*sigma + n[4];
-        Scalar C = (n[5]*sigma + n[6])*sigma + n[7];
+        const Scalar A = (sigma + n[0])*sigma + n[1];
+        const Scalar B = (n[2]*sigma + n[3])*sigma + n[4];
+        const Scalar C = (n[5]*sigma + n[6])*sigma + n[7];
 
         using std::sqrt;
-        Scalar tmp = Scalar(2.0)*C/(sqrt(B*B - Scalar(4.0)*A*C) - B);
-        tmp *= tmp;
-        tmp *= tmp;
-
-        return Scalar(1e6)*tmp;
+        const Scalar term = Scalar(2.0)*C/(sqrt(B*B - Scalar(4.0)*A*C) - B);
+        
+        return Scalar(1e6)*term*term*term*term;
     }
 
     /*!
