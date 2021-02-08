@@ -38,8 +38,7 @@ namespace Components {
 
 /*!
  * \ingroup Components
- * \brief A much simpler (and thus potentially less buggy) version of
- *        pure water.
+ * \brief A simple version of pure water
  *
  * \tparam Scalar The type used for scalar values
  */
