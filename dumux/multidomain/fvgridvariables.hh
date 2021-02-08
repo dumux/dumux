@@ -66,6 +66,12 @@ public:
     //! export type of tuple of pointers
     using TupleType = typename MDTraits::template Tuple<PtrType>;
 
+    //! export underlying scalar type
+    using Scalar = typename MDTraits::Scalar;
+
+    //! export the time representation
+    using TimeLevel = Dumux::TimeLevel<Scalar>;
+
     /*!
      * \brief The default constructor
      */
@@ -101,6 +107,16 @@ public:
         forEach(std::make_index_sequence<numSubDomains>{}, [&](auto&& id)
         {
             elementAt(gridVars_, id)->init(sol[id]);
+        });
+    }
+
+    //! update the time level only
+    void updateTime(const TimeLevel& timeLevel)
+    {
+        using namespace Dune::Hybrid;
+        forEach(std::make_index_sequence<numSubDomains>{}, [&](auto&& id)
+        {
+            elementAt(gridVars_, id)->updateTime(timeLevel);
         });
     }
 
