@@ -33,8 +33,7 @@
 #include <dumux/material/components/liquid.hh>
 #include <dumux/material/components/gas.hh>
 
-namespace Dumux {
-namespace Components {
+namespace Dumux::Components {
 
 /*!
  * \ingroup Components
@@ -361,8 +360,6 @@ struct IsAqueous<SimpleH2O<Scalar>> : public std::true_type {};
 template <class Scalar>
 const Scalar Components::SimpleH2O<Scalar>::R = Constants<Scalar>::R / 18e-3;
 
-} // end namespace Components
-
-} // end namespace Dumux
+} // end namespace Dumux::Components
 
 #endif
