@@ -60,6 +60,10 @@ class PoreNetworkModelBoundaryFlux
             return stream;
         }
 
+        //! allow to get the total flux for a given eqIdx
+        const auto& operator[] (int eqIdx) const
+        { return totalFlux[eqIdx]; }
+
         //! make the total flux assignable to NumEqVector through implicit conversion
         operator NumEqVector() const
         { return totalFlux; }
