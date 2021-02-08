@@ -103,6 +103,11 @@ struct LocalOperator<TypeTag, TTag::OnePBulkBox> { using type = typename SDOpera
 template<class TypeTag>
 struct LocalOperator<TypeTag, TTag::OnePLowDimBox> { using type = typename SDOperator<TTag::OnePLowDimBox>::Type; };
 
+template<class TypeTag>
+struct LocalOperator<TypeTag, TTag::OnePBulkTpfa> { using type = typename SDOperator<TTag::OnePBulkTpfa>::Type; };
+template<class TypeTag>
+struct LocalOperator<TypeTag, TTag::OnePLowDimTpfa> { using type = typename SDOperator<TTag::OnePLowDimTpfa>::Type; };
+
 // set cm property for the box test
 using BoxTraits = TestTraits<Properties::TTag::OnePBulkBox, Properties::TTag::OnePLowDimBox>;
 template<class TypeTag>
@@ -111,11 +116,11 @@ template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::OnePLowDimBox> { using type = typename BoxTraits::CouplingManager; };
 
 // set cm property for the tpfa test
-// using TpfaTraits = TestTraits<Properties::TTag::OnePBulkTpfa, Properties::TTag::OnePLowDimTpfa>;
-// template<class TypeTag>
-// struct CouplingManager<TypeTag, TTag::OnePBulkTpfa> { using type = typename TpfaTraits::CouplingManager; };
-// template<class TypeTag>
-// struct CouplingManager<TypeTag, TTag::OnePLowDimTpfa> { using type = typename TpfaTraits::CouplingManager; };
+using TpfaTraits = TestTraits<Properties::TTag::OnePBulkTpfa, Properties::TTag::OnePLowDimTpfa>;
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::OnePBulkTpfa> { using type = typename TpfaTraits::CouplingManager; };
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::OnePLowDimTpfa> { using type = typename TpfaTraits::CouplingManager; };
 
 } // end namespace Properties
 } // end namespace Dumux

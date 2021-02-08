@@ -314,13 +314,15 @@ public:
         assert(map.find(bulkContext_.elementIdx) != map.end());
         assert(bulkContext_.elementIdx == this->problem(bulkId).gridGeometry().elementMapper().index(bulkLocalAssembler.element()));
 
+        LocalResidual<bulkId> localResidual(&(this->problem(bulkId)));
+
         typename LocalResidual<bulkId>::ElementResidualVector res(1);
         res = 0.0;
         res[0] = evalBulkFluxes(bulkLocalAssembler.element(),
                                 bulkLocalAssembler.fvGeometry(),
                                 bulkLocalAssembler.curElemVolVars(),
                                 bulkLocalAssembler.elemFluxVarsCache(),
-                                bulkLocalAssembler.localResidual(),
+                                localResidual,
                                 map.find(bulkContext_.elementIdx)->second.dofToCouplingScvfMap.at(dofIdxGlobalJ));
         return res;
     }
@@ -433,7 +435,7 @@ public:
 
             for (const auto lowDimElemIdx : elementStencil)
             {
-                const auto& ldSol = Assembler::isImplicit() ? this->curSol()[lowDimId] : assembler.prevSol()[lowDimId];
+                const auto& ldSol = this->curSol()[lowDimId];
                 const auto& ldProblem = this->problem(lowDimId);
                 const auto& ldGridGeometry = this->problem(lowDimId).gridGeometry();
 
@@ -496,12 +498,11 @@ public:
 
             // then simply bind the local views of that first neighbor
             auto bulkFvGeom = localView(bulkGridGeom);
-            auto bulkElemVolVars = Assembler::isImplicit() ? localView(assembler.gridVariables(bulkId).curGridVolVars())
-                                                           : localView(assembler.gridVariables(bulkId).prevGridVolVars());
+            auto bulkElemVolVars = localView(assembler.gridVariables(bulkId).curGridVolVars());
             auto bulkElemFluxVarsCache = localView(assembler.gridVariables(bulkId).gridFluxVarsCache());
 
             // evaluate variables on old/new time level depending on time disc scheme
-            const auto& bulkSol = Assembler::isImplicit() ? this->curSol()[bulkId] : assembler.prevSol()[bulkId];
+            const auto& bulkSol = this->curSol()[bulkId];
             bulkFvGeom.bind(bulkElem);
             bulkElemVolVars.bind(bulkElem, bulkFvGeom, bulkSol);
             bulkElemFluxVarsCache.bind(bulkElem, bulkFvGeom, bulkElemVolVars);
@@ -510,7 +511,7 @@ public:
             lowDimContext_.bulkFvGeometry = std::make_unique< FVElementGeometry<bulkId> >( std::move(bulkFvGeom) );
             lowDimContext_.bulkElemVolVars = std::make_unique< ElementVolumeVariables<bulkId> >( std::move(bulkElemVolVars) );
             lowDimContext_.bulkElemFluxVarsCache = std::make_unique< ElementFluxVariablesCache<bulkId> >( std::move(bulkElemFluxVarsCache) );
-            lowDimContext_.bulkLocalResidual = std::make_unique< LocalResidual<bulkId> >(assembler.localResidual(bulkId));
+            lowDimContext_.bulkLocalResidual = std::make_unique< LocalResidual<bulkId> >( &(this->problem(bulkId)) );
         }
     }
 
