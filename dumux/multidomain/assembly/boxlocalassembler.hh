@@ -33,7 +33,6 @@
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/numericepsilon.hh>
 
-#include <dumux/discretization/method.hh>
 #include <dumux/timestepping/multistagetimestepper.hh>
 
 namespace Dumux {
@@ -84,7 +83,7 @@ public:
                                         std::shared_ptr<CouplingManager> cm)
     : element_(element)
     , fvGeometry_(fvGeometry)
-    , elemVariables_(elemVars)
+    , elementVariables_(elemVars)
     , elementIsGhost_(element.partitionType() == Dune::GhostEntity)
     , stageParams_(nullptr)
     , cm_(cm)
@@ -104,7 +103,7 @@ public:
                                         std::shared_ptr<CouplingManager> cm)
     : element_(element)
     , fvGeometry_(fvGeometry)
-    , elemVariables_(elemVars)
+    , elementVariables_(elemVars)
     , elementIsGhost_(element.partitionType() == Dune::GhostEntity)
     , stageParams_(stageParams)
     , cm_(cm)
@@ -263,7 +262,7 @@ public:
 
             for (std::size_t k = 0; k < stageParams_->size(); ++k)
             {
-                LocalOperator localOperator(element(), fvGeometry(), elemVariables_[k]);
+                LocalOperator localOperator(element(), fvGeometry(), elementVariables_[k]);
 
                 if (!stageParams_->skipTemporal(k))
                     residual.axpy(stageParams_->temporalWeight(k), localOperator.evalStorage());
@@ -274,6 +273,33 @@ public:
             return residual;
         }
     }
+
+    //! Return references to the local views
+    const Element& element() const { return element_; }
+    const FVElementGeometry& fvGeometry() const { return fvGeometry_; }
+    const ElementVariables& elemVariables() const { return elementVariables_.back(); }
+
+    //! Still needed by some coupling managers
+    //! \todo TODO: Double check if still necessary after complete
+    //!             integration of new time integration schemes.
+    const auto& curElemVolVars() const { return elemVariables().elemVolVars(); }
+    const auto& elemFluxVarsCache() const { return elemVariables().elemFluxVarsCache(); }
+
+    //! Returns if a stationary problem is assembled
+    bool isStationary() const { return !stageParams_; }
+
+    // TODO: This is currently required by some coupling managers.
+    //       We should get rid of this coupling probabaly.
+    static constexpr bool isImplicit() { return /*this is buggy*/ true; }
+
+    //! Return a reference to the underlying problem
+    //! TODO: Should grid vars return problem directly!?
+    const auto& problem() const
+    { return elemVariables().gridVariables().gridVolVars().problem(); }
+
+private:
+    ElementVariables& elemVariables_()
+    { return elementVariables_.back(); }
 
     /*!
      * \brief Computes the derivatives with respect to the dofs of the given
@@ -299,7 +325,7 @@ public:
     ElementResidualVector assembleJacobianAndResidualNumeric_(JacobianBlock& A)
     {
         // get the variables of the current stage
-        auto& curVariables = elemVariables();
+        auto& curVariables = elemVariables_();
         auto& curElemVolVars = curVariables.elemVolVars();
         const auto& x = curVariables.gridVariables().dofs();
 
@@ -388,12 +414,11 @@ public:
     template<std::size_t otherId, class JacobianBlock>
     void assembleJacobianCouplingNumeric_(Dune::index_constant<otherId> domainJ, JacobianBlock& A)
     {
-        const auto& problem = elemVariables().elemVolVars().gridVolVars().problem();
         const auto& stencil = cm_->couplingStencil(domainId, element(), domainJ);
         const auto& dofs = cm_->dofs(domainJ);
 
-        auto& elemVolVars = elemVariables().elemVolVars();
-        auto& elemFluxVarsCache = elemVariables().elemFluxVarsCache();
+        auto& elemVolVars = elemVariables_().elemVolVars();
+        auto& elemFluxVarsCache = elemVariables_().elemFluxVarsCache();
 
         // TODO: How to handle the case of caching?
         auto updateCoupledVariables = [&] ()
@@ -447,7 +472,7 @@ public:
                         // For other dofs, add the contribution of the partial derivative.
                         if (fvGeometry().gridGeometry().dofOnBoundary(scv.dofIndex()))
                         {
-                            const auto bcTypes = problem.boundaryTypes(element(), scv);
+                            const auto bcTypes = problem().boundaryTypes(element(), scv);
                             if (bcTypes.isCouplingDirichlet(eqIdx))
                                 A[scv.dofIndex()][globalJ][eqIdx][pvIdx] = partialDerivs[scv.localDofIndex()][eqIdx];
                             else if (bcTypes.isDirichlet(eqIdx))
@@ -472,31 +497,11 @@ public:
             updateCoupledVariables();
         }
     }
-public:
-    //! Return references to the local views
-    const Element& element() const { return element_; }
-    const FVElementGeometry& fvGeometry() const { return fvGeometry_; }
-    const ElementVariables& elemVariables() const { return elemVariables_.back(); }
-    ElementVariables& elemVariables() { return elemVariables_.back(); }
-    const auto& curElemVolVars() const { return elemVariables().elemVolVars(); }
-    const auto& elemFluxVarsCache() const { return elemVariables().elemFluxVarsCache(); }
-
-    //! Returns if a stationary problem is assembled
-    bool isStationary() const { return !stageParams_; }
-
-    // TODO: This is currently required by some coupling managers.
-    //       We should get rid of this coupling probabaly.
-    static constexpr bool isImplicit() { return /*this is buggy*/ true; }
-
-    //! Return a reference to the underlying problem
-    //! TODO: Should grid vars return problem directly!?
-    const auto& problem() const
-    { return elemVariables().gridVariables().gridVolVars().problem(); }
 
 private:
     const Element& element_;
     const FVElementGeometry& fvGeometry_;
-    std::vector<ElementVariables>& elemVariables_;
+    std::vector<ElementVariables>& elementVariables_;
 
     bool elementIsGhost_;
     std::shared_ptr<const StageParams> stageParams_;
