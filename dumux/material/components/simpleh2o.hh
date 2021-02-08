@@ -145,7 +145,7 @@ public:
     static const Scalar liquidEnthalpy(Scalar temperature,
                                        Scalar pressure)
     {
-        return 4180*(temperature - 293.15);
+        return liquidHeatCapacity(temperature, pressure)*(temperature - 293.15);
     }
 
     /*!
@@ -311,7 +311,7 @@ public:
      */
     static Scalar liquidHeatCapacity(Scalar temperature, Scalar pressure)
     {
-        return 4.2e3;
+        return 4180.0;
     }
 
     /*!
