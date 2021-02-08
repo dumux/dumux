@@ -2,7 +2,7 @@ add_input_file_links()
 
 # 1pnc tests
 dumux_add_test(NAME test_1pnc_maxwellstefan_tpfa
-              LABELS porousmediumflow 1p2c
+              LABELS porousmediumflow 1pnc
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=MaxwellStefanOnePThreeCTestCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -12,7 +12,7 @@ dumux_add_test(NAME test_1pnc_maxwellstefan_tpfa
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pnc_maxwellstefan_tpfa params.input -Problem.Name test_1pnc_maxwellstefan_tpfa")
 
 dumux_add_test(NAME test_1pnc_maxwellstefan_box
-              LABELS porousmediumflow 1p2c
+              LABELS porousmediumflow 1pnc
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=MaxwellStefanOnePThreeCTestBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
