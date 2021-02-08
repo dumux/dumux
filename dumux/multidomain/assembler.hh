@@ -318,6 +318,46 @@ public:
     SolutionVector& residual()
     { return *residual_; }
 
+    /*!
+     * \brief Prepare for a new stage within a time integration step.
+     *        This caches the given grid variables, which are then used as a
+     *        representation of the previous stage. Moreover, the given grid
+     *        variables are then updated to the time level of the upcoming stage.
+     * \param gridVars the grid variables representing the previous stage
+     * \param params the parameters with the weights to be used in the upcoming stage
+     * \todo TODO: This function does two things, namely caching and then updating.
+     *             Should we split/delegate this, or is the current name descriptive enough?
+     *             When used from outside, one would expect the gridvars to be prepared maybe,
+     *             and that is what's done. Caching might not be expected from the outside but
+     *             it is also not important that that is known from there?
+     */
+    void prepareStage(GridVariables& gridVars,
+                      std::shared_ptr<const StageParams> params)
+    {
+        stageParams_ = params;
+        const auto curStage = params->size() - 1;
+
+        // we keep track of previous stages, they are needed for residual assembly
+        prevStageVariables_.push_back(gridVars);
+
+        // Now we update the time level of the given grid variables
+        const auto t = params->timeAtStage(curStage);
+        const auto prevT = params->timeAtStage(0);
+        const auto dtFraction = params->timeStepFraction(curStage);
+        TimeLevel<Scalar> timeLevel(t, prevT, dtFraction);
+
+        gridVars.updateTime(timeLevel);
+    }
+
+    /*!
+     * \brief Remove traces from stages within a time integration step.
+     */
+    void clearStages()
+    {
+        prevStageVariables_.clear();
+        stageParams_ = nullptr;
+    }
+
 private:
     // reset the residual vector to 0.0
     void resetResidual_()
