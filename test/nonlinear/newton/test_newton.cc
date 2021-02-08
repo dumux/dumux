@@ -39,8 +39,6 @@ public:
 
     void setLinearSystem() {}
 
-    bool isStationaryProblem() { return false; }
-
     ResidualType prevSol() { return ResidualType(0.0); }
 
     void resetTimeStep(const ResidualType& sol) {}
