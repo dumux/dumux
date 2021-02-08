@@ -353,6 +353,8 @@ public:
         if constexpr (ParentType::isMomentumProblem())
         {
             values[Indices::velocityYIdx] = 0.0;
+            if (icType == "Grain")
+                return values;
             if (useVelocityProfile_)
             {
                 const static Scalar rad = (icType == "ThinChannel") ?

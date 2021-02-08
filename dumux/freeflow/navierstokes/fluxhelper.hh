@@ -242,6 +242,10 @@ public:
         static_assert(FVElementGeometry::GridGeometry::discMethod == DiscretizationMethod::fcstaggered);
         using NumEqVector = decltype(problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf));
         NumEqVector flux;
+        flux *= 0;
+
+        //if( problem.phasefield(element, fvGeometry, scvf) < 0.5 )
+        //    return flux;
 
         if (scvf.isFrontal())
         {
