@@ -158,13 +158,14 @@ public:
      * \brief Specific internal energy of the component \f$\mathrm{[J/kg]}\f$ as a liquid.
      * \param temperature temperature of phase in \f$\mathrm{[K]}\f$
      * \param pressure pressure of phase in \f$\mathrm{[Pa]}\f$
+     * \note Account for volume work in the internal energy which appears
+     *       in the storage term of the energy balance
      */
     static Scalar liquidInternalEnergy(Scalar temperature, Scalar pressure)
     {
-        // u = c * dT for incompressible fluids
-        const Scalar heatCapacity = liquidHeatCapacity(temperature, pressure);
-        static const Scalar tRef = getParamFromGroup<Scalar>(std::to_string(id), "Component.ReferenceTemperature", 293.15);
-        return heatCapacity * (temperature - tRef);
+        const Scalar h = liquidEnthalpy(temperature, pressure);
+        const Scalar rho = liquidDensity(temperature, pressure);
+        return h - pressure / rho;
     }
 
     /*!
@@ -175,9 +176,9 @@ public:
      */
     static Scalar liquidEnthalpy(Scalar temperature, Scalar pressure)
     {
-        const Scalar u = liquidInternalEnergy(temperature, pressure);
-        const Scalar rho = liquidDensity(temperature, pressure);
-        return u + pressure / rho;
+        const Scalar heatCapacity = liquidHeatCapacity(temperature, pressure);
+        static const Scalar tRef = getParamFromGroup<Scalar>(std::to_string(id), "Component.ReferenceTemperature", 293.15);
+        return heatCapacity * (temperature - tRef);
     }
 
     /*!
