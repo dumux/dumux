@@ -44,7 +44,7 @@
 #include <dumux/timestepping/multistagetimestepper.hh>
 
 #include "couplingjacobianpattern.hh"
-#include "subdomaincclocalassembler.hh"
+// #include "subdomaincclocalassembler.hh"
 // #include "subdomainboxlocalassembler.hh"
 #include "subdomainstaggeredlocalassembler.hh"
 

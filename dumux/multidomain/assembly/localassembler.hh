@@ -26,6 +26,7 @@
 
 #include <dumux/discretization/method.hh>
 #include "boxlocalassembler.hh"
+#include "cclocalassembler.hh"
 
 namespace Dumux {
 namespace Impl {
@@ -36,6 +37,14 @@ namespace Impl {
     template<std::size_t id, class Assembler, DiffMethod diffMethod>
     struct MDLocalAssemblerChooser<id, Assembler, DiscretizationMethod::box, diffMethod>
     { using type = SubDomainBoxLocalAssembler<id, Assembler, diffMethod>; };
+
+    template<std::size_t id, class Assembler, DiffMethod diffMethod>
+    struct MDLocalAssemblerChooser<id, Assembler, DiscretizationMethod::cctpfa, diffMethod>
+    { using type = SubDomainCCLocalAssembler<id, Assembler, diffMethod>; };
+
+    template<std::size_t id, class Assembler, DiffMethod diffMethod>
+    struct MDLocalAssemblerChooser<id, Assembler, DiscretizationMethod::ccmpfa, diffMethod>
+    { using type = SubDomainCCLocalAssembler<id, Assembler, diffMethod>; };
 
     template<std::size_t id, class Assembler, DiffMethod diffMethod>
     using MDLocalAssemblerType = typename MDLocalAssemblerChooser<id,
