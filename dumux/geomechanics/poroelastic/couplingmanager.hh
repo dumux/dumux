@@ -308,26 +308,14 @@ public:
      *        and the storage term here.
      */
     template< class PMFlowLocalAssembler >
-    typename LocalResidual<PMFlowId>::ElementResidualVector
+    auto
     evalCouplingResidual(Dune::index_constant<PMFlowId> pmFlowDomainId,
                          const PMFlowLocalAssembler& pmFlowLocalAssembler,
                          Dune::index_constant<PoroMechId> poroMechDomainId,
                          GridIndexType<PoroMechId> dofIdxGlobalJ)
     {
-        auto res = pmFlowLocalAssembler.localResidual().evalFluxAndSource(pmFlowLocalAssembler.element(),
-                                                                          pmFlowLocalAssembler.fvGeometry(),
-                                                                          pmFlowLocalAssembler.curElemVolVars(),
-                                                                          pmFlowLocalAssembler.elemFluxVarsCache(),
-                                                                          pmFlowLocalAssembler.elemBcTypes());
-
-        // If the residual instationary, evaluate storage
-        if (!pmFlowLocalAssembler.localResidual().isStationary())
-            res += pmFlowLocalAssembler.localResidual().evalStorage(pmFlowLocalAssembler.element(),
-                                                                    pmFlowLocalAssembler.fvGeometry(),
-                                                                    pmFlowLocalAssembler.prevElemVolVars(),
-                                                                    pmFlowLocalAssembler.curElemVolVars());
-
-        return res;
+        // TODO: efficiency!
+        return pmFlowLocalAssembler.evalLocalResidual();
     }
 
     /*!
@@ -337,17 +325,14 @@ public:
      *        the fluxes as well as the source term here.
      */
     template< class PoroMechLocalAssembler >
-    typename LocalResidual<PoroMechId>::ElementResidualVector
+    auto
     evalCouplingResidual(Dune::index_constant<PoroMechId> poroMechDomainId,
                          const PoroMechLocalAssembler& poroMechLocalAssembler,
                          Dune::index_constant<PMFlowId> pmFlowDomainId,
                          GridIndexType<PMFlowId> dofIdxGlobalJ)
     {
-        return poroMechLocalAssembler.localResidual().evalFluxAndSource(poroMechLocalAssembler.element(),
-                                                                        poroMechLocalAssembler.fvGeometry(),
-                                                                        poroMechLocalAssembler.curElemVolVars(),
-                                                                        poroMechLocalAssembler.elemFluxVarsCache(),
-                                                                        poroMechLocalAssembler.elemBcTypes());
+        // TODO: efficiency!
+        return poroMechLocalAssembler.evalLocalResidual();
     }
 
     //! Return the porous medium flow variables an element/scv of the poromech domain couples to

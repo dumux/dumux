@@ -33,6 +33,18 @@
 #include "problem_poroelastic.hh"
 
 #include <dumux/common/properties.hh>
+
+namespace Dumux::Properties {
+    // property forward declaration
+    // TODO: We need this in MDTraits such that the MDAssembler
+    //       can extract the local operator from the sub-typetags.
+    //       Thus, we need to introduce this property for all models?
+    //       Should this be circumvented somehow? (In standard models one can
+    //       select the operator in the main file so far...)
+    template<class TypeTag, class MyTypeTag>
+    struct LocalOperator { using type = UndefinedProperty; };
+} // end namespace Dumux::Properties
+
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
 
@@ -40,8 +52,14 @@
 
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/multidomain/newtonsolver.hh>
-#include <dumux/multidomain/fvassembler.hh>
+#include <dumux/multidomain/assembler.hh>
+#include <dumux/multidomain/fvgridvariables.hh>
 #include <dumux/multidomain/traits.hh>
+
+#include <dumux/assembly/fv/localoperator.hh>
+#include <dumux/porousmediumflow/immiscible/operators.hh>
+#include <dumux/geomechanics/fvoperators.hh>
+#include <dumux/timestepping/multistagemethods.hh>
 
 #include <dumux/geomechanics/poroelastic/couplingmanager.hh>
 
@@ -71,6 +89,33 @@ private:
 public:
     using type = PoroMechanicsCouplingManager< Traits >;
 };
+
+template<class TypeTag>
+struct LocalOperator<TypeTag, TTag::TwoPSub>
+{
+private:
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
+    using ElemVariables = typename GetPropType<TypeTag, Properties::GridVariables>::LocalView;
+    using ImmiscibleOperators = FVImmiscibleOperators<ModelTraits, FluxVariables, ElemVariables>;
+
+public:
+    using type = FVLocalOperator<ElemVariables, ImmiscibleOperators>;
+};
+
+template<class TypeTag>
+struct LocalOperator<TypeTag, TTag::PoroElasticSub>
+{
+private:
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using ElemVariables = typename GetPropType<TypeTag, Properties::GridVariables>::LocalView;
+    using StressType = GetPropType<TypeTag, Properties::StressType>;
+    using GeomechanicsOperators = FVGeomechanicsOperators<ModelTraits, ElemVariables, StressType>;
+
+public:
+    using type = FVLocalOperator<ElemVariables, GeomechanicsOperators>;
+};
+
 } // end namespace Properties
 } // end namespace Dumux
 
@@ -139,7 +184,6 @@ int main(int argc, char** argv)
     x[poroMechId].resize(poroMechFvGridGeometry->numDofs());
     twoPProblem->applyInitialSolution(x[twoPId]);
     poroMechProblem->applyInitialSolution(x[poroMechId]);
-    SolutionVector xOld = x;
 
     // initialize the coupling manager
     couplingManager->init(twoPProblem, poroMechProblem, x);
@@ -178,12 +222,16 @@ int main(int argc, char** argv)
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDT);
 
+    // use implicit Euler for time integration
+    auto timeMethod = std::make_shared<MultiStage::ImplicitEuler<Scalar>>();
+
     // the assembler
-    using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric, /*implicit?*/true>;
-    auto assembler = std::make_shared<Assembler>( std::make_tuple(twoPProblem, poroMechProblem),
-                                                  std::make_tuple(twoPFvGridGeometry, poroMechFvGridGeometry),
-                                                  std::make_tuple(twoPGridVariables, poroMechGridVariables),
-                                                  couplingManager, timeLoop, xOld);
+    using Assembler = MultiDomainAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+    auto assembler = std::make_shared<Assembler>( std::make_tuple(twoPFvGridGeometry, poroMechFvGridGeometry),
+                                                  couplingManager, *timeMethod);
+
+    auto mdGridVars = MultiDomainFVGridVariables<Traits>(std::make_tuple(twoPGridVariables, poroMechGridVariables));
+    mdGridVars.update(x);
 
     // the linear solver
     using LinearSolver = UMFPackBackend;
@@ -191,21 +239,22 @@ int main(int argc, char** argv)
 
     // the non-linear solver
     using NewtonSolver = Dumux::MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+    auto nonLinearSolver = std::make_shared<NewtonSolver>(assembler, linearSolver, couplingManager);
+
+    // the time stepper for time integration
+    using TimeStepper = MultiStageTimeStepper<NewtonSolver>;
+    TimeStepper timeStepper(nonLinearSolver, timeMethod);
 
     // time loop
     timeLoop->start(); do
     {
-        // solve the non-linear system with time step control
-        nonLinearSolver.solve(x, *timeLoop);
-
-        // make the new solution the old solution
-        xOld = x;
+        // do time integraiton
+        timeStepper.step(mdGridVars, timeLoop->time(), timeLoop->timeStepSize());
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
-        twoPGridVariables->advanceTimeStep();
-        poroMechGridVariables->advanceTimeStep();
+        // twoPGridVariables->advanceTimeStep();
+        // poroMechGridVariables->advanceTimeStep();
 
         // write vtk output
         twoPVtkWriter.write(timeLoop->time());
@@ -214,23 +263,22 @@ int main(int argc, char** argv)
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
-        using TwoPPrimaryVariables = GetPropType<TwoPTypeTag, Properties::PrimaryVariables>;
-        TwoPPrimaryVariables storage(0);
-        const auto& twoPLocalResidual = assembler->localResidual(twoPId);
-        for (const auto& element : elements(leafGridView, Dune::Partitions::interior))
-        {
-            auto storageVec = twoPLocalResidual.evalStorage(*twoPProblem, element, *twoPFvGridGeometry, *twoPGridVariables, x[twoPId]);
-            storage += storageVec[0];
-        }
-        std::cout << "time, mass CO2 (kg), mass brine (kg):" << std::endl;
-        std::cout << timeLoop->time() << " , " << storage[1] << " , " << storage[0] << std::endl;
-        std::cout << "***************************************" << std::endl;
+        // using TwoPPrimaryVariables = GetPropType<TwoPTypeTag, Properties::PrimaryVariables>;
+        // TwoPPrimaryVariables storage(0);
+        // const auto& twoPLocalResidual = assembler->localResidual(twoPId);
+        // for (const auto& element : elements(leafGridView, Dune::Partitions::interior))
+        // {
+        //     auto storageVec = twoPLocalResidual.evalStorage(*twoPProblem, element, *twoPFvGridGeometry, *twoPGridVariables, x[twoPId]);
+        //     storage += storageVec[0];
+        // }
+        // std::cout << "time, mass CO2 (kg), mass brine (kg):" << std::endl;
+        // std::cout << timeLoop->time() << " , " << storage[1] << " , " << storage[0] << std::endl;
+        // std::cout << "***************************************" << std::endl;
 
     } while (!timeLoop->finished());
 
-
-    // output some Newton statistics
-    nonLinearSolver.report();
+    // // output some Newton statistics
+    // nonLinearSolver.report();
 
     timeLoop->finalize(leafGridView.comm());
 
