@@ -103,6 +103,9 @@ private:
     using ThisType = MultiDomainAssembler<MDTraits, CouplingManager, diffMethod>;
     using GridGeometryTuple = typename MDTraits::template TupleOfSharedPtrConst<SubDomainGridGeometry>;
 
+    template<std::size_t id>
+    using Context = typename CouplingManager::template CouplingContext<id>;
+
 public:
 
     /*!
@@ -152,18 +155,18 @@ public:
             this->assembleJacobianAndResidual_(domainId, jacRow, subRes, gridVars);
         });
 
-        // using namespace Dune::Indices;
+        using namespace Dune::Indices;
         // std::cout << "SOL in GV: " << std::endl;
         // Dune::printvector(std::cout, gridVars.dofs()[_0], "", "", 1, 10, 5);
         // Dune::printvector(std::cout, gridVars.dofs()[_1], "", "", 1, 10, 5);
         //
         // std::cout << "Linear system: " << std::endl;
-        // Dune::printmatrix(std::cout, (*jacobian_)[_0][_0], "", "", 10, 5);
-        // Dune::printmatrix(std::cout, (*jacobian_)[_0][_1], "", "", 10, 5);
-        // Dune::printmatrix(std::cout, (*jacobian_)[_1][_0], "", "", 10, 5);
-        // Dune::printmatrix(std::cout, (*jacobian_)[_1][_1], "", "", 10, 5);
-        // Dune::printvector(std::cout, (*residual_)[_0], "", "", 1, 10, 5);
-        // Dune::printvector(std::cout, (*residual_)[_1], "", "", 1, 10, 5);
+        // Dune::printmatrix(std::cout, (*jacobian_)[_0][_0], "", "", 10, 2);
+        // Dune::printmatrix(std::cout, (*jacobian_)[_0][_1], "", "", 10, 2);
+        // Dune::printmatrix(std::cout, (*jacobian_)[_1][_0], "", "", 10, 2);
+        // Dune::printmatrix(std::cout, (*jacobian_)[_1][_1], "", "", 10, 2);
+        // Dune::printvector(std::cout, (*residual_)[_0], "", "", 1, 10, 2);
+        // Dune::printvector(std::cout, (*residual_)[_1], "", "", 1, 10, 2);
     }
 
     //! compute the residuals using the internal residual
@@ -393,10 +396,10 @@ private:
         {
             auto ggLocalView = localView(gridGeometry(domainId));
             ggLocalView.bind(element);
-            auto elemVars = this->prepareElemVariables_<domainId>(gridVars[domainId], element, ggLocalView);
+            auto [elemVars, contexts] = this->prepareElemVariables_<domainId>(gridVars, element, ggLocalView);
 
             using LocalAssembler = Dumux::MultiDomainLocalAssembler<i, ThisType, diffMethod>;
-            LocalAssembler localAssembler(element, ggLocalView, elemVars, stageParams_, couplingManager_);
+            LocalAssembler localAssembler(element, ggLocalView, contexts, elemVars, stageParams_, couplingManager_);
             localAssembler.assembleJacobianAndResidual(jacRow, subRes);
         });
     }
@@ -410,10 +413,10 @@ private:
         {
             auto ggLocalView = localView(gridGeometry(domainId));
             ggLocalView.bind(element);
-            auto elemVars = this->prepareElemVariables_<domainId>(gridVars[domainId], element, ggLocalView);
+            auto [elemVars, contexts] = this->prepareElemVariables_<domainId>(gridVars, element, ggLocalView);
 
             using LocalAssembler = Dumux::MultiDomainLocalAssembler<i, ThisType, diffMethod>;
-            LocalAssembler localAssembler(element, ggLocalView, elemVars, stageParams_, couplingManager_);
+            LocalAssembler localAssembler(element, ggLocalView, contexts, elemVars, stageParams_, couplingManager_);
             localAssembler.assembleResidual(subRes);
         });
     }
@@ -460,31 +463,47 @@ private:
     //! prepares the local views on the grid variables for the given element
     //! \todo: TODO: when stageparams.skipSpatial() == true, we don't need to bind flux vars caches!
     template<std::size_t id>
-    std::vector<SubDomainElemVars<id>>
-    prepareElemVariables_(const SubDomainGridVariables<id>& gridVars,
+    std::pair< std::vector<SubDomainElemVars<id>>,
+               std::vector<std::shared_ptr<Context<id>>> >
+    prepareElemVariables_(const Variables& gridVars,
                           const SubDomainElement<id>& element,
                           const typename SubDomainGridGeometry<id>::LocalView& ggLocalView) const
     {
-        couplingManager_->bindCouplingContext(Dune::index_constant<id>(), element, *this);
+        static constexpr auto domainId = Dune::index_constant<id>();
+
         if (!stageParams_)
         {
-            auto elemVars = localView(gridVars);
+            auto context = couplingManager_->makeCouplingContext(domainId, element, gridVars);
+            auto elemVars = localView(gridVars[domainId]);
             elemVars.bind(element, ggLocalView);
-            return {elemVars};
+            return std::make_pair(std::vector<SubDomainElemVars<id>>{{elemVars}},
+                                  std::vector<std::shared_ptr<Context<id>>>{{context}});
         }
         else
         {
             std::vector<SubDomainElemVars<id>> elemVars;
+            std::vector<std::shared_ptr<Context<id>>> contexts;
+
             elemVars.reserve(stageParams_->size());
+            contexts.reserve(stageParams_->size());
 
             for (int i = 0; i < stageParams_->size()-1; ++i)
-                elemVars.emplace_back(prevStageVariables_[i][Dune::index_constant<id>()]);
-            elemVars.emplace_back(gridVars);
+            {
+                elemVars.emplace_back(prevStageVariables_[i][domainId]);
+                contexts.emplace_back(couplingManager_->makeCouplingContext(domainId, element, prevStageVariables_[i]));
+            }
 
-            for (auto& evv : elemVars)
-                evv.bind(element, ggLocalView);
+            elemVars.emplace_back(gridVars[domainId]);
+            contexts.emplace_back(couplingManager_->makeCouplingContext(domainId, element, gridVars));
 
-            return elemVars;
+            for (int i = 0; i < elemVars.size(); ++i)
+            {
+                couplingManager_->setCouplingContext(contexts[i]);
+                elemVars[i].bind(element, ggLocalView);
+            }
+
+            return std::make_pair(std::vector<SubDomainElemVars<id>>{elemVars},
+                                  std::vector<std::shared_ptr<Context<id>>>{contexts});
         }
     }
 

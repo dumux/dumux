@@ -215,8 +215,8 @@ int main(int argc, char** argv)
     PoroMechOutputFields::initOutputModule(poroMechVtkWriter);
 
     // write initial solution
-    twoPVtkWriter.write(0.0);
-    poroMechVtkWriter.write(0.0);
+    // twoPVtkWriter.write(0.0);
+    // poroMechVtkWriter.write(0.0);
 
     //instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dt, tEnd);

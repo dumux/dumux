@@ -58,6 +58,7 @@ class SubDomainBoxLocalAssembler
 
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
+    using Context = typename CouplingManager::template CouplingContext<id>;
 
     using JacobianMatrix = typename Assembler::JacobianMatrix;
     using ResidualVector = typename Assembler::SolutionVector;
@@ -79,10 +80,12 @@ public:
      */
     explicit SubDomainBoxLocalAssembler(const Element& element,
                                         const FVElementGeometry& fvGeometry,
+                                        std::vector<std::shared_ptr<Context>>& contexts,
                                         std::vector<ElementVariables>& elemVars,
                                         std::shared_ptr<CouplingManager> cm)
     : element_(element)
     , fvGeometry_(fvGeometry)
+    , contexts_(contexts)
     , elementVariables_(elemVars)
     , elementIsGhost_(element.partitionType() == Dune::GhostEntity)
     , stageParams_(nullptr)
@@ -98,11 +101,13 @@ public:
      */
     explicit SubDomainBoxLocalAssembler(const Element& element,
                                         const FVElementGeometry& fvGeometry,
+                                        std::vector<std::shared_ptr<Context>>& contexts,
                                         std::vector<ElementVariables>& elemVars,
                                         std::shared_ptr<const StageParams> stageParams,
                                         std::shared_ptr<CouplingManager> cm)
     : element_(element)
     , fvGeometry_(fvGeometry)
+    , contexts_(contexts)
     , elementVariables_(elemVars)
     , elementIsGhost_(element.partitionType() == Dune::GhostEntity)
     , stageParams_(stageParams)
@@ -262,6 +267,7 @@ public:
 
             for (std::size_t k = 0; k < stageParams_->size(); ++k)
             {
+                cm_->setCouplingContext(contexts_[k]);
                 LocalOperator localOperator(element(), fvGeometry(), elementVariables_[k]);
 
                 if (!stageParams_->skipTemporal(k))
@@ -501,6 +507,7 @@ private:
 private:
     const Element& element_;
     const FVElementGeometry& fvGeometry_;
+    std::vector<std::shared_ptr<Context>>& contexts_;
     std::vector<ElementVariables>& elementVariables_;
 
     bool elementIsGhost_;
