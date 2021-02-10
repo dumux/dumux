@@ -41,9 +41,9 @@ namespace Dumux {
  *        This allows for element-wise evaluation of individual terms
  *        of the equations to be solved.
  * \tparam ElementVariables local view on the grid variables
- * \tparam Operators The model-specific operators
+ * \tparam Op The model-specific operators
  */
-template<class ElementVariables, class Operators>
+template<class ElementVariables, class Op>
 class FVLocalOperator
 {
     // The variables required for the evaluation of the equation
@@ -59,12 +59,15 @@ class FVLocalOperator
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using NumEqVector = typename Operators::NumEqVector;
+    using NumEqVector = typename Op::NumEqVector;
     static constexpr int dim = GridView::dimension;
     static constexpr int numEq = NumEqVector::size();
     static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
 
 public:
+    //! export operators
+    using Operators = Op;
+
     //! export the grid variables type this operator requires a local view of
     using GridVariables = GridVars;
 
