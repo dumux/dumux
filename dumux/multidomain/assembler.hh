@@ -118,6 +118,8 @@ public:
     , couplingManager_(couplingManager)
     , isImplicit_(true)
     {
+        // TODO: Store that instantiation happened for stationary problem for later error catch?
+        //       Or maybe we need another mechanism to tell the assembler if implicit/explicit...
         std::cout << "Instantiated MultiDomainAssembler for a stationary problem." << std::endl;
     }
 
