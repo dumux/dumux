@@ -99,6 +99,8 @@ public:
         });
     }
 
+    //! TODO: Adjust to all interfaces of FVGridVariables
+
     //! initialize all variables
     void init(const SolutionVector& sol)
     {
