@@ -69,6 +69,7 @@ struct SpatialParams<TypeTag, TTag::MandelOnePSub>
     using type = PoroElasticSpatialParams< GetPropType<TypeTag, Properties::Scalar>,
                                            GetPropType<TypeTag, Properties::GridGeometry> >;
 };
+
 ////////////////////////////
 /////Solid Problem//////////
 ////////////////////////////
