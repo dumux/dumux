@@ -93,6 +93,9 @@ public:
     bool hasOutflow() const
     { return hasOutflow_; }
 
+    bool isWall() const
+    { return hasDirichlet_(); } // TODO: return hasDirichlet() && massproblem.hasNeumann() || hasBJS(); }
+
     /*
      * \brief Access operator
      * \return BoundaryTypes

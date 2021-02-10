@@ -58,6 +58,7 @@ public:
 
     //! the maximum number of scvs per element
     static constexpr auto dim = GridView::dimension;
+    static constexpr int numCornersPerFace = 2 * (dim - 1);
     static constexpr std::size_t maxNumElementScvs = 2*dim; // (2, 4, 6)
     //! the maximum number of scvfs per element
     static constexpr std::size_t maxNumElementScvfs = maxNumElementScvs * maxNumElementScvs; // (4, 16, 36)
@@ -417,6 +418,26 @@ public:
         const Scalar halfFaceLength = scvFrontalLength(selfScv) / 2.0;
         const GlobalPosition shift = selfScv.innerUnitNormal() * halfFaceLength;
         return lateralScvf.center() + shift;
+    }
+
+    std::array<GlobalPosition, numCornersPerFace> faceCornerPositions(const SubControlVolumeFace& frontalFace,
+                                                                      const Element& element) const
+    {
+        assert(frontalFace.isFrontal());
+        assert(frontalFace.isBoundary());
+
+        std::array<GlobalPosition, numCornersPerFace> cornerLocations;
+
+        for (const auto& intersection : intersections(gridGeometry().gridView(), element))
+        {
+            if (intersection.centerUnitOuterNormal() == frontalFace.directionIndex())
+            {
+                for (int i = 0; i < intersection.corners(); ++i)
+                    cornerLocations[i] = intersection.corner(i);
+            }
+        }
+
+        return cornerLocations;
     }
 
     //! iterator range for sub control volumes. Iterates over
