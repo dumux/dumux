@@ -354,6 +354,14 @@ private:
                 partialDerivs[0][pvIdx] = 1.0;
             }
 
+            // For instationary simulations, scale the coupling
+            // fluxes of the current stage correctly
+            if (stageParams_)
+            {
+                for (std::size_t k = 0; k < numNeighbors; ++k)
+                    partialDerivs[k+1] *= stageParams_->spatialWeight(stageParams_->size()-1);
+            }
+
             // add the current partial derivatives to the global jacobian matrix
             // no special treatment is needed if globalJ is a ghost because then derivatives have been assembled to 0 above
             if constexpr (Problem::enableInternalDirichletConstraints())
