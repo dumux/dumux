@@ -361,8 +361,8 @@ private:
                 {
                     // update the volume variables and compute element residual
                     elemSol[localI][pvIdx] = priVar;
-                    curVolVars.update(elemSol, problem(), element(), scvI);
                     cm_->updateCouplingContext(domainId, *this, domainId, scvI.dofIndex(), elemSol[localI], pvIdx);
+                    curVolVars.update(elemSol, problem(), element(), scvI);
                     return evalLocalResidual();
                 };
 
