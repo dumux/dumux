@@ -42,6 +42,8 @@ static_assert(false, "dune-foamgrid required!");
 #include "griddata.hh"
 #include "structuredlatticegridcreator.hh"
 
+#include "dgfwriter.hh"
+
 namespace Dumux {
 
 /*!
@@ -82,6 +84,13 @@ public:
             }
 
             loadBalance();
+        }
+        // write the final grid to a dgf file, if desired
+        if (getParamFromGroup<bool>(paramGroup_, "Grid.WriteDgfFile", false))
+        {
+            const auto defaultName = enableDgfGridPointer_ ? "pnm-grid-from-dgf.dgf" : "pnm-grid-from-factory.dgf";
+            const auto fileName = getParamFromGroup<std::string>(paramGroup, "Grid.DgfName", defaultName);
+            writeDgf(fileName, grid().leafGridView(), *gridData_);
         }
 
         timer.stop();
