@@ -157,6 +157,12 @@ public:
         for (auto&& scv : scvs(fvGeometry))
             asImp().evalStorage(residual, this->problem(), element, fvGeometry, prevElemVolVars, curElemVolVars, scv);
 
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            if (scv.dofIndex() == 123 && ::printStuff)
+                std::cout << "storage " << residual[scv.dofIndex()] << std::endl;
+        }
+
         return residual;
     }
 
@@ -174,9 +180,28 @@ public:
         for (auto&& scv : scvs(fvGeometry))
             asImp().evalSource(residual, this->problem(), element, fvGeometry, elemVolVars, scv);
 
+
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            if (scv.dofIndex() == 98 && ::printStuff)
+                std::cout << "source  " << residual[scv.dofIndex()] << std::endl;
+        }
+
         // forward to the local residual specialized for the discretization methods
         for (auto&& scvf : scvfs(fvGeometry))
             asImp().evalFlux(residual, this->problem(), element, fvGeometry, elemVolVars, bcTypes, elemFluxVarsCache, scvf);
+
+
+
+        ElementResidualVector newResidual(fvGeometry.numScv());
+        for (auto&& scvf : scvfs(fvGeometry))
+            asImp().evalFlux(newResidual, this->problem(), element, fvGeometry, elemVolVars, bcTypes, elemFluxVarsCache, scvf);
+
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                if (scv.dofIndex() == 98 && ::printStuff)
+                    std::cout << " flux " << newResidual[scv.dofIndex()] << std::endl;
+            }
 
         return residual;
     }

@@ -417,6 +417,14 @@ public:
                     this->couplingManager().updateCouplingContext(domainI, *this, domainI, scv.dofIndex(), elemSol[localDofIndex], pvIdx);
                     return this->evalLocalResidual();
                 };
+                // get the vecor of the acutal element residuals
+
+                if (fvGeometry.gridGeometry().elementMapper().index(this->element()) == 175)
+                    ::printStuff = true;
+
+                const auto origResiduals = this->evalLocalResidual();
+
+                ::printStuff = false;
 
                 // derive the residuals numerically
                 static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
