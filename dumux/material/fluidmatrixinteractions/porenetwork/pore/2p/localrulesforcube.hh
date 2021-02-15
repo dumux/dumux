@@ -49,6 +49,10 @@ struct TwoPLocalRulesCubeJoekarNiasar
     {
         Params() = default;
 
+        Params& setPoreInscribedRadius(Scalar r) { radius_ = r; return *this;}
+        Params& setPoreShape(Pore::Shape s) { shape_ = s; return *this;}
+        Params& setSurfaceTension(Scalar st) { surfaceTension_ = st; return *this;}
+
         template<class SpatialParams, class Element, class SubControlVolume, class ElemSol>
         Params(const SpatialParams& spatialParams,
                const Element& element,
