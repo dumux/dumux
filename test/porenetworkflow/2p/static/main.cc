@@ -40,7 +40,7 @@
 #include <dumux/common/properties/grid.hh>
 #include <dumux/discretization/porenetwork/gridgeometry.hh>
 #include <dumux/material/fluidmatrixinteractions/porenetwork/throat/thresholdcapillarypressures.hh>
-#include <dumux/material/fluidmatrixinteractions/porenetwork/pore/2p/regularizedlocalrulesforcube.hh>
+#include <dumux/material/fluidmatrixinteractions/porenetwork/pore/2p/localrulesforcube.hh>
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
 #include <dune/foamgrid/foamgrid.hh>
 
@@ -130,7 +130,7 @@ int main(int argc, char** argv)
     // helper function to evalute the entry capillary pressure
     auto getPcEntry = [&](const std::size_t eIdx)
     {
-        const Scalar throatRadius =  gridGeometry->throatRadius(eIdx);
+        const Scalar throatRadius =  gridGeometry->throatInscribedRadius(eIdx);
         const auto shapeFactor = gridGeometry->throatShapeFactor(eIdx);
         return ThresholdCapillaryPressures::pcEntry(surfaceTension,
                                                     contactAngle,
@@ -241,11 +241,12 @@ int main(int argc, char** argv)
 
                 if (pc[dofIdx] > 0.0)
                 {
-                    using MaterialLaw = RegularizedTwoPLocalRulesCubeJoekarNiasar<Scalar>;
-                    const Scalar poreRadius = gridGeometry->poreRadius(dofIdx);
+                    using MaterialLaw = FluidMatrix::TwoPLocalRulesCubeJoekarNiasarDefault<Scalar>;
+                    const Scalar poreRadius = gridGeometry->poreInscribedRadius(dofIdx);
 
-                    const auto params = MaterialLaw::makeParams(poreRadius, contactAngle, surfaceTension, Pore::Shape::cube);
-                    sw[dofIdx] = MaterialLaw::sw(params, pc[dofIdx]);
+                    const auto params = MaterialLaw::BasicParams().setPoreInscribedRadius(poreRadius).setPoreShape(Pore::Shape::cube).setSurfaceTension(surfaceTension);
+                    auto fluidMatrixInteraction = makeFluidMatrixInteraction(MaterialLaw(params));
+                    sw[dofIdx] = fluidMatrixInteraction.sw(pc[dofIdx]);
                 }
                 else
                     sw[dofIdx] = 1.0;
