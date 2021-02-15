@@ -120,7 +120,7 @@ public:
         const Scalar surfaceTension = 0.5*(elemVolVars[0].surfaceTension() + elemVolVars[1].surfaceTension());
         return ThresholdCapillaryPressures::pcEntry(surfaceTension,
                                                     this->asImp_().contactAngle(element, elemVolVars),
-                                                    this->asImp_().throatRadius(element, elemVolVars),
+                                                    this->asImp_().throatInscribedRadius(element, elemVolVars),
                                                     this->gridGeometry().throatShapeFactor(eIdx));
     }
 
@@ -134,7 +134,7 @@ public:
         const Scalar surfaceTension = 0.5*(elemVolVars[0].surfaceTension() + elemVolVars[1].surfaceTension());
         return ThresholdCapillaryPressures::pcSnapoff(surfaceTension,
                                                       this->asImp_().contactAngle(element, elemVolVars),
-                                                      this->asImp_().throatRadius(element, elemVolVars));
+                                                      this->asImp_().throatInscribedRadius(element, elemVolVars));
     }
 
     /*!

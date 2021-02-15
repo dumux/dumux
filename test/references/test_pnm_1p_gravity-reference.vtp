@@ -238,7 +238,7 @@
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
         </DataArray>
-        <DataArray type="Float32" Name="throatRadius" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="throatInscribedRadius" NumberOfComponents="1" format="ascii">
           2e-06 2e-06 2e-06 2e-06 2e-06 2e-06 2e-06 2e-06 2e-06 2e-06 2e-06 2e-06
           2e-06 2e-06 2e-06 2e-06 2e-06 2e-06 2e-06 2e-06 2e-06 2e-06 2e-06 2e-06
           2e-06 2e-06 2e-06 2e-06 2e-06 2e-06 2e-06 2e-06 2e-06 2e-06 2e-06 2e-06

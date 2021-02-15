@@ -48,7 +48,7 @@ public:
         out.addField(out.problem().gridGeometry().throatLabel(), "throatLabel", OutputModule::FieldType::element);
 
         out.addFluxVariable([](const auto& fluxVars, const auto& fluxVarsCache)
-                             { return fluxVarsCache.throatRadius(); }, "throatRadius");
+                             { return fluxVarsCache.throatInscribedRadius(); }, "throatInscribedRadius");
 
         out.addFluxVariable([](const auto& fluxVars, const auto& fluxVarsCache)
                              { return fluxVarsCache.throatLength(); }, "throatLength");

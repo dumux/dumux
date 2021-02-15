@@ -69,7 +69,7 @@ public:
         coordinationNumber_ = gridData.getCoordinationNumbers();
 
         const auto numThroats = gridView.size(0);
-        throatRadius_.resize(numThroats);
+        throatInscribedRadius_.resize(numThroats);
         throatLength_.resize(numThroats);
         throatLabel_.resize(numThroats);
         throatCrossSectionalArea_.resize(numThroats);
@@ -142,7 +142,7 @@ public:
             const auto& params = gridData.parameters(element);
             static const auto throatRadiusIdx = gridData.parameterIndex("ThroatRadius");
             static const auto throatLengthIdx = gridData.parameterIndex("ThroatLength");
-            throatRadius_[eIdx] = params[throatRadiusIdx];
+            throatInscribedRadius_[eIdx] = params[throatRadiusIdx];
             throatLength_[eIdx] = params[throatLengthIdx];
 
             // use a default value if no throat label is given by the grid
@@ -185,7 +185,7 @@ public:
                 throatShapeFactor_[eIdx] = getThroatShapeFactor_(gridData, element, eIdx);
             }
 
-            assert(throatRadius_[eIdx] > 0.0);
+            assert(throatInscribedRadius_[eIdx] > 0.0);
             assert(throatLength_[eIdx] > 0.0);
             assert(throatCrossSectionalArea_[eIdx] > 0.0);
 
@@ -211,19 +211,9 @@ public:
     const std::vector<Label>& poreLabel() const
     { return poreLabel_; }
 
-    //! Returns the radius of the pore
-    [[deprecated("Use poreInscribedRadius")]]
-    Scalar poreRadius(const GridIndex dofIdxGlobal) const
-    { return poreInscribedRadius_[dofIdxGlobal]; }
-
     //! Returns the inscribed radius of the pore
     Scalar poreInscribedRadius(const GridIndex dofIdxGlobal) const
     { return poreInscribedRadius_[dofIdxGlobal]; }
-
-    //! Returns the vector of pore radii
-    [[deprecated("Use poreInscribedRadius")]]
-    const std::vector<Scalar>& poreRadius() const
-    { return poreInscribedRadius_; }
 
     //! Returns the vector of inscribed pore radii
     const std::vector<Scalar>& poreInscribedRadius() const
@@ -237,13 +227,13 @@ public:
     const std::vector<Scalar>& poreVolume() const
     { return poreVolume_; }
 
-    //! Returns the radius of the throat
-    Scalar throatRadius(const GridIndex eIdx) const
-    { return throatRadius_[eIdx]; }
+    //! Returns the inscribed radius of the throat
+    Scalar throatInscribedRadius(const GridIndex eIdx) const
+    { return throatInscribedRadius_[eIdx]; }
 
-    //! Returns the vector of throat radii
-    const std::vector<Scalar>& throatRadius() const
-    { return throatRadius_; }
+    //! Returns the vector of inscribed throat radii
+    const std::vector<Scalar>& throatInscribedRadius() const
+    { return throatInscribedRadius_; }
 
     //! Returns the length of the throat
     Scalar throatLength(const GridIndex eIdx) const
@@ -299,7 +289,7 @@ public:
             // if a vector of throat cross section shapes is requested (e.g., for vtk output),
             // resize the container and fill it with the same value everywhere
             const auto throatShape = throatGeometry_[0];
-            throatGeometry_.resize(throatRadius_.size(), throatShape);
+            throatGeometry_.resize(throatInscribedRadius_.size(), throatShape);
         }
 
         return throatGeometry_;
@@ -325,7 +315,7 @@ public:
             // if a vector of throat shape factors is requested (e.g., for vtk output),
             // resize the container and fill it with the same value everywhere
             const auto shapeFactor = throatShapeFactor_[0];
-            throatShapeFactor_.resize(throatRadius_.size(), shapeFactor);
+            throatShapeFactor_.resize(throatInscribedRadius_.size(), shapeFactor);
         }
 
         return throatShapeFactor_;
@@ -390,10 +380,10 @@ private:
             if (const auto shape = throatCrossSectionShape(eIdx); shape == Throat::Shape::rectangle)
             {
                 static const auto throatHeight = getParamFromGroup<Scalar>(gridData.paramGroup(), "Grid.ThroatHeight");
-                return Throat::totalCrossSectionalAreaForRectangle(throatRadius_[eIdx], throatHeight);
+                return Throat::totalCrossSectionalAreaForRectangle(throatInscribedRadius_[eIdx], throatHeight);
             }
             else
-                return Throat::totalCrossSectionalArea(shape, throatRadius_[eIdx]);
+                return Throat::totalCrossSectionalArea(shape, throatInscribedRadius_[eIdx]);
         }
     }
 
@@ -412,7 +402,7 @@ private:
             if (const auto shape = throatCrossSectionShape(eIdx); shape == Throat::Shape::rectangle)
             {
                 static const auto throatHeight = getParamFromGroup<Scalar>(gridData.paramGroup(), "Grid.ThroatHeight");
-                return Throat::shapeFactorRectangle(throatRadius_[eIdx], throatHeight);
+                return Throat::shapeFactorRectangle(throatInscribedRadius_[eIdx], throatHeight);
             }
             else if (shape == Throat::Shape::polygon || shape == Throat::Shape::scaleneTriangle)
             {
@@ -420,7 +410,7 @@ private:
                 return shapeFactor;
             }
             else
-                return Throat::shapeFactor<Scalar>(shape, throatRadius_[eIdx]);
+                return Throat::shapeFactor<Scalar>(shape, throatInscribedRadius_[eIdx]);
         }
     }
 
@@ -459,7 +449,7 @@ private:
     std::vector<SmallLocalIndex> coordinationNumber_;
     mutable std::vector<Throat::Shape> throatGeometry_;
     mutable std::vector<Scalar> throatShapeFactor_;
-    std::vector<Scalar> throatRadius_;
+    std::vector<Scalar> throatInscribedRadius_;
     std::vector<Scalar> throatLength_;
     std::vector<Label> throatLabel_; // 0:no, 1:general, 2:coupling1, 3:coupling2, 4:inlet, 5:outlet
     std::vector<Scalar> throatCrossSectionalArea_;

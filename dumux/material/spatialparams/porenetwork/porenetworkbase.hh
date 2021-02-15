@@ -74,11 +74,11 @@ public:
     }
 
     template<class ElementVolumeVariables>
-    Scalar throatRadius(const Element& element,
-                        const ElementVolumeVariables& elemVolVars) const
+    Scalar throatInscribedRadius(const Element& element,
+                                 const ElementVolumeVariables& elemVolVars) const
     {
         const auto eIdx = gridGeometry().elementMapper().index(element);
-        return gridGeometry().throatRadius(eIdx);
+        return gridGeometry().throatInscribedRadius(eIdx);
     }
 
    template<class ElementVolumeVariables>
@@ -91,17 +91,8 @@ public:
 
    template<class ElementSolutionVector>
    Scalar poreInscribedRadius(const Element& element,
-                     const SubControlVolume& scv,
-                     const ElementSolutionVector& elemSol) const
-   {
-       return gridGeometry().poreInscribedRadius(scv.dofIndex());
-   }
-
-   template<class ElementSolutionVector>
-   [[deprecated("Use poreInscribedRadius")]]
-   Scalar poreRadius(const Element& element,
-                     const SubControlVolume& scv,
-                     const ElementSolutionVector& elemSol) const
+                              const SubControlVolume& scv,
+                              const ElementSolutionVector& elemSol) const
    {
        return gridGeometry().poreInscribedRadius(scv.dofIndex());
    }
@@ -111,9 +102,7 @@ public:
      *
      */
     const GridView& gridView() const
-    {
-        return gridGeometry().gridView();
-    }
+    { return gridGeometry().gridView(); }
 
 
      /*! Intrinsic permeability tensor K \f$[m^2]\f$ depending
@@ -143,19 +132,9 @@ public:
     const GlobalPosition& gravity(const GlobalPosition& pos) const
     { return gravity_; }
 
-
-    //! The finite volume grid geometry
-    [[deprecated("Use gridGeometry")]]
-    const GridGeometry& fvGridGeometry() const
-    {
-        return *gridGeometry_;
-    }
-
     //! The finite volume grid geometry
     const GridGeometry& gridGeometry() const
-    {
-        return *gridGeometry_;
-    }
+    { return *gridGeometry_; }
 
     /*!
      * \brief Function for defining the porosity.

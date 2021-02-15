@@ -63,7 +63,7 @@ public:
         throatShapeFactor_ = fvGeometry.gridGeometry().throatShapeFactor(eIdx);
         throatCrossSectionalArea_ = problem.spatialParams().throatCrossSectionalArea(element, elemVolVars);
         throatLength_ = problem.spatialParams().throatLength(element, elemVolVars);
-        throatRadius_ = problem.spatialParams().throatRadius(element, elemVolVars);
+        throatInscribedRadius_ = problem.spatialParams().throatInscribedRadius(element, elemVolVars);
         poreToPoreDistance_ = element.geometry().volume();
 
         cache_.fill(problem, element, fvGeometry, scvf, elemVolVars, *this, /*phaseIdx*/0);
@@ -85,8 +85,8 @@ public:
     Scalar throatLength() const
     { return throatLength_; }
 
-    Scalar throatRadius() const
-    { return throatRadius_; }
+    Scalar throatInscribedRadius() const
+    { return throatInscribedRadius_; }
 
     const auto& singlePhaseFlowVariables() const
     { return cache_; }
@@ -100,7 +100,7 @@ private:
     Scalar transmissibility_;
     Scalar throatCrossSectionalArea_;
     Scalar throatLength_;
-    Scalar throatRadius_;
+    Scalar throatInscribedRadius_;
     Scalar poreToPoreDistance_;
 
     typename AdvectionType::Transmissibility::SinglePhaseCache cache_;

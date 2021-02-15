@@ -52,10 +52,10 @@ public:
                                               const int phaseIdx)
     {
         const auto shape = fluxVarsCache.throatCrossSectionShape();
-        const Scalar throatRadius = fluxVarsCache.throatRadius();
+        const Scalar throatInscribedRadius = fluxVarsCache.throatInscribedRadius();
         const Scalar throatLength = fluxVarsCache.throatLength();
         const Scalar area = fluxVarsCache.throatCrossSectionalArea();
-        return singlePhaseTransmissibility(shape, throatRadius, throatLength, area);
+        return singlePhaseTransmissibility(shape, throatInscribedRadius, throatLength, area);
     }
 
     //! Returns the conductivity of a throat when only one phase is present.
@@ -207,9 +207,9 @@ public:
                                               const FluxVariablesCache& fluxVarsCache,
                                               const int phaseIdx)
     {
-        const Scalar throatRadius = fluxVarsCache.throatRadius();
+        const Scalar throatInscribedRadius = fluxVarsCache.throatInscribedRadius();
         const Scalar throatLength = fluxVarsCache.throatLength();
-        return singlePhaseTransmissibility(throatRadius, throatLength);
+        return singlePhaseTransmissibility(throatInscribedRadius, throatLength);
     }
 
     //! Returns the conductivity of a throat when only one phase is present.

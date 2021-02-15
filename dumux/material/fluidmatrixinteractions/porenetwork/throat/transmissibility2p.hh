@@ -146,7 +146,7 @@ struct Mogensen
         const Scalar throatLength = fluxVarsCache.throatLength();
         const auto nPhaseIdx = fluxVarsCache.nPhaseIdx();
         const Scalar aNw = fluxVarsCache.throatCrossSectionalArea(nPhaseIdx);
-        const Scalar rEff = 0.5*(sqrt(aNw / M_PI) + fluxVarsCache.throatRadius());
+        const Scalar rEff = 0.5*(sqrt(aNw / M_PI) + fluxVarsCache.throatInscribedRadius());
         const Scalar result = M_PI/(8*throatLength) * rEff*rEff*rEff*rEff;
         assert(std::isnormal(result));
         return result;
@@ -200,7 +200,7 @@ struct BakkeOren
         const Scalar throatLength = fluxVarsCache.throatLength();
         const auto nPhaseIdx = fluxVarsCache.nPhaseIdx();
         const Scalar aNw = fluxVarsCache.throatCrossSectionalArea(nPhaseIdx);
-        const Scalar rEff = 0.5*(sqrt(aNw / M_PI) + fluxVarsCache.throatRadius());
+        const Scalar rEff = 0.5*(sqrt(aNw / M_PI) + fluxVarsCache.throatInscribedRadius());
         const Scalar result = rEff*rEff*aNw / (8.0*throatLength);
         assert(std::isnormal(result));
         return result;

@@ -72,7 +72,7 @@ public:
         pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
         pcEntry_ = problem.spatialParams().pcEntry(element, elemVolVars);
         pcSnapoff_ = problem.spatialParams().pcSnapoff(element, elemVolVars);
-        throatRadius_ = problem.spatialParams().throatRadius(element, elemVolVars);
+        throatInscribedRadius_ = problem.spatialParams().throatInscribedRadius(element, elemVolVars);
         throatLength_ = problem.spatialParams().throatLength(element, elemVolVars);
         invaded_ = invaded;
         poreToPoreDistance_ = element.geometry().volume();
@@ -135,8 +135,8 @@ public:
     Scalar throatLength() const
     { return throatLength_; }
 
-    Scalar throatRadius() const
-    { return throatRadius_; }
+    Scalar throatInscribedRadius() const
+    { return throatInscribedRadius_; }
 
     Scalar pcEntry() const
     { return pcEntry_; }
@@ -183,7 +183,7 @@ private:
     std::array<Scalar, numPhases> transmissibility_;
     std::array<Scalar, numPhases> throatCrossSectionalArea_;
     Scalar throatLength_;
-    Scalar throatRadius_;
+    Scalar throatInscribedRadius_;
     Scalar pcEntry_;
     Scalar pcSnapoff_;
     Scalar pc_;
