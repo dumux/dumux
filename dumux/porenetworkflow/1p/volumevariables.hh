@@ -17,10 +17,11 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \file
- * \ingroup OnePModel
- * \brief Quantities required by the one-phase fully implicit model defined on a vertex.
- */
+* \file
+* \ingroup TwoPModel
+* \brief Contains the quantities which are constant within a
+*        finite volume (the pore body) in the one-phase model.
+*/
 
 #ifndef DUMUX_PNM_1P_VOLUME_VARIABLES_HH
 #define DUMUX_PNM_1P_VOLUME_VARIABLES_HH
@@ -32,15 +33,14 @@ namespace Dumux {
 /*!
  * \ingroup PNMOnePModel
  * \brief Contains the quantities which are constant within a
- *        finite volume in the one-phase model.
+ *        finite volume (the pore body) in the one-phase model.
  *
- * \tparam Traits Class encapsulating types to be used by the vol vars
+ * \tparam Traits Class encapsulating types to be used by the volVars
  */
 template<class Traits>
 class PNMOnePVolumeVariables : public OnePVolumeVariables<Traits>
 {
     using ParentType = OnePVolumeVariables<Traits>;
-
     using Scalar = typename Traits::PrimaryVariables::value_type;
 public:
 
@@ -60,23 +60,23 @@ public:
                 const Scv& scv)
     {
         ParentType::update(elemSol, problem, element, scv);
-
         inscribedPoreRadius_ = problem.spatialParams().poreInscribedRadius(element, scv, elemSol);
         poreVolume_ = problem.gridGeometry().poreVolume(scv.dofIndex()) * this->porosity();
     }
 
-    [[deprecated("Use poreInscribedRadius")]]
-    Scalar poreRadius() const
-    { return inscribedPoreRadius_; }
-
+    /*!
+     * \brief Returns the pore's inscribed radius.
+     */
     Scalar poreInscribedRadius() const
     { return inscribedPoreRadius_; }
 
+    /*!
+     * \brief Returns the pore volume. // TODO should this be a fraction only?
+     */
     Scalar poreVolume() const
     { return poreVolume_; }
 
 protected:
-
     Scalar inscribedPoreRadius_;
     Scalar poreVolume_;
 };

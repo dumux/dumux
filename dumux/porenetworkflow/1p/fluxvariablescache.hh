@@ -18,33 +18,20 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Flux variables cache for 1p PNM
+ * \brief Flux variables cache for the single-phase-flow PNM
  */
 #ifndef DUMUX_PNM_1P_FLUXVARIABLESCACHE_HH
 #define DUMUX_PNM_1P_FLUXVARIABLESCACHE_HH
 
 #include <dumux/porenetworkflow/common/throatproperties.hh>
 
-namespace Dumux
-{
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//! The cache is dependent on the active physical processes (advection, diffusion, heat conduction)
-//! For each type of process there is a base cache storing the data required to compute the respective fluxes
-//! Specializations of the overall cache are provided for combinations of processes
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+namespace Dumux {
 
 /*!
- * \ingroup ImplicitModel
- * \brief The flux variables cache classes for porous media.
- *        Store data required for flux calculation. For each type of physical process (advection, diffusion, heat conduction)
- *        there is a base cache storing the data required to compute the respective fluxes. Specializations of the overall
- *        cache class are provided for different combinations of processes.
+ * \ingroup PoreNetworkOnePModel
+ * \brief Flux variables cache for the single-phase-flow PNM
+ *        Store data required for flux calculation.
  */
-
-//! We only store discretization-related quantities for the box method.
-//! Thus, we need no physics-dependent specialization.
 template<class AdvectionType>
 class PNMOnePFluxVariablesCache
 {
@@ -70,29 +57,53 @@ public:
         transmissibility_ = AdvectionType::calculateTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, *this, /*phaseIdx*/0);
     }
 
+    /*!
+     * \brief Returns the throats's cross-sectional shape.
+     */
     Throat::Shape throatCrossSectionShape() const
     { return throatCrossSectionShape_; }
 
+    /*!
+     * \brief Returns the throats's shape factor.
+     */
     Scalar throatShapeFactor() const
     { return throatShapeFactor_; }
 
+    /*!
+     * \brief Returns the throats's transmissibility.
+     */
     Scalar transmissibility(const int phaseIdx = 0) const
     { return transmissibility_; }
 
+    /*!
+     * \brief Returns the throats's cross-sectional area.
+     */
     Scalar throatCrossSectionalArea(const int phaseIdx = 0) const
     { return throatCrossSectionalArea_; }
 
+    /*!
+     * \brief Returns the throats's length.
+     */
     Scalar throatLength() const
     { return throatLength_; }
 
+    /*!
+     * \brief Returns the throats's inscribed radius.
+     */
     Scalar throatInscribedRadius() const
     { return throatInscribedRadius_; }
 
-    const auto& singlePhaseFlowVariables() const
-    { return cache_; }
-
+    /*!
+     * \brief Returns the throats's pore-to-pore-center distance.
+     */
     Scalar poreToPoreDistance() const
     { return poreToPoreDistance_; }
+
+    /*!
+     * \brief Returns the throats's cached flow variables for single-phase flow.
+     */
+    const auto& singlePhaseFlowVariables() const
+    { return cache_; }
 
 private:
     Throat::Shape throatCrossSectionShape_;

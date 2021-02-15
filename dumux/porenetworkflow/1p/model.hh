@@ -19,14 +19,11 @@
 /*!
  * \file
  *
- * \brief Base class for all models which use the one-phase,
- *        fully implicit model.
- *        Adaption of the fully implicit scheme to the one-phase pore network model.
+ * \brief A one-phase-flow, isothermal pore-network model using the fully implicit scheme.
  */
 
 #ifndef DUMUX_PNM1P_MODEL_HH
 #define DUMUX_PNM1P_MODEL_HH
-
 
 #include <dumux/common/properties.hh>
 #include <dumux/flux/porenetwork/advection.hh>
@@ -48,25 +45,9 @@
 namespace Dumux
 {
 /*!
- * \ingroup Pore network model
- * \brief A one-phase, isothermal flow model using the fully implicit scheme.
- *
- * one-phase, isothermal flow model, which uses a standard Darcy approach as the
- * equation for the conservation of momentum:
- * \f[
- v = - \frac{\textbf K}{\mu}
- \left(\textbf{grad}\, p - \varrho {\textbf g} \right)
- * \f]
- *
- * and solves the mass continuity equation:
- * \f[
- \phi \frac{\partial \varrho}{\partial t} + \text{div} \left\lbrace
- - \varrho \frac{\textbf K}{\mu} \left( \textbf{grad}\, p -\varrho {\textbf g} \right) \right\rbrace = q,
- * \f]
- * All equations are discretized using a vertex-centered finite volume (box)
- * or cell-centered finite volume scheme as spatial
- * and the implicit Euler method as time discretization.
- * The model supports compressible as well as incompressible fluids.
+ * \ingroup PoreNetworkOnePModel
+ * \brief A one-phase, isothermal pore-network model using the fully implicit scheme.
+ *        TODO docme
  */
 
  ///////////////////////////////////////////////////////////////////////////

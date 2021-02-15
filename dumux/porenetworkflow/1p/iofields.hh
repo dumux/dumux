@@ -31,8 +31,8 @@ namespace Dumux
 {
 
 /*!
- * \ingroup PoreNetworkOnePNCModel
- * \brief Adds output fields specific to the PNM 1pnc model
+ * \ingroup PoreNetworkOnePModel
+ * \brief Adds output fields specific to the PNM 1p model
  */
 class PNMOnePIOFields
 {
