@@ -31,7 +31,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup PoreNetworkOnePNCModel
+ * \ingroup PoreNetworkTwoPModel
  * \brief Adds output fields specific to the PNM 2p model
  */
 class PNMTwoPIOFields

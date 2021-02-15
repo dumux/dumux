@@ -28,8 +28,8 @@
 
 namespace Dumux {
 /*!
- * \ingroup PNMTwoP
- * \brief A two-phase PNM specific  newton solver.
+ * \ingroup PoreNetworkTwoPModel
+ * \brief A two-phase PNM specific newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
  * which allows the newton method to abort quicker if the solution is

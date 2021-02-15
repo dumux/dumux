@@ -19,9 +19,7 @@
 /*!
  * \file
  *
- * \brief Base class for all models which use the one-phase,
- *        fully implicit model.
- *        Adaption of the fully implicit scheme to the one-phase flow model.
+ * \brief A two-phase-flow, isothermal pore-network model using the fully implicit scheme.
  */
 
 #ifndef DUMUX_PNM2P_MODEL_HH
@@ -52,7 +50,7 @@ namespace Dumux
 {
 // \{
 ///////////////////////////////////////////////////////////////////////////
-// properties for the isothermal single phase model
+// properties for the isothermal two-phase model
 ///////////////////////////////////////////////////////////////////////////
 namespace Properties {
 
@@ -60,7 +58,7 @@ namespace Properties {
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tags for the implicit single-phase problems
+//! The type tags for the implicit two-phase problems
 // Create new type tags
 namespace TTag {
 struct PNMTwoP { using InheritsFrom = std::tuple<PoreNetworkModel, TwoP>; };
@@ -70,7 +68,7 @@ struct PNMTwoPNI { using InheritsFrom = std::tuple<PNMTwoP>; };
 } // end namespace TTag
 
 ///////////////////////////////////////////////////////////////////////////
-// default property values for the isothermal single phase model
+// default property values for the isothermal two-phase model
 ///////////////////////////////////////////////////////////////////////////
 
 //! Set the volume variables property
@@ -200,7 +198,7 @@ public:
     using type = PNMTwoPVolumeVariables<NITraits<BaseTraits, ETCM>>;
 };
 
-//! Set the vtk output fields specific to the non-isothermal twop model
+//! Set the vtk output fields specific to the non-isothermal two-phase model
 template<class TypeTag>
 struct IOFields<TypeTag, TTag::PNMTwoPNI> { using type = EnergyIOFields<PNMTwoPIOFields>; };
 

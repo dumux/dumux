@@ -32,7 +32,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup  PorenetworkFlow
+ * \ingroup PoreNetworkTwoPModel
  *
  * \brief A (quasi-) static two-phase pore-network model for drainage processes.
  *        This assumes that there are no pressure gradients within the phases and thus, no flow.

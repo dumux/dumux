@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup BoxDiscretization
+ * \ingroup PoreNetworkTwoPModel
  * \brief Global flux variable cache
  */
 #ifndef DUMUX_PNM_2P_ELEMNT_FLUXVARSCACHE_HH
@@ -31,12 +31,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup BoxDiscretization
+ * \ingroup PoreNetworkTwoPModel
  * \brief The flux variables caches for an element
- * \note The class is specialized for a version with and without caching
- * If grid caching is enabled the flux caches are stored for the whole gridview in the corresponding
- * GridFluxVariablesCache which is memory intensive but faster. For caching disabled the
- * flux caches are locally computed for each element whenever needed.
  */
 template<class GFVC, bool cachingEnabled>
 class PNMTwoPElementFluxVariablesCache;

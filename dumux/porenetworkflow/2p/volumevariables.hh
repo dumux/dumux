@@ -18,9 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup TwoPModel
+ * \ingroup PoreNetworkTwoPModel
  * \brief Contains the quantities which are constant within a
- *        finite volume in the two-phase model.
+ *        finite volume (the pore body) in the two-phase model.
  */
 
 #ifndef DUMUX_PNM_2P_VOLUME_VARIABLES_HH
@@ -31,9 +31,9 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPModel
+ * \ingroup PoreNetworkTwoPModel
  * \brief Contains the quantities which are are constant within a
- *        finite volume in the two-phase model.
+ *        finite volume (the pore body) in the two-phase model.
  */
 template <class Traits>
 class PNMTwoPVolumeVariables
@@ -44,10 +44,9 @@ class PNMTwoPVolumeVariables
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using FS = typename Traits::FluidSystem;
     static constexpr int numFluidComps = ParentType::numFluidComponents();
-
     static constexpr auto formulation = ModelTraits::priVarFormulation();
-
 public:
+
     //! Export type of fluid system
     using FluidSystem = typename Traits::FluidSystem;
     //! Export type of fluid state
@@ -69,29 +68,39 @@ public:
      * \param scv The sub control volume
     */
     template<class ElemSol, class Problem, class Element, class Scv>
-    void update(const ElemSol &elemSol,
-                const Problem &problem,
-                const Element &element,
+    void update(const ElemSol& elemSol,
+                const Problem& problem,
+                const Element& element,
                 const Scv& scv)
     {
         ParentType::update(elemSol, problem, element, scv);
         poreInscribedRadius_ = problem.spatialParams().poreInscribedRadius(element, scv, elemSol);
         poreVolume_ = problem.gridGeometry().poreVolume(scv.dofIndex()) * this->porosity();
-        surfaceTension_ = 0.0725; // the value of water/air TODO make general
+
+        // the value of water/air TODO make general in fluid system
+        static const Scalar gamma = getParamFromGroup<Scalar>(problem.paramGroup(), "Problem.SurfaceTension", 0.0725);
+        surfaceTension_ = gamma;
     }
 
-    [[deprecated("Use poreInscribedRadius")]]
-    Scalar poreRadius() const
-    { return poreInscribedRadius_; }
-
+    /*!
+     * \brief Returns the pore's inscribed radius.
+     */
     Scalar poreInscribedRadius() const
     { return poreInscribedRadius_; }
 
+    /*!
+     * \brief Returns the pore volume. // TODO should this be a fraction only?
+     */
+    Scalar poreVolume() const
+    { return poreVolume_; }
+
+    /*!
+     * \brief Returns the surface tension.
+     */
     Scalar surfaceTension() const
     { return surfaceTension_; }
 
 protected:
-
     Scalar poreInscribedRadius_;
     Scalar poreVolume_;
     Scalar surfaceTension_;

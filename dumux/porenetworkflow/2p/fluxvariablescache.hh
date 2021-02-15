@@ -16,10 +16,10 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/*!
- * \file
- * \brief Base class for the flux variables
- */
+ /*!
+  * \file
+  * \brief Flux variables cache for the two-phase-flow PNM
+  */
 #ifndef DUMUX_PNM_2P_FLUXVARIABLESCACHE_HH
 #define DUMUX_PNM_2P_FLUXVARIABLESCACHE_HH
 
@@ -28,26 +28,13 @@
 #include <dune/common/reservedvector.hh>
 #include <dumux/porenetworkflow/common/throatproperties.hh>
 
-namespace Dumux
-{
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//! The cache is dependent on the active physical processes (advection, diffusion, heat conduction)
-//! For each type of process there is a base cache storing the data required to compute the respective fluxes
-//! Specializations of the overall cache are provided for combinations of processes
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+namespace Dumux {
 
 /*!
- * \ingroup ImplicitModel
- * \brief The flux variables cache classes for porous media.
- *        Store data required for flux calculation. For each type of physical process (advection, diffusion, heat conduction)
- *        there is a base cache storing the data required to compute the respective fluxes. Specializations of the overall
- *        cache class are provided for different combinations of processes.
+ * \ingroup PoreNetworkTwoPModel
+ * \brief Flux variables cache for the two-phase-flow PNM
+ *        Store data required for flux calculation.
  */
-
-//! We only store discretization-related quantities for the box method.
-//! Thus, we need no physics-dependent specialization.
 template<class AdvectionType, int maxNumCorners = 4>
 class PNMTwoPFluxVariablesCache
 {
@@ -117,63 +104,124 @@ public:
             transmissibility_[phaseIdx] = AdvectionType::calculateTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, *this, phaseIdx);
     }
 
+    /*!
+     * \brief Returns the throats's cross-sectional shape.
+     */
     Throat::Shape throatCrossSectionShape() const
     { return throatCrossSectionShape_; }
 
+    /*!
+     * \brief Returns the throats's shape factor.
+     */
     Scalar throatShapeFactor() const
     { return throatShapeFactor_; }
 
+    /*!
+     * \brief Returns the throats's transmissibility.
+     */
     Scalar transmissibility(const int phaseIdx) const
     { return transmissibility_[phaseIdx]; }
 
+    /*!
+     * \brief Returns the throats's cross-sectional area for a given phaseIdx.
+     */
     Scalar throatCrossSectionalArea(const int phaseIdx) const
     { return throatCrossSectionalArea_[phaseIdx]; }
 
+    /*!
+     * \brief Returns the throats's total cross-sectional area.
+     */
     Scalar throatCrossSectionalArea() const
     { return throatCrossSectionalArea_[0] + throatCrossSectionalArea_[1]; }
 
+    /*!
+     * \brief Returns the throats's length.
+     */
     Scalar throatLength() const
     { return throatLength_; }
 
+    /*!
+     * \brief Returns the throats's inscribed radius.
+     */
     Scalar throatInscribedRadius() const
     { return throatInscribedRadius_; }
 
+    /*!
+     * \brief Returns the throats's entry capillary pressure.
+     */
     Scalar pcEntry() const
     { return pcEntry_; }
 
+    /*!
+     * \brief Returns the throats's snap-off capillary pressure.
+     */
     Scalar pcSnapoff() const
     { return pcSnapoff_; }
 
+    /*!
+     * \brief Returns the capillary pressure within the throat.
+     */
     Scalar pc() const
     { return pc_; }
 
+    /*!
+     * \brief Returns the surface tension within the throat.
+     */
     Scalar surfaceTension() const
     { return surfaceTension_; }
 
+    /*!
+     * \brief Returns true if the throat is invaded by the nonwetting phase.
+     */
     bool invaded() const
     { return invaded_; }
 
+    /*!
+     * \brief Returns the curvature radius within the throat.
+     */
     Scalar curvatureRadius() const
     { return surfaceTension_ / pc_;}
 
+    /*!
+     * \brief Returns the cross-sectional area of a wetting layer within
+     *        one of the throat's corners.
+     */
     Scalar wettingLayerCrossSectionalArea(const int cornerIdx) const
     { return wettingLayerArea_[cornerIdx]; }
 
+    /*!
+     * \brief Returns the index of the wetting phase.
+     */
     std::size_t wPhaseIdx() const
     { return 1 - nPhaseIdx_; }
 
+    /*!
+     * \brief Returns the index of the nonwetting phase.
+     */
     std::size_t nPhaseIdx() const
     { return nPhaseIdx_; }
 
+    /*!
+     * \brief Returns the throats's cached flow variables for single-phase flow.
+     */
     const auto& singlePhaseFlowVariables() const
     { return singlePhaseCache_; }
 
+    /*!
+     * \brief Returns the throats's cached flow variables for the nonwetting phase.
+     */
     const auto& nonWettingPhaseFlowVariables() const
     { return nonWettingPhaseCache_; }
 
+    /*!
+     * \brief Returns the throats's cached flow variables for the wetting phase.
+     */
     const auto& wettingLayerFlowVariables() const
     { return wettingLayerCache_; }
 
+    /*!
+     * \brief Returns the throats's pore-to-pore-center distance.
+     */
     Scalar poreToPoreDistance() const
     { return poreToPoreDistance_; }
 

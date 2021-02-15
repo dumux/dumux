@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PoreNetworkDiscretization
+ * \ingroup PoreNetworkTwoPModel
  * \brief Global flux variable cache
  */
 #ifndef DUMUX_PNM_2P_INVASIONSTATE_HH
@@ -34,7 +34,6 @@ namespace Dumux {
 #ifndef DOXYGEN
 namespace Detail {
 // helper struct detecting if the user-defined problem params class has a globalCapillaryPressure function
-// for g++ > 5.3, this can be replaced by a lambda
 struct hasGlobalCapillaryPressure
 {
     template<class Problem>
@@ -47,7 +46,7 @@ struct hasGlobalCapillaryPressure
 
 
 /*!
- * \ingroup PoreNetworkDiscretization
+ * \ingroup PoreNetworkTwoPModel
  * \brief The grid flux variables cache for the two-phase PNM hodling the invasion state of the throats
  * \note The flux caches of the gridview are stored which is memory intensive but faster
  */

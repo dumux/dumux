@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PoreNetworkDiscretization
+ * \ingroup PoreNetworkTwoPModel
  * \brief Global flux variable cache
  */
 #ifndef DUMUX_PNM_2P_GRID_FLUXVARSCACHE_HH
@@ -33,7 +33,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup PoreNetworkDiscretization
+ * \ingroup PoreNetworkTwoPModel
  * \brief Flux variable caches traits
  */
 template<class P, class FVC, class I, class L>

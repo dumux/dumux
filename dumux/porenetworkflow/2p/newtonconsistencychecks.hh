@@ -59,7 +59,7 @@ struct SaturationIndex <T, decltype((void) T::s0Idx, 0)>
 } // end namespace Detail
 
 /*!
- * \ingroup PNMTwoP
+ * \ingroup PoreNetworkTwoPModel
  * \brief Consistency checks for the PNM two-phase model
  */
 template<class GridVariables, class SolutionVector>
