@@ -22,8 +22,8 @@
  * \brief Definition of the spatial parameters for the single-phase flow
  *        sub-problem in the coupled poro-mechanical el1p problem.
  */
-#ifndef DUMUX_1P_SUB_PROBLEM_HH
-#define DUMUX_1P_SUB_PROBLEM_HH
+#ifndef DUMUX_MANDEL_1P_SUB_PROBLEM_HH
+#define DUMUX_MANDEL_1P_SUB_PROBLEM_HH
 
 #include <dumux/common/boundarytypes.hh>
 

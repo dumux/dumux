@@ -21,8 +21,8 @@
  * \ingroup GeomechanicsTests
  * \brief Test for the Mandel problem.
  */
-#ifndef MANDEL_PROBLEM_HH
-#define MANDEL_PROBLEM_HH
+#ifndef MANDEL_PROBLEM_PORESUB_HH
+#define MANDEL_PROBLEM_PORESUB_HH
 
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/geomechanics/fvproblem.hh>
