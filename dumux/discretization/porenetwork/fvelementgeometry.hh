@@ -302,11 +302,12 @@ private:
         }
 
         // construct the inner sub control volume face
-        auto unitOuterNormal = elementGeometry.corner(1)-elementGeometry.corner(0);
+        auto unitOuterNormal = elementGeometry.corner(1) - elementGeometry.corner(0);
         unitOuterNormal /= unitOuterNormal.two_norm();
         LocalIndexType scvfLocalIdx = 0;
         scvfs_[0] = SubControlVolumeFace(elementGeometry.center(),
                                          std::move(unitOuterNormal),
+                                         gridGeometry().throatCrossSectionalArea(gridGeometry().elementMapper().index(element)),
                                          scvfLocalIdx++,
                                          std::vector<LocalIndexType>({0, 1}));
     }

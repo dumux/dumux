@@ -95,7 +95,8 @@ public:
       dofIndex_(dofIndex)
     {}
 
-    //! The center of the sub control volume (return pore center)
+    //! The center of the sub control volume (return pore center).
+    //! Be aware that this is not the pore-body center! Use dofPosition() for the latter!
     const GlobalPosition& center() const
     { return center_; }
 

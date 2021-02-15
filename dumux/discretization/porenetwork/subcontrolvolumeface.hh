@@ -78,63 +78,48 @@ public:
     //! Constructor for inner scvfs
     PNMSubControlVolumeFace(const GlobalPosition& center,
                             const GlobalPosition& unitOuterNormal,
+                            const Scalar& area,
                             GridIndexType scvfIndex,
                             std::vector<LocalIndexType>&& scvIndices)
     : center_(center),
       unitOuterNormal_(unitOuterNormal),
-      area_(1.0), // TODO throat cross-section area
+      area_(area),
       scvfIndex_(scvfIndex),
       scvIndices_(std::move(scvIndices))
     {}
 
     //! The center of the sub control volume face
     const GlobalPosition& center() const
-    {
-        return center_;
-    }
+    { return center_; }
 
     //! The integration point for flux evaluations in global coordinates
     const GlobalPosition& ipGlobal() const
-    {
-        return center_;
-    }
+    { return center_; }
 
     //! The area of the sub control volume face
     Scalar area() const
-    {
-        return area_;
-    }
+    { return area_; }
 
-    //! We assume to always have a pore body and not a pore throat at the boundary.
+    //! We assume to always have a pore body and not a pore throat at the boundary
     bool boundary() const
-    {
-        return false;
-    }
+    { return false; }
 
+    //! The unit outer normal of the sub control volume face
     const GlobalPosition& unitOuterNormal() const
-    {
-        return unitOuterNormal_;
-    }
+    { return unitOuterNormal_; }
 
-    //! index of the inside sub control volume for spatial param evaluation
+    //! Index of the inside sub control volume for spatial param evaluation
     LocalIndexType insideScvIdx() const
-    {
-        return scvIndices_[0];
-    }
+    { return scvIndices_[0]; }
 
-    //! index of the outside sub control volume for spatial param evaluation
+    //! Index of the outside sub control volume for spatial param evaluation
     // This results in undefined behaviour if boundary is true
     LocalIndexType outsideScvIdx() const
-    {
-        assert(!boundary());
-        return scvIndices_[1];
-    }
+    { return scvIndices_[1]; }
 
     //! The local index of this sub control volume face
     GridIndexType index() const
-    {
-        return scvfIndex_;
-    }
+    { return scvfIndex_; }
 
 private:
     GlobalPosition center_;

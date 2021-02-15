@@ -626,6 +626,7 @@ public:
             LocalIndexType scvfLocalIdx = 0;
             scvfs_[eIdx][0] = SubControlVolumeFace(elementGeometry.center(),
                                                    std::move(unitOuterNormal),
+                                                   throatCrossSectionalArea(this->elementMapper().index(element)),
                                                    scvfLocalIdx++,
                                                    std::vector<LocalIndexType>({0, 1}));
         }
