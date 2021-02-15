@@ -17,11 +17,11 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \file
- * \ingroup OnePNCModel
- * \brief Quantities required by the single-phase, n-component box
- *        model defined on a vertex.
- */
+* \file
+* \ingroup PoreNetworkOnePNCModel
+* \brief Contains the quantities which are constant within a
+*        finite volume (the pore body) in the one-phase, n-component model.
+*/
 
 #ifndef DUMUX_PNM_1PNC_VOLUME_VARIABLES_HH
 #define DUMUX_PNM_1PNC_VOLUME_VARIABLES_HH
@@ -31,7 +31,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePNCModel
+ * \ingroup PoreNetworkOnePNCModel
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the one-phase, n-component model.
  *
@@ -45,7 +45,6 @@ class PNMOnePNCVolumeVariables
 {
     using ParentType = OnePNCVolumeVariables<Traits>;
     using Scalar = typename Traits::PrimaryVariables::value_type;
-
 public:
 
     /*!
@@ -69,18 +68,19 @@ public:
         poreVolume_ = problem.gridGeometry().poreVolume(scv.dofIndex()) * this->porosity();
     }
 
-    [[deprecated("Use poreInscribedRadius")]]
-    Scalar poreRadius() const
-    { return poreInscribedRadius_; }
-
+    /*!
+     * \brief Returns the pore's inscribed radius.
+     */
     Scalar poreInscribedRadius() const
     { return poreInscribedRadius_; }
 
+    /*!
+     * \brief Returns the pore volume. // TODO should this be a fraction only?
+     */
     Scalar poreVolume() const
     { return poreVolume_; }
 
 protected:
-
     Scalar poreInscribedRadius_;
     Scalar poreVolume_;
 };
