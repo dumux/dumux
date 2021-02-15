@@ -19,8 +19,7 @@
 /*!
  * \file
  *
- * \brief Implementation of the capillary pressure and
- * relative permeability <-> saturation relations according to Joekar-Niasar et al., 2010.
+ * \brief Implementation of capillary pressure curves for multiple pore body geometries
  *
  */
 #ifndef DUMUX_PNM_2P_LOCAL_RULES_HH
@@ -134,7 +133,7 @@ public:
     }
 
     /*!
-     * \brief The capillary pressure-saturation curve
+     * \brief The saturation-capilllary-pressure curve
      */
     Scalar sw(const Scalar pc) const
     {
@@ -148,52 +147,40 @@ public:
     }
 
     /*!
-     * \brief The relative permeability for the wetting phase
+     * \brief The relative permeability for the wetting phase.
+     * \note This is only for compatibility. Will not be used.
      */
     Scalar krw(const Scalar sw) const
-    {
-        return 1.0;
-    }
+    { return 1.0; }
 
     /*!
      * \brief The derivative of the relative permeability for the wetting phase w.r.t. saturation
+     * \note This is only for compatibility. Will not be used.
      */
     Scalar dkrw_dsw(const Scalar sw) const
-    {
-        return 0;
-    }
+    { return 0; }
 
     /*!
      * \brief The relative permeability for the non-wetting phase
+     * \note This is only for compatibility. Will not be used.
      */
     Scalar krn(const Scalar sw) const
-    {
-        return 1.0;
-    }
+    { return 1.0; }
 
     /*!
      * \brief The derivative of the relative permeability for the non-wetting phase w.r.t. saturation
+     * \note This is only for compatibility. Will not be used.
      */
     Scalar dkrn_dsw(const Scalar sw) const
-    {
-        return 0.0;
-    }
-
-
-
+    { return 0.0; }
 
 private:
-
-    // std::unique_ptr<int> test_; // this clashes with fluidmatrixinteraction
-
     std::shared_ptr<LocalRulesForCube> localRulesForCube_;
+    // TODO add more shapes here
 
     Pore::Shape shape_;
-
-
-
 };
 
 }
 
-#endif // DUMUX_PNM_LOCAL_RULES_HH
+#endif

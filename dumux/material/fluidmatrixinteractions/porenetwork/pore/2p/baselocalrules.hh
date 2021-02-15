@@ -119,7 +119,7 @@ public:
     }
 
     /*!
-     * \brief The saturation-capillary pressure curve
+     * \brief The saturation-capillary-pressure curve
      */
     template<bool enableRegularization = isRegularized()>
     Scalar sw(const Scalar pc) const
@@ -152,39 +152,35 @@ public:
 
     /*!
      * \brief The relative permeability for the wetting phase
+     * \note This is only for compatibility. Will not be used.
      */
     template<bool enableRegularization = isRegularized()>
     Scalar krw(const Scalar sw) const
-    {
-        return 1.0;
-    }
+    { return 1.0; }
 
     /*!
      * \brief The derivative of the relative permeability for the wetting phase w.r.t. saturation
+     * \note This is only for compatibility. Will not be used.
      */
     template<bool enableRegularization = isRegularized()>
     Scalar dkrw_dsw(const Scalar sw) const
-    {
-        return 0;
-    }
+    { return 0; }
 
     /*!
      * \brief The relative permeability for the non-wetting phase
+     * \note This is only for compatibility. Will not be used.
      */
     template<bool enableRegularization = isRegularized()>
     Scalar krn(const Scalar sw) const
-    {
-        return 1.0;
-    }
+    { return 1.0; }
 
     /*!
      * \brief The derivative of the relative permeability for the non-wetting phase w.r.t. saturation
+     * \note This is only for compatibility. Will not be used.
      */
     template<bool enableRegularization = isRegularized()>
     Scalar dkrn_dsw(const Scalar sw) const
-    {
-        return 0.0;
-    }
+    { return 0.0; }
 
     /*!
      * \brief Equality comparison with another instance
