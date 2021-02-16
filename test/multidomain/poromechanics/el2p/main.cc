@@ -253,6 +253,8 @@ int main(int argc, char** argv)
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
+        x[twoPId] = mdGridVars[twoPId].dofs();
+        x[poroMechId] = mdGridVars[poroMechId].dofs();
         // twoPGridVariables->advanceTimeStep();
         // poroMechGridVariables->advanceTimeStep();
 
