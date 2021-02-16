@@ -59,20 +59,26 @@ int main(int argc, char* argv[])
     typename Test::Intersection intersectionPolygon;
 
     std::vector<Dune::FieldVector<double, dimworld>> cubeCorners({
-        {1.7837834300248889274342900535,  1,                                0.499999964679389508059870195211},
-        {1.78351325218300194030973671033, 1,                                0.545454518029280244206802308327},
-        {1.7662934121967939216091281196,  0.961739886506218333295237243874, 0.484848417286167787665362993721},
-        {1.75741331436180403535729510622, 0.942609829759327388920553403295, 0.499999920264502406563877912049},
-        {1.79356998092638098007967073499, 0.972375607789213725062893445283, 0.471776790792329592250098357908},
-        {1.79832816745618395692929425422, 0.958563411683820643105491399183, 0.48039248052374511344098095833},
-        {1.77800582982993704561636150174, 0.950586620721574071524173632497, 0.467468923719178419684538994261},
-        {1.77598990381765808876934897853, 0.934115494295432058358130689157, 0.471776761182404913430588067058} });
+        {0.8619712261141845, 1.206565697102448, 0.4152254463380627},
+        {0.8715547951379876, 1.175481516085758, 0.2599429674402531},
+        {0.7046736652858085, 1.209207158782034, 0.4447521639960824},
+        {0.7307137896935333, 1.171606500732276, 0.2574814772189353},
+        {0.8926414294658755, 1,                 0.4012781039132332},
+        {0.8316315415883838, 1,                 0.2581023823497354},
+        {0.7349272235105835, 1,                 0.4613391568883559},
+        {0.7479805294570721, 1,                 0.3155931875126768} });
 
     std::vector<Dune::FieldVector<double, dimworld>> quadCorners({
-        {1.8749999999999489297408672428,  1, 0.499999999999137911821378565946},
-        {1.91666666666663298990158637025, 1, 0.583333333332539227811253113032},
-        {1.74999999999989808152633941063, 1, 0.499999999999581890008926166047},
-        {1.8749999999999489297408672428,  1, 0.624999999999461763877661724109} });
+        {1.000000000000000000000000000000, 1.000000000000000000000000000000, 1.000000000000000000000000000000},
+        {1.000000000000000000000000000000, 1.000000000000000000000000000000, 0.327819111366782434124900191819},
+        {0.303996171086607036571081152942, 1.000000000000000000000000000000, 1.000000000000000000000000000000},
+        {0.297170743844278550938042826601, 1.000000000000000000000000000000, 0.293625720570556747457402479995} });
+
+    std::vector<Dune::FieldVector<double, dimworld>> quad2Corners({
+        {1.000000000000000000000000000000, 1.000000000000000000000000000000, 0.327819111366782434124900191819},
+        {1.000000000000000000000000000000, 1.000000000000000000000000000000, 0.0},
+        {0.297170743844278550938042826601, 1.000000000000000000000000000000, 0.293625720570556747457402479995},
+        {0.325413399309280815252520824288, 1.000000000000000000000000000000, 0.000000000000000000000000000000} });
 
     Geometry3D cube(Dune::GeometryTypes::cube(dimworld), cubeCorners);
     Geometry2D quad(Dune::GeometryTypes::cube(dimworld-1), quadCorners);
@@ -96,13 +102,24 @@ int main(int argc, char* argv[])
     }
 
     // write out quadrilateral
-    std::vector<Point> quadRearrange({quadCorners[0], quadCorners[1], quadCorners[3], quadCorners[2]});
-    const auto quadTriangulation = Dumux::triangulate<2, dimworld>(quadRearrange);
-    Dumux::writeVTKPolyDataTriangle(quadTriangulation, "quad");
+    {
+        std::vector<Point> quadRearrange({quadCorners[0], quadCorners[1], quadCorners[3], quadCorners[2]});
+        const auto quadTriangulation = Dumux::triangulate<2, dimworld>(quadRearrange);
+        Dumux::writeVTKPolyDataTriangle(quadTriangulation, "quad1");
+    }
+    {
+        std::vector<Point> quadRearrange({quad2Corners[0], quad2Corners[1], quad2Corners[3], quad2Corners[2]});
+        const auto quadTriangulation = Dumux::triangulate<2, dimworld>(quadRearrange);
+        Dumux::writeVTKPolyDataTriangle(quadTriangulation, "quad2");
+    }
 
+    int numInts1 = 0;
+    int numInts2 = 0;
+    double area = 0.0;
     if (Test::intersection(cube, quad, intersectionPolygon))
     {
         const auto triangulation = Dumux::triangulate<2, dimworld>(intersectionPolygon);
+        numInts1 = triangulation.size();
 
         // try to make a dune geometry with the result
         for (const auto& t : triangulation)
@@ -111,11 +128,44 @@ int main(int argc, char* argv[])
             std::vector<Point> corners(t.begin(), t.end());
             Geometry2D triangle(Dune::GeometryTypes::simplex(dimworld-1), corners);
             std::cout << "Volume: " << triangle.volume() << std::endl;
+            area += triangle.volume();
         }
 
-        Dumux::writeVTKPolyDataTriangle(triangulation, "quad_intersections");
-        DUNE_THROW(Dune::InvalidStateException, "Found unexpected intersection!");
+        Dumux::writeVTKPolyDataTriangle(triangulation, "quad1_intersections");
     }
+
+    quad = Geometry2D(Dune::GeometryTypes::cube(dimworld-1), quad2Corners);
+    if (Test::intersection(cube, quad, intersectionPolygon))
+    {
+        const auto triangulation = Dumux::triangulate<2, dimworld>(intersectionPolygon);
+        numInts2 = triangulation.size();
+
+        // try to make a dune geometry with the result
+        for (const auto& t : triangulation)
+        {
+            // might run into an assertion
+            std::vector<Point> corners(t.begin(), t.end());
+            Geometry2D triangle(Dune::GeometryTypes::simplex(dimworld-1), corners);
+            std::cout << "Volume: " << triangle.volume() << std::endl;
+            area += triangle.volume();
+        }
+
+        Dumux::writeVTKPolyDataTriangle(triangulation, "quad2_intersections");
+    }
+
+    // compute intersection face area
+    std::vector<Dune::FieldVector<double, dimworld>> isFaceCorners({
+    {0.8926414294658755, 1,                 0.4012781039132332},
+    {0.8316315415883838, 1,                 0.2581023823497354},
+    {0.7349272235105835, 1,                 0.4613391568883559},
+    {0.7479805294570721, 1,                 0.3155931875126768} });
+    Geometry2D isFace(Dune::GeometryTypes::cube(dimworld-1), isFaceCorners);
+    const auto isFaceArea = isFace.volume();
+
+    using std::abs;
+    std::cout << "Intersection area mismatch: " << std::setprecision(30) << abs(area-isFaceArea) << std::endl;
+    std::cout << "Num triangles 1: " << numInts1 << std::endl;
+    std::cout << "Num triangles 2: " << numInts2 << std::endl;
 
     std::cout << "All tests passed!" << std::endl;
 
