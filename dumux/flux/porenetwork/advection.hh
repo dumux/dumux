@@ -151,7 +151,9 @@ public:
 /*!
  * \file
  * \ingroup PoreNetworkFlux
- * \brief Non-creeping flow flux law to describe the advective flux for pore-network models based on El-Zehairy et al.(2019).
+ * \brief Non-creeping flow flux law to describe the advective flux for pore-network models based on
+ *        El-Zehairy et al.(2019).
+ *        https://doi.org/10.1016/j.advwatres.2019.103378
  */
 template <class ScalarT, class... TransmissibilityLawTypes>
 class PoreNetworkNonCreepingFlow
@@ -302,13 +304,12 @@ public:
         const auto tmp0 = B0*B0 - 4*A0*C0;
         const auto q = (-B0 + sqrt(tmp0)) / (2*A0);
 
-        //! give the volume flowrate proper sign based on flow direction
+        //! give the volume flowrate proper sign based on flow direction.
+        //! Since viscosity, mu, will be applied through upwinding when localresidula is computed, it should be taken out from the flowrate definition in this step
         if (upstreamIdx == 0)
             return mu * q;
         else
             return -mu * q;
-
-        //TODO: gravity
 
     }
 

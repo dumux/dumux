@@ -45,7 +45,7 @@
 #include "../problem.hh"
 #include "../properties.hh"
 
-int main(int argc, char** argv) try
+int main(int argc, char** argv)
 {
     using namespace Dumux;
 
@@ -136,9 +136,6 @@ int main(int argc, char** argv) try
     using NewtonSolver = NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
-    // helper class to calculate the boundary flux
-    //const auto boundaryFlux = PoreNetworkModelBoundaryFlux(*assembler, x);
-
     // time loop
     timeLoop->start(); do
     {
@@ -150,9 +147,6 @@ int main(int argc, char** argv) try
 
         // make the new solution the old solution
         xOld = x;
-
-        //std::cout << "cumulative outflux is: " << boundaryFlux.getFlux("max", 0, true) << std::endl;
-
         gridVariables->advanceTimeStep();
 
         // advance to the time loop to the next step
@@ -160,7 +154,6 @@ int main(int argc, char** argv) try
 
         // write vtk output
         vtkWriter.write(timeLoop->time());
-
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
@@ -185,28 +178,4 @@ int main(int argc, char** argv) try
 
     return 0;
 
-}
-catch (Dumux::ParameterException &e)
-{
-    std::cerr << std::endl << e << " ---> Abort!" << std::endl;
-    return 1;
-}
-catch (Dune::DGFException & e)
-{
-    std::cerr << "DGF exception thrown (" << e <<
-                 "). Most likely, the DGF file name is wrong "
-                 "or the DGF file is corrupted, "
-                 "e.g. missing hash at end of file or wrong number (dimensions) of entries."
-                 << " ---> Abort!" << std::endl;
-    return 2;
-}
-catch (Dune::Exception &e)
-{
-    std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
-    return 3;
-}
-catch (...)
-{
-    std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
-    return 4;
 }

@@ -33,10 +33,7 @@
 
 #include <dumux/common/boundarytypes.hh>
 
-namespace Dumux
-{
-template <class TypeTag>
-class PNMOnePNonCreepingProblem;
+namespace Dumux {
 
 template <class TypeTag>
 class PNMOnePNonCreepingProblem : public PorousMediumFlowProblem<TypeTag>
@@ -59,9 +56,7 @@ public:
     template<class SpatialParams>
     PNMOnePNonCreepingProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<SpatialParams> spatialParams)
     : ParentType(gridGeometry, spatialParams)
-    {
-        testHydrostaticPressure_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.EnableGravity");
-    }
+    {}
 
     /*!
      * \name Simulation steering
@@ -121,7 +116,6 @@ public:
 #endif
          return values;
     }
-
 
     // \}
 
@@ -185,14 +179,10 @@ private:
 
     bool isOutletPore_(const SubControlVolume& scv) const
     {
-        if (testHydrostaticPressure_)
-            return false;
-
         return this->gridGeometry().poreLabel(scv.dofIndex()) == Labels::outlet;
     }
 
-    bool testHydrostaticPressure_;
 };
-} //end namespace
+} //end namespace Dumux
 
 #endif

@@ -43,7 +43,7 @@
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
 #include "properties.hh"
 
-int main(int argc, char** argv) try
+int main(int argc, char** argv)
 {
     using namespace Dumux;
 
@@ -100,25 +100,12 @@ int main(int argc, char** argv) try
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
-    // make assemble and attach linear system
+    // the assembler
     using Assembler = FVAssembler<TypeTag, DiffMethod::analytic>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
-    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
-    auto A = std::make_shared<JacobianMatrix>();
-    auto r = std::make_shared<SolutionVector>();
-    assembler->setLinearSystem(A, r);
 
+    // helper class to calculate the boundary flux
     const auto boundaryFlux = PoreNetworkModelBoundaryFlux(*gridVariables, assembler->localResidual(), x);
-
-    Dune::Timer timer;
-    // assemble the local jacobian and the residual
-    Dune::Timer assemblyTimer;
-    if (mpiHelper.rank() == 0)
-        std::cout << "Assembling linear system ..." << std::flush;
-    assembler->assembleJacobianAndResidual(x);
-    assemblyTimer.stop();
-    if (mpiHelper.rank() == 0)
-        std::cout << " took " << assemblyTimer.elapsed() << " seconds." << std::endl;
 
     // the linear solver
     using LinearSolver = ILU0RestartedGMResBackend;
@@ -127,7 +114,7 @@ int main(int argc, char** argv) try
     // the non-linear solver
     using NewtonSolver = NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
-    nonLinearSolver.solve(x /*, *timeLoop*/);
+    nonLinearSolver.solve(x);
 
     // output result to vtk
     Dune::Timer outputTimer;
@@ -143,42 +130,10 @@ int main(int argc, char** argv) try
     std::cout << "cumulative outflux is: " << boundaryFlux.getFlux("max", 0, true) << std::endl;
 
     if (mpiHelper.rank() == 0)
+    {
         std::cout << " took " << outputTimer.elapsed() << " seconds." << std::endl;
-
-    timer.stop();
-
-    const auto &comm = Dune::MPIHelper::getCollectiveCommunication();
-    if (mpiHelper.rank() == 0)
-        std::cout << "Simulation took " << timer.elapsed() << " seconds on "
-                  << comm.size() << " processes.\n"
-                  << "The cumulative CPU time was " << timer.elapsed() * comm.size() << " seconds.\n";
-
-    if (mpiHelper.rank() == 0)
         Parameters::print();
+    }
 
     return 0;
-}
-catch (Dumux::ParameterException &e)
-{
-    std::cerr << std::endl
-              << e << " ---> Abort!" << std::endl;
-    return 1;
-}
-catch (Dune::DGFException &e)
-{
-    std::cerr << "DGF exception thrown (" << e << "). Most likely, the DGF file name is wrong "
-                                                  "or the DGF file is corrupted, "
-                                                  "e.g. missing hash at end of file or wrong number (dimensions) of entries."
-              << " ---> Abort!" << std::endl;
-    return 2;
-}
-catch (Dune::Exception &e)
-{
-    std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
-    return 3;
-}
-catch (...)
-{
-    std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
-    return 4;
 }

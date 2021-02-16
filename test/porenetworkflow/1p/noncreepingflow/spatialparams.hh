@@ -29,8 +29,7 @@
 #include <dumux/porenetworkflow/common/poreproperties.hh>
 #include <dumux/porenetworkflow/common/throatproperties.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 template<class GridGeometry, class Scalar>
 class PNMNonCreepingSpatialParams : public PNMBaseSpatialParams<GridGeometry, Scalar, PNMNonCreepingSpatialParams<GridGeometry, Scalar>>
@@ -85,10 +84,7 @@ public:
               const ElementSolutionVector& elemSol) const
     { return 1.0; }
 
-
-
 };
-
-} // namespace Dumux
+} // end namespace Dumux
 
 #endif

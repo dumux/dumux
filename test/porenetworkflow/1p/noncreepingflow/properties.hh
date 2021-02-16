@@ -36,7 +36,6 @@
 #include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
 
 #include"spatialparams.hh"
-// the problem
 #include "problem.hh"
 
 //////////
