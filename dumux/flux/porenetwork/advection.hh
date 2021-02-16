@@ -296,8 +296,8 @@ public:
         //! attention: the q, volumetric flowrate, calculated here is always positive and its sign need to be determined based on flow direction
         //! this approach is taken to prevent the term under the square root becoming negative
         const Scalar A0 = (contractionCoefficient * elemVolVars[upstreamIdx].density() + expansionCoefficient * elemVolVars[downstreamIdx].density())
-                          / (2.0 * throatCrossSectionalArea * throatCrossSectionalArea);
-        const Scalar B0 = mu / creepingFlowTransmissibility;
+                          / (2.0 * mu * mu * throatCrossSectionalArea * throatCrossSectionalArea);
+        const Scalar B0 =  1/ creepingFlowTransmissibility;
         const Scalar C0 = (upstreamIdx == 0) ? -deltaP: deltaP;
 
         using std::sqrt;
@@ -305,11 +305,10 @@ public:
         const auto q = (-B0 + sqrt(tmp0)) / (2*A0);
 
         //! give the volume flowrate proper sign based on flow direction.
-        //! Since viscosity, mu, will be applied through upwinding when localresidula is computed, it should be taken out from the flowrate definition in this step
         if (upstreamIdx == 0)
-            return mu * q;
+            return q;
         else
-            return -mu * q;
+            return -q;
 
     }
 
