@@ -41,6 +41,7 @@ namespace Dumux {
 template<class MDTraits>
 class MultiDomainFVGridVariables
 {
+    using ThisType = MultiDomainFVGridVariables<MDTraits>;
     static constexpr std::size_t numSubDomains = MDTraits::numSubDomains;
 
     template<std::size_t i>
@@ -83,6 +84,15 @@ public:
     MultiDomainFVGridVariables(const TupleType& tuple)
     : gridVars_(tuple)
     {}
+
+        /*!
+         * \brief Construction from an existing tuple and solution
+         */
+        MultiDomainFVGridVariables(const TupleType& tuple,
+                                   const SolutionVector& sol)
+        : gridVars_(tuple)
+        , dofs_(sol)
+        {}
 
     /*!
      * \brief Contruct the grid variables
@@ -198,6 +208,21 @@ public:
      */
     TupleType getTuple()
     { return gridVars_; }
+
+    //! make a deep copy of this class
+    ThisType deepCopy() const
+    {
+        TupleType tupleCopy;
+
+        using namespace Dune::Hybrid;
+        forEach(std::make_index_sequence<numSubDomains>{}, [&](auto&& id)
+        {
+            constexpr auto i = std::decay_t<decltype(id)>::value;
+            elementAt(tupleCopy, id) = std::make_shared<Type<i>>( *(std::get<i>(gridVars_)) );
+        });
+
+        return {tupleCopy, dofs_};
+    }
 
 private:
     //! a tuple of pointes to all grid variables

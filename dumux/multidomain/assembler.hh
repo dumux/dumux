@@ -343,7 +343,7 @@ public:
         const auto curStage = params->size() - 1;
 
         // we keep track of previous stages, they are needed for residual assembly
-        prevStageVariables_.push_back(gridVars);
+        prevStageVariables_.push_back(gridVars.deepCopy());
 
         // Now we update the time level of the given grid variables
         const auto t = params->timeAtStage(curStage);
