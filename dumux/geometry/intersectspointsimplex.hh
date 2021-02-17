@@ -181,7 +181,23 @@ bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
     if (v2norm < v1norm*eps_)
         return true;
 
-    return (v1.dot(v2) > v1norm*v2norm*(1.0 - eps_) && v2norm < v1norm*(1.0 + eps_));
+    // if the cross product is zero the points are on a line
+    const auto n = crossProduct(v1, v2);
+
+    // early return if the vector length is larger than zero
+    if constexpr (dimworld == 3)
+    {
+        if (n.two_norm() > v1norm*eps_)
+           return false;
+    }
+    else
+    {
+        using std::abs;
+        if (abs(n) > v1norm*eps_)
+            return false;
+    }
+
+    return (v1.dot(v2) > 0.0 && v2norm < v1norm*(1.0 + eps_));
 }
 
 /*!
