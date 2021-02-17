@@ -74,8 +74,15 @@ void testIntersections(std::vector<bool>& returns)
         const GlobalPosition b2(scaling*2.0);
 
         GlobalPosition p11 = a2;
-        p11[dimWorld-1] += (b2-a2).two_norm()*1.5e-7;
+        p11[dimWorld-1] += (b2-a2).two_norm()*1.0e-6;
         returns.push_back(testIntersection(a2, b2, p11));
+
+        // test that triggers bug in 1d2d intersection query
+        // which has been fixed with !2274 (found a false positive here)
+        GlobalPosition p12(0.0); p12[0] = 0.001969*scaling; p12[1] = 0.0004995*scaling;
+        GlobalPosition c(0.0); c[1] = 0.0005*scaling;
+        GlobalPosition d = c; d[0] = 0.002*scaling;
+        returns.push_back(testIntersection(c, d, p12));
     }
 }
 

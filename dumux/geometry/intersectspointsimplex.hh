@@ -30,7 +30,7 @@ namespace Dumux {
 
 /*!
  * \ingroup Geometry
- * \brief Find out whether a point is inside a tetrahedron (p0, p1, p2, p3) (dimworld is 3)
+ * \brief Find out whether a point is inside the tetrahedron (p0, p1, p2, p3) (dimworld is 3)
  */
 template<class ctype, int dimworld, typename std::enable_if_t<(dimworld == 3), int> = 0>
 bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
@@ -72,7 +72,7 @@ bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
 
 /*!
  * \ingroup Geometry
- * \brief Find out whether a point is inside a triangle (p0, p1, p2, p3) (dimworld is 3)
+ * \brief Find out whether a point is inside the triangle (p0, p1, p2) (dimworld is 3)
  */
 template<class ctype, int dimworld, typename std::enable_if_t<(dimworld == 3), int> = 0>
 bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
@@ -132,7 +132,7 @@ bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
 
 /*!
  * \ingroup Geometry
- * \brief Find out whether a point is inside a triangle (p0, p1, p2, p3) (dimworld is 2)
+ * \brief Find out whether a point is inside the triangle (p0, p1, p2) (dimworld is 2)
  */
 template<class ctype, int dimworld, typename std::enable_if_t<(dimworld == 2), int> = 0>
 bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
@@ -159,7 +159,7 @@ bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
 
 /*!
  * \ingroup Geometry
- * \brief Find out whether a point is inside a interval (p0, p1) (dimworld is 2 or 3)
+ * \brief Find out whether a point is inside the interval (p0, p1) (dimworld is 2 or 3)
  * \note We assume the given interval has non-zero length and use it to scale the epsilon
  */
 template<class ctype, int dimworld, typename std::enable_if_t<(dimworld == 3 || dimworld == 2), int> = 0>
@@ -177,16 +177,31 @@ bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
     const ctype v1norm = v1.two_norm();
     const ctype v2norm = v2.two_norm();
 
-    // check if point and p0 are the same
+    // early exit if point and p0 are the same
     if (v2norm < v1norm*eps_)
         return true;
 
-    return (v1.dot(v2) > v1norm*v2norm*(1.0 - eps_) && v2norm < v1norm*(1.0 + eps_));
+    // early exit if the point is outside the segment (no epsilon in the
+    // first statement because we already did the above equality check)
+    if (v1.dot(v2) < 0.0 || v2norm > v1norm*(1.0 + eps_))
+        return false;
+
+    // If the area spanned by the 2 vectors is zero, the points are colinear.
+    // If that is the case, the given point is on the segment.
+    const auto n = crossProduct(v1, v2);
+    const auto eps2 = v1norm*v1norm*eps_;
+    if constexpr (dimworld == 3)
+        return n.two_norm2() < eps2*eps2;
+    else
+    {
+        using std::abs;
+        return abs(n) < eps2;
+    }
 }
 
 /*!
  * \ingroup Geometry
- * \brief Find out whether a point is inside a interval (p0, p1) (dimworld is 1)
+ * \brief Find out whether a point is inside the interval (p0, p1) (dimworld is 1)
  */
 template<class ctype, int dimworld, typename std::enable_if_t<(dimworld == 1), int> = 0>
 bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
