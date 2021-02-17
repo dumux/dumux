@@ -177,11 +177,26 @@ bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
     const ctype v1norm = v1.two_norm();
     const ctype v2norm = v2.two_norm();
 
-    // check if point and p0 are the same
+    // early exit if point and p0 are the same
     if (v2norm < v1norm*eps_)
         return true;
 
-    return (v1.dot(v2) > v1norm*v2norm*(1.0 - eps_) && v2norm < v1norm*(1.0 + eps_));
+    // early exit if the point is outside the segment (no epsilon in the
+    // first statement because we already did the above equality check)
+    if (v1.dot(v2) < 0.0 || v2norm > v1norm*(1.0 + eps_))
+        return false;
+
+    // If the area spanned by the 2 vectors is zero, the points are colinear.
+    // If that is the case, the given point is on the segment.
+    const auto n = crossProduct(v1, v2);
+    const auto eps2 = v1norm*v1norm*eps_;
+    if constexpr (dimworld == 3)
+        return n.two_norm2() < eps2*eps2;
+    else
+    {
+        using std::abs;
+        return abs(n) < eps2;
+    }
 }
 
 /*!
