@@ -1,5 +1,7 @@
+#!/usr/bin/env python3
+
 from dune.common import FieldVector
-from dune.grid import structuredGrid, gridFunction
+from dune.grid import structuredGrid, gridFunction, OutputType
 from dumux.common import FVProblem, BoundaryTypes, TimeLoop
 from dumux.discretization import GridGeometry
 import numpy as np
@@ -17,7 +19,7 @@ except ImportError:
 ########################
 
 dimension = 2
-cells = 25
+cells = 20
 
 gridView = structuredGrid([0]*dimension, [1]*dimension, [cells]*dimension)
 
@@ -97,7 +99,8 @@ def plot(time):
         plt.show()
         plt.pause(1e-3)
     gridView.writeVTK(problem.name + "-solution-{:0.2f}".format(time).replace(".", ""),
-                      celldata={"solution": solutionGridFunction})
+                      celldata={"solution": solutionGridFunction},
+                      outputType=OutputType.ascii)
 
 
 #######################
