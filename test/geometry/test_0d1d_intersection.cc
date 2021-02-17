@@ -74,7 +74,7 @@ void testIntersections(std::vector<bool>& returns)
         const GlobalPosition b2(scaling*2.0);
 
         GlobalPosition p11 = a2;
-        p11[dimWorld-1] += (b2-a2).two_norm()*1.5e-7;
+        p11[dimWorld-1] += (b2-a2).two_norm()*1.0e-6;
         returns.push_back(testIntersection(a2, b2, p11));
     }
 }
