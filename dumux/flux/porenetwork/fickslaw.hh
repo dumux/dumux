@@ -29,8 +29,7 @@
 #include <dumux/flux/referencesystemformulation.hh>
 #include <dumux/flux/fickiandiffusioncoefficients.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup PoreNetworkFlux
