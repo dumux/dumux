@@ -72,6 +72,7 @@ struct PNMFouriersLaw
     }
 
 };
-} // end namespace
+
+} // end namespace Dumux
 
 #endif
