@@ -101,7 +101,7 @@ public:
         if constexpr (ModelTraits::enableEnergyBalance())
         {
             const auto upwindTerm = [](const auto& volVars) { return volVars.density() * volVars.enthalpy(); };
-            return advectiveFlux(upwindTerm);
+            return getAdvectiveFlux(upwindTerm);
         }
         else
             return 0.0;
