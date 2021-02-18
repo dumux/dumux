@@ -37,11 +37,6 @@
 #include <dune/grid/utility/persistentcontainer.hh>
 #include <dune/geometry/axisalignedcubegeometry.hh>
 
-// FoamGrid specific includes
-#if HAVE_DUNE_FOAMGRID
-#include <dune/foamgrid/foamgrid.hh>
-#include <dune/foamgrid/dgffoam.hh>
-#endif
 
 #include <dumux/common/indextraits.hh>
 #include <dumux/porenetworkflow/common/geometry.hh>
