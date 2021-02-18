@@ -274,7 +274,7 @@ public:
             const Scalar rho = 0.5*insideVolVars.density(phaseIdx) + 0.5*outsideVolVars.density(phaseIdx);
 
             // projected distance between pores in gravity field direction
-            auto poreToPoreVector = fluxVarsCache.poreToPoreDistance() * scvf.unitOuterNormal();
+            const auto poreToPoreVector = fluxVarsCache.poreToPoreDistance() * scvf.unitOuterNormal();
             const auto& gravityVector = problem.spatialParams().gravity(scvf.center());
 
             deltaP += rho * (gravityVector * poreToPoreVector);
