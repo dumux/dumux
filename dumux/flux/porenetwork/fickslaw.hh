@@ -109,6 +109,6 @@ private:
             return volVars.diffusionCoefficient(0, 0, compIdx);
     }
 };
-} // end namespace
+} // end namespace Dumux
 
 #endif
