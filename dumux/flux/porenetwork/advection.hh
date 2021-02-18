@@ -272,12 +272,12 @@ public:
         if (enableGravity)
         {
             const Scalar rho = 0.5*insideVolVars.density(phaseIdx) + 0.5*outsideVolVars.density(phaseIdx);
-            const Scalar g = problem.spatialParams().gravity(scvf.center()) * scvf.unitOuterNormal();
 
-            // The transmissibility is with respect to the effective throat length (potentially dropping the pore body radii).
-            // For gravity, we need to consider the total throat length (i.e., the cell-center to cell-center distance).
-            // This might cause some inconsistencies TODO: is there a better way?
-            deltaP += fluxVarsCache.poreToPoreDistance() * rho * g;
+            // projected distance between pores in gravity field direction
+            auto poreToPoreVector = fluxVarsCache.poreToPoreDistance() * scvf.unitOuterNormal();
+            const auto& gravityVector = problem.spatialParams().gravity(scvf.center());
+
+            deltaP += rho * (gravityVector * poreToPoreVector);
         }
         const Scalar creepingFlowTransmissibility = fluxVarsCache.transmissibility(phaseIdx);
         const Scalar throatCrossSectionalArea = fluxVarsCache.throatCrossSectionalArea();
