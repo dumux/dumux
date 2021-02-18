@@ -602,6 +602,6 @@ private:
     std::shared_ptr<Grid> gridPtr_;
 };
 
-} // namespace Dumux
+} // end namespace Dumux
 
-#endif // DUMUX_IO_STRUCTURED_LATTICE_GRID_CREATOR_HH
+#endif
