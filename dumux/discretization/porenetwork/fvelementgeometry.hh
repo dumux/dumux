@@ -257,11 +257,6 @@ public:
     }
 
     //! The global finite volume geometry we are a restriction of
-    [[deprecated("Use gridGeometry")]]
-    const GridGeometry& fvGridGeometry() const
-    { return *gridGeometryPtr_; }
-
-    //! The global finite volume geometry we are a restriction of
     const GridGeometry& gridGeometry() const
     { return *gridGeometryPtr_; }
 
