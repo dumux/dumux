@@ -142,7 +142,7 @@ public:
     {
         static_assert(ElementVolumeVariables::VolumeVariables::numFluidPhases() == 1);
         const Scalar t = calculateTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, 0);
-        return std::array<Scalar, 2>{t, -t};
+        return {t, -t};
     }
 };
 
