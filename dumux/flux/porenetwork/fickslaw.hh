@@ -95,8 +95,8 @@ public:
 private:
 
     template<class VolumeVariables>
-    static auto getDiffusionCoefficient_(const int phaseIdx, const int compIdx,
-                                         const VolumeVariables& volVars)
+    static Scalar getDiffusionCoefficient_(const int phaseIdx, const int compIdx,
+                                           const VolumeVariables& volVars)
     {
         using FluidSystem = typename VolumeVariables::FluidSystem;
 
