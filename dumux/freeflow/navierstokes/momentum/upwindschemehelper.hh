@@ -52,14 +52,12 @@ class FaceCenteredStaggeredUpwindHelper
     using FVElementGeometry = typename GridGeometry::LocalView;
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
     using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
-    using VolumeVariables = typename GridVolumeVariables::VolumeVariables;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
 
     static constexpr int upwindSchemeOrder = GridGeometry::upwindSchemeOrder;
     static_assert(upwindSchemeOrder <= 2, "Not implemented: Order higher than 2!");
@@ -71,16 +69,13 @@ public:
                                       const FVElementGeometry& fvGeometry,
                                       const Problem& problem,
                                       const SubControlVolumeFace& scvf,
-                                      const ElementVolumeVariables& elemVolVars,
-                                      const ElementBoundaryTypes& elemBcTypes,
-                                      const UpwindScheme& upwindScheme)
+                                      const ElementVolumeVariables& elemVolVars)
     : element_(element)
     , fvGeometry_(fvGeometry)
     , problem_(problem)
     , scvf_(scvf)
     , elemVolVars_(elemVolVars)
-    , elemBcTypes_(elemBcTypes)
-    , upwindScheme_(upwindScheme)
+    , upwindScheme_(fvGeometry.staggeredUpwindMethods())
     {}
 
     /*!
@@ -359,7 +354,9 @@ private:
     {
         assert(lateralScvf.boundary() || fvGeometry_.hasHalfParallelNeighbor(lateralScvf) || fvGeometry_.hasCornerParallelNeighbor(lateralScvf));
 
-        const auto& lateralFaceBcTypes = elemBcTypes_[lateralScvf.localIndex()];
+        const auto& scv = fvGeometry_.scv(lateralScvf.insideScvIdx());
+        const auto& element = fvGeometry_.gridGeometry().element(scv.elementIndex());
+        const auto& lateralFaceBcTypes = problem_.boundaryTypes(element, lateralScvf);
 
         // In the case there is a neumann condition for momentum at the face in question, we force a zero gradient condition
         // This would include cases such as a "symmetry" condition, or a dirichlet pressure condition
@@ -373,10 +370,8 @@ private:
 //         if (hasBJS)
 //             return object.beaversJoesephSlipVelocity(x,y,z);
 
-        const auto& scv = fvGeometry_.scv(lateralScvf.insideScvIdx());
         if (lateralFaceBcTypes.isDirichlet(scv.directionIndex()))
         {
-            const auto& element = fvGeometry_.gridGeometry().element(scv.elementIndex());
             const auto& tempCornerFace = makeCornerFace_(lateralScvf);
             return problem_.dirichlet(element, tempCornerFace)[scv.directionIndex()];
         }
@@ -462,7 +457,6 @@ private:
     const Problem& problem_;
     const SubControlVolumeFace& scvf_;
     const ElementVolumeVariables& elemVolVars_;
-    const ElementBoundaryTypes& elemBcTypes_;
     const UpwindScheme& upwindScheme_;
 };
 

@@ -334,12 +334,10 @@ public:
 
         const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
         FaceCenteredStaggeredUpwindHelper<TypeTag> upwindHelper(this->element(),
-                                                                                   this->fvGeometry(),
-                                                                                   this->problem(),
-                                                                                   scvf,
-                                                                                   elemVolVars,
-                                                                                   this->elemBcTypes(),
-                                                                                   this->fvGeometry().staggeredUpwindMethods());
+                                                                this->fvGeometry(),
+                                                                this->problem(),
+                                                                scvf,
+                                                                elemVolVars);
 
         const Scalar transportedMomentum = upwindHelper.computeUpwindFrontalMomentum(selfIsUpstream);
 
@@ -414,12 +412,10 @@ public:
         const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
 
         FaceCenteredStaggeredUpwindHelper<TypeTag> upwindHelper(this->element(),
-                                                                                   fvGeometry,
-                                                                                   problem,
-                                                                                   scvf,
-                                                                                   elemVolVars,
-                                                                                   this->elemBcTypes(),
-                                                                                   fvGeometry.staggeredUpwindMethods());
+                                                                fvGeometry,
+                                                                problem,
+                                                                scvf,
+                                                                elemVolVars);
 
         const Scalar transportedMomentum = upwindHelper.computeUpwindLateralMomentum(selfIsUpstream);
 
