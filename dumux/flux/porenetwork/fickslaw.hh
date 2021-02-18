@@ -48,13 +48,14 @@ public:
 
     template<class Problem, class Element, class FVElementGeometry,
              class ElementVolumeVariables, class ElementFluxVariablesCache>
-    static auto flux(const Problem& problem,
-                     const Element& element,
-                     const FVElementGeometry& fvGeometry,
-                     const ElementVolumeVariables& elemVolVars,
-                     const typename FVElementGeometry::SubControlVolumeFace& scvf,
-                     const int phaseIdx,
-                     const ElementFluxVariablesCache& elemFluxVarsCache)
+    static Dune::FieldVector<Scalar, numComponents>
+    flux(const Problem& problem,
+         const Element& element,
+         const FVElementGeometry& fvGeometry,
+         const ElementVolumeVariables& elemVolVars,
+         const typename FVElementGeometry::SubControlVolumeFace& scvf,
+         const int phaseIdx,
+         const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         Dune::FieldVector<Scalar, numComponents> componentFlux(0.0);
 
