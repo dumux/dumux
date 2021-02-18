@@ -26,13 +26,12 @@
 
 #include <dumux/common/math.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
-    /*!
-     * \ingroup PoreNetworkFlux
-     * \brief Specialization of Fouriers's Law for the pore-network model.
-     */
+ /*!
+  * \ingroup PoreNetworkFlux
+  * \brief Specialization of Fourier's Law for the pore-network model.
+  */
 struct PNMFouriersLaw
 {
 
