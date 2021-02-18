@@ -301,8 +301,8 @@ public:
         const Scalar C0 = (upstreamIdx == 0) ? -deltaP: deltaP;
 
         using std::sqrt;
-        const auto tmp0 = B0*B0 - 4*A0*C0;
-        const auto q = (-B0 + sqrt(tmp0)) / (2*A0);
+        const auto discriminant = B0*B0 - 4*A0*C0;
+        const auto q = (-B0 + sqrt(discriminant)) / (2*A0);
 
         //! give the volume flowrate proper sign based on flow direction.
         if (upstreamIdx == 0)
