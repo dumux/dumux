@@ -24,16 +24,14 @@
 #ifndef DUMUX_FLUX_PNM_ADVECTION_HH
 #define DUMUX_FLUX_PNM_ADVECTION_HH
 
-namespace Dumux
-{
-
-namespace Detail {
+namespace Dumux::Detail {
 
 template<class... TransmissibilityLawTypes>
-struct Transmissibility : public TransmissibilityLawTypes...
-{};
+struct Transmissibility : public TransmissibilityLawTypes... {};
 
-}
+} // end namespace Dumux::Detail
+
+namespace Dumux {
 
 /*!
  * \file
