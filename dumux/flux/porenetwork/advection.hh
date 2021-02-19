@@ -292,17 +292,23 @@ public:
         const Scalar expansionCoefficient = fluxVarsCache.singlePhaseFlowVariables().expansionCoefficient(downstreamIdx);
         const Scalar mu = elemVolVars[upstreamIdx].viscosity();
 
-        //! A0q^2 + B0q + C0 = 0
-        //! attention: the q, volumetric flowrate, calculated here is always positive and its sign need to be determined based on flow direction
-        //! this approach is taken to prevent the term under the square root becoming negative
-        const Scalar A0 = (contractionCoefficient * elemVolVars[upstreamIdx].density() + expansionCoefficient * elemVolVars[downstreamIdx].density())
+        //! El-Zehairy et al.(2019): Eq.(14):
+        //! A0Q^2 + B0Q + C0 = 0  where Q is volumetric flowrate, A0 = [Kc + Ke] * rho /[2aij^2], Kc and Ke are contraction and expansion coefficient respectively,
+        //! aij is cross sectional area of the throat, B0 = 1/K0 (K0 is trnasmissibility used in paper) and C0 = -deltaP
+        //! In our implementation viscosity of fluid will be included using upwinding later. Thus, creepingFlowTransmissibility = mu * K0 and
+        //! the volumetric flowrate calculated here q = mu * Q. Substitution of new variables into El-Zehairy et al.(2019), Eq.(14) gives:
+        //! Aq^2 + Bq + C = 0  where
+        //! A = A0 / mu^2,  B = B0/mu = 1/creepingFlowTransmissibility and C = C0
+        //! attention: the q, volumetric flowrate, calculated here is always positive and its sign needs to be determined based on flow direction
+        //! this approach is taken to prevent the term under the square root (discriminant) becoming negative
+        const Scalar A = (contractionCoefficient * elemVolVars[upstreamIdx].density() + expansionCoefficient * elemVolVars[downstreamIdx].density())
                           / (2.0 * mu * mu * throatCrossSectionalArea * throatCrossSectionalArea);
-        const Scalar B0 =  1/ creepingFlowTransmissibility;
-        const Scalar C0 = (upstreamIdx == 0) ? -deltaP: deltaP;
+        const Scalar B =  1/ creepingFlowTransmissibility;
+        const Scalar C = -std::abs(deltaP);
 
         using std::sqrt;
-        const auto discriminant = B0*B0 - 4*A0*C0;
-        const auto q = (-B0 + sqrt(discriminant)) / (2*A0);
+        const auto discriminant = B*B - 4*A*C;
+        const auto q = (-B + sqrt(discriminant)) / (2*A);
 
         //! give the volume flowrate proper sign based on flow direction.
         if (upstreamIdx == 0)
