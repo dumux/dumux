@@ -166,7 +166,7 @@ struct TwoPLocalRulesPlatonicBody
         const Scalar poreRadius = params.poreInscribedRadius();
         using std::exp;
         const Scalar e = exp(expFactor_()*sw);
-        return -(2.0*expFactor_()*sigma*e) / (poreRadius*(e-1.0)*(e-1.0));
+        return -(2.0*expFactor_<Scalar>()*sigma*e) / (poreRadius*(e-1.0)*(e-1.0));
     }
 
     /*!
