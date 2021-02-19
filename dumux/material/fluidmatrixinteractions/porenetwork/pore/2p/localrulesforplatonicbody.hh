@@ -184,8 +184,8 @@ struct TwoPLocalRulesPlatonicBody
 
 private:
 
-    template<class T = void>
-    static constexpr auto expFactor_()
+    template<class Scalar>
+    static constexpr Scalar expFactor_()
     {
         if constexpr (shape == Pore::Shape::tetrahedron)
             return 3.87;
