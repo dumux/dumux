@@ -204,7 +204,7 @@ private:
         }
     }
 
-    bool static isPlatonicBody_(Pore::Shape s)
+    static constexpr bool isPlatonicBody_(Pore::Shape s)
     {
         return s == Pore::Shape::tetrahedron ||
                s == Pore::Shape::cube ||
