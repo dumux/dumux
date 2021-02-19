@@ -199,7 +199,7 @@ private:
             return 24.11;
         else
         {
-            static_assert(AlwaysFalse<T>::value, "Shape not supported");
+            static_assert(AlwaysFalse<Scalar>::value, "Shape not supported");
             return 0;
         }
     }
