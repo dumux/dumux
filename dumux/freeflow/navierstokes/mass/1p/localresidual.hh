@@ -71,7 +71,8 @@ class NavierStokesMassOnePLocalResidual : public CCLocalResidual<TypeTag>
 
     static_assert(GridGeometry::discMethod == DiscretizationMethod::cctpfa);
 
-    static constexpr int phi1Idx = Indices::phiIdx;
+    static constexpr int phi1Idx = Indices::phi1Idx;
+    static constexpr int phi2Idx = Indices::phi2Idx;
     static constexpr int uIdx = Indices::uIdx;
 
 public:
@@ -104,7 +105,8 @@ public:
         //PhasefieldLocalResidual::fluidPhaseStorage(storage, volVars);
         const auto& priVars = volVars.priVars();
         const Scalar b = mineralMolarDensity * 1.0;
-        storage[Indices::phasefieldEqIdx] = xi * xi * priVars[phi1Idx];
+        storage[Indices::phasefield1EqIdx] = xi * xi * priVars[phi1Idx];
+        storage[Indices::phasefield2EqIdx] = xi * xi * priVars[phi2Idx];
         storage[Indices::uTransportEqIdx] = (priVars[phi1Idx] + delta) *
             (priVars[uIdx] - priVars[phi1Idx] * b)
             ;
@@ -126,12 +128,19 @@ public:
         const static Scalar react = getParam<Scalar>("Phasefield.Reaction");
         const Scalar mineralMolarDensity = getParam<Scalar>("Phasefield.MineralMolarDensity");
         Scalar f_P = react * (priVars[uIdx] - 1.0);
-        source[Indices::phasefieldEqIdx] =
+        source[Indices::phasefield1EqIdx] =
             // - gamma P'
             - 16.0 * sigma * (
-            priVars[phi1Idx] * (1.0 - priVars[phi1Idx]) * (1.0 - 2.0 * priVars[phi1Idx])
+            priVars[phi1Idx] * priVars[phi2Idx] * (priVars[phi2Idx] - priVars[phi1Idx])
             )
-            - 4.0 * xi * priVars[phi1Idx] * (1.0 - priVars[phi1Idx]) * f_P
+            - 4.0 * xi * priVars[phi1Idx] * priVars[phi2Idx] * f_P
+            ;
+        source[Indices::phasefield2EqIdx] =
+            // - gamma P'
+            - 16.0 * sigma * (
+            priVars[phi2Idx] * priVars[phi1Idx] * (priVars[phi1Idx] - priVars[phi2Idx])
+            )
+            + 4.0 * xi * priVars[phi1Idx] * priVars[phi2Idx] * f_P
             ;
 
         return source;
@@ -199,9 +208,9 @@ public:
         const static Scalar xi = getParam<Scalar>("Phasefield.xi");
         const static Scalar delta = getParam<Scalar>("Phasefield.delta");
         const static Scalar D_u = getParam<Scalar>("Phasefield.DiffCoeff");
-        const int numDiffusion = 2;
+        const int numDiffusion = 3;
         const static std::array<Scalar, numDiffusion> diffCoeff = {
-            xi*xi*sigma,// xi*xi*sigma, xi*xi*sigma,// p1 - p3
+            xi*xi*sigma, xi*xi*sigma,// xi*xi*sigma,// p1 - p3
         //    xi*xi*sigma, xi*xi*sigma,// p11, p12
             (insideVolVars.priVar(phi1Idx)+delta) * D_u//,//u_A
         //    (insideVolVars.priVar(Indices::p11Idx)+delta) * D_u,

@@ -34,9 +34,11 @@ struct NavierStokesMassOnePIndices
 {
     static constexpr int conti0EqIdx = 0; //!< Index of the first (total for pure-fluid systems) mass balance equation
     static constexpr int pressureIdx = conti0EqIdx; //!< Index of the pressure
-    static constexpr int phasefieldEqIdx = 1;
-    static constexpr int phiIdx = phasefieldEqIdx;
-    static constexpr int uTransportEqIdx = 2;
+    static constexpr int phasefield1EqIdx = 1;
+    static constexpr int phasefield2EqIdx = 2;
+    static constexpr int phi1Idx = phasefield1EqIdx;
+    static constexpr int phi2Idx = phasefield2EqIdx;
+    static constexpr int uTransportEqIdx = 3;
     static constexpr int uIdx = uTransportEqIdx;
 };
 

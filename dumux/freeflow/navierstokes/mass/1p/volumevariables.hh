@@ -126,7 +126,7 @@ public:
      *        the control volume.
      */
     Scalar phasefield(int index) const
-    { return priVars_[Indices::phiIdx+index-1]; }
+    { return priVars_[Indices::phi1Idx+index-1]; }
 
      /*!
      * \brief Returns the concentration \f$\mathrm{[u]}\f$ of a given species within

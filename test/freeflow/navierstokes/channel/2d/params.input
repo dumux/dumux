@@ -1,5 +1,5 @@
 [TimeLoop]
-DtInitial = 1 # [s]
+DtInitial = 0.05 # [s]
 TEnd = 4 # [s]
 MaxTimeStepSize = 1
 
@@ -8,13 +8,15 @@ UpperRight = 5 2
 Cells = 200 80
 
 [Problem]
-Name = test_channel_navier_stokes_grain # name passed to the output routines
+Name = test_channel_2_navier_stokes_grain_phase_coupling # name passed to the output routines
 InletVelocity = 1 #1.2e-3
 EnableGravity = false
 EnableInertiaTerms = true
 OutletCondition = Outflow
 PrintMatrix = false
 UseVelocityProfile = true
+InletDelay = 0.1
+InletWindup = 2.0
 
 [Component]
 LiquidDensity = 1.0 #1e3

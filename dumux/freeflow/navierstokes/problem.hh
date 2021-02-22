@@ -307,7 +307,8 @@ public:
             return std::make_pair(phi, phi);
         }
         else
-            return couplingManager_->getInsideAndOutsidePhasefield(element, fvGeometry, scvf, isPreviousTimeStep);
+            return couplingManager_->getInsideAndOutsidePhasefield(element, fvGeometry, scvf,
+                    isPreviousTimeStep);
     }
 
     /*!

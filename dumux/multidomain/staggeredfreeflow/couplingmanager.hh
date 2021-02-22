@@ -237,8 +237,9 @@ public:
         assert(!(considerPreviousTimeStep && !isTransient_));
         bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, scv.elementIndex());
         const auto& massScv = (*scvs(momentumCouplingContext_[0].fvGeometry).begin());
-        return considerPreviousTimeStep ? momentumCouplingContext_[0].prevElemVolVars[massScv].phasefield(1)
-                                        : momentumCouplingContext_[0].curElemVolVars[massScv].phasefield(1);
+        return considerPreviousTimeStep ?
+            momentumCouplingContext_[0].prevElemVolVars[massScv].phasefield(1) :
+            momentumCouplingContext_[0].curElemVolVars[massScv].phasefield(1);
     }
 
     /*!
@@ -250,8 +251,6 @@ public:
                             const SubControlVolumeFace<freeFlowMomentumIdx>& scvf) const
     {
         const auto ownCellPhasefield = phasefield(element, fvGeometry, scvf);
-        return ownCellPhasefield;
-        //assert (scvf.boundary() && scvf.isFrontal());
 
         bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
 
@@ -293,12 +292,14 @@ public:
         auto result = [&](const auto& elemVolVars)
         {
             if (scvf.boundary())
-                return std::make_pair(elemVolVars[insideMassScv].phasefield(1), elemVolVars[insideMassScv].phasefield(1));
+                return std::make_pair(elemVolVars[insideMassScv].phasefield(1),
+                        elemVolVars[insideMassScv].phasefield(1));
             else
             {
                 const auto& outsideMomentumScv = fvGeometry.scv(scvf.outsideScvIdx());
                 const auto& outsideMassScv = momentumCouplingContext_[0].fvGeometry.scv(outsideMomentumScv.elementIndex());
-                return std::make_pair(elemVolVars[insideMassScv].phasefield(1), elemVolVars[outsideMassScv].phasefield(1));
+                return std::make_pair(elemVolVars[insideMassScv].phasefield(1),
+                        elemVolVars[outsideMassScv].phasefield(1));
             }
         };
 

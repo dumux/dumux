@@ -207,7 +207,8 @@ public:
 #if NONISOTHERMAL
                 values.setDirichlet(Indices::temperatureIdx);
 #endif
-                values.setDirichlet(Indices::phiIdx);
+                values.setDirichlet(Indices::phi1Idx);
+                values.setDirichlet(Indices::phi2Idx);
                 values.setDirichlet(Indices::uIdx);
             }
         }
@@ -226,6 +227,8 @@ public:
          PrimaryVariables values = initialAtPos(globalPos);
 
          const static auto bcType = getParam<std::string>("Phasefield.Scenario");
+         const static auto delayTime = getParam<Scalar>("Problem.InletDelay");
+         const static auto windupTime = getParam<Scalar>("Problem.InletWindup");
          if constexpr (ParentType::isMomentumProblem())
          {
              const static Scalar rad = (bcType == "ThinChannel") ?
@@ -233,6 +236,14 @@ public:
              values[Indices::velocityXIdx] = parabolicProfile(globalPos[1], inletVelocity_, rad);
              if (!useVelocityProfile_ && isInlet_(globalPos))
                 values[Indices::velocityXIdx] = inletVelocity_;
+             if (time() < delayTime)
+             {
+                 values[Indices::velocityXIdx] = 0.0;
+             }
+             else if (time() < delayTime + windupTime)
+             {
+                 values[Indices::velocityXIdx] *= (time() - delayTime)/windupTime;
+             }
          }
          else
          {
@@ -250,11 +261,13 @@ public:
             if (bcType == "ThinChannel")
             {
                 const Scalar s = (globalPos[1]-1.0)*(globalPos[1]-1.0)-rad*rad;
-                values[Indices::phiIdx] = 1.0/(1.0 + std::exp(S*s/xi));
+                values[Indices::phi1Idx] = 1.0/(1.0 + std::exp(S*s/xi));
+                values[Indices::phi2Idx] = 1.0 - values[Indices::phi1Idx];
             }
             else
             {
-                values[Indices::phiIdx] = 1.0;
+                values[Indices::phi1Idx] = 1.0;
+                values[Indices::phi2Idx] = 0.0;
             }
             values[Indices::uIdx] = u_in;
          }
@@ -378,17 +391,20 @@ public:
             if (icType == "ThinChannel")
             {
                 const Scalar s = (globalPos[1]-1.0)*(globalPos[1]-1.0) -rad*rad;
-                values[Indices::phiIdx] = 1.0/(1.0 + std::exp(S*s/xi));
+                values[Indices::phi1Idx] = 1.0/(1.0 + std::exp(S*s/xi));
+                values[Indices::phi2Idx] = 1.0 - values[Indices::phi1Idx];
             }
             else if (icType == "Grain")
             {
                 const Scalar s = (globalPos[1]-grainY)*(globalPos[1]-grainY) +
                     (globalPos[0]-grainX)*(globalPos[0]-grainX) -rad*rad;
-                values[Indices::phiIdx] = 1.0/(1.0 + std::exp(S*-s/xi));
+                values[Indices::phi1Idx] = 1.0/(1.0 + std::exp(S*-s/xi));
+                values[Indices::phi2Idx] = 1.0 - values[Indices::phi1Idx];
             }
             else
             {
-                values[Indices::phiIdx] = 1.0;
+                values[Indices::phi1Idx] = 1.0;
+                values[Indices::phi2Idx] = 0.0;
             }
             values[Indices::uIdx] = getParam<Scalar>("Phasefield.InitialConcentration");
         }
