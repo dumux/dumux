@@ -318,13 +318,6 @@ public:
 
     }
 
-    /*!
-     * \brief Returns the throat conductivity
-     *
-     * \param problem The problem
-     * \param element The element
-     * \param ElementVolumeVariables The element volume variables
-     */
     template<class Problem, class Element, class FVElementGeometry, class ElementVolumeVariables, class FluxVariablesCache>
     static Scalar calculateTransmissibility(const Problem& problem,
                                             const Element& element,
