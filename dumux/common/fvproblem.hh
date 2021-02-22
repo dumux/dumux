@@ -115,7 +115,7 @@ public:
     /*!
      * \brief Set the problem name.
      *
-     * This static method sets the simulation name, which should be
+     * This function sets the simulation name, which should be
      * called before the application problem is declared! If not, the
      * default name "sim" will be used.
      *
