@@ -144,6 +144,6 @@ You learn how to
 
 </td>
 <td width="20%"><a href="liddrivencavity/README.md">
-<figure><img src="pnmpermeabilityupscaling/img/result.png" alt="pnm result"/></figure></td>
+<figure><img src="porenetwork_upscaling/img/result.png" alt="pnm result"/></figure></td>
 </a></td>
 </tr></table>
