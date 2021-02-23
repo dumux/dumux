@@ -66,7 +66,7 @@ public:
     void updateInvasionState(std::vector<bool>& elementIsInvaded, const Scalar pcGlobal)
     {
         // iterate over all elements (throats)
-        for (const auto element : elements(gridView_))
+        for (const auto& element : elements(gridView_))
         {
             const auto eIdx = gridView_.indexSet().index(element);
 

@@ -158,7 +158,7 @@ int main(int argc, char** argv)
     sequenceWriter.addVertexData(poreVolume , "poreVolume");
 
     // fill the network properties
-    for (const auto element : elements(leafGridView))
+    for (const auto& element : elements(leafGridView))
     {
         const auto eIdx = leafGridView.indexSet().index(element);
         pcEntry[eIdx] = getPcEntry(eIdx);
