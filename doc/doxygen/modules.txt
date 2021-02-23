@@ -578,3 +578,27 @@
      * \defgroup FacetCoupling Conforming mixed-dimension facet coupling mode
      * \brief Couples problems of different dimensions where one or more lower-dimensional problems (lowdim) live on the facets of the          higher-dimensional domain (bulk). Examples are discrete facet conforming fracture models and problems with physics on a domain surface.
      */
+
+ /* ***************** PoreNetwork ******************/
+ /*!
+  * \defgroup PoreNetworkModels Pore-Network Models
+  * \brief Single and multi-phase models for flow and transport in pore networks
+  */
+     /*!
+      * \ingroup PoreNetworkModels
+      * \defgroup PNMOnePModel 1p
+      * \brief Single-phase (immiscible) flow
+      * For a detailed model description see porenetwork/1p/model.hh
+      */
+     /*!
+      * \ingroup PoreNetworkModels
+      * \defgroup PNMOnePNCModel 1pnc
+      * \brief Single-phase, multi-component flow
+      * For a detailed model description see porenetwork/1pnc/model.hh
+      */
+     /*!
+      * \ingroup PoreNetworkModels
+      * \defgroup PNMTwoPModel 2p
+      * \brief Two-phase (immiscible) flow
+      * For a detailed model description see porenetwork/2p/model.hh
+      */
