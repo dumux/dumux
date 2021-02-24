@@ -71,7 +71,7 @@ open('installdumux.log', 'w').close()
 ## (1/3) Check some prerequistes
 #################################################################
 #################################################################
-programs = ['wget', 'git', 'gcc', 'g++', 'cmake', 'pkg-config']
+programs = ['git', 'gcc', 'g++', 'cmake', 'pkg-config']
 show_message("(1/3) Checking all prerequistes: " + " ".join(programs) + "...")
 
 # check some prerequistes
@@ -102,14 +102,15 @@ show_message("(2/3) Cloning repositories. This may take a while. Make sure to be
 # the core modules
 for module in ['common', 'geometry', 'grid', 'localfunctions', 'istl']:
     if not os.path.exists("dune-{}".format(module)):
-        git_clone('https://gitlab.dune-project.org/core/dune-{}.git'.format(module), "releases/{}".format(args['dune_version'])))
+        git_clone('https://gitlab.dune-project.org/core/dune-{}.git'.format(module), "releases/{}".format(args['dune_version']))
     else:
         print("-- Skip cloning dune-{} because the folder already exists.".format(module))
 
 # dumux
 if not os.path.exists("dumux"):
-    git_clone('https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git', "releases/{}".format(args['dumux_version'])))
+    git_clone('https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git', "releases/{}".format(args['dumux_version']))
 else:
+
     print("-- Skip cloning dumux because the folder already exists.")
 
 
@@ -123,12 +124,7 @@ show_message("(2/3) Step completed. All repositories have been cloned into a con
 show_message("(3/3) Configure and build dune modules and dumux using dunecontrol. This may take several minutes...")
 
 # run dunecontrol
-if not os.path.isfile("cmake.opts"):
-    subprocess.run(["wget","https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/releases/3.2/cmake.opts"])
-else:
-    print("-- The file cmake.opts already exists. The existing file will be used to configure dumux.")
-
-run_command(command=["./dune-common/bin/dunecontrol", "--opts=cmake.opts", "all"])
+run_command(command=["./dune-common/bin/dunecontrol", "--opts=dumux/cmake.opts", "all"])
 
 show_message("(3/3) Step completed. Succesfully configured and built dune and dumux.")
 
@@ -138,7 +134,7 @@ show_message("(3/3) Step completed. Succesfully configured and built dune and du
 #################################################################
 #################################################################
 show_message("(Installation complete) To test if everything works, please run the following commands (can be copied to command line):\n\n"
-             "  cd dumux/dumux/build-cmake/test/porousmediumflow/1p/isothermal\n"
+             "  cd dumux/dumux/build-cmake/test/porousmediumflow/1p/implicit/isothermal\n"
              "  make test_1p_tpfa\n"
              "  ./test_1p_tpfa\n"
              "  paraview *pvd\n")
