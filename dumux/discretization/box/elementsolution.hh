@@ -25,7 +25,7 @@
 #define DUMUX_BOX_ELEMENT_SOLUTION_HH
 
 #include <type_traits>
-#include <dune/istl/bvector.hh>
+#include <dune/common/reservedvector.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {
@@ -40,6 +40,9 @@ class BoxElementSolution
     using GridGeometry = typename FVElementGeometry::GridGeometry;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
+
+    static constexpr int dim = GridView::dimension;
+    static constexpr int numCubeCorners = 1 << dim;
 
 public:
     //! export the primary variables type
@@ -104,7 +107,7 @@ public:
     { return priVars_[i]; }
 
 private:
-    Dune::BlockVector<PrimaryVariables> priVars_;
+    Dune::ReservedVector<PrimaryVariables, numCubeCorners> priVars_;
 };
 
 /*!
