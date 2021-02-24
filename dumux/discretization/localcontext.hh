@@ -26,10 +26,13 @@
 #define DUMUX_LOCAL_CONTEXT_HH
 
 #include <optional>
+#include <dune/common/std/type_traits.hh>
+
 #include <dune/common/exceptions.hh>
 #include <dumux/timestepping/timelevel.hh>
 
 namespace Dumux {
+namespace Experimental {
 
 class EmptyCouplingContext {};
 
@@ -37,15 +40,18 @@ class EmptyCouplingContext {};
  * \ingroup Discretization
  * \brief TODO: Doc me
  */
-template<class ElementSolution,
-         class ElementVariables,
-         class CouplingContext = EmptyCouplingContext>
+template<class ES, class EV, class CC = EmptyCouplingContext>
 class LocalContext
 {
-    using Scalar = typename ElementSolution::PrimaryVariables::value_type;
-    using TimeLevel = Dumux::TimeLevel<Scalar>;
+    using Scalar = typename ES::PrimaryVariables::value_type;
 
 public:
+
+    using ElementSolution = ES;
+    using ElementVariables = EV;
+    using CouplingContext = CC;
+    using TimeLevel = Dumux::TimeLevel<Scalar>;
+
     //! TODO: Doc me
     void setElementSolution(const ElementSolution& elemSol)
     { elemSol_ = &elemSol; }
@@ -101,6 +107,21 @@ private:
     std::optional<TimeLevel> timeLevel_;
 };
 
+namespace Detail {
+
+    template<class C> using ContextElemSol = typename C::ElementSolution;
+    template<class C> using ContextElemVars = typename C::ElementVariables;
+    template<class C> using ContextTimeLevel = typename C::TimeLevel;
+
+    // TODO: We could introduce a Context concept!
+    template<class Context>
+    inline constexpr bool hasContextInterfaces =
+        Dune::Std::is_detected_v<ContextElemSol, Context>
+        && Dune::Std::is_detected_v<ContextElemVars, Context>
+        && Dune::Std::is_detected_v<ContextTimeLevel, Context>;
+}
+
+} // end namespace Experimental
 } // end namespace Dumux
 
 #endif
