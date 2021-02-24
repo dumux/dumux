@@ -5,9 +5,21 @@ One click install script for dumux
 """
 import os
 import sys
+import argparse
 import subprocess
 from distutils.spawn import find_executable
 from distutils.version import LooseVersion
+
+parser = argparse.ArgumentParser(prog='installdumux',
+                                 usage='./installdumux.py [OPTIONS]',
+                                 description='This script downloads and compiles the latest release of Dumux.')
+# Optional arguments
+parser.add_argument('--dune_version', default="2.7",
+                     help='Dune version to be checked out.')
+parser.add_argument('--dumux_version', default="3.3",
+                     help='Dumux version to be checked out.')
+args = vars(parser.parse_args())
+
 
 def show_message(message):
     print("*" * 120)
@@ -86,18 +98,17 @@ os.chdir("dumux")
 
 show_message("(2/3) Cloning repositories. This may take a while. Make sure to be connected to the internet...")
 
-dune_version=2.7
-dumux_version=3.2
+
 # the core modules
 for module in ['common', 'geometry', 'grid', 'localfunctions', 'istl']:
     if not os.path.exists("dune-{}".format(module)):
-        git_clone('https://gitlab.dune-project.org/core/dune-{}.git'.format(module), "releases/{}".format(dune_version))
+        git_clone('https://gitlab.dune-project.org/core/dune-{}.git'.format(module), "releases/{}".format(args['dune_version'])))
     else:
         print("-- Skip cloning dune-{} because the folder already exists.".format(module))
 
 # dumux
 if not os.path.exists("dumux"):
-    git_clone('https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git', "releases/{}".format(dumux_version))
+    git_clone('https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git', "releases/{}".format(args['dumux_version'])))
 else:
     print("-- Skip cloning dumux because the folder already exists.")
 
