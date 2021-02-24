@@ -57,7 +57,9 @@ public:
     PNMOnePProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<SpatialParams> spatialParams)
     : ParentType(gridGeometry, spatialParams)
     {
-        testHydrostaticPressure_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.EnableGravity");
+        testHydrostaticPressure_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.HydrostaticPressureTest");
+        inletPressure_ = getParam<Scalar>("Problem.InletPressure");
+        outletPressure_ = getParam<Scalar>("Problem.OutletPressure");
     }
 
     /*!
@@ -107,9 +109,9 @@ public:
     {
         PrimaryVariables values(0.0);
         if(isInletPore_(scv))
-            values[Indices::pressureIdx] = 1.0e5;
+            values[Indices::pressureIdx] = inletPressure_;
         else
-            values[Indices::pressureIdx] = 0.9e5;
+            values[Indices::pressureIdx] = outletPressure_;
 #if !ISOTHERMAL
          if(isInletPore_(scv))
             values[Indices::temperatureIdx] = 273.15 +25;
@@ -182,13 +184,15 @@ private:
 
     bool isOutletPore_(const SubControlVolume& scv) const
     {
-        if (testHydrostaticPressure_)
-            return false;
+        // if (testHydrostaticPressure_)
+        //     return false;
 
         return this->gridGeometry().poreLabel(scv.dofIndex()) == Labels::outlet;
     }
 
     bool testHydrostaticPressure_;
+    Scalar inletPressure_;
+    Scalar outletPressure_;
 };
 } //end namespace Dumux
 
