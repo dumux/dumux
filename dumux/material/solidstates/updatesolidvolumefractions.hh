@@ -24,6 +24,8 @@
 #ifndef DUMUX_UPDATE_SOLID_VOLUME_FRACTION_HH
 #define DUMUX_UPDATE_SOLID_VOLUME_FRACTION_HH
 
+#include <dumux/discretization/localcontext.hh>
+
 namespace Dumux {
 
 /*!
@@ -32,27 +34,34 @@ namespace Dumux {
  * \note updates the inert components (TODO: these are assumed to come last right now in the solid system!)
  * \note gets the non-inert components from the primary variables
  */
-template<class ElemSol, class Problem, class Element, class Scv, class SolidState>
-void updateSolidVolumeFractions(const ElemSol& elemSol,
+template<class Context, class Problem, class Element, class Scv, class SolidState>
+void updateSolidVolumeFractions(const Context& context,
                                 const Problem& problem,
                                 const Element& element,
                                 const Scv& scv,
                                 SolidState& solidState,
                                 const int solidVolFracOffset)
 {
+    // check if context fulfills the context interface or is assumed to be an element solution (old interface)
+    static constexpr bool isContext = Experimental::Detail::hasContextInterfaces<Context>;
+
     for (int sCompIdx = solidState.numComponents-solidState.numInertComponents; sCompIdx < solidState.numComponents; ++sCompIdx)
     {
         const auto& sp = problem.spatialParams();
         using SolidSystem = typename SolidState::SolidSystem;
-        const auto inertVolumeFraction = sp.template inertVolumeFraction<SolidSystem>(element, scv, elemSol, sCompIdx);
+        const auto inertVolumeFraction = sp.template inertVolumeFraction<SolidSystem>(element, scv, context, sCompIdx);
         solidState.setVolumeFraction(sCompIdx, inertVolumeFraction);
     }
 
     if (!(solidState.isInert()))
     {
-        auto&& priVars = elemSol[scv.localDofIndex()];
         for (int sCompIdx = 0; sCompIdx < solidState.numComponents- solidState.numInertComponents; ++sCompIdx)
-           solidState.setVolumeFraction(sCompIdx, priVars[solidVolFracOffset + sCompIdx]);
+        {
+            if constexpr (isContext)
+                solidState.setVolumeFraction(sCompIdx, context.elementSolution()[scv.localDofIndex()][solidVolFracOffset + sCompIdx]);
+            else
+                solidState.setVolumeFraction(sCompIdx, context[scv.localDofIndex()][solidVolFracOffset + sCompIdx]);
+       }
     }
 }
 
