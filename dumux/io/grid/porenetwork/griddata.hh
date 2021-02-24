@@ -61,7 +61,7 @@ class GridData
     using SmallLocalIndex = typename IndexTraits<GridView>::SmallLocalIndex;
     using StringVector = std::vector<std::string>;
 
-    using Scalar = double;
+    using Scalar = typename Grid::ctype;
     using PersistentParameterContainer = Dune::PersistentContainer<Grid, std::vector<typename Grid::ctype>>;
     using ParametersForGeneratedGrid = Dumux::PoreNetwork::ParametersForGeneratedGrid<Grid, Scalar>;
 
