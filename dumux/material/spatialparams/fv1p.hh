@@ -183,6 +183,8 @@ public:
                                 const SubControlVolume& scv,
                                 const ElementSolution& elemSol) const
     {
+        // TODO: Change doc and template arg once (or if) transition to new
+        // assembly with context instead of elemSol is the new standard.
         static_assert(decltype(isValid(Detail::hasPermeabilityAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
         "   Your spatial params class has to either implement\n\n"
         "         const PermeabilityType& permeabilityAtPos(const GlobalPosition& globalPos) const\n\n"
@@ -218,6 +220,8 @@ public:
                     const SubControlVolume& scv,
                     const ElementSolution& elemSol) const
     {
+        // TODO: Change doc and template arg once (or if) transition to new
+        // assembly with context instead of elemSol is the new standard.
         static_assert(decltype(isValid(Detail::hasPorosityAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
         "   Your spatial params class has to either implement\n\n"
         "         Scalar porosityAtPos(const GlobalPosition& globalPos) const\n\n"
@@ -256,6 +260,8 @@ public:
                                const ElementSolution& elemSol,
                                int compIdx) const
     {
+        // TODO: Change doc and template arg once (or if) transition to new
+        // assembly with context instead of elemSol is the new standard.
         return 1.0 - asImp_().porosity(element, scv, elemSol);
     }
 
@@ -267,6 +273,8 @@ public:
                                const ElementSolution& elemSol,
                                int compIdx) const
     {
+        // TODO: Change doc and template arg once (or if) transition to new
+        // assembly with context instead of elemSol is the new standard.
         return 0.0;
     }
 
@@ -287,6 +295,8 @@ public:
                                const ElementSolution& elemSol,
                                int compIdx) const
     {
+        // TODO: Change doc and template arg once (or if) transition to new
+        // assembly with context instead of elemSol is the new standard.
         static_assert(decltype(isValid(Detail::hasInertVolumeFractionAtPos<GlobalPosition, SolidSystem>())(this->asImp_()))::value," \n\n"
         "   Your spatial params class has to either implement\n\n"
         "         template<class SolidSystem>\n"
@@ -343,6 +353,6 @@ private:
     Scalar forchCoeffDefault_;
 };
 
-} // namespace Dumux
+} // end namespace Dumux
 
 #endif
