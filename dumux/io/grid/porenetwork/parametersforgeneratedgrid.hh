@@ -50,6 +50,7 @@ class ParametersForGeneratedGrid
     using GridView = typename Grid::LeafGridView;
     using Element = typename Grid::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using Vertex = typename Grid::template Codim<Grid::dimension>::Entity;
 
     static constexpr auto dim = Grid::dimension;
     static constexpr auto dimWorld = Grid::dimensionworld;
@@ -384,8 +385,8 @@ private:
         return maxPoreRadius;
     }
 
-    // returns a lambda taking a vertex and returning a radius
-    auto poreRadiusGenerator_(const int subregionId) const
+    // returns a function taking a vertex and a pore label and returning a radius
+    std::function<Scalar(const Vertex&, const int)> poreRadiusGenerator_(const int subregionId) const
     {
         // adapt the parameter name if there are subregions
         const std::string prefix = subregionId < 0 ? "Grid." : "Grid.Subregion" + std::to_string(subregionId) + ".";
@@ -393,70 +394,91 @@ private:
         // prepare random number generation for lognormal parameter distribution
         std::mt19937 generator;
 
-        // lognormal random number distribution
-        Dumux::SimpleLogNormalDistribution<> poreRadiusDist;
-
-        const Scalar fixedPoreRadius = getParamFromGroup<Scalar>(paramGroup_, prefix + "PoreRadius", -1);
-        if (fixedPoreRadius < 0.0)
-        {
-            const auto type = getParamFromGroup<std::string>(paramGroup_, prefix + "ParameterType");
-            if (type != "lognormal")
-                DUNE_THROW(Dune::InvalidStateException, "Unknown parameter type " << type);
-
-            // allow to specify a seed to get reproducible results
-            const auto seed = getParamFromGroup<unsigned int>(paramGroup_, prefix + "ParameterRandomNumberSeed", std::random_device{}());
-            generator.seed(seed);
-
-            // if we use a distribution, get the mean and standard deviation from input file
-            const Scalar meanPoreRadius = getParamFromGroup<Scalar>(paramGroup_, prefix + "MeanPoreRadius");
-            const Scalar stddevPoreRadius = getParamFromGroup<Scalar>(paramGroup_, prefix + "StandardDeviationPoreRadius");
-            const Scalar variance = stddevPoreRadius*stddevPoreRadius;
-
-            using std::log;
-            using std::sqrt;
-            const Scalar mu = log(meanPoreRadius/sqrt(1.0 + variance/(meanPoreRadius*meanPoreRadius)));
-            const Scalar sigma = sqrt(log(1.0 + variance/(meanPoreRadius*meanPoreRadius)));
-            poreRadiusDist.param({mu, sigma});
-        }
-
         // check if pores for certain labels should be treated in a special way
         const auto poreLabelsToSetFixedRadius = getParamFromGroup<std::vector<int>>(paramGroup_, prefix + "PoreLabelsToSetFixedRadius", std::vector<int>{});
         const auto poreLabelsToApplyFactorForRadius = getParamFromGroup<std::vector<int>>(paramGroup_, prefix + "PoreLabelsToApplyFactorForRadius", std::vector<int>{});
         const auto poreRadiusForLabel = getParamFromGroup<std::vector<Scalar>>(paramGroup_, prefix + "FixedPoreRadiusForLabel", std::vector<Scalar>{});
         const auto poreRadiusFactorForLabel = getParamFromGroup<std::vector<Scalar>>(paramGroup_, prefix + "PoreRadiusFactorForLabel", std::vector<Scalar>{});
 
-        return [=](const auto& vertex, const int poreLabel) mutable
+        const auto generateFunction = [&](auto& poreRadiusDist)
         {
-            // default radius to return: either a fixed (user-specified) one or a randomly drawn one
-            const auto radius = [&]{ return fixedPoreRadius > 0.0 ? fixedPoreRadius : poreRadiusDist(generator); };
-
-            // check if pores for certain labels should be treated in a special way
-            if (poreLabelsToSetFixedRadius.empty() && poreLabelsToApplyFactorForRadius.empty())
-                return radius(); // nothing special to be done
-
-            // set a fixed radius for a given label
-            else if (!poreLabelsToSetFixedRadius.empty() || !poreRadiusForLabel.empty())
+            return [=](const auto& vertex, const int poreLabel) mutable
             {
-                if (poreLabelsToSetFixedRadius.size() != poreRadiusForLabel.size())
-                    DUNE_THROW(Dumux::ParameterException, "PoreLabelsToSetFixedRadius must be of same size as FixedPoreRadiusForLabel");
+                const auto radius = poreRadiusDist(generator);
 
-                if (const auto it = std::find(poreLabelsToSetFixedRadius.begin(), poreLabelsToSetFixedRadius.end(), poreLabel); it != poreLabelsToSetFixedRadius.end())
-                    return poreRadiusForLabel[std::distance(poreLabelsToSetFixedRadius.begin(), it)];
-            }
+                // check if pores for certain labels should be treated in a special way
+                if (poreLabelsToSetFixedRadius.empty() && poreLabelsToApplyFactorForRadius.empty())
+                    return radius; // nothing special to be done
 
-            // multiply the pore radius by a given value for a given label
-            else if (!poreLabelsToApplyFactorForRadius.empty() || !poreRadiusFactorForLabel.empty())
-            {
-                if (poreLabelsToApplyFactorForRadius.size() != poreRadiusFactorForLabel.size())
-                    DUNE_THROW(Dumux::ParameterException, "PoreLabelsToApplyFactorForRadius must be of same size as PoreRadiusFactorForLabel");
+                // set a fixed radius for a given label
+                else if (!poreLabelsToSetFixedRadius.empty() || !poreRadiusForLabel.empty())
+                {
+                    if (poreLabelsToSetFixedRadius.size() != poreRadiusForLabel.size())
+                        DUNE_THROW(Dumux::ParameterException, "PoreLabelsToSetFixedRadius must be of same size as FixedPoreRadiusForLabel");
 
-                if (const auto it = std::find(poreLabelsToApplyFactorForRadius.begin(), poreLabelsToApplyFactorForRadius.end(), poreLabel); it != poreLabelsToApplyFactorForRadius.end())
-                    return poreRadiusFactorForLabel[std::distance(poreLabelsToApplyFactorForRadius.begin(), it)] * radius();
-            }
+                    if (const auto it = std::find(poreLabelsToSetFixedRadius.begin(), poreLabelsToSetFixedRadius.end(), poreLabel); it != poreLabelsToSetFixedRadius.end())
+                        return poreRadiusForLabel[std::distance(poreLabelsToSetFixedRadius.begin(), it)];
+                }
 
-            // default
-            return radius();
+                // multiply the pore radius by a given value for a given label
+                else if (!poreLabelsToApplyFactorForRadius.empty() || !poreRadiusFactorForLabel.empty())
+                {
+                    if (poreLabelsToApplyFactorForRadius.size() != poreRadiusFactorForLabel.size())
+                        DUNE_THROW(Dumux::ParameterException, "PoreLabelsToApplyFactorForRadius must be of same size as PoreRadiusFactorForLabel");
+
+                    if (const auto it = std::find(poreLabelsToApplyFactorForRadius.begin(), poreLabelsToApplyFactorForRadius.end(), poreLabel); it != poreLabelsToApplyFactorForRadius.end())
+                        return poreRadiusFactorForLabel[std::distance(poreLabelsToApplyFactorForRadius.begin(), it)] * radius;
+                }
+
+                // default
+                return radius;
+            };
         };
+
+        const Scalar fixedPoreRadius = getParamFromGroup<Scalar>(paramGroup_, prefix + "PoreRadius", -1.0);
+        // return random radius according to a user-specified distribution
+        if (fixedPoreRadius <= 0.0)
+        {
+            // allow to specify a seed to get reproducible results
+            const auto seed = getParamFromGroup<unsigned int>(paramGroup_, prefix + "ParameterRandomNumberSeed", std::random_device{}());
+            generator.seed(seed);
+
+            const auto type = getParamFromGroup<std::string>(paramGroup_, prefix + "ParameterType");
+            if (type == "lognormal")
+            {
+                // if we use a lognormal distribution, get the mean and standard deviation from input file
+                const Scalar meanPoreRadius = getParamFromGroup<Scalar>(paramGroup_, prefix + "MeanPoreRadius");
+                const Scalar stddevPoreRadius = getParamFromGroup<Scalar>(paramGroup_, prefix + "StandardDeviationPoreRadius");
+                const Scalar variance = stddevPoreRadius*stddevPoreRadius;
+
+                using std::log;
+                using std::sqrt;
+                const Scalar mu = log(meanPoreRadius/sqrt(1.0 + variance/(meanPoreRadius*meanPoreRadius)));
+                const Scalar sigma = sqrt(log(1.0 + variance/(meanPoreRadius*meanPoreRadius)));
+
+                Dumux::SimpleLogNormalDistribution<> poreRadiusDist(mu, sigma);
+                return generateFunction(poreRadiusDist);
+            }
+            else if (type == "uniform")
+            {
+                // if we use a uniform distribution, get the min and max from input file
+                const Scalar minPoreRadius = getParamFromGroup<Scalar>(paramGroup_, prefix + "MinPoreRadius");
+                const Scalar maxPoreRadius = getParamFromGroup<Scalar>(paramGroup_, prefix + "MaxPoreRadius");
+
+                Dumux::SimpleUniformDistribution<> poreRadiusDist(minPoreRadius, maxPoreRadius);
+                return generateFunction(poreRadiusDist);
+
+            }
+            else
+                DUNE_THROW(Dune::InvalidStateException, "Unknown parameter type " << type);
+        }
+
+        // always return a fixed constant radius
+        else
+        {
+            auto poreRadiusDist = [fixedPoreRadius](auto& gen){ return fixedPoreRadius; };
+            return generateFunction(poreRadiusDist);
+        }
     }
 
     template <class GetParameter>
@@ -523,8 +545,7 @@ private:
         return [=](const Element& element)
         {
             const Scalar delta = element.geometry().volume();
-            using PNMVertex = typename GridView::template Codim<dim>::Entity;
-            const std::array<PNMVertex, 2> vertices = {element.template subEntity<dim>(0), element.template subEntity<dim>(1)};
+            const std::array<Vertex, 2> vertices = {element.template subEntity<dim>(0), element.template subEntity<dim>(1)};
 
             // the element parameters (throat radius and length)
             if (inputThroatRadius > 0.0)
@@ -556,8 +577,7 @@ private:
             const Scalar delta = element.geometry().volume();
             if (substractRadiiFromThroatLength)
             {
-                using PNMVertex = typename GridView::template Codim<dim>::Entity;
-                const std::array<PNMVertex, 2> vertices = {element.template subEntity<dim>(0), element.template subEntity<dim>(1)};
+                const std::array<Vertex, 2> vertices = {element.template subEntity<dim>(0), element.template subEntity<dim>(1)};
                 const Scalar result = delta - getParameter(vertices[0], "PoreInscribedRadius") - getParameter(vertices[1], "PoreInscribedRadius");
                 if (result <= 0.0)
                     DUNE_THROW(Dune::GridError, "Pore radii are so large they intersect! Something went wrong at element " << gridView_.indexSet().index(element));
