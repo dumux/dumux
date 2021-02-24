@@ -601,6 +601,122 @@ private:
     PointSourceMap pointSourceMap_;
 };
 
+namespace Experimental {
+
+//! Experimental problem implementation compatible with new time
+//! integration schemes and corresponding assembly.
+template<class TypeTag>
+class FVProblem : public Dumux::FVProblem<TypeTag>
+{
+    using ParentType = Dumux::FVProblem<TypeTag>;
+
+    using GridGeometry = GetPropType<TypeTag, Dumux::Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+
+    using GridView = typename GridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using PrimaryVariables = typename ParentType::Traits::PrimaryVariables;
+    using NumEqVector = typename ParentType::Traits::NumEqVector;
+    using Scalar = typename ParentType::Traits::Scalar;
+
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
+
+public:
+    // pull up constructor
+    using ParentType::ParentType;
+
+    /*!
+     * \brief Specify the kind of boundary conditions used on a discrete
+     *        entity on the boundary.
+     *
+     * \param element The finite element
+     * \param boundaryEntity The boundary entity (scv/scvf)
+     * \note In cell-centered schemes, boundaryEntity is a sub-control
+     *       volume face (scvf). In the box scheme, a sub-control volume (scv).
+     */
+    template<class BoundaryEntity>
+    auto boundaryTypes(const Element& element,
+                       const BoundaryEntity& boundaryEntity) const
+    {
+        if constexpr (isBox)
+            return this->asImp_().boundaryTypesAtPos(boundaryEntity.dofPosition());
+        else
+            return this->asImp_().boundaryTypesAtPos(boundaryEntity.ipGlobal());
+    }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a discrete entity on the boundary.
+     *
+     * \param element The finite element
+     * \param boundaryEntity The boundary entity (scv/scvf)
+     * \param elementSolution The element-local state of the discrete solution.
+     * \note In cell-centered schemes, boundaryEntity is a sub-control
+     *       volume face (scvf). In the box scheme, a sub-control volume (scv).
+     */
+    template<class BoundaryEntity, class ElementSolution>
+    PrimaryVariables dirichlet(const Element& element,
+                               const BoundaryEntity& boundaryEntity,
+                               const ElementSolution& elementSolution) const
+    {
+        if constexpr (isBox)
+            return this->asImp_().dirichletAtPos(boundaryEntity.dofPosition());
+        else
+            return this->asImp_().dirichletAtPos(boundaryEntity.ipGlobal());
+    }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a neumann
+     *        boundary segment.
+     *
+     * This is the method for the case where the Neumann condition is
+     * potentially solution dependent
+     *
+     * \param context The element-local context
+     * \param scvf The sub control volume face
+     * \note The element-local context consists of an element and local
+     *       geometric information, together with the primary/secondary
+     *       variables in that local scope. Potentially, users can define
+     *       the context to carry an additional object containing further
+     *       locally required data.
+     */
+    template<class LocalContext>
+    NumEqVector neumann(const LocalContext& context,
+                        const SubControlVolumeFace& scvf) const
+    { return this->asImp_().neumannAtPos(scvf.ipGlobal()); }
+
+    /*!
+     * \brief Evaluate the source term for all phases within a given
+     *        sub-control-volume.
+     *
+     * This is the method for the case where the source term is
+     * potentially solution dependent and requires some quantities that
+     * are specific to the fully-implicit method.
+     *
+     * \param context The element-local context
+     * \param scv The sub control volume
+     * \note The element-local context consists of an element and local
+     *       geometric information, together with the primary/secondary
+     *       variables in that local scope. Potentially, users can define
+     *       the context to carry an additional object containing further
+     *       locally required data.
+     *
+     * For this method, the return parameter stores the conserved quantity rate
+     * generated or annihilate per volume unit. Positive values mean
+     * that the conserved quantity is created, negative ones mean that it vanishes.
+     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
+     */
+    template<class LocalContext>
+    NumEqVector source(const LocalContext& context,
+                       const SubControlVolume& scv) const
+    { return this->asImp_().sourceAtPos(scv.center()); }
+
+    //! TODO: Point sources!
+};
+
+} // end namespace Experimental
 } // end namespace Dumux
 
 #endif
