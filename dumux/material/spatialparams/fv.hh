@@ -117,6 +117,8 @@ public:
                      const SubControlVolume& scv,
                      const ElementSolution& elemSol) const
     {
+        // TODO: Change doc and template arg once (or if) transition to new
+        // assembly with context instead of elemSol is the new standard.
         return this->asImp_().template wettingPhaseAtPos<FluidSystem>(scv.center());
     }
 
@@ -135,6 +137,6 @@ public:
     }
 };
 
-} // namespace Dumux
+} // end namespace Dumux
 
 #endif
