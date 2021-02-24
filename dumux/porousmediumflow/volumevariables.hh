@@ -26,6 +26,8 @@
 #ifndef DUMUX_POROUSMEDIUMFLOW_VOLUME_VARIABLES_HH
 #define DUMUX_POROUSMEDIUMFLOW_VOLUME_VARIABLES_HH
 
+#include <dumux/discretization/localcontext.hh>
+
 namespace Dumux {
 
 /*!
@@ -54,20 +56,23 @@ public:
     /*!
      * \brief Updates all quantities for a given control volume.
      *
-     * \param elemSol A vector containing all primary variables connected to the element
+     * \param context The element-local context
      * \param problem The object specifying the problem which ought to
      *                be simulated
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    template<class ElemSol, class Problem, class Element, class Scv>
-    void update(const ElemSol& elemSol,
+    template<class Context, class Problem, class Element, class Scv>
+    void update(const Context& context,
                 const Problem& problem,
                 const Element& element,
                 const Scv& scv)
     {
-        priVars_ = elemSol[scv.localDofIndex()];
-        extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
+        if constexpr (Experimental::Detail::hasContextInterfaces<Context>)
+            priVars_ = context.elementSolution()[scv.localDofIndex()];
+        else // context is elemsol (old interface)
+            priVars_ = context[scv.localDofIndex()];
+        extrusionFactor_ = problem.extrusionFactor(element, scv, context);
     }
 
     /*!

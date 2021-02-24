@@ -30,6 +30,8 @@
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 
+#include <dumux/discretization/localcontext.hh>
+
 namespace Dumux {
 
 /*!
@@ -66,34 +68,34 @@ public:
     /*!
      * \brief Updates all quantities for a given control volume.
      *
-     * \param elemSol A vector containing all primary variables connected to the element
+     * \param context The element-local context
      * \param problem The object specifying the problem which ought to
      *                be simulated
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    template<class ElemSol, class Problem, class Element, class Scv>
-    void update(const ElemSol& elemSol,
+    template<class Context, class Problem, class Element, class Scv>
+    void update(const Context& context,
                 const Problem& problem,
                 const Element& element,
                 const Scv& scv)
     {
-        ParentType::update(elemSol, problem, element, scv);
+        ParentType::update(context, problem, element, scv);
 
          // porosity
-        completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
+        completeFluidState(context, problem, element, scv, fluidState_, solidState_);
 
         // porosity and permeability
-        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
-        EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
-        permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
+        updateSolidVolumeFractions(context, problem, element, scv, solidState_, numFluidComps);
+        EnergyVolVars::updateSolidEnergyParams(context, problem, element, scv, solidState_);
+        permeability_ = problem.spatialParams().permeability(element, scv, context);
         EnergyVolVars::updateEffectiveThermalConductivity();
     }
 
     /*!
      * \brief Sets complete fluid state
      *
-     * \param elemSol A vector containing all primary variables connected to the element
+     * \param context The element-local context
      * \param problem The object specifying the problem which ought to
      *                be simulated
      * \param element An element which contains part of the control volume
@@ -101,19 +103,27 @@ public:
      * \param fluidState A container with the current (physical) state of the fluid
      * \param solidState A container with the current (physical) state of the solid
      */
-    template<class ElemSol, class Problem, class Element, class Scv>
-    void completeFluidState(const ElemSol& elemSol,
+    template<class Context, class Problem, class Element, class Scv>
+    void completeFluidState(const Context& context,
                             const Problem& problem,
                             const Element& element,
                             const Scv& scv,
                             FluidState& fluidState,
                             SolidState& solidState)
     {
-        EnergyVolVars::updateTemperature(elemSol, problem, element, scv, fluidState, solidState);
+        EnergyVolVars::updateTemperature(context, problem, element, scv, fluidState, solidState);
         fluidState.setSaturation(/*phaseIdx=*/0, 1.);
 
-        const auto& priVars = elemSol[scv.localDofIndex()];
-        fluidState.setPressure(/*phaseIdx=*/0, priVars[Indices::pressureIdx]);
+        if constexpr (Experimental::Detail::hasContextInterfaces<Context>)
+        {
+            const auto& priVars = context.elementSolution()[scv.localDofIndex()];
+            fluidState.setPressure(/*phaseIdx=*/0, priVars[Indices::pressureIdx]);
+        }
+        else // context is elemsol (old interface)
+        {
+            const auto& priVars = context[scv.localDofIndex()];
+            fluidState.setPressure(/*phaseIdx=*/0, priVars[Indices::pressureIdx]);
+        }
 
         // saturation in a single phase is always 1 and thus redundant
         // to set. But since we use the fluid state shared by the
