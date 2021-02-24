@@ -33,6 +33,7 @@
 
 #include <dune/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/random.hh>
 #include <dumux/geometry/intersectspointgeometry.hh>
 #include <dumux/porenetwork/common/throatproperties.hh>
 #include <dumux/porenetwork/common/poreproperties.hh>
@@ -393,7 +394,7 @@ private:
         std::mt19937 generator;
 
         // lognormal random number distribution
-        std::lognormal_distribution<> poreRadiusDist;
+        Dumux::SimpleLogNormalDistribution<> poreRadiusDist;
 
         const Scalar fixedPoreRadius = getParamFromGroup<Scalar>(paramGroup_, prefix + "PoreRadius", -1);
         if (fixedPoreRadius < 0.0)
