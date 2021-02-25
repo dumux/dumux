@@ -175,7 +175,8 @@ Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingM
  *        for the staggered scheme (degrees of freedom on cell centers)
  */
 template<bool isImplicit, class CouplingManager, class GridGeometryI, class GridGeometryJ, std::size_t i, std::size_t j,
-         typename std::enable_if_t<(GridGeometryI::discMethod == DiscretizationMethod::fcstaggered), int> = 0>
+         typename std::enable_if_t<(GridGeometryI::discMethod == DiscretizationMethod::fcstaggered ||
+                                    GridGeometryI::discMethod == DiscretizationMethod::fcdiamond), int> = 0>
 Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingManager,
                                                 Dune::index_constant<i> domainI,
                                                 const GridGeometryI& gridGeometryI,

@@ -141,7 +141,7 @@ private:
     template<std::size_t id>
     struct SubDomainAssemblerType<DiscretizationMethod::fcdiamond, id>
     {
-        using type = SubDomainFaceCenteredLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
+        using type = SubDomainFaceCenteredDiamondLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id>

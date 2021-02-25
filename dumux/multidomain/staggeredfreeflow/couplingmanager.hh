@@ -797,7 +797,7 @@ public:
                                 const SubControlVolumeFace<freeFlowMassIdx>& scvf) const
     {
         this->bindCouplingContext(Dune::index_constant<freeFlowMassIdx>(), element, scvf.insideScvIdx()/*eIdx*/);
-        const auto& fvGeometry = this->massAndEnergyCouplingContext_[0];
+        const auto& fvGeometry = this->massAndEnergyCouplingContext_[0].fvGeometry;
 
         const auto& localBasis = fvGeometry.feLocalBasis();
         std::vector<ShapeValue> shapeValues;
