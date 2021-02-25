@@ -8,6 +8,9 @@ dumux_add_test(NAME test_donea_momentum_diamond_cr
                SOURCES main_momentum_diamond.cc
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>)
 
+dumux_add_test(NAME test_donea_coupled_diamond_rt
+               SOURCES main_coupled_diamond.cc)
+
 dumux_add_test(NAME test_ff_stokes_donea_nocaching
               LABELS freeflow navierstokes
               SOURCES main.cc
