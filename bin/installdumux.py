@@ -14,11 +14,16 @@ parser = argparse.ArgumentParser(prog='installdumux',
                                  usage='./installdumux.py [OPTIONS]',
                                  description='This script downloads and compiles the latest release of Dumux.')
 # Optional arguments
-parser.add_argument('--dune_version', default="2.7",
-                     help='Dune version to be checked out.')
-parser.add_argument('--dumux_version', default="3.3",
-                     help='Dumux version to be checked out.')
+parser.add_argument('--dune-version',
+                    default="2.7",
+                    help='Dune version to be checked out.')
+parser.add_argument('--dumux-version',
+                    default="3.3",
+                    help='Dumux version to be checked out.')
 args = vars(parser.parse_args())
+
+dune_branch = args["dune_version"] if args["dune_version"] == "master" else "releases/" + args["dune_version"]
+dumux_branch = args["dumux_version"] if args["dumux_version"] == "master" else "releases/" + args["dumux_version"]
 
 
 def show_message(message):
@@ -98,17 +103,16 @@ os.chdir("dumux")
 
 show_message("(2/3) Cloning repositories. This may take a while. Make sure to be connected to the internet...")
 
-
 # the core modules
 for module in ['common', 'geometry', 'grid', 'localfunctions', 'istl']:
     if not os.path.exists("dune-{}".format(module)):
-        git_clone('https://gitlab.dune-project.org/core/dune-{}.git'.format(module), "releases/{}".format(args['dune_version']))
+        git_clone('https://gitlab.dune-project.org/core/dune-{}.git'.format(module), dune_branch)
     else:
         print("-- Skip cloning dune-{} because the folder already exists.".format(module))
 
 # dumux
 if not os.path.exists("dumux"):
-    git_clone('https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git', "releases/{}".format(args['dumux_version']))
+    git_clone('https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git', dumux_branch)
 else:
 
     print("-- Skip cloning dumux because the folder already exists.")
@@ -133,8 +137,9 @@ show_message("(3/3) Step completed. Succesfully configured and built dune and du
 ## Show message how to check that everything works
 #################################################################
 #################################################################
+path = '' if dumux_branch == "master" or LooseVersion(args["dumux_version"]) > LooseVersion('3.3') else '/implicit'
 show_message("(Installation complete) To test if everything works, please run the following commands (can be copied to command line):\n\n"
-             "  cd dumux/dumux/build-cmake/test/porousmediumflow/1p/implicit/isothermal\n"
+             "  cd dumux/dumux/build-cmake/test/porousmediumflow/1p{}/isothermal\n"
              "  make test_1p_tpfa\n"
              "  ./test_1p_tpfa\n"
-             "  paraview *pvd\n")
+             "  paraview *pvd\n".format(path))
