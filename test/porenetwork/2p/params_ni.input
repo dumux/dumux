@@ -1,7 +1,6 @@
 [TimeLoop]
 DtInitial = 1e-5 # [s]
 TEnd = 0.01 # [s]
-#MaxTimeStepSize = 1e-5#0.0001
 
 [Grid]
 File = ../1p/grids/pnm_converted.dgf
@@ -21,13 +20,6 @@ AddVelocity = 1
 MaxSteps = 10
 TargetSteps = 4
 MaxRelativeShift = 1e-5
-
-[Implicit]
-MaxTimeStepDivisions = 20
-
-
-[PlotMaterialLaw]
-# PoreRadius = Min
 
 [Component]
 SolidHeatCapacity = 1.0 # for compatibility
