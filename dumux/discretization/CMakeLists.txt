@@ -1,6 +1,7 @@
 add_subdirectory(box)
 add_subdirectory(cellcentered)
 add_subdirectory(fem)
+add_subdirectory(porenetwork)
 add_subdirectory(projection)
 add_subdirectory(staggered)
 

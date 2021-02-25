@@ -35,6 +35,7 @@ partial.hh
 pdesolver.hh
 pointsource.hh
 properties.hh
+random.hh
 reorderingdofmapper.hh
 reservedblockvector.hh
 spline.hh

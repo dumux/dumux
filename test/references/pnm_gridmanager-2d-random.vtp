@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<VTKFile type="PolyData" version="0.1" byte_order="LittleEndian">
+  <PolyData>
+    <Piece NumberOfLines="35" NumberOfPoints="24">
+      <PointData Scalars="poreInscribedRadius">
+        <DataArray type="Float32" Name="poreInscribedRadius" NumberOfComponents="1" format="ascii">
+          5.8307e-06 8.20678e-06 6.73508e-06 9.17191e-06 7.14002e-06 7.45226e-06 8.17131e-06 9.87333e-06 6.09005e-06 1.31235e-05 7.32424e-06 1.34357e-05
+          1.53632e-05 1.00266e-05 9.75278e-06 1.232e-05 1.07384e-05 5.82362e-06 8.0054e-06 1.01813e-05 1.98456e-05 1.58578e-05 1.17355e-05 1.21942e-05
+        </DataArray>
+        <DataArray type="Float32" Name="poreVolume" NumberOfComponents="1" format="ascii">
+          1.58581e-15 4.4219e-15 2.44409e-15 6.17262e-15 2.91198e-15 3.31096e-15 4.36481e-15 7.69982e-15 1.80698e-15 1.80818e-14 3.14324e-15 1.9403e-14
+          2.90093e-14 8.06408e-15 7.42123e-15 1.49599e-14 9.90628e-15 1.58004e-15 4.10431e-15 8.44294e-15 6.25292e-14 3.19022e-14 1.293e-14 1.45061e-14
+        </DataArray>
+        <DataArray type="Float32" Name="poreLabel" NumberOfComponents="1" format="ascii">
+          1 -1 2 2 1 -1 1 -1 3 3 2 -1
+          -1 -1 3 -1 -1 -1 3 1 2 1 1 3
+        </DataArray>
+      </PointData>
+      <CellData Scalars="throatRadius">
+        <DataArray type="Float32" Name="throatRadius" NumberOfComponents="1" format="ascii">
+          4.11658e-06 4.70756e-06 4.12337e-06 4.81161e-06 4.09397e-06 5.71113e-06 5.03676e-06 5.10376e-06 4.28953e-06 6.9563e-06 5.18869e-06 6.48355e-06
+          9.31931e-06 5.8116e-06 6.58115e-06 7.10058e-06 5.25119e-06 6.98718e-06 6.5364e-06 5.18384e-06 8.64324e-06 6.8266e-06 4.12387e-06 7.58904e-06
+          4.12097e-06 5.64464e-06 5.61358e-06 7.12156e-06 7.21317e-06 4.12475e-06 8.66678e-06 4.12122e-06 7.35925e-06 4.12238e-06 7.42437e-06
+        </DataArray>
+        <DataArray type="Float32" Name="throatLength" NumberOfComponents="1" format="ascii">
+          0.000235963 0.000338612 0.000338551 0.000235408 0.00034027 0.000231955 0.00033654 0.00033793 0.000339292 0.000330557 0.00022924 0.000330946
+          0.000221201 0.000329983 0.0002301 0.00022461 0.000336075 0.000328317 0.000230221 0.000333909 0.00032587 0.000229235 0.000233438 0.000327452
+          0.000337703 0.000231256 0.000335521 0.000227499 0.000323527 0.000228319 0.000325376 0.000337549 0.000227526 0.000335994 0.000330621
+        </DataArray>
+        <DataArray type="Float32" Name="throatLabel" NumberOfComponents="1" format="ascii">
+          1 2 2 1 1 1 1 1 3 3 2 2
+          -1 -1 -1 -1 -1 -1 3 2 -1 -1 -1 -1
+          -1 3 3 1 2 1 1 1 1 1 3
+        </DataArray>
+      </CellData>
+      <Points>
+        <DataArray type="Float32" Name="Coordinates" NumberOfComponents="3" format="ascii">
+          0.00025 0 0 0.00025 0.00025 0 0 0 0 0 0.00025 0
+          0.0005 0 0 0.0005 0.00025 0 0.00075 0 0 0.00075 0.00025 0
+          0.001 0.00025 0 0.001 0 0 0 0.0005 0 0.00025 0.0005 0
+          0.0005 0.0005 0 0.00075 0.0005 0 0.001 0.0005 0 0.00025 0.00075 0
+          0.00075 0.00075 0 0.0005 0.00075 0 0.001 0.00075 0 0.00025 0.001 0
+          0 0.00075 0 0.0005 0.001 0 0.00075 0.001 0 0.001 0.001 0
+        </DataArray>
+      </Points>
+      <Lines>
+        <DataArray type="Int32" Name="connectivity" NumberOfComponents="1" format="ascii">
+          0 1 2 1 0 3 4 5 0 5 6 7
+          4 7 6 5 6 8 9 7 10 11 3 11
+          11 12 1 12 7 13 12 13 5 13 7 12
+          13 14 10 15 12 15 13 16 17 16 12 16
+          13 17 16 18 13 18 15 19 20 19 17 21
+          15 21 17 19 16 22 17 22 16 23
+        </DataArray>
+        <DataArray type="Int32" Name="offsets" NumberOfComponents="1" format="ascii">
+          2 4 6 8 10 12 14 16 18 20 22 24
+          26 28 30 32 34 36 38 40 42 44 46 48
+          50 52 54 56 58 60 62 64 66 68 70
+        </DataArray>
+      </Lines>
+    </Piece>
+  </PolyData>
+</VTKFile>

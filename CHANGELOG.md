@@ -1,6 +1,12 @@
 Differences Between DuMu<sup>x</sup> 3.4 and DuMu<sup>x</sup> 3.3
 
 ### Improvements and Enhancements
+- __Pore-network models added to DuMu<sup>x</sup>__:
+    - Three fully implicit pore-network models (1p, 1pnc, 2p) have been added.
+    - A quasi-static 2p PNM for the creation of pc-Sw curves has been added.
+    - A new namespace `Dumux::PoreNetwork` has been introduced, containing all relevant classes and functions for pore-network modeling.
+    - An example introduces the use of the 1p PNM for the estimation of the upscaled Darcy permeability.
+    - Note that this is still considered a rather _experimental_ feature. Everything within namespace `Dumux::PoreNetwork` might undergo (backward-compatibility breaking) changes _without prior notice_.
 - __Several scripts have been translated to Python__:
     - `getusedversions.sh` to extract the used Dumux/Dune versions of a module (new script: `bin/util/getusedversions.py`)
     - `extractmodulepart.sh` no longer creates an install file, instead, you can now generate install scripts for your module using the new script `bin/util/makeinstallscript.py`.

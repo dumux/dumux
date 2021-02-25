@@ -1,4 +1,5 @@
 add_subdirectory(2p)
+add_subdirectory(porenetwork)
 
 dumux_add_test(SOURCES test_effectivediffusivity.cc
               LABELS unit material
