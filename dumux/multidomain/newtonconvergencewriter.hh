@@ -27,7 +27,7 @@
 #define DUMUX_MULTIDOMAIN_NEWTON_CONVERGENCE_WRITER_HH
 
 #include <string>
-
+#include <dune/common/hybridutilities.hh>
 #include <dumux/nonlinear/newtonconvergencewriter.hh>
 
 namespace Dumux {
