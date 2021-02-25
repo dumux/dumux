@@ -327,34 +327,16 @@ private:
         else // DGF grid data
         {
             // treat vertex parameter names
-            if (auto inputFileVertexParameterNames = getParamFromGroup<StringVector>(paramGroup_, "Grid.VertexParameters", StringVector{}); !inputFileVertexParameterNames.empty())
-            {
-                // TODO Remove at some point
-                std::cout << "\n***\nWARNING: Setting Grid.VertexParameters in the input file is deprecated. Set '% Vertex parameters: Param1 Param2 ...' in the dgf file instead\n***\n" << std::endl;
-                vertexParameterNames_ = std::move(inputFileVertexParameterNames);
-            }
+            if (auto dgfFileVertexParameterNames = dgfFileParameterNames_("Vertex"); dgfFileVertexParameterNames.empty())
+                DUNE_THROW(Dune::InvalidStateException, "No vertex parameter names specified in dgf file. Set '% Vertex parameters: Param1 Param2 ...'");
             else
-            {
-                if (auto dgfFileVertexParameterNames = dgfFileParameterNames_("Vertex"); dgfFileVertexParameterNames.empty())
-                    DUNE_THROW(Dune::InvalidStateException, "No vertex parameter names specified in dgf file. Set '% Vertex parameters: Param1 Param2 ...'");
-                else
-                    vertexParameterNames_ = std::move(dgfFileVertexParameterNames);
-            }
+                vertexParameterNames_ = std::move(dgfFileVertexParameterNames);
 
             // treat element parameter names
-            if (auto inputFileElementParameterNames = getParamFromGroup<StringVector>(paramGroup_, "Grid.ElementParameters", StringVector{}); !inputFileElementParameterNames.empty())
-            {
-                // TODO Remove at some point
-                std::cout << "\n***\nWARNING: Setting Grid.ElementParameters in the input file is deprecated. Set '% Element parameters: Param1 Param2 ...' in the dgf file instead\n***\n" << std::endl;
-                elementParameterNames_ = std::move(inputFileElementParameterNames);
-            }
+            if (auto dgfFileElementParameterNames =  dgfFileParameterNames_("Element"); dgfFileElementParameterNames.empty())
+                DUNE_THROW(Dune::InvalidStateException, "No element parameter names specified in dgf file. Set '% Element parameters: Param1 Param2 ...'");
             else
-            {
-                if (auto dgfFileElementParameterNames =  dgfFileParameterNames_("Element"); dgfFileElementParameterNames.empty())
-                    DUNE_THROW(Dune::InvalidStateException, "No element parameter names specified in dgf file. Set '% Element parameters: Param1 Param2 ...'");
-                else
-                    elementParameterNames_ = std::move(dgfFileElementParameterNames);
-            }
+                elementParameterNames_ = std::move(dgfFileElementParameterNames);
 
             // make sure that the number of specified parameters matches with the dgf file
             if (const auto& someElement = *(elements(gridView_()).begin()); elementParameterNames_.size() != dgfGrid_.nofParameters(someElement))
