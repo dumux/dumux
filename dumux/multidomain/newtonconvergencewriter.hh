@@ -20,24 +20,21 @@
  * \file
  * \ingroup Nonlinear
  * \brief This class provides the infrastructure to write the
- *        convergence behaviour of the newton method for the
- *        staggered discretization scheme into a VTK file.
+ *        convergence behaviour of the Newton method for
+ *        multidomain simulations into a VTK file.
  */
 #ifndef DUMUX_MULTIDOMAIN_NEWTON_CONVERGENCE_WRITER_HH
 #define DUMUX_MULTIDOMAIN_NEWTON_CONVERGENCE_WRITER_HH
 
 #include <string>
 
-#include <dune/grid/io/file/vtk/vtksequencewriter.hh>
-#include <dumux/io/vtksequencewriter.hh>
-#include <dumux/io/pointcloudvtkwriter.hh>
 #include <dumux/nonlinear/newtonconvergencewriter.hh>
 
 namespace Dumux {
 
 /*!
  * \ingroup Nonlinear
- * \brief Writes the intermediate solutions for every Newton iteration (for staggered grid scheme)
+ * \brief Writes the intermediate solutions for every Newton iteration
  * \note To use this create a shared_ptr to an instance of this class in the main file
  *       and pass it to newton.solve(x, convergencewriter). You can use the reset method
  *       to write out multiple Newton solves with a unique id, if you don't call use all
@@ -64,7 +61,7 @@ class MultiDomainNewtonConvergenceWriter : public ConvergenceWriterInterface<typ
 public:
     /*!
      * \brief Constructor
-     * \param gridGeometry The finite volume geometry on the grid view
+     * \param gridGeometryTuple A tuple of grid geometries
      * \param name Base name of the vtk output
      */
     MultiDomainNewtonConvergenceWriter(GridGeometryTuple&& gridGeometryTuple,
@@ -90,7 +87,7 @@ public:
     }
 
     //! Reset the convergence writer for a possible next Newton step
-    // //! You may set a different id in case you don't want the output to be overwritten by the next step
+    //! You may set a different id in case you don't want the output to be overwritten by the next step
     void reset(std::size_t newId = 0UL)
     {
         using namespace Dune::Hybrid;
