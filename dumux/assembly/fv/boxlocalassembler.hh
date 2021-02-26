@@ -34,6 +34,7 @@
 #include <dumux/assembly/numericepsilon.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/localcontext.hh>
 #include <dumux/timestepping/multistagetimestepper.hh>
 
 
@@ -62,6 +63,7 @@ class BoxLocalAssembler
     using LocalOperator = typename Assembler::LocalOperator;
     using JacobianMatrix = typename Assembler::JacobianMatrix;
     using ResidualVector = typename Assembler::ResidualVector;
+    using LocalContext = typename LocalOperator::LocalContext;
 
     static constexpr int numEq = PrimaryVariables::size();
     static_assert(diffMethod == DiffMethod::numeric, "Analytical assembly not implemented");
@@ -84,9 +86,7 @@ public:
     , elemVariables_(elemVars)
     , elementIsGhost_(element.partitionType() == Dune::GhostEntity)
     , stageParams_(nullptr)
-    {
-        assert(elemVars.size() == 1);
-    }
+    { assert(elemVars.size() == 1); }
 
     /*!
      * \brief Constructor for instationary problems.
@@ -235,12 +235,14 @@ public:
     template< typename ApplyDirichletFunctionType >
     void evalDirichletBoundaries(ApplyDirichletFunctionType applyDirichlet)
     {
+        const auto context = makeContext_(elemVariables());
+
         for (const auto& scvI : scvs(fvGeometry()))
         {
-            const auto bcTypes = problem().boundaryTypes(element(), scvI);
+            const auto bcTypes = problem().boundaryTypes(element(), scvI, context);
             if (bcTypes.hasDirichlet())
             {
-                const auto dirichletValues = problem().dirichlet(element(), scvI);
+                const auto dirichletValues = problem().dirichlet(element(), scvI, context);
 
                 // set the Dirichlet conditions in residual and jacobian
                 for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
@@ -265,7 +267,8 @@ protected:
     {
         if (isStationary())
         {
-            LocalOperator localOperator(element(), fvGeometry(), elemVariables());
+            const auto context = makeContext_(elemVariables());
+            LocalOperator localOperator(element(), fvGeometry(), context);
             return elementIsGhost_ ? localOperator.getEmptyResidual()
                                    : localOperator.evalFluxesAndSources();
         }
@@ -276,7 +279,9 @@ protected:
 
             for (std::size_t k = 0; k < stageParams_->size(); ++k)
             {
-                LocalOperator localOperator(element(), fvGeometry(), elemVariables_[k]);
+                const auto context = makeContext_(elemVariables_[k]);
+                LocalOperator localOperator(element(), fvGeometry(), context);
+                const auto eIdx = fvGeometry().gridGeometry().elementMapper().index(element());
 
                 if (!stageParams_->skipTemporal(k))
                     residual.axpy(stageParams_->temporalWeight(k), localOperator.evalStorage());
@@ -322,6 +327,9 @@ protected:
         const auto origElemSol = elementSolution(element(), x, fvGeometry().gridGeometry());
         auto elemSol = origElemSol;
 
+        auto context = makeContext_(curVariables);
+        context.setElementSolution(elemSol);
+
         //////////////////////////////////////////////////////////////////////////////////////////////
         // Calculate derivatives of the residual of all dofs in element with respect to themselves. //
         //////////////////////////////////////////////////////////////////////////////////////////////
@@ -340,11 +348,11 @@ protected:
             for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
             {
                 partialDerivs = 0.0;
-                auto evalResiduals = [&](Scalar priVar)
+                auto evalResiduals = [&] (Scalar priVar)
                 {
                     // update the volume variables and compute element residual
-                    elemSol[scvI.localDofIndex()][pvIdx] = priVar;
-                    curVolVars.update(elemSol, problem(), element(), scvI);
+                    elemSol[localI][pvIdx] = priVar;
+                    curVolVars.update(context, problem(), element(), scvI);
                     return evalLocalResidual();
                 };
 
@@ -408,6 +416,15 @@ protected:
     { return elemVariables().gridVariables().gridVolVars().problem(); }
 
 private:
+    LocalContext makeContext_(const ElementVariables& elemVars) const
+    {
+        LocalContext context;
+        context.setElementVariables(elemVars);
+        if (stageParams_)
+            context.setTimeLevel(elemVars.gridVariables().timeLevel());
+        return context;
+    }
+
     const Element& element_;
     const FVElementGeometry& fvGeometry_;
     std::vector<ElementVariables>& elemVariables_;
