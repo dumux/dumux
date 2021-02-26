@@ -54,7 +54,7 @@ void testGeneric(const std::string& name)
         gridManager.sanitizeGrid();
 
         const std::array<std::string, 3> vtkName = {"generic-1dgrid-", "generic-2dgrid-", "generic-3dgrid-"};
-        writeToVtk(vtkName[dimWorld-1] + name, gridView, gridData);
+        PoreNetwork::writeToVtk(vtkName[dimWorld-1] + name, gridView, gridData);
     }
 
     // use faulty dgf file to create a grid, apply grid sanitation (specified in input file)
@@ -69,7 +69,7 @@ void testGeneric(const std::string& name)
 
         const std::array<std::string, 3> vtkName = {"dgf-1dgrid-", "dgf-2dgrid-", "dgf-3dgrid-"};
 
-        writeToVtk(vtkName[dimWorld-1] + name, gridView, gridData);
+        PoreNetwork::writeToVtk(vtkName[dimWorld-1] + name, gridView, gridData);
     }
 }
 
@@ -91,7 +91,7 @@ bool testRemoveThroatsOnBoundary()
     const auto gridData = gridManager.getGridData();
 
     if(getParam<bool>("Test.WriteVTK"))
-        writeToVtk("remove-throats", gridView, gridData);
+        PoreNetwork::writeToVtk("remove-throats", gridView, gridData);
 
     const auto lowerLeft = getParam<GlobalPosition>("Grid.LowerLeft", GlobalPosition(0.0));
     const auto upperRight = getParam<GlobalPosition>("Grid.UpperRight");
