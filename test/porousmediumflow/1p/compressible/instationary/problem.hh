@@ -100,9 +100,9 @@ struct EnableGridGeometryCache<TypeTag, TTag::OnePCompressible> { static constex
  * <tt>./test_cc1pfv</tt>
  */
 template<class TypeTag>
-class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
+class OnePTestProblem : public Experimental::PorousMediumFlowProblem<TypeTag>
 {
-    using ParentType = PorousMediumFlowProblem<TypeTag>;
+    using ParentType = Experimental::PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

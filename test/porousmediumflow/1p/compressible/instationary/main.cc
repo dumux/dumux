@@ -129,10 +129,12 @@ int main(int argc, char** argv)
     // TODO: The operators or local operator could be a property, just as is LocalResidual currently
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
-    using ElemVariables = typename GridVariables::LocalView;
 
-    using ImmiscibleOperators = FVImmiscibleOperators<ModelTraits, FluxVariables, ElemVariables>;
-    using LocalOperator = FVLocalOperator<ElemVariables, ImmiscibleOperators>;
+    using ElemVariables = typename GridVariables::LocalView;
+    using Context = Experimental::LocalContext<ElemVariables>;
+
+    using ImmiscibleOperators = FVImmiscibleOperators<ModelTraits, FluxVariables, Context>;
+    using LocalOperator = FVLocalOperator<Context, ImmiscibleOperators>;
 
     using Assembler = Assembler<LocalOperator, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(gridGeometry, *timeMethod);
