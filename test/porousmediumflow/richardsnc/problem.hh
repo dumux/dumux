@@ -27,59 +27,13 @@
 #ifndef DUMUX_RICHARDS_NC_WELL_TRACER_PROBLEM_HH
 #define DUMUX_RICHARDS_NC_WELL_TRACER_PROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
-
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
 
-#include <dumux/discretization/cctpfa.hh>
-#include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/richardsnc/model.hh>
-
-#include "spatialparams.hh"
 
 namespace Dumux {
-
-/*!
- * \ingroup RichardsNCTests
- * \brief A water infiltration problem with a low-permeability lens
- *        embedded into a high-permeability domain which uses the
- *        Richards box model.
- */
-template <class TypeTag>
-class RichardsWellTracerProblem;
-
-
-// Specify the properties for the lens problem
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct RichardsWellTracer { using InheritsFrom = std::tuple<RichardsNC>; };
-struct RichardsWellTracerBox { using InheritsFrom = std::tuple<RichardsWellTracer, BoxModel>; };
-struct RichardsWellTracerCC { using InheritsFrom = std::tuple<RichardsWellTracer, CCTpfaModel>; };
-} // end namespace TTag
-
-// Use 2d YaspGrid
-template<class TypeTag>
-struct Grid<TypeTag, TTag::RichardsWellTracer> { using type = Dune::YaspGrid<2>; };
-
-// Set the physical problem to be solved
-template<class TypeTag>
-struct Problem<TypeTag, TTag::RichardsWellTracer> { using type = RichardsWellTracerProblem<TypeTag>; };
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::RichardsWellTracer>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = RichardsWellTracerSpatialParams<GridGeometry, Scalar>;
-};
-
-// Set the physical problem to be solved
-template<class TypeTag>
-struct PointSource<TypeTag, TTag::RichardsWellTracer> { using type = SolDependentPointSource<TypeTag>; };
-} // end namespace Properties
 
 /*!
  * \ingroup RichardsNCTests

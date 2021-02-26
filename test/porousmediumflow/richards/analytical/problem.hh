@@ -32,61 +32,14 @@
 #include <cmath>
 #include <dune/common/math.hh>
 #include <dune/geometry/quadraturerules.hh>
-#include <dune/grid/yaspgrid.hh>
 
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
 
-#include <dumux/discretization/cctpfa.hh>
-#include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include <dumux/porousmediumflow/richards/model.hh>
-#include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
-
-#include "spatialparams.hh"
-
 namespace Dumux {
-
-/*!
- * \ingroup RichardsTests
- * \brief A one-dimensional infiltration problem with a smooth, given solution.
- *
- * The source term is calculated analytically. Thus, this example can be used
- * to calculate the L2 error and to show convergence for grid and time-step
- * refinement.
- */
-template <class TypeTag>
-class RichardsAnalyticalProblem;
-
-//////////
-// Specify the properties for the analytical problem
-//////////
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct RichardsAnalytical { using InheritsFrom = std::tuple<Richards>; };
-struct RichardsAnalyticalBox { using InheritsFrom = std::tuple<RichardsAnalytical, BoxModel>; };
-struct RichardsAnalyticalCC { using InheritsFrom = std::tuple<RichardsAnalytical, CCTpfaModel>; };
-} // end namespace TTag
-
-// Use 2d YaspGrid
-template<class TypeTag>
-struct Grid<TypeTag, TTag::RichardsAnalytical> { using type = Dune::YaspGrid<2>; };
-
-// Set the physical problem to be solved
-template<class TypeTag>
-struct Problem<TypeTag, TTag::RichardsAnalytical> { using type = RichardsAnalyticalProblem<TypeTag>; };
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::RichardsAnalytical>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = RichardsAnalyticalSpatialParams<GridGeometry, Scalar>;
-};
-} // end namespace Properties
 
 /*!
  * \ingroup RichardsModel

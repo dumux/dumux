@@ -52,7 +52,7 @@
 #include <dumux/io/grid/gridmanager.hh>
 #include <dumux/io/loadsolution.hh>
 
-#include "problem.hh"
+#include "properties.hh"
 
 #ifndef DIFFMETHOD
 #define DIFFMETHOD DiffMethod::numeric
