@@ -19,73 +19,73 @@
 /*!
  * \file
  * \ingroup OnePTests
- * \brief The properties for the convergence test with analytic solution
+ * \brief The properties for the incompressible test
  */
-#ifndef DUMUX_CONVERGENCE_TEST_ONEP_PROPERTIES_HH
-#define DUMUX_CONVERGENCE_TEST_ONEP_PROPERTIES_HH
 
-#include <dune/grid/yaspgrid.hh>
-#if HAVE_UG
-#include <dune/grid/uggrid.hh>
+#ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_PROPERTIES_HH
+#define DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_PROPERTIES_HH
+
+#if HAVE_DUNE_SPGRID
+#include <dune/grid/spgrid.hh>
 #endif
 
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/ccmpfa.hh>
 #include <dumux/discretization/box.hh>
 
-#include <dumux/material/components/constant.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/porousmediumflow/1p/model.hh>
+#include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
 
-#include "spatialparams.hh"
+#include <dumux/material/components/simpleh2o.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
+
 #include "problem.hh"
+#include "spatialparams.hh"
 
-#ifndef GRIDTYPE
-#define GRIDTYPE Dune::YaspGrid<2>
+#ifndef FVGEOMCACHING
+#define FVGEOMCACHING 0
 #endif
 
 namespace Dumux::Properties {
-
-// Create new type tags
 namespace TTag {
-struct OnePConvergence { using InheritsFrom = std::tuple<OneP>; };
-struct OnePConvergenceTpfa { using InheritsFrom = std::tuple<OnePConvergence, CCTpfaModel>; };
-struct OnePConvergenceMpfa { using InheritsFrom = std::tuple<OnePConvergence, CCMpfaModel>; };
-struct OnePConvergenceBox { using InheritsFrom = std::tuple<OnePConvergence, BoxModel>; };
+struct OnePIncompressible { using InheritsFrom = std::tuple<OneP>; };
+struct OnePIncompressibleTpfa { using InheritsFrom = std::tuple<OnePIncompressible, CCTpfaModel>; };
+struct OnePIncompressibleMpfa { using InheritsFrom = std::tuple<OnePIncompressible, CCMpfaModel>; };
+struct OnePIncompressibleBox { using InheritsFrom = std::tuple<OnePIncompressible, BoxModel>; };
 } // end namespace TTag
 
-// Set the problem property
+// Set the grid type
+#if HAVE_DUNE_SPGRID
 template<class TypeTag>
-struct Problem<TypeTag, TTag::OnePConvergence> { using type = Dumux::ConvergenceProblem<TypeTag>; };
+struct Grid<TypeTag, TTag::OnePIncompressible> { using type = Dune::SPGrid<double, 2>; };
+#endif
+
+// Set the problem type
+template<class TypeTag>
+struct Problem<TypeTag, TTag::OnePIncompressible> { using type = OnePTestProblem<TypeTag>; };
+
+// set the spatial params
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::OnePIncompressible> { using type = OnePTestSpatialParams<TypeTag>; };
+
+// use the incompressible local residual (provides analytic jacobian)
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::OnePIncompressible> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
 
 // the fluid system
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::OnePConvergence>
+struct FluidSystem<TypeTag, TTag::OnePIncompressible>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::Constant<1, Scalar> > ;
-};
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePConvergence> { using type = GRIDTYPE; };
-
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::OnePConvergence>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = ConvergenceTestSpatialParams<GridGeometry, Scalar>;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 };
 
 // Enable caching
 template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::OnePConvergence> { static constexpr bool value = true; };
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::OnePIncompressible> { static constexpr bool value = false; };
 template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::OnePConvergence> { static constexpr bool value = true; };
+struct EnableGridFluxVariablesCache<TypeTag, TTag::OnePIncompressible> { static constexpr bool value = false; };
 template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::OnePConvergence> { static constexpr bool value = true; };
-
+struct EnableGridGeometryCache<TypeTag, TTag::OnePIncompressible> { static constexpr bool value = FVGEOMCACHING; };
 } // end namespace Dumux::Properties
-
 #endif

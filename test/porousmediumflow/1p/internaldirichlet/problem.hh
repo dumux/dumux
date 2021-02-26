@@ -25,29 +25,11 @@
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_INTERNAL_DIRICHLET_HH
 #define DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_INTERNAL_DIRICHLET_HH
 
-#include <bitset>
 #include <dumux/common/boundarytypes.hh>
+
 #include <test/porousmediumflow/1p/incompressible/problem.hh>
 
 namespace Dumux {
-// forward declarations
-template<class TypeTag> class OnePTestProblemInternalDirichlet;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct OnePInternalDirichlet {};
-struct OnePInternalDirichletTpfa { using InheritsFrom = std::tuple<OnePInternalDirichlet, OnePIncompressibleTpfa>; };
-struct OnePInternalDirichletBox { using InheritsFrom = std::tuple<OnePInternalDirichlet, OnePIncompressibleBox>; };
-} // end namespace TTag
-
-// Set the problem type
-template<class TypeTag>
-struct Problem<TypeTag, TTag::OnePInternalDirichlet>
-{ using type = OnePTestProblemInternalDirichlet<TypeTag>; };
-
-} // end namespace Properties
-
 /*!
  * \ingroup OnePTests
  * \brief A test for internal Dirichlet constraints

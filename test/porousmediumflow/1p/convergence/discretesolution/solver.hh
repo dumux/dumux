@@ -42,7 +42,7 @@
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
 
-#include "problem.hh"
+#include "properties.hh"
 
 // return type of solveRefinementLevel()
 // stores the grid geometry and the produced solution

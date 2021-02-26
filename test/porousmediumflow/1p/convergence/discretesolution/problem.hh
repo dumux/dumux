@@ -25,74 +25,22 @@
 #define DUMUX_INCOMPRESSIBLE_ONEP_CONVERGENCETEST_PROBLEM_HH
 
 #include <cmath>
-#include <dune/grid/yaspgrid.hh>
+
 #include <dune/geometry/quadraturerules.hh>
 
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
+
 #include <dumux/common/boundarytypes.hh>
-
-#include <dumux/discretization/cctpfa.hh>
-#include <dumux/discretization/ccmpfa.hh>
-#include <dumux/discretization/box.hh>
-
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/1p/model.hh>
-#include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
-
-#include <dumux/material/components/constant.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
-
-#include "spatialparams.hh"
 
 namespace Dumux {
-// forward declarations
-template<class TypeTag> class OnePTestProblem;
-
-namespace Properties {
-
-// create the type tag nodes
-namespace TTag {
-struct OnePIncompressible { using InheritsFrom = std::tuple<OneP>; };
-struct OnePIncompressibleTpfa { using InheritsFrom = std::tuple<OnePIncompressible, CCTpfaModel>; };
-struct OnePIncompressibleMpfa { using InheritsFrom = std::tuple<OnePIncompressible, CCMpfaModel>; };
-struct OnePIncompressibleBox { using InheritsFrom = std::tuple<OnePIncompressible, BoxModel>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePIncompressible> { using type = Dune::YaspGrid<2>; };
-
-// Set the problem type
-template<class TypeTag>
-struct Problem<TypeTag, TTag::OnePIncompressible> { using type = OnePTestProblem<TypeTag>; };
-
-// set the spatial params
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::OnePIncompressible>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = OnePTestSpatialParams<GridGeometry, Scalar>;
-};
-
-// use the incompressible local residual (provides analytic jacobian)
-template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::OnePIncompressible> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
-
-// the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::OnePIncompressible>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<0, Scalar> >;
-};
-
-} // end namespace Properties
 
 /*!
  * \ingroup OnePTests
  * \brief problem setup for the convergence test
  */
-template<class TypeTag>
+template <class TypeTag>
 class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
@@ -123,7 +71,7 @@ public:
      *        used for which equation on a given boundary control volume.
      * \param globalPos The position of the center of the finite volume
      */
-    BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
         values.setAllDirichlet();
@@ -134,8 +82,10 @@ public:
      * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      * \param globalPos The center of the finite volume for which it is to be set.
      */
-    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
-    { return exact(globalPos); }
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+    {
+        return exact(globalPos);
+    }
 
     /*!
      * \brief Evaluates the source term within a sub-control volume.
@@ -144,18 +94,18 @@ public:
      * \param elemVolVars The element volume variables
      * \param scv The sub-control volume for which the source term is evaluated
      */
-    template<class ElementVolumeVariables>
-    NumEqVector source(const Element& element,
-                       const FVElementGeometry& fvGeometry,
-                       const ElementVolumeVariables& elemVolVars,
-                       const SubControlVolume& scv) const
+    template <class ElementVolumeVariables>
+    NumEqVector source(const Element &element,
+                        const FVElementGeometry &fvGeometry,
+                        const ElementVolumeVariables &elemVolVars,
+                        const SubControlVolume &scv) const
     {
         static const auto order = getParam<Scalar>("Problem.SourceIntegrationOrder");
         static const auto periodLength = getParam<Scalar>("Problem.ExactSolPeriodLength");
-        const auto& k = this->spatialParams().permeabilityAtPos(scv.center());
+        const auto &k = this->spatialParams().permeabilityAtPos(scv.center());
 
-        using std::sin;
         using std::cos;
+        using std::sin;
 
         const auto eg = element.geometry();
         const auto rule = Dune::QuadratureRules<Scalar, GridView::dimension>::rule(eg.type(), order);
@@ -167,14 +117,14 @@ public:
             const auto x = p[0];
             const auto y = p[1];
 
-            const auto preFactor = -1.0*periodLength*periodLength*M_PI*M_PI;
-            const auto preFactorArg = periodLength*M_PI;
-            const auto sineTerm = sin(preFactorArg*x);
-            const auto cosTerm = cos(preFactorArg*y);
-            const auto secondDeriv = preFactor*sineTerm*cosTerm;
+            const auto preFactor = -1.0 * periodLength * periodLength * M_PI * M_PI;
+            const auto preFactorArg = periodLength * M_PI;
+            const auto sineTerm = sin(preFactorArg * x);
+            const auto cosTerm = cos(preFactorArg * y);
+            const auto secondDeriv = preFactor * sineTerm * cosTerm;
 
             // derivative in x and y are identical
-            source -= 2.0*k*secondDeriv*qp.weight()*eg.integrationElement(qp.position());
+            source -= 2.0 * k * secondDeriv * qp.weight() * eg.integrationElement(qp.position());
         }
 
         source /= eg.volume();
@@ -185,7 +135,9 @@ public:
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ for an isothermal problem.
      */
     Scalar temperature() const
-    { return 283.15; }
+    {
+        return 283.15;
+    }
 
     /*!
      * \brief Returns the exact solution at a position.
@@ -196,12 +148,12 @@ public:
         const auto x = globalPos[0];
         const auto y = globalPos[1];
 
-        using std::sin;
         using std::cos;
+        using std::sin;
 
         static const auto periodLength = getParam<Scalar>("Problem.ExactSolPeriodLength");
-        const auto preFactorArg = periodLength*M_PI;
-        const auto u = sin(preFactorArg*x)*cos(preFactorArg*y);
+        const auto preFactorArg = periodLength * M_PI;
+        const auto u = sin(preFactorArg * x) * cos(preFactorArg * y);
 
         return PrimaryVariables(u);
     }
