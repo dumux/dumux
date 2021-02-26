@@ -136,7 +136,7 @@ public:
                                     Scalar pressure)
     {
         static const Scalar tRef = getParam<Scalar>("SimpleH2O.ReferenceTemperature", 293.15);
-        return 1976*(temperature - tRef) + 2.45e6;
+        return gasHeatCapacity(temperature, pressure)*(temperature - tRef);
     }
 
     /*!
