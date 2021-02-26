@@ -5,7 +5,7 @@
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
- *   the Free Software Foundation, either version 2 of the License, or       *
+ *   the Free Software Foundation, either version 3 of the License, or       *
  *   (at your option) any later version.                                     *
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
@@ -23,9 +23,7 @@
  */
 #include <config.h>
 
-#include <ctime>
 #include <iostream>
-#include <tuple>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
@@ -42,42 +40,9 @@
 #include <dumux/assembly/diffmethod.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
 
-#include <dune/grid/yaspgrid.hh>
-#include <dumux/discretization/cctpfa.hh>
-#include <dumux/porousmediumflow/solidenergy/model.hh>
-
-#include "problem.hh"
-#include "spatialparams.hh"
-
-namespace Dumux {
-namespace Properties {
-
-// Create new type tags
-namespace TTag {
-struct SolidEnergyTest { using InheritsFrom = std::tuple<SolidEnergy, CCTpfaModel>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::SolidEnergyTest> { using type = Dune::YaspGrid<2>; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::SolidEnergyTest> { using type = SolidEnergyProblem<TypeTag>; };
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::SolidEnergyTest>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = SolidEnergySpatialParams<GridGeometry, Scalar>;
-};
-
-} // end namespace Properties
-} // end namespace Dumux
+#include "properties.hh"
 
 int main(int argc, char** argv)
 {
