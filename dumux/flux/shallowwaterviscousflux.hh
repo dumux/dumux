@@ -24,6 +24,9 @@
 #ifndef DUMUX_FLUX_SHALLOW_WATER_VISCOUS_FLUX_HH
 #define DUMUX_FLUX_SHALLOW_WATER_VISCOUS_FLUX_HH
 
+#include <cmath>
+#include <algorithm>
+#include <utility>
 #include <dumux/flux/fluxvariablescaching.hh>
 
 namespace Dumux {
@@ -71,82 +74,54 @@ public:
     {
         using Scalar = typename PrimaryVariables::value_type;
 
-        using std::sqrt;
-        using std::max;
-
         NumEqVector localFlux(0.0);
 
         // Get the inside and outside volume variables
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-        const auto& unitNormal = scvf.unitOuterNormal();
 
-        // Inside and outside subcontrolvolumes
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
 
-        // Distance vector between the two cell centers
-        const auto& cellCenterToCellCenter = outsideScv.center() - insideScv.center();
+        const auto [gradU, gradV] = [&]()
+        {
+            // The left (inside) and right (outside) states
+            const auto velocityXLeft   = insideVolVars.velocity(0);
+            const auto velocityYLeft   = insideVolVars.velocity(1);
+            const auto velocityXRight  = outsideVolVars.velocity(0);
+            const auto velocityYRight  = outsideVolVars.velocity(1);
 
-        // Check whether the mixing-length turbulence model is used
-        static const auto useMixingLengthTurbulenceModel = getParam<bool>("ShallowWater.UseMixingLengthTurbulenceModel", false);
-
-        // Compute the average shear velocity on the face
-        const Scalar ustar = [&](){
-            // If the mixing-length turbulence model is used:
-            // compute ustar based on the bottom friction
-            if (useMixingLengthTurbulenceModel)
-            {
-                // Get the bottom shear stress in the two adjacent cells
-                // Note that element is not needed in spatialParams().frictionLaw (should be removed). For now we simply pass the same element twice
-                const auto& bottomShearStressInside = problem.spatialParams().frictionLaw(element, insideScv).shearStress(insideVolVars);
-                const auto& bottomShearStressOutside = problem.spatialParams().frictionLaw(element, outsideScv).shearStress(outsideVolVars);
-                const auto bottomShearStressInsideMag = bottomShearStressInside.two_norm();
-                const auto bottomShearStressOutsideMag = bottomShearStressOutside.two_norm();
-
-                // Use a harmonic average of the viscosity and the depth at the interface.
-                const auto averageBottomShearStress = 2.0*(bottomShearStressInsideMag*bottomShearStressOutsideMag)/max(1.0e-8,bottomShearStressInsideMag + bottomShearStressOutsideMag);
-
-                // Shear velocity possibly needed in mixing-length turbulence model in the computation of the diffusion flux
-                return sqrt(averageBottomShearStress);
-            }
-            else
-                return 0.0;
+            // Compute the velocity gradients normal to the face
+            // Factor that takes the direction of the unit vector into account
+            const auto& cellCenterToCellCenter = outsideScv.center() - insideScv.center();
+            const auto distance = cellCenterToCellCenter.two_norm();
+            const auto& unitNormal = scvf.unitOuterNormal();
+            const auto direction = (unitNormal*cellCenterToCellCenter)/distance;
+            return std::make_pair(
+                (velocityXRight-velocityXLeft)*direction/distance,
+                (velocityYRight-velocityYLeft)*direction/distance
+            );
         }();
 
-        // The left (inside) and right (outside) states
-        const auto waterDepthLeft  = insideVolVars.waterDepth();
-        const auto velocityXLeft   = insideVolVars.velocity(0);
-        const auto velocityYLeft   = insideVolVars.velocity(1);
-        const auto waterDepthRight = outsideVolVars.waterDepth();
-        const auto velocityXRight  = outsideVolVars.velocity(0);
-        const auto velocityYRight  = outsideVolVars.velocity(1);
-
-        // Distance between the two adjacent cell centres
-        const auto distance = cellCenterToCellCenter.two_norm();
-
-        // Factor that takes the direction of the unit vector into account
-        const auto direction = (unitNormal*cellCenterToCellCenter)/distance;
-
-        // Compute the velocity gradients normal to the face
-        const auto gradU = (velocityXRight-velocityXLeft)*direction/distance;
-        const auto gradV = (velocityYRight-velocityYLeft)*direction/distance;
-
         // Use a harmonic average of the depth at the interface.
+        const auto waterDepthLeft  = insideVolVars.waterDepth();
+        const auto waterDepthRight = outsideVolVars.waterDepth();
         const auto averageDepth = 2.0*(waterDepthLeft*waterDepthRight)/(waterDepthLeft + waterDepthRight);
 
-        // Now get the (constant) background turbulent viscosity
-        static const auto turbBGViscosity = getParam<Scalar>("ShallowWater.TurbulentViscosity", 1.0e-6);
-
-        Scalar turbViscosity = 0.0;
-
-        // constant eddy viscosity equal to the prescribed background eddy viscosity
-        if (!useMixingLengthTurbulenceModel)
-            turbViscosity = turbBGViscosity;
-
-        // turbulence model based on mixing length
-        else
+        // compute the turbulent viscosity contribution
+        const Scalar turbViscosity = [&,gradU=gradU,gradV=gradV]()
         {
+            // The (constant) background turbulent viscosity
+            static const auto turbBGViscosity = getParam<Scalar>("ShallowWater.TurbulentViscosity", 1.0e-6);
+
+            // Check whether the mixing-length turbulence model is used
+            static const auto useMixingLengthTurbulenceModel = getParam<bool>("ShallowWater.UseMixingLengthTurbulenceModel", false);
+
+            // constant eddy viscosity equal to the prescribed background eddy viscosity
+            if (!useMixingLengthTurbulenceModel)
+                return turbBGViscosity;
+
+            // turbulence model based on mixing length
             // Compute the turbulent viscosity using a combined horizonal/vertical mixing length approach
             // Turbulence coefficients: vertical (Elder like) and horizontal (Smagorinsky like)
             static const auto turbConstV = getParam<Scalar>("ShallowWater.VerticalCoefficientOfMixingLengthModel", 1.0);
@@ -158,7 +133,27 @@ public:
             * \nu_t^v = c^v \frac{\kappa}{6} u_{*} h
             * \f]
             */
-            static const Scalar kappa = 0.41;
+            constexpr Scalar kappa = 0.41;
+            // Compute the average shear velocity on the face
+            const Scalar ustar = [&]()
+            {
+                // Get the bottom shear stress in the two adjacent cells
+                // Note that element is not needed in spatialParams().frictionLaw (should be removed). For now we simply pass the same element twice
+                const auto& bottomShearStressInside = problem.spatialParams().frictionLaw(element, insideScv).shearStress(insideVolVars);
+                const auto& bottomShearStressOutside = problem.spatialParams().frictionLaw(element, outsideScv).shearStress(outsideVolVars);
+                const auto bottomShearStressInsideMag = bottomShearStressInside.two_norm();
+                const auto bottomShearStressOutsideMag = bottomShearStressOutside.two_norm();
+
+                // Use a harmonic average of the viscosity and the depth at the interface.
+                using std::max;
+                const auto averageBottomShearStress = 2.0*(bottomShearStressInsideMag*bottomShearStressOutsideMag)
+                        / max(1.0e-8,bottomShearStressInsideMag + bottomShearStressOutsideMag);
+
+                // Shear velocity possibly needed in mixing-length turbulence model in the computation of the diffusion flux
+                using std::sqrt;
+                return sqrt(averageBottomShearStress);
+            }();
+
             const auto turbViscosityV = turbConstV * (kappa/6.0) * ustar * averageDepth;
 
             /** The horizontal (Smagorinsky-like) contribution to the turbulent viscosity scales with the water depth (squared)
@@ -185,12 +180,13 @@ public:
             *
             It should be noted that this simplified approach is formally inconsistent and will result in a turbulent viscosity that is dependent on the grid (orientation).
             */
+            using std::sqrt;
             const auto mixingLengthSquared = turbConstH * turbConstH * averageDepth * averageDepth;
-            const auto turbViscosityH      = mixingLengthSquared * sqrt(2.0*gradU*gradU + 2.0*gradV*gradV);
+            const auto turbViscosityH = mixingLengthSquared * sqrt(2.0*gradU*gradU + 2.0*gradV*gradV);
 
             // Total turbulent viscosity
-            turbViscosity = turbBGViscosity + sqrt(turbViscosityV*turbViscosityV + turbViscosityH*turbViscosityH);
-        }
+            return turbBGViscosity + sqrt(turbViscosityV*turbViscosityV + turbViscosityH*turbViscosityH);
+        }();
 
         // Compute the viscous momentum fluxes
         const auto uViscousFlux = turbViscosity * averageDepth * gradU;
@@ -202,9 +198,9 @@ public:
 
         const auto limitingDepth = (waterDepthLeft + waterDepthRight) * 0.5;
         const auto mobility = ShallowWater::fluxLimiterLET(limitingDepth,
-                                                             limitingDepth,
-                                                             upperWaterDepthFluxLimiting,
-                                                             lowerWaterDepthFluxLimiting);
+                                                           limitingDepth,
+                                                           upperWaterDepthFluxLimiting,
+                                                           lowerWaterDepthFluxLimiting);
 
         localFlux[0] = 0.0;
         localFlux[1] = -uViscousFlux * mobility * scvf.area();
