@@ -41,7 +41,7 @@
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/container.hh>
 
-#include "problem.hh"
+#include "properties.hh"
 
 int main(int argc, char** argv)
 {

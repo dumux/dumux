@@ -26,75 +26,14 @@
 
 #ifndef DUMUX_1P2CNI_CONVECTION_TEST_PROBLEM_HH
 #define DUMUX_1P2CNI_CONVECTION_TEST_PROBLEM_HH
-
-#if HAVE_UG
-#include <dune/grid/uggrid.hh>
-#endif
-#include <dune/grid/yaspgrid.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 
 #include <dumux/common/boundarytypes.hh>
-
-#include <dumux/discretization/elementsolution.hh>
-#include <dumux/discretization/cctpfa.hh>
-#include <dumux/discretization/ccmpfa.hh>
-#include <dumux/discretization/box.hh>
-#include <dumux/porousmediumflow/1pnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include <dumux/material/fluidsystems/1padapter.hh>
-#include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/components/h2o.hh>
-#include "../../spatialparams.hh"
-
 namespace Dumux {
-
-template <class TypeTag>
-class OnePTwoCNIConvectionProblem;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct OnePTwoCNIConvection { using InheritsFrom = std::tuple<OnePNCNI>; };
-struct OnePTwoCNIConvectionCCTpfa { using InheritsFrom = std::tuple<OnePTwoCNIConvection, CCTpfaModel>; };
-struct OnePTwoCNIConvectionCCMpfa { using InheritsFrom = std::tuple<OnePTwoCNIConvection, CCMpfaModel>; };
-struct OnePTwoCNIConvectionBox { using InheritsFrom = std::tuple<OnePTwoCNIConvection, BoxModel>; };
-} // end namespace TTag
-
-// Set the grid type
-#if HAVE_UG
-template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePTwoCNIConvection> { using type = Dune::UGGrid<2>; };
-#else
-template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePTwoCNIConvection> { using type = Dune::YaspGrid<2>; };
-#endif
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::OnePTwoCNIConvection> { using type = OnePTwoCNIConvectionProblem<TypeTag>; };
-
-// Set fluid configuration
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::OnePTwoCNIConvection>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using H2ON2 = FluidSystems::H2ON2<Scalar, FluidSystems::H2ON2DefaultPolicy</*simplified=*/true>>;
-    using type = FluidSystems::OnePAdapter<H2ON2, H2ON2::liquidPhaseIdx>;
-};
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::OnePTwoCNIConvection>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = OnePNCTestSpatialParams<GridGeometry, Scalar>;
-};
-
-// Define whether mole(true) or mass (false) fractions are used
-template<class TypeTag>
-struct UseMoles<TypeTag, TTag::OnePTwoCNIConvection> { static constexpr bool value = true; };
-} // end namespace Properties
 
 /*!
  * \ingroup OnePNCTests
