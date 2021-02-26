@@ -157,9 +157,7 @@ public:
      * \brief Specific internal energy of steam \f$\mathrm{[J/kg]}\f$.
      *
      *        Definition of enthalpy: \f$h= u + pv = u + p / \rho\f$.
-     *
      *        Rearranging for internal energy yields: \f$u = h - pv\f$.
-     *
      *        Exploiting the Ideal Gas assumption (\f$pv = R_{\textnormal{specific}} T\f$)gives: \f$u = h - R / M T \f$.
      *
      *        The universal gas constant can only be used in the case of molar formulations.
@@ -169,10 +167,10 @@ public:
     static const Scalar gasInternalEnergy(Scalar temperature,
                                           Scalar pressure)
     {
-        return
-            gasEnthalpy(temperature, pressure) -
-            1/molarMass()* // conversion from [J/(mol K)] to [J/(kg K)]
-            IdealGas::R*temperature; // = pressure *spec. volume for an ideal gas
+        // 1/molarMass: conversion from [J/(mol K)] to [J/(kg K)]
+        // R*T/molarMass: pressure *spec. volume for an ideal gas
+        return gasEnthalpy(temperature, pressure)
+                - 1/molarMass()*IdealGas::R*temperature;
     }
 
     /*!
@@ -183,9 +181,10 @@ public:
      */
     static const Scalar liquidInternalEnergy(Scalar temperature,
                                              Scalar pressure)
-    { return
-            liquidEnthalpy(temperature, pressure) -
-            pressure/liquidDensity(temperature, pressure); }
+    {
+        return liquidEnthalpy(temperature, pressure)
+                - pressure/liquidDensity(temperature, pressure);
+    }
 
     /*!
      * \brief Returns true if the gas phase is assumed to be compressible
