@@ -21,7 +21,6 @@
  * \ingroup GeomechanicsTests
  * \brief Test for the linear elastic model.
  */
-
 #include <config.h>
 
 #include <ctime>
@@ -32,6 +31,7 @@
 #include <dune/grid/io/file/vtk.hh>
 
 #include "problem.hh"
+#include "properties.hh"
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
