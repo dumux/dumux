@@ -40,9 +40,9 @@ def check_cpp_version():
         raise Exception("g++ greater than or equal to {} is required for dumux releases >=3.2!".format(requiredversion))
 
 
-def run_command(command):
+def run_command(command, workdir="."):
     with open("../installdumux.log", "a") as log:
-        popen = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        popen = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, cwd=workdir)
         for line in popen.stdout:
             log.write(line)
             print(line, end='')
@@ -66,6 +66,11 @@ def git_clone(url, branch=None):
     if branch:
         clone += ["-b", branch]
     run_command(command=[*clone, url])
+
+
+def git_setbranch(folder, branch):
+    checkout = ["git", "checkout", branch]
+    run_command(command=checkout, workdir=folder)
 
 
 # clear the log file
@@ -109,12 +114,14 @@ for module in ['common', 'geometry', 'grid', 'localfunctions', 'istl']:
         git_clone('https://gitlab.dune-project.org/core/dune-{}.git'.format(module), dune_branch)
     else:
         print("-- Skip cloning dune-{} because the folder already exists.".format(module))
+        git_setbranch("dune-{}".format(module), dune_branch)
 
 # dumux
 if not os.path.exists("dumux"):
     git_clone('https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git', dumux_branch)
 else:
     print("-- Skip cloning dumux because the folder already exists.")
+    git_setbranch("dumux", dumux_branch)
 
 
 show_message("(2/3) Step completed. All repositories have been cloned into a containing folder.")
