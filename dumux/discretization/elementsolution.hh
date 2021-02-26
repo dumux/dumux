@@ -24,14 +24,52 @@
 #ifndef DUMUX_DISCRETIZATION_ELEMENT_SOLUTION_HH
 #define DUMUX_DISCRETIZATION_ELEMENT_SOLUTION_HH
 
+#include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 #include <dumux/discretization/box/elementsolution.hh>
 #include <dumux/discretization/staggered/elementsolution.hh>
 
 namespace Dumux {
 
+namespace Detail {
+    template<class GGLV, class PV, DiscretizationMethod dm>
+    struct ElementSolutionHelper;
+} // end namespace Detail
+
 struct EmptyElementSolution {};
 
+/*!
+ * \ingroup Discretization
+ * \brief Convenience alias for discretization-specific element solution.
+ * \tparam GGLocalView Local view on the grid geometry
+ * \tparam PrimaryVariables The primary variables type
+ */
+template<class GGLocalView, class PrimaryVariables>
+using ElementSolution
+    = typename Detail::ElementSolutionHelper<GGLocalView,
+                                             PrimaryVariables,
+                                             GGLocalView::GridGeometry::discMethod>::Type;
+
+namespace Detail {
+
+    // TODO: We could also require a generic template interface for elemsols
+    template<class GGLV, class PV>
+    struct ElementSolutionHelper<GGLV, PV, DiscretizationMethod::box>
+    { using Type = BoxElementSolution<GGLV, PV>; };
+
+    template<class GGLV, class PV>
+    struct ElementSolutionHelper<GGLV, PV, DiscretizationMethod::cctpfa>
+    { using Type = CCElementSolution<GGLV, PV>; };
+
+    template<class GGLV, class PV>
+    struct ElementSolutionHelper<GGLV, PV, DiscretizationMethod::ccmpfa>
+    { using Type = CCElementSolution<GGLV, PV>; };
+
+    template<class GGLV, class PV>
+    struct ElementSolutionHelper<GGLV, PV, DiscretizationMethod::staggered>
+    { using Type = StaggeredElementSolution<PV>; };
+
+} // end namespace Detail
 } // end namespace Dumux
 
 #endif

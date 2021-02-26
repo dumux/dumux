@@ -26,9 +26,11 @@
 #define DUMUX_LOCAL_CONTEXT_HH
 
 #include <optional>
-#include <dune/common/std/type_traits.hh>
 
+#include <dune/common/std/type_traits.hh>
 #include <dune/common/exceptions.hh>
+
+#include <dumux/discretization/elementsolution.hh>
 #include <dumux/timestepping/timelevel.hh>
 
 namespace Dumux {
@@ -40,10 +42,17 @@ class EmptyCouplingContext {};
  * \ingroup Discretization
  * \brief TODO: Doc me
  */
-template<class ES, class EV, class CC = EmptyCouplingContext>
+template<class EV, class CC = EmptyCouplingContext>
 class LocalContext
 {
-    using Scalar = typename ES::PrimaryVariables::value_type;
+    using GridVariables = typename EV::GridVariables;
+    using GridGeometry  = typename GridVariables::GridGeometry;
+    using SolutionVector = typename GridVariables::SolutionVector;
+    using Scalar = typename GridVariables::Scalar;
+
+    using PrimaryVariables = typename SolutionVector::value_type;
+    using GGLocalView  = typename GridGeometry::LocalView;
+    using ES = Dumux::ElementSolution<GGLocalView, PrimaryVariables>;
 
 public:
 
