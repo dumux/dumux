@@ -32,6 +32,7 @@
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>
+#include <dumux/discretization/localcontext.hh>
 
 namespace Dumux {
 
@@ -40,13 +41,14 @@ namespace Dumux {
  * \brief The element-wise local operator for finite volume schemes.
  *        This allows for element-wise evaluation of individual terms
  *        of the equations to be solved.
- * \tparam ElementVariables local view on the grid variables
+ * \tparam C element-local context
  * \tparam Op The model-specific operators
  */
-template<class ElementVariables, class Op>
+template<class C, class Op>
 class FVLocalOperator
 {
     // The variables required for the evaluation of the equation
+    using ElementVariables = typename C::ElementVariables;
     using GridVars = typename ElementVariables::GridVariables;
     using PrimaryVariables = typename GridVars::PrimaryVariables;
 
@@ -68,6 +70,9 @@ public:
     //! export operators
     using Operators = Op;
 
+    //! export context type
+    using LocalContext = C;
+
     //! export the grid variables type this operator requires a local view of
     using GridVariables = GridVars;
 
@@ -84,15 +89,15 @@ public:
 
     /*!
      * \brief The constructor
-     * \note The grid geometry/grid variables local views are expected to
+     * \note The grid geometry local view & context are expected to
      *       be bound to the same (the given) element
      */
     explicit FVLocalOperator(const Element& element,
                              const FVElementGeometry& fvGeometry,
-                             const ElementVariables& elemVars)
+                             const LocalContext& context)
     : element_(element)
     , fvGeometry_(fvGeometry)
-    , elemVariables_(elemVars)
+    , context_(context)
     {}
 
     /*!
@@ -107,13 +112,12 @@ public:
      */
     ElementResidualVector evalFluxesAndSources() const
     {
-        const auto& problem = elemVariables_.gridVariables().gridVolVars().problem();
-        const auto& evv = elemVariables_.elemVolVars();
+        const auto& problem = context_.elementVariables().gridVariables().gridVolVars().problem();
 
         // source term
         auto result = getEmptyResidual();
         for (const auto& scv : scvs(fvGeometry_))
-            result[scv.localDofIndex()] -= Operators::source(problem, element_, fvGeometry_, evv, scv);
+            result[scv.localDofIndex()] -= Operators::source(problem, element_, fvGeometry_, context_, scv);
 
         // flux term
         for (const auto& scvf : scvfs(fvGeometry_))
@@ -127,8 +131,7 @@ public:
      */
     ElementResidualVector evalStorage() const
     {
-        const auto& problem = elemVariables_.gridVariables().gridVolVars().problem();
-        const auto& evv = elemVariables_.elemVolVars();
+        const auto& problem = context_.elementVariables().gridVariables().gridVolVars().problem();
 
         // TODO: Until now, FVLocalResidual defined storage as the entire
         //       time derivative. Now it means the term above the time derivative.
@@ -138,7 +141,7 @@ public:
         //       be more consistent
         auto result = getEmptyResidual();
         for (const auto& scv : scvs(fvGeometry_))
-            result[scv.localDofIndex()] += operators_.storage(problem, scv, evv[scv]);
+            result[scv.localDofIndex()] += Operators::storage(problem, scv, context_);
 
         return result;
     }
@@ -172,27 +175,27 @@ protected:
         const auto& insideScv = fvGeometry_.scv(scvf.insideScvIdx());
         const auto localDofIdx = insideScv.localDofIndex();
 
-        const auto& problem = elemVariables_.gridVariables().gridVolVars().problem();
-        const auto& evv = elemVariables_.elemVolVars();
-        const auto& efvc = elemVariables_.elemFluxVarsCache();
+        const auto& problem = context_.elementVariables().gridVariables().gridVolVars().problem();
 
         if (!scvf.boundary())
-            r[localDofIdx] += Operators::flux(problem, element_, fvGeometry_, evv, efvc, scvf);
+            r[localDofIdx] += Operators::flux(problem, element_, fvGeometry_, context_, scvf);
         else
         {
-            const auto& bcTypes = problem.boundaryTypes(element_, scvf);
+            const auto& bcTypes = problem.boundaryTypes(element_, scvf, context_);
 
             // Dirichlet boundaries
             if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann())
-                r[localDofIdx] += Operators::flux(problem, element_, fvGeometry_, evv, efvc, scvf);
+                r[localDofIdx] += Operators::flux(problem, element_, fvGeometry_, context_, scvf);
 
             // Neumann and Robin ("solution dependent Neumann") boundary conditions
             else if (bcTypes.hasNeumann() && !bcTypes.hasDirichlet())
             {
-                auto neumannFluxes = problem.neumann(element_, fvGeometry_, evv, efvc, scvf);
+                auto neumannFluxes = problem.neumann(element_, fvGeometry_, context_, scvf);
 
-                // multiply neumann fluxes with the area and the extrusion factor
-                neumannFluxes *= Extrusion::area(scvf)*evv[insideScv].extrusionFactor();
+                // multiply with the face area & extrusion factor
+                const auto& elemVolVars = context_.elementVariables().elemVolVars();
+                neumannFluxes *= Extrusion::area(scvf)*elemVolVars[insideScv].extrusionFactor();
+
                 r[localDofIdx] += neumannFluxes;
             }
 
@@ -206,14 +209,12 @@ protected:
     template<bool b = isBox, std::enable_if_t<b, int> = 0>
     void addFlux_(ElementResidualVector& r, const SubControlVolumeFace& scvf) const
     {
-        const auto& problem = elemVariables_.gridVariables().gridVolVars().problem();
-        const auto& evv = elemVariables_.elemVolVars();
-        const auto& efvc = elemVariables_.elemFluxVarsCache();
+        const auto& problem = context_.elementVariables().gridVariables().gridVolVars().problem();
 
         // inner faces
         if (!scvf.boundary())
         {
-            const auto flux = Operators::flux(problem, element_, fvGeometry_, evv, efvc, scvf);
+            const auto flux = Operators::flux(problem, element_, fvGeometry_, context_, scvf);
             r[fvGeometry_.scv(scvf.insideScvIdx()).localDofIndex()] += flux;
             r[fvGeometry_.scv(scvf.outsideScvIdx()).localDofIndex()] -= flux;
         }
@@ -222,13 +223,15 @@ protected:
         else
         {
             const auto& scv = fvGeometry_.scv(scvf.insideScvIdx());
-            const auto& bcTypes = problem.boundaryTypes(element_, scv);
+            const auto& bcTypes = problem.boundaryTypes(element_, scv, context_);
 
             // Treat Neumann and Robin ("solution dependent Neumann") boundary conditions.
             if (bcTypes.hasNeumann())
             {
-                const auto neumannFluxes = problem.neumann(element_, fvGeometry_, evv, efvc, scvf);
-                const auto area = Extrusion::area(scvf)*evv[scv].extrusionFactor();
+                const auto neumannFluxes = problem.neumann(element_, fvGeometry_, context_, scvf);
+
+                const auto& elemVolVars = context_.elementVariables().elemVolVars();
+                const auto area = Extrusion::area(scvf)*elemVolVars[scv].extrusionFactor();
 
                 // only add fluxes to equations for which Neumann is set
                 for (int eqIdx = 0; eqIdx < NumEqVector::size(); ++eqIdx)
@@ -240,10 +243,9 @@ protected:
 
 private:
 
-    const Element& element_;                 //!< pointer to the element for which the residual is computed
-    const FVElementGeometry& fvGeometry_;    //!< the local view on the finite element grid geometry
-    const ElementVariables& elemVariables_;  //!< the local view on the grid variables
-    Operators operators_; //!< evaluates storage/flux operators of the actual equation
+    const Element& element_;              //!< pointer to the element for which the residual is computed
+    const FVElementGeometry& fvGeometry_; //!< the local view on the finite element grid geometry
+    const LocalContext& context_;         //!< element-local context (primary/secondary variables & further data)
 };
 
 } // end namespace Dumux
