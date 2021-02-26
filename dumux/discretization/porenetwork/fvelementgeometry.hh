@@ -295,7 +295,7 @@ private:
                                          std::move(unitOuterNormal),
                                          gridGeometry().throatCrossSectionalArea(gridGeometry().elementMapper().index(element)),
                                          scvfLocalIdx++,
-                                         std::vector<LocalIndexType>({0, 1}));
+                                         std::array<LocalIndexType, 2>({0, 1}));
     }
 
     //! The bound element
