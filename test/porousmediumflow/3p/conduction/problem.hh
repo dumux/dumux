@@ -27,64 +27,19 @@
 #define DUMUX_3PNI_CONDUCTION_PROBLEM_HH
 
 #include <cmath>
-#include <dune/grid/yaspgrid.hh>
+#include <algorithm>
 
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
 
-#include <dumux/discretization/elementsolution.hh>
-#include <dumux/discretization/cctpfa.hh>
-#include <dumux/discretization/ccmpfa.hh>
-#include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/3p/model.hh>
-#include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 #include <dumux/material/components/h2o.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
-
-#include "spatialparams.hh"
 
 namespace Dumux {
 
-template <class TypeTag>
-class ThreePNIConductionProblem;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct ThreePNIConduction { using InheritsFrom = std::tuple<ThreePNI>; };
-struct ThreePNIConductionBox { using InheritsFrom = std::tuple<ThreePNIConduction, BoxModel>; };
-struct ThreePNIConductionCCTpfa { using InheritsFrom = std::tuple<ThreePNIConduction, CCTpfaModel>; };
-struct ThreePNIConductionCCMpfa { using InheritsFrom = std::tuple<ThreePNIConduction, CCMpfaModel>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::ThreePNIConduction> { using type = Dune::YaspGrid<2>; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::ThreePNIConduction> { using type = ThreePNIConductionProblem<TypeTag>; };
-
-
-// Set the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::ThreePNIConduction>
-{ using type = FluidSystems::H2OAirMesitylene<GetPropType<TypeTag, Properties::Scalar>>; };
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::ThreePNIConduction>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = ThreePNISpatialParams<GridGeometry, Scalar>;
-};
-}// end namespace Properties
-
-
 /*!
- * \ingroup ThreePModel
- * \ingroup ImplicitTestProblems
+ * \ingroup ThreePTests
  *
  * \brief Test for the ThreePModel in combination with the NI model for a conduction problem.
  *
