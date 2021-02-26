@@ -35,6 +35,7 @@
 #include <dune/istl/io.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/localcontext.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -43,7 +44,11 @@
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 
-#include <dumux/assembly/fvassembler.hh>
+#include <dumux/assembly/assembler.hh>
+#include <dumux/assembly/assembler.hh>
+#include <dumux/assembly/fv/localoperator.hh>
+#include <dumux/porousmediumflow/compositional/operators.hh>
+#include <dumux/timestepping/multistagemethods.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
@@ -95,7 +100,6 @@ int main(int argc, char** argv)
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x(gridGeometry->numDofs());
     problem->applyInitialSolution(x);
-    auto xOld = x;
 
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
@@ -122,9 +126,24 @@ int main(int argc, char** argv)
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
-    // the assembler with time loop for instationary problem
-    using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
+    // use implicit Euler for time integration
+    auto timeMethod = std::make_shared<MultiStage::ImplicitEuler<Scalar>>();
+
+    // TODO: Should context become a property?
+    using ElemVariables = typename GridVariables::LocalView;
+    using Context = Experimental::LocalContext<ElemVariables>;
+
+    // TODO: The operators or local operator could be a property, just as is LocalResidual currently
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
+    using CompositionalOperators = FVCompositionalOperators<ModelTraits, FluxVariables, Context>;
+
+    // element-local operator, evaluating the terms defined in CompositionalOperators
+    using LocalOperator = FVLocalOperator<Context, CompositionalOperators>;
+
+    // create assembler & linear solver
+    using Assembler = Assembler<LocalOperator, DiffMethod::numeric>;
+    auto assembler = std::make_shared<Assembler>(gridGeometry, *timeMethod);
 
     // the linear solver
     using LinearSolver = ILU0BiCGSTABBackend;
@@ -132,20 +151,21 @@ int main(int argc, char** argv)
 
     // the non-linear solver
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver);
+    auto nonLinearSolver = std::make_shared<NewtonSolver>(assembler, linearSolver);
+
+    // the time stepper for time integration
+    using TimeStepper = MultiStageTimeStepper<NewtonSolver>;
+    TimeStepper timeStepper(nonLinearSolver, timeMethod);
 
     // time loop
     timeLoop->start(); do
     {
-        // set the current time for the problem
-        problem->setTime(timeLoop->time());
+        // do time integraiton
+        timeStepper.step(*gridVariables, timeLoop->time(), timeLoop->timeStepSize());
 
-        // linearize & solve
-        nonLinearSolver.solve(x, *timeLoop);
-
-        // make the new solution the old solution
-        xOld = x;
-        gridVariables->advanceTimeStep();
+        // update solution for vtk output
+        // TODO: port VtkOutputModule
+        x = gridVariables->dofs();
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
@@ -158,7 +178,7 @@ int main(int argc, char** argv)
         timeLoop->reportTimeStep();
 
         // set new dt as suggested by the newton solver
-        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+        timeLoop->setTimeStepSize(nonLinearSolver->suggestTimeStepSize(timeLoop->timeStepSize()));
 
     } while (!timeLoop->finished());
 
