@@ -116,10 +116,14 @@ private:
     using GG = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
     using Element = typename GG::GridView::template Codim<0>::Entity;
     using SubControlVolume = typename GG::SubControlVolume;
+
 public:
     using GridGeometry = GG;
     // BoundaryTypes is whatever the problem returns from boundaryTypes(element, scv)
-    using BoundaryTypes = std::decay_t<decltype(std::declval<Problem>().boundaryTypes(std::declval<Element>(), std::declval<SubControlVolume>()))>;
+    // TODO: If context is no property, there is no way to determine the boundary types
+    //       here. We should either make it a property or rethink this here. Alternatively,
+    //       we could require problems to export the boundary types.
+    using BoundaryTypes = std::decay_t<decltype(std::declval<Problem>().boundaryTypesAtPos(std::declval<typename Element::Geometry::GlobalCoordinate>()))>;
 };
 
 } // end namespace Detail
