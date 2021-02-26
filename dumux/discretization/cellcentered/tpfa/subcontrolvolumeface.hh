@@ -155,7 +155,7 @@ public:
         return area_;
     }
 
-    //! returns bolean if the sub control volume face is on the boundary
+    //! returns true if the sub control volume face is on the boundary
     bool boundary() const
     {
         return boundary_;
@@ -167,20 +167,20 @@ public:
         return unitOuterNormal_;
     }
 
-    //! index of the inside sub control volume for spatial param evaluation
+    //! index of the inside sub control volume
     GridIndexType insideScvIdx() const
     {
         return scvIndices_[0];
     }
 
-    //! index of the outside sub control volume for spatial param evaluation
-    // This results in undefined behaviour if boundary is true
+    //! Index of the i-th outside sub control volume or boundary scv index.
+    // Results in undefined behaviour if i >= numOutsideScvs()
     GridIndexType outsideScvIdx(int i = 0) const
     {
         return scvIndices_[i+1];
     }
 
-    //! The number of outside scvs connection via this scv face
+    //! The number of scvs on the outside of this face
     std::size_t numOutsideScvs() const
     {
         return scvIndices_.size()-1;

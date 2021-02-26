@@ -107,6 +107,15 @@ int main (int argc, char *argv[])
                 ++boundaryCount;
                 std::cout << " (on boundary).";
             }
+
+            // verify that boundary faces have no neighbor
+            if (scvf.boundary() && scvf.numOutsideScvs() != 0)
+                DUNE_THROW(Dune::Exception, "Boundary face states that it has a neighbor");
+
+            // verify that non-boundary faces have a single neighbor
+            if (!scvf.boundary() && scvf.numOutsideScvs() != 1)
+                DUNE_THROW(Dune::Exception, "Expected non-boundary face to have a single neighbor");
+
             std::cout << std::endl;
         }
 

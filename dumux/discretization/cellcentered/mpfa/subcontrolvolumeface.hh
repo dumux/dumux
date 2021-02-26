@@ -155,7 +155,7 @@ public:
     Scalar area() const
     { return area_; }
 
-    //! returns bolean if the sub control volume face is on the domain boundary
+    //! returns true if the sub control volume face is on the domain boundary
     bool boundary() const
     { return boundary_; }
 
@@ -175,12 +175,12 @@ public:
     GridIndexType insideScvIdx() const
     { return insideScvIdx_; }
 
-    //! The number of outside scvs connection via this scv face
+    //! The number of scvs on the outside of this scv face
     std::size_t numOutsideScvs() const
     { return outsideScvIndices_.size(); }
 
-    //! index of the outside sub control volume or boundary scv index
-    //! returns undefined behaviour if index exceeds numOutsideScvs
+    //! Index of the i-th outside sub control volume or boundary scv index.
+    // Results in undefined behaviour if i >= numOutsideScvs()
     GridIndexType outsideScvIdx(int i = 0) const
     { return outsideScvIndices_[i]; }
 
