@@ -16,53 +16,54 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup NavierStokesNCTests
+ * \brief The properties of the test for the staggered grid Navier-Stokes model with analytical solution.
+ */
+#ifndef DUMUX_SINCOS_TEST_PROPERTIES_HH
+#define DUMUX_SINCOS_TEST_PROPERTIES_HH
 
-#ifndef DUMUX_POISEUILLE_FLOW_TEST_PROPERTIES_HH
-#define DUMUX_POISEUILLE_FLOW_TEST_PROPERTIES_HH
-
-#include <dumux/freeflow/shallowwater/model.hh>
-#include <dumux/discretization/cctpfa.hh>
 #include <dune/grid/yaspgrid.hh>
-#if HAVE_UG
-#include <dune/grid/uggrid.hh>
-#endif
 
-#ifndef GRIDTYPE
-#define GRIDTYPE Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>
-#endif
+#include <dumux/discretization/staggered/freeflow/properties.hh>
+#include <dumux/freeflow/navierstokes/model.hh>
+#include <dumux/material/components/constant.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include "problem.hh"
-#include "spatialparams.hh"
 
 namespace Dumux::Properties {
 
+// Create new type tags
 namespace TTag {
-struct PoiseuilleFlow { using InheritsFrom = std::tuple<ShallowWater, CCTpfaModel>; };
-} // namespace TTag
+struct SincosTest { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
+} // end namespace TTag
 
+// the fluid system
 template<class TypeTag>
-struct Grid<TypeTag, TTag::PoiseuilleFlow> { using type = GRIDTYPE; };
-
-template<class TypeTag>
-struct Problem<TypeTag, TTag::PoiseuilleFlow> { using type = Dumux::PoiseuilleFlowProblem<TypeTag> ; };
-
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::PoiseuilleFlow>
+struct FluidSystem<TypeTag, TTag::SincosTest>
 {
 private:
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
-
 public:
-    using type = PoiseuilleFlowSpatialParams<GridGeometry, Scalar, VolumeVariables>;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
+// Set the grid type
 template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::PoiseuilleFlow> { static constexpr bool value = false; };
+struct Grid<TypeTag, TTag::SincosTest> { using type = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
+
+// Set the problem property
 template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::PoiseuilleFlow> { static constexpr bool value = true; };
+struct Problem<TypeTag, TTag::SincosTest> { using type = Dumux::SincosTestProblem<TypeTag> ; };
+
+template<class TypeTag>
+struct EnableGridGeometryCache<TypeTag, TTag::SincosTest> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::SincosTest> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::SincosTest> { static constexpr bool value = true; };
 
 } // end namespace Dumux::Properties
 

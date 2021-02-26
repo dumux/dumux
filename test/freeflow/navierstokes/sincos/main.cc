@@ -46,7 +46,7 @@
 #include <dumux/linear/istlsolverfactorybackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
-#include "problem.hh"
+#include "properties.hh"
 
 /*!
 * \brief Creates analytical solution.

@@ -19,16 +19,22 @@
 /*!
  * \file
  * \ingroup NavierStokesTests
- * \brief the properties of the freeflow problem for pipe flow
- * Simulation of a radially-symmetric pipe flow with circular cross-section
+ * \brief The properties of the test for the staggered grid Navier-Stokes model with analytical solution (Kovasznay 1948, \cite Kovasznay1948)
  */
-#ifndef DUMUX_TEST_FREEFLOW_PIPE_PROPERTIES_HH
-#define DUMUX_TEST_FREEFLOW_PIPE_PROPERTIES_HH
+#ifndef DUMUX_KOVASZNAY_TEST_PROPERTIES_HH
+#define DUMUX_KOVASZNAY_TEST_PROPERTIES_HH
+
+#ifndef UPWINDSCHEMEORDER
+#define UPWINDSCHEMEORDER 0
+#endif
 
 #include <dune/grid/yaspgrid.hh>
 
+#if HAVE_DUNE_SUBGRID
+#include <dune/subgrid/subgrid.hh>
+#endif
+
 #include <dumux/discretization/staggered/freeflow/properties.hh>
-#include <dumux/discretization/extrusion.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
@@ -39,47 +45,43 @@ namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
-struct PipeFlow { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
+struct KovasznayTest { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
 } // end namespace TTag
 
 // the fluid system
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::PipeFlow>
+struct FluidSystem<TypeTag, TTag::KovasznayTest>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::Constant<1, Scalar> > ;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::PipeFlow>
-{ using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
+struct Grid<TypeTag, TTag::KovasznayTest>
+{
+    using HostGrid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >;
+
+#if HAVE_DUNE_SUBGRID
+    using type = Dune::SubGrid<HostGrid::dimension, HostGrid>;
+#else
+    using type = HostGrid;
+#endif
+};
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::PipeFlow>
-{ using type = FreeFlowPipeProblem<TypeTag> ; };
+struct Problem<TypeTag, TTag::KovasznayTest> { using type = Dumux::KovasznayTestProblem<TypeTag> ; };
 
 template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::PipeFlow> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::KovasznayTest> { static constexpr bool value = true; };
 template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::PipeFlow> { static constexpr bool value = true; };
+struct EnableGridFluxVariablesCache<TypeTag, TTag::KovasznayTest> { static constexpr bool value = true; };
 template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::PipeFlow> { static constexpr bool value = true; };
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::KovasznayTest> { static constexpr bool value = true; };
 
-// rotation-symmetric grid geometry forming a cylinder channel
 template<class TypeTag>
-struct GridGeometry<TypeTag, TTag::PipeFlow>
-{
-    static constexpr auto upwindSchemeOrder = getPropValue<TypeTag, Properties::UpwindSchemeOrder>();
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
-    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
-
-    struct GGTraits : public StaggeredFreeFlowDefaultFVGridGeometryTraits<GridView, upwindSchemeOrder>
-    { using Extrusion = RotationalExtrusion<0>; };
-
-    using type = StaggeredFVGridGeometry<GridView, enableCache, GGTraits>;
-};
+struct UpwindSchemeOrder<TypeTag, TTag::KovasznayTest> { static constexpr int value = UPWINDSCHEMEORDER; };
 
 } // end namespace Dumux::Properties
 

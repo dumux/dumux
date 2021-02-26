@@ -42,7 +42,7 @@
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
-#include "problem.hh"
+#include "properties.hh"
 
 int main(int argc, char** argv)
 {

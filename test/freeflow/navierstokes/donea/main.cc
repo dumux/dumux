@@ -43,7 +43,7 @@
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/nonlinear/staggerednewtonconvergencewriter.hh>
 
-#include "problem.hh"
+#include "properties.hh"
 
 int main(int argc, char** argv)
 {

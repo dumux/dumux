@@ -28,6 +28,9 @@
 #define DUMUX_PIPE_LAUFER_PROBLEM_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/common/timeloop.hh>
+
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/freeflow/rans/problem.hh>
 #include <dumux/freeflow/turbulencemodel.hh>

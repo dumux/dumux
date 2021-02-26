@@ -5,7 +5,7 @@
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
- *   the Free Software Foundation, either version 2 of the License, or       *
+ *   the Free Software Foundation, either version 3 of the License, or       *
  *   (at your option) any later version.                                     *
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
@@ -24,59 +24,14 @@
 #ifndef DUMUX_ROUGH_CHANNEL_TEST_PROBLEM_HH
 #define DUMUX_ROUGH_CHANNEL_TEST_PROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
-#include <dumux/discretization/cctpfa.hh>
-#include "spatialparams.hh"
-#include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/common/properties.hh>
 
-#include <dumux/freeflow/shallowwater/model.hh>
 #include <dumux/freeflow/shallowwater/problem.hh>
 #include <dumux/freeflow/shallowwater/boundaryfluxes.hh>
 
 namespace Dumux {
-
-template <class TypeTag>
-class RoughChannelProblem;
-
-// Specify the properties for the problem
-namespace Properties {
-
-// Create new type tags
-namespace TTag {
-struct RoughChannel { using InheritsFrom = std::tuple<ShallowWater, CCTpfaModel>; };
-} // end namespace TTag
-
-template<class TypeTag>
-struct Grid<TypeTag, TTag::RoughChannel>
-{ using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::RoughChannel>
-{ using type = Dumux::RoughChannelProblem<TypeTag>; };
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::RoughChannel>
-{
-private:
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
-public:
-    using type = RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>;
-};
-
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::RoughChannel>
-{ static constexpr bool value = true; };
-
-template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::RoughChannel>
-{ static constexpr bool value = false; };
-} // end namespace Properties
 
 /*!
  * \ingroup ShallowWaterTests

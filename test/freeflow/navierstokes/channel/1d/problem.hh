@@ -27,56 +27,15 @@
 #define DUMUX_DONEA_TEST_PROBLEM_HH
 
 #include <dune/common/fmatrix.hh>
-#include <dune/grid/yaspgrid.hh>
 
-#include <dumux/discretization/staggered/freeflow/properties.hh>
-
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
-#include <dumux/freeflow/navierstokes/model.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
-
-#include <dumux/material/components/constant.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include "../../l2error.hh"
 
 namespace Dumux {
-template <class TypeTag>
-class NavierStokesAnalyticProblem;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct NavierStokesAnalytic { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
-} // end namespace TTag
-
-// the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::NavierStokesAnalytic>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
-};
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::NavierStokesAnalytic> { using type = Dune::YaspGrid<1>; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::NavierStokesAnalytic> { using type = Dumux::NavierStokesAnalyticProblem<TypeTag> ; };
-
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::NavierStokesAnalytic> { static constexpr bool value = true; };
-
-template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::NavierStokesAnalytic> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::NavierStokesAnalytic> { static constexpr bool value = true; };
-
-template<class TypeTag>
-struct NormalizePressure<TypeTag, TTag::NavierStokesAnalytic> { static constexpr bool value = false; };
-} // end namespace Properties
 
 /*!
  * \ingroup NavierStokesTests
