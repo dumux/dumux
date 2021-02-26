@@ -123,6 +123,10 @@ public:
         t_ = t;
     }
 
+    //! Return the time level of these variables
+    const TimeLevel& timeLevel() const
+    { return t_; }
+
 private:
     SolutionVector x_;
     TimeLevel t_;
