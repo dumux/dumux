@@ -5,9 +5,26 @@ One click install script for dumux
 """
 import os
 import sys
+import argparse
 import subprocess
 from distutils.spawn import find_executable
 from distutils.version import LooseVersion
+
+parser = argparse.ArgumentParser(prog='installdumux',
+                                 usage='./installdumux.py [OPTIONS]',
+                                 description='This script downloads and compiles the latest release of Dumux.')
+# Optional arguments
+parser.add_argument('--dune-version',
+                    default="2.7",
+                    help='Dune version to be checked out.')
+parser.add_argument('--dumux-version',
+                    default="3.3",
+                    help='Dumux version to be checked out.')
+args = vars(parser.parse_args())
+
+dune_branch = args["dune_version"] if args["dune_version"] == "master" else "releases/" + args["dune_version"]
+dumux_branch = args["dumux_version"] if args["dumux_version"] == "master" else "releases/" + args["dumux_version"]
+
 
 def show_message(message):
     print("*" * 120)
@@ -23,9 +40,9 @@ def check_cpp_version():
         raise Exception("g++ greater than or equal to {} is required for dumux releases >=3.2!".format(requiredversion))
 
 
-def run_command(command):
+def run_command(command, workdir="."):
     with open("../installdumux.log", "a") as log:
-        popen = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        popen = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, cwd=workdir)
         for line in popen.stdout:
             log.write(line)
             print(line, end='')
@@ -48,7 +65,12 @@ def git_clone(url, branch=None):
     clone = ["git", "clone"]
     if branch:
         clone += ["-b", branch]
-    result = run_command(command=[*clone, url])
+    run_command(command=[*clone, url])
+
+
+def git_setbranch(folder, branch):
+    checkout = ["git", "checkout", branch]
+    run_command(command=checkout, workdir=folder)
 
 
 # clear the log file
@@ -56,10 +78,10 @@ open('installdumux.log', 'w').close()
 
 #################################################################
 #################################################################
-## (1/3) Check some prerequistes
+# (1/3) Check some prerequistes
 #################################################################
 #################################################################
-programs = ['wget', 'git', 'gcc', 'g++', 'cmake', 'pkg-config']
+programs = ['git', 'gcc', 'g++', 'cmake', 'pkg-config']
 show_message("(1/3) Checking all prerequistes: " + " ".join(programs) + "...")
 
 # check some prerequistes
@@ -77,7 +99,7 @@ show_message("(1/3) Step completed. All prerequistes found.")
 
 #################################################################
 #################################################################
-## (2/3) Clone modules
+# (2/3) Clone modules
 #################################################################
 #################################################################
 # make a new folder containing everything
@@ -86,48 +108,49 @@ os.chdir("dumux")
 
 show_message("(2/3) Cloning repositories. This may take a while. Make sure to be connected to the internet...")
 
-dune_version=2.7
-dumux_version=3.2
 # the core modules
 for module in ['common', 'geometry', 'grid', 'localfunctions', 'istl']:
     if not os.path.exists("dune-{}".format(module)):
-        git_clone('https://gitlab.dune-project.org/core/dune-{}.git'.format(module), "releases/{}".format(dune_version))
+        git_clone('https://gitlab.dune-project.org/core/dune-{}.git'.format(module), dune_branch)
     else:
         print("-- Skip cloning dune-{} because the folder already exists.".format(module))
+        git_setbranch("dune-{}".format(module), dune_branch)
 
 # dumux
 if not os.path.exists("dumux"):
-    git_clone('https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git', "releases/{}".format(dumux_version))
+    git_clone('https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git', dumux_branch)
 else:
     print("-- Skip cloning dumux because the folder already exists.")
+    git_setbranch("dumux", dumux_branch)
 
 
 show_message("(2/3) Step completed. All repositories have been cloned into a containing folder.")
 
 #################################################################
 #################################################################
-## (3/3) Configure and build
+# (3/3) Configure and build
 #################################################################
 #################################################################
 show_message("(3/3) Configure and build dune modules and dumux using dunecontrol. This may take several minutes...")
 
 # run dunecontrol
-if not os.path.isfile("cmake.opts"):
-    subprocess.run(["wget","https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/releases/3.2/cmake.opts"])
-else:
-    print("-- The file cmake.opts already exists. The existing file will be used to configure dumux.")
-
-run_command(command=["./dune-common/bin/dunecontrol", "--opts=cmake.opts", "all"])
+run_command(command=["./dune-common/bin/dunecontrol", "--opts=dumux/cmake.opts", "all"])
 
 show_message("(3/3) Step completed. Succesfully configured and built dune and dumux.")
 
 #################################################################
 #################################################################
-## Show message how to check that everything works
+# Show message how to check that everything works
 #################################################################
 #################################################################
+test_path = 'dumux/dumux/build-cmake/test/porousmediumflow/1p'
+if dumux_branch == "master" or LooseVersion(args["dumux_version"]) > LooseVersion('3.3'):
+    test_path += '/isothermal'
+else:
+    test_path += '/implicit/isothermal'
+
 show_message("(Installation complete) To test if everything works, please run the following commands (can be copied to command line):\n\n"
-             "  cd dumux/dumux/build-cmake/test/porousmediumflow/1p/isothermal\n"
+             "  {}\n"
              "  make test_1p_tpfa\n"
              "  ./test_1p_tpfa\n"
-             "  paraview *pvd\n")
+             "  paraview *pvd\n".format(test_path))
