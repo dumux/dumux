@@ -30,9 +30,6 @@
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/vtk.hh>
 
-#include <test/porousmediumflow/2p/incompressible/problem.hh>
-#include "properties_tracer.hh"
-
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
@@ -49,6 +46,8 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
+
+#include "properties.hh"
 
 int main(int argc, char** argv)
 {

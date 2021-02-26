@@ -57,42 +57,9 @@
 
 // Use the incompressible or point source problem for this adaptive test
 #include <test/porousmediumflow/2p/incompressible/problem.hh>
+
 #include "pointsourceproblem.hh"
-#include "problem.hh"
-
-// Type tags for the adaptive versions of the two-phase incompressible problem
-namespace Dumux {
-namespace Properties {
-//! Type Tags for the adaptive tests
-// Create new type tags
-namespace TTag {
-struct TwoPIncompressibleAdaptiveTpfa { using InheritsFrom = std::tuple<TwoPIncompressibleTpfa>; };
-struct TwoPIncompressibleAdaptiveMpfa { using InheritsFrom = std::tuple<TwoPIncompressibleMpfa>; };
-struct TwoPIncompressibleAdaptiveBox { using InheritsFrom = std::tuple<TwoPIncompressibleBox>; };
-struct TwoPAdaptivePointSource { using InheritsFrom = std::tuple<TwoPIncompressibleAdaptiveTpfa>; };
-} // end namespace TTag
-
-//! Use non-conforming refinement in the cell-centered tests, conforming for box
-#if HAVE_DUNE_ALUGRID
-template<class TypeTag>
-struct Grid<TypeTag, TTag::TwoPIncompressibleAdaptiveTpfa> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
-template<class TypeTag>
-struct Grid<TypeTag, TTag::TwoPIncompressibleAdaptiveMpfa> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
-#endif
-#if HAVE_DUNE_UGGRID
-template<class TypeTag>
-struct Grid<TypeTag, TTag::TwoPIncompressibleAdaptiveBox> { using type = Dune::UGGrid<2>; };
-#endif
-template<class TypeTag>
-struct Problem<TypeTag, TTag::TwoPAdaptivePointSource> { using type = PointSourceTestProblem<TypeTag>; };
-template<class TypeTag>
-struct Problem<TypeTag, TTag::TwoPIncompressibleAdaptiveTpfa> { using type = TwoPTestProblemAdaptive<TypeTag>; };
-template<class TypeTag>
-struct Problem<TypeTag, TTag::TwoPIncompressibleAdaptiveMpfa> { using type = TwoPTestProblemAdaptive<TypeTag>; };
-template<class TypeTag>
-struct Problem<TypeTag, TTag::TwoPIncompressibleAdaptiveBox> { using type = TwoPTestProblemAdaptive<TypeTag>; };
-} // end namespace Properties
-} // end namespace Dumux
+#include "properties.hh"
 
 int main(int argc, char** argv)
 {
