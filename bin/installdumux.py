@@ -65,7 +65,7 @@ def git_clone(url, branch=None):
     clone = ["git", "clone"]
     if branch:
         clone += ["-b", branch]
-    result = run_command(command=[*clone, url])
+    run_command(command=[*clone, url])
 
 
 # clear the log file
@@ -73,7 +73,7 @@ open('installdumux.log', 'w').close()
 
 #################################################################
 #################################################################
-## (1/3) Check some prerequistes
+# (1/3) Check some prerequistes
 #################################################################
 #################################################################
 programs = ['git', 'gcc', 'g++', 'cmake', 'pkg-config']
@@ -94,7 +94,7 @@ show_message("(1/3) Step completed. All prerequistes found.")
 
 #################################################################
 #################################################################
-## (2/3) Clone modules
+# (2/3) Clone modules
 #################################################################
 #################################################################
 # make a new folder containing everything
@@ -114,7 +114,6 @@ for module in ['common', 'geometry', 'grid', 'localfunctions', 'istl']:
 if not os.path.exists("dumux"):
     git_clone('https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git', dumux_branch)
 else:
-
     print("-- Skip cloning dumux because the folder already exists.")
 
 
@@ -122,7 +121,7 @@ show_message("(2/3) Step completed. All repositories have been cloned into a con
 
 #################################################################
 #################################################################
-## (3/3) Configure and build
+# (3/3) Configure and build
 #################################################################
 #################################################################
 show_message("(3/3) Configure and build dune modules and dumux using dunecontrol. This may take several minutes...")
@@ -134,12 +133,17 @@ show_message("(3/3) Step completed. Succesfully configured and built dune and du
 
 #################################################################
 #################################################################
-## Show message how to check that everything works
+# Show message how to check that everything works
 #################################################################
 #################################################################
-path = '' if dumux_branch == "master" or LooseVersion(args["dumux_version"]) > LooseVersion('3.3') else '/implicit'
+test_path = 'dumux/dumux/build-cmake/test/porousmediumflow/1p'
+if dumux_branch == "master" or LooseVersion(args["dumux_version"]) > LooseVersion('3.3'):
+    test_path += '/isothermal'
+else:
+    test_path += '/implicit/isothermal'
+
 show_message("(Installation complete) To test if everything works, please run the following commands (can be copied to command line):\n\n"
-             "  cd dumux/dumux/build-cmake/test/porousmediumflow/1p{}/isothermal\n"
+             "  {}\n"
              "  make test_1p_tpfa\n"
              "  ./test_1p_tpfa\n"
-             "  paraview *pvd\n".format(path))
+             "  paraview *pvd\n".format(test_path))
