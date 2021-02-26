@@ -32,18 +32,6 @@
 #include <dumux/porousmediumflow/nonisothermal/operators.hh>
 
 namespace Dumux {
-namespace Impl {
-
-    template<class MT, class EV, bool enable> struct DefaultEnergyOperatorsChooser;
-    template<class MT, class EV>
-    struct DefaultEnergyOperatorsChooser<MT, EV, false> { using Type = void; };
-    template<class MT, class EV>
-    struct DefaultEnergyOperatorsChooser<MT, EV, true> { using Type = FVNonIsothermalOperators<MT, EV>; };
-
-    template<class MT, class EV>
-    using DefaultEnergyOperators = typename DefaultEnergyOperatorsChooser<MT, EV, MT::enableEnergyBalance()>::Type;
-
-} // end namespace Impl
 
 /*!
  * \ingroup PorousmediumflowModels
@@ -52,24 +40,22 @@ namespace Impl {
  * \tparam ModelTraits defines model-related types and variables (e.g. number of phases)
  * \tparam FluxVariables the type that is responsible for computing the individual
  *                       flux contributions, i.e., advective, diffusive, convective...
- * \tparam ElementVariables the type of element-local view on the grid variables
+ * \tparam LocalContext the type of element-local context (primary/secondary variables)
  * \tparam EnergyOperators optional template argument, specifying the class that
  *                         handles the operators related to non-isothermal effects.
  *                         These are assumed to be taken into account by the model
  *                         if this template argument is other than void.
  */
-template<class ModelTraits, class FluxVariables, class ElementVariables,
-         class EnergyOperators = Impl::DefaultEnergyOperators<ModelTraits, ElementVariables>>
+template<class ModelTraits, class FluxVariables, class LocalContext,
+         class EnergyOperators = Impl::DefaultEnergyOperators<ModelTraits, LocalContext>>
 class FVImmiscibleOperators
-: public FVOperators<ElementVariables>
+: public FVOperators<LocalContext>
 {
-    using ParentType = FVOperators<ElementVariables>;
+    using ParentType = FVOperators<LocalContext>;
 
     // The variables required for the evaluation of the equation
+    using ElementVariables = typename LocalContext::ElementVariables;
     using GridVariables = typename ElementVariables::GridVariables;
-    using VolumeVariables = typename GridVariables::VolumeVariables;
-    using ElementVolumeVariables = typename ElementVariables::ElementVolumeVariables;
-    using ElementFluxVariablesCache = typename ElementVariables::ElementFluxVariablesCache;
 
     // The grid geometry on which the scheme operates
     using GridGeometry = typename GridVariables::GridGeometry;
@@ -101,13 +87,14 @@ public:
      * \brief Compute the storage term of the equations for the given sub-control volume
      * \param problem The problem to be solved (could store additionally required quantities)
      * \param scv The sub-control volume
-     * \param volVars The primary & secondary variables evaluated for the scv
-     * \note This must be overloaded by the implementation
+     * \param context The element-local context (primary/secondary variables)
      */
      static StorageTerm storage(const Problem& problem,
                                 const SubControlVolume& scv,
-                                const VolumeVariables& volVars)
+                                const LocalContext& context)
     {
+        const auto& volVars = context.elementVariables().elemVolVars()[scv];
+
         // partial time derivative of the phase mass
         StorageTerm storage;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
@@ -119,12 +106,12 @@ public:
 
             // The energy storage in the fluid phase with index phaseIdx
             if constexpr (isNonIsothermal)
-                EnergyOperators::fluidPhaseStorage(storage, scv, volVars, phaseIdx);
+                EnergyOperators::addFluidPhaseStorage(storage, scv, context, phaseIdx);
         }
 
         // The energy storage in the solid matrix
         if constexpr (isNonIsothermal)
-            EnergyOperators::solidPhaseStorage(storage, scv, volVars);
+            EnergyOperators::addSolidPhaseStorage(storage, scv, context);
 
         // multiply with volume
         storage *= Extrusion::volume(scv)*volVars.extrusionFactor();
@@ -137,18 +124,18 @@ public:
      * \param problem The problem to be solved (could store additionally required quantities)
      * \param element The grid element
      * \param fvGeometry The element-local view on the finite volume grid geometry
-     * \param elemVolVars The element-local view on the grid volume variables
-     * \param elemFluxVarsCache The element-local view on the grid flux variables cache
+     * \param context The element-local context (primary/secondary variables)
      * \param scvf The sub-control volume face for which the flux term is to be computed
-     * \note This must be overloaded by the implementation
      */
     static FluxTerm flux(const Problem& problem,
                          const Element& element,
                          const FVElementGeometry& fvGeometry,
-                         const ElementVolumeVariables& elemVolVars,
-                         const ElementFluxVariablesCache& elemFluxVarsCache,
+                         const LocalContext& context,
                          const SubControlVolumeFace& scvf)
     {
+        const auto& elemVolVars = context.elementVariables().elemVolVars();
+        const auto& elemFluxVarsCache = context.elementVariables().elemFluxVarsCache();
+
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
@@ -164,12 +151,12 @@ public:
 
             // Add advective phase energy fluxes. For isothermal model the contribution is zero.
             if constexpr (isNonIsothermal)
-                EnergyOperators::heatConvectionFlux(flux, fluxVars, phaseIdx);
+                EnergyOperators::addHeatConvectionFlux(flux, fluxVars, phaseIdx);
         }
 
         // Add diffusive energy fluxes. For isothermal model the contribution is zero.
         if constexpr (isNonIsothermal)
-            EnergyOperators::heatConductionFlux(flux, fluxVars);
+            EnergyOperators::addHeatConductionFlux(flux, fluxVars);
 
         return flux;
     }

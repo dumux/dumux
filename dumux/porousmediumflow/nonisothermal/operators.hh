@@ -28,6 +28,22 @@
 
 namespace Dumux {
 
+// forward declaration
+template<class MT, class LC> class FVNonIsothermalOperators;
+
+namespace Impl {
+
+    template<class MT, class C, bool enable> struct DefaultEnergyOperatorsChooser;
+    template<class MT, class C>
+    struct DefaultEnergyOperatorsChooser<MT, C, false> { using Type = void; };
+    template<class MT, class C>
+    struct DefaultEnergyOperatorsChooser<MT, C, true> { using Type = FVNonIsothermalOperators<MT, C>; };
+
+    template<class MT, class C>
+    using DefaultEnergyOperators = typename DefaultEnergyOperatorsChooser<MT, C, MT::enableEnergyBalance()>::Type;
+
+} // end namespace Impl
+
 /*!
  * \ingroup NIModel
  * \brief Sub-control entity-local evaluation of the operators
@@ -35,12 +51,13 @@ namespace Dumux {
  *        that assume thermal equilibrium between all phases.
  * \tparam FluxVariables the type that is responsible for computing the individual
  *                       flux contributions, i.e., advective, diffusive, conduvtive...
- * \tparam ElementVariables the type of element-local view on the grid variables
+ * \tparam LocalContext the type of element-local context (primary/secondary variables)
  */
-template<class ModelTraits, class ElementVariables>
+template<class ModelTraits, class LocalContext>
 class FVNonIsothermalOperators
 {
     // The variables required for the evaluation of the equation
+    using ElementVariables = typename LocalContext::ElementVariables;
     using GridVariables = typename ElementVariables::GridVariables;
     using VolumeVariables = typename GridVariables::VolumeVariables;
     using ElementVolumeVariables = typename ElementVariables::ElementVolumeVariables;
@@ -62,15 +79,16 @@ public:
      *
      * \param storage The mass of the component within the sub-control volume
      * \param scv The sub-control volume
-     * \param volVars The volume variables
+     * \param context The element-local context (primary/secondary variables)
      * \param phaseIdx The phase index
      */
     template<class NumEqVector>
-    static void addPhaseStorage(NumEqVector& storage,
-                                const SubControlVolume& scv,
-                                const VolumeVariables& volVars,
-                                int phaseIdx)
+    static void addFluidPhaseStorage(NumEqVector& storage,
+                                     const SubControlVolume& scv,
+                                     const LocalContext& context,
+                                     int phaseIdx)
     {
+        const auto& volVars = context.elementVariables().elemVolVars()[scv];
         storage[energyEqIdx] += volVars.porosity()
                                 * volVars.density(phaseIdx)
                                 * volVars.internalEnergy(phaseIdx)
@@ -82,13 +100,14 @@ public:
      *
      * \param storage The mass of the component within the sub-control volume
      * \param scv The sub-control volume
-     * \param volVars The volume variables
+     * \param context The element-local context (primary/secondary variables)
      */
     template<class NumEqVector>
     static void addSolidPhaseStorage(NumEqVector& storage,
                                      const SubControlVolume& scv,
-                                     const VolumeVariables& volVars)
+                                     const LocalContext& context)
     {
+        const auto& volVars = context.elementVariables().elemVolVars()[scv];
         storage[energyEqIdx] += volVars.temperature()
                                 * volVars.solidHeatCapacity()
                                 * volVars.solidDensity()
@@ -132,14 +151,14 @@ public:
      * \param source The source which ought to be simulated
      * \param element An element which contains part of the control volume
      * \param fvGeometry The finite-volume geometry
-     * \param elemVolVars The volume variables of the current element
+     * \param context The element-local context (primary/secondary variables)
      * \param scv The sub-control volume over which we integrate the source term
      */
     template<class NumEqVector>
     static void addSourceEnergy(NumEqVector& source,
                                 const Element& element,
                                 const FVElementGeometry& fvGeometry,
-                                const ElementVolumeVariables& elemVolVars,
+                                const LocalContext& context,
                                 const SubControlVolume &scv)
     {}
 };
