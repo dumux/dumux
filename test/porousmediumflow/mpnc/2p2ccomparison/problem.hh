@@ -26,76 +26,14 @@
 #ifndef DUMUX_MPNC_TWOPTWOC_COMPARISON_OBSTACLEPROBLEM_HH
 #define DUMUX_MPNC_TWOPTWOC_COMPARISON_OBSTACLEPROBLEM_HH
 
-#include <dune/common/parametertreeparser.hh>
-#include <dune/grid/yaspgrid.hh>
-
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
 
-#include <dumux/discretization/box.hh>
-#include <dumux/discretization/cctpfa.hh>
-
-#include <dumux/porousmediumflow/mpnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
-#include <test/porousmediumflow/2p2c/mpnccomparison/iofields.hh>
-
-#include <dumux/material/fluidsystems/h2on2.hh>
-#include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 
-#include "spatialparams.hh"
-
 namespace Dumux {
-
-/*!
- * \ingroup MPNCTests
- * \brief Problem where air is injected in a unsaturated porous medium.
- *
- * This test compares a mpnc problem with a 2p2c problem.
- */
-template <class TypeTag>
-class MPNCComparisonProblem;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct MPNCComparison { using InheritsFrom = std::tuple<MPNC>; };
-struct MPNCComparisonBox { using InheritsFrom = std::tuple<MPNCComparison, BoxModel>; };
-struct MPNCComparisonCC { using InheritsFrom = std::tuple<MPNCComparison, CCTpfaModel>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::MPNCComparison> { using type = Dune::YaspGrid<2>; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::MPNCComparison> { using type = MPNCComparisonProblem<TypeTag>; };
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::MPNCComparison>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = MPNCComparisonSpatialParams<GridGeometry, Scalar>;
-};
-
-// Set fluid configuration
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::MPNCComparison>
-{
-    using type = FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>,
-                                     FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
-};
-
-// decide which type to use for floating values (double / quad)
-template<class TypeTag>
-struct Scalar<TypeTag, TTag::MPNCComparison> { using type = double; };
-template<class TypeTag>
-struct UseMoles<TypeTag, TTag::MPNCComparison> { static constexpr bool value = true; };
-template<class TypeTag>
-struct IOFields<TypeTag, TTag::MPNCComparison> { using type = TwoPTwoCMPNCIOFields; };
-} // end namespace Dumux
 
 /*!
  * \ingroup MPNCTests
@@ -310,6 +248,6 @@ private:
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
 };
-} // end namespace
+} // end namespace Dumux
 
 #endif

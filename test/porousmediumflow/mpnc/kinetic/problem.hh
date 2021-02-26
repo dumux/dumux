@@ -35,83 +35,14 @@
 #ifndef DUMUX_EVAPORATION_ATMOSPHERE_PROBLEM_HH
 #define DUMUX_EVAPORATION_ATMOSPHERE_PROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
-
-#include <dumux/common/boundarytypes.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/common/boundarytypes.hh>
 
-#include <dumux/discretization/box.hh>
-
-#include <dumux/porousmediumflow/mpnc/model.hh>
-#include <dumux/porousmediumflow/mpnc/pressureformulation.hh>
 #include <dumux/porousmediumflow/problem.hh>
-
-#include <dumux/material/fluidsystems/h2on2kinetic.hh>
-#include <dumux/material/components/constant.hh>
-
-#include "spatialparams.hh"
+#include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 
 namespace Dumux {
-/*!
- * \ingroup MPNCTests
- * \brief Problem showcasing the capabilities of the kinetic model.
- */
-template <class TypeTag>
-class EvaporationAtmosphereProblem;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct EvaporationAtmosphere { using InheritsFrom = std::tuple<MPNCNonequil>; };
-struct EvaporationAtmosphereBox { using InheritsFrom = std::tuple<EvaporationAtmosphere, BoxModel>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::EvaporationAtmosphere> { using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::EvaporationAtmosphere> { using type = EvaporationAtmosphereProblem<TypeTag>; };
-
-// Set fluid configuration
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::EvaporationAtmosphere>
-{
-    using type = FluidSystems::H2ON2Kinetic<GetPropType<TypeTag, Properties::Scalar>,
-                                            FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
-};
-
-//! Set the default pressure formulation: either pw first or pn first
-template<class TypeTag>
-struct PressureFormulation<TypeTag, TTag::EvaporationAtmosphere>
-{
-public:
-    static const MpNcPressureFormulation value = MpNcPressureFormulation::leastWettingFirst;
-};
-
-// Set the type used for scalar values
-template<class TypeTag>
-struct Scalar<TypeTag, TTag::EvaporationAtmosphere> { using type = double; };
-
-// Set the fluid system
-template<class TypeTag>
-struct SolidSystem<TypeTag, TTag::EvaporationAtmosphere>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using InertComponent = Components::Constant<1, Scalar>;
-    using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
-};
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::EvaporationAtmosphere>
-{
-    using GridGeometry = GetPropType<TypeTag, GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = EvaporationAtmosphereSpatialParams<GridGeometry, Scalar>;
-};
-} // end namespace Properties
 
 /*!
  * \ingroup MPNCTests

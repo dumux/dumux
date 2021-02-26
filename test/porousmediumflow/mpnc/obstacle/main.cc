@@ -23,15 +23,10 @@
  */
 #include <config.h>
 
-#include <ctime>
 #include <iostream>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/grid/io/file/vtk.hh>
-#include <dune/istl/io.hh>
-
-#include "problem.hh"
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -47,39 +42,9 @@
 #include <dumux/discretization/method.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
 
-/*!
- * \brief Provides an interface for customizing error messages associated with
- *        reading in parameters.
- *
- * \param progName  The name of the program, that was tried to be started.
- * \param errorMsg  The error message that was issued by the start function.
- *                  Comprises the thing that went wrong and a general help message.
- */
-void usage(const char *progName, const std::string &errorMsg)
-{
-    if (errorMsg.size() > 0) {
-        std::string errorMessageOut = "\nUsage: ";
-                    errorMessageOut += progName;
-                    errorMessageOut += " [options]\n";
-                    errorMessageOut += errorMsg;
-                    errorMessageOut += "\n\nThe list of mandatory arguments for this program is:\n"
-                                        "\t-TimeManager.TEnd               End of the simulation [s] \n"
-                                        "\t-TimeManager.DtInitial          Initial timestep size [s] \n"
-                                        "\t-Grid.LowerLeft                 Lower left corner coordinates\n"
-                                        "\t-Grid.UpperRight                Upper right corner coordinates\n"
-                                        "\t-Grid.Cells                     Number of cells in respective coordinate directions\n"
-                                        "\t                                definition in DGF format\n"
-                                        "\t-SpatialParams.LensLowerLeft   coordinates of the lower left corner of the lens [m] \n"
-                                        "\t-SpatialParams.LensUpperRight  coordinates of the upper right corner of the lens [m] \n"
-                                        "\t-SpatialParams.Permeability     Permeability of the domain [m^2] \n"
-                                        "\t-SpatialParams.PermeabilityLens Permeability of the lens [m^2] \n";
-
-        std::cout << errorMessageOut
-                  << "\n";
-    }
-}
+#include "properties.hh"
 
 int main(int argc, char** argv)
 {
@@ -96,7 +61,7 @@ int main(int argc, char** argv)
         DumuxMessage::print(/*firstCall=*/true);
 
     // parse command line arguments and input file
-    Parameters::init(argc, argv, usage);
+    Parameters::init(argc, argv);
 
     // try to create a grid (from the given grid file or the input file)
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;

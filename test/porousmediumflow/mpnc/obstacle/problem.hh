@@ -28,74 +28,14 @@
 #ifndef DUMUX_OBSTACLEPROBLEM_HH
 #define DUMUX_OBSTACLEPROBLEM_HH
 
-#include <dune/common/parametertreeparser.hh>
-#include <dune/grid/yaspgrid.hh>
-
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
 
-#include <dumux/discretization/box.hh>
-#include <dumux/discretization/cctpfa.hh>
-
-#include <dumux/porousmediumflow/mpnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
-
-#include <dumux/material/fluidsystems/h2on2.hh>
-#include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 
-#include "spatialparams.hh"
-
 namespace Dumux {
-
-/*!
- * \ingroup MPNCTests
- * \brief Problem where liquid water is injected which has to go
- *        around an obstacle with \f$10^3\f$ lower permeability.
- *
- * The water is injected by means of a Dirichlet condition on the lower
- * right of the domain.
- */
-template <class TypeTag>
-class ObstacleProblem;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct Obstacle { using InheritsFrom = std::tuple<MPNC>; };
-struct ObstacleBox { using InheritsFrom = std::tuple<Obstacle, BoxModel>; };
-struct ObstacleCC { using InheritsFrom = std::tuple<Obstacle, CCTpfaModel>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::Obstacle> { using type = Dune::YaspGrid<2>; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::Obstacle> { using type = ObstacleProblem<TypeTag>; };
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::Obstacle>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = ObstacleSpatialParams<GridGeometry, Scalar>;
-};
-
-// Set fluid configuration
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::Obstacle>
-{
-    using type = FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>,
-                                     FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
-};
-
-// decide which type to use for floating values (double / quad)
-template<class TypeTag>
-struct Scalar<TypeTag, TTag::Obstacle> { using type = double; };
-
-}
 
 /*!
  * \ingroup MPNCTests
