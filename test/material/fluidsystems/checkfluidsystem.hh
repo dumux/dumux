@@ -59,8 +59,7 @@
 #include <dumux/material/fluidstates/saturationoverlay.hh>
 #include <dumux/material/fluidstates/temperatureoverlay.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \brief This fluid state ensures that only the allowed quantities are accessed.
