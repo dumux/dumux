@@ -38,18 +38,17 @@ namespace ShallowWater {
  *
  *
  * Riemann problem applies the hydrostatic reconstruction, uses the
- * Riemann invariants to transform the two-dimensional problem to an
- * one-dimensional problem and solves this new problem, and rotates
- * the problem back. Further it applies an flux limiter for the water
- * flux handle drying of elements.
+ * Riemann invariants to transform the two-dimensional problem to a
+ * one-dimensional problem, solves this new problem, and rotates
+ * the problem back. Further it applies a flux limiter for the water
+ * flux to handle drying elements.
  * The correction of the bed slope source term leads to a
- * non-symmetric flux term at the interface for the momentum equations
- * since DuMuX computes the fluxes twice from each side this does not
+ * non-symmetric flux term at the interface for the momentum equations.
+ * Since DuMuX computes the fluxes twice from each side this does not
  * matter.
  *
- * So far we have only the exact Riemann solver, and the reconstruction
- * after Audusse but further solvers and reconstructions ca be
- * implemented.
+ * So far this implements the exact Riemann solver (with reconstruction
+ * after Audusse).
  *
  * The computed water flux (localFlux[0]) is given in m^2/s, the
  * momentum fluxes (localFlux[1], localFlux[2]) are given in m^3/s^2.

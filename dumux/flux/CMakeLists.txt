@@ -20,6 +20,7 @@ maxwellstefandiffusioncoefficients.hh
 maxwellstefanslaw.hh
 referencesystemformulation.hh
 shallowwaterflux.hh
+shallowwaterviscousflux.hh
 stationaryvelocityfield.hh
 traits.hh
 upwindscheme.hh

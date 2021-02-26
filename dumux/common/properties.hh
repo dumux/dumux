@@ -276,6 +276,8 @@ struct SherwoodFormulation { using type = UndefinedProperty; };
 
 template<class TypeTag, class MyTypeTag>
 struct NormalizePressure { using type = UndefinedProperty; }; //!<  Returns whether to normalize the pressure term in the momentum balance or not
+template<class TypeTag, class MyTypeTag>
+struct ViscousFluxType { using type = UndefinedProperty; };              //!< The type for the calculation of the (turbulent) viscous (momentum) fluxes
 
 /////////////////////////////////////////////////////////////
 // Properties used by multidomain simulations

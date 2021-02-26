@@ -78,7 +78,7 @@ public:
     }
 
        /*!
-     * \brief Evaluate the mass flux over a face of a sub control volume
+     * \brief Evaluate the mass/momentum flux over a face of a sub control volume
      *
      * \param problem The problem
      * \param element The current element.
@@ -97,7 +97,11 @@ public:
         NumEqVector flux(0.0);
         FluxVariables fluxVars;
         flux += fluxVars.advectiveFlux(problem, element, fvGeometry, elemVolVars, scvf);
-        flux += fluxVars.diffusiveFlux(problem, element, fvGeometry, elemVolVars, scvf);
+
+        // Compute viscous momentum flux contribution if required
+        static const bool enableViscousFlux = getParam<bool>("ShallowWater.EnableViscousFlux", false);
+        if (enableViscousFlux)
+            flux += fluxVars.viscousFlux(problem, element, fvGeometry, elemVolVars, scvf);
         return flux;
     }
 };
