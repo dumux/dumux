@@ -80,12 +80,12 @@ public:
                             const GlobalPosition& unitOuterNormal,
                             const Scalar& area,
                             GridIndexType scvfIndex,
-                            std::vector<LocalIndexType>&& scvIndices)
+                            std::array<LocalIndexType, 2>&& scvIndices)
     : center_(center),
       unitOuterNormal_(unitOuterNormal),
       area_(area),
       scvfIndex_(scvfIndex),
-      scvIndices_({scvIndices[0], scvIndices[1]})
+      scvIndices_(std::move(scvIndices))
     {}
 
     //! The center of the sub control volume face

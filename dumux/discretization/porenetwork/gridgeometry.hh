@@ -618,7 +618,7 @@ public:
                                                    std::move(unitOuterNormal),
                                                    this->throatCrossSectionalArea(this->elementMapper().index(element)),
                                                    scvfLocalIdx++,
-                                                   std::vector<LocalIndexType>({0, 1}));
+                                                   std::array<LocalIndexType, 2>({0, 1}));
         }
     }
 
