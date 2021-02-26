@@ -5,9 +5,9 @@ Name = constant-params
 UpperRight = 1e-3 1e-3 1e-3
 NumPores = 5 5 5
 
-PoreRadius = 1e-5
+PoreInscribedRadius = 1e-5
 PoreGeometry = Sphere
-ThroatRadius = 1e-6
+ThroatInscribedRadius = 1e-6
 ThroatLength = 1e-4
 
 BoundaryFaceMarker = 2 3 1 1 1 1
@@ -28,9 +28,9 @@ Sanitize = true
 UpperRight = 1e-3 1e-3
 NumPores = 5 5
 
-PoreRadius = 1e-5
+PoreInscribedRadius = 1e-5
 PoreGeometry = Cube
-ThroatRadius = 1e-6
+ThroatInscribedRadius = 1e-6
 ThroatLength = 1e-4
 
 BoundaryFaceMarker = 2 3 1 1
@@ -50,10 +50,10 @@ Sanitize = true
 UpperRight = 1e-3
 NumPores = 20
 
-PoreRadius = 1e-5
+PoreInscribedRadius = 1e-5
 PoreGeometry = Cylinder
 PoreHeight = 1e-5
-ThroatRadius = 1e-6
+ThroatInscribedRadius = 1e-6
 ThroatLength = 1e-4
 
 BoundaryFaceMarker = 1 1

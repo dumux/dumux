@@ -140,9 +140,9 @@ public:
         {
             const int eIdx = gridView.indexSet().index(element);
             const auto& params = gridData.parameters(element);
-            static const auto throatRadiusIdx = gridData.parameterIndex("ThroatRadius");
+            static const auto throatInscribedRadiusIdx = gridData.parameterIndex("ThroatInscribedRadius");
             static const auto throatLengthIdx = gridData.parameterIndex("ThroatLength");
-            throatInscribedRadius_[eIdx] = params[throatRadiusIdx];
+            throatInscribedRadius_[eIdx] = params[throatInscribedRadiusIdx];
             throatLength_[eIdx] = params[throatLengthIdx];
 
             // use a default value if no throat label is given by the grid

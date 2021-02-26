@@ -29,7 +29,7 @@
 #include <vector>
 #include <dune/grid/io/file/vtk.hh>
 
-namespace Dumux {
+namespace Dumux::PoreNetwork {
 
 //! Extract the vertex parameters from a pore network.
 template<class GridView, class GridData>
@@ -99,6 +99,6 @@ void writeToVtk(const std::string& fileName, const GridView& gridView, const Gri
     vtkWriter.write(fileName);
 }
 
-} // end namespace Dumux
+} // end namespace Dumux::PoreNetwork
 
 #endif

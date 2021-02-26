@@ -25,8 +25,8 @@
           1 1 2 1 3 1 1 2 3 1 1
         </DataArray>
       </PointData>
-      <CellData Scalars="throatRadius">
-        <DataArray type="Float32" Name="throatRadius" NumberOfComponents="1" format="ascii">
+      <CellData Scalars="throatInscribedRadius">
+        <DataArray type="Float32" Name="throatInscribedRadius" NumberOfComponents="1" format="ascii">
           4.11658e-06 4.70756e-06 4.31042e-06 6.9563e-06 5.16132e-06 5.18517e-06 4.31144e-06 5.7185e-06 4.31344e-06 7.44744e-06 4.12163e-06 5.61949e-06
           7.21941e-06 7.20563e-06 8.31374e-06 7.59153e-06 7.33705e-06 6.99583e-06 5.75207e-06 7.54291e-06 4.31091e-06 4.10902e-06 5.81255e-06 8.10476e-06
           8.10679e-06 5.18072e-06 1.22845e-05 4.10978e-06 5.08512e-06 7.11641e-06 7.20984e-06 7.21875e-06 6.25225e-06 4.9708e-06 6.30755e-06 6.10565e-06

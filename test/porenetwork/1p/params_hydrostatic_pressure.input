@@ -4,8 +4,8 @@ ThroatCrossSectionShape = Square
 
 UpperRight = 1e-3 1e-3 1e-3
 NumPores = 4 4 4
-PoreRadius = 2e-5
-ThroatRadius = 2e-6
+PoreInscribedRadius = 2e-5
+ThroatInscribedRadius = 2e-6
 BoundaryFaceMarker = 1 1 1 1 2 1
 PriorityList = 4 5 0 1 2 3
 

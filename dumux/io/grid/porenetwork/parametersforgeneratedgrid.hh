@@ -194,15 +194,15 @@ public:
         }
 
         // treat throat parameters
-        auto defaultThroatRadius = throatRadiusGenerator_(-1, getParameter);
+        auto defaultThroatInscribedRadius = throatInscribedRadiusGenerator_(-1, getParameter);
         auto defaultThroatLength = throatLengthGenerator_(-1, getParameter);
 
         // get helper functions for throat radii and lengths on subregions
-        std::vector<decltype(defaultThroatRadius)> subregionThroatRadius;
+        std::vector<decltype(defaultThroatInscribedRadius)> subregionThroatInscribedRadius;
         std::vector<decltype(defaultThroatLength)> subregionThroatLength;
         for (int i = 0; i < numSubregions; ++i)
         {
-            subregionThroatRadius.emplace_back(throatRadiusGenerator_(i, getParameter));
+            subregionThroatInscribedRadius.emplace_back(throatInscribedRadiusGenerator_(i, getParameter));
             subregionThroatLength.emplace_back(throatLengthGenerator_(i, getParameter));
         }
 
@@ -211,14 +211,14 @@ public:
         {
             if (numSubregions == 0) // assign values if no subregions are specified
             {
-                setParameter(element, "ThroatRadius", defaultThroatRadius(element));
+                setParameter(element, "ThroatInscribedRadius", defaultThroatInscribedRadius(element));
                 setParameter(element, "ThroatLength", defaultThroatLength(element));
             }
             else // assign values to throats if they are within a subregion
             {
                 // default value for elements not belonging to a subregion
                 setParameter(element, "ThroatRegionId", -1);
-                setParameter(element, "ThroatRadius", defaultThroatRadius(element));
+                setParameter(element, "ThroatInscribedRadius", defaultThroatInscribedRadius(element));
                 setParameter(element, "ThroatLength", defaultThroatLength(element));
 
                 for (int id = 0; id < numSubregions; ++id)
@@ -227,7 +227,7 @@ public:
                     if (intersectsPointGeometry(element.geometry().center(), subregion))
                     {
                         setParameter(element, "ThroatRegionId", id);
-                        setParameter(element, "ThroatRadius", subregionThroatRadius[id](element));
+                        setParameter(element, "ThroatInscribedRadius", subregionThroatInscribedRadius[id](element));
                         setParameter(element, "ThroatLength", subregionThroatLength[id](element));
                     }
                 }
@@ -435,7 +435,7 @@ private:
             };
         };
 
-        const Scalar fixedPoreRadius = getParamFromGroup<Scalar>(paramGroup_, prefix + "PoreRadius", -1.0);
+        const Scalar fixedPoreRadius = getParamFromGroup<Scalar>(paramGroup_, prefix + "PoreInscribedRadius", -1.0);
         // return random radius according to a user-specified distribution
         if (fixedPoreRadius <= 0.0)
         {
@@ -443,12 +443,13 @@ private:
             const auto seed = getParamFromGroup<unsigned int>(paramGroup_, prefix + "ParameterRandomNumberSeed", std::random_device{}());
             generator.seed(seed);
 
-            const auto type = getParamFromGroup<std::string>(paramGroup_, prefix + "ParameterType");
+            const auto type = getParamFromGroup<std::string>(paramGroup_, prefix + "ParameterType", "lognormal");
             if (type == "lognormal")
             {
                 // if we use a lognormal distribution, get the mean and standard deviation from input file
-                const Scalar meanPoreRadius = getParamFromGroup<Scalar>(paramGroup_, prefix + "MeanPoreRadius");
-                const Scalar stddevPoreRadius = getParamFromGroup<Scalar>(paramGroup_, prefix + "StandardDeviationPoreRadius");
+                const auto [meanPoreRadius, stddevPoreRadius] = getDistributionInputParams_("Lognormal", prefix,
+                                                                                            "MeanPoreInscribedRadius",
+                                                                                            "StandardDeviationPoreInscribedRadius");
                 const Scalar variance = stddevPoreRadius*stddevPoreRadius;
 
                 using std::log;
@@ -462,12 +463,11 @@ private:
             else if (type == "uniform")
             {
                 // if we use a uniform distribution, get the min and max from input file
-                const Scalar minPoreRadius = getParamFromGroup<Scalar>(paramGroup_, prefix + "MinPoreRadius");
-                const Scalar maxPoreRadius = getParamFromGroup<Scalar>(paramGroup_, prefix + "MaxPoreRadius");
-
+                const auto [minPoreRadius, maxPoreRadius] = getDistributionInputParams_("Uniform", prefix,
+                                                                                        "MinPoreInscribedRadius",
+                                                                                        "MaxPoreInscribedRadius");
                 Dumux::SimpleUniformDistribution<> poreRadiusDist(minPoreRadius, maxPoreRadius);
                 return generateFunction(poreRadiusDist);
-
             }
             else
                 DUNE_THROW(Dune::InvalidStateException, "Unknown parameter type " << type);
@@ -478,6 +478,26 @@ private:
         {
             auto poreRadiusDist = [fixedPoreRadius](auto& gen){ return fixedPoreRadius; };
             return generateFunction(poreRadiusDist);
+        }
+    }
+
+    // print helpful error message if params are not properly provided
+    std::array<Scalar, 2> getDistributionInputParams_(const std::string& distributionName,
+                                                      const std::string& prefix,
+                                                      const std::string& paramName0,
+                                                      const std::string& paramName1) const
+    {
+        try
+        {
+            return std::array{getParamFromGroup<Scalar>(paramGroup_, prefix + paramName0),
+                              getParamFromGroup<Scalar>(paramGroup_, prefix + paramName1)};
+        }
+        catch (const Dumux::ParameterException& e)
+        {
+            std::cout << "\n" << distributionName << " pore-size distribution needs input parameters "
+                      << prefix + paramName0 << " and " << prefix + paramName1 << ".\n"
+                      << "Alternatively, use " << prefix << "PoreInscribedRadius to set a fixed inscribed pore radius." << std::endl;
+            DUNE_THROW(Dumux::ParameterException, e.what());
         }
     }
 
@@ -531,16 +551,16 @@ private:
 
     // returns a lambda taking a element and returning a radius
     template <class GetParameter>
-    auto throatRadiusGenerator_(const int subregionId, const GetParameter& getParameter) const
+    auto throatInscribedRadiusGenerator_(const int subregionId, const GetParameter& getParameter) const
     {
         // adapt the parameter name if there are subregions
         const std::string prefix = subregionId < 0 ? "Grid." : "Grid.Subregion" + std::to_string(subregionId) + ".";
 
         // check for a user-specified fixed throat radius
-        const Scalar inputThroatRadius = getParamFromGroup<Scalar>(paramGroup_, prefix + "ThroatRadius", -1.0);
+        const Scalar inputThroatInscribedRadius = getParamFromGroup<Scalar>(paramGroup_, prefix + "ThroatInscribedRadius", -1.0);
 
         // shape parameter for calculation of throat radius
-        const Scalar throatN = getParamFromGroup<Scalar>(paramGroup_, prefix + "ThroatRadiusN", 0.1);
+        const Scalar throatN = getParamFromGroup<Scalar>(paramGroup_, prefix + "ThroatInscribedRadiusN", 0.1);
 
         return [=](const Element& element)
         {
@@ -548,8 +568,8 @@ private:
             const std::array<Vertex, 2> vertices = {element.template subEntity<dim>(0), element.template subEntity<dim>(1)};
 
             // the element parameters (throat radius and length)
-            if (inputThroatRadius > 0.0)
-                return inputThroatRadius;
+            if (inputThroatInscribedRadius > 0.0)
+                return inputThroatInscribedRadius;
             else
             {
                 const Scalar poreRadius0 = getParameter(vertices[0], "PoreInscribedRadius");
