@@ -1,0 +1,246 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
+/*****************************************************************************
+ *   See the file COPYING for full copying permissions.                      *
+ *                                                                           *
+ *   This program is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation, either version 3 of the License, or       *
+ *   (at your option) any later version.                                     *
+ *                                                                           *
+ *   This program is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   GNU General Public License for more details.                            *
+ *                                                                           *
+ *   You should have received a copy of the GNU General Public License       *
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ *****************************************************************************/
+/*!
+ * \file
+ * \ingroup PorousmediumflowModels
+ * \brief Sub-control entity-local evaluation of the operators
+ *        within in the systems of equations of m-phase-n-component models.
+ */
+#ifndef DUMUX_FV_COMPOSITIONAL_OPERATORS_HH
+#define DUMUX_FV_COMPOSITIONAL_OPERATORS_HH
+
+#include <type_traits>
+
+#include <dumux/assembly/fv/operators.hh>
+#include <dumux/discretization/extrusion.hh>
+#include <dumux/porousmediumflow/nonisothermal/operators.hh>
+
+namespace Dumux {
+
+/*!
+ * \ingroup PorousmediumflowModels
+ * \brief Sub-control entity-local evaluation of the operators
+ *        within in the systems of equations of m-phase-n-component models.
+ * \tparam ModelTraits defines model-related types and variables (e.g. number of phases)
+ * \tparam FluxVariables the type that is responsible for computing the individual
+ *                       flux contributions, i.e., advective, diffusive, convective...
+ * \tparam LocalContext the type of element-local context (primary/secondary variables)
+ * \tparam EnergyOperators optional template argument, specifying the class that
+ *                         handles the operators related to non-isothermal effects.
+ *                         These are assumed to be taken into account by the model
+ *                         if this template argument is other than void.
+ */
+template<class ModelTraits, class FluxVariables, class LocalContext,
+         class EnergyOperators = Impl::DefaultEnergyOperators<ModelTraits, LocalContext>>
+class FVCompositionalOperators
+: public FVOperators<LocalContext>
+{
+    using ParentType = FVOperators<LocalContext>;
+
+    // The variables required for the evaluation of the equation
+    using ElementVariables = typename LocalContext::ElementVariables;
+    using GridVariables = typename ElementVariables::GridVariables;
+    using VolumeVariables = typename GridVariables::GridVolumeVariables::VolumeVariables;
+    using FluidSystem = typename VolumeVariables::FluidSystem;
+
+    // The grid geometry on which the scheme operates
+    using GridGeometry = typename GridVariables::GridGeometry;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
+
+    using GridView = typename GridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using Problem = std::decay_t<decltype(std::declval<GridVariables>().gridVolVars().problem())>;
+    using Indices = typename ModelTraits::Indices;
+
+    static constexpr int numPhases = ModelTraits::numFluidPhases();
+    static constexpr int numComponents = ModelTraits::numFluidComponents();
+    static constexpr int conti0EqIdx = ModelTraits::Indices::conti0EqIdx;
+    static constexpr bool isNonIsothermal = !std::is_same_v<EnergyOperators, void>;
+    static constexpr bool useMoles = ModelTraits::useMoles();
+
+    //! The index of the component balance equation that gets replaced with the total mass balance
+    static constexpr int replaceCompEqIdx = ModelTraits::replaceCompEqIdx();
+    static constexpr bool useTotalMoleOrMassBalance = replaceCompEqIdx < numComponents;
+
+public:
+    //! export the type used to store scalar values for all equations
+    using typename ParentType::NumEqVector;
+
+    // export the types of the flux/source/storage terms
+    using typename ParentType::FluxTerm;
+    using typename ParentType::SourceTerm;
+    using typename ParentType::StorageTerm;
+
+    /*!
+     * \brief Compute the storage term of the equations for the given sub-control volume
+     * \param problem The problem to be solved (could store additionally required quantities)
+     * \param scv The sub-control volume
+     * \param context The element-local context (primary/secondary variables)
+     */
+     static StorageTerm storage(const Problem& problem,
+                                const SubControlVolume& scv,
+                                const LocalContext& context)
+    {
+        const auto& volVars = context.elementVariables().elemVolVars()[scv];
+
+        StorageTerm storage(0.0);
+
+        const auto massOrMoleDensity = [](const auto& volVars, const int phaseIdx)
+        { return useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };
+
+        const auto massOrMoleFraction= [](const auto& volVars, const int phaseIdx, const int compIdx)
+        { return useMoles ? volVars.moleFraction(phaseIdx, compIdx) : volVars.massFraction(phaseIdx, compIdx); };
+
+        // compute storage term of all components within all phases
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            {
+                auto eqIdx = conti0EqIdx + compIdx;
+                if (eqIdx != replaceCompEqIdx)
+                    storage[eqIdx] += volVars.porosity()
+                                      * volVars.saturation(phaseIdx)
+                                      * massOrMoleDensity(volVars, phaseIdx)
+                                      * massOrMoleFraction(volVars, phaseIdx, compIdx);
+            }
+
+            // in case one balance is substituted by the total mole balance
+            if (useTotalMoleOrMassBalance)
+                storage[replaceCompEqIdx] += massOrMoleDensity(volVars, phaseIdx)
+                                             * volVars.porosity()
+                                             * volVars.saturation(phaseIdx);
+
+            //! The energy storage in the fluid phase with index phaseIdx
+            if constexpr (isNonIsothermal)
+                EnergyOperators::addFluidPhaseStorage(storage, scv, context, phaseIdx);
+        }
+
+        //! The energy storage in the solid matrix
+        if constexpr (isNonIsothermal)
+            EnergyOperators::addSolidPhaseStorage(storage, scv, context);
+
+        // multiply with volume
+        storage *= Extrusion::volume(scv)*volVars.extrusionFactor();
+
+        return storage;
+    }
+
+    /*!
+     * \brief Compute the flux term of the equations for the given sub-control volume face
+     * \param problem The problem to be solved (could store additionally required quantities)
+     * \param element The grid element
+     * \param fvGeometry The element-local view on the finite volume grid geometry
+     * \param context The element-local context (primary/secondary variables)
+     * \param scvf The sub-control volume face for which the flux term is to be computed
+     */
+    static FluxTerm flux(const Problem& problem,
+                         const Element& element,
+                         const FVElementGeometry& fvGeometry,
+                         const LocalContext& context,
+                         const SubControlVolumeFace& scvf)
+    {
+        const auto& elemVolVars = context.elementVariables().elemVolVars();
+        const auto& elemFluxVarsCache = context.elementVariables().elemFluxVarsCache();
+
+        FluxVariables fluxVars;
+        fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+        static constexpr auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
+
+        // get upwind weights into local scope
+        FluxTerm flux(0.0);
+
+        const auto massOrMoleDensity = [](const auto& volVars, const int phaseIdx)
+        { return useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };
+
+        const auto massOrMoleFraction= [](const auto& volVars, const int phaseIdx, const int compIdx)
+        { return useMoles ? volVars.moleFraction(phaseIdx, compIdx) : volVars.massFraction(phaseIdx, compIdx); };
+
+        // advective fluxes
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            const auto diffusiveFluxes = fluxVars.molecularDiffusionFlux(phaseIdx);
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            {
+                // get equation index
+                const auto eqIdx = conti0EqIdx + compIdx;
+
+                // the physical quantities for which we perform upwinding
+                const auto upwindTerm = [&massOrMoleDensity, &massOrMoleFraction, phaseIdx, compIdx] (const auto& volVars)
+                { return massOrMoleDensity(volVars, phaseIdx)*massOrMoleFraction(volVars, phaseIdx, compIdx)*volVars.mobility(phaseIdx); };
+
+                if (eqIdx != replaceCompEqIdx)
+                    flux[eqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
+
+                // diffusive fluxes (only for the component balances)
+                if(eqIdx != replaceCompEqIdx)
+                {
+                    //check for the reference system and adapt units of the diffusive flux accordingly.
+                    if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+                        flux[eqIdx] += useMoles ? diffusiveFluxes[compIdx]/FluidSystem::molarMass(compIdx)
+                                            : diffusiveFluxes[compIdx];
+                    else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
+                        flux[eqIdx] += useMoles ? diffusiveFluxes[compIdx]
+                                            : diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
+                    else
+                        DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
+                }
+            }
+
+            // in case one balance is substituted by the total mole balance
+            if (useTotalMoleOrMassBalance)
+            {
+                // the physical quantities for which we perform upwinding
+                const auto upwindTerm = [&massOrMoleDensity, phaseIdx] (const auto& volVars)
+                { return massOrMoleDensity(volVars, phaseIdx)*volVars.mobility(phaseIdx); };
+
+                flux[replaceCompEqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
+
+                for(int compIdx = 0; compIdx < numComponents; ++compIdx)
+                {
+                    //check for the reference system and adapt units of the diffusive flux accordingly.
+                    if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+                        flux[replaceCompEqIdx] += useMoles ? diffusiveFluxes[compIdx]/FluidSystem::molarMass(compIdx) : diffusiveFluxes[compIdx];
+                    else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
+                        flux[replaceCompEqIdx] += useMoles ? diffusiveFluxes[compIdx]
+                                                : diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
+                    else
+                        DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
+                }
+            }
+
+            //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
+            if constexpr (isNonIsothermal)
+                EnergyOperators::addHeatConvectionFlux(flux, fluxVars, phaseIdx);
+        }
+
+        //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
+        if constexpr (isNonIsothermal)
+            EnergyOperators::addHeatConductionFlux(flux, fluxVars);
+
+        return flux;
+    }
+};
+
+} // end namespace Dumux
+
+#endif
