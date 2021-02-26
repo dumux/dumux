@@ -38,7 +38,7 @@
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
 
-#include "problem.hh"
+#include "properties.hh"
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
