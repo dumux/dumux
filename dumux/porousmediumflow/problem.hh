@@ -34,10 +34,11 @@ namespace Dumux {
  *
  * TODO: derive from base problem property?
  */
-template<class TypeTag>
-class PorousMediumFlowProblem : public FVProblem<TypeTag>
+template<class TypeTag,
+         class BaseProblem = FVProblem<TypeTag>>
+class PorousMediumFlowProblem : public BaseProblem
 {
-    using ParentType = FVProblem<TypeTag>;
+    using ParentType = BaseProblem;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
 
@@ -139,6 +140,15 @@ protected:
     std::shared_ptr<SpatialParams> spatialParams_;
 };
 
+namespace Experimental {
+
+//! Experimental problem implementation compatible with new time integration
+//! schemes and corresponding assembly.
+template<class TypeTag>
+using PorousMediumFlowProblem
+    = Dumux::PorousMediumFlowProblem<TypeTag, Experimental::FVProblem<TypeTag>>;
+
+} // end namespace Experimental
 } // end namespace Dumux
 
 #endif
