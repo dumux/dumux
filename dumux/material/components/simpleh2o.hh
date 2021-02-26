@@ -122,7 +122,7 @@ public:
 
         using std::sqrt;
         const Scalar term = Scalar(2.0)*C/(sqrt(B*B - Scalar(4.0)*A*C) - B);
-        
+
         return Scalar(1e6)*term*term*term*term;
     }
 
@@ -134,7 +134,10 @@ public:
      */
     static const Scalar gasEnthalpy(Scalar temperature,
                                     Scalar pressure)
-    { return 1976*(temperature - 293.15) + 2.45e6; }
+    {
+        static const Scalar tRef = getParam<Scalar>("SimpleH2O.ReferenceTemperature", 293.15);
+        return 1976*(temperature - tRef) + 2.45e6;
+    }
 
     /*!
      * \brief Specific enthalpy of liquid water \f$\mathrm{[J/kg]}\f$.
@@ -145,7 +148,8 @@ public:
     static const Scalar liquidEnthalpy(Scalar temperature,
                                        Scalar pressure)
     {
-        return liquidHeatCapacity(temperature, pressure)*(temperature - 293.15);
+        static const Scalar tRef = getParam<Scalar>("SimpleH2O.ReferenceTemperature", 293.15);
+        return liquidHeatCapacity(temperature, pressure)*(temperature - tRef);
     }
 
     /*!
