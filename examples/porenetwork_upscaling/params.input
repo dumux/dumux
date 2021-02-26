@@ -10,8 +10,8 @@ UpperRight = 4e-4 4e-4 4e-4
 NumPores = 20 20 20
 
 ParameterType = lognormal
-MeanPoreRadius = 1e-5
-StandardDeviationPoreRadius = 4e-6
+MeanPoreInscribedRadius = 1e-5
+StandardDeviationPoreInscribedRadius = 4e-6
 PoreGeometry = Sphere
 ThroatCrossSectionShape = Square
 ParameterRandomNumberSeed = 1

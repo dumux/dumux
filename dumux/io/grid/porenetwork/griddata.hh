@@ -247,7 +247,7 @@ public:
             else if (paramName.find("Pore") != std::string::npos)
                 msg = "Make sure to include it in the vector of parameter names VertexParameters = " + paramName + " ... ...";
 
-            DUNE_THROW(Dumux::ParameterException, paramName << " not set in the grid or input file. \n" << msg << "\n" << list.str());
+            DUNE_THROW(Dumux::ParameterException, paramName << " not set in the grid file. \n" << msg << "\n" << list.str());
         }
     }
 
@@ -317,7 +317,7 @@ private:
         if (!isDgfData_)
         {
             vertexParameterNames_ = StringVector{"PoreInscribedRadius", "PoreVolume", "PoreLabel"};
-            elementParameterNames_ = StringVector{"ThroatRadius", "ThroatLength", "ThroatLabel"};
+            elementParameterNames_ = StringVector{"ThroatInscribedRadius", "ThroatLength", "ThroatLabel"};
             if (numSubregions_ > 0)
             {
                 vertexParameterNames_.push_back("PoreRegionId");

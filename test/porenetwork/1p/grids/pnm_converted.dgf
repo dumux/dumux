@@ -1,6 +1,6 @@
 DGF
 % Vertex parameters: PoreInscribedRadius PoreLabel
-% Element parameters: ThroatRadius ThroatLength ThroatLabel
+% Element parameters: ThroatInscribedRadius ThroatLength ThroatLabel
 Vertex % Coordinates and volumes of the pore bodies
 parameters 2
 1 1 4 0.0002263 2.0

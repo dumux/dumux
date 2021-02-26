@@ -6,7 +6,7 @@ WriteVTK = false
 UpperRight = 1e-3 1e-3
 NumPores = 5 5
 
-PoreRadius = 1e-4
+PoreInscribedRadius = 1e-4
 ThroatRadius = 1e-5
 PoreGeometry = Sphere
 
