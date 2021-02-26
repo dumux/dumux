@@ -35,6 +35,7 @@
 #include <dumux/common/dumuxmessage.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/pdesolver.hh>
 #include <dumux/assembly/fvassembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
@@ -107,14 +108,15 @@ int main(int argc, char** argv)
     //! the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::analytic, IMPLICIT>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
-    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
-    auto A = std::make_shared<JacobianMatrix>();
-    auto r = std::make_shared<SolutionVector>();
-    assembler->setLinearSystem(A, r);
 
     //! the linear solver
     using LinearSolver = UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
+
+    //! pde solver (assemble, solve, update)
+    LinearPDESolver solver(assembler, linearSolver);
+    assembler->assembleJacobianAndResidual(x);
+    solver.reuseMatrix();
 
     //! intialize the vtk output module
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
@@ -135,30 +137,8 @@ int main(int argc, char** argv)
     timeLoop->start();
     while (!timeLoop->finished())
     {
-        Dune::Timer assembleTimer;
-        assembler->assembleJacobianAndResidual(x);
-        assembleTimer.stop();
-
-        // solve the linear system A(xOld-xNew) = r
-        Dune::Timer solveTimer;
-        SolutionVector xDelta(x);
-        linearSolver->solve(*A, xDelta, *r);
-        solveTimer.stop();
-
-        // update solution and grid variables
-        Dune::Timer updateTimer;
-        x -= xDelta;
-        gridVariables->update(x);
-        updateTimer.stop();
-
-        // statistics
-        const auto elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
-        if (mpiHelper.rank() == 0)
-            std::cout << "Assemble/solve/update time: "
-                      <<  assembleTimer.elapsed() << "(" << 100*assembleTimer.elapsed()/elapsedTot << "%)/"
-                      <<  solveTimer.elapsed() << "(" << 100*solveTimer.elapsed()/elapsedTot << "%)/"
-                      <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"
-                      <<  std::endl;
+        // assemble & solve & update
+        solver.solve(x);
 
         // make the new solution the old solution
         xOld = x;
