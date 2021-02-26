@@ -24,75 +24,13 @@
 #ifndef DUMUX_TWOPNC_DIFFUSION_PROBLEM_HH
 #define DUMUX_TWOPNC_DIFFUSION_PROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
-
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
 
-#include <dumux/discretization/cctpfa.hh>
-#include <dumux/discretization/ccmpfa.hh>
-#include <dumux/porousmediumflow/2pnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/material/fluidsystems/h2on2.hh>
-
-#include "spatialparams.hh"
-#include <dumux/flux/maxwellstefanslaw.hh>
-
-#ifndef DIFFUSIONTYPE // default to Fick's law if not set through CMake
-#define DIFFUSIONTYPE FicksLaw<TypeTag>
-#endif
 
 namespace Dumux {
-
-template <class TypeTag>
-class TwoPNCDiffusionProblem;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct TwoPNCDiffusion { using InheritsFrom = std::tuple<TwoPNC>; };
-struct TwoPNCDiffusionCC { using InheritsFrom = std::tuple<TwoPNCDiffusion, CCTpfaModel>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::TwoPNCDiffusion> { using type = Dune::YaspGrid<2>; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::TwoPNCDiffusion> { using type = TwoPNCDiffusionProblem<TypeTag>; };
-
-// // Set fluid configuration
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::TwoPNCDiffusion>
-{
-    using type = FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>,
-                                     FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
-};
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::TwoPNCDiffusion>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = TwoPNCDiffusionSpatialParams<GridGeometry, Scalar>;
-};
-
-// Define whether mole(true) or mass (false) fractions are used
-template<class TypeTag>
-struct UseMoles<TypeTag, TTag::TwoPNCDiffusion> { static constexpr bool value = true; };
-
-//! Here we set FicksLaw or TwoPNCDiffusionsLaw
-template<class TypeTag>
-struct MolecularDiffusionType<TypeTag, TTag::TwoPNCDiffusion> { using type = DIFFUSIONTYPE; };
-
-//! Set the default formulation to pw-Sn: This can be over written in the problem.
-template<class TypeTag>
-struct Formulation<TypeTag, TTag::TwoPNCDiffusion>
-{ static constexpr auto value = TwoPFormulation::p0s1; };
-
-} // end namespace Properties
-
 
 /*!
  * \ingroup TwoPNCTests
@@ -257,8 +195,6 @@ private:
     static constexpr Scalar eps_ = 1e-6;
 
    std::string name_ ;
-
-
 };
 
 } // end namespace Dumux
