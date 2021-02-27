@@ -23,9 +23,6 @@
  */
 
 #include <config.h>
-
-#include "problem.hh"
-
 #include <ctime>
 #include <iostream>
 
@@ -47,6 +44,8 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
+
+#include "properties.hh"
 
 int main(int argc, char** argv)
 {

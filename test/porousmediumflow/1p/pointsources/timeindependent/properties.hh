@@ -19,73 +19,63 @@
 /*!
  * \file
  * \ingroup OnePTests
- * \brief The properties for the convergence test with analytic solution
+ * \brief A test problem for the one-phase model:
+ * Water is injected in one single point in the middle of the domain.
  */
-#ifndef DUMUX_CONVERGENCE_TEST_ONEP_PROPERTIES_HH
-#define DUMUX_CONVERGENCE_TEST_ONEP_PROPERTIES_HH
+#ifndef DUMUX_1P_SINGULARITY_PROBLEM_PROPERTIES_HH
+#define DUMUX_1P_SINGULARITY_PROBLEM_PROPERTIES_HH
 
-#include <dune/grid/yaspgrid.hh>
 #if HAVE_UG
 #include <dune/grid/uggrid.hh>
 #endif
+#include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/cctpfa.hh>
-#include <dumux/discretization/ccmpfa.hh>
 #include <dumux/discretization/box.hh>
-
-#include <dumux/material/components/constant.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/porousmediumflow/1p/model.hh>
 
-#include "spatialparams.hh"
-#include "problem.hh"
+#include <dumux/material/components/simpleh2o.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
+#include <dumux/material/spatialparams/fv1pconstant.hh>
 
-#ifndef GRIDTYPE
-#define GRIDTYPE Dune::YaspGrid<2>
+#ifndef GRIDTYPE // default to yasp grid if not provided by CMake
+#define GRIDTYPE Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >
 #endif
 
+#include "problem.hh"
 namespace Dumux::Properties {
-
 // Create new type tags
 namespace TTag {
-struct OnePConvergence { using InheritsFrom = std::tuple<OneP>; };
-struct OnePConvergenceTpfa { using InheritsFrom = std::tuple<OnePConvergence, CCTpfaModel>; };
-struct OnePConvergenceMpfa { using InheritsFrom = std::tuple<OnePConvergence, CCMpfaModel>; };
-struct OnePConvergenceBox { using InheritsFrom = std::tuple<OnePConvergence, BoxModel>; };
+struct OnePSingularity { using InheritsFrom = std::tuple<OneP>; };
+struct OnePSingularityBox { using InheritsFrom = std::tuple<OnePSingularity, BoxModel>; };
+struct OnePSingularityCCTpfa { using InheritsFrom = std::tuple<OnePSingularity, CCTpfaModel>; };
 } // end namespace TTag
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::OnePConvergence> { using type = Dumux::ConvergenceProblem<TypeTag>; };
 
 // the fluid system
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::OnePConvergence>
+struct FluidSystem<TypeTag, TTag::OnePSingularity>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::Constant<1, Scalar> > ;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 };
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePConvergence> { using type = GRIDTYPE; };
+struct Grid<TypeTag, TTag::OnePSingularity> { using type = GRIDTYPE; };
 
+// Set the problem property
 template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::OnePConvergence>
+struct Problem<TypeTag, TTag::OnePSingularity> { using type = OnePSingularityProblem<TypeTag> ; };
+
+// Set the spatial parameters
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::OnePSingularity>
 {
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = ConvergenceTestSpatialParams<GridGeometry, Scalar>;
+    using type = FVSpatialParamsOnePConstant<GridGeometry, Scalar>;
 };
 
-// Enable caching
-template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::OnePConvergence> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::OnePConvergence> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::OnePConvergence> { static constexpr bool value = true; };
-
-} // end namespace Dumux::Properties
+} // end namespace Dumux
 
 #endif

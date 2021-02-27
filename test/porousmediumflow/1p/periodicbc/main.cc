@@ -43,7 +43,7 @@
 
 #include <dumux/assembly/fvassembler.hh>
 
-#include "problem.hh"
+#include "properties.hh"
 
 int main(int argc, char** argv)
 {

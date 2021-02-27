@@ -32,8 +32,8 @@
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 
-#include "problem_conduction.hh"
-#include "problem_convection.hh"
+#include "properties_conduction.hh"
+#include "properties_convection.hh"
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
