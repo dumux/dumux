@@ -29,6 +29,7 @@
 
 #include <dune/common/timer.hh>
 #include <dune/geometry/quadraturerules.hh>
+#include <dune/grid/common/capabilities.hh>
 
 #include <dumux/common/tag.hh>
 #include <dumux/common/properties.hh>
@@ -44,15 +45,6 @@ namespace Dumux {
 namespace Embedded1d3dCouplingMode {
 struct Kernel : public Utility::Tag<Kernel> {
     static std::string name() { return "kernel"; }
-
-    [[deprecated("Comparison with enum is deprecated. Removed after 3.3. Use tags.")]]
-    friend constexpr bool operator==(Kernel, EmbeddedCouplingMode m) { return m == EmbeddedCouplingMode::kernel; }
-    [[deprecated("Comparison with enum is deprecated. Removed after 3.3. Use tags.")]]
-    friend constexpr bool operator==(EmbeddedCouplingMode m, Kernel) { return m == EmbeddedCouplingMode::kernel; }
-    [[deprecated("Comparison with enum is deprecated. Removed after 3.3. Use tags.")]]
-    friend constexpr bool operator!=(Kernel, EmbeddedCouplingMode m) { return m != EmbeddedCouplingMode::kernel; }
-    [[deprecated("Comparison with enum is deprecated. Removed after 3.3. Use tags.")]]
-    friend constexpr bool operator!=(EmbeddedCouplingMode m, Kernel) { return m != EmbeddedCouplingMode::kernel; }
 };
 
 inline constexpr Kernel kernel{};

@@ -37,21 +37,13 @@
 #include <dumux/multidomain/embedded/couplingmanagerbase.hh>
 #include <dumux/multidomain/embedded/circlepoints.hh>
 #include <dumux/multidomain/embedded/circleaveragepointsourcetraits.hh>
+#include <dumux/multidomain/embedded/extendedsourcestencil.hh>
 
 namespace Dumux {
 
 namespace Embedded1d3dCouplingMode {
 struct Surface : public Utility::Tag<Surface> {
     static std::string name() { return "surface"; }
-
-    [[deprecated("Comparison with enum is deprecated. Removed after 3.3. Use tags.")]]
-    friend constexpr bool operator==(Surface, EmbeddedCouplingMode m) { return m == EmbeddedCouplingMode::cylindersources; }
-    [[deprecated("Comparison with enum is deprecated. Removed after 3.3. Use tags.")]]
-    friend constexpr bool operator==(EmbeddedCouplingMode m, Surface) { return m == EmbeddedCouplingMode::cylindersources; }
-    [[deprecated("Comparison with enum is deprecated. Removed after 3.3. Use tags.")]]
-    friend constexpr bool operator!=(Surface, EmbeddedCouplingMode m) { return m != EmbeddedCouplingMode::cylindersources; }
-    [[deprecated("Comparison with enum is deprecated. Removed after 3.3. Use tags.")]]
-    friend constexpr bool operator!=(EmbeddedCouplingMode m, Surface) { return m != EmbeddedCouplingMode::cylindersources; }
 };
 
 inline constexpr Surface surface{};

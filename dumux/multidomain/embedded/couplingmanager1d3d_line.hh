@@ -38,15 +38,6 @@ namespace Dumux {
 namespace Embedded1d3dCouplingMode {
 struct Line : public Utility::Tag<Line> {
     static std::string name() { return "line"; }
-
-    [[deprecated("Comparison with enum is deprecated. Removed after 3.3. Use tags.")]]
-    friend constexpr bool operator==(Line, EmbeddedCouplingMode m) { return m == EmbeddedCouplingMode::line; }
-    [[deprecated("Comparison with enum is deprecated. Removed after 3.3. Use tags.")]]
-    friend constexpr bool operator==(EmbeddedCouplingMode m, Line) { return m == EmbeddedCouplingMode::line; }
-    [[deprecated("Comparison with enum is deprecated. Removed after 3.3. Use tags.")]]
-    friend constexpr bool operator!=(Line, EmbeddedCouplingMode m) { return m != EmbeddedCouplingMode::line; }
-    [[deprecated("Comparison with enum is deprecated. Removed after 3.3. Use tags.")]]
-    friend constexpr bool operator!=(EmbeddedCouplingMode m, Line) { return m != EmbeddedCouplingMode::line; }
 };
 
 inline constexpr Line line{};
