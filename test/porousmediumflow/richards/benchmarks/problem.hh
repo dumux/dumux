@@ -36,6 +36,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/io/format.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/simpleh2o.hh>
