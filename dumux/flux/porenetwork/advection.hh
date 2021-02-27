@@ -25,6 +25,9 @@
 #ifndef DUMUX_FLUX_PNM_ADVECTION_HH
 #define DUMUX_FLUX_PNM_ADVECTION_HH
 
+#include <array>
+#include <dumux/common/parameters.hh>
+
 namespace Dumux::PoreNetwork::Detail {
 
 template<class... TransmissibilityLawTypes>

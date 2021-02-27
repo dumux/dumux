@@ -32,6 +32,9 @@
 #include <vector>
 
 #include <dune/common/exceptions.hh>
+#include <dune/grid/common/exceptions.hh>
+#include <dune/geometry/axisalignedcubegeometry.hh>
+
 #include <dumux/common/parameters.hh>
 #include <dumux/common/random.hh>
 #include <dumux/geometry/intersectspointgeometry.hh>

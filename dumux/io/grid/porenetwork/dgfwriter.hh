@@ -26,6 +26,7 @@
 
 #include <string>
 #include <iostream>
+#include <fstream>
 
 namespace Dumux::PoreNetwork {
 

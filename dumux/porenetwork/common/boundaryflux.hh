@@ -25,7 +25,14 @@
 #define DUMUX_PNM_BOUNDARYFLUX_HH
 
 #include <algorithm>
+#include <numeric>
 #include <vector>
+#include <type_traits>
+#include <unordered_map>
+#include <string>
+#include <iostream>
+
+#include <dune/common/exceptions.hh>
 #include <dumux/common/typetraits/problem.hh>
 #include <dumux/discretization/box/elementboundarytypes.hh>
 

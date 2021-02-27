@@ -25,7 +25,12 @@
 #ifndef DUMUX_PNM_SPATIAL_PARAMS_BASE_HH
 #define DUMUX_PNM_SPATIAL_PARAMS_BASE_HH
 
+#include <type_traits>
+#include <memory>
+
 #include <dune/common/fvector.hh>
+
+#include <dumux/common/parameters.hh>
 
 namespace Dumux::PoreNetwork {
 

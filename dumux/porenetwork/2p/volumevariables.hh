@@ -25,6 +25,7 @@
 #ifndef DUMUX_PNM_2P_VOLUME_VARIABLES_HH
 #define DUMUX_PNM_2P_VOLUME_VARIABLES_HH
 
+#include <dumux/common/parameters.hh>
 #include <dumux/porousmediumflow/2p/volumevariables.hh>
 
 namespace Dumux::PoreNetwork {
