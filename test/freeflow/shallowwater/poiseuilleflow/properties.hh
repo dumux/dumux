@@ -23,11 +23,13 @@
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/shallowwater/model.hh>
 #include <dumux/discretization/cctpfa.hh>
-
+#include <dune/grid/yaspgrid.hh>
 #if HAVE_UG
 #include <dune/grid/uggrid.hh>
-#else
-#include <dune/grid/yaspgrid.hh>
+#endif
+
+#ifndef GRIDTYPE
+#define GRIDTYPE Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>
 #endif
 
 #include "problem.hh"
