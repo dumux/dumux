@@ -24,6 +24,7 @@
 #ifndef DUMUX_FREEFLOW_SHALLOW_WATER_LOCAL_RESIDUAL_HH
 #define DUMUX_FREEFLOW_SHALLOW_WATER_LOCAL_RESIDUAL_HH
 
+#include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 
 namespace Dumux{
@@ -99,7 +100,7 @@ public:
         flux += fluxVars.advectiveFlux(problem, element, fvGeometry, elemVolVars, scvf);
 
         // Compute viscous momentum flux contribution if required
-        static const bool enableViscousFlux = getParam<bool>("ShallowWater.EnableViscousFlux", false);
+        static const bool enableViscousFlux = getParamFromGroup<bool>(problem.paramGroup(), "ShallowWater.EnableViscousFlux", false);
         if (enableViscousFlux)
             flux += fluxVars.viscousFlux(problem, element, fvGeometry, elemVolVars, scvf);
         return flux;

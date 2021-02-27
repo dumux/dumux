@@ -27,6 +27,7 @@
 #define DUMUX_COMMON_STRING_UTILITIES_HH
 
 #include <vector>
+#include <string>
 #include <string_view>
 #include <tuple>
 

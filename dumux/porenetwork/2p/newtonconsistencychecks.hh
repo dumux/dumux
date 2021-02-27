@@ -27,6 +27,7 @@
 #include <vector>
 #include <iostream>
 #include <dune/common/exceptions.hh>
+#include <dumux/common/exceptions.hh>
 #include <dumux/discretization/localview.hh>
 
 namespace Dumux::PoreNetwork {

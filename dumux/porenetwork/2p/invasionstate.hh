@@ -28,6 +28,7 @@
 #include <type_traits>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/typetraits/isvalid.hh>
+#include <dumux/porenetwork/common/labels.hh>
 
 namespace Dumux::PoreNetwork {
 

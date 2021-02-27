@@ -27,7 +27,11 @@
 #include <cmath>
 #include <algorithm>
 #include <utility>
+#include <type_traits>
+
+#include <dumux/common/parameters.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
+#include <dumux/flux/shallowwater/fluxlimiterlet.hh>
 
 namespace Dumux {
 
@@ -37,7 +41,8 @@ namespace Dumux {
  *        by adding all surrounding shear stresses.
  *        For now implemented strictly for 2D depth-averaged models (i.e. 3 equations)
  */
-template<class PrimaryVariables, class NumEqVector, typename std::enable_if_t<NumEqVector::size() == 3, int> = 0>
+template<class PrimaryVariables, class NumEqVector,
+         typename std::enable_if_t<NumEqVector::size() == 3, int> = 0>
 class ShallowWaterViscousFlux
 {
 
@@ -112,10 +117,10 @@ public:
         const Scalar turbViscosity = [&,gradU=gradU,gradV=gradV]()
         {
             // The (constant) background turbulent viscosity
-            static const auto turbBGViscosity = getParam<Scalar>("ShallowWater.TurbulentViscosity", 1.0e-6);
+            static const auto turbBGViscosity = getParamFromGroup<Scalar>(problem.paramGroup(), "ShallowWater.TurbulentViscosity", 1.0e-6);
 
             // Check whether the mixing-length turbulence model is used
-            static const auto useMixingLengthTurbulenceModel = getParam<bool>("ShallowWater.UseMixingLengthTurbulenceModel", false);
+            static const auto useMixingLengthTurbulenceModel = getParamFromGroup<bool>(problem.paramGroup(), "ShallowWater.UseMixingLengthTurbulenceModel", false);
 
             // constant eddy viscosity equal to the prescribed background eddy viscosity
             if (!useMixingLengthTurbulenceModel)
@@ -124,8 +129,8 @@ public:
             // turbulence model based on mixing length
             // Compute the turbulent viscosity using a combined horizonal/vertical mixing length approach
             // Turbulence coefficients: vertical (Elder like) and horizontal (Smagorinsky like)
-            static const auto turbConstV = getParam<Scalar>("ShallowWater.VerticalCoefficientOfMixingLengthModel", 1.0);
-            static const auto turbConstH = getParam<Scalar>("ShallowWater.HorizontalCoefficientOfMixingLengthModel", 0.1);
+            static const auto turbConstV = getParamFromGroup<Scalar>(problem.paramGroup(), "ShallowWater.VerticalCoefficientOfMixingLengthModel", 1.0);
+            static const auto turbConstH = getParamFromGroup<Scalar>(problem.paramGroup(), "ShallowWater.HorizontalCoefficientOfMixingLengthModel", 0.1);
 
             /** The vertical (Elder-like) contribution to the turbulent viscosity scales with water depth \f[ h \f] and shear velocity \f[ u_{*} \f] :
             *
@@ -193,8 +198,8 @@ public:
         const auto vViscousFlux = turbViscosity * averageDepth * gradV;
 
         // compute the mobility of the flux with the fluxlimiter
-        static const auto upperWaterDepthFluxLimiting = getParam<double>("FluxLimiterLET.UpperWaterDepth", 1e-3);
-        static const auto lowerWaterDepthFluxLimiting = getParam<double>("FluxLimiterLET.LowerWaterDepth", 1e-5);
+        static const auto upperWaterDepthFluxLimiting = getParamFromGroup<double>(problem.paramGroup(), "FluxLimiterLET.UpperWaterDepth", 1e-3);
+        static const auto lowerWaterDepthFluxLimiting = getParamFromGroup<double>(problem.paramGroup(), "FluxLimiterLET.LowerWaterDepth", 1e-5);
 
         const auto limitingDepth = (waterDepthLeft + waterDepthRight) * 0.5;
         const auto mobility = ShallowWater::fluxLimiterLET(limitingDepth,

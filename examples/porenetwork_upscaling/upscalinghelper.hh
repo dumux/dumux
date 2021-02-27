@@ -25,6 +25,11 @@
 // This file contains the __upscaling helper struct__ which considers the volume flux leaving
 // the pore network in flow direction in order to find the upscaled Darcy permeability.
 // [[content]]
+#include <iostream>
+#include <ostream>
+#include <iomanip>
+#include <numeric>
+#include <functional>
 
 namespace Dumux {
 

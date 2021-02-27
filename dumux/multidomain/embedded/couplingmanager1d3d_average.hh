@@ -46,15 +46,6 @@ namespace Dumux {
 namespace Embedded1d3dCouplingMode {
 struct Average : public Utility::Tag<Average> {
     static std::string name() { return "average"; }
-
-    [[deprecated("Comparison with enum is deprecated. Removed after 3.3. Use tags.")]]
-    friend constexpr bool operator==(Average, EmbeddedCouplingMode m) { return m == EmbeddedCouplingMode::average; }
-    [[deprecated("Comparison with enum is deprecated. Removed after 3.3. Use tags.")]]
-    friend constexpr bool operator==(EmbeddedCouplingMode m, Average) { return m == EmbeddedCouplingMode::average; }
-    [[deprecated("Comparison with enum is deprecated. Removed after 3.3. Use tags.")]]
-    friend constexpr bool operator!=(Average, EmbeddedCouplingMode m) { return m != EmbeddedCouplingMode::average; }
-    [[deprecated("Comparison with enum is deprecated. Removed after 3.3. Use tags.")]]
-    friend constexpr bool operator!=(EmbeddedCouplingMode m, Average) { return m != EmbeddedCouplingMode::average; }
 };
 
 inline constexpr Average average{};

@@ -97,7 +97,7 @@ public:
         auto krw = swRange;
         auto krn = swRange;
         auto krg = swRange;
-        for (const auto& [i, sw] : enumerate(swRange))
+        for (const auto [i, sw] : enumerate(swRange))
         {
             const Scalar sn = 1.0 - sg - sw;
             krw[i] = pcKrSwCurve_.krw(sw, sn);

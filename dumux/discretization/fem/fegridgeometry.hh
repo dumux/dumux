@@ -25,6 +25,8 @@
 #ifndef DUMUX_DISCRETIZATION_FE_GRID_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_FE_GRID_GEOMETRY_HH
 
+#include <unordered_map>
+
 #include <dumux/common/indextraits.hh>
 #include <dumux/common/defaultmappertraits.hh>
 

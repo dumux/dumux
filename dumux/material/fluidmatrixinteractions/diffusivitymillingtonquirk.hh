@@ -25,6 +25,7 @@
 #define DUMUX_MATERIAL_DIFFUSIVITY_MILLINGTON_QUIRK_HH
 
 #include <cmath>
+#include <algorithm>
 
 namespace Dumux {
 

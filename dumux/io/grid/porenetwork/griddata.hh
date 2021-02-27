@@ -34,6 +34,8 @@
 #include <dune/common/exceptions.hh>
 #include <dune/grid/common/gridfactory.hh>
 #include <dune/grid/common/mcmgmapper.hh>
+#include <dune/grid/io/file/dgfparser/gridptr.hh>
+#include <dune/grid/io/file/dgfparser/parser.hh>
 #include <dune/grid/utility/persistentcontainer.hh>
 #include <dune/geometry/axisalignedcubegeometry.hh>
 

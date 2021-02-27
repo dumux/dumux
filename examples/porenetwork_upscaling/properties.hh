@@ -26,8 +26,7 @@
 // [[content]]
 // ### Includes
 // [[details]] includes
-#include <dune/grid/yaspgrid.hh> // for `Dune::YaspGrid`
-
+#include <dune/foamgrid/foamgrid.hh> // for `Dune::FoamGrid`
 
 // The `OneP` type tag specializes most of the `properties` required for single-
 // phase flow simulations in DuMu<sup>x</sup>. We will use this in the following to inherit the
