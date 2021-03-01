@@ -29,7 +29,7 @@
 #include <vector>
 #include <type_traits>
 #include <unordered_map>
-#include <string>
+#include <string_view>
 #include <iostream>
 
 #include <dune/common/exceptions.hh>
@@ -139,7 +139,7 @@ public:
      * \param coord x, y or z coordinate at which bBoxMin or bBoxMax is evaluated
      * \param verbose If set true, the fluxes at all individual SCVs are printed
      */
-    Result getFlux(const std::string minMax, const int coord, const bool verbose = false) const
+    Result getFlux(std::string_view minMax, const int coord, const bool verbose = false) const
     {
         if (!(minMax == "min" || minMax == "max"))
             DUNE_THROW(Dune::InvalidStateException,
