@@ -118,7 +118,6 @@ public:
     explicit SimpleNormalDistribution(Scalar mean, Scalar stddev = 1.0)
     : mean_(mean)
     , stddev_(stddev)
-    , isCached_(false)
     {}
 
     explicit SimpleNormalDistribution(const Parameters& p)
@@ -183,8 +182,8 @@ private:
 
     Scalar mean_;
     Scalar stddev_;
-    bool isCached_;
-    Scalar cachedValue_;
+    bool isCached_ = false;
+    Scalar cachedValue_ = {};
 };
 
 /*!
