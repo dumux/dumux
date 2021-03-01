@@ -28,7 +28,6 @@
 #include <dumux/common/parameters.hh>
 
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/frictionlaws/frictionlaw.hh>
 
 namespace Dumux {
 
@@ -64,12 +63,6 @@ public:
 
     Scalar gravity() const
     { return gravity_; }
-
-    const FrictionLaw<VolumeVariables>&
-    frictionLaw(const Element& element, const SubControlVolume& scv) const
-    {
-        DUNE_THROW(Dune::NotImplemented, "No friction law is implemented for this test!");
-    }
 
     //! Define the bed surface
     Scalar bedSurface(const Element& element, const SubControlVolume& scv) const
