@@ -540,9 +540,9 @@ private:
 
         // compute distance
         auto proj = a; proj.axpy(t, ab);
-        const auto r = (proj - point).two_norm();
+        const auto radiusSquared = (proj - point).two_norm2();
 
-        if (r > rho)
+        if (radiusSquared > rho*rho)
             return 0.0;
 
         return 1.0/(M_PI*rho*rho);
