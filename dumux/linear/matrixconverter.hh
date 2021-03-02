@@ -33,6 +33,7 @@
 #include <dune/istl/matrixindexset.hh>
 
 #include <dumux/common/parameters.hh>
+#include <dumux/linear/scotchbackend.hh>
 
 namespace Dumux {
 
@@ -60,30 +61,39 @@ public:
         // get the size for the converted matrix
         const auto numRows = getNumRows_(A);
 
-        // create an empty BCRS matrix with 1x1 blocks
         auto M = BCRSMatrix(numRows, numRows, BCRSMatrix::random);
-
-        // set the occupation pattern and copy the values
         setOccupationPattern_(M, A);
         copyValues_(M, A);
 
         return M;
     }
 
-private:
+    /*!
+     * \brief Converts the matrix to a type the IterativeSolverBackend can handle
+     *
+     * \param A The original multitype blockmatrix
+     */
+    static auto multiTypeToBCRSMatrix(const MultiTypeBlockMatrix &A, const std::vector<int>& permutation)
+    {
+        // get the size for the converted matrix
+        const auto numRows = getNumRows_(A);
+
+        auto M = BCRSMatrix(numRows, numRows, BCRSMatrix::random);
+        setOccupationPattern_(M, A, permutation);
+        copyValues_(M, A, permutation);
+
+        return M;
+    }
 
     /*!
      * \brief Sets the occupation pattern and indices for the converted matrix
-     *
-     * \param M The converted matrix
      * \param A The original multitype blockmatrix
      */
-    static void setOccupationPattern_(BCRSMatrix& M, const MultiTypeBlockMatrix& A)
+    static auto computeReordering(const MultiTypeBlockMatrix& A)
     {
         // prepare the occupation pattern
-        const auto numRows = M.N();
-        Dune::MatrixIndexSet occupationPattern;
-        occupationPattern.resize(numRows, numRows);
+        const auto numRows = getNumRows_(A);
+        std::vector<std::vector<std::size_t>> graph(numRows);
 
         // lambda function to fill the occupation pattern
         auto addIndices = [&](const auto& subMatrix, const std::size_t startRow, const std::size_t startCol)
@@ -99,7 +109,7 @@ private:
                     for(std::size_t i = 0; i < blockSizeI; ++i)
                         for(std::size_t j = 0; j < blockSizeJ; ++j)
                             if(abs(subMatrix[row.index()][col.index()][i][j]) > eps)
-                                occupationPattern.add(startRow + row.index()*blockSizeI + i, startCol + col.index()*blockSizeJ + j);
+                                graph[startRow + row.index()*blockSizeI + i].push_back(startCol + col.index()*blockSizeJ + j);
         };
 
         // fill the pattern
@@ -122,6 +132,66 @@ private:
             });
         });
 
+        return ScotchBackend<std::size_t>::computeReordering(graph);
+    }
+
+private:
+
+    /*!
+     * \brief Sets the occupation pattern and indices for the converted matrix
+     *
+     * \param M The converted matrix
+     * \param A The original multitype blockmatrix
+     */
+    static void setOccupationPattern_(BCRSMatrix& M, const MultiTypeBlockMatrix& A, const std::vector<int>& p)
+    {
+        static const auto occupationPattern = [&]
+        {
+            // prepare the occupation pattern
+            const auto numRows = M.N();
+            Dune::MatrixIndexSet occupationPattern;
+            occupationPattern.resize(numRows, numRows);
+
+            // lambda function to fill the occupation pattern
+            auto addIndices = [&](const auto& subMatrix, const std::size_t startRow, const std::size_t startCol)
+            {
+                using std::abs;
+                static const Scalar eps = getParam<Scalar>("MatrixConverter.DeletePatternEntriesBelowAbsThreshold", -1.0);
+
+                using BlockType = typename std::decay_t<decltype(subMatrix)>::block_type;
+                const auto blockSizeI = BlockType::rows;
+                const auto blockSizeJ = BlockType::cols;
+                for(auto row = subMatrix.begin(); row != subMatrix.end(); ++row)
+                    for(auto col = row->begin(); col != row->end(); ++col)
+                        for(std::size_t i = 0; i < blockSizeI; ++i)
+                            for(std::size_t j = 0; j < blockSizeJ; ++j)
+                                if(abs(subMatrix[row.index()][col.index()][i][j]) > eps)
+                                    occupationPattern.add(p[startRow + row.index()*blockSizeI + i], p[startCol + col.index()*blockSizeJ + j]);
+            };
+
+            // fill the pattern
+            using namespace Dune::Hybrid;
+            std::size_t rowIndex = 0;
+            forEach(std::make_index_sequence<MultiTypeBlockMatrix::N()>(), [&A, &addIndices, &rowIndex, numRows](const auto i)
+            {
+                std::size_t colIndex = 0;
+                forEach(A[i], [&](const auto& subMatrix)
+                {
+                    addIndices(subMatrix, rowIndex, colIndex);
+
+                    using SubBlockType = typename std::decay_t<decltype(subMatrix)>::block_type;
+
+                    colIndex += SubBlockType::cols * subMatrix.M();
+
+                    // if we have arrived at the right side of the matrix, increase the row index
+                    if(colIndex == numRows)
+                        rowIndex += SubBlockType::rows * subMatrix.N();
+                });
+            });
+
+            return occupationPattern;
+        }();
+
         occupationPattern.exportIdx(M);
     }
 
@@ -131,7 +201,7 @@ private:
      * \param M The converted matrix
      * \param A The original subMatrix of the multitype blockmatrix
      */
-    static void copyValues_(BCRSMatrix& M, const MultiTypeBlockMatrix& A)
+    static void copyValues_(BCRSMatrix& M, const MultiTypeBlockMatrix& A, const std::vector<int>& p)
     {
         // get number of rows
         const auto numRows = M.N();
@@ -150,7 +220,7 @@ private:
                     for (std::size_t i = 0; i < blockSizeI; ++i)
                         for (std::size_t j = 0; j < blockSizeJ; ++j)
                             if(abs(subMatrix[row.index()][col.index()][i][j]) > eps)
-                                M[startRow + row.index()*blockSizeI + i][startCol + col.index()*blockSizeJ + j] = subMatrix[row.index()][col.index()][i][j];
+                                M[p[startRow + row.index()*blockSizeI + i]][p[startCol + col.index()*blockSizeJ + j]] = subMatrix[row.index()][col.index()][i][j];
 
         };
 
@@ -212,6 +282,31 @@ public:
      *
      * \param b The original multitype blockvector
      */
+    static auto multiTypeToBlockVector(const MultiTypeBlockVector& b, const std::vector<int>& permutation)
+    {
+        BlockVector bTmp;
+        bTmp.resize(b.dim());
+
+        std::size_t startIndex = 0;
+        Dune::Hybrid::forEach(b, [&](const auto& subVector)
+        {
+            const auto numEq = std::decay_t<decltype(subVector)>::block_type::size();
+
+            for(std::size_t i = 0; i < subVector.size(); ++i)
+                for(std::size_t j = 0; j < numEq; ++j)
+                    bTmp[permutation[startIndex + i*numEq + j]] = subVector[i][j];
+
+            startIndex += numEq*subVector.size();
+        });
+
+        return bTmp;
+    }
+
+    /*!
+     * \brief Converts a Dune::MultiTypeBlockVector to a plain 1x1 Dune::BlockVector
+     *
+     * \param b The original multitype blockvector
+     */
     static auto multiTypeToBlockVector(const MultiTypeBlockVector& b)
     {
         BlockVector bTmp;
@@ -230,6 +325,27 @@ public:
         });
 
         return bTmp;
+    }
+
+    /*!
+     * \brief Copys the entries of a Dune::BlockVector to a Dune::MultiTypeBlockVector
+     *
+     * \param x The multitype blockvector where the values are copied to
+     * \param y The regular blockvector where the values are copied from
+     */
+    static void retrieveValues(MultiTypeBlockVector& x, const BlockVector& y, const std::vector<int>& permutation)
+    {
+        std::size_t startIndex = 0;
+        Dune::Hybrid::forEach(x, [&](auto& subVector)
+        {
+            const auto numEq = std::decay_t<decltype(subVector)>::block_type::size();
+
+            for(std::size_t i = 0; i < subVector.size(); ++i)
+                for(std::size_t j = 0; j < numEq; ++j)
+                    subVector[i][j] = y[permutation[startIndex + i*numEq + j]];
+
+            startIndex += numEq*subVector.size();
+        });
     }
 
     /*!

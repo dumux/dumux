@@ -1171,15 +1171,18 @@ private:
     {
         assert(this->checkSizesOfSubMatrices(A) && "Sub-blocks of MultiTypeBlockMatrix have wrong sizes!");
 
+        // create mapping
+        static const auto permutation = MatrixConverter<JacobianMatrix>::computeReordering(A);
+
         // create the bcrs matrix the IterativeSolver backend can handle
-        const auto M = MatrixConverter<JacobianMatrix>::multiTypeToBCRSMatrix(A);
+        const auto M = MatrixConverter<JacobianMatrix>::multiTypeToBCRSMatrix(A, permutation);
 
         // get the new matrix sizes
         const std::size_t numRows = M.N();
         assert(numRows == M.M());
 
         // create the vector the IterativeSolver backend can handle
-        const auto bTmp = VectorConverter<SolutionVector>::multiTypeToBlockVector(b);
+        const auto bTmp = VectorConverter<SolutionVector>::multiTypeToBlockVector(b, permutation);
         assert(bTmp.size() == numRows);
 
         // create a blockvector to which the linear solver writes the solution
@@ -1192,7 +1195,7 @@ private:
 
         // copy back the result y into x
         if(converged)
-            VectorConverter<SolutionVector>::retrieveValues(x, y);
+            VectorConverter<SolutionVector>::retrieveValues(x, y, permutation);
 
         return converged;
     }

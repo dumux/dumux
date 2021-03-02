@@ -29,6 +29,8 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <dumux/common/parameters.hh>
+
 
 #if HAVE_PTSCOTCH
 #if HAVE_MPI
@@ -73,6 +75,8 @@ public:
                                               std::string scotchStrategy = "")
     {
         std::vector<int> permutation, inversePermutation;
+        if (scotchStrategy.empty())
+            scotchStrategy = getParam<std::string>("Scotch.Strategy", "g{pass= " + std::to_string(5) + "}");
         computeReordering(graph, permutation, inversePermutation, scotchStrategy);
         return permutation;
     }
