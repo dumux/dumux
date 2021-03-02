@@ -27,6 +27,7 @@
 #include <type_traits>
 
 #include <dumux/discretization/box/elementsolution.hh>
+#include <dumux/discretization/localcontext.hh>
 
 namespace Dumux {
 
@@ -114,27 +115,32 @@ public:
     : gridVolVarsPtr_(&gridVolVars) {}
 
     // specialization for box models, simply forwards to the bindElement method
-    template<class FVElementGeometry, class SolutionVector>
+    template<class FVElementGeometry, class SolutionVector, class Context>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
-              const SolutionVector& sol)
+              const SolutionVector& sol,
+              Context& context)
     {
-        bindElement(element, fvGeometry, sol);
+        bindElement(element, fvGeometry, sol, context);
     }
 
     // specialization for box models
-    template<class FVElementGeometry, class SolutionVector>
+    template<class FVElementGeometry, class SolutionVector, class Context>
     void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
-                     const SolutionVector& sol)
+                     const SolutionVector& sol,
+                     Context& context)
     {
         // get the solution at the dofs of the element
         auto elemSol = elementSolution(element, sol, fvGeometry.gridGeometry());
 
+        // set element solution in context
+        context.setElementSolution(elemSol);
+
         // resize volume variables to the required size
         volumeVariables_.resize(fvGeometry.numScv());
         for (auto&& scv : scvs(fvGeometry))
-            volumeVariables_[scv.indexInElement()].update(elemSol, gridVolVars().problem(), element, scv);
+            volumeVariables_[scv.indexInElement()].update(context, gridVolVars().problem(), element, scv);
     }
 
     const VolumeVariables& operator [](std::size_t scvIdx) const

@@ -33,6 +33,7 @@
 #include <dune/istl/bvector.hh>
 
 #include <dumux/discretization/localview.hh>
+#include <dumux/discretization/localcontext.hh>
 #include "gridvariables.hh"
 
 namespace Dumux {
@@ -45,6 +46,8 @@ namespace Dumux {
 template<class GV>
 class FVGridVariablesLocalView
 {
+    using ThisType = FVGridVariablesLocalView<GV>;
+
     using GridGeometry = typename GV::GridGeometry;
     using FVElementGeometry = typename GridGeometry::LocalView;
 
@@ -74,9 +77,12 @@ public:
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry)
     {
-        const auto& x = gridVariables().dofs();
-        elemVolVars_.bind(element, fvGeometry, x);
-        elemFluxVarsCache_.bind(element, fvGeometry, elemVolVars_);
+        Experimental::LocalContext<ThisType> context;
+        if (gridVariables().hasTimeLevel())
+            context.setTimeLevel(gridVariables().timeLevel());
+
+        elemVolVars_.bind(element, fvGeometry, gridVariables().dofs(), context);
+        elemFluxVarsCache_.bind(element, fvGeometry, elemVolVars_, context);
     }
 
     /*!
@@ -87,7 +93,11 @@ public:
     void bindElemVolVars(const Element& element,
                          const FVElementGeometry& fvGeometry)
     {
-        elemVolVars_.bind(element, fvGeometry, gridVariables().dofs());
+        Experimental::LocalContext<ThisType> context;
+        if (gridVariables().hasTimeLevel())
+            context.setTimeLevel(gridVariables().timeLevel());
+
+        elemVolVars_.bind(element, fvGeometry, gridVariables().dofs(), context);
 
         // unbind flux variables cache
         elemFluxVarsCache_ = localView(gridVariables().gridFluxVarsCache());

@@ -118,19 +118,23 @@ public:
 
     // Function is called by the BoxLocalJacobian prior to flux calculations on the element.
     // We assume the FVGeometries to be bound at this point
-    template<class FVElementGeometry, class ElementVolumeVariables>
+    template<class FVElementGeometry, class ElementVolumeVariables, class Context>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
-              const ElementVolumeVariables& elemVolVars)
+              const ElementVolumeVariables& elemVolVars,
+              Context& context)
     {
-        bindElement(element, fvGeometry, elemVolVars);
+        bindElement(element, fvGeometry, elemVolVars, context);
     }
 
-    template<class FVElementGeometry, class ElementVolumeVariables>
+    template<class FVElementGeometry, class ElementVolumeVariables, class Context>
     void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
-                     const ElementVolumeVariables& elemVolVars)
+                     const ElementVolumeVariables& elemVolVars,
+                     Context& context)
     {
+        // TODO: pass down context?
+
         // temporary resizing of the cache
         fluxVarsCache_.resize(fvGeometry.numScvf());
         for (auto&& scvf : scvfs(fvGeometry))
