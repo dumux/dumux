@@ -30,6 +30,7 @@
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/simpleh2o.hh>
@@ -43,6 +44,7 @@ namespace Dumux::Properties {
 namespace TTag {
 struct OnePNISimple { using InheritsFrom = std::tuple<OnePNI>; };
 struct OnePNISimpleTpfa { using InheritsFrom = std::tuple<OnePNISimple, CCTpfaModel>; };
+struct OnePNISimpleBox { using InheritsFrom = std::tuple<OnePNISimple, BoxModel>; };
 } // end namespace TTag
 
 // Set the grid type
