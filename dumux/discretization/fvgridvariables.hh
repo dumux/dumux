@@ -55,6 +55,9 @@ class FVGridVariablesLocalView
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
+    //! export the type of context
+    using LocalContext = Experimental::LocalContext<ThisType>;
+
     //! export corresponding grid-wide class
     using GridVariables = GV;
 

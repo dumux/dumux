@@ -39,12 +39,12 @@ namespace Dumux {
  *        the terms of equations in the context of finite-volume schemes
  * \todo TODO: Should operators have a state? That is, be constructed and have non-static functions?
  */
-template<class LocalContext>
+template<class ElementVariables>
 class FVOperators
 {
     // The variables required for the evaluation of the equation
-    using ElementVariables = typename LocalContext::ElementVariables;
     using GridVariables = typename ElementVariables::GridVariables;
+    using LocalContext = typename ElementVariables::LocalContext;
     using Scalar = typename GridVariables::Scalar;
 
     using PrimaryVariables = typename GridVariables::PrimaryVariables;

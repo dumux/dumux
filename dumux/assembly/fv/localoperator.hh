@@ -41,15 +41,14 @@ namespace Dumux {
  * \brief The element-wise local operator for finite volume schemes.
  *        This allows for element-wise evaluation of individual terms
  *        of the equations to be solved.
- * \tparam C element-local context
+ * \tparam EV Element-local variables
  * \tparam Op The model-specific operators
  */
-template<class C, class Op>
+template<class EV, class Op>
 class FVLocalOperator
 {
     // The variables required for the evaluation of the equation
-    using ElementVariables = typename C::ElementVariables;
-    using GridVars = typename ElementVariables::GridVariables;
+    using GridVars = typename EV::GridVariables;
     using PrimaryVariables = typename GridVars::PrimaryVariables;
 
     // The grid geometry on which the scheme operates
@@ -71,7 +70,7 @@ public:
     using Operators = Op;
 
     //! export context type
-    using LocalContext = C;
+    using LocalContext = typename EV::LocalContext;
 
     //! export the grid variables type this operator requires a local view of
     using GridVariables = GridVars;

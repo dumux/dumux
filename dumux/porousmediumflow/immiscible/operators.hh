@@ -40,22 +40,22 @@ namespace Dumux {
  * \tparam ModelTraits defines model-related types and variables (e.g. number of phases)
  * \tparam FluxVariables the type that is responsible for computing the individual
  *                       flux contributions, i.e., advective, diffusive, convective...
- * \tparam LocalContext the type of element-local context (primary/secondary variables)
+ * \tparam ElementVariables Element-local variables (primary/secondary variables)
  * \tparam EnergyOperators optional template argument, specifying the class that
  *                         handles the operators related to non-isothermal effects.
  *                         These are assumed to be taken into account by the model
  *                         if this template argument is other than void.
  */
-template<class ModelTraits, class FluxVariables, class LocalContext,
-         class EnergyOperators = Impl::DefaultEnergyOperators<ModelTraits, LocalContext>>
+template<class ModelTraits, class FluxVariables, class ElementVariables,
+         class EnergyOperators = Impl::DefaultEnergyOperators<ModelTraits, ElementVariables>>
 class FVImmiscibleOperators
-: public FVOperators<LocalContext>
+: public FVOperators<ElementVariables>
 {
-    using ParentType = FVOperators<LocalContext>;
+    using ParentType = FVOperators<ElementVariables>;
 
     // The variables required for the evaluation of the equation
-    using ElementVariables = typename LocalContext::ElementVariables;
     using GridVariables = typename ElementVariables::GridVariables;
+    using LocalContext = typename ElementVariables::LocalContext;
 
     // The grid geometry on which the scheme operates
     using GridGeometry = typename GridVariables::GridGeometry;
