@@ -42,6 +42,7 @@
 #include <dune/istl/bvector.hh>
 #include <dune/istl/multitypeblockvector.hh>
 
+#include <dumux/common/partial.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/typetraits/vector.hh>
@@ -157,6 +158,117 @@ constexpr std::size_t blockSize() { return 1; }
 
 template<class T, std::enable_if_t<!Dune::IsNumber<std::decay_t<T>>::value, int> = 0>
 constexpr std::size_t blockSize() { return std::decay_t<T>::size(); }
+
+
+//! This is a partial copy of Dune::MultiTypeBlockMatrix. TODO: It can be deleted once Dune::MultiTypeBlockMatrix
+//! exposes std::tuple's constructor.
+template<class FirstRow, class... Args>
+class MultiTypeBlockMatrix : std::tuple<FirstRow, Args...>
+{
+    using ParentType = std::tuple<FirstRow, Args...>;
+  public:
+
+    using ParentType::ParentType;
+
+    /**
+     * own class' type
+     */
+    using type = MultiTypeBlockMatrix<FirstRow, Args...>;
+
+    /** \brief Type used for sizes */
+    using size_type = std::size_t;
+
+    using field_type = typename FirstRow::field_type;
+
+    /** \brief Return the number of matrix rows */
+    static constexpr size_type N()
+    {
+      return 1+sizeof...(Args);
+    }
+
+    /** \brief Return the number of matrix columns */
+    static constexpr size_type M()
+    {
+      return FirstRow::size();
+    }
+
+    template< size_type index >
+    auto
+    operator[] ( const std::integral_constant< size_type, index > indexVariable ) -> decltype(std::get<index>(*this))
+    {
+      DUNE_UNUSED_PARAMETER(indexVariable);
+      return std::get<index>(*this);
+    }
+
+   /** \brief Const random-access operator
+     *
+     * This is the const version of the random-access operator.  See the non-const version for a full
+     * explanation of how to use it.
+     */
+    template< size_type index >
+    auto
+    operator[] ( const std::integral_constant< size_type, index > indexVariable ) const -> decltype(std::get<index>(*this))
+    {
+      DUNE_UNUSED_PARAMETER(indexVariable);
+      return std::get<index>(*this);
+    }
+
+    /** \brief y = A x
+     */
+    template<typename X, typename Y>
+    void mv (const X& x, Y& y) const {
+      static_assert(X::size() == M(), "length of x does not match row length");
+      static_assert(Y::size() == N(), "length of y does not match row count");
+      y = 0; //reset y (for mv uses umv)
+      umv(x,y);
+    }
+
+    /** \brief y += A x
+     */
+    template<typename X, typename Y>
+    void umv (const X& x, Y& y) const {
+      static_assert(X::size() == M(), "length of x does not match row length");
+      static_assert(Y::size() == N(), "length of y does not match row count");
+      using namespace Dune::Hybrid;
+      forEach(integralRange(Dune::Hybrid::size(y)), [&](auto&& i) {
+        using namespace Dune::Hybrid; // needed for icc, see issue #31
+        forEach(integralRange(Dune::Hybrid::size(x)), [&](auto&& j) {
+          (*this)[i][j].umv(x[j], y[i]);
+        });
+      });
+    }
+
+    /** \brief y += alpha A x
+     */
+    template<typename AlphaType, typename X, typename Y>
+    void usmv (const AlphaType& alpha, const X& x, Y& y) const {
+      static_assert(X::size() == M(), "length of x does not match row length");
+      static_assert(Y::size() == N(), "length of y does not match row count");
+      using namespace Dune::Hybrid;
+      forEach(integralRange(Dune::Hybrid::size(y)), [&](auto&& i) {
+        using namespace Dune::Hybrid; // needed for icc, see issue #31
+        forEach(integralRange(Dune::Hybrid::size(x)), [&](auto&& j) {
+          (*this)[i][j].usmv(alpha, x[j], y[i]);
+        });
+      });
+    }
+
+};
+
+/*!
+ * \brief a function to get a MultiTypeBlockVector with const references to some entries of another MultiTypeBlockVector
+ * \param v a MultiTypeBlockVector
+ * \param indices the indices of the entries that should be referenced
+ * TODO can be removed if it gets implemented in dumux-master
+ */
+template<class ...Args, std::size_t ...i>
+auto partial(const Dune::MultiTypeBlockVector<Args...>& v, Dune::index_constant<i>... indices)
+{
+    return Dune::MultiTypeBlockVector<std::add_lvalue_reference_t<const std::decay_t<std::tuple_element_t<indices, std::tuple<Args...>>>>...>(v[indices]...);
+}
+
+
+
 
 } // end namespace Detail
 
@@ -966,6 +1078,8 @@ private:
                 solveLinearSystem(deltaU);
                 solveTimer.stop();
 
+                std::cout << "Solve took " << solveTimer.elapsed() << std::endl;
+
                 ///////////////
                 // update
                 ///////////////
@@ -1183,16 +1297,142 @@ private:
     {
         assert(this->checkSizesOfSubMatrices(A) && "Sub-blocks of MultiTypeBlockMatrix have wrong sizes!");
 
-        // create the bcrs matrix the IterativeSolver backend can handle
-        const auto M = MatrixConverter<JacobianMatrix>::multiTypeToBCRSMatrix(A);
+        using namespace Dune::Indices;
 
-        // get the new matrix sizes
-        const std::size_t numRows = M.N();
-        assert(numRows == M.M());
+        const auto& A00 = A[_0][_0];
+        const auto& A11 = A[_1][_1];
+        const auto& A22 = A[_2][_2];
 
-        // create the vector the IterativeSolver backend can handle
-        const auto bTmp = VectorConverter<SolutionVector>::multiTypeToBlockVector(b);
-        assert(bTmp.size() == numRows);
+        const auto& A01 = A[_0][_1];
+        const auto& A02 = A[_0][_2];
+
+        const auto& A10 = A[_1][_0];
+        const auto& A12 = A[_1][_2];
+
+        const auto& A20 = A[_2][_0];
+        const auto& A21 = A[_2][_1];
+
+
+        using FirstRow = Dune::MultiTypeBlockVector<const std::decay_t<decltype(A11)>&, const std::decay_t<decltype(A10)>&, const std::decay_t<decltype(A12)>&>;
+        using SecondRow = Dune::MultiTypeBlockVector<const std::decay_t<decltype(A01)>&, const std::decay_t<decltype(A00)>&, const std::decay_t<decltype(A02)>&>;
+        using ThirdRow = Dune::MultiTypeBlockVector<const std::decay_t<decltype(A21)>&, const std::decay_t<decltype(A20)>&, const std::decay_t<decltype(A22)>&>;
+
+        using NewA = Detail::MultiTypeBlockMatrix<FirstRow, SecondRow, ThirdRow>;
+
+        FirstRow firstRow(A11, A10, A12);
+        SecondRow secondRow(A01, A00, A02);
+        ThirdRow thirdRow(A21, A20, A22);
+
+        const NewA newA = NewA(firstRow, secondRow, thirdRow);
+
+        const auto newM = MatrixConverter<NewA>::multiTypeToBCRSMatrix(newA);
+
+        using namespace Dune::Indices;
+
+        auto newB = partial(b, _1, _0, _2);
+        const auto newBtmp = VectorConverter<decltype(newB)>::multiTypeToBlockVector(newB);
+
+        auto newX = partial(x, _1, _0, _2);
+
+
+        // const auto& firstRow = partial(A[Dune::index_constant<0>{}], Dune::index_constant<1>{}, Dune::index_constant<0>{}, Dune::index_constant<2>{});
+        // const auto& secondRow = partial(A[Dune::index_constant<1>{}], Dune::index_constant<1>{}, Dune::index_constant<0>{}, Dune::index_constant<2>{});
+        // const auto& thirdRow = partial(A[Dune::index_constant<2>{}], Dune::index_constant<1>{}, Dune::index_constant<0>{}, Dune::index_constant<2>{});
+        //
+        //
+        // using NewA = Detail::MultiTypeBlockMatrix<decltype(firstRow), decltype(secondRow), decltype(thirdRow)>;
+        //
+        // const auto newA = NewA(firstRow, secondRow, thirdRow);
+
+
+
+//         // create the bcrs matrix the IterativeSolver backend can handle
+//         const auto M = MatrixConverter<JacobianMatrix>::multiTypeToBCRSMatrix(A);
+//
+//         // get the new matrix sizes
+        const std::size_t numRows = newM.N();
+//         assert(numRows == M.M());
+//
+//         // create the vector the IterativeSolver backend can handle
+//         const auto bTmp = VectorConverter<SolutionVector>::multiTypeToBlockVector(b);
+//         assert(bTmp.size() == numRows);
+//
+//         static const bool printmatrix = getParam<bool>("Problem.PrintMatrix", false);
+//
+//         if (printmatrix)
+//         {
+//             static int counter = 0;
+//
+//             std::ofstream logFile;
+//             const auto rank = Dune::MPIHelper::getCollectiveCommunication().rank();
+//             // logFile.open("solver_log_" + std::to_string(rank) +  "_iter_" + std::to_string(counter) + ".log");
+// //
+//             // const auto& A00 = A[Dune::index_constant<0>{}][Dune::index_constant<0>{}];
+//             // const auto& A11 = A[Dune::index_constant<1>{}][Dune::index_constant<1>{}];
+//             // const auto& A22 = A[Dune::index_constant<2>{}][Dune::index_constant<2>{}];
+//             //
+//             // const auto& A01 = A[Dune::index_constant<0>{}][Dune::index_constant<1>{}];
+//             // const auto& A02 = A[Dune::index_constant<0>{}][Dune::index_constant<2>{}];
+//             //
+//             //
+//             // const auto& A10 = A[Dune::index_constant<1>{}][Dune::index_constant<0>{}];
+//             // const auto& A12 = A[Dune::index_constant<1>{}][Dune::index_constant<2>{}];
+//             //
+//             //
+//             // const auto& A20 = A[Dune::index_constant<2>{}][Dune::index_constant<0>{}];
+//             // const auto& A21 = A[Dune::index_constant<2>{}][Dune::index_constant<1>{}];
+//
+//
+//
+//
+//             // if (A02.frobenius_norm() > 1e-18)
+//             //     DUNE_THROW(Dune::InvalidStateException, "A02 > 0");
+//             //
+//             // if (A12.frobenius_norm() > 1e-18)
+//             //     DUNE_THROW(Dune::InvalidStateException, "A12 > 0");
+//             //
+//             // if (A20.frobenius_norm() > 1e-18)
+//             //     DUNE_THROW(Dune::InvalidStateException, "A20 > 0");
+//             //
+//             // if (A21.frobenius_norm() > 1e-18)
+//             //     DUNE_THROW(Dune::InvalidStateException, "A21 > 0");
+//
+//
+//
+//             Dune::writeMatrixToMatlab(A00, "matrix00_" + std::to_string(rank) +  "_iter_" + std::to_string(counter)  + ".mat");
+//             Dune::writeMatrixToMatlab(A11, "matrix11_" + std::to_string(rank) +  "_iter_" + std::to_string(counter)  + ".mat");
+//             Dune::writeMatrixToMatlab(A22, "matrix22_" + std::to_string(rank) +  "_iter_" + std::to_string(counter)  + ".mat");
+//
+//
+//             Dune::writeMatrixToMatlab(A01, "matrix01_" + std::to_string(rank) +  "_iter_" + std::to_string(counter)  + ".mat");
+//             Dune::writeMatrixToMatlab(A02, "matrix02_" + std::to_string(rank) +  "_iter_" + std::to_string(counter)  + ".mat");
+//
+//             Dune::writeMatrixToMatlab(A10, "matrix10_" + std::to_string(rank) +  "_iter_" + std::to_string(counter)  + ".mat");
+//             Dune::writeMatrixToMatlab(A12, "matrix12_" + std::to_string(rank) +  "_iter_" + std::to_string(counter)  + ".mat");
+//
+//             Dune::writeMatrixToMatlab(A20, "matrix20_" + std::to_string(rank) +  "_iter_" + std::to_string(counter)  + ".mat");
+//             Dune::writeMatrixToMatlab(A21, "matrix21_" + std::to_string(rank) +  "_iter_" + std::to_string(counter)  + ".mat");
+//
+// //
+//             logFile.open("solver_residual_log0_" + std::to_string(rank) +  "_iter_" + std::to_string(counter) + ".log");
+//             Dune::printvector(logFile, b[Dune::index_constant<1>{}], "", "");
+//             logFile.close();
+//
+//             logFile.open("solver_residual_log1_" + std::to_string(rank) +  "_iter_" + std::to_string(counter) + ".log");
+//             Dune::printvector(logFile, b[Dune::index_constant<0>{}], "", "");
+//             logFile.close();
+//
+//             logFile.open("solver_residual_log2_" + std::to_string(rank) +  "_iter_" + std::to_string(counter) + ".log");
+//             Dune::printvector(logFile, b[Dune::index_constant<2>{}], "", "");
+//             logFile.close();
+//
+//             // logFile.open("solver_residual_log_" + std::to_string(rank) +  "_iter_" + std::to_string(counter) + ".log");
+//             // Dune::printvector(logFile, b[Dune::index_constant<0>{}], "", "");
+//
+//             ++counter;
+//
+//         }
+
 
         // create a blockvector to which the linear solver writes the solution
         using VectorBlock = typename Dune::FieldVector<Scalar, 1>;
@@ -1200,11 +1440,11 @@ private:
         BlockVector y(numRows);
 
         // solve
-        const bool converged = ls.solve(M, y, bTmp);
+        const bool converged = ls.solve(newM, y, newBtmp);
 
         // copy back the result y into x
         if(converged)
-            VectorConverter<SolutionVector>::retrieveValues(x, y);
+            VectorConverter<decltype(newB)>::retrieveValues(newX, y);
 
         return converged;
     }
