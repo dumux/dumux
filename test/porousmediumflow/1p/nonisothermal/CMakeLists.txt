@@ -1,3 +1,4 @@
+add_subdirectory(simple)
 add_input_file_links()
 
 # non-isothermal tests

@@ -1,0 +1,15 @@
+[Grid]
+UpperRight = 1 1
+Cells = 20 20
+
+[Problem]
+Name = simple_1pni
+EnableGravity = false # disable gravity
+
+[SimpleH2O]
+ReferenceTemperature = 0
+
+[Component]
+SolidDensity = 2700
+SolidThermalConductivity = 0.0
+SolidHeatCapacity = 790
