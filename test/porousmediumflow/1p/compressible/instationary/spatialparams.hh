@@ -75,6 +75,7 @@ public:
                                   const SubControlVolume& scv,
                                   const ElementSolution& elemSol) const
     {
+        if (scv.dofIndex() == 0) std::cout << "Time is: " << elemSol.timeLevel().current() << std::endl;
         if (isInLens_(scv.dofPosition()))
             return permeabilityLens_;
         else

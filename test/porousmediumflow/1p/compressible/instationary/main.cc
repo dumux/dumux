@@ -102,7 +102,9 @@ int main(int argc, char** argv)
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     const auto init = [problem] (auto& x) { problem->applyInitialSolution(x); };
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry, init);
-    auto xOld = gridVariables->dofs();
+
+    // not needed anymore...
+    // auto xOld = gridVariables->dofs();
 
     // get some time loop parameters
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -110,13 +112,16 @@ int main(int argc, char** argv)
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
     auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
 
+    // initialize time
+    gridVariables->updateTime(0.0);
+
     // intialize the vtk output module
-    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, gridVariables->dofs(), problem->name());
-    using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
-    vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
-    using IOFields = GetPropType<TypeTag, Properties::IOFields>;
-    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
-    vtkWriter.write(0.0);
+    // VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, gridVariables->dofs(), problem->name());
+    // using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
+    // vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
+    // using IOFields = GetPropType<TypeTag, Properties::IOFields>;
+    // IOFields::initOutputModule(vtkWriter); // Add model specific output fields
+    // vtkWriter.write(0.0);
 
     // instantiate time loop
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);
@@ -164,8 +169,8 @@ int main(int argc, char** argv)
         timeLoop->advanceTimeStep();
 
         // write vtk output
-        if (timeLoop->isCheckPoint())
-            vtkWriter.write(timeLoop->time());
+        // if (timeLoop->isCheckPoint())
+        //     vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
