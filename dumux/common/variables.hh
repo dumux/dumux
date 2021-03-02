@@ -24,6 +24,8 @@
 #ifndef DUMUX_VARIABLES_HH
 #define DUMUX_VARIABLES_HH
 
+#include <cassert>
+#include <optional>
 #include <type_traits>
 
 #include <dumux/common/typetraits/typetraits.hh>
@@ -77,28 +79,41 @@ public:
     using TimeLevel = Dumux::TimeLevel<Scalar>;
 
     //! Default constructor
-    explicit Variables() : x_(), t_(0.0) {}
+    explicit Variables() : x_(), t_() {}
 
     //! Construction from a solution
-    explicit Variables(const SolutionVector& x,
-                       const TimeLevel& t = TimeLevel{0.0})
+    explicit Variables(const SolutionVector& x) : x_(x), t_(std::nullopt) {}
+
+    //! Construction from a solution
+    explicit Variables(SolutionVector&& x) : x_(std::move(x)), t_(std::nullopt) {}
+
+    //! Construction from a solution & time level
+    explicit Variables(const SolutionVector& x, const TimeLevel& t)
     : x_(x), t_(t)
     {}
 
-    //! Construction from a solution
-    explicit Variables(SolutionVector&& x,
-                       const TimeLevel& t = TimeLevel{0.0})
+    //! Construction from a solution & time level
+    explicit Variables(SolutionVector&& x, const TimeLevel& t)
     : x_(std::move(x)), t_(t)
     {}
 
     //! Construction from initializer lambda
     template<class Initializer,
               std::enable_if_t<(std::is_invocable_r_v<void, Initializer, X&>), int> = 0>
-    explicit Variables(const Initializer& initializeSolution,
-                       const TimeLevel& timeLevel = TimeLevel{0.0})
-    : t_(timeLevel)
+    explicit Variables(const Initializer& initializeSolution)
     {
         initializeSolution(x_);
+        t_ = std::nullopt;
+    }
+
+    //! Construction from initializer lambda & time level
+    template<class Initializer,
+              std::enable_if_t<(std::is_invocable_r_v<void, Initializer, X&>), int> = 0>
+    explicit Variables(const Initializer& initializeSolution,
+                       const TimeLevel& timeLevel)
+    {
+        initializeSolution(x_);
+        t_ .emplace(timeLevel);
     }
 
     //! Return reference to the solution
@@ -113,23 +128,30 @@ public:
 
     //! Update the time level only
     void updateTime(const TimeLevel& t)
-    { t_ = t; }
+    { t_.emplace(t); }
 
     //! Update the state to a new solution & time level
     void update(const SolutionVector& x,
                 const TimeLevel& t)
     {
-        x_ = x;
-        t_ = t;
+        update(x);
+        updateTime(t);
     }
 
     //! Return the time level of these variables
     const TimeLevel& timeLevel() const
-    { return t_; }
+    {
+        assert(hasTimeLevel() && "Time level not available!");
+        return *t_;
+    }
+
+    //! Return true if time information is available
+    bool hasTimeLevel() const
+    { return t_.has_value(); }
 
 private:
     SolutionVector x_;
-    TimeLevel t_;
+    std::optional<TimeLevel> t_;
 };
 
 } // end namespace Dumux
