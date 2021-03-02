@@ -38,7 +38,7 @@ public:
      * \note This can be used in contexts outside of time integration,
      *       where no information on a previous time or time step size is needed.
      */
-    explicit TimeLevel(Scalar curTime)
+    TimeLevel(Scalar curTime)
     : curTime_(curTime)
     , prevTime_(curTime)
     , timeStepFraction_(1.0)
@@ -54,7 +54,7 @@ public:
      *       for determining the time that will be reached at the end of the
      *       time integration step.
      */
-    explicit TimeLevel(Scalar curTime, Scalar prevTime, Scalar dtFraction)
+    TimeLevel(Scalar curTime, Scalar prevTime, Scalar dtFraction)
     : curTime_(curTime)
     , prevTime_(prevTime)
     , timeStepFraction_(dtFraction)
