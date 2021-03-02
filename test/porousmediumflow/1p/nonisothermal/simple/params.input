@@ -1,0 +1,23 @@
+[Grid]
+UpperRight = 3 30
+Cells = 9 300
+
+[Problem]
+Name = simple_1pni
+EnableGravity = true # disable gravity
+Direction = 1
+
+[SimpleH2O]
+ReferenceTemperature = 0
+
+[SpatialParams]
+Porosity = 0.4
+Permeability = 1e-15
+
+[Component]
+SolidDensity = 2700
+SolidThermalConductivity = 0.0
+SolidHeatCapacity = 790
+
+[Vtk]
+AddVelocity = true
