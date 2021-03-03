@@ -75,10 +75,6 @@ struct SolidSystem<TypeTag, TTag::ThermoChem>
     using type = SolidSystems::CompositionalSolidPhase<Scalar, ComponentOne, ComponentTwo>;
 };
 
-// // Enable velocity output
-// template<class TypeTag>
-// struct VtkAddVelocity<TypeTag, TTag::ThermoChem> { static constexpr bool value = false; };
-
 // Set the spatial parameters
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::ThermoChem>
