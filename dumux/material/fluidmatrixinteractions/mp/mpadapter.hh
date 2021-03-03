@@ -107,7 +107,7 @@ namespace Dumux::FluidMatrix {
  * \ingroup Fluidmatrixinteractions
  * \brief An adapter for mpnc to use the capillary pressure-saturation relationships
  */
-template <class MaterialLaw, int numFluidPhases = MaterialLaw::numFluidPhases()>
+template <class MaterialLaw, int numFluidPhases = std::decay_t<MaterialLaw>::numFluidPhases()>
 class MPAdapter
 {
     static_assert(AlwaysFalse<MaterialLaw>::value, "Adapter not implemented for the specified number of phases");
@@ -119,10 +119,10 @@ class MPAdapter<MaterialLaw, 2>
 : public Adapter<MPAdapter<MaterialLaw, 2>, MultiPhasePcKrSw>
 {
 public:
-    using Scalar = typename MaterialLaw::Scalar;
+    using Scalar = typename std::decay_t<MaterialLaw>::Scalar;
 
-    MPAdapter(const MaterialLaw& pcKrS)
-    : pcKrS_(pcKrS)
+    MPAdapter(MaterialLaw&& pcKrS)
+    : pcKrS_(std::forward<MaterialLaw>(pcKrS))
     {}
 
     /*!
@@ -161,8 +161,17 @@ public:
         return values;
     }
 private:
-    const MaterialLaw& pcKrS_;
+    MaterialLaw pcKrS_;
 };
+
+/*!
+ * \ingroup Fluidmatrixinteractions
+ * \brief Deduction guide for the MPAdapter class.
+ *        Makes sure that MPAdapter stores a copy of T if
+ *        the constructor is called with a temporary object.
+ */
+template<typename T>
+MPAdapter(T&&) -> MPAdapter<T>;
 
 } // end namespace Dumux::FluidMatrix
 
