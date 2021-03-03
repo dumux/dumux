@@ -30,7 +30,6 @@
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/vtk.hh>
 
-#include "problem.hh"
 #include "properties.hh"
 
 #include <dumux/common/properties.hh>
