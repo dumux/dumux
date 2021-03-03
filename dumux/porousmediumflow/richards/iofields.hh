@@ -68,7 +68,7 @@ public:
         if(gravity)
             out.addVolumeVariable([](const auto& v){ return v.pressureHead(FS::liquidPhaseIdx); },
                                   IOName::pressureHead());
-        if (enableWaterDiffusionInAir)
+        if constexpr (enableWaterDiffusionInAir)
             out.addVolumeVariable([](const auto& v){ return v.moleFraction(FS::gasPhaseIdx, FS::liquidCompIdx); },
                                   IOName::moleFraction<FS>(FS::gasPhaseIdx, FS::liquidCompIdx));
         out.addVolumeVariable([](const auto& v){ return v.waterContent(FS::liquidPhaseIdx); },

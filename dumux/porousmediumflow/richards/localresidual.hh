@@ -111,7 +111,7 @@ public:
                                * volVars.saturation(liquidPhaseIdx);
 
         // for extended Richards we consider water in air
-        if (enableWaterDiffusionInAir)
+        if constexpr (enableWaterDiffusionInAir)
             storage[conti0EqIdx] += volVars.porosity()
                                     * volVars.molarDensity(gasPhaseIdx)
                                     * volVars.moleFraction(gasPhaseIdx, liquidCompIdx)
@@ -155,7 +155,7 @@ public:
         flux[conti0EqIdx] = fluxVars.advectiveFlux(liquidPhaseIdx, upwindTerm);
 
         // for extended Richards we consider water vapor diffusion in air
-        if (enableWaterDiffusionInAir)
+        if constexpr (enableWaterDiffusionInAir)
         {
             //check for the reference system and adapt units of the diffusive flux accordingly.
             if (FluxVariables::MolecularDiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
