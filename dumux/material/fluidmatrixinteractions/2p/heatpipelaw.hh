@@ -274,11 +274,11 @@ public:
     /*!
      * \brief The capillary pressure-saturation curve.
      *
-     * \param swe Effective saturation of the wetting phase \f$\mathrm{\overline{S}_w}\f$
+     * \param sw Saturation of the wetting phase \f$\mathrm{S_w}\f$
      */
-    template<class Scalar>
-    Scalar pc(Scalar swe) const
+    Scalar pc(const Scalar sw) const
     {
+        const Scalar swe = EffToAbs::swToSwe(sw, effToAbsParams_);
         const Scalar sne = 1 - swe;
         const Scalar p0Gamma = params_.p0()*params_.gamma();
 
@@ -298,7 +298,6 @@ public:
     /*!
      * \brief The capillary pressure at Swe = 1.0 also called end point capillary pressure
      */
-    template<class Scalar>
     Scalar endPointPc() const
     { return 0.0; }
 
@@ -306,30 +305,30 @@ public:
      * \brief The partial derivative of the capillary
      *        pressure w.r.t. the effective saturation.
      *
-     * \param swe Effective saturation of the wetting phase \f$\mathrm{\overline{S}_w}\f$
+     * \param sw Saturation of the wetting phase \f$\mathrm{S_w}\f$
      */
-    template<class Scalar>
-    Scalar dpc_dswe(Scalar swe) const
+    Scalar dpc_dsw(const Scalar sw) const
     {
+        const Scalar swe = EffToAbs::swToSwe(sw, effToAbsParams_);
         const Scalar sne = 1 - swe;
         const Scalar p0Gamma = params_.p0()*params_.gamma();
         if (sne > 1.0)
             sne = 1.0;
         else if (sne <= 0.0)
-            return -p0Gamma*1.417;
+            return -p0Gamma*1.417*EffToAbs::dswe_dsw(effToAbsParams_);
         else
-            return - p0Gamma*((3*1.263*sne - 2*2.120)*sne + 1.417);
+            return - p0Gamma*((3*1.263*sne - 2*2.120)*sne + 1.417)*EffToAbs::dswe_dsw(effToAbsParams_);
     }
 
     /*!
      * \brief The relative permeability for the wetting phase of
      *        the medium.
      *
-     * \param swe The mobile saturation of the wetting phase.
+     * \param sw Saturation of the wetting phase \f$\mathrm{S_w}\f$
      */
-    template<class Scalar>
-    Scalar krw(Scalar swe) const
+    Scalar krw(const Scalar sw) const
     {
+        const Scalar swe = EffToAbs::swToSwe(sw, effToAbsParams_);
         return kr_(swe);
     }
 
@@ -337,11 +336,11 @@ public:
      * \brief The relative permeability for the non-wetting phase
      *        of the medium.
      *
-     * \param swe The mobile saturation of the wetting phase.
+     * \param sw Saturation of the wetting phase \f$\mathrm{S_w}\f$
      */
-    template<class Scalar>
-    Scalar krn(Scalar swe) const
+    Scalar krn(const Scalar sw) const
     {
+        const Scalar swe = EffToAbs::swToSwe(sw, effToAbsParams_);
         const Scalar sne = 1 - swe; // TODO does this make sense?
         return kr_(sne);
     }
