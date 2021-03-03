@@ -54,7 +54,6 @@ class ObstacleSpatialParams
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
     using PcKrSwCurve = FluidMatrix::SmoothedLinearLaw<Scalar>;
-    using MPAdapter = Dumux::FluidMatrix::MPAdapter<PcKrSwCurve, 2>;
 
 public:
     //! Export the type used for the permeability
@@ -93,7 +92,7 @@ public:
      */
     auto fluidMatrixInteractionAtPos(const GlobalPosition &globalPos) const
     {
-        return makeFluidMatrixInteraction(MPAdapter(pcKrSwCurve_));
+        return makeFluidMatrixInteraction(FluidMatrix::MPAdapter(pcKrSwCurve_));
     }
 
     /*!

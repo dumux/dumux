@@ -63,7 +63,6 @@ class EvaporationAtmosphereSpatialParams
     static constexpr auto dimWorld = GridView::dimensionworld;
 
     using PcKrSwCurve = FluidMatrix::BrooksCoreyDefault<Scalar>;
-    using MPAdapter = Dumux::FluidMatrix::MPAdapter<PcKrSwCurve, 2>;
 
     using NonwettingSolidInterfacialArea = FluidMatrix::InterfacialArea<Scalar,
                                                                         FluidMatrix::InterfacialAreaExponentialCubic,
@@ -248,9 +247,9 @@ public:
     auto fluidMatrixInteractionAtPos(const GlobalPosition &globalPos) const
     {
         if (inFF_(globalPos))
-            return makeFluidMatrixInteraction(MPAdapter(*pcKrSwCurveFF_), *aNsFreeFlow_, *aNwFreeFlow_, *aWs_);
+            return makeFluidMatrixInteraction(FluidMatrix::MPAdapter(*pcKrSwCurveFF_), *aNsFreeFlow_, *aNwFreeFlow_, *aWs_);
         else if (inPM_(globalPos))
-            return makeFluidMatrixInteraction(MPAdapter(*pcKrSwCurvePM_), *aNs_, *aNw_, *aWs_);
+            return makeFluidMatrixInteraction(FluidMatrix::MPAdapter(*pcKrSwCurvePM_), *aNs_, *aNw_, *aWs_);
         else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
