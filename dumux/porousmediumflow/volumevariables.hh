@@ -26,7 +26,8 @@
 #ifndef DUMUX_POROUSMEDIUMFLOW_VOLUME_VARIABLES_HH
 #define DUMUX_POROUSMEDIUMFLOW_VOLUME_VARIABLES_HH
 
-#include <dumux/discretization/localcontext.hh>
+#include <dune/common/concept.hh>
+#include <dumux/discretization/solutionstate.hh>
 
 namespace Dumux {
 
@@ -56,23 +57,44 @@ public:
     /*!
      * \brief Updates all quantities for a given control volume.
      *
-     * \param context The element-local context
+     * \param ElemState The element-local state of the solution
      * \param problem The object specifying the problem which ought to
      *                be simulated
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    template<class Context, class Problem, class Element, class Scv>
-    void update(const Context& context,
+    template<class ElemState, class Problem, class Element, class Scv>
+    void update(const ElemState& elemState,
                 const Problem& problem,
                 const Element& element,
                 const Scv& scv)
     {
-        if constexpr (Experimental::Detail::hasContextInterfaces<Context>)
-            priVars_ = context.elementSolution()[scv.localDofIndex()];
-        else // context is elemsol (old interface)
-            priVars_ = context[scv.localDofIndex()];
-        extrusionFactor_ = problem.extrusionFactor(element, scv, context);
+        struct EmptyExtVars {} empty;
+        update(elemState, empty, problem, element, scv);
+    }
+
+    /*!
+     * \brief Updates all quantities for a given control volume.
+     *
+     * \param ElemState The element-local state of the solution
+     * \param ExtVariables Further required external variables
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
+     */
+    template<class ElemState, class ExtVariables, class Problem, class Element, class Scv>
+    void update(const ElemState& elemState,
+                const ExtVariables& extVariables,
+                const Problem& problem,
+                const Element& element,
+                const Scv& scv)
+    {
+        if constexpr (Dune::models<Experimental::Concept::ElementSolutionState, ElemState>())
+            priVars_ = elemState.elementSolution()[scv.localDofIndex()];
+        else // elemState is elemsol (old interface)
+            priVars_ = elemState[scv.localDofIndex()];
+        extrusionFactor_ = problem.extrusionFactor(element, scv, elemState, extVariables);
     }
 
     /*!

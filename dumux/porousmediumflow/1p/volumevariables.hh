@@ -25,12 +25,14 @@
 #ifndef DUMUX_1P_VOLUME_VARIABLES_HH
 #define DUMUX_1P_VOLUME_VARIABLES_HH
 
+#include <dune/common/concept.hh>
+
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 
-#include <dumux/discretization/localcontext.hh>
+#include <dumux/discretization/solutionstate.hh>
 
 namespace Dumux {
 
@@ -68,62 +70,102 @@ public:
     /*!
      * \brief Updates all quantities for a given control volume.
      *
-     * \param context The element-local context
-     * \param problem The object specifying the problem which ought to
-     *                be simulated
+     * \param ElemState The element-local state of the solution
+     * \param problem The object specifying the problem which ought to be simulated
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    template<class Context, class Problem, class Element, class Scv>
-    void update(const Context& context,
+    template<class ElemState, class Problem, class Element, class Scv>
+    void update(const ElemState& elemState,
                 const Problem& problem,
                 const Element& element,
                 const Scv& scv)
     {
-        ParentType::update(context, problem, element, scv);
+        struct EmptyExtVars {} empty;
+        update(elemState, empty, problem, element, scv);
+    }
 
-         // porosity
-        completeFluidState(context, problem, element, scv, fluidState_, solidState_);
+    /*!
+     * \brief Updates all quantities for a given control volume.
+     *
+     * \param ElemState The element-local state of the solution
+     * \param ExtVariables Further required external variables
+     * \param problem The object specifying the problem which ought to be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
+     */
+    template<class ElemState, class ExtVariables, class Problem, class Element, class Scv>
+    void update(const ElemState& elemState,
+                const ExtVariables& extVariables,
+                const Problem& problem,
+                const Element& element,
+                const Scv& scv)
+    {
+        ParentType::update(elemState, extVariables, problem, element, scv);
+        completeFluidState(elemState, extVariables, problem, element, scv, fluidState_, solidState_);
 
         // porosity and permeability
-        updateSolidVolumeFractions(context, problem, element, scv, solidState_, numFluidComps);
-        EnergyVolVars::updateSolidEnergyParams(context, problem, element, scv, solidState_);
-        permeability_ = problem.spatialParams().permeability(element, scv, context);
+        updateSolidVolumeFractions(elemState, extVariables, problem, element, scv, solidState_, numFluidComps);
+        EnergyVolVars::updateSolidEnergyParams(elemState, extVariables, problem, element, scv, solidState_);
+        permeability_ = problem.spatialParams().permeability(element, scv, elemState, extVariables);
         EnergyVolVars::updateEffectiveThermalConductivity();
     }
 
     /*!
      * \brief Sets complete fluid state
      *
-     * \param context The element-local context
-     * \param problem The object specifying the problem which ought to
-     *                be simulated
+     * \param ElemState The element-local state of the solution
+     * \param problem The object specifying the problem which ought to be simulated
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      * \param fluidState A container with the current (physical) state of the fluid
      * \param solidState A container with the current (physical) state of the solid
      */
-    template<class Context, class Problem, class Element, class Scv>
-    void completeFluidState(const Context& context,
+    template<class ElemState, class Problem, class Element, class Scv>
+    void completeFluidState(const ElemState& elemState,
                             const Problem& problem,
                             const Element& element,
                             const Scv& scv,
                             FluidState& fluidState,
                             SolidState& solidState)
     {
-        EnergyVolVars::updateTemperature(context, problem, element, scv, fluidState, solidState);
+        struct EmptyExtVars {} empty;
+        completeFluidState(elemState, empty, problem, element, scv, fluidState, solidState);
+    }
+
+    /*!
+     * \brief Sets complete fluid state
+     *
+     * \param ElemState The element-local state of the solution
+     * \param ExtVariables Further required external variables
+     * \param problem The object specifying the problem which ought to be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
+     * \param fluidState A container with the current (physical) state of the fluid
+     * \param solidState A container with the current (physical) state of the solid
+     */
+    template<class ElemState, class ExtVariables, class Problem, class Element, class Scv>
+    void completeFluidState(const ElemState& elemState,
+                            const ExtVariables& extVariables,
+                            const Problem& problem,
+                            const Element& element,
+                            const Scv& scv,
+                            FluidState& fluidState,
+                            SolidState& solidState)
+    {
+        EnergyVolVars::updateTemperature(elemState, extVariables, problem, element, scv, fluidState, solidState);
         fluidState.setSaturation(/*phaseIdx=*/0, 1.);
 
-        if constexpr (Experimental::Detail::hasContextInterfaces<Context>)
+        // compatibility layer with old elemsol-based style
+        const auto& priVars = [&elemState, &scv] ()
         {
-            const auto& priVars = context.elementSolution()[scv.localDofIndex()];
-            fluidState.setPressure(/*phaseIdx=*/0, priVars[Indices::pressureIdx]);
-        }
-        else // context is elemsol (old interface)
-        {
-            const auto& priVars = context[scv.localDofIndex()];
-            fluidState.setPressure(/*phaseIdx=*/0, priVars[Indices::pressureIdx]);
-        }
+            if constexpr (Dune::models<Experimental::Concept::ElementSolutionState, ElemState>())
+                return elemState.elementSolution()[scv.localDofIndex()];
+            else
+                return elemState[scv.localDofIndex()];
+        } ();
+
+        fluidState.setPressure(/*phaseIdx=*/0, priVars[Indices::pressureIdx]);
 
         // saturation in a single phase is always 1 and thus redundant
         // to set. But since we use the fluid state shared by the

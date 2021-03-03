@@ -55,7 +55,6 @@ class FVImmiscibleOperators
 
     // The variables required for the evaluation of the equation
     using GridVariables = typename ElementVariables::GridVariables;
-    using LocalContext = typename ElementVariables::LocalContext;
 
     // The grid geometry on which the scheme operates
     using GridGeometry = typename GridVariables::GridGeometry;
@@ -89,6 +88,7 @@ public:
      * \param scv The sub-control volume
      * \param context The element-local context (primary/secondary variables)
      */
+     template<class LocalContext>
      static StorageTerm storage(const Problem& problem,
                                 const SubControlVolume& scv,
                                 const LocalContext& context)
@@ -127,6 +127,7 @@ public:
      * \param context The element-local context (primary/secondary variables)
      * \param scvf The sub-control volume face for which the flux term is to be computed
      */
+    template<class LocalContext>
     static FluxTerm flux(const Problem& problem,
                          const Element& element,
                          const FVElementGeometry& fvGeometry,

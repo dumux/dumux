@@ -44,7 +44,6 @@ class FVOperators
 {
     // The variables required for the evaluation of the equation
     using GridVariables = typename ElementVariables::GridVariables;
-    using LocalContext = typename ElementVariables::LocalContext;
     using Scalar = typename GridVariables::Scalar;
 
     using PrimaryVariables = typename GridVariables::PrimaryVariables;
@@ -88,6 +87,7 @@ public:
      * \param context The element-local context (primary/secondary variables)
      * \note This must be overloaded by the implementation
      */
+     template<class LocalContext>
      static StorageTerm storage(const Problem& problem,
                                 const SubControlVolume& scv,
                                 const LocalContext& context)
@@ -102,6 +102,7 @@ public:
      * \param scvf The sub-control volume face for which the flux term is to be computed
      * \note This must be overloaded by the implementation
      */
+    template<class LocalContext>
     static FluxTerm flux(const Problem& problem,
                          const Element& element,
                          const FVElementGeometry& fvGeometry,
@@ -118,6 +119,7 @@ public:
      * \param scv The sub-control volume for which the source term is to be computed
      * \note This is a default implementation forwarding to interfaces in the problem
      */
+     template<class LocalContext>
      static SourceTerm source(const Problem& problem,
                               const Element& element,
                               const FVElementGeometry& fvGeometry,

@@ -634,14 +634,17 @@ namespace Experimental {
          *
          * \param element The finite element
          * \param boundaryEntity The boundary entity (scv/scvf)
-         * \param context The element-local context
+         * \param elemState The element-local state of the solution
          * \note In cell-centered schemes, boundaryEntity is a sub-control
          *       volume face (scvf). In the box scheme, a sub-control volume (scv).
+         * \todo TODO: We put the state here to have access to time. But that also
+         *             has the element solution. Would non-linear problems converge
+         *             with solution-dependent BCs? We could substitute it by time level.
          */
-        template<class BoundaryEntity, class Context>
+        template<class BoundaryEntity, class ElementState>
         auto boundaryTypes(const Element& element,
                            const BoundaryEntity& boundaryEntity,
-                           const Context& context) const
+                           const ElementState& elemState) const
         {
             if constexpr (isBox)
                 return this->asImp_().boundaryTypesAtPos(boundaryEntity.dofPosition());
@@ -655,12 +658,15 @@ namespace Experimental {
          *
          * \param element The finite element
          * \param boundaryEntity The boundary entity (scv/scvf)
-         * \param context The element-local context
+         * \param elemState The element-local state of the solution
+         * \todo TODO: We put the state here to have access to time. But that also
+         *             has the element solution. Would non-linear problems converge
+         *             with solution-dependent BCs? We could substitute it by time level.
          */
-        template<class BoundaryEntity, class Context>
+        template<class BoundaryEntity, class ElementState>
         PrimaryVariables dirichlet(const Element& element,
                                    const BoundaryEntity& boundaryEntity,
-                                   const Context& context) const
+                                   const ElementState& elemState) const
         {
             if constexpr (isBox)
                 return this->asImp_().dirichletAtPos(boundaryEntity.dofPosition());
@@ -682,6 +688,7 @@ namespace Experimental {
          *
          * Negative values mean influx.
          * E.g. for the mass balance that would be the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
+         * \todo TODO: Should Context be something that also has (element and) fvGeometry?
          */
         template<class Context>
         NumEqVector neumann(const Element& element,
@@ -707,6 +714,7 @@ namespace Experimental {
          * generated or annihilate per volume unit. Positive values mean
          * that the conserved quantity is created, negative ones mean that it vanishes.
          * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
+         * \todo TODO: Should Context be something that also has (element and) fvGeometry?
          */
         template<class Context>
         NumEqVector source(const Element &element,
@@ -723,11 +731,14 @@ namespace Experimental {
          * default is 1.0 which means that 1D problems are actually
          * thought as pipes with a cross section of 1 m^2 and 2D problems
          * are assumed to extend 1 m to the back.
+         *
+         * \todo TODO: Move to spatial params???
          */
-        template<class Context>
+        template<class ElementState, class ExtVariables>
         Scalar extrusionFactor(const Element& element,
                                const SubControlVolume& scv,
-                               const Context& context) const
+                               const ElementState& state,
+                               const ExtVariables& extVariables) const
         { return this->asImp_().extrusionFactorAtPos(scv.center()); }
 
         //! TODO: Point sources!

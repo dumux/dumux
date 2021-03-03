@@ -33,7 +33,7 @@
 #include <dune/istl/bvector.hh>
 
 #include <dumux/discretization/localview.hh>
-#include <dumux/discretization/localcontext.hh>
+#include <dumux/discretization/solutionstate.hh>
 #include "gridvariables.hh"
 
 namespace Dumux {
@@ -55,9 +55,6 @@ class FVGridVariablesLocalView
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
-    //! export the type of context
-    using LocalContext = Experimental::LocalContext<ThisType>;
-
     //! export corresponding grid-wide class
     using GridVariables = GV;
 
@@ -73,6 +70,28 @@ public:
     {}
 
     /*!
+     * \brief Bind this local view to a grid element, providing
+     *        required external variables.
+     * \param element The grid element
+     * \param fvGeometry Local view on the grid geometry
+     * \param extVariables Further required external variables
+     */
+    template<class ExtVariables>
+    void bind(const Element& element,
+              const FVElementGeometry& fvGeometry,
+              const ExtVariables& extVariables)
+    {
+        const auto state = makeState_();
+        elemVolVars_.bind(element, fvGeometry, state, extVariables);
+
+        // TODO: Probably only extVariables should be passed down to the flux
+        //       cache? At this point, the elem vol vars are already done, which
+        //       may represent the solution state already? On the other hand it
+        //       might not hurt to pass all in order to be flexible.
+        elemFluxVarsCache_.bind(element, fvGeometry, elemVolVars_, state);
+    }
+
+    /*!
      * \brief Bind this local view to a grid element.
      * \param element The grid element
      * \param fvGeometry Local view on the grid geometry
@@ -80,31 +99,11 @@ public:
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry)
     {
-        Experimental::LocalContext<ThisType> context;
-        if (gridVariables().hasTimeLevel())
-            context.setTimeLevel(gridVariables().timeLevel());
-
-        elemVolVars_.bind(element, fvGeometry, gridVariables().dofs(), context);
-        elemFluxVarsCache_.bind(element, fvGeometry, elemVolVars_, context);
+        struct EmptyExtVars {} empty;
+        bind(element, fvGeometry, empty);
     }
 
-    /*!
-     * \brief Bind only the volume variables local view to a grid element.
-     * \param element The grid element
-     * \param fvGeometry Local view on the grid geometry
-     */
-    void bindElemVolVars(const Element& element,
-                         const FVElementGeometry& fvGeometry)
-    {
-        Experimental::LocalContext<ThisType> context;
-        if (gridVariables().hasTimeLevel())
-            context.setTimeLevel(gridVariables().timeLevel());
-
-        elemVolVars_.bind(element, fvGeometry, gridVariables().dofs(), context);
-
-        // unbind flux variables cache
-        elemFluxVarsCache_ = localView(gridVariables().gridFluxVarsCache());
-    }
+    //! TODO: Interfaces for selective binds! (only volvars & bindElement only)
 
     //! return reference to the elem vol vars
     const ElementVolumeVariables& elemVolVars() const { return elemVolVars_; }
@@ -119,6 +118,14 @@ public:
     { return *gridVariables_; }
 
 private:
+    auto makeState_() const
+    {
+        using SolutionVector = std::decay_t<decltype(gridVariables().dofs())>;
+        using TimeLevel = std::decay_t<decltype(gridVariables().timeLevel())>;
+        using State = Experimental::SolutionState<SolutionVector, TimeLevel>;
+        return State(&gridVariables().dofs(), &gridVariables().timeLevel());
+    }
+
     const GridVariables* gridVariables_;
     ElementVolumeVariables elemVolVars_;
     ElementFluxVariablesCache elemFluxVarsCache_;

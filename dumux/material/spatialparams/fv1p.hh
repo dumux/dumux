@@ -183,8 +183,6 @@ public:
                                 const SubControlVolume& scv,
                                 const ElementSolution& elemSol) const
     {
-        // TODO: Change doc and template arg once (or if) transition to new
-        // assembly with context instead of elemSol is the new standard.
         static_assert(decltype(isValid(Detail::hasPermeabilityAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
         "   Your spatial params class has to either implement\n\n"
         "         const PermeabilityType& permeabilityAtPos(const GlobalPosition& globalPos) const\n\n"
@@ -220,8 +218,6 @@ public:
                     const SubControlVolume& scv,
                     const ElementSolution& elemSol) const
     {
-        // TODO: Change doc and template arg once (or if) transition to new
-        // assembly with context instead of elemSol is the new standard.
         static_assert(decltype(isValid(Detail::hasPorosityAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
         "   Your spatial params class has to either implement\n\n"
         "         Scalar porosityAtPos(const GlobalPosition& globalPos) const\n\n"
@@ -260,8 +256,6 @@ public:
                                const ElementSolution& elemSol,
                                int compIdx) const
     {
-        // TODO: Change doc and template arg once (or if) transition to new
-        // assembly with context instead of elemSol is the new standard.
         return 1.0 - asImp_().porosity(element, scv, elemSol);
     }
 
@@ -273,8 +267,6 @@ public:
                                const ElementSolution& elemSol,
                                int compIdx) const
     {
-        // TODO: Change doc and template arg once (or if) transition to new
-        // assembly with context instead of elemSol is the new standard.
         return 0.0;
     }
 
@@ -295,8 +287,6 @@ public:
                                const ElementSolution& elemSol,
                                int compIdx) const
     {
-        // TODO: Change doc and template arg once (or if) transition to new
-        // assembly with context instead of elemSol is the new standard.
         static_assert(decltype(isValid(Detail::hasInertVolumeFractionAtPos<GlobalPosition, SolidSystem>())(this->asImp_()))::value," \n\n"
         "   Your spatial params class has to either implement\n\n"
         "         template<class SolidSystem>\n"
@@ -353,6 +343,122 @@ private:
     Scalar forchCoeffDefault_;
 };
 
+namespace Experimental {
+
+    /*!
+     * \ingroup SpatialParameters
+     * \brief The base class for spatial parameters of one-phase problems
+     * using a fully implicit discretization method.
+     */
+    template<class GridGeometry, class Scalar, class Implementation>
+    class FVSpatialParamsOneP : public Dumux::FVSpatialParamsOneP<GridGeometry, Scalar, Implementation>
+    {
+        using ParentType = Dumux::FVSpatialParamsOneP<GridGeometry, Scalar, Implementation>;
+
+        using SubControlVolume = typename GridGeometry::SubControlVolume;
+        using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+        using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+    public:
+        using ParentType::ParentType;
+
+        using ParentType::permeability;
+        /*!
+         * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$
+         * \note  It is possibly solution dependent.
+         *
+         * \param element The current element
+         * \param scv The sub-control volume inside the element.
+         * \param elemState The element-local state of the solution.
+         * \param extVariables Further required external variables.
+         * \return permeability
+         */
+        template<class ElemState, class ExtVariables>
+        decltype(auto) permeability(const Element& element,
+                                    const SubControlVolume& scv,
+                                    const ElemState& elemState,
+                                    const ExtVariables& extVariables) const
+        { return this->asImp_().permeability(element, scv, elemState); }
+
+        using ParentType::porosity;
+        /*!
+         * \brief Function for defining the porosity.
+         *        That is possibly solution dependent.
+         * \note this can only be used for solids with one inert component
+         *       (see inertVolumeFraction for the more general interface)
+         * \param element The current element
+         * \param scv The sub-control volume inside the element.
+         * \param elemState The element-local state of the solution.
+         * \param extVariables Further required external variables.
+         * \return the porosity
+         */
+        template<class ElemState, class ExtVariables>
+        Scalar porosity(const Element& element,
+                        const SubControlVolume& scv,
+                        const ElemState& elemState,
+                        const ExtVariables& extVariables) const
+        { return this->asImp_().porosity(element, scv, elemState); }
+
+        using ParentType::inertVolumeFraction;
+        /*!
+         * \brief Function for defining the solid volume fraction.
+         *        That is possibly solution dependent.
+         *
+         * \param element The current element
+         * \param scv The sub-control volume inside the element.
+         * \param elemState The element-local state of the solution.
+         * \param extVariables Further required external variables.
+         * \param compIdx The solid component index
+         * \return the volume fraction of the inert solid component with index compIdx
+         *
+         * \note this overload is enable if there is only one inert solid component and the
+         *       user didn't choose to implement a inertVolumeFractionAtPos overload.
+         *       It then forwards to the simpler porosity interface.
+         *       With more than one solid components or active solid components (i.e. dissolution)
+         *       please overload the more general inertVolumeFraction/inertVolumeFractionAtPos interface.
+         */
+        template<class SolidSystem, class ElemState, class ExtVariables,
+                 typename std::enable_if_t<SolidSystem::isInert()
+                                           && SolidSystem::numInertComponents == 1
+                                           && !decltype(isValid(Detail::hasInertVolumeFractionAtPos<GlobalPosition, SolidSystem>())(std::declval<Implementation>()))::value,
+                                           int> = 0>
+        Scalar inertVolumeFraction(const Element& element,
+                                   const SubControlVolume& scv,
+                                   const ElemState& elemState,
+                                   const ExtVariables& extVariables,
+                                   int compIdx) const
+        { return 1.0 - this->asImp_().porosity(element, scv, elemState, extVariables); }
+
+        // specialization if there are no inert components at all
+        template<class SolidSystem, class ElemState, class ExtVariables,
+                 typename std::enable_if_t<SolidSystem::numInertComponents == 0, int> = 0>
+        Scalar inertVolumeFraction(const Element& element,
+                                   const SubControlVolume& scv,
+                                   const ElemState& elemState,
+                                   const ExtVariables& extVariables,
+                                   int compIdx) const
+        { return 0.0; }
+
+        // the more general interface forwarding to inertVolumeFractionAtPos
+        template<class SolidSystem, class ElemState, class ExtVariables,
+                 typename std::enable_if_t<(SolidSystem::numInertComponents > 1) ||
+                                           (
+                                                (SolidSystem::numInertComponents > 0) &&
+                                                (
+                                                    !SolidSystem::isInert()
+                                                    || decltype(isValid(Detail::hasInertVolumeFractionAtPos<GlobalPosition, SolidSystem>())
+                                                            (std::declval<Implementation>()))::value
+                                                )
+                                            ),
+                                            int> = 0>
+        Scalar inertVolumeFraction(const Element& element,
+                                   const SubControlVolume& scv,
+                                   const ElemState& elemState,
+                                   const ExtVariables& extVariables,
+                                   int compIdx) const
+        { return this->asImp_().template inertVolumeFraction<SolidSystem>(element, scv, elemState, compIdx); }
+    };
+} // end namespace Experimental
 } // end namespace Dumux
 
 #endif

@@ -116,6 +116,16 @@ public:
     BoxElementFluxVariablesCache(const GridFluxVariablesCache& global)
     : gridFluxVarsCachePtr_(&global) {}
 
+    // old signature
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+              const FVElementGeometry& fvGeometry,
+              const ElementVolumeVariables& elemVolVars)
+    {
+        struct EmptyContext {} empty;
+        bind(element, fvGeometry, elemVolVars, empty);
+    }
+
     // Function is called by the BoxLocalJacobian prior to flux calculations on the element.
     // We assume the FVGeometries to be bound at this point
     template<class FVElementGeometry, class ElementVolumeVariables, class Context>

@@ -27,9 +27,11 @@
 #define DUMUX_ENERGY_VOLUME_VARIABLES_HH
 
 #include <type_traits>
+
+#include <dune/common/concept.hh>
 #include <dune/common/std/type_traits.hh>
 
-#include <dumux/discretization/localcontext.hh>
+#include <dumux/discretization/solutionstate.hh>
 #include <dumux/material/solidsystems/1csolid.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
 
@@ -100,8 +102,22 @@ public:
     using FluidSystem = typename IsothermalTraits::FluidSystem;
 
     //! The temperature is obtained from the problem as a constant for isothermal models
-    template<class Context, class Problem, class Element, class Scv>
-    void updateTemperature(const Context& context,
+    template<class ElemState, class Problem, class Element, class Scv>
+    void updateTemperature(const ElemState& elemState,
+                           const Problem& problem,
+                           const Element& element,
+                           const Scv& scv,
+                           FluidState& fluidState,
+                           SolidState& solidState)
+    {
+        struct EmptyExtVars {} empty;
+        updateTemperature(elemState, empty, problem, element, scv, fluidState, solidState);
+    }
+
+    //! The temperature is obtained from the problem as a constant for isothermal models
+    template<class ElemState, class ExtVariables, class Problem, class Element, class Scv>
+    void updateTemperature(const ElemState& elemState,
+                           const ExtVariables& extVariables,
                            const Problem& problem,
                            const Element& element,
                            const Scv& scv,
@@ -115,8 +131,21 @@ public:
         solidState.setTemperature(T);
     }
 
-    template<class Context, class Problem, class Element, class Scv>
-    void updateSolidEnergyParams(const Context& context,
+    template<class ElemState, class Problem, class Element, class Scv>
+    void updateSolidEnergyParams(const ElemState& elemState,
+                                 const Problem& problem,
+                                 const Element& element,
+                                 const Scv& scv,
+                                 SolidState& solidState)
+    {
+        struct EmptyExtVars {} empty;
+        updateSolidEnergyParams(elemState, empty, problem, element, scv, solidState);
+
+    }
+
+    template<class ElemState, class ExtVariables, class Problem, class Element, class Scv>
+    void updateSolidEnergyParams(const ElemState& elemState,
+                                 const ExtVariables& extVariables,
                                  const Problem& problem,
                                  const Element &element,
                                  const Scv &scv,
@@ -167,25 +196,41 @@ public:
     using SolidSystem = typename Traits::SolidSystem;
 
     //! The temperature is obtained from the problem as a constant for isothermal models
-    template<class Context, class Problem, class Element, class Scv>
-    void updateTemperature(const Context& context,
+    template<class ElemState, class Problem, class Element, class Scv>
+    void updateTemperature(const ElemState& elemState,
                            const Problem& problem,
                            const Element& element,
                            const Scv& scv,
                            FluidState& fluidState,
                            SolidState& solidState)
     {
+        struct EmptyExtVars {} empty;
+        updateTemperature(elemState, empty, problem, element, scv, fluidState, solidState);
+    }
+
+    //! The temperature is obtained from the problem as a constant for isothermal models
+    template<class ElemState, class ExtVariables, class Problem, class Element, class Scv>
+    void updateTemperature(const ElemState& elemState,
+                           const ExtVariables& extVariables,
+                           const Problem& problem,
+                           const Element& element,
+                           const Scv& scv,
+                           FluidState& fluidState,
+                           SolidState& solidState)
+    {
+        // compatibility layer with old elemsol-based style
+        const auto& elemSol = [&] ()
+        {
+            if constexpr (Dune::models<Experimental::Concept::ElementSolutionState, ElemState>())
+                return elemState.elementSolution();
+            else
+                return elemState;
+        } ();
+
         if constexpr (fullThermalEquilibrium)
         {
             // retrieve temperature from solution vector, all phases have the same temperature
-            const Scalar T = [&] ()
-            {
-                if constexpr (Experimental::Detail::hasContextInterfaces<Context>)
-                    return context.elementSolution()[scv.localDofIndex()][temperatureIdx];
-                else // context is elemsol (old interface)
-                    return context[scv.localDofIndex()][temperatureIdx];
-            } ();
-
+            const Scalar T = elemSol[scv.localDofIndex()][temperatureIdx];
             for (int phaseIdx = 0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
                 fluidState.setTemperature(phaseIdx, T);
             solidState.setTemperature(T);
@@ -196,59 +241,50 @@ public:
             // this means we have 1 temp for fluid phase, one for solid
             if constexpr (fluidThermalEquilibrium)
             {
-                const Scalar T = [&] ()
-                {
-                    if constexpr (Experimental::Detail::hasContextInterfaces<Context>)
-                        return context.elementSolution()[scv.localDofIndex()][temperatureIdx];
-                    else // context is elemsol (old interface)
-                        return context[scv.localDofIndex()][temperatureIdx];
-                } ();
-
+                const Scalar T = elemSol[scv.localDofIndex()][temperatureIdx];
                 for (int phaseIdx = 0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
                     fluidState.setTemperature(phaseIdx, T);
             }
             // this is for numEnergyEqFluid > 1
             else
             {
+                // retrieve temperatures from solution vector, phases might have different temperature
                 for (int phaseIdx = 0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
-                {
-                    // retrieve temperatures from solution vector, phases might have different temperature
-                    const Scalar T = [&] ()
-                    {
-                        if constexpr (Experimental::Detail::hasContextInterfaces<Context>)
-                            return context.elementSolution()[scv.localDofIndex()][temperatureIdx+phaseIdx];
-                        else // context is elemsol (old interface)
-                            return context[scv.localDofIndex()][temperatureIdx+phaseIdx];
-                    } ();
-                    fluidState.setTemperature(phaseIdx, T);
-                }
+                    fluidState.setTemperature(phaseIdx, elemSol[temperatureIdx+phaseIdx]);
             }
 
-            const Scalar solidTemperature = [&] ()
-            {
-                if constexpr (Experimental::Detail::hasContextInterfaces<Context>)
-                    return context.elementSolution()[scv.localDofIndex()][temperatureIdx+numEnergyEq-1];
-                else // context is elemsol (old interface)
-                    return context[scv.localDofIndex()][temperatureIdx+numEnergyEq-1];
-            } ();
+            const Scalar solidTemperature = elemSol[scv.localDofIndex()][temperatureIdx+numEnergyEq-1];
             solidState.setTemperature(solidTemperature);
         }
     }
 
-    template<class Context, class Problem, class Element, class Scv>
-    void updateSolidEnergyParams(const Context& context,
+    template<class ElemState, class Problem, class Element, class Scv>
+    void updateSolidEnergyParams(const ElemState& elemState,
+                                 const Problem& problem,
+                                 const Element& element,
+                                 const Scv& scv,
+                                 SolidState& solidState)
+    {
+        struct EmptyExtVars {} empty;
+        updateSolidEnergyParams(elemState, empty, problem, element, scv, solidState);
+
+    }
+
+    template<class ElemState, class ExtVariables, class Problem, class Element, class Scv>
+    void updateSolidEnergyParams(const ElemState& elemState,
+                                 const ExtVariables& extVariables,
                                  const Problem& problem,
                                  const Element &element,
                                  const Scv &scv,
                                  SolidState & solidState)
     {
-        Scalar cs = solidHeatCapacity_(context, problem, element, scv, solidState);
+        Scalar cs = solidHeatCapacity_(elemState, extVariables, problem, element, scv, solidState);
         solidState.setHeatCapacity(cs);
 
-        Scalar rhos = solidDensity_(context, problem, element, scv, solidState);
+        Scalar rhos = solidDensity_(elemState, extVariables, problem, element, scv, solidState);
         solidState.setDensity(rhos);
 
-        Scalar lambdas = solidThermalConductivity_(context, problem, element, scv, solidState);
+        Scalar lambdas = solidThermalConductivity_(elemState, extVariables, problem, element, scv, solidState);
         solidState.setThermalConductivity(lambdas);
     }
 
@@ -412,16 +448,18 @@ private:
     /*!
      * \brief Gets the solid heat capacity in an scv.
      *
-     * \param context the element-local context
+     * \param ElemState the element-local solution state
+     * \param ExtVariables further required external variables
      * \param problem the problem to solve
      * \param element the element (codim-0-entity) the scv belongs to
      * \param scv the sub control volume
      * \param solidState the solid state
      * \note this gets selected if the user uses the solidsystem / solidstate interface
      */
-    template<class Context, class Problem, class Element, class Scv,
-             std::enable_if_t<!Detail::hasSolidHeatCapacity<typename Problem::SpatialParams, Element, Scv, Context, SolidState>(), int> = 0>
-    Scalar solidHeatCapacity_(const Context& context,
+    template<class ElemState, class ExtVariables, class Problem, class Element, class Scv,
+             std::enable_if_t<!Detail::hasSolidHeatCapacity<typename Problem::SpatialParams, Element, Scv, ElemState, ExtVariables, SolidState>(), int> = 0>
+    Scalar solidHeatCapacity_(const ElemState& elemState,
+                              const ExtVariables& extVariables,
                               const Problem& problem,
                               const Element& element,
                               const Scv& scv,
@@ -433,16 +471,18 @@ private:
     /*!
      * \brief Gets the solid density in an scv.
      *
-     * \param context the element-local context
+     * \param ElemState the element-local solution state
+     * \param ExtVariables further required external variables
      * \param problem the problem to solve
      * \param element the element (codim-0-entity) the scv belongs to
      * \param scv the sub control volume
      * \param solidState the solid state
      * \note this gets selected if the user uses the solidsystem / solidstate interface
      */
-    template<class Context, class Problem, class Element, class Scv,
-             std::enable_if_t<!Detail::hasSolidDensity<typename Problem::SpatialParams, Element, Scv, Context, SolidState>(), int> = 0>
-    Scalar solidDensity_(const Context& context,
+    template<class ElemState, class ExtVariables, class Problem, class Element, class Scv,
+             std::enable_if_t<!Detail::hasSolidDensity<typename Problem::SpatialParams, Element, Scv, ElemState, ExtVariables, SolidState>(), int> = 0>
+    Scalar solidDensity_(const ElemState& elemState,
+                         const ExtVariables& extVariables,
                          const Problem& problem,
                          const Element& element,
                          const Scv& scv,
@@ -454,16 +494,18 @@ private:
     /*!
      * \brief Gets the solid's thermal conductivity in an scv.
      *
-     * \param context the element-local context
+     * \param ElemState the element-local solution state
+     * \param ExtVariables further required external variables
      * \param problem the problem to solve
      * \param element the element (codim-0-entity) the scv belongs to
      * \param scv the sub control volume
      * \param solidState the solid state
      * \note this gets selected if the user uses the solidsystem / solidstate interface
      */
-    template<class Context, class Problem, class Element, class Scv,
-             std::enable_if_t<!Detail::hasSolidThermalConductivity<typename Problem::SpatialParams, Element, Scv, Context, SolidState>(), int> = 0>
-    Scalar solidThermalConductivity_(const Context& context,
+    template<class ElemState, class ExtVariables, class Problem, class Element, class Scv,
+             std::enable_if_t<!Detail::hasSolidThermalConductivity<typename Problem::SpatialParams, Element, Scv, ElemState, ExtVariables, SolidState>(), int> = 0>
+    Scalar solidThermalConductivity_(const ElemState& elemState,
+                                     const ExtVariables& extVariables,
                                      const Problem& problem,
                                      const Element& element,
                                      const Scv& scv,
@@ -483,7 +525,8 @@ private:
     /*!
      * \brief Gets the solid heat capacity in an scv.
      *
-     * \param context the element-local context
+     * \param ElemState the element-local solution state
+     * \param ExtVariables further required external variables
      * \param problem the problem to solve
      * \param element the element (codim-0-entity) the scv belongs to
      * \param scv the sub control volume
@@ -491,9 +534,10 @@ private:
      * \note this gets selected if the user uses the simple spatial params interface in
      *       combination with an InertSolidPhase as solid system
      */
-    template<class Context, class Problem, class Element, class Scv,
-             std::enable_if_t<Detail::hasSolidHeatCapacity<typename Problem::SpatialParams, Element, Scv, Context, SolidState>(), int> = 0>
-    Scalar solidHeatCapacity_(const Context& context,
+    template<class ElemState, class ExtVariables, class Problem, class Element, class Scv,
+             std::enable_if_t<Detail::hasSolidHeatCapacity<typename Problem::SpatialParams, Element, Scv, ElemState, ExtVariables, SolidState>(), int> = 0>
+    Scalar solidHeatCapacity_(const ElemState& elemState,
+                              const ExtVariables& extVariables,
                               const Problem& problem,
                               const Element& element,
                               const Scv& scv,
@@ -502,13 +546,14 @@ private:
         static_assert(Detail::isInertSolidPhase<SolidSystem>::value,
             "solidHeatCapacity can only be overwritten in the spatial params when the solid system is a simple InertSolidPhase\n"
             "If you select a proper solid system, the solid heat capacity will be computed as stated in the solid system!");
-        return problem.spatialParams().solidHeatCapacity(element, scv, context, solidState);
+        return problem.spatialParams().solidHeatCapacity(element, scv, elemState, extVariables, solidState);
     }
 
     /*!
      * \brief Gets the solid density in an scv.
      *
-     * \param context the element-local context
+     * \param ElemState the element-local solution state
+     * \param ExtVariables further required external variables
      * \param problem the problem to solve
      * \param element the element (codim-0-entity) the scv belongs to
      * \param scv the sub control volume
@@ -516,9 +561,10 @@ private:
      * \note this gets selected if the user uses the simple spatial params interface in
      *       combination with an InertSolidPhase as solid system
      */
-    template<class Context, class Problem, class Element, class Scv,
-             std::enable_if_t<Detail::hasSolidDensity<typename Problem::SpatialParams, Element, Scv, Context, SolidState>(), int> = 0>
-    Scalar solidDensity_(const Context& context,
+    template<class ElemState, class ExtVariables, class Problem, class Element, class Scv,
+             std::enable_if_t<Detail::hasSolidDensity<typename Problem::SpatialParams, Element, Scv, ElemState, ExtVariables, SolidState>(), int> = 0>
+    Scalar solidDensity_(const ElemState& elemState,
+                         const ExtVariables& extVariables,
                          const Problem& problem,
                          const Element& element,
                          const Scv& scv,
@@ -527,13 +573,14 @@ private:
         static_assert(Detail::isInertSolidPhase<SolidSystem>::value,
             "solidDensity can only be overwritten in the spatial params when the solid system is a simple InertSolidPhase\n"
             "If you select a proper solid system, the solid density will be computed as stated in the solid system!");
-        return problem.spatialParams().solidDensity(element, scv, context, solidState);
+        return problem.spatialParams().solidDensity(element, scv, elemState, extVariables, solidState);
     }
 
     /*!
      * \brief Gets the solid's heat capacity in an scv.
      *
-     * \param context the element-local context
+     * \param ElemState the element-local solution state
+     * \param ExtVariables further required external variables
      * \param problem the problem to solve
      * \param element the element (codim-0-entity) the scv belongs to
      * \param scv the sub control volume
@@ -541,9 +588,10 @@ private:
      * \note this gets selected if the user uses the simple spatial params interface in
      *       combination with an InertSolidPhase as solid system
      */
-    template<class Context, class Problem, class Element, class Scv,
-             std::enable_if_t<Detail::hasSolidThermalConductivity<typename Problem::SpatialParams, Element, Scv, Context, SolidState>(), int> = 0>
-    Scalar solidThermalConductivity_(const Context& context,
+    template<class ElemState, class ExtVariables, class Problem, class Element, class Scv,
+             std::enable_if_t<Detail::hasSolidThermalConductivity<typename Problem::SpatialParams, Element, Scv, ElemState, ExtVariables, SolidState>(), int> = 0>
+    Scalar solidThermalConductivity_(const ElemState& elemState,
+                                     const ExtVariables& extVariables,
                                      const Problem& problem,
                                      const Element& element,
                                      const Scv& scv,
@@ -552,7 +600,7 @@ private:
         static_assert(Detail::isInertSolidPhase<SolidSystem>::value,
             "solidThermalConductivity can only be overwritten in the spatial params when the solid system is a simple InertSolidPhase\n"
             "If you select a proper solid system, the solid thermal conductivity will be computed as stated in the solid system!");
-        return problem.spatialParams().solidThermalConductivity(element, scv, context, solidState);
+        return problem.spatialParams().solidThermalConductivity(element, scv, elemState, extVariables, solidState);
     }
 
     std::array<Scalar, numEnergyEq> lambdaEff_;

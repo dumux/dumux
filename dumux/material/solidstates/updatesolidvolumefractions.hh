@@ -24,7 +24,8 @@
 #ifndef DUMUX_UPDATE_SOLID_VOLUME_FRACTION_HH
 #define DUMUX_UPDATE_SOLID_VOLUME_FRACTION_HH
 
-#include <dumux/discretization/localcontext.hh>
+#include <dune/common/concept.hh>
+#include <dumux/discretization/solutionstate.hh>
 
 namespace Dumux {
 
@@ -34,35 +35,55 @@ namespace Dumux {
  * \note updates the inert components (TODO: these are assumed to come last right now in the solid system!)
  * \note gets the non-inert components from the primary variables
  */
-template<class Context, class Problem, class Element, class Scv, class SolidState>
-void updateSolidVolumeFractions(const Context& context,
+template<class ElemState, class ExtVariables, class Problem, class Element, class Scv, class SolidState>
+void updateSolidVolumeFractions(const ElemState& elemState,
+                                const ExtVariables& extVariables,
                                 const Problem& problem,
                                 const Element& element,
                                 const Scv& scv,
                                 SolidState& solidState,
                                 const int solidVolFracOffset)
 {
-    // check if context fulfills the context interface or is assumed to be an element solution (old interface)
-    static constexpr bool isContext = Experimental::Detail::hasContextInterfaces<Context>;
+    // compatibility layer with old elemsol-based style
+    const auto& priVars = [&elemState, &scv] ()
+    {
+        if constexpr (Dune::models<Experimental::Concept::ElementSolutionState, ElemState>())
+            return elemState.elementSolution()[scv.localDofIndex()];
+        else
+            return elemState[scv.localDofIndex()];
+    } ();
 
     for (int sCompIdx = solidState.numComponents-solidState.numInertComponents; sCompIdx < solidState.numComponents; ++sCompIdx)
     {
         const auto& sp = problem.spatialParams();
         using SolidSystem = typename SolidState::SolidSystem;
-        const auto inertVolumeFraction = sp.template inertVolumeFraction<SolidSystem>(element, scv, context, sCompIdx);
+        const auto inertVolumeFraction = sp.template inertVolumeFraction<SolidSystem>(element, scv, elemState, extVariables, sCompIdx);
         solidState.setVolumeFraction(sCompIdx, inertVolumeFraction);
     }
 
     if (!(solidState.isInert()))
     {
-        for (int sCompIdx = 0; sCompIdx < solidState.numComponents- solidState.numInertComponents; ++sCompIdx)
-        {
-            if constexpr (isContext)
-                solidState.setVolumeFraction(sCompIdx, context.elementSolution()[scv.localDofIndex()][solidVolFracOffset + sCompIdx]);
-            else
-                solidState.setVolumeFraction(sCompIdx, context[scv.localDofIndex()][solidVolFracOffset + sCompIdx]);
-       }
+        for (int sCompIdx = 0; sCompIdx < solidState.numComponents-solidState.numInertComponents; ++sCompIdx)
+                solidState.setVolumeFraction(sCompIdx, priVars[solidVolFracOffset + sCompIdx]);
     }
+}
+
+/*!
+ * \ingroup SolidStates
+ * \brief update the solid volume fractions (inert and reacitve) and set them in the solidstate
+ * \note updates the inert components (TODO: these are assumed to come last right now in the solid system!)
+ * \note gets the non-inert components from the primary variables
+ */
+template<class ElemState, class Problem, class Element, class Scv, class SolidState>
+void updateSolidVolumeFractions(const ElemState& elemState,
+                                const Problem& problem,
+                                const Element& element,
+                                const Scv& scv,
+                                SolidState& solidState,
+                                const int solidVolFracOffset)
+{
+    struct EmptyExtVars {} empty;
+    updateSolidVolumeFractions(elemState, empty, problem, element, scv, solidState, solidVolFracOffset);
 }
 
 } // end namespace Dumux

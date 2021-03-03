@@ -116,12 +116,12 @@ int main(int argc, char** argv)
     gridVariables->updateTime(0.0);
 
     // intialize the vtk output module
-    // VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, gridVariables->dofs(), problem->name());
-    // using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
-    // vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
-    // using IOFields = GetPropType<TypeTag, Properties::IOFields>;
-    // IOFields::initOutputModule(vtkWriter); // Add model specific output fields
-    // vtkWriter.write(0.0);
+    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, gridVariables->dofs(), problem->name());
+    using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
+    vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
+    using IOFields = GetPropType<TypeTag, Properties::IOFields>;
+    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
+    vtkWriter.write(0.0);
 
     // instantiate time loop
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);
@@ -166,15 +166,14 @@ int main(int argc, char** argv)
         timeLoop->advanceTimeStep();
 
         // write vtk output
-        // if (timeLoop->isCheckPoint())
-        //     vtkWriter.write(timeLoop->time());
+        if (timeLoop->isCheckPoint())
+            vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
         // set new dt as suggested by the newton solver
         timeLoop->setTimeStepSize(nonLinearSolver->suggestTimeStepSize(timeLoop->timeStepSize()));
-
     } while (!timeLoop->finished());
 
     timeLoop->finalize(leafGridView.comm());

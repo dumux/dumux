@@ -70,7 +70,7 @@ public:
     using Operators = Op;
 
     //! export context type
-    using LocalContext = typename EV::LocalContext;
+    using LocalContext = Dumux::Experimental::LocalContext<EV>;
 
     //! export the grid variables type this operator requires a local view of
     using GridVariables = GridVars;

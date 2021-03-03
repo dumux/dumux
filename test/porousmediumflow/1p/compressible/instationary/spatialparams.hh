@@ -25,8 +25,10 @@
 #ifndef DUMUX_COMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_COMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
 
+#include <dune/common/concept.hh>
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/discretization/solutionstate.hh>
 
 namespace Dumux {
 
@@ -37,15 +39,15 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class OnePTestSpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar,
-                             OnePTestSpatialParams<GridGeometry, Scalar>>
+: public Experimental::FVSpatialParamsOneP<GridGeometry, Scalar,
+                                           OnePTestSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
-                                           OnePTestSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = Experimental::FVSpatialParamsOneP<GridGeometry, Scalar,
+                                                         OnePTestSpatialParams<GridGeometry, Scalar>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -70,12 +72,20 @@ public:
      * \param elemSol The element solution vector
      * \return The intrinsic permeability
      */
-    template<class ElementSolution>
+    template<class ElemState, class ExtVariables>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolution& elemSol) const
+                                  const ElemState& elemState,
+                                  const ExtVariables& extVariables) const
     {
-        if (scv.dofIndex() == 0) std::cout << "Time is: " << elemSol.timeLevel().current() << std::endl;
+        // Print time only when valid element state is provided. This may
+        // not be the case during the bind() call in vtkoutputmodule.
+        if constexpr (Dune::models<Experimental::Concept::ElementSolutionState, ElemState>())
+        {
+            if (scv.dofIndex() == 0)
+                std::cout << "Time is: " << elemState.timeLevel().current() << std::endl;
+        }
+
         if (isInLens_(scv.dofPosition()))
             return permeabilityLens_;
         else
