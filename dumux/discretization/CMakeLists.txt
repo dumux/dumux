@@ -28,6 +28,7 @@ rotationsymmetricgridgeometrytraits.hh
 rotationsymmetricscv.hh
 rotationsymmetricscvf.hh
 scvandscvfiterators.hh
+solutionstate.hh
 staggered.hh
 subcontrolvolumebase.hh
 subcontrolvolumefacebase.hh
