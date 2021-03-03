@@ -67,6 +67,12 @@ public:
     { return false; }
 
     /*!
+     * \brief Return the number of fluid phases
+     */
+    static constexpr int numFluidPhases()
+    { return 2; }
+
+    /*!
      * \brief The parameter type
      * \tparam Scalar The scalar type
      */
