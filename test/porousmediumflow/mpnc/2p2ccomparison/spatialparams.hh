@@ -53,7 +53,6 @@ class MPNCComparisonSpatialParams
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
     using PcKrSwCurve = FluidMatrix::BrooksCoreyDefault<Scalar>;
-    using MPAdapter = Dumux::FluidMatrix::MPAdapter<PcKrSwCurve, 2>;
 
 public:
     using PermeabilityType = Scalar;
@@ -96,7 +95,7 @@ public:
      */
     auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
-        return makeFluidMatrixInteraction(MPAdapter(pcKrSw_));
+        return makeFluidMatrixInteraction(FluidMatrix::MPAdapter(pcKrSw_));
     }
 
     /*!
