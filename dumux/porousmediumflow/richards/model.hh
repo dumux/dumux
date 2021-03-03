@@ -109,7 +109,8 @@
 #include <dumux/porousmediumflow/nonisothermal/iofields.hh>
 
 #include "indices.hh"
-#include "volumevariables.hh"
+// #include "volumevariables.hh"
+#include "ownvolumevariables.hh"
 #include "iofields.hh"
 #include "localresidual.hh"
 

@@ -44,6 +44,24 @@ averageDistancePointGeometry(const typename Geometry::GlobalCoordinate& p,
     return avgDist/geometry.volume();
 }
 
+
+
+template<class Geometry>
+inline typename Geometry::ctype
+DistancePointGeometry(const typename Geometry::GlobalCoordinate& p,
+                      const Geometry& geometry,
+                      std::size_t integrationOrder = 2)
+{
+    typename Geometry::ctype avgDist = 0.0;
+    // const auto& quad = Dune::QuadratureRules<typename Geometry::ctype, Geometry::mydimension>::rule(geometry.type(), integrationOrder);
+    // for (const auto& qp : quad)
+    Dune::FieldVector<double, 2> center= {geometry.center()[0], geometry.center()[1]};
+    Dune::FieldVector<double, 2> p2= {p[0], p[1]};
+    auto factor = getParam<double>("Problem.Factor");
+    avgDist = (center-p2).two_norm()*factor;
+    return avgDist;
+}
+
 /*!
  * \ingroup Geometry
  * \brief Compute the distance from a point to a line through the points a and b
