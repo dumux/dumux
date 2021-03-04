@@ -33,14 +33,14 @@ template<class MT, class LC> class FVNonIsothermalOperators;
 
 namespace Impl {
 
-    template<class MT, class EV, bool enable> struct DefaultEnergyOperatorsChooser;
-    template<class MT, class EV>
-    struct DefaultEnergyOperatorsChooser<MT, EV, false> { using Type = void; };
-    template<class MT, class EV>
-    struct DefaultEnergyOperatorsChooser<MT, EV, true> { using Type = FVNonIsothermalOperators<MT, EV>; };
+    template<class MT, class C, bool enable> struct DefaultEnergyOperatorsChooser;
+    template<class MT, class C>
+    struct DefaultEnergyOperatorsChooser<MT, C, false> { using Type = void; };
+    template<class MT, class C>
+    struct DefaultEnergyOperatorsChooser<MT, C, true> { using Type = FVNonIsothermalOperators<MT, C>; };
 
-    template<class MT, class EV>
-    using DefaultEnergyOperators = typename DefaultEnergyOperatorsChooser<MT, EV, MT::enableEnergyBalance()>::Type;
+    template<class MT, class C>
+    using DefaultEnergyOperators = typename DefaultEnergyOperatorsChooser<MT, C, MT::enableEnergyBalance()>::Type;
 
 } // end namespace Impl
 
@@ -51,20 +51,18 @@ namespace Impl {
  *        that assume thermal equilibrium between all phases.
  * \tparam FluxVariables the type that is responsible for computing the individual
  *                       flux contributions, i.e., advective, diffusive, conduvtive...
- * \tparam ElementVariables Element-local variables (primary/secondary variables)
+ * \tparam LocalContexts Element-local context (geometry & primary/secondary variables)
  */
-template<class ModelTraits, class ElementVariables>
+template<class ModelTraits, class LocalContext>
 class FVNonIsothermalOperators
 {
     // The variables required for the evaluation of the equation
+    using ElementVariables = typename LocalContext::ElementVariables;
     using GridVariables = typename ElementVariables::GridVariables;
-    using VolumeVariables = typename GridVariables::VolumeVariables;
     using ElementVolumeVariables = typename ElementVariables::ElementVolumeVariables;
-    using LocalContext = typename ElementVariables::LocalContext;
 
     // The grid geometry on which the scheme operates
     using GridGeometry = typename GridVariables::GridGeometry;
-    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
 
     using GridView = typename GridGeometry::GridView;
@@ -156,8 +154,6 @@ public:
      */
     template<class NumEqVector>
     static void addSourceEnergy(NumEqVector& source,
-                                const Element& element,
-                                const FVElementGeometry& fvGeometry,
                                 const LocalContext& context,
                                 const SubControlVolume &scv)
     {}

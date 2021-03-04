@@ -35,6 +35,7 @@
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/localcontext.hh>
+#include <dumux/discretization/solutionstate.hh>
 #include <dumux/timestepping/multistagetimestepper.hh>
 
 
@@ -235,7 +236,8 @@ public:
     template< typename ApplyDirichletFunctionType >
     void evalDirichletBoundaries(ApplyDirichletFunctionType applyDirichlet)
     {
-        const auto context = makeContext_(elemVariables());
+        // TODO: BCTypes actually works on element solution state now, not context!
+        const auto context = makeLocalContext(element(), fvGeometry(), elemVariables());
 
         for (const auto& scvI : scvs(fvGeometry()))
         {
@@ -267,8 +269,8 @@ protected:
     {
         if (isStationary())
         {
-            const auto context = makeContext_(elemVariables());
-            LocalOperator localOperator(element(), fvGeometry(), context);
+            const auto context = makeLocalContext(element(), fvGeometry(), elemVariables());
+            LocalOperator localOperator(context);
             return elementIsGhost_ ? localOperator.getEmptyResidual()
                                    : localOperator.evalFluxesAndSources();
         }
@@ -279,9 +281,8 @@ protected:
 
             for (std::size_t k = 0; k < stageParams_->size(); ++k)
             {
-                const auto context = makeContext_(elemVariables_[k]);
-                LocalOperator localOperator(element(), fvGeometry(), context);
-                const auto eIdx = fvGeometry().gridGeometry().elementMapper().index(element());
+                const auto context = makeLocalContext(element(), fvGeometry(), elemVariables_[k]);
+                LocalOperator localOperator(context);
 
                 if (!stageParams_->skipTemporal(k))
                     residual.axpy(stageParams_->temporalWeight(k), localOperator.evalStorage());
@@ -321,14 +322,14 @@ protected:
         // get the variables of the current stage
         auto& curVariables = elemVariables();
         auto& curElemVolVars = curVariables.elemVolVars();
-        const auto& x = curVariables.gridVariables().dofs();
+        const auto& curGridVariables = curVariables.gridVariables();
+        const auto& x = curGridVariables.dofs();
 
         const auto origResiduals = evalLocalResidual();
         const auto origElemSol = elementSolution(element(), x, fvGeometry().gridGeometry());
-        auto elemSol = origElemSol;
 
-        auto context = makeContext_(curVariables);
-        context.setElementSolution(elemSol);
+        auto elemSol = origElemSol;
+        auto elemSolState = Experimental::ElementSolutionState(std::move(elemSol), &curGridVariables.timeLevel());
 
         //////////////////////////////////////////////////////////////////////////////////////////////
         // Calculate derivatives of the residual of all dofs in element with respect to themselves. //
@@ -351,16 +352,17 @@ protected:
                 auto evalResiduals = [&] (Scalar priVar)
                 {
                     // update the volume variables and compute element residual
-                    elemSol[localI][pvIdx] = priVar;
-                    curVolVars.update(context, problem(), element(), scvI);
+                    elemSolState.elementSolution()[localI][pvIdx] = priVar;
+                    curVolVars.update(elemSolState, problem(), element(), scvI);
                     return evalLocalResidual();
                 };
 
                 // derive the residuals numerically
                 static const NumericEpsilon<Scalar, numEq> eps_{problem().paramGroup()};
                 static const int numDiffMethod = getParamFromGroup<int>(problem().paramGroup(), "Assembly.NumericDifferenceMethod");
-                NumericDifferentiation::partialDerivative(evalResiduals, elemSol[localI][pvIdx], partialDerivs,
-                                                          origResiduals, eps_(elemSol[localI][pvIdx], pvIdx),
+                NumericDifferentiation::partialDerivative(evalResiduals, elemSolState.elementSolution()[localI][pvIdx],
+                                                          partialDerivs, origResiduals,
+                                                          eps_(elemSolState.elementSolution()[localI][pvIdx], pvIdx),
                                                           numDiffMethod);
 
                 // TODO: Distinguish between implicit/explicit here. For explicit schemes,
@@ -391,7 +393,7 @@ protected:
                 }
 
                 // restore the original element solution & volume variables
-                elemSol[localI][pvIdx] = origElemSol[localI][pvIdx];
+                elemSolState.elementSolution()[localI][pvIdx] = origElemSol[localI][pvIdx];
                 curVolVars = origCurVolVars;
 
                 // TODO additional dof dependencies
@@ -416,15 +418,6 @@ protected:
     { return elemVariables().gridVariables().gridVolVars().problem(); }
 
 private:
-    LocalContext makeContext_(const ElementVariables& elemVars) const
-    {
-        LocalContext context;
-        context.setElementVariables(elemVars);
-        if (stageParams_)
-            context.setTimeLevel(elemVars.gridVariables().timeLevel());
-        return context;
-    }
-
     const Element& element_;
     const FVElementGeometry& fvGeometry_;
     std::vector<ElementVariables>& elemVariables_;

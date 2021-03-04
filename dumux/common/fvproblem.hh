@@ -681,8 +681,6 @@ namespace Experimental {
          * This is the method for the case where the Neumann condition is
          * potentially solution dependent
          *
-         * \param element The finite element
-         * \param fvGeometry The finite-volume geometry
          * \param context The element-local context
          * \param scvf The sub control volume face
          *
@@ -691,9 +689,7 @@ namespace Experimental {
          * \todo TODO: Should Context be something that also has (element and) fvGeometry?
          */
         template<class Context>
-        NumEqVector neumann(const Element& element,
-                            const FVElementGeometry& fvGeometry,
-                            const Context& context,
+        NumEqVector neumann(const Context& context,
                             const SubControlVolumeFace& scvf) const
         { return this->asImp_().neumannAtPos(scvf.ipGlobal()); }
 
@@ -717,9 +713,7 @@ namespace Experimental {
          * \todo TODO: Should Context be something that also has (element and) fvGeometry?
          */
         template<class Context>
-        NumEqVector source(const Element &element,
-                           const FVElementGeometry& fvGeometry,
-                           const Context& context,
+        NumEqVector source(const Context& context,
                            const SubControlVolume& scv) const
         { return this->asImp_().sourceAtPos(scv.center()); }
 

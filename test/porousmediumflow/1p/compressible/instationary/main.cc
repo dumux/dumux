@@ -35,6 +35,7 @@
 #include <dune/istl/io.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/localcontext.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -131,12 +132,11 @@ int main(int argc, char** argv)
     auto timeMethod = std::make_shared<MultiStage::ImplicitEuler<Scalar>>();
 
     // create assembler & linear solver
-    // TODO: The operators or local operator could be a property, just as is LocalResidual currently
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
-    using ElemVariables = typename GridVariables::LocalView;
-    using ImmiscibleOperators = FVImmiscibleOperators<ModelTraits, FluxVariables, ElemVariables>;
-    using LocalOperator = FVLocalOperator<ElemVariables, ImmiscibleOperators>;
+    using LocalContext = Dumux::Experimental::LocalContext<typename GridVariables::LocalView>;
+    using ImmiscibleOperators = FVImmiscibleOperators<ModelTraits, FluxVariables, LocalContext>;
+    using LocalOperator = FVLocalOperator<LocalContext, ImmiscibleOperators>;
 
     using Assembler = Assembler<LocalOperator, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(gridGeometry, *timeMethod);

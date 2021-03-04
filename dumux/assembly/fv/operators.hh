@@ -39,19 +39,18 @@ namespace Dumux {
  *        the terms of equations in the context of finite-volume schemes
  * \todo TODO: Should operators have a state? That is, be constructed and have non-static functions?
  */
-template<class ElementVariables>
+template<class LocalContext>
 class FVOperators
 {
     // The variables required for the evaluation of the equation
-    using GridVariables = typename ElementVariables::GridVariables;
-    using Scalar = typename GridVariables::Scalar;
-
+    using ElemVars = typename LocalContext::ElementVariables;
+    using GridVariables = typename ElemVars::GridVariables;
     using PrimaryVariables = typename GridVariables::PrimaryVariables;
+    using Scalar = typename GridVariables::Scalar;
     static constexpr int numEq = PrimaryVariables::size();
 
     // The grid geometry on which the scheme operates
     using GridGeometry = typename GridVariables::GridGeometry;
-    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Extrusion = Extrusion_t<GridGeometry>;
@@ -59,7 +58,7 @@ class FVOperators
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    // user-input defined in the problem
+    // user-input defined in the problem (TODO: Could be a template in the functions)
     using Problem = std::decay_t<decltype(std::declval<GridVariables>().gridVolVars().problem())>;
 
 public:
@@ -83,29 +82,23 @@ public:
     /*!
      * \brief Compute the storage term of the equations for the given sub-control volume
      * \param problem The problem to be solved (could store additionally required quantities)
-     * \param scv The sub-control volume
-     * \param context The element-local context (primary/secondary variables)
+     * \param context The element-local context (geometry & sprimary/secondary variables)
+     * \param scv The sub-control volume for which to evaluate the storage term
      * \note This must be overloaded by the implementation
      */
-     template<class LocalContext>
      static StorageTerm storage(const Problem& problem,
-                                const SubControlVolume& scv,
-                                const LocalContext& context)
+                                const LocalContext& context,
+                                const SubControlVolume& scv)
     { DUNE_THROW(Dune::NotImplemented, "Storage operator not implemented!"); }
 
     /*!
      * \brief Compute the flux term of the equations for the given sub-control volume face
      * \param problem The problem to be solved (could store additionally required quantities)
-     * \param element The grid element
-     * \param fvGeometry The element-local view on the finite volume grid geometry
      * \param context The element-local context (primary/secondary variables)
      * \param scvf The sub-control volume face for which the flux term is to be computed
      * \note This must be overloaded by the implementation
      */
-    template<class LocalContext>
     static FluxTerm flux(const Problem& problem,
-                         const Element& element,
-                         const FVElementGeometry& fvGeometry,
                          const LocalContext& context,
                          const SubControlVolumeFace& scvf)
     { DUNE_THROW(Dune::NotImplemented, "This model does not implement a flux method!"); }
@@ -113,16 +106,11 @@ public:
     /*!
      * \brief Compute the source term of the equations for the given sub-control volume
      * \param problem The problem to be solved (could store additionally required quantities)
-     * \param element The grid element
-     * \param fvGeometry The element-local view on the finite volume grid geometry
      * \param context The element-local context (primary/secondary variables)
      * \param scv The sub-control volume for which the source term is to be computed
      * \note This is a default implementation forwarding to interfaces in the problem
      */
-     template<class LocalContext>
      static SourceTerm source(const Problem& problem,
-                              const Element& element,
-                              const FVElementGeometry& fvGeometry,
                               const LocalContext& context,
                               const SubControlVolume& scv)
     {
@@ -131,11 +119,11 @@ public:
         SourceTerm source(0.0);
 
         // add contributions from volume flux sources
-        source += problem.source(element, fvGeometry, context, scv);
+        source += problem.source(context, scv);
 
         // add contribution from possible point sources
-        // TODO: New point source interface with context
-        source += problem.scvPointSources(element, fvGeometry, elemVolVars, scv);
+        // TODO: New point source interface with context!?
+        // source += problem.scvPointSources(element, fvGeometry, elemVolVars, scv);
 
         // multiply with scv volume
         source *= Extrusion::volume(scv)*elemVolVars[scv].extrusionFactor();

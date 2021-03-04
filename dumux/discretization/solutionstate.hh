@@ -103,8 +103,12 @@ public:
     , timeLevel_(timeLevel)
     {}
 
-    //! return the element solution vector
+    //! return const reference to the element solution vector
     const ElementSolution& elementSolution() const
+    { return elemSol_; }
+
+    //! return reference to the element solution vector
+    ElementSolution& elementSolution()
     { return elemSol_; }
 
     //! return the time level

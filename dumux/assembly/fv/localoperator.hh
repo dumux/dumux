@@ -41,25 +41,23 @@ namespace Dumux {
  * \brief The element-wise local operator for finite volume schemes.
  *        This allows for element-wise evaluation of individual terms
  *        of the equations to be solved.
- * \tparam EV Element-local variables
+ * \tparam C Element-local context (geometry, primary/secondary variables)
  * \tparam Op The model-specific operators
  */
-template<class EV, class Op>
+template<class C, class Op>
 class FVLocalOperator
 {
     // The variables required for the evaluation of the equation
-    using GridVars = typename EV::GridVariables;
-    using PrimaryVariables = typename GridVars::PrimaryVariables;
+    using ElemVars = typename C::ElementVariables;
+    using GridVars = typename ElemVars::GridVariables;
 
     // The grid geometry on which the scheme operates
     using GridGeometry = typename GridVars::GridGeometry;
-    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using GridView = typename GridGeometry::GridView;
     using Extrusion = Extrusion_t<GridGeometry>;
 
-    using GridView = typename GridGeometry::GridView;
-    using Element = typename GridView::template Codim<0>::Entity;
-
+    // info & types related to the system of equations
     using NumEqVector = typename Op::NumEqVector;
     static constexpr int dim = GridView::dimension;
     static constexpr int numEq = NumEqVector::size();
@@ -70,7 +68,7 @@ public:
     using Operators = Op;
 
     //! export context type
-    using LocalContext = Dumux::Experimental::LocalContext<EV>;
+    using LocalContext = C;
 
     //! export the grid variables type this operator requires a local view of
     using GridVariables = GridVars;
@@ -91,12 +89,8 @@ public:
      * \note The grid geometry local view & context are expected to
      *       be bound to the same (the given) element
      */
-    explicit FVLocalOperator(const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const LocalContext& context)
-    : element_(element)
-    , fvGeometry_(fvGeometry)
-    , context_(context)
+    explicit FVLocalOperator(const LocalContext& context)
+    : context_(context)
     {}
 
     /*!
@@ -115,11 +109,11 @@ public:
 
         // source term
         auto result = getEmptyResidual();
-        for (const auto& scv : scvs(fvGeometry_))
-            result[scv.localDofIndex()] -= Operators::source(problem, element_, fvGeometry_, context_, scv);
+        for (const auto& scv : scvs(context_.elementGridGeometry()))
+            result[scv.localDofIndex()] -= Operators::source(problem, context_, scv);
 
         // flux term
-        for (const auto& scvf : scvfs(fvGeometry_))
+        for (const auto& scvf : scvfs(context_.elementGridGeometry()))
             addFlux_(result, scvf);
 
         return result;
@@ -139,15 +133,15 @@ public:
         //       now but flux() also returns the flux multiplied with area so this should
         //       be more consistent
         auto result = getEmptyResidual();
-        for (const auto& scv : scvs(fvGeometry_))
-            result[scv.localDofIndex()] += Operators::storage(problem, scv, context_);
+        for (const auto& scv : scvs(context_.elementGridGeometry()))
+            result[scv.localDofIndex()] += Operators::storage(problem, context_, scv);
 
         return result;
     }
 
     ElementResidualVector getEmptyResidual() const
     {
-        ElementResidualVector res(fvGeometry_.numScv());
+        ElementResidualVector res(context_.elementGridGeometry().numScv());
         res = 0.0;
         return res;
     }
@@ -171,25 +165,26 @@ protected:
     template<bool b = isBox, std::enable_if_t<!b, int> = 0>
     void addFlux_(ElementResidualVector& r, const SubControlVolumeFace& scvf) const
     {
-        const auto& insideScv = fvGeometry_.scv(scvf.insideScvIdx());
+        const auto& insideScv = context_.elementGridGeometry().scv(scvf.insideScvIdx());
         const auto localDofIdx = insideScv.localDofIndex();
 
         const auto& problem = context_.elementVariables().gridVariables().gridVolVars().problem();
 
         if (!scvf.boundary())
-            r[localDofIdx] += Operators::flux(problem, element_, fvGeometry_, context_, scvf);
+            r[localDofIdx] += Operators::flux(problem, context_, scvf);
         else
         {
-            const auto& bcTypes = problem.boundaryTypes(element_, scvf, context_);
+            // TODO: This actually receives elementState currently, not context
+            const auto& bcTypes = problem.boundaryTypes(context_.element(), scvf, context_);
 
             // Dirichlet boundaries
             if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann())
-                r[localDofIdx] += Operators::flux(problem, element_, fvGeometry_, context_, scvf);
+                r[localDofIdx] += Operators::flux(problem, context_, scvf);
 
             // Neumann and Robin ("solution dependent Neumann") boundary conditions
             else if (bcTypes.hasNeumann() && !bcTypes.hasDirichlet())
             {
-                auto neumannFluxes = problem.neumann(element_, fvGeometry_, context_, scvf);
+                auto neumannFluxes = problem.neumann(context_, scvf);
 
                 // multiply with the face area & extrusion factor
                 const auto& elemVolVars = context_.elementVariables().elemVolVars();
@@ -209,25 +204,28 @@ protected:
     void addFlux_(ElementResidualVector& r, const SubControlVolumeFace& scvf) const
     {
         const auto& problem = context_.elementVariables().gridVariables().gridVolVars().problem();
+        const auto& fvGeometry = context_.elementGridGeometry();
 
         // inner faces
         if (!scvf.boundary())
         {
-            const auto flux = Operators::flux(problem, element_, fvGeometry_, context_, scvf);
-            r[fvGeometry_.scv(scvf.insideScvIdx()).localDofIndex()] += flux;
-            r[fvGeometry_.scv(scvf.outsideScvIdx()).localDofIndex()] -= flux;
+            const auto flux = Operators::flux(problem, context_, scvf);
+            r[fvGeometry.scv(scvf.insideScvIdx()).localDofIndex()] += flux;
+            r[fvGeometry.scv(scvf.outsideScvIdx()).localDofIndex()] -= flux;
         }
 
         // boundary faces
         else
         {
-            const auto& scv = fvGeometry_.scv(scvf.insideScvIdx());
-            const auto& bcTypes = problem.boundaryTypes(element_, scv, context_);
+            const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+
+            // TODO: This actually receives elementState currently, not context
+            const auto& bcTypes = problem.boundaryTypes(context_.element(), scv, context_);
 
             // Treat Neumann and Robin ("solution dependent Neumann") boundary conditions.
             if (bcTypes.hasNeumann())
             {
-                const auto neumannFluxes = problem.neumann(element_, fvGeometry_, context_, scvf);
+                const auto neumannFluxes = problem.neumann(context_, scvf);
 
                 const auto& elemVolVars = context_.elementVariables().elemVolVars();
                 const auto area = Extrusion::area(scvf)*elemVolVars[scv].extrusionFactor();
@@ -241,10 +239,7 @@ protected:
     }
 
 private:
-
-    const Element& element_;              //!< pointer to the element for which the residual is computed
-    const FVElementGeometry& fvGeometry_; //!< the local view on the finite element grid geometry
-    const LocalContext& context_;         //!< element-local context (primary/secondary variables & further data)
+    const LocalContext& context_; //!< reference to the element-local context
 };
 
 } // end namespace Dumux

@@ -40,25 +40,25 @@ namespace Dumux {
  * \tparam ModelTraits defines model-related types and variables (e.g. number of phases)
  * \tparam FluxVariables the type that is responsible for computing the individual
  *                       flux contributions, i.e., advective, diffusive, convective...
- * \tparam ElementVariables Element-local variables (primary/secondary variables)
+ * \tparam LocalContext Element-local context (geometry & primary/secondary variables)
  * \tparam EnergyOperators optional template argument, specifying the class that
  *                         handles the operators related to non-isothermal effects.
  *                         These are assumed to be taken into account by the model
  *                         if this template argument is other than void.
  */
-template<class ModelTraits, class FluxVariables, class ElementVariables,
-         class EnergyOperators = Impl::DefaultEnergyOperators<ModelTraits, ElementVariables>>
+template<class ModelTraits, class FluxVariables, class LocalContext,
+         class EnergyOperators = Impl::DefaultEnergyOperators<ModelTraits, LocalContext>>
 class FVImmiscibleOperators
-: public FVOperators<ElementVariables>
+: public FVOperators<LocalContext>
 {
-    using ParentType = FVOperators<ElementVariables>;
+    using ParentType = FVOperators<LocalContext>;
 
     // The variables required for the evaluation of the equation
+    using ElementVariables = typename LocalContext::ElementVariables;
     using GridVariables = typename ElementVariables::GridVariables;
 
     // The grid geometry on which the scheme operates
     using GridGeometry = typename GridVariables::GridGeometry;
-    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Extrusion = Extrusion_t<GridGeometry>;
@@ -66,9 +66,10 @@ class FVImmiscibleOperators
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
+    // TODO: Problem could be a template in the functions?
     using Problem = std::decay_t<decltype(std::declval<GridVariables>().gridVolVars().problem())>;
-    using Indices = typename ModelTraits::Indices;
 
+    using Indices = typename ModelTraits::Indices;
     static constexpr int numPhases = ModelTraits::numFluidPhases();
     static constexpr int conti0EqIdx = ModelTraits::Indices::conti0EqIdx;
     static constexpr bool isNonIsothermal = !std::is_same_v<EnergyOperators, void>;
@@ -85,13 +86,12 @@ public:
     /*!
      * \brief Compute the storage term of the equations for the given sub-control volume
      * \param problem The problem to be solved (could store additionally required quantities)
-     * \param scv The sub-control volume
-     * \param context The element-local context (primary/secondary variables)
+     * \param context The element-local context (geometry & sprimary/secondary variables)
+     * \param scv The sub-control volume for which the storage term is to be computed
      */
-     template<class LocalContext>
      static StorageTerm storage(const Problem& problem,
-                                const SubControlVolume& scv,
-                                const LocalContext& context)
+                                const LocalContext& context,
+                                const SubControlVolume& scv)
     {
         const auto& volVars = context.elementVariables().elemVolVars()[scv];
 
@@ -122,18 +122,15 @@ public:
     /*!
      * \brief Compute the flux term of the equations for the given sub-control volume face
      * \param problem The problem to be solved (could store additionally required quantities)
-     * \param element The grid element
-     * \param fvGeometry The element-local view on the finite volume grid geometry
      * \param context The element-local context (primary/secondary variables)
      * \param scvf The sub-control volume face for which the flux term is to be computed
      */
-    template<class LocalContext>
     static FluxTerm flux(const Problem& problem,
-                         const Element& element,
-                         const FVElementGeometry& fvGeometry,
                          const LocalContext& context,
                          const SubControlVolumeFace& scvf)
     {
+        const auto& element = context.element();
+        const auto& fvGeometry = context.elementGridGeometry();
         const auto& elemVolVars = context.elementVariables().elemVolVars();
         const auto& elemFluxVarsCache = context.elementVariables().elemFluxVarsCache();
 

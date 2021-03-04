@@ -25,13 +25,7 @@
 #ifndef DUMUX_LOCAL_CONTEXT_HH
 #define DUMUX_LOCAL_CONTEXT_HH
 
-#include <optional>
-
-#include <dune/common/std/type_traits.hh>
-#include <dune/common/exceptions.hh>
-
-#include <dumux/discretization/elementsolution.hh>
-#include <dumux/timestepping/timelevel.hh>
+#include <type_traits>
 
 namespace Dumux {
 namespace Experimental {
@@ -45,89 +39,82 @@ class EmptyCouplingContext {};
 template<class EV, class CC = EmptyCouplingContext>
 class LocalContext
 {
+
+    using CouplingContext = CC;
     using GridVariables = typename EV::GridVariables;
     using GridGeometry  = typename GridVariables::GridGeometry;
-    using SolutionVector = typename GridVariables::SolutionVector;
-    using Scalar = typename GridVariables::Scalar;
+    using GridView = typename GridGeometry::GridView;
 
-    using PrimaryVariables = typename SolutionVector::value_type;
-    using GGLocalView  = typename GridGeometry::LocalView;
-    using ES = Dumux::ElementSolution<GGLocalView, PrimaryVariables>;
+    static constexpr bool isEmptyCC = std::is_same_v<CC, EmptyCouplingContext>;
 
 public:
 
-    using ElementSolution = ES;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ElementGridGeometry = typename GridGeometry::LocalView;
     using ElementVariables = EV;
-    using CouplingContext = CC;
-    using TimeLevel = Dumux::TimeLevel<Scalar>;
+
+    //! Constructor for contexts without coupling data
+    template<bool e = isEmptyCC, std::enable_if_t<e, int> = 0>
+    LocalContext(const Element& element,
+                 const ElementGridGeometry& eg,
+                 const ElementVariables& ev)
+    : element_(&element)
+    , elemGeom_(&eg)
+    , elemVars_(&ev)
+    {}
+
+    //! Constructor for contexts with coupling data
+    template<bool e = isEmptyCC, std::enable_if_t<!e, int> = 0>
+    LocalContext(const Element& element,
+                 const ElementGridGeometry& eg,
+                 const ElementVariables& ev,
+                 const CouplingContext& cc)
+    : element_(&element)
+    , elemGeom_(&eg)
+    , elemVars_(&ev)
+    , couplingContext_(&cc)
+    {}
 
     //! TODO: Doc me
-    void setElementSolution(const ElementSolution& elemSol)
-    { elemSol_ = &elemSol; }
+    const Element& element() const { return *element_; }
+    const ElementGridGeometry elementGridGeometry() const { return *elemGeom_; }
+    const ElementVariables& elementVariables() const { return *elemVars_; }
 
     //! TODO: Doc me
-    void setElementVariables(const ElementVariables& elemVars)
-    { elemVars_ = &elemVars; }
-
-    //! TODO: Doc me
-    void setTimeLevel(const TimeLevel& timeLevel)
-    { timeLevel_.emplace(timeLevel); }
-
-    //! TODO: Doc me
-    void setCouplingContext(const CouplingContext& couplingContext)
-    { couplingContext_ = &couplingContext; }
-
-    //! TODO: Doc me
-    const ElementSolution& elementSolution() const
-    {
-        if (!elemSol_)
-            DUNE_THROW(Dune::InvalidStateException, "Element solution not available!");
-        return *elemSol_;
-    }
-
-    //! TODO: Doc me
-    const ElementVariables& elementVariables() const
-    {
-        if (!elemVars_)
-            DUNE_THROW(Dune::InvalidStateException, "Element variables not available!");
-        return *elemVars_;
-    }
-
-    //! TODO: Doc me
-    const TimeLevel& timeLevel() const
-    {
-        if (!timeLevel_)
-            DUNE_THROW(Dune::InvalidStateException, "Time level not available!");
-        return *timeLevel_;
-    }
-
-    //! TODO: Doc me
-    const CouplingContext& couplingContext() const
-    {
-        if (!couplingContext_)
-            DUNE_THROW(Dune::InvalidStateException, "Coupling context not available!");
-        return *couplingContext_;
-    }
+    template<bool e = isEmptyCC, std::enable_if_t<!e, int> = 0>
+    const CouplingContext& couplingContext() const { return *couplingContext_; }
 
 private:
-    const ElementSolution* elemSol_ = nullptr;
-    const ElementVariables* elemVars_ = nullptr;
-    const CouplingContext* couplingContext_ = nullptr;
-    std::optional<TimeLevel> timeLevel_;
+    const Element* element_;
+    const ElementGridGeometry* elemGeom_;
+    const ElementVariables* elemVars_;
+    const CouplingContext* couplingContext_;
 };
 
-namespace Detail {
+/*!
+ * \ingroup Discretization
+ * \brief TODO: Doc me
+ */
+template<class EV>
+LocalContext<EV>
+makeLocalContext(const typename EV::GridVariables::GridGeometry::GridView::template Codim<0>::Entity& element,
+                 const typename EV::GridVariables::GridGeometry::LocalView& gglocalView,
+                 const EV& elemVariables)
+{ return {element, gglocalView, elemVariables}; }
 
-    template<class C> using ContextElemSol = typename C::ElementSolution;
-    template<class C> using ContextElemVars = typename C::ElementVariables;
-    template<class C> using ContextTimeLevel = typename C::TimeLevel;
-
-    // TODO: We could introduce a Context concept!
-    template<class Context>
-    inline constexpr bool hasContextInterfaces =
-        Dune::Std::is_detected_v<ContextElemSol, Context>
-        && Dune::Std::is_detected_v<ContextElemVars, Context>
-        && Dune::Std::is_detected_v<ContextTimeLevel, Context>;
+/*!
+ * \ingroup Discretization
+ * \brief TODO: Doc me
+ */
+template<class EV, class CC>
+LocalContext<EV, CC>
+makeLocalContext(const typename EV::GridVariables::GridGeometry::GridView::template Codim<0>::Entity& element,
+                 const typename EV::GridVariables::GridGeometry::LocalView& gglocalView,
+                 const EV& elemVariables,
+                 const CC& couplingContext)
+{
+    static_assert(!std::is_same_v<CC, EmptyCouplingContext>, "Invalid coupling context!");
+    return {element, gglocalView, elemVariables, couplingContext};
 }
 
 } // end namespace Experimental
