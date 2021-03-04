@@ -225,7 +225,6 @@ int main()
     enum { N2Idx = FluidSystem::N2Idx };
 
     using MaterialLaw = Dumux::FluidMatrix::BrooksCoreyDefault<Scalar>;
-    using MPAdapter = Dumux::FluidMatrix::MPAdapter<MaterialLaw, numPhases>;
 
     Scalar T = 273.15 + 25;
 
@@ -242,7 +241,7 @@ int main()
 
     // set the parameters for the capillary pressure law
     MaterialLaw pcKrSw(typename MaterialLaw::BasicParams{/*pe*/0.0, /*lambda*/2.0});
-    MPAdapter material(pcKrSw);
+    auto material = Dumux::FluidMatrix::MPAdapter(pcKrSw);
 
     CompositionalFluidState fsRef;
     FluidState1p2c fsRefSeq;
@@ -360,7 +359,7 @@ int main()
     std::cout << "testing two-phase against implicit routines, including capillary pressure\n";
 
     MaterialLaw pcKrS2(typename MaterialLaw::BasicParams{/*pe*/1e3, /*lambda*/2.0});
-    MPAdapter material2(pcKrS2);
+    auto material2 = Dumux::FluidMatrix::MPAdapter(pcKrS2);
 
     // set gas saturation
     fsRef.setSaturation(gasPhaseIdx, 0.5);
