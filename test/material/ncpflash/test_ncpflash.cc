@@ -184,7 +184,7 @@ int main()
     // set the parameters for the capillary pressure law
     typename PcKrSw::BasicParams bParams(/*pe*/0.0, /*lambda*/2.0);
     auto pcKrSw = PcKrSw(bParams);
-    auto material = Dumux::FluidMatrix::MPAdapter<PcKrSw>(pcKrSw);
+    auto material = Dumux::FluidMatrix::MPAdapter(pcKrSw);
 
     CompositionalFluidState fsRef;
 
@@ -262,7 +262,7 @@ int main()
 
     typename PcKrSw::BasicParams bParams2(/*pe*/1e3, /*lambda*/2.0);
     auto pcKrSw2 = PcKrSw(bParams2);
-    auto material2 = Dumux::FluidMatrix::MPAdapter<PcKrSw>(pcKrSw2);
+    auto material2 = Dumux::FluidMatrix::MPAdapter(pcKrSw2);
 
     // set gas saturation
     fsRef.setSaturation(gasPhaseIdx, 0.5);
