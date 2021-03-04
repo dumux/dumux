@@ -90,11 +90,17 @@ public:
                 const Element& element,
                 const Scv& scv)
     {
+        // compatibility layer with new elemsolstate+external variables based style
         if constexpr (Dune::models<Experimental::Concept::ElementSolutionState, ElemState>())
+        {
             priVars_ = elemState.elementSolution()[scv.localDofIndex()];
+            extrusionFactor_ = problem.extrusionFactor(element, scv, elemState, extVariables);
+        }
         else // elemState is elemsol (old interface)
+        {
             priVars_ = elemState[scv.localDofIndex()];
-        extrusionFactor_ = problem.extrusionFactor(element, scv, elemState, extVariables);
+            extrusionFactor_ = problem.extrusionFactor(element, scv, elemState);
+        }
     }
 
     /*!

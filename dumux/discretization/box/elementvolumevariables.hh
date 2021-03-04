@@ -172,7 +172,7 @@ public:
             // resize volume variables to the required size
             volumeVariables_.resize(fvGeometry.numScv());
             for (auto&& scv : scvs(fvGeometry))
-                volumeVariables_[scv.indexInElement()].update(elemSol, extVariables, gridVolVars().problem(), element, scv);
+                volumeVariables_[scv.indexInElement()].update(elemSol, gridVolVars().problem(), element, scv);
         }
     }
 

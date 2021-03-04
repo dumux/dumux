@@ -44,10 +44,12 @@ void updateSolidVolumeFractions(const ElemState& elemState,
                                 SolidState& solidState,
                                 const int solidVolFracOffset)
 {
-    // compatibility layer with old elemsol-based style
+    // compatibility layer with new elemsol-state + external variables style
+    static constexpr bool isElemState = Dune::models<Experimental::Concept::ElementSolutionState, ElemState>();
+
     const auto& priVars = [&elemState, &scv] ()
     {
-        if constexpr (Dune::models<Experimental::Concept::ElementSolutionState, ElemState>())
+        if constexpr (isElemState)
             return elemState.elementSolution()[scv.localDofIndex()];
         else
             return elemState[scv.localDofIndex()];
@@ -57,14 +59,22 @@ void updateSolidVolumeFractions(const ElemState& elemState,
     {
         const auto& sp = problem.spatialParams();
         using SolidSystem = typename SolidState::SolidSystem;
-        const auto inertVolumeFraction = sp.template inertVolumeFraction<SolidSystem>(element, scv, elemState, extVariables, sCompIdx);
-        solidState.setVolumeFraction(sCompIdx, inertVolumeFraction);
+        if constexpr (isElemState)
+        {
+            const auto inertVolumeFraction = sp.template inertVolumeFraction<SolidSystem>(element, scv, elemState, extVariables, sCompIdx);
+            solidState.setVolumeFraction(sCompIdx, inertVolumeFraction);
+        }
+        else
+        {
+            const auto inertVolumeFraction = sp.template inertVolumeFraction<SolidSystem>(element, scv, elemState, sCompIdx);
+            solidState.setVolumeFraction(sCompIdx, inertVolumeFraction);
+        }
     }
 
     if (!(solidState.isInert()))
     {
         for (int sCompIdx = 0; sCompIdx < solidState.numComponents-solidState.numInertComponents; ++sCompIdx)
-                solidState.setVolumeFraction(sCompIdx, priVars[solidVolFracOffset + sCompIdx]);
+            solidState.setVolumeFraction(sCompIdx, priVars[solidVolFracOffset + sCompIdx]);
     }
 }
 
