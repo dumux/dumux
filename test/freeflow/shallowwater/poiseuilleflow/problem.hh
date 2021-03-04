@@ -121,9 +121,8 @@ public:
         bedSlope_ = getParam<Scalar>("Problem.BedSlope");
         discharge_ = getParam<Scalar>("Problem.Discharge");
         hBoundary_ = getParam<Scalar>("Problem.HBoundary");
-        enableViscousFlux_ = getParam<bool>("Problem.EnableViscousFlux", false);
-        turbViscosity_ = getParam<Scalar>("Problem.TurbulentViscosity");
         alphaWall_ = getParam<Scalar>("Problem.AlphaWall");
+        turbViscosity_ = getParam<Scalar>("ShallowWater.TurbulentViscosity");
         ksWall_ = getParam<Scalar>("Problem.KsWall");
         wallFrictionLawType_ = getParam<std::string>("Problem.WallFrictionLaw");
         // Make the wallFrictionLawType_ lower case
@@ -362,7 +361,6 @@ private:
     Scalar discharge_; // discharge at the inflow boundary
     Scalar alphaWall_; // wall roughness coefficient for no-slip type wall roughness
     Scalar ksWall_; // Nikuradse wall roughness height for Nikuradse type wall roughness
-    bool enableViscousFlux_; // switch for enabling viscous (turbulent) momentum flux computation
     Scalar turbViscosity_; // turbulent viscosity
     std::string wallFrictionLawType_; // wall friction law type
 

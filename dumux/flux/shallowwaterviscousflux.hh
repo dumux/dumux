@@ -79,12 +79,6 @@ public:
      *        \f[
      *        \int_{S_f} \nu_t h \mathbf{\nabla} \mathbf{u} \cdot \mathbf{n_f} dS
      *        \f]
-     *
-     * \todo The implementation now is the simplest one involving
-     *       only direct neighbours. This implementation is not complete/
-     *       correct on non-orthogonal meshes. A more complete implementation
-     *       with a more elaborate stencil that also takes into account
-     *       the non-orthogonal contributions can be considered at a later stage.
      */
     template<class Problem, class FVElementGeometry, class ElementVolumeVariables>
     static NumEqVector flux(const Problem& problem,
