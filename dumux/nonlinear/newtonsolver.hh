@@ -1068,7 +1068,8 @@ private:
 
             computeResidualReduction_(uCurrentIter);
 
-            if (reduction_ < lastReduction_ || lambda <= 0.125) {
+            if (reduction_ < lastReduction_ || lambda <= lineSearchMinRelaxationFactor_)
+            {
                 endIterMsgStream_ << Fmt::format(", residual reduction {:.4e}->{:.4e}@lambda={:.4f}", lastReduction_, reduction_, lambda);
                 return;
             }
@@ -1201,6 +1202,7 @@ private:
     void initParams_(const std::string& group = "")
     {
         useLineSearch_ = getParamFromGroup<bool>(group, "Newton.UseLineSearch");
+        lineSearchMinRelaxationFactor_ = getParamFromGroup<Scalar>(group, "Newton.LineSearchMinRelaxationFactor", 0.125);
         useChop_ = getParamFromGroup<bool>(group, "Newton.EnableChop");
         if(useLineSearch_ && useChop_)
             DUNE_THROW(Dune::InvalidStateException, "Use either linesearch OR chop!");
@@ -1291,6 +1293,7 @@ private:
 
     // further parameters
     bool useLineSearch_;
+    Scalar lineSearchMinRelaxationFactor_;
     bool useChop_;
     bool enableAbsoluteResidualCriterion_;
     bool enableShiftCriterion_;
