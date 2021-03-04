@@ -1057,9 +1057,9 @@ private:
                                    const SolutionVector &uLastIter,
                                    const SolutionVector &deltaU)
     {
-        Scalar lambda = 1.0;
-
-        while (true)
+        // Try decreasing relaxation factor until the residual descreases
+        // or the minimum specified relaxation factor is assumed
+        for (Scalar lambda = 1.0; true; lambda *= 0.5)
         {
             uCurrentIter = deltaU;
             uCurrentIter *= -lambda;
@@ -1071,11 +1071,8 @@ private:
             if (reduction_ < lastReduction_ || lambda <= lineSearchMinRelaxationFactor_)
             {
                 endIterMsgStream_ << Fmt::format(", residual reduction {:.4e}->{:.4e}@lambda={:.4f}", lastReduction_, reduction_, lambda);
-                return;
+                break;
             }
-
-            // try with a smaller update
-            lambda /= 2.0;
         }
     }
 
