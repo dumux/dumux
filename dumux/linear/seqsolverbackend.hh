@@ -847,11 +847,38 @@ private:
  * See: Davis, Timothy A. (2004). "Algorithm 832". ACM Transactions on
  * Mathematical Software 30 (2): 196–199. doi:10.1145/992200.992206.
  * http://faculty.cse.tamu.edu/davis/suitesparse.html
+ *
+ * You can choose from one of the following ordering strategies using the input
+ * paramter "LinearSolver.UMFPackOrdering":
+ * \verbatim
+ * 0: UMFPACK_ORDERING_CHOLMOD
+ * 1: UMFPACK_ORDERING_AMD (default)
+ * 2: UMFPACK_ORDERING_GIVEN
+ * 3: UMFPACK_ORDERING_METIS
+ * 4: UMFPACK_ORDERING_BEST
+ * 5: UMFPACK_ORDERING_NONE
+ * 6: UMFPACK_ORDERING_USER
+ * \endverbatim
+ *
+ * See https://fossies.org/linux/SuiteSparse/UMFPACK/Doc/UMFPACK_UserGuide.pdf page 17 for details.
  */
 class UMFPackBackend : public LinearSolver
 {
 public:
-    using LinearSolver::LinearSolver;
+
+    UMFPackBackend(const std::string& paramGroup = "")
+    : LinearSolver(paramGroup)
+    {
+        ordering_ = getParamFromGroup<int>(this->paramGroup(), "LinearSolver.UMFPackOrdering", 1);
+    }
+
+    //! set ordering strategy
+    void setOrdering(int i)
+    { ordering_ = i; }
+
+    //! the ordering strategy
+    int ordering() const
+    { return ordering_; }
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
@@ -861,7 +888,10 @@ public:
         static_assert(BlockType::rows == BlockType::cols, "Matrix block must be quadratic!");
         constexpr auto blockSize = BlockType::rows;
 
-        Dune::UMFPack<Matrix> solver(A, this->verbosity() > 0);
+        Dune::UMFPack<Matrix> solver;
+        solver.setVerbosity(this->verbosity() > 0);
+        solver.setOption(UMFPACK_ORDERING, ordering_);
+        solver.setMatrix(A);
 
         Vector bTmp(b);
         solver.apply(x, bTmp, result_);
@@ -896,6 +926,7 @@ public:
 
 private:
     Dune::InverseOperatorResult result_;
+    int ordering_;
 };
 #endif // HAVE_UMFPACK
 
