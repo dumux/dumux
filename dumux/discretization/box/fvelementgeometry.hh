@@ -271,7 +271,7 @@ public:
     {
         element_ = element;
         eIdx_ = gridGeometry().elementMapper().index(element);
-        makeElementGeometries(element);
+        makeElementGeometries_();
     }
 
     //! Returns true if bind/bindElement has already been called
@@ -292,12 +292,13 @@ public:
 
 private:
 
-    void makeElementGeometries(const Element& element)
+    void makeElementGeometries_()
     {
         hasBoundaryScvf_ = false;
 
         // get the element geometry
-        auto elementGeometry = element.geometry();
+        const auto& element = *element_;
+        const auto elementGeometry = element.geometry();
         const auto refElement = referenceElement(elementGeometry);
 
         // get the sub control volume geometries of this element
