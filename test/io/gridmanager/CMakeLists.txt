@@ -305,6 +305,7 @@ add_executable(test_pnm_gridmanager EXCLUDE_FROM_ALL test_pnm_gridmanager.cc)
 dumux_add_test(NAME test_pnm_gridmanager_constant_params
                LABELS unit io porenetwork
                TARGET test_pnm_gridmanager
+               CMAKE_GUARD dune-foamgrid_FOUND
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/pnm_gridmanager-3d-constant.vtp
@@ -383,4 +384,6 @@ dumux_add_test(NAME test_pnm_gridmanager_remove_throats_on_boundary_all
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_gridmanager
                CMD_ARGS test_remove-troats-on-boundary.input -Grid.RemoveThroatsOnBoundary "0 1 2 3")
 
-dumux_add_test(SOURCES test_pnm_subgriddata.cc LABELS unit io porenetwork)
+dumux_add_test(SOURCES test_pnm_subgriddata.cc
+               LABELS unit io porenetwork
+               CMAKE_GUARD dune-foamgrid_FOUND)
