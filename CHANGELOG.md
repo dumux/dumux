@@ -32,6 +32,11 @@ auto fluidMatrixInteractionAtPos(const GlobalPosition &globalPos) const
     return makeFluidMatrixInteraction(FluidMatrix::MPAdapter(pcKrSwCurve_));
 }
 ```
+- __Grid-geometry__: The local views of grid geometries are now required to implement the interfaces
+`element()` (returning the bound element) and `isBound()` returning a `bool` which is `true` if the
+functions `bind` or `bindElement` have been called (i.e. the local geometry is in a bound state). These
+interfaces are currently not used (except in the unit tests) but will be required
+by the assembler in future Dumux versions.
 
 Differences Between DuMu<sup>x</sup> 3.3 and DuMu<sup>x</sup> 3.2
 =============================================
