@@ -24,6 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_FV_ELEMENT_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_FV_ELEMENT_GEOMETRY_HH
 
+#include <optional>
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
 
@@ -205,11 +206,19 @@ public:
     void bindElement(const Element& element)
     {
         clear_();
-        elementPtr_ = &element;
+        element_ = element;
         scvfs_.reserve(element.subEntities(1));
         scvfIndices_.reserve(element.subEntities(1));
-        makeElementGeometries_(element);
+        makeElementGeometries_();
     }
+
+    //! Returns true if bind/bindElement has already been called
+    bool isBound() const
+    { return static_cast<bool>(element_); }
+
+    //! The bound element
+    const Element& element() const
+    { return *element_; }
 
     //! The grid finite volume geometry we are a restriction of
     const GridGeometry& gridGeometry() const
@@ -222,8 +231,9 @@ public:
 private:
 
     //! create scvs and scvfs of the bound element
-    void makeElementGeometries_(const Element& element)
+    void makeElementGeometries_()
     {
+        const auto& element = *element_;
         const auto eIdx = gridGeometry().elementMapper().index(element);
         scvs_[0] = SubControlVolume(element.geometry(), eIdx);
         scvIndices_[0] = eIdx;
@@ -279,7 +289,7 @@ private:
             if (intersection.neighbor())
             {
                 // only create subcontrol faces where the outside element is the bound element
-                if (intersection.outside() == *elementPtr_)
+                if (intersection.outside() == *element_)
                 {
                     std::vector<GridIndexType> scvIndices{eIdx, scvfNeighborVolVarIndex};
                     neighborScvfs_.emplace_back(intersection,
@@ -319,7 +329,7 @@ private:
         hasBoundaryScvf_ = false;
     }
 
-    const Element* elementPtr_; //!< the element to which this fvgeometry is bound
+    std::optional<Element> element_; //!< the element to which this fvgeometry is bound
     const GridGeometry* gridGeometryPtr_;  //!< the grid fvgeometry
 
     // local storage after binding an element
