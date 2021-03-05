@@ -26,6 +26,7 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_FV_ELEMENT_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_BOX_FV_ELEMENT_GEOMETRY_HH
 
+#include <optional>
 #include <dune/geometry/type.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
@@ -114,7 +115,7 @@ public:
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
     {
-        return gridGeometry().feCache().get(elemGeometryType_).localBasis();
+        return gridGeometry().feCache().get(element_->type()).localBasis();
     }
 
     //! The total number of sub control volumes
@@ -142,9 +143,18 @@ public:
     //! For compatibility reasons with the FVGeometry cache being disabled
     void bindElement(const Element& element)
     {
-        elemGeometryType_ = element.type();
+        element_ = element;
+        // cache element index
         eIdx_ = gridGeometry().elementMapper().index(element);
     }
+
+    //! Returns true if bind/bindElement has already been called
+    bool isBound() const
+    { return static_cast<bool>(element_); }
+
+    //! The bound element
+    const Element& element() const
+    { return *element_; }
 
     //! The grid geometry we are a restriction of
     const GridGeometry& gridGeometry() const
@@ -155,10 +165,10 @@ public:
     { return gridGeometry().hasBoundaryScvf(eIdx_); }
 
 private:
-    Dune::GeometryType elemGeometryType_;
     const GridGeometry* gridGeometryPtr_;
-
     GridIndexType eIdx_;
+
+    std::optional<Element> element_;
 };
 
 //! specialization in case the FVElementGeometries are not stored
@@ -231,7 +241,7 @@ public:
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
     {
-        return gridGeometry().feCache().get(elemGeometryType_).localBasis();
+        return gridGeometry().feCache().get(element_->type()).localBasis();
     }
 
     //! The total number of sub control volumes
@@ -259,9 +269,18 @@ public:
     //! For compatibility reasons with the FVGeometry cache being disabled
     void bindElement(const Element& element)
     {
+        element_ = element;
         eIdx_ = gridGeometry().elementMapper().index(element);
         makeElementGeometries(element);
     }
+
+    //! Returns true if bind/bindElement has already been called
+    bool isBound() const
+    { return static_cast<bool>(element_); }
+
+    //! The bound element
+    const Element& element() const
+    { return *element_; }
 
     //! The grid geometry we are a restriction of
     const GridGeometry& gridGeometry() const
@@ -279,7 +298,6 @@ private:
 
         // get the element geometry
         auto elementGeometry = element.geometry();
-        elemGeometryType_ = elementGeometry.type();
         const auto refElement = referenceElement(elementGeometry);
 
         // get the sub control volume geometries of this element
@@ -348,8 +366,8 @@ private:
     }
 
     //! The bound element
-    Dune::GeometryType elemGeometryType_;
     GridIndexType eIdx_;
+    std::optional<Element> element_;
 
     //! The global geometry this is a restriction of
     const GridGeometry* gridGeometryPtr_;
