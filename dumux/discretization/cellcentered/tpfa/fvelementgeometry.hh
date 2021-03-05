@@ -26,6 +26,7 @@
 #ifndef DUMUX_DISCRETIZATION_CCTPFA_FV_ELEMENT_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_CCTPFA_FV_ELEMENT_GEOMETRY_HH
 
+#include <optional>
 #include <algorithm>
 #include <array>
 #include <vector>
@@ -151,9 +152,17 @@ public:
     //! Bind only element-local
     void bindElement(const Element& element)
     {
-        elementPtr_ = &element;
-        scvIndices_[0] = gridGeometry().elementMapper().index(*elementPtr_);
+        element_ = element;
+        scvIndices_[0] = gridGeometry().elementMapper().index(*element_);
     }
+
+    //! Returns true if bind/bindElement has already been called
+    bool isBound() const
+    { return static_cast<bool>(element_); }
+
+    //! The bound element
+    const Element& element() const
+    { return *element_; }
 
     //! The global finite volume geometry we are a restriction of
     const GridGeometry& gridGeometry() const
@@ -165,7 +174,7 @@ public:
 
 private:
 
-    const Element* elementPtr_;
+    std::optional<Element> element_;
     std::array<GridIndexType, 1> scvIndices_;
     const GridGeometry* gridGeometryPtr_;
 };
@@ -350,11 +359,19 @@ public:
     void bindElement(const Element& element)
     {
         clear();
-        elementPtr_ = &element;
+        element_ = element;
         scvfs_.reserve(element.subEntities(1));
         scvfIndices_.reserve(element.subEntities(1));
         makeElementGeometries(element);
     }
+
+    //! Returns true if bind/bindElement has already been called
+    bool isBound() const
+    { return static_cast<bool>(element_); }
+
+    //! The bound element
+    const Element& element() const
+    { return *element_; }
 
     //! The global finite volume geometry we are a restriction of
     const GridGeometry& gridGeometry() const
@@ -479,7 +496,7 @@ private:
                     // only create subcontrol faces where the outside element is the bound element
                     if (dim == dimWorld)
                     {
-                        if (scvfNeighborVolVarIndices[0] == gridGeometry().elementMapper().index(*elementPtr_))
+                        if (scvfNeighborVolVarIndices[0] == gridGeometry().elementMapper().index(*element_))
                         {
                             ScvfGridIndexStorage scvIndices({eIdx, scvfNeighborVolVarIndices[0]});
                             neighborScvfs_.emplace_back(intersection,
@@ -499,7 +516,7 @@ private:
                     {
                         for (unsigned outsideScvIdx = 0; outsideScvIdx < scvfNeighborVolVarIndices.size(); ++outsideScvIdx)
                         {
-                            if (scvfNeighborVolVarIndices[outsideScvIdx] == gridGeometry().elementMapper().index(*elementPtr_))
+                            if (scvfNeighborVolVarIndices[outsideScvIdx] == gridGeometry().elementMapper().index(*element_))
                             {
                                 ScvfGridIndexStorage scvIndices;
                                 scvIndices.resize(scvfNeighborVolVarIndices.size() + 1);
@@ -560,7 +577,7 @@ private:
         hasBoundaryScvf_ = false;
     }
 
-    const Element* elementPtr_; //!< the element to which this fvgeometry is bound
+    std::optional<Element> element_; //!< the element to which this fvgeometry is bound
     const GridGeometry* gridGeometryPtr_;  //!< the grid fvgeometry
 
     // local storage after binding an element
