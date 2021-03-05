@@ -29,6 +29,8 @@
 #ifndef DUMUX_POROUSMEDIUMFLOW_BOXDFM_FV_ELEMENT_GEOMETRY_HH
 #define DUMUX_POROUSMEDIUMFLOW_BOXDFM_FV_ELEMENT_GEOMETRY_HH
 
+#include <optional>
+
 #include <dune/common/version.hh>
 #include <dune/geometry/type.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
@@ -119,7 +121,7 @@ public:
 
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
-    { return gridGeometry().feCache().get(elemGeometryType_).localBasis(); }
+    { return gridGeometry().feCache().get(element_->type()).localBasis(); }
 
     //! The total number of sub control volumes
     std::size_t numScv() const
@@ -144,7 +146,7 @@ public:
     */
     void bindElement(const Element& element)
     {
-        elemGeometryType_ = element.type();
+        element_ = element;
         eIdx_ = gridGeometry().elementMapper().index(element);
     }
 
@@ -152,9 +154,18 @@ public:
     const GridGeometry& gridGeometry() const
     { return *gridGeometryPtr_; }
 
+    //! Returns true if bind/bindElement has already been called
+    bool isBound() const
+    { return static_cast<bool>(element_); }
+
+    //! The bound element
+    const Element& element() const
+    { return *element_; }
+
 private:
-    Dune::GeometryType elemGeometryType_;
     const GridGeometry* gridGeometryPtr_;
+
+    std::optional<Element> element_;
     GridIndexType eIdx_;
 };
 
@@ -229,7 +240,7 @@ public:
 
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
-    { return gridGeometry().feCache().get(elemGeometryType_).localBasis(); }
+    { return gridGeometry().feCache().get(element_->type()).localBasis(); }
 
     //! The total number of sub control volumes
     std::size_t numScv() const
@@ -239,8 +250,12 @@ public:
     std::size_t numScvf() const
     { return scvfs_.size(); }
 
-    //! This function is for compatibility reasons with cc methods
-    //! The box stencil is always element-local so bind and bindElement are identical.
+    /*!
+     * \brief Binding of an element, has to be called before using the fvgeometries
+     *        Prepares all the volume variables within the element.
+     * \note For the box scheme, bind() and bindElement() are identical, but the
+     *       distinction is here for the sake of compatibility with cc schemes.
+     */
     void bind(const Element& element)
     {
         this->bindElement(element);
@@ -248,29 +263,34 @@ public:
 
    /*!
     * \brief Binding of an element, has to be called before using the fvgeometries
-    *
-    * Prepares all the volume variables within the element.
-    * For compatibility reasons with the FVGeometry cache being disabled.
+    *        Prepares all the volume variables within the element.
     */
     void bindElement(const Element& element)
     {
+        element_ = element;
         eIdx_ = gridGeometry().elementMapper().index(element);
-        makeElementGeometries(element);
+        makeElementGeometries_();
     }
 
     //! The global finite volume geometry we are a restriction of
     const GridGeometry& gridGeometry() const
     { return *gridGeometryPtr_; }
 
+    //! Returns true if bind/bindElement has already been called
+    bool isBound() const
+    { return static_cast<bool>(element_); }
+
+    //! The bound element
+    const Element& element() const
+    { return *element_; }
+
 private:
 
-    void makeElementGeometries(const Element& element)
+    void makeElementGeometries_()
     {
-        auto eIdx = gridGeometry().elementMapper().index(element);
-
         // get the element geometry
-        auto elementGeometry = element.geometry();
-        elemGeometryType_ = elementGeometry.type();
+        const auto& element = *element_;
+        const auto elementGeometry = element.geometry();
         const auto refElement = referenceElement(element);
 
         // get the sub control volume geometries of this element
@@ -287,7 +307,7 @@ private:
             // add scv to the local container
             scvs_[scvLocalIdx] = SubControlVolume(geometryHelper,
                                                   scvLocalIdx,
-                                                  eIdx,
+                                                  eIdx_,
                                                   dofIdxGlobal);
         }
 
@@ -368,7 +388,7 @@ private:
                                        static_cast<LocalIndexType>(refElement.subEntity(idxInInside, 1, vIdxLocal, dim)),
                                        scvLocalIdx++,
                                        idxInInside,
-                                       eIdx,
+                                       eIdx_,
                                        isVertexIndices[vIdxLocal]);
 
                 // add fracture scvf for each edge of the intersection in 3d
@@ -422,19 +442,13 @@ private:
     }
 
     //! The bound element
-    Dune::GeometryType elemGeometryType_;
+    std::optional<Element> element_;
     GridIndexType eIdx_;
 
     //! The global geometry this is a restriction of
     const GridGeometry* gridGeometryPtr_;
 
-    /*!
-     * \brief Binding of an element, has to be called before using the fvgeometries
-     *
-     * Prepares all the volume variables within the element.
-     * For compatibility reasons with the FVGeometry cache being disabled.
-     * vectors to store the geometries locally after binding an element
-     */
+    //! The element-local scvs & scvfs
     std::vector<SubControlVolume> scvs_;
     std::vector<SubControlVolumeFace> scvfs_;
 };
