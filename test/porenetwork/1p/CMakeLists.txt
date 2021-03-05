@@ -8,6 +8,7 @@ dumux_add_test(NAME test_pnm_1p
                LABELS porenetwork
                COMPILE_DEFINITIONS ISOTHERMAL=1
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_1p-reference.vtp
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_1p-00000.vtp
@@ -18,6 +19,7 @@ dumux_add_test(NAME test_pnm_1p_gravity
                LABELS porenetwork
                COMPILE_DEFINITIONS ISOTHERMAL=1
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                CMD_ARGS      --script fuzzy --zeroThreshold {"velocity_liq \(m/s\)":1e-15,"volumeFlux":1e-25}
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_1p_gravity-reference.vtp
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_1p_gravity-00000.vtp
