@@ -28,6 +28,7 @@
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/numeqvector.hh>
 
 #include <dumux/discretization/cellcentered/mpfa/omethod/staticinteractionvolume.hh>
 #include <dumux/discretization/ccmpfa.hh>
@@ -178,7 +179,7 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
     };
 
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
