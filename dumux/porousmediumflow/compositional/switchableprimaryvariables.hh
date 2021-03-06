@@ -26,6 +26,7 @@
 #define DUMUX_SWITCHABLE_PRIMARY_VARIABLES_HH
 
 #include <dune/common/exceptions.hh>
+#include <dumux/common/numeqvector.hh>
 
 namespace Dumux {
 
@@ -71,6 +72,17 @@ public:
 private:
     StateType state_;
     bool stateIsSet_{false};
+};
+
+/*!
+ * \ingroup PorousmediumflowModels
+ * \brief The corresponding NumEqVectorTraits for the primary variables with switchable state
+ */
+template<class PrimaryVariables, class StateType>
+struct NumEqVectorTraits<SwitchablePrimaryVariables<PrimaryVariables, StateType>>
+{
+    static constexpr std::size_t numEq = PrimaryVariables::size();
+    using type = PrimaryVariables;
 };
 
 } // end namespace Dumux

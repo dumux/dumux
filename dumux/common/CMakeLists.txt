@@ -28,6 +28,7 @@ intersectionmapper.hh
 loggingparametertree.hh
 math.hh
 monotonecubicspline.hh
+numeqvector.hh
 numericdifferentiation.hh
 optionalscalar.hh
 parameters.hh
