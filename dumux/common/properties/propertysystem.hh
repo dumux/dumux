@@ -29,14 +29,15 @@
 #include <tuple>
 #include <type_traits>
 
-namespace Dumux {
-namespace Properties {
+namespace Dumux::Properties {
 
 //! a tag to mark properties as undefined
 struct UndefinedProperty {};
 
+} // end namespace Dumux::Properties
+
 //! implementation details for template meta programming
-namespace Detail {
+namespace Dumux::Properties::Detail {
 
 //! check if a property P is defined
 template<class P>
@@ -132,8 +133,9 @@ struct GetPropImpl
     static_assert(!std::is_same<type, UndefinedProperty>::value, "Property is undefined!");
 };
 
-} // end namespace Detail
-} // end namespace Property
+} // end namespace Dumux::Properties::Detail
+
+namespace Dumux {
 
 //! get the type of a property (equivalent to old macro GET_PROP(...))
 template<class TypeTag, template<class,class> class Property>
