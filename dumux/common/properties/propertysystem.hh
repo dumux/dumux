@@ -136,7 +136,7 @@ struct GetPropImpl
 
 namespace Dumux {
 
-//! get the type of a property (equivalent to old macro GET_PROP(...))
+//! get the type of a property
 template<class TypeTag, template<class,class> class Property>
 using GetProp = typename Properties::Detail::GetPropImpl<TypeTag, Property>::type;
 
@@ -145,7 +145,7 @@ using GetProp = typename Properties::Detail::GetPropImpl<TypeTag, Property>::typ
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
-//! get the type alias defined in the property (equivalent to old macro GET_PROP_TYPE(...))
+//! get the type alias defined in the property
 template<class TypeTag, template<class,class> class Property>
 using GetPropType = typename Properties::Detail::GetPropImpl<TypeTag, Property>::type::type;
 
