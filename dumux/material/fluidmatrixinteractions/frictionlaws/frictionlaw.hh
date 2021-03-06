@@ -99,7 +99,7 @@ public:
         return roughnessHeight * (1.0 - mobility);
     }
 
-    virtual ~FrictionLaw() {}
+    virtual ~FrictionLaw() = default;
 };
 
 } // end namespace Dumux
