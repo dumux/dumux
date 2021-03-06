@@ -42,7 +42,7 @@ namespace Dumux::Properties::Detail {
 //! check if a property P is defined
 template<class P>
 constexpr auto isDefinedProperty(int)
--> decltype(std::integral_constant<bool, !std::is_same<typename P::type, UndefinedProperty>::value>{})
+-> decltype(std::integral_constant<bool, !std::is_same_v<typename P::type, UndefinedProperty>>{})
 { return {}; }
 
 //! fall back if a Property is defined
