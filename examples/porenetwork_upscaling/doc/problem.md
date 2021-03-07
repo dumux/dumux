@@ -23,7 +23,7 @@ which we specialize a number of compile-time `properties`.
 
 ```cpp
 
-#include <dune/grid/yaspgrid.hh> // for `Dune::YaspGrid`
+#include <dune/foamgrid/foamgrid.hh> // for `Dune::FoamGrid`
 ```
 
 The `OneP` type tag specializes most of the `properties` required for single-
@@ -32,7 +32,7 @@ respective properties, and subsequently specialize those properties for our
 type tag, which we want to modify or for which no meaningful default can be set.
 
 ```cpp
-#include <dumux/porenetworkflow/1p/model.hh>// for `TTag::PNMOneP`
+#include <dumux/porenetwork/1p/model.hh>// for `TTag::PNMOneP`
 ```
 
 The local residual for incompressible flow is included.

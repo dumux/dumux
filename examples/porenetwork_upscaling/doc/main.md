@@ -44,8 +44,8 @@ Pore-Network-Model to evaluate the upscaled Darcy permeability of a given networ
 #include <dumux/io/grid/gridmanager_yasp.hh>
 
 #include <dumux/io/grid/porenetwork/gridmanager.hh> // for pore-network grid
-#include <dumux/porenetworkflow/common/pnmvtkoutputmodule.hh>
-#include <dumux/porenetworkflow/common/boundaryflux.hh> // for getting the total mass flux leaving the network
+#include <dumux/porenetwork/common/pnmvtkoutputmodule.hh>
+#include <dumux/porenetwork/common/boundaryflux.hh> // for getting the total mass flux leaving the network
 
 #include "upscalinghelper.hh"
 #include "properties.hh"
@@ -245,3 +245,4 @@ catch (const Dune::Exception &e)
 
 | [:arrow_left: Back to the main documentation](../README.md) | [:arrow_left: Go back to part 1](problem.md) | [:arrow_right: Continue with part 3](upscalinghelper.md) |
 |---|---|---:|
+
