@@ -31,8 +31,6 @@
 // These are DUNE helper classes related to parallel computations, time measurements and file I/O
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/grid/io/file/dgfparser/dgfexception.hh>
-#include <dune/grid/io/file/vtk.hh>
 
 // The following headers include functionality related to property definition or retrieval, as well as
 // the retrieval of input parameters specified in the input file or via the command line.
