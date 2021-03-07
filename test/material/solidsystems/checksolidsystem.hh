@@ -32,7 +32,6 @@
 #include <iostream>
 
 #include <dune/common/classname.hh>
-#include <dune/common/unused.hh>
 #include <dune/common/exceptions.hh>
 
 // include all solid states
@@ -69,24 +68,24 @@ int checkSolidSystem()
 
     // some value to make sure the return values of the solid system
     // are convertible to scalars
-    Scalar DUNE_UNUSED val;
+    [[maybe_unused]] Scalar val;
 
     // test for componentName and isCompressible
     for (int phaseIdx = 0; phaseIdx < numComponents; ++phaseIdx)
     {
-        std::string name DUNE_UNUSED= SolidSystem::componentName(phaseIdx);
-        bool DUNE_UNUSED bVal = SolidSystem::isCompressible(phaseIdx);
+        [[maybe_unused]] std::string name = SolidSystem::componentName(phaseIdx);
+        [[maybe_unused]] bool bVal = SolidSystem::isCompressible(phaseIdx);
         val = SolidSystem::molarMass(phaseIdx);
     }
 
     // test for componentName
     for (int compIdx = 0; compIdx < numComponents; ++compIdx)
     {
-        std::string name DUNE_UNUSED= SolidSystem::componentName(compIdx);
+        [[maybe_unused]] std::string name = SolidSystem::componentName(compIdx);
     }
 
     // test for name
-    std::string name DUNE_UNUSED = SolidSystem::name();
+    [[maybe_unused]] std::string name = SolidSystem::name();
 
     try
     {
