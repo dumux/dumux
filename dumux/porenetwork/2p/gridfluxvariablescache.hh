@@ -36,13 +36,12 @@ namespace Dumux::PoreNetwork {
  * \ingroup PNMTwoPModel
  * \brief Flux variable caches traits
  */
-template<class P, class FVC, class I, class L>
+template<class P, class FVC, class IS = TwoPInvasionState<P>>
 struct PNMTwoPDefaultGridFVCTraits
 {
     using Problem = P;
     using FluxVariablesCache = FVC;
-    using Indices = I;
-    using Labels = L;
+    using InvasionState = IS;
 
     template<class GridFluxVariablesCache, bool cachingEnabled>
     using LocalView = PNMTwoPElementFluxVariablesCache<GridFluxVariablesCache, cachingEnabled>;
@@ -69,9 +68,9 @@ class PNMTwoPGridFluxVariablesCache<P, FVC, true, Traits>
 {
     using Problem = typename Traits::Problem;
     using ThisType = PNMTwoPGridFluxVariablesCache<P, FVC, true, Traits>;
-    using InvasionState = TwoPInvasionState<Problem>;
+    using InvasionState = typename Traits::InvasionState;
 
-    public:
+public:
     //! export the flux variable cache type
     using FluxVariablesCache = typename Traits::FluxVariablesCache;
 
@@ -140,7 +139,7 @@ class PNMTwoPGridFluxVariablesCache<P, FVC, false, Traits>
 {
     using Problem = typename Traits::Problem;
     using ThisType = PNMTwoPGridFluxVariablesCache<P, FVC, false, Traits>;
-    using InvasionState = TwoPInvasionState<Problem>;
+    using InvasionState = typename Traits::InvasionState;
 
     public:
     //! export the flux variable cache type

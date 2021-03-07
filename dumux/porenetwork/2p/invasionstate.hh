@@ -26,24 +26,11 @@
 
 #include <vector>
 #include <type_traits>
+#include <dune/common/std/type_traits.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/porenetwork/common/labels.hh>
 
 namespace Dumux::PoreNetwork {
-
-#ifndef DOXYGEN
-namespace Detail {
-// helper struct detecting if the user-defined problem params class has a globalCapillaryPressure function
-struct hasGlobalCapillaryPressure
-{
-    template<class Problem>
-    auto operator()(const Problem& p)
-    -> decltype(p.globalCapillaryPressure())
-    {}
-};
-} // end namespace Detail
-#endif
 
 /*!
  * \ingroup PNMTwoPModel
@@ -54,6 +41,13 @@ template<class P>
 class TwoPInvasionState
 {
     using Problem = P;
+
+    template <class T>
+    using GlobalCapillaryPressureDetector = decltype(std::declval<T>().globalCapillaryPressure());
+
+    template<class T>
+    static constexpr bool hasGlobalCapillaryPressure()
+    { return Dune::Std::is_detected<GlobalCapillaryPressureDetector, T>::value; }
 
 public:
 
@@ -71,10 +65,10 @@ public:
         }
 
         numThroatsInvaded_ = std::count(invadedCurrentIteration_.begin(), invadedCurrentIteration_.end(), true);
-        verbose_ = getParamFromGroup<bool>(problem.paramGroup(), "InvasionState.InvasionStateVerbosity", true);
+        verbose_ = getParamFromGroup<bool>(problem.paramGroup(), "InvasionState.Verbosity", true);
         restrictToGlobalCapillaryPressure_ = getParamFromGroup<bool>(problem.paramGroup(), "InvasionState.RestrictInvasionToGlobalCapillaryPressure", false);
 
-        if (decltype(isValid(Detail::hasGlobalCapillaryPressure())(problem)){})
+        if (hasGlobalCapillaryPressure<Problem>())
         {
             if (restrictToGlobalCapillaryPressure_)
                 std::cout << "\n *** Invasion behavior is restricted by a global capillary pressure defined in the problem! *** \n" << std::endl;
@@ -118,8 +112,11 @@ public:
                 if (invasionSwitch_(element, elemVolVars, elemFluxVarsCache[scvf]))
                 {
                     hasChangedInCurrentIteration_ = true;
-                    static constexpr auto cachingEnabled = std::integral_constant<bool, GridFluxVariablesCache::cachingEnabled>{};
-                    updateChangedFluxVarCache_(element, fvGeometry, gridFluxVarsCache, elemVolVars, scvf, cachingEnabled);
+                    if constexpr (GridFluxVariablesCache::cachingEnabled)
+                    {
+                        const auto eIdx = problem_.gridGeometry().elementMapper().index(element);
+                        gridFluxVarsCache.cache(eIdx, scvf.index()).update(problem_, element, fvGeometry, elemVolVars, scvf, invadedCurrentIteration_[eIdx]);
+                    }
                 }
             }
         }
@@ -208,8 +205,8 @@ private:
         const auto wPhaseIdx = spatialParams.template wettingPhase<typename ElementVolumeVariables::VolumeVariables::FluidSystem>(element, elemVolVars);
 
         // Block non-wetting phase flux out of the outlet
-        static const bool blockOutlet = getParamFromGroup<bool>(problem_.paramGroup(), "InvasionState.BlockOutletForNonwettingPhase", true);
-        if (blockOutlet && gridGeometry.throatLabel(eIdx) == Labels::outlet)
+        static const auto blockNonwettingPhase = getParamFromGroup<std::vector<int>>(problem_.paramGroup(), "InvasionState.BlockNonwettingPhaseAtThroatLabel", std::vector<int>{Labels::outlet});
+        if (!blockNonwettingPhase.empty() && std::find(blockNonwettingPhase.begin(), blockNonwettingPhase.end(), gridGeometry.throatLabel(eIdx)) != blockNonwettingPhase.end())
         {
             invadedCurrentIteration_[eIdx] = false;
             return false;
@@ -223,7 +220,7 @@ private:
         const Scalar pcSnapoff = fluxVarsCache.pcSnapoff();
 
         // check if there is a user-specified global capillary pressure which needs to be obeyed
-        if (maybeRestrictToGlobalCapillaryPressure_(pcEntry, decltype(isValid(Detail::hasGlobalCapillaryPressure())(problem_)){}))
+        if (maybeRestrictToGlobalCapillaryPressure_(pcEntry))
         {
             if (*pcMax > pcEntry)
             {
@@ -267,42 +264,16 @@ private:
         return invadedBeforeSwitch != invadedAfterSwitch;
     }
 
-    //! Update the fluxVarsCache after an invasion/snap-off occured (only for caching enabled)
-    template<class Element, class FVElementGeometry, class GridFluxVariablesCache,
-             class ElementVolumeVariables, class SubControlVolumeFace>
-    void updateChangedFluxVarCache_(const Element& element,
-                                    const FVElementGeometry& fvGeometry,
-                                    GridFluxVariablesCache& gridFluxVarsCache,
-                                    const ElementVolumeVariables& elemVolVars,
-                                    const SubControlVolumeFace& scvf,
-                                    std::true_type)
-    {
-        const auto eIdx = problem_.gridGeometry().elementMapper().index(element);
-        gridFluxVarsCache.cache(eIdx, scvf.index()).update(problem_, element, fvGeometry, elemVolVars, scvf, invaded(element));
-    }
-
-    //! Do nothing if the fluxVarCaches are not cached globally
-    template<class Element, class FVElementGeometry, class GridFluxVariablesCache,
-             class ElementVolumeVariables, class SubControlVolumeFace>
-    void updateChangedFluxVarCache_(const Element& element,
-                                    const FVElementGeometry& fvGeometry,
-                                    GridFluxVariablesCache& gridFluxVarsCache,
-                                    const ElementVolumeVariables& elemVolVars,
-                                    const SubControlVolumeFace& scvf,
-                                    std::false_type) {}
-
     //! If the user has specified a global capillary pressure, check if it is lower than the given entry capillary pressure.
     //! This may be needed to exactly reproduce pc-S curves given by static network models.
     template<class Scalar>
-    bool maybeRestrictToGlobalCapillaryPressure_(const Scalar pcEntry, std::true_type) const
+    bool maybeRestrictToGlobalCapillaryPressure_(const Scalar pcEntry) const
     {
-        return restrictToGlobalCapillaryPressure_ && (pcEntry > problem_.globalCapillaryPressure());
+        if constexpr (hasGlobalCapillaryPressure<Problem>())
+            return restrictToGlobalCapillaryPressure_ && (pcEntry > problem_.globalCapillaryPressure());
+        else
+            return false;
     }
-
-    //! Do nothing here.
-    template<class Scalar>
-    bool maybeRestrictToGlobalCapillaryPressure_(const Scalar pc, std::false_type) const
-    { return false; }
 
     std::vector<bool> invadedCurrentIteration_;
     std::vector<bool> invadedPreviousTimeStep_;

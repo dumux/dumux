@@ -130,10 +130,8 @@ struct GridFluxVariablesCache<TypeTag, TTag::PNMTwoP>
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using Labels = GetPropType<TypeTag, Properties::Labels>;
     using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
-    using Traits = Dumux::PoreNetwork::PNMTwoPDefaultGridFVCTraits<Problem, FluxVariablesCache, Indices, Labels>;
+    using Traits = Dumux::PoreNetwork::PNMTwoPDefaultGridFVCTraits<Problem, FluxVariablesCache>;
 public:
     using type = Dumux::PoreNetwork::PNMTwoPGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache, Traits>;
 };
