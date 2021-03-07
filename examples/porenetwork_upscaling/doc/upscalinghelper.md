@@ -37,6 +37,11 @@ the pore network in flow direction in order to find the upscaled Darcy permeabil
 
 
 ```cpp
+#include <iostream>
+#include <ostream>
+#include <iomanip>
+#include <numeric>
+#include <functional>
 
 namespace Dumux {
 
