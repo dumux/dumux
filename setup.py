@@ -9,8 +9,8 @@ from skbuild import setup
 # > python setup.py sdist
 # > python -m twine upload dist/*
 
-dumuxVersion = '3.4.0.dev20210114'
-duneVersion  = '2.8.0.dev20201218'
+dumuxVersion = '3.4.0.dev20210308'
+duneVersion  = '2.8.0.dev20210308'
 
 metadata = metaData(duneVersion)[1]
 metadata['version'] = dumuxVersion
