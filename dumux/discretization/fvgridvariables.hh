@@ -193,12 +193,15 @@ class FVGridVariablesLocalView
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using ElementVolumeVariables = typename GV::GridVolumeVariables::LocalView;
-    using ElementFluxVariablesCache = typename GV::GridFluxVariablesCache::LocalView;
-
 public:
     //! export corresponding grid-wide class
     using GridVariables = GV;
+
+    //! export underlying volume variables cache
+    using ElementVolumeVariables = typename GV::GridVolumeVariables::LocalView;
+
+    //! export underlying flux variables cache
+    using ElementFluxVariablesCache = typename GV::GridFluxVariablesCache::LocalView;
 
     //! Constructor
     FVGridVariablesLocalView(const GridVariables& gridVariables)
