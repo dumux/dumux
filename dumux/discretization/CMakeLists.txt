@@ -20,6 +20,7 @@ functionspacebasis.hh
 fvgridvariables.hh
 fvproperties.hh
 gridvariables.hh
+localcontext.hh
 localview.hh
 method.hh
 rotationpolicy.hh
