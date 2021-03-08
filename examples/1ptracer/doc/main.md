@@ -31,8 +31,6 @@ These are DUNE helper classes related to parallel computations, time measurement
 ```cpp
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/grid/io/file/dgfparser/dgfexception.hh>
-#include <dune/grid/io/file/vtk.hh>
 ```
 
 The following headers include functionality related to property definition or retrieval, as well as
@@ -161,7 +159,8 @@ The grid variables are used store variables (primary and secondary variables) on
 ```
 
 We now instantiate the assembler class, assemble the linear system and solve it with the linear
-solver UMFPack. Besides that, the time needed for assembly and solve is measured and printed.
+solver ILUnBiCGSTABBackend (a bi-conjugate gradient solver preconditioned by an incomplete LU-factorization preconditioner).
+Besides that, the time needed for assembly and solve is measured and printed.
 
 ```cpp
     using OnePAssembler = FVAssembler<OnePTypeTag, DiffMethod::analytic>;
@@ -175,7 +174,7 @@ solver UMFPack. Besides that, the time needed for assembly and solve is measured
 
     (*r) *= -1.0; // We want to solve `Ax = -r`.
 
-    using LinearSolver = UMFPackBackend;
+    using LinearSolver = ILUnBiCGSTABBackend;
     Dune::Timer solverTimer; std::cout << "Solving linear system ..." << std::flush;
     auto linearSolver = std::make_shared<LinearSolver>();
     linearSolver->solve(*A, p, *r);
