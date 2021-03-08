@@ -171,10 +171,17 @@ public:
                                    FluxVariables& fluxVars,
                                    int phaseIdx)
     {
-        auto upwindTerm = [phaseIdx](const auto& volVars)
-        { return volVars.density(phaseIdx)*volVars.mobility(phaseIdx)*volVars.enthalpy(phaseIdx); };
+        const auto upwindTerm = [phaseIdx](const auto& volVars)
+        { return volVars.density(phaseIdx)*volVars.mobility(phaseIdx)*volVars.internalEnergy(phaseIdx); };
 
         flux[energyEqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
+
+        // volume work
+        const auto insidePressure = fluxVars.elemVolVars()[fluxVars.scvFace().insideScvIdx()].pressure(phaseIdx);
+        const auto velUpwindTerm = [phaseIdx](const auto& volVars)
+        { return volVars.mobility(phaseIdx); };
+
+        flux[energyEqIdx] += -insidePressure*fluxVars.advectiveFlux(phaseIdx, velUpwindTerm);
     }
 
     /*!
