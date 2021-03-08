@@ -99,7 +99,7 @@ public:
             DUNE_THROW(Dune::InvalidStateException,
                     "second argument must be either 'min' or 'max' (string) !");
 
-        const Scalar eps = 1e-6; //TODO
+        const Scalar eps = getParam<Scalar>("Problem.Epsilon"); //5e-6; //TODO
         auto onMeasuringBoundary = [&] (const Scalar pos)
         {
             return ( (minMax == "min" && pos < problem_.gridGeometry().bBoxMin()[coord] + eps) ||
