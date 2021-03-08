@@ -49,6 +49,8 @@ class TwoPInvasionState
     static constexpr bool hasGlobalCapillaryPressure()
     { return Dune::Std::is_detected<GlobalCapillaryPressureDetector, T>::value; }
 
+    enum class EventType {invasion, snapOff, none};
+
 public:
 
     TwoPInvasionState(const Problem& problem) : problem_(problem)
@@ -68,7 +70,7 @@ public:
         verbose_ = getParamFromGroup<bool>(problem.paramGroup(), "InvasionState.Verbosity", true);
         restrictToGlobalCapillaryPressure_ = getParamFromGroup<bool>(problem.paramGroup(), "InvasionState.RestrictInvasionToGlobalCapillaryPressure", false);
 
-        if (hasGlobalCapillaryPressure<Problem>())
+        if constexpr (hasGlobalCapillaryPressure<Problem>())
         {
             if (restrictToGlobalCapillaryPressure_)
                 std::cout << "\n *** Invasion behavior is restricted by a global capillary pressure defined in the problem! *** \n" << std::endl;
@@ -109,8 +111,9 @@ public:
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 // checks if invasion or snap-off occured after Newton iteration step
-                if (invasionSwitch_(element, elemVolVars, elemFluxVarsCache[scvf]))
+                if (const auto invasionResult = invasionSwitch_(element, elemVolVars, elemFluxVarsCache[scvf]); invasionResult)
                 {
+                    const auto localScvIdxWithCriticalPc = invasionResult.localScvIdxWithCriticalPc;
                     hasChangedInCurrentIteration_ = true;
                     if constexpr (GridFluxVariablesCache::cachingEnabled)
                     {
@@ -191,29 +194,39 @@ private:
 
     //! The switch for determining the invasion state of a pore throat. Called at the end of each Newton step.
     template<class Element, class ElementVolumeVariables, class FluxVariablesCache>
-    bool invasionSwitch_(const Element& element,
+    auto invasionSwitch_(const Element& element,
                          const ElementVolumeVariables& elemVolVars,
                          const FluxVariablesCache& fluxVarsCache)
 
     {
+        using Scalar = typename ElementVolumeVariables::VolumeVariables::PrimaryVariables::value_type;
         const auto& gridGeometry = problem_.gridGeometry();
         const auto& spatialParams = problem_.spatialParams();
         const auto eIdx = gridGeometry.elementMapper().index(element);
         bool invadedBeforeSwitch = invadedCurrentIteration_[eIdx];
         bool invadedAfterSwitch = invadedBeforeSwitch;
 
-        const auto wPhaseIdx = spatialParams.template wettingPhase<typename ElementVolumeVariables::VolumeVariables::FluidSystem>(element, elemVolVars);
+        // Result type, containing the local scv index of the pore from which the invasion/snap-off occurred
+        // Evaluates to 'false' if no invasion/snap-off occurred
+        struct Result
+        {
+            std::uint8_t localScvIdxWithCriticalPc;
+            Scalar criticalPc;
+            EventType event = EventType::none;
+
+            operator bool() const
+            { return event != EventType::none; }
+        };
 
         // Block non-wetting phase flux out of the outlet
         static const auto blockNonwettingPhase = getParamFromGroup<std::vector<int>>(problem_.paramGroup(), "InvasionState.BlockNonwettingPhaseAtThroatLabel", std::vector<int>{Labels::outlet});
         if (!blockNonwettingPhase.empty() && std::find(blockNonwettingPhase.begin(), blockNonwettingPhase.end(), gridGeometry.throatLabel(eIdx)) != blockNonwettingPhase.end())
         {
             invadedCurrentIteration_[eIdx] = false;
-            return false;
+            return Result{}; // nothing happened
         }
 
         //Determine whether throat gets invaded or snap-off occurs
-        using Scalar = typename ElementVolumeVariables::VolumeVariables::PrimaryVariables::value_type;
         const std::array<Scalar, 2> pc = { elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure() };
         const auto pcMax = std::max_element(pc.begin(), pc.end());
         const Scalar pcEntry = fluxVarsCache.pcEntry();
@@ -229,7 +242,7 @@ private:
             }
 
             invadedCurrentIteration_[eIdx] = false;
-            return false;
+            return Result{}; //nothing happened
         }
 
         if (*pcMax > pcEntry)
@@ -239,29 +252,38 @@ private:
 
         invadedCurrentIteration_[eIdx] = invadedAfterSwitch;
 
-        if (invadedAfterSwitch != invadedBeforeSwitch && verbose_)
+        if (invadedBeforeSwitch == invadedAfterSwitch)
+            return Result{}; // nothing happened
+        else
         {
-          const std::array<Scalar, 2> sw = { elemVolVars[0].saturation(wPhaseIdx), elemVolVars[1].saturation(wPhaseIdx) };
-          const auto scvIdx = pcMax - pc.begin();
-          const auto vIdx = gridGeometry.gridView().indexSet().subIndex(element, scvIdx, 1);
-          if (!invadedBeforeSwitch && invadedAfterSwitch)
-          {
-              std::cout << "Throat " << eIdx << " was invaded from pore "  << vIdx << " :";
-              std::cout << " pc: " << *pcMax;
-              std::cout << ", pcEntry: " << spatialParams.pcEntry(element, elemVolVars);
-              std::cout << ", sw: " << sw[scvIdx] << std::endl;
-          }
-          else if (invadedBeforeSwitch && !invadedAfterSwitch)
-          {
-              std::cout << "Snap-off occured at: " << eIdx << " from pore "  << vIdx << " :";
-              std::cout << " pc: " << *pcMax;
-              std::cout << ", pcSnapoff: " << spatialParams.pcSnapoff(element, elemVolVars);
-              std::cout << ", sw: " << sw[scvIdx] << std::endl;
-          }
-          else
-              DUNE_THROW(Dune::InvalidStateException, "Invalid Process ");
+            Result result;
+            result.localScvIdxWithCriticalPc = std::distance(pc.begin(), pcMax);
+            result.criticalPc = *pcMax;
+            result.event = !invadedBeforeSwitch && invadedAfterSwitch ? EventType::invasion : EventType::snapOff;
+
+            if (verbose_)
+            {
+                const auto wPhaseIdx = spatialParams.template wettingPhase<typename ElementVolumeVariables::VolumeVariables::FluidSystem>(element, elemVolVars);
+                const std::array sw = { elemVolVars[0].saturation(wPhaseIdx), elemVolVars[1].saturation(wPhaseIdx) };
+                const auto vIdx = gridGeometry.gridView().indexSet().subIndex(element, result.localScvIdxWithCriticalPc, 1);
+                if (result.event == EventType::invasion)
+                {
+                    std::cout << "Throat " << eIdx << " was invaded from pore "  << vIdx << " :";
+                    std::cout << " pc: " << *pcMax;
+                    std::cout << ", pcEntry: " << spatialParams.pcEntry(element, elemVolVars);
+                    std::cout << ", sw: " << sw[result.localScvIdxWithCriticalPc] << std::endl;
+                }
+                else
+                {
+                    std::cout << "Snap-off occured at throat " << eIdx << " from pore "  << vIdx << " :";
+                    std::cout << " pc: " << *pcMax;
+                    std::cout << ", pcSnapoff: " << spatialParams.pcSnapoff(element, elemVolVars);
+                    std::cout << ", sw: " << sw[result.localScvIdxWithCriticalPc] << std::endl;
+                }
+            }
+
+            return result;
         }
-        return invadedBeforeSwitch != invadedAfterSwitch;
     }
 
     //! If the user has specified a global capillary pressure, check if it is lower than the given entry capillary pressure.
