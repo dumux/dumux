@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup OnePTests
- * \brief Test for the one-phase model
+ * \brief test for the one-phase model
  */
 #include <config.h>
 #include <ctime>
@@ -44,7 +44,7 @@
 #include <dumux/timestepping/multistagemethods.hh>
 
 #include <dumux/assembly/fv/localoperator.hh>
-#include <dumux/assembly/fv/boxlocalassembler.hh>
+#include <dumux/assembly/localassembler.hh>
 #include <dumux/assembly/assembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
@@ -123,7 +123,7 @@ int main(int argc, char** argv)
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // use implicit Euler for time integration
-    auto timeMethod = std::make_shared<MultiStage::ImplicitEuler<Scalar>>();
+    auto timeMethod = std::make_shared<Experimental::MultiStage::ImplicitEuler<Scalar>>();
 
     // the assembler (we use the immiscible operators to define the system of equations)
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
@@ -132,7 +132,7 @@ int main(int argc, char** argv)
     using Operators = Experimental::FVImmiscibleOperators<ModelTraits, FluxVariables, LocalContext>;
 
     using LocalOperator = Experimental::FVLocalOperator<Operators>;
-    using LocalAssembler = Experimental::BoxLocalAssembler<LocalOperator>;
+    using LocalAssembler = Experimental::LocalAssembler<LocalOperator>;
     using Assembler = Experimental::Assembler<LocalAssembler>;
     auto assembler = std::make_shared<Assembler>(gridGeometry, DiffMethod::numeric);
 
@@ -145,7 +145,7 @@ int main(int argc, char** argv)
     auto nonLinearSolver = std::make_shared<NewtonSolver>(assembler, linearSolver);
 
     // the time stepper for time integration
-    using TimeStepper = MultiStageTimeStepper<NewtonSolver>;
+    using TimeStepper = Experimental::MultiStageTimeStepper<NewtonSolver>;
     TimeStepper timeStepper(nonLinearSolver, timeMethod);
 
     // set some check points for the time loop
