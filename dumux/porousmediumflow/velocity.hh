@@ -36,6 +36,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/elementsolution.hh>
+#include <dumux/discretization/fvgridvariables.hh>
 #include <dumux/flux/traits.hh>
 
 namespace Dumux {
@@ -108,7 +109,7 @@ public:
      * \param gridVariables The grid variables
      */
     PorousMediumFlowVelocity(const GridVariables& gridVariables)
-    : problem_(gridVariables.curGridVolVars().problem())
+    : problem_(getProblem_(gridVariables))
     , gridGeometry_(gridVariables.gridGeometry())
     , gridVariables_(gridVariables)
     {
@@ -460,6 +461,15 @@ private:
     }
 
 private:
+
+    // extract problem from grid vars (experimental interface)
+    template<class GV, std::enable_if_t<Experimental::areExperimentalGridVars<GV>, int> = 0>
+    const Problem& getProblem_(const GV& gv) { return gv.gridVolVars().problem(); }
+
+    // extract problem from grid vars (standards interface)
+    template<class GV, std::enable_if_t<!Experimental::areExperimentalGridVars<GV>, int> = 0>
+    const Problem& getProblem_(const GV& gv) { return gv.curGridVolVars().problem(); }
+
     const Problem& problem_;
     const GridGeometry& gridGeometry_;
     const GridVariables& gridVariables_;

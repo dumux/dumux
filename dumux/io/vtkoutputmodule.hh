@@ -43,7 +43,9 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/io/format.hh>
+
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/fvgridvariables.hh>
 
 #include "vtkfunction.hh"
 #include "velocityoutput.hh"
@@ -378,8 +380,18 @@ public:
     }
 
 protected:
+    // extract the grid volume variables from the grid variables (experimental interface)
+    template<bool isExperimental = Experimental::areExperimentalGridVars<GridVariables>,
+             std::enable_if_t<isExperimental, int> = 0>
+    decltype(auto) gridVolVars() const { return gridVariables_.gridVolVars(); }
+
+    // extract the grid volume variables from the grid variables (experimental interface)
+    template<bool isExperimental = Experimental::areExperimentalGridVars<GridVariables>,
+             std::enable_if_t<!isExperimental, int> = 0>
+    decltype(auto) gridVolVars() const { return gridVariables_.curGridVolVars(); }
+
     // some return functions for differing implementations to use
-    const auto& problem() const { return gridVariables_.curGridVolVars().problem(); }
+    const auto& problem() const { return gridVolVars().problem(); }
     const GridVariables& gridVariables() const { return gridVariables_; }
     const GridGeometry& gridGeometry() const { return gridVariables_.gridGeometry(); }
     const SolutionVector& sol() const { return sol_; }
@@ -447,7 +459,7 @@ private:
                 const auto eIdxGlobal = gridGeometry().elementMapper().index(element);
 
                 auto fvGeometry = localView(gridGeometry());
-                auto elemVolVars = localView(gridVariables_.curGridVolVars());
+                auto elemVolVars = localView(gridVolVars());
 
                 // If velocity output is enabled we need to bind to the whole stencil
                 // otherwise element-local data is sufficient
@@ -634,7 +646,7 @@ private:
                 const auto numCorners = element.subEntities(dim);
 
                 auto fvGeometry = localView(gridGeometry());
-                auto elemVolVars = localView(gridVariables_.curGridVolVars());
+                auto elemVolVars = localView(gridVolVars());
 
                 // resize element-local data containers
                 for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
