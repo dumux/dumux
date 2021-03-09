@@ -640,7 +640,6 @@ int checkFluidSystem(bool enablePhaseRestriction = true)
     for (int compIdx = 0; compIdx < numComponents; ++compIdx)
     {
         val = FluidSystem::molarMass(compIdx);
-        [[maybe_unused]] std::string
         [[maybe_unused]] std::string name = FluidSystem::componentName(compIdx);
     }
 
