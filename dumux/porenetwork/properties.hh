@@ -32,6 +32,7 @@
 
 #include <dumux/porenetwork/common/labels.hh>
 #include <dumux/porenetwork/common/velocityoutput.hh>
+#include <dumux/flux/porenetwork/fickslaw.hh>
 
 namespace Dumux::Properties {
 
@@ -69,6 +70,16 @@ public:
 
 template<class TypeTag>
 struct HeatConductionType<TypeTag, TTag::PoreNetworkModel> { using type = Dumux::PoreNetwork::PNMFouriersLaw; };
+
+//! By default, we use fick's law for the diffusive fluxes
+template<class TypeTag>
+struct MolecularDiffusionType<TypeTag, TTag::PoreNetworkModel> {
+private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+public:
+    using type = Dumux::PoreNetwork::PNMFicksLaw<Scalar, ModelTraits::numFluidPhases(), ModelTraits::numFluidComponents()>;
+};
 
 //! The labels
 template<class TypeTag>
