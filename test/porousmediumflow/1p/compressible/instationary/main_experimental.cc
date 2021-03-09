@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup OnePTests
- * \brief Test for the one-phase CC model
+ * \brief Test for the one-phase model
  */
 #include <config.h>
 #include <ctime>
@@ -31,6 +31,7 @@
 #include <dune/istl/io.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/localcontext.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -39,13 +40,17 @@
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 
-#include <dumux/assembly/fvassembler.hh>
+#include <dumux/porousmediumflow/immiscible/operators.hh>
+#include <dumux/timestepping/multistagemethods.hh>
+
+#include <dumux/assembly/fv/localoperator.hh>
+#include <dumux/assembly/fv/boxlocalassembler.hh>
+#include <dumux/assembly/assembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
 
 #include "properties.hh"
-#include "assembler.hh"
 
 int main(int argc, char** argv)
 {
@@ -94,7 +99,6 @@ int main(int argc, char** argv)
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x(gridGeometry->numDofs());
     problem->applyInitialSolution(x);
-    auto xOld = x;
 
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
@@ -118,10 +122,19 @@ int main(int argc, char** argv)
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
-    // the assembler with time loop for instationary problem
-    using BaseAssembler = FVAssembler<TypeTag, DiffMethod::numeric>;
-    using Assembler = Dumux::OnePCompressibleTest::GridVarsAssembler<BaseAssembler>;
-    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
+    // use implicit Euler for time integration
+    auto timeMethod = std::make_shared<MultiStage::ImplicitEuler<Scalar>>();
+
+    // the assembler (we use the immiscible operators to define the system of equations)
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
+    using LocalContext = Experimental::LocalContext<typename GridVariables::LocalView>;
+    using Operators = Experimental::FVImmiscibleOperators<ModelTraits, FluxVariables, LocalContext>;
+
+    using LocalOperator = Experimental::FVLocalOperator<Operators>;
+    using LocalAssembler = Experimental::BoxLocalAssembler<LocalOperator>;
+    using Assembler = Experimental::Assembler<LocalAssembler>;
+    auto assembler = std::make_shared<Assembler>(gridGeometry, DiffMethod::numeric);
 
     // the linear solver
     using LinearSolver = ILU0BiCGSTABBackend;
@@ -129,7 +142,11 @@ int main(int argc, char** argv)
 
     // the non-linear solver
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver);
+    auto nonLinearSolver = std::make_shared<NewtonSolver>(assembler, linearSolver);
+
+    // the time stepper for time integration
+    using TimeStepper = MultiStageTimeStepper<NewtonSolver>;
+    TimeStepper timeStepper(nonLinearSolver, timeMethod);
 
     // set some check points for the time loop
     timeLoop->setPeriodicCheckPoint(tEnd/10.0);
@@ -137,11 +154,8 @@ int main(int argc, char** argv)
     // time loop
     timeLoop->start(); do
     {
-        // linearize & solve
-        nonLinearSolver.solve(*gridVariables, *timeLoop);
-
-        // make the new solution the old solution
-        xOld = gridVariables->dofs();
+        // do time integraiton
+        timeStepper.step(*gridVariables, timeLoop->time(), timeLoop->timeStepSize());
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
@@ -154,7 +168,7 @@ int main(int argc, char** argv)
         timeLoop->reportTimeStep();
 
         // set new dt as suggested by the newton solver
-        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+        timeLoop->setTimeStepSize(nonLinearSolver->suggestTimeStepSize(timeLoop->timeStepSize()));
 
     } while (!timeLoop->finished());
 
