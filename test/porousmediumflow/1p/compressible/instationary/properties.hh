@@ -38,7 +38,6 @@
 
 #include "problem.hh"
 #include "spatialparams.hh"
-#include "gridvariables.hh"
 
 #ifndef EXPERIMENTAL
 #define EXPERIMENTAL 0
@@ -88,14 +87,12 @@ template<class TypeTag>
 struct GridVariables<TypeTag, TTag::OnePCompressible>
 {
 private:
-    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
     using GVV = GetPropType<TypeTag, Properties::GridVolumeVariables>;
     using GFC = GetPropType<TypeTag, Properties::GridFluxVariablesCache>;
-    using Base = Dumux::FVGridVariables<GG, GVV, GFC>;
     using X = GetPropType<TypeTag, Properties::SolutionVector>;
 
 public:
-    using type = Dumux::OnePCompressibleTest::TestGridVariables<GG, Base, X>;
+    using type = Dumux::Experimental::FVGridVariables<GVV, GFC, X>;
 };
 #endif
 
