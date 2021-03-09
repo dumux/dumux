@@ -53,6 +53,7 @@ class FVLocalOperator
 
     using FVElementGeometry = typename LC::ElementGridGeometry;
     using GridGeometry = typename FVElementGeometry::GridGeometry;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Extrusion = Extrusion_t<GridGeometry>;
 
@@ -143,19 +144,58 @@ public:
 
     // \}
 
+    /*!
+     * \brief Compute the flux across a single face embedded in the given element.
+     * \note This function behaves different than the flux function in the
+     *       operators, as it checks if the face is on the boundary. If so,
+     *       it returns the flux resulting from the user-specified conditions.
+     * \note This assumes that the given element and face are contained within
+     *       the context that was used to instantiate this class.
+     */
+    NumEqVector computeFlux(const Element& element,
+                            const SubControlVolumeFace& scvf) const
+    {
+        const auto& evv = context_.elementVariables().elemVolVars();
+        const auto& problem = evv.gridVolVars().problem();
+
+        // interior faces
+        if (!scvf.boundary())
+            return Operators::flux(problem, context_, scvf);
+
+        const auto& insideScv = context_.elementGridGeometry().scv(scvf.insideScvIdx());
+
+        // for cell-centered schemes, evaluate fluxes also across Dirichlet boundaries
+        if constexpr (!isBox)
+        {
+            const auto& bcTypes = problem.boundaryTypes(element, scvf);
+            if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann())
+                return Operators::flux(problem, context_, scvf);
+            else if (bcTypes.hasNeumann() && bcTypes.hasDirichlet())
+                DUNE_THROW(Dune::NotImplemented, "Mixed boundary conditions for cell-centered schemes. " <<
+                                                 "Use pure boundary conditions by converting Dirichlet BCs to Robin BCs.");
+        }
+        // for the box scheme, only pure Neumann boundaries are supported
+        else
+        {
+            if (!problem.boundaryTypes(element, insideScv).hasOnlyNeumann())
+                DUNE_THROW(Dune::NotImplemented, "For the box scheme only Neumann boundary fluxes can be computed.");
+        }
+
+        // compute and return the Neumann boundary fluxes
+        auto neumannFluxes = getUnscaledNeumannFluxes_(element, scvf);
+        neumannFluxes *= Extrusion::area(scvf)*evv[insideScv].extrusionFactor();
+        return neumannFluxes;
+    }
+
 protected:
 
     //! compute and add the flux across the given face to the container (cc schemes)
     template<bool b = isBox, std::enable_if_t<!b, int> = 0>
     void addFlux_(ElementResidualVector& r, const SubControlVolumeFace& scvf) const
     {
+        const auto& fvGeometry = context_.elementGridGeometry();
         const auto& evv = context_.elementVariables().elemVolVars();
         const auto& problem = evv.gridVolVars().problem();
-
-        // TODO: Modify problem interfaces to receive context
-        const auto& fvGeometry = context_.elementGridGeometry();
-        const auto& element = fvGeometry.element();
-        const auto& efvc = context_.elementVariables().elemFluxVarsCache();
 
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto localDofIdx = insideScv.localDofIndex();
@@ -164,7 +204,7 @@ protected:
             r[localDofIdx] += Operators::flux(problem, context_, scvf);
         else
         {
-            const auto& bcTypes = problem.boundaryTypes(element, scvf);
+            const auto& bcTypes = problem.boundaryTypes(fvGeometry.element(), scvf);
 
             // Dirichlet boundaries
             if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann())
@@ -173,9 +213,7 @@ protected:
             // Neumann and Robin ("solution dependent Neumann") boundary conditions
             else if (bcTypes.hasNeumann() && !bcTypes.hasDirichlet())
             {
-                auto neumannFluxes = problem.neumann(element, fvGeometry, evv, efvc, scvf);
-
-                // multiply neumann fluxes with the area and the extrusion factor
+                auto neumannFluxes = getUnscaledNeumannFluxes_(fvGeometry.element(), scvf);
                 neumannFluxes *= Extrusion::area(scvf)*evv[insideScv].extrusionFactor();
                 r[localDofIdx] += neumannFluxes;
             }
@@ -190,13 +228,9 @@ protected:
     template<bool b = isBox, std::enable_if_t<b, int> = 0>
     void addFlux_(ElementResidualVector& r, const SubControlVolumeFace& scvf) const
     {
+        const auto& fvGeometry = context_.elementGridGeometry();
         const auto& evv = context_.elementVariables().elemVolVars();
         const auto& problem = evv.gridVolVars().problem();
-
-        // TODO: Modify problem interfaces to receive context
-        const auto& fvGeometry = context_.elementGridGeometry();
-        const auto& element = fvGeometry.element();
-        const auto& efvc = context_.elementVariables().elemFluxVarsCache();
 
         // inner faces
         if (!scvf.boundary())
@@ -212,12 +246,12 @@ protected:
         else
         {
             const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-            const auto& bcTypes = problem.boundaryTypes(element, scv);
+            const auto& bcTypes = problem.boundaryTypes(fvGeometry.element(), scv);
 
             // Treat Neumann and Robin ("solution dependent Neumann") boundary conditions.
             if (bcTypes.hasNeumann())
             {
-                const auto neumannFluxes = problem.neumann(element, fvGeometry, evv, efvc, scvf);
+                const auto neumannFluxes = getUnscaledNeumannFluxes_(fvGeometry.element(), scvf);
                 const auto area = Extrusion::area(scvf)*evv[scv].extrusionFactor();
 
                 // only add fluxes to equations for which Neumann is set
@@ -226,6 +260,18 @@ protected:
                         r[scv.localDofIndex()][eqIdx] += neumannFluxes[eqIdx]*area;
             }
         }
+    }
+
+    //! get the user-specified Neumann boundary flux
+    NumEqVector getUnscaledNeumannFluxes_(const Element& element,
+                                          const SubControlVolumeFace& scvf) const
+    {
+        // TODO: Modify problem interfaces to receive context
+        const auto& fvGeometry = context_.elementGridGeometry();
+        const auto& evv = context_.elementVariables().elemVolVars();
+        const auto& efvc = context_.elementVariables().elemFluxVarsCache();
+        const auto& problem = evv.gridVolVars().problem();
+        return problem.neumann(element, fvGeometry, evv, efvc, scvf);
     }
 
 private:
