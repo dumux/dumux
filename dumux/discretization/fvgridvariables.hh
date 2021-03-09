@@ -173,7 +173,10 @@ private:
 // Experimental implementation of new grid variables layout //
 //////////////////////////////////////////////////////////////
 
+#include <utility>
+#include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/common/typetraits/problem.hh>
+
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/gridvariables.hh>
 
@@ -373,6 +376,23 @@ private:
     GridVolumeVariables gridVolVars_;          //!< the current volume variables (primary and secondary variables)
     GridFluxVariablesCache gridFluxVarsCache_; //!< the flux variables cache
 };
+
+    namespace Detail {
+        struct hasGridVolVars
+        {
+            template<class GV>
+            auto operator()(const GV& gv) -> decltype(gv.gridVolVars()) {}
+        };
+    } // end namespace Detail
+
+    // helper bool to check if a grid variables type fulfills the new experimental interface
+    // can be used in the transition period in places where both interfaces should be supported
+    // Note that this doesn't check if the provided type actually models grid variables. Instead,
+    // it is assumed that that is known, and it is only checked if the new or old behaviour can be
+    // expected from it.
+    template<class GridVariables>
+    inline constexpr bool areExperimentalGridVars =
+        decltype(isValid(Detail::hasGridVolVars())(std::declval<GridVariables>()))::value;
 
 } // end namespace Dumux::Experimental
 
