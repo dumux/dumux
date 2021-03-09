@@ -18,37 +18,34 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Flux
- * \brief Fick's law specilized for different discretization schemes.
- *        This file contains the data which is required to calculate
- *        diffusive mass fluxes due to molecular diffusion with Fick's law.
+ * \ingroup TwoPNCModel
+ * \brief Defines the indices required for the two-phase n-component model.
  */
-#ifndef DUMUX_DISCRETIZATION_FICKS_LAW_HH
-#define DUMUX_DISCRETIZATION_FICKS_LAW_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/discretization/method.hh>
-#include <dumux/flux/referencesystemformulation.hh>
+#ifndef DUMUX_2PNC_INDICES_HH
+#define DUMUX_2PNC_INDICES_HH
 
 namespace Dumux {
 
-// forward declaration
-template <class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
-class FicksLawImplementation;
-
 /*!
- * \ingroup Flux
- * \brief Evaluates the diffusive mass flux according to Fick's law
+ * \ingroup TwoPNCModel
+ * \brief The indices for the isothermal two-phase n-component model.
  */
-template <class TypeTag, ReferenceSystemFormulation referenceSystem =  ReferenceSystemFormulation::massAveraged>
-using FicksLaw = FicksLawImplementation<TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod, referenceSystem>;
+struct TwoPNCIndices
+{
+    // present phases (-> 'pseudo' primary variable)
+    static constexpr int firstPhaseOnly = 1;  //!< Only the first phase (in fluid system) is present
+    static constexpr int secondPhaseOnly = 2; //!< Only the second phase (in fluid system) is present
+    static constexpr int bothPhases = 3;      //!< Both phases are present
+
+    // Primary variable indices
+    static constexpr int pressureIdx = 0; //! index for first/second phase pressure (depending on formulation) in privar vector
+    static constexpr int switchIdx = 1;   //! index of either the saturation or the mass/mole fraction of the first/second component
+
+    // equation indices
+    static constexpr int conti0EqIdx = 0; //! index of the conservation equation for the first component
+};
 
 } // end namespace Dumux
-
-#include <dumux/flux/cctpfa/fickslaw.hh>
-#include <dumux/flux/ccmpfa/fickslaw.hh>
-#include <dumux/flux/box/fickslaw.hh>
-#include <dumux/flux/staggered/freeflow/fickslaw.hh>
-//#include <dumux/flux/porenetwork/fickslaw.hh>
 
 #endif
