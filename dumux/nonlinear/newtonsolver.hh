@@ -481,7 +481,7 @@ public:
      *
      * \param vars The current iteration's variables
      */
-    virtual void assembleLinearSystem(const Variables& vars)
+    virtual void assembleLinearSystem(Variables& vars)
     {
         assembleLinearSystem_(this->assembler(), vars);
 
@@ -879,7 +879,7 @@ protected:
             this->assembler().updateGridVariables(Backend::dofs(vars));
     }
 
-    void computeResidualReduction_(const Variables& vars)
+    void computeResidualReduction_(Variables& vars)
     {
         // we assume that the assembler works on solution vectors
         // if it doesn't export the variables type
@@ -1067,7 +1067,7 @@ private:
 
     //! assembleLinearSystem_ for assemblers that support partial reassembly
     template<class A>
-    auto assembleLinearSystem_(const A& assembler, const Variables& vars)
+    auto assembleLinearSystem_(const A& assembler, Variables& vars)
     -> typename std::enable_if_t<decltype(isValid(Detail::supportsPartialReassembly())(assembler))::value, void>
     {
         this->assembler().assembleJacobianAndResidual(vars, partialReassembler_.get());
@@ -1075,7 +1075,7 @@ private:
 
     //! assembleLinearSystem_ for assemblers that don't support partial reassembly
     template<class A>
-    auto assembleLinearSystem_(const A& assembler, const Variables& vars)
+    auto assembleLinearSystem_(const A& assembler, Variables& vars)
     -> typename std::enable_if_t<!decltype(isValid(Detail::supportsPartialReassembly())(assembler))::value, void>
     {
         this->assembler().assembleJacobianAndResidual(vars);
