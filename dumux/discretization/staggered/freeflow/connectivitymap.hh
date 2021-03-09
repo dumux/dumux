@@ -194,4 +194,4 @@ private:
 
 } // end namespace Dumux
 
-#endif // DUMUX_STAGGERED_FREEFLOW_CONNECTIVITY_MAP_HH
+#endif

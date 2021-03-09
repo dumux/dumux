@@ -1,0 +1,52 @@
+# Parameter file for test case 2pncmin.
+# Everything behind a '#' is a comment.
+# Type "./test_2pncmin --help" for more information.
+
+[TimeLoop]
+TEnd                    = 150000                # duration of the simulation [s]
+DtInitial               = 1                     # initial time step size [s]
+MaxTimeStepSize         = 5000                  # maximum time step size
+
+[Grid]
+Positions0              = 0 0.02
+Positions1              = 0 0.015 0.02
+Cells0                  = 2
+Cells1                  = 2 3
+Grading0                = 1.0
+Grading1                = 1.0 -1.2
+
+[FluidSystem]
+NTemperature            = 100                   # [-] number of tabularization entries
+NPressure               = 100                   # [-] number of tabularization entries
+PressureLow             = 1e4                   # [Pa]low end for tabularization of fluid properties
+PressureHigh            = 3e6                   # [Pa]high end for tabularization of fluid properties
+TemperatureLow          = 273.15                # [K]low end for tabularization of fluid properties
+TemperatureHigh         = 400.00                # [K]high end for tabularization of fluid properties
+
+[Problem]
+Name                    = test_2pncminni        # [-] name for output files
+Temperature             = 299                   # [K] initial temperature
+InitialPressure         = 1.00e5                # [Pa] Initial reservoir pressure
+InitialGasSaturation    = 0.5                   # [-] initial gas saturation
+InitialSalinity         = 2.00e-2               # [-]=[kgNaCl/kgSolution] Initial salt mass fraction
+
+[FreeFlow]
+RefMoleFracH2O          = 6.0e-3                # [-] mole fraction of water vapor in air above the container
+BoundaryLayerThickness  = 1e-2                  # [m] thickness of boundary layer over which the water vapor diffuses
+MassTransferCoefficient = 1
+RefTemperature          = 299                   # [K] temperature in the air above container
+
+[SpatialParams]
+SolubilityLimit         = 0.26 	                # [-]  solubility limit of NaCl in brine
+referencePorosity       = 0.4                   # [-]  initial porosity
+referencePermeability   = 1e-13                 # [m²]  initial permeability
+VanGenuchtenAlpha       = 0.00015               # Van Genuchten parameter
+VanGenuchtenN           = 14.0                  # Van Genuchten parameter
+Swr                     = 0.25                  # [-] irreducible liquid saturation
+Snr                     = 0.025                 # [-] irreducible gas saturation
+
+[Vtk]
+AddVelocity             = 1                     # Add extra information
+
+[Output]
+PlotFluidMatrixInteractions = false

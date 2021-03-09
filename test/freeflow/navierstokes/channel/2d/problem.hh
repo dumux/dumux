@@ -127,7 +127,7 @@ public:
     : ParentType(gridGeometry)
     {
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
-        kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
+        dynamicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0) * getParam<Scalar>("Component.LiquidDensity", 1.0);
 
         const auto tmp = getParam<std::string>("Problem.OutletCondition", "Outflow");
         if (tmp == "Outflow")
@@ -144,7 +144,9 @@ public:
         useVelocityProfile_ = getParam<bool>("Problem.UseVelocityProfile", false);
         outletPressure_ = getParam<Scalar>("Problem.OutletPressure", 1.1e5);
 
-        hasAnalyticalSolution_ = (outletCondition_ == OutletCondition::neumannXneumannY);
+        const bool isStationary = getParam<bool>("Problem.IsStationary", false);
+
+        hasAnalyticalSolution_ = isStationary && useVelocityProfile_ && (outletCondition_ != OutletCondition::doNothing);
         if (hasAnalyticalSolution_)
             createAnalyticalSolution_();
     }
@@ -326,7 +328,7 @@ public:
         const Scalar yMax = this->gridGeometry().bBoxMax()[1];
 
         Scalar velocityQuadraticCoefficient = - inletVelocity_ / (0.25*(yMax - yMin)*(yMax - yMin));
-        Scalar pressureLinearCoefficient = 2.0 * velocityQuadraticCoefficient * kinematicViscosity_;
+        Scalar pressureLinearCoefficient = 2.0 * velocityQuadraticCoefficient * dynamicViscosity_;
         Scalar pressureConstant = -pressureLinearCoefficient * this->gridGeometry().bBoxMax()[0]  + outletPressure_;
 
         PrimaryVariables values;
@@ -462,7 +464,7 @@ private:
     static constexpr Scalar eps_=1e-6;
     bool printL2Error_;
     Scalar inletVelocity_;
-    Scalar kinematicViscosity_;
+    Scalar dynamicViscosity_;
     Scalar outletPressure_;
     OutletCondition outletCondition_;
     bool useVelocityProfile_;

@@ -53,14 +53,22 @@ class SequentialFVSpatialParams: public SequentialFVSpatialParamsOneP<TypeTag>
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    /// @cond false
-    using MaterialLawParams = typename GetPropType<TypeTag, Properties::MaterialLaw>::Params;
-    /// @endcond
 
 public:
     SequentialFVSpatialParams(const Problem& problem)
     :SequentialFVSpatialParamsOneP<TypeTag>(problem)
     {
+    }
+
+
+    // make sure we get a deprecation warning (remove this after release 3.3)
+    template<class ElementSolution, class SubControlVolume>
+    [[deprecated("Use the new style material laws. Old material laws and this interface will no longer be supported after release 3.3")]]
+    decltype(auto) materialLawParamsDeprecated(const Element& element,
+                                               const SubControlVolume& scv,
+                                               const ElementSolution& elemSol) const
+    {
+        return this->asImp_().materialLawParams(element);
     }
 
     /*!
@@ -69,9 +77,9 @@ public:
      * \return the material parameters object
      * \param element The element
      */
-    const MaterialLawParams& materialLawParams(const Element &element) const
+    const auto& materialLawParams(const Element &element) const
     {
-            return asImp_().materialLawParamsAtPos(element.geometry().center());
+        return asImp_().materialLawParamsAtPos(element.geometry().center());
     }
 
     /*!
@@ -80,7 +88,7 @@ public:
      * \return the material parameters object
      * \param globalPos The position of the center of the element
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    const auto& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     {
         DUNE_THROW(Dune::InvalidStateException,
                    "The spatial parameters do not provide "

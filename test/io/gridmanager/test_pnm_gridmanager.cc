@@ -22,81 +22,19 @@
  * \brief test for the pore network model grid creator
  */
 #include "config.h"
-
-#include <dune/grid/io/file/vtk.hh>
-
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
 #include <dumux/io/grid/porenetwork/dgfwriter.hh>
 
-namespace Dumux
-{
+#include "pnmgridutilities.hh"
 
-template<class GridView, class GridData>
-std::vector<std::vector<double>> getVertexParams(const GridView& gridView, const GridData& gridData)
-{
-    const auto someVertex = *(vertices(gridView).begin());
-    const auto numVertexParams = gridData.parameters(someVertex).size();
-    std::vector<std::vector<double>> result(numVertexParams);
-
-    for(int i = 0; i < result.size(); ++i)
-        result[i].resize(gridView.size(1));
-
-    for(const auto& vertex : vertices(gridView))
-    {
-        const auto vIdx = gridView.indexSet().index(vertex);
-        for(int i = 0; i < result.size(); ++i)
-            result[i][vIdx] = gridData.parameters(vertex)[i];
-    }
-
-    return result;
-}
-
-template<class GridView, class GridData>
-std::vector<std::vector<double>> getElementParams(const GridView& gridView, const GridData& gridData)
-{
-    const auto someElement = *(elements(gridView).begin());
-    const auto numElementParams = gridData.parameters(someElement).size();
-    std::vector<std::vector<double>> result(numElementParams);
-
-    for(int i = 0; i < result.size(); ++i)
-        result[i].resize(gridView.size(0));
-
-    for(const auto& element : elements(gridView))
-    {
-        const auto eIdx = gridView.indexSet().index(element);
-        for(int i = 0; i < result.size(); ++i)
-            result[i][eIdx] = gridData.parameters(element)[i];
-    }
-
-    return result;
-}
-
-template<class GridView, class GridData>
-void writeToVtk(const std::string& fileName, const GridView& gridView, const GridData& gridData)
-{
-    using VTKWriter = Dune::VTKWriter<GridView>;
-    static const std::array<std::string, 3> poreParameterNames = {"poreRadius", "poreVolume", "poreLabel"};
-    static const std::array<std::string, 3> throatParameterNames = {"throatRadius", "throatlength", "throatLabel"};
-
-    const auto vertexData = getVertexParams(gridView, *gridData);
-    const auto elementData = getElementParams(gridView, *gridData);
-
-    VTKWriter vtkWriter(gridView);
-    for(int i = 0; i < poreParameterNames.size(); ++i)
-        vtkWriter.addVertexData(vertexData[i], poreParameterNames[i]);
-    for(int i = 0; i < throatParameterNames.size(); ++i)
-        vtkWriter.addCellData(elementData[i], throatParameterNames[i]);
-
-    vtkWriter.write(fileName);
-}
+namespace Dumux {
 
 template<int dimWorld>
 void testGeneric(const std::string& name)
 {
-    using GridManager = Dumux::PoreNetworkGridManager<dimWorld>;
-
+    using GridManager = PoreNetwork::GridManager<dimWorld>;
     // create a random network, write out a dgf file before grid sanitation
     {
         const std::array<std::string, 3> prefix = {"Generic1D", "Generic2D", "Generic3D"};
@@ -107,14 +45,14 @@ void testGeneric(const std::string& name)
         const auto gridView = gridManager.grid().leafGridView();
         const auto gridData = gridManager.getGridData();
 
-        writeDgf("dgfGrid.dgf",
-                 gridView,
-                 *gridData);
+        PoreNetwork::writeDgf("dgfGrid.dgf",
+                              gridView,
+                              *gridData);
 
         gridManager.sanitizeGrid();
 
         const std::array<std::string, 3> vtkName = {"generic-1dgrid-", "generic-2dgrid-", "generic-3dgrid-"};
-        writeToVtk(vtkName[dimWorld-1] + name, gridView, gridData);
+        PoreNetwork::writeToVtk(vtkName[dimWorld-1] + name, gridView, gridData);
     }
 
     // use faulty dgf file to create a grid, apply grid sanitation (specified in input file)
@@ -129,14 +67,14 @@ void testGeneric(const std::string& name)
 
         const std::array<std::string, 3> vtkName = {"dgf-1dgrid-", "dgf-2dgrid-", "dgf-3dgrid-"};
 
-        writeToVtk(vtkName[dimWorld-1] + name, gridView, gridData);
+        PoreNetwork::writeToVtk(vtkName[dimWorld-1] + name, gridView, gridData);
     }
 }
 
 
 bool testRemoveThroatsOnBoundary()
 {
-    using GridManager = Dumux::PoreNetworkGridManager<2>;
+    using GridManager = PoreNetwork::GridManager<2>;
     using GridType = typename GridManager::Grid;
     using Element = typename GridType::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -151,7 +89,7 @@ bool testRemoveThroatsOnBoundary()
     const auto gridData = gridManager.getGridData();
 
     if(getParam<bool>("Test.WriteVTK"))
-        writeToVtk("remove-throats", gridView, gridData);
+        PoreNetwork::writeToVtk("remove-throats", gridView, gridData);
 
     const auto lowerLeft = getParam<GlobalPosition>("Grid.LowerLeft", GlobalPosition(0.0));
     const auto upperRight = getParam<GlobalPosition>("Grid.UpperRight");

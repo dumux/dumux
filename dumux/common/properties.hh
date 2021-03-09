@@ -181,7 +181,7 @@ struct EnableBoxInterfaceSolver { using type = UndefinedProperty; };
 template<class TypeTag, class MyTypeTag>
 struct Chemistry { using type = UndefinedProperty; };                           //!< The chemistry class with which solves equlibrium reactions
 template<class TypeTag, class MyTypeTag>
-struct SetMoleFractionsForFirstPhase { using type = UndefinedProperty; };       //!< Set the mole fraction in the wetting or non-wetting phase
+struct SetMoleFractionsForFirstPhase { using type = UndefinedProperty; };       //!< Set the mole fraction in the wetting or nonwetting phase
 
 //////////////////////////////////////////////////////////////
 // Additional properties used by the richards model
@@ -276,6 +276,8 @@ struct SherwoodFormulation { using type = UndefinedProperty; };
 
 template<class TypeTag, class MyTypeTag>
 struct NormalizePressure { using type = UndefinedProperty; }; //!<  Returns whether to normalize the pressure term in the momentum balance or not
+template<class TypeTag, class MyTypeTag>
+struct ViscousFluxType { using type = UndefinedProperty; };              //!< The type for the calculation of the (turbulent) viscous (momentum) fluxes
 
 /////////////////////////////////////////////////////////////
 // Properties used by multidomain simulations
@@ -292,4 +294,4 @@ struct TimeManager { using type = UndefinedProperty; };
 } // end namespace Properties
 } // end namespace Dumux
 
-#endif // DUMUX_PROPERTIES_HH
+#endif

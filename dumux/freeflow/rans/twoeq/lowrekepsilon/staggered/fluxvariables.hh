@@ -34,14 +34,15 @@
 
 namespace Dumux {
 
-// forward declaration
-template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>
-class LowReKEpsilonFluxVariablesImpl;
-
 /*!
  * \ingroup LowReKEpsilonModel
  * \brief The flux variables class for the low-Reynolds k-epsilon model using the staggered grid discretization.
  */
+
+// forward declaration
+template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>
+class LowReKEpsilonFluxVariablesImpl;
+
 template<class TypeTag, class BaseFluxVariables>
 class LowReKEpsilonFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethod::staggered>
 : public BaseFluxVariables
@@ -96,11 +97,11 @@ public:
         // calculate advective flux
         auto upwindTermK = [](const auto& volVars)
         {
-            return volVars.turbulentKineticEnergy();
+            return volVars.turbulentKineticEnergy() * volVars.density();
         };
         auto upwindTermEpsilon = [](const auto& volVars)
         {
-            return volVars.dissipationTilde();
+            return volVars.dissipationTilde() * volVars.density();
         };
 
         flux[turbulentKineticEnergyEqIdx]
@@ -115,14 +116,14 @@ public:
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         // effective diffusion coefficients
-        Scalar insideCoeff_k = insideVolVars.kinematicViscosity()
-                               + insideVolVars.kinematicEddyViscosity() / insideVolVars.sigmaK();
-        Scalar outsideCoeff_k = outsideVolVars.kinematicViscosity()
-                                + outsideVolVars.kinematicEddyViscosity() / outsideVolVars.sigmaK();
-        Scalar insideCoeff_e = insideVolVars.kinematicViscosity()
-                               + insideVolVars.kinematicEddyViscosity() / insideVolVars.sigmaEpsilon();
-        Scalar outsideCoeff_e = outsideVolVars.kinematicViscosity()
-                                + outsideVolVars.kinematicEddyViscosity() / outsideVolVars.sigmaEpsilon();
+        Scalar insideCoeff_k = insideVolVars.viscosity() + insideVolVars.kinematicEddyViscosity()
+                                                         * insideVolVars.density() / insideVolVars.sigmaK();
+        Scalar outsideCoeff_k = outsideVolVars.viscosity() + outsideVolVars.kinematicEddyViscosity()
+                                                           * outsideVolVars.density() / outsideVolVars.sigmaK();
+        Scalar insideCoeff_e = insideVolVars.viscosity() + insideVolVars.kinematicEddyViscosity()
+                                                         * insideVolVars.density() / insideVolVars.sigmaEpsilon();
+        Scalar outsideCoeff_e = outsideVolVars.viscosity() + outsideVolVars.kinematicEddyViscosity()
+                                                           * outsideVolVars.density() / outsideVolVars.sigmaEpsilon();
 
         // scale by extrusion factor
         insideCoeff_k *= insideVolVars.extrusionFactor();

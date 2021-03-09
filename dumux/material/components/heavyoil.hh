@@ -24,15 +24,17 @@
 #ifndef DUMUX_HEAVYOIL_HH
 #define DUMUX_HEAVYOIL_HH
 
-#include <dumux/material/idealgas.hh>
+#include <algorithm>
+
+#include <dune/common/math.hh>
+
 #include <dumux/material/constants.hh>
-
 #include <dumux/material/components/base.hh>
-#include <dumux/material/components/liquid.hh>
 #include <dumux/material/components/gas.hh>
+#include <dumux/material/components/liquid.hh>
+#include <dumux/material/idealgas.hh>
 
-namespace Dumux {
-namespace Components {
+namespace Dumux::Components {
 
 /*!
  * \ingroup Components
@@ -98,11 +100,11 @@ public:
 
     static Scalar refComponentSpecificGravity()
     {
-        const Scalar A = 0.83;
-        const Scalar B = 89.9513;
-        const Scalar C = 139.6612;
-        const Scalar D = 3.2033;
-        const Scalar E = 1.0564;
+        constexpr Scalar A = 0.83;
+        constexpr Scalar B = 89.9513;
+        constexpr Scalar C = 139.6612;
+        constexpr Scalar D = 3.2033;
+        constexpr Scalar E = 1.0564;
 
         const Scalar mW = refComponentMolecularWeight() *1000. ;  // in [g/mol];
 
@@ -112,61 +114,61 @@ public:
 
     static Scalar perbutationFactorBoilingTemperature()
     {
-        const Scalar A = -7.4120e-2;    //All factors for 1 atm / 101325 pascals [760 mmHg]
-        const Scalar B = -7.5041e-3;
-        const Scalar C = -2.6031;
-        const Scalar D = 9.0180e-2;
-        const Scalar E = -1.0482;
+        constexpr Scalar A = -7.4120e-2;    //All factors for 1 atm / 101325 pascals [760 mmHg]
+        constexpr Scalar B = -7.5041e-3;
+        constexpr Scalar C = -2.6031;
+        constexpr Scalar D = 9.0180e-2;
+        constexpr Scalar E = -1.0482;
 
         using std::log;
-        Scalar deltaSpecificGravity = log(refComponentSpecificGravity()/specificGravity());
-        Scalar deltaMolecularWeight = log(refComponentMolecularWeight()/molecularWeight());
+        const Scalar deltaSpecificGravity = log(refComponentSpecificGravity()/specificGravity());
+        const Scalar deltaMolecularWeight = log(refComponentMolecularWeight()/molecularWeight());
 
-        using std::pow;
-        return A*pow(deltaSpecificGravity,2) + B*deltaSpecificGravity + C*pow(deltaMolecularWeight,2) + D*deltaMolecularWeight
+        using Dune::power;
+        return A*power(deltaSpecificGravity,2) + B*deltaSpecificGravity + C*power(deltaMolecularWeight,2) + D*deltaMolecularWeight
                 + E*deltaSpecificGravity*deltaMolecularWeight;
     }
 
     static Scalar perbutationFactorCriticalTemperature()
     {
-        const Scalar A = -6.1294e-2;
-        const Scalar B = -7.0862e-2;
-        const Scalar C = 6.1976e-1;
-        const Scalar D = -5.7090e-2;
-        const Scalar E = -8.4583e-2;
+        constexpr Scalar A = -6.1294e-2;
+        constexpr Scalar B = -7.0862e-2;
+        constexpr Scalar C = 6.1976e-1;
+        constexpr Scalar D = -5.7090e-2;
+        constexpr Scalar E = -8.4583e-2;
 
         using std::log;
-        Scalar deltaSpecificGravity = log(refComponentSpecificGravity()/specificGravity());
-        Scalar deltaMolecularWeight = log(refComponentMolecularWeight()/molecularWeight());
+        const Scalar deltaSpecificGravity = log(refComponentSpecificGravity()/specificGravity());
+        const Scalar deltaMolecularWeight = log(refComponentMolecularWeight()/molecularWeight());
 
-        using std::pow;
-        return A*pow(deltaSpecificGravity,2) + B*deltaSpecificGravity + C*pow(deltaMolecularWeight,2) + D*deltaMolecularWeight
+        using Dune::power;
+        return A*power(deltaSpecificGravity,2) + B*deltaSpecificGravity + C*power(deltaMolecularWeight,2) + D*deltaMolecularWeight
                 + E*deltaSpecificGravity*deltaMolecularWeight;
     }
 
     static Scalar perbutationFactorCriticalPressure()
     {
-        const Scalar A = 1.8270e-1;
-        const Scalar B = -2.4864e-1;
-        const Scalar C = 8.3611;
-        const Scalar D = -2.2389e-1;
-        const Scalar E = 2.6984;
+        constexpr Scalar A = 1.8270e-1;
+        constexpr Scalar B = -2.4864e-1;
+        constexpr Scalar C = 8.3611;
+        constexpr Scalar D = -2.2389e-1;
+        constexpr Scalar E = 2.6984;
 
         using std::log;
-        Scalar deltaSpecificGravity = log(refComponentSpecificGravity()/specificGravity());
-        Scalar deltaMolecularWeight = log(refComponentMolecularWeight()/molecularWeight());
+        const Scalar deltaSpecificGravity = log(refComponentSpecificGravity()/specificGravity());
+        const Scalar deltaMolecularWeight = log(refComponentMolecularWeight()/molecularWeight());
 
-        using std::pow;
-        return A*pow(deltaSpecificGravity,2) + B*deltaSpecificGravity + C*pow(deltaMolecularWeight,2) + D*deltaMolecularWeight
+        using Dune::power;
+        return A*power(deltaSpecificGravity,2) + B*deltaSpecificGravity + C*power(deltaMolecularWeight,2) + D*deltaMolecularWeight
                 + E*deltaSpecificGravity*deltaMolecularWeight;
     }
 
     static Scalar refComponentBoilingTemperature()
     {
-        const Scalar A = 477.63;    //All factors for 1 atm /  101325 pascals [760 mmHg]
-        const Scalar B = 88.51;
-        const Scalar C = 1007;
-        const Scalar D = 1214.40;
+        constexpr Scalar A = 477.63;    //All factors for 1 atm /  101325 pascals [760 mmHg]
+        constexpr Scalar B = 88.51;
+        constexpr Scalar C = 1007;
+        constexpr Scalar D = 1214.40;
 
         using std::log;
         return A*log((1000.*refComponentMolecularWeight() + B)/(1000.*refComponentMolecularWeight()+C)) + D;
@@ -174,10 +176,10 @@ public:
 
     static Scalar refComponentCriticalTemperature()
     {
-        const Scalar A = 226.50;
-        const Scalar B = 6.78;
-        const Scalar C = 1.282e6;
-        const Scalar D = 2668;
+        constexpr Scalar A = 226.50;
+        constexpr Scalar B = 6.78;
+        constexpr Scalar C = 1.282e6;
+        constexpr Scalar D = 2668;
 
         using std::log;
         return A*log((1000.*refComponentMolecularWeight() + B)/(1000.*refComponentMolecularWeight()+C)) + D ;
@@ -185,10 +187,10 @@ public:
 
     static Scalar refComponentCriticalPressure()
     {
-        const Scalar A = 141.20;
-        const Scalar B = 45.66e-2;
-        const Scalar C = 16.59e-3;
-        const Scalar D = 2.19;
+        constexpr Scalar A = 141.20;
+        constexpr Scalar B = 45.66e-2;
+        constexpr Scalar C = 16.59e-3;
+        constexpr Scalar D = 2.19;
 
         using std::pow;
         return (A*1000.*molecularWeight())/(pow(B + (C*1000.*molecularWeight()),D)) ;
@@ -199,8 +201,8 @@ public:
     */
     static Scalar boilingTemperature()
     {
-        using std::pow;
-        return refComponentBoilingTemperature() * pow((1 + 2*perbutationFactorBoilingTemperature())/(1 - 2*perbutationFactorBoilingTemperature()),2);
+        using Dune::power;
+        return refComponentBoilingTemperature() * power((1 + 2*perbutationFactorBoilingTemperature())/(1 - 2*perbutationFactorBoilingTemperature()),2);
     }
 
     /*!
@@ -208,8 +210,8 @@ public:
      */
     static Scalar criticalTemperature()
     {
-        using std::pow;
-        return refComponentCriticalTemperature() * pow((1 + 2*perbutationFactorCriticalTemperature())/(1 - 2*perbutationFactorCriticalTemperature()),2);
+        using Dune::power;
+        return refComponentCriticalTemperature() * power((1 + 2*perbutationFactorCriticalTemperature())/(1 - 2*perbutationFactorCriticalTemperature()),2);
     }
 
     /*!
@@ -217,8 +219,8 @@ public:
      */
     static Scalar criticalPressure()
     {
-        using std::pow;
-        return refComponentCriticalPressure() * pow((1 + 2*perbutationFactorCriticalPressure())/(1 - 2*perbutationFactorCriticalPressure()),2);
+        using Dune::power;
+        return refComponentCriticalPressure() * power((1 + 2*perbutationFactorCriticalPressure())/(1 - 2*perbutationFactorCriticalPressure()),2);
     }
 
     /*!
@@ -228,11 +230,11 @@ public:
      */
     static Scalar vaporPressure(Scalar temperature)
     {
-        const Scalar A = 8.25990;
-        const Scalar B = 2830.065;
-        const Scalar C = 42.95101;
+        constexpr Scalar A = 8.25990;
+        constexpr Scalar B = 2830.065;
+        constexpr Scalar C = 42.95101;
 
-        Scalar T = temperature - 273.15;
+        const Scalar T = temperature - 273.15;
 
         using std::pow;
         return 100*1.334*pow(10.0, (A - (B/(T + C))));  // in [Pa]
@@ -240,9 +242,9 @@ public:
 
     static Scalar vaporTemperature(Scalar pressure)
     {
-        const Scalar A = 8.25990;
-        const Scalar B = 2830.065;
-        const Scalar C = 42.95101;
+        constexpr Scalar A = 8.25990;
+        constexpr Scalar B = 2830.065;
+        constexpr Scalar C = 42.95101;
 
         const Scalar P = pressure;
 
@@ -292,14 +294,12 @@ public:
     static Scalar heatVap(Scalar temperature,
                    const  Scalar pressure)
     {
-        using std::min;
-        using std::max;
-        temperature = min(temperature, criticalTemperature()); // regularization
-        temperature = max(temperature, 0.0); // regularization
+        using std::clamp;
+        temperature = clamp(temperature, 0.0, criticalTemperature()); // regularization
 
-        Scalar T_crit = criticalTemperature();
-        Scalar Tr1 = boilingTemperature()/criticalTemperature();
-        Scalar p_crit = criticalPressure();
+        const Scalar T_crit = criticalTemperature();
+        const Scalar Tr1 = boilingTemperature()/criticalTemperature();
+        const Scalar p_crit = criticalPressure();
 
         //        Chen method, eq. 7-11.4 (at boiling)
         using std::log;
@@ -362,12 +362,10 @@ public:
 
         /* according to Lashanizadegan et al (2008) in Chemical Engineering Communications:  */
         /* Simultaneous Heat and Fluid Flow in Porous Media: Case Study: Steam Injection for Tertiary Oil Recovery */
-        Scalar rhoReference = 906.; // [kg/m^3] at reference pressure and temperature
-        Scalar compressCoeff = 1.e-8; // just a value without justification
-        Scalar expansCoeff = 1.e-7; // also just a value
-        Scalar rho = rhoReference * (1. + (pressure - 1.e5)*compressCoeff) * (1. - (temperature - 293.)*expansCoeff);
-
-        return rho; // [kg/m^3]
+        constexpr Scalar rhoReference = 906.; // [kg/m^3] at reference pressure and temperature
+        constexpr Scalar compressCoeff = 1.e-8; // just a value without justification
+        constexpr Scalar expansCoeff = 1.e-7; // also just a value
+        return rhoReference * (1. + (pressure - 1.e5)*compressCoeff) * (1. - (temperature - 293.)*expansCoeff);
     }
 
     /*!
@@ -407,19 +405,17 @@ public:
      */
     static Scalar gasViscosity(Scalar temperature, Scalar pressure, bool regularize=true)
     {
-        using std::min;
-        using std::max;
-        temperature = min(temperature, 500.0); // regularization
-        temperature = max(temperature, 250.0);
+        using std::clamp;
+        temperature = clamp(temperature, 250.0, 500.0); // regularization
 
         // reduced temperature
-        Scalar Tr = temperature/criticalTemperature();
+        const Scalar Tr = temperature/criticalTemperature();
 
         using std::pow;
         using std::exp;
-        Scalar Fp0 = 1.0;
-        Scalar xi = 0.00474;
-        Scalar eta_xi =
+        constexpr Scalar Fp0 = 1.0;
+        constexpr Scalar xi = 0.00474;
+        const Scalar eta_xi =
             Fp0*(0.807*pow(Tr,0.618)
                  - 0.357*exp(-0.449*Tr)
                  + 0.34*exp(-4.058*Tr)
@@ -446,11 +442,12 @@ public:
         //return 1027919.422*exp(-0.04862*temperature); // [Pa s]
 
         //according to http://www.ecltechnology.com/subsur/reports/pvt_tgb.pdf [Page 10]
-        Scalar temperatureFahrenheit = (9/5)*(temperature-273.15)+32;
-        Scalar API = 9;
+        const Scalar temperatureFahrenheit = (9/5)*(temperature-273.15)+32;
+        constexpr Scalar API = 9;
 
         using std::pow;
-        return ((pow(10,0.10231*pow(API,2)-3.9464*API+46.5037))*(pow(temperatureFahrenheit,-0.04542*pow(API,2)+1.70405*API-19.18)))*0.001;
+        using Dune::power;
+        return ((pow(10,0.10231*power(API,2)-3.9464*API+46.5037))*(pow(temperatureFahrenheit,-0.04542*power(API,2)+1.70405*API-19.18)))*0.001;
 
     }
     /*!
@@ -482,8 +479,6 @@ public:
     }
 };
 
-} // end namespace Components
-
-} // end namespace Dumux
+} // end namespace Dumux::Components
 
 #endif

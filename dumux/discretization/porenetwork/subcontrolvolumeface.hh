@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PoreNetworkDiscretization
+ * \ingroup PoreNetworkModels
  * \brief Base class for a sub control volume face
  */
 #ifndef DUMUX_DISCRETIZATION_PNM_SUBCONTROLVOLUMEFACE_HH
@@ -27,10 +27,10 @@
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
 
-namespace Dumux {
+namespace Dumux::PoreNetwork {
 
 /*!
- * \ingroup PoreNetworkDiscretization
+ * \ingroup PoreNetworkModels
  * \brief Default traits class
  * \tparam GV the type of the grid view
  */
@@ -58,10 +58,10 @@ struct PNMDefaultScvfGeometryTraits
 template<class GV,
          class T = PNMDefaultScvfGeometryTraits<GV> >
 class PNMSubControlVolumeFace
-: public SubControlVolumeFaceBase<PNMSubControlVolumeFace<GV, T>, T>
+: public Dumux::SubControlVolumeFaceBase<PNMSubControlVolumeFace<GV, T>, T>
 {
     using ThisType = PNMSubControlVolumeFace<GV, T>;
-    using ParentType = SubControlVolumeFaceBase<ThisType, T>;
+    using ParentType = Dumux::SubControlVolumeFaceBase<ThisType, T>;
     using GridIndexType = typename T::GridIndexType;
     using LocalIndexType = typename T::LocalIndexType;
     using Scalar = typename T::Scalar;
@@ -78,72 +78,57 @@ public:
     //! Constructor for inner scvfs
     PNMSubControlVolumeFace(const GlobalPosition& center,
                             const GlobalPosition& unitOuterNormal,
+                            const Scalar& area,
                             GridIndexType scvfIndex,
-                            std::vector<LocalIndexType>&& scvIndices)
+                            std::array<LocalIndexType, 2>&& scvIndices)
     : center_(center),
       unitOuterNormal_(unitOuterNormal),
-      area_(1.0), // TODO throat cross-section area
+      area_(area),
       scvfIndex_(scvfIndex),
       scvIndices_(std::move(scvIndices))
     {}
 
     //! The center of the sub control volume face
     const GlobalPosition& center() const
-    {
-        return center_;
-    }
+    { return center_; }
 
     //! The integration point for flux evaluations in global coordinates
     const GlobalPosition& ipGlobal() const
-    {
-        return center_;
-    }
+    { return center_; }
 
     //! The area of the sub control volume face
     Scalar area() const
-    {
-        return area_;
-    }
+    { return area_; }
 
-    //! We assume to always have a pore body and not a pore throat at the boundary.
+    //! We assume to always have a pore body and not a pore throat at the boundary
     bool boundary() const
-    {
-        return false;
-    }
+    { return false; }
 
+    //! The unit outer normal of the sub control volume face
     const GlobalPosition& unitOuterNormal() const
-    {
-        return unitOuterNormal_;
-    }
+    { return unitOuterNormal_; }
 
-    //! index of the inside sub control volume for spatial param evaluation
+    //! Index of the inside sub control volume for spatial param evaluation
     LocalIndexType insideScvIdx() const
-    {
-        return scvIndices_[0];
-    }
+    { return scvIndices_[0]; }
 
-    //! index of the outside sub control volume for spatial param evaluation
+    //! Index of the outside sub control volume for spatial param evaluation
     // This results in undefined behaviour if boundary is true
     LocalIndexType outsideScvIdx() const
-    {
-        assert(!boundary());
-        return scvIndices_[1];
-    }
+    { return scvIndices_[1]; }
 
     //! The local index of this sub control volume face
     GridIndexType index() const
-    {
-        return scvfIndex_;
-    }
+    { return scvfIndex_; }
 
 private:
     GlobalPosition center_;
     GlobalPosition unitOuterNormal_;
     Scalar area_;
     GridIndexType scvfIndex_;
-    std::vector<LocalIndexType> scvIndices_;
+    std::array<LocalIndexType, 2> scvIndices_;
 };
 
-} // end namespace Dumux
+} // end namespace Dumux::PoreNetwork
 
 #endif

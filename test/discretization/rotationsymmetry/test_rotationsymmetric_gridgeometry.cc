@@ -87,7 +87,7 @@ void runTest(const GG& gg, const double refVolume, const double refSurface)
 
 } // end namespace Dumux
 
-int main (int argc, char *argv[]) try
+int main (int argc, char *argv[])
 {
     using namespace Dumux;
 
@@ -210,12 +210,4 @@ int main (int argc, char *argv[]) try
     } // end rotational extrusion
 
     return 0;
-}
-// //////////////////////////////////
-//   Error handler
-// /////////////////////////////////
-catch (Dune::Exception &e) {
-
-    std::cout << e << std::endl;
-    return 1;
 }

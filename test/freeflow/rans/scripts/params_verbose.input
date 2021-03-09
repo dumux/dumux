@@ -20,6 +20,8 @@ SandGrainRoughness = 0.0 # [m] # not implemented for EddyViscosityModel = 3
 [RANS]
 EddyViscosityModel = "baldwinLomax"
 UseStoredEddyViscosity = false
+IsFlatWallBounded = True
+WriteFlatWallBoundedFields = True
 
 [KEpsilon]
 YPlusThreshold = 60. # should be large (30-60) for fine grids

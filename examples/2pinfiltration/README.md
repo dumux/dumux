@@ -43,7 +43,7 @@ If we insert this into the conservation equations for each phase $`\alpha`$ that
 To reduce the number of unknowns and close the system we need closure relations for this equations. For that, we make use of a $`p_c - S_w`$ as well as a $`k_r - S_w`$ - relationship. In this problem we use a Van-Genuchten parameterization. The parameters for that relationship are specified in the `spatialparams.hh` file.
 
 With the additional constraint that $`S_w + S_n = 1`$ we reduce the number of primary variables to two.
-In this example we use the wetting phase pressure $`p_0`$ and the saturation of the non-wetting phase $`S_1`$ as primary variables. It is also possible to switch that formulation to the non-wetting pressure and the wetting saturation.
+In this example we use the wetting phase pressure $`p_0`$ and the saturation of the nonwetting phase $`S_1`$ as primary variables. It is also possible to switch that formulation to the nonwetting pressure and the wetting saturation.
 
 The two-dimensional model domain is 6m x 4m and contains a lens with a lower permeability and porosity. We read the initial values for the DNAPL saturation and the water pressure from a file.
 The lens and the initial saturation can be seen in Figures 1 and 2.

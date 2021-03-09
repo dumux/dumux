@@ -18,19 +18,20 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup PoreNetworkModels
  * \brief Implementation of the single-phase transmissibility laws for throats
  */
 #ifndef DUMUX_PNM_THROAT_TRANSMISSIBILITY_1P_HH
 #define DUMUX_PNM_THROAT_TRANSMISSIBILITY_1P_HH
 
-#include <dumux/porenetworkflow/common/throatproperties.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/porenetwork/common/throatproperties.hh>
 #include "emptycache.hh"
 
-namespace Dumux {
+namespace Dumux::PoreNetwork {
 
 /*!
- * \ingroup PoreNetworkModel
+ * \ingroup PoreNetworkModels
  * \brief Collection of single-phase flow throat transmissibilities based on
  *        Bruus, H. (2011). Acoustofluidics 1: Governing equations in microfluidics. Lab on a Chip, 11(22), 3742-3751.
  *        https://backend.orbit.dtu.dk/ws/portalfiles/portal/5900070/rsc%5B1%5D.pdf
@@ -52,10 +53,10 @@ public:
                                               const int phaseIdx)
     {
         const auto shape = fluxVarsCache.throatCrossSectionShape();
-        const Scalar throatRadius = fluxVarsCache.throatRadius();
+        const Scalar throatInscribedRadius = fluxVarsCache.throatInscribedRadius();
         const Scalar throatLength = fluxVarsCache.throatLength();
         const Scalar area = fluxVarsCache.throatCrossSectionalArea();
-        return singlePhaseTransmissibility(shape, throatRadius, throatLength, area);
+        return singlePhaseTransmissibility(shape, throatInscribedRadius, throatLength, area);
     }
 
     //! Returns the conductivity of a throat when only one phase is present.
@@ -86,7 +87,7 @@ protected:
             case Throat::Shape::equilateralTriangle:
             {
                 using std::sqrt;
-                static constexpr Scalar sqrt3 = sqrt(3.0);
+                static Scalar sqrt3 = sqrt(3.0);
                 const Scalar sideLength = 6.0/sqrt3 * radius;
                 return 320.0/sqrt3 * length * 1.0/(sideLength*sideLength*sideLength*sideLength);
             }
@@ -113,7 +114,11 @@ protected:
     }
 };
 
-template<class Scalar, bool interpolateK = false>
+/*!
+ * \ingroup PoreNetworkModels
+ * \brief Single-phase flow throat transmissibility based on Patzek & Silin (2001) https://doi.org/10.1006/jcis.2000.7413
+ */
+template<class Scalar, bool considerPoreResistance = false, bool interpolateK = false>
 class TransmissibilityPatzekSilin
 {
     static_assert(!interpolateK,  "Interpolation of k not implemented");
@@ -133,16 +138,46 @@ public:
         const auto shapeFactor = fluxVarsCache.throatShapeFactor();
         const Scalar area = fluxVarsCache.throatCrossSectionalArea();
         const Scalar throatLength = fluxVarsCache.throatLength();
-        return singlePhaseTransmissibility(shapeFactor, throatLength, area);
+        const Scalar throatTransmissibility = singlePhaseTransmissibility(shapeFactor, throatLength, area);
+
+        if constexpr (!considerPoreResistance)
+            return throatTransmissibility;
+        else
+        {
+            static const bool considerPoreResistanceOnRuntime = getParamFromGroup<bool>(problem.paramGroup(), "Transmissibility.ConsiderPoreResistance", true);
+            if (!considerPoreResistanceOnRuntime)
+                return throatTransmissibility;
+
+            const auto& scv0 = fvGeometry.scv(scvf.insideScvIdx());
+            const auto& scv1 = fvGeometry.scv(scvf.outsideScvIdx());
+
+            const auto& spatialParams = problem.spatialParams();
+            const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
+
+            // TODO maybe include this in fluxVarsCache if this is general enough
+            const Scalar poreLength0 = spatialParams.poreLength(element, scv0, elemSol);
+            const Scalar poreLength1 = spatialParams.poreLength(element, scv1, elemSol);
+
+            const auto poreShapeFactor0 = spatialParams.poreShapeFactor(element, scv0, elemSol);
+            const auto poreShapeFactor1 = spatialParams.poreShapeFactor(element, scv1, elemSol);
+
+            const auto poreCrossSectionalArea0 = spatialParams.poreCrossSectionalArea(element, scv0, elemSol);
+            const auto poreCrossSectionalArea1 = spatialParams.poreCrossSectionalArea(element, scv1, elemSol);
+
+            const Scalar poreTransmissibility0 = singlePhaseTransmissibility(poreShapeFactor0, poreLength0, poreCrossSectionalArea0);
+            const Scalar poreTransmissibility1 = singlePhaseTransmissibility(poreShapeFactor1, poreLength1, poreCrossSectionalArea1);
+
+            return 1 / (1.0/throatTransmissibility + 1.0/poreTransmissibility0 + 1.0/poreTransmissibility1);
+        }
     }
 
     //! Returns the conductivity of a throat when only one phase is present. See Patzek & Silin (2001)
     static Scalar singlePhaseTransmissibility(const Scalar shapeFactor,
-                                              const Scalar throatLength,
+                                              const Scalar length,
                                               const Scalar area)
     {
         const Scalar k = k_(shapeFactor);
-        return k * area*area * shapeFactor / throatLength;
+        return k * area*area * shapeFactor / length;
     }
 
 private:
@@ -177,9 +212,9 @@ public:
                                               const FluxVariablesCache& fluxVarsCache,
                                               const int phaseIdx)
     {
-        const Scalar throatRadius = fluxVarsCache.throatRadius();
+        const Scalar throatInscribedRadius = fluxVarsCache.throatInscribedRadius();
         const Scalar throatLength = fluxVarsCache.throatLength();
-        return singlePhaseTransmissibility(throatRadius, throatLength);
+        return singlePhaseTransmissibility(throatInscribedRadius, throatLength);
     }
 
     //! Returns the conductivity of a throat when only one phase is present.
@@ -191,6 +226,6 @@ public:
     }
 };
 
-}
+} // end namespace Dumux::Porenetwork
 
-#endif // DUMUX_PNM_THROAT_TRANSMISSIBILITY_1P_HH
+#endif

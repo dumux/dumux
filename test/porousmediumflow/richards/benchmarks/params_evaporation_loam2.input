@@ -1,0 +1,37 @@
+[TimeLoop]
+DtInitial = 10 # [s]
+TEnd = 172800 # [s]
+MaxTimeStepSize = 7200 # [s]
+
+[Grid]
+Cells0 = 1000
+Grading0 = -0.99
+Positions0 = -1.0 0
+
+[Flux]
+UpwindWeight = 0.5
+
+[Problem]
+Name = test_richards_benchmark_evaporation_loam2
+EnableGravity = false
+InitialHeadInCm = -200.0
+CriticalSurfaceHeadInCm = -10000.0
+SurfaceFluxMilliMeterPerDay = 3.0
+
+[Newton]
+MaxRelativeShift = 1e-6
+
+[Assembly.NumericDifference]
+BaseEpsilon = 1e-7
+
+[SpatialParams]
+Name = loam2
+Swr = 0.18604651162
+Snr = 0.0
+VanGenuchtenPcLowSweThreshold = 1e-5
+VanGenuchtenPcHighSweThreshold = 1.0
+VanGenuchtenAlpha = 4.07747197e-4
+VanGenuchtenN = 1.6
+VanGenuchtenL = 0.5
+Porosity = 0.43
+Permeability = 5.8991203e-13

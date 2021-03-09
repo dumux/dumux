@@ -25,6 +25,7 @@
 #define DUMUX_FACETCOUPLING_BOX_FV_ELEMENT_GEOMETRY_HH
 
 #include <algorithm>
+#include <optional>
 
 #include <dune/geometry/type.hh>
 
@@ -110,7 +111,7 @@ public:
 
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
-    { return gridGeometry().feCache().get(elemGeometryType_).localBasis(); }
+    { return gridGeometry().feCache().get(element_->type()).localBasis(); }
 
     //! The total number of sub control volumes
     std::size_t numScv() const
@@ -133,7 +134,7 @@ public:
     //! For compatibility reasons with the FVGeometry cache being disabled
     void bindElement(const Element& element)
     {
-        elemGeometryType_ = element.type();
+        element_ = element;
         eIdx_ = gridGeometry().elementMapper().index(element);
     }
 
@@ -141,11 +142,19 @@ public:
     const GridGeometry& gridGeometry() const
     { return *gridGeometryPtr_; }
 
+    //! Returns true if bind/bindElement has already been called
+    bool isBound() const
+    { return static_cast<bool>(element_); }
+
+    //! The bound element
+    const Element& element() const
+    { return *element_; }
+
 private:
-    Dune::GeometryType elemGeometryType_;
     const GridGeometry* gridGeometryPtr_;
 
     GridIndexType eIdx_;
+    std::optional<Element> element_;
 };
 
 //! specialization in case the geometries are not stored grid-wide
@@ -216,7 +225,7 @@ public:
 
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
-    { return gridGeometry().feCache().get(elemGeometryType_).localBasis(); }
+    { return gridGeometry().feCache().get(element_->type()).localBasis(); }
 
     //! The total number of sub control volumes
     std::size_t numScv() const
@@ -239,23 +248,30 @@ public:
     //! For compatibility reasons with the FVGeometry cache being disabled
     void bindElement(const Element& element)
     {
+        element_ = element;
         eIdx_ = gridGeometry().elementMapper().index(element);
-        makeElementGeometries(element);
+        makeElementGeometries_();
     }
 
     //! The global finite volume geometry we are a restriction of
     const GridGeometry& gridGeometry() const
     { return *gridGeometryPtr_; }
 
+    //! Returns true if bind/bindElement has already been called
+    bool isBound() const
+    { return static_cast<bool>(element_); }
+
+    //! The bound element
+    const Element& element() const
+    { return *element_; }
+
 private:
 
-    void makeElementGeometries(const Element& element)
+    void makeElementGeometries_()
     {
-        auto eIdx = gridGeometry().elementMapper().index(element);
-
         // get the element geometry
-        auto elementGeometry = element.geometry();
-        elemGeometryType_ = elementGeometry.type();
+        const auto& element = *element_;
+        const auto elementGeometry = element.geometry();
         const auto refElement = referenceElement(elementGeometry);
 
         // get the sub control volume geometries of this element
@@ -268,7 +284,7 @@ private:
         for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
             scvs_.emplace_back(geometryHelper,
                                scvLocalIdx,
-                               eIdx,
+                               eIdx_,
                                gridGeometry().vertexMapper().subIndex(element, scvLocalIdx, dim));
 
         // construct the sub control volume faces
@@ -338,12 +354,12 @@ private:
         }
     }
 
-    //! The bound element
-    Dune::GeometryType elemGeometryType_;
-    GridIndexType eIdx_;
-
     //! The global geometry this is a restriction of
     const GridGeometry* gridGeometryPtr_;
+
+    //! The bound element
+    GridIndexType eIdx_;
+    std::optional<Element> element_;
 
     //! vectors to store the geometries locally after binding an element
     std::vector<SubControlVolume> scvs_;

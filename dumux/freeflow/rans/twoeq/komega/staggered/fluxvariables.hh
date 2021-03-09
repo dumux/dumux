@@ -34,14 +34,15 @@
 
 namespace Dumux {
 
-// forward declaration
-template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>
-class KOmegaFluxVariablesImpl;
-
 /*!
   * \ingroup KOmegaModel
   * \brief The flux variables class for the k-omega model using the staggered grid discretization.
  */
+
+// forward declaration
+template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>
+class KOmegaFluxVariablesImpl;
+
 template<class TypeTag, class BaseFluxVariables>
 class KOmegaFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethod::staggered>
 : public BaseFluxVariables
@@ -96,11 +97,11 @@ public:
         // calculate advective flux
         auto upwindTermK = [](const auto& volVars)
         {
-            return volVars.turbulentKineticEnergy();
+            return volVars.turbulentKineticEnergy()*volVars.density();
         };
         auto upwindTermOmega = [](const auto& volVars)
         {
-            return volVars.dissipation();
+            return volVars.dissipation()*volVars.density();
         };
 
         flux[turbulentKineticEnergyEqIdx]
@@ -115,14 +116,14 @@ public:
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         // effective diffusion coefficients
-        Scalar insideCoeff_k = insideVolVars.kinematicViscosity()
-                                + ( insideVolVars.sigmaK() * insideVolVars.turbulentKineticEnergy() / insideVolVars.dissipation() );
-        Scalar outsideCoeff_k = outsideVolVars.kinematicViscosity()
-                                + ( outsideVolVars.sigmaK() * outsideVolVars.turbulentKineticEnergy() / outsideVolVars.dissipation() );
-        Scalar insideCoeff_w = insideVolVars.kinematicViscosity()
-                                + ( insideVolVars.sigmaOmega() * insideVolVars.turbulentKineticEnergy() / insideVolVars.dissipation() );
-        Scalar outsideCoeff_w = outsideVolVars.kinematicViscosity()
-                                + ( outsideVolVars.sigmaOmega() * outsideVolVars.turbulentKineticEnergy() / outsideVolVars.dissipation() );
+        Scalar insideCoeff_k = insideVolVars.viscosity()
+                                + ( insideVolVars.sigmaK() * insideVolVars.density()* insideVolVars.turbulentKineticEnergy() / insideVolVars.dissipation() );
+        Scalar outsideCoeff_k = outsideVolVars.viscosity()
+                                + ( outsideVolVars.sigmaK() * outsideVolVars.density()* outsideVolVars.turbulentKineticEnergy() / outsideVolVars.dissipation() );
+        Scalar insideCoeff_w = insideVolVars.viscosity()
+                                + ( insideVolVars.sigmaOmega() * insideVolVars.density()* insideVolVars.turbulentKineticEnergy() / insideVolVars.dissipation() );
+        Scalar outsideCoeff_w = outsideVolVars.viscosity()
+                                + ( outsideVolVars.sigmaOmega() * outsideVolVars.density()* outsideVolVars.turbulentKineticEnergy() / outsideVolVars.dissipation() );
 
         // scale by extrusion factor
         insideCoeff_k *= insideVolVars.extrusionFactor();

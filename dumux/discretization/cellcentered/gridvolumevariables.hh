@@ -90,11 +90,11 @@ public:
     { return volumeVariables_[scvIdx]; }
 
     template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
-    const VolumeVariables& volVars(const SubControlVolume scv) const
+    const VolumeVariables& volVars(const SubControlVolume& scv) const
     { return volumeVariables_[scv.dofIndex()]; }
 
     template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
-    VolumeVariables& volVars(const SubControlVolume scv)
+    VolumeVariables& volVars(const SubControlVolume& scv)
     { return volumeVariables_[scv.dofIndex()]; }
 
     // required for compatibility with the box method

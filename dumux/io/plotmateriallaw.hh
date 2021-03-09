@@ -24,6 +24,8 @@
 #ifndef DUMUX_PLOT_FLUID_MATRIX_LAW_HH
 #define DUMUX_PLOT_FLUID_MATRIX_LAW_HH
 
+#warning "This header is deprecated and will be removed after 3.3. Use new 2p material laws and plot tools from io/plotpckrsw.hh"
+
 #include <cmath>
 #include <vector>
 #include <string>
@@ -366,4 +368,4 @@ private:
 
 } // end namespace Dumux
 
-#endif // DUMUX_PLOT_FLUID_MATRIX_LAW_HH
+#endif

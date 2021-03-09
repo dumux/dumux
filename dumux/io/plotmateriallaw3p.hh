@@ -285,7 +285,7 @@ public:
             }
         }
 
-        gnuplot.setXlabel("non-wetting phase saturation [-]");
+        gnuplot.setXlabel("nonwetting phase saturation [-]");
         gnuplot.setYlabel("transition function [-]");
         gnuplot.addDataSetToPlot(sn, alpha, curveTitle + "_alpha");
     }
@@ -309,4 +309,4 @@ private:
 };
 } // end of namespace Dumux
 
-#endif // DUMUX_PLOT_FLUID_MATRIX_LAW_HH
+#endif

@@ -30,6 +30,9 @@ Testing
 *.pyc
 __pycache__
 
+# macOS
+.DS_Store
+
 # always consider files containing source code regardless of their name
 !*.cc
 !*.hh
@@ -40,3 +43,9 @@ __pycache__
 
 # always consider reference solutions
 !*reference.vtu
+
+# ignore files generated during python setup.py sdist
+MANIFEST
+_skbuild/
+dist
+*.egg-info

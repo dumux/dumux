@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup InputOutput
+ * \ingroup PoreNetworkModels
  * \brief Class for grid data attached to dgf or gmsh grid files
  */
 #ifndef DUMUX_IO_PORENETWORKGRID_DATA_HH
@@ -34,29 +34,24 @@
 #include <dune/common/exceptions.hh>
 #include <dune/grid/common/gridfactory.hh>
 #include <dune/grid/common/mcmgmapper.hh>
+#include <dune/grid/io/file/dgfparser/gridptr.hh>
+#include <dune/grid/io/file/dgfparser/parser.hh>
 #include <dune/grid/utility/persistentcontainer.hh>
 #include <dune/geometry/axisalignedcubegeometry.hh>
 
-// FoamGrid specific includes
-#if HAVE_DUNE_FOAMGRID
-#include <dune/foamgrid/foamgrid.hh>
-#include <dune/foamgrid/dgffoam.hh>
-#endif
-
 #include <dumux/common/indextraits.hh>
-#include <dumux/porenetworkflow/common/geometry.hh>
-#include <dumux/porenetworkflow/common/throatproperties.hh>
+#include <dumux/porenetwork/common/throatproperties.hh>
 
 #include "parametersforgeneratedgrid.hh"
 
-namespace Dumux {
+namespace Dumux::PoreNetwork {
 
 /*!
- * \ingroup InputOutput
+ * \ingroup PoreNetworkModels
  * \brief Class for grid data attached to dgf or gmsh grid files
  */
 template <class Grid>
-class PoreNetworkGridData
+class GridData
 {
     static constexpr int dim = Grid::dimension;
     static constexpr int dimWorld = Grid::dimensionworld;
@@ -68,14 +63,14 @@ class PoreNetworkGridData
     using SmallLocalIndex = typename IndexTraits<GridView>::SmallLocalIndex;
     using StringVector = std::vector<std::string>;
 
-    using Scalar = double;
+    using Scalar = typename Grid::ctype;
     using PersistentParameterContainer = Dune::PersistentContainer<Grid, std::vector<typename Grid::ctype>>;
-    using ParametersForGeneratedGrid = Dumux::ParametersForGeneratedGrid<Grid, Scalar>;
+    using ParametersForGeneratedGrid = Dumux::PoreNetwork::ParametersForGeneratedGrid<Grid, Scalar>;
 
 public:
 
     //! constructor for dgf grid data
-    PoreNetworkGridData(Dune::GridPtr<Grid> grid, const std::string& paramGroup)
+    GridData(Dune::GridPtr<Grid> grid, const std::string& paramGroup)
     : dgfGrid_(grid)
     , isDgfData_(true)
     , paramGroup_(paramGroup)
@@ -85,7 +80,7 @@ public:
     }
 
     //! constructor for non-dgf grid data
-    PoreNetworkGridData(std::shared_ptr<Grid> grid, const std::string& paramGroup)
+    GridData(std::shared_ptr<Grid> grid, const std::string& paramGroup)
     : factoryGrid_(grid)
     , isDgfData_(false)
     , paramGroup_(paramGroup)
@@ -239,17 +234,22 @@ public:
     {
         // make sure the string is present in the map, throw a Dumux exception otherwise (and not a std one)
         // the [] operator can't be used here due to const correctness
-        if (parameterIndex_.count(paramName))
+        if (static_cast<bool>(parameterIndex_.count(paramName)))
             return parameterIndex_.at(paramName);
         else
         {
+            std::stringstream list;
+            list << "List of parameter indices:\n";
+            for (const auto& entry : parameterIndex_)
+                list << entry.first << " " << entry.second << "\n";
+
             std::string msg;
             if (paramName.find("Throat") != std::string::npos)
                 msg = "Make sure to include it in the vector of parameter names ElementParameters = " + paramName + " ... ...";
             else if (paramName.find("Pore") != std::string::npos)
                 msg = "Make sure to include it in the vector of parameter names VertexParameters = " + paramName + " ... ...";
 
-            DUNE_THROW(Dumux::ParameterException, paramName << " not set in the input file. \n" << msg);
+            DUNE_THROW(Dumux::ParameterException, paramName << " not set in the grid file. \n" << msg << "\n" << list.str());
         }
     }
 
@@ -279,13 +279,13 @@ public:
      * \brief Returns the value of an element parameter
      */
     Scalar getParameter(const Element& element, const std::string& param) const
-    { return (*elementParameters_)[element][parameterIndex(param)]; }
+    { return parameters(element)[parameterIndex(param)]; }
 
     /*!
      * \brief Returns the value of an vertex parameter
      */
     Scalar getParameter(const Vertex& vertex, const std::string& param) const
-    { return (*vertexParameters_)[vertex][parameterIndex(param)]; }
+    { return parameters(vertex)[parameterIndex(param)]; }
 
     /*!
      * \brief Returns the pore label at a given position for a generic grid.
@@ -318,8 +318,8 @@ private:
     {
         if (!isDgfData_)
         {
-            vertexParameterNames_ = StringVector{"PoreRadius", "PoreVolume", "PoreLabel"};
-            elementParameterNames_ = StringVector{"ThroatRadius", "ThroatLength", "ThroatLabel"};
+            vertexParameterNames_ = StringVector{"PoreInscribedRadius", "PoreVolume", "PoreLabel"};
+            elementParameterNames_ = StringVector{"ThroatInscribedRadius", "ThroatLength", "ThroatLabel"};
             if (numSubregions_ > 0)
             {
                 vertexParameterNames_.push_back("PoreRegionId");
@@ -329,34 +329,16 @@ private:
         else // DGF grid data
         {
             // treat vertex parameter names
-            if (auto inputFileVertexParameterNames = getParamFromGroup<StringVector>(paramGroup_, "Grid.VertexParameters", StringVector{}); !inputFileVertexParameterNames.empty())
-            {
-                // TODO Remove at some point
-                std::cout << "\n***\nWARNING: Setting Grid.VertexParameters in the input file is deprecated. Set '% Vertex parameters: Param1 Param2 ...' in the dgf file instead\n***\n" << std::endl;
-                vertexParameterNames_ = std::move(inputFileVertexParameterNames);
-            }
+            if (auto dgfFileVertexParameterNames = dgfFileParameterNames_("Vertex"); dgfFileVertexParameterNames.empty())
+                DUNE_THROW(Dune::InvalidStateException, "No vertex parameter names specified in dgf file. Set '% Vertex parameters: Param1 Param2 ...'");
             else
-            {
-                if (auto dgfFileVertexParameterNames = dgfFileParameterNames_("Vertex"); dgfFileVertexParameterNames.empty())
-                    DUNE_THROW(Dune::InvalidStateException, "No vertex parameter names specified in dgf file. Set '% Vertex parameters: Param1 Param2 ...'");
-                else
-                    vertexParameterNames_ = std::move(dgfFileVertexParameterNames);
-            }
+                vertexParameterNames_ = std::move(dgfFileVertexParameterNames);
 
             // treat element parameter names
-            if (auto inputFileElementParameterNames = getParamFromGroup<StringVector>(paramGroup_, "Grid.ElementParameters", StringVector{}); !inputFileElementParameterNames.empty())
-            {
-                // TODO Remove at some point
-                std::cout << "\n***\nWARNING: Setting Grid.ElementParameters in the input file is deprecated. Set '% Element parameters: Param1 Param2 ...' in the dgf file instead\n***\n" << std::endl;
-                elementParameterNames_ = std::move(inputFileElementParameterNames);
-            }
+            if (auto dgfFileElementParameterNames =  dgfFileParameterNames_("Element"); dgfFileElementParameterNames.empty())
+                DUNE_THROW(Dune::InvalidStateException, "No element parameter names specified in dgf file. Set '% Element parameters: Param1 Param2 ...'");
             else
-            {
-                if (auto dgfFileElementParameterNames =  dgfFileParameterNames_("Element"); dgfFileElementParameterNames.empty())
-                    DUNE_THROW(Dune::InvalidStateException, "No element parameter names specified in dgf file. Set '% Element parameters: Param1 Param2 ...'");
-                else
-                    elementParameterNames_ = std::move(dgfFileElementParameterNames);
-            }
+                elementParameterNames_ = std::move(dgfFileElementParameterNames);
 
             // make sure that the number of specified parameters matches with the dgf file
             if (const auto& someElement = *(elements(gridView_()).begin()); elementParameterNames_.size() != dgfGrid_.nofParameters(someElement))
@@ -447,6 +429,6 @@ private:
     std::unordered_map<std::string, int> parameterIndex_;
 };
 
-} // namespace Dumux
+} // namespace Dumux::PoreNetwork
 
 #endif

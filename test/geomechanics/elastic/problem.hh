@@ -21,43 +21,19 @@
  * \ingroup GeomechanicsTests
  * \brief Definition of a test problem for the linear elastic model.
  */
-
 #ifndef DUMUX_ELASTICPROBLEM_HH
 #define DUMUX_ELASTICPROBLEM_HH
 
 #include <dune/common/fmatrix.hh>
-#include <dune/grid/yaspgrid.hh>
 
+#include <dumux/common/math.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
-#include <dumux/discretization/box.hh>
-#include <dumux/geomechanics/elastic/model.hh>
+
 #include <dumux/geomechanics/fvproblem.hh>
 
-#include "spatialparams.hh"
-
 namespace Dumux {
-
-template <class TypeTag>
-class ElasticProblem;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct TestElastic { using InheritsFrom = std::tuple<Elastic, BoxModel>; };
-} // end namespace TTag
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::TestElastic> { using type = Dune::YaspGrid<2>; };
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::TestElastic> { using type = Dumux::ElasticProblem<TypeTag>; };
-// The spatial parameters property
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::TestElastic>
-{ using type = ElasticSpatialParams< GetPropType<TypeTag, Properties::Scalar>,
-                                     GetPropType<TypeTag, Properties::GridGeometry> >;
-};
-} // end namespace Properties
 
 /*!
  * \ingroup GeomechanicsTests

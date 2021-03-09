@@ -26,18 +26,17 @@
 
 #include <cmath>
 
-#include <dumux/common/parameters.hh>
+#include <dune/common/math.hh>
 
+#include <dumux/common/parameters.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/nacl.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
-
 #include <dumux/material/components/base.hh>
 #include <dumux/material/components/liquid.hh>
 #include <dumux/material/components/gas.hh>
 
-namespace Dumux {
-namespace Components {
+namespace Dumux::Components {
 
 /*!
  * \ingroup Components
@@ -124,7 +123,7 @@ public:
         Scalar pi = 0;
         using std::log;
         if (ThisType::salinity() < 0.26) // here we have hard coded the solubility limit for NaCl
-            pi = (R * temperature * log(1- ThisType::salinity())); // simplified version of Eq 2.29 in Vishal Jambhekar's Promo
+            pi = (R * temperature * log(1- ThisType::salinity())); // simplified version of Eq 2.29 in Vishal Jambhekar's dissertation (http://dx.doi.org/10.18419/opus-8979)
         else
             pi = (R * temperature * log(0.74));
         using std::exp;
@@ -184,11 +183,11 @@ public:
 
         const Scalar m = (1E3/58.44)*(salinity/(1-salinity));
 
-        using std::pow;
+        using Dune::power;
         Scalar d_h = 0;
         for (int i = 0; i<=3; i++) {
             for (int j=0; j<=2; j++) {
-                d_h = d_h + a[i][j] * pow(theta, i) * pow(m, j);
+                d_h = d_h + a[i][j] * power(theta, i) * power(m, j);
             }
         }
 
@@ -415,9 +414,10 @@ public:
         const Scalar salinity = max(0.0, ThisType::salinity());
 
         using std::pow;
+        using Dune::power;
         using std::exp;
         const Scalar T_C = temperature - 273.15;
-        const Scalar A = (0.42*pow((pow(salinity, 0.8)-0.17), 2) + 0.045)*pow(T_C, 0.8);
+        const Scalar A = (0.42*power((pow(salinity, 0.8)-0.17), 2) + 0.045)*pow(T_C, 0.8);
         const Scalar mu_brine = 0.1 + 0.333*salinity + (1.65+91.9*salinity*salinity*salinity)*exp(-A);
         assert(mu_brine > 0.0);
         return mu_brine/1000.0;
@@ -439,8 +439,6 @@ public:
 template <class Scalar, class H2O>
 struct IsAqueous<Brine<Scalar, H2O>> : public std::true_type {};
 
-} // end namespace Components
-
-} // end namespace Dumux
+} // end namespace Dumux::Components
 
 #endif

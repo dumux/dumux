@@ -31,14 +31,15 @@
 
 namespace Dumux {
 
-// forward declaration
-template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>
-class KEpsilonResidualImpl;
-
 /*!
  * \ingroup KEpsilonModel
  * \brief Element-wise calculation of the residual for k-epsilon models using the staggered discretization
  */
+
+// forward declaration
+template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>
+class KEpsilonResidualImpl;
+
 template<class TypeTag, class BaseLocalResidual>
 class KEpsilonResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethod::staggered>
 : public BaseLocalResidual
@@ -88,8 +89,8 @@ public:
     {
         CellCenterPrimaryVariables storage = ParentType::computeStorageForCellCenter(problem, scv, volVars);
 
-        storage[turbulentKineticEnergyEqIdx] = volVars.turbulentKineticEnergy();
-        storage[dissipationEqIdx] = volVars.dissipation();
+        storage[turbulentKineticEnergyEqIdx] = volVars.turbulentKineticEnergy() * volVars.density();
+        storage[dissipationEqIdx] = volVars.dissipation() * volVars.density();
 
         return storage;
     }
@@ -112,23 +113,23 @@ public:
         // turbulence production is equal to dissipation -> exclude both terms (according to local equilibrium hypothesis, see FLUENT)
         if (!volVars.isMatchingPoint())
         {
-            source[turbulentKineticEnergyEqIdx] += 2.0 * volVars.kinematicEddyViscosity()
+            source[turbulentKineticEnergyEqIdx] += 2.0 * volVars.dynamicEddyViscosity()
                                                    * volVars.stressTensorScalarProduct();
         }
         source[dissipationEqIdx] += volVars.cOneEpsilon()
                                     * dissipation / turbulentKineticEnergy
-                                    * 2.0 * volVars.kinematicEddyViscosity()
+                                    * 2.0 * volVars.dynamicEddyViscosity()
                                     * volVars.stressTensorScalarProduct();
 
         // destruction
         // turbulence production is equal to dissipation -> exclude both terms (according to local equilibrium hypothesis, see FLUENT)
         if (!volVars.isMatchingPoint())
         {
-            source[turbulentKineticEnergyEqIdx] -= dissipation;
+            source[turbulentKineticEnergyEqIdx] -= dissipation * volVars.density();
         }
         source[dissipationEqIdx] -= volVars.cTwoEpsilon()
                                     * dissipation * dissipation
-                                    / turbulentKineticEnergy;
+                                    / turbulentKineticEnergy * volVars.density();
 
         return source;
     }

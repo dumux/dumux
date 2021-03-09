@@ -62,6 +62,14 @@ public:
     void bindElement(const Element& element)
     { bind(element); }
 
+    //! Returns true if bind/bindElement has already been called
+    bool isBound() const
+    { return feBasisLocalView_.isBound(); }
+
+    //! The bound element
+    const Element& element() const
+    { return feBasisLocalView_.element(); }
+
     //! Return the finite element basis local view
     const FEBasisLocalView& feBasisLocalView() const
     { return feBasisLocalView_; }

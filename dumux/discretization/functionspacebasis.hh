@@ -91,4 +91,4 @@ struct FunctionSpaceBasisTraits<GridGeometry, DiscretizationMethod::fem>
 } // end namespace Dumux
 
 #endif // HAVE_DUNE_FUNCTIONS
-#endif // DUMUX_FUNCTION_SPACE_BASIS_HH
+#endif

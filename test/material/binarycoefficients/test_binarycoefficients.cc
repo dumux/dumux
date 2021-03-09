@@ -38,7 +38,7 @@
 #include <dumux/material/binarycoefficients/h2o_xylene.hh>
 #include <dumux/material/binarycoefficients/n2_o2.hh>
 
-#include <test/porousmediumflow/co2/implicit/co2tables.hh>
+#include <test/porousmediumflow/co2/co2tables.hh>
 
 template<class Scalar, class BinaryCoefficients>
 int checkBinaryCoefficients()

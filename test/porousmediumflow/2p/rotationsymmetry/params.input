@@ -1,0 +1,20 @@
+[TimeLoop]
+DtInitial = 1e2 # [s]
+TEnd = 1e7 # [s]
+MaxTimeStepSize = 1e4
+
+[Grid]
+File = dome.msh
+
+[Problem]
+Name = test_2p_rotationsymmetry_dome
+EnableGravity = true
+
+[Vtk]
+OutputInterval = 50
+
+[SpatialParams]
+Swr = 0.0
+Snr = 0.0
+BrooksCoreyPcEntry = 0.0
+BrooksCoreyLambda = 2.0

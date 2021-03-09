@@ -1,0 +1,23 @@
+[TimeLoop]
+DtInitial = 250 # [s]
+TEnd = 1e4 # [s]
+
+[Grid]
+UpperRight = 60 40
+Cells = 24 16
+
+[LinearSolver]
+ResidualReduction = 1e-12
+
+[Problem]
+Name = obstacle_2p
+
+[SpatialParams]
+FineMaterial.Swr = 0.2
+FineMaterial.Snr = 0.0
+FineMaterial.BrooksCoreyPcEntry = 1e4
+FineMaterial.BrooksCoreyLambda = 2.0
+CoarseMaterial.Swr = 0.2
+CoarseMaterial.Snr = 0.0
+CoarseMaterial.BrooksCoreyPcEntry = 1e4
+CoarseMaterial.BrooksCoreyLambda = 2.0

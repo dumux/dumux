@@ -27,6 +27,8 @@
 #include <dumux/porousmediumflow/sequential/impetproperties.hh>
 #include "evalcflflux.hh"
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 /*!
  * \ingroup SequentialTwoPModel
@@ -150,7 +152,7 @@ private:
              break;
          }
 
-             //for time step criterion if the non-wetting phase velocity is used
+             //for time step criterion if the nonwetting phase velocity is used
          case nPhaseIdx:
          {
              if (flux >= 0)
@@ -234,11 +236,16 @@ private:
 template<class TypeTag>
 typename EvalCflFluxDefault<TypeTag>::Scalar EvalCflFluxDefault<TypeTag>::getCflFluxFunction(const Element& element)
 {
-    Scalar residualSatW = problem_.spatialParams().materialLawParams(element).swr();
-    Scalar residualSatNw = problem_.spatialParams().materialLawParams(element).snr();
+    // old material law interface is deprecated: Replace this by
+    // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
+    // after the release of 3.3, when the deprecated interface is no longer supported
+    const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
+
+    const Scalar residualSatW = fluidMatrixInteraction.pcSwCurve().effToAbsParams().swr();
+    const Scalar residualSatNw = fluidMatrixInteraction.pcSwCurve().effToAbsParams().snr();
 
     // compute dt restriction
-    Scalar volumeCorrectionFactor = 1 - residualSatW - residualSatNw;
+    const Scalar volumeCorrectionFactor = 1 - residualSatW - residualSatNw;
     Scalar volumeCorrectionFactorOutW = 0;
     Scalar volumeCorrectionFactorOutNw = 0;
 
@@ -273,7 +280,7 @@ typename EvalCflFluxDefault<TypeTag>::Scalar EvalCflFluxDefault<TypeTag>::getCfl
     }
 
     //determine timestep
-    Scalar cFLFluxFunction = min(cFLFluxIn, cFLFluxOut);
+    const Scalar cFLFluxFunction = min(cFLFluxIn, cFLFluxOut);
 
     return cFLFluxFunction;
 }

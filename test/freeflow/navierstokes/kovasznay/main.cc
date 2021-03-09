@@ -29,7 +29,6 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/grid/io/file/dgfparser/dgfexception.hh>
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 
@@ -47,7 +46,7 @@
 
 #include "problem.hh"
 
-int main(int argc, char** argv) try
+int main(int argc, char** argv)
 {
     using namespace Dumux;
 
@@ -137,7 +136,7 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     // the linear solver
-    using LinearSolver = Dumux::UzawaBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
+    using LinearSolver = Dumux::UzawaBiCGSTABBackend<LinearSolverTraits<GridGeometry>>; // if rho \neq 1, use UMFPack rather than BIGCStab
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
@@ -173,27 +172,3 @@ int main(int argc, char** argv) try
 
     return 0;
 } // end main
-catch (Dumux::ParameterException &e)
-{
-    std::cerr << std::endl << e << " ---> Abort!" << std::endl;
-    return 1;
-}
-catch (Dune::DGFException & e)
-{
-    std::cerr << "DGF exception thrown (" << e <<
-                 "). Most likely, the DGF file name is wrong "
-                 "or the DGF file is corrupted, "
-                 "e.g. missing hash at end of file or wrong number (dimensions) of entries."
-                 << " ---> Abort!" << std::endl;
-    return 2;
-}
-catch (Dune::Exception &e)
-{
-    std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
-    return 3;
-}
-catch (...)
-{
-    std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
-    return 4;
-}

@@ -1,0 +1,36 @@
+[TimeLoop]
+DtInitial = 250 # [s]
+TEnd = 1e4 # [s]
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 60 40
+Cells = 24 16
+
+[Problem]
+Name = injectioncc # [-] the name of the output files
+
+InitialTemperature = 313.15 # [K] 40°C initial temperature in the reservoir
+DepthBOR = 2700 # [m] depth below ground surface
+
+NTemperature = 3 # [-] number of temperature table entries
+NPressure = 200 # [-] number of pressure table entries
+PressureLow = 1e5 # [Pa] lower pressure limit for tabularization
+PressureHigh = 3e7 # [Pa] upper pressure limit for tabularization
+TemperatureLow = 312.15 # [Pa] lower temperature limit for tabularization
+TemperatureHigh = 314.15 # [Pa] upper temperature limit for tabularization
+
+[LoadSolution]
+PriVarNamesState1 = p_liq x^N2_liq
+PriVarNamesState2 = p_liq x^H2O_gas
+PriVarNamesState3 = p_liq S_gas
+
+[SpatialParams]
+FineMaterial.Swr = 0.2
+FineMaterial.Snr = 0.0
+FineMaterial.BrooksCoreyPcEntry = 1e4
+FineMaterial.BrooksCoreyLambda = 2.0
+CoarseMaterial.Swr = 0.2
+CoarseMaterial.Snr = 0.0
+CoarseMaterial.BrooksCoreyPcEntry = 1e4
+CoarseMaterial.BrooksCoreyLambda = 2.0

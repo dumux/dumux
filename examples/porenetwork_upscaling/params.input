@@ -1,0 +1,29 @@
+[Problem]
+EnableGravity = 0 # disable gravity
+Name = upscaling_pnm
+PressureGradient = 10
+Directions = 0 1 2
+Epsilon = 1e-3
+
+[Grid]
+UpperRight = 4e-4 4e-4 4e-4
+NumPores = 20 20 20
+
+ParameterType = lognormal
+MeanPoreInscribedRadius = 1e-5
+StandardDeviationPoreInscribedRadius = 4e-6
+PoreGeometry = Sphere
+ThroatCrossSectionShape = Square
+ParameterRandomNumberSeed = 1
+
+BoundaryFaceMarker = 1 2 3 4 5 6
+MinThroatLength = 1e-10
+DeletionProbability = 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
+RemoveThroatsOnBoundary = 0 1 2 3 4 5
+CapPoresOnBoundaries = 0 1 2 3 4 5
+Sanitize = true
+DeletionRandomNumberSeed = 33
+
+[Component]
+LiquidKinematicViscosity = 1e-6
+LiquidDensity = 1e3

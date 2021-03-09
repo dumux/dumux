@@ -1,0 +1,32 @@
+[TimeLoop]
+DtInitial = 1e3 # [s]
+TEnd = 1e4 # [s]
+CheckPointInterval = 2e3 # [s]
+
+[Grid]
+UpperRight = 10 10
+Cells = 20 10
+
+[Problem]
+Name = chemicalnonequilibrium
+EnableGravity = false
+
+[SpatialParams]
+WettingNonwettingArea.PcMax = 0 # will be overwritten internally
+WettingNonwettingArea.A1 = -1.603e-01
+WettingNonwettingArea.A2 = 1.429e-05
+WettingNonwettingArea.A3 = 1.915e-01
+MeanPoreSize = 5e-4
+MassTransferFactor = 0.5
+BrooksCoreyPcEntry = 1e4
+BrooksCoreyLambda = 2.0
+Swr = 0.2
+Snr = 0.1
+
+[Component]
+SolidDensity = 2700
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 790
+
+[Newton]
+MaxRelativeShift = 1e-12

@@ -46,7 +46,7 @@ public:
 } // end namespace Dumux
 #endif
 
-int main (int argc, char *argv[]) try
+int main (int argc, char *argv[])
 {
     using namespace Dumux;
 
@@ -81,7 +81,16 @@ int main (int argc, char *argv[]) try
         auto eIdx = gridGeometry.elementMapper().index(element);
         std::cout << std::endl << "Checking fvGeometry of element " << eIdx << std::endl;
         auto fvGeometry = localView(gridGeometry);
+
+        // bind the local view to the element
+        if (fvGeometry.isBound()) DUNE_THROW(Dune::Exception, "Local view should not be bound at this point");
         fvGeometry.bind(element);
+        if (!fvGeometry.isBound()) DUNE_THROW(Dune::Exception, "Local view should be bound at this point");
+
+        // make sure the bound element fits
+        auto eIdxBound = gridGeometry.elementMapper().index(fvGeometry.element());
+        if (eIdx != eIdxBound)
+            DUNE_THROW(Dune::Exception, "Bound element index does not match");
 
         auto range = scvs(fvGeometry);
         Detail::NoopFunctor<SubControlVolume> op;
@@ -107,6 +116,15 @@ int main (int argc, char *argv[]) try
                 ++boundaryCount;
                 std::cout << " (on boundary).";
             }
+
+            // verify that boundary faces have no neighbor
+            if (scvf.boundary() && scvf.numOutsideScvs() != 0)
+                DUNE_THROW(Dune::Exception, "Boundary face states that it has a neighbor");
+
+            // verify that non-boundary faces have a single neighbor
+            if (!scvf.boundary() && scvf.numOutsideScvs() != 1)
+                DUNE_THROW(Dune::Exception, "Expected non-boundary face to have a single neighbor");
+
             std::cout << std::endl;
         }
 
@@ -114,12 +132,4 @@ int main (int argc, char *argv[]) try
             DUNE_THROW(Dune::InvalidStateException, "fvGeometry.hasBoundaryScvf() reports " << fvGeometry.hasBoundaryScvf()
                             << " but the number of boundary scvfs is " << boundaryCount);
     }
-}
-// //////////////////////////////////
-//   Error handler
-// /////////////////////////////////
-catch (Dune::Exception &e) {
-
-    std::cout << e << std::endl;
-    return 1;
 }

@@ -19,7 +19,7 @@
 
 /*!
  * \file
- *
+ * \ingroup PoreNetworkModels
  * \brief Specification of threshold capillary pressures for the PNM.
  */
 #ifndef DUMUX_PNM_THRESHOLD_CAPILLARY_PRESSURES_HH
@@ -27,13 +27,10 @@
 
 #include <cmath>
 
-namespace Dumux
-{
+namespace Dumux::PoreNetwork {
 
-class ThresholdCapillaryPressures
+struct ThresholdCapillaryPressures
 {
-public:
-
     //! The snap-off capillary pressure of a pore throat
     template<class Scalar>
     static constexpr Scalar pcSnapoff(const Scalar surfaceTension,
@@ -70,9 +67,8 @@ public:
         const Scalar F = (1 + sqrt(1 + 4*shapeFactor*D / (cosTheta*cosTheta))) / (1 + 2*sqrt(M_PI*shapeFactor));
         return surfaceTension / inscribedRadius * cosTheta * (1 + 2*sqrt(M_PI*shapeFactor)) * F;
     }
-
 };
 
-} // namespace Dumux
+} // namespace Dumux::PoreNetwork
 
 #endif

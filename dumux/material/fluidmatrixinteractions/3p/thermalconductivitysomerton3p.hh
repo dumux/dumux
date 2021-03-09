@@ -96,7 +96,7 @@ public:
      * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974)
      *
      * \param sw The saturation of the wetting phase
-     * \param sn The saturation of the non-wetting phase
+     * \param sn The saturation of the nonwetting phase
      * \param lambdaW The thermal conductivity of the water phase in \f$\mathrm{[W/(m K)]}\f$
      * \param lambdaN The thermal conductivity of the NAPL phase in \f$\mathrm{[W/(m K)]}\f$
      * \param lambdaG The thermal conductivity of the gas phase in \f$\mathrm{[W/(m K)]}\f$

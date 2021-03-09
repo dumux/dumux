@@ -177,4 +177,4 @@ public:
 } // end namespace Properties
 } // end namespace Dumux
 
-#endif // DUMUX_ZEROEQ_NC_MODEL_HH
+#endif

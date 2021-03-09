@@ -25,6 +25,7 @@
 #define DUMUX_IO_GRID_MANAGER_SUB_HH
 
 #include <memory>
+#include <utility>
 
 #include <dune/common/shared_ptr.hh>
 #include <dune/common/concept.hh>
@@ -70,6 +71,7 @@ class SubGridManagerBase
 {
     static constexpr int dim = HostGrid::dimension;
     using HostElement = typename HostGrid::template Codim<0>::Entity;
+    using GlobalPosition = typename HostElement::Geometry::GlobalCoordinate;
 
 public:
     using Grid = Dune::SubGrid<dim, HostGrid>;
@@ -153,6 +155,16 @@ protected:
         hostGridManager_->init(paramGroup);
     }
 
+    void initHostGrid_(const GlobalPosition& lowerLeft,
+                       const GlobalPosition& upperRight,
+                       const std::array<int, dim>& cells,
+                       const std::string& paramGroup,
+                       const int overlap = 1)
+    {
+        hostGridManager_ = std::make_unique<HostGridManager>();
+        hostGridManager_->init(lowerLeft, upperRight, cells, paramGroup, overlap);
+    }
+
     /*!
      * \brief Returns a reference to the host grid.
      */
@@ -230,20 +242,28 @@ private:
     template<class Img>
     void createGridFromImage_(const Img& img, const std::string& paramGroup)
     {
-        // check if the number of cells matches
-        std::array<int, dim> cells; cells.fill(1);
-        cells = getParamFromGroup<std::array<int, dim>>(paramGroup, "Grid.Cells", cells);
+        // get the number of cells
+        const std::array<int, dim> cells{static_cast<int>(img.header().nCols), static_cast<int>(img.header().nRows)};
 
-        if (img.header().nCols != cells[0])
-            DUNE_THROW(Dune::GridError, "Host grid has wrong number of cells in x-direction. Expected "
-                         << img.header().nCols << ", got " << cells[0]);
-        if (img.header().nRows != cells[1])
-            DUNE_THROW(Dune::GridError, "Host grid has wrong number of cells in y-direction. Expected "
-                         << img.header().nRows << ", got " << cells[1]);
-
+        // get the corner coordinates
+        const auto [lowerLeft, upperRight] = [&]()
+        {
+            using GlobalPosition = typename ParentType::Grid::template Codim<0>::Geometry::GlobalCoordinate;
+            const auto lowerLeft = getParamFromGroup<GlobalPosition>(paramGroup, "Grid.LowerLeft", GlobalPosition(0.0));
+            if (hasParamInGroup(paramGroup, "Grid.PixelDimensions"))
+            {
+                auto upperRight = getParamFromGroup<GlobalPosition>(paramGroup, "Grid.PixelDimensions");
+                for (int i = 0; i < upperRight.size(); ++i)
+                    upperRight[i] *= cells[i];
+                upperRight += lowerLeft;
+                return std::make_pair(lowerLeft, upperRight);
+            }
+            else
+                return std::make_pair(lowerLeft, getParamFromGroup<GlobalPosition>(paramGroup, "Grid.UpperRight"));
+        }();
 
         // construct the host grid
-        this->initHostGrid_(paramGroup);
+        this->initHostGrid_(lowerLeft, upperRight, cells, paramGroup);
 
         // check if the marker is customized, per default
         // we mark all cells that are encoded as 0
@@ -252,12 +272,26 @@ private:
         // Create the selector
         auto elementSelector = [this, &img, &marked](const auto& element)
         {
-            const auto eIdx = this->hostGrid_().leafGridView().indexSet().index(element);
+            auto eIdx = this->hostGrid_().leafGridView().indexSet().index(element);
+
+            // if the hostgrid was refined, get the index of the original, un-refined
+            // host grid element which fits with the image's indices
+            if (element.hasFather())
+            {
+                auto level0Element = element.father();
+                while (level0Element.hasFather())
+                    level0Element = level0Element.father();
+
+                assert(level0Element.level() == 0);
+                eIdx = this->hostGrid_().levelGridView(0).indexSet().index(level0Element);
+            }
+
             return img[eIdx] == marked;
         };
 
         // create the grid
         this->gridPtr() = this->createGrid_(this->hostGrid_(), elementSelector, paramGroup);
+
         this->loadBalance();
     }
 };

@@ -3,6 +3,10 @@
 import os
 import json
 import argparse
+import sys
+
+if sys.version_info[0] < 3:
+    sys.exit("Python 3 or a more recent version is required.")
 
 from convert_code_to_doc import *
 
@@ -36,7 +40,7 @@ class Navigation:
         makeEntry = lambda i,l: "| [:arrow_right: Click to continue with part {} of the documentation]({}) |\n|---:|\n\n".format(i,l)
         self.snippets[mainpage]["footer"] = "".join(
             [ makeHead(title) + makeEntry(index+1, self.getRelPath(mainpage, subpage)) for index, (subpage, title) in enumerate(zip(subpages, subtitles))]
-        ).rstrip("\n")
+        ).rstrip() + '\n' # end file with a single endline character
 
         # then the navigation snippets for the subpages
         pagetypes = ["mid" for i in range(len(subpages))]

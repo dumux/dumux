@@ -24,14 +24,16 @@
 #ifndef DUMUX_BINARY_COEFF_BRINE_CO2_HH
 #define DUMUX_BINARY_COEFF_BRINE_CO2_HH
 
+#include <dune/common/math.hh>
+
 #include <dumux/common/parameters.hh>
 #include <dumux/material/components/brine.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/co2.hh>
 #include <dumux/material/idealgas.hh>
 
-namespace Dumux {
-namespace BinaryCoeff {
+namespace Dumux::BinaryCoeff {
+
 /*!
  * \ingroup Binarycoefficients
  * \brief Binary coefficients for brine and CO2.
@@ -41,8 +43,8 @@ class Brine_CO2 {
     using H2O = Dumux::Components::H2O<Scalar>;
     using CO2 = Dumux::Components::CO2<Scalar, CO2Tables>;
     using IdealGas = Dumux::IdealGas<Scalar>;
-    static const int lPhaseIdx = 0; // index of the liquid phase
-    static const int gPhaseIdx = 1; // index of the gas phase
+    static constexpr int lPhaseIdx = 0; // index of the liquid phase
+    static constexpr int gPhaseIdx = 1; // index of the gas phase
 
 public:
     /*!
@@ -54,17 +56,22 @@ public:
      */
     static Scalar gasDiffCoeff(Scalar temperature, Scalar pressure)
     {
-        if(!hasParam("BinaryCoefficients.GasDiffCoeff")) //in case one might set that user-specific as e.g. in dumux-lecture/mm/convectivemixing
+        static const bool hasGasDiffCoeff = hasParam("BinaryCoefficients.GasDiffCoeff");
+        if (!hasGasDiffCoeff) //in case one might set that user-specific as e.g. in dumux-lecture/mm/convectivemixing
         {
             //Diffusion coefficient of water in the CO2 phase
-            Scalar const PI=3.141593;
-            Scalar const k = 1.3806504e-23; // Boltzmann constant
-            Scalar const c = 4; // slip parameter, can vary between 4 (slip condition) and 6 (stick condition)
-            Scalar const R_h = 1.72e-10; // hydrodynamic radius of the solute
-            Scalar mu = CO2::gasViscosity(temperature, pressure); // CO2 viscosity
-            Scalar D = k / (c * PI * R_h) * (temperature / mu);
+            constexpr Scalar PI = 3.141593;
+            constexpr Scalar k = 1.3806504e-23; // Boltzmann constant
+            constexpr Scalar c = 4; // slip parameter, can vary between 4 (slip condition) and 6 (stick condition)
+            constexpr Scalar R_h = 1.72e-10; // hydrodynamic radius of the solute
+            const Scalar mu = CO2::gasViscosity(temperature, pressure); // CO2 viscosity
+            return k / (c * PI * R_h) * (temperature / mu);
+        }
+        else
+        {
+            static const Scalar D = getParam<Scalar>("BinaryCoefficients.GasDiffCoeff");
             return D;
-        } else return getParam<Scalar>("BinaryCoefficients.GasDiffCoeff");
+        }
     }
 
     /*!
@@ -76,10 +83,14 @@ public:
     static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure)
     {
         //Diffusion coefficient of CO2 in the brine phase
-        if(!hasParam("BinaryCoefficients.LiquidDiffCoeff")) //in case one might set that user-specific as e.g. in dumux-lecture/mm/convectivemixing
-        {
+        static const bool hasLiquidDiffCoeff = hasParam("BinaryCoefficients.LiquidDiffCoeff");
+        if (!hasLiquidDiffCoeff) //in case one might set that user-specific as e.g. in dumux-lecture/mm/convectivemixing
             return 2e-9;
-        } else return getParam<Scalar>("BinaryCoefficients.LiquidDiffCoeff");
+        else
+        {
+            const Scalar D = getParam<Scalar>("BinaryCoefficients.LiquidDiffCoeff");
+            return D;
+        }
     }
 
     /*!
@@ -104,9 +115,10 @@ public:
                                        const Scalar salinity,
                                        const int knownPhaseIdx,
                                        Scalar &xlCO2,
-                                       Scalar &ygH2O) {
+                                       Scalar &ygH2O)
+    {
 
-        Scalar A = computeA_(temperature, pg);
+        const Scalar A = computeA_(temperature, pg);
 
         /* salinity: conversion from mass fraction to mol fraction */
         const Scalar x_NaCl = salinityToMoleFrac_(salinity);
@@ -115,10 +127,10 @@ public:
         // with the mutual solubility function
         if (knownPhaseIdx < 0)
         {
-            Scalar molalityNaCl = molFracToMolality_(x_NaCl); // molality of NaCl //CHANGED
-            Scalar m0_CO2 = molalityCO2inPureWater_(temperature, pg); // molality of CO2 in pure water
-            Scalar gammaStar = activityCoefficient_(temperature, pg, molalityNaCl);// activity coefficient of CO2 in brine
-            Scalar m_CO2 = m0_CO2 / gammaStar; // molality of CO2 in brine
+            const Scalar molalityNaCl = molFracToMolality_(x_NaCl); // molality of NaCl //CHANGED
+            const Scalar m0_CO2 = molalityCO2inPureWater_(temperature, pg); // molality of CO2 in pure water
+            const Scalar gammaStar = activityCoefficient_(temperature, pg, molalityNaCl);// activity coefficient of CO2 in brine
+            const Scalar m_CO2 = m0_CO2 / gammaStar; // molality of CO2 in brine
             xlCO2 = m_CO2 / (molalityNaCl + 55.508 + m_CO2); // mole fraction of CO2 in brine
             ygH2O = A * (1 - xlCO2 - x_NaCl); // mole fraction of water in the gas phase
         }
@@ -145,23 +157,21 @@ public:
      */
     static Scalar fugacityCoefficientCO2(Scalar T, Scalar pg)
     {
-        Scalar V = 1 / (CO2::gasDensity(T, pg) / CO2::molarMass()) * 1.e6; // molar volume in cm^3/mol
-        Scalar pg_bar = pg / 1.e5; // gas phase pressure in bar
-        Scalar a_CO2 = (7.54e7 - 4.13e4 * T); // mixture parameter of  Redlich-Kwong equation
-        static const Scalar b_CO2 = 27.8; // mixture parameter of Redlich-Kwong equation
-        static const Scalar R = IdealGas::R * 10.; // ideal gas constant with unit bar cm^3 /(K mol)
-        Scalar lnPhiCO2, phiCO2;
+        const Scalar V = 1 / (CO2::gasDensity(T, pg) / CO2::molarMass()) * 1.e6; // molar volume in cm^3/mol
+        const Scalar pg_bar = pg / 1.e5; // gas phase pressure in bar
+        const Scalar a_CO2 = (7.54e7 - 4.13e4 * T); // mixture parameter of  Redlich-Kwong equation
+        constexpr Scalar b_CO2 = 27.8; // mixture parameter of Redlich-Kwong equation
+        constexpr Scalar R = IdealGas::R * 10.; // ideal gas constant with unit bar cm^3 /(K mol)
 
         using std::log;
         using std::exp;
         using std::pow;
-        lnPhiCO2 = log(V / (V - b_CO2)) + b_CO2 / (V - b_CO2) - 2 * a_CO2 / (R
+        const Scalar lnPhiCO2 = log(V / (V - b_CO2)) + b_CO2 / (V - b_CO2) - 2 * a_CO2 / (R
                 * pow(T, 1.5) * b_CO2) * log((V + b_CO2) / V) + a_CO2 * b_CO2
                 / (R * pow(T, 1.5) * b_CO2 * b_CO2) * (log((V + b_CO2) / V)
                 - b_CO2 / (V + b_CO2)) - log(pg_bar * V / (R * T));
 
-        phiCO2 = exp(lnPhiCO2); // fugacity coefficient of CO2
-        return phiCO2;
+        return exp(lnPhiCO2); // fugacity coefficient of CO2
     }
 
     /*!
@@ -173,25 +183,23 @@ public:
      */
     static Scalar fugacityCoefficientH2O(Scalar T, Scalar pg)
     {
-        Scalar V = 1 / (CO2::gasDensity(T, pg) / CO2::molarMass()) * 1.e6; // molar volume in cm^3/mol
-        Scalar pg_bar = pg / 1.e5; // gas phase pressure in bar
-        Scalar a_CO2 = (7.54e7 - 4.13e4 * T);// mixture parameter of  Redlich-Kwong equation
-        static const Scalar a_CO2_H2O = 7.89e7;// mixture parameter of Redlich-Kwong equation
-        static const Scalar b_CO2 = 27.8;// mixture parameter of Redlich-Kwong equation
-        static const Scalar b_H2O = 18.18;// mixture parameter of Redlich-Kwong equation
-        static const Scalar R = IdealGas::R * 10.; // ideal gas constant with unit bar cm^3 /(K mol)
-        Scalar lnPhiH2O, phiH2O;
+        const Scalar V = 1 / (CO2::gasDensity(T, pg) / CO2::molarMass()) * 1.e6; // molar volume in cm^3/mol
+        const Scalar pg_bar = pg / 1.e5; // gas phase pressure in bar
+        const Scalar a_CO2 = (7.54e7 - 4.13e4 * T);// mixture parameter of  Redlich-Kwong equation
+        constexpr Scalar a_CO2_H2O = 7.89e7;// mixture parameter of Redlich-Kwong equation
+        constexpr Scalar b_CO2 = 27.8;// mixture parameter of Redlich-Kwong equation
+        constexpr Scalar b_H2O = 18.18;// mixture parameter of Redlich-Kwong equation
+        constexpr Scalar R = IdealGas::R * 10.; // ideal gas constant with unit bar cm^3 /(K mol)
 
         using std::log;
         using std::pow;
         using std::exp;
-        lnPhiH2O = log(V / (V - b_CO2)) + b_H2O / (V - b_CO2) - 2 * a_CO2_H2O
+        const Scalar lnPhiH2O = log(V / (V - b_CO2)) + b_H2O / (V - b_CO2) - 2 * a_CO2_H2O
                 / (R * pow(T, 1.5) * b_CO2) * log((V + b_CO2) / V) + a_CO2
                 * b_H2O / (R * pow(T, 1.5) * b_CO2 * b_CO2) * (log((V + b_CO2)
                 / V) - b_CO2 / (V + b_CO2)) - log(pg_bar * V / (R * T));
 
-        phiH2O = exp(lnPhiH2O); // fugacity coefficient of H2O
-        return phiH2O;
+        return exp(lnPhiH2O); // fugacity coefficient of H2O
     }
 
 private:
@@ -201,8 +209,8 @@ private:
      */
     static Scalar salinityToMoleFrac_(Scalar salinity)
     {
-        const Scalar Mw = H2O::molarMass(); // molecular weight of water [kg/mol]
-        const Scalar Ms = 58.8e-3;          // molecular weight of NaCl  [kg/mol]
+        constexpr Scalar Mw = H2O::molarMass(); // molecular weight of water [kg/mol]
+        constexpr Scalar Ms = 58.8e-3;          // molecular weight of NaCl  [kg/mol]
 
         const Scalar X_NaCl = salinity;
         // salinity: conversion from mass fraction to mol fraction
@@ -219,8 +227,7 @@ private:
     static Scalar molFracToMolality_(Scalar x_NaCl)
     {
         // conversion from mol fraction to molality (dissolved CO2 neglected)
-        const Scalar mol_NaCl = 55.508 * x_NaCl / (1 - x_NaCl);
-        return mol_NaCl;
+        return 55.508 * x_NaCl / (1 - x_NaCl);
     }
 
     /*!
@@ -232,12 +239,11 @@ private:
      */
     static Scalar molalityCO2inPureWater_(Scalar temperature, Scalar pg)
     {
-        Scalar A = computeA_(temperature, pg); // according to Spycher, Pruess and Ennis-King (2003)
-        Scalar B = computeB_(temperature, pg); // according to Spycher, Pruess and Ennis-King (2003)
-        Scalar yH2OinGas = (1 - B) / (1. / A - B); // equilibrium mol fraction of H2O in the gas phase
-        Scalar xCO2inWater = B * (1 - yH2OinGas); // equilibrium mol fraction of CO2 in the water phase
-        Scalar molalityCO2 = (xCO2inWater * 55.508) / (1 - xCO2inWater); // CO2 molality
-        return molalityCO2;
+        const Scalar A = computeA_(temperature, pg); // according to Spycher, Pruess and Ennis-King (2003)
+        const Scalar B = computeB_(temperature, pg); // according to Spycher, Pruess and Ennis-King (2003)
+        const Scalar yH2OinGas = (1 - B) / (1. / A - B); // equilibrium mol fraction of H2O in the gas phase
+        const Scalar xCO2inWater = B * (1 - yH2OinGas); // equilibrium mol fraction of CO2 in the water phase
+        return (xCO2inWater * 55.508) / (1 - xCO2inWater); // CO2 molality
     }
 
     /*!
@@ -251,13 +257,12 @@ private:
      */
     static Scalar activityCoefficient_(Scalar temperature, Scalar pg, Scalar molalityNaCl)
     {
-        Scalar lambda = computeLambda_(temperature, pg); // lambda_{CO2-Na+}
-        Scalar xi = computeXi_(temperature, pg); // Xi_{CO2-Na+-Cl-}
-        Scalar lnGammaStar = 2 * lambda * molalityNaCl + xi * molalityNaCl
+        const Scalar lambda = computeLambda_(temperature, pg); // lambda_{CO2-Na+}
+        const Scalar xi = computeXi_(temperature, pg); // Xi_{CO2-Na+-Cl-}
+        const Scalar lnGammaStar = 2 * lambda * molalityNaCl + xi * molalityNaCl
                 * molalityNaCl;
         using std::exp;
-        Scalar gammaStar = exp(lnGammaStar);
-        return gammaStar; // molal activity coefficient of CO2 in brine
+        return exp(lnGammaStar); // molal activity coefficient of CO2 in brine
     }
 
     /*!
@@ -270,15 +275,14 @@ private:
      */
     static Scalar computeA_(Scalar T, Scalar pg)
     {
-        Scalar deltaP = pg / 1e5 - 1; // pressure range [bar] from p0 = 1bar to pg[bar]
+        const Scalar deltaP = pg / 1e5 - 1; // pressure range [bar] from p0 = 1bar to pg[bar]
         const Scalar v_av_H2O = 18.1; // average partial molar volume of H2O [cm^3/mol]
-        const Scalar R = IdealGas::R * 10;
-        Scalar k0_H2O = equilibriumConstantH2O_(T); // equilibrium constant for H2O at 1 bar
-        Scalar phi_H2O = fugacityCoefficientH2O(T, pg); // fugacity coefficient of H2O for the water-CO2 system
-        Scalar pg_bar = pg / 1.e5;
+        constexpr Scalar R = IdealGas::R * 10;
+        const Scalar k0_H2O = equilibriumConstantH2O_(T); // equilibrium constant for H2O at 1 bar
+        const Scalar phi_H2O = fugacityCoefficientH2O(T, pg); // fugacity coefficient of H2O for the water-CO2 system
+        const Scalar pg_bar = pg / 1.e5;
         using std::exp;
-        Scalar A = k0_H2O / (phi_H2O * pg_bar) * exp(deltaP * v_av_H2O / (R * T));
-        return A;
+        return k0_H2O / (phi_H2O * pg_bar) * exp(deltaP * v_av_H2O / (R * T));
     }
 
     /*!
@@ -291,16 +295,15 @@ private:
      */
     static Scalar computeB_(Scalar T, Scalar pg)
     {
-        Scalar deltaP = pg / 1e5 - 1; // pressure range [bar] from p0 = 1bar to pg[bar]
-        const Scalar v_av_CO2 = 32.6; // average partial molar volume of CO2 [cm^3/mol]
-        const Scalar R = IdealGas::R * 10;
-        Scalar k0_CO2 = equilibriumConstantCO2_(T); // equilibrium constant for CO2 at 1 bar
-        Scalar phi_CO2 = fugacityCoefficientCO2(T, pg); // fugacity coefficient of CO2 for the water-CO2 system
-        Scalar pg_bar = pg / 1.e5;
+        const Scalar deltaP = pg / 1e5 - 1; // pressure range [bar] from p0 = 1bar to pg[bar]
+        constexpr Scalar v_av_CO2 = 32.6; // average partial molar volume of CO2 [cm^3/mol]
+        constexpr Scalar R = IdealGas::R * 10;
+        const Scalar k0_CO2 = equilibriumConstantCO2_(T); // equilibrium constant for CO2 at 1 bar
+        const Scalar phi_CO2 = fugacityCoefficientCO2(T, pg); // fugacity coefficient of CO2 for the water-CO2 system
+        const Scalar pg_bar = pg / 1.e5;
         using std::exp;
-        Scalar B = phi_CO2 * pg_bar / (55.508 * k0_CO2) * exp(-(deltaP
+        return phi_CO2 * pg_bar / (55.508 * k0_CO2) * exp(-(deltaP
                 * v_av_CO2) / (R * T));
-        return B;
     }
 
     /*!
@@ -312,16 +315,13 @@ private:
      */
     static Scalar computeLambda_(Scalar T, Scalar pg)
     {
-        Scalar lambda;
-        static const Scalar c[6] = { -0.411370585, 6.07632013E-4, 97.5347708,
+        constexpr Scalar c[6] = { -0.411370585, 6.07632013E-4, 97.5347708,
                 -0.0237622469, 0.0170656236, 1.41335834E-5 };
 
         using std::log;
-        Scalar pg_bar = pg / 1.0E5; /* conversion from Pa to bar */
-        lambda = c[0] + c[1] * T + c[2] / T + c[3] * pg_bar / T + c[4] * pg_bar
+        const Scalar pg_bar = pg / 1.0E5; /* conversion from Pa to bar */
+        return c[0] + c[1] * T + c[2] / T + c[3] * pg_bar / T + c[4] * pg_bar
                 / (630.0 - T) + c[5] * T * log(pg_bar);
-
-        return lambda;
     }
 
     /*!
@@ -333,14 +333,11 @@ private:
      */
     static Scalar computeXi_(Scalar T, Scalar pg)
     {
-        Scalar xi;
-        static const Scalar c[4] = { 3.36389723E-4, -1.98298980E-5,
+        constexpr Scalar c[4] = { 3.36389723E-4, -1.98298980E-5,
                 2.12220830E-3, -5.24873303E-3 };
 
         Scalar pg_bar = pg / 1.0E5; /* conversion from Pa to bar */
-        xi = c[0] + c[1] * T + c[2] * pg_bar / T + c[3] * pg_bar / (630.0 - T);
-
-        return xi;
+        return c[0] + c[1] * T + c[2] * pg_bar / T + c[3] * pg_bar / (630.0 - T);
     }
 
     /*!
@@ -351,12 +348,11 @@ private:
      */
     static Scalar equilibriumConstantCO2_(Scalar T)
     {
-        Scalar TinC = T - 273.15; //temperature in °C
-        static const Scalar c[3] = { 1.189, 1.304e-2, -5.446e-5 };
-        Scalar logk0_CO2 = c[0] + c[1] * TinC + c[2] * TinC * TinC;
+        const Scalar TinC = T - 273.15; //temperature in °C
+        constexpr Scalar c[3] = { 1.189, 1.304e-2, -5.446e-5 };
+        const Scalar logk0_CO2 = c[0] + c[1] * TinC + c[2] * TinC * TinC;
         using std::pow;
-        Scalar k0_CO2 = pow(10, logk0_CO2);
-        return k0_CO2;
+        return pow(10, logk0_CO2);
     }
 
     /*!
@@ -367,13 +363,12 @@ private:
      */
     static Scalar equilibriumConstantH2O_(Scalar T)
     {
-        Scalar TinC = T - 273.15; //temperature in °C
-        static const Scalar c[4] = { -2.209, 3.097e-2, -1.098e-4, 2.048e-7 };
-        Scalar logk0_H2O = c[0] + c[1] * TinC + c[2] * TinC * TinC + c[3]
+        const Scalar TinC = T - 273.15; //temperature in °C
+        constexpr Scalar c[4] = { -2.209, 3.097e-2, -1.098e-4, 2.048e-7 };
+        const Scalar logk0_H2O = c[0] + c[1] * TinC + c[2] * TinC * TinC + c[3]
                 * TinC * TinC * TinC;
         using std::pow;
-        Scalar k0_H2O = pow(10, logk0_H2O);
-        return k0_H2O;
+        return pow(10, logk0_H2O);
     }
 };
 
@@ -433,8 +428,8 @@ public:
         const Scalar phiCO2 = fugacityCoeffCO2_(temperature, pgCO2, rhoCO2);
 
         using std::log;
-        using std::pow;
-        const Scalar exponent = A - log(phiCO2) + 2*B*mol_NaCl + C*pow(mol_NaCl,2);
+        using Dune::power;
+        const Scalar exponent = A - log(phiCO2) + 2*B*mol_NaCl + C*power(mol_NaCl,2);
 
         using std::exp;
         const Scalar mol_CO2w = pgCO2 / (1e5 * exp(exponent)); /* paper: equation (6) */
@@ -620,7 +615,7 @@ private:
     }
 
 };
-} // end namespace BinaryCoeff
-} // end namespace Dumux
+
+} // end namespace Dumux::BinaryCoeff
 
 #endif

@@ -112,3 +112,38 @@ You learn how to
 <figure><img src="biomineralization/img/pore_scale_w_processes_named.png" alt="biomin result"/></figure></td>
 </a></td>
 </tr></table>
+
+### [:open_file_folder: Example 7: Lid-driven cavity](liddrivencavity/README.md)
+
+<table><tr><td>
+
+In this example, we simulate laminar incompressible flow in a cavity with the Navier-Stokes equations.
+You learn how to
+
+* solve a single-phase Navier-Stokes flow problem
+* compare the results of Stokes flow (Re = 1) and Navier-Stokes flow (Re = 1000)
+* compare the numerical results with the reference data using the plotting library `matplotlib`
+
+</td>
+<td width="20%"><a href="liddrivencavity/README.md">
+<figure><img src="liddrivencavity/img/setup.png" alt="liddriven result"/></figure></td>
+</a></td>
+</tr></table>
+
+### [:open_file_folder: Example 7: Permeability estimation using a pore-network model](porenetwork_upscaling/README.md)
+
+<table><tr><td>
+
+In this example, we use a single-phase flow pore-network model to estimate the upscaled Darcy permeability of a randomly
+generated grid.
+
+You learn how to
+
+* solve a single-phase-flow pore-network problem
+* use the total mass flow rate to estimate $`K_{xx}`$, $`K_{yy}`$, $`K_{zz}`$
+
+</td>
+<td width="20%"><a href="liddrivencavity/README.md">
+<figure><img src="porenetwork_upscaling/img/result.png" alt="pnm result"/></figure></td>
+</a></td>
+</tr></table>

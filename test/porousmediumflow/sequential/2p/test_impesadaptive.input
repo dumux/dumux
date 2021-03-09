@@ -1,0 +1,27 @@
+[TimeManager]
+TEnd = 2e7 # [s]
+DtInitial = 0 # [s]
+
+[Problem]
+Name = test_2padaptive # name passed to the output routines
+EnableGravity = 0
+
+[Impet]
+CFLFactor = 0.95
+
+[Grid]
+Cells = 2 1
+
+UpperRight = 300 100
+
+[GridAdapt]
+MinLevel = 0 # [-] minimum level of refinement
+MaxLevel = 5 # [-] maximum level of refinement
+RefineTolerance = 0.05 # threshold for refinement criterion
+CoarsenTolerance = 0.001 # threshold for coarsening criterion
+
+[SpatialParams]
+Swr = 0.2
+Snr = 0.2
+BrooksCoreyPcEntry = 0
+BrooksCoreyLambda = 2

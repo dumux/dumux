@@ -1,0 +1,28 @@
+[Problem]
+Name = poiseuilleflow
+BedSlope = 0.00005 # [-] slope of the bed in m/m (positive downwards)
+Gravity = 9.81 # [m/s^2] gravitational acceleration
+Discharge = -4.0875 # [m^2/s] discharge per meter at the inflow boundary
+HBoundary = 10.0 # [m] water depth at the ouflow boundary
+WallFrictionLaw = noslip # Type of wall friction law: "noslip" or "nikuradse"
+AlphaWall = 1.0 # [-] wall roughness parameter; alphaWall=0 : full slip, 0<alphaWall<1 : partial slip, alphaWall=1 : no slip
+KsWall = 50.0 # [m] wall roughness height (Nikuradse equivalent)
+
+[ShallowWater]
+EnableViscousFlux = true
+UseMixingLengthTurbulenceModel = false
+TurbulentViscosity = 0.1 # [m^2/s] turbulent viscosity
+
+[TimeLoop]
+TEnd = 2880.0 # [s]
+MaxTimeStepSize = 120.0 # [s]
+DtInitial = 1.0 # [s]
+PrintoutTimes = 180 360 720 980 1440 2160 2880
+
+[Grid]
+LowerLeft = 0.0 -50.0
+UpperRight = 400.0 50.0
+Cells = 20 20
+
+[Newton]
+EnablePartialReassembly = true

@@ -21,6 +21,9 @@ InletMoleFraction = 1e-3
 [RANS]
 EddyViscosityModel = "prandtl"
 TurbulentSchmidtNumber = 0.7
+WallNormalAxis = 1
+IsFlatWallBounded = True
+WriteFlatWallBoundedFields = True
 
 [Assembly]
 NumericDifferenceMethod = 0

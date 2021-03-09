@@ -48,7 +48,7 @@ void testSegTriangle(const Dune::FieldVector<double, dimworld>& a,
     }
 }
 
-int main(int argc, char* argv[]) try
+int main(int argc, char* argv[])
 {
     constexpr int dimworld = 3;
     using Point = Dune::FieldVector<double, dimworld>;
@@ -116,14 +116,90 @@ int main(int argc, char* argv[]) try
     else
         DUNE_THROW(Dune::InvalidStateException, "No intersections found!");
 
+    // Test a tricky situation intersecting a hexagon with two quadrilaterals.
+    // One face of the hexagon is in-plane with the two quadrilaterals, which
+    // together enclose the entire hexagon face. Thus, the sum of the areas of
+    // the two intersections must be equal to that of the respective hexagon face.
+    // The separating edge between the two quadrilaterals passes very close by one
+    // of the hex face corners. This situation was taken from an actual mortar
+    // application which exposed a bug in the 1d-2d algorithm in 3d space.
+    std::vector<Dune::FieldVector<double, dimworld>> hexCorners({
+        {0.8619712261141845, 1.206565697102448, 0.4152254463380627},
+        {0.8715547951379876, 1.175481516085758, 0.2599429674402531},
+        {0.7046736652858085, 1.209207158782034, 0.4447521639960824},
+        {0.7307137896935333, 1.171606500732276, 0.2574814772189353},
+        {0.8926414294658755, 1.0,               0.4012781039132332},
+        {0.8316315415883838, 1.0,               0.2581023823497354},
+        {0.7349272235105835, 1.0,               0.4613391568883559},
+        {0.7479805294570721, 1.0,               0.3155931875126768}
+    });
+
+    std::vector<Dune::FieldVector<double, dimworld>> quad1Corners({
+        {1.000000000000000000000000000000, 1.0, 1.000000000000000000000000000000},
+        {1.000000000000000000000000000000, 1.0, 0.327819111366782434124900191819},
+        {0.303996171086607036571081152942, 1.0, 1.000000000000000000000000000000},
+        {0.297170743844278550938042826601, 1.0, 0.293625720570556747457402479995}
+    });
+
+    std::vector<Dune::FieldVector<double, dimworld>> quad2Corners({
+        {1.000000000000000000000000000000, 1.0, 0.327819111366782434124900191819},
+        {1.000000000000000000000000000000, 1.0, 0.000000000000000000000000000000},
+        {0.297170743844278550938042826601, 1.0, 0.293625720570556747457402479995},
+        {0.325413399309280815252520824288, 1.0, 0.000000000000000000000000000000}
+    });
+
+    Geometry3D hex(Dune::GeometryTypes::cube(dimworld), hexCorners);
+    Geometry2D quad1(Dune::GeometryTypes::cube(dimworld-1), quad1Corners);
+    Geometry2D quad2(Dune::GeometryTypes::cube(dimworld-1), quad2Corners);
+
+    // lambda to compute the area of a triangulated intersection
+    auto computeArea = [] (const auto& triangulation)
+    {
+        double a = 0.0;
+        for (const auto& t : triangulation)
+            a += Geometry2D(Dune::GeometryTypes::simplex(dimworld-1),
+                            std::vector<Point>(t.begin(), t.end())).volume();
+        return a;
+    };
+
+    double area = 0.0;
+    if (Test::intersection(hex, quad1, intersectionPolygon))
+    {
+        const auto triangulation = Dumux::triangulate<2, dimworld>(intersectionPolygon);
+        Dumux::writeVTKPolyDataTriangle(triangulation, "quad1_intersections");
+        if (triangulation.size() != 5)
+            DUNE_THROW(Dune::InvalidStateException, "Found " << triangulation.size() << " instead of 5 intersections!");
+
+        area += computeArea(triangulation);
+    }
+
+    if (Test::intersection(hex, quad2, intersectionPolygon))
+    {
+        const auto triangulation = Dumux::triangulate<2, dimworld>(intersectionPolygon);
+        Dumux::writeVTKPolyDataTriangle(triangulation, "quad2_intersections");
+        if (triangulation.size() != 1)
+            DUNE_THROW(Dune::InvalidStateException, "Found " << triangulation.size() << " instead of 1 intersections!");
+
+        area += computeArea(triangulation);
+    }
+
+    // compute area of the intersecting hexagon face
+    std::vector<Dune::FieldVector<double, dimworld>> hexFaceCorners({
+        {0.8926414294658755, 1.0, 0.4012781039132332},
+        {0.8316315415883838, 1.0, 0.2581023823497354},
+        {0.7349272235105835, 1.0, 0.4613391568883559},
+        {0.7479805294570721, 1.0, 0.3155931875126768}
+    });
+    Geometry2D hexFace(Dune::GeometryTypes::cube(dimworld-1), hexFaceCorners);
+    const auto hexFaceArea = hexFace.volume();
+
+    using std::abs;
+    const auto areaMismatch = abs(area-hexFaceArea);
+    std::cout << "Area mismatch is: " << areaMismatch << std::endl;
+    if (areaMismatch > 1e-14)
+        DUNE_THROW(Dune::InvalidStateException, "Intersection area mismatch too large!");
+
     std::cout << "All tests passed!" << std::endl;
 
     return 0;
-}
-// //////////////////////////////////
-//   Error handler
-// /////////////////////////////////
-catch (const Dune::Exception& e) {
-    std::cout << e << std::endl;
-    return 1;
 }

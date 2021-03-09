@@ -18,12 +18,13 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup PoreNetworkModels
  * \brief An empty cache for transmissibility laws using only standard quantities
  */
 #ifndef DUMUX_PNM_EMPTY_CACHE_HH
 #define DUMUX_PNM_EMPTY_CACHE_HH
 
-namespace Dumux {
+namespace Dumux::PoreNetwork {
 
 struct EmptyCache
 {
@@ -31,6 +32,6 @@ struct EmptyCache
     void fill(Args&&...) {}
 };
 
-} // namespace Dumux
+} // end namespace Dumux::PoreNetwork
 
-#endif // DUMUX_PNM_EMPTY_CACHE_HH
+#endif

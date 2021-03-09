@@ -58,10 +58,10 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa, referenceSys
     using Extrusion = Extrusion_t<GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using BalanceEqOpts = GetPropType<TypeTag, Properties::BalanceEqOpts>;
 
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
@@ -133,6 +133,45 @@ public:
      *        a fluid phase across the given sub-control volume face.
      *        The computed fluxes are given in mole/s or kg/s, depending
      *        on the template parameter ReferenceSystemFormulation.
+     *
+     * \note This overload allows to explicitly specify the inside and outside volume variables
+     *       which can be useful to evaluate diffusive fluxes at boundaries with given outside values.
+     *       This only works if scvf.numOutsideScv() == 1.
+     */
+    static ComponentFluxVector flux(const Problem& problem,
+                                    const Element& element,
+                                    const FVElementGeometry& fvGeometry,
+                                    const VolumeVariables& insideVolVars,
+                                    const VolumeVariables& outsideVolVars,
+                                    const SubControlVolumeFace& scvf,
+                                    const int phaseIdx,
+                                    const ElementFluxVariablesCache& elemFluxVarsCache)
+    {
+        if constexpr (isMixedDimensional_)
+            if (scvf.numOutsideScv() != 1)
+                DUNE_THROW(Dune::Exception, "This flux overload requires scvf.numOutsideScv() == 1");
+
+        // helper lambda to get the outside mole or mass fraction
+        const auto getOutsideX = [&](const Scalar xInside, const Scalar tij, const int phaseIdx, const int compIdx)
+        {
+            return massOrMoleFraction(outsideVolVars, referenceSystem, phaseIdx, compIdx);
+        };
+
+        // helper lambda to get the averaged density at the scvf
+        const auto getRho = [&](const int phaseIdx, const Scalar rhoInside, const Scalar rhoOutside)
+        {
+            return 0.5*(rhoInside + rhoOutside);
+        };
+
+        return flux_(element, fvGeometry, insideVolVars, outsideVolVars, elemFluxVarsCache, scvf, phaseIdx, getOutsideX, getRho);
+    }
+
+
+    /*!
+     * \brief Returns the diffusive fluxes of all components within
+     *        a fluid phase across the given sub-control volume face.
+     *        The computed fluxes are given in mole/s or kg/s, depending
+     *        on the template parameter ReferenceSystemFormulation.
      */
     static ComponentFluxVector flux(const Problem& problem,
                                     const Element& element,
@@ -142,40 +181,37 @@ public:
                                     const int phaseIdx,
                                     const ElementFluxVariablesCache& elemFluxVarsCache)
     {
-        ComponentFluxVector componentFlux(0.0);
-        for (int compIdx = 0; compIdx < numComponents; compIdx++)
+        // get inside/outside volume variables
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+
+        // helper lambda to get the outside mole or mass fraction
+        const auto getOutsideX = [&](const Scalar xInside, const Scalar tij, const int phaseIdx, const int compIdx)
         {
-            if constexpr (!FluidSystem::isTracerFluidSystem())
-                if (compIdx == FluidSystem::getMainComponent(phaseIdx))
-                    continue;
-
-            // diffusion tensors are always solution dependent
-            Scalar tij = elemFluxVarsCache[scvf].diffusionTij(phaseIdx, compIdx);
-
-            // get inside/outside volume variables
-            const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-            const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-
-            // the inside and outside mass/mole fractions fractions
-            const Scalar xInside = massOrMoleFraction(insideVolVars, referenceSystem, phaseIdx, compIdx);
             const Scalar massOrMoleFractionOutside = massOrMoleFraction(outsideVolVars, referenceSystem, phaseIdx, compIdx);
-            const Scalar xOutside = scvf.numOutsideScvs() == 1 ? massOrMoleFractionOutside
-                                  : branchingFacetX(problem, element, fvGeometry, elemVolVars,
-                                                    elemFluxVarsCache, scvf, xInside, tij, phaseIdx, compIdx);
+            if constexpr (isMixedDimensional_)
+            {
+                return scvf.numOutsideScvs() == 1 ? massOrMoleFractionOutside
+                                                : branchingFacetX_(problem, element, fvGeometry, elemVolVars,
+                                                                   elemFluxVarsCache, scvf, xInside, tij, phaseIdx, compIdx);
+            }
+            else
+                return massOrMoleFractionOutside;
+        };
 
-            const Scalar rhoInside = massOrMolarDensity(insideVolVars, referenceSystem, phaseIdx);
-            const Scalar rhoOutside = massOrMolarDensity(outsideVolVars, referenceSystem, phaseIdx);
+        // helper lambda to get the averaged density at the scvf
+        const auto getRho = [&](const int phaseIdx, const Scalar rhoInside, const Scalar rhoOutside)
+        {
+            if constexpr (isMixedDimensional_)
+            {
+                return scvf.numOutsideScvs() == 1 ? 0.5*(rhoInside + rhoOutside)
+                                                  : branchingFacetDensity_(elemVolVars, scvf, phaseIdx, rhoInside);
+            }
+            else
+                return 0.5*(rhoInside + rhoOutside);
+        };
 
-            const Scalar rho = scvf.numOutsideScvs() == 1 ? 0.5*(rhoInside + rhoOutside)
-                                                        : branchingFacetDensity(elemVolVars, scvf, phaseIdx, rhoInside);
-
-            componentFlux[compIdx] = rho*tij*(xInside - xOutside);
-            if constexpr (!FluidSystem::isTracerFluidSystem())
-                if (BalanceEqOpts::mainComponentIsBalanced(phaseIdx))
-                    componentFlux[FluidSystem::getMainComponent(phaseIdx)] -= componentFlux[compIdx];
-        }
-
-        return componentFlux;
+        return flux_(element, fvGeometry, insideVolVars, outsideVolVars, elemFluxVarsCache, scvf, phaseIdx, getOutsideX, getRho);
     }
 
     //! compute diffusive transmissibilities
@@ -193,6 +229,7 @@ public:
         const auto& insideVolVars = elemVolVars[insideScvIdx];
         const auto getDiffCoeff = [&](const auto& vv)
         {
+            using FluidSystem = typename ElementVolumeVariables::VolumeVariables::FluidSystem;
             if constexpr (FluidSystem::isTracerFluidSystem())
                 return vv.effectiveDiffusionCoefficient(0, 0, compIdx);
             else
@@ -217,7 +254,7 @@ public:
             const auto outsideD = getDiffCoeff(outsideVolVars);
 
             Scalar tj;
-            if (dim == dimWorld)
+            if constexpr (dim == dimWorld)
                 // assume the normal vector from outside is anti parallel so we save flipping a vector
                 tj = -1.0*computeTpfaTransmissibility(scvf, outsideScv, outsideD, outsideVolVars.extrusionFactor());
             else
@@ -237,15 +274,55 @@ public:
     }
 
 private:
+    template<class OutsideFractionHelper, class DensityHelper>
+    static ComponentFluxVector flux_(const Element& element,
+                                     const FVElementGeometry& fvGeometry,
+                                     const VolumeVariables& insideVolVars,
+                                     const VolumeVariables& outsideVolVars,
+                                     const ElementFluxVariablesCache& elemFluxVarsCache,
+                                     const SubControlVolumeFace& scvf,
+                                     const int phaseIdx,
+                                     const OutsideFractionHelper& getOutsideX,
+                                     const DensityHelper& getRho)
+    {
+        ComponentFluxVector componentFlux(0.0);
+        for (int compIdx = 0; compIdx < numComponents; compIdx++)
+        {
+            using FluidSystem = typename VolumeVariables::FluidSystem;
+            if constexpr (!FluidSystem::isTracerFluidSystem())
+                if (compIdx == FluidSystem::getMainComponent(phaseIdx))
+                    continue;
+
+            // diffusion tensors are always solution dependent
+            const Scalar tij = elemFluxVarsCache[scvf].diffusionTij(phaseIdx, compIdx);
+
+            // the inside and outside mass/mole fractions fractions
+            const Scalar xInside = massOrMoleFraction(insideVolVars, referenceSystem, phaseIdx, compIdx);
+            const Scalar xOutside = getOutsideX(xInside, tij, phaseIdx, compIdx);
+
+            const Scalar rhoInside = massOrMolarDensity(insideVolVars, referenceSystem, phaseIdx);
+            const Scalar rhoOutside = massOrMolarDensity(outsideVolVars, referenceSystem, phaseIdx);
+
+            const Scalar rho = getRho(phaseIdx, rhoInside, rhoOutside);
+
+            componentFlux[compIdx] = rho*tij*(xInside - xOutside);
+            if constexpr (!FluidSystem::isTracerFluidSystem())
+                if (BalanceEqOpts::mainComponentIsBalanced(phaseIdx))
+                    componentFlux[FluidSystem::getMainComponent(phaseIdx)] -= componentFlux[compIdx];
+        }
+
+        return componentFlux;
+    }
+
     //! compute the mole/mass fraction at branching facets for network grids
-    static Scalar branchingFacetX(const Problem& problem,
-                                  const Element& element,
-                                  const FVElementGeometry& fvGeometry,
-                                  const ElementVolumeVariables& elemVolVars,
-                                  const ElementFluxVariablesCache& elemFluxVarsCache,
-                                  const SubControlVolumeFace& scvf,
-                                  const Scalar insideX, const Scalar insideTi,
-                                  const int phaseIdx, const int compIdx)
+    static Scalar branchingFacetX_(const Problem& problem,
+                                   const Element& element,
+                                   const FVElementGeometry& fvGeometry,
+                                   const ElementVolumeVariables& elemVolVars,
+                                   const ElementFluxVariablesCache& elemFluxVarsCache,
+                                   const SubControlVolumeFace& scvf,
+                                   const Scalar insideX, const Scalar insideTi,
+                                   const int phaseIdx, const int compIdx)
     {
         Scalar sumTi(insideTi);
         Scalar sumXTi(insideTi*insideX);
@@ -266,10 +343,10 @@ private:
     }
 
     //! compute the density at branching facets for network grids as arithmetic mean
-    static Scalar branchingFacetDensity(const ElementVolumeVariables& elemVolVars,
-                                        const SubControlVolumeFace& scvf,
-                                        const int phaseIdx,
-                                        const Scalar insideRho)
+    static Scalar branchingFacetDensity_(const ElementVolumeVariables& elemVolVars,
+                                         const SubControlVolumeFace& scvf,
+                                         const int phaseIdx,
+                                         const Scalar insideRho)
     {
         Scalar rho(insideRho);
         for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
@@ -281,6 +358,8 @@ private:
         }
         return rho/(scvf.numOutsideScvs()+1);
     }
+
+    static constexpr bool isMixedDimensional_ = static_cast<int>(GridView::dimension) < static_cast<int>(GridView::dimensionworld);
 };
 
 } // end namespace Dumux

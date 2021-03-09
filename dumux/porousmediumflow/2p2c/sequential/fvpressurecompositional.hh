@@ -34,6 +34,8 @@
 #include <dumux/porousmediumflow/2p2c/sequential/properties.hh>
 #include <dumux/io/vtkmultiwriter.hh>
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 /*!
  * \ingroup SequentialTwoPTwoCModel
@@ -78,9 +80,6 @@ template<class TypeTag> class FVPressureCompositional
 
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
-    ///@cond false
-    using MaterialLaw = typename GetPropType<TypeTag, Properties::SpatialParams>::MaterialLaw;
-    ///@endcond
 
     using CellData = GetPropType<TypeTag, Properties::CellData>;
     enum
@@ -547,6 +546,11 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
         FluidState& fluidState = cellData.manipulateFluidState();
         CompositionalFlash<Scalar, FluidSystem> flashSolver;
 
+        // old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
+
         // initial conditions
         PhaseVector pressure(0.);
         Scalar sat_0=0.;
@@ -562,13 +566,12 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
             if (icFormulation == Indices::saturation)  // saturation initial condition
             {
                 sat_0 = problem_.initSat(element);
-                flashSolver.saturationFlash2p2c(fluidState, sat_0, pressure, problem_.spatialParams().porosity(element), temperature_);
+                flashSolver.saturationFlash2p2c(fluidState, sat_0, pressure, temperature_);
             }
             else if (icFormulation == Indices::concentration) // concentration initial condition
             {
                 Scalar Z0 = problem_.initConcentration(element);
-                flashSolver.concentrationFlash2p2c(fluidState, Z0, pressure,
-                        problem_.spatialParams().porosity(element), temperature_);
+                flashSolver.concentrationFlash2p2c(fluidState, Z0, pressure, temperature_);
             }
         }
         else if(compositional)    //means we regard compositional effects since we know an estimate pressure field
@@ -580,8 +583,7 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                 Scalar pc=0.;
                 if(getPropValue<TypeTag, Properties::EnableCapillarity>())
                 {
-                    pc = MaterialLaw::pc(problem_.spatialParams().materialLawParams(element),
-                                    sat_0);
+                    pc = fluidMatrixInteraction.pc(sat_0);
                 }
                 else
                     pc = 0.;
@@ -602,8 +604,7 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                         break;
                     }
                 }
-                flashSolver.saturationFlash2p2c(fluidState, sat_0, pressure,
-                        problem_.spatialParams().porosity(element), temperature_);
+                flashSolver.saturationFlash2p2c(fluidState, sat_0, pressure, temperature_);
             }
             else if (icFormulation == Indices::concentration) // concentration initial condition
             {
@@ -641,26 +642,22 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                         //store old pc
                         Scalar oldPc = pc;
                         //update with better pressures
-                        flashSolver.concentrationFlash2p2c(fluidState, Z0, pressure,
-                                problem_.spatialParams().porosity(element), problem_.temperatureAtPos(globalPos));
-                        pc = MaterialLaw::pc(problem_.spatialParams().materialLawParams(element),
-                                            fluidState.saturation(wPhaseIdx));
+                        flashSolver.concentrationFlash2p2c(fluidState, Z0, pressure, problem_.temperatureAtPos(globalPos));
+                        pc = fluidMatrixInteraction.pc(fluidState.saturation(wPhaseIdx));
                         // TODO: get right criterion, do output for evaluation
                         //converge criterion
                         using std::abs;
                         if (abs(oldPc - pc) < 10.0)
                             iter = maxiter;
 
-                        pc = MaterialLaw::pc(problem_.spatialParams().materialLawParams(element),
-                                fluidState.saturation(wPhaseIdx));
+                        pc = fluidMatrixInteraction.pc(fluidState.saturation(wPhaseIdx));
                     }
                 }
                 else  // capillary pressure neglected
                 {
                     pressure[wPhaseIdx] = pressure[nPhaseIdx]
                         = this->pressure()[eIdxGlobal];
-                    flashSolver.concentrationFlash2p2c(fluidState, Z0,
-                            pressure, problem_.spatialParams().porosity(element), temperature_);
+                    flashSolver.concentrationFlash2p2c(fluidState, Z0, pressure, temperature_);
                 }
             } //end conc initial condition
         } //end compositional
@@ -671,11 +668,9 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
         problem_.transportModel().totalConcentration(nCompIdx,eIdxGlobal) = cellData.massConcentration(nCompIdx);
 
         // initialize mobilities
-        cellData.setMobility(wPhaseIdx, MaterialLaw::krw(problem_.spatialParams().materialLawParams(element),
-                                                         fluidState.saturation(wPhaseIdx))
+        cellData.setMobility(wPhaseIdx, fluidMatrixInteraction.krw(fluidState.saturation(wPhaseIdx))
                     / cellData.viscosity(wPhaseIdx));
-        cellData.setMobility(nPhaseIdx, MaterialLaw::krn(problem_.spatialParams().materialLawParams(element),
-                                                         fluidState.saturation(wPhaseIdx))
+        cellData.setMobility(nPhaseIdx, fluidMatrixInteraction.krn(fluidState.saturation(wPhaseIdx))
                     / cellData.viscosity(nPhaseIdx));
 
         // calculate perimeter used as weighting factor
@@ -800,8 +795,7 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
     PhaseVector p_(incp);
     p_ += pressure;
     Scalar Z0 = mass[0] / mass.one_norm();
-    flashSolver.concentrationFlash2p2c(updFluidState, Z0,
-            p_, problem_.spatialParams().porosity(element), temperature_);
+    flashSolver.concentrationFlash2p2c(updFluidState, Z0, p_, temperature_);
 
     specificVolume=0.; // = \sum_{\alpha} \nu_{\alpha} / \rho_{\alpha}
     for(int phaseIdx = 0; phaseIdx< numPhases; phaseIdx++)
@@ -814,8 +808,7 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
         Dune::dinfo << "dv_dp larger 0 at Idx " << eIdxGlobal << " , try and invert secant"<< std::endl;
 
         p_ -= 2*incp;
-        flashSolver.concentrationFlash2p2c(updFluidState, Z0,
-                    p_, problem_.spatialParams().porosity(element), temperature_);
+        flashSolver.concentrationFlash2p2c(updFluidState, Z0, p_, temperature_);
 
         specificVolume=0.; // = \sum_{\alpha} \nu_{\alpha} / \rho_{\alpha}
         for(int phaseIdx = 0; phaseIdx< numPhases; phaseIdx++)
@@ -827,8 +820,7 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
         {
             Dune::dwarn << "dv_dp still larger 0 after inverting secant at idx"<< eIdxGlobal<< std::endl;
             p_ += 2*incp;
-            flashSolver.concentrationFlash2p2c(updFluidState, Z0,
-                        p_, problem_.spatialParams().porosity(element), temperature_);
+            flashSolver.concentrationFlash2p2c(updFluidState, Z0, p_, temperature_);
             // neglect effects of phase split, only regard changes in phase densities
             specificVolume=0.; // = \sum_{\alpha} \nu_{\alpha} / \rho_{\alpha}
             for(int phaseIdx = 0; phaseIdx< numPhases; phaseIdx++)
@@ -849,8 +841,7 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
         mass[compIdx] +=  massIncrement[compIdx];
         Z0 = mass[0] / mass.one_norm();
 
-        flashSolver.concentrationFlash2p2c(updFluidState, Z0,
-                pressure, problem_.spatialParams().porosity(element), temperature_);
+        flashSolver.concentrationFlash2p2c(updFluidState, Z0, pressure, temperature_);
 
         specificVolume=0.; // = \sum_{\alpha} \nu_{\alpha} / \rho_{\alpha}
         for(int phaseIdx = 0; phaseIdx< numPhases; phaseIdx++)

@@ -81,9 +81,9 @@ public:
                               const SubControlVolume& scv)
     {
         RANSParentType::updateRANSProperties(elemSol, problem, element, scv);
-        additionalRoughnessLength_ = problem.additionalRoughnessLength_[RANSParentType::elementIdx()];
+        additionalRoughnessLength_ = problem.additionalRoughnessLength(RANSParentType::elementIdx());
         yPlusRough_ = wallDistanceRough() * RANSParentType::uStar() / RANSParentType::kinematicViscosity();
-        RANSParentType::setDynamicEddyViscosity_(calculateEddyViscosity(elemSol, problem, element, scv, problem.eddyViscosityModel_));
+        RANSParentType::setDynamicEddyViscosity_(calculateEddyViscosity(elemSol, problem, element, scv, problem.eddyViscosityModel()));
         RANSParentType::calculateEddyDiffusivity(problem);
         RANSParentType::calculateEddyThermalConductivity(problem);
     }
@@ -108,9 +108,9 @@ public:
         using std::exp;
         using std::sqrt;
         Scalar kinematicEddyViscosity = 0.0;
-        unsigned int flowNormalAxis = problem.flowNormalAxis_[RANSParentType::elementIdx()];
-        unsigned int wallNormalAxis = problem.wallNormalAxis_[RANSParentType::elementIdx()];
-        Scalar velGrad = abs(RANSParentType::velocityGradients()[flowNormalAxis][wallNormalAxis]);
+        unsigned int flowDirectionAxis = problem.flowDirectionAxis(RANSParentType::elementIdx());
+        unsigned int wallNormalAxis = problem.wallNormalAxis(RANSParentType::elementIdx());
+        Scalar velGrad = abs(RANSParentType::velocityGradients()[flowDirectionAxis][wallNormalAxis]);
 
         if (modelName.compare("none") == 0)
         {
@@ -130,7 +130,7 @@ public:
         }
         else if (modelName.compare("baldwinLomax") == 0)
         {
-            kinematicEddyViscosity = problem.kinematicEddyViscosity_[RANSParentType::elementIdx()];
+            kinematicEddyViscosity = problem.kinematicEddyViscosity(RANSParentType::elementIdx());
         }
         else
         {
@@ -160,4 +160,4 @@ protected:
 
 } // end namespace Dumux
 
-#endif // DUMUX_ZEROEQ_VOLUME_VARIABLES_HH
+#endif

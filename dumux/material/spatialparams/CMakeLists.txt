@@ -3,6 +3,7 @@ add_subdirectory(porenetwork)
 install(FILES
 fv.hh
 fv1p.hh
+fv1pconstant.hh
 fvelastic.hh
 fvnonequilibrium.hh
 fvporoelastic.hh

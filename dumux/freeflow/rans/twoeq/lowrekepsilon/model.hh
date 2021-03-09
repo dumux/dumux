@@ -34,34 +34,34 @@
  * \f$ \varepsilon = \tilde{\varepsilon} + D_\varepsilon \f$:
  *
  * \f[
- *    \frac{\partial \left( k \right)}{\partial t}
- *    + \nabla \cdot \left( \textbf{v} k \right)
- *    - \nabla \cdot \left( \left( \nu + \frac{\nu_\text{t}}{\sigma_\text{k}} \right) \nabla k \right)
- *    - 2 \nu_\text{t} \textbf{S} \cdot \textbf{S}
- *    + \tilde{\varepsilon}
- *    + D_\varepsilon
+ *    \frac{\partial \left( \varrho k \right)}{\partial t}
+ *    + \nabla \cdot \left( \textbf{v} \varhho k \right)
+ *    - \nabla \cdot \left( \left( \mu + \frac{\mu_\text{t}}{\sigma_\text{k}} \right) \nabla k \right)
+ *    - 2 \mu_\text{t} \textbf{S} \cdot \textbf{S}
+ *    + \varrho \tilde{\varepsilon}
+ *    + D_\varepsilon \varrho
  *    = 0
  * \f].
  *
  * The dissipation balance is changed by introducing additional functions
  * (\f$ E_\text{k}\f$, \f$ f_1 \f$, and \f$ f_2 \f$) to account for a dampening towards the wall:
  * \f[
- *   \frac{\partial \left( \tilde{\varepsilon} \right)}{\partial t}
- *   + \nabla \cdot \left( \textbf{v} \tilde{\varepsilon} \right)
- *   - \nabla \cdot \left( \left( \nu + \frac{\nu_\text{t}}{\sigma_{\varepsilon}} \right) \nabla \tilde{\varepsilon} \right)
- *   - C_{1\tilde{\varepsilon}} f_1 \frac{\tilde{\varepsilon}}{k} 2 \nu_\text{t} \textbf{S} \cdot \textbf{S}
- *   + C_{2\tilde{\varepsilon}} f_2 \frac{\tilde{\varepsilon}^2}{k}
- *   - E_\text{k}
+ *   \frac{\partial \left( \varrho \tilde{\varepsilon} \right)}{\partial t}
+ *   + \nabla \cdot \left( \textbf{v} \varrho \tilde{\varepsilon} \right)
+ *   - \nabla \cdot \left( \left( \mu + \frac{\mu_\text{t}}{\sigma_{\varepsilon}} \right) \nabla \tilde{\varepsilon} \right)
+ *   - C_{1\tilde{\varepsilon}} f_1 \frac{\tilde{\varepsilon}}{k} 2 \mu_\text{t} \textbf{S} \cdot \textbf{S}
+ *   + C_{2\tilde{\varepsilon}} \varrho f_2 \frac{\tilde{\varepsilon}^2}{k}
+ *   - E_\text{k} \varrho
  *   = 0
  * \f].
  *
  * The kinematic eddy viscosity \f$ \nu_\text{t} \f$ is dampened by \f$ f_\mu \f$:
  * \f[
- * \nu_\text{t} = C_\mu f_\mu \frac{k^2}{\tilde{\varepsilon}}
+ * \mu_\text{t} = \varrho C_\mu f_\mu \frac{k^2}{\tilde{\varepsilon}}
  * \f].
  *
  * The auxiliary and dampening functions are defined as:
- * \f[ D_\varepsilon = 2 \nu \nicefrac{k}{y^2} \f]
+ * \f[ D_\varepsilon = 2 \nu \frac{k}{y^2} \f]
  * \f[ E_\text{k} = -2 \nu \frac{\tilde{\varepsilon}}{y^2} \exp \left( -0.5 y^+ \right) \f]
  * \f[ f_1 = 1 \f]
  * \f[ f_2 = 1 - 0.22 \exp \left( - \left( \frac{\mathit{Re}_\text{t}}{6} \right)^2 \right) \f]
@@ -234,4 +234,4 @@ struct IOFields<TypeTag, TTag::LowReKEpsilonNI> { using type = FreeflowNonIsothe
 } // end properties
 } // end namespace
 
-#endif // DUMUX_LOWREKEPSILON_MODEL_HH
+#endif

@@ -1,1 +1,3 @@
-add_subdirectory(implicit)
+add_subdirectory(conduction)
+add_subdirectory(convection)
+add_subdirectory(infiltration)

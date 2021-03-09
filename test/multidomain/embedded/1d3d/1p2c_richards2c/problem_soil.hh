@@ -158,8 +158,7 @@ public:
 
         // for initial conditions
         const Scalar sw = getParam<Scalar>("Problem.InitTopSaturation", 0.3); // start with 30% saturation on top
-        using MaterialLaw = typename GetPropType<TypeTag, Properties::SpatialParams>::MaterialLaw;
-        pcTop_ = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(gridGeometry->bBoxMax()), sw);
+        pcTop_ = this->spatialParams().fluidMatrixInteractionAtPos(gridGeometry->bBoxMax()).pc(sw);
     }
 
     /*!
@@ -184,12 +183,12 @@ public:
     { return 273.15 + 10; } // in [K]
 
     /*
-      * \brief Returns the reference pressure [Pa] of the non-wetting
+      * \brief Returns the reference pressure [Pa] of the nonwetting
      *        fluid phase within a finite volume.
      *
      * This problem assumes a constant reference pressure of 1 bar.
      */
-    Scalar nonWettingReferencePressure() const
+    Scalar nonwettingReferencePressure() const
     { return 1.0e5; }
 
 
@@ -331,7 +330,7 @@ public:
 
         PrimaryVariables priVars(0.0);
         //! Hydrostatic pressure profile
-        priVars[pressureIdx] = (nonWettingReferencePressure() - pcTop_)
+        priVars[pressureIdx] = (nonwettingReferencePressure() - pcTop_)
                                 -9.81*1000*(globalPos[dimWorld-1] - gg.bBoxMax()[dimWorld-1]);
         priVars[transportCompIdx] = xTracer;
         return priVars;

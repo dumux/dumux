@@ -58,4 +58,4 @@ public:
 };
 
 } // end namespace Dumux
-#endif // DUMUX_NONEQUILIBRIUM_NEWTON_SOLVER_HH
+#endif

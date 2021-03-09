@@ -21,20 +21,21 @@
  * \ingroup InputOutput
  * \brief  A simple reader class for raster images.
  */
- #ifndef DUMUX_RASTER_IMAGE_READER_HH
- #define DUMUX_RASTER_IMAGE_READER_HH
+#ifndef DUMUX_RASTER_IMAGE_READER_HH
+#define DUMUX_RASTER_IMAGE_READER_HH
 
- #include <cassert>
- #include <string>
- #include <vector>
- #include <fstream>
- #include <sstream>
- #include <algorithm>
- #include <map>
- #include <iterator>
- #include <iostream>
+#include <cassert>
+#include <string>
+#include <vector>
+#include <fstream>
+#include <sstream>
+#include <algorithm>
+#include <map>
+#include <iterator>
+#include <iostream>
 
- #include <dune/common/exceptions.hh>
+#include <dune/common/exceptions.hh>
+#include <dumux/common/stringutilities.hh>
 
 namespace Dumux {
 
@@ -108,11 +109,11 @@ public:
     };
 
     /*!
-     * \brief A helper function to retrieve the format data from a given magic number.
+     * \brief A helper function to retrieve the format from tokens of the file's first line.
      *
-     * \param magicNumber The magic number contained in the header data of the file.
+     * \param firstLineTokes The tokens extracted from the first line of the file
      */
-    static Format getFormat(const std::string& magicNumber)
+    static Format getFormat(const std::vector<std::string_view>& firstLineTokes)
     {
         static const auto format = []{
             std::map<std::string, Format> format;
@@ -121,9 +122,11 @@ public:
             format["P3"] = Format{"P3", "Portable PixMap", "ASCII"};
             format["P4"] = Format{"P4", "Portable BitMap", "binary"};
             format["P5"] = Format{"P5", "Portable GrayMap", "binary"};
-            format["P5"] = Format{"P5", "Portable PixMap", "binary"};
+            format["P6"] = Format{"P6", "Portable PixMap", "binary"};
             return format;
         }();
+
+        const std::string& magicNumber = std::string(firstLineTokes[0]);
 
         if (!format.count(magicNumber))
             DUNE_THROW(Dune::IOError, magicNumber << " is not a valid magic number for the Netpbm format");
@@ -213,36 +216,70 @@ public:
     {
         HeaderData headerData;
         std::string inputLine;
+        std::size_t lineNumber = 0;
 
         // First line : get format.
         std::getline(infile, inputLine);
-        headerData.format = getFormat(inputLine);
+        ++lineNumber;
+
+        const auto firstLineTokens = tokenize(inputLine, " ");
+        headerData.format = getFormat(firstLineTokens);
         const auto magicNumber = headerData.format.magicNumber;
 
-        // Read dimensions and maximum value (for non-b/w images).
-        while (!infile.eof())
+        // dimensions could be given right after magic number (in same line)
+        if (firstLineTokens.size() > 2)
         {
-            std::getline(infile, inputLine);
+            if (isBlackAndWhite_(magicNumber) && firstLineTokens.size() != 3)
+                DUNE_THROW(Dune::IOError, "Could not read first line for B/W image");
 
-            auto isComment = [](const auto& s)
-            { return (s.find("#") != std::string::npos); };
+            headerData.nCols = std::stoi(std::string(firstLineTokens[1]));
+            headerData.nRows = std::stoi(std::string(firstLineTokens[2]));
 
-            // Skip comments.
-            if (isComment(inputLine))
-                continue;
-
-            // The first line after the comments contains the dimensions.
-            headerData.nCols = std::stoi(inputLine.substr(0, inputLine.find(" ")));
-            headerData.nRows = std::stoi(inputLine.substr(inputLine.find(" ") + 1));
-
-            // Grayscale images additionaly contain a maxium value in the header.
-            if (magicNumber != "P1" && magicNumber != "P4")
+            if (isGrayScale_(magicNumber))
+            {
+                if (firstLineTokens.size() == 4)
+                    headerData.maxValue = std::stoi(std::string(firstLineTokens[3]));
+                if (firstLineTokens.size() > 4)
+                    DUNE_THROW(Dune::IOError, "Could not read first line for grayscale image");
+            }
+        }
+        else
+        {
+            // Read dimensions and maximum value (for non-b/w images).
+            while (!infile.eof())
             {
                 std::getline(infile, inputLine);
-                headerData.maxValue = std::stoi(inputLine);
+                ++lineNumber;
+
+                // Skip comments.
+                if (isComment_(inputLine))
+                    continue;
+
+                const auto tokens = tokenize(inputLine, " ");
+
+                // The first line after the comments contains the dimensions.
+                if (tokens.size() != 2)
+                    DUNE_THROW(Dune::IOError, "Expecting " << [](auto size){ return size < 2 ? "both" : "only"; }(tokens.size()) << " dimensions (2 numbers) in line " << lineNumber);
+
+                headerData.nCols = std::stoi(std::string(tokens[0]));
+                headerData.nRows = std::stoi(std::string(tokens[1]));
+
+                // Grayscale images additionaly contain a maxium value in the header.
+                if (isGrayScale_(magicNumber))
+                {
+                    std::getline(infile, inputLine);
+                    ++lineNumber;
+
+                    const auto token = tokenize(inputLine, " ");
+                    if (token.size() != 1)
+                        DUNE_THROW(Dune::IOError, "Expecting" << [](auto size){ return size == 0 ? "" : " only"; }(token.size()) << " intensity (one number) in line " << lineNumber);
+
+                    headerData.maxValue = std::stoi(std::string(token[0]));
+                }
+                break;
             }
-            break;
         }
+
         return headerData;
     }
 
@@ -291,7 +328,7 @@ public:
 
         std::size_t rowIdx = 0;
         std::size_t colIdx = 0;
-        for (const auto& val : result)
+        for (const auto val : result)
         {
             image[rowIdx][colIdx] = val;
 
@@ -317,13 +354,24 @@ public:
         std::vector<OutputValueType> data;
         data.reserve(image.size()*image[0].size());
         for (const auto& row: image)
-            for (const auto& col : row)
+            for (const auto col : row)
                 data.push_back(col);
 
         return data;
     }
 
 private:
+
+    static bool isBlackAndWhite_(const std::string& magicNumber)
+    {
+        return magicNumber == "P1" || magicNumber == "P4";
+    }
+
+    static bool isGrayScale_(const std::string& magicNumber)
+    {
+        return magicNumber == "P2" || magicNumber == "P5";
+    }
+
     /*!
      * \brief Reads the data block of a *.pbm (black and white) file in ASCII encoding.
      *        Returns a vector that contains the pixel values.
@@ -342,14 +390,16 @@ private:
         while (!infile.eof())
         {
             std::getline(infile, inputLine);
-            inputLine.erase(std::remove(inputLine.begin(), inputLine.end(), '\n'), inputLine.end());
-            inputLine.erase(std::remove(inputLine.begin(), inputLine.end(), ' '), inputLine.end());
-            if (!inputLine.empty())
+            if (!isComment_(inputLine))
             {
-                for (const auto& value : inputLine)
+                inputLine.erase(std::remove_if(inputLine.begin(), inputLine.end(), [](unsigned char c){ return std::isspace(c); }), inputLine.end());
+                if (!inputLine.empty())
                 {
-                    assert(value == '0' || value == '1');
-                    data.push_back(value - '0');  // convert char to int
+                    for (const auto& value : inputLine)
+                    {
+                        assert(value == '0' || value == '1');
+                        data.push_back(value - '0');  // convert char to int
+                    }
                 }
             }
         }
@@ -370,6 +420,28 @@ private:
     {
         std::vector<bool> data(numPixel_(headerData));
 
+        // Skip potentially remaining comments in header section
+        // before reading binary content. We detect a comment by
+        // reading a line with std::getline and checking the resulting string.
+        // We continue reading new lines until no more comments are found. Then we
+        // need to set infile's current position to one line before the actual binary
+        // content, otherwise the following steps will fail.
+        std::string inputLine;
+        while (!infile.eof())
+        {
+            // store position before calling std::getline
+            const auto lastPos = infile.tellg();
+            std::getline(infile, inputLine);
+
+            // stop the loop if no more comment is found and go back one line
+            if (!isComment_(inputLine))
+            {
+                infile.seekg(lastPos);
+                break;
+            }
+        }
+
+        // read actual binary content
         std::size_t nBytes = 0;
         std::size_t bitIndex = 0;
         using Bit = std::uint8_t;
@@ -489,8 +561,16 @@ private:
     {
         return headerData.nRows*headerData.nCols;
     }
+
+    /*!
+     * \brief Returns true if a given line is a comment (starting with #)
+     */
+    static bool isComment_(const std::string_view line)
+    {
+        return line[0] == '#';
+    }
 };
 
 } // namespace Dumux
 
-#endif // DUMUX_RASTER_IMAGE_READER_HH
+#endif

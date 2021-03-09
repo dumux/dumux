@@ -194,7 +194,7 @@ private:
     //! Return an instance of the element mapper
     ElementMapper makeElementMapper_(const GridView& gridView) const
     {
-        if constexpr (std::is_same_v<ElementMapper, Dune::MultipleCodimMultipleGeomTypeMapper<GridView>>)
+        if constexpr (std::is_constructible<ElementMapper, GridView, Dune::MCMGLayout>())
             return ElementMapper(gridView, Dune::mcmgElementLayout());
         else
             return ElementMapper(gridView);
@@ -203,7 +203,7 @@ private:
     //! Return an instance of the vertex mapper
     VertexMapper makeVertexMapper_(const GridView& gridView) const
     {
-        if constexpr (std::is_same_v<VertexMapper, Dune::MultipleCodimMultipleGeomTypeMapper<GridView>>)
+        if constexpr (std::is_constructible<VertexMapper, GridView, Dune::MCMGLayout>())
             return VertexMapper(gridView, Dune::mcmgVertexLayout());
         else
             return VertexMapper(gridView);

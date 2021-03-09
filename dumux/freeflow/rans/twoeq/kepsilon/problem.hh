@@ -85,21 +85,23 @@ public:
     //! The constructor sets the gravity, if desired by the user.
     RANSProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
     : ParentType(gridGeometry, paramGroup)
-    {
-        yPlusThreshold_ = getParamFromGroup<Scalar>(this->paramGroup(), "KEpsilon.YPlusThreshold", 30);
-        useStoredEddyViscosity_ = getParamFromGroup<bool>(this->paramGroup(), "RANS.UseStoredEddyViscosity", false);
-    }
+    { }
 
     /*!
      * \brief Correct size of the static (solution independent) wall variables
      */
     void updateStaticWallProperties()
     {
-        ParentType::updateStaticWallProperties();
+        if (!ParentType::isFlatWallBounded())
+        {
+            DUNE_THROW(Dune::NotImplemented, "\n Due to grid/geometric concerns, k-epsilon models should only be used for "
+                                          << " wall bounded flows with flat channel geometries. "
+                                          << "\n If your geometry is a flat channel, please set the runtime parameter RANS.IsFlatWallBounded to true. \n");
+        }
 
+        ParentType::updateStaticWallProperties();
         // update size and initial values of the global vectors
         matchingPointIdx_.resize(this->gridGeometry().elementMapper().size(), 0);
-        storedDensity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
         storedDissipation_.resize(this->gridGeometry().elementMapper().size(), 0.0);
         storedTurbulentKineticEnergy_.resize(this->gridGeometry().elementMapper().size(), 0.0);
         storedDynamicEddyViscosity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
@@ -135,7 +137,6 @@ public:
                 VolumeVariables volVars;
                 volVars.update(elemSol, asImp_(), element, scv);
                 storedDynamicEddyViscosity_[elementIdx] = volVars.calculateEddyViscosity();
-                storedDensity_[elementIdx] = volVars.density();
             }
         }
 
@@ -144,17 +145,17 @@ public:
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-            unsigned int wallNormalAxis = asImp_().wallNormalAxis_[elementIdx];
-            unsigned int neighborIdx0 = asImp_().neighborIdx_[elementIdx][wallNormalAxis][0];
-            unsigned int neighborIdx1 = asImp_().neighborIdx_[elementIdx][wallNormalAxis][1];
+            unsigned int wallNormalAxis = asImp_().wallNormalAxis(elementIdx);
+            unsigned int neighborIndex0 = asImp_().neighborIndex(elementIdx, wallNormalAxis, 0);
+            unsigned int neighborIndex1 = asImp_().neighborIndex(elementIdx, wallNormalAxis, 1);
             numElementsInNearWallRegion = inNearWallRegion(elementIdx)
                                           ? numElementsInNearWallRegion + 1
                                           : numElementsInNearWallRegion + 0;
-            if ((!inNearWallRegion(elementIdx) && (inNearWallRegion(neighborIdx0) || inNearWallRegion(neighborIdx1)))
-                || (!inNearWallRegion(elementIdx) && elementIdx == asImp_().wallElementIdx_[elementIdx])
-                || (inNearWallRegion(elementIdx) && (asImp_().wallElementIdx_[neighborIdx0] != asImp_().wallElementIdx_[neighborIdx1])))
+            if ((!inNearWallRegion(elementIdx) && (inNearWallRegion(neighborIndex0) || inNearWallRegion(neighborIndex1)))
+                || (!inNearWallRegion(elementIdx) && elementIdx == asImp_().wallElementIndex(elementIdx))
+                || (inNearWallRegion(elementIdx) && (asImp_().wallElementIndex(neighborIndex0) != asImp_().wallElementIndex(neighborIndex1))))
             {
-                matchingPointIdx_[asImp_().wallElementIdx_[elementIdx]] = elementIdx;
+                matchingPointIdx_[asImp_().wallElementIndex(elementIdx)] = elementIdx;
             }
         }
         std::cout << "numElementsInNearWallRegion: " << numElementsInNearWallRegion << std::endl;
@@ -174,10 +175,10 @@ public:
             for (const auto& element : elements(this->gridGeometry().gridView()))
             {
                 unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-                unsigned int matchingPointIdx = matchingPointIdx_[asImp_().wallElementIdx_[elementIdx]];
+                unsigned int matchingPointIndex = matchingPointIdx(asImp_().wallElementIndex(elementIdx));
 
-                Scalar scalingFactor = storedDynamicEddyViscosity_[matchingPointIdx]
-                                       / zeroEqDynamicEddyViscosity_[matchingPointIdx];
+                Scalar scalingFactor = storedDynamicEddyViscosity(matchingPointIndex)
+                                       / zeroEqDynamicEddyViscosity_[matchingPointIndex];
                 if (!isMatchingPoint(elementIdx)
                     && !std::isnan(scalingFactor) && !std::isinf(scalingFactor))
                 {
@@ -187,10 +188,10 @@ public:
             for (const auto& element : elements(this->gridGeometry().gridView()))
             {
                 unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-                unsigned int matchingPointIdx = matchingPointIdx_[asImp_().wallElementIdx_[elementIdx]];
+                unsigned int matchingPointIndex = matchingPointIdx(asImp_().wallElementIndex(elementIdx));
                 if (isMatchingPoint(elementIdx))
                 {
-                    zeroEqDynamicEddyViscosity_[matchingPointIdx] = storedDynamicEddyViscosity_[matchingPointIdx];
+                    zeroEqDynamicEddyViscosity_[matchingPointIndex] = storedDynamicEddyViscosity(matchingPointIndex);
                 }
             }
         }
@@ -201,33 +202,33 @@ public:
      */
     bool inNearWallRegion(unsigned int elementIdx) const
     {
-        unsigned int wallElementIdx = asImp_().wallElementIdx_[elementIdx];
-        unsigned int matchingPointIdx = matchingPointIdx_[wallElementIdx];
-        return wallElementIdx == matchingPointIdx ? yPlusNominal(elementIdx) < yPlusThreshold_
-                                                : yPlus(elementIdx) < yPlusThreshold_;
+        unsigned int wallElementIdx = asImp_().wallElementIndex(elementIdx);
+        unsigned int matchingPointIndex = matchingPointIdx(wallElementIdx);
+        return (wallElementIdx == matchingPointIndex) ? yPlusNominal(elementIdx) < yPlusThreshold()
+                                                      : yPlus(elementIdx) < yPlusThreshold();
     }
 
     /*!
      * \brief Returns if an element is the matching point
      */
     bool isMatchingPoint(unsigned int elementIdx) const
-    { return matchingPointIdx_[asImp_().wallElementIdx_[elementIdx]] == elementIdx; }
+    { return matchingPointIdx(asImp_().wallElementIndex(elementIdx)) == elementIdx; }
 
     /*!
      * \brief Returns the \f$ y^+ \f$ value at an element center
      */
     const Scalar yPlus(unsigned int elementIdx) const
     {
-        return asImp_().wallDistance_[elementIdx] * uStar(elementIdx)
-               / asImp_().kinematicViscosity_[elementIdx];
+        return asImp_().wallDistance(elementIdx) * uStar(elementIdx)
+             / asImp_().kinematicViscosity(elementIdx);
     }
     /*!
      * \brief Returns the nominal \f$ y^+ \f$ value at an element center
      */
     const Scalar yPlusNominal(unsigned int elementIdx) const
     {
-        return asImp_().wallDistance_[elementIdx] * uStarNominal(elementIdx)
-               / asImp_().kinematicViscosity_[elementIdx];
+        return asImp_().wallDistance(elementIdx) * uStarNominal(elementIdx)
+             / asImp_().kinematicViscosity(elementIdx);
     }
 
     /*!
@@ -244,15 +245,15 @@ public:
         Scalar mixingLength = 0.0;
         if (yPlusValue > 0.0)
         {
-            mixingLength = asImp_().karmanConstant() * asImp_().wallDistance_[elementIdx]
+            mixingLength = asImp_().karmanConstant() * asImp_().wallDistance(elementIdx)
                            * (1.0 - exp(-yPlusValue / 26.0 ))
                            / sqrt(1.0 - exp(-0.26 * yPlusValue));
         }
 
-        unsigned int wallNormalAxis = asImp_().wallNormalAxis_[elementIdx];
-        unsigned int flowNormalAxis = asImp_().flowNormalAxis_[elementIdx];
-        Scalar velocityGradient = asImp_().velocityGradients_[elementIdx][flowNormalAxis][wallNormalAxis];
-        return mixingLength * mixingLength * abs(velocityGradient) * storedDensity_[elementIdx];
+        unsigned int wallNormalAxis = asImp_().wallNormalAxis(elementIdx);
+        unsigned int flowDirectionAxis = asImp_().flowDirectionAxis(elementIdx);
+        Scalar velocityGradient = asImp_().velocityGradient(elementIdx, flowDirectionAxis, wallNormalAxis);
+        return mixingLength * mixingLength * abs(velocityGradient) * asImp_().storedDensity(elementIdx);
     }
 
     //! \brief Returns the wall shear stress velocity
@@ -260,11 +261,11 @@ public:
     {
         using std::abs;
         using std::sqrt;
-        unsigned int wallElementIdx = asImp_().wallElementIdx_[elementIdx];
-        unsigned int wallNormalAxis = asImp_().wallNormalAxis_[elementIdx];
-        unsigned int flowNormalAxis = asImp_().flowNormalAxis_[elementIdx];
-        return sqrt(asImp_().kinematicViscosity_[wallElementIdx]
-                    * abs(asImp_().velocityGradients_[wallElementIdx][flowNormalAxis][wallNormalAxis]));
+        unsigned int wallElementIdx = asImp_().wallElementIndex(elementIdx);
+        unsigned int wallNormalAxis = asImp_().wallNormalAxis(elementIdx);
+        unsigned int flowDirectionAxis = asImp_().flowDirectionAxis(elementIdx);
+        return sqrt(asImp_().kinematicViscosity(wallElementIdx)
+                    * abs(asImp_().velocityGradient(wallElementIdx, flowDirectionAxis, wallNormalAxis)));
     }
 
     //! \brief Returns the nominal wall shear stress velocity (accounts for poor approximation of viscous sublayer)
@@ -272,9 +273,8 @@ public:
     {
         using std::pow;
         using std::sqrt;
-        unsigned int matchingPointIdx = matchingPointIdx_[asImp_().wallElementIdx_[elementIdx]];
-        return pow(cMu(), 0.25)
-               * sqrt(storedTurbulentKineticEnergy_[matchingPointIdx]);
+        unsigned int matchingPointIndex = matchingPointIdx(asImp_().wallElementIndex(elementIdx));
+        return pow(cMu(), 0.25) * sqrt(storedTurbulentKineticEnergy(matchingPointIndex));
     }
 
     /*!
@@ -283,7 +283,7 @@ public:
     const Scalar dissipationWallFunction(unsigned int elementIdx) const
     {
         return uStarNominal(elementIdx) * uStarNominal(elementIdx) * uStarNominal(elementIdx)
-               / asImp_().karmanConstant() / asImp_().wallDistance_[elementIdx];
+               / asImp_().karmanConstant() / asImp_().wallDistance(elementIdx);
     }
 
     /*!
@@ -291,9 +291,8 @@ public:
      */
     const Scalar turbulentKineticEnergyWallFunction(unsigned int elementIdx) const
     {
-        unsigned int wallElementIdx = asImp_().wallElementIdx_[elementIdx];
-        unsigned int matchingPointIdx = matchingPointIdx_[wallElementIdx];
-        return storedTurbulentKineticEnergy_[matchingPointIdx];
+        unsigned int matchingPointIndex = matchingPointIdx(asImp_().wallElementIndex(elementIdx));
+        return storedTurbulentKineticEnergy(matchingPointIndex);
     }
 
     //! \brief Returns the nominal wall shear stress (accounts for poor approximation of viscous sublayer)
@@ -301,8 +300,7 @@ public:
     {
         using std::log;
         Scalar velocityNominal = uStarNominal(elementIdx) * (1.0 / asImp_().karmanConstant() * log(yPlusNominal(elementIdx)) + 5.0);
-        return uStarNominal(elementIdx) * uStarNominal(elementIdx)
-               * velocity / velocityNominal;
+        return uStarNominal(elementIdx) * uStarNominal(elementIdx) * velocity / velocityNominal;
     }
 
     //! \brief Checks whether a wall function should be used
@@ -327,7 +325,7 @@ public:
     {
         unsigned int elementIdx = asImp_().gridGeometry().elementMapper().index(element);
         return FacePrimaryVariables(asImp_().tangentialMomentumWallFunction(elementIdx, elemFaceVars[scvf].velocitySelf())
-                                    * elemVolVars[scvf.insideScvIdx()].density());
+                                    * asImp_().storedDensity(elementIdx) );
     }
 
     //! \brief Returns the flux for non-isothermal and compositional RANS models
@@ -454,21 +452,42 @@ public:
 
     //! \brief Returns the \f$ C_{\mu} \f$ constant
     const Scalar cMu() const
+    { return 0.09; }
+
+    Scalar yPlusThreshold() const
     {
-        return 0.09;
+        static const Scalar yPlusThreshold = getParamFromGroup<Scalar>(this->paramGroup(), "KEpsilon.YPlusThreshold", 30);
+        return yPlusThreshold;
     }
 
-public:
+    bool useStoredEddyViscosity() const
+    {
+        static const bool useStoredEddyViscosity = getParamFromGroup<bool>(this->paramGroup(), "RANS.UseStoredEddyViscosity", false);
+        return useStoredEddyViscosity;
+    }
+
+    Scalar storedDissipation(const int elementIdx) const
+    { return storedDissipation_[elementIdx]; }
+
+    Scalar storedTurbulentKineticEnergy(const int elementIdx) const
+    { return storedTurbulentKineticEnergy_[elementIdx]; }
+
+    Scalar storedDynamicEddyViscosity(const int elementIdx) const
+    { return storedDynamicEddyViscosity_[elementIdx]; }
+
+    Scalar zeroEqDynamicEddyViscosity(const int elementIdx) const
+    { return zeroEqDynamicEddyViscosity_[elementIdx]; }
+
+    unsigned int matchingPointIdx(const int elementIdx) const
+    { return matchingPointIdx_[elementIdx]; }
+
+private:
     std::vector<unsigned int> matchingPointIdx_;
-    std::vector<Scalar> storedDensity_;
     std::vector<Scalar> storedDissipation_;
     std::vector<Scalar> storedTurbulentKineticEnergy_;
     std::vector<Scalar> storedDynamicEddyViscosity_;
     std::vector<Scalar> zeroEqDynamicEddyViscosity_;
-    bool useStoredEddyViscosity_;
-    Scalar yPlusThreshold_;
 
-private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }

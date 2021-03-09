@@ -21,54 +21,14 @@
  * \ingroup GeomechanicsTests
  * \brief Definition of a test problem for the poro-elastic model.
  */
-
 #ifndef DUMUX_POROELASTIC_PROBLEM_HH
 #define DUMUX_POROELASTIC_PROBLEM_HH
 
 #include <dune/common/fmatrix.hh>
-#include <dune/grid/yaspgrid.hh>
-
 #include <dumux/common/boundarytypes.hh>
-#include <dumux/discretization/box.hh>
-#include <dumux/geomechanics/poroelastic/model.hh>
 #include <dumux/geomechanics/fvproblem.hh>
 
-#include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/material/components/constant.hh>
-
-#include "spatialparams.hh"
-
 namespace Dumux {
-
-template <class TypeTag>
-class PoroElasticProblem;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct TestPoroElastic { using InheritsFrom = std::tuple<PoroElastic, BoxModel>; };
-} // end namespace TTag
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::TestPoroElastic> { using type = Dune::YaspGrid<2>; };
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::TestPoroElastic> { using type = Dumux::PoroElasticProblem<TypeTag>; };
-// The fluid phase consists of one constant component
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::TestPoroElastic>
-{
-    using type = Dumux::FluidSystems::OnePLiquid< GetPropType<TypeTag, Properties::Scalar>,
-                                                  Dumux::Components::Constant<0, GetPropType<TypeTag, Properties::Scalar>> >;
-};
-// The spatial parameters property
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::TestPoroElastic>
-{
-    using type = PoroElasticSpatialParams< GetPropType<TypeTag, Properties::Scalar>,
-                                           GetPropType<TypeTag, Properties::GridGeometry> >;
-};
-} // end namespace Properties
 
 /*!
  * \ingroup GeomechanicsTests

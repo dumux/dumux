@@ -61,7 +61,7 @@
  * \f$g\f$ is the potential of the gravity field.
  *
  * In contrast to the full two-phase model, the Richards model assumes
- * gas as the non-wetting fluid and that it exhibits a much lower
+ * gas as the nonwetting fluid and that it exhibits a much lower
  * viscosity than the (liquid) wetting phase. (For example at
  * atmospheric pressure and at room temperature, the viscosity of air
  * is only about \f$1\%\f$ of the viscosity of liquid water.) As a
@@ -97,7 +97,7 @@
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/somerton.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>

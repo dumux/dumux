@@ -27,24 +27,22 @@
 
 #include "porenetworkbase.hh"
 
-namespace Dumux
-{
+namespace Dumux::PoreNetwork {
 
 /*!
 * \ingroup SpatialParameters
 * \brief The default class for spatial parameters for single-phase pore-network models.
 */
 template<class GridGeometry, class Scalar>
-class PNMOnePDefaultSpatialParams : public PNMBaseSpatialParams<GridGeometry, Scalar,
-                                                                PNMOnePDefaultSpatialParams<GridGeometry, Scalar>>
+class OnePDefaultSpatialParams : public BaseSpatialParams<GridGeometry, Scalar,
+                                                          OnePDefaultSpatialParams<GridGeometry, Scalar>>
 {
-    using ParentType = PNMBaseSpatialParams<GridGeometry, Scalar,
-                                            PNMOnePDefaultSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = BaseSpatialParams<GridGeometry, Scalar,
+                                         OnePDefaultSpatialParams<GridGeometry, Scalar>>;
 public:
     using ParentType::ParentType;
 };
 
-
-} // namespace Dumux
+} // namespace Dumux::PoreNetwork
 
 #endif

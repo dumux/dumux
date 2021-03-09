@@ -112,6 +112,7 @@ public:
     {
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
         createAnalyticalSolution_();
+        mu_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
     }
 
    /*!
@@ -156,13 +157,8 @@ public:
         Scalar x = globalPos[0];
         Scalar y = globalPos[1];
 
-        source[Indices::momentumXBalanceIdx] = (12.0-24.0*y) * x*x*x*x + (-24.0 + 48.0*y)* x*x*x
-                                             + (-48.0*y + 72.0*y*y - 48.0*y*y*y + 12.0)* x*x
-                                             + (-2.0 + 24.0*y - 72.0*y*y + 48.0*y*y*y)*x
-                                             + 1.0 - 4.0*y + 12.0*y*y - 8.0*y*y*y;
-        source[Indices::momentumYBalanceIdx] = (8.0 - 48.0*y + 48.0*y*y)*x*x*x + (-12.0 + 72.0*y - 72.0*y*y)*x*x
-                                             + (4.0 - 24.0*y + 48.0*y*y - 48.0*y*y*y + 24.0*y*y*y*y)*x - 12.0*y*y
-                                             + 24.0*y*y*y - 12.0*y*y*y*y;
+        source[Indices::momentumXBalanceIdx] = -2.0*mu_*dxxU_(x,y) - mu_*dyyU_(x,y) - mu_*dxyV_(x,y) + dxP_(x,y);
+        source[Indices::momentumYBalanceIdx] = -2.0*mu_*dyyV_(x,y) - mu_*dxyU_(x,y) - mu_*dxxV_(x,y) + dyP_(x,y);
         return source;
     }
     // \}
@@ -229,9 +225,9 @@ public:
         Scalar y = globalPos[1];
 
         PrimaryVariables values;
-        values[Indices::pressureIdx] = x * (1.0-x); // p(x,y) = x(1-x) [Donea2003]
-        values[Indices::velocityXIdx] = x*x * (1.0 - x)*(1.0 - x) * (2.0*y - 6.0*y*y + 4.0*y*y*y);
-        values[Indices::velocityYIdx] = -1.0*y*y * (1.0 - y)*(1.0 - y) * (2.0*x - 6.0*x*x + 4.0*x*x*x);
+        values[Indices::pressureIdx] = f1_(x);
+        values[Indices::velocityXIdx] = f2_(x)*df2_(y);
+        values[Indices::velocityYIdx] = -f2_(y)*df2_(x);
 
         return values;
     }
@@ -283,6 +279,53 @@ public:
     }
 
 private:
+    Scalar f1_(Scalar x) const
+    { return x*(1.0-x); /*x - x^2*/ }
+
+    Scalar df1_(Scalar x) const
+    { return 1.0 - 2.0*x; }
+
+    Scalar f2_(Scalar x) const
+    { return f1_(x)*f1_(x); /*=x^2*(1-2x+x^2)=x^2-2x^3+x^4*/ }
+
+    Scalar df2_(Scalar x) const
+    { return 2.0*x - 6.0*x*x + 4.0*x*x*x; }
+
+    Scalar ddf2_(Scalar x) const
+    { return 2.0 - 12.0*x + 12.0*x*x; }
+
+    Scalar dddf2_(Scalar x) const
+    { return - 12.0 + 24.0*x; }
+
+    Scalar dxP_ (Scalar x, Scalar y) const
+    { return df1_(x); }
+
+    Scalar dyP_ (Scalar x, Scalar y) const
+    { return 0.0; }
+
+    Scalar dxU_ (Scalar x, Scalar y) const
+    { return df2_(x)*df2_(y); }
+
+    Scalar dxxU_ (Scalar x, Scalar y) const
+    { return ddf2_(x)*df2_(y); }
+
+    Scalar dxyU_ (Scalar x, Scalar y) const
+    { return df2_(x)*ddf2_(y); }
+
+    Scalar dyyU_ (Scalar x, Scalar y) const
+    { return f2_(x)*dddf2_(y); }
+
+    Scalar dyV_ (Scalar x, Scalar y) const
+    { return -df2_(y)*df2_(x); }
+
+    Scalar dyyV_ (Scalar x, Scalar y) const
+    { return -ddf2_(y)*df2_(x); }
+
+    Scalar dxyV_ (Scalar x, Scalar y) const
+    { return -df2_(y)*ddf2_(x); }
+
+    Scalar dxxV_ (Scalar x, Scalar y) const
+    { return -f2_(y)*dddf2_(x); }
 
    /*!
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
@@ -325,6 +368,7 @@ private:
     std::vector<Scalar> analyticalPressure_;
     std::vector<VelocityVector> analyticalVelocity_;
     std::vector<VelocityVector> analyticalVelocityOnFace_;
+    Scalar mu_;
 };
 } // end namespace Dumux
 

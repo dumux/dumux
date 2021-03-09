@@ -20,6 +20,9 @@ InletMoleFraction = 1e-3
 [RANS]
 TurbulentSchmidtNumber = 0.7
 TurbulentPrandtlNumber = 0.85
+WallNormalAxis = 1
+IsFlatWallBounded = True
+WriteFlatWallBoundedFields = True
 
 [KEpsilon]
 YPlusThreshold = 10. # should be small (10-30) for coarse grids

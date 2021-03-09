@@ -144,7 +144,7 @@ void performTests(std::vector<bool>& returns, const Quadrilateral& quad, const T
 
 #endif
 
-int main (int argc, char *argv[]) try
+int main (int argc, char *argv[])
 {
     // maybe initialize mpi
     Dune::MPIHelper::instance(argc, argv);
@@ -195,11 +195,4 @@ int main (int argc, char *argv[]) try
     std::cout << "All tests passed!" << std::endl;
 
     return 0;
-}
-// //////////////////////////////////
-//   Error handler
-// /////////////////////////////////
-catch (const Dune::Exception& e) {
-    std::cout << e << std::endl;
-    return 1;
 }

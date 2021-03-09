@@ -84,11 +84,11 @@ public:
         RANSParentType::updateRANSProperties(elemSol, problem, element, scv);
         turbulentKineticEnergy_ = elemSol[0][Indices::turbulentKineticEnergyIdx];
         dissipationTilde_ = elemSol[0][Indices::dissipationIdx];
-        storedDissipationTilde_ = problem.storedDissipationTilde_[RANSParentType::elementIdx()];
-        storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy_[RANSParentType::elementIdx()];
-        stressTensorScalarProduct_ = problem.stressTensorScalarProduct_[RANSParentType::elementIdx()];
-        if (problem.useStoredEddyViscosity_)
-            RANSParentType::setDynamicEddyViscosity_(problem.storedDynamicEddyViscosity_[RANSParentType::elementIdx()]);
+        storedDissipationTilde_ = problem.storedDissipationTilde(RANSParentType::elementIdx());
+        storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy(RANSParentType::elementIdx());
+        stressTensorScalarProduct_ = problem.stressTensorScalarProduct(RANSParentType::elementIdx());
+        if (problem.useStoredEddyViscosity())
+            RANSParentType::setDynamicEddyViscosity_(problem.storedDynamicEddyViscosity(RANSParentType::elementIdx()));
         else
             RANSParentType::setDynamicEddyViscosity_(calculateEddyViscosity());
         RANSParentType::calculateEddyDiffusivity(problem);
@@ -108,41 +108,31 @@ public:
      * \brief Returns the turbulent kinetic energy \f$ m^2/s^2 \f$
      */
     Scalar turbulentKineticEnergy() const
-    {
-        return turbulentKineticEnergy_;
-    }
+    { return turbulentKineticEnergy_; }
 
     /*!
      * \brief Returns an effective dissipation \f$ m^2/s^3 \f$
      */
     Scalar dissipationTilde() const
-    {
-        return dissipationTilde_;
-    }
+    { return dissipationTilde_; }
 
     /*!
      * \brief Returns the turbulent kinetic energy \f$ m^2/s^2 \f$
      */
     Scalar storedTurbulentKineticEnergy() const
-    {
-        return storedTurbulentKineticEnergy_;
-    }
+    { return storedTurbulentKineticEnergy_; }
 
     /*!
      * \brief Returns an effective dissipation \f$ m^2/s^3 \f$
      */
     Scalar storedDissipationTilde() const
-    {
-        return storedDissipationTilde_;
-    }
+    { return storedDissipationTilde_; }
 
     /*!
      * \brief Returns the scalar product of the stress tensor
      */
     Scalar stressTensorScalarProduct() const
-    {
-        return stressTensorScalarProduct_;
-    }
+    { return stressTensorScalarProduct_; }
 
     //! \brief Returns the \f$ Re_\textrm{T} \f$ value
     const Scalar reT() const
@@ -190,7 +180,6 @@ public:
     const Scalar fMu() const
     {
         using std::exp;
-        using std::pow;
         return 1.0 - exp(-0.0115 * RANSParentType::yPlus());
     }
 

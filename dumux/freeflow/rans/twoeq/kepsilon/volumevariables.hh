@@ -85,21 +85,21 @@ public:
         inNearWallRegion_ = problem.inNearWallRegion(RANSParentType::elementIdx());
         turbulentKineticEnergy_ = elemSol[0][Indices::turbulentKineticEnergyIdx];
         dissipation_ = elemSol[0][Indices::dissipationIdx];
-        storedDissipation_ = problem.storedDissipation_[RANSParentType::elementIdx()];
-        storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy_[RANSParentType::elementIdx()];
-        stressTensorScalarProduct_ = problem.stressTensorScalarProduct_[RANSParentType::elementIdx()];
+        storedDissipation_ = problem.storedDissipation(RANSParentType::elementIdx());
+        storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy(RANSParentType::elementIdx());
+        stressTensorScalarProduct_ = problem.stressTensorScalarProduct(RANSParentType::elementIdx());
         const Scalar uStarNominal = problem.uStarNominal(RANSParentType::elementIdx());
-        const auto flowNormalAxis = problem.flowNormalAxis_[RANSParentType::elementIdx()];
-        yPlusNominal_ = RANSParentType::wallDistance() * uStarNominal / problem.kinematicViscosity_[RANSParentType::elementIdx()];
-        uPlusNominal_ = RANSParentType::velocity()[flowNormalAxis] / uStarNominal;
+        const auto flowDirectionAxis = problem.flowDirectionAxis(RANSParentType::elementIdx());
+        yPlusNominal_ = RANSParentType::wallDistance() * uStarNominal / problem.kinematicViscosity(RANSParentType::elementIdx());
+        uPlusNominal_ = RANSParentType::ccVelocityVector()[flowDirectionAxis] / uStarNominal;
         cMu_ = problem.cMu();
-        if (problem.useStoredEddyViscosity_)
-            RANSParentType::setDynamicEddyViscosity_(problem.storedDynamicEddyViscosity_[RANSParentType::elementIdx()]);
+        if (problem.useStoredEddyViscosity())
+            RANSParentType::setDynamicEddyViscosity_(problem.storedDynamicEddyViscosity(RANSParentType::elementIdx()));
         else
             RANSParentType::setDynamicEddyViscosity_(calculateEddyViscosity());
         if (inNearWallRegion_)
         {
-            RANSParentType::setDynamicEddyViscosity_(problem.zeroEqDynamicEddyViscosity_[RANSParentType::elementIdx()]);
+            RANSParentType::setDynamicEddyViscosity_(problem.zeroEqDynamicEddyViscosity(RANSParentType::elementIdx()));
         }
         RANSParentType::calculateEddyDiffusivity(problem);
         RANSParentType::calculateEddyThermalConductivity(problem);
@@ -118,57 +118,43 @@ public:
      * \brief Returns the turbulent kinetic energy \f$ m^2/s^2 \f$
      */
     Scalar turbulentKineticEnergy() const
-    {
-        return turbulentKineticEnergy_;
-    }
+    { return turbulentKineticEnergy_; }
 
     /*!
      * \brief Returns an effective dissipation \f$ m^2/s^3 \f$
      */
     Scalar dissipation() const
-    {
-        return dissipation_;
-    }
+    { return dissipation_; }
 
     /*!
      * \brief Returns the turbulent kinetic energy \f$ m^2/s^2 \f$
      */
     Scalar storedTurbulentKineticEnergy() const
-    {
-        return storedTurbulentKineticEnergy_;
-    }
+    { return storedTurbulentKineticEnergy_; }
 
     /*!
      * \brief Returns an effective dissipation \f$ m^2/s^3 \f$
      */
     Scalar storedDissipation() const
-    {
-        return storedDissipation_;
-    }
+    { return storedDissipation_; }
 
     /*!
      * \brief Returns the scalar product of the stress tensor
      */
     Scalar stressTensorScalarProduct() const
-    {
-        return stressTensorScalarProduct_;
-    }
+    { return stressTensorScalarProduct_; }
 
     /*
      * \brief Returns if an element is located in the near-wall region
      */
     bool inNearWallRegion() const
-    {
-        return inNearWallRegion_;
-    }
+    { return inNearWallRegion_; }
 
     /*!
      * \brief Returns if an element is the matching point
      */
     bool isMatchingPoint() const
-    {
-        return isMatchingPoint_;
-    }
+    { return isMatchingPoint_; }
 
     //! \brief Returns the \f$ C_{\mu} \f$ constant
     const Scalar cMu() const
@@ -190,15 +176,11 @@ public:
     const Scalar cTwoEpsilon() const
     { return 1.92; }
 
-    /*!
-     * \brief Return the nominal dimensionless wall distance \f$\mathrm{[-]}\f$.
-     */
+    //! \brief Returns the nominal dimensionless wall distance \f$\mathrm{[-]}\f$.
     Scalar yPlusNominal() const
     { return yPlusNominal_; }
 
-    /*!
-     * \brief Return the nominal dimensionless velocity \f$\mathrm{[-]}\f$.
-     */
+    //! \brief Return the nominal dimensionless velocity \f$\mathrm{[-]}\f$.
     Scalar uPlusNominal() const
     { return uPlusNominal_; }
 

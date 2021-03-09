@@ -28,10 +28,9 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/grid/io/file/dgfparser/dgfexception.hh>
 #include <dune/grid/io/file/vtk.hh>
 
-#include <test/porousmediumflow/2p/implicit/incompressible/problem.hh>
+#include <test/porousmediumflow/2p/incompressible/problem.hh>
 #include "problem_tracer.hh"
 
 #include <dumux/common/properties.hh>
@@ -51,7 +50,7 @@
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
 
-int main(int argc, char** argv) try
+int main(int argc, char** argv)
 {
     using namespace Dumux;
 
@@ -108,8 +107,8 @@ int main(int argc, char** argv) try
     auto pOld = p;
 
     // maybe update the interface parameters
-    if (ENABLEINTERFACESOLVER)
-        twoPProblem->spatialParams().updateMaterialInterfaceParams(p);
+    if constexpr (ENABLEINTERFACESOLVER)
+        twoPProblem->spatialParams().updateMaterialInterfaces(p);
 
     // the grid variables
     using TwoPGridVariables = GetPropType<TwoPTypeTag, Properties::GridVariables>;
@@ -206,9 +205,6 @@ int main(int argc, char** argv) try
         // make the new solution the old solution
         pOld = p;
         twoPGridVariables->advanceTimeStep();
-
-        // write vtk output
-        twoPVtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
@@ -313,6 +309,7 @@ int main(int argc, char** argv) try
         timeLoop->advanceTimeStep();
 
         // write vtk output
+        twoPVtkWriter.write(timeLoop->time());
         vtkWriter.write(timeLoop->time());
 
     } while (!timeLoop->finished());
@@ -332,28 +329,3 @@ int main(int argc, char** argv) try
 
     return 0;
 } // end main
-
-catch (Dumux::ParameterException &e)
-{
-    std::cerr << std::endl << e << " ---> Abort!" << std::endl;
-    return 1;
-}
-catch (Dune::DGFException & e)
-{
-    std::cerr << "DGF exception thrown (" << e <<
-                 "). Most likely, the DGF file name is wrong "
-                 "or the DGF file is corrupted, "
-                 "e.g. missing hash at end of file or wrong number (dimensions) of entries."
-                 << " ---> Abort!" << std::endl;
-    return 2;
-}
-catch (Dune::Exception &e)
-{
-    std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
-    return 3;
-}
-catch (...)
-{
-    std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
-    return 4;
-}

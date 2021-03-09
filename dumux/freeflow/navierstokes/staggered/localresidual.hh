@@ -42,14 +42,15 @@ template<int radialAxis>
 static constexpr bool isRotationalExtrusion<RotationalExtrusion<radialAxis>> = true;
 } // end namespace Impl
 
-// forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
-class NavierStokesResidualImpl;
-
 /*!
  * \ingroup NavierStokesModel
  * \brief Element-wise calculation of the Navier-Stokes residual for models using the staggered discretization
  */
+
+// forward declaration
+template<class TypeTag, DiscretizationMethod discMethod>
+class NavierStokesResidualImpl;
+
 template<class TypeTag>
 class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
 : public StaggeredLocalResidual<TypeTag>
@@ -84,6 +85,8 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
     using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+
+    static constexpr bool normalizePressure = getPropValue<TypeTag, Properties::NormalizePressure>();
 
     using CellCenterResidual = CellCenterPrimaryVariables;
     using FaceResidual = FacePrimaryVariables;
@@ -191,7 +194,11 @@ public:
                 // Pressure term (needed because we incorporate pressure in terms of a surface integral).
                 // grad(p) becomes div(pI) + (p/r)*n_r in cylindrical coordinates. The second term
                 // is new with respect to Cartesian coordinates and handled below as a source term.
-                source += insideVolVars.pressure()/r;
+                const Scalar pressure =
+                    normalizePressure ? insideVolVars.pressure() - problem.initial(scvf)[Indices::pressureIdx]
+                                      : insideVolVars.pressure();
+
+                source += pressure/r;
             }
         }
 
@@ -379,4 +386,4 @@ private:
 
 } // end namespace Dumux
 
-#endif   // DUMUX_STAGGERED_NAVIERSTOKES_LOCAL_RESIDUAL_HH
+#endif

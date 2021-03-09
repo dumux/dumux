@@ -1,0 +1,26 @@
+[TimeLoop]
+DtInitial = 1800 # [s]
+TEnd = 60000 # [s]
+
+[Grid]
+UpperRight = 60 40
+Cells = 60 40
+
+[Problem]
+Name = sagd # name passed to the output routines
+
+[Newton]
+MaxSteps = 8
+
+[Component]
+SolidDensity = 2650
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 850
+
+[SpatialParams]
+Swr = 0.1
+Snr = 0.09
+Sgr = 0.01
+ParkerVanGenuchtenN = 4
+ParkerVanGenuchtenAlpha = 1
+ParkerVanGenuchtenRegardSnrForKrn = false

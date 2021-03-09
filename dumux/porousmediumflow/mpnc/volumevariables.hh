@@ -26,13 +26,14 @@
 #ifndef DUMUX_MPNC_VOLUME_VARIABLES_HH
 #define DUMUX_MPNC_VOLUME_VARIABLES_HH
 
+#include <dumux/common/deprecated.hh>
+
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 
 #include <dumux/material/constraintsolvers/compositionfromfugacities.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
-#include <dumux/material/fluidmatrixinteractions/mp/mpadapter.hh>
 #include "pressureformulation.hh"
 
 namespace Dumux {
@@ -72,6 +73,9 @@ class MPNCVolumeVariablesImplementation<Traits, false>
     using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
     using DiffusionCoefficients = typename Traits::DiffusionType::DiffusionCoefficientsContainer;
 
+    // remove this after deprecation period, i.e. after release 3.3
+    static constexpr auto numPhases = std::integral_constant<int, ModelTraits::numFluidPhases()>{};
+
 public:
     //! Export the type encapsulating primary variable indices
     using Indices = typename Traits::ModelTraits::Indices;
@@ -108,13 +112,18 @@ public:
 
         completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
 
+        // Old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported.
+        // We can safely use the two-p wrapper here without breaking compatibility because the MPAdapter only supports
+        // two phases anyway...
+        const auto fluidMatrixInteraction = Deprecated::makeMPPcKrSw(Scalar{}, problem.spatialParams(), element, scv, elemSol, numPhases);
+
         //calculate the remaining quantities
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
         const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
         // relative permeabilities
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        using MPAdapter = MPAdapter<MaterialLaw, numFluidPhases()>;
-        MPAdapter::relativePermeabilities(relativePermeability_, materialParams, fluidState_, wPhaseIdx);
+        const auto relPerm = fluidMatrixInteraction.relativePermeabilities(fluidState_, wPhaseIdx);
+        std::copy(relPerm.begin(), relPerm.end(), relativePermeability_.begin());
 
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState_);
@@ -178,13 +187,15 @@ public:
         // capillary pressure parameters
         const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
         fluidState.setWettingPhase(wPhaseIdx);
-        const auto& materialParams =
-            problem.spatialParams().materialLawParams(element, scv, elemSol);
         // capillary pressures
-        std::vector<Scalar> capPress(numFluidPhases());
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        using MPAdapter = MPAdapter<MaterialLaw, numFluidPhases()>;
-        MPAdapter::capillaryPressures(capPress, materialParams, fluidState, wPhaseIdx);
+
+        // Old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported.
+        // We can safely use the two-p wrapper here without breaking compatibility because the MPAdapter only supports
+        // two phases anyway...
+        const auto fluidMatrixInteraction = Deprecated::makeMPPcKrSw(Scalar{}, problem.spatialParams(), element, scv, elemSol, numPhases);
+        const auto capPress = fluidMatrixInteraction.capillaryPressures(fluidState, wPhaseIdx);
         // add to the pressure of the first fluid phase
 
         // depending on which pressure is stored in the primary variables
@@ -513,6 +524,9 @@ class MPNCVolumeVariablesImplementation<Traits, true>
     using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
     using DiffusionCoefficients = typename Traits::DiffusionType::DiffusionCoefficientsContainer;
 
+    // remove this after deprecation period, i.e. after release 3.3
+    static constexpr auto numPhases = std::integral_constant<int, ModelTraits::numFluidPhases()>{};
+
 public:
     //! Export the underlying fluid system
     using FluidSystem = typename Traits::FluidSystem;
@@ -549,13 +563,16 @@ public:
         completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
 
         // calculate the remaining quantities
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
         const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
 
-        // relative permeabilities
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        using MPAdapter = MPAdapter<MaterialLaw, numFluidPhases()>;
-        MPAdapter::relativePermeabilities(relativePermeability_,  materialParams, fluidState_, wPhaseIdx);
+        // Old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported.
+        const auto fluidMatrixInteraction = Deprecated::makeMPPcKrSw(Scalar{}, problem.spatialParams(), element, scv, elemSol, numPhases);
+
+        const auto relPerm = fluidMatrixInteraction.relativePermeabilities(fluidState_, wPhaseIdx);
+        std::copy(relPerm.begin(), relPerm.end(), relativePermeability_.begin());
+
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState_);
 
@@ -612,15 +629,17 @@ public:
         // set the phase pressures
         /////////////
         // capillary pressure parameters
-        const auto& materialParams =
-            problem.spatialParams().materialLawParams(element, scv, elemSol);
         const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
         fluidState.setWettingPhase(wPhaseIdx);
         // capillary pressures
-        std::vector<Scalar> capPress(numFluidPhases());
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        using MPAdapter = MPAdapter<MaterialLaw, numFluidPhases()>;
-        MPAdapter::capillaryPressures(capPress, materialParams, fluidState, wPhaseIdx);
+
+        // Old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported.
+        // We can safely use the two-p wrapper here without breaking compatibility because the MPAdapter only supports
+        // two phases anyway...
+        const auto fluidMatrixInteraction = Deprecated::makeMPPcKrSw(Scalar{}, problem.spatialParams(), element, scv, elemSol, numPhases);
+        const auto capPress = fluidMatrixInteraction.capillaryPressures(fluidState, wPhaseIdx);
         // add to the pressure of the first fluid phase
 
         // depending on which pressure is stored in the primary variables

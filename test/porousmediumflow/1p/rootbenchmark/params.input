@@ -1,0 +1,20 @@
+[Grid]
+LowerLeft = -0.5
+UpperRight = 0.0
+Cells = 10
+
+[Problem]
+Name = test_1p_rootbenchmark
+EnableGravity = true
+RootCollarPressure = 1900.0 # Pa (psi = -1000cm, p = psi*0.01*9.81*1000 + 1e5)
+SoilPressure = 80380.0 # Pa (psi = -200cm, p = psi*0.01*9.81*1000 + 1e5)
+Radius = 2e-3 # 2mm
+AxialConductivity = 4.32e-2 # cm^3/day (contains factor rho*g)
+RadialConductivity = 1.728e-4 # 1/day (contains factor rho*g)
+
+[Component]
+LiquidDensity = 1000
+LiquidKinematicViscosity = 1.0e-6
+
+[Assembly.NumericDifference]
+PriVarMagnitude = 1e5

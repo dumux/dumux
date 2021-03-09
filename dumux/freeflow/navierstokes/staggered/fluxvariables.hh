@@ -43,14 +43,15 @@
 
 namespace Dumux {
 
-// forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
-class NavierStokesFluxVariablesImpl;
-
 /*!
  * \ingroup NavierStokesModel
  * \brief The flux variables class for the Navier-Stokes model using the staggered grid discretization.
  */
+
+// forward declaration
+template<class TypeTag, DiscretizationMethod discMethod>
+class NavierStokesFluxVariablesImpl;
+
 template<class TypeTag>
 class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
 : public FluxVariablesBase<GetPropType<TypeTag, Properties::Problem>,
@@ -697,4 +698,4 @@ private:
 
 } // end namespace Dumux
 
-#endif // DUMUX_NAVIERSTOKES_STAGGERED_FLUXVARIABLES_HH
+#endif

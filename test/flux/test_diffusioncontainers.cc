@@ -83,7 +83,7 @@ void testFickianContainer()
             }
         }
     }
-};
+}
 
 template<class Container, int numPhases, int numComponents>
 void testMSContainer()
@@ -118,7 +118,7 @@ void testMSContainer()
             }
         }
     }
-};
+}
 
 template<int numComponents, int numPhases>
 using FickDC = Dumux::FickianDiffusionCoefficients<int, numComponents, numPhases>;
@@ -126,7 +126,7 @@ using FickDC = Dumux::FickianDiffusionCoefficients<int, numComponents, numPhases
 template<int numComponents, int numPhases>
 using MSDC = Dumux::MaxwellStefanDiffusionCoefficients<int, numComponents, numPhases>;
 
-int main(int argc, char* argv[]) try
+int main(int argc, char* argv[])
 {
     testFickianContainer<FickDC<1, 5>, 1, 5>();
     testFickianContainer<FickDC<2, 2>, 2, 2>();
@@ -143,9 +143,4 @@ int main(int argc, char* argv[]) try
     testMSContainer<MSDC<3, 2>, 3, 2>();
 
     return 0;
-}
-catch (const Dune::Exception& e)
-{
-    std::cout << e << std::endl;
-    return 1;
 }

@@ -19,7 +19,7 @@
 #include <dumux/geometry/intersectingentities.hh>
 #include <test/geometry/writetriangulation.hh>
 
-int main (int argc, char *argv[]) try
+int main (int argc, char *argv[])
 {
     // maybe initialize mpi
     Dune::MPIHelper::instance(argc, argv);
@@ -80,11 +80,4 @@ int main (int argc, char *argv[]) try
     std::cout << " done ( " << timer.elapsed() << " seconds)." << std::endl;
 
     return 0;
-}
-// //////////////////////////////////
-//   Error handler
-// /////////////////////////////////
-catch (const Dune::Exception& e) {
-    std::cout << e << std::endl;
-    return 1;
 }

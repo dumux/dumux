@@ -65,6 +65,18 @@ class CompositionalFlash
 public:
     using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
     using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
+
+    template<class FluidState>
+    [[deprecated("Use concentrationFlash2p2c without porosity argument. Will be removed after 3.3")]]
+    static void concentrationFlash2p2c(FluidState &fluidState,
+                             const Scalar &Z0,
+                             const PhaseVector &phasePressure,
+                             const Scalar &porosity,
+                             const Scalar &temperature)
+    {
+        concentrationFlash2p2c(fluidState, Z0, phasePressure, temperature);
+    }
+
 /*!
  * \name Concentration flash for a given feed fraction
  */
@@ -85,15 +97,13 @@ public:
      * \param fluidState The sequential fluid State
      * \param Z0 Feed mass fraction: Mass of first component per total mass \f$\mathrm{[-]}\f$
      * \param phasePressure Vector holding the pressure \f$\mathrm{[Pa]}\f$
-     * \param porosity Porosity \f$\mathrm{[-]}\f$
      * \param temperature Temperature \f$\mathrm{[K]}\f$
      */
     template<class FluidState>
-    static void concentrationFlash2p2c(FluidState &fluidState,
-                             const Scalar &Z0,
-                             const PhaseVector &phasePressure,
-                             const Scalar &porosity,
-                             const Scalar &temperature)
+    static void concentrationFlash2p2c(FluidState& fluidState,
+                                       const Scalar Z0,
+                                       const PhaseVector& phasePressure,
+                                       const Scalar temperature)
     {
 #ifndef NDEBUG
         // this solver can only handle fluid systems which
@@ -110,10 +120,10 @@ public:
         fluidState.setPressure(phase1Idx, phasePressure[phase1Idx]);
 
         // mole equilibrium ratios k for in case first phase is reference phase
-        Scalar k10 = FluidSystem::fugacityCoefficient(fluidState, phase0Idx, comp0Idx) * fluidState.pressure(phase0Idx)
-                / (FluidSystem::fugacityCoefficient(fluidState, phase1Idx, comp0Idx) * fluidState.pressure(phase1Idx));
-        Scalar k11 = FluidSystem::fugacityCoefficient(fluidState, phase0Idx, comp1Idx) * fluidState.pressure(phase0Idx)
-                / (FluidSystem::fugacityCoefficient(fluidState, phase1Idx, comp1Idx) * fluidState.pressure(phase1Idx));
+        const Scalar k10 = FluidSystem::fugacityCoefficient(fluidState, phase0Idx, comp0Idx) * fluidState.pressure(phase0Idx)
+                     / (FluidSystem::fugacityCoefficient(fluidState, phase1Idx, comp0Idx) * fluidState.pressure(phase1Idx));
+        const Scalar k11 = FluidSystem::fugacityCoefficient(fluidState, phase0Idx, comp1Idx) * fluidState.pressure(phase0Idx)
+                     / (FluidSystem::fugacityCoefficient(fluidState, phase1Idx, comp1Idx) * fluidState.pressure(phase1Idx));
 
         // get mole fraction from equilibrium constants
         fluidState.setMoleFraction(phase0Idx, comp0Idx, ((1. - k11) / (k10 - k11)));
@@ -122,11 +132,11 @@ public:
         fluidState.setMoleFraction(phase1Idx, comp1Idx, 1.0 - fluidState.moleFraction(phase1Idx,comp0Idx));
 
         // mass equilibrium ratios K for in case first phase is reference phase
-        Scalar K10 = fluidState.massFraction(phase1Idx, comp0Idx) / fluidState.massFraction(phase0Idx, comp0Idx);
-        Scalar K11 = (1. - fluidState.massFraction(phase1Idx, comp0Idx)) / (1. - fluidState.massFraction(phase0Idx, comp0Idx));
+        const Scalar K10 = fluidState.massFraction(phase1Idx, comp0Idx) / fluidState.massFraction(phase0Idx, comp0Idx);
+        const Scalar K11 = (1. - fluidState.massFraction(phase1Idx, comp0Idx)) / (1. - fluidState.massFraction(phase0Idx, comp0Idx));
 
         // phase mass fraction Nu (ratio of phase mass to total phase mass) of first phase
-        Scalar Nu0 = 1. + ((Z0 * (K10 - 1.)) + ((1. - Z0) * (K11 - 1.))) / ((K11 - 1.) * (K10 - 1.));
+        const Scalar Nu0 = 1. + ((Z0 * (K10 - 1.)) + ((1. - Z0) * (K11 - 1.))) / ((K11 - 1.) * (K10 - 1.));
 
         // an array of the phase mass fractions from which we will compute the saturations
         std::array<Scalar, 2> phaseMassFraction;
@@ -204,6 +214,17 @@ public:
     }
 //@}
 
+    template<class FluidState>
+    [[deprecated("Use saturationFlash2p2c without porosity argument. Will be removed after 3.3")]]
+    static void saturationFlash2p2c(FluidState &fluidState,
+            const Scalar &saturation,
+            const PhaseVector &phasePressure,
+            const Scalar &porosity,
+            const Scalar &temperature)
+    {
+        saturationFlash2p2c(fluidState, saturation, phasePressure, temperature);
+    }
+
 /*!
  * \name Saturation flash for a given saturation (e.g. at boundary)
  */
@@ -217,15 +238,13 @@ public:
      * \param fluidState The sequential fluid state
      * \param saturation Saturation of phase 1 \f$\mathrm{[-]}\f$
      * \param phasePressure Vector holding the pressure \f$\mathrm{[Pa]}\f$
-     * \param porosity Porosity \f$\mathrm{[-]}\f$
      * \param temperature Temperature \f$\mathrm{[K]}\f$
      */
     template<class FluidState>
-    static void saturationFlash2p2c(FluidState &fluidState,
-            const Scalar &saturation,
-            const PhaseVector &phasePressure,
-            const Scalar &porosity,
-            const Scalar &temperature)
+    static void saturationFlash2p2c(FluidState& fluidState,
+                                    const Scalar saturation,
+                                    const PhaseVector& phasePressure,
+                                    const Scalar temperature)
     {
 #ifndef NDEBUG
         // this solver can only handle fluid systems which
@@ -242,10 +261,10 @@ public:
         fluidState.setPressure(phase1Idx, phasePressure[phase1Idx]);
 
         // mole equilibrium ratios k for in case first phase is reference phase
-        Scalar k10 = FluidSystem::fugacityCoefficient(fluidState, phase0Idx, comp0Idx) * fluidState.pressure(phase0Idx)
-                / (FluidSystem::fugacityCoefficient(fluidState, phase1Idx, comp0Idx) * fluidState.pressure(phase1Idx));
-        Scalar k11 = FluidSystem::fugacityCoefficient(fluidState, phase0Idx, comp1Idx) * fluidState.pressure(phase0Idx)
-                / (FluidSystem::fugacityCoefficient(fluidState, phase1Idx, comp1Idx) * fluidState.pressure(phase1Idx));
+        const Scalar k10 = FluidSystem::fugacityCoefficient(fluidState, phase0Idx, comp0Idx) * fluidState.pressure(phase0Idx)
+                     / (FluidSystem::fugacityCoefficient(fluidState, phase1Idx, comp0Idx) * fluidState.pressure(phase1Idx));
+        const Scalar k11 = FluidSystem::fugacityCoefficient(fluidState, phase0Idx, comp1Idx) * fluidState.pressure(phase0Idx)
+                     / (FluidSystem::fugacityCoefficient(fluidState, phase1Idx, comp1Idx) * fluidState.pressure(phase1Idx));
 
         // get mole fraction from equilibrium constants
         fluidState.setMoleFraction(phase0Idx,comp0Idx, ((1. - k11) / (k10 - k11)));

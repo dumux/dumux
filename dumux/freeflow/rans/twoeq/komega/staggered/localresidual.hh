@@ -31,14 +31,15 @@
 
 namespace Dumux {
 
-// forward declaration
-template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>
-class KOmegaResidualImpl;
-
 /*!
  * \ingroup KOmegaModel
  * \brief Element-wise calculation of the residual for k-omega models using the staggered discretization
  */
+
+// forward declaration
+template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>
+class KOmegaResidualImpl;
+
 template<class TypeTag, class BaseLocalResidual>
 class KOmegaResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethod::staggered>
 : public BaseLocalResidual
@@ -82,8 +83,8 @@ public:
     {
         CellCenterPrimaryVariables storage = ParentType::computeStorageForCellCenter(problem, scv, volVars);
 
-        storage[turbulentKineticEnergyEqIdx] = volVars.turbulentKineticEnergy();
-        storage[dissipationEqIdx] = volVars.dissipation();
+        storage[turbulentKineticEnergyEqIdx] = volVars.turbulentKineticEnergy()*volVars.density();
+        storage[dissipationEqIdx] = volVars.dissipation()*volVars.density();
 
         return storage;
     }
@@ -104,18 +105,18 @@ public:
         // production
         static const auto enableKOmegaProductionLimiter
             = getParamFromGroup<bool>(problem.paramGroup(), "KOmega.EnableProductionLimiter", false);
-        Scalar productionTerm = 2.0 * volVars.kinematicEddyViscosity() * volVars.stressTensorScalarProduct();
+        Scalar productionTerm = 2.0 * volVars.dynamicEddyViscosity() * volVars.stressTensorScalarProduct();
         if (enableKOmegaProductionLimiter)
         {
-            Scalar productionAlternative = 20.0 * volVars.betaK() * volVars.turbulentKineticEnergy() * volVars.dissipation();
+            Scalar productionAlternative = 20.0 * volVars.density() * volVars.betaK() * volVars.turbulentKineticEnergy() * volVars.dissipation();
             productionTerm = min(productionTerm, productionAlternative);
         }
         source[turbulentKineticEnergyEqIdx] += productionTerm;
         source[dissipationEqIdx] += volVars.alpha() * volVars.dissipation() / volVars.turbulentKineticEnergy() * productionTerm;
 
         // destruction
-        source[turbulentKineticEnergyEqIdx] -= volVars.betaK() * volVars.turbulentKineticEnergy() * volVars.dissipation();
-        source[dissipationEqIdx] -= volVars.betaOmega() * volVars.dissipation() * volVars.dissipation();
+        source[turbulentKineticEnergyEqIdx] -= volVars.betaK() * volVars.density() * volVars.turbulentKineticEnergy() * volVars.dissipation();
+        source[dissipationEqIdx] -= volVars.betaOmega() * volVars.density() * volVars.dissipation() * volVars.dissipation();
 
         // cross-diffusion term
         Scalar gradientProduct = 0.0;
@@ -123,7 +124,7 @@ public:
             gradientProduct += volVars.storedTurbulentKineticEnergyGradient()[i]
                                * volVars.storedDissipationGradient()[i];
         if (gradientProduct > 0.0)
-            source[dissipationEqIdx] += 0.125 / volVars.dissipation() * gradientProduct;
+            source[dissipationEqIdx] += 0.125 *volVars.density() / volVars.dissipation() * gradientProduct;
 
         return source;
     }

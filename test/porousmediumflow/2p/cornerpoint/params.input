@@ -1,0 +1,18 @@
+[TimeLoop]
+DtInitial = 1e3 # [s]
+TEnd = 1e4 # [s]
+
+[Grid]
+File = ./grids/hardsmall.grdecl
+
+[Problem]
+Name = cc2pcornerpoint # name passed to the output routines
+Homogeneous = 0 # use a homogeneous permeablity/porosity distribution
+InjectionElement = 0 # index of the element where injection should take place
+InjectionRate = 0.1 # injection rate in kg/s
+
+[SpatialParams]
+Swr = 0.0
+Snr = 0.0
+VanGenuchtenAlpha = 0.00045
+VanGenuchtenN = 7.3

@@ -31,35 +31,8 @@
 #include <dune/istl/preconditioners.hh>
 #include <dune/grid/common/capabilities.hh>
 
+#include <dumux/common/gridcapabilities.hh>
 #include <dumux/discretization/method.hh>
-
-// TODO: The following is a temporary solution to make the parallel AMG work
-// for UGGrid. Once it is resolved upstream
-// (https://gitlab.dune-project.org/core/dune-grid/issues/78),
-// it should be guarded by a DUNE_VERSION macro and removed later.
-
-#if HAVE_UG
-#include <dune/grid/uggrid.hh>
-#endif // HAVE_UG
-
-namespace Dumux::Temp::Capabilities {
-
-template<class Grid, int codim>
-struct canCommunicate
-{
-  static const bool v = false;
-};
-
-#if HAVE_UG
-template<int dim, int codim>
-struct canCommunicate<Dune::UGGrid<dim>, codim>
-{
-  static const bool v = true;
-};
-#endif // HAVE_UG
-
-} // namespace Dumux::Temp::Capabilities
-// end workaround
 
 namespace Dumux {
 
@@ -142,11 +115,7 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::box>
     using DofMapper = typename GridGeometry::VertexMapper;
     using Grid = typename GridGeometry::GridView::Traits::Grid;
     static constexpr int dofCodim = Grid::dimension;
-
-    // TODO: see above for description of this workaround, remove second line if fixed upstream
-    static constexpr bool canCommunicate =
-             Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
-             || Dumux::Temp::Capabilities::canCommunicate<Grid, dofCodim>::v;
+    static constexpr bool canCommunicate = Dumux::Detail::canCommunicate<Grid, dofCodim>;
 
     template<class GridView>
     static bool isNonOverlapping(const GridView& gridView)
@@ -161,11 +130,7 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::cctpfa>
     using DofMapper = typename GridGeometry::ElementMapper;
     using Grid = typename GridGeometry::GridView::Traits::Grid;
     static constexpr int dofCodim = 0;
-
-    // TODO: see above for description of this workaround, remove second line if fixed upstream
-    static constexpr bool canCommunicate =
-             Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
-             || Dumux::Temp::Capabilities::canCommunicate<Grid, dofCodim>::v;
+    static constexpr bool canCommunicate = Dumux::Detail::canCommunicate<Grid, dofCodim>;
 
     template<class GridView>
     static bool isNonOverlapping(const GridView& gridView)
@@ -184,4 +149,4 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::staggered>
 
 } // end namespace Dumux
 
-#endif // DUMUX_LINEAR_SOLVER_TRAITS_HH
+#endif

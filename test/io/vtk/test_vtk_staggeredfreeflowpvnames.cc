@@ -129,6 +129,8 @@ private:
         using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
         using Scalar = GetPropType<TTag, Properties::Scalar>;
         using Traits = GetPropType<TTag, Properties::ModelTraits>;
+        Scalar eps_ = 1e-6;
+
     public:
         using ParentType::ParentType;
 
@@ -159,8 +161,8 @@ private:
         { return ParentType::updateDynamicWallProperties(u); }
 
         template<class Scvf>
-        bool isOnWall(const Scvf&) const
-        { return true; }
+        bool isOnWall(const Scvf& scvf) const
+        { return (scvf.center()[0] < eps_); }
     };
 
 public:
@@ -292,7 +294,7 @@ void testWriteAndReadVtk(std::shared_ptr<GridGeometry> gridGeometry,
 }
 
 
-int main(int argc, char** argv) try
+int main(int argc, char** argv)
 {
     using namespace Dumux;
 
@@ -374,18 +376,3 @@ int main(int argc, char** argv) try
 
     return 0;
 } // end main
-catch (Dumux::ParameterException &e)
-{
-    std::cerr << std::endl << e << " ---> Abort!" << std::endl;
-    return 1;
-}
-catch (Dune::Exception &e)
-{
-    std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
-    return 2;
-}
-catch (...)
-{
-    std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
-    return 3;
-}

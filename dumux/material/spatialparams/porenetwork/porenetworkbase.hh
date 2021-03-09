@@ -18,45 +18,89 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup PoreNetworkModels
  * \ingroup SpatialParameters
- * \brief The base class for spatial parameters for pore network models.
+ * \brief The base class for spatial parameters for pore-network models.
  */
 #ifndef DUMUX_PNM_SPATIAL_PARAMS_BASE_HH
 #define DUMUX_PNM_SPATIAL_PARAMS_BASE_HH
 
-#include <dumux/porenetworkflow/common/geometry.hh>
-#include <dune/common/fvector.hh>
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <type_traits>
+#include <memory>
 
-namespace Dumux
+#include <dune/common/fvector.hh>
+
+#include <dumux/common/parameters.hh>
+
+namespace Dumux::PoreNetwork {
+
+#ifndef DOXYGEN
+namespace Detail {
+// helper struct detecting if the user-defined spatial params class has a materialLawParamsAtPos function
+// for g++ > 5.3, this can be replaced by a lambda
+template<class GlobalPosition>
+struct hasMaterialLawParamsAtPos
 {
+    template<class SpatialParams>
+    auto operator()(const SpatialParams& a)
+    -> decltype(a.materialLawParamsAtPos(std::declval<GlobalPosition>()))
+    {}
+};
+
+// helper struct detecting if the user-defined spatial params class has a permeabilityAtPos function
+// for g++ > 5.3, this can be replaced by a lambda
+template<class GlobalPosition>
+struct hasPermeabilityAtPos
+{
+    template<class SpatialParams>
+    auto operator()(const SpatialParams& a)
+    -> decltype(a.permeabilityAtPos(std::declval<GlobalPosition>()))
+    {}
+};
+
+template<class GlobalPosition, class SolidSystem>
+struct hasInertVolumeFractionAtPos
+{
+    template<class SpatialParams>
+    auto operator()(const SpatialParams& a)
+    -> decltype(a.template inertVolumeFractionAtPos<SolidSystem>(std::declval<GlobalPosition>(), 0))
+    {}
+};
+
+template<class GlobalPosition>
+struct hasPorosityAtPos
+{
+    template<class SpatialParams>
+    auto operator()(const SpatialParams& a)
+    -> decltype(a.porosityAtPos(std::declval<GlobalPosition>()))
+    {}
+};
+
+} // end namespace Detail
+#endif
 
 /*!
  * \ingroup SpatialParameters
  */
 
 /**
- * \brief The base class for spatial parameters for pore network models.
+ * \ingroup PoreNetworkModels
+ * \brief The base class for spatial parameters for pore-network models.
  */
 template<class GridGeometry, class Scalar, class Implementation>
-class PNMBaseSpatialParams
+class BaseSpatialParams
 {
-    using Grid = typename GridGeometry::Grid;
     using GridView = typename GridGeometry::GridView;
-    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    static constexpr auto dofCodim = GridView::dimension;
     static constexpr auto dimWorld = GridView::dimensionworld;
 
 public:
     using PermeabilityType = Scalar;
 
-    PNMBaseSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    BaseSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : gridGeometry_(gridGeometry)
     , gravity_(0.0)
     {
@@ -65,6 +109,13 @@ public:
             gravity_[dimWorld-1]  = -9.81;
     }
 
+    /*!
+     *\brief Length of the throat \f$[m]\f$.
+     *       Can be solution-dependent.
+     *
+     *  \param element The finite volume element
+     *  \param elemVolVars The element volume variables.
+     */
     template<class ElementVolumeVariables>
     Scalar throatLength(const Element& element,
                         const ElementVolumeVariables& elemVolVars) const
@@ -73,69 +124,61 @@ public:
         return gridGeometry().throatLength(eIdx);
     }
 
+    /*!
+     *\brief Inscribed radius of the throat \f$[m]\f$.
+     *       Can be solution-dependent.
+     *
+     *  \param element The finite volume element
+     *  \param elemVolVars The element volume variables.
+     */
     template<class ElementVolumeVariables>
-    Scalar throatRadius(const Element& element,
-                        const ElementVolumeVariables& elemVolVars) const
+    Scalar throatInscribedRadius(const Element& element,
+                                 const ElementVolumeVariables& elemVolVars) const
     {
         const auto eIdx = gridGeometry().elementMapper().index(element);
-        return gridGeometry().throatRadius(eIdx);
+        return gridGeometry().throatInscribedRadius(eIdx);
     }
 
-   template<class ElementVolumeVariables>
-   Scalar throatCrossSectionalArea(const Element& element,
+    /*!
+     *\brief Cross-sectional area of the throat \f$[m]\f$.
+     *       Can be solution-dependent.
+     *
+     *  \param element The finite volume element
+     *  \param elemVolVars The element volume variables.
+     */
+    template<class ElementVolumeVariables>
+    Scalar throatCrossSectionalArea(const Element& element,
                                    const ElementVolumeVariables& elemVolVars) const
-   {
-       const auto eIdx = gridGeometry().elementMapper().index(element);
-       return gridGeometry().throatCrossSectionalArea(eIdx);
-   }
+    {
+        const auto eIdx = gridGeometry().elementMapper().index(element);
+        return gridGeometry().throatCrossSectionalArea(eIdx);
+    }
 
    /*!
-   * \brief Returns the aspect ratio for a throat
-   *
-   */
-   template<class ElementVolumeVariables>
-   Scalar throatAspectRatio(const Element& element,
-                            const ElementVolumeVariables& elemVolVars) const
-   {
-       const auto eIdx = gridGeometry().elementMapper().index(element);
-       return gridGeometry().throatAspectRatio(eIdx);
-   }
-
-   /*!
-   * \brief Returns the aspect ratio for a pore
-   *
-   */
-   template<class ElementSolutionVector>
-   Scalar poreAspectRatio(const Element& element,
-                          const SubControlVolume& scv,
-                          const ElementSolutionVector& elemSol) const
-   { return 1.0; }
-
-   template<class ElementSolutionVector>
-   Scalar poreRadius(const Element& element,
-                     const SubControlVolume& scv,
-                     const ElementSolutionVector& elemSol) const
-   {
-       return gridGeometry().poreRadius(scv.dofIndex());
-   }
+    *\brief Inscribed radius of the pore body \f$[m]\f$.
+    *       Can be solution-dependent.
+    *
+    *  \param element The finite volume element
+    *  \param scv The sub-control volume
+    *  \param elemSol The element solution
+    */
+    template<class ElementSolutionVector>
+    Scalar poreInscribedRadius(const Element& element,
+                               const SubControlVolume& scv,
+                               const ElementSolutionVector& elemSol) const
+    {
+        return gridGeometry().poreInscribedRadius(scv.dofIndex());
+    }
 
     /*!
      * \brief Returns a reference to the gridview
-     *
      */
     const GridView& gridView() const
-    {
-        return gridGeometry().gridView();
-    }
+    { return gridGeometry().gridView(); }
 
 
-     /*! Intrinsic permeability tensor K \f$[m^2]\f$ depending
-     *  on the position in the domain
-     *
-     *  \param element The finite volume element
-     *  \param scv The sub-control volume
-     *
-     *  Solution dependent permeability function
+    /*! Intrinsic permeability tensor K \f$[m^2]\f$.
+     *\note This is only required for compatibility reasons.
      */
     template<class ElementSolutionVector>
     Scalar permeability(const Element& element,
@@ -156,19 +199,9 @@ public:
     const GlobalPosition& gravity(const GlobalPosition& pos) const
     { return gravity_; }
 
-
-    //! The finite volume grid geometry
-    [[deprecated("Use gridGeometry")]]
-    const GridGeometry& fvGridGeometry() const
-    {
-        return *gridGeometry_;
-    }
-
     //! The finite volume grid geometry
     const GridGeometry& gridGeometry() const
-    {
-        return *gridGeometry_;
-    }
+    { return *gridGeometry_; }
 
     /*!
      * \brief Function for defining the porosity.
@@ -279,12 +312,10 @@ protected:
     { return *static_cast<const Implementation*>(this); }
 
 private:
-
     std::shared_ptr<const GridGeometry> gridGeometry_;
     GlobalPosition gravity_; //!< The gravity vector
-
 };
 
-} // namespace Dumux
+} // namespace Dumux::PoreNetwork
 
 #endif

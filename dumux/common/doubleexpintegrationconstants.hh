@@ -499,4 +499,4 @@ constexpr double doubleExponentialIntegrationWeights[] =
 
 } // end namespace Dumux
 
-#endif // include guard
+#endif

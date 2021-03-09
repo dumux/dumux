@@ -1,0 +1,21 @@
+[TimeLoop]
+DtInitial = 50 # [s]
+TEnd = 300 # [s]
+
+[Grid]
+UpperRight = 4 8
+Cells = 10 20
+
+[Problem]
+Name = test_boxsteaminjection # name passed to the output routines
+
+[Component]
+SolidDensity = 2650
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 850.0
+
+[SpatialParams]
+Swr = 0.1
+Snr = 0
+VanGenuchtenAlpha = 0.0028
+VanGenuchtenN = 2.0

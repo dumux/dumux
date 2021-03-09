@@ -1,0 +1,37 @@
+[TimeLoop]
+DtInitial = 10 # [s]
+TEnd = 1e6 # [s]
+
+[Grid]
+UpperRight = 3 1
+Cells = 50 20
+
+[Problem]
+Name = richardswelltracer
+EnableGravity = true
+ContaminantMoleFraction = 1e-10
+PumpRate = 0.015 # kg/s
+
+LensLowerLeft = 0.8 0.2
+LensUpperRight = 1.2 0.8
+
+[Component]
+LiquidDiffusionCoefficient = 2.3e-9
+Name = "D2O"
+MolarMass = 20e-3 # in kg/mol, molar mass heavy water D2O
+
+[Vtk]
+AddVelocity = true
+
+[Newton]
+EnableChop = false
+
+[SpatialParams]
+Lens.Swr = 0.18
+Lens.Snr = 0.0
+Lens.VanGenuchtenAlpha = 0.00045
+Lens.VanGenuchtenN = 7.3
+OuterDomain.Swr = 0.05
+OuterDomain.Snr = 0.0
+OuterDomain.VanGenuchtenAlpha = 0.0037
+OuterDomain.VanGenuchtenN = 4.7

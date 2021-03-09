@@ -52,6 +52,7 @@ public:
     {
         name_ = getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
         meanInletVelocity_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.MeanInletVelocity");
+        initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure");
         mu_ = getParam<Scalar>("Component.LiquidKinematicViscosity")*getParam<Scalar>("Component.LiquidDensity");
 
         pipeRadius_ = this->gridGeometry().bBoxMax()[0] - this->gridGeometry().bBoxMin()[0];
@@ -109,7 +110,11 @@ public:
     { return analyticalSolution(globalPos); }
 
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
-    { return PrimaryVariables(0.0); }
+    {
+        PrimaryVariables values(0.0);
+        values[Indices::pressureIdx] = initialPressure_;
+        return values;
+    }
 
     PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
     {
@@ -139,6 +144,7 @@ private:
     { return globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_; }
 
     std::string name_;
+    Scalar initialPressure_;
     Scalar meanInletVelocity_;
     Scalar mu_;
     Scalar pipeRadius_, pipeLength_;

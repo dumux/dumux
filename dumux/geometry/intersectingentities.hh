@@ -26,6 +26,7 @@
 #include <type_traits>
 #include <vector>
 #include <algorithm>
+#include <limits>
 
 #include <dune/common/fvector.hh>
 
@@ -78,9 +79,20 @@ public:
         if (otherCorners.size() != corners_.size())
             return false;
 
-        const auto eps = 1.5e-7*(corners_[1] - corners_[0]).two_norm();
+        using std::max;
+        ctype eps2 = std::numeric_limits<ctype>::min();
+        for (int i = 1; i < corners_.size(); ++i)
+            eps2 = max(eps2, (corners_[i] - corners_[0]).two_norm2());
+
+        // We use a base epsilon of 1.5e-7 for comparisons of lengths.
+        // Since here we compare squared lengths, we multiply by its square.
+        eps2 *= 1.5e-7*1.5e-7;
+
         for (int i = 0; i < corners_.size(); ++i)
-            if ((corners_[i] - otherCorners[i]).two_norm() > eps)
+            // early return if none of the other corners are equal to this corner
+            if (std::none_of(otherCorners.begin(),
+                             otherCorners.end(),
+                             [&] (const auto& other) { return (corners_[i] - other).two_norm2() < eps2; }))
                 return false;
 
         return true;

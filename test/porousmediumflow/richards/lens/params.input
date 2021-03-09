@@ -1,0 +1,35 @@
+[TimeLoop]
+DtInitial = 100 # [s]
+TEnd = 3000 # [s]
+
+[Grid]
+UpperRight = 6 4
+Cells = 24 16
+
+[Problem]
+Name = richardslens
+EnableGravity = true # enable gravity
+
+[Newton]
+TargetSteps = 18 # set the "desirable" number of Newton iterations of a time step
+EnableChop = true # chop for better convergence
+
+[LinearSolver]
+Type = bicgstabsolver
+
+[LinearSolver.Preconditioner]
+Type = amg
+AmgMaxLevel = 2
+AmgAccumulationMode = atOnce
+
+[SpatialParams.Lens]
+Swr = 0.18
+Snr = 0.0
+VanGenuchtenAlpha = 0.00045
+VanGenuchtenN = 7.3
+
+[SpatialParams.OuterDomain]
+Swr = 0.05
+Snr = 0.0
+VanGenuchtenAlpha = 0.0037
+VanGenuchtenN = 4.7

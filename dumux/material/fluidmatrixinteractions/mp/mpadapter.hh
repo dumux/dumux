@@ -27,24 +27,27 @@
 #ifndef DUMUX_MP_ADAPTER_HH
 #define DUMUX_MP_ADAPTER_HH
 
+// remove from here after release 3.3 /////////////
+
 #include <algorithm>
 #include <cassert>
 #include <dumux/common/typetraits/typetraits.hh>
 
 namespace Dumux {
 
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief An adapter for mpnc to use the capillary pressure-saturation relationships
  */
-template <class MaterialLaw, int numPhases>
+template <class MaterialLaw, int numFluidPhases>
 class MPAdapter
 {
     static_assert(AlwaysFalse<MaterialLaw>::value, "Adapter not implemented for the specified number of phases");
 };
 
 template <class MaterialLaw>
-class MPAdapter<MaterialLaw, 2 /*numPhases*/>
+class [[deprecated("Use new material laws and FluidMatrix::MPAdapter instead!")]] MPAdapter<MaterialLaw, 2 /*numFluidPhases*/>
 {
 public:
     using Params = typename MaterialLaw::Params;
@@ -63,7 +66,7 @@ public:
     {
         assert(values.size() == 2);
         const int nPhaseIdx = 1 - wPhaseIdx;
-        // non-wetting phase gets the capillary pressure added
+        // nonwetting phase gets the capillary pressure added
         values[nPhaseIdx] = 0;
         // wetting phase does not get anything added
         values[wPhaseIdx] = - MaterialLaw::pc(params, state.saturation(wPhaseIdx));
@@ -88,6 +91,89 @@ public:
         values[nPhaseIdx] = MaterialLaw::krn(params, state.saturation(wPhaseIdx));
     }
 };
+
+
 } // end namespace Dumux
+
+// remove until here after release 3.3 /////////////
+
+#include <dune/common/fvector.hh>
+#include <dumux/common/typetraits/typetraits.hh>
+#include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
+
+namespace Dumux::FluidMatrix {
+
+/*!
+ * \ingroup Fluidmatrixinteractions
+ * \brief An adapter for mpnc to use the capillary pressure-saturation relationships
+ */
+template <class MaterialLaw, int numFluidPhases = std::decay_t<MaterialLaw>::numFluidPhases()>
+class MPAdapter
+{
+    static_assert(AlwaysFalse<MaterialLaw>::value, "Adapter not implemented for the specified number of phases");
+};
+
+
+template<class MaterialLaw>
+class MPAdapter<MaterialLaw, 2>
+: public Adapter<MPAdapter<MaterialLaw, 2>, MultiPhasePcKrSw>
+{
+public:
+    using Scalar = typename std::decay_t<MaterialLaw>::Scalar;
+
+    MPAdapter(MaterialLaw&& pcKrS)
+    : pcKrS_(std::forward<MaterialLaw>(pcKrS))
+    {}
+
+    /*!
+     * \brief The capillary pressure-saturation curve.
+     * \param state Fluidstate
+     * \param wPhaseIdx the phase index of the wetting phase
+     */
+    template <class FluidState>
+    auto capillaryPressures(const FluidState& state, int wPhaseIdx) const
+    {
+        Dune::FieldVector<typename FluidState::Scalar, 2> values;
+
+        const int nPhaseIdx = 1 - wPhaseIdx;
+        // non-wetting phase gets the capillary pressure added
+        values[nPhaseIdx] = 0;
+        // wetting phase does not get anything added
+        values[wPhaseIdx] = - pcKrS_.pc(state.saturation(wPhaseIdx));
+
+        return values;
+    }
+
+    /*!
+     * \brief The relative permeability of all phases.
+     * \param state Fluidstate
+     * \param wPhaseIdx The phase index of the wetting phase
+     */
+    template <class FluidState>
+    auto relativePermeabilities(const FluidState& state, int wPhaseIdx) const
+    {
+        Dune::FieldVector<typename FluidState::Scalar, 2> values;
+
+        const int nPhaseIdx = 1 - wPhaseIdx;
+        values[wPhaseIdx] = pcKrS_.krw(state.saturation(wPhaseIdx));
+        values[nPhaseIdx] = pcKrS_.krn(state.saturation(wPhaseIdx));
+
+        return values;
+    }
+private:
+    MaterialLaw pcKrS_;
+};
+
+/*!
+ * \ingroup Fluidmatrixinteractions
+ * \brief Deduction guide for the MPAdapter class.
+ *        Makes sure that MPAdapter stores a copy of T if
+ *        the constructor is called with a temporary object.
+ */
+template<typename T>
+MPAdapter(T&&) -> MPAdapter<T>;
+
+} // end namespace Dumux::FluidMatrix
+
 
 #endif

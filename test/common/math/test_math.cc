@@ -32,6 +32,7 @@
 
 #include <iostream>
 #include <utility>
+#include <algorithm>
 
 #include <dune/common/float_cmp.hh>
 #include <dune/common/fmatrix.hh>
@@ -54,7 +55,7 @@ void checkTableInterpolation(Scalar ip, Scalar expected, const Table& table, Sca
 
 } // end namespace Test
 
-int main() try
+int main()
 {
     //! Declare Vectors (FieldVector and DynamicVector)
     Dune::FieldVector<double, 3> v1({1.0, 2.0, 3.0});
@@ -186,8 +187,31 @@ int main() try
     Test::checkTableInterpolation(1.5, 2.0, table);
     Test::checkTableInterpolation(2.0, 3.0, table);
     Test::checkTableInterpolation(3.0, 3.0, table);
-}
-catch (Dune::Exception& e) {
-    std::cerr << e << std::endl;
-    return 1;
+
+    //////////////////////////////////////////////////////////////////
+    ///// Dumux::linspace ////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////
+    {
+        const auto v = Dumux::linspace(1.0, 2.0, 100);
+        if (!Dune::FloatCmp::eq(v.back(), 2.0))
+            DUNE_THROW(Dune::Exception, "[linspace] Last point not included!");
+        if (!Dune::FloatCmp::eq(v.front(), 1.0))
+            DUNE_THROW(Dune::Exception, "[linspace] First point not included!");
+        if (v.size() != 100)
+            DUNE_THROW(Dune::Exception, "[linspace] Size incorrect!");
+        if (!std::is_sorted(v.begin(), v.end()))
+            DUNE_THROW(Dune::Exception, "[linspace] Not sorted in ascending order!");
+    }
+    {
+        const auto v = Dumux::linspace(1.0, 2.0, 100, /*endPoint=*/false);
+        if (!Dune::FloatCmp::eq(v.back(), 2.0-0.01))
+            DUNE_THROW(Dune::Exception, "[linspace] Last point not correct!");
+        if (!Dune::FloatCmp::eq(v.front(), 1.0))
+            DUNE_THROW(Dune::Exception, "[linspace] First point not included!");
+        if (v.size() != 100)
+            DUNE_THROW(Dune::Exception, "[linspace] Size incorrect!");
+        if (!std::is_sorted(v.begin(), v.end()))
+            DUNE_THROW(Dune::Exception, "[linspace] Not sorted in ascending order!");
+    }
+
 }

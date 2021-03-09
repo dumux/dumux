@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup PoreNetworkModels
  * \brief This file contains the data which is required to calculate
  *        diffusive mass fluxes due to molecular diffusion with Fick's law.
  */
@@ -29,11 +30,10 @@
 #include <dumux/flux/referencesystemformulation.hh>
 #include <dumux/flux/fickiandiffusioncoefficients.hh>
 
-namespace Dumux
-{
+namespace Dumux::PoreNetwork {
 
 /*!
- * \ingroup PoreNetworkFlux
+ * \ingroup PoreNetworkModels
  * \brief Specialization of Fick's Law for the pore-network model.
  */
 template<class Scalar, int numPhases, int numComponents,
@@ -49,13 +49,14 @@ public:
 
     template<class Problem, class Element, class FVElementGeometry,
              class ElementVolumeVariables, class ElementFluxVariablesCache>
-    static auto flux(const Problem& problem,
-                     const Element& element,
-                     const FVElementGeometry& fvGeometry,
-                     const ElementVolumeVariables& elemVolVars,
-                     const typename FVElementGeometry::SubControlVolumeFace& scvf,
-                     const int phaseIdx,
-                     const ElementFluxVariablesCache& elemFluxVarsCache)
+    static Dune::FieldVector<Scalar, numComponents>
+    flux(const Problem& problem,
+         const Element& element,
+         const FVElementGeometry& fvGeometry,
+         const ElementVolumeVariables& elemVolVars,
+         const typename FVElementGeometry::SubControlVolumeFace& scvf,
+         const int phaseIdx,
+         const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         Dune::FieldVector<Scalar, numComponents> componentFlux(0.0);
 
@@ -95,8 +96,8 @@ public:
 private:
 
     template<class VolumeVariables>
-    static auto getDiffusionCoefficient_(const int phaseIdx, const int compIdx,
-                                         const VolumeVariables& volVars)
+    static Scalar getDiffusionCoefficient_(const int phaseIdx, const int compIdx,
+                                           const VolumeVariables& volVars)
     {
         using FluidSystem = typename VolumeVariables::FluidSystem;
 
@@ -109,6 +110,6 @@ private:
             return volVars.diffusionCoefficient(0, 0, compIdx);
     }
 };
-} // end namespace
+} // end namespace Dumux::PoreNetwork
 
 #endif

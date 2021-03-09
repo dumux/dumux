@@ -20,52 +20,43 @@
  * \file
  *
  * \ingroup SpatialParameters
- * \brief The two phase spatial parameters for pore network models.
+ * \brief The two-phase spatial parameters for pore-network models.
  */
 #ifndef DUMUX_PNM2P_SPATIAL_PARAMS_HH
 #define DUMUX_PNM2P_SPATIAL_PARAMS_HH
 
 #include <dumux/material/fluidmatrixinteractions/porenetwork/throat/thresholdcapillarypressures.hh>
 #include "porenetworkbase.hh"
-#include <dumux/porenetworkflow/common/poreproperties.hh>
-#include <dumux/porenetworkflow/common/throatproperties.hh>
-#include <dumux/porenetworkflow/common/geometry.hh>
+#include <dumux/porenetwork/common/poreproperties.hh>
+#include <dumux/porenetwork/common/throatproperties.hh>
 
-namespace Dumux
-{
+namespace Dumux::PoreNetwork {
 
 /*!
  * \ingroup SpatialParameters
+ * \ingroup PNMTwoPModel
  */
 
 /**
- * \brief The base class for spatial parameters for pore network models.
+ * \brief The base class for spatial parameters for pore-network models.
  */
-template<class GridGeometry, class Scalar, class MaterialLawT, class Implementation>
-class PNMTwoPBaseSpatialParams
-: public PNMBaseSpatialParams<GridGeometry, Scalar, PNMTwoPBaseSpatialParams<GridGeometry, Scalar, MaterialLawT, Implementation>>
+template<class GridGeometry, class Scalar, class LocalRules, class Implementation>
+class TwoPBaseSpatialParams
+: public BaseSpatialParams<GridGeometry, Scalar, TwoPBaseSpatialParams<GridGeometry, Scalar, LocalRules, Implementation>>
 {
-    using ParentType = PNMBaseSpatialParams<GridGeometry, Scalar, PNMTwoPBaseSpatialParams<GridGeometry, Scalar, MaterialLawT, Implementation>>;
+    using ParentType = BaseSpatialParams<GridGeometry, Scalar, TwoPBaseSpatialParams<GridGeometry, Scalar, LocalRules, Implementation>>;
     using GridView = typename GridGeometry::GridView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
 
-    using MaterialLaw = MaterialLawT;
-    using MaterialLawParams = typename MaterialLaw::Params;
-
-    PNMTwoPBaseSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    TwoPBaseSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
-        if (!gridGeometry->useSameGeometryForAllPores() && MaterialLawT::supportsMultipleGeometries())
+        if (!gridGeometry->useSameGeometryForAllPores() && LocalRules::supportsMultipleGeometries())
             DUNE_THROW(Dune::InvalidStateException, "Your MaterialLaw does not support multiple pore body shapes.");
 
-        setParams();
-    }
-
-    void setParams()
-    {
         if (this->gridGeometry().useSameShapeForAllThroats())
         {
             cornerHalfAngles_.resize(1);
@@ -84,50 +75,56 @@ public:
         }
     }
 
+    /*!
+     * \brief The index of the wetting phase within a pore throat
+     */
     template<class FS, class ElementVolumeVariables>
     int wettingPhase(const Element&, const ElementVolumeVariables& elemVolVars) const
     { return 0; }
 
+    /*!
+     * \brief The index of the wetting phase within a pore body
+     */
     template<class FS, class ElementSolutionVector>
     int wettingPhase(const Element&, const SubControlVolume& scv, const ElementSolutionVector& elemSol) const
     { return 0; }
-//TEMP_START
-    Scalar interfaceConfig(const SubControlVolume& scv) const
-    {
-        if (this->gridGeometry().poreLabel(scv.dofIndex()) == 1) //Labels::source)
-        {
-            //std::cout<< "droplet pore" << std::endl;
-            return 1.0; //droplet
-        }
-        else
-        {
-            //std::cout<< "no droplet pore" << std::endl;
-            return 0.0; //rectangular
-        }
-    }
-//TEMP_END
 
+    /*!
+     *\brief The contact angle within a pore throat \f$[rad]\f$.
+     *\note Overload for solution-dependent values.
+     *
+     *  \param element The element
+     *  \param elemVolVars The element  volume variables
+     */
     template<class ElementVolumeVariables>
     Scalar contactAngle(const Element& element,
                         const ElementVolumeVariables& elemVolVars) const
     {
         static const Scalar theta = getParam<Scalar>("SpatialParameters.ContactAngle", 0.0);
-        return theta; // overload for different contact angles
+        return theta;
     }
 
+    /*!
+     *\brief The contact angle within a pore body \f$[rad]\f$.
+     *\note Overload for solution-dependent values.
+     *
+     *  \param element The element
+     *  \param scv The sub-control volume
+     *  \param elemSol The element solution
+     */
     template<class ElementSolutionVector>
     Scalar contactAngle(const Element& element,
                         const SubControlVolume& scv,
                         const ElementSolutionVector& elemSol) const
     {
         static const Scalar theta = getParam<Scalar>("SpatialParameters.ContactAngle", 0.0);
-        return theta; // overload for different contact angles
+        return theta;
     }
 
     /*!
      * \brief Return the element (throat) specific entry capillary pressure \f$ Pa\f$
-     *
      * \param element The current element
+     * \param elemVolVars The element volume variables
      */
     template<class ElementVolumeVariables>
     const Scalar pcEntry(const Element& element, const ElementVolumeVariables& elemVolVars) const
@@ -137,12 +134,14 @@ public:
         const Scalar surfaceTension = 0.5*(elemVolVars[0].surfaceTension() + elemVolVars[1].surfaceTension());
         return ThresholdCapillaryPressures::pcEntry(surfaceTension,
                                                     this->asImp_().contactAngle(element, elemVolVars),
-                                                    this->asImp_().throatRadius(element, elemVolVars),
+                                                    this->asImp_().throatInscribedRadius(element, elemVolVars),
                                                     this->gridGeometry().throatShapeFactor(eIdx));
     }
 
     /*!
      * \brief Return the element (throat) specific snap-off capillary pressure \f$ Pa\f$
+     * \param element The current element
+     * \param elemVolVars The element volume variables
      */
     template<class ElementVolumeVariables>
     const Scalar pcSnapoff(const Element& element, const ElementVolumeVariables& elemVolVars) const
@@ -151,27 +150,26 @@ public:
         const Scalar surfaceTension = 0.5*(elemVolVars[0].surfaceTension() + elemVolVars[1].surfaceTension());
         return ThresholdCapillaryPressures::pcSnapoff(surfaceTension,
                                                       this->asImp_().contactAngle(element, elemVolVars),
-                                                      this->asImp_().throatRadius(element, elemVolVars));
+                                                      this->asImp_().throatInscribedRadius(element, elemVolVars));
     }
 
     /*!
-     * \brief Returns the parameter object for the PNM material law
+     * \brief Returns the parameter object for the Brooks-Corey material law.
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
+     * In this test, we use element-wise distributed material parameters.
+     *
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return The material parameters object
      */
-    template<class ElementSolutionVector>
-    MaterialLawParams materialLawParams(const Element& element,
-                                        const SubControlVolume& scv,
-                                        const ElementSolutionVector& elemSol) const
+    template<class ElementSolution>
+    auto fluidMatrixInteraction(const Element& element,
+                                const SubControlVolume& scv,
+                                const ElementSolution& elemSol) const
     {
-        static const Scalar surfaceTension = getParam<Scalar>("SpatialParameters.SurfaceTension", 0.0725); // TODO
-        const Scalar contactAngle = this->asImp_().contactAngle(element, scv, elemSol);
-        const Scalar poreRadius = this->asImp_().poreRadius(element, scv, elemSol);
-        const auto poreShape = this->gridGeometry().poreGeometry(scv.dofIndex());
-        const auto droplet = interfaceConfig(scv); //TEMP 0.0;
-        return MaterialLaw::makeParams(poreRadius, contactAngle, surfaceTension, poreShape, droplet);
+        const auto params = LocalRules::makeParams(*this, element, scv, elemSol);
+        return makeFluidMatrixInteraction(LocalRules(params, "SpatialParams"));
     }
 
     const Dune::ReservedVector<Scalar, 4>& cornerHalfAngles(const Element& element) const
@@ -186,21 +184,20 @@ public:
     }
 
 private:
-
     std::vector<Dune::ReservedVector<Scalar, 4>> cornerHalfAngles_;
 };
 
 // TODO docme
 template<class GridGeometry, class Scalar, class MaterialLawT>
-class PNMTwoPDefaultSpatialParams : public PNMTwoPBaseSpatialParams<GridGeometry, Scalar, MaterialLawT,
-                                                                     PNMTwoPDefaultSpatialParams<GridGeometry, Scalar, MaterialLawT>>
+class TwoPDefaultSpatialParams : public TwoPBaseSpatialParams<GridGeometry, Scalar, MaterialLawT,
+                                                              TwoPDefaultSpatialParams<GridGeometry, Scalar, MaterialLawT>>
 {
-    using ParentType = PNMTwoPBaseSpatialParams<GridGeometry, Scalar, MaterialLawT,
-                                                PNMTwoPDefaultSpatialParams<GridGeometry, Scalar, MaterialLawT>>;
+    using ParentType = TwoPBaseSpatialParams<GridGeometry, Scalar, MaterialLawT,
+                                             TwoPDefaultSpatialParams<GridGeometry, Scalar, MaterialLawT>>;
 public:
     using ParentType::ParentType;
 };
 
-} // namespace Dumux
+} // namespace Dumux::PoreNetwork
 
 #endif

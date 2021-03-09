@@ -75,6 +75,7 @@ public:
                     const std::string& paramGroup = "")
     : ParentType(assembler, linearSolver)
     , paramGroup_(paramGroup)
+    , reuseMatrix_(false)
     {
         initParams_(paramGroup);
 
@@ -102,7 +103,10 @@ public:
 
         // linearize the problem at the current solution
         assembleTimer.start();
-        this->assembler().assembleJacobianAndResidual(uCurrentIter);
+        if (reuseMatrix_)
+            this->assembler().assembleResidual(uCurrentIter);
+        else
+            this->assembler().assembleJacobianAndResidual(uCurrentIter);
         assembleTimer.stop();
 
         ///////////////
@@ -193,6 +197,15 @@ public:
      */
     const std::string& paramGroup() const
     { return paramGroup_; }
+
+    /*!
+     * \brief Set whether the matrix should be reused
+     * \note If this is set to true, the matrix will not be assembled. Make
+     *       sure there is an assembled matrix that can be resused before
+     *       setting this flag to true.
+     */
+    void reuseMatrix(bool reuse = true)
+    { reuseMatrix_ = reuse; }
 
 private:
 
@@ -322,6 +335,9 @@ private:
 
     //! the parameter group for getting parameters from the parameter tree
     std::string paramGroup_;
+
+    //! check if the matrix is supposed to be reused
+    bool reuseMatrix_;
 };
 
 } // end namespace Dumux

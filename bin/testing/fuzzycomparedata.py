@@ -5,7 +5,6 @@ Applicable for all style formats like e.g. csv files.
 Fuzzy compares numbers by using absolute and/or relative difference comparison.
 
 """
-from __future__ import print_function
 import argparse
 import csv
 import json

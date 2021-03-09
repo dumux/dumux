@@ -50,7 +50,7 @@ class ForchheimersLawImplementation;
  * \tparam GridGeometry the grid geometry
  * \tparam isNetwork whether we are computing on a network grid embedded in a higher world dimension
  */
-template<class Scalar, class GridGeometry, bool isNetwork>
+template<class Scalar, class GridGeometry, class UpwindScheme, bool isNetwork>
 class CCTpfaForchheimersLaw;
 
 /*!
@@ -61,8 +61,9 @@ class CCTpfaForchheimersLaw;
 template <class TypeTag>
 class ForchheimersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
 : public CCTpfaForchheimersLaw<GetPropType<TypeTag, Properties::Scalar>,
-                         GetPropType<TypeTag, Properties::GridGeometry>,
-                         (GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension < GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimensionworld)>
+                               GetPropType<TypeTag, Properties::GridGeometry>,
+                               typename GetPropType<TypeTag, Properties::FluxVariables>::UpwindScheme,
+                              (GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension < GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimensionworld)>
 {};
 
 /*!
@@ -136,10 +137,10 @@ private:
  * \ingroup CCTpfaFlux
  * \brief Specialization of the CCTpfaForchheimersLaw grids where dim=dimWorld
  */
-template<class ScalarType, class GridGeometry>
-class CCTpfaForchheimersLaw<ScalarType, GridGeometry, /*isNetwork*/ false>
+template<class ScalarType, class GridGeometry, class UpwindScheme>
+class CCTpfaForchheimersLaw<ScalarType, GridGeometry, UpwindScheme, /*isNetwork*/ false>
 {
-    using ThisType = CCTpfaForchheimersLaw<ScalarType, GridGeometry, /*isNetwork*/ false>;
+    using ThisType = CCTpfaForchheimersLaw<ScalarType, GridGeometry, UpwindScheme, /*isNetwork*/ false>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
@@ -354,10 +355,9 @@ private:
     {
         // Get the volume flux based on Darcy's law. The value returned by this method needs to be multiplied with the
         // mobility (upwinding).
-        Scalar darcyFlux = DarcysLaw::flux(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, elemFluxVarsCache);
+        const auto flux = DarcysLaw::flux(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, elemFluxVarsCache);
         auto upwindTerm = [phaseIdx](const auto& volVars){ return volVars.mobility(phaseIdx); };
-        const Scalar darcyUpwindMobility = doUpwind_(scvf, elemVolVars, upwindTerm, !std::signbit(darcyFlux) /*insideIsUpstream*/);
-        darcyFlux *= darcyUpwindMobility;
+        const auto darcyFlux = UpwindScheme::apply(elemVolVars, scvf, upwindTerm, flux, phaseIdx);
 
         // Convert to Darcy velocity
         DimWorldVector darcyVelocity = scvf.unitOuterNormal();
@@ -412,8 +412,7 @@ private:
 
         // The fluxvariables expect a value on which an upwinding of the mobility is performed.
         // We therefore divide by the mobility here.
-        const Scalar forchheimerUpwindMobility = doUpwind_(scvf, elemVolVars, upwindTerm,
-                                                           !std::signbit(velocity * scvf.unitOuterNormal()) /*insideIsUpstream*/);
+        const auto forchheimerUpwindMobility = UpwindScheme::multiplier(elemVolVars, scvf, upwindTerm, velocity * scvf.unitOuterNormal(), phaseIdx);
 
         // Do not divide by zero. If the mobility is zero, the resulting flux with upwinding will be zero anyway.
         if (forchheimerUpwindMobility > 0.0)
@@ -440,8 +439,7 @@ private:
 
          // residual += c_F rho / mu abs(v) sqrt(K) v
          auto upwindTerm = [phaseIdx](const auto& volVars){ return volVars.density(phaseIdx) / volVars.viscosity(phaseIdx); };
-         bool insideIsUpstream = !std::signbit(oldVelocity * scvf.unitOuterNormal());
-         const Scalar rhoOverMu = doUpwind_(scvf, elemVolVars, upwindTerm, insideIsUpstream);
+         const Scalar rhoOverMu = UpwindScheme::multiplier(elemVolVars, scvf, upwindTerm, oldVelocity * scvf.unitOuterNormal(), phaseIdx);
          sqrtK.usmv(forchCoeff * rhoOverMu * oldVelocity.two_norm(), oldVelocity, residual);
      }
 
@@ -461,7 +459,6 @@ private:
         derivative = 0.0;
 
         auto upwindTerm = [phaseIdx](const auto& volVars){ return volVars.density(phaseIdx) / volVars.viscosity(phaseIdx); };
-        bool insideIsUpstream = !std::signbit(velocity * scvf.unitOuterNormal());
 
         const Scalar absV = velocity.two_norm() ;
         // This part of the derivative is only calculated if the velocity is sufficiently small:
@@ -473,7 +470,7 @@ private:
         // phase has a velocity of zero (kr=0).
         // f = sqrtK * vTimesV (this is  a matrix)
         // f *= forchCoeff density / |velocity| / viscosity (multiply all entries with scalars)
-        const Scalar rhoOverMu = doUpwind_(scvf, elemVolVars, upwindTerm, insideIsUpstream);
+        const Scalar rhoOverMu = UpwindScheme::multiplier(elemVolVars, scvf, upwindTerm, velocity * scvf.unitOuterNormal(), phaseIdx);
         if (absV > 1e-20)
         {
             for (int i = 0; i < dim; i++)
@@ -494,25 +491,6 @@ private:
         for (int i = 0; i < dim; i++)
             derivative[i][i] += (1.0 + (sqrtK[i][i]*forchCoeff * absV * rhoOverMu));
     }
-
-     template<class ElementVolumeVariables, class UpwindTermFunction>
-     static Scalar doUpwind_(const SubControlVolumeFace& scvf,
-                             const ElementVolumeVariables& elemVolVars,
-                             const UpwindTermFunction& upwindTerm,
-                             const bool insideIsUpstream)
-     {
-         static const Scalar upwindWeight = getParam<Scalar>("Flux.UpwindWeight");
-
-         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-
-         if (!insideIsUpstream) // if sign of flux is negative
-             return (upwindWeight*upwindTerm(outsideVolVars)
-                          + (1.0 - upwindWeight)*upwindTerm(insideVolVars));
-         else
-             return (upwindWeight*upwindTerm(insideVolVars)
-                          + (1.0 - upwindWeight)*upwindTerm(outsideVolVars));
-     }
 
     /*!
      * \brief Check whether all off-diagonal entries of a tensor are zero.
@@ -554,8 +532,8 @@ private:
  * \ingroup CCTpfaFlux
  * \brief Specialization of the CCTpfaForchheimersLaw grids where dim<dimWorld
  */
-template<class ScalarType, class GridGeometry>
-class CCTpfaForchheimersLaw<ScalarType, GridGeometry, /*isNetwork*/ true>
+template<class ScalarType, class GridGeometry, class UpwindScheme>
+class CCTpfaForchheimersLaw<ScalarType, GridGeometry, UpwindScheme, /*isNetwork*/ true>
 {
     static_assert(AlwaysFalse<ScalarType>::value, "Forchheimer not implemented for network grids");
 };

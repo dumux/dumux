@@ -2,65 +2,85 @@
 
 #include <dune/common/float_cmp.hh>
 
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/vangenuchtenparams.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchtenparams.hh>
-
-#include <dumux/material/fluidmatrixinteractions/porenetwork/pore/2p/regularizedlocalrules.hh>
-
-
-
+#include <dumux/common/parameters.hh>
 #include <dumux/io/container.hh>
+#include <dumux/io/gnuplotinterface.hh>
+#include <dumux/material/fluidmatrixinteractions/porenetwork/pore/2p/localrulesforplatonicbody.hh>
+#include <dumux/material/fluidmatrixinteractions/porenetwork/pore/2p/multishapelocalrules.hh>
+
 #include "testmateriallawfunctions.hh"
-
-namespace Dumux::Test {
-
-// test if endPointPc() is the same as evaluation at sw=1
-template<class Law>
-void checkEndPointPc(const typename Law::Params& params)
-{
-    const auto pcSat = Law::pc(params, Law::sweToSw(params, 1.0));
-    const auto endPointPc = Law::endPointPc(params);
-    static constexpr double eps = 1e-10;
-
-    if (Dune::FloatCmp::ne(pcSat, endPointPc, eps))
-        DUNE_THROW(Dune::Exception, "pc(sw=1) != endPointPc(): " << pcSat << " != " << endPointPc);
-}
-
-} // end namespace Dumux
 
 int main(int argc, char** argv) try
 {
     using namespace Dumux;
 
-
-    const double poreRadius = 1e-5;
-    const double contactAngle = 0.0;
+    const double poreRadius = 1e-6;
     const double surfaceTension = 0.0725;
-    const auto shape = Pore::Shape::cube; // todo more shapes
     const auto sw = Dumux::linspace(0.0, 1.0, 100);
+    const auto swForDerivatives = Dumux::linspace(1e-8, 0.7, 100); // derivatives can't be numerically reproduced for sw > 0.7. TODO: find better numeric epsilon?
+    const auto swNonReg = Dumux::linspace(1e-2, 1.0-1e-2, 100);
 
+    GnuplotInterface<double> gnuplotPc;
 
-    using LocalRules = TwoPLocalRules<double>;
-    using RegLocalRules = RegularizedTwoPLocalRules<double>;
-    const auto params = RegLocalRules::makeParams(poreRadius, contactAngle, surfaceTension, shape);
-    const auto swNonReg = Dumux::linspace(params.lowSw, params.highSw, 100);
+    using LocalRulesCubeNoReg = PoreNetwork::FluidMatrix::TwoPLocalRulesPlatonicBodyNoReg<PoreNetwork::Pore::Shape::cube>;
+    using LocalRulesCube = PoreNetwork::FluidMatrix::TwoPLocalRulesPlatonicBodyDefault<PoreNetwork::Pore::Shape::cube>;
+    using Method = LocalRulesCube::RegularizationParams::HighSwRegularizationMethod;
 
-    // set some parameters
+    const auto params = LocalRulesCubeNoReg::BasicParams().setPoreShape(PoreNetwork::Pore::Shape::cube).setPoreInscribedRadius(poreRadius).setSurfaceTension(surfaceTension);
+    LocalRulesCubeNoReg cubeLawNoReg(params);
 
+    for (const auto method : std::array{Method::linear, Method::powerLaw, Method::spline})
+    {
+        LocalRulesCube::RegularizationParams regularizationParams;
+        regularizationParams.setHighSwRegularizationMethod(method);
 
-    // Test::checkEndPointPc<VG>(params);
-    // Test::checkEndPointPc<VGReg>(params);
+        const std::string name = [&]
+        {
+            if (method == Method::linear) return "linear";
+            else if (method == Method::powerLaw) return "powerlaw";
+            else return "spline";
+        }();
 
+        LocalRulesCube cubeLaw(params, regularizationParams);
+        Dumux::Test::runMaterialLawTest("cube_with_" + name + "_regularization", cubeLaw, sw, swForDerivatives);
 
-    Dumux::Test::testValueEqualRange("Checking sw == sw(pc(sw))", sw, [](auto sw){ return sw; }, [&](auto sw) { return LocalRules::sw(params, LocalRules::pc(params, sw)); });
-    // Dumux::Test::testValueEqualRange("Checking sw == sw(pc(sw))", sw, [](auto sw){ return sw; }, [&](auto sw) { return RegLocalRules::sw(params, RegLocalRules::pc(params, sw)); });
-    // check that regularized and unregularized are the same in the region without regularization
-    Dumux::Test::testValueEqualRange("Checking NoReg::pc == Reg::pc", swNonReg, [&](auto sw){ return RegLocalRules::pc(params, sw); }, [&](auto sw) { return LocalRules::pc(params, sw); });
+        // check that regularized and unregularized are the same in the region without regularization
+        Dumux::Test::testValueEqualRange("Checking NoReg::pc == Reg::pc", swNonReg, [&](auto sw){ return cubeLawNoReg.pc(sw); }, [&](auto sw) { return cubeLaw.pc(sw); });
 
-    // Test::runMaterialLawTest<VG, RegLocalRules>("vangenuchten", params, sw, swNonReg);
+        // plot regularization part for high Sw
+        if (argc > 1 && std::atoi(argv[1]) == 1)
+        {
+            const auto swPlot = Dumux::linspace(0.989, 1.01, 100);
+            auto pc = swPlot;
+            std::transform(swPlot.begin(), swPlot.end(), pc.begin(), [&](auto s){ return cubeLaw.pc(s); });
+
+            // extend the x range by 10% on each side
+            gnuplotPc.setXRange(0.98, 1.01);
+            // gnuplotPc.setYRange(-1e-1, cubeLaw.pc(0.96)*1.01);
+            gnuplotPc.setXlabel("wetting phase saturation [-]");
+            gnuplotPc.setYlabel("capillary pressure [Pa]");
+            gnuplotPc.addDataSetToPlot(swPlot, pc, name);
+            gnuplotPc.plot("pc-Sw");
+        }
+    }
+
+    std::cout << "\n\nChecking multi shape" << std::endl;
+    using LocalRulesMultiShape = PoreNetwork::FluidMatrix::MultiShapeTwoPLocalRules<double>;
+    using Shape = Dumux::PoreNetwork::Pore::Shape;
+
+    for (const auto shape : std::array{Shape::tetrahedron, Shape::cube, Shape::octahedron, Shape::dodecahedron, Shape::icosahedron})
+    {
+        std::cout << "\nChecking " << Dumux::PoreNetwork::Pore::shapeToString(shape) << std::endl;
+        LocalRulesMultiShape::BasicParams multiParams;
+        const auto params = LocalRulesCubeNoReg::BasicParams().setPoreShape(shape).setPoreInscribedRadius(poreRadius).setSurfaceTension(surfaceTension);
+        multiParams.setParams(params);
+        LocalRulesMultiShape multiShapeLaw(multiParams);
+        auto name = Dumux::PoreNetwork::Pore::shapeToString(shape);
+        name[0] = std::tolower(name[0]);
+        Dumux::Test::runMaterialLawTest(name, multiShapeLaw, sw, swForDerivatives);
+        std::cout << "done\n" << std::endl;
+
+    }
 
     return 0;
 }

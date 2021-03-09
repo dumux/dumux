@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PoreNetworkDiscretization
+ * \ingroup PoreNetworkModels
  * \brief Base class for the finite volume geometry for porenetwork models
  */
 #ifndef DUMUX_DISCRETIZATION_PNM_GRID_GEOMETRY_HH
@@ -40,11 +40,11 @@
 #include <dumux/discretization/porenetwork/fvelementgeometry.hh>
 #include <dumux/discretization/porenetwork/subcontrolvolume.hh>
 #include <dumux/discretization/porenetwork/subcontrolvolumeface.hh>
-#include <dumux/porenetworkflow/common/throatproperties.hh>
-#include <dumux/porenetworkflow/common/poreproperties.hh>
+#include <dumux/porenetwork/common/throatproperties.hh>
+#include <dumux/porenetwork/common/poreproperties.hh>
 #include <dumux/discretization/extrusion.hh>
 
-namespace Dumux {
+namespace Dumux::PoreNetwork {
 
 /*!
  * \ingroup PoreNetworkDiscretization
@@ -69,7 +69,7 @@ public:
         coordinationNumber_ = gridData.getCoordinationNumbers();
 
         const auto numThroats = gridView.size(0);
-        throatRadius_.resize(numThroats);
+        throatInscribedRadius_.resize(numThroats);
         throatLength_.resize(numThroats);
         throatLabel_.resize(numThroats);
         throatCrossSectionalArea_.resize(numThroats);
@@ -77,6 +77,7 @@ public:
 
         useSameGeometryForAllPores_ = true;
         useSameShapeForAllThroats_ = true;
+        overwriteGridDataWithShapeSpecificValues_ = false;
 
         // first check if the same geometry shall be used for all entities ...
         if (hasParamInGroup(gridData.paramGroup(), "Grid.ThroatCrossSectionShape"))
@@ -85,6 +86,7 @@ public:
             const auto throatGeometry = Throat::shapeFromString(throatGeometryInput);
             throatGeometry_.resize(1);
             throatGeometry_[0] = throatGeometry;
+            overwriteGridDataWithShapeSpecificValues_  = getParamFromGroup<bool>(gridData.paramGroup(), "Grid.OverwriteGridDataWithShapeSpecificValues", true);
 
             std::cout << "Using '" << throatGeometryInput << "' as cross-sectional shape for all throats." << std::endl;
         }
@@ -97,7 +99,7 @@ public:
 
         // get the vertex parameters
         const auto numPores = gridView.size(dim);
-        poreRadius_.resize(numPores);
+        poreInscribedRadius_.resize(numPores);
         poreLabel_.resize(numPores);
         poreVolume_.resize(numPores);
 
@@ -120,12 +122,12 @@ public:
 
         for (const auto& vertex : vertices(gridView))
         {
-            static const auto poreRadiusIdx = gridData.parameterIndex("PoreRadius");
+            static const auto poreInscribedRadiusIdx = gridData.parameterIndex("PoreInscribedRadius");
             static const auto poreLabelIdx = gridData.parameterIndex("PoreLabel");
             const auto vIdx = gridView.indexSet().index(vertex);
             const auto& params = gridData.parameters(vertex);
-            poreRadius_[vIdx] = params[poreRadiusIdx];
-            assert(poreRadius_[vIdx] > 0.0);
+            poreInscribedRadius_[vIdx] = params[poreInscribedRadiusIdx];
+            assert(poreInscribedRadius_[vIdx] > 0.0);
             poreLabel_[vIdx] = params[poreLabelIdx];
 
             if (!useSameGeometryForAllPores())
@@ -138,9 +140,9 @@ public:
         {
             const int eIdx = gridView.indexSet().index(element);
             const auto& params = gridData.parameters(element);
-            static const auto throatRadiusIdx = gridData.parameterIndex("ThroatRadius");
+            static const auto throatInscribedRadiusIdx = gridData.parameterIndex("ThroatInscribedRadius");
             static const auto throatLengthIdx = gridData.parameterIndex("ThroatLength");
-            throatRadius_[eIdx] = params[throatRadiusIdx];
+            throatInscribedRadius_[eIdx] = params[throatInscribedRadiusIdx];
             throatLength_[eIdx] = params[throatLengthIdx];
 
             // use a default value if no throat label is given by the grid
@@ -183,7 +185,7 @@ public:
                 throatShapeFactor_[eIdx] = getThroatShapeFactor_(gridData, element, eIdx);
             }
 
-            assert(throatRadius_[eIdx] > 0.0);
+            assert(throatInscribedRadius_[eIdx] > 0.0);
             assert(throatLength_[eIdx] > 0.0);
             assert(throatCrossSectionalArea_[eIdx] > 0.0);
 
@@ -209,13 +211,13 @@ public:
     const std::vector<Label>& poreLabel() const
     { return poreLabel_; }
 
-    //! Returns the radius of the pore
-    Scalar poreRadius(const GridIndex dofIdxGlobal) const
-    { return poreRadius_[dofIdxGlobal]; }
+    //! Returns the inscribed radius of the pore
+    Scalar poreInscribedRadius(const GridIndex dofIdxGlobal) const
+    { return poreInscribedRadius_[dofIdxGlobal]; }
 
-    //! Returns the vector of pore radii
-    const std::vector<Scalar>& poreRadius() const
-    { return poreRadius_; }
+    //! Returns the vector of inscribed pore radii
+    const std::vector<Scalar>& poreInscribedRadius() const
+    { return poreInscribedRadius_; }
 
     //! Returns the volume of the pore
     Scalar poreVolume(const GridIndex dofIdxGlobal) const
@@ -225,13 +227,13 @@ public:
     const std::vector<Scalar>& poreVolume() const
     { return poreVolume_; }
 
-    //! Returns the radius of the throat
-    Scalar throatRadius(const GridIndex eIdx) const
-    { return throatRadius_[eIdx]; }
+    //! Returns the inscribed radius of the throat
+    Scalar throatInscribedRadius(const GridIndex eIdx) const
+    { return throatInscribedRadius_[eIdx]; }
 
-    //! Returns the vector of throat radii
-    const std::vector<Scalar>& throatRadius() const
-    { return throatRadius_; }
+    //! Returns the vector of inscribed throat radii
+    const std::vector<Scalar>& throatInscribedRadius() const
+    { return throatInscribedRadius_; }
 
     //! Returns the length of the throat
     Scalar throatLength(const GridIndex eIdx) const
@@ -269,7 +271,7 @@ public:
             // if a vector of pore geometries is requested (e.g., for vtk output),
             // resize the container and fill it with the same value everywhere
             const auto poreGeo = poreGeometry_[0];
-            poreGeometry_.resize(poreRadius_.size(), poreGeo);
+            poreGeometry_.resize(poreInscribedRadius_.size(), poreGeo);
         }
 
         return poreGeometry_;
@@ -287,7 +289,7 @@ public:
             // if a vector of throat cross section shapes is requested (e.g., for vtk output),
             // resize the container and fill it with the same value everywhere
             const auto throatShape = throatGeometry_[0];
-            throatGeometry_.resize(throatRadius_.size(), throatShape);
+            throatGeometry_.resize(throatInscribedRadius_.size(), throatShape);
         }
 
         return throatGeometry_;
@@ -313,7 +315,7 @@ public:
             // if a vector of throat shape factors is requested (e.g., for vtk output),
             // resize the container and fill it with the same value everywhere
             const auto shapeFactor = throatShapeFactor_[0];
-            throatShapeFactor_.resize(throatRadius_.size(), shapeFactor);
+            throatShapeFactor_.resize(throatInscribedRadius_.size(), shapeFactor);
         }
 
         return throatShapeFactor_;
@@ -356,10 +358,10 @@ private:
             {
                 static const Scalar fixedHeight = getParamFromGroup<Scalar>(gridData.paramGroup(), "Grid.PoreHeight", -1.0);
                 const Scalar h = fixedHeight > 0.0 ? fixedHeight : gridData.getParameter(vertex, "PoreHeight");
-                return Pore::volume(Pore::Shape::cylinder, poreRadius(vIdx), h);
+                return Pore::volume(Pore::Shape::cylinder, poreInscribedRadius(vIdx), h);
             }
             else
-                return Pore::volume(poreGeometry(vIdx), poreRadius(vIdx));
+                return Pore::volume(poreGeometry(vIdx), poreInscribedRadius(vIdx));
         }
     }
 
@@ -367,8 +369,8 @@ private:
     template<class GridData>
     Scalar getThroatCrossSectionalArea_(const GridData& gridData, const Element& element, const std::size_t eIdx) const
     {
-        static const bool gridHasThroatCrossSectionalArea = gridData.gridHasVertexParameter("ThroatCrossSectionalArea");
-        if (gridHasThroatCrossSectionalArea)
+        static const bool gridHasThroatCrossSectionalArea = gridData.gridHasElementParameter("ThroatCrossSectionalArea");
+        if (gridHasThroatCrossSectionalArea && !overwriteGridDataWithShapeSpecificValues_)
         {
             static const auto throatAreaIdx = gridData.parameterIndex("ThroatCrossSectionalArea");
             return gridData.parameters(element)[throatAreaIdx];
@@ -378,10 +380,10 @@ private:
             if (const auto shape = throatCrossSectionShape(eIdx); shape == Throat::Shape::rectangle)
             {
                 static const auto throatHeight = getParamFromGroup<Scalar>(gridData.paramGroup(), "Grid.ThroatHeight");
-                return Throat::totalCrossSectionalAreaForRectangle(throatRadius_[eIdx], throatHeight);
+                return Throat::totalCrossSectionalAreaForRectangle(throatInscribedRadius_[eIdx], throatHeight);
             }
             else
-                return Throat::totalCrossSectionalArea(shape, throatRadius_[eIdx]);
+                return Throat::totalCrossSectionalArea(shape, throatInscribedRadius_[eIdx]);
         }
     }
 
@@ -389,8 +391,8 @@ private:
     template<class GridData>
     Scalar getThroatShapeFactor_(const GridData& gridData, const Element& element, const std::size_t eIdx) const
     {
-        static const bool gridHasThroatShapeFactor = gridData.gridHasVertexParameter("ThroatShapeFactor");
-        if (gridHasThroatShapeFactor)
+        static const bool gridHasThroatShapeFactor = gridData.gridHasElementParameter("ThroatShapeFactor");
+        if (gridHasThroatShapeFactor && !overwriteGridDataWithShapeSpecificValues_)
         {
             static const auto throatShapeFactorIdx = gridData.parameterIndex("ThroatShapeFactor");
             return gridData.parameters(element)[throatShapeFactorIdx];
@@ -400,7 +402,7 @@ private:
             if (const auto shape = throatCrossSectionShape(eIdx); shape == Throat::Shape::rectangle)
             {
                 static const auto throatHeight = getParamFromGroup<Scalar>(gridData.paramGroup(), "Grid.ThroatHeight");
-                return Throat::shapeFactorRectangle(throatRadius_[eIdx], throatHeight);
+                return Throat::shapeFactorRectangle(throatInscribedRadius_[eIdx], throatHeight);
             }
             else if (shape == Throat::Shape::polygon || shape == Throat::Shape::scaleneTriangle)
             {
@@ -408,7 +410,7 @@ private:
                 return shapeFactor;
             }
             else
-                return Throat::shapeFactor<Scalar>(shape, throatRadius_[eIdx]);
+                return Throat::shapeFactor<Scalar>(shape, throatInscribedRadius_[eIdx]);
         }
     }
 
@@ -441,22 +443,23 @@ private:
     }
 
     mutable std::vector<Pore::Shape> poreGeometry_;
-    std::vector<Scalar> poreRadius_;
+    std::vector<Scalar> poreInscribedRadius_;
     std::vector<Scalar> poreVolume_;
     std::vector<Label> poreLabel_; // 0:no, 1:general, 2:coupling1, 3:coupling2, 4:inlet, 5:outlet
     std::vector<SmallLocalIndex> coordinationNumber_;
     mutable std::vector<Throat::Shape> throatGeometry_;
     mutable std::vector<Scalar> throatShapeFactor_;
-    std::vector<Scalar> throatRadius_;
+    std::vector<Scalar> throatInscribedRadius_;
     std::vector<Scalar> throatLength_;
     std::vector<Label> throatLabel_; // 0:no, 1:general, 2:coupling1, 3:coupling2, 4:inlet, 5:outlet
     std::vector<Scalar> throatCrossSectionalArea_;
     bool useSameGeometryForAllPores_;
     bool useSameShapeForAllThroats_;
+    bool overwriteGridDataWithShapeSpecificValues_;
 };
 
 /*!
- * \ingroup PoreNetworkDiscretization
+ * \ingroup PoreNetworkModels
  * \brief The default traits
  * \tparam the grid view type
  */
@@ -482,7 +485,7 @@ template<class Scalar,
          class GridView,
          bool enableGridGeometryCache = false,
          class Traits = PNMDefaultGridGeometryTraits<GridView> >
-class PNMGridGeometry;
+class GridGeometry;
 
 /*!
  * \ingroup PoreNetworkDiscretization
@@ -490,11 +493,11 @@ class PNMGridGeometry;
  * \note For caching enabled we store the fv geometries for the whole grid view which is memory intensive but faster
  */
 template<class Scalar, class GV, class Traits>
-class PNMGridGeometry<Scalar, GV, true, Traits>
+class GridGeometry<Scalar, GV, true, Traits>
 : public BaseGridGeometry<GV, Traits>
 , public Traits::PNMData
 {
-    using ThisType = PNMGridGeometry<Scalar, GV, true, Traits>;
+    using ThisType = GridGeometry<Scalar, GV, true, Traits>;
     using ParentType = BaseGridGeometry<GV, Traits>;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
@@ -525,7 +528,7 @@ public:
     using GridView = GV;
 
     //! Constructor
-    PNMGridGeometry(const GridView gridView)
+    GridGeometry(const GridView gridView)
     : ParentType(gridView)
     {
         static_assert(GridView::dimension == 1, "Porenetwork model only allow GridView::dimension == 1!");
@@ -613,8 +616,9 @@ public:
             LocalIndexType scvfLocalIdx = 0;
             scvfs_[eIdx][0] = SubControlVolumeFace(elementGeometry.center(),
                                                    std::move(unitOuterNormal),
+                                                   this->throatCrossSectionalArea(this->elementMapper().index(element)),
                                                    scvfLocalIdx++,
-                                                   std::vector<LocalIndexType>({0, 1}));
+                                                   std::array<LocalIndexType, 2>({0, 1}));
         }
     }
 
@@ -665,17 +669,17 @@ private:
 };
 
 /*!
- * \ingroup PoreNetworkDiscretization
+ * \ingroup PoreNetworkModels
  * \brief Base class for the finite volume geometry for porenetwork models
  * \note For caching disabled we store only some essential index maps to build up local systems on-demand in
  *       the corresponding FVElementGeometry
  */
 template<class Scalar, class GV, class Traits>
-class PNMGridGeometry<Scalar, GV, false, Traits>
+class GridGeometry<Scalar, GV, false, Traits>
 : public BaseGridGeometry<GV, Traits>
 , public Traits::PNMData
 {
-    using ThisType = PNMGridGeometry<Scalar, GV, false, Traits>;
+    using ThisType = GridGeometry<Scalar, GV, false, Traits>;
     using ParentType = BaseGridGeometry<GV, Traits>;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
@@ -707,7 +711,7 @@ public:
     using GridView = GV;
 
     //! Constructor
-    PNMGridGeometry(const GridView gridView)
+    GridGeometry(const GridView gridView)
     : ParentType(gridView)
     {
         static_assert(GridView::dimension == 1, "Porenetwork model only allow GridView::dimension == 1!");
@@ -797,6 +801,6 @@ private:
     std::vector<bool> boundaryDofIndices_;
 };
 
-} // end namespace Dumux
+} // end namespace Dumux::PoreNetwork
 
 #endif

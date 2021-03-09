@@ -24,11 +24,14 @@
 #ifndef DUMUX_BINARY_COEFF_AIR_XYLENE_HH
 #define DUMUX_BINARY_COEFF_AIR_XYLENE_HH
 
+#include <algorithm>
+
+#include <dune/common/math.hh>
+
 #include <dumux/material/components/air.hh>
 #include <dumux/material/components/xylene.hh>
 
-namespace Dumux {
-namespace BinaryCoeff {
+namespace Dumux::BinaryCoeff {
 
 /*!
  * \ingroup Binarycoefficients
@@ -61,14 +64,12 @@ public:
         using Air = Dumux::Components::Air<Scalar>;
         using Xylene = Dumux::Components::Xylene<Scalar>;
 
-        using std::min;
-        using std::max;
-        temperature = max(temperature, 1e-9); // regularization
-        temperature = min(temperature, 500.0); // regularization
-        pressure = max(pressure, 0.0); // regularization
-        pressure = min(pressure, 1e8); // regularization
+        using std::clamp;
+        temperature = clamp(temperature, 1e-9, 500.0); // regularization
+        pressure = clamp(pressure, 0.0, 1e8); // regularization
 
         using std::pow;
+        using Dune::power;
         using std::sqrt;
         using std::exp;
         const Scalar M_x = 1e3*Xylene::molarMass(); // [g/mol] molecular weight of xylene
@@ -82,6 +83,7 @@ public:
         const Scalar T_scal_x = 1.15*Tb_x;
         const Scalar T_scal_ax = sqrt(T_scal_a*T_scal_x);
 
+        using std::max;
         Scalar T_star = temperature/T_scal_ax;
         T_star = max(T_star, 1e-5); // regularization
 
@@ -90,7 +92,7 @@ public:
         const Scalar B_ = 0.00217 - 0.0005*sqrt(1.0/M_a + 1.0/M_x);
         const Scalar Mr = (M_a + M_x)/(M_a*M_x);
         const Scalar D_ax = (B_*pow(temperature,1.5)*sqrt(Mr))
-                           /(1e-5*pressure*pow(sigma_ax, 2.0)*Omega); // [cm^2/s]
+                           /(1e-5*pressure*power(sigma_ax, 2)*Omega); // [cm^2/s]
 
         return D_ax*1e-4;   //  [m^2/s]
     }
@@ -109,7 +111,6 @@ public:
     }
 };
 
-} // end namespace BinaryCoeff
-} // end namespace Dumux
+} // end namespace Dumux::BinaryCoeff
 
 #endif

@@ -31,7 +31,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
 #include <dumux/discretization/method.hh>
-#include <dumux/parallel/vectorcommdatahandle.hh>
+#include <dumux/linear/parallelhelpers.hh>
 
 #include "jacobianpattern.hh"
 #include "diffmethod.hh"
@@ -124,7 +124,7 @@ public:
             localAssembler.assembleJacobianAndResidual(*jacobian_, *residual_, *gridVariables_, partialReassembler);
         });
 
-        enforcePeriodicConstraints_(*jacobian_, *residual_, *gridGeometry_);
+        enforcePeriodicConstraints_(*jacobian_, *residual_, curSol, *gridGeometry_);
     }
 
     /*!
@@ -167,15 +167,29 @@ public:
         ResidualType residual(numDofs());
         assembleResidual(residual, curSol);
 
-        // for box communicate the residual with the neighboring processes
-        if (isBox && gridView().comm().size() > 1)
+        // issue a warning if the caluclation is used in parallel with overlap
+        static bool warningIssued = false;
+
+        if (gridView().overlapSize(0) == 0)
         {
-            using VertexMapper = typename GridGeometry::VertexMapper;
-            VectorCommDataHandleSum<VertexMapper, SolutionVector, GridGeometry::GridView::dimension>
-                sumResidualHandle(gridGeometry_->vertexMapper(), residual);
-            gridView().communicate(sumResidualHandle,
-                                   Dune::InteriorBorder_InteriorBorder_Interface,
-                                   Dune::ForwardCommunication);
+            if constexpr (isBox)
+            {
+                using DM = typename GridGeometry::VertexMapper;
+                using PVHelper = ParallelVectorHelper<GridView, DM, GridView::dimension>;
+
+                PVHelper vectorHelper(gridView(), gridGeometry_->vertexMapper());
+
+                vectorHelper.makeNonOverlappingConsistent(residual);
+            }
+        }
+        else if (!warningIssued)
+        {
+            if (gridView().comm().size() > 1 && gridView().comm().rank() == 0)
+                std::cout << "\nWarning: norm calculation adds entries corresponding to\n"
+                << "overlapping entities multiple times. Please use the norm\n"
+                << "function provided by a linear solver instead." << std::endl;
+
+            warningIssued = true;
         }
 
         // calculate the square norm of the residual
@@ -397,7 +411,7 @@ private:
     }
 
     template<class GG> std::enable_if_t<GG::discMethod == DiscretizationMethod::box, void>
-    enforcePeriodicConstraints_(JacobianMatrix& jac, SolutionVector& res, const GG& gridGeometry)
+    enforcePeriodicConstraints_(JacobianMatrix& jac, SolutionVector& res, const SolutionVector& curSol, const GG& gridGeometry)
     {
         for (const auto& m : gridGeometry.periodicVertexMap())
         {
@@ -410,6 +424,7 @@ private:
                     jac[m.first][it.index()] += (*it);
 
                 // enforce constraint in second row
+                res[m.second] = curSol[m.second] - curSol[m.first];
                 for (auto it = jac[m.second].begin(); it != end; ++it)
                     (*it) = it.index() == m.second ? 1.0 : it.index() == m.first ? -1.0 : 0.0;
             }
@@ -417,7 +432,7 @@ private:
     }
 
     template<class GG> std::enable_if_t<GG::discMethod != DiscretizationMethod::box, void>
-    enforcePeriodicConstraints_(JacobianMatrix& jac, SolutionVector& res, const GG& gridGeometry) {}
+    enforcePeriodicConstraints_(JacobianMatrix& jac, SolutionVector& res, const SolutionVector& curSol, const GG& gridGeometry) {}
 
     //! pointer to the problem to be solved
     std::shared_ptr<const Problem> problem_;

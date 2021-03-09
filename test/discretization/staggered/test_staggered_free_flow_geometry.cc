@@ -5,7 +5,7 @@
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
- *   the Free Software Foundation, either version 2 of the License, or       *
+ *   the Free Software Foundation, either version 3 of the License, or       *
  *   (at your option) any later version.                                     *
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
@@ -56,7 +56,7 @@ public:
 } // end namespace Dumux
 #endif
 
-int main (int argc, char *argv[]) try
+int main (int argc, char *argv[])
 {
     using namespace Dumux;
 
@@ -190,12 +190,4 @@ int main (int argc, char *argv[]) try
             }
         }
     }
-}
-// //////////////////////////////////
-//   Error handler
-// /////////////////////////////////
-catch (Dune::Exception &e) {
-
-    std::cout << e << std::endl;
-    return 1;
 }

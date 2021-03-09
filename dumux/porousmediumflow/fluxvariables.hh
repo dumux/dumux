@@ -40,11 +40,11 @@ namespace Dumux {
  *        molecular diffusive and heat conduction fluxes.
  *
  * \param TypeTag The type tag for access to type traits
- * \param UpwindScheme The upwind scheme to be applied to advective fluxes
+ * \param UpScheme The upwind scheme to be applied to advective fluxes
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag,
-         class UpwindScheme = UpwindScheme<GetPropType<TypeTag, Properties::GridGeometry>> >
+         class UpScheme = UpwindScheme<GetPropType<TypeTag, Properties::GridGeometry>> >
 class PorousMediumFluxVariables
 : public FluxVariablesBase<GetPropType<TypeTag, Properties::Problem>,
                            typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView,
@@ -61,6 +61,7 @@ class PorousMediumFluxVariables
     };
 
 public:
+    using UpwindScheme = UpScheme;
     using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
     using MolecularDiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
     using HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>;
@@ -119,7 +120,7 @@ public:
                                                 phaseIdx,
                                                 this->elemFluxVarsCache());
         else
-            return {0.0};
+            return Dune::FieldVector<Scalar, numComponents>(0.0);
     }
 
     /*!

@@ -27,6 +27,8 @@
 #include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/diffusivepart.hh>
 #include "properties.hh"
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 /*!
  * \ingroup SequentialTwoPModel
@@ -54,7 +56,6 @@ private:
       using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
       using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-      using MaterialLaw = typename SpatialParams::MaterialLaw;
 
       using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
       using FluidState = GetPropType<TypeTag, Properties::FluidState>;
@@ -112,6 +113,11 @@ public:
         Scalar mobilityWI = 0;
         Scalar mobilityNwI = 0;
 
+        // old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
+
         if (preComput_)
         {
             mobilityWI = CellDataI.mobility(wPhaseIdx);
@@ -123,9 +129,9 @@ public:
             fluidState.setPressure(wPhaseIdx, referencePressure);
             fluidState.setPressure(nPhaseIdx, referencePressure);
             fluidState.setTemperature(temperature);
-            mobilityWI = MaterialLaw::krw(problem_.spatialParams().materialLawParams(element), satI);
+            mobilityWI = fluidMatrixInteraction.krw(satI);
             mobilityWI /= FluidSystem::viscosity(fluidState, wPhaseIdx);
-            mobilityNwI = MaterialLaw::krn(problem_.spatialParams().materialLawParams(element), satI);
+            mobilityNwI = fluidMatrixInteraction.krn(satI);
             mobilityNwI /= FluidSystem::viscosity(fluidState, nPhaseIdx);
         }
 
@@ -172,9 +178,14 @@ public:
                 fluidState.setPressure(nPhaseIdx, referencePressure);
                 fluidState.setTemperature(temperature);
 
-                mobilityWJ = MaterialLaw::krw(problem_.spatialParams().materialLawParams(neighbor), satJ);
+                // old material law interface is deprecated: Replace this by
+                // const auto& fluidMatrixInteractionNeighbor = spatialParams.fluidMatrixInteractionAtPos(neighbor.geometry().center());
+                // after the release of 3.3, when the deprecated interface is no longer supported
+                const auto fluidMatrixInteractionNeighbor = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), neighbor);
+
+                mobilityWJ = fluidMatrixInteractionNeighbor.krw(satJ);
                 mobilityWJ /= FluidSystem::viscosity(fluidState, wPhaseIdx);
-                mobilityNwJ = MaterialLaw::krn(problem_.spatialParams().materialLawParams(neighbor), satJ);
+                mobilityNwJ = fluidMatrixInteractionNeighbor.krn(satJ);
                 mobilityNwJ /= FluidSystem::viscosity(fluidState, nPhaseIdx);
             }
             Scalar mobilityWMean = 0.5*(mobilityWI + mobilityWJ);
@@ -207,9 +218,9 @@ public:
             fluidState.setPressure(wPhaseIdx, referencePressure);
             fluidState.setPressure(nPhaseIdx, referencePressure);
             fluidState.setTemperature(temperature);
-            mobilityWJ = MaterialLaw::krw(problem_.spatialParams().materialLawParams(element), satJ);
+            mobilityWJ = fluidMatrixInteraction.krw(satJ);
             mobilityWJ /= FluidSystem::viscosity(fluidState, wPhaseIdx);
-            mobilityNwJ = MaterialLaw::krn(problem_.spatialParams().materialLawParams(element), satJ);
+            mobilityNwJ = fluidMatrixInteraction.krn(satJ);
             mobilityNwJ /= FluidSystem::viscosity(fluidState, nPhaseIdx);
 
             Scalar mobWMean = 0.5 * (mobilityWI + mobilityWJ);

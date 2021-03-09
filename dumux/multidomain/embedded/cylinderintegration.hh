@@ -33,6 +33,7 @@
 #include <iterator>
 #include <utility>
 #include <tuple>
+#include <limits>
 
 #include <dune/common/fvector.hh>
 
@@ -62,28 +63,27 @@ class CylinderIntegration
 public:
     /*!
      * \brief Constructor
-     * \param rStep characteristic relative integration length (real number between 0 and 1)
+     * \param rStep characteristic relative integration length (positive real number between 0 and 1)
      * \note half the characteristic length means 2*2*2=8 times more integration points
      */
     CylinderIntegration(const Scalar rStep)
     {
-        using std::ceil; using std::clamp;
-        rSamples_ = std::max<std::size_t>(1, ceil(1.0/clamp(rStep, 1.0/std::numeric_limits<std::size_t>::max(), 1.0)));
+        rSamples_ = characteristicLengthToNumSamples_(rStep);
         initialize_();
     }
 
     /*!
      * \brief Constructor
-     * \param rStep characteristic relative integration length in r-direction (real number between 0 and 1)
-     * \param zSamples characteristic relative integration length in z-direction (real number between 0 and 1)
+     * \param rStep characteristic relative integration length in r-direction (positive real number between 0 and 1)
+     * \param zStep characteristic relative integration length in z-direction (positive real number between 0 and 1)
      * \note Use this constructor to achieve a non-balanced (away from 1) aspect ratio between r and z-direction
      */
     CylinderIntegration(const Scalar rStep, const Scalar zStep)
     : zStepFixed_(true)
     {
         using std::ceil; using std::clamp;
-        rSamples_ = std::max<std::size_t>(1, ceil(1.0/clamp(rStep, 1.0/std::numeric_limits<std::size_t>::max(), 1.0)));
-        zSamples_ = std::max<std::size_t>(1, ceil(1.0/clamp(zStep, 1.0/std::numeric_limits<std::size_t>::max(), 1.0)));
+        rSamples_ = characteristicLengthToNumSamples_(rStep);
+        zSamples_ = characteristicLengthToNumSamples_(zStep);
         initialize_();
     }
 
@@ -198,6 +198,17 @@ private:
                 if (t > 2*M_PI) t -= 2*M_PI;
             }
         }
+    }
+
+    // invert characteristic length (between 0 and 1)
+    // and make sure there is no integer wrap around for small ratios
+    std::size_t characteristicLengthToNumSamples_(const Scalar cl) const
+    {
+        using std::clamp; using std::min; using std::max; using std::ceil; using std::nexttoward;
+        const Scalar clampedCl = clamp(cl, std::numeric_limits<Scalar>::min(), 1.0);
+        const Scalar floatNumSamples = ceil(1.0/clampedCl);
+        const Scalar largestValidFloat = nexttoward(std::numeric_limits<std::size_t>::max(), 0.0);
+        return static_cast<std::size_t>(min(floatNumSamples, largestValidFloat));
     }
 
     bool zStepFixed_ = false;

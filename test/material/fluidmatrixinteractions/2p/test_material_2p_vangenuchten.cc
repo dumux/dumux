@@ -2,11 +2,7 @@
 
 #include <dune/common/float_cmp.hh>
 
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/vangenuchtenparams.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchtenparams.hh>
 
 #include <dumux/io/container.hh>
 #include "testmateriallawfunctions.hh"
@@ -15,53 +11,53 @@ namespace Dumux::Test {
 
 // test if endPointPc() is the same as evaluation at sw=1
 template<class Law>
-void checkEndPointPc(const typename Law::Params& params)
+void checkEndPointPc(const Law& law)
 {
-    const auto pcSat = Law::pc(params, Law::sweToSw(params, 1.0));
-    const auto endPointPc = Law::endPointPc(params);
-    static constexpr double eps = 1e-10;
+    const auto pcSat = law.pc(Law::EffToAbs::sweToSw(1.0, law.effToAbsParams()));
+    const auto endPointPc = law.endPointPc();
+    static constexpr double eps = 1e-7;
 
-    if (Dune::FloatCmp::ne(pcSat, endPointPc, eps))
+    if (Dune::FloatCmp::lt(eps, std::abs(pcSat-endPointPc)))
         DUNE_THROW(Dune::Exception, "pc(sw=1) != endPointPc(): " << pcSat << " != " << endPointPc);
 }
 
 } // end namespace Dumux
 
-int main(int argc, char** argv) try
+int main(int argc, char** argv)
 {
     using namespace Dumux;
 
-    using VGRegEff = RegularizedVanGenuchten<double>;
-    using VGEff = VanGenuchten<double>;
-    using VGReg = EffToAbsLaw<VGRegEff>;
-    using VG = EffToAbsLaw<VGEff, VGReg::Params>;
+    using VGReg = FluidMatrix::VanGenuchtenDefault<double>;
+    using VG = FluidMatrix::VanGenuchtenNoReg<double>;
 
     // set some parameters
-    VGReg::Params params;
-    params.setVgAlpha(6.66e-5);
-    params.setVgn(3.652);
-    params.setVgl(0.5);
-    params.setSwr(0.1);
-    params.setSnr(0.1);
-    params.setPcLowSw(0.01);
-    params.setPcHighSw(0.99);
-    params.setKrnLowSw(0.1);
-    params.setKrwHighSw(0.9);
+    const double alpha = 6.66e-5;
+    const double n = 3.652;
+    const double l = 0.5;
+    VGReg::BasicParams params(alpha, n, l);
 
-    Test::checkEndPointPc<VG>(params);
-    Test::checkEndPointPc<VGReg>(params);
+    VGReg::EffToAbsParams eaParams;
+    eaParams.setSwr(0.1);
+    eaParams.setSnr(0.1);
 
-    const auto sw = Dumux::linspace(0.0, 1.0, 100);
-    const auto swNonReg = Dumux::linspace(VGReg::sweToSw(params, params.pcLowSw()), VGReg::sweToSw(params, params.pcHighSw()), 100);
+    VGReg::RegularizationParams regParams;
+    regParams.setPcLowSwe(0.01);
+    regParams.setPcHighSwe(0.99);
+    regParams.setKrnLowSwe(0.1);
+    regParams.setKrwHighSwe(0.9);
 
-    Test::runMaterialLawTest<VG, VGReg>("vangenuchten", params, sw, swNonReg);
-    Test::runEffToAbsTest<VGRegEff, VGReg>("vangenuchten-efftoabs", params, sw);
+    VGReg vgRegLaw(params, eaParams, regParams);
+    VG vgLaw(params, eaParams);
+
+    Test::checkEndPointPc(vgRegLaw);
+    Test::checkEndPointPc(vgLaw);
+
+    const auto sw = linspace(0.0, 1.0, 100);
+    const auto swNonReg = linspace(VGReg::EffToAbs::sweToSw(regParams.pcLowSwe(), eaParams), VGReg::EffToAbs::sweToSw(regParams.pcHighSwe(), eaParams), 100);
+
+    Test::runMaterialLawTest("vangenuchten", vgLaw, vgRegLaw, sw, swNonReg);
+    Test::runEffToAbsTest("vangenuchten-efftoabs", vgLaw, sw);
+    Test::runEffToAbsTest("vangenuchten-reg-efftoabs", vgRegLaw, sw);
 
     return 0;
-}
-// error handler
-catch (const Dune::Exception& e)
-{
-    std::cerr << "Test failed with exception: " << e << std::endl;
-    return 1;
 }

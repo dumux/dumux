@@ -61,7 +61,7 @@
 
 #include <dumux/common/properties.hh>
 
-#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/somerton.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 
 #include <dumux/porousmediumflow/properties.hh>
@@ -222,4 +222,4 @@ struct IOFields<TypeTag, TTag::TwoPOneCNI> { using type = EnergyIOFields<TwoPOne
 } // end namespace Properties
 } // end namespace Dumux
 
-#endif // DUMUX_2P1C_MODEL_HH
+#endif

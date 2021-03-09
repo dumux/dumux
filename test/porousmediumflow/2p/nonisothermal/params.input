@@ -1,0 +1,29 @@
+[TimeLoop]
+DtInitial = 250 # [s]
+TEnd = 1e4 # [s]
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 60 40
+Cells = 24 16
+
+[Problem]
+Name = injection2pni
+
+[Newton]
+WriteConvergence = 1 # write convergence behaviour to disk?
+
+[Component]
+SolidDensity = 2700
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 790
+
+[SpatialParams]
+FineMaterial.Swr = 0.2
+FineMaterial.Snr = 0.0
+FineMaterial.BrooksCoreyPcEntry = 1e4
+FineMaterial.BrooksCoreyLambda = 2.0
+CoarseMaterial.Swr = 0.2
+CoarseMaterial.Snr = 0.0
+CoarseMaterial.BrooksCoreyPcEntry = 1e4
+CoarseMaterial.BrooksCoreyLambda = 2.0

@@ -1,0 +1,23 @@
+[TimeLoop]
+DtInitial = 250 # [s]
+TEnd = 300000 # [s]
+MaxTimeStepSize = 10000 # [s]
+
+[Grid]
+File = grids/fracture.msh
+
+[Problem]
+Name = fracture
+EnableGravity = false
+
+[LinearSolver]
+ResidualReduction = 1e-16
+
+[Newton]
+MaxRelativeShift = 1e-10
+
+[SpatialParams]
+Swr = 0.05
+Snr = 0.0
+VanGenuchtenN = 4.7
+VanGenuchtenAlpha = 0.0037

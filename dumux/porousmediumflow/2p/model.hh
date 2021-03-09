@@ -59,7 +59,7 @@
 
 #include <dumux/common/properties.hh>
 
-#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/somerton.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/material/spatialparams/fv.hh>
 
@@ -110,7 +110,7 @@ struct TwoPModelTraits
  * \tparam PT The type used for permeabilities
  * \tparam MT The model traits
  * \tparam SR The class used for reconstruction of
- *            non-wetting phase saturations in scvs
+ *            nonwetting phase saturations in scvs
  */
 template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class SR>
 struct TwoPVolumeVariablesTraits
@@ -182,7 +182,7 @@ private:
 
     static constexpr auto DM = GetPropType<TypeTag, Properties::GridGeometry>::discMethod;
     static constexpr bool enableIS = getPropValue<TypeTag, Properties::EnableBoxInterfaceSolver>();
-    // class used for scv-wise reconstruction of non-wetting phase saturations
+    // class used for scv-wise reconstruction of nonwetting phase saturations
     using SR = TwoPScvSaturationReconstruction<DM, enableIS>;
 
     using Traits = TwoPVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, SR>;
@@ -223,7 +223,7 @@ private:
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
     static constexpr auto DM = GetPropType<TypeTag, Properties::GridGeometry>::discMethod;
     static constexpr bool enableIS = getPropValue<TypeTag, Properties::EnableBoxInterfaceSolver>();
-    // class used for scv-wise reconstruction of non-wetting phase saturations
+    // class used for scv-wise reconstruction of nonwetting phase saturations
     using SR = TwoPScvSaturationReconstruction<DM, enableIS>;
     using BaseTraits = TwoPVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, SR>;
 

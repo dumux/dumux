@@ -1,0 +1,12 @@
+[Grid]
+NumPores = 10 10 10
+UpperRight = 1e-3 1e-3 1e-3
+NumSubregions = 1
+
+PoreInscribedRadius = 1e-5
+PoreGeometry = Sphere
+ThroatCrossSectionShape = Circle
+
+Subregion0.LowerLeft = 0 0 0
+Subregion0.UpperRight = 0.5e-3 0.5e-3 0.5e-3
+Subregion0.PoreInscribedRadius = 2e-5

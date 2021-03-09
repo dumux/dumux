@@ -18,30 +18,32 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup PoreNetworkModels
  * \brief This file contains the data which is required to calculate
  *        the fluxes of the pore network model over a face of a finite volume.
  */
 #ifndef DUMUX_FLUX_PNM_ADVECTION_HH
 #define DUMUX_FLUX_PNM_ADVECTION_HH
 
-namespace Dumux
-{
+#include <array>
+#include <dumux/common/parameters.hh>
 
-namespace Detail {
+namespace Dumux::PoreNetwork::Detail {
 
 template<class... TransmissibilityLawTypes>
-struct Transmissibility : public TransmissibilityLawTypes...
-{};
+struct Transmissibility : public TransmissibilityLawTypes... {};
 
-}
+} // end namespace Dumux::PoreNetwork::Detail
+
+namespace Dumux::PoreNetwork {
 
 /*!
  * \file
- * \ingroup PoreNetworkFlux
+ * \ingroup PoreNetworkModels
  * \brief Hagen–Poiseuille-type flux law to describe the advective flux for pore-network models.
  */
 template<class ScalarT, class... TransmissibilityLawTypes>
-class PoreNetworkCreepingFlow
+class CreepingFlow
 {
 
 public:
@@ -92,7 +94,7 @@ public:
             // The transmissibility is with respect to the effective throat length (potentially dropping the pore body radii).
             // For gravity, we need to consider the total throat length (i.e., the cell-center to cell-center distance).
             // This might cause some inconsistencies TODO: is there a better way?
-            volumeFlow += transmissibility * element.geometry().volume() * rho * g;
+            volumeFlow += transmissibility * fluxVarsCache.poreToPoreDistance() * rho * g;
         }
 
         return volumeFlow;
@@ -144,11 +146,11 @@ public:
     {
         static_assert(ElementVolumeVariables::VolumeVariables::numFluidPhases() == 1);
         const Scalar t = calculateTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, 0);
-        return std::array<Scalar, 2>{t, -t};
+        return {t, -t};
     }
 };
 
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

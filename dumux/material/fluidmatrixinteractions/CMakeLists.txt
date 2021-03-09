@@ -10,6 +10,7 @@ add_subdirectory(porenetwork)
 install(FILES
 diffusivityconstanttortuosity.hh
 diffusivitymillingtonquirk.hh
+fluidmatrixinteraction.hh
 permeabilitykozenycarman.hh
 porositydeformation.hh
 porosityprecipitation.hh

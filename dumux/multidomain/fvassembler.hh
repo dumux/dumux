@@ -38,6 +38,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/jacobianpattern.hh>
+#include <dumux/linear/parallelhelpers.hh>
 
 #include "couplingjacobianpattern.hh"
 #include "subdomaincclocalassembler.hh"
@@ -150,6 +151,7 @@ public:
     , gridVariablesTuple_(gridVariables)
     , timeLoop_()
     , isStationaryProblem_(true)
+    , warningIssued_(false)
     {
         static_assert(isImplicit(), "Explicit assembler for stationary problem doesn't make sense!");
         std::cout << "Instantiated assembler for a stationary problem." << std::endl;
@@ -173,6 +175,7 @@ public:
     , timeLoop_(timeLoop)
     , prevSol_(&prevSol)
     , isStationaryProblem_(false)
+    , warningIssued_(false)
     {
         std::cout << "Instantiated assembler for an instationary problem." << std::endl;
     }
@@ -220,17 +223,57 @@ public:
     }
 
     //! compute the residual and return it's vector norm
-    //! TODO: this needs to be adapted in parallel
     Scalar residualNorm(const SolutionVector& curSol)
     {
         ResidualType residual;
         setResidualSize(residual);
         assembleResidual(residual, curSol);
 
-        // calculate the square norm of the residual
-        const Scalar result2 = residual.two_norm2();
+        // calculate the squared norm of the residual
+        Scalar resultSquared = 0.0;
+
+        // for box communicate the residual with the neighboring processes
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(residual)), [&](const auto domainId)
+        {
+            const auto gridGeometry = std::get<domainId>(gridGeometryTuple_);
+            const auto& gridView = gridGeometry->gridView();
+
+            if (gridView.overlapSize(0) == 0)
+            {
+                if constexpr (GridGeometry<domainId>::discMethod == DiscretizationMethod::box)
+                {
+                    using GV = typename GridGeometry<domainId>::GridView;
+                    using DM = typename GridGeometry<domainId>::VertexMapper;
+                    using PVHelper = ParallelVectorHelper<GV, DM, GV::dimension>;
+
+                    PVHelper vectorHelper(gridView, gridGeometry->vertexMapper());
+
+                    vectorHelper.makeNonOverlappingConsistent(residual[domainId]);
+                }
+            }
+            else if (!warningIssued_)
+            {
+                if (gridView.comm().size() > 1 && gridView.comm().rank() == 0)
+                    std::cout << "\nWarning: norm calculation adds entries corresponding to\n"
+                              << "overlapping entities multiple times. Please use the norm\n"
+                              << "function provided by a linear solver instead." << std::endl;
+
+                warningIssued_ = true;
+            }
+
+            Scalar localNormSquared = residual[domainId].two_norm2();
+
+            if (gridView.comm().size() > 1)
+            {
+                localNormSquared = gridView.comm().sum(localNormSquared);
+            }
+
+            resultSquared += localNormSquared;
+        });
+
         using std::sqrt;
-        return sqrt(result2);
+        return sqrt(resultSquared);
     }
 
     /*!
@@ -520,6 +563,9 @@ private:
     //! shared pointers to the jacobian matrix and residual
     std::shared_ptr<JacobianMatrix> jacobian_;
     std::shared_ptr<SolutionVector> residual_;
+
+    //! Issue a warning if the calculation is used in parallel with overlap. This could be a static local variable if it wasn't for g++7 yielding a linker error.
+    bool warningIssued_;
 };
 
 } // end namespace Dumux

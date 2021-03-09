@@ -31,15 +31,16 @@
 
 namespace Dumux {
 
-// forward declaration
-template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>
-class OneEqResidualImpl;
-
 /*!
  * \ingroup OneEqModel
  * \brief Element-wise calculation of the residual for one-equation turbulence models
  *        using the staggered discretization
  */
+
+// forward declaration
+template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>
+class OneEqResidualImpl;
+
 template<class TypeTag, class BaseLocalResidual>
 class OneEqResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethod::staggered>
 : public BaseLocalResidual
@@ -80,7 +81,7 @@ public:
                                                            const VolumeVariables& volVars) const
     {
         CellCenterPrimaryVariables storage = ParentType::computeStorageForCellCenter(problem, scv, volVars);
-        storage[viscosityTildeEqIdx] = volVars.viscosityTilde();
+        storage[viscosityTildeEqIdx] = volVars.viscosityTilde() * volVars.density();
         return storage;
     }
 
@@ -98,18 +99,19 @@ public:
 
         source[viscosityTildeEqIdx] += volVars.cb1() * (1.0 - volVars.ft2())
                                        * volVars.stressTensorScalarProductTilde()
-                                       * volVars.viscosityTilde();
+                                       * volVars.viscosityTilde() * volVars.density();
 
         source[viscosityTildeEqIdx] -= (volVars.cw1() * volVars.fW()
                                         - volVars.cb1() * volVars.ft2() / problem.karmanConstant() / problem.karmanConstant())
                                        * volVars.viscosityTilde() * volVars.viscosityTilde()
-                                       / volVars.wallDistance() / volVars.wallDistance();
+                                       / volVars.wallDistance() / volVars.wallDistance() * volVars.density();;
 
         for (unsigned int dimIdx = 0; dimIdx < ModelTraits::dim(); ++dimIdx)
         {
             source[viscosityTildeEqIdx] += volVars.cb2() / volVars.sigma()
                                            * volVars.storedViscosityTildeGradient()[dimIdx]
-                                           * volVars.storedViscosityTildeGradient()[dimIdx];
+                                           * volVars.storedViscosityTildeGradient()[dimIdx]
+                                           * volVars.density();
         }
 
         return source;

@@ -64,9 +64,7 @@ class RANSProblemImpl<TypeTag, TurbulenceModel::komega> : public RANSProblemBase
 public:
     RANSProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
     : ParentType(gridGeometry, paramGroup)
-    {
-        useStoredEddyViscosity_ = getParamFromGroup<bool>(this->paramGroup(), "RANS.UseStoredEddyViscosity", false);
-    }
+    { }
 
     /*!
      * \brief Correct size of the static (solution independent) wall variables
@@ -117,41 +115,57 @@ public:
         // calculate cell-centered gradients
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
+            const unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
 
             for (unsigned int dimIdx = 0; dimIdx < DimVector::dimension; ++dimIdx)
             {
-                unsigned backwardNeighbor = ParentType::neighborIdx_[elementIdx][dimIdx][0];
-                unsigned forwardNeighbor = ParentType::neighborIdx_[elementIdx][dimIdx][1];
+                const unsigned neighborIdx0 = ParentType::neighborIndex(elementIdx, dimIdx, 0);
+                const unsigned neighborIdx1 = ParentType::neighborIndex(elementIdx, dimIdx, 1);
+
+                // Cell centered TKE Gradient
                 storedTurbulentKineticEnergyGradient_[elementIdx][dimIdx]
-                    = (storedTurbulentKineticEnergy_[forwardNeighbor]
-                          - storedTurbulentKineticEnergy_[backwardNeighbor])
-                      / (ParentType::cellCenter_[forwardNeighbor][dimIdx]
-                          - ParentType::cellCenter_[backwardNeighbor][dimIdx]);
+                    = (storedTurbulentKineticEnergy(neighborIdx1) - storedTurbulentKineticEnergy(neighborIdx0))
+                    / (ParentType::cellCenter(neighborIdx1)[dimIdx] - ParentType::cellCenter(neighborIdx0)[dimIdx]);
+                // Cell centered Omega Gradient
                 storedDissipationGradient_[elementIdx][dimIdx]
-                    = (storedDissipation_[forwardNeighbor]
-                          - storedDissipation_[backwardNeighbor])
-                      / (ParentType::cellCenter_[forwardNeighbor][dimIdx]
-                          - ParentType::cellCenter_[backwardNeighbor][dimIdx]);
+                    = (storedDissipation(neighborIdx1) - storedDissipation(neighborIdx0))
+                    / (ParentType::cellCenter(neighborIdx1)[dimIdx] - ParentType::cellCenter(neighborIdx0)[dimIdx]);
             }
         }
     }
 
     //! \brief Returns the \f$ \beta_{\omega} \f$ constant
     const Scalar betaOmega() const
+    { return 0.0708; }
+
+    bool useStoredEddyViscosity() const
     {
-        return 0.0708;
+        static const bool useStoredEddyViscosity = getParamFromGroup<bool>(this->paramGroup(), "RANS.UseStoredEddyViscosity", false);
+        return useStoredEddyViscosity;
     }
 
-public:
-    std::vector<Scalar> storedDynamicEddyViscosity_;
-    std::vector<Scalar> storedDissipation_;
-    std::vector<DimVector> storedDissipationGradient_;
-    std::vector<Scalar> storedTurbulentKineticEnergy_;
-    std::vector<DimVector> storedTurbulentKineticEnergyGradient_;
-    bool useStoredEddyViscosity_;
+    Scalar storedDynamicEddyViscosity(const int elementIdx) const
+    { return storedDynamicEddyViscosity_[elementIdx]; }
+
+    Scalar storedTurbulentKineticEnergy(const int elementIdx) const
+    { return storedTurbulentKineticEnergy_[elementIdx]; }
+
+    Scalar storedDissipation(const int elementIdx) const
+    { return storedDissipation_[elementIdx]; }
+
+    DimVector storedTurbulentKineticEnergyGradient(const int elementIdx) const
+    { return storedTurbulentKineticEnergyGradient_[elementIdx]; }
+
+    DimVector storedDissipationGradient(const int elementIdx) const
+    { return storedDissipationGradient_[elementIdx]; }
 
 private:
+    std::vector<Scalar> storedDynamicEddyViscosity_;
+    std::vector<Scalar> storedTurbulentKineticEnergy_;
+    std::vector<Scalar> storedDissipation_;
+    std::vector<DimVector> storedDissipationGradient_;
+    std::vector<DimVector> storedTurbulentKineticEnergyGradient_;
+
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }

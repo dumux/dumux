@@ -34,15 +34,16 @@
 
 namespace Dumux {
 
-// forward declaration
-template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>
-class OneEqFluxVariablesImpl;
-
 /*!
  * \ingroup OneEqModel
  * \brief The flux variables class for the one-equation model by Spalart-Allmaras
  *        using the staggered grid discretization.
  */
+
+// forward declaration
+template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>
+class OneEqFluxVariablesImpl;
+
 template<class TypeTag, class BaseFluxVariables>
 class OneEqFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethod::staggered>
 : public BaseFluxVariables
@@ -95,7 +96,7 @@ public:
         // calculate advective flux
         auto upwindTermK = [](const auto& volVars)
         {
-            return volVars.viscosityTilde();
+            return volVars.viscosityTilde() * volVars.density();
         };
 
         flux[viscosityTildeEqIdx]
@@ -108,9 +109,9 @@ public:
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         // effective diffusion coefficients
-        Scalar insideCoeff = (insideVolVars.kinematicViscosity() + insideVolVars.viscosityTilde())
+        Scalar insideCoeff = (insideVolVars.viscosity() + insideVolVars.viscosityTilde() * insideVolVars.density())
                              / insideVolVars.sigma();
-        Scalar outsideCoeff = (outsideVolVars.kinematicViscosity() + outsideVolVars.viscosityTilde())
+        Scalar outsideCoeff = (outsideVolVars.viscosity() + outsideVolVars.viscosityTilde() * outsideVolVars.density())
                               / outsideVolVars.sigma();
 
         // scale by extrusion factor

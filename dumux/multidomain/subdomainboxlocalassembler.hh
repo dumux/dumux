@@ -118,21 +118,55 @@ public:
         this->asImp_().bindLocalViews();
         this->elemBcTypes().update(problem(), this->element(), this->fvGeometry());
 
-        // for the diagonal jacobian block
-        // forward to the internal implementation
-        const auto residual = this->asImp_().assembleJacobianAndResidualImpl(jacRow[domainId], *std::get<domainId>(gridVariables));
-
-        // update the residual vector
-        for (const auto& scv : scvs(this->fvGeometry()))
-            res[scv.dofIndex()] += residual[scv.localDofIndex()];
-
-        // assemble the coupling blocks
-        using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(jacRow)), [&](auto&& i)
+        if (!this->elementIsGhost())
         {
-            if (i != id)
-                this->assembleJacobianCoupling(i, jacRow, residual, gridVariables);
-        });
+            // for the diagonal jacobian block
+            // forward to the internal implementation
+            const auto residual = this->asImp_().assembleJacobianAndResidualImpl(jacRow[domainId], *std::get<domainId>(gridVariables));
+
+            // update the residual vector
+            for (const auto& scv : scvs(this->fvGeometry()))
+                res[scv.dofIndex()] += residual[scv.localDofIndex()];
+
+            // assemble the coupling blocks
+            using namespace Dune::Hybrid;
+            forEach(integralRange(Dune::Hybrid::size(jacRow)), [&](auto&& i)
+            {
+                if (i != id)
+                    this->assembleJacobianCoupling(i, jacRow, residual, gridVariables);
+            });
+        }
+        else
+        {
+            using GridGeometry = typename GridVariables::GridGeometry;
+            using GridView = typename GridGeometry::GridView;
+            static constexpr auto dim = GridView::dimension;
+
+            int numVerticesLocal = this->element().subEntities(dim);
+
+            for (int i = 0; i < numVerticesLocal; ++i)
+            {
+                const auto vertex = this->element().template subEntity<dim>(i);
+
+                if (vertex.partitionType() == Dune::InteriorEntity ||
+                    vertex.partitionType() == Dune::BorderEntity)
+                {
+                    // do not change the non-ghost vertices
+                    continue;
+                }
+
+                // set main diagonal entries for the vertex
+                const auto vIdx = this->assembler().gridGeometry(domainId).vertexMapper().index(vertex);
+
+                typedef typename JacobianMatrix::block_type BlockType;
+                BlockType &J = jacRow[domainId][vIdx][vIdx];
+                for (int j = 0; j < BlockType::rows; ++j)
+                    J[j][j] = 1.0;
+
+                // set residual for the vertex
+                res[vIdx] = 0;
+            }
+        }
 
         // lambda for the incorporation of Dirichlet Bcs
         auto applyDirichlet = [&] (const auto& scvI,

@@ -33,6 +33,8 @@
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/flux/referencesystemformulation.hh>
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 
 /*!
@@ -109,7 +111,7 @@ public:
                                * volVars.saturation(liquidPhaseIdx);
 
         // for extended Richards we consider water in air
-        if (enableWaterDiffusionInAir)
+        if constexpr (enableWaterDiffusionInAir)
             storage[conti0EqIdx] += volVars.porosity()
                                     * volVars.molarDensity(gasPhaseIdx)
                                     * volVars.moleFraction(gasPhaseIdx, liquidCompIdx)
@@ -153,7 +155,7 @@ public:
         flux[conti0EqIdx] = fluxVars.advectiveFlux(liquidPhaseIdx, upwindTerm);
 
         // for extended Richards we consider water vapor diffusion in air
-        if (enableWaterDiffusionInAir)
+        if constexpr (enableWaterDiffusionInAir)
         {
             //check for the reference system and adapt units of the diffusive flux accordingly.
             if (FluxVariables::MolecularDiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
@@ -198,17 +200,18 @@ public:
         const auto poreVolume = Extrusion::volume(scv)*curVolVars.porosity();
         static const auto rho = curVolVars.density(0);
 
-        // material law for pc-sw
-        const auto& matParams = problem.spatialParams().materialLawParams(element, scv, InvalidElemSol{});
+        // old material law interface is deprecated: Replace this by
+        // const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element, scv, InvalidElemSol{});
 
         // partial derivative of storage term w.r.t. p_w
         // d(Sw*rho*phi*V/dt)/dpw = rho*phi*V/dt*dsw/dpw = rho*phi*V/dt*dsw/dpc*dpc/dpw = -rho*phi*V/dt*dsw/dpc
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        partialDerivatives[conti0EqIdx][0] += -rho*poreVolume/this->timeLoop().timeStepSize()*MaterialLaw::dsw_dpc(matParams, curVolVars.capillaryPressure());
+        partialDerivatives[conti0EqIdx][0] += -rho*poreVolume/this->timeLoop().timeStepSize()*fluidMatrixInteraction.dsw_dpc(curVolVars.capillaryPressure());
     }
 
     /*!
-     * \brief Adds source derivatives for wetting and non-wetting phase.
+     * \brief Adds source derivatives for wetting and nonwetting phase.
      *
      * \param partialDerivatives The partial derivatives
      * \param problem The problem
@@ -229,9 +232,9 @@ public:
     { /* TODO maybe forward to problem for the user to implement the source derivatives?*/ }
 
     /*!
-     * \brief Adds flux derivatives for wetting and non-wetting phase for cell-centered FVM using TPFA
+     * \brief Adds flux derivatives for wetting and nonwetting phase for cell-centered FVM using TPFA
      *
-     * Compute derivatives for the wetting and the non-wetting phase flux with respect to \f$p_w\f$
+     * Compute derivatives for the wetting and the nonwetting phase flux with respect to \f$p_w\f$
      * and \f$S_n\f$.
      *
      * \param derivativeMatrices The partial derivatives
@@ -267,8 +270,6 @@ public:
         const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
         const auto& insideVolVars = curElemVolVars[insideScvIdx];
         const auto& outsideVolVars = curElemVolVars[outsideScvIdx];
-        const auto& insideMaterialParams = problem.spatialParams().materialLawParams(element, insideScv, InvalidElemSol{});
-        const auto& outsideMaterialParams = problem.spatialParams().materialLawParams(outsideElement, outsideScv, InvalidElemSol{});
 
         // some quantities to be reused (rho & mu are constant and thus equal for all cells)
         static const auto rho = insideVolVars.density(0);
@@ -284,16 +285,21 @@ public:
         const auto outsideWeight = 1.0 - insideWeight;
         const auto upwindTerm = rho*insideVolVars.mobility(0)*insideWeight + rho*outsideVolVars.mobility(0)*outsideWeight;
 
+        // old material law interface is deprecated: Replace this by
+        // const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto insideFluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element, insideScv, InvalidElemSol{});
+        const auto outsideFluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), outsideElement, outsideScv, InvalidElemSol{});
+
         // material law derivatives
         const auto insideSw = insideVolVars.saturation(0);
         const auto outsideSw = outsideVolVars.saturation(0);
         const auto insidePc = insideVolVars.capillaryPressure();
         const auto outsidePc = outsideVolVars.capillaryPressure();
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        const auto dkrw_dsw_inside = MaterialLaw::dkrw_dsw(insideMaterialParams, insideSw);
-        const auto dkrw_dsw_outside = MaterialLaw::dkrw_dsw(outsideMaterialParams, outsideSw);
-        const auto dsw_dpw_inside = -MaterialLaw::dsw_dpc(insideMaterialParams, insidePc);
-        const auto dsw_dpw_outside = -MaterialLaw::dsw_dpc(outsideMaterialParams, outsidePc);
+        const auto dkrw_dsw_inside = insideFluidMatrixInteraction.dkrw_dsw(insideSw);
+        const auto dkrw_dsw_outside = outsideFluidMatrixInteraction.dkrw_dsw(outsideSw);
+        const auto dsw_dpw_inside = -insideFluidMatrixInteraction.dsw_dpc(insidePc);
+        const auto dsw_dpw_outside = -outsideFluidMatrixInteraction.dsw_dpc(outsidePc);
 
         // the transmissibility
         const auto tij = elemFluxVarsCache[scvf].advectionTij();
@@ -342,8 +348,6 @@ public:
         const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
         const auto& insideVolVars = curElemVolVars[insideScvIdx];
         const auto& outsideVolVars = curElemVolVars[outsideScvIdx];
-        const auto& insideMaterialParams = problem.spatialParams().materialLawParams(element, insideScv, InvalidElemSol{});
-        const auto& outsideMaterialParams = problem.spatialParams().materialLawParams(element, outsideScv, InvalidElemSol{});
 
         // some quantities to be reused (rho & mu are constant and thus equal for all cells)
         static const auto rho = insideVolVars.density(0);
@@ -359,16 +363,21 @@ public:
         const auto outsideWeight = 1.0 - insideWeight;
         const auto upwindTerm = rho*insideVolVars.mobility(0)*insideWeight + rho*outsideVolVars.mobility(0)*outsideWeight;
 
+        // old material law interface is deprecated: Replace this by
+        // const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto insideFluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element, insideScv, InvalidElemSol{});
+        const auto outsideFluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element, outsideScv, InvalidElemSol{});
+
         // material law derivatives
         const auto insideSw = insideVolVars.saturation(0);
         const auto outsideSw = outsideVolVars.saturation(0);
         const auto insidePc = insideVolVars.capillaryPressure();
         const auto outsidePc = outsideVolVars.capillaryPressure();
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        const auto dkrw_dsw_inside = MaterialLaw::dkrw_dsw(insideMaterialParams, insideSw);
-        const auto dkrw_dsw_outside = MaterialLaw::dkrw_dsw(outsideMaterialParams, outsideSw);
-        const auto dsw_dpw_inside = -MaterialLaw::dsw_dpc(insideMaterialParams, insidePc);
-        const auto dsw_dpw_outside = -MaterialLaw::dsw_dpc(outsideMaterialParams, outsidePc);
+        const auto dkrw_dsw_inside = insideFluidMatrixInteraction.dkrw_dsw(insideSw);
+        const auto dkrw_dsw_outside = outsideFluidMatrixInteraction.dkrw_dsw(outsideSw);
+        const auto dsw_dpw_inside = -insideFluidMatrixInteraction.dsw_dpc(insidePc);
+        const auto dsw_dpw_outside = -outsideFluidMatrixInteraction.dsw_dpc(outsidePc);
 
         // so far it was the same as for tpfa
         // the transmissibilities (flux derivatives with respect to all pw-dofs on the element)
@@ -404,9 +413,9 @@ public:
     }
 
     /*!
-     * \brief Adds cell-centered Dirichlet flux derivatives for wetting and non-wetting phase
+     * \brief Adds cell-centered Dirichlet flux derivatives for wetting and nonwetting phase
      *
-     * Compute derivatives for the wetting and the non-wetting phase flux with respect to \f$p_w\f$
+     * Compute derivatives for the wetting and the nonwetting phase flux with respect to \f$p_w\f$
      * and \f$S_n\f$.
      *
      * \param derivativeMatrices The matrices containing the derivatives
@@ -439,7 +448,11 @@ public:
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = curElemVolVars[insideScvIdx];
         const auto& outsideVolVars = curElemVolVars[scvf.outsideScvIdx()];
-        const auto& insideMaterialParams = problem.spatialParams().materialLawParams(element, insideScv, InvalidElemSol{});
+
+        // old material law interface is deprecated: Replace this by
+        // const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto insideFluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element, insideScv, InvalidElemSol{});
 
         // some quantities to be reused (rho & mu are constant and thus equal for all cells)
         static const auto rho = insideVolVars.density(0);
@@ -458,9 +471,8 @@ public:
         // material law derivatives
         const auto insideSw = insideVolVars.saturation(0);
         const auto insidePc = insideVolVars.capillaryPressure();
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        const auto dkrw_dsw_inside = MaterialLaw::dkrw_dsw(insideMaterialParams, insideSw);
-        const auto dsw_dpw_inside = -MaterialLaw::dsw_dpc(insideMaterialParams, insidePc);
+        const auto dkrw_dsw_inside = insideFluidMatrixInteraction.dkrw_dsw(insideSw);
+        const auto dsw_dpw_inside = -insideFluidMatrixInteraction.dsw_dpc(insidePc);
 
         // the transmissibility
         const auto tij = elemFluxVarsCache[scvf].advectionTij();
@@ -470,7 +482,7 @@ public:
     }
 
     /*!
-     * \brief Adds Robin flux derivatives for wetting and non-wetting phase
+     * \brief Adds Robin flux derivatives for wetting and nonwetting phase
      *
      * \param derivativeMatrices The matrices containing the derivatives
      * \param problem The problem

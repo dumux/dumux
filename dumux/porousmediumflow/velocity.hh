@@ -26,10 +26,12 @@
 #define DUMUX_POROUSMEDIUMFLOW_VELOCITY_HH
 
 #include <vector>
+#include <type_traits>
 
 #include <dune/common/fvector.hh>
 #include <dune/common/float_cmp.hh>
 #include <dune/geometry/type.hh>
+#include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
@@ -37,6 +39,27 @@
 #include <dumux/flux/traits.hh>
 
 namespace Dumux {
+
+#ifndef DOXYGEN
+namespace Detail {
+// helper structs and functions detecting if the model is compositional
+
+template <typename T, typename ...Ts>
+using MoleFractionDetector = decltype(std::declval<T>().moleFraction(std::declval<Ts>()...));
+
+template<class T, typename ...Args>
+static constexpr bool hasMoleFraction()
+{ return Dune::Std::is_detected<MoleFractionDetector, T, Args...>::value; }
+
+template <typename T, typename ...Ts>
+using MassFractionDetector = decltype(std::declval<T>().massFraction(std::declval<Ts>()...));
+
+template<class T, typename ...Args>
+static constexpr bool hasMassFraction()
+{ return Dune::Std::is_detected<MassFractionDetector, T, Args...>::value; }
+
+} // end namespace Detail
+#endif // DOXYGEN
 
 /*!
  * \ingroup PorousmediumflowModels
@@ -69,6 +92,11 @@ class PorousMediumFlowVelocity
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using Problem = typename GridVolumeVariables::Problem;
+
+    static constexpr bool modelIsCompositional = Detail::hasMoleFraction<typename GridVolumeVariables::VolumeVariables, int, int>() ||
+                                                 Detail::hasMassFraction<typename GridVolumeVariables::VolumeVariables, int, int>();
+
+    static_assert(VolumeVariables::numFluidPhases() >= 1, "Velocity output only makes sense for models with fluid phases.");
 
 public:
     static constexpr int numFluidPhases = VolumeVariables::numFluidPhases();
@@ -143,7 +171,7 @@ public:
         }
 
         // get the transposed Jacobian of the element mapping
-        const auto refElement = referenceElement(geometry);
+        const auto refElement = Dune::referenceElement(geometry);
         const auto& localPos = refElement.position(0, 0);
         const auto jacobianT2 = geometry.jacobianTransposed(localPos);
 
@@ -303,13 +331,26 @@ public:
                             if (Dune::FloatCmp::eq<NumEqVector, Dune::FloatCmp::CmpStyle::absolute>(neumannFlux, NumEqVector(0.0), 1e-30))
                                 scvfFluxes[scvfIndexInInside[localScvfIdx]] = 0;
 
-                            // otherwise, we try some reconstruction (TODO: Can this be improved?)
+                            // otherwise, we try some reconstruction
                             // for cubes
                             else if (dim == 1 || geomType.isCube())
                             {
                                 const auto fIdx = scvfIndexInInside[localScvfIdx];
-                                const auto fIdxOpposite = fIdx%2 ? fIdx-1 : fIdx+1;
-                                scvfFluxes[fIdx] = -scvfFluxes[fIdxOpposite];
+
+                                if constexpr (!modelIsCompositional)
+                                {
+                                    // We assume that the density at the face equals the one at the cell center and reconstruct a volume flux from the Neumann mass flux.
+                                    const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+                                    const auto eqIdx = VolumeVariables::Indices::conti0EqIdx + phaseIdx;
+                                    scvfFluxes[fIdx] += neumannFlux[eqIdx] / insideVolVars.density(phaseIdx) * scvf.area() * insideVolVars.extrusionFactor();
+                                }
+                                else
+                                {
+                                    // For compositional models, we generally can't reconstruct the volume flow from the Neumann flux (which is a species flux rather
+                                    // than a phase flux here). Instead, we use the velocity of the opposing face.
+                                    const auto fIdxOpposite = fIdx%2 ? fIdx-1 : fIdx+1;
+                                    scvfFluxes[fIdx] = -scvfFluxes[fIdxOpposite];
+                                }
                             }
 
                             // for simplices

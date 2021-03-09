@@ -179,7 +179,7 @@ private:
 
 } // end namespace Dumux
 
-int main (int argc, char *argv[]) try
+int main (int argc, char *argv[])
 {
     // maybe initialize mpi
     Dune::MPIHelper::instance(argc, argv);
@@ -296,7 +296,19 @@ int main (int argc, char *argv[]) try
                 using GeometryType = Dune::AxisAlignedCubeGeometry<Scalar, 2, dimWorld>;
                 GlobalPosition lowerLeftCube = upperRight; lowerLeftCube *= 0.4;
                 GlobalPosition upperRightCube = lowerLeftCube; upperRightCube[0] += 0.2*scaling; upperRightCube[1] += 0.2*scaling;
-                GeometryType cube(lowerLeftCube, upperRightCube);
+
+                GeometryType cube = [&]()
+                {
+                    if constexpr (dimWorld == 2)
+                        return GeometryType(lowerLeftCube, upperRightCube);
+                    else
+                    {
+                        std::bitset<dimWorld> axes;
+                        axes.set(0); axes.set(1);
+                        return GeometryType(lowerLeftCube, upperRightCube, axes);
+                    }
+                }();
+
                 using GeometriesEntitySet = Dumux::GeometriesEntitySet<GeometryType>;
                 GeometriesEntitySet entitySet(std::vector<GeometryType>{cube});
                 Dumux::BoundingBoxTree<GeometriesEntitySet> geometriesTree(std::make_shared<GeometriesEntitySet>(entitySet));
@@ -489,15 +501,4 @@ int main (int argc, char *argv[]) try
         return 1;
 
     return 0;
-}
-// //////////////////////////////////
-//   Error handler
-// /////////////////////////////////
-catch (Dumux::ParameterException &e) {
-    std::cerr << e << ". Abort!\n";
-    return 1;
-}
-catch (const Dune::Exception& e) {
-    std::cout << e << std::endl;
-    return 1;
 }

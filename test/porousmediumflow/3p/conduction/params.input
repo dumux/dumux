@@ -1,0 +1,29 @@
+[TimeLoop]
+DtInitial = 1 # [s]
+TEnd = 1e5 # [s]
+MaxTimeStepSize = 1e10
+
+[Grid]
+UpperRight = 5 1
+Cells = 200 1
+
+[Problem]
+Name = test_3pniconduction # name passed to the output routines
+OutputInterval = 5 # every 5th timestep an output file is written
+EnableGravity = false # disable gravity
+
+[Vtk]
+AddVelocity = true #Enable velocity output
+
+[Component]
+SolidDensity = 2700
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 790
+
+[SpatialParams]
+Swr = 0.12
+Snr = 0.10
+Sgr = 0.01
+ParkerVanGenuchtenAlpha = 0.5
+ParkerVanGenuchtenN = 4
+ParkerVanGenuchtenRegardSnrForKrn = true

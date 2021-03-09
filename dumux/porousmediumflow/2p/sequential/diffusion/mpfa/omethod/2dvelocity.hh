@@ -30,6 +30,8 @@
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/ointeractionvolume.hh>
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 /*!
  * \ingroup SequentialTwoPModel
@@ -65,7 +67,6 @@ template<class TypeTag> class FvMpfaO2dVelocity2P
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
@@ -230,7 +231,7 @@ public:
             }
 
             writer.attachCellData(velocityWetting, "wetting-velocity", dim);
-            writer.attachCellData(velocityNonwetting, "non-wetting-velocity", dim);
+            writer.attachCellData(velocityNonwetting, "nonwetting-velocity", dim);
         }
 
         return;
@@ -619,21 +620,20 @@ void FvMpfaO2dVelocity2P<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
 
                     }
 
-                    Scalar pcBound = MaterialLaw::pc(
-                            problem_.spatialParams().materialLawParams(element), satWBound);
+                    // old material law interface is deprecated: Replace this by
+                    // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
+                    // after the release of 3.3, when the deprecated interface is no longer supported
+                    const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
+
+                    Scalar pcBound = fluidMatrixInteraction.pc(satWBound);
 
                     Scalar gravityDiffBound = (problem_.bBoxMax() - globalPosFace) * gravity_
                             * (density_[nPhaseIdx] - density_[wPhaseIdx]);
 
                     pcBound += gravityDiffBound;
 
-                    Dune::FieldVector < Scalar, numPhases
-                            > lambdaBound(
-                                    MaterialLaw::krw(
-                                            problem_.spatialParams().materialLawParams(element),
-                                            satWBound));
-                    lambdaBound[nPhaseIdx] = MaterialLaw::krn(
-                            problem_.spatialParams().materialLawParams(element), satWBound);
+                    Dune::FieldVector < Scalar, numPhases> lambdaBound(fluidMatrixInteraction.krw(satWBound));
+                    lambdaBound[nPhaseIdx] = fluidMatrixInteraction.krn(satWBound);
                     lambdaBound[wPhaseIdx] /= viscosity_[wPhaseIdx];
                     lambdaBound[nPhaseIdx] /= viscosity_[nPhaseIdx];
 

@@ -43,7 +43,7 @@
 #define BULKGRIDTYPE Dune::UGGrid<3>
 #endif
 
-int main (int argc, char *argv[]) try
+int main (int argc, char *argv[])
 {
     // maybe initialize mpi
     Dune::MPIHelper::instance(argc, argv);
@@ -274,11 +274,4 @@ int main (int argc, char *argv[]) try
 
     using EdgeWriter = Dune::VTKWriter<typename EdgeGrid::LeafGridView>;
     EdgeWriter edgeWriter(edgeGridView); edgeWriter.write("edgegrid");
-}
-// //////////////////////////////////
-//   Error handler
-// /////////////////////////////////
-catch (Dune::Exception& e) {
-    std::cout << e << std::endl;
-    return 1;
 }

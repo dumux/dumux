@@ -26,6 +26,7 @@
 #ifndef DUMUX_DISCRETIZATION_CCMPFA_FV_ELEMENT_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_CCMPFA_FV_ELEMENT_GEOMETRY_HH
 
+#include <optional>
 #include <dune/common/exceptions.hh>
 #include <dune/common/iteratorrange.hh>
 
@@ -148,8 +149,17 @@ public:
     //! Bind only element-local
     void bindElement(const Element& element)
     {
+        element_ = element;
         scvIndices_[0] = gridGeometry().elementMapper().index(element);
     }
+
+    //! Returns true if bind/bindElement has already been called
+    bool isBound() const
+    { return static_cast<bool>(element_); }
+
+    //! The bound element
+    const Element& element() const
+    { return *element_; }
 
     //! The global finite volume geometry we are a restriction of
     const GridGeometry& gridGeometry() const
@@ -161,6 +171,7 @@ public:
 
 private:
 
+    std::optional<Element> element_;
     std::array<GridIndexType, 1> scvIndices_;
     const GridGeometry* gridGeometryPtr_;
 };
@@ -307,8 +318,17 @@ public:
     void bindElement(const Element& element)
     {
         clear();
+        element_ = element;
         makeElementGeometries(element);
     }
+
+    //! Returns true if bind/bindElement has already been called
+    bool isBound() const
+    { return static_cast<bool>(element_); }
+
+    //! The bound element
+    const Element& element() const
+    { return *element_; }
 
     //! The global finite volume geometry we are a restriction of
     const GridGeometry& gridGeometry() const
@@ -530,6 +550,7 @@ private:
     }
 
     const GridGeometry* gridGeometryPtr_;
+    std::optional<Element> element_;
 
     // local storage after binding an element
     std::array<GridIndexType, 1> scvIndices_;

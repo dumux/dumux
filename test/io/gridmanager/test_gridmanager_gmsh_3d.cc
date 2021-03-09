@@ -27,7 +27,7 @@
 
 #include "gridmanagertests.hh"
 
-int main(int argc, char** argv) try
+int main(int argc, char** argv)
 {
     using namespace Dumux;
     // initialize MPI, finalize is done automatically on exit
@@ -38,16 +38,4 @@ int main(int argc, char** argv) try
     GridManagerTests<GRIDTYPE>::testBoundaryAndElementMarkers("gmsh", name, refine);
 
     return 0;
-}
-catch (Dumux::ParameterException &e) {
-    std::cerr << e << ". Abort!\n";
-    return 1;
-}
-catch (Dune::Exception &e) {
-    std::cerr << "Dune reported error: " << e << std::endl;
-    return 3;
-}
-catch (...) {
-    std::cerr << "Unknown exception thrown!\n";
-    return 4;
 }

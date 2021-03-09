@@ -83,7 +83,7 @@ triangulate(const RandomAccessContainer& convexHull)
         return std::vector<Triangle>(1, {convexHull[0], convexHull[1], convexHull[2]});
 
     Point midPoint(0.0);
-    for (const auto p : convexHull)
+    for (const auto& p : convexHull)
         midPoint += p;
     midPoint /= convexHull.size();
 
@@ -131,4 +131,4 @@ triangulate(const RandomAccessContainer& points)
 
 } // end namespace Dumux
 
-# endif
+#endif

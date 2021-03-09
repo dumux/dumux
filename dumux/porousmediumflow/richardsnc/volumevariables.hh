@@ -33,6 +33,8 @@
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 
 /*!
@@ -93,14 +95,18 @@ public:
         //////////
         // specify the other parameters
         //////////
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-        relativePermeabilityWetting_ = MaterialLaw::krw(materialParams, fluidState_.saturation(0));
+
+        // old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+
+        relativePermeabilityWetting_ = fluidMatrixInteraction.krw(fluidState_.saturation(0));
 
         // precompute the minimum capillary pressure (entry pressure)
         // needed to make sure we don't compute unphysical capillary pressures and thus saturations
-        minPc_ = MaterialLaw::endPointPc(materialParams);
-        pn_ = problem.nonWettingReferencePressure();
+        minPc_ = fluidMatrixInteraction.endPointPc();
+        pn_ = problem.nonwettingReferencePressure();
         //porosity
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, ParentType::numFluidComponents());
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
@@ -150,7 +156,11 @@ public:
     {
         EnergyVolVars::updateTemperature(elemSol, problem, element, scv, fluidState, solidState);
 
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+        // old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+
         const auto& priVars = elemSol[scv.localDofIndex()];
 
         // set the wetting pressure
@@ -160,10 +170,9 @@ public:
         // make sure that we the capillary pressure is not smaller than the minimum pc
         // this would possibly return unphysical values from regularized material laws
         using std::max;
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        const Scalar pc = max(MaterialLaw::endPointPc(materialParams),
-                              problem.nonWettingReferencePressure() - fluidState.pressure(0));
-        const Scalar sw = MaterialLaw::sw(materialParams, pc);
+        const Scalar pc = max(fluidMatrixInteraction.endPointPc(),
+                              problem.nonwettingReferencePressure() - fluidState.pressure(0));
+        const Scalar sw = fluidMatrixInteraction.sw(pc);
         fluidState.setSaturation(0, sw);
 
         // set the mole/mass fractions
@@ -262,8 +271,8 @@ public:
      * \brief Returns the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
      *        the control volume.
      *
-     * For the non-wetting phase (i.e. the gas phase), we assume
-     * infinite mobility, which implies that the non-wetting phase
+     * For the nonwetting phase (i.e. the gas phase), we assume
+     * infinite mobility, which implies that the nonwetting phase
      * pressure is equal to the finite volume's reference pressure
      * defined by the problem.
      *
@@ -291,7 +300,7 @@ public:
      *        the control volume.
      *
      * \param phaseIdx The index of the fluid phase
-     * \note The non-wetting phase is infinitely mobile
+     * \note The nonwetting phase is infinitely mobile
      */
     Scalar viscosity(const int phaseIdx = 0) const
     { return phaseIdx == 0 ? fluidState_.viscosity(0) : 0.0; }
@@ -310,7 +319,7 @@ public:
      *        control volume.
      *
      * The capillary pressure is defined as the difference in
-     * pressures of the non-wetting and the wetting phase, i.e.
+     * pressures of the nonwetting and the wetting phase, i.e.
      * \f[ p_c = p_n - p_w \f]
      *
      * \note Capillary pressures are always larger than the entry pressure
@@ -326,8 +335,8 @@ public:
      * \brief Returns the pressureHead \f$\mathrm{[cm]}\f$ of a given phase within
      *        the control volume.
      *
-     * For the non-wetting phase (i.e. the gas phase), we assume
-     * infinite mobility, which implies that the non-wetting phase
+     * For the nonwetting phase (i.e. the gas phase), we assume
+     * infinite mobility, which implies that the nonwetting phase
      * pressure is equal to the finite volume's reference pressure
      * defined by the problem.
      *
@@ -420,7 +429,7 @@ private:
     Scalar relativePermeabilityWetting_; // the relative permeability of the wetting phase
     SolidState solidState_;
     PermeabilityType permeability_; // the instrinsic permeability
-    Scalar pn_; // the reference non-wetting pressure
+    Scalar pn_; // the reference nonwetting pressure
     Scalar minPc_; // the minimum capillary pressure (entry pressure)
 };
 

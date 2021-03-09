@@ -64,6 +64,12 @@ dumux_add_test(NAME plot_ch4
               CMD_ARGS "CH4"
               LABELS unit material)
 
+dumux_add_test(NAME plot_constantcomponent
+              TARGET plot_component
+              COMMAND ./plot_component
+              CMD_ARGS "Constant"
+              LABELS unit material)
+
 dumux_add_test(NAME plot_chlorideion
               TARGET plot_component
               COMMAND ./plot_component

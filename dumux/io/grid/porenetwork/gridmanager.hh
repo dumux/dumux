@@ -18,12 +18,14 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup PoreNetworkModels
  * \brief Provides a grid manager for pore-network models
  */
 #ifndef DUMUX_PORE_NETWORK_GRID_MANAGER_HH
 #define DUMUX_PORE_NETWORK_GRID_MANAGER_HH
 
 #include <iostream>
+#include <algorithm>
 
 #include <dune/common/classname.hh>
 #include <dune/common/exceptions.hh>
@@ -42,16 +44,14 @@ static_assert(false, "dune-foamgrid required!");
 #include "griddata.hh"
 #include "structuredlatticegridcreator.hh"
 
-#include "dgfwriter.hh"
-
-namespace Dumux {
+namespace Dumux::PoreNetwork {
 
 /*!
- * \ingroup PoreNetworkModel
+ * \ingroup PoreNetworkModels
  * \brief A grid manager for pore-network models
  */
-template<int dimWorld, class GData = Dumux::PoreNetworkGridData<Dune::FoamGrid<1, dimWorld>>>
-class PoreNetworkGridManager
+template<int dimWorld, class GData = Dumux::PoreNetwork::GridData<Dune::FoamGrid<1, dimWorld>>>
+class GridManager
 {
     using GridType = Dune::FoamGrid<1, dimWorld>;
     using Element = typename GridType::template Codim<0>::Entity;
@@ -84,13 +84,6 @@ public:
             }
 
             loadBalance();
-        }
-        // write the final grid to a dgf file, if desired
-        if (getParamFromGroup<bool>(paramGroup_, "Grid.WriteDgfFile", false))
-        {
-            const auto defaultName = enableDgfGridPointer_ ? "pnm-grid-from-dgf.dgf" : "pnm-grid-from-factory.dgf";
-            const auto fileName = getParamFromGroup<std::string>(paramGroup, "Grid.DgfName", defaultName);
-            writeDgf(fileName, grid().leafGridView(), *gridData_);
         }
 
         timer.stop();
@@ -143,13 +136,9 @@ public:
     {
         std::size_t i = fileName.rfind('.', fileName.length());
         if (i != std::string::npos)
-        {
             return(fileName.substr(i+1, fileName.length() - i));
-        }
         else
-        {
             DUNE_THROW(Dune::IOError, "Please provide and extension for your grid file ('"<< fileName << "')!");
-        }
         return "";
     }
 
@@ -184,7 +173,6 @@ public:
                 // update the grid data
                 gridData_ = std::make_shared<GridData>(dgfGridPtr(), paramGroup_);
             }
-
             else
                 gridPtr()->loadBalance();
         }
@@ -202,9 +190,58 @@ public:
         if (enableDgfGridPointer_)
             gridData_->copyDgfData();
 
+        const auto gridView = grid().leafGridView();
+        static const std::string sanitationMode = getParamFromGroup<std::string>(paramGroup_, "Grid.SanitationMode", "KeepLargestCluster");
+
+        // find the elements to keep, all others will be deleted
+        const auto keepElement = [&]
+        {
+            if (sanitationMode == "UsePoreLabels")
+                return findElementsConnectedToPoreLabel(gridView);
+            else if (sanitationMode == "KeepLargestCluster")
+                return findElementsInLargestCluster(gridView);
+            else
+                DUNE_THROW(Dune::IOError, sanitationMode << "is not a valid sanitation mode. Use KeepLargestCluster or UsePoreLabels.");
+
+
+        }();
+
+        if (std::none_of(keepElement.begin(), keepElement.end(), [](const bool i){return i;}))
+            DUNE_THROW(Dune::InvalidStateException, "sanitize() deleted all elements! Check your boundary face indices. "
+                << "If the problem persisits, add at least one of your boundary face indices to PruningSeedIndices");
+
+        // remove the elements in the grid
+        std::size_t numDeletedElements = 0;
+        grid().preGrow();
+        for (const auto& element : elements(gridView))
+        {
+            const auto eIdx = gridView.indexSet().index(element);
+            if (!keepElement[eIdx])
+            {
+                grid().removeElement(element);
+                ++numDeletedElements;
+            }
+        }
+        // triggers the grid growth process
+        grid().grow();
+        grid().postGrow();
+
+        // resize the parameters for dgf grids
+        if (enableDgfGridPointer_)
+            gridData_->resizeParameterContainers();
+
+        if (numDeletedElements > 0)
+            std::cout << "\nDeleted " << numDeletedElements << " isolated elements.\n" << std::endl;
+    }
+
+    /*!
+     * \brief Returns a vector of bool which entries are true for elements connected to pores at the boundary
+     *        with a given pore label.
+     */
+    std::vector<bool> findElementsConnectedToPoreLabel(const typename Grid::LeafGridView& gridView) const
+    {
         // pruning -- remove elements not connected to a Dirichlet boundary (marker == 1)
         const auto pruningSeedIndices = getParamFromGroup<std::vector<int>>(paramGroup_, "Grid.PruningSeedIndices", std::vector<int>{1});
-        const auto gridView = grid().leafGridView();
         std::vector<bool> elementIsConnected(gridView.size(0), false);
 
         auto boundaryIdx = [&](const auto& vertex)
@@ -247,55 +284,66 @@ public:
                 elementIsConnected[eIdx] = true;
 
                 // use iteration instead of recursion here because the recursion can get too deep
-                std::stack<Element> elementStack;
-                elementStack.push(element);
-                while (!elementStack.empty())
-                {
-                    auto e = elementStack.top();
-                    elementStack.pop();
-                    for (const auto& intersection : intersections(gridView, e))
-                    {
-                        if (!intersection.boundary())
-                        {
-                            auto outside = intersection.outside();
-                            auto nIdx = gridView.indexSet().index(outside);
-                            if (!elementIsConnected[nIdx])
-                            {
-                                elementIsConnected[nIdx] = true;
-                                elementStack.push(outside);
-                            }
-                        }
-                    }
-                }
+                recursivelyFindConnectedElements_(gridView, element, elementIsConnected);
             }
         }
 
-        if (std::none_of(elementIsConnected.begin(), elementIsConnected.end(), [](const bool i){return i;}))
-            DUNE_THROW(Dune::InvalidStateException, "sanitize() deleted all elements! Check your boundary face indices. "
-                << "If the problem persisits, add at least one of your boundary face indices to PruningSeedIndices");
+        return elementIsConnected;
+    }
 
-        // remove the elements in the grid
-        std::size_t numDeletedElements = 0;
-        grid().preGrow();
+    /*!
+     * \brief Returns a vector of bool which entries are true for elements located in the largest
+     *        connected cluster of the network.
+     */
+    std::vector<bool> findElementsInLargestCluster(const typename Grid::LeafGridView& gridView) const
+    {
+        const auto clusteredElements = clusterElements(gridView);
+
+        const auto numClusters = *std::max_element(clusteredElements.begin(), clusteredElements.end()) + 1;
+        std::cout << "\nFound " << numClusters << " unconnected clusters." << std::endl;
+
+        // count number of elements in individual clusters
+        std::vector<std::size_t> clusterFrequency(numClusters);
+        for (const auto clusterIdx : clusteredElements)
+            clusterFrequency[clusterIdx] += 1;
+
+        const auto largestCluster = std::max_element(clusterFrequency.begin(), clusterFrequency.end());
+        const auto largestClusterIdx = std::distance(clusterFrequency.begin(), largestCluster);
+
+        std::vector<bool> elementsInLargestCluster(gridView.size(0));
+
+        for (int eIdx = 0; eIdx < clusteredElements.size(); ++eIdx)
+            if (clusteredElements[eIdx] == largestClusterIdx)
+                elementsInLargestCluster[eIdx] = true;
+
+        return elementsInLargestCluster;
+    }
+
+    /*!
+     * \brief Assigns a cluster index for each element.
+     */
+    std::vector<std::size_t> clusterElements(const typename Grid::LeafGridView& gridView) const
+    {
+        std::vector<std::size_t> elementInCluster(gridView.size(0), 0); // initially, all elements are in pseudo cluster 0
+        std::size_t clusterIdx = 0;
+
         for (const auto& element : elements(gridView))
         {
             const auto eIdx = gridView.indexSet().index(element);
-            if (!elementIsConnected[eIdx])
-            {
-                grid().removeElement(element);
-                ++numDeletedElements;
-            }
+            if (elementInCluster[eIdx]) // element already is in a cluster
+                continue;
+
+            ++clusterIdx;
+            elementInCluster[eIdx] = clusterIdx;
+
+            recursivelyFindConnectedElements_(gridView, element, elementInCluster, clusterIdx);
         }
-        // triggers the grid growth process
-        grid().grow();
-        grid().postGrow();
 
-        // resize the parameters for dgf grids
-        if (enableDgfGridPointer_)
-            gridData_->resizeParameterContainers();
+        // make sure the clusters start with index zero
+        for (auto& clusterIdx : elementInCluster)
+            clusterIdx -= 1;
 
-        if (numDeletedElements > 0)
-            std::cout << "\nDeleted " << numDeletedElements << " elements not connected to a boundary." << std::endl;
+        return elementInCluster;
     }
 
 protected:
@@ -362,6 +410,35 @@ private:
         gridPtr() = std::shared_ptr<Grid>(factory.createGrid());
         gridData_ = std::make_shared<GridData>(gridPtr_, paramGroup_);
         gridData_->assignParameters();
+    }
+
+    template<class T>
+    void recursivelyFindConnectedElements_(const typename Grid::LeafGridView& gridView,
+                                           const Element& element,
+                                           std::vector<T>& elementIsConnected,
+                                           T marker = 1) const
+    {
+        // use iteration instead of recursion here because the recursion can get too deep
+        std::stack<Element> elementStack;
+        elementStack.push(element);
+        while (!elementStack.empty())
+        {
+            auto e = elementStack.top();
+            elementStack.pop();
+            for (const auto& intersection : intersections(gridView, e))
+            {
+                if (!intersection.boundary())
+                {
+                    auto outside = intersection.outside();
+                    auto nIdx = gridView.indexSet().index(outside);
+                    if (!elementIsConnected[nIdx])
+                    {
+                        elementIsConnected[nIdx] = marker;
+                        elementStack.push(outside);
+                    }
+                }
+            }
+        }
     }
 };
 

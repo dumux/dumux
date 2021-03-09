@@ -18,19 +18,18 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup PoreNetworkModels
  * \brief Implementation of the transmissibility laws for throats
  */
 #ifndef DUMUX_PNM_THROAT_TRANSMISSIBILITY_2P_HH
 #define DUMUX_PNM_THROAT_TRANSMISSIBILITY_2P_HH
 
-#include <dumux/porenetworkflow/common/throatproperties.hh>
+#include <dumux/porenetwork/common/throatproperties.hh>
 #include "emptycache.hh"
 
-namespace Dumux {
+namespace Dumux::PoreNetwork {
 
 namespace WettingLayerTransmissibility {
-
 
 struct CreviceResistanceFactorZhou
 {
@@ -98,10 +97,6 @@ struct RansohoffRadke
 
     /*!
     * \brief Returns the integral conductivity of all wetting layers occupying the corners of a throat
-    *
-    * \param problem The problem
-    * \param element The element
-    * \param ElementVolumeVariables The element volume variables
     */
     template<class Element, class FVElementGeometry, class FluxVariablesCache>
     static Scalar wettingLayerTransmissibility(const Element& element,
@@ -146,7 +141,7 @@ struct Mogensen
         const Scalar throatLength = fluxVarsCache.throatLength();
         const auto nPhaseIdx = fluxVarsCache.nPhaseIdx();
         const Scalar aNw = fluxVarsCache.throatCrossSectionalArea(nPhaseIdx);
-        const Scalar rEff = 0.5*(sqrt(aNw / M_PI) + fluxVarsCache.throatRadius());
+        const Scalar rEff = 0.5*(sqrt(aNw / M_PI) + fluxVarsCache.throatInscribedRadius());
         const Scalar result = M_PI/(8*throatLength) * rEff*rEff*rEff*rEff;
         assert(std::isnormal(result));
         return result;
@@ -200,13 +195,13 @@ struct BakkeOren
         const Scalar throatLength = fluxVarsCache.throatLength();
         const auto nPhaseIdx = fluxVarsCache.nPhaseIdx();
         const Scalar aNw = fluxVarsCache.throatCrossSectionalArea(nPhaseIdx);
-        const Scalar rEff = 0.5*(sqrt(aNw / M_PI) + fluxVarsCache.throatRadius());
+        const Scalar rEff = 0.5*(sqrt(aNw / M_PI) + fluxVarsCache.throatInscribedRadius());
         const Scalar result = rEff*rEff*aNw / (8.0*throatLength);
         assert(std::isnormal(result));
         return result;
     }
 };
 } // end namespace NonWettingPhaseTransmissibility
-} // end namespace Dumux
+} // end namespace Dumux::PoreNetwork
 
-#endif // DUMUX_PNM_THROAT_TRANSMISSIBILITY_2P_HH
+#endif

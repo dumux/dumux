@@ -99,7 +99,7 @@ void runIntersectionTest(std::vector<bool>& returns, const Transformation& trans
 
 } // end namespace Dumux
 
-int main (int argc, char *argv[]) try
+int main (int argc, char *argv[])
 {
     using namespace Dumux;
 
@@ -124,11 +124,4 @@ int main (int argc, char *argv[]) try
               << "\n++++++++++++++++++++++" << std::endl;
 
     return 0;
-}
-// //////////////////////////////////
-//   Error handler
-// /////////////////////////////////
-catch (const Dune::Exception& e) {
-    std::cout << e << std::endl;
-    return 1;
 }

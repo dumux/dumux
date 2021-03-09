@@ -37,12 +37,8 @@
 
 #include <dumux/material/fluidsystems/h2on2.hh>
 
-#include <dumux/material/fluidmatrixinteractions/mp/mplinearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/mp/mpadapter.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedlinearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 
 #include <dune/common/exceptions.hh>
 
@@ -94,7 +90,7 @@ void checkSame(const FluidState &fsRef, const FluidState &fsFlash)
 
 template <class Scalar, class FluidSystem, class MaterialLaw, class FluidState>
 void checkImmiscibleFlash(const FluidState &fsRef,
-                          typename MaterialLaw::Params &matParams)
+                          const MaterialLaw& material)
 {
     enum { numPhases = FluidSystem::numPhases };
     enum { numComponents = FluidSystem::numComponents };
@@ -120,7 +116,7 @@ void checkImmiscibleFlash(const FluidState &fsRef,
     // run the flash calculation
     typename FluidSystem::ParameterCache paramCache;
     flash.guessInitial(fsFlash, paramCache, globalMolarities);
-    flash.template solve<MaterialLaw>(fsFlash, paramCache, matParams, globalMolarities);
+    flash.solve(fsFlash, paramCache, material, globalMolarities);
 
     // compare the "flashed" fluid state with the reference one
     checkSame<Scalar>(fsRef, fsFlash);
@@ -129,12 +125,10 @@ void checkImmiscibleFlash(const FluidState &fsRef,
 
 template <class Scalar, class FluidSystem, class MaterialLaw, class FluidState>
 void completeReferenceFluidState(FluidState &fs,
-                                 typename MaterialLaw::Params &matParams,
+                                 const MaterialLaw& material,
                                  int refPhaseIdx)
 {
     enum { numPhases = FluidSystem::numPhases };
-
-    using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
 
     int otherPhaseIdx = 1 - refPhaseIdx;
 
@@ -142,8 +136,7 @@ void completeReferenceFluidState(FluidState &fs,
     fs.setSaturation(otherPhaseIdx, 1.0 - fs.saturation(refPhaseIdx));
 
     // calulate the capillary pressure
-    PhaseVector pc;
-    MaterialLaw::capillaryPressures(pc, matParams, fs, /*wPhaseIdx=*/0);
+    const auto pc = material.capillaryPressures(fs, /*wPhaseIdx=*/0);
     fs.setPressure(otherPhaseIdx,
                    fs.pressure(refPhaseIdx)
                    + (pc[otherPhaseIdx] - pc[refPhaseIdx]));
@@ -171,10 +164,7 @@ int main()
     enum { liquidPhaseIdx = FluidSystem::liquidPhaseIdx };
     enum { gasPhaseIdx = FluidSystem::gasPhaseIdx };
 
-    using EffMaterialLaw = Dumux::RegularizedBrooksCorey<Scalar>;
-    using MaterialLaw = Dumux::EffToAbsLaw<EffMaterialLaw>;
-    using MPAdapter = Dumux::MPAdapter<MaterialLaw, numPhases>;
-    using MaterialLawParams = MaterialLaw::Params;
+    using PcKrSw = Dumux::FluidMatrix::BrooksCoreyDefault<Scalar>;
 
     Scalar T = 273.15 + 25;
 
@@ -190,11 +180,9 @@ int main()
     FluidSystem::init(Tmin, Tmax, nT, pmin, pmax, np);
 
     // set the parameters for the capillary pressure law
-    MaterialLawParams matParams;
-    matParams.setSwr(0.0);
-    matParams.setSnr(0.0);
-    matParams.setPe(0);
-    matParams.setLambda(2.0);
+    typename PcKrSw::BasicParams bParams(/*pe*/0.0, /*lambda*/2.0);
+    auto pcKrSw = PcKrSw(bParams);
+    auto material = Dumux::FluidMatrix::MPAdapter(pcKrSw);
 
     ImmiscibleFluidState fsRef;
 
@@ -213,10 +201,10 @@ int main()
     fsRef.setPressure(liquidPhaseIdx, 1e6);
 
     // set the remaining parameters of the reference fluid state
-    completeReferenceFluidState<Scalar, FluidSystem, MPAdapter>(fsRef, matParams, liquidPhaseIdx);
+    completeReferenceFluidState<Scalar, FluidSystem>(fsRef, material, liquidPhaseIdx);
 
     // check the flash calculation
-    checkImmiscibleFlash<Scalar, FluidSystem, MPAdapter>(fsRef, matParams);
+    checkImmiscibleFlash<Scalar, FluidSystem>(fsRef, material);
 
     ////////////////
     // only gas
@@ -228,10 +216,10 @@ int main()
     fsRef.setPressure(gasPhaseIdx, 1e6);
 
     // set the remaining parameters of the reference fluid state
-    completeReferenceFluidState<Scalar, FluidSystem, MPAdapter>(fsRef, matParams, gasPhaseIdx);
+    completeReferenceFluidState<Scalar, FluidSystem>(fsRef, material, gasPhaseIdx);
 
     // check the flash calculation
-    checkImmiscibleFlash<Scalar, FluidSystem, MPAdapter>(fsRef, matParams);
+    checkImmiscibleFlash<Scalar, FluidSystem>(fsRef, material);
 
     ////////////////
     // both phases
@@ -243,21 +231,19 @@ int main()
     fsRef.setPressure(liquidPhaseIdx, 1e6);
 
     // set the remaining parameters of the reference fluid state
-    completeReferenceFluidState<Scalar, FluidSystem, MPAdapter>(fsRef, matParams, liquidPhaseIdx);
+    completeReferenceFluidState<Scalar, FluidSystem>(fsRef, material, liquidPhaseIdx);
 
     // check the flash calculation
-    checkImmiscibleFlash<Scalar, FluidSystem, MPAdapter>(fsRef, matParams);
+    checkImmiscibleFlash<Scalar, FluidSystem>(fsRef, material);
 
     ////////////////
     // with capillary pressure
     ////////////////
     std::cout << "testing two-phase with capillary pressure\n";
 
-    MaterialLawParams matParams2;
-    matParams2.setSwr(0.0);
-    matParams2.setSnr(0.0);
-    matParams2.setPe(1e3);
-    matParams2.setLambda(2.0);
+    typename PcKrSw::BasicParams bParams2(/*pe*/1e3, /*lambda*/2.0);
+    auto pcKrSw2 = PcKrSw(bParams2);
+    auto material2 = Dumux::FluidMatrix::MPAdapter(pcKrSw2);
 
     // set liquid saturation
     fsRef.setSaturation(liquidPhaseIdx, 0.5);
@@ -266,10 +252,10 @@ int main()
     fsRef.setPressure(liquidPhaseIdx, 1e6);
 
     // set the remaining parameters of the reference fluid state
-    completeReferenceFluidState<Scalar, FluidSystem, MPAdapter>(fsRef, matParams2, liquidPhaseIdx);
+    completeReferenceFluidState<Scalar, FluidSystem>(fsRef, material2, liquidPhaseIdx);
 
     // check the flash calculation
-    checkImmiscibleFlash<Scalar, FluidSystem, MPAdapter>(fsRef, matParams2);
+    checkImmiscibleFlash<Scalar, FluidSystem>(fsRef, material2);
 
     return 0;
 }

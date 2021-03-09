@@ -55,12 +55,12 @@
  * if a fluid phase is not present, the sum of the mole fractions of
  * this fluid phase is smaller than \f$1\f$, i.e.
  * \f[
- * \forall \alpha: S_\alpha = 0 \implies \sum_\kappa x_\alpha^\kappa \leq 1
+ * \forall \alpha: S_\alpha = 0 \Rightarrow \sum_\kappa x_\alpha^\kappa \leq 1
  * \f]
  *
  * Also, if a fluid phase may be present at a given spatial location
  * its saturation must be positive:
- * \f[ \forall \alpha: \sum_\kappa x_\alpha^\kappa = 1 \implies S_\alpha \geq 0 \f]
+ * \f[ \forall \alpha: \sum_\kappa x_\alpha^\kappa = 1 \Rightarrow S_\alpha \geq 0 \f]
  *
  * Since at any given spatial location, a phase is always either
  * present or not present, one of the strict equalities on the
@@ -102,8 +102,8 @@
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysimplefluidlumping.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/simplefluidlumping.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/somerton.hh>
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/compositional/localresidual.hh>

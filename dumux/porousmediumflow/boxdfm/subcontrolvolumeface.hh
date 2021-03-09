@@ -210,7 +210,7 @@ public:
     Scalar area() const
     { return area_; }
 
-    //! returns bolean if the sub control volume face is on the boundary
+    //! returns true if the sub control volume face is on the boundary
     bool boundary() const
     { return boundary_; }
 
@@ -234,18 +234,25 @@ public:
     typename BoundaryFlag::value_type boundaryFlag() const
     { return boundaryFlag_.get(); }
 
-    //! Index of the inside sub control volume for spatial param evaluation
+    //! index of the inside sub control volume
     LocalIndexType insideScvIdx() const
     { return scvIndices_[0]; }
 
-    //! Index of the outside sub control volume for spatial param evaluation
-    // This results in undefined behaviour if boundary is true
-    LocalIndexType outsideScvIdx() const
+    //! Index of the i-th outside sub control volume or boundary scv index.
+    // Results in undefined behaviour if i >= numOutsideScvs()
+    LocalIndexType outsideScvIdx(int i = 0) const
     {
         assert(!boundary());
         return scvIndices_[1];
     }
 
+    //! The number of scvs on the outside of this face
+    std::size_t numOutsideScvs() const
+    {
+        return static_cast<std::size_t>(!boundary());
+    }
+
+    //! Returns a corner of the sub control volume face
     const GlobalPosition& corner(unsigned int localIdx) const
     {
         assert(localIdx < corners_.size() && "provided index exceeds the number of corners");

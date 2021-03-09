@@ -28,6 +28,8 @@
 #ifndef PARKERVANGEN_PARAMS_3P_HH
 #define PARKERVANGEN_PARAMS_3P_HH
 
+#warning "This header is deprecated. Removal after 3.3. Use new material laws."
+
 #include <dune/common/fvector.hh>
 #include <iostream>
 
@@ -155,14 +157,14 @@ public:
     { swr_ = input; }
 
     /*!
-     * \brief Return the residual non-wetting saturation.
+     * \brief Return the residual nonwetting saturation.
      */
     Scalar snr() const
     { return snr_; }
 
     /*!
-     * \brief Set the residual non-wetting saturation.
-     * \param input Set the resiudal non-wetting saturation
+     * \brief Set the residual nonwetting saturation.
+     * \param input Set the resiudal nonwetting saturation
      */
     void setSnr(Scalar input)
     { snr_ = input; }

@@ -28,7 +28,7 @@ The following resources are useful to get started with DuMu<sup>x</sup>:
 * [Handbook](https://dumux.org/handbook), a detailed DuMu<sup>x</sup> manual,
 * [DuMu<sup>x</sup> course materials](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course/tree/master),
 * [Examples](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/tree/master/examples), with detailed description of code and results,
-* [Class documentation](https://dumux.org/classdocumentation) generated from the source code,
+* [Class documentation](https://dumux.org/docs/doxygen/master/) generated from the source code,
 * [Mailing list](https://listserv.uni-stuttgart.de/mailman/listinfo/dumux),
 * [Changelog](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/CHANGELOG.md), where all changes between different release versions are listed and explained.
 
@@ -83,7 +83,7 @@ You can also cite specific releases published on Zenodo:
 Automated Testing
 ==================
 
-* DuMu<sup>x</sup> 3.2 / Dune 2.7: [![buildbot badge](https://git.iws.uni-stuttgart.de/buildbot/badges/dumux-rel-3-2-dune-rel-2-7-clang-full.svg)](https://git.iws.uni-stuttgart.de/buildbot/#/builders)
+* DuMu<sup>x</sup> 3.3 / Dune 2.7: [![buildbot badge](https://git.iws.uni-stuttgart.de/buildbot/badges/dumux-rel-3-3-dune-rel-2-7-clang-full.svg)](https://git.iws.uni-stuttgart.de/buildbot/#/builders)
 * DuMu<sup>x</sup> master / Dune 2.7: [![buildbot badge](https://git.iws.uni-stuttgart.de/buildbot/badges/dumux-master-dune-rel-2-7-clang-full.svg)](https://git.iws.uni-stuttgart.de/buildbot/#/builders)
 * DuMu<sup>x</sup> master / Dune master: [![buildbot badge](https://git.iws.uni-stuttgart.de/buildbot/badges/dumux-master-dune-master-clang-full.svg)](https://git.iws.uni-stuttgart.de/buildbot/#/builders)
 

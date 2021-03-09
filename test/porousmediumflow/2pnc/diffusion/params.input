@@ -1,0 +1,17 @@
+[TimeLoop]
+DtInitial = 250 # [s]
+TEnd = 1e8 # [s]
+
+[Grid]
+UpperRight = 60 40
+Cells = 50 5
+
+[Problem]
+Name = 2pnc_diffusion
+EnableGravity = false
+
+[SpatialParams]
+BrooksCoreyPcEntry = 1e2
+BrooksCoreyLambda = 1.3
+Swr = 0.02
+Snr = 0.0

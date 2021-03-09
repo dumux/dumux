@@ -45,6 +45,10 @@ void runIntersectionTest(std::vector<bool>& returns, const Transformation& trans
     returns.push_back(testIntersection(triangle, transform({0.5, 0.51}), false, verbose));
     returns.push_back(testIntersection(triangle, transform({0.0, -0.01}), false, verbose));
 
+    // test cases where the point is just inside or just outside the triangle
+    returns.push_back(testIntersection(triangle, transform({0.0, -1.5e-7}), false, verbose));
+    returns.push_back(testIntersection(triangle, transform({1.0+1.5e-7, 1.5e-7}), false, verbose));
+
     // test quadrilateral-point intersections
     if (verbose) std::cout << "\n  -- Test quadrilateral-point intersections" << std::endl;
 
@@ -64,6 +68,9 @@ void runIntersectionTest(std::vector<bool>& returns, const Transformation& trans
     returns.push_back(testIntersection(quadrilateral, transform({0.5, 1.01}), false, verbose));
     returns.push_back(testIntersection(quadrilateral, transform({0.0, -0.01}), false, verbose));
 
+    // test cases where the point is just inside or just outside the triangle
+    returns.push_back(testIntersection(quadrilateral, transform({0.0, -1.5e-7}), false, verbose));
+    returns.push_back(testIntersection(quadrilateral, transform({1.0+1.5e-7, 1.5e-7}), false, verbose));
 }
 
 template<class Transformation>
@@ -84,7 +91,7 @@ void run2DIntersectionTest(std::vector<bool>& returns, const Transformation& tra
 
 } // end namespace Dumux
 
-int main (int argc, char *argv[]) try
+int main (int argc, char *argv[])
 {
     using namespace Dumux;
 
@@ -124,11 +131,4 @@ int main (int argc, char *argv[]) try
               << "\n++++++++++++++++++++++" << std::endl;
 
     return 0;
-}
-// //////////////////////////////////
-//   Error handler
-// /////////////////////////////////
-catch (const Dune::Exception& e) {
-    std::cout << e << std::endl;
-    return 1;
 }

@@ -119,6 +119,7 @@ class TissueProblem : public PorousMediumFlowProblem<TypeTag>
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using GridView = typename GridGeometry::GridView;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
@@ -184,7 +185,10 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        values.setAllDirichlet();
+        if (globalPos[2] > this->gridGeometry().bBoxMax()[2] - eps_  || globalPos[2] < this->gridGeometry().bBoxMin()[2] + eps_)
+            values.setAllNeumann();
+        else
+            values.setAllDirichlet();
         return values;
     }
 
@@ -201,6 +205,49 @@ public:
         values = exactSolution(globalPos);
         return values;
     }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a neumann
+     *        boundary segment.
+     *
+     * This is the method for the case where the Neumann condition is
+     * potentially solution dependent
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars All volume variables for the element
+     * \param scvf The sub control volume face
+     *
+     * Negative values mean influx.
+     * E.g. for the mass balance that would the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
+     */
+    template<class ElementVolumeVariables, class ElemFluxVarsCache>
+    NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElemFluxVarsCache&,
+                        const SubControlVolumeFace& scvf) const
+    {
+        NumEqVector flux(0.0);
+        // integrate over the scvf to compute the flux
+        const auto geometry = scvf.geometry();
+        Scalar derivative = 0.0;
+        const auto& quad = Dune::QuadratureRules<Scalar, GridView::dimension-1>::rule(geometry.type(), 4);
+        for(auto&& qp : quad)
+        {
+            auto globalPos = geometry.global(qp.position());
+            globalPos[2] = 0; // the derivative in z-direction is the exact solution evaluated with z=0
+            derivative += exactSolution(globalPos)*qp.weight()*geometry.integrationElement(qp.position());
+        }
+
+        const auto globalPos = scvf.ipGlobal();
+        if (globalPos[2] > this->gridGeometry().bBoxMax()[2] - eps_ )
+            flux[0] = -derivative/scvf.area();
+        else
+            flux[0] = derivative/scvf.area();
+        return flux;
+    }
+
 
     // \}
 
@@ -247,15 +294,18 @@ public:
                      const ElementVolumeVariables& elemVolVars,
                      const SubControlVolume &scv) const
     {
-        // compute source at every integration point
-        const Scalar pressure3D = this->couplingManager().bulkPriVars(source.id())[Indices::pressureIdx];
-        const Scalar pressure1D = this->couplingManager().lowDimPriVars(source.id())[Indices::pressureIdx];
+        if constexpr (CouplingManager::couplingMode != Embedded1d3dCouplingMode::kernel)
+        {
+            // compute source at every integration point
+            const Scalar pressure3D = this->couplingManager().bulkPriVars(source.id())[Indices::pressureIdx];
+            const Scalar pressure1D = this->couplingManager().lowDimPriVars(source.id())[Indices::pressureIdx];
 
-        // calculate the source
-        const Scalar radius = this->couplingManager().radius(source.id());
-        const Scalar beta = 2*M_PI/(2*M_PI + std::log(radius));
-        const Scalar sourceValue = beta*(pressure1D - pressure3D);
-        source = sourceValue*source.quadratureWeight()*source.integrationElement();
+            // calculate the source
+            const Scalar radius = this->couplingManager().radius(source.id());
+            const Scalar beta = 2*M_PI/(2*M_PI + std::log(radius));
+            const Scalar sourceValue = beta*(pressure1D - pressure3D);
+            source = sourceValue*source.quadratureWeight()*source.integrationElement();
+        }
     }
 
     /*!
@@ -276,77 +326,51 @@ public:
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
-    template<class ElementVolumeVariables,
-             bool enable = (CouplingManager::couplingMode == EmbeddedCouplingMode::kernel),
-             std::enable_if_t<enable, int> = 0>
+    template<class ElementVolumeVariables>
     NumEqVector source(const Element &element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
                        const SubControlVolume &scv) const
     {
-        static const Scalar kernelWidth = getParam<Scalar>("MixedDimension.KernelWidth");
-        static const Scalar kernelFactor = std::log(kernelWidth)-9.0/10.0;
-
         NumEqVector source(0.0);
 
-        const auto eIdx = this->gridGeometry().elementMapper().index(element);
-        const auto& sourceIds = this->couplingManager().bulkSourceIds(eIdx);
-        const auto& sourceWeights = this->couplingManager().bulkSourceWeights(eIdx);
-
-        for (int i = 0; i < sourceIds.size(); ++i)
+        if constexpr(CouplingManager::couplingMode == Embedded1d3dCouplingMode::kernel)
         {
-            const auto id = sourceIds[i];
-            const auto weight = sourceWeights[i];
+            const auto eIdx = this->gridGeometry().elementMapper().index(element);
+            const auto& sourceIds = this->couplingManager().bulkSourceIds(eIdx, scv.indexInElement());
+            const auto& sourceWeights = this->couplingManager().bulkSourceWeights(eIdx, scv.indexInElement());
 
-            const Scalar radius = this->couplingManager().radius(id);
-            const Scalar pressure3D = this->couplingManager().bulkPriVars(id)[Indices::pressureIdx];
-            const Scalar pressure1D = this->couplingManager().lowDimPriVars(id)[Indices::pressureIdx];
+            for (int i = 0; i < sourceIds.size(); ++i)
+            {
+                const auto id = sourceIds[i];
+                const auto weight = sourceWeights[i];
+                const auto xi = this->couplingManager().fluxScalingFactor(id);
 
-            // calculate the source
-            const Scalar beta = 2*M_PI/(2*M_PI + std::log(radius));
-            const Scalar sourceValue = beta*(pressure1D - pressure3D / kernelFactor * std::log(radius));
+                const Scalar radius = this->couplingManager().radius(id);
+                const Scalar pressure3D = this->couplingManager().bulkPriVars(id)[Indices::pressureIdx];
+                const Scalar pressure1D = this->couplingManager().lowDimPriVars(id)[Indices::pressureIdx];
 
-            source[Indices::conti0EqIdx] += sourceValue*weight;
+                // calculate the source
+                static const Scalar beta = 2*M_PI/(2*M_PI + std::log(radius));
+                const Scalar sourceValue = beta*(pressure1D - pressure3D)*xi;
+                source[Indices::conti0EqIdx] += sourceValue*weight;
+            }
+
+            const auto volume = scv.volume()*elemVolVars[scv].extrusionFactor();
+            source[Indices::conti0EqIdx] /= volume;
         }
-
-        const auto volume = scv.volume()*elemVolVars[scv].extrusionFactor();
-        source[Indices::conti0EqIdx] /= volume;
 
         return source;
     }
 
-    //! Other methods
-    template<class ElementVolumeVariables,
-             bool enable = (CouplingManager::couplingMode == EmbeddedCouplingMode::kernel),
-             std::enable_if_t<!enable, int> = 0>
-    NumEqVector source(const Element &element,
-                       const FVElementGeometry& fvGeometry,
-                       const ElementVolumeVariables& elemVolVars,
-                       const SubControlVolume &scv) const
-    { return NumEqVector(0.0); }
-
-    //! Evaluate coupling residual for the derivative bulk DOF with respect to low dim DOF
-    //! We only need to evaluate the part of the residual that will be influence by the low dim DOF
-    template<class MatrixBlock, class VolumeVariables>
-    void addSourceDerivatives(MatrixBlock& block,
-                              const Element& element,
-                              const FVElementGeometry& fvGeometry,
-                              const VolumeVariables& curElemVolVars,
-                              const SubControlVolume& scv) const
+    //! compute the flux scaling factor (xi) for a distance r for a vessel with radius R and kernel width rho
+    Scalar fluxScalingFactor(const Scalar r, const Scalar R, const Scalar rho) const
     {
-        const auto eIdx = this->gridGeometry().elementMapper().index(element);
-
-        auto key = std::make_pair(eIdx, 0);
-        if (this->pointSourceMap().count(key))
-        {
-            // call the solDependent function. Herein the user might fill/add values to the point sources
-            // we make a copy of the local point sources here
-            auto pointSources = this->pointSourceMap().at(key);
-
-            // add the point source values to the local residual (negative sign is convention for source term)
-            for (const auto& source : pointSources)
-                block[0][0] -= this->couplingManager().pointSourceDerivative(source, Dune::index_constant<0>{}, Dune::index_constant<0>{});
-        }
+        using std::log;
+        static const Scalar beta = 2*M_PI/(2*M_PI + log(R));
+        static const Scalar kernelWidthFactorLog = log(rho/R);
+        return r < rho ? 1.0/(1.0 + R*beta/(2*M_PI*R)*(r*r/(2*rho*rho) + kernelWidthFactorLog - 0.5))
+                       : 1.0/(1.0 + R*beta/(2*M_PI*R)*log(r/R));
     }
 
     /*!
@@ -360,33 +384,32 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     { return PrimaryVariables(0.0); }
 
+    Scalar p1DExact(const GlobalPosition &globalPos) const
+    { return 1.0 + globalPos[2]; }
+
     //! The exact solution
     Scalar exactSolution(const GlobalPosition &globalPos) const
     {
-        Dune::FieldVector<double, 2> xy({globalPos[0], globalPos[1]});
-        if (CouplingManager::couplingMode == EmbeddedCouplingMode::cylindersources)
-        {
-            static const auto R = getParam<Scalar>("SpatialParams.Radius");
-            if (xy.two_norm() > R)
-                return -1.0*(1+globalPos[2])/(2*M_PI)*std::log(xy.two_norm());
-            else
-               return -1.0*(1+globalPos[2])/(2*M_PI)*std::log(R);
+        const auto r = std::hypot(globalPos[0], globalPos[1]);
+        static const auto R = getParam<Scalar>("SpatialParams.Radius");
 
-        }
-        else if (CouplingManager::couplingMode == EmbeddedCouplingMode::kernel)
+        if (CouplingManager::couplingMode == Embedded1d3dCouplingMode::kernel)
         {
-            static const auto rho = getParam<Scalar>("MixedDimension.KernelWidth");
-            const auto& r = xy.two_norm();
-            if (xy.two_norm() >= rho)
-                return -1.0*(1+globalPos[2])/(2*M_PI)*std::log(xy.two_norm());
+            static const auto rho = getParam<Scalar>("MixedDimension.KernelWidthFactor")*R;
+            if (r > rho)
+                return -1.0*p1DExact(globalPos)/(2*M_PI)*std::log(r);
             else
-                return -1.0*(1+globalPos[2])/(2*M_PI)*(11.0/15.0*std::pow(r/rho, 5)
-                                                       - 3.0/2.0*std::pow(r/rho, 4)
-                                                       + 5.0/3.0*std::pow(r/rho, 2)
-                                                       - 9.0/10.0 + std::log(rho));
+                return -1.0*p1DExact(globalPos)/(2*M_PI)*(r*r/(2.0*rho*rho) + std::log(rho) - 0.5);
         }
-        else
-            return -1.0*(1+globalPos[2])/(2*M_PI)*std::log(xy.two_norm());
+        else if (CouplingManager::couplingMode == Embedded1d3dCouplingMode::surface)
+        {
+            if (r > R)
+                return -1.0*p1DExact(globalPos)/(2*M_PI)*std::log(r);
+            else
+               return -1.0*p1DExact(globalPos)/(2*M_PI)*std::log(R);
+        }
+
+        return -1.0*p1DExact(globalPos)/(2*M_PI)*std::log(r);
     }
 
     //! Called after every time step

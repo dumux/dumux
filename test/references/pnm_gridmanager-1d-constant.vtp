@@ -2,8 +2,8 @@
 <VTKFile type="PolyData" version="0.1" byte_order="LittleEndian">
   <PolyData>
     <Piece NumberOfLines="19" NumberOfPoints="20">
-      <PointData Scalars="poreRadius">
-        <DataArray type="Float32" Name="poreRadius" NumberOfComponents="1" format="ascii">
+      <PointData Scalars="poreInscribedRadius">
+        <DataArray type="Float32" Name="poreInscribedRadius" NumberOfComponents="1" format="ascii">
           1e-05 1e-05 1e-05 1e-05 1e-05 1e-05 1e-05 1e-05 1e-05 1e-05 1e-05 1e-05
           1e-05 1e-05 1e-05 1e-05 1e-05 1e-05 1e-05 1e-05
         </DataArray>
@@ -16,12 +16,12 @@
           -1 -1 -1 -1 -1 -1 -1 1
         </DataArray>
       </PointData>
-      <CellData Scalars="throatRadius">
-        <DataArray type="Float32" Name="throatRadius" NumberOfComponents="1" format="ascii">
+      <CellData Scalars="throatInscribedRadius">
+        <DataArray type="Float32" Name="throatInscribedRadius" NumberOfComponents="1" format="ascii">
           1e-06 1e-06 1e-06 1e-06 1e-06 1e-06 1e-06 1e-06 1e-06 1e-06 1e-06 1e-06
           1e-06 1e-06 1e-06 1e-06 1e-06 1e-06 1e-06
         </DataArray>
-        <DataArray type="Float32" Name="throatlength" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="throatLength" NumberOfComponents="1" format="ascii">
           0.0001 0.0001 0.0001 0.0001 0.0001 0.0001 0.0001 0.0001 0.0001 0.0001 0.0001 0.0001
           0.0001 0.0001 0.0001 0.0001 0.0001 0.0001 0.0001
         </DataArray>

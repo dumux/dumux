@@ -38,6 +38,8 @@
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/porousmediumflow/2p2c/sequential/properties.hh>
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 /*!
  * \ingroup SequentialTwoPTwoCModel
@@ -79,7 +81,6 @@ template<class TypeTag> class FVPressure2P2C
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using BoundaryTypes = GetPropType<TypeTag, Properties::SequentialBoundaryTypes>;
@@ -677,6 +678,11 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
     PhaseVector pressBC(0.);
     Scalar pcBound (0.);
 
+    // old material law interface is deprecated: Replace this by
+    // const auto& fluidMatrixInteraction = problem().spatialParams.fluidMatrixInteractionAtPos(elementI.geometry().center());
+    // after the release of 3.3, when the deprecated interface is no longer supported
+    const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem().spatialParams(), elementI);
+
     /**********         Dirichlet Boundary        *************/
     if (bcType.isDirichlet(Indices::pressureEqIdx))
     {
@@ -754,11 +760,9 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
             else if(getPropValue<TypeTag, Properties::BoundaryMobility>() == Indices::permDependent)
             {
                 lambdaWBound
-                    = MaterialLaw::krw(problem().spatialParams().materialLawParams(elementI),
-                            BCfluidState.saturation(wPhaseIdx)) / viscosityWBound;
+                    = fluidMatrixInteraction.krw(BCfluidState.saturation(wPhaseIdx)) / viscosityWBound;
                 lambdaNWBound
-                    = MaterialLaw::krn(problem().spatialParams().materialLawParams(elementI),
-                            BCfluidState.saturation(wPhaseIdx)) / viscosityNWBound;
+                    = fluidMatrixInteraction.krn(BCfluidState.saturation(wPhaseIdx)) / viscosityNWBound;
             }
             // get average density
             Scalar rhoMeanW = 0.5 * (cellDataI.density(wPhaseIdx) + densityWBound);
@@ -953,6 +957,13 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
 
     PhaseVector pressure;
     CompositionalFlash<Scalar, FluidSystem> flashSolver;
+
+    // old material law interface is deprecated: Replace this by
+    // const auto& fluidMatrixInteraction = problem().spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
+    // after the release of 3.3, when the deprecated interface is no longer supported
+    const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem().spatialParams(), element);
+
+
     if(getPropValue<TypeTag, Properties::EnableCapillarity>()) // iterate capillary pressure and saturation
     {
         unsigned int maxiter = 6;
@@ -977,13 +988,11 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
             }
 
             // complete fluid state
-            flashSolver.concentrationFlash2p2c(fluidState, Z0, pressure,
-                                               problem().spatialParams().porosity(element), temperature_);
+            flashSolver.concentrationFlash2p2c(fluidState, Z0, pressure, temperature_);
 
             // calculate new pc
             Scalar oldPc = pc;
-            pc = MaterialLaw::pc(problem().spatialParams().materialLawParams(element),
-                                 fluidState.saturation(wPhaseIdx));
+            pc = fluidMatrixInteraction.pc(fluidState.saturation(wPhaseIdx));
 
             if (fabs(oldPc-pc)<10 && iter != 0)
                 break;
@@ -996,16 +1005,13 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
     else  // capillary pressure neglected
     {
         pressure[wPhaseIdx] = pressure[nPhaseIdx] = asImp_().pressure()[eIdxGlobal];
-        flashSolver.concentrationFlash2p2c(fluidState, Z0, pressure,
-                                           problem().spatialParams().porosity(element), temperature_);
+        flashSolver.concentrationFlash2p2c(fluidState, Z0, pressure, temperature_);
     }
 
     // initialize mobilities
-    cellData.setMobility(wPhaseIdx, MaterialLaw::krw(problem().spatialParams().materialLawParams(element),
-                                                     fluidState.saturation(wPhaseIdx))
+    cellData.setMobility(wPhaseIdx, fluidMatrixInteraction.krw(fluidState.saturation(wPhaseIdx))
                 / cellData.viscosity(wPhaseIdx));
-    cellData.setMobility(nPhaseIdx, MaterialLaw::krn(problem().spatialParams().materialLawParams(element),
-                                                     fluidState.saturation(wPhaseIdx))
+    cellData.setMobility(nPhaseIdx, fluidMatrixInteraction.krn(fluidState.saturation(wPhaseIdx))
                 / cellData.viscosity(nPhaseIdx));
 
     // determine volume mismatch between actual fluid volume and pore volume

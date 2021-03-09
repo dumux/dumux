@@ -24,16 +24,15 @@
 #ifndef DUMUX_BRINE_FLUID_SYSTEM_HH
 #define DUMUX_BRINE_FLUID_SYSTEM_HH
 
-#include <dumux/material/fluidsystems/base.hh>
+#include <dune/common/math.hh>
 
+#include <dumux/common/exceptions.hh>
+#include <dumux/io/name.hh>
+#include <dumux/material/fluidsystems/base.hh>
 #include <dumux/material/constants.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/nacl.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
-
-#include <dumux/common/exceptions.hh>
-
-#include <dumux/io/name.hh>
 
 namespace Dumux {
 namespace FluidSystems {
@@ -286,13 +285,14 @@ public:
         const Scalar xNaCl = fluidState.massFraction(phaseIdx, NaClIdx);
 
         using std::pow;
+        using Dune::power;
         using std::exp;
         using std::max;
         const Scalar T = max(temperature, 275.0);
         const Scalar salinity = max(0.0, xNaCl);
 
         const Scalar T_C = T - 273.15;
-        const Scalar A = ((0.42*pow((pow(salinity, 0.8)-0.17), 2)) + 0.045)*pow(T_C, 0.8);
+        const Scalar A = ((0.42*power((pow(salinity, 0.8)-0.17), 2)) + 0.045)*pow(T_C, 0.8);
         const Scalar mu_brine = 0.1 + (0.333*salinity) + (1.65+(91.9*salinity*salinity*salinity))*exp(-A); // [cP]
         assert(mu_brine > 0.0);
         return mu_brine/1000.0; // [Pa·s]
@@ -364,11 +364,11 @@ public:
 
         const Scalar m = (1E3/58.44)*(salinity/(1-salinity));
 
-        using std::pow;
+        using Dune::power;
         Scalar d_h = 0;
         for (int i = 0; i<=3; i++)
             for (int j=0; j<=2; j++)
-                d_h = d_h + a[i][j] * pow(theta, i) * pow(m, j);
+                d_h = d_h + a[i][j] * power(theta, i) * power(m, j);
 
         /* heat of dissolution for halite according to Michaelides 1971 */
         const Scalar delta_h = (4.184/(1E3 + (58.44 * m)))*d_h;
@@ -455,9 +455,8 @@ public:
                 swap(compIIdx, compJIdx);
             }
             //! \todo TODO implement binary coefficients
-            // http://webserver.dmt.upm.es/~isidoro/dat1/Mass%20diffusivity%20data.htm
+            // http://webserver.dmt.upm.es/~isidoro/dat1/Mass%20diffusivity%20data.pdf
             // The link above was given as a reference in brine_air fluid system.
-            // Doesn't work anymore though...
             if (compJIdx == NaClIdx)
                 return 0.12e-9;
             else

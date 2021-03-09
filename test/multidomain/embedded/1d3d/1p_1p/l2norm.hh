@@ -49,16 +49,9 @@ struct L2Norm
         for (const auto& element : elements(gg.gridView()))
         {
             const auto geometry = element.geometry();
-            const auto center = geometry.center();
             const auto elemSol = elementSolution(element, sol, gg);
 
-            // maybe exclude some elements from the norm
-            static const bool excludeInnerBulk = getParam<bool>("Problem.NormExcludeInnerBulk");
-            static const Scalar radius = getParam<Scalar>("SpatialParams.Radius") + 0.01;
             using GridView = std::decay_t<decltype(gg.gridView())>;
-            if (int(GridView::dimension) == 3 && excludeInnerBulk && std::sqrt(center[0]*center[0] + center[1]*center[1]) < radius)
-                continue;
-
             const auto& quad = Dune::QuadratureRules<Scalar, GridView::dimension>::rule(geometry.type(), order);
             for(auto&& qp : quad)
             {
@@ -83,25 +76,14 @@ struct L2Norm
         for (const auto& element : elements(gg.gridView()))
         {
             const auto geometry = element.geometry();
-            const auto center = geometry.center();
-
-            // maybe exclude some elements from the norm
-            static const bool excludeInnerBulk = getParam<bool>("Problem.NormExcludeInnerBulk");
-            static const Scalar radius = getParam<Scalar>("SpatialParams.Radius") + 0.01;
             using GridView = std::decay_t<decltype(gg.gridView())>;
-            if (int(GridView::dimension) == 3 && excludeInnerBulk && std::sqrt(center[0]*center[0] + center[1]*center[1]) < radius)
-                continue;
 
             const auto& quad = Dune::QuadratureRules<Scalar, GridView::dimension>::rule(geometry.type(), order);
-            for(auto&& qp : quad)
-            {
-                const auto globalPos = geometry.global(qp.position());
-                const Scalar pe = problem.exactSolution(globalPos);
-                norm += pe*pe*qp.weight()*geometry.integrationElement(qp.position());
-            }
+            for (auto&& qp : quad)
+                norm += 1.0*qp.weight()*geometry.integrationElement(qp.position());
         }
 
-        return std::sqrt(norm);
+        return norm;
     }
 };
 

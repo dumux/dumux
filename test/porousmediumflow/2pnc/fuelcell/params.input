@@ -1,0 +1,50 @@
+# Parameter file for test case 2pnc.
+# Everything behind a '#' is a comment.
+# Type "./test_2pnc --help" for more information.
+
+[TimeLoop]
+DtInitial = 5e-1                 # [s] initial time step size
+MaxTimeStepSize = 1000           # [s] maximum time step size
+TEnd= 1e3                        # [s] duration of the simulation
+
+[Grid]
+UpperRight = 2.0e-3 5.5e-4  # [m] upper right corner coordinates
+Cells = 21 6                # [-] number of cells in x,y-direction
+
+[Problem]
+Name = fuelcell
+EnableGravity = false
+NTemperature = 3                # [-] number of temperature table entries
+NPressure = 200                 # [-] number of pressure table entries
+PressureLow = 1e5               # [Pa] lower pressure limit for tabularization
+PressureHigh = 3e7              # [Pa] upper pressure limit for tabularization
+TemperatureLow = 312.15         # [K] lower temperature limit for tabularization
+TemperatureHigh = 314.15        # [K] upper temperature limit for tabularization
+InitialTemperature = 310        # [K] initial temperature for tabularization
+
+[Component]
+SolidHeatCapacity = 710          # [J/(kg K)] specific heat capacity of diffusion layer (Acosta)
+SolidDensity = 1430              # [kg/m^3] density of ELAT (Wöhr)
+SolidThermalConductivity = 15.6  # [W/(m*K)] thermal conductivity (Acosta)
+
+[ElectroChemistry]
+SpecificResistance = 0.25               # [Ohm*cm^2]
+ReversibleVoltage = 1.191               # [V]
+CellVoltage = 0.5                       # [V]
+ThermoneutralVoltage = 1.4836           # [V]
+RefCurrentDensity = 1.87e-8             # [A/cm^2] for calculating exchange current density at reference conditions
+RefO2PartialPressure = 5.0e5            # [Pa] for calculating exchange current density at reference conditions
+RefTemperature = 353.25                 # [K] for calculating exchange current density at reference conditions
+ActivationBarrier = 73.0e3              # [J/mol]
+TransferCoefficient = 0.5               # [-] (alpha)
+NumElectrons = 2                        # [-] number of electrons transferred in reaction
+SurfaceIncreasingFactor = 60
+TransportNumberH20 = 0.2327             # [-] account for osmotic H20 transport term from membrane, value Lena Walter
+pO2Inlet = 0.3e5                        # [Pa] partial pressure of oxygen at gas channel inlet
+MaxIterations = 300                     # [-] Maximum number for iterations for solving electrochemical system
+
+[SpatialParams]
+VanGenuchtenN = 3.652
+VanGenuchtenAlpha = 6.66e-5
+Swr = 0.12
+Snr = 0.0

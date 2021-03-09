@@ -1,0 +1,21 @@
+[Problem]
+EnableGravity = 0 # Disable Gravity
+
+[Grid]
+#File = ./grids/test_diffusion3d_sg.dgf
+File = ./grids/test_diffusion3d_ug1.dgf
+#File = ./grids/test_diffusion3d_ug2.dgf
+
+[MPFA]
+TransmissibilityCriterion = 1 # 0 = default criterion, 1 = accumulative criterion
+
+RefinementRatio = 0
+
+[LinearSolver]
+GMResRestart = 80
+MaxIterations = 1000
+ResidualReduction = 1e-8
+
+[SpatialParams]
+LinearPcEntry = 0
+LinearPcMax = 0

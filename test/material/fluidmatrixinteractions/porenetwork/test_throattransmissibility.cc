@@ -24,7 +24,7 @@
 #include "config.h"
 
 #include <dune/common/float_cmp.hh>
-#include <dumux/material/fluidmatrixinteractions/porenetwork/transmissibility1p.hh>
+#include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility1p.hh>
 
 namespace Dumux
 {
@@ -43,35 +43,35 @@ struct MockFVElementGeometry
 struct MockFluxVariablesCacheOneP
 {
     using Scalar = double;
-    MockFluxVariablesCacheOneP(const Throat::Shape shape)
+    MockFluxVariablesCacheOneP(const PoreNetwork::Throat::Shape shape)
     : shape_(shape)
     {}
 
-    Throat::Shape shape() const
+    PoreNetwork::Throat::Shape shape() const
     { return shape_; }
 
     Scalar throatShapeFactor() const
-    { return Throat::shapeFactor(shape(), throatRadius()); }
+    { return PoreNetwork::Throat::shapeFactor(shape(), throatInscribedRadius()); }
 
     Scalar throatCrossSectionalArea() const
     {
-      if (shape_ != Throat::Shape::rectangle)
-        return Throat::totalCrossSectionalArea(shape(), throatRadius());
+      if (shape_ != PoreNetwork::Throat::Shape::rectangle)
+        return PoreNetwork::Throat::totalCrossSectionalArea(shape(), throatInscribedRadius());
       else
-        return Throat::totalCrossSectionalAreaForRectangle(throatRadius(), 10.0*2.0*throatRadius()/*height*/);
+        return PoreNetwork::Throat::totalCrossSectionalAreaForRectangle(throatInscribedRadius(), 10.0*2.0*throatInscribedRadius()/*height*/);
     }
 
     Scalar throatLength() const
     { return 1e-2; }
 
-    Scalar throatRadius() const
+    Scalar throatInscribedRadius() const
     { return 1e-3; }
 
-    Throat::Shape throatCrossSectionShape() const
+    PoreNetwork::Throat::Shape throatCrossSectionShape() const
     { return shape_; }
 
 private:
-    Throat::Shape shape_;
+    PoreNetwork::Throat::Shape shape_;
 };
 
 
@@ -84,24 +84,24 @@ int testAll(const MockFluxVariablesCacheOneP& fluxVarsCache)
     const auto elemVolVars = MockElemVolVars{};
     const auto scvf = typename MockFVElementGeometry::SubControlVolumeFace{};
     const auto shape = fluxVarsCache.shape();
-    const auto resultBruus = TransmissibilityBruus<double>::singlePhaseTransmissibility(problem, element, fVElementGeometry, scvf, elemVolVars, fluxVarsCache, 0);
-    const auto resultPatzekSilin = TransmissibilityPatzekSilin<double>::singlePhaseTransmissibility(problem, element, fVElementGeometry, scvf, elemVolVars, fluxVarsCache, 0);
+    const auto resultBruus = PoreNetwork::TransmissibilityBruus<double>::singlePhaseTransmissibility(problem, element, fVElementGeometry, scvf, elemVolVars, fluxVarsCache, 0);
+    const auto resultPatzekSilin = PoreNetwork::TransmissibilityPatzekSilin<double>::singlePhaseTransmissibility(problem, element, fVElementGeometry, scvf, elemVolVars, fluxVarsCache, 0);
 
-    std::cout << "\nShape: " << Throat::shapeToString(shape) << std::endl;
+    std::cout << "\nShape: " << PoreNetwork::Throat::shapeToString(shape) << std::endl;
     std::cout << "TransmissibilityBruus " << resultBruus << std::endl;
     std::cout << "TransmissibilityPatzekSilin " << resultPatzekSilin << std::endl;
 
-    if (shape != Throat::Shape::square) // both laws yield slightly different values for squares
+    if (shape != PoreNetwork::Throat::Shape::square) // both laws yield slightly different values for squares
     {
         if (Dune::FloatCmp::ne<double>(resultBruus, resultPatzekSilin))
         {
-            std::cout << "TransmissibilityBruus for " << Throat::shapeToString(shape) << " is wrong" <<  std::endl;
+            std::cout << "TransmissibilityBruus for " << PoreNetwork::Throat::shapeToString(shape) << " is wrong" <<  std::endl;
             ++success;
         }
     }
     else if (Dune::FloatCmp::ne<double>(resultBruus, resultPatzekSilin, 1e-2))
     {
-        std::cout << "TransmissibilityBruus for " << Throat::shapeToString(shape) << " is wrong" <<  std::endl;
+        std::cout << "TransmissibilityBruus for " << PoreNetwork::Throat::shapeToString(shape) << " is wrong" <<  std::endl;
         ++success;
     }
 
@@ -117,14 +117,14 @@ int testBruus(const MockFluxVariablesCacheOneP& fluxVarsCache, const double refe
     const auto elemVolVars = MockElemVolVars{};
     const auto scvf = typename MockFVElementGeometry::SubControlVolumeFace{};
     const auto shape = fluxVarsCache.shape();
-    const auto resultBruus = TransmissibilityBruus<double>::singlePhaseTransmissibility(problem, element, fVElementGeometry, scvf, elemVolVars, fluxVarsCache, 0);
+    const auto resultBruus = PoreNetwork::TransmissibilityBruus<double>::singlePhaseTransmissibility(problem, element, fVElementGeometry, scvf, elemVolVars, fluxVarsCache, 0);
 
-    std::cout << "\nShape: " << Throat::shapeToString(shape) << std::endl;
+    std::cout << "\nShape: " << PoreNetwork::Throat::shapeToString(shape) << std::endl;
     std::cout << "TransmissibilityBruus " << resultBruus << std::endl;
 
     if (Dune::FloatCmp::ne<double>(resultBruus, reference, 1e-5))
     {
-        std::cout << "TransmissibilityBruus for " << Throat::shapeToString(shape) << " is wrong" <<  std::endl;
+        std::cout << "TransmissibilityBruus for " << PoreNetwork::Throat::shapeToString(shape) << " is wrong" <<  std::endl;
         ++success;
     }
 
@@ -138,19 +138,19 @@ int main(int argc, char** argv)
     using namespace Dumux;
     int success = 0;
 
-    auto fluxVarsCacheCircle = MockFluxVariablesCacheOneP(Throat::Shape::circle);
+    auto fluxVarsCacheCircle = MockFluxVariablesCacheOneP(PoreNetwork::Throat::Shape::circle);
     success += testAll(fluxVarsCacheCircle);
 
-    auto fluxVarsCacheSquare= MockFluxVariablesCacheOneP(Throat::Shape::square);
+    auto fluxVarsCacheSquare= MockFluxVariablesCacheOneP(PoreNetwork::Throat::Shape::square);
     success += testAll(fluxVarsCacheSquare);
 
-    auto fluxVarsCacheEquilateralTriangle = MockFluxVariablesCacheOneP(Throat::Shape::equilateralTriangle);
+    auto fluxVarsCacheEquilateralTriangle = MockFluxVariablesCacheOneP(PoreNetwork::Throat::Shape::equilateralTriangle);
     success += testAll(fluxVarsCacheEquilateralTriangle);
 
-    auto fluxVarsCacheTwoPlates = MockFluxVariablesCacheOneP(Throat::Shape::twoPlates);
+    auto fluxVarsCacheTwoPlates = MockFluxVariablesCacheOneP(PoreNetwork::Throat::Shape::twoPlates);
     success += testBruus(fluxVarsCacheTwoPlates, 6.66667e-08);
 
-    auto fluxVarsCacheRectangle = MockFluxVariablesCacheOneP(Throat::Shape::rectangle);
+    auto fluxVarsCacheRectangle = MockFluxVariablesCacheOneP(PoreNetwork::Throat::Shape::rectangle);
     success += testBruus(fluxVarsCacheRectangle, 1.24933e-09);
 
     if (success > 0)

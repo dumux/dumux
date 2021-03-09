@@ -1,0 +1,29 @@
+[TimeLoop]
+DtInitial = 2 # [s]
+TEnd = 200 # [s]
+
+[Grid]
+UpperRight = 1 1
+Cells = 128 128
+
+[Problem]
+Name = example_ff_liddrivencavity_re1000
+LidVelocity = 1
+EnableGravity = false
+
+[Component]
+LiquidDensity = 1
+LiquidKinematicViscosity = 1e-3
+
+[Newton]
+MaxSteps = 10
+MaxRelativeShift = 1e-8
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-8
+
+[Vtk]
+WriteFaceData = false
+
+[Flux]
+UpwindWeight = 0.5 # set to 0.5 for reproducing Ghia et al. (1982)

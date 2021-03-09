@@ -32,6 +32,7 @@ namespace Dumux {
  * \brief Reference implementation of a params for the heat pipe's
  *        material law
  */
+// "Use new material laws! Removal after 3.3")
 template<class ScalarT>
 class HeatPipeLawParams
 {

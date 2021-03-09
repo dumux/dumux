@@ -1,0 +1,27 @@
+[TimeLoop]
+DtInitial = 1 # [s]
+TEnd = 1e5 # [s]
+MaxTimeStepSize = 1e10 # [s]
+
+[Grid]
+UpperRight = 5 1
+Cells = 200 1
+
+[Problem]
+Name = test_boxrichardsniconduction # name passed to the output routines
+OutputInterval = 5 # every 5th timestep an output file is written
+EnableGravity= 0 # disable gravity
+
+[Newton]
+EnableChop = false  # chop for better convergence
+
+[Component]
+SolidDensity = 2700
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 790
+
+[SpatialParams]
+Swr = 0.05
+Snr = 0.0
+VanGenuchtenAlpha = 0.0037
+VanGenuchtenN = 4.7

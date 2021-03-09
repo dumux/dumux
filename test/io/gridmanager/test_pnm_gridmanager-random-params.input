@@ -6,8 +6,8 @@ UpperRight = 1e-3 1e-3 1e-3
 NumPores = 5 5 5
 
 ParameterType = lognormal
-MeanPoreRadius = 1e-5
-StandardDeviationPoreRadius = 3e-6
+MeanPoreInscribedRadius = 1e-5
+StandardDeviationPoreInscribedRadius = 3e-6
 PoreGeometry = Sphere
 
 BoundaryFaceMarker = 2 3 1 1 1 1
@@ -29,8 +29,8 @@ UpperRight = 1e-3 1e-3
 NumPores = 5 5
 
 ParameterType = lognormal
-MeanPoreRadius = 1e-5
-StandardDeviationPoreRadius = 3e-6
+MeanPoreInscribedRadius = 1e-5
+StandardDeviationPoreInscribedRadius = 3e-6
 PoreGeometry = Cube
 
 BoundaryFaceMarker = 2 3 1 1
@@ -52,8 +52,8 @@ UpperRight = 1e-3
 NumPores = 20
 
 ParameterType = lognormal
-MeanPoreRadius = 1e-5
-StandardDeviationPoreRadius = 3e-6
+MeanPoreInscribedRadius = 1e-5
+StandardDeviationPoreInscribedRadius = 3e-6
 PoreGeometry = Cylinder
 PoreHeight = 1e-5
 

@@ -114,6 +114,24 @@ distancePointSegment(const typename Geometry::GlobalCoordinate& p, const Geometr
 
 /*!
  * \ingroup Geometry
+ * \brief Compute the average distance from a segment to a geometry by integration
+ */
+template<class Geometry>
+inline typename Geometry::ctype
+averageDistanceSegmentGeometry(const typename Geometry::GlobalCoordinate& a,
+                               const typename Geometry::GlobalCoordinate& b,
+                               const Geometry& geometry,
+                               std::size_t integrationOrder = 2)
+{
+    typename Geometry::ctype avgDist = 0.0;
+    const auto& quad = Dune::QuadratureRules<typename Geometry::ctype, Geometry::mydimension>::rule(geometry.type(), integrationOrder);
+    for (const auto& qp : quad)
+        avgDist += distancePointSegment(geometry.global(qp.position()), a, b)*qp.weight()*geometry.integrationElement(qp.position());
+    return avgDist/geometry.volume();
+}
+
+/*!
+ * \ingroup Geometry
  * \brief Compute the shortest distance between two points
  */
 template<class ctype, int dimWorld>

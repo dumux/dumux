@@ -18,21 +18,20 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PoreNetworkDiscretization
+ * \ingroup PoreNetworkModels
  * \brief Base class for the local geometry for porenetworks
  */
 #ifndef DUMUX_DISCRETIZATION_PNM_FV_ELEMENT_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_PNM_FV_ELEMENT_GEOMETRY_HH
 
-#include <dune/localfunctions/lagrange/pqkfactory.hh>
-
+#include <optional>
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 
-namespace Dumux {
+namespace Dumux::PoreNetwork {
 
 /*!
- * \ingroup PoreNetworkDiscretization
+ * \ingroup PoreNetworkModels
  * \brief Base class for the local geometry for porenetworks
  * \tparam GG the finite volume grid geometry type
  * \tparam enableFVGridGeometryCache if the grid geometry is cached or not
@@ -59,7 +58,6 @@ public:
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
     using GridGeometry = GG;
-    using FVGridGeometry [[deprecated("Use GridGeometry")]] = GG;
     //! the maximum number of scvs per element
     static constexpr std::size_t maxNumElementScvs = 2;
 
@@ -106,7 +104,7 @@ public:
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
     {
-        return gridGeometry().feCache().get(elementPtr_->geometry().type()).localBasis();
+        return gridGeometry().feCache().get(element_->type()).localBasis();
     }
 
     //! The total number of sub control volumes
@@ -134,14 +132,17 @@ public:
     //! For compatibility reasons with the FVGeometry cache being disabled
     void bindElement(const Element& element)
     {
-        elementPtr_ = &element;
+        element_ = element;
         eIdx_ = gridGeometry().elementMapper().index(element);
     }
 
-    //! The global finite volume geometry we are a restriction of
-    [[deprecated("Use gridGeometry")]]
-    const GridGeometry& fvGridGeometry() const
-    { return *gridGeometryPtr_; }
+    //! Returns true if bind/bindElement has already been called
+    bool isBound() const
+    { return static_cast<bool>(element_); }
+
+    //! The bound element
+    const Element& element() const
+    { return *element_; }
 
     //! The global finite volume geometry we are a restriction of
     const GridGeometry& gridGeometry() const
@@ -152,7 +153,7 @@ public:
     { return gridGeometry().hasBoundaryScvf(eIdx_); }
 
 private:
-    const Element* elementPtr_;
+    std::optional<Element> element_;
     const GridGeometry* gridGeometryPtr_;
 
     GridIndexType eIdx_;
@@ -178,8 +179,7 @@ public:
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
     using GridGeometry = GG;
-    using FVGridGeometry [[deprecated("Use GridGeometry")]] = GG;
-        //! the maximum number of scvs per element
+    //! the maximum number of scvs per element
     static constexpr std::size_t maxNumElementScvs = 2;
 
     //! Constructor
@@ -223,7 +223,7 @@ public:
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
     {
-        return gridGeometry().feCache().get(elementPtr_->geometry().type()).localBasis();
+        return gridGeometry().feCache().get(element_->type()).localBasis();
     }
 
     //! The total number of sub control volumes
@@ -251,15 +251,18 @@ public:
     //! For compatibility reasons with the FVGeometry cache being disabled
     void bindElement(const Element& element)
     {
-        elementPtr_ = &element;
+        element_ = element;
         eIdx_ = gridGeometry().elementMapper().index(element);
         makeElementGeometries(element);
     }
 
-    //! The global finite volume geometry we are a restriction of
-    [[deprecated("Use gridGeometry")]]
-    const GridGeometry& fvGridGeometry() const
-    { return *gridGeometryPtr_; }
+    //! Returns true if bind/bindElement has already been called
+    bool isBound() const
+    { return static_cast<bool>(element_); }
+
+    //! The bound element
+    const Element& element() const
+    { return *element_; }
 
     //! The global finite volume geometry we are a restriction of
     const GridGeometry& gridGeometry() const
@@ -302,17 +305,18 @@ private:
         }
 
         // construct the inner sub control volume face
-        auto unitOuterNormal = elementGeometry.corner(1)-elementGeometry.corner(0);
+        auto unitOuterNormal = elementGeometry.corner(1) - elementGeometry.corner(0);
         unitOuterNormal /= unitOuterNormal.two_norm();
         LocalIndexType scvfLocalIdx = 0;
         scvfs_[0] = SubControlVolumeFace(elementGeometry.center(),
                                          std::move(unitOuterNormal),
+                                         gridGeometry().throatCrossSectionalArea(gridGeometry().elementMapper().index(element)),
                                          scvfLocalIdx++,
-                                         std::vector<LocalIndexType>({0, 1}));
+                                         std::array<LocalIndexType, 2>({0, 1}));
     }
 
     //! The bound element
-    const Element* elementPtr_;
+    std::optional<Element> element_;
     GridIndexType eIdx_;
 
     //! The global geometry this is a restriction of
@@ -325,6 +329,6 @@ private:
     bool hasBoundaryScvf_ = false;
 };
 
-} // end namespace Dumux
+} // end namespace Dumux::PoreNetwork
 
 #endif

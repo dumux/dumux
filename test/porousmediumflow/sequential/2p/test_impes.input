@@ -1,0 +1,24 @@
+[TimeManager]
+TEnd = 1e7 # [s]
+DtInitial = 0 #[s]
+
+[Grid]
+Cells = 30 6
+
+UpperRight = 300 60
+
+[Impet]
+CFLFactor = 0.95
+
+[Problem]
+Name = test_impes # name passed to the output routines
+EnableGravity = 0
+
+[Vtk]
+OutputLevel = 0
+
+[SpatialParams]
+Swr = 0.2
+Snr = 0.2
+BrooksCoreyPcEntry = 0
+BrooksCoreyLambda = 2

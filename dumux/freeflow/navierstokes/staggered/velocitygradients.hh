@@ -386,4 +386,4 @@ private:
 
 } // end namespace Dumux
 
-#endif // DUMUX_NAVIERSTOKES_STAGGERED_VELOCITYGRADIENTS_HH
+#endif

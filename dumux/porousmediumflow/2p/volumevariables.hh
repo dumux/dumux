@@ -31,6 +31,8 @@
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 #include <dumux/porousmediumflow/2p/formulation.hh>
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 
 /*!
@@ -47,14 +49,14 @@ class TwoPVolumeVariables
     using EnergyVolVars = EnergyVolumeVariables<Traits, TwoPVolumeVariables<Traits> >;
     using PermeabilityType = typename Traits::PermeabilityType;
     using ModelTraits = typename Traits::ModelTraits;
-    using Indices = typename ModelTraits::Indices;
+    using Idx = typename ModelTraits::Indices;
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using FS = typename Traits::FluidSystem;
     static constexpr int numFluidComps = ParentType::numFluidComponents();
     enum
     {
-        pressureIdx = Indices::pressureIdx,
-        saturationIdx = Indices::saturationIdx,
+        pressureIdx = Idx::pressureIdx,
+        saturationIdx = Idx::saturationIdx,
 
         phase0Idx = FS::phase0Idx,
         phase1Idx = FS::phase1Idx
@@ -67,6 +69,8 @@ public:
     using FluidSystem = typename Traits::FluidSystem;
     //! Export type of fluid state
     using FluidState = typename Traits::FluidState;
+    //! Export the indices
+    using Indices = typename ModelTraits::Indices;
     //! Export type of solid state
     using SolidState = typename Traits::SolidState;
     //! Export type of solid system
@@ -91,18 +95,20 @@ public:
 
         completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
 
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+        // old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element, scv, elemSol);
 
         const int wPhaseIdx = fluidState_.wettingPhase();
         const int nPhaseIdx = 1 - wPhaseIdx;
 
         mobility_[wPhaseIdx] =
-            MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx))
+            fluidMatrixInteraction.krw(fluidState_.saturation(wPhaseIdx))
             / fluidState_.viscosity(wPhaseIdx);
 
         mobility_[nPhaseIdx] =
-            MaterialLaw::krn(materialParams, fluidState_.saturation(wPhaseIdx))
+            fluidMatrixInteraction.krn(fluidState_.saturation(wPhaseIdx))
             / fluidState_.viscosity(nPhaseIdx);
 
         // porosity calculation over inert volumefraction
@@ -134,8 +140,11 @@ public:
     {
         EnergyVolVars::updateTemperature(elemSol, problem, element, scv, fluidState, solidState);
 
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+        // old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+
         const auto& priVars = elemSol[scv.localDofIndex()];
 
         const auto wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
@@ -147,7 +156,7 @@ public:
             {
                 fluidState.setSaturation(phase1Idx, priVars[saturationIdx]);
                 fluidState.setSaturation(phase0Idx, 1 - priVars[saturationIdx]);
-                pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
+                pc_ = fluidMatrixInteraction.pc(fluidState.saturation(wPhaseIdx));
                 fluidState.setPressure(phase1Idx, priVars[pressureIdx] - pc_);
             }
             else
@@ -156,7 +165,7 @@ public:
                                                                                 scv, elemSol, priVars[saturationIdx]);
                 fluidState.setSaturation(phase1Idx, Sn);
                 fluidState.setSaturation(phase0Idx, 1 - Sn);
-                pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
+                pc_ = fluidMatrixInteraction.pc(fluidState.saturation(wPhaseIdx));
                 fluidState.setPressure(phase1Idx, priVars[pressureIdx] + pc_);
             }
         }
@@ -169,14 +178,14 @@ public:
                                                                                 scv, elemSol, priVars[saturationIdx]);
                 fluidState.setSaturation(phase0Idx, Sn);
                 fluidState.setSaturation(phase1Idx, 1 - Sn);
-                pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
+                pc_ = fluidMatrixInteraction.pc(fluidState.saturation(wPhaseIdx));
                 fluidState.setPressure(phase0Idx, priVars[pressureIdx] + pc_);
             }
             else
             {
                 fluidState.setSaturation(phase0Idx, priVars[saturationIdx]);
                 fluidState.setSaturation(phase1Idx, 1 - priVars[saturationIdx]);
-                pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
+                pc_ = fluidMatrixInteraction.pc(fluidState.saturation(wPhaseIdx));
                 fluidState.setPressure(phase0Idx, priVars[pressureIdx] - pc_);
             }
         }

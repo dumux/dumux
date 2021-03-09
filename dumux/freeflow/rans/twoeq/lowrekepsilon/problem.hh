@@ -62,9 +62,7 @@ public:
     //! The constructor sets the gravity, if desired by the user.
     RANSProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
     : ParentType(gridGeometry, paramGroup)
-    {
-        useStoredEddyViscosity_ = getParamFromGroup<bool>(this->paramGroup(), "RANS.UseStoredEddyViscosity", true);
-    }
+    { }
 
     /*!
      * \brief Correct size of the static (solution independent) wall variables
@@ -111,13 +109,26 @@ public:
         }
     }
 
-public:
+    bool useStoredEddyViscosity() const
+    {
+        static const bool useStoredEddyViscosity = getParamFromGroup<bool>(this->paramGroup(), "RANS.UseStoredEddyViscosity", true);
+        return useStoredEddyViscosity;
+    }
+
+    Scalar storedDissipationTilde(const int elementIdx) const
+    { return storedDissipationTilde_[elementIdx]; }
+
+    Scalar storedDynamicEddyViscosity(const int elementIdx) const
+    { return storedDynamicEddyViscosity_[elementIdx]; }
+
+    Scalar storedTurbulentKineticEnergy(const int elementIdx) const
+    { return storedTurbulentKineticEnergy_[elementIdx]; }
+
+private:
     std::vector<Scalar> storedDissipationTilde_;
     std::vector<Scalar> storedDynamicEddyViscosity_;
     std::vector<Scalar> storedTurbulentKineticEnergy_;
-    bool useStoredEddyViscosity_;
 
-private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }

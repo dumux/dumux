@@ -28,6 +28,8 @@
 #include "3dpressure.hh"
 #include "3dvelocity.hh"
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 /*!
  * \ingroup SequentialTwoPModel
@@ -77,7 +79,6 @@ template<class TypeTag> class FvMpfaL3dPressureVelocity2p: public FvMpfaL3dPress
     using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
     using InteractionVolume = GetPropType<TypeTag, Properties::MPFAInteractionVolume>;
     using Intersection = typename GridView::Intersection;
@@ -452,8 +453,14 @@ void FvMpfaL3dPressureVelocity2p<TypeTag>::calculateVelocityOnBoundary(const Int
             satW = cellData.saturation(wPhaseIdx);
         }
 
-        Scalar pressBound = boundValues[pressureIdx];
-        Scalar pcBound = MaterialLaw::pc(problem_.spatialParams().materialLawParams(element), satW);
+        const Scalar pressBound = boundValues[pressureIdx];
+
+        // old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
+
+        const Scalar pcBound = fluidMatrixInteraction.pc(satW);
 
         //determine phase pressures from primary pressure variable
         Scalar pressWBound = 0;
@@ -469,10 +476,8 @@ void FvMpfaL3dPressureVelocity2p<TypeTag>::calculateVelocityOnBoundary(const Int
             pressNwBound = pressBound;
         }
 
-        Scalar lambdaWBound = MaterialLaw::krw(problem_.spatialParams().materialLawParams(element), satW)
-                / viscosity_[wPhaseIdx];
-        Scalar lambdaNwBound = MaterialLaw::krn(problem_.spatialParams().materialLawParams(element), satW)
-                / viscosity_[nPhaseIdx];
+        const Scalar lambdaWBound = fluidMatrixInteraction.krw(satW) / viscosity_[wPhaseIdx];
+        const Scalar lambdaNwBound = fluidMatrixInteraction.krn(satW) / viscosity_[nPhaseIdx];
 
         Scalar potentialDiffW = cellData.fluxData().upwindPotential(wPhaseIdx, isIndex);
         Scalar potentialDiffNw = cellData.fluxData().upwindPotential(nPhaseIdx, isIndex);

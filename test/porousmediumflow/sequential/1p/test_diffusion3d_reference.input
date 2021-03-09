@@ -1,0 +1,20 @@
+[Problem]
+EnableGravity = 0 # Disable Gravity
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 1.0
+
+[Grid]
+File = ./grids/test_diffusion3d_ug1.dgf
+
+RefinementRatio = 0
+
+[LinearSolver]
+GMResRestart = 80
+MaxIterations = 1000
+ResidualReduction = 1e-8
+
+[SpatialParams]
+LinearPcEntry = 0
+LinearPcMax = 0

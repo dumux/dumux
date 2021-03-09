@@ -25,6 +25,8 @@
 #ifndef LINEAR_MATERIAL_PARAMS_HH
 #define LINEAR_MATERIAL_PARAMS_HH
 
+// TODO Deprecated. Remove after 3.3
+
 namespace Dumux {
 
 /*!

@@ -43,4 +43,4 @@ struct IndexTraits
 
 } // namespace Dumux
 
-#endif // DUMUX_COMMON_INDEX_TRAITS_HH
+#endif

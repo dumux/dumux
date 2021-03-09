@@ -1,15 +1,99 @@
+Differences Between DuMu<sup>x</sup> 3.4 and DuMu<sup>x</sup> 3.3
+
+### Improvements and Enhancements
+- __Pore-network models added to DuMu<sup>x</sup>__:
+    - Three fully implicit pore-network models (1p, 1pnc, 2p) have been added.
+    - A quasi-static 2p PNM for the creation of pc-Sw curves has been added.
+    - A new namespace `Dumux::PoreNetwork` has been introduced, containing all relevant classes and functions for pore-network modeling.
+    - An example introduces the use of the 1p PNM for the estimation of the upscaled Darcy permeability.
+    - Note that this is still considered a rather _experimental_ feature. Everything within namespace `Dumux::PoreNetwork` might undergo (backward-compatibility breaking) changes _without prior notice_.
+- __Several scripts have been translated to Python__:
+    - `getusedversions.sh` to extract the used Dumux/Dune versions of a module (new script: `bin/util/getusedversions.py`)
+    - `extractmodulepart.sh` no longer creates an install file, instead, you can now generate install scripts for your module using the new script `bin/util/makeinstallscript.py`.
+    - Note: the old shells script will be removed after release 3.4.
+
+### Immediate interface changes not allowing/requiring a deprecation period:
+- __MPNC__: The `MPAdapter` can now also be called with a temporary `pcKrSw` objects. For this, the compiler needs to deduce the
+            class's template argument types. You may need to adapt your `spatialParams` from
+
+```
+using MPAdapter = Dumux::FluidMatrix::MPAdapter<PcKrSwCurve, 2>;
+...
+auto fluidMatrixInteractionAtPos(const GlobalPosition &globalPos) const
+{
+    return makeFluidMatrixInteraction(MPAdapter(pcKrSwCurve_));
+}
+```
+to
+```
+// alias for MPAdapter is removed
+auto fluidMatrixInteractionAtPos(const GlobalPosition &globalPos) const
+{
+    return makeFluidMatrixInteraction(FluidMatrix::MPAdapter(pcKrSwCurve_));
+}
+```
+- __Grid-geometry__: The local views of grid geometries are now required to implement the interfaces
+`element()` (returning the bound element) and `isBound()` returning a `bool` which is `true` if the
+functions `bind` or `bindElement` have been called (i.e. the local geometry is in a bound state). These
+interfaces are currently not used (except in the unit tests) but will be required
+by the assembler in future Dumux versions.
+
 Differences Between DuMu<sup>x</sup> 3.3 and DuMu<sup>x</sup> 3.2
 =============================================
 
 ### Improvements and Enhancements
 
-- __Dune version__: DuMu<sup>x</sup> now requires Dune >=2.7
-- The DuMu<sup>x</sup> install script has been translated to Python to improve portability. The old shell script will be removed after release 3.3.
+- __Requirements__: DuMu<sup>x</sup> now requires Dune >=2.7 and CMake >= 3.13.
+- __New way to use material laws__: The usage of laws for pc-Sw and kr-Sw has been completely revised. A caller does not have to pass a `parameters` object to the laws anymore. The `spatialParams` now provide a `fluidMatrixInteraction` function which bundles an arbitrary number of
+ different interaction laws such as a pc-Sw and kr-Sw curve and interfacial areas.
+ New pre-cached spline laws were added which can help to increase efficiency. The usage of the old interface is deprecated and warnings will be raised. The old interface will be removed after the release of 3.3.
+- __New example__: We have added another free-flow example dealing with lid-driven cavity flow.
+- __Install script written in Python__: The DuMu<sup>x</sup> install script has been translated to Python to improve portability. The old shell script will be removed after release 3.3.
+- __Improved velocity reconstruction__: The velocity reconstruction for immiscible porous-media models has been improved, leading to slightly
+  different velocity fields in the vicinity of Neumann boundaries.
+- __Python bindings (experimental)__: Basic support for Python bindings has been added. Python bindings are an experimental feature
+  and might undergo unannounced API changes until further notice. This concerns the files in the folders `python` and `dumux/python`. To activate
+    - add `-DDUNE_ENABLE_PYTHONBINDINGS=TRUE` and `-DCMAKE_POSITION_INDEPENDENT_CODE=TRUE` to your CMAKE_FLAGS and run dunecontrol
+    - run `python3 dune-common/bin/setup-dunepy.py`
+    - adapt your PYTHONPATH environment variable as described [here](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/tree/master/python)
+- __Obtain DuMux via pip__: The Dumux source code can now be installed using `pip install dumux`. This works for the Python bindings as well as the C++ source code. Matching Dune modules are also installed. Currently not all dune modules have Python packages available. We recommend trying this new feature in a virtual environment by typing
+```sh
+python3 -m virtualenv venv
+source venv/bin/activate
+pip install dumux
+```
+To test the setup you can use the following Python script
+```py
+from dune.grid import structuredGrid
+from dumux.discretization import GridGeometry
+
+gridView = structuredGrid([0,0],[1,1],[5,5])
+
+gridGeometry = GridGeometry(gridView, discMethod="cctpfa")
+gridGeometry.update()
+
+print("The total number of scvs is {}".format(gridGeometry.numScv()))
+print("The total number of scvfs is {}".format(gridGeometry.numScvf()))
+```
+- __fmt-library__: We now include a basic version of the [fmt-library](https://github.com/fmtlib/fmt) which implements `std::format` (coming with C++20) without the need for C++20.
+  In order to use this, include `<dumux/io/format.hh>`. `format`, `format_to`, `format_to_n`, `formatted_size` are available in the `Dumux::Fmt` namespace.
+  The string formatting is documented [here](https://en.cppreference.com/w/cpp/utility/format/formatter#Standard_format_specification) and follows the Python string formatting rules.
+  The functions are documented on [cppreference](https://en.cppreference.com/w/cpp/utility/format).
+ - __RANS__: The RANS models now include variable densities. Compositional or nonisothermal RANS models could produce slightly different, more accurate, results.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
-
+- __Flash/Constraintsolver__: The flashes depending on material laws are immediately required to use new-style material laws (fluidMatrixInteraction interface in spatialparams)
+- __Box interface solver__: The box interface solver immediately requires the new material law interface without deprecation period. Use the new class `BoxMaterialInterfaces` and update your spatial params to use the new fluidmatrixinteraction interface to be able to use the box interface solver in version 3.3.
 - For the "sequential" models, the property `BoundaryTypes` has been simply renamed to `SequentialBoundaryTypes`
 - __Quadmath__: Dumux::Quad has been removed without deprecation. Use Dune::Float128 instead.
+- Within the RANS group, two additional runtime parameters have been included 'IsFlatWallBounded' and 'WriteFlatWallBoundedFields'.
+For both the K-Epsilon and Zero-eq RANS models the 'IsFlatWallBounded' runtime parameter should be set as True,
+as wall topology is not supported for these models with our geometric constraints. If not set as true, the geometry
+will be checked before the model is run. If either the runtime parameter or the geometry check indicate non-flat walls,
+the model will terminate. To add FlatWallBounded specific output to the vtk output, WriteFlatWallBoundedFields can be set as True.
+- __1d3d coupling__: The kernel coupling manager has been replaced with the one from Koch et al (2020) JCP https://doi.org/10.1016/j.jcp.2020.109370
+- __1d3d coupling__: The average and surface coupling managers has been updated with a slightly more accurate version to compute the stencils and the average operator.
+The results might differ a bit when using coarse grids. However, both version are expected to converge to the same result with grid refinement.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.3:
 
@@ -18,12 +102,12 @@ Differences Between DuMu<sup>x</sup> 3.3 and DuMu<sup>x</sup> 3.2
 ### Deleted classes/files, property names, constants/enums:
 
 - Everything that has been deprecated before release 3.2 has been removed.
-- All of the geometry headers previously saved in `dumux/common/geometry` have been relocated to `dumux/geometry`. 
-  The headers in `dumux/common/geometry` are deprecated and will be removed in 3.3. The geometry tests have been moved from `test/common/geometry` 
+- All of the geometry headers previously saved in `dumux/common/geometry` have been relocated to `dumux/geometry`.
+  The headers in `dumux/common/geometry` are deprecated and will be removed after 3.3. The geometry tests have been moved from `test/common/geometry`
   and `test/common/boundingboxtree` to `test/geometry`.
 
 ### Other noteworthy changes:
-- after release 3.2, DuMu<sup>x</sup> releases earlier than 2.12 will no longer be automatically tested or supported.
+- Releases earlier than 3.0 are no longer automatically tested or supported.
 
 Differences Between DuMu<sup>x</sup> 3.2 and DuMu<sup>x</sup> 3.1
 =============================================
@@ -50,7 +134,7 @@ An additional new option is `Vtk.CoordPrecision` which changes the precision of 
 ### Immediate interface changes not allowing/requiring a deprecation period
 
 - Remove `Grid.HeapSize` as dune-ugrid removed the according feature as well.
-- __Van Genuchten__: Corrected VanGenuchten-Mualem exponent in the non-wetting saturation formula (`1/3` instead of `1/2` (or `l`, see above))
+- __Van Genuchten__: Corrected VanGenuchten-Mualem exponent in the nonwetting saturation formula (`1/3` instead of `1/2` (or `l`, see above))
 - __Van Genuchten__: Corrected VanGenuchten-Mualem implementation of `dkrn/dSw`
 - __Brooks-Corey__: Corrected Brooks-Corey implementation of `dkrn/dSw` and added the derivatives for the regularized version
 - __AMGBackend__: The internal structure of the AMGBackend and the ParallelISTLHelper has been overhauled, as only used by the AMG, we did not make the changes backwards-compatible
@@ -1331,7 +1415,7 @@ Differences Between DuMu<sup>x</sup> 2.2 and DuMu<sup>x</sup> 2.3
     test/decoupled/2p. They work in parallel only if the AMGBackend is used
     as linear solver. No dynamic loadbalancing can be done yet.
 
-  - The MPNC model can use either the most wetting or the most non-wetting phase
+  - The MPNC model can use either the most wetting or the most nonwetting phase
     pressure as primary variable. This is controlled via the property
     "PressureFormulation."
 

@@ -367,6 +367,9 @@ public:
     //! Export transmissibility storage type
     using AdvectionTransmissibilityContainer = std::array<Scalar, 2>;
 
+    //! Export the type used for the gravity coefficients
+    using GravityCoefficients = std::array<Scalar, 1>;
+
     //! update subject to a given problem
     template< class Problem, class ElementVolumeVariables >
     void updateAdvection(const Problem& problem,
@@ -375,7 +378,7 @@ public:
                          const ElementVolumeVariables& elemVolVars,
                          const SubControlVolumeFace &scvf)
     {
-        tij_ = AdvectionType::calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf);
+        tij_ = AdvectionType::calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf, g_);
     }
 
     //! We use the same name as in the TpfaDarcysLawCache so
@@ -393,8 +396,13 @@ public:
     Scalar advectionTijFacet() const
     { return tij_[facetTijIdx]; }
 
+    //! return the coefficients for the computation of gravity at the scvf
+    const GravityCoefficients& gravityCoefficients() const
+    { return g_; }
+
 private:
     AdvectionTransmissibilityContainer tij_;
+    GravityCoefficients g_;
 };
 
 /*!
@@ -436,24 +444,49 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/tr
                        int phaseIdx,
                        const ElementFluxVarsCache& elemFluxVarsCache)
     {
-        static const Scalar gravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
-        if (gravity)
-            DUNE_THROW(Dune::NotImplemented, "Gravity for darcys law with facet coupling on surface grids");
-
         if (!problem.couplingManager().isOnInteriorBoundary(element, scvf))
             return TpfaDarcysLaw::flux(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, elemFluxVarsCache);
 
+        // On surface grids only xi = 1.0 can be used, as the coupling condition
+        // for xi != 1.0 does not generalize for surface grids where there can be
+        // seveal neighbor meeting at a branching point.
+        static const Scalar xi = getParamFromGroup<Scalar>(problem.paramGroup(), "FacetCoupling.Xi", 1.0);
+        if (Dune::FloatCmp::ne(xi, 1.0, 1e-6))
+            DUNE_THROW(Dune::InvalidStateException, "Xi != 1.0 cannot be used on surface grids");
+
         // Obtain inside and fracture pressures
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+        const auto& facetVolVars = problem.couplingManager().getLowDimVolVars(element, scvf);
         const auto pInside = insideVolVars.pressure(phaseIdx);
-        const auto pFacet = problem.couplingManager().getLowDimVolVars(element, scvf).pressure(phaseIdx);
+        const auto pFacet = facetVolVars.pressure(phaseIdx);
 
-        // return flux
+        // compute and return flux
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
-        if (scvf.boundary())
-            return fluxVarsCache.advectionTijInside()*pInside + fluxVarsCache.advectionTijFacet()*pFacet;
-        else
-            return fluxVarsCache.advectionTijInside()*pInside + fluxVarsCache.advectionTijFacet()*pFacet;
+        Scalar flux = fluxVarsCache.advectionTijInside()*pInside + fluxVarsCache.advectionTijFacet()*pFacet;
+
+        static const Scalar gravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
+        if (gravity)
+        {
+            // compute alpha := n^T*K*g and add to flux (use arithmetic mean for density)
+            const auto& g = problem.spatialParams().gravity(scvf.ipGlobal());
+            const auto rho = 0.5*(insideVolVars.density(phaseIdx) + facetVolVars.density(phaseIdx));
+            const auto rhoTimesArea = rho*Extrusion::area(scvf);
+            const auto alpha_inside = rhoTimesArea*insideVolVars.extrusionFactor()
+                                      *vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g);
+
+            flux += alpha_inside;
+
+            // maybe add further gravitational contributions
+            if ( !scvf.boundary() && problem.interiorBoundaryTypes(element, scvf).hasOnlyNeumann() )
+            {
+                const auto alpha_facet = rhoTimesArea*insideVolVars.extrusionFactor()
+                                         *vtmv(scvf.unitOuterNormal(), facetVolVars.permeability(), g);
+
+                flux -= fluxVarsCache.gravityCoefficients()[0]*(alpha_inside - alpha_facet);
+            }
+        }
+
+        return flux;
     }
 
     // The flux variables cache has to be bound to an element prior to flux calculations
@@ -464,6 +497,20 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/tr
                                                   const FVElementGeometry& fvGeometry,
                                                   const ElementVolumeVariables& elemVolVars,
                                                   const SubControlVolumeFace& scvf)
+    {
+        typename Cache::GravityCoefficients g;
+        return calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf, g);
+    }
+
+    // This overload additionally receives a container in which the coefficients required
+    // for the computation of the gravitational acceleration ar the scvf are stored
+    template< class Problem, class ElementVolumeVariables >
+    static TijContainer calculateTransmissibility(const Problem& problem,
+                                                  const Element& element,
+                                                  const FVElementGeometry& fvGeometry,
+                                                  const ElementVolumeVariables& elemVolVars,
+                                                  const SubControlVolumeFace& scvf,
+                                                  typename Cache::GravityCoefficients& g)
     {
         TijContainer tij;
         if (!problem.couplingManager().isCoupled(element, scvf))
@@ -504,7 +551,8 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/tr
                                         *vtmv(scvf.unitOuterNormal(), facetVolVars.permeability(), scvf.unitOuterNormal());
 
             // TODO: check for division by zero??
-            tij[Cache::insideTijIdx] = wFacet*wIn/(wIn+wFacet);
+            g[0] = wIn/(wIn+wFacet);
+            tij[Cache::insideTijIdx] = wFacet*g[0];
             tij[Cache::facetTijIdx] = -tij[Cache::insideTijIdx];
         }
         else if (iBcTypes.hasOnlyDirichlet())

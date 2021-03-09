@@ -38,6 +38,7 @@
 #include <dune/common/exceptions.hh>
 
 #include <dumux/common/parameters.hh>
+#include <dumux/io/format.hh>
 
 namespace Dumux {
 
@@ -233,7 +234,7 @@ public:
     {
         endTime_ = t;
         if (verbose_)
-            std::cout << "Set new end time to t = " << t << " seconds." << std::endl;
+            std::cout << Fmt::format("Set new end time to t = {:.5g} seconds.\n", t);
     }
 
     /*!
@@ -256,6 +257,9 @@ public:
     {
         using std::min;
         timeStepSize_ = min(dt, maxTimeStepSize());
+        if (!finished() && Dune::FloatCmp::le(timeStepSize_, 0.0, 1e-14*endTime_))
+            std::cerr << Fmt::format("You have set a very small timestep size (dt = {:.5g}).", timeStepSize_)
+                      << " This might lead to numerical problems!\n";
     }
 
     /*!
@@ -344,15 +348,11 @@ public:
         if (verbose_)
         {
             const auto cpuTime = wallClockTime();
-            const auto percent = std::round( time_ / endTime_ * 100 );
-            std::cout << "[" << std::fixed << std::setw( 3 ) << std::setfill( ' ' )
-                      << std::setprecision( 0 )  << percent << "%] "
-                      << "Time step " << timeStepIdx_ << " done in "
-                      << std::setprecision( 6 ) << timeStepWallClockTime_ << " seconds. "
-                      << "Wall clock time: " << std::setprecision( 3 ) << cpuTime
-                      << ", time: " << std::setprecision( 5 ) << time_
-                      << ", time step size: " << std::setprecision( 8 ) << previousTimeStepSize_
-                      << std::endl;
+            using std::round;
+            const auto percent = round( time_ / endTime_ * 100 );
+            std::cout << Fmt::format("[{:3.0f}%] ", percent)
+                      << Fmt::format("Time step {} done in {:.2g} seconds. ", timeStepIdx_, timeStepWallClockTime_)
+                      << Fmt::format("Wall clock time: {:.2g}, time: {:.5g}, time step size: {:.5g}\n", cpuTime, time_, previousTimeStepSize_);
         }
     }
 
@@ -365,23 +365,22 @@ public:
         auto cpuTime = timer_.stop();
 
         if (verbose_)
-        {
-            std::cout << "Simulation took " << cpuTime << " seconds on "
-                      << comm.size() << " processes.\n";
-        }
+            std::cout << Fmt::format("Simulation took {:.2g} seconds on {} processes.\n", cpuTime, comm.size());
 
         if (comm.size() > 1)
             cpuTime = comm.sum(cpuTime);
 
         if (verbose_)
-        {
-            std::cout << "The cumulative CPU time was " << cpuTime << " seconds.\n";
-        }
+            std::cout << Fmt::format("The cumulative CPU time was {:.2g} seconds.\n", cpuTime);
     }
 
     //! If the time loop has verbose output
     bool verbose() const
     { return verbose_; }
+
+    //! Sets time loop verbosity
+    void setVerbose(bool verbose = true)
+    { verbose_ = verbose; }
 
     /*
      * @}
@@ -514,8 +513,8 @@ public:
             lastPeriodicCheckPoint_ += interval;
 
         if (this->verbose())
-            std::cout << "Enabled periodic check points every " << interval
-                      << " seconds with the next check point at " << lastPeriodicCheckPoint_ + interval << " seconds." << std::endl;
+            std::cout << Fmt::format("Enabled periodic check points every {:.5g} seconds ", interval)
+                      << Fmt::format("with the next check point at {:.5g} seconds.\n", lastPeriodicCheckPoint_ + interval);
 
         // check if the current time point is a check point
         if (Dune::FloatCmp::eq(this->time()-lastPeriodicCheckPoint_, 0.0, 1e-7))
@@ -590,11 +589,11 @@ private:
     //! Adds a check point to the queue
     void setCheckPoint_(Scalar t)
     {
-        if (t < this->time())
+        if (Dune::FloatCmp::le(t - this->time(), 0.0, this->timeStepSize()*1e-7))
         {
             if (this->verbose())
-                std::cerr << "Couldn't insert checkpoint at t = " << t
-                          << " because that's in the past! (current simulation time is " << this->time() << ")" << std::endl;
+                std::cerr << Fmt::format("Couldn't insert checkpoint at t = {:.5g} ", t)
+                          << Fmt::format("because that's in the past! (current simulation time is {:.5g})\n", this->time());
             return;
         }
 
@@ -611,7 +610,7 @@ private:
 
         checkPoints_.push(t);
         if (this->verbose())
-            std::cout << "Set check point at t = " << t << " seconds." << std::endl;
+            std::cout << Fmt::format("Set check point at t = {:.5g} seconds.\n", t);
     }
 
     /*!

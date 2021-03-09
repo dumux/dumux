@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup PoreNetworkModels
  * \brief Write pore-network grids with attached data to dgf file
  */
 #ifndef DUMUX_PORE_NETWORK_DGF_WRITER_HH
@@ -25,23 +26,23 @@
 
 #include <string>
 #include <iostream>
+#include <fstream>
 
-namespace Dumux {
+namespace Dumux::PoreNetwork {
 
  /*!
-  * \ingroup PoreNetworkModel
+  * \ingroup PoreNetworkModels
   * \brief Write pore-network grids with attached data to dgf file
   */
 template<class GridView, class GridData>
-inline static void writeDgf(const std::string& fileName, const GridView& gridView, const GridData& gridData)
+void writeDgf(const std::string& fileName, const GridView& gridView, const GridData& gridData)
 {
     const auto someElement = *(elements(gridView).begin());
     const auto someVertex = *(vertices(gridView).begin());
     const auto numVertexParams = gridData.parameters(someVertex).size();
     const auto numElementParams = gridData.parameters(someElement).size();
 
-    std::ofstream dgfFile;
-    dgfFile.open(fileName);
+    std::ofstream dgfFile(fileName);
     dgfFile << "DGF\nVertex % Coordinates, volumes and boundary flags of the pore bodies\nparameters " << numVertexParams << "\n";
     dgfFile << "% Vertex parameters: ";
     for (const auto& p : gridData.vertexParameterNames())
@@ -87,9 +88,8 @@ inline static void writeDgf(const std::string& fileName, const GridView& gridVie
     }
 
     dgfFile << "#";
-    dgfFile.close();
 }
 
-}
+} // end namespace Dumux::PoreNetwork
 
 #endif

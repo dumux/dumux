@@ -1,0 +1,24 @@
+[TimeLoop]
+DtInitial = 1 # [s]
+TEnd = 2500 # [s]
+MaxTimeStepSize = 200
+
+[Grid]
+File = grids/durlofsky.msh
+
+[SpatialParams]
+FractureAperture = 1e-3
+
+[SpatialParams.Matrix]
+Swr = 0.18
+BrooksCoreyPcEntry = 1e4
+BrooksCoreyLambda = 2
+
+[SpatialParams.Fracture]
+Swr = 0.05
+BrooksCoreyPcEntry = 1e3
+BrooksCoreyLambda = 2
+
+[Problem]
+Name = 2pboxdfm
+EnableGravity = false

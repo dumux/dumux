@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PoreNetworkDiscretization
- * \brief the sub control volume for porenetworks
+ * \ingroup PoreNetworkModels
+ * \brief the sub control volume for pore networks
  */
 #ifndef DUMUX_DISCRETIZATION_PNM_SUBCONTROLVOLUME_HH
 #define DUMUX_DISCRETIZATION_PNM_SUBCONTROLVOLUME_HH
@@ -29,10 +29,10 @@
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/subcontrolvolumebase.hh>
 
-namespace Dumux {
+namespace Dumux::PoreNetwork {
 
 /*!
- * \ingroup PoreNetworkDiscretization
+ * \ingroup PoreNetworkModels
  * \brief Default traits class
  * \tparam GV the type of the grid view
  */
@@ -53,7 +53,7 @@ struct PNMDefaultScvGeometryTraits
 };
 
 /*!
- * \ingroup PoreNetworkDiscretization
+ * \ingroup PoreNetworkModels
  * \brief the sub control volume for porenetworks
  * \tparam GV the type of the grid view
  * \tparam T the scv geometry traits
@@ -61,10 +61,10 @@ struct PNMDefaultScvGeometryTraits
 template<class GV,
          class T = PNMDefaultScvGeometryTraits<GV> >
 class PNMSubControlVolume
-: public SubControlVolumeBase<PNMSubControlVolume<GV, T>, T>
+: public Dumux::SubControlVolumeBase<PNMSubControlVolume<GV, T>, T>
 {
     using ThisType = PNMSubControlVolume<GV, T>;
-    using ParentType = SubControlVolumeBase<ThisType, T>;
+    using ParentType = Dumux::SubControlVolumeBase<ThisType, T>;
     using GridIndexType = typename T::GridIndexType;
     using LocalIndexType = typename T::LocalIndexType;
     using Scalar = typename T::Scalar;
@@ -95,7 +95,8 @@ public:
       dofIndex_(dofIndex)
     {}
 
-    //! The center of the sub control volume (return pore center)
+    //! The center of the sub control volume (return pore center).
+    //! Be aware that this is not the pore-body center! Use dofPosition() for the latter!
     const GlobalPosition& center() const
     { return center_; }
 
@@ -145,6 +146,6 @@ private:
     GridIndexType dofIndex_;
 };
 
-} // end namespace Dumux
+} // end namespace Dumux::PoreNetwork
 
 #endif

@@ -27,6 +27,8 @@
 #include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/convectivepart.hh>
 #include "properties.hh"
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 /*!
  * \ingroup SequentialTwoPModel
@@ -54,7 +56,6 @@ private:
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
@@ -100,6 +101,11 @@ public:
         Scalar lambdaWJ = 0;
         Scalar lambdaNwJ = 0;
 
+        // old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
+
         if (preComput_)
         {
             lambdaWI=cellDataI.mobility(wPhaseIdx);
@@ -107,9 +113,9 @@ public:
         }
         else
         {
-            lambdaWI = MaterialLaw::krw(problem_.spatialParams().materialLawParams(element), satI);
+            lambdaWI = fluidMatrixInteraction.krw(satI);
             lambdaWI /= viscosity_[wPhaseIdx];
-            lambdaNwI = MaterialLaw::krn(problem_.spatialParams().materialLawParams(element), satI);
+            lambdaNwI = fluidMatrixInteraction.krn(satI);
             lambdaNwI /= viscosity_[nPhaseIdx];
         }
 
@@ -144,9 +150,14 @@ public:
             }
             else
             {
-                lambdaWJ = MaterialLaw::krw(problem_.spatialParams().materialLawParams(neighbor), satJ);
+                // old material law interface is deprecated: Replace this by
+                // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(neighbor.geometry().center());
+                // after the release of 3.3, when the deprecated interface is no longer supported
+                const auto fluidMatrixInteractionNeighbor = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), neighbor);
+
+                lambdaWJ = fluidMatrixInteractionNeighbor.krw(satJ);
                 lambdaWJ /= viscosity_[wPhaseIdx];
-                lambdaNwJ = MaterialLaw::krn(problem_.spatialParams().materialLawParams(neighbor), satJ);
+                lambdaNwJ = fluidMatrixInteractionNeighbor.krn(satJ);
                 lambdaNwJ /= viscosity_[nPhaseIdx];
             }
 
@@ -164,9 +175,9 @@ public:
             distVec = intersection.geometry().center() - element.geometry().center();
 
             //calculate lambda_n*f_w at the boundary
-            lambdaWJ = MaterialLaw::krw(problem_.spatialParams().materialLawParams(element), satJ);
+            lambdaWJ = fluidMatrixInteraction.krw(satJ);
             lambdaWJ /= viscosity_[wPhaseIdx];
-            lambdaNwJ = MaterialLaw::krn(problem_.spatialParams().materialLawParams(element), satJ);
+            lambdaNwJ = fluidMatrixInteraction.krn(satJ);
             lambdaNwJ /= viscosity_[nPhaseIdx];
 
             //If potential is zero always take value from the boundary!

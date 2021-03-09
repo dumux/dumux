@@ -35,12 +35,15 @@
 // Hermite basis functions
 #include <dumux/common/cubicsplinehermitebasis.hh>
 
+// for inversion
+#include <dumux/nonlinear/findscalarroot.hh>
+
 namespace Dumux {
 
 /*!
  * \ingroup Common
  * \brief A monotone cubic spline
- * \note Contruction after Fritsch & Butland (1984) (see https://doi.org/10.1137/0905021)
+ * \note Construction after Fritsch & Butland (1984) (see https://doi.org/10.1137/0905021)
  * \note The resulting interpolation is globally monotone but only C^1
  */
 template<class Scalar = double>
@@ -54,18 +57,13 @@ public:
     MonotoneCubicSpline() = default;
 
     /*!
-     * \brief Contruct a monotone cubic spline from the control points (x[i], y[i])
+     * \brief Construct a monotone cubic spline from the control points (x[i], y[i])
      * \note if the data set is monotone, monotonicity is preserved
      * \param x a vector of x-coordinates
      * \param y a vector of y-coordinates
      */
-    MonotoneCubicSpline(const std::vector<Scalar>& x, const std::vector<Scalar> y)
+    MonotoneCubicSpline(const std::vector<Scalar>& x, const std::vector<Scalar>& y)
     {
-        // check some requirements
-        assert (x.size() == y.size());
-        assert (x.size() >=2);
-        assert (std::is_sorted(x.begin(), x.end()));
-
         updatePoints(x, y);
     }
 
@@ -76,12 +74,21 @@ public:
      */
     void updatePoints(const std::vector<Scalar>& x, const std::vector<Scalar>& y)
     {
+        // check some requirements
+        assert (x.size() == y.size());
+        assert (x.size() >=2);
+        assert (std::is_sorted(x.begin(), x.end()) || std::is_sorted(x.rbegin(), x.rend()));
+
         // save a copy of the control points
         x_ = x;
         y_ = y;
 
         // the number of control points
         numPoints_ = x.size();
+
+        // whether we are increasing
+        increasingX_ = x_.back() > x_.front();
+        increasingY_ = y_.back() > y_.front();
 
         // the slope at every control point
         m_.resize(numPoints_);
@@ -108,21 +115,12 @@ public:
      */
     Scalar eval(const Scalar x) const
     {
-        if (x <= x_.front())
+        if ((x <= x_.front() && increasingX_) || (x >= x_.front() && !increasingX_))
             return y_.front() + m_.front()*(x - x_.front());
-        else if (x > x_.back())
+        else if ((x > x_.back() && increasingX_) || (x < x_.back() && !increasingX_))
             return y_.back() + m_.back()*(x - x_.back());
-        else
-        {
-            const auto lookUpIndex = std::distance(x_.begin(), std::lower_bound(x_.begin(), x_.end(), x));
-            assert(lookUpIndex != 0);
 
-            // interpolate parametrization parameter t in [0,1]
-            const auto h = (x_[lookUpIndex] - x_[lookUpIndex-1]);
-            const auto t = (x - x_[lookUpIndex-1])/h;
-            return y_[lookUpIndex-1]*Basis::h00(t) + h*m_[lookUpIndex-1]*Basis::h10(t)
-                   + y_[lookUpIndex]*Basis::h01(t) + h*m_[lookUpIndex]*Basis::h11(t);
-        }
+        return eval_(x);
     }
 
     /*!
@@ -132,29 +130,93 @@ public:
      */
     Scalar evalDerivative(const Scalar x) const
     {
-        if (x <= x_.front())
+        if ((x <= x_.front() && increasingX_) || (x >= x_.front() && !increasingX_))
             return m_.front();
-        else if (x > x_.back())
+        else if ((x > x_.back() && increasingX_) || (x < x_.back() && !increasingX_))
             return m_.back();
-        else
-        {
-            const auto lookUpIndex = std::distance(x_.begin(), std::lower_bound(x_.begin(), x_.end(), x));
-            assert(lookUpIndex != 0);
 
-            // interpolate parametrization parameter t in [0,1]
-            const auto h = (x_[lookUpIndex] - x_[lookUpIndex-1]);
-            const auto t = (x - x_[lookUpIndex-1])/h;
-            const auto dtdx = 1.0/h;
-            return y_[lookUpIndex-1]*Basis::dh00(t)*dtdx + m_[lookUpIndex-1]*Basis::dh10(t)
-                   + y_[lookUpIndex]*Basis::dh01(t)*dtdx + m_[lookUpIndex]*Basis::dh11(t);
-        }
+        return evalDerivative_(x);
+    }
+
+    /*!
+     * \brief Evaluate the inverse function
+     * \param y the y-coordinate
+     * \note We extrapolate linearly if out of bounds
+     * \note Throws exception if inverse could not be found (e.g. not unique)
+     */
+    Scalar evalInverse(const Scalar y) const
+    {
+        if ((y <= y_.front() && increasingY_) || (y >= y_.front() && !increasingY_))
+            return x_.front() + (y - y_.front())/m_.front();
+        else if ((y > y_.back() && increasingY_) || (y < y_.back() && !increasingY_))
+            return x_.back() + (y - y_.back())/m_.back();
+
+        return evalInverse_(y);
     }
 
 private:
+    Scalar eval_(const Scalar x) const
+    {
+        // interpolate parametrization parameter t in [0,1]
+        const auto lookUpIndex = lookUpIndex_(x_, x, increasingX_);
+        const auto h = (x_[lookUpIndex] - x_[lookUpIndex-1]);
+        const auto t = (x - x_[lookUpIndex-1])/h;
+        return y_[lookUpIndex-1]*Basis::h00(t) + h*m_[lookUpIndex-1]*Basis::h10(t)
+               + y_[lookUpIndex]*Basis::h01(t) + h*m_[lookUpIndex]*Basis::h11(t);
+    }
+
+    Scalar evalDerivative_(const Scalar x) const
+    {
+        // interpolate parametrization parameter t in [0,1]
+        const auto lookUpIndex = lookUpIndex_(x_, x, increasingX_);
+        const auto h = (x_[lookUpIndex] - x_[lookUpIndex-1]);
+        const auto t = (x - x_[lookUpIndex-1])/h;
+        const auto dtdx = 1.0/h;
+        return y_[lookUpIndex-1]*Basis::dh00(t)*dtdx + m_[lookUpIndex-1]*Basis::dh10(t)
+               + y_[lookUpIndex]*Basis::dh01(t)*dtdx + m_[lookUpIndex]*Basis::dh11(t);
+    }
+
+    Scalar evalInverse_(const Scalar y) const
+    {
+        const auto lookUpIndex = lookUpIndex_(y_, y, increasingY_);
+        auto localPolynomial = [&](const auto x) {
+            // interpolate parametrization parameter t in [0,1]
+            const auto h = (x_[lookUpIndex] - x_[lookUpIndex-1]);
+            const auto t = (x - x_[lookUpIndex-1])/h;
+            return y - (y_[lookUpIndex-1]*Basis::h00(t) + h*m_[lookUpIndex-1]*Basis::h10(t)
+                   + y_[lookUpIndex]*Basis::h01(t) + h*m_[lookUpIndex]*Basis::h11(t));
+        };
+
+        // use an epsilon for the bracket
+        const auto eps = (x_[lookUpIndex]-x_[lookUpIndex-1])*1e-5;
+        return findScalarRootBrent(x_[lookUpIndex-1]-eps, x_[lookUpIndex]+eps, localPolynomial);
+    }
+
+    auto lookUpIndex_(const std::vector<Scalar>& vec, const Scalar v, bool increasing) const
+    {
+        return increasing ? lookUpIndexIncreasing_(vec, v) : lookUpIndexDecreasing_(vec, v);
+    }
+
+    auto lookUpIndexIncreasing_(const std::vector<Scalar>& vec, const Scalar v) const
+    {
+        const auto lookUpIndex = std::distance(vec.begin(), std::lower_bound(vec.begin(), vec.end(), v));
+        assert(lookUpIndex != 0 && lookUpIndex < vec.size());
+        return lookUpIndex;
+    }
+
+    auto lookUpIndexDecreasing_(const std::vector<Scalar>& vec, const Scalar v) const
+    {
+        const auto lookUpIndex = vec.size() - std::distance(vec.rbegin(), std::upper_bound(vec.rbegin(), vec.rend(), v));
+        assert(lookUpIndex != 0 && lookUpIndex < vec.size());
+        return lookUpIndex;
+    }
+
     std::vector<Scalar> x_; //!< the x-coordinates
     std::vector<Scalar> y_; //!< the y-coordinates
     std::vector<Scalar> m_; //!< the slope for each control point
     std::size_t numPoints_; //!< the number of control points
+    bool increasingX_; //!< if we are increasing monotone or not
+    bool increasingY_; //!< if we are increasing monotone or not
 };
 
 } // end namespace Dumux

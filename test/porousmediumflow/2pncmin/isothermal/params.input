@@ -1,0 +1,49 @@
+# Parameter file for test case 2pncmin.
+# Everything behind a '#' is a comment.
+# Type "./test_2pncmin --help" for more information.
+
+[TimeLoop]
+TEnd = 1e6                         # duration of the simulation [s]
+DtInitial = 10                     # initial time step size [s]
+MaxTimeStepSize = 50000            # maximum time step size
+
+[Grid]
+UpperRight = 40 10
+Cells = 20 10
+
+[FluidSystem]
+NTemperature =  100                # [-] number of tabularization entries
+NPressure = 100                    # [-] number of tabularization entries
+PressureLow = 1e4                  # [Pa]low end for tabularization of fluid properties
+PressureHigh = 3e6                 # [Pa]high end for tabularization of fluid properties
+TemperatureLow = 273.15            # [K]low end for tabularization of fluid properties
+TemperatureHigh = 400.00           # [K]high end for tabularization of fluid properties
+
+[Problem]
+Name                = saltflush    # [-]  name for output files
+ReservoirPressure   = 11e6         # [Pa] Initial reservoir pressure
+reservoirSaturation = 0.4          # [-]  Initial saturation
+Temperature         = 418.15       # [K]  reservoir temperature
+InnerPressure       = 13e6         # [Pa]
+InnerLiqSaturation  = 0.95         # [-]  liquid saturation at inner boundary
+InnerSalinity       = 0.0001       # [-]  salinity of inner liquid
+OuterPressure       = 11e6         # [Pa] reservoir boundary pressure
+OuterLiqSaturation  = 0.2          # [-]  liquid saturation at outer boundary
+OuterSalinity       = 0.4          # [-]  Initial salinity
+LiquidSaturation    = 0.4          # [-]  initial liquid saturation
+InitPrecipitatedSaltBlock    = 0.05    # [-]  initial precipitated salt in the blocked part
+
+[SpatialParams]
+SolubilityLimit     = 0.26 	       # [-]  solubility limit of salt in brine
+referencePorosity   = 0.11         # [-]  initial porosity
+referencePermeability   = 2.23e-14
+Swr   = 0.2          # [-]  irreducible liquid saturation
+Snr   = 0.001        # [-]  irreducible gas saturation
+BrooksCoreyPcEntry = 500 # [Pa]
+BrooksCoreyLambda = 2 # [-]
+
+[Vtk]
+AddVelocity         = 1            # Add extra information
+
+[LinearSolver]
+ResidualReduction = 1e-6

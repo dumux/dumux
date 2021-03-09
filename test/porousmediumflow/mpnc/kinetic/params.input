@@ -1,0 +1,78 @@
+[TimeLoop]
+DtInitial = 0.05 # [s]
+TEnd = 10 # [s]
+
+[Grid]
+Cells0 = 14
+Cells1 = 15 15
+Grading0 = 1.0
+Grading1 = -0.833333 0.833333
+Positions0 = 0.0 1.0
+Positions1 = 0.0 0.25 0.5
+
+[InitialConditions]
+SwFFInitial = 1e-4 # - 0.001#
+SwPMInitial = 0.8 # -
+pnInitial = 1e5 # 6.8e6 # 1e5 # 101475 	# Pa
+TInitial = 293
+pnInjection = 100003
+
+[BoundaryConditions]
+percentOfEquil = .1 # percentage of the equilibrium concentration water in the nPhase influx
+TInject = 293
+massFluxInjectedPhase = 0.75
+
+[SpatialParams.PorousMedium]
+permeability = 1e-11 # m^2
+porosity = 0.4 #
+meanPoreSize = 1e-4 # characteristic length of the system
+factorEnergyTransfer = 1 #
+factorMassTransfer = 1 #
+
+[SpatialParams.FreeFlow]
+permeability = 1e-6 # m^2
+porosity = 0.99 #
+meanPoreSize = 1e-2 # 4e-5  # characteristic length of the system
+
+[SpatialParams.soil]
+# characteristic length, i.e. mean pore size
+# 40 micrometer i.e. 1e-5 for the micromodel
+
+VGAlpha = 3.512e-04 #
+VGN = 4.716e+00 #
+Swr = 0 #
+Snr = 0 #
+specificSolidsurface = 4022.994# (1/m)
+
+aWettingNonwettingA1 = -1.603e-01 #
+aWettingNonwettingA2 = 1.429e-05 #
+aWettingNonwettingA3 = 1.915e-01 #
+
+BCPd = 2.290e+03 #
+BClambda = 2.740e+00 #
+
+aNonwettingSolidA1 = 1.369e+03 #
+aNonwettingSolidA2 = -3.782e+00 #
+aNonwettingSolidA3 = 1.063e-09 #
+
+[SourceSink]
+heatIntoSolid = 0  #
+
+[Constants]
+nRestart = 100 # after so many timesteps a restart file should be written
+
+[Problem]
+Name = evaporationatmosphere
+
+[FluidSystem]
+nTemperature = 100 # for the tabulation of water: so many interpolation points
+nPressure = 100 # for the tabulation of water: so many interpolation points
+hammer = 1e4
+
+[Vtk]
+AddVelocity = 1 # enable velocity output
+
+[Component]
+SolidDensity = 2600
+SolidThermalConductivity = 3
+SolidHeatCapacity = 817

@@ -25,6 +25,7 @@
 #define DUMUX_MATERIAL_DIFFUSIVITY_MILLINGTON_QUIRK_HH
 
 #include <cmath>
+#include <algorithm>
 
 namespace Dumux {
 
@@ -72,7 +73,7 @@ public:
         using std::max;
         const Scalar diffCoeff = volVars.diffusionCoefficient(phaseIdx, compIdxI, compIdxJ);
         const Scalar porosity = volVars.porosity();
-        const Scalar sat = max(volVars.saturation(phaseIdx), 0.0);
+        const Scalar sat = max<Scalar>(volVars.saturation(phaseIdx), 0.0);
         return porosity * (sat*sat*sat) * cbrt(porosity * sat) * diffCoeff;
     }
 

@@ -1,0 +1,24 @@
+[TimeLoop]
+DtInitial = 86400 # [s]
+TEnd = 864000 # [s]
+
+[Grid]
+UpperRight = 500 10
+Cells = 40 4
+
+[Problem]
+Name = infiltration
+
+[Assembly]
+NumericDifferenceMethod = 0 # -1 backward differences, 0: central differences, +1: forward differences
+
+[Newton]
+MaxRelativeShift = 1e-6
+
+[SpatialParams]
+Swr = 0.12
+Snr = 0.07
+Sgr = 0.03
+ParkerVanGenuchtenN = 4
+ParkerVanGenuchtenAlpha = 0.0005
+ParkerVanGenuchtenRegardSnrForKrn = false

@@ -138,4 +138,4 @@ LinearSolverParameters<LinearSolverTraits>::dumuxToIstlSolverParams =
 
 } // end namespace Dumux
 
-#endif // DUMUX_LINEAR_SOLVER_PARAMETERS_HH
+#endif

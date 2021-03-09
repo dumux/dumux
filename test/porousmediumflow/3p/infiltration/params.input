@@ -1,0 +1,29 @@
+[TimeLoop]
+DtInitial = 60 # [s]
+TEnd = 3600 # [s]
+
+[Grid]
+UpperRight = 500 10
+Cells = 50 10
+
+[Problem]
+Name = infiltration3pcc
+
+[SpatialParams]
+permeability = 1.e-11 # m^2
+porosity = 0.40
+
+ParkerVanGenuchtenAlpha = 0.0005
+ParkerVanGenuchtenN = 4
+ParkerVanGenuchtenBetaNw = 1
+ParkerVanGenuchtenBetaGw = 1
+ParkerVanGenuchtenBetaGn = 1
+Swr = 0.12
+Snr = 0.07
+Sgr = 0.03
+
+[Output]
+PlotFluidMatrixInteractions = false
+
+[Newton]
+MaxRelativeShift = 1e-4

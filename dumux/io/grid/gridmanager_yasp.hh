@@ -24,6 +24,8 @@
 #ifndef DUMUX_IO_GRID_MANAGER_YASP_HH
 #define DUMUX_IO_GRID_MANAGER_YASP_HH
 
+#include <dune/common/math.hh>
+
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
@@ -92,10 +94,13 @@ public:
             // get the overlap
             const int overlap =  getParamFromGroup<int>(modelParamGroup, "Grid.Overlap", 1);
 
-            // make the grid
-            ParentType::gridPtr() = createGrid_(modelParamGroup, upperRight, cells, periodic, overlap, Coordinates{});
-
-            postProcessing_(modelParamGroup);
+            if constexpr (std::is_same_v<Dune::EquidistantCoordinates<ct, dim>, Coordinates>)
+                init(upperRight, cells, modelParamGroup, overlap, periodic);
+            else
+            {
+                const auto lowerLeft = getParamFromGroup<GlobalPosition>(modelParamGroup, "Grid.LowerLeft", GlobalPosition(0.0));
+                init(lowerLeft, upperRight, cells, modelParamGroup, overlap, periodic);
+            }
         }
 
         // Didn't find a way to construct the grid
@@ -109,56 +114,66 @@ public:
         }
     }
 
+    /*!
+     * \brief Make the grid using input data not read from the input file.
+     * \note Use this function for EquidistantCoordinates where lowerLeft is always zero.
+     */
+    void init(const GlobalPosition& upperRight,
+              const std::array<int, dim>& cells,
+              const std::string& modelParamGroup = "",
+              const int overlap = 1,
+              const std::bitset<dim> periodic = std::bitset<dim>{})
+    {
+        static_assert(std::is_same_v<Dune::EquidistantCoordinates<ct, dim>, Coordinates>,
+                      "Use init function taking lowerLeft as argument when working with EquidistantOffsetCoordinates");
+
+        if (!hasParamInGroup(modelParamGroup, "Grid.Partitioning"))
+        {
+            // construct using default load balancing
+            ParentType::gridPtr() = std::make_unique<Grid>(upperRight, cells, periodic, overlap);
+        }
+        else
+        {
+            // construct using user defined partitioning
+            const auto partitioning = getParamFromGroup<std::array<int, dim>>(modelParamGroup, "Grid.Partitioning");
+            Dune::YaspFixedSizePartitioner<dim> lb(partitioning);
+            ParentType::gridPtr() = std::make_unique<Grid>(upperRight, cells, periodic, overlap, typename Grid::CollectiveCommunicationType(), &lb);
+        }
+
+        postProcessing_(modelParamGroup);
+    }
+
+    /*!
+     * \brief Make the grid using input data not read from the input file.
+     * \note Use this function for EquidistantOffsetCoordinates.
+     */
+    void init(const GlobalPosition& lowerLeft,
+              const GlobalPosition& upperRight,
+              const std::array<int, dim>& cells,
+              const std::string& modelParamGroup = "",
+              const int overlap = 1,
+              const std::bitset<dim> periodic = std::bitset<dim>{})
+    {
+        static_assert(std::is_same_v<Dune::EquidistantOffsetCoordinates<ct, dim>, Coordinates>,
+                      "LowerLeft can only be specified with EquidistantOffsetCoordinates");
+
+        if (!hasParamInGroup(modelParamGroup, "Grid.Partitioning"))
+        {
+            // construct using default load balancing
+            ParentType::gridPtr() = std::make_unique<Grid>(lowerLeft, upperRight, cells, periodic, overlap);
+        }
+        else
+        {
+            // construct using user defined partitioning
+            const auto partitioning = getParamFromGroup<std::array<int, dim>>(modelParamGroup, "Grid.Partitioning");
+            Dune::YaspFixedSizePartitioner<dim> lb(partitioning);
+            ParentType::gridPtr() = std::make_unique<Grid>(lowerLeft, upperRight, cells, periodic, overlap, typename Grid::CollectiveCommunicationType(), &lb);
+        }
+
+        postProcessing_(modelParamGroup);
+    }
+
 private:
-    /*!
-     * \brief Create a grid with zero offset
-     */
-    std::unique_ptr<Grid> createGrid_(const std::string& modelParamGroup,
-                                      const GlobalPosition& upperRight,
-                                      const std::array<int, dim>& cells,
-                                      const std::bitset<dim>& periodic,
-                                      const int overlap,
-                                      Dune::EquidistantCoordinates<ct, dim>) const
-    {
-        if (!hasParamInGroup(modelParamGroup, "Grid.Partitioning"))
-        {
-            // construct using default load balancing
-            return std::make_unique<Grid>(upperRight, cells, periodic, overlap);
-        }
-        else
-        {
-            // construct using user defined partitioning
-            const auto partitioning = getParamFromGroup<std::array<int, dim>>(modelParamGroup, "Grid.Partitioning");
-            Dune::YaspFixedSizePartitioner<dim> lb(partitioning);
-            return std::make_unique<Grid>(upperRight, cells, periodic, overlap, typename Grid::CollectiveCommunicationType(), &lb);
-        }
-    }
-
-    /*!
-     * \brief Create a grid with non-zero offset
-     */
-    std::unique_ptr<Grid> createGrid_(const std::string& modelParamGroup,
-                                      const GlobalPosition& upperRight,
-                                      const std::array<int, dim>& cells,
-                                      const std::bitset<dim>& periodic,
-                                      const int overlap,
-                                      Dune::EquidistantOffsetCoordinates<ct, dim>) const
-    {
-        const auto lowerLeft = getParamFromGroup<GlobalPosition>(modelParamGroup, "Grid.LowerLeft", GlobalPosition(0.0));
-
-        if (!hasParamInGroup(modelParamGroup, "Grid.Partitioning"))
-        {
-            // construct using default load balancing
-            return std::make_unique<Grid>(lowerLeft, upperRight, cells, periodic, overlap);
-        }
-        else
-        {
-            // construct using user defined partitioning
-            const auto partitioning = getParamFromGroup<std::array<int, dim>>(modelParamGroup, "Grid.Partitioning");
-            Dune::YaspFixedSizePartitioner<dim> lb(partitioning);
-            return std::make_unique<Grid>(lowerLeft, upperRight, cells, periodic, overlap, typename Grid::CollectiveCommunicationType(), &lb);
-        }
-    }
 
     /*!
      * \brief Postprocessing for YaspGrid
@@ -250,9 +265,7 @@ public:
               const std::array<std::vector<ctype>, dim>& grading,
               const std::string& modelParamGroup = "")
     {
-
-
-        // Additional arameters (they have a default)
+        // Additional parameters (they have a default)
         const int overlap = getParamFromGroup<int>(modelParamGroup, "Grid.Overlap", 1);
         const bool verbose = getParamFromGroup<bool>(modelParamGroup, "Grid.Verbosity", false);
         // \todo TODO periodic boundaries with yasp (the periodicity concept of yasp grid is currently not supported, use dune-spgrid)
@@ -322,6 +335,7 @@ private:
     {
         std::array<std::vector<ctype>, dim> globalPositions;
         using std::pow;
+        using Dune::power;
         for (int dimIdx = 0; dimIdx < dim; dimIdx++)
         {
             for (int zoneIdx = 0; zoneIdx < cells[dimIdx].size(); ++zoneIdx)
@@ -372,13 +386,13 @@ private:
                 // if grading factor is not 1.0, do power law spacing
                 else
                 {
-                    height = (1.0 - gradingFactor) / (1.0 - pow(gradingFactor, numCells));
+                    height = (1.0 - gradingFactor) / (1.0 - power(gradingFactor, numCells));
 
                     if (verbose)
                     {
                         std::cout << " -> grading_eff "  << gradingFactor
-                                  << " h_min "  << height * pow(gradingFactor, 0) * length
-                                  << " h_max "  << height * pow(gradingFactor, numCells-1) * length
+                                  << " h_min "  << height * power(gradingFactor, 0) * length
+                                  << " h_max "  << height * power(gradingFactor, numCells-1) * length
                                   << std::endl;
                     }
                 }
@@ -392,11 +406,11 @@ private:
                     {
                         if (increasingCellSize)
                         {
-                            hI *= pow(gradingFactor, i);
+                            hI *= power(gradingFactor, i);
                         }
                         else
                         {
-                            hI *= pow(gradingFactor, numCells-i-1);
+                            hI *= power(gradingFactor, numCells-i-1);
                         }
                     }
                     localPositions.push_back(localPositions[i] + hI);

@@ -1,0 +1,34 @@
+[TimeLoop]
+DtInitial = 1 # [s]
+TEnd = 2700 # [s]
+MaxTimeStepSize = 60 # [s]
+EpisodeLength = 1000 # [s]
+
+[Grid]
+UpperRight = 1.5 0.74
+Cells = 15 8
+
+[Problem]
+Name = kuevette # name passed to the output routines
+
+[Assembly]
+NumericDifferenceMethod = 0 # use central differences (backward -1, forward +1)
+
+[Newton]
+MaxRelativeShift = 1e-6
+
+[Component]
+SolidDensity = 2650
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 850
+
+[SpatialParams]
+Swr = 0.12
+Snr = 0.07
+Sgr = 0.01
+ParkerVanGenuchtenN = 4
+ParkerVanGenuchtenRegardSnrForKrn = true
+Fine.ParkerVanGenuchtenAlpha = 0.0005
+Coarse.ParkerVanGenuchtenAlpha = 0.005
+ThreePNAPLAdsorptionRhoBulk = 1500
+ThreePNAPLAdsorptionKdNAPL = 0

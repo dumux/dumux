@@ -1,0 +1,35 @@
+[TimeLoop]
+DtInitial = 100 # [s]
+TEnd = 100 # [s]
+
+[Grid]
+UpperRight = 6 4
+Cells = 48 32
+Refinement = 1
+CellType = Cube
+ClosureType = Green
+
+[SpatialParams]
+LensLowerLeft = 1.0 2.0 # [m] coordinates of the lower left lens corner
+LensUpperRight = 4.0 3.0 # [m] coordinates of the upper right lens corner
+
+[SpatialParams.Lens]
+Swr = 0.18
+VanGenuchtenAlpha = 0.00045
+VanGenuchtenN = 7.3
+
+[SpatialParams.Outer]
+Swr = 0.05
+VanGenuchtenAlpha = 0.0037
+VanGenuchtenN = 4.7
+
+[Problem]
+Name = 2padaptive # name passed to the output routines
+
+[Adaptive]
+RefineAtDirichletBC = 0
+RefineAtFluxBC = 1
+MinLevel = 0
+MaxLevel = 2
+CoarsenTolerance = 1e-4
+RefineTolerance = 1e-4

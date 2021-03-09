@@ -22,7 +22,7 @@ include(DuneMacros)
 
 # start a dune project with information from dune.module
 dune_project()
-dune_enable_all_packages()
+dune_enable_all_packages(MODULE_LIBRARIES dumux_fmt)
 
 # enforce C++-17
 dune_require_cxx_standard(MODULE "DuMuX" VERSION 17)
@@ -32,6 +32,12 @@ add_subdirectory(doc)
 add_subdirectory(dumux)
 add_subdirectory(test EXCLUDE_FROM_ALL)
 add_subdirectory(examples EXCLUDE_FROM_ALL)
+
+# if Python bindings are enabled, include necessary sub directories.
+if(DUNE_ENABLE_PYTHONBINDINGS)
+  add_subdirectory(python)
+  dune_python_install_package(PATH "python")
+endif()
 
 # finalize the dune project, e.g. generating config.h etc.
 finalize_dune_project(GENERATE_CONFIG_H_CMAKE)

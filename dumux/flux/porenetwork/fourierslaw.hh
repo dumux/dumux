@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup PoreNetworkModels
  * \brief This file contains the data which is required to calculate
  *        diffusive heat fluxes with Fourier's law.
  */
@@ -26,13 +27,12 @@
 
 #include <dumux/common/math.hh>
 
-namespace Dumux
-{
+namespace Dumux::PoreNetwork {
 
-    /*!
-     * \ingroup PoreNetworkFlux
-     * \brief Specialization of Fouriers's Law for the pore-network model.
-     */
+ /*!
+  * \ingroup PoreNetworkModels
+  * \brief Specialization of Fourier's Law for the pore-network model.
+  */
 struct PNMFouriersLaw
 {
 
@@ -71,8 +71,8 @@ struct PNMFouriersLaw
         }
         return heatflux;
     }
-
 };
-} // end namespace
+
+} // end namespace Dumux::PoreNetwork
 
 #endif

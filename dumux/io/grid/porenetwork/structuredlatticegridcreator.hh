@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup InputOutput
- * \brief Creates a network grid from a strucutred lattice. Connections can be randomly deleted.
+ * \ingroup PoreNetworkModels
+ * \brief Creates a network grid from a structured lattice. Connections can be randomly deleted.
  */
 #ifndef DUMUX_IO_STRUCTURED_LATTICE_GRID_CREATOR_HH
 #define DUMUX_IO_STRUCTURED_LATTICE_GRID_CREATOR_HH
@@ -45,12 +45,12 @@
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/common/parameters.hh>
 
-namespace Dumux {
+namespace Dumux::PoreNetwork {
 
 namespace Concept {
 
 /*!
- * \ingroup InputOutput
+ * \ingroup PoreNetworkModels
  * \brief The element selector concept
  */
 template<class GlobalPosition>
@@ -63,6 +63,10 @@ struct LowDimElementSelector
 };
 } // end namespace Concept
 
+/*!
+ * \ingroup PoreNetworkModels
+ * \brief Creates a network grid from a structured lattice. Connections can be randomly deleted.
+ */
 template<int dimWorld>
 class StructuredLatticeGridCreator
 {
@@ -564,10 +568,26 @@ private:
                 {
                     case 0: neglectElement = center[0] < hostGridLowerLeft_[0] + eps; break;
                     case 1: neglectElement = center[0] > hostGridUpperRight_[0] - eps; break;
-                    case 2: neglectElement = center[1] < hostGridLowerLeft_[1] + eps; break;
-                    case 3: neglectElement = center[1] > hostGridUpperRight_[1] - eps; break;
-                    case 4: neglectElement = center[2] < hostGridLowerLeft_[2] + eps; break;
-                    case 5: neglectElement = center[2] > hostGridUpperRight_[2] - eps; break;
+                    case 2: if constexpr (dimWorld > 1)
+                            {
+                                neglectElement = center[1] < hostGridLowerLeft_[1] + eps;
+                                break;
+                            }
+                    case 3: if constexpr (dimWorld > 1)
+                            {
+                                neglectElement = center[1] > hostGridUpperRight_[1] - eps;
+                                break;
+                            }
+                    case 4: if constexpr (dimWorld > 2)
+                            {
+                                neglectElement = center[2] < hostGridLowerLeft_[2] + eps;
+                                break;
+                            }
+                    case 5: if constexpr (dimWorld > 2)
+                            {
+                                neglectElement = center[2] > hostGridUpperRight_[2] - eps;
+                                break;
+                            }
                 }
 
                 if (neglectElement)
@@ -602,6 +622,6 @@ private:
     std::shared_ptr<Grid> gridPtr_;
 };
 
-} // namespace Dumux
+} // end namespace Dumux::PoreNetwork
 
-#endif // DUMUX_IO_STRUCTURED_LATTICE_GRID_CREATOR_HH
+#endif

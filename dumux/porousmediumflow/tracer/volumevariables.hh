@@ -63,9 +63,12 @@ class TracerVolumeVariables
     static constexpr int numFluidComps = ParentType::numFluidComponents();
 
 public:
-    //! Export fluid system type
+    //! Export the fluid system type
     using FluidSystem = typename Traits::FluidSystem;
+    //! Export the solid state type
     using SolidState = typename Traits::SolidState;
+    //! Export the indices
+    using Indices = typename Traits::ModelTraits::Indices;
 
     /*!
      * \brief Updates all quantities for a given control volume.

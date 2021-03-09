@@ -1,0 +1,26 @@
+[TimeLoop]
+DtInitial = 1 # [s]
+TEnd = 2 # [s]
+
+[Grid]
+UpperRight = 1 1
+Cells = 128 128
+
+[Problem]
+Name = example_ff_liddrivencavity_re1
+LidVelocity = 1
+EnableGravity = false
+
+[Component]
+LiquidDensity = 1
+LiquidKinematicViscosity = 1
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-8
+
+[Newton]
+MaxSteps = 10
+MaxRelativeShift = 1e-5
+
+[Vtk]
+WriteFaceData = false

@@ -16,7 +16,7 @@
 #include <dumux/geometry/geometricentityset.hh>
 #include <dumux/geometry/intersectionentityset.hh>
 
-int main (int argc, char *argv[]) try
+int main (int argc, char *argv[])
 {
     using namespace Dumux;
 
@@ -150,11 +150,4 @@ int main (int argc, char *argv[]) try
 
     std::cout << "All tests passed!" << std::endl;
     return 0;
-}
-// //////////////////////////////////
-//   Error handler
-// /////////////////////////////////
-catch (const Dune::Exception& e) {
-    std::cout << e << std::endl;
-    return 1;
 }

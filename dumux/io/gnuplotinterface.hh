@@ -444,4 +444,4 @@ private:
     std::string gnuplotPath_;
 };
 } // end namespace Dumux
-#endif // DUMUX_GNUPLOT_INTERFACE_HH
+#endif

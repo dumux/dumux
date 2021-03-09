@@ -30,7 +30,6 @@
 #include <dune/common/version.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/grid/io/file/dgfparser/dgfexception.hh>
 #include <dune/grid/io/file/vtk.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dune/istl/io.hh>
@@ -43,7 +42,7 @@
 
 #include <dumux/linear/linearsolvertraits.hh>
 
-#if DUNE_VERSION_GT_REV(DUNE_ISTL,2,7,0)
+#if DUNE_VERSION_GTE(DUNE_ISTL,2,8)
 #include <dumux/linear/istlsolverfactorybackend.hh>
 #else
 #include <dumux/linear/amgbackend.hh>
@@ -58,7 +57,7 @@
 ////////////////////////
 // the main function
 ////////////////////////
-int main(int argc, char** argv) try
+int main(int argc, char** argv)
 {
     using namespace Dumux;
 
@@ -131,7 +130,7 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
-#if DUNE_VERSION_GT_REV(DUNE_ISTL,2,7,0)
+#if DUNE_VERSION_GTE(DUNE_ISTL,2,8)
     using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>>;
 #else
     using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
@@ -187,29 +186,4 @@ int main(int argc, char** argv) try
     }
 
     return 0;
-}
-
-catch (const Dumux::ParameterException &e)
-{
-    std::cerr << std::endl << e << " ---> Abort!" << std::endl;
-    return 1;
-}
-catch (const Dune::DGFException & e)
-{
-    std::cerr << "DGF exception thrown (" << e <<
-                 "). Most likely, the DGF file name is wrong "
-                 "or the DGF file is corrupted, "
-                 "e.g. missing hash at end of file or wrong number (dimensions) of entries."
-                 << " ---> Abort!" << std::endl;
-    return 2;
-}
-catch (const Dune::Exception &e)
-{
-    std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
-    return 3;
-}
-catch (...)
-{
-    std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
-    return 4;
 }

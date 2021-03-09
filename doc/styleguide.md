@@ -164,6 +164,7 @@ This style guide is taken, modified and enhanced from [DUNE](https://dune-projec
     else
         return 1.0; // ok, one-liner
     ```
+* __Numbers__: Write `1.0` not `1.` for better readability
 
 ### Namespaces
 

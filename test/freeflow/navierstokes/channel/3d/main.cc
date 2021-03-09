@@ -29,7 +29,6 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/grid/io/file/dgfparser/dgfexception.hh>
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 
@@ -47,7 +46,7 @@
 
 #include "problem.hh"
 
-int main(int argc, char** argv) try
+int main(int argc, char** argv)
 {
     using namespace Dumux;
 
@@ -65,11 +64,11 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // create a grid
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Grid = GetPropType<TypeTag, Properties::Grid>;
     Dumux::GridManager<Grid> gridManager;
 
-#if HAVE_DUNE_SUBGRID
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+#if HAVE_DUNE_SUBGRID && GRID_DIM == 3
     const bool isStaircaseGeometry = getParam<bool>("Problem.IsStaircaseGeometry", false);
 
     auto selector = [&](const auto& element)
@@ -259,27 +258,3 @@ flux.addSurface("middle", p0middle, p1middle);
 
     return 0;
 } // end main
-catch (Dumux::ParameterException &e)
-{
-    std::cerr << std::endl << e << " ---> Abort!" << std::endl;
-    return 1;
-}
-catch (Dune::DGFException & e)
-{
-    std::cerr << "DGF exception thrown (" << e <<
-                 "). Most likely, the DGF file name is wrong "
-                 "or the DGF file is corrupted, "
-                 "e.g. missing hash at end of file or wrong number (dimensions) of entries."
-                 << " ---> Abort!" << std::endl;
-    return 2;
-}
-catch (Dune::Exception &e)
-{
-    std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
-    return 3;
-}
-catch (...)
-{
-    std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
-    return 4;
-}

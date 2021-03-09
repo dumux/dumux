@@ -25,13 +25,11 @@
 
 #include <config.h>
 
-#include <ctime>
 #include <iostream>
 #include <fstream>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/istl/io.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -39,9 +37,9 @@
 #include <dumux/geometry/diameter.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/assembly/diffmethod.hh>
-#include <dumux/discretization/method.hh>
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
+#include <dumux/io/grid/gridmanager_foam.hh>
 
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/fvassembler.hh>
@@ -60,14 +58,14 @@
 #define LOWDIMTYPETAG=BloodFlowCC
 #endif
 #ifndef COUPLINGMODE
-#define COUPLINGMODE=EmbeddedCouplingMode::average
+#define COUPLINGMODE=Embedded1d3dCouplingMode::Average
 #endif
 
 namespace Dumux {
 namespace Properties {
 
 template<class Traits>
-using TheCouplingManager = EmbeddedCouplingManager1d3d<Traits, COUPLINGMODE>;
+using TheCouplingManager = Embedded1d3dCouplingManager<Traits, COUPLINGMODE>;
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::BULKTYPETAG> { using type = TheCouplingManager<MultiDomainTraits<TypeTag, Properties::TTag::LOWDIMTYPETAG>>; };
@@ -86,7 +84,7 @@ struct PointSourceHelper<TypeTag, TTag::LOWDIMTYPETAG> { using type = typename G
 } // end namespace Properties
 } // end namespace Dumux
 
-int main(int argc, char** argv) try
+int main(int argc, char** argv)
 {
     using namespace Dumux;
 
@@ -165,21 +163,24 @@ int main(int argc, char** argv) try
     auto lowDimGridVariables = std::make_shared<LowDimGridVariables>(lowDimProblem, lowDimFvGridGeometry);
     lowDimGridVariables->init(sol[lowDimIdx]);
 
+    const bool writeVtk = getParam<bool>("Vtk.EnableVtkOutput", true);
+
     // intialize the vtk output module
     using BulkSolutionVector = std::decay_t<decltype(sol[bulkIdx])>;
     VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, sol[bulkIdx], bulkProblem->name());
     GetPropType<BulkTypeTag, Properties::IOFields>::initOutputModule(bulkVtkWriter);
     bulkProblem->addVtkOutputFields(bulkVtkWriter);
-    bulkVtkWriter.write(0.0);
 
     using LowDimSolutionVector = std::decay_t<decltype(sol[lowDimIdx])>;
     VtkOutputModule<LowDimGridVariables, LowDimSolutionVector> lowDimVtkWriter(*lowDimGridVariables, sol[lowDimIdx], lowDimProblem->name());
     GetPropType<LowDimTypeTag, Properties::IOFields>::initOutputModule(lowDimVtkWriter);
     lowDimProblem->addVtkOutputFields(lowDimVtkWriter);
-    lowDimVtkWriter.write(0.0);
 
-    // an output file for the L2-norm
-    std::ofstream outFile_;
+    if (writeVtk)
+    {
+        bulkVtkWriter.write(0.0);
+        lowDimVtkWriter.write(0.0);
+    }
 
     // compute hmax of both domains
     double hMaxBulk = 0.0;
@@ -238,11 +239,14 @@ int main(int argc, char** argv) try
 
     // output the source terms
     bulkProblem->computeSourceIntegral(sol[bulkIdx], *bulkGridVariables);
-    lowDimProblem->computeSourceIntegral(sol[lowDimIdx], *lowDimGridVariables);
+    auto sourceNorm = lowDimProblem->computeSourceIntegral(sol[lowDimIdx], *lowDimGridVariables);
 
     // write vtk output
-    bulkVtkWriter.write(1.0);
-    lowDimVtkWriter.write(1.0);
+    if (writeVtk)
+    {
+        bulkVtkWriter.write(1.0);
+        lowDimVtkWriter.write(1.0);
+    }
 
     // write the L2-norm to file
     static const int order = getParam<int>("Problem.NormIntegrationOrder");
@@ -253,14 +257,16 @@ int main(int argc, char** argv) try
 
     // ouput result to terminal
     std::cout << "-----------------------------------------------------\n";
-    std::cout << " L2_1d: " << norm1D << " hmax_1d: " << hMaxLowDim << '\n'
-              << " L2_3d: " << norm3D << " hmax_3d: " << hMaxBulk << '\n';
+    std::cout << " L2_p1d: " << norm1D << " hmax_1d: " << hMaxLowDim << '\n'
+              << " L2_p3d: " << norm3D << " hmax_3d: " << hMaxBulk << '\n'
+              << " L2_q  : " << sourceNorm << " hmax_3d: " << hMaxBulk << '\n';
     std::cout << "-----------------------------------------------------" << std::endl;
 
     // ... and file.
-    outFile_.open("1p_1p_norm.log", std::ios::app);
-    outFile_ << hMaxBulk << " " << hMaxLowDim << " " << norm3D << " " << norm1D << '\n';
-    outFile_.close();
+    {
+        std::ofstream outFile(getParam<std::string>("Problem.OutputFilename"));
+        outFile << hMaxBulk << " " << hMaxLowDim << " " << norm3D << " " << norm1D << " " << sourceNorm << '\n';
+    }
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
@@ -275,27 +281,3 @@ int main(int argc, char** argv) try
 
     return 0;
 } // end main
-catch (Dumux::ParameterException &e)
-{
-    std::cerr << std::endl << e << " ---> Abort!" << std::endl;
-    return 1;
-}
-catch (Dune::DGFException & e)
-{
-    std::cerr << "DGF exception thrown (" << e <<
-                 "). Most likely, the DGF file name is wrong "
-                 "or the DGF file is corrupted, "
-                 "e.g. missing hash at end of file or wrong number (dimensions) of entries."
-                 << " ---> Abort!" << std::endl;
-    return 2;
-}
-catch (Dune::Exception &e)
-{
-    std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
-    return 3;
-}
-catch (...)
-{
-    std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
-    return 4;
-}

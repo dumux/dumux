@@ -1,0 +1,28 @@
+{
+    "README.md" : [
+        "doc/_intro.md"
+    ],
+
+    "doc/problem.md" : [
+        "doc/problem_intro.md",
+        "properties.hh",
+        "problem.hh",
+        "main.cc"
+    ],
+
+    "doc/postprocessing.md" : [
+        "doc/postprocessing_text.md"
+    ],
+
+    "navigation" : {
+        "mainpage" : "README.md",
+        "subpages" : [
+            "doc/problem.md",
+            "doc/postprocessing.md"
+        ],
+        "subtitles" : [
+            "Implementation",
+            "Post-processing"
+        ]
+    }
+}

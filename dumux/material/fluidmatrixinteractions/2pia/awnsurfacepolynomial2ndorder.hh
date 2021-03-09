@@ -30,6 +30,9 @@
 #include <algorithm>
 #include <cmath>
 #include <assert.h>
+#include <dune/common/math.hh>
+
+#warning "This header is deprecated. Removal after 3.3. Use new material laws."
 
 namespace Dumux {
 
@@ -39,7 +42,7 @@ namespace Dumux {
  *        specific interfacial  area to wetting phase saturation and capillary pressure as suggested by Joekar-Niasar(2008) \cite joekar2008 .
  */
 template <class ScalarT, class ParamsT = AwnSurfacePolynomial2ndOrderParams<ScalarT> >
-class AwnSurfacePolynomial2ndOrder
+class [[deprecated("Use new material laws and FluidMatrix::InterfacialAreaPolynomialSecondOrder instead!")]] AwnSurfacePolynomial2ndOrder
 {
 public:
     using Params = ParamsT;
@@ -65,8 +68,8 @@ public:
         const Scalar a01 = params.a01();
         const Scalar a02 = params.a02();
 
-        using std::pow;
-        const Scalar aAlphaBeta = a00 + a10 * Sw + a20 * pow(Sw,2) + a11*Sw*pc +  a01*pc + a02*pow(pc,2);
+        using Dune::power;
+        const Scalar aAlphaBeta = a00 + a10 * Sw + a20 * power(Sw,2) + a11*Sw*pc +  a01*pc + a02*power(pc,2);
         return aAlphaBeta;
     }
 

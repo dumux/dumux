@@ -87,7 +87,7 @@ public:
 
 } // end namespace Dumux
 
-int main(int argc, char* argv[]) try
+int main(int argc, char* argv[])
 {
     using namespace Dumux;
 
@@ -123,14 +123,4 @@ int main(int argc, char* argv[]) try
 
     return 0;
 
-}
-catch (const Dune::Exception& e)
-{
-    std::cout << e << std::endl;
-    return 1;
-}
-catch (...)
-{
-    std::cout << "Unknown exception thrown!" << std::endl;
-    return 1;
 }
