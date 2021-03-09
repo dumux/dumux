@@ -53,7 +53,7 @@ int checkBinaryCoefficients()
     // Test the function gasDiffCoeff:
     try
     {
-        Scalar DUNE_UNUSED val = BinaryCoefficients::gasDiffCoeff(t, p);
+        [[maybe_unused]] Scalar val = BinaryCoefficients::gasDiffCoeff(t, p);
     } catch (Dune::NotImplemented&)
     {
         std::cout << "warning: " << className << "::gasDiffCoeff() is not implemented." << std::endl;
@@ -66,7 +66,7 @@ int checkBinaryCoefficients()
     // Test the function liquidDiffCoeff:
     try
     {
-        Scalar DUNE_UNUSED val = BinaryCoefficients::liquidDiffCoeff(t, p);
+        [[maybe_unused]] Scalar val = BinaryCoefficients::liquidDiffCoeff(t, p);
     } catch (Dune::NotImplemented&)
     {
         std::cout << "warning: " << className << "::liquidDiffCoeff() is not implemented." << std::endl;
