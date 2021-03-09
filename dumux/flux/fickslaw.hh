@@ -49,5 +49,6 @@ using FicksLaw = FicksLawImplementation<TypeTag, GetPropType<TypeTag, Properties
 #include <dumux/flux/ccmpfa/fickslaw.hh>
 #include <dumux/flux/box/fickslaw.hh>
 #include <dumux/flux/staggered/freeflow/fickslaw.hh>
+//#include <dumux/flux/porenetwork/fickslaw.hh>
 
 #endif
