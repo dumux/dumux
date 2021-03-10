@@ -39,6 +39,10 @@
 #include <dumux/discretization/fvgridvariables.hh>
 #include <dumux/flux/traits.hh>
 
+// for compatibility with experimental assembly
+#include <dumux/assembly/experimentalhelpers.hh>
+#include <dumux/discretization/localcontext.hh>
+
 namespace Dumux {
 
 #ifndef DOXYGEN
@@ -327,7 +331,20 @@ public:
                         else
                         {
                             // check if we have Neumann no flow, we can just use 0
-                            const auto neumannFlux = problem_.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+                            const auto neumannFlux = [&] ()
+                            {
+                                // compatibility layer with new experimental assembly
+                                if constexpr (Experimental::areExperimentalGridVars<GridVariables>)
+                                {
+                                    using namespace Experimental::CompatibilityHelpers;
+                                    const auto elemVarsFacade = makeElemVariablesFacade(elemVolVars, elemFluxVarsCache);
+                                    const auto context = makeLocalContext(fvGeometry, elemVarsFacade);
+                                    return problem_.neumann(context, scvf);
+                                }
+                                else
+                                    return problem_.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+                            } ();
+
                             using NumEqVector = std::decay_t<decltype(neumannFlux)>;
                             if (Dune::FloatCmp::eq<NumEqVector, Dune::FloatCmp::CmpStyle::absolute>(neumannFlux, NumEqVector(0.0), 1e-30))
                                 scvfFluxes[scvfIndexInInside[localScvfIdx]] = 0;

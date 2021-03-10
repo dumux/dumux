@@ -46,6 +46,7 @@
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvgridvariables.hh>
+#include <dumux/discretization/solutionstate.hh>
 
 #include "vtkfunction.hh"
 #include "velocityoutput.hh"
@@ -466,12 +467,26 @@ private:
                 if (velocityOutput_->enableOutput())
                 {
                     fvGeometry.bind(element);
-                    elemVolVars.bind(element, fvGeometry, sol_);
+                    if constexpr (Experimental::areExperimentalGridVars<GridVariables>)
+                    {
+                        const Experimental::SolutionState solState(&gridVariables_.dofs(),
+                                                                   &gridVariables_.timeLevel());
+                        elemVolVars.bind(element, fvGeometry, solState);
+                    }
+                    else
+                        elemVolVars.bind(element, fvGeometry, sol_);
                 }
                 else
                 {
                     fvGeometry.bindElement(element);
-                    elemVolVars.bindElement(element, fvGeometry, sol_);
+                    if constexpr (Experimental::areExperimentalGridVars<GridVariables>)
+                    {
+                        const Experimental::SolutionState solState(&gridVariables_.dofs(),
+                                                                   &gridVariables_.timeLevel());
+                        elemVolVars.bindElement(element, fvGeometry, solState);
+                    }
+                    else
+                        elemVolVars.bindElement(element, fvGeometry, sol_);
                 }
 
                 if (!volVarScalarDataInfo_.empty()
@@ -659,12 +674,26 @@ private:
                 if (velocityOutput_->enableOutput())
                 {
                     fvGeometry.bind(element);
-                    elemVolVars.bind(element, fvGeometry, sol_);
+                    if constexpr (Experimental::areExperimentalGridVars<GridVariables>)
+                    {
+                        const Experimental::SolutionState solState(&gridVariables_.dofs(),
+                                                                   &gridVariables_.timeLevel());
+                        elemVolVars.bind(element, fvGeometry, solState);
+                    }
+                    else
+                        elemVolVars.bind(element, fvGeometry, sol_);
                 }
                 else
                 {
                     fvGeometry.bindElement(element);
-                    elemVolVars.bindElement(element, fvGeometry, sol_);
+                    if constexpr (Experimental::areExperimentalGridVars<GridVariables>)
+                    {
+                        const Experimental::SolutionState solState(&gridVariables_.dofs(),
+                                                                   &gridVariables_.timeLevel());
+                        elemVolVars.bindElement(element, fvGeometry, solState);
+                    }
+                    else
+                        elemVolVars.bindElement(element, fvGeometry, sol_);
                 }
 
                 if (!volVarScalarDataInfo_.empty()
