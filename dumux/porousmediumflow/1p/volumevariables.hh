@@ -25,8 +25,11 @@
 #ifndef DUMUX_1P_VOLUME_VARIABLES_HH
 #define DUMUX_1P_VOLUME_VARIABLES_HH
 
+#include <dumux/discretization/solutionstate.hh>
+
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
+
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 
@@ -51,6 +54,7 @@ class OnePVolumeVariables
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using PermeabilityType = typename Traits::PermeabilityType;
     static constexpr int numFluidComps = ParentType::numFluidComponents();
+
 public:
     //! Export the underlying fluid system
     using FluidSystem = typename Traits::FluidSystem;
@@ -109,10 +113,18 @@ public:
                             FluidState& fluidState,
                             SolidState& solidState)
     {
+        // compatibility with new experimental assembly style
+        const auto& priVars = [&elemSol, &scv] ()
+        {
+            if constexpr (Dune::models<Experimental::Concept::ElementSolutionState, ElemSol>())
+                return elemSol.elementSolution()[scv.localDofIndex()];
+            else
+                return elemSol[scv.localDofIndex()];
+        } ();
+
         EnergyVolVars::updateTemperature(elemSol, problem, element, scv, fluidState, solidState);
         fluidState.setSaturation(/*phaseIdx=*/0, 1.);
 
-        const auto& priVars = elemSol[scv.localDofIndex()];
         fluidState.setPressure(/*phaseIdx=*/0, priVars[Indices::pressureIdx]);
 
         // saturation in a single phase is always 1 and thus redundant
