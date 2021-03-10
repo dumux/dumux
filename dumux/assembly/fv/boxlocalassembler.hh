@@ -35,6 +35,7 @@
 
 #include <dumux/common/numeqvector.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/solutionstate.hh>
 #include <dumux/timestepping/multistagetimestepper.hh>
 
 
@@ -268,14 +269,16 @@ public:
     template< typename ApplyDirichletFunctionType >
     void evalDirichletBoundaries(ApplyDirichletFunctionType applyDirichlet)
     {
+        const auto& element = fvGeometry_.element();
         const auto& problem = gridVariables_.gridVolVars().problem();
+        const auto elemSolState = makeElementSolutionState(element, gridVariables_);
 
         for (const auto& scvI : scvs(fvGeometry_))
         {
-            const auto bcTypes = problem.boundaryTypes(fvGeometry_.element(), scvI);
+            const auto bcTypes = problem.boundaryTypes(element, scvI);
             if (bcTypes.hasDirichlet())
             {
-                const auto dirichletValues = problem.dirichlet(fvGeometry_.element(), scvI);
+                const auto dirichletValues = problem.dirichlet(element, scvI, elemSolState);
 
                 // set the Dirichlet conditions in residual and jacobian
                 for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
@@ -371,13 +374,13 @@ protected:
         // alias for the variables of the current stage
         auto& curVariables = elemVariables_;
         auto& curElemVolVars = curVariables.elemVolVars();
-        const auto& x = curVariables.gridVariables().dofs();
         const auto& element = fvGeometry_.element();
         const auto& problem = curElemVolVars.gridVolVars().problem();
 
         const auto origResiduals = evalLocalResidual();
-        const auto origElemSol = elementSolution(element, x, fvGeometry_.gridGeometry());
-        auto elemSol = origElemSol;
+        auto elemSolState = makeElementSolutionState(element, curVariables.gridVariables());
+        auto& elemSol = elemSolState.elementSolution();
+        const auto origElemSol = elemSol;
 
         //////////////////////////////////////////////////////////////////////////////////////////////
         // Calculate derivatives of the residual of all dofs in element with respect to themselves. //
@@ -401,7 +404,7 @@ protected:
                 {
                     // update the volume variables and compute element residual
                     elemSol[scvI.localDofIndex()][pvIdx] = priVar;
-                    curVolVars.update(elemSol, problem, element, scvI);
+                    curVolVars.update(elemSolState, problem, element, scvI);
                     return evalLocalResidual();
                 };
 

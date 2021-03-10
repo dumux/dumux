@@ -179,6 +179,7 @@ private:
 
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/gridvariables.hh>
+#include <dumux/discretization/solutionstate.hh>
 
 namespace Dumux::Experimental {
 
@@ -221,8 +222,9 @@ public:
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry)
     {
-        const auto& x = gridVariables().dofs();
-        elemVolVars_.bind(element, fvGeometry, x);
+        const Experimental::SolutionState solState(&gridVariables().dofs(),
+                                                   &gridVariables().timeLevel());
+        elemVolVars_.bind(element, fvGeometry, solState);
         elemFluxVarsCache_.bind(element, fvGeometry, elemVolVars_);
     }
 
@@ -234,7 +236,13 @@ public:
     void bindElemVolVars(const Element& element,
                          const FVElementGeometry& fvGeometry)
     {
-        elemVolVars_.bind(element, fvGeometry, gridVariables().dofs());
+        Dumux::Experimental::SolutionState solState(&gridVariables().dofs(),
+                                                    &gridVariables().timeLevel());
+
+        if (bindEntireStencil)
+            elemVolVars_.bind(element, fvGeometry, solState);
+        else
+            elemVolVars_.bindElement(element, fvGeometry, solState);
 
         // unbind flux variables cache
         elemFluxVarsCache_ = localView(gridVariables().gridFluxVarsCache());
@@ -377,6 +385,7 @@ private:
     GridFluxVariablesCache gridFluxVarsCache_; //!< the flux variables cache
 };
 
+    // implementation details
     namespace Detail {
         struct hasGridVolVars
         {

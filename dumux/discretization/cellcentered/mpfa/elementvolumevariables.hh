@@ -29,6 +29,7 @@
 #include <utility>
 #include <vector>
 
+#include <dumux/assembly/experimentalhelpers.hh>
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 
 namespace Dumux {
@@ -76,20 +77,27 @@ namespace CCMpfa {
      * \param element       The element to which the finite volume geometry is bound
      * \param fvGeometry    The element finite volume geometry
      * \param nodalIndexSet The dual grid index set around a node
+     * \param solState      The state of the discrete solution
      */
-    template<class VolumeVariables, class IndexType, class Problem, class FVElemGeom, class NodalIndexSet>
+    template<class VolumeVariables, class IndexType, class Problem, class FVElemGeom, class NodalIndexSet, class SolState>
     void addBoundaryVolVarsAtNode(std::vector<VolumeVariables>& volVars,
                                   std::vector<IndexType>& volVarIndices,
                                   const Problem& problem,
                                   const typename FVElemGeom::GridGeometry::GridView::template Codim<0>::Entity& element,
                                   const FVElemGeom& fvGeometry,
-                                  const NodalIndexSet& nodalIndexSet)
+                                  const NodalIndexSet& nodalIndexSet,
+                                  const SolState& solState)
     {
         if (nodalIndexSet.numBoundaryScvfs() == 0)
             return;
 
         // index of the element the fvGeometry was bound to
         const auto boundElemIdx = fvGeometry.gridGeometry().elementMapper().index(element);
+
+        // compatibility layer with new assembly: get element-local state
+        // This causes a slight overhead when using the old assembly (elem sol not needed)
+        using namespace Experimental::CompatibilityHelpers;
+        auto elemSolState = getElemSolState(element, solState, fvGeometry.gridGeometry());
 
         // check each scvf in the index set for boundary presence
         for (auto scvfIdx : nodalIndexSet.gridScvfIndices())
@@ -108,11 +116,15 @@ namespace CCMpfa {
             // boundaries the "outside" vol vars cannot be properly defined.
             if (bcTypes.hasOnlyDirichlet())
             {
+                // update the element solution state with the Dirichlet values
+                if constexpr (Dune::models<Experimental::Concept::ElementSolutionState, decltype(elemSolState)>())
+                    elemSolState.elementSolution()[0] = getDirichletValues(problem, insideElement, ivScvf, elemSolState);
+                // old assembly style (elemSolState = elementSolution)
+                else
+                    elemSolState[0] = getDirichletValues(problem, insideElement, ivScvf, elemSolState);
+
                 VolumeVariables dirichletVolVars;
-                dirichletVolVars.update(elementSolution<FVElemGeom>(problem.dirichlet(insideElement, ivScvf)),
-                                        problem,
-                                        insideElement,
-                                        fvGeometry.scv(insideScvIdx));
+                dirichletVolVars.update(elemSolState, problem, insideElement, fvGeometry.scv(insideScvIdx));
 
                 volVars.emplace_back(std::move(dirichletVolVars));
                 volVarIndices.push_back(ivScvf.outsideScvIdx());
@@ -130,15 +142,22 @@ namespace CCMpfa {
      * \param problem       The problem containing the Dirichlet boundary conditions
      * \param element        The element to which the finite volume geometry was bound
      * \param fvGeometry    The element finite volume geometry
+     * \param solState      The state of the discrete solution
      */
-    template<class VolumeVariables, class IndexType, class Problem, class FVElemGeom>
+    template<class VolumeVariables, class IndexType, class Problem, class FVElemGeom, class SolState>
     void addBoundaryVolVars(std::vector<VolumeVariables>& volVars,
                             std::vector<IndexType>& volVarIndices,
                             const Problem& problem,
                             const typename FVElemGeom::GridGeometry::GridView::template Codim<0>::Entity& element,
-                            const FVElemGeom& fvGeometry)
+                            const FVElemGeom& fvGeometry,
+                            const SolState& solState)
     {
         const auto& gridGeometry = fvGeometry.gridGeometry();
+
+        // compatibility layer with new assembly: get element-local state
+        // This causes a slight overhead when using old assembly (elem sol not needed)
+        using namespace Experimental::CompatibilityHelpers;
+        auto elemSolState = getElemSolState(element, solState, fvGeometry.gridGeometry());
 
         // treat the BCs inside the element
         if (fvGeometry.hasBoundaryScvf())
@@ -155,11 +174,15 @@ namespace CCMpfa {
                 // boundaries the "outside" vol vars cannot be properly defined.
                 if (problem.boundaryTypes(element, scvf).hasOnlyDirichlet())
                 {
+                    // update the element solution state with the Dirichlet values
+                    if constexpr (Dune::models<Experimental::Concept::ElementSolutionState, decltype(elemSolState)>())
+                        elemSolState.elementSolution()[0] = getDirichletValues(problem, element, scvf, elemSolState);
+                    // old assembly style (elemSolState = elementSolution)
+                    else
+                        elemSolState[0] = getDirichletValues(problem, element, scvf, elemSolState);
+
                     VolumeVariables dirichletVolVars;
-                    dirichletVolVars.update(elementSolution<FVElemGeom>(problem.dirichlet(element, scvf)),
-                                            problem,
-                                            element,
-                                            scvI);
+                    dirichletVolVars.update(elemSolState, problem, element, scvI);
 
                     volVars.emplace_back(std::move(dirichletVolVars));
                     volVarIndices.push_back(scvf.outsideScvIdx());
@@ -173,10 +196,10 @@ namespace CCMpfa {
         {
             if (!gridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
                 addBoundaryVolVarsAtNode( volVars, volVarIndices, problem, element, fvGeometry,
-                                          gridIvIndexSets.primaryIndexSet(scvf).nodalIndexSet() );
+                                          gridIvIndexSets.primaryIndexSet(scvf).nodalIndexSet(), solState );
             else
                 addBoundaryVolVarsAtNode( volVars, volVarIndices, problem, element, fvGeometry,
-                                          gridIvIndexSets.secondaryIndexSet(scvf).nodalIndexSet() );
+                                          gridIvIndexSets.secondaryIndexSet(scvf).nodalIndexSet(), solState );
         }
     }
 } // end namespace CCMpfa
@@ -228,10 +251,10 @@ public:
     }
 
     //! precompute all volume variables in a stencil of an element - bind Dirichlet vol vars in the stencil
-    template<class FVElementGeometry, class SolutionVector>
+    template<class FVElementGeometry, class SolutionState>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
-              const SolutionVector& sol)
+              const SolutionState& solState)
     {
         clear();
 
@@ -241,7 +264,8 @@ public:
         {
             boundaryVolVars_.reserve(maxNumBoundaryVolVars);
             boundaryVolVarIndices_.reserve(maxNumBoundaryVolVars);
-            CCMpfa::addBoundaryVolVars(boundaryVolVars_, boundaryVolVarIndices_, gridVolVars().problem(), element, fvGeometry);
+            CCMpfa::addBoundaryVolVars(boundaryVolVars_, boundaryVolVarIndices_,
+                                       gridVolVars().problem(), element, fvGeometry, solState);
         }
     }
 
@@ -299,10 +323,10 @@ public:
     : gridVolVarsPtr_(&gridVolVars) {}
 
     //! Prepares the volume variables within the element stencil
-    template<class FVElementGeometry, class SolutionVector>
+    template<class FVElementGeometry, class SolutionState>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
-              const SolutionVector& sol)
+              const SolutionState& solState)
     {
         clear();
 
@@ -319,12 +343,13 @@ public:
         volumeVariables_.reserve(numVolVars+maxNumBoundaryVolVars);
         volVarIndices_.reserve(numVolVars+maxNumBoundaryVolVars);
 
+        // compatibility layer with new assembly: get element-local state
+        using namespace Experimental::CompatibilityHelpers;
+        const auto elemSolState = getElemSolState(element, solState, gridGeometry);
+
         VolumeVariables volVars;
         const auto& scvI = fvGeometry.scv(globalI);
-        volVars.update(elementSolution(element, sol, gridGeometry),
-                       problem,
-                       element,
-                       scvI);
+        volVars.update(elemSolState, problem, element, scvI);
 
         volVarIndices_.push_back(scvI.dofIndex());
         volumeVariables_.emplace_back(std::move(volVars));
@@ -333,12 +358,10 @@ public:
         for (auto&& dataJ : assemblyMapI)
         {
             const auto& elementJ = gridGeometry.element(dataJ.globalJ);
+            const auto elemSolStateJ = getElemSolState(elementJ, solState, gridGeometry);
             const auto& scvJ = fvGeometry.scv(dataJ.globalJ);
             VolumeVariables volVarsJ;
-            volVarsJ.update(elementSolution(elementJ, sol, gridGeometry),
-                            problem,
-                            elementJ,
-                            scvJ);
+            volVarsJ.update(elemSolStateJ, problem, elementJ, scvJ);
 
             volVarIndices_.push_back(scvJ.dofIndex());
             volumeVariables_.emplace_back(std::move(volVarsJ));
@@ -346,7 +369,8 @@ public:
 
         // maybe prepare boundary volume variables
         if (maxNumBoundaryVolVars > 0)
-            CCMpfa::addBoundaryVolVars(volumeVariables_, volVarIndices_, problem, element, fvGeometry);
+            CCMpfa::addBoundaryVolVars(volumeVariables_, volVarIndices_,
+                                       problem, element, fvGeometry, solState);
 
         // //! TODO Check if user added additional DOF dependencies, i.e. the residual of DOF globalI depends
         // //! on additional DOFs not included in the discretization schemes' occupation pattern
@@ -373,10 +397,10 @@ public:
     }
 
     //! Prepares the volume variables of an element
-    template<class FVElementGeometry, class SolutionVector>
+    template<class FVElementGeometry, class SolutionState>
     void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
-                     const SolutionVector& sol)
+                     const SolutionState& solState)
     {
         clear();
 
@@ -385,9 +409,13 @@ public:
         volumeVariables_.resize(1);
         volVarIndices_.resize(1);
 
+        // compatibility layer with new assembly: get element-local state
+        using namespace Experimental::CompatibilityHelpers;
+        const auto elemSolState = getElemSolState(element, solState, gridGeometry);
+
         // update the volume variables of the element
         const auto& scv = fvGeometry.scv(eIdx);
-        volumeVariables_[0].update(elementSolution(element, sol, gridGeometry),
+        volumeVariables_[0].update(elemSolState,
                                    gridVolVars().problem(),
                                    element,
                                    scv);

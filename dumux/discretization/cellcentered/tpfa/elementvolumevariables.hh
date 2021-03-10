@@ -28,6 +28,7 @@
 #include <type_traits>
 #include <vector>
 
+#include <dumux/assembly/experimentalhelpers.hh>
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 
 namespace Dumux {
@@ -84,10 +85,10 @@ public:
     }
 
     //! precompute all boundary volume variables in a stencil of an element, the remaining ones are cached
-    template<class FVElementGeometry, class SolutionVector>
+    template<class FVElementGeometry, class SolutionState>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
-              const SolutionVector& sol)
+              const SolutionState& solutionState)
     {
         if (!fvGeometry.hasBoundaryScvf())
             return;
@@ -95,6 +96,11 @@ public:
         clear_();
         boundaryVolVarIndices_.reserve(fvGeometry.numScvf());
         boundaryVolumeVariables_.reserve(fvGeometry.numScvf());
+
+        // compatibility layer with new assembly: get element-local state
+        // This causes a slight overhead when using the old assembly (elem sol not needed)
+        using namespace Experimental::CompatibilityHelpers;
+        auto elemSolState = getElemSolState(element, solutionState, fvGeometry.gridGeometry());
 
         for (const auto& scvf : scvfs(fvGeometry))
         {
@@ -106,14 +112,16 @@ public:
             const auto bcTypes = problem.boundaryTypes(element, scvf);
             if (bcTypes.hasOnlyDirichlet())
             {
-                const auto dirichletPriVars = elementSolution<FVElementGeometry>(problem.dirichlet(element, scvf));
-                auto&& scvI = fvGeometry.scv(scvf.insideScvIdx());
+                // update the element solution state with the Dirichlet values
+                if constexpr (Dune::models<Experimental::Concept::ElementSolutionState, decltype(elemSolState)>())
+                    elemSolState.elementSolution()[0] = getDirichletValues(problem, element, scvf, elemSolState);
+                // old assembly style (elemSolState = elementSolution)
+                else
+                    elemSolState[0] = getDirichletValues(problem, element, scvf, elemSolState);
 
+                const auto& scvI = fvGeometry.scv(scvf.insideScvIdx());
                 VolumeVariables volVars;
-                volVars.update(dirichletPriVars,
-                               problem,
-                               element,
-                               scvI);
+                volVars.update(elemSolState, problem, element, scvI);
 
                 boundaryVolumeVariables_.emplace_back(std::move(volVars));
                 boundaryVolVarIndices_.push_back(scvf.outsideScvIdx());
@@ -174,10 +182,10 @@ public:
     : gridVolVarsPtr_(&gridVolVars) {}
 
     //! Prepares the volume variables within the element stencil
-    template<class FVElementGeometry, class SolutionVector>
+    template<class FVElementGeometry, class SolutionState>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
-              const SolutionVector& sol)
+              const SolutionState& solState)
     {
         clear_();
 
@@ -193,8 +201,10 @@ public:
         int localIdx = 0;
 
         // update the volume variables of the element at hand
-        auto&& scvI = fvGeometry.scv(globalI);
-        volumeVariables_[localIdx].update(elementSolution(element, sol, gridGeometry),
+        using namespace Experimental::CompatibilityHelpers;
+        auto elemSolState = getElemSolState(element, solState, gridGeometry);
+        const auto& scvI = fvGeometry.scv(globalI);
+        volumeVariables_[localIdx].update(elemSolState,
                                           problem,
                                           element,
                                           scvI);
@@ -206,7 +216,7 @@ public:
         {
             const auto& elementJ = gridGeometry.element(dataJ.globalJ);
             auto&& scvJ = fvGeometry.scv(dataJ.globalJ);
-            volumeVariables_[localIdx].update(elementSolution(elementJ, sol, gridGeometry),
+            volumeVariables_[localIdx].update(getElemSolState(elementJ, solState, gridGeometry),
                                               problem,
                                               elementJ,
                                               scvJ);
@@ -227,18 +237,20 @@ public:
                 const auto bcTypes = problem.boundaryTypes(element, scvf);
                 if (bcTypes.hasOnlyDirichlet())
                 {
-                    const auto dirichletPriVars = elementSolution<FVElementGeometry>(problem.dirichlet(element, scvf));
+                    // update the element solution state with the Dirichlet values
+                    if constexpr (Dune::models<Experimental::Concept::ElementSolutionState, decltype(elemSolState)>())
+                        elemSolState.elementSolution()[0] = getDirichletValues(problem, element, scvf, elemSolState);
+                    // old assembly style (elemSolState = elementSolution)
+                    else
+                        elemSolState[0] = getDirichletValues(problem, element, scvf, elemSolState);
 
                     volumeVariables_.resize(localIdx+1);
                     volVarIndices_.resize(localIdx+1);
-                    volumeVariables_[localIdx].update(dirichletPriVars,
-                        problem,
-                        element,
-                        scvI);
-                        volVarIndices_[localIdx] = scvf.outsideScvIdx();
-                        ++localIdx;
-                    }
+                    volumeVariables_[localIdx].update(elemSolState, problem, element, scvI);
+                    volVarIndices_[localIdx] = scvf.outsideScvIdx();
+                    ++localIdx;
                 }
+            }
         }
 
         //! Check if user added additional DOF dependencies, i.e. the residual of DOF globalI depends
@@ -263,10 +275,10 @@ public:
         // }
     }
 
-    template<class FVElementGeometry, class SolutionVector>
+    template<class FVElementGeometry, class SolutionState>
     void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
-                     const SolutionVector& sol)
+                     const SolutionState& solState)
     {
         clear_();
 
@@ -275,8 +287,10 @@ public:
         volVarIndices_.resize(1);
 
         // update the volume variables of the element
-        auto&& scv = fvGeometry.scv(eIdx);
-        volumeVariables_[0].update(elementSolution(element, sol, fvGeometry.gridGeometry()),
+        using namespace Experimental::CompatibilityHelpers;
+        const auto elemSolState = getElemSolState(element, solState, fvGeometry.gridGeometry());
+        const auto& scv = fvGeometry.scv(eIdx);
+        volumeVariables_[0].update(elemSolState,
                                    gridVolVars().problem(),
                                    element,
                                    scv);

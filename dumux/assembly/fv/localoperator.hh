@@ -182,7 +182,7 @@ public:
         }
 
         // compute and return the Neumann boundary fluxes
-        auto neumannFluxes = getUnscaledNeumannFluxes_(element, scvf);
+        auto neumannFluxes = problem.neumann(context_, scvf);
         neumannFluxes *= Extrusion::area(scvf)*evv[insideScv].extrusionFactor();
         return neumannFluxes;
     }
@@ -213,7 +213,7 @@ protected:
             // Neumann and Robin ("solution dependent Neumann") boundary conditions
             else if (bcTypes.hasNeumann() && !bcTypes.hasDirichlet())
             {
-                auto neumannFluxes = getUnscaledNeumannFluxes_(fvGeometry.element(), scvf);
+                auto neumannFluxes = problem.neumann(context_, scvf);
                 neumannFluxes *= Extrusion::area(scvf)*evv[insideScv].extrusionFactor();
                 r[localDofIdx] += neumannFluxes;
             }
@@ -251,7 +251,7 @@ protected:
             // Treat Neumann and Robin ("solution dependent Neumann") boundary conditions.
             if (bcTypes.hasNeumann())
             {
-                const auto neumannFluxes = getUnscaledNeumannFluxes_(fvGeometry.element(), scvf);
+                const auto neumannFluxes = problem.neumann(context_, scvf);
                 const auto area = Extrusion::area(scvf)*evv[scv].extrusionFactor();
 
                 // only add fluxes to equations for which Neumann is set
@@ -260,18 +260,6 @@ protected:
                         r[scv.localDofIndex()][eqIdx] += neumannFluxes[eqIdx]*area;
             }
         }
-    }
-
-    //! get the user-specified Neumann boundary flux
-    NumEqVector getUnscaledNeumannFluxes_(const Element& element,
-                                          const SubControlVolumeFace& scvf) const
-    {
-        // TODO: Modify problem interfaces to receive context
-        const auto& fvGeometry = context_.elementGridGeometry();
-        const auto& evv = context_.elementVariables().elemVolVars();
-        const auto& efvc = context_.elementVariables().elemFluxVarsCache();
-        const auto& problem = evv.gridVolVars().problem();
-        return problem.neumann(element, fvGeometry, evv, efvc, scvf);
     }
 
 private:

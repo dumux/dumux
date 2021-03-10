@@ -19,10 +19,12 @@
 /*!
  * \file
  * \ingroup SolidStates
- * \brief Update the solid volume fractions (inert and reacitve) and set them in the solidstate
+ * \brief Update the solid volume fractions (inert and reactive) and set them in the solidstate
  */
 #ifndef DUMUX_UPDATE_SOLID_VOLUME_FRACTION_HH
 #define DUMUX_UPDATE_SOLID_VOLUME_FRACTION_HH
+
+#include <dumux/discretization/solutionstate.hh>
 
 namespace Dumux {
 
@@ -50,8 +52,16 @@ void updateSolidVolumeFractions(const ElemSol& elemSol,
 
     if (!(solidState.isInert()))
     {
-        auto&& priVars = elemSol[scv.localDofIndex()];
-        for (int sCompIdx = 0; sCompIdx < solidState.numComponents- solidState.numInertComponents; ++sCompIdx)
+        // compatibility with new experimental assembly style
+        const auto& priVars = [&] ()
+        {
+            if constexpr (Dune::models<Experimental::Concept::ElementSolutionState, ElemSol>())
+                return elemSol.elementSolution()[scv.localDofIndex()];
+            else
+                return elemSol[scv.localDofIndex()];
+        } ();
+
+        for (int sCompIdx = 0; sCompIdx < solidState.numComponents-solidState.numInertComponents; ++sCompIdx)
            solidState.setVolumeFraction(sCompIdx, priVars[solidVolFracOffset + sCompIdx]);
     }
 }

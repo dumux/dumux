@@ -33,7 +33,19 @@
 
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
+
+#ifndef EXPERIMENTAL
+#define EXPERIMENTAL false
+#endif
+
+#if EXPERIMENTAL
+#define BASEPROBLEM Experimental::PorousMediumFlowProblem<TypeTag>
+#else
+#define BASEPROBLEM PorousMediumFlowProblem<TypeTag>
+#endif
+
 namespace Dumux {
+
 /*!
  * \ingroup OnePTests
  * \brief  Test problem for the compressible one-phase model.
@@ -42,9 +54,9 @@ namespace Dumux {
  * <tt>./test_cc1pfv</tt>
  */
 template<class TypeTag>
-class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
+class OnePTestProblem : public BASEPROBLEM
 {
-    using ParentType = PorousMediumFlowProblem<TypeTag>;
+    using ParentType = BASEPROBLEM;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

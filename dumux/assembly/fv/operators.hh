@@ -122,18 +122,15 @@ public:
     {
         SourceTerm source(0.0);
 
-        // TODO: The problem-interfaces should be adapted to receive context?
-        const auto& fvGeometry = context.elementGridGeometry();
-        const auto& elemVolVars = context.elementVariables().elemVolVars();
-        const auto& element = fvGeometry.element();
-
         // add contributions from volume flux sources
-        source += problem.source(element, fvGeometry, elemVolVars, scv);
+        source += problem.source(context, scv);
 
         // add contribution from possible point sources
-        source += problem.scvPointSources(element, fvGeometry, elemVolVars, scv);
+        // TODO: Point sources
+        // source += problem.scvPointSources(element, fvGeometry, elemVolVars, scv);
 
         // multiply with scv volume
+        const auto& elemVolVars = context.elementVariables().elemVolVars();
         source *= Extrusion::volume(scv)*elemVolVars[scv].extrusionFactor();
 
         return source;

@@ -27,6 +27,7 @@
 #include <type_traits>
 
 #include <dumux/discretization/box/elementsolution.hh>
+#include <dumux/discretization/solutionstate.hh>
 
 namespace Dumux {
 
@@ -68,19 +69,19 @@ public:
 
     // For compatibility reasons with the case of not storing the vol vars.
     // function to be called before assembling an element, preparing the vol vars within the stencil
-    template<class FVElementGeometry, class SolutionVector>
+    template<class FVElementGeometry, class SolutionState>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
-              const SolutionVector& sol)
+              const SolutionState& solState)
     {
-        bindElement(element, fvGeometry, sol);
+        bindElement(element, fvGeometry, solState);
     }
 
     // function to prepare the vol vars within the element
-    template<class FVElementGeometry, class SolutionVector>
+    template<class FVElementGeometry, class SolutionState>
     void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
-                     const SolutionVector& sol)
+                     const SolutionState& solState)
     {
         eIdx_ = fvGeometry.gridGeometry().elementMapper().index(element);
     }
@@ -114,27 +115,43 @@ public:
     : gridVolVarsPtr_(&gridVolVars) {}
 
     // specialization for box models, simply forwards to the bindElement method
-    template<class FVElementGeometry, class SolutionVector>
+    template<class FVElementGeometry, class SolutionState>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
-              const SolutionVector& sol)
+              const SolutionState& solState)
     {
-        bindElement(element, fvGeometry, sol);
+        bindElement(element, fvGeometry, solState);
     }
 
     // specialization for box models
-    template<class FVElementGeometry, class SolutionVector>
+    template<class FVElementGeometry, class SolutionState>
     void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
-                     const SolutionVector& sol)
+                     const SolutionState& solState)
     {
-        // get the solution at the dofs of the element
-        auto elemSol = elementSolution(element, sol, fvGeometry.gridGeometry());
+        // compatibility layer with new experimental assembly style
+        if constexpr (Dune::models<Experimental::Concept::SolutionState, SolutionState>())
+        {
+            const auto elemSolState = makeElementSolutionState(element,
+                                                               solState,
+                                                               fvGeometry.gridGeometry());
 
-        // resize volume variables to the required size
-        volumeVariables_.resize(fvGeometry.numScv());
-        for (auto&& scv : scvs(fvGeometry))
-            volumeVariables_[scv.indexInElement()].update(elemSol, gridVolVars().problem(), element, scv);
+            // resize volume variables to the required size
+            volumeVariables_.resize(fvGeometry.numScv());
+            for (auto&& scv : scvs(fvGeometry))
+                volumeVariables_[scv.indexInElement()].update(elemSolState, gridVolVars().problem(), element, scv);
+        }
+        // current standard style (solution state = solution vector)
+        else
+        {
+            // get the solution at the dofs of the element
+            auto elemSol = elementSolution(element, solState, fvGeometry.gridGeometry());
+
+            // resize volume variables to the required size
+            volumeVariables_.resize(fvGeometry.numScv());
+            for (auto&& scv : scvs(fvGeometry))
+                volumeVariables_[scv.indexInElement()].update(elemSol, gridVolVars().problem(), element, scv);
+        }
     }
 
     const VolumeVariables& operator [](std::size_t scvIdx) const

@@ -37,6 +37,7 @@
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/reservedblockvector.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/solutionstate.hh>
 #include <dumux/timestepping/multistagetimestepper.hh>
 
 
@@ -318,8 +319,10 @@ protected:
         const auto origPriVars = x[globalI];
         const auto origVolVars = curVolVars;
 
-        // element solution container to be deflected
-        auto elemSol = elementSolution(element, x, gridGeometry);
+        // element solution to be deflected
+        auto elemSolState = makeElementSolutionState(element, curVariables.gridVariables());
+        auto& elemSol = elemSolState.elementSolution();
+        const auto origElemSol = elemSolState.elementSolution();
 
         // derivatives in the neighbors with repect to the current elements
         // in index 0 we save the derivative of the element residual with respect to it's own dofs
@@ -335,7 +338,7 @@ protected:
 
                 // update the volume variables and the flux var cache
                 elemSol[0][pvIdx] = priVar;
-                curVolVars.update(elemSol, problem, element, scv);
+                curVolVars.update(elemSolState, problem, element, scv);
                 curElemFluxVarsCache.update(element, fvGeometry_, curElemVolVars);
                 if (enableGridFluxVarsCache)
                     gridVariables_.gridFluxVarsCache().updateElement(element, fvGeometry_, curElemVolVars);
