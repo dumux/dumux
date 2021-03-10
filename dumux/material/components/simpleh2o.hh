@@ -33,13 +33,11 @@
 #include <dumux/material/components/liquid.hh>
 #include <dumux/material/components/gas.hh>
 
-namespace Dumux {
-namespace Components {
+namespace Dumux::Components {
 
 /*!
  * \ingroup Components
- * \brief A much simpler (and thus potentially less buggy) version of
- *        pure water.
+ * \brief A simple version of pure water
  *
  * \tparam Scalar The type used for scalar values
  */
@@ -109,25 +107,23 @@ public:
         if (T < tripleTemperature())
             return 0; // water is solid: We don't take sublimation into account
 
-        static const Scalar n[10] = {
+        constexpr Scalar n[10] = {
             0.11670521452767e4, -0.72421316703206e6, -0.17073846940092e2,
             0.12020824702470e5, -0.32325550322333e7, 0.14915108613530e2,
             -0.48232657361591e4, 0.40511340542057e6, -0.23855557567849,
             0.65017534844798e3
         };
 
-        Scalar sigma = T + n[8]/(T - n[9]);
+        const Scalar sigma = T + n[8]/(T - n[9]);
 
-        Scalar A = (sigma + n[0])*sigma + n[1];
-        Scalar B = (n[2]*sigma + n[3])*sigma + n[4];
-        Scalar C = (n[5]*sigma + n[6])*sigma + n[7];
+        const Scalar A = (sigma + n[0])*sigma + n[1];
+        const Scalar B = (n[2]*sigma + n[3])*sigma + n[4];
+        const Scalar C = (n[5]*sigma + n[6])*sigma + n[7];
 
         using std::sqrt;
-        Scalar tmp = Scalar(2.0)*C/(sqrt(B*B - Scalar(4.0)*A*C) - B);
-        tmp *= tmp;
-        tmp *= tmp;
+        const Scalar term = 2.0*C/(sqrt(B*B - 4.0*A*C) - B);
 
-        return Scalar(1e6)*tmp;
+        return 1e6*term*term*term*term;
     }
 
     /*!
@@ -138,7 +134,10 @@ public:
      */
     static const Scalar gasEnthalpy(Scalar temperature,
                                     Scalar pressure)
-    { return 1976*(temperature - 293.15) + 2.45e6; }
+    {
+        static const Scalar tRef = getParam<Scalar>("SimpleH2O.ReferenceTemperature", 293.15);
+        return gasHeatCapacity(temperature, pressure)*(temperature - tRef);
+    }
 
     /*!
      * \brief Specific enthalpy of liquid water \f$\mathrm{[J/kg]}\f$.
@@ -149,16 +148,16 @@ public:
     static const Scalar liquidEnthalpy(Scalar temperature,
                                        Scalar pressure)
     {
-        return 4180*(temperature - 293.15);
+        static const Scalar tRef = getParam<Scalar>("SimpleH2O.ReferenceTemperature", 293.15);
+        return liquidHeatCapacity(temperature, pressure)*(temperature - tRef)
+                + pressure/liquidDensity(temperature, pressure);
     }
 
     /*!
      * \brief Specific internal energy of steam \f$\mathrm{[J/kg]}\f$.
      *
      *        Definition of enthalpy: \f$h= u + pv = u + p / \rho\f$.
-     *
      *        Rearranging for internal energy yields: \f$u = h - pv\f$.
-     *
      *        Exploiting the Ideal Gas assumption (\f$pv = R_{\textnormal{specific}} T\f$)gives: \f$u = h - R / M T \f$.
      *
      *        The universal gas constant can only be used in the case of molar formulations.
@@ -168,10 +167,10 @@ public:
     static const Scalar gasInternalEnergy(Scalar temperature,
                                           Scalar pressure)
     {
-        return
-            gasEnthalpy(temperature, pressure) -
-            1/molarMass()* // conversion from [J/(mol K)] to [J/(kg K)]
-            IdealGas::R*temperature; // = pressure *spec. volume for an ideal gas
+        // 1/molarMass: conversion from [J/(mol K)] to [J/(kg K)]
+        // R*T/molarMass: pressure *spec. volume for an ideal gas
+        return gasEnthalpy(temperature, pressure)
+                - 1/molarMass()*IdealGas::R*temperature;
     }
 
     /*!
@@ -182,9 +181,10 @@ public:
      */
     static const Scalar liquidInternalEnergy(Scalar temperature,
                                              Scalar pressure)
-    { return
-            liquidEnthalpy(temperature, pressure) -
-            pressure/liquidDensity(temperature, pressure); }
+    {
+        return liquidEnthalpy(temperature, pressure)
+                - pressure/liquidDensity(temperature, pressure);
+    }
 
     /*!
      * \brief Returns true if the gas phase is assumed to be compressible
@@ -315,7 +315,7 @@ public:
      */
     static Scalar liquidHeatCapacity(Scalar temperature, Scalar pressure)
     {
-        return 4.2e3;
+        return 4180.0;
     }
 
     /*!
@@ -362,8 +362,6 @@ struct IsAqueous<SimpleH2O<Scalar>> : public std::true_type {};
 template <class Scalar>
 const Scalar Components::SimpleH2O<Scalar>::R = Constants<Scalar>::R / 18e-3;
 
-} // end namespace Components
-
-} // end namespace Dumux
+} // end namespace Dumux::Components
 
 #endif
