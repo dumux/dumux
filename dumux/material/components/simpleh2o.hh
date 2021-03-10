@@ -121,9 +121,9 @@ public:
         const Scalar C = (n[5]*sigma + n[6])*sigma + n[7];
 
         using std::sqrt;
-        const Scalar term = Scalar(2.0)*C/(sqrt(B*B - Scalar(4.0)*A*C) - B);
+        const Scalar term = 2.0*C/(sqrt(B*B - 4.0*A*C) - B);
 
-        return Scalar(1e6)*term*term*term*term;
+        return 1e6*term*term*term*term;
     }
 
     /*!
