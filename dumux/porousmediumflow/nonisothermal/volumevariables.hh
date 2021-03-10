@@ -176,10 +176,19 @@ public:
                            FluidState& fluidState,
                            SolidState& solidState)
     {
+        // compatibility with new experimental assembly style
+        const auto& priVars = [&elemSol, &scv] ()
+        {
+            if constexpr (Dune::models<Experimental::Concept::ElementSolutionState, ElemSol>())
+                return elemSol.elementSolution()[scv.localDofIndex()];
+            else
+                return elemSol[scv.localDofIndex()];
+        } ();
+
         if constexpr (fullThermalEquilibrium)
         {
             // retrieve temperature from solution vector, all phases have the same temperature
-            const Scalar T = elemSol[scv.localDofIndex()][temperatureIdx];
+            const Scalar T = priVars[temperatureIdx];
             for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
             {
                 fluidState.setTemperature(phaseIdx, T);
@@ -192,7 +201,7 @@ public:
             // this means we have 1 temp for fluid phase, one for solid
             if constexpr (fluidThermalEquilibrium)
             {
-                const Scalar T = elemSol[scv.localDofIndex()][temperatureIdx];
+                const Scalar T = priVars[temperatureIdx];
                 for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
                 {
                     fluidState.setTemperature(phaseIdx, T);
@@ -204,11 +213,11 @@ public:
                 for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
                 {
                     // retrieve temperatures from solution vector, phases might have different temperature
-                    const Scalar T = elemSol[scv.localDofIndex()][temperatureIdx + phaseIdx];
+                    const Scalar T = priVars[temperatureIdx + phaseIdx];
                     fluidState.setTemperature(phaseIdx, T);
                 }
             }
-            const Scalar solidTemperature = elemSol[scv.localDofIndex()][temperatureIdx+numEnergyEq-1];
+            const Scalar solidTemperature = priVars[temperatureIdx+numEnergyEq-1];
             solidState.setTemperature(solidTemperature);
         }
     }
