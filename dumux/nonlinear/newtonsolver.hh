@@ -782,6 +782,18 @@ public:
     void detachConvergenceWriter()
     { convergenceWriter_ = nullptr; }
 
+    /*!
+     * \brief Return the factor for reducing the time step after a Newton iteration has failed
+     */
+    Scalar retryTimeStepReductionFactor() const
+    { return retryTimeStepReductionFactor_; }
+
+    /*!
+     * \brief Set the factor for reducing the time step after a Newton iteration has failed
+     */
+    void setRetryTimeStepReductionFactor(const Scalar factor)
+    { retryTimeStepReductionFactor_ = factor; }
+
 protected:
 
     /*!
