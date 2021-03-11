@@ -222,8 +222,7 @@ public:
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry)
     {
-        const Experimental::SolutionState solState(&gridVariables().dofs(),
-                                                   &gridVariables().timeLevel());
+        const auto solState = solutionStateView(gridVariables());
         elemVolVars_.bind(element, fvGeometry, solState);
         elemFluxVarsCache_.bind(element, fvGeometry, elemVolVars_);
     }
@@ -236,9 +235,7 @@ public:
     void bindElemVolVars(const Element& element,
                          const FVElementGeometry& fvGeometry)
     {
-        Dumux::Experimental::SolutionState solState(&gridVariables().dofs(),
-                                                    &gridVariables().timeLevel());
-
+        const auto solState = solutionStateView(gridVariables());
         if (bindEntireStencil)
             elemVolVars_.bind(element, fvGeometry, solState);
         else

@@ -176,14 +176,7 @@ public:
                            FluidState& fluidState,
                            SolidState& solidState)
     {
-        // compatibility with new experimental assembly style
-        const auto& priVars = [&elemSol, &scv] ()
-        {
-            if constexpr (Dune::models<Experimental::Concept::ElementSolutionState, ElemSol>())
-                return elemSol.elementSolution()[scv.localDofIndex()];
-            else
-                return elemSol[scv.localDofIndex()];
-        } ();
+        const auto& priVars = elemSol[scv.localDofIndex()];
 
         if constexpr (fullThermalEquilibrium)
         {

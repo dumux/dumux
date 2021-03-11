@@ -320,9 +320,9 @@ protected:
         const auto origVolVars = curVolVars;
 
         // element solution to be deflected
-        auto elemSolState = makeElementSolutionState(element, curVariables.gridVariables());
-        auto& elemSol = elemSolState.elementSolution();
-        const auto origElemSol = elemSolState.elementSolution();
+        const auto solStateView = solutionStateView(curVariables.gridVariables());
+        const auto origElemSol = elementSolution(element, solStateView, fvGeometry_.gridGeometry());
+        auto elemSol = origElemSol;
 
         // derivatives in the neighbors with repect to the current elements
         // in index 0 we save the derivative of the element residual with respect to it's own dofs
@@ -338,7 +338,7 @@ protected:
 
                 // update the volume variables and the flux var cache
                 elemSol[0][pvIdx] = priVar;
-                curVolVars.update(elemSolState, problem, element, scv);
+                curVolVars.update(elemSol, problem, element, scv);
                 curElemFluxVarsCache.update(element, fvGeometry_, curElemVolVars);
                 if (enableGridFluxVarsCache)
                     gridVariables_.gridFluxVarsCache().updateElement(element, fvGeometry_, curElemVolVars);

@@ -469,8 +469,7 @@ private:
                     fvGeometry.bind(element);
                     if constexpr (Experimental::areExperimentalGridVars<GridVariables>)
                     {
-                        const Experimental::SolutionState solState(&gridVariables_.dofs(),
-                                                                   &gridVariables_.timeLevel());
+                        const auto solState = solutionStateView(gridVariables_);
                         elemVolVars.bind(element, fvGeometry, solState);
                     }
                     else
@@ -481,8 +480,7 @@ private:
                     fvGeometry.bindElement(element);
                     if constexpr (Experimental::areExperimentalGridVars<GridVariables>)
                     {
-                        const Experimental::SolutionState solState(&gridVariables_.dofs(),
-                                                                   &gridVariables_.timeLevel());
+                        const auto solState = solutionStateView(gridVariables_);
                         elemVolVars.bindElement(element, fvGeometry, solState);
                     }
                     else
@@ -676,8 +674,7 @@ private:
                     fvGeometry.bind(element);
                     if constexpr (Experimental::areExperimentalGridVars<GridVariables>)
                     {
-                        const Experimental::SolutionState solState(&gridVariables_.dofs(),
-                                                                   &gridVariables_.timeLevel());
+                        const auto solState = solutionStateView(gridVariables_);
                         elemVolVars.bind(element, fvGeometry, solState);
                     }
                     else
@@ -688,8 +685,7 @@ private:
                     fvGeometry.bindElement(element);
                     if constexpr (Experimental::areExperimentalGridVars<GridVariables>)
                     {
-                        const Experimental::SolutionState solState(&gridVariables_.dofs(),
-                                                                   &gridVariables_.timeLevel());
+                        const auto solState = solutionStateView(gridVariables_);
                         elemVolVars.bindElement(element, fvGeometry, solState);
                     }
                     else

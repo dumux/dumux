@@ -78,53 +78,18 @@ makeElemVariablesFacade(const ElemVolVars& elemVolVars,
                         const ElemFluxVarsCache& elemFluxVarsCache)
 { return {&elemVolVars, &elemFluxVarsCache}; }
 
-// Get an element solution state from a global state.
-// If a solution vector is passed (current default style),
-// then an element solution is returned, whereas if an actual
-// solution state is given (new concept), we return an elem sol state.
-template<class Element, class SolState, class GridGeometry>
-auto getElemSolState(const Element& element,
-                     const SolState& solState,
-                     const GridGeometry& gridGeometry)
-{
-    if constexpr (Dune::models<Concept::SolutionState, SolState>())
-        return makeElementSolutionState(element, solState, gridGeometry);
-    else
-        return elementSolution(element, solState, gridGeometry);
-}
-
-// Get an element solution state from grid variables.
-// If grid variables with the experimental layout are passed,
-// we return an actual element solution state. Otherwise,
-// we return an empty element solution.
-template<class Element, class GridVariables>
-auto getElemSolState(const Element& element,
-                     const GridVariables& gridVariables)
-{
-    if constexpr (areExperimentalGridVars<GridVariables>)
-        return makeElementSolutionState(element, gridVariables);
-    else
-    {
-        using DummySolVec = std::vector<Dune::FieldVector<double, 1>>;
-        using ElemSol = decltype(elementSolution(element,
-                                                 std::declval<DummySolVec>(),
-                                                 gridVariables.gridGeometry()));
-        return ElemSol{};
-    }
-}
-
 // get the Dirichlet values for a boundary entity from a user problem
-template<class Problem, class Element, class BoundaryEntity, class ElemSolState>
+template<class Problem, class Element, class BoundaryEntity, class ElemSol>
 decltype(auto) getDirichletValues(const Problem& problem,
                                   const Element& element,
                                   const BoundaryEntity& boundaryEntity,
-                                  const ElemSolState& elemSolState)
+                                  const ElemSol& elemSol)
 {
-    // given element solution state models an actual state
-    if constexpr (Dune::models<Concept::ElementSolutionState, ElemSolState>())
+    // given element solution models the experimental elemsol concept
+    if constexpr (Dune::models<Concept::ElementSolution, ElemSol>())
     {
         if constexpr (ProblemTraits<Problem>::hasTransientDirichletInterface)
-            return problem.dirichlet(element, boundaryEntity, elemSolState.timeLevel());
+            return problem.dirichlet(element, boundaryEntity, elemSol.timeLevel());
         else
             return problem.dirichlet(element, boundaryEntity);
     }

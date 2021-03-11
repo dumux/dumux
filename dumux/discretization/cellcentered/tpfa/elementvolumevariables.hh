@@ -97,11 +97,7 @@ public:
         boundaryVolVarIndices_.reserve(fvGeometry.numScvf());
         boundaryVolumeVariables_.reserve(fvGeometry.numScvf());
 
-        // compatibility layer with new assembly: get element-local state
-        // This causes a slight overhead when using the old assembly (elem sol not needed)
-        using namespace Experimental::CompatibilityHelpers;
-        auto elemSolState = getElemSolState(element, solutionState, fvGeometry.gridGeometry());
-
+        auto elemSol = elementSolution(element, solutionState, fvGeometry.gridGeometry());
         for (const auto& scvf : scvfs(fvGeometry))
         {
             if (!scvf.boundary())
@@ -112,16 +108,11 @@ public:
             const auto bcTypes = problem.boundaryTypes(element, scvf);
             if (bcTypes.hasOnlyDirichlet())
             {
-                // update the element solution state with the Dirichlet values
-                if constexpr (Dune::models<Experimental::Concept::ElementSolutionState, decltype(elemSolState)>())
-                    elemSolState.elementSolution()[0] = getDirichletValues(problem, element, scvf, elemSolState);
-                // old assembly style (elemSolState = elementSolution)
-                else
-                    elemSolState[0] = getDirichletValues(problem, element, scvf, elemSolState);
-
+                using namespace Experimental::CompatibilityHelpers;
+                elemSol[0] = getDirichletValues(problem, element, scvf, elemSol);
                 const auto& scvI = fvGeometry.scv(scvf.insideScvIdx());
                 VolumeVariables volVars;
-                volVars.update(elemSolState, problem, element, scvI);
+                volVars.update(elemSol, problem, element, scvI);
 
                 boundaryVolumeVariables_.emplace_back(std::move(volVars));
                 boundaryVolVarIndices_.push_back(scvf.outsideScvIdx());
@@ -201,10 +192,9 @@ public:
         int localIdx = 0;
 
         // update the volume variables of the element at hand
-        using namespace Experimental::CompatibilityHelpers;
-        auto elemSolState = getElemSolState(element, solState, gridGeometry);
+        auto elemSol = elementSolution(element, solState, gridGeometry);
         const auto& scvI = fvGeometry.scv(globalI);
-        volumeVariables_[localIdx].update(elemSolState,
+        volumeVariables_[localIdx].update(elemSol,
                                           problem,
                                           element,
                                           scvI);
@@ -216,7 +206,7 @@ public:
         {
             const auto& elementJ = gridGeometry.element(dataJ.globalJ);
             auto&& scvJ = fvGeometry.scv(dataJ.globalJ);
-            volumeVariables_[localIdx].update(getElemSolState(elementJ, solState, gridGeometry),
+            volumeVariables_[localIdx].update(elementSolution(elementJ, solState, gridGeometry),
                                               problem,
                                               elementJ,
                                               scvJ);
@@ -237,16 +227,12 @@ public:
                 const auto bcTypes = problem.boundaryTypes(element, scvf);
                 if (bcTypes.hasOnlyDirichlet())
                 {
-                    // update the element solution state with the Dirichlet values
-                    if constexpr (Dune::models<Experimental::Concept::ElementSolutionState, decltype(elemSolState)>())
-                        elemSolState.elementSolution()[0] = getDirichletValues(problem, element, scvf, elemSolState);
-                    // old assembly style (elemSolState = elementSolution)
-                    else
-                        elemSolState[0] = getDirichletValues(problem, element, scvf, elemSolState);
+                    using namespace Experimental::CompatibilityHelpers;
+                    elemSol[0] = getDirichletValues(problem, element, scvf, elemSol);
 
                     volumeVariables_.resize(localIdx+1);
                     volVarIndices_.resize(localIdx+1);
-                    volumeVariables_[localIdx].update(elemSolState, problem, element, scvI);
+                    volumeVariables_[localIdx].update(elemSol, problem, element, scvI);
                     volVarIndices_[localIdx] = scvf.outsideScvIdx();
                     ++localIdx;
                 }
@@ -287,10 +273,9 @@ public:
         volVarIndices_.resize(1);
 
         // update the volume variables of the element
-        using namespace Experimental::CompatibilityHelpers;
-        const auto elemSolState = getElemSolState(element, solState, fvGeometry.gridGeometry());
+        const auto elemSol = elementSolution(element, solState, fvGeometry.gridGeometry());
         const auto& scv = fvGeometry.scv(eIdx);
-        volumeVariables_[0].update(elemSolState,
+        volumeVariables_[0].update(elemSol,
                                    gridVolVars().problem(),
                                    element,
                                    scv);

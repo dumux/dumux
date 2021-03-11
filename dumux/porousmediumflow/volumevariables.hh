@@ -26,8 +26,6 @@
 #ifndef DUMUX_POROUSMEDIUMFLOW_VOLUME_VARIABLES_HH
 #define DUMUX_POROUSMEDIUMFLOW_VOLUME_VARIABLES_HH
 
-#include <dumux/discretization/solutionstate.hh>
-
 namespace Dumux {
 
 /*!
@@ -68,19 +66,8 @@ public:
                 const Element& element,
                 const Scv& scv)
     {
-        // compatibility layer with new experimental assembly style (elem sol = element solution state)
-        if constexpr (Dune::models<Experimental::Concept::ElementSolutionState, ElemSol>())
-        {
-            const auto& elemSolState = elemSol;
-            priVars_ = elemSolState.elementSolution()[scv.localDofIndex()];
-            extrusionFactor_ = problem.spatialParams().extrusionFactor(element, scv, elemSolState);
-        }
-        // current standard style (element solution-based)
-        else
-        {
-            priVars_ = elemSol[scv.localDofIndex()];
-            extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
-        }
+        priVars_ = elemSol[scv.localDofIndex()];
+        extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
     }
 
     /*!

@@ -380,9 +380,9 @@ protected:
         const auto& problem = curElemVolVars.gridVolVars().problem();
 
         const auto origResiduals = evalLocalResidual();
-        auto elemSolState = makeElementSolutionState(element, curVariables.gridVariables());
-        auto& elemSol = elemSolState.elementSolution();
-        const auto origElemSol = elemSol;
+        const auto solStateView = solutionStateView(curVariables.gridVariables());
+        const auto origElemSol = elementSolution(element, solStateView, fvGeometry_.gridGeometry());
+        auto elemSol = origElemSol;
 
         //////////////////////////////////////////////////////////////////////////////////////////////
         // Calculate derivatives of the residual of all dofs in element with respect to themselves. //
@@ -406,7 +406,7 @@ protected:
                 {
                     // update the volume variables and compute element residual
                     elemSol[scvI.localDofIndex()][pvIdx] = priVar;
-                    curVolVars.update(elemSolState, problem, element, scvI);
+                    curVolVars.update(elemSol, problem, element, scvI);
                     return evalLocalResidual();
                 };
 
