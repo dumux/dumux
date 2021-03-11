@@ -29,7 +29,7 @@
 // base problem
 #include <dumux/porousmediumflow/problem.hh>
 // Pore network model
-#include <dumux/porenetworkflow/1p/model.hh>
+#include <dumux/porenetwork/1p/model.hh>
 
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/material/components/simpleh2o.hh>

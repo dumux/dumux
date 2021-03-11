@@ -43,8 +43,8 @@
  #include <dumux/assembly/fvassembler.hh>
 
 #include "drainageproblem.hh"
-#include <dumux/porenetworkflow/common/pnmvtkoutputmodule.hh>
-#include <dumux/porenetworkflow/2pnc/newtonsolver.hh>
+#include <dumux/porenetwork/common/pnmvtkoutputmodule.hh>
+#include <dumux/porenetwork/2pnc/newtonsolver.hh>
 #include <dumux/io/grid/porenetworkgridcreator.hh>
 
 

@@ -39,8 +39,8 @@
 
  #include <dumux/assembly/fvassembler.hh>
 
-#include <dumux/porenetworkflow/common/pnmvtkoutputmodule.hh>
-#include <dumux/porenetworkflow/2p/newtonsolver.hh>
+#include <dumux/porenetwork/common/pnmvtkoutputmodule.hh>
+#include <dumux/porenetwork/2p/newtonsolver.hh>
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
 #include <dumux/io/plotpnmmateriallaw.hh>
 #include "problem.hh"

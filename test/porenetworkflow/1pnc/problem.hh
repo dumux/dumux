@@ -28,7 +28,7 @@
 // base problem
 #include <dumux/porousmediumflow/problem.hh>
 // Pore network model
-#include <dumux/porenetworkflow/1pnc/model.hh>
+#include <dumux/porenetwork/1pnc/model.hh>
 
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>

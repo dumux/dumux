@@ -44,7 +44,7 @@
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
 #include <dune/foamgrid/foamgrid.hh>
 
-#include <dumux/porenetworkflow/2p/static/staticdrainge.hh>
+#include <dumux/porenetwork/2p/static/staticdrainge.hh>
 #include <dumux/io/gnuplotinterface.hh>
 
 namespace Dumux {

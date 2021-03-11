@@ -27,7 +27,7 @@
 #include <dune/foamgrid/foamgrid.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porenetworkflow/2p/model.hh>
+#include <dumux/porenetwork/2p/model.hh>
 
 // spatial params
 #include <dumux/material/spatialparams/porenetwork/porenetwork2p.hh>
@@ -35,7 +35,7 @@
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
-#include <dumux/porenetworkflow/common/utilities.hh>
+#include <dumux/porenetwork/common/utilities.hh>
 
 
 namespace Dumux

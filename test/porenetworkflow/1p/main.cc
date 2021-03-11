@@ -38,8 +38,8 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 
-#include <dumux/porenetworkflow/common/pnmvtkoutputmodule.hh>
-#include <dumux/porenetworkflow/common/boundaryflux.hh>
+#include <dumux/porenetwork/common/pnmvtkoutputmodule.hh>
+#include <dumux/porenetwork/common/boundaryflux.hh>
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
 #include "problem.hh"
 

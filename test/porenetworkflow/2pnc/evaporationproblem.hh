@@ -31,13 +31,13 @@
 // base problem
 #include <dumux/porousmediumflow/problem.hh>
 
-#include <dumux/porenetworkflow/2pnc/model.hh>
+#include <dumux/porenetwork/2pnc/model.hh>
 
 // spatial params
 #include <dumux/material/spatialparams/porenetwork/porenetwork2p.hh>
 
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/porenetworkflow/common/utilities.hh>
+#include <dumux/porenetwork/common/utilities.hh>
 
 // #if !CUSTOMCOMPONENTS
 #include <dumux/material/fluidsystems/h2oair.hh>
