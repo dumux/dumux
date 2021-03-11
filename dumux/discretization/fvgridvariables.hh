@@ -185,6 +185,17 @@ namespace Dumux::Experimental {
 
 /*!
  * \ingroup Discretization
+ * \brief Policy for binding local views of finite volume grid variables.
+ */
+enum class FVGridVariablesBindPolicy
+{
+    all,
+    volVarsOnly,
+    volVarsOfElementOnly
+};
+
+/*!
+ * \ingroup Discretization
  * \brief Finite volume-specific local view on grid variables.
  * \tparam GV The grid variables class
  */
@@ -220,30 +231,29 @@ public:
      * \param fvGeometry Local view on the grid geometry
      */
     void bind(const Element& element,
-              const FVElementGeometry& fvGeometry)
+              const FVElementGeometry& fvGeometry,
+              FVGridVariablesBindPolicy policy = FVGridVariablesBindPolicy::all)
     {
         const auto solState = solutionStateView(gridVariables());
-        elemVolVars_.bind(element, fvGeometry, solState);
-        elemFluxVarsCache_.bind(element, fvGeometry, elemVolVars_);
-    }
 
-    /*!
-     * \brief Bind only the volume variables local view to a grid element.
-     * \param element The grid element
-     * \param fvGeometry Local view on the grid geometry
-     */
-    void bindElemVolVars(const Element& element,
-                         const FVElementGeometry& fvGeometry)
-    {
-        const auto solState = solutionStateView(gridVariables());
-        if (bindEntireStencil)
+        if (policy == FVGridVariablesBindPolicy::all)
+        {
             elemVolVars_.bind(element, fvGeometry, solState);
+            elemFluxVarsCache_.bind(element, fvGeometry, elemVolVars_);
+        }
         else
-            elemVolVars_.bindElement(element, fvGeometry, solState);
-
-        // unbind flux variables cache
-        elemFluxVarsCache_ = localView(gridVariables().gridFluxVarsCache());
+        {
+            // unbind flux variables cache
+            elemFluxVarsCache_ = localView(gridVariables().gridFluxVarsCache());
+            if (policy == FVGridVariablesBindPolicy::volVarsOnly)
+                elemVolVars_.bind(element, fvGeometry, solState);
+            else if (policy == FVGridVariablesBindPolicy::volVarsOfElementOnly)
+                elemVolVars_.bindElement(element, fvGeometry, solState);
+            else
+                DUNE_THROW(Dune::NotImplemented, "Bind for given policy");
+        }
     }
+
 
     //! return reference to the elem vol vars
     const ElementVolumeVariables& elemVolVars() const { return elemVolVars_; }
