@@ -34,6 +34,8 @@
 #include <dumux/assembly/numericepsilon.hh>
 
 #include <dumux/common/numeqvector.hh>
+#include <dumux/common/typetraits/problem.hh>
+
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/solutionstate.hh>
 #include <dumux/timestepping/multistagetimestepper.hh>
@@ -271,14 +273,14 @@ public:
     {
         const auto& element = fvGeometry_.element();
         const auto& problem = gridVariables_.gridVolVars().problem();
-        const auto elemSolState = makeElementSolutionState(element, gridVariables_);
 
         for (const auto& scvI : scvs(fvGeometry_))
         {
             const auto bcTypes = problem.boundaryTypes(element, scvI);
             if (bcTypes.hasDirichlet())
             {
-                const auto dirichletValues = problem.dirichlet(element, scvI, elemSolState);
+                const auto dirichletValues = getDirichletValues_(problem, element, scvI,
+                                                                 gridVariables_.timeLevel());
 
                 // set the Dirichlet conditions in residual and jacobian
                 for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
@@ -457,15 +459,30 @@ protected:
         return origResiduals;
     }
 
-    //! Returns the volume variables of the local view (case of no caching)
-    template<class ElemVolVars, class GridVolVars, std::enable_if_t<!GridVolVars::cachingEnabled, int> = 0>
-    auto& getVolVarAcess_(ElemVolVars& elemVolVars, GridVolVars& gridVolVars, const SubControlVolume& scv)
-    { return elemVolVars[scv]; }
-
     //! Returns the volume variables of the grid vol vars (case of global caching)
-    template<class ElemVolVars, class GridVolVars, std::enable_if_t<GridVolVars::cachingEnabled, int> = 0>
-    auto& getVolVarAcess_(ElemVolVars& elemVolVars, GridVolVars& gridVolVars, const SubControlVolume& scv)
-    { return gridVolVars.volVars(scv); }
+    template<class ElemVolVars, class GridVolVars>
+    auto& getVolVarAcess_(ElemVolVars& elemVolVars,
+                          GridVolVars& gridVolVars,
+                          const SubControlVolume& scv)
+    {
+        if constexpr (GridVolVars::cachingEnabled)
+            return gridVolVars.volVars(scv);
+        else
+            return elemVolVars[scv];
+    }
+
+    //! get the user-defined Dirichlet boundary conditions
+    template<class Problem, class TimeLevel>
+    auto getDirichletValues_(const Problem& problem,
+                             const Element& element,
+                             const SubControlVolume& scv,
+                             const TimeLevel& timeLevel)
+    {
+        if constexpr(ProblemTraits<Problem>::hasTransientDirichletInterface)
+            return problem.dirichlet(element, scv, timeLevel);
+        else
+            return problem.dirichlet(element, scv);
+    }
 
     DiffMethod diffMethod_;                           //!< the type of differentiation method
     GridVariables& gridVariables_;                    //!< reference to the grid variables

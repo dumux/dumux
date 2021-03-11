@@ -652,14 +652,27 @@ public:
      *
      * \param element The finite element
      * \param boundaryEntity The boundary entity (scv/scvf)
-     * \param elementSolution The element-local state of the discrete solution.
+     * \param timeLevel The time level on which to evaluate the boundary conditions
      * \note In cell-centered schemes, boundaryEntity is a sub-control
      *       volume face (scvf). In the box scheme, a sub-control volume (scv).
      */
-    template<class BoundaryEntity, class ElementSolution>
+    template<class BoundaryEntity, class TimeLevel>
     PrimaryVariables dirichlet(const Element& element,
                                const BoundaryEntity& boundaryEntity,
-                               const ElementSolution& elementSolution) const
+                               const TimeLevel& timeLevel) const
+    { return this->asImp_().dirichlet(element, boundaryEntity); }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a discrete entity on the boundary.
+     *
+     * \param element The finite element
+     * \param boundaryEntity The boundary entity (scv/scvf)
+     * \note In cell-centered schemes, boundaryEntity is a sub-control
+     *       volume face (scvf). In the box scheme, a sub-control volume (scv).
+     */
+    template<class BoundaryEntity>
+    PrimaryVariables dirichlet(const Element& element,
+                               const BoundaryEntity& boundaryEntity) const
     {
         if constexpr (isBox)
             return this->asImp_().dirichletAtPos(boundaryEntity.dofPosition());

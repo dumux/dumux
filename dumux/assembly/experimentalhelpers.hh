@@ -122,7 +122,12 @@ decltype(auto) getDirichletValues(const Problem& problem,
 {
     // given element solution state models an actual state
     if constexpr (Dune::models<Concept::ElementSolutionState, ElemSolState>())
-        return problem.dirichlet(element, boundaryEntity, elemSolState);
+    {
+        if constexpr (ProblemTraits<Problem>::hasTransientDirichletInterface)
+            return problem.dirichlet(element, boundaryEntity, elemSolState.timeLevel());
+        else
+            return problem.dirichlet(element, boundaryEntity);
+    }
 
     // current default style (elemSolState = element solution, not passed to user interface)
     else
