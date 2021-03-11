@@ -88,6 +88,13 @@ public:
      * \param context The element-stencil-local required data
      * \param scv The sub-control volume
      * \note This must be overloaded by the implementation
+     * \note In cell-centered schemes, depending on the assembler or the policy used
+     *       therein, the context may contain variables (e.g. from neighboring cells
+     *       within the stencil) with respect to which the storage term is not
+     *       differentiated. This means that if a Newton solver is used to solve
+     *       the system of equations, one ends up with a quasi-Newton scheme. If
+     *       this is undesireable, make sure to set up an assembler that takes into
+     *       account the dependencies of the storage term w.r.t variables in the context.
      */
      template<class Problem>
      static StorageTerm storage(const Problem& problem,
@@ -114,6 +121,13 @@ public:
      * \param context The element-stencil-local required data
      * \param scv The sub-control volume for which the source term is to be computed
      * \note This is a default implementation forwarding to interfaces in the problem
+     * \note In cell-centered schemes, depending on the assembler or the policy used
+     *       therein, the context may contain variables (e.g. from neighboring cells
+     *       within the stencil) with respect to which the source term is not
+     *       differentiated. This means that if a Newton solver is used to solve
+     *       the system of equations, one ends up with a quasi-Newton scheme. If
+     *       this is undesireable, make sure to set up an assembler that takes into
+     *       account the dependencies of the storage term w.r.t variables in the context.
      */
      template<class Problem>
      static SourceTerm source(const Problem& problem,
