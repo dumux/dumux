@@ -27,7 +27,7 @@
 #include <vector>
 #include <dune/istl/bvector.hh>
 #include <dumux/io/gnuplotinterface.hh>
-#include <dumux/porenetworkflow/2p/fluxvariablescache.hh>
+#include <dumux/porenetwork/2p/fluxvariablescache.hh>
 
 namespace Dumux
 {
