@@ -25,6 +25,9 @@
 #define DUMUX_TYPETRAITS_PROBLEM_HH
 
 #include <type_traits>
+
+#include <dumux/common/typetraits/isvalid.hh>
+#include <dumux/timestepping/timelevel.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {
@@ -33,6 +36,29 @@ namespace Dumux {
 namespace Detail {
 template<class Problem, DiscretizationMethod dm>
 struct ProblemTraits;
+
+template<class GridGeometry, class Scalar>
+struct hasTransientDirichlet
+{
+private:
+    using TimeLevel = Dumux::Experimental::TimeLevel<Scalar>;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+    using BoundaryEntity = std::conditional_t<GridGeometry::discMethod == DiscretizationMethod::box,
+                                              typename GridGeometry::SubControlVolume,
+                                              typename GridGeometry::SubControlVolumeFace>;
+public:
+    template<class Problem>
+    auto operator()(const Problem& p)
+    -> decltype(p.dirichlet(std::declval<Element>(),
+                            std::declval<BoundaryEntity>(),
+                            std::declval<TimeLevel>()))
+    {}
+};
+
+template<class Problem, class GridGeometry, class Scalar>
+inline constexpr bool hasTransientDirichletInterface
+    = decltype(isValid(hasTransientDirichlet<GridGeometry, Scalar>())(std::declval<Problem>()))::value;
+
 } // end namespace Detail
 
 /*!
@@ -44,6 +70,9 @@ struct ProblemTraits
 {
     using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
     using BoundaryTypes = typename Detail::template ProblemTraits<Problem, GridGeometry::discMethod>::BoundaryTypes;
+
+    static constexpr bool hasTransientDirichletInterface
+        = Detail::hasTransientDirichletInterface<Problem, GridGeometry, typename Problem::Traits::Scalar>;
 };
 
 } // end namespace Dumux
