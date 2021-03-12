@@ -205,7 +205,7 @@ private:
 
     // enable models with primary variable switch
     // TODO: Always use ParentType::Variables once we require assemblers to export variables
-    static constexpr bool assemblerExportsVariables = Impl::exportsVariables<Assembler>;
+    static constexpr bool assemblerExportsVariables = Detail::exportsVariables<Assembler>;
     using PriVarSwitchVariables
         = std::conditional_t<assemblerExportsVariables,
                              typename ParentType::Variables,
@@ -337,7 +337,7 @@ public:
                 {
                     // set solution to previous solution & reset time step
                     Backend::update(vars, this->assembler().prevSol());
-                    this->assembler().resetTimeStep(Backend::getDofVector(vars));
+                    this->assembler().resetTimeStep(Backend::dofs(vars));
 
                     if (verbosity_ >= 1)
                     {
@@ -387,12 +387,12 @@ public:
         if constexpr (hasPriVarsSwitch<PriVarSwitchVariables>)
         {
             if constexpr (assemblerExportsVariables)
-                priVarSwitchAdapter_->initialize(Backend::getDofVector(initVars), initVars);
+                priVarSwitchAdapter_->initialize(Backend::dofs(initVars), initVars);
             else // this assumes assembly with solution (i.e. Variables=SolutionVector)
                 priVarSwitchAdapter_->initialize(initVars, this->assembler().gridVariables());
         }
 
-        const auto& initSol = Backend::getDofVector(initVars);
+        const auto& initSol = Backend::dofs(initVars);
 
         // write the initial residual if a convergence writer was set
         if (convergenceWriter_)
@@ -400,7 +400,7 @@ public:
             this->assembler().assembleResidual(initVars);
 
             // dummy vector, there is no delta before solving the linear system
-            auto delta = Backend::makeZeroDofVector(Backend::size(initSol));
+            auto delta = Backend::zeros(Backend::size(initSol));
             convergenceWriter_->write(initSol, delta, this->assembler().residual());
         }
 
@@ -617,7 +617,7 @@ public:
         if constexpr (hasPriVarsSwitch<PriVarSwitchVariables>)
         {
             if constexpr (assemblerExportsVariables)
-                priVarSwitchAdapter_->invoke(Backend::getDofVector(vars), vars);
+                priVarSwitchAdapter_->invoke(Backend::dofs(vars), vars);
             else // this assumes assembly with solution (i.e. Variables=SolutionVector)
                 priVarSwitchAdapter_->invoke(vars, this->assembler().gridVariables());
         }
@@ -853,7 +853,7 @@ protected:
         Backend::update(vars, uCurrentIter);
 
         if constexpr (!assemblerExportsVariables)
-            this->assembler().updateGridVariables(Backend::getDofVector(vars));
+            this->assembler().updateGridVariables(Backend::dofs(vars));
     }
 
     void computeResidualReduction_(const Variables& vars)
@@ -863,7 +863,7 @@ protected:
         if constexpr (Detail::hasNorm<LinearSolver, SolutionVector>())
         {
             if constexpr (!assemblerExportsVariables)
-                this->assembler().assembleResidual(Backend::getDofVector(vars));
+                this->assembler().assembleResidual(Backend::dofs(vars));
             else
                 this->assembler().assembleResidual(vars);
             residualNorm_ = this->linearSolver().norm(this->assembler().residual());
@@ -871,7 +871,7 @@ protected:
         else
         {
             if constexpr (!assemblerExportsVariables)
-                residualNorm_ = this->assembler().residualNorm(Backend::getDofVector(vars));
+                residualNorm_ = this->assembler().residualNorm(Backend::dofs(vars));
             else
                 residualNorm_ = this->assembler().residualNorm(vars);
         }
@@ -920,8 +920,8 @@ private:
             newtonBegin(vars);
 
             // the given solution is the initial guess
-            auto uLastIter = Backend::getDofVector(vars);
-            auto deltaU = Backend::getDofVector(vars);
+            auto uLastIter = Backend::dofs(vars);
+            auto deltaU = Backend::dofs(vars);
 
             // setup timers
             Dune::Timer assembleTimer(false);
@@ -939,7 +939,7 @@ private:
 
                 // make the current solution to the old one
                 if (numSteps_ > 0)
-                    uLastIter = Backend::getDofVector(vars);
+                    uLastIter = Backend::dofs(vars);
 
                 if (verbosity_ >= 1 && enableDynamicOutput_)
                     std::cout << "Assemble: r(x^k) = dS/dt + div F - q;   M = grad r"
@@ -996,7 +996,7 @@ private:
                 if (convergenceWriter_)
                 {
                     this->assembler().assembleResidual(vars);
-                    convergenceWriter_->write(Backend::getDofVector(vars), deltaU, this->assembler().residual());
+                    convergenceWriter_->write(Backend::dofs(vars), deltaU, this->assembler().residual());
                 }
 
                 // detect if the method has converged
@@ -1011,7 +1011,7 @@ private:
             {
                 totalWastedIter_ += numSteps_;
                 // TODO: what should NewtonFail receive as arg?
-                auto uCurrentIter = Backend::getDofVector(vars);
+                auto uCurrentIter = Backend::dofs(vars);
                 newtonFail(uCurrentIter);
                 return false;
             }
@@ -1040,7 +1040,7 @@ private:
             totalWastedIter_ += numSteps_;
 
             // TODO: what should NewtonFail receive as arg?
-            auto uCurrentIter = Backend::getDofVector(vars);
+            auto uCurrentIter = Backend::dofs(vars);
             newtonFail(uCurrentIter);
             return false;
         }

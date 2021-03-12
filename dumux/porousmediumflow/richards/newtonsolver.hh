@@ -69,7 +69,7 @@ private:
                         const SolutionVector &uLastIter,
                         const SolutionVector &deltaU) final
     {
-        auto uCurrentIter = Backend::getDofVector(varsCurrentIter);
+        auto uCurrentIter = Backend::dofs(varsCurrentIter);
         uCurrentIter = uLastIter;
         uCurrentIter -= deltaU;
 

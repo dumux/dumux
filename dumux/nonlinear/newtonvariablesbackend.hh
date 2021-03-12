@@ -64,7 +64,7 @@ public:
     static std::size_t size(const DofVector& d)
     { return 1; }
 
-    static DofVector makeZeroDofVector(std::size_t size)
+    static DofVector zeros(std::size_t size)
     { return 0.0; }
 };
 
@@ -82,7 +82,7 @@ public:
     static std::size_t size(const DofVector& d)
     { return d.size(); }
 
-    static DofVector makeZeroDofVector(std::size_t size)
+    static DofVector zeros(std::size_t size)
     { DofVector d; d.resize(size); return d; }
 };
 
@@ -111,7 +111,7 @@ public:
         return result;
     }
 
-    static DofVector makeZeroDofVector(const VectorSizeInfo& size)
+    static DofVector zeros(const VectorSizeInfo& size)
     {
         DofVector result;
         using namespace Dune::Hybrid;
@@ -122,7 +122,7 @@ public:
     }
 };
 
-namespace Impl {
+namespace Detail {
 
 template<class Vars>
 using SolutionVectorType = typename Vars::SolutionVector;
@@ -151,11 +151,11 @@ public:
     { v = dofs; }
 
     //! return const reference to dof vector
-    static const DofVector& getDofVector(const Variables& v)
+    static const DofVector& dofs(const Variables& v)
     { return v; }
 
     //! return reference to dof vector
-    static DofVector& getDofVector(Variables& v)
+    static DofVector& dofs(Variables& v)
     { return v; }
 };
 
@@ -178,14 +178,14 @@ public:
     { v.update(dofs); }
 
     //! return const reference to dof vector
-    static const DofVector& getDofVector(const Variables& v)
+    static const DofVector& dofs(const Variables& v)
     { return v.dofs(); }
 
     //! return reference to dof vector
-    static DofVector& getDofVector(Variables& v)
+    static DofVector& dofs(Variables& v)
     { return v.dofs(); }
 };
-} // end namespace Impl
+} // end namespace Detail
 
 /*!
  * \ingroup Nonlinear
@@ -195,7 +195,7 @@ public:
  *        the time level.
  */
 template<class Vars>
-using NewtonVariablesBackend = Impl::NewtonVariablesBackend<Vars, Dune::Std::is_detected_v<Impl::SolutionVectorType, Vars>>;
+using NewtonVariablesBackend = Detail::NewtonVariablesBackend<Vars, Dune::Std::is_detected_v<Detail::SolutionVectorType, Vars>>;
 
 } // end namespace Dumux
 

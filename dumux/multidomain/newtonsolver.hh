@@ -53,7 +53,7 @@ class MultiDomainNewtonSolver: public NewtonSolver<Assembler, LinearSolver, Reas
     using typename ParentType::Backend;
     using typename ParentType::SolutionVector;
 
-    static constexpr bool assemblerExportsVariables = Impl::exportsVariables<Assembler>;
+    static constexpr bool assemblerExportsVariables = Detail::exportsVariables<Assembler>;
 
     template<std::size_t i>
     using PrimaryVariableSwitch = typename Detail::GetPVSwitchMultiDomain<Assembler, i>::type;
@@ -96,7 +96,7 @@ public:
     void newtonBeginStep(const Variables& varsCurrentIter) override
     {
         ParentType::newtonBeginStep(varsCurrentIter);
-        couplingManager_->updateSolution(Backend::getDofVector(varsCurrentIter));
+        couplingManager_->updateSolution(Backend::dofs(varsCurrentIter));
     }
 
     /*!
@@ -141,7 +141,7 @@ public:
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<Assembler::Traits::numSubDomains>{}, [&](auto&& id)
         {
-            auto& uCurrentIter = Backend::getDofVector(varsCurrentIter)[id];
+            auto& uCurrentIter = Backend::dofs(varsCurrentIter)[id];
             if constexpr (!assemblerExportsVariables)
                 this->invokePriVarSwitch_(this->assembler().gridVariables(id),
                                           uCurrentIter, id, HasPriVarsSwitch<std::decay_t<decltype(id)>::value>{});
@@ -150,7 +150,7 @@ public:
         });
 
         ParentType::newtonEndStep(varsCurrentIter, uLastIter);
-        couplingManager_->updateSolution(Backend::getDofVector(varsCurrentIter));
+        couplingManager_->updateSolution(Backend::dofs(varsCurrentIter));
     }
 
 private:
@@ -169,7 +169,7 @@ private:
     {
         using namespace Dune::Hybrid;
         auto& priVarSwitch = *elementAt(priVarSwitches_, id);
-        auto& sol = Backend::getDofVector(vars)[id];
+        auto& sol = Backend::dofs(vars)[id];
 
         priVarSwitch.reset(sol.size());
         priVarsSwitchedInLastIteration_[i] = false;

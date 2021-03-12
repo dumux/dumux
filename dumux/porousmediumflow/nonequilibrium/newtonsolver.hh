@@ -53,7 +53,7 @@ public:
                        const SolutionVector &uLastIter) final
     {
         ParentType::newtonEndStep(varsCurrentIter, uLastIter);
-        const auto& uCurrentIter = Backend::getDofVector(varsCurrentIter);
+        const auto& uCurrentIter = Backend::dofs(varsCurrentIter);
 
         // Averages the face velocities of a vertex. Implemented in the model.
         // The velocities are stored in the model.
