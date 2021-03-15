@@ -32,9 +32,7 @@
 #include <dune/common/fvector.hh>
 
 #include <dumux/common/typetraits/problem.hh>
-#include <dumux/discretization/solutionstate.hh>
-#include <dumux/discretization/fvgridvariables.hh>
-#include <dumux/discretization/elementsolution.hh>
+#include <dumux/discretization/concepts.hh>
 
 namespace Dumux::Experimental {
 namespace CompatibilityHelpers {

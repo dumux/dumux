@@ -24,6 +24,11 @@
 #ifndef DUMUX_DISCRETIZATION_ELEMENT_SOLUTION_HH
 #define DUMUX_DISCRETIZATION_ELEMENT_SOLUTION_HH
 
+#include <type_traits>
+
+#include <dune/common/concept.hh>
+#include <dumux/discretization/concepts.hh>
+
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 #include <dumux/discretization/box/elementsolution.hh>
 #include <dumux/discretization/staggered/elementsolution.hh>
@@ -32,6 +37,64 @@ namespace Dumux {
 
 struct EmptyElementSolution {};
 
+namespace Experimental {
+
+/*!
+ * \ingroup Discretization
+ * \brief State class to represent the element-local state of the primary
+ *        variables of a numerical model, consisting of the spatial degrees
+ *        of freedom and potentially a corresponding time level.
+ * \note Here, we extend the concept of elementSolution to additionally carry
+ *       time information. Therefore, for now we inherit from the given element
+ *       solution, extending its interface
+ */
+template<class BaseElemSol, class TL>
+class ElementSolution : public BaseElemSol
+{
+public:
+    using TimeLevel = TL;
+
+    //! Constructor
+    template<class TheTimeLevel,
+             std::enable_if_t<std::is_same_v<std::decay_t<TheTimeLevel>, TL>, int> = 0>
+    ElementSolution(BaseElemSol&& base,
+                    TheTimeLevel&& timeLevel)
+    : BaseElemSol(std::forward<BaseElemSol>(base))
+    , timeLevel_(timeLevel)
+    {
+        static_assert(std::is_lvalue_reference_v<TheTimeLevel>,
+                      "Time level must be an lvalue reference");
+    }
+
+    //! return the time level
+    const TimeLevel& timeLevel() const
+    { return timeLevel_; }
+
+private:
+    const TimeLevel& timeLevel_;
+};
+
+// hide deduction guides from doxygen
+#ifndef DOXYGEN
+template<class B, class TL> ElementSolution(const B& b, const TL& t) -> ElementSolution<B, TL>;
+template<class B, class TL> ElementSolution(B&& b, const TL& t) -> ElementSolution<B, TL>;
+#endif // DOXYGEN
+
+/*!
+ * \ingroup Discretization
+ * \brief Make an element solution from a global solution state.
+ */
+template<class Element, class SolState, class GridGeometry,
+         std::enable_if_t<Dune::models<Concept::SolutionState, SolState>(), int> = 0>
+auto elementSolution(const Element& element,
+                     const SolState& solState,
+                     const GridGeometry& gridGeometry)
+{
+    auto elemSol = elementSolution(element, solState.dofs(), gridGeometry);
+    return ElementSolution{std::move(elemSol), solState.timeLevel()};
+}
+
+} // end namespace Experimental
 } // end namespace Dumux
 
 #endif

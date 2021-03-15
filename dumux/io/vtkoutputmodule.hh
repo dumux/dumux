@@ -46,7 +46,7 @@
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvgridvariables.hh>
-#include <dumux/discretization/solutionstate.hh>
+#include <dumux/discretization/solutionstateview.hh>
 
 #include "vtkfunction.hh"
 #include "velocityoutput.hh"
@@ -469,7 +469,7 @@ private:
                     fvGeometry.bind(element);
                     if constexpr (Experimental::areExperimentalGridVars<GridVariables>)
                     {
-                        const auto solState = solutionStateView(gridVariables_);
+                        const Experimental::SolutionStateView solState(gridVariables_);
                         elemVolVars.bind(element, fvGeometry, solState);
                     }
                     else
@@ -480,7 +480,7 @@ private:
                     fvGeometry.bindElement(element);
                     if constexpr (Experimental::areExperimentalGridVars<GridVariables>)
                     {
-                        const auto solState = solutionStateView(gridVariables_);
+                        const Experimental::SolutionStateView solState(gridVariables_);
                         elemVolVars.bindElement(element, fvGeometry, solState);
                     }
                     else
@@ -674,7 +674,7 @@ private:
                     fvGeometry.bind(element);
                     if constexpr (Experimental::areExperimentalGridVars<GridVariables>)
                     {
-                        const auto solState = solutionStateView(gridVariables_);
+                        const Experimental::SolutionStateView solState(gridVariables_);
                         elemVolVars.bind(element, fvGeometry, solState);
                     }
                     else
@@ -685,7 +685,7 @@ private:
                     fvGeometry.bindElement(element);
                     if constexpr (Experimental::areExperimentalGridVars<GridVariables>)
                     {
-                        const auto solState = solutionStateView(gridVariables_);
+                        const Experimental::SolutionStateView solState(gridVariables_);
                         elemVolVars.bindElement(element, fvGeometry, solState);
                     }
                     else

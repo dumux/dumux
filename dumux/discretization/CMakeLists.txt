@@ -11,6 +11,7 @@ box.hh
 ccmpfa.hh
 cctpfa.hh
 checkoverlapsize.hh
+concepts.hh
 elementsolution.hh
 evalgradients.hh
 evalsolution.hh
@@ -28,7 +29,7 @@ rotationsymmetricgridgeometrytraits.hh
 rotationsymmetricscv.hh
 rotationsymmetricscvf.hh
 scvandscvfiterators.hh
-solutionstate.hh
+solutionstateview.hh
 staggered.hh
 subcontrolvolumebase.hh
 subcontrolvolumefacebase.hh

@@ -37,7 +37,8 @@
 #include <dumux/common/typetraits/problem.hh>
 
 #include <dumux/discretization/method.hh>
-#include <dumux/discretization/solutionstate.hh>
+#include <dumux/discretization/elementsolution.hh>
+#include <dumux/discretization/solutionstateview.hh>
 #include <dumux/timestepping/multistagetimestepper.hh>
 
 
@@ -380,7 +381,7 @@ protected:
         const auto& problem = curElemVolVars.gridVolVars().problem();
 
         const auto origResiduals = evalLocalResidual();
-        const auto solStateView = solutionStateView(curVariables.gridVariables());
+        const Experimental::SolutionStateView solStateView(curVariables.gridVariables());
         const auto origElemSol = elementSolution(element, solStateView, fvGeometry_.gridGeometry());
         auto elemSol = origElemSol;
 

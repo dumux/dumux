@@ -36,8 +36,11 @@
 
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/reservedblockvector.hh>
+
 #include <dumux/discretization/method.hh>
-#include <dumux/discretization/solutionstate.hh>
+#include <dumux/discretization/elementsolution.hh>
+#include <dumux/discretization/solutionstateview.hh>
+
 #include <dumux/timestepping/multistagetimestepper.hh>
 
 
@@ -320,7 +323,7 @@ protected:
         const auto origVolVars = curVolVars;
 
         // element solution to be deflected
-        const auto solStateView = solutionStateView(curVariables.gridVariables());
+        const Experimental::SolutionStateView solStateView(curVariables.gridVariables());
         const auto origElemSol = elementSolution(element, solStateView, fvGeometry_.gridGeometry());
         auto elemSol = origElemSol;
 

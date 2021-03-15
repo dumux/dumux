@@ -179,7 +179,7 @@ private:
 
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/gridvariables.hh>
-#include <dumux/discretization/solutionstate.hh>
+#include <dumux/discretization/solutionstateview.hh>
 
 namespace Dumux::Experimental {
 
@@ -234,7 +234,7 @@ public:
               const FVElementGeometry& fvGeometry,
               FVGridVariablesBindPolicy policy = FVGridVariablesBindPolicy::all)
     {
-        const auto solState = solutionStateView(gridVariables());
+        const Experimental::SolutionStateView solState(gridVariables());
 
         if (policy == FVGridVariablesBindPolicy::all)
         {
