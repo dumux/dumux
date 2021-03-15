@@ -34,19 +34,22 @@ namespace Dumux::Experimental {
  *        involved in the system of equations of non-isothermal models
  *        that assume thermal equilibrium between all phases.
  * \tparam ModelTraits Model-specific traits.
- * \tparam LocalContext Element-local context (geometry & primary/secondary variables)
+ * \tparam LC Element-local context (geometry & primary/secondary variables)
  */
-template<class ModelTraits, class LocalContext>
+template<class ModelTraits, class LC>
 class FVNonIsothermalOperators
 {
     // The variables required for the evaluation of the equation
-    using ElementVariables = typename LocalContext::ElementVariables;
+    using ElementVariables = typename LC::ElementVariables;
 
     // The grid geometry on which the scheme operates
-    using GridGeometry = typename LocalContext::ElementGridGeometry::GridGeometry;
+    using GridGeometry = typename LC::ElementGridGeometry::GridGeometry;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
 
 public:
+
+    //! export the type of context on which this class operates
+    using LocalContext = LC;
 
     /*!
      * \brief The energy storage in the fluid phase with index phaseIdx

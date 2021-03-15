@@ -27,18 +27,30 @@
 
 #include <dumux/common/numeqvector.hh>
 #include <dumux/discretization/extrusion.hh>
+#include <dumux/discretization/localcontext.hh>
 
 namespace Dumux::Experimental {
 
 /*!
  * \ingroup Assembly
+ * \brief Convenience alias to define the context finite-volume operators work on.
+ * \tparam EV The element-(stencil)-local variables
+ */
+template<class EV>
+using FVOperatorsContext = DefaultLocalContext<EV>;
+
+/*!
+ * \ingroup Assembly
  * \brief The base class for the sub-control entity-local evaluation of
  *        the terms of equations in the context of finite-volume schemes
- * \tparam LC the element-stencil-local data required to evaluate the terms
+ * \tparam EV The element-(stencil)-local variables
  */
-template<class LC>
+template<class EV>
 class FVOperators
 {
+    // context type on which to operate
+    using LC = FVOperatorsContext<EV>;
+
     // The grid geometry on which the scheme operates
     using FVElementGeometry = typename LC::ElementGridGeometry;
     using GridGeometry = typename FVElementGeometry::GridGeometry;

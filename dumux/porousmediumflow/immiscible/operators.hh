@@ -38,7 +38,7 @@ namespace Dumux::Experimental {
  * \tparam ModelTraits defines model-related types and variables (e.g. number of phases)
  * \tparam FluxVariables the type that is responsible for computing the individual
  *                       flux contributions, i.e., advective, diffusive, convective...
- * \tparam LocalContext the element-stencil-local data required to evaluate the terms
+ * \tparam ElemVars The element-(stencil)-local variables
  * \tparam EnergyOperators optional template argument, specifying the class that
  *                         handles the operators related to non-isothermal effects.
  *                         The default energy operators are compatible with isothermal
@@ -46,15 +46,16 @@ namespace Dumux::Experimental {
  */
 template<class ModelTraits,
          class FluxVariables,
-         class LocalContext,
-         class EnergyOperators = FVNonIsothermalOperators<ModelTraits, LocalContext>>
+         class ElemVars,
+         class EnergyOperators = FVNonIsothermalOperators<ModelTraits, FVOperatorsContext<ElemVars>>>
 class FVImmiscibleOperators
-: public FVOperators<LocalContext>
+: public FVOperators<ElemVars>
 {
-    using ParentType = FVOperators<LocalContext>;
+    using ParentType = FVOperators<ElemVars>;
+    using LC = typename ParentType::LocalContext;
 
     // The variables required for the evaluation of the equation
-    using ElementVariables = typename LocalContext::ElementVariables;
+    using ElementVariables = typename LC::ElementVariables;
     using GridVariables = typename ElementVariables::GridVariables;
     using VolumeVariables = typename GridVariables::VolumeVariables;
     using ElementVolumeVariables = typename ElementVariables::ElementVolumeVariables;
@@ -78,6 +79,9 @@ class FVImmiscibleOperators
     static constexpr bool enableEnergyBalance = ModelTraits::enableEnergyBalance();;
 
 public:
+    //! export the type of context on which this class operates
+    using LocalContext = LC;
+
     //! export the type used to store scalar values for all equations
     using typename ParentType::NumEqVector;
 
