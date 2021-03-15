@@ -128,8 +128,8 @@ int main(int argc, char** argv)
     // the assembler (we use the immiscible operators to define the system of equations)
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
-    using LocalContext = Experimental::LocalContext<typename GridVariables::LocalView>;
-    using Operators = Experimental::FVImmiscibleOperators<ModelTraits, FluxVariables, LocalContext>;
+    using ElementVariables = typename GridVariables::LocalView;
+    using Operators = Experimental::FVImmiscibleOperators<ModelTraits, FluxVariables, ElementVariables>;
 
     using LocalOperator = Experimental::FVLocalOperator<Operators>;
     using LocalAssembler = Experimental::LocalAssembler<LocalOperator>;
