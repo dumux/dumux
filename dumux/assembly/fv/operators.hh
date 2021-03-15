@@ -140,8 +140,7 @@ public:
         source += problem.source(context, scv);
 
         // add contribution from possible point sources
-        // TODO: Point sources
-        // source += problem.scvPointSources(element, fvGeometry, elemVolVars, scv);
+        source += problem.scvPointSources(context, scv);
 
         // multiply with scv volume
         const auto& elemVolVars = context.elementVariables().elemVolVars();

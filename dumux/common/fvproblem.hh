@@ -726,7 +726,28 @@ public:
                        const SubControlVolume& scv) const
     { return this->asImp_().sourceAtPos(scv.center()); }
 
-    //! TODO: Point sources!
+    /*!
+     * \brief Adds contribution of point sources for a specific sub control volume
+     *        to the values.
+     *
+     * \param context The element-local context
+     * \param scv The sub control volume
+     * \note The element-local context consists of an element and local
+     *       geometric information, together with the primary/secondary
+     *       variables in that local scope. Potentially, users can define
+     *       the context to carry an additional object containing further
+     *       locally required data.
+     *
+     */
+    template<class LocalContext>
+    NumEqVector scvPointSources(const LocalContext& context,
+                                const SubControlVolume& scv) const
+    {
+        const auto& elemVolVars = context.elementVariables().elemVolVars();
+        const auto& fvGeometry = context.elementGridGeometry();
+        const auto& element = fvGeometry.element();
+        return ParentType::scvPointSources(element, fvGeometry, elemVolVars, scv);
+    }
 };
 
 } // end namespace Experimental
