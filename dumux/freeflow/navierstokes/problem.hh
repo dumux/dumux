@@ -152,7 +152,7 @@ public:
                        const SubControlVolume &scv) const
     {
         // forward to solution independent, fully-implicit specific interface
-        return asImp_().sourceAtPos(scv.center());
+        return asImp_().sourceAtPos(scv.dofPosition());
     }
 
     /*!
