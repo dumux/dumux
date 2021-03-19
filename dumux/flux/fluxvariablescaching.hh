@@ -47,6 +47,9 @@ struct EmptyCache
 {
     //! export type used for scalar values
     using Scalar = S;
+
+    template<typename... Args>
+    void update(Args&&... args) {}
 };
 
 #ifndef DOXYGEN // hide the empty caches from doxygen
