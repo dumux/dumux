@@ -48,7 +48,6 @@ struct EmptyCache
     //! export type used for scalar values
     using Scalar = S;
 
-    //! interface used by box-type caches
     template<typename... Args>
     void update(Args&&... args) {}
 };
