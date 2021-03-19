@@ -215,6 +215,10 @@ public:
 
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
 
+        const auto dirIdx = scv.directionIndex();
+        auto directionVector = scvf.unitOuterNormal(); directionVector = 0.0;
+        directionVector[dirIdx] = 1.0;
+
         if (scv.boundary())
         {
             // This is the most simple case for a frontal scvf lying directly on the boundary.
@@ -238,7 +242,7 @@ public:
                 if (bcTypes.hasNeumann() && bcTypes.isNeumann(scvf.directionIndex()))
                 {
                     const auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
-                    return neumannFluxes[scvf.directionIndex()] * Extrusion::area(scvf) * elemVolVars[scv].extrusionFactor();
+                    return (neumannFluxes * directionVector) * Extrusion::area(scvf) * elemVolVars[scv].extrusionFactor();
                 }
             }
             else if (scvf.isLateral())
@@ -271,7 +275,7 @@ public:
                 if (bcTypes.hasNeumann() && bcTypes.isNeumann(scvf.directionIndex()))
                 {
                     const auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
-                    return neumannFluxes[scvf.directionIndex()] * Extrusion::area(scvf) * elemVolVars[scv].extrusionFactor();
+                    return (neumannFluxes * directionVector) * Extrusion::area(scvf) * elemVolVars[scv].extrusionFactor();
                 }
             }
         }
@@ -301,7 +305,7 @@ public:
             if (bcTypes.hasNeumann() && bcTypes.isNeumann(scv.directionIndex()))
             {
                 const auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
-                return neumannFluxes[scv.directionIndex()] * Extrusion::area(scvf) * elemVolVars[scv].extrusionFactor();
+                return (neumannFluxes * directionVector) * Extrusion::area(scvf) * elemVolVars[scv].extrusionFactor();
             }
         }
 
