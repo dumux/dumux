@@ -419,6 +419,15 @@ public:
                 partialDerivs[0][pvIdx] = 1.0;
             }
 
+            // restore the original state of the scv's volume variables
+            curVolVars = origVolVars;
+
+            // restore the current element solution
+            elemSol[0][pvIdx] = origPriVars[pvIdx];
+
+            // restore the undeflected state of the coupling context
+            this->couplingManager().updateCouplingContext(domainI, *this, domainI, globalI, elemSol[0], pvIdx);
+
             // add the current partial derivatives to the global jacobian matrix
             if constexpr (Problem::enableInternalDirichletConstraints())
             {
@@ -469,15 +478,6 @@ public:
                         A[dataJ.globalJ][globalI][eqIdx][pvIdx] += partialDerivs[j++][eqIdx];
                 }
             }
-
-            // restore the original state of the scv's volume variables
-            curVolVars = origVolVars;
-
-            // restore the current element solution
-            elemSol[0][pvIdx] = origPriVars[pvIdx];
-
-            // restore the undeflected state of the coupling context
-            this->couplingManager().updateCouplingContext(domainI, *this, domainI, globalI, elemSol[0], pvIdx);
         }
 
         // restore original state of the flux vars cache in case of global caching.
@@ -720,6 +720,12 @@ public:
             // results in a delta of zero for ghosts
             else partialDeriv[pvIdx] = 1.0;
 
+            // restore the original state of the scv's volume variables
+            curVolVars = origVolVars;
+
+            // restore the current element solution
+            elemSol[0][pvIdx] = origPriVars[pvIdx];
+
             // add the current partial derivatives to the global jacobian matrix
             // only diagonal entries for explicit jacobians
             if constexpr (Problem::enableInternalDirichletConstraints())
@@ -744,12 +750,6 @@ public:
                 for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
                     A[globalI][globalI][eqIdx][pvIdx] += partialDeriv[eqIdx];
             }
-
-            // restore the original state of the scv's volume variables
-            curVolVars = origVolVars;
-
-            // restore the current element solution
-            elemSol[0][pvIdx] = origPriVars[pvIdx];
         }
 
         // return the original residual
