@@ -155,7 +155,7 @@ public:
     {
         SmallLocalIndexType ownIdx = 0;
         SmallLocalIndexType otherIdx = 0;
-        for (const auto ownIs : intersections(this->gridView(), ownElement))
+        for (const auto& ownIs : intersections(this->gridView(), ownElement))
         {
             // helper lambda to make sure the inner loop stops once the other index is found
             auto getOtherIdx = [&] (const auto& ownOuterNormal)
