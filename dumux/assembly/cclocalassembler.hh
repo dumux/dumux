@@ -272,6 +272,12 @@ public:
                 partialDerivs[0][pvIdx] = 1.0;
             }
 
+            // restore the original state of the scv's volume variables
+            curVolVars = origVolVars;
+
+            // restore the current element solution
+            elemSol[0][pvIdx] = origPriVars[pvIdx];
+
             // add the current partial derivatives to the global jacobian matrix
             // no special treatment is needed if globalJ is a ghost because then derivatives have been assembled to 0 above
             if constexpr (Problem::enableInternalDirichletConstraints())
@@ -323,12 +329,6 @@ public:
                         A[dataJ.globalJ][globalI][eqIdx][pvIdx] += partialDerivs[j++][eqIdx];
                 }
             }
-
-            // restore the original state of the scv's volume variables
-            curVolVars = origVolVars;
-
-            // restore the current element solution
-            elemSol[0][pvIdx] = origPriVars[pvIdx];
         }
 
         // restore original state of the flux vars cache in case of global caching.
@@ -442,6 +442,12 @@ public:
             // results in a delta of zero for ghosts
             else partialDeriv[pvIdx] = 1.0;
 
+            // restore the original state of the scv's volume variables
+            curVolVars = origVolVars;
+
+            // restore the current element solution
+            elemSol[0][pvIdx] = origPriVars[pvIdx];
+
             // add the current partial derivatives to the global jacobian matrix
             // only diagonal entries for explicit jacobians
             if constexpr (Problem::enableInternalDirichletConstraints())
@@ -466,12 +472,6 @@ public:
                 for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
                     A[globalI][globalI][eqIdx][pvIdx] += partialDeriv[eqIdx];
             }
-
-            // restore the original state of the scv's volume variables
-            curVolVars = origVolVars;
-
-            // restore the current element solution
-            elemSol[0][pvIdx] = origPriVars[pvIdx];
         }
 
         // return the original residual
