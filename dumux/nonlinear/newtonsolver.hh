@@ -779,14 +779,6 @@ public:
 
 protected:
 
-    /*!
-     * \brief Update solution-depended quantities like grid variables after the solution has changed.
-     */
-    virtual void solutionChanged_(const SolutionVector &uCurrentIter)
-    {
-        this->assembler().updateGridVariables(uCurrentIter);
-    }
-
     void computeResidualReduction_(const SolutionVector &uCurrentIter)
     {
         if constexpr (Detail::hasNorm<LinearSolver, SolutionVector>())
@@ -1028,6 +1020,14 @@ private:
     -> typename std::enable_if_t<!decltype(isValid(Detail::supportsPartialReassembly())(assembler))::value, void>
     {
         this->assembler().assembleJacobianAndResidual(uCurrentIter);
+    }
+
+    /*!
+     * \brief Update solution-depended quantities like grid variables after the solution has changed.
+     */
+    virtual void solutionChanged_(const SolutionVector &uCurrentIter)
+    {
+        this->assembler().updateGridVariables(uCurrentIter);
     }
 
     /*!
