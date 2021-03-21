@@ -42,7 +42,6 @@
 #include <dune/grid/common/partitionset.hh>
 
 #include <dumux/common/parameters.hh>
-#include <dumux/common/typetraits/typetraits.hh>
 #include <dumux/io/format.hh>
 #include <dumux/discretization/method.hh>
 
@@ -269,7 +268,7 @@ private:
     template<class Vector>
     std::size_t getNumberOfComponents_(const Vector& v)
     {
-        if constexpr (IsIndexable<decltype(std::declval<Vector>()[0])>::value)
+        if constexpr (Dune::IsIndexable<decltype(std::declval<Vector>()[0])>::value)
             return v[0].size();
         else
             return 1;

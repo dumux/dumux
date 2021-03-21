@@ -25,7 +25,6 @@
 #ifndef DUMUX_COMMON_DEPRECATED_HH
 #define DUMUX_COMMON_DEPRECATED_HH
 
-#include <dune/common/deprecated.hh>
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
 #include <dumux/material/fluidmatrixinteractions/mp/mpadapter.hh>
@@ -37,7 +36,7 @@ namespace Dumux {
 // Each implementation has to state after which release
 // it will be removed. Implementations in the Deprecated
 // namespace will be removed without
-// deprecation after their usage in the code exprired,
+// deprecation after their usage in the code expired,
 // so most likely you don't want to use this in your code
 namespace Deprecated {
 

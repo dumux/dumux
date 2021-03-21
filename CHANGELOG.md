@@ -38,6 +38,10 @@ functions `bind` or `bindElement` have been called (i.e. the local geometry is i
 interfaces are currently not used (except in the unit tests) but will be required
 by the assembler in future Dumux versions.
 
+### Deprecated properties/classes/functions/files, to be removed after 3.4:
+
+- __Type traits__: `Dumux::IsIndexable<T, I>` is deprecated, use `Dune::IsIndexable<T, I>`directly.
+
 Differences Between DuMu<sup>x</sup> 3.3 and DuMu<sup>x</sup> 3.2
 =============================================
 
