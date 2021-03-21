@@ -149,6 +149,15 @@ public:
 private:
 
     /*!
+     * \brief Update solution-depended quantities like grid variables after the solution has changed.
+     */
+    void solutionChanged_(const SolutionVector &uCurrentIter) override
+    {
+        couplingManager_->updateSolution(uCurrentIter);
+        this->assembler().updateGridVariables(uCurrentIter);
+    }
+
+    /*!
      * \brief Reset the privar switch state, noop if there is no priVarSwitch
      */
     template<std::size_t i>
