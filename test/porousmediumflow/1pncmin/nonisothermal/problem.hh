@@ -265,7 +265,6 @@ public:
         const auto& volVars = elemVolVars[scv];
 
         Scalar qMass = rrate_.thermoChemReaction(volVars);
-        const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
         Scalar qMole = qMass/FluidSystem::molarMass(H2OIdx)*(1-volVars.porosity());
 
         // make sure not more solid reacts than present
