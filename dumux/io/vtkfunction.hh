@@ -27,12 +27,13 @@
 #include <string>
 #include <memory>
 
+#include <dune/common/typetraits.hh>
+
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk/common.hh>
 #include <dune/grid/io/file/vtk/function.hh>
 
 #include <dumux/io/vtkprecision.hh>
-#include <dumux/common/typetraits/typetraits.hh>
 
 namespace Dumux::Vtk {
 
@@ -41,9 +42,9 @@ namespace Detail {
 template<class Field>
 double accessEntry(const Field& f, [[maybe_unused]] int mycomp, [[maybe_unused]] int i)
 {
-    if constexpr (IsIndexable<std::decay_t<decltype(std::declval<Field>()[0])>>{})
+    if constexpr (Dune::IsIndexable<std::decay_t<decltype(std::declval<Field>()[0])>>{})
     {
-        if constexpr (IsIndexable<std::decay_t<decltype(std::declval<Field>()[0][0])>>{})
+        if constexpr (Dune::IsIndexable<std::decay_t<decltype(std::declval<Field>()[0][0])>>{})
             DUNE_THROW(Dune::InvalidStateException, "Invalid field type");
         else
             return f[i][mycomp];
@@ -233,9 +234,9 @@ private:
     //! access to the field
     double accessEntry_([[maybe_unused]] int mycomp, [[maybe_unused]] int eIdx, [[maybe_unused]] int cornerIdx) const
     {
-        if constexpr (IsIndexable<decltype(std::declval<F>()[0])>{})
+        if constexpr (Dune::IsIndexable<decltype(std::declval<F>()[0])>{})
         {
-            if constexpr (IsIndexable<decltype(std::declval<F>()[0][0])>{})
+            if constexpr (Dune::IsIndexable<decltype(std::declval<F>()[0][0])>{})
                 return field_[eIdx][cornerIdx][mycomp];
             else
                 return field_[eIdx][cornerIdx];

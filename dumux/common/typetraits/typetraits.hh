@@ -38,9 +38,12 @@ namespace Dumux {
     /*! \brief We define our own is_indexable type in order
      *         to avoid several version checks throughout dumux.
      *         This should be deleted when the deprecation phase is over.
+     *
+     * \deprecated Use <code>Dune::IsIndexable<T, I></code> instead. Will
+     *             be removed after DuMux 3.4.
      */
     template<typename T, typename I = std::size_t>
-    using IsIndexable = typename Dune::IsIndexable<T, I>;
+    using IsIndexable [[deprecated("Use Dune::IsIndexable<T, I> instead")]] = typename Dune::IsIndexable<T, I>;
 
 } // end namespace Dumux
 #endif

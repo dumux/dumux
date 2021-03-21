@@ -27,6 +27,7 @@
 #include <cmath>
 #include <type_traits>
 
+#include <dune/common/typetraits.hh>
 #include <dune/geometry/quadraturerules.hh>
 #include <dune/common/concept.hh>
 
@@ -37,7 +38,6 @@
 #include <dumux/common/doubleexpintegrator.hh>
 #include <dumux/discretization/evalsolution.hh>
 #include <dumux/discretization/elementsolution.hh>
-#include <dumux/common/typetraits/typetraits.hh>
 
 namespace Dumux {
 
@@ -59,7 +59,7 @@ static constexpr bool hasLocalFunction()
 { return Dune::models<HasLocalFunction, F>(); }
 
 template<class Error,
-         typename std::enable_if_t<IsIndexable<Error>::value, int> = 0>
+         typename std::enable_if_t<Dune::IsIndexable<Error>::value, int> = 0>
 Error sqrtNorm(const Error& error)
 {
     using std::sqrt;
@@ -70,7 +70,7 @@ Error sqrtNorm(const Error& error)
 }
 
 template<class Error,
-         typename std::enable_if_t<!IsIndexable<Error>::value, int> = 0>
+         typename std::enable_if_t<!Dune::IsIndexable<Error>::value, int> = 0>
 Error sqrtNorm(const Error& error)
 {
     using std::sqrt;
