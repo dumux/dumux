@@ -30,3 +30,14 @@ dumux_add_test(NAME test_1p_compressible_instationary_box
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_compressible_instationary_box-00010.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_compressible_instationary_box params.input -Problem.Name test_1p_compressible_instationary_box")
+
+dumux_add_test(NAME test_1p_compressible_instationary_tpfa_experimental
+               LABELS porousmediumflow 1p
+               SOURCES main_experimental.cc
+               COMPILE_DEFINITIONS TYPETAG=OnePCompressibleTpfa
+               COMPILE_DEFINITIONS EXPERIMENTAL=1
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS  --script fuzzy
+                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
+                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_compressible_instationary_tpfa_experimental-00010.vtu
+                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_compressible_instationary_tpfa_experimental params.input -Problem.Name test_1p_compressible_instationary_tpfa_experimental")
