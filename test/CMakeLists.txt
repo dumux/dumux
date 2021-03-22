@@ -11,6 +11,7 @@ add_subdirectory(nonlinear)
 add_subdirectory(porenetwork)
 add_subdirectory(porousmediumflow)
 add_subdirectory(discretization)
+add_subdirectory(timestepping)
 
 # if Python bindings are enabled, include Python binding tests
 if(DUNE_ENABLE_PYTHONBINDINGS)
