@@ -62,11 +62,12 @@ class DofBackend<Scalar, true>
 {
 public:
     using DofVector = Scalar; //!< the type of the dofs parametrizing the variables object
+    using SizeType = std::size_t;
 
-    static std::size_t size(const DofVector& d)
+    static SizeType size(const DofVector& d)
     { return 1; }
 
-    static DofVector zeros(std::size_t size)
+    static DofVector zeros(SizeType size)
     { return 0.0; }
 };
 
@@ -80,11 +81,12 @@ class DofBackend<Dune::BlockVector<BT>, false>
 
 public:
     using DofVector = Dune::BlockVector<BT>; //!< the type of the dofs parametrizing the variables object
+    using SizeType = std::size_t;
 
-    static std::size_t size(const DofVector& d)
+    static SizeType size(const DofVector& d)
     { return d.size(); }
 
-    static DofVector zeros(std::size_t size)
+    static DofVector zeros(SizeType size)
     { DofVector d; d.resize(size); return d; }
 };
 
@@ -102,8 +104,9 @@ class DofBackend<Dune::MultiTypeBlockVector<Blocks...>, false>
 
 public:
     using DofVector = DV; //!< the type of the dofs parametrizing the variables object
+    using SizeType = VectorSizeInfo;
 
-    static VectorSizeInfo size(const DofVector& d)
+    static SizeType size(const DofVector& d)
     {
         VectorSizeInfo result;
         using namespace Dune::Hybrid;
@@ -113,7 +116,7 @@ public:
         return result;
     }
 
-    static DofVector zeros(const VectorSizeInfo& size)
+    static DofVector zeros(const SizeType& size)
     {
         DofVector result;
         using namespace Dune::Hybrid;
