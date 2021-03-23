@@ -32,10 +32,11 @@ namespace Dumux {
 class MockScalarAssembler
 {
 public:
-    using ResidualType = Dune::BlockVector<double>;
-    using Variables = ResidualType;
-    using JacobianMatrix = double;
     using Scalar = double;
+    using ResidualType = Scalar;
+    using JacobianMatrix = Scalar;
+    using SolutionVector = Scalar;
+    using Variables = Scalar;
 
     void setLinearSystem() {}
 
@@ -45,14 +46,13 @@ public:
 
     void assembleResidual(const ResidualType& sol)
     {
-        res_.resize(1);
-        res_[0] = sol[0]*sol[0] - 5.0;
+        res_ = sol*sol - 5.0;
     }
 
     void assembleJacobianAndResidual (const ResidualType& sol)
     {
         assembleResidual(sol);
-        jac_ = 2.0*sol[0];
+        jac_ = 2.0*sol;
     }
 
     JacobianMatrix& jacobian() { return jac_; }
@@ -76,12 +76,10 @@ public:
         return true;
     }
 
-    double norm(const Dune::BlockVector<double>& residual) const
+    double norm(const double& residual) const
     {
-        assert(residual.size() == 1);
-
         using std::abs;
-        return abs(residual[0]);
+        return abs(residual);
     }
 };
 
@@ -109,17 +107,16 @@ int main(int argc, char* argv[])
     auto solver = std::make_shared<Solver>(assembler, linearSolver);
 
     double initialGuess = 0.1;
-    Dune::BlockVector<double> x(1);
-    x = initialGuess;
+    double x = initialGuess;
 
     std::cout << "Solving: x^2 - 5 = 0" << std::endl;
     solver->solve(x);
-    std::cout << "Solution: " << std::setprecision(15) << x[0]
+    std::cout << "Solution: " << std::setprecision(15) << x
               << ", exact: " << std::sqrt(5.0)
-              << ", error: " << std::abs(x[0]-std::sqrt(5.0))/std::sqrt(5.0)*100 << "%" << std::endl;
+              << ", error: " << std::abs(x-std::sqrt(5.0))/std::sqrt(5.0)*100 << "%" << std::endl;
 
-    if (Dune::FloatCmp::ne(x[0], std::sqrt(5.0), 1e-13))
-        DUNE_THROW(Dune::Exception, "Didn't find correct root: " << std::setprecision(15) << x[0] << ", exact: " << std::sqrt(5.0));
+    if (Dune::FloatCmp::ne(x, std::sqrt(5.0), 1e-13))
+        DUNE_THROW(Dune::Exception, "Didn't find correct root: " << std::setprecision(15) << x << ", exact: " << std::sqrt(5.0));
 
     return 0;
 
