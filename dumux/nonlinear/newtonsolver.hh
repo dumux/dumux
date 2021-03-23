@@ -160,9 +160,21 @@ void assign(To& to, const From& from)
         });
     }
 
-    else if constexpr (hasDynamicIndexAccess<From>() && hasDynamicIndexAccess<From>())
+    else if constexpr (hasDynamicIndexAccess<To>() && hasDynamicIndexAccess<From>())
         for (decltype(to.size()) i = 0; i < to.size(); ++i)
             assign(to[i], from[i]);
+
+    else if constexpr (hasDynamicIndexAccess<To>() && Dune::IsNumber<From>::value)
+    {
+        assert(to.size() == 1);
+        assign(to[0], from);
+    }
+
+    else if constexpr (Dune::IsNumber<To>::value && hasDynamicIndexAccess<From>())
+    {
+        assert(from.size() == 1);
+        assign(to, from[0]);
+    }
 
     else
         DUNE_THROW(Dune::Exception, "Values are not assignable to each other!");
@@ -173,6 +185,16 @@ constexpr std::size_t blockSize() { return 1; }
 
 template<class T, std::enable_if_t<!Dune::IsNumber<std::decay_t<T>>::value, int> = 0>
 constexpr std::size_t blockSize() { return std::decay_t<T>::size(); }
+
+template<class S, bool isScalar = false>
+struct BlockTypeHelper
+{ using type = std::decay_t<decltype(std::declval<S>()[0])>; };
+template<class S>
+struct BlockTypeHelper<S, true>
+{ using type = S; };
+
+template<class SolutionVector>
+using BlockType = typename BlockTypeHelper<SolutionVector, Dune::IsNumber<SolutionVector>::value>::type;
 
 } // end namespace Detail
 
@@ -1144,9 +1166,11 @@ private:
         //! to this field vector type in Dune ISTL
         //! Could be avoided for vectors that already have the right type using SFINAE
         //! but it shouldn't impact performance too much
-        constexpr auto blockSize = Detail::blockSize<decltype(b[0])>();
+        using OriginalBlockType = Detail::BlockType<SolutionVector>;
+        constexpr auto blockSize = Detail::blockSize<OriginalBlockType>();
+
         using BlockType = Dune::FieldVector<Scalar, blockSize>;
-        Dune::BlockVector<BlockType> xTmp; xTmp.resize(b.size());
+        Dune::BlockVector<BlockType> xTmp; xTmp.resize(Backend::size(b));
         Dune::BlockVector<BlockType> bTmp(xTmp);
 
         Detail::assign(bTmp, b);
@@ -1271,14 +1295,27 @@ private:
     template<class Sol>
     void updateDistanceFromLastLinearization_(const Sol& u, const Sol& uDelta)
     {
-        for (size_t i = 0; i < u.size(); ++i) {
-            const auto& currentPriVars(u[i]);
-            auto nextPriVars(currentPriVars);
-            nextPriVars -= uDelta[i];
+        if constexpr (Dune::IsNumber<Sol>::value)
+        {
+            auto nextPriVars = u;
+            nextPriVars -= uDelta;
 
             // add the current relative shift for this degree of freedom
-            auto shift = Detail::maxRelativeShift<Scalar>(currentPriVars, nextPriVars);
-            distanceFromLastLinearization_[i] += shift;
+            auto shift = Detail::maxRelativeShift<Scalar>(u, nextPriVars);
+            distanceFromLastLinearization_[0] += shift;
+        }
+        else
+        {
+            for (std::size_t i = 0; i < u.size(); ++i)
+            {
+                const auto& currentPriVars(u[i]);
+                auto nextPriVars(currentPriVars);
+                nextPriVars -= uDelta[i];
+
+                // add the current relative shift for this degree of freedom
+                auto shift = Detail::maxRelativeShift<Scalar>(currentPriVars, nextPriVars);
+                distanceFromLastLinearization_[i] += shift;
+            }
         }
     }
 
@@ -1292,7 +1329,7 @@ private:
     template<class Sol>
     void resizeDistanceFromLastLinearization_(const Sol& u, std::vector<Scalar>& dist)
     {
-        dist.assign(u.size(), 0.0);
+        dist.assign(Backend::size(u), 0.0);
     }
 
     template<class ...Args>
