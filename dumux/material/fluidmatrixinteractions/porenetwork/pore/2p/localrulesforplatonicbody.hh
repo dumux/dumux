@@ -321,11 +321,6 @@ private:
         if (sw < pcLowSw_)
             return pcLowSwPcValue_() + pcDerivativeLowSw_() * (sw - pcLowSw_);
 
-        auto linearCurveForHighSw = [&]()
-        {
-            return pcDerivativeHighSwEnd_()*(sw - 1.0);
-        };
-
         if (sw <= pcHighSw_)
             return {}; // standard
         else if (sw < 1.0) // regularized part below sw = 1.0
@@ -335,7 +330,10 @@ private:
                 return pcHighSwPcValue_() * pow(((1.0-sw)/(1.0-pcHighSw_)), 1.0/3.0);
 
             else if (highSwRegularizationMethod_ == HighSwRegularizationMethod::linear)
-                return linearCurveForHighSw();
+            {
+                const Scalar slope = -pcHighSwPcValue_() / (1.0 - pcHighSw_);
+                return pcHighSwPcValue_() + (sw - pcHighSw_) * slope;
+            }
 
             else if (highSwRegularizationMethod_ == HighSwRegularizationMethod::spline)
                 return pcSpline_().eval(sw);
@@ -344,7 +342,7 @@ private:
                 DUNE_THROW(Dune::NotImplemented, "Regularization not method not implemented");
         }
         else // regularized part above sw = 1.0
-            return linearCurveForHighSw();
+            return pcDerivativeHighSwEnd_()*(sw - 1.0);
     }
 
     /*!
@@ -516,6 +514,9 @@ private:
 
         baseLawParamsPtr_ = &m->basicParams();
 
+        static const auto highSwFixedSlopeInput = getParamFromGroup<Scalar>(paramGroup, "RegularizationHighSwFixedSlope", std::numeric_limits<Scalar>::quiet_NaN());
+        highSwFixedSlope_ = highSwFixedSlopeInput;
+
         // Note: we do not pre-calculate all end-point values (e.g.,  pcLowSwPcValue_ and pcDerivativeLowSw_)
         // as done in, e.g., VanGenuchten. This is because this law will generally be instantiated only as
         // a temporary object since all pore bodies generally have different parameters.
@@ -550,7 +551,11 @@ private:
     // dpc_dsw at Sw = 1.0
     Scalar pcDerivativeHighSwEnd_() const
     {
-        return (0.0 - pcHighSwPcValue_()) / (1.0 - pcHighSw_);
+        using std::isnan;
+        if (!isnan(highSwFixedSlope_))
+            return highSwFixedSlope_;
+        else
+            return (0.0 - pcHighSwPcValue_()) / (1.0 - pcHighSw_);
     }
 
     const Spline<Scalar>& pcSpline_() const
@@ -574,6 +579,7 @@ private:
     const BaseLawParams* baseLawParamsPtr_;
     mutable std::optional<Spline<Scalar>> optionalPcSpline_;
     bool highSwSplineZeroSlope_;
+    Scalar highSwFixedSlope_;
 };
 
 /*!
