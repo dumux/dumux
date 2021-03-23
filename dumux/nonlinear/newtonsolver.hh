@@ -731,7 +731,7 @@ public:
      * \brief Called if the Newton method broke down.
      * This method is called _after_ newtonEnd()
      */
-    virtual void newtonFail(SolutionVector& u) {}
+    virtual void newtonFail(Variables& u) {}
 
     /*!
      * \brief Called if the Newton method ended successfully
@@ -1033,9 +1033,7 @@ private:
             if (!newtonConverged())
             {
                 totalWastedIter_ += numSteps_;
-                // TODO: what should NewtonFail receive as arg?
-                auto uCurrentIter = Backend::dofs(vars);
-                newtonFail(uCurrentIter);
+                newtonFail(vars);
                 return false;
             }
 
@@ -1062,9 +1060,7 @@ private:
 
             totalWastedIter_ += numSteps_;
 
-            // TODO: what should NewtonFail receive as arg?
-            auto uCurrentIter = Backend::dofs(vars);
-            newtonFail(uCurrentIter);
+            newtonFail(vars);
             return false;
         }
     }
