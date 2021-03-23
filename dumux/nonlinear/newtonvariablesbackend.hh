@@ -48,7 +48,7 @@ namespace Dumux {
  * \ingroup Nonlinear
  * \brief Class providing operations with primary variable vectors
  */
-template<class DofVector, class Enable = void>
+template<class DofVector, bool isScalar = Dune::IsNumber<DofVector>::value>
 class NewtonDofBackend;
 
 /*!
@@ -56,7 +56,7 @@ class NewtonDofBackend;
  * \brief Specialization providing Newton operations for scalar/number types
  */
 template<class Scalar>
-class NewtonDofBackend<Scalar, std::enable_if_t<Dune::IsNumber<Scalar>::value, Scalar>>
+class NewtonDofBackend<Scalar, true>
 {
 public:
     using DofVector = Scalar; //!< the type of the dofs parametrizing the variables object
@@ -73,7 +73,7 @@ public:
  * \brief Specialization providing Newton operations for block vectors
  */
 template<class BT>
-class NewtonDofBackend<Dune::BlockVector<BT>>
+class NewtonDofBackend<Dune::BlockVector<BT>, false>
 {
 
 public:
@@ -91,7 +91,7 @@ public:
  * \brief Specialization providing Newton operations for multitype block vectors
  */
 template<class... Blocks>
-class NewtonDofBackend<Dune::MultiTypeBlockVector<Blocks...>>
+class NewtonDofBackend<Dune::MultiTypeBlockVector<Blocks...>, false>
 {
     using DV = Dune::MultiTypeBlockVector<Blocks...>;
     static constexpr auto numBlocks = DV::size();
