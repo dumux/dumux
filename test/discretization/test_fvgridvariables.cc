@@ -83,13 +83,12 @@ template<class TypeTag>
 struct GridVariables<TypeTag, TTag::GridVariablesTest>
 {
 private:
-    using GG = GetPropType<TypeTag, GridGeometry>;
     using GVV = GetPropType<TypeTag, GridVolumeVariables>;
     using GFC = GetPropType<TypeTag, GridFluxVariablesCache>;
     using X = GetPropType<TypeTag, SolutionVector>;
 
 public:
-    using type = Dumux::Experimental::FVGridVariables<GG, GVV, GFC, X>;
+    using type = Dumux::Experimental::FVGridVariables<GVV, GFC, X>;
 };
 
 } // end namespace Dumux::Properties

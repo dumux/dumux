@@ -173,6 +173,7 @@ private:
 // Experimental implementation of new grid variables layout //
 //////////////////////////////////////////////////////////////
 
+#include <dumux/common/typetraits/problem.hh>
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/gridvariables.hh>
 
@@ -255,17 +256,19 @@ private:
  * \ingroup Discretization
  * \brief The grid variable class for finite volume schemes, storing
  *        variables on scv and scvf (volume and flux variables).
- * \tparam GG the type of the grid geometry
  * \tparam GVV the type of the grid volume variables
  * \tparam GFVC the type of the grid flux variables cache
  * \tparam X the type used for solution vectors
- * \todo TODO: GG is an obsolete (or redundant) template argument?
  */
-template<class GG, class GVV, class GFVC, class X>
-class FVGridVariables : public GridVariables<GG, X>
+template<class GVV, class GFVC, class X>
+class FVGridVariables
+: public GridVariables<typename ProblemTraits<typename GVV::Problem>::GridGeometry, X>
 {
+    using Problem = typename GVV::Problem;
+    using GG = typename ProblemTraits<Problem>::GridGeometry;
+
     using ParentType = GridVariables<GG, X>;
-    using ThisType = FVGridVariables<GG, GVV, GFVC, X>;
+    using ThisType = FVGridVariables<GVV, GFVC, X>;
 
 public:
     using typename ParentType::SolutionVector;
@@ -296,7 +299,6 @@ public:
      *       initializer function in the given problem, and thus,
      *       this only compiles if the problem implements it.
      */
-    template<class Problem>
     FVGridVariables(std::shared_ptr<Problem> problem,
                     std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry, [problem] (auto& x) { problem->applyInitialSolution(x); })
@@ -312,7 +314,7 @@ public:
      *                         vector, or an initializer lambda.
      *                         See Dumux::Experimental::Variables.
      */
-    template<class Problem, class SolOrInitializer>
+    template<class SolOrInitializer>
     FVGridVariables(std::shared_ptr<Problem> problem,
                     std::shared_ptr<const GridGeometry> gridGeometry,
                     SolOrInitializer&& solOrInitializer)
