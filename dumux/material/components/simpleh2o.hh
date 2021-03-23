@@ -25,6 +25,7 @@
 #ifndef DUMUX_SIMPLE_H2O_HH
 #define DUMUX_SIMPLE_H2O_HH
 
+#include <dumux/common/parameters.hh>
 #include <dumux/material/idealgas.hh>
 
 #include <cmath>
