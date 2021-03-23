@@ -32,7 +32,7 @@ dumux_add_test(NAME test_1p_compressible_instationary_box
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_compressible_instationary_box params.input -Problem.Name test_1p_compressible_instationary_box")
 
 dumux_add_test(NAME test_1p_compressible_instationary_tpfa_experimental
-               LABELS porousmediumflow 1p
+               LABELS porousmediumflow 1p experimental
                SOURCES main_experimental.cc
                COMPILE_DEFINITIONS TYPETAG=OnePCompressibleTpfa
                COMPILE_DEFINITIONS EXPERIMENTAL=1
