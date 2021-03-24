@@ -1121,6 +1121,7 @@ private:
 
             // try with a smaller update and reset solution
             lambda *= 0.5;
+            uCurrentIter = uLastIter;
         }
     }
 
