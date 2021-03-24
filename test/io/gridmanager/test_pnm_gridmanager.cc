@@ -47,7 +47,7 @@ void testGeneric(const std::string& name)
         const auto gridView = gridManager.grid().leafGridView();
         const auto gridData = gridManager.getGridData();
 
-        PoreNetwork::writeDgf("dgfGrid.dgf",
+        PoreNetwork::writeDgf(name + "-" + std::to_string(dimWorld) + "d.dgf",
                               gridView,
                               *gridData);
 
