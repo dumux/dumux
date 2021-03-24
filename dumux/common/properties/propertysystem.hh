@@ -29,19 +29,20 @@
 #include <tuple>
 #include <type_traits>
 
-namespace Dumux {
-namespace Properties {
+namespace Dumux::Properties {
 
 //! a tag to mark properties as undefined
 struct UndefinedProperty {};
 
+} // end namespace Dumux::Properties
+
 //! implementation details for template meta programming
-namespace Detail {
+namespace Dumux::Properties::Detail {
 
 //! check if a property P is defined
 template<class P>
 constexpr auto isDefinedProperty(int)
--> decltype(std::integral_constant<bool, !std::is_same<typename P::type, UndefinedProperty>::value>{})
+-> decltype(std::integral_constant<bool, !std::is_same_v<typename P::type, UndefinedProperty>>{})
 { return {}; }
 
 //! fall back if a Property is defined
@@ -49,16 +50,15 @@ template<class P>
 constexpr std::true_type isDefinedProperty(...) { return {}; }
 
 //! check if a TypeTag inherits from other TypeTags
-//! the enable_if portion of decltype is only needed for the macro hack to work, if no macros are in use anymore it can be removed,
-//! i.e. then trailing return type is then -> decltype(std::declval<typename T::InheritsFrom>(), std::true_type{})
 template<class T>
 constexpr auto hasParentTypeTag(int)
--> decltype(std::declval<typename T::InheritsFrom>(), std::enable_if_t<!std::is_same<typename T::InheritsFrom, void>::value, int>{}, std::true_type{})
+-> decltype(std::declval<typename T::InheritsFrom>(), std::true_type{})
 { return {}; }
 
 //! fall back if a TypeTag doesn't inherit
 template<class T>
-constexpr std::false_type hasParentTypeTag(...) { return {}; }
+constexpr std::false_type hasParentTypeTag(...)
+{ return {}; }
 
 //! helper alias to concatenate multiple tuples
 template<class ...Tuples>
@@ -132,10 +132,11 @@ struct GetPropImpl
     static_assert(!std::is_same<type, UndefinedProperty>::value, "Property is undefined!");
 };
 
-} // end namespace Detail
-} // end namespace Property
+} // end namespace Dumux::Properties::Detail
 
-//! get the type of a property (equivalent to old macro GET_PROP(...))
+namespace Dumux {
+
+//! get the type of a property
 template<class TypeTag, template<class,class> class Property>
 using GetProp = typename Properties::Detail::GetPropImpl<TypeTag, Property>::type;
 
@@ -144,7 +145,7 @@ using GetProp = typename Properties::Detail::GetPropImpl<TypeTag, Property>::typ
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
-//! get the type alias defined in the property (equivalent to old macro GET_PROP_TYPE(...))
+//! get the type alias defined in the property
 template<class TypeTag, template<class,class> class Property>
 using GetPropType = typename Properties::Detail::GetPropImpl<TypeTag, Property>::type::type;
 
