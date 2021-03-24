@@ -1104,13 +1104,11 @@ private:
                                    const SolutionVector &deltaU)
     {
         Scalar lambda = 1.0;
-        auto uCurrentIter = Backend::dofs(vars);
+        auto uCurrentIter = uLastIter;
 
         while (true)
         {
-            uCurrentIter = deltaU;
-            uCurrentIter *= -lambda;
-            uCurrentIter += uLastIter;
+            Backend::axpy(-lambda, deltaU, uCurrentIter);
             solutionChanged_(vars, uCurrentIter);
 
             computeResidualReduction_(vars);
@@ -1120,8 +1118,8 @@ private:
                 return;
             }
 
-            // try with a smaller update
-            lambda /= 2.0;
+            // try with a smaller update and reset solution
+            lambda *= 0.5;
         }
     }
 
