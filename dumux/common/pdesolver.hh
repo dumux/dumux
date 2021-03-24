@@ -64,16 +64,19 @@ using AssemblerVariables = typename VariablesChooser<Assembler>::Type;
  * and has a method solve that linearizes (if not already linear), assembles, solves and updates
  * given an initial solution producing a new solution.
  *
- * \tparam Assembler A PDE linearized system assembler
- * \tparam LinearSolver A linear system solver
+ * \tparam A Assembler for linearized system of the PDE
+ * \tparam LS Linear system solver
  */
-template<class Assembler, class LinearSolver>
+template<class A, class LS>
 class PDESolver
 {
-    using Scalar = typename Assembler::Scalar;
+    using Scalar = typename A::Scalar;
     using TimeLoop = TimeLoopBase<Scalar>;
 
 public:
+    //! export the assembler and linear solver types
+    using Assembler = A;
+    using LinearSolver = LS;
 
     //! export the type of variables that represent a numerical solution
     using Variables = Detail::AssemblerVariables<Assembler>;
@@ -112,8 +115,6 @@ public:
         solve(vars);
     }
 
-protected:
-
     /*!
      * \brief Access the assembler
      */
@@ -131,6 +132,8 @@ protected:
      */
     const LinearSolver& linearSolver() const
     { return *linearSolver_; }
+
+protected:
 
     /*!
      * \brief Access the linear solver
