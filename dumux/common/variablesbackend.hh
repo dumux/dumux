@@ -64,11 +64,17 @@ public:
     using DofVector = Scalar; //!< the type of the dofs parametrizing the variables object
     using SizeType = std::size_t;
 
+    //! Return the number of entries in the dof vector
     static SizeType size(const DofVector& d)
     { return 1; }
 
+    //! Make a zero-initialized dof vector instance
     static DofVector zeros(SizeType size)
     { return 0.0; }
+
+    //! Perform axpy operation (y += a * x)
+    static void axpy(Scalar a, const DofVector& x, DofVector& y)
+    { y += a*x; }
 };
 
 /*!
@@ -83,11 +89,17 @@ public:
     using DofVector = Dune::BlockVector<BT>; //!< the type of the dofs parametrizing the variables object
     using SizeType = std::size_t;
 
+    //! Return the number of entries in the dof vector
     static SizeType size(const DofVector& d)
     { return d.size(); }
 
+    //! Make a zero-initialized dof vector instance
     static DofVector zeros(SizeType size)
     { DofVector d; d.resize(size); return d; }
+
+    //! Perform axpy operation (y += a * x)
+    static void axpy(typename DofVector::field_type a, const DofVector& x, DofVector& y)
+    { y.axpy(a, x); }
 };
 
 /*!
@@ -106,6 +118,7 @@ public:
     using DofVector = DV; //!< the type of the dofs parametrizing the variables object
     using SizeType = VectorSizeInfo;
 
+    //! Return the number of entries in the sub-dof-vectors
     static SizeType size(const DofVector& d)
     {
         VectorSizeInfo result;
@@ -116,6 +129,7 @@ public:
         return result;
     }
 
+    //! Make a zero-initialized dof vector instance
     static DofVector zeros(const SizeType& size)
     {
         DofVector result;
@@ -125,6 +139,11 @@ public:
         });
         return result;
     }
+
+    //! Perform axpy operation (y += a * x)
+    template<class Scalar, std::enable_if_t< Dune::IsNumber<Scalar>::value, int> = 0>
+    static void axpy(Scalar a, const DofVector& x, DofVector& y)
+    { y.axpy(a, x); }
 };
 
 namespace Detail {
