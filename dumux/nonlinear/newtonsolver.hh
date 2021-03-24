@@ -1104,10 +1104,11 @@ private:
                                    const SolutionVector &deltaU)
     {
         Scalar lambda = 1.0;
+        auto uCurrentIter = Backend::dofs(vars);
 
         while (true)
         {
-            auto uCurrentIter = deltaU;
+            uCurrentIter = deltaU;
             uCurrentIter *= -lambda;
             uCurrentIter += uLastIter;
             solutionChanged_(vars, uCurrentIter);

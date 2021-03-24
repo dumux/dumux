@@ -69,8 +69,7 @@ private:
                         const SolutionVector &uLastIter,
                         const SolutionVector &deltaU) final
     {
-        auto uCurrentIter = Backend::dofs(varsCurrentIter);
-        uCurrentIter = uLastIter;
+        auto uCurrentIter = uLastIter;
         uCurrentIter -= deltaU;
 
         // do not clamp anything after 5 iterations
