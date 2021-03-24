@@ -157,10 +157,10 @@ protected:
     /*!
      * \brief Update solution-depended quantities like grid variables after the solution has changed.
      */
-    void solutionChanged_(const SolutionVector &uCurrentIter) override
+    void solutionChanged_(Variables& vars, const SolutionVector& uCurrentIter) override
     {
         couplingManager_->updateSolution(uCurrentIter);
-        this->assembler().updateGridVariables(uCurrentIter);
+        ParentType::solutionChanged_(vars, uCurrentIter);
     }
 
 private:
