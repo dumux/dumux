@@ -40,20 +40,27 @@ template <class Assembler, class LinearSolver>
 class NonEquilibriumNewtonSolver : public NewtonSolver<Assembler, LinearSolver>
 {
     using ParentType = NewtonSolver<Assembler, LinearSolver>;
-    using SolutionVector = typename Assembler::ResidualType;
+
+    using typename ParentType::Backend;
+    using typename ParentType::SolutionVector;
+    static constexpr bool assemblerExportsVariables = Detail::exportsVariables<Assembler>;
 
 public:
     using ParentType::ParentType;
+    using typename ParentType::Variables;
 
-    void newtonEndStep(SolutionVector &uCurrentIter,
+    void newtonEndStep(Variables &varsCurrentIter,
                        const SolutionVector &uLastIter) final
     {
-        ParentType::newtonEndStep(uCurrentIter, uLastIter);
+        ParentType::newtonEndStep(varsCurrentIter, uLastIter);
+        const auto& uCurrentIter = Backend::dofs(varsCurrentIter);
 
-        auto& gridVariables = this->assembler().gridVariables();
         // Averages the face velocities of a vertex. Implemented in the model.
         // The velocities are stored in the model.
-        gridVariables.calcVelocityAverage(uCurrentIter);
+        if constexpr(!assemblerExportsVariables)
+            this->assembler().gridVariables().calcVelocityAverage(uCurrentIter);
+        else
+            varsCurrentIter.calcVelocityAverage(uCurrentIter);
     }
 };
 

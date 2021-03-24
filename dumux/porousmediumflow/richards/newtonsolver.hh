@@ -45,28 +45,31 @@ class RichardsNewtonSolver : public NewtonSolver<Assembler, LinearSolver>
 {
     using Scalar = typename Assembler::Scalar;
     using ParentType = NewtonSolver<Assembler, LinearSolver>;
-    using SolutionVector = typename Assembler::ResidualType;
     using Indices = typename Assembler::GridVariables::VolumeVariables::Indices;
     enum { pressureIdx = Indices::pressureIdx };
 
+    using typename ParentType::Backend;
+    using typename ParentType::SolutionVector;
+
 public:
     using ParentType::ParentType;
+    using typename ParentType::Variables;
 
 private:
 
     /*!
      * \brief Update the current solution of the Newton method
      *
-     * \param uCurrentIter The solution after the current Newton iteration \f$ u^{k+1} \f$
+     * \param varsCurrentIter The variables after the current Newton iteration \f$ u^{k+1} \f$
      * \param uLastIter The solution after the last Newton iteration \f$ u^k \f$
      * \param deltaU The vector of differences between the last
      *               iterative solution and the next one \f$ \Delta u^k \f$
      */
-    void choppedUpdate_(SolutionVector &uCurrentIter,
+    void choppedUpdate_(Variables &varsCurrentIter,
                         const SolutionVector &uLastIter,
                         const SolutionVector &deltaU) final
     {
-        uCurrentIter = uLastIter;
+        auto uCurrentIter = uLastIter;
         uCurrentIter -= deltaU;
 
         // do not clamp anything after 5 iterations
@@ -110,11 +113,11 @@ private:
             }
         }
 
-        // update the grid variables
-        this->solutionChanged_(uCurrentIter);
+        // update the variables
+        this->solutionChanged_(varsCurrentIter, uCurrentIter);
 
         if (this->enableResidualCriterion())
-            this->computeResidualReduction_(uCurrentIter);
+            this->computeResidualReduction_(varsCurrentIter);
     }
 };
 
