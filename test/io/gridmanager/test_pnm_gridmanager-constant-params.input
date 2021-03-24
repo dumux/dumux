@@ -20,7 +20,7 @@ Sanitize = false
 DeletionRandomNumberSeed = 33
 
 [Dgf3D.Grid]
-File = dgfGrid.dgf
+File = constant-params-3d.dgf
 PruningSeedIndices = 2 3
 Sanitize = true
 
@@ -42,7 +42,7 @@ Sanitize = false
 DeletionRandomNumberSeed = 33
 
 [Dgf2D.Grid]
-File = dgfGrid.dgf
+File = constant-params-2d.dgf
 PruningSeedIndices = 2 3
 Sanitize = true
 
@@ -59,4 +59,4 @@ ThroatLength = 1e-4
 BoundaryFaceMarker = 1 1
 
 [Dgf1D.Grid]
-File = dgfGrid.dgf
+File = constant-params-1d.dgf

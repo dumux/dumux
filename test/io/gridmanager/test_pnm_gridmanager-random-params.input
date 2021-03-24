@@ -20,7 +20,7 @@ DeletionRandomNumberSeed = 33
 ParameterRandomNumberSeed = 22
 
 [Dgf3D.Grid]
-File = dgfGrid.dgf
+File = random-params-3d.dgf
 PruningSeedIndices = 2 3
 Sanitize = true
 
@@ -43,7 +43,7 @@ DeletionRandomNumberSeed = 33
 ParameterRandomNumberSeed = 22
 
 [Dgf2D.Grid]
-File = dgfGrid.dgf
+File = random-params-2d.dgf
 PruningSeedIndices = 2 3
 Sanitize = true
 
@@ -61,4 +61,4 @@ BoundaryFaceMarker = 1 1
 ParameterRandomNumberSeed = 22
 
 [Dgf1D.Grid]
-File = dgfGrid.dgf
+File = random-params-1d.dgf
