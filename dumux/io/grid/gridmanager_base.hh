@@ -118,6 +118,10 @@ public:
         }
     }
 
+    /*!
+     * \brief Get an owning pointer to grid data associated with the grid
+     * \note Throws if no grid data is available
+     */
     std::shared_ptr<GridData> getGridData() const
     {
         if (!gridData_)
@@ -125,7 +129,12 @@ public:
 
         return gridData_;
     }
-
+    
+    /*!
+     * \brief Check whether there is data associated with the grid
+     */
+    bool hasGridData() const
+    { return static_cast<bool>(gridData_); }
 
 protected:
 
