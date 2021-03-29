@@ -73,7 +73,10 @@ class NavierStokesMassOnePLocalResidual : public CCLocalResidual<TypeTag>
 
     static constexpr int phi1Idx = Indices::phi1Idx;
     static constexpr int phi2Idx = Indices::phi2Idx;
-    static constexpr int uIdx = Indices::uIdx;
+    static constexpr int phi3Idx = Indices::phi3Idx;
+    static constexpr int u1Idx = Indices::u1Idx;
+    static constexpr int u2Idx = Indices::u2Idx;
+    static constexpr int u3Idx = Indices::u3Idx;
 
 public:
     //! Use the parent type's constructor
@@ -95,7 +98,8 @@ public:
         NumEqVector storage(0.0);
         const Scalar xi = getParam<Scalar>("Phasefield.xi");
         const Scalar delta = getParam<Scalar>("Phasefield.delta");
-        const Scalar mineralMolarDensity = getParam<Scalar>("Phasefield.MineralMolarDensity");
+        const Scalar mineralDMolarDensity = getParam<Scalar>("Phasefield.MineralDMolarDensity");
+        const Scalar mineralPMolarDensity = getParam<Scalar>("Phasefield.MineralPMolarDensity");
         //storage[Indices::conti0EqIdx] = volVars.density() * (volVars.phasefield(1) + delta)
         //    + volVars.phasefield(1);
         storage[Indices::conti0EqIdx] = 0.0;//volVars.density();
@@ -104,13 +108,23 @@ public:
         EnergyLocalResidual::fluidPhaseStorage(storage, volVars);
         //PhasefieldLocalResidual::fluidPhaseStorage(storage, volVars);
         const auto& priVars = volVars.priVars();
-        const Scalar b = mineralMolarDensity * 1.0;
+        const static std::array<Scalar, 3> b_D = {-1.0, 1.0, 0.0};
+        const static std::array<Scalar, 3> b_P = {0.0, 1.0, 1.0};
         storage[Indices::phasefield1EqIdx] = xi * xi * priVars[phi1Idx];
         storage[Indices::phasefield2EqIdx] = xi * xi * priVars[phi2Idx];
-        storage[Indices::uTransportEqIdx] = (priVars[phi1Idx] + delta) *
-            (priVars[uIdx] - priVars[phi1Idx] * b)
+        storage[Indices::phasefield3EqIdx] = xi * xi * priVars[phi3Idx];
+        storage[Indices::u1TransportEqIdx] = (priVars[phi1Idx] + delta) * priVars[u1Idx]
+            + priVars[phi2Idx] * b_D[0] * mineralDMolarDensity
+            + priVars[phi3Idx] * b_P[0] * mineralPMolarDensity;
             ;
-            // + priVars[phi2Idx] * b_D
+        storage[Indices::u2TransportEqIdx] = (priVars[phi1Idx] + delta) * priVars[u2Idx]
+            + priVars[phi2Idx] * b_D[1] * mineralDMolarDensity
+            + priVars[phi3Idx] * b_P[1] * mineralPMolarDensity;
+            ;
+        storage[Indices::u3TransportEqIdx] = (priVars[phi1Idx] + delta) * priVars[u3Idx]
+            + priVars[phi2Idx] * b_D[2] * mineralDMolarDensity
+            + priVars[phi3Idx] * b_P[2] * mineralPMolarDensity;
+            ;
 
         return storage;
     }
@@ -126,21 +140,58 @@ public:
         const static Scalar sigma = getParam<Scalar>("Phasefield.sigma");
         const static Scalar xi = getParam<Scalar>("Phasefield.xi");
         const static Scalar react = getParam<Scalar>("Phasefield.Reaction");
-        const Scalar mineralMolarDensity = getParam<Scalar>("Phasefield.MineralMolarDensity");
-        Scalar f_P = react * (priVars[uIdx] - 1.0);
+        Scalar f_P = react * (priVars[u2Idx]*priVars[u3Idx] - 1.0);
+        //source[Indices::phasefield1EqIdx] =
+        //    // - gamma P'
+        //    - 16.0 * sigma * (
+        //    priVars[phi1Idx] * priVars[phi2Idx] * (priVars[phi2Idx] - priVars[phi1Idx])
+        //    )
+        //    - 4.0 * xi * priVars[phi1Idx] * priVars[phi2Idx] * f_P
+        //    ;
+        //source[Indices::phasefield2EqIdx] =
+        //    // - gamma P'
+        //    - 16.0 * sigma * (
+        //    priVars[phi2Idx] * priVars[phi1Idx] * (priVars[phi1Idx] - priVars[phi2Idx])
+        //    )
+        //    + 4.0 * xi * priVars[phi1Idx] * priVars[phi2Idx] * f_P
+        Scalar f_D = react * (priVars[u2Idx] / priVars[u1Idx] - 1.0);
         source[Indices::phasefield1EqIdx] =
-            // - gamma P'
-            - 16.0 * sigma * (
-            priVars[phi1Idx] * priVars[phi2Idx] * (priVars[phi2Idx] - priVars[phi1Idx])
-            )
-            - 4.0 * xi * priVars[phi1Idx] * priVars[phi2Idx] * f_P
+            16.0/3.0 * sigma * (
+                 -2*(priVars[phi1Idx] -3*priVars[phi1Idx]*priVars[phi1Idx]
+                     +2*priVars[phi1Idx]*priVars[phi1Idx]*priVars[phi1Idx])
+                 +  (priVars[phi2Idx] -3*priVars[phi2Idx]*priVars[phi2Idx]
+                     +2*priVars[phi2Idx]*priVars[phi2Idx]*priVars[phi2Idx])
+                 +  (priVars[phi3Idx] -3*priVars[phi3Idx]*priVars[phi3Idx]
+                     +2*priVars[phi3Idx]*priVars[phi3Idx]*priVars[phi3Idx])
+                 )
+            -4.0 * xi * priVars[phi1Idx] * priVars[phi2Idx] * f_D
+            -4.0 * xi * priVars[phi1Idx] * priVars[phi3Idx] * f_P;
+            //-4.0 * xi * std::max(0.0, priVars[phi1Idx] * priVars[phi2Idx]) * f_D
+            //-4.0 * xi * std::max(0.0, priVars[phi1Idx] * priVars[phi3Idx]) * f_P;
             ;
         source[Indices::phasefield2EqIdx] =
-            // - gamma P'
-            - 16.0 * sigma * (
-            priVars[phi2Idx] * priVars[phi1Idx] * (priVars[phi1Idx] - priVars[phi2Idx])
-            )
-            + 4.0 * xi * priVars[phi1Idx] * priVars[phi2Idx] * f_P
+            16.0/3.0 * sigma * (
+                    (priVars[phi1Idx] -3*priVars[phi1Idx]*priVars[phi1Idx]
+                     +2*priVars[phi1Idx]*priVars[phi1Idx]*priVars[phi1Idx])
+                -2* (priVars[phi2Idx] -3*priVars[phi2Idx]*priVars[phi2Idx]
+                     +2*priVars[phi2Idx]*priVars[phi2Idx]*priVars[phi2Idx])
+                +   (priVars[phi3Idx] -3*priVars[phi3Idx]*priVars[phi3Idx]
+                     +2*priVars[phi3Idx]*priVars[phi3Idx]*priVars[phi3Idx])
+                )
+            +4.0 * xi * priVars[phi1Idx] * priVars[phi2Idx] * f_D;
+            //+4.0 * xi * std::max(0.0, priVars[phi1Idx] * priVars[phi2Idx]) * f_D;
+            ;
+        source[Indices::phasefield3EqIdx] =
+            16.0/3.0 * sigma * (
+                    (priVars[phi1Idx] -3*priVars[phi1Idx]*priVars[phi1Idx]
+                     +2*priVars[phi1Idx]*priVars[phi1Idx]*priVars[phi1Idx])
+                +   (priVars[phi2Idx] -3*priVars[phi2Idx]*priVars[phi2Idx]
+                     +2*priVars[phi2Idx]*priVars[phi2Idx]*priVars[phi2Idx])
+                -2* (priVars[phi3Idx] -3*priVars[phi3Idx]*priVars[phi3Idx]
+                     +2*priVars[phi3Idx]*priVars[phi3Idx]*priVars[phi3Idx])
+                )
+            +4.0 * xi * priVars[phi1Idx] * priVars[phi3Idx] * f_P;
+            //+4.0 * xi * std::max(0.0, priVars[phi1Idx] * priVars[phi3Idx]) * f_P;
             ;
 
         return source;
@@ -182,7 +233,7 @@ public:
         //! Add phasefield fluxes. For sharp-interface model the contribution is zero.
         //PhasefieldLocalResidual::phasefieldFlux(flux, fluxVars);
         diffusiveFlux(flux, fluxVars, fvGeometry, elemVolVars, scvf);
-        //advectiveFlux(flux, fluxVars, fvGeometry, elemVolVars, scvf);
+        advectiveFlux(flux, fluxVars, fvGeometry, elemVolVars, scvf);
 
         return flux;
     }
@@ -192,9 +243,15 @@ public:
     {
         const static Scalar delta = getParam<Scalar>("Phasefield.delta");
 
-        auto upwindTerm = [](const auto& volVars) { return (volVars.priVar(phi1Idx) + delta) *
-            volVars.priVar(uIdx); };
-        flux[Indices::uTransportEqIdx] += fluxVars.advectiveFlux(upwindTerm);
+        auto upwindTerm1 = [](const auto& volVars) { return (volVars.priVar(phi1Idx) + delta) *
+            volVars.priVar(u1Idx); };
+        auto upwindTerm2 = [](const auto& volVars) { return (volVars.priVar(phi1Idx) + delta) *
+            volVars.priVar(u2Idx); };
+        auto upwindTerm3 = [](const auto& volVars) { return (volVars.priVar(phi1Idx) + delta) *
+            volVars.priVar(u3Idx); };
+        flux[Indices::u1TransportEqIdx] += fluxVars.advectiveFlux(upwindTerm1);
+        flux[Indices::u2TransportEqIdx] += fluxVars.advectiveFlux(upwindTerm2);
+        flux[Indices::u3TransportEqIdx] += fluxVars.advectiveFlux(upwindTerm3);
     }
 
     void diffusiveFlux(NumEqVector& flux, FluxVariables& fluxVars, FVElementGeometry fvGeometry,
@@ -208,13 +265,13 @@ public:
         const static Scalar xi = getParam<Scalar>("Phasefield.xi");
         const static Scalar delta = getParam<Scalar>("Phasefield.delta");
         const static Scalar D_u = getParam<Scalar>("Phasefield.DiffCoeff");
-        const int numDiffusion = 3;
+        const int numDiffusion = 6;
         const static std::array<Scalar, numDiffusion> diffCoeff = {
-            xi*xi*sigma, xi*xi*sigma,// xi*xi*sigma,// p1 - p3
+            xi*xi*sigma, xi*xi*sigma, xi*xi*sigma,// p1 - p3
         //    xi*xi*sigma, xi*xi*sigma,// p11, p12
-            (insideVolVars.priVar(phi1Idx)+delta) * D_u//,//u_A
-        //    (insideVolVars.priVar(Indices::p11Idx)+delta) * D_u,
-        //    (insideVolVars.priVar(Indices::p11Idx)+delta) * D_u,
+            (insideVolVars.priVar(phi1Idx)+delta) * D_u,//u_A
+            (insideVolVars.priVar(phi1Idx)+delta) * D_u,
+            (insideVolVars.priVar(phi1Idx)+delta) * D_u,
         //    (insideVolVars.priVar(Indices::p1Idx)+delta) * D_u,//u_3A
         //    (insideVolVars.priVar(Indices::p1Idx)+delta) * D_u,
         //    (insideVolVars.priVar(Indices::p1Idx)+delta) * D_u

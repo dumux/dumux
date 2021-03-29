@@ -43,10 +43,16 @@ struct NavierStokesIndices
     static constexpr int pressureIdx = conti0EqIdx; //!< Index of the pressure in a solution vector
     static constexpr int phasefield1EqIdx = dimension+1;
     static constexpr int phasefield2EqIdx = dimension+2;
-    static constexpr int uTransportEqIdx = dimension+3;
+    static constexpr int phasefield3EqIdx = dimension+3;
+    static constexpr int u1TransportEqIdx = dimension+4;
+    static constexpr int u2TransportEqIdx = dimension+5;
+    static constexpr int u3TransportEqIdx = dimension+6;
     static constexpr int phi1Idx = phasefield1EqIdx;
     static constexpr int phi2Idx = phasefield2EqIdx;
-    static constexpr int uIdx = uTransportEqIdx;
+    static constexpr int phi3Idx = phasefield3EqIdx;
+    static constexpr int u1Idx = u1TransportEqIdx;
+    static constexpr int u2Idx = u2TransportEqIdx;
+    static constexpr int u3Idx = u3TransportEqIdx;
 
     static constexpr auto dim = dimension;
 

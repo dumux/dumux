@@ -85,9 +85,9 @@ public:
         const auto& elemSelf = gridGeometry.element(scvSelf.elementIndex());
         const auto& scvOpposite = fvGeometry.scv(scvf.outsideScvIdx());
         const auto& elemOpposite = gridGeometry.element(scvOpposite.elementIndex());
-        const auto phasefieldSelf = 1.0 * (problem.phasefield(elemSelf, scvSelf) + 1e-8);
+        const auto phasefieldSelf = 1.0 * (problem.phasefield(elemSelf, scvSelf) + 1e-6);
         const auto phasefieldOpposite = 1.0
-            * (problem.phasefield(elemOpposite, scvOpposite) + 1e-8);
+            * (problem.phasefield(elemOpposite, scvOpposite) + 1e-6);
         const auto velocitySelf = elemVolVars[scvf.insideScvIdx()].velocity() *phasefieldSelf;
         const auto velocityOpposite = elemVolVars[scvf.outsideScvIdx()].velocity()
             *phasefieldOpposite;
@@ -128,13 +128,13 @@ public:
         const auto& scvInner = fvGeometry.scv(scvf.insideScvIdx());
         const auto& elemInner = gridGeometry.element(scvInner.elementIndex());
         const auto phasefieldInner = 1.0
-            * (problem.phasefield(elemInner, scvInner) + 1e-8);
+            * (problem.phasefield(elemInner, scvInner) + 1e-6);
         auto phasefieldOuter = phasefieldInner;
         if (!scvf.boundary())
         {
             const auto& scvOuter = fvGeometry.scv(scvf.outsideScvIdx());
             const auto& elemOuter = gridGeometry.element(scvOuter.elementIndex());
-            phasefieldOuter = (problem.phasefield(elemOuter, scvOuter) + 1e-8);
+            phasefieldOuter = (problem.phasefield(elemOuter, scvOuter) + 1e-6);
         }
         const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity() *phasefieldInner;
         const auto outerVelocity = elemVolVars[scvf.outsideScvIdx()].velocity() *phasefieldOuter;
@@ -183,13 +183,13 @@ public:
         const auto& scvInner = fvGeometry.scv(orthogonalScvf.insideScvIdx());
         const auto& elemInner = gridGeometry.element(scvInner.elementIndex());
         const auto phasefieldInner = 1.0
-            * (problem.phasefield(elemInner, scvInner) + 1e-8);
+            * (problem.phasefield(elemInner, scvInner) + 1e-6);
         auto phasefieldOuter = phasefieldInner;
         if (!orthogonalScvf.boundary())
         {
             const auto& scvOuter = fvGeometry.scv(orthogonalScvf.outsideScvIdx());
             const auto& elemOuter = gridGeometry.element(scvOuter.elementIndex());
-            phasefieldOuter = (problem.phasefield(elemOuter, scvOuter) + 1e-8);
+            phasefieldOuter = (problem.phasefield(elemOuter, scvOuter) + 1e-6);
         }
         const auto innerVelocity = elemVolVars[orthogonalScvf.insideScvIdx()].velocity()
             *phasefieldInner;

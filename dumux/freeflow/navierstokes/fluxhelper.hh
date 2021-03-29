@@ -52,12 +52,12 @@ struct NavierStokesUpwindTerms
 {
     static auto transportFlux(const int compIdx)
     { return [compIdx](const auto& volVars) { return volVars.concentration(compIdx)
-                                                //* (volVars.phasefield(1) + 1e-8)
+                                                * (volVars.phasefield(1) + 1e-6)
                                                     ; }; }
 
     // TODO: add phasefield to mass flux
     static auto totalMassFlux()
-    { return [](const auto& volVars) { return (volVars.phasefield(1) + 1e-8) * volVars.density(); }; }
+    { return [](const auto& volVars) { return (volVars.phasefield(1) + 1e-6) * volVars.density(); }; }
 
     static auto comoponentMoleFlux(const int compIdx)
     { return [compIdx](const auto& volVars) { return volVars.molarDensity()*volVars.moleFraction(compIdx); }; }
@@ -122,8 +122,12 @@ public:
         {
             auto upwindTerm = NavierStokesUpwindTerms::totalMassFlux();
             flux[Traits::Indices::conti0EqIdx] = upwind(upwindTerm);
-            auto upwindTermU = NavierStokesUpwindTerms::transportFlux(1);
-            flux[Traits::Indices::uTransportEqIdx] = upwind(upwindTermU);
+            auto upwindTermU1 = NavierStokesUpwindTerms::transportFlux(1);
+            flux[Traits::Indices::u1TransportEqIdx] = upwind(upwindTermU1);
+            auto upwindTermU2 = NavierStokesUpwindTerms::transportFlux(2);
+            flux[Traits::Indices::u2TransportEqIdx] = upwind(upwindTermU2);
+            auto upwindTermU3 = NavierStokesUpwindTerms::transportFlux(3);
+            flux[Traits::Indices::u3TransportEqIdx] = upwind(upwindTermU3);
         }
 
         // TODO 1pnc
@@ -251,7 +255,7 @@ public:
         {
             // pressure contribution
             flux[scvf.directionIndex()] = (pressure - problem.referencePressure(element, fvGeometry, scvf)) * scvf.directionSign()
-                * (problem.phasefield(element, fvGeometry, scvf) + 1e-8)
+                * (problem.phasefield(element, fvGeometry, scvf) + 1e-6)
                 ;
 
             // TODO: Phasefield
@@ -326,7 +330,7 @@ public:
                     const auto innerTransportingVelocity =
                         elemVolVars[orthogonalScvf.insideScvIdx()].velocity()
                         * (problem.phasefield(element,
-                            fvGeometry.scv(orthogonalScvf.insideScvIdx())) + 1e-8)
+                            fvGeometry.scv(orthogonalScvf.insideScvIdx())) + 1e-6)
                         ;
 
                     if (scvf.boundary())
@@ -350,7 +354,7 @@ public:
                             const auto outerTransportingVelocity =
                                 elemVolVars[orthogonalScvf.outsideScvIdx()].velocity()
                                     * (problem.phasefield(element,
-                                        fvGeometry.scv(orthogonalScvf.outsideScvIdx())) + 1e-8)
+                                        fvGeometry.scv(orthogonalScvf.outsideScvIdx())) + 1e-6)
                                     ;
                             return (insideVolume*innerTransportingVelocity + outsideVolume*outerTransportingVelocity) / (insideVolume + outsideVolume);
                         }
@@ -362,10 +366,10 @@ public:
                 {
                     const auto phi = problem.getInsideAndOutsidePhasefield(element, fvGeometry, scvf);
                     const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity()
-                        * (phi.first + 1e-8)
+                        * (phi.first + 1e-6)
                         ;
                     const auto outerVelocity = elemVolVars[scvf.outsideScvIdx()].velocity()
-                        * ( phi.second + 1e-8)
+                        * ( phi.second + 1e-6)
                         ;
                     const auto rho = problem.getInsideAndOutsideDensity(element, fvGeometry, scvf);
 
@@ -387,7 +391,7 @@ public:
                 {
                     const auto insideDensity = problem.density(element, fvGeometry.scv(scvf.insideScvIdx()));
                     const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity()
-                        * (problem.phasefield(element, fvGeometry.scv(scvf.insideScvIdx())) + 1e-8)
+                        * (problem.phasefield(element, fvGeometry.scv(scvf.insideScvIdx())) + 1e-6)
                         ;
                     flux[scv.directionIndex()] += innerVelocity * transportingVelocity * insideDensity * scvf.directionSign();
                 }

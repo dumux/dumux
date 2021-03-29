@@ -36,10 +36,16 @@ struct NavierStokesMassOnePIndices
     static constexpr int pressureIdx = conti0EqIdx; //!< Index of the pressure
     static constexpr int phasefield1EqIdx = 1;
     static constexpr int phasefield2EqIdx = 2;
+    static constexpr int phasefield3EqIdx = 3;
     static constexpr int phi1Idx = phasefield1EqIdx;
     static constexpr int phi2Idx = phasefield2EqIdx;
-    static constexpr int uTransportEqIdx = 3;
-    static constexpr int uIdx = uTransportEqIdx;
+    static constexpr int phi3Idx = phasefield3EqIdx;
+    static constexpr int u1TransportEqIdx = 4;
+    static constexpr int u2TransportEqIdx = 5;
+    static constexpr int u3TransportEqIdx = 6;
+    static constexpr int u1Idx = u1TransportEqIdx;
+    static constexpr int u2Idx = u2TransportEqIdx;
+    static constexpr int u3Idx = u3TransportEqIdx;
 };
 
 } // end namespace Dumux

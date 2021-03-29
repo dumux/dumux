@@ -209,7 +209,10 @@ public:
 #endif
                 values.setDirichlet(Indices::phi1Idx);
                 values.setDirichlet(Indices::phi2Idx);
-                values.setDirichlet(Indices::uIdx);
+                values.setDirichlet(Indices::phi3Idx);
+                values.setDirichlet(Indices::u1Idx);
+                values.setDirichlet(Indices::u2Idx);
+                values.setDirichlet(Indices::u3Idx);
             }
         }
 
@@ -257,19 +260,25 @@ public:
             const static Scalar xi = getParam<Scalar>("Phasefield.xi");
             const static Scalar rad = getParam<Scalar>("Phasefield.DirichletRadius");
             const static Scalar S = getParam<Scalar>("Phasefield.DirichletScaling");
-            const static Scalar u_in = getParam<Scalar>("Phasefield.InletConcentration");
+            const static Scalar a_in = getParam<Scalar>("Phasefield.InletAConcentration");
+            const static Scalar b_in = getParam<Scalar>("Phasefield.InletBConcentration");
+            const static Scalar c_in = getParam<Scalar>("Phasefield.InletCConcentration");
             if (bcType == "ThinChannel")
             {
                 const Scalar s = (globalPos[1]-1.0)*(globalPos[1]-1.0)-rad*rad;
                 values[Indices::phi1Idx] = 1.0/(1.0 + std::exp(S*s/xi));
                 values[Indices::phi2Idx] = 1.0 - values[Indices::phi1Idx];
+                values[Indices::phi3Idx] = 0.0;
             }
             else
             {
                 values[Indices::phi1Idx] = 1.0;
                 values[Indices::phi2Idx] = 0.0;
+                values[Indices::phi3Idx] = 0.0;
             }
-            values[Indices::uIdx] = u_in;
+            //values[Indices::u1Idx] = a_in;
+            //values[Indices::u2Idx] = b_in;
+            //values[Indices::u3Idx] = c_in;
          }
 
          return values;
@@ -310,6 +319,18 @@ public:
         {
             if (isOutlet_(scvf.ipGlobal()))
                 values = NavierStokesBoundaryFluxHelper<ModelTraits>::scalarOutflowFlux(*this, element, fvGeometry, scvf, elemVolVars);
+            if (isInlet_(scvf.ipGlobal()))
+            {
+                const static Scalar a_in = getParam<Scalar>("Phasefield.InletAConcentration");
+                const static Scalar b_in = getParam<Scalar>("Phasefield.InletBConcentration");
+                const static Scalar c_in = getParam<Scalar>("Phasefield.InletCConcentration");
+                const auto volumeFlux = this->faceVelocity(element,fvGeometry, scvf) *
+                    scvf.unitOuterNormal();
+                const auto insideVolVars = elemVolVars[scvf.insideScvIdx()];
+                values[Indices::u1Idx] = volumeFlux * a_in;
+                values[Indices::u2Idx] = volumeFlux * b_in;
+                values[Indices::u3Idx] = volumeFlux * c_in;
+            }
         }
 
         return values;
@@ -393,20 +414,29 @@ public:
                 const Scalar s = (globalPos[1]-1.0)*(globalPos[1]-1.0) -rad*rad;
                 values[Indices::phi1Idx] = 1.0/(1.0 + std::exp(S*s/xi));
                 values[Indices::phi2Idx] = 1.0 - values[Indices::phi1Idx];
+                values[Indices::phi3Idx] = 0.0;
             }
             else if (icType == "Grain")
             {
                 const Scalar s = (globalPos[1]-grainY)*(globalPos[1]-grainY) +
                     (globalPos[0]-grainX)*(globalPos[0]-grainX) -rad*rad;
+                const Scalar s2 = (globalPos[0] - grainX);
                 values[Indices::phi1Idx] = 1.0/(1.0 + std::exp(S*-s/xi));
-                values[Indices::phi2Idx] = 1.0 - values[Indices::phi1Idx];
+                values[Indices::phi2Idx] = (1.0 - values[Indices::phi1Idx])/(1.0 + std::exp(S*-s2/xi));
+                values[Indices::phi3Idx] = 1-values[Indices::phi1Idx]-values[Indices::phi2Idx];
             }
             else
             {
                 values[Indices::phi1Idx] = 1.0;
                 values[Indices::phi2Idx] = 0.0;
+                values[Indices::phi3Idx] = 0.0;
             }
-            values[Indices::uIdx] = getParam<Scalar>("Phasefield.InitialConcentration");
+            const auto a0 = getParam<Scalar>("Phasefield.InitialAConcentration");
+            const auto b0 = getParam<Scalar>("Phasefield.InitialBConcentration");
+            const auto c0 = getParam<Scalar>("Phasefield.InitialCConcentration");
+            values[Indices::u1Idx] = a0;
+            values[Indices::u2Idx] = b0;
+            values[Indices::u3Idx] = c0;
         }
 
 

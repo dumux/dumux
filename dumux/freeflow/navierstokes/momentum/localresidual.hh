@@ -98,8 +98,10 @@ public:
                                const VolumeVariables& volVars,
                                const bool isPreviousStorage = false) const
     {
+        const static bool transitive = getParam<bool>("Problem.EnableTransitive");
+        if (!transitive)
+            return NumEqVector(0.0);
         const auto& element = problem.gridGeometry().element(scv.elementIndex());
-        // TODO: factor (phi1 + delta), inside derivative
         const static Scalar delta = getParam<Scalar>("Phasefield.delta");
         return problem.density(element, scv, isPreviousStorage) * volVars.velocity()
                 * (problem.phasefield(element, scv, isPreviousStorage)+delta)

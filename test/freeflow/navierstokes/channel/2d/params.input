@@ -1,22 +1,24 @@
 [TimeLoop]
-DtInitial = 0.05 # [s]
+DtInitial = 0.005 # [s]
 TEnd = 4 # [s]
-MaxTimeStepSize = 1
+MaxTimeStepSize = 0.05
 
 [Grid]
-UpperRight = 5 2
-Cells = 200 80
+UpperRight = 1 1
+Cells = 200 200
 
 [Problem]
-Name = test_channel_2_navier_stokes_grain_phase_coupling # name passed to the output routines
-InletVelocity = 1 #1.2e-3
+Name = compare_flow_2s5_10000K_reverse # name passed to the output routines
+OutputInterval = 0.1
+InletVelocity = 5.0 #1.2e-3
 EnableGravity = false
-EnableInertiaTerms = true
+EnableInertiaTerms = false
+EnableTransitive = false
 OutletCondition = Outflow
 PrintMatrix = false
 UseVelocityProfile = true
-InletDelay = 0.1
-InletWindup = 2.0
+InletDelay = 0.0
+InletWindup = 0.0
 
 [Component]
 LiquidDensity = 1.0 #1e3
@@ -26,8 +28,10 @@ GasDensity = 1
 GasKinematicViscosity = 1e-6
 
 [ Newton ]
-MaxSteps = 10
-MaxRelativeShift = 1e-8
+MaxSteps = 11
+MaxRelativeShift = 1e-10
+UseLineSearch = false
+EnableChop = false
 
 [Vtk]
 WriteFaceData = false
@@ -47,21 +51,32 @@ NumericDifference.BaseEpsilon =  1e-3
 EnableDilatationTerm = false
 
 [Phasefield]
-xi = 125e-3
-delta = 1e-8
-sigma = 3.75e-3
+xi = 25e-3
+delta = 1e-6
+sigma = 2.5e-3
 DiffCoeff = 0.2 #1e-9
 InitialConcentration = 1.0 #[mol m-3?]
 InletConcentration = 1.0 #[mol m-3?]
-MineralMolarDensity = 2.0 #[mol m-3]
+InitialAConcentration = 2.0 #[mol m-3?]
+InitialBConcentration = 1.0 #[mol m-3?]
+InitialCConcentration = 1.0 #[mol m-3?]
+InletAConcentration = 2.0 #[mol m-3?]
+InletBConcentration = 1.0 #[mol m-3?]
+InletCConcentration = 1.0 #[mol m-3?]
+MineralDMolarDensity = 20.0 # 20 #[mol m-3]
+MineralPMolarDensity = 4.0 # 4 #[mol m-3]
 Scenario = Grain # ThinChannel or Grain
-GrainX = 2.5
-GrainY = 1.0
-StartingRadius = 0.5
+GrainX = 0.5
+GrainY = 0.5
+StartingRadius = 0.2
 StartingScaling = 9.0
 DirichletRadius = 0.5
 DirichletScaling = 9.0
-K = 100.0 #25.0
+K = 10000.0 #25.0
 n = 10.0
 Reaction = 1.0 #8.9e-3
 AdvectiveTransport = 1.0
+
+[Restart]
+#Time = 1.11325
+#File = compare_flow_1s25_10000K_gammapos

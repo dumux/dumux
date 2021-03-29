@@ -49,6 +49,8 @@
 #include "problem_new.hh"
 #include "../../analyticalsolution.hh"
 
+#include <dumux/freeflow/navierstokes/newtonsolver.hh>
+
 namespace Dumux::Properties{
 
 // Set the problem property
@@ -62,6 +64,37 @@ public:
 };
 
 }
+
+//void writeScalars()
+//{
+//    static const auto upperRight = getParam<std::tuple<Scalar, Scalar>>("Grid.UpperRight");
+//    static const auto cells = getParam<std::tuple<Scalar, Scalar>>("Grid.Cells");
+//    static const Scalar hx = std::get<0>(upperRight)/std::get<0>(Cells);
+//    static const Scalar hy = std::get<1>(upperRight)/std::get<1>(Cells);
+//    static const auto xi = getParam<Scalar>("Phasefield.xi");
+//    Scalar volumeF = 0;
+//    Scalar volumeD = 0;
+//    Scalar volumeP = 0;
+//    Scalar sigmaF = 0;
+//    Scalar sigmaD = 0;
+//    Scalar sigmaP = 0;
+//    Scalar conserveA = 0;
+//    Scalar conserveB = 0;
+//    for (auto dof : *xPtr)
+//    {
+//        Scalar sf =  dof[Indices::phi1Idx] * (1-dof[Indices::phi1Idx]);
+//        Scalar sd =  dof[Indices::phi1Idx] * dof[Indices::phi2Idx];
+//        Scalar sp =  dof[Indices::phi1Idx] * dof[Indices::phi3Idx];
+//        volumeF += dof[Indices::phi1Idx] * hx*hy;
+//        volumeD += dof[Indices::phi2Idx] * hx*hy;
+//        volumeP += dof[Indices::phi3Idx] * hx*hy;
+//        sigmaF  += 4.0*hx*hy/xi*sf;
+//        sigmaD += 4.0*hx*hy/xi*sd;
+//        sigmaP += 4.0*hx*hy/xi*sp;
+//    }
+//    fout << '\t' << volumeF << '\t' << volumeD << '\t' << volumeP << '\t' << sigmaF << '\t' <<
+//        sigmaD << '\t' << sigmaP << '\t' << conserveA << '\t' << conserveB << '\n';
+//}
 
 int main(int argc, char** argv) try
 {
@@ -128,7 +161,10 @@ int main(int argc, char** argv) try
     constexpr auto momentumIdx = Dune::index_constant<0>();
     constexpr auto massIdx = Dune::index_constant<1>();
     using SolutionVector = typename Traits::SolutionVector;
-    SolutionVector x;
+    //auto xPtr = std::make_shared<SolutionVector>();
+    //auto xOldPtr = std::make_shared<SolutionVector>();
+    SolutionVector x;// = *xPtr;
+    //*xOldPtr = x;
     x[momentumIdx].resize(momentumGridGeometry->numDofs());
     x[massIdx].resize(massGridGeometry->numDofs());
     momentumProblem->applyInitialSolution(x[momentumIdx]);
@@ -181,7 +217,7 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+    using NewtonSolver = PhasefieldMultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
     // // set up two surfaces over which fluxes are calculated
@@ -222,6 +258,10 @@ int main(int argc, char** argv) try
     // const auto p1outlet = GlobalPosition{xMax, yMax};
     // flux.addSurface("outlet", p0outlet, p1outlet);
 
+    //std::ofstream fout;
+    //fout.open(getParam<std::string>("Problem.Name", "scalars"));
+    //massProblem->writeScalars(std::get<1>(xOld)&, fout);
+
     if (isStationary)
     {
         nonLinearSolver.solve(x);
@@ -238,19 +278,26 @@ int main(int argc, char** argv) try
     {
         // time loop
         assembler->assembleResidual(x);
-        auto res = assembler->residual();
-        auto res_mom = res[momentumIdx];
-        std::ofstream fout;
-        fout.open("res_mom_new.txt");
-        Dune::printvector(fout, res_mom, "", "");
-        fout.close();
+        //auto res = assembler->residual();
+        //auto res_mom = res[momentumIdx];
+        //auto res_mas = res[massIdx];
+        //std::ofstream fout;
+        //fout.open("res_mom.txt");
+        //Dune::printvector(fout, res_mom, "", "");
+        //fout.close();
+        //fout.open("res_mas.txt");
+        //Dune::printvector(fout, res_mas, "", "");
+        //fout.close();
+        //std::cout << "done\n";
         timeLoop->start(); do
         {
             // solve the non-linear system with time step control
             nonLinearSolver.solve(x, *timeLoop);
-            auto A = assembler->jacobian();
-            auto A_mom = A[momentumIdx][momentumIdx];
-            Dune::writeMatrixToMatlab(A_mom, "a_mom_matrix_new.mat");
+            //auto A = assembler->jacobian();
+            //auto A_mom = A[momentumIdx][momentumIdx];
+            //auto A_mas = A[massIdx][massIdx];
+            //Dune::writeMatrixToMatlab(A_mom, "a_mom_matrix.mat");
+            //Dune::writeMatrixToMatlab(A_mom, "a_mas_matrix.mat");
 
             // make the new solution the old solution
             xOld = x;
@@ -262,6 +309,9 @@ int main(int argc, char** argv) try
 
             // write vtk output
             vtkWriter.write(timeLoop->time());
+
+            // write volume, surface and relative mass
+            //massProblem.writeScalars(std::get<1>(xOld)&, fout);
 
             // // calculate and print mass fluxes over the planes
             // flux.calculateMassOrMoleFluxes();

@@ -94,7 +94,16 @@ public:
         out.addVolumeVariable([](const auto& v){ return v.density(); }, IOName::density());
         out.addVolumeVariable([](const auto& v){ return v.phasefield(1); }, "phi1");
         out.addVolumeVariable([](const auto& v){ return v.phasefield(2); }, "phi2");
-        out.addVolumeVariable([](const auto& v){ return v.concentration(1); }, "u");
+        out.addVolumeVariable([](const auto& v){ return v.phasefield(3); }, "phi3");
+        out.addVolumeVariable([](const auto& v){ return v.concentration(1); }, "u1");
+        out.addVolumeVariable([](const auto& v){ return v.concentration(2); }, "u2");
+        out.addVolumeVariable([](const auto& v){ return v.concentration(3); }, "u3");
+        out.addVolumeVariable([](const auto& v){ return v.phasefield(1) > v.phasefield(2) ? (
+                v.phasefield(1) > v.phasefield(3) ? 1.0 : 0.0 ) : 0.0; }, "chi1");
+        out.addVolumeVariable([](const auto& v){ return v.phasefield(2) > v.phasefield(1) ? (
+                v.phasefield(2) > v.phasefield(3) ? 1.0 : 0.0 ) : 0.0; }, "chi2");
+        out.addVolumeVariable([](const auto& v){ return v.phasefield(3) > v.phasefield(1) ? (
+                v.phasefield(3) > v.phasefield(2) ? 1.0 : 0.0 ) : 0.0; }, "chi3");
 
         // add discretization-specific fields
         additionalOutput_(out, isStaggered<OutputModule>());

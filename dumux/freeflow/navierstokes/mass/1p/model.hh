@@ -75,7 +75,7 @@ struct NavierStokesMassOnePModelTraits
     //! There are as many momentum balance equations as dimensions
     //! and one mass balance equation.
     //! plus one equation per phasefield and per transported species
-    static constexpr int numEq() { return 1+2+1; }
+    static constexpr int numEq() { return 1+3+3; }
 
     //! The number of phases is 1
     static constexpr int numFluidPhases() { return 1; }

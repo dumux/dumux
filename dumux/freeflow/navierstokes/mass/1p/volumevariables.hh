@@ -133,7 +133,7 @@ public:
      *        the control volume.
      */
     Scalar concentration(int speciesIdx) const
-    { return priVars_[Indices::uIdx +speciesIdx-1]; }
+    { return priVars_[Indices::u1Idx +speciesIdx-1]; }
 
      /*!
      * \brief Returns the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
