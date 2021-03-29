@@ -30,6 +30,21 @@
 #include <dumux/porousmediumflow/nonisothermal/operators.hh>
 
 namespace Dumux::Experimental {
+namespace Detail {
+
+template<class ModelTraits, class ElemVars,
+         bool enable = ModelTraits::enableEnergyBalance()>
+struct DefaultEnergyOperatorsChooser;
+
+template<class ModelTraits, class ElemVars>
+struct DefaultEnergyOperatorsChooser<ModelTraits, ElemVars, true>
+{ using type = FVNonIsothermalOperators<ModelTraits, FVOperatorsContext<ElemVars>>; };
+
+template<class ModelTraits, class ElemVars>
+struct DefaultEnergyOperatorsChooser<ModelTraits, ElemVars, false>
+{ using type = void; };
+
+} // end namespace Detail
 
 /*!
  * \ingroup PorousmediumflowModels
@@ -41,13 +56,11 @@ namespace Dumux::Experimental {
  * \tparam ElemVars The element-(stencil)-local variables
  * \tparam EnergyOperators optional template argument, specifying the class that
  *                         handles the operators related to non-isothermal effects.
- *                         The default energy operators are compatible with isothermal
- *                         simulations.
  */
 template<class ModelTraits,
          class FluxVariables,
          class ElemVars,
-         class EnergyOperators = FVNonIsothermalOperators<ModelTraits, FVOperatorsContext<ElemVars>>>
+         class EnergyOperators = typename Detail::DefaultEnergyOperatorsChooser<ModelTraits, ElemVars>::type>
 class FVImmiscibleOperators
 : public FVOperators<ElemVars>
 {

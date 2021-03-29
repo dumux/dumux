@@ -65,15 +65,11 @@ public:
                                      const LocalContext& context,
                                      int phaseIdx)
     {
-        // do no-op in case energy balance is not active
-        if constexpr (ModelTraits::enableEnergyBalance())
-        {
-            const auto& volVars = context.elementVariables().elemVolVars()[scv];
-            storage[ModelTraits::Indices::energyEqIdx] += volVars.porosity()
-                                                          *volVars.density(phaseIdx)
-                                                          *volVars.internalEnergy(phaseIdx)
-                                                          *volVars.saturation(phaseIdx);
-        }
+        const auto& volVars = context.elementVariables().elemVolVars()[scv];
+        storage[ModelTraits::Indices::energyEqIdx] += volVars.porosity()
+                                                      *volVars.density(phaseIdx)
+                                                      *volVars.internalEnergy(phaseIdx)
+                                                      *volVars.saturation(phaseIdx);
     }
 
     /*!
@@ -88,15 +84,11 @@ public:
                                      const SubControlVolume& scv,
                                      const LocalContext& context)
     {
-        // do no-op in case energy balance is not active
-        if constexpr (ModelTraits::enableEnergyBalance())
-        {
-            const auto& volVars = context.elementVariables().elemVolVars()[scv];
-            storage[ModelTraits::Indices::energyEqIdx] += volVars.temperature()
-                                                          *volVars.solidHeatCapacity()
-                                                          *volVars.solidDensity()
-                                                          *(1.0 - volVars.porosity());
-        }
+        const auto& volVars = context.elementVariables().elemVolVars()[scv];
+        storage[ModelTraits::Indices::energyEqIdx] += volVars.temperature()
+                                                      *volVars.solidHeatCapacity()
+                                                      *volVars.solidDensity()
+                                                      *(1.0 - volVars.porosity());
     }
 
     /*!
@@ -111,14 +103,10 @@ public:
                                       FluxVariables& fluxVars,
                                       int phaseIdx)
     {
-        // do no-op in case energy balance is not active
-        if constexpr (ModelTraits::enableEnergyBalance())
-        {
-            auto upwindTerm = [phaseIdx](const auto& volVars)
-            { return volVars.density(phaseIdx)*volVars.mobility(phaseIdx)*volVars.enthalpy(phaseIdx); };
+        auto upwindTerm = [phaseIdx](const auto& volVars)
+        { return volVars.density(phaseIdx)*volVars.mobility(phaseIdx)*volVars.enthalpy(phaseIdx); };
 
-            flux[ModelTraits::Indices::energyEqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
-        }
+        flux[ModelTraits::Indices::energyEqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
     }
 
     /*!
@@ -131,9 +119,7 @@ public:
     static void addHeatConductionFlux(NumEqVector& flux,
                                       FluxVariables& fluxVars)
     {
-        // do no-op in case energy balance is not active
-        if constexpr (ModelTraits::enableEnergyBalance())
-            flux[ModelTraits::Indices::energyEqIdx] += fluxVars.heatConductionFlux();
+        flux[ModelTraits::Indices::energyEqIdx] += fluxVars.heatConductionFlux();
     }
 
     /*!
