@@ -41,6 +41,7 @@
 #include <dumux/linear/seqsolverbackend.hh>
 
 #include <dumux/porousmediumflow/immiscible/operators.hh>
+#include <dumux/porousmediumflow/fluxvariables.hh>
 #include <dumux/timestepping/multistagemethods.hh>
 
 #include <dumux/assembly/fv/localoperator.hh>
@@ -127,8 +128,8 @@ int main(int argc, char** argv)
 
     // the assembler (we use the immiscible operators to define the system of equations)
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-    using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using ElementVariables = typename GridVariables::LocalView;
+    using FluxVariables = Experimental::PorousMediumFluxVariables<TypeTag>;
     using Operators = Experimental::FVImmiscibleOperators<ModelTraits, FluxVariables, ElementVariables>;
 
     using LocalOperator = Experimental::FVLocalOperator<Operators>;

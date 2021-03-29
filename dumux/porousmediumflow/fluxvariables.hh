@@ -29,27 +29,17 @@
 #include <array>
 
 #include <dumux/common/properties.hh>
+#include <dumux/discretization/localcontext.hh>
 #include <dumux/flux/fluxvariablesbase.hh>
 #include <dumux/flux/upwindscheme.hh>
 
 namespace Dumux {
+namespace Detail {
 
-/*!
- * \ingroup PorousmediumflowModels
- * \brief The porous medium flux variables class that computes advective / convective,
- *        molecular diffusive and heat conduction fluxes.
- *
- * \param TypeTag The type tag for access to type traits
- * \param UpScheme The upwind scheme to be applied to advective fluxes
- * \note  Not all specializations are currently implemented
- */
-template<class TypeTag,
-         class UpScheme = UpwindScheme<GetPropType<TypeTag, Properties::GridGeometry>> >
-class PorousMediumFluxVariables
-: public FluxVariablesBase<GetPropType<TypeTag, Properties::Problem>,
-                           typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView,
-                           typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView,
-                           typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView>
+//! Implementation of the flux variables to achieve compatibility-layer with experimental assembly
+template<class TypeTag, class BaseFluxVariables, class UpScheme>
+class PorousMediumFluxVariablesImpl
+: public BaseFluxVariables
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
@@ -72,7 +62,7 @@ public:
     static constexpr bool enableThermalNonEquilibrium = getPropValue<TypeTag, Properties::EnableThermalNonEquilibrium>();
 
     //! The constructor
-    PorousMediumFluxVariables()
+    PorousMediumFluxVariablesImpl()
     {
         advFluxIsCached_.reset();
         advFluxBeforeUpwinding_.fill(0.0);
@@ -165,6 +155,47 @@ private:
     mutable std::array<Scalar, numPhases> advFluxBeforeUpwinding_;
 };
 
+} // end namespace Detail
+
+/*!
+ * \ingroup PorousmediumflowModels
+ * \brief The porous medium flux variables class that computes advective / convective,
+ *        molecular diffusive and heat conduction fluxes.
+ *
+ * \param TypeTag The type tag for access to type traits
+ * \param UpScheme The upwind scheme to be applied to advective fluxes
+ * \note  Not all specializations are currently implemented
+ */
+template<class TypeTag,
+         class UpScheme = UpwindScheme<GetPropType<TypeTag, Properties::GridGeometry>> >
+using PorousMediumFluxVariables
+    = Detail::PorousMediumFluxVariablesImpl<TypeTag,
+                                            FluxVariablesBase<GetPropType<TypeTag, Properties::Problem>,
+                                                              typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView,
+                                                              typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView,
+                                                              typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView>,
+                                            UpScheme>;
+
+namespace Experimental {
+
+/*!
+ * \ingroup PorousmediumflowModels
+ * \brief The porous medium flux variables class that computes advective / convective,
+ *        molecular diffusive and heat conduction fluxes.
+ *
+ * \param TypeTag The type tag for access to type traits
+ * \param UpScheme The upwind scheme to be applied to advective fluxes
+ * \note  Not all specializations are currently implemented
+ * \todo  Get rid of type tag as template arg somehow!
+ */
+template<class TypeTag,
+         class UpScheme = UpwindScheme<GetPropType<TypeTag, Properties::GridGeometry>> >
+using PorousMediumFluxVariables
+    = Dumux::Detail::PorousMediumFluxVariablesImpl<TypeTag,
+                                                   FluxVariablesBase<DefaultLocalContext<typename GetPropType<TypeTag, Dumux::Properties::GridVariables>::LocalView>>,
+                                                   UpScheme>;
+
+} // end namespace Experimental
 } // end namespace Dumux
 
 #endif

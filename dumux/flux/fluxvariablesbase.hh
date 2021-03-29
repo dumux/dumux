@@ -25,6 +25,9 @@
 #define DUMUX_DISCRETIZATION_FLUXVARIABLESBASE_HH
 
 #include <vector>
+#include <optional>
+
+#include <dumux/discretization/method.hh>
 
 namespace Dumux {
 
@@ -93,6 +96,82 @@ private:
     const ElementFluxVariablesCache* elemFluxVarsCachePtr_; //!< Pointer to the current element flux variables cache
 };
 
+namespace Experimental {
+
+/*!
+ * \ingroup Flux
+ * \brief Base class for the flux variables living on a sub control volume face
+ * \tparam LocalContext the element stencil-local context, consisting of
+ *                      the local geometry and primary & secondary variables
+ */
+template<class LocalContext>
+class FluxVariablesBase
+{
+    using FVElementGeometry = typename LocalContext::ElementGridGeometry;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using GridGeometry = typename FVElementGeometry::GridGeometry;
+
+    using GridView = typename GridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Stencil = std::vector<std::size_t>;
+
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
+
+public:
+
+    //! Initialize the flux variables storing some temporary pointers
+    void init(const LocalContext& context,
+              const SubControlVolumeFace& scvf)
+    {
+        contextPtr_ = &context;
+        scvFacePtr_ = &scvf;
+
+        // for cell-centered methods, the element inside of the scvf may
+        // not be the one the FVElementGeometry is bound to.
+        if constexpr (!isBox)
+        {
+            const auto& fvGeometry = context.elementGridGeometry();
+            const auto& gridGeometry = fvGeometry.gridGeometry();
+            const auto& boundElement = fvGeometry.element();
+            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+
+            const auto boundElementIdx = gridGeometry.elementMapper().index(boundElement);
+            if (insideScv.elementIndex() != boundElementIdx)
+                element_ = gridGeometry.element(boundElementIdx);
+        }
+    }
+
+    decltype(auto) problem() const
+    { return elemVolVars().gridVolVars().problem(); }
+
+    decltype(auto) elemVolVars() const
+    { return contextPtr_->elementVariables().elemVolVars(); }
+
+    decltype(auto) elemFluxVarsCache() const
+    { return contextPtr_->elementVariables().elemFluxVarsCache(); }
+
+    const SubControlVolumeFace& scvFace() const
+    { return *scvFacePtr_; }
+
+    const FVElementGeometry& fvGeometry() const
+    { return contextPtr_->elementGridGeometry(); }
+
+    const Element& element() const
+    {
+        if constexpr (isBox)
+            return contextPtr_->elementGridGeometry().element();
+        else
+            return element_ ? *element_
+                            : contextPtr_->elementGridGeometry().element();
+    }
+
+private:
+    const LocalContext* contextPtr_;         //!< Pointer to the local context
+    const SubControlVolumeFace* scvFacePtr_; //!< Pointer to the sub control volume face for which the flux variables are created
+    std::optional<Element> element_;         //!< The element on the inside of the sub-control volume face
+};
+
+} // end namespace Experimental
 } // end namespace Dumux
 
 #endif

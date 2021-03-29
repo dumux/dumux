@@ -151,28 +151,8 @@ public:
                          const LocalContext& context,
                          const SubControlVolumeFace& scvf)
     {
-        const auto& fvGeometry = context.elementGridGeometry();
-        const auto& elemVolVars = context.elementVariables().elemVolVars();
-        const auto& elemFluxVarsCache = context.elementVariables().elemFluxVarsCache();
-
         FluxVariables fluxVars;
-
-        // for box, the "inside" element is always the one the grid geom is bound to
-        if constexpr (GridGeometry::discMethod == DiscretizationMethod::box)
-            fluxVars.init(problem, fvGeometry.element(), fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-        else
-        {
-            const auto& gridGeom = fvGeometry.gridGeometry();
-            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-            const auto boundElementIdx = gridGeom.elementMapper().index(fvGeometry.element());
-
-            if (insideScv.elementIndex() == boundElementIdx)
-                fluxVars.init(problem, fvGeometry.element(), fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-            else
-                fluxVars.init(problem, gridGeom.element(insideScv.elementIndex()),
-                              fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-        }
-
+        fluxVars.init(context, scvf);
 
         NumEqVector flux;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
