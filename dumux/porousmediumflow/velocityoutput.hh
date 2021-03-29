@@ -33,7 +33,7 @@
 #include <dumux/io/velocityoutput.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/elementsolution.hh>
-#include <dumux/discretization/fvgridvariables.hh>
+#include <dumux/discretization/concepts.hh>
 #include <dumux/porousmediumflow/velocity.hh>
 
 namespace Dumux {
@@ -89,8 +89,7 @@ public:
     PorousMediumFlowVelocityOutput(const GridVariables& gridVariables)
     {
         // check, if velocity output can be used (works only for cubes so far)
-        // compatibility layer with new and old-style grid variables
-        if constexpr (Experimental::areExperimentalGridVars<GridVariables>)
+        if constexpr (Dune::models<Experimental::Concept::FVGridVariables, GridVariables>())
             enableOutput_ = getParamFromGroup<bool>(gridVariables.gridVolVars().problem().paramGroup(), "Vtk.AddVelocity");
         else
             enableOutput_ = getParamFromGroup<bool>(gridVariables.curGridVolVars().problem().paramGroup(), "Vtk.AddVelocity");

@@ -45,7 +45,7 @@
 #include <dumux/io/format.hh>
 
 #include <dumux/discretization/method.hh>
-#include <dumux/discretization/fvgridvariables.hh>
+#include <dumux/discretization/concepts.hh>
 
 #include "vtkfunction.hh"
 #include "velocityoutput.hh"
@@ -380,15 +380,14 @@ public:
     }
 
 protected:
-    // extract the grid volume variables from the grid variables (experimental interface)
-    template<bool isExperimental = Experimental::areExperimentalGridVars<GridVariables>,
-             std::enable_if_t<isExperimental, int> = 0>
-    decltype(auto) gridVolVars() const { return gridVariables_.gridVolVars(); }
-
-    // extract the grid volume variables from the grid variables (experimental interface)
-    template<bool isExperimental = Experimental::areExperimentalGridVars<GridVariables>,
-             std::enable_if_t<!isExperimental, int> = 0>
-    decltype(auto) gridVolVars() const { return gridVariables_.curGridVolVars(); }
+    // obtain the grid volume variables from the grid variables
+    decltype(auto) gridVolVars() const
+    {
+        if constexpr (Dune::models<Experimental::Concept::FVGridVariables, GridVariables>())
+            return gridVariables_.gridVolVars();
+        else
+            return gridVariables_.curGridVolVars();
+    }
 
     // some return functions for differing implementations to use
     const auto& problem() const { return gridVolVars().problem(); }

@@ -36,7 +36,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/elementsolution.hh>
-#include <dumux/discretization/fvgridvariables.hh>
+#include <dumux/discretization/concepts.hh>
 #include <dumux/flux/traits.hh>
 
 namespace Dumux {
@@ -462,13 +462,14 @@ private:
 
 private:
 
-    // extract problem from grid vars (experimental interface)
-    template<class GV, std::enable_if_t<Experimental::areExperimentalGridVars<GV>, int> = 0>
-    const Problem& getProblem_(const GV& gv) { return gv.gridVolVars().problem(); }
-
-    // extract problem from grid vars (standards interface)
-    template<class GV, std::enable_if_t<!Experimental::areExperimentalGridVars<GV>, int> = 0>
-    const Problem& getProblem_(const GV& gv) { return gv.curGridVolVars().problem(); }
+    // extract problem from grid variables
+    const Problem& getProblem_(const GridVariables& gv)
+    {
+        if constexpr (Dune::models<Experimental::Concept::FVGridVariables, GridVariables>())
+            return gv.gridVolVars().problem();
+        else
+            return gv.curGridVolVars().problem();
+    }
 
     const Problem& problem_;
     const GridGeometry& gridGeometry_;
