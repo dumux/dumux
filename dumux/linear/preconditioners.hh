@@ -146,17 +146,15 @@ public:
      */
     virtual void apply(X& update, const Y& currentDefect)
     {
-        using namespace Dune::Indices;
+        auto& A = matrix_[Dune::Indices::_0][Dune::Indices::_0];
+        auto& B = matrix_[Dune::Indices::_0][Dune::Indices::_1];
+        auto& C = matrix_[Dune::Indices::_1][Dune::Indices::_0];
+        auto& D = matrix_[Dune::Indices::_1][Dune::Indices::_1];
 
-        auto& A = matrix_[_0][_0];
-        auto& B = matrix_[_0][_1];
-        auto& C = matrix_[_1][_0];
-        auto& D = matrix_[_1][_1];
-
-        const auto& f = currentDefect[_0];
-        const auto& g = currentDefect[_1];
-        auto& u = update[_0];
-        auto& p = update[_1];
+        const auto& f = currentDefect[Dune::Indices::_0];
+        const auto& g = currentDefect[Dune::Indices::_1];
+        auto& u = update[Dune::Indices::_0];
+        auto& p = update[Dune::Indices::_1];
 
         // incorporate Dirichlet cell values
         // TODO: pass Dirichlet constraint handler from outside
@@ -245,10 +243,9 @@ private:
      */
     scalar_field_type estimateOmega_() const
     {
-        using namespace Dune::Indices;
-        auto& A = matrix_[_0][_0];
-        auto& B = matrix_[_0][_1];
-        auto& C = matrix_[_1][_0];
+        auto& A = matrix_[Dune::Indices::_0][Dune::Indices::_0];
+        auto& B = matrix_[Dune::Indices::_0][Dune::Indices::_1];
+        auto& C = matrix_[Dune::Indices::_1][Dune::Indices::_0];
 
         U x(A.M());
         x = 1.0;
