@@ -26,79 +26,15 @@
 #ifndef DUMUX_BLOOD_FLOW_PROBLEM_HH
 #define DUMUX_BLOOD_FLOW_PROBLEM_HH
 
-#include <dune/foamgrid/foamgrid.hh>
-
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/cctpfa.hh>
-#include <dumux/discretization/box.hh>
 
-#include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
-
-#include <dumux/material/components/constant.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include <dumux/multidomain/embedded/couplingmanager1d3d.hh> // for coupling mode
 
-#include "spatialparams_bloodflow.hh"
-
 namespace Dumux {
-// forward declaration
-template <class TypeTag> class BloodFlowProblem;
-
-namespace Properties {
-
-// Create new type tags
-namespace TTag {
-struct BloodFlow { using InheritsFrom = std::tuple<OneP>; };
-struct BloodFlowCC { using InheritsFrom = std::tuple<BloodFlow, CCTpfaModel>; };
-struct BloodFlowBox { using InheritsFrom = std::tuple<BloodFlow, BoxModel>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::BloodFlow> { using type = Dune::FoamGrid<1, 3>; };
-
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::BloodFlow> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::BloodFlow> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::BloodFlow> { static constexpr bool value = true; };
-template<class TypeTag>
-struct SolutionDependentAdvection<TypeTag, TTag::BloodFlow> { static constexpr bool value = false; };
-template<class TypeTag>
-struct SolutionDependentMolecularDiffusion<TypeTag, TTag::BloodFlow> { static constexpr bool value = false; };
-template<class TypeTag>
-struct SolutionDependentHeatConduction<TypeTag, TTag::BloodFlow> { static constexpr bool value = false; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::BloodFlow> { using type = BloodFlowProblem<TypeTag>; };
-
-// the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::BloodFlow>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
-};
-
-// Set the problem property
-template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::BloodFlow> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::BloodFlow>
-{
-    using type = BloodFlowSpatialParams<GetPropType<TypeTag, Properties::GridGeometry>,
-                                        GetPropType<TypeTag, Properties::Scalar>>;
-};
-} // end namespace Properties
 
 /*!
  * \ingroup EmbeddedTests

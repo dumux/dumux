@@ -25,13 +25,11 @@
 
 #include <config.h>
 
-#include <ctime>
 #include <iostream>
 #include <fstream>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/istl/io.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -39,46 +37,17 @@
 #include <dumux/geometry/diameter.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/assembly/fvassembler.hh>
-#include <dumux/assembly/diffmethod.hh>
-#include <dumux/discretization/method.hh>
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
+#include <dumux/io/grid/gridmanager_foam.hh>
 
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
-#include <dumux/multidomain/embedded/couplingmanager2d3d.hh>
 
-#include "problem_matrix.hh"
-#include "problem_fracture.hh"
+#include "properties.hh"
 
 namespace Dumux {
-namespace Properties {
-
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::Matrix>
-{
-    using Traits = MultiDomainTraits<TypeTag, Properties::TTag::Fracture>;
-    using type = EmbeddedCouplingManager2d3d<Traits>;
-};
-
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::Fracture>
-{
-    using Traits = MultiDomainTraits<Properties::TTag::Matrix, TypeTag>;
-    using type = EmbeddedCouplingManager2d3d<Traits>;
-};
-
-template<class TypeTag>
-struct PointSource<TypeTag, TTag::Matrix> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSource<0>; };
-template<class TypeTag>
-struct PointSource<TypeTag, TTag::Fracture> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSource<1>; };
-template<class TypeTag>
-struct PointSourceHelper<TypeTag, TTag::Matrix> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSourceHelper<0>; };
-template<class TypeTag>
-struct PointSourceHelper<TypeTag, TTag::Fracture> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSourceHelper<1>; };
-
-} // end namespace Properties
 
 struct SolverTag { struct Nonlinear {}; struct Linear {}; };
 

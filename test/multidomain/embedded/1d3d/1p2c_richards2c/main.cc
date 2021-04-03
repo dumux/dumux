@@ -25,7 +25,6 @@
 
 #include <config.h>
 
-#include <ctime>
 #include <iostream>
 #include <fstream>
 
@@ -37,47 +36,20 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/assembly/fvassembler.hh>
-#include <dumux/assembly/diffmethod.hh>
-#include <dumux/discretization/method.hh>
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager.hh>
+
+#include <dumux/io/grid/gridmanager_ug.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
+#include <dumux/io/grid/gridmanager_foam.hh>
 
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
-#include <dumux/multidomain/embedded/couplingmanager1d3d.hh>
 #include <dumux/multidomain/glue.hh>
 
-#include "problem_root.hh"
-#include "problem_soil.hh"
+#include "properties.hh"
 
 namespace Dumux {
-namespace Properties {
-
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::Soil>
-{
-    using Traits = MultiDomainTraits<TypeTag, Properties::TTag::Root>;
-    using type = Embedded1d3dCouplingManager<Traits, Embedded1d3dCouplingMode::Average>;
-};
-
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::Root>
-{
-    using Traits = MultiDomainTraits<Properties::TTag::Soil, TypeTag>;
-    using type = Embedded1d3dCouplingManager<Traits, Embedded1d3dCouplingMode::Average>;
-};
-
-template<class TypeTag>
-struct PointSource<TypeTag, TTag::Soil> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSource<0>; };
-template<class TypeTag>
-struct PointSource<TypeTag, TTag::Root> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSource<1>; };
-template<class TypeTag>
-struct PointSourceHelper<TypeTag, TTag::Soil> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSourceHelper<0>; };
-template<class TypeTag>
-struct PointSourceHelper<TypeTag, TTag::Root> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSourceHelper<1>; };
-
-} // end namespace Properties
 
 //! Helper function for mass balance evaluations
 template<class Problem, class SolutionVector, class GridVariables>

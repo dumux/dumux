@@ -25,74 +25,14 @@
 #ifndef DUMUX_FRACTURE_PROBLEM_HH
 #define DUMUX_FRACTURE_PROBLEM_HH
 
-#include <dune/foamgrid/foamgrid.hh>
-
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/cctpfa.hh>
 
-#include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
 
-#include <dumux/material/components/constant.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
-
-#include "spatialparams.hh"
-
 namespace Dumux {
-// forward declaration
-template <class TypeTag> class FractureProblem;
-
-namespace Properties {
-
-// Create new type tags
-namespace TTag {
-struct Fracture { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::Fracture> { using type = Dune::FoamGrid<2, 3>; };
-
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::Fracture> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::Fracture> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::Fracture> { static constexpr bool value = true; };
-template<class TypeTag>
-struct SolutionDependentAdvection<TypeTag, TTag::Fracture> { static constexpr bool value = false; };
-template<class TypeTag>
-struct SolutionDependentMolecularDiffusion<TypeTag, TTag::Fracture> { static constexpr bool value = false; };
-template<class TypeTag>
-struct SolutionDependentHeatConduction<TypeTag, TTag::Fracture> { static constexpr bool value = false; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::Fracture> { using type = FractureProblem<TypeTag>; };
-
-// the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::Fracture>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
-};
-
-// Set the problem property
-template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::Fracture> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::Fracture>
-{
-    using type = MatrixFractureSpatialParams<GetPropType<TypeTag, Properties::GridGeometry>,
-                                             GetPropType<TypeTag, Properties::Scalar>>;
-};
-} // end namespace Properties
 
 /*!
  * \ingroup EmbeddedTests
