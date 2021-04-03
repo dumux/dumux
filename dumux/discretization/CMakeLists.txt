@@ -22,10 +22,6 @@ fvproperties.hh
 gridvariables.hh
 localview.hh
 method.hh
-rotationpolicy.hh
-rotationsymmetricgridgeometrytraits.hh
-rotationsymmetricscv.hh
-rotationsymmetricscvf.hh
 scvandscvfiterators.hh
 staggered.hh
 subcontrolvolumebase.hh
