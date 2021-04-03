@@ -215,23 +215,12 @@ public:
     }
 
     /*!
-     * \brief Returns the beta value which is the alpha value divided by the square root of the (scalar-valued) interface permeability.
-     */
-    [[deprecated("Use betaBJ with tangential vector instead. Will be removed after 3.3")]]
-    Scalar betaBJ(const Element& element, const SubControlVolumeFace& scvf) const
-    {
-        using std::sqrt;
-        return asImp_().alphaBJ(scvf) / sqrt(asImp_().permeability(element, scvf));
-    }
-
-    /*!
      * \brief Returns the velocity in the porous medium (which is 0 by default according to Saffmann).
      */
     VelocityVector porousMediumVelocity(const Element& element, const SubControlVolumeFace& scvf) const
     {
         return VelocityVector(0.0);
     }
-
 
     /*!
      * \brief Returns the slip velocity at a porous boundary based on the Beavers-Joseph(-Saffman) condition.
