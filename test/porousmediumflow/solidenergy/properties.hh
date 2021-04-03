@@ -16,47 +16,45 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/*!
+/**
  * \file
- * \ingroup OnePTests
- * \brief Definition of the spatial parameters for the solid energy test
+ * \ingroup SolidEnergyTests
+ * \brief Properties for the solid energy test
  */
-#ifndef DUMUX_TEST_SOLIDENERGY_SPATIAL_PARAMS_HH
-#define DUMUX_TEST_SOLIDENERGY_SPATIAL_PARAMS_HH
+#ifndef DUMUX_TEST_SOLIDENERGY_PROPERTIES_HH
+#define DUMUX_TEST_SOLIDENERGY_PROPERTIES_HH
 
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dune/grid/yaspgrid.hh>
+#include <dumux/discretization/cctpfa.hh>
+#include <dumux/porousmediumflow/solidenergy/model.hh>
 
-namespace Dumux {
+#include "problem.hh"
+#include "spatialparams.hh"
 
-/*!
- * \ingroup OnePTests
- * \brief Definition of the spatial parameters for the solid energy test
- */
-template<class GridGeometry, class Scalar>
-class SolidEnergySpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar,
-                             SolidEnergySpatialParams<GridGeometry, Scalar>>
+namespace Dumux::Properties {
+
+// Create new type tags
+namespace TTag {
+struct SolidEnergyTest { using InheritsFrom = std::tuple<SolidEnergy, CCTpfaModel>; };
+} // end namespace TTag
+
+// Set the grid type
+template<class TypeTag>
+struct Grid<TypeTag, TTag::SolidEnergyTest> { using type = Dune::YaspGrid<2>; };
+
+// Set the problem property
+template<class TypeTag>
+struct Problem<TypeTag, TTag::SolidEnergyTest> { using type = SolidEnergyProblem<TypeTag>; };
+
+// Set the spatial parameters
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::SolidEnergyTest>
 {
-    using GridView = typename GridGeometry::GridView;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
-                                           SolidEnergySpatialParams<GridGeometry, Scalar>>;
-
-    using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-
-public:
-    SolidEnergySpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry) {}
-
-    /*!
-     * \brief Define the porosity \f$\mathrm{[-]}\f$.
-     *
-     * \param globalPos The global position
-     */
-    Scalar porosityAtPos(const GlobalPosition& globalPos) const
-    { return 0.4; }
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using type = SolidEnergySpatialParams<GridGeometry, Scalar>;
 };
 
-} // end namespace Dumux
+} // end namespace Dumux::Properties
 
 #endif
