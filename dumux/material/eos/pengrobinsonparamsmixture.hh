@@ -202,9 +202,6 @@ public:
         return pureParams_[compIdx];
     }
 
-    [[deprecated("Will be removed after Dumux 3.3")]]
-    void checkDefined() const {}
-
 protected:
     PureParams pureParams_[numComponents];
 
