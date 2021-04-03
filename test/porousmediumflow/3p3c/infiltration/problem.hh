@@ -26,58 +26,13 @@
 #ifndef DUMUX_INFILTRATION_THREEPTHREEC_PROBLEM_HH
 #define DUMUX_INFILTRATION_THREEPTHREEC_PROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
-
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
 
-#include <dumux/discretization/cctpfa.hh>
-#include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/3p3c/model.hh>
-#include <dumux/material/fluidsystems/h2oairmesitylene.hh>
-
-#include "spatialparams.hh"
 
 namespace Dumux {
-
-/*!
- * \ingroup ThreePThreeCTests
- * \brief Isothermal NAPL infiltration problem: LNAPL contaminates
- *        the unsaturated and the saturated groundwater zone.
- */
-template <class TypeTag>
-class InfiltrationThreePThreeCProblem;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct InfiltrationThreePThreeC { using InheritsFrom = std::tuple<ThreePThreeC>; };
-struct InfiltrationThreePThreeCBox { using InheritsFrom = std::tuple<InfiltrationThreePThreeC, BoxModel>; };
-struct InfiltrationThreePThreeCCCTpfa { using InheritsFrom = std::tuple<InfiltrationThreePThreeC, CCTpfaModel>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::InfiltrationThreePThreeC> { using type = Dune::YaspGrid<2>; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::InfiltrationThreePThreeC> { using type = InfiltrationThreePThreeCProblem<TypeTag>; };
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::InfiltrationThreePThreeC>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = InfiltrationThreePThreeCSpatialParams<GridGeometry, Scalar>;
-};
-
-// Set the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::InfiltrationThreePThreeC>
-{ using type = FluidSystems::H2OAirMesitylene<GetPropType<TypeTag, Properties::Scalar>>; };
-}
 
 /*!
  * \ingroup ThreePThreeCTests
@@ -321,6 +276,7 @@ private:
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
 };
+
 } //end namespace Dumux
 
 #endif

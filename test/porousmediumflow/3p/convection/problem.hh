@@ -25,63 +25,17 @@
 #ifndef DUMUX_3PNI_CONVECTION_PROBLEM_HH
 #define DUMUX_3PNI_CONVECTION_PROBLEM_HH
 
+#include <algorithm>
 #include <cmath>
-#include <dune/grid/yaspgrid.hh>
 
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/common/properties.hh>
 
-#include <dumux/discretization/elementsolution.hh>
-#include <dumux/discretization/cctpfa.hh>
-#include <dumux/discretization/ccmpfa.hh>
-#include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/3p/model.hh>
-#include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 #include <dumux/material/components/h2o.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
-
-#include "../conduction/spatialparams.hh"  // reuse the conduction spatialParams
 
 namespace Dumux {
-/**
- * \ingroup ThreePTests
- * \brief Test for the ThreePModel in combination with the NI model for a convection problem.
- */
-template <class TypeTag>
-class ThreePNIConvectionProblem;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct ThreePNIConvection { using InheritsFrom = std::tuple<ThreePNI>; };
-struct ThreePNIConvectionBox { using InheritsFrom = std::tuple<ThreePNIConvection, BoxModel>; };
-struct ThreePNIConvectionCCTpfa { using InheritsFrom = std::tuple<ThreePNIConvection, CCTpfaModel>; };
-struct ThreePNIConvectionCCMpfa { using InheritsFrom = std::tuple<ThreePNIConvection, CCMpfaModel>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::ThreePNIConvection> { using type = Dune::YaspGrid<2>; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::ThreePNIConvection> { using type = ThreePNIConvectionProblem<TypeTag>; };
-
-
-// Set the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::ThreePNIConvection>
-{ using type = FluidSystems::H2OAirMesitylene<GetPropType<TypeTag, Properties::Scalar>>; };
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::ThreePNIConvection>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = ThreePNISpatialParams<GridGeometry, Scalar>;
-};
-} // end namespace Properties
 
 /*!
  * \ingroup ThreePTests
