@@ -27,11 +27,12 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-
 #include <dumux/common/boundarytypes.hh>
+
 #include <dumux/porousmediumflow/problem.hh>
 
 namespace Dumux {
+
 /*!
  * \ingroup TwoPOneCTests
  * \brief Non-isothermal 2D problem where steam is injected on the lower left side of the domain.

@@ -24,17 +24,10 @@
 
 #include <config.h>
 
-#include "properties.hh"
-
-#include <ctime>
 #include <iostream>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/grid/io/file/vtk.hh>
-#include <dune/istl/io.hh>
-
-#include <dumux/discretization/method.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -46,7 +39,9 @@
 #include <dumux/assembly/fvassembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
+
+#include "properties.hh"
 
 int main(int argc, char** argv)
 {
