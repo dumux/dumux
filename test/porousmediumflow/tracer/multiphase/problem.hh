@@ -26,6 +26,9 @@
 #ifndef DUMUX_TRACER_MULTIPHASE_TEST_PROBLEM_HH
 #define DUMUX_TRACER_MULTIPHASE_TEST_PROBLEM_HH
 
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
+
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
