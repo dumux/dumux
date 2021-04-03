@@ -24,7 +24,10 @@
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_ONEPNC_BULKPROBLEM_HH
 #define DUMUX_TEST_TPFAFACETCOUPLING_ONEPNC_BULKPROBLEM_HH
 
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
+
 #include <dumux/porousmediumflow/problem.hh>
 
 // defined in CMakeLists.txt

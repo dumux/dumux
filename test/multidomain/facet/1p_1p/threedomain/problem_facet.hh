@@ -26,61 +26,11 @@
 #ifndef DUMUX_TEST_FACETCOUPLING_THREEDOMAIN_ONEP_FACETPROBLEM_HH
 #define DUMUX_TEST_FACETCOUPLING_THREEDOMAIN_ONEP_FACETPROBLEM_HH
 
-#include <dune/foamgrid/foamgrid.hh>
-
 #include <dumux/common/boundarytypes.hh>
 
-#include <dumux/material/components/constant.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
-
-#include <dumux/multidomain/facet/box/properties.hh>
-#include <dumux/multidomain/facet/cellcentered/tpfa/properties.hh>
-#include <dumux/multidomain/facet/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/1p/model.hh>
-
-#include "spatialparams.hh"
 
 namespace Dumux {
-// forward declarations
-template<class TypeTag> class OnePFacetProblem;
-
-namespace Properties {
-// create the type tag nodes
-// Create new type tags
-namespace TTag {
-struct OnePFacet { using InheritsFrom = std::tuple<OneP>; };
-struct OnePFacetTpfa { using InheritsFrom = std::tuple<CCTpfaFacetCouplingModel, OnePFacet>; };
-struct OnePFacetMpfa { using InheritsFrom = std::tuple<CCMpfaFacetCouplingModel, OnePFacet>; };
-struct OnePFacetBox { using InheritsFrom = std::tuple<BoxFacetCouplingModel, OnePFacet>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePFacet> { using type = Dune::FoamGrid<2, 3>; };
-// Set the problem type
-template<class TypeTag>
-struct Problem<TypeTag, TTag::OnePFacet> { using type = OnePFacetProblem<TypeTag>; };
-// set the spatial params
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::OnePFacet>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = OnePSpatialParams<GridGeometry, Scalar>;
-};
-
-// the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::OnePFacet>
-{
-private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
-    using type = FluidSystems::OnePLiquid< Scalar, Components::Constant<1, Scalar> >;
-};
-
-} // end namespace Properties
 
 /*!
  * \ingroup FacetTests

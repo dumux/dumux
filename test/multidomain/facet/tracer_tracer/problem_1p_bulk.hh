@@ -26,61 +26,13 @@
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_TRACER_ONEP_BULKPROBLEM_HH
 #define DUMUX_TEST_TPFAFACETCOUPLING_TRACER_ONEP_BULKPROBLEM_HH
 
-#include <dune/alugrid/grid.hh>
-
 #include <dumux/common/boundarytypes.hh>
-
-#include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
-
-#include <dumux/multidomain/facet/box/properties.hh>
-#include <dumux/multidomain/facet/cellcentered/tpfa/properties.hh>
-#include <dumux/multidomain/facet/cellcentered/mpfa/properties.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/1p/model.hh>
-
-#include "spatialparams_1p.hh"
 
 namespace Dumux {
-// forward declarations
-template<class TypeTag> class OnePBulkProblem;
-
-namespace Properties {
-// create the type tag nodes
-// Create new type tags
-namespace TTag {
-struct OnePBulk { using InheritsFrom = std::tuple<OneP>; };
-struct OnePBulkTpfa { using InheritsFrom = std::tuple<CCTpfaFacetCouplingModel, OnePBulk>; };
-struct OnePBulkMpfa { using InheritsFrom = std::tuple<CCMpfaFacetCouplingModel, OnePBulk>; };
-struct OnePBulkBox { using InheritsFrom = std::tuple<BoxFacetCouplingModel, OnePBulk>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePBulk> { using type = Dune::ALUGrid<2, 2, Dune::simplex, Dune::conforming>; };
-// Set the problem type
-template<class TypeTag>
-struct Problem<TypeTag, TTag::OnePBulk> { using type = OnePBulkProblem<TypeTag>; };
-// set the spatial params
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::OnePBulk>
-{
-    using type = OnePSpatialParams< GetPropType<TypeTag, Properties::GridGeometry>,
-                                    GetPropType<TypeTag, Properties::Scalar> >;
-};
-
-// the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::OnePBulk>
-{
-private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
-    using type = FluidSystems::OnePLiquid< Scalar, Components::SimpleH2O<Scalar> >;
-};
-
-} // end namespace Properties
 
 /*!
  * \ingroup FacetTests

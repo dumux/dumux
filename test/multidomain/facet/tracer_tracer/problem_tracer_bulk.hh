@@ -25,81 +25,13 @@
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_TRACER_BULK_PROBLEM_HH
 #define DUMUX_TEST_TPFAFACETCOUPLING_TRACER_BULK_PROBLEM_HH
 
-#include <dune/alugrid/grid.hh>
-
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 
-#include <dumux/multidomain/facet/box/properties.hh>
-#include <dumux/multidomain/facet/cellcentered/tpfa/properties.hh>
-#include <dumux/multidomain/facet/cellcentered/mpfa/properties.hh>
-
-#include <dumux/porousmediumflow/tracer/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include <dumux/material/fluidsystems/base.hh>
-
-#include "spatialparams_tracer.hh"
-#include "tracerfluidsystem.hh"
-#include "tracermodeltraits.hh"
-
 namespace Dumux {
-
-template <class TypeTag>
-class TracerBulkProblem;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct TracerTestBulk { using InheritsFrom = std::tuple<Tracer>; };
-
-// define the type tags
-struct TracerBulkTpfa { using InheritsFrom = std::tuple<CCTpfaFacetCouplingModel, TracerTestBulk>; };
-struct TracerBulkMpfa { using InheritsFrom = std::tuple<CCMpfaFacetCouplingModel, TracerTestBulk>; };
-struct TracerBulkBox { using InheritsFrom = std::tuple<BoxFacetCouplingModel, TracerTestBulk>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::TracerTestBulk> { using type = Dune::ALUGrid<2, 2, Dune::simplex, Dune::conforming>; };
-
-//! Overwrite the advection type property
-template<class TypeTag>
-struct AdvectionType<TypeTag, TTag::TracerBulkTpfa> { using type = StationaryVelocityField<GetPropType<TypeTag, Properties::Scalar>>; };
-template<class TypeTag>
-struct AdvectionType<TypeTag, TTag::TracerBulkBox> { using type = StationaryVelocityField<GetPropType<TypeTag, Properties::Scalar>>; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::TracerTestBulk> { using type = TracerBulkProblem<TypeTag>; };
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::TracerTestBulk>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = TracerSpatialParams<GridGeometry, Scalar>;
-};
-
-// Define whether mole(true) or mass (false) fractions are used
-template<class TypeTag>
-struct UseMoles<TypeTag, TTag::TracerTestBulk> { static constexpr bool value = false; };
-
-//! set the model traits (with disabled diffusion)
-template<class TypeTag>
-struct ModelTraits<TypeTag, TTag::TracerTestBulk>
-{
-private:
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-public:
-    using type = TracerTestModelTraits<FluidSystem::numComponents, getPropValue<TypeTag, Properties::UseMoles>()>;
-};
-
-// use the test-specific fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::TracerTestBulk> { using type = TracerFluidSystem<TypeTag>; };
-} // end namespace Properties
-
 
 /*!
  * \ingroup FacetTests

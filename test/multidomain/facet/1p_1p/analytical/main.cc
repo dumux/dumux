@@ -29,15 +29,10 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/geometry/quadraturerules.hh>
 
-#include "problem_bulk.hh"
-#include "problem_lowdim.hh"
-
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
 
-#include <dumux/assembly/diffmethod.hh>
-#include <dumux/discretization/method.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/evalsolution.hh>
 #include <dumux/linear/seqsolverbackend.hh>
@@ -47,44 +42,13 @@
 #include <dumux/multidomain/traits.hh>
 
 #include <dumux/multidomain/facet/gridmanager.hh>
-#include <dumux/multidomain/facet/couplingmapper.hh>
-#include <dumux/multidomain/facet/couplingmanager.hh>
 #include <dumux/multidomain/facet/codimonegridadapter.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 
-// obtain/define some types to be used below in the property definitions and in main
-template< class BulkTypeTag, class LowDimTypeTag >
-class TestTraits
-{
-    using BulkFVGridGeometry = Dumux::GetPropType<BulkTypeTag, Dumux::Properties::GridGeometry>;
-    using LowDimFVGridGeometry = Dumux::GetPropType<LowDimTypeTag, Dumux::Properties::GridGeometry>;
-public:
-    using MDTraits = Dumux::MultiDomainTraits<BulkTypeTag, LowDimTypeTag>;
-    using CouplingMapper = Dumux::FacetCouplingMapper<BulkFVGridGeometry, LowDimFVGridGeometry>;
-    using CouplingManager = Dumux::FacetCouplingManager<MDTraits, CouplingMapper>;
-};
+#include "properties.hh"
 
-// set the coupling manager property in the sub-problems for both box and tpfa
 namespace Dumux {
-namespace Properties {
-
-// set cm property for the box test
-using BoxTraits = TestTraits<Properties::TTag::OnePBulkBox, Properties::TTag::OnePLowDimBox>;
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePBulkBox> { using type = typename BoxTraits::CouplingManager; };
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePLowDimBox> { using type = typename BoxTraits::CouplingManager; };
-
-// set cm property for the tpfa test
-using TpfaTraits = TestTraits<Properties::TTag::OnePBulkTpfa, Properties::TTag::OnePLowDimTpfa>;
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePBulkTpfa> { using type = typename TpfaTraits::CouplingManager; };
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePLowDimTpfa> { using type = typename TpfaTraits::CouplingManager; };
-
-} // end namespace Properties
-} // end namespace Dumux
 
 //! Container to store the L2 errors
 template< class Scalar >
@@ -235,7 +199,7 @@ int main(int argc, char** argv)
     lowDimFvGridGeometry->update();
 
     // the coupling manager
-    using TestTraits = TestTraits<BulkProblemTypeTag, LowDimProblemTypeTag>;
+    using TestTraits = Properties::TestTraits<BulkProblemTypeTag, LowDimProblemTypeTag>;
     using CouplingManager = typename TestTraits::CouplingManager;
     auto couplingManager = std::make_shared<CouplingManager>();
 

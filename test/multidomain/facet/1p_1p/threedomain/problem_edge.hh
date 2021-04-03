@@ -26,62 +26,11 @@
 #ifndef DUMUX_TEST_FACETCOUPLING_THREEDOMAIN_ONEP_EDGEPROBLEM_HH
 #define DUMUX_TEST_FACETCOUPLING_THREEDOMAIN_ONEP_EDGEPROBLEM_HH
 
-#include <dune/foamgrid/foamgrid.hh>
-
 #include <dumux/common/boundarytypes.hh>
 
-#include <dumux/material/components/constant.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
-
-#include <dumux/discretization/box.hh>
-#include <dumux/discretization/cctpfa.hh>
-#include <dumux/discretization/ccmpfa.hh>
-
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/1p/model.hh>
-
-#include "spatialparams.hh"
 
 namespace Dumux {
-// forward declarations
-template<class TypeTag> class OnePEdgeProblem;
-
-namespace Properties {
-// create the type tag nodes
-// Create new type tags
-namespace TTag {
-struct OnePEdge { using InheritsFrom = std::tuple<OneP>; };
-struct OnePEdgeTpfa { using InheritsFrom = std::tuple<OnePEdge, CCTpfaModel>; };
-struct OnePEdgeMpfa { using InheritsFrom = std::tuple<OnePEdge, CCTpfaModel>; };
-struct OnePEdgeBox { using InheritsFrom = std::tuple<OnePEdge, BoxModel>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePEdge> { using type = Dune::FoamGrid<1, 3>; };
-// Set the problem type
-template<class TypeTag>
-struct Problem<TypeTag, TTag::OnePEdge> { using type = OnePEdgeProblem<TypeTag>; };
-// set the spatial params
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::OnePEdge>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = OnePSpatialParams<GridGeometry, Scalar>;
-};
-
-// the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::OnePEdge>
-{
-private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
-    using type = FluidSystems::OnePLiquid< Scalar, Components::Constant<1, Scalar> >;
-};
-
-} // end namespace Properties
 
 /*!
  * \ingroup FacetTests
