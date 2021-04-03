@@ -58,10 +58,6 @@ public:
     Scalar b() const
     { return b_; }
 
-    [[deprecated("Will be removed after Dumux 3.3")]]
-    void checkDefined() const
-    {}
-
     /*!
      * \brief Set the attractive parameter 'a' of the Peng-Robinson
      *        fluid.
