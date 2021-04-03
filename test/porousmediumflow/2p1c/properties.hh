@@ -38,7 +38,9 @@
 
 #include "problem.hh"
 #include "spatialparams.hh"
+
 namespace Dumux::Properties {
+
 // Create new type tags
 namespace TTag {
 struct InjectionProblem { using InheritsFrom = std::tuple<TwoPOneCNI>; };
@@ -77,6 +79,7 @@ struct SpatialParams<TypeTag, TTag::InjectionProblem>
 //Define whether spurious cold-water flow into the steam is blocked
 template<class TypeTag>
 struct UseBlockingOfSpuriousFlow<TypeTag, TTag::InjectionProblem> { static constexpr bool value = true; };
+
 } // end namespace Dumux::Properties
 
 #endif
