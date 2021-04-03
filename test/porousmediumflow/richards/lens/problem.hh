@@ -27,64 +27,13 @@
 #ifndef DUMUX_RICHARDS_LENSPROBLEM_HH
 #define DUMUX_RICHARDS_LENSPROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
-#if HAVE_DUNE_ALUGRID
-#include <dune/alugrid/grid.hh>
-#endif
-#if HAVE_UG
-#include <dune/grid/uggrid.hh>
-#endif
-
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
 
-#include <dumux/discretization/cctpfa.hh>
-#include <dumux/discretization/ccmpfa.hh>
-#include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include <dumux/porousmediumflow/richards/model.hh>
-#include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
-
-#include "spatialparams.hh"
-
 namespace Dumux {
-
-template <class TypeTag>
-class RichardsLensProblem;
-
-// Specify the properties for the lens problem
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct RichardsLens { using InheritsFrom = std::tuple<Richards>; };
-struct RichardsLensBox { using InheritsFrom = std::tuple<RichardsLens, BoxModel>; };
-struct RichardsLensCC { using InheritsFrom = std::tuple<RichardsLens, CCTpfaModel>; };
-struct RichardsLensCCMpfa { using InheritsFrom = std::tuple<RichardsLens, CCMpfaModel>; };
-} // end namespace TTag
-
-#ifndef GRIDTYPE
-// Use 2d YaspGrid
-template<class TypeTag>
-struct Grid<TypeTag, TTag::RichardsLens> { using type = Dune::YaspGrid<2>; };
-#else
-// Use GRIDTYPE from CMakeLists.txt
-template<class TypeTag>
-struct Grid<TypeTag, TTag::RichardsLens> { using type = GRIDTYPE; };
-#endif
-
-// Set the physical problem to be solved
-template<class TypeTag>
-struct Problem<TypeTag, TTag::RichardsLens> { using type = RichardsLensProblem<TypeTag>; };
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::RichardsLens>
-{
-    using type = RichardsLensSpatialParams<GetPropType<TypeTag, Properties::GridGeometry>,
-                                           GetPropType<TypeTag, Properties::Scalar>>;
-};
-} // end namespace Dumux
 
 /*!
  * \ingroup RichardsTests

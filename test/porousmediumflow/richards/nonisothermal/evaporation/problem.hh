@@ -27,61 +27,15 @@
 #define DUMUX_RICHARDS_EVAPORATION_PROBLEM_HH
 
 #include <cmath>
-#include <dune/grid/yaspgrid.hh>
 
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
 
-#include <dumux/discretization/elementsolution.hh>
-#include <dumux/discretization/cctpfa.hh>
-#include <dumux/discretization/box.hh>
-
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/richards/model.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/somerton.hh>
-#include <dumux/material/fluidsystems/h2on2.hh>
-#include "../spatialparams.hh"
+#include <dumux/material/components/h2o.hh>
 
 namespace Dumux {
-
-/**
- * \ingroup RichardsTests
- * \brief Test for the RichardsModel in combination with the NI model for evaporation.
- */
-template <class TypeTag>
-class RichardsNIEvaporationProblem;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct RichardsNIEvaporation { using InheritsFrom = std::tuple<RichardsNI>; };
-struct RichardsNIEvaporationBox { using InheritsFrom = std::tuple<RichardsNIEvaporation, BoxModel>; };
-struct RichardsNIEvaporationCC { using InheritsFrom = std::tuple<RichardsNIEvaporation, CCTpfaModel>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::RichardsNIEvaporation> { using type = Dune::YaspGrid<2>; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::RichardsNIEvaporation> { using type = RichardsNIEvaporationProblem<TypeTag>; };
-
-// Set the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::RichardsNIEvaporation> { using type = FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>; };
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::RichardsNIEvaporation>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = RichardsNISpatialParams<GridGeometry, Scalar>;
-};
-
-template<class TypeTag>
-struct EnableWaterDiffusionInAir<TypeTag, TTag::RichardsNIEvaporation> { static constexpr bool value = true; };
-} // end namespace Properties
 
 /*!
  * \ingroup RichardsTests
