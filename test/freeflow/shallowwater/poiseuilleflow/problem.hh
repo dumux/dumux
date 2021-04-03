@@ -20,13 +20,14 @@
 #ifndef DUMUX_POISEUILLE_FLOW_TEST_PROBLEM_HH
 #define DUMUX_POISEUILLE_FLOW_TEST_PROBLEM_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/common/parameters.hh>
-#include <dumux/freeflow/shallowwater/problem.hh>
-#include <dumux/freeflow/shallowwater/boundaryfluxes.hh>
-
 #include <algorithm>
 #include <cctype>
+
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
+
+#include <dumux/freeflow/shallowwater/problem.hh>
+#include <dumux/freeflow/shallowwater/boundaryfluxes.hh>
 
 namespace Dumux {
 

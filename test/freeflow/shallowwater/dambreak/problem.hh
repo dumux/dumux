@@ -5,7 +5,7 @@
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
- *   the Free Software Foundation, either version 2 of the License, or       *
+ *   the Free Software Foundation, either version 3 of the License, or       *
  *   (at your option) any later version.                                     *
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
@@ -24,12 +24,10 @@
 #ifndef DUMUX_DAM_BREAK_TEST_PROBLEM_HH
 #define DUMUX_DAM_BREAK_TEST_PROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
-#include <dumux/discretization/cctpfa.hh>
-#include "spatialparams.hh"
-
 #include <dumux/common/boundarytypes.hh>
-#include <dumux/freeflow/shallowwater/model.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/common/properties.hh>
+
 #include <dumux/freeflow/shallowwater/problem.hh>
 #include <dumux/flux/shallowwater/riemannproblem.hh>
 #include <dumux/flux/shallowwater/exactriemann.hh>
@@ -40,52 +38,6 @@ namespace Dumux {
  * \ingroup ShallowWaterTests
  * \brief A simple dam break test for the shallow water equations
  */
-template <class TypeTag>
-class DamBreakProblem;
-
-
-// Specify the properties for the problem
-namespace Properties {
-
-// Create new type tags
-namespace TTag {
-struct DamBreakWet { using InheritsFrom = std::tuple<ShallowWater, CCTpfaModel>; };
-} // end namespace TTag
-
-template<class TypeTag>
-struct Grid<TypeTag, TTag::DamBreakWet>
-{ using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::DamBreakWet>
-{ using type = Dumux::DamBreakProblem<TypeTag>; };
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::DamBreakWet>
-{
-private:
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
-    using type = DamBreakSpatialParams<GridGeometry, Scalar>;
-};
-
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::DamBreakWet>
-{ static constexpr bool value = true; };
-
-template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::DamBreakWet>
-{ static constexpr bool value = false; };
-
-template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::DamBreakWet>
-{ static constexpr bool value = false; };
-
-} // end namespace Properties
-
 
 /*!
  * \ingroup Shallow water equations model

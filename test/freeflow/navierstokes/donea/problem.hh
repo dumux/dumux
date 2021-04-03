@@ -24,60 +24,15 @@
 #ifndef DUMUX_DONEA_TEST_PROBLEM_HH
 #define DUMUX_DONEA_TEST_PROBLEM_HH
 
-#ifndef ENABLECACHING
-#define ENABLECACHING 0
-#endif
-
-#include <dune/grid/yaspgrid.hh>
-
-#include <dumux/discretization/staggered/freeflow/properties.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
-#include <dumux/freeflow/navierstokes/model.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
-
-#include <dumux/material/components/constant.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include "../l2error.hh"
 
-namespace Dumux
-{
-template <class TypeTag>
-class DoneaTestProblem;
-
-namespace Properties
-{
-// Create new type tags
-namespace TTag {
-struct DoneaTest { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
-} // end namespace TTag
-
-// the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::DoneaTest>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
-};
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::DoneaTest> { using type = Dune::YaspGrid<2>; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::DoneaTest> { using type = Dumux::DoneaTestProblem<TypeTag> ; };
-
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::DoneaTest> { static constexpr bool value = ENABLECACHING; };
-template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::DoneaTest> { static constexpr bool value = ENABLECACHING; };
-template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::DoneaTest> { static constexpr bool value = ENABLECACHING; };
-template<class TypeTag>
-struct EnableGridFaceVariablesCache<TypeTag, TTag::DoneaTest> { static constexpr bool value = ENABLECACHING; };
-}
+namespace Dumux {
 
 /*!
  * \ingroup NavierStokesTests

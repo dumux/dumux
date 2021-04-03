@@ -29,70 +29,18 @@
 #define DUMUX_3D_CHANNEL_PROBLEM_HH
 
 #include <dune/common/float_cmp.hh>
-#include <dune/grid/yaspgrid.hh>
+
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
+
+#include <dumux/freeflow/navierstokes/boundarytypes.hh>
+#include <dumux/freeflow/navierstokes/problem.hh>
 
 #ifndef GRID_DIM
 #define GRID_DIM 3
 #endif
 
-#if HAVE_DUNE_SUBGRID && GRID_DIM == 3
-#include <dune/subgrid/subgrid.hh>
-#endif
-
-#include <dumux/discretization/staggered/freeflow/properties.hh>
-
-#include <dumux/freeflow/navierstokes/boundarytypes.hh>
-#include <dumux/freeflow/navierstokes/model.hh>
-#include <dumux/freeflow/navierstokes/problem.hh>
-
-#include <dumux/material/components/constant.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
-
 namespace Dumux {
-
-template <class TypeTag>
-class ThreeDChannelTestProblem;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct ThreeDChannelTest { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
-} // end namespace TTag
-
-// the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::ThreeDChannelTest>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
-};
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::ThreeDChannelTest>
-{
-    static constexpr int dim = GRID_DIM;
-
-    using HostGrid = Dune::YaspGrid<dim, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, dim> >;
-
-#if HAVE_DUNE_SUBGRID && GRID_DIM == 3
-    using type = Dune::SubGrid<HostGrid::dimension, HostGrid>;
-#else
-    using type = HostGrid;
-#endif
-};
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::ThreeDChannelTest> { using type = ThreeDChannelTestProblem<TypeTag> ; };
-
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::ThreeDChannelTest> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::ThreeDChannelTest> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::ThreeDChannelTest> { static constexpr bool value = true; };
-} // end namespace Properties
 
 /*!
  * \brief Test problem for the one-phase (Navier-) Stokes model in a 3D or pseudo 3D channel.

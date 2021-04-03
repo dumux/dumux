@@ -43,7 +43,7 @@
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
-#include "problem.hh"
+#include "properties.hh"
 
 /*!
  * \brief Provides an interface for customizing error messages associated with

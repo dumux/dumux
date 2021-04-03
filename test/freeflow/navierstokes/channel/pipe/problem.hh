@@ -22,6 +22,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+
 #include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 

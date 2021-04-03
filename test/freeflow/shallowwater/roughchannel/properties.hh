@@ -16,54 +16,57 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup ShallowWaterTests
+ * \brief The properties of a test for the Shallow water model (rough channel).
+ */
+#ifndef DUMUX_ROUGH_CHANNEL_TEST_PROPERTIES_HH
+#define DUMUX_ROUGH_CHANNEL_TEST_PROPERTIES_HH
 
-#ifndef DUMUX_POISEUILLE_FLOW_TEST_PROPERTIES_HH
-#define DUMUX_POISEUILLE_FLOW_TEST_PROPERTIES_HH
-
-#include <dumux/freeflow/shallowwater/model.hh>
-#include <dumux/discretization/cctpfa.hh>
 #include <dune/grid/yaspgrid.hh>
-#if HAVE_UG
-#include <dune/grid/uggrid.hh>
-#endif
-
-#ifndef GRIDTYPE
-#define GRIDTYPE Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>
-#endif
+#include <dumux/discretization/cctpfa.hh>
+#include <dumux/freeflow/shallowwater/model.hh>
 
 #include "problem.hh"
 #include "spatialparams.hh"
 
 namespace Dumux::Properties {
 
+// Create new type tags
 namespace TTag {
-struct PoiseuilleFlow { using InheritsFrom = std::tuple<ShallowWater, CCTpfaModel>; };
-} // namespace TTag
+struct RoughChannel { using InheritsFrom = std::tuple<ShallowWater, CCTpfaModel>; };
+} // end namespace TTag
 
 template<class TypeTag>
-struct Grid<TypeTag, TTag::PoiseuilleFlow> { using type = GRIDTYPE; };
+struct Grid<TypeTag, TTag::RoughChannel>
+{ using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
 
+// Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::PoiseuilleFlow> { using type = Dumux::PoiseuilleFlowProblem<TypeTag> ; };
+struct Problem<TypeTag, TTag::RoughChannel>
+{ using type = Dumux::RoughChannelProblem<TypeTag>; };
 
+// Set the spatial parameters
 template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::PoiseuilleFlow>
+struct SpatialParams<TypeTag, TTag::RoughChannel>
 {
 private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
-
 public:
-    using type = PoiseuilleFlowSpatialParams<GridGeometry, Scalar, VolumeVariables>;
+    using type = RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>;
 };
 
 template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::PoiseuilleFlow> { static constexpr bool value = false; };
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::PoiseuilleFlow> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::RoughChannel>
+{ static constexpr bool value = true; };
 
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::RoughChannel>
+{ static constexpr bool value = false; };
 } // end namespace Dumux::Properties
 
 #endif
