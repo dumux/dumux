@@ -37,13 +37,11 @@
 #include <dumux/nonlinear/newtonsolver.hh>
 
 #include <dumux/assembly/fvassembler.hh>
-#include <dumux/assembly/diffmethod.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 
-// the problem definitions
-#include "problem.hh"
+#include "properties.hh"
 
 int main(int argc, char** argv)
 {

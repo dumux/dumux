@@ -26,66 +26,14 @@
 #ifndef DUMUX_WATER_AIR_PROBLEM_HH
 #define DUMUX_WATER_AIR_PROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
-
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
 
-#include <dumux/discretization/cctpfa.hh>
-#include <dumux/discretization/box.hh>
-
 #include <dumux/material/components/n2.hh>
-#include <dumux/material/fluidsystems/h2on2.hh>
-#include <dumux/porousmediumflow/2p2c/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include "spatialparams.hh"
-
 namespace Dumux {
-
-template <class TypeTag>
-class WaterAirProblem;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct WaterAir { using InheritsFrom = std::tuple<TwoPTwoCNI>; };
-struct WaterAirBox { using InheritsFrom = std::tuple<WaterAir, BoxModel>; };
-struct WaterAirCCTpfa { using InheritsFrom = std::tuple<WaterAir, CCTpfaModel>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::WaterAir> { using type = Dune::YaspGrid<2>; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::WaterAir> { using type = WaterAirProblem<TypeTag>; };
-
-// Set the wetting phase
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::WaterAir> { using type = FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>>; };
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::WaterAir>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = WaterAirSpatialParams<GridGeometry, Scalar>;
-};
-
-// Define whether mole(true) or mass (false) fractions are used
-template<class TypeTag>
-struct UseMoles<TypeTag, TTag::WaterAir> { static constexpr bool value = true; };
-
-// Enable caching
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::WaterAir> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::WaterAir> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::WaterAir> { static constexpr bool value = true; };
-} // end namespace Dumux
 
 /*!
  * \ingroup TwoPTwoCModel
