@@ -43,7 +43,7 @@ namespace Dumux {
      *             be removed after DuMux 3.4.
      */
     template<typename T, typename I = std::size_t>
-    using IsIndexable [[deprecated("Use Dune::IsIndexable<T, I> instead")]] = typename Dune::IsIndexable<T, I>;
+    using IsIndexable [[deprecated("Use Dune::IsIndexable<T, I> instead. Will be removed after 3.4")]] = typename Dune::IsIndexable<T, I>;
 
 } // end namespace Dumux
 #endif
