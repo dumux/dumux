@@ -203,21 +203,6 @@ public:
     /*!
      * \brief Updates the the primary variables state at the boundary.
      *
-     * Required when a Dirichlet BC differs from the initial condition (only for box method).
-     */
-    template<class Problem, class GridVariables, class SolutionVector>
-    [[deprecated("Use updateDirichletConstraints() instead. Will be remove after 3.3")]]
-    void updateBoundary(const Problem& problem,
-                        const typename GridVariables::GridGeometry& gridGeometry,
-                        GridVariables& gridVariables,
-                        SolutionVector& sol)
-    {
-        updateDirichletConstraints(problem, gridGeometry, gridVariables, sol);
-    }
-
-    /*!
-     * \brief Updates the the primary variables state at the boundary.
-     *
      * Required when a Dirichlet constraint (at a boundary or internal) differs from the initial condition.
      */
     template<class Problem, class GridVariables, class SolutionVector>
