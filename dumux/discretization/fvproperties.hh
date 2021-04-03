@@ -28,7 +28,6 @@
 #include <dune/istl/bvector.hh>
 #include <dune/istl/bcrsmatrix.hh>
 
-#include <dumux/common/deprecated.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/properties/grid.hh>
 #include <dumux/common/boundarytypes.hh>
@@ -68,12 +67,6 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::FiniteVolumeModel> { static
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::FiniteVolumeModel> { static constexpr bool value = false; };
 
-DUNE_NO_DEPRECATED_BEGIN
-//! Boundary types at a single degree of freedom
-template<class TypeTag>
-struct BoundaryTypes<TypeTag, TTag::FiniteVolumeModel>
-{ using type = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>; };
-DUNE_NO_DEPRECATED_END
 // TODO: bundle SolutionVector, JacobianMatrix
 //       in LinearAlgebra traits
 
