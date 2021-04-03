@@ -24,13 +24,11 @@
 
 #include <config.h>
 
-#include <ctime>
 #include <iostream>
 #include <fstream>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/istl/io.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -38,74 +36,15 @@
 #include <dumux/geometry/diameter.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/assembly/fvassembler.hh>
-#include <dumux/assembly/diffmethod.hh>
-#include <dumux/discretization/method.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/staggeredvtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
 
 #include <dumux/multidomain/staggeredtraits.hh>
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 
-#include <dumux/multidomain/boundary/stokesdarcy/couplingmanager.hh>
-
-#include <dumux/material/fluidsystems/2pimmiscible.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/material/fluidsystems/1pgas.hh>
-#include <dumux/material/components/air.hh>
-#include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/tabulatedcomponent.hh>
-#include <dumux/material/fluidsystems/1padapter.hh>
-
-#include "problem_darcy.hh"
-#include "problem_stokes.hh"
-
-namespace Dumux {
-namespace Properties {
-
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::StokesOneP>
-{
-    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, Properties::TTag::DarcyTwoP>;
-    using type = Dumux::StokesDarcyCouplingManager<Traits>;
-};
-
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::DarcyTwoP>
-{
-    using Traits = StaggeredMultiDomainTraits<Properties::TTag::StokesOneP, Properties::TTag::StokesOneP, TypeTag>;
-    using type = Dumux::StokesDarcyCouplingManager<Traits>;
-};
-
-template<class TypeTag>
-struct CouplingFluidSystem
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using H2OType = Dumux::Components::SimpleH2O<Scalar>;
-    using H2OPhase = Dumux::FluidSystems::OnePLiquid<Scalar, H2OType>;
-    using AirType = Dumux::Components::TabulatedComponent<Components::Air<Scalar>, false >;
-    using AirPhase = Dumux::FluidSystems::OnePGas<Scalar, AirType>;
-    using type = FluidSystems::TwoPImmiscible<Scalar, H2OPhase, AirPhase> ;
-};
-
-// the fluid system for the free-flow model
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::StokesOneP>
-{
-    static constexpr auto phaseIdx = 1; // simulate the air phase
-    using type = FluidSystems::OnePAdapter<typename CouplingFluidSystem<TypeTag>::type, phaseIdx>;
-};
-
-// the fluid system for the Darcy model
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::DarcyTwoP>
-{
-    using type = typename CouplingFluidSystem<TypeTag>::type;
-};
-
-} // end namespace Properties
-} // end namespace Dumux
+#include "properties.hh"
 
 int main(int argc, char** argv)
 {

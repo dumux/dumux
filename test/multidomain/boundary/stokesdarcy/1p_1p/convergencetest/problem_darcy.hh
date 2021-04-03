@@ -45,37 +45,6 @@ namespace Dumux {
 template <class TypeTag>
 class DarcySubProblem;
 
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct DarcyOneP { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
-} // end namespace TTag
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::DarcyOneP> { using type = Dumux::DarcySubProblem<TypeTag>; };
-
-// the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::DarcyOneP>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::Constant<1, Scalar> > ;
-};
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::DarcyOneP> { using type = Dune::YaspGrid<2>; };
-
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::DarcyOneP>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = ConvergenceTestSpatialParams<GridGeometry, Scalar>;
-};
-} // end namespace Properties
-
 /*!
  * \ingroup BoundaryTests
  * \brief The Darcy sub-problem of coupled Stokes-Darcy convergence test

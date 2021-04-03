@@ -28,8 +28,7 @@
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup BoundaryTests

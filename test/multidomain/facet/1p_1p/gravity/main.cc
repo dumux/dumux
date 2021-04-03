@@ -32,7 +32,6 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
 
-#include <dumux/assembly/diffmethod.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 
 #include <dumux/multidomain/newtonsolver.hh>
@@ -40,39 +39,10 @@
 #include <dumux/multidomain/traits.hh>
 
 #include <dumux/multidomain/facet/gridmanager.hh>
-#include <dumux/multidomain/facet/couplingmapper.hh>
-#include <dumux/multidomain/facet/couplingmanager.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 
-#include "properties_bulk.hh"
-#include "properties_lowdim.hh"
-
-namespace Dumux {
-
-// obtain/define some types to be used below in the property definitions and in main
-template< class BulkTypeTag, class LowDimTypeTag >
-class TestTraits
-{
-    using BulkFVGridGeometry = GetPropType<BulkTypeTag, Properties::GridGeometry>;
-    using LowDimFVGridGeometry = GetPropType<LowDimTypeTag, Properties::GridGeometry>;
-public:
-    using MDTraits = Dumux::MultiDomainTraits<BulkTypeTag, LowDimTypeTag>;
-    using CouplingMapper = Dumux::FacetCouplingMapper<BulkFVGridGeometry, LowDimFVGridGeometry>;
-    using CouplingManager = Dumux::FacetCouplingManager<MDTraits, CouplingMapper>;
-};
-
-namespace Properties {
-
-// set cm property in the sub-problems
-using TpfaTraits = TestTraits<TTag::OnePBulkTpfa, TTag::OnePLowDimTpfa>;
-using MpfaTraits = TestTraits<TTag::OnePBulkMpfa, TTag::OnePLowDimMpfa>;
-template<class TypeTag> struct CouplingManager<TypeTag, TTag::OnePBulkTpfa> { using type = typename TpfaTraits::CouplingManager; };
-template<class TypeTag> struct CouplingManager<TypeTag, TTag::OnePLowDimTpfa> { using type = typename TpfaTraits::CouplingManager; };
-template<class TypeTag> struct CouplingManager<TypeTag, TTag::OnePBulkMpfa> { using type = typename MpfaTraits::CouplingManager; };
-template<class TypeTag> struct CouplingManager<TypeTag, TTag::OnePLowDimMpfa> { using type = typename MpfaTraits::CouplingManager; };
-} // end namespace Properties
-} // end namespace Dumux
+#include "properties.hh"
 
 // main program
 int main(int argc, char** argv)
@@ -122,7 +92,7 @@ int main(int argc, char** argv)
     lowDimFvGridGeometry->update();
 
     // the coupling mapper
-    using TestTraits = TestTraits<BulkProblemTypeTag, LowDimProblemTypeTag>;
+    using TestTraits = Properties::TestTraits<BulkProblemTypeTag, LowDimProblemTypeTag>;
     auto couplingMapper = std::make_shared<typename TestTraits::CouplingMapper>();
     couplingMapper->update(*bulkFvGridGeometry, *lowDimFvGridGeometry, gridManager.getEmbeddings());
 

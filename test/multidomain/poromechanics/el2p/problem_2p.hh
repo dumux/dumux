@@ -26,55 +26,13 @@
 #ifndef DUMUX_2P_SUB_PROBLEM_HH
 #define DUMUX_2P_SUB_PROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
-
 #include <dumux/common/boundarytypes.hh>
-#include <dumux/discretization/cctpfa.hh>
-#include <dumux/porousmediumflow/2p/model.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
+
 #include <dumux/porousmediumflow/problem.hh>
 
-#include <dumux/material/fluidsystems/brineco2.hh>
-
-#include "spatialparams_2p.hh"
-#include "co2tables_el2p.hh"
-
 namespace Dumux {
-
-// forward declaration of the problem class
-template <class TypeTag>
-class TwoPSubProblem;
-
-namespace Properties {
-
-// Create new type tags
-namespace TTag {
-struct TwoPSub { using InheritsFrom = std::tuple<TwoP, CCTpfaModel>; };
-} // end namespace TTag
-
-// Set the fluid system for TwoPSubProblem
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::TwoPSub>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::BrineCO2<Scalar, El2P::CO2Tables>;
-};
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::TwoPSub> { using type = Dune::YaspGrid<3>; };
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::TwoPSub> { using type = TwoPSubProblem<TypeTag> ; };
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::TwoPSub>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
-    using type = TwoPSpatialParams<GridGeometry, Scalar, CouplingManager>;
-};
-} // end namespace Properties
 
 /*!
  * \ingroup PoromechanicsTests

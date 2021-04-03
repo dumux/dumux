@@ -26,80 +26,13 @@
 #ifndef DUMUX_DARCY_SUBPROBLEM_DIFFUSION_COMPARISON_HH
 #define DUMUX_DARCY_SUBPROBLEM_DIFFUSION_COMPARISON_HH
 
-#include <dune/grid/yaspgrid.hh>
-
-#include <dumux/discretization/cctpfa.hh>
-
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
 
-#include <dumux/flux/maxwellstefanslaw.hh>
-
-#include <dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh>
-#include <dumux/material/fluidsystems/1padapter.hh>
-#include <dumux/material/fluidsystems/h2oair.hh>
-
-#include <dumux/porousmediumflow/1pnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include "./../spatialparams.hh"
-
-#ifndef DIFFUSIONTYPE
-#define DIFFUSIONTYPE FicksLaw<TypeTag>
-#endif
-
 namespace Dumux {
-template <class TypeTag>
-class DarcySubProblem;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct DarcyOnePTwoC { using InheritsFrom = std::tuple<OnePNC, CCTpfaModel>; };
-} // end namespace TTag
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::DarcyOnePTwoC> { using type = Dumux::DarcySubProblem<TypeTag>; };
-
-// The fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::DarcyOnePTwoC>
-{
-  using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
-  static constexpr auto phaseIdx = H2OAir::liquidPhaseIdx; // simulate the water phase
-  using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
-};
-
-// Use moles
-template<class TypeTag>
-struct UseMoles<TypeTag, TTag::DarcyOnePTwoC> { static constexpr bool value = true; };
-
-// Do not replace one equation with a total mass balance
-template<class TypeTag>
-struct ReplaceCompEqIdx<TypeTag, TTag::DarcyOnePTwoC> { static constexpr int value = 3; };
-
-//! Use a model with constant tortuosity for the effective diffusivity
-template<class TypeTag>
-struct EffectiveDiffusivityModel<TypeTag, TTag::DarcyOnePTwoC>
-{ using type = DiffusivityConstantTortuosity<GetPropType<TypeTag, Properties::Scalar>>; };
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::DarcyOnePTwoC> { using type = Dune::YaspGrid<2>; };
-
-// Set the diffusion type
-template<class TypeTag>
-struct MolecularDiffusionType<TypeTag, TTag::DarcyOnePTwoC> { using type = DIFFUSIONTYPE; };
-
-// Set the spatial paramaters type
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::DarcyOnePTwoC>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = OnePSpatialParams<GridGeometry, Scalar>;
-};
-} // end namespace Properties
 
 template <class TypeTag>
 class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>

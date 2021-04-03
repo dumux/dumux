@@ -31,7 +31,6 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
 
-#include <dumux/assembly/diffmethod.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 
 #include <dumux/multidomain/newtonsolver.hh>
@@ -39,37 +38,13 @@
 #include <dumux/multidomain/traits.hh>
 
 #include <dumux/multidomain/facet/gridmanager.hh>
-#include <dumux/multidomain/facet/couplingmapper.hh>
-#include <dumux/multidomain/facet/couplingmanager.hh>
 #include <dumux/multidomain/facet/codimonegridadapter.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 
-#include "properties_bulk.hh"
-#include "properties_facet.hh"
-
-using BulkTypeTag = Dumux::Properties::TTag::BULKTYPETAG;
-using FacetTypeTag = Dumux::Properties::TTag::FACETTYPETAG;
+#include "properties.hh"
 
 namespace Dumux {
-
-// obtain/define some types to be used below in the property definitions and in main
-class TestTraits
-{
-    using BulkGridGeometry = GetPropType<BulkTypeTag, Properties::GridGeometry>;
-    using FacetGridGeometry = GetPropType<FacetTypeTag, Properties::GridGeometry>;
-public:
-    using MDTraits = Dumux::MultiDomainTraits<BulkTypeTag, FacetTypeTag>;
-    using CouplingMapper = Dumux::FacetCouplingMapper<BulkGridGeometry, FacetGridGeometry>;
-    using CouplingManager = Dumux::FacetCouplingManager<MDTraits, CouplingMapper>;
-};
-
-// specify coupling manager property in sub-problems
-namespace Properties {
-template<class TypeTag> struct CouplingManager<TypeTag, BulkTypeTag> { using type = typename TestTraits::CouplingManager; };
-template<class TypeTag> struct CouplingManager<TypeTag, FacetTypeTag> { using type = typename TestTraits::CouplingManager; };
-} // end namespace Properties
-} // end namespace Dumux
 
 /*!
  * \brief Updates the finite volume grid geometry for the box scheme.
@@ -106,10 +81,15 @@ void updateBulkFVGridGeometry(GridGeometry& gridGeometry,
     gridGeometry.update();
 }
 
+} // end namespace Dumux
+
 // main program
 int main(int argc, char** argv)
 {
     using namespace Dumux;
+
+    using BulkTypeTag = Properties::TTag::BULKTYPETAG;
+    using FacetTypeTag = Properties::TTag::FACETTYPETAG;
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -142,6 +122,7 @@ int main(int argc, char** argv)
     facetFvGridGeometry->update();
 
     // the coupling mapper
+    using TestTraits = Properties::TestTraits;
     auto couplingMapper = std::make_shared<typename TestTraits::CouplingMapper>();
     couplingMapper->update(*bulkFvGridGeometry, *facetFvGridGeometry, gridManager.getEmbeddings());
 

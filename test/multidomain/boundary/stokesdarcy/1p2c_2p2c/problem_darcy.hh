@@ -25,66 +25,14 @@
 #ifndef DUMUX_DARCY2P2C_SUBPROBLEM_HH
 #define DUMUX_DARCY2P2C_SUBPROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
-
-#include <dumux/discretization/cctpfa.hh>
-
 #include <dumux/common/boundarytypes.hh>
-
-#include <dumux/material/fluidsystems/h2oair.hh>
-
+#include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/2p2c/model.hh>
-
 #include "spatialparams.hh"
 
 namespace Dumux {
 template <class TypeTag>
 class DarcySubProblem;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-#if !NONISOTHERMAL
-struct DarcyTwoPTwoC { using InheritsFrom = std::tuple<TwoPTwoC, CCTpfaModel>; };
-#else
-struct DarcyTwoPTwoC { using InheritsFrom = std::tuple<TwoPTwoCNI, CCTpfaModel>; };
-#endif
-} // end namespace TTag
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::DarcyTwoPTwoC> { using type = Dumux::DarcySubProblem<TypeTag>; };
-
-// the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::DarcyTwoPTwoC> { using type = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>; };
-
-//! Set the default formulation to pw-Sn: This can be over written in the problem.
-template<class TypeTag>
-struct Formulation<TypeTag, TTag::DarcyTwoPTwoC>
-{ static constexpr auto value = TwoPFormulation::p1s0; };
-
-//// The gas component balance (air) is replaced by the total mass balance
-template<class TypeTag>
-struct ReplaceCompEqIdx<TypeTag, TTag::DarcyTwoPTwoC> { static constexpr int value = 3; };
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::DarcyTwoPTwoC> { using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
-
-template<class TypeTag>
-struct UseMoles<TypeTag, TTag::DarcyTwoPTwoC> { static constexpr bool value = true; };
-
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::DarcyTwoPTwoC>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = TwoPTwoCSpatialParams<GridGeometry, Scalar>;
-};
-
-} // end namespace Properties
 
 template <class TypeTag>
 class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>

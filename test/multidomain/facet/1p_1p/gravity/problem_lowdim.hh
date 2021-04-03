@@ -24,6 +24,10 @@
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_ONEP_LOWDIMPROBLEM_HH
 #define DUMUX_TEST_TPFAFACETCOUPLING_ONEP_LOWDIMPROBLEM_HH
 
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/common/boundarytypes.hh>
+
 #include <dumux/porousmediumflow/problem.hh>
 
 namespace Dumux {

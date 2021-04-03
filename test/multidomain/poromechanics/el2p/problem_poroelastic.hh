@@ -24,54 +24,15 @@
 #ifndef DUMUX_POROELASTIC_SUBPROBLEM_HH
 #define DUMUX_POROELASTIC_SUBPROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
 #include <dune/common/fmatrix.hh>
 
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
-#include <dumux/discretization/box.hh>
-#include <dumux/geomechanics/poroelastic/model.hh>
+
 #include <dumux/geomechanics/fvproblem.hh>
 
-#include <dumux/material/fluidsystems/brineco2.hh>
-
-#include "spatialparams_poroelastic.hh"
-#include "co2tables_el2p.hh"
-
 namespace Dumux {
-
-// forward declaration of the problem class
-template <class TypeTag>
-class PoroElasticSubProblem;
-
-namespace Properties {
-
-// Create new type tags
-namespace TTag {
-struct PoroElasticSub { using InheritsFrom = std::tuple<PoroElastic, BoxModel>; };
-} // end namespace TTag
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::PoroElasticSub> { using type = Dune::YaspGrid<3>; };
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::PoroElasticSub> { using type = Dumux::PoroElasticSubProblem<TypeTag>; };
-
-// Set the fluid system for TwoPSubProblem
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::PoroElasticSub>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::BrineCO2<Scalar, El2P::CO2Tables>;
-};
-
-// The spatial parameters property
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::PoroElasticSub>
-{
-    using type = PoroElasticSpatialParams< GetPropType<TypeTag, Properties::Scalar>,
-                                           GetPropType<TypeTag, Properties::GridGeometry> >;
-};
-} // end namespace Properties
 
 /*!
  * \ingroup PoromechanicsTests

@@ -25,39 +25,13 @@
 #ifndef DUMUX_STOKES_SUBPROBLEM_HH
 #define DUMUX_STOKES_SUBPROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
-
-#include <dumux/discretization/staggered/freeflow/properties.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
-#include <dumux/freeflow/navierstokes/model.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
 
 namespace Dumux {
-template <class TypeTag>
-class StokesSubProblem;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct StokesOneP { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::StokesOneP> { using type = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::StokesOneP> { using type = Dumux::StokesSubProblem<TypeTag> ; };
-
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::StokesOneP> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::StokesOneP> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::StokesOneP> { static constexpr bool value = true; };
-} // end namespace Properties
 
 /*!
  * \ingroup BoundaryTests

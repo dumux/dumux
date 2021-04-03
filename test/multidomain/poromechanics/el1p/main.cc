@@ -27,50 +27,19 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 
-#include "problem_1p.hh"
-#include "problem_poroelastic.hh"
-
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
-
-#include <dumux/assembly/diffmethod.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
 
-#include <dumux/geomechanics/poroelastic/couplingmanager.hh>
-
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
 
-// set the coupling manager property in the sub-problems
-namespace Dumux {
-namespace Properties {
-
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePSub>
-{
-private:
-    // define traits etc. as below in main
-    using Traits = MultiDomainTraits<TTag::OnePSub, TTag::PoroElasticSub>;
-public:
-    using type = PoroMechanicsCouplingManager< Traits >;
-};
-
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::PoroElasticSub>
-{
-private:
-    // define traits etc. as below in main
-    using Traits = MultiDomainTraits<TTag::OnePSub, TTag::PoroElasticSub>;
-public:
-    using type = PoroMechanicsCouplingManager< Traits >;
-};
-} // end namespace Properties
-} // end namespace Dumux
+#include "properties.hh"
 
 int main(int argc, char** argv)
 {

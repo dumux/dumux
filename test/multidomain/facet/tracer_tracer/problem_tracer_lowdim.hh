@@ -25,74 +25,13 @@
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_TRACER_LOWDIM_PROBLEM_HH
 #define DUMUX_TEST_TPFAFACETCOUPLING_TRACER_LOWDIM_PROBLEM_HH
 
-#include <dune/foamgrid/foamgrid.hh>
-
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 
-#include <dumux/discretization/box.hh>
-#include <dumux/discretization/cctpfa.hh>
-
-#include <dumux/porousmediumflow/tracer/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include <dumux/material/fluidsystems/base.hh>
-
-#include "spatialparams_tracer.hh"
-#include "tracerfluidsystem.hh"
-#include "tracermodeltraits.hh"
-
 namespace Dumux {
-
-template <class TypeTag>
-class TracerLowDimProblem;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct TracerTestLowDim { using InheritsFrom = std::tuple<Tracer>; };
-
-// define the type tags for both bulk and lowdim type tag here
-struct TracerLowDimTpfa { using InheritsFrom = std::tuple<TracerTestLowDim, CCTpfaModel>; };
-struct TracerLowDimMpfa { using InheritsFrom = std::tuple<TracerTestLowDim, CCTpfaModel>; };
-struct TracerLowDimBox { using InheritsFrom = std::tuple<TracerTestLowDim, BoxModel>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::TracerTestLowDim> { using type = Dune::FoamGrid<1, 2>; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::TracerTestLowDim> { using type = TracerLowDimProblem<TypeTag>; };
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::TracerTestLowDim>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = TracerSpatialParams<GridGeometry, Scalar>;
-};
-
-// Define whether mole(true) or mass (false) fractions are used
-template<class TypeTag>
-struct UseMoles<TypeTag, TTag::TracerTestLowDim> { static constexpr bool value = false; };
-
-//! set the model traits (with disabled diffusion)
-template<class TypeTag>
-struct ModelTraits<TypeTag, TTag::TracerTestLowDim>
-{
-private:
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-public:
-    using type = TracerTestModelTraits<FluidSystem::numComponents, getPropValue<TypeTag, Properties::UseMoles>()>;
-};
-
-// use the test-specific fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::TracerTestLowDim> { using type = TracerFluidSystem<TypeTag>; };
-} // end namespace Properties
-
 
 /*!
  * \ingroup FacetTests

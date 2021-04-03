@@ -26,8 +26,6 @@
 #ifndef DUMUX_TISSUE_PROBLEM_HH
 #define DUMUX_TISSUE_PROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
-
 #include <dune/geometry/quadraturerules.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
@@ -35,76 +33,12 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/box.hh>
-#include <dumux/discretization/cctpfa.hh>
 
-#include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
-
-#include <dumux/material/components/constant.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include <dumux/multidomain/embedded/couplingmanager1d3d.hh> // for coupling mode
 
-#include "spatialparams_tissue.hh"
-
 namespace Dumux {
-
-template <class TypeTag>
-class TissueProblem;
-
-namespace Properties {
-
-// Create new type tags
-namespace TTag {
-struct Tissue { using InheritsFrom = std::tuple<OneP>; };
-struct TissueCC { using InheritsFrom = std::tuple<Tissue, CCTpfaModel>; };
-struct TissueBox { using InheritsFrom = std::tuple<Tissue, BoxModel>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::Tissue> { using type = Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 3> >; };
-
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::Tissue> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::Tissue> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::Tissue> { static constexpr bool value = true; };
-template<class TypeTag>
-struct SolutionDependentAdvection<TypeTag, TTag::Tissue> { static constexpr bool value = false; };
-template<class TypeTag>
-struct SolutionDependentMolecularDiffusion<TypeTag, TTag::Tissue> { static constexpr bool value = false; };
-template<class TypeTag>
-struct SolutionDependentHeatConduction<TypeTag, TTag::Tissue> { static constexpr bool value = false; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::Tissue> { using type = TissueProblem<TypeTag>; };
-
-// Set the problem property
-template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::Tissue> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
-
-// the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::Tissue>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
-};
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::Tissue>
-{
-    using type = TissueSpatialParams<GetPropType<TypeTag, Properties::GridGeometry>,
-                                     GetPropType<TypeTag, Properties::Scalar>>;
-};
-} // end namespace Properties
-
 
 /*!
  * \ingroup EmbeddedTests

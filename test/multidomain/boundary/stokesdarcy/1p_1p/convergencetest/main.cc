@@ -24,7 +24,6 @@
 
 #include <config.h>
 
-#include <ctime>
 #include <iostream>
 
 #include <dune/common/parallel/mpihelper.hh>
@@ -36,8 +35,6 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/assembly/fvassembler.hh>
-#include <dumux/assembly/diffmethod.hh>
-#include <dumux/discretization/method.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
@@ -47,31 +44,8 @@
 #include <dumux/multidomain/newtonsolver.hh>
 #include <test/freeflow/navierstokes/l2error.hh>
 
-#include <dumux/multidomain/boundary/stokesdarcy/couplingmanager.hh>
-
 #include "testcase.hh"
-#include "problem_darcy.hh"
-#include "problem_stokes.hh"
-
-namespace Dumux {
-namespace Properties {
-
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::FreeFlowOneP>
-{
-    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, Properties::TTag::DarcyOneP>;
-    using type = Dumux::StokesDarcyCouplingManager<Traits>;
-};
-
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::DarcyOneP>
-{
-    using Traits = StaggeredMultiDomainTraits<Properties::TTag::FreeFlowOneP, Properties::TTag::FreeFlowOneP, TypeTag>;
-    using type = Dumux::StokesDarcyCouplingManager<Traits>;
-};
-
-} // end namespace Properties
-} // end namespace Dumux
+#include "properties.hh"
 
 /*!
 * \brief Creates analytical solution.

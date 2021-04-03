@@ -24,13 +24,11 @@
 
 #include <config.h>
 
-#include <ctime>
 #include <iostream>
 #include <fstream>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/istl/io.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -39,40 +37,15 @@
 #include <dumux/geometry/diameter.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/assembly/fvassembler.hh>
-#include <dumux/assembly/diffmethod.hh>
-#include <dumux/discretization/method.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/staggeredvtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
 
 #include <dumux/multidomain/staggeredtraits.hh>
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 
-#include <dumux/multidomain/boundary/stokesdarcy/couplingmanager.hh>
-
-#include "problem_darcy.hh"
-#include "problem_stokes.hh"
-
-namespace Dumux {
-namespace Properties {
-
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::StokesOnePTwoC>
-{
-    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, Properties::TTag::DarcyOnePTwoC>;
-    using type = Dumux::StokesDarcyCouplingManager<Traits>;
-};
-
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::DarcyOnePTwoC>
-{
-    using Traits = StaggeredMultiDomainTraits<Properties::TTag::StokesOnePTwoC, Properties::TTag::StokesOnePTwoC, TypeTag>;
-    using type = Dumux::StokesDarcyCouplingManager<Traits>;
-};
-
-} // end namespace Properties
-} // end namespace Dumux
+#include "properties.hh"
 
 int main(int argc, char** argv)
 {

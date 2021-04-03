@@ -25,72 +25,20 @@
 #ifndef DUMUX_DARCY_SUBPROBLEM_ONEPTHREEC_HH
 #define DUMUX_DARCY_SUBPROBLEM_ONEPTHREEC_HH
 
-#include <dune/grid/yaspgrid.hh>
-
-#include <dumux/discretization/cctpfa.hh>
-
 #include <dumux/common/boundarytypes.hh>
 
+#include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
 #include <dumux/flux/maxwellstefanslaw.hh>
 
 #include <dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh>
-
-#include <dumux/porousmediumflow/1pnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
 #include "../1p2c_1p2c/spatialparams.hh"
-#include "h2n2co2fluidsystem.hh"
 
 namespace Dumux {
 
 template <class TypeTag>
 class DarcySubProblem;
-
-namespace Properties {
-
-// Create new type tags
-namespace TTag {
-struct DarcyOnePThreeC { using InheritsFrom = std::tuple<OnePNC, CCTpfaModel>; };
-} // end namespace TTag
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::DarcyOnePThreeC> { using type = Dumux::DarcySubProblem<TypeTag>; };
-
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::DarcyOnePThreeC> { using type = FluidSystems::H2N2CO2FluidSystem<GetPropType<TypeTag, Properties::Scalar>>; };
-
-// Use moles
-template<class TypeTag>
-struct UseMoles<TypeTag, TTag::DarcyOnePThreeC> { static constexpr bool value = true; };
-
-// Do not replace one equation with a total mass balance
-template<class TypeTag>
-struct ReplaceCompEqIdx<TypeTag, TTag::DarcyOnePThreeC> { static constexpr int value = 3; };
-
-//! Use a model with constant tortuosity for the effective diffusivity
-template<class TypeTag>
-struct EffectiveDiffusivityModel<TypeTag, TTag::DarcyOnePThreeC>
-{ using type = DiffusivityConstantTortuosity<GetPropType<TypeTag, Properties::Scalar>>; };
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::DarcyOnePThreeC> { using type = Dune::YaspGrid<2>; };
-
-//Set the diffusion type
-template<class TypeTag>
-struct MolecularDiffusionType<TypeTag, TTag::DarcyOnePThreeC> { using type = MaxwellStefansLaw<TypeTag>; };
-
-// Set the spatial paramaters type
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::DarcyOnePThreeC>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = OnePSpatialParams<GridGeometry, Scalar>;
-};
-
-} // end namespace Properties
 
 template <class TypeTag>
 class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>

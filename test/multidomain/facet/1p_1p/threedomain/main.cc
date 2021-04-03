@@ -32,12 +32,6 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
 
-#include "problem_bulk.hh"
-#include "problem_facet.hh"
-#include "problem_edge.hh"
-
-#include <dumux/assembly/diffmethod.hh>
-
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 #include <dumux/multidomain/fvassembler.hh>
@@ -47,55 +41,12 @@
 #include <dumux/multidomain/fvgridvariables.hh>
 
 #include <dumux/multidomain/facet/gridmanager.hh>
-#include <dumux/multidomain/facet/couplingmapper.hh>
-#include <dumux/multidomain/facet/couplingmanager.hh>
 #include <dumux/multidomain/facet/codimonegridadapter.hh>
 #include <dumux/multidomain/io/vtkoutputmodule.hh>
 
-// obtain/define some types to be used below in the property definitions and in main
-template<class BulkTypeTag, class FacetTypeTag, class EdgeTypeTag>
-class TestTraits
-{
-    using BulkFVG = Dumux::GetPropType<BulkTypeTag, Dumux::Properties::GridGeometry>;
-    using FacetFVG = Dumux::GetPropType<FacetTypeTag, Dumux::Properties::GridGeometry>;
-    using EdgeFVG = Dumux::GetPropType<EdgeTypeTag, Dumux::Properties::GridGeometry>;
-public:
-    using MDTraits = Dumux::MultiDomainTraits<BulkTypeTag, FacetTypeTag, EdgeTypeTag>;
-    using CouplingMapper = Dumux::FacetCouplingThreeDomainMapper<BulkFVG, FacetFVG, EdgeFVG>;
-    using CouplingManager = Dumux::FacetCouplingThreeDomainManager<MDTraits, CouplingMapper>;
-};
+#include "properties.hh"
 
-// set the coupling manager property in the sub-problems
 namespace Dumux {
-namespace Properties {
-
-using TpfaTraits = TestTraits<TTag::OnePBulkTpfa, TTag::OnePFacetTpfa, TTag::OnePEdgeTpfa>;
-using MpfaTraits = TestTraits<TTag::OnePBulkMpfa, TTag::OnePFacetMpfa, TTag::OnePEdgeMpfa>;
-using BoxTraits = TestTraits<TTag::OnePBulkBox, TTag::OnePFacetBox, TTag::OnePEdgeBox>;
-
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePBulkTpfa> { using type = typename TpfaTraits::CouplingManager; };
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePFacetTpfa> { using type = typename TpfaTraits::CouplingManager; };
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePEdgeTpfa> { using type = typename TpfaTraits::CouplingManager; };
-
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePBulkMpfa> { using type = typename MpfaTraits::CouplingManager; };
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePFacetMpfa> { using type = typename MpfaTraits::CouplingManager; };
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePEdgeMpfa> { using type = typename MpfaTraits::CouplingManager; };
-
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePBulkBox> { using type = typename BoxTraits::CouplingManager; };
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePFacetBox> { using type = typename BoxTraits::CouplingManager; };
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePEdgeBox> { using type = typename BoxTraits::CouplingManager; };
-
-} // end namespace Properties
-} // end namespace Dumux
 
 /*!
  * \brief Updates the finite volume grid geometry for the box scheme.
@@ -133,6 +84,8 @@ void updateFVGridGeometry(GridGeometry& gridGeometry,
     gridGeometry.update();
 }
 
+} // end namespace Dumux
+
 int main(int argc, char** argv)
 {
     using namespace Dumux;
@@ -156,8 +109,8 @@ int main(int argc, char** argv)
     using EdgeTypeTag = EDGETYPETAG;
 
     // the multidomain traits and some indices
-    using ThisTestTraits = TestTraits<BulkTypeTag, FacetTypeTag, EdgeTypeTag>;
-    using Traits = typename ThisTestTraits::MDTraits;
+    using TestTraits = Properties::TestTraits<BulkTypeTag, FacetTypeTag, EdgeTypeTag>;
+    using Traits = typename TestTraits::MDTraits;
     constexpr auto bulkId = Traits::template SubDomain<0>::Index{};
     constexpr auto facetId = Traits::template SubDomain<1>::Index{};
     constexpr auto edgeId = Traits::template SubDomain<2>::Index{};
@@ -186,7 +139,7 @@ int main(int argc, char** argv)
     gridGeometry[edgeId].update();
 
     // the coupling manager
-    using CouplingManager = typename ThisTestTraits::CouplingManager;
+    using CouplingManager = typename TestTraits::CouplingManager;
     auto couplingManager = std::make_shared<CouplingManager>();
 
     // the problems (boundary conditions)
@@ -209,7 +162,7 @@ int main(int argc, char** argv)
     problem.applyInitialSolution(x);
 
     // the coupling mapper
-    using CouplingMapper = typename ThisTestTraits::CouplingMapper;
+    using CouplingMapper = typename TestTraits::CouplingMapper;
     auto couplingMapper = std::make_shared<CouplingMapper>();
     couplingMapper->update(gridGeometry[bulkId], gridGeometry[facetId], gridGeometry[edgeId], gridManager.getEmbeddings());
 

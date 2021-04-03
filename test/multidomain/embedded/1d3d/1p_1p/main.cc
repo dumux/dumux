@@ -36,7 +36,6 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/geometry/diameter.hh>
 #include <dumux/linear/seqsolverbackend.hh>
-#include <dumux/assembly/diffmethod.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/grid/gridmanager_foam.hh>
@@ -44,45 +43,9 @@
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
-#include <dumux/multidomain/embedded/couplingmanager1d3d.hh>
 
-#include "problem_bloodflow.hh"
-#include "problem_tissue.hh"
+#include "properties.hh"
 #include "l2norm.hh"
-
-// default to tpfa for both domains
-#ifndef BULKTYPETAG
-#define BULKTYPETAG=TissueCC
-#endif
-#ifndef LOWDIMTYPETAG
-#define LOWDIMTYPETAG=BloodFlowCC
-#endif
-#ifndef COUPLINGMODE
-#define COUPLINGMODE=Embedded1d3dCouplingMode::Average
-#endif
-
-namespace Dumux {
-namespace Properties {
-
-template<class Traits>
-using TheCouplingManager = Embedded1d3dCouplingManager<Traits, COUPLINGMODE>;
-
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::BULKTYPETAG> { using type = TheCouplingManager<MultiDomainTraits<TypeTag, Properties::TTag::LOWDIMTYPETAG>>; };
-template<class TypeTag>
-struct PointSource<TypeTag, TTag::BULKTYPETAG> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSource<0>; };
-template<class TypeTag>
-struct PointSourceHelper<TypeTag, TTag::BULKTYPETAG> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSourceHelper<0>; };
-
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::LOWDIMTYPETAG> { using type = TheCouplingManager<MultiDomainTraits<Properties::TTag::BULKTYPETAG, TypeTag>>; };
-template<class TypeTag>
-struct PointSource<TypeTag, TTag::LOWDIMTYPETAG> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSource<1>; };
-template<class TypeTag>
-struct PointSourceHelper<TypeTag, TTag::LOWDIMTYPETAG> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSourceHelper<1>; };
-
-} // end namespace Properties
-} // end namespace Dumux
 
 int main(int argc, char** argv)
 {

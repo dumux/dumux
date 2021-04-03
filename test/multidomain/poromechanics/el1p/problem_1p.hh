@@ -25,55 +25,13 @@
 #ifndef DUMUX_1P_SUB_PROBLEM_HH
 #define DUMUX_1P_SUB_PROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
-
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
-#include <dumux/discretization/cctpfa.hh>
-#include <dumux/porousmediumflow/1p/model.hh>
+
 #include <dumux/porousmediumflow/problem.hh>
 
-#include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/material/components/constant.hh>
-
-#include "spatialparams_1p.hh"
-
 namespace Dumux {
-
-// forward declaration of the problem class
-template <class TypeTag>
-class OnePSubProblem;
-
-namespace Properties {
-
-// Create new type tags
-namespace TTag {
-struct OnePSub { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
-} // end namespace TTag
-
-// The fluid phase consists of one constant component
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::OnePSub>
-{
-    using type = Dumux::FluidSystems::OnePLiquid< GetPropType<TypeTag, Properties::Scalar>,
-                                                  Dumux::Components::Constant<0, GetPropType<TypeTag, Properties::Scalar>> >;
-};
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePSub> { using type = Dune::YaspGrid<2>; };
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::OnePSub> { using type = OnePSubProblem<TypeTag> ; };
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::OnePSub>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
-    using type = OnePSpatialParams<GridGeometry, Scalar, CouplingManager>;
-};
-} // end namespace Properties
 
 /*!
  * \ingroup PoromechanicsTests

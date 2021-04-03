@@ -29,17 +29,10 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/geometry/quadraturerules.hh>
 
-#include "problem_1p_bulk.hh"
-#include "problem_1p_lowdim.hh"
-
-#include "problem_tracer_bulk.hh"
-#include "problem_tracer_lowdim.hh"
-
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
 
-#include <dumux/assembly/diffmethod.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/evalgradients.hh>
@@ -50,66 +43,13 @@
 #include <dumux/multidomain/traits.hh>
 
 #include <dumux/multidomain/facet/gridmanager.hh>
-#include <dumux/multidomain/facet/couplingmapper.hh>
-#include <dumux/multidomain/facet/couplingmanager.hh>
 #include <dumux/multidomain/facet/codimonegridadapter.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 
-// obtain/define some types to be used below in the property definitions and in main
-template< class BulkTypeTag, class LowDimTypeTag >
-class TestTraits
-{
-    using BulkFVGridGeometry = Dumux::GetPropType<BulkTypeTag, Dumux::Properties::GridGeometry>;
-    using LowDimFVGridGeometry = Dumux::GetPropType<LowDimTypeTag, Dumux::Properties::GridGeometry>;
-public:
-    using MDTraits = Dumux::MultiDomainTraits<BulkTypeTag, LowDimTypeTag>;
-    using CouplingMapper = Dumux::FacetCouplingMapper<BulkFVGridGeometry, LowDimFVGridGeometry>;
-    using CouplingManager = Dumux::FacetCouplingManager<MDTraits, CouplingMapper>;
-};
+#include "properties.hh"
 
-// set the coupling manager property in the sub-problems for both box and tpfa
 namespace Dumux {
-namespace Properties {
-
-// set cm property for the box test
-using BoxTraits = TestTraits<Properties::TTag::OnePBulkBox, Properties::TTag::OnePLowDimBox>;
-using BoxTracerTraits = TestTraits<Properties::TTag::TracerBulkBox, Properties::TTag::TracerLowDimBox>;
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePBulkBox> { using type = typename BoxTraits::CouplingManager; };
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePLowDimBox> { using type = typename BoxTraits::CouplingManager; };
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::TracerBulkBox> { using type = typename BoxTracerTraits::CouplingManager; };
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::TracerLowDimBox> { using type = typename BoxTracerTraits::CouplingManager; };
-
-// set cm property for the tpfa test
-using TpfaTraits = TestTraits<Properties::TTag::OnePBulkTpfa, Properties::TTag::OnePLowDimTpfa>;
-using TpfaTracerTraits = TestTraits<Properties::TTag::TracerBulkTpfa, Properties::TTag::TracerLowDimTpfa>;
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePBulkTpfa> { using type = typename TpfaTraits::CouplingManager; };
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePLowDimTpfa> { using type = typename TpfaTraits::CouplingManager; };
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::TracerBulkTpfa> { using type = typename TpfaTracerTraits::CouplingManager; };
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::TracerLowDimTpfa> { using type = typename TpfaTracerTraits::CouplingManager; };
-
-// set cm property for the mpfa test
-using MpfaTraits = TestTraits<Properties::TTag::OnePBulkMpfa, Properties::TTag::OnePLowDimMpfa>;
-using MpfaTracerTraits = TestTraits<Properties::TTag::TracerBulkMpfa, Properties::TTag::TracerLowDimMpfa>;
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePBulkMpfa> { using type = typename MpfaTraits::CouplingManager; };
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePLowDimMpfa> { using type = typename MpfaTraits::CouplingManager; };
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::TracerBulkMpfa> { using type = typename MpfaTracerTraits::CouplingManager; };
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::TracerLowDimMpfa> { using type = typename MpfaTracerTraits::CouplingManager; };
-
-} // end namespace Properties
-} // end namespace Dumux
 
 /*!
  * \brief Updates the finite volume grid geometry for the box scheme.
@@ -211,6 +151,8 @@ void computeVolumeFluxes(Storage& volumeFluxes,
     }
 }
 
+} // end namespace Dumux
+
 // main program
 int main(int argc, char** argv)
 {
@@ -259,7 +201,7 @@ int main(int argc, char** argv)
     lowDimFvGridGeometry->update();
 
     // the coupling mapper
-    using OnePTestTraits = TestTraits<BulkOnePTypeTag, LowDimOnePTypeTag>;
+    using OnePTestTraits = Properties::TestTraits<BulkOnePTypeTag, LowDimOnePTypeTag>;
     auto couplingMapper = std::make_shared<typename OnePTestTraits::CouplingMapper>();
     couplingMapper->update(*bulkFvGridGeometry, *lowDimFvGridGeometry, gridManager.getEmbeddings());
 
@@ -364,7 +306,7 @@ int main(int argc, char** argv)
     using LowDimTracerTypeTag = Properties::TTag::TRACERLOWDIMTYPETAG;
 
     // instantiate coupling manager
-    using TracerTestTraits = TestTraits<BulkTracerTypeTag, LowDimTracerTypeTag>;
+    using TracerTestTraits = Properties::TestTraits<BulkTracerTypeTag, LowDimTracerTypeTag>;
     using CouplingManager = typename TracerTestTraits::CouplingManager;
     auto couplingManager = std::make_shared<CouplingManager>();
 
