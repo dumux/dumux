@@ -82,6 +82,27 @@ void circlePoints(std::vector<GlobalPosition>& points,
 
 /*!
  * \ingroup EmbeddedCoupling
+ * \brief returns a vector of sin and cos values of a circle parametrization
+ * \param numPoints the number of points
+ */
+template<class Scalar = double>
+std::vector<Scalar> circlePointsSinCos(const std::size_t numPoints)
+{
+    std::vector<Scalar> sincos(2*numPoints);
+    Scalar t = 0 + 0.1; // add arbitrary offset
+    for (std::size_t i = 0; i < numPoints; ++i)
+    {
+        using std::sin; using std::cos;
+        sincos[2*i] = sin(t);
+        sincos[2*i + 1] = cos(t);
+        t += 2*M_PI/numPoints;
+        if(t > 2*M_PI) t -= 2*M_PI;
+    }
+    return sincos;
+}
+
+/*!
+ * \ingroup EmbeddedCoupling
  * \brief returns a vector of points on a circle
  * \param center the circle center
  * \param normal the normal to the circle plane
@@ -94,20 +115,10 @@ std::vector<GlobalPosition> circlePoints(const GlobalPosition& center,
                                          const Scalar radius,
                                          const std::size_t numPoints = 20)
 {
+    // precompute the sin/cos values
+    const auto sincos = circlePointsSinCos<Scalar>(numPoints);
+
     std::vector<GlobalPosition> points;
-
-    // precompute the sin/cos
-    std::vector<Scalar> sincos(2*numPoints);
-    Scalar t = 0 + 0.1; // add arbitrary offset
-    for (std::size_t i = 0; i < numPoints; ++i)
-    {
-        using std::sin; using std::cos;
-        sincos[2*i] = sin(t);
-        sincos[2*i + 1] = cos(t);
-        t += 2*M_PI/numPoints;
-        if(t > 2*M_PI) t -= 2*M_PI;
-    }
-
     circlePoints(points, sincos, center, normal, radius);
     return points;
 }
