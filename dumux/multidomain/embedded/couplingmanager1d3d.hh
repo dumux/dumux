@@ -35,56 +35,11 @@ namespace Dumux {
 template<class MDTraits, class CouplingMode>
 class Embedded1d3dCouplingManager;
 
-/*!
- * \ingroup EmbeddedCoupling
- * \brief The coupling mode
- * \deprecated Will be removed after 3.3
- */
-enum class EmbeddedCouplingMode
-{ line, average, cylindersources, kernel };
-
-// deprecated and will be removed after 3.3
-template<class MDTraits, EmbeddedCouplingMode mode>
-struct EmbeddedCouplingManager1d3d;
-
 } // end namespace Dumux
 
 #include <dumux/multidomain/embedded/couplingmanager1d3d_line.hh>
 #include <dumux/multidomain/embedded/couplingmanager1d3d_average.hh>
 #include <dumux/multidomain/embedded/couplingmanager1d3d_surface.hh>
 #include <dumux/multidomain/embedded/couplingmanager1d3d_kernel.hh>
-
-// TODO: remove this part after the release 3.3
-namespace Dumux {
-
-template<class MDTraits>
-struct [[deprecated("Removed after 3.3. Use Embedded1d3dCouplingManager.")]] EmbeddedCouplingManager1d3d<MDTraits, EmbeddedCouplingMode::line>
-: public Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Line> {
-    using ParentType = Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Line>;
-    using ParentType::ParentType;
-};
-
-template<class MDTraits>
-struct [[deprecated("Removed after 3.3. Use Embedded1d3dCouplingManager.")]] EmbeddedCouplingManager1d3d<MDTraits, EmbeddedCouplingMode::average>
-: public Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Average> {
-    using ParentType = Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Average>;
-    using ParentType::ParentType;
-};
-
-template<class MDTraits>
-struct [[deprecated("Removed after 3.3. Use Embedded1d3dCouplingManager.")]] EmbeddedCouplingManager1d3d<MDTraits, EmbeddedCouplingMode::cylindersources>
-: public Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Surface> {
-    using ParentType = Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Surface>;
-    using ParentType::ParentType;
-};
-
-template<class MDTraits>
-struct [[deprecated("Removed after 3.3. Use Embedded1d3dCouplingManager.")]] EmbeddedCouplingManager1d3d<MDTraits, EmbeddedCouplingMode::kernel>
-: public Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Kernel> {
-    using ParentType = Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Kernel>;
-    using ParentType::ParentType;
-};
-
-} // end namespace Dumux
 
 #endif
