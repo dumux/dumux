@@ -30,11 +30,13 @@
 #include <dumux/porousmediumflow/tracer/model.hh>
 #include <dumux/material/fluidsystems/base.hh>
 
-#include "spatialparams_tracer.hh"
+#include <test/porousmediumflow/2p/incompressible/properties.hh>
 
-#include "problem_tracer.hh"
+#include "spatialparams.hh"
+#include "problem.hh"
 
 namespace Dumux::Properties {
+
 //Create new type tags
 namespace TTag {
 struct TwoPTracerTest { using InheritsFrom = std::tuple<Tracer>; };
