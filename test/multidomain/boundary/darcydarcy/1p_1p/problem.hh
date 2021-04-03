@@ -26,9 +26,12 @@
 #define DUMUX_ONEP_SUB_TEST_PROBLEM_HH
 
 #include <dune/common/indices.hh>
+
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
+
 #include <dumux/porousmediumflow/problem.hh>
-#include "spatialparams.hh"
 
 namespace Dumux {
 

@@ -24,7 +24,6 @@
 
 #include <config.h>
 
-#include <ctime>
 #include <iostream>
 #include <fstream>
 
@@ -34,85 +33,16 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
-#include <dumux/linear/seqsolverbackend.hh>
-#include <dumux/assembly/diffmethod.hh>
-#include <dumux/discretization/method.hh>
-#include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager.hh>
 
-#include <dumux/porousmediumflow/1p/model.hh>
-#include <dumux/porousmediumflow/2p/model.hh>
-#include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/ch4.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/material/fluidsystems/1pgas.hh>
-#include <dumux/material/fluidsystems/2pimmiscible.hh>
-#include <dumux/discretization/cctpfa.hh>
-#include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
+#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/io/vtkoutputmodule.hh>
+#include <dumux/io/grid/gridmanager_sub.hh>
 
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
-#include <dumux/multidomain/boundary/darcydarcy/couplingmanager.hh>
 
-#include "problem.hh"
-
-namespace Dumux {
-namespace Properties {
-
-// Create new type tags
-namespace TTag {
-struct OnePSub { using InheritsFrom = std::tuple<CCTpfaModel>; };
-// differentiate between the two subproblems
-struct OnePSub0 { using InheritsFrom = std::tuple<OneP, OnePSub>; };
-struct OnePSub1 { using InheritsFrom = std::tuple<TwoP, OnePSub>; };
-} // end namespace TTag
-
-// the coupling manager
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePSub>
-{ using type = DarcyDarcyBoundaryCouplingManager<MultiDomainTraits<Properties::TTag::OnePSub0, Properties::TTag::OnePSub1>>; };
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePSub>
-{
-    using HostGrid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>;
-    using type = Dune::SubGrid<HostGrid::dimension, HostGrid>;
-};
-
-// set the spatial params
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::OnePSub>
-{
-    using type = TestSpatialParams<GetPropType<TypeTag, Properties::GridGeometry>,
-                                   GetPropType<TypeTag, Properties::Scalar>>;
-};
-
-// differentiate between the two fluid systems
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::OnePSub0>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
-};
-
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::OnePSub1>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::TwoPImmiscible<Scalar, FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar>>,
-                                                      FluidSystems::OnePGas<Scalar, Components::CH4<Scalar>>>;
-};
-
-// differentiate between the two subproblems
-template<class TypeTag>
-struct Problem<TypeTag, TTag::OnePSub0> { using type = OnePTestProblem<TypeTag, 0>; };
-template<class TypeTag>
-struct Problem<TypeTag, TTag::OnePSub1> { using type = OnePTestProblem<TypeTag, 1>; };
-
-} // end namespace Properties
-} // end namespace Dumux
+#include "properties.hh"
 
 int main(int argc, char** argv)
 {

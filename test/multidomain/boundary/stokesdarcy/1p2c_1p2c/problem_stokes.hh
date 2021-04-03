@@ -25,59 +25,13 @@
 #ifndef DUMUX_STOKES_SUBPROBLEM_HH
 #define DUMUX_STOKES_SUBPROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 
-#include <dumux/discretization/staggered/freeflow/properties.hh>
-
-#include <dumux/freeflow/compositional/navierstokesncmodel.hh>
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
 
-#include <dumux/material/fluidsystems/1padapter.hh>
-#include <dumux/material/fluidsystems/h2oair.hh>
-
 namespace Dumux {
-template <class TypeTag>
-class StokesSubProblem;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct StokesOnePTwoC { using InheritsFrom = std::tuple<NavierStokesNC, StaggeredFreeFlowModel>; };
-} // end namespace TTag
-
-// The fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::StokesOnePTwoC>
-{
-  using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
-  static constexpr auto phaseIdx = H2OAir::liquidPhaseIdx; // simulate the water phase
-  using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
-};
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::StokesOnePTwoC> { using type = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::StokesOnePTwoC> { using type = Dumux::StokesSubProblem<TypeTag> ; };
-
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
-
-// Use moles
-template<class TypeTag>
-struct UseMoles<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
-
-// Do not replace one equation with a total mass balance
-template<class TypeTag>
-struct ReplaceCompEqIdx<TypeTag, TTag::StokesOnePTwoC> { static constexpr int value = 3; };
-} // end namespace Properties
 
 /*!
  * \ingroup BoundaryTests

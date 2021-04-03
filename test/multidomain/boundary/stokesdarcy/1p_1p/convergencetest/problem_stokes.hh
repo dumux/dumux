@@ -43,36 +43,6 @@ namespace Dumux {
 template <class TypeTag>
 class FreeFlowSubProblem;
 
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct FreeFlowOneP { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
-} // end namespace TTag
-
-// the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::FreeFlowOneP>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::Constant<1, Scalar> > ;
-};
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::FreeFlowOneP> { using type = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::FreeFlowOneP> { using type = Dumux::FreeFlowSubProblem<TypeTag> ; };
-
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::FreeFlowOneP> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::FreeFlowOneP> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::FreeFlowOneP> { static constexpr bool value = true; };
-} // end namespace Properties
-
 /*!
  * \ingroup BoundaryTests
  * \brief The Stokes sub-problem of coupled Stokes-Darcy convergence test

@@ -25,56 +25,13 @@
 #ifndef DUMUX_DARCY_SUBPROBLEM_HH
 #define DUMUX_DARCY_SUBPROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
-
-#include <dumux/discretization/cctpfa.hh>
-
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 
-#include <dumux/porousmediumflow/2p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include "spatialparams.hh"
-
 namespace Dumux {
-template <class TypeTag>
-class DarcySubProblem;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct DarcyTwoP { using InheritsFrom = std::tuple<TwoP, CCTpfaModel>; };
-} // end namespace TTag
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::DarcyTwoP> { using type = Dumux::DarcySubProblem<TypeTag>; };
-
-// Set the grid type
-#if ENABLE_3D
-template<class TypeTag>
-struct Grid<TypeTag, TTag::DarcyTwoP> { using type = Dune::YaspGrid<3>; };
-#else
-template<class TypeTag>
-struct Grid<TypeTag, TTag::DarcyTwoP> { using type = Dune::YaspGrid<2>; };
-#endif
-
-template<class TypeTag>
-struct UseMoles<TypeTag, TTag::DarcyTwoP> { static constexpr bool value = false; };
-
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::DarcyTwoP>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = ConservationSpatialParams<GridGeometry, Scalar>;
-};
-
-//! Set the default formulation to pw-Sn: This can be over written in the problem.
-template<class TypeTag>
-struct Formulation<TypeTag, TTag::DarcyTwoP>
-{ static constexpr auto value = TwoPFormulation::p1s0; };
-} // end namespace Properties
 
 template <class TypeTag>
 class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
