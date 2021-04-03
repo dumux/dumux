@@ -48,25 +48,6 @@ class IntegrationPointSource : public IdPointSource<GlobalPosition, SourceValues
 
 public:
     //! Constructor for integration point sources
-    [[deprecated("Call constructor with a single element index instead! Will be removed after 3.3")]]
-    IntegrationPointSource(GlobalPosition pos, SourceValues values, IdType id,
-                           Scalar qpweight, Scalar integrationElement,
-                           const std::vector<std::size_t>& elementIndices)
-      : ParentType(pos, values, id),
-        qpweight_(qpweight), integrationElement_(integrationElement),
-        elementIndex_(elementIndices[0]) {}
-
-    //! Constructor for integration point sources, when there is no
-    // value known at the time of initialization
-    [[deprecated("Call constructor with a single element index instead! Will be removed after 3.3")]]
-    IntegrationPointSource(GlobalPosition pos, IdType id,
-                           Scalar qpweight, Scalar integrationElement,
-                           const std::vector<std::size_t>& elementIndices)
-      : ParentType(pos, id),
-        qpweight_(qpweight), integrationElement_(integrationElement),
-        elementIndex_(elementIndices[0]) {}
-
-    //! Constructor for integration point sources
     IntegrationPointSource(GlobalPosition pos, SourceValues values, IdType id,
                            Scalar qpweight, Scalar integrationElement,
                            std::size_t elementIndex)
@@ -98,10 +79,6 @@ public:
 
     void setIntegrationElement(const Scalar ie)
     { integrationElement_ = ie; }
-
-    [[deprecated("Use elementIndex() instead. Will be removed after 3.3")]]
-    std::vector<std::size_t> elementIndices() const
-    { return std::vector<std::size_t>({elementIndex_}); }
 
     //! The index of the element this intergration point source is associated with
     std::size_t elementIndex() const

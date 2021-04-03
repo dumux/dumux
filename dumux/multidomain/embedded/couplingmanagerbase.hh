@@ -279,9 +279,9 @@ public:
                     const auto id = idCounter_++;
                     const auto qpweight = qp.weight();
                     const auto ie = intersectionGeometry.integrationElement(qp.position());
-                    pointSources(bulkIdx).emplace_back(globalPos, id, qpweight, ie, std::vector<std::size_t>({bulkElementIdx}));
+                    pointSources(bulkIdx).emplace_back(globalPos, id, qpweight, ie, bulkElementIdx);
                     pointSources(bulkIdx).back().setEmbeddings(is.numDomainNeighbors());
-                    pointSources(lowDimIdx).emplace_back(globalPos, id, qpweight, ie, std::vector<std::size_t>({lowDimElementIdx}));
+                    pointSources(lowDimIdx).emplace_back(globalPos, id, qpweight, ie, lowDimElementIdx);
                     pointSources(lowDimIdx).back().setEmbeddings(is.numDomainNeighbors());
 
                     // pre compute additional data used for the evaluation of
