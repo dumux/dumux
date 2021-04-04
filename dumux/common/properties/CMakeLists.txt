@@ -1,5 +1,3 @@
-install(FILES
-grid.hh
-model.hh
-propertysystem.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/common/properties)
+file(GLOB DUMUX_COMMON_PROPERTIES_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_COMMON_PROPERTIES_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/common/properties)

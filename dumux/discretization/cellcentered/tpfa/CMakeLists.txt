@@ -1,10 +1,3 @@
-install(FILES
-computetransmissibility.hh
-elementfluxvariablescache.hh
-elementvolumevariables.hh
-fvelementgeometry.hh
-fvgridgeometry.hh
-gridfluxvariablescache.hh
-gridvolumevariables.hh
-subcontrolvolumeface.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization/cellcentered/tpfa)
+file(GLOB DUMUX_DISCRETIZATION_CELLCENTERED_TPFA_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_DISCRETIZATION_CELLCENTERED_TPFA_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization/cellcentered/tpfa)

@@ -1,8 +1,3 @@
-install(FILES
-couplingmanager.hh
-couplingmapper.hh
-darcyslaw.hh
-fickslaw.hh
-fourierslaw.hh
-properties.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/multidomain/facet/cellcentered/tpfa)
+file(GLOB DUMUX_MULTIDOMAIN_FACET_CELLCENTERED_TPFA_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_MULTIDOMAIN_FACET_CELLCENTERED_TPFA_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/multidomain/facet/cellcentered/tpfa)

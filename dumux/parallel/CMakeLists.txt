@@ -1,3 +1,3 @@
-install(FILES
-vectorcommdatahandle.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/parallel)
+file(GLOB DUMUX_PARALLEL_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_PARALLEL_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/parallel)

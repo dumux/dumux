@@ -1,3 +1,3 @@
-install(FILES
-fluidsolidinterfacialareashiwang.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/1pia)
+file(GLOB DUMUX_MATERIAL_FLUIDMATRIXINTERACTIONS_1PIA_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_MATERIAL_FLUIDMATRIXINTERACTIONS_1PIA_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/1pia)

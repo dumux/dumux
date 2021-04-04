@@ -1,3 +1,3 @@
-install(FILES
-localresidual.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/immiscible)
+file(GLOB DUMUX_POROUSMEDIUMFLOW_IMMISCIBLE_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_POROUSMEDIUMFLOW_IMMISCIBLE_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/immiscible)

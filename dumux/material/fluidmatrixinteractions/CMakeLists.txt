@@ -6,11 +6,6 @@ add_subdirectory(frictionlaws)
 add_subdirectory(mp)
 add_subdirectory(porenetwork)
 
-install(FILES
-diffusivityconstanttortuosity.hh
-diffusivitymillingtonquirk.hh
-fluidmatrixinteraction.hh
-permeabilitykozenycarman.hh
-porositydeformation.hh
-porosityprecipitation.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions)
+file(GLOB DUMUX_MATERIAL_FLUIDMATRIXINTERACTIONS_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_MATERIAL_FLUIDMATRIXINTERACTIONS_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions)

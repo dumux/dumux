@@ -1,9 +1,3 @@
-install(FILES
-pressure.hh
-pressureadaptive.hh
-pressureproperties.hh
-pressurepropertiesadaptive.hh
-pressurevelocity.hh
-velocity.hh
-velocityadaptive.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/2p/sequential/diffusion/cellcentered)
+file(GLOB DUMUX_POROUSMEDIUMFLOW_2P_SEQUENTIAL_DIFFUSION_CELLCENTERED_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_POROUSMEDIUMFLOW_2P_SEQUENTIAL_DIFFUSION_CELLCENTERED_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/2p/sequential/diffusion/cellcentered)

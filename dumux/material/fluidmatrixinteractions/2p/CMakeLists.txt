@@ -1,19 +1,6 @@
 add_subdirectory(interfacialarea)
 add_subdirectory(thermalconductivity)
 
-install(FILES
-brookscorey.hh
-datasplinemateriallaw.hh
-efftoabsdefaultpolicy.hh
-heatpipelaw.hh
-heatpipelawparams.hh
-linearmaterial.hh
-materiallaw.hh
-noregularization.hh
-smoothedlinearlaw.hh
-splinemateriallaw.hh
-thermalconductivityjohansen.hh
-thermalconductivitysimplefluidlumping.hh
-thermalconductivitysomerton.hh
-vangenuchten.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/2p)
+file(GLOB DUMUX_MATERIAL_FLUIDMATRIXINTERACTIONS_2P_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_MATERIAL_FLUIDMATRIXINTERACTIONS_2P_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/2p)

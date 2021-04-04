@@ -1,5 +1,3 @@
-install(FILES
-localresidual.hh
-model.hh
-volumevariables.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/solidenergy)
+file(GLOB DUMUX_POROUSMEDIUMFLOW_SOLIDENERGY_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_POROUSMEDIUMFLOW_SOLIDENERGY_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/solidenergy)

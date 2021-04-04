@@ -1,24 +1,3 @@
-install(FILES
-1padapter.hh
-1pgas.hh
-1pliquid.hh
-2p1c.hh
-2pimmiscible.hh
-3pimmiscible.hh
-base.hh
-brine.hh
-brineair.hh
-brineco2.hh
-h2oair.hh
-h2oairmesitylene.hh
-h2oairxylene.hh
-h2oheavyoil.hh
-h2on2.hh
-h2on2kinetic.hh
-h2on2o2.hh
-liquidphase2c.hh
-nullparametercache.hh
-parametercachebase.hh
-spe5.hh
-spe5parametercache.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidsystems)
+file(GLOB DUMUX_MATERIAL_FLUIDSYSTEMS_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_MATERIAL_FLUIDSYSTEMS_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidsystems)

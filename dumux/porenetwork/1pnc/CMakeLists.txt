@@ -1,5 +1,3 @@
-install(FILES
-iofields.hh
-model.hh
-volumevariables.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porenetwork/1pnc)
+file(GLOB DUMUX_PORENETWORK_1PNC_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_PORENETWORK_1PNC_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porenetwork/1pnc)

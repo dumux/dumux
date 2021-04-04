@@ -5,25 +5,6 @@ add_subdirectory(porenetwork)
 add_subdirectory(projection)
 add_subdirectory(staggered)
 
-install(FILES
-basegridgeometry.hh
-box.hh
-ccmpfa.hh
-cctpfa.hh
-checkoverlapsize.hh
-elementsolution.hh
-evalgradients.hh
-evalsolution.hh
-extrusion.hh
-fluxstencil.hh
-functionspacebasis.hh
-fvgridvariables.hh
-fvproperties.hh
-gridvariables.hh
-localview.hh
-method.hh
-scvandscvfiterators.hh
-staggered.hh
-subcontrolvolumebase.hh
-subcontrolvolumefacebase.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization)
+file(GLOB DUMUX_DISCRETIZATION_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_DISCRETIZATION_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization)

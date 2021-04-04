@@ -23,13 +23,6 @@ add_subdirectory(sequential)
 add_subdirectory(solidenergy)
 add_subdirectory(tracer)
 
-install(FILES
-fluxvariables.hh
-fluxvariablescache.hh
-fluxvariablescachefiller.hh
-problem.hh
-properties.hh
-velocity.hh
-velocityoutput.hh
-volumevariables.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow)
+file(GLOB DUMUX_POROUSMEDIUMFLOW_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_POROUSMEDIUMFLOW_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow)

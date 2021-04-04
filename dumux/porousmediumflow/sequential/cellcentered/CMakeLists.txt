@@ -1,8 +1,5 @@
 add_subdirectory(mpfa)
 
-install(FILES
-pressure.hh
-transport.hh
-velocity.hh
-velocitydefault.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/sequential/cellcentered)
+file(GLOB DUMUX_POROUSMEDIUMFLOW_SEQUENTIAL_CELLCENTERED_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_POROUSMEDIUMFLOW_SEQUENTIAL_CELLCENTERED_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/sequential/cellcentered)
