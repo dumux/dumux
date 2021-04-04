@@ -38,8 +38,6 @@
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/2p/formulation.hh>
 
-#include <dumux/common/deprecated.hh>
-
 namespace Dumux {
 
 /*!
@@ -191,22 +189,12 @@ public:
         const auto& insideVolVars = curElemVolVars[insideScvIdx];
         const auto& outsideVolVars = curElemVolVars[outsideScvIdx];
 
-        // old material law interface is deprecated: Replace this by
-        // const auto& insidefluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element,
-        //                                                                                           insideScv,
-        //                                                                                           elementSolution<FVElementGeometry>(insideVolVars.priVars()));
-        // const auto& outsidefluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(outsideElement,
-        //                                                                                            outsideScv,
-        //                                                                                            elementSolution<FVElementGeometry>(outsideVolVars.priVars()));
-        // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto& insidefluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(),
-                                                                          element,
-                                                                          insideScv,
-                                                                          elementSolution<FVElementGeometry>(insideVolVars.priVars()));
-        const auto& outsidefluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(),
-                                                                           outsideElement,
-                                                                           outsideScv,
-                                                                           elementSolution<FVElementGeometry>(outsideVolVars.priVars()));
+        const auto insidefluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(
+            element, insideScv, elementSolution<FVElementGeometry>(insideVolVars.priVars())
+        );
+        const auto outsidefluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(
+            outsideElement, outsideScv, elementSolution<FVElementGeometry>(outsideVolVars.priVars())
+        );
 
         // get references to the two participating derivative matrices
         auto& dI_dI = derivativeMatrices[insideScvIdx];
@@ -321,22 +309,10 @@ public:
 
         const auto elemSol = elementSolution(element, curElemVolVars, fvGeometry);
 
-        // old material law interface is deprecated: Replace this by
-        // const auto& insidefluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element,
-        //                                                                                           insideScv,
-        //                                                                                           elemSol);
-        // const auto& outsidefluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element,
-        //                                                                                            outsideScv,
-        //                                                                                            elemSol);
-        // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto& insidefluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(),
-                                                                          element,
-                                                                          insideScv,
-                                                                          elemSol);
-        const auto& outsidefluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(),
-                                                                           element,
-                                                                           outsideScv,
-                                                                           elemSol);
+        const auto insidefluidMatrixInteraction
+            = problem.spatialParams().fluidMatrixInteraction(element, insideScv, elemSol);
+        const auto outsidefluidMatrixInteraction
+            = problem.spatialParams().fluidMatrixInteraction(element, outsideScv, elemSol);
 
         // some quantities to be reused (rho & mu are constant and thus equal for all cells)
         static const auto rho_w = insideVolVars.density(0);
@@ -427,16 +403,9 @@ public:
             }
             else
             {
-                // old material law interface is deprecated: Replace this by
-                // const auto& fluidMatrixInteractionJ = problem.spatialParams().fluidMatrixInteraction(element,
-                //                                                                                      scvJ,
-                //                                                                                      elemSol);
+                const auto& fluidMatrixInteractionJ
+                    = problem.spatialParams().fluidMatrixInteraction(element, scvJ, elemSol);
 
-                // after the release of 3.3, when the deprecated interface is no longer supported
-                const auto& fluidMatrixInteractionJ = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(),
-                                                                             element,
-                                                                             scvJ,
-                                                                             elemSol);
                 const auto swJ = curElemVolVars[scvJ].saturation(0);
                 const auto dFluxN_dSnJ_pc = tj_up_n*fluidMatrixInteractionJ.dpc_dsw(swJ);
                 dI_dJ_inside[globalJ][conti0EqIdx+1][saturationIdx] -= dFluxN_dSnJ_pc;
@@ -485,15 +454,9 @@ public:
         const auto& insideVolVars = curElemVolVars[insideScvIdx];
         const auto& outsideVolVars = curElemVolVars[scvf.outsideScvIdx()];
 
-        // old material law interface is deprecated: Replace this by
-        // const auto& insidefluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element,
-        //                                                                                           insideScv,
-        //                                                                                           elementSolution<FVElementGeometry>(insideVolVars.priVars()));
-        // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto& insidefluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(),
-                                                                          element,
-                                                                          insideScv,
-                                                                          elementSolution<FVElementGeometry>(insideVolVars.priVars()));
+        const auto insidefluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(
+            element, insideScv, elementSolution<FVElementGeometry>(insideVolVars.priVars())
+        );
 
         // some quantities to be reused (rho & mu are constant and thus equal for all cells)
         static const auto rho_w = insideVolVars.density(0);
