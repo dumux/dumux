@@ -151,6 +151,8 @@ void updateBulkFVGridGeometry(GridGeometry& gridGeometry,
     gridGeometry.update();
 }
 
+} // end namespace Dumux
+
 // main program
 int main(int argc, char** argv)
 {
