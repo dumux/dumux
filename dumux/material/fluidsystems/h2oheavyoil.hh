@@ -337,7 +337,7 @@ public:
          * -- compare e.g. with Promo Class p. 32/33
          */
         const Scalar mu[numComponents] = {
-            H2O::gasViscosity(fluidState.temperature(phaseIdx), H2O::vaporPressure(fluidState.temperature(phaseIdx))),
+            h2oGasViscosityInMixture(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx)),
             HeavyOil::gasViscosity(fluidState.temperature(phaseIdx), HeavyOil::vaporPressure(fluidState.temperature(phaseIdx)))
         };
 
