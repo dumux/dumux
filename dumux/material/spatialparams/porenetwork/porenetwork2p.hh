@@ -25,10 +25,13 @@
 #ifndef DUMUX_PNM2P_SPATIAL_PARAMS_HH
 #define DUMUX_PNM2P_SPATIAL_PARAMS_HH
 
+#include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
 #include <dumux/material/fluidmatrixinteractions/porenetwork/throat/thresholdcapillarypressures.hh>
-#include "porenetworkbase.hh"
+
 #include <dumux/porenetwork/common/poreproperties.hh>
 #include <dumux/porenetwork/common/throatproperties.hh>
+
+#include "porenetworkbase.hh"
 
 namespace Dumux::PoreNetwork {
 
