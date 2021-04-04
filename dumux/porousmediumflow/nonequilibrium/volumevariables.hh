@@ -36,8 +36,6 @@
 #include <dumux/common/dimensionlessnumbers.hh>
 #include <dumux/common/parameters.hh>
 
-#include <dumux/common/deprecated.hh>
-
 namespace Dumux {
 
 /*!
@@ -133,8 +131,9 @@ public:
                               const Element& element,
                               const Scv& scv)
     {
-        factorEnergyTransfer_ = problem.spatialParams().factorEnergyTransfer(element, scv, elemSol);
-        characteristicLength_ = problem.spatialParams().characteristicLength(element, scv, elemSol);
+        const auto& spatialParams = problem.spatialParams();
+        factorEnergyTransfer_ = spatialParams.factorEnergyTransfer(element, scv, elemSol);
+        characteristicLength_ = spatialParams.characteristicLength(element, scv, elemSol);
 
         // set the dimensionless numbers and obtain respective quantities
         const unsigned int vIdxGlobal = scv.dofIndex();
@@ -181,20 +180,12 @@ public:
         const Scalar pc = fluidState.pressure(phase1Idx) - fluidState.pressure(phase0Idx);
         const Scalar Sw = fluidState.saturation(phase0Idx);
 
-        // old material law interface is deprecated: Replace this by
-        // const auto& wettingNonwettingInterfacialArea = spatialParams.wettingNonwettingInterfacialArea(element, scv, elemSol);
-        // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto fluidMatrixInteraction = Deprecated::makeInterfacialArea(Scalar{}, problem.spatialParams(), element, scv, elemSol);
-
+        const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
         const auto awn = fluidMatrixInteraction.wettingNonwettingInterface().area(Sw, pc);
+        const auto ans = fluidMatrixInteraction.nonwettingSolidInterface().area(Sw, pc);
         interfacialArea_[phase0Idx][phase1Idx] = awn;
         interfacialArea_[phase1Idx][phase0Idx] = interfacialArea_[phase0Idx][phase1Idx];
-        interfacialArea_[phase0Idx][phase0Idx] = 0.;
-
-        // old material law interface is deprecated: Replace this by
-        // const auto& nonwettingSolidInterfacialArea = spatialParams.nonwettingSolidInterfacialArea(element, scv, elemSol);
-        // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto ans = fluidMatrixInteraction.nonwettingSolidInterface().area(Sw, pc);
+        interfacialArea_[phase0Idx][phase0Idx] = 0.0;
 
         // Switch for using a a_{wn} relations that has some "maximum capillary pressure" as parameter
         // That value is obtained by regularization of the pc(Sw) function.
@@ -207,20 +198,14 @@ public:
             interfacialArea_[phase0Idx][sPhaseIdx] = solidSurface - ans;
         }
         else
-        {
-            // old material law interface is deprecated: Replace this by
-            // const auto& wettingSolidInterfacialArea = spatialParams.wettingSolidInterfacialArea(element, scv, elemSol);
-            // after the release of 3.3, when the deprecated interface is no longer supported
-            const auto fluidMatrixInteraction = Deprecated::makeInterfacialArea(Scalar{}, problem.spatialParams(), element, scv, elemSol);
             interfacialArea_[phase0Idx][sPhaseIdx] = fluidMatrixInteraction.wettingSolidInterface().area(Sw, pc);
-        }
 
         interfacialArea_[sPhaseIdx][phase0Idx] = interfacialArea_[phase0Idx][sPhaseIdx];
-        interfacialArea_[sPhaseIdx][sPhaseIdx] = 0.;
+        interfacialArea_[sPhaseIdx][sPhaseIdx] = 0.0;
 
         interfacialArea_[phase1Idx][sPhaseIdx] = ans;
         interfacialArea_[sPhaseIdx][phase1Idx] = interfacialArea_[phase1Idx][sPhaseIdx];
-        interfacialArea_[phase1Idx][phase1Idx] = 0.;
+        interfacialArea_[phase1Idx][phase1Idx] = 0.0;
     }
 
     /*!
@@ -337,8 +322,9 @@ public:
                               const Element& element,
                               const Scv& scv)
     {
-        factorEnergyTransfer_ = problem.spatialParams().factorEnergyTransfer(element, scv, elemSol);
-        characteristicLength_ = problem.spatialParams().characteristicLength(element, scv, elemSol);
+        const auto& spatialParams = problem.spatialParams();
+        factorEnergyTransfer_ = spatialParams.factorEnergyTransfer(element, scv, elemSol);
+        characteristicLength_ = spatialParams.characteristicLength(element, scv, elemSol);
 
         // set the dimensionless numbers and obtain respective quantities
         const unsigned int vIdxGlobal = scv.dofIndex();
@@ -492,8 +478,9 @@ public:
                               const Element& element,
                               const Scv& scv)
     {
-        factorMassTransfer_ = problem.spatialParams().factorMassTransfer(element, scv, elemSol);
-        characteristicLength_ = problem.spatialParams().characteristicLength(element, scv, elemSol);
+        const auto& spatialParams = problem.spatialParams();
+        factorMassTransfer_ = spatialParams.factorMassTransfer(element, scv, elemSol);
+        characteristicLength_ = spatialParams.characteristicLength(element, scv, elemSol);
 
         // set the dimensionless numbers and obtain respective quantities.
         const unsigned int vIdxGlobal = scv.dofIndex();
@@ -538,17 +525,12 @@ public:
                                const Element& element,
                                const Scv& scv)
     {
-        // obtain parameters for awnsurface and material law
-        // old material law interface is deprecated: Replace this by
-        // const auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
-        // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto fluidMatrixInteraction = Deprecated::makeInterfacialArea(Scalar{}, problem.spatialParams(), element, scv, elemSol);
-
         const auto Sw = fluidState.saturation(phase0Idx) ;
         const auto pc = fluidState.pressure(phase1Idx) - fluidState.pressure(phase0Idx);
 
         // when we only consider chemical non-equilibrium there is only mass transfer between
         // the fluid phases, so in 2p only interfacial area between wetting and non-wetting
+        const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
         interfacialArea_ = fluidMatrixInteraction.wettingNonwettingInterface().area(Sw, pc);
     }
 
@@ -669,9 +651,10 @@ public:
                               const Element& element,
                               const Scv& scv)
     {
-        factorMassTransfer_ = problem.spatialParams().factorMassTransfer(element, scv, elemSol);
-        factorEnergyTransfer_ = problem.spatialParams().factorEnergyTransfer(element, scv, elemSol);
-        characteristicLength_ = problem.spatialParams().characteristicLength(element, scv, elemSol);
+        const auto& spatialParams = problem.spatialParams();
+        factorMassTransfer_ = spatialParams.factorMassTransfer(element, scv, elemSol);
+        factorEnergyTransfer_ = spatialParams.factorEnergyTransfer(element, scv, elemSol);
+        characteristicLength_ = spatialParams.characteristicLength(element, scv, elemSol);
 
         const auto vIdxGlobal = scv.dofIndex();
         using FluidSystem = typename Traits::FluidSystem;
@@ -727,10 +710,7 @@ public:
         const Scalar pc = fluidState.pressure(phase1Idx) - fluidState.pressure(phase0Idx);
         const Scalar Sw = fluidState.saturation(phase0Idx);
 
-        // old material law interface is deprecated: Replace this by
-        // const auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
-        // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto fluidMatrixInteraction = Deprecated::makeInterfacialArea(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+        const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
 
         const auto awn = fluidMatrixInteraction.wettingNonwettingInterface().area(Sw, pc);
         interfacialArea_[phase0Idx][phase1Idx] = awn;
