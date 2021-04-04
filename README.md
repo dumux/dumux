@@ -56,8 +56,8 @@ How to cite
 
 DuMu<sup>x</sup> is research software and developed at research institutions.
 If you are using DuMu<sup>x</sup> in scientific publications and in
-the academic context, please cite (at least one)
-of our publications:
+the academic context, please cite (at least one of)
+our publications:
 
 * [Koch, T., Gläser, D., Weishaupt, K., Ackermann, S., Beck, M., Becker, B.,
   Burbulla, S., Class, H., Coltman, E., Emmert, S., Fetzer, T., Grüninger, C.,
