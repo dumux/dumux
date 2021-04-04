@@ -29,8 +29,6 @@
 
 #include <dune/common/exceptions.hh>
 
-#include <dumux/common/deprecated.hh>
-
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 #include <dumux/material/idealgas.hh>
@@ -108,10 +106,7 @@ public:
     {
         ParentType::update(elemSol, problem, element, scv);
 
-        // old material law interface is deprecated: Replace this by
-        // const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
-        // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+        const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
 
         const auto& priVars = elemSol[scv.localDofIndex()];
         const auto phasePresence = priVars.state();
@@ -252,10 +247,7 @@ public:
     {
         EnergyVolVars::updateTemperature(elemSol, problem, element, scv, fluidState, solidState);
 
-        // old material law interface is deprecated: Replace this by
-        // const auto& fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
-        // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+        const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
 
         const auto& priVars = elemSol[scv.localDofIndex()];
 
