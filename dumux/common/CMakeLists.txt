@@ -1,4 +1,3 @@
-add_subdirectory(geometry)
 add_subdirectory(properties)
 add_subdirectory(typetraits)
 
