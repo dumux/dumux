@@ -1,8 +1,3 @@
-install(FILES
-couplingmanager.hh
-couplingmapper.hh
-interactionvolume.hh
-localassembler.hh
-localsubcontrolentities.hh
-properties.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/multidomain/facet/cellcentered/mpfa)
+file(GLOB DUMUX_MULTIDOMAIN_FACET_CELLCENTERED_MPFA_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_MULTIDOMAIN_FACET_CELLCENTERED_MPFA_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/multidomain/facet/cellcentered/mpfa)

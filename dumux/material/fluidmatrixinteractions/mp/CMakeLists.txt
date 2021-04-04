@@ -1,4 +1,3 @@
-install(FILES
-mpadapter.hh
-mplinearmaterial.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/mp)
+file(GLOB DUMUX_MATERIAL_FLUIDMATRIXINTERACTIONS_MP_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_MATERIAL_FLUIDMATRIXINTERACTIONS_MP_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/mp)

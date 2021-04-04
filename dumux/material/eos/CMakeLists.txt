@@ -1,6 +1,3 @@
-install(FILES
-pengrobinson.hh
-pengrobinsonmixture.hh
-pengrobinsonparams.hh
-pengrobinsonparamsmixture.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/eos)
+file(GLOB DUMUX_MATERIAL_EOS_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_MATERIAL_EOS_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/eos)

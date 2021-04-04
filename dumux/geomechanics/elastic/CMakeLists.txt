@@ -1,6 +1,3 @@
-install(FILES
-indices.hh
-localresidual.hh
-model.hh
-volumevariables.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/geomechanics/elastic)
+file(GLOB DUMUX_GEOMECHANICS_ELASTIC_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_GEOMECHANICS_ELASTIC_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/geomechanics/elastic)

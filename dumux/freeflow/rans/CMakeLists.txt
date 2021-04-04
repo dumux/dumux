@@ -2,9 +2,6 @@ add_subdirectory(oneeq)
 add_subdirectory(twoeq)
 add_subdirectory(zeroeq)
 
-install(FILES
-iofields.hh
-model.hh
-problem.hh
-volumevariables.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/freeflow/rans)
+file(GLOB DUMUX_FREEFLOW_RANS_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_FREEFLOW_RANS_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/freeflow/rans)

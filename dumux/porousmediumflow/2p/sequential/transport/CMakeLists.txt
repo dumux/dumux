@@ -1,6 +1,5 @@
 add_subdirectory(cellcentered)
 
-install(FILES
-problem.hh
-properties.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/2p/sequential/transport)
+file(GLOB DUMUX_POROUSMEDIUMFLOW_2P_SEQUENTIAL_TRANSPORT_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_POROUSMEDIUMFLOW_2P_SEQUENTIAL_TRANSPORT_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/2p/sequential/transport)

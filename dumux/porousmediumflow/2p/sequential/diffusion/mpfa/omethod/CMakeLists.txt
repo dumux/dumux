@@ -1,6 +1,3 @@
-install(FILES
-2dpressure.hh
-2dpressureproperties.hh
-2dpressurevelocity.hh
-2dvelocity.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/2p/sequential/diffusion/mpfa/omethod)
+file(GLOB DUMUX_POROUSMEDIUMFLOW_2P_SEQUENTIAL_DIFFUSION_MPFA_OMETHOD_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_POROUSMEDIUMFLOW_2P_SEQUENTIAL_DIFFUSION_MPFA_OMETHOD_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/2p/sequential/diffusion/mpfa/omethod)

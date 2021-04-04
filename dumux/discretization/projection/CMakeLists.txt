@@ -1,3 +1,3 @@
-install(FILES
-projector.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization/projection)
+file(GLOB DUMUX_DISCRETIZATION_PROJECTION_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_DISCRETIZATION_PROJECTION_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization/projection)

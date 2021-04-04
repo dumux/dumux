@@ -1,54 +1,6 @@
 add_subdirectory(properties)
 add_subdirectory(typetraits)
 
-install(FILES
-balanceequationopts.hh
-boundaryconditions.hh
-boundaryflag.hh
-boundarytypes.hh
-cubicspline.hh
-cubicsplinehermitebasis.hh
-defaultmappertraits.hh
-defaultusagemessage.hh
-deprecated.hh
-dimensionlessnumbers.hh
-doubleexpintegrationconstants.hh
-doubleexpintegrator.hh
-dumuxmessage.hh
-entitymap.hh
-enumerate.hh
-exceptions.hh
-fixedlengthspline_.hh
-fvproblem.hh
-gridcapabilities.hh
-indextraits.hh
-integrate.hh
-intersectionmapper.hh
-loggingparametertree.hh
-math.hh
-monotonecubicspline.hh
-numeqvector.hh
-numericdifferentiation.hh
-optionalscalar.hh
-parameters.hh
-partial.hh
-pdesolver.hh
-pointsource.hh
-properties.hh
-random.hh
-reorderingdofmapper.hh
-reservedblockvector.hh
-spline.hh
-splinecommon_.hh
-staggeredfvproblem.hh
-start.hh
-stringutilities.hh
-tabulated2dfunction.hh
-tag.hh
-timeloop.hh
-timemanager.hh
-valgrind.hh
-variablelengthspline_.hh
-variables.hh
-variablesbackend.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/common)
+file(GLOB DUMUX_COMMON_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_COMMON_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/common)

@@ -1,5 +1,3 @@
-install(FILES
-johansen.hh
-simplefluidlumping.hh
-somerton.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/2p/thermalconductivity)
+file(GLOB DUMUX_MATERIAL_FLUIDMATRIXINTERACTIONS_2P_THERMALCONDUCTIVITY_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_MATERIAL_FLUIDMATRIXINTERACTIONS_2P_THERMALCONDUCTIVITY_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/2p/thermalconductivity)

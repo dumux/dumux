@@ -1,5 +1,3 @@
-install(FILES
-localresidual.hh
-primaryvariableswitch.hh
-switchableprimaryvariables.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/compositional)
+file(GLOB DUMUX_POROUSMEDIUMFLOW_COMPOSITIONAL_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_POROUSMEDIUMFLOW_COMPOSITIONAL_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/compositional)

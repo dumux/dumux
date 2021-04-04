@@ -1,4 +1,3 @@
-install(FILES
-feelementgeometry.hh
-fegridgeometry.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization/fem)
+file(GLOB DUMUX_DISCRETIZATION_FEM_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_DISCRETIZATION_FEM_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization/fem)

@@ -1,15 +1,3 @@
-install(FILES
-amgbackend.hh
-istlsolverfactorybackend.hh
-istlsolverregistry.hh
-linearsolveracceptsmultitypematrix.hh
-linearsolverparameters.hh
-linearsolvertraits.hh
-matrixconverter.hh
-parallelhelpers.hh
-pdesolver.hh
-preconditioners.hh
-scotchbackend.hh
-seqsolverbackend.hh
-solver.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/linear)
+file(GLOB DUMUX_LINEAR_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_LINEAR_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/linear)

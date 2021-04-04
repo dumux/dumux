@@ -1,3 +1,3 @@
-install(FILES
-properties.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/sequential/mimetic)
+file(GLOB DUMUX_POROUSMEDIUMFLOW_SEQUENTIAL_MIMETIC_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_POROUSMEDIUMFLOW_SEQUENTIAL_MIMETIC_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/sequential/mimetic)

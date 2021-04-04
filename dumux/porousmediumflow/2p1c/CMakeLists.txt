@@ -1,9 +1,3 @@
-install(FILES
-darcyslaw.hh
-indices.hh
-iofields.hh
-localresidual.hh
-model.hh
-primaryvariableswitch.hh
-volumevariables.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/2p1c)
+file(GLOB DUMUX_POROUSMEDIUMFLOW_2P1C_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_POROUSMEDIUMFLOW_2P1C_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/2p1c)

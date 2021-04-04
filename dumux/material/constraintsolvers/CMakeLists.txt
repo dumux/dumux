@@ -1,8 +1,3 @@
-install(FILES
-compositionalflash.hh
-compositionfromfugacities.hh
-computefromreferencephase.hh
-immiscibleflash.hh
-misciblemultiphasecomposition.hh
-ncpflash.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/constraintsolvers)
+file(GLOB DUMUX_MATERIAL_CONSTRAINTSOLVERS_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_MATERIAL_CONSTRAINTSOLVERS_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/constraintsolvers)

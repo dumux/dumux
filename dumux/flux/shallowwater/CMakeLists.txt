@@ -1,5 +1,3 @@
-install(FILES
-exactriemann.hh
-fluxlimiterlet.hh
-riemannproblem.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/flux/shallowwater)
+file(GLOB DUMUX_FLUX_SHALLOWWATER_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_FLUX_SHALLOWWATER_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/flux/shallowwater)

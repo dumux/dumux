@@ -1,6 +1,3 @@
-install(FILES
-iofields.hh
-localresidual.hh
-model.hh
-volumevariables.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/mineralization)
+file(GLOB DUMUX_POROUSMEDIUMFLOW_MINERALIZATION_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_POROUSMEDIUMFLOW_MINERALIZATION_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/mineralization)

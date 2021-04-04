@@ -1,3 +1,3 @@
-install(FILES
-localresidual.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/nonequilibrium/thermal)
+file(GLOB DUMUX_POROUSMEDIUMFLOW_NONEQUILIBRIUM_THERMAL_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_POROUSMEDIUMFLOW_NONEQUILIBRIUM_THERMAL_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/nonequilibrium/thermal)
