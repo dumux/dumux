@@ -33,19 +33,18 @@ namespace Dumux {
 
 #ifndef DOXYGEN
 namespace Detail {
-// helper struct detecting if the user-defined spatial params class has a materialLawParamsAtPos function
-// for g++ > 5.3, this can be replaced by a lambda
+// helper struct detecting if the user-defined spatial params class
+// has a fluidMatrixInteractionAtPos function
 template<class GlobalPosition>
-struct hasMaterialLawParamsAtPos
+struct hasFluidMatrixInteractionAtPos
 {
     template<class SpatialParams>
     auto operator()(const SpatialParams& a)
-    -> decltype(a.materialLawParamsAtPos(std::declval<GlobalPosition>()))
+    -> decltype(a.fluidMatrixInteractionAtPos(std::declval<GlobalPosition>()))
     {}
 };
 } // end namespace Detail
 #endif
-
 
 /*!
  * \ingroup SpatialParameters
@@ -68,40 +67,28 @@ public:
     : ParentType(gridGeometry)
     {}
 
-    // make sure we get a deprecation warning (remove this after release 3.3)
-    template<class ElementSolution>
-    [[deprecated("Use the new style material laws. Old material laws and this interface will no longer be supported after release 3.3")]]
-    decltype(auto) materialLawParamsDeprecated(const Element& element,
-                                               const SubControlVolume& scv,
-                                               const ElementSolution& elemSol) const
-    {
-        return this->asImp_().materialLawParams(element, scv, elemSol);
-    }
-
     /*!
      * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
      *
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
-     * \return the material parameters object
      */
     template<class ElementSolution>
-    [[deprecated("Use the new style material laws. Old material laws and this interface will no longer be supported after release 3.3")]]
-    decltype(auto) materialLawParams(const Element& element,
-                                     const SubControlVolume& scv,
-                                     const ElementSolution& elemSol) const
+    decltype(auto) fluidMatrixInteraction(const Element& element,
+                                          const SubControlVolume& scv,
+                                          const ElementSolution& elemSol) const
     {
-        static_assert(decltype(isValid(Detail::hasMaterialLawParamsAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
+        static_assert(decltype(isValid(Detail::hasFluidMatrixInteractionAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
         "   Your spatial params class has to either implement\n\n"
-        "         const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const\n\n"
+        "         auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const\n\n"
         "   or overload this function\n\n"
         "         template<class ElementSolution>\n"
-        "         const MaterialLawParams& materialLawParams(const Element& element,\n"
-        "                                                    const SubControlVolume& scv,\n"
-        "                                                    const ElementSolution& elemSol) const\n\n");
+        "         auto fluidMatrixInteraction(const Element& element,\n"
+        "                                     const SubControlVolume& scv,\n"
+        "                                     const ElementSolution& elemSol) const\n\n");
 
-        return this->asImp_().materialLawParamsAtPos(scv.center());
+        return this->asImp_().fluidMatrixInteractionAtPos(scv.center());
     }
 
     /*!

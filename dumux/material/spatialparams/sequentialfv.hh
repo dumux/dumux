@@ -29,9 +29,6 @@
 #include "sequentialfv1p.hh"
 
 namespace Dumux {
-namespace Properties
-{ template<class TypeTag, class MyTypeTag>
-struct  MaterialLaw  { using type = UndefinedProperty; }; }
 
 /*!
  * \ingroup SpatialParameters
@@ -56,20 +53,8 @@ class SequentialFVSpatialParams: public SequentialFVSpatialParamsOneP<TypeTag>
 
 public:
     SequentialFVSpatialParams(const Problem& problem)
-    :SequentialFVSpatialParamsOneP<TypeTag>(problem)
-    {
-    }
-
-
-    // make sure we get a deprecation warning (remove this after release 3.3)
-    template<class ElementSolution, class SubControlVolume>
-    [[deprecated("Use the new style material laws. Old material laws and this interface will no longer be supported after release 3.3")]]
-    decltype(auto) materialLawParamsDeprecated(const Element& element,
-                                               const SubControlVolume& scv,
-                                               const ElementSolution& elemSol) const
-    {
-        return this->asImp_().materialLawParams(element);
-    }
+    : SequentialFVSpatialParamsOneP<TypeTag>(problem)
+    {}
 
     /*!
      * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
@@ -77,9 +62,9 @@ public:
      * \return the material parameters object
      * \param element The element
      */
-    const auto& materialLawParams(const Element &element) const
+    auto fluidMatrixInteraction(const Element &element) const
     {
-        return asImp_().materialLawParamsAtPos(element.geometry().center());
+        return asImp_().fluidMatrixInteractionAtPos(element.geometry().center());
     }
 
     /*!
@@ -88,11 +73,11 @@ public:
      * \return the material parameters object
      * \param globalPos The position of the center of the element
      */
-    const auto& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
         DUNE_THROW(Dune::InvalidStateException,
                    "The spatial parameters do not provide "
-                   "a materialLawParamsAtPos() method.");
+                   "a fluidMatrixInteractionAtPos() method.");
     }
 
 private:
