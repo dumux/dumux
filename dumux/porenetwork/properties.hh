@@ -68,7 +68,7 @@ public:
 };
 
 template<class TypeTag>
-struct HeatConductionType<TypeTag, TTag::PoreNetworkModel> { using type = Dumux::PoreNetwork::PNMFouriersLaw; };
+struct HeatConductionType<TypeTag, TTag::PoreNetworkModel> { using type = Dumux::PoreNetwork::PNMFouriersLaw<>; };
 
 //! The labels
 template<class TypeTag>
