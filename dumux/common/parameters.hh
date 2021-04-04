@@ -306,22 +306,6 @@ private:
         defaultParams["Problem.EnableGravity"] = "true";
         defaultParams["Problem.EnableInertiaTerms"] = "true";
 
-        // parameters in the Newton group
-        // MinSteps = 2 makes Newton more robust if converge criterion is not perfect
-        defaultParams["Newton.MinSteps"] = "2";
-        defaultParams["Newton.MaxSteps"] = "18";
-        defaultParams["Newton.TargetSteps"] = "10";
-        defaultParams["Newton.UseLineSearch"] = "false";
-        defaultParams["Newton.EnableChop"] = "false";
-        defaultParams["Newton.EnableShiftCriterion"] = "true";
-        defaultParams["Newton.MaxRelativeShift"] = "1e-8";
-        defaultParams["Newton.EnableResidualCriterion"] = "false";
-        defaultParams["Newton.ResidualReduction"] = "1e-5";
-        defaultParams["Newton.EnableAbsoluteResidualCriterion"] = "false";
-        defaultParams["Newton.MaxAbsoluteResidual"] = "1e-5";
-        defaultParams["Newton.SatisfyResidualAndShiftCriterion"] = "false";
-        defaultParams["Newton.EnablePartialReassembly"] = "false";
-
         // parameters in the time loop group
         defaultParams["TimeLoop.MaxTimeStepSize"] = "1e300";
         defaultParams["TimeLoop.MaxTimeStepDivisions"] = "10";

@@ -15,7 +15,9 @@ Differences Between DuMu<sup>x</sup> 3.4 and DuMu<sup>x</sup> 3.3
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __MPNC__: The `MPAdapter` can now also be called with a temporary `pcKrSw` objects. For this, the compiler needs to deduce the
             class's template argument types. You may need to adapt your `spatialParams` from
-
+- __Newton__: The global parameter defaults have been substituted for local parameter defaults (in nonlinear/newtonsolver.hh). If
+              you have been relying on global defaults (reading parameters without supplying a value in the input file nor a default)
+              you will get a runtime ParameterException. To solve this simply provide a default or set the value in the input file.
 ```
 using MPAdapter = Dumux::FluidMatrix::MPAdapter<PcKrSwCurve, 2>;
 ...
