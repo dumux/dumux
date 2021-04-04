@@ -27,76 +27,7 @@
 #ifndef DUMUX_MP_LINEAR_MATERIAL_HH
 #define DUMUX_MP_LINEAR_MATERIAL_HH
 
-#include "mplinearmaterialparams.hh"
-
 #include <algorithm>
-
-namespace Dumux {
-
-/*!
- * \ingroup Fluidmatrixinteractions
- * \brief Implements a linear saturation-capillary pressure relation
- *
- * Implements a linear saturation-capillary pressure relation for
- * M-phase fluid systems.
- *
- * \sa MpLinearMaterialParams
- */
-template <int numPhasesV, class ScalarT, class ParamsT = MpLinearMaterialParams<numPhasesV, ScalarT> >
-class [[deprecated("Use FluidMatrix::MPLinearMaterial. Will be removed after 3.3")]] MpLinearMaterial
-{
-public:
-    using Params = ParamsT;
-    using Scalar = typename Params::Scalar;
-    enum { numPhases = numPhasesV };
-
-    /*!
-     * \brief The linear capillary pressure-saturation curve.
-     *
-     * This material law is linear:
-     * \f[
-     p_C = (1 - \overline{S}_w) (p_{C,max} - p_{C,entry}) + p_{C,entry}
-     \f]
-     *
-     * \param values Container for the return values
-     * \param params Array of Parameters
-     * \param state The fluid state
-     * \param wPhaseIdx The phase index of the wetting phase
-     */
-    template <class ContainerT, class FluidState>
-    static void capillaryPressures(ContainerT &values,
-                                   const Params &params,
-                                   const FluidState &state,
-                                   int wPhaseIdx = 0)
-    {
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            Scalar S = state.saturation(phaseIdx);
-            values[phaseIdx] =
-                S*params.pcMaxSat(phaseIdx) +
-                (1 - S)*params.pcMinSat(phaseIdx);
-        }
-    }
-
-    /*!
-     * \brief The relative permeability of all phases.
-     * \param values Container for the return values
-     * \param params Array of Parameters
-     * \param state The fluid state
-     * \param wPhaseIdx The phase index of the wetting phase
-     */
-    template <class ContainerT, class FluidState>
-    static void relativePermeabilities(ContainerT &values,
-                                       const Params &params,
-                                       const FluidState &state,
-                                       int wPhaseIdx = 0)
-    {
-        using std::clamp;
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-            values[phaseIdx] = clamp(state.saturation(phaseIdx), 0.0, 1.0);
-    }
-};
-} // end namespace Dumux
-
 #include <dune/common/fvector.hh>
 #include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
 

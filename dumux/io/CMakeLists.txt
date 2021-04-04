@@ -12,7 +12,6 @@ gnuplotinterface.hh
 loadsolution.hh
 name.hh
 ploteffectivediffusivitymodel.hh
-plotmateriallaw.hh
 plotmateriallaw3p.hh
 plotpckrsw.hh
 plotthermalconductivitymodel.hh
