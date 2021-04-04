@@ -1,6 +1,3 @@
-install(FILES
-fvelementgeometry.hh
-gridgeometry.hh
-subcontrolvolume.hh
-subcontrolvolumeface.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization/porenetwork)
+file(GLOB DUMUX_DISCRETIZATION_PORENETWORK_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_DISCRETIZATION_PORENETWORK_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization/porenetwork)

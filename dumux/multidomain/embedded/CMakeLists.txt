@@ -1,15 +1,3 @@
-install(FILES
-circleaveragepointsourcetraits.hh
-circlepoints.hh
-couplingmanager1d3d.hh
-couplingmanager1d3d_average.hh
-couplingmanager1d3d_kernel.hh
-couplingmanager1d3d_line.hh
-couplingmanager1d3d_surface.hh
-couplingmanager2d3d.hh
-couplingmanagerbase.hh
-cylinderintegration.hh
-extendedsourcestencil.hh
-integrationpointsource.hh
-pointsourcedata.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/multidomain/embedded)
+file(GLOB DUMUX_MULTIDOMAIN_EMBEDDED_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_MULTIDOMAIN_EMBEDDED_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/multidomain/embedded)

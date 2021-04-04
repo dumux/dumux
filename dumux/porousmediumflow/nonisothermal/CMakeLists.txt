@@ -1,7 +1,3 @@
-install(FILES
-indices.hh
-iofields.hh
-localresidual.hh
-model.hh
-volumevariables.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/nonisothermal)
+file(GLOB DUMUX_POROUSMEDIUMFLOW_NONISOTHERMAL_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_POROUSMEDIUMFLOW_NONISOTHERMAL_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/nonisothermal)

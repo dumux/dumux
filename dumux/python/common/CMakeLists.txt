@@ -1,5 +1,3 @@
-install(FILES
-boundarytypes.hh
-fvproblem.hh
-timeloop.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/python/common)
+file(GLOB DUMUX_PYTHON_COMMON_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_PYTHON_COMMON_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/python/common)

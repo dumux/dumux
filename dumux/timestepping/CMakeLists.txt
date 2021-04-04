@@ -1,5 +1,3 @@
-install(FILES
-timelevel.hh
-multistagemethods.hh
-multistagetimestepper.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/timestepping)
+file(GLOB DUMUX_TIMESTEPPING_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_TIMESTEPPING_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/timestepping)

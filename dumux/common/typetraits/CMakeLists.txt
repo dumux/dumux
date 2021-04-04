@@ -1,9 +1,3 @@
-install(FILES
-isvalid.hh
-matrix.hh
-problem.hh
-state.hh
-typetraits.hh
-utility.hh
-vector.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/common/typetraits)
+file(GLOB DUMUX_COMMON_TYPETRAITS_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_COMMON_TYPETRAITS_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/common/typetraits)

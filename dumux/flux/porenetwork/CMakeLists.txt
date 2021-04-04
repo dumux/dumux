@@ -1,5 +1,3 @@
-install(FILES
-advection.hh
-fickslaw.hh
-fourierslaw.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/flux/porenetwork)
+file(GLOB DUMUX_FLUX_PORENETWORK_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_FLUX_PORENETWORK_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/flux/porenetwork)

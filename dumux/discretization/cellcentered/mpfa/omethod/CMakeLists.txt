@@ -1,8 +1,3 @@
-install(FILES
-interactionvolume.hh
-interactionvolumeindexset.hh
-localassembler.hh
-localsubcontrolentities.hh
-scvgeometryhelper.hh
-staticinteractionvolume.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization/cellcentered/mpfa/omethod)
+file(GLOB DUMUX_DISCRETIZATION_CELLCENTERED_MPFA_OMETHOD_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_DISCRETIZATION_CELLCENTERED_MPFA_OMETHOD_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization/cellcentered/mpfa/omethod)

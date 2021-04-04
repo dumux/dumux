@@ -1,7 +1,3 @@
-install(FILES
-findscalarroot.hh
-newtonconvergencewriter.hh
-newtonsolver.hh
-primaryvariableswitchadapter.hh
-staggerednewtonconvergencewriter.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/nonlinear)
+file(GLOB DUMUX_NONLINEAR_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_NONLINEAR_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/nonlinear)

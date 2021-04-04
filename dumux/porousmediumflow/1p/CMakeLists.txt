@@ -1,9 +1,5 @@
 add_subdirectory(sequential)
 
-install(FILES
-incompressiblelocalresidual.hh
-indices.hh
-iofields.hh
-model.hh
-volumevariables.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/1p)
+file(GLOB DUMUX_POROUSMEDIUMFLOW_1P_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_POROUSMEDIUMFLOW_1P_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/1p)

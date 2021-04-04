@@ -5,23 +5,6 @@ add_subdirectory(porenetwork)
 add_subdirectory(shallowwater)
 add_subdirectory(staggered)
 
-install(FILES
-darcyslaw.hh
-effectivestresslaw.hh
-fickiandiffusioncoefficients.hh
-fickslaw.hh
-fluxvariablesbase.hh
-fluxvariablescaching.hh
-forchheimerslaw.hh
-fourierslaw.hh
-fourierslawnonequilibrium.hh
-hookeslaw.hh
-maxwellstefandiffusioncoefficients.hh
-maxwellstefanslaw.hh
-referencesystemformulation.hh
-shallowwaterflux.hh
-shallowwaterviscousflux.hh
-stationaryvelocityfield.hh
-traits.hh
-upwindscheme.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/flux)
+file(GLOB DUMUX_FLUX_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_FLUX_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/flux)

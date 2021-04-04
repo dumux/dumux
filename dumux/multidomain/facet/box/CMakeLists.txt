@@ -1,13 +1,3 @@
-install(FILES
-couplingmanager.hh
-couplingmapper.hh
-darcyslaw.hh
-fickslaw.hh
-fourierslaw.hh
-fvelementgeometry.hh
-fvgridgeometry.hh
-localresidual.hh
-properties.hh
-subcontrolvolumeface.hh
-upwindscheme.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/multidomain/facet/box)
+file(GLOB DUMUX_MULTIDOMAIN_FACET_BOX_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_MULTIDOMAIN_FACET_BOX_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/multidomain/facet/box)

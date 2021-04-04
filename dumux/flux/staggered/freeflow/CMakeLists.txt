@@ -1,5 +1,3 @@
-install(FILES
-fickslaw.hh
-fourierslaw.hh
-maxwellstefanslaw.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/flux/staggered/freeflow)
+file(GLOB DUMUX_FLUX_STAGGERED_FREEFLOW_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_FLUX_STAGGERED_FREEFLOW_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/flux/staggered/freeflow)

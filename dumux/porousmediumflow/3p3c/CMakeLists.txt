@@ -1,8 +1,3 @@
-install(FILES
-indices.hh
-iofields.hh
-localresidual.hh
-model.hh
-primaryvariableswitch.hh
-volumevariables.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/3p3c)
+file(GLOB DUMUX_POROUSMEDIUMFLOW_3P3C_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_POROUSMEDIUMFLOW_3P3C_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/3p3c)

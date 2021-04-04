@@ -1,3 +1,3 @@
-install(FILES
-thermalconductivityaverage.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/1p)
+file(GLOB DUMUX_MATERIAL_FLUIDMATRIXINTERACTIONS_1P_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_MATERIAL_FLUIDMATRIXINTERACTIONS_1P_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/1p)

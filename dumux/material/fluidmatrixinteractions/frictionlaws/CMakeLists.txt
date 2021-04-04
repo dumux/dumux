@@ -1,6 +1,3 @@
-install(FILES
-frictionlaw.hh
-manning.hh
-nikuradse.hh
-nofriction.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/frictionlaws)
+file(GLOB DUMUX_MATERIAL_FLUIDMATRIXINTERACTIONS_FRICTIONLAWS_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_MATERIAL_FLUIDMATRIXINTERACTIONS_FRICTIONLAWS_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/frictionlaws)

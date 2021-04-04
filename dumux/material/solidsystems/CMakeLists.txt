@@ -1,4 +1,3 @@
-install(FILES
-1csolid.hh
-compositionalsolidphase.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/solidsystems)
+file(GLOB DUMUX_MATERIAL_SOLIDSYSTEMS_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_MATERIAL_SOLIDSYSTEMS_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/solidsystems)

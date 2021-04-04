@@ -1,5 +1,3 @@
-install(FILES
-porenetwork1p.hh
-porenetwork2p.hh
-porenetworkbase.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/spatialparams/porenetwork)
+file(GLOB DUMUX_MATERIAL_SPATIALPARAMS_PORENETWORK_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_MATERIAL_SPATIALPARAMS_PORENETWORK_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/spatialparams/porenetwork)

@@ -1,5 +1,3 @@
-install(FILES
-compositionalsolidstate.hh
-inertsolidstate.hh
-updatesolidvolumefractions.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/solidstates)
+file(GLOB DUMUX_MATERIAL_SOLIDSTATES_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_MATERIAL_SOLIDSTATES_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/solidstates)

@@ -1,14 +1,5 @@
 add_subdirectory(staggered)
 
-install(FILES
-fluxvariables.hh
-iofields.hh
-kepsilonncmodel.hh
-komegancmodel.hh
-localresidual.hh
-lowrekepsilonncmodel.hh
-navierstokesncmodel.hh
-oneeqncmodel.hh
-volumevariables.hh
-zeroeqncmodel.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/freeflow/compositional)
+file(GLOB DUMUX_FREEFLOW_COMPOSITIONAL_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_FREEFLOW_COMPOSITIONAL_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/freeflow/compositional)

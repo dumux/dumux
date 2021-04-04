@@ -1,10 +1,5 @@
 add_subdirectory(staggered)
 
-install(FILES
-fluxvariables.hh
-iofields.hh
-localresidual.hh
-model.hh
-problem.hh
-volumevariables.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/freeflow/rans/twoeq/komega)
+file(GLOB DUMUX_FREEFLOW_RANS_TWOEQ_KOMEGA_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_FREEFLOW_RANS_TWOEQ_KOMEGA_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/freeflow/rans/twoeq/komega)

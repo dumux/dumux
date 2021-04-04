@@ -1,29 +1,8 @@
-add_subdirectory(grid)
 add_subdirectory(format)
+add_subdirectory(grid)
 add_subdirectory(vtk)
 add_subdirectory(xml)
 
-install(FILES
-adaptivegridrestart.hh
-container.hh
-defaultiofields.hh
-format.hh
-gnuplotinterface.hh
-loadsolution.hh
-name.hh
-ploteffectivediffusivitymodel.hh
-plotmateriallaw3p.hh
-plotpckrsw.hh
-plotthermalconductivitymodel.hh
-pointcloudvtkwriter.hh
-rasterimagereader.hh
-restart.hh
-staggeredvtkoutputmodule.hh
-velocityoutput.hh
-vtkfunction.hh
-vtkmultiwriter.hh
-vtknestedfunction.hh
-vtkoutputmodule.hh
-vtkprecision.hh
-vtksequencewriter.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/io)
+file(GLOB DUMUX_IO_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_IO_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/io)

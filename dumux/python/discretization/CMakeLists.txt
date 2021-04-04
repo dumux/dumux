@@ -1,3 +1,3 @@
-install(FILES
-gridgeometry.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/python/discretization)
+file(GLOB DUMUX_PYTHON_DISCRETIZATION_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_PYTHON_DISCRETIZATION_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/python/discretization)

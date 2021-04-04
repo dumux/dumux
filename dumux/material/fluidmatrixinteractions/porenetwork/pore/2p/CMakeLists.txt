@@ -1,5 +1,3 @@
-install(FILES
-localrulesforplatonicbody.hh
-multishapelocalrules.hh
-singleshapelocalrules.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/porenetwork/pore/2p)
+file(GLOB DUMUX_MATERIAL_FLUIDMATRIXINTERACTIONS_PORENETWORK_PORE_2P_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_MATERIAL_FLUIDMATRIXINTERACTIONS_PORENETWORK_PORE_2P_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/porenetwork/pore/2p)

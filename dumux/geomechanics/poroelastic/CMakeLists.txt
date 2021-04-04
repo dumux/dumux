@@ -1,7 +1,3 @@
-install(FILES
-couplingmanager.hh
-iofields.hh
-localresidual.hh
-model.hh
-volumevariables.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/geomechanics/poroelastic)
+file(GLOB DUMUX_GEOMECHANICS_POROELASTIC_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_GEOMECHANICS_POROELASTIC_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/geomechanics/poroelastic)

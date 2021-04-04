@@ -10,7 +10,6 @@ add_subdirectory(solidstates)
 add_subdirectory(solidsystems)
 add_subdirectory(spatialparams)
 
-install(FILES
-constants.hh
-idealgas.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material)
+file(GLOB DUMUX_MATERIAL_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_MATERIAL_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material)

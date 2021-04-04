@@ -1,5 +1,3 @@
-install(FILES
-napladsorption.hh
-parkervangenuchten.hh
-thermalconductivitysomerton3p.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/3p)
+file(GLOB DUMUX_MATERIAL_FLUIDMATRIXINTERACTIONS_3P_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_MATERIAL_FLUIDMATRIXINTERACTIONS_3P_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/3p)

@@ -1,6 +1,3 @@
-install(FILES
-indices.hh
-iofields.hh
-localresidual.hh
-model.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/freeflow/nonisothermal)
+file(GLOB DUMUX_FREEFLOW_NONISOTHERMAL_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_FREEFLOW_NONISOTHERMAL_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/freeflow/nonisothermal)

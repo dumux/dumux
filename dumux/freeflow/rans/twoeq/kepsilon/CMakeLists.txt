@@ -1,10 +1,5 @@
 add_subdirectory(staggered)
 
-install(FILES
-fluxvariables.hh
-iofields.hh
-localresidual.hh
-model.hh
-problem.hh
-volumevariables.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/freeflow/rans/twoeq/kepsilon)
+file(GLOB DUMUX_FREEFLOW_RANS_TWOEQ_KEPSILON_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_FREEFLOW_RANS_TWOEQ_KEPSILON_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/freeflow/rans/twoeq/kepsilon)

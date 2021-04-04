@@ -1,11 +1,3 @@
-install(FILES
-connectivitymap.hh
-elementvolumevariables.hh
-facevariables.hh
-fvgridgeometrytraits.hh
-gridvolumevariables.hh
-properties.hh
-staggeredgeometryhelper.hh
-subcontrolvolumeface.hh
-velocityoutput.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization/staggered/freeflow)
+file(GLOB DUMUX_DISCRETIZATION_STAGGERED_FREEFLOW_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_DISCRETIZATION_STAGGERED_FREEFLOW_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization/staggered/freeflow)

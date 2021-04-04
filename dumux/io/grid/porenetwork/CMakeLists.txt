@@ -1,8 +1,3 @@
-install(FILES
-dgfwriter.hh
-griddata.hh
-gridmanager.hh
-parametersforgeneratedgrid.hh
-structuredlatticegridcreator.hh
-subgriddata.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/io/grid/porenetwork)
+file(GLOB DUMUX_IO_GRID_PORENETWORK_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_IO_GRID_PORENETWORK_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/io/grid/porenetwork)

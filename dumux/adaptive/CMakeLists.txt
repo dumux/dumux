@@ -1,6 +1,3 @@
-install(FILES
-adapt.hh
-griddatatransfer.hh
-initializationindicator.hh
-markelements.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/adaptive)
+file(GLOB DUMUX_ADAPTIVE_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_ADAPTIVE_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/adaptive)

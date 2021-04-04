@@ -1,13 +1,6 @@
 add_subdirectory(box)
 add_subdirectory(cellcentered)
 
-install(FILES
-codimonegridadapter.hh
-couplingmanager.hh
-couplingmapper.hh
-couplingmapperbase.hh
-enrichmenthelper.hh
-gmshreader.hh
-gridmanager.hh
-vertexmapper.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/multidomain/facet)
+file(GLOB DUMUX_MULTIDOMAIN_FACET_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_MULTIDOMAIN_FACET_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/multidomain/facet)

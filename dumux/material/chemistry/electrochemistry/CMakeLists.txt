@@ -1,4 +1,3 @@
-install(FILES
-electrochemistry.hh
-electrochemistryni.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/chemistry/electrochemistry)
+file(GLOB DUMUX_MATERIAL_CHEMISTRY_ELECTROCHEMISTRY_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_MATERIAL_CHEMISTRY_ELECTROCHEMISTRY_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/chemistry/electrochemistry)

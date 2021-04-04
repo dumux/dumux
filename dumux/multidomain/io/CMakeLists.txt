@@ -1,3 +1,3 @@
-install(FILES
-vtkoutputmodule.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/multidomain/io)
+file(GLOB DUMUX_MULTIDOMAIN_IO_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_MULTIDOMAIN_IO_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/multidomain/io)

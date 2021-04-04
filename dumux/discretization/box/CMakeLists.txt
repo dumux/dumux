@@ -1,15 +1,3 @@
-install(FILES
-boxgeometryhelper.hh
-elementboundarytypes.hh
-elementfluxvariablescache.hh
-elementsolution.hh
-elementvolumevariables.hh
-fluxvariablescache.hh
-fvelementgeometry.hh
-fvgridgeometry.hh
-gridfluxvariablescache.hh
-gridvolumevariables.hh
-scvftoscvboundarytypes.hh
-subcontrolvolume.hh
-subcontrolvolumeface.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization/box)
+file(GLOB DUMUX_DISCRETIZATION_BOX_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_DISCRETIZATION_BOX_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization/box)

@@ -1,6 +1,3 @@
-install(FILES
-emptycache.hh
-thresholdcapillarypressures.hh
-transmissibility1p.hh
-transmissibility2p.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/porenetwork/throat)
+file(GLOB DUMUX_MATERIAL_FLUIDMATRIXINTERACTIONS_PORENETWORK_THROAT_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_MATERIAL_FLUIDMATRIXINTERACTIONS_PORENETWORK_THROAT_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/porenetwork/throat)
