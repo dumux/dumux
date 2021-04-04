@@ -27,7 +27,6 @@
 
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
-#include <dumux/material/fluidmatrixinteractions/mp/mpadapter.hh>
 
 namespace Dumux {
 
@@ -273,49 +272,6 @@ auto makePcKrSw(const Scalar& scalar,
 // Deprecation warnings for the mp material law stuff //
 ///////////////////////////////////////////////////////////////
 
-template<class ScalarT, class SpatialParams, class Element, class Scv, class ElemSol, class NumPhases>
-class PcKrSwMPHelper : public FluidMatrix::Adapter<PcKrSwMPHelper<ScalarT, SpatialParams, Element, Scv, ElemSol, NumPhases>, FluidMatrix::MultiPhasePcKrSw>
-{
-    using MaterialLaw = typename SpatialParams::MaterialLaw;
-    using MPAdapter = Dumux::MPAdapter<MaterialLaw, NumPhases{}()>;
-public:
-    using Scalar = ScalarT;
-
-    // pass scalar so template arguments can all be deduced
-    PcKrSwMPHelper(const Scalar& scalar,
-                   const SpatialParams& sp,
-                   const Element& element,
-                   const Scv& scv,
-                   const ElemSol& elemSol,
-                   const NumPhases& np)
-    : spatialParams_(sp), element_(element), scv_(scv), elemSol_(elemSol)
-    {}
-
-    template<class FluidState>
-    auto capillaryPressures(const FluidState& fs, int wPhaseIdx) const
-    {
-        const auto& params = spatialParams_.materialLawParamsDeprecated(element_, scv_, elemSol_);
-        Dune::FieldVector<Scalar, NumPhases{}()> pc;
-        MPAdapter::capillaryPressures(pc, params, fs, wPhaseIdx);
-        return pc;
-    }
-
-    template<class FluidState>
-    auto relativePermeabilities(const FluidState& fs, int wPhaseIdx) const
-    {
-        const auto& params = spatialParams_.materialLawParamsDeprecated(element_, scv_, elemSol_);
-        Dune::FieldVector<Scalar, NumPhases{}()> kr;
-        MPAdapter::capillaryPressures(kr, params, fs, wPhaseIdx);
-        return kr;
-    }
-
-private:
-    const SpatialParams& spatialParams_;
-    const Element& element_;
-    const Scv& scv_;
-    const ElemSol& elemSol_;
-};
-
 template<class Scalar, class SpatialParams, class Element, class Scv, class ElemSol, class NumPhases>
 auto makeMPPcKrSw(const Scalar& scalar,
                   const SpatialParams& sp,
@@ -324,15 +280,11 @@ auto makeMPPcKrSw(const Scalar& scalar,
                   const ElemSol& elemSol,
                   const NumPhases& np)
 {
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     constexpr bool hasNew = decltype(isValid(HasNewFIAIF<Element, Scv, ElemSol>()).template check<SpatialParams>())::value;
-    constexpr bool hasNewAtPos = decltype(isValid(HasNewFIAIFAtPos<GlobalPosition>()).template check<SpatialParams>())::value;
     if constexpr (hasNew)
         return sp.fluidMatrixInteraction(element, scv, elemSol);
-    else if constexpr (hasNewAtPos)
-        return sp.fluidMatrixInteractionAtPos(scv.center());
     else
-        return makeFluidMatrixInteraction(PcKrSwMPHelper(scalar, sp, element, scv, elemSol, np));
+        return sp.fluidMatrixInteractionAtPos(scv.center());
 }
 
 ///////////////////////////////////////////////////////////////
