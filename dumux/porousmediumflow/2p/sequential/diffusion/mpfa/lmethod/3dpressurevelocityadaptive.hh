@@ -27,8 +27,6 @@
 #include "3dpressureadaptive.hh"
 #include "3dvelocityadaptive.hh"
 
-#include <dumux/common/deprecated.hh>
-
 namespace Dumux {
 
 /*!
@@ -556,11 +554,7 @@ void FvMpfaL3dPressureVelocity2pAdaptive<TypeTag>::calculateVelocityOnBoundary(c
 
         const Scalar pressBound = boundValues[pressureIdx];
 
-        // old material law interface is deprecated: Replace this by
-        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
-        // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
-
+        const auto fluidMatrixInteraction = problem_.spatialParams().fluidMatrixInteractionAtPos(element.geometry().center());
         const Scalar pcBound = fluidMatrixInteraction.pc(satW);
 
         //determine phase pressures from primary pressure variable

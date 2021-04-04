@@ -28,8 +28,6 @@
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
 #include <dumux/porousmediumflow/sequential/mimetic/properties.hh>
 
-#include <dumux/common/deprecated.hh>
-
 namespace Dumux {
 
 /*!
@@ -248,11 +246,7 @@ public:
                         PrimaryVariables boundValues(0.0);
                         problem.dirichlet(boundValues, intersection);
 
-                        // old material law interface is deprecated: Replace this by
-                        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
-                        // after the release of 3.3, when the deprecated interface is no longer supported
-                        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element);
-
+                        const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteractionAtPos(element.geometry().center());
                         if (velocityW[idxInInside] >= 0.)
                         {
                             mobilityW = cellData.mobility(wPhaseIdx);

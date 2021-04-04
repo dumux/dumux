@@ -33,8 +33,6 @@
 #include "adaptiveproperties.hh"
 #include "fvtransport.hh"
 
-#include <dumux/common/deprecated.hh>
-
 namespace Dumux {
 /*!
  * \ingroup SequentialTwoPTwoCModel
@@ -368,10 +366,7 @@ void FV2dTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2
     Scalar pressI = problem().pressureModel().pressure(globalIdxI);
     Scalar pcI = cellDataI.capillaryPressure();
 
-    // old material law interface is deprecated: Replace this by
-    // const auto& fluidMatrixInteraction = problem().spatialParams.fluidMatrixInteractionAtPos(elementI.geometry().center());
-    // after the release of 3.3, when the deprecated interface is no longer supported
-    const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem().spatialParams(), elementI);
+    const auto fluidMatrixInteraction = problem().spatialParams().fluidMatrixInteractionAtPos(elementI.geometry().center());
 
     PhaseVector SmobI(0.);
     using std::max;

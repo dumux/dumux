@@ -30,8 +30,6 @@
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/ointeractionvolume.hh>
 
-#include <dumux/common/deprecated.hh>
-
 namespace Dumux {
 /*!
  * \ingroup SequentialTwoPModel
@@ -620,11 +618,7 @@ void FvMpfaO2dVelocity2P<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
 
                     }
 
-                    // old material law interface is deprecated: Replace this by
-                    // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
-                    // after the release of 3.3, when the deprecated interface is no longer supported
-                    const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
-
+                    const auto fluidMatrixInteraction = problem_.spatialParams().fluidMatrixInteractionAtPos(element.geometry().center());
                     Scalar pcBound = fluidMatrixInteraction.pc(satWBound);
 
                     Scalar gravityDiffBound = (problem_.bBoxMax() - globalPosFace) * gravity_

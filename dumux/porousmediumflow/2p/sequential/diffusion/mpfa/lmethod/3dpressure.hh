@@ -32,8 +32,6 @@
 #include "3dinteractionvolumecontainer.hh"
 #include "3dtransmissibilitycalculator.hh"
 
-#include <dumux/common/deprecated.hh>
-
 namespace Dumux {
 
 /*!
@@ -2352,11 +2350,7 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleBoundaryInteractionVolume(Interaction
 
                     }
 
-                    // old material law interface is deprecated: Replace this by
-                    // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
-                    // after the release of 3.3, when the deprecated interface is no longer supported
-                    const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
-
+                    const auto fluidMatrixInteraction = problem_.spatialParams().fluidMatrixInteractionAtPos(element.geometry().center());
                     Scalar pcBound = fluidMatrixInteraction.pc(satWBound);
 
                     Scalar gravityDiffBound = (problem_.bBoxMax() - globalPosFace) * gravity_
@@ -2492,11 +2486,7 @@ void FvMpfaL3dPressure2p<TypeTag>::updateMaterialLaws()
 
         Scalar satW = cellData.saturation(wPhaseIdx);
 
-        // old material law interface is deprecated: Replace this by
-        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
-        // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
-
+        const auto fluidMatrixInteraction = problem_.spatialParams().fluidMatrixInteractionAtPos(element.geometry().center());
         const Scalar pc = fluidMatrixInteraction.pc(satW);
 
         cellData.setCapillaryPressure(pc);
