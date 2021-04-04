@@ -44,8 +44,6 @@
 #include <dune/common/dynvector.hh>
 #include <dune/common/dynmatrix.hh>
 
-#include <dumux/common/deprecated.hh>
-
 namespace Dumux {
 
 /*!
@@ -702,11 +700,7 @@ void MimeticTwoPLocalStiffnessAdaptive<TypeTag>::assembleElementMatrices(const E
                 PrimaryVariables boundValues(0.0);
                 problem_.dirichlet(boundValues, intersection);
 
-                // old material law interface is deprecated: Replace this by
-                // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
-                // after the release of 3.3, when the deprecated interface is no longer supported
-                const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
-
+                const auto fluidMatrixInteraction = problem_.spatialParams().fluidMatrixInteractionAtPos(element.geometry().center());
                 const Scalar krw = fluidMatrixInteraction.krw(boundValues[saturationIdx]);
                 const Scalar krn = fluidMatrixInteraction.krn(boundValues[saturationIdx]);
 

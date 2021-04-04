@@ -42,8 +42,6 @@
 #include "fvgridgeometrytraits.hh"
 #include "gridvolumevariables.hh"
 
-#include <dumux/common/deprecated.hh>
-
 namespace Dumux {
 namespace Properties {
 
@@ -115,15 +113,6 @@ private:
 public:
     using type = StaggeredGridVolumeVariables<Traits, enableCache>;
 };
-
-DUNE_NO_DEPRECATED_BEGIN
-//! Boundary types at a single degree of freedom
-template<class TypeTag>
-struct BoundaryTypes<TypeTag, TTag::StaggeredFreeFlowModel>
-{
-    using type = NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
-};
-DUNE_NO_DEPRECATED_END
 
 //! The velocity output
 template<class TypeTag>

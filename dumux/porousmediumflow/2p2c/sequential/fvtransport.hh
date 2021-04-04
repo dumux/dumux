@@ -35,8 +35,6 @@
 #include <dumux/common/math.hh>
 #include <dumux/parallel/vectorcommdatahandle.hh>
 
-#include <dumux/common/deprecated.hh>
-
 namespace Dumux {
 /*!
  * \ingroup SequentialTwoPTwoCModel
@@ -599,11 +597,7 @@ void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
     Scalar pcI = cellDataI.capillaryPressure();
     DimMatrix K_I(problem().spatialParams().intrinsicPermeability(elementI));
 
-    // old material law interface is deprecated: Replace this by
-    // const auto& fluidMatrixInteraction = problem().spatialParams.fluidMatrixInteractionAtPos(elementI.geometry().center());
-    // after the release of 3.3, when the deprecated interface is no longer supported
-    const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem().spatialParams(), elementI);
-
+    const auto fluidMatrixInteraction = problem().spatialParams().fluidMatrixInteractionAtPos(elementI.geometry().center());
     PhaseVector SmobI(0.);
     using std::max;
     SmobI[wPhaseIdx] = max((cellDataI.saturation(wPhaseIdx)
@@ -915,11 +909,7 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(ComponentVector& fluxEntries,
             K_I[axis][axis] = minimalBoundaryPermeability;
     }
 
-    // old material law interface is deprecated: Replace this by
-    // const auto& fluidMatrixInteraction = problem().spatialParams.fluidMatrixInteractionAtPos(elementI.geometry().center());
-    // after the release of 3.3, when the deprecated interface is no longer supported
-    const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem().spatialParams(), elementI);
-
+    const auto fluidMatrixInteraction = problem().spatialParams().fluidMatrixInteractionAtPos(elementI.geometry().center());
     Scalar SwmobI = max((cellDataI.saturation(wPhaseIdx)
                             - fluidMatrixInteraction.pcSwCurve().effToAbsParams().swr())
                             , 1e-2);
@@ -1012,10 +1002,7 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(ComponentVector& fluxEntries,
         potential[wPhaseIdx] *= fabs(K * unitOuterNormal);
         potential[nPhaseIdx] *= fabs(K * unitOuterNormal);
 
-        // old material law interface is deprecated: Replace this by
-        // const auto& fluidMatrixInteraction = problem().spatialParams.fluidMatrixInteractionAtPos(elementI.geometry().center());
-        // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem().spatialParams(), elementI);
+        const auto fluidMatrixInteraction = problem().spatialParams().fluidMatrixInteractionAtPos(elementI.geometry().center());
 
         // do upwinding for lambdas
         PhaseVector lambda(0.);
@@ -1129,10 +1116,7 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
     PrimaryVariables primaryVariablesOnBoundary(0.);
     problem().dirichlet(primaryVariablesOnBoundary, intersection);
 
-    // old material law interface is deprecated: Replace this by
-    // const auto& fluidMatrixInteraction = problem().spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
-    // after the release of 3.3, when the deprecated interface is no longer supported
-    const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem().spatialParams(), element);
+    const auto fluidMatrixInteraction = problem().spatialParams().fluidMatrixInteractionAtPos(element.geometry().center());
 
     // read boundary type
     typename Indices::BoundaryFormulation bcType;

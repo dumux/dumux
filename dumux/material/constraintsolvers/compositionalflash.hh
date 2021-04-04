@@ -66,22 +66,10 @@ public:
     using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
     using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
 
-    template<class FluidState>
-    [[deprecated("Use concentrationFlash2p2c without porosity argument. Will be removed after 3.3")]]
-    static void concentrationFlash2p2c(FluidState &fluidState,
-                             const Scalar &Z0,
-                             const PhaseVector &phasePressure,
-                             const Scalar &porosity,
-                             const Scalar &temperature)
-    {
-        concentrationFlash2p2c(fluidState, Z0, phasePressure, temperature);
-    }
 
-/*!
- * \name Concentration flash for a given feed fraction
- */
-//@{
-    /*! \brief 2p2c Flash for constant p & T if concentration (feed mass fraction) is given.
+    /*!
+     * \name Concentration flash for a given feed fraction
+     * \brief 2p2c Flash for constant p & T if concentration (feed mass fraction) is given.
      *
      * This flash uses the Rachford-Rice equation:
      * Rachford Jr, H. H., & Rice, J. D. (1952).
@@ -214,22 +202,9 @@ public:
     }
 //@}
 
-    template<class FluidState>
-    [[deprecated("Use saturationFlash2p2c without porosity argument. Will be removed after 3.3")]]
-    static void saturationFlash2p2c(FluidState &fluidState,
-            const Scalar &saturation,
-            const PhaseVector &phasePressure,
-            const Scalar &porosity,
-            const Scalar &temperature)
-    {
-        saturationFlash2p2c(fluidState, saturation, phasePressure, temperature);
-    }
-
-/*!
- * \name Saturation flash for a given saturation (e.g. at boundary)
- */
 //@{
-    /*! \brief 2p2c flash for constant p & T if the saturation instead of concentration (feed mass fraction) is known.
+    /*! \name Saturation flash for a given saturation (e.g. at boundary)
+     * \brief 2p2c flash for constant p & T if the saturation instead of concentration (feed mass fraction) is known.
      *
      * Routine goes as follows:
      * - determination of the equilibrium constants from the fluid system

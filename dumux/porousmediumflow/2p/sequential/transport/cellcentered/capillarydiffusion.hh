@@ -27,8 +27,6 @@
 #include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/diffusivepart.hh>
 #include "properties.hh"
 
-#include <dumux/common/deprecated.hh>
-
 namespace Dumux {
 /*!
  * \ingroup SequentialTwoPModel
@@ -113,11 +111,7 @@ public:
         Scalar mobilityWI = 0;
         Scalar mobilityNwI = 0;
 
-        // old material law interface is deprecated: Replace this by
-        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
-        // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
-
+        const auto fluidMatrixInteraction = problem_.spatialParams().fluidMatrixInteractionAtPos(element.geometry().center());
         if (preComput_)
         {
             mobilityWI = CellDataI.mobility(wPhaseIdx);
@@ -178,11 +172,7 @@ public:
                 fluidState.setPressure(nPhaseIdx, referencePressure);
                 fluidState.setTemperature(temperature);
 
-                // old material law interface is deprecated: Replace this by
-                // const auto& fluidMatrixInteractionNeighbor = spatialParams.fluidMatrixInteractionAtPos(neighbor.geometry().center());
-                // after the release of 3.3, when the deprecated interface is no longer supported
-                const auto fluidMatrixInteractionNeighbor = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), neighbor);
-
+                const auto fluidMatrixInteractionNeighbor = problem_.spatialParams().fluidMatrixInteractionAtPos(neighbor.geometry().center());
                 mobilityWJ = fluidMatrixInteractionNeighbor.krw(satJ);
                 mobilityWJ /= FluidSystem::viscosity(fluidState, wPhaseIdx);
                 mobilityNwJ = fluidMatrixInteractionNeighbor.krn(satJ);

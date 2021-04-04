@@ -42,8 +42,6 @@
 
 #include "primaryvariableswitch.hh"
 
-#include <dumux/common/deprecated.hh>
-
 namespace Dumux {
 
 namespace Detail {
@@ -184,10 +182,7 @@ public:
             fluidState_.setSaturation(gPhaseIdx, sg_);
             fluidState_.setSaturation(nPhaseIdx, sn_);
 
-            // old material law interface is deprecated: Replace this by
-            // const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
-            // after the release of 3.3, when the deprecated interface is no longer supported
-            const auto fluidMatrixInteraction = Deprecated::makePcKrSw<3>(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+            const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
 
             // calculate capillary pressures
             const Scalar pcgw = fluidMatrixInteraction.pcgw(sw_, sn_);
@@ -533,10 +528,7 @@ public:
             fluidState_.setSaturation(gPhaseIdx, sg_);
             fluidState_.setSaturation(nPhaseIdx, sn_);
 
-            // old material law interface is deprecated: Replace this by
-            // const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
-            // after the release of 3.3, when the deprecated interface is no longer supported
-            const auto fluidMatrixInteraction = Deprecated::makePcKrSw<3>(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+            const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
 
             // calculate capillary pressures
             const Scalar pcgw = fluidMatrixInteraction.pcgw(sw_, sn_);
@@ -728,11 +720,7 @@ public:
             else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
         }
 
-        // old material law interface is deprecated: Replace this by
-        // const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
-        // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto fluidMatrixInteraction = Deprecated::makePcKrSw<3>(Scalar{}, problem.spatialParams(), element, scv, elemSol);
-
+        const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
         for (int phaseIdx = 0; phaseIdx < numPs; ++phaseIdx)
         {
             // Mobilities

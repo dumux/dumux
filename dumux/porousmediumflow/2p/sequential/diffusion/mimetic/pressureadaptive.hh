@@ -32,8 +32,6 @@
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mimetic/operatoradaptive.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mimetic/mimeticadaptive.hh>
 
-#include <dumux/common/deprecated.hh>
-
 namespace Dumux {
 
 /*!
@@ -535,10 +533,7 @@ void MimeticPressure2PAdaptive<TypeTag>::updateMaterialLaws()
 
         const Scalar satW = cellData.saturation(wPhaseIdx);
 
-        // old material law interface is deprecated: Replace this by
-        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
-        // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
+        const auto fluidMatrixInteraction = problem_.spatialParams().fluidMatrixInteractionAtPos(element.geometry().center());
 
         // initialize mobilities
         const Scalar mobilityW = fluidMatrixInteraction.krw(satW) / viscosity_[wPhaseIdx];

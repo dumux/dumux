@@ -31,8 +31,6 @@
 #include <dumux/parallel/vectorcommdatahandle.hh>
 #include <dumux/material/constraintsolvers/compositionalflash.hh>
 
-#include <dumux/common/deprecated.hh>
-
 namespace Dumux {
 /*!
  * \ingroup SequentialTwoPTwoCModel
@@ -708,11 +706,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFluxOnBoundary(Dune::FieldVector<
                             }
                             case Indices::permDependent:
                             {
-                                // old material law interface is deprecated: Replace this by
-                                // const auto& fluidMatrixInteraction = problem().spatialParams.fluidMatrixInteractionAtPos(elementI.geometry().center());
-                                // after the release of 3.3, when the deprecated interface is no longer supported
-                                const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem().spatialParams(), elementI);
-
+                                const auto fluidMatrixInteraction = problem().spatialParams().fluidMatrixInteractionAtPos(elementI.geometry().center());
                                 if (phaseIdx == wPhaseIdx)
                                     lambdaBound = fluidMatrixInteraction.krw(BCfluidState.saturation(wPhaseIdx)) / viscosityBound;
                                 else
@@ -932,10 +926,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::update1pMaterialLawsInElement(const El
     // acess the simple fluid state and prepare for manipulation
     auto& pseudoFluidState = cellData.manipulateSimpleFluidState();
 
-    // old material law interface is deprecated: Replace this by
-    // const auto& fluidMatrixInteraction = problem().spatialParams.fluidMatrixInteractionAtPos(elementI.geometry().center());
-    // after the release of 3.3, when the deprecated interface is no longer supported
-    const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem().spatialParams(), elementI);
+    const auto fluidMatrixInteraction = problem().spatialParams().fluidMatrixInteractionAtPos(elementI.geometry().center());
 
     // prepare phase pressure for fluid state
     // both phase pressures are necessary for the case 1p domain is assigned for

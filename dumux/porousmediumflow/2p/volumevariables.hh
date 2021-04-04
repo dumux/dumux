@@ -31,8 +31,6 @@
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 #include <dumux/porousmediumflow/2p/formulation.hh>
 
-#include <dumux/common/deprecated.hh>
-
 namespace Dumux {
 
 /*!
@@ -95,10 +93,8 @@ public:
 
         completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
 
-        // old material law interface is deprecated: Replace this by
-        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
-        // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+        const auto& spatialParams = problem.spatialParams();
+        const auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
 
         const int wPhaseIdx = fluidState_.wettingPhase();
         const int nPhaseIdx = 1 - wPhaseIdx;
@@ -114,7 +110,7 @@ public:
         // porosity calculation over inert volumefraction
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
-        permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
+        permeability_ = spatialParams.permeability(element, scv, elemSol);
         EnergyVolVars::updateEffectiveThermalConductivity();
     }
 
@@ -140,14 +136,12 @@ public:
     {
         EnergyVolVars::updateTemperature(elemSol, problem, element, scv, fluidState, solidState);
 
-        // old material law interface is deprecated: Replace this by
-        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
-        // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+        const auto& spatialParams = problem.spatialParams();
+        const auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
 
         const auto& priVars = elemSol[scv.localDofIndex()];
 
-        const auto wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
+        const auto wPhaseIdx = spatialParams.template wettingPhase<FluidSystem>(element, scv, elemSol);
         fluidState.setWettingPhase(wPhaseIdx);
         if (formulation == TwoPFormulation::p0s1)
         {
@@ -161,7 +155,7 @@ public:
             }
             else
             {
-                const auto Sn = Traits::SaturationReconstruction::reconstructSn(problem.spatialParams(), element,
+                const auto Sn = Traits::SaturationReconstruction::reconstructSn(spatialParams, element,
                                                                                 scv, elemSol, priVars[saturationIdx]);
                 fluidState.setSaturation(phase1Idx, Sn);
                 fluidState.setSaturation(phase0Idx, 1 - Sn);
@@ -174,7 +168,7 @@ public:
             fluidState.setPressure(phase1Idx, priVars[pressureIdx]);
             if (wPhaseIdx == phase1Idx)
             {
-                const auto Sn = Traits::SaturationReconstruction::reconstructSn(problem.spatialParams(), element,
+                const auto Sn = Traits::SaturationReconstruction::reconstructSn(spatialParams, element,
                                                                                 scv, elemSol, priVars[saturationIdx]);
                 fluidState.setSaturation(phase0Idx, Sn);
                 fluidState.setSaturation(phase1Idx, 1 - Sn);

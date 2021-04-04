@@ -1,5 +1,4 @@
 install(FILES
-boundarytypes.hh
 connectivitymap.hh
 elementvolumevariables.hh
 facevariables.hh

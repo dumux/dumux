@@ -30,8 +30,6 @@
 #include <dumux/porousmediumflow/sequential/cellcentered/pressure.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
 
-#include <dumux/common/deprecated.hh>
-
 namespace Dumux {
 /*!
  * \ingroup SequentialTwoPModel
@@ -929,11 +927,7 @@ const Intersection& intersection, const CellData& cellData, const bool first)
 
         //calculate constitutive relations depending on the kind of saturation used
 
-        // old material law interface is deprecated: Replace this by
-        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
-        // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
-
+        const auto fluidMatrixInteraction = problem_.spatialParams().fluidMatrixInteractionAtPos(element.geometry().center());
         const Scalar pcBound = fluidMatrixInteraction.pc(satW);
 
         // determine phase pressures from primary pressure variable
@@ -1108,11 +1102,7 @@ void FVPressure2P<TypeTag>::updateMaterialLaws()
         // determine phase saturations from primary saturation variable
         const Scalar satW = cellData.saturation(wPhaseIdx);
 
-        // old material law interface is deprecated: Replace this by
-        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
-        // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
-
+        const auto fluidMatrixInteraction = problem_.spatialParams().fluidMatrixInteractionAtPos(element.geometry().center());
         const Scalar pc = fluidMatrixInteraction.pc(satW);
 
         // determine phase pressures from primary pressure variable

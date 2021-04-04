@@ -31,8 +31,6 @@
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 
-#include <dumux/common/deprecated.hh>
-
 namespace Dumux {
 
 /*!
@@ -93,15 +91,11 @@ public:
         ParentType::update(elemSol, problem, element, scv);
         completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
 
-        // old material law interface is deprecated: Replace this by
-        // const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
-        // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto fluidMatrixInteraction = Deprecated::makePcKrSw<3>(Scalar{}, problem.spatialParams(), element, scv, elemSol);
-
         const auto sw = fluidState_.saturation(wPhaseIdx);
         const auto sn = fluidState_.saturation(nPhaseIdx);
 
-         // mobilities
+        // mobilities
+        const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
         for (int phaseIdx = 0; phaseIdx < ParentType::numFluidPhases(); ++phaseIdx)
         {
             mobility_[phaseIdx] = fluidMatrixInteraction.kr(phaseIdx, sw, sn)
@@ -140,10 +134,7 @@ public:
 
         const auto& priVars = elemSol[scv.localDofIndex()];
 
-        // old material law interface is deprecated: Replace this by
-        // const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
-        // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto fluidMatrixInteraction = Deprecated::makePcKrSw<3>(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+        const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
 
         const Scalar sw = priVars[swIdx];
         const Scalar sn = priVars[snIdx];

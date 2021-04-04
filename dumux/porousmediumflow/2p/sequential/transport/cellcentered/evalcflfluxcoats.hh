@@ -28,8 +28,6 @@
 #include <dumux/porousmediumflow/sequential/impetproperties.hh>
 #include "evalcflflux.hh"
 
-#include <dumux/common/deprecated.hh>
-
 namespace Dumux {
 /*!
  * \ingroup SequentialTwoPModel
@@ -358,11 +356,7 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
     Scalar lambdaWI = cellDataI.mobility(wPhaseIdx);
     Scalar lambdaNwI = cellDataI.mobility(nPhaseIdx);
 
-    // old material law interface is deprecated: Replace this by
-    // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
-    // after the release of 3.3, when the deprecated interface is no longer supported
-    const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
-
+    const auto fluidMatrixInteraction = problem_.spatialParams().fluidMatrixInteractionAtPos(element.geometry().center());
     const Scalar dpc_dsI = fluidMatrixInteraction.dpc_dsw(satI);
 
     const GlobalPosition& unitOuterNormal = intersection.centerUnitOuterNormal();
@@ -413,11 +407,7 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
             Scalar lambdaWJ = cellDataI.mobility(wPhaseIdx);
             Scalar lambdaNwJ = cellDataI.mobility(nPhaseIdx);
 
-            // old material law interface is deprecated: Replace this by
-            // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(neighbor.geometry().center());
-            // after the release of 3.3, when the deprecated interface is no longer supported
-            const auto fluidMatrixInteractionNeighbor = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), neighbor);
-
+            const auto fluidMatrixInteractionNeighbor = problem_.spatialParams().fluidMatrixInteractionAtPos(neighbor.geometry().center());
             const Scalar dpc_dsJ = fluidMatrixInteractionNeighbor.dpc_dsw(satJ);
 
             // compute vectorized permeabilities

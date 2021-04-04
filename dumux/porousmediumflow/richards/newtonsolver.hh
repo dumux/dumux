@@ -26,7 +26,7 @@
 #define DUMUX_RICHARDS_NEWTON_SOLVER_HH
 
 #include <algorithm>
-#include <dumux/common/deprecated.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/discretization/elementsolution.hh>
@@ -90,11 +90,7 @@ private:
                     const auto& spatialParams = this->assembler().problem().spatialParams();
                     const auto elemSol = elementSolution(element, uCurrentIter, gridGeometry);
 
-                    // old material law interface is deprecated: Replace this by
-                    // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
-                    // after the release of 3.1, when the deprecated interface is no longer supported
-                    const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, spatialParams, element, scv, elemSol);
-
+                    const auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
                     const Scalar pcMin = fluidMatrixInteraction.pc(1.0);
                     const Scalar pw = uLastIter[dofIdxGlobal][pressureIdx];
                     using std::max;

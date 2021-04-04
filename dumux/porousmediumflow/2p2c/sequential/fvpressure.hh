@@ -38,8 +38,6 @@
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/porousmediumflow/2p2c/sequential/properties.hh>
 
-#include <dumux/common/deprecated.hh>
-
 namespace Dumux {
 /*!
  * \ingroup SequentialTwoPTwoCModel
@@ -678,10 +676,7 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
     PhaseVector pressBC(0.);
     Scalar pcBound (0.);
 
-    // old material law interface is deprecated: Replace this by
-    // const auto& fluidMatrixInteraction = problem().spatialParams.fluidMatrixInteractionAtPos(elementI.geometry().center());
-    // after the release of 3.3, when the deprecated interface is no longer supported
-    const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem().spatialParams(), elementI);
+    const auto fluidMatrixInteraction = problem().spatialParams().fluidMatrixInteractionAtPos(elementI.geometry().center());
 
     /**********         Dirichlet Boundary        *************/
     if (bcType.isDirichlet(Indices::pressureEqIdx))
@@ -958,12 +953,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
     PhaseVector pressure;
     CompositionalFlash<Scalar, FluidSystem> flashSolver;
 
-    // old material law interface is deprecated: Replace this by
-    // const auto& fluidMatrixInteraction = problem().spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
-    // after the release of 3.3, when the deprecated interface is no longer supported
-    const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem().spatialParams(), element);
-
-
+    const auto fluidMatrixInteraction = problem().spatialParams().fluidMatrixInteractionAtPos(element.geometry().center());
     if(getPropValue<TypeTag, Properties::EnableCapillarity>()) // iterate capillary pressure and saturation
     {
         unsigned int maxiter = 6;

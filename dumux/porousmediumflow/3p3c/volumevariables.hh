@@ -37,8 +37,6 @@
 
 #include "primaryvariableswitch.hh"
 
-#include <dumux/common/deprecated.hh>
-
 namespace Dumux {
 
 namespace Detail {
@@ -188,11 +186,7 @@ public:
 
         // calculate capillary pressures
 
-        // old material law interface is deprecated: Replace this by
-        // const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
-        // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto fluidMatrixInteraction = Deprecated::makePcKrSw<3>(Scalar{}, problem.spatialParams(), element, scv, elemSol);
-
+        const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
         Scalar pcgw = fluidMatrixInteraction.pcgw(sw_, sn_);
         Scalar pcnw = fluidMatrixInteraction.pcnw(sw_, sn_);
         Scalar pcgn = fluidMatrixInteraction.pcgn(sw_, sn_);
