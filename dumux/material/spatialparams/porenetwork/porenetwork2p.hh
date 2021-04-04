@@ -154,9 +154,23 @@ public:
     }
 
     /*!
-     * \brief Returns the parameter object for the Brooks-Corey material law.
+     * \brief Returns the surface tension \f$ N/m\f$
      *
-     * In this test, we use element-wise distributed material parameters.
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     */
+    template<class ElementSolution>
+    Scalar surfaceTension(const Element& element,
+                          const SubControlVolume& scv,
+                          const ElementSolution& elemSol) const
+    {
+        static const Scalar gamma = getParam<Scalar>("SpatialParams.SurfaceTension", 0.0725); // default to surface tension of water/air
+        return gamma;
+    }
+
+    /*!
+     * \brief Returns the parameter object for the pore-local pc-Sw law
      *
      * \param element The current element
      * \param scv The sub-control volume inside the element.

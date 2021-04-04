@@ -57,10 +57,8 @@ struct PlatonicBodyParams
                        const ElemSol& elemSol)
     : shape_(spatialParams.gridGeometry().poreGeometry()[scv.dofIndex()])
     , radius_(spatialParams.poreInscribedRadius(element, scv, elemSol))
-    {
-        static const Scalar surfaceTension = getParam<Scalar>("SpatialParams.SurfaceTension", 0.0725); // TODO
-        surfaceTension_ = surfaceTension;
-    }
+    , surfaceTension_(spatialParams.surfaceTension(element, scv, elemSol))
+    {}
 
     template<class SpatialParams, class Element, class SubControlVolume, class ElemSol>
     void update(const SpatialParams& spatialParams,
@@ -71,9 +69,7 @@ struct PlatonicBodyParams
         const auto& gridGeometry = spatialParams.gridGeometry();
         shape_ = gridGeometry.poreGeometry()[scv.dofIndex()];
         radius_ = spatialParams.poreInscribedRadius(element, scv, elemSol);
-
-        static const Scalar surfaceTension = getParam<Scalar>("SpatialParams.SurfaceTension", 0.0725); // TODO
-        surfaceTension_ = surfaceTension;
+        surfaceTension_ = spatialParams.surfaceTension(element, scv, elemSol);
     }
 
     Pore::Shape poreShape() const { return shape_; }
