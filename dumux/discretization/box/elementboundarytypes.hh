@@ -26,6 +26,7 @@
 
 #include <cassert>
 #include <vector>
+#include <dune/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -72,7 +73,9 @@ public:
 
                 hasDirichlet_ = hasDirichlet_ || vertexBCTypes_[scvIdxLocal].hasDirichlet();
                 hasNeumann_ = hasNeumann_ || vertexBCTypes_[scvIdxLocal].hasNeumann();
+DUNE_NO_DEPRECATED_BEGIN
                 hasOutflow_ = hasOutflow_ || vertexBCTypes_[scvIdxLocal].hasOutflow();
+DUNE_NO_DEPRECATED_END
             }
         }
     }
@@ -95,6 +98,7 @@ public:
      * \brief Returns whether the element potentially features an
      *        outflow boundary segment.
      */
+    [[deprecated("Will be removed after release 3.4")]]
     bool hasOutflow() const
     { return hasOutflow_; }
 

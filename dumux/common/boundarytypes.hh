@@ -117,6 +117,7 @@ public:
     /*!
      * \brief Set all boundary conditions to Neumann.
      */
+    [[deprecated("Will be removed after release 3.4")]]
     void setAllOutflow()
     {
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
@@ -181,6 +182,7 @@ public:
      * \param eqIdx The index of the equation on which the outflow
      *              condition applies.
      */
+    [[deprecated("Will be removed after release 3.4")]]
     void setOutflow(int eqIdx)
     {
         resetEq(eqIdx);
@@ -308,6 +310,7 @@ public:
      *
      * \param eqIdx The index of the equation
      */
+    [[deprecated("Will be removed after release 3.4")]]
     bool isOutflow(unsigned eqIdx) const
     { return boundaryInfo_[eqIdx].isOutflow; }
 
@@ -315,6 +318,7 @@ public:
      * \brief Returns true if some equation is used to specify an
      *        outflow condition.
      */
+    [[deprecated("Will be removed after release 3.4")]]
     bool hasOutflow() const
     {
         return std::any_of(boundaryInfo_.begin(),
