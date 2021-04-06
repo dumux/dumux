@@ -11,6 +11,7 @@ Differences Between DuMu<sup>x</sup> 3.4 and DuMu<sup>x</sup> 3.3
     - `getusedversions.sh` to extract the used Dumux/Dune versions of a module (new script: `bin/util/getusedversions.py`)
     - `extractmodulepart.sh` no longer creates an install file, instead, you can now generate install scripts for your module using the new script `bin/util/makeinstallscript.py`.
     - Note: the old shells script will be removed after release 3.4.
+- __Law for water vapor viscosity in gas mixtures changed__: Polynomial laws for determining the viscosity of vater vapor in gas mixtures are introduced and applied by the new function `h2oGasViscosityInMixture`. The polynomial laws give a better approximation of the gas viscosity especially at higher temperatures ( >273.15 K) and a high water vapor content.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __MPNC__: The `MPAdapter` can now also be called with a temporary `pcKrSw` objects. For this, the compiler needs to deduce the
