@@ -1249,16 +1249,16 @@ private:
     //! initialize the parameters by reading from the parameter tree
     void initParams_(const std::string& group = "")
     {
-        useLineSearch_ = getParamFromGroup<bool>(group, "Newton.UseLineSearch");
+        useLineSearch_ = getParamFromGroup<bool>(group, "Newton.UseLineSearch", false);
         lineSearchMinRelaxationFactor_ = getParamFromGroup<Scalar>(group, "Newton.LineSearchMinRelaxationFactor", 0.125);
-        useChop_ = getParamFromGroup<bool>(group, "Newton.EnableChop");
+        useChop_ = getParamFromGroup<bool>(group, "Newton.EnableChop", false);
         if(useLineSearch_ && useChop_)
             DUNE_THROW(Dune::InvalidStateException, "Use either linesearch OR chop!");
 
-        enableAbsoluteResidualCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableAbsoluteResidualCriterion");
-        enableShiftCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableShiftCriterion");
-        enableResidualCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableResidualCriterion") || enableAbsoluteResidualCriterion_;
-        satisfyResidualAndShiftCriterion_ = getParamFromGroup<bool>(group, "Newton.SatisfyResidualAndShiftCriterion");
+        enableAbsoluteResidualCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableAbsoluteResidualCriterion", false);
+        enableShiftCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableShiftCriterion", true);
+        enableResidualCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableResidualCriterion", false) || enableAbsoluteResidualCriterion_;
+        satisfyResidualAndShiftCriterion_ = getParamFromGroup<bool>(group, "Newton.SatisfyResidualAndShiftCriterion", false);
         enableDynamicOutput_ = getParamFromGroup<bool>(group, "Newton.EnableDynamicOutput", true);
 
         if (!enableShiftCriterion_ && !enableResidualCriterion_)
@@ -1268,14 +1268,14 @@ private:
                        << "NewtonEnableResidualCriterion has to be set to true");
         }
 
-        setMaxRelativeShift(getParamFromGroup<Scalar>(group, "Newton.MaxRelativeShift"));
-        setMaxAbsoluteResidual(getParamFromGroup<Scalar>(group, "Newton.MaxAbsoluteResidual"));
-        setResidualReduction(getParamFromGroup<Scalar>(group, "Newton.ResidualReduction"));
-        setTargetSteps(getParamFromGroup<int>(group, "Newton.TargetSteps"));
-        setMinSteps(getParamFromGroup<int>(group, "Newton.MinSteps"));
-        setMaxSteps(getParamFromGroup<int>(group, "Newton.MaxSteps"));
+        setMaxRelativeShift(getParamFromGroup<Scalar>(group, "Newton.MaxRelativeShift", 1e-8));
+        setMaxAbsoluteResidual(getParamFromGroup<Scalar>(group, "Newton.MaxAbsoluteResidual", 1e-5));
+        setResidualReduction(getParamFromGroup<Scalar>(group, "Newton.ResidualReduction", 1e-5));
+        setTargetSteps(getParamFromGroup<int>(group, "Newton.TargetSteps", 10));
+        setMinSteps(getParamFromGroup<int>(group, "Newton.MinSteps", 2));
+        setMaxSteps(getParamFromGroup<int>(group, "Newton.MaxSteps", 18));
 
-        enablePartialReassembly_ = getParamFromGroup<bool>(group, "Newton.EnablePartialReassembly");
+        enablePartialReassembly_ = getParamFromGroup<bool>(group, "Newton.EnablePartialReassembly", false);
         reassemblyMinThreshold_ = getParamFromGroup<Scalar>(group, "Newton.ReassemblyMinThreshold", 1e-1*shiftTolerance_);
         reassemblyMaxThreshold_ = getParamFromGroup<Scalar>(group, "Newton.ReassemblyMaxThreshold", 1e2*shiftTolerance_);
         reassemblyShiftWeight_ = getParamFromGroup<Scalar>(group, "Newton.ReassemblyShiftWeight", 1e-3);
