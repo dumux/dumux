@@ -133,7 +133,8 @@ template<class Vector>
 inline static unsigned int directionIndex(Vector&& vector)
 {
     const auto eps = 1e-8;
-    return std::find_if(vector.begin(), vector.end(), [eps](const auto& x) { return std::abs(x) > eps; } ) - vector.begin();
+    using std::abs;
+    return std::find_if(vector.begin(), vector.end(), [eps](const auto& x) { return x > eps; } ) - vector.begin();
 }
 
 /*!
