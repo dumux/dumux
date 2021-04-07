@@ -16,9 +16,13 @@ the maximum pressure limit is the lowest of the following values:
 
 NIST uses the IIR Convention to define the reference state for the enthalpy.
 Therefore the enthalpy is set to 200000 J/kg at 0°C for saturated liquid.
-Since this is not the reference state used in dumux, a modification of the
-enthalpy values is necessary. NIST can provides also data according to other
-reference states (NBP and ASHRAE).
+In in Span and Wagner (2009 "A New Equation of State for Carbon Dioxide
+Covering the Fluid Region from the Triple-Point Temperature to 1100 K at
+Pressures upto 800 MPa") at T = 298.15 K and p = 0.101325 MPa. This corresponds
+to an entalpy of 505841 J/kg. In addition wihtin Dumux this value is modified by
+21910 J/kg.
+
+NIST can provides also data according to other reference states (NBP and ASHRAE).
 """
 
 import argparse
@@ -84,8 +88,9 @@ for i in range(cmdArgs["n_temp"]):
     enthalpy = np.delete(values["Enthalpy_kJkg"], phase_boundary_indices)
     # transform unit (kJ/kg -> J/kg)
     enthalpy *= 1000
-    # transform to the reference state used in dumux
-    enthalpy -= 484870
+    # transform to the reference state
+    enthalpy -= 505841  # IIR -> Span/Wagner
+    enthalpy += 21910   # Span/Wagner -> Dumux
     # format the data
     density_str.append('    {'+', '.join([format(x, '.12e') for x in density])+'}')
     enthalpy_str.append('    {'+', '.join([format(x, '.12e') for x in enthalpy])+'}')
