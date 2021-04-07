@@ -54,6 +54,7 @@ public:
 
         boundaryInfo_[eqIdx].isSymmetry = false;
         boundaryInfo_[eqIdx].isBeaversJoseph = false;
+        boundaryInfo_[eqIdx].isOutflow = false;
     }
 
     /*!
@@ -123,11 +124,39 @@ public:
         return false;
     }
 
+    /*!
+     * \brief Set an outflow boundary condition
+     */
+    void setOutflow(const int eqIdx)
+    {
+        resetEq(eqIdx);
+        boundaryInfo_[eqIdx].isOutflow = true;
+    }
+
+    /*!
+     * \brief Returns true if an outflow boundary condition was set
+     * \param eqIdx The index of the equation
+     */
+    bool isOutflow(const int eqIdx) const
+    { return boundaryInfo_[eqIdx].isOutflow; }
+
+    /*!
+     * \brief Returns true if some equation has an outflow boundary condition
+     */
+    bool hasOutflow() const
+    {
+        for (int i = 0; i < numEq; ++i)
+            if (boundaryInfo_[i].isOutflow)
+                return true;
+        return false;
+    }
+
 protected:
     //! use bitfields to minimize the size
     struct NavierStokesBoundaryInfo
     {
         bool isSymmetry : 1;
+        bool isOutflow : 1;
         bool isBeaversJoseph : 1;
     };
 

@@ -24,6 +24,7 @@
 #include <dumux/common/properties/grid.hh>
 #include <dumux/common/defaultmappertraits.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/porousmediumflow/sequential/boundarytypes.hh>
 #include <dumux/porousmediumflow/sequential/gridadaptproperties.hh>
 #include <dumux/porousmediumflow/sequential/gridadaptinitializationindicatordefault.hh>
 
@@ -237,7 +238,7 @@ struct SequentialBoundaryTypes<TypeTag, TTag::SequentialModel>
 { private:
     enum { numEq = getPropValue<TypeTag, Properties::NumEq>() };
 public:
-    using type = Dumux::BoundaryTypes<numEq>;
+    using type = Dumux::SequentialBoundaryTypes<numEq>;
 };
 
 //! do not specific any model-specific default parameters here
