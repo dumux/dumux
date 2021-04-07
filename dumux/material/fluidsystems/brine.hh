@@ -219,7 +219,8 @@ public:
     using Base::density;
     /*!
      * \brief Return the phase density [kg/m^3].
-     * \note The density is compuated as a function of the salt mass fraction
+     * \note The density is computed as a function of the salt mass fraction, pressure and temperature. The used function is an empirical relationship fitted to experimental data. It is presented by Batzle and Wang (1992).
+     *
      */
     template <class FluidState>
     static Scalar density(const FluidState& fluidState, int phaseIdx = liquidPhaseIdx)
@@ -276,6 +277,7 @@ public:
     using Base::viscosity;
     /*!
      * \brief Return the viscosity of the phase.
+     * \note The viscosity is computed as a function of the salt mass fraction and temperature. The used function is an empirical relationship fitted to experimental data. It is presented by Batzle and Wang (1992).
      */
     template <class FluidState>
     static Scalar viscosity(const FluidState& fluidState, int phaseIdx = liquidPhaseIdx)
