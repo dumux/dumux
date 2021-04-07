@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Common
- * \copydoc Dumux::Variables
+ * \copydoc Dumux::Experimental::Variables
  */
 #ifndef DUMUX_COMMON_VARIABLES_HH
 #define DUMUX_COMMON_VARIABLES_HH

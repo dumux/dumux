@@ -104,7 +104,7 @@ public:
      * \brief Called before the Newton method is applied to an
      *        non-linear system of equations.
      *
-     * \param u The initial solution
+     * \param vars The variables representing the initial solution
      */
     void newtonBegin(Variables& vars) override
     {
