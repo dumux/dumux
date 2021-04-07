@@ -34,11 +34,11 @@ namespace Dumux::PoreNetwork::FluidMatrix {
 template<class ScalarT>
 struct LocalRulesTraits
 {
-    using Tetrahedron = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::tetrahedron>;
-    using Cube = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::cube>;
-    using Octahedron = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::octahedron>;
-    using Icosahedron = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::icosahedron>;
-    using Dodecahedron = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::dodecahedron>;
+    using Tetrahedron = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::tetrahedron, ScalarT>;
+    using Cube = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::cube, ScalarT>;
+    using Octahedron = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::octahedron, ScalarT>;
+    using Icosahedron = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::icosahedron, ScalarT>;
+    using Dodecahedron = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::dodecahedron, ScalarT>;
 };
 
 template<class ScalarT>
