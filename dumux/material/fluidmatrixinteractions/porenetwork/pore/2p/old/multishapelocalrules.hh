@@ -28,7 +28,6 @@
 #include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
 #include <dumux/porenetwork/common/poreproperties.hh>
 #include "localrulesforplatonicbody.hh"
-#include "droplocalrules.hh"
 
 namespace Dumux::PoreNetwork::FluidMatrix {
 
@@ -40,7 +39,6 @@ struct LocalRulesTraits
     using Octahedron = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::octahedron>;
     using Icosahedron = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::icosahedron>;
     using Dodecahedron = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::dodecahedron>;
-    using DropCube = DropLocalRulesNoReg<Pore::Shape::dropcube>;
 };
 
 template<class ScalarT>
@@ -71,9 +69,6 @@ public:
                 case Pore::Shape::dodecahedron:
                     platonicBodyParams_ = std::make_unique<PlatonicBodyParams<Scalar>>(spatialParams, element, scv, elemSol);
                     break;
-                case Pore::Shape::dropcube:
-                    dropParams_ = std::make_unique<DropParams<Scalar>>(spatialParams, element, scv, elemSol);
-                    break;
                 default:
                     DUNE_THROW(Dune::NotImplemented, "Invalid shape");
             }
@@ -83,9 +78,6 @@ public:
         PlatonicBodyParams<Scalar> platonicBodyParams() const
         { return *platonicBodyParams_; }
 
-        DropParams<Scalar> dropParams() const
-        { return *dropParams_; }
-
         Pore::Shape poreShape() const
         { return shape_; }
 
@@ -93,17 +85,10 @@ public:
         {
             shape_ = platonicBodyParams.poreShape();
             platonicBodyParams_ = std::make_unique<PlatonicBodyParams<Scalar>>(platonicBodyParams);
-        } //TODO: dropParams?
-
-        void setDropParams(const DropParams<Scalar>& dropParams)
-        {
-            shape_ = dropParams.poreShape();
-            dropParams_ = std::make_unique<DropParams<Scalar>>(dropParams);
         }
 
     private:
         std::unique_ptr<PlatonicBodyParams<Scalar>> platonicBodyParams_;
-        std::unique_ptr<DropParams<Scalar>> dropParams_;
         Pore::Shape shape_;
     };
 
@@ -142,11 +127,6 @@ public:
                                                                                  typename LocalRules::Cube::RegularizationParams{},
                                                                                  paramGroup);
                 break;
-            case Pore::Shape::dropcube:
-                dropLocalRules_ = std::make_shared<typename LocalRules::DropCube>(baseParams.dropParams(),
-                                                                                 typename LocalRules::DropCube::RegularizationParams{},
-                                                                                 paramGroup);
-                break;
             case Pore::Shape::octahedron:
                 localRulesForOctahedron_ = std::make_shared<typename LocalRules::Octahedron>(baseParams.platonicBodyParams(),
                                                                                              typename LocalRules::Octahedron::RegularizationParams{},
@@ -181,8 +161,6 @@ public:
                 return localRulesForTetrahedron_->updateParams(spatialParams, element, scv, elemSol);
             case Pore::Shape::cube:
                 return localRulesForCube_->updateParams(spatialParams, element, scv, elemSol);
-            case Pore::Shape::dropcube:
-                return dropLocalRules_->updateParams(spatialParams, element, scv, elemSol);
             case Pore::Shape::octahedron:
                 return localRulesForOctahedron_->updateParams(spatialParams, element, scv, elemSol);
             case Pore::Shape::icosahedron:
@@ -205,8 +183,6 @@ public:
                 return localRulesForTetrahedron_->pc(sw);
             case Pore::Shape::cube:
                 return localRulesForCube_->pc(sw);
-            case Pore::Shape::dropcube:
-                return dropLocalRules_->pc(sw);
             case Pore::Shape::octahedron:
                 return localRulesForOctahedron_->pc(sw);
             case Pore::Shape::icosahedron:
@@ -229,8 +205,6 @@ public:
                 return localRulesForTetrahedron_->sw(pc);
             case Pore::Shape::cube:
                 return localRulesForCube_->sw(pc);
-            case Pore::Shape::dropcube:
-                return dropLocalRules_->sw(pc);
             case Pore::Shape::octahedron:
                 return localRulesForOctahedron_->sw(pc);
             case Pore::Shape::icosahedron:
@@ -253,8 +227,6 @@ public:
                 return localRulesForTetrahedron_->dpc_dsw(sw);
             case Pore::Shape::cube:
                 return localRulesForCube_->dpc_dsw(sw);
-            case Pore::Shape::dropcube:
-                return dropLocalRules_->dpc_dsw(sw);
             case Pore::Shape::octahedron:
                 return localRulesForOctahedron_->dpc_dsw(sw);
             case Pore::Shape::icosahedron:
@@ -277,8 +249,6 @@ public:
                 return localRulesForTetrahedron_->dsw_dpc(pc);
             case Pore::Shape::cube:
                 return localRulesForCube_->dsw_dpc(pc);
-            case Pore::Shape::dropcube:
-                return dropLocalRules_->dsw_dpc(pc);
             case Pore::Shape::octahedron:
                 return localRulesForOctahedron_->dsw_dpc(pc);
             case Pore::Shape::icosahedron:
@@ -321,7 +291,6 @@ public:
 private:
     std::shared_ptr<typename LocalRules::Tetrahedron> localRulesForTetrahedron_;
     std::shared_ptr<typename LocalRules::Cube> localRulesForCube_;
-    std::shared_ptr<typename LocalRules::DropCube> dropLocalRules_;
     std::shared_ptr<typename LocalRules::Octahedron> localRulesForOctahedron_;
     std::shared_ptr<typename LocalRules::Icosahedron> localRulesForIcosahedron_;
     std::shared_ptr<typename LocalRules::Dodecahedron> localRulesForDodecahedron_;
