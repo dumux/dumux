@@ -170,7 +170,7 @@ public:
         // issue a warning if the caluclation is used in parallel with overlap
         static bool warningIssued = false;
 
-        if (gridView().overlapSize(0) == 0)
+        if (gridView().comm().size() > 1 && gridView().overlapSize(0) == 0)
         {
             if constexpr (isBox)
             {
