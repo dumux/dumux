@@ -40,6 +40,7 @@
 #include <dumux/porenetwork/common/pnmvtkoutputmodule.hh>
 #include <dumux/porenetwork/2p/newtonsolver.hh>
 
+#include "volumevariables.hh"
 #include "properties.hh"
 
 int main(int argc, char** argv)
