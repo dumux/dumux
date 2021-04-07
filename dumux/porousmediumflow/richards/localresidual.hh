@@ -280,7 +280,7 @@ public:
         const auto upwindTerm = rho*insideVolVars.mobility(0)*insideWeight + rho*outsideVolVars.mobility(0)*outsideWeight;
 
         const auto insideFluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, insideScv, InvalidElemSol{});
-        const auto outsideFluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, outsideScv, InvalidElemSol{});
+        const auto outsideFluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(outsideElement, outsideScv, InvalidElemSol{});
 
         // material law derivatives
         const auto insideSw = insideVolVars.saturation(0);
