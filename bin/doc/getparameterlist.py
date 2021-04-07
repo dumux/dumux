@@ -6,6 +6,7 @@ for usage of getParam or getParamFromGroup.
 """
 
 import os
+import argparse
 
 # find the content of the given string between the first matching pair of opening/closing keys
 def getEnclosedContent(string, openKey, closeKey):
@@ -87,11 +88,65 @@ def getParamsFromFile(file):
 
     return parameters
 
+# check if the last line of table header
+# #|:-|:-|:-|:-|:-|
+def isEndOfTableHeader(text):
+    if text.startswith("* | :-"):
+        return False
+    else:
+        return True
+
+class CheckExistAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string):
+        if(os.path.isfile(values)):
+            setattr(namespace, self.dest, values)
+            setattr(namespace, 'hasInput', True)
+        else:
+            parser.error("File {} does not exist!".format(values))
+
+
+parser = argparse.ArgumentParser(
+    description="""
+    Generate parameters list from header files.
+    ----------------------------------------------------------------
+    If input file is given, the descriptions will be copied from the input.
+    If no input file is given, the descriptions will be empty.
+    """,
+    formatter_class=argparse.RawDescriptionHelpFormatter)
+parser.add_argument("--root", help="root path of Dumux",
+                    metavar="rootpath",
+                    default=os.path.abspath(os.path.join(os.path.abspath(__file__), '../../../')))
+parser.add_argument("--param-list", help="given parameterlist file",
+                    action=CheckExistAction,
+                    metavar = "input",
+                    dest="inputFile")
+parser.add_argument("--output",  help="relative path (to the root path) of the output file",
+                    metavar = "output",
+                    default = 'doc/doxygen/extradoc/parameterlist.txt')
+
+args = vars(parser.parse_args())
+
+maxExplanationWidth = 0
+# get the explanations from old parameterlist.txt
+oldDataDict = {}
+if args["inputFile"]:
+    with open(args["inputFile"],"r") as oldOutputFile:
+        oldLines = oldOutputFile.readlines()
+        tableHeader = True
+        for line in oldLines[:-1]:
+            if tableHeader:
+                tableHeader = isEndOfTableHeader(line)
+                continue
+            keysList = ["Group","Parameter","Type","Default Value","Explanation"]
+            valuesList = [value.strip() for value in line.split("|")[1:-1]]
+            maxExplanationWidth = max(maxExplanationWidth, len(valuesList[-1]))
+            name = valuesList[0] + "." + valuesList[1]
+            oldDataDict.update({name : dict(zip(keysList, valuesList))})
+
 # search all *.hh files for parameters
 # TODO: allow runtime args with extensions and folder(s) to be checked
 parameters = []
-rootDir = os.path.dirname(os.path.abspath(__file__)) + "/../../dumux"
-for root, _, files in os.walk(rootDir):
+for root, _, files in os.walk(args["root"]):
     for file in files:
         if os.path.splitext(file)[1] == ".hh" and os.path.splitext(file)[0] != 'parameters':
             parameters.extend(getParamsFromFile(os.path.join(root, file)))
@@ -116,7 +171,6 @@ maxGroupWidth = 0
 maxParamWidth = 0
 maxTypeWidth = 0
 maxDefaultWidth = 0
-
 tableEntryData = []
 for key in parameterDict:
 
@@ -164,10 +218,16 @@ for data in tableEntryData:
         previousGroupEntry = groupEntry
         if groupEntry != '-': groupEntry = '\\b ' + groupEntry
 
-    tableEntry = ' * | {} | {} | {} | {} | TODO: explanation |'.format(groupEntry.ljust(maxGroupWidth),
-                                                                       paramName.ljust(maxParamWidth),
-                                                                       paramType.ljust(maxTypeWidth),
-                                                                       defaultValue.ljust(maxDefaultWidth))
+    # get the explanation from old text
+    paramKey = groupEntry + "." + paramName
+    explanation = "" if paramKey not in oldDataDict else oldDataDict[paramKey]["Explanation"]
+    tableEntry = ' * | {} | {} | {} | {} | {} |'.format(
+        groupEntry.ljust(maxGroupWidth),
+        paramName.ljust(maxParamWidth),
+        paramType.ljust(maxTypeWidth),                                                            
+        defaultValue.ljust(maxDefaultWidth),
+        explanation.ljust(maxExplanationWidth)
+    )
 
     if groupEntry != '-': tableEntriesWithGroup.append(tableEntry)
     else: tableEntriesWithoutGroup.append(tableEntry)
@@ -204,8 +264,9 @@ header +=   " | " + "executable.input".ljust(maxDefaultWidth)
 header +=   " | :-         |\n"
 
 # overwrite the old parameterlist.txt file
-with open(rootDir + '/../doc/doxygen/extradoc/parameterlist.txt', "w") as outputfile:
+with open(os.path.join(args["root"], args["output"]), "w") as outputfile:
     outputfile.write(header)
     for e in tableEntries:
         outputfile.write(e + '\n')
     outputfile.write(' */\n')
+    print("The parameter list is written to {}".format(os.path.join(args["root"], args["output"])))
