@@ -31,7 +31,7 @@ namespace Dumux::PoreNetwork::Pore {
 
 //! Collection of different pore-body shapes
 enum class Shape
-{ circle, square, cube, sphere, cylinder, tetrahedron, octahedron, icosahedron, dodecahedron };
+{ circle =1, square, cube, sphere, cylinder, tetrahedron, octahedron, icosahedron, dodecahedron, dropcube};
 
 //! Get the shape from a string description of the shape
 inline std::string shapeToString(Shape s)
@@ -47,6 +47,7 @@ inline std::string shapeToString(Shape s)
         case Shape::octahedron: return "Octahedron";
         case Shape::icosahedron: return "Icosahedron";
         case Shape::dodecahedron: return "Dodecahedron";
+        case Shape::dropcube: return "DropCube";
         default: DUNE_THROW(Dune::InvalidStateException, "Unknown shape!");
     }
 }
@@ -63,6 +64,7 @@ inline Shape shapeFromString(const std::string& s)
     else if (s == shapeToString(Shape::octahedron)) return Shape::octahedron;
     else if (s == shapeToString(Shape::icosahedron)) return Shape::icosahedron;
     else if (s == shapeToString(Shape::dodecahedron)) return Shape::dodecahedron;
+    else if (s == shapeToString(Shape::dropcube)) return Shape::dropcube;
     else DUNE_THROW(Dune::InvalidStateException, s << " is not a valid shape");
 }
 
@@ -81,6 +83,7 @@ inline Scalar volume(Shape shape, Scalar inscribedRadius)
         case Shape::octahedron: return 6.93*inscribedRadius*inscribedRadius*inscribedRadius; break;
         case Shape::icosahedron: return 5.05*inscribedRadius*inscribedRadius*inscribedRadius; break;
         case Shape::dodecahedron: return 5.55*inscribedRadius*inscribedRadius*inscribedRadius; break;
+        case Shape::dropcube: return 8*inscribedRadius*inscribedRadius*inscribedRadius; break;
         default : DUNE_THROW(Dune::InvalidStateException, "Unsupported geometry");
     }
 }
