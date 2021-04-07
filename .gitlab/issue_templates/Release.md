@@ -34,7 +34,7 @@ __Hard Feature Freeze!__
 - [ ]  Announce hard feature freeze on the mailing list
 - [ ]  Update all install scripts and the install text in the handbook
 - [ ]  Header check (run `make headercheck`)
-- [ ]  Check and update the runtime parameters (see `bin/doc/getparameterlist.py`)
+- [ ]  Re-generate parameter list (`bin/doc/generate_parameterlist.py`) and check log file (maybe manual updates to `bin/doc/docextra/parameters.json` are needed)
 - [ ]  Make sure the CMakeLists.txt in `dumux` subfolder are up-to-date (generated with `bin/utils/create_cmakelists.py`, dumux `make install` should result in a useable installed dumux version)
 - [ ]  Create release branches
 - [ ]  Configure CI to test release branch
