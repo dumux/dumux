@@ -26,6 +26,7 @@
 
 #include <ctime>
 #include <iostream>
+#include <fstream>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
@@ -80,7 +81,7 @@ public:
 //    Scalar sigmaP = 0;
 //    Scalar conserveA = 0;
 //    Scalar conserveB = 0;
-//    for (auto dof : *xPtr)
+//    for (auto dof : xPtr)
 //    {
 //        Scalar sf =  dof[Indices::phi1Idx] * (1-dof[Indices::phi1Idx]);
 //        Scalar sd =  dof[Indices::phi1Idx] * dof[Indices::phi2Idx];
@@ -258,9 +259,9 @@ int main(int argc, char** argv) try
     // const auto p1outlet = GlobalPosition{xMax, yMax};
     // flux.addSurface("outlet", p0outlet, p1outlet);
 
-    //std::ofstream fout;
-    //fout.open(getParam<std::string>("Problem.Name", "scalars"));
-    //massProblem->writeScalars(std::get<1>(xOld)&, fout);
+    std::ofstream fout;
+    fout.open(getParam<std::string>("Problem.Name", "scalars"));
+    massProblem->writeScalars(xOld[massIdx], fout);
 
     if (isStationary)
     {
@@ -311,7 +312,7 @@ int main(int argc, char** argv) try
             vtkWriter.write(timeLoop->time());
 
             // write volume, surface and relative mass
-            //massProblem.writeScalars(std::get<1>(xOld)&, fout);
+            massProblem->writeScalars(xOld[massIdx], fout);
 
             // // calculate and print mass fluxes over the planes
             // flux.calculateMassOrMoleFluxes();

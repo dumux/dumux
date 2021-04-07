@@ -40,6 +40,9 @@
 #include <dumux/discretization/fcstaggered.hh>
 #include <dumux/discretization/cctpfa.hh>
 
+#include <fstream>
+#include <iostream>
+
 namespace Dumux {
 template <class TypeTag>
 class ChannelTestProblem;
@@ -501,6 +504,47 @@ public:
     bool hasAnalyticalSolution() const
     { return outletCondition_ == OutletCondition::neumannXneumannY; }
 
+    void writeScalars(SolutionVector& x, std::ofstream& fout)
+    {
+        static const auto upperRight = getParam<std::tuple<Scalar, Scalar>>("Grid.UpperRight");
+        static const auto cells = getParam<std::tuple<Scalar, Scalar>>("Grid.Cells");
+        static const Scalar hx = std::get<0>(upperRight)/std::get<0>(cells);
+        static const Scalar hy = std::get<1>(upperRight)/std::get<1>(cells);
+        static const auto xi = getParam<Scalar>("Phasefield.xi");
+        static const auto rhoD = getParam<Scalar>("Phasefield.MineralDMolarDensity");
+        static const auto rhoP = getParam<Scalar>("Phasefield.MineralPMolarDensity");
+        Scalar volumeF = 0;
+        Scalar volumeD = 0;
+        Scalar volumeP = 0;
+        Scalar sigmaF = 0;
+        Scalar sigmaD = 0;
+        Scalar sigmaP = 0;
+        Scalar conserveB = 0;
+        Scalar conserveC = 0;
+        for (auto dof : x)
+        {
+            Scalar sf =  dof[Indices::phi1Idx] * (1-dof[Indices::phi1Idx]);
+            Scalar sd =  dof[Indices::phi1Idx] * dof[Indices::phi2Idx];
+            Scalar sp =  dof[Indices::phi1Idx] * dof[Indices::phi3Idx];
+            volumeF += dof[Indices::phi1Idx] * hx*hy;
+            volumeD += dof[Indices::phi2Idx] * hx*hy;
+            volumeP += dof[Indices::phi3Idx] * hx*hy;
+            sigmaF  += 4.0*hx*hy/xi*sf;
+            sigmaD += 4.0*hx*hy/xi*sd;
+            sigmaP += 4.0*hx*hy/xi*sp;
+            // Conservation of chemical species B, C (TODO: add fluxes at domain boundary)
+            accumFluxB_ += 0;
+            accumFluxC_ += 0;
+            conserveB += hx*hy * ( dof[indices::phi1Idx] * dof[Indices::u2Idx] +
+                    dof[Indices::phi2Idx] * rhoD + dof[indices::phi3Idx] * rhoP ) + accumFluxB_;
+            conserveC += hx*hy * ( dof[indices::phi1Idx] * dof[Indices::u3Idx] +
+                    dof[indices::phi3Idx] * rhoP ) + accumFluxC_;
+        }
+        fout << timeLoop_->time() << '\t' << volumeF << '\t' << volumeD << '\t' << volumeP << '\t' << sigmaF << '\t' <<
+            sigmaD << '\t' << sigmaP << '\t' << conserveB << '\t' << conserveC << std::endl;
+    }
+
+
 private:
 
     bool isInlet_(const GlobalPosition& globalPos) const
@@ -519,6 +563,8 @@ private:
     OutletCondition outletCondition_;
     bool useVelocityProfile_;
     TimeLoopPtr timeLoop_;
+    Scalar accumFluxB_;
+    Scalar accumFluxC_;
 };
 } // end namespace Dumux
 

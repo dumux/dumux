@@ -8,11 +8,12 @@ UpperRight = 1 1
 Cells = 200 200
 
 [Problem]
-Name = compare_flow_2s5_10000K_reverse # name passed to the output routines
+Name = compare_flow_2s5_10000K # name passed to the output routines
 OutputInterval = 0.1
 InletVelocity = 5.0 #1.2e-3
 EnableGravity = false
 EnableInertiaTerms = false
+IsStationary = false
 EnableTransitive = false
 OutletCondition = Outflow
 PrintMatrix = false

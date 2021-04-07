@@ -28,6 +28,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>
 #include <dumux/freeflow/navierstokes/energy/localresidual.hh>
+#include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 //#include <dumux/freeflow/navierstokes/phasefield/localresidual.hh>
 
 namespace Dumux {
@@ -271,7 +272,7 @@ public:
         //    xi*xi*sigma, xi*xi*sigma,// p11, p12
             (insideVolVars.priVar(phi1Idx)+delta) * D_u,//u_A
             (insideVolVars.priVar(phi1Idx)+delta) * D_u,
-            (insideVolVars.priVar(phi1Idx)+delta) * D_u,
+            (insideVolVars.priVar(phi1Idx)+delta) * D_u
         //    (insideVolVars.priVar(Indices::p1Idx)+delta) * D_u,//u_3A
         //    (insideVolVars.priVar(Indices::p1Idx)+delta) * D_u,
         //    (insideVolVars.priVar(Indices::p1Idx)+delta) * D_u
@@ -285,13 +286,13 @@ public:
 
             Scalar tij;
 
-        //    const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, diffCoeff[k],
-        //                                                  insideVolVars.extrusionFactor());
-            auto distanceVector = scvf.ipGlobal();
-            distanceVector -= insideScv.center();
-            distanceVector /= distanceVector.two_norm2();
-            const Scalar ti = diffCoeff[i] * insideVolVars.extrusionFactor() * (distanceVector *
-                    scvf.unitOuterNormal());
+            const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, diffCoeff[i],
+                                                          insideVolVars.extrusionFactor());
+            //auto distanceVector = scvf.ipGlobal();
+            //distanceVector -= insideScv.center();
+            //distanceVector /= distanceVector.two_norm2();
+            //const Scalar ti = diffCoeff[i] * insideVolVars.extrusionFactor() * (distanceVector *
+            //        scvf.unitOuterNormal());
 
             if (scvf.boundary())
                 tij = scvf.area()*ti;
@@ -299,13 +300,13 @@ public:
             {
                 const auto outsideScvIdx = scvf.outsideScvIdx();
                 const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
-        //        const Scalar tj = -computeTpfaTransmissibility(scvf, outsideScv, diffCoeff[k],
-        //                                                       outsideVolVars.extrusionFactor());
-                distanceVector = scvf.ipGlobal();
-                distanceVector -= outsideScv.center();
-                distanceVector /= distanceVector.two_norm2();
-                const Scalar tj = -diffCoeff[i] * outsideVolVars.extrusionFactor() * (distanceVector *
-                        scvf.unitOuterNormal());
+                const Scalar tj = -computeTpfaTransmissibility(scvf, outsideScv, diffCoeff[i],
+                                                               outsideVolVars.extrusionFactor());
+                //distanceVector = scvf.ipGlobal();
+                //distanceVector -= outsideScv.center();
+                //distanceVector /= distanceVector.two_norm2();
+                //const Scalar tj = -diffCoeff[i] * outsideVolVars.extrusionFactor() * (distanceVector *
+                //        scvf.unitOuterNormal());
 
                 if(ti*tj < 0)
                     tij = 0;
