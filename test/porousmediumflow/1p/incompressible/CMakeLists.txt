@@ -145,3 +145,11 @@ dumux_add_test(NAME test_1p_incompressible_mpfa_extrude_distorted
                                     -Problem.CheckIsConstantVelocity true
                                     -Problem.EnableGravity false
                                     -Grid.File ./grids/randomlydistorted.dgf)
+
+# check grids without communicate method (using box and numeric differentiation)
+dumux_add_test(NAME test_1p_incompressible_box_numdiff_no_communicate
+               LABELS porousmediumflow 1p
+               SOURCES main.cc
+               COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleBox NUMDIFFMETHOD=DiffMethod::numeric GRIDTYPE=Dumux::NoCommunicateGrid<2>
+               COMMAND ./test_1p_incompressible_box_numdiff_no_communicate
+               CMD_ARGS -Grid.Overlap 0)
