@@ -50,6 +50,67 @@
 #define GRIDTYPE Dune::YaspGrid<2>
 #endif
 
+////////////////////////////////////////////////////
+// A fake grid that cannot communicate.           //
+// Can be used to make sure that compilation and  //
+// sequential execution also work for such grids. //
+////////////////////////////////////////////////////
+namespace Dumux {
+
+template<int dim>
+class NoCommunicateGrid;
+
+template<int dim>
+class NoCommunicateGridLeafGridView
+: public Dune::YaspGrid<dim>::LeafGridView
+{
+    using ParentType = typename Dune::YaspGrid<dim>::LeafGridView;
+public:
+    using ParentType::ParentType;
+
+    struct Traits : public ParentType::Traits
+    { using Grid = NoCommunicateGrid<dim>; };
+};
+
+template<int dim>
+class NoCommunicateGrid : public Dune::YaspGrid<dim>
+{
+    using ParentType = Dune::YaspGrid<dim>;
+public:
+    using ParentType::ParentType;
+    struct Traits : public ParentType::Traits
+    { using LeafGridView = NoCommunicateGridLeafGridView<dim>; };
+
+    using LeafGridView = NoCommunicateGridLeafGridView<dim>;
+
+    typename Traits::LeafGridView leafGridView() const
+    { return NoCommunicateGridLeafGridView<dim>(*this); }
+private:
+    using ParentType::communicate;
+    using ParentType::communicateCodim;
+};
+
+template<int dim>
+class GridManager<NoCommunicateGrid<dim>> : public GridManager<Dune::YaspGrid<dim>>
+{
+    using ParentType = GridManager<Dune::YaspGrid<dim>>;
+public:
+    using ParentType::ParentType;
+    using Grid = NoCommunicateGrid<dim>;
+    Grid& grid() { return static_cast<NoCommunicateGrid<dim>&>(ParentType::grid()); }
+};
+
+} // end namespace Dumux
+
+namespace Dune::Capabilities {
+
+template<int dim, int codim>
+struct canCommunicate<Dumux::NoCommunicateGrid<dim>, codim>
+{ static constexpr bool v = false; };
+
+} // end namespace Dune::Capabilities
+/////////////////////////////////////////
+
 namespace Dumux::Properties {
 // Create new type tags
 namespace TTag {
