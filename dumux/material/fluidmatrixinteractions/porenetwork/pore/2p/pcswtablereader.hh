@@ -55,23 +55,23 @@ public:
         return minSw() <= sw && sw <= maxSw();
     }
 
-    Scalar at(Scalar sw) const
+    Scalar at(Scalar pc) const //get sw corresponding to pc
     {
-        if (!applies(sw))
+        if (!appliesPc(pc))
         {
-            if (sw<minSw())
-                sw=minSw();
-            if(sw>maxSw())
-                sw=maxSw();
+            if (pc<minPc())
+                pc=minPc();
+            if(pc>maxPc())
+                pc=maxPc();
         }
 
-        int i = findSwIdx_(sw);
-
-        Scalar swAtI = swAt_(i);
+        int i = findPcIdx_(pc);
+        return val(i);
+        /*Scalar swAtI = swAt_(i);
         Scalar swAtI1 = swAt_(i + 1);
 
         Scalar alpha = (sw - swAtI)/(swAtI1 - swAtI);
-        return alpha;
+        return alpha;*/
     }
 
     Scalar val(int i) const
@@ -91,7 +91,7 @@ protected:
     int findSwIdx_(Scalar sw) const
     {
         if (Dune::FloatCmp::eq<Scalar>(sw, maxSw()))
-            return numSteps - 2;
+            return numSteps ;
         const int result = static_cast<int>((sw - minSw())/(maxSw() - minSw())*(numSteps - 1));
 
         using std::min;
@@ -115,23 +115,23 @@ public:
         return minPc() <= pc && pc <= maxPc();
     }
 
-    Scalar atPc(Scalar pc) const
+    Scalar atSw(Scalar sw) const //get pc corresponding to sw
     {
-        if (!appliesPc(pc))
+        if (!applies(sw))
         {
-            if (pc<minPc())
-                pc=minPc();
-            if(pc>maxPc())
-                pc=maxPc();
+            if (sw<minSw())
+                sw=minSw();
+            if(sw>maxSw())
+                sw=maxSw();
         }
 
-        int i = findPcIdx_(pc);
-
-        Scalar pcAtI = pcAt_(i);
+        int i = findSwIdx_(sw);
+        return val(i);
+        /*Scalar pcAtI = pcAt_(i);
         Scalar pcAtI1 = pcAt_(i + 1);
 
         Scalar alpha = (pc - pcAtI)/(pcAtI1 - pcAtI);
-        return alpha;
+        return alpha;*/
     }
 
     Scalar valPc(int i) const

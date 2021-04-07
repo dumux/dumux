@@ -29,6 +29,8 @@
 #include <dumux/material/fluidmatrixinteractions/2p/noregularization.hh>
 #include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
 
+#include "pcswtablereader.hh"
+
 namespace Dumux::PoreNetwork::FluidMatrix {
 
 /*!
@@ -44,7 +46,7 @@ public:
 
     using Scalar = ScalarType;
 
-    using BasicParams = typename BaseLaw::template Params<Scalar>;
+    using BasicParams = typename BaseLaw::template Params<Scalar>; //, class Tables = PcSwDropTables>;
     using RegularizationParams = typename Regularization::template Params<Scalar>;
 
     static constexpr bool supportsMultipleGeometries()

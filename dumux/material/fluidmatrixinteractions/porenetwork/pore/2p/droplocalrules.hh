@@ -25,13 +25,18 @@
 #define DUMUX_PNM_2P_DROP_LOCAL_RULES_HH
 
 #include <dumux/common/parameters.hh>
+#include <dumux/common/optionalscalar.hh>
 #include <dumux/porenetwork/common/poreproperties.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/noregularization.hh>
-#include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
+//#include <dumux/material/fluidmatrixinteractions/2p/noregularization.hh>
+//#include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
+#include <dumux/common/typetraits/typetraits.hh>
 #include "singleshapelocalrules.hh"
+#include "pcswdroptables.hh"
 #include "pcswtablereader.hh"
 
+
 namespace Dumux::PoreNetwork::FluidMatrix {
+
 /*!
  * \brief The parameter type
  * \tparam Scalar The scalar type
@@ -94,6 +99,7 @@ private:
  * \ingroup Fluidmatrixinteractions
  * \brief Implementation of tabulated capillary pressure-saturation curve for drop pores
  */
+template<Pore::Shape shape>
 struct DropLocalRules
 {
     template<class Scalar>
@@ -106,7 +112,7 @@ struct DropLocalRules
                            const ElemSol& elemSol)
     {
         using Scalar = std::decay_t<decltype(spatialParams.poreInscribedRadius(element, scv, elemSol))>;
-        return DropParams<Scalar>(spatialParams, element, scv, elemSol);
+        return Params<Scalar>(spatialParams, element, scv, elemSol);
     }
 
 /*!
@@ -115,12 +121,13 @@ struct DropLocalRules
      * \param sw Saturation of the wetting phase \f$\mathrm{S_{w,i}}\f$ at pore \f$i\f$
      * \param params The parameters container
      */
-    template<class Scalar,class PcSwDropTables>
+    template<class Scalar>
+    //template<class PcSwDropTables>
     static Scalar pc(Scalar sw, const Params<Scalar>& params)
     {
-        return PcSwDropTables::tabulatedPc.at(sw);
+        PcSwTables::TabulatedPc tabulatedPc;
+        return tabulatedPc.TabulatedPcSwProperties::atSw(sw);
     }
-
     /*!
      * \brief The wetting-phase saturation of a pore body
      *
@@ -130,7 +137,8 @@ struct DropLocalRules
     template<class Scalar,class PcSwDropTables>
     static Scalar sw(Scalar pc, const Params<Scalar>& params)
     {
-        return PcSwDropTables::tabulatedSw.at(pc);
+        PcSwTables::TabulatedSw tabulatedSw;
+        return tabulatedSw.TabulatedPcSwProperties::at(pc);
     }
 
     /*!
@@ -143,11 +151,12 @@ struct DropLocalRules
     template<class Scalar,class PcSwDropTables>
     static Scalar dpc_dsw(Scalar sw, const Params<Scalar>& params)
     {
+        PcSwTables::TabulatedPc tabulatedPc;
         Scalar eps = 1e-2;
         if (sw>=0.0+eps)
-            return (PcSwDropTables::tabulatedPc.at(sw) - PcSwDropTables::tabulatedPc.at(sw-eps))/eps;
+            return (tabulatedPc.TabulatedPcSwProperties::atSw(sw) - tabulatedPc.TabulatedPcSwProperties::atSw(sw-eps))/eps;
         else
-            return (PcSwDropTables::tabulatedPc.at(sw+eps) - PcSwDropTables::tabulatedPc.at(sw))/eps;
+            return (tabulatedPc.TabulatedPcSwProperties::atSw(sw+eps) - tabulatedPc.TabulatedPcSwProperties::atSw(sw))/eps;
     }
 
     /*!
@@ -160,11 +169,12 @@ struct DropLocalRules
     template<class Scalar,class PcSwDropTables>
     static Scalar dsw_dpc(Scalar pc, const Params<Scalar>& params)
     {
+        PcSwTables::TabulatedSw tabulatedSw;
         Scalar eps = 1e-2;
         if (pc>=0.0+eps)
-            return (PcSwDropTables::tabulatedSw.at(pc) - PcSwDropTables::tabulatedSw.at(pc-eps))/eps;
+            return (tabulatedSw.TabulatedPcSwProperties::at(pc) - tabulatedSw.TabulatedPcSwProperties::at(pc-eps))/eps;
         else
-            return (PcSwDropTables::tabulatedSw.at(pc+eps) - PcSwDropTables::tabulatedSw.at(pc))/eps;
+            return (tabulatedSw.TabulatedPcSwProperties::at(pc+eps) - tabulatedSw.TabulatedPcSwProperties::at(pc))/eps;
     }
 };
 
@@ -178,31 +188,35 @@ public:
     template<class MaterialLaw>
     void init(const MaterialLaw* m, const DropParams<Scalar>& p, const std::string& paramGroup = "")
     {
-
+        baseLawParamsPtr_ = &m->basicParams();
     }
     /*!
      * \brief The regularized saturation-capillary pressure curve
      */
     OptionalScalar<Scalar> pc(const Scalar sw) const
     {
+        return {};
     }
     /*!
      * \brief The regularized saturation-capillary pressure curve
      */
     OptionalScalar<Scalar> sw(const Scalar pc) const
     {
+        return {};
     }
     /*!
      * \brief The regularized partial derivative of the capillary pressure w.r.t. the saturation
      */
     OptionalScalar<Scalar> dpc_dsw(const Scalar sw) const
     {
+        return {};
     }
     /*!
      * \brief The regularized partial derivative of the saturation to the capillary pressure
      */
     OptionalScalar<Scalar> dsw_dpc(const Scalar pc) const
     {
+        return {};
     }
 
     template<class SpatialParams, class Element, class SubControlVolume, class ElemSol>
@@ -211,16 +225,18 @@ public:
                       const SubControlVolume& scv,
                       const ElemSol& elemSol)
     {}
+private:
+    const BaseLawParams* baseLawParamsPtr_;
 };
-template<typename Scalar = double>
-using DropLocalRulesDefault = SingleShapeTwoPLocalRules<Scalar, DropLocalRules, DropLocalRulesRegularization<Scalar, DropLocalRules>>;
+template<Pore::Shape shape, typename Scalar = double>
+using DropLocalRulesDefault = SingleShapeTwoPLocalRules<Scalar, DropLocalRules<shape>, DropLocalRulesRegularization<Scalar, DropLocalRules<shape>>>;
 
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief A default configuration without regularization for using the VanGenuchten material law
  */
-template<typename Scalar = double>
-using DropLocalRulesNoReg = SingleShapeTwoPLocalRules<Scalar, DropLocalRules, Dumux::FluidMatrix::NoRegularization>;
+template<Pore::Shape shape, typename Scalar = double>
+using DropLocalRulesNoReg = SingleShapeTwoPLocalRules<Scalar, DropLocalRules<shape>, Dumux::FluidMatrix::NoRegularization>;
 
 
 } // end namespace Dumux::PoreNetwork::FluidMatrix
