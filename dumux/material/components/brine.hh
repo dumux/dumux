@@ -113,22 +113,22 @@ public:
 
     /*!
      * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of pure brine
-     *        at a given temperature. Here, it is assumed to be equal to that of pure water.
+     *        at a given temperature.
+     * \note The vapor pressure of brine decreases with the mole fraction of water in the liquid phase.
+     * This is described by Raoult's law, see Thomas Fetzer's Dissertation Eq. 2.11.
+     * It is also the simplified version of the Kelvin equation, neglecting the influence of the capillary pressure here.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      */
     static Scalar vaporPressure(Scalar temperature)
     {
-        Scalar ps = H2O::vaporPressure(temperature); //Saturation vapor pressure for pure water
-        Scalar pi = 0;
-        using std::log;
-        if (ThisType::salinity() < 0.26) // here we have hard coded the solubility limit for NaCl
-            pi = (R * temperature * log(1- ThisType::salinity())); // simplified version of Eq 2.29 in Vishal Jambhekar's dissertation (http://dx.doi.org/10.18419/opus-8979)
-        else
-            pi = (R * temperature * log(0.74));
-        using std::exp;
-        ps *= exp((pi)/(R*temperature));// Kelvin's law for reduction in saturation vapor pressure due to osmotic potential
-        return ps;
+        //calculate mole fraction
+        const Scalar M1 = H2O::molarMass();
+        const Scalar M2 = Components::NaCl<Scalar>::molarMass(); // molar mass of NaCl [kg/mol]
+        const Scalar xNaClLiquid = - M1 * ThisType::salinity() / ((M2-M1) * ThisType::salinity() - M2)
+
+        // Raoult's law, see Thomas Fetzer's Dissertation Eq. 2.11.
+        return H2O::vaporPressure(temperature) * (1 - xNaClLiquid);
     }
 
     /*!

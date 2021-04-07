@@ -302,6 +302,9 @@ public:
 
     /*!
      * \brief Vapor pressure of a component \f$\mathrm{[Pa]}\f$.
+     * \note The vapor pressure of brine decreases with the mole fraction of water in the liquid phase.
+     * This is described by Raoult's law, see Thomas Fetzer's Dissertation Eq. 2.11.
+     * It is also the simplified version of the Kelvin equation, neglecting the influence of the capillary pressure here.
      *
      * \param fluidState The fluid state
      * \param compIdx The index of the component to consider
@@ -311,9 +314,9 @@ public:
     {
         if (compIdx == H2OIdx)
         {
-            // simplified version of Eq 2.29 in Vishal Jambhekar's Promo
             const Scalar temperature = fluidState.temperature(H2OIdx);
-            return H2O::vaporPressure(temperature)/fluidState.massFraction(phase0Idx, H2OIdx);
+            // Raoult's law, see Thomas Fetzer's Dissertation Eq. 2.11.
+            return H2O::vaporPressure(temperature)*fluidState.moleFraction(phase0Idx, H2OIdx);
         }
         else if (compIdx == NaClIdx)
             DUNE_THROW(Dune::NotImplemented, "NaCl::vaporPressure(t)");
