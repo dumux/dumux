@@ -54,7 +54,7 @@ public:
     TwoPBaseSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
-        if (!gridGeometry->useSameGeometryForAllPores() && LocalRules::supportsMultipleGeometries())
+        if (!gridGeometry->useSameGeometryForAllPores() && !LocalRules::supportsMultipleGeometries())
             DUNE_THROW(Dune::InvalidStateException, "Your MaterialLaw does not support multiple pore body shapes.");
 
         if (this->gridGeometry().useSameShapeForAllThroats())
