@@ -239,7 +239,7 @@ public:
             const auto gridGeometry = std::get<domainId>(gridGeometryTuple_);
             const auto& gridView = gridGeometry->gridView();
 
-            if (gridView.overlapSize(0) == 0)
+            if (gridView.comm().size() && gridView.overlapSize(0) == 0)
             {
                 if constexpr (GridGeometry<domainId>::discMethod == DiscretizationMethod::box)
                 {
