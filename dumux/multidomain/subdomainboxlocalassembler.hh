@@ -453,12 +453,12 @@ public:
                 };
                 // get the vecor of the acutal element residuals
 
-                if (fvGeometry.gridGeometry().elementMapper().index(this->element()) == 175)
+                /*if (fvGeometry.gridGeometry().elementMapper().index(this->element()) == 175)
                     ::printStuff = true;
 
                 const auto origResiduals = this->evalLocalResidual();
 
-                ::printStuff = false;
+                ::printStuff = false;*/
 
                 // derive the residuals numerically
                 static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
