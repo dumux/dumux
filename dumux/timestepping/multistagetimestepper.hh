@@ -122,7 +122,7 @@ public:
 
     /*!
      * \brief Advance one time step of the given time loop
-     * \params vars The variables object at the current time level.
+     * \param vars The variables object at the current time level.
      * \param t The current time level
      * \param dt The time step size to be used
      * \note We expect the time level in vars to correspond to the given time `t`

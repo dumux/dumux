@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Flux
- * \copydoc Dumux::ShallowWaterViscousMomentumFlux
+ * \copydoc Dumux::ShallowWaterViscousFlux
  */
 #ifndef DUMUX_FLUX_SHALLOW_WATER_VISCOUS_FLUX_HH
 #define DUMUX_FLUX_SHALLOW_WATER_VISCOUS_FLUX_HH

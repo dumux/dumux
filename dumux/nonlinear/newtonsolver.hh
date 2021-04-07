@@ -334,6 +334,7 @@ public:
      *        Does time step control when the Newton fails to converge
      * \param vars The variables object representing the current state of the
      *             numerical solution (primary and possibly secondary variables).
+     * \param timeLoop The time loop.
      */
     void solve(Variables& vars, TimeLoop& timeLoop) override
     {

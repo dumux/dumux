@@ -954,6 +954,7 @@ namespace FluidSystems {
  * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of steam in a gas mixture.
  *
  * \param temperature temperature in \f$\mathrm{[K]}\f$
+ * \param pressure pressure
  *
  * We assume here that water is in mixture with other gaseous components.
  * For pure water, use the gasViscosity function of Components::H2O.
@@ -964,7 +965,7 @@ namespace FluidSystems {
  * "Reid, R.C., Prausnitz, J.M., Poling, B.E.: The Properties of
  * Gases and Liquids (1987)"
  * Lucas corresponding states method
- * https://www.osti.gov/scitech/biblio/6504847} \cite{reid1987}
+ * https://www.osti.gov/scitech/biblio/6504847} \cite reid1987
  *
  * For temperatures above 500 K see:
  * Nagel, T. et al.: THC-Processes (2018)
