@@ -384,7 +384,6 @@ protected:
     std::string paramGroup_;
 
 private:
-
     void createOneDGrid_()
     {
         const auto lowerLeft = getParamFromGroup<GlobalPosition>(paramGroup_, "Grid.LowerLeft", GlobalPosition(0.0));

@@ -348,7 +348,7 @@ public:
         if (verbose_)
         {
             const auto cpuTime = wallClockTime();
-            using std::round;            
+            using std::round;
             const auto percent = round( time_ / endTime_ * 100 );
             std::cout << Fmt::format("[{:3.0f}%] ", percent)
                       << Fmt::format("Time step {} done in {:.2g} seconds. ", timeStepIdx_, timeStepWallClockTime_)
