@@ -5,7 +5,7 @@
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
- *   the Free Software Foundation, either version 2 of the License, or       *
+ *   the Free Software Foundation, either version 3 of the License, or       *
  *   (at your option) any later version.                                     *
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \copydoc Dumux::PNMNewtonConsistencyChecks
+ * \ingroup PNMTwoPModel
+ * \copydoc Dumux::PoreNetwork::TwoPNewtonConsistencyChecks
  */
 #ifndef DUMUX_PNM_NEWTON_CONSISTENCY_CHECKS
 #define DUMUX_PNM_NEWTON_CONSISTENCY_CHECKS
@@ -26,10 +27,12 @@
 #include <vector>
 #include <iostream>
 #include <dune/common/exceptions.hh>
+#include <dumux/common/exceptions.hh>
 #include <dumux/discretization/localview.hh>
 
-namespace Dumux {
+namespace Dumux::PoreNetwork {
 
+#ifndef DOXYGEN
 namespace Detail {
 
 // Primary template
@@ -57,13 +60,14 @@ struct SaturationIndex <T, decltype((void) T::s0Idx, 0)>
     static constexpr auto value = T::s0Idx;
 };
 } // end namespace Detail
+#endif
 
 /*!
- * \ingroup PNMTwoP
+ * \ingroup PNMTwoPModel
  * \brief Consistency checks for the PNM two-phase model
  */
 template<class GridVariables, class SolutionVector>
-class PNMNewtonConsistencyChecks
+class TwoPNewtonConsistencyChecks
 {
 public:
 

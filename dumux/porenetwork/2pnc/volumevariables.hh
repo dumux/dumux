@@ -18,27 +18,22 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup OnePNCModel
- * \brief Quantities required by the single-phase, n-component box
- *        model defined on a vertex.
+ * \ingroup TwoPModel
+ * \brief Contains the quantities which are constant within a
+ *        finite volume in the two-phase model.
  */
 
-#ifndef DUMUX_PNM_2PNC_VOLUME_VARIABLES_HH
-#define DUMUX_PNM_2PNC_VOLUME_VARIABLES_HH
+#ifndef DUMUX_PNM_2P_NC_VOLUME_VARIABLES_HH
+#define DUMUX_PNM_2P_NC_VOLUME_VARIABLES_HH
 
-#include <dumux/common/parameters.hh>
 #include <dumux/porousmediumflow/2pnc/volumevariables.hh>
 
 namespace Dumux::PoreNetwork {
 
 /*!
- * \ingroup OnePNCModel
+ * \ingroup TwoPModel
  * \brief Contains the quantities which are are constant within a
- *        finite volume in the one-phase, n-component model.
- *
- * \note The default value for the phase index given in the fluid property interfaces is not used,
- *       but is only here to enable calling these functions without handing in a phase index
- *       (as in a single-phasic context there is only one phase).
+ *        finite volume in the two-phase model.
  */
 template <class Traits>
 class TwoPNCVolumeVariables
@@ -46,12 +41,16 @@ class TwoPNCVolumeVariables
 {
     using ParentType = Dumux::TwoPNCVolumeVariables<Traits>;
     using Scalar = typename Traits::PrimaryVariables::value_type;
-    using ModelTraits = typename Traits::ModelTraits;
-    using FS = typename Traits::FluidSystem;
-    static constexpr int numFluidComps = ParentType::numFluidComponents();
-    static constexpr auto formulation = ModelTraits::priVarFormulation();
 
 public:
+    //! Export type of fluid system
+    using FluidSystem = typename Traits::FluidSystem;
+    //! Export type of fluid state
+    using FluidState = typename Traits::FluidState;
+    //! Export type of solid state
+    using SolidState = typename Traits::SolidState;
+    //! Export type of solid system
+    using SolidSystem = typename Traits::SolidSystem;
 
     /*!
      * \brief Updates all quantities for a given control volume.
@@ -60,9 +59,9 @@ public:
      * \param problem The object specifying the problem which ought to
      *                be simulated
      * \param element An element which contains part of the control volume
-     * \param scv The sub-control volume
-     */
-   template<class ElemSol, class Problem, class Element, class Scv>
+     * \param scv The sub control volume
+    */
+    template<class ElemSol, class Problem, class Element, class Scv>
     void update(const ElemSol &elemSol,
                 const Problem &problem,
                 const Element &element,
@@ -77,21 +76,12 @@ public:
         surfaceTension_ = gamma;
     }
 
-    /*!
-     * \brief Returns the pore's inscribed radius.
-     */
     Scalar poreInscribedRadius() const
     { return poreInscribedRadius_; }
 
-    /*!
-     * \brief Returns the pore volume. // TODO should this be a fraction only?
-     */
     Scalar poreVolume() const
     { return poreVolume_; }
 
-    /*!
-     * \brief Returns the surface tension.
-     */
     Scalar surfaceTension() const
     { return surfaceTension_; }
 
@@ -101,6 +91,6 @@ protected:
     Scalar surfaceTension_;
 };
 
-} // end namespace Dumux
+} // end namespace Dumux::PoreNetwork
 
 #endif

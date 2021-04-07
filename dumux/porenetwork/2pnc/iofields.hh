@@ -19,22 +19,20 @@
 /*!
  * \file
  * \ingroup PoreNetworkTwoPModel
- * \copydoc Dumux::PNMOnePNCVtkOutputFields
+ * \copydoc Dumux::PNMOnePNCIOFields
  */
-#ifndef DUMUX_PNM_TWOPNC_IO_FIELDS_HH
-#define DUMUX_PNM_TWOPNC_IO_FIELDS_HH
+#ifndef DUMUX_PNM_TWOP_NC_IO_FIELDS_HH
+#define DUMUX_PNM_TWOP_NC_IO_FIELDS_HH
 
 #include <dumux/porousmediumflow/2pnc/iofields.hh>
 #include <dumux/porenetwork/common/iofields.hh>
 
-namespace Dumux::PoreNetwork
-{
+namespace Dumux::PoreNetwork {
 
 /*!
- * \ingroup PNMTwoPNCModel
- * \brief Adds vtk output fields specific to the PNM 1pnc model
+ * \ingroup PoreNetworkOnePNCModel
+ * \brief Adds output fields specific to the PNM 2pnc model
  */
-
 class TwoPNCIOFields
 {
 
@@ -42,8 +40,9 @@ public:
     template <class OutputModule>
     static void initOutputModule(OutputModule& out)
     {
-         // use default fields from the 2pNc model
+         // use default fields from the 2p model
         Dumux::TwoPNCIOFields::initOutputModule(out);
+
         using VolumeVariables = typename OutputModule::VolumeVariables;
         using FS = typename VolumeVariables::FluidSystem;
 
@@ -74,9 +73,8 @@ public:
         };
         out.addFluxVariable(volumeFluxN, "volumeFluxN");
     }
-
 };
 
-} // end namespace Dumux
+} // end namespace Dumux::PoreNetwork
 
-#endif // DUMUX_PNM_ONEP_NC_VTK_OUTPUT_FIELDS_HH
+#endif
