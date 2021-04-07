@@ -134,7 +134,7 @@ inline static unsigned int directionIndex(Vector&& vector)
 {
     const auto eps = 1e-8;
     using std::abs;
-    return std::find_if(vector.begin(), vector.end(), [eps](const auto& x) { return x > eps; } ) - vector.begin();
+    return std::find_if(vector.begin(), vector.end(), [eps](const auto& x) { return abs(x) > eps; } ) - vector.begin();
 }
 
 /*!
