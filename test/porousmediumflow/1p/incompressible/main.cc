@@ -149,6 +149,9 @@ int main(int argc, char** argv)
     // output result to vtk
     vtkWriter.write(1.0);
 
+    // output residual norm (test assembler interface)
+    std::cout << "Residual norm: " << assembler->residualNorm(x) << std::endl;
+
     timer.stop();
 
     const bool checkIsConstantVelocity = getParam<bool>("Problem.CheckIsConstantVelocity", false);
