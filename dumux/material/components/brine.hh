@@ -125,7 +125,7 @@ public:
         //calculate mole fraction
         const Scalar M1 = H2O::molarMass();
         const Scalar M2 = Components::NaCl<Scalar>::molarMass(); // molar mass of NaCl [kg/mol]
-        const Scalar xNaClLiquid = - M1 * ThisType::salinity() / ((M2-M1) * ThisType::salinity() - M2)
+        const Scalar xNaClLiquid = - M1 * ThisType::salinity() / ((M2-M1) * ThisType::salinity() - M2);
 
         // Raoult's law, see Thomas Fetzer's Dissertation Eq. 2.11.
         return H2O::vaporPressure(temperature) * (1 - xNaClLiquid);
