@@ -68,7 +68,8 @@ struct BrineAirDefaultPolicy
  */
 template <class Scalar,
           class H2Otype = Components::TabulatedComponent<Components::H2O<Scalar>>,
-          class Policy = BrineAirDefaultPolicy<>>
+          class Policy = BrineAirDefaultPolicy<>,
+          bool useKelvinVaporPressure = false>
 class BrineAir
 : public Base<Scalar, BrineAir<Scalar, H2Otype, Policy>>
 {
@@ -286,7 +287,17 @@ public:
         // The vapor pressure of the water is affected by the
         // salinity, thus, we forward to the interface of Brine here
         if (compIdx == H2OIdx)
-            return Brine::vaporPressure(BrineAdapter<FluidState>(fluidState), Brine::H2OIdx);
+            if (!useKelvinVaporPressure)
+                return Brine::vaporPressure(BrineAdapter<FluidState>(fluidState), Brine::H2OIdx);
+            else
+            {
+                const auto t = fluidState.temperature(liquidPhaseIdx);
+                const auto pc =  (fluidState.wettingPhase() == (int) liquidPhaseIdx)
+                                 ? fluidState.pressure(gasPhaseIdx)-fluidState.pressure(liquidPhaseIdx)
+                                 : fluidState.pressure(liquidPhaseIdx)-fluidState.pressure(gasPhaseIdx);
+                return Brine::vaporPressure(BrineAdapter<FluidState>(fluidState), Brine::H2OIdx)
+                        *exp( -pc / (Brine::molarDensity(fluidState, liquidPhaseIdx) * (Dumux::Constants<Scalar>::R*t)) );
+            }
         else if (compIdx == NaClIdx)
             DUNE_THROW(Dune::NotImplemented, "NaCl::vaporPressure(t)");
         else
