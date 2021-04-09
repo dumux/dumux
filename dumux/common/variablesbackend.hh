@@ -80,13 +80,17 @@ public:
 /*!
  * \ingroup Common
  * \brief Specialization providing operations for block vectors
+ * \tparam Vector a type that is
+ *   - default-constructible
+ *   - has size() member
+ *   - has resize(0) member
+ *   - has axpy(a, x) member 
  */
-template<class BT>
-class DofBackend<Dune::BlockVector<BT>, false>
+template<class Vector>
+class DofBackend<Vector, false>
 {
-
 public:
-    using DofVector = Dune::BlockVector<BT>; //!< the type of the dofs parametrizing the variables object
+    using DofVector = Vector; //!< the type of the dofs parametrizing the variables object
     using SizeType = std::size_t;
 
     //! Return the number of entries in the dof vector
