@@ -773,6 +773,12 @@ private:
                      facetCorners = {{2, 0, 6, 4}, {1, 3, 5, 7}, {0, 1, 4, 5},
                                {3, 2, 7, 6}, {1, 0, 3, 2}, {4, 5, 6, 7}};
                      break;
+                 case 6: // prism
+                     facetCorners = {{0, 2, 1}, {3, 4, 5}, {0, 1, 3, 4}, {0, 3, 2, 5}, {1, 2, 4, 5}};
+                     break;
+                 case 5: // pyramid
+                     facetCorners = {{0, 2, 1, 3}, {0, 1, 4}, {1, 3, 4}, {2, 4, 3}, {0, 4, 2}};
+                     break;
                  case 4: // tetrahedron
                      facetCorners = {{1, 0, 2}, {0, 1, 3}, {0, 3, 2}, {1, 2, 3}};
                      break;
