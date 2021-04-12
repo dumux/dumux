@@ -6,15 +6,12 @@ Run this in the build directory
 Warning: This runs make clean on the build directory
 """
 
-import multiprocessing as mp
 import json
 import subprocess
 from argparse import ArgumentParser
 from glob import glob
 from subprocess import PIPE
 import os
-
-import sys
 
 # Whether the two lists a and b have a common member
 def has_common_member(myset, mylist):
