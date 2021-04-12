@@ -36,11 +36,7 @@ def build_command_and_dir(config, cache):
 
     return command, dir
 
-# find the changes files
-changed_files = subprocess.check_output(["git", "diff-tree", "-r", "--name-only", "HEAD",  "master"], encoding='ascii').splitlines()
-changed_files = set(changed_files)
-
-def is_affected_tests(test):
+def is_affected_test(test, changed_files):
     with open(test) as config_file:
         config = json.load(config_file)
 
@@ -59,6 +55,10 @@ def is_affected_tests(test):
 
 if __name__ == '__main__':
 
+    # find the changes files
+    changed_files = subprocess.check_output(["git", "diff-tree", "-r", "--name-only", "HEAD",  "master"], encoding='ascii').splitlines()
+    changed_files = set(changed_files)
+
     subprocess.run(["make", "clean"])
     subprocess.run(["make"])
 
@@ -66,4 +66,4 @@ if __name__ == '__main__':
     os.makedirs("TestTargets", exist_ok=True)
 
     for test in glob("TestMetaData/*json"):
-        print(is_affected_tests(test))
+        print(is_affected_test(test, changed_files))
