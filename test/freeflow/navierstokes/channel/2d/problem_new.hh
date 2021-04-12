@@ -535,10 +535,10 @@ public:
             // Conservation of chemical species B, C (TODO: add fluxes at domain boundary)
             accumFluxB_ += 0;
             accumFluxC_ += 0;
-            conserveB += hx*hy * ( dof[indices::phi1Idx] * dof[Indices::u2Idx] +
-                    dof[Indices::phi2Idx] * rhoD + dof[indices::phi3Idx] * rhoP ) + accumFluxB_;
-            conserveC += hx*hy * ( dof[indices::phi1Idx] * dof[Indices::u3Idx] +
-                    dof[indices::phi3Idx] * rhoP ) + accumFluxC_;
+            conserveB += hx*hy * ( dof[Indices::phi1Idx] * dof[Indices::u2Idx] +
+                    dof[Indices::phi2Idx] * rhoD + dof[Indices::phi3Idx] * rhoP ) + accumFluxB_;
+            conserveC += hx*hy * ( dof[Indices::phi1Idx] * dof[Indices::u3Idx] +
+                    dof[Indices::phi3Idx] * rhoP ) + accumFluxC_;
         }
         fout << timeLoop_->time() << '\t' << volumeF << '\t' << volumeD << '\t' << volumeP << '\t' << sigmaF << '\t' <<
             sigmaD << '\t' << sigmaP << '\t' << conserveB << '\t' << conserveC << std::endl;

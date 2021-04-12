@@ -66,37 +66,6 @@ public:
 
 }
 
-//void writeScalars()
-//{
-//    static const auto upperRight = getParam<std::tuple<Scalar, Scalar>>("Grid.UpperRight");
-//    static const auto cells = getParam<std::tuple<Scalar, Scalar>>("Grid.Cells");
-//    static const Scalar hx = std::get<0>(upperRight)/std::get<0>(Cells);
-//    static const Scalar hy = std::get<1>(upperRight)/std::get<1>(Cells);
-//    static const auto xi = getParam<Scalar>("Phasefield.xi");
-//    Scalar volumeF = 0;
-//    Scalar volumeD = 0;
-//    Scalar volumeP = 0;
-//    Scalar sigmaF = 0;
-//    Scalar sigmaD = 0;
-//    Scalar sigmaP = 0;
-//    Scalar conserveA = 0;
-//    Scalar conserveB = 0;
-//    for (auto dof : xPtr)
-//    {
-//        Scalar sf =  dof[Indices::phi1Idx] * (1-dof[Indices::phi1Idx]);
-//        Scalar sd =  dof[Indices::phi1Idx] * dof[Indices::phi2Idx];
-//        Scalar sp =  dof[Indices::phi1Idx] * dof[Indices::phi3Idx];
-//        volumeF += dof[Indices::phi1Idx] * hx*hy;
-//        volumeD += dof[Indices::phi2Idx] * hx*hy;
-//        volumeP += dof[Indices::phi3Idx] * hx*hy;
-//        sigmaF  += 4.0*hx*hy/xi*sf;
-//        sigmaD += 4.0*hx*hy/xi*sd;
-//        sigmaP += 4.0*hx*hy/xi*sp;
-//    }
-//    fout << '\t' << volumeF << '\t' << volumeD << '\t' << volumeP << '\t' << sigmaF << '\t' <<
-//        sigmaD << '\t' << sigmaP << '\t' << conserveA << '\t' << conserveB << '\n';
-//}
-
 int main(int argc, char** argv) try
 {
     using namespace Dumux;
@@ -176,8 +145,10 @@ int main(int argc, char** argv) try
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(restartTime, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
-    if (getParam<Scalar>("Problem.InletVelocity") > 1e-6)
-        timeLoop->setCheckPoint({200.0, 210.0});
+    //if (getParam<Scalar>("Problem.InletVelocity") > 1e-6)
+    //    timeLoop->setCheckPoint({200.0, 210.0});
+    if (hasParam("Problem.OutputInterval"))
+        timeLoop->setPeriodicCheckPoint(getParam<Scalar>("Problem.OutputInterval"));
 
     massProblem->setTimeLoop(timeLoop);
     momentumProblem->setTimeLoop(timeLoop);
@@ -259,9 +230,9 @@ int main(int argc, char** argv) try
     // const auto p1outlet = GlobalPosition{xMax, yMax};
     // flux.addSurface("outlet", p0outlet, p1outlet);
 
-    std::ofstream fout;
-    fout.open(getParam<std::string>("Problem.Name", "scalars"));
-    massProblem->writeScalars(xOld[massIdx], fout);
+    std::ofstream fout_scalar;
+    fout_scalar.open(getParam<std::string>("Problem.Name", "scalars") + ".txt");
+    massProblem->writeScalars(xOld[massIdx], fout_scalar);
 
     if (isStationary)
     {
@@ -282,13 +253,12 @@ int main(int argc, char** argv) try
         //auto res = assembler->residual();
         //auto res_mom = res[momentumIdx];
         //auto res_mas = res[massIdx];
-        //std::ofstream fout;
+        //std::ofstream fout_res;
         //fout.open("res_mom.txt");
         //Dune::printvector(fout, res_mom, "", "");
         //fout.close();
-        //fout.open("res_mas.txt");
-        //Dune::printvector(fout, res_mas, "", "");
-        //fout.close();
+        //fout_res.open("res_mas.txt");
+        //Dune::printvector(fout_res, res_mas, "", "");
         //std::cout << "done\n";
         timeLoop->start(); do
         {
@@ -299,6 +269,11 @@ int main(int argc, char** argv) try
             //auto A_mas = A[massIdx][massIdx];
             //Dune::writeMatrixToMatlab(A_mom, "a_mom_matrix.mat");
             //Dune::writeMatrixToMatlab(A_mom, "a_mas_matrix.mat");
+            //auto res = assembler->residual();
+            //auto res_mas = res[massIdx];
+            //Dune::printvector(fout_res, res_mas, "", "");
+            //auto res_u = res_mas[Indices];
+
 
             // make the new solution the old solution
             xOld = x;
@@ -312,7 +287,7 @@ int main(int argc, char** argv) try
             vtkWriter.write(timeLoop->time());
 
             // write volume, surface and relative mass
-            massProblem->writeScalars(xOld[massIdx], fout);
+            massProblem->writeScalars(xOld[massIdx], fout_scalar);
 
             // // calculate and print mass fluxes over the planes
             // flux.calculateMassOrMoleFluxes();
@@ -341,6 +316,7 @@ int main(int argc, char** argv) try
         } while (!timeLoop->finished());
 
         timeLoop->finalize(leafGridView.comm());
+        //fout_res.close();
     }
 
     ////////////////////////////////////////////////////////////

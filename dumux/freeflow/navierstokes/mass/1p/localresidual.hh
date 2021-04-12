@@ -29,7 +29,6 @@
 #include <dumux/common/math.hh>
 #include <dumux/freeflow/navierstokes/energy/localresidual.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
-//#include <dumux/freeflow/navierstokes/phasefield/localresidual.hh>
 
 namespace Dumux {
 
