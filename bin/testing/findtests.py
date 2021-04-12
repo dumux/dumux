@@ -14,7 +14,7 @@ from subprocess import PIPE
 import os
 
 
-# Whether the two lists a and b have a common member
+# Check if the set a contains a member of list b
 def has_common_member(myset, mylist):
     return not myset.isdisjoint(mylist)
 
@@ -82,6 +82,9 @@ if __name__ == '__main__':
                         help='The source tree (default: `HEAD`)')
     parser.add_argument('-t', '--target', required=False, default='master',
                         help='The tree to compare against (default: `master`)')
+    parser.add_argument('-f', '--outfile', required=False,
+                        default='affectedtests.json',
+                        help='The file in which to write the affected tests')
     args = vars(parser.parse_args())
 
     # find the changes files
@@ -110,5 +113,5 @@ if __name__ == '__main__':
             count += 1
     print("Detected {} affected tests".format(count))
 
-    with open('affectedtests.json', 'w') as jsonFile:
+    with open(args['outfile'], 'w') as jsonFile:
         json.dump(affectedTests, jsonFile)
