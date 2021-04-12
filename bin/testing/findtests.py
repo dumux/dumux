@@ -9,6 +9,7 @@ Warning: This runs make clean on the build directory
 import multiprocessing as mp
 import json
 import subprocess
+from argparse import ArgumentParser
 from glob import glob
 from subprocess import PIPE
 import os
@@ -53,10 +54,23 @@ def is_affected_test(test, changed_files):
 
     return False, config["name"], config["target"]
 
+
 if __name__ == '__main__':
 
+    # parse input arguments
+    parser = ArgumentParser(description='Find tests affected by changes')
+    parser.add_argument('-s', '--source', required=False, default='HEAD',
+                        help='The source tree (default: `HEAD`)')
+    parser.add_argument('-t', '--target', required=False, default='master',
+                        help='The tree to compare against (default: `master`)')
+
+    args = vars(parser.parse_args())
+
     # find the changes files
-    changed_files = subprocess.check_output(["git", "diff-tree", "-r", "--name-only", "HEAD",  "master"], encoding='ascii').splitlines()
+    changed_files = subprocess.check_output(["git", "diff-tree",
+                                             "-r", "--name-only",
+                                             args['source'],  args['target']],
+                                            encoding='ascii').splitlines()
     changed_files = set(changed_files)
 
     subprocess.run(["make", "clean"])
