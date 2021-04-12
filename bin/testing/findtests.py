@@ -13,43 +13,65 @@ from glob import glob
 from subprocess import PIPE
 import os
 
+
 # Whether the two lists a and b have a common member
 def has_common_member(myset, mylist):
     return not myset.isdisjoint(mylist)
 
-def make_dryrun(config):
-    lines = subprocess.check_output(["make", "--dry-run", config["target"]], encoding='ascii').splitlines()
-    return [l for l in lines if "g++" in l]
 
-def build_command_and_dir(config, cache):
-    lines = make_dryrun(config)
-    if len(lines) == 0:
+# make dry run and return the compilation command
+def get_compile_command(testConfig):
+    lines = subprocess.check_output(["make", "--dry-run",
+                                     testConfig["target"]],
+                                    encoding='ascii').splitlines()
+    commands = list(filter(lambda comm: 'g++' in comm, lines))
+    assert len(commands) <= 1
+    return commands[0] if commands else None
+
+
+# get the command and folder to compile the given test
+def build_command_and_dir(testConfig, cache):
+    compCommand = get_compile_command(testConfig)
+    if compCommand is None:
         with open(cache) as c:
             data = json.load(c)
             return data["command"], data["dir"]
     else:
-        (_, dir), command = [l.split() for l in lines[0].split("&&")]
+        (_, dir), command = [comm.split() for comm in compCommand.split("&&")]
         with open(cache, "w") as c:
-            json.dump({"command":command, "dir":dir}, c)
+            json.dump({"command": command, "dir": dir}, c)
+        return command, dir
 
-    return command, dir
 
-def is_affected_test(test, changed_files):
-    with open(test) as config_file:
-        config = json.load(config_file)
+# check if a test is affected by changes in the given files
+def is_affected_test(testConfigFile, changed_files):
+    with open(testConfigFile) as configFile:
+        testConfig = json.load(configFile)
 
-    command, dir = build_command_and_dir(config, "TestTargets/"+config["target"]+".json")
+    cacheFile = "TestTargets/" + testConfig["target"] + ".json"
+    command, dir = build_command_and_dir(testConfig, cacheFile)
+
+    # detect headers included in this test
+    # -MM skips headers from system directories
+    # -H  prints the name(+path) of each used header
     # for some reason g++ writes to stderr
-    lines = subprocess.run(command + ["-MM", "-H"], stderr=PIPE, stdout=PIPE, cwd=dir, encoding='ascii').stderr.splitlines()
+    headers = subprocess.run(command + ["-MM", "-H"],
+                             stderr=PIPE, stdout=PIPE, cwd=dir,
+                             encoding='ascii').stderr.splitlines()
 
-    # filter lines
-    project_dir = os.path.abspath(os.getcwd().rstrip("build-cmake"))
-    test_files = set([os.path.relpath(l.lstrip(". "), project_dir) for l in lines if project_dir in l])
+    # filter only headers from this project and turn them into relative paths
+    projectDir = os.path.abspath(os.getcwd().rstrip("build-cmake"))
+
+    def isProjectHeader(headerPath):
+        return projectDir in headerPath
+
+    test_files = set([os.path.relpath(header.lstrip(". "), projectDir)
+                      for header in filter(isProjectHeader, headers)])
 
     if has_common_member(changed_files, test_files):
-        return True, config["name"], config["target"]
+        return True, testConfig["name"], testConfig["target"]
 
-    return False, config["name"], config["target"]
+    return False, testConfig["name"], testConfig["target"]
 
 
 if __name__ == '__main__':
@@ -60,7 +82,6 @@ if __name__ == '__main__':
                         help='The source tree (default: `HEAD`)')
     parser.add_argument('-t', '--target', required=False, default='master',
                         help='The tree to compare against (default: `master`)')
-
     args = vars(parser.parse_args())
 
     # find the changes files
@@ -70,11 +91,24 @@ if __name__ == '__main__':
                                             encoding='ascii').splitlines()
     changed_files = set(changed_files)
 
+    # clean build directory
     subprocess.run(["make", "clean"])
     subprocess.run(["make"])
 
     # create cache folder
     os.makedirs("TestTargets", exist_ok=True)
 
+    # detect affected tests
+    print("Detecting affected tests:")
+    count = 0
+    affectedTests = {}
     for test in glob("TestMetaData/*json"):
-        print(is_affected_test(test, changed_files))
+        affected, name, target = is_affected_test(test, changed_files)
+        if affected:
+            print("\t- {}".format(name))
+            affectedTests[name] = {'target': target}
+            count += 1
+    print("Detected {} affected tests".format(count))
+
+    with open('affectedtests.json', 'w') as jsonFile:
+        json.dump(affectedTests, jsonFile)
