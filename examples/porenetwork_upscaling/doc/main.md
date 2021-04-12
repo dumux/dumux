@@ -37,14 +37,14 @@ Pore-Network-Model to evaluate the upscaled Darcy permeability of a given networ
 
 #include <dumux/linear/seqsolverbackend.hh> // for ILU0BiCGSTABBackend
 #include <dumux/linear/pdesolver.hh>        // for LinearPDESolver
+#include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/assembly/fvassembler.hh>
-#include <dumux/assembly/diffmethod.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager_yasp.hh>
-
-#include <dumux/io/grid/porenetwork/gridmanager.hh> // for pore-network grid
 #include <dumux/porenetwork/common/pnmvtkoutputmodule.hh>
+
+#include <dumux/io/grid/gridmanager_yasp.hh>
+#include <dumux/io/grid/porenetwork/gridmanager.hh> // for pore-network grid
 #include <dumux/porenetwork/common/boundaryflux.hh> // for getting the total mass flux leaving the network
 
 #include "upscalinghelper.hh"
@@ -53,18 +53,18 @@ Pore-Network-Model to evaluate the upscaled Darcy permeability of a given networ
 
 </details>
 
-### Beginning of the main function
+### The driver function
+
+It depends on the template argument `TypeTag` if we run the example assuming
+a creeping flow regime or not. This is decided with the parameter
+`Problem.AssumeCreepingFlow` in the input file.
 
 ```cpp
-int main(int argc, char** argv) try
+namespace Dumux {
+
+template<class TypeTag>
+void runExample()
 {
-    using namespace Dumux;
-
-    // We parse the command line arguments.
-    Parameters::init(argc, argv);
-
-    // Convenience alias for the type tag of the problem.
-    using TypeTag = Properties::TTag::PNMUpscaling;
 ```
 
 ### Create the grid and the grid geometry
@@ -77,7 +77,6 @@ int main(int argc, char** argv) try
 
     // We compute on the leaf grid view.
     const auto& leafGridView = gridManager.grid().leafGridView();
-
     // instantiate the grid geometry
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
@@ -88,19 +87,34 @@ int main(int argc, char** argv) try
 ### Initialize the problem and grid variables
 
 ```cpp
-    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    auto spatialParams = std::make_shared<SpatialParams>(gridGeometry);
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(gridGeometry, spatialParams);
+    auto problem = std::make_shared<Problem>(gridGeometry);
 
     // instantiate and initialize the discrete and exact solution vectors
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    SolutionVector x(gridGeometry->numDofs());
+    SolutionVector x(gridGeometry->numDofs()); // zero-initializes
 
     // instantiate and initialize the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
+```
+
+### Instantiate the solver
+We use the `NewtonSolver` class, which is instantiated on the basis
+of an assembler and a linear solver. When the `solve` function of the
+`NewtonSolver` is called, it uses the assembler and linear
+solver classes to assemble and solve the non-linear system.
+
+```cpp
+    using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
+
+    using LinearSolver = UMFPackBackend;
+    auto linearSolver = std::make_shared<LinearSolver>();
+
+    using NewtonSolver = NewtonSolver<Assembler, LinearSolver>;
+    NewtonSolver nonLinearSolver(assembler, linearSolver);
 ```
 
 ### Initialize VTK output
@@ -110,42 +124,31 @@ int main(int argc, char** argv) try
     using VtkWriter = PoreNetwork::VtkOutputModule<GridVariables, GetPropType<TypeTag, Properties::FluxVariables>, SolutionVector>;
     VtkWriter vtkWriter(*gridVariables, x, problem->name());
     VtkOutputFields::initOutputModule(vtkWriter);
+```
+
+specify the field type explicitly since it may not be possible
+to deduce this from the vector size in a pore network
+
+```cpp
     vtkWriter.addField(gridGeometry->poreVolume(), "poreVolume", VtkWriter::FieldType::vertex);
     vtkWriter.addField(gridGeometry->throatShapeFactor(), "throatShapeFactor", VtkWriter::FieldType::element);
     vtkWriter.addField(gridGeometry->throatCrossSectionalArea(), "throatCrossSectionalArea", VtkWriter::FieldType::element);
 ```
 
-### Instantiate the solver
-We use the `LinearPDESolver` class, which is instantiated on the basis
-of an assembler and a linear solver. When the `solve` function of the
-`LinearPDESolver` is called, it uses the assembler and linear
-solver classes to assemble and solve the linear system around the provided
-solution and stores the result therein.
-
-```cpp
-    using Assembler = FVAssembler<TypeTag, DiffMethod::analytic>;
-    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
-
-    using LinearSolver = UMFPackBackend;
-    auto linearSolver = std::make_shared<LinearSolver>();
-    LinearPDESolver<Assembler, LinearSolver> solver(assembler,  linearSolver);
-    solver.setVerbose(false); // suppress output during solve()
-```
-
 ### Prepare the upscaling procedure.
-Specify the directions for which the permeability shall be determined (default: x, y, z for 3D).
-
-```cpp
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
-    const auto defaultDirections = GridView::dimensionworld == 3 ? std::vector<int>{0, 1, 2}
-                                                                 : std::vector<int>{0, 1};
-    const auto directions = getParam<std::vector<int>>("Problem.Directions", defaultDirections);
-```
-
 Set up a helper class to determine the total mass flux leaving the network
 
 ```cpp
     const auto boundaryFlux = PoreNetwork::BoundaryFlux(*gridVariables, assembler->localResidual(), x);
+```
+
+### The actual upscaling procedure
+#### Instantiate the upscaling helper
+
+```cpp
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using UpscalingHelper = UpscalingHelper<Scalar>;
+    UpscalingHelper upscalingHelper;
 ```
 
 Set the side lengths used for applying the pressure gradient and calculating the REV outflow area.
@@ -159,82 +162,89 @@ determine it automatically based on the network's bounding box.
         if (hasParam("Problem.SideLength"))
             return getParam<GlobalPosition>("Problem.SideLength");
         else
-            return UpscalingHelper::getSideLengths(*gridGeometry);
+            return upscalingHelper.getSideLengths(*gridGeometry);
     }();
 
     // pass the side lengths to the problem
     problem->setSideLengths(sideLengths);
 ```
 
-### The actual upscaling procedure
-Iterate over all directions specified before, apply the pressure gradient, calculated the mass flux
-and finally determine the permeability.
+Get the maximum pressure gradient and the population of sample points specified in the input file
 
 ```cpp
+    const Scalar maxPressureGradient = getParam<Scalar>("Problem.MaximumPressureGradient");
+    const int numberOfSamples = getParam<int>("Problem.NumberOfPressureGradients", 1);
+```
+
+Iterate over all directions specified before, apply several pressure gradient, calculated the mass flux
+and finally determine the the upscaled properties.
+
+```cpp
+    const auto directions = getParam<std::vector<int>>("Problem.Directions", std::vector<int>{0, 1, 2});
     for (int dimIdx : directions)
     {
-        // reset the solution
-        x = 0;
-
         // set the direction in which the pressure gradient will be applied
         problem->setDirection(dimIdx);
 
-        // solve problem
-        solver.solve(x);
-
-        // write the vtu file for the given direction
-        vtkWriter.write(dimIdx);
-
-        // get the Scalar type
-        using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-
-        // calculate the permeability
-        const Scalar totalFluidMassFlux = boundaryFlux.getFlux(std::vector<int>{problem->outletPoreLabel()})[0];
-        const Scalar K = UpscalingHelper::getDarcyPermeability(*problem, totalFluidMassFlux);
-
-        // optionally compare with reference data
-        static const auto referenceData = getParam<std::vector<Scalar>>("Problem.ReferenceData", std::vector<Scalar>{});
-        if (!referenceData.empty())
+        for (int i = 0; i < numberOfSamples; i++)
         {
-            static const Scalar eps = getParam<Scalar>("Problem.TestEpsilon");
-            if (Dune::FloatCmp::ne<Scalar>(K, referenceData[dimIdx], eps))
-            {
-                std::cerr << "Calculated permeability of " << K << " does not match with reference value of " << referenceData[dimIdx] << std::endl;
-                return 1;
-            }
+            // reset the solution
+            x = 0;
+
+            // set the pressure gradient to be applied
+            Scalar pressureGradient = maxPressureGradient*std::exp(i+1 - numberOfSamples);
+            problem->setPressureGradient(pressureGradient);
+
+            // solve problem
+            nonLinearSolver.solve(x);
+
+            // set the sample points
+            const Scalar totalFluidMassFlux = boundaryFlux.getFlux(std::vector<int>{ problem->outletPoreLabel() })[0];
+            upscalingHelper.setSamplePoints(*problem, totalFluidMassFlux);
         }
+
+        // write a vtu file for the given direction for the last sample
+        vtkWriter.write(dimIdx);
     }
+
+    // calculate and report the upscaled properties
+    constexpr bool isCreepingFlow = std::is_same_v<TypeTag, Properties::TTag::PNMUpscalingCreepingFlow>;
+    upscalingHelper.calculateUpscaledProperties(isCreepingFlow);
+    upscalingHelper.report(isCreepingFlow);
+
+    // plot the results just for non-creeping flow
+    // creeping flow would just result in a straight line (permeability is independent of the pressure gradient)
+    if (!isCreepingFlow)
+        upscalingHelper.plot();
+};
+
+} // end namespace Dumux
+```
+
+### The main function
+<details><summary> Click to show main</summary>
+
+```cpp
+int main(int argc, char** argv)
+{
+    using namespace Dumux;
+
+    // We parse the command line arguments.
+    Parameters::init(argc, argv);
+
+    // Convenience alias for the type tag of the problem.
+    using CreepingFlowTypeTag = Properties::TTag::PNMUpscalingCreepingFlow;
+    using NonCreepingFlowTypeTag = Properties::TTag::PNMUpscalingNonCreepingFlow;
+    // // [[/codeblock]]
+
+    // user decides whether creeping flow or non-creeping flow should be run
+    if (getParam<bool>("Problem.AssumeCreepingFlow", false))
+        runExample<CreepingFlowTypeTag>();
+    else
+        runExample<NonCreepingFlowTypeTag>();
 
     // program end, return with 0 exit code (success)
     return 0;
-}
-```
-
-### Exception handling
-In this part of the main file we catch and print possible exceptions that could
-occur during the simulation.
-<details><summary> Click to show error handler</summary>
-
-```cpp
-
-catch (const Dumux::ParameterException &e)
-{
-    std::cerr << std::endl << e << " ---> Abort!" << std::endl;
-    return 1;
-}
-catch (const Dune::DGFException & e)
-{
-    std::cerr << "DGF exception thrown (" << e <<
-                 "). Most likely, the DGF file name is wrong "
-                 "or the DGF file is corrupted, "
-                 "e.g. missing hash at end of file or wrong number (dimensions) of entries."
-                 << " ---> Abort!" << std::endl;
-    return 2;
-}
-catch (const Dune::Exception &e)
-{
-    std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
-    return 3;
 }
 ```
 
