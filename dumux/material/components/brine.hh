@@ -89,24 +89,30 @@ public:
 
     /*!
      * \brief Returns the critical temperature \f$\mathrm{[K]}\f$ of brine. Here, it is assumed to be equal to that of pure water.
+     * The critical temperature of brine is dependent on the salt concentration.
+     * With increasing NaCl mass fraction the critical point shifts to higher temperatures, see Bakker, 2018 (DOI: 10.1016/j.cageo.2018.03.003).
      */
     static Scalar criticalTemperature()
     { return H2O::criticalTemperature(); }
 
     /*!
      * \brief Returns the critical pressure \f$\mathrm{[Pa]}\f$ of brine. Here, it is assumed to be equal to that of pure water.
+     * The critical pressure of brine is dependent on the salt concentration.
+     * With increasing NaCl mass fraction the critical point shifts to higher pressures, see Bakker, 2018 (DOI: 10.1016/j.cageo.2018.03.003).
      */
     static Scalar criticalPressure()
     { return H2O::criticalPressure(); }
 
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ at brine's triple point. Here, it is assumed to be equal to that of pure water.
+     * The triple temperature of brine is dependent on the salt concentration, see Bakker, 2018 (DOI: 10.1016/j.cageo.2018.03.003).
      */
     static Scalar tripleTemperature()
     { return H2O::tripleTemperature(); }
 
     /*!
      * \brief Returns the pressure \f$\mathrm{[Pa]}\f$ at brine's triple point. Here, it is assumed to be equal to that of pure water.
+     * The triple pressure of brine is dependent on the salt concentration, see Bakker, 2018 (DOI: 10.1016/j.cageo.2018.03.003).
      */
     static Scalar triplePressure()
     { return H2O::triplePressure(); }
@@ -303,9 +309,11 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
-     * Equations given in:
-     *                        - Batzle & Wang (1992) \cite batzle1992 <BR>
-     *                        - cited by: Adams & Bachu in Geofluids (2002) 2, 257-271 \cite adams2002
+     * \note The density is computed as a function of the salt mass fraction, pressure and temperature.
+     * The used function is an empirical relationship fitted to experimental data.
+     * It is presented by Batzle and Wang, 1992 (DOI: 10.1190/1.1443207) \cite batzle1992,
+     * better description and comparison with other approaches in Adams and Bachu, 2002
+     * (DOI: 10.1046/j.1468-8123.2002.00041.x) \cite adams2002.
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
@@ -401,10 +409,10 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
-     * Equation given in:
-     *                         - Batzle & Wang (1992) \cite batzle1992 <BR>
-     *                         - cited by: Bachu & Adams (2002)
-     *                           "Equations of State for basin geofluids" \cite adams2002
+     * \note The viscosity is computed as a function of the salt mass fraction and temperature.
+     * The used function is an empirical relationship fitted to experimental data.
+     * It is presented by Batzle and Wang, 1992 (DOI: 10.1190/1.1443207)  \cite batzle1992,
+     * better description and comparison with other approaches in Adams and Bachu, 2002 (DOI: 10.1046/j.1468-8123.2002.00041.x) \cite adams2002.
      */
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {
@@ -418,9 +426,9 @@ public:
         using std::exp;
         const Scalar T_C = temperature - 273.15;
         const Scalar A = (0.42*power((pow(salinity, 0.8)-0.17), 2) + 0.045)*pow(T_C, 0.8);
-        const Scalar mu_brine = 0.1 + 0.333*salinity + (1.65+91.9*salinity*salinity*salinity)*exp(-A);
+        const Scalar mu_brine = 0.1 + 0.333*salinity + (1.65+91.9*salinity*salinity*salinity)*exp(-A); //[cP]
         assert(mu_brine > 0.0);
-        return mu_brine/1000.0;
+        return mu_brine/1000.0; //[Pa s]
     }
 
     /*!
