@@ -36,10 +36,11 @@ def substituteAndWrite(mapping):
         ymlFile.write(raw.substitute(**mapping))
 
 
+commandIndentation = ' '*args['indentation']
 with open(args['outfile'], 'w') as ymlFile:
 
     def makeScriptString(commands):
-        commands = [' '*args['indentation'] + '- ' + comm for comm in commands]
+        commands = [commandIndentation + '- ' + comm for comm in commands]
         return '\n'.join(commands)
 
     # if no configuration is given, build and run all tests
@@ -67,7 +68,9 @@ with open(args['outfile'], 'w') as ymlFile:
                 'touch TestMakefile',
                 'echo "include CMakeFiles/Makefile2" >> TestMakefile',
                 'echo "" >> TestMakefile',
-                'echo "build_selected_tests: {}" >> TestMakefile'
+                '|\n'
+                + commandIndentation
+                + '  "echo "build_selected_tests: {}" >> TestMakefile"'
                 .format(' '.join(targetNames)),
                 'make -j4 build_selected_tests']
             testCommand = ['cd build-cmake',
