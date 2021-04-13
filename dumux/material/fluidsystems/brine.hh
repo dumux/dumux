@@ -219,7 +219,11 @@ public:
     using Base::density;
     /*!
      * \brief Return the phase density [kg/m^3].
-     * \note The density is computed as a function of the salt mass fraction, pressure and temperature. The used function is an empirical relationship fitted to experimental data. It is presented by Batzle and Wang (1992).
+     * \note The density is computed as a function of the salt mass fraction, pressure and temperature.
+     * The used function is an empirical relationship fitted to experimental data.
+     * It is presented by Batzle and Wang, 1992 (DOI: 10.1190/1.1443207) \cite batzle1992,
+     * better description and comparison with other approaches in Adams and Bachu, 2002
+     * (DOI: 10.1046/j.1468-8123.2002.00041.x) \cite adams2002.
      *
      */
     template <class FluidState>
@@ -277,7 +281,10 @@ public:
     using Base::viscosity;
     /*!
      * \brief Return the viscosity of the phase.
-     * \note The viscosity is computed as a function of the salt mass fraction and temperature. The used function is an empirical relationship fitted to experimental data. It is presented by Batzle and Wang (1992).
+     * \note The viscosity is computed as a function of the salt mass fraction and temperature.
+     * The used function is an empirical relationship fitted to experimental data.
+     * It is presented by Batzle and Wang, 1992 (DOI: 10.1190/1.1443207)  \cite batzle1992,
+     * better description and comparison with other approaches in Adams and Bachu, 2002 (DOI: 10.1046/j.1468-8123.2002.00041.x) \cite adams2002.
      */
     template <class FluidState>
     static Scalar viscosity(const FluidState& fluidState, int phaseIdx = liquidPhaseIdx)
@@ -415,9 +422,9 @@ public:
      *        the fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
      *
      * The molar density for the simple relation is defined by the
-     * mass density \f$\rho_\alpha\f$ and the molar mass of the main component \f$M_\kappa\f$:
+     * mass density \f$\rho_\alpha\f$ and the average molar mass of the phase \f$M_\alpha\f$:
      *
-     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{M_\kappa} \;.\f]
+     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{M_\alpha} \;.\f]
      */
     template <class FluidState>
     static Scalar molarDensity(const FluidState& fluidState, int phaseIdx = liquidPhaseIdx)
@@ -446,9 +453,10 @@ public:
      * \param compIIdx Index of the component i
      * \param compJIdx Index of the component j
      *
-     * The implemented value for NaCl is for a molar concentration of 2.5984 mol/l and a temperature of 25°C, see Rard and Miller, 1979 \cite Rard1979.
+     * The implemented value for NaCl is for a molar concentration of 2.5984 mol/l and a temperature of 25°C,
+     * see Rard and Miller, 1979 (DOI: 10.1007/BF00648776) \cite Rard1979.
      * Dependent on the salt concentration the coefficient can vary between 1.47e-9 m^2/s and 1.6e-9 m^2/s, see Rard and Miller, 1979.
-     * It also depends on temperature, values for different temparatures can e.g. found here: Alanis et al., 2000 \cite Alanis2000.
+     * It also depends on temperature; values for different temparatures can e.g. found here: Alanis et al., 2000 (DOI: 10.1117/1.602422) \cite Alanis2000.
      */
     template <class FluidState>
     static Scalar binaryDiffusionCoefficient(const FluidState& fluidState,

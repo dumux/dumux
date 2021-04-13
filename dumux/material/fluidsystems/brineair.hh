@@ -291,12 +291,14 @@ public:
                 return Brine::vaporPressure(BrineAdapter<FluidState>(fluidState), Brine::H2OIdx);
             else
             {
+                //additionally taking the influence of the capillary pressure on the vapor pressure, described by Kelvin's equation, into account.
                 const auto t = fluidState.temperature(liquidPhaseIdx);
                 const auto pc =  (fluidState.wettingPhase() == (int) liquidPhaseIdx)
                                  ? fluidState.pressure(gasPhaseIdx)-fluidState.pressure(liquidPhaseIdx)
                                  : fluidState.pressure(liquidPhaseIdx)-fluidState.pressure(gasPhaseIdx);
+                //influence of the capillary pressure on the vapor pressure, the influence of the salt concentration is already taken into account in the brine vapour pressure
                 return Brine::vaporPressure(BrineAdapter<FluidState>(fluidState), Brine::H2OIdx)
-                        *exp( -pc / (Brine::molarDensity(fluidState, liquidPhaseIdx) * (Dumux::Constants<Scalar>::R*t)) );
+                        *exp( -pc / (Brine::molarDensity(fluidState, liquidPhaseIdx) * (Dumux::Constants<Scalar>::R*t)));
             }
         else if (compIdx == NaClIdx)
             DUNE_THROW(Dune::NotImplemented, "NaCl::vaporPressure(t)");
