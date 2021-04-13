@@ -1,68 +1,106 @@
 stages:
-  - trigger pipelines
-  - trigger downstream modules
+  - pipeline config
+  - test pipelines
+  # - downstream modules
 
 variables:
   IMAGE_REGISTRY_URL: $CI_REGISTRY/dumux-repositories/dumux-docker-ci
 
-# rules for pipelines:
-# - pipelines are triggered for commits to master, tags, merge requests
-# - Within merge requests, we require to start the pipeline manually
-#   by clicking play for the trigger
-.default-trigger:
-  stage: trigger pipelines
-  trigger:
-    include:
-      - local: .gitlab-ci/default.yml
-    strategy: depend
+workflow:
   rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-    - if: $CI_PIPELINE_SOURCE == "pipeline"
+      when: manual
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: manual
 
-.scheduled-trigger:
-  extends: .default-trigger
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
+###################################################################################
+# Stage 1: configure the test pipeline.                                           #
+# This creates the .yml to be used for the test pipeline trigger stage. Within    #
+# merge request, we create a .yml file that considers building and executing only #
+# those test that are affected by the changes introduced in the merge request.    #
+# In all other cases, we use the default configuration which runs all tests.      #
+###################################################################################
+generate-config:
+  image: $IMAGE_REGISTRY_URL/full:dune-2.7-gcc-ubuntu-20.04
+  stage: pipeline config
+  script:
+    - dunecontrol --opts=$DUNE_OPTS_FILE --current all
+    - |
+      if [ $CI_PIPELINE_SOURCE == "merge_request_event" ]; then
+          cd build-cmake
+          python3 ../bin/testing/findtests.py -f affectedtests.json -t origin/master
+          python3 ../.gitlab-ci/makepipelineconfig.py -c affectedtests.json -o ../generated-config.yml
+      else
+          python3 .gitlab-ci/makepipelineconfig.py -o generated-config.yml
+      fi
+  artifacts:
+    paths:
+      - generated-config.yml
+    expire_in: 3 hours
 
-###################################
-# pipelines with different setups #
+###################################################################################
+# Stage 2: trigger the test pipelines                                             #
+# In this stage, we trigger the test pipeline with different configurations, i.e. #
+# different Dune versions, compilers, etc. Within merge requests, we create three #
+# test pipelines including two different compilers and a full and minimal setup   #
+# of dependencies. In all other situations, additional test jobs are created.     #
+###################################################################################
+
+# basic trigger job to start the test pipeline
+.base-trigger:
+  stage: test pipelines
+  needs:
+    - generate-config
+  trigger:
+    include:
+      - artifact: generated-config.yml
+        job: generate-config
+    strategy: depend
+
+# trigger for jobs that should not be created in merge requests
+.non-merge-request-trigger:
+  extends: .base-trigger
+  rules:
+    - if: $CI_PIPELINE_SOURCE != "merge_request_event"
+
+#############################################
+# pipelines to be created in merge requests #
 full-dune-2.7-gcc:
-  extends: .default-trigger
+  extends: .base-trigger
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/full:dune-2.7-gcc-ubuntu-20.04
 
 minimal-dune-2.7-gcc:
-  extends: .default-trigger
+  extends: .base-trigger
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/minimal:dune-2.7-gcc-ubuntu-20.04
 
 full-dune-2.7-clang:
-  extends: .default-trigger
+  extends: .base-trigger
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/full:dune-2.7-clang-ubuntu-20.04
 
 ##################################
 # additional scheduled pipelines #
 full-dune-master-gcc:
-  extends: .scheduled-trigger
+  extends: .non-merge-request-trigger
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/full:dune-master-gcc-ubuntu-20.04
 
 full-dune-master-clang:
-  extends: .scheduled-trigger
+  extends: .non-merge-request-trigger
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/full:dune-master-clang-ubuntu-20.04
 
-###################################
-# triggers for downstream modules #
-trigger lecture:
-    stage: trigger downstream modules
-    trigger:
-      project: dumux-repositories/dumux-lecture
-      # TODO: replace by master once development in lecture is finished
-      branch: feature/test-dumux-trigger
-      strategy: depend
-    variables:
-      DUMUX_BRANCH: $CI_COMMIT_BRANCH
+# ###################################
+# # triggers for downstream modules #
+# trigger lecture:
+#     stage: trigger downstream modules
+#     trigger:
+#       project: dumux-repositories/dumux-lecture
+#       # TODO: replace by master once development in lecture is finished
+#       branch: feature/test-dumux-trigger
+#       strategy: depend
+#     variables:
+#       DUMUX_BRANCH: $CI_COMMIT_BRANCH
