@@ -1,36 +1,35 @@
 stages:
-  - pipeline config
-  - test pipelines
+  - configure
+  - trigger
   # - downstream modules
 
 variables:
   IMAGE_REGISTRY_URL: $CI_REGISTRY/dumux-repositories/dumux-docker-ci
 
+# Cases in which to create a pipeline. The `generate-config` job further
+# specifies the situations in which they must be started manually.
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      when: manual
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: manual
 
-###################################################################################
-# Stage 1: configure the test pipeline.                                           #
-# This creates the .yml to be used for the test pipeline trigger stage. Within    #
-# merge request, we create a .yml file that considers building and executing only #
-# those test that are affected by the changes introduced in the merge request.    #
-# In all other cases, we use the default configuration which runs all tests.      #
-###################################################################################
+################################################################################
+# Stage 1: configure the test pipeline.                                        #
+# This creates the .yml to be used for the test pipeline trigger stage. Within #
+# merge request, we create a .yml file that adds a test selection stage before #
+# the build stage to identify the tests affected by changes introduced in the  #
+# merge request. In all other cases, we use the default which runs all tests.  #
+################################################################################
 generate-config:
   image: $IMAGE_REGISTRY_URL/full:dune-2.7-gcc-ubuntu-20.04
-  stage: pipeline config
+  stage: configure
   script:
-    - dunecontrol --opts=$DUNE_OPTS_FILE --current all
     - |
       if [ $CI_PIPELINE_SOURCE == "merge_request_event" ]; then
-          cd build-cmake
-          python3 ../bin/testing/findtests.py -f affectedtests.json -t origin/master
-          python3 ../.gitlab-ci/makepipelineconfig.py -c affectedtests.json -o ../generated-config.yml
+          dunecontrol --opts=$DUNE_OPTS_FILE --current all
+          pushd build-cmake && python3 ../bin/testing/findtests.py -f affectedtests.json -t origin/master && popd
+          python3 .gitlab-ci/makepipelineconfig.py -c build-cmake/affectedtests.json -o generated-config.yml
       else
           python3 .gitlab-ci/makepipelineconfig.py -o generated-config.yml
       fi
@@ -38,6 +37,11 @@ generate-config:
     paths:
       - generated-config.yml
     expire_in: 3 hours
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
 
 ###################################################################################
 # Stage 2: trigger the test pipelines                                             #
@@ -49,7 +53,7 @@ generate-config:
 
 # basic trigger job to start the test pipeline
 .base-trigger:
-  stage: test pipelines
+  stage: trigger
   needs:
     - generate-config
   trigger:

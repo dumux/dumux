@@ -63,7 +63,8 @@ with open(args['outfile'], 'w') as ymlFile:
             # we let the script create a small custom makeFile here on top of
             # `Makefile2`, where we define a new target to be built in parallel
             buildCommand = [
-                'rm TestMakefile', 'touch TestMakefile',
+                'rm -f TestMakefile',
+                'touch TestMakefile',
                 'echo "include CMakeFiles/Makefile2" >> TestMakefile',
                 'echo "" >> TestMakefile',
                 'echo "build_selected_tests: {}" >> TestMakefile'
