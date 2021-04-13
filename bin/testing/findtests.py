@@ -15,12 +15,12 @@ import os
 
 
 # Check if the set a contains a member of list b
-def has_common_member(myset, mylist):
+def hasCommonMember(myset, mylist):
     return not myset.isdisjoint(mylist)
 
 
 # make dry run and return the compilation command
-def get_compile_command(testConfig):
+def getCompileCommand(testConfig):
     lines = subprocess.check_output(["make", "--dry-run",
                                      testConfig["target"]],
                                     encoding='ascii').splitlines()
@@ -30,8 +30,8 @@ def get_compile_command(testConfig):
 
 
 # get the command and folder to compile the given test
-def build_command_and_dir(testConfig, cache):
-    compCommand = get_compile_command(testConfig)
+def buildCommandAndDir(testConfig, cache):
+    compCommand = getCompileCommand(testConfig)
     if compCommand is None:
         with open(cache) as c:
             data = json.load(c)
@@ -44,12 +44,12 @@ def build_command_and_dir(testConfig, cache):
 
 
 # check if a test is affected by changes in the given files
-def is_affected_test(testConfigFile, changed_files):
+def isAffectedTest(testConfigFile, changed_files):
     with open(testConfigFile) as configFile:
         testConfig = json.load(configFile)
 
     cacheFile = "TestTargets/" + testConfig["target"] + ".json"
-    command, dir = build_command_and_dir(testConfig, cacheFile)
+    command, dir = buildCommandAndDir(testConfig, cacheFile)
 
     # detect headers included in this test
     # -MM skips headers from system directories
@@ -68,7 +68,7 @@ def is_affected_test(testConfigFile, changed_files):
     test_files = set([os.path.relpath(header.lstrip(". "), projectDir)
                       for header in filter(isProjectHeader, headers)])
 
-    if has_common_member(changed_files, test_files):
+    if hasCommonMember(changed_files, test_files):
         return True, testConfig["name"], testConfig["target"]
 
     return False, testConfig["name"], testConfig["target"]
@@ -106,7 +106,7 @@ if __name__ == '__main__':
     count = 0
     affectedTests = {}
     for test in glob("TestMetaData/*json"):
-        affected, name, target = is_affected_test(test, changed_files)
+        affected, name, target = isAffectedTest(test, changed_files)
         if affected:
             print("\t- {}".format(name))
             affectedTests[name] = {'target': target}
