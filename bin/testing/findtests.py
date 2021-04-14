@@ -50,6 +50,7 @@ def isAffectedTest(testConfigFile, changed_files):
 
     cacheFile = "TestTargets/" + testConfig["target"] + ".json"
     command, dir = buildCommandAndDir(testConfig, cacheFile)
+    mainFile = command[-1]
 
     # detect headers included in this test
     # -MM skips headers from system directories
@@ -65,8 +66,10 @@ def isAffectedTest(testConfigFile, changed_files):
     def isProjectHeader(headerPath):
         return projectDir in headerPath
 
-    test_files = set([os.path.relpath(header.lstrip(". "), projectDir)
+    test_files = [os.path.relpath(mainFile.lstrip(". "), projectDir)]
+    test_files.extend([os.path.relpath(header.lstrip(". "), projectDir)
                       for header in filter(isProjectHeader, headers)])
+    test_files = set(test_files)
 
     if hasCommonMember(changed_files, test_files):
         return True, testConfig["name"], testConfig["target"]
