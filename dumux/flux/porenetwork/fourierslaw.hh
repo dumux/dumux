@@ -26,6 +26,7 @@
 #define DUMUX_FLUX_PNM_FOURIERS_LAW_HH
 
 #include <dumux/common/math.hh>
+#include <dumux/flux/referencesystemformulation.hh>
 #include <type_traits>
 
 namespace Dumux::PoreNetwork {
