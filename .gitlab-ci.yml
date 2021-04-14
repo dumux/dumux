@@ -27,9 +27,7 @@ generate-config:
   script:
     - |
       if [ $CI_PIPELINE_SOURCE == "merge_request_event" ]; then
-          dunecontrol --opts=$DUNE_OPTS_FILE --current all
-          pushd build-cmake && python3 ../bin/testing/findtests.py -f affectedtests.json -t origin/master && popd
-          python3 .gitlab-ci/makepipelineconfig.py -c build-cmake/affectedtests.json -o generated-config.yml
+          python3 .gitlab-ci/makepipelineconfig.py -o generated-config.yml --affectedtestsonly
       else
           python3 .gitlab-ci/makepipelineconfig.py -o generated-config.yml
       fi

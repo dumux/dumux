@@ -2,12 +2,13 @@ default:
   image: $$IMAGE
 
 stages:
-  - build
-  - test
+${stages}
 
 workflow:
   rules:
     - if: $$CI_PIPELINE_SOURCE=="parent_pipeline"
+
+${test_select_job}
 
 build dumux:
   stage: build
@@ -17,6 +18,7 @@ ${build_script}
     paths:
       - build-cmake
     expire_in: 3 hours
+${build_needs}
 
 test dumux:
   stage: test
