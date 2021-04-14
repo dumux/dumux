@@ -44,6 +44,17 @@ with open(args['outfile'], 'w') as ymlFile:
         commands = [commandIndentation + '- ' + comm for comm in commands]
         return '\n'.join(commands)
 
+    def makeMultiLineCommand(commandParts):
+
+        # add indentation to each part
+        result = [commandIndentation + '  ' + cp for cp in commandParts]
+
+        # add line break token at the end of each part
+        result = ' \\\n'.join(result)
+
+        # add multiline trigger token at the beginning
+        return '|\n' + result
+
     # if no configuration is given, build and run all tests
     if not args['testconfig']:
         buildCommand = [duneConfigCommand,
@@ -56,7 +67,7 @@ with open(args['outfile'], 'w') as ymlFile:
         with open(args['testconfig']) as configFile:
             config = json.load(configFile)
 
-            testNames = config.keys()
+            testNames = list(config.keys())
             targetNames = [tc['target'] for tc in config.values()]
 
             if not targetNames:
@@ -74,10 +85,9 @@ with open(args['outfile'], 'w') as ymlFile:
                     'rm -f TestMakefile && touch TestMakefile',
                     'echo "include CMakeFiles/Makefile2" >> TestMakefile',
                     'echo "" >> TestMakefile',
-                    '|\n'
-                    + commandIndentation
-                    + '  echo "build_selected_tests: {}" >> TestMakefile'
-                      .format(' '.join(targetNames)),
+                    makeMultiLineCommand(['echo "build_selected_tests:"']
+                                         + targetNames
+                                         + ['>> TestMakefile']),
                     'make -f TestMakefile -j4 build_selected_tests']
 
             if not testNames:
@@ -86,8 +96,10 @@ with open(args['outfile'], 'w') as ymlFile:
                                'dune-ctest -R NOOP']
             else:
                 testCommand = ['cd build-cmake',
-                               'dune-ctest -j4 --output-on-failure -R {}'
-                               .format(' '.join(testNames))]
+                               makeMultiLineCommand(['dune-ctest -j4 '
+                                                     '--output-on-failure '
+                                                     '-R']
+                                                    + testNames)]
 
     substituteAndWrite({'build_script': makeScriptString(buildCommand),
                         'test_script': makeScriptString(testCommand)})
