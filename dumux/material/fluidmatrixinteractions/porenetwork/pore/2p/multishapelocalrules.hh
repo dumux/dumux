@@ -34,11 +34,11 @@ namespace Dumux::PoreNetwork::FluidMatrix {
 template<class ScalarT>
 struct LocalRulesTraits
 {
-    using Tetrahedron = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::tetrahedron>;
-    using Cube = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::cube>;
-    using Octahedron = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::octahedron>;
-    using Icosahedron = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::icosahedron>;
-    using Dodecahedron = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::dodecahedron>;
+    using Tetrahedron = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::tetrahedron, ScalarT>;
+    using Cube = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::cube, ScalarT>;
+    using Octahedron = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::octahedron, ScalarT>;
+    using Icosahedron = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::icosahedron, ScalarT>;
+    using Dodecahedron = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::dodecahedron, ScalarT>;
 };
 
 template<class ScalarT>
@@ -102,6 +102,7 @@ public:
     { return 2; }
 
     template<class SpatialParams, class Element, class SubControlVolume, class ElemSol>
+    [[deprecated("Use constructor of BasicParams directly. Will be removed before release 3.4")]]
     static BasicParams makeParams(const SpatialParams& spatialParams,
                                   const Element& element,
                                   const SubControlVolume& scv,

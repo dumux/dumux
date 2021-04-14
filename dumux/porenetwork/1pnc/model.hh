@@ -242,5 +242,12 @@ struct ThermalConductivityModel<TypeTag, TTag::PNMOnePNCNI>
     using type = ThermalConductivityAverage<GetPropType<TypeTag, Properties::Scalar>>;
 }; //!< Use the average for effective conductivities
 
+// template<class TypeTag>
+// struct HeatConductionType<TypeTag, TTag::PNMOnePNCNI>
+// {
+//     TODO uncomment this as soon as there is a generalized approach for component enthalpies in all fluid systems
+//     using type = Dumux::PoreNetwork::PNMFouriersLaw<GetPropType<TypeTag, MolecularDiffusionType>>;
+// }; //!< Use Fourier's law and also consider enthalpy transport by molecular diffusion
+
 } // end namespace Dumux::Properties
 #endif

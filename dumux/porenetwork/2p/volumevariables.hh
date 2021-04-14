@@ -76,10 +76,7 @@ public:
         ParentType::update(elemSol, problem, element, scv);
         poreInscribedRadius_ = problem.spatialParams().poreInscribedRadius(element, scv, elemSol);
         poreVolume_ = problem.gridGeometry().poreVolume(scv.dofIndex()) * this->porosity();
-
-        // the value of water/air TODO make general in fluid system
-        static const Scalar gamma = getParamFromGroup<Scalar>(problem.paramGroup(), "Problem.SurfaceTension", 0.0725);
-        surfaceTension_ = gamma;
+        surfaceTension_ = problem.spatialParams().surfaceTension(element, scv, elemSol);
     }
 
     /*!
