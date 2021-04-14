@@ -102,6 +102,7 @@ public:
     { return 2; }
 
     template<class SpatialParams, class Element, class SubControlVolume, class ElemSol>
+    [[deprecated("Use constructor of BasicParams directly. Will be removed before release 3.4")]]
     static BasicParams makeParams(const SpatialParams& spatialParams,
                                   const Element& element,
                                   const SubControlVolume& scv,
