@@ -182,7 +182,7 @@ public:
                                 const SubControlVolume& scv,
                                 const ElementSolution& elemSol) const
     {
-        const auto params = LocalRules::makeParams(*this, element, scv, elemSol);
+        const auto params = typename LocalRules::BasicParams(*this, element, scv, elemSol);
         return makeFluidMatrixInteraction(LocalRules(params, "SpatialParams"));
     }
 
