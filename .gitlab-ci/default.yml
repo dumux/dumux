@@ -1,0 +1,31 @@
+default:
+  image: $IMAGE
+
+stages:
+  - build
+  - test
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE=="parent_pipeline"
+
+build dumux:
+  stage: build
+  script:
+    - dunecontrol --opts=$DUNE_OPTS_FILE --current all
+    - dunecontrol --opts=$DUNE_OPTS_FILE --current bexec make -k -j4 build_tests
+  artifacts:
+    paths:
+      - build-cmake
+    expire_in: 3 hours
+
+test dumux:
+  stage: test
+  script:
+    - dunecontrol --opts=$DUNE_OPTS_FILE --current bexec dune-ctest -j4 --output-on-failure
+  needs:
+    - job: build dumux
+      artifacts: true
+  artifacts:
+    reports:
+      junit: junit/dumux-cmake.xml

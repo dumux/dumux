@@ -6,8 +6,9 @@ stages:
 variables:
   IMAGE_REGISTRY_URL: $CI_REGISTRY/dumux-repositories/dumux-docker-ci
 
-# Cases in which to create a pipeline. The `generate-config` job further
-# specifies the situations in which they must be started manually.
+# Cases in which to create a pipeline. The `select-pipeline` job further
+# specifies the situations in which they must be started manually. Currently,
+# we only have automatic pipeline triggers for scheduled pipelines.
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
@@ -21,19 +22,19 @@ workflow:
 # the build stage to identify the tests affected by changes introduced in the  #
 # merge request. In all other cases, we use the default which runs all tests.  #
 ################################################################################
-generate-config:
+select-pipeline:
   image: $IMAGE_REGISTRY_URL/full:dune-2.7-gcc-ubuntu-20.04
   stage: configure
   script:
     - |
       if [ $CI_PIPELINE_SOURCE == "merge_request_event" ]; then
-          python3 .gitlab-ci/makepipelineconfig.py -o generated-config.yml --affectedtestsonly
+          cp .gitlab-ci/affectedtestsonly.yml pipeline-config.yml
       else
-          python3 .gitlab-ci/makepipelineconfig.py -o generated-config.yml
+          cp .gitlab-ci/default.yml pipeline-config.yml
       fi
   artifacts:
     paths:
-      - generated-config.yml
+      - pipeline-config.yml
     expire_in: 3 hours
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -53,11 +54,11 @@ generate-config:
 .base-trigger:
   stage: trigger
   needs:
-    - generate-config
+    - select-pipeline
   trigger:
     include:
-      - artifact: generated-config.yml
-        job: generate-config
+      - artifact: pipeline-config.yml
+        job: select-pipeline
     strategy: depend
 
 # trigger for jobs that should not be created in merge requests
