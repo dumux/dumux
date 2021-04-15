@@ -25,6 +25,7 @@
 #define DUMUX_MATH_HH
 
 #include <algorithm>
+#include <numeric>
 #include <cmath>
 #include <utility>
 
@@ -879,6 +880,44 @@ vtmv(const Dune::DenseVector<V1>& v1,
      const Dune::DenseVector<V2>& v2)
 {
     return m*(v1*v2);
+}
+
+/*!
+ * \ingroup Common
+ * \brief Returns the [intercept, slope] of the regression line
+ *        fitted to a set of (x, y) data points.
+ *
+ *        Note: We use least-square regression method to find
+ *        the regression line.
+ *
+ * \param x x-values of the data set
+ * \param y y-values of the data set
+ */
+template <class Scalar>
+std::array<Scalar, 2> linearRegression(const std::vector<Scalar>& x,
+                                       const std::vector<Scalar>& y)
+{
+    if (x.size() != y.size())
+        DUNE_THROW(Dune::InvalidStateException, "x and y array must have the same length.");
+
+    const Scalar averageX = std::accumulate(x.begin(), x.end(), 0.0)/x.size();
+    const Scalar averageY = std::accumulate(y.begin(), y.end(), 0.0)/y.size();
+
+    // calculate temporary variables necessary for slope computation
+    const Scalar numerator = std::inner_product(
+        x.begin(), x.end(), y.begin(), 0.0, std::plus<Scalar>(),
+        [&](auto xx, auto yy) { return (xx - averageX) * (yy - averageY); }
+    );
+    const Scalar denominator = std::inner_product(
+        x.begin(), x.end(), x.begin(), 0.0, std::plus<Scalar>(),
+        [&](auto xx, auto yy) { return (xx - averageX) * (yy - averageX); }
+    );
+
+    // compute slope and intercept of the regression line
+    const Scalar slope = numerator / denominator;
+    const Scalar intercept = averageY - slope * averageX;
+
+    return {intercept, slope};
 }
 
 } // end namespace Dumux
