@@ -883,7 +883,7 @@ vtmv(const Dune::DenseVector<V1>& v1,
 
 /*!
  * \ingroup Common
- * \brief Returns the [slope, intercept] of the regression line
+ * \brief Returns the [intercept, slope] of the regression line
  *        fitted to a set of (x, y) data points.
  *
  *        Note: We use least-square regression method to find
