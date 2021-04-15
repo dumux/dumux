@@ -214,4 +214,25 @@ int main()
             DUNE_THROW(Dune::Exception, "[linspace] Not sorted in ascending order!");
     }
 
+    //////////////////////////////////////////////////////////////////
+    ///// Dumux::linearRegression ////////////////////////////////////
+    //////////////////////////////////////////////////////////////////
+    {
+        const auto x = Dumux::linspace(0.0, 1.0, 100);
+        const auto [intercept, slope] = Dumux::linearRegression(x, x);
+        if (std::abs(intercept) > 1e-14)
+            DUNE_THROW(Dune::Exception, "[linearRegreesion] Wrong intercept " << intercept << ", should be 0.0.");
+        if (std::abs(slope-1.0) > 1e-14)
+            DUNE_THROW(Dune::Exception, "[linearRegreesion] Wrong slope " << slope << ", should be 1.0.");
+    }
+    {
+        const auto x = Dumux::linspace(0.0, 1.0, 100);
+        const auto y = Dumux::linspace(1.0, 3.0, 100);
+        const auto [intercept, slope] = Dumux::linearRegression(x, y);
+        if (std::abs(intercept-1.0) > 1e-14)
+            DUNE_THROW(Dune::Exception, "[linearRegreesion] Wrong intercept " << intercept << ", should be 1.0.");
+        if (std::abs(slope-2.0) > 1e-14)
+            DUNE_THROW(Dune::Exception, "[linearRegreesion] Wrong slope " << slope << ", should be 2.0.");
+    }
+
 }
