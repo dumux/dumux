@@ -896,22 +896,25 @@ template <class Scalar>
 std::array<Scalar, 2> linearRegression(const std::vector<Scalar>& x,
                                        const std::vector<Scalar>& y)
 {
-    size_t n = x.size();
-    Scalar averageX = std::accumulate(x.begin(), x.end(), 0.0)/n;
-    Scalar averageY = std::accumulate(y.begin(), y.end(), 0.0)/n;
+    if (x.size() != y.size())
+        DUNE_THROW(Dune::InvalidStateException, "x and y array must have the same length.");
 
-    // calculate slope of the regression line
-    Scalar temp0 = 0.0; //numerator
-    Scalar temp1 = 0.0; //denuminator
-    for(size_t i = 0; i < n; i++)
-    {
-        temp0 += (x[i] - averageX) * (y[i] - averageY);
-        temp1 += (x[i] - averageX) * (x[i] - averageX);
-    }
-    Scalar slope = temp0 / temp1;
+    const Scalar averageX = std::accumulate(x.begin(), x.end(), 0.0)/x.size();
+    const Scalar averageY = std::accumulate(y.begin(), y.end(), 0.0)/y.size();
 
-    //calculate intercept of the regression line
-    Scalar intercept = averageY - slope * averageX;
+    // calculate temporary variables necessary for slope computation
+    const Scalar numerator = std::inner_product(
+    x.begin(), x.end(), y.begin(), 0.0, std::plus<Scalar>(),
+    [](auto xx, auto yy) { return (xx - averageX) * (yy - averageY); }
+    );
+    const Scalar denominator = std::inner_product(
+    x.begin(), x.end(), x.begin(), 0.0, std::plus<Scalar>(),
+    [](auto xx, auto xx) { return (xx - averageX) * (xx - averageX); }
+    );
+
+    // compute slope and intercept of the regression line
+    const Scalar slope = numerator / denominator;
+    const Scalar intercept = averageY - slope * averageX;
 
     return {slope, intercept};
 }
