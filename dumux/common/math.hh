@@ -881,6 +881,41 @@ vtmv(const Dune::DenseVector<V1>& v1,
     return m*(v1*v2);
 }
 
+/*!
+ * \ingroup Common
+ * \brief Returns the [slope, intercept] of the regression line
+ *        fitted to a set of (x, y) data points.
+ *
+ *        Note: We use least-square regression method to find
+ *        the regression line.
+ *
+ * \param x x-values of the data set
+ * \param y y-values of the data set
+ */
+template <class Scalar>
+std::array<Scalar, 2> linearRegression(const std::vector<Scalar>& x,
+                                       const std::vector<Scalar>& y)
+{
+    size_t n = x.size();
+    Scalar averageX = std::accumulate(x.begin(), x.end(), 0.0)/n;
+    Scalar averageY = std::accumulate(y.begin(), y.end(), 0.0)/n;
+
+    // calculate slope of the regression line
+    Scalar temp0 = 0.0; //numerator
+    Scalar temp1 = 0.0; //denuminator
+    for(size_t i = 0; i < n; i++)
+    {
+        temp0 += (x[i] - averageX) * (y[i] - averageY);
+        temp1 += (x[i] - averageX) * (x[i] - averageX);
+    }
+    Scalar slope = temp0 / temp1;
+
+    //calculate intercept of the regression line
+    Scalar intercept = averageY - slope * averageX;
+
+    return {slope, intercept};
+}
+
 } // end namespace Dumux
 
 #endif
