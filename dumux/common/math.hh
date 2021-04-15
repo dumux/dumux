@@ -905,11 +905,11 @@ std::array<Scalar, 2> linearRegression(const std::vector<Scalar>& x,
     // calculate temporary variables necessary for slope computation
     const Scalar numerator = std::inner_product(
         x.begin(), x.end(), y.begin(), 0.0, std::plus<Scalar>(),
-        [](auto xx, auto yy) { return (xx - averageX) * (yy - averageY); }
+        [&](auto xx, auto yy) { return (xx - averageX) * (yy - averageY); }
     );
     const Scalar denominator = std::inner_product(
         x.begin(), x.end(), x.begin(), 0.0, std::plus<Scalar>(),
-        [](auto xx, auto xx) { return (xx - averageX) * (xx - averageX); }
+        [&](auto xx, auto yy) { return (xx - averageX) * (yy - averageX); }
     );
 
     // compute slope and intercept of the regression line
