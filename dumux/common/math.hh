@@ -916,7 +916,7 @@ std::array<Scalar, 2> linearRegression(const std::vector<Scalar>& x,
     const Scalar slope = numerator / denominator;
     const Scalar intercept = averageY - slope * averageX;
 
-    return {slope, intercept};
+    return {intercept, slope};
 }
 
 } // end namespace Dumux
