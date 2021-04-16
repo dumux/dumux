@@ -17,6 +17,10 @@ LiquidKinematicViscosity = 0.025
 MaxSteps = 10
 MaxRelativeShift = 1e-5
 
+[LinearSolver]
+ResidualReduction = 1e-5
+Preconditioner.Iterations = 3
+
 [Vtk]
 WriteFaceData = false
 
