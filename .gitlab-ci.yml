@@ -1,7 +1,7 @@
 stages:
   - configure
   - trigger
-  # - downstream modules
+  - downstream modules
 
 variables:
   IMAGE_REGISTRY_URL: $CI_REGISTRY/dumux-repositories/dumux-docker-ci
@@ -14,6 +14,7 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "schedule"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
 
 ################################################################################
 # Stage 1: configure the test pipeline.                                        #
@@ -42,8 +43,9 @@ select-pipeline:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: manual
 
+
 ###################################################################################
-# Stage 2: trigger the test pipelines                                             #
+# Stage 2: trigger the Dumux test pipelines                                       #
 # In this stage, we trigger the test pipeline with different configurations, i.e. #
 # different Dune versions, compilers, etc. Within merge requests, we create three #
 # test pipelines including two different compilers and a full and minimal setup   #
@@ -62,7 +64,7 @@ select-pipeline:
     strategy: depend
 
 # trigger for jobs that should not be created in merge requests
-.non-merge-request-trigger:
+.non-mr-trigger:
   extends: .base-trigger
   rules:
     - if: $CI_PIPELINE_SOURCE != "merge_request_event"
@@ -87,23 +89,27 @@ full-dune-2.7-clang:
 ##################################
 # additional scheduled pipelines #
 full-dune-master-gcc:
-  extends: .non-merge-request-trigger
+  extends: .non-mr-trigger
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/full:dune-master-gcc-ubuntu-20.04
 
 full-dune-master-clang:
-  extends: .non-merge-request-trigger
+  extends: .non-mr-trigger
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/full:dune-master-clang-ubuntu-20.04
 
-# ###################################
-# # triggers for downstream modules #
-# trigger lecture:
-#     stage: trigger downstream modules
-#     trigger:
-#       project: dumux-repositories/dumux-lecture
-#       # TODO: replace by master once development in lecture is finished
-#       branch: feature/test-dumux-trigger
-#       strategy: depend
-#     variables:
-#       DUMUX_BRANCH: $CI_COMMIT_BRANCH
+
+#########################################################
+# Stage 3: trigger test pipelines of downstream modules #
+#########################################################
+
+# trigger lecture test
+trigger lecture:
+  stage: downstream modules
+  trigger:
+    project: dumux-repositories/dumux-lecture
+    # TODO: use master when lecture pipeline is set up
+    branch: feature/test-dumux-trigger
+    strategy: depend
+  variables:
+    DUMUX_MERGE_REQUEST_BRANCH: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
