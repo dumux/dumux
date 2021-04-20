@@ -12,11 +12,10 @@ def div(M):
 def grad(v):
     return np.array([[sp.diff(v[0],x),  sp.diff(v[0],y)], [sp.diff(v[1],x),  sp.diff(v[1],y)]])
 
-# coordinates
-x, y = sp.symbols("x y")
+# coordinates and time
+x, y, t = sp.symbols("x y t")
 
 kinematicViscosity = 0.1
-t = 1.0/(10*kinematicViscosity)
 
 # analytical solutions for v and p in free-flow domain (see reference given in problems)
 def analyticalSolutionStokes():
@@ -32,13 +31,13 @@ vvT = np.outer(vFF, vFF)
 gradV = grad(vFF)
 gradVT = grad(vFF).T
 pI = np.array([[pFF,  0], [0,  pFF]])
+storageTerm = np.array([sp.diff(vFF[0], t), sp.diff(vFF[1], t)])
 
 # complete momentum flux and its divergence
-momentumFlux = vvT - (gradV + gradVT) +pI
-#momentumFlux = - (gradV + gradVT) +pI # only Stokes
+momentumFlux = vvT - kinematicViscosity*(gradV + gradVT) +pI
 divMomentumFlux = div(momentumFlux)
 
 # solution for source term
 print("Source term mass:", sp.diff(vFF[0],x) + sp.diff(vFF[1], y))
-print("Source term momentum x:", divMomentumFlux[0])
-print("Source term momentum y:", divMomentumFlux[1])
+print("Source term momentum x:", divMomentumFlux[0] + storageTerm[0])
+print("Source term momentum y:", divMomentumFlux[1] + storageTerm[1])
