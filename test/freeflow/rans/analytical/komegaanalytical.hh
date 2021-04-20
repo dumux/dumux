@@ -94,16 +94,19 @@ private:
     {
         const Scalar x = globalPos[0];
         const Scalar y = globalPos[1];
-        return 6.0 * ((x * x * y) - (y * y * x));
+        return 2.0 - 2.0 * x * y;
     }
 
     ScalarGradientVector pressureGradient_(const GlobalPosition& globalPos) const
     {
         const Scalar x = globalPos[0];
         const Scalar y = globalPos[1];
+
+        // index [derivative]
         ScalarGradientVector gradients(0.0);
-        gradients[0] = (12.0 * x * y) - (6 * y * y);
-        gradients[1] = (6 * x * x) - (12 * x * y);
+
+        gradients[0] = -2.0 * y;
+        gradients[1] = -2.0 * x;
         return gradients;
     }
 
@@ -111,9 +114,12 @@ private:
     {
         const Scalar x = globalPos[0];
         const Scalar y = globalPos[1];
+
+        // index [velocity]
         VelocityVector v(0.0);
-        v[0] = 2.0 * x * x * x * y;
-        v[1] = 2.0 - 2.0 * y * y * y * x;
+
+        v[0] = 2.0 * x * x * x;
+        v[1] = 2.0 - 2.0 * y * y * y;
         return v;
     }
 
@@ -126,10 +132,10 @@ private:
         // index [velocity] [derivative]
         VelocityGradientMatrix gradients;
 
-        gradients[0][0] = 6.0 * x * x * y;
-        gradients[0][1] = 2.0 * x * x * x;
-        gradients[1][0] = -2.0 * y * y * y;
-        gradients[1][1] = -6.0 * y * y * x;
+        gradients[0][0] = 6.0 * x * x;
+        gradients[0][1] = 0.0;
+        gradients[1][0] = 0.0;
+        gradients[1][1] = -6.0 * y * y;
         return gradients;
     }
 
@@ -143,13 +149,13 @@ private:
         VelocitySecondGradientMatrix gradients;
 
         gradients[0][0][0] = 12.0 * x;
-        gradients[0][0][1] = 6.0 * x * x;
-        gradients[0][1][0] = 6.0 * x * x;
+        gradients[0][0][1] = 0.0;
+        gradients[0][1][0] = gradients[0][0][1];
         gradients[0][1][1] = 0.0;
 
         gradients[1][0][0] = 0.0;
-        gradients[1][0][1] = -6.0 * y * y;
-        gradients[1][1][0] = -6.0 * y * y;
+        gradients[1][0][1] = 0.0;
+        gradients[1][1][0] = gradients[1][0][1];
         gradients[1][1][1] = -12.0 * y;
 
         return gradients;
@@ -157,8 +163,9 @@ private:
 
     VelocityGradientMatrix velocityProductGradient_(const GlobalPosition& globalPos) const
     {
-        // product rule d(v*v)
+        // index [velocity] [derivative]
         VelocityGradientMatrix products;
+        // product rule d(v*v)
         // 2 vx dvxdx
         products[0][0] = 2.0 * velocity_(globalPos)[0] * velGradient_(globalPos)[0][0];
         // vx dvydy + vy dvxdy
@@ -200,7 +207,10 @@ private:
     {
         const Scalar x = globalPos[0];
         const Scalar y = globalPos[1];
+
+        // index [derivative]
         ScalarGradientVector gradients(0.0);
+
         gradients[0] = 2.0 * x * y * y;
         gradients[1] = 2.0 * y * x * x;
         return gradients;
@@ -232,7 +242,10 @@ private:
     {
         const Scalar x = globalPos[0];
         const Scalar y = globalPos[1];
+
+        // index [derivative]
         ScalarGradientVector gradients(0.0);
+
         gradients[0] = -2.0 * x * y * y;
         gradients[1] = -2.0 * x * x * y;
         return gradients;
