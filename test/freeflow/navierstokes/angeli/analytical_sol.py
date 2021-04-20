@@ -19,15 +19,23 @@ kinematicViscosity = 0.1
 
 # analytical solutions for v and p in free-flow domain (see reference given in problems)
 def analyticalSolutionStokes():
+    psi = sp.exp(-5*kinematicViscosity*sp.pi**2*t)*sp.cos(sp.pi*x)*sp.cos(2*sp.pi*y)
+    ux = sp.diff(psi,y)
+    uy = -sp.diff(psi,x)
 
     vFF = np.array([- 2.0 * sp.pi * sp.exp(- 5.0 * kinematicViscosity * sp.pi * sp.pi * t) * sp.cos(sp.pi * x) * sp.sin(2.0 * sp.pi * y), sp.pi * sp.exp(- 5.0 * kinematicViscosity * sp.pi*sp.pi * t) * sp.sin(sp.pi * x) * sp.cos(2.0 * sp.pi * y)])
-    pFF = - 0.25 * sp.exp(-10.0 * kinematicViscosity * sp.pi * sp.pi * t) * sp.pi * sp.pi * (4.0 * sp.cos(2.0 * sp.pi * x) + sp.cos(4.0 * sp.pi * y))
+
+    assert(vFF[0]-ux == 0)
+    assert(vFF[1]-uy == 0)
+
+    pFF = - 0.25 * sp.exp(-10.0 * kinematicViscosity * sp.pi**2 * t) * sp.pi**2 * (4.0 * sp.cos(2.0 * sp.pi * x) + sp.cos(4.0 * sp.pi * y))
     return [vFF, pFF]
 
 vFF, pFF = analyticalSolutionStokes()
 
 # individual terms of the Navier-Stokes eq.
-vvT = np.outer(vFF, vFF)
+#vvT = np.outer(vFF, vFF)
+vvT = np.tensordot(vFF, vFF, axes=0)
 gradV = grad(vFF)
 gradVT = grad(vFF).T
 pI = np.array([[pFF,  0], [0,  pFF]])
@@ -39,5 +47,5 @@ divMomentumFlux = div(momentumFlux)
 
 # solution for source term
 print("Source term mass:", sp.diff(vFF[0],x) + sp.diff(vFF[1], y))
-print("Source term momentum x:", divMomentumFlux[0] + storageTerm[0])
-print("Source term momentum y:", divMomentumFlux[1] + storageTerm[1])
+print("Source term momentum x:", sp.simplify(divMomentumFlux[0] + storageTerm[0]))
+print("Source term momentum y:", sp.simplify(divMomentumFlux[1] + storageTerm[1]))
