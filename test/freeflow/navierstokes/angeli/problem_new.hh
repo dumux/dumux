@@ -114,7 +114,7 @@ public:
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     AngeliTestProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(gridGeometry, couplingManager), time_(0.0), timeStepSize_(0.0)
+    : ParentType(gridGeometry, couplingManager)
     {
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
     }
@@ -293,16 +293,9 @@ public:
     void updateTime(const Scalar time)
     { time_ = time; }
 
-    /*!
-     * \brief Updates the time step size
-     */
-    void updateTimeStepSize(const Scalar timeStepSize)
-    { timeStepSize_ = timeStepSize; }
-
 private:
     Scalar kinematicViscosity_;
     Scalar time_ = 0.0;
-    Scalar timeStepSize_ = 0.0;
 };
 } // end namespace Dumux
 

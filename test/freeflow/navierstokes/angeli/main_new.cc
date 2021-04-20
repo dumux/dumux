@@ -158,10 +158,6 @@ int main(int argc, char** argv)
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
-    // the problem (initial and boundary conditions)
-    momentumProblem->updateTimeStepSize(timeLoop->timeStepSize());
-    massProblem->updateTimeStepSize(timeLoop->timeStepSize());
-
     // the solution vector
     constexpr auto momentumIdx = Dune::index_constant<0>();
     constexpr auto massIdx = Dune::index_constant<1>();
@@ -247,12 +243,6 @@ int main(int argc, char** argv)
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
-        massProblem->updateTime(timeLoop->time());
-        momentumProblem->updateTime(timeLoop->time());
-
-        // update the analytical solution for the new time step
-        exactPressure = getScalarAnalyticalSolution(*massProblem)[GetPropType<MassTypeTag, Properties::ModelTraits>::Indices::pressureIdx];
-        exactVelocity = getVelocityAnalyticalSolution(*momentumProblem);
 
         // write vtk output
         vtkWriter.write(timeLoop->time());
@@ -262,9 +252,6 @@ int main(int argc, char** argv)
 
         // set new dt as suggested by newton solver
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
-        momentumProblem->updateTimeStepSize(timeLoop->timeStepSize());
-        massProblem->updateTimeStepSize(timeLoop->timeStepSize());
-
     } while (!timeLoop->finished());
 
     timeLoop->finalize(leafGridView.comm());
