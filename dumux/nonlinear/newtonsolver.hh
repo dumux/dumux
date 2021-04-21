@@ -59,6 +59,51 @@
 #include "primaryvariableswitchadapter.hh"
 
 namespace Dumux {
+
+
+    template <class Matrix, class OffDiagMatrix, class Vector>
+    auto scaleLinearSystemByInverseOfDiagonal(Matrix& matrix, OffDiagMatrix& offDiagMatrix, Vector& rhs)
+    {
+        auto tmp = rhs;
+
+        for (auto row = matrix.begin(); row != matrix.end(); ++row)
+        {
+            const auto rowIdx = row.index();
+
+            auto diagonal = matrix[rowIdx][rowIdx];
+            diagonal.invert();
+
+            const auto b = rhs[rowIdx];
+            diagonal.mv(b, rhs[rowIdx]);
+
+            tmp[rowIdx] = diagonal;
+
+            for (auto col = row->begin(); col != row->end(); ++col)
+                col->leftmultiply(diagonal);
+        }
+
+        for (auto offDiagrow = offDiagMatrix.begin(); offDiagrow != offDiagMatrix.end(); ++offDiagrow)
+        {
+            const auto rowIdx = offDiagrow.index();
+
+            const auto& diagonal = tmp[rowIdx];
+            // std::cout << "vblock diag " << rowIdx << " : " << 1/diagonal << std::endl;
+
+
+            auto col = offDiagrow->begin();
+            for (; col != offDiagrow->end(); ++col)
+            {
+                // std::cout << "old entry in p block: " << col.index() << ": " << *col << std::endl;
+                *col *= diagonal;
+            }
+                // col->leftmultiply(diagonal);
+        }
+
+        return tmp;
+    }
+
+
+
 namespace Detail {
 
 // Helper boolean that states if the assembler exports grid variables
@@ -1220,6 +1265,10 @@ private:
                            SolutionVector& b)
     {
         assert(this->checkSizesOfSubMatrices(A) && "Sub-blocks of MultiTypeBlockMatrix have wrong sizes!");
+
+        // auto Aneu = A;
+
+        scaleLinearSystemByInverseOfDiagonal(A[Dune::index_constant<0>{}][Dune::index_constant<0>{}], A[Dune::index_constant<0>{}][Dune::index_constant<1>{}], b[Dune::index_constant<0>{}]);
 
         // create the bcrs matrix the IterativeSolver backend can handle
         const auto M = MatrixConverter<JacobianMatrix>::multiTypeToBCRSMatrix(A);

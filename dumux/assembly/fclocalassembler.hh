@@ -203,7 +203,10 @@ public:
     void assembleResidual(SolutionVector& res)
     {
         this->asImp_().bindLocalViews();
+
+        ::printStuff = true;
         const auto residual = this->evalLocalResidual();
+        ::printStuff = false;
 
         for (const auto& scv : scvs(this->fvGeometry()))
             res[scv.dofIndex()] += residual[scv.localDofIndex()];
@@ -343,7 +346,9 @@ public:
         auto&& curElemVolVars = this->curElemVolVars();
 
         // get the vector of the actual element residuals
+        // ::printStuff = true;
         const auto origResiduals = this->evalLocalResidual();
+        // ::printStuff = false;
 
         //////////////////////////////////////////////////////////////////////////////////////////////////
         //                                                                                              //

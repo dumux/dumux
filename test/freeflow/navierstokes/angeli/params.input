@@ -1,6 +1,8 @@
 [TimeLoop]
-DtInitial = 1e-4 # [s]
-TEnd = 1e-2 # [s]
+TStart = 0.5e-6
+DtInitial = 0.5e-6 # [s]
+MaxTimeStepSize = 1e-6
+TEnd = 1e-6 # [s]
 
 [Grid]
 LowerLeft = 0 0
@@ -12,6 +14,8 @@ Name = test_angeli # name passed to the output routines
 EnableGravity = false
 PrintL2Error = false
 EnableInertiaTerms = true
+# PrintMatrix = true
+
 
 [Component]
 LiquidDensity = 1
@@ -22,7 +26,13 @@ NumericDifference.BaseEpsilon = 1e-8
 
 [Newton]
 MaxSteps = 10
-MaxRelativeShift = 1e-5
+MaxRelativeShift = 1e-8
 
 [Vtk]
-WriteFaceData = false
+WriteFaceData = true
+
+[Flux]
+UpwindWeight = 0.5
+
+[FreeFlow]
+UseOldTransportingVelocity = false

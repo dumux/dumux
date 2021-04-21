@@ -99,6 +99,12 @@ public:
                                const bool isPreviousStorage = false) const
     {
         const auto& element = problem.gridGeometry().element(scv.elementIndex());
+
+        if (::printStuff && scv.dofIndex() == 51)
+        {
+            std::cout << "density is " << problem.density(element, scv, isPreviousStorage) << ", velocity " << volVars.velocity() << "dirIdx " << int(scv.directionIndex()) << std::endl;
+        }
+
         return problem.density(element, scv, isPreviousStorage) * volVars.velocity();
     }
 

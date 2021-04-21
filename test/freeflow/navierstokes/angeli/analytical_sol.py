@@ -15,7 +15,7 @@ def grad(v):
 # coordinates and time
 x, y, t = sp.symbols("x y t")
 
-kinematicViscosity = 0.1
+kinematicViscosity = 0.0
 
 # analytical solutions for v and p in free-flow domain (see reference given in problems)
 def analyticalSolutionStokes():
@@ -47,5 +47,39 @@ divMomentumFlux = div(momentumFlux)
 
 # solution for source term
 print("Source term mass:", sp.diff(vFF[0],x) + sp.diff(vFF[1], y))
-print("Source term momentum x:", sp.simplify(divMomentumFlux[0] + storageTerm[0]))
-print("Source term momentum y:", sp.simplify(divMomentumFlux[1] + storageTerm[1]))
+print("Source term momentum x:", sp.simplify(divMomentumFlux[0] ))#+ storageTerm[0]))
+print("Source term momentum y:", sp.simplify(divMomentumFlux[1] ))#+ storageTerm[1]))
+
+
+
+print("Sol at ccc", vFF[0].subs(t,0))
+
+intStor = sp.simplify(sp.integrate(storageTerm[1].subs(x,0.01).subs(y,0.04), (t, 0, 1e-8)))
+
+print("integralStorageTerm 1e-8:", intStor.evalf() * 0.0002)
+print("test:", sp.simplify(sp.integrate(vFF[1].subs(x,0.01).subs(y,0.04), (t, 0, 1e-8))).evalf() * 0.0002)
+
+
+numericStor0 = sp.simplify(vFF[1].subs(x,0.03).subs(y,0.02).subs(t,0))
+numericStor1 = sp.simplify(vFF[1].subs(x,0.03).subs(y,0.02).subs(t,1e-8))
+
+numericStor = (numericStor1 - numericStor0).evalf() / 1e-8 * 0.0002
+
+print("numeric storage", numericStor)
+
+
+
+#intStor = sp.simplify(sp.integrate(storageTerm[1].subs(x,0.01).subs(y,0.04), (t, 0, 1e-3)))
+
+#print("integralStorageTerm 1e-8:", intStor.evalf() * 0.0002)
+#print("test:", sp.simplify(sp.integrate(vFF[1].subs(x,0.01).subs(y,0.04), (t, 0, 1e-3))).evalf() * 0.0002)
+
+
+#numericStor0 = sp.simplify(vFF[1].subs(x,0.01).subs(y,0.04).subs(t,0))
+#numericStor1 = sp.simplify(vFF[1].subs(x,0.01).subs(y,0.04).subs(t,1e-3))
+
+#numericStor = (numericStor1 - numericStor0).evalf() / 1e-3 * 0.0002
+
+#print("numeric storage", numericStor)
+
+print("time deriv at 1e-8", storageTerm[1].subs(x,0.03).subs(y,0.02).subs(t, 1e-8).evalf() * 0.0002)
