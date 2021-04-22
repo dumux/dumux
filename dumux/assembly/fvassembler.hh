@@ -458,13 +458,13 @@ private:
             if (m.first < m.second)
             {
                 // add the second row to the first
-                res[m.first] += res[m.second];
+                res.native()[m.first] += res.native()[m.second];
                 const auto end = jac[m.second].end();
                 for (auto it = jac[m.second].begin(); it != end; ++it)
                     jac[m.first][it.index()] += (*it);
 
                 // enforce constraint in second row
-                res[m.second] = curSol[m.second] - curSol[m.first];
+                res.native()[m.second] = curSol.native()[m.second] - curSol.native()[m.first];
                 for (auto it = jac[m.second].begin(); it != end; ++it)
                     (*it) = it.index() == m.second ? 1.0 : it.index() == m.first ? -1.0 : 0.0;
             }

@@ -601,7 +601,7 @@ public:
                                            min(reassemblyMaxThreshold_,
                                                shift_*reassemblyShiftWeight_));
 
-            updateDistanceFromLastLinearization_(uLastIter, deltaU);
+            updateDistanceFromLastLinearization_(uLastIter.native(), deltaU.native());
             partialReassembler_->computeColors(this->assembler(),
                                                distanceFromLastLinearization_,
                                                reassemblyThreshold);
@@ -1172,9 +1172,9 @@ private:
         Dune::BlockVector<BlockType> xTmp; xTmp.resize(Backend::size(b));
         Dune::BlockVector<BlockType> bTmp(xTmp);
 
-        Detail::assign(bTmp, b);
+        Detail::assign(bTmp, b.native());
         const int converged = ls.solve(A, xTmp, bTmp);
-        Detail::assign(x, xTmp);
+        Detail::assign(x.native(), xTmp);
 
         return converged;
     }
