@@ -152,6 +152,185 @@ private:
     BVType blockVector_;
 };
 
+template<class BVType, class State>
+class BlockVectorWithState
+{
+    struct BlockVectorView
+    {
+        BlockVectorView(BVType& sol, State& state)
+        {
+            solution_ = &sol;
+            state_ = &state;
+        }
+
+       auto& operator= (const BVType& other)
+       {
+           *solution_ = other;
+           return *this;
+       }
+
+       void setState(int s)
+       { *state_ = s; }
+
+       operator BVType()
+       { return *solution_; }
+
+       State state() const
+       { return *state_; }
+
+   private:
+       BVType* solution_;
+       State* state_;
+    };
+
+    struct ConstBlockVectorView
+    {
+        ConstBlockVectorView(const BVType& sol, const State& state) : solution_(&sol), state_(&state)
+        {}
+
+       operator BVType() const
+       { return *solution_; }
+
+       State state() const
+       { return *state_; }
+
+   private:
+       const BVType* solution_;
+       const  State* state_;
+    };
+
+public:
+    using field_type = typename BVType::field_type;
+    using block_type = typename BVType::block_type;
+    using allocator_type = typename BVType::allocator_type;
+    using size_type = typename BVType::size_type;
+    using Iterator = typename BVType::Iterator;
+    using ConstIterator = typename BVType::ConstIterator;
+
+    BlockVectorWithState() = default;
+
+    //! make vector with _n components
+    explicit BlockVectorWithState (size_type n) : blockVector_(n)
+    {
+        states_.resize(blockVector_.size());
+    }
+
+    /** \brief Construct from a std::initializer_list */
+    BlockVectorWithState (const std::initializer_list<block_type>& l) : blockVector_(l)
+    {
+        states_.resize(blockVector_.size());
+    }
+
+    template<typename S>
+    BlockVectorWithState (size_type n, S capacity) : blockVector_(n, capacity)
+    {
+        states_.resize(blockVector_.size());
+    }
+
+    block_type& operator [](int i)
+    {
+        return BlockVectorView(blockVector_[dofIdx], states_[dofIdx]);
+    }
+
+    const block_type& operator[] (int i) const
+    {
+        return ConstBlockVectorView(blockVector_[dofIdx], states_[dofIdx]);
+    }
+
+    BlockVectorWithState& operator= (const field_type& k)
+    {
+        blockVector_ = k;
+        return *this;
+    }
+
+    BlockVectorWithState& operator*= (const field_type& k)
+    {
+        blockVector_ *= k;
+        return *this;
+    }
+
+    BlockVectorWithState& operator/= (const field_type& k)
+    {
+        blockVector_ /= k;
+        return *this;
+    }
+
+    BlockVectorWithState& operator+= (const BlockVectorWithState& y)
+    {
+        blockVector_ += y.blockVector_;
+        return *this;
+    }
+
+    BlockVectorWithState& operator-= (const BlockVectorWithState& y)
+    {
+        blockVector_ -= y.blockVector_;
+        return *this;
+    }
+
+    BlockVectorWithState operator* (const BlockVectorWithState& y)
+    {
+        return blockVector_ * y.blockVector_;
+    }
+
+    BlockVectorWithState& axpy(const field_type& a, const BlockVectorWithState& y)
+    {
+        blockVector_.axpy(a, y.blockVector_);
+        return *this;
+    }
+
+    BlockVectorWithState& dot(const BlockVectorWithState& y)
+    {
+        blockVector_.dot(y.blockVector_);
+        return *this;
+    }
+
+    auto one_norm () const
+    { return blockVector_.one_norm(); }
+
+    auto two_norm () const
+    { return blockVector_.two_norm(); }
+
+    auto two_norm2 () const
+    { return blockVector_.two_norm2(); }
+
+    auto infinity_norm () const
+    { return blockVector_.infinity_norm(); }
+
+    auto begin() const
+    { return blockVector_.begin(); }
+
+    auto end() const
+    { return blockVector_.end(); }
+
+    void reserve(size_type capacity)
+    {
+        blockVector_.reserve(capacity);
+        states_.reserve(capacity);
+    }
+
+    size_type capacity() const
+    { return blockVector_.capacity(); }
+
+    size_type size() const
+    { return blockVector_.size(); }
+
+    void resize(size_type size)
+    {
+        blockVector_.resize(size);
+        states_.resize(size);
+    }
+
+    BVType& native()
+    { return blockVector_; }
+
+    const BVType& native() const
+    { return blockVector_; }
+
+private:
+    BVType blockVector_;
+    States states_;
+};
+
 } // end namespace Dumux::Istl
 
 #endif
