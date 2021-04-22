@@ -158,10 +158,13 @@ class BlockVectorWithState
     template<class PV>
     struct BlockVectorView
     {
+        BlockVectorView() : solution_(nullptr), state_(nullptr) {}
+
         BlockVectorView(PV& sol, State& state)
         {
             solution_ = &sol;
             state_ = &state;
+            // PV::narf();
         }
 
        auto& operator= (const PV& other)
@@ -173,8 +176,23 @@ class BlockVectorWithState
        void setState(int s)
        { *state_ = s; }
 
-       operator PV()
+       operator PV() const
        { return *solution_; }
+
+       auto& operator[] (int i)
+       {
+           return (*solution_)[i];
+       }
+
+       const auto& operator[] (int i) const
+       {
+           return (*solution_)[i];
+       }
+
+       static constexpr auto size()
+       { return PV::size(); }
+
+
 
        State state() const
        { return *state_; }
@@ -195,6 +213,11 @@ class BlockVectorWithState
 
        State state() const
        { return *state_; }
+
+       const auto& operator[] (int i) const
+       {
+           return (*solution_)[i];
+       }
 
    private:
        const PV* solution_;
