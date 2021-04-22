@@ -46,8 +46,8 @@ public:
 
 protected:
     // perform variable switch at a degree of freedom location
-    template<class VolumeVariables, class IndexType, class GlobalPosition>
-    bool update_(typename VolumeVariables::PrimaryVariables& priVars,
+    template<class PV, class VolumeVariables, class IndexType, class GlobalPosition>
+    bool update_(PV&& priVars,
                  const VolumeVariables& volVars,
                  IndexType dofIdxGlobal,
                  const GlobalPosition& globalPos)

@@ -86,13 +86,13 @@ public:
         {
             const auto residual = this->asImp_().evalLocalResidual(); // forward to the internal implementation
             for (const auto& scv : scvs(this->fvGeometry()))
-                res[scv.dofIndex()] += residual[scv.localDofIndex()];
+                res.native()[scv.dofIndex()] += residual[scv.localDofIndex()];
         }
         else if (!this->elementIsGhost())
         {
             const auto residual = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables, partialReassembler); // forward to the internal implementation
             for (const auto& scv : scvs(this->fvGeometry()))
-                res[scv.dofIndex()] += residual[scv.localDofIndex()];
+                res.native()[scv.dofIndex()] += residual[scv.localDofIndex()];
         }
         else
         {
@@ -121,7 +121,7 @@ public:
                     J[j][j] = 1.0;
 
                 // set residual for the vertex
-                res[vIdx] = 0;
+                res.native()[vIdx] = 0;
             }
         }
 
@@ -185,7 +185,7 @@ public:
         const auto residual = this->evalLocalResidual();
 
         for (const auto& scv : scvs(this->fvGeometry()))
-            res[scv.dofIndex()] += residual[scv.localDofIndex()];
+            res.native()[scv.dofIndex()] += residual[scv.localDofIndex()];
 
         auto applyDirichlet = [&] (const auto& scvI,
                                    const auto& dirichletValues,

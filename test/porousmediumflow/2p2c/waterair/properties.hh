@@ -71,7 +71,9 @@ struct SpatialParams<TypeTag, TTag::WaterAir>
 template<class TypeTag>
 struct SolutionVector<TypeTag, TTag::WaterAir>
 {
-    using type = Dumux::Istl::BlockVectorWithState<Dune::BlockVector<GetPropType<TypeTag, Properties::PrimaryVariables>>, std::vector<int>>;
+    using PV = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,
+                                 GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
+    using type = Dumux::Istl::BlockVectorWithState<Dune::BlockVector<PV>, int>;
 };
 
 // Define whether mole(true) or mass (false) fractions are used
