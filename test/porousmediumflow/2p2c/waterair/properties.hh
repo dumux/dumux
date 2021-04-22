@@ -33,6 +33,7 @@
 
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/porousmediumflow/2p2c/model.hh>
+#include <dumux/common/blockvector.hh>
 
 #include "spatialparams.hh"
 #include "problem.hh"
@@ -65,6 +66,12 @@ struct SpatialParams<TypeTag, TTag::WaterAir>
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = WaterAirSpatialParams<GridGeometry, Scalar>;
+};
+
+template<class TypeTag>
+struct SolutionVector<TypeTag, TTag::WaterAir>
+{
+    using type = Dumux::Istl::BlockVectorWithState<Dune::BlockVector<GetPropType<TypeTag, Properties::PrimaryVariables>>, std::vector<int>>;
 };
 
 // Define whether mole(true) or mass (false) fractions are used
