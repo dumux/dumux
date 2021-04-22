@@ -155,15 +155,16 @@ private:
 template<class BVType, class State>
 class BlockVectorWithState
 {
+    template<class PV>
     struct BlockVectorView
     {
-        BlockVectorView(BVType& sol, State& state)
+        BlockVectorView(PV& sol, State& state)
         {
             solution_ = &sol;
             state_ = &state;
         }
 
-       auto& operator= (const BVType& other)
+       auto& operator= (const PV& other)
        {
            *solution_ = other;
            return *this;
@@ -172,31 +173,32 @@ class BlockVectorWithState
        void setState(int s)
        { *state_ = s; }
 
-       operator BVType()
+       operator PV()
        { return *solution_; }
 
        State state() const
        { return *state_; }
 
    private:
-       BVType* solution_;
+       PV* solution_;
        State* state_;
     };
 
+    template<class PV>
     struct ConstBlockVectorView
     {
-        ConstBlockVectorView(const BVType& sol, const State& state) : solution_(&sol), state_(&state)
+        ConstBlockVectorView(const PV& sol, const State& state) : solution_(&sol), state_(&state)
         {}
 
-       operator BVType() const
+       operator PV() const
        { return *solution_; }
 
        State state() const
        { return *state_; }
 
    private:
-       const BVType* solution_;
-       const  State* state_;
+       const PV* solution_;
+       const State* state_;
     };
 
 public:
@@ -227,14 +229,14 @@ public:
         states_.resize(blockVector_.size());
     }
 
-    block_type& operator [](int i)
+    auto operator [](int i)
     {
-        return BlockVectorView(blockVector_[dofIdx], states_[dofIdx]);
+        return BlockVectorView<block_type>(blockVector_[i], states_[i]);
     }
 
-    const block_type& operator[] (int i) const
+    const auto operator[] (int i) const
     {
-        return ConstBlockVectorView(blockVector_[dofIdx], states_[dofIdx]);
+        return ConstBlockVectorView<block_type>(blockVector_[i], states_[i]);
     }
 
     BlockVectorWithState& operator= (const field_type& k)
@@ -328,7 +330,7 @@ public:
 
 private:
     BVType blockVector_;
-    States states_;
+    std::vector<State> states_;
 };
 
 } // end namespace Dumux::Istl
