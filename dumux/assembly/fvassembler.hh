@@ -219,7 +219,7 @@ public:
 
                 PVHelper vectorHelper(gridView(), gridGeometry_->vertexMapper());
 
-                vectorHelper.makeNonOverlappingConsistent(residual);
+                vectorHelper.makeNonOverlappingConsistent(residual.native());
             }
         }
         else if (!warningIssued)

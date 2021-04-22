@@ -39,7 +39,7 @@
 #include <dumux/discretization/evalsolution.hh>
 #include <dumux/discretization/evalgradients.hh>
 #include <dumux/porousmediumflow/1pnc/model.hh>
-
+#include <dumux/common/blockvector.hh>
 
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/fluidsystems/1padapter.hh>
@@ -86,6 +86,12 @@ struct SpatialParams<TypeTag, TTag::OnePTwoCTest>
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = OnePNCTestSpatialParams<GridGeometry, Scalar>;
+};
+
+template<class TypeTag>
+struct SolutionVector<TypeTag, TTag::OnePTwoCTest>
+{
+    using type = Dumux::Istl::BlockVector<Dune::BlockVector<GetPropType<TypeTag, Properties::PrimaryVariables>>>;
 };
 
 // Define whether mole(true) or mass (false) fractions are used
