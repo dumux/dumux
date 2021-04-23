@@ -152,77 +152,154 @@ private:
     BVType blockVector_;
 };
 
+// forward declare
+template<class PV, class State>
+struct BlockVectorView;
+
+template<class PV, class State>
+struct ConstBlockVectorView;
+
+template<class PV, class State>
+struct ConstBlockVectorView
+{
+    template<typename T, class S>
+    friend struct BlockVectorView;
+
+    // friend BlockVectorView<PV>& operator= (const ConstBlockVectorView<PV>& other);
+
+    ConstBlockVectorView(const PV& sol, const State& state) : solution_(&sol), state_(&state)
+    {}
+
+   operator PV() const
+   { return *solution_; }
+
+   State state() const
+   { return *state_; }
+
+   const auto& operator[] (int i) const
+   {
+       return (*solution_)[i];
+   }
+
+private:
+   const PV* solution_;
+   const State* state_;
+};
+
+
+template<class PV, class State>
+struct BlockVectorView
+{
+    template<typename T, class S>
+    friend struct ConstBlockVectorView;
+
+    BlockVectorView() : solution_(nullptr), state_(nullptr) {}
+
+    BlockVectorView(PV& sol, State& state)
+    {
+        solution_ = &sol;
+        state_ = &state;
+        // PV::narf();
+    }
+
+   auto& operator= (const ConstBlockVectorView<PV, State>& other)
+   {
+       if (solution_)
+       {
+           *solution_ = (*other.solution_);
+           *state_ = other.state();
+       }
+       else
+       {
+           solStored_ = std::make_unique<PV>((*other.solution_));
+           stateStored_ = other.state();
+       }
+
+       return *this;
+   }
+
+   auto& operator= (const SwitchablePrimaryVariables<PV, int>& other)
+   {
+       if (solution_)
+       {
+           *solution_ = other;
+           *state_ = other.state();
+       }
+       else
+       {
+           solStored_ = std::make_unique<PV>(other);
+           stateStored_ = other.state();
+       }
+
+       return *this;
+   }
+
+   void setState(int s)
+   { *state_ = s; }
+
+   operator SwitchablePrimaryVariables<PV, int>() const
+   {
+       SwitchablePrimaryVariables<PV, int> privars;
+       if (solution_)
+       {
+           privars = *solution_;
+           privars.setState(*state_);
+       }
+       else
+       {
+           privars = *solStored_;
+           privars.setState(stateStored_);
+       }
+
+       return privars;
+   }
+   // operator PV() const
+   // {
+   //     if (solution_)
+   //         return *solution_;
+   //     else
+   //         return *solStored_;
+   // }
+
+   auto& operator[] (int i)
+   {
+       if (solution_)
+           return (*solution_)[i];
+       else
+           return (*solStored_)[i];
+   }
+
+   const auto& operator[] (int i) const
+   {
+       if (solution_)
+           return (*solution_)[i];
+       else
+           return (*solStored_)[i];
+   }
+
+   static constexpr auto size()
+   { return PV::size(); }
+
+
+
+   State state() const
+   {
+       if (solution_)
+           return *state_;
+       else
+           return stateStored_;
+   }
+
+private:
+   PV* solution_;
+   State* state_;
+   State stateStored_;
+   std::unique_ptr<PV> solStored_;
+};
+
 template<class BVType, class State>
 class BlockVectorWithState
 {
-    template<class PV>
-    struct BlockVectorView
-    {
-        BlockVectorView() : solution_(nullptr), state_(nullptr) {}
-
-        BlockVectorView(PV& sol, State& state)
-        {
-            solution_ = &sol;
-            state_ = &state;
-            // PV::narf();
-        }
-
-       auto& operator= (const PV& other)
-       {
-           *solution_ = other;
-           return *this;
-       }
-
-       void setState(int s)
-       { *state_ = s; }
-
-       operator PV() const
-       { return *solution_; }
-
-       auto& operator[] (int i)
-       {
-           return (*solution_)[i];
-       }
-
-       const auto& operator[] (int i) const
-       {
-           return (*solution_)[i];
-       }
-
-       static constexpr auto size()
-       { return PV::size(); }
-
-
-
-       State state() const
-       { return *state_; }
-
-   private:
-       PV* solution_;
-       State* state_;
-    };
-
-    template<class PV>
-    struct ConstBlockVectorView
-    {
-        ConstBlockVectorView(const PV& sol, const State& state) : solution_(&sol), state_(&state)
-        {}
-
-       operator PV() const
-       { return *solution_; }
-
-       State state() const
-       { return *state_; }
-
-       const auto& operator[] (int i) const
-       {
-           return (*solution_)[i];
-       }
-
-   private:
-       const PV* solution_;
-       const State* state_;
-    };
 
 public:
     using field_type = typename BVType::field_type;
@@ -254,12 +331,12 @@ public:
 
     auto operator [](int i)
     {
-        return BlockVectorView<block_type>(blockVector_[i], states_[i]);
+        return BlockVectorView<block_type, State>(blockVector_[i], states_[i]);
     }
 
     const auto operator[] (int i) const
     {
-        return ConstBlockVectorView<block_type>(blockVector_[i], states_[i]);
+        return ConstBlockVectorView<block_type, State>(blockVector_[i], states_[i]);
     }
 
     BlockVectorWithState& operator= (const field_type& k)
