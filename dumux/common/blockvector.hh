@@ -24,6 +24,10 @@
 #ifndef DUMUX_COMMON_BLOCKVECTOR_HH
 #define DUMUX_COMMON_BLOCKVECTOR_HH
 
+#include <dune/common/fvector.hh>
+#include <dune/istl/bvector.hh>
+#include <dune/common/std/type_traits.hh>
+
 namespace Dumux::Istl {
 
 template<class BlockVectorType>
@@ -407,5 +411,40 @@ private:
 };
 
 } // end namespace Dumux::Istl
+
+namespace Dumux {
+
+namespace Detail {
+
+template <class T>
+using NativeStorageDetector = decltype(std::declval<T>().native());
+
+template<class T>
+static constexpr bool hasNativeStorage()
+{ return Dune::Std::is_detected<NativeStorageDetector, T>::value; }
+
+}
+
+template<class SolutionVector>
+decltype(auto) native(SolutionVector&& sol)
+{
+    if constexpr (Detail::hasNativeStorage<SolutionVector>())
+        return sol.native();
+    else
+    {
+        using Scalar = std::decay_t<decltype(sol[0][0])>;
+        static constexpr auto numEq = std::decay_t<decltype(sol[0])>::size();
+        using BlockType = Dune::FieldVector<Scalar, numEq>;
+        using BlockVector = Dune::BlockVector<BlockType>;
+
+        BlockVector result(sol.size());
+        for (auto i = 0; i < sol.size(); ++i)
+            result[i] = sol[i];
+
+        return result;
+    }
+}
+
+} // end namespace Dumux
 
 #endif
