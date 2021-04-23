@@ -161,7 +161,7 @@ public:
         assemble_([&](const Element& element)
         {
             LocalAssembler localAssembler(*this, element, curSol);
-            localAssembler.assembleJacobianAndResidual(*jacobian_, *residual_, *gridVariables_, partialReassembler);
+            localAssembler.assembleJacobianAndResidual(*jacobian_, native(*residual_), *gridVariables_, partialReassembler);
         });
 
         enforcePeriodicConstraints_(*jacobian_, *residual_, curSol, *gridGeometry_);
@@ -197,7 +197,7 @@ public:
         assemble_([&](const Element& element)
         {
             LocalAssembler localAssembler(*this, element, curSol);
-            localAssembler.assembleResidual(r);
+            localAssembler.assembleResidual(native(r));
         });
     }
 
