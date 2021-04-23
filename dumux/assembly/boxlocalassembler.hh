@@ -75,8 +75,8 @@ public:
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix. The element residual is written into the right hand side.
      */
-    template <class PartialReassembler = DefaultPartialReassembler>
-    void assembleJacobianAndResidual(JacobianMatrix& jac, SolutionVector& res, GridVariables& gridVariables,
+    template <class Residual, class PartialReassembler = DefaultPartialReassembler>
+    void assembleJacobianAndResidual(JacobianMatrix& jac, Residual& res, GridVariables& gridVariables,
                                      const PartialReassembler* partialReassembler = nullptr)
     {
         this->asImp_().bindLocalViews();
@@ -86,13 +86,13 @@ public:
         {
             const auto residual = this->asImp_().evalLocalResidual(); // forward to the internal implementation
             for (const auto& scv : scvs(this->fvGeometry()))
-                res.native()[scv.dofIndex()] += residual[scv.localDofIndex()];
+                res[scv.dofIndex()] += residual[scv.localDofIndex()];
         }
         else if (!this->elementIsGhost())
         {
             const auto residual = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables, partialReassembler); // forward to the internal implementation
             for (const auto& scv : scvs(this->fvGeometry()))
-                res.native()[scv.dofIndex()] += residual[scv.localDofIndex()];
+                res[scv.dofIndex()] += residual[scv.localDofIndex()];
         }
         else
         {
@@ -121,7 +121,7 @@ public:
                     J[j][j] = 1.0;
 
                 // set residual for the vertex
-                res.native()[vIdx] = 0;
+                res[vIdx] = 0;
             }
         }
 
@@ -179,13 +179,14 @@ public:
     /*!
      * \brief Assemble the residual only
      */
-    void assembleResidual(SolutionVector& res)
+    template<class Residual>
+    void assembleResidual(Residual& res)
     {
         this->asImp_().bindLocalViews();
         const auto residual = this->evalLocalResidual();
 
         for (const auto& scv : scvs(this->fvGeometry()))
-            res.native()[scv.dofIndex()] += residual[scv.localDofIndex()];
+            res[scv.dofIndex()] += residual[scv.localDofIndex()];
 
         auto applyDirichlet = [&] (const auto& scvI,
                                    const auto& dirichletValues,
