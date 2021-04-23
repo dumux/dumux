@@ -24,26 +24,18 @@
 #ifndef DUMUX_COMMON_BLOCKVECTOR_HH
 #define DUMUX_COMMON_BLOCKVECTOR_HH
 
-// // forward declaration
-// namespace Dune {
-//
-// template<class... Args>
-// class MultiTypeBlockVector;
-//
-// } // end namespace Dune
-
 namespace Dumux::Istl {
 
-template<class BVType>
+template<class BlockVectorType>
 class BlockVector
 {
 public:
-    using field_type = typename BVType::field_type;
-    using block_type = typename BVType::block_type;
-    using allocator_type = typename BVType::allocator_type;
-    using size_type = typename BVType::size_type;
-    using Iterator = typename BVType::Iterator;
-    using ConstIterator = typename BVType::ConstIterator;
+    using field_type = typename BlockVectorType::field_type;
+    using block_type = typename BlockVectorType::block_type;
+    using allocator_type = typename BlockVectorType::allocator_type;
+    using size_type = typename BlockVectorType::size_type;
+    using Iterator = typename BlockVectorType::Iterator;
+    using ConstIterator = typename BlockVectorType::ConstIterator;
 
     BlockVector() = default;
 
@@ -142,172 +134,153 @@ public:
     void resize(size_type size)
     { blockVector_.resize(size); }
 
-    BVType& native()
+    BlockVectorType& native()
     { return blockVector_; }
 
-    const BVType& native() const
+    const BlockVectorType& native() const
     { return blockVector_; }
 
 private:
-    BVType blockVector_;
+    BlockVectorType blockVector_;
 };
 
 // forward declare
-template<class PV, class State>
+template<class BlockType, class PriVarsType, class State>
 struct BlockVectorView;
 
-template<class PV, class State>
+template<class BlockType, class State>
 struct ConstBlockVectorView;
 
-template<class PV, class State>
+template<class BlockType, class State>
 struct ConstBlockVectorView
 {
-    template<typename T, class S>
+    template<class B, class P, class S>
     friend struct BlockVectorView;
 
-    // friend BlockVectorView<PV>& operator= (const ConstBlockVectorView<PV>& other);
-
-    ConstBlockVectorView(const PV& sol, const State& state) : solution_(&sol), state_(&state)
+    ConstBlockVectorView(const BlockType& priVars, const State& state) : priVars_(&priVars), state_(&state)
     {}
 
-   operator PV() const
-   { return *solution_; }
+    operator BlockType() const
+    { return *priVars_; }
 
-   State state() const
-   { return *state_; }
+    State state() const
+    { return *state_; }
 
-   const auto& operator[] (int i) const
-   {
-       return (*solution_)[i];
-   }
+    const auto& operator[] (int i) const
+    { return (*priVars_)[i]; }
 
 private:
-   const PV* solution_;
-   const State* state_;
+    const BlockType* priVars_;
+    const State* state_;
 };
 
-
-template<class PV, class State>
+template<class BlockType, class PriVarsType, class State>
 struct BlockVectorView
 {
-    template<typename T, class S>
-    friend struct ConstBlockVectorView;
+    BlockVectorView() : priVars_(nullptr), state_(nullptr) {}
 
-    BlockVectorView() : solution_(nullptr), state_(nullptr) {}
-
-    BlockVectorView(PV& sol, State& state)
+    BlockVectorView(BlockType& priVars, State& state)
     {
-        solution_ = &sol;
+        priVars_ = &priVars;
         state_ = &state;
-        // PV::narf();
     }
 
-   auto& operator= (const ConstBlockVectorView<PV, State>& other)
-   {
-       if (solution_)
-       {
-           *solution_ = (*other.solution_);
-           *state_ = other.state();
-       }
-       else
-       {
-           solStored_ = std::make_unique<PV>((*other.solution_));
-           stateStored_ = other.state();
-       }
+    auto& operator= (const ConstBlockVectorView<BlockType, State>& other)
+    {
+        if (priVars_)
+        {
+            *priVars_ = (*other.priVars_);
+            *priVars_ = other.state();
+        }
+        else
+        {
+            priVarsStored_ = std::make_unique<BlockType>((*other.priVars_));
+            stateStored_ = other.state();
+        }
 
-       return *this;
-   }
+        return *this;
+    }
 
-   auto& operator= (const SwitchablePrimaryVariables<PV, int>& other)
-   {
-       if (solution_)
-       {
-           *solution_ = other;
-           *state_ = other.state();
-       }
-       else
-       {
-           solStored_ = std::make_unique<PV>(other);
-           stateStored_ = other.state();
-       }
+    auto& operator= (const PriVarsType& other)
+    {
+        if (priVars_)
+        {
+            *priVars_ = other;
+            *state_ = other.state();
+        }
+        else
+        {
+            priVarsStored_ = std::make_unique<BlockType>(other);
+            stateStored_ = other.state();
+        }
 
-       return *this;
-   }
+        return *this;
+    }
 
-   void setState(int s)
-   { *state_ = s; }
+    void setState(int s)
+    { *state_ = s; }
 
-   operator SwitchablePrimaryVariables<PV, int>() const
-   {
-       SwitchablePrimaryVariables<PV, int> privars;
-       if (solution_)
-       {
-           privars = *solution_;
-           privars.setState(*state_);
-       }
-       else
-       {
-           privars = *solStored_;
-           privars.setState(stateStored_);
-       }
+    operator PriVarsType() const
+    {
+        PriVarsType privars;
+        if (priVars_)
+        {
+            privars = *priVars_;
+            privars.setState(*state_);
+        }
+        else
+        {
+            privars = *priVarsStored_;
+            privars.setState(stateStored_);
+        }
 
-       return privars;
-   }
-   // operator PV() const
-   // {
-   //     if (solution_)
-   //         return *solution_;
-   //     else
-   //         return *solStored_;
-   // }
+        return privars;
+    }
 
-   auto& operator[] (int i)
-   {
-       if (solution_)
-           return (*solution_)[i];
-       else
-           return (*solStored_)[i];
-   }
+    auto& operator[] (int i)
+    {
+        if (priVars_)
+            return (*priVars_)[i];
+        else
+            return (*priVarsStored_)[i];
+    }
 
-   const auto& operator[] (int i) const
-   {
-       if (solution_)
-           return (*solution_)[i];
-       else
-           return (*solStored_)[i];
-   }
+    const auto& operator[] (int i) const
+    {
+        if (priVars_)
+            return (*priVars_)[i];
+        else
+            return (*priVarsStored_)[i];
+    }
 
-   static constexpr auto size()
-   { return PV::size(); }
+    static constexpr auto size()
+    { return BlockType::size(); }
 
-
-
-   State state() const
-   {
-       if (solution_)
-           return *state_;
-       else
-           return stateStored_;
-   }
+    State state() const
+    {
+        if (priVars_)
+            return *state_;
+        else
+            return stateStored_;
+    }
 
 private:
-   PV* solution_;
-   State* state_;
-   State stateStored_;
-   std::unique_ptr<PV> solStored_;
+    BlockType* priVars_;
+    State* state_;
+    State stateStored_;
+    std::unique_ptr<BlockType> priVarsStored_;
 };
 
-template<class BVType, class State>
+template<class BlockVectorType, class PriVarsType, class State>
 class BlockVectorWithState
 {
-
 public:
-    using field_type = typename BVType::field_type;
-    using block_type = typename BVType::block_type;
-    using allocator_type = typename BVType::allocator_type;
-    using size_type = typename BVType::size_type;
-    using Iterator = typename BVType::Iterator;
-    using ConstIterator = typename BVType::ConstIterator;
+    using field_type = typename BlockVectorType::field_type;
+    using block_type = typename BlockVectorType::block_type;
+    using allocator_type = typename BlockVectorType::allocator_type;
+    using size_type = typename BlockVectorType::size_type;
+    using Iterator = typename BlockVectorType::Iterator;
+    using ConstIterator = typename BlockVectorType::ConstIterator;
 
     BlockVectorWithState() = default;
 
@@ -329,12 +302,12 @@ public:
         states_.resize(blockVector_.size());
     }
 
-    auto operator [](int i)
+    auto operator [](size_type i)
     {
-        return BlockVectorView<block_type, State>(blockVector_[i], states_[i]);
+        return BlockVectorView<block_type, PriVarsType, State>(blockVector_[i], states_[i]);
     }
 
-    const auto operator[] (int i) const
+    auto operator[] (size_type i) const
     {
         return ConstBlockVectorView<block_type, State>(blockVector_[i], states_[i]);
     }
@@ -422,14 +395,14 @@ public:
         states_.resize(size);
     }
 
-    BVType& native()
+    BlockVectorType& native()
     { return blockVector_; }
 
-    const BVType& native() const
+    const BlockVectorType& native() const
     { return blockVector_; }
 
 private:
-    BVType blockVector_;
+    BlockVectorType blockVector_;
     std::vector<State> states_;
 };
 
