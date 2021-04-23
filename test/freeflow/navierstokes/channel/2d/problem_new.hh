@@ -279,9 +279,9 @@ public:
                 values[Indices::phi2Idx] = 0.0;
                 values[Indices::phi3Idx] = 0.0;
             }
-            //values[Indices::u1Idx] = a_in;
-            //values[Indices::u2Idx] = b_in;
-            //values[Indices::u3Idx] = c_in;
+            values[Indices::u1Idx] = a_in;
+            values[Indices::u2Idx] = b_in;
+            values[Indices::u3Idx] = c_in;
          }
 
          return values;
@@ -324,15 +324,19 @@ public:
                 values = NavierStokesBoundaryFluxHelper<ModelTraits>::scalarOutflowFlux(*this, element, fvGeometry, scvf, elemVolVars);
             if (isInlet_(scvf.ipGlobal()))
             {
-                const static Scalar a_in = getParam<Scalar>("Phasefield.InletAConcentration");
-                const static Scalar b_in = getParam<Scalar>("Phasefield.InletBConcentration");
-                const static Scalar c_in = getParam<Scalar>("Phasefield.InletCConcentration");
-                const auto volumeFlux = this->faceVelocity(element,fvGeometry, scvf) *
-                    scvf.unitOuterNormal();
-                const auto insideVolVars = elemVolVars[scvf.insideScvIdx()];
-                values[Indices::u1Idx] = volumeFlux * a_in;
-                values[Indices::u2Idx] = volumeFlux * b_in;
-                values[Indices::u3Idx] = volumeFlux * c_in;
+                //const static Scalar D = getParam<Scalar>("Phasefield.DiffCoeff");
+                //const auto& volVars = elemVolVars[scvf.insideScvIdx()];
+                //values[Indices::phi1Idx] = 0.0;
+                //values[Indices::phi2Idx] = 0.0;
+                //values[Indices::phi3Idx] = 0.0;
+                //const static Scalar a_in = getParam<Scalar>("Phasefield.InletAConcentration");
+                //const static Scalar b_in = getParam<Scalar>("Phasefield.InletBConcentration");
+                //const static Scalar c_in = getParam<Scalar>("Phasefield.InletCConcentration");
+                //const auto volumeFlux = this->faceVelocity(element,fvGeometry, scvf) *
+                //    scvf.unitOuterNormal();
+                //values[Indices::u1Idx] = volumeFlux/D * (a_in - volVars.concentration(1));
+                //values[Indices::u2Idx] = volumeFlux/D * (b_in - volVars.concentration(2));
+                //values[Indices::u3Idx] = volumeFlux/D * (c_in - volVars.concentration(3));
             }
         }
 
@@ -410,6 +414,7 @@ public:
             const static Scalar xi = getParam<Scalar>("Phasefield.xi");
             const static Scalar rad = getParam<Scalar>("Phasefield.StartingRadius");
             const static Scalar S = getParam<Scalar>("Phasefield.StartingScaling");
+            const static Scalar S2 = getParam<Scalar>("Phasefield.StartingScaling2");
             const static Scalar grainX = getParam<Scalar>("Phasefield.GrainX");
             const static Scalar grainY = getParam<Scalar>("Phasefield.GrainY");
             if (icType == "ThinChannel")
@@ -425,7 +430,7 @@ public:
                     (globalPos[0]-grainX)*(globalPos[0]-grainX) -rad*rad;
                 const Scalar s2 = (globalPos[0] - grainX);
                 values[Indices::phi1Idx] = 1.0/(1.0 + std::exp(S*-s/xi));
-                values[Indices::phi2Idx] = (1.0 - values[Indices::phi1Idx])/(1.0 + std::exp(S*-s2/xi));
+                values[Indices::phi2Idx] = (1.0 - values[Indices::phi1Idx])/(1.0 + std::exp(S2*-s2/xi));
                 values[Indices::phi3Idx] = 1-values[Indices::phi1Idx]-values[Indices::phi2Idx];
             }
             else
@@ -506,6 +511,12 @@ public:
 
     void writeScalars(SolutionVector& x, std::ofstream& fout)
     {
+        NumEqVector dummyFlux(0.0);
+        writeScalars(x, dummyFlux, fout);
+    }
+
+    void writeScalars(SolutionVector& x, NumEqVector& boundaryFlux, std::ofstream& fout)
+    {
         static const auto upperRight = getParam<std::tuple<Scalar, Scalar>>("Grid.UpperRight");
         static const auto cells = getParam<std::tuple<Scalar, Scalar>>("Grid.Cells");
         static const Scalar hx = std::get<0>(upperRight)/std::get<0>(cells);
@@ -513,14 +524,16 @@ public:
         static const auto xi = getParam<Scalar>("Phasefield.xi");
         static const auto rhoD = getParam<Scalar>("Phasefield.MineralDMolarDensity");
         static const auto rhoP = getParam<Scalar>("Phasefield.MineralPMolarDensity");
-        Scalar volumeF = 0;
-        Scalar volumeD = 0;
-        Scalar volumeP = 0;
-        Scalar sigmaF = 0;
-        Scalar sigmaD = 0;
-        Scalar sigmaP = 0;
-        Scalar conserveB = 0;
-        Scalar conserveC = 0;
+        Scalar volumeF = 0.0;
+        Scalar volumeD = 0.0;
+        Scalar volumeP = 0.0;
+        Scalar sigmaF = 0.0;
+        Scalar sigmaD = 0.0;
+        Scalar sigmaP = 0.0;
+        Scalar conserveB = 0.0;
+        Scalar conserveC = 0.0;
+        accumFluxB_ += boundaryFlux[Indices::u2Idx];
+        accumFluxC_ += boundaryFlux[Indices::u3Idx];
         for (auto dof : x)
         {
             Scalar sf =  dof[Indices::phi1Idx] * (1-dof[Indices::phi1Idx]);
@@ -532,14 +545,17 @@ public:
             sigmaF  += 4.0*hx*hy/xi*sf;
             sigmaD += 4.0*hx*hy/xi*sd;
             sigmaP += 4.0*hx*hy/xi*sp;
-            // Conservation of chemical species B, C (TODO: add fluxes at domain boundary)
-            accumFluxB_ += 0;
-            accumFluxC_ += 0;
+            // Conservation of chemical species B, C
             conserveB += hx*hy * ( dof[Indices::phi1Idx] * dof[Indices::u2Idx] +
-                    dof[Indices::phi2Idx] * rhoD + dof[Indices::phi3Idx] * rhoP ) + accumFluxB_;
+                    dof[Indices::phi2Idx] * rhoD + dof[Indices::phi3Idx] * rhoP )
+                ;
             conserveC += hx*hy * ( dof[Indices::phi1Idx] * dof[Indices::u3Idx] +
-                    dof[Indices::phi3Idx] * rhoP ) + accumFluxC_;
+                    dof[Indices::phi3Idx] * rhoP )
+                ;
         }
+        conserveB += accumFluxB_;
+        conserveC += accumFluxC_;
+
         fout << timeLoop_->time() << '\t' << volumeF << '\t' << volumeD << '\t' << volumeP << '\t' << sigmaF << '\t' <<
             sigmaD << '\t' << sigmaP << '\t' << conserveB << '\t' << conserveC << std::endl;
     }
@@ -563,8 +579,8 @@ private:
     OutletCondition outletCondition_;
     bool useVelocityProfile_;
     TimeLoopPtr timeLoop_;
-    Scalar accumFluxB_;
-    Scalar accumFluxC_;
+    Scalar accumFluxB_ = 0.0;
+    Scalar accumFluxC_ = 0.0;
 };
 } // end namespace Dumux
 

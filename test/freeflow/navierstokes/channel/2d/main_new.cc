@@ -35,6 +35,7 @@
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
 #include <dumux/assembly/diffmethod.hh>
+#include <dumux/assembly/fvassembler.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
@@ -51,6 +52,36 @@
 #include "../../analyticalsolution.hh"
 
 #include <dumux/freeflow/navierstokes/newtonsolver.hh>
+
+template<class Assembler, class SolutionVector, class LocalAssembler, class CouplingManager>
+auto assembleBoundaryFluxes(const Assembler& assembler, const SolutionVector& curSol,
+        CouplingManager& couplingManager)
+{
+    using MassSolutionVector = std::remove_reference_t<std::remove_cv_t<decltype(curSol[Dune::index_constant<1>()])>>;
+    typename MassSolutionVector::block_type flux(0.0);
+
+    for (const auto& element : elements(assembler.gridView(Dune::index_constant<1>())))
+    {
+        LocalAssembler localAssembler(assembler, element, curSol, couplingManager);
+        localAssembler.bindLocalViews();
+
+        for (const auto& scvf : scvfs(localAssembler.fvGeometry()))
+        {
+            if (scvf.boundary())
+            {
+                flux += localAssembler.localResidual().evalFlux(localAssembler.problem(),
+                        element,
+                        localAssembler.fvGeometry(),
+                        localAssembler.curElemVolVars(),
+                        localAssembler.elemFluxVarsCache(),
+                        scvf
+                        )
+                    * scvf.area();
+            }
+        }
+    }
+    return flux;
+}
 
 namespace Dumux::Properties{
 
@@ -230,9 +261,13 @@ int main(int argc, char** argv) try
     // const auto p1outlet = GlobalPosition{xMax, yMax};
     // flux.addSurface("outlet", p0outlet, p1outlet);
 
+    using MassLocalAssembler = SubDomainCCLocalAssembler<massIdx, MassTypeTag, Assembler,
+          DiffMethod::numeric, /*implict*/true>;
     std::ofstream fout_scalar;
     fout_scalar.open(getParam<std::string>("Problem.Name", "scalars") + ".txt");
-    massProblem->writeScalars(xOld[massIdx], fout_scalar);
+    //auto boundaryFlux = assembleBoundaryFluxes<Assembler, SolutionVector,
+    //     MassLocalAssembler, CouplingManager>(*assembler, xOld, *couplingManager);
+    massProblem->writeScalars(xOld[massIdx],/* boundaryFlux,*/ fout_scalar);
 
     if (isStationary)
     {
@@ -256,10 +291,9 @@ int main(int argc, char** argv) try
         //std::ofstream fout_res;
         //fout.open("res_mom.txt");
         //Dune::printvector(fout, res_mom, "", "");
-        //fout.close();
+        //fout_res.close();
         //fout_res.open("res_mas.txt");
         //Dune::printvector(fout_res, res_mas, "", "");
-        //std::cout << "done\n";
         timeLoop->start(); do
         {
             // solve the non-linear system with time step control
@@ -287,7 +321,9 @@ int main(int argc, char** argv) try
             vtkWriter.write(timeLoop->time());
 
             // write volume, surface and relative mass
-            massProblem->writeScalars(xOld[massIdx], fout_scalar);
+            auto boundaryFlux = assembleBoundaryFluxes<Assembler, SolutionVector,
+                 MassLocalAssembler, CouplingManager>(*assembler, xOld, *couplingManager);
+            massProblem->writeScalars(xOld[massIdx], boundaryFlux, fout_scalar);
 
             // // calculate and print mass fluxes over the planes
             // flux.calculateMassOrMoleFluxes();
