@@ -30,6 +30,8 @@
 
 namespace Dumux::Istl {
 
+// TODO: can probably be replaced with class BlockVector : public BlockVectorType
+// This does not really add any value. Maybe delete completely and just use the dune type directly.
 template<class BlockVectorType>
 class BlockVector
 {
@@ -275,17 +277,18 @@ private:
     std::unique_ptr<BlockType> priVarsStored_;
 };
 
-template<class BlockVectorType, class PriVarsType, class StateVectorType>
+template<class BVType, class PriVarsType, class StateVectorType>
 class BlockVectorWithState
 {
+    using BlockVectorType = std::decay_t<BVType>;
     using State = typename std::decay_t<StateVectorType>::value_type;
 public:
-    using field_type = typename std::decay_t<BlockVectorType>::field_type;
-    using block_type = typename std::decay_t<BlockVectorType>::block_type;
-    using allocator_type = typename std::decay_t<BlockVectorType>::allocator_type;
-    using size_type = typename std::decay_t<BlockVectorType>::size_type;
-    using Iterator = typename std::decay_t<BlockVectorType>::Iterator;
-    using ConstIterator = typename std::decay_t<BlockVectorType>::ConstIterator;
+    using field_type = typename BlockVectorType::field_type;
+    using block_type = typename BlockVectorType::block_type;
+    using allocator_type = typename BlockVectorType::allocator_type;
+    using size_type = typename BlockVectorType::size_type;
+    using Iterator = typename BlockVectorType::Iterator;
+    using ConstIterator = typename BlockVectorType::ConstIterator;
 
     BlockVectorWithState() = default;
 
@@ -309,7 +312,7 @@ public:
 
     //! constructor for using this class as a view (member variables should be references)
     //! TODO add some enable_if (also to other ctors) magic to prevent misuse
-    BlockVectorWithState(std::decay_t<BlockVectorType>& otherDofs, std::vector<State>& otherStates) : blockVector_(otherDofs), states_(otherStates)
+    BlockVectorWithState(BlockVectorType& otherDofs, std::vector<State>& otherStates) : blockVector_(otherDofs), states_(otherStates)
     {
         static_assert(std::is_lvalue_reference_v<decltype(blockVector_)>);
     }
@@ -407,18 +410,27 @@ public:
         states_.resize(size);
     }
 
+    //! Returns a reference to the stored DOFs.
     BlockVectorType& native()
     { return blockVector_; }
 
+    //! Returns a reference to the stored DOFs.
     const BlockVectorType& native() const
     { return blockVector_; }
 
-    std::decay_t<BlockVectorType> nativeDeepCopy() const
+    //! Returns a deep copy of the stored DOFs.
+    BlockVectorType nativeDeepCopy() const
     { return blockVector_; }
 
 private:
-    BlockVectorType blockVector_;
-    StateVectorType states_;
+    BVType blockVector_; // BVType might be a reference
+    StateVectorType states_; // StateVectorType might be a reference
+};
+
+template<class MTBVType, class PriVarsTypes, class StateVectorTypes>
+class MultiTypeBlockVectorWithState
+{
+
 };
 
 } // end namespace Dumux::Istl
@@ -439,6 +451,8 @@ static constexpr bool hasNativeStorage()
 template<class SolutionVector>
 decltype(auto) native(SolutionVector&& sol)
 {
+    // TODO handle MultiTypeBlockVector
+
     if constexpr (Detail::hasNativeStorage<SolutionVector>())
         return sol.native();
     else
