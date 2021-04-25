@@ -275,16 +275,17 @@ private:
     std::unique_ptr<BlockType> priVarsStored_;
 };
 
-template<class BlockVectorType, class PriVarsType, class State>
+template<class BlockVectorType, class PriVarsType, class StateVectorType>
 class BlockVectorWithState
 {
+    using State = typename std::decay_t<StateVectorType>::value_type;
 public:
-    using field_type = typename BlockVectorType::field_type;
-    using block_type = typename BlockVectorType::block_type;
-    using allocator_type = typename BlockVectorType::allocator_type;
-    using size_type = typename BlockVectorType::size_type;
-    using Iterator = typename BlockVectorType::Iterator;
-    using ConstIterator = typename BlockVectorType::ConstIterator;
+    using field_type = typename std::decay_t<BlockVectorType>::field_type;
+    using block_type = typename std::decay_t<BlockVectorType>::block_type;
+    using allocator_type = typename std::decay_t<BlockVectorType>::allocator_type;
+    using size_type = typename std::decay_t<BlockVectorType>::size_type;
+    using Iterator = typename std::decay_t<BlockVectorType>::Iterator;
+    using ConstIterator = typename std::decay_t<BlockVectorType>::ConstIterator;
 
     BlockVectorWithState() = default;
 
@@ -304,6 +305,13 @@ public:
     BlockVectorWithState (size_type n, S capacity) : blockVector_(n, capacity)
     {
         states_.resize(blockVector_.size());
+    }
+
+    //! constructor for using this class as a view (member variables should be references)
+    //! TODO add some enable_if (also to other ctors) magic to prevent misuse
+    BlockVectorWithState(std::decay_t<BlockVectorType>& otherDofs, std::vector<State>& otherStates) : blockVector_(otherDofs), states_(otherStates)
+    {
+        static_assert(std::is_lvalue_reference_v<decltype(blockVector_)>);
     }
 
     auto operator [](size_type i)
@@ -405,9 +413,12 @@ public:
     const BlockVectorType& native() const
     { return blockVector_; }
 
+    std::decay_t<BlockVectorType> nativeDeepCopy() const
+    { return blockVector_; }
+
 private:
     BlockVectorType blockVector_;
-    std::vector<State> states_;
+    StateVectorType states_;
 };
 
 } // end namespace Dumux::Istl
