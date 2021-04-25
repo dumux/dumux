@@ -437,6 +437,10 @@ class MultiTypeBlockVectorWithState
 
 namespace Dumux {
 
+// forward declare
+template<class PV, class S>
+class SwitchablePrimaryVariables;
+
 namespace Detail {
 
 template <class T>
@@ -446,7 +450,34 @@ template<class T>
 static constexpr bool hasNativeStorage()
 { return Dune::Std::is_detected<NativeStorageDetector, T>::value; }
 
+//! Use a standard Dune::BlockVector for PrimaryVariables without state.
+template<class PrimaryVariables>
+struct SolutionVectorHelper
+{
+    using type = Dune::BlockVector<PrimaryVariables>;
+};
+
+//! Use a wrapped type for PrimaryVariables without state.
+template<class PV, class S>
+struct SolutionVectorHelper <Dumux::SwitchablePrimaryVariables<PV, S>>
+{
+    using type = Dumux::Istl::BlockVectorWithState<Dune::BlockVector<PV>, Dumux::SwitchablePrimaryVariables<PV, S>, std::vector<S>>;
+};
+
+template<class... PrimaryVariables>
+struct MultiTypeSolutionVectorHelper
+{
+    // TODO make distinction between regular privars and such with state
+    using type = Dune::MultiTypeBlockVector<Dune::BlockVector<PrimaryVariables>...>;
+};
+
 }
+
+//! Helper alias to get the correct solution vector based on the chosen PrimaryVariables.
+template<class ...PrimaryVariables>
+using SolutionVector = std::conditional_t<(sizeof...(PrimaryVariables) == 1),
+                                          typename Detail::SolutionVectorHelper<PrimaryVariables...>::type,
+                                          typename Detail::MultiTypeSolutionVectorHelper<PrimaryVariables...>::type>;
 
 template<class SolutionVector>
 decltype(auto) native(SolutionVector&& sol)
