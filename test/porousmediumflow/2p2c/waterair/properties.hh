@@ -74,7 +74,7 @@ struct SolutionVector<TypeTag, TTag::WaterAir>
     using PV = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,
                                  GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using type = Dumux::Istl::BlockVectorWithState<Dune::BlockVector<PV>, PrimaryVariables, int>;
+    using type = Dumux::Istl::BlockVectorWithState<Dune::BlockVector<PV>, PrimaryVariables, std::vector<int>>;
 };
 
 // Define whether mole(true) or mass (false) fractions are used
