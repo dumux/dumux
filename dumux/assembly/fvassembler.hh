@@ -161,7 +161,7 @@ public:
         assemble_([&](const Element& element)
         {
             LocalAssembler localAssembler(*this, element, curSol);
-            localAssembler.assembleJacobianAndResidual(*jacobian_, native(*residual_), *gridVariables_, partialReassembler);
+            localAssembler.assembleJacobianAndResidual(*jacobian_, *residual_, *gridVariables_, partialReassembler);
         });
 
         enforcePeriodicConstraints_(*jacobian_, *residual_, curSol, *gridGeometry_);
@@ -197,7 +197,7 @@ public:
         assemble_([&](const Element& element)
         {
             LocalAssembler localAssembler(*this, element, curSol);
-            localAssembler.assembleResidual(native(r));
+            localAssembler.assembleResidual(r);
         });
     }
 
@@ -218,8 +218,7 @@ public:
                 using PVHelper = ParallelVectorHelper<GridView, DM, GridView::dimension>;
 
                 PVHelper vectorHelper(gridView(), gridGeometry_->vertexMapper());
-
-                vectorHelper.makeNonOverlappingConsistent(residual.native());
+                vectorHelper.makeNonOverlappingConsistent(residual);
             }
         }
         else if (!warningIssued)
@@ -458,13 +457,13 @@ private:
             if (m.first < m.second)
             {
                 // add the second row to the first
-                res.native()[m.first] += res.native()[m.second];
+                res[m.first] += res[m.second];
                 const auto end = jac[m.second].end();
                 for (auto it = jac[m.second].begin(); it != end; ++it)
                     jac[m.first][it.index()] += (*it);
 
                 // enforce constraint in second row
-                res.native()[m.second] = curSol.native()[m.second] - curSol.native()[m.first];
+                res[m.second] = native(curSol)[m.second] - native(curSol)[m.first];
                 for (auto it = jac[m.second].begin(); it != end; ++it)
                     (*it) = it.index() == m.second ? 1.0 : it.index() == m.first ? -1.0 : 0.0;
             }
