@@ -491,6 +491,12 @@ struct SolutionVectorTraits
     using NativeType = SolutionVector;
 };
 
+template<class PV, class S>
+struct SolutionVectorTraits<Dune::BlockVector<SwitchablePrimaryVariables<PV, S>>>
+{
+    using NativeType = Dune::BlockVector<PV>;
+};
+
 template<class BlockVectorType, class PrivarsType, class StateVectorType>
 struct SolutionVectorTraits<Dumux::Istl::BlockVectorWithState<BlockVectorType, PrivarsType, StateVectorType>>
 {
