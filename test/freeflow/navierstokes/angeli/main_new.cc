@@ -200,6 +200,18 @@ int main(int argc, char** argv)
                                                  std::make_tuple(momentumGridVariables, massGridVariables),
                                                  couplingManager, timeLoop, xOld);
 
+    for (const auto& element : elements(leafGridView))
+    {
+        using SubDomainLocalAssembler = SubDomainCCLocalAssembler<massIdx, MassTypeTag, Assembler>;
+        SubDomainLocalAssembler localAssembler(*assembler, element, x, *couplingManager);
+        // localAssembler.bindLocalViews();
+
+        for (const auto& scvf : scvfs(localAssembler.fvGeometry()))
+        {
+            std::cout << scvf.ipGlobal() << std::endl;
+        }
+    }
+
     assembler->assembleResidual(x);
     std::cout << "Initial momentum defect " << std::endl;
     for (const auto s : assembler->residual()[momentumIdx])
