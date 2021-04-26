@@ -49,7 +49,7 @@ inline constexpr bool exportsVariables = Dune::Std::is_detected_v<AssemblerVaria
 
 template<class A, bool exports = exportsVariables<A>> struct VariablesChooser;
 template<class A> struct VariablesChooser<A, true> { using Type = AssemblerVariablesType<A>; };
-template<class A> struct VariablesChooser<A, false> { using Type = typename A::ResidualType; };
+template<class A> struct VariablesChooser<A, false> { using Type = typename A::SolutionVector; };
 
 template<class Assembler>
 using AssemblerVariables = typename VariablesChooser<Assembler>::Type;
