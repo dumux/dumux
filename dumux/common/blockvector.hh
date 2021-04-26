@@ -450,6 +450,13 @@ template<class T>
 static constexpr bool hasNativeStorage()
 { return Dune::Std::is_detected<NativeStorageDetector, T>::value; }
 
+template <class T>
+using StateDetector = decltype(std::declval<T>().state());
+
+template<class T>
+static constexpr bool hasState()
+{ return Dune::Std::is_detected<StateDetector, T>::value; }
+
 //! Use a standard Dune::BlockVector for PrimaryVariables without state.
 template<class PrimaryVariables>
 struct SolutionVectorHelper
@@ -478,14 +485,28 @@ template<class ...PrimaryVariables>
 using SolutionVector = std::conditional_t<(sizeof...(PrimaryVariables) == 1),
                                           typename Detail::SolutionVectorHelper<PrimaryVariables...>::type,
                                           typename Detail::MultiTypeSolutionVectorHelper<PrimaryVariables...>::type>;
+template<class SolutionVector>
+struct SolutionVectorTraits
+{
+    using NativeType = SolutionVector;
+};
+
+template<class BlockVectorType, class PrivarsType, class StateVectorType>
+struct SolutionVectorTraits<Dumux::Istl::BlockVectorWithState<BlockVectorType, PrivarsType, StateVectorType>>
+{
+    using NativeType = BlockVectorType;
+};
 
 template<class SolutionVector>
 decltype(auto) native(SolutionVector&& sol)
 {
     // TODO handle MultiTypeBlockVector
 
+
     if constexpr (Detail::hasNativeStorage<SolutionVector>())
         return sol.native();
+    else if constexpr (!Detail::hasState<std::decay_t<decltype(sol[0])>>())
+        return sol;
     else
     {
         using Scalar = std::decay_t<decltype(sol[0][0])>;
