@@ -34,12 +34,12 @@ namespace Dumux {
 
 //! provide an interface as a form of type erasure
 //! this is the minimal requirements a convergence write passed to a newton method has to fulfill
-template <class SolutionVector>
+template <class ResidualVector>
 struct ConvergenceWriterInterface
 {
     virtual ~ConvergenceWriterInterface() = default;
 
-    virtual void write(const SolutionVector &uLastIter, const SolutionVector &deltaU, const SolutionVector &residual) {}
+    virtual void write(const ResidualVector &uLastIter, const ResidualVector &deltaU, const ResidualVector &residual) {}
 };
 
 /*!
@@ -50,12 +50,12 @@ struct ConvergenceWriterInterface
  *       to write out multiple Newton solves with a unique id, if you don't call use all
  *       Newton iterations just come after each other in the pvd file.
  */
-template <class GridGeometry, class SolutionVector>
-class NewtonConvergenceWriter : public ConvergenceWriterInterface<SolutionVector>
+template <class GridGeometry, class ResidualVector>
+class NewtonConvergenceWriter : public ConvergenceWriterInterface<ResidualVector>
 {
     using GridView = typename GridGeometry::GridView;
-    static constexpr auto numEq = SolutionVector::block_type::dimension;
-    using Scalar = typename SolutionVector::block_type::value_type;
+    static constexpr auto numEq = ResidualVector::block_type::dimension;
+    using Scalar = typename ResidualVector::block_type::value_type;
 
     static_assert(GridGeometry::discMethod != DiscretizationMethods::staggered,
                   "This convergence writer does not work for the staggered method, use the StaggeredNewtonConvergenceWriter instead");
@@ -111,9 +111,9 @@ public:
     void reset(std::size_t newId = 0UL)
     { id_ = newId; iteration_ = 0UL; }
 
-    void write(const SolutionVector& uLastIter,
-               const SolutionVector& deltaU,
-               const SolutionVector& residual) override
+    void write(const ResidualVector& uLastIter,
+               const ResidualVector& deltaU,
+               const ResidualVector& residual) override
     {
         assert(uLastIter.size() == deltaU.size() && uLastIter.size() == residual.size());
 
