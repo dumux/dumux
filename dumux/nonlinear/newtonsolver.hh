@@ -54,6 +54,7 @@
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
 #include <dumux/linear/matrixconverter.hh>
 #include <dumux/assembly/partialreassembler.hh>
+#include <dumux/common/blockvector.hh>
 
 #include "newtonconvergencewriter.hh"
 #include "primaryvariableswitchadapter.hh"
@@ -218,12 +219,11 @@ class NewtonSolver : public PDESolver<Assembler, LinearSolver>
 
 protected:
     using Backend = VariablesBackend<typename ParentType::Variables>;
-    using SolutionVector = typename Backend::DofVector;
 
 private:
     using Scalar = typename Assembler::Scalar;
     using JacobianMatrix = typename Assembler::JacobianMatrix;
-    using ConvergenceWriter = ConvergenceWriterInterface<SolutionVector>;
+    using ConvergenceWriter = ConvergenceWriterInterface<typename Assembler::ResidualType>;
     using TimeLoop = TimeLoopBase<Scalar>;
 
     // enable models with primary variable switch
@@ -235,8 +235,11 @@ private:
                              Detail::PriVarSwitchVariables<Assembler>>;
     using PrimaryVariableSwitchAdapter = Dumux::PrimaryVariableSwitchAdapter<PriVarSwitchVariables>;
 
+    using ResidualType = typename Assembler::ResidualType;
+
 public:
     using typename ParentType::Variables;
+    using SolutionVector = typename Backend::DofVector;
     using Communication = Comm;
 
     /*!
@@ -425,7 +428,7 @@ public:
 
             // dummy vector, there is no delta before solving the linear system
             auto delta = Backend::zeros(Backend::size(initSol));
-            convergenceWriter_->write(initSol, delta, this->assembler().residual());
+            convergenceWriter_->write(native(initSol), native(delta), this->assembler().residual());
         }
 
         if (enablePartialReassembly_)
@@ -601,7 +604,7 @@ public:
                                            min(reassemblyMaxThreshold_,
                                                shift_*reassemblyShiftWeight_));
 
-            updateDistanceFromLastLinearization_(uLastIter.native(), deltaU.native());
+            updateDistanceFromLastLinearization_(native(uLastIter), native(deltaU));
             partialReassembler_->computeColors(this->assembler(),
                                                distanceFromLastLinearization_,
                                                reassemblyThreshold);
@@ -1020,7 +1023,7 @@ private:
                 if (convergenceWriter_)
                 {
                     this->assembler().assembleResidual(vars);
-                    convergenceWriter_->write(Backend::dofs(vars), deltaU, this->assembler().residual());
+                    convergenceWriter_->write(native(Backend::dofs(vars)), native(deltaU), this->assembler().residual());
                 }
 
                 // detect if the method has converged
@@ -1157,7 +1160,7 @@ private:
     solveLinearSystemImpl_(LinearSolver& ls,
                            JacobianMatrix& A,
                            SolutionVector& x,
-                           SolutionVector& b)
+                           typename Assembler::ResidualType& b)
     {
         //! Copy into a standard block vector.
         //! This is necessary for all model _not_ using a FieldVector<Scalar, blockSize> as
@@ -1165,18 +1168,27 @@ private:
         //! to this field vector type in Dune ISTL
         //! Could be avoided for vectors that already have the right type using SFINAE
         //! but it shouldn't impact performance too much
-        using OriginalBlockType = Detail::BlockType<SolutionVector>;
-        constexpr auto blockSize = Detail::blockSize<OriginalBlockType>();
+        // using OriginalBlockType = Detail::BlockType<SolutionVector>;
+        // constexpr auto blockSize = Detail::blockSize<OriginalBlockType>();
 
-        using BlockType = Dune::FieldVector<Scalar, blockSize>;
-        Dune::BlockVector<BlockType> xTmp; xTmp.resize(Backend::size(b));
-        Dune::BlockVector<BlockType> bTmp(xTmp);
+        // using BlockType = Dune::FieldVector<Scalar, blockSize>;
+        // Dune::BlockVector<BlockType> xTmp; xTmp.resize(Backend::size(b));
+        // Dune::BlockVector<BlockType> bTmp(xTmp);
 
-        Detail::assign(bTmp, b.native());
-        const int converged = ls.solve(A, xTmp, bTmp);
-        Detail::assign(x.native(), xTmp);
 
-        return converged;
+        if constexpr (std::is_rvalue_reference_v<decltype(native(x))&&>)
+        {
+            // for problems using the "old" SolutionVector storing SwitchablePrimaryVariables
+            decltype(auto) xTmp = native(x);
+            const int converged = ls.solve(A, xTmp, b);
+            Detail::assign(x, xTmp);
+            return converged;
+
+        }
+        else
+        {
+            return ls.solve(A, native(x), b);
+        }
     }
 
 
