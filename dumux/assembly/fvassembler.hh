@@ -54,7 +54,7 @@ class FVAssembler
     using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
     using Element = typename GridView::template Codim<0>::Entity;
     using TimeLoop = TimeLoopBase<GetPropType<TypeTag, Properties::Scalar>>;
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
 
     static constexpr DiscretizationMethod discMethod = GetPropType<TypeTag, Properties::GridGeometry>::discMethod;
     static constexpr bool isBox = discMethod == DiscretizationMethod::box;
@@ -69,8 +69,8 @@ public:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-
-    using ResidualType = SolutionVector;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using ResidualType = typename SolutionVectorTraits<SolutionVector>::NativeType;
 
     /*!
      * \brief The constructor for stationary problems
@@ -207,7 +207,7 @@ public:
      *        sparsity pattern of the jacobian matrix.
      */
     void setLinearSystem(std::shared_ptr<JacobianMatrix> A,
-                         std::shared_ptr<SolutionVector> r)
+                         std::shared_ptr<ResidualType> r)
     {
         jacobian_ = A;
         residual_ = r;
@@ -230,7 +230,7 @@ public:
     {
         jacobian_ = std::make_shared<JacobianMatrix>();
         jacobian_->setBuildMode(JacobianMatrix::random);
-        residual_ = std::make_shared<SolutionVector>();
+        residual_ = std::make_shared<ResidualType>();
 
         setJacobianPattern();
         setResidualSize();
@@ -285,7 +285,7 @@ public:
     { return *jacobian_; }
 
     //! The residual vector (rhs)
-    SolutionVector& residual()
+    ResidualType& residual()
     { return *residual_; }
 
     //! The solution of the previous time step
@@ -340,7 +340,7 @@ private:
     {
         if(!residual_)
         {
-            residual_ = std::make_shared<SolutionVector>();
+            residual_ = std::make_shared<ResidualType>();
             setResidualSize();
         }
 
@@ -411,7 +411,7 @@ private:
     }
 
     template<class GG> std::enable_if_t<GG::discMethod == DiscretizationMethod::box, void>
-    enforcePeriodicConstraints_(JacobianMatrix& jac, SolutionVector& res, const SolutionVector& curSol, const GG& gridGeometry)
+    enforcePeriodicConstraints_(JacobianMatrix& jac, ResidualType& res, const SolutionVector& curSol, const GG& gridGeometry)
     {
         for (const auto& m : gridGeometry.periodicVertexMap())
         {
@@ -432,7 +432,7 @@ private:
     }
 
     template<class GG> std::enable_if_t<GG::discMethod != DiscretizationMethod::box, void>
-    enforcePeriodicConstraints_(JacobianMatrix& jac, SolutionVector& res, const SolutionVector& curSol, const GG& gridGeometry) {}
+    enforcePeriodicConstraints_(JacobianMatrix& jac, ResidualType& res, const SolutionVector& curSol, const GG& gridGeometry) {}
 
     //! pointer to the problem to be solved
     std::shared_ptr<const Problem> problem_;
@@ -454,7 +454,7 @@ private:
 
     //! shared pointers to the jacobian matrix and residual
     std::shared_ptr<JacobianMatrix> jacobian_;
-    std::shared_ptr<SolutionVector> residual_;
+    std::shared_ptr<ResidualType> residual_;
 };
 
 } // namespace Dumux
