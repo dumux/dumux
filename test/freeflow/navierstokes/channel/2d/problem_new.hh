@@ -532,8 +532,8 @@ public:
         Scalar sigmaP = 0.0;
         Scalar conserveB = 0.0;
         Scalar conserveC = 0.0;
-        accumFluxB_ += boundaryFlux[Indices::u2Idx];
-        accumFluxC_ += boundaryFlux[Indices::u3Idx];
+        accumFluxB_ += boundaryFlux[Indices::u2Idx]*timeLoop_->timeStepSize();
+        accumFluxC_ += boundaryFlux[Indices::u3Idx]*timeLoop_->timeStepSize();
         for (auto dof : x)
         {
             Scalar sf =  dof[Indices::phi1Idx] * (1-dof[Indices::phi1Idx]);
@@ -556,7 +556,8 @@ public:
         conserveB += accumFluxB_;
         conserveC += accumFluxC_;
 
-        fout << timeLoop_->time() << '\t' << volumeF << '\t' << volumeD << '\t' << volumeP << '\t' << sigmaF << '\t' <<
+        fout << std::setprecision(10) << timeLoop_->time() << '\t' << volumeF << '\t' <<
+            volumeD << '\t' << volumeP << '\t' << sigmaF << '\t' <<
             sigmaD << '\t' << sigmaP << '\t' << conserveB << '\t' << conserveC << std::endl;
     }
 

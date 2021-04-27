@@ -76,7 +76,7 @@ auto assembleBoundaryFluxes(const Assembler& assembler, const SolutionVector& cu
                         localAssembler.elemFluxVarsCache(),
                         scvf
                         )
-                    * scvf.area();
+                    ;
             }
         }
     }
@@ -268,6 +268,24 @@ int main(int argc, char** argv) try
     //auto boundaryFlux = assembleBoundaryFluxes<Assembler, SolutionVector,
     //     MassLocalAssembler, CouplingManager>(*assembler, xOld, *couplingManager);
     massProblem->writeScalars(xOld[massIdx],/* boundaryFlux,*/ fout_scalar);
+
+    //FluxOverAxisAlignedPlane<MassGridVariables, std::decay_t<decltype(x[massIdx])>,
+    //    GetPropType<MassTypeTag, Properties::LocalResidual>> flux(*massGridVariables, x[massIdx]);
+    //using GridView = typename GetPropType<MassTypeTag, Properties::GridGeometry>::GridView;
+    //using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
+    //const Scalar xMin = massGridGeometry->bBoxMin()[0];
+    //const Scalar xMax = massGridGeometry->bBoxMax()[0];
+    //const Scalar yMin = massGridGeometry->bBoxMin()[1];
+    //const Scalar yMax = massGridGeometry->bBoxMax()[1];
+    //const auto inletLowerLeft = GlobalPosition{xMin, yMin};
+    //const auto inletUpperRight = GlobalPosition{xMin, yMax};
+    //flux.addPlane("inlet", inletLowerLeft, inletUpperRight, 0);
+    //const auto outletLowerLeft = GlobalPosition{xMax, yMin};
+    //const auto outletUpperRight = GlobalPosition{xMax, yMax};
+    //flux.addPlane("outlet", outletLowerLeft, outletUpperRight, 0);
+    //flux.calculateAllScalarFluxes();
+    //std::cout << "inlet = " << flux.netFlux("inlet") << ", outlet = " << flux.netFlux("outlet") <<
+    //    std::endl;
 
     if (isStationary)
     {

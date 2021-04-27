@@ -8,7 +8,7 @@ UpperRight = 1 1
 Cells = 200 200
 
 [Problem]
-Name = compare_flow_2s5_10000K # name passed to the output routines
+Name = phase_flow_200 # name passed to the output routines
 OutputInterval = 0.1
 InletVelocity = 5.0 #1.2e-3
 EnableGravity = false
@@ -52,7 +52,7 @@ NumericDifference.BaseEpsilon =  1e-3
 EnableDilatationTerm = false
 
 [Phasefield]
-xi = 25e-3
+xi = 5e-2
 delta = 1e-6
 sigma = 2.5e-3
 DiffCoeff = 0.2 #1e-9
