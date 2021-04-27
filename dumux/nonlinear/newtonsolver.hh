@@ -54,7 +54,7 @@
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
 #include <dumux/linear/matrixconverter.hh>
 #include <dumux/assembly/partialreassembler.hh>
-#include <dumux/common/blockvector.hh>
+#include <dumux/common/solutionvector.hh>
 
 #include "newtonconvergencewriter.hh"
 #include "primaryvariableswitchadapter.hh"
