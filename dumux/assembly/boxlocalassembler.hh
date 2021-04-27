@@ -57,6 +57,7 @@ class BoxLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Im
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using Residual = typename SolutionVectorTraits<SolutionVector>::NativeType;
 
     enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
 
@@ -75,7 +76,7 @@ public:
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix. The element residual is written into the right hand side.
      */
-    template <class Residual, class PartialReassembler = DefaultPartialReassembler>
+    template <class PartialReassembler = DefaultPartialReassembler>
     void assembleJacobianAndResidual(JacobianMatrix& jac, Residual& res, GridVariables& gridVariables,
                                      const PartialReassembler* partialReassembler = nullptr)
     {
@@ -179,7 +180,6 @@ public:
     /*!
      * \brief Assemble the residual only
      */
-    template<class Residual>
     void assembleResidual(Residual& res)
     {
         this->asImp_().bindLocalViews();
