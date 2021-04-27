@@ -27,6 +27,7 @@
 #include <dumux/common/numeqvector.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/common/std/type_traits.hh>
+#include <dune/common/shared_ptr.hh>
 
 namespace Dumux {
 
@@ -36,6 +37,17 @@ class SwitchablePrimaryVariables;
 
 template<class PV>
 class NumEqVectorTraits;
+
+namespace Detail {
+
+template <class T>
+using StateDetector = decltype(std::declval<T>().state());
+
+template<class T>
+static constexpr bool hasState()
+{ return Dune::Std::is_detected<StateDetector, T>::value; }
+
+} // end namespace Detail
 
 } // end namespace Dumux
 
@@ -288,11 +300,11 @@ private:
     std::unique_ptr<BlockType> priVarsStored_;
 };
 
-template<class BVType, class PriVarsType, class StateVectorType>
+template<class BlockVectorType, class PriVarsType>
 class BlockVectorWithState
 {
-    using BlockVectorType = std::decay_t<BVType>;
-    using State = typename std::decay_t<StateVectorType>::value_type;
+    static_assert(Detail::hasState<PriVarsType>());
+    using State = decltype(std::declval<PriVarsType>().state());
 public:
     using field_type = typename BlockVectorType::field_type;
     using block_type = typename BlockVectorType::block_type;
@@ -306,136 +318,141 @@ public:
     //! make vector with _n components
     explicit BlockVectorWithState (size_type n) : blockVector_(n)
     {
-        states_.resize(blockVector_.size());
+        blockVector_ = std::make_shared<BlockVectorType>(n);
+        states_ = std::make_shared<std::vector<State>>(blockVector_->size());
     }
 
     /** \brief Construct from a std::initializer_list */
     BlockVectorWithState (const std::initializer_list<block_type>& l) : blockVector_(l)
     {
-        states_.resize(blockVector_.size());
+        blockVector_ = std::make_shared<BlockVectorType>(l);
+        states_ = std::make_shared<std::vector<State>>(blockVector_->size());
     }
 
     template<typename S>
-    BlockVectorWithState (size_type n, S capacity) : blockVector_(n, capacity)
+    BlockVectorWithState (size_type n, S capacity)
     {
-        states_.resize(blockVector_.size());
+        blockVector_ = std::make_shared<BlockVectorType>(n, capacity);
+        states_ = std::make_shared<std::vector<State>>(blockVector_->size());
     }
 
     //! constructor for using this class as a view (member variables should be references)
     //! TODO add some enable_if (also to other ctors) magic to prevent misuse
-    BlockVectorWithState(BlockVectorType& otherDofs, std::vector<State>& otherStates) : blockVector_(otherDofs), states_(otherStates)
+    BlockVectorWithState(BlockVectorType& otherDofs, std::vector<State>& otherStates)
     {
-        static_assert(std::is_lvalue_reference_v<decltype(blockVector_)>);
+        // static_assert(std::is_lvalue_reference_v<decltype(*blockVector_)>);
+        blockVector_ = Dune::stackobject_to_shared_ptr(otherDofs);
+        states_ = Dune::stackobject_to_shared_ptr(otherStates);
     }
 
     auto operator [](size_type i)
     {
-        return BlockVectorView<block_type, PriVarsType, State>(blockVector_[i], states_[i]);
+        return BlockVectorView<block_type, PriVarsType, State>((*blockVector_)[i], (*states_)[i]);
     }
 
     auto operator[] (size_type i) const
     {
-        return ConstBlockVectorView<block_type, State>(blockVector_[i], states_[i]);
+        return ConstBlockVectorView<block_type, State>((*blockVector_)[i], (*states_)[i]);
     }
 
     BlockVectorWithState& operator= (const field_type& k)
     {
-        blockVector_ = k;
+        *blockVector_ = k;
         return *this;
     }
 
     BlockVectorWithState& operator*= (const field_type& k)
     {
-        blockVector_ *= k;
+        *blockVector_ *= k;
         return *this;
     }
 
     BlockVectorWithState& operator/= (const field_type& k)
     {
-        blockVector_ /= k;
+        *blockVector_ /= k;
         return *this;
     }
 
     BlockVectorWithState& operator+= (const BlockVectorWithState& y)
     {
-        blockVector_ += y.blockVector_;
+        *blockVector_ += (*y.blockVector_);
         return *this;
     }
 
     BlockVectorWithState& operator-= (const BlockVectorWithState& y)
     {
-        blockVector_ -= y.blockVector_;
+        *blockVector_ -= (*y.blockVector_);
         return *this;
     }
 
     BlockVectorWithState operator* (const BlockVectorWithState& y)
     {
-        return blockVector_ * y.blockVector_;
+        return *blockVector_ * (*y.blockVector_);
     }
 
     BlockVectorWithState& axpy(const field_type& a, const BlockVectorWithState& y)
     {
-        blockVector_.axpy(a, y.blockVector_);
+        blockVector_->axpy(a, (*y.blockVector_));
         return *this;
     }
 
     BlockVectorWithState& dot(const BlockVectorWithState& y)
     {
-        blockVector_.dot(y.blockVector_);
+        blockVector_->dot((*y.blockVector_));
         return *this;
     }
 
     auto one_norm () const
-    { return blockVector_.one_norm(); }
+    { return blockVector_->one_norm(); }
 
     auto two_norm () const
-    { return blockVector_.two_norm(); }
+    { return blockVector_->two_norm(); }
 
     auto two_norm2 () const
-    { return blockVector_.two_norm2(); }
+    { return blockVector_->two_norm2(); }
 
     auto infinity_norm () const
-    { return blockVector_.infinity_norm(); }
+    { return blockVector_->infinity_norm(); }
 
     auto begin() const
-    { return blockVector_.begin(); }
+    { return blockVector_->begin(); }
 
     auto end() const
-    { return blockVector_.end(); }
+    { return blockVector_->end(); }
 
     void reserve(size_type capacity)
     {
-        blockVector_.reserve(capacity);
-        states_.reserve(capacity);
+        blockVector_->reserve(capacity);
+        states_->reserve(capacity);
     }
 
     size_type capacity() const
-    { return blockVector_.capacity(); }
+    { return blockVector_->capacity(); }
 
     size_type size() const
-    { return blockVector_.size(); }
+    { return blockVector_->size(); }
 
     void resize(size_type size)
     {
-        blockVector_.resize(size);
-        states_.resize(size);
+        blockVector_->resize(size);
+        states_->resize(size);
     }
 
     //! Returns a reference to the stored DOFs.
     BlockVectorType& native()
-    { return blockVector_; }
+    { return *blockVector_; }
 
     //! Returns a reference to the stored DOFs.
     const BlockVectorType& native() const
-    { return blockVector_; }
+    { return *blockVector_; }
 
     //! Returns a deep copy of the stored DOFs.
     BlockVectorType nativeDeepCopy() const
-    { return blockVector_; }
+    { return *blockVector_; }
 
 private:
-    BVType blockVector_; // BVType might be a reference
-    StateVectorType states_; // StateVectorType might be a reference
+    std::shared_ptr<BlockVectorType> blockVector_;
+    std::shared_ptr<std::vector<State>> states_;
 };
 
 namespace Detail {
@@ -497,13 +514,6 @@ template<class T>
 static constexpr bool hasNativeStorage()
 { return Dune::Std::is_detected<NativeStorageDetector, T>::value; }
 
-template <class T>
-using StateDetector = decltype(std::declval<T>().state());
-
-template<class T>
-static constexpr bool hasState()
-{ return Dune::Std::is_detected<StateDetector, T>::value; }
-
 //! Use a standard Dune::BlockVector for PrimaryVariables without state.
 template<class... PrimaryVariables>
 struct SolutionVectorHelper
@@ -516,7 +526,7 @@ struct SolutionVectorHelper
 template<class PV, class S>
 struct SolutionVectorHelper <Dumux::SwitchablePrimaryVariables<PV, S>>
 {
-    using type = Dumux::Istl::BlockVectorWithState<Dune::BlockVector<PV>, Dumux::SwitchablePrimaryVariables<PV, S>, std::vector<S>>;
+    using type = Dumux::Istl::BlockVectorWithState<Dune::BlockVector<PV>, Dumux::SwitchablePrimaryVariables<PV, S>>;
 };
 
 template<class... PrimaryVariables>
@@ -602,8 +612,8 @@ struct SolutionVectorTraits<Dune::BlockVector<SwitchablePrimaryVariables<PV, S>>
     using NativeType = Dune::BlockVector<PV>;
 };
 
-template<class BlockVectorType, class PrivarsType, class StateVectorType>
-struct SolutionVectorTraits<Dumux::Istl::BlockVectorWithState<BlockVectorType, PrivarsType, StateVectorType>>
+template<class BlockVectorType, class PrivarsType>
+struct SolutionVectorTraits<Dumux::Istl::BlockVectorWithState<BlockVectorType, PrivarsType>>
 {
     using NativeType = BlockVectorType;
 };
