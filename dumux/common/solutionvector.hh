@@ -24,8 +24,20 @@
 #ifndef DUMUX_COMMON_SOLUTIONVECTOR_HH
 #define DUMUX_COMMON_SOLUTIONVECTOR_HH
 
+#include <dumux/common/numeqvector.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/common/std/type_traits.hh>
+
+namespace Dumux {
+
+// forward declare
+template<class PV, class S>
+class SwitchablePrimaryVariables;
+
+template<class PV>
+class NumEqVectorTraits;
+
+} // end namespace Dumux
 
 namespace Dumux::Istl {
 
@@ -426,22 +438,55 @@ private:
     StateVectorType states_; // StateVectorType might be a reference
 };
 
-template<class MTBVType, class PriVarsTypes, class StateVectorTypes>
-class MultiTypeBlockVectorWithState
-{
+namespace Detail {
 
+template<class PrimaryVariables>
+struct StateVectorHelper
+{
+    using type = void;
+};
+
+template<class PV, class S>
+struct StateVectorHelper<Dumux::SwitchablePrimaryVariables<PV, S>>
+{
+    // using PrimaryVariables = Dumux::SwitchablePrimaryVariables<PV, S>;
+    // using State = decltype(std::declval<PrimaryVariables>.state());
+    // using type = std::vector<PrimaryVariables, State>;
+};
+
+}
+
+template<class MTBVType, class... PriVarsTypes>
+class MultiTypeBlockVectorWithState : public MTBVType
+{
+//     using StateVectors = std::tuple<Detail::StateVectorHelper<PriVarsTypes>...>;
+
+// public:
+//     // using size_type = typename MTBVType::size_type;
+//     using MTBVType::MTBVType;
+//     using MTBVType::operator=;
+//     using MTBVType::operator-=;
+//     using MTBVType::operator+=;
+//     using MTBVType::operator*=;
+//     using MTBVType::operator/=;
+//     using MTBVType::operator[];
+
+
+// private:
+//     // MTBVType multiTypeBlockVector_;
+//     StateVectors stateVectors_;
 };
 
 } // end namespace Dumux::Istl
 
 namespace Dumux {
 
-// forward declare
-template<class PV, class S>
-class SwitchablePrimaryVariables;
+// // forward declare
+// template<class PV, class S>
+// class SwitchablePrimaryVariables;
 
-template<class PV>
-class NumEqVectorTraits;
+// template<class PV>
+// class NumEqVectorTraits;
 
 namespace Detail {
 
@@ -460,10 +505,11 @@ static constexpr bool hasState()
 { return Dune::Std::is_detected<StateDetector, T>::value; }
 
 //! Use a standard Dune::BlockVector for PrimaryVariables without state.
-template<class PrimaryVariables>
+template<class... PrimaryVariables>
 struct SolutionVectorHelper
 {
-    using type = Dune::BlockVector<PrimaryVariables>;
+    // static_assert(sizeof...(PrimaryVariables) == 1);
+    using type = Dune::BlockVector<PrimaryVariables...>;
 };
 
 //! Use a wrapped type for PrimaryVariables without state.
@@ -477,16 +523,73 @@ template<class... PrimaryVariables>
 struct MultiTypeSolutionVectorHelper
 {
     // TODO make distinction between regular privars and such with state
-    using type = Dune::MultiTypeBlockVector<Dune::BlockVector<PrimaryVariables>...>;
+    using type0 = Dune::MultiTypeBlockVector<Dune::BlockVector<typename NumEqVectorTraits<PrimaryVariables>::type>...>;
+
+    using type = Dumux::Istl::MultiTypeBlockVectorWithState<type0, PrimaryVariables...>;
+    // using type = Dune::MultiTypeBlockVector<Dune::BlockVector<PrimaryVariables>...>;
 };
 
-}
+template<int i, class... PrimaryVariables>
+struct SolutionVectorChooser
+{
+    using type = typename MultiTypeSolutionVectorHelper<PrimaryVariables...>::type;
+};
+
+template<class PrimaryVariables>
+struct SolutionVectorChooser<1, PrimaryVariables>
+{
+    using type = typename SolutionVectorHelper<PrimaryVariables>::type;
+};
+
+
+
+// Helper struct containing the native function for standard solution vectors.
+template<class SolutionVector>
+struct NativeChooser
+{
+    template<class SV>
+    static decltype(auto) native(SV&& sol)
+    {
+        using PrimaryVariable = std::decay_t<decltype(sol[0])>;
+
+        if constexpr (Detail::hasNativeStorage<SolutionVector>())
+            return sol.native();
+        else if constexpr (!Detail::hasState<PrimaryVariable>())
+            return sol;
+        else
+        {
+            using BlockType = typename Dumux::NumEqVectorTraits<PrimaryVariable>::type;
+            Dune::BlockVector<BlockType> result(sol.size());
+            for (auto i = 0; i < sol.size(); ++i)
+                result[i] = sol[i];
+
+            return result;
+        }
+    }
+};
+
+// Helper struct containing the native function for MultiTypeBlockVector solution vectors
+template<class... Args>
+struct NativeChooser<Dumux::Istl::MultiTypeBlockVectorWithState<Args...>>
+{
+    template<class SV>
+    static decltype(auto) native(SV&& sol)
+    {
+        return sol;
+    }
+};
+
+
+} // end namespace Detail
+
+//! Helper type to determine whether a given type is a Dune::MultiTypeBlockVector
+template<class... T>
+struct isMultiTypeBlockVector<Dumux::Istl::MultiTypeBlockVectorWithState<T...> > : public std::true_type {};
 
 //! Helper alias to get the correct solution vector based on the chosen PrimaryVariables.
 template<class ...PrimaryVariables>
-using SolutionVector = std::conditional_t<(sizeof...(PrimaryVariables) == 1),
-                                          typename Detail::SolutionVectorHelper<PrimaryVariables...>::type,
-                                          typename Detail::MultiTypeSolutionVectorHelper<PrimaryVariables...>::type>;
+using SolutionVector = typename Detail::SolutionVectorChooser<sizeof...(PrimaryVariables), PrimaryVariables...>::type;
+
 template<class SolutionVector>
 struct SolutionVectorTraits
 {
@@ -508,24 +611,7 @@ struct SolutionVectorTraits<Dumux::Istl::BlockVectorWithState<BlockVectorType, P
 template<class SolutionVector>
 decltype(auto) native(SolutionVector&& sol)
 {
-    // TODO handle MultiTypeBlockVector
-
-    using PrimaryVariable = std::decay_t<decltype(sol[0])>;
-
-
-    if constexpr (Detail::hasNativeStorage<SolutionVector>())
-        return sol.native();
-    else if constexpr (!Detail::hasState<PrimaryVariable>())
-        return sol;
-    else
-    {
-        using BlockType = typename Dumux::NumEqVectorTraits<PrimaryVariable>::type;
-        Dune::BlockVector<BlockType> result(sol.size());
-        for (auto i = 0; i < sol.size(); ++i)
-            result[i] = sol[i];
-
-        return result;
-    }
+    return Detail::NativeChooser<std::decay_t<SolutionVector>>::native(sol);
 }
 
 } // end namespace Dumux
