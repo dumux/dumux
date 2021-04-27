@@ -33,7 +33,7 @@
 
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/porousmediumflow/2p2c/model.hh>
-#include <dumux/common/blockvector.hh>
+#include <dumux/common/solutionvector.hh>
 
 #include "spatialparams.hh"
 #include "problem.hh"
