@@ -21,10 +21,9 @@
  * \ingroup Common
  * \brief docme
  */
-#ifndef DUMUX_COMMON_BLOCKVECTOR_HH
-#define DUMUX_COMMON_BLOCKVECTOR_HH
+#ifndef DUMUX_COMMON_SOLUTIONVECTOR_HH
+#define DUMUX_COMMON_SOLUTIONVECTOR_HH
 
-#include <dune/common/fvector.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/common/std/type_traits.hh>
 
@@ -441,6 +440,9 @@ namespace Dumux {
 template<class PV, class S>
 class SwitchablePrimaryVariables;
 
+template<class PV>
+class NumEqVectorTraits;
+
 namespace Detail {
 
 template <class T>
@@ -508,19 +510,17 @@ decltype(auto) native(SolutionVector&& sol)
 {
     // TODO handle MultiTypeBlockVector
 
+    using PrimaryVariable = std::decay_t<decltype(sol[0])>;
+
 
     if constexpr (Detail::hasNativeStorage<SolutionVector>())
         return sol.native();
-    else if constexpr (!Detail::hasState<std::decay_t<decltype(sol[0])>>())
+    else if constexpr (!Detail::hasState<PrimaryVariable>())
         return sol;
     else
     {
-        using Scalar = std::decay_t<decltype(sol[0][0])>;
-        static constexpr auto numEq = std::decay_t<decltype(sol[0])>::size();
-        using BlockType = Dune::FieldVector<Scalar, numEq>;
-        using BlockVector = Dune::BlockVector<BlockType>;
-
-        BlockVector result(sol.size());
+        using BlockType = typename Dumux::NumEqVectorTraits<PrimaryVariable>::type;
+        Dune::BlockVector<BlockType> result(sol.size());
         for (auto i = 0; i < sol.size(); ++i)
             result[i] = sol[i];
 
