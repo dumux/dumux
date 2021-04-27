@@ -26,6 +26,7 @@
 
 #include <dumux/common/numeqvector.hh>
 #include <dune/istl/bvector.hh>
+#include <dune/istl/multitypeblockvector.hh>
 #include <dune/common/std/type_traits.hh>
 #include <dune/common/shared_ptr.hh>
 
@@ -340,9 +341,16 @@ public:
     //! TODO add some enable_if (also to other ctors) magic to prevent misuse
     BlockVectorWithState(BlockVectorType& otherDofs, std::vector<State>& otherStates)
     {
-        // static_assert(std::is_lvalue_reference_v<decltype(*blockVector_)>);
         blockVector_ = Dune::stackobject_to_shared_ptr(otherDofs);
         states_ = Dune::stackobject_to_shared_ptr(otherStates);
+    }
+
+    //! constructor for using this class as a view (member variables should be references)
+    //! TODO add some enable_if (also to other ctors) magic to prevent misuse
+    BlockVectorWithState(const BlockVectorType& otherDofs, const std::vector<State>& otherStates)
+    {
+        blockVector_ = std::make_shared<BlockVectorType>(otherDofs);
+        states_ = std::make_shared<std::vector<State>>(otherStates);
     }
 
     auto operator [](size_type i)
@@ -466,44 +474,59 @@ struct StateVectorHelper
 template<class PV, class S>
 struct StateVectorHelper<Dumux::SwitchablePrimaryVariables<PV, S>>
 {
-    // using PrimaryVariables = Dumux::SwitchablePrimaryVariables<PV, S>;
-    // using State = decltype(std::declval<PrimaryVariables>.state());
-    // using type = std::vector<PrimaryVariables, State>;
+    using PrimaryVariables = Dumux::SwitchablePrimaryVariables<PV, S>;
+    using State = decltype(std::declval<PrimaryVariables>().state());
+    using type = std::vector<State>;
 };
 
 }
 
 template<class MTBVType, class... PriVarsTypes>
-class MultiTypeBlockVectorWithState : public MTBVType
+class MultiTypeBlockVectorWithState
 {
-//     using StateVectors = std::tuple<Detail::StateVectorHelper<PriVarsTypes>...>;
+    using StateVectors = std::tuple<typename Detail::StateVectorHelper<PriVarsTypes>::type...>;
 
-// public:
-//     // using size_type = typename MTBVType::size_type;
-//     using MTBVType::MTBVType;
-//     using MTBVType::operator=;
-//     using MTBVType::operator-=;
-//     using MTBVType::operator+=;
-//     using MTBVType::operator*=;
-//     using MTBVType::operator/=;
-//     using MTBVType::operator[];
+    template<class BlockVectorType, class PVType>
+    using ViewType = BlockVectorWithState<BlockVectorType, PVType>;
 
+public:
+    template<class...T>
+    MultiTypeBlockVectorWithState(T&&... args) : multiTypeBlockVector_(std::forward<T>(args)...) {}
 
-// private:
-//     // MTBVType multiTypeBlockVector_;
-//     StateVectors stateVectors_;
+    using size_type = typename MTBVType::size_type;
+
+    //! Returns a view storing references
+    template<size_type index>
+    auto operator[] ([[maybe_unused]] const std::integral_constant<size_type, index> indexVariable)
+    {
+        using NativeType = typename std::decay_t<decltype(multiTypeBlockVector_[indexVariable])>;
+        using PVType = typename std::tuple_element<index,std::tuple<PriVarsTypes...>>::type;
+        return ViewType<NativeType, PVType>(multiTypeBlockVector_[indexVariable], std::get<indexVariable>(stateVectors_));
+    }
+
+    //! Returns a view storing copies
+    template<size_type index>
+    const auto operator[] ([[maybe_unused]] const std::integral_constant<size_type, index> indexVariable) const
+    {
+        using NativeType = typename std::decay_t<decltype(multiTypeBlockVector_[indexVariable])>;
+        using PVType = typename std::tuple_element<index,std::tuple<PriVarsTypes...>>::type;
+        return ViewType<NativeType, PVType>(multiTypeBlockVector_[indexVariable], std::get<indexVariable>(stateVectors_));
+    }
+
+    MTBVType& native()
+    { return multiTypeBlockVector_; }
+
+    const MTBVType& native() const
+    { return multiTypeBlockVector_; }
+
+private:
+    MTBVType multiTypeBlockVector_;
+    StateVectors stateVectors_;
 };
 
 } // end namespace Dumux::Istl
 
 namespace Dumux {
-
-// // forward declare
-// template<class PV, class S>
-// class SwitchablePrimaryVariables;
-
-// template<class PV>
-// class NumEqVectorTraits;
 
 namespace Detail {
 
