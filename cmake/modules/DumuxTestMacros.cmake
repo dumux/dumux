@@ -204,6 +204,61 @@
 # future Dune features with older Dune versions supported by Dumux
 function(dumux_add_test)
   dune_add_test(${ARGV})
+
+  include(CMakeParseArguments)
+  set(OPTIONS EXPECT_COMPILE_FAIL EXPECT_FAIL SKIP_ON_77 COMPILE_ONLY)
+  set(SINGLEARGS NAME TARGET TIMEOUT)
+  set(MULTIARGS SOURCES COMPILE_DEFINITIONS COMPILE_FLAGS LINK_LIBRARIES CMD_ARGS MPI_RANKS COMMAND CMAKE_GUARD LABELS)
+  cmake_parse_arguments(ADDTEST "${OPTIONS}" "${SINGLEARGS}" "${MULTIARGS}" ${ARGN})
+
+  if(NOT ADDTEST_NAME)
+    # try deducing the test name from the executable name
+    if(ADDTEST_TARGET)
+      set(ADDTEST_NAME ${ADDTEST_TARGET})
+    endif()
+    # try deducing the test name form the source name
+    if(ADDTEST_SOURCES)
+      # deducing a name is only possible with a single source argument
+      list(LENGTH ADDTEST_SOURCES len)
+      if(NOT len STREQUAL "1")
+        message(FATAL_ERROR "Cannot deduce test name from multiple sources!")
+      endif()
+      # strip file extension
+      get_filename_component(ADDTEST_NAME ${ADDTEST_SOURCES} NAME_WE)
+    endif()
+  endif()
+  if(NOT ADDTEST_COMMAND)
+    set(ADDTEST_COMMAND ${ADDTEST_NAME})
+  endif()
+
+  # Find out whether this test should be a dummy
+  set(SHOULD_SKIP_TEST FALSE)
+  set(FAILED_CONDITION_PRINTING "")
+  foreach(condition ${ADDTEST_CMAKE_GUARD})
+    separate_arguments(condition)
+    if(NOT (${condition}))
+      set(SHOULD_SKIP_TEST TRUE)
+      set(FAILED_CONDITION_PRINTING "${FAILED_CONDITION_PRINTING}std::cout << \"  ${condition}\" << std::endl;\n")
+    endif()
+  endforeach()
+
+  # If we do nothing, switch the sources for a dummy source
+  if(SHOULD_SKIP_TEST)
+    dune_module_path(MODULE dune-common RESULT scriptdir SCRIPT_DIR)
+    set(ADDTEST_TARGET)
+    set(dummymain ${CMAKE_CURRENT_BINARY_DIR}/main77_${ADDTEST_NAME}.cc)
+    configure_file(${scriptdir}/main77.cc.in ${dummymain})
+    set(ADDTEST_SOURCES ${dummymain})
+  endif()
+
+  # Add the executable if it is not already present
+  if(ADDTEST_SOURCES)
+    set(ADDTEST_TARGET ${ADDTEST_NAME})
+  endif()
+
+  file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/TestMetaData")
+  file(WRITE "${CMAKE_BINARY_DIR}/TestMetaData/${ADDTEST_NAME}.json"
+             "\{\n  \"name\": \"${ADDTEST_NAME}\",\n  \"target\": \"${ADDTEST_TARGET}\"\n\}\n")
 endfunction()
 
 # Evaluate test guards like dune_add_test internally does
