@@ -175,6 +175,7 @@ public:
 
             // kg/m^3 * m^2 * Pa / m / Pa / s = kg/s/m^2
             auto criticalRate = density*K/viscosity*((cellPressure - criticalSurfacePressure_)/dist - density*gravity);
+
             if (!std::signbit(criticalRate))
                 criticalRate *= useKrwAverage_ ? avgRelPerm : relPerm;
 
@@ -227,6 +228,81 @@ public:
             std::cout << Fmt::format("Actual rate: {:.5g} (mm/day)\n", rate*86400*1000/1000);
 
         return rate*86400*1000/1000;
+    }
+
+    /*!
+     * \brief Adds Robin flux derivatives for wetting phase
+     *
+     * \param derivativeMatrices The matrices containing the derivatives
+     * \param element The element
+     * \param fvGeometry The finite volume element geometry
+     * \param curElemVolVars The current element volume variables
+     * \param elemFluxVarsCache The element flux variables cache
+     * \param scvf The sub control volume face
+     */
+    template<class PartialDerivativeMatrices, class ElementVolumeVariables, class ElementFluxVariablesCache>
+    void addRobinFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
+                                 const Element& element,
+                                 const FVElementGeometry& fvGeometry,
+                                 const ElementVolumeVariables& elemVolVars,
+                                 const ElementFluxVariablesCache& elemFluxVarsCache,
+                                 const SubControlVolumeFace& scvf) const
+    {
+
+        const auto insideScvIdx = scvf.insideScvIdx();
+        const auto& insideVolVars = elemVolVars[insideScvIdx];
+        const auto& globalPos = scvf.ipGlobal();
+        const auto insideFluidMatrixInteraction = this->spatialParams().fluidMatrixInteractionAtPos(globalPos);
+
+        //material law derivatives
+        const auto insideSw = insideVolVars.saturation(0);
+        const auto insidePc = insideVolVars.capillaryPressure();
+        const auto dsw_dpw_inside = -insideFluidMatrixInteraction.dsw_dpc(insidePc);
+        const auto dkrw_dsw_inside = insideFluidMatrixInteraction.dkrw_dsw(insideSw);
+
+        if (onUpperBoundary(globalPos))
+        {
+            const auto& volVars = elemVolVars[scvf.insideScvIdx()];
+
+            const auto dist = (fvGeometry.scv(scvf.insideScvIdx()).center() - globalPos).two_norm();
+            const auto cellPressure = volVars.pressure(0);
+            const auto density = volVars.density(0);
+            const auto viscosity = volVars.viscosity(0);
+            const auto relPerm = useKrwAverage_ ?  volVars.relativePermeability(0)*0.5 : volVars.relativePermeability(0);
+            const auto K = volVars.permeability();
+            const auto gravity = enableGravity_ ? 9.81 : 0.0;
+
+            // kg/m^3 * m^2 * Pa / m / Pa / s = kg/s/m^2
+            auto criticalRate = density*K/viscosity*((cellPressure - criticalSurfacePressure_)/dist - density*gravity);
+
+            if (!std::signbit(criticalRate))
+                criticalRate *= relPerm;
+
+            if (scenario_ == BenchmarkScenario::evaporation)
+            {
+                if (criticalRate <= potentialRate_)
+                    derivativeMatrices[insideScvIdx][Indices::conti0EqIdx][0]
+                        += (density/viscosity*K*relPerm/dist + density*K/viscosity*((cellPressure - criticalSurfacePressure_)/dist - density*gravity) *dkrw_dsw_inside*dsw_dpw_inside)*surfaceArea_;
+            }
+            else //in case of infiltration no relative permeability is added in this term
+            {
+                if (criticalRate >= potentialRate_)
+                    derivativeMatrices[insideScvIdx][Indices::conti0EqIdx][0] += density*K/viscosity/dist*surfaceArea_;
+            }
+        }
+
+        //free drainage (gravitational flux) for infiltration scenario
+        else if (onLowerBoundary(globalPos) && (scenario_ == BenchmarkScenario::infiltration))
+        {
+            const auto& volVars = elemVolVars[scvf.insideScvIdx()];
+            const auto gravity = enableGravity_ ? 9.81 : 0.0;
+            const auto density = volVars.density(0);
+            const auto relPerm = volVars.relativePermeability(0);
+            const auto viscosity = volVars.viscosity(0);
+            const auto K = volVars.permeability();
+
+            derivativeMatrices[insideScvIdx][Indices::conti0EqIdx][0] += density*K*relPerm/viscosity*(density*gravity)*dkrw_dsw_inside*dsw_dpw_inside*surfaceArea_;
+        }
     }
 
 private:

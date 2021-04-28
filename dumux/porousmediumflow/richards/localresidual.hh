@@ -485,7 +485,11 @@ public:
                                  const ElementVolumeVariables& curElemVolVars,
                                  const ElementFluxVariablesCache& elemFluxVarsCache,
                                  const SubControlVolumeFace& scvf) const
-    { /* TODO maybe forward to problem for the user to implement the Robin derivatives?*/ }
+    {
+        /* forward to problem for the user to implement the Robin derivatives*/
+        problem.addRobinFluxDerivatives(derivativeMatrices, element, fvGeometry, curElemVolVars, elemFluxVarsCache, scvf);
+
+    }
 
 private:
     Implementation *asImp_()

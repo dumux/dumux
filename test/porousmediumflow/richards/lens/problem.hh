@@ -73,6 +73,8 @@ class RichardsLensProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     enum {
         // copy some indices for convenience
         pressureIdx = Indices::pressureIdx,
@@ -191,6 +193,25 @@ public:
     { return initial_(globalPos); };
 
     // \}
+
+    /*!
+     * \brief Adds Robin flux derivatives for wetting phase. This is needed in case of solution dependent Neumann conditions.
+     *
+     * \param derivativeMatrices The matrices containing the derivatives
+     * \param element The element
+     * \param fvGeometry The finite volume element geometry
+     * \param curElemVolVars The current element volume variables
+     * \param elemFluxVarsCache The element flux variables cache
+     * \param scvf The sub control volume face
+     */
+    template<class PartialDerivativeMatrices, class ElementVolumeVariables, class ElementFluxVariablesCache>
+    void addRobinFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
+                                 const Element& element,
+                                 const FVElementGeometry& fvGeometry,
+                                 const ElementVolumeVariables& elemVolVars,
+                                 const ElementFluxVariablesCache& elemFluxVarsCache,
+                                 const SubControlVolumeFace& scvf) const
+    {}
 
 private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const

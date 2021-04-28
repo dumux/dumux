@@ -98,8 +98,7 @@ int main(int argc, char** argv)
     using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 
-    // using Assembler = FVAssembler<TypeTag, DiffMethod::analytic>; // TODO: something is wrong with analytic derivatives!
-    using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
+    using Assembler = FVAssembler<TypeTag, DiffMethod::analytic>;
 
     const auto dt = getParam<double>("TimeLoop.DtInitial");
     const auto checkPoints = getParam<std::vector<double>>("TimeLoop.TEnd");
