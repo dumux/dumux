@@ -25,6 +25,7 @@
 #define DUMUX_COMMON_SOLUTIONVECTOR_HH
 
 #include <dumux/common/numeqvector.hh>
+#include <dumux/common/typetraits/vector.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/istl/multitypeblockvector.hh>
 #include <dune/common/std/type_traits.hh>
@@ -37,7 +38,7 @@ template<class PV, class S>
 class SwitchablePrimaryVariables;
 
 template<class PV>
-class NumEqVectorTraits;
+struct NumEqVectorTraits;
 
 namespace Detail {
 
@@ -306,6 +307,13 @@ class BlockVectorWithState
 {
     static_assert(Detail::hasState<PriVarsType>());
     using State = decltype(std::declval<PriVarsType>().state());
+
+    using StateVectorType = std::conditional_t<std::is_const_v<BlockVectorType>,
+                                               const std::vector<State>,
+                                               std::vector<State>>;
+
+    // using BlockVectorType = Dune::BlockVector<NumEqVectorTraits<PriVarsType>::type>;
+
 public:
     using field_type = typename BlockVectorType::field_type;
     using block_type = typename BlockVectorType::block_type;
@@ -314,44 +322,46 @@ public:
     using Iterator = typename BlockVectorType::Iterator;
     using ConstIterator = typename BlockVectorType::ConstIterator;
 
-    BlockVectorWithState() = default;
+    BlockVectorWithState()
+    : blockVector_(std::make_shared<BlockVectorType>())
+    , states_(std::make_shared<std::vector<State>>())
+    {}
 
     //! make vector with _n components
-    explicit BlockVectorWithState (size_type n) : blockVector_(n)
-    {
-        blockVector_ = std::make_shared<BlockVectorType>(n);
-        states_ = std::make_shared<std::vector<State>>(blockVector_->size());
-    }
+    explicit BlockVectorWithState (size_type n)
+    : blockVector_(std::make_shared<BlockVectorType>(n))
+    , states_(std::make_shared<std::vector<State>>(n))
+    {}
 
     /** \brief Construct from a std::initializer_list */
-    BlockVectorWithState (const std::initializer_list<block_type>& l) : blockVector_(l)
-    {
-        blockVector_ = std::make_shared<BlockVectorType>(l);
-        states_ = std::make_shared<std::vector<State>>(blockVector_->size());
-    }
+    BlockVectorWithState (const std::initializer_list<block_type>& l)
+    : blockVector_(std::make_shared<BlockVectorType>(l))
+    , states_(std::make_shared<std::vector<State>>(blockVector_->size()))
+    {}
 
     template<typename S>
     BlockVectorWithState (size_type n, S capacity)
-    {
-        blockVector_ = std::make_shared<BlockVectorType>(n, capacity);
-        states_ = std::make_shared<std::vector<State>>(blockVector_->size());
-    }
+    : blockVector_(std::make_shared<BlockVectorType>(n, capacity))
+    , states_(std::make_shared<std::vector<State>>(blockVector_->size()))
+    {}
 
-    //! constructor for using this class as a view (member variables should be references)
-    //! TODO add some enable_if (also to other ctors) magic to prevent misuse
+    //! constructor for using this class as a view
     BlockVectorWithState(BlockVectorType& otherDofs, std::vector<State>& otherStates)
-    {
-        blockVector_ = Dune::stackobject_to_shared_ptr(otherDofs);
-        states_ = Dune::stackobject_to_shared_ptr(otherStates);
-    }
+    : blockVector_(Dune::stackobject_to_shared_ptr(otherDofs))
+    , states_(Dune::stackobject_to_shared_ptr(otherStates))
+    {}
 
-    //! constructor for using this class as a view (member variables should be references)
-    //! TODO add some enable_if (also to other ctors) magic to prevent misuse
+    //! constructor for using this class as a view
     BlockVectorWithState(const BlockVectorType& otherDofs, const std::vector<State>& otherStates)
-    {
-        blockVector_ = std::make_shared<BlockVectorType>(otherDofs);
-        states_ = std::make_shared<std::vector<State>>(otherStates);
-    }
+    : blockVector_(Dune::stackobject_to_shared_ptr(otherDofs))
+    , states_(Dune::stackobject_to_shared_ptr(otherStates))
+    {}
+
+    //! Copy constructor
+    BlockVectorWithState(const BlockVectorWithState& other)
+    : blockVector_(std::make_shared<BlockVectorType>((*other.blockVector_)))
+    , states_(std::make_shared<std::vector<State>>((*other.states_)))
+    {}
 
     auto operator [](size_type i)
     {
@@ -361,6 +371,13 @@ public:
     auto operator[] (size_type i) const
     {
         return ConstBlockVectorView<block_type, State>((*blockVector_)[i], (*states_)[i]);
+    }
+
+    BlockVectorWithState& operator= (const BlockVectorWithState& other)
+    {
+        blockVector_ = std::make_shared<BlockVectorType>((*other.blockVector_));
+        states_ = std::make_shared<std::vector<State>>((*other.states_));
+        return *this;
     }
 
     BlockVectorWithState& operator= (const field_type& k)
@@ -460,7 +477,7 @@ public:
 
 private:
     std::shared_ptr<BlockVectorType> blockVector_;
-    std::shared_ptr<std::vector<State>> states_;
+    std::shared_ptr<StateVectorType> states_;
 };
 
 namespace Detail {
@@ -468,7 +485,7 @@ namespace Detail {
 template<class PrimaryVariables>
 struct StateVectorHelper
 {
-    using type = void;
+    using type = int; // dummy type
 };
 
 template<class PV, class S>
@@ -484,33 +501,59 @@ struct StateVectorHelper<Dumux::SwitchablePrimaryVariables<PV, S>>
 template<class MTBVType, class... PriVarsTypes>
 class MultiTypeBlockVectorWithState
 {
-    using StateVectors = std::tuple<typename Detail::StateVectorHelper<PriVarsTypes>::type...>;
+    // using StateVectors = std::tuple<typename Detail::StateVectorHelper<PriVarsTypes>::type...>;
+    using StateVectors = Dune::MultiTypeBlockVector<typename Detail::StateVectorHelper<PriVarsTypes>::type...>;
 
     template<class BlockVectorType, class PVType>
     using ViewType = BlockVectorWithState<BlockVectorType, PVType>;
 
 public:
-    template<class...T>
-    MultiTypeBlockVectorWithState(T&&... args) : multiTypeBlockVector_(std::forward<T>(args)...) {}
 
-    using size_type = typename MTBVType::size_type;
+    using NativeType = std::decay_t<MTBVType>;
+
+    MultiTypeBlockVectorWithState() = default;
+
+    // MultiTypeBlockVectorWithState(const MultiTypeBlockVectorWithState& other) = default;
+
+    MultiTypeBlockVectorWithState(const MultiTypeBlockVectorWithState& other) = default;
+
+
+    // template<class...T, typename = typename std::enable_if<false, void>::type>
+    // MultiTypeBlockVectorWithState(T&&... args) : multiTypeBlockVector_(std::forward<T>(args)...) {}
+
+    using size_type = typename std::decay_t<MTBVType>::size_type;
 
     //! Returns a view storing references
     template<size_type index>
-    auto operator[] ([[maybe_unused]] const std::integral_constant<size_type, index> indexVariable)
+    decltype(auto) operator[] ([[maybe_unused]] const std::integral_constant<size_type, index> indexVariable)
     {
-        using NativeType = typename std::decay_t<decltype(multiTypeBlockVector_[indexVariable])>;
         using PVType = typename std::tuple_element<index,std::tuple<PriVarsTypes...>>::type;
-        return ViewType<NativeType, PVType>(multiTypeBlockVector_[indexVariable], std::get<indexVariable>(stateVectors_));
+
+        if constexpr (Dumux::Detail::hasState<PVType>())
+        {
+            using NativeType = typename std::decay_t<decltype(multiTypeBlockVector_[indexVariable])>;
+            return ViewType<NativeType, PVType>(multiTypeBlockVector_[indexVariable], std::get<indexVariable>(stateVectors_));
+        }
+        else
+            return multiTypeBlockVector_[indexVariable];
     }
 
     //! Returns a view storing copies
     template<size_type index>
-    const auto operator[] ([[maybe_unused]] const std::integral_constant<size_type, index> indexVariable) const
+    decltype(auto) operator[] ([[maybe_unused]] const std::integral_constant<size_type, index> indexVariable) const
     {
-        using NativeType = typename std::decay_t<decltype(multiTypeBlockVector_[indexVariable])>;
         using PVType = typename std::tuple_element<index,std::tuple<PriVarsTypes...>>::type;
-        return ViewType<NativeType, PVType>(multiTypeBlockVector_[indexVariable], std::get<indexVariable>(stateVectors_));
+
+        if constexpr (Dumux::Detail::hasState<PVType>())
+        {
+            std::cout << "calling const " << std::endl; // TODO remove debug output
+            using NativeType = typename std::remove_reference_t<decltype(multiTypeBlockVector_[indexVariable])>;
+            // const auto tmp = ViewType<NativeType, PVType>(multiTypeBlockVector_[indexVariable], std::get<indexVariable>(stateVectors_));
+            const auto tmp = ViewType<NativeType, PVType>(std::get<indexVariable>(multiTypeBlockVector_), std::get<indexVariable>(stateVectors_));
+            return tmp;
+        }
+        else
+            return std::as_const(multiTypeBlockVector_[indexVariable]);
     }
 
     MTBVType& native()
@@ -520,8 +563,9 @@ public:
     { return multiTypeBlockVector_; }
 
 private:
-    MTBVType multiTypeBlockVector_;
-    StateVectors stateVectors_;
+
+    /*mutable*/ MTBVType multiTypeBlockVector_;
+    /*mutable*/ StateVectors stateVectors_;
 };
 
 } // end namespace Dumux::Istl
