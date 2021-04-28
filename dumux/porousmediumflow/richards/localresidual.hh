@@ -196,7 +196,7 @@ public:
         static_assert(!FluidSystem::isCompressible(0),
                       "richards/localresidual.hh: Analytic Jacobian only supports incompressible fluids!");
 
-        const auto poreVolume = Extrusion::volume(scv)*curVolVars.porosity();
+        const auto poreVolume = Extrusion::volume(scv)*curVolVars.porosity()*curVolVars.extrusionFactor();
         static const auto rho = curVolVars.density(0);
 
         // partial derivative of storage term w.r.t. p_w
