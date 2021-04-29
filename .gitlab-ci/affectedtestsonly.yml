@@ -12,28 +12,31 @@ workflow:
 
 select tests:
   stage: configure
+  image: $IMAGE_REGISTRY_URL/full:dune-2.7-gcc-ubuntu-20.04
   script:
     - dunecontrol --opts=$DUNE_OPTS_FILE --current all
     - |
       pushd build-cmake
-        python3 ../bin/testing/findtests.py -f affectedtests.json -t origin/master
+        python3 ../bin/testing/findtests.py -f ../affectedtests.json -t origin/master
       popd
   artifacts:
     paths:
-      - build-cmake
+      - affectedtests.json
     expire_in: 3 hours
 
 build dumux:
   stage: build
   script:
+    - dunecontrol --opts=$DUNE_OPTS_FILE --current all
     - |
       pushd build-cmake
         make clean
-        python3 ../bin/testing/runselectedtests.py -c affectedtests.json -b
+        python3 ../bin/testing/runselectedtests.py -c ../affectedtests.json -b
       popd
   artifacts:
     paths:
       - build-cmake
+      - affectedtests.json
     expire_in: 3 hours
   needs:
     - job: select tests
@@ -44,7 +47,7 @@ test dumux:
   script:
     - |
       pushd build-cmake
-        python3 ../bin/testing/runselectedtests.py -c affectedtests.json -t
+        python3 ../bin/testing/runselectedtests.py -c ../affectedtests.json -t
       popd
   needs:
     - job: build dumux
