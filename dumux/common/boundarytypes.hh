@@ -143,8 +143,7 @@ public:
     }
 
     /*!
-     * \brief Set a Neumann boundary condition for a single a single
-     *        equation.
+     * \brief Set a Neumann boundary condition for a single equation.
      *
      * \param eqIdx The index of the equation
      */
@@ -176,8 +175,7 @@ public:
     }
 
     /*!
-     * \brief Set a Neumann boundary condition for a single a single
-     *        equation.
+     * \brief Set a Neumann boundary condition for a single equation.
      *
      * \param eqIdx The index of the equation on which the outflow
      *              condition applies.
