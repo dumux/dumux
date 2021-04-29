@@ -258,7 +258,7 @@ function(dumux_add_test)
 
   file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/TestMetaData")
   file(WRITE "${CMAKE_BINARY_DIR}/TestMetaData/${ADDTEST_NAME}.json"
-             "\{\n  \"name\": \"${ADDTEST_NAME}\",\n  \"target\": \"${ADDTEST_TARGET}\"\n\}\n")
+             "{\n  \"name\": \"${ADDTEST_NAME}\",\n  \"target\": \"${ADDTEST_TARGET}\"\n}\n")
 endfunction()
 
 # Evaluate test guards like dune_add_test internally does
