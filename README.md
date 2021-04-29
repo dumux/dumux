@@ -25,7 +25,7 @@ Documentation
 The following resources are useful to get started with DuMu<sup>x</sup>:
 
 * [Getting started guide](https://dumux.org/gettingstarted/) on the [DuMu<sup>x</sup> website](https://dumux.org/)
-* [Handbook](https://dumux.org/handbook), a detailed DuMu<sup>x</sup> manual,
+* [Handbook](https://dumux.org/docs/handbook/master/dumux-handbook.pdf), a detailed DuMu<sup>x</sup> manual,
 * [DuMu<sup>x</sup> course materials](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course/tree/master),
 * [Examples](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/tree/master/examples), with detailed description of code and results,
 * [Class documentation](https://dumux.org/docs/doxygen/master/) generated from the source code,
@@ -63,9 +63,9 @@ our publications:
   Burbulla, S., Class, H., Coltman, E., Emmert, S., Fetzer, T., Grüninger, C.,
   Heck, K., Hommel, J., Kurz, T., Lipp, M., Mohammadi, F., Scherrer, S.,
   Schneider, M., Seitz, G., Stadler, L., Utz, M., Weinhardt, F.
-  & Flemisch, B. (_2020_). __DuMu<sup>x</sup> 3 – an open-source simulator for solving flow
+  & Flemisch, B. (_2021_). __DuMu<sup>x</sup> 3 – an open-source simulator for solving flow
   and transport problems in porous media with a focus on model coupling.__
-  _Computers & Mathematics with Applications_,
+  _Computers & Mathematics with Applications_, 81, 423-443.
   https://doi.org/10.1016/j.camwa.2020.02.012][7]
 
 * [Flemisch, B., Darcis, M., Erbertseder, K., Faigle, B., Lauser, A.,
@@ -139,7 +139,7 @@ on how to update an application to the new version.
 [1]: https://dune-project.org/
 [2]: https://dumux.org/documents/dumux_awrpaper.pdf
 [3]: https://dumux.org/installation
-[4]: https://dumux.org/documents/dumux-handbook-master.pdf
+[4]: https://dumux.org/docs/handbook/master/dumux-handbook.pdf
 [5]: https://www.gnu.org/licenses/gpl-3.0.en.html
 [6]: https://www.iws.uni-stuttgart.de/en/lh2/
 [7]: https://doi.org/10.1016/j.camwa.2020.02.012
