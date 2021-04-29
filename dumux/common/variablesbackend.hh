@@ -84,7 +84,7 @@ public:
  *   - default-constructible
  *   - has size() member
  *   - has resize(0) member
- *   - has axpy(a, x) member 
+ *   - has axpy(a, x) member
  */
 template<class Vector>
 class DofBackend<Vector, false>
