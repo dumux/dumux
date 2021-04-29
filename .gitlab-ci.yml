@@ -38,6 +38,8 @@ select-pipeline:
       - pipeline-config.yml
     expire_in: 3 hours
   rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: always
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: manual
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
