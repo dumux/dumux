@@ -5,9 +5,8 @@ stages:
 variables:
   IMAGE_REGISTRY_URL: $CI_REGISTRY/dumux-repositories/dumux-docker-ci
 
-# Cases in which to create a pipeline. The `select-pipeline` job further
-# specifies the situations in which they must be started manually. Currently,
-# we only have automatic pipeline triggers for scheduled pipelines.
+# Cases in which to create pipelines at all. The trigger jobs may further
+# specify how exactly they should be created in different situations.
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
@@ -30,6 +29,8 @@ workflow:
   variables:
     TRIGGER_SOURCE: $CI_PIPELINE_SOURCE
   rules:
+  - if: $CI_PIPELINE_SOURCE == "schedule"
+    when: always
   - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     when: manual
 
