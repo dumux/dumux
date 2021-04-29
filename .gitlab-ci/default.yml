@@ -2,6 +2,7 @@ default:
   image: $IMAGE
 
 stages:
+  - configure
   - build
   - test
 
@@ -9,20 +10,60 @@ workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE=="parent_pipeline"
 
+variables:
+  TRIGGER_SOURCE: "unknown"
+
+select tests:
+  stage: configure
+  image: $IMAGE_REGISTRY_URL/full:dune-2.7-gcc-ubuntu-20.04
+  script:
+    - |
+      if [[ "$TRIGGER_SOURCE" == "merge_request_event" ]]; then
+          dunecontrol --opts=$DUNE_OPTS_FILE --current all
+          pushd build-cmake
+            python3 ../bin/testing/findtests.py -f ../affectedtests.json -t origin/master
+          popd
+      else
+          echo "Skipping test selection, build/test stages will consider all tests!"
+          echo "{}" >> ../affectedtests.json
+      fi
+  artifacts:
+    paths:
+      - affectedtests.json
+    expire_in: 3 hours
+
 build dumux:
   stage: build
   script:
     - dunecontrol --opts=$DUNE_OPTS_FILE --current all
-    - dunecontrol --opts=$DUNE_OPTS_FILE --current bexec make -k -j4 build_tests
+    - |
+      pushd build-cmake
+        if [[ "$TRIGGER_SOURCE" == "merge_request_event" ]]; then
+          python3 ../bin/testing/runselectedtests.py -c ../affectedtests.json -b
+        else
+          python3 ../bin/testing/runselectedtests.py --all -b
+        fi
+      popd
   artifacts:
     paths:
       - build-cmake
+      - affectedtests.json
     expire_in: 3 hours
+  needs:
+    - job: select tests
+      artifacts: true
 
 test dumux:
   stage: test
   script:
-    - dunecontrol --opts=$DUNE_OPTS_FILE --current bexec dune-ctest -j4 --output-on-failure
+    - |
+      pushd build-cmake
+        if [[ "$TRIGGER_SOURCE" == "merge_request_event" ]]; then
+          python3 ../bin/testing/runselectedtests.py -c ../affectedtests.json -t
+        else
+          python3 ../bin/testing/runselectedtests.py --all -t
+        fi
+      popd
   needs:
     - job: build dumux
       artifacts: true
