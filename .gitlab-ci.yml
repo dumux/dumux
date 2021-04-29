@@ -1,5 +1,4 @@
 stages:
-  - configure
   - trigger
   - downstream modules
 
@@ -12,42 +11,10 @@ variables:
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-
-
-################################################################################
-# Stage 1: configure the test pipeline.                                        #
-# This creates the .yml to be used for the test pipeline trigger stage. Within #
-# merge request, we create a .yml file that adds a test selection stage before #
-# the build stage to identify the tests affected by changes introduced in the  #
-# merge request. In all other cases, we use the default which runs all tests.  #
-################################################################################
-select-pipeline:
-  image: $IMAGE_REGISTRY_URL/full:dune-2.7-gcc-ubuntu-20.04
-  stage: configure
-  script:
-    - |
-      if [ $CI_PIPELINE_SOURCE == "merge_request_event" ]; then
-          cp .gitlab-ci/affectedtestsonly.yml pipeline-config.yml
-      else
-          cp .gitlab-ci/default.yml pipeline-config.yml
-      fi
-  artifacts:
-    paths:
-      - pipeline-config.yml
-    expire_in: 3 hours
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: always
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      when: manual
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: manual
-
 
 ###################################################################################
-# Stage 2: trigger the Dumux test pipelines                                       #
+# Stage 1: trigger the Dumux test pipelines                                       #
 # In this stage, we trigger the test pipeline with different configurations, i.e. #
 # different Dune versions, compilers, etc. Within merge requests, we create three #
 # test pipelines including two different compilers and a full and minimal setup   #
@@ -57,13 +24,14 @@ select-pipeline:
 # basic trigger job to start the test pipeline
 .base-trigger:
   stage: trigger
-  needs:
-    - select-pipeline
   trigger:
-    include:
-      - artifact: pipeline-config.yml
-        job: select-pipeline
+    include: .gitlab-ci/default.yml
     strategy: depend
+  variables:
+    TRIGGER_SOURCE: $CI_PIPELINE_SOURCE
+  rules:
+  - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    when: manual
 
 # trigger for jobs that should not be created in merge requests
 .non-mr-trigger:
@@ -102,7 +70,7 @@ full-dune-master-clang:
 
 
 #########################################################
-# Stage 3: trigger test pipelines of downstream modules #
+# Stage 2: trigger test pipelines of downstream modules #
 #########################################################
 
 # trigger lecture test
