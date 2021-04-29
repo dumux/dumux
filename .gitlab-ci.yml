@@ -11,7 +11,6 @@ variables:
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
 ###################################################################################
@@ -31,10 +30,6 @@ workflow:
   variables:
     TRIGGER_SOURCE: $CI_PIPELINE_SOURCE
   rules:
-  - if: $CI_PIPELINE_SOURCE == "schedule"
-    when: always
-  - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-    when: manual
   - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     when: manual
 
