@@ -179,10 +179,10 @@ private:
 template<class BlockType, class PriVarsType, class State>
 struct BlockVectorView;
 
-template<class BlockType, class State>
+template<class BlockType, class PriVarsType, class State>
 struct ConstBlockVectorView;
 
-template<class BlockType, class State>
+template<class BlockType, class PriVarsType, class State>
 struct ConstBlockVectorView
 {
     template<class B, class P, class S>
@@ -191,8 +191,12 @@ struct ConstBlockVectorView
     ConstBlockVectorView(const BlockType& priVars, const State& state) : priVars_(&priVars), state_(&state)
     {}
 
-    operator BlockType() const
-    { return *priVars_; }
+    operator PriVarsType() const
+    {
+        PriVarsType privars = *priVars_;
+        privars.setState(*state_);
+        return privars;
+    }
 
     State state() const
     { return *state_; }
@@ -216,35 +220,17 @@ struct BlockVectorView
         state_ = &state;
     }
 
-    auto& operator= (const ConstBlockVectorView<BlockType, State>& other)
+    auto& operator= (const ConstBlockVectorView<BlockType, PriVarsType, State>& other)
     {
-        if (priVars_)
-        {
-            *priVars_ = (*other.priVars_);
-            *priVars_ = other.state();
-        }
-        else
-        {
-            priVarsStored_ = std::make_unique<BlockType>((*other.priVars_));
-            stateStored_ = other.state();
-        }
-
+        *priVars_ = (*other.priVars_);
+        *state_ = other.state();
         return *this;
     }
 
     auto& operator= (const PriVarsType& other)
     {
-        if (priVars_)
-        {
-            *priVars_ = other;
-            *state_ = other.state();
-        }
-        else
-        {
-            priVarsStored_ = std::make_unique<BlockType>(other);
-            stateStored_ = other.state();
-        }
-
+        *priVars_ = other;
+        *state_ = other.state();
         return *this;
     }
 
@@ -254,52 +240,26 @@ struct BlockVectorView
     operator PriVarsType() const
     {
         PriVarsType privars;
-        if (priVars_)
-        {
-            privars = *priVars_;
-            privars.setState(*state_);
-        }
-        else
-        {
-            privars = *priVarsStored_;
-            privars.setState(stateStored_);
-        }
-
+        privars = *priVars_;
+        privars.setState(*state_);
         return privars;
     }
 
     auto& operator[] (int i)
-    {
-        if (priVars_)
-            return (*priVars_)[i];
-        else
-            return (*priVarsStored_)[i];
-    }
+    { return (*priVars_)[i]; }
 
     const auto& operator[] (int i) const
-    {
-        if (priVars_)
-            return (*priVars_)[i];
-        else
-            return (*priVarsStored_)[i];
-    }
+    { return (*priVars_)[i]; }
 
     static constexpr auto size()
     { return BlockType::size(); }
 
     State state() const
-    {
-        if (priVars_)
-            return *state_;
-        else
-            return stateStored_;
-    }
+    { return *state_; }
 
 private:
     BlockType* priVars_;
     State* state_;
-    State stateStored_;
-    std::unique_ptr<BlockType> priVarsStored_;
 };
 
 template<class BlockVectorType, class PriVarsType>
@@ -370,7 +330,7 @@ public:
 
     auto operator[] (size_type i) const
     {
-        return ConstBlockVectorView<block_type, State>((*blockVector_)[i], (*states_)[i]);
+        return ConstBlockVectorView<block_type, PriVarsType, State>((*blockVector_)[i], (*states_)[i]);
     }
 
     BlockVectorWithState& operator= (const BlockVectorWithState& other)
