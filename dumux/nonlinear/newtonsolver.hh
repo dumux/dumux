@@ -947,8 +947,8 @@ private:
             newtonBegin(vars);
 
             // the given solution is the initial guess
-            auto uLastIter = Backend::dofs(vars);
-            auto deltaU = Backend::dofs(vars);
+            auto uLastIter = deepCopy(Backend::dofs(vars));
+            auto deltaU = deepCopy(Backend::dofs(vars));
 
             // setup timers
             Dune::Timer assembleTimer(false);
@@ -966,7 +966,7 @@ private:
 
                 // make the current solution to the old one
                 if (numSteps_ > 0)
-                    uLastIter = Backend::dofs(vars);
+                    uLastIter = deepCopy(Backend::dofs(vars));
 
                 if (verbosity_ >= 1 && enableDynamicOutput_)
                     std::cout << "Assemble: r(x^k) = dS/dt + div F - q;   M = grad r"
@@ -1095,7 +1095,7 @@ private:
     virtual void newtonUpdateShift_(const SolutionVector &uLastIter,
                                     const SolutionVector &deltaU)
     {
-        auto uNew = uLastIter;
+        auto uNew = deepCopy(uLastIter);
         uNew -= deltaU;
         shift_ = Detail::maxRelativeShift<Scalar>(uLastIter, uNew);
 
