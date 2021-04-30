@@ -118,10 +118,10 @@ template<class Element, class SolutionVector, class GridGeometry>
 auto elementSolution(const Element& element, const SolutionVector& sol, const GridGeometry& gg)
 -> std::enable_if_t<GridGeometry::discMethod == DiscretizationMethods::box,
                     BoxElementSolution<typename GridGeometry::LocalView,
-                                      std::decay_t<decltype(std::declval<SolutionVector>()[0])>>
+                                       typename SolutionVectorTraits<SolutionVector>::PrimaryVariables>
                     >
 {
-    using PrimaryVariables = std::decay_t<decltype(std::declval<SolutionVector>()[0])>;
+    using PrimaryVariables = typename SolutionVectorTraits<SolutionVector>::PrimaryVariables;
     return BoxElementSolution<typename GridGeometry::LocalView, PrimaryVariables>(element, sol, gg);
 }
 
