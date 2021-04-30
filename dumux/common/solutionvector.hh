@@ -670,18 +670,21 @@ using SolutionVector = typename Detail::SolutionVectorChooser<sizeof...(PrimaryV
 template<class SolutionVector>
 struct SolutionVectorTraits
 {
+    using PrimaryVariables = std::decay_t<decltype(std::declval<SolutionVector>()[0])>;
     using NativeType = SolutionVector;
 };
 
 template<class PV, class S>
 struct SolutionVectorTraits<Dune::BlockVector<SwitchablePrimaryVariables<PV, S>>>
 {
+    using PrimaryVariables = SwitchablePrimaryVariables<PV, S>;
     using NativeType = Dune::BlockVector<PV>;
 };
 
 template<class BlockVectorType, class PrivarsType>
 struct SolutionVectorTraits<Dumux::Istl::BlockVectorWithState<BlockVectorType, PrivarsType>>
 {
+    using PrimaryVariables = PrivarsType;
     using NativeType = BlockVectorType;
 };
 
