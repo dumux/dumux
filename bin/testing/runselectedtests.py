@@ -5,6 +5,7 @@ Build and/or run (using `dune-ctest`) a selection of tests.
 Run this in the top level of the build tree.
 """
 
+import os
 import sys
 import json
 import subprocess
@@ -46,10 +47,8 @@ def runTests(config, script='', flags=['-j4', '--output-on-failure']):
         tests = ['NOOP']
 
     # if not given, try system-wide call to dune-ctest
-    call = ['dune-ctest'] if not script else ['./' + script.lstrip('./')]
-    call.extend(flags)
-    call.extend(['-R'] + tests)
-    subprocess.run(call, check=True)
+    script = ['dune-ctest'] if not script else script
+    subprocess.run([script] + flags + ['-R'] + tests, check=True)
 
 
 if __name__ == '__main__':
@@ -93,6 +92,8 @@ if __name__ == '__main__':
     # prepare build and test flags
     buildFlags = args['buildflags'].split(' ')
     testFlags = args['testflags'].split(' ')
+    dunectest = args['script']
+    dunectest = 'dune-ctest' if not dunectest else os.path.abspath(dunectest)
 
     # use target `all`
     if args['all']:
@@ -101,7 +102,7 @@ if __name__ == '__main__':
             subprocess.run(['make'] + buildFlags + ['build_tests'], check=True)
         if args['test']:
             print('Running all tests')
-            subprocess.run(['ctest'] + testFlags, check=True)
+            subprocess.run([dunectest] + testFlags, check=True)
 
     # use target selection
     else:
@@ -113,4 +114,4 @@ if __name__ == '__main__':
             if args['build']:
                 buildTests(config, buildFlags)
             if args['test']:
-                runTests(config, args['script'], testFlags)
+                runTests(config, dunectest, testFlags)
