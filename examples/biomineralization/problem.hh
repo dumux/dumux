@@ -32,7 +32,7 @@
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/common/boundarytypes.hh> // for `BoundaryTypes`
 #include <dumux/common/properties.hh> // GetPropType
-#include <dumux/common/numeqvector.hh>
+#include <dumux/common/numeqvector.hh> // for `NumEqVector`
 #include <dumux/material/components/ammonia.hh>
 #include <dumux/discretization/evalgradients.hh>
 #include <dumux/io/container.hh>

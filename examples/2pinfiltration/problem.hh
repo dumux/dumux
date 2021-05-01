@@ -25,7 +25,7 @@
 //
 // ### Includes
 // We start with includes for `PorousMediumFlowProblem`, `readFileToContainer`,
-// `BoundaryTypes` and `GetPropType` (used below).
+// `BoundaryTypes`, `GetPropType` and `NumEqVector` (used below).
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/io/container.hh>
 #include <dumux/common/boundarytypes.hh>

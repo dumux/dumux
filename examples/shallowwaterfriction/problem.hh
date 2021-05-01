@@ -38,6 +38,7 @@
 #include <dumux/freeflow/shallowwater/boundaryfluxes.hh>
 // Include the `BoundaryTypes` class which specifies the boundary types set in this problem.
 #include <dumux/common/boundarytypes.hh>
+// Include the `NumEqVector` class which specifies a field vector with size number of equations in this problem.
 #include <dumux/common/numeqvector.hh>
 
 // ### The problem class
