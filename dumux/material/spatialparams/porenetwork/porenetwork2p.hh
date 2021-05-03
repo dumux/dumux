@@ -103,7 +103,7 @@ public:
     Scalar contactAngle(const Element& element,
                         const ElementVolumeVariables& elemVolVars) const
     {
-        static const Scalar theta = getParam<Scalar>("SpatialParameters.ContactAngle", 0.0);
+        static const Scalar theta = getParam<Scalar>("SpatialParams.ContactAngle", 0.0);
         return theta;
     }
 
@@ -120,7 +120,7 @@ public:
                         const SubControlVolume& scv,
                         const ElementSolutionVector& elemSol) const
     {
-        static const Scalar theta = getParam<Scalar>("SpatialParameters.ContactAngle", 0.0);
+        static const Scalar theta = getParam<Scalar>("SpatialParams.ContactAngle", 0.0);
         return theta;
     }
 
