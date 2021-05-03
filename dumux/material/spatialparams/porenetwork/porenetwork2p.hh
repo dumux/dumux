@@ -157,7 +157,7 @@ public:
     }
 
     /*!
-     * \brief Returns the surface tension \f$ N/m\f$
+     * \brief Returns the surface tension \f$ [N/m] \f$
      *
      * \param element The current element
      * \param scv The sub-control volume inside the element.
