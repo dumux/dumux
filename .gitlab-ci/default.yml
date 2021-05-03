@@ -2,7 +2,6 @@ default:
   image: $IMAGE
 
 stages:
-  - configure
   - build
   - test
 
@@ -13,45 +12,25 @@ workflow:
 variables:
   TRIGGER_SOURCE: "unknown"
 
-select tests:
-  stage: configure
-  image: $IMAGE_REGISTRY_URL/full:dune-2.7-gcc-ubuntu-20.04
-  script:
-    - |
-      if [[ "$TRIGGER_SOURCE" == "merge_request_event" ]]; then
-          dunecontrol --opts=$DUNE_OPTS_FILE --current all
-          pushd build-cmake
-            python3 ../bin/testing/findtests.py -f ../affectedtests.json -t origin/master
-          popd
-      else
-          echo "Skipping test selection, build/test stages will consider all tests!"
-          echo "{}" >> ../affectedtests.json
-      fi
-  artifacts:
-    paths:
-      - affectedtests.json
-    expire_in: 3 hours
-
 build dumux:
   stage: build
   script:
-    - dunecontrol --opts=$DUNE_OPTS_FILE --current all
     - |
-      pushd build-cmake
-        if [[ "$TRIGGER_SOURCE" == "merge_request_event" ]]; then
-          python3 ../bin/testing/runselectedtests.py -c ../affectedtests.json -b
-        else
-          python3 ../bin/testing/runselectedtests.py --all -b
-        fi
-      popd
+      mkdir dune && cd dune
+      git clone -b releases/2.7 https://gitlab.dune-project.org/core/dune-common
+      git clone -b releases/2.7 https://gitlab.dune-project.org/core/dune-geometry
+      git clone -b releases/2.7 https://gitlab.dune-project.org/core/dune-grid
+      git clone -b releases/2.7 https://gitlab.dune-project.org/core/dune-istl
+      git clone -b releases/2.7 https://gitlab.dune-project.org/core/dune-localfunctions
+      cd ..
+      ./dune/dune-common/bin/dunecontrol --opts=cmake.opts all
+      cd build-cmake
+      make -j8 build_tests
   artifacts:
     paths:
+      - dune
       - build-cmake
-      - affectedtests.json
     expire_in: 3 hours
-  needs:
-    - job: select tests
-      artifacts: true
 
 test dumux:
   stage: test
@@ -60,13 +39,8 @@ test dumux:
     OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
   script:
     - |
-      pushd build-cmake
-        if [[ "$TRIGGER_SOURCE" == "merge_request_event" ]]; then
-          python3 ../bin/testing/runselectedtests.py -c ../affectedtests.json -t
-        else
-          python3 ../bin/testing/runselectedtests.py --all -t
-        fi
-      popd
+      cd build-cmake
+      ctest -j8 build_tests --output-on-failure
   needs:
     - job: build dumux
       artifacts: true

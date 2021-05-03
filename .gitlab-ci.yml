@@ -47,10 +47,10 @@ full-dune-2.7-gcc:
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/full:dune-2.7-gcc-ubuntu-20.04
 
-minimal-dune-2.7-gcc:
+minimal-dune-2.7-clang:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/minimal:dune-2.7-gcc-ubuntu-20.04
+    IMAGE: timokoch/bb-dumux-minimal:latest
 
 full-dune-2.7-clang:
   extends: .base-trigger
