@@ -38,6 +38,7 @@
 #include <dumux/freeflow/shallowwater/boundaryfluxes.hh>
 // Include the `BoundaryTypes` class which specifies the boundary types set in this problem.
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/numeqvector.hh>
 
 // ### The problem class
 // We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
@@ -56,7 +57,6 @@ class RoughChannelProblem : public ShallowWaterProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
@@ -65,7 +65,8 @@ class RoughChannelProblem : public ShallowWaterProblem<TypeTag>
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
+    using NeumannFluxes = NumEqVector;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
 public:

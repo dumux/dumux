@@ -26,6 +26,7 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/numeqvector.hh>
 
 namespace Dumux{
 
@@ -40,7 +41,7 @@ class ShallowWaterResidual
     using ParentType = GetPropType<TypeTag, Properties::BaseLocalResidual>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;

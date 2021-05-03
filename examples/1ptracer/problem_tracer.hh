@@ -33,6 +33,7 @@
 #include <dumux/porousmediumflow/problem.hh>
 // Include the `BoundaryTypes` class which specifies the boundary types set in this problem.
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/numeqvector.hh>
 
 // ### The problem class
 //
@@ -57,7 +58,7 @@ class TracerTestProblem : public PorousMediumFlowProblem<TypeTag>
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;

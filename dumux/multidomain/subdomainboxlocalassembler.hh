@@ -36,6 +36,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numericdifferentiation.hh>
+#include <dumux/common/numeqvector.hh>
 #include <dumux/assembly/numericepsilon.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/fvlocalassemblerbase.hh>
@@ -60,7 +61,7 @@ class SubDomainBoxLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Asse
     using ParentType = FVLocalAssemblerBase<TypeTag, Assembler,Implementation, implicit>;
 
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using LocalResidualValues = GetPropType<TypeTag, Properties::NumEqVector>;
+    using LocalResidualValues = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using SolutionVector = typename Assembler::SolutionVector;

@@ -36,6 +36,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numericdifferentiation.hh>
+#include <dumux/common/numeqvector.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/assembly/numericepsilon.hh>
@@ -61,7 +62,7 @@ class SubDomainCCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assem
     using ParentType = FVLocalAssemblerBase<TypeTag, Assembler,Implementation, implicit>;
 
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using LocalResidualValues = GetPropType<TypeTag, Properties::NumEqVector>;
+    using LocalResidualValues = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using SolutionVector = typename Assembler::SolutionVector;
     using SubSolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -283,7 +284,7 @@ class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*i
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using LocalResidualValues = GetPropType<TypeTag, Properties::NumEqVector>;
+    using LocalResidualValues = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
@@ -635,7 +636,7 @@ class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*i
     using ParentType = SubDomainCCLocalAssemblerBase<id, TypeTag, Assembler, ThisType, /*implicit=*/false>;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using LocalResidualValues = GetPropType<TypeTag, Properties::NumEqVector>;
+    using LocalResidualValues = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     static constexpr int numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
@@ -781,7 +782,7 @@ class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::analytic, /*
     using ThisType = SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/true>;
     using ParentType = SubDomainCCLocalAssemblerBase<id, TypeTag, Assembler, ThisType, /*implicit=*/true>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using LocalResidualValues = GetPropType<TypeTag, Properties::NumEqVector>;
+    using LocalResidualValues = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using Problem = GetPropType<TypeTag, Properties::Problem>;

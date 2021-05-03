@@ -26,6 +26,7 @@
 #ifndef DUMUX_COMPOSITIONAL_MINERALIZATION_LOCAL_RESIDUAL_HH
 #define DUMUX_COMPOSITIONAL_MINERALIZATION_LOCAL_RESIDUAL_HH
 
+#include <dumux/common/numeqvector.hh>
 #include <dumux/porousmediumflow/compositional/localresidual.hh>
 
 namespace Dumux
@@ -39,7 +40,7 @@ template<class TypeTag>
 class MineralizationLocalResidual: public CompositionalLocalResidual<TypeTag>
 {
     using ParentType = CompositionalLocalResidual<TypeTag>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;

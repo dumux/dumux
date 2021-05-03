@@ -31,6 +31,7 @@
 #include <dune/common/reservedvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/numeqvector.hh>
 #include <dumux/geometry/boundingboxtree.hh>
 #include <dumux/geometry/intersectspointgeometry.hh>
 #include <dumux/geometry/intersectingentities.hh>
@@ -210,10 +211,10 @@ private:
 template<class TypeTag>
 class SolDependentPointSource : public PointSource<Dune::FieldVector<typename GetPropType<TypeTag, Properties::GridGeometry>::GridView::ctype,
                                                    GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimensionworld>,
-                                                   GetPropType<TypeTag, Properties::NumEqVector>>
+                                                   Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>>
 {
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
-    using SourceValues = GetPropType<TypeTag, Properties::NumEqVector>;
+    using SourceValues = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;

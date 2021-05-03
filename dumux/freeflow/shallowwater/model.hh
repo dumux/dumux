@@ -64,6 +64,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/properties/model.hh>
+#include <dumux/common/numeqvector.hh>
 
 #include <dumux/flux/shallowwaterflux.hh>
 #include <dumux/flux/shallowwaterviscousflux.hh>
@@ -156,11 +157,11 @@ struct IOFields<TypeTag, TTag::ShallowWater>
 
 template<class TypeTag>
 struct AdvectionType<TypeTag, TTag::ShallowWater>
-{ using type = ShallowWaterFlux< GetPropType<TypeTag, Properties::NumEqVector> >; };
+{ using type = ShallowWaterFlux< Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>> >; };
 
 template<class TypeTag>
 struct ViscousFluxType<TypeTag, TTag::ShallowWater>
-{ using type = ShallowWaterViscousFlux< GetPropType<TypeTag, Properties::PrimaryVariables>, GetPropType<TypeTag, Properties::NumEqVector> >; };
+{ using type = ShallowWaterViscousFlux< GetPropType<TypeTag, Properties::PrimaryVariables>, Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>> >; };
 
 } // end properties
 } // end namespace Dumux

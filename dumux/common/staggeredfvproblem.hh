@@ -29,6 +29,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/fvproblem.hh>
+#include <dumux/common/numeqvector.hh>
 
 namespace Dumux {
 
@@ -61,7 +62,7 @@ class StaggeredFVProblem : public FVProblem<TypeTag>
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
 
     using CoordScalar = typename GridView::ctype;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;

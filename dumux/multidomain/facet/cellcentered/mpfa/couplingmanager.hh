@@ -30,6 +30,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/common/numericdifferentiation.hh>
+#include <dumux/common/numeqvector.hh>
 #include <dumux/assembly/numericepsilon.hh>
 
 #include <dumux/discretization/method.hh>
@@ -68,7 +69,7 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     // further types specific to the sub-problems
     template<std::size_t id> using Scalar = GetPropType<SubDomainTypeTag<id>, Properties::Scalar>;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
-    template<std::size_t id> using NumEqVector = GetPropType<SubDomainTypeTag<id>, Properties::NumEqVector>;
+    template<std::size_t id> using NumEqVector = Dumux::NumEqVector<GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>>;
     template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
     template<std::size_t id> using FVElementGeometry = typename GridGeometry<id>::LocalView;
     template<std::size_t id> using SubControlVolume = typename GridGeometry<id>::SubControlVolume;

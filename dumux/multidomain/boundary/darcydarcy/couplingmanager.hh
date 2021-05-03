@@ -33,6 +33,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>
+#include <dumux/common/numeqvector.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
@@ -57,7 +58,7 @@ class DarcyDarcyBoundaryCouplingManager
     template<std::size_t i> using SubDomainTypeTag = typename MDTraits::template SubDomain<i>::TypeTag;
     template<std::size_t i> using Problem = GetPropType<SubDomainTypeTag<i>, Properties::Problem>;
     template<std::size_t i> using PrimaryVariables = GetPropType<SubDomainTypeTag<i>, Properties::PrimaryVariables>;
-    template<std::size_t i> using NumEqVector = GetPropType<SubDomainTypeTag<i>, Properties::NumEqVector>;
+    template<std::size_t i> using NumEqVector = Dumux::NumEqVector<PrimaryVariables<i>>;
     template<std::size_t i> using ElementVolumeVariables = typename GetPropType<SubDomainTypeTag<i>, Properties::GridVolumeVariables>::LocalView;
     template<std::size_t i> using VolumeVariables = typename GetPropType<SubDomainTypeTag<i>, Properties::GridVolumeVariables>::VolumeVariables;
     template<std::size_t i> using GridGeometry = typename MDTraits::template SubDomain<i>::GridGeometry;

@@ -29,6 +29,7 @@
 #include <dune/istl/matrix.hh>
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/numeqvector.hh>
 #include <dumux/assembly/fvlocalresidual.hh>
 #include <dumux/discretization/extrusion.hh>
 
@@ -55,7 +56,7 @@ class BoxLocalResidual : public FVLocalResidual<TypeTag>
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
 
 public:
     using ElementResidualVector = typename ParentType::ElementResidualVector;

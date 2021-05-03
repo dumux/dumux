@@ -32,6 +32,7 @@
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/common/boundarytypes.hh> // for `BoundaryTypes`
 #include <dumux/common/properties.hh> // GetPropType
+#include <dumux/common/numeqvector.hh>
 #include <dumux/material/components/ammonia.hh>
 #include <dumux/discretization/evalgradients.hh>
 #include <dumux/io/container.hh>
@@ -93,7 +94,7 @@ class MICPColumnProblemSimpleChemistry : public PorousMediumFlowProblem<TypeTag>
     };
 
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using BoundaryTypes = Dumux::BoundaryTypes<PrimaryVariables::size()>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;

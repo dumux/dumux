@@ -25,6 +25,7 @@
 #define DUMUX_FREEFLOW_SHALLOW_WATER_FLUXVARIABLES_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/numeqvector.hh>
 #include <dumux/flux/fluxvariablesbase.hh>
 
 namespace Dumux {
@@ -43,7 +44,7 @@ class ShallowWaterFluxVariables
 {
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
     using ViscousFluxType = GetPropType<TypeTag, Properties::ViscousFluxType>;
 

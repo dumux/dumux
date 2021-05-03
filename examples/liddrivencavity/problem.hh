@@ -31,6 +31,7 @@
 //
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/numeqvector.hh>
 
 // Include the `NavierStokesProblem` class, the base
 // class from which we will derive.
@@ -54,8 +55,8 @@ class LidDrivenCavityExampleProblem : public NavierStokesProblem<TypeTag>
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;

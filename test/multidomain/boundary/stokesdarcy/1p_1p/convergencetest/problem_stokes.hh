@@ -26,6 +26,7 @@
 #define DUMUX_FREEFLOW_SUBPROBLEM_HH
 
 #include <dune/common/fvector.hh>
+#include <dumux/common/numeqvector.hh>
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/staggered/freeflow/properties.hh>
@@ -60,7 +61,7 @@ class FreeFlowSubProblem : public NavierStokesProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;

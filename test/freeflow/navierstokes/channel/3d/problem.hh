@@ -32,6 +32,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/numeqvector.hh>
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
@@ -78,7 +79,7 @@ class ThreeDChannelTestProblem : public NavierStokesProblem<TypeTag>
     using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
 
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
 
     static constexpr bool enablePseudoThreeDWallFriction = !(GRID_DIM == 3);
 

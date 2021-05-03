@@ -27,6 +27,7 @@
 
 #include <dumux/common/reservedblockvector.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/numeqvector.hh>
 #include <dumux/assembly/fvlocalresidual.hh>
 #include <dumux/discretization/extrusion.hh>
 
@@ -43,7 +44,7 @@ class CCLocalResidual : public FVLocalResidual<TypeTag>
     using ParentType = FVLocalResidual<TypeTag>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Element = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView::template Codim<0>::Entity;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
