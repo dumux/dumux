@@ -93,7 +93,7 @@ public:
         {
             shape_ = platonicBodyParams.poreShape();
             platonicBodyParams_ = std::make_unique<PlatonicBodyParams<Scalar>>(platonicBodyParams);
-        } //TODO: dropParams?
+        }
 
         void setDropParams(const DropParams<Scalar>& dropParams)
         {
