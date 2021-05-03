@@ -18,15 +18,8 @@ select tests:
   image: $IMAGE_REGISTRY_URL/full:dune-2.7-gcc-ubuntu-20.04
   script:
     - |
-      if [[ "$TRIGGER_SOURCE" == "merge_request_event" ]]; then
-          dunecontrol --opts=$DUNE_OPTS_FILE --current all
-          pushd build-cmake
-            python3 ../bin/testing/findtests.py -f ../affectedtests.json -t origin/master
-          popd
-      else
-          echo "Skipping test selection, build/test stages will consider all tests!"
-          echo "{}" >> ../affectedtests.json
-      fi
+      echo "Skipping test selection, build/test stages will consider all tests!"
+      echo "{}" >> affectedtests.json
   artifacts:
     paths:
       - affectedtests.json
@@ -38,11 +31,7 @@ build dumux:
     - dunecontrol --opts=$DUNE_OPTS_FILE --current all
     - |
       pushd build-cmake
-        if [[ "$TRIGGER_SOURCE" == "merge_request_event" ]]; then
-          python3 ../bin/testing/runselectedtests.py -c ../affectedtests.json -b
-        else
           python3 ../bin/testing/runselectedtests.py --all -b
-        fi
       popd
   artifacts:
     paths:
@@ -61,11 +50,7 @@ test dumux:
   script:
     - |
       pushd build-cmake
-        if [[ "$TRIGGER_SOURCE" == "merge_request_event" ]]; then
-          python3 ../bin/testing/runselectedtests.py -c ../affectedtests.json -t
-        else
           python3 ../bin/testing/runselectedtests.py --all -t
-        fi
       popd
   needs:
     - job: build dumux
