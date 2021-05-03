@@ -219,13 +219,6 @@
  * | LoadSolution             | PriVarNamesState1                        | std::vector<std::string>          | -                                  | Primary variable names state, e.g. p_liq x^N2_liq |
  * | LoadSolution             | PriVarNamesState2                        | std::vector<std::string>          | -                                  | Primary variable names state, e.g. p_liq x^H2O_gas |
  * | LoadSolution             | PriVarNamesState...                      | std::vector<std::string>          | -                                  | Primary variable names state, e.g. p_liq S_gas |
- * | \b MPFA                  | CalcVelocityInTransport                  | bool                              | -                                  | Indicates if velocity is reconstructed in the pressure step or in the transport step |
- * | MPFA                     | EnableComplexLStencil                    | bool                              | true                               | Whether to enable the two non-centered flux stencils |
- * | MPFA                     | EnableSimpleLStencil                     | bool                              | true                               | Whether to enable the two centered flux stencils |
- * | MPFA                     | EnableTPFA                               | bool                              | false                              | Whether to enable the use of TPFA if neighboring cells are of the same grid level |
- * | MPFA                     | Q                                        | CoordScalar                       | -                                  | The quadrature point parameterizaion to be used on scvfs |
- * | MPFA                     | TransmissibilityCriterion                | int                               | 0                                  |  |
- * | MPFA                     | TransmissibilityCriterionThreshold       | Scalar                            | 1e-8                               |  |
  * | \b MatrixConverter       | DeletePatternEntriesBelowAbsThreshold    | Scalar                            | -1.0                               | Only set non-zero value if original matrix entry is larger than this. |
  * | \b MixedDimension        | IntegrationOrder                         | int                               | 1                                  | The integration order for coupling source |
  * | MixedDimension           | KernelIntegrationCRL                     | double                            | 0.1                                | The characteristic relative length |
@@ -233,6 +226,13 @@
  * | MixedDimension           | NumCircleSegments                        | int                               | -                                  | The number of circle segements in the context of integration points. |
  * | MixedDimension           | UseCircleAverage                         | bool                              | true                               | if we use the circle average as the 3D values or a point evaluation |
  * | MixedDimension           | WriteIntegrationPointsToFile             | bool                              | false                              | Whether to write integration points to a file |
+ * | \b MPFA                  | CalcVelocityInTransport                  | bool                              | -                                  | Indicates if velocity is reconstructed in the pressure step or in the transport step |
+ * | MPFA                     | EnableComplexLStencil                    | bool                              | true                               | Whether to enable the two non-centered flux stencils |
+ * | MPFA                     | EnableSimpleLStencil                     | bool                              | true                               | Whether to enable the two centered flux stencils |
+ * | MPFA                     | EnableTPFA                               | bool                              | false                              | Whether to enable the use of TPFA if neighboring cells are of the same grid level |
+ * | MPFA                     | Q                                        | CoordScalar                       | -                                  | The quadrature point parameterizaion to be used on scvfs |
+ * | MPFA                     | TransmissibilityCriterion                | int                               | 0                                  |  |
+ * | MPFA                     | TransmissibilityCriterionThreshold       | Scalar                            | 1e-8                               |  |
  * | \b Newton                | EnableAbsoluteResidualCriterion          | bool                              | -                                  | For Newton iterations to stop the absolute residual is demanded to be below a threshold value. At least two iterations. |
  * | Newton                   | EnableChop                               | bool                              | -                                  | chop the Newton update at the beginning of the non-linear solver |
  * | Newton                   | EnableDynamicOutput                      | bool                              | true                               | Prints current information about assembly and solution process in the coarse of the simulation. |
