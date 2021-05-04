@@ -322,22 +322,25 @@ public:
         {
             if (isOutlet_(scvf.ipGlobal()))
                 values = NavierStokesBoundaryFluxHelper<ModelTraits>::scalarOutflowFlux(*this, element, fvGeometry, scvf, elemVolVars);
-            if (isInlet_(scvf.ipGlobal()))
-            {
-                //const static Scalar D = getParam<Scalar>("Phasefield.DiffCoeff");
-                //const auto& volVars = elemVolVars[scvf.insideScvIdx()];
-                //values[Indices::phi1Idx] = 0.0;
-                //values[Indices::phi2Idx] = 0.0;
-                //values[Indices::phi3Idx] = 0.0;
-                //const static Scalar a_in = getParam<Scalar>("Phasefield.InletAConcentration");
-                //const static Scalar b_in = getParam<Scalar>("Phasefield.InletBConcentration");
-                //const static Scalar c_in = getParam<Scalar>("Phasefield.InletCConcentration");
-                //const auto volumeFlux = this->faceVelocity(element,fvGeometry, scvf) *
-                //    scvf.unitOuterNormal();
-                //values[Indices::u1Idx] = volumeFlux/D * (a_in - volVars.concentration(1));
-                //values[Indices::u2Idx] = volumeFlux/D * (b_in - volVars.concentration(2));
-                //values[Indices::u3Idx] = volumeFlux/D * (c_in - volVars.concentration(3));
-            }
+            //if (isInlet_(scvf.ipGlobal()))
+            //{
+            //    const static Scalar dirichletPenalty = getParam<Scalar>("Problem.DirichletPenalty");
+            //    const auto& volVars = elemVolVars[scvf.insideScvIdx()];
+            //    const static Scalar D = getParam<Scalar>("Phasefield.DiffCoeff");
+            //    Scalar pressure = this->couplingManager().cellPressure(element, scvf);
+            //    values[Indices::pressureIdx] = -dirichletPenalty * (pressure - volVars.pressure());
+            //    values[Indices::phi1Idx] = 0.0;
+            //    values[Indices::phi2Idx] = 0.0;
+            //    values[Indices::phi3Idx] = 0.0;
+            //    const static Scalar a_in = getParam<Scalar>("Phasefield.InletAConcentration");
+            //    const static Scalar b_in = getParam<Scalar>("Phasefield.InletBConcentration");
+            //    const static Scalar c_in = getParam<Scalar>("Phasefield.InletCConcentration");
+            //    const auto volumeFlux = this->faceVelocity(element,fvGeometry, scvf) *
+            //        scvf.unitOuterNormal();
+            //    values[Indices::u1Idx] = volumeFlux/D * (a_in - volVars.concentration(1));
+            //    values[Indices::u2Idx] = volumeFlux/D * (b_in - volVars.concentration(2));
+            //    values[Indices::u3Idx] = volumeFlux/D * (c_in - volVars.concentration(3));
+            //}
         }
 
         return values;
@@ -524,6 +527,7 @@ public:
         static const auto xi = getParam<Scalar>("Phasefield.xi");
         static const auto rhoD = getParam<Scalar>("Phasefield.MineralDMolarDensity");
         static const auto rhoP = getParam<Scalar>("Phasefield.MineralPMolarDensity");
+        static const auto delta = getParam<Scalar>("Phasefield.delta");
         Scalar volumeF = 0.0;
         Scalar volumeD = 0.0;
         Scalar volumeP = 0.0;
@@ -532,8 +536,10 @@ public:
         Scalar sigmaP = 0.0;
         Scalar conserveB = 0.0;
         Scalar conserveC = 0.0;
-        accumFluxB_ += boundaryFlux[Indices::u2Idx]*timeLoop_->timeStepSize();
-        accumFluxC_ += boundaryFlux[Indices::u3Idx]*timeLoop_->timeStepSize();
+        Scalar conserveBdelta = 0.0;
+        Scalar conserveCdelta = 0.0;
+        accumFluxB_ += boundaryFlux[Indices::u2Idx]*timeLoop_->previousTimeStepSize();
+        accumFluxC_ += boundaryFlux[Indices::u3Idx]*timeLoop_->previousTimeStepSize();
         for (auto dof : x)
         {
             Scalar sf =  dof[Indices::phi1Idx] * (1-dof[Indices::phi1Idx]);
@@ -552,13 +558,24 @@ public:
             conserveC += hx*hy * ( dof[Indices::phi1Idx] * dof[Indices::u3Idx] +
                     dof[Indices::phi3Idx] * rhoP )
                 ;
+            conserveBdelta += hx*hy * ( (dof[Indices::phi1Idx] + delta) * dof[Indices::u2Idx] +
+                    dof[Indices::phi2Idx] * rhoD + dof[Indices::phi3Idx] * rhoP )
+                ;
+            conserveCdelta += hx*hy * ( (dof[Indices::phi1Idx] + delta) * dof[Indices::u3Idx] +
+                    dof[Indices::phi3Idx] * rhoP )
+                ;
         }
         conserveB += accumFluxB_;
         conserveC += accumFluxC_;
+        conserveBdelta += accumFluxB_;
+        conserveCdelta += accumFluxC_;
 
-        fout << std::setprecision(10) << timeLoop_->time() << '\t' << volumeF << '\t' <<
-            volumeD << '\t' << volumeP << '\t' << sigmaF << '\t' <<
-            sigmaD << '\t' << sigmaP << '\t' << conserveB << '\t' << conserveC << std::endl;
+        fout << std::setprecision(10) << timeLoop_->time()
+            << '\t' << volumeF << '\t' << volumeD << '\t' << volumeP
+            << '\t' << sigmaF << '\t' << sigmaD << '\t' << sigmaP
+            << '\t' << conserveB << '\t' << conserveC
+            << '\t' << conserveBdelta << '\t' << conserveCdelta
+            << std::endl;
     }
 
 

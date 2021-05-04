@@ -52,7 +52,7 @@ NumericDifference.BaseEpsilon =  1e-3
 EnableDilatationTerm = false
 
 [Phasefield]
-xi = 5e-2
+xi = 2.5e-2
 delta = 1e-6
 sigma = 2.5e-3
 DiffCoeff = 0.2 #1e-9

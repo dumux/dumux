@@ -338,11 +338,6 @@ int main(int argc, char** argv) try
             // write vtk output
             vtkWriter.write(timeLoop->time());
 
-            // write volume, surface and relative mass
-            auto boundaryFlux = assembleBoundaryFluxes<Assembler, SolutionVector,
-                 MassLocalAssembler, CouplingManager>(*assembler, xOld, *couplingManager);
-            massProblem->writeScalars(xOld[massIdx], boundaryFlux, fout_scalar);
-
             // // calculate and print mass fluxes over the planes
             // flux.calculateMassOrMoleFluxes();
             // if(GetPropType<TypeTag, Properties::ModelTraits>::enableEnergyBalance())
@@ -366,6 +361,11 @@ int main(int argc, char** argv) try
 
             // set new dt as suggested by newton solver
             timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+
+            // write volume, surface and relative mass
+            auto boundaryFlux = assembleBoundaryFluxes<Assembler, SolutionVector,
+                 MassLocalAssembler, CouplingManager>(*assembler, xOld, *couplingManager);
+            massProblem->writeScalars(xOld[massIdx], boundaryFlux, fout_scalar);
 
         } while (!timeLoop->finished());
 
