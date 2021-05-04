@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PoreNetworkModels
+ * \ingroup PoreNetworkDiscretization
  * \brief Base class for the finite volume geometry for porenetwork models
  */
 #ifndef DUMUX_DISCRETIZATION_PNM_GRID_GEOMETRY_HH
@@ -459,7 +459,7 @@ private:
 };
 
 /*!
- * \ingroup PoreNetworkModels
+ * \ingroup PoreNetworkDiscretization
  * \brief The default traits
  * \tparam the grid view type
  */
@@ -669,7 +669,7 @@ private:
 };
 
 /*!
- * \ingroup PoreNetworkModels
+ * \ingroup PoreNetworkDiscretization
  * \brief Base class for the finite volume geometry for porenetwork models
  * \note For caching disabled we store only some essential index maps to build up local systems on-demand in
  *       the corresponding FVElementGeometry

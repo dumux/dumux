@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PoreNetworkModels
+ * \ingroup PoreNetworkDiscretization
  * \brief Base class for a sub control volume face
  */
 #ifndef DUMUX_DISCRETIZATION_PNM_SUBCONTROLVOLUMEFACE_HH
@@ -30,7 +30,7 @@
 namespace Dumux::PoreNetwork {
 
 /*!
- * \ingroup PoreNetworkModels
+ * \ingroup PoreNetworkDiscretization
  * \brief Default traits class
  * \tparam GV the type of the grid view
  */
