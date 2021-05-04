@@ -1,5 +1,5 @@
 add_executable(test_ff_stokes_channel_3d EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_ff_stokes_channel_3d PUBLIC "GRID_DIM=3")
+target_compile_definitions(test_ff_stokes_channel_3d PUBLIC "GRID_DIM=3" PUBLIC "UPWINDSCHEMEORDER=1")
 
 dumux_add_test(NAME test_ff_stokes_channel_3d_cuboid
               TARGET test_ff_stokes_channel_3d
@@ -28,7 +28,7 @@ dumux_add_test(NAME test_ff_stokes_channel_3d_staircase
 dumux_add_test(NAME test_ff_stokes_channel_pseudo3d
               LABELS freeflow navierstokes
               SOURCES main.cc
-              COMPILE_DEFINITIONS GRID_DIM=2
+              COMPILE_DEFINITIONS UPWINDSCHEMEORDER=1 GRID_DIM=2
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
