@@ -80,6 +80,8 @@ struct CouplingManager<TypeTag, TTag::SincosTest>
     using type = StaggeredFreeFlowCouplingManager<Traits>;
 };
 
+struct UpwindSchemeOrder<TypeTag, TTag::SincosTest> { static constexpr int value = UPWINDSCHEMEORDER; };
+
 } // end namespace Dumux::Properties
 
 #endif

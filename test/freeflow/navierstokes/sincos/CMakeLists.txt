@@ -1,12 +1,12 @@
 dune_symlink_to_source_files(FILES "convergencetest.py")
-dune_symlink_to_source_files(FILES "params.input")
+dune_symlink_to_source_files(FILES "params.input" "params_standard.input")
 
 dumux_add_test(NAME test_ff_navierstokes_sincos
               SOURCES main.cc
               LABELS freeflow
               TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK
-              COMPILE_DEFINITIONS LINEARSOLVER=UMFPackBackend
+              COMPILE_DEFINITIONS UPWINDSCHEMEORDER=1 LINEARSOLVER=UMFPackBackend
               COMMAND ./convergencetest.py
               CMD_ARGS test_ff_navierstokes_sincos params.input
               -Grid.UpperRight "6.28 6.28"
@@ -21,7 +21,7 @@ dumux_add_test(NAME test_ff_navierstokes_sincos_instationary
               LABELS freeflow
               TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK
-              COMPILE_DEFINITIONS LINEARSOLVER=UMFPackBackend
+              COMPILE_DEFINITIONS UPWINDSCHEMEORDER=1 LINEARSOLVER=UMFPackBackend
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_sincos_instationary-reference.vtu
