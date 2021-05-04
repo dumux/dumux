@@ -67,6 +67,9 @@ struct Grid<TypeTag, TTag::ThreeDChannelTest>
 #endif
 };
 
+template<class TypeTag>
+struct UpwindSchemeOrder<TypeTag, TTag::ThreeDChannelTest> { static constexpr int value = UPWINDSCHEMEORDER; };
+
 // Set the problem property
 template<class TypeTag>
 struct Problem<TypeTag, TTag::ThreeDChannelTest> { using type = ThreeDChannelTestProblem<TypeTag> ; };

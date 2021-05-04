@@ -1,5 +1,5 @@
 add_executable(test_ff_stokes_channel_3d EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_ff_stokes_channel_3d PUBLIC "GRID_DIM=3")
+target_compile_definitions(test_ff_stokes_channel_3d PUBLIC "GRID_DIM=3" PUBLIC "UPWINDSCHEMEORDER=1")
 
 dumux_add_test(NAME test_ff_stokes_channel_3d_cuboid
               TARGET test_ff_stokes_channel_3d
@@ -28,7 +28,7 @@ dumux_add_test(NAME test_ff_stokes_channel_3d_staircase
 dumux_add_test(NAME test_ff_stokes_channel_pseudo3d
               LABELS freeflow navierstokes
               SOURCES main.cc
-              COMPILE_DEFINITIONS GRID_DIM=2
+              COMPILE_DEFINITIONS UPWINDSCHEMEORDER=1 GRID_DIM=2
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -42,7 +42,7 @@ dumux_add_test(NAME test_ff_stokes_channel_pseudo3d
 dune_symlink_to_source_files(FILES "params.input" "params_pseudo.input")
 
 add_executable(test_ff_stokes_channel_3d_new EXCLUDE_FROM_ALL main_new.cc)
-target_compile_definitions(test_ff_stokes_channel_3d_new PUBLIC "GRID_DIM=3")
+target_compile_definitions(test_ff_stokes_channel_3d_new PUBLIC "GRID_DIM=3" PUBLIC "UPWINDSCHEMEORDER=1")
 
 dumux_add_test(NAME test_ff_stokes_channel_3d_cuboid_new
               TARGET test_ff_stokes_channel_3d_new
@@ -71,7 +71,7 @@ dumux_add_test(NAME test_ff_stokes_channel_3d_staircase_new
 dumux_add_test(NAME test_ff_stokes_channel_pseudo3d_new
               LABELS freeflow navierstokes
               SOURCES main_new.cc
-              COMPILE_DEFINITIONS GRID_DIM=2
+              COMPILE_DEFINITIONS UPWINDSCHEMEORDER=1 GRID_DIM=2
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -79,4 +79,34 @@ dumux_add_test(NAME test_ff_stokes_channel_pseudo3d_new
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_pseudo3d_new-00000.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_pseudo3d_new params_pseudo.input
                              -Problem.Name test_ff_stokes_channel_pseudo3d_new"
+                             --zeroThreshold {"velocity_liq \(m/s\)":1e-12})
+
+### Higher Order tests
+
+dumux_add_test(NAME test_ff_stokes_channel_3d_higherorder
+              SOURCES main.cc
+              LABELS freeflow navierstokes
+              COMPILE_DEFINITIONS UPWINDSCHEMEORDER=2 GRID_DIM=3
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel_3d_higherorder-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_3d_higherorder-00001.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_3d_higherorder params.input
+                             -Problem.Name test_ff_stokes_channel_3d_higherorder"
+                             --zeroThreshold {"velocity_liq \(m/s\)":1e-12})
+
+
+
+dumux_add_test(NAME test_ff_stokes_channel_3d_higherorder_new
+              SOURCES main_new.cc
+              LABELS freeflow navierstokes
+              COMPILE_DEFINITIONS UPWINDSCHEMEORDER=2 GRID_DIM=3
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel_3d_higherorder-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_3d_higherorder_new-00000.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_3d_higherorder_new params.input
+                             -Problem.Name test_ff_stokes_channel_3d_higherorder_new"
                              --zeroThreshold {"velocity_liq \(m/s\)":1e-12})
