@@ -965,7 +965,7 @@ namespace FluidSystems {
  * "Reid, R.C., Prausnitz, J.M., Poling, B.E.: The Properties of
  * Gases and Liquids (1987)"
  * Lucas corresponding states method
- * https://www.osti.gov/scitech/biblio/6504847} \cite reid1987
+ * https://www.osti.gov/scitech/biblio/6504847 \cite reid1987
  *
  * For temperatures above 500 K see:
  * Nagel, T. et al.: THC-Processes (2018)
