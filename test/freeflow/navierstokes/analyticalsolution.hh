@@ -85,6 +85,31 @@ auto getScalarAnalyticalSolution(const Problem& problem)
     return result;
 }
 
+//! Returns an array of vectors containing the analytical solution for a scalar value at the center of each element.
+template<class MassProblem, class MomentumProblem>
+auto getSourceTerm(const MassProblem& massProblem, const MomentumProblem& momentumProblem)
+{
+    using GridGeometry = std::decay_t<decltype(massProblem.gridGeometry())>;
+    using GlobalPosition = typename GridGeometry::LocalView::SubControlVolumeFace::GlobalPosition;
+    using PrimaryVariables = std::decay_t<decltype(momentumProblem.analyticalSolution(GlobalPosition(0.0)))>;
+    using Scalar = typename PrimaryVariables::value_type;
+
+    std::array<std::vector<Scalar>, PrimaryVariables::size()> result;
+    for (auto& component : result)
+        component.resize(massProblem.gridGeometry().gridView().size(0));
+
+    for (const auto& element : elements(massProblem.gridGeometry().gridView()))
+    {
+        const auto eIdx = massProblem.gridGeometry().elementMapper().index(element);
+        const auto center = element.geometry().center();
+        const auto sol = momentumProblem.sourceAtPos(center);
+        for (int i = 0; i < PrimaryVariables::size(); ++i)
+            result[i][eIdx] = sol[i];
+    }
+
+    return result;
+}
+
 } // end namespace Dumux
 
 #endif

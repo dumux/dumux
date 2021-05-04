@@ -35,13 +35,3 @@ AddProcessRank = false
 
 [Flux]
 UpwindWeight = 0.5
-
-[LinearSolver]
-Type = restartedflexiblegmressolver
-Verbosity = 1
-GMResRestart = 50
-
-[LinearSolver.Preconditioner]
-Type = uzawa
-Verbosity = 1
-Iterations = 5

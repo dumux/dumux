@@ -217,17 +217,16 @@ int main(int argc, char** argv)
     VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name());
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
-    auto exactPressure = getScalarAnalyticalSolution(*massProblem)[GetPropType<MassTypeTag, Properties::ModelTraits>::Indices::pressureIdx];
-    auto exactVelocity = getVelocityAnalyticalSolution(*momentumProblem);
-    vtkWriter.addField(exactPressure, "pressureExact");
-    vtkWriter.addField(exactVelocity, "velocityExact");
 
     auto source = createSource(*momentumProblem);
     auto sourceX = source[MomentumProblem::Indices::momentumXBalanceIdx];
     auto sourceY = source[MomentumProblem::Indices::momentumYBalanceIdx];
     vtkWriter.addField(sourceX, "sourceX");
     vtkWriter.addField(sourceY, "sourceY");
-
+    auto exactPressure = getScalarAnalyticalSolution(*massProblem)[GetPropType<MassTypeTag, Properties::ModelTraits>::Indices::pressureIdx];
+    auto exactVelocity = getVelocityAnalyticalSolution(*momentumProblem);
+    vtkWriter.addField(exactPressure, "pressureExact");
+    vtkWriter.addField(exactVelocity, "velocityExact");
     vtkWriter.write(0.0);
 
     // the assembler with time loop for instationary problem

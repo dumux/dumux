@@ -71,6 +71,9 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::SincosTest> { using type = Dumux::SincosTestProblem<TypeTag> ; };
 
 template<class TypeTag>
+struct UpwindSchemeOrder<TypeTag, TTag::SincosTest> { static constexpr int value = UPWINDSCHEMEORDER; };
+
+template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::SincosTest> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::SincosTest> { static constexpr bool value = true; };

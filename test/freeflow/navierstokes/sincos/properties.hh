@@ -65,6 +65,9 @@ struct EnableGridFluxVariablesCache<TypeTag, TTag::SincosTest> { static constexp
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::SincosTest> { static constexpr bool value = true; };
 
+template<class TypeTag>
+struct UpwindSchemeOrder<TypeTag, TTag::SincosTest> { static constexpr int value = UPWINDSCHEMEORDER; };
+
 } // end namespace Dumux::Properties
 
 #endif
