@@ -29,6 +29,7 @@
 #include <vector>
 #include <dune/common/exceptions.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/numeqvector.hh>
 #include <dumux/flux/referencesystemformulation.hh>
 
 namespace Dumux {
@@ -48,7 +49,7 @@ class CompositionalLocalResidual: public GetPropType<TypeTag, Properties::BaseLo
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;

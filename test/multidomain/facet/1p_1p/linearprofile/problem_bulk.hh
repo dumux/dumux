@@ -27,6 +27,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/numeqvector.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
 
@@ -56,7 +57,7 @@ class OnePBulkProblem : public PorousMediumFlowProblem<TypeTag>
 
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
 
 public:
     OnePBulkProblem(std::shared_ptr<const GridGeometry> gridGeometry,

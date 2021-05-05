@@ -26,6 +26,7 @@
 #ifndef DUMUX_2P1C_LOCAL_RESIDUAL_HH
 #define DUMUX_2P1C_LOCAL_RESIDUAL_HH
 
+#include <dumux/common/numeqvector.hh>
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 
 namespace Dumux {
@@ -38,7 +39,7 @@ class TwoPOneCLocalResidual : public ImmiscibleLocalResidual<TypeTag>
 {
     using ParentType = ImmiscibleLocalResidual<TypeTag>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;

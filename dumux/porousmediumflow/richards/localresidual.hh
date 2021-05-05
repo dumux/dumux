@@ -29,6 +29,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/typetraits/typetraits.hh>
+#include <dumux/common/numeqvector.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/flux/referencesystemformulation.hh>
@@ -48,7 +49,7 @@ class RichardsLocalResidual : public GetPropType<TypeTag, Properties::BaseLocalR
     using ParentType = GetPropType<TypeTag, Properties::BaseLocalResidual>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;

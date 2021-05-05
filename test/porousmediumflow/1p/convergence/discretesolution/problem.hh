@@ -32,6 +32,7 @@
 #include <dumux/common/parameters.hh>
 
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/numeqvector.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
 namespace Dumux {
@@ -46,8 +47,8 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;

@@ -33,6 +33,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/numeqvector.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
 
@@ -54,7 +55,7 @@ class SoilProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = typename GridGeometry::GridView;
     using GlobalPosition = typename GridGeometry::GlobalCoordinate;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;

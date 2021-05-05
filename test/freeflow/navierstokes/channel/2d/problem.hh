@@ -28,6 +28,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
+#include <dumux/common/numeqvector.hh>
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
@@ -57,8 +58,8 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;

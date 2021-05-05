@@ -28,6 +28,7 @@
 #define DUMUX_FACETCOUPLING_CC_LOCAL_RESIDUAL_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/numeqvector.hh>
 #include <dumux/assembly/cclocalresidual.hh>
 
 namespace Dumux {
@@ -53,7 +54,7 @@ class CCFacetCouplingLocalResidual : public CCLocalResidual<TypeTag>
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
 
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
 
 public:
     //! pull up the parent's constructor

@@ -31,6 +31,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/numeqvector.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
 
@@ -97,7 +98,7 @@ class InjectionProblem2PNI : public PorousMediumFlowProblem<TypeTag>
     };
 
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;

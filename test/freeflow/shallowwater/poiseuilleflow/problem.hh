@@ -25,6 +25,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/numeqvector.hh>
 
 #include <dumux/freeflow/shallowwater/problem.hh>
 #include <dumux/freeflow/shallowwater/boundaryfluxes.hh>
@@ -98,7 +99,6 @@ class PoiseuilleFlowProblem
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
@@ -108,7 +108,8 @@ class PoiseuilleFlowProblem
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
+    using NeumannFluxes = NumEqVector;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
 public:

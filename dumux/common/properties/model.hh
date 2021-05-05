@@ -45,13 +45,18 @@ struct ModelProperties {};
 template<class TypeTag>
 struct Scalar<TypeTag, TTag::ModelProperties> { using type = double; };
 
+DUNE_NO_DEPRECATED_BEGIN
 //! Set the default vector with size number of equations to a field vector
 template<class TypeTag>
 struct NumEqVector<TypeTag, TTag::ModelProperties> { using type = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::ModelTraits>::numEq()>; };
+DUNE_NO_DEPRECATED_END
 
+DUNE_NO_DEPRECATED_BEGIN
 //! Set the default primary variable vector to a vector of size of number of equations
+//! TODO: this needs to be adapted after release 3.4 when Properties::NumEqVector is removed.
 template<class TypeTag>
 struct PrimaryVariables<TypeTag, TTag::ModelProperties> { using type = GetPropType<TypeTag, Properties::NumEqVector>; };
+DUNE_NO_DEPRECATED_END
 
 //! do not specific any model-specific default parameters here
 template<class TypeTag>

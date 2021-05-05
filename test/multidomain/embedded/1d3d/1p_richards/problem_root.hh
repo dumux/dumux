@@ -29,6 +29,7 @@
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/numeqvector.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
 
@@ -46,7 +47,7 @@ class RootProblem : public PorousMediumFlowProblem<TypeTag>
     using PointSource = GetPropType<TypeTag, Properties::PointSource>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NeumannFluxes = Dumux::NumEqVector<PrimaryVariables>;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeometry::GridView;

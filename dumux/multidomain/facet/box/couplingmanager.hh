@@ -28,6 +28,7 @@
 #include <cassert>
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/numeqvector.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/multidomain/couplingmanager.hh>
@@ -64,7 +65,7 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     // further types specific to the sub-problems
     template<std::size_t id> using PrimaryVariables = GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
-    template<std::size_t id> using NumEqVector = GetPropType<SubDomainTypeTag<id>, Properties::NumEqVector>;
+    template<std::size_t id> using NumEqVector = Dumux::NumEqVector<PrimaryVariables<id>>;
     template<std::size_t id> using ElementBoundaryTypes = GetPropType<SubDomainTypeTag<id>, Properties::ElementBoundaryTypes>;
     template<std::size_t id> using LocalResidual = GetPropType<SubDomainTypeTag<id>, Properties::LocalResidual>;
 

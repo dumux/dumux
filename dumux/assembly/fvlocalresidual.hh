@@ -30,6 +30,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
 #include <dumux/common/reservedblockvector.hh>
+#include <dumux/common/numeqvector.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>
 
@@ -55,7 +56,7 @@ class FVLocalResidual
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Extrusion = Extrusion_t<GridGeometry>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;

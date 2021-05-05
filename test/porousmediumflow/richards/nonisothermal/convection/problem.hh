@@ -32,6 +32,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/numeqvector.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
 
@@ -72,7 +73,7 @@ class RichardsNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;

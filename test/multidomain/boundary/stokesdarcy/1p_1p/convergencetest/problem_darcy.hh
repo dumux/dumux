@@ -31,6 +31,7 @@
 #include <dumux/discretization/cctpfa.hh>
 
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/numeqvector.hh>
 
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -56,7 +57,7 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;

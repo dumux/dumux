@@ -25,6 +25,7 @@
 #ifndef DUMUX_STOKES_SUBPROBLEM_ONEPTHREEC_HH
 #define DUMUX_STOKES_SUBPROBLEM_ONEPTHREEC_HH
 
+#include <dumux/common/numeqvector.hh>
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
 
@@ -57,7 +58,7 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
 
     using Element = typename GridView::template Codim<0>::Entity;

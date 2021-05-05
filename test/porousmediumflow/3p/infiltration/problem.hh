@@ -26,6 +26,7 @@
 #define DUMUX_INFILTRATION_THREEP_PROBLEM_HH
 
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/numeqvector.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
 
@@ -79,7 +80,7 @@ class InfiltrationThreePProblem : public PorousMediumFlowProblem<TypeTag>
     };
 
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;

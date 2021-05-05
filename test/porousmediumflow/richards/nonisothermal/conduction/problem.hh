@@ -31,6 +31,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/numeqvector.hh>
 #include <dumux/discretization/elementsolution.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
@@ -71,7 +72,7 @@ class RichardsNIConductionProblem :public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;

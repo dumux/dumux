@@ -27,6 +27,7 @@
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/numeqvector.hh>
 
 #include <dumux/freeflow/shallowwater/problem.hh>
 #include <dumux/flux/shallowwater/riemannproblem.hh>
@@ -66,7 +67,7 @@ class DamBreakProblem : public ShallowWaterProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NeumannFluxes = Dumux::NumEqVector<PrimaryVariables>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;

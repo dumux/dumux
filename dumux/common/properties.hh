@@ -48,7 +48,7 @@ struct Grid { using type = UndefinedProperty; };                   //!< The DUNE
 template<class TypeTag, class MyTypeTag>
 struct PrimaryVariables { using type = UndefinedProperty; };       //!< A vector of primary variables
 template<class TypeTag, class MyTypeTag>
-struct NumEqVector { using type = UndefinedProperty; };            //!< A vector of size number equations that can be used for Neumann fluxes, sources, residuals, ...
+struct [[deprecated("NumEqVector will be removed after 3.4. Implemented in dumux/common/numeqvector.hh instead.")]] NumEqVector { using type = UndefinedProperty; };            //!< A vector of size number equations that can be used for Neumann fluxes, sources, residuals, ...
 template<class TypeTag, class MyTypeTag>
 struct ModelTraits { using type = UndefinedProperty; };            //!< Traits class encapsulating model specifications
 template<class TypeTag, class MyTypeTag>

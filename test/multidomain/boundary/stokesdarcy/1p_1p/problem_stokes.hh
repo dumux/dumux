@@ -26,7 +26,7 @@
 #define DUMUX_STOKES_SUBPROBLEM_HH
 
 #include <dune/grid/yaspgrid.hh>
-
+#include <dumux/common/numeqvector.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
@@ -64,7 +64,7 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
 
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 

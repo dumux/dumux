@@ -28,6 +28,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/numeqvector.hh>
 
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/porousmediumflow/problem.hh>
@@ -71,7 +72,7 @@ class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using ReactionRate = ThermoChemReaction;
 

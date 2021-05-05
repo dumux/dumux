@@ -246,6 +246,12 @@ Include the `BoundaryTypes` class which specifies the boundary types set in this
 #include <dumux/common/boundarytypes.hh>
 ```
 
+Include the `NumEqVector` class which specifies a field vector with size number of equations in this problem.
+
+```cpp
+#include <dumux/common/numeqvector.hh>
+```
+
 ### The problem class
 
 We enter the problem class where all necessary boundary conditions and initial
@@ -270,7 +276,7 @@ class TracerTestProblem : public PorousMediumFlowProblem<TypeTag>
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;

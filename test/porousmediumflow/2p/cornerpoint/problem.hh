@@ -27,6 +27,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/numeqvector.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
 
@@ -52,7 +53,7 @@ class TwoPCornerPointTestProblem : public PorousMediumFlowProblem<TypeTag>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     enum { dimWorld = GridView::dimensionworld };
 

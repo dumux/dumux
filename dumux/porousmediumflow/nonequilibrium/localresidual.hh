@@ -28,6 +28,7 @@
 
 #include <cmath>
 #include <dumux/common/properties.hh>
+#include <dumux/common/numeqvector.hh>
 #include <dumux/porousmediumflow/nonequilibrium/thermal/localresidual.hh>
 
 namespace Dumux {
@@ -49,7 +50,7 @@ class NonEquilibriumLocalResidualImplementation<TypeTag, false>: public GetPropT
 {
     using ParentType = GetPropType<TypeTag, Properties::EquilibriumLocalResidual>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
@@ -113,7 +114,7 @@ class NonEquilibriumLocalResidualImplementation<TypeTag, true>: public GetPropTy
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;

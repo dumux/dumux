@@ -30,6 +30,7 @@
 #include <dumux/common/parameters.hh>
 
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/numeqvector.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/h2o.hh>
 
@@ -73,7 +74,7 @@ class OnePTwoCNITransientBCProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;

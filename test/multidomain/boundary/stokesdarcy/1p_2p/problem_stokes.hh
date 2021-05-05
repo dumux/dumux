@@ -27,6 +27,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/numeqvector.hh>
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
@@ -63,7 +64,7 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
 
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 

@@ -29,6 +29,7 @@
 #include <dumux/common/spline.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/numeqvector.hh>
 #include <dumux/flux/referencesystemformulation.hh>
 
 namespace Dumux {
@@ -46,7 +47,7 @@ template<class TypeTag>
 class EnergyLocalResidualNonEquilibrium<TypeTag, 1/*numEnergyEqFluid*/>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -209,7 +210,7 @@ class EnergyLocalResidualNonEquilibrium<TypeTag, 2/*numEnergyEqFluid*/>
 : public EnergyLocalResidualNonEquilibrium<TypeTag, 1/*numEnergyEqFluid*/>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;

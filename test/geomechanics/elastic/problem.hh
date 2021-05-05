@@ -30,6 +30,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/numeqvector.hh>
 
 #include <dumux/geomechanics/fvproblem.hh>
 
@@ -48,7 +49,7 @@ class ElasticProblem : public GeomechanicsFVProblem<TypeTag>
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;

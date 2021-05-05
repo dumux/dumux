@@ -34,6 +34,7 @@
 #include <dumux/common/parameters.hh>
 
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/numeqvector.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
 #include <dumux/material/components/h2o.hh>
@@ -96,7 +97,7 @@ class OnePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
         energyEqIdx = Indices::energyEqIdx
     };
 
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;

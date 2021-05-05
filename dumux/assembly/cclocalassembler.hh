@@ -33,6 +33,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numericdifferentiation.hh>
+#include <dumux/common/numeqvector.hh>
 #include <dumux/assembly/numericepsilon.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/fvlocalassemblerbase.hh>
@@ -61,7 +62,7 @@ class CCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Imp
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
 
 public:
 
@@ -133,7 +134,7 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tru
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>;
     using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using Element = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView::template Codim<0>::Entity;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
@@ -359,7 +360,7 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/fal
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false>;
     using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using Element = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView::template Codim<0>::Entity;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
@@ -491,7 +492,7 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/tr
 {
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, true>;
     using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using Problem = typename GridVariables::GridVolumeVariables::Problem;
@@ -608,7 +609,7 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/fa
 {
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, false>;
     using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using Problem = typename GridVariables::GridVolumeVariables::Problem;

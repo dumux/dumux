@@ -27,6 +27,7 @@
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/numeqvector.hh>
 
 #include <dumux/freeflow/shallowwater/problem.hh>
 #include <dumux/freeflow/shallowwater/boundaryfluxes.hh>
@@ -72,10 +73,10 @@ class BowlProblem : public ShallowWaterProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
 
-    using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NeumannFluxes = NumEqVector;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;

@@ -26,6 +26,7 @@
 #define DUMUX_PRORELASTIC_LOCAL_RESIDUAL_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/numeqvector.hh>
 #include <dumux/geomechanics/elastic/localresidual.hh>
 
 namespace Dumux {
@@ -48,7 +49,7 @@ class PoroElasticLocalResidual: public ElasticLocalResidual<TypeTag>
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;

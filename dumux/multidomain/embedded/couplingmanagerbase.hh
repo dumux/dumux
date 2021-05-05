@@ -36,6 +36,7 @@
 #include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/numeqvector.hh>
 #include <dumux/geometry/distance.hh>
 #include <dumux/geometry/intersectingentities.hh>
 #include <dumux/discretization/method.hh>
@@ -53,7 +54,7 @@ struct DefaultPointSourceTraits
 private:
     template<std::size_t i> using SubDomainTypeTag = typename MDTraits::template SubDomain<i>::TypeTag;
     template<std::size_t i> using GridGeometry = GetPropType<SubDomainTypeTag<i>, Properties::GridGeometry>;
-    template<std::size_t i> using NumEqVector = GetPropType<SubDomainTypeTag<i>, Properties::NumEqVector>;
+    template<std::size_t i> using NumEqVector = Dumux::NumEqVector<GetPropType<SubDomainTypeTag<i>, Properties::PrimaryVariables>>;
 public:
     //! export the point source type for domain i
     template<std::size_t i>

@@ -26,6 +26,7 @@
 #define DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_INTERNAL_DIRICHLET_HH
 
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/numeqvector.hh>
 
 #include <test/porousmediumflow/1p/incompressible/problem.hh>
 
@@ -42,7 +43,7 @@ class OnePTestProblemInternalDirichlet : public OnePTestProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NeumannValues = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NeumannValues = Dumux::NumEqVector<PrimaryVariables>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using BoundaryTypes = Dumux::BoundaryTypes<ModelTraits::numEq()>;
     using Indices = typename ModelTraits::Indices;

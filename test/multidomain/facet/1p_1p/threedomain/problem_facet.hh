@@ -27,6 +27,7 @@
 #define DUMUX_TEST_FACETCOUPLING_THREEDOMAIN_ONEP_FACETPROBLEM_HH
 
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/numeqvector.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
 
@@ -41,11 +42,10 @@ template<class TypeTag>
 class OnePFacetProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using PrimaryVariables = typename GridVariables::PrimaryVariables;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
+    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using Scalar = typename GridVariables::Scalar;
 
     using GridGeometry = typename GridVariables::GridGeometry;

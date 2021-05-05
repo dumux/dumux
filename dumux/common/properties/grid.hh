@@ -28,6 +28,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/pointsource.hh>
+#include <dumux/common/numeqvector.hh>
 
 namespace Dumux {
 namespace Properties {
@@ -42,7 +43,7 @@ template<class TypeTag>
 struct PointSource<TypeTag, TTag::GridProperties>
 {
 private:
-    using SourceValues = GetPropType<TypeTag, Properties::NumEqVector>;
+    using SourceValues = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using GlobalPosition = typename Dune::FieldVector<typename GridView::ctype, GridView::dimensionworld>;
 public:

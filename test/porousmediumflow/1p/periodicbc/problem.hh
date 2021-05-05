@@ -31,6 +31,7 @@
 #define FVGEOMCACHING 0
 #endif
 
+#include <dumux/common/numeqvector.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
 namespace Dumux {
@@ -50,7 +51,7 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using SourceValues = GetPropType<TypeTag, Properties::NumEqVector>;
+    using SourceValues = Dumux::NumEqVector<PrimaryVariables>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     static constexpr int dimWorld = GridView::dimensionworld;

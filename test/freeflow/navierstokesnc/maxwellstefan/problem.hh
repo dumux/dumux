@@ -27,6 +27,7 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/numeqvector.hh>
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
@@ -48,8 +49,8 @@ class MaxwellStefanNCTestProblem : public NavierStokesProblem<TypeTag>
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
