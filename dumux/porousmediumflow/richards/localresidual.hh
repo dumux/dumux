@@ -34,6 +34,18 @@
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/flux/referencesystemformulation.hh>
 
+namespace Dumux::Detail {
+// helper structs and functions detecting if the user-defined problem class
+// implements addRobinFluxDerivatives
+template <typename T, typename ...Ts>
+using RobinDerivDetector = decltype(std::declval<T>().addRobinFluxDerivatives(std::declval<Ts>()...));
+
+template<class T, typename ...Args>
+static constexpr bool hasAddRobinFluxDerivatives()
+{ return Dune::Std::is_detected<RobinDerivDetector, T, Args...>::value; }
+
+} // end namespace Dumux::Detail
+
 namespace Dumux {
 
 /*!
@@ -486,9 +498,11 @@ public:
                                  const ElementFluxVariablesCache& elemFluxVarsCache,
                                  const SubControlVolumeFace& scvf) const
     {
-        /* forward to problem for the user to implement the Robin derivatives*/
-        problem.addRobinFluxDerivatives(derivativeMatrices, element, fvGeometry, curElemVolVars, elemFluxVarsCache, scvf);
-
+        if constexpr(Detail::hasAddRobinFluxDerivatives<Problem,
+            PartialDerivativeMatrices, Element, FVElementGeometry,
+            ElementVolumeVariables, ElementFluxVariablesCache, SubControlVolumeFace>()
+        )
+            problem.addRobinFluxDerivatives(derivativeMatrices, element, fvGeometry, curElemVolVars, elemFluxVarsCache, scvf);
     }
 
 private:
