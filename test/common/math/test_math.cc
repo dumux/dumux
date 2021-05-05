@@ -235,4 +235,47 @@ int main()
             DUNE_THROW(Dune::Exception, "[linearRegreesion] Wrong slope " << slope << ", should be 2.0.");
     }
 
+    //////////////////////////////////////////////////////////////////
+    ///// Dumux::invertCubicPolynomial ///////////////////////////////
+    //////////////////////////////////////////////////////////////////
+
+    std::array<double, 3> roots{};
+
+    // One corner case
+    int nroots = Dumux::invertCubicPolynomial(roots.data(),
+                                              1.0,
+                                              -0.96165703943410097,
+                                              0.30826068470787077,
+                                              0.01340255221155587);
+    if (nroots != 1)
+        DUNE_THROW(Dune::Exception, "Expecting one root");
+
+    using std::isfinite;
+    
+    if (!isfinite(roots[0]))
+        DUNE_THROW(Dune::Exception, "Expecting finite root");
+    if (!Dune::FloatCmp::eq(roots[0], -3.863448718244389e-02, 1e-14))
+        DUNE_THROW(Dune::Exception, "Root of cubic equation does not match reference");
+
+
+    // One simple case
+    std::array<double, 3> known_roots{-10.1, 0.001, 1000.77};
+
+    nroots = Dumux::invertCubicPolynomial(
+        roots.data(),
+        1.0,
+        -known_roots[0] - known_roots[1] - known_roots[2],
+        known_roots[0] * known_roots[1] + known_roots[0] * known_roots[2] + known_roots[1] * known_roots[2],
+        -known_roots[0] * known_roots[1] * known_roots[2]);
+
+    if (nroots != 3)
+        DUNE_THROW(Dune::Exception, "Expecting three roots");
+
+    for (int i = 0; i < 3; i++)
+    {
+        if (!isfinite(roots[i]))
+            DUNE_THROW(Dune::Exception, "Expecting finite root");
+        if (!Dune::FloatCmp::eq(roots[i], known_roots[i], 1e-10))
+            DUNE_THROW(Dune::Exception, "Root of cubic equation does not match reference");
+    }
 }
