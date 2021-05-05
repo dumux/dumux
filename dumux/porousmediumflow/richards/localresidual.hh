@@ -34,6 +34,18 @@
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/flux/referencesystemformulation.hh>
 
+namespace Dumux::Detail {
+// helper structs and functions detecting if the user-defined problem class
+// implements addRobinFluxDerivatives
+template <typename T, typename ...Ts>
+using RobinDerivDetector = decltype(std::declval<T>().addRobinFluxDerivatives(std::declval<Ts>()...));
+
+template<class T, typename ...Args>
+static constexpr bool hasAddRobinFluxDerivatives()
+{ return Dune::Std::is_detected<RobinDerivDetector, T, Args...>::value; }
+
+} // end namespace Dumux::Detail
+
 namespace Dumux {
 
 /*!
@@ -196,7 +208,7 @@ public:
         static_assert(!FluidSystem::isCompressible(0),
                       "richards/localresidual.hh: Analytic Jacobian only supports incompressible fluids!");
 
-        const auto poreVolume = Extrusion::volume(scv)*curVolVars.porosity();
+        const auto poreVolume = Extrusion::volume(scv)*curVolVars.porosity()*curVolVars.extrusionFactor();
         static const auto rho = curVolVars.density(0);
 
         // partial derivative of storage term w.r.t. p_w
@@ -485,7 +497,13 @@ public:
                                  const ElementVolumeVariables& curElemVolVars,
                                  const ElementFluxVariablesCache& elemFluxVarsCache,
                                  const SubControlVolumeFace& scvf) const
-    { /* TODO maybe forward to problem for the user to implement the Robin derivatives?*/ }
+    {
+        if constexpr(Detail::hasAddRobinFluxDerivatives<Problem,
+            PartialDerivativeMatrices, Element, FVElementGeometry,
+            ElementVolumeVariables, ElementFluxVariablesCache, SubControlVolumeFace>()
+        )
+            problem.addRobinFluxDerivatives(derivativeMatrices, element, fvGeometry, curElemVolVars, elemFluxVarsCache, scvf);
+    }
 
 private:
     Implementation *asImp_()
