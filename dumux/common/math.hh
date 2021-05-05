@@ -330,8 +330,14 @@ int invertCubicPolynomial(SolContainer *sol,
         // calculate the cube root of - q/2 + sqrt(q^2/4 + p^3/27)
         using std::cbrt;
         using std::sqrt;
-        Scalar u = cbrt(-q/2 + sqrt(wDisc));
 
+        // Choose the root that is safe against the loss of precision
+        // that can cause wDisc to be equal to q*q/4 despite p != 0.
+        // We do not want u to be zero in that case. Mathematically,
+        // we are happy with either root. 
+        const Scalar u = [&]{
+            return q > 0 ? cbrt(-0.5*q - sqrt(wDisc)) : cbrt(-0.5*q + sqrt(wDisc));
+        }();
         // at this point, u != 0 since p^3 = 0 is necessary in order
         // for u = 0 to hold, so
         sol[0] = u - p/(3*u) - b/3;

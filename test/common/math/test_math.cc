@@ -33,6 +33,9 @@
 #include <iostream>
 #include <utility>
 #include <algorithm>
+#include <array>
+#include <random>
+#include <tuple>
 
 #include <dune/common/float_cmp.hh>
 #include <dune/common/fmatrix.hh>
@@ -235,4 +238,100 @@ int main()
             DUNE_THROW(Dune::Exception, "[linearRegreesion] Wrong slope " << slope << ", should be 2.0.");
     }
 
+    //////////////////////////////////////////////////////////////////
+    ///// Dumux::invertCubicPolynomial ///////////////////////////////
+    //////////////////////////////////////////////////////////////////
+
+    const auto cubicCoefficientsFromRoots = [](auto x, auto y, auto z, double scale = 1.0){
+        const auto b = -(x + y + z);
+        const auto c = x*y + x*z + y*z;
+        const auto d = -x*y*z;
+        // scaling doesn't change the roots
+        return std::make_tuple(1.0*scale, b*scale, c*scale, d*scale);
+    };
+
+    const auto quadCoefficientsFromRoots = [](auto x, auto y, double scale = 1.0){
+        const auto b = -(x + y);
+        const auto c = x*y;
+        return std::make_tuple(1.0*scale, b*scale, c*scale);
+    };
+
+    const auto linearCoefficientsFromRoots = [](auto x, double scale = 1.0){
+        return std::make_tuple(1.0*scale, -x*scale);
+    };
+
+    std::mt19937 gen(std::random_device{}());
+    std::uniform_real_distribution<> dis(-10.0, 10.0);
+    auto threeRandomNumbers = [&]() mutable {
+        const auto x = dis(gen);
+        auto y = dis(gen); while (x == y) { y = dis(gen); }
+        auto z = dis(gen); while (x == z || y == z) { z = dis(gen); }
+        return std::make_tuple(x, y, z);
+    };
+
+    const auto checkRoots = [](const std::array<double, 3>& roots,
+                               const std::array<double, 3>& ref,
+                               int n)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            using std::isfinite;
+            if (!isfinite(roots[i]))
+                DUNE_THROW(Dune::Exception, "Expecting finite root");
+            if (std::none_of(ref.begin(), ref.end(), [&](auto r){ return Dune::FloatCmp::eq(roots[i], r, 1e-10); }))
+                DUNE_THROW(Dune::Exception, "[invertCubicPolynomial] Root "
+                    << i << " of " << n << ": " << roots[i]
+                    << " does not match reference");
+        }
+    };
+
+    std::array<double, 3> roots{};
+    for (double scaling : {1.0, -1.0, 5.0})
+    {
+        for (int i = 0; i < 1000; ++i)
+        {
+            const auto [x, y, z] = threeRandomNumbers();
+
+            // test for three unique roots
+            {
+                const auto [a, b, c, d] = cubicCoefficientsFromRoots(x, y, z, scaling);
+                int numRoots = Dumux::invertCubicPolynomial(roots.data(), a, b, c, d);
+                if (numRoots != 3)
+                    DUNE_THROW(Dune::Exception, "Expecting three roots! Got " << numRoots);
+                checkRoots(roots, {x, y, z}, numRoots);
+            }
+
+            // test for two unique roots
+            {
+                const auto [b, c, d] = quadCoefficientsFromRoots(x, z, scaling);
+                int numRoots = Dumux::invertCubicPolynomial(roots.data(), 0.0, b, c, d);
+                if (numRoots != 2)
+                    DUNE_THROW(Dune::Exception, "Expecting two roots! Got " << numRoots);
+                checkRoots(roots, {x, z}, numRoots);
+            }
+
+            // test for one unique root
+            {
+                const auto [c, d] = linearCoefficientsFromRoots(x, scaling);
+                int numRoots = Dumux::invertCubicPolynomial(roots.data(), 0.0, 0.0, c, d);
+                if (numRoots != 1)
+                    DUNE_THROW(Dune::Exception, "Expecting one root! Got " << numRoots);
+                checkRoots(roots, {x}, numRoots);
+            }
+        }
+    }
+
+    // Test one corner case (see MR!2594)
+    int nroots = Dumux::invertCubicPolynomial(roots.data(),
+        1.0, -0.96165703943410097, 0.30826068470787077, 0.01340255221155587
+    );
+    if (nroots != 1)
+        DUNE_THROW(Dune::Exception, "Expecting one root");
+    using std::isfinite;
+    if (!isfinite(roots[0]))
+        DUNE_THROW(Dune::Exception, "Expecting finite root");
+    if (!Dune::FloatCmp::eq(roots[0], -3.863448718244389e-02, 1e-14))
+        DUNE_THROW(Dune::Exception, "Root of cubic equation does not match reference");
+
+    return 0;
 }
