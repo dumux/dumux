@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PoreNetworkModels
+ * \ingroup PoreNetworkFlux
  * \brief This file contains the data which is required to calculate
  *        the fluxes of the pore network model over a face of a finite volume.
  */
@@ -39,7 +39,7 @@ namespace Dumux::PoreNetwork {
 
 /*!
  * \file
- * \ingroup PoreNetworkModels
+ * \ingroup PoreNetworkFlux
  * \brief Hagen–Poiseuille-type flux law to describe the advective flux for pore-network models.
  */
 template<class ScalarT, class... TransmissibilityLawTypes>

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PoreNetworkModels
+ * \ingroup PoreNetworkDiscretization
  * \brief Base class for the local geometry for porenetworks
  */
 #ifndef DUMUX_DISCRETIZATION_PNM_FV_ELEMENT_GEOMETRY_HH
@@ -31,7 +31,7 @@
 namespace Dumux::PoreNetwork {
 
 /*!
- * \ingroup PoreNetworkModels
+ * \ingroup PoreNetworkDiscretization
  * \brief Base class for the local geometry for porenetworks
  * \tparam GG the finite volume grid geometry type
  * \tparam enableFVGridGeometryCache if the grid geometry is cached or not

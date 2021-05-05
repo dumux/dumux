@@ -305,6 +305,11 @@
      * \defgroup FEMDiscretization Finite element method
      * \brief The finite element method
      */
+    /*!
+     * \ingroup Discretization
+     * \defgroup PoreNetworkDiscretization Pore network model discretization
+     * \brief The pore-network model discretization.
+     */
 /* ***************** Flux ******************/
 /*!
  * \defgroup Flux Flux
@@ -330,6 +335,11 @@
          * \defgroup CCMpfaFlux Flux related to the cell-centered multi-point flux approximation schemes
          * \brief Flux related to the cell-centered multi-point flux approximation schemes
          */
+    /*!
+     * \ingroup Flux
+     * \defgroup PoreNetworkFlux Flux related to the pore network models
+     * \brief Flux related to the pore newtwork models
+     */
     /*!
      * \ingroup Flux
      * \defgroup StaggeredFlux Flux related to the staggered scheme
@@ -602,3 +612,9 @@
       * \brief Two-phase (immiscible) flow
       * For a detailed model description see porenetwork/2p/model.hh
       */
+
+ /* ***************** TimeStepping ******************/
+ /*!
+  * \defgroup TimeStepping Time stepping
+  * \brief The time stepping
+  */

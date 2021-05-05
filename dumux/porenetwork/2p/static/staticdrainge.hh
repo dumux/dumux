@@ -19,7 +19,7 @@
 
 /*!
  * \file
- *
+ * \ingroup PNMTwoPModel
  * \brief A (quasi-) static two-phase pore-network model for drainage processes.
  */
 #ifndef DUMUX_PNM_TWOP_STATIC_DRAINAGE_HH
@@ -31,7 +31,7 @@
 namespace Dumux::PoreNetwork {
 
 /*!
- * \ingroup PoreNetworkTwoPModel
+ * \ingroup PNMTwoPModel
  *
  * \brief A (quasi-) static two-phase pore-network model for drainage processes.
  *        This assumes that there are no pressure gradients within the phases and thus, no flow.

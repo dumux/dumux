@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PoreNetworkModels
+ * \ingroup PoreNetworkFlux
  * \brief This file contains the data which is required to calculate
  *        diffusive heat fluxes with Fourier's law.
  */
@@ -38,7 +38,7 @@ struct NoDiffusionType {};
 } // end namespace Detail
 
  /*!
-  * \ingroup PoreNetworkModels
+  * \ingroup PoreNetworkFlux
   * \brief Specialization of Fourier's Law for the pore-network model.
   */
 template<class MolecularDiffusionType = Detail::NoDiffusionType>

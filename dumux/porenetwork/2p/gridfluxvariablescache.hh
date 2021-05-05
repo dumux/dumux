@@ -48,7 +48,7 @@ struct PNMTwoPDefaultGridFVCTraits
 };
 
 /*!
- * \ingroup BoxDiscretization
+ * \ingroup PoreNetworkDiscretization
  * \brief Flux variable caches on a gridview
  * \note The class is specialized for a version with and without grid caching
  */

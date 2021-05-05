@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PoreNetworkModels
+ * \ingroup PoreNetworkDiscretization
  * \brief the sub control volume for pore networks
  */
 #ifndef DUMUX_DISCRETIZATION_PNM_SUBCONTROLVOLUME_HH
@@ -32,7 +32,7 @@
 namespace Dumux::PoreNetwork {
 
 /*!
- * \ingroup PoreNetworkModels
+ * \ingroup PoreNetworkDiscretization
  * \brief Default traits class
  * \tparam GV the type of the grid view
  */
@@ -53,7 +53,7 @@ struct PNMDefaultScvGeometryTraits
 };
 
 /*!
- * \ingroup PoreNetworkModels
+ * \ingroup PoreNetworkDiscretization
  * \brief the sub control volume for porenetworks
  * \tparam GV the type of the grid view
  * \tparam T the scv geometry traits
