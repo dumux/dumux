@@ -89,7 +89,6 @@ template <class TypeTag>
 class PeriodicTestProblem :  public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
-
     using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
@@ -184,16 +183,6 @@ public:
      */
     // \{
 
-   /*!
-     * \brief Evaluates the initial value for a control volume.
-     *
-     * \param globalPos The global position
-     */
-    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
-    {
-        return PrimaryVariables(0.0);
-    }
-
     //! Enable internal Dirichlet constraints
     static constexpr bool enableInternalDirichletConstraints()
     { return !ParentType::isMomentumProblem(); }
@@ -214,10 +203,9 @@ public:
 
         for (const auto& intersection : intersections(this->gridGeometry().gridView(), element))
         {
-            if (intersection.boundary() && intersection.neighbor() && intersection.geometry().center()[1] > this->gridGeometry().bBoxMax()[1] - 1e-6)
+            if (intersection.boundary() && intersection.neighbor() && intersection.geometry().center()[1] > this->gridGeometry().bBoxMax()[1] - eps_)
                 values.set(0);
         }
-
 
         return values;
     }
@@ -229,7 +217,7 @@ public:
      */
     PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
     {
-        return PrimaryVariables(0.0);
+        return PrimaryVariables(1.0);
     }
 
 private:
