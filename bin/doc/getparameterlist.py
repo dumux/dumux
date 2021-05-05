@@ -8,6 +8,7 @@ for usage of getParam or getParamFromGroup.
 import os
 import argparse
 
+
 # find the content of the given string between the first matching pair of opening/closing keys
 def getEnclosedContent(string, openKey, closeKey):
 
@@ -19,10 +20,12 @@ def getEnclosedContent(string, openKey, closeKey):
     result, rest = rest[0] + closeKey, rest[2]
     while result.count(openKey) != result.count(closeKey):
         rest = rest.partition(closeKey)
-        if rest[1] == '': raise IOError('Could not get content between "{}" and "{}" in given string "{}"'.format(openKey, closeKey, string))
+        if rest[1] == '':
+            raise IOError('Could not get content between "{}" and "{}" in given string "{}"'.format(openKey, closeKey, string))
         result, rest = result + rest[0] + closeKey, rest[2]
 
     return result.partition(openKey)[2].rpartition(closeKey)[0]
+
 
 # extract a parameter from a given line
 def extractParamName(line):
@@ -52,20 +55,23 @@ def extractParamName(line):
     functionArgs = line.partition('<' + paramType + '>')[2]
     functionArgs = getEnclosedContent(functionArgs, '(', ')')
 
-    if hasGroup: functionArgs = functionArgs.partition(',')[2]
+    if hasGroup:
+        functionArgs = functionArgs.partition(',')[2]
     functionArgs = functionArgs.partition(',')
     paramName = functionArgs[0]
     defaultValue = None if not functionArgs[2] else functionArgs[2]
 
     paramType = paramType.strip(' ')
     paramName = paramName.strip(' ')
-    if (defaultValue): defaultValue = defaultValue.strip(' ')
+    if (defaultValue):
+        defaultValue = defaultValue.strip(' ')
 
     # if interior spaces occur in the parameter name, we can't identify it
     if paramName[0] != '"' or paramName[-1] != '"' or ' ' in paramName:
         raise IOError("Could not correctly process parameter name")
 
     return {'paramType': paramType, 'paramName': paramName.strip('"'), 'defaultValue': defaultValue}
+
 
 # extract all parameters from a given file
 def getParamsFromFile(file):
@@ -74,8 +80,9 @@ def getParamsFromFile(file):
     with open(file) as f:
         for lineIdx, line in enumerate(f):
             try:
-                param = extractParamName(line);
-                if param: parameters.append(param);
+                param = extractParamName(line)
+                if param:
+                    parameters.append(param)
             except IOError as e:
                 errors[lineIdx] = {'line': line.strip(), 'message': e}
 
@@ -88,13 +95,12 @@ def getParamsFromFile(file):
 
     return parameters
 
+
 # check if the last line of table header
 # #|:-|:-|:-|:-|:-|
 def isEndOfTableHeader(text):
-    if text.startswith("* | :-"):
-        return False
-    else:
-        return True
+    return not text.startswith("* | :-")
+
 
 class CheckExistAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string):
@@ -118,11 +124,11 @@ parser.add_argument("--root", help="root path of Dumux",
                     default=os.path.abspath(os.path.join(os.path.abspath(__file__), '../../../')))
 parser.add_argument("--param-list", help="given parameterlist file",
                     action=CheckExistAction,
-                    metavar = "input",
+                    metavar="input",
                     dest="inputFile")
 parser.add_argument("--output",  help="relative path (to the root path) of the output file",
-                    metavar = "output",
-                    default = 'doc/doxygen/extradoc/parameterlist.txt')
+                    metavar="output",
+                    default='doc/doxygen/extradoc/parameterlist.txt')
 
 args = vars(parser.parse_args())
 
@@ -130,18 +136,18 @@ maxExplanationWidth = 0
 # get the explanations from old parameterlist.txt
 oldDataDict = {}
 if args["inputFile"]:
-    with open(args["inputFile"],"r") as oldOutputFile:
+    with open(args["inputFile"], "r") as oldOutputFile:
         oldLines = oldOutputFile.readlines()
         tableHeader = True
         for line in oldLines[:-1]:
             if tableHeader:
                 tableHeader = isEndOfTableHeader(line)
                 continue
-            keysList = ["Group","Parameter","Type","Default Value","Explanation"]
+            keysList = ["Group", "Parameter", "Type", "Default Value", "Explanation"]
             valuesList = [value.strip() for value in line.split("|")[1:-1]]
             maxExplanationWidth = max(maxExplanationWidth, len(valuesList[-1]))
             name = valuesList[0] + "." + valuesList[1]
-            oldDataDict.update({name : dict(zip(keysList, valuesList))})
+            oldDataDict.update({name: dict(zip(keysList, valuesList))})
 
 # search all *.hh files for parameters
 # TODO: allow runtime args with extensions and folder(s) to be checked
@@ -189,14 +195,17 @@ for key in parameterDict:
         print('\nFound multiple occurrences of parameter ' + paramName + ' with differing specifications: ')
     if hasMultiplePT:
         print(' -> Specified type names:')
-        for typeName in entry['paramType']: print(' '*8 + typeName)
+        for typeName in entry['paramType']:
+            print(' '*8 + typeName)
         print(' ---> For the parameters list, ' + paramType + ' has been chosen. Please adapt manually if desired.')
     if hasMultipleDV:
         print(' -> Specified default values:')
-        for default in entry['defaultValue']: print(' '*8 + (default if default else '- (none given)'))
+        for default in entry['defaultValue']:
+            print(' '*8 + (default if default else '- (none given)'))
         print(' ---> For the parameters list, ' + defaultValue + ' has been chosen. Please adapt manually if desired.')
 
-    maxGroupWidth = max(maxGroupWidth, len(groupEntry)+3) # +3 because \b will be added later
+    # +3 because \b will be added later
+    maxGroupWidth = max(maxGroupWidth, len(groupEntry)+3)
     maxParamWidth = max(maxParamWidth, len(paramName))
     maxTypeWidth = max(maxTypeWidth, len(paramType))
     maxDefaultWidth = max(maxDefaultWidth, len(defaultValue))
@@ -216,7 +225,8 @@ for data in tableEntryData:
 
     if groupEntry != previousGroupEntry:
         previousGroupEntry = groupEntry
-        if groupEntry != '-': groupEntry = '\\b ' + groupEntry
+        if groupEntry != '-':
+            groupEntry = '\\b ' + groupEntry
 
     # get the explanation from old text
     paramKey = groupEntry + "." + paramName
@@ -224,44 +234,46 @@ for data in tableEntryData:
     tableEntry = ' * | {} | {} | {} | {} | {} |'.format(
         groupEntry.ljust(maxGroupWidth),
         paramName.ljust(maxParamWidth),
-        paramType.ljust(maxTypeWidth),                                                            
+        paramType.ljust(maxTypeWidth),
         defaultValue.ljust(maxDefaultWidth),
         explanation.ljust(maxExplanationWidth)
     )
 
-    if groupEntry != '-': tableEntriesWithGroup.append(tableEntry)
-    else: tableEntriesWithoutGroup.append(tableEntry)
+    if groupEntry != '-':
+        tableEntriesWithGroup.append(tableEntry)
+    else:
+        tableEntriesWithoutGroup.append(tableEntry)
 
 # combine entries
 tableEntries = tableEntriesWithoutGroup + tableEntriesWithGroup
 
-header = """/*!
- *\\file
+header = r"""/*!
+ *\file
  *\ingroup Parameter
  *
- *\\brief List of currently useable run-time parameters
+ *\brief List of currently useable run-time parameters
  *
  * The listed run-time parameters are available in general,
  * but we point out that a certain model might not be able
  * to use every parameter!
  *\n"""
 header += " * | " + "Group".ljust(maxGroupWidth)
-header +=   " | " + "Parameter".ljust(maxParamWidth)
-header +=   " | " + "Type".ljust(maxTypeWidth)
-header +=   " | " + "Default Value".ljust(maxDefaultWidth)
-header +=   " | Explanation |\n"
+header += " | " + "Parameter".ljust(maxParamWidth)
+header += " | " + "Type".ljust(maxTypeWidth)
+header += " | " + "Default Value".ljust(maxDefaultWidth)
+header += " | Explanation |\n"
 
 header += " * | " + ":-".ljust(maxGroupWidth)
-header +=   " | " + ":-".ljust(maxParamWidth)
-header +=   " | " + ":-".ljust(maxTypeWidth)
-header +=   " | " + ":-".ljust(maxDefaultWidth)
-header +=   " | :-         |\n"
+header += " | " + ":-".ljust(maxParamWidth)
+header += " | " + ":-".ljust(maxTypeWidth)
+header += " | " + ":-".ljust(maxDefaultWidth)
+header += " | :-         |\n"
 
 header += " * | " + "".ljust(maxGroupWidth)
-header +=   " | " + "ParameterFile".ljust(maxParamWidth)
-header +=   " | " + "std::string".ljust(maxTypeWidth)
-header +=   " | " + "executable.input".ljust(maxDefaultWidth)
-header +=   " | :-         |\n"
+header += " | " + "ParameterFile".ljust(maxParamWidth)
+header += " | " + "std::string".ljust(maxTypeWidth)
+header += " | " + "executable.input".ljust(maxDefaultWidth)
+header += " | :-         |\n"
 
 # overwrite the old parameterlist.txt file
 with open(os.path.join(args["root"], args["output"]), "w") as outputfile:
