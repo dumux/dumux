@@ -1,7 +1,7 @@
 \section{Parallel Computation}
 \label{sec:parallelcomputation}
 This section explains how \Dumux can be used
-on multicore / multinode systems.
+on multicore/multinode systems.
 
 There are different concepts and methods for parallel programming, which are
 often grouped in \textit{shared-memory} and \textit{distributed-memory}
@@ -62,7 +62,7 @@ Most MPI implementations use the \textbf{mpirun} command
 \begin{lstlisting}[style=Bash]
 mpirun -np <n_cores> <executable_name>
 \end{lstlisting}
-
+%
 where \textit{-np} sets the number of cores (\texttt{n\_cores}) that should be used for the
 computation. On a cluster you usually have to use a queuing system (e.g. slurm) to
 submit a job. Check with your cluster administrator how to run parallel applications on the cluster.

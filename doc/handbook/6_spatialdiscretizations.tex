@@ -222,8 +222,7 @@ model domain and $F(u) = F(\mathbf v, p) = F(\mathbf v(x,t), p(x,t))$.
 Like the FE method, the box method follows the principle of weighted residuals.
 In the function $f(u)$ the unknown $u$ is approximated by discrete values at the
 nodes of the FE mesh $\hat u_i$ and linear basis functions $N_i$ yielding an
-approximate function $f(\tilde u)$. For $u\in \lbrace \mathbf v, p, x^\kappa \rbrace$
-this means:
+approximate function $f(\tilde u)$. For $u\in \lbrace \mathbf v, p, x^\kappa \rbrace$, this means:
 
 \begin{minipage}[b]{0.47\textwidth}
 \begin{equation}
@@ -255,8 +254,7 @@ this means:
 \end{equation}
 \end{minipage}
 
-Due to the approximation with node values and basis functions the differential
-equations are not exactly fulfilled anymore but a residual $\varepsilon$ is produced.
+Due to the approximation with node values and basis functions, the differential equations are not exactly fulfilled anymore but a residual $\varepsilon$ is produced.
 
 \begin{equation}
   f(u) = 0  \qquad \Rightarrow \qquad f(\tilde u) = \varepsilon
