@@ -99,7 +99,7 @@ def getParamsFromFile(file):
 # check if the last line of table header
 # #|:-|:-|:-|:-|:-|
 def isEndOfTableHeader(text):
-    return not text.startswith("* | :-")
+    return not text.startswith(" * | :-")
 
 
 class CheckExistAction(argparse.Action):
@@ -143,9 +143,20 @@ if args["inputFile"]:
             if tableHeader:
                 tableHeader = isEndOfTableHeader(line)
                 continue
+
             keysList = ["Group", "Parameter", "Type", "Default Value", "Explanation"]
             valuesList = [value.strip() for value in line.split("|")[1:-1]]
             maxExplanationWidth = max(maxExplanationWidth, len(valuesList[-1]))
+
+            # error in input, e.g. missing the "|" at the end of line
+            if line.strip()[-1] != "|":
+                print("Error in Input. Check the end of line of {}".format(valuesList[0:2]))
+                exit()
+
+            #remove \\b in string
+            if "\\b" in valuesList[0]:
+                valuesList[0]= valuesList[0][3:]
+
             name = valuesList[0] + "." + valuesList[1]
             oldDataDict.update({name: dict(zip(keysList, valuesList))})
 
@@ -222,15 +233,14 @@ for data in tableEntryData:
     paramName = data['name']
     paramType = data['type']
     defaultValue = data['default']
+    paramKey = groupEntry + "." + paramName
+    explanation = "" if paramKey not in oldDataDict else oldDataDict[paramKey]["Explanation"]
 
     if groupEntry != previousGroupEntry:
         previousGroupEntry = groupEntry
         if groupEntry != '-':
             groupEntry = '\\b ' + groupEntry
 
-    # get the explanation from old text
-    paramKey = groupEntry + "." + paramName
-    explanation = "" if paramKey not in oldDataDict else oldDataDict[paramKey]["Explanation"]
     tableEntry = ' * | {} | {} | {} | {} | {} |'.format(
         groupEntry.ljust(maxGroupWidth),
         paramName.ljust(maxParamWidth),
