@@ -499,7 +499,7 @@ public:
                                  const SubControlVolumeFace& scvf) const
     {
         if constexpr(Detail::hasAddRobinFluxDerivatives<Problem,
-            PartialDerivativeMatrices, Element, FVElementGeometry,
+            PartialDerivativeMatrices&, Element, FVElementGeometry,
             ElementVolumeVariables, ElementFluxVariablesCache, SubControlVolumeFace>()
         )
             problem.addRobinFluxDerivatives(derivativeMatrices, element, fvGeometry, curElemVolVars, elemFluxVarsCache, scvf);
