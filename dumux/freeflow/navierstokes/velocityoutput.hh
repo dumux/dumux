@@ -27,6 +27,7 @@
 #include <dumux/io/velocityoutput.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/freeflow/navierstokes/momentum/velocityreconstruction.hh>
 
 namespace Dumux {
 
@@ -54,8 +55,6 @@ public:
     NavierStokesVelocityOutput(const std::string& paramGroup = "")
     {
         enableOutput_ = getParamFromGroup<bool>(paramGroup, "Vtk.AddVelocity", true);
-        isStructuredGrid_ = getParamFromGroup<bool>(paramGroup, "Vtk.IsStructuredGrid", true);
-        // TODO add check for structured quad grid
     }
 
     //! Returns whether to enable the velocity output or not
@@ -76,36 +75,27 @@ public:
                            const ElementFluxVarsCache& elemFluxVarsCache,
                            int phaseIdx) const override
     {
-        if (isStructuredGrid_)
-            calculateVelocityVelocityForStructuredGrid_(velocity, element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
+        using Problem = std::decay_t<decltype(elemVolVars.gridVolVars().problem())>;
+        if constexpr (Problem::momentumDiscretizationMethod == DiscretizationMethod::fcstaggered)
+            calculateVelocityForStaggeredGrid_(velocity, element, fvGeometry, elemVolVars);
     }
 
 private:
-    void calculateVelocityVelocityForStructuredGrid_(VelocityVector& velocity,
-                                                     const Element& element,
-                                                     const FVElementGeometry& fvGeometry,
-                                                     const ElementVolumeVariables& elemVolVars,
-                                                     const ElementFluxVarsCache& elemFluxVarsCache,
-                                                     int phaseIdx) const
+    void calculateVelocityForStaggeredGrid_(VelocityVector& velocity,
+                                            const Element& element,
+                                            const FVElementGeometry& fvGeometry,
+                                            const ElementVolumeVariables& elemVolVars) const
     {
-        for (const auto& scvf : scvfs(fvGeometry))
+        const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
+        const auto getFaceVelocity = [&](const FVElementGeometry& fvG, const auto& scvf)
         {
-            const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
-            const auto dirIdx = directionIndex_(scvf.unitOuterNormal());
-            velocity[eIdx][dirIdx] += 0.5*elemVolVars.gridVolVars().problem().faceVelocity(element, fvGeometry, scvf)[dirIdx];
-        }
+            return elemVolVars.gridVolVars().problem().faceVelocity(element, fvGeometry, scvf);
+        };
+
+        velocity[eIdx] = StaggeredVelocityReconstruction::cellCenterVelocity(getFaceVelocity, fvGeometry);
     }
 
-template<class Vector>
-static auto directionIndex_(Vector&& vector)
-{
-    const auto eps = 1e-8;
-    return std::find_if(vector.begin(), vector.end(), [eps](const auto& x) { return std::abs(x) > eps; } ) - vector.begin();
-}
-
 bool enableOutput_;
-bool isStructuredGrid_;
-
 };
 
 } // end namespace Dumux
