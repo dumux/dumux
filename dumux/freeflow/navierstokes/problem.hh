@@ -33,6 +33,42 @@
 
 namespace Dumux {
 
+namespace Detail {
+
+// Helper class to get the discretization methods of the mass and momentum model
+template<class CouplingManager>
+class OtherDomainDiscMethod
+{
+public:
+    static constexpr DiscretizationMethod momentumDiscMethod()
+    {
+        if constexpr (std::is_empty_v<CouplingManager>)
+            return DiscretizationMethod::none;
+        else
+            return getOtherMethod_(CouplingManager::freeFlowMomentumIdx);
+    }
+
+    static constexpr DiscretizationMethod massDiscMethod()
+    {
+        if constexpr (std::is_empty_v<CouplingManager>)
+            return DiscretizationMethod::none;
+        else
+            return getOtherMethod_(CouplingManager::freeFlowMassIdx);
+    }
+
+private:
+
+    template<class IdxType>
+    static constexpr DiscretizationMethod getOtherMethod_(IdxType idx)
+    {
+        using Problem = std::decay_t<decltype(std::declval<CouplingManager>().problem(idx))>;
+        using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
+        return GridGeometry::discMethod;
+    }
+};
+
+}
+
 //! The implementation is specialized for the different discretizations
 template<class TypeTag, DiscretizationMethod discMethod> struct NavierStokesParentProblemImpl;
 
@@ -97,6 +133,12 @@ public:
     //! This problem is used for the momentum balance model.
     static constexpr bool isMomentumProblem()
     { return true; }
+
+    //! Export the discretization method for the momentum problem.
+    static constexpr DiscretizationMethod momentumDiscretizationMethod = GridGeometry::discMethod;
+
+    //! Export the discretization method for the mass problem.
+    static constexpr DiscretizationMethod massDiscretizationMethod = Detail::OtherDomainDiscMethod<CouplingManager>::massDiscMethod();
 
     /*!
      * \brief The constructor
@@ -520,14 +562,20 @@ public:
     static constexpr bool isMomentumProblem()
     { return false; }
 
+    //! Export the discretization method for the momentum problem.
+    static constexpr DiscretizationMethod momentumDiscretizationMethod = Detail::OtherDomainDiscMethod<CouplingManager>::momentumDiscMethod();
+
+    //! Export the discretization method for the mass problem.
+    static constexpr DiscretizationMethod massDiscretizationMethod = GridGeometry::discMethod;
+
     /*!
      * \brief The constructor
      * \param gridGeometry The finite volume grid geometry
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
     NavierStokesProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry,
-                                               std::shared_ptr<CouplingManager> couplingManager,
-                                               const std::string& paramGroup = "")
+                                            std::shared_ptr<CouplingManager> couplingManager,
+                                            const std::string& paramGroup = "")
     : NavierStokesProblemImpl(gridGeometry, paramGroup)
     {
          couplingManager_ = couplingManager;
