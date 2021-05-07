@@ -49,11 +49,10 @@
 /*!
 * \brief Creates analytical solution.
 * Returns a tuple of the analytical solution for the pressure, the velocity and the velocity at the faces
-* \param time the time at which to evaluate the analytical solution
 * \param problem the problem for which to evaluate the analytical solution
 */
-template<class Scalar, class Problem>
-auto createAnalyticalSolution(const Scalar time, const Problem& problem)
+template<class Problem, class Scalar = double>
+auto createAnalyticalSolution(const Problem& problem)
 {
     const auto& gridGeometry = problem.gridGeometry();
     using GridView = typename std::decay_t<decltype(gridGeometry)>::GridView;
@@ -80,7 +79,7 @@ auto createAnalyticalSolution(const Scalar time, const Problem& problem)
         {
             auto ccDofIdx = scv.dofIndex();
             auto ccDofPosition = scv.dofPosition();
-            auto analyticalSolutionAtCc = problem.analyticalSolution(ccDofPosition, time);
+            auto analyticalSolutionAtCc = problem.analyticalSolution(ccDofPosition);
 
             // velocities on faces
             for (auto&& scvf : scvfs(fvGeometry))
@@ -88,7 +87,7 @@ auto createAnalyticalSolution(const Scalar time, const Problem& problem)
                 const auto faceDofIdx = scvf.dofIndex();
                 const auto faceDofPosition = scvf.center();
                 const auto dirIdx = scvf.directionIndex();
-                const auto analyticalSolutionAtFace = problem.analyticalSolution(faceDofPosition, time);
+                const auto analyticalSolutionAtFace = problem.analyticalSolution(faceDofPosition);
                 analyticalVelocityOnFace[faceDofIdx][dirIdx] = analyticalSolutionAtFace[Indices::velocity(dirIdx)];
             }
 
@@ -148,7 +147,6 @@ int main(int argc, char** argv)
     // the problem (initial and boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(gridGeometry);
-    problem->updateTimeStepSize(timeLoop->timeStepSize());
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -168,7 +166,7 @@ int main(int argc, char** argv)
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
 
-    auto analyticalSolution = createAnalyticalSolution(timeLoop->time(), *problem);
+    auto analyticalSolution = createAnalyticalSolution(*problem);
     vtkWriter.addField(std::get<0>(analyticalSolution), "pressureExact");
     vtkWriter.addField(std::get<1>(analyticalSolution), "velocityExact");
     vtkWriter.addFaceField(std::get<2>(analyticalSolution), "faceVelocityExact");
@@ -190,6 +188,8 @@ int main(int argc, char** argv)
     const bool printL2Error = getParam<bool>("Problem.PrintL2Error");
     timeLoop->start(); do
     {
+        problem->setTime(timeLoop->time() + timeLoop->timeStepSize());
+
         // solve the non-linear system with time step control
         nonLinearSolver.solve(x, *timeLoop);
 
@@ -204,22 +204,23 @@ int main(int argc, char** argv)
             using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
 
             using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
-            const auto l2error = L2Error::calculateL2Error(*problem, x);
+            const auto [l2errorAbs, l2errorRel] = L2Error::calculateL2Error(*problem, x);
             const int numCellCenterDofs = gridGeometry->numCellCenterDofs();
             const int numFaceDofs = gridGeometry->numFaceDofs();
             std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
                     << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
                     << std::scientific
-                    << "L2(p) = " << l2error.first[Indices::pressureIdx] << " / " << l2error.second[Indices::pressureIdx]
-                    << ", L2(vx) = " << l2error.first[Indices::velocityXIdx] << " / " << l2error.second[Indices::velocityXIdx]
-                    << ", L2(vy) = " << l2error.first[Indices::velocityYIdx] << " / " << l2error.second[Indices::velocityYIdx]
+                    << "L2(p) = " << l2errorAbs[Indices::pressureIdx] << " / " << l2errorRel[Indices::pressureIdx]
+                    << ", L2(vx) = " << l2errorAbs[Indices::velocityXIdx] << " / " << l2errorRel[Indices::velocityXIdx]
+                    << ", L2(vy) = " << l2errorAbs[Indices::velocityYIdx] << " / " << l2errorRel[Indices::velocityYIdx]
                     << std::endl;
         }
 
+        // update the analytical solution
+        analyticalSolution = createAnalyticalSolution(*problem);
+
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
-        problem->updateTime(timeLoop->time());
-        analyticalSolution = createAnalyticalSolution(timeLoop->time(), *problem);
 
         // write vtk output
         vtkWriter.write(timeLoop->time());
@@ -229,7 +230,6 @@ int main(int argc, char** argv)
 
         // set new dt as suggested by newton solver
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
-        problem->updateTimeStepSize(timeLoop->timeStepSize());
 
     } while (!timeLoop->finished());
 
