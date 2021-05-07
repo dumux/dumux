@@ -136,17 +136,19 @@ int main(int argc, char** argv)
 
     // get some time loop parameters
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    const auto tStart = getParam<Scalar>("TimeLoop.TStart", 0.0);
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0, dt, tEnd);
+    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(tStart, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the problem (initial and boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(gridGeometry);
+    problem->setTime(timeLoop->time());
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
