@@ -28,6 +28,8 @@
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
 #include <dune/common/fmatrix.hh>
+#include <dumux/common/typetraits/problem.hh>
+#include <dumux/discretization/facecentered/staggered/elementboundarytypes.hh>
 
 // forward declare
 namespace Dune {
@@ -62,18 +64,68 @@ public:
                                  const ElemVolVars& elemVolVars,
                                  bool fullGradient = false)
     {
+        const auto& problem = elemVolVars.gridVolVars().problem();
+        using BoundaryTypes = typename ProblemTraits<std::decay_t<decltype(problem)>>::BoundaryTypes;
+        using ElementBoundaryTypes = FaceCenteredStaggeredElementBoundaryTypes<BoundaryTypes>;
+        ElementBoundaryTypes elemBcTypes;
+        elemBcTypes.update(problem, fvGeometry.element(), fvGeometry);
+        return velocityGradient(fvGeometry, scvf, elemVolVars, elemBcTypes, fullGradient);
+    }
+
+    template<class FVElementGeometry, class ElemVolVars, class BoundaryTypes>
+    static auto velocityGradient(const FVElementGeometry fvGeometry,
+                                 const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                 const ElemVolVars& elemVolVars,
+                                 const FaceCenteredStaggeredElementBoundaryTypes<BoundaryTypes>& elemBcTypes,
+                                 bool fullGradient = false)
+    {
         using Scalar = typename FVElementGeometry::GridGeometry::GlobalCoordinate::value_type;
         static constexpr auto dim = FVElementGeometry::GridGeometry::GlobalCoordinate::dimension;
-        using Gradient = Dune::FieldMatrix<Scalar, dim, dim>;
-        Gradient gradient(0.0);
+        Dune::FieldMatrix<Scalar, dim, dim> gradient(0.0);
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
 
-        if (scvf.isFrontal())
+        if (scvf.isFrontal() && !scvf.boundary())
         {
-            if (fullGradient)
-                DUNE_THROW(Dune::NotImplemented, "Full gradient for frontal staggered faces not implemented");
-
             gradient[scv.directionIndex()][scv.directionIndex()] = velocityGradII(fvGeometry, scvf, elemVolVars);
+
+            if (fullGradient)
+            {
+                Dune::FieldMatrix<std::size_t, dim, dim> counter(0.0);
+
+                for (const auto otherScvf : scvfs(fvGeometry))
+                {
+                    if (otherScvf.index() == scvf.index())
+                        continue;
+
+                    const auto& otherScv = fvGeometry.scv(otherScvf.insideScvIdx());
+
+                    if (otherScvf.isFrontal() && !otherScvf.boundary())
+                        gradient[otherScv.directionIndex()][otherScv.directionIndex()] = velocityGradII(fvGeometry, otherScvf, elemVolVars);
+                    else if (otherScvf.isLateral())
+                    {
+                        assert(otherScv.directionIndex() != otherScvf.directionIndex());
+                        const auto i = otherScv.directionIndex();
+                        const auto j = otherScvf.directionIndex();
+
+                        if (!fvGeometry.hasBoundaryScvf() || !elemBcTypes[otherScvf.localIndex()].isNeumann(i))
+                        {
+                            gradient[i][j] += velocityGradIJ(fvGeometry, otherScvf, elemVolVars);
+                            ++counter[i][j];
+                        }
+                        if (!fvGeometry.hasBoundaryScvf() || !otherScv.boundary() ||
+                            !elemBcTypes[fvGeometry.frontalScvfOnBoundary(otherScv).localIndex()].isNeumann(j))
+                        {
+                            gradient[j][i] += velocityGradJI(fvGeometry, otherScvf, elemVolVars);
+                             ++counter[j][i];
+                        }
+                    }
+                }
+
+                for (int i = 0; i < dim; ++i)
+                    for (int j = 0; j < dim; ++j)
+                        if (i != j)
+                            gradient[i][j] /= counter[i][j];
+            }
         }
         else
         {
