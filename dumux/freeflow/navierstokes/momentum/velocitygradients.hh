@@ -27,6 +27,7 @@
 #include <optional>
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
+#include <dune/common/fmatrix.hh>
 
 // forward declare
 namespace Dune {
@@ -53,8 +54,38 @@ struct SupportsPeriodicity<Dune::SPGrid<ct, dim, Ref, Comm>> : public std::true_
  */
 class StaggeredVelocityGradients
 {
-
 public:
+
+    template<class FVElementGeometry, class ElemVolVars>
+    static auto velocityGradient(const FVElementGeometry fvGeometry,
+                                 const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                 const ElemVolVars& elemVolVars,
+                                 bool fullGradient = false)
+    {
+        using Scalar = typename FVElementGeometry::GridGeometry::GlobalCoordinate::value_type;
+        static constexpr auto dim = FVElementGeometry::GridGeometry::GlobalCoordinate::dimension;
+        using Gradient = Dune::FieldMatrix<Scalar, dim, dim>;
+        Gradient gradient(0.0);
+        const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+
+        if (scvf.isFrontal())
+        {
+            if (fullGradient)
+                DUNE_THROW(Dune::NotImplemented, "Full gradient for frontal staggered faces not implemented");
+
+            gradient[scv.directionIndex()][scv.directionIndex()] = velocityGradII(fvGeometry, scvf, elemVolVars);
+        }
+        else
+        {
+            if (fullGradient)
+                DUNE_THROW(Dune::NotImplemented, "Full gradient for lateral staggered faces not implemented");
+
+            gradient[scv.directionIndex()][scvf.directionIndex()] = velocityGradIJ(fvGeometry, scvf, elemVolVars);
+            gradient[scvf.directionIndex()][scv.directionIndex()] = velocityGradJI(fvGeometry, scvf, elemVolVars);
+        }
+
+        return gradient;
+    }
 
     /*!
      * \brief Returns the in-axis velocity gradient.
