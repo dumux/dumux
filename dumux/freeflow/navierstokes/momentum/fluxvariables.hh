@@ -172,7 +172,13 @@ public:
         if (scvf.boundary())
             return result;
 
-        const Scalar velocityGrad_ii = VelocityGradients::velocityGradII(fvGeometry, scvf, elemVolVars) * scvf.directionSign();
+        // get the velocity gradient at the normal face's integration point
+        const auto gradV = VelocityGradients::velocityGradient(fvGeometry, scvf, elemVolVars);
+
+        GlobalPosition gradVn(0.0);
+        gradV.mv(scvf.unitOuterNormal(), gradVn);
+        const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+        const Scalar velocityGrad_ii = gradVn[scv.directionIndex()];
 
         static const bool enableUnsymmetrizedVelocityGradient
         = getParamFromGroup<bool>(this->problem().paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
@@ -231,29 +237,30 @@ public:
         const auto& fvGeometry = this->fvGeometry();
         const auto& elemVolVars = this->elemVolVars();
         const auto& problem = this->problem();
+        const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
 
         static const bool enableUnsymmetrizedVelocityGradient
             = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
 
         const auto mu = this->problem().effectiveViscosity(this->element(), this->fvGeometry(), this->scvFace());
 
+        // get the velocity gradient at the lateral face's integration point
+        const auto gradV = VelocityGradients::velocityGradient(fvGeometry, scvf, elemVolVars);
+
+        // Consider the shear stress caused by the gradient of the velocities parallel to our face of interest.
+        GlobalPosition gradVn(0.0);
+        gradV.mv(scvf.unitOuterNormal(), gradVn);
+        const Scalar velocityGrad_ij = gradVn[scv.directionIndex()];
+        result -= mu * velocityGrad_ij;
 
         // Consider the shear stress caused by the gradient of the velocities normal to our face of interest.
         if (!enableUnsymmetrizedVelocityGradient)
         {
-            // if (!scvf.boundary() ||
-            //     currentScvfBoundaryTypes->isDirichlet(Indices::velocity(staggeredScvf.directionIndex())) ||
-            //     currentScvfBoundaryTypes->isBeaversJoseph(Indices::velocity(staggeredScvf.directionIndex())))
-            // {
-                const Scalar velocityGrad_ji = VelocityGradients::velocityGradJI(fvGeometry, scvf, elemVolVars);
-                // Account for the orientation of the staggered normal face's outer normal vector.
-                result -= mu * velocityGrad_ji * scvf.directionSign();
-            // }
+            GlobalPosition gradVTransposedN(0.0);
+            gradV.mtv(scvf.unitOuterNormal(), gradVTransposedN);
+            const Scalar velocityGrad_ji = gradVTransposedN[scv.directionIndex()];
+            result -= mu * velocityGrad_ji;
         }
-
-        // Consider the shear stress caused by the gradient of the velocities parallel to our face of interest.
-        const Scalar velocityGrad_ij = VelocityGradients::velocityGradIJ(fvGeometry, scvf, elemVolVars);
-        result -= mu * velocityGrad_ij * scvf.directionSign();
 
         // Account for the area of the staggered lateral face.
         return result * Extrusion::area(scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
