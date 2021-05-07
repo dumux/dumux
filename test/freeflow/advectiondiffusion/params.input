@@ -1,0 +1,28 @@
+[TimeLoop]
+DtInitial = 1e2 # [s]
+TEnd = 5e3 # [s]
+
+[Grid]
+Positions0 = 0 1.0
+Cells0 = 50
+Grading0 = 1.0
+Positions1 = 0.0 1.0
+Cells1 = 50
+Grading1 = 1.0
+
+[Problem]
+Name = AdvectionDiffusion # name passed to the output routines
+InletVelocity = 3e-4
+EnableGravity = false
+D1 = 1e-6
+FluidMolarMass = 18.0
+Density = 1000.0
+CenterCircleRadius = 0.25
+CircleCenter = 0.5 0.5
+
+[Vtk]
+AddVelocity = true
+
+[Component]
+LiquidDensity = 1
+LiquidKinematicViscosity = 1
