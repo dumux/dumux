@@ -173,7 +173,7 @@ public:
             return result;
 
         // get the velocity gradient at the normal face's integration point
-        const auto gradV = VelocityGradients::velocityGradient(fvGeometry, scvf, elemVolVars);
+        const auto gradV = VelocityGradients::velocityGradient(fvGeometry, scvf, elemVolVars, this->elemBcTypes(), false);
 
         GlobalPosition gradVn(0.0);
         gradV.mv(scvf.unitOuterNormal(), gradVn);
@@ -245,7 +245,7 @@ public:
         const auto mu = this->problem().effectiveViscosity(this->element(), this->fvGeometry(), this->scvFace());
 
         // get the velocity gradient at the lateral face's integration point
-        const auto gradV = VelocityGradients::velocityGradient(fvGeometry, scvf, elemVolVars);
+        const auto gradV = VelocityGradients::velocityGradient(fvGeometry, scvf, elemVolVars, this->elemBcTypes(), false);
 
         // Consider the shear stress caused by the gradient of the velocities parallel to our face of interest.
         GlobalPosition gradVn(0.0);
