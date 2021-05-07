@@ -74,21 +74,19 @@ public:
         rho_ = getParam<Scalar>("Component.LiquidDensity", 1.0);
     }
 
-   /*!
+    /*!
      * \brief Returns the temperature within the domain in [K].
-     *
-     * This problem assumes a temperature of 10 degrees Celsius.
+     * This problem assumes a temperature of 20 degrees Celsius (unused)
      */
     Scalar temperature() const
-    { return 298.0; }
+    { return 293.15; }
 
-    // \}
-   /*!
+    /*!
      * \name Boundary conditions
      */
     // \{
 
-   /*!
+    /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary control volume.
      *
@@ -126,29 +124,25 @@ public:
         return false;
     }
 
-   /*!
+    /*!
      * \brief Returns Dirichlet boundary values at a given position.
-     *
      * \param globalPos The global position
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition & globalPos) const
     {
         // use the values of the analytical solution
-        return analyticalSolution(globalPos, time_+timeStepSize_);
+        return analyticalSolution(globalPos);
     }
 
     /*!
      * \brief Returns the analytical solution of the problem at a given time and position.
-     *
      * \param globalPos The global position
-     * \param time The current simulation time
      */
-    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos, const Scalar time) const
+    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
     {
         const Scalar x = globalPos[0];
         const Scalar y = globalPos[1];
-
-        const Scalar t = time;
+        const Scalar t = time_;
 
         PrimaryVariables values;
 
@@ -159,54 +153,35 @@ public:
         return values;
     }
 
-    /*!
-     * \brief Returns the analytical solution of the problem at a given position.
-     *
-     * \param globalPos The global position
-     */
-    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
-    {
-        return analyticalSolution(globalPos, time_+timeStepSize_);
-    }
-
     // \}
 
-   /*!
+    /*!
      * \name Volume terms
      */
     // \{
 
-   /*!
+    /*!
      * \brief Evaluates the initial value for a control volume.
-     *
      * \param globalPos The global position
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        return analyticalSolution(globalPos, 0);
+        return analyticalSolution(globalPos);
     }
 
-    /*!
-     * \brief Updates the time
-     */
-    void updateTime(const Scalar time)
-    {
-        time_ = time;
-    }
+    // \}
 
     /*!
-     * \brief Updates the time step size
+     * \brief Updates the time information
      */
-    void updateTimeStepSize(const Scalar timeStepSize)
+    void setTime(Scalar t)
     {
-        timeStepSize_ = timeStepSize;
+        time_ = t;
     }
 
 private:
-    Scalar kinematicViscosity_;
-    Scalar rho_;
+    Scalar kinematicViscosity_, rho_;
     Scalar time_ = 0;
-    Scalar timeStepSize_ = 0;
 };
 } // end namespace Dumux
 
