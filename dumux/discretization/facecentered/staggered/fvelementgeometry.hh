@@ -185,6 +185,10 @@ public:
     std::size_t elementIndex() const
     { return eIdx_; }
 
+    //! The bound element
+    const Element& element() const
+    { return *elementPtr_; }
+
 private:
 
     const auto& scvIndices_() const
@@ -197,7 +201,7 @@ private:
         return gridGeometry().scvfIndicesOfElement(eIdx_);
     }
 
-    const Element* elementPtr_; //TODO maybe remove
+    const Element* elementPtr_;
     GridIndexType eIdx_;
     const GridGeometry* gridGeometry_;
 };
