@@ -191,6 +191,9 @@ int main(int argc, char** argv)
     timeLoop->start(); do
     {
         problem->setTime(timeLoop->time() + timeLoop->timeStepSize());
+        problem->applyInitialSolution(x);
+
+        std::cout << assembler->residualNorm(x) << std::endl;
 
         // solve the non-linear system with time step control
         nonLinearSolver.solve(x, *timeLoop);
