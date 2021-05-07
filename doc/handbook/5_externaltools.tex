@@ -59,20 +59,12 @@ of \texttt{Dumux::GnuplotInterface}, or the header file itself (\texttt{dumux/io
 
 \subsection{Gstat}
 Gstat is an open source software tool which generates geostatistical random fields (see \url{www.gstat.org}).
-In order to use gstat, execute the \texttt{bin/installexternal.sh} from your \Dumux root
+In order to use gstat, execute the \texttt{bin/installexternal.py} from your \Dumux root
 directory or donwload, unpack and install the tarball from the gstat-website.
 Then, rerun cmake (in the second case set \texttt{GSTAT\_ROOT} in your input file to the
 path where gstat is installed).
 
 
-\subsection{ParaView}
-\paragraph{Reload Button:}
-There are scripts to reload PVD or series of VTU files since ParaView 4.2.
-The scripts can be found
-\href{http://markmail.org/message/exxynsgishbvtngg#query:+page:1+mid:rxlwxs7uqrfgibyv+state:results}{\texttt{under this link}}.
-Just save the specific code portion in a file and load it via \texttt{Macros} $\rightarrow$ \texttt{Add new macro}.
-
-\paragraph{Guide:}
-Since ParaView 4.3.1, The ParaView Guide is partly
-available for free download, see \url{http://www.paraview.org/documentation/}.
-It contains similar content as the ParaView book.
+\subsection{ParaView} \label{ssec:paraview}
+To visualize the simulation data you have produced using \Dumux, we recommend using \href{https://www.paraview.org/}{Paraview}. 
+This open-source software supports \Dumux~'s standard data formats, and can be operated either with a GUI or with batching tools. 
