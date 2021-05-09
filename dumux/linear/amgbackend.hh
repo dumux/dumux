@@ -60,6 +60,8 @@ public:
     {
         if (isParallel_)
             DUNE_THROW(Dune::InvalidStateException, "Using sequential constructor for parallel run. Use signature with gridView and dofMapper!");
+
+        checkAvailabilityOfDirectSolver_();
     }
 
     /*!
@@ -81,6 +83,7 @@ public:
         if (isParallel_)
             phelper_ = std::make_unique<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper);
 #endif
+        checkAvailabilityOfDirectSolver_();
     }
 
     /*!
@@ -118,6 +121,16 @@ public:
     }
 
 private:
+    //! see https://gitlab.dune-project.org/core/dune-istl/-/issues/62
+    void checkAvailabilityOfDirectSolver_()
+    {
+#if !HAVE_SUPERLU && !HAVE_UMFPACK
+        std::cout << "\nAMGBiCGSTABBackend: No direct solver backend found. Using iterative solver as coarse grid solver.\n"
+                  << "Note that dune-istl currently hard-codes a tolerance of 1e-2 for the iterative coarse grid solver.\n"
+                  << "This may result in reduced accuracy or performance depending on your setup.\nConsider installing "
+                  << "UMFPack (SuiteSparse) or SuperLU or apply the istl patch, see dumux/patches/README.md." << std::endl;
+#endif
+    }
 
 #if HAVE_MPI
     template<class Matrix, class Vector>
