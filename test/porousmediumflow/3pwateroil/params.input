@@ -12,6 +12,9 @@ Name = sagd # name passed to the output routines
 [Newton]
 MaxSteps = 8
 
+[LinearSolver]
+ResidualReduction = 1e-16
+
 [Component]
 SolidDensity = 2650
 SolidThermalConductivity = 2.8
