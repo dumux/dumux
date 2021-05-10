@@ -198,25 +198,30 @@ int invertQuadraticPolynomial(SolContainer &sol,
 template <class Scalar, class SolContainer>
 void invertCubicPolynomialPostProcess_(SolContainer &sol,
                                        int numSol,
-                                       Scalar a,
-                                       Scalar b,
-                                       Scalar c,
-                                       Scalar d)
+                                       Scalar a, Scalar b, Scalar c, Scalar d,
+                                       std::size_t numIterations = 1)
 {
-    // do one Newton iteration on the analytic solution if the
-    // precision is increased
-    for (int i = 0; i < numSol; ++i) {
+    const auto eval = [&](auto x){ return d + x*(c + x*(b + x*a)); };
+    const auto evalDeriv = [&](auto x){ return c + x*(2*b + x*3*a); };
+
+    // do numIterations Newton iterations on the analytic solution
+    // and update result if the precision is increased
+    for (int i = 0; i < numSol; ++i)
+    {
         Scalar x = sol[i];
-        Scalar fOld = d + x*(c + x*(b + x*a));
+        Scalar fCurrent = eval(x);
+        const Scalar fOld = fCurrent;
+        for (int j = 0; j < numIterations; ++j)
+        {
+            const Scalar fPrime = evalDeriv(x);
+            if (fPrime == 0.0)
+                break;
+            x -= fCurrent/fPrime;
+            fCurrent = eval(x);
+        }
 
-        Scalar fPrime = c + x*(2*b + x*3*a);
-        if (fPrime == 0.0)
-            continue;
-        x -= fOld/fPrime;
-
-        Scalar fNew = d + x*(c + x*(b + x*a));
         using std::abs;
-        if (abs(fNew) < abs(fOld))
+        if (abs(fCurrent) < abs(fOld))
             sol[i] = x;
     }
 }
@@ -229,22 +234,24 @@ void invertCubicPolynomialPostProcess_(SolContainer &sol,
  * The polynomial is defined as
  * \f[ p(x) = a\; x^3 + + b\;x^3 + c\;x + d \f]
  *
- * This method teturns the number of solutions which are in the real
+ * This method returns the number of solutions which are in the real
  * numbers. The "sol" argument contains the real roots of the cubic
  * polynomial in order with the smallest root first.
  *
+ * \note The closer the roots are to each other the less
+ *       precise the inversion becomes. Increase number of post-processing iterations for improved results.
+ *
  * \param sol Container into which the solutions are written
- * \param a The coefficiont for the cubic term
- * \param b The coefficiont for the quadratic term
- * \param c The coefficiont for the linear term
- * \param d The coefficiont for the constant term
+ * \param a The coefficient for the cubic term
+ * \param b The coefficient for the quadratic term
+ * \param c The coefficient for the linear term
+ * \param d The coefficient for the constant term
+ * \param numPostProcessIterations The number of iterations to increase precision of the analytical result
  */
 template <class Scalar, class SolContainer>
 int invertCubicPolynomial(SolContainer *sol,
-                          Scalar a,
-                          Scalar b,
-                          Scalar c,
-                          Scalar d)
+                          Scalar a, Scalar b, Scalar c, Scalar d,
+                          std::size_t numPostProcessIterations = 1)
 {
     // reduces to a quadratic polynomial
     if (a == 0)
@@ -334,7 +341,7 @@ int invertCubicPolynomial(SolContainer *sol,
         // Choose the root that is safe against the loss of precision
         // that can cause wDisc to be equal to q*q/4 despite p != 0.
         // We do not want u to be zero in that case. Mathematically,
-        // we are happy with either root. 
+        // we are happy with either root.
         const Scalar u = [&]{
             return q > 0 ? cbrt(-0.5*q - sqrt(wDisc)) : cbrt(-0.5*q + sqrt(wDisc));
         }();
@@ -344,7 +351,7 @@ int invertCubicPolynomial(SolContainer *sol,
         // does not produce a division by zero. the remaining two
         // roots of u are rotated by +- 2/3*pi in the complex plane
         // and thus not considered here
-        invertCubicPolynomialPostProcess_(sol, 1, a, b, c, d);
+        invertCubicPolynomialPostProcess_(sol, 1, a, b, c, d, numPostProcessIterations);
         return 1;
     }
     else { // the negative discriminant case:
@@ -404,7 +411,7 @@ int invertCubicPolynomial(SolContainer *sol,
 
         // post process the obtained solution to increase numerical
         // precision
-        invertCubicPolynomialPostProcess_(sol, 3, a, b, c, d);
+        invertCubicPolynomialPostProcess_(sol, 3, a, b, c, d, numPostProcessIterations);
 
         // sort the result
         using std::sort;
