@@ -44,6 +44,7 @@
 #include <dune/common/dynvector.hh>
 
 #include <dumux/common/math.hh>
+#include <dumux/io/format.hh>
 
 namespace Test {
 
@@ -264,31 +265,43 @@ int main()
     std::uniform_real_distribution<> dis(-10.0, 10.0);
     auto threeRandomNumbers = [&]() mutable {
         const auto x = dis(gen);
-        auto y = dis(gen); while (x == y) { y = dis(gen); }
-        auto z = dis(gen); while (x == z || y == z) { z = dis(gen); }
+        auto y = dis(gen); while (Dune::FloatCmp::eq(x, y, 1e-10)) { y = dis(gen); }
+        auto z = dis(gen); while (Dune::FloatCmp::eq(x, z, 1e-10) || Dune::FloatCmp::eq(y, z, 1e-10)) { z = dis(gen); }
         return std::make_tuple(x, y, z);
     };
 
     const auto checkRoots = [](const std::array<double, 3>& roots,
                                const std::array<double, 3>& ref,
-                               int n)
+                               const std::array<double, 4>& coeff,
+                               int n, bool throwing = true) -> bool
     {
+        const auto refToString = [&](){
+            std::string refStr{};
+            for (int i = 0; i < n; i++)
+                refStr += Dumux::Fmt::format("{:.14e},", ref[i]);
+            return refStr;
+        };
+
         for (int i = 0; i < n; i++)
         {
             using std::isfinite;
             if (!isfinite(roots[i]))
                 DUNE_THROW(Dune::Exception, "Expecting finite root");
-            if (std::none_of(ref.begin(), ref.end(), [&](auto r){ return Dune::FloatCmp::eq(roots[i], r, 1e-10); }))
-                DUNE_THROW(Dune::Exception, "[invertCubicPolynomial] Root "
-                    << i << " of " << n << ": " << roots[i]
-                    << " does not match reference");
+            if (throwing && std::none_of(ref.begin(), ref.end(), [&](auto r){ return Dune::FloatCmp::eq(roots[i], r, 1e-8); }))
+                DUNE_THROW(Dune::Exception, "[invertCubicPolynomial] Root " << Dumux::Fmt::format(
+                        "{} of {}: {:.14e}, does not match reference roots = [{}].\n", i+1, n, roots[i], refToString())
+                        << Dumux::Fmt::format("Polynomial: {:+.5e}x³ {:+.5e}x² {:+.5e}x {:+.5e}\n", coeff[0], coeff[1], coeff[2], coeff[3]));
+            else
+                return false;
         }
+
+        return true;
     };
 
     std::array<double, 3> roots{};
     for (double scaling : {1.0, -1.0, 5.0})
     {
-        for (int i = 0; i < 1000; ++i)
+        for (int i = 0; i < 100000; ++i)
         {
             const auto [x, y, z] = threeRandomNumbers();
 
@@ -298,7 +311,12 @@ int main()
                 int numRoots = Dumux::invertCubicPolynomial(roots.data(), a, b, c, d);
                 if (numRoots != 3)
                     DUNE_THROW(Dune::Exception, "Expecting three roots! Got " << numRoots);
-                checkRoots(roots, {x, y, z}, numRoots);
+                if (!checkRoots(roots, {x, y, z}, {a, b, c, d}, numRoots, false))
+                {
+                    // Try to increase Newton iterations for increased precision and try again
+                    int numRoots = Dumux::invertCubicPolynomial(roots.data(), a, b, c, d, 10);
+                    checkRoots(roots, {x, y, z}, {a, b, c, d}, numRoots);
+                }
             }
 
             // test for two unique roots
@@ -307,7 +325,12 @@ int main()
                 int numRoots = Dumux::invertCubicPolynomial(roots.data(), 0.0, b, c, d);
                 if (numRoots != 2)
                     DUNE_THROW(Dune::Exception, "Expecting two roots! Got " << numRoots);
-                checkRoots(roots, {x, z}, numRoots);
+                if (!checkRoots(roots, {x, z}, {0.0, b, c, d}, numRoots, false))
+                {
+                    // Try to increase Newton iterations for increased precision and try again
+                    int numRoots = Dumux::invertCubicPolynomial(roots.data(), 0.0, b, c, d, 10);
+                    checkRoots(roots, {x, z}, {0.0, b, c, d}, numRoots);
+                }
             }
 
             // test for one unique root
@@ -316,7 +339,12 @@ int main()
                 int numRoots = Dumux::invertCubicPolynomial(roots.data(), 0.0, 0.0, c, d);
                 if (numRoots != 1)
                     DUNE_THROW(Dune::Exception, "Expecting one root! Got " << numRoots);
-                checkRoots(roots, {x}, numRoots);
+                if (!checkRoots(roots, {x}, {0.0, 0.0, c, d}, numRoots, false))
+                {
+                    // Try to increase Newton iterations for increased precision and try again
+                    int numRoots = Dumux::invertCubicPolynomial(roots.data(), 0.0, 0.0, c, d, 10);
+                    checkRoots(roots, {x}, {0.0, 0.0, c, d}, numRoots);
+                }
             }
         }
     }
