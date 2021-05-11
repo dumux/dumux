@@ -12,4 +12,10 @@ dumux_add_test(NAME example_pnm1p_permeabilityupscaling
                                       ${CMAKE_CURRENT_BINARY_DIR}/Y-dir.dat
                                       ${CMAKE_SOURCE_DIR}/test/references/example_porenetwork_upscaling_noncreeping_flow_Z_direction-reference.dat
                                       ${CMAKE_CURRENT_BINARY_DIR}/Z-dir.dat
-                              --command "${CMAKE_CURRENT_BINARY_DIR}/example_pnm1p_permeabilityupscaling")
+                              --command "${CMAKE_CURRENT_BINARY_DIR}/example_pnm1p_permeabilityupscaling params.input -Problem.AssumeCreepingFlow false")
+
+dumux_add_test(NAME example_pnm1p_creeping_flow_permeabilityupscaling
+               TARGET example_pnm1p_permeabilityupscaling
+               CMAKE_GUARD HAVE_UMFPACK dune-foamgrid_FOUND
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/example_pnm1p_permeabilityupscaling  params.input -Problem.AssumeCreepingFlow true")
