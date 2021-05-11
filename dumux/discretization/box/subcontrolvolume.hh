@@ -24,6 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_SUBCONTROLVOLUME_HH
 #define DUMUX_DISCRETIZATION_BOX_SUBCONTROLVOLUME_HH
 
+#include <dune/geometry/type.hh>
 #include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/common/math.hh>
@@ -63,7 +64,7 @@ struct BoxDefaultScvGeometryTraits
         struct hasSingleGeometryType
         {
             static const bool v = true;
-            static const unsigned int topologyId = Dune::Impl::CubeTopology< mydim >::type::id;
+            static const unsigned int topologyId = Dune::GeometryTypes::cube(mydim).id();
         };
     };
 
