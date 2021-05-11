@@ -7,8 +7,8 @@
 # Part 2: Main program flow
 
 The main program flow is implemented in file `main.cc` described below.
-For each spatial direction x, y and z, flow through the network is simulated and the resulting mass flow rate
-is used to determine the permeability.
+For each spatial direction x, y and z, flow through the network is simulated using several pressure gradients and the resulting mass flow rate
+are used to determine the apscaled properties.
 
 The code documentation is structured as follows:
 
@@ -211,6 +211,9 @@ and finally determine the the upscaled properties.
     constexpr bool isCreepingFlow = std::is_same_v<TypeTag, Properties::TTag::PNMUpscalingCreepingFlow>;
     upscalingHelper.calculateUpscaledProperties(isCreepingFlow);
     upscalingHelper.report(isCreepingFlow);
+
+    // compare the Darcy permeability with reference data provided in input file and report in case of inconsistency
+    upscalingHelper.compareWithReference();
 
     // plot the results just for non-creeping flow
     // creeping flow would just result in a straight line (permeability is independent of the pressure gradient)
