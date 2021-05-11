@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+# TODO set the image name here to a global address
+#      after adding your container to your modules container registry
+# e.g. git.iws.uni-stuttgart.de:4567/dumux-pub/koch2017a
+IMAGE_NAME=${dockerTag}
+
+# the host directory ...
+SHARED_DIR_HOST="$$(pwd)"
+# ... that is mounted into this container directory:
+SHARED_DIR_CONTAINER="/dumux/shared"
+
+help ()
+{
+    echo ""
+    echo "Usage: docker_${dockerTag}.sh <command> [options]"
+    echo ""
+    echo "  docker_${dockerTag}.sh open [image]      - run a container from the image."
+    echo "  docker_${dockerTag}.sh help              - display this message."
+    echo ""
+    echo "Optionally supply a Docker image name to the open command."
+    echo ""
+}
+
+# start a container. Only argument is the Docker image.
+open()
+{
+    IMAGE="$$1"
+    docker run -it \
+                -e HOST_UID=$$(id -u $$USER) \
+                -e HOST_GID=$$(id -g $$USER) \
+                -v $$SHARED_DIR_HOST:$$SHARED_DIR_CONTAINER \
+                --name dumux_${dockerTag} \
+                $$IMAGE /bin/bash
+}
+
+# Check if user specified valid command otherwise print help message
+if [ "$$1" == "open" ]; then
+    IMAGE="$$2" : $${IMAGE:="$$IMAGE_NAME"}
+    open $$IMAGE
+else
+    help
+    exit 1
+fi
