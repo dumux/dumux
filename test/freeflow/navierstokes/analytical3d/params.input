@@ -1,0 +1,28 @@
+[TimeLoop]
+DtInitial = 1e-3 # [s]
+TEnd = 1 # [s]
+
+[Grid]
+LowerLeft = -1 -1 -1
+UpperRight = 1 1 1
+Cells = 10 10 10
+
+[Problem]
+Name = test_3d # name passed to the output routines
+EnableGravity = false
+PrintL2Error = false
+EnableInertiaTerms = true
+
+[Component]
+LiquidDensity = 1
+LiquidKinematicViscosity = 1
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-8
+
+[Newton]
+MaxSteps = 10
+MaxRelativeShift = 1e-5
+
+[Vtk]
+WriteFaceData = false
