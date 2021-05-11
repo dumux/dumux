@@ -131,7 +131,7 @@ public:
         for (int dirIdx = 0; dirIdx < 3; dirIdx++)
         {
             // add the data in each direction for plot
-            gnuplot.addFileToPlot(dirName_[dirIdx]);
+            gnuplot.addFileToPlot(dirName_[dirIdx] + "-dir.dat");
             // set the properties of lines to be plotted
             option += Fmt::format("set linetype {0} linecolor {0} linewidth 7\n", dirIdx+1);
             // report the darcy permeability in each direction as the title of the plot
@@ -144,7 +144,7 @@ public:
         gnuplot.setXlabel("Forchheimer Number [-]");
         gnuplot.setYlabel("Apparent permeability / Darcy permeability [-]");
         gnuplot.setOption(option);
-        gnuplot.plot();
+        gnuplot.plot("permeability_ratio_versus_forchheimer_number");
     }
     // [[/codeblock]]
     //
@@ -153,7 +153,7 @@ public:
     void writePlotDataToFile(std::size_t dirIdx)
     {
         // Open a logfile
-        std::ofstream logfile(dirName_[dirIdx]);
+        std::ofstream logfile(dirName_[dirIdx]+"-dir.dat");
 
         // Save the data needed to be plotted in logfile
         for (int i = 0; i < apparentPermeability_[dirIdx].size(); i++)
@@ -179,7 +179,7 @@ public:
         {
             std::cout << Fmt::format("\n{:#>{}}\n\n", "", 40)
                       << Fmt::format("{}-direction:\n", dirName_[dirIdx])
-                      << Fmt::format("-- Darcy permeability = {:.3e} m^2\n", darcyPermeability_[dirIdx]);
+                      << Fmt::format("-- Darcy (intrinsic) permeability = {:.3e} m^2\n", darcyPermeability_[dirIdx]);
 
             // Report non-creeping flow upscaled properties
             if (!isCreepingFlow)
@@ -191,6 +191,29 @@ public:
             std::cout << Fmt::format("\n{:#>{}}\n", "", 40) << std::endl;
         }
     }
+    // [[/codeblock]]
+    //
+    // ### Compare with reference data provided in input file
+    // [[codeblock]]
+    void compareWithReference()
+    {
+        static const auto referenceData = getParam<std::vector<Scalar>>("Problem.ReferencePermeability", std::vector<Scalar>{});
+        if (!referenceData.empty())
+        {
+            for (int dirIdx = 0; dirIdx < 3; dirIdx++)
+            {
+                const auto K = darcyPermeability_[dirIdx];
+                static const Scalar eps = getParam<Scalar>("Problem.TestEpsilon", 1e-3);
+                if (Dune::FloatCmp::ne<Scalar>(K, referenceData[dirIdx], eps))
+                {
+                    std::cerr << "Calculated permeability of " << K << " in "
+                            <<dirName_[dirIdx]<<"-direction does not match with reference value of "
+                            << referenceData[dirIdx] << std::endl;
+                }
+            }
+        }
+    }
+    // [[/codeblock]]
 private:
     std::array<std::vector<Scalar>, 3> samplePointsX_;
     std::array<std::vector<Scalar>, 3> samplePointsY_;
