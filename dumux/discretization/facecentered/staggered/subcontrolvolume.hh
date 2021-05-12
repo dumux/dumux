@@ -74,7 +74,7 @@ public:
                                           const GridIndexType globalIndex,
                                           const SmallLocalIndexType indexInElement,
                                           const GridIndexType dofIdx,
-                                          const SmallLocalIndexType dirIdx,
+                                          const SmallLocalIndexType dofAxis,
                                           const std::int_least8_t dirSign,
                                           const GridIndexType eIdx,
                                           const bool boundary)
@@ -84,7 +84,7 @@ public:
     , globalIndex_(globalIndex)
     , indexInElement_(indexInElement)
     , dofIdx_(dofIdx)
-    , directionIdx_(dirIdx)
+    , dofAxis_(dofAxis)
     , directionSign_(dirSign)
     , eIdx_(eIdx)
     , boundary_(boundary) {}
@@ -115,8 +115,8 @@ public:
     SmallLocalIndexType localDofIndex() const
     { return indexInElement_; }
 
-    SmallLocalIndexType directionIndex() const
-    { return directionIdx_; }
+    SmallLocalIndexType dofAxis() const
+    { return dofAxis_; }
 
     std::int_least8_t directionSign() const
     { return directionSign_; }
@@ -131,7 +131,7 @@ private:
     GridIndexType globalIndex_;
     SmallLocalIndexType indexInElement_;
     GridIndexType dofIdx_;
-    SmallLocalIndexType directionIdx_;
+    SmallLocalIndexType dofAxis_;
     std::int_least8_t directionSign_;
     GridIndexType eIdx_;
     bool boundary_;
