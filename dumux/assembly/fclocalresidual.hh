@@ -117,10 +117,10 @@ public:
         NumEqVector source(0.0);
 
         // add contributions from volume flux sources
-        source += problem.source(element, fvGeometry, elemVolVars, scv)[scv.directionIndex()];
+        source += problem.source(element, fvGeometry, elemVolVars, scv)[scv.dofAxis()];
 
         // add contribution from possible point sources
-        source += problem.scvPointSources(element, fvGeometry, elemVolVars, scv)[scv.directionIndex()];
+        source += problem.scvPointSources(element, fvGeometry, elemVolVars, scv)[scv.dofAxis()];
 
         return source;
     }
