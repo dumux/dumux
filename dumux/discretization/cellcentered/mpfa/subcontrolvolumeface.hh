@@ -74,7 +74,7 @@ struct CCMpfaDefaultScvfGeometryTraits
         struct hasSingleGeometryType
         {
             static const bool v = true;
-            static const unsigned int topologyId = Dune::Impl::CubeTopology< dim >::type::id;
+            static const unsigned int topologyId = Dune::GeometryTypes::cube(dim).id();
         };
     };
 
