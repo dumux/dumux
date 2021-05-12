@@ -13,22 +13,22 @@ def grad(v):
     return np.array([[sp.diff(v[0],x),  sp.diff(v[0],y)], [sp.diff(v[1],x),  sp.diff(v[1],y)]])
 
 # coordinates and time
-x, y, t = sp.symbols("x y t")
+x, y, t, mu = sp.symbols("x y t mu")
 
-kinematicViscosity = 0.0
+kinematicViscosity = 1.0
 
 # analytical solutions for v and p in free-flow domain (see reference given in problems)
 def analyticalSolutionStokes():
-    psi = sp.exp(-5*kinematicViscosity*sp.pi**2*t)*sp.cos(sp.pi*x)*sp.cos(2*sp.pi*y)
+    psi = sp.exp(-5*mu*sp.pi**2*t)*sp.cos(sp.pi*x)*sp.cos(2*sp.pi*y)
     ux = sp.diff(psi,y)
     uy = -sp.diff(psi,x)
 
-    vFF = np.array([- 2.0 * sp.pi * sp.exp(- 5.0 * kinematicViscosity * sp.pi * sp.pi * t) * sp.cos(sp.pi * x) * sp.sin(2.0 * sp.pi * y), sp.pi * sp.exp(- 5.0 * kinematicViscosity * sp.pi*sp.pi * t) * sp.sin(sp.pi * x) * sp.cos(2.0 * sp.pi * y)])
+    vFF = np.array([- 2.0 * sp.pi * sp.exp(- 5.0 * mu * sp.pi * sp.pi * t) * sp.cos(sp.pi * x) * sp.sin(2.0 * sp.pi * y), sp.pi * sp.exp(- 5.0 * mu * sp.pi*sp.pi * t) * sp.sin(sp.pi * x) * sp.cos(2.0 * sp.pi * y)])
 
-    assert(vFF[0]-ux == 0)
-    assert(vFF[1]-uy == 0)
+    #assert(vFF[0]-ux == 0)
+    #assert(vFF[1]-uy == 0)
 
-    pFF = - 0.25 * sp.exp(-10.0 * kinematicViscosity * sp.pi**2 * t) * sp.pi**2 * (4.0 * sp.cos(2.0 * sp.pi * x) + sp.cos(4.0 * sp.pi * y))
+    pFF = - 0.25 * sp.exp(-10.0 * mu * sp.pi**2 * t) * sp.pi**2 * (4.0 * sp.cos(2.0 * sp.pi * x) + sp.cos(4.0 * sp.pi * y))
     return [vFF, pFF]
 
 vFF, pFF = analyticalSolutionStokes()
@@ -42,13 +42,24 @@ pI = np.array([[pFF,  0], [0,  pFF]])
 storageTerm = np.array([sp.diff(vFF[0], t), sp.diff(vFF[1], t)])
 
 # complete momentum flux and its divergence
-momentumFlux = vvT - kinematicViscosity*(gradV + gradVT) +pI
+momentumFlux = vvT - mu*(gradV + gradVT) +pI
 divMomentumFlux = div(momentumFlux)
 
 # solution for source term
 print("Source term mass:", sp.diff(vFF[0],x) + sp.diff(vFF[1], y))
-print("Source term momentum x:", sp.simplify(divMomentumFlux[0] ))#+ storageTerm[0]))
-print("Source term momentum y:", sp.simplify(divMomentumFlux[1] ))#+ storageTerm[1]))
+print("Source term momentum x:", sp.simplify(divMomentumFlux[0] + storageTerm[0]))
+print("Source term momentum y:", sp.simplify(divMomentumFlux[1] + storageTerm[1]))
+
+print("\nNeumann fluxes ######################")
+#print("Shape momentumFlux", momentumFlux.shape)
+#momFluxNormal = momentumFlux.dot(np.array([1,0]))
+#print("Shape momFluxNormal", momFluxNormal.shape)
+print(" momFlux 0 0", sp.simplify(momentumFlux)[0][0])
+print(" momFlux 0 1", sp.simplify(momentumFlux)[0][1])
+print(" momFlux 1 0", sp.simplify(momentumFlux)[1][0])
+print(" momFlux 1 1", sp.simplify(momentumFlux)[1][1])
+#print("momentumFlux * normal", sp.simplify(momFluxNormal))
+print("######################\n")
 
 
 
