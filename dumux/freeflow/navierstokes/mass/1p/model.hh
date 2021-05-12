@@ -199,8 +199,32 @@ public:
     using type = NavierStokesMassOnePFluxVariables<Problem, ModelTraits, DiffusiveFluxTypes, ElementVolumeVariables, ElementFluxVariablesCache>;
 };
 
+// ToDo Define FluxVariablesCache classes properly
 template<class TypeTag>
-struct FluxVariablesCache<TypeTag, TTag::NavierStokesMassOneP> { using type = FluxVariablesCaching::EmptyCache<GetPropType<TypeTag, Properties::Scalar>>; };
+struct FluxVariablesCache<TypeTag, TTag::NavierStokesMassOneP>
+{
+private:
+    struct FluxCache : public FluxVariablesCaching::EmptyCache<GetPropType<TypeTag, Properties::Scalar>>
+    {
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    public:
+        //! update the cache for an scvf
+        template< class Problem, class ElementVolumeVariables >
+        void update(const Problem& problem,
+                    const Element& element,
+                    const FVElementGeometry& fvGeometry,
+                    const ElementVolumeVariables& elemVolVars,
+                    const SubControlVolumeFace& scvf)
+        { }
+    };
+public:
+    using type = FluxCache;
+};
 
 template<class TypeTag>
 struct FluxVariablesCacheFiller<TypeTag, TTag::NavierStokesMassOneP> { using type = FluxVariablesCaching::EmptyCacheFiller; };
