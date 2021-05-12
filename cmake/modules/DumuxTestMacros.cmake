@@ -249,10 +249,11 @@ function(dumux_add_test)
     set(dummymain ${CMAKE_CURRENT_BINARY_DIR}/main77_${ADDTEST_NAME}.cc)
     configure_file(${scriptdir}/main77.cc.in ${dummymain})
     set(ADDTEST_SOURCES ${dummymain})
-  endif()
 
-  # Add the executable if it is not already present
-  if(ADDTEST_SOURCES)
+    # Tests to be skipped get a dummy target based on the name
+    set(ADDTEST_TARGET ${ADDTEST_NAME})
+  elseif(ADDTEST_SOURCES)
+    # Add the executable if it is not already present
     set(ADDTEST_TARGET ${ADDTEST_NAME})
   endif()
 
