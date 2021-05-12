@@ -122,16 +122,16 @@ public:
                               const SubControlVolume& scv) const
     {
         NumEqVector source = ParentType::computeSource(problem, element, fvGeometry, elemVolVars, scv);
-        source += problem.gravity()[scv.directionIndex()] * problem.density(element, scv);
+        source += problem.gravity()[scv.dofAxis()] * problem.density(element, scv);
 
         // Axisymmetric problems in 2D feature an extra source terms arising from the transformation to cylindrical coordinates.
         // See Ferziger/Peric: Computational methods for fluid dynamics chapter 8.
         // https://doi.org/10.1007/978-3-540-68228-8 (page 301)
         if constexpr (dim == 2 && Impl::isRotationalExtrusion<Extrusion>)
         {
-            if (scv.directionIndex() == Extrusion::radialAxis)
+            if (scv.dofAxis() == Extrusion::radialAxis)
             {
-                const auto r = scv.center()[scv.directionIndex()] - fvGeometry.gridGeometry().bBoxMin()[scv.directionIndex()];
+                const auto r = scv.center()[scv.dofAxis()] - fvGeometry.gridGeometry().bBoxMin()[scv.dofAxis()];
                 const auto& scvf = (*scvfs(fvGeometry, scv).begin()); // the frontal scvf belonging to the scv
 
                 // Velocity term
@@ -188,7 +188,7 @@ public:
         {
             const auto& frontalScvfOnBoundary = fvGeometry.frontalScvfOnBoundary(scv);
             const auto& bcTypes = elemBcTypes[frontalScvfOnBoundary.localIndex()];
-            if (bcTypes.isDirichlet(scv.directionIndex()))
+            if (bcTypes.isDirichlet(scv.dofAxis()))
                 return NumEqVector(0.0); // skip calculation as Dirichlet BC will be incorporated explicitly by assembler.
         }
 
@@ -235,10 +235,10 @@ public:
             if (scvf.boundary() && scvf.isFrontal())
             {
                 const auto& bcTypes = elemBcTypes[scvf.localIndex()];
-                if (bcTypes.hasNeumann() && bcTypes.isNeumann(scvf.directionIndex()))
+                if (bcTypes.hasNeumann() && bcTypes.isNeumann(scv.dofAxis()))
                 {
                     const auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
-                    return neumannFluxes[scvf.directionIndex()] * Extrusion::area(scvf) * elemVolVars[scv].extrusionFactor();
+                    return neumannFluxes[scv.dofAxis()] * Extrusion::area(scvf) * elemVolVars[scv].extrusionFactor();
                 }
             }
             else if (scvf.isLateral())
@@ -268,10 +268,10 @@ public:
                 const auto& frontalScvfOnBoundary = fvGeometry.frontalScvfOnBoundary(scv);
                 assert(frontalScvfOnBoundary.isFrontal() && frontalScvfOnBoundary.boundary());
                 const auto& bcTypes = elemBcTypes[frontalScvfOnBoundary.localIndex()];
-                if (bcTypes.hasNeumann() && bcTypes.isNeumann(scvf.directionIndex()))
+                if (bcTypes.hasNeumann() && bcTypes.isNeumann(scvf.normalAxis()))
                 {
                     const auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
-                    return neumannFluxes[scvf.directionIndex()] * Extrusion::area(scvf) * elemVolVars[scv].extrusionFactor();
+                    return neumannFluxes[scv.dofAxis()] * Extrusion::area(scvf) * elemVolVars[scv].extrusionFactor();
                 }
             }
         }
@@ -298,10 +298,10 @@ public:
             //
             assert(scvf.isLateral());
             const auto& bcTypes = elemBcTypes[scvf.localIndex()];
-            if (bcTypes.hasNeumann() && bcTypes.isNeumann(scv.directionIndex()))
+            if (bcTypes.hasNeumann() && bcTypes.isNeumann(scv.dofAxis()))
             {
                 const auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
-                return neumannFluxes[scv.directionIndex()] * Extrusion::area(scvf) * elemVolVars[scv].extrusionFactor();
+                return neumannFluxes[scv.dofAxis()] * Extrusion::area(scvf) * elemVolVars[scv].extrusionFactor();
             }
         }
 
