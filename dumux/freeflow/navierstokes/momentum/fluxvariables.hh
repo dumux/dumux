@@ -178,7 +178,7 @@ public:
         GlobalPosition gradVn(0.0);
         gradV.mv(scvf.unitOuterNormal(), gradVn);
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-        const Scalar velocityGrad_ii = gradVn[scv.directionIndex()];
+        const Scalar velocityGrad_ii = gradVn[scv.dofAxis()];
 
         static const bool enableUnsymmetrizedVelocityGradient
         = getParamFromGroup<bool>(this->problem().paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
@@ -250,7 +250,7 @@ public:
         // Consider the shear stress caused by the gradient of the velocities parallel to our face of interest.
         GlobalPosition gradVn(0.0);
         gradV.mv(scvf.unitOuterNormal(), gradVn);
-        const Scalar velocityGrad_ij = gradVn[scv.directionIndex()];
+        const Scalar velocityGrad_ij = gradVn[scv.dofAxis()];
         result -= mu * velocityGrad_ij;
 
         // Consider the shear stress caused by the gradient of the velocities normal to our face of interest.
@@ -258,7 +258,7 @@ public:
         {
             GlobalPosition gradVTransposedN(0.0);
             gradV.mtv(scvf.unitOuterNormal(), gradVTransposedN);
-            const Scalar velocityGrad_ji = gradVTransposedN[scv.directionIndex()];
+            const Scalar velocityGrad_ji = gradVTransposedN[scv.dofAxis()];
             result -= mu * velocityGrad_ji;
         }
 
@@ -391,8 +391,8 @@ public:
             // use the Dirichlet velocity as transporting velocity if the lateral face is on a Dirichlet boundary
             if (!useOldScheme && scvf.boundary())
             {
-                if (this->elemBcTypes()[scvf.localIndex()].isDirichlet(scvf.directionIndex()))
-                    return problem.dirichlet(this->element(), scvf)[scvf.directionIndex()];
+                if (this->elemBcTypes()[scvf.localIndex()].isDirichlet(scvf.normalAxis()))
+                    return problem.dirichlet(this->element(), scvf)[scvf.normalAxis()];
             }
 
             const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
@@ -403,8 +403,8 @@ public:
 
             if (orthogonalScvf.boundary())
             {
-                if (this->elemBcTypes()[orthogonalScvf.localIndex()].isDirichlet(scvf.directionIndex()))
-                    return problem.dirichlet(this->element(), scvf)[scvf.directionIndex()];
+                if (this->elemBcTypes()[orthogonalScvf.localIndex()].isDirichlet(scvf.normalAxis()))
+                    return problem.dirichlet(this->element(), scvf)[scvf.normalAxis()];
                 else
                     return innerTransportingVelocity; // fallback value, should actually never be called
             }
@@ -421,8 +421,8 @@ public:
             // use the Dirichlet velocity as for transported momentum if the lateral face is on a Dirichlet boundary
             if (scvf.boundary())
             {
-                if (const auto& scv = fvGeometry.scv(scvf.insideScvIdx()); this->elemBcTypes()[scvf.localIndex()].isDirichlet(scv.directionIndex()))
-                    return problem.dirichlet(this->element(), scvf)[scv.directionIndex()] * this->problem().density(this->element(), scv);
+                if (const auto& scv = fvGeometry.scv(scvf.insideScvIdx()); this->elemBcTypes()[scvf.localIndex()].isDirichlet(scv.dofAxis()))
+                    return problem.dirichlet(this->element(), scvf)[scv.dofAxis()] * this->problem().density(this->element(), scv);
             }
 
             const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
