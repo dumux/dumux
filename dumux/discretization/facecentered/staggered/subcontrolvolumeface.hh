@@ -80,7 +80,7 @@ public:
                                               const std::array<GridIndexType, 2> globalScvIndices,
                                               const SmallLocalIndexType localScvfIdx,
                                               const Scalar area,
-                                              const SmallLocalIndexType directionIdx,
+                                              const SmallLocalIndexType normalAxis,
                                               const std::int_least8_t outerNormalSign,
                                               const GridIndexType globalScvfIdx,
                                               const GridIndexType scvfIdxWithCommonEntity,
@@ -92,7 +92,7 @@ public:
     , globalScvIndices_(globalScvIndices)
     , localScvfIdx_(localScvfIdx)
     , area_(area)
-    , directionIdx_(directionIdx)
+    , normalAxis_(normalAxis)
     , outerNormalSign_(outerNormalSign)
     , globalScvfIdx_(globalScvfIdx)
     , scvfIdxWithCommonEntity_(scvfIdxWithCommonEntity)
@@ -111,7 +111,7 @@ public:
     const GlobalPosition unitOuterNormal() const
     {
         GlobalPosition result(0.0);
-        result[directionIndex()] = 1.0 * directionSign();
+        result[normalAxis_] = 1.0 * directionSign();
         return result;
     }
 
@@ -144,8 +144,8 @@ public:
     Scalar area() const
     { return area_; }
 
-    SmallLocalIndexType directionIndex() const
-    { return directionIdx_; }
+    SmallLocalIndexType normalAxis() const
+    { return normalAxis_; }
 
     std::int_least8_t directionSign() const
     { return outerNormalSign_; }
@@ -160,7 +160,7 @@ private:
     std::array<GridIndexType, 2> globalScvIndices_;
     SmallLocalIndexType localScvfIdx_;
     Scalar area_;
-    SmallLocalIndexType directionIdx_;
+    SmallLocalIndexType normalAxis_;
     std::int_least8_t outerNormalSign_;
     GridIndexType globalScvfIdx_;
     GridIndexType scvfIdxWithCommonEntity_;
