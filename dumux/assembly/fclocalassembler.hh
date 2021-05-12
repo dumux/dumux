@@ -249,7 +249,7 @@ public:
                     if (bcTypes.hasDirichlet())
                     {
                         const auto& scv = this->fvGeometry().scv(scvf.insideScvIdx());
-                        const PrimaryVariables dirichletValues(this->asImp_().problem().dirichlet(this->element(), scvf)[scv.directionIndex()]); // TODO
+                        const PrimaryVariables dirichletValues(this->asImp_().problem().dirichlet(this->element(), scvf)[scv.dofAxis()]); // TODO
 
                         // set the Dirichlet conditions in residual and jacobian
                         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
