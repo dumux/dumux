@@ -53,12 +53,12 @@ struct NavierStokesMomentumBoundaryFluxHelper
         if (scvf.isFrontal())
         {
             // pressure contribution
-            flux[scvf.directionIndex()] = (pressure - problem.referencePressure(element, fvGeometry, scvf)) * scvf.directionSign();
+            flux[scvf.normalAxis()] = (pressure - problem.referencePressure(element, fvGeometry, scvf)) * scvf.directionSign();
 
             if (problem.enableInertiaTerms())
             {
                 const auto v = elemVolVars[scvf.insideScvIdx()].velocity();
-                flux[scvf.directionIndex()] += v*v * problem.density(element, fvGeometry, scvf) * scvf.directionSign();
+                flux[scvf.normalAxis()] += v*v * problem.density(element, fvGeometry, scvf) * scvf.directionSign();
             }
         }
 
@@ -79,7 +79,7 @@ struct NavierStokesMomentumBoundaryFluxHelper
             {
                 // const auto& frontalScvfOnBoundary = fvGeometry.frontalScvfOnBoundary(scv);
                 const auto bcTypes = problem.boundaryTypes(element, scvf);
-                if (bcTypes.isNeumann(scv.directionIndex()))
+                if (bcTypes.isNeumann(scv.dofAxis()))
                 {
                     static std::mutex recursionPreventionMutex;
                     if (!recursionPreventionMutex.try_lock())
@@ -88,7 +88,7 @@ struct NavierStokesMomentumBoundaryFluxHelper
                                    << "Double check your neumann() function to avoid ambiguities in your domain corners.");
 
                     const auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
-                    flux[scv.directionIndex()] = neumannFluxes[scv.directionIndex()];
+                    flux[scv.dofAxis()] = neumannFluxes[scv.dofAxis()];
                     recursionPreventionMutex.unlock();
 
                     return flux;
@@ -100,11 +100,11 @@ struct NavierStokesMomentumBoundaryFluxHelper
 
             // lateral face normal to boundary (integration point touches boundary)
             if (scv.boundary())
-                flux[scvf.directionIndex()] -= mu * StaggeredVelocityGradients::velocityGradIJ(fvGeometry, scvf, elemVolVars)
+                flux[scv.dofAxis()] -= mu * StaggeredVelocityGradients::velocityGradIJ(fvGeometry, scvf, elemVolVars)
                                                * scvf.directionSign();
             // lateral face coinciding with boundary
             else if (scvf.boundary())
-                flux[scv.directionIndex()] -= mu * StaggeredVelocityGradients::velocityGradJI(fvGeometry, scvf, elemVolVars)
+                flux[scv.dofAxis()] -= mu * StaggeredVelocityGradients::velocityGradJI(fvGeometry, scvf, elemVolVars)
                                               * scvf.directionSign();
 
             // advective terms
@@ -117,8 +117,8 @@ struct NavierStokesMomentumBoundaryFluxHelper
 
                     if (scvf.boundary())
                     {
-                        if (const auto bcTypes = problem.boundaryTypes(element, scvf); bcTypes.isDirichlet(scvf.directionIndex()))
-                            return problem.dirichlet(element, scvf)[scvf.directionIndex()];
+                        if (const auto bcTypes = problem.boundaryTypes(element, scvf); bcTypes.isDirichlet(scvf.normalAxis()))
+                            return problem.dirichlet(element, scvf)[scvf.normalAxis()];
                         else
                             return
                                 innerTransportingVelocity; // fallback
@@ -156,7 +156,7 @@ struct NavierStokesMomentumBoundaryFluxHelper
                     const auto transportedMomentum =  selfIsUpstream ? (upwindWeight * insideMomentum + (1.0 - upwindWeight) * outsideMomentum)
                                                                      : (upwindWeight * outsideMomentum + (1.0 - upwindWeight) * insideMomentum);
 
-                    flux[scvf.directionIndex()] += transportingVelocity * transportedMomentum * scvf.directionSign();
+                    flux[scv.dofAxis()] += transportingVelocity * transportedMomentum * scvf.directionSign();
                 }
 
                 // lateral face coinciding with boundary
@@ -164,7 +164,7 @@ struct NavierStokesMomentumBoundaryFluxHelper
                 {
                     const auto insideDensity = problem.density(element, fvGeometry.scv(scvf.insideScvIdx()));
                     const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity();
-                    flux[scv.directionIndex()] += innerVelocity * transportingVelocity * insideDensity * scvf.directionSign();
+                    flux[scv.dofAxis()] += innerVelocity * transportingVelocity * insideDensity * scvf.directionSign();
                 }
             }
         }
