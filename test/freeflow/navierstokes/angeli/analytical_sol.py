@@ -50,47 +50,71 @@ print("Source term mass:", sp.diff(vFF[0],x) + sp.diff(vFF[1], y))
 print("Source term momentum x:", sp.simplify(divMomentumFlux[0] + storageTerm[0]))
 print("Source term momentum y:", sp.simplify(divMomentumFlux[1] + storageTerm[1]))
 
-print("\nNeumann fluxes ######################")
-#print("Shape momentumFlux", momentumFlux.shape)
-#momFluxNormal = momentumFlux.dot(np.array([1,0]))
-#print("Shape momFluxNormal", momFluxNormal.shape)
-print(" momFlux 0 0", sp.simplify(momentumFlux)[0][0])
-print(" momFlux 0 1", sp.simplify(momentumFlux)[0][1])
-print(" momFlux 1 0", sp.simplify(momentumFlux)[1][0])
-print(" momFlux 1 1", sp.simplify(momentumFlux)[1][1])
-#print("momentumFlux * normal", sp.simplify(momFluxNormal))
-print("######################\n")
+print("Storage cancels diffusion: storage-diff:", sp.simplify(storageTerm-div(mu*(gradV + gradVT))))
+print("Advection cancels pressure: Advection+press:", sp.simplify(div(vvT)+div(pI)))
+
+
+volume = 0.02**2
+
+print("Eval at x = 0.02, y= 0.77, t = 1e-6")
+print("Storage term", storageTerm[0].subs(mu, 0.1).subs(x, 0.02).subs(y,0.77).subs(t,1e-6).evalf()*volume)
+
+v0 = vFF[0].subs(mu, 0.1).subs(x, 0.02).subs(y,0.77).subs(t,0.5e-6).evalf()
+v1 = vFF[0].subs(mu, 0.1).subs(x, 0.02).subs(y,0.77).subs(t,1e-6).evalf()
+
+print("v1", v1)
+print("v0", v0)
+print("v(0)", vFF[0].subs(mu, 0.1).subs(x, 0.02).subs(y,0.77).subs(t,0).evalf())
+#print("v(1e-6)", vFF[0].subs(mu, 0.1).subs(x, 0.02).subs(y,0.77).subs(t,1e-6).evalf()
+
+
+print("Storage term, numerical", (v1-v0)/0.5e-6*volume)
+print("diffusion term", div(mu*(gradV + gradVT))[0].subs(mu, 0.1).subs(x, 0.02).subs(y,0.77).subs(t,1e-6).evalf()*volume)
+
+#print("\nNeumann fluxes ######################")
+##print("Shape momentumFlux", momentumFlux.shape)
+##momFluxNormal = momentumFlux.dot(np.array([1,0]))
+##print("Shape momFluxNormal", momFluxNormal.shape)
+#neumann = sp.simplify(momentumFlux)
+#print(" momFlux 0 0", neumann[0][0])
+#print(" momFlux 0 1", neumann[0][1])
+#print(" momFlux 1 0", neumann[1][0])
+#print(" momFlux 1 1", neumann[1][1])
+##print("momentumFlux * normal", sp.simplify(momFluxNormal))
+#print("######################\n")
 
 
 
-print("Sol at ccc", vFF[0].subs(t,0))
-
-intStor = sp.simplify(sp.integrate(storageTerm[1].subs(x,0.01).subs(y,0.04), (t, 0, 1e-8)))
-
-print("integralStorageTerm 1e-8:", intStor.evalf() * 0.0002)
-print("test:", sp.simplify(sp.integrate(vFF[1].subs(x,0.01).subs(y,0.04), (t, 0, 1e-8))).evalf() * 0.0002)
 
 
-numericStor0 = sp.simplify(vFF[1].subs(x,0.03).subs(y,0.02).subs(t,0))
-numericStor1 = sp.simplify(vFF[1].subs(x,0.03).subs(y,0.02).subs(t,1e-8))
+#print("Sol at ccc", vFF[0].subs(t,0))
 
-numericStor = (numericStor1 - numericStor0).evalf() / 1e-8 * 0.0002
-
-print("numeric storage", numericStor)
-
-
-
-#intStor = sp.simplify(sp.integrate(storageTerm[1].subs(x,0.01).subs(y,0.04), (t, 0, 1e-3)))
+#intStor = sp.simplify(sp.integrate(storageTerm[1].subs(x,0.01).subs(y,0.04), (t, 0, 1e-8)))
 
 #print("integralStorageTerm 1e-8:", intStor.evalf() * 0.0002)
-#print("test:", sp.simplify(sp.integrate(vFF[1].subs(x,0.01).subs(y,0.04), (t, 0, 1e-3))).evalf() * 0.0002)
+#print("test:", sp.simplify(sp.integrate(vFF[1].subs(x,0.01).subs(y,0.04), (t, 0, 1e-8))).evalf() * 0.0002)
 
 
-#numericStor0 = sp.simplify(vFF[1].subs(x,0.01).subs(y,0.04).subs(t,0))
-#numericStor1 = sp.simplify(vFF[1].subs(x,0.01).subs(y,0.04).subs(t,1e-3))
+#numericStor0 = sp.simplify(vFF[1].subs(x,0.03).subs(y,0.02).subs(t,0))
+#numericStor1 = sp.simplify(vFF[1].subs(x,0.03).subs(y,0.02).subs(t,1e-8))
 
-#numericStor = (numericStor1 - numericStor0).evalf() / 1e-3 * 0.0002
+#numericStor = (numericStor1 - numericStor0).evalf() / 1e-8 * 0.0002
 
 #print("numeric storage", numericStor)
 
-print("time deriv at 1e-8", storageTerm[1].subs(x,0.03).subs(y,0.02).subs(t, 1e-8).evalf() * 0.0002)
+
+
+##intStor = sp.simplify(sp.integrate(storageTerm[1].subs(x,0.01).subs(y,0.04), (t, 0, 1e-3)))
+
+##print("integralStorageTerm 1e-8:", intStor.evalf() * 0.0002)
+##print("test:", sp.simplify(sp.integrate(vFF[1].subs(x,0.01).subs(y,0.04), (t, 0, 1e-3))).evalf() * 0.0002)
+
+
+##numericStor0 = sp.simplify(vFF[1].subs(x,0.01).subs(y,0.04).subs(t,0))
+##numericStor1 = sp.simplify(vFF[1].subs(x,0.01).subs(y,0.04).subs(t,1e-3))
+
+##numericStor = (numericStor1 - numericStor0).evalf() / 1e-3 * 0.0002
+
+##print("numeric storage", numericStor)
+
+#print("time deriv at 1e-8", storageTerm[1].subs(x,0.03).subs(y,0.02).subs(t, 1e-8).evalf() * 0.0002)
