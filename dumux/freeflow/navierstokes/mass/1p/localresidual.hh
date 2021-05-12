@@ -55,6 +55,7 @@ class NavierStokesMassOnePLocalResidual : public GetPropType<TypeTag, Properties
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using EnergyLocalResidual = NavierStokesEnergyLocalResidual<ModelTraits>;
 
 public:
     //! Use the parent type's constructor
