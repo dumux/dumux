@@ -43,6 +43,7 @@
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/discretization/fcdiamond.hh>
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/box.hh>
 
 namespace Dumux
 {
@@ -56,7 +57,7 @@ namespace Properties
 namespace TTag {
 struct DoneaTestNew {};
 struct DoneaTestNewMomentum { using InheritsFrom = std::tuple<DoneaTestNew, NavierStokesMomentumDiamond, FaceCenteredDiamondModel>; };
-struct DoneaTestNewMass { using InheritsFrom = std::tuple<DoneaTestNew, NavierStokesMassOneP, CCTpfaModel>; };
+struct DoneaTestNewMass { using InheritsFrom = std::tuple<DoneaTestNew, NavierStokesMassOneP, BoxModel>; };
 } // end namespace TTag
 
 // Set the problem property
@@ -190,7 +191,7 @@ public:
             values.setDirichlet(Indices::velocityYIdx);
         }
         else
-            values.setNeumann(Indices::conti0EqIdx);
+            values.setDirichlet(Indices::conti0EqIdx);
 
         return values;
     }
@@ -248,7 +249,7 @@ public:
 
     //! Enable internal Dirichlet constraints
     static constexpr bool enableInternalDirichletConstraints()
-    { return !ParentType::isMomentumProblem(); }
+    { return false; }
 
     /*!
      * \brief Tag a degree of freedom to carry internal Dirichlet constraints.
@@ -260,36 +261,36 @@ public:
      * \param element The finite element
      * \param scv The sub-control volume
      */
-    std::bitset<PrimaryVariables::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
-    {
-        std::bitset<PrimaryVariables::dimension> values;
+    // std::bitset<PrimaryVariables::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
+    // {
+    //     std::bitset<PrimaryVariables::dimension> values;
 
-        auto fvGeometry = localView(this->gridGeometry());
-        fvGeometry.bindElement(element);
+    //     auto fvGeometry = localView(this->gridGeometry());
+    //     fvGeometry.bindElement(element);
 
-        bool onBoundary = false;
-        for (const auto& scvf : scvfs(fvGeometry))
-            onBoundary = std::max(onBoundary, scvf.boundary());
+    //     bool onBoundary = false;
+    //     for (const auto& scvf : scvfs(fvGeometry))
+    //         onBoundary = std::max(onBoundary, scvf.boundary());
 
-        if (onBoundary)
-            values.set(0);
+    //     if (onBoundary)
+    //         values.set(0);
 
-        // TODO: only use one cell or pass fvGeometry to hasInternalDirichletConstraint
+    //     // TODO: only use one cell or pass fvGeometry to hasInternalDirichletConstraint
 
-        // if (scv.dofIndex() == 0)
-        //     values.set(0);
-        // the pure Neumann problem is only defined up to a constant
-        // we create a well-posed problem by fixing the pressure at one dof
-        return values;
-    }
+    //     // if (scv.dofIndex() == 0)
+    //     //     values.set(0);
+    //     // the pure Neumann problem is only defined up to a constant
+    //     // we create a well-posed problem by fixing the pressure at one dof
+    //     return values;
+    // }
 
     /*!
      * \brief Define the values of internal Dirichlet constraints for a degree of freedom.
      * \param element The finite element
      * \param scv The sub-control volume
      */
-    PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
-    { return PrimaryVariables(analyticalSolution(scv.center())[Indices::pressureIdx]); }
+    // PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
+    // { return PrimaryVariables(analyticalSolution(scv.dofPosition())[Indices::pressureIdx]); }
 
     template<class SolutionVector>
     auto calculateL2Error(const SolutionVector& curSol)
