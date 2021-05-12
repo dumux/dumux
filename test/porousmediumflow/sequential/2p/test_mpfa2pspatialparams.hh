@@ -26,6 +26,8 @@
 #include <dumux/common/properties.hh>
 #include <dumux/material/spatialparams/sequentialfv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
+
 
 namespace Dumux
 {
@@ -45,11 +47,6 @@ template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::Test2PSpatialParams> { using type = Test2PSpatialParams<TypeTag>; };
 
 }
-
-// forward declaration
-template<class Scalar>
-class LinearMaterialDefault;
-class LinearMaterial;
 
 /*!
  * \ingroup SequentialTwoPTests
@@ -73,14 +70,13 @@ class Test2PSpatialParams: public SequentialFVSpatialParams<TypeTag>
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FieldMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
-
     using PcKrSwCurve = FluidMatrix::BrooksCoreyDefault<Scalar>;
 
 public:
 
     static constexpr bool pcSwCurveIsLinear()
     {
-        return std::is_same_v<PcKrSwCurve, LinearMaterial> || std::is_same_v<PcKrSwCurve, LinearMaterialDefault>;
+        return std::is_same_v<PcKrSwCurve, FluidMatrix::LinearMaterialDefault<Scalar>>;
     }
 
     const FieldMatrix& intrinsicPermeabilityAtPos(const GlobalPosition& globalPos) const
