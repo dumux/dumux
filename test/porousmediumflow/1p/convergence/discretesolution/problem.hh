@@ -25,7 +25,6 @@
 #define DUMUX_INCOMPRESSIBLE_ONEP_CONVERGENCETEST_PROBLEM_HH
 
 #include <cmath>
-
 #include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/common/properties.hh>
