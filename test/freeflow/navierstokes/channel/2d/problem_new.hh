@@ -274,7 +274,15 @@ public:
             {
                 assert(outletCondition_ == OutletCondition::neumannXneumannY);
                 values = FluxHelper::fixedPressureMomentumFlux(*this, element, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure_, false /*zeroNormalVelocityGradient*/);
-                values[Indices::momentumYBalanceIdx] = -dudy(scvf.ipGlobal()[1], inletVelocity_) * this->effectiveViscosity(element, fvGeometry, scvf) * scvf.directionSign();
+
+                Dune::FieldMatrix<Scalar, dimWorld, dimWorld> shearRate(0.0); // gradV + gradV^T
+                shearRate[0][1] = dudy(scvf.ipGlobal()[1], inletVelocity_); // we assume du/dx = dv/dy = dv/dx = 0
+                shearRate[1][0] = shearRate[0][1];
+
+                const auto normal = scvf.unitOuterNormal();
+                NumEqVector normalGradient(0.0);
+                shearRate.mv(normal, normalGradient);
+                values -= this->effectiveViscosity(element, fvGeometry, scvf)*normalGradient;
             }
         }
         else
