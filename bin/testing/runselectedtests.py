@@ -16,7 +16,7 @@ if sys.version_info.major < 3:
     sys.exit('Python 3 required')
 
 
-def buildTests(config, flags=['j4']):
+def buildTests(config, flags=['-j4', '--keep-going']):
 
     if not config:
         print('No tests to be built')
@@ -74,7 +74,7 @@ if __name__ == '__main__':
                         help='use this flag to run the tests')
     parser.add_argument('-bf', '--buildflags',
                         required=False,
-                        default='-j4',
+                        default='-j4 --keep-going',
                         help='set the flags passed to make')
     parser.add_argument('-tf', '--testflags',
                         required=False,
