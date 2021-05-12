@@ -33,6 +33,9 @@
 #include <dumux/assembly/numericepsilon.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/typetraits/typetraits.hh>
+#include <dumux/discretization/method.hh>
+#include <dumux/discretization/evalsolution.hh>
+#include <dumux/discretization/elementsolution.hh>
 
 #include <dumux/multidomain/couplingmanager.hh>
 
@@ -44,7 +47,7 @@ namespace Dumux {
  * \brief The interface of the coupling manager for multi domain problems
  */
 template<class Traits>
-class StaggeredFreeFlowCouplingManagerBase : public CouplingManager<Traits>
+class FreeFlowCouplingManagerBase : public CouplingManager<Traits>
 {
 public:
     static constexpr auto freeFlowMomentumIdx = typename Traits::template SubDomain<0>::Index();
@@ -94,6 +97,7 @@ protected:
 public:
 
     static constexpr auto pressureIdx = VolumeVariables<freeFlowMassIdx>::Indices::pressureIdx;
+    static constexpr auto massDiscMethod = GridGeometry<freeFlowMassIdx>::discMethod;
 
     /*!
      * \ingroup MultiDomain
@@ -134,170 +138,64 @@ public:
 
         if (!localAssemblerI.assembler().isStationaryProblem())
         {
-            assert(isTransient_);
+            assert(this->isTransient_);
             localResidual.evalStorage(residual, problem, element, fvGeometry, prevElemVolVars, curElemVolVars, scvI);
         }
 
         return residual;
     }
 
-
-    //! TODO: this is just a prototype. May be removed after some testing
-    Scalar extrapolatedPressure(const Element<freeFlowMomentumIdx>& element,
-                                const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
-                                const SubControlVolumeFace<freeFlowMomentumIdx>& scvf) const
-    {
-        const auto ownCellPressure = pressure(element, fvGeometry, scvf);
-        assert (scvf.boundary() && scvf.isFrontal());
-
-        bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
-
-        for (const auto is : intersections(fvGeometry.gridGeometry().gridView(), element))
-        {
-            if ((is.centerUnitOuterNormal() * scvf.unitOuterNormal() + 1) < 1e-9)
-            {
-                const auto& outsideElement = is.outside();
-                const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(outsideElement);
-                const auto& outsideScv = momentumCouplingContext_[0].fvGeometry.scv(eIdx);
-                const auto p = momentumCouplingContext_[0].curElemVolVars[outsideScv].pressure() - this->problem(freeFlowMassIdx).initial(outsideElement)[pressureIdx];
-                const auto slope = (ownCellPressure - p) / (element.geometry().center() - outsideScv.center()).two_norm();
-
-                return ownCellPressure + slope * (element.geometry().center() - scvf.center()).two_norm(); // only works if boundary is on the right
-            }
-        }
-        DUNE_THROW(Dune::InvalidStateException, "No intersection found");
-    }
-
     /*!
-     * \name member functions concerning the coupling stencils
+     * \name member functions concerning the calculation of coupled variables
      */
     // \{
 
     /*!
      * \brief Returns the pressure at a given sub control volume face.
      */
-    Scalar pressure(const Element<freeFlowMomentumIdx>& element,
-                    const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
-                    const SubControlVolumeFace<freeFlowMomentumIdx>& scvf) const
-    {
-        return this->curSol()[freeFlowMassIdx][fvGeometry.elementIndex()][pressureIdx];
-    }
-
-    /*!
-     * \brief Returns the pressure at the center of a sub control volume corresponding to a given sub control volume face.
-     *        This is used for setting a Dirichlet pressure for the mass model when a fixed pressure for the momentum balance is set at another
-     *        boundary. Since the the pressure at the given scvf is solution-dependent and thus unknown a priori, we just use the value
-     *        of the interior cell here.
-     */
-    Scalar cellPressure(const Element<freeFlowMassIdx>& element,
-                        const SubControlVolumeFace<freeFlowMassIdx>& scvf) const
-    {
-        return this->curSol()[freeFlowMassIdx][scvf.insideScvIdx()][pressureIdx];
-    }
+    virtual Scalar pressure(const Element<freeFlowMomentumIdx>& element,
+                            const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
+                            const SubControlVolumeFace<freeFlowMomentumIdx>& scvf) const = 0;
 
     /*!
      * \brief Returns the density at a given sub control volume face.
      */
-    Scalar density(const Element<freeFlowMomentumIdx>& element,
-                   const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
-                   const SubControlVolumeFace<freeFlowMomentumIdx>& scvf,
-                   const bool considerPreviousTimeStep = false) const
-    {
-        assert(!(considerPreviousTimeStep && !isTransient_));
-        bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
-        const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& insideMassScv = momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
+    virtual Scalar density(const Element<freeFlowMomentumIdx>& element,
+                           const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
+                           const SubControlVolumeFace<freeFlowMomentumIdx>& scvf,
+                           const bool considerPreviousTimeStep = false) const = 0;
 
-        auto rho = [&](const auto& elemVolVars)
-        {
-            if (scvf.boundary())
-                return elemVolVars[insideMassScv].density();
-            else
-            {
-                const auto& outsideMomentumScv = fvGeometry.scv(scvf.outsideScvIdx());
-                const auto& outsideMassScv = momentumCouplingContext_[0].fvGeometry.scv(outsideMomentumScv.elementIndex());
-                // TODO distance weighting
-                return 0.5*(elemVolVars[insideMassScv].density() + elemVolVars[outsideMassScv].density());
-            }
-        };
-
-        return considerPreviousTimeStep ? rho(momentumCouplingContext_[0].prevElemVolVars)
-                                        : rho(momentumCouplingContext_[0].curElemVolVars);
-    }
-
-    auto getInsideAndOutsideDensity(const Element<freeFlowMomentumIdx>& element,
-                                    const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
-                                    const SubControlVolumeFace<freeFlowMomentumIdx>& scvf,
-                                    const bool considerPreviousTimeStep = false) const
-    {
-        assert(!(considerPreviousTimeStep && !isTransient_));
-        bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
-        const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& insideMassScv = momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
-
-        auto result = [&](const auto& elemVolVars)
-        {
-            if (scvf.boundary())
-                return std::make_pair(elemVolVars[insideMassScv].density(), elemVolVars[insideMassScv].density());
-            else
-            {
-                const auto& outsideMomentumScv = fvGeometry.scv(scvf.outsideScvIdx());
-                const auto& outsideMassScv = momentumCouplingContext_[0].fvGeometry.scv(outsideMomentumScv.elementIndex());
-                return std::make_pair(elemVolVars[insideMassScv].density(), elemVolVars[outsideMassScv].density());
-            }
-        };
-
-        return considerPreviousTimeStep ? result(momentumCouplingContext_[0].prevElemVolVars)
-                                        : result(momentumCouplingContext_[0].curElemVolVars);
-    }
+    virtual std::pair<Scalar,Scalar> getInsideAndOutsideDensity(const Element<freeFlowMomentumIdx>& element,
+                                                                     const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
+                                                                     const SubControlVolumeFace<freeFlowMomentumIdx>& scvf,
+                                                                     const bool considerPreviousTimeStep = false) const = 0;
 
     /*!
      * \brief Returns the density at a given sub control volume.
      */
-    Scalar density(const Element<freeFlowMomentumIdx>& element,
-                   const SubControlVolume<freeFlowMomentumIdx>& scv,
-                   const bool considerPreviousTimeStep = false) const
-    {
-        assert(!(considerPreviousTimeStep && !isTransient_));
-        bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, scv.elementIndex());
-        const auto& massScv = (*scvs(momentumCouplingContext_[0].fvGeometry).begin());
-
-        return considerPreviousTimeStep ? momentumCouplingContext_[0].prevElemVolVars[massScv].density()
-                                        : momentumCouplingContext_[0].curElemVolVars[massScv].density();
-    }
+    virtual Scalar density(const Element<freeFlowMomentumIdx>& element,
+                           const SubControlVolume<freeFlowMomentumIdx>& scv,
+                           const bool considerPreviousTimeStep = false) const = 0;
 
     /*!
      * \brief Returns the pressure at a given sub control volume face.
      */
-    Scalar effectiveViscosity(const Element<freeFlowMomentumIdx>& element,
-                              const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
-                              const SubControlVolumeFace<freeFlowMomentumIdx>& scvf) const
-    {
-        bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
+    virtual Scalar effectiveViscosity(const Element<freeFlowMomentumIdx>& element,
+                                      const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
+                                      const SubControlVolumeFace<freeFlowMomentumIdx>& scvf) const = 0;
 
-        const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& insideMassScv = momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
-
-        if (scvf.boundary())
-            return momentumCouplingContext_[0].curElemVolVars[insideMassScv].viscosity();
-
-        const auto& outsideMomentumScv = fvGeometry.scv(scvf.outsideScvIdx());
-        const auto& outsideMassScv = momentumCouplingContext_[0].fvGeometry.scv(outsideMomentumScv.elementIndex());
-
-        auto mu = [&](const auto& elemVolVars)
-        {
-            // TODO distance weighting
-            return 0.5*(elemVolVars[insideMassScv].viscosity() + elemVolVars[outsideMassScv].viscosity());
-        };
-
-        return mu(momentumCouplingContext_[0].curElemVolVars);
-    }
-
-     /*!
+    /*!
      * \brief Returns the velocity at a given sub control volume face.
      */
     virtual VelocityVector faceVelocity(const Element<freeFlowMassIdx>& element,
-                                const SubControlVolumeFace<freeFlowMassIdx>& scvf) const = 0;
+                                        const SubControlVolumeFace<freeFlowMassIdx>& scvf) const = 0;
+
+    // \}
+
+    /*!
+     * \name member functions concerning the coupling stencils
+     */
+    // \{
 
     /*!
      * \brief The coupling stencil of domain I, i.e. which domain J DOFs
@@ -487,8 +385,11 @@ public:
 
         if constexpr (domainI == freeFlowMomentumIdx && domainJ == freeFlowMassIdx)
         {
+            static_assert(GridGeometry<freeFlowMassIdx>::discMethod == DiscretizationMethod::cctpfa);
+
             bindCouplingContext(domainI, localAssemblerI.element());
 
+            // ToDo is this really needed, because by binding the context this should have already been done
             const auto& problem = this->problem(domainJ);
             const auto& deflectedElement = problem.gridGeometry().element(dofIdxGlobalJ);
             const auto elemSol = elementSolution(deflectedElement, this->curSol()[domainJ], problem.gridGeometry());
@@ -600,7 +501,7 @@ protected:
 };
 
 template<class Traits>
-class StaggeredFreeFlowCouplingManager : public StaggeredFreeFlowCouplingManagerBase<Traits>
+class StaggeredFreeFlowCouplingManager : public FreeFlowCouplingManagerBase<Traits>
 {
 public:
     static constexpr auto freeFlowMomentumIdx = typename Traits::template SubDomain<0>::Index();
@@ -631,9 +532,14 @@ private:
 
     using VelocityVector = typename SubControlVolumeFace<freeFlowMassIdx>::GlobalPosition;
 
-    using ParentType = StaggeredFreeFlowCouplingManagerBase<Traits>;
+    using ParentType = FreeFlowCouplingManagerBase<Traits>;
+
+    static_assert(GridGeometry<freeFlowMassIdx>::discMethod == DiscretizationMethod::cctpfa);
 
 public:
+    static constexpr auto pressureIdx = ParentType::pressureIdx;
+    static constexpr auto massDiscMethod = ParentType::massDiscMethod;
+
    /*!
      * \brief Methods to be accessed by main
      */
@@ -663,6 +569,176 @@ public:
     }
 
     // \}
+
+    /*!
+     * \brief Returns the pressure at a given sub control volume face.
+     */
+    Scalar pressure(const Element<freeFlowMomentumIdx>& element,
+                    const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
+                    const SubControlVolumeFace<freeFlowMomentumIdx>& scvf) const
+    {
+        return this->curSol()[freeFlowMassIdx][fvGeometry.elementIndex()][pressureIdx];
+    }
+
+    //! TODO: this is just a prototype. May be removed after some testing
+    Scalar extrapolatedPressure(const Element<freeFlowMomentumIdx>& element,
+                                const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
+                                const SubControlVolumeFace<freeFlowMomentumIdx>& scvf) const
+    {
+        const auto ownCellPressure = pressure(element, fvGeometry, scvf);
+        assert (scvf.boundary() && scvf.isFrontal());
+
+        bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
+
+        for (const auto is : intersections(fvGeometry.gridGeometry().gridView(), element))
+        {
+            if ((is.centerUnitOuterNormal() * scvf.unitOuterNormal() + 1) < 1e-9)
+            {
+                const auto& outsideElement = is.outside();
+                const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(outsideElement);
+                const auto& outsideScv = this->momentumCouplingContext_[0].fvGeometry.scv(eIdx);
+                const auto p = this->momentumCouplingContext_[0].curElemVolVars[outsideScv].pressure() - this->problem(freeFlowMassIdx).initial(outsideElement)[pressureIdx];
+                const auto slope = (ownCellPressure - p) / (element.geometry().center() - outsideScv.center()).two_norm();
+
+                return ownCellPressure + slope * (element.geometry().center() - scvf.center()).two_norm(); // only works if boundary is on the right
+            }
+        }
+        DUNE_THROW(Dune::InvalidStateException, "No intersection found");
+    }
+
+    /*!
+     * \brief Returns the pressure at the center of a sub control volume corresponding to a given sub control volume face.
+     *        This is used for setting a Dirichlet pressure for the mass model when a fixed pressure for the momentum balance is set at another
+     *        boundary. Since the the pressure at the given scvf is solution-dependent and thus unknown a priori, we just use the value
+     *        of the interior cell here.
+     */
+    Scalar cellPressure(const Element<freeFlowMassIdx>& element,
+                        const SubControlVolumeFace<freeFlowMassIdx>& scvf) const
+    {
+        return this->curSol()[freeFlowMassIdx][scvf.insideScvIdx()][pressureIdx];
+    }
+
+    /*!
+     * \brief Returns the density at a given sub control volume face.
+     */
+    Scalar density(const Element<freeFlowMomentumIdx>& element,
+                   const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
+                   const SubControlVolumeFace<freeFlowMomentumIdx>& scvf,
+                   const bool considerPreviousTimeStep = false) const
+    {
+        assert(!(considerPreviousTimeStep && !this->isTransient_));
+        bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
+
+        const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& insideMassScv = this->momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
+
+        auto rho = [&](const auto& elemVolVars)
+        {
+            if (scvf.boundary())
+                return elemVolVars[insideMassScv].density();
+            else
+            {
+                const auto& outsideMomentumScv = fvGeometry.scv(scvf.outsideScvIdx());
+                const auto& outsideMassScv = this->momentumCouplingContext_[0].fvGeometry.scv(outsideMomentumScv.elementIndex());
+                // TODO distance weighting
+                return 0.5*(elemVolVars[insideMassScv].density() + elemVolVars[outsideMassScv].density());
+            }
+        };
+
+        return considerPreviousTimeStep ? rho(this->momentumCouplingContext_[0].prevElemVolVars)
+                                        : rho(this->momentumCouplingContext_[0].curElemVolVars);
+    }
+
+    /*!
+     * \brief Returns the density at a given sub control volume.
+     */
+    Scalar density(const Element<freeFlowMomentumIdx>& element,
+                   const SubControlVolume<freeFlowMomentumIdx>& scv,
+                   const bool considerPreviousTimeStep = false) const
+    {
+        assert(!(considerPreviousTimeStep && !isTransient_));
+        bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, scv.elementIndex());
+        const auto& massScv = (*scvs(momentumCouplingContext_[0].fvGeometry).begin());
+
+        return considerPreviousTimeStep ? momentumCouplingContext_[0].prevElemVolVars[massScv].density()
+                                        : momentumCouplingContext_[0].curElemVolVars[massScv].density();
+    }
+
+    std::pair<Scalar,Scalar> getInsideAndOutsideDensity(const Element<freeFlowMomentumIdx>& element,
+                                                        const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
+                                                        const SubControlVolumeFace<freeFlowMomentumIdx>& scvf,
+                                                        const bool considerPreviousTimeStep = false) const
+    {
+        assert(!(considerPreviousTimeStep && !this->isTransient_));
+        bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
+        const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& insideMassScv = this->momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
+
+        auto result = [&](const auto& elemVolVars)
+        {
+            if (scvf.boundary())
+                return std::make_pair(elemVolVars[insideMassScv].density(), elemVolVars[insideMassScv].density());
+            else
+            {
+                const auto& outsideMomentumScv = fvGeometry.scv(scvf.outsideScvIdx());
+                const auto& outsideMassScv = this->momentumCouplingContext_[0].fvGeometry.scv(outsideMomentumScv.elementIndex());
+                return std::make_pair(elemVolVars[insideMassScv].density(), elemVolVars[outsideMassScv].density());
+            }
+        };
+
+        return considerPreviousTimeStep ? result(this->momentumCouplingContext_[0].prevElemVolVars)
+                                        : result(this->momentumCouplingContext_[0].curElemVolVars);
+    }
+
+    /*!
+     * \brief Returns the pressure at a given sub control volume face.
+     */
+    Scalar effectiveViscosity(const Element<freeFlowMomentumIdx>& element,
+                              const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
+                              const SubControlVolumeFace<freeFlowMomentumIdx>& scvf) const
+    {
+        bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
+
+        if constexpr (massDiscMethod ==  DiscretizationMethod::cctpfa)
+        {
+            const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
+            const auto& insideMassScv = this->momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
+
+            if (scvf.boundary())
+                return this->momentumCouplingContext_[0].curElemVolVars[insideMassScv].viscosity();
+
+            const auto& outsideMomentumScv = fvGeometry.scv(scvf.outsideScvIdx());
+            const auto& outsideMassScv = this->momentumCouplingContext_[0].fvGeometry.scv(outsideMomentumScv.elementIndex());
+
+            auto mu = [&](const auto& elemVolVars)
+            {
+                // TODO distance weighting
+                return 0.5*(elemVolVars[insideMassScv].viscosity() + elemVolVars[outsideMassScv].viscosity());
+            };
+
+            return mu(this->momentumCouplingContext_[0].curElemVolVars);
+        }
+        else if constexpr (massDiscMethod ==  DiscretizationMethod::box)
+        {
+            // ToDo Cache the shape values when Box method is used
+            using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
+            const auto& localBasis = this->momentumCouplingContext_[0].fvGeometry.feLocalBasis();
+            std::vector<ShapeValue> shapeValues;
+            const auto ipLocal = element.geometry().local(scvf.ipGlobal());
+            localBasis.evaluateFunction(ipLocal, shapeValues);
+
+            Scalar mu = 0.0;
+            for (const auto& massScv : scvs(this->momentumCouplingContext_[0].fvGeometry))
+            {
+                const auto& volVars = this->momentumCouplingContext_[0].curElemVolVars[massScv];
+                mu += volVars.viscosity()*shapeValues[massScv.indexInElement()][0];
+            }
+
+            return mu;
+        }
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Discretisation scheme for freeFlowMass is unkown!");
+    }
 
     /*!
     * \brief Returns the velocity at a given sub control volume face.
@@ -725,7 +801,7 @@ private:
 };
 
 template<class Traits>
-class DiamondFreeFlowCouplingManager : public StaggeredFreeFlowCouplingManagerBase<Traits>
+class DiamondFreeFlowCouplingManager : public FreeFlowCouplingManagerBase<Traits>
 {
 public:
     static constexpr auto freeFlowMomentumIdx = typename Traits::template SubDomain<0>::Index();
@@ -757,9 +833,12 @@ private:
     using VelocityVector = typename SubControlVolumeFace<freeFlowMassIdx>::GlobalPosition;
     using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
 
-    using ParentType = StaggeredFreeFlowCouplingManagerBase<Traits>;
+    using ParentType = FreeFlowCouplingManagerBase<Traits>;
 
 public:
+    static constexpr auto pressureIdx = ParentType::pressureIdx;
+    static constexpr auto massDiscMethod = ParentType::massDiscMethod;
+
    /*!
      * \brief Methods to be accessed by main
      */
@@ -791,6 +870,190 @@ public:
     // \}
 
     /*!
+     * \brief Returns the pressure at a given sub control volume face.
+     */
+    Scalar pressure(const Element<freeFlowMomentumIdx>& element,
+                    const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
+                    const SubControlVolumeFace<freeFlowMomentumIdx>& scvf) const
+    {
+        const auto& gg = this->problem(freeFlowMassIdx).gridGeometry();
+        const auto elemSol = elementSolution(element, this->curSol()[freeFlowMassIdx], gg);
+        return evalSolution(element, element.geometry(), gg, elemSol, scvf.center())[pressureIdx];
+    }
+
+    /*!
+     * \brief Returns the density at a given sub control volume face.
+     */
+    Scalar density(const Element<freeFlowMomentumIdx>& element,
+                   const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
+                   const SubControlVolumeFace<freeFlowMomentumIdx>& scvf,
+                   const bool considerPreviousTimeStep = false) const
+    {
+        assert(!(considerPreviousTimeStep && !this->isTransient_));
+        this->bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
+
+        if constexpr (massDiscMethod ==  DiscretizationMethod::cctpfa)
+        {
+            const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
+            const auto& insideMassScv = this->momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
+
+            auto rho = [&](const auto& elemVolVars)
+            {
+                if (scvf.boundary())
+                    return elemVolVars[insideMassScv].density();
+                else
+                {
+                    const auto& outsideMomentumScv = fvGeometry.scv(scvf.outsideScvIdx());
+                    const auto& outsideMassScv = this->momentumCouplingContext_[0].fvGeometry.scv(outsideMomentumScv.elementIndex());
+                    // TODO distance weighting
+                    return 0.5*(elemVolVars[insideMassScv].density() + elemVolVars[outsideMassScv].density());
+                }
+            };
+
+            return considerPreviousTimeStep ? rho(this->momentumCouplingContext_[0].prevElemVolVars)
+                                            : rho(this->momentumCouplingContext_[0].curElemVolVars);
+        }
+        else if constexpr (massDiscMethod ==  DiscretizationMethod::box)
+        {
+            // ToDo Cache the shape values when Box method is used
+            using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
+            const auto& localBasis = this->momentumCouplingContext_[0].fvGeometry.feLocalBasis();
+            std::vector<ShapeValue> shapeValues;
+            const auto ipLocal = element.geometry().local(scvf.ipGlobal());
+            localBasis.evaluateFunction(ipLocal, shapeValues);
+
+            Scalar rho = 0.0;
+            for (const auto& massScv : scvs(this->momentumCouplingContext_[0].fvGeometry))
+            {
+                const auto& volVars = considerPreviousTimeStep ? this->momentumCouplingContext_[0].prevElemVolVars[massScv]
+                                                               : this->momentumCouplingContext_[0].curElemVolVars[massScv];
+                rho += volVars.density()*shapeValues[massScv.indexInElement()][0];
+            }
+
+            return rho;
+        }
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Discretisation scheme for freeFlowMass is unkown!");
+    }
+
+
+    /*!
+     * \brief Returns the density at a given sub control volume.
+     */
+    Scalar density(const Element<freeFlowMomentumIdx>& element,
+                   const SubControlVolume<freeFlowMomentumIdx>& scv,
+                   const bool considerPreviousTimeStep = false) const
+    {
+        assert(!(considerPreviousTimeStep && !this->isTransient_));
+        this->bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, scv.elementIndex());
+
+        Scalar rho = 0;
+        if constexpr (massDiscMethod ==  DiscretizationMethod::cctpfa)
+        {
+            const auto& massScv = (*scvs(this->momentumCouplingContext_[0].fvGeometry).begin());
+            rho = considerPreviousTimeStep ? this->momentumCouplingContext_[0].prevElemVolVars[massScv].density()
+                                           : this->momentumCouplingContext_[0].curElemVolVars[massScv].density();
+        }
+        else if constexpr (massDiscMethod ==  DiscretizationMethod::box)
+        {
+            // ToDo Cache the shape values when Box method is used
+            using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
+            const auto& localBasis = this->momentumCouplingContext_[0].fvGeometry.feLocalBasis();
+            std::vector<ShapeValue> shapeValues;
+            const auto ipLocal = element.geometry().local(scv.dofPosition());
+            localBasis.evaluateFunction(ipLocal, shapeValues);
+
+            Scalar rho = 0.0;
+            for (const auto& massScv : scvs(this->momentumCouplingContext_[0].fvGeometry))
+            {
+                const auto& volVars = considerPreviousTimeStep ? this->momentumCouplingContext_[0].prevElemVolVars[massScv]
+                                                               : this->momentumCouplingContext_[0].curElemVolVars[massScv];
+                rho += volVars.density()*shapeValues[massScv.indexInElement()][0];
+            }
+        }
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Discretisation scheme for freeFlowMass is unkown!");
+
+        return rho;
+    }
+
+    std::pair<Scalar,Scalar> getInsideAndOutsideDensity(const Element<freeFlowMomentumIdx>& element,
+                                                        const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
+                                                        const SubControlVolumeFace<freeFlowMomentumIdx>& scvf,
+                                                        const bool considerPreviousTimeStep = false) const
+    {
+        assert(!(considerPreviousTimeStep && !isTransient_));
+        this->bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
+        const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& insideMassScv = this->momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
+
+        auto result = [&](const auto& elemVolVars)
+        {
+            if (scvf.boundary())
+                return std::make_pair(elemVolVars[insideMassScv].density(), elemVolVars[insideMassScv].density());
+            else
+            {
+                const auto& outsideMomentumScv = fvGeometry.scv(scvf.outsideScvIdx());
+                const auto& outsideMassScv = this->momentumCouplingContext_[0].fvGeometry.scv(outsideMomentumScv.elementIndex());
+                return std::make_pair(elemVolVars[insideMassScv].density(), elemVolVars[outsideMassScv].density());
+            }
+        };
+
+        return considerPreviousTimeStep ? result(this->momentumCouplingContext_[0].prevElemVolVars)
+                                        : result(this->momentumCouplingContext_[0].curElemVolVars);
+    }
+
+    /*!
+     * \brief Returns the pressure at a given sub control volume face.
+     */
+    Scalar effectiveViscosity(const Element<freeFlowMomentumIdx>& element,
+                              const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
+                              const SubControlVolumeFace<freeFlowMomentumIdx>& scvf) const
+    {
+        this->bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
+
+        if constexpr (massDiscMethod ==  DiscretizationMethod::cctpfa)
+        {
+            const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
+            const auto& insideMassScv = this->momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
+
+            if (scvf.boundary())
+                return this->momentumCouplingContext_[0].curElemVolVars[insideMassScv].viscosity();
+
+            const auto& outsideMomentumScv = fvGeometry.scv(scvf.outsideScvIdx());
+            const auto& outsideMassScv = this->momentumCouplingContext_[0].fvGeometry.scv(outsideMomentumScv.elementIndex());
+
+            auto mu = [&](const auto& elemVolVars)
+            {
+                // TODO distance weighting
+                return 0.5*(elemVolVars[insideMassScv].viscosity() + elemVolVars[outsideMassScv].viscosity());
+            };
+
+            return mu(this->momentumCouplingContext_[0].curElemVolVars);
+        }
+        else if constexpr (massDiscMethod ==  DiscretizationMethod::box)
+        {
+            // ToDo Cache the shape values when Box method is used
+            using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
+            const auto& localBasis = this->momentumCouplingContext_[0].fvGeometry.feLocalBasis();
+            std::vector<ShapeValue> shapeValues;
+            const auto ipLocal = element.geometry().local(scvf.ipGlobal());
+            localBasis.evaluateFunction(ipLocal, shapeValues);
+
+            Scalar mu = 0.0;
+            for (const auto& massScv : scvs(this->momentumCouplingContext_[0].fvGeometry))
+            {
+                const auto& volVars = this->momentumCouplingContext_[0].curElemVolVars[massScv];
+                mu += volVars.viscosity()*shapeValues[massScv.indexInElement()][0];
+            }
+
+            return mu;
+        }
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Discretisation scheme for freeFlowMass is unkown!");
+    }
+
+    /*!
     * \brief Returns the velocity at a given sub control volume face.
     */
     VelocityVector faceVelocity(const Element<freeFlowMassIdx>& element,
@@ -814,6 +1077,63 @@ public:
         return v;
     }
 
+    /*!
+     * \ingroup MultiDomain
+     * \brief updates all data and variables that are necessary to evaluate the residual of the element of domain i
+     *        this is called whenever one of the primary variables that the element residual depends on changes in domain j
+     *
+     * \param domainI the domain index of domain i
+     * \param localAssemblerI the local assembler assembling the element residual of an element of domain i
+     * \param domainJ the domain index of domain j
+     * \param dofIdxGlobalJ the index of the degree of freedom of domain j whose solution changed
+     * \param priVarsJ the new solution at the degree of freedom of domain j with index dofIdxGlobalJ
+     * \param pvIdxJ the index of the primary variable of domain j which has been updated
+     *
+     * \note this concerns all data that is used in the evaluation of the element residual and depends on
+     *       the primary variables at the degree of freedom location with index dofIdxGlobalJ
+     * \note  the element whose residual is to be evaluated can be retrieved from the local assembler
+     *        as localAssemblerI.element()
+     * \note  per default, we udpate the solution vector, if the element residual of domain i depends on more than
+     *        the primary variables of domain j update the other dependent data here by overloading this function
+     */
+    template<std::size_t i, std::size_t j, class LocalAssemblerI>
+    void updateCouplingContext(Dune::index_constant<i> domainI,
+                               const LocalAssemblerI& localAssemblerI,
+                               Dune::index_constant<j> domainJ,
+                               std::size_t dofIdxGlobalJ,
+                               const PrimaryVariables<j>& priVarsJ,
+                               int pvIdxJ)
+    {
+        if constexpr (ParentType::massDiscMethod ==  DiscretizationMethod::box)
+        {
+            this->curSol()[domainJ][dofIdxGlobalJ][pvIdxJ] = priVarsJ[pvIdxJ];
+
+            if constexpr (domainI == freeFlowMomentumIdx && domainJ == freeFlowMassIdx)
+            {
+                this->bindCouplingContext(domainI, localAssemblerI.element());
+
+                // ToDo is this really needed, because by binding the context this should have already been done
+                const auto& problem = this->problem(domainJ);
+                const auto& deflectedElement = problem.gridGeometry().element(this->momentumCouplingContext_[0].eIdx);
+                const auto elemSol = elementSolution(deflectedElement, this->curSol()[domainJ], problem.gridGeometry());
+                const auto& fvGeometry = this->momentumCouplingContext_[0].fvGeometry;
+
+                for (auto&& scv : scvs(fvGeometry))
+                {
+                    if(scv.dofIndex() == dofIdxGlobalJ)
+                    {
+                        if constexpr (ElementVolumeVariables<freeFlowMassIdx>::GridVolumeVariables::cachingEnabled)
+                            this->gridVars_(freeFlowMassIdx).curGridVolVars().volVars(scv).update(std::move(elemSol), problem, deflectedElement, scv);
+                        //else
+                        //    this->momentumCouplingContext_[0].curElemVolVars[scv].update(std::move(elemSol), problem, deflectedElement, scv);
+                    }
+                }
+            }
+        }
+        else
+            ParentType::updateCouplingContext(domainI, localAssemblerI, domainJ, dofIdxGlobalJ, priVarsJ, pvIdxJ);
+    }
+
 private:
     void computeCouplingStencils_()
     {
@@ -833,21 +1153,25 @@ private:
             for (const auto& scv : scvs(momentumFvGeometry))
             {
                 this->massAndEnergyToMomentumStencils_[eIdx].push_back(scv.dofIndex());
-                this->momentumToMassAndEnergyStencils_[scv.index()].push_back(eIdx);
 
-                // extend the stencil for fluids with variable viscosity and density,
-                if constexpr (FluidSystem::isCompressible(0/*phaseIdx*/))
-                // if constexpr (FluidSystem::isCompressible(0/*phaseIdx*/) || !FluidSystem::viscosityIsConstant(0/*phaseIdx*/)) // TODO fix on master
-                {
-                    for (const auto& scvf : scvfs(momentumFvGeometry, scv))
-                    {
-                        if (!scvf.boundary())
-                        {
-                            const auto& outsideScv = momentumFvGeometry.scv(scvf.outsideScvIdx());
-                            this->momentumToMassAndEnergyStencils_[scv.index()].push_back(outsideScv.elementIndex());
-                        }
-                    }
-                }
+                auto massFvGeometry = localView(this->problem(freeFlowMassIdx).gridGeometry());
+                massFvGeometry.bindElement(element);
+                for (auto&& scvMass : scvs(massFvGeometry))
+                    this->momentumToMassAndEnergyStencils_[scv.index()].push_back(scvMass.dofIndex());
+
+                // // extend the stencil for fluids with variable viscosity and density,
+                // if constexpr (FluidSystem::isCompressible(0/*phaseIdx*/))
+                // // if constexpr (FluidSystem::isCompressible(0/*phaseIdx*/) || !FluidSystem::viscosityIsConstant(0/*phaseIdx*/)) // TODO fix on master
+                // {
+                //     for (const auto& scvf : scvfs(momentumFvGeometry, scv))
+                //     {
+                //         if (!scvf.boundary())
+                //         {
+                //             const auto& outsideScv = momentumFvGeometry.scv(scvf.outsideScvIdx());
+                //             this->momentumToMassAndEnergyStencils_[scv.index()].push_back(outsideScv.elementIndex());
+                //         }
+                //     }
+                // }
             }
         }
     }
