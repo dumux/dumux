@@ -104,7 +104,7 @@ public:
             auto addBoundaryVolVars = [&](const auto& scvFace)
             {
                 const auto& scvI = fvGeometry.scv(scvFace.insideScvIdx());
-                typename VolumeVariables::PrimaryVariables pv(problem.dirichlet(element, scvFace)[scvI.directionIndex()]);
+                typename VolumeVariables::PrimaryVariables pv(problem.dirichlet(element, scvFace)[scvI.dofAxis()]);
                 const auto dirichletPriVars = elementSolution<FVElementGeometry>(pv);
 
                 VolumeVariables volVars;
@@ -255,7 +255,7 @@ public:
                 auto addBoundaryVolVars = [&](const auto& scvFace)
                 {
                     const auto& scvI = fvGeometry.scv(scvFace.insideScvIdx());
-                    typename VolumeVariables::PrimaryVariables pv(problem.dirichlet(element, scvFace)[scvI.directionIndex()]);
+                    typename VolumeVariables::PrimaryVariables pv(problem.dirichlet(element, scvFace)[scvI.dofAxis()]);
                     const auto dirichletPriVars = elementSolution<FVElementGeometry>(pv);
 
                     VolumeVariables volVars;
