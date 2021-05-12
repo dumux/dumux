@@ -146,8 +146,13 @@ public:
         if constexpr (ParentType::isMomentumProblem())
         {
             // set Dirichlet values for the velocity everywhere
-            values.setDirichlet(Indices::velocityXIdx);
-            values.setDirichlet(Indices::velocityYIdx);
+            if (globalPos[0] < this->gridGeometry().bBoxMax()[0] - 1e-8)
+            {
+                values.setDirichlet(Indices::velocityXIdx);
+                values.setDirichlet(Indices::velocityYIdx);
+            }
+            else
+                values.setAllNeumann();
         }
         else
             values.setAllNeumann();
@@ -157,7 +162,8 @@ public:
 
     //! Enable internal Dirichlet constraints
     static constexpr bool enableInternalDirichletConstraints()
-    { return !ParentType::isMomentumProblem(); }
+    { return false; }
+    // { return !ParentType::isMomentumProblem(); }
 
     /*!
      * \brief Tag a degree of freedom to carry internal Dirichlet constraints.
@@ -173,18 +179,18 @@ public:
     {
         std::bitset<PrimaryVariables::dimension> values;
 
-        auto fvGeometry = localView(this->gridGeometry());
-        fvGeometry.bindElement(element);
+        // auto fvGeometry = localView(this->gridGeometry());
+        // fvGeometry.bindElement(element);
 
-        auto isAtBoundary = [&](const FVElementGeometry& fvGeometry)
-        {
-            if (fvGeometry.hasBoundaryScvf())
-                return true;
-            return false;
-        };
+        // auto isAtBoundary = [&](const FVElementGeometry& fvGeometry)
+        // {
+        //     if (fvGeometry.hasBoundaryScvf())
+        //         return true;
+        //     return false;
+        // };
 
-        if (isAtBoundary(fvGeometry))
-            values.set(Indices::pressureIdx);
+        // if (isAtBoundary(fvGeometry))
+        //     values.set(Indices::pressureIdx);
         return values;
     }
 
@@ -231,6 +237,23 @@ public:
         {
             const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
             values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
+        }
+        else
+        {
+            using std::sin;
+            using std::cos;
+            Dune::FieldMatrix<Scalar, 2, 2> momentumFlux(0.0);
+            const auto x = scvf.ipGlobal()[0];
+            const auto y = scvf.ipGlobal()[1];
+            const Scalar mu = kinematicViscosity_;
+            const Scalar t = time_;
+            momentumFlux[0][0] = M_PI*M_PI *(-4.0*mu*exp(10.0*M_PI*M_PI*mu*t)*sin(M_PI*x)*sin(2*M_PI*y) + (4.0*sin(2*M_PI*y)*sin(2*M_PI*y)*cos(M_PI*x)*cos(M_PI*x) - 1.0*cos(2*M_PI*x) - 0.25*cos(4*M_PI*y))*exp(5.0*M_PI*M_PI*mu*t))*exp(-15.0*M_PI*M_PI*mu*t);
+            momentumFlux[0][1] = M_PI*M_PI *( 3.0*mu*exp(10.0*M_PI*M_PI*mu*t) - 2.0*exp(5.0*M_PI*M_PI*mu*t)*sin(M_PI*x)*sin(2*M_PI*y))*exp(-15.0*M_PI*M_PI*mu*t)*cos(M_PI*x)*cos(2*M_PI*y);
+            momentumFlux[1][0] = M_PI*M_PI *( 3.0*mu*exp(10.0*M_PI*M_PI*mu*t) - 2.0*exp(5.0*M_PI*M_PI*mu*t)*sin(M_PI*x)*sin(2*M_PI*y))*exp(-15.0*M_PI*M_PI*mu*t)*cos(M_PI*x)*cos(2*M_PI*y);
+            momentumFlux[1][1] = M_PI*M_PI *( 4.0*mu*exp(10.0*M_PI*M_PI*mu*t)*sin(M_PI*x)*sin(2*M_PI*y) + (sin(M_PI*x)*sin(M_PI*x)*cos(2*M_PI*y)*cos(2*M_PI*y) - 1.0*cos(2*M_PI*x) - 0.25*cos(4*M_PI*y))*exp(5.0*M_PI*M_PI*mu*t))*exp(-15.0*M_PI*M_PI*mu*t);
+
+            const auto normal = scvf.unitOuterNormal();
+            momentumFlux.mv(normal, values);
         }
 
         return values;
