@@ -165,11 +165,6 @@ public:
                            const SubControlVolumeFace<freeFlowMomentumIdx>& scvf,
                            const bool considerPreviousTimeStep = false) const = 0;
 
-    virtual std::pair<Scalar,Scalar> getInsideAndOutsideDensity(const Element<freeFlowMomentumIdx>& element,
-                                                                     const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
-                                                                     const SubControlVolumeFace<freeFlowMomentumIdx>& scvf,
-                                                                     const bool considerPreviousTimeStep = false) const = 0;
-
     /*!
      * \brief Returns the density at a given sub control volume.
      */
@@ -975,32 +970,6 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Discretisation scheme for freeFlowMass is unkown!");
 
         return rho;
-    }
-
-    std::pair<Scalar,Scalar> getInsideAndOutsideDensity(const Element<freeFlowMomentumIdx>& element,
-                                                        const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
-                                                        const SubControlVolumeFace<freeFlowMomentumIdx>& scvf,
-                                                        const bool considerPreviousTimeStep = false) const
-    {
-        assert(!(considerPreviousTimeStep && !isTransient_));
-        this->bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
-        const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& insideMassScv = this->momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
-
-        auto result = [&](const auto& elemVolVars)
-        {
-            if (scvf.boundary())
-                return std::make_pair(elemVolVars[insideMassScv].density(), elemVolVars[insideMassScv].density());
-            else
-            {
-                const auto& outsideMomentumScv = fvGeometry.scv(scvf.outsideScvIdx());
-                const auto& outsideMassScv = this->momentumCouplingContext_[0].fvGeometry.scv(outsideMomentumScv.elementIndex());
-                return std::make_pair(elemVolVars[insideMassScv].density(), elemVolVars[outsideMassScv].density());
-            }
-        };
-
-        return considerPreviousTimeStep ? result(this->momentumCouplingContext_[0].prevElemVolVars)
-                                        : result(this->momentumCouplingContext_[0].curElemVolVars);
     }
 
     /*!
