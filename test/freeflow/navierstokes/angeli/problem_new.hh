@@ -308,7 +308,7 @@ public:
      * \param globalPos The global position
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
-    { return analyticalSolution(globalPos, 0.0); }
+    { return analyticalSolution(globalPos, time_); }
 
     /*!
      * \brief Updates the time
