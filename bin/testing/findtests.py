@@ -44,7 +44,7 @@ def buildCommandAndDir(testConfig, cache):
 
 
 # check if a test is affected by changes in the given files
-def isAffectedTest(testConfigFile, changed_files):
+def isAffectedTest(testConfigFile, changedFiles):
     with open(testConfigFile) as configFile:
         testConfig = json.load(configFile)
 
@@ -66,12 +66,12 @@ def isAffectedTest(testConfigFile, changed_files):
     def isProjectHeader(headerPath):
         return projectDir in headerPath
 
-    test_files = [os.path.relpath(mainFile.lstrip(". "), projectDir)]
-    test_files.extend([os.path.relpath(header.lstrip(". "), projectDir)
+    testFiles = [os.path.relpath(mainFile.lstrip(". "), projectDir)]
+    testFiles.extend([os.path.relpath(header.lstrip(". "), projectDir)
                       for header in filter(isProjectHeader, headers)])
-    test_files = set(test_files)
+    testFiles = set(testFiles)
 
-    if hasCommonMember(changed_files, test_files):
+    if hasCommonMember(changedFiles, testFiles):
         return True, testConfig["name"], testConfig["target"]
 
     return False, testConfig["name"], testConfig["target"]
@@ -85,17 +85,19 @@ if __name__ == '__main__':
                         help='The source tree (default: `HEAD`)')
     parser.add_argument('-t', '--target', required=False, default='master',
                         help='The tree to compare against (default: `master`)')
+    parser.add_argument('-j', '--num-processes', required=False, default=4,
+                        help='How many processes should be used to run this (default: 4)')
     parser.add_argument('-f', '--outfile', required=False,
                         default='affectedtests.json',
                         help='The file in which to write the affected tests')
     args = vars(parser.parse_args())
 
     # find the changes files
-    changed_files = subprocess.check_output(["git", "diff-tree",
+    changedFiles = subprocess.check_output(["git", "diff-tree",
                                              "-r", "--name-only",
                                              args['source'],  args['target']],
                                             encoding='ascii').splitlines()
-    changed_files = set(changed_files)
+    changedFiles = set(changedFiles)
 
     # clean build directory
     subprocess.run(["make", "clean"])
@@ -109,7 +111,7 @@ if __name__ == '__main__':
     count = 0
     affectedTests = {}
     for test in glob("TestMetaData/*json"):
-        affected, name, target = isAffectedTest(test, changed_files)
+        affected, name, target = isAffectedTest(test, changedFiles)
         if affected:
             print("\t- {}".format(name))
             affectedTests[name] = {'target': target}
