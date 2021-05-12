@@ -86,7 +86,7 @@ public:
 
         if (scvf.isFrontal() && !scvf.boundary())
         {
-            gradient[scv.directionIndex()][scv.directionIndex()] = velocityGradII(fvGeometry, scvf, elemVolVars);
+            gradient[scv.dofAxis()][scv.dofAxis()] = velocityGradII(fvGeometry, scvf, elemVolVars);
 
             if (fullGradient)
             {
@@ -100,12 +100,12 @@ public:
                     const auto& otherScv = fvGeometry.scv(otherScvf.insideScvIdx());
 
                     if (otherScvf.isFrontal() && !otherScvf.boundary())
-                        gradient[otherScv.directionIndex()][otherScv.directionIndex()] = velocityGradII(fvGeometry, otherScvf, elemVolVars);
+                        gradient[otherScv.dofAxis()][otherScv.dofAxis()] = velocityGradII(fvGeometry, otherScvf, elemVolVars);
                     else if (otherScvf.isLateral())
                     {
-                        assert(otherScv.directionIndex() != otherScvf.directionIndex());
-                        const auto i = otherScv.directionIndex();
-                        const auto j = otherScvf.directionIndex();
+                        assert(otherScv.dofAxis() != otherScvf.normalAxis());
+                        const auto i = otherScv.dofAxis();
+                        const auto j = otherScvf.normalAxis();
 
                         if (!fvGeometry.hasBoundaryScvf() || !elemBcTypes[otherScvf.localIndex()].isNeumann(i))
                         {
@@ -132,8 +132,8 @@ public:
             if (fullGradient)
                 DUNE_THROW(Dune::NotImplemented, "Full gradient for lateral staggered faces not implemented");
 
-            gradient[scv.directionIndex()][scvf.directionIndex()] = velocityGradIJ(fvGeometry, scvf, elemVolVars);
-            gradient[scvf.directionIndex()][scv.directionIndex()] = velocityGradJI(fvGeometry, scvf, elemVolVars);
+            gradient[scv.dofAxis()][scvf.normalAxis()] = velocityGradIJ(fvGeometry, scvf, elemVolVars);
+            gradient[scvf.normalAxis()][scv.dofAxis()] = velocityGradJI(fvGeometry, scvf, elemVolVars);
         }
 
         return gradient;
@@ -282,7 +282,7 @@ private:
 
             for (const auto& outsideScvf : scvfs(periodicFvGeometry, outsideScv))
             {
-                if (outsideScvf.directionIndex() == scvf.directionIndex() && outsideScvf.directionSign() != scvf.directionSign())
+                if (outsideScvf.normalAxis() == scvf.normalAxis() && outsideScvf.directionSign() != scvf.directionSign())
                 {
                     const auto insideDistance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
                     const auto outsideDistance = (outsideScv.dofPosition() - outsideScvf.ipGlobal()).two_norm();
@@ -332,7 +332,7 @@ private:
 
             for (const auto& outsideOrthogonalScvf : scvfs(periodicFvGeometry, orthogonalOutsideScv))
             {
-                if (outsideOrthogonalScvf.directionIndex() == orthogonalScvf.directionIndex() && outsideOrthogonalScvf.directionSign() != orthogonalScvf.directionSign())
+                if (outsideOrthogonalScvf.normalAxis() == orthogonalScvf.normalAxis() && outsideOrthogonalScvf.directionSign() != orthogonalScvf.directionSign())
                 {
                     const auto insideDistance = (orthogonalInsideScv.dofPosition() - orthogonalScvf.ipGlobal()).two_norm();
                     const auto outsideDistance = (orthogonalOutsideScv.dofPosition() - outsideOrthogonalScvf.ipGlobal()).two_norm();
