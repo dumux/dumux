@@ -223,7 +223,7 @@ int main(int argc, char** argv)
         for (const auto& scv : scvs(fvGeometry))
         {
             const auto dofIdx = scv.dofIndex();
-            vExFace[dofIdx] = momentumProblem->analyticalSolution(scv.dofPosition())[scv.directionIndex()];
+            vExFace[dofIdx] = momentumProblem->analyticalSolution(scv.dofPosition())[scv.dofAxis()];
         }
     }
 

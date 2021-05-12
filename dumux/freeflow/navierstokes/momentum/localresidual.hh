@@ -102,7 +102,7 @@ public:
 
         if (::printStuff && scv.dofIndex() == 51)
         {
-            std::cout << "density is " << problem.density(element, scv, isPreviousStorage) << ", velocity " << volVars.velocity() << "dirIdx " << int(scv.directionIndex()) << std::endl;
+            std::cout << "density is " << problem.density(element, scv, isPreviousStorage) << ", velocity " << volVars.velocity() << "dirIdx " << int(scv.dofAxis()) << std::endl;
         }
 
         return problem.density(element, scv, isPreviousStorage) * volVars.velocity();
