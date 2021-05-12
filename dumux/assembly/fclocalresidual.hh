@@ -162,7 +162,7 @@ public:
         NumEqVector prevStorage = this->asImp().computeStorage(problem, scv, prevVolVars, true/*isPreviousStorage*/);
         NumEqVector storage = this->asImp().computeStorage(problem, scv, curVolVars, false/*isPreviousStorage*/);
 
-        if (::printStuff && scv.dofIndex() == 51)
+        if (::evalComponents && scv.dofIndex() == 4489)
         {
             std::cout << "At dof " << scv.dofPosition();
             std::cout << " : prevStorage " << prevStorage << ", curStorage " << storage << std::endl;
@@ -173,7 +173,7 @@ public:
 
         storage -= prevStorage;
 
-        if (::printStuff && scv.dofIndex() == 51)
+        if (::evalComponents && scv.dofIndex() == 4489)
         {
             std::cout << "diff " << storage << std::endl;
         }
@@ -184,9 +184,20 @@ public:
 
         residual[scv.localDofIndex()] += storage;
 
-        if (::printStuff && scv.dofIndex() == 51)
+        if (::evalComponents && scv.dofIndex() == 4489)
         {
             std::cout << "dt " << this->timeLoop().timeStepSize() << ", volume " << Extrusion::volume(scv) << ", result " << storage << std::endl;
+        }
+
+        if (::evalComponents)
+        {
+            ::storage[scv.dofIndex()] += storage;
+
+            if (scv.dofIndex() == 4489)
+            {
+                std::cout << "dof pos " << scv.dofPosition() << ", storage " << storage << std::endl;
+            }
+
         }
 
 

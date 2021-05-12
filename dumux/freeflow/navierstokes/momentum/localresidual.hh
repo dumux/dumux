@@ -100,7 +100,7 @@ public:
     {
         const auto& element = problem.gridGeometry().element(scv.elementIndex());
 
-        if (::printStuff && scv.dofIndex() == 51)
+        if (::evalComponents && scv.dofIndex() == 4489)
         {
             std::cout << "density is " << problem.density(element, scv, isPreviousStorage) << ", velocity " << volVars.velocity() << "dirIdx " << int(scv.dofAxis()) << std::endl;
         }
@@ -177,6 +177,15 @@ public:
         flux += fluxVars.advectiveMomentumFlux();
         flux += fluxVars.diffusiveMomentumFlux();
         flux += fluxVars.pressureContribution();
+
+        const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+        if (::evalComponents)
+        {
+            ::advection[scv.dofIndex()] += fluxVars.advectiveMomentumFlux();
+            ::diffusion[scv.dofIndex()] += fluxVars.diffusiveMomentumFlux();
+            ::pressure[scv.dofIndex()] += fluxVars.pressureContribution();
+        }
+
         return flux;
     }
 

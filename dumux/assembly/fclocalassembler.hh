@@ -205,7 +205,9 @@ public:
         this->asImp_().bindLocalViews();
 
         ::printStuff = true;
+        ::evalComponents = true;
         const auto residual = this->evalLocalResidual();
+        ::evalComponents = false;
         ::printStuff = false;
 
         for (const auto& scv : scvs(this->fvGeometry()))
@@ -347,7 +349,9 @@ public:
 
         // get the vector of the actual element residuals
         // ::printStuff = true;
+        ::evalComponents = true;
         const auto origResiduals = this->evalLocalResidual();
+        ::evalComponents = false;
         // ::printStuff = false;
 
         //////////////////////////////////////////////////////////////////////////////////////////////////

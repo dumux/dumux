@@ -1,7 +1,7 @@
 [TimeLoop]
 TStart = 0.5e-6
-DtInitial = 0.5e-6 # [s]
-MaxTimeStepSize = 1e-6
+DtInitial = 0.1e-6 # [s]
+#MaxTimeStepSize = 1e-6
 TEnd = 1e-6 # [s]
 
 [Grid]
@@ -35,4 +35,5 @@ WriteFaceData = true
 UpwindWeight = 0.5
 
 [FreeFlow]
+EnableUnsymmetrizedVelocityGradient = false
 UseOldTransportingVelocity = false

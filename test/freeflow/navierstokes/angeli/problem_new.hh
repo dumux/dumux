@@ -145,14 +145,14 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            // set Dirichlet values for the velocity everywhere
-            if (globalPos[0] < this->gridGeometry().bBoxMax()[0] - 1e-8)
-            {
+            // // set Dirichlet values for the velocity everywhere
+            // if (globalPos[0] < this->gridGeometry().bBoxMax()[0] - 1e-8)
+            // {
                 values.setDirichlet(Indices::velocityXIdx);
                 values.setDirichlet(Indices::velocityYIdx);
-            }
-            else
-                values.setAllNeumann();
+            // }
+            // else
+            //     values.setAllNeumann();
         }
         else
             values.setAllNeumann();
@@ -162,8 +162,8 @@ public:
 
     //! Enable internal Dirichlet constraints
     static constexpr bool enableInternalDirichletConstraints()
-    { return false; }
-    // { return !ParentType::isMomentumProblem(); }
+    // { return false; }
+    { return !ParentType::isMomentumProblem(); }
 
     /*!
      * \brief Tag a degree of freedom to carry internal Dirichlet constraints.
@@ -179,18 +179,18 @@ public:
     {
         std::bitset<PrimaryVariables::dimension> values;
 
-        // auto fvGeometry = localView(this->gridGeometry());
-        // fvGeometry.bindElement(element);
+        auto fvGeometry = localView(this->gridGeometry());
+        fvGeometry.bindElement(element);
 
-        // auto isAtBoundary = [&](const FVElementGeometry& fvGeometry)
-        // {
-        //     if (fvGeometry.hasBoundaryScvf())
-        //         return true;
-        //     return false;
-        // };
+        auto isAtBoundary = [&](const FVElementGeometry& fvGeometry)
+        {
+            if (fvGeometry.hasBoundaryScvf())
+                return true;
+            return false;
+        };
 
-        // if (isAtBoundary(fvGeometry))
-        //     values.set(Indices::pressureIdx);
+        if (isAtBoundary(fvGeometry))
+            values.set(Indices::pressureIdx);
         return values;
     }
 

@@ -24,6 +24,15 @@
  */
 
 bool printStuff = false;
+bool evalComponents = false;
+
+#include <vector>
+
+std::vector<double> pressure;
+std::vector<double> diffusion;
+std::vector<double> advection;
+std::vector<double> storage;
+
 
 #include <config.h>
 
@@ -164,6 +173,8 @@ int main(int argc, char** argv)
 
     timeLoop->setMaxTimeStepSize(maxDt);
 
+    std::cout << "Setting initial time to " << timeLoop->time() << std::endl;
+
     massProblem->updateTime(timeLoop->time());
     momentumProblem->updateTime(timeLoop->time());
 
@@ -177,6 +188,11 @@ int main(int argc, char** argv)
     momentumProblem->applyInitialSolution(x[momentumIdx]);
     massProblem->applyInitialSolution(x[massIdx]);
     auto xOld = x;
+
+    ::storage.resize(x[momentumIdx].size());
+    ::diffusion.resize(x[momentumIdx].size());
+    ::advection.resize(x[momentumIdx].size());
+    ::pressure.resize(x[momentumIdx].size());
 
     // the grid variables
     using MomentumGridVariables = GetPropType<MomentumTypeTag, Properties::GridVariables>;
@@ -213,6 +229,13 @@ int main(int argc, char** argv)
     }
     faceVtk.addField(dofIdx, "dofIdx");
     faceVtk.addField(x[momentumIdx], "velocity");
+    faceVtk.addField(::storage, "storage");
+    faceVtk.addField(::diffusion, "diffusion");
+    faceVtk.addField(::advection, "advection");
+    faceVtk.addField(::pressure, "pressure");
+
+    std::vector<double> faceResidual(momentumGridGeometry->numDofs());
+    faceVtk.addField(faceResidual, "faceResidual");
 
     std::vector<Scalar> vExFace(momentumGridGeometry->numDofs());
 
@@ -255,9 +278,9 @@ int main(int argc, char** argv)
     // vtkWriter.addField(resiCC, "resiCC");
     vtkWriter.write(timeLoop->time());
     //
-    // faceVtk.addField(vExFace, "velocityExact");
+    faceVtk.addField(vExFace, "velocityExact");
     // faceVtk.addField(resiFace, "momentumResi");
-    // faceVtk.write("face_" + std::to_string(timeLoop->timeStepIndex()), Dune::VTK::ascii);
+    faceVtk.write("intFace", Dune::VTK::ascii);
     //
     // std::cout << "Initial momentum defect " << std::endl;
     // for (const auto s : assembler->residual()[momentumIdx])
@@ -278,11 +301,31 @@ int main(int argc, char** argv)
 
     const bool shouldPrintL2Error = getParam<bool>("Problem.PrintL2Error");
 
+    bool isFirstStep = true;
+
     // // time loop
     timeLoop->start(); do
     {
+        std::fill(::storage.begin(), ::storage.end(), 0.0);
+        std::fill(::diffusion.begin(), ::diffusion.end(), 0.0);
+        std::fill(::advection.begin(), ::advection.end(), 0.0);
+        std::fill(::pressure.begin(), ::pressure.end(), 0.0);
+
         massProblem->updateTime(timeLoop->time() + timeLoop->timeStepSize());
         momentumProblem->updateTime(timeLoop->time() + timeLoop->timeStepSize());
+
+        assembler->updateGridVariables(x);
+
+        // if (isFirstStep)
+        // {
+        //     momentumProblem->applyInitialSolution(x[momentumIdx]);
+        //     massProblem->applyInitialSolution(x[massIdx]);
+        //     assembler->updateGridVariables(x);
+        //     couplingManager->updateSolution(x);
+        // }
+
+
+        isFirstStep = false;
 
         // solve the non-linear system with time step control
         // nonLinearSolver.solve(x);
@@ -292,22 +335,23 @@ int main(int argc, char** argv)
         exactPressure = getScalarAnalyticalSolution(*massProblem)[GetPropType<MassTypeTag, Properties::ModelTraits>::Indices::pressureIdx];
         exactVelocity = getVelocityAnalyticalSolution(*momentumProblem);
 
-        // auto fvGeometry = localView(*momentumGridGeometry);
-        // for (const auto& element : elements(momentumGridGeometry->gridView()))
-        // {
-        //     fvGeometry.bindElement(element);
-        //     for (const auto& scv : scvs(fvGeometry))
-        //     {
-        //         const auto dofIdx = scv.dofIndex();
-        //         x[momentumIdx][dofIdx] = momentumProblem->analyticalSolution(scv.dofPosition())[scv.directionIndex()];
-        //     }
-        // }
-        //
+        auto fvGeometry = localView(*momentumGridGeometry);
+        for (const auto& element : elements(momentumGridGeometry->gridView()))
+        {
+            fvGeometry.bindElement(element);
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                const auto dofIdx = scv.dofIndex();
+                vExFace[dofIdx] = momentumProblem->analyticalSolution(scv.dofPosition())[scv.dofAxis()];
+                // x[momentumIdx][dofIdx] = momentumProblem->analyticalSolution(scv.dofPosition())[scv.dofAxis()];
+            }
+        }
+
         // for (int i = 0; i < exactPressure.size(); ++i)
-        //     x[massIdx][i] = exactPressure[i];
-        //
+            // x[massIdx][i] = exactPressure[i];
+
         // assembler->updateGridVariables(x);
-        //
+
         // assembler->assembleResidual(x);
         // std::cout << "Initial momentum defect " << std::endl;
         // for (int i = 0; i < assembler->residual()[momentumIdx].size(); ++i)
@@ -328,13 +372,31 @@ int main(int argc, char** argv)
     //     }
     //
 
+
+
+        // std::cout << "old v at 4489 " << x[momentumIdx][4489] << std::endl;
+
+        std::cout << "recalculating residual ***** \n\n" << std::endl;
+
+        std::fill(::storage.begin(), ::storage.end(), 0.0);
+        std::fill(::diffusion.begin(), ::diffusion.end(), 0.0);
+        std::fill(::advection.begin(), ::advection.end(), 0.0);
+        std::fill(::pressure.begin(), ::pressure.end(), 0.0);
+//
+        assembler->assembleResidual(x);
+
+        std::cout << "recalculating residual  done***** \n\n" << std::endl;
+
+         for (int i = 0; i < assembler->residual()[momentumIdx].size(); ++i)
+            faceResidual[i] = assembler->residual()[momentumIdx][i];
+
+        if (shouldPrintL2Error)
+           printL2Error(*momentumProblem, *massProblem, x);
+
         // make the new solution the old solution
         xOld = x;
         momentumGridVariables->advanceTimeStep();
         massGridVariables->advanceTimeStep();
-
-        if (shouldPrintL2Error)
-           printL2Error(*momentumProblem, *massProblem, x);
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
@@ -343,6 +405,8 @@ int main(int argc, char** argv)
         vtkWriter.write(timeLoop->time());
         // vtkWriter.write(1);
         faceVtk.write("face_" + std::to_string(timeLoop->timeStepIndex()), Dune::VTK::ascii);
+
+        // DUNE_THROW(Dune::InvalidStateException, "done");
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
