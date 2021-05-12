@@ -387,7 +387,7 @@ public:
                 if (!dofHandled[dofIdx])
                 {
                     dofHandled[dofIdx] = true;
-                    sol[dofIdx] = initial(scv)[scv.directionIndex()];
+                    sol[dofIdx] = initial(scv)[scv.dofAxis()];
                 }
             }
         }
