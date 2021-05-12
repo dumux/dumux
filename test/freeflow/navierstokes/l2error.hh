@@ -95,7 +95,7 @@ private:
     {
         using GridGeometry = std::decay_t<decltype(problem.gridGeometry())>;
         if constexpr (GridGeometry::discMethod == DiscretizationMethod::fcstaggered)
-            return problem.analyticalSolution(scv.dofPosition())[scv.directionIndex()];
+            return problem.analyticalSolution(scv.dofPosition())[scv.dofAxis()];
         else
             return problem.analyticalSolution(scv.dofPosition());
     }
@@ -132,7 +132,7 @@ auto calculateL2Error(const Problem& problem, const SolutionVector& sol)
         // get the L2 norm for each coordinate direction
         for (int i = 0; i < PrimaryVariables::size(); ++i)
         {
-            const auto error = Detail::L2Error::calculate(problem, sol, [i](const auto& scv){ return scv.directionIndex() == i; });
+            const auto error = Detail::L2Error::calculate(problem, sol, [i](const auto& scv){ return scv.dofAxis() == i; });
             absolute[i] = error.absolute;
             relative[i] = error.relative;
         }
