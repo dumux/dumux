@@ -19,7 +19,9 @@
  *
  * \brief Test for the sequential 2p models
  */
+#ifndef PROBLEM
 #define PROBLEM 2 // 0 = Buckley-Leverett, 1 = McWhorter, 2 = 2D Lense problem
+#endif
 
 #include <config.h>
 
