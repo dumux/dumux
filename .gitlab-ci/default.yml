@@ -12,6 +12,7 @@ workflow:
 
 variables:
   TRIGGER_SOURCE: "unknown"
+  MR_TARGET_BRANCH_NAME: "master"
 
 select tests:
   stage: configure
@@ -21,7 +22,7 @@ select tests:
       if [[ "$TRIGGER_SOURCE" == "merge_request_event" ]]; then
           dunecontrol --opts=$DUNE_OPTS_FILE --current all
           pushd build-cmake
-            python3 ../bin/testing/findtests.py -f ../affectedtests.json -t origin/master
+            python3 ../bin/testing/findtests.py -f ../affectedtests.json -t origin/$MR_TARGET_BRANCH_NAME
           popd
       else
           echo "Skipping test selection, build/test stages will consider all tests!"
