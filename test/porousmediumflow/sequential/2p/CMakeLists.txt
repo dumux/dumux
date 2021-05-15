@@ -89,6 +89,28 @@ dumux_add_test(NAME test_mpfal2padaptive
                                ${CMAKE_CURRENT_BINARY_DIR}/test_mpfal2padaptive-00006.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_mpfa2p -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_mpfa2p.input -Problem.Name test_mpfal2padaptive -ModelType MPFALAdaptive")
 
+dumux_add_test(NAME test_mpfal2p_bcleverett
+              SOURCES test_mpfa2p.cc
+              COMPILE_DEFINITIONS PROBLEM=0
+              LABELS porousmediumflow 2p sequential
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --command "${CMAKE_CURRENT_BINARY_DIR}/test_mpfal2p_bcleverett
+                                   -ParameterFile test_mpfa2p.input
+                                   -Problem.Name test_mpfal2p_bcleverett
+                                   -Problem.EnableGravity false
+                                   -Grid.File grids/test_mpfa2p.dgf -ModelType MPFAL")
+
+dumux_add_test(NAME test_mpfao2p_mcwhorter
+              SOURCES test_mpfa2p.cc
+              COMPILE_DEFINITIONS PROBLEM=1
+              LABELS porousmediumflow 2p sequential
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --command "${CMAKE_CURRENT_BINARY_DIR}/test_mpfao2p_mcwhorter
+                                   -ParameterFile test_mpfa2p.input
+                                   -Problem.Name test_mpfao2p_mcwhorter
+                                   -Problem.EnableGravity false
+                                   -Grid.File grids/test_mpfa2p.dgf -ModelType MPFAO")
+
 # 3d tests
 dumux_add_test(NAME test_3d2pfv
               LABELS porousmediumflow 2p sequential
