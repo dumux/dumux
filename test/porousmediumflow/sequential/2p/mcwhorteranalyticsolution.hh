@@ -136,7 +136,7 @@ private:
         swr_ = fluidMatrixInteraction.pcSwCurve().effToAbsParams().swr();
         snr_ = fluidMatrixInteraction.pcSwCurve().effToAbsParams().snr();
         porosity_ = problem_.spatialParams().porosity(dummyElement);
-        permeability_ = problem_.spatialParams().intrinsicPermeability(dummyElement)[0][0];
+        permeability_ = problem_.spatialParams().intrinsicPermeabilityAtPos(dummyElement.geometry().center())[0][0];
         PrimaryVariables initVec;
         problem_.initial(initVec, dummyElement);
         sInit_ = initVec[saturationIdx];
@@ -403,7 +403,7 @@ private:
     Scalar sInit_;
     Scalar permeability_;
     enum
-    {   intervalNum_ = 1000, pointNum_ = intervalNum_+1};
+    {   intervalNum_ = 454, pointNum_ = intervalNum_+1};
     Dune::FieldVector<Scalar, pointNum_> satVec_;
     Dune::FieldVector<Scalar,pointNum_> fractionalW_;
     Dune::FieldVector<Scalar, pointNum_> dpcdsw_;
