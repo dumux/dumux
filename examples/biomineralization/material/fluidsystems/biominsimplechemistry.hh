@@ -228,13 +228,10 @@ private:
         static constexpr int phaseIdx(int brinePhaseIdx) { return wPhaseIdx; }
         static constexpr int compIdx(int brineCompIdx)
         {
+            assert( brineCompIdx == Brine::H2OIdx || brineCompIdx == Brine::NaIdx
+                 || brineCompIdx == Brine::ClIdx || brineCompIdx == Brine::CaIdx);
             switch (brineCompIdx)
             {
-                assert(brineCompIdx == Brine::H2OIdx
-                        || brineCompIdx == Brine::NaIdx
-                        || brineCompIdx == Brine::ClIdx
-                        || brineCompIdx == Brine::CaIdx
-                      );
                 case Brine::H2OIdx: return H2OIdx;
                 case Brine::NaIdx: return NaIdx;
                 case Brine::ClIdx: return ClIdx;
