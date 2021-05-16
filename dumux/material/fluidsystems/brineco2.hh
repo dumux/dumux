@@ -176,9 +176,9 @@ private:
         static constexpr int phaseIdx(int brinePhaseIdx) { return liquidPhaseIdx; }
         static constexpr int compIdx(int brineCompIdx)
         {
+            assert(brineCompIdx == VariableSalinityBrine::H2OIdx || brineCompIdx == VariableSalinityBrine::NaClIdx);
             switch (brineCompIdx)
             {
-                assert(brineCompIdx == VariableSalinityBrine::H2OIdx || brineCompIdx == VariableSalinityBrine::NaClIdx);
                 case VariableSalinityBrine::H2OIdx: return BrineOrH2OIdx;
                 case VariableSalinityBrine::NaClIdx: return NaClIdx;
                 default: return 0; // this will never be reached, only needed to suppress compiler warning
