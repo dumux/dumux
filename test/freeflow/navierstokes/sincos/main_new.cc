@@ -51,6 +51,7 @@
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/istlsolverfactorybackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
+#include <dumux/io/vtk/intersectionwriter.hh>
 
 #include "../l2error.hh"
 #include "../analyticalsolution.hh"
@@ -227,6 +228,18 @@ int main(int argc, char** argv) try
 
     if (isStationary)
     {
+        std::vector<double> faceResidual(momentumGridGeometry->numDofs());
+        assembler->assembleResidual(x);
+        for (int i = 0; i < assembler->residual()[momentumIdx].size(); ++i)
+            faceResidual[i] = assembler->residual()[momentumIdx][i];
+
+        ConformingIntersectionWriter faceVtk(momentumGridGeometry->gridView());
+
+        faceVtk.addField(faceResidual, "faceResidual");
+        faceVtk.write("init", Dune::VTK::ascii);
+
+
+
         // linearize & solve
         Dune::Timer timer;
         nonLinearSolver.solve(x);
