@@ -99,7 +99,6 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using Intersection = typename GridView::Intersection;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using GridFaceVariables = typename GridVariables::GridFaceVariables;
@@ -448,49 +447,55 @@ private:
                             setLineForAveragingCorners = true;
                         }
 
-                        auto treatVirtualParallelFaceDofPos = [&](const GlobalPosition& thisCorner)
+                        auto treatVirtualParallelFaceDofPos = [&](unsigned int thisCornerIdx)
                         {
+                            const GlobalPosition& thisCorner = scvf.corner(thisCornerIdx);
+
                             if (containerCmp(globalPos, thisCorner))
                             {
+                                lineForAveragingCorners[0] = scvf.center();
+
                                 unsigned int dirIdx = scvf.directionIndex();
                                 unsigned int nonDirIdx = (dirIdx == 0) ? 1 : 0;
 
-                                SubControlVolumeFace normalFaceThisCorner = scvf;
+                                unsigned int otherCornerIdx = (thisCornerIdx == 0) ? 1 : 0;
+                                const GlobalPosition& otherCorner = scvf.corner(otherCornerIdx);
 
                                 const SubControlVolumeFace& normalFacePair0 = this->gridGeometry().scvf(scvf.insideScvIdx(), scvf.pairData(0).localLateralFaceIdx);
                                 const SubControlVolumeFace& normalFacePair1 = this->gridGeometry().scvf(scvf.insideScvIdx(), scvf.pairData(1).localLateralFaceIdx);
 
+                                unsigned int localSubFaceIdx;
+
                                 if (scalarCmp(thisCorner[nonDirIdx], normalFacePair0.center()[nonDirIdx]))
                                 {
-                                    normalFaceThisCorner = normalFacePair0;
+                                    localSubFaceIdx = thisCornerIdx;
                                 }
                                 else if (scalarCmp(thisCorner[nonDirIdx], normalFacePair1.center()[nonDirIdx]))
                                 {
-                                    normalFaceThisCorner = normalFacePair1;
+                                    localSubFaceIdx = otherCornerIdx;
                                 }
                                 else
                                 {
                                     DUNE_THROW(Dune::InvalidStateException, "");
                                 }
 
-                                Intersection parallelIntersection;
-
-                                for(const auto& is : intersections(this->gridGeometry().gridView(), normalFaceThisCorner.intersection().outside()))
+                                if (thisCorner[nonDirIdx] > otherCorner[nonDirIdx] )
                                 {
-                                    if (containerCmp(is.centerUnitOuterNormal(), scvf.intersection().centerUnitOuterNormal()))
-                                    {
-                                        parallelIntersection = is;
-                                    }
+                                    lineForAveragingCorners[1] = scvf.center();
+                                    lineForAveragingCorners[1][nonDirIdx] += scvf.parallelDofsDistance(localSubFaceIdx, 0);
+                                }
+                                else
+                                {
+                                    lineForAveragingCorners[1] = scvf.center();
+                                    lineForAveragingCorners[1][nonDirIdx] -= scvf.parallelDofsDistance(localSubFaceIdx, 0);
                                 }
 
-                                lineForAveragingCorners[0] = scvf.center();
-                                lineForAveragingCorners[1] = parallelIntersection.geometry().center();
                                 setLineForAveragingCorners = true;
                             }
                         };
 
-                        treatVirtualParallelFaceDofPos(scvf.corner(0));
-                        treatVirtualParallelFaceDofPos(scvf.corner(1));
+                        treatVirtualParallelFaceDofPos(0);
+                        treatVirtualParallelFaceDofPos(1);
                     }
                 }
             }

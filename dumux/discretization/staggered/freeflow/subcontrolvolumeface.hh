@@ -128,7 +128,6 @@ class FreeFlowStaggeredSubControlVolumeFace
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
     using CornerStorage = typename T::CornerStorage;
-    using Intersection = typename GV::Intersection;
 
     using PairData = typename T::PairData;
     using AxisData = typename T::AxisData;
@@ -159,7 +158,6 @@ public:
                                           const std::vector<GridIndexType>& scvIndices,
                                           const typename T::GeometryHelper& geometryHelper)
     : ParentType(),
-      intersection_(is),
       geomType_(isGeometry.type()),
       area_(isGeometry.volume()),
       center_(isGeometry.center()),
@@ -234,11 +232,6 @@ public:
     GridIndexType index() const
     {
         return scvfIndex_;
-    }
-
-    const Intersection& intersection() const
-    {
-        return intersection_;
     }
 
     //! The positions of the corners
@@ -467,7 +460,6 @@ public:
     { isGhostFace_ = isGhostFaceFlag; }
 
 private:
-    Intersection intersection_;
     Dune::GeometryType geomType_;
     CornerStorage corners_;
     Scalar area_;
