@@ -26,6 +26,8 @@
 #ifndef DUMUX_ANGELI_TEST_PROBLEM_HH
 #define DUMUX_ANGELI_TEST_PROBLEM_HH
 
+#include <dune/geometry/quadraturerules.hh>
+
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
@@ -53,6 +55,7 @@ class AngeliTestProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
@@ -61,6 +64,8 @@ class AngeliTestProblem : public NavierStokesProblem<TypeTag>
 
     static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
@@ -125,13 +130,29 @@ public:
     }
 
     /*!
-     * \brief Returns Dirichlet boundary values at a given position.
-     * \param globalPos The global position
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        control volume face (velocities)
+     *
+     * \param element The finite element
+     * \param scvf the sub control volume face
      */
-    PrimaryVariables dirichletAtPos(const GlobalPosition & globalPos) const
+    PrimaryVariables dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
     {
-        // use the values of the analytical solution
-        return analyticalSolution(globalPos);
+        return velocityDirichlet_(scvf);
+    }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        control volume face (pressure)
+     *
+     * \param element The finite element
+     * \param scv the sub control volume
+     */
+    PrimaryVariables dirichlet(const Element& element, const SubControlVolume& scv) const
+    {
+        PrimaryVariables priVars(0.0);
+        priVars[Indices::pressureIdx] = analyticalSolution(scv.center())[Indices::pressureIdx];
+        return priVars;
     }
 
     /*!
@@ -161,12 +182,21 @@ public:
     // \{
 
     /*!
-     * \brief Evaluates the initial value for a control volume.
-     * \param globalPos The global position
+     * \brief Evaluates the initial value for a control volume (pressure)
      */
-    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
+    PrimaryVariables initial(const SubControlVolume& scv) const
     {
-        return analyticalSolution(globalPos);
+        PrimaryVariables priVars(0.0);
+        priVars[Indices::pressureIdx] = analyticalSolution(scv.center())[Indices::pressureIdx];
+        return priVars;
+    }
+
+    /*!
+     * \brief Evaluates the initial value for a face control volume (velocities)
+     */
+    PrimaryVariables initial(const SubControlVolumeFace& scvf) const
+    {
+        return velocityDirichlet_(scvf);
     }
 
     // \}
@@ -180,6 +210,24 @@ public:
     }
 
 private:
+    PrimaryVariables velocityDirichlet_(const SubControlVolumeFace& scvf) const
+    {
+        PrimaryVariables priVars(0.0);
+        const auto geo = scvf.geometry();
+        const auto& quad = Dune::QuadratureRules<Scalar, GridView::dimension-1>::rule(geo.type(), 3);
+        for (auto&& qp : quad)
+        {
+            const auto w = qp.weight()*geo.integrationElement(qp.position());
+            const auto globalPos = geo.global(qp.position());
+            const auto sol = analyticalSolution(globalPos);
+            priVars[Indices::velocityXIdx] += sol[Indices::velocityXIdx]*w;
+            priVars[Indices::velocityYIdx] += sol[Indices::velocityYIdx]*w;
+        }
+        priVars[Indices::velocityXIdx] /= scvf.area();
+        priVars[Indices::velocityYIdx] /= scvf.area();
+        return priVars;
+    }
+
     Scalar kinematicViscosity_, rho_;
     Scalar time_ = 0;
 };
