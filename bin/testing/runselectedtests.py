@@ -46,9 +46,12 @@ def runTests(config, script='', flags=['-j4', '--output-on-failure']):
         print('No tests to be run. Letting dune-ctest produce empty report.')
         tests = ['NOOP']
 
+    # turn test names into a regular expression
+    testRegEx = '|'.join(tests)
+
     # if not given, try system-wide call to dune-ctest
     script = ['dune-ctest'] if not script else script
-    subprocess.run([script] + flags + ['-R'] + tests, check=True)
+    subprocess.run([script] + flags + ['-R', testRegEx], check=True)
 
 
 if __name__ == '__main__':
