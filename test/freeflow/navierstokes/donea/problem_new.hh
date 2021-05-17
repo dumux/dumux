@@ -117,11 +117,15 @@ class DoneaTestProblemNew : public NavierStokesProblem<TypeTag>
 public:
     DoneaTestProblemNew(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(gridGeometry, couplingManager)
-    {}
+    {
+        useNeumann_ = getParam<bool>("Problem.UseNeumann", false);
+    }
 
     DoneaTestProblemNew(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
-    {}
+    {
+        useNeumann_ = getParam<bool>("Problem.UseNeumann", false);
+    }
 
    /*!
      * \name Problem parameters
@@ -181,8 +185,19 @@ public:
         // set Dirichlet values for the velocity and pressure everywhere
         if constexpr (ParentType::isMomentumProblem())
         {
-            values.setDirichlet(Indices::velocityXIdx);
-            values.setDirichlet(Indices::velocityYIdx);
+            if (useNeumann_)
+            {
+                static constexpr Scalar eps = 1e-8;
+                if ((globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps) || (globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps))
+                    values.setAllNeumann();
+                else
+                    values.setAllDirichlet();
+            }
+            else
+            {
+                values.setDirichlet(Indices::velocityXIdx);
+                values.setDirichlet(Indices::velocityYIdx);
+            }
         }
         else
             values.setNeumann(Indices::conti0EqIdx);
@@ -198,6 +213,47 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
         return analyticalSolution(globalPos);
+    }
+
+    /*!
+     * \brief Evaluates the boundary conditions for a Neumann control volume.
+     *
+     * \param element The element for which the Neumann boundary condition is set
+     * \param fvGeometry The fvGeometry
+     * \param elemVolVars The element volume variables
+     * \param elemFaceVars The element face variables
+     * \param scvf The boundary sub control volume face
+     */
+    template<class ElementVolumeVariables, class ElementFluxVariablesCache>
+    NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElementFluxVariablesCache& elemFluxVarsCache,
+                        const SubControlVolumeFace& scvf) const
+    {
+        NumEqVector values(0.0);
+
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            const auto x = scvf.ipGlobal()[0];
+            const auto y = scvf.ipGlobal()[1];
+
+            Dune::FieldMatrix<Scalar, dimWorld, dimWorld> momentumFlux(0.0);
+            momentumFlux[0][0] = x*(-2*x*y*(2*x - 2.0)*(4.0*y*y - 6.0*y + 2.0) - x - 4*y*(x - 1.0)*(x - 1.0)*(4.0*y*y - 6.0*y + 2.0) + 1.0);
+            momentumFlux[0][1] = x*x*(x - 1.0)*(x - 1.0)*(-12.0*y*y + 12.0*y - 2.0) + y*y*(y - 1.0)*(y - 1.0)*(12.0*x*x - 12.0*x + 2.0);
+            momentumFlux[1][0] = momentumFlux[0][1];
+            momentumFlux[1][1] = x*(-x + 2.0*y*y*(2*y - 2.0)*(4.0*x*x - 6.0*x + 2.0) + 4.0*y*(y - 1.0)*(y - 1.0)*(4.0*x*x - 6.0*x + 2.0) + 1.0);
+
+            const auto normal = scvf.unitOuterNormal();
+            momentumFlux.mv(normal, values);
+        }
+        else
+        {
+            const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
+            values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
+        }
+
+        return values;
     }
 
     /*!
@@ -259,22 +315,26 @@ public:
     {
         std::bitset<PrimaryVariables::dimension> values;
 
-        auto fvGeometry = localView(this->gridGeometry());
-        fvGeometry.bindElement(element);
+        if (!useNeumann_)
+        {
+            auto fvGeometry = localView(this->gridGeometry());
+            fvGeometry.bindElement(element);
 
-        bool onBoundary = false;
-        for (const auto& scvf : scvfs(fvGeometry))
-            onBoundary = std::max(onBoundary, scvf.boundary());
+            bool onBoundary = false;
+            for (const auto& scvf : scvfs(fvGeometry))
+                onBoundary = std::max(onBoundary, scvf.boundary());
 
-        if (onBoundary)
-            values.set(0);
+            if (onBoundary)
+                values.set(0);
 
-        // TODO: only use one cell or pass fvGeometry to hasInternalDirichletConstraint
+            // TODO: only use one cell or pass fvGeometry to hasInternalDirichletConstraint
 
-        // if (scv.dofIndex() == 0)
-        //     values.set(0);
-        // the pure Neumann problem is only defined up to a constant
-        // we create a well-posed problem by fixing the pressure at one dof
+            // if (scv.dofIndex() == 0)
+            //     values.set(0);
+            // the pure Neumann problem is only defined up to a constant
+            // we create a well-posed problem by fixing the pressure at one dof
+        }
+
         return values;
     }
 
@@ -286,6 +346,8 @@ public:
     PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
     { return PrimaryVariables(analyticalSolution(scv.center())[Indices::pressureIdx]); }
 
+private:
+    bool useNeumann_;
 };
 } // end namespace Dumux
 
