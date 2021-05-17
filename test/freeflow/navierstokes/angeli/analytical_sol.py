@@ -50,8 +50,36 @@ print("Source term mass:", sp.diff(vFF[0],x) + sp.diff(vFF[1], y))
 print("Source term momentum x:", sp.simplify(divMomentumFlux[0] + storageTerm[0]))
 print("Source term momentum y:", sp.simplify(divMomentumFlux[1] + storageTerm[1]))
 
+
+
+
+print('\n##### Integration over control volume')
+fluxBottom = sp.integrate(vFF.dot(np.array([0, -1])).subs(y, 0), (x, 0, 0.1))
+fluxTop= sp.integrate(vFF.dot(np.array([0, 1])).subs(y, 0.1), (x, 0, 0.1))
+print("fluxBottom", sp.simplify(fluxBottom))
+print("fluxTop", sp.simplify(fluxTop))
+
+print("Sum vert", sp.simplify(fluxBottom+fluxTop))
+
+fluxLeft= sp.integrate(vFF.dot(np.array([-1, 0])).subs(x, 0), (y, 0, 0.1))
+fluxRight= sp.integrate(vFF.dot(np.array([1, 0])).subs(x, 0.1), (y, 0, 0.1))
+
+print("fluxLeft", sp.simplify(fluxLeft))
+print("fluxRight", sp.simplify(fluxRight))
+
+print("Total Sum", sp.simplify(fluxBottom+fluxTop+fluxLeft+fluxRight))
+
+
+
 print("Storage cancels diffusion: storage-diff:", sp.simplify(storageTerm-div(mu*(gradV + gradVT))))
 print("Advection cancels pressure: Advection+press:", sp.simplify(div(vvT)+div(pI)))
+
+print('v interior at 5e-7', vFF[1].subs(mu, 0.1).subs(x, 0.01).subs(y,0.02).subs(t,0.5e-6).evalf())
+print('v boundary at 5e-7', vFF[1].subs(mu, 0.1).subs(x, 0.01).subs(y,0.00).subs(t,0.5e-6).evalf())
+print('v boundary at 1e-6', vFF[1].subs(mu, 0.1).subs(x, 0.01).subs(y,0.00).subs(t,1e-6).evalf())
+print('v boundary left at 1e-6', vFF[0].subs(mu, 0.1).subs(x, 0.00).subs(y,0.01).subs(t,1e-6).evalf())
+print('p at 0.5e-6', pI[0][0].subs(mu, 0.1).subs(x, 0.01).subs(y,0.01).subs(t,0.5e-6).evalf())
+print('p at 1e-6', pI[0][0].subs(mu, 0.1).subs(x, 0.01).subs(y,0.01).subs(t,1e-6).evalf())
 
 
 volume = 0.02**2
