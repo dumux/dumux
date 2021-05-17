@@ -58,6 +58,10 @@ class AngeliTestProblem : public NavierStokesProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+
     static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -277,7 +281,339 @@ public:
         timeStepSize_ = timeStepSize;
     }
 
-private:
+//     //needed for residualcalc
+//     auto instationaryAnalyticalSolutionAtPos(const GlobalPosition& globalPos, Scalar t) const
+//     {
+//         return /*asImp_().*/analyticalSolutionAtPos(globalPos);
+//     }
+
+//     /*!
+//      * \brief Return the analytical solution of the problem at a given position
+//      *
+//      * \param globalPos The global position
+//      */
+//     PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
+//     {
+//         if (!getParam<bool>("Problem.AveragedAnalyticalSolution", true))
+//             return /*asImp_().*/analyticalSolutionAtPos(globalPos);
+//
+//         return meanAnalyticalSolution_(globalPos, [&](Scalar x) { return /*asImp_().*/xFactorAnalyticalSolutionAntiderivativeAtPos(x); },
+//                                                  [&](Scalar y) { return /*asImp_().*/yFactorAnalyticalSolutionAntiderivativeAtPos(y); },
+//                                                  [&](Scalar x) { return /*asImp_().*/xFactorAnalyticalSolutionAtPos(x); },
+//                                                  [&](Scalar y) { return /*asImp_().*/yFactorAnalyticalSolutionAtPos(y); });
+//     }
+
+    /*!
+     * \brief Return the analytical solution of the problem at a given position
+     *
+     * \param globalPos The global position
+     */
+    PrimaryVariables instationaryAnalyticalSolution(const GlobalPosition& globalPos, Scalar t) const
+    {
+        if (!getParam<bool>("Problem.AveragedAnalyticalSolution", true))
+            return /*asImp_().*/instationaryAnalyticalSolutionAtPos(globalPos,t);
+
+        return meanAnalyticalSolution_(globalPos,
+                                      [&](Scalar x) { return /*asImp_().*/xFactorAnalyticalSolutionAntiderivativeAtPos(x,t); },
+                                      [&](Scalar y) { return /*asImp_().*/yFactorAnalyticalSolutionAntiderivativeAtPos(y,t); },
+                                      [&](Scalar x) { return /*asImp_().*/xFactorAnalyticalSolutionAtPos(x,t); },
+                                      [&](Scalar y) { return /*asImp_().*/yFactorAnalyticalSolutionAtPos(y,t); });
+    }
+
+private:/*!
+     * \brief Return the analytical solution of the problem at a given position
+     *
+     * \param globalPos The global position
+     */
+    template <class LambdaA, class LambdaB, class LambdaC, class LambdaD>
+    PrimaryVariables meanAnalyticalSolution_(const GlobalPosition& globalPos,
+                                        const LambdaA& xFactorAnalyticalSolutionAntiderivativeAtPosLambdaFunction,
+                                        const LambdaB& yFactorAnalyticalSolutionAntiderivativeAtPosLambdaFunction,
+                                        const LambdaC& xFactorAnalyticalSolutionAtPosLambdaFunction,
+                                        const LambdaD& yFactorAnalyticalSolutionAtPosLambdaFunction) const
+    {
+        Scalar xIntegralLeft = 0.;
+        Scalar xIntegralRight = 0.;
+        Scalar yIntegralDown = 0.;
+        Scalar yIntegralUp = 0.;
+
+        bool integrateX = false;
+        bool integrateY = false;
+
+        setIntegralRanges_(globalPos, integrateX, integrateY, xIntegralLeft, xIntegralRight, yIntegralDown, yIntegralUp);
+
+        std::array<PrimaryVariables,2> xMean;
+        std::array<PrimaryVariables,2> yMean;
+
+        for (unsigned int j=0; j < 2; ++j) //up to two summands in the analytical solution
+        {
+            for (unsigned int i = 0; i < xMean[j].size(); ++i)
+            {
+                xMean[j][i] = (xFactorAnalyticalSolutionAntiderivativeAtPosLambdaFunction(xIntegralRight)[j][i] - xFactorAnalyticalSolutionAntiderivativeAtPosLambdaFunction(xIntegralLeft)[j][i])/(xIntegralRight - xIntegralLeft);
+                yMean[j][i] = (yFactorAnalyticalSolutionAntiderivativeAtPosLambdaFunction(yIntegralUp)[j][i]    - yFactorAnalyticalSolutionAntiderivativeAtPosLambdaFunction(yIntegralDown)[j][i])/(yIntegralUp    - yIntegralDown);
+            }
+        }
+
+        const std::array<PrimaryVariables,2> xPointValue = xFactorAnalyticalSolutionAtPosLambdaFunction(globalPos[0]);
+        const std::array<PrimaryVariables,2> yPointValue = yFactorAnalyticalSolutionAtPosLambdaFunction(globalPos[1]);
+
+        if (integrateX && !integrateY)
+        {
+            PrimaryVariables values;
+
+            for (unsigned int j=0; j < 2; ++j)
+            {
+                for (unsigned int i = 0; i < values.size(); ++i)
+                {
+                    values[i] += xMean[j][i] * yPointValue[j][i];
+                }
+            }
+
+            return values;
+        }
+
+        if (!integrateX && integrateY)
+        {
+            PrimaryVariables values;
+
+            for (unsigned int j=0; j < 2; ++j)
+            {
+                for (unsigned int i = 0; i < values.size(); ++i)
+                {
+                    values[i] += xPointValue[j][i] * yMean[j][i];
+                }
+            }
+
+            return values;
+        }
+
+        if (integrateX && integrateY)
+        {
+            PrimaryVariables values;
+
+            for (unsigned int j=0; j < 2; ++j)
+            {
+                for (unsigned int i = 0; i < values.size(); ++i)
+                {
+                    values[i] += xMean[j][i] * yMean[j][i];
+                }
+            }
+
+            return values;
+        }
+    }
+
+    template<class SomeType>
+    bool containerCmp_(const SomeType& a, const SomeType& b) const
+    {
+        double eps = 1e-10;
+
+        if (a.size() != b.size())
+        {
+            std::cout << "containerCmp_ with different sizes" << std::endl;
+            return false;
+        }
+        else
+        {
+            bool retVal = true;
+            for (unsigned int i = 0; i < a.size(); ++i)
+            {
+                if (!((a[i] > b[i] - eps) && (a[i] < b[i] + eps)))
+                {
+                    retVal = false;
+                    break;
+                }
+            }
+
+            return retVal;
+        }
+    }
+
+    template<class SomeType>
+    bool scalarCmp_(const SomeType& a, const SomeType& b) const
+    {
+        double eps = 1e-10;
+
+        return a > b - eps
+        && a < b + eps;
+    }
+
+    void setVolumeOrLineForAveragingCorners_(const GlobalPosition& globalPos, std::array<GlobalPosition,4>& volumeForAveragingCorners, std::array<GlobalPosition,2>& lineForAveragingCorners, bool& setVolumeForAveragingCorners, bool& setLineForAveragingCorners) const
+    {
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            auto fvGeometry = localView(this->gridGeometry());
+            fvGeometry.bindElement(element);
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                if (containerCmp_(globalPos,scv.center()))
+                {
+                    if(scv.geometry().corners()!=4)
+                    {
+                        DUNE_THROW(Dune::InvalidStateException, "");
+                    }
+
+                    for (unsigned int i = 0; i < scv.geometry().corners(); ++i)
+                    {
+                        volumeForAveragingCorners[i] = scv.geometry().corner(i);
+                    }
+
+                    setVolumeForAveragingCorners = true;
+                }
+
+                for (auto&& scvf : scvfs(fvGeometry))
+                {
+                    if (!scvf.boundary())
+                    {
+                        if (containerCmp_(globalPos,scvf.center()))
+                        {
+                            lineForAveragingCorners[0] = scvf.corner(0);
+                            lineForAveragingCorners[1] = scvf.corner(1);
+                            setLineForAveragingCorners = true;
+                        }
+                    }
+                    else
+                    {
+                        if (containerCmp_(globalPos,scvf.center()))
+                        {
+                            lineForAveragingCorners[0] = scvf.corner(0);
+                            lineForAveragingCorners[1] = scvf.corner(1);
+                            setLineForAveragingCorners = true;
+                        }
+
+                        auto treatVirtualParallelFaceDofPos = [&](unsigned int thisCornerIdx)
+                        {
+                            const GlobalPosition& thisCorner = scvf.corner(thisCornerIdx);
+
+                            if (containerCmp_(globalPos, thisCorner))
+                            {
+                                lineForAveragingCorners[0] = scvf.center();
+
+                                unsigned int dirIdx = scvf.directionIndex();
+                                unsigned int nonDirIdx = (dirIdx == 0) ? 1 : 0;
+
+                                unsigned int otherCornerIdx = (thisCornerIdx == 0) ? 1 : 0;
+                                const GlobalPosition& otherCorner = scvf.corner(otherCornerIdx);
+
+                                const SubControlVolumeFace& normalFacePair0 = this->gridGeometry().scvf(scvf.insideScvIdx(), scvf.pairData(0).localLateralFaceIdx);
+                                const SubControlVolumeFace& normalFacePair1 = this->gridGeometry().scvf(scvf.insideScvIdx(), scvf.pairData(1).localLateralFaceIdx);
+
+                                unsigned int localSubFaceIdx;
+
+                                if (scalarCmp_(thisCorner[nonDirIdx], normalFacePair0.center()[nonDirIdx]))
+                                {
+                                    localSubFaceIdx = thisCornerIdx;
+                                }
+                                else if (scalarCmp_(thisCorner[nonDirIdx], normalFacePair1.center()[nonDirIdx]))
+                                {
+                                    localSubFaceIdx = otherCornerIdx;
+                                }
+                                else
+                                {
+                                    DUNE_THROW(Dune::InvalidStateException, "");
+                                }
+
+                                if (thisCorner[nonDirIdx] > otherCorner[nonDirIdx] )
+                                {
+                                    lineForAveragingCorners[1] = scvf.center();
+                                    lineForAveragingCorners[1][nonDirIdx] += scvf.parallelDofsDistance(localSubFaceIdx, 0);
+                                }
+                                else
+                                {
+                                    lineForAveragingCorners[1] = scvf.center();
+                                    lineForAveragingCorners[1][nonDirIdx] -= scvf.parallelDofsDistance(localSubFaceIdx, 0);
+                                }
+
+                                setLineForAveragingCorners = true;
+                            }
+                        };
+
+                        treatVirtualParallelFaceDofPos(0);
+                        treatVirtualParallelFaceDofPos(1);
+                    }
+                }
+            }
+        }
+
+        if (setLineForAveragingCorners == setVolumeForAveragingCorners)
+        {
+            DUNE_THROW(Dune::InvalidStateException, "either they both stayed false or they were both set to true, none of which should happen");
+        }
+    }
+
+    void setIntegralRanges_ (const GlobalPosition& globalPos, bool& integrateX, bool& integrateY, Scalar& xIntegralLeft, Scalar& xIntegralRight, Scalar& yIntegralDown, Scalar& yIntegralUp) const
+    {
+        std::array<GlobalPosition,4> volumeForAveragingCorners = {};
+        std::array<GlobalPosition,2> lineForAveragingCorners = {};
+
+        bool setVolumeForAveragingCorners = false;
+        bool setLineForAveragingCorners = false;
+
+        setVolumeOrLineForAveragingCorners_(globalPos, volumeForAveragingCorners, lineForAveragingCorners, setVolumeForAveragingCorners, setLineForAveragingCorners);
+
+        if (setLineForAveragingCorners)
+        {
+            if (scalarCmp_(lineForAveragingCorners[0][1], lineForAveragingCorners[1][1]))
+            {
+                integrateX = true;
+                if (lineForAveragingCorners[0][0] < lineForAveragingCorners[1][0])
+                {
+                    xIntegralLeft = lineForAveragingCorners[0][0];
+                    xIntegralRight = lineForAveragingCorners[1][0];
+                }
+                else if (lineForAveragingCorners[0][0] > lineForAveragingCorners[1][0])
+                {
+                    xIntegralLeft = lineForAveragingCorners[1][0];
+                    xIntegralRight = lineForAveragingCorners[0][0];
+                }
+                else
+                {
+                    DUNE_THROW(Dune::InvalidStateException, "");
+                }
+            }
+            else if (scalarCmp_(lineForAveragingCorners[0][0], lineForAveragingCorners[1][0]))
+            {
+                integrateY = true;
+                if (lineForAveragingCorners[0][1] < lineForAveragingCorners[1][1])
+                {
+                    yIntegralDown = lineForAveragingCorners[0][1];
+                    yIntegralUp = lineForAveragingCorners[1][1];
+                }
+                else if (lineForAveragingCorners[0][1] > lineForAveragingCorners[1][1])
+                {
+                    yIntegralDown = lineForAveragingCorners[1][1];
+                    yIntegralUp = lineForAveragingCorners[0][1];
+                }
+                else
+                {
+                    DUNE_THROW(Dune::InvalidStateException, "");
+                }
+            }
+            else
+            {
+                DUNE_THROW(Dune::InvalidStateException, "");
+            }
+        }
+        else //setVolumeForAveragingCorners
+        {
+            integrateX = true;
+            integrateY = true;
+
+            xIntegralLeft = std::numeric_limits<Scalar>::max();
+            xIntegralRight = std::numeric_limits<Scalar>::min();
+            yIntegralDown = std::numeric_limits<Scalar>::max();
+            yIntegralUp = std::numeric_limits<Scalar>::min();
+
+            for (unsigned int i = 0; i < volumeForAveragingCorners.size(); ++i)
+            {
+                xIntegralLeft  = std::min(xIntegralLeft,  volumeForAveragingCorners[i][0]);
+                xIntegralRight = std::max(xIntegralRight, volumeForAveragingCorners[i][0]);
+                yIntegralDown  = std::min(yIntegralDown,  volumeForAveragingCorners[i][1]);
+                yIntegralUp    = std::max(yIntegralUp,    volumeForAveragingCorners[i][1]);
+            }
+        }
+    }
+
     Scalar f_(Scalar t) const
     { return std::exp(- 5.0 * kinematicViscosity_ * M_PI * M_PI * t); }
 
