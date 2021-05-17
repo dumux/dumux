@@ -31,41 +31,6 @@
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {
-template<class SomeType>
-bool containerCmp(const SomeType& a, const SomeType& b)
-{
-    double eps = 1e-10;
-
-    if (a.size() != b.size())
-    {
-        std::cout << "containerCmp with different sizes" << std::endl;
-        return false;
-    }
-    else
-    {
-        bool retVal = true;
-        for (unsigned int i = 0; i < a.size(); ++i)
-        {
-            if (!((a[i] > b[i] - eps) && (a[i] < b[i] + eps)))
-            {
-                retVal = false;
-                break;
-            }
-        }
-
-        return retVal;
-    }
-}
-
-template<class SomeType>
-bool scalarCmp(const SomeType& a, const SomeType& b)
-{
-    double eps = 1e-10;
-
-    return a > b - eps
-    && a < b + eps;
-}
-
 
 //! The implementation is specialized for the different discretizations
 template<class TypeTag, DiscretizationMethod discMethod> struct NavierStokesParentProblemImpl;
@@ -404,6 +369,41 @@ public:
     }
 
 private:
+    template<class SomeType>
+    bool containerCmp_(const SomeType& a, const SomeType& b) const
+    {
+        double eps = 1e-10;
+
+        if (a.size() != b.size())
+        {
+            std::cout << "containerCmp_ with different sizes" << std::endl;
+            return false;
+        }
+        else
+        {
+            bool retVal = true;
+            for (unsigned int i = 0; i < a.size(); ++i)
+            {
+                if (!((a[i] > b[i] - eps) && (a[i] < b[i] + eps)))
+                {
+                    retVal = false;
+                    break;
+                }
+            }
+
+            return retVal;
+        }
+    }
+
+    template<class SomeType>
+    bool scalarCmp_(const SomeType& a, const SomeType& b) const
+    {
+        double eps = 1e-10;
+
+        return a > b - eps
+        && a < b + eps;
+    }
+
     void setVolumeOrLineForAveragingCorners_(const GlobalPosition& globalPos, std::array<GlobalPosition,4>& volumeForAveragingCorners, std::array<GlobalPosition,2>& lineForAveragingCorners, bool& setVolumeForAveragingCorners, bool& setLineForAveragingCorners) const
     {
         for (const auto& element : elements(this->gridGeometry().gridView()))
@@ -412,7 +412,7 @@ private:
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
-                if (containerCmp(globalPos,scv.center()))
+                if (containerCmp_(globalPos,scv.center()))
                 {
                     if(scv.geometry().corners()!=4)
                     {
@@ -431,7 +431,7 @@ private:
                 {
                     if (!scvf.boundary())
                     {
-                        if (containerCmp(globalPos,scvf.center()))
+                        if (containerCmp_(globalPos,scvf.center()))
                         {
                             lineForAveragingCorners[0] = scvf.corner(0);
                             lineForAveragingCorners[1] = scvf.corner(1);
@@ -440,7 +440,7 @@ private:
                     }
                     else
                     {
-                        if (containerCmp(globalPos,scvf.center()))
+                        if (containerCmp_(globalPos,scvf.center()))
                         {
                             lineForAveragingCorners[0] = scvf.corner(0);
                             lineForAveragingCorners[1] = scvf.corner(1);
@@ -451,7 +451,7 @@ private:
                         {
                             const GlobalPosition& thisCorner = scvf.corner(thisCornerIdx);
 
-                            if (containerCmp(globalPos, thisCorner))
+                            if (containerCmp_(globalPos, thisCorner))
                             {
                                 lineForAveragingCorners[0] = scvf.center();
 
@@ -466,11 +466,11 @@ private:
 
                                 unsigned int localSubFaceIdx;
 
-                                if (scalarCmp(thisCorner[nonDirIdx], normalFacePair0.center()[nonDirIdx]))
+                                if (scalarCmp_(thisCorner[nonDirIdx], normalFacePair0.center()[nonDirIdx]))
                                 {
                                     localSubFaceIdx = thisCornerIdx;
                                 }
-                                else if (scalarCmp(thisCorner[nonDirIdx], normalFacePair1.center()[nonDirIdx]))
+                                else if (scalarCmp_(thisCorner[nonDirIdx], normalFacePair1.center()[nonDirIdx]))
                                 {
                                     localSubFaceIdx = otherCornerIdx;
                                 }
@@ -519,7 +519,7 @@ private:
 
         if (setLineForAveragingCorners)
         {
-            if (scalarCmp(lineForAveragingCorners[0][1], lineForAveragingCorners[1][1]))
+            if (scalarCmp_(lineForAveragingCorners[0][1], lineForAveragingCorners[1][1]))
             {
                 integrateX = true;
                 if (lineForAveragingCorners[0][0] < lineForAveragingCorners[1][0])
@@ -537,7 +537,7 @@ private:
                     DUNE_THROW(Dune::InvalidStateException, "");
                 }
             }
-            else if (scalarCmp(lineForAveragingCorners[0][0], lineForAveragingCorners[1][0]))
+            else if (scalarCmp_(lineForAveragingCorners[0][0], lineForAveragingCorners[1][0]))
             {
                 integrateY = true;
                 if (lineForAveragingCorners[0][1] < lineForAveragingCorners[1][1])
