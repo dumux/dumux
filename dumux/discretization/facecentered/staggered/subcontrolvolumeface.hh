@@ -30,8 +30,8 @@
 #include <dune/geometry/type.hh>
 
 #include <dumux/common/indextraits.hh>
-#include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
+#include <dune/geometry/axisalignedcubegeometry.hh>
 
 
 #include <typeinfo>
@@ -47,12 +47,16 @@ namespace Dumux {
 template<class GridView>
 struct FaceCenteredDefaultScvfGeometryTraits
 {
-    using Geometry = typename GridView::template Codim<1>::Geometry;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using Scalar = typename GridView::ctype;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+    static constexpr int dim = GridView::Grid::dimension;
+    static constexpr int dimWorld = GridView::Grid::dimensionworld;
+    using CornerStorage = std::array<GlobalPosition, (1<<(dim-1))>;
+    using Geometry = Dune::AxisAlignedCubeGeometry<Scalar, dim-1, dimWorld>;
 };
 
 template<class GridView, class T = FaceCenteredDefaultScvfGeometryTraits<GridView>>
@@ -62,6 +66,7 @@ class FaceCenteredStaggeredSubControlVolumeFace
     using GridIndexType = typename T::GridIndexType;
     using Scalar = typename T::Scalar;
     using Element = typename T::Element;
+    using CornerStorage = typename T::CornerStorage;
 
     using SmallLocalIndexType = typename IndexTraits<GridView>::SmallLocalIndex;
 
@@ -74,9 +79,10 @@ public:
 
     FaceCenteredStaggeredSubControlVolumeFace() = default;
 
+    template<class Corners>
     FaceCenteredStaggeredSubControlVolumeFace(const GlobalPosition& center,
                                               const GlobalPosition& ipGlobal,
-                                              const std::array<SmallLocalIndexType, 2> localScvIndices,
+                                              Corners&& corners,
                                               const std::array<GridIndexType, 2> globalScvIndices,
                                               const SmallLocalIndexType localScvfIdx,
                                               const Scalar area,
@@ -88,7 +94,6 @@ public:
                                               const bool boundary)
     : center_(center)
     , ipGlobal_(ipGlobal)
-    , localScvIndices_(localScvIndices)
     , globalScvIndices_(globalScvIndices)
     , localScvfIdx_(localScvfIdx)
     , area_(area)
@@ -97,7 +102,16 @@ public:
     , globalScvfIdx_(globalScvfIdx)
     , scvfIdxWithCommonEntity_(scvfIdxWithCommonEntity)
     , faceType_(faceType)
-    , boundary_(boundary) {}
+    , boundary_(boundary)
+    {
+        if constexpr (std::is_same_v<Corners, CornerStorage>)
+            corners_ = std::move(corners);
+        else
+        {
+            for (int i = 0; i < corners_.size(); ++i)
+                corners_[i] = corners[i];
+        }
+    }
 
     //! The center of the sub control volume face
     const GlobalPosition& center() const
@@ -153,10 +167,24 @@ public:
     std::size_t scvfIdxWithCommonEntity() const
     { return scvfIdxWithCommonEntity_; }
 
+    const GlobalPosition& corner(unsigned int localIdx) const
+    {
+        assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
+        return corners_[localIdx];
+    }
+
+    //! The geometry of the sub control volume face
+    Geometry geometry() const
+    {
+        auto inPlaneAxes = std::move(std::bitset<T::dimWorld>{}.set());
+        inPlaneAxes.set(normalAxis_, false);
+        return Geometry(corners_.front(), corners_.back(), inPlaneAxes);
+    }
+
 private:
     GlobalPosition center_;
     GlobalPosition ipGlobal_;
-    std::array<SmallLocalIndexType, 2> localScvIndices_;
+    CornerStorage corners_;
     std::array<GridIndexType, 2> globalScvIndices_;
     SmallLocalIndexType localScvfIdx_;
     Scalar area_;
@@ -171,4 +199,4 @@ private:
 
 } // end namespace Dumux
 
-#endif // DUMUX_DISCRETIZATION_FACECENTERED_STAGGERED_SUBCONTROLVOLUMEFACE_HH
+#endif
