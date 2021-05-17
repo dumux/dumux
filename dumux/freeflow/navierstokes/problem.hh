@@ -139,7 +139,7 @@ public:
         if (!getParam<bool>("Problem.AveragedAnalyticalSolution", true))
             return asImp_().analyticalSolutionAtPos(globalPos);
 
-        return meanAnalyticalSolution(globalPos, [&](Scalar x) { return asImp_().xFactorAnalyticalSolutionAntiderivativeAtPos(x); },
+        return meanAnalyticalSolution_(globalPos, [&](Scalar x) { return asImp_().xFactorAnalyticalSolutionAntiderivativeAtPos(x); },
                                                  [&](Scalar y) { return asImp_().yFactorAnalyticalSolutionAntiderivativeAtPos(y); },
                                                  [&](Scalar x) { return asImp_().xFactorAnalyticalSolutionAtPos(x); },
                                                  [&](Scalar y) { return asImp_().yFactorAnalyticalSolutionAtPos(y); });
@@ -155,94 +155,11 @@ public:
         if (!getParam<bool>("Problem.AveragedAnalyticalSolution", true))
             return asImp_().instationaryAnalyticalSolutionAtPos(globalPos,t);
 
-        return meanAnalyticalSolution(globalPos,
+        return meanAnalyticalSolution_(globalPos,
                                       [&](Scalar x) { return asImp_().xFactorAnalyticalSolutionAntiderivativeAtPos(x,t); },
                                       [&](Scalar y) { return asImp_().yFactorAnalyticalSolutionAntiderivativeAtPos(y,t); },
                                       [&](Scalar x) { return asImp_().xFactorAnalyticalSolutionAtPos(x,t); },
                                       [&](Scalar y) { return asImp_().yFactorAnalyticalSolutionAtPos(y,t); });
-    }
-
-    /*!
-     * \brief Return the analytical solution of the problem at a given position
-     *
-     * \param globalPos The global position
-     */
-    template <class LambdaA, class LambdaB, class LambdaC, class LambdaD>
-    PrimaryVariables meanAnalyticalSolution(const GlobalPosition& globalPos,
-                                        const LambdaA& xFactorAnalyticalSolutionAntiderivativeAtPosLambdaFunction,
-                                        const LambdaB& yFactorAnalyticalSolutionAntiderivativeAtPosLambdaFunction,
-                                        const LambdaC& xFactorAnalyticalSolutionAtPosLambdaFunction,
-                                        const LambdaD& yFactorAnalyticalSolutionAtPosLambdaFunction) const
-    {
-        Scalar xIntegralLeft = 0.;
-        Scalar xIntegralRight = 0.;
-        Scalar yIntegralDown = 0.;
-        Scalar yIntegralUp = 0.;
-
-        bool integrateX = false;
-        bool integrateY = false;
-
-        setIntegralRanges_(globalPos, integrateX, integrateY, xIntegralLeft, xIntegralRight, yIntegralDown, yIntegralUp);
-
-        std::array<PrimaryVariables,2> xMean;
-        std::array<PrimaryVariables,2> yMean;
-
-        for (unsigned int j=0; j < 2; ++j) //up to two summands in the analytical solution
-        {
-            for (unsigned int i = 0; i < xMean[j].size(); ++i)
-            {
-                xMean[j][i] = (xFactorAnalyticalSolutionAntiderivativeAtPosLambdaFunction(xIntegralRight)[j][i] - xFactorAnalyticalSolutionAntiderivativeAtPosLambdaFunction(xIntegralLeft)[j][i])/(xIntegralRight - xIntegralLeft);
-                yMean[j][i] = (yFactorAnalyticalSolutionAntiderivativeAtPosLambdaFunction(yIntegralUp)[j][i]    - yFactorAnalyticalSolutionAntiderivativeAtPosLambdaFunction(yIntegralDown)[j][i])/(yIntegralUp    - yIntegralDown);
-            }
-        }
-
-        const std::array<PrimaryVariables,2> xPointValue = xFactorAnalyticalSolutionAtPosLambdaFunction(globalPos[0]);
-        const std::array<PrimaryVariables,2> yPointValue = yFactorAnalyticalSolutionAtPosLambdaFunction(globalPos[1]);
-
-        if (integrateX && !integrateY)
-        {
-            PrimaryVariables values;
-
-            for (unsigned int j=0; j < 2; ++j)
-            {
-                for (unsigned int i = 0; i < values.size(); ++i)
-                {
-                    values[i] += xMean[j][i] * yPointValue[j][i];
-                }
-            }
-
-            return values;
-        }
-
-        if (!integrateX && integrateY)
-        {
-            PrimaryVariables values;
-
-            for (unsigned int j=0; j < 2; ++j)
-            {
-                for (unsigned int i = 0; i < values.size(); ++i)
-                {
-                    values[i] += xPointValue[j][i] * yMean[j][i];
-                }
-            }
-
-            return values;
-        }
-
-        if (integrateX && integrateY)
-        {
-            PrimaryVariables values;
-
-            for (unsigned int j=0; j < 2; ++j)
-            {
-                for (unsigned int i = 0; i < values.size(); ++i)
-                {
-                    values[i] += xMean[j][i] * yMean[j][i];
-                }
-            }
-
-            return values;
-        }
     }
 
     /*!
@@ -369,6 +286,89 @@ public:
     }
 
 private:
+    /*!
+     * \brief Return the analytical solution of the problem at a given position
+     *
+     * \param globalPos The global position
+     */
+    template <class LambdaA, class LambdaB, class LambdaC, class LambdaD>
+    PrimaryVariables meanAnalyticalSolution_(const GlobalPosition& globalPos,
+                                        const LambdaA& xFactorAnalyticalSolutionAntiderivativeAtPosLambdaFunction,
+                                        const LambdaB& yFactorAnalyticalSolutionAntiderivativeAtPosLambdaFunction,
+                                        const LambdaC& xFactorAnalyticalSolutionAtPosLambdaFunction,
+                                        const LambdaD& yFactorAnalyticalSolutionAtPosLambdaFunction) const
+    {
+        Scalar xIntegralLeft = 0.;
+        Scalar xIntegralRight = 0.;
+        Scalar yIntegralDown = 0.;
+        Scalar yIntegralUp = 0.;
+
+        bool integrateX = false;
+        bool integrateY = false;
+
+        setIntegralRanges_(globalPos, integrateX, integrateY, xIntegralLeft, xIntegralRight, yIntegralDown, yIntegralUp);
+
+        std::array<PrimaryVariables,2> xMean;
+        std::array<PrimaryVariables,2> yMean;
+
+        for (unsigned int j=0; j < 2; ++j) //up to two summands in the analytical solution
+        {
+            for (unsigned int i = 0; i < xMean[j].size(); ++i)
+            {
+                xMean[j][i] = (xFactorAnalyticalSolutionAntiderivativeAtPosLambdaFunction(xIntegralRight)[j][i] - xFactorAnalyticalSolutionAntiderivativeAtPosLambdaFunction(xIntegralLeft)[j][i])/(xIntegralRight - xIntegralLeft);
+                yMean[j][i] = (yFactorAnalyticalSolutionAntiderivativeAtPosLambdaFunction(yIntegralUp)[j][i]    - yFactorAnalyticalSolutionAntiderivativeAtPosLambdaFunction(yIntegralDown)[j][i])/(yIntegralUp    - yIntegralDown);
+            }
+        }
+
+        const std::array<PrimaryVariables,2> xPointValue = xFactorAnalyticalSolutionAtPosLambdaFunction(globalPos[0]);
+        const std::array<PrimaryVariables,2> yPointValue = yFactorAnalyticalSolutionAtPosLambdaFunction(globalPos[1]);
+
+        if (integrateX && !integrateY)
+        {
+            PrimaryVariables values;
+
+            for (unsigned int j=0; j < 2; ++j)
+            {
+                for (unsigned int i = 0; i < values.size(); ++i)
+                {
+                    values[i] += xMean[j][i] * yPointValue[j][i];
+                }
+            }
+
+            return values;
+        }
+
+        if (!integrateX && integrateY)
+        {
+            PrimaryVariables values;
+
+            for (unsigned int j=0; j < 2; ++j)
+            {
+                for (unsigned int i = 0; i < values.size(); ++i)
+                {
+                    values[i] += xPointValue[j][i] * yMean[j][i];
+                }
+            }
+
+            return values;
+        }
+
+        if (integrateX && integrateY)
+        {
+            PrimaryVariables values;
+
+            for (unsigned int j=0; j < 2; ++j)
+            {
+                for (unsigned int i = 0; i < values.size(); ++i)
+                {
+                    values[i] += xMean[j][i] * yMean[j][i];
+                }
+            }
+
+            return values;
+        }
+    }
+
     template<class SomeType>
     bool containerCmp_(const SomeType& a, const SomeType& b) const
     {
