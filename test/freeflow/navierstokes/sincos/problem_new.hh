@@ -35,6 +35,8 @@
 
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
+#include <dune/geometry/quadraturerules.hh>
+
 
 #include "../l2error.hh"
 
@@ -100,6 +102,8 @@ class SincosTestProblem : public NavierStokesProblem<TypeTag>
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using FVElementGeometry = typename GridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
+
 
     static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
@@ -117,6 +121,13 @@ public:
     {
         isStationary_ = getParam<bool>("Problem.IsStationary");
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
+
+        if constexpr(ParentType::isMomentumProblem())
+        {
+            useNeumann_ = getParam<bool>("Problem.UseNeumann", false);
+            if (useNeumann_ && !isStationary_ && !this->enableInertiaTerms())
+                DUNE_THROW(Dune::NotImplemented, "Neumann boundary conditions only implemented for stationary case with intertia terms.");
+        }
     }
 
    /*!
@@ -183,9 +194,19 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            // set Dirichlet values for the velocity everywhere
-            values.setDirichlet(Indices::velocityXIdx);
-            values.setDirichlet(Indices::velocityYIdx);
+            if (useNeumann_)
+            {
+                static constexpr Scalar eps = 1e-8;
+                if ((globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps) /*|| (globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps)*/)
+                    values.setAllNeumann();
+                else
+                    values.setAllDirichlet();
+            }
+            else
+            {
+                // set Dirichlet values for the velocity everywhere
+                values.setAllDirichlet();
+            }
         }
         else
             values.setAllNeumann();
@@ -211,8 +232,11 @@ public:
     {
         // set fixed pressure in one cell
         std::bitset<PrimaryVariables::dimension> values;
+
+        // if (!useNeumann_ && scv.dofIndex() == 0)
         if (scv.dofIndex() == 0)
             values.set(Indices::pressureIdx);
+
         return values;
     }
 
@@ -254,7 +278,48 @@ public:
     {
         NumEqVector values(0.0);
 
-        if constexpr (!ParentType::isMomentumProblem())
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            const auto flux = [&](Scalar x, Scalar y)
+            {
+                Dune::FieldMatrix<Scalar, dimWorld, dimWorld> momentumFlux(0.0);
+                using std::sin;
+                using std::cos;
+                const auto mu = kinematicViscosity_;
+                momentumFlux[0][0] = -1.0*mu*cos(x - y) + 1.0*mu*cos(x + y) - 0.5*cos(2*y) - 0.125*cos(2*x - 2*y) - 0.125*cos(2*x + 2*y) + 0.25;
+                momentumFlux[0][1] = -0.125*cos(2*x - 2*y) + 0.125*cos(2*x + 2*y);
+                momentumFlux[1][0] = -0.125*cos(2*x - 2*y) + 0.125*cos(2*x + 2*y);
+                momentumFlux[1][1] = 1.0*mu*cos(x - y) - 1.0*mu*cos(x + y) - 0.5*cos(2*x) - 0.125*cos(2*x - 2*y) - 0.125*cos(2*x + 2*y) + 0.25;
+                return momentumFlux;
+            };
+
+            static const bool useQuadrature = getParam<bool>("Problem.UseQuadrature", false);
+            if (useQuadrature)
+            {
+                const auto geo = scvf.geometry();
+                const auto& quad = Dune::QuadratureRules<Scalar, GridView::dimension-1>::rule(geo.type(), 3);
+                auto tmp = values;
+                for (auto&& qp : quad)
+                {
+                    const auto w = geo.integrationElement(qp.position()) * qp.weight();
+                    const auto globalPos = geo.global(qp.position());
+                    const auto sol = flux(globalPos[0], globalPos[1]);
+
+                    const auto normal = scvf.unitOuterNormal();
+                    sol.mv(normal, tmp);
+                    values += tmp*w;
+                }
+
+                values /= scvf.area();
+            }
+            else
+            {
+                const auto tmp = flux(scvf.ipGlobal()[0], scvf.ipGlobal()[1]);
+                const auto normal = scvf.unitOuterNormal();
+                tmp.mv(normal, values);
+            }
+        }
+        else
         {
             const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
             values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
@@ -325,9 +390,9 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        if (isStationary_)
-            return PrimaryVariables(0.0);
-        else
+        // if (isStationary_)
+        //     return PrimaryVariables(0.0);
+        // else
             return analyticalSolution(globalPos, 0.0);
     }
 
@@ -354,8 +419,9 @@ private:
     Scalar timeStepSize_;
 
     bool isStationary_;
+    bool useNeumann_ = false;
 };
 
 } // end namespace Dumux
 
-#endif // DUMUX_SINCOS_TEST_PROBLEM_HH
+#endif
