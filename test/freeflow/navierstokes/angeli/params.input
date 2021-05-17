@@ -1,6 +1,6 @@
 [TimeLoop]
-DtInitial = 1e-4 # [s]
-TEnd = 1e-2 # [s]
+DtInitial = 1e-6 # [s]
+TEnd = 2e-6 # [s]
 
 [Grid]
 LowerLeft = 0 0
@@ -12,6 +12,7 @@ Name = test_angeli # name passed to the output routines
 EnableGravity = false
 PrintL2Error = false
 EnableInertiaTerms = true
+AveragedAnalyticalSolution = true
 
 [Component]
 LiquidDensity = 1

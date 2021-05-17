@@ -80,7 +80,7 @@ auto createAnalyticalSolution(const Scalar time, const Problem& problem)
         {
             auto ccDofIdx = scv.dofIndex();
             auto ccDofPosition = scv.dofPosition();
-            auto analyticalSolutionAtCc = problem.analyticalSolution(ccDofPosition, time);
+            auto analyticalSolutionAtCc = problem.instationaryAnalyticalSolution(ccDofPosition, time);
 
             // velocities on faces
             for (auto&& scvf : scvfs(fvGeometry))
@@ -88,7 +88,7 @@ auto createAnalyticalSolution(const Scalar time, const Problem& problem)
                 const auto faceDofIdx = scvf.dofIndex();
                 const auto faceDofPosition = scvf.center();
                 const auto dirIdx = scvf.directionIndex();
-                const auto analyticalSolutionAtFace = problem.analyticalSolution(faceDofPosition, time);
+                const auto analyticalSolutionAtFace = problem.instationaryAnalyticalSolution(faceDofPosition, time);
                 analyticalVelocityOnFace[faceDofIdx][dirIdx] = analyticalSolutionAtFace[Indices::velocity(dirIdx)];
             }
 

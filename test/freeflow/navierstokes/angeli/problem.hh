@@ -36,7 +36,6 @@
 #include "../l2error.hh"
 
 namespace Dumux {
-
 /*!
  * \ingroup NavierStokesTests
  * \brief  Test problem for the staggered grid (Angeli et al. 2017, \cite Angeli2017).
@@ -134,29 +133,7 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition & globalPos) const
     {
         // use the values of the analytical solution
-        return analyticalSolution(globalPos, time_+timeStepSize_);
-    }
-
-    /*!
-     * \brief Returns the analytical solution of the problem at a given time and position.
-     *
-     * \param globalPos The global position
-     * \param time The current simulation time
-     */
-    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos, const Scalar time) const
-    {
-        const Scalar x = globalPos[0];
-        const Scalar y = globalPos[1];
-
-        const Scalar t = time;
-
-        PrimaryVariables values;
-
-        values[Indices::pressureIdx] = - 0.25 * std::exp(-10.0 * kinematicViscosity_ * M_PI * M_PI * t) * M_PI * M_PI * (4.0 * std::cos(2.0 * M_PI * x) + std::cos(4.0 * M_PI * y))*rho_;
-        values[Indices::velocityXIdx] = - 2.0 * M_PI * std::exp(- 5.0 * kinematicViscosity_ * M_PI * M_PI * t) * std::cos(M_PI * x) * std::sin(2.0 * M_PI * y);
-        values[Indices::velocityYIdx] = M_PI * std::exp(- 5.0 * kinematicViscosity_ * M_PI * M_PI * t) * std::sin(M_PI * x) * std::cos(2.0 * M_PI * y);
-
-        return values;
+        return this->instationaryAnalyticalSolution(globalPos, time_+timeStepSize_);
     }
 
     /*!
@@ -166,7 +143,105 @@ public:
      */
     PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
     {
-        return analyticalSolution(globalPos, time_+timeStepSize_);
+        return this->instationaryAnalyticalSolution(globalPos, time_+timeStepSize_);
+    }
+
+    PrimaryVariables instationaryAnalyticalSolutionAtPos(const GlobalPosition& globalPos, const Scalar time) const
+    {
+        const Scalar x = globalPos[0];
+        const Scalar y = globalPos[1];
+        const Scalar t = time;
+
+        PrimaryVariables values = {};
+
+        for (unsigned int j = 0; j < 2; ++j)
+        {
+            for (unsigned int i = 0; i < values.size(); ++i)
+            {
+                values[i] += xFactorAnalyticalSolutionAtPos(x,t)[j][i]*yFactorAnalyticalSolutionAtPos(y,t)[j][i];
+            }
+        }
+
+        return values;
+    }
+
+    /*!
+     * \brief Returns the analytical solution of the problem at a given position.
+     *
+     * \param globalPos The global position
+     */
+    PrimaryVariables analyticalSolutionAtPos(const GlobalPosition& globalPos) const
+    {
+        return this->instationaryAnalyticalSolutionAtPos(globalPos, time_+timeStepSize_);
+    }
+
+
+    std::array<PrimaryVariables, 2> xFactorAnalyticalSolutionAtPos(Scalar x, Scalar t) const
+    {
+        PrimaryVariables values1;
+        values1[Indices::pressureIdx] = - 0.25 * f_(t) * f_(t)  * 4.0 * M_PI * M_PI * std::cos(2.0 * M_PI * x)*rho_;
+        values1[Indices::velocityXIdx] = f_(t) * f2_(x) ;
+        values1[Indices::velocityYIdx] = - f_(t) * df2_(x);
+
+        PrimaryVariables values2 = {};
+        values2[Indices::pressureIdx] = 1.;
+
+        std::array<PrimaryVariables, 2> retPair;
+        retPair[0] = values1;
+        retPair[1] = values2;
+
+        return retPair;
+    }
+
+    std::array<PrimaryVariables, 2> yFactorAnalyticalSolutionAtPos(Scalar y, Scalar t) const
+    {
+        PrimaryVariables values1;
+        values1[Indices::pressureIdx] = 1.;
+        values1[Indices::velocityXIdx] = df3_(y);
+        values1[Indices::velocityYIdx] = f3_(y);
+
+        PrimaryVariables values2 = {};
+        values2[Indices::pressureIdx] = - 0.25 * f_(t) * f_(t)  * M_PI * M_PI * std::cos(4.0 * M_PI * y)*rho_;
+
+        std::array<PrimaryVariables, 2> retPair;
+        retPair[0] = values1;
+        retPair[1] = values2;
+
+        return retPair;
+    }
+
+    std::array<PrimaryVariables, 2> xFactorAnalyticalSolutionAntiderivativeAtPos(Scalar x, Scalar t) const
+    {
+        PrimaryVariables values1;
+        values1[Indices::pressureIdx] = - 0.25 * f_(t) * f_(t)  * 2.0 * M_PI * std::sin(2.0 * M_PI * x)*rho_;
+        values1[Indices::velocityXIdx] = f_(t) * intf2_(x) ;
+        values1[Indices::velocityYIdx] = - f_(t) * f2_(x);
+
+        PrimaryVariables values2 = {};
+        values2[Indices::pressureIdx] = x;
+
+        std::array<PrimaryVariables, 2> retPair;
+        retPair[0] = values1;
+        retPair[1] = values2;
+
+        return retPair;
+    }
+
+    std::array<PrimaryVariables, 2> yFactorAnalyticalSolutionAntiderivativeAtPos(Scalar y, Scalar t) const
+    {
+        PrimaryVariables values1;
+        values1[Indices::pressureIdx] = y;
+        values1[Indices::velocityXIdx] = f3_(y);
+        values1[Indices::velocityYIdx] = intf3_(y);
+
+        PrimaryVariables values2 = {};
+        values2[Indices::pressureIdx] = - 1./16 * f_(t) * f_(t)  * M_PI * std::sin(4.0 * M_PI * y)*rho_;
+
+        std::array<PrimaryVariables, 2> retPair;
+        retPair[0] = values1;
+        retPair[1] = values2;
+
+        return retPair;
     }
 
     // \}
@@ -183,7 +258,7 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        return analyticalSolution(globalPos, 0);
+        return this->instationaryAnalyticalSolution(globalPos, 0);
     }
 
     /*!
@@ -203,6 +278,30 @@ public:
     }
 
 private:
+    Scalar f_(Scalar t) const
+    { return std::exp(- 5.0 * kinematicViscosity_ * M_PI * M_PI * t); }
+
+    Scalar df_(Scalar t) const
+    { return - 5.0 * kinematicViscosity_ * M_PI * M_PI *  f_(t); }
+
+    Scalar intf2_ (Scalar x) const
+    { return std::sin(M_PI * x)/M_PI; }
+
+    Scalar f2_ (Scalar x) const
+    { return std::cos(M_PI * x); }
+
+    Scalar df2_ (Scalar x) const
+    { return -M_PI * std::sin(M_PI * x); }
+
+    Scalar intf3_ ( Scalar x) const
+    { return std::sin(2.0 * M_PI * x)/(2.0 * M_PI); }
+
+    Scalar f3_ ( Scalar x) const
+    { return std::cos(2.0 * M_PI * x); }
+
+    Scalar df3_ ( Scalar x) const
+    { return - 2.0 * M_PI * std::sin(2.0 * M_PI * x); }
+
     Scalar kinematicViscosity_;
     Scalar rho_;
     Scalar time_ = 0;
