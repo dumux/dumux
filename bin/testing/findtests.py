@@ -4,6 +4,9 @@
 Find those tests that are affected by changes
 Run this in the build directory
 Warning: This runs 'make clean' on the build directory
+Note: This only works with compilers that support the following flags:
+      - "-MM": write included user headers (no system headers) to stdout
+      - "-H": Show header includes and nesting depth
 """
 
 import json
@@ -12,6 +15,8 @@ from argparse import ArgumentParser
 from glob import glob
 from subprocess import PIPE
 import os
+from multiprocessing import Pool
+from functools import partial
 
 
 # Check if the set a contains a member of list b
@@ -24,7 +29,11 @@ def getCompileCommand(testConfig):
     lines = subprocess.check_output(["make", "--dry-run",
                                      testConfig["target"]],
                                     encoding='ascii').splitlines()
-    commands = list(filter(lambda comm: 'g++' in comm, lines))
+
+    def hasCppCommand(line):
+        return any(cpp in line for cpp in ['g++', 'clang++'])
+
+    commands = list(filter(lambda line: hasCppCommand(line), lines))
     assert len(commands) <= 1
     return commands[0] if commands else None
 
@@ -44,7 +53,7 @@ def buildCommandAndDir(testConfig, cache):
 
 
 # check if a test is affected by changes in the given files
-def isAffectedTest(testConfigFile, changed_files):
+def isAffectedTest(testConfigFile, changedFiles):
     with open(testConfigFile) as configFile:
         testConfig = json.load(configFile)
 
@@ -66,12 +75,12 @@ def isAffectedTest(testConfigFile, changed_files):
     def isProjectHeader(headerPath):
         return projectDir in headerPath
 
-    test_files = [os.path.relpath(mainFile.lstrip(". "), projectDir)]
-    test_files.extend([os.path.relpath(header.lstrip(". "), projectDir)
+    testFiles = [os.path.relpath(mainFile.lstrip(". "), projectDir)]
+    testFiles.extend([os.path.relpath(header.lstrip(". "), projectDir)
                       for header in filter(isProjectHeader, headers)])
-    test_files = set(test_files)
+    testFiles = set(testFiles)
 
-    if hasCommonMember(changed_files, test_files):
+    if hasCommonMember(changedFiles, testFiles):
         return True, testConfig["name"], testConfig["target"]
 
     return False, testConfig["name"], testConfig["target"]
@@ -81,21 +90,26 @@ if __name__ == '__main__':
 
     # parse input arguments
     parser = ArgumentParser(description='Find tests affected by changes')
-    parser.add_argument('-s', '--source', required=False, default='HEAD',
+    parser.add_argument('-s', '--source',
+                        required=False, default='HEAD',
                         help='The source tree (default: `HEAD`)')
-    parser.add_argument('-t', '--target', required=False, default='master',
+    parser.add_argument('-t', '--target',
+                        required=False, default='master',
                         help='The tree to compare against (default: `master`)')
-    parser.add_argument('-f', '--outfile', required=False,
-                        default='affectedtests.json',
+    parser.add_argument('-np', '--num-processes',
+                        required=False, type=int, default=4,
+                        help='Number of processes (default: 4)')
+    parser.add_argument('-f', '--outfile',
+                        required=False, default='affectedtests.json',
                         help='The file in which to write the affected tests')
     args = vars(parser.parse_args())
 
     # find the changes files
-    changed_files = subprocess.check_output(["git", "diff-tree",
-                                             "-r", "--name-only",
-                                             args['source'],  args['target']],
-                                            encoding='ascii').splitlines()
-    changed_files = set(changed_files)
+    changedFiles = subprocess.check_output(
+        ["git", "diff-tree", "-r", "--name-only", args['source'],  args['target']],
+        encoding='ascii'
+    ).splitlines()
+    changedFiles = set(changedFiles)
 
     # clean build directory
     subprocess.run(["make", "clean"])
@@ -106,15 +120,18 @@ if __name__ == '__main__':
 
     # detect affected tests
     print("Detecting affected tests:")
-    count = 0
     affectedTests = {}
-    for test in glob("TestMetaData/*json"):
-        affected, name, target = isAffectedTest(test, changed_files)
-        if affected:
-            print("\t- {}".format(name))
-            affectedTests[name] = {'target': target}
-            count += 1
-    print("Detected {} affected tests".format(count))
+    tests = glob("TestMetaData/*json")
+
+    numProcesses = max(1, args['num_processes'])
+    findAffectedTest = partial(isAffectedTest, changedFiles=changedFiles)
+    with Pool(processes=numProcesses) as p:
+        for affected, name, target in p.imap_unordered(findAffectedTest, tests, chunksize=4):
+            if affected:
+                affectedTests[name] = {'target': target}
+                print('\t- {} (target: {})'.format(name, target))
+
+    print("Detected {} affected tests".format(len(affectedTests)))
 
     with open(args['outfile'], 'w') as jsonFile:
         json.dump(affectedTests, jsonFile)
