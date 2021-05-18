@@ -24,7 +24,10 @@ NumericDifference.BaseEpsilon = 1e-8
 
 [Newton]
 MaxSteps = 10
-MaxRelativeShift = 1e-5
+MaxRelativeShift = 1e-10
 
 [Vtk]
 WriteFaceData = false
+
+[Flux]
+UpwindWeight = 0.5
