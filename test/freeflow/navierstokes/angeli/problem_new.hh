@@ -27,6 +27,7 @@
 #define DUMUX_ANGELI_TEST_PROBLEM_HH
 
 #include <dune/grid/yaspgrid.hh>
+#include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
@@ -93,6 +94,7 @@ class AngeliTestProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
     using NumEqVector = typename ParentType::NumEqVector;
     using PrimaryVariables = typename ParentType::PrimaryVariables;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -117,12 +119,11 @@ public:
     : ParentType(gridGeometry, couplingManager)
     {
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
+        useNeumann_ = getParam<bool>("Problem.UseNeumann", false);
     }
 
    /*!
      * \brief Returns the temperature within the domain in [K].
-     *
-     * This problem assumes a temperature of 10 degrees Celsius.
      */
     Scalar temperature() const
     { return 298.0; }
@@ -145,9 +146,12 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            // set Dirichlet values for the velocity everywhere
-            values.setDirichlet(Indices::velocityXIdx);
-            values.setDirichlet(Indices::velocityYIdx);
+            static constexpr Scalar eps = 1e-8;
+            if (useNeumann_ && (globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps ||
+                                globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps))
+                values.setAllNeumann();
+            else
+                values.setAllDirichlet();
         }
         else
             values.setAllNeumann();
@@ -173,18 +177,24 @@ public:
     {
         std::bitset<PrimaryVariables::dimension> values;
 
-        auto fvGeometry = localView(this->gridGeometry());
-        fvGeometry.bindElement(element);
-
-        auto isAtBoundary = [&](const FVElementGeometry& fvGeometry)
+        // We don't need internal Dirichlet conditions if a Neumann BC is set for the momentum balance (which accounts for the pressure).
+        // If only Dirichlet BCs are set for the momentum balance, fix the pressure at some cells such that the solution is fully defined.
+        if (!useNeumann_)
         {
-            if (fvGeometry.hasBoundaryScvf())
-                return true;
-            return false;
-        };
+            auto fvGeometry = localView(this->gridGeometry());
+            fvGeometry.bindElement(element);
 
-        if (isAtBoundary(fvGeometry))
-            values.set(Indices::pressureIdx);
+            const auto isAtBoundary = [&](const FVElementGeometry& fvGeometry)
+            {
+                if (fvGeometry.hasBoundaryScvf())
+                    return true;
+                return false;
+            };
+
+            if (isAtBoundary(fvGeometry))
+                values.set(Indices::pressureIdx);
+        }
+
         return values;
     }
 
@@ -194,20 +204,23 @@ public:
      * \param scv The sub-control volume
      */
     PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
-    { return dirichletAtPos(scv.center()); }
+    { return analyticalSolution(scv.center()); }
 
 
-   /*!
-     * \brief Returns Dirichlet boundary values at a given position.
+    /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        control volume face (velocities)
      *
-     * \param globalPos The global position
+     * \param element The finite element
+     * \param scvf the sub control volume face
      */
-    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
+    PrimaryVariables dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
     {
-        // use the values of the analytical solution
-        return analyticalSolution(globalPos, time_);
+        if constexpr (ParentType::isMomentumProblem())
+            return velocityDirichlet_(scvf);
+        else
+            return analyticalSolution(scvf.center());
     }
-
 
     /*!
      * \brief Evaluates the boundary conditions for a Neumann control volume.
@@ -232,6 +245,23 @@ public:
             const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
             values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
         }
+        else
+        {
+            using std::sin;
+            using std::cos;
+            Dune::FieldMatrix<Scalar, 2, 2> momentumFlux(0.0);
+            const auto x = scvf.ipGlobal()[0];
+            const auto y = scvf.ipGlobal()[1];
+            const Scalar mu = kinematicViscosity_;
+            const Scalar t = time_;
+            momentumFlux[0][0] = M_PI*M_PI *(-4.0*mu*exp(10.0*M_PI*M_PI*mu*t)*sin(M_PI*x)*sin(2*M_PI*y) + (4.0*sin(2*M_PI*y)*sin(2*M_PI*y)*cos(M_PI*x)*cos(M_PI*x) - 1.0*cos(2*M_PI*x) - 0.25*cos(4*M_PI*y))*exp(5.0*M_PI*M_PI*mu*t))*exp(-15.0*M_PI*M_PI*mu*t);
+            momentumFlux[0][1] = M_PI*M_PI *( 3.0*mu*exp(10.0*M_PI*M_PI*mu*t) - 2.0*exp(5.0*M_PI*M_PI*mu*t)*sin(M_PI*x)*sin(2*M_PI*y))*exp(-15.0*M_PI*M_PI*mu*t)*cos(M_PI*x)*cos(2*M_PI*y);
+            momentumFlux[1][0] = M_PI*M_PI *( 3.0*mu*exp(10.0*M_PI*M_PI*mu*t) - 2.0*exp(5.0*M_PI*M_PI*mu*t)*sin(M_PI*x)*sin(2*M_PI*y))*exp(-15.0*M_PI*M_PI*mu*t)*cos(M_PI*x)*cos(2*M_PI*y);
+            momentumFlux[1][1] = M_PI*M_PI *( 4.0*mu*exp(10.0*M_PI*M_PI*mu*t)*sin(M_PI*x)*sin(2*M_PI*y) + (sin(M_PI*x)*sin(M_PI*x)*cos(2*M_PI*y)*cos(2*M_PI*y) - 1.0*cos(2*M_PI*x) - 0.25*cos(4*M_PI*y))*exp(5.0*M_PI*M_PI*mu*t))*exp(-15.0*M_PI*M_PI*mu*t);
+
+            const auto normal = scvf.unitOuterNormal();
+            momentumFlux.mv(normal, values);
+        }
 
         return values;
     }
@@ -242,35 +272,27 @@ public:
      * \param globalPos The global position
      * \param time The current simulation time
      */
-    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos, const Scalar time) const
+    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
     {
         const Scalar x = globalPos[0];
         const Scalar y = globalPos[1];
-
-        const Scalar t = time;
+        const Scalar t = time_;
 
         PrimaryVariables values;
+        using std::exp;
+        using std::sin;
+        using std::cos;
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            values[Indices::velocityXIdx] = - 2.0 * M_PI * std::exp(- 5.0 * kinematicViscosity_ * M_PI * M_PI * t) * std::cos(M_PI * x) * std::sin(2.0 * M_PI * y);
-            values[Indices::velocityYIdx] = M_PI * std::exp(- 5.0 * kinematicViscosity_ * M_PI * M_PI * t) * std::sin(M_PI * x) * std::cos(2.0 * M_PI * y);
+            values[Indices::velocityXIdx] = - 2.0 * M_PI * exp(- 5.0 * kinematicViscosity_ * M_PI * M_PI * t) * cos(M_PI * x) * sin(2.0 * M_PI * y);
+            values[Indices::velocityYIdx] = M_PI * exp(- 5.0 * kinematicViscosity_ * M_PI * M_PI * t) * sin(M_PI * x) * cos(2.0 * M_PI * y);
         }
         else
-        {
-            values[Indices::pressureIdx] = - 0.25 * std::exp(-10.0 * kinematicViscosity_ * M_PI * M_PI * t) * M_PI * M_PI * (4.0 * std::cos(2.0 * M_PI * x) + std::cos(4.0 * M_PI * y));
-        }
+            values[Indices::pressureIdx] = - 0.25 * exp(-10.0 * kinematicViscosity_ * M_PI * M_PI * t) * M_PI * M_PI * (4.0 * cos(2.0 * M_PI * x) + cos(4.0 * M_PI * y));
 
         return values;
     }
-
-    /*!
-     * \brief Returns the analytical solution of the problem at a given position.
-     *
-     * \param globalPos The global position
-     */
-    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
-    { return analyticalSolution(globalPos, time_); }
 
     // \}
 
@@ -279,23 +301,75 @@ public:
      */
     // \{
 
-   /*!
-     * \brief Evaluates the initial value for a control volume.
-     *
-     * \param globalPos The global position
+    /*!
+     * \brief Evaluates the initial value for a control volume (velocity)
      */
-    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
-    { return analyticalSolution(globalPos, 0.0); }
+    PrimaryVariables initial(const SubControlVolume& scv) const
+    {
+        // We can either evaluate the analytical solution point-wise at the
+        // momentum balance integration points or use an averaged velocity.
+
+        // Not using the quadrature to integrate and average the velocity
+        // will yield a spurious pressure solution in the first time step
+        // because the discrete mass balance equation is not fulfilled when just taking
+        // point-wise values of the analytical solution.
+        static const bool useQuad = getParam<bool>("Problem.UseQuad", true);
+
+        if (!useQuad)
+            return analyticalSolution(scv.dofPosition());
+
+        // Get the element intersection/facet corresponding corresponding to the dual grid scv
+        // (where the velocity DOFs are located) and use a quadrature to get the average velocity
+        // on that facet.
+        const auto& element = this->gridGeometry().element(scv.elementIndex());
+
+        int idx = 0;
+        for (const auto& intersection : intersections(this->gridGeometry().gridView(), element))
+        {
+            if (idx == scv.indexInElement())
+                return velocityDirichlet_(intersection);
+
+            ++idx;
+        }
+        DUNE_THROW(Dune::InvalidStateException, "No intersection found");
+    }
 
     /*!
-     * \brief Updates the time
+     * \brief Evaluates the initial value for an element (pressure)
+     */
+    PrimaryVariables initial(const Element& element) const
+    {
+        return analyticalSolution(element.geometry().center());
+    }
+
+    /*!
+     * \brief Update the time
      */
     void updateTime(const Scalar time)
     { time_ = time; }
 
 private:
+
+    template<class Entity>
+    PrimaryVariables velocityDirichlet_(const Entity& entity) const
+    {
+        PrimaryVariables priVars(0.0);
+        const auto geo = entity.geometry();
+        const auto& quad = Dune::QuadratureRules<Scalar, decltype(geo)::mydimension>::rule(geo.type(), 3);
+        for (auto&& qp : quad)
+        {
+            const auto w = qp.weight()*geo.integrationElement(qp.position());
+            const auto globalPos = geo.global(qp.position());
+            const auto sol = analyticalSolution(globalPos);
+            priVars += sol*w;
+        }
+        priVars /= geo.volume();
+        return priVars;
+    }
+
     Scalar kinematicViscosity_;
     Scalar time_ = 0.0;
+    bool useNeumann_;
 };
 } // end namespace Dumux
 
