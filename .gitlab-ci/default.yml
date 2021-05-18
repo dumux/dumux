@@ -16,7 +16,6 @@ variables:
 
 select tests:
   stage: configure
-  image: $IMAGE_REGISTRY_URL/full:dune-2.7-gcc-ubuntu-20.04
   script:
     - |
       if [[ "$TRIGGER_SOURCE" == "merge_request_event" ]]; then
