@@ -31,6 +31,7 @@ parser.add_argument('-t', '--topfoldername', required=False, default='DUMUX',
 parser.add_argument('-o', '--optsfile', required=False,
                     help='Provide custom opts file to be used for the call to dunecontrol. '\
                          'Note that this file is required to be contained and committed within the module or its dependencies.')
+parser.add_argument('-s', '--skipfolders', required=False, nargs='*', help='a list of module folders to be skipped')
 cmdArgs = vars(parser.parse_args())
 
 
@@ -64,7 +65,11 @@ else:
 depNames = [dep['name'] for dep in deps]
 depFolders = [dep['folder'] for dep in deps]
 depFolderPaths = [os.path.abspath(os.path.join(modParentPath, d)) for d in depFolders]
-
+if cmdArgs['skipfolders']:
+    cmdArgs['skipfolders'] = [f.strip('/') for f in cmdArgs['skipfolders']]
+    depFolders = [d for d in depFolders if d not in cmdArgs['skipfolders']]
+    depNames = [getModuleInfo(d, 'Module') for d in depFolders]
+    depFolderPaths = [d for d in depFolderPaths if os.path.basename(d.strip('/')) not in cmdArgs['skipfolders']]
 
 #################################
 # determine specific commits of all modules
@@ -206,7 +211,8 @@ with open(instFileName, 'w') as installFile:
         installFile.write('cd ..\n\n')
 
     # write the module clone first in order for the patches to be present
-    writeCloneModule(modName, modFolder)
+    if modName in depNames:
+        writeCloneModule(modName, modFolder)
     for depModName, depModFolder in zip(depNames, depFolders):
         if depModName != modName:
             writeCloneModule(depModName, depModFolder)
@@ -222,21 +228,23 @@ with open(instFileName, 'w') as installFile:
     writeCommand('make build_tests', '--Error: applications could not be compiled. Please try to compile them manually.')
 
 print("\n-- Successfully created install script file " + instFileName)
+
 if len(patches) > 0:
     print("-> It is recommended that you now commit and publish the 'patches' folder and this install script in your module such that others can use it.")
     print("   IMPORTANT: After you committed the patches, you have to adjust the line of the install script in which your module is checked out to a specific commit.")
     print("              That is, in the line 'git reset --hard COMMIT_SHA' for your module, replace COMMIT_SHA by the commit in which you added the patches.")
     print("              If patches had to be created for your own module, please think about comitting and pushing your local changes and rerunning this script again.")
 
-print("\n-- You might want to put installation instructions into the README.md file of your module, for instance:\n")
-print("   ## Installation\n")
-print("   The easiest way of installation is to use the script `" + instFileName + "` provided in this repository.")
-print("   Using `wget`, you can simply install all dependent modules by typing:\n")
-print("   ```sh")
-print("   wget " + versions[modFolder]['remote'] + "/" + instFileName)
-print("   chmod u+x " + instFileName)
-print("   ./" + instFileName)
-print("   ```\n")
+if modName in depNames: # print gudience to installation if the module is not skipped
+    print("\n-- You might want to put installation instructions into the README.md file of your module, for instance:\n")
+    print("   ## Installation\n")
+    print("   The easiest way of installation is to use the script `" + instFileName + "` provided in this repository.")
+    print("   Using `wget`, you can simply install all dependent modules by typing:\n")
+    print("   ```sh")
+    print("   wget " + versions[modFolder]['remote'] + "/" + instFileName)
+    print("   chmod u+x " + instFileName)
+    print("   ./" + instFileName)
+    print("   ```\n")
 
-if topFolderName: print("   This will create a sub-folder `" + topFolderName + "`, clone all modules into it, configure the entire project and build the applications contained in this module.")
-else: print("   This will clone all modules into the folder from which the script is called, configure the entire project and build the applications contained in this module.")
+    if topFolderName: print("   This will create a sub-folder `" + topFolderName + "`, clone all modules into it, configure the entire project and build the applications contained in this module.")
+    else: print("   This will clone all modules into the folder from which the script is called, configure the entire project and build the applications contained in this module.")
