@@ -387,7 +387,7 @@ public:
                 if (!dofHandled[dofIdx])
                 {
                     dofHandled[dofIdx] = true;
-                    sol[dofIdx] = initial(scv)[scv.dofAxis()];
+                    sol[dofIdx] = asImp_().initial(scv)[scv.dofAxis()];
                 }
             }
         }
@@ -518,11 +518,11 @@ private:
     }
 
     //! Returns the implementation of the problem (i.e. static polymorphism)
-    Implementation &asImp_()
+    Implementation& asImp_()
     { return *static_cast<Implementation *>(this); }
 
     //! \copydoc asImp_()
-    const Implementation &asImp_() const
+    const Implementation& asImp_() const
     { return *static_cast<const Implementation *>(this); }
 
     GravityVector gravity_;
