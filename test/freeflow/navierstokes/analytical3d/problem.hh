@@ -27,6 +27,7 @@
 
 
 #include <dune/grid/spgrid.hh>
+#include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
@@ -143,15 +144,11 @@ public:
         return values;
     }
 
-   /*!
-     * \brief Returns Dirichlet boundary values at a given position.
-     *
-     * \param globalPos The global position
-     */
-    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
+    PrimaryVariables dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
     {
-        return analyticalSolution(globalPos);
+        return velocityDirichlet_(scvf);
     }
+
 
     /*!
      * \brief Returns the analytical solution of the problem at a given time and position.
@@ -180,6 +177,8 @@ public:
         const Scalar dz = d*z;
 
         PrimaryVariables values;
+        using std::sin;
+        using std::cos;
 
         if constexpr (ParentType::isMomentumProblem())
         {
@@ -214,8 +213,24 @@ public:
      *
      * \param globalPos The global position
      */
-    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
-    { return analyticalSolution(globalPos, 0.0); }
+    PrimaryVariables initial(const Element& element) const
+    { return analyticalSolution(element.geometry().center(), 0.0); }
+
+    PrimaryVariables initial(const SubControlVolume& scv) const
+    {
+        const auto& element = this->gridGeometry().element(scv.elementIndex());
+
+        int idx = 0;
+        for (const auto& intersection : intersections(this->gridGeometry().gridView(), element))
+        {
+            if (idx == scv.indexInElement())
+                return velocityDirichlet_(intersection);
+
+            ++idx;
+        }
+        DUNE_THROW(Dune::InvalidStateException, "No intersection found");
+    }
+
 
     // \}
 
@@ -266,6 +281,27 @@ public:
     { time_ = time; }
 
 private:
+
+    template<class Entity>
+    PrimaryVariables velocityDirichlet_(const Entity& entity) const
+    {
+        PrimaryVariables priVars(0.0);
+        const auto geo = entity.geometry();
+        const auto& quad = Dune::QuadratureRules<Scalar, decltype(geo)::mydimension>::rule(geo.type(), 3);
+        for (auto&& qp : quad)
+        {
+            const auto w = qp.weight()*geo.integrationElement(qp.position());
+            const auto globalPos = geo.global(qp.position());
+            const auto sol = analyticalSolution(globalPos);
+            priVars += sol*w;
+        }
+        priVars /= geo.volume();
+
+        return priVars;
+    }
+
+
+
     Scalar time_ = 0.0;
 };
 } // end namespace Dumux
