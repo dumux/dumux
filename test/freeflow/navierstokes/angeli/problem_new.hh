@@ -27,6 +27,7 @@
 #define DUMUX_ANGELI_TEST_PROBLEM_HH
 
 #include <dune/grid/yaspgrid.hh>
+#include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
@@ -93,6 +94,7 @@ class AngeliTestProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
     using NumEqVector = typename ParentType::NumEqVector;
     using PrimaryVariables = typename ParentType::PrimaryVariables;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -200,20 +202,23 @@ public:
      * \param scv The sub-control volume
      */
     PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
-    { return dirichletAtPos(scv.center()); }
+    { return analyticalSolution(scv.center()); }
 
 
-   /*!
-     * \brief Returns Dirichlet boundary values at a given position.
+    /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        control volume face (velocities)
      *
-     * \param globalPos The global position
+     * \param element The finite element
+     * \param scvf the sub control volume face
      */
-    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
+    PrimaryVariables dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
     {
-        // use the values of the analytical solution
-        return analyticalSolution(globalPos, time_);
+        if constexpr (ParentType::isMomentumProblem())
+            return velocityDirichlet_(scvf);
+        else
+            return analyticalSolution(scvf.center());
     }
-
 
     /*!
      * \brief Evaluates the boundary conditions for a Neumann control volume.
@@ -302,13 +307,21 @@ public:
      */
     // \{
 
-   /*!
-     * \brief Evaluates the initial value for a control volume.
-     *
-     * \param globalPos The global position
+    /*!
+     * \brief Evaluates the initial value for a control volume (pressure)
      */
-    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
-    { return analyticalSolution(globalPos, time_); }
+    PrimaryVariables initial(const SubControlVolume& scv) const
+    {
+        return velocityDirichlet_(scv);
+    }
+
+    /*!
+     * \brief Evaluates the initial value for a control volume (pressure)
+     */
+    PrimaryVariables initial(const Element& element) const
+    {
+        return analyticalSolution(element.geometry().center());
+    }
 
     /*!
      * \brief Updates the time
@@ -317,6 +330,26 @@ public:
     { time_ = time; }
 
 private:
+
+    template<class Entity>
+    PrimaryVariables velocityDirichlet_(const Entity& entity) const
+    {
+        PrimaryVariables priVars(0.0);
+        const auto geo = entity.geometry();
+        const auto& quad = Dune::QuadratureRules<Scalar, decltype(geo)::mydimension>::rule(geo.type(), 3);
+        for (auto&& qp : quad)
+        {
+            const auto w = qp.weight()*geo.integrationElement(qp.position());
+            const auto globalPos = geo.global(qp.position());
+            const auto sol = analyticalSolution(globalPos);
+            priVars[Indices::velocityXIdx] += sol[Indices::velocityXIdx]*w;
+            priVars[Indices::velocityYIdx] += sol[Indices::velocityYIdx]*w;
+        }
+        priVars[Indices::velocityXIdx] /= geo.volume();
+        priVars[Indices::velocityYIdx] /= geo.volume();
+        return priVars;
+    }
+
     Scalar kinematicViscosity_;
     Scalar time_ = 0.0;
 };
