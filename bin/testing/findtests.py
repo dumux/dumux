@@ -4,6 +4,9 @@
 Find those tests that are affected by changes
 Run this in the build directory
 Warning: This runs 'make clean' on the build directory
+Note: This only works with compilers that support the following flags:
+      - "-MM": write included user headers (no system headers) to stdout
+      - "-H": Show header includes and nesting depth
 """
 
 import json
@@ -26,7 +29,11 @@ def getCompileCommand(testConfig):
     lines = subprocess.check_output(["make", "--dry-run",
                                      testConfig["target"]],
                                     encoding='ascii').splitlines()
-    commands = list(filter(lambda comm: 'g++' in comm, lines))
+
+    def hasCppCommand(line):
+        return any(cpp in line for cpp in ['g++', 'clang++'])
+
+    commands = list(filter(lambda line: hasCppCommand(line), lines))
     assert len(commands) <= 1
     return commands[0] if commands else None
 
