@@ -72,6 +72,7 @@ def isAffectedTest(testConfigFile, changed_files):
     test_files = set(test_files)
 
     if hasCommonMember(changed_files, test_files):
+        print("Main-File of test {}: {}".format(testConfigFile, mainFile))
         return True, testConfig["name"], testConfig["target"]
 
     return False, testConfig["name"], testConfig["target"]
