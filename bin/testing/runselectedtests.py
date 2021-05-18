@@ -47,7 +47,7 @@ def runTests(config, script='', flags=['-j4', '--output-on-failure']):
         tests = ['NOOP']
 
     # turn test names into a regular expression
-    testRegEx = '|'.join(tests)
+    testRegEx = '|'.join(["^{}$".format(t) for t in tests])
 
     # if not given, try system-wide call to dune-ctest
     script = ['dune-ctest'] if not script else script
