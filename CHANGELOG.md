@@ -9,8 +9,9 @@ Differences Between DuMu<sup>x</sup> 3.4 and DuMu<sup>x</sup> 3.3
     - An example introduces the use of the 1p PNM for the estimation of the upscaled Darcy permeability.
     - Advection type including inertia effect for simulations in the non-creeping flow regime
     - Note that this is still considered a rather _experimental_ feature. Everything within namespace `Dumux::PoreNetwork` might undergo (backward-compatibility breaking) changes _without prior notice_.
-- __Several scripts have been translated to Python__:
-    - `getusedversions.sh` to extract the used Dumux/Dune versions of a module (new script: `bin/util/getusedversions.py`)
+- __Shell scripts translated to Python__:
+    - `installexternal.sh` is deprecated, you can now install external modules and libraries via new script `bin/installexternal.py`.
+    - `getusedversions.sh` to extract the used Dumux/Dune versions of a module is removed, use new script: `bin/util/getusedversions.py` instead.
     - `extractmodulepart.sh` no longer creates an install file, instead, you can now generate install scripts for your module using the new script `bin/util/makeinstallscript.py`.
     - Note: the old shells script will be removed after release 3.4.
 - __Law for water vapor viscosity in gas mixtures changed__: Polynomial laws for determining the viscosity of vater vapor in gas mixtures are introduced and applied by the new function `h2oGasViscosityInMixture`. The polynomial laws give a better approximation of the gas viscosity especially at higher temperatures ( >273.15 K) and a high water vapor content.
