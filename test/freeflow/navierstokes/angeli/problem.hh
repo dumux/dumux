@@ -77,6 +77,8 @@ public:
     {
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
         rho_ = getParam<Scalar>("Component.LiquidDensity", 1.0);
+        useVelocityAveragingForDirichlet_ = getParam<bool>("Problem.UseVelocityAveragingForDirichlet", false);
+        useVelocityAveragingForInitial_ = getParam<bool>("Problem.UseVelocityAveragingForInitial", false);
     }
 
     /*!
@@ -135,10 +137,15 @@ public:
      *
      * \param element The finite element
      * \param scvf the sub control volume face
+     *
+     * Concerning the usage of averagedVelocity_, see the explanation of the initial function.
      */
     PrimaryVariables dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
     {
-        return velocityDirichlet_(scvf);
+        if (useVelocityAveragingForDirichlet_)
+            return averagedVelocity_(scvf);
+        else
+            return analyticalSolution(scvf.center());
     }
 
     /*!
@@ -192,11 +199,21 @@ public:
     }
 
     /*!
-     * \brief Evaluates the initial value for a face control volume (velocities)
+     * \brief Evaluates the initial value for a sub control volume face (velocities)
+     *
+     * Simply assigning the value of the analytical solution at the face center
+     * gives a discrete solution that is not divergence-free. For small initial
+     * time steps, this has a negative impact on the pressure solution
+     * after the first time step. The flag UseVelocityAveragingForInitial triggers the
+     * function averagedVelocity_ which uses a higher order quadrature formula to
+     * bring the discrete solution sufficiently close to being divergence-free.
      */
     PrimaryVariables initial(const SubControlVolumeFace& scvf) const
     {
-        return velocityDirichlet_(scvf);
+        if (useVelocityAveragingForInitial_)
+            return averagedVelocity_(scvf);
+        else
+            return analyticalSolution(scvf.center());
     }
 
     // \}
@@ -210,7 +227,7 @@ public:
     }
 
 private:
-    PrimaryVariables velocityDirichlet_(const SubControlVolumeFace& scvf) const
+    PrimaryVariables averagedVelocity_(const SubControlVolumeFace& scvf) const
     {
         PrimaryVariables priVars(0.0);
         const auto geo = scvf.geometry();
@@ -230,6 +247,8 @@ private:
 
     Scalar kinematicViscosity_, rho_;
     Scalar time_ = 0;
+    bool useVelocityAveragingForDirichlet_;
+    bool useVelocityAveragingForInitial_;
 };
 } // end namespace Dumux
 
