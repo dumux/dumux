@@ -27,6 +27,7 @@
 #include <array>
 #include <utility>
 #include <dune/geometry/type.hh>
+#include <dune/geometry/axisalignedcubegeometry.hh>
 
 #include <dumux/common/indextraits.hh>
 
@@ -44,18 +45,24 @@ namespace Dumux {
 template<class GridView>
 struct FaceCenteredDefaultScvGeometryTraits
 {
-    using Geometry = typename GridView::template Codim<0>::Geometry;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using Scalar = typename GridView::ctype;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+    static constexpr int dim = GridView::Grid::dimension;
+    static constexpr int dimWorld = GridView::Grid::dimensionworld;
+    using CornerStorage = std::array<GlobalPosition, (1<<(dim))>;
+    using Geometry = Dune::AxisAlignedCubeGeometry<Scalar, dim, dimWorld>;
 };
 
 
 template<class GridView, class T = FaceCenteredDefaultScvGeometryTraits<GridView>>
 class FaceCenteredStaggeredSubControlVolume
 {
+    using Geometry = typename T::Geometry;
+    using CornerStorage = typename T::CornerStorage;
     using Element = typename T::Element;
     using GlobalPosition = typename T::GlobalPosition;
     using Scalar = typename T::Scalar;
@@ -68,8 +75,10 @@ public:
 
     FaceCenteredStaggeredSubControlVolume() = default;
 
+    template<class Corners>
     FaceCenteredStaggeredSubControlVolume(const GlobalPosition& center,
                                           const GlobalPosition& dofPosition,
+                                          Corners&& corners,
                                           const Scalar volume,
                                           const GridIndexType globalIndex,
                                           const SmallLocalIndexType indexInElement,
@@ -87,7 +96,16 @@ public:
     , dofAxis_(dofAxis)
     , directionSign_(dirSign)
     , eIdx_(eIdx)
-    , boundary_(boundary) {}
+    , boundary_(boundary)
+    {
+        if constexpr (std::is_same_v<Corners, CornerStorage>)
+            corners_ = std::move(corners);
+        else
+        {
+            for (int i = 0; i < corners_.size(); ++i)
+                corners_[i] = corners[i];
+        }
+    }
 
     //! The center of the sub control volume
     const GlobalPosition& center() const
@@ -124,9 +142,22 @@ public:
     bool boundary() const
     { return boundary_; }
 
+    const GlobalPosition& corner(unsigned int localIdx) const
+    {
+        assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
+        return corners_[localIdx];
+    }
+
+    //! The geometry of the sub control volume face
+    Geometry geometry() const
+    {
+        return Geometry(corners_.front(), corners_.back());
+    }
+
 private:
     GlobalPosition center_;
     GlobalPosition dofPosition_;
+    CornerStorage corners_;
     Scalar volume_;
     GridIndexType globalIndex_;
     SmallLocalIndexType indexInElement_;

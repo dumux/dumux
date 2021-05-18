@@ -128,7 +128,8 @@ class FaceCenteredStaggeredFVGridGeometry<GV, true, Traits>
 
     // static_assert(maxNumScvfsPerElement == 16); // TODO remove
 
-    using CornerStorage = typename Traits::SubControlVolumeFace::Traits::CornerStorage;
+    using ScvfCornerStorage = typename Traits::SubControlVolumeFace::Traits::CornerStorage;
+    using ScvCornerStorage = typename Traits::SubControlVolume::Traits::CornerStorage;
 
 public:
     //! export discretization method
@@ -302,8 +303,9 @@ public:
                 const auto dofIndex = intersectionMapper().globalIntersectionIndex(element, localScvIdx);
                 const auto localOppositeScvIdx = geometryHelper.localOppositeIdx(localScvIdx);
                 const auto directionIdx = Dumux::directionIndex(intersection.centerUnitOuterNormal());
-                const auto intersectionGeometry = intersection.geometry();
-                const auto elementCenter = element.geometry().center();
+                const auto& intersectionGeometry = intersection.geometry();
+                const auto& elementGeometry = element.geometry();
+                const auto& elementCenter = elementGeometry.center();
 
                 // store the local index of the first scvf corresponding to the scv on the current intersection
                 scvfOfScvInfo_[eIdx].push_back(localScvfIdx);
@@ -335,10 +337,28 @@ public:
                 }
 
                 // the sub control volume
+                ScvCornerStorage scvCorners;
+                assert(scvCorners.size() == elementGeometry.corners()); // we assume a fixed-size container
+                for (int i = 0; i < scvCorners.size(); ++i)
+                {
+                    auto& corner = scvCorners[i];
+
+                    // copy the corner of the corresponding element
+                    corner = elementGeometry.corner(i);
+
+                    // shift the corner such that the scvf covers half of the lateral facet
+                    // (keep the outer corner positions)
+                    using std::abs;
+                    const auto eps =  1e-8; // TODO
+                    if (abs(corner[directionIdx] - intersectionGeometry.center()[directionIdx]) > eps)
+                        corner[directionIdx] = elementCenter[directionIdx];
+                }
+
                 const auto scvCenter = 0.5*(intersectionGeometry.center() + elementCenter);
                 scvs_.emplace_back(scvCenter,
                                    intersectionGeometry.center(),
-                                   element.geometry().volume()*0.5,
+                                   std::move(scvCorners),
+                                   elementGeometry.volume()*0.5,
                                    globalScvIndices[localScvIdx],
                                    localScvIdx,
                                    dofIndex,
@@ -348,7 +368,7 @@ public:
                                    onDomainBoundary_(intersection));
 
                 // the frontal sub control volume face at the element center
-                CornerStorage frontalCorners;
+                ScvfCornerStorage frontalCorners;
                 assert(frontalCorners.size() == intersectionGeometry.corners()); // we assume a fixed-size container
                 const auto frontalOffSet = intersectionGeometry.center() - elementCenter;
                 for (int i = 0; i < frontalCorners.size(); ++i)
@@ -407,7 +427,7 @@ public:
                     const auto lateralDirIdx = directionIndex(laterUnitOuterNormal);
 
                     // getting the lateral corners requires some work
-                    CornerStorage lateralCorners;
+                    ScvfCornerStorage lateralCorners;
                     assert(lateralCorners.size() == intersectionGeometry.corners()); // we assume a fixed-size container
                     for (int i = 0; i < lateralCorners.size(); ++i)
                     {
@@ -460,7 +480,7 @@ public:
                     const auto directionIdx = Dumux::directionIndex(intersection.centerUnitOuterNormal());
 
                     // the frontal sub control volume face at the boundary
-                    CornerStorage boundaryCorners;
+                    ScvfCornerStorage boundaryCorners;
                     assert(boundaryCorners.size() == intersectionGeometry.corners()); // we assume a fixed-size container
                     for (int i = 0; i < boundaryCorners.size(); ++i)
                         boundaryCorners[i] = intersectionGeometry.corner(i);
