@@ -111,7 +111,7 @@ int main (int argc, char *argv[]) try
             {
                 std::cout << "- scv " << scv.index() << " center at: " << scv.center()
                           << ", dofPosition " << scv.dofPosition() << " , volume: " << scv.volume()
-                          << " , normal: "<< int(scv.directionIndex())  << " , in direction: " << int(scv.directionSign());
+                          << " , normal: "<< int(scv.dofAxis())  << " , in direction: " << int(scv.directionSign());
                 std::cout << " contains: \n";
 
                 std::size_t boundaryCount = 0;

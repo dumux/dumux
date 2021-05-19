@@ -241,13 +241,13 @@ namespace {
             {
                 // Plot scv index at the scv center
                 // shift scv center in it's direction
-                GlobalPosition shiftedScvCenter = shift(elementCenter, scv.center(), 0.5, scv.directionIndex());
+                GlobalPosition shiftedScvCenter = shift(elementCenter, scv.center(), 0.5, scv.dofAxis());
                 plotFile << "set label at " << shiftedScvCenter[0] << "," << shiftedScvCenter[1] << " '" << scv.index() << "' center" << std::endl;
                 drawCircle(plotFile, shiftedScvCenter, 0.05, "fs empty border 0");
 
                 // Plot the Dof index adjacent to the scv center
-                GlobalPosition shiftedDofLocation = shift(elementCenter, scv.center(), 1.0, scv.directionIndex());
-                if (scv.directionIndex() == 0)
+                GlobalPosition shiftedDofLocation = shift(elementCenter, scv.center(), 1.0, scv.dofAxis());
+                if (scv.dofAxis() == 0)
                     plotFile << "set label at " << shiftedDofLocation[0] << "," << shiftedDofLocation[1] << " 'dof " << int(scv.dofIndex()) << "' boxed center" << std::endl;
                 else
                     plotFile << "set label at " << shiftedDofLocation[0] << "," << shiftedDofLocation[1] << " 'dof " << int(scv.dofIndex()) << "' boxed center rotate by 90" << std::endl;
@@ -257,7 +257,7 @@ namespace {
                 {
                     //scale the scvf centers
                     auto shiftedScvfCenter = centrify(scv.center(), scvf.center(), 0.25);
-                    shiftedScvfCenter = shift(elementCenter, shiftedScvfCenter, 0.5, scv.directionIndex());
+                    shiftedScvfCenter = shift(elementCenter, shiftedScvfCenter, 0.5, scv.dofAxis());
 
                     // Plot scvf index at the scvf center, (offset)
                     if (scvf.boundary())
