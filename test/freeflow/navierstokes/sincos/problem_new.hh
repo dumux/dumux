@@ -123,12 +123,6 @@ public:
         density_ = getParam<Scalar>("Component.LiquidDensity", 1.0);
         dynamicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0) * density_;
         useNeumann_ = getParam<bool>("Problem.UseNeumann", false);
-
-        if constexpr(ParentType::isMomentumProblem())
-        {
-            if (useNeumann_ && !isStationary_)
-                DUNE_THROW(Dune::NotImplemented, "Neumann boundary conditions only implemented for stationary case.");
-        }
     }
 
    /*!
@@ -152,39 +146,17 @@ public:
             const Scalar x = globalPos[0];
             const Scalar y = globalPos[1];
             const Scalar t = time_;
+
+            const auto rho = density_;
             const Scalar mu = dynamicViscosity_;
-            const Scalar rho = density_;
 
-            using std::cos;
-            using std::sin;
-            using Dune::power;
+            source[Indices::momentumXBalanceIdx] = rho*dtU_(x,y,t) - 2.0*mu*dxxU_(x,y,t) - mu*dyyU_(x,y,t) - mu*dxyV_(x,y,t) + dxP_(x,y,t);
+            source[Indices::momentumYBalanceIdx] = rho*dtV_(x,y,t) - 2.0*mu*dyyV_(x,y,t) - mu*dxyU_(x,y,t) - mu*dxxV_(x,y,t) + dyP_(x,y,t);
 
-            if (isStationary_)
+            if (this->enableInertiaTerms())
             {
-                if (this->enableInertiaTerms())
-                {
-                    source[Indices::momentumXBalanceIdx] = (-2.0*mu*sin(y) + (1.0 - rho)*sin(x)) * cos(x);
-                    source[Indices::momentumYBalanceIdx] =  (2.0*mu*sin(x) + (1.0 - rho)*sin(y)) * cos(y);
-                }
-                else
-                {
-                    source[Indices::momentumXBalanceIdx] = (-2.0*mu*sin(y) + sin(x)) * cos(x);
-                    source[Indices::momentumYBalanceIdx] = ( 2.0*mu*sin(x) + sin(y)) * cos(y);
-                }
-            }
-            else
-            {
-                if (this->enableInertiaTerms())
-                {
-                    source[Indices::momentumXBalanceIdx] = (-mu*(cos(2*t - y) - cos(2*t + y)) + 4*rho*power(sin(t), 4)*sin(x) - 4*rho*power(sin(t), 2)*sin(x)
-                                                           + 4*rho*power(sin(t), 2)*sin(y) - 2*rho*sin(y) - 4*power(sin(t), 4)*sin(x) + 4*power(sin(t), 2)*sin(x))*cos(x);
-                    source[Indices::momentumYBalanceIdx] =  (4*mu*sin(t)*sin(x)*cos(t) + 4*rho*power(sin(t), 4)*sin(y) - 4*rho*power(sin(t), 2)*sin(x) - 4*rho*power(sin(t), 2)*sin(y)
-                                                             + 2*rho*sin(x) - 4*power(sin(t), 4)*sin(y) + 4.0*power(sin(t), 2)*sin(y))*cos(y);
-                }
-                else
-                {
-
-                }
+                source[Indices::momentumXBalanceIdx] += rho*dxUU_(x,y,t) + rho*dyUV_(x,y,t);
+                source[Indices::momentumYBalanceIdx] += rho*dxUV_(x,y,t) + rho*dyVV_(x,y,t);
             }
         }
 
@@ -307,25 +279,23 @@ public:
             const auto flux = [&](Scalar x, Scalar y)
             {
                 Dune::FieldMatrix<Scalar, dimWorld, dimWorld> momentumFlux(0.0);
-                using std::sin;
-                using std::cos;
                 const Scalar mu = dynamicViscosity_;
                 const Scalar rho = density_;
+                const Scalar t = time_;
+
+                momentumFlux[0][0] = -2*mu*dxU_(x,y,t) + p_(x,y,t);
+                momentumFlux[0][1] = -mu*(dyU_(x,y,t) + dxV_(x,y,t));
+                momentumFlux[1][0] = -mu*(dyU_(x,y,t) + dxV_(x,y,t));
+                momentumFlux[1][1] = -2*mu*dyV_(x,y,t) + p_(x,y,t);
 
                 if (this->enableInertiaTerms())
                 {
-                    momentumFlux[0][0] = -2*mu*sin(x)*sin(y) + rho*sin(y)*sin(y)*cos(x)*cos(x) - 0.25*cos(2*x) - 0.25*cos(2*y);
-                    momentumFlux[0][1] = -rho*(cos(2*x - 2*y) - cos(2*x + 2*y))/8.0;
-                    momentumFlux[1][0] = momentumFlux[0][1];
-                    momentumFlux[1][1] = 2*mu*sin(x)*sin(y) + rho*sin(x)*sin(x)*cos(y)*cos(y) - 0.25*cos(2*x) - 0.25*cos(2*y);
+                    momentumFlux[0][0] += rho*u_(x,y,t)*u_(x,y,t);
+                    momentumFlux[0][1] += rho*u_(x,y,t)*v_(x,y,t);
+                    momentumFlux[1][0] += rho*v_(x,y,t)*u_(x,y,t);
+                    momentumFlux[1][1] += rho*v_(x,y,t)*v_(x,y,t);
                 }
-                else
-                {
-                    momentumFlux[0][0] = -2*mu*sin(x)*sin(y) - 0.25*cos(2*x) - 0.25*cos(2*y);
-                    momentumFlux[0][1] = 0;
-                    momentumFlux[1][0] = 0;
-                    momentumFlux[1][1] = 2*mu*sin(x)*sin(y) - 0.25*cos(2*x) - 0.25*cos(2*y);
-                }
+
                 return momentumFlux;
             };
 
@@ -353,27 +323,13 @@ public:
         const Scalar t = time;
         PrimaryVariables values;
 
-        using std::sin;
-        using std::cos;
-
         if constexpr (ParentType::isMomentumProblem())
         {
-            values[Indices::velocityXIdx] = -1.0 * cos(x) * sin(y);
-            values[Indices::velocityYIdx] = sin(x) * cos(y);
+            values[Indices::velocityXIdx] = u_(x,y,t);
+            values[Indices::velocityYIdx] = v_(x,y,t);
         }
         else
-            values[Indices::pressureIdx] = -0.25 * (cos(2.0 * x) + cos(2.0 * y));
-
-        if (!isStationary_)
-        {
-            if constexpr (ParentType::isMomentumProblem())
-            {
-                values[Indices::velocityXIdx] *= sin(2.0 * t);
-                values[Indices::velocityYIdx] *= sin(2.0 * t);
-            }
-            else
-                values[Indices::pressureIdx] *= sin(2.0 * t) * sin(2.0 * t);
-        }
+            values[Indices::pressureIdx] = p_(x,y,t);
 
         return values;
     }
@@ -415,6 +371,106 @@ public:
     { time_ = time; }
 
 private:
+
+    Scalar f_(Scalar t) const
+    {
+        using std::sin;
+        if (isStationary_)
+            return 1.0;
+        else
+            return sin(2.0 * t);
+    }
+
+    Scalar df_(Scalar t) const
+    {
+        using std::cos;
+        if (isStationary_)
+            return 0.0;
+        else
+            return 2.0 * cos(2.0 * t);
+    }
+
+    Scalar f1_(Scalar x) const
+    { using std::cos; return -0.25 * cos(2.0 * x); }
+
+    Scalar df1_(Scalar x) const
+    { using std::sin; return 0.5 * sin(2.0 * x); }
+
+    Scalar f2_(Scalar x) const
+    { using std::cos; return -cos(x); }
+
+    Scalar df2_(Scalar x) const
+    { using std::sin; return sin(x); }
+
+    Scalar ddf2_(Scalar x) const
+    { using std::cos; return cos(x); }
+
+    Scalar dddf2_(Scalar x) const
+    { using std::sin; return -sin(x); }
+
+    Scalar p_(Scalar x, Scalar y, Scalar t) const
+    { return (f1_(x) + f1_(y)) * f_(t) * f_(t); }
+
+    Scalar dxP_ (Scalar x, Scalar y, Scalar t) const
+    { return df1_(x) * f_(t) * f_(t); }
+
+    Scalar dyP_ (Scalar x, Scalar y, Scalar t) const
+    { return df1_(y) * f_(t) * f_(t); }
+
+    Scalar u_(Scalar x, Scalar y, Scalar t) const
+    { return f2_(x)*df2_(y) * f_(t); }
+
+    Scalar dtU_ (Scalar x, Scalar y, Scalar t) const
+    { return f2_(x)*df2_(y) * df_(t); }
+
+    Scalar dxU_ (Scalar x, Scalar y, Scalar t) const
+    { return df2_(x)*df2_(y) * f_(t); }
+
+    Scalar dyU_ (Scalar x, Scalar y, Scalar t) const
+    { return f2_(x)*ddf2_(y) * f_(t); }
+
+    Scalar dxxU_ (Scalar x, Scalar y, Scalar t) const
+    { return ddf2_(x)*df2_(y) * f_(t); }
+
+    Scalar dxyU_ (Scalar x, Scalar y, Scalar t) const
+    { return df2_(x)*ddf2_(y) * f_(t); }
+
+    Scalar dyyU_ (Scalar x, Scalar y, Scalar t) const
+    { return f2_(x)*dddf2_(y) * f_(t); }
+
+    Scalar v_(Scalar x, Scalar y, Scalar t) const
+    { return -f2_(y)*df2_(x) * f_(t); }
+
+    Scalar dtV_ (Scalar x, Scalar y, Scalar t) const
+    { return -f2_(y)*df2_(x) * df_(t); }
+
+    Scalar dxV_ (Scalar x, Scalar y, Scalar t) const
+    { return -f2_(y)*ddf2_(x) * f_(t); }
+
+    Scalar dyV_ (Scalar x, Scalar y, Scalar t) const
+    { return -df2_(y)*df2_(x) * f_(t); }
+
+    Scalar dyyV_ (Scalar x, Scalar y, Scalar t) const
+    { return -ddf2_(y)*df2_(x) * f_(t); }
+
+    Scalar dxyV_ (Scalar x, Scalar y, Scalar t) const
+    { return -df2_(y)*ddf2_(x) * f_(t); }
+
+    Scalar dxxV_ (Scalar x, Scalar y, Scalar t) const
+    { return -f2_(y)*dddf2_(x) * f_(t); }
+
+    Scalar dxUU_ (Scalar x, Scalar y, Scalar t) const
+    { return 2.*u_(x,y,t)*dxU_(x,y,t); }
+
+    Scalar dyVV_ (Scalar x, Scalar y, Scalar t) const
+    { return 2.*v_(x,y,t)*dyV_(x,y,t); }
+
+    Scalar dxUV_ (Scalar x, Scalar y, Scalar t) const
+    { return v_(x,y,t)*dxU_(x,y,t) + u_(x,y,t)*dxV_(x,y,t); }
+
+    Scalar dyUV_ (Scalar x, Scalar y, Scalar t) const
+    { return v_(x,y,t)*dyU_(x,y,t) + u_(x,y,t)*dyV_(x,y,t); }
+
     Scalar dynamicViscosity_;
     Scalar density_;
     Scalar time_;
