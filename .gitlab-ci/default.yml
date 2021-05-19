@@ -18,6 +18,7 @@ select tests:
   stage: configure
   script:
     - |
+      dunecontrol --opts=$DUNE_OPTS_FILE --current all
       if [[ "$TRIGGER_SOURCE" == "merge_request_event" ]]; then
           python3 bin/testing/getchangedfiles.py -o changedfiles.txt -t origin/$MR_TARGET_BRANCH_NAME
           python3 bin/testing/findtests.py -o affectedtests.json --file-list changedfiles.txt --build-dir build-cmake
@@ -27,15 +28,16 @@ select tests:
       fi
   artifacts:
     paths:
+      - build-cmake
       - affectedtests.json
     expire_in: 3 hours
 
 build dumux:
   stage: build
   script:
-    - dunecontrol --opts=$DUNE_OPTS_FILE --current all
     - |
       pushd build-cmake
+        make clean && make
         if [[ "$TRIGGER_SOURCE" == "merge_request_event" ]]; then
           python3 ../bin/testing/runselectedtests.py -c ../affectedtests.json -b
         else
