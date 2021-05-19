@@ -117,16 +117,17 @@ public:
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     SincosTestProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(gridGeometry, couplingManager), time_(0.0), timeStepSize_(0.0)
+    : ParentType(gridGeometry, couplingManager), time_(0.0)
     {
         isStationary_ = getParam<bool>("Problem.IsStationary");
-        kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
+        density_ = getParam<Scalar>("Component.LiquidDensity", 1.0);
+        dynamicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0) * density_;
+        useNeumann_ = getParam<bool>("Problem.UseNeumann", false);
 
         if constexpr(ParentType::isMomentumProblem())
         {
-            useNeumann_ = getParam<bool>("Problem.UseNeumann", false);
-            if (useNeumann_ && !isStationary_ && !this->enableInertiaTerms())
-                DUNE_THROW(Dune::NotImplemented, "Neumann boundary conditions only implemented for stationary case with intertia terms.");
+            if (useNeumann_ && !isStationary_)
+                DUNE_THROW(Dune::NotImplemented, "Neumann boundary conditions only implemented for stationary case.");
         }
     }
 
@@ -150,26 +151,40 @@ public:
         {
             const Scalar x = globalPos[0];
             const Scalar y = globalPos[1];
-            const Scalar t = time_ + timeStepSize_;
+            const Scalar t = time_;
+            const Scalar mu = dynamicViscosity_;
+            const Scalar rho = density_;
 
             using std::cos;
             using std::sin;
+            using Dune::power;
 
             if (isStationary_)
             {
-                source[Indices::momentumXBalanceIdx] = -2.0 * kinematicViscosity_ * cos(x) * sin(y);
-                source[Indices::momentumYBalanceIdx] =  2.0 * kinematicViscosity_ * cos(y) * sin(x);
-
-                if (!this->enableInertiaTerms())
+                if (this->enableInertiaTerms())
                 {
-                    source[Indices::momentumXBalanceIdx] += 0.5 * sin(2.0 * x);
-                    source[Indices::momentumYBalanceIdx] += 0.5 * sin(2.0 * y);
+                    source[Indices::momentumXBalanceIdx] = (-2.0*mu*sin(y) + (1.0 - rho)*sin(x)) * cos(x);
+                    source[Indices::momentumYBalanceIdx] =  (2.0*mu*sin(x) + (1.0 - rho)*sin(y)) * cos(y);
+                }
+                else
+                {
+                    source[Indices::momentumXBalanceIdx] = (-2.0*mu*sin(y) + sin(x)) * cos(x);
+                    source[Indices::momentumYBalanceIdx] = ( 2.0*mu*sin(x) + sin(y)) * cos(y);
                 }
             }
             else
             {
-                source[Indices::momentumXBalanceIdx] = -2.0 * cos(x) * sin(y) * (cos(2.0 * t) + sin(2.0 * t) * kinematicViscosity_);
-                source[Indices::momentumYBalanceIdx] =  2.0 * sin(x) * cos(y) * (cos(2.0 * t) + sin(2.0 * t) * kinematicViscosity_);
+                if (this->enableInertiaTerms())
+                {
+                    source[Indices::momentumXBalanceIdx] = (-mu*(cos(2*t - y) - cos(2*t + y)) + 4*rho*power(sin(t), 4)*sin(x) - 4*rho*power(sin(t), 2)*sin(x)
+                                                           + 4*rho*power(sin(t), 2)*sin(y) - 2*rho*sin(y) - 4*power(sin(t), 4)*sin(x) + 4*power(sin(t), 2)*sin(x))*cos(x);
+                    source[Indices::momentumYBalanceIdx] =  (4*mu*sin(t)*sin(x)*cos(t) + 4*rho*power(sin(t), 4)*sin(y) - 4*rho*power(sin(t), 2)*sin(x) - 4*rho*power(sin(t), 2)*sin(y)
+                                                             + 2*rho*sin(x) - 4*power(sin(t), 4)*sin(y) + 4.0*power(sin(t), 2)*sin(y))*cos(y);
+                }
+                else
+                {
+
+                }
             }
         }
 
@@ -196,11 +211,18 @@ public:
         {
             if (useNeumann_)
             {
-                static constexpr Scalar eps = 1e-8;
-                if ((globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps) /*|| (globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps)*/)
-                    values.setAllNeumann();
+                if (globalPos[1] > this->gridGeometry().bBoxMax()[1] - 1e-6
+                || globalPos[0] > this->gridGeometry().bBoxMax()[0] - 1e-6
+                || globalPos[1] < this->gridGeometry().bBoxMin()[1] + 1e-6)
+                {
+                    values.setNeumann(Indices::velocityXIdx);
+                    values.setNeumann(Indices::velocityYIdx);
+                }
                 else
-                    values.setAllDirichlet();
+                {
+                    values.setDirichlet(Indices::velocityXIdx);
+                    values.setDirichlet(Indices::velocityYIdx);
+                }
             }
             else
             {
@@ -233,9 +255,11 @@ public:
         // set fixed pressure in one cell
         std::bitset<PrimaryVariables::dimension> values;
 
-        // if (!useNeumann_ && scv.dofIndex() == 0)
-        if (scv.dofIndex() == 0)
+        if (!useNeumann_ && scv.dofIndex() == 0)
+        {
+            assert(false);
             values.set(Indices::pressureIdx);
+        }
 
         return values;
     }
@@ -254,10 +278,10 @@ public:
      *
      * \param globalPos The global position
      */
-    PrimaryVariables dirichletAtPos(const GlobalPosition & globalPos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
         // use the values of the analytical solution
-        return analyticalSolution(globalPos, time_+timeStepSize_);
+        return analyticalSolution(globalPos, time_);
     }
 
     /*!
@@ -285,44 +309,32 @@ public:
                 Dune::FieldMatrix<Scalar, dimWorld, dimWorld> momentumFlux(0.0);
                 using std::sin;
                 using std::cos;
-                const auto mu = kinematicViscosity_;
-                momentumFlux[0][0] = -1.0*mu*cos(x - y) + 1.0*mu*cos(x + y) - 0.5*cos(2*y) - 0.125*cos(2*x - 2*y) - 0.125*cos(2*x + 2*y) + 0.25;
-                momentumFlux[0][1] = -0.125*cos(2*x - 2*y) + 0.125*cos(2*x + 2*y);
-                momentumFlux[1][0] = -0.125*cos(2*x - 2*y) + 0.125*cos(2*x + 2*y);
-                momentumFlux[1][1] = 1.0*mu*cos(x - y) - 1.0*mu*cos(x + y) - 0.5*cos(2*x) - 0.125*cos(2*x - 2*y) - 0.125*cos(2*x + 2*y) + 0.25;
+                const Scalar mu = dynamicViscosity_;
+                const Scalar rho = density_;
+
+                if (this->enableInertiaTerms())
+                {
+                    momentumFlux[0][0] = -2*mu*sin(x)*sin(y) + rho*sin(y)*sin(y)*cos(x)*cos(x) - 0.25*cos(2*x) - 0.25*cos(2*y);
+                    momentumFlux[0][1] = -rho*(cos(2*x - 2*y) - cos(2*x + 2*y))/8.0;
+                    momentumFlux[1][0] = momentumFlux[0][1];
+                    momentumFlux[1][1] = 2*mu*sin(x)*sin(y) + rho*sin(x)*sin(x)*cos(y)*cos(y) - 0.25*cos(2*x) - 0.25*cos(2*y);
+                }
+                else
+                {
+                    momentumFlux[0][0] = -2*mu*sin(x)*sin(y) - 0.25*cos(2*x) - 0.25*cos(2*y);
+                    momentumFlux[0][1] = 0;
+                    momentumFlux[1][0] = 0;
+                    momentumFlux[1][1] = 2*mu*sin(x)*sin(y) - 0.25*cos(2*x) - 0.25*cos(2*y);
+                }
                 return momentumFlux;
             };
 
-            static const bool useQuadrature = getParam<bool>("Problem.UseQuadrature", false);
-            if (useQuadrature)
-            {
-                const auto geo = scvf.geometry();
-                const auto& quad = Dune::QuadratureRules<Scalar, GridView::dimension-1>::rule(geo.type(), 3);
-                auto tmp = values;
-                for (auto&& qp : quad)
-                {
-                    const auto w = geo.integrationElement(qp.position()) * qp.weight();
-                    const auto globalPos = geo.global(qp.position());
-                    const auto sol = flux(globalPos[0], globalPos[1]);
-
-                    const auto normal = scvf.unitOuterNormal();
-                    sol.mv(normal, tmp);
-                    values += tmp*w;
-                }
-
-                values /= scvf.area();
-            }
-            else
-            {
-                const auto tmp = flux(scvf.ipGlobal()[0], scvf.ipGlobal()[1]);
-                const auto normal = scvf.unitOuterNormal();
-                tmp.mv(normal, values);
-            }
+            flux(scvf.ipGlobal()[0], scvf.ipGlobal()[1]).mv(scvf.unitOuterNormal(), values);
         }
         else
         {
             const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
-            values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
+            values[Indices::conti0EqIdx] = insideDensity * (this->faceVelocity(element, fvGeometry, scvf) *  scvf.unitOuterNormal());
         }
 
         return values;
@@ -373,7 +385,7 @@ public:
      */
     PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
     {
-        return analyticalSolution(globalPos, time_+timeStepSize_);
+        return analyticalSolution(globalPos, time_);
     }
 
     // \}
@@ -390,9 +402,9 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        // if (isStationary_)
-        //     return PrimaryVariables(0.0);
-        // else
+        if (isStationary_)
+            return PrimaryVariables(0.0);
+        else
             return analyticalSolution(globalPos, 0.0);
     }
 
@@ -400,24 +412,12 @@ public:
      * \brief Updates the time
      */
     void updateTime(const Scalar time)
-    {
-        time_ = time;
-    }
-
-    /*!
-     * \brief Updates the time step size
-     */
-    void updateTimeStepSize(const Scalar timeStepSize)
-    {
-        timeStepSize_ = timeStepSize;
-    }
+    { time_ = time; }
 
 private:
-    Scalar kinematicViscosity_;
-    bool enableInertiaTerms_;
+    Scalar dynamicViscosity_;
+    Scalar density_;
     Scalar time_;
-    Scalar timeStepSize_;
-
     bool isStationary_;
     bool useNeumann_ = false;
 };
