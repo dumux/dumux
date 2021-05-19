@@ -20,6 +20,7 @@ select tests:
     - |
       dunecontrol --opts=$DUNE_OPTS_FILE --current all
       if [[ "$TRIGGER_SOURCE" == "merge_request_event" ]]; then
+          echo "Detecting changes w.r.t to branch $MR_TARGET_BRANCH_NAME"
           python3 bin/testing/getchangedfiles.py -o changedfiles.txt -t origin/$MR_TARGET_BRANCH_NAME
           python3 bin/testing/findtests.py -o affectedtests.json --file-list changedfiles.txt --build-dir build-cmake
       else
