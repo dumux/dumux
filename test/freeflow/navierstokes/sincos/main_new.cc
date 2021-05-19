@@ -51,7 +51,6 @@
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/istlsolverfactorybackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
-#include <dumux/io/vtk/intersectionwriter.hh>
 
 #include "../l2error.hh"
 #include "../analyticalsolution.hh"
@@ -86,6 +85,30 @@ void printL2Error(const MomentumProblem& momentumProblem,
     logFile.close();
 }
 
+template<class MomentumProblem>
+auto createSource(const MomentumProblem& momentumProblem)
+{
+    using Scalar = double;
+    using Indices = typename MomentumProblem::Indices;
+
+    const auto& gridGeometry = momentumProblem.gridGeometry();
+    std::array<std::vector<Scalar>, 2> source;
+
+    for (auto& component : source)
+        component.resize(gridGeometry.gridView().size(0));
+
+    for (const auto& element : elements(gridGeometry.gridView()))
+    {
+        const auto& center = element.geometry().center();
+        const auto eIdx = gridGeometry.elementMapper().index(element);
+        auto sourceAtPosVal = momentumProblem.sourceAtPos(center);
+        source[Indices::momentumXBalanceIdx][eIdx] = sourceAtPosVal[Indices::momentumXBalanceIdx];
+        source[Indices::momentumYBalanceIdx][eIdx] = sourceAtPosVal[Indices::momentumYBalanceIdx];
+    }
+
+    return source;
+}
+
 namespace Dumux::Properties{
 
 // Set the problem property
@@ -100,7 +123,7 @@ public:
 
 }
 
-int main(int argc, char** argv) try
+int main(int argc, char** argv)
 {
     using namespace Dumux;
 
@@ -161,10 +184,6 @@ int main(int argc, char** argv) try
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
-    // the problem (initial and boundary conditions)
-    momentumProblem->updateTimeStepSize(timeLoop->timeStepSize());
-    massProblem->updateTimeStepSize(timeLoop->timeStepSize());
-
     // the solution vector
     constexpr auto momentumIdx = Dune::index_constant<0>();
     constexpr auto massIdx = Dune::index_constant<1>();
@@ -203,6 +222,12 @@ int main(int argc, char** argv) try
     vtkWriter.addField(exactPressure, "pressureExact");
     vtkWriter.addField(exactVelocity, "velocityExact");
 
+    auto source = createSource(*momentumProblem);
+    auto sourceX = source[MomentumProblem::Indices::momentumXBalanceIdx];
+    auto sourceY = source[MomentumProblem::Indices::momentumYBalanceIdx];
+    vtkWriter.addField(sourceX, "sourceX");
+    vtkWriter.addField(sourceY, "sourceY");
+
     vtkWriter.write(0.0);
 
     // the assembler with time loop for instationary problem
@@ -228,18 +253,6 @@ int main(int argc, char** argv) try
 
     if (isStationary)
     {
-        std::vector<double> faceResidual(momentumGridGeometry->numDofs());
-        assembler->assembleResidual(x);
-        for (int i = 0; i < assembler->residual()[momentumIdx].size(); ++i)
-            faceResidual[i] = assembler->residual()[momentumIdx][i];
-
-        ConformingIntersectionWriter faceVtk(momentumGridGeometry->gridView());
-
-        faceVtk.addField(faceResidual, "faceResidual");
-        faceVtk.write("init", Dune::VTK::ascii);
-
-
-
         // linearize & solve
         Dune::Timer timer;
         nonLinearSolver.solve(x);
@@ -262,6 +275,10 @@ int main(int argc, char** argv) try
         // time loop
         timeLoop->start(); do
         {
+            // set the correct time level for the problem's boundary conditions
+            momentumProblem->updateTime(timeLoop->time() + timeLoop->timeStepSize());
+            massProblem->updateTime(timeLoop->time() + timeLoop->timeStepSize());
+
             // solve the non-linear system with time step control
             nonLinearSolver.solve(x, *timeLoop);
 
@@ -275,8 +292,6 @@ int main(int argc, char** argv) try
 
             // advance to the time loop to the next step
             timeLoop->advanceTimeStep();
-            momentumProblem->updateTime(timeLoop->time());
-            massProblem->updateTime(timeLoop->time());
 
             // update the analytical solution for the new time step
             exactPressure = getScalarAnalyticalSolution(*massProblem)[GetPropType<MassTypeTag, Properties::ModelTraits>::Indices::pressureIdx];
@@ -290,9 +305,6 @@ int main(int argc, char** argv) try
 
             // set new dt as suggested by newton solver
             timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
-            momentumProblem->updateTimeStepSize(timeLoop->timeStepSize());
-            massProblem->updateTimeStepSize(timeLoop->timeStepSize());
-
         } while (!timeLoop->finished());
 
         timeLoop->finalize(leafGridView.comm());
@@ -310,28 +322,4 @@ int main(int argc, char** argv) try
     }
 
     return 0;
-} // end main
-catch (Dumux::ParameterException &e)
-{
-    std::cerr << std::endl << e << " ---> Abort!" << std::endl;
-    return 1;
-}
-catch (Dune::DGFException & e)
-{
-    std::cerr << "DGF exception thrown (" << e <<
-                 "). Most likely, the DGF file name is wrong "
-                 "or the DGF file is corrupted, "
-                 "e.g. missing hash at end of file or wrong number (dimensions) of entries."
-                 << " ---> Abort!" << std::endl;
-    return 2;
-}
-catch (Dune::Exception &e)
-{
-    std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
-    return 3;
-}
-catch (...)
-{
-    std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
-    return 4;
 }

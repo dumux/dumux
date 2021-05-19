@@ -62,3 +62,20 @@ dumux_add_test(NAME test_ff_navierstokes_sincos_uzawapreconditioner_factory
                              -Problem.Name test_ff_navierstokes_sincos_uzawapreconditioner
                              -Problem.IsStationary false
                              -Component.LiquidKinematicViscosity 0.1")
+
+
+dumux_add_test(NAME test_ff_navierstokes_sincos_transient_new
+              TARGET test_ff_navierstokes_sincos_new
+              LABELS freeflow
+              CMAKE_GUARD HAVE_UMFPACK
+              COMPILE_DEFINITIONS LINEARSOLVER=UMFPackBackend
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_sincos_instationary-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_sincos_transient_new-00017.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_sincos_new params.input
+                             -Grid.UpperRight '1 1'
+                             -Grid.Cells '50 50'
+                             -Problem.Name test_ff_navierstokes_sincos_transient_new
+                             -Problem.IsStationary false
+                             -Component.LiquidKinematicViscosity 0.1")
