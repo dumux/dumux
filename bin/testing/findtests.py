@@ -86,7 +86,7 @@ if __name__ == '__main__':
     parser.add_argument('-np', '--num-processes',
                         required=False, type=int, default=4,
                         help='Number of processes (default: 4)')
-    parser.add_argument('-f', '--outfile',
+    parser.add_argument('-o', '--outfile',
                         required=False, default='affectedtests.json',
                         help='The file in which to write the affected tests')
     parser.add_argument('-b', '--build-dir',
