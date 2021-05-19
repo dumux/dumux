@@ -36,7 +36,6 @@ OPM_FLAGS=""
 # to build opm it might be necessary to set manually the following variables (comment the above line)
 #OPM_FLAGS="
 #-DUSE_MPI=ON
-#-DOPM_CLANG_WITH_STDC++FS=ON
 #"
 
 # set this to "ON" if you want to be able to have the headercheck target
