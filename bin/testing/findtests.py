@@ -68,19 +68,10 @@ def isAffectedTest(testConfigFile, changedFiles):
     headers = subprocess.run(command + ["-MM", "-H"],
                              stderr=PIPE, stdout=PIPE, cwd=dir,
                              encoding='ascii').stderr.splitlines()
+    headers = [h.lstrip('. ') for h in headers]
+    headers.append(mainFile)
 
-    # filter only headers from this project and turn them into relative paths
-    projectDir = os.path.abspath(os.getcwd().rstrip("build-cmake"))
-
-    def isProjectHeader(headerPath):
-        return projectDir in headerPath
-
-    testFiles = [os.path.relpath(mainFile.lstrip(". "), projectDir)]
-    testFiles.extend([os.path.relpath(header.lstrip(". "), projectDir)
-                      for header in filter(isProjectHeader, headers)])
-    testFiles = set(testFiles)
-
-    if hasCommonMember(changedFiles, testFiles):
+    if hasCommonMember(changedFiles, headers):
         return True, testConfig["name"], testConfig["target"]
 
     return False, testConfig["name"], testConfig["target"]
@@ -90,26 +81,25 @@ if __name__ == '__main__':
 
     # parse input arguments
     parser = ArgumentParser(description='Find tests affected by changes')
-    parser.add_argument('-s', '--source',
-                        required=False, default='HEAD',
-                        help='The source tree (default: `HEAD`)')
-    parser.add_argument('-t', '--target',
-                        required=False, default='master',
-                        help='The tree to compare against (default: `master`)')
+    parser.add_argument('-l', '--file-list', required=True,
+                        help='A file containing a list of files that changed')
     parser.add_argument('-np', '--num-processes',
                         required=False, type=int, default=4,
                         help='Number of processes (default: 4)')
     parser.add_argument('-f', '--outfile',
                         required=False, default='affectedtests.json',
                         help='The file in which to write the affected tests')
+    parser.add_argument('-b', '--build-dir',
+                        required=False, default='.',
+                        help='The path to the top-level build directory of the project to be checked')
     args = vars(parser.parse_args())
 
-    # find the changes files
-    changedFiles = subprocess.check_output(
-        ["git", "diff-tree", "-r", "--name-only", args['source'],  args['target']],
-        encoding='ascii'
-    ).splitlines()
-    changedFiles = set(changedFiles)
+    targetFile = os.path.abspath(args['outfile'])
+    with open(args['file_list']) as files:
+        changedFiles = set([line.strip('\n') for line in files.readlines()])
+
+    owd = os.getcwd()
+    os.chdir(args['build_dir'])
 
     # clean build directory
     subprocess.run(["make", "clean"])
@@ -133,5 +123,7 @@ if __name__ == '__main__':
 
     print("Detected {} affected tests".format(len(affectedTests)))
 
-    with open(args['outfile'], 'w') as jsonFile:
+    with open(targetFile, 'w') as jsonFile:
         json.dump(affectedTests, jsonFile)
+
+    os.chdir(owd)

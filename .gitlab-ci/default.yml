@@ -19,10 +19,8 @@ select tests:
   script:
     - |
       if [[ "$TRIGGER_SOURCE" == "merge_request_event" ]]; then
-          dunecontrol --opts=$DUNE_OPTS_FILE --current all
-          pushd build-cmake
-            python3 ../bin/testing/findtests.py -f ../affectedtests.json -t origin/$MR_TARGET_BRANCH_NAME
-          popd
+          python3 bin/testing/getchangedfiles.py -o changedfiles.txt -t origin/$MR_TARGET_BRANCH_NAME
+          python3 bin/testing/findtests.py -f affectedtests.json --file-list changedfiles.txt --build-dir build-cmake
       else
           echo "Skipping test selection, build/test stages will consider all tests!"
           echo "{}" >> ../affectedtests.json
