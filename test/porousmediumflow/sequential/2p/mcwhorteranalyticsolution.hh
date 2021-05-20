@@ -131,10 +131,10 @@ private:
     void prepareAnalytic()
     {
         const auto& dummyElement = *problem_.gridView().template begin<0>();
-        const auto& fluidMatrixInteraction = problem_.spatialParams().fluidMatrixInteractionAtPos(dummyElement.geometry().center());
+        const auto& fluidMatrixInteraction = problem_->spatialParams().fluidMatrixInteractionAtPos(dummyElement.geometry().center());
 
-        swr_ = fluidMatrixInteraction.pcSwCurve().effToAbsParams().swr();
-        snr_ = fluidMatrixInteraction.pcSwCurve().effToAbsParams().snr();
+        swr_ = fluidMatrixInteraction.effToAbsParams().swr();
+        snr_ = fluidMatrixInteraction.effToAbsParams().snr();
         porosity_ = problem_.spatialParams().porosity(dummyElement);
         permeability_ = problem_.spatialParams().intrinsicPermeability(dummyElement)[0][0];
         PrimaryVariables initVec;
