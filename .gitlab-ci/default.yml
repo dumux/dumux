@@ -25,6 +25,7 @@ select tests:
           python3 bin/testing/getchangedfiles.py -o changedfiles.txt -t origin/$MR_TARGET_BRANCH_NAME
           python3 bin/testing/findtests.py -o affectedtests.json --file-list changedfiles.txt --build-dir build-cmake
       else
+          echo "Received '$TRIGGER_SOURCE' as pipeline trigger event"
           echo "Skipping test selection, build/test stages will consider all tests!"
           echo "{}" >> ../affectedtests.json
       fi
