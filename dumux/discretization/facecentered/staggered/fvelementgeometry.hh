@@ -73,73 +73,9 @@ public:
     const SubControlVolumeFace& lateralOrthogonalScvf(const SubControlVolumeFace& scvf) const
     {
         assert(scvf.isLateral());
-
-        const auto otherLocalIdx = [&]
-        {
-            if constexpr (GridView::Grid::dimension == 2)
-            {
-                switch (scvf.localIndex())
-                {
-                    case 1: return 7;
-                    case 7: return 1;
-                    case 2: return 10;
-                    case 10: return 2;
-                    case 4: return 8;
-                    case 8: return 4;
-                    case 5: return 11;
-                    case 11: return 5;
-                    default:
-                    {
-                        assert(false && "No lateral orthogonal scvf found");
-                        return -1;
-                    }
-                }
-            }
-            else
-            {
-                switch (scvf.localIndex())
-                {
-                    case 1: return 11;
-                    case 11: return 1;
-                    case 2: return 16;
-                    case 16: return 2;
-                    case 3: return 21;
-                    case 21: return 3;
-                    case 4: return 26;
-                    case 26: return 4;
-                    case 6: return 12;
-                    case 12: return 6;
-                    case 7: return 17;
-                    case 17: return 7;
-                    case 8: return 22;
-                    case 22: return 8;
-                    case 9: return 27;
-                    case 27: return 9;
-                    case 13: return 23;
-                    case 23: return 13;
-                    case 14: return 28;
-                    case 28: return 14;
-                    case 18: return 24;
-                    case 24: return 18;
-                    case 19: return 29;
-                    case 29: return 19;
-
-                    default:
-                    {
-                        assert(false && "No lateral orthogonal scvf found");
-                        return -1;
-                    }
-                }
-            }
-        }();
-
-        const auto otherGlobalIdx = scvfIndices_()[otherLocalIdx];
-
-        assert(gridGeometry().scvf(scvf.scvfIdxWithCommonEntity()).index() == otherGlobalIdx);
-
+        const auto otherGlobalIdx = scvfIndices_()[GridGeometry::GeometryHelper::lateralOrthogonalScvfLocalIndex(scvf.localIndex())];
+        assert(gridGeometry().scvf(scvf.scvfIdxWithCommonEntity()).index() == otherGlobalIdx); // TODO remove once scvfIdxWithCommonEntity is removed
         return gridGeometry().scvf(otherGlobalIdx);
-
-        //  return gridGeometry().scvf(scvf.scvfIdxWithCommonEntity());
     }
 
      //! Return the frontal sub control volume face on a the boundary for a given sub control volume
