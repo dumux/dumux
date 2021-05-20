@@ -9,23 +9,24 @@ import subprocess
 from argparse import ArgumentParser
 
 
-def getCommandOutput(command):
-    return subprocess.check_output(command, encoding='ascii')
+def getCommandOutput(command, cwd=None):
+    return subprocess.check_output(command, encoding='ascii', cwd=cwd)
 
 
 # get the files that differ between two trees in a git repo
 def getChangedFiles(gitFolder, sourceTree, targetTree):
-    owd = os.getcwd()
-    os.chdir(os.path.abspath(gitFolder))
 
-    root = getCommandOutput(['git', 'rev-parse', '--show-toplevel']).strip('\n')
+    gitFolder = os.path.abspath(gitFolder)
+    root = getCommandOutput(
+        command=['git', 'rev-parse', '--show-toplevel'],
+        cwd=gitFolder
+    ).strip('\n')
     changedFiles = getCommandOutput(
-        ["git", "diff-tree", "-r", "--name-only", sourceTree, targetTree],
+        command=["git", "diff-tree", "-r", "--name-only", sourceTree, targetTree],
+        cwd=gitFolder
     ).splitlines()
-    changedFiles = [os.path.join(root, file) for file in changedFiles]
 
-    os.chdir(owd)
-    return changedFiles
+    return [os.path.join(root, file) for file in changedFiles]
 
 
 if __name__ == '__main__':
@@ -54,5 +55,4 @@ if __name__ == '__main__':
 
     with open(args['outfile'], 'w') as outFile:
         for file in changedFiles:
-            outFile.write(os.path.abspath(file))
-            outFile.write('\n')
+            outFile.write(f"{os.path.abspath(file)}\n")
