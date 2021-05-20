@@ -1086,7 +1086,7 @@ public:
     {
         BlockDiagILU0Preconditioner<Matrix, Vector, Vector> preconditioner(M);
         Dune::MatrixAdapter<Matrix, Vector, Vector> op(M);
-        static const int restartGMRes = getParamFromGroup<double>(this->paramGroup(), "LinearSolver.GMResRestart");
+        static const int restartGMRes = getParamFromGroup<int>(this->paramGroup(), "LinearSolver.GMResRestart");
         Dune::RestartedGMResSolver<Vector> solver(op, preconditioner, this->residReduction(), restartGMRes,
                                                   this->maxIter(), this->verbosity());
         auto bTmp(b);
