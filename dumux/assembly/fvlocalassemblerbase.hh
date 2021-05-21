@@ -221,10 +221,10 @@ public:
         // and set the residual to (privar - dirichletvalue)
         for (const auto& scvI : scvs(this->fvGeometry()))
         {
-            const auto internalDirichletConstraints = this->problem().hasInternalDirichletConstraint(this->element(), scvI);
+            const auto internalDirichletConstraints = asImp_().problem().hasInternalDirichletConstraint(this->element(), scvI);
             if (internalDirichletConstraints.any())
             {
-                const auto dirichletValues = this->problem().internalDirichlet(this->element(), scvI);
+                const auto dirichletValues = asImp_().problem().internalDirichlet(this->element(), scvI);
                 // set the Dirichlet conditions in residual and jacobian
                 for (int eqIdx = 0; eqIdx < internalDirichletConstraints.size(); ++eqIdx)
                     if (internalDirichletConstraints[eqIdx])
