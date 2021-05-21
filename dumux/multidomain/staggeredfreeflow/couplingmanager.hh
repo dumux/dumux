@@ -102,6 +102,7 @@ public:
      */
     // \{
 
+    //! use as regular coupling manager
     void init(std::shared_ptr<Problem<freeFlowMomentumIdx>> momentumProblem,
               std::shared_ptr<Problem<freeFlowMassIdx>> massProblem,
               GridVariablesTuple&& gridVariables,
@@ -112,6 +113,21 @@ public:
         this->updateSolution(curSol);
 
         computeCouplingStencils_();
+    }
+
+    //! use as binary coupling manager in multi model context
+    void init(std::shared_ptr<Problem<freeFlowMomentumIdx>> momentumProblem,
+              std::shared_ptr<Problem<freeFlowMassIdx>> massProblem,
+              GridVariablesTuple&& gridVariables,
+              typename ParentType::SolutionVectorTuple& curSol)
+    {
+        this->setSubProblems(std::make_tuple(momentumProblem, massProblem));
+        gridVariables_ = gridVariables;
+        this->attachSolution(curSol);
+
+        computeCouplingStencils_();
+
+        std::cout << "momentum sol is " << this->curSol(freeFlowMomentumIdx)[123] << std::endl;
     }
 
     void init(std::shared_ptr<Problem<freeFlowMomentumIdx>> momentumProblem,
