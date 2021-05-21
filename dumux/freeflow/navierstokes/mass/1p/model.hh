@@ -60,6 +60,7 @@
 #include <dumux/flux/cctpfa/fourierslaw.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/freeflow/turbulencemodel.hh>
 #include <dumux/freeflow/navierstokes/energy/model.hh>
 #include <dumux/freeflow/navierstokes/scalarfluxvariablescachefiller.hh>
 
