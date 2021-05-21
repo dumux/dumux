@@ -1,2 +1,3 @@
 add_subdirectory(darcydarcy)
+add_subdirectory(freeflowporousmedium)
 add_subdirectory(stokesdarcy)
