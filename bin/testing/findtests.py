@@ -26,29 +26,26 @@ def hasCommonMember(myset, mylist):
 
 # make dry run and return the compilation command
 def getCompileCommand(testConfig, buildTreeRoot='.'):
-    lines = subprocess.check_output(["make", "--dry-run", testConfig["target"]],
+    target = testConfig['target']
+    lines = subprocess.check_output(["make", "-B", "--dry-run", target],
                                     encoding='ascii',
                                     cwd=buildTreeRoot).splitlines()
 
     def hasCppCommand(line):
         return any(cpp in line for cpp in ['g++', 'clang++'])
 
+    # there may be library build commands first, last one is the actual target
     commands = list(filter(lambda line: hasCppCommand(line), lines))
-    assert len(commands) <= 1
-    return commands[0] if commands else None
+    return commands[-1] if commands else None
 
 
 # get the command and folder to compile the given test
-def buildCommandAndDir(testConfig, cache, buildTreeRoot='.'):
+def buildCommandAndDir(testConfig, buildTreeRoot='.'):
     compCommand = getCompileCommand(testConfig, buildTreeRoot)
     if compCommand is None:
-        with open(cache) as c:
-            data = json.load(c)
-            return data["command"], data["dir"]
+        raise Exception("Could not determine compile command for {}".format(testConfig))
     else:
         (_, dir), command = [comm.split() for comm in compCommand.split("&&")]
-        with open(cache, "w") as c:
-            json.dump({"command": command, "dir": dir}, c)
         return command, dir
 
 
@@ -57,9 +54,7 @@ def isAffectedTest(testConfigFile, changedFiles, buildTreeRoot='.'):
     with open(testConfigFile) as configFile:
         testConfig = json.load(configFile)
 
-    cacheFile = "TestTargets/" + testConfig["target"] + ".json"
-    cacheFile = os.path.join(buildTreeRoot, cacheFile)
-    command, dir = buildCommandAndDir(testConfig, cacheFile, buildTreeRoot)
+    command, dir = buildCommandAndDir(testConfig, buildTreeRoot)
     mainFile = command[-1]
 
     # detect headers included in this test
@@ -103,9 +98,6 @@ if __name__ == '__main__':
     # clean build directory
     subprocess.run(["make", "clean"], cwd=buildDir)
     subprocess.run(["make", "all"], cwd=buildDir)
-
-    # create cache folder
-    os.makedirs(os.path.join(buildDir, "TestTargets"), exist_ok=True)
 
     # detect affected tests
     print("Detecting affected tests:")
