@@ -583,7 +583,7 @@ public:
         const auto ownCellPressure = pressure(element, fvGeometry, scvf);
         assert (scvf.boundary() && scvf.isFrontal());
 
-        bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
+        this->bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
 
         for (const auto is : intersections(fvGeometry.gridGeometry().gridView(), element))
         {
@@ -622,7 +622,7 @@ public:
                    const bool considerPreviousTimeStep = false) const
     {
         assert(!(considerPreviousTimeStep && !this->isTransient_));
-        bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
+        this->bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
 
         const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideMassScv = this->momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
@@ -651,12 +651,12 @@ public:
                    const SubControlVolume<freeFlowMomentumIdx>& scv,
                    const bool considerPreviousTimeStep = false) const
     {
-        assert(!(considerPreviousTimeStep && !isTransient_));
-        bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, scv.elementIndex());
-        const auto& massScv = (*scvs(momentumCouplingContext_[0].fvGeometry).begin());
+        assert(!(considerPreviousTimeStep && !this->isTransient_));
+        this->bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, scv.elementIndex());
+        const auto& massScv = (*scvs(this->momentumCouplingContext_[0].fvGeometry).begin());
 
-        return considerPreviousTimeStep ? momentumCouplingContext_[0].prevElemVolVars[massScv].density()
-                                        : momentumCouplingContext_[0].curElemVolVars[massScv].density();
+        return considerPreviousTimeStep ? this->momentumCouplingContext_[0].prevElemVolVars[massScv].density()
+                                        : this->momentumCouplingContext_[0].curElemVolVars[massScv].density();
     }
 
     std::pair<Scalar,Scalar> getInsideAndOutsideDensity(const Element<freeFlowMomentumIdx>& element,
@@ -665,7 +665,7 @@ public:
                                                         const bool considerPreviousTimeStep = false) const
     {
         assert(!(considerPreviousTimeStep && !this->isTransient_));
-        bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
+        this->bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
         const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideMassScv = this->momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
 
@@ -692,47 +692,24 @@ public:
                               const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
                               const SubControlVolumeFace<freeFlowMomentumIdx>& scvf) const
     {
-        bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
+        this->bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
 
-        if constexpr (massDiscMethod ==  DiscretizationMethod::cctpfa)
+        const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& insideMassScv = this->momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
+
+        if (scvf.boundary())
+            return this->momentumCouplingContext_[0].curElemVolVars[insideMassScv].viscosity();
+
+        const auto& outsideMomentumScv = fvGeometry.scv(scvf.outsideScvIdx());
+        const auto& outsideMassScv = this->momentumCouplingContext_[0].fvGeometry.scv(outsideMomentumScv.elementIndex());
+
+        auto mu = [&](const auto& elemVolVars)
         {
-            const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
-            const auto& insideMassScv = this->momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
+            // TODO distance weighting
+            return 0.5*(elemVolVars[insideMassScv].viscosity() + elemVolVars[outsideMassScv].viscosity());
+        };
 
-            if (scvf.boundary())
-                return this->momentumCouplingContext_[0].curElemVolVars[insideMassScv].viscosity();
-
-            const auto& outsideMomentumScv = fvGeometry.scv(scvf.outsideScvIdx());
-            const auto& outsideMassScv = this->momentumCouplingContext_[0].fvGeometry.scv(outsideMomentumScv.elementIndex());
-
-            auto mu = [&](const auto& elemVolVars)
-            {
-                // TODO distance weighting
-                return 0.5*(elemVolVars[insideMassScv].viscosity() + elemVolVars[outsideMassScv].viscosity());
-            };
-
-            return mu(this->momentumCouplingContext_[0].curElemVolVars);
-        }
-        else if constexpr (massDiscMethod ==  DiscretizationMethod::box)
-        {
-            // ToDo Cache the shape values when Box method is used
-            using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
-            const auto& localBasis = this->momentumCouplingContext_[0].fvGeometry.feLocalBasis();
-            std::vector<ShapeValue> shapeValues;
-            const auto ipLocal = element.geometry().local(scvf.ipGlobal());
-            localBasis.evaluateFunction(ipLocal, shapeValues);
-
-            Scalar mu = 0.0;
-            for (const auto& massScv : scvs(this->momentumCouplingContext_[0].fvGeometry))
-            {
-                const auto& volVars = this->momentumCouplingContext_[0].curElemVolVars[massScv];
-                mu += volVars.viscosity()*shapeValues[massScv.indexInElement()][0];
-            }
-
-            return mu;
-        }
-        else
-            DUNE_THROW(Dune::InvalidStateException, "Discretisation scheme for freeFlowMass is unkown!");
+        return mu(this->momentumCouplingContext_[0].curElemVolVars);
     }
 
     /*!
