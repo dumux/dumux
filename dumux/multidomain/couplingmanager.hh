@@ -30,11 +30,22 @@
 #include <vector>
 #include <dune/common/exceptions.hh>
 #include <dune/common/indices.hh>
+#include <dune/common/shared_ptr.hh>
 #include <dumux/assembly/numericepsilon.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/typetraits/typetraits.hh>
 
 namespace Dumux {
+
+namespace Detail {
+
+template<class... Args, std::size_t ...Is>
+auto toRef(std::tuple<Args...> v, std::index_sequence<Is...> indices)
+{
+    return Dune::MultiTypeBlockVector<std::add_lvalue_reference_t<typename Args::element_type>...>(*std::get<Is>(v)...);
+}
+
+} // end namespace Detail
 
 /*!
  * \file
@@ -52,6 +63,9 @@ class CouplingManager
     template<std::size_t id> using ProblemWeakPtr = std::weak_ptr<const Problem<id>>;
     using Problems = typename Traits::template Tuple<ProblemWeakPtr>;
 
+    template<std::size_t id>
+    using SolutionVectorT = std::decay_t<decltype(std::declval<typename Traits::SolutionVector>()[Dune::index_constant<id>()])>; // TODO maybe make SubdomainSolutionVector in Traits public
+
 public:
     //! default type used for coupling element stencils
     template<std::size_t i, std::size_t j>
@@ -59,6 +73,17 @@ public:
 
     //! the type of the solution vector
     using SolutionVector = typename Traits::SolutionVector;
+
+    using SolutionVectorTuple = typename Traits::template TupleOfSharedPtr<SolutionVectorT>; // TODO better name
+
+    CouplingManager()
+    {
+        using namespace Dune::Hybrid;
+        forEach(curSols_, [&](auto&& solutionVector)
+        {
+            solutionVector = std::make_shared<typename std::decay_t<decltype(solutionVector)>::element_type>();
+        });
+    }
 
     /*!
      * \name member functions concerning the coupling stencils
@@ -156,7 +181,7 @@ public:
                                const PrimaryVariables<j>& priVarsJ,
                                int pvIdxJ)
     {
-        curSol_[domainJ][dofIdxGlobalJ][pvIdxJ] = priVarsJ[pvIdxJ];
+        curSol(domainJ)[dofIdxGlobalJ][pvIdxJ] = priVarsJ[pvIdxJ];
     }
 
     /*!
@@ -182,9 +207,30 @@ public:
 
     /*!
      * \brief Updates the entire solution vector, e.g. before assembly or after grid adaption
+     *         Overload this function if the solution vector is stored outside this class
      */
     void updateSolution(const SolutionVector& curSol)
-    { curSol_ = curSol; }
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(curSols_)), [&](const auto id)
+        {
+            // copy external solution into object stored in this class
+            *std::get<id>(curSols_) = curSol[id];
+        });
+    }
+
+    /*!
+     * \brief Attach a solution vector stored outside of this class.
+     */
+    void attachSolution(SolutionVectorTuple& curSol)
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(curSols_)), [&](const auto id)
+        {
+            // do not take ownership of the external pointer's object
+            std::get<id>(curSols_) = Dune::stackobject_to_shared_ptr(*std::get<id>(curSol));
+        });
+    }
 
     // \}
 
@@ -272,25 +318,55 @@ public:
 protected:
 
     /*!
-     * \brief the solution vector of the coupled problem
+     * \brief the solution vector of the subproblem
+    * \param domainIdx The domain index
      * \note in case of numeric differentiation the solution vector always carries the deflected solution
      */
-    SolutionVector& curSol()
-    { return curSol_; }
+    template<std::size_t i>
+    SolutionVectorT<i>& curSol(Dune::index_constant<i> domainIdx)
+    { return *std::get<i>(curSols_); }
+
+    /*!
+     * \brief the solution vector of the subproblem
+     * \param domainIdx The domain index
+     * \note in case of numeric differentiation the solution vector always carries the deflected solution
+     */
+    template<std::size_t i>
+    const SolutionVectorT<i>& curSol(Dune::index_constant<i> domainIdx) const
+    { return *std::get<i>(curSols_); }
 
     /*!
      * \brief the solution vector of the coupled problem
      * \note in case of numeric differentiation the solution vector always carries the deflected solution
+     *       The type returned does not allow assignment from a "regular" MultiTypeBlockVector (not holding references).
+     *       curSol() = x;  won't compile. Use couplingManager.updateSolution(x) instead or (better) use the new curSol(idx) interface.
      */
-    const SolutionVector& curSol() const
-    { return curSol_; }
+    [[deprecated("This function returns a Dune::MultiTypeBlockVector<SubDomainSolutionVector&, ....> (i.e. storing references). "
+                 "Use curSol(domainIdx) to get a reference to the corresponding subdomain solution vector. Will be removed after 3.6")]]
+    decltype(auto) curSol()
+    {
+        return Detail::toRef(curSols_, std::make_index_sequence<Traits::numSubDomains>());
+    }
+
+    /*!
+     * \brief the solution vector of the coupled problem
+     * \note in case of numeric differentiation the solution vector always carries the deflected solution
+     *       The type returned does not allow assignment from a "regular" MultiTypeBlockVector (not holding references)
+     *       curSol() = x; // won't compile. Use couplingManager.updateSolution(x) instead or (better) use the new curSol(idx) interface.
+     */
+    [[deprecated("This function returns a Dune::MultiTypeBlockVector<SubDomainSolutionVector&, ....> (i.e. storing references). "
+                 "Use curSol(domainIdx) to get a reference to the corresponding subdomain solution vector. Will be removed after 3.6")]]
+    decltype(auto) curSol() const
+    {
+        return Detail::toRef(curSols_, std::make_index_sequence<Traits::numSubDomains>());
+    }
 
 private:
     /*!
-     * \brief the solution vector of the coupled problem
+     * \brief A tuple of shared_ptr's to solution vectors of the subproblems
      * \note in case of numeric differentiation the solution vector always carries the deflected solution
      */
-    SolutionVector curSol_;
+    SolutionVectorTuple curSols_;
 
     /*!
      * \brief A tuple of std::weak_ptrs to the sub problems
