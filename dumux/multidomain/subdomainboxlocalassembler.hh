@@ -388,6 +388,7 @@ class SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*
     using FVElementGeometry = typename GridGeometry::LocalView;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
     enum { dim = GridView::dimension };
@@ -581,6 +582,15 @@ public:
                             A[scv.dofIndex()][globalJ][eqIdx][pvIdx] = 0.0;
                         else
                             A[scv.dofIndex()][globalJ][eqIdx][pvIdx] += partialDerivs[scv.localDofIndex()][eqIdx];
+
+                        // enforce internal Dirichlet constraints
+                        if constexpr (Problem::enableInternalDirichletConstraints())
+                        {
+                            const auto internalDirichletConstraints = this->problem().hasInternalDirichletConstraint(this->element(), scv);
+                            if (internalDirichletConstraints[eqIdx])
+                                A[scv.dofIndex()][globalJ][eqIdx][pvIdx] = 0.0;
+                        }
+
                     }
                 }
 
