@@ -1,6 +1,6 @@
 dune_symlink_to_source_files(FILES "params.input")
 
-dune_add_test(NAME example_1p_rotationsymmetry
+dumux_add_test(NAME example_1p_rotationsymmetry
               LABELS porousmediumflow 1p example
               SOURCES main.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

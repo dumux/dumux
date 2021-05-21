@@ -1,6 +1,6 @@
 dune_symlink_to_source_files(FILES "params.input")
 
-dune_add_test(NAME test_tracer_multiphase_tpfa
+dumux_add_test(NAME test_tracer_multiphase_tpfa
               LABELS porousmediumflow tracer
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestTpfa
@@ -10,7 +10,7 @@ dune_add_test(NAME test_tracer_multiphase_tpfa
                                ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_multiphase_tpfa-00010.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_tracer_multiphase_tpfa params.input -Problem.Name test_tracer_multiphase_tpfa")
 
-dune_add_test(NAME test_tracer_multiphase_mpfa
+dumux_add_test(NAME test_tracer_multiphase_mpfa
               LABELS porousmediumflow tracer
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestMpfa
