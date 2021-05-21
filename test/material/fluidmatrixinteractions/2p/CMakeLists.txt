@@ -25,10 +25,10 @@ dumux_add_test(SOURCES test_material_2p_brookscorey.cc
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_material_2p_brookscorey")
 
 
-dune_add_test(SOURCES test_material_2p_spline.cc
-              LABELS unit material)
+dumux_add_test(SOURCES test_material_2p_spline.cc
+               LABELS unit material)
 
-dune_add_test(SOURCES test_material_2p_dataspline.cc
-              LABELS unit material)
+dumux_add_test(SOURCES test_material_2p_dataspline.cc
+               LABELS unit material)
 
 dune_symlink_to_source_files(FILES test_material_2p_spline.input test_material_2p_dataspline.input)
