@@ -30,11 +30,23 @@
 #include <vector>
 #include <dune/common/exceptions.hh>
 #include <dune/common/indices.hh>
+#include <dune/common/shared_ptr.hh>
 #include <dumux/assembly/numericepsilon.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/typetraits/typetraits.hh>
 
 namespace Dumux {
+
+namespace Detail {
+
+// helper to create a multitype vector of references to solution vectors
+template<class... Args, std::size_t ...Is>
+auto toRef(const std::tuple<Args...>& v, std::index_sequence<Is...> indices)
+{
+    return Dune::MultiTypeBlockVector<std::add_lvalue_reference_t<typename Args::element_type>...>(*std::get<Is>(v)...);
+}
+
+} // end namespace Detail
 
 /*!
  * \file
@@ -52,6 +64,10 @@ class CouplingManager
     template<std::size_t id> using ProblemWeakPtr = std::weak_ptr<const Problem<id>>;
     using Problems = typename Traits::template Tuple<ProblemWeakPtr>;
 
+    template<std::size_t id>
+    using SubSolutionVector
+        = std::decay_t<decltype(std::declval<typename Traits::SolutionVector>()[Dune::index_constant<id>()])>;
+
 public:
     //! default type used for coupling element stencils
     template<std::size_t i, std::size_t j>
@@ -59,6 +75,27 @@ public:
 
     //! the type of the solution vector
     using SolutionVector = typename Traits::SolutionVector;
+
+protected:
+    //! the type in which the solution vector is stored in the manager
+    using SolutionVectorStorage = typename Traits::template TupleOfSharedPtr<SubSolutionVector>;
+
+public:
+    /*!
+     * \brief Default constructor
+     *
+     * The coupling manager stores pointers to the sub-solution vectors. Note that they can be either
+     * owning pointers (default `updateSolution`) or non-owning. In the non-owning case attach the solution
+     * vector managed elsewhere using `attachSolution` and make sure that object stays alive of the lifetime
+     * of the coupling manager.
+     */
+    CouplingManager()
+    {
+        using namespace Dune::Hybrid;
+        forEach(curSols_, [&](auto&& solutionVector){
+            solutionVector = std::make_shared<typename std::decay_t<decltype(solutionVector)>::element_type>();
+        });
+    }
 
     /*!
      * \name member functions concerning the coupling stencils
@@ -156,7 +193,7 @@ public:
                                const PrimaryVariables<j>& priVarsJ,
                                int pvIdxJ)
     {
-        curSol_[domainJ][dofIdxGlobalJ][pvIdxJ] = priVarsJ[pvIdxJ];
+        curSol(domainJ)[dofIdxGlobalJ][pvIdxJ] = priVarsJ[pvIdxJ];
     }
 
     /*!
@@ -182,9 +219,18 @@ public:
 
     /*!
      * \brief Updates the entire solution vector, e.g. before assembly or after grid adaption
+     *         Overload might want to overload function if the solution vector is stored outside this class
+     *         to make sure updates don't happen more than once.
      */
     void updateSolution(const SolutionVector& curSol)
-    { curSol_ = curSol; }
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(curSols_)), [&](const auto id)
+        {
+            // copy external solution into object stored in this class
+            *std::get<id>(curSols_) = curSol[id];
+        });
+    }
 
     // \}
 
@@ -270,36 +316,79 @@ public:
     }
 
 protected:
+    /*!
+     * \brief Attach a solution vector stored outside of this class.
+     * \note The caller has to make sure that curSol stays alive for the lifetime of
+     *       the coupling manager. Otherwise we have a dangling reference here. Use with care.
+     */
+    void attachSolution(SolutionVectorStorage& curSol)
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(curSols_)), [&](const auto id)
+        {
+            // do not take ownership of the external pointer's object
+            std::get<id>(curSols_) = Dune::stackobject_to_shared_ptr(*std::get<id>(curSol));
+        });
+    }
+
+    /*!
+     * \brief the solution vector of the subproblem
+     * \param domainIdx The domain index
+     * \note in case of numeric differentiation the solution vector always carries the deflected solution
+     */
+    template<std::size_t i>
+    SubSolutionVector<i>& curSol(Dune::index_constant<i> domainIdx)
+    { return *std::get<i>(curSols_); }
+
+    /*!
+     * \brief the solution vector of the subproblem
+     * \param domainIdx The domain index
+     * \note in case of numeric differentiation the solution vector always carries the deflected solution
+     */
+    template<std::size_t i>
+    const SubSolutionVector<i>& curSol(Dune::index_constant<i> domainIdx) const
+    { return *std::get<i>(curSols_); }
 
     /*!
      * \brief the solution vector of the coupled problem
      * \note in case of numeric differentiation the solution vector always carries the deflected solution
+     *       The type returned does not allow assignment from a "regular" MultiTypeBlockVector (not holding references).
+     *       curSol() = x;  won't compile. Use couplingManager.updateSolution(x) instead or (better) use the new curSol(idx) interface.
      */
-    SolutionVector& curSol()
-    { return curSol_; }
+    [[deprecated("This function returns a Dune::MultiTypeBlockVector<SubDomainSolutionVector&, ....> (i.e. storing references). "
+                 "Use curSol(domainIdx) to get a reference to the corresponding subdomain solution vector. Will be removed after 3.5")]]
+    decltype(auto) curSol()
+    {
+        return Detail::toRef(curSols_, std::make_index_sequence<Traits::numSubDomains>());
+    }
 
     /*!
      * \brief the solution vector of the coupled problem
      * \note in case of numeric differentiation the solution vector always carries the deflected solution
+     *       The type returned does not allow assignment from a "regular" MultiTypeBlockVector (not holding references)
+     *       curSol() = x; // won't compile. Use couplingManager.updateSolution(x) instead or (better) use the new curSol(idx) interface.
      */
-    const SolutionVector& curSol() const
-    { return curSol_; }
+    [[deprecated("This function returns a Dune::MultiTypeBlockVector<SubDomainSolutionVector&, ....> (i.e. storing references). "
+                 "Use curSol(domainIdx) to get a reference to the corresponding subdomain solution vector. Will be removed after 3.5")]]
+    decltype(auto) curSol() const
+    {
+        return Detail::toRef(curSols_, std::make_index_sequence<Traits::numSubDomains>());
+    }
 
 private:
     /*!
-     * \brief the solution vector of the coupled problem
+     * \brief A tuple of shared_ptr's to solution vectors of the subproblems
      * \note in case of numeric differentiation the solution vector always carries the deflected solution
      */
-    SolutionVector curSol_;
+    SolutionVectorStorage curSols_;
 
     /*!
      * \brief A tuple of std::weak_ptrs to the sub problems
      * \note these are weak pointers and not shared pointers to break the cyclic dependency between coupling manager and problems
      */
     Problems problems_;
-
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif
