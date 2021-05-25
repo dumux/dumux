@@ -1238,15 +1238,17 @@ private:
         {
             static int counter = 0;
 
-            std::ofstream logFile;
+            // std::ofstream logFile;
             const auto rank = Dune::MPIHelper::getCollectiveCommunication().rank();
-            logFile.open("solver_log_" + std::to_string(rank) +  "_iter_" + std::to_string(counter) + ".log");
+            // logFile.open("solver_log_" + std::to_string(rank) +  "_iter_" + std::to_string(counter) + ".log");
 
-            Dune::printmatrix(logFile, M, "", "");
-            logFile.close();
+            // Dune::printmatrix(logFile, M, "", "");
+            // logFile.close();
+            Dune::storeMatrixMarket(M, "solver_log_" + std::to_string(rank) +  "_iter_" + std::to_string(counter) + ".log");
+            Dune::storeMatrixMarket(bTmp, "solver_residual_log_" + std::to_string(rank) +  "_iter_" + std::to_string(counter) + ".log");
 
-            logFile.open("solver_residual_log_" + std::to_string(rank) +  "_iter_" + std::to_string(counter) + ".log");
-            Dune::printvector(logFile, bTmp, "", "");
+            // logFile.open("solver_residual_log_" + std::to_string(rank) +  "_iter_" + std::to_string(counter) + ".log");
+            // Dune::printvector(logFile, bTmp, "", "");
 
             ++counter;
 
