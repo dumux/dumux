@@ -47,8 +47,8 @@ template<class Traits>
 class StaggeredFreeFlowCouplingManager : public CouplingManager<Traits>
 {
 public:
-        static constexpr auto freeFlowMomentumIdx = typename Traits::template SubDomain<0>::Index();
-        static constexpr auto freeFlowMassIdx = typename Traits::template SubDomain<1>::Index();
+        static constexpr auto freeFlowMomentumIndex = typename Traits::template SubDomain<0>::Index();
+        static constexpr auto freeFlowMassIndex = typename Traits::template SubDomain<1>::Index();
 private:
     template<std::size_t id> using SubDomainTypeTag = typename Traits::template SubDomain<id>::TypeTag;
     template<std::size_t id> using PrimaryVariables = GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>;
@@ -72,30 +72,30 @@ private:
 
     using GridVariablesTuple = typename Traits::template TupleOfSharedPtr<GridVariables>;
 
-    using FluidSystem = typename VolumeVariables<freeFlowMassIdx>::FluidSystem;
-    // static_assert(std::is_same_v<FluidSystem, typename VolumeVariables<freeFlowMomentumIdx>::FluidSystem>);
+    using FluidSystem = typename VolumeVariables<freeFlowMassIndex>::FluidSystem;
+    // static_assert(std::is_same_v<FluidSystem, typename VolumeVariables<freeFlowMomentumIndex>::FluidSystem>);
 
-    using VelocityVector = typename SubControlVolumeFace<freeFlowMassIdx>::GlobalPosition;
-    static_assert(std::is_same_v<VelocityVector, typename SubControlVolumeFace<freeFlowMomentumIdx>::GlobalPosition>);
+    using VelocityVector = typename SubControlVolumeFace<freeFlowMassIndex>::GlobalPosition;
+    static_assert(std::is_same_v<VelocityVector, typename SubControlVolumeFace<freeFlowMomentumIndex>::GlobalPosition>);
 
 
     struct MomentumCouplingContext
     {
-        FVElementGeometry<freeFlowMassIdx> fvGeometry;
-        ElementVolumeVariables<freeFlowMassIdx> curElemVolVars;
-        ElementVolumeVariables<freeFlowMassIdx> prevElemVolVars;
+        FVElementGeometry<freeFlowMassIndex> fvGeometry;
+        ElementVolumeVariables<freeFlowMassIndex> curElemVolVars;
+        ElementVolumeVariables<freeFlowMassIndex> prevElemVolVars;
         std::size_t eIdx;
     };
 
     struct MassAndEnergyCouplingContext
     {
-        FVElementGeometry<freeFlowMomentumIdx> fvGeometry;
+        FVElementGeometry<freeFlowMomentumIndex> fvGeometry;
         std::size_t eIdx;
     };
 
 public:
 
-    static constexpr auto pressureIdx = VolumeVariables<freeFlowMassIdx>::Indices::pressureIdx;
+    static constexpr auto pressureIdx = VolumeVariables<freeFlowMassIndex>::Indices::pressureIdx;
 
     /*!
      * \brief Methods to be accessed by main
@@ -103,8 +103,8 @@ public:
     // \{
 
     //! use as regular coupling manager
-    void init(std::shared_ptr<Problem<freeFlowMomentumIdx>> momentumProblem,
-              std::shared_ptr<Problem<freeFlowMassIdx>> massProblem,
+    void init(std::shared_ptr<Problem<freeFlowMomentumIndex>> momentumProblem,
+              std::shared_ptr<Problem<freeFlowMassIndex>> massProblem,
               GridVariablesTuple&& gridVariables,
               const SolutionVector& curSol)
     {
@@ -116,8 +116,8 @@ public:
     }
 
     //! use as binary coupling manager in multi model context
-    void init(std::shared_ptr<Problem<freeFlowMomentumIdx>> momentumProblem,
-              std::shared_ptr<Problem<freeFlowMassIdx>> massProblem,
+    void init(std::shared_ptr<Problem<freeFlowMomentumIndex>> momentumProblem,
+              std::shared_ptr<Problem<freeFlowMassIndex>> massProblem,
               GridVariablesTuple&& gridVariables,
               typename ParentType::SolutionVectorTuple& curSol)
     {
@@ -127,11 +127,11 @@ public:
 
         computeCouplingStencils_();
 
-        std::cout << "momentum sol is " << this->curSol(freeFlowMomentumIdx)[123] << std::endl;
+        std::cout << "momentum sol is " << this->curSol(freeFlowMomentumIndex)[123] << std::endl;
     }
 
-    void init(std::shared_ptr<Problem<freeFlowMomentumIdx>> momentumProblem,
-              std::shared_ptr<Problem<freeFlowMassIdx>> massProblem,
+    void init(std::shared_ptr<Problem<freeFlowMomentumIndex>> momentumProblem,
+              std::shared_ptr<Problem<freeFlowMassIndex>> massProblem,
               GridVariablesTuple&& gridVariables,
               const SolutionVector& curSol,
               const SolutionVector& prevSol)
@@ -161,9 +161,9 @@ public:
      * \return the element residual
      */
     template<std::size_t j, class LocalAssemblerI>
-    decltype(auto) evalCouplingResidual(Dune::index_constant<freeFlowMomentumIdx> domainI,
+    decltype(auto) evalCouplingResidual(Dune::index_constant<freeFlowMomentumIndex> domainI,
                                         const LocalAssemblerI& localAssemblerI,
-                                        const SubControlVolume<freeFlowMomentumIdx>& scvI,
+                                        const SubControlVolume<freeFlowMomentumIndex>& scvI,
                                         Dune::index_constant<j> domainJ,
                                         std::size_t dofIdxGlobalJ) const
     {
@@ -191,14 +191,14 @@ public:
 
 
     //! TODO: this is just a prototype. May be removed after some testing
-    Scalar extrapolatedPressure(const Element<freeFlowMomentumIdx>& element,
-                                const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
-                                const SubControlVolumeFace<freeFlowMomentumIdx>& scvf) const
+    Scalar extrapolatedPressure(const Element<freeFlowMomentumIndex>& element,
+                                const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                                const SubControlVolumeFace<freeFlowMomentumIndex>& scvf) const
     {
         const auto ownCellPressure = pressure(element, fvGeometry, scvf);
         assert (scvf.boundary() && scvf.isFrontal());
 
-        bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
+        bindCouplingContext(Dune::index_constant<freeFlowMomentumIndex>(), element, fvGeometry.elementIndex());
 
         for (const auto is : intersections(fvGeometry.gridGeometry().gridView(), element))
         {
@@ -207,7 +207,7 @@ public:
                 const auto& outsideElement = is.outside();
                 const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(outsideElement);
                 const auto& outsideScv = momentumCouplingContext_[0].fvGeometry.scv(eIdx);
-                const auto p = momentumCouplingContext_[0].curElemVolVars[outsideScv].pressure() - this->problem(freeFlowMassIdx).initial(outsideElement)[pressureIdx];
+                const auto p = momentumCouplingContext_[0].curElemVolVars[outsideScv].pressure() - this->problem(freeFlowMassIndex).initial(outsideElement)[pressureIdx];
                 const auto slope = (ownCellPressure - p) / (element.geometry().center() - outsideScv.center()).two_norm();
 
                 return ownCellPressure + slope * (element.geometry().center() - scvf.center()).two_norm(); // only works if boundary is on the right
@@ -224,11 +224,11 @@ public:
     /*!
      * \brief Returns the pressure at a given sub control volume face.
      */
-    Scalar pressure(const Element<freeFlowMomentumIdx>& element,
-                    const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
-                    const SubControlVolumeFace<freeFlowMomentumIdx>& scvf) const
+    Scalar pressure(const Element<freeFlowMomentumIndex>& element,
+                    const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                    const SubControlVolumeFace<freeFlowMomentumIndex>& scvf) const
     {
-        return this->curSol()[freeFlowMassIdx][fvGeometry.elementIndex()][pressureIdx];
+        return this->curSol(freeFlowMassIndex)[fvGeometry.elementIndex()][pressureIdx];
     }
 
     /*!
@@ -237,22 +237,22 @@ public:
      *        boundary. Since the the pressure at the given scvf is solution-dependent and thus unknown a priori, we just use the value
      *        of the interior cell here.
      */
-    Scalar cellPressure(const Element<freeFlowMassIdx>& element,
-                        const SubControlVolumeFace<freeFlowMassIdx>& scvf) const
+    Scalar cellPressure(const Element<freeFlowMassIndex>& element,
+                        const SubControlVolumeFace<freeFlowMassIndex>& scvf) const
     {
-        return this->curSol()[freeFlowMassIdx][scvf.insideScvIdx()][pressureIdx];
+        return this->curSol(freeFlowMassIndex)[scvf.insideScvIdx()][pressureIdx];
     }
 
     /*!
      * \brief Returns the density at a given sub control volume face.
      */
-    Scalar density(const Element<freeFlowMomentumIdx>& element,
-                   const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
-                   const SubControlVolumeFace<freeFlowMomentumIdx>& scvf,
+    Scalar density(const Element<freeFlowMomentumIndex>& element,
+                   const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                   const SubControlVolumeFace<freeFlowMomentumIndex>& scvf,
                    const bool considerPreviousTimeStep = false) const
     {
         assert(!(considerPreviousTimeStep && !isTransient_));
-        bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
+        bindCouplingContext(Dune::index_constant<freeFlowMomentumIndex>(), element, fvGeometry.elementIndex());
         const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideMassScv = momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
 
@@ -273,13 +273,13 @@ public:
                                         : rho(momentumCouplingContext_[0].curElemVolVars);
     }
 
-    auto getInsideAndOutsideDensity(const Element<freeFlowMomentumIdx>& element,
-                                    const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
-                                    const SubControlVolumeFace<freeFlowMomentumIdx>& scvf,
+    auto getInsideAndOutsideDensity(const Element<freeFlowMomentumIndex>& element,
+                                    const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                                    const SubControlVolumeFace<freeFlowMomentumIndex>& scvf,
                                     const bool considerPreviousTimeStep = false) const
     {
         assert(!(considerPreviousTimeStep && !isTransient_));
-        bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
+        bindCouplingContext(Dune::index_constant<freeFlowMomentumIndex>(), element, fvGeometry.elementIndex());
         const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideMassScv = momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
 
@@ -302,12 +302,12 @@ public:
     /*!
      * \brief Returns the density at a given sub control volume.
      */
-    Scalar density(const Element<freeFlowMomentumIdx>& element,
-                   const SubControlVolume<freeFlowMomentumIdx>& scv,
+    Scalar density(const Element<freeFlowMomentumIndex>& element,
+                   const SubControlVolume<freeFlowMomentumIndex>& scv,
                    const bool considerPreviousTimeStep = false) const
     {
         assert(!(considerPreviousTimeStep && !isTransient_));
-        bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, scv.elementIndex());
+        bindCouplingContext(Dune::index_constant<freeFlowMomentumIndex>(), element, scv.elementIndex());
         const auto& massScv = (*scvs(momentumCouplingContext_[0].fvGeometry).begin());
 
         return considerPreviousTimeStep ? momentumCouplingContext_[0].prevElemVolVars[massScv].density()
@@ -317,11 +317,11 @@ public:
     /*!
      * \brief Returns the pressure at a given sub control volume face.
      */
-    Scalar effectiveViscosity(const Element<freeFlowMomentumIdx>& element,
-                              const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
-                              const SubControlVolumeFace<freeFlowMomentumIdx>& scvf) const
+    Scalar effectiveViscosity(const Element<freeFlowMomentumIndex>& element,
+                              const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                              const SubControlVolumeFace<freeFlowMomentumIndex>& scvf) const
     {
-        bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
+        bindCouplingContext(Dune::index_constant<freeFlowMomentumIndex>(), element, fvGeometry.elementIndex());
 
         const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideMassScv = momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
@@ -344,10 +344,11 @@ public:
      /*!
      * \brief Returns the velocity at a given sub control volume face.
      */
-    VelocityVector faceVelocity(const Element<freeFlowMassIdx>& element,
-                                const SubControlVolumeFace<freeFlowMassIdx>& scvf) const
+    VelocityVector faceVelocity(const Element<freeFlowMassIndex>& element,
+                                const SubControlVolumeFace<freeFlowMassIndex>& scvf) const
     {
-        bindCouplingContext(Dune::index_constant<freeFlowMassIdx>(), element, scvf.insideScvIdx()/*eIdx*/);
+        // TODO: rethink this! Maybe we only need scvJ.dofIndex()
+        bindCouplingContext(Dune::index_constant<freeFlowMassIndex>(), element, scvf.insideScvIdx()/*eIdx*/);
         const auto& scvJ = massAndEnergyCouplingContext_[0].fvGeometry.scv(scvf.index()/*corresponds to scvIdx of staggered*/);
 
         // create a unit normal vector oriented in positive coordinate direction
@@ -356,7 +357,7 @@ public:
         std::for_each(velocity.begin(), velocity.end(), [](auto& v){ v = abs(v); });
 
         // create the actual velocity vector
-        velocity *= this->curSol()[freeFlowMomentumIdx][scvJ.dofIndex()];
+        velocity *= this->curSol(freeFlowMomentumIndex)[scvJ.dofIndex()];
 
         return velocity;
     }
@@ -368,6 +369,17 @@ public:
     template<std::size_t i, std::size_t j>
     const CouplingStencilType& couplingStencil(Dune::index_constant<i> domainI,
                                                const Element<i>& element,
+                                               Dune::index_constant<j> domainJ) const
+    { return emptyStencil_; }
+
+    /*!
+     * \brief The coupling stencil of domain I, i.e. which domain J DOFs
+     *        the given domain I element's residual depends on.
+     */
+    template<std::size_t j>
+    const CouplingStencilType& couplingStencil(Dune::index_constant<freeFlowMomentumIndex> domainI,
+                                               const Element<freeFlowMomentumIndex>& elementI,
+                                               const SubControlVolume<freeFlowMomentumIndex>& scvI,
                                                Dune::index_constant<j> domainJ) const
     { return emptyStencil_; }
 
@@ -385,11 +397,11 @@ public:
      *        fem: the residual of the element
      * \note  This function has to be implemented by all coupling managers for all combinations of i and j
      */
-    const CouplingStencilType couplingStencil(Dune::index_constant<freeFlowMassIdx> domainI,
-                                              const Element<freeFlowMassIdx>& elementI,
-                                              Dune::index_constant<freeFlowMomentumIdx> domainJ) const
+    const CouplingStencilType& couplingStencil(Dune::index_constant<freeFlowMassIndex> domainI,
+                                              const Element<freeFlowMassIndex>& elementI,
+                                              Dune::index_constant<freeFlowMomentumIndex> domainJ) const
     {
-        const auto eIdx = this->problem(freeFlowMassIdx).gridGeometry().elementMapper().index(elementI);
+        const auto eIdx = this->problem(freeFlowMassIndex).gridGeometry().elementMapper().index(elementI);
         return massAndEnergyToMomentumStencils_[eIdx];
     }
 
@@ -402,10 +414,10 @@ public:
      * \param scvI the sub-control volume of domain i
      * \param domainJ the domain index of domain j
      */
-    CouplingStencilType couplingStencil(Dune::index_constant<freeFlowMomentumIdx> domainI,
-                                        const Element<freeFlowMomentumIdx>& elementI,
-                                        const SubControlVolume<freeFlowMomentumIdx>& scvI,
-                                        Dune::index_constant<freeFlowMassIdx> domainJ) const
+    const CouplingStencilType& couplingStencil(Dune::index_constant<freeFlowMomentumIndex> domainI,
+                                               const Element<freeFlowMomentumIndex>& elementI,
+                                               const SubControlVolume<freeFlowMomentumIndex>& scvI,
+                                               Dune::index_constant<freeFlowMassIndex> domainJ) const
     {
         return momentumToMassAndEnergyStencils_[scvI.index()];
     }
@@ -449,33 +461,33 @@ public:
                              const Assembler& assembler)
     {}
 
-    void bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx> domainI,
-                             const Element<freeFlowMomentumIdx>& elementI) const
+    void bindCouplingContext(Dune::index_constant<freeFlowMomentumIndex> domainI,
+                             const Element<freeFlowMomentumIndex>& elementI) const
     {
         // The call to this->problem() is expensive because of std::weak_ptr (see base class). Here we try to avoid it if possible.
         if (momentumCouplingContext_.empty())
-            bindCouplingContext(domainI, elementI, this->problem(freeFlowMomentumIdx).gridGeometry().elementMapper().index(elementI));
+            bindCouplingContext(domainI, elementI, this->problem(freeFlowMomentumIndex).gridGeometry().elementMapper().index(elementI));
         else
             bindCouplingContext(domainI, elementI, momentumCouplingContext_[0].fvGeometry.gridGeometry().elementMapper().index(elementI));
     }
 
-    void bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx> domainI,
-                             const Element<freeFlowMomentumIdx>& elementI,
+    void bindCouplingContext(Dune::index_constant<freeFlowMomentumIndex> domainI,
+                             const Element<freeFlowMomentumIndex>& elementI,
                              const std::size_t eIdx) const
     {
         if (momentumCouplingContext_.empty())
         {
-            auto fvGeometry = localView(this->problem(freeFlowMassIdx).gridGeometry());
+            auto fvGeometry = localView(this->problem(freeFlowMassIndex).gridGeometry());
             fvGeometry.bind(elementI);
 
-            auto curElemVolVars = localView(gridVars_(freeFlowMassIdx).curGridVolVars());
-            curElemVolVars.bind(elementI, fvGeometry, this->curSol()[freeFlowMassIdx]);
+            auto curElemVolVars = localView(gridVars_(freeFlowMassIndex).curGridVolVars());
+            curElemVolVars.bind(elementI, fvGeometry, this->curSol(freeFlowMassIndex));
 
-            auto prevElemVolVars = isTransient_ ? localView(gridVars_(freeFlowMassIdx).prevGridVolVars())
-                                                : localView(gridVars_(freeFlowMassIdx).curGridVolVars());
+            auto prevElemVolVars = isTransient_ ? localView(gridVars_(freeFlowMassIndex).prevGridVolVars())
+                                                : localView(gridVars_(freeFlowMassIndex).curGridVolVars());
 
             if (isTransient_)
-                prevElemVolVars.bindElement(elementI, fvGeometry, (*prevSol_)[freeFlowMassIdx]);
+                prevElemVolVars.bindElement(elementI, fvGeometry, (*prevSol_)[freeFlowMassIndex]);
 
             momentumCouplingContext_.emplace_back(MomentumCouplingContext{std::move(fvGeometry), std::move(curElemVolVars), std::move(prevElemVolVars), eIdx});
         }
@@ -483,30 +495,30 @@ public:
         {
             momentumCouplingContext_[0].eIdx = eIdx;
             momentumCouplingContext_[0].fvGeometry.bind(elementI);
-            momentumCouplingContext_[0].curElemVolVars.bind(elementI, momentumCouplingContext_[0].fvGeometry, this->curSol()[freeFlowMassIdx]);
+            momentumCouplingContext_[0].curElemVolVars.bind(elementI, momentumCouplingContext_[0].fvGeometry, this->curSol(freeFlowMassIndex));
 
             if (isTransient_)
-                momentumCouplingContext_[0].prevElemVolVars.bindElement(elementI, momentumCouplingContext_[0].fvGeometry, (*prevSol_)[freeFlowMassIdx]);
+                momentumCouplingContext_[0].prevElemVolVars.bindElement(elementI, momentumCouplingContext_[0].fvGeometry, (*prevSol_)[freeFlowMassIndex]);
         }
     }
 
-    void bindCouplingContext(Dune::index_constant<freeFlowMassIdx> domainI,
-                             const Element<freeFlowMassIdx>& elementI) const
+    void bindCouplingContext(Dune::index_constant<freeFlowMassIndex> domainI,
+                             const Element<freeFlowMassIndex>& elementI) const
     {
         // The call to this->problem() is expensive because of std::weak_ptr (see base class). Here we try to avoid it if possible.
         if (massAndEnergyCouplingContext_.empty())
-            bindCouplingContext(domainI, elementI, this->problem(freeFlowMassIdx).gridGeometry().elementMapper().index(elementI));
+            bindCouplingContext(domainI, elementI, this->problem(freeFlowMassIndex).gridGeometry().elementMapper().index(elementI));
         else
             bindCouplingContext(domainI, elementI, massAndEnergyCouplingContext_[0].fvGeometry.gridGeometry().elementMapper().index(elementI));
     }
 
-    void bindCouplingContext(Dune::index_constant<freeFlowMassIdx> domainI,
-                             const Element<freeFlowMassIdx>& elementI,
+    void bindCouplingContext(Dune::index_constant<freeFlowMassIndex> domainI,
+                             const Element<freeFlowMassIndex>& elementI,
                              const std::size_t eIdx) const
     {
         if (massAndEnergyCouplingContext_.empty())
         {
-            auto fvGeometry = localView(this->problem(freeFlowMomentumIdx).gridGeometry());
+            auto fvGeometry = localView(this->problem(freeFlowMomentumIndex).gridGeometry());
             fvGeometry.bindElement(elementI);
 
             massAndEnergyCouplingContext_.emplace_back(MassAndEnergyCouplingContext{std::move(fvGeometry), eIdx});
@@ -545,21 +557,21 @@ public:
                                const PrimaryVariables<j>& priVarsJ,
                                int pvIdxJ)
     {
-        this->curSol()[domainJ][dofIdxGlobalJ][pvIdxJ] = priVarsJ[pvIdxJ];
+        this->curSol(domainJ)[dofIdxGlobalJ][pvIdxJ] = priVarsJ[pvIdxJ];
 
-        if constexpr (domainI == freeFlowMomentumIdx && domainJ == freeFlowMassIdx)
+        if constexpr (domainI == freeFlowMomentumIndex && domainJ == freeFlowMassIndex)
         {
             bindCouplingContext(domainI, localAssemblerI.element());
 
             const auto& problem = this->problem(domainJ);
             const auto& deflectedElement = problem.gridGeometry().element(dofIdxGlobalJ);
-            const auto elemSol = elementSolution(deflectedElement, this->curSol()[domainJ], problem.gridGeometry());
+            const auto elemSol = elementSolution(deflectedElement, this->curSol(domainJ), problem.gridGeometry());
             const auto& fvGeometry = momentumCouplingContext_[0].fvGeometry;
             const auto scvIdxJ = dofIdxGlobalJ;
             const auto& scv = fvGeometry.scv(scvIdxJ);
 
-            if constexpr (ElementVolumeVariables<freeFlowMassIdx>::GridVolumeVariables::cachingEnabled)
-                gridVars_(freeFlowMassIdx).curGridVolVars().volVars(scv).update(std::move(elemSol), problem, deflectedElement, scv);
+            if constexpr (ElementVolumeVariables<freeFlowMassIndex>::GridVolumeVariables::cachingEnabled)
+                gridVars_(freeFlowMassIndex).curGridVolVars().volVars(scv).update(std::move(elemSol), problem, deflectedElement, scv);
             else
                 momentumCouplingContext_[0].curElemVolVars[scv].update(std::move(elemSol), problem, deflectedElement, scv);
         }
@@ -650,7 +662,7 @@ public:
     void computeCouplingStencils_()
     {
         // TODO higher order
-        const auto& momentumGridGeometry = this->problem(freeFlowMomentumIdx).gridGeometry();
+        const auto& momentumGridGeometry = this->problem(freeFlowMomentumIndex).gridGeometry();
         auto momentumFvGeometry = localView(momentumGridGeometry);
         massAndEnergyToMomentumStencils_.clear();
         massAndEnergyToMomentumStencils_.resize(momentumGridGeometry.gridView().size(0));
