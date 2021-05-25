@@ -24,17 +24,24 @@
 #ifndef DUMUX_FV_ASSEMBLER_HH
 #define DUMUX_FV_ASSEMBLER_HH
 
+#include "tbb/parallel_for.h"
+
 #include <type_traits>
 
+#include <dune/common/timer.hh>
 #include <dune/istl/matrixindexset.hh>
+
+#include <dumux/io/format.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/linear/parallelhelpers.hh>
 
-#include "jacobianpattern.hh"
-#include "diffmethod.hh"
+#include <dumux/assembly/coloring.hh>
+#include <dumux/assembly/jacobianpattern.hh>
+#include <dumux/assembly/diffmethod.hh>
+
 #include "boxlocalassembler.hh"
 #include "cclocalassembler.hh"
 #include "fclocalassembler.hh"
@@ -95,6 +102,7 @@ class FVAssembler
     using GridView = typename GridGeo::GridView;
     using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
     using Element = typename GridView::template Codim<0>::Entity;
+    using ElementSeed = typename GridView::Grid::template Codim<0>::EntitySeed;
     using TimeLoop = TimeLoopBase<GetPropType<TypeTag, Properties::Scalar>>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
@@ -127,6 +135,7 @@ public:
     , isStationaryProblem_(true)
     {
         static_assert(isImplicit, "Explicit assembler for stationary problem doesn't make sense!");
+        enableMultithreading_ = getParam<bool>("Assembly.Multithreading", false);
     }
 
     /*!
@@ -145,7 +154,9 @@ public:
     , timeLoop_(timeLoop)
     , prevSol_(&prevSol)
     , isStationaryProblem_(!timeLoop)
-    {}
+    {
+        enableMultithreading_ = getParam<bool>("Assembly.Multithreading", false);
+    }
 
     /*!
      * \brief Assembles the global Jacobian of the residual
@@ -260,6 +271,9 @@ public:
 
         setJacobianPattern();
         setResidualSize();
+
+        if (enableMultithreading_)
+            std::tie(elementSets_, std::ignore) = coloredElementSets(gridGeometry());
     }
 
     /*!
@@ -274,6 +288,9 @@ public:
 
         setJacobianPattern();
         setResidualSize();
+
+        if (enableMultithreading_)
+            std::tie(elementSets_, std::ignore) = coloredElementSets(gridGeometry());
     }
 
     /*!
@@ -425,9 +442,35 @@ private:
         // try assembling using the local assembly function
         try
         {
+            // make this element loop run in parallel
+            // for this we have to color the elements so that we don't get
+            // race conditions when writing into the global matrix
+            // each color can be assembled using multiple threads
+            // this is because locking with mutexes is expensive and
+            // we assume that we still have enough elements per color
+            // to make use of multiple cores
+
             // let the local assembler add the element contributions
-            for (const auto& element : elements(gridView()))
-                assembleElement(element);
+            if (enableMultithreading_)
+            {
+                for (const auto& elements : elementSets_)
+                {
+                    tbb::parallel_for(tbb::blocked_range<std::size_t>(0, elements.size()),
+                    [&](const tbb::blocked_range<size_t>& r)
+                    {
+                        for (std::size_t i=r.begin(); i<r.end(); ++i)
+                        {
+                            const auto element = gridView().grid().entity(elements[i]);
+                            assembleElement(element);
+                        }
+                    });
+                }
+            }
+            else
+            {
+                for (const auto& element : elements(gridView()))
+                    assembleElement(element);
+            }
 
             // if we get here, everything worked well on this process
             succeeded = true;
@@ -495,6 +538,10 @@ private:
     //! shared pointers to the jacobian matrix and residual
     std::shared_ptr<JacobianMatrix> jacobian_;
     std::shared_ptr<SolutionVector> residual_;
+
+    //! element sets for parallel assembly
+    bool enableMultithreading_ = false;
+    std::deque<std::vector<ElementSeed>> elementSets_;
 };
 
 } // namespace Dumux
