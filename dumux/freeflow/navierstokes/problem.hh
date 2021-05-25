@@ -45,7 +45,7 @@ public:
         if constexpr (std::is_empty_v<CouplingManager>)
             return DiscretizationMethod::none;
         else
-            return getOtherMethod_(CouplingManager::freeFlowMomentumIdx);
+            return getOtherMethod_(CouplingManager::freeFlowMomentumIndex);
     }
 
     static constexpr DiscretizationMethod massDiscMethod()
@@ -53,7 +53,7 @@ public:
         if constexpr (std::is_empty_v<CouplingManager>)
             return DiscretizationMethod::none;
         else
-            return getOtherMethod_(CouplingManager::freeFlowMassIdx);
+            return getOtherMethod_(CouplingManager::freeFlowMassIndex);
     }
 
 private:
