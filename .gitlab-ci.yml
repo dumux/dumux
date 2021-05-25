@@ -80,8 +80,7 @@ trigger lecture:
   stage: downstream modules
   trigger:
     project: dumux-repositories/dumux-lecture
-    # TODO: use master when lecture pipeline is set up
-    branch: feature/test-dumux-trigger
+    branch: master
     strategy: depend
   variables:
     DUMUX_PIPELINE_SOURCE: $CI_PIPELINE_SOURCE
