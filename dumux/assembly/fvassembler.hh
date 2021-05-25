@@ -24,9 +24,14 @@
 #ifndef DUMUX_FV_ASSEMBLER_HH
 #define DUMUX_FV_ASSEMBLER_HH
 
+#include "tbb/parallel_for.h"
+
 #include <type_traits>
 
+#include <dune/common/timer.hh>
 #include <dune/istl/matrixindexset.hh>
+
+#include <dumux/io/format.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
@@ -53,6 +58,7 @@ class FVAssembler
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
     using Element = typename GridView::template Codim<0>::Entity;
+    using ElementSeed = typename GridView::Grid::template Codim<0>::EntitySeed;
     using TimeLoop = TimeLoopBase<GetPropType<TypeTag, Properties::Scalar>>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
@@ -220,6 +226,7 @@ public:
 
         setJacobianPattern();
         setResidualSize();
+        buildElementSets_();
     }
 
     /*!
@@ -234,6 +241,7 @@ public:
 
         setJacobianPattern();
         setResidualSize();
+        buildElementSets_();
     }
 
     /*!
@@ -385,9 +393,35 @@ private:
         // try assembling using the local assembly function
         try
         {
+            // make this element loop run in parallel
+            // for this we have to color the elements so that we don't get
+            // race conditions when writing into the global matrix
+            // each color can be assembled using multiple threads
+            // this is because locking with mutexes is expensive and
+            // we assume that we still have enough elements per color
+            // to make use of multiple cores
+
             // let the local assembler add the element contributions
-            for (const auto& element : elements(gridView()))
-                assembleElement(element);
+            if (parallelAssembly_)
+            {
+                for (const auto& elements : elementSets_)
+                {
+                    tbb::parallel_for(tbb::blocked_range<std::size_t>(0, elements.size()),
+                    [&](const tbb::blocked_range<size_t>& r)
+                    {
+                        for (std::size_t i=r.begin(); i<r.end(); ++i)
+                        {
+                            const auto element = gridView().grid().entity(elements[i]);
+                            assembleElement(element);
+                        }
+                    });
+                }
+            }
+            else
+            {
+                for (const auto& element : elements(gridView()))
+                    assembleElement(element);
+            }
 
             // if we get here, everything worked well on this process
             succeeded = true;
@@ -434,6 +468,65 @@ private:
     template<class GG> std::enable_if_t<GG::discMethod != DiscretizationMethod::box, void>
     enforcePeriodicConstraints_(JacobianMatrix& jac, SolutionVector& res, const SolutionVector& curSol, const GG& gridGeometry) {}
 
+    void buildElementSets_()
+    {
+        parallelAssembly_ = getParam<bool>("Assembly.Parallel", false);
+        if (parallelAssembly_)
+        {
+            Dune::Timer timer;
+            // cell-centered algorithm
+            // greedy algorithm
+            std::vector<int> localColors; localColors.reserve(10);
+            std::vector<bool> notAssigned; notAssigned.reserve(10);
+            std::vector<int> colors(gridView().size(0), -1);
+            for (const auto& element : elements(gridView()))
+            {
+                localColors.clear();
+                for (const auto& i : intersections(gridView(), element))
+                {
+                    if (i.neighbor())
+                    {
+                        const auto& neighbor = i.outside();
+                        localColors.push_back(colors[gridGeometry().elementMapper().index(neighbor)]);
+                        for (const auto& j : intersections(gridView(), neighbor))
+                            if (j.neighbor())
+                                localColors.push_back(colors[gridGeometry().elementMapper().index(j.outside())]);
+                    }
+                }
+
+                // find smallest color (positive integer) not in localColors
+                const auto smallestAvailableColor = [&]
+                {
+                    const int numLocalColors = localColors.size();
+                    notAssigned.assign(numLocalColors, true);
+
+                    // worst case for numLocalColors=3 is localColors={0, 1, 2}
+                    // which should result in 3 as smallest available color
+                    for (int i = 0; i < numLocalColors; i++)
+                        if (localColors[i] >= 0 && localColors[i] < numLocalColors)
+                            notAssigned[localColors[i]] = false;
+
+                    for (int i = 0; i < numLocalColors; i++)
+                        if (notAssigned[i])
+                            return i;
+
+                    return numLocalColors;
+                }();
+
+                colors[gridGeometry().elementMapper().index(element)]
+                    = smallestAvailableColor;
+
+                if (smallestAvailableColor < elementSets_.size())
+                    elementSets_[smallestAvailableColor].push_back(element.seed());
+                else
+                    elementSets_.push_back(std::vector<ElementSeed>{ element.seed() });
+            }
+
+            std::cout << Fmt::format("Colored elements with {} colors in {} seconds.\n",
+                                     elementSets_.size(), timer.elapsed());
+        }
+    }
+
     //! pointer to the problem to be solved
     std::shared_ptr<const Problem> problem_;
 
@@ -455,6 +548,10 @@ private:
     //! shared pointers to the jacobian matrix and residual
     std::shared_ptr<JacobianMatrix> jacobian_;
     std::shared_ptr<SolutionVector> residual_;
+
+    //! element sets for parallel assembly
+    bool parallelAssembly_ = false;
+    std::deque<std::vector<ElementSeed>> elementSets_;
 };
 
 } // namespace Dumux
