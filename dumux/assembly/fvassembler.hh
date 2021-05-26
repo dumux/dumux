@@ -514,37 +514,29 @@ private:
         if (parallelAssembly_)
         {
             Dune::Timer timer;
-            // cell-centered algorithm
-            // greedy algorithm
-            std::vector<int> localColors; localColors.reserve(10);
+
+            // greedy algorithm (not necessarily the smallest amount of colors)
+            std::vector<int> neighborColors; neighborColors.reserve(10);
             std::vector<bool> notAssigned; notAssigned.reserve(10);
             std::vector<int> colors(gridView().size(0), -1);
+            const auto dofToElement = computeDofToElementMap_();
+
             for (const auto& element : elements(gridView()))
             {
-                localColors.clear();
-                for (const auto& i : intersections(gridView(), element))
-                {
-                    if (i.neighbor())
-                    {
-                        const auto& neighbor = i.outside();
-                        localColors.push_back(colors[gridGeometry().elementMapper().index(neighbor)]);
-                        for (const auto& j : intersections(gridView(), neighbor))
-                            if (j.neighbor())
-                                localColors.push_back(colors[gridGeometry().elementMapper().index(j.outside())]);
-                    }
-                }
+                neighborColors.clear();
+                computeNeighborColors_(element, colors, dofToElement, neighborColors);
 
-                // find smallest color (positive integer) not in localColors
+                // find smallest color (positive integer) not in neighborColors
                 const auto smallestAvailableColor = [&]
                 {
-                    const int numLocalColors = localColors.size();
+                    const int numLocalColors = neighborColors.size();
                     notAssigned.assign(numLocalColors, true);
 
-                    // worst case for numLocalColors=3 is localColors={0, 1, 2}
+                    // worst case for numLocalColors=3 is neighborColors={0, 1, 2}
                     // which should result in 3 as smallest available color
                     for (int i = 0; i < numLocalColors; i++)
-                        if (localColors[i] >= 0 && localColors[i] < numLocalColors)
-                            notAssigned[localColors[i]] = false;
+                        if (neighborColors[i] >= 0 && neighborColors[i] < numLocalColors)
+                            notAssigned[neighborColors[i]] = false;
 
                     for (int i = 0; i < numLocalColors; i++)
                         if (notAssigned[i])
@@ -565,6 +557,71 @@ private:
             std::cout << Fmt::format("Colored elements with {} colors in {} seconds.\n",
                                      elementSets_.size(), timer.elapsed());
         }
+    }
+
+    template<class DofToElementMap>
+    void computeNeighborColors_(const Element& element,
+                                const std::vector<int>& colors,
+                                const DofToElementMap& dofToElement,
+                                std::vector<int>& neighborColors) const
+    {
+        if constexpr (discMethod == DiscretizationMethod::cctpfa)
+        {
+            const auto& eMapper = gridGeometry().elementMapper();
+            const auto eIdx = eMapper.index(element);
+            for (const auto& intersection : intersections(gridView(), element))
+                if (intersection.neighbor())
+                    for (auto eIdx : dofToElement[eMapper.index(intersection.outside())])
+                        neighborColors.push_back(colors[eIdx]);
+        }
+
+        else if constexpr (discMethod == DiscretizationMethod::box)
+        {
+            const auto& vMapper = gridGeometry().vertexMapper();
+            for (int i = 0; i < element.subEntities(GridView::dimension); i++)
+                for (auto eIdx : dofToElement[vMapper.subIndex(element, i, GridView::dimension)])
+                    neighborColors.push_back(colors[eIdx]);
+        }
+
+        else
+            DUNE_THROW(Dune::NotImplemented,
+                "Missing coloring scheme implementation for this discretization method");
+    }
+
+    std::vector<std::vector<std::size_t>> computeDofToElementMap_() const
+    {
+        std::vector<std::vector<std::size_t>> dofToElements;
+
+        if constexpr (discMethod == DiscretizationMethod::cctpfa)
+        {
+            dofToElements.resize(gridView().size(0));
+            const auto& eMapper = gridGeometry().elementMapper();
+            for (const auto& element : elements(gridView()))
+            {
+                const auto eIdx = eMapper.index(element);
+                for (const auto& intersection : intersections(gridView(), element))
+                    if (intersection.neighbor())
+                        dofToElements[eMapper.index(intersection.outside())].push_back(eIdx);
+            }
+        }
+
+        else if constexpr (discMethod == DiscretizationMethod::box)
+        {
+            dofToElements.resize(gridView().size(GridView::dimension));
+            const auto& vMapper = gridGeometry().vertexMapper();
+            for (const auto& element : elements(gridView()))
+            {
+                const auto eIdx = gridGeometry().elementMapper().index(element);
+                for (int i = 0; i < element.subEntities(GridView::dimension); i++)
+                    dofToElements[vMapper.subIndex(element, i, GridView::dimension)].push_back(eIdx);
+            }
+        }
+
+        else
+            DUNE_THROW(Dune::NotImplemented,
+                "Missing coloring scheme implementation for this discretization method");
+
+        return dofToElements;
     }
 
     //! pointer to the problem to be solved
