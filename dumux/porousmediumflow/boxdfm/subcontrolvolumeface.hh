@@ -72,7 +72,7 @@ struct BoxDfmDefaultScvfGeometryTraits
         struct hasSingleGeometryType
         {
             static const bool v = true;
-            static const unsigned int topologyId = Dune::Impl::CubeTopology< mydim >::type::id;
+            static const unsigned int topologyId = Dune::GeometryTypes::cube(mydim).id();
         };
     };
 
