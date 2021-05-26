@@ -26,6 +26,7 @@
 #define DUMUX_POROUSMEDIUMFLOW_BOXDFM_SUBCONTROLVOLUME_HH
 
 #include <dune/common/reservedvector.hh>
+#include <dune/geometry/type.hh>
 #include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/discretization/subcontrolvolumebase.hh>
@@ -69,7 +70,7 @@ struct BoxDfmDefaultScvGeometryTraits
         struct hasSingleGeometryType
         {
             static const bool v = true;
-            static const unsigned int topologyId = Dune::Impl::CubeTopology< mydim >::type::id;
+            static const unsigned int topologyId = Dune::GeometryTypes::cube(mydim).id();
         };
     };
 
