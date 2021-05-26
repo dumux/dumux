@@ -24,6 +24,10 @@
 #ifndef DUMUX_SEQ_SOLVER_BACKEND_HH
 #define DUMUX_SEQ_SOLVER_BACKEND_HH
 
+#include "tbb/parallel_for.h"
+#include "tbb/parallel_reduce.h"
+#include "tbb/blocked_range.h"
+
 #include <type_traits>
 #include <tuple>
 #include <utility>
@@ -45,6 +49,134 @@
 #include <dumux/linear/linearsolverparameters.hh>
 
 namespace Dumux {
+
+template<class M, class X, class Y>
+class TBBMatrixAdapter : public Dune::AssembledLinearOperator<M, X, Y>
+{
+public:
+    using matrix_type = M;
+    using domain_type = X;
+    using range_type = Y;
+    using field_type = typename X::field_type;
+
+    explicit TBBMatrixAdapter (const M& A)
+    : A_(Dune::stackobject_to_shared_ptr(A))
+    {}
+
+    explicit TBBMatrixAdapter (std::shared_ptr<const M> A)
+    : A_(A)
+    {}
+
+    void apply (const X& x, Y& y) const override
+    {
+        // parallel matrix-vector product
+        using RowIt = typename M::ConstRowIterator;
+        using ColIt = typename M::ConstColIterator;
+
+        static tbb::affinity_partitioner ap;
+        tbb::parallel_for(tbb::blocked_range<RowIt>(A_->begin(), A_->end()),
+        [&](const tbb::blocked_range<RowIt>& r)
+        {
+            const RowIt rowEnd = r.end();
+            for (RowIt row = r.begin(); row != rowEnd; ++row)
+            {
+                y[row.index()] = 0;
+                const ColIt colEnd = row->end();
+                for (ColIt col = row->begin(); col != colEnd; ++col)
+                {
+                    auto&& xj = Dune::Impl::asVector(x[col.index()]);
+                    auto&& yi = Dune::Impl::asVector(y[row.index()]);
+                    Dune::Impl::asMatrix(*col).umv(xj, yi);
+                }
+            }
+        }, ap);
+    }
+
+    void applyscaleadd (field_type alpha, const X& x, Y& y) const override
+    {
+        // parallel matrix-vector product
+        using RowIt = typename M::ConstRowIterator;
+        using ColIt = typename M::ConstColIterator;
+
+        static tbb::affinity_partitioner ap;
+        tbb::parallel_for(tbb::blocked_range<RowIt>(A_->begin(), A_->end()),
+        [&](const tbb::blocked_range<RowIt>& r)
+        {
+            const RowIt rowEnd = r.end();
+            for (RowIt row = r.begin(); row != rowEnd; ++row)
+            {
+                const ColIt colEnd = row->end();
+                for (ColIt col = row->begin(); col != colEnd; ++col)
+                {
+                    auto&& xj = Dune::Impl::asVector(x[col.index()]);
+                    auto&& yi = Dune::Impl::asVector(y[row.index()]);
+                    Dune::Impl::asMatrix(*col).usmv(alpha, xj, yi);
+                }
+            }
+        }, ap);
+    }
+
+    const M& getmat() const override
+    { return *A_; }
+
+    Dune::SolverCategory::Category category() const override
+    { return Dune::SolverCategory::sequential; }
+
+private:
+    const std::shared_ptr<const M> A_;
+};
+
+//! Default implementation for the scalar case
+template<class X>
+class TBBScalarProduct : public Dune::ScalarProduct<X>
+{
+public:
+    //! export types
+    using domain_type = X;
+    using field_type = typename X::field_type;
+    using real_type = typename Dune::FieldTraits<field_type>::real_type;
+
+    /*! \brief Dot product of two vectors. In the complex case, the first argument is conjugated.
+     *  It is assumed that the vectors are consistent on the interior+border
+     *  partition.
+     */
+    field_type dot (const X& x, const X& y) const override
+    {
+        return tbb::parallel_reduce(
+            tbb::blocked_range<field_type>(0, x.size(), 100000), 0.0,
+            [&](tbb::blocked_range<field_type> r, field_type sum)
+            {
+                for (int i = r.begin(); i < r.end(); ++i)
+                    sum += Dune::Impl::asVector(x[i]).dot(Dune::Impl::asVector(y[i]));
+                return sum;
+            },
+            std::plus<field_type>()
+        );
+    }
+
+    /*! \brief Norm of a right-hand side vector.
+     *  The vector must be consistent on the interior+border partition
+     */
+    real_type norm (const X& x) const override
+    {
+        return std::sqrt(tbb::parallel_reduce(
+            tbb::blocked_range<field_type>(0, x.size(), 100000), 0.0,
+            [&](tbb::blocked_range<field_type> r, field_type sum)
+            {
+                for (int i = r.begin(); i < r.end(); ++i)
+                    sum += Dune::Impl::asVector(x[i]).two_norm2();
+                return sum;
+            },
+            std::plus<field_type>()
+        ));
+    }
+
+    //! Category of the scalar product (see SolverCategory::Category)
+    Dune::SolverCategory::Category category() const override
+    {
+        return Dune::SolverCategory::sequential;
+    }
+};
 
 /*!
  * \ingroup Linear
@@ -70,13 +202,30 @@ public:
     static bool solve(const SolverInterface& s, const Matrix& A, Vector& x, const Vector& b,
                       const std::string& modelParamGroup = "")
     {
+        const bool parallel = getParamFromGroup<bool>(modelParamGroup, "LinearSolver.Parallel", false);
+
         Preconditioner precond(A, s.precondIter(), s.relaxation());
 
         // make a linear operator from a matrix
-        using MatrixAdapter = Dune::MatrixAdapter<Matrix, Vector, Vector>;
-        MatrixAdapter linearOperator(A);
+        auto linearOperator = [&]()
+        -> std::shared_ptr<Dune::AssembledLinearOperator<Matrix, Vector, Vector>>
+        {
+            if (parallel)
+                return std::make_shared<TBBMatrixAdapter<Matrix, Vector, Vector>>(A);
+            else
+                return std::make_shared<Dune::MatrixAdapter<Matrix, Vector, Vector>>(A);
+        }();
 
-        Solver solver(linearOperator, precond, s.residReduction(), s.maxIter(), s.verbosity());
+        auto scalarProduct = [&]()
+        -> std::shared_ptr<Dune::ScalarProduct<Vector>>
+        {
+            if (parallel)
+                return std::make_shared<TBBScalarProduct<Vector>>();
+            else
+                return std::make_shared<Dune::SeqScalarProduct<Vector>>();
+        }();
+
+        Solver solver(*linearOperator, *scalarProduct, precond, s.residReduction(), s.maxIter(), s.verbosity());
 
         Vector bTmp(b);
 
@@ -92,14 +241,21 @@ public:
     {
         // get the restart threshold
         const int restartGMRes = getParamFromGroup<int>(modelParamGroup, "LinearSolver.GMResRestart", 10);
+        const bool parallel = getParamFromGroup<bool>(modelParamGroup, "LinearSolver.Parallel", false);
 
         Preconditioner precond(A, s.precondIter(), s.relaxation());
 
         // make a linear operator from a matrix
-        using MatrixAdapter = Dune::MatrixAdapter<Matrix, Vector, Vector>;
-        MatrixAdapter linearOperator(A);
+        auto linearOperator = [&]()
+        -> std::shared_ptr<Dune::AssembledLinearOperator<Matrix, Vector, Vector>>
+        {
+            if (parallel)
+                return std::make_shared<TBBMatrixAdapter<Matrix, Vector, Vector>>(A);
+            else
+                return std::make_shared<Dune::MatrixAdapter<Matrix, Vector, Vector>>(A);
+        }();
 
-        Solver solver(linearOperator, precond, s.residReduction(), restartGMRes, s.maxIter(), s.verbosity());
+        Solver solver(*linearOperator, precond, s.residReduction(), restartGMRes, s.maxIter(), s.verbosity());
 
         Vector bTmp(b);
 
@@ -113,12 +269,21 @@ public:
     static bool solveWithILU0Prec(const SolverInterface& s, const Matrix& A, Vector& x, const Vector& b,
                                   const std::string& modelParamGroup = "")
     {
+        const bool parallel = getParamFromGroup<bool>(modelParamGroup, "LinearSolver.Parallel", false);
+
         Preconditioner precond(A, s.relaxation());
 
-        using MatrixAdapter = Dune::MatrixAdapter<Matrix, Vector, Vector>;
-        MatrixAdapter operatorA(A);
+        // make a linear operator from a matrix
+        auto linearOperator = [&]()
+        -> std::shared_ptr<Dune::AssembledLinearOperator<Matrix, Vector, Vector>>
+        {
+            if (parallel)
+                return std::make_shared<TBBMatrixAdapter<Matrix, Vector, Vector>>(A);
+            else
+                return std::make_shared<Dune::MatrixAdapter<Matrix, Vector, Vector>>(A);
+        }();
 
-        Solver solver(operatorA, precond, s.residReduction(), s.maxIter(), s.verbosity());
+        Solver solver(*linearOperator, precond, s.residReduction(), s.maxIter(), s.verbosity());
 
         Vector bTmp(b);
 
@@ -135,13 +300,21 @@ public:
     {
         // get the restart threshold
         const int restartGMRes = getParamFromGroup<int>(modelParamGroup, "LinearSolver.GMResRestart", 10);
+        const bool parallel = getParamFromGroup<bool>(modelParamGroup, "LinearSolver.Parallel", false);
 
         Preconditioner precond(A, s.relaxation());
 
-        using MatrixAdapter = Dune::MatrixAdapter<Matrix, Vector, Vector>;
-        MatrixAdapter operatorA(A);
+        // make a linear operator from a matrix
+        auto linearOperator = [&]()
+        -> std::shared_ptr<Dune::AssembledLinearOperator<Matrix, Vector, Vector>>
+        {
+            if (parallel)
+                return std::make_shared<TBBMatrixAdapter<Matrix, Vector, Vector>>(A);
+            else
+                return std::make_shared<Dune::MatrixAdapter<Matrix, Vector, Vector>>(A);
+        }();
 
-        Solver solver(operatorA, precond, s.residReduction(), restartGMRes, s.maxIter(), s.verbosity());
+        Solver solver(*linearOperator, precond, s.residReduction(), restartGMRes, s.maxIter(), s.verbosity());
 
         Vector bTmp(b);
 
@@ -158,7 +331,7 @@ public:
                                    const Dune::ParameterTree& params)
     {
         // make a linear operator from a matrix
-        using MatrixAdapter = Dune::MatrixAdapter<Matrix, Vector, Vector>;
+        using MatrixAdapter = TBBMatrixAdapter<Matrix, Vector, Vector>;
         const auto linearOperator = std::make_shared<MatrixAdapter>(A);
 
 #if DUNE_VERSION_GTE(DUNE_ISTL,2,8)
