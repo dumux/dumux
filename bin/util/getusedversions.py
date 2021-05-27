@@ -20,10 +20,27 @@ def raiseUntrackedFilesError(folderPath):
 def isGitRepository(modFolderPath):
     return os.path.exists(os.path.join(modFolderPath, '.git'))
 
+
 # returns true if a module contains untracked files
 def hasUntrackedFiles(modFolderPath):
     run = callFromPath(modFolderPath)(runCommand)
     return run('git ls-files --others --exclude-standard') != ''
+
+
+# get the most recent commit that also exists on the remote master/release branch
+# maybe used to find a commit we can use as basis for a pub module
+def mostRecentCommonCommitWithRemote(modFolderPath, match=['/master', '/release']):
+    run = callFromPath(modFolderPath)(runCommand)
+    revList = run('git rev-list HEAD').split('\n')
+    for rev in revList:
+        remoteBranches = run('git branch -r --contains {}'.format(rev))
+        for m in match:
+            if m in remoteBranches:
+                return rev
+    
+    raise RuntimeError('Could not suitable find ancestor commit'
+                       ' that is synced with master on remote')
+
 
 # function to extract git version information for modules
 # returns a dictionary containing module information for each given module folder
@@ -42,9 +59,13 @@ def getUsedVersions(modFolderPaths, ignoreUntracked=False):
             run = callFromPath(modFolderPath)(runCommand)
             result[modFolderPath] = {}
             result[modFolderPath]['remote'] = run('git ls-remote --get-url').strip('\n')
-            result[modFolderPath]['revision'] = run('git log -n 1 --format=%H @{upstream}').strip('\n')
-            result[modFolderPath]['date'] = run('git log -n 1 --format=%ai @{upstream}').strip('\n')
-            result[modFolderPath]['author'] = run('git log -n 1 --format=%an @{upstream}').strip('\n')
+            # update remote to make sure we find all upstream commits
+            run('git fetch {}'.format(result[modFolderPath]['remote']))
+            rev = mostRecentCommonCommitWithRemote(modFolderPaths)
+            result[modFolderPath]['revision'] = rev
+            result[modFolderPath]['date'] = run('git log -n 1 --format=%ai {}'.format(rev)).strip('\n')
+            result[modFolderPath]['author'] = run('git log -n 1 --format=%an {}'.format(rev)).strip('\n')
+            # this may return HEAD if we are on some detached HEAD tree
             result[modFolderPath]['branch'] = run('git rev-parse --abbrev-ref HEAD').strip('\n')
 
     return result
