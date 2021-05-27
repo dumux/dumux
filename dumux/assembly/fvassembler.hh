@@ -38,8 +38,10 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/linear/parallelhelpers.hh>
 
-#include "jacobianpattern.hh"
-#include "diffmethod.hh"
+#include <dumux/assembly/coloring.hh>
+#include <dumux/assembly/jacobianpattern.hh>
+#include <dumux/assembly/diffmethod.hh>
+
 #include "boxlocalassembler.hh"
 #include "cclocalassembler.hh"
 #include "fclocalassembler.hh"
@@ -133,6 +135,7 @@ public:
     , isStationaryProblem_(true)
     {
         static_assert(isImplicit, "Explicit assembler for stationary problem doesn't make sense!");
+        enableMultithreading_ = getParam<bool>("Assembly.Multithreading", false);
     }
 
     /*!
@@ -151,7 +154,9 @@ public:
     , timeLoop_(timeLoop)
     , prevSol_(&prevSol)
     , isStationaryProblem_(!timeLoop)
-    {}
+    {
+        enableMultithreading_ = getParam<bool>("Assembly.Multithreading", false);
+    }
 
     /*!
      * \brief Assembles the global Jacobian of the residual
@@ -266,7 +271,9 @@ public:
 
         setJacobianPattern();
         setResidualSize();
-        buildElementSets_();
+
+        if (enableMultithreading_)
+            std::tie(elementSets_, std::ignore) = coloredElementSets(gridGeometry());
     }
 
     /*!
@@ -281,7 +288,9 @@ public:
 
         setJacobianPattern();
         setResidualSize();
-        buildElementSets_();
+
+        if (enableMultithreading_)
+            std::tie(elementSets_, std::ignore) = coloredElementSets(gridGeometry());
     }
 
     /*!
@@ -442,7 +451,7 @@ private:
             // to make use of multiple cores
 
             // let the local assembler add the element contributions
-            if (parallelAssembly_)
+            if (enableMultithreading_)
             {
                 for (const auto& elements : elementSets_)
                 {
@@ -508,122 +517,6 @@ private:
     template<class GG> std::enable_if_t<GG::discMethod != DiscretizationMethod::box, void>
     enforcePeriodicConstraints_(JacobianMatrix& jac, SolutionVector& res, const SolutionVector& curSol, const GG& gridGeometry) {}
 
-    void buildElementSets_()
-    {
-        parallelAssembly_ = getParam<bool>("Assembly.Parallel", false);
-        if (parallelAssembly_)
-        {
-            Dune::Timer timer;
-
-            // greedy algorithm (not necessarily the smallest amount of colors)
-            std::vector<int> neighborColors; neighborColors.reserve(10);
-            std::vector<bool> notAssigned; notAssigned.reserve(10);
-            std::vector<int> colors(gridView().size(0), -1);
-            const auto dofToElement = computeDofToElementMap_();
-
-            for (const auto& element : elements(gridView()))
-            {
-                neighborColors.clear();
-                computeNeighborColors_(element, colors, dofToElement, neighborColors);
-
-                // find smallest color (positive integer) not in neighborColors
-                const auto smallestAvailableColor = [&]
-                {
-                    const int numLocalColors = neighborColors.size();
-                    notAssigned.assign(numLocalColors, true);
-
-                    // worst case for numLocalColors=3 is neighborColors={0, 1, 2}
-                    // which should result in 3 as smallest available color
-                    for (int i = 0; i < numLocalColors; i++)
-                        if (neighborColors[i] >= 0 && neighborColors[i] < numLocalColors)
-                            notAssigned[neighborColors[i]] = false;
-
-                    for (int i = 0; i < numLocalColors; i++)
-                        if (notAssigned[i])
-                            return i;
-
-                    return numLocalColors;
-                }();
-
-                colors[gridGeometry().elementMapper().index(element)]
-                    = smallestAvailableColor;
-
-                if (smallestAvailableColor < elementSets_.size())
-                    elementSets_[smallestAvailableColor].push_back(element.seed());
-                else
-                    elementSets_.push_back(std::vector<ElementSeed>{ element.seed() });
-            }
-
-            std::cout << Fmt::format("Colored elements with {} colors in {} seconds.\n",
-                                     elementSets_.size(), timer.elapsed());
-        }
-    }
-
-    template<class DofToElementMap>
-    void computeNeighborColors_(const Element& element,
-                                const std::vector<int>& colors,
-                                const DofToElementMap& dofToElement,
-                                std::vector<int>& neighborColors) const
-    {
-        if constexpr (discMethod == DiscretizationMethod::cctpfa)
-        {
-            const auto& eMapper = gridGeometry().elementMapper();
-            const auto eIdx = eMapper.index(element);
-            for (const auto& intersection : intersections(gridView(), element))
-                if (intersection.neighbor())
-                    for (auto eIdx : dofToElement[eMapper.index(intersection.outside())])
-                        neighborColors.push_back(colors[eIdx]);
-        }
-
-        else if constexpr (discMethod == DiscretizationMethod::box)
-        {
-            const auto& vMapper = gridGeometry().vertexMapper();
-            for (int i = 0; i < element.subEntities(GridView::dimension); i++)
-                for (auto eIdx : dofToElement[vMapper.subIndex(element, i, GridView::dimension)])
-                    neighborColors.push_back(colors[eIdx]);
-        }
-
-        else
-            DUNE_THROW(Dune::NotImplemented,
-                "Missing coloring scheme implementation for this discretization method");
-    }
-
-    std::vector<std::vector<std::size_t>> computeDofToElementMap_() const
-    {
-        std::vector<std::vector<std::size_t>> dofToElements;
-
-        if constexpr (discMethod == DiscretizationMethod::cctpfa)
-        {
-            dofToElements.resize(gridView().size(0));
-            const auto& eMapper = gridGeometry().elementMapper();
-            for (const auto& element : elements(gridView()))
-            {
-                const auto eIdx = eMapper.index(element);
-                for (const auto& intersection : intersections(gridView(), element))
-                    if (intersection.neighbor())
-                        dofToElements[eMapper.index(intersection.outside())].push_back(eIdx);
-            }
-        }
-
-        else if constexpr (discMethod == DiscretizationMethod::box)
-        {
-            dofToElements.resize(gridView().size(GridView::dimension));
-            const auto& vMapper = gridGeometry().vertexMapper();
-            for (const auto& element : elements(gridView()))
-            {
-                const auto eIdx = gridGeometry().elementMapper().index(element);
-                for (int i = 0; i < element.subEntities(GridView::dimension); i++)
-                    dofToElements[vMapper.subIndex(element, i, GridView::dimension)].push_back(eIdx);
-            }
-        }
-
-        else
-            DUNE_THROW(Dune::NotImplemented,
-                "Missing coloring scheme implementation for this discretization method");
-
-        return dofToElements;
-    }
-
     //! pointer to the problem to be solved
     std::shared_ptr<const Problem> problem_;
 
@@ -647,7 +540,7 @@ private:
     std::shared_ptr<SolutionVector> residual_;
 
     //! element sets for parallel assembly
-    bool parallelAssembly_ = false;
+    bool enableMultithreading_ = false;
     std::deque<std::vector<ElementSeed>> elementSets_;
 };
 
