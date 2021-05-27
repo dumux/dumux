@@ -26,6 +26,17 @@
 #ifndef DUMUX_MULTIDOMAIN_FV_ASSEMBLER_HH
 #define DUMUX_MULTIDOMAIN_FV_ASSEMBLER_HH
 
+#if HAVE_TBB
+#include "tbb/parallel_for.h"
+// Maybe change this to true at some point,
+// together with some heuristic based on number of elements, scheme,...
+// #define DUMUX_MULTITHREADING_ASSEMBLY_DEFAULT true
+#endif
+
+#ifndef DUMUX_MULTITHREADING_ASSEMBLY_DEFAULT
+#define DUMUX_MULTITHREADING_ASSEMBLY_DEFAULT false
+#endif
+
 #include <type_traits>
 #include <tuple>
 
@@ -81,6 +92,12 @@ public:
     using GridGeometry = typename MDTraits::template SubDomain<id>::GridGeometry;
 
     template<std::size_t id>
+    using ElementSeed = typename GridGeometry<id>::GridView::Grid::template Codim<0>::EntitySeed;
+
+    template<std::size_t id>
+    using ElementSets = std::deque<std::vector<ElementSeed<id>>>;
+
+    template<std::size_t id>
     using Problem = typename MDTraits::template SubDomain<id>::Problem;
 
     using JacobianMatrix = typename MDTraits::JacobianMatrix;
@@ -100,6 +117,7 @@ private:
     using ProblemTuple = typename MDTraits::template TupleOfSharedPtrConst<Problem>;
     using GridGeometryTuple = typename MDTraits::template TupleOfSharedPtrConst<GridGeometry>;
     using GridVariablesTuple = typename MDTraits::template TupleOfSharedPtr<GridVariables>;
+    using ElementSetsTuple = typename MDTraits::template Tuple<ElementSets>;
 
     using TimeLoop = TimeLoopBase<Scalar>;
     using ThisType = MultiDomainFVAssembler<MDTraits, CouplingManager, diffMethod, isImplicit()>;
@@ -162,6 +180,7 @@ public:
     {
         static_assert(isImplicit(), "Explicit assembler for stationary problem doesn't make sense!");
         std::cout << "Instantiated assembler for a stationary problem." << std::endl;
+        enableMultithreading_ = getParam<bool>("Assembly.Multithreading", DUMUX_MULTITHREADING_ASSEMBLY_DEFAULT);
     }
 
     /*!
@@ -185,6 +204,7 @@ public:
     , warningIssued_(false)
     {
         std::cout << "Instantiated assembler for an instationary problem." << std::endl;
+        enableMultithreading_ = getParam<bool>("Assembly.Multithreading", DUMUX_MULTITHREADING_ASSEMBLY_DEFAULT);
     }
 
     /*!
@@ -302,6 +322,9 @@ public:
         setJacobianBuildMode(*jacobian_);
         setJacobianPattern(*jacobian_);
         setResidualSize(*residual_);
+
+        if (enableMultithreading_)
+            buildElementSets_();
     }
 
     /*!
@@ -316,6 +339,9 @@ public:
         setJacobianBuildMode(*jacobian_);
         setJacobianPattern(*jacobian_);
         setResidualSize(*residual_);
+
+        if (enableMultithreading_)
+            buildElementSets_();
     }
 
     /*!
@@ -529,8 +555,31 @@ private:
     void assemble_(Dune::index_constant<i> domainId, AssembleElementFunc&& assembleElement) const
     {
         // let the local assembler add the element contributions
-        for (const auto& element : elements(gridView(domainId)))
-            assembleElement(element);
+        if (enableMultithreading_)
+        {
+#if HAVE_TBB
+            for (const auto& elements : std::get<i>(elementSets_))
+            {
+                tbb::parallel_for(tbb::blocked_range<std::size_t>(0, elements.size()),
+                [&](const tbb::blocked_range<size_t>& r)
+                {
+                    for (std::size_t i=r.begin(); i<r.end(); ++i)
+                    {
+                        const auto element = gridView(domainId).grid().entity(elements[i]);
+                        assembleElement(element);
+                    }
+                });
+            }
+#else
+            DUNE_THROW(Dune::Exception,
+                "Multithread assembly has been explicitly requested but TBB has not been found!");
+#endif // HAVE_TBB
+        }
+        else
+        {
+            for (const auto& element : elements(gridView(domainId)))
+                assembleElement(element);
+        }
     }
 
     // get diagonal block pattern
@@ -596,6 +645,80 @@ private:
         }
     }
 
+    //! build element sets for lock-free multithreaded assembly
+    void buildElementSets_(int verbosity = 1)
+    {
+        // for multidomain, we need to make sure to consider the entire row
+        // hence all conflicts arising from writing into the coupling blocks too
+        // - we assume for now that the coupling manager creates local contexts per color so there is no conflict there
+        // - when writing into the coupling block there is no conflict as we only touch rows related to our own element
+        // - however, when deflecting the solution vector, there is a conflict with all other elements that couple
+        //   with the same dof, so we need to consider the coupling stencil in the set
+        // - in the case of caching deflecting the solution may require updating caches in the local stencil of the other domain
+        // - if there is an extended own stencil we have added restrictions for the own domain too
+        // - all coupling is binary, because we still assemble domain after domain sequentially
+        //
+        // working theory: if we construct a dofToElement map (dof J to element I) for every subdomain J, we can iterate over
+        // all domains and then find conflicting elements in I by checking if they are in the dofToElement map of
+        // any of the dofs that we interact with (own stencil + extended stencil + coupling stencil)
+        using namespace Dune::Hybrid;
+        forEach(std::make_index_sequence<JacobianMatrix::N()>(), [&](const auto i)
+        {
+            Dune::Timer timer;
+
+            constexpr auto domainI = Dune::index_constant<i>;
+            const auto& gg = gridGeometry(domainI);
+            const auto dofToElement = [&]
+            {
+                std::array<std::vector<std::vector<std::size_t>>, Traits::numSubDomains> dofToElement;
+                forEach(std::make_index_sequence<JacobianMatrix::M()>(), [&](const auto j)
+                {
+                    dofToElement[j] = Detail::computeDofToElementMap(
+                        domainI, domainJ, couplingManager(), gg
+                    );
+                });
+            }();
+
+            std::vector<int> colors(gg.gridView().size(0), -1);
+
+            // reserve some memory for helper arrays
+            std::vector<int> neighborColors; neighborColors.reserve(50);
+            std::vector<bool> notAssigned; notAssigned.reserve(50);
+
+            for (const auto& element : elements(gg.gridView()))
+            {
+                // compute neighbor colors based on discretization-dependent stencil
+                neighborColors.clear();
+
+                // neighbors due to conflicts in own domain (regular)
+                Detail::addNeighborColors(gg, element, colors, dofToElement[i], neighborColors);
+                // neighbors due to conflicts in own domain (extended stencil)
+                Detail::addNeighborColors(gg, element, colors, dofToElement[i], neighborColors);
+                // neighbors due to conflicts in other domains (coupling stencils)
+                forEach(std::make_index_sequence<JacobianMatrix::M()>(), [&](const auto j){
+                    Detail::addNeighborColors(gg, element, colors, dofToElement[i], neighborColors);
+                });
+
+                // find smallest color (positive integer) not in neighborColors
+                const auto color = Detail::smallestAvailableColor(neighborColors, notAssigned);
+
+                // assign color to element
+                colors[gg.elementMapper().index(element)] = color;
+
+                // add element to the set of elements with the same color
+                auto& elementSets = std::get<i>(elementSets_);
+                if (color < elementSets.size())
+                    elementSets[color].push_back(element.seed());
+                else
+                    elementSets.push_back(std::vector<ElementSeed>{ element.seed() });
+            }
+
+            if (verbosity > 0)
+                std::cout << Fmt::format("Colored {} elements of domain {} with {} colors in {} seconds.\n",
+                                        gridView(domainI).size(0), i, elementSets.size(), timer.elapsed());
+        });
+    }
+
     //! pointer to the problem to be solved
     ProblemTuple problemTuple_;
 
@@ -620,6 +743,10 @@ private:
 
     //! Issue a warning if the calculation is used in parallel with overlap. This could be a static local variable if it wasn't for g++7 yielding a linker error.
     bool warningIssued_;
+
+    //! element sets for parallel assembly
+    bool enableMultithreading_ = false;
+    ElementSetsTuple elementSets_;
 };
 
 } // end namespace Dumux
