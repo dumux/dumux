@@ -24,7 +24,16 @@
 #ifndef DUMUX_FV_ASSEMBLER_HH
 #define DUMUX_FV_ASSEMBLER_HH
 
+#if HAVE_TBB
 #include "tbb/parallel_for.h"
+// Maybe change this to true at some point,
+// together with some heuristic based on number of elements, scheme,...
+// #define DUMUX_MULTITHREADING_ASSEMBLY_DEFAULT true
+#endif
+
+#ifndef DUMUX_MULTITHREADING_ASSEMBLY_DEFAULT
+#define DUMUX_MULTITHREADING_ASSEMBLY_DEFAULT false
+#endif
 
 #include <type_traits>
 
@@ -95,7 +104,7 @@ public:
     , isStationaryProblem_(true)
     {
         static_assert(isImplicit, "Explicit assembler for stationary problem doesn't make sense!");
-        enableMultithreading_ = getParam<bool>("Assembly.Multithreading", false);
+        enableMultithreading_ = getParam<bool>("Assembly.Multithreading", DUMUX_MULTITHREADING_ASSEMBLY_DEFAULT);
     }
 
     /*!
@@ -115,7 +124,7 @@ public:
     , prevSol_(&prevSol)
     , isStationaryProblem_(!timeLoop)
     {
-        enableMultithreading_ = getParam<bool>("Assembly.Multithreading", false);
+        enableMultithreading_ = getParam<bool>("Assembly.Multithreading", DUMUX_MULTITHREADING_ASSEMBLY_DEFAULT);
     }
 
     /*!
@@ -413,6 +422,7 @@ private:
             // let the local assembler add the element contributions
             if (enableMultithreading_)
             {
+#if HAVE_TBB
                 for (const auto& elements : elementSets_)
                 {
                     tbb::parallel_for(tbb::blocked_range<std::size_t>(0, elements.size()),
@@ -425,6 +435,10 @@ private:
                         }
                     });
                 }
+#else
+                DUNE_THROW(Dune::Exception,
+                    "Multithread assembly has been explicitly requested but TBB has not been found!");
+#endif // HAVE_TBB
             }
             else
             {
