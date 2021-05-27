@@ -121,37 +121,42 @@ public:
                 const auto bulkRefElem = referenceElement(bulkElement);
 
                 // find the bulk element facet that lies on this low dim element (assumes conformity!)
-                bool found = false;
-                unsigned int coupledFacetIndex = 0;
-                std::vector<unsigned int> handledFacets;
-                for (const auto& is : intersections(bulkFvGridGeometry.gridView(), bulkElement))
+                const auto coupledFacetIndex = [&]
                 {
-                    // skip already handled facets (necessary for e.g. Dune::FoamGrid)
-                    if (std::count(handledFacets.begin(), handledFacets.end(), is.indexInInside()))
-                        continue;
-
-                    handledFacets.push_back(is.indexInInside());
-
-                    // determine if it lies on low dim element by comparing corner indices
-                    const auto numCorners = is.geometry().corners();
-                    std::vector<BulkIndexType> facetIndices(numCorners);
-                    for (int i = 0; i < numCorners; ++i)
+                    bool found = false;
+                    unsigned int coupledFacetIndex = 0;
+                    std::vector<unsigned int> handledFacets;
+                    for (const auto& is : intersections(bulkFvGridGeometry.gridView(), bulkElement))
                     {
-                        const auto vIdxLocal = bulkRefElem.subEntity(is.indexInInside(), 1, i, bulkDim);
-                        facetIndices[i] = bulkFvGridGeometry.vertexMapper().vertexIndex(bulkElement.template subEntity<bulkDim>(vIdxLocal));
+                        // skip already handled facets (necessary for e.g. Dune::FoamGrid)
+                        if (std::count(handledFacets.begin(), handledFacets.end(), is.indexInInside()))
+                            continue;
+
+                        handledFacets.push_back(is.indexInInside());
+
+                        // determine if it lies on low dim element by comparing corner indices
+                        const auto numCorners = is.geometry().corners();
+                        std::vector<BulkIndexType> facetIndices(numCorners);
+                        for (int i = 0; i < numCorners; ++i)
+                        {
+                            const auto vIdxLocal = bulkRefElem.subEntity(is.indexInInside(), 1, i, bulkDim);
+                            facetIndices[i] = bulkFvGridGeometry.vertexMapper().vertexIndex(bulkElement.template subEntity<bulkDim>(vIdxLocal));
+                        }
+
+                        std::sort(facetIndices.begin(), facetIndices.end());
+                        if ( std::equal(facetIndices.begin(), facetIndices.end(), elementCorners.begin(), elementCorners.end()) )
+                        {
+                            coupledFacetIndex = is.indexInInside();
+                            found = true; break;
+                        }
                     }
 
-                    std::sort(facetIndices.begin(), facetIndices.end());
-                    if ( std::equal(facetIndices.begin(), facetIndices.end(), elementCorners.begin(), elementCorners.end()) )
-                    {
-                        coupledFacetIndex = is.indexInInside();
-                        found = true; break;
-                    }
-                }
+                    // ensure that we found the facet!
+                    if (!found)
+                        DUNE_THROW(Dune::InvalidStateException, "Could not find the bulk element coupling facet!");
 
-                // ensure that we found the facet!
-                if (!found)
-                    DUNE_THROW(Dune::InvalidStateException, "Could not find the bulk element coupling facet!");
+                    return coupledFacetIndex;
+                }();
 
                 // we should always find numElementCorners coupling scvfs
                 auto fvGeometry = localView(bulkFvGridGeometry);
