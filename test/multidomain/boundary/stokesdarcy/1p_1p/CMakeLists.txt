@@ -1,4 +1,5 @@
 add_subdirectory(convergencetest)
+add_subdirectory(convergencetest_mortar)
 
 add_input_file_links()
 

@@ -1,0 +1,61 @@
+[Problem]
+EnableGravity = false
+EnableInertiaTerms = false
+
+[FreeFlow]
+EnableUnsymmetrizedVelocityGradient = false
+
+[SpatialParams]
+Permeability = 1 # m^2
+AlphaBeaversJoseph = 1.0
+
+[Domain1]
+SolverType = Darcy
+DiscretizationScheme = Tpfa
+Grid.LowerLeft = 0 0
+Grid.UpperRight = 1 1
+Grid.Cells = 14 16
+Grid.Refinement = 1
+Problem.Name = domain1
+Problem.IsOnNegativeMortarSide = false
+
+[Domain2]
+SolverType = Stokes
+DiscretizationScheme = Staggered
+Grid.LowerLeft = 0 1
+Grid.UpperRight = 1 2
+Grid.Cells = 16 16
+Grid.Refinement = 1
+Problem.Name = domain2
+Problem.IsOnNegativeMortarSide = true
+
+[Mortar]
+Grid.LowerLeft = 0 1
+Grid.UpperRight = 1 1
+Grid.Cells = 16
+Grid.Refinement = 1
+VariableType = Pressure
+
+[InterfaceSolver]
+Verbosity = 2
+ResidualReduction = 1e-20
+MaxIterations = 2000
+LinearSolverType = GMRes
+
+[Vtk]
+OutputName = mortarcoupling
+AddVelocity = 1
+
+[L2Error]
+OutputFile = errors.csv
+IntegrationOrder = 4
+
+[Newton]
+MaxSteps = 100
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1
+
+[0.Component]
+LiquidDensity = 1
+LiquidKinematicViscosity = 1
