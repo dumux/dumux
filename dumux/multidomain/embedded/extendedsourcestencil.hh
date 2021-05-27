@@ -172,8 +172,8 @@ private:
         if constexpr (domainId == bulkIdx)
         {
             const auto bulkElementIdx = couplingManager.problem(bulkIdx).gridGeometry().elementMapper().index(element);
-            if (sourceStencils_.count(bulkElementIdx))
-                return sourceStencils_.at(bulkElementIdx);
+            if (auto stencil = sourceStencils_.find(bulkElementIdx); stencil != sourceStencils_.end())
+                return stencil->second;
         }
         
         return couplingManager.emptyStencil(domainId);
