@@ -75,7 +75,7 @@ options.add_argument('--download', action="store_true", default=False,
 
 parser.add_argument('--dune_branch', default="releases/2.7",
                      help='Dune branch to be checked out.')
-parser.add_argument('--dumux_branch', default="releases/3.3",
+parser.add_argument('--dumux_branch', default="releases/3.4",
                      help='Dumux branch to be checked out.')
 parser.add_argument('--opm_branch', default="release/2020.10",
                      help='Opm branch to be checked out.')

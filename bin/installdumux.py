@@ -18,7 +18,7 @@ parser.add_argument('--dune-version',
                     default="2.7",
                     help='Dune version to be checked out.')
 parser.add_argument('--dumux-version',
-                    default="3.3",
+                    default="3.4",
                     help='Dumux version to be checked out.')
 args = vars(parser.parse_args())
 
