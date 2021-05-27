@@ -122,7 +122,7 @@ public:
 
                 // find the bulk element facet that lies on this low dim element (assumes conformity!)
                 bool found = false;
-                unsigned int coupledFacetIndex;
+                unsigned int coupledFacetIndex = 0;
                 std::vector<unsigned int> handledFacets;
                 for (const auto& is : intersections(bulkFvGridGeometry.gridView(), bulkElement))
                 {
