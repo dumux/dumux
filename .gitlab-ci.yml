@@ -1,4 +1,5 @@
 stages:
+  - check-status
   - trigger
   - downstream modules
 
@@ -10,7 +11,39 @@ variables:
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "pipeline"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "master"
+
+# for commits happening on master, we check if there was a successful
+# pipeline on a related merge request already. If yes, we simply return
+# to propagate that pipeline status on master. Otherwise, we trigger a new run.
+check-pipeline-status:
+  image: $IMAGE_REGISTRY_URL/full:dune-2.7-gcc-ubuntu-20.04
+  stage: check-status
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "pipeline"
+      when: never
+    - if: $CI_COMMIT_BRANCH == "master"
+      when: always
+  script:
+    - |
+      curl --header --form "token=$CI_JOB_TOKEN" \
+                    "https://git.iws.uni-stuttgart.de/api/v4/projects/31/pipelines/?status=success" \
+                    > pipeline_status.json
+    - |
+      if ! python3 .gitlab-ci/getpipelineinfo.py --status-file pipeline_status.json \
+                                                 --look-for HEAD \
+                                                 --print-format pipeline-id; then
+          echo "No successful pipeline found. Triggering new pipeline..."
+          curl --request POST --form "token=$CI_JOB_TOKEN" \
+                              --form ref=$CI_COMMIT_BRANCH \
+                              "https://git.iws.uni-stuttgart.de/api/v4/projects/31/trigger/pipeline"
+      else
+          echo "Found successful pipeline for the current state of the branch"
+      fi
 
 ###################################################################################
 # Stage 1: trigger the Dumux test pipelines                                       #
@@ -28,9 +61,12 @@ workflow:
     strategy: depend
   variables:
     TRIGGER_SOURCE: $CI_PIPELINE_SOURCE
+    COMMIT_BRANCH: $CI_COMMIT_BRANCH
     MR_TARGET_BRANCH_NAME: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
   rules:
   - if: $CI_PIPELINE_SOURCE == "schedule"
+    when: always
+  - if: $CI_PIPELINE_SOURCE == "pipeline"
     when: always
   - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     when: manual
@@ -39,7 +75,7 @@ workflow:
 .non-mr-trigger:
   extends: .base-trigger
   rules:
-    - if: $CI_PIPELINE_SOURCE != "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "schedule"
 
 #############################################
 # pipelines to be created in merge requests #
@@ -77,6 +113,10 @@ full-dune-master-clang:
 
 # trigger lecture test
 trigger lecture:
+  rules:
+  - if: $CI_PIPELINE_SOURCE == "schedule"
+  - if: $CI_PIPELINE_SOURCE == "pipeline"
+  - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   stage: downstream modules
   trigger:
     project: dumux-repositories/dumux-lecture

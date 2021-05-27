@@ -10,22 +10,57 @@ workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE=="parent_pipeline"
 
-# variables that may be overwritten by the trigger
+# variables that should be overwritten by the trigger
 variables:
   TRIGGER_SOURCE: "undefined"
+  COMMIT_BRANCH: "undefined"
   MR_TARGET_BRANCH_NAME: "undefined"
 
 select tests:
   stage: configure
   script:
+    - dunecontrol --opts=$DUNE_OPTS_FILE --current all
     - |
-      dunecontrol --opts=$DUNE_OPTS_FILE --current all
       if [[ "$TRIGGER_SOURCE" == "merge_request_event" ]]; then
           echo "Detecting changes w.r.t to target branch '$MR_TARGET_BRANCH_NAME'"
-          python3 bin/testing/getchangedfiles.py -o changedfiles.txt -t origin/$MR_TARGET_BRANCH_NAME
-          python3 bin/testing/findtests.py -o affectedtests.json --file-list changedfiles.txt --build-dir build-cmake
+          python3 bin/testing/getchangedfiles.py --outfile changedfiles.txt \
+                                                 --target.tree origin/$MR_TARGET_BRANCH_NAME
+          python3 bin/testing/findtests.py --outfile affectedtests.json \
+                                           --file-list changedfiles.txt \
+                                           --build-dir build-cmake
+
+      elif [[ "$TRIGGER_SOURCE" == "schedule" ]]; then
+          echo "Starting scheduled pipeline"
+          echo "Skipping test selection, build/test stages will consider all tests!"
+          touch affectedtests.json
+
+      elif [[ "$TRIGGER_SOURCE" == "pipeline" ]]; then
+          echo "Starting pipeline triggered from another pipeline"
+          echo "Determining sha with the last successful pipeline to test against"
+          curl --header --form "token=$CI_JOB_TOKEN" \
+                        "https://git.iws.uni-stuttgart.de/api/v4/projects/31/pipelines/?status=success" \
+                        > pipeline_status.json
+
+          if ! python3 .gitlab-ci/getpipelineinfo.py --status-file pipeline_status.json \
+                                                     --look-for latest \
+                                                     --print-format commit-sha; then
+              echo "Could not find a successful pipeline, will build/run all tests"
+              touch affectedtests.json
+          else
+              export COMMIT_SHA=$(python3 .gitlab-ci/getpipelineinfo.py --status-file pipeline_status.json \
+                                                                        --look-for latest \
+                                                                        --print-format commit-sha)
+              echo "Comparing against sha $COMMIT_SHA"
+              python3 bin/testing/getchangedfiles.py --outfile changedfiles.txt \
+                                                     --source-tree HEAD \
+                                                     --target-tree $COMMIT_SHA
+              python3 bin/testing/findtests.py --outfile affectedtests.json \
+                                               --file-list changedfiles.txt \
+                                               --build-dir build-cmake
+          fi
+
       else
-          echo "Received '$TRIGGER_SOURCE' as pipeline trigger event"
+          echo "Unknown pipeline trigger event"
           echo "Skipping test selection, build/test stages will consider all tests!"
           touch affectedtests.json
       fi
