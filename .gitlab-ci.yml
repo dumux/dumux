@@ -42,7 +42,7 @@ check-pipeline-status:
                               --form ref=$CI_COMMIT_BRANCH \
                               "https://git.iws.uni-stuttgart.de/api/v4/projects/31/trigger/pipeline"
       else
-          echo "Found successful pipeline for the current state of the branch"
+          echo "Found successful pipeline for the current state of the branch. Not testing again."
       fi
 
 ###################################################################################
