@@ -34,9 +34,8 @@ select tests:
           echo "Skipping test selection, build/test stages will consider all tests!"
           touch affectedtests.json
 
-      elif [[ "$TRIGGER_SOURCE" == "pipeline" ]]; then
-          echo "Starting pipeline triggered from another pipeline"
-          echo "Determining sha with the last successful pipeline to test against"
+      elif [ -n $TEST_AGAINST_LAST_SUCCESSFUL ]; then
+          echo "Determining sha of the last successful pipeline to test against"
           curl --header --form "token=$CI_JOB_TOKEN" \
                         "https://git.iws.uni-stuttgart.de/api/v4/projects/31/pipelines/?status=success" \
                         > pipeline_status.json

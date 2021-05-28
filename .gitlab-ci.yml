@@ -40,6 +40,7 @@ check-pipeline-status:
           echo "No successful pipeline found. Triggering new pipeline..."
           curl --request POST --form "token=$CI_JOB_TOKEN" \
                               --form ref=$CI_COMMIT_BRANCH \
+                              --form "variables[CI_TEST_AGAINST_LAST_SUCCESSFUL]=true" \
                               "https://git.iws.uni-stuttgart.de/api/v4/projects/31/trigger/pipeline"
       else
           echo "Found successful pipeline for the current state of the branch. Not testing again."
@@ -63,6 +64,7 @@ check-pipeline-status:
     TRIGGER_SOURCE: $CI_PIPELINE_SOURCE
     COMMIT_BRANCH: $CI_COMMIT_BRANCH
     MR_TARGET_BRANCH_NAME: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+    TEST_AGAINST_LAST_SUCCESSFUL: $CI_TEST_AGAINST_LAST_SUCCESSFUL
   rules:
   - if: $CI_PIPELINE_SOURCE == "schedule"
     when: always
