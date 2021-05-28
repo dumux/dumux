@@ -146,6 +146,17 @@ public:
     const GridVolumeVariables& gridVolVars() const
     { return *gridVolumeVariablesPtr_; }
 
+    //! Returns true if volVars exist for the given scv index
+    bool hasVolVars(const std::size_t scvIdx) const
+    {
+        if (scvIdx < numScv_)
+            return true;
+        else
+        {
+            const auto it = std::find(boundaryVolVarIndices_.begin(), boundaryVolVarIndices_.end(), scvIdx);
+            return it != boundaryVolVarIndices_.end();
+        }
+    }
 
 private:
     //! Clear all local storage
@@ -310,6 +321,10 @@ public:
     //! The global volume variables object we are a restriction of
     const GridVolumeVariables& gridVolVars() const
     { return *gridVolumeVariablesPtr_; }
+
+    //! Returns true if volVars exist for the given scv index
+    bool hasVolVars(const std::size_t scvIdx) const
+    { return volVarsInserted_(scvIdx); }
 
 private:
 
