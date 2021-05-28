@@ -447,11 +447,28 @@ public:
     }
 
     /*!
+     * \brief Returns true if the scvf is located on a boundary with a slip condition.
+     *
+     * \note This member function must be overloaded in the problem implementation.
+     *        Make sure to use scvf.center() for querying the spatial location.
+     */
+    bool onSlipBoundary(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf) const
+    { return asImp_().onSlipBoundaryAtPos(scvf.center()); }
+
+    /*!
+     * \brief Returns true if the scvf is located on a boundary with a slip condition.
+     *
+     * \note This member function must be overloaded in the problem implementation.
+     */
+    bool onSlipBoundaryAtPos(const GlobalPosition& pos) const
+    { return false; }
+
+    /*!
      * \brief Returns the intrinsic permeability of required as input parameter for the Beavers-Joseph-Saffman boundary condition
      *
      * This member function must be overloaded in the problem implementation, if the BJS boundary condition is used.
      */
-    Scalar permeability(const Element& element, const SubControlVolumeFace& scvf) const
+    Scalar permeability(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf) const
     {
         DUNE_THROW(Dune::NotImplemented, "When using the Beavers-Joseph-Saffman boundary condition, the permeability must be returned in the actual problem");
     }
@@ -461,7 +478,7 @@ public:
      *
      * This member function must be overloaded in the problem implementation, if the BJS boundary condition is used.
      */
-    Scalar alphaBJ(const SubControlVolumeFace& scvf) const
+    Scalar alphaBJ(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf) const
     {
         DUNE_THROW(Dune::NotImplemented, "When using the Beavers-Joseph-Saffman boundary condition, the alpha value must be returned in the actual problem");
     }
@@ -469,18 +486,17 @@ public:
     /*!
      * \brief Returns the beta value which is the alpha value divided by the square root of the (scalar-valued) interface permeability.
      */
-    Scalar betaBJ(const Element& element, const SubControlVolumeFace& scvf, const GlobalPosition& tangentialVector) const
+    Scalar betaBJ(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf, const GlobalPosition& tangentialVector) const
     {
-        const Scalar interfacePermeability = interfacePermeability_(element, scvf, tangentialVector);
+        const Scalar interfacePermeability = interfacePermeability_(fvGeometry, scvf, tangentialVector);
         using std::sqrt;
-        return asImp_().alphaBJ(scvf) / sqrt(interfacePermeability);
+        return asImp_().alphaBJ(fvGeometry, scvf) / sqrt(interfacePermeability);
     }
 
     /*!
      * \brief Returns the velocity in the porous medium (which is 0 by default according to Saffmann).
      */
-    template<class Scvf>
-    VelocityVector porousMediumVelocity(const Element& element, const SubControlVolumeFace& scvf) const
+    VelocityVector porousMediumVelocity(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf) const
     {
         return VelocityVector(0.0);
     }
@@ -488,35 +504,42 @@ public:
 
     /*!
      * \brief Returns the slip velocity at a porous boundary based on the Beavers-Joseph(-Saffman) condition.
+     * \note This only returns a vector filled with one component of the slip velocity (corresponding to the dof axis of the scv the svf belongs to)
      */
-    const Scalar beaversJosephVelocity(const Element& element,
-                                       const SubControlVolume& scv,
-                                       const SubControlVolumeFace& ownScvf,
-                                       const SubControlVolumeFace& faceOnPorousBoundary,
-                                       const Scalar velocitySelf,
-                                       const Scalar tangentialVelocityGradient) const
+    const VelocityVector beaversJosephVelocity(const FVElementGeometry& fvGeometry,
+                                               const SubControlVolumeFace& scvf,
+                                               const ElementVolumeVariables& elemVolVars,
+                                               const Scalar tangentialVelocityGradient) const
     {
+        assert(scvf.isLateral());
+        assert(scvf.boundary());
+
+        const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+
         // create a unit normal vector oriented in positive coordinate direction
-        GlobalPosition orientation = ownScvf.unitOuterNormal();
-        orientation[ownScvf.directionIndex()] = 1.0;
+        GlobalPosition orientation;
+        orientation[scv.dofAxis()] = 1.0;
 
         // du/dy + dv/dx = alpha/sqrt(K) * (u_boundary-uPM)
         // beta = alpha/sqrt(K)
-        const Scalar betaBJ = asImp_().betaBJ(element, faceOnPorousBoundary, orientation);
-        const Scalar distanceNormalToBoundary = (faceOnPorousBoundary.center() - scv.center()).two_norm();
+        const Scalar betaBJ = asImp_().betaBJ(fvGeometry, scvf, orientation);
+        const Scalar distanceNormalToBoundary = (scvf.ipGlobal() - scv.dofPosition()).two_norm();
 
-        return (tangentialVelocityGradient*distanceNormalToBoundary
-              + asImp_().porousMediumVelocity(element, faceOnPorousBoundary) * orientation * betaBJ * distanceNormalToBoundary
-              + velocitySelf) / (betaBJ*distanceNormalToBoundary + 1.0);
+        const Scalar scalarSlipVelocity = (tangentialVelocityGradient*distanceNormalToBoundary
+            + asImp_().porousMediumVelocity(fvGeometry, scvf) * orientation * betaBJ * distanceNormalToBoundary
+            + elemVolVars[scv].velocity()) / (betaBJ*distanceNormalToBoundary + 1.0);
+
+        orientation *= scalarSlipVelocity;
+        return orientation;
     }
 
 
 private:
     //! Returns a scalar permeability value at the coupling interface
     template<class Scvf>
-    Scalar interfacePermeability_(const Element& element, const Scvf& scvf, const GlobalPosition& tangentialVector) const
+    Scalar interfacePermeability_(const FVElementGeometry& fvGeometry, const Scvf& scvf, const GlobalPosition& tangentialVector) const
     {
-        const auto& K = asImp_().permeability(element, scvf);
+        const auto& K = asImp_().permeability(fvGeometry, scvf);
 
         // use t*K*t for permeability tensors
         if constexpr (Dune::IsNumber<std::decay_t<decltype(K)>>::value)
