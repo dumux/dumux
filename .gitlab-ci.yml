@@ -30,7 +30,7 @@ check-pipeline-status:
       when: always
   script:
     - |
-      curl --header --form "token=$CI_JOB_TOKEN" \
+      curl --header "token=$CI_JOB_TOKEN" \
                     "https://git.iws.uni-stuttgart.de/api/v4/projects/31/pipelines/?status=success" \
                     > pipeline_status.json
     - |

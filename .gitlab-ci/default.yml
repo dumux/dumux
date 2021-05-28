@@ -21,6 +21,13 @@ select tests:
   script:
     - dunecontrol --opts=$DUNE_OPTS_FILE --current all
     - |
+      getLastSuccesful() {
+          python3 .gitlab-ci/getpipelineinfo.py \
+                      --status-file $1 \
+                      --look-for latest \
+                      --print-format commit-sha
+      }
+
       if [[ "$TRIGGER_SOURCE" == "merge_request_event" ]]; then
           echo "Detecting changes w.r.t to target branch '$MR_TARGET_BRANCH_NAME'"
           python3 bin/testing/getchangedfiles.py --outfile changedfiles.txt \
@@ -36,19 +43,15 @@ select tests:
 
       elif [ -n $TEST_AGAINST_LAST_SUCCESSFUL ]; then
           echo "Determining sha of the last successful pipeline to test against"
-          curl --header --form "token=$CI_JOB_TOKEN" \
+          curl --header "token=$CI_JOB_TOKEN" \
                         "https://git.iws.uni-stuttgart.de/api/v4/projects/31/pipelines/?status=success" \
                         > pipeline_status.json
 
-          if ! python3 .gitlab-ci/getpipelineinfo.py --status-file pipeline_status.json \
-                                                     --look-for latest \
-                                                     --print-format commit-sha; then
+          if ! getLastSuccesful pipeline_status.json; then
               echo "Could not find a successful pipeline, will build/run all tests"
               touch affectedtests.json
           else
-              export COMMIT_SHA=$(python3 .gitlab-ci/getpipelineinfo.py --status-file pipeline_status.json \
-                                                                        --look-for latest \
-                                                                        --print-format commit-sha)
+              COMMIT_SHA=$(getLastSuccesful pipeline_status.json)
               echo "Comparing against sha $COMMIT_SHA"
               python3 bin/testing/getchangedfiles.py --outfile changedfiles.txt \
                                                      --source-tree HEAD \
