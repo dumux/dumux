@@ -1,0 +1,62 @@
+<!--
+This form is for release issue ONLY!
+If you're looking for help check out the [readme](/README.md).
+-->
+This a release issue template with a checklist based on [Release Manager Tasks](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/wikis/Release-Manager-Tasks). Check there for details on each task.
+# [5 Weeks] prior to the release:
+- [ ]  Call a meeting
+- [ ]  Assign developers to the major subtasks
+    - Manager:
+    - Lecture:
+    - Doxygen:
+    - Handbook:
+    - Course:
+    - Examples:
+    - Website:
+- [ ]  Create a group (dumux-repositories) milestone in GitLab
+- [ ]  Fix planned [Dune] and compiler compatibility
+- [ ]  Go through all existing Gitlab tasks ([issues] or [MRs])
+- [ ]  Assign the open [issues] and [MRs] to the developers
+- [ ]  Post a release schedule announcement on the mailing list
+
+# [3 weeks] prior to the release:
+- [ ]  Check all open MRs and Issues for severity and impact
+- [ ]  Update the milestone issue
+- [ ]  Announce soft feature freeze on the mailing list
+- [ ]  Check in with the managers of the sub-tasks
+
+# [2 weeks] prior to the release:
+__Hard Feature Freeze!__
+- [ ]  Check remaining MRs and Issues
+- [ ]  Update the milestone issue
+- [ ]  Update CHANGELOG
+- [ ]  Announce hard feature freeze on the mailing list
+- [ ]  Update all install scripts and the install text in the handbook
+- [ ]  Header check (run `make headercheck`)
+- [ ]  Check and update the runtime parameters (see `bin/doc/getparameterlist.py`)
+- [ ]  Make sure the CMakeLists.txt in `dumux` subfolder are up-to-date (generated with `bin/utils/create_cmakelists.py`, dumux `make install` should result in a useable installed dumux version)
+- [ ]  Create release branches
+- [ ]  Configure CI to test release branch
+- [ ]  Local Testing (different compilers and dependency setups)
+
+# During the week of the release:
+__Final testing!__
+- [ ]  Re-run tests
+- [ ]  Update copyright
+- [ ]  Update License
+- [ ]  Test Lecture and Course
+- [ ]  Update Website
+- [ ]  Create a release candidate
+- [ ]  Call for testing
+
+# Releasing DuMu<sup>x</sup>
+__Important:__ These steps are normally done together with Bernd. Make sure to schedule the time properly.
+- [ ]  Protect release branch (in GitLab)
+- [ ]  Create new tags
+- [ ]  Prepare a Zenodo citation
+- [ ]  Include the Zenodo citation to the website
+- [ ]  Write a release email to dumux@listserv.uni-stuttgart.de
+
+# After the release
+- [ ]  Bump version in dune.module to next version
+- [ ]  Sent an E-Mail to the dumux mailing list about updates on supported features and upcoming changes
