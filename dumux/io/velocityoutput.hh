@@ -50,6 +50,14 @@ public:
     using VelocityVector = std::vector<Dune::FieldVector<Scalar, dimWorld>>;
 
     /*!
+    * \brief A container for possible velocity data types
+    */
+    enum class FieldType : unsigned int
+    {
+        element, vertex, undefined
+    };
+
+    /*!
      * \brief Default constructor
      */
     VelocityOutput() = default;
@@ -65,6 +73,9 @@ public:
 
     //! returns the number of phases
     virtual int numFluidPhases() const { return 0; }
+
+    //! returns the field type
+    virtual FieldType fieldType() const { return FieldType::undefined; }
 
     //! Calculate the velocities for the scvs in the element
     //! We assume the local containers to be bound to the complete stencil
