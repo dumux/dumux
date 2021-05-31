@@ -23,7 +23,7 @@ select tests:
     - |
       getLastSuccesful() {
           python3 .gitlab-ci/getpipelineinfo.py \
-                      --status-file $1 \
+                      --access-token $CI_JOB_TOKEN \
                       --look-for latest \
                       --print-format commit-sha
       }
@@ -43,15 +43,12 @@ select tests:
 
       elif [ -n $TEST_AGAINST_LAST_SUCCESSFUL ]; then
           echo "Determining sha of the last successful pipeline to test against"
-          curl --header "token=$CI_JOB_TOKEN" \
-                        "https://git.iws.uni-stuttgart.de/api/v4/projects/31/pipelines/?status=success" \
-                        > pipeline_status.json
 
-          if ! getLastSuccesful pipeline_status.json; then
+          if ! getLastSuccesful; then
               echo "Could not find a successful pipeline, will build/run all tests"
               touch affectedtests.json
           else
-              COMMIT_SHA=$(getLastSuccesful pipeline_status.json)
+              COMMIT_SHA=$(getLastSuccesful)
               echo "Comparing against sha $COMMIT_SHA"
               python3 bin/testing/getchangedfiles.py --outfile changedfiles.txt \
                                                      --source-tree HEAD \

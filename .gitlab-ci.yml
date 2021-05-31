@@ -30,11 +30,7 @@ check-pipeline-status:
       when: always
   script:
     - |
-      curl --header "token=$CI_JOB_TOKEN" \
-                    "https://git.iws.uni-stuttgart.de/api/v4/projects/31/pipelines/?status=success" \
-                    > pipeline_status.json
-    - |
-      if ! python3 .gitlab-ci/getpipelineinfo.py --status-file pipeline_status.json \
+      if ! python3 .gitlab-ci/getpipelineinfo.py --access-token $CI_JOB_TOKEN \
                                                  --look-for HEAD \
                                                  --print-format pipeline-id; then
           echo "No successful pipeline found. Triggering new pipeline..."
