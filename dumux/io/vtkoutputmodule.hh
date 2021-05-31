@@ -432,10 +432,18 @@ private:
             {
                 for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
                 {
-                    if(isBox && dim == 1)
+                    if(velocityOutput_->fieldType() == VelocityOutput::FieldType::element)
                         velocity[phaseIdx].resize(numCells);
-                    else
+                    else if(velocityOutput_->fieldType() == VelocityOutput::FieldType::vertex)
                         velocity[phaseIdx].resize(numDofs);
+                    else
+                    {
+                        if(isBox && dim == 1)
+                            velocity[phaseIdx].resize(numCells);
+                        else
+                            velocity[phaseIdx].resize(numDofs);
+                    }
+
                 }
             }
 
@@ -522,7 +530,8 @@ private:
             // the velocity field
             if (velocityOutput_->enableOutput())
             {
-                if (isBox && dim > 1)
+                if (velocityOutput_->fieldType() == VelocityOutput::FieldType::vertex
+                    || ( (velocityOutput_->fieldType() == VelocityOutput::FieldType::undefined) && dim > 1 && isBox ))
                 {
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
                         this->sequenceWriter().addVertexData( Field(gridGeometry().gridView(), gridGeometry().vertexMapper(), velocity[phaseIdx],
