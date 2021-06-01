@@ -18,6 +18,7 @@ dumux_add_test(NAME test_ff_navierstokes_sincos
 dumux_add_test(NAME test_ff_navierstokes_sincos_instationary
               TARGET test_ff_navierstokes_sincos
               LABELS freeflow
+              TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK
               COMPILE_DEFINITIONS LINEARSOLVER=UMFPackBackend
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

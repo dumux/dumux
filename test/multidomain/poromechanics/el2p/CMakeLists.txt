@@ -4,7 +4,7 @@ dumux_add_test(NAME test_md_poromechanics_el2p
               LABELS multidomain poromechanics 2p poroelastic
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
-              TIMEOUT 1500
+              TIMEOUT 3600
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_poromechanics_el2p_2p-reference.vtu

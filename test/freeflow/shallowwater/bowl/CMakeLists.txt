@@ -3,6 +3,7 @@ dune_symlink_to_source_files(FILES "params.input")
 dumux_add_test(NAME test_shallowwater_bowl
                SOURCES main.cc
                LABELS shallowwater
+               TIMEOUT 3600
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS   --script fuzzy
                           --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_shallowwater_bowl-reference.vtu
@@ -13,7 +14,7 @@ dumux_add_test(NAME test_shallowwater_bowl
 dumux_add_test(NAME test_shallowwater_bowl_parallel
                TARGET test_shallowwater_bowl
                LABELS shallowwater
-               TIMEOUT 1500
+               TIMEOUT 3600
                CMAKE_GUARD MPI_FOUND
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS   --script fuzzy
