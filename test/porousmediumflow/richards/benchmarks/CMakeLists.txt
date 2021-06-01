@@ -16,6 +16,7 @@ dumux_add_test(NAME test_richards_benchmark_infiltration_tpfa
                TARGET test_richards_benchmark_tpfa
                CMAKE_GUARD HAVE_UMFPACK
                LABELS porousmediumflow richards
+               TIMEOUT 3600
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS --script fuzzyData
                         --relative 0.05
@@ -50,6 +51,7 @@ dumux_add_test(NAME test_richards_benchmark_evaporation_tpfa
                TARGET test_richards_benchmark_tpfa
                CMAKE_GUARD HAVE_UMFPACK
                LABELS porousmediumflow richards
+               TIMEOUT 3600
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS --script fuzzyData
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_benchmark_tpfa_rate_analytical_clay.dat

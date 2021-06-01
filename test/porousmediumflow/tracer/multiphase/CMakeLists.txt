@@ -2,6 +2,7 @@ dune_symlink_to_source_files(FILES "params.input")
 
 dumux_add_test(NAME test_tracer_multiphase_tpfa
               LABELS porousmediumflow tracer
+              TIMEOUT 3600
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -12,6 +13,7 @@ dumux_add_test(NAME test_tracer_multiphase_tpfa
 
 dumux_add_test(NAME test_tracer_multiphase_mpfa
               LABELS porousmediumflow tracer
+              TIMEOUT 3600
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestMpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

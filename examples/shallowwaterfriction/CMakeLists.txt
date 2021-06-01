@@ -2,6 +2,7 @@ dune_symlink_to_source_files(FILES "params.input")
 
 dumux_add_test(NAME example_shallowwaterfriction
                LABELS shallowwater example
+               TIMEOUT 3600
                SOURCES main.cc
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS       --script fuzzy

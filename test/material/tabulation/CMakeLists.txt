@@ -1,2 +1,3 @@
 dumux_add_test(SOURCES test_tabulation.cc
-              LABELS unit material)
+               TIMEOUT 3600
+               LABELS unit material)

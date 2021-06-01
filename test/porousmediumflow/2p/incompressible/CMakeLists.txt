@@ -60,6 +60,7 @@ dumux_add_test(NAME test_2p_incompressible_box_analytic
 # using box with interface solver
 dumux_add_test(NAME test_2p_incompressible_box_ifsolver
               LABELS porousmediumflow 2p
+              TIMEOUT 3600
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleBox
               COMPILE_DEFINITIONS ENABLEINTERFACESOLVER=true

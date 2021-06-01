@@ -85,6 +85,7 @@ dumux_add_test(NAME test_md_facet_1pncni1pncni_tpfa
 dumux_add_test(NAME test_md_facet_1pncni1pncni_mpfa
                SOURCES main.cc
                LABELS multidomain multidomain_facet 1pnc
+               TIMEOUT 3600
                COMPILE_DEFINITIONS BULKTYPETAG=OnePNCNIBulkMpfa
                COMPILE_DEFINITIONS FACETTYPETAG=OnePNCNIFacetTpfa
                COMPILE_DEFINITIONS DIMWORLD=2
@@ -185,6 +186,7 @@ dumux_add_test(NAME test_md_facet_1pncni1pncni_surface_tpfa
 dumux_add_test(NAME test_md_facet_1pncni1pncni_surface_mpfa
                SOURCES main.cc
                LABELS multidomain multidomain_facet 1pnc
+               TIMEOUT 3600
                COMPILE_DEFINITIONS BULKTYPETAG=OnePNCNIBulkMpfa
                COMPILE_DEFINITIONS FACETTYPETAG=OnePNCNIFacetTpfa
                COMPILE_DEFINITIONS DIMWORLD=3
