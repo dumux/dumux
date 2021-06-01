@@ -24,7 +24,7 @@ select tests:
       getLastSuccesful() {
           python3 .gitlab-ci/getpipelineinfo.py \
                       --access-token $CI_JOB_API_READ_TOKEN \
-                      --look-for latest \
+                      --look-for latest-merge \
                       --print-format commit-sha
       }
 
