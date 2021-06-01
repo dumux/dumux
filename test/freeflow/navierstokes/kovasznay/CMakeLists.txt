@@ -16,6 +16,7 @@ target_compile_definitions(test_ff_navierstokes_kovasznay_higherorder PUBLIC "UP
 dumux_add_test(NAME test_ff_navierstokes_kovasznay_higherorder_cuboid
               TARGET test_ff_navierstokes_kovasznay_higherorder
               LABELS freeflow navierstokes
+              TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -29,6 +30,7 @@ dumux_add_test(NAME test_ff_navierstokes_kovasznay_higherorder_cuboid
 dumux_add_test(NAME test_ff_navierstokes_kovasznay_higherorder_staircase
               TARGET test_ff_navierstokes_kovasznay_higherorder
               LABELS freeflow navierstokes
+              TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK dune-subgrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
