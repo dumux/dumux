@@ -103,8 +103,7 @@ elif args['look_for'] == 'latest':
 
 elif args['look_for'] == 'latest-merge':
     commits = runCommand('git rev-list HEAD').split('\n')
-    commits = [c for c in commits if isMergeCommit(c)]
-    pipeLine = findPipeline(commits)
+    pipeLine = findPipeline(filter(lambda c: isMergeCommit(c), commits))
 
 if pipeLine is not None:
     if args['print_format'] == 'pipeline-id':
