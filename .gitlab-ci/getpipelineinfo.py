@@ -105,8 +105,8 @@ elif args['look_for'] == 'latest':
 
 elif args['look_for'] == 'latest-merge':
     count = args['max_tree_depth']
-    commits = filter(None, runCommand(f'git rev-list HEAD --max-count={count}').split('\n'))
-    pipeLine = findPipeline(filter(lambda c: isMergeCommit(c)), commits)
+    commits = filter(None, runCommand(f'git rev-list HEAD --merges --max-count={count}').split('\n'))
+    pipeLine = findPipeline(commits)
 
 if pipeLine is not None:
     if args['print_format'] == 'pipeline-id':
