@@ -23,10 +23,14 @@ class APIRequester:
         return json.loads(data)
 
 
-def pipelinesApiSuffix(): return 'pipelines/'
-def pipelineApiSuffix(id): return 'pipelines/' + str(id) + '/'
-def commitsApiSuffix(): return 'repository/commits/'
-def commitApiSuffix(sha): return 'repository/commits/' + sha + '/'
+# if no id is given this returns all pipelines (// is fine)
+def pipelineApiSuffix(id=''):
+    return 'pipelines/' + str(id) + '/'
+
+
+# if no commit sha is given this returns all commits (// is fine)
+def commitApiSuffix(sha=''):
+    return 'repository/commits/' + str(sha) + '/'
 
 
 parser = ArgumentParser(
