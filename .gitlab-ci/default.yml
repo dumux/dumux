@@ -23,7 +23,7 @@ select tests:
     - |
       getLastSuccesful() {
           python3 .gitlab-ci/getpipelineinfo.py \
-                      --access-token $CI_JOB_TOKEN \
+                      --access-token $CI_JOB_API_READ_TOKEN \
                       --look-for latest \
                       --print-format commit-sha
       }
