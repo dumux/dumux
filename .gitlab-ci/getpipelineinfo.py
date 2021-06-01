@@ -114,4 +114,4 @@ if pipeLine is not None:
     elif args['print_format'] == 'commit-sha':
         print(pipeLine['sha'])
 else:
-    sys.exit('Could not find a succesful pipeline')
+    sys.exit('Could not find a successful pipeline')
