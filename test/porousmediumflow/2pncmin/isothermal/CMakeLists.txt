@@ -4,6 +4,7 @@ dune_symlink_to_source_files(FILES params.input)
 dumux_add_test(NAME test_2pncmin_dissolution_box
               LABELS porousmediumflow 2pncmin
               SOURCES main.cc
+              TIMEOUT 3600
               COMPILE_DEFINITIONS TYPETAG=DissolutionBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS      --script fuzzy
@@ -14,6 +15,7 @@ dumux_add_test(NAME test_2pncmin_dissolution_box
 dumux_add_test(NAME test_2pncmin_dissolution_box_restart
               LABELS porousmediumflow 2pncmin
               TARGET  test_2pncmin_dissolution_box
+              TIMEOUT 3600
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2pncmin_dissolution_box-reference.vtu
