@@ -19,6 +19,8 @@ variables:
 select tests:
   stage: configure
   script:
+    - echo "PRINTING PROJECT VAR"
+    - echo "PROJ VAR -> $CI_JOB_API_READ_TOKEN"
     - dunecontrol --opts=$DUNE_OPTS_FILE --current all
     - |
       getLastSuccesful() {
