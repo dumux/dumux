@@ -11,37 +11,26 @@ except Exception:
     sys.exit('Could not import common module')
 
 
-def performApiQuery(command, err='API query unsuccessful'):
-    return runCommand(command, suppressTraceBack=True, errorMessage=err)
+class APIRequester:
+    def __init__(self, projectURL, token):
+        self.projectURL = projectURL.rstrip('/')
+        self.token = token
+
+    def __call__(self, urlSuffix, msg='API request failed'):
+        reqURL = self.projectURL + '/' + urlSuffix.lstrip('/')
+        reqCmd = 'curl --header "token={}" "{}"'.format(self.token, reqURL)
+        data = runCommand(reqCmd, suppressTraceBack=True, errorMessage=msg)
+        return json.loads(data)
 
 
-def getPipeLinesApiURL(apiURL):
-    return apiURL.rstrip('/') + '/pipelines/'
+# if no id is given this returns all pipelines (// is fine)
+def pipelineApiSuffix(id=''):
+    return 'pipelines/' + str(id) + '/'
 
 
-def getPipelines(apiURL, token, filter=''):
-    queryURL = getPipeLinesApiURL(apiURL) + filter
-    queryCmd = 'curl --header "token={}" "{}"'.format(token, queryURL)
-    pl = performApiQuery(queryCmd, 'Could not retrieve pipelines')
-    return json.loads(pl)
-
-
-def getPipelineInfo(apiURL, token, pipeLineId, infoString):
-    queryURL = getPipeLinesApiURL(apiURL) + str(pipeLineId) + '/' + infoString
-    queryCmd = 'curl --header "token={}" "{}"'.format(token, queryURL)
-    pl = performApiQuery(queryCmd, 'Could not retrieve pipeline info')
-    return json.loads(pl)
-
-
-def getPipeLineJobs(apiURL, token, pipeLineId):
-    return getPipelineInfo(apiURL, token, pipeLineId, 'jobs')
-
-
-def findPipeline(pipeLines, predicate):
-    for pipeLine in pipeLines:
-        if predicate(pipeLine):
-            return pipeLine
-    return None
+# if no commit sha is given this returns all commits (// is fine)
+def commitApiSuffix(sha=''):
+    return 'repository/commits/' + str(sha) + '/'
 
 
 parser = ArgumentParser(
@@ -52,8 +41,12 @@ parser.add_argument('-p', '--print-format',
                     required=True, choices=['pipeline-id', 'commit-sha'],
                     help='Switch between reporting the pipeline-id/commit-sha')
 parser.add_argument('-l', '--look-for',
-                    required=True, choices=['latest', 'HEAD'],
+                    required=True, choices=['latest', 'latest-merge', 'HEAD'],
                     help='Define how to search for pipelines')
+parser.add_argument('-m', '--max-tree-depth',
+                    required=False, type=int, default=50,
+                    help='Maximum number of revisions to consider'
+                         ' in search for pipeline candidates')
 parser.add_argument('-t', '--access-token',
                     required=True,
                     help='The token to post read requests to the GitLab API')
@@ -61,54 +54,63 @@ parser.add_argument('-u', '--project-api-url',
                     required=False,
                     default='https://git.iws.uni-stuttgart.de/api/v4/projects/31/',
                     help='The token to post read requests to the GitLab API')
-parser.add_argument('-f', '--filter',
-                    required=False, default='?status=success',
-                    help='Pipeline query filter (default: "?status=success"')
+parser.add_argument('-s', '--pipeline-status',
+                    required=False, default='success',
+                    help='Status of pipeline candidates (default: success')
 parser.add_argument('-e', '--exclude-jobs',
                     required=False, nargs='*',
                     default=['check-pipeline-status'],
                     help='Exclude pipelines that contain the given jobs')
 args = vars(parser.parse_args())
 
-apiURL = args['project_api_url']
-token = args['access_token']
-pipeLines = getPipelines(apiURL, token, args['filter'])
 
-currentBranch = runCommand('git branch --show-current').strip('\n')
-currentCommitInfo = runCommand('git show HEAD').split('\n')
-headIsMergeCommit = 'Merge:' in currentCommitInfo[1]
-
-headSHA = runCommand('git rev-list HEAD --max-count=1').strip('\n')
-if headIsMergeCommit:
-    preSHA = runCommand('git rev-list HEAD --max-count=2').split('\n')[1]
-    mrSHA = currentCommitInfo[1].split()[2]
+requester = APIRequester(args['project_api_url'], args['access_token'])
 
 
-def checkBranch(pipeLine):
-    return pipeLine['ref'] == currentBranch
+def isMergeCommit(commitSHA):
+    commitInfo = runCommand(f'git show --no-patch {commitSHA}').split('\n')
+    return commitInfo[1].startswith('Merge:')
 
 
-def checkCommit(pipeLine):
-    sha = pipeLine['sha']
-    if headIsMergeCommit:
-        return sha == headSHA or sha == preSHA or mrSHA in sha
-    return sha == headSHA
+def getLastPipeline(commitSHA):
+    return requester(commitApiSuffix(commitSHA))['last_pipeline']
 
 
-def skip(pipeLine):
-    jobs = getPipeLineJobs(apiURL, token, pipeLine['id'])
-    jobNames = [j['name'] for j in jobs]
-    return any(j in jobNames for j in args['exclude_jobs'])
+def hasMatchingStatus(pipeline):
+    return pipeline['status'] == args['pipeline_status']
+
+
+def hasExcludeJob(pipeLine):
+    suffix = pipelineApiSuffix(pipeLine['id'])
+    jobs = requester(suffix.rstrip('/') + '/jobs/')
+    return any(j in jobs for j in args['exclude_jobs'])
+
+
+def findPipeline(commits):
+    for commit in commits:
+        pipeLine = getLastPipeline(commit)
+        if pipeLine is not None:
+            if hasMatchingStatus(pipeLine) and not hasExcludeJob(pipeLine):
+                return pipeLine
+    return None
 
 
 if args['look_for'] == 'HEAD':
-    pipeLine = findPipeline(
-        pipeLines, lambda p: checkCommit(p) and not skip(p)
-    )
+    commits = [runCommand('git rev-list HEAD --max-count=1').strip('\n')]
+    if isMergeCommit(commits[0]):
+        preSHA = runCommand('git rev-list HEAD --max-count=2').split('\n')[1]
+        commits.append(preSHA)
+    pipeLine = findPipeline(commits)
+
 elif args['look_for'] == 'latest':
-    pipeLine = findPipeline(
-        pipeLines, lambda p: checkBranch(p) and not skip(p)
-    )
+    count = args['max_tree_depth']
+    commits = filter(None, runCommand(f'git rev-list HEAD --max-count={count}').split('\n'))
+    pipeLine = findPipeline(commits)
+
+elif args['look_for'] == 'latest-merge':
+    count = args['max_tree_depth']
+    commits = filter(None, runCommand(f'git rev-list HEAD --merges --max-count={count}').split('\n'))
+    pipeLine = findPipeline(commits)
 
 if pipeLine is not None:
     if args['print_format'] == 'pipeline-id':
@@ -116,4 +118,4 @@ if pipeLine is not None:
     elif args['print_format'] == 'commit-sha':
         print(pipeLine['sha'])
 else:
-    sys.exit('Could not find a succesful pipeline')
+    sys.exit('Could not find a successful pipeline')
