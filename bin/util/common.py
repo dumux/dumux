@@ -2,6 +2,7 @@ import os
 import sys
 import functools
 import subprocess
+import traceback
 
 
 def getCommandErrorHints(command):
@@ -19,19 +20,19 @@ def runCommand(command, suppressTraceBack=False, errorMessage=''):
                               shell=True, check=True,
                               text=True, capture_output=True).stdout
     except Exception:
+        eType, eValue, eTraceback = sys.exc_info()
         if suppressTraceBack:
-            sys.excepthook(Exception, Exception(errorMessage), None)
-        elif not errorMessage:
+            traceback.print_exception(eType, eType(errorMessage), None)
+        elif errorMessage:
+            traceback.print_exception(eType, eType(errorMessage), eTraceback)
+        else:
             print("An error occurred during subprocess run:")
             print("-- command: {}".format(command))
             print("-- folder: {}".format(os.getcwd()))
-            print("-- error: {}".format(sys.exc_info()[1]))
+            traceback.print_exception(eType, eValue, eTraceback)
             hints = getCommandErrorHints(command)
             if hints is not None:
                 print(hints)
-            raise
-        else:
-            raise Exception(errorMessage)
 
 
 # decorator to call function from within the given path
