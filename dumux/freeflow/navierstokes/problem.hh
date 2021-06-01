@@ -812,7 +812,7 @@ public:
         {
             fvGeometry.bindElement(element);
             for (const auto& scv : scvs(fvGeometry))
-                sol[scv.dofIndex()] = initial(scv);
+                sol[scv.dofIndex()] =  asImp_().initial(scv);
         }
     }
 
