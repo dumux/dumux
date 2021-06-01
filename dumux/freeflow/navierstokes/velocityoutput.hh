@@ -48,6 +48,7 @@ class NavierStokesVelocityOutput : public VelocityOutput<GridVariables>
     using FluidSystem = typename VolumeVariables::FluidSystem;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
+    using FieldType = typename ParentType::FieldType;
 
 public:
     using VelocityVector = typename ParentType::VelocityVector;
@@ -66,6 +67,9 @@ public:
     //! returns the number of phases
     int numFluidPhases() const override { return VolumeVariables::numFluidPhases(); }
 
+    //! returns the field type
+    FieldType fieldType() const override { return FieldType::element; }
+
     //! Calculate the velocities for the scvs in the element
     //! We assume the local containers to be bound to the complete stencil
     void calculateVelocity(VelocityVector& velocity,
@@ -79,6 +83,8 @@ public:
         using MomGG = std::decay_t<decltype(std::declval<CouplingManager>().problem(CouplingManager::freeFlowMomentumIndex).gridGeometry())>;
         if constexpr (MomGG::discMethod == DiscretizationMethods::fcstaggered)
             calculateVelocityForStaggeredGrid_(velocity, element, fvGeometry, elemVolVars);
+        else if constexpr (MomGG::discMethod == DiscretizationMethods::fcdiamond)
+            calculateVelocityForDiamondSchemes_(velocity, element, fvGeometry, elemVolVars);
     }
 
 private:
@@ -94,6 +100,21 @@ private:
         };
 
         velocity[eIdx] = StaggeredVelocityReconstruction::cellCenterVelocity(getFaceVelocity, fvGeometry);
+    }
+
+    void calculateVelocityForDiamondSchemes_(VelocityVector& velocity,
+                                             const Element& element,
+                                             const FVElementGeometry& fvGeometry,
+                                             const ElementVolumeVariables& elemVolVars) const
+    {
+        const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
+        const auto getFaceVelocity = [&](const FVElementGeometry& fvG, const auto& scvf)
+        {
+            return elemVolVars.gridVolVars().problem().faceVelocity(element, fvGeometry, scvf);
+        };
+
+        for (const auto& scvf : scvfs(fvGeometry))
+            velocity[eIdx] += getFaceVelocity(fvGeometry, scvf) / fvGeometry.numScvf();
     }
 
     bool enableOutput_;
