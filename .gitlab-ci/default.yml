@@ -21,6 +21,14 @@ select tests:
   script:
     - echo "PRINTING PROJECT VAR"
     - echo "PROJ VAR -> $CI_JOB_API_READ_TOKEN"
+    - echo "BRANCH NAME"
+    - git branch --show-current
+    - echo "BRANCH NAME"
+    - export branch_name=$(git branch --show-current)
+    - echo "BN = $branch_name"
+    - git status
+    - export git_status=$(git status)
+    - echo "STATUS = $git_status"
     - dunecontrol --opts=$DUNE_OPTS_FILE --current all
     - |
       getLastSuccesful() {

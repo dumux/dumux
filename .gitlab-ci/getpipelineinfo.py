@@ -12,6 +12,8 @@ except Exception:
 
 
 def performApiQuery(command, err='API query unsuccessful'):
+    print("API QUERY")
+    print(runCommand(command, suppressTraceBack=True, errorMessage=err))
     return runCommand(command, suppressTraceBack=True, errorMessage=err)
 
 
@@ -72,7 +74,9 @@ args = vars(parser.parse_args())
 
 apiURL = args['project_api_url']
 token = args['access_token']
+print("CALLING PIPELINES")
 pipeLines = getPipelines(apiURL, token, args['filter'])
+print("PLS -> ", pipeLines)
 
 currentBranch = runCommand('git branch --show-current').strip('\n')
 currentCommitInfo = runCommand('git show HEAD').split('\n')
@@ -97,15 +101,18 @@ def checkCommit(pipeLine):
 
 def skip(pipeLine):
     jobs = getPipeLineJobs(apiURL, token, pipeLine['id'])
+    print("JOBS = ", jobs)
     jobNames = [j['name'] for j in jobs]
     return any(j in jobNames for j in args['exclude_jobs'])
 
 
 if args['look_for'] == 'HEAD':
+    print("Checking HEAD")
     pipeLine = findPipeline(
         pipeLines, lambda p: checkCommit(p) and not skip(p)
     )
 elif args['look_for'] == 'latest':
+    print("Checking latest")
     pipeLine = findPipeline(
         pipeLines, lambda p: checkBranch(p) and not skip(p)
     )
@@ -116,4 +123,5 @@ if pipeLine is not None:
     elif args['print_format'] == 'commit-sha':
         print(pipeLine['sha'])
 else:
+    print("NO PIPELINE FOUND")
     sys.exit('Could not find a succesful pipeline')
