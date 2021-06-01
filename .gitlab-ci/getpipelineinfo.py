@@ -23,12 +23,10 @@ class APIRequester:
         return json.loads(data)
 
 
-def getPipeLinesApiSuffix(): return 'pipelines/'
-def getPipeLineApiSuffix(id): return 'pipelines/' + str(id) + '/'
-
-
-def getCommitsApiSuffix(): return 'repository/commits/'
-def getCommitApiSuffix(sha): return 'repository/commits/' + sha + '/'
+def pipelinesApiSuffix(): return 'pipelines/'
+def pipelineApiSuffix(id): return 'pipelines/' + str(id) + '/'
+def commitsApiSuffix(): return 'repository/commits/'
+def commitApiSuffix(sha): return 'repository/commits/' + sha + '/'
 
 
 parser = ArgumentParser(
@@ -41,6 +39,10 @@ parser.add_argument('-p', '--print-format',
 parser.add_argument('-l', '--look-for',
                     required=True, choices=['latest', 'latest-merge', 'HEAD'],
                     help='Define how to search for pipelines')
+parser.add_argument('-m', '--max-tree-depth',
+                    required=False, type=int, default=50,
+                    help='Maximum number of revisions to consider'
+                         ' in search for pipeline candidates')
 parser.add_argument('-t', '--access-token',
                     required=True,
                     help='The token to post read requests to the GitLab API')
@@ -67,7 +69,7 @@ def isMergeCommit(commitSHA):
 
 
 def getLastPipeline(commitSHA):
-    return requester(getCommitApiSuffix(commitSHA))['last_pipeline']
+    return requester(commitApiSuffix(commitSHA))['last_pipeline']
 
 
 def hasMatchingStatus(pipeline):
@@ -75,8 +77,7 @@ def hasMatchingStatus(pipeline):
 
 
 def hasExcludeJob(pipeLine):
-    id = pipeLine['id']
-    suffix = getPipeLineApiSuffix(id)
+    suffix = pipelineApiSuffix(pipeLine['id'])
     jobs = requester(suffix.rstrip('/') + '/jobs/')
     return any(j in jobs for j in args['exclude_jobs'])
 
@@ -98,12 +99,14 @@ if args['look_for'] == 'HEAD':
     pipeLine = findPipeline(commits)
 
 elif args['look_for'] == 'latest':
-    commits = runCommand('git rev-list HEAD').split('\n')
+    count = args['max_tree_depth']
+    commits = filter(None, runCommand(f'git rev-list HEAD --max-count={count}').split('\n'))
     pipeLine = findPipeline(commits)
 
 elif args['look_for'] == 'latest-merge':
-    commits = runCommand('git rev-list HEAD').split('\n')
-    pipeLine = findPipeline(filter(lambda c: isMergeCommit(c), commits))
+    count = args['max_tree_depth']
+    commits = filter(None, runCommand(f'git rev-list HEAD --max-count={count}').split('\n'))
+    pipeLine = findPipeline(filter(lambda c: isMergeCommit(c)), commits)
 
 if pipeLine is not None:
     if args['print_format'] == 'pipeline-id':
