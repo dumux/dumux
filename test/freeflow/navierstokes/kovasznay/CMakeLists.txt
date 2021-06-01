@@ -1,5 +1,6 @@
 dumux_add_test(NAME test_ff_navierstokes_kovasznay
               LABELS freeflow navierstokes
+              TIMEOUT 3600
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
               COMPILE_DEFINITIONS UPWINDSCHEMEORDER=1

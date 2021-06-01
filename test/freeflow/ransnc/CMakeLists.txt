@@ -86,6 +86,7 @@ target_compile_definitions(test_ff_rans2cni_kepsilon PUBLIC "TYPETAG=FlatPlateNC
 dumux_add_test(NAME test_ff_rans2cni_kepsilon_twolayer
               TARGET test_ff_rans2cni_kepsilon
               LABELS freeflow rans
+              TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -97,6 +98,7 @@ dumux_add_test(NAME test_ff_rans2cni_kepsilon_twolayer
 dumux_add_test(NAME test_ff_rans2cni_kepsilon_wallfunction
               TARGET test_ff_rans2cni_kepsilon
               LABELS freeflow rans
+              TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -110,6 +112,7 @@ dumux_add_test(NAME test_ff_rans2cni_komega
               COMPILE_DEFINITIONS TYPETAG=FlatPlateNCNIKOmega
               COMPILE_DEFINITIONS NONISOTHERMAL
               LABELS freeflow rans
+              TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -122,6 +125,7 @@ dumux_add_test(NAME test_ff_rans2cni_komega
 dumux_add_test(NAME test_ff_rans2cni_komega_loadsolution
               TARGET test_ff_rans2cni_komega
               LABELS freeflow rans loadsolution
+              TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -138,6 +142,7 @@ dumux_add_test(NAME test_ff_rans2cni_lowrekepsilon
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FlatPlateNCNILowReKEpsilon
               LABELS freeflow rans
+              TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -151,6 +156,7 @@ dumux_add_test(NAME test_ff_rans2cni_oneeq
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FlatPlateNCNIOneEq
               LABELS freeflow rans
+              TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -165,6 +171,7 @@ dumux_add_test(NAME test_ff_rans2cni_zeroeq
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FlatPlateNCNIZeroEq
               LABELS freeflow rans
+              TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
