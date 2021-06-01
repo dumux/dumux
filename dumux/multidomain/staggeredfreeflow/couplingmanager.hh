@@ -44,6 +44,25 @@
 #include <dumux/discretization/facecentered/staggered/consistentlyorientedgrid.hh>
 
 namespace Dumux {
+namespace Detail {
+    template<class Traits>
+    struct MomentumDiscMethod
+    {
+        static constexpr auto freeFlowMomentumIdx = typename Traits::template SubDomain<0>::Index();
+        template<std::size_t id> using SubDomainTypeTag = typename Traits::template SubDomain<id>::TypeTag;
+        template<std::size_t id> using PrimaryVariables = GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>;
+        template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
+        static constexpr auto discMethod = GridGeometry<freeFlowMomentumIdx>::discMethod;
+    };
+}
+
+// forward declaration
+template<class Traits, DiscretizationMethod discMethod>
+class FreeFlowCouplingManagerImplementation;
+
+//ToDo: find better name for general coupling manager
+template<class Traits>
+using StaggeredFreeFlowCouplingManager = FreeFlowCouplingManagerImplementation<Traits, Detail::MomentumDiscMethod<Traits>::discMethod>;
 
 /*!
  * \file
@@ -518,7 +537,7 @@ private:
 };
 
 template<class Traits>
-class StaggeredFreeFlowCouplingManager : public FreeFlowCouplingManagerBase<Traits>
+class FreeFlowCouplingManagerImplementation<Traits, DiscretizationMethod::fcstaggered> : public FreeFlowCouplingManagerBase<Traits>
 {
 public:
     static constexpr auto freeFlowMomentumIdx = typename Traits::template SubDomain<0>::Index();
@@ -830,7 +849,7 @@ private:
 
 
 template<class Traits>
-class DiamondFreeFlowCouplingManager : public FreeFlowCouplingManagerBase<Traits>
+class FreeFlowCouplingManagerImplementation<Traits, DiscretizationMethod::fcdiamond> : public FreeFlowCouplingManagerBase<Traits>
 {
 public:
     static constexpr auto freeFlowMomentumIdx = typename Traits::template SubDomain<0>::Index();
