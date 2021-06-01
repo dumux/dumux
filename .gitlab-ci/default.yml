@@ -31,7 +31,7 @@ select tests:
       if [[ "$TRIGGER_SOURCE" == "merge_request_event" ]]; then
           echo "Detecting changes w.r.t to target branch '$MR_TARGET_BRANCH_NAME'"
           python3 bin/testing/getchangedfiles.py --outfile changedfiles.txt \
-                                                 --target.tree origin/$MR_TARGET_BRANCH_NAME
+                                                 --target-tree origin/$MR_TARGET_BRANCH_NAME
           python3 bin/testing/findtests.py --outfile affectedtests.json \
                                            --file-list changedfiles.txt \
                                            --build-dir build-cmake
