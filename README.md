@@ -82,16 +82,21 @@ You can also cite specific releases published on Zenodo:
 
 Automated Testing
 ==================
+* Master branch (development): [![master build badge](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/badges/master/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines?page=1&scope=all&ref=master)
+* Latest release: [![release build badge](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/badges/releases/3.4/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines?page=1&scope=all&ref=releases/3.4)
 
-* DuMu<sup>x</sup> 3.3 / Dune 2.7: [![buildbot badge](https://git.iws.uni-stuttgart.de/buildbot/badges/dumux-rel-3-3-dune-rel-2-7-clang-full.svg)](https://git.iws.uni-stuttgart.de/buildbot/#/builders)
-* DuMu<sup>x</sup> master / Dune 2.7: [![buildbot badge](https://git.iws.uni-stuttgart.de/buildbot/badges/dumux-master-dune-rel-2-7-clang-full.svg)](https://git.iws.uni-stuttgart.de/buildbot/#/builders)
-* DuMu<sup>x</sup> master / Dune master: [![buildbot badge](https://git.iws.uni-stuttgart.de/buildbot/badges/dumux-master-dune-master-clang-full.svg)](https://git.iws.uni-stuttgart.de/buildbot/#/builders)
 
-DuMu<sup>x</sup> features many tests (some unit tests and test problems) that can
-be run manually. We have experimental support for automated testing with buildbot.
-Click <a href="https://git.iws.uni-stuttgart.de/buildbot/#/builders" target="_blank">here (buildbot)</a>
-to see the latest builds (clicking on a build
-number will show a detailed overview of the build).
+DuMu<sup>x</sup> features many tests (some unit tests and test problems) that
+are continuously and automatically tested in the GitLab-CI framework (see badges).
+The test suite is based on CTest and can also be built and run manually
+```
+make -j8 build_tests && ctest -j8
+```
+The tests are labelled (see `CMakeLists.txt` of each individual test for its labels).
+You can build and run tests of a specific label (e.g. `2p` for two-phase flow porous medium model tests) like this
+```
+make -j8 build_2p_tests && ctest -j8 -L ^2p$
+```
 
 [![coverage report](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-coverage/badges/master/coverage.svg)](https://pages.iws.uni-stuttgart.de/dumux-repositories/dumux-coverage/)
 
