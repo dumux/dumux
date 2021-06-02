@@ -63,6 +63,40 @@ public:
 
 }
 
+template<class Problem, class SolutionVector>
+void writeSteadyVelocityAndCoordinates(const Problem& problem, const SolutionVector& sol)
+{
+    const auto& gridGeometry = problem.gridGeometry();
+    std::ofstream logFilevx(problem.name() + "_vx.log"), logFilevy(problem.name() + "_vy.log");
+    logFilevx << "y vx\n";
+    logFilevy << "x vy\n";
+
+    static constexpr double eps_ = 1.0e-7;
+    std::vector<int> dofHandled(gridGeometry.numDofs(), false);
+    for (const auto& element : elements(gridGeometry.gridView()))
+    {
+        auto fvGeometry = localView(gridGeometry);
+        fvGeometry.bind(element);
+        for (const auto& scv : scvs(fvGeometry))
+        {
+            if (dofHandled[scv.dofIndex()])
+                continue;
+
+            if (!scv.boundary())
+            {
+                const auto& globalPos = scv.dofPosition();
+                const auto velocity = sol[scv.dofIndex()][0];
+                dofHandled[scv.dofIndex()] = true;
+
+                if (std::abs(globalPos[0]-0.5) < eps_)
+                    logFilevx << globalPos[1] << " " << velocity << "\n";
+                else if (std::abs(globalPos[1]-0.5) < eps_)
+                    logFilevy << globalPos[0] << " " << velocity << "\n";
+            }
+        }
+    }
+}
+
 int main(int argc, char** argv) try
 {
     using namespace Dumux;
@@ -193,6 +227,9 @@ int main(int argc, char** argv) try
     } while (!timeLoop->finished());
 
     timeLoop->finalize(leafGridView.comm());
+
+    // We write the velocities and coordinates at x = 0.5 and y = 0.5 into a file
+    writeSteadyVelocityAndCoordinates(*momentumProblem, x[momentumIdx]);
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
