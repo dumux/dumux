@@ -120,6 +120,14 @@ class NavierStokesProblemImpl<TypeTag, DiscretizationMethod::fcstaggered> : publ
 
 public:
 
+    //! Export traits of this problem
+    struct Traits
+    {
+        using Scalar = NavierStokesProblemImpl::Scalar;
+        using NumEqVector = Dune::FieldVector<Scalar, ModelTraits::dim()>;
+        using PrimaryVariables = NumEqVector;
+    };
+
     //! Export the boundary types.
     using BoundaryTypes = NavierStokesMomentumBoundaryTypes<ModelTraits::dim()>;
 
