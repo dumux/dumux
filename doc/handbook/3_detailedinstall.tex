@@ -132,6 +132,10 @@ to avoid confusing it with the option files which came out of the distribution.
 
 \section{The First Run of a Test Application}
 \label{quick-start-guide}
+
+We recommend the "Getting Started" guide on the \Dumux website: \url{https://dumux.org/gettingstarted/}.
+Nevertheless, here is a brief description of how to run a first application.
+
 The previous section showed how to install and compile \Dumux. This section
 shall give a very brief introduction on how to run a first test application and how
 to visualize the first output files.\par
@@ -139,7 +143,7 @@ All executable files are compiled in the \texttt{build} sub-directories of \Dumu
 If not specified differently in the options file, this is \texttt{build-cmake} as default.
 
 \begin{enumerate}
-\item Enter the folder \texttt{test/porousmediumflow/2p/implicit/incompressible} within your build directory.\\ Type \texttt{make test{\_}2p{\_}incompressible{\_}tpfa}
+\item Enter the folder \texttt{test/porousmediumflow/2p/incompressible} within your build directory.\\ Type \texttt{make test{\_}2p{\_}incompressible{\_}tpfa}
       in order to compile the application\\\texttt{test{\_}2p{\_}incompressible{\_}tpfa}. To run the simulation,
       type \texttt{./test{\_}2p{\_}incompressible{\_}tpfa params.input}
       into the console.
@@ -149,7 +153,7 @@ If not specified differently in the options file, this is \texttt{build-cmake} a
       name \texttt{params.input}.
 \item The simulation starts and produces some VTU output files and also a PVD
       file. The PVD file can be used to examine time series and summarizes the VTU
-      files. It is possible to stop a running application by pressing $<$Ctrl$><$c$>$.
+      files. (It is possible to abort a running application by pressing $<$Ctrl$><$c$>$.)
 \item You can display the results using the visualization tool ParaView (or
       alternatively VisIt). Just type \texttt{paraview} in the console and open the
       PVD file. On the upper left-hand side, you can choose the desired parameter to be displayed.
