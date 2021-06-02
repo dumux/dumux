@@ -54,7 +54,7 @@ __Important:__ These steps are normally done together with Bernd. Make sure to s
 - [ ]  Protect release branch (in GitLab)
 - [ ]  Create new tags
 - [ ]  Prepare a Zenodo citation
-- [ ]  Include the Zenodo citation to the website
+- [ ]  Include the Zenodo citation to the website (only major releases)
 - [ ]  Write a release email to dumux@listserv.uni-stuttgart.de
 
 # After the release
