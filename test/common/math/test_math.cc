@@ -265,8 +265,8 @@ int main()
     std::uniform_real_distribution<> dis(-10.0, 10.0);
     auto threeRandomNumbers = [&]() mutable {
         const auto x = dis(gen);
-        auto y = dis(gen); while (Dune::FloatCmp::eq(x, y, 1e-10)) { y = dis(gen); }
-        auto z = dis(gen); while (Dune::FloatCmp::eq(x, z, 1e-10) || Dune::FloatCmp::eq(y, z, 1e-10)) { z = dis(gen); }
+        auto y = dis(gen); while (Dune::FloatCmp::eq(x, y, 1e-3)) { y = dis(gen); }
+        auto z = dis(gen); while (Dune::FloatCmp::eq(x, z, 1e-3) || Dune::FloatCmp::eq(y, z, 1e-3)) { z = dis(gen); }
         return std::make_tuple(x, y, z);
     };
 
@@ -287,7 +287,7 @@ int main()
             using std::isfinite;
             if (!isfinite(roots[i]))
                 DUNE_THROW(Dune::Exception, "Expecting finite root");
-            if (throwing && std::none_of(ref.begin(), ref.end(), [&](auto r){ return Dune::FloatCmp::eq(roots[i], r, 1e-8); }))
+            if (throwing && std::none_of(ref.begin(), ref.end(), [&](auto r){ return Dune::FloatCmp::eq(roots[i], r, 1e-5); }))
                 DUNE_THROW(Dune::Exception, "[invertCubicPolynomial] Root " << Dumux::Fmt::format(
                         "{} of {}: {:.14e}, does not match reference roots = [{}].\n", i+1, n, roots[i], refToString())
                         << Dumux::Fmt::format("Polynomial: {:+.5e}x³ {:+.5e}x² {:+.5e}x {:+.5e}\n", coeff[0], coeff[1], coeff[2], coeff[3]));
@@ -301,6 +301,7 @@ int main()
     std::array<double, 3> roots{};
     for (double scaling : {1.0, -1.0, 5.0})
     {
+        // random numbers
         for (int i = 0; i < 100000; ++i)
         {
             const auto [x, y, z] = threeRandomNumbers();
@@ -345,6 +346,33 @@ int main()
                     int numRoots = Dumux::invertCubicPolynomial(roots.data(), 0.0, 0.0, c, d, 10);
                     checkRoots(roots, {x}, {0.0, 0.0, c, d}, numRoots);
                 }
+            }
+        }
+
+        // some corner cases with close roots
+        {
+            const auto [x, y, z] = std::make_tuple(10.0, 10.0+1e-8, 0.0);
+            const auto [a, b, c, d] = cubicCoefficientsFromRoots(x, y, z, scaling);
+            int numRoots = Dumux::invertCubicPolynomial(roots.data(), a, b, c, d);
+            if (numRoots != 3)
+                DUNE_THROW(Dune::Exception, "Expecting three roots! Got " << numRoots);
+            if (!checkRoots(roots, {x, y, z}, {a, b, c, d}, numRoots, false))
+            {
+                // Try to increase Newton iterations for increased precision and try again
+                int numRoots = Dumux::invertCubicPolynomial(roots.data(), a, b, c, d, 10);
+                checkRoots(roots, {x, y, z}, {a, b, c, d}, numRoots);
+            }
+        }{
+            const auto [x, y, z] = std::make_tuple(10.0, 10.0+1e-4, 10.0+2e-4);
+            const auto [a, b, c, d] = cubicCoefficientsFromRoots(x, y, z, scaling);
+            int numRoots = Dumux::invertCubicPolynomial(roots.data(), a, b, c, d);
+            if (numRoots != 3)
+                DUNE_THROW(Dune::Exception, "Expecting three roots! Got " << numRoots);
+            if (!checkRoots(roots, {x, y, z}, {a, b, c, d}, numRoots, false))
+            {
+                // Try to increase Newton iterations for increased precision and try again
+                int numRoots = Dumux::invertCubicPolynomial(roots.data(), a, b, c, d, 10);
+                checkRoots(roots, {x, y, z}, {a, b, c, d}, numRoots);
             }
         }
     }
