@@ -1,5 +1,5 @@
 add_executable(test_ff_navierstokes_closedsystem_new EXCLUDE_FROM_ALL main_new.cc)
-
+add_subdirectory(reference_data)
 
 dumux_add_test(NAME test_ff_navierstokes_closedsystem_ldc_re1_new
               TARGET test_ff_navierstokes_closedsystem_new
@@ -10,7 +10,7 @@ dumux_add_test(NAME test_ff_navierstokes_closedsystem_ldc_re1_new
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_closedsystem_ldc_re1-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_closedsystem_ldc_re1_new-00002.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_closedsystem_new params_re1.input
-                             -Problem.Name test_ff_navierstokes_closedsystem_ldc_re1_new
+                             -Problem.Name test_ff_navierstokes_closedsystem_ldc_re1
                              -Grid.Cells \"64 64\"")
 
 dumux_add_test(NAME test_ff_navierstokes_closedsystem_ldc_re1000_new
@@ -22,7 +22,7 @@ dumux_add_test(NAME test_ff_navierstokes_closedsystem_ldc_re1000_new
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_closedsystem_ldc_re1000-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_closedsystem_ldc_re1000_new-00009.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_closedsystem_new params_re1000.input
-                             -Problem.Name test_ff_navierstokes_closedsystem_ldc_re1000_new
+                             -Problem.Name test_ff_navierstokes_closedsystem_ldc_re1000
                              -Grid.Cells \"64 64\" -TimeLoop.TEnd 50")
 
-dune_symlink_to_source_files(FILES "params_re1.input" "params_re1000.input")
+dune_symlink_to_source_files(FILES "params_re1.input" "params_re1000.input" "run_and_plot.py")
