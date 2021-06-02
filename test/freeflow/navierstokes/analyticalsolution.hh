@@ -56,7 +56,7 @@ auto getVelocityAnalyticalSolution(const Problem& problem)
     return result;
 }
 
-//! Returns an array of vectors containing the analytical solution for a scalar value at the center of each element.
+//! Returns an array of vectors containing the analytical solution for a scalar value at the center of each Dof.
 template<class Problem>
 auto getScalarAnalyticalSolution(const Problem& problem)
 {
@@ -68,7 +68,7 @@ auto getScalarAnalyticalSolution(const Problem& problem)
 
     std::array<std::vector<Scalar>, PrimaryVariables::size()> result;
     for (auto& r : result)
-        r.resize(problem.gridGeometry().gridView().size(0));
+        r.resize(problem.gridGeometry().numDofs());
 
     for (const auto& element : elements(problem.gridGeometry().gridView()))
     {
