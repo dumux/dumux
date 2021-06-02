@@ -62,36 +62,6 @@ The newest and maybe unstable developments of \Dune and \Dumux are also provided
 Please check the \Dune website \cite{DUNE-HP} for further information on the \Dune development. We always try to keep up with the latest developments of \Dune.
 However, the current \Dumux release is based on the stable 2.7 release and it might not compile without further adaptations using the newest versions of \Dune.
 
-%TODO:currently, no DUNE patches necessary! Uncomment this section in case this changes again in the future.
-%
-% \paragraph{Patching \Dune or external libraries}
-% \label{sc:patchingDUNE}
-% Patching of \Dune modules in order to work together with \Dumux can be necessary for several reasons.
-% Software like a compiler or even a standard library
-% changes at times. But, for example, a certain release of a software component that we depend on,
-% may not reflect that change and thus it has to be modified.
-% In the dynamic developing process of software which depends on other modules it is not always feasible
-% to adapt everything to the most recent version of each module. They may fix problems with a certain module
-% of a certain release without introducing too much structural change.
-%
-% \Dumux contains patches and documentation about their usage and application within the
-% directory \texttt{dumux/patches}.
-% Please check the README file in that directory for recent information.
-% In general, a patch can be applied as follows
-% (the exact command or the used parameters may be slightly different).
-% We include here an example of a patching dune-grid.
-%
-% \begin{lstlisting}[style=Bash]
-% $ # make sure you are in the common root directory
-% $ cd dune-grid
-% $ patch -p0 < ../dumux/patches/grid-2.3.1.patch
-% \end{lstlisting}
-%
-% It can be removed by
-% \begin{lstlisting}[style=Bash]
-% $ path -p0 -R < ../dumux/patches/grid-2.3.1.patch
-% \end{lstlisting}
-
 \section{Building \Dune and \Dumux}
 \label{buildIt}
 Configuring \Dune and \Dumux is done by the shell-command \texttt{dunecontrol}, which is part of the \Dune build system.
@@ -101,17 +71,17 @@ CMake's documentation\footnote{\url{https://cmake.org/documentation/}}.
 If something fails during the execution of \texttt{dunecontrol}, feel free to report it to the \Dune or \Dumux developer mailing list,
 but please include error details.
 
-It is possible to compile \Dumux with nearly no explicit options to the build system.
-However, for the successful compilation of \Dune and \Dumux, it is currently necessary to pass
-the option \texttt{-fno-strict-aliasing} to the \Cplusplus compiler,
-which is done here via a command-line argument to \texttt{dunecontrol}:
+It is possible to compile \Dumux without explicitly passing options to the build system.
+However, this will usually not result in the most performant code. A set of default options
+that will usually work well is provided with \Dumux in a file and can be passed
+to \texttt{dunecontrol}. The following command will configure \Dune and \Dumux
+and build all necessary libraries
 \begin{lstlisting}[style=Bash]
 $ # make sure you are in the common root directory
-$ ./dune-common/bin/dunecontrol --configure-opts="CXXFLAGS=-fno-strict-aliasing" --use-cmake all
+$ ./dune-common/bin/dunecontrol --opts=dumux/cmake.opts all
 \end{lstlisting}
 
-Too many options within the command line can make life hard. That's why usually option files are being used together with \texttt{dunecontrol} and its sub-tools.
-Larger sets of options are kept in them. If you are going to compile with modified options, the following
+If you are going to compile with modified options, the following
 can be a starting point:
 \begin{lstlisting}[style=Bash]
 $ # make sure you are in the common root directory
