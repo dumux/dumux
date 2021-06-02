@@ -170,6 +170,18 @@ public:
     std::size_t scvfIdxWithCommonEntity() const
     { return scvfIdxWithCommonEntity_; }
 
+    const GlobalPosition& corner(unsigned int localIdx) const
+    {
+        assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
+        return corners_[localIdx];
+    }
+
+    //! The geometry of the sub control volume face
+    Geometry geometry() const
+    {
+        return geometry_.value();
+    }
+
 private:
     CornerStorage corners_;
     std::optional<Geometry> geometry_;
