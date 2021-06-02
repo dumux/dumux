@@ -30,13 +30,29 @@ check-pipeline-status:
       when: always
   script:
     - |
+      getLastSuccessful() {
+          python3 .gitlab-ci/getpipelineinfo.py \
+                      --access-token $CI_JOB_API_READ_TOKEN \
+                      --look-for latest-merge \
+                      --print-format commit-sha
+      }
+
       if ! python3 .gitlab-ci/getpipelineinfo.py --access-token $CI_JOB_API_READ_TOKEN \
                                                  --look-for HEAD \
                                                  --print-format pipeline-id; then
-          echo "No successful pipeline found. Triggering new pipeline..."
+          echo "No successful pipeline found."
+
+          REFERENCE_SHA=""
+          if getLastSuccessful; then
+              REFERENCE_SHA=$(getLastSuccessful);
+              echo "Triggering new pipeline against reference commit $REFERENCE_SHA."
+          else
+              echo "Latest successful pipeline not found. Trigger complete pipeline."
+          fi
+
           curl --request POST --form "token=$CI_JOB_TOKEN" \
                               --form ref=$CI_COMMIT_BRANCH \
-                              --form "variables[CI_TEST_AGAINST_LAST_SUCCESSFUL]=true" \
+                              --form "variables[CI_REFERENCE_SHA]=$REFERENCE_SHA" \
                               "https://git.iws.uni-stuttgart.de/api/v4/projects/31/trigger/pipeline"
       else
           echo "Found successful pipeline for the current state of the branch. Not testing again."
@@ -57,10 +73,8 @@ check-pipeline-status:
     include: .gitlab-ci/default.yml
     strategy: depend
   variables:
-    TRIGGER_SOURCE: $CI_PIPELINE_SOURCE
-    COMMIT_BRANCH: $CI_COMMIT_BRANCH
     MR_TARGET_BRANCH_NAME: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
-    TEST_AGAINST_LAST_SUCCESSFUL: $CI_TEST_AGAINST_LAST_SUCCESSFUL
+    REFERENCE_SHA: $CI_REFERENCE_SHA
   rules:
   - if: $CI_PIPELINE_SOURCE == "schedule"
     when: always
@@ -121,6 +135,7 @@ trigger lecture:
     branch: master
     strategy: depend
   variables:
-    DUMUX_PIPELINE_SOURCE: $CI_PIPELINE_SOURCE
     DUMUX_MERGE_REQUEST_SOURCE_BRANCH: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
     DUMUX_MERGE_REQUEST_TARGET_BRANCH: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+    DUMUX_COMMIT_SHA: $CI_COMMIT_SHA
+    DUMUX_REFERENCE_SHA: $CI_REFERENCE_SHA
