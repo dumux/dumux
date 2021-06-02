@@ -1,3 +1,4 @@
+add_subdirectory(closedsystem)
 add_subdirectory(analytical3d)
 add_subdirectory(donea)
 add_subdirectory(angeli)
