@@ -30,11 +30,11 @@
 
 #include <dumux/common/indextraits.hh>
 
-
 #include <typeinfo>
 
 namespace Dumux {
 
+//ToDo: Change Docu
 /*!
  * \ingroup CCDiscretization
  * \brief Default traits class to be used for the sub-control volumes
@@ -42,7 +42,7 @@ namespace Dumux {
  * \tparam GV the type of the grid view
  */
 template<class GridView>
-struct FaceCenteredDefaultScvGeometryTraits
+struct FaceCenteredDiamondScvGeometryTraits
 {
     using Grid = typename GridView::Grid;
 
@@ -70,7 +70,7 @@ struct FaceCenteredDefaultScvGeometryTraits
 };
 
 
-template<class GridView, class T = FaceCenteredDefaultScvGeometryTraits<GridView>>
+template<class GridView, class T = FaceCenteredDiamondScvGeometryTraits<GridView>>
 class FaceCenteredDiamondSubControlVolume
 {
     using GlobalPosition = typename T::GlobalPosition;
