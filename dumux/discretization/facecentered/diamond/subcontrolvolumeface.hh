@@ -33,7 +33,6 @@
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
 
-
 #include <typeinfo>
 
 namespace Dumux {
@@ -45,7 +44,7 @@ namespace Dumux {
  * \tparam GV the type of the grid view
  */
 template<class GridView>
-struct FaceCenteredDefaultScvfGeometryTraits
+struct FaceCenteredDiamondScvfGeometryTraits
 {
     using Grid = typename GridView::Grid;
     static constexpr int dim = Grid::dimension;
@@ -77,7 +76,7 @@ struct FaceCenteredDefaultScvfGeometryTraits
     }
 };
 
-template<class GridView, class T = FaceCenteredDefaultScvfGeometryTraits<GridView>>
+template<class GridView, class T = FaceCenteredDiamondScvfGeometryTraits<GridView>>
 class FaceCenteredDiamondSubControlVolumeFace
 {
     using Scalar = typename T::Scalar;
