@@ -1,6 +1,17 @@
+
+dumux_add_test(NAME test_ff_navierstokes_kovasznay_diamond_rt
+               LABELS freeflow navierstokes
+               SOURCES main_new.cc
+               COMPILE_DEFINITIONS MOMENTUMTYPETAG=KovasznayTestMomentumDiamond
+               COMPILE_DEFINITIONS MASSTYPETAG=KovasznayTestMassDiamond
+               CMAKE_GUARD HAVE_UMFPACK
+               COMPILE_DEFINITIONS UPWINDSCHEMEORDER=1)
+
 dumux_add_test(NAME test_ff_navierstokes_kovasznay_new
               LABELS freeflow navierstokes
               SOURCES main_new.cc
+              COMPILE_DEFINITIONS MOMENTUMTYPETAG=KovasznayTestMomentumStaggered
+              COMPILE_DEFINITIONS MASSTYPETAG=KovasznayTestMassStaggered
               CMAKE_GUARD HAVE_UMFPACK
               COMPILE_DEFINITIONS UPWINDSCHEMEORDER=1
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

@@ -35,10 +35,14 @@
 #include <dumux/material/components/constant.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
-#include <dumux/freeflow/navierstokes/mass/1p/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/diamond/model.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
+#include <dumux/freeflow/navierstokes/mass/1p/model.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/discretization/fcstaggered.hh>
+#include <dumux/discretization/fcdiamond.hh>
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/box.hh>
 
 namespace Dumux {
 
@@ -49,8 +53,10 @@ namespace Properties {
 // Create new type tags
 namespace TTag {
 struct KovasznayTest {};
-struct KovasznayTestMomentum { using InheritsFrom = std::tuple<KovasznayTest, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
-struct KovasznayTestMass { using InheritsFrom = std::tuple<KovasznayTest, NavierStokesMassOneP, CCTpfaModel>; };
+struct KovasznayTestMomentumStaggered { using InheritsFrom = std::tuple<KovasznayTest, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
+struct KovasznayTestMassStaggered { using InheritsFrom = std::tuple<KovasznayTest, NavierStokesMassOneP, CCTpfaModel>; };
+struct KovasznayTestMomentumDiamond { using InheritsFrom = std::tuple<KovasznayTest, NavierStokesMomentumDiamond, FaceCenteredDiamondModel>; };
+struct KovasznayTestMassDiamond { using InheritsFrom = std::tuple<KovasznayTest, NavierStokesMassOneP, BoxModel>; };
 } // end namespace TTag
 
 
@@ -238,11 +244,20 @@ public:
 
         auto isAtLeftBoundary = [&](const FVElementGeometry& fvGeometry)
         {
-            if (fvGeometry.hasBoundaryScvf())
+
+            if constexpr (GridGeometry::discMethod == DiscretizationMethod::box)
             {
-                for (const auto& scvf : scvfs(fvGeometry))
-                    if (scvf.boundary() && scvf.center()[0] < this->gridGeometry().bBoxMin()[0] + eps_)
-                        return true;
+                if(scv.dofPosition()[0] <  this->gridGeometry().bBoxMin()[0] + eps_)
+                    return true;
+            }
+            else
+            {
+                if (fvGeometry.hasBoundaryScvf())
+                {
+                    for (const auto& scvf : scvfs(fvGeometry))
+                        if (scvf.boundary() && scvf.center()[0] < this->gridGeometry().bBoxMin()[0] + eps_)
+                            return true;
+                }
             }
             return false;
         };
@@ -262,7 +277,7 @@ public:
      * \param scv The sub-control volume
      */
     PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
-    { return PrimaryVariables(analyticalSolution(scv.center())[Indices::pressureIdx]); }
+    { return PrimaryVariables(analyticalSolution(scv.dofPosition())[Indices::pressureIdx]); }
 
 private:
     static constexpr Scalar eps_ = 1e-6;

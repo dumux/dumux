@@ -67,7 +67,7 @@ template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::KovasznayTest>
 {
 private:
-    using Traits = MultiDomainTraits<TTag::KovasznayTestMomentum, TTag::KovasznayTestMass>;
+    using Traits = MultiDomainTraits<TTag::MOMENTUMTYPETAG, TTag::MASSTYPETAG>;
 public:
     using type = StaggeredFreeFlowCouplingManager<Traits>;
 };
@@ -79,8 +79,8 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using MomentumTypeTag = Properties::TTag::KovasznayTestMomentum;
-    using MassTypeTag = Properties::TTag::KovasznayTestMass;
+    using MomentumTypeTag = Properties::TTag::MOMENTUMTYPETAG;
+    using MassTypeTag = Properties::TTag::MASSTYPETAG;
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
