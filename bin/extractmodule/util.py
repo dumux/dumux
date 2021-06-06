@@ -123,13 +123,17 @@ def getPatches(persistentVersions):
     return result
 
 
+def versionTable(versions):
+    return "| {:<50} | {:<50} | {:<50} | {:<30} |\n".format(
+        'module folder', 'branch', 'commit hash', 'commit date'
+    ) + "| {:<50} | {:<50} | {:<50} | {:<30} |\n".format(
+        '-'*50, '-'*50, '-'*50, '-'*30
+    ) + "\n".join(
+        ["| {:<50} | {:<50} | {:<50} | {:<30} |".format(
+            folder, versionInfo['branch'], versionInfo['revision'], versionInfo['date']
+        ) for folder, versionInfo in versions.items()]
+    ) + "\n"
+
+
 def printVersionTable(versions):
-    print("\t| {:^50} | {:^50} | {:^50} | {:^30} |"
-          .format('module folder', 'branch', 'commit hash', 'commit date'))
-    print("\t" + 193*'-')
-    for folder, versionInfo in versions.items():
-        print("\t| {:^50} | {:^50} | {:^50} | {:^30} |"
-              .format(folder,
-                      versionInfo['branch'],
-                      versionInfo['revision'],
-                      versionInfo['date']))
+    print(versionTable(versions=versions))
