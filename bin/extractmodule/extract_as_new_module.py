@@ -11,10 +11,12 @@ import argparse
 import shutil
 from distutils.dir_util import copy_tree
 import re
-import threading
+import multiprocessing as mp
 import fnmatch
+import itertools
+from functools import partial
 from util import getPersistentVersions
-from util import printVersionTable
+from util import versionTable
 from makeinstallscript import makeInstallScript
 try:
     path = os.path.split(os.path.abspath(__file__))[0]
@@ -24,196 +26,40 @@ try:
 except Exception:
     sys.exit('Could not import common modul or getModuleInfo')
 
-# set script parameters
-epilog = '''
------------------------------------------------------------
-The script has to be called one level above module_dir.
-At least one of the subfolders (FOLDER_1 [FOLDER_2 ...]) has
-to contain a source file *.cc of an executable for which
-you would like to timber a table in dumux-pub.)
-'''
-parser = argparse.ArgumentParser(
-    prog='extractmodulepart',
-    usage="./extractmodulepart module_dir SUBFOLDER_1 [SUBFOLDER_2 ...]",
-    description='This script extracts a subfolder of a DUNE module',
-    formatter_class=argparse.RawDescriptionHelpFormatter,
-    epilog=epilog)
-parser.add_argument('module_dir',
-                    help='Dune module from which the subfolder is extracted')
-parser.add_argument('subfolder',
-                    nargs='+',
-                    help='subfolder(s) of module_dir that you want to extract')
-args = vars(parser.parse_args())
+
+# return the list of included headers including the header itself
+def add_headers_recursively(header_path, curret_headers, module_path):
+    hh = []
+    if os.path.exists(header_path):
+        if header_path not in curret_headers:
+            hh.append(header_path)
+            hh += search_headers(header_path, module_path)
+    return hh
 
 
 # function to search matching header files
-def search_headers(c_file):
-    with open(c_file, 'r') as f:
-        content = f.read()
+def search_headers(source_file, module_path):
+    headers = []
 
-    header_in_bracket = re.findall(r'#include\s+<(.+?)>', content)
-    header_in_quotation = re.findall(r'#include\s+"(.+?)"', content)
+    with open(source_file, 'r') as f:
+        content = f.read()
+        header_in_bracket = re.findall(r'#include\s+<(.+?)>', content)
+        header_in_quotation = re.findall(r'#include\s+"(.+?)"', content)
 
     # search for includes relative to the module path
     for header in header_in_bracket + header_in_quotation:
-        header_with_path = os.path.join(module_full_path, header)
-        if not os.path.exists(header_with_path):
-            continue
-        if header_with_path not in all_headers:
-            all_headers.append(header_with_path)
-            thread_ = threading.Thread(target=search_headers,
-                                       args=(header_with_path, ))
-            thread_.start()
+        header_path = os.path.join(module_path, header)
+        headers += add_headers_recursively(header_path, headers, module_path)
 
     # search for includes relative to the path of the including file
     # only allow quoted includes for this
     for header in header_in_quotation:
         if header == "config.h":
             continue
-        header_dir_name = os.path.dirname(c_file)
-        header_with_path = os.path.join(header_dir_name, header)
-        if not os.path.exists(header_with_path):
-            continue
-        if header_with_path not in all_headers:
-            all_headers.append(header_with_path)
-            thread_ = threading.Thread(target=search_headers,
-                                       args=(header_with_path, ))
-            thread_.start()
+        header_path = os.path.join(os.path.dirname(source_file), header)
+        headers += add_headers_recursively(header_path, headers, module_path)
 
-
-# functions to find the file with specific name in a direcotry
-def find_files_with_name(name, path):
-    result = []
-    for root, dirs, files in os.walk(path):
-        if name in files:
-            result.append(os.path.join(root, name))
-    return result
-
-
-# functions to find the file with specific pattern in a direcotry
-def find_files_with_pattern(pattern, path):
-    result = []
-    for root, dirs, files in os.walk(path):
-        for name in files:
-            if fnmatch.fnmatch(name, pattern):
-                result.append(os.path.join(root, name))
-    return result
-
-
-# functions to configure CMakeLists.txt files
-def generate_new_content(lines, pattern, replace_str):
-    index = lines.find(pattern)
-    if index != -1:
-        content = lines[0: index] + "\n"
-        if replace_str != "":
-            content += replace_str + "\n"
-        flag = True
-        while flag:
-            index = lines.find(")", index)
-            if index != -1:
-                lines = lines[index + 1:]
-            else:
-                break
-
-            index = lines.find(pattern)
-            if index != -1:
-                content += lines[0: index] + "\n"
-            else:
-                content += lines + "\n"
-                flag = False
-    else:
-        if replace_str == "":
-            content = lines
-        else:
-            if pattern == "add_subdirectory(":
-                content = replace_str + "\n" + lines
-            else:
-                content = lines + "\n" + replace_str
-    return content
-
-
-def generate_subdirectory_content(dirs):
-    content = ""
-    for name in dirs:
-        content += "add_subdirectory(" + name + ")" + "\n"
-    return content
-
-
-def generate_install_content(header_files, destination):
-    if len(header_files) == 0:
-        return ""
-    content = "install(FILES" + "\n"
-    for header_file in header_files:
-        content += "    " + header_file + "\n"
-    content += ("DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}"
-                + destination + ")" + "\n")
-    return content
-
-
-def generate_content(cmake_list_txt_file, dirs, header_files, destination):
-    subdirectory_content = generate_subdirectory_content(dirs)
-    install_content = generate_install_content(header_files, destination)
-
-    if os.path.exists(cmake_list_txt_file):
-        with open(cmake_list_txt_file, "r", encoding="utf-8") as f:
-            content = "".join(f.readlines()).strip()
-            f.close()
-        content = generate_new_content(content, "add_subdirectory(",
-                                       subdirectory_content)
-        return generate_new_content(content, "install(FILE", install_content)
-    else:
-        if subdirectory_content == "":
-            return install_content
-        else:
-            return subdirectory_content + "\n" + install_content
-
-
-def generate_cmake_lists_txt(cmake_list_txt_file, dirs,
-                             header_files, destination):
-    content = generate_content(cmake_list_txt_file, dirs,
-                               header_files, destination)
-
-    with open(cmake_list_txt_file, "w", encoding="utf-8") as f:
-        if content != "":
-            f.write(content)
-
-
-def check_dir(root_dir):
-    if not os.path.exists(root_dir):
-        print("root path" + str(root_dir) + "is not exist!")
-        return False
-    if not os.path.isdir(root_dir):
-        print("root path" + str(root_dir) + "is not dir!")
-        return False
-    return True
-
-
-def check_str(root_dir):
-    if root_dir is None or root_dir.strip() == "":
-        return None
-    root_dir = root_dir.strip()
-    if root_dir.endswith(os.sep):
-        root_dir = root_dir[:-1]
-    return root_dir
-
-
-def generate_cmake_lists_txt_file(root_dir):
-    root_dir = check_str(root_dir)
-    if root_dir is None:
-        return
-    if not check_dir(root_dir):
-        return
-    drop_len = len(root_dir)
-    for parent, dirs, files in os.walk(root_dir):
-        destination = parent[drop_len:]
-        header_files = []
-        cmake_list_txt_file = os.path.join(parent, "CMakeLists.txt")
-        for name in files:
-            for suffix in [".h", ".hh"]:
-                if name.endswith(suffix):
-                    header_files.append(name)
-        generate_cmake_lists_txt(cmake_list_txt_file, dirs,
-                                 header_files, destination)
+    return headers
 
 
 # function asking user to answer yes or no question
@@ -222,13 +68,13 @@ def query_yes_no(question, default="yes"):
     if default is None:
         prompt = " [y/n] "
     elif default == "yes":
-        prompt = " [y/N] "
-    elif default == "no":
         prompt = " [Y/n] "
+    elif default == "no":
+        prompt = " [y/N] "
     else:
         raise ValueError("invalid default answer: '%s'" % default)
     while True:
-        sys.stdout.write(question + prompt)
+        sys.stdout.write("\n\n" + question + prompt)
         choice = input().lower()
         if default is not None and choice == "":
             return valid[default]
@@ -239,15 +85,15 @@ def query_yes_no(question, default="yes"):
                              "(or 'y' or 'n').\n")
 
 
-# funtion to get correct git remote url and make sure it is empty
+# query for git remote url and make sure it is not empty
 def get_remote_url(repo_path):
     run_from_mod = callFromPath(repo_path)(runCommand)
     while True:
         if query_yes_no("Do you own a subfolder in dumux-pub?"):
             nameyearx = input("Type below the information of"
-                              " AuthorLastNameYearx (e.g. luggi2020b)\n")
+                              " AuthorLastNameYearx (e.g. Luigi2020b)\n")
             remoteurl = 'https://git.iws.uni-stuttgart.de'\
-                        '/dumux-pub/{}.git'.format(nameyearx)
+                        '/dumux-pub/{}.git'.format(nameyearx.lower())
         else:
             remoteurl = input("Provide URL of your remote repository:\n")
         check_remote_repo = run_from_mod('git ls-remote {}'.format(remoteurl))
@@ -259,205 +105,350 @@ def get_remote_url(repo_path):
             sys.stdout.write("ERROR: The remote reposity is not empty!.\n")
 
 
-if __name__ == "__main__":
+def extract_sources_files(module_dir, subfolders):
+    def find_files_with_pattern(pattern, path):
+        result = []
+        for root, dirs, files in os.walk(path):
+            for name in files:
+                if fnmatch.fnmatch(name, pattern):
+                    result.append(os.path.join(root, name))
+        return result
 
-    module_dir = args['module_dir']
-    subfolders = args['subfolder']
+    sources = []
+    for folder in subfolders:
+        folder_path = os.path.join(module_dir, folder)
+        if not os.path.isdir(folder_path):
+            raise NameError(f"Subfolder '{folder}' is not a subfolder of '{module_dir}'")
+        sources += find_files_with_pattern("*.cc", os.path.abspath(folder_path))
+    return sources
 
-    # if module_dir contains a slash as last character, delete it
-    if module_dir.endswith('/'):
-        module_dir = module_dir[:-1]
 
-    # check if we are above module_dir
-    if not (os.path.isdir(module_dir)):
-        print("ERROR: you need to run the script one level above the folder "
-              + module_dir + ".")
-        print("Run \""+os.path.basename(__file__)+" --help\" for details.")
-        exit(1)
+def check_module(module_name):
+    try:
+        with open(f"{module_name}/dune.module") as module_file:
+            content = module_file.read()
+            if f"Module: {module_name}" not in content:
+                raise Exception(f"Invalid dune.module in {module_name}")
+    except OSError:
+        print("Could not find new Dune module. Aborting")
+        raise
 
-    # determine all source files in the paths passed as arguments
-    script_path = os.getcwd()
-    os.chdir(module_dir)
-    module_full_path = os.getcwd()
-    all_sources = []
-    all_sources_with_path = []
-    all_directories = []
-    for dir_path in subfolders:
-        if dir_path.startswith(module_dir):
-            # the "+1" is required to also remove the "/"
-            stripped_path = dir_path[len(module_dir)+1:]
-        else:
-            stripped_path = dir_path
-        full_path = os.path.join(module_full_path, stripped_path)
-        directories = " " + stripped_path
-        all_directories.append(stripped_path)
-        os.chdir(full_path)
-        for file in find_files_with_pattern("*.cc", full_path):
-            print(file)
-            sources = os.path.relpath(file, module_full_path)
-            print(sources)
-            all_sources.append(sources)
-            sourceswithpath = os.path.join(module_full_path, sources)
-            all_sources_with_path.append(sourceswithpath)
-    os.chdir(module_full_path)
-    os.chdir("..")  # back to the script folder
 
-    # check if sources have been obtained
-    if (all_sources == []):
-        print("ERROR: no source files *.cc found in the directories "
-              + " ".join([str(x) for x in subfolders]) + ".")
-        print("Be sure to provide a list of paths as arguments.")
-        print("Run \""+os.path.basename(__file__)+" --help\" for details.")
-        exit(1)
+###################################################################
+# Some general information for users of the script
+###################################################################
+def info_explanations(module_dir, module_path, subfolders, source_files):
+    return f"""
+This script will extract the following subfolders of
+the module '{module_dir}':
+{os.linesep.join([f"   - {os.path.relpath(f, module_path)}" for f in subfolders])}
 
-    # try to find the duneproject script
-    dune_project = shutil.which('duneproject', path="dune-common/bin")
-    if (dune_project is None):
-        print("ERROR: Could not find duneproject.")
-        print("Be sure to have duneproject in dune-common/bin")
-        exit(1)
-    else:
-        print(dune_project)
+and all headers contained in '{module_dir}'
+tha are required to build the exectutables from the sources:
+{os.linesep.join([f"   - {s}" for s in source_files])}
 
-    # give explanations
-    print("\n""This script will\n"
-          "- extract the following sub-folders of " + module_dir + ":\n")
-    for dir_path in all_directories:
-        print("  " + dir_path + ",")
-    print("\n""  and all headers in " + module_dir
-          + " that are required to build the\n"
-          "  executables from the sources\n")
-    for source in all_sources:
-        print("  " + source + ",")
-    print("""
-This script copies extracted files into a freshly created DUNE module
-retaining the directory structure
-and updates/creates required files like CMakeLists.txt.
-duneproject will run now.
-The new module should NOT depend on the module in {0}.\n\n"""
-          .format(module_dir))
+The extracted files are copied into a new DUNE module
+retaining the directory structure. Required files for
+creating a working DUNE module (like CMakeLists.txt)
+will be created and/or updated.
 
-    input("Read the above and press [Enter] to proceed...")
+The script 'duneproject' will run now. Please answer all
+upcoming queries to the best of your knowledge.
 
-    # run duneproject
-    old_ls = os.listdir()
-    subprocess.call([dune_project])
-    new_ls = os.listdir()
+Important: the new module should NOT depend on the module '{module_dir}'
+"""
 
-    # determine the new module/directory name
-    module_name = (set(new_ls) - set(old_ls)).pop()
-    if (module_name == ""):
-        print("ERROR: could not find new module. Aborting.")
-        exit(1)
-    else:
-        print()
-        print(os.path.basename(__file__) + ": Found new module " + module_name)
-    print("Determining required headers...")
-    os.chdir(module_name)
-    module_path = os.getcwd()
 
-    # extract headers, provide some output and copy everything to new module
-    all_headers = []
-    print("The following header files are extracted: ")
-    for source in all_sources_with_path:
-        search_headers(source)
-        for header in all_headers:
-            print(header)
-            dir_path = os.path.dirname(os.path.realpath(header))\
-                .replace(module_dir, module_name, 1)
-            os.makedirs(dir_path, exist_ok=True)
-            shutil.copy(header, dir_path)
-        source_dir = os.path.dirname(source)
-        source_path = source_dir.replace(module_dir, module_name, 1)
-        copy_tree(source_dir, source_path)
+###################################################################
+# Main part of README.md
+###################################################################
+def info_readme_main(module_dir, subfolders, source_files):
+    subfolders_str = ''.join([f"*   `{d}`\n" for d in subfolders])
+    sources_str = ''.join([f"*   `{s}`\n" for s in source_files])
+    return f"""
+This file has been created automatically. Please adapt it to your needs.
 
-    # copy .gitignore from dumux to the new module
-    dumux_gitignore_file = os.path.join(script_path, "dumux/.gitignore")
-    shutil.copy(dumux_gitignore_file, module_path)
+## Content
 
-    # delete unnecessary directories to keep the extracted module clean
-    shutil.rmtree('dune')
-    shutil.rmtree('src')
-
-    # set CMakeLists.txt for each directory
-    generate_cmake_lists_txt_file(module_path)
-    print("The required header files are extracted"
-          " and CMakeLists are configured.")
-    print("==================================================================")
-
-    # create README file
-    os.remove("README")
-    orig_stdout = sys.stdout
-    readme_file = open("README.md", "w+")
-
-    readme_dir_str_lists = []
-    for dir_path in all_directories:
-        readme_dir_str_lists.append("*   `" + dir_path + "`,\n")
-    readme_source_str_lists = []
-    for source in all_sources:
-        readme_source_str_lists.append("*   `" + source + "`,\n")
-    readme_str_args = [module_dir, ''.join(readme_dir_str_lists),
-                       ''.join(readme_source_str_lists)]
-
-    readme_file.write("""This file has been created automatically. Please adapt it to your needs. \n
-===============================\n
-## Content\n
-"The content of this DUNE module was extracted from the module `{0}`."
-In particular, the following subfolders of `{0}` have been extracted:
-{1}
-Additionally, all headers in `{0}` that are required to build the
+The content of this DUNE module has been extracted from the module `{module_dir}`.
+In particular, the following subfolders of `{module_dir}` have been extracted:
+{subfolders_str}
+Additionally, all headers in `{module_dir}` that are required to build the
 executables from the sources
-{2}
+{sources_str}
 have been extracted. You can configure the module just like any other DUNE
 module by using `dunecontrol`. For building and running the executables,
 please go to the build folders corresponding to the sources listed above.\n
-""".format(*readme_str_args))
+"""
 
-    version_script_path = os.path.join(script_path,
-                                       "dumux/bin/util/getusedversions.py")
-    install_script_path = os.path.join(script_path,
-                                       "dumux/bin/util/makeinstallscript.py")
-    os.chdir(script_path)
-    # ask user if to write version information into README
-    if query_yes_no("\nWrite detailed version information"
-                    " (folder/branch/commits/dates) into README.md?"):
-        print("Looking for the dune modules in path :" + str(script_path)
-              + "...")
-        readme_file.write("===============================\n"
-                          + "## Version Information\n")
-        versions = getPersistentVersions(
-            [dep['folder'] for dep in getDependencies(module_full_path)], True)
-        print("Writing version information into README.md ...")
-        sys.stdout = readme_file
-        printVersionTable(versions)
-        sys.stdout = orig_stdout
 
-    print("Automatic generation of README.md file is complete.")
-    print("==================================================================")
+###################################################################
+# Installation part of README.md
+###################################################################
+def info_readme_installation(remoteurl, install_script_name):
+    return f"""
 
-    # ask user if to generate an install script
-    install_script_name = 'install_' + module_name + '.sh'
-    if query_yes_no("\nGenerate install script " + install_script_name
-                    + " in your new module " + module_name + "?"):
-        remoteurl = get_remote_url(module_path)
-        print("Write instructions for install script into README.md file...")
-        readme_file.write("""===============================
 ## Installation
-   The easiest way of installation is to use the install script `{0}`
-   provided in this repository.
-   Using `wget`, you can simply install all dependent modules by typing:
 
-   ```sh
-   wget {1}/{0}.sh
-   chmod u+x {0}
-   ./{0}
-   ```
+The easiest way of installation is to use the install script `{install_script_name}`
+provided in this repository.
+Using `wget`, you can simply install all dependent modules by typing:
 
-   This will create a sub-folder `DUMUX`, clone all modules into it.
+```sh
+wget {remoteurl}/{install_script_name}.sh
+chmod u+x {install_script_name}
+./{install_script_name}
+```
 
-""".format(*[install_script_name, remoteurl]))
-        readme_file.close()
-        run_from_mod = callFromPath(module_path)(runCommand)
+This will create a sub-folder `DUMUX`, clone all modules into it.
+
+"""
+
+
+###################################################################
+# Infos on how to create the install script manually
+###################################################################
+def info_make_install(new_module_name):
+    return f"""
+========================================================================
+
+The extracted module is contained in the subfolder '{new_module_name}'.
+You can configure it with
+./dune-common/bin/dunecontrol --opts=dumux/cmake.opts —only={new_module_name} all
+To create an install script use the "makeinstallscript.py" script in the same folder.
+You can run 'python3 makeinstallscript.py --help' for more information
+"""
+
+
+if __name__ == "__main__":
+
+    # set script parameters
+    epilog = '''
+    -----------------------------------------------------------
+    The script has to be called one level above module_dir.
+    At least one of the subfolders (FOLDER_1 [FOLDER_2 ...]) has
+    to contain a source file *.cc of an executable for which
+    you would like to timber a table in dumux-pub.)
+    -----------------------------------------------------------
+
+    Example usage:
+    ./dumux/bin/extractmodule/extract_as_new_module.py dumux-fracture appl test
+
+    (extracts the subfolders appl and test from the module dumux-fracture)
+
+    '''
+    parser = argparse.ArgumentParser(
+        prog='extract_as_new_module.py',
+        usage='./dumux/bin/extractmodule/extract_as_new_module.py'
+              ' module_dir SUBFOLDER_1 [SUBFOLDER_2 ...]',
+        description='This script extracts subfolders of a given DUNE module'
+                    ' into a new DUNE module.',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=epilog)
+    parser.add_argument(
+        'module_dir',
+        help='Dune module from which the subfolder is extracted'
+    )
+    parser.add_argument(
+        'subfolder', nargs='+',
+        help='subfolder(s) of module_dir that you want to extract'
+    )
+    args = vars(parser.parse_args())
+
+    # if module_dir ends with slash(es) remove it/them
+    module_dir = args['module_dir'].strip(os.sep)
+    module_path = os.path.abspath(module_dir)
+    # make unique set of subfolders
+    subfolders = list(set(args['subfolder']))
+
+    # check if we are above module_dir
+    if not os.path.isdir(module_dir):
+        sys.exit("ERROR: You need to run the script"
+                 f"one level above the folder {module_dir}.\n"
+                 f"Run \"{os.path.basename(__file__)} --help\" for details.")
+
+    # determine all source files in the paths passed as arguments
+    source_files = extract_sources_files(module_dir, subfolders)
+
+    # check if sources have been obtained
+    if not source_files:
+        sys.exit(
+            "ERROR: No source files *.cc found in the subfolders: " +
+            ", ".join([str(x) for x in subfolders]) + ".\n"
+            "Be sure to provide a list of paths as arguments.\n"
+            f"Run '{os.path.basename(__file__)} --help' for details."
+        )
+
+    # try to find the duneproject script
+    dune_project = shutil.which('duneproject', path="dune-common/bin")
+    if dune_project is None:
+        sys.exit(
+            "ERROR: Could not find duneproject.\n"
+            "Make sure to have duneproject in dune-common/bin"
+        )
+
+    # give explanations
+    print(info_explanations(
+        module_dir, module_path, subfolders, source_files
+    ))
+    input("Read the above and press [Enter] to proceed...")
+
+    # run duneproject
+    subprocess.call([dune_project])
+
+    # find the created folder
+    # as the one with the most recent modification time
+    new_module_name = max(
+        [d for d in os.listdir() if os.path.isdir(d)],
+        key=os.path.getmtime
+    )
+
+    # verify it's really a Dune module
+    check_module(new_module_name)
+    print(
+        f"Found new module {new_module_name}\n"
+        "Copying source files..."
+    )
+
+    # get the base path of the new module
+    new_module_path = module_path.replace(module_dir, new_module_name, 1)
+
+    # copy the source tree
+    # copy all base folders complete, then delete the unnecessary ones
+    base_folders = list(set([
+        os.path.relpath(s, module_path).split(os.path.sep)[0] for s in source_files
+    ]))
+    for b in base_folders:
+        path_in_old_module = os.path.join(module_path, b)
+        path_in_new_module = os.path.join(new_module_path, b)
+        copy_tree(path_in_old_module, path_in_new_module)
+
+    # add base folders in project-level CMakeLists.txt
+    with open(os.path.join(new_module_path, "CMakeLists.txt"), "r") as cml:
+        section = 0
+        content = []
+        for line in cml.readlines():
+            if line.startswith("add_subdirectory"):
+                section = 1 if section in [0, 1] else 2
+            elif section == 1:
+                section = 2
+                for b in base_folders:
+                    content.append(f"add_subdirectory({b})")
+            content.append(line)
+
+    with open(os.path.join(new_module_path, "CMakeLists.txt"), "w") as cml:
+        for line in content:
+            cml.write(line)
+
+    # go through source tree and remove unnecessary directories
+    new_source_files = [
+        s.replace(module_dir, new_module_name, 1) for s in source_files
+    ]
+    for b in base_folders:
+        def matching_path(path, list_of_paths):
+            for p in list_of_paths:
+                if path in p:
+                    return True
+            return False
+
+        for path, dirs, files in os.walk(os.path.join(new_module_path, b)):
+            for d in dirs:
+                dir_path = os.path.join(path, d)
+                keep = matching_path(dir_path, new_source_files)
+                if not keep:
+                    rel_dir_path = os.path.relpath(dir_path, new_module_path)
+                    answer_is_yes = query_yes_no(
+                        f"{rel_dir_path} does not contain source files."
+                        " Copy to new module?",
+                        default="no"
+                    )
+                    if not answer_is_yes:
+                        # remove copy of directory
+                        shutil.rmtree(dir_path)
+                        # remove entry from CMakeLists.txt
+                        cml_path = os.path.join(module_path, "CMakeLists.txt")
+                        with open(cml_path, "r+") as cml:
+                            content = cml.read()
+                            cml.seek(0)
+                            content = content.replace(
+                                "add_subdirectory({d})\n", ""
+                            )
+                            cml.write(content)
+                            cml.truncate()
+
+                        # make os.walk know about removed folders
+                        dirs.remove(d)
+
+    # search for all header (in parallel)
+    with mp.Pool() as p:
+        headers = itertools.chain.from_iterable(p.map(
+            partial(search_headers, module_path=module_path),
+            source_files
+        ))
+
+    # make unique
+    headers = list(set(headers))
+
+    # copy headers to the new module
+    for header in headers:
+        header_dir = os.path.dirname(os.path.realpath(header))
+        path_in_new_module = header_dir.replace(module_dir, new_module_name, 1)
+        os.makedirs(path_in_new_module, exist_ok=True)
+        shutil.copy(header, path_in_new_module)
+
+    # copy .gitignore from dumux to the new module
+    dumux_gitignore_file = "dumux/.gitignore"
+    shutil.copy(dumux_gitignore_file, new_module_path)
+
+    # delete unnecessary directories to keep the extracted module clean
+    if "dune" not in subfolders:
+        shutil.rmtree(os.path.join(new_module_path, 'dune'))
+    if "src" not in subfolders:
+        shutil.rmtree(os.path.join(new_module_path, 'src'))
+    with open(os.path.join(new_module_path, "CMakeLists.txt"), "r+") as cml:
+        content = cml.read()
+        cml.seek(0)
+        if "dune" not in subfolders:
+            content = content.replace("add_subdirectory(dune)\n", "")
+        if "src" not in subfolders:
+            content = content.replace("add_subdirectory(src)\n", "")
+        cml.write(content)
+        cml.truncate()
+
+    # create README file
+    os.remove(os.path.join(new_module_path, 'README'))
+    readme_path = os.path.join(new_module_path, "README.md")
+    with open(readme_path, "w") as readme_file:
+        readme_file.write(
+            info_readme_main(module_dir, subfolders, source_files)
+        )
+
+    # ask user if to write version information into README.md
+    if query_yes_no("Write detailed version information"
+                    " (folder/branch/commits/dates) into README.md?"):
+        print("Looking for the dune modules in path: "
+              + os.path.abspath(".")
+              + "...")
+
+        versions = getPersistentVersions(
+            [dep['folder'] for dep in getDependencies(module_path)], True
+        )
+
+        # append version information
+        with open(readme_path, "a") as readme_file:
+            readme_file.write(
+                "\n## Version Information\n\n" +
+                versionTable(versions)
+            )
+
+    # if there is a remote repository available
+    # we can directly push the source code and
+    # also create a "one-click" installation script
+    install_script_name = 'install_' + new_module_name + '.sh'
+    if query_yes_no("Do you have an empty remote repository to push the code to (recommended)?"):
+        remoteurl = get_remote_url(new_module_path)
+
+        run_from_mod = callFromPath(new_module_path)(runCommand)
         try:
             run_from_mod('git init')
             run_from_mod('git add .')
@@ -465,33 +456,27 @@ please go to the build folders corresponding to the sources listed above.\n
             run_from_mod('git remote add origin {}'.format(remoteurl))
             run_from_mod('git push -u origin master')
 
-            makeInstallScript(os.path.join(script_path, module_name),
-                              ignoreUntracked=True)
+            # create an installation script
+            makeInstallScript(new_module_path, ignoreUntracked=True)
             shutil.move(install_script_name,
-                        os.path.join(module_name, install_script_name))
+                        os.path.join(new_module_path, install_script_name))
+
+            # append install information into readme
+            with open(readme_path, "a") as readme_file:
+                readme_file.write(info_readme_installation(remoteurl, install_script_name))
+
+            # add to version control
             run_from_mod('git add .')
             run_from_mod('git commit -m "Create Install script"')
             run_from_mod('git push -u origin master')
 
-            print("\n" + "*"*80 + "\n"
-                  """Congratulations, the install script {}.sh has been succesfully generated,
-                  You can make further changes to suit your needs,
-                  commit and push to the remote repository"""
-                  .format(module_name) + "\n" + "*"*80)
         except Exception:
-            sys.exit("""Automatically generate install script {}.sh failed.
-To create the script, use the "makeinstallscript.py" script in the same folder,
-run python3 makeinstallscript.py --help for more detailed information"""
-                     .format(module_name))
+            sys.exit(
+                f"Automatically generate install script {install_script_name} failed."
+                "\nTo create the script, use the 'makeinstallscript.py' script in the same folder."
+                "\nRun 'python3 makeinstallscript.py --help' for more detailed information"
+            )
 
-    # in case user want to do generate install.sh manuelly
+    # output guidance for users to create install script manually
     else:
-        # output guidence for users
-        print("\n" + "*"*80 + "\n" +
-              """The extracted module is contained in the subfolder \"{0}\".
-              You can configure it using \"dunecontrol ... —only= {0} all\".
-              Make sure you have an empty remote repository.
-              To create an install script {0}.sh,
-              use the "makeinstallscript.py" script in the same folder,
-              run python3 makeinstallscript.py --help for more information"""
-              .format(module_name) + "\n" + "*"*80)
+        print(info_make_install(new_module_name))
