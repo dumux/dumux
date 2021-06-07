@@ -36,6 +36,7 @@
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 
 #include <dumux/multidomain/boundary/stokesdarcy/couplingmanager.hh>
+#include <dumux/multidomain/staggeredtraits.hh>
 
 #include "spatialparams.hh"
 #include "problem_darcy.hh"

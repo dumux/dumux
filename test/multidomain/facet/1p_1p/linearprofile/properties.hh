@@ -36,6 +36,7 @@
 #include <dumux/multidomain/facet/box/properties.hh>
 #include <dumux/multidomain/facet/cellcentered/tpfa/properties.hh>
 #include <dumux/multidomain/facet/cellcentered/mpfa/properties.hh>
+#include <dumux/multidomain/traits.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
 

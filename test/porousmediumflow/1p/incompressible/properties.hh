@@ -33,6 +33,7 @@
 #include <dune/common/quadmath.hh>
 #endif
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/ccmpfa.hh>
 #include <dumux/discretization/box.hh>

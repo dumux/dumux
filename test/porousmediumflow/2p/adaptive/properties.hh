@@ -26,9 +26,16 @@
 #ifndef DUMUX_LENSPROBLEM_ADAPTIVE_PROPERTIES_HH
 #define DUMUX_LENSPROBLEM_ADAPTIVE_PROPERTIES_HH
 
+#if HAVE_DUNE_UGGRID
+#include <dune/grid/uggrid.hh>
+#endif
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
 #include <test/porousmediumflow/2p/incompressible/problem.hh>
 #include "../incompressible/properties.hh"
 #include "problem.hh"
+#include "pointsourceproblem.hh"
 
 // Type tags for the adaptive versions of the two-phase incompressible problem
 namespace Dumux::Properties {
