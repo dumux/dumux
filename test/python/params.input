@@ -1,0 +1,6 @@
+[Problem]
+EnableGravity = false
+
+[SpatialParams]
+Porosity = 0.3
+Permeability = 1e-8
