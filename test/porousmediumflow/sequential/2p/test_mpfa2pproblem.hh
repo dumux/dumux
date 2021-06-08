@@ -24,7 +24,7 @@
 #ifndef DUMUX_TEST_MPFA2P_PROBLEM_HH
 #define DUMUX_TEST_MPFA2P_PROBLEM_HH
 
-#if HAVE_UG
+#if HAVE_DUNE_UGGRID
 #include <dune/grid/uggrid.hh>
 #endif
 #include <dune/grid/yaspgrid.hh>
@@ -75,7 +75,7 @@ struct MPFALAdaptiveTwoPTest { using InheritsFrom = std::tuple<MPFATwoPTest, IMP
 } // end namespace TTag
 
 // Set the grid type
-#if HAVE_UG
+#if HAVE_DUNE_UGGRID
 template<class TypeTag>
 struct Grid<TypeTag, TTag::MPFATwoPTest> { using type = Dune::UGGrid<2>; };
 #else

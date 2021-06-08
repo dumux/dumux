@@ -23,7 +23,7 @@
 
 #include <config.h>
 
-#if HAVE_UG
+#if HAVE_DUNE_UGGRID
 
 #include <dumux/common/start.hh>
 #include <dumux/common/properties.hh>

@@ -26,7 +26,7 @@
 #ifndef DUMUX_1P2CNI_TRANSIENT_BC_TEST_PROBLEM_PROPERTIES_HH
 #define DUMUX_1P2CNI_TRANSIENT_BC_TEST_PROBLEM_PROPERTIES_HH
 
-#if HAVE_UG
+#if HAVE_DUNE_UGGRID
 #include <dune/grid/uggrid.hh>
 #endif
 #include <dune/grid/yaspgrid.hh>
@@ -54,7 +54,7 @@ struct OnePTwoCNITransientBCBox { using InheritsFrom = std::tuple<OnePTwoCNITran
 } // end namespace TTag
 
 // Set the grid type
-#if HAVE_UG
+#if HAVE_DUNE_UGGRID
 template<class TypeTag>
 struct Grid<TypeTag, TTag::OnePTwoCNITransientBC> { using type = Dune::UGGrid<2>; };
 #else

@@ -31,12 +31,12 @@
 // (https://gitlab.dune-project.org/core/dune-grid/issues/78),
 // it should be guarded by a DUNE_VERSION macro and removed later.
 
-#if HAVE_UG
+#if HAVE_DUNE_UGGRID
 namespace Dune {
 template<int dim>
 class UGGrid;
 } // end namespace Dumux
-#endif // HAVE_UG
+#endif // HAVE_DUNE_UGGRID
 
 namespace Dumux::Temp::Capabilities {
 
@@ -46,13 +46,13 @@ struct canCommunicate
   static const bool v = false;
 };
 
-#if HAVE_UG
+#if HAVE_DUNE_UGGRID
 template<int dim, int codim>
 struct canCommunicate<Dune::UGGrid<dim>, codim>
 {
   static const bool v = true;
 };
-#endif // HAVE_UG
+#endif // HAVE_DUNE_UGGRID
 
 } // namespace Dumux::Temp::Capabilities
 // end workaround

@@ -32,7 +32,7 @@
 #include <dumux/io/grid/gridmanager.hh>
 #include <dumux/io/grid/cakegridmanager.hh>
 
-#if HAVE_UG
+#if HAVE_DUNE_UGGRID
 #include <dune/grid/uggrid.hh>
 #endif
 
@@ -45,7 +45,7 @@
 #endif
 
 // The grid type
-#if HAVE_UG && USEUG==1
+#if HAVE_DUNE_UGGRID && USEUG==1
 template<int dim>
 using Grid = Dune::UGGrid<dim>;
 #elif HAVE_DUNE_ALUGRID

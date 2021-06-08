@@ -25,7 +25,7 @@
 #define DUMUX_CONVERGENCE_TEST_ONEP_PROPERTIES_HH
 
 #include <dune/grid/yaspgrid.hh>
-#if HAVE_UG
+#if HAVE_DUNE_UGGRID
 #include <dune/grid/uggrid.hh>
 #endif
 
