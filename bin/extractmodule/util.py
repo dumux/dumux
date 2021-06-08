@@ -59,7 +59,7 @@ def mostRecentCommonCommitWithRemote(modFolderPath,
     for rev in revList:
         branches = findBranches(rev)
         if branches:
-            return branches[0]
+            return branches[0], rev
 
     raise RuntimeError('Could not find suitable ancestor commit'
                        ' on a branch that matches the given filter')
@@ -85,7 +85,7 @@ def getPersistentVersions(modFolderPaths, ignoreUntracked=False):
         # update remote to make sure we find all upstream commits
         fetchRepo(result[modFolderPath]['remote'], modFolderPath)
 
-        rev = mostRecentCommonCommitWithRemote(modFolderPath)
+        branch, rev = mostRecentCommonCommitWithRemote(modFolderPath)
         run = callFromPath(modFolderPath)(runCommand)
 
         result[modFolderPath]['revision'] = rev
@@ -97,9 +97,7 @@ def getPersistentVersions(modFolderPaths, ignoreUntracked=False):
         ).strip('\n')
 
         # this may return HEAD if we are on some detached HEAD tree
-        result[modFolderPath]['branch'] = run(
-            'git rev-parse --abbrev-ref HEAD'
-        ).strip('\n')
+        result[modFolderPath]['branch'] = branch
 
     return result
 
