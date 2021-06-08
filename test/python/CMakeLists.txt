@@ -40,4 +40,40 @@ else()
                                       ${CMAKE_CURRENT_BINARY_DIR}/finitevolume-solution-100.vtu
                               --command "${CMAKE_CURRENT_SOURCE_DIR}/test_explicit_transport_cctpfa.py")
 
+  dune_python_add_test(NAME test_python_1p_incompressible_box_numdiff
+                       LABELS python
+                       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                       SCRIPT ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                                --script fuzzy
+                                --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_box-reference.vtu
+                                        ${CMAKE_CURRENT_BINARY_DIR}/test_1p_box_numeric-00000.vtu
+                                --command "${CMAKE_CURRENT_SOURCE_DIR}/test_1p.py box numeric")
+
+  dune_python_add_test(NAME test_python_1p_incompressible_box_anadiff
+                       LABELS python
+                       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                       SCRIPT ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                                --script fuzzy
+                                --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_box-reference.vtu
+                                        ${CMAKE_CURRENT_BINARY_DIR}/test_1p_box_analytic-00000.vtu
+                                --command "${CMAKE_CURRENT_SOURCE_DIR}/test_1p.py box analytic")
+
+  dune_python_add_test(NAME test_python_1p_incompressible_cctpfa_numdiff
+                       LABELS python
+                       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                       SCRIPT ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                                --script fuzzy
+                                --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
+                                        ${CMAKE_CURRENT_BINARY_DIR}/test_1p_cctpfa_numeric-00000.vtu
+                                --command "${CMAKE_CURRENT_SOURCE_DIR}/test_1p.py cctpfa numeric")
+
+  dune_python_add_test(NAME test_python_1p_incompressible_cctpfa_anadiff
+                       LABELS python
+                       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                       SCRIPT ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                                --script fuzzy
+                                --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
+                                        ${CMAKE_CURRENT_BINARY_DIR}/test_1p_cctpfa_analytic-00000.vtu
+                                --command "${CMAKE_CURRENT_SOURCE_DIR}/test_1p.py cctpfa analytic")
+
 endif()
