@@ -40,6 +40,7 @@
 #include <dumux/material/fluidsystems/liquidphase2c.hh>
 
 #include <dumux/multidomain/embedded/couplingmanager1d3d.hh>
+#include <dumux/multidomain/traits.hh>
 
 #include "problem_soil.hh"
 #include "problem_root.hh"

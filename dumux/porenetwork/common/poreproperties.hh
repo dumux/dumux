@@ -24,6 +24,7 @@
 #ifndef DUMUX_PNM_BASE_PORE_PROPERTIES_HH
 #define DUMUX_PNM_BASE_PORE_PROPERTIES_HH
 
+#include <cmath>
 #include <string>
 #include <dune/common/exceptions.hh>
 

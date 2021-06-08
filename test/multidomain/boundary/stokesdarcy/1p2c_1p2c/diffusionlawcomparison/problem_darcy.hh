@@ -30,7 +30,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/numeqvector.hh>
-
+#include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
 namespace Dumux {

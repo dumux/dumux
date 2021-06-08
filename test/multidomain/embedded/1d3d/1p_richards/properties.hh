@@ -23,7 +23,9 @@
  */
 #ifndef DUMUX_ROOTSOIL_PROPERTIES_HH
 #define DUMUX_ROOTSOIL_PROPERTIES_HH
-
+#ifndef SOILTYPETAG
+#define SOILTYPETAG SoilCC
+#endif
 #include <dune/grid/yaspgrid.hh>
 #include <dune/foamgrid/foamgrid.hh>
 
@@ -39,6 +41,7 @@
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include <dumux/multidomain/embedded/couplingmanager1d3d.hh>
+#include <dumux/multidomain/traits.hh>
 
 #include "problem_soil.hh"
 #include "problem_root.hh"

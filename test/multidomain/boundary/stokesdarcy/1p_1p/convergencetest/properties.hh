@@ -35,6 +35,7 @@
 #include <dumux/porousmediumflow/1p/model.hh>
 
 #include <dumux/multidomain/boundary/stokesdarcy/couplingmanager.hh>
+#include <dumux/multidomain/staggeredtraits.hh>
 
 #include "spatialparams.hh"
 #include "problem_darcy.hh"

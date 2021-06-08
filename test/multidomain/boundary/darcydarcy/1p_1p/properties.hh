@@ -24,6 +24,12 @@
 #ifndef DUMUX_ONEP_SUB_TEST_PROPERTIES_HH
 #define DUMUX_ONEP_SUB_TEST_PROPERTIES_HH
 
+#include <dune/grid/yaspgrid.hh>
+
+#if DOMAINSPLIT==1
+#include <dune/subgrid/subgrid.hh>
+#endif
+
 #include <dumux/common/properties.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>

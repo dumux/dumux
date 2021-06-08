@@ -25,6 +25,8 @@
 #define DUMUX_DISCRETIZATION_PNM_FV_ELEMENT_GEOMETRY_HH
 
 #include <optional>
+#include <array>
+
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 
