@@ -37,15 +37,15 @@ def makeInstallScript(path,
     try:
         modName = getModuleInfo(modPath, 'Module')
     except Exception:
-        sys.exit("\nError: Could not determine module name. Make sure the module\n"
-                "         path is correct and that it contains 'dune.module'.")
+        sys.exit("\nError: Could not determine module name. Make sure the\n"
+                 "         module path is correct and contains 'dune.module'.")
 
     if not fileName:
         instFileName = 'install_' + modName + '.sh'
     else:
         instFileName = fileName
     print("\n-- Creating install script '{}' for module '{}' in folder '{}'"
-        .format(instFileName, modName, modPath))
+          .format(instFileName, modName, modPath))
 
 
     print("\n-- Determining the dependencies")
