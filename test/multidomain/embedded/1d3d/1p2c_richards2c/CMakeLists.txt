@@ -1,7 +1,7 @@
 dumux_add_test(NAME test_md_embedded_1d3d_1p2c_richards2c
               LABELS multidomain multidomain_embedded 1pnc richardsnc
               SOURCES main.cc
-              CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UG )"
+              CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-uggrid_FOUND )"
               TIMEOUT 1500
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy

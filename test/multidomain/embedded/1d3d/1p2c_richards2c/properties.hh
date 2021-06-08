@@ -55,7 +55,7 @@ struct Soil { using InheritsFrom = std::tuple<RichardsNC, CCTpfaModel>; };
 } // end namespace TTag
 
 // Set the grid type
-#if HAVE_UG
+#if HAVE_DUNE_UGGRID
 template<class TypeTag>
 struct Grid<TypeTag, TTag::Soil> { using type = Dune::UGGrid<3>; };
 #else

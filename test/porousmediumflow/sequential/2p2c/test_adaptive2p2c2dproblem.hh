@@ -24,7 +24,7 @@
 #ifndef DUMUX_TEST_ADAPTIVE2D_2P2C_PROBLEM_HH
 #define DUMUX_TEST_ADAPTIVE2D_2P2C_PROBLEM_HH
 
-#if HAVE_UG
+#if HAVE_DUNE_UGGRID
 #include <dune/grid/uggrid.hh>
 #endif
 #include <dune/grid/yaspgrid.hh>
@@ -57,7 +57,7 @@ struct Adaptive2p2c2d { using InheritsFrom = std::tuple<Test2P2CSpatialParams, S
 } // end namespace TTag
 
 // Set the grid type
-#if HAVE_UG
+#if HAVE_DUNE_UGGRID
 template<class TypeTag>
 struct Grid<TypeTag, TTag::Adaptive2p2c2d> { using type = Dune::UGGrid<2>; };
 #else
