@@ -1,0 +1,5 @@
+add_subdirectory(doc)
+add_subdirectory(extractmodule)
+add_subdirectory(postprocessing)
+add_subdirectory(testing)
+add_subdirectory(util)

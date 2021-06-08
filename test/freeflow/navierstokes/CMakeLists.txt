@@ -1,7 +1,9 @@
-add_subdirectory(donea)
 add_subdirectory(angeli)
-add_subdirectory(kovasznay)
 add_subdirectory(channel)
+add_subdirectory(donea)
+add_subdirectory(kovasznay)
 add_subdirectory(sincos)
 
-dune_symlink_to_source_files(FILES convergence.sh)
+file(GLOB DUMUX_TEST_FREEFLOW_NAVIERSTOKES_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_TEST_FREEFLOW_NAVIERSTOKES_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/freeflow/navierstokes)

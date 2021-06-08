@@ -1,15 +1,3 @@
-dune_symlink_to_source_files(FILES params.input convergencetest.py)
-
-dumux_add_test(NAME test_1p_rootbenchmark_tpfa
-               LABELS porousmediumflow 1p
-               SOURCES main.cc
-               COMPILE_DEFINITIONS TYPETAG=RootBenchmarkCCTpfa
-               COMMAND ./convergencetest.py
-               CMD_ARGS test_1p_rootbenchmark_tpfa -Problem.EnableGravity false)
-
-dumux_add_test(NAME test_1p_rootbenchmark_tpfa_gravity
-               TARGET test_1p_rootbenchmark_tpfa
-               LABELS porousmediumflow 1p
-               COMPILE_DEFINITIONS TYPETAG=RootBenchmarkCCTpfa
-               COMMAND ./convergencetest.py
-               CMD_ARGS test_1p_rootbenchmark_tpfa test_1p_rootbenchmark_tpfa_gravity.log)
+file(GLOB DUMUX_TEST_POROUSMEDIUMFLOW_1P_ROOTBENCHMARK_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_TEST_POROUSMEDIUMFLOW_1P_ROOTBENCHMARK_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/porousmediumflow/1p/rootbenchmark)

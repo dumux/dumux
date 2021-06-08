@@ -1,11 +1,6 @@
-dune_symlink_to_source_files(FILES "params.input")
+add_subdirectory(doc)
+add_subdirectory(img)
 
-dumux_add_test(NAME example_freeflow_channel_navierstokes
-               LABELS freeflow navierstokes example
-               SOURCES main.cc
-               CMAKE_GUARD HAVE_UMFPACK
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-               CMD_ARGS       --script fuzzy
-                              --files ${CMAKE_SOURCE_DIR}/test/references/example_ff_channel-reference.vtu
-                                      ${CMAKE_CURRENT_BINARY_DIR}/example_ff_channel-00001.vtu
-                              --command "${CMAKE_CURRENT_BINARY_DIR}/example_freeflow_channel_navierstokes params.input -Problem.Name example_ff_channel")
+file(GLOB DUMUX_EXAMPLES_FREEFLOWCHANNEL_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_EXAMPLES_FREEFLOWCHANNEL_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/examples/freeflowchannel)

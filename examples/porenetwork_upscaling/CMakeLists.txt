@@ -1,9 +1,6 @@
-dune_symlink_to_source_files(FILES "params.input")
+add_subdirectory(doc)
+add_subdirectory(img)
 
-dumux_add_test(NAME example_pnm1p_permeabilityupscaling
-               LABELS porenetwork example
-               SOURCES main.cc
-               CMAKE_GUARD HAVE_UMFPACK dune-foamgrid_FOUND
-               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/example_pnm1p_permeabilityupscaling
-               CMD_ARGS -Problem.ReferenceData "2.95910919e-13 2.91015548e-13 2.71752264e-13"
-                        -Problem.TestEpsilon 1e-7)
+file(GLOB DUMUX_EXAMPLES_PORENETWORK_UPSCALING_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_EXAMPLES_PORENETWORK_UPSCALING_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/examples/porenetwork_upscaling)
