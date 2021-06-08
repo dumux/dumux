@@ -34,6 +34,7 @@
 #include <dumux/freeflow/compositional/navierstokesncmodel.hh>
 
 #include <dumux/multidomain/boundary/stokesdarcy/couplingmanager.hh>
+#include <dumux/multidomain/staggeredtraits.hh>
 
 #include "h2n2co2fluidsystem.hh"
 #include "problem_darcy.hh"

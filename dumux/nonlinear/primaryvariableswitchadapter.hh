@@ -26,6 +26,7 @@
 
 #include <memory>
 #include <dune/common/std/type_traits.hh>
+#include <dumux/common/parameters.hh>
 
 namespace Dumux {
 namespace Detail {

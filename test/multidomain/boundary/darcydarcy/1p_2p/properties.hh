@@ -26,6 +26,9 @@
 
 #include <config.h>
 
+#include <dune/grid/yaspgrid.hh>
+#include <dune/subgrid/subgrid.hh>
+
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/2p/model.hh>
 

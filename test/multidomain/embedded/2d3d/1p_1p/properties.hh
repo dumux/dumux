@@ -34,6 +34,7 @@
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include <dumux/multidomain/embedded/couplingmanager2d3d.hh>
+#include <dumux/multidomain/traits.hh>
 
 #include "spatialparams.hh"
 #include "problem_matrix.hh"

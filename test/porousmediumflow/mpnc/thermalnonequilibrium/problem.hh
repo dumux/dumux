@@ -36,6 +36,7 @@
 #include <dumux/common/numeqvector.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
+#include <dumux/porousmediumflow/mpnc/pressureformulation.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 
 namespace Dumux {

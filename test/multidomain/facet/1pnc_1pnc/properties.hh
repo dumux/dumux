@@ -24,6 +24,12 @@
 #ifndef DUMUX_TEST_FACETCOUPLING_ONEPNC_BULK_PROPERTIES_HH
 #define DUMUX_TEST_FACETCOUPLING_ONEPNC_BULK_PROPERTIES_HH
 
+#ifndef BULKTYPETAG
+#define BULKTYPETAG OnePNCBulkTpfa
+#endif
+#ifndef FACETTYPETAG
+#define FACETTYPETAG OnePNCFacetTpfa
+#endif
 #ifndef DIMWORLD
 #define DIMWORLD 2
 #endif
@@ -41,7 +47,7 @@
 #include <dumux/multidomain/facet/cellcentered/mpfa/properties.hh>
 #include <dumux/multidomain/facet/couplingmapper.hh>
 #include <dumux/multidomain/facet/couplingmanager.hh>
-
+#include <dumux/multidomain/traits.hh>
 #include <dumux/porousmediumflow/1pnc/model.hh>
 
 #include "problem_facet.hh"

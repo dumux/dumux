@@ -179,10 +179,10 @@ Dune::MatrixIndexSet getFEJacobianPattern(const FEBasis& feBasis)
 
         const auto& finiteElement = localView.tree().finiteElement();
         const auto numLocalDofs = finiteElement.localBasis().size();
-        for (size_t i = 0; i < numLocalDofs; i++)
+        for (std::size_t i = 0; i < numLocalDofs; i++)
         {
             const auto dofIdxI = localView.index(i);
-            for (size_t j = 0; j < numLocalDofs; j++)
+            for (std::size_t j = 0; j < numLocalDofs; j++)
             {
                 const auto dofIdxJ = localView.index(j);
                 pattern.add(dofIdxI, dofIdxJ);

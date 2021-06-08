@@ -26,13 +26,13 @@
 
 // default to tpfa for both domains
 #ifndef BULKTYPETAG
-#define BULKTYPETAG=TissueCC
+#define BULKTYPETAG TissueCC
 #endif
 #ifndef LOWDIMTYPETAG
-#define LOWDIMTYPETAG=BloodFlowCC
+#define LOWDIMTYPETAG BloodFlowCC
 #endif
 #ifndef COUPLINGMODE
-#define COUPLINGMODE=Embedded1d3dCouplingMode::Average
+#define COUPLINGMODE Embedded1d3dCouplingMode::Average
 #endif
 
 #include <dune/grid/yaspgrid.hh>
@@ -48,6 +48,7 @@
 #include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
 
 #include <dumux/multidomain/embedded/couplingmanager1d3d.hh>
+#include <dumux/multidomain/traits.hh>
 
 #include "problem_tissue.hh"
 #include "spatialparams_tissue.hh"
