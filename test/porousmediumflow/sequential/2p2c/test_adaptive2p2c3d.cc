@@ -23,7 +23,7 @@
  */
 #include <config.h>
 
-#if HAVE_UG
+#if HAVE_DUNE_UGGRID
 
 #include <dumux/common/properties.hh>
 #include "test_adaptive2p2c3dproblem.hh"
@@ -70,4 +70,4 @@ int main()
     std::cerr << "You need to have UGGrid to run this test\n";
     return 77;
 }
-#endif // HAVE_UG
+#endif // HAVE_DUNE_UGGRID
