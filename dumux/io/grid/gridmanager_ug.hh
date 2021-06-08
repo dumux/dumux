@@ -24,7 +24,7 @@
 #ifndef DUMUX_IO_GRID_MANAGER_UG_HH
 #define DUMUX_IO_GRID_MANAGER_UG_HH
 
-#if HAVE_UG
+#if HAVE_DUNE_UGGRID
 #include <dune/grid/uggrid.hh>
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #endif
@@ -35,7 +35,7 @@
 
 namespace Dumux {
 
-#if HAVE_UG
+#if HAVE_DUNE_UGGRID
 
 /*!
  * \ingroup InputOutput
@@ -175,7 +175,7 @@ private:
     }
 };
 
-#endif // HAVE_UG
+#endif // HAVE_DUNE_UGGRID
 
 } // end namespace Dumux
 

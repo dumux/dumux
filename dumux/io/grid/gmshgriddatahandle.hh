@@ -34,7 +34,7 @@
 #include <dune/grid/common/datahandleif.hh>
 
 // UGGrid specific includes
-#if HAVE_UG
+#if HAVE_DUNE_UGGRID
 #include <dune/grid/uggrid.hh>
 #endif
 
@@ -124,7 +124,7 @@ private:
     mutable std::map< typename IdSet::IdType, typename Data::value_type> data_;
 };
 
-#if HAVE_UG
+#if HAVE_DUNE_UGGRID
 
 /*!
  * \ingroup InputOutput
@@ -202,7 +202,7 @@ private:
     mutable std::map< typename IdSet::IdType, typename Data::value_type> data_;
 };
 
-#endif // HAVE_UG
+#endif // HAVE_DUNE_UGGRID
 
 } // namespace Dumux
 
