@@ -28,28 +28,24 @@ except Exception:
 
 
 # return the list of included headers including the header itself
-def add_headers_recursively(header_path, curret_headers, module_path):
-    hh = []
+def add_headers_recursively(header_path, current_headers, module_path):
     if os.path.exists(header_path):
-        if header_path not in curret_headers:
-            hh.append(header_path)
-            hh += search_headers(header_path, module_path)
-    return hh
+        if header_path not in current_headers:
+            current_headers.append(header_path)
+            search_headers(header_path, current_headers, module_path)
 
 
 # function to search matching header files
-def search_headers(source_file, module_path):
-    headers = []
-
+def search_headers(source_file, headers, module_path):
     with open(source_file, 'r') as f:
         content = f.read()
         header_in_bracket = re.findall(r'#include\s+<(.+?)>', content)
         header_in_quotation = re.findall(r'#include\s+"(.+?)"', content)
 
     # search for includes relative to the module path
-    for header in header_in_bracket + header_in_quotation:
+    for header in header_in_bracket:
         header_path = os.path.join(module_path, header)
-        headers += add_headers_recursively(header_path, headers, module_path)
+        add_headers_recursively(header_path, headers, module_path)
 
     # search for includes relative to the path of the including file
     # only allow quoted includes for this
@@ -57,7 +53,7 @@ def search_headers(source_file, module_path):
         if header == "config.h":
             continue
         header_path = os.path.join(os.path.dirname(source_file), header)
-        headers += add_headers_recursively(header_path, headers, module_path)
+        add_headers_recursively(header_path, headers, module_path)
 
     return headers
 
@@ -185,19 +181,18 @@ please go to the build folders corresponding to the sources listed above.\n
 ###################################################################
 # Installation part of README.md
 ###################################################################
-def info_readme_installation(remoteurl, install_script_name):
+def info_readme_installation(remoteurl, install_script_name, new_module_name):
     return f"""
 
 ## Installation
 
 The easiest way of installation is to use the install script `{install_script_name}`
 provided in this repository.
-Using `wget`, you can simply install all dependent modules by typing:
+You can simply clone the remote and install all dependent modules by typing:
 
 ```sh
-wget {remoteurl}/{install_script_name}.sh
-chmod u+x {install_script_name}
-./{install_script_name}
+git clone {remoteurl}
+./{new_module_name}/{install_script_name}
 ```
 
 This will create a sub-folder `DUMUX`, clone all modules into it.
@@ -382,7 +377,7 @@ if __name__ == "__main__":
     # search for all header (in parallel)
     with mp.Pool() as p:
         headers = itertools.chain.from_iterable(p.map(
-            partial(search_headers, module_path=module_path),
+            partial(search_headers, module_path=module_path, headers=[]),
             source_files
         ))
 
@@ -445,38 +440,43 @@ if __name__ == "__main__":
     # we can directly push the source code and
     # also create a "one-click" installation script
     install_script_name = 'install_' + new_module_name + '.sh'
+    try:
+        makeInstallScript(new_module_path, ignoreUntracked=True, skipFolders=new_module_name,
+                          suppressHints=True, topFolderName=None)
+    except Exception:
+        sys.exit(
+            f"Automatically generate install script {install_script_name} failed."
+            "\nTo create the script, use the 'makeinstallscript.py' script in the same folder."
+            "\nRun 'python3 makeinstallscript.py --help' for more detailed information"
+        )
+
+    shutil.move(install_script_name,
+                os.path.join(new_module_path, install_script_name))
+    print(info_make_install(new_module_name))
+    run_from_mod = callFromPath(new_module_path)(runCommand)
+
     if query_yes_no("Do you have an empty remote repository to push the code to (recommended)?"):
         remoteurl = get_remote_url(new_module_path)
 
-        run_from_mod = callFromPath(new_module_path)(runCommand)
-        try:
-            run_from_mod('git init')
-            run_from_mod('git add .')
-            run_from_mod('git commit -m "Initial commit"')
-            run_from_mod('git remote add origin {}'.format(remoteurl))
-            run_from_mod('git push -u origin master')
+        # append install information into readme
+        with open(readme_path, "a") as readme_file:
+            readme_file.write(info_readme_installation(remoteurl, install_script_name, new_module_name))
+        run_from_mod('git init')
+        run_from_mod('git add .')
+        run_from_mod('git commit -m "Initial commit"')
+        run_from_mod('git remote add origin {}'.format(remoteurl))
+        run_from_mod('git push -u origin master')
 
-            # create an installation script
-            makeInstallScript(new_module_path, ignoreUntracked=True)
-            shutil.move(install_script_name,
-                        os.path.join(new_module_path, install_script_name))
-
-            # append install information into readme
-            with open(readme_path, "a") as readme_file:
-                readme_file.write(info_readme_installation(remoteurl, install_script_name))
-
-            # add to version control
-            run_from_mod('git add .')
-            run_from_mod('git commit -m "Create Install script"')
-            run_from_mod('git push -u origin master')
-
-        except Exception:
-            sys.exit(
-                f"Automatically generate install script {install_script_name} failed."
-                "\nTo create the script, use the 'makeinstallscript.py' script in the same folder."
-                "\nRun 'python3 makeinstallscript.py --help' for more detailed information"
-            )
+        if query_yes_no("Do you also want to create an one-click install script?"):
+            makeInstallScript(new_module_path, ignoreUntracked=True, suppressHints=True)
+            print("The one-click install script {} is created in your current folder.".format(install_script_name))
 
     # output guidance for users to create install script manually
     else:
-        print(info_make_install(new_module_name))
+        remoteurl = "{$remoteurl$} ({$remoteurl$} is the URL for your remote git repository)"
+        # append install information into readme
+        with open(readme_path, "a") as readme_file:
+            readme_file.write(info_readme_installation(remoteurl, install_script_name, new_module_name))
+        run_from_mod('git init')
+        run_from_mod('git add .')
+        run_from_mod('git commit -m "Initial commit"')
