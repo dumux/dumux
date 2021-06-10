@@ -46,3 +46,12 @@ def BoundaryTypes(numEq=1):
         module = generator.load(includes, typeName, moduleName)
         globals().update({cacheKey : module.BoundaryTypes})
     return globals()[cacheKey]()
+
+def Parameters():
+    parametersType = "Dumux::Parameters"
+    includes = ["dumux/common/parameters.hh", "dumux/python/common/parameters.hh"]
+    moduleName = "parameters_" + hashIt(parametersType)
+    # holderType = "std::shared_ptr<{}>".format(assemblerType)
+    generator = SimpleGenerator("Parameters", "Dumux::Python")
+    module = generator.load(includes, parametersType, moduleName)#, options=[holderType], preamble=model.getProperties())
+    return module.Parameters()
