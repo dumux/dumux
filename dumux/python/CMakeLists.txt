@@ -1,3 +1,5 @@
 add_subdirectory(assembly)
 add_subdirectory(common)
 add_subdirectory(discretization)
+add_subdirectory(io)
+add_subdirectory(material)
