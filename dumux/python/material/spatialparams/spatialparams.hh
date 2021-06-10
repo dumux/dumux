@@ -24,22 +24,73 @@
 #ifndef DUMUX_PYTHON_MATERIAL_SPATIAL_PARAMS_HH
 #define DUMUX_PYTHON_MATERIAL_SPATIAL_PARAMS_HH
 
-
 #include <dune/python/pybind11/pybind11.h>
 #include <dune/python/pybind11/stl.h>
 
+#include <dumux/material/spatialparams/fv1p.hh>
+
 namespace Dumux::Python {
 
+template<class GridGeometry, class Scalar, class PT>
+class FVSpatialParamsOneP
+: public Dumux::FVSpatialParamsOneP<GridGeometry, Scalar, FVSpatialParamsOneP<GridGeometry, Scalar, PT>>
+{
+    using ThisType = FVSpatialParamsOneP<GridGeometry, Scalar, PT>;
+    using ParentType = Dumux::FVSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using GlobalPosition = typename GridGeometry::GridView::template Codim<0>::Geometry::GlobalCoordinate;
+
+public:
+
+    using PermeabilityType = PT;
+
+    FVSpatialParamsOneP(std::shared_ptr<const GridGeometry> gridGeometry,
+                        pybind11::object pySpatialParams)
+    : ParentType(gridGeometry)
+    , pySpatialParams_(pySpatialParams)
+    {}
+
+    template<class ElementSolution>
+    PermeabilityType permeability(const Element& element,
+                                  const SubControlVolume& scv,
+                                  const ElementSolution& elemSol) const
+    {
+        if (pybind11::hasattr(pySpatialParams_, "permeability"))
+            return pySpatialParams_.attr("permeability")(element, scv, elemSol).template cast<PermeabilityType>();
+        else
+            return pySpatialParams_.attr("permeabilityAtPos")(scv.center()).template cast<PermeabilityType>();
+    }
+
+    template<class ElementSolution>
+    Scalar porosity(const Element& element,
+                              const SubControlVolume& scv,
+                              const ElementSolution& elemSol) const
+    {
+        if (pybind11::hasattr(pySpatialParams_, "porosity"))
+            return pySpatialParams_.attr("porosity")(element, scv, elemSol).template cast<Scalar>();
+        else
+            return pySpatialParams_.attr("porosityAtPos")(scv.center()).template cast<Scalar>();
+    }
+
+private:
+    pybind11::object pySpatialParams_;
+};
+
+
+
 template <class SP, class... options>
-void registerSpatialParams(pybind11::handle scope,
-                           pybind11::class_<SP, options...> cls)
+void registerOnePSpatialParams(pybind11::handle scope,
+                               pybind11::class_<SP, options...> cls)
 {
     using pybind11::operator""_a;
     using GridGeometry = std::decay_t<decltype(std::declval<SP>().gridGeometry())>;
 
-    cls.def(pybind11::init([](std::shared_ptr<GridGeometry> gridGeometry){
-        return std::make_shared<SP>(gridGeometry);
-    }), "gridGeometry"_a);
+    cls.def(pybind11::init([](std::shared_ptr<GridGeometry> gridGeometry, pybind11::object sp){
+        return std::make_shared<SP>(gridGeometry, sp);
+    }));
+
+    cls.def("gravity", &SP::gravity);
 }
 
 } // namespace Dumux::Python

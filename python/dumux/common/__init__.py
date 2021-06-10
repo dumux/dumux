@@ -13,13 +13,14 @@ from dune.common.hashit import hashIt
 # class MyProblem:
 #    ...
 #
-def FVProblem(gridGeometry):
+def FVProblem(gridGeometry, spatialParams):
 
     def createModule(numEq):
         priVarType = "Dune::FieldVector<double, {}>".format(numEq)
         ggType = gridGeometry._typeName
-        problemType = "Dumux::Python::FVProblem<{}, {}>".format(ggType, priVarType)
-        includes = gridGeometry._includes + ["dumux/python/common/fvproblem.hh"]
+        spatialParamsType = spatialParams._typeName
+        problemType = "Dumux::Python::FVProblem<{}, {}, {}>".format(ggType, priVarType, spatialParamsType)
+        includes = gridGeometry._includes + spatialParams._includes + ["dumux/python/common/fvproblem.hh"]
         moduleName = "fvproblem_" + hashIt(problemType)
         holderType = "std::shared_ptr<{}>".format(problemType)
         generator = SimpleGenerator("FVProblem", "Dumux::Python")
@@ -30,7 +31,7 @@ def FVProblem(gridGeometry):
         module = createModule(Cls.numEq)
 
         def createFVProblem():
-            return module.FVProblem(gridGeometry, Cls())
+            return module.FVProblem(gridGeometry, spatialParams, Cls())
         return createFVProblem
 
     return FVProblemDecorator
