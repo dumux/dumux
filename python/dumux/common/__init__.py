@@ -1,7 +1,10 @@
 from ._common import *
 
+from dumux.common.properties import Model, Property
+
 from dune.generator.generator import SimpleGenerator
 from dune.common.hashit import hashIt
+
 
 # A problem decorator generator for Python problems
 #
@@ -25,6 +28,7 @@ def FVProblem(gridGeometry):
 
     def FVProblemDecorator(Cls):
         module = createModule(Cls.numEq)
+
         def createFVProblem():
             return module.FVProblem(gridGeometry, Cls())
         return createFVProblem
@@ -34,7 +38,7 @@ def FVProblem(gridGeometry):
 
 # Function for JIT copmilation of Dumux::BoundaryTypes
 def BoundaryTypes(numEq=1):
-    # only copmile this once per numEq
+    # only compile this once per numEq
     cacheKey = "BoundaryTypes_{}".format(numEq)
     try:
         return globals()[cacheKey]()
@@ -46,3 +50,21 @@ def BoundaryTypes(numEq=1):
         module = generator.load(includes, typeName, moduleName)
         globals().update({cacheKey : module.BoundaryTypes})
     return globals()[cacheKey]()
+
+
+def Parameters(*, file=None, dict={}):
+    parametersType = "Dumux::Parameters"
+    includes = ["dumux/common/parameters.hh", "dumux/python/common/parameters.hh"]
+    moduleName = "parameters_" + hashIt(parametersType)
+    generator = SimpleGenerator("Parameters", "Dumux::Python")
+    module = generator.load(includes, parametersType, moduleName)
+
+    # make sure all dict keys are strings
+    for key in dict:
+        if not isinstance(dict[key], str):
+            dict[key] = str(dict[key])
+
+    if file is not None:
+        return module.Parameters(file, dict)
+    else:
+        return module.Parameters(dict)
