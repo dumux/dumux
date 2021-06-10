@@ -42,11 +42,12 @@ namespace Dumux::Python {
  * \ingroup Common
  * \brief A C++ wrapper for a Python problem
  */
-template<class GridGeometry_, class PrimaryVariables>
+template<class GridGeometry_, class PrimaryVariables, class SpatialParams_>
 class FVProblem
 {
 public:
     using GridGeometry = GridGeometry_;
+    using SpatialParams = SpatialParams_;
     using Scalar = typename PrimaryVariables::value_type;
     using NumEqVector = Dune::FieldVector<Scalar, PrimaryVariables::dimension>;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
@@ -59,8 +60,12 @@ public:
     static constexpr std::size_t numEq = static_cast<std::size_t>(PrimaryVariables::dimension);
     using BoundaryTypes = Dumux::BoundaryTypes<PrimaryVariables::dimension>;
 
-    FVProblem(std::shared_ptr<const GridGeometry> gridGeometry, pybind11::object pyProblem)
-    : gridGeometry_(gridGeometry), pyProblem_(pyProblem)
+    FVProblem(std::shared_ptr<const GridGeometry> gridGeometry,
+              std::shared_ptr<const SpatialParams> spatialParams,
+              pybind11::object pyProblem)
+    : gridGeometry_(gridGeometry)
+    , spatialParams_(spatialParams)
+    , pyProblem_(pyProblem)
     {}
 
     std::string name() const
@@ -128,6 +133,15 @@ public:
         return pyProblem_.attr("sourceAtPos")(globalPos).template cast<NumEqVector>();
     }
 
+    template<class ElementVolumeVariables>
+    NumEqVector scvPointSources(const Element& element,
+                                const FVElementGeometry& fvGeometry,
+                                const ElementVolumeVariables& elemVolVars,
+                                const SubControlVolume& scv) const
+    {
+        return pyProblem_.attr("scvPointSources")(element, fvGeometry, scv).template cast<NumEqVector>();
+    }
+
     template<class Entity>
     PrimaryVariables initial(const Entity& entity) const
     {
@@ -142,11 +156,43 @@ public:
         return pyProblem_.attr("extrusionFactor")(element, scv).template cast<Scalar>();
     }
 
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    {
+        return pyProblem_.attr("temperatureAtPos")(globalPos).template cast<Scalar>();
+    }
+
+    const std::string paramGroup() const
+    {
+        return pyProblem_.attr("paramGroup")().template cast<std::string>();
+    }
+
+    static constexpr bool enableInternalDirichletConstraints()
+    { return false; } // TODO
+
+    /*!
+     * \brief Add source term derivative to the Jacobian
+     * \note Only needed in case of analytic differentiation and solution dependent sources
+     */
+    template<class MatrixBlock, class VolumeVariables>
+    void addSourceDerivatives(MatrixBlock& block,
+                              const Element& element,
+                              const FVElementGeometry& fvGeometry,
+                              const VolumeVariables& volVars,
+                              const SubControlVolume& scv) const
+    {
+        pyProblem_.attr("addSourceDerivatives")(block, element, fvGeometry, scv).template cast<Scalar>();
+    }
+
+
     const GridGeometry& gridGeometry() const
     { return *gridGeometry_; }
 
+    const SpatialParams& spatialParams() const
+    { return *spatialParams_; }
+
 private:
     std::shared_ptr<const GridGeometry> gridGeometry_;
+    std::shared_ptr<const SpatialParams> spatialParams_;
     pybind11::object pyProblem_;
 };
 
@@ -158,8 +204,11 @@ void registerFVProblem(pybind11::handle scope, pybind11::class_<Problem, options
     using namespace Dune::Python;
 
     using GridGeometry = typename Problem::GridGeometry;
-    cls.def(pybind11::init([](std::shared_ptr<const GridGeometry> gridGeometry, pybind11::object p){
-        return std::make_shared<Problem>(gridGeometry, p);
+    using SpatialParams = typename Problem::SpatialParams;
+    cls.def(pybind11::init([](std::shared_ptr<const GridGeometry> gridGeometry,
+                              std::shared_ptr<const SpatialParams> spatialParams,
+                              pybind11::object p){
+        return std::make_shared<Problem>(gridGeometry, spatialParams, p);
     }));
 
     cls.def_property_readonly("name", &Problem::name);
