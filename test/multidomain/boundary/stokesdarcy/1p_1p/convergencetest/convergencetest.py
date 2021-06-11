@@ -19,7 +19,7 @@ subprocess.call(['rm', testname + '_darcy.log'])
 print("Removed old log file ({})!".format(testname + '_darcy.log'))
 
 # do the runs with different refinement
-for i in [0, 1, 2]:
+for i in [0, 1, 2, 3, 4]:
     subprocess.call(['./' + executableName] + testargs + ['-Grid.Refinement', str(i)])
 
 def checkRatesFreeFlow():

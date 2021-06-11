@@ -14,8 +14,8 @@ SolverType = Darcy
 DiscretizationScheme = Tpfa
 Grid.LowerLeft = 0 0
 Grid.UpperRight = 1 1
-Grid.Cells = 14 16
-Grid.Refinement = 1
+Grid.Cells = 12 10
+#Grid.Refinement = 0
 Problem.Name = domain1
 Problem.IsOnNegativeMortarSide = false
 
@@ -24,21 +24,21 @@ SolverType = Stokes
 DiscretizationScheme = Staggered
 Grid.LowerLeft = 0 1
 Grid.UpperRight = 1 2
-Grid.Cells = 16 16
-Grid.Refinement = 1
+Grid.Cells = 12 10
+#Grid.Refinement = 0
 Problem.Name = domain2
 Problem.IsOnNegativeMortarSide = true
 
 [Mortar]
 Grid.LowerLeft = 0 1
 Grid.UpperRight = 1 1
-Grid.Cells = 16
-Grid.Refinement = 1
+Grid.Cells = 12
+#Grid.Refinement = 0
 VariableType = Pressure
 
 [InterfaceSolver]
 Verbosity = 2
-ResidualReduction = 1e-20
+ResidualReduction = 1e-13
 MaxIterations = 2000
 LinearSolverType = GMRes
 
@@ -59,3 +59,6 @@ NumericDifference.BaseEpsilon = 1
 [0.Component]
 LiquidDensity = 1
 LiquidKinematicViscosity = 1
+
+[Flux]
+UpwindWeight = 0.5
