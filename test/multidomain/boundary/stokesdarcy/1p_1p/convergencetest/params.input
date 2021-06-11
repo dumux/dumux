@@ -1,11 +1,11 @@
 [Darcy.Grid]
 UpperRight = 1 1
-Cells = 40 40
+Cells = 12 10
 
 [FreeFlow.Grid]
 LowerLeft = 0 1
 UpperRight = 1 2
-Cells = 40 40
+Cells = 12 10
 
 [FreeFlow.Problem]
 Name = freeFlow
@@ -16,9 +16,11 @@ Name = darcy
 
 [Darcy.SpatialParams]
 AlphaBeaversJoseph = 1.0
+Permeability = 1
 
 [Problem]
 EnableGravity = false
+TestCase = ShiueExampleTwo
 
 [Vtk]
 AddVelocity = 1

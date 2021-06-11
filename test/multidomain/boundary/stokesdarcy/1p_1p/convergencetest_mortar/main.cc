@@ -58,6 +58,75 @@
 #include "preconditioner.hh"
 #include "interfaceoperator.hh"
 
+template<class Problem, class SolutionVector>
+void printFreeFlowL2Error(const Problem& problem, const SolutionVector& x)
+{
+    using namespace Dumux;
+    using Scalar = double;
+    using TypeTag = Properties::TTag::StokesOneP;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+
+
+    using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
+    const auto l2error = L2Error::calculateL2Error(problem, x);
+    const int numCellCenterDofs = problem.gridGeometry().numCellCenterDofs();
+    const int numFaceDofs = problem.gridGeometry().numFaceDofs();
+    std::ostream tmpOutputObject(std::cout.rdbuf()); // create temporary output with fixed formatting without affecting std::cout
+    tmpOutputObject << std::setprecision(8) << "** L2 error (abs/rel) for "
+                    << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
+                    << std::scientific
+                    << "L2(p) = " << l2error.first[Indices::pressureIdx] << " / " << l2error.second[Indices::pressureIdx]
+                    << " , L2(vx) = " << l2error.first[Indices::velocityXIdx] << " / " << l2error.second[Indices::velocityXIdx]
+                    << " , L2(vy) = " << l2error.first[Indices::velocityYIdx] << " / " << l2error.second[Indices::velocityYIdx]
+                    << std::endl;
+
+    // write the norm into a log file
+    std::ofstream logFile;
+    logFile.open(problem.name() + ".log", std::ios::app);
+    logFile << "[ConvergenceTest] L2(p) = " << l2error.first[Indices::pressureIdx] << " L2(vx) = " << l2error.first[Indices::velocityXIdx] << " L2(vy) = " << l2error.first[Indices::velocityYIdx] << std::endl;
+    logFile.close();
+}
+
+template<class Problem, class SolutionVector>
+void printDarcyL2Error(const Problem& problem, const SolutionVector& x)
+{
+    using namespace Dumux;
+    using Scalar = double;
+
+    Scalar l2error = 0.0;
+
+    for (const auto& element : elements(problem.gridGeometry().gridView()))
+    {
+        auto fvGeometry = localView(problem.gridGeometry());
+        fvGeometry.bindElement(element);
+
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            const auto dofIdx = scv.dofIndex();
+            const Scalar delta = x[dofIdx] - problem.exactPressure(scv.center());
+            l2error += scv.volume()*(delta*delta);
+        }
+    }
+    using std::sqrt;
+    l2error = sqrt(l2error);
+
+    const auto numDofs = problem.gridGeometry().numDofs();
+    std::ostream tmp(std::cout.rdbuf());
+    tmp << std::setprecision(8) << "** L2 error (abs) for "
+            << std::setw(6) << numDofs << " cc dofs "
+            << std::scientific
+            << "L2 error = " << l2error
+            << std::endl;
+
+    // write the norm into a log file
+    std::ofstream logFile;
+    logFile.open(problem.name() + ".log", std::ios::app);
+    logFile << "[ConvergenceTest] L2(p) = " << l2error << std::endl;
+    logFile.close();
+}
+
 ////////////////////////////////////////////
 // Some aliases etc to be used in solve() //
 ////////////////////////////////////////////
@@ -215,16 +284,19 @@ void solveMortar(Dumux::OnePMortarVariableType mv)
     solver2->write(1.0);
 
     // compute L2 error
-    const auto l2Error1 = solver1->problemPointer()->calculateL2Error(*solver1->solutionPointer());
-    const auto l2Error2 = solver2->problemPointer()->calculateL2Error(*solver2->solutionPointer());
+    printFreeFlowL2Error(*solver2->problemPointer(), *solver2->solutionPointer());
+    printDarcyL2Error((*solver1->problemPointer()), *solver1->solutionPointer());
 
-    // write into file
-    std::ofstream errorFile(getParam<std::string>("L2Error.OutputFile"), std::ios::app);
-    errorFile << l2Error1 << ","
-              << l2Error2[0] << ","
-              << l2Error2[1] << ","
-              << l2Error2[2] << std::endl;
-    errorFile.close();
+    // const auto l2Error1 = solver1->problemPointer()->calculateL2Error(*solver1->solutionPointer());
+    // const auto l2Error2 = solver2->problemPointer()->calculateL2Error(*solver2->solutionPointer());
+
+    // // write into file
+    // std::ofstream errorFile(getParam<std::string>("L2Error.OutputFile"), std::ios::app);
+    // errorFile << l2Error1 << ","
+    //           << l2Error2[0] << ","
+    //           << l2Error2[1] << ","
+    //           << l2Error2[2] << std::endl;
+    // errorFile.close();
 
     // print time necessary for solve
     std::cout << "\n#####################################################\n\n"

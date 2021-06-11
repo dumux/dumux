@@ -1,94 +1,133 @@
-import os
-import math
+#!/usr/bin/env python3
+
+from math import *
 import subprocess
-import numpy as np
-# import matplotlib.pyplot as plt
+import sys
 
-errorFileStandard = "errors_standard.txt"
+if len(sys.argv) < 2:
+    sys.stderr.write('Please provide a single argument <testname> to the script\n')
+    sys.exit(1)
 
-# remove error norm files from previous runs
-if os.path.exists(errorFileStandard):
-    subprocess.call(["rm", errorFileStandard])
+executableName = str(sys.argv[1])
+testargs = [str(i) for i in sys.argv][2:]
+testname = 'mortarcoupling'#testargs[testargs.index('-Problem.TestCase')+1]
 
-cells1 = [10, 10]
-cells2 = [11, 10]
-cellsMortar = 8
-numRefinements = 2
+# remove the old log files
+subprocess.call(['rm', testname + '_domain2.log'])
+print("Removed old log file ({})!".format(testname + '_domain2.log'))
+subprocess.call(['rm', testname + '_domain1.log'])
+print("Removed old log file ({})!".format(testname + '_domain1.log'))
 
-hInverse = []
-for refIdx in range(1, numRefinements+2):
-    factor = math.pow(2, refIdx-1)
-    cells1X = int(cells1[0]*factor)
-    cells1Y = int(cells1[1]*factor)
-    cells2X = int(cells2[0]*factor)
-    cells2Y = int(cells2[1]*factor)
+# do the runs with different refinement
+for i in [0, 1, 2, 3, 4]:
+# for i in [0, 1, 2, 3, 4]:
+    subprocess.call(['./' + executableName] + testargs + ['-Grid.Refinement', str(i)])
 
-    strCells1 = str(cells1X) + " " + str(cells1Y)
-    strCells2 = str(cells2X) + " " + str(cells2Y)
-    strCellsMortar = str(int(cellsMortar*factor))
+def checkRatesFreeFlow():
+    # check the rates and append them to the log file
+    logfile = open(testname + '_domain2.log', "r+")
 
-    # run schemes
-    print("\n\nCalling standard solver for refinement " + str(refIdx-1))
-    subprocess.call(["./test_md_mortar_darcy1p_stokes1p_convergence",
-                     "-L2Error.OutputFile", errorFileStandard,
-                     "-Domain1.Grid.Cells", strCells1,
-                     "-Domain1.Problem.Name", "domain1",
-                     "-Domain2.Grid.Cells", strCells2,
-                     "-Domain2.Problem.Name", "domain2",
-                     "-Mortar.VariableType", "Pressure",
-                     "-Mortar.Grid.Cells", strCellsMortar])
+    errorP = []
+    errorVx = []
+    errorVy = []
+    for line in logfile:
+        line = line.strip("\n")
+        line = line.strip("\[ConvergenceTest\]")
+        line = line.split()
+        errorP.append(float(line[2]))
+        errorVx.append(float(line[5]))
+        errorVy.append(float(line[8]))
 
-    # add numCells for this level
-    hInverse.append( (0.5*(cells1X + cells2X)) )
+    resultsP = []
+    resultsVx = []
+    resultsVy = []
+    logfile.truncate(0)
+    logfile.write("n\terrorP\t\trateP\t\terrorVx\t\trateVx\t\terrorVy\t\trateVy\n")
+    logfile.write("-"*50 + "\n")
+    for i in range(len(errorP)-1):
+        if isnan(errorP[i]) or isinf(errorP[i]):
+            continue
+        if not ((errorP[i] < 1e-12 or errorP[i+1] < 1e-12) and (errorVx[i] < 1e-12 or errorVx[i+1] < 1e-12) and (errorVy[i] < 1e-12 or errorVy[i+1] < 1e-12)):
+            rateP = (log(errorP[i])-log(errorP[i+1]))/log(2)
+            rateVx = (log(errorVx[i])-log(errorVx[i+1]))/log(2)
+            rateVy = (log(errorVy[i])-log(errorVy[i+1]))/log(2)
+            message = "{}\t{:0.4e}\t{:0.4e}\t{:0.4e}\t{:0.4e}\t{:0.4e}\t{:0.4e}\n".format(i, errorP[i], rateP,  errorVx[i], rateVx, errorVy[i], rateVy)
+            logfile.write(message)
+            resultsP.append(rateP)
+            resultsVx.append(rateVx)
+            resultsVy.append(rateVy)
+        else:
+            logfile.write("error: exact solution!?")
+    i = len(errorP)-1
+    message = "{}\t{:0.4e}\t\t{}\t{:0.4e}\t\t{}\t{:0.4e}\t\t{}\n".format(i, errorP[i], "",  errorVx[i], "", errorVy[i], "")
+    logfile.write(message)
 
-errorsStandard = np.loadtxt(errorFileStandard, delimiter=',')
+    logfile.close()
+    print("\nComputed the following convergence rates for {}:\n".format(testname))
 
-# compute rates
-ratesStandardPressure = []
-ratesStandardFlux = []
-ratesStandardMortar = []
-ratesStandardIFFlux = []
+    subprocess.call(['cat', testname + '_domain2.log'])
 
-for i in range(0, len(errorsStandard)-1):
-    deltaEP = np.log(errorsStandard[i+1][0]) - np.log(errorsStandard[i][0])
-    deltaEF = np.log(errorsStandard[i+1][1]) - np.log(errorsStandard[i][1])
-    deltaEM = np.log(errorsStandard[i+1][2]) - np.log(errorsStandard[i][2])
-    deltaEIF = np.log(errorsStandard[i+1][3]) - np.log(errorsStandard[i][3])
-    deltaH = np.log(hInverse[i+1]) - np.log(hInverse[i])
-    ratesStandardPressure.append( deltaEP / deltaH )
-    ratesStandardFlux.append( deltaEF / deltaH )
-    ratesStandardMortar.append( deltaEM / deltaH )
-    ratesStandardIFFlux.append( deltaEIF / deltaH )
+    return {"p" : resultsP, "v_x" : resultsVx, "v_y" : resultsVy}
 
-print("hInverse: ", hInverse)
-print("Flat pressure: ", ratesStandardPressure)
-print("Flat flux: ", ratesStandardFlux)
-print("Flat mortar: ", ratesStandardMortar)
-print("Flat ifFlux: ", ratesStandardIFFlux)
-#
-# # plot pressure error norms
-# plt.figure(1)
-# plt.loglog(hInverse, errorsStandard[:, 0], label='standard')
-# plt.loglog(hInverse, errorsSharp[:, 0], label='sharp')
-# plt.legend()
-# plt.xlabel("1/h")
-# plt.ylabel("absolute error")
-# plt.savefig("pressure.pdf", bbox_inches='tight')
-#
-# # plot flux error norms
-# plt.figure(2)
-# plt.loglog(hInverse, errorsStandard[:, 1], label='standard')
-# plt.loglog(hInverse, errorsSharp[:, 1], label='sharp')
-# plt.legend()
-# plt.xlabel("1/h")
-# plt.ylabel("absolute error")
-# plt.savefig("flux.pdf", bbox_inches='tight')
-#
-# # plot flux error norms
-# plt.figure(3)
-# plt.loglog(hInverse, errorsStandard[:, 2], label='standard')
-# plt.loglog(hInverse, errorsSharp[:, 2], label='sharp')
-# plt.legend()
-# plt.xlabel("1/h")
-# plt.ylabel("absolute error")
-# plt.savefig("fluxmortar.pdf", bbox_inches='tight')
+def checkRatesDarcy():
+    # check the rates and append them to the log file
+    logfile = open(testname + '_domain1.log', "r+")
+
+    errorP = []
+    for line in logfile:
+        line = line.strip("\n")
+        line = line.strip("\[ConvergenceTest\]")
+        line = line.split()
+        errorP.append(float(line[2]))
+
+    resultsP = []
+    logfile.truncate(0)
+    logfile.write("n\terrorP\t\trateP\n")
+    logfile.write("-"*50 + "\n")
+    for i in range(len(errorP)-1):
+        if isnan(errorP[i]) or isinf(errorP[i]):
+            continue
+        if not ((errorP[i] < 1e-12 or errorP[i+1] < 1e-12)):
+            rateP = (log(errorP[i])-log(errorP[i+1]))/log(2)
+            message = "{}\t{:0.4e}\t{:0.4e}\n".format(i, errorP[i], rateP)
+            logfile.write(message)
+            resultsP.append(rateP)
+        else:
+            logfile.write("error: exact solution!?")
+    i = len(errorP)-1
+    message = "{}\t{:0.4e}\n".format(i, errorP[i], "")
+    logfile.write(message)
+
+    logfile.close()
+    print("\nComputed the following convergence rates for {}:\n".format(testname))
+
+    subprocess.call(['cat', testname + '_domain1.log'])
+
+    return {"p" : resultsP}
+
+def checkRatesFreeFlowAndDarcy():
+    resultsFreeFlow = checkRatesFreeFlow()
+    resultsDarcy = checkRatesDarcy()
+
+    def mean(numbers):
+        return float(sum(numbers)) / len(numbers)
+
+    # check the rates, we expect rates around 2
+    if mean(resultsFreeFlow["p"]) < 2.05 and mean(resultsFreeFlow["p"]) < 1.84:
+        sys.stderr.write("*"*70 + "\n" + "The convergence rates for pressure were not close enough to 2! Test failed.\n" + "*"*70 + "\n")
+        sys.exit(1)
+
+    if mean(resultsFreeFlow["v_x"]) < 2.05 and mean(resultsFreeFlow["v_x"]) < 1.95:
+        sys.stderr.write("*"*70 + "\n" + "The convergence rates for x-velocity were not close enough to 2! Test failed.\n" + "*"*70 + "\n")
+        sys.exit(1)
+
+    if mean(resultsFreeFlow["v_y"]) < 2.05 and mean(resultsFreeFlow["v_y"]) < 1.95:
+        sys.stderr.write("*"*70 + "\n" + "The convergence rates for y-velocity were not close enough to 2! Test failed.\n" + "*"*70 + "\n")
+        sys.exit(1)
+
+    if mean(resultsDarcy["p"]) < 2.05 and mean(resultsDarcy["p"]) < 1.95:
+        sys.stderr.write("*"*70 + "\n" + "The convergence rates for pressure were not close enough to 2! Test failed.\n" + "*"*70 + "\n")
+        sys.exit(1)
+
+
+checkRatesFreeFlowAndDarcy()
