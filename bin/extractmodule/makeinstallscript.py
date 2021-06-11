@@ -27,7 +27,8 @@ def makeInstallScript(path,
                       fileName=None,
                       ignoreUntracked=False,
                       topFolderName='DUMUX',
-                      optsFile=None):
+                      optsFile=None,
+                      skipFolders=None):
 
     cwd = os.getcwd()
     modPath = os.path.abspath(os.path.join(cwd, path))
@@ -59,10 +60,14 @@ def makeInstallScript(path,
     else:
         sys.exit("Error: Could not determine module dependencies.")
 
-    depNames = [dep['name'] for dep in deps]
-    depFolders = [dep['folder'] for dep in deps]
-    depFolderPaths = [os.path.abspath(os.path.join(modParentPath, d)) for d in depFolders]
-
+    if not skipFolders:
+        depNames = [dep['name'] for dep in deps]
+        depFolders = [dep['folder'] for dep in deps]
+        depFolderPaths = [os.path.abspath(os.path.join(modParentPath, d)) for d in depFolders]
+    else:
+        depNames = [dep['name'] for dep in deps if dep['folder'] != skipFolders]
+        depFolders = [dep['folder'] for dep in deps if dep['folder'] != skipFolders]
+        depFolderPaths = [os.path.abspath(os.path.join(modParentPath, d)) for d in depFolders if d != skipFolders]
 
     print("\n-- Determining the module versions")
     try:
@@ -277,17 +282,17 @@ def makeInstallScript(path,
             "   IMPORTANT: After you committed the patches, you have to adjust the line of the install script in which your module is checked out to a specific commit.\n"
             "              That is, in the line 'git reset --hard COMMIT_SHA' for your module, replace COMMIT_SHA by the commit in which you added the patches.\n"
             "              If patches had to be created for your own module, please think about comitting and pushing your local changes and rerunning this script again.")
-
-    print(f"\n-- You might want to put installation instructions into the README.md file of your module, for instance:\n"
-        f"     ## Installation\n"
-        f"     The easiest way of installation is to use the script `{instFileName}` provided in this repository.\n"
-        f"     Using `wget`, you can simply install all dependent modules by typing:\n"
-        f"\n"
-        f"     ```sh\n"
-        f"     wget {versions[modFolder]['remote']}/{instFileName}\n"
-        f"     chmod u+x {instFileName}\n"
-        f"     ./{instFileName}\n"
-        f"     ```\n")
+    if not skipFolders:
+        print(f"\n-- You might want to put installation instructions into the README.md file of your module, for instance:\n"
+            f"     ## Installation\n"
+            f"     The easiest way of installation is to use the script `{instFileName}` provided in this repository.\n"
+            f"     Using `wget`, you can simply install all dependent modules by typing:\n"
+            f"\n"
+            f"     ```sh\n"
+            f"     wget {versions[modFolder]['remote']}/{instFileName}\n"
+            f"     chmod u+x {instFileName}\n"
+            f"     ./{instFileName}\n"
+            f"     ```\n")
 
     if topFolderName:
         print(f"   This will create a sub-folder `{topFolderName}`, clone all modules into it, configure the entire project and build the applications contained in this module.")
@@ -326,6 +331,9 @@ if __name__ == '__main__':
                             'dunecontrol. Note that this file is required to be '
                             'contained and committed within the module or its '
                             'dependencies.')
+    parser.add_argument('-s', '--skipfolders',
+                        required=False, default=None,
+                        help='a list of module folders to be skipped')
     cmdArgs = vars(parser.parse_args())
 
     makeInstallScript(
@@ -333,5 +341,6 @@ if __name__ == '__main__':
         fileName=cmdArgs.get('filename', None),
         ignoreUntracked=cmdArgs.get('ignoreuntracked', False),
         topFolderName=cmdArgs.get('topfoldername', None),
-        optsFile=cmdArgs.get('optsFile', None)
+        optsFile=cmdArgs.get('optsFile', None),
+        skipFolders=cmdArgs.get('skipfolders', None)
     )
