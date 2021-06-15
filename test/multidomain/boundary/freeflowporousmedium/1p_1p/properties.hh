@@ -89,7 +89,11 @@ struct FluidSystem<TypeTag, TTag::FreeFlowOneP>
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::FreeFlowOneP> { using type = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
+struct Grid<TypeTag, TTag::FreeFlowOneP>
+{
+    using Coords = Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2>;
+    using type = Dune::YaspGrid<2, Coords>;
+};
 
 // Set the problem property
 template<class TypeTag>
@@ -115,14 +119,6 @@ struct CouplingManager<TypeTag, TTag::FreeFlowOneP>
     using Traits = MultiDomainTraits<Properties::TTag::FreeFlowOnePMomentum, Properties::TTag::FreeFlowOnePMass, TTag::DarcyOneP>;
     using type = Dumux::FreeFlowPorousMediumCouplingManager<Traits>;
 };
-
-// template<class TypeTag>
-// struct CouplingManager<TypeTag, TTag::StokesOneP>
-// {
-//     using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, Properties::TTag::DarcyOneP>;
-//     using type = Dumux::StokesDarcyCouplingManager<Traits>;
-// };
-
 
 } // end namespace Dumux::Properties
 

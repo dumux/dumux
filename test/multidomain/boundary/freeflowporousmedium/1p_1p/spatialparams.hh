@@ -40,8 +40,9 @@ class OnePSpatialParams
                              OnePSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
-                                           OnePSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = FVSpatialParamsOneP<
+        GridGeometry, Scalar, OnePSpatialParams<GridGeometry, Scalar>
+    >;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -51,7 +52,7 @@ public:
     using PermeabilityType = Scalar;
 
     OnePSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
-        : ParentType(gridGeometry)
+    : ParentType(gridGeometry)
     {
         permeability_ = getParam<Scalar>("Darcy.SpatialParams.Permeability");
         alphaBJ_ = getParam<Scalar>("Darcy.SpatialParams.AlphaBeaversJoseph");
