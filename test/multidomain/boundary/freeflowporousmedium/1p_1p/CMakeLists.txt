@@ -1,3 +1,5 @@
+add_subdirectory(convergence)
+
 add_input_file_links()
 
 add_executable(test_md_boundary_ff1p_pm1p EXCLUDE_FROM_ALL main.cc)
