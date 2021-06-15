@@ -278,6 +278,19 @@ public:
         return values;
     }
 
+    Dune::FieldMatrix<Scalar, 2, 2> velocityGradient(const GlobalPosition& globalPos) const
+    {
+        Dune::FieldMatrix<Scalar, 2, 2> gradV(0.0);
+        const Scalar x = globalPos[0];
+        const Scalar y = globalPos[1];
+
+        gradV[0][0] = x*y*(x*(2*x - 2.0) + 2*(x - 1.0)*(x - 1.0))*(4.0*y*y - 6.0*y + 2.0);
+        gradV[0][1] = x*x*(x - 1.0)*(x - 1.0)*(12.0*y*y - 12.0*y + 2.0);
+        gradV[1][0] = y*y*(y - 1.0)*(y - 1.0)*(-12.0*x*x + 12.0*x - 2.0);
+        gradV[1][1] = -x*y*(1.0*y*(2*y - 2.0) + 2.0*(y - 1.0)*(y - 1.0))*(4.0*x*x - 6.0*x + 2.0);
+        return gradV;
+    }
+
     // \}
 
    /*!
