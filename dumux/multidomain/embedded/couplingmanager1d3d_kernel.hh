@@ -260,7 +260,7 @@ public:
                 // publish point source data in the global vector
                 this->pointSourceData().emplace_back(std::move(psData));
 
-                const auto avgMinDist = averageDistanceSegmentGeometry(a, b, outside.geometry());
+                const auto avgMinDist = averageDistancePointGeometry(center, outside.geometry());
                 this->averageDistanceToBulkCell().push_back(avgMinDist);
                 fluxScalingFactor_.push_back(this->problem(bulkIdx).fluxScalingFactor(avgMinDist, radius, kernelWidth));
 
