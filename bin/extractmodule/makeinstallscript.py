@@ -244,6 +244,11 @@ def makeInstallScript(path,
                             .format(depModName) + '\n')
             installFile.write('cd ..\n\n')
 
+        writeCommandWithErrorCheck(
+            'mv ../{} .'.format(modFolder),
+            '-- Error: failed to move the new module to {}'.format(topFolderName)
+        )
+
         # write the module clone first in order for the patches to be present
         if modName in depNames:
             writeCloneModule(modName, modFolder)
