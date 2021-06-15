@@ -72,6 +72,53 @@ public:
 
 }
 
+template<class Problem, class GridVolumeVariables, class SolutionVector>
+auto getVelocityGradient(const Problem& problem, const GridVolumeVariables& gridVolVars, const SolutionVector& sol)
+{
+    const auto& gridGeometry = problem.gridGeometry();
+    struct Result
+    {
+        std::array<std::vector<double>, 4> analytical;
+        std::array<std::vector<double>, 4> numerical;
+    } result;
+
+    for (auto& r : result.analytical)
+        r.resize(gridGeometry.gridView().size(0));
+
+    for (auto& r : result.numerical)
+        r.resize(gridGeometry.gridView().size(0));
+
+
+    auto fvGeometry = localView(gridGeometry);
+    auto elemVolVars = localView(gridVolVars);
+    for (const auto& element : elements(gridGeometry.gridView()))
+    {
+        fvGeometry.bind(element);
+        elemVolVars.bind(element, fvGeometry, sol);
+        const auto eIdx = gridGeometry.elementMapper().index(element);
+
+        const auto gradAnalytical = problem.velocityGradient(element.geometry().center());
+        result.analytical[0][eIdx] = gradAnalytical[0][0];
+        result.analytical[1][eIdx] = gradAnalytical[0][1];
+        result.analytical[2][eIdx] = gradAnalytical[1][0];
+        result.analytical[3][eIdx] = gradAnalytical[1][1];
+
+        for (const auto& scvf : scvfs(fvGeometry))
+        {
+            if (scvf.isFrontal() && !scvf.boundary())
+            {
+                const auto gradNumerical = Dumux::StaggeredVelocityGradients::velocityGradient(fvGeometry, scvf, elemVolVars, true);
+                result.numerical[0][eIdx] = gradNumerical[0][0];
+                result.numerical[1][eIdx] = gradNumerical[0][1];
+                result.numerical[2][eIdx] = gradNumerical[1][0];
+                result.numerical[3][eIdx] = gradNumerical[1][1];
+            }
+        }
+    }
+
+    return result;
+}
+
 int main(int argc, char** argv)
 {
     using namespace Dumux;
@@ -160,6 +207,7 @@ int main(int argc, char** argv)
     vtkWriter.addField(exactPressure, "pressureExact");
     vtkWriter.addField(exactVelocity, "velocityExact");
 
+
     // the linear solver
     using LinearSolver = Dumux::UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
@@ -171,7 +219,22 @@ int main(int argc, char** argv)
     // linearize & solve
     nonLinearSolver.solve(x);
 
-    vtkWriter.write(1.0);
+    static const bool addGradients = getParam<bool>("Vtk.AddGradients", false);
+    if (addGradients)
+    {
+        const auto gradV = getVelocityGradient(*momentumProblem, momentumGridVariables->curGridVolVars(), x[momentumIdx]);
+        vtkWriter.addField(gradV.analytical[0], "dudxExact");
+        vtkWriter.addField(gradV.analytical[1], "dudyExact");
+        vtkWriter.addField(gradV.analytical[2], "dvdxExact");
+        vtkWriter.addField(gradV.analytical[3], "dvdyExact");
+        vtkWriter.addField(gradV.numerical[0], "dudx");
+        vtkWriter.addField(gradV.numerical[1], "dudy");
+        vtkWriter.addField(gradV.numerical[2], "dvdx");
+        vtkWriter.addField(gradV.numerical[3], "dvdy");
+        vtkWriter.write(1.0);
+    }
+    else
+        vtkWriter.write(1.0);
 
     using GridView = std::decay_t<decltype(momentumGridGeometry->gridView())>;
     using SolVec = std::decay_t<decltype(x[momentumIdx])>;
