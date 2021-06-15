@@ -84,15 +84,10 @@ public:
      */
     // \{
 
-    /*!
-     * \brief The problem name.
-     */
     const std::string& name() const
-    {
-        return problemName_;
-    }
+    { return problemName_; }
 
-   /*!
+    /*!
      * \brief Returns the temperature within the domain in [K].
      *
      * This problem assumes a temperature of 10 degrees Celsius.
@@ -101,7 +96,7 @@ public:
     { return 298.0; }
 
     // \}
-   /*!
+    /*!
      * \name Boundary conditions
      */
     // \{
@@ -165,7 +160,7 @@ public:
         return values;
     }
 
-   /*!
+    /*!
      * \brief Returns Dirichlet boundary values at a given position.
      *
      * \param globalPos The global position
@@ -184,7 +179,7 @@ public:
         return values;
     }
 
-        /*!
+    /*!
      * \brief Evaluates the boundary conditions for a Neumann control volume.
      *
      * \param element The element for which the Neumann boundary condition is set
@@ -209,30 +204,40 @@ public:
 
             if (couplingManager_->isCoupled(CouplingManager::freeFlowMomentumIndex, CouplingManager::porousMediumIndex, scvf))
             {
-                values += couplingManager_->momentumCouplingCondition(CouplingManager::freeFlowMomentumIndex,
-                                                                      CouplingManager::porousMediumIndex,
-                                                                      fvGeometry, scvf, elemVolVars);
+                values += couplingManager_->momentumCouplingCondition(
+                    CouplingManager::freeFlowMomentumIndex, CouplingManager::porousMediumIndex,
+                    fvGeometry, scvf, elemVolVars
+                );
 
-                values += FluxHelper::slipVelocityMomentumFlux(*this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache);
+                values += FluxHelper::slipVelocityMomentumFlux(
+                    *this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache
+                );
             }
             else
             {
                 assert(!onLowerBoundary_(scvf.ipGlobal()));
                 const Scalar pressure = onLeftBoundary_(globalPos) ? deltaP_ : 0.0;
-                values = FluxHelper::fixedPressureMomentumFlux(*this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, pressure, true /*zeroNormalVelocityGradient*/);
+                values = FluxHelper::fixedPressureMomentumFlux(
+                    *this, fvGeometry, scvf, elemVolVars,
+                    elemFluxVarsCache, pressure, true /*zeroNormalVelocityGradient*/
+                );
             }
         }
         else
         {
             if (couplingManager_->isCoupled(CouplingManager::freeFlowMassIndex, CouplingManager::porousMediumIndex, scvf))
             {
-                values = couplingManager_->massCouplingCondition(CouplingManager::freeFlowMassIndex, CouplingManager::porousMediumIndex,
-                                                                 fvGeometry, scvf, elemVolVars);
+                values = couplingManager_->massCouplingCondition(
+                    CouplingManager::freeFlowMassIndex, CouplingManager::porousMediumIndex,
+                    fvGeometry, scvf, elemVolVars
+                );
             }
             else
             {
                 using FluxHelper = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>;
-                values = FluxHelper::scalarOutflowFlux(*this, element, fvGeometry, scvf, elemVolVars);
+                values = FluxHelper::scalarOutflowFlux(
+                    *this, element, fvGeometry, scvf, elemVolVars
+                );
             }
         }
 

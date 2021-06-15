@@ -61,7 +61,8 @@ public:
                    std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(gridGeometry, "Darcy"), eps_(1e-7), couplingManager_(couplingManager)
     {
-        problemName_ = getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+        problemName_ = getParam<std::string>("Vtk.OutputName")
+            + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
 
         // determine whether to simulate a vertical or horizontal flow configuration
         verticalFlow_ = problemName_.find("vertical") != std::string::npos;
@@ -115,13 +116,11 @@ public:
         return values;
     }
 
-        /*!
+    /*!
      * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
      * \param element The element for which the Dirichlet boundary condition is set
-     * \param scvf The boundary subcontrolvolumeface
-     *
-     * For this method, the \a values parameter stores primary variables.
+     * \param scvf The boundary sub-control-volume-face
      */
     PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
     { return initial(element); }
@@ -134,8 +133,6 @@ public:
      * \param elemVolVars The element volume variables
      * \param elemFluxVarsCache Flux variables caches for all faces in stencil
      * \param scvf The boundary sub control volume face
-     *
-     * For this method, the \a values variable stores primary variables.
      */
     template<class ElementVolumeVariables, class ElementFluxVarsCache>
     NumEqVector neumann(const Element& element,
@@ -147,8 +144,10 @@ public:
         NumEqVector values(0.0);
 
         if (couplingManager().isCoupled(CouplingManager::porousMediumIndex, CouplingManager::freeFlowMassIndex, scvf))
-            values[Indices::conti0EqIdx] = couplingManager().massCouplingCondition(CouplingManager::porousMediumIndex, CouplingManager::freeFlowMassIndex,
-                                                                                   fvGeometry, scvf, elemVolVars);
+            values[Indices::conti0EqIdx] = couplingManager().massCouplingCondition(
+                CouplingManager::porousMediumIndex, CouplingManager::freeFlowMassIndex,
+                fvGeometry, scvf, elemVolVars
+            );
 
         return values;
     }
@@ -156,39 +155,11 @@ public:
     // \}
 
     /*!
-     * \name Volume terms
-     */
-    // \{
-    /*!
-     * \brief Evaluates the source term for all phases within a given
-     *        sub control volume.
-     *
-     * \param element The element for which the source term is set
-     * \param fvGeometry The fvGeometry
-     * \param elemVolVars The element volume variables
-     * \param scv The sub control volume
-     */
-    template<class ElementVolumeVariables>
-    NumEqVector source(const Element &element,
-                       const FVElementGeometry& fvGeometry,
-                       const ElementVolumeVariables& elemVolVars,
-                       const SubControlVolume &scv) const
-    { return NumEqVector(0.0); }
-
-    // \}
-
-    /*!
      * \brief Evaluates the initial value for a control volume.
-     *
      * \param element The element
-     *
-     * For this method, the \a priVars parameter stores primary
-     * variables.
      */
     PrimaryVariables initial(const Element &element) const
-    {
-        return PrimaryVariables(0.0);
-    }
+    { return PrimaryVariables(0.0); }
 
     // \}
 
