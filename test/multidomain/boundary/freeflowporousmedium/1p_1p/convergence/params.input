@@ -1,0 +1,34 @@
+[Darcy.Grid]
+UpperRight = 1 1
+Cells = 40 40
+
+[FreeFlow.Grid]
+LowerLeft = 0 1
+UpperRight = 1 2
+Cells = 40 40
+
+[FreeFlow.Problem]
+Name = freeFlow
+EnableInertiaTerms = false
+
+[Darcy.Problem]
+Name = darcy
+
+[Darcy.SpatialParams]
+AlphaBeaversJoseph = 1.0
+
+[Problem]
+EnableGravity = false
+
+[Vtk]
+AddVelocity = 1
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 1.0
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-4
+
+[FreeFlow.Flux]
+UpwindWeight = 0.5
