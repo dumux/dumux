@@ -6,6 +6,7 @@
 import os
 import sys
 import argparse
+import subprocess
 
 from util import getPersistentVersions
 from util import printVersionTable
@@ -281,6 +282,8 @@ def makeInstallScript(path,
         )
 
     print("\n-- Successfully created install script file " + instFileName)
+
+    subprocess.call(['chmod', 'u+x', instFileName])  # make script executable
 
     if len(patches) > 0:
         print("-> You should now commit and publish the 'patches' folder and this install script in your module such that others can use it.\n"
