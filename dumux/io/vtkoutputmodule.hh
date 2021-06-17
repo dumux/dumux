@@ -45,7 +45,7 @@
 #include <dumux/io/format.hh>
 #include <dumux/discretization/method.hh>
 
-#include "vtkfunction.hh"
+#include <dumux/io/vtk/function.hh>
 #include <dumux/io/vtk/fieldtype.hh>
 #include "velocityoutput.hh"
 
