@@ -33,7 +33,7 @@
 #include <dune/grid/io/file/vtk/common.hh>
 #include <dune/grid/io/file/vtk/function.hh>
 
-#include <dumux/io/vtkprecision.hh>
+#include <dumux/io/vtk/precision.hh>
 
 namespace Dumux::Vtk {
 
