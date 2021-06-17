@@ -46,6 +46,7 @@
 #include <dumux/discretization/method.hh>
 
 #include "vtkfunction.hh"
+#include "vtkfieldtype.hh"
 #include "velocityoutput.hh"
 
 namespace Dumux {
@@ -64,9 +65,11 @@ class VtkOutputModuleBase
 
 public:
     //! export field type
-    enum class FieldType : unsigned int
+    struct [[deprecated("use Vtk::FieldType instead")]] FieldType
     {
-        element, vertex, automatic
+        static constexpr auto element = Vtk::FieldType::element;
+        static constexpr auto vertex = Vtk::FieldType::vertex;
+        static constexpr auto automatic = Vtk::FieldType::automatic;
     };
 
     VtkOutputModuleBase(const GridGeometry& gridGeometry,
@@ -105,7 +108,7 @@ public:
     template<typename Vector>
     void addField(const Vector& v,
                   const std::string& name,
-                  FieldType fieldType = FieldType::automatic)
+                  Vtk::FieldType fieldType = Vtk::FieldType::automatic)
     { addField(v, name, this->precision(), fieldType); }
 
     /*!
@@ -122,7 +125,7 @@ public:
     void addField(const Vector& v,
                   const std::string& name,
                   Dumux::Vtk::Precision precision,
-                  FieldType fieldType = FieldType::automatic)
+                  Vtk::FieldType fieldType = Vtk::FieldType::automatic)
     {
         // Deduce the number of components from the given vector type
         const auto nComp = getNumberOfComponents_(v);
@@ -131,32 +134,32 @@ public:
         const auto numVertexDofs = gridGeometry().vertexMapper().size();
 
         // Automatically deduce the field type ...
-        if(fieldType == FieldType::automatic)
+        if(fieldType == Vtk::FieldType::automatic)
         {
             if(numElemDofs == numVertexDofs)
                 DUNE_THROW(Dune::InvalidStateException, "Automatic deduction of FieldType failed. Please explicitly specify FieldType::element or FieldType::vertex.");
 
             if(v.size() == numElemDofs)
-                fieldType = FieldType::element;
+                fieldType = Vtk::FieldType::element;
             else if(v.size() == numVertexDofs)
-                fieldType = FieldType::vertex;
+                fieldType = Vtk::FieldType::vertex;
             else
                 DUNE_THROW(Dune::RangeError, "Size mismatch of added field!");
         }
         // ... or check if the user-specified type matches the size of v
         else
         {
-            if(fieldType == FieldType::element)
+            if(fieldType == Vtk::FieldType::element)
                 if(v.size() != numElemDofs)
                     DUNE_THROW(Dune::RangeError, "Size mismatch of added field!");
 
-            if(fieldType == FieldType::vertex)
+            if(fieldType == Vtk::FieldType::vertex)
                 if(v.size() != numVertexDofs)
                     DUNE_THROW(Dune::RangeError, "Size mismatch of added field!");
         }
 
         // add the appropriate field
-        if (fieldType == FieldType::element)
+        if (fieldType == Vtk::FieldType::element)
             fields_.emplace_back(gridGeometry_.gridView(), gridGeometry_.elementMapper(), v, name, nComp, 0, dm_, precision);
         else
             fields_.emplace_back(gridGeometry_.gridView(), gridGeometry_.vertexMapper(), v, name, nComp, dim, dm_, precision);
