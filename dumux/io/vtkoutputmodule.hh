@@ -46,7 +46,7 @@
 #include <dumux/discretization/method.hh>
 
 #include "vtkfunction.hh"
-#include "vtkfieldtype.hh"
+#include <dumux/io/vtk/fieldtype.hh>
 #include "velocityoutput.hh"
 
 namespace Dumux {
