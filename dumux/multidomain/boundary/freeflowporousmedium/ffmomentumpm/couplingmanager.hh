@@ -183,14 +183,7 @@ public:
                     otherFvGeometry.bindElement(otherElement);
 
                     // there is only one scv for TPFA
-                    const auto& otherScv = [&]
-                    {
-                        for (const auto scv : scvs(otherFvGeometry))
-                            return scv;
-                        DUNE_THROW(Dune::InvalidStateException, "Error");
-                    }();
-
-                    context.push_back({volVars(domainJ, otherElement, otherScv),
+                    context.push_back({volVars(domainJ, otherElement, *std::begin(scvs(otherFvGeometry))),
                                        otherFvGeometry,
                                        scvf.index(),
                                        couplingMapper_.flipScvfIndex(domainI, scvf),

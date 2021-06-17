@@ -148,7 +148,7 @@ public:
                 const auto& ffElement = freeFlowMomentumGG.element(ffElemIdx);
                 ffFvGeometry.bindElement(ffElement);
 
-                for (const auto ffScvf : scvfs(ffFvGeometry))
+                for (const auto& ffScvf : scvfs(ffFvGeometry))
                 {
                     // TODO this only takes the scv directly at the interface, maybe extend
                     if (!ffScvf.boundary() || !ffScvf.isFrontal())

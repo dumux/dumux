@@ -92,7 +92,7 @@ public:
             {
                 Dune::FieldMatrix<std::size_t, dim, dim> counter(0.0);
 
-                for (const auto otherScvf : scvfs(fvGeometry))
+                for (const auto& otherScvf : scvfs(fvGeometry))
                 {
                     if (otherScvf.index() == scvf.index())
                         continue;
