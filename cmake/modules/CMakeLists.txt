@@ -9,6 +9,7 @@ set(modules
   FindGLPK.cmake
   FindGmsh.cmake
   FindGstat.cmake
+  FindJsonCpp.cmake
   FindNLOPT.cmake
   FindPVPython.cmake)
 include(GNUInstallDirs)
