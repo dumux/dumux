@@ -6,6 +6,7 @@ set(modules
   DumuxTestMacros.cmake
   FindGLPK.cmake
   FindGstat.cmake
+  FindJsonCpp.cmake
   FindNLOPT.cmake
   FindPVPython.cmake)
 include(GNUInstallDirs)
