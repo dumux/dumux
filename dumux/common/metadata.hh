@@ -99,7 +99,7 @@ public:
         obj["Type"] = className_(gg, hideTemplates);
         obj["GridView"]["Type"] = className_(gg.gridView(), hideTemplates);
         obj["IsPeriodic"] = gg.isPeriodic() ? "true" : "false";
-        obj["DiscretisationMethod"] = GridGeometry::discMethod;
+        obj["DiscretisationMethod"] = discretizationMethodToString(GridGeometry::discMethod);
         obj["MaxElementStencilSize"] = GridGeometry::maxElementStencilSize;
         obj["NumScvs"] = gg.numScv();
         obj["NumScvfs"] = gg.numScvf();
