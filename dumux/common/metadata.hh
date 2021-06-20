@@ -84,29 +84,35 @@ class Metadata {
 public:
 
     template<class TypeTag, DiffMethod diffmethod, bool isImplicit>
-    static void collectMetaData(const FVAssembler<TypeTag, diffmethod, isImplicit>& a)
+    static void collectMetaData(const FVAssembler<TypeTag, diffmethod, isImplicit>& a, bool hideTemplates = true)
     {
         auto& obj = getTree()["Assembler"];
-        obj["Type"] = Dune::className(a);
+        obj["Type"] = className_(a, hideTemplates);
         obj["Stationary"] = a.isStationaryProblem() ? "true" : "false";
     }
 
     template<class GridGeometry>
-    static auto collectMetaData(const GridGeometry& gg)
+    static auto collectMetaData(const GridGeometry& gg, bool hideTemplates = true)
     -> typename std::enable_if_t<decltype(isValid(Detail::isGridGeometry())(gg))::value, void>
     {
         auto& obj = getTree()["GridGeometry"];
-        obj["Type"] = Dune::className(gg);
-        obj["GridView"] = Dune::className(gg.gridView());
+        obj["Type"] = className_(gg, hideTemplates);
+        obj["GridView"]["Type"] = className_(gg.gridView(), hideTemplates);
         obj["IsPeriodic"] = gg.isPeriodic() ? "true" : "false";
+        obj["DiscretisationMethod"] = GridGeometry::discMethod;
+        obj["MaxElementStencilSize"] = GridGeometry::maxElementStencilSize;
+        obj["NumScvs"] = gg.numScv();
+        obj["NumScvfs"] = gg.numScvf();
+        obj["SumBoundaryScvfs"] = gg.numBoundaryScvf();
+        obj["NumDofs"] = gg.numDofs();
     }
 
     template<class GridVariables>
-    static auto collectMetaData(const GridVariables& gv)
+    static auto collectMetaData(const GridVariables& gv, bool hideTemplates = true)
     -> typename std::enable_if_t<decltype(isValid(Detail::isGridVariables())(gv))::value, void>
     {
         auto& obj = getTree()["GridVariables"];
-        obj["Type"] = Dune::className(gv);
+        obj["Type"] = className_(gv, hideTemplates);
     }
 
     //! prints json tree
@@ -122,6 +128,27 @@ public:
     {
         static JsonTree parser_;
         return parser_;
+    }
+
+private:
+    template <class T>
+    static std::string className_(const T& c, bool hideTemplates)
+    {
+        return hideTemplates ? hideTemplateArguments_(Dune::className(c)) : Dune::className(c);
+    }
+
+    static std::string hideTemplateArguments_(std::string&& s)
+    {
+        std::size_t first = s.find("<");
+        std::size_t last = s.find_last_of(">");
+
+        if(first != std::string::npos && last != std::string::npos)
+            s.replace(first, last-first+1, "<...>");
+
+        s.erase(std::unique(std::begin(s), std::end(s),
+                [](unsigned char a, unsigned char b){return std::isspace(a) && std::isspace(b);}), std::end(s));
+
+        return std::move(s);
     }
 
 };
