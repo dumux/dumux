@@ -38,6 +38,24 @@ namespace Dumux {
         none, box, cctpfa, ccmpfa, staggered, fem
     };
 
+    /**
+     * \brief The name of the discretization method
+     * \ingroup Discretization
+     */
+    std::string discretizationMethodToString(DiscretizationMethod discMethod)
+    {
+        switch (discMethod)
+        {
+            case DiscretizationMethod::none: return "None";
+            case DiscretizationMethod::box: return "Box";
+            case DiscretizationMethod::cctpfa: return "CCTpfa";
+            case DiscretizationMethod::ccmpfa: return "CCMpfa";
+            case DiscretizationMethod::staggered: return "Staggered";
+            case DiscretizationMethod::fem: return "Fem";
+            default: return "Invalid"; // should never be reached
+        }
+    }
+
 } // end namespace Dumux
 
 #endif
