@@ -19,12 +19,22 @@
 /*!
  * \file
  * \ingroup InputOutput
- * \brief Vtk output precision options available in Dumux
+ * \brief Vtk field types available in Dumux
  */
-#ifndef DUMUX_IO_VTKPRECISION_HH
-#define DUMUX_IO_VTKPRECISION_HH
+#ifndef DUMUX_IO_VTK_FIELD_TYPE_HH
+#define DUMUX_IO_VTK_FIELD_TYPE_HH
 
-#warning "This file is deprecated, include dumux/io/vtk/precision.hh instead!"
-#include <dumux/io/vtk/precision.hh>
+namespace Dumux::Vtk {
+
+/*!
+ * \ingroup InputOutput
+ * \brief Identifier for vtk field types.
+ */
+enum class FieldType : unsigned int
+{
+    element, vertex, automatic
+};
+
+} // end namespace Dumux::Vtk
 
 #endif
