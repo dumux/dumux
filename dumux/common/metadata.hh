@@ -82,62 +82,26 @@ class Metadata {
     using JsonTree = nlohmann::json;
 
 public:
-
-    template<class TypeTag, DiffMethod diffmethod, bool isImplicit>
-    static void collectMetaData(const FVAssembler<TypeTag, diffmethod, isImplicit>& a, bool hideTemplates = true)
-    {
-        auto& obj = getTree()["Assembler"];
-        obj["Type"] = className_(a, hideTemplates);
-        obj["Stationary"] = a.isStationaryProblem() ? "true" : "false";
-    }
-
-    template<class GridGeometry>
-    static auto collectMetaData(const GridGeometry& gg, bool hideTemplates = true)
-    -> typename std::enable_if_t<decltype(isValid(Detail::isGridGeometry())(gg))::value, void>
-    {
-        auto& obj = getTree()["GridGeometry"];
-        obj["Type"] = className_(gg, hideTemplates);
-        obj["GridView"]["Type"] = className_(gg.gridView(), hideTemplates);
-        obj["IsPeriodic"] = gg.isPeriodic() ? "true" : "false";
-        obj["DiscretisationMethod"] = discretizationMethodToString(GridGeometry::discMethod);
-        obj["MaxElementStencilSize"] = GridGeometry::maxElementStencilSize;
-        obj["NumScvs"] = gg.numScv();
-        obj["NumScvfs"] = gg.numScvf();
-        obj["SumBoundaryScvfs"] = gg.numBoundaryScvf();
-        obj["NumDofs"] = gg.numDofs();
-    }
-
-    template<class GridVariables>
-    static auto collectMetaData(const GridVariables& gv, bool hideTemplates = true)
-    -> typename std::enable_if_t<decltype(isValid(Detail::isGridVariables())(gv))::value, void>
-    {
-        auto& obj = getTree()["GridVariables"];
-        obj["Type"] = className_(gv, hideTemplates);
-    }
-
-    //! prints json tree
-    static void print()
-    {
-        std::cout << getTree().dump(4) << std::endl;
-    }
-
     /*!
      * \brief Get the json tree
      */
-    static JsonTree& getTree()
+    JsonTree& getTree()
     {
-        static JsonTree parser_;
-        return parser_;
+        return tree_;
     }
 
-private:
+    const JsonTree& getTree() const
+    {
+        return tree_;
+    }
+
     template <class T>
-    static std::string className_(const T& c, bool hideTemplates)
+    static std::string className(const T& c, bool hideTemplates)
     {
-        return hideTemplates ? hideTemplateArguments_(Dune::className(c)) : Dune::className(c);
+        return hideTemplates ? hideTemplateArguments(Dune::className(c)) : Dune::className(c);
     }
 
-    static std::string hideTemplateArguments_(std::string&& s)
+    static std::string hideTemplateArguments(std::string&& s)
     {
         std::size_t first = s.find("<");
         std::size_t last = s.find_last_of(">");
@@ -150,8 +114,48 @@ private:
 
         return std::move(s);
     }
-
+private:
+    JsonTree tree_;
 };
+
+//! prints json tree
+template<class Collector>
+void print(const Collector& collector)
+{
+    std::cout << collector.getTree().dump(4) << std::endl;
+}
+
+template<class Collector, class TypeTag, DiffMethod diffmethod, bool isImplicit>
+void collectMetaData(Collector& collector, const FVAssembler<TypeTag, diffmethod, isImplicit>& a, bool hideTemplates = true)
+{
+    auto& obj = collector.getTree()["Assembler"];
+    obj["Type"] = Metadata::className(a, hideTemplates);
+    obj["Stationary"] = a.isStationaryProblem() ? "true" : "false";
+}
+
+template<class Collector, class GridGeometry>
+auto collectMetaData(Collector& collector, const GridGeometry& gg, bool hideTemplates = true)
+-> typename std::enable_if_t<decltype(isValid(Detail::isGridGeometry())(gg))::value, void>
+{
+    auto& obj = collector.getTree()["GridGeometry"];
+    obj["Type"] = Metadata::className(gg, hideTemplates);
+    obj["GridView"]["Type"] = Metadata::className(gg.gridView(), hideTemplates);
+    obj["IsPeriodic"] = gg.isPeriodic() ? "true" : "false";
+    obj["DiscretisationMethod"] = discretizationMethodToString(GridGeometry::discMethod);
+    obj["MaxElementStencilSize"] = GridGeometry::maxElementStencilSize;
+    obj["NumScvs"] = gg.numScv();
+    obj["NumScvfs"] = gg.numScvf();
+    obj["SumBoundaryScvfs"] = gg.numBoundaryScvf();
+    obj["NumDofs"] = gg.numDofs();
+}
+
+template<class Collector, class GridVariables>
+auto collectMetaData(Collector& collector, const GridVariables& gv, bool hideTemplates = true)
+-> typename std::enable_if_t<decltype(isValid(Detail::isGridVariables())(gv))::value, void>
+{
+    auto& obj = collector.getTree()["GridVariables"];
+    obj["Type"] = Metadata::className(gv, hideTemplates);
+}
 
 } // end namespace Dumux
 
