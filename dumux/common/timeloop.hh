@@ -348,11 +348,11 @@ public:
         if (verbose_)
         {
             const auto cpuTime = wallClockTime();
-            using std::round;            
+            using std::round;
             const auto percent = round( time_ / endTime_ * 100 );
             std::cout << Fmt::format("[{:3.0f}%] ", percent)
                       << Fmt::format("Time step {} done in {:.2g} seconds. ", timeStepIdx_, timeStepWallClockTime_)
-                      << Fmt::format("Wall clock time: {:.2g}, time: {:.5g}, time step size: {:.5g}\n", cpuTime, time_, previousTimeStepSize_);
+                      << Fmt::format("Wall clock time: {:.5g}, time: {:.5g}, time step size: {:.5g}\n", cpuTime, time_, previousTimeStepSize_);
         }
     }
 
@@ -365,13 +365,13 @@ public:
         auto cpuTime = timer_.stop();
 
         if (verbose_)
-            std::cout << Fmt::format("Simulation took {:.2g} seconds on {} processes.\n", cpuTime, comm.size());
+            std::cout << Fmt::format("Simulation took {:.5g} seconds on {} processes.\n", cpuTime, comm.size());
 
         if (comm.size() > 1)
             cpuTime = comm.sum(cpuTime);
 
         if (verbose_)
-            std::cout << Fmt::format("The cumulative CPU time was {:.2g} seconds.\n", cpuTime);
+            std::cout << Fmt::format("The cumulative CPU time was {:.5g} seconds.\n", cpuTime);
     }
 
     //! If the time loop has verbose output
