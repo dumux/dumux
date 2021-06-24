@@ -38,8 +38,7 @@ template <class Traits>
 class TabulatedPcSwProperties
 {
     using Scalar = typename Traits::Scalar;
-    enum { numSteps = Traits::numSteps,
-           numThroatSteps = Traits::numThroatSteps};
+    enum { numSteps = Traits::numSteps};
 
 public:
     // user default constructor (we can't use "= default" here to satisfy older clang compilers since this class is used as a static data member)
@@ -58,10 +57,10 @@ public:
     { return Traits::maxPc; }
 
     Scalar minThroatRadius() const
-    { return Traits::minThroatRadius; }
+    { return Traits::minPc; }
 
     Scalar maxThroatRadius() const
-    { return Traits::maxThroatRadius; }
+    { return Traits::maxPc; }
 
     bool applies(Scalar sw, Scalar throatRadius) const
     {
@@ -89,15 +88,13 @@ public:
                 throatRadius=maxThroatRadius();
         }
 
-        int i = findThroatIdx_(throatRadius);
-        int j = findPcIdx_(pc);
+        int i = findPcIdx_(pc);
+        int j = findThroatIdx_(throatRadius);
 
-
-        Scalar pcAtI = pcAt_(j);
-        Scalar pcAtI1 = pcAt_(j + 1);
-        Scalar throatRadiusAtI = throatRadiusAt_(i);
-        Scalar throatRadiusAtI1 = throatRadiusAt_(i + 1);
-
+        Scalar pcAtI = pcAt_(i);
+        Scalar pcAtI1 = pcAt_(i + 1);
+        Scalar throatRadiusAtI = throatRadiusAt_(j);
+        Scalar throatRadiusAtI1 = throatRadiusAt_(j + 1);
 
         Scalar alpha = (pc - pcAtI)/(pcAtI1 - pcAtI);
         Scalar beta = (throatRadius - throatRadiusAtI)/(throatRadiusAtI1 - throatRadiusAtI);
@@ -122,7 +119,7 @@ public:
     Scalar val(int i, int j) const
     {
 #if !defined NDEBUG
-        if (i < 0 || i >= Traits::numThroatSteps||
+        if (i < 0 || i >= Traits::numSteps||
             j < 0 || j >= Traits::numSteps) {
             DUNE_THROW(NumericalProblem,
                        "Attempt to access element ("
@@ -144,17 +141,17 @@ public:
                 sw=maxSw();
             if (throatRadius<minThroatRadius())
                 throatRadius=minThroatRadius();
-            if (throatRadius>maxThroatRadius())
+            if (throatRadius<maxThroatRadius())
                 throatRadius=maxThroatRadius();
         }
 
-        int i = findThroatIdx_(throatRadius);
-        int j = findSwIdx_(sw);
+        int i = findSwIdx_(sw);
+        int j = findThroatIdx_(throatRadius);
 
-        Scalar swAtI = swAt_(j);
-        Scalar swAtI1 = swAt_(j + 1);
-        Scalar throatRadiusAtI = throatRadiusAt_(i);
-        Scalar throatRadiusAtI1 = throatRadiusAt_(i + 1);
+        Scalar swAtI = swAt_(i);
+        Scalar swAtI1 = swAt_(i + 1);
+        Scalar throatRadiusAtI = throatRadiusAt_(j);
+        Scalar throatRadiusAtI1 = throatRadiusAt_(j + 1);
 
         Scalar alpha = (sw - swAtI)/(swAtI1 - swAtI);
         Scalar beta = (throatRadius - throatRadiusAtI)/(throatRadiusAtI1 - throatRadiusAtI);
@@ -175,7 +172,7 @@ public:
     Scalar valPc(int i, int j) const
     {
 #if !defined NDEBUG
-        if (i < 0 || i >= Traits::numThroatSteps ||
+        if (i < 0 || i >= Traits::numSteps ||
             j < 0 || j >= Traits::numSteps) {
             DUNE_THROW(NumericalProblem,
                        "Attempt to access element ("
@@ -215,11 +212,11 @@ protected:
     }
 
     Scalar pcAt_(int i) const
-    {   return i*(maxPc() - minPc())/(numSteps - 1) + minPc(); }
+    { return i*(maxPc() - minPc())/(numSteps - 1) + minPc(); }
 
     int findThroatIdx_(Scalar throatRadius) const
     {
-        if (Dune::FloatCmp::eq<Scalar>(throatRadius, maxThroatRadius()))
+        if (Dune::FloatCmp::eq<Scalar>(pc, maxPc()))
             return numThroatSteps - 2;
         const int result = static_cast<int>((throatRadius - minThroatRadius())/(maxThroatRadius() - minThroatRadius())*(numThroatSteps - 1));
 

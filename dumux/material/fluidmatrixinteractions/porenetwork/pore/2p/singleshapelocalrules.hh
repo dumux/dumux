@@ -52,14 +52,14 @@ public:
     static constexpr bool supportsMultipleGeometries()
     { return false; }
 
-    template<class SpatialParams, class Element, class SubControlVolume, class ElemSol>
+    template<class SpatialParams, class Element, class SubControlVolume, class ElemSol >
     void updateParams(const SpatialParams& spatialParams,
                       const Element& element,
                       const SubControlVolume& scv,
                       const ElemSol& elemSol)
     {
-        basicParams_.update(spatialParams, element, scv, elemSol);
-        regularization_.updateParams(spatialParams, element, scv, elemSol);
+        basicParams_.update(spatialParams, element, scv, elemSol); //
+        regularization_.updateParams(spatialParams, element, scv, elemSol); //
     }
 
     /*!

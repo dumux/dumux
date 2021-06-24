@@ -42,7 +42,12 @@ struct ThresholdCapillaryPressures
         const Scalar theta = contactAngle;
         const Scalar cosTheta = std::cos(theta);
         const Scalar sinTheta = std::sin(theta);
-        return surfaceTension / inscribedRadius * (cosTheta - sinTheta);
+
+        bool preventSnapOff = getParam<bool>("Problem.preventSnapOff", false);
+        if (!preventSnapOff)
+            return surfaceTension / inscribedRadius * (cosTheta - sinTheta);
+        else
+            return 0.0;
     }
 
     /*! \brief The entry capillary pressure of a pore throat.

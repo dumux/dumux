@@ -2,7 +2,7 @@ install(FILES
 localrulesforplatonicbody.hh
 multishapelocalrules.hh
 singleshapelocalrules.hh
-droplocalrules.hh
+droplocalrules-throatSize.hh
 pcswdroptables.hh
-pdswtablereader.hh
+pcswtablereader.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/porenetwork/pore/2p)

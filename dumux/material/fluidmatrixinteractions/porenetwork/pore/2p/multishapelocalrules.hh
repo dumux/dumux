@@ -28,7 +28,7 @@
 #include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
 #include <dumux/porenetwork/common/poreproperties.hh>
 #include "localrulesforplatonicbody.hh"
-#include "droplocalrules.hh"
+#include "droplocalrules-throatSize.hh"
 
 namespace Dumux::PoreNetwork::FluidMatrix {
 
@@ -93,6 +93,7 @@ public:
         {
             shape_ = platonicBodyParams.poreShape();
             platonicBodyParams_ = std::make_unique<PlatonicBodyParams<Scalar>>(platonicBodyParams);
+            dropParams_ = std::make_unique<DropParams<Scalar>>(dropParams);
         } //TODO: dropParams?
 
         void setDropParams(const DropParams<Scalar>& dropParams)
