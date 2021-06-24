@@ -73,6 +73,11 @@ public:
         };
         out.addFluxVariable(volumeFluxN, "volumeFluxN");
     }
+    template <class ModelTraits, class FluidSystem, class SolidSystem = void>
+    static std::string primaryVariableName(int pvIdx, int state = 0)
+    {
+        return TwoPNCIOFields::template primaryVariableName<ModelTraits, FluidSystem, SolidSystem>(pvIdx, state);
+    }
 };
 
 } // end namespace Dumux::PoreNetwork

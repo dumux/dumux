@@ -83,6 +83,7 @@ public:
      */
     bool hasData(const std::string& name, const DataType& type) const
     {
+        std::cout << "hasData" << std::endl;
         using namespace tinyxml2;
 
         const XMLElement* pieceNode = getPieceNode_();
