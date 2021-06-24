@@ -35,7 +35,7 @@ namespace Dumux::PoreNetwork::Throat {
 
 //! Collection of different pore-throat shapes
 enum class Shape
-{ scaleneTriangle, equilateralTriangle, square, rectangle, circle, twoPlates, polygon };
+{ scaleneTriangle = 1, equilateralTriangle, square , rectangle, circle , twoPlates, polygon };
 
 //! Get the shape from a string description of the shape
 inline std::string shapeToString(Shape s)

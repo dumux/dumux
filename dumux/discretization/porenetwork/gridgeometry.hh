@@ -73,6 +73,7 @@ public:
         throatLength_.resize(numThroats);
         throatLabel_.resize(numThroats);
         throatCrossSectionalArea_.resize(numThroats);
+        //throatCrossSectionShape_.resize(numThroats);
         throatShapeFactor_.resize(numThroats);
 
         useSameGeometryForAllPores_ = true;
@@ -171,13 +172,14 @@ public:
                 throatLabel_[eIdx] = max(poreLabel0, poreLabel1);
             }
 
-            if (!useSameShapeForAllThroats())
+            if (!useSameShapeForAllThroats()) //&& hasParamInGroup(gridData.paramGroup(), "Grid.ThroatShapeFactor"))
             {
-                static const auto throatShapeFactorIdx = gridData.parameterIndex("ThroatShapeFactor");
-                static const auto throatAreaIdx = gridData.parameterIndex("ThroatCrossSectionalArea");
-                throatShapeFactor_[eIdx] = params[throatShapeFactorIdx];
-                throatGeometry_[eIdx] = Throat::shape(throatShapeFactor_[eIdx]);
-                throatCrossSectionalArea_[eIdx] = params[throatAreaIdx];
+                throatGeometry_[eIdx] = getThroatGeometry_(gridData, element, eIdx); //Throat::shape(throatShapeFactor_[eIdx]);
+                //static const auto throatShapeFactorIdx = gridData.parameterIndex("ThroatShapeFactor");
+                throatCrossSectionalArea_[eIdx] = getThroatCrossSectionalArea_(gridData, element, eIdx);
+                //static const auto throatAreaIdx = gridData.parameterIndex("ThroatCrossSectionalArea");
+                throatShapeFactor_[eIdx] = getThroatShapeFactor_(gridData, element, eIdx);//throatShapeFactor_[eIdx] = params[throatShapeFactorIdx];
+                //throatCrossSectionalArea_[eIdx] = params[throatAreaIdx];
             }
             else
             {
@@ -367,6 +369,25 @@ private:
 
     //! automatically determine throat cross-sectional area if not provided by the grid file
     template<class GridData>
+    Throat::Shape getThroatGeometry_(const GridData& gridData, const Element& element, const std::size_t eIdx) const
+    {
+        static const bool gridHasThroatCrossSectionShape = gridData.gridHasElementParameter("ThroatGeometry");
+        if (gridHasThroatCrossSectionShape && !overwriteGridDataWithShapeSpecificValues_)
+        {
+            static const auto throatGeometryIdx = gridData.parameterIndex("ThroatGeometry");
+            using T = std::underlying_type_t<Throat::Shape>;
+            const auto throatGeometryValue = static_cast<T>(gridData.parameters(element)[throatGeometryIdx]);
+            std::cout << throatGeometryValue << std::endl;
+            return static_cast<Throat::Shape>(throatGeometryValue);
+        }
+        else
+        {
+            return throatCrossSectionShape(eIdx);
+        }
+    }
+
+    //! automatically determine throat cross-sectional area if not provided by the grid file
+    template<class GridData>
     Scalar getThroatCrossSectionalArea_(const GridData& gridData, const Element& element, const std::size_t eIdx) const
     {
         static const bool gridHasThroatCrossSectionalArea = gridData.gridHasElementParameter("ThroatCrossSectionalArea");
@@ -386,6 +407,7 @@ private:
                 return Throat::totalCrossSectionalArea(shape, throatInscribedRadius_[eIdx]);
         }
     }
+
 
     //! automatically determine throat shape factor if not provided by the grid file
     template<class GridData>
