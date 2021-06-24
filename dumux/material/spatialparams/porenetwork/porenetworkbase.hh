@@ -140,6 +140,17 @@ public:
     }
 
     /*!
+     *\brief Inscribed radius of the throat \f$[m]\f$.
+     *
+     *  \param element The finite volume element
+     */
+    Scalar throatInscribedRadius(const Element& element) const
+    {
+        const auto eIdx = gridGeometry().elementMapper().index(element);
+        return gridGeometry().throatInscribedRadius(eIdx);
+    }
+
+    /*!
      *\brief Cross-sectional area of the throat \f$[m]\f$.
      *       Can be solution-dependent.
      *
