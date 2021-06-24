@@ -480,3 +480,5 @@ if __name__ == "__main__":
         run_from_mod('git init')
         run_from_mod('git add .')
         run_from_mod('git commit -m "Initial commit"')
+        print("Please remember to replace the placeholder $remoteurl$ in README installation\n"
+              "with the correct URL after your remote git repository is created.")
