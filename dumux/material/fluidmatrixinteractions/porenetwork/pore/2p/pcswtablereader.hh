@@ -92,8 +92,12 @@ protected:
     {
         if (Dune::FloatCmp::eq<Scalar>(sw, maxSw()))
             return numSteps ;
-        const int result = static_cast<int>((sw - minSw())/(maxSw() - minSw())*(numSteps - 1));
-
+        //const int result = static_cast<int>((sw - minSw())/(maxSw() - minSw())*(numSteps - 1));
+        int result = 0.0;
+        if (sw > 0.9995905)
+            result = static_cast<int>((sw - 0.9995905)/(maxSw() - 0.9995905)*(2444 - 1));
+        else
+            result = static_cast<int>((sw - minSw())/(0.9995905-minSw())*(614 - 1));
         using std::min;
         using std::max;
         return max(0, min(result, numSteps - 2));
@@ -159,8 +163,8 @@ protected:
         return max(0, min(result, numSteps - 2));
     }
 
-    Scalar pcAt_(int i) const
-    { return i*(maxPc() - minPc())/(numSteps - 1) + minPc(); }
+    //Scalar pcAt_(int i) const
+    //{ return i*(maxPc() - minPc())/(numSteps - 1) + minPc(); }
 };
 } // end namespace Dumux
 
