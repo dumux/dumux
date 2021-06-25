@@ -157,8 +157,15 @@ public:
     NavierStokesProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry,
                                 std::shared_ptr<CouplingManager> couplingManager,
                                 const std::string& paramGroup = "")
-    : NavierStokesProblemImpl(gridGeometry, paramGroup)
+    : ParentType(gridGeometry, paramGroup)
+    , gravity_(0.0)
     {
+        static_assert(!std::is_empty_v<CouplingManager>, "Use other constructor not taking couplingManager as argument");
+
+        if (getParamFromGroup<bool>(paramGroup, "Problem.EnableGravity"))
+            gravity_[dim-1]  = -9.81;
+
+        enableInertiaTerms_ = getParamFromGroup<bool>(paramGroup, "Problem.EnableInertiaTerms");
         couplingManager_ = couplingManager;
     }
 
@@ -172,6 +179,8 @@ public:
     : ParentType(gridGeometry, paramGroup)
     , gravity_(0.0)
     {
+        static_assert(std::is_empty_v<CouplingManager>, "Use other constructor taking couplingManager as additional argument");
+
         if (getParamFromGroup<bool>(paramGroup, "Problem.EnableGravity"))
             gravity_[dim-1]  = -9.81;
 
