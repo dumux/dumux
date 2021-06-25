@@ -141,7 +141,7 @@ auto collectMetaData(Collector& collector, const GridGeometry& gg, bool hideTemp
     obj["Type"] = Metadata::className(gg, hideTemplates);
     obj["GridView"]["Type"] = Metadata::className(gg.gridView(), hideTemplates);
     obj["IsPeriodic"] = gg.isPeriodic() ? "true" : "false";
-    obj["DiscretisationMethod"] = discretizationMethodToString(GridGeometry::discMethod);
+    obj["DiscretisationMethod"] = toString(GridGeometry::discMethod);
     obj["MaxElementStencilSize"] = GridGeometry::maxElementStencilSize;
     obj["NumScvs"] = gg.numScv();
     obj["NumScvfs"] = gg.numScvf();
