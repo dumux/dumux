@@ -11,6 +11,7 @@ from argparse import ArgumentParser
 import numpy as np
 import openpnm as op
 import porespy as ps
+from porespy.tools import randomize_colors
 
 parser = ArgumentParser(description='extract network from image using PoreSpy')
 parser.add_argument('file', type=str, help='The image file')
@@ -75,6 +76,10 @@ else:
                                    voxel_size=args['resolution'],
                                    accuracy=('high' if args['marchingCubesArea'] else 'standard'),
                                    phase_alias={1: 'solid', 2: 'void'})
+# write output for segmentation
+if dim == 2:
+    ps.io.to_vtk(np.array(randomize_colors(snowOutput.regions), dtype=int)[:, :, np.newaxis],
+                 args['outputname']+'segmentation', voxel_size=args['resolution'])
 
 # use PoreSpy to sanitize some parameters (might become obsolete as some point)
 pn, geo = op.io.PoreSpy.import_data(snowOutput.network)
