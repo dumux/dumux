@@ -130,7 +130,7 @@ void collectMetaData(Collector& collector, const FVAssembler<TypeTag, diffmethod
 {
     auto& obj = collector.getTree()["Assembler"];
     obj["Type"] = Metadata::className(a, hideTemplates);
-    obj["Stationary"] = a.isStationaryProblem() ? "true" : "false";
+    obj["Stationary"] = a.isStationaryProblem();
 }
 
 template<class Collector, class GridGeometry>
@@ -140,7 +140,7 @@ auto collectMetaData(Collector& collector, const GridGeometry& gg, bool hideTemp
     auto& obj = collector.getTree()["GridGeometry"];
     obj["Type"] = Metadata::className(gg, hideTemplates);
     obj["GridView"]["Type"] = Metadata::className(gg.gridView(), hideTemplates);
-    obj["IsPeriodic"] = gg.isPeriodic() ? "true" : "false";
+    obj["IsPeriodic"] = gg.isPeriodic();
     obj["DiscretisationMethod"] = toString(GridGeometry::discMethod);
     obj["MaxElementStencilSize"] = GridGeometry::maxElementStencilSize;
     obj["NumScvs"] = gg.numScv();
