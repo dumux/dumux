@@ -64,7 +64,7 @@ class GenericCouplingManager
 
 public:
 
-    static constexpr auto couplingManagerMap =  CouplingManagerMaps::makeCouplingManagerMap();
+    static constexpr auto couplingManagerMap = CouplingManagerMaps::makeCouplingManagerMap();
 
     template<std::size_t i, std::size_t j>
     using SubCouplingManager = SubCouplingManagerT<couplingManagerMap[i][j]>;
