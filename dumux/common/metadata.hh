@@ -95,6 +95,12 @@ public:
         return tree_;
     }
 
+    /*!
+     * \brief returns the object with id of the json tree
+     */
+    auto& operator[] (std::string id)
+    { return getTree()[id]; }
+
     template <class T>
     static std::string className(const T& c, bool hideTemplates)
     {
@@ -128,7 +134,7 @@ void print(const Collector& collector)
 template<class Collector, class TypeTag, DiffMethod diffmethod, bool isImplicit>
 void collectMetaData(Collector& collector, const FVAssembler<TypeTag, diffmethod, isImplicit>& a, bool hideTemplates = true)
 {
-    auto& obj = collector.getTree()["Assembler"];
+    auto& obj = collector["Assembler"];
     obj["Type"] = Metadata::className(a, hideTemplates);
     obj["Stationary"] = a.isStationaryProblem();
 }
@@ -137,7 +143,7 @@ template<class Collector, class GridGeometry>
 auto collectMetaData(Collector& collector, const GridGeometry& gg, bool hideTemplates = true)
 -> typename std::enable_if_t<decltype(isValid(Detail::isGridGeometry())(gg))::value, void>
 {
-    auto& obj = collector.getTree()["GridGeometry"];
+    auto& obj = collector["GridGeometry"];
     obj["Type"] = Metadata::className(gg, hideTemplates);
     obj["GridView"]["Type"] = Metadata::className(gg.gridView(), hideTemplates);
     obj["IsPeriodic"] = gg.isPeriodic();
@@ -153,7 +159,7 @@ template<class Collector, class GridVariables>
 auto collectMetaData(Collector& collector, const GridVariables& gv, bool hideTemplates = true)
 -> typename std::enable_if_t<decltype(isValid(Detail::isGridVariables())(gv))::value, void>
 {
-    auto& obj = collector.getTree()["GridVariables"];
+    auto& obj = collector["GridVariables"];
     obj["Type"] = Metadata::className(gv, hideTemplates);
 }
 
