@@ -42,7 +42,7 @@ namespace Dumux {
      * \brief The name of the discretization method
      * \ingroup Discretization
      */
-    std::string discretizationMethodToString(DiscretizationMethod discMethod)
+    std::string toString(DiscretizationMethod discMethod)
     {
         switch (discMethod)
         {
