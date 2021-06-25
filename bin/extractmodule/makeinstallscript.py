@@ -90,44 +90,6 @@ def makeInstallScript(path,
     print("\n-- Creating patches for unpublished commits and uncommitted changes")
     patches = getPatches(versions)
 
-    # create patch files
-    if len(patches) > 0:
-        if not suppressHints:
-            print("-> Placing patches in the folder 'patches' in your module. You "
-                  "should commit them to your repository in order for the install"
-                  "script to work on other machines.")
-        patchesPath = os.path.join(modPath, 'patches')
-        os.makedirs(patchesPath, exist_ok=True)
-
-        def getPatchFileNameAndRelPath(depModPath, targetName):
-            i = 1
-            fileName = os.path.join(patchesPath, targetName + '.patch')
-            while os.path.exists(fileName):
-                fileName = os.path.join(patchesPath,
-                                        targetName + '_' + str(i) + '.patch')
-                i += 1
-
-            return fileName, os.path.relpath(fileName, depModPath)
-
-        def writePatch(depModPath, depModName, type):
-            patchName = depModName + '_' + type
-            pPath, pRelPath = getPatchFileNameAndRelPath(depModPath, patchName)
-            patches[depModPath][type + '_relpath'] = pRelPath
-            open(pPath, 'w').write(patches[depModPath][type])
-            return pPath
-
-        print("-> Created patch files:")
-        for depModPath in patches.keys():
-            depModName = getModuleInfo(depModPath, "Module")
-            if 'unpublished' in patches[depModPath]:
-                print(' '*3 + writePatch(depModPath, depModName, 'unpublished'))
-            if 'uncommitted' in patches[depModPath]:
-                print(' '*3 + writePatch(depModPath, depModName, 'uncommitted'))
-
-    else:
-        print("-> No Patches required")
-
-
     # write installation shell script (switch to relative paths)
     versions = {os.path.relpath(p, modParentPath): v for p, v in versions.items()}
     patches = {os.path.relpath(p, modParentPath): v for p, v in patches.items()}
@@ -155,6 +117,18 @@ def makeInstallScript(path,
             '    exit 1\n'
             '}\n\n'
         )
+
+        # write patch information into install script
+        if len(patches) > 0:
+            for depModPath in patches.keys():
+                if 'unpublished' in patches[depModPath]:
+                    installFile.write("cat >> unpublished.patch <<'EOF'\n"
+                                      + patches[depModPath]['unpublished']
+                                      + "\nEOF\n")
+                if 'uncommitted' in patches[depModPath]:
+                    installFile.write("cat >> uncommitted.patch <<'EOF'\n"
+                                      + patches[depModPath]['uncommitted']
+                                      + "\nEOF\n")
 
         unitIndentation = ' '*4
 
@@ -220,27 +194,6 @@ def makeInstallScript(path,
                 .format(versions[depModFolder]['revision'], depModName)
             )
 
-            # write section on application of patches
-            def writeApplyPatch(patchRelPath):
-                patchError = '--Error: patch {} was not found'.format(patchRelPath)
-                installFile.write('if [ -f {} ]; then\n'.format(patchRelPath))
-                writeCommandWithErrorCheck(
-                    'git apply {}'.format(patchRelPath),
-                    '--Error: failed to apply patch {} in module {}'
-                    .format(patchRelPath, depModName),
-                    indentationLevel=1
-                )
-                installFile.write("else\n"
-                                f"{unitIndentation}{exitFunc} "
-                                f"\"{patchError}\".\n")
-                installFile.write('fi\n')
-
-            if depModFolder in patches:
-                if'unpublished_relpath' in patches[depModFolder]:
-                    writeApplyPatch(patches[depModFolder]['unpublished_relpath'])
-                if 'uncommitted_relpath' in patches[depModFolder]:
-                    writeApplyPatch(patches[depModFolder]['uncommitted_relpath'])
-
             installFile.write('echo "-- Successfully set up the module {} \\n"\n'
                             .format(depModName) + '\n')
             installFile.write('cd ..\n\n')
@@ -251,6 +204,17 @@ def makeInstallScript(path,
         for depModName, depModFolder in zip(depNames, depFolders):
             if depModName != modName:
                 writeCloneModule(depModName, depModFolder)
+
+        for patchtype in ['unpublished', 'uncommited']:
+            installFile.write('if [ -f {}.patch ]; then\n'.format(patchtype))
+            writeCommandWithErrorCheck(
+                'git apply {}.patch'.format(patchtype),
+                '--Error: failed to apply patch {}.patch'.format(patchtype),
+                indentationLevel=1)
+            installFile.write("else\n"
+                              f"{unitIndentation} "
+                              + 'echo "No patch {}.patch is found".\n'.format(patchtype))
+            installFile.write('fi\n')
 
         # write configure command
         installFile.write('echo "-- All modules haven been cloned successfully. '
