@@ -110,7 +110,7 @@ def makeInstallScript(path,
         # write function to install the new module and its dependencies into install script
         installFile.write(
             '# defines the function to install module with urls, shas and patches\n'
-            'InstallModule()\n'
+            'installModule()\n'
             '{\n'
             '    URLS=$1\n'
             '    DEPFOLDERS=$2\n'
