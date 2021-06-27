@@ -29,7 +29,8 @@ def makeInstallScript(path,
                       ignoreUntracked=False,
                       topFolderName='DUMUX',
                       optsFile=None,
-                      skipFolders=None):
+                      skipFolders=None,
+                      suppressHints=False):
 
     cwd = os.getcwd()
     modPath = os.path.abspath(os.path.join(cwd, path))
@@ -48,7 +49,6 @@ def makeInstallScript(path,
         instFileName = fileName
     print("\n-- Creating install script '{}' for module '{}' in folder '{}'"
           .format(instFileName, modName, modPath))
-
 
     print("\n-- Determining the dependencies")
     deps = getDependencies(modPath)
@@ -77,7 +77,7 @@ def makeInstallScript(path,
         print('\nCaught exception: ' + str(err))
         if 'untracked' in str(err):
             print('If you are certain that the untracked files are not needed for '
-                'the module installation, run this script with the -i flag.')
+                  'the module installation, run this script with the -i flag.')
         sys.exit(1)
 
     if len(versions) != len(depNames):
@@ -87,15 +87,15 @@ def makeInstallScript(path,
     print("   on top of which we will generate the required patches")
     printVersionTable(versions)
 
-
     print("\n-- Creating patches for unpublished commits and uncommitted changes")
     patches = getPatches(versions)
 
     # create patch files
     if len(patches) > 0:
-        print("-> Placing patches in the folder 'patches' in your module. You "
-            "should commit them to your repository in order for the install"
-            "script to work on other machines.")
+        if not suppressHints:
+            print("-> Placing patches in the folder 'patches' in your module. You "
+                  "should commit them to your repository in order for the install"
+                  "script to work on other machines.")
         patchesPath = os.path.join(modPath, 'patches')
         os.makedirs(patchesPath, exist_ok=True)
 
@@ -245,11 +245,6 @@ def makeInstallScript(path,
                             .format(depModName) + '\n')
             installFile.write('cd ..\n\n')
 
-        writeCommandWithErrorCheck(
-            'mv ../{} .'.format(modFolder),
-            '-- Error: failed to move the new module to {}'.format(topFolderName)
-        )
-
         # write the module clone first in order for the patches to be present
         if modName in depNames:
             writeCloneModule(modName, modFolder)
@@ -286,21 +281,22 @@ def makeInstallScript(path,
     subprocess.call(['chmod', 'u+x', instFileName])  # make script executable
 
     if len(patches) > 0:
-        print("-> You should now commit and publish the 'patches' folder and this install script in your module such that others can use it.\n"
-            "   IMPORTANT: After you committed the patches, you have to adjust the line of the install script in which your module is checked out to a specific commit.\n"
-            "              That is, in the line 'git reset --hard COMMIT_SHA' for your module, replace COMMIT_SHA by the commit in which you added the patches.\n"
-            "              If patches had to be created for your own module, please think about comitting and pushing your local changes and rerunning this script again.")
-    if not skipFolders:
+        if not suppressHints:
+            print("-> You should now commit and publish the 'patches' folder and this install script in your module such that others can use it.\n"
+                  "   IMPORTANT: After you committed the patches, you have to adjust the line of the install script in which your module is checked out to a specific commit.\n"
+                  "              That is, in the line 'git reset --hard COMMIT_SHA' for your module, replace COMMIT_SHA by the commit in which you added the patches.\n"
+                  "              If patches had to be created for your own module, please think about comitting and pushing your local changes and rerunning this script again.")
+
+    if not suppressHints:
         print(f"\n-- You might want to put installation instructions into the README.md file of your module, for instance:\n"
-            f"     ## Installation\n"
-            f"     The easiest way of installation is to use the script `{instFileName}` provided in this repository.\n"
-            f"     Using `wget`, you can simply install all dependent modules by typing:\n"
-            f"\n"
-            f"     ```sh\n"
-            f"     wget {versions[modFolder]['remote']}/{instFileName}\n"
-            f"     chmod u+x {instFileName}\n"
-            f"     ./{instFileName}\n"
-            f"     ```\n")
+              f"     ## Installation\n"
+              f"     The easiest way of installation is to use the script `{instFileName}` provided in this repository.\n"
+              f"     Using `wget`, you can simply install all dependent modules by typing:\n"
+              f"\n"
+              f"     ```sh\n"
+              f"     wget {versions[modFolder]['remote']}/{instFileName}\n"
+              f"     bash {instFileName}\n"
+              f"     ```\n")
 
     if topFolderName:
         print(f"   This will create a sub-folder `{topFolderName}`, clone all modules into it, configure the entire project and build the applications contained in this module.")
@@ -342,6 +338,11 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--skipfolders',
                         required=False, default=None,
                         help='a list of module folders to be skipped')
+
+    parser.add_argument('-d', '--suppresshints',
+                        required=False, default=False,
+                        help='if output needs to be suppressed')
+
     cmdArgs = vars(parser.parse_args())
 
     makeInstallScript(
@@ -350,5 +351,6 @@ if __name__ == '__main__':
         ignoreUntracked=cmdArgs.get('ignoreuntracked', False),
         topFolderName=cmdArgs.get('topfoldername', None),
         optsFile=cmdArgs.get('optsFile', None),
-        skipFolders=cmdArgs.get('skipfolders', None)
+        skipFolders=cmdArgs.get('skipfolders', None),
+        suppressHints=cmdArgs.get('suppresshints', False),
     )
