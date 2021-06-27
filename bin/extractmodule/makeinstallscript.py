@@ -112,44 +112,49 @@ def makeInstallScript(path,
             '# defines the function to install module with urls, shas and patches\n'
             'InstallModule()\n'
             '{\n'
-            '   URLS=$1\n'
-            '   DEPFOLDERS=$2\n'
-            '   DEPBRANCHES=$3\n'
-            '   DEPSHAS=$4\n'
-            '   PATCHES=$5\n\n'
-            '   for url in ${URLS[@]}; do\n'
-            '       if ! git clone $url; then\n'
-            '           echo "--Error: failed to clone $url"\n'
-            '       fi\n'
-            '   done\n\n'
-            '   for index in ${!DEPFOLDERS[@]}; do\n'
-            '       if ! cd ${DEPFOLDERS[index]}; then\n'
-            '           echo "Error: could not enter folder ${DEPFOLDERS[index]}"\n'
-            '       fi\n'
-            '       if ! git checkout ${DEPBRANCHES[index]}; then\n'
-            '           echo "-- Error: failed to check out branch  ${DEPBRANCHES[index]} in ${DEPFOLDERS[index]}."\n'
-            '       fi\n'
-            '       if ! git reset --hard ${DEPSHAS[index]}; then\n'
-            '           echo "-- Error: failed to check out commit ${DEPSHAS[index]} in module ${DEPFOLDERS[index]}."\n'
-            '       fi\n'
-            '       cd ..\n'
-            '   done\n\n'
-            '   for patch in ${PATCHES[@]}; do\n'
-            '       if ! [ -f $patch ]; then\n'
-            f'           if ! git apply {"../" if topFolderName else ""}$patch; then\n'
-            '               echo "--Error: failed to apply patch $patch"\n'
-            '           fi\n'
-            '       else\n'
-            '           echo "--Error no patch $patch is found"\n'
-            '       fi\n'
-            '   done\n'
+            '    URLS=$1\n'
+            '    DEPFOLDERS=$2\n'
+            '    DEPBRANCHES=$3\n'
+            '    DEPSHAS=$4\n'
+            '    PATCHES=$5\n'
+            '    PATCHFOLDERS=$6\n\n'
+            '    for url in ${URLS[@]}; do\n'
+            '        if ! git clone $url; then\n'
+            '            echo "--Error: failed to clone $url"\n'
+            '        fi\n'
+            '    done\n\n'
+            '    for index in ${!DEPFOLDERS[@]}; do\n'
+            '        if ! cd ${DEPFOLDERS[index]}; then\n'
+            '            echo "Error: could not enter folder ${DEPFOLDERS[index]}"\n'
+            '        fi\n'
+            '        if ! git checkout ${DEPBRANCHES[index]}; then\n'
+            '            echo "-- Error: failed to check out branch  ${DEPBRANCHES[index]} in ${DEPFOLDERS[index]}."\n'
+            '        fi\n'
+            '        if ! git reset --hard ${DEPSHAS[index]}; then\n'
+            '            echo "-- Error: failed to check out commit ${DEPSHAS[index]} in module ${DEPFOLDERS[index]}."\n'
+            '        fi\n'
+            '        cd ..\n'
+            '    done\n\n'
+            '    for i in ${!PATCHES[@]}; do\n'
+            # # associative array is for bash 4 or newer
+            # '        if ! [ -f ${PATCHES[$module]} ]; then\n'
+            # '            cd $module\n'
+            # f'            if ! git apply {"../" if topFolderName else ""}$'
+            # '{PATCHES[$module]}; then\n'
+            '        cd ${PATCHFOLDERS[i]}\n'
+            f'        if ! git apply {"../" if topFolderName else ""}$'
+            '{PATCHES[i]}; then\n'
+            '            echo "--Error: failed to apply patch $patch"\n'
+            '        fi\n'
+            '        cd ..\n'
+            '    done\n'
             '}\n\n'
         )
 
         # write urls, depfolders/branches/shas and patches into install script
         installFile.write('# Information about url, folder/branch/sha and patch\n')
         folders = depFolders
-        if modName in depNames:
+        if modName in depNames and modName not in folders:
             folders.append(modName)
         installFile.write('URLS=(\n')
         for dep in folders:
@@ -170,19 +175,37 @@ def makeInstallScript(path,
             installFile.write(versions[dep]['revision'] + '\n')
         installFile.write(')\n\n')
 
-        installFile.write('PATCHES=(unpublished.patch uncommitted.patch)\n\n')
-
         # write patch information into install script
         if len(patches) > 0:
+            patchRelPath = []
+            patchModule = []
             for depModPath in patches.keys():
+                depModName = getModuleInfo(depModPath, "Module")
                 if 'unpublished' in patches[depModPath]:
-                    installFile.write("cat >> unpublished.patch <<'EOF'\n"
+                    installFile.write("cat >> {}_unpublished.patch <<'EOF'\n".format(depModName)
                                       + patches[depModPath]['unpublished']
                                       + "EOF\n")
+                    patchModule.append(depModPath)
+                    patchRelPath.append(os.path.relpath("{}_unpublished.patch".format(depModName), depModPath))
                 if 'uncommitted' in patches[depModPath]:
-                    installFile.write("cat >> uncommitted.patch <<'EOF'\n"
+                    installFile.write("cat >> {}_uncommitted.patch <<'EOF'\n".format(depModName)
                                       + patches[depModPath]['uncommitted']
                                       + "EOF\n")
+                    patchRelPath.append(os.path.relpath("{}_uncommitted.patch".format(depModName), depModPath))
+                    patchModule.append(depModPath)
+
+        # associative Arrays requires bash 4 or newer!
+        # installFile.write('declare -A PATCHES\n')
+        # for module, path in zip(patchModule, patchRelPath):
+        #     installFile.write('PATCHES[' + module + ']=' + path + '\n')
+
+        installFile.write('PATCHFOLDERS=(\n')
+        installFile.write('\n'.join(patchModule))
+        installFile.write('\n)\n\n')
+
+        installFile.write('PATCHES=(\n')
+        installFile.write('\n'.join(patchRelPath))
+        installFile.write('\n)\n\n')
 
         unitIndentation = ' '*4
 
@@ -222,7 +245,7 @@ def makeInstallScript(path,
                 ' script is executed.\n\n'
             )
 
-        installFile.write('InstallModule $URLS $DEPFOLDERS $DEPBRANCHES $DEPSHAS $PATCHES\n\n')
+        installFile.write('InstallModule $URLS $DEPFOLDERS $DEPBRANCHES $DEPSHAS $PATCHES $PATCHFOLDERS\n\n')
 
         # write configure command
         installFile.write('echo "-- All modules haven been cloned successfully. '
