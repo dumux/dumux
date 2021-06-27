@@ -467,10 +467,6 @@ if __name__ == "__main__":
         run_from_mod('git remote add origin {}'.format(remoteurl))
         run_from_mod('git push -u origin master')
 
-        if query_yes_no("Do you also want to create an one-click install script?"):
-            makeInstallScript(new_module_path, ignoreUntracked=True, suppressHints=True)
-            print("The one-click install script {} is created in your current folder.".format(install_script_name))
-
     # output guidance for users to create install script manually
     else:
         remoteurl = "{$remoteurl$} ({$remoteurl$} is the URL for your remote git repository)"
