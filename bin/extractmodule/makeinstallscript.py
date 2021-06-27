@@ -136,11 +136,6 @@ def makeInstallScript(path,
             '        cd ..\n'
             '    done\n\n'
             '    for i in ${!PATCHES[@]}; do\n'
-            # # associative array is for bash 4 or newer
-            # '        if ! [ -f ${PATCHES[$module]} ]; then\n'
-            # '            cd $module\n'
-            # f'            if ! git apply {"../" if topFolderName else ""}$'
-            # '{PATCHES[$module]}; then\n'
             '        cd ${PATCHFOLDERS[i]}\n'
             f'        if ! git apply {"../" if topFolderName else ""}$'
             '{PATCHES[i]}; then\n'
@@ -193,11 +188,6 @@ def makeInstallScript(path,
                                       + "EOF\n")
                     patchRelPath.append(os.path.relpath("{}_uncommitted.patch".format(depModName), depModPath))
                     patchModule.append(depModPath)
-
-        # associative Arrays requires bash 4 or newer!
-        # installFile.write('declare -A PATCHES\n')
-        # for module, path in zip(patchModule, patchRelPath):
-        #     installFile.write('PATCHES[' + module + ']=' + path + '\n')
 
         installFile.write('PATCHFOLDERS=(\n')
         installFile.write('\n'.join(patchModule))
@@ -347,5 +337,5 @@ if __name__ == '__main__':
         topFolderName=cmdArgs.get('topfoldername', None),
         optsFile=cmdArgs.get('optsFile', None),
         skipFolders=cmdArgs.get('skipfolders', None),
-        suppressHints=cmdArgs.get('suppresshints', False),
+        suppressHints=cmdArgs.get('suppresshints', False)
     )
