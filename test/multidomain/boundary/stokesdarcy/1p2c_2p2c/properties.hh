@@ -38,6 +38,7 @@
 #include <dumux/freeflow/compositional/navierstokesncmodel.hh>
 
 #include <dumux/multidomain/boundary/stokesdarcy/couplingmanager.hh>
+#include <dumux/multidomain/staggeredtraits.hh>
 
 #include "problem_darcy.hh"
 #include "problem_stokes.hh"

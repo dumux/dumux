@@ -25,6 +25,7 @@
 #define DUMUX_MODEL_PROPERTIES_HH
 
 #include <dune/common/fvector.hh>
+#include <dune/common/deprecated.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/balanceequationopts.hh>

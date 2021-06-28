@@ -24,6 +24,8 @@
 #ifndef DUMUX_COMMON_NUMEQVECTOR_HH
 #define DUMUX_COMMON_NUMEQVECTOR_HH
 
+#include <cstddef>
+
 namespace Dumux {
 
 template<class PrimaryVariables>

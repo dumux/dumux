@@ -30,7 +30,7 @@
 #include <dumux/freeflow/compositional/navierstokesncmodel.hh>
 #include <dumux/material/fluidsystems/1padapter.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
-
+#include <dumux/discretization/staggered/freeflow/properties.hh>
 #include "problem_stokes.hh"
 
 namespace Dumux::Properties {

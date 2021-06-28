@@ -35,6 +35,7 @@
 #include <dumux/multidomain/facet/cellcentered/tpfa/properties.hh>
 #include <dumux/multidomain/facet/couplingmapper.hh>
 #include <dumux/multidomain/facet/couplingmanager.hh>
+#include <dumux/multidomain/traits.hh>
 
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/cctpfa.hh>

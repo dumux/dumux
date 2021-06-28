@@ -41,6 +41,8 @@
 #include <dumux/common/numeqvector.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
+#include <dumux/porousmediumflow/mpnc/pressureformulation.hh>
+#include <dumux/material/binarycoefficients/h2o_n2.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 
 namespace Dumux {
