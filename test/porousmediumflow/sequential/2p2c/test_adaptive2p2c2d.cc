@@ -23,7 +23,7 @@
  */
 #include <config.h>
 
-#if HAVE_UG
+#if HAVE_DUNE_UGGRID
 
 #include "test_adaptive2p2c2dproblem.hh"
 #include <dumux/common/start.hh>

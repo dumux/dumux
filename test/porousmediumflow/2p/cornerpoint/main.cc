@@ -25,9 +25,9 @@
 // As of versions Opm 2018.04 and Dune 2.6, using opm-grid and dune-uggrid
 // together results in a compiler error. The following lines enforce that
 // dune-uggrid isn't considered.
-#if HAVE_UG
-#undef HAVE_UG
-#define HAVE_UG 0
+#if HAVE_DUNE_UGGRID
+#undef HAVE_DUNE_UGGRID
+#define HAVE_DUNE_UGGRID 0
 #endif
 
 #include <iostream>

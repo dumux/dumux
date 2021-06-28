@@ -37,7 +37,7 @@
 #include <dumux/io/vtk/vtkreader.hh>
 
 // UGGrid specific includes
-#if HAVE_UG
+#if HAVE_DUNE_UGGRID
 #include <dune/grid/uggrid.hh>
 #endif
 
@@ -50,7 +50,7 @@ namespace Detail {
 template<class Grid>
 struct isUG : public std::false_type {};
 
-#if HAVE_UG
+#if HAVE_DUNE_UGGRID
 template<int dim>
 struct isUG<Dune::UGGrid<dim>> : public std::true_type {};
 #endif
