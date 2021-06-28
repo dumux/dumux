@@ -113,7 +113,7 @@ public:
      */
     Scalar xToI(Scalar x) const
     {
-        return (x - xMin_)/(xMax_ - xMin_)*m_;
+        return (x - xMin_)/(xMax_ - xMin_)*(m_ - 1);
     }
 
 
@@ -127,7 +127,7 @@ public:
      */
     Scalar yToJ(Scalar y) const
     {
-        return (y - yMin_)/(yMax_ - yMin_)*n_;
+        return (y - yMin_)/(yMax_ - yMin_)*(n_ - 1);
     }
 
 
@@ -165,10 +165,9 @@ public:
         Scalar alpha = xToI(x);
         Scalar beta = yToJ(y);
 
-        using std::max;
-        using std::min;
-        int i = max(0, min(m_, static_cast<int>(alpha)));
-        int j = max(0, min(n_, static_cast<int>(beta)));
+        using std::clamp;
+        int i = clamp(static_cast<int>(alpha), 0, m_ - 2);
+        int j = clamp(static_cast<int>(beta),  0, n_ - 2);
 
         alpha -= i;
         beta -= j;
