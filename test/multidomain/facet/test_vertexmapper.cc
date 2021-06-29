@@ -30,7 +30,7 @@
 #include <dune/foamgrid/foamgrid.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
-#include <dumux/io/vtkfunction.hh>
+#include <dumux/io/vtk/function.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/multidomain/facet/gridmanager.hh>
 #include <dumux/multidomain/facet/codimonegridadapter.hh>

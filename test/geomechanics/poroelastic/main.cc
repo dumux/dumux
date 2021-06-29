@@ -169,8 +169,8 @@ int main(int argc, char** argv)
 
     for (int dir = 0; dir < dim; ++dir)
     {
-        vtkWriter.addField(sigmaStorage[dir], "sigma_" + std::to_string(dir), VtkOutputModule::FieldType::element);
-        vtkWriter.addField(effSigmaStorage[dir], "effSigma_" + std::to_string(dir), VtkOutputModule::FieldType::element);
+        vtkWriter.addField(sigmaStorage[dir], "sigma_" + std::to_string(dir), Vtk::FieldType::element);
+        vtkWriter.addField(effSigmaStorage[dir], "effSigma_" + std::to_string(dir), Vtk::FieldType::element);
     }
 
     // use convenience function to compute stresses
