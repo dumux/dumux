@@ -186,16 +186,20 @@ def info_readme_installation(remoteurl, install_script_name, new_module_name):
 
 ## Installation
 
-The easiest way of installation is to use the install script `{install_script_name}`
-provided in this repository.
-You can simply clone the remote and install all dependent modules by typing:
+The installation procedure is done as follows :
+Create a root folder, e.g. `$NewFolder$`, enter the previously created folder
+clone the remote and use the install script `{install_script_name}`
+provided in this repository to install all dependent modules.
 
 ```sh
+mkdir $NewFolder$
+cd $NewFolder$
 git clone {remoteurl}
 ./{new_module_name}/{install_script_name}
 ```
 
-This will create a sub-folder `DUMUX`, clone all modules into it.
+This will clone all modules into your created folder `$NewFolder$`,
+configure your module with `dunecontrol` and build tests.
 
 """
 
