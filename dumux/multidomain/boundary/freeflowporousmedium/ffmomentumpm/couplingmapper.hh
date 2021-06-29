@@ -172,7 +172,6 @@ public:
                         if (otherFfScvf.isLateral())
                         {
                             const auto& lateralOrthogonalScvf = ffFvGeometry.lateralOrthogonalScvf(otherFfScvf);
-                            isCoupledLateralScvf_[otherFfScvf.index()] = true;
                             isCoupledLateralScvf_[lateralOrthogonalScvf.index()] = true;
                         }
                     }
