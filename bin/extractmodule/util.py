@@ -247,7 +247,7 @@ def writeShellInstallScript(instFileName,
         for depModPath in set(patchModule):
             depModName = getModuleInfo(depModPath, "Module")
             if 'unpublished' in patches[depModPath]:
-                installFile.write("cat >> {}_unpublished.patch <<'EOF'\n".format(depModName)
+                installFile.write(f"cat >> {depModName}/unpublished.patch <<'EOF'"
                                   + patches[depModPath]['unpublished']
                                   + "EOF\n")
             if 'uncommitted' in patches[depModPath]:
