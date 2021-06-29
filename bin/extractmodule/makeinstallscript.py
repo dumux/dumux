@@ -31,7 +31,8 @@ def makeInstallScript(path,
                       topFolderName='DUMUX',
                       optsFile=None,
                       skipFolders=None,
-                      suppressHints=False):
+                      suppressHints=False
+                      language="bash"):
 
     cwd = os.getcwd()
     modPath = os.path.abspath(os.path.join(cwd, path))
