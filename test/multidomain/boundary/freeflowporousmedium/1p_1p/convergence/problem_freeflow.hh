@@ -127,8 +127,7 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            // TODO: is isFrontal really needed here?
-            if (couplingManager().isCoupled(CouplingManager::freeFlowMomentumIndex, CouplingManager::porousMediumIndex, scvf) && scvf.isFrontal())
+            if (couplingManager().isCoupled(CouplingManager::freeFlowMomentumIndex, CouplingManager::porousMediumIndex, scvf))
             {
                 values.setCouplingNeumann(Indices::momentumYBalanceIdx);
                 values.setCouplingNeumann(Indices::momentumXBalanceIdx);

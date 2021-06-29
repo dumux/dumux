@@ -215,7 +215,6 @@ public:
             }
             else
             {
-                assert(!onLowerBoundary_(scvf.ipGlobal()));
                 const Scalar pressure = onLeftBoundary_(globalPos) ? deltaP_ : 0.0;
                 values = FluxHelper::fixedPressureMomentumFlux(
                     *this, fvGeometry, scvf, elemVolVars,
