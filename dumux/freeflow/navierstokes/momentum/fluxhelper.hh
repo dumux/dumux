@@ -88,6 +88,10 @@ struct NavierStokesMomentumBoundaryFluxHelper
 
         if (scvf.isLateral())
         {
+            // if the lateral scvf is adjacent to a slip boundary, call the helper function for this special case
+            if (scv.boundary() && problem.onSlipBoundary(fvGeometry, fvGeometry.frontalScvfOnBoundary(scv)))
+                return slipVelocityMomentumFlux(problem, fvGeometry, scvf, elemVolVars, elemFluxVarsCache);
+
             // viscous terms
             const Scalar mu = problem.effectiveViscosity(element, fvGeometry, scvf);
 
