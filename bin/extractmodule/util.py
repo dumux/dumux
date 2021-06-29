@@ -316,3 +316,189 @@ def writeShellInstallScript(instFileName,
             '--Error: applications could not be compiled. '
             'Please try to compile them manually.'
         )
+
+
+def writePythonInstallScript(instFileName,
+                             modName, modFolder,
+                             folders, versions,
+                             patches, patchModule, patchRelPath,
+                             topFolderName, optsRelPath="dumux/cmake.opts"):
+    """
+    function to write the content into the generated python install script
+
+    Keyword Arguments:
+
+        - instFileName -- The name of the generated python install script
+
+        - modName -- The name of the module to be installed
+        - modFolder -- The folder containing the module to be installed
+
+        - folders -- The list containing the folders of the module to be
+            installed and all its dependencies
+        - versions -- The persistent, remotely available git versions for
+            the module to be installed and all its dependencies
+
+        - patches -- The patches for unpublished commits and uncommitted changes
+        - patchModule -- The paths for the modules which has unpublished commits and uncommited changes
+        - patchRelPath -- The realative paths of the generated patch files
+
+        - topFolderName -- The of the folder that the install script creates upon execution to install the module in.
+            If an empty string is passed, no folder will be created and installation happens in place.
+        - optsRelPath -- The relative path of custom opts file called by 'dunecontrol'
+
+    """
+
+    with open(instFileName, 'w') as installFile:
+        # env and intro about script
+        installFile.write("##!/usr/bin/env python3\n\n")
+        installFile.write("'''\n")
+        installFile.write("This script installs the module {} together with all dependencies.\n".format(modName))
+        installFile.write("'''\n")
+
+        # import libraies
+        installFile.write("""
+import os
+import sys
+import subprocess
+import traceback
+
+""")
+
+        # define funtions (git utilites, installModule, print messages)
+        installFile.write("""
+def show_message(message):
+    print("*" * 120)
+    print(message)
+    print("*" * 120 + "\\n")
+
+
+# execute a command in a folder and retrieve the output
+def runCommandFromPath(command, path="."):
+    curPath = os.getcwd()
+    os.chdir(path)
+    subprocess.run(command)
+    os.chdir(curPath)
+
+
+def git_clone(url):
+    clone = ["git", "clone"]
+    runCommandFromPath(command=[*clone, url])
+
+
+def git_setbranch(branch):
+    checkout = ["git", "checkout", branch]
+    runCommandFromPath(command=checkout)
+
+
+def git_setrevision(sha):
+    reset = ["git", "reset", "--hard", sha]
+    runCommandFromPath(command=reset)
+
+
+def git_apply_patch(folder, patch):
+    apply = ["git", "apply", patch]
+    runCommandFromPath(command=apply, path=folder)
+
+
+def installModule(urls, deps, patches):
+    for url in urls:
+        git_clone(url)
+    for folder, branch, sha in zip(deps["folders"], deps["branches"], deps["shas"]):
+        os.chdir(folder)
+        git_setbranch(branch)
+        git_setrevision(sha)
+        os.chdir("..")
+
+    for folder, patch in zip(patches["folders"], patches["files"]):
+        git_apply_patch(folder, patch)\n
+""")
+
+        # main function
+        installFile.write("\nif __name__ == '__main__':\n")
+
+        # step 1: generate patches
+        unitIndentation = ' '*4
+        installFile.write(unitIndentation + "#"*80 + "\n")
+        installFile.write(unitIndentation + "# (1/3) Generate Patches\n")
+        installFile.write(unitIndentation + "#"*80 + "\n")
+        installFile.write(unitIndentation + 'show_message("(1/3) Creating patches for unpublished commits and uncommitted changes...")\n')
+
+        for depModPath in set(patchModule):
+            depModName = getModuleInfo(depModPath, "Module")
+            if 'unpublished' in patches[depModPath]:
+                patchString = str(patches[depModPath]['unpublished']).replace('\\', r'\\').replace("'", "\\'").replace('"', '\\"')
+                installFile.write(unitIndentation + "with open('{}_unpublished.patch', 'w') as patchFile:\n".format(depModName))
+                installFile.write(
+                    unitIndentation*2 + "patchFile.write(\"\"\""
+                    + patchString
+                    + '\"\"\" )' + "\n"
+                )
+            if 'uncommitted' in patches[depModPath]:
+                patchString = str(patches[depModPath]['uncommitted']).replace('\\', r'\\').replace("'", "\\'").replace('"', '\\"')
+                installFile.write(
+                    unitIndentation + "with open('{}_uncommitted.patch', 'w') as patchFile:\n".format(depModName))
+                installFile.write(
+                    unitIndentation*2 + "patchFile.write(\"\"\""
+                    + patchString
+                    + '\"\"\" )' + "\n"
+                    )
+
+        installFile.write("\n" + unitIndentation + 'show_message("(1/3) Step completed. All patch files are generated.")\n')
+
+        # step2: clone repositories, set branches and commits, apply patches
+        installFile.write(unitIndentation + "#"*80 + "\n")
+        installFile.write(unitIndentation + "# (2/3) Clone repositories, set branches and commits, apply patches\n")
+        installFile.write(unitIndentation + "#"*80 + "\n")
+        installFile.write(unitIndentation + 'show_message("(2/3) Cloning repositories, setting branches and commits, applying patches...")\n')
+
+        if topFolderName:
+            installFile.write('    os.makedirs("./DUMUX", exist_ok=True)\n'
+                              '    os.chdir("DUMUX")\n\n')
+        installFile.write(unitIndentation + 'urls = [\n')
+        for dep in folders:
+            installFile.write(unitIndentation*2 + "\"" + (versions[dep]['remote']) + "\"," + '\n')
+        installFile.write(unitIndentation*2 + ']\n')
+
+        installFile.write(unitIndentation + r'deps = {}' + '\n')
+
+        installFile.write(unitIndentation + 'deps["folders"] = [\n')
+        for dep in folders:
+            installFile.write(unitIndentation*2 + "\"" + dep + "\"," + '\n')
+        installFile.write(unitIndentation*2 + ']\n')
+
+        installFile.write(unitIndentation + 'deps["branches"] = [\n')
+        for dep in folders:
+            installFile.write(unitIndentation*2 + "\"" + versions[dep]['branch'] + "\"," + '\n')
+        installFile.write(unitIndentation*2 + ']\n')
+
+        installFile.write(unitIndentation + 'deps["shas"] = [\n')
+        for dep in folders:
+            installFile.write(unitIndentation*2 + "\"" + versions[dep]['revision'] + "\"," + '\n')
+        installFile.write(unitIndentation*2 + ']\n')
+
+        installFile.write(unitIndentation + r'patches = {}' + '\n')
+
+        installFile.write(unitIndentation + 'patches["folders"] = [\n')
+        for patchfolder in patchModule:
+            installFile.write(unitIndentation*2 + "\"" + patchfolder + "\"," + '\n')
+        installFile.write(unitIndentation*2 + ']\n')
+
+        installFile.write(unitIndentation + 'patches["files"] = [\n')
+        for patchPath in patchRelPath:
+            if topFolderName:
+                patchPath = os.path.join("..", patchPath)
+            installFile.write(unitIndentation*2 + "\"" + patchPath + "\"," + '\n')
+        installFile.write(unitIndentation*2 + ']\n')
+
+        installFile.write(unitIndentation + 'installModule(urls, deps, patches)\n')
+        installFile.write(unitIndentation + 'show_message("(2/3) Repositories are cloned and set properly.")\n')
+
+        # step3: configure with dunecontrol and build tests
+        installFile.write(unitIndentation + "#"*80 + "\n")
+        installFile.write(unitIndentation + "# (3/3) Configure and build\n")
+        installFile.write(unitIndentation + "#"*80 + "\n")
+        installFile.write(unitIndentation + 'show_message("(3/3) Configure and build dune modules and dumux using dunecontrol....")\n')
+        installFile.write(unitIndentation + 'runCommandFromPath(command=["./dune-common/bin/dunecontrol", "--opts={}", "all"])\n'.format(optsRelPath))
+        installFile.write(unitIndentation + 'os.chdir("{}/build-cmake")\n'.format(modFolder))
+        installFile.write(unitIndentation + 'runCommandFromPath(command=["make buildtest"])\n')
+        installFile.write(unitIndentation + 'show_message("(3/3) Step completed. Succesfully configured and built tests.")\n')
