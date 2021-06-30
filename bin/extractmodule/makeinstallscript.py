@@ -31,7 +31,7 @@ def makeInstallScript(path,
                       topFolderName='DUMUX',
                       optsFile=None,
                       skipFolders=None,
-                      suppressHints=False
+                      suppressHints=False,
                       language="bash"):
 
     cwd = os.getcwd()
@@ -112,9 +112,9 @@ def makeInstallScript(path,
         depModName = getModuleInfo(depModPath, "Module")
         if 'unpublished' in patches[depModPath]:
             patchModule.append(depModPath)
-            patchRelPath.append(os.path.relpath("{}_unpublished.patch".format(depModName), depModPath))
+            patchRelPath.append(os.path.relpath("{}/unpublished.patch".format(depModName), depModPath))
         if 'uncommitted' in patches[depModPath]:
-            patchRelPath.append(os.path.relpath("{}_uncommitted.patch".format(depModName), depModPath))
+            patchRelPath.append(os.path.relpath("{}/uncommitted.patch".format(depModName), depModPath))
             patchModule.append(depModPath)
 
     writeShellInstallScript(instFileName,

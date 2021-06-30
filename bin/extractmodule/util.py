@@ -8,7 +8,6 @@ try:
     sys.path.append(os.path.join(path, '../util'))
 
     from common import callFromPath, runCommand
-    from getmoduleinfo import getModuleInfo
 except Exception:
     sys.exit('Could not import common module')
 
@@ -177,15 +176,13 @@ def writeShellInstallScript(instFileName,
 
         # write function to install the new module and its dependencies into install script
         installFile.write(
-            '# defines the function to install module with urls, shas and patches\n'
+            '# defines function to clone modules, set branches and commits\n'
             'installModule()\n'
             '{\n'
             '    URLS=$1\n'
             '    DEPFOLDERS=$2\n'
             '    DEPBRANCHES=$3\n'
-            '    DEPSHAS=$4\n'
-            '    PATCHES=$5\n'
-            '    PATCHFOLDERS=$6\n\n'
+            '    DEPSHAS=$4\n\n'
             '    for url in ${URLS[@]}; do\n'
             '        if ! git clone $url; then\n'
             '            echo "--Error: failed to clone $url"\n'
@@ -202,11 +199,17 @@ def writeShellInstallScript(instFileName,
             '            echo "-- Error: failed to check out commit ${DEPSHAS[index]} in module ${DEPFOLDERS[index]}."\n'
             '        fi\n'
             '        cd ..\n'
-            '    done\n\n'
+            '    done\n'
+            '}\n\n'
+
+            '# defines function to apply patches\n'
+            'applyPatch()\n'
+            '{\n'
+            '    PATCHES=$1\n'
+            '    PATCHFOLDERS=$2\n\n'
             '    for i in ${!PATCHES[@]}; do\n'
             '        cd ${PATCHFOLDERS[i]}\n'
-            f'        if ! git apply {"../" if topFolderName else ""}$'
-            '{PATCHES[i]}; then\n'
+            '        if ! git apply ${PATCHES[i]}; then\n'
             '            echo "--Error: failed to apply patch $patch"\n'
             '        fi\n'
             '        cd ..\n'
@@ -244,17 +247,6 @@ def writeShellInstallScript(instFileName,
         installFile.write('\n'.join(patchRelPath))
         installFile.write('\n)\n\n')
 
-        for depModPath in set(patchModule):
-            depModName = getModuleInfo(depModPath, "Module")
-            if 'unpublished' in patches[depModPath]:
-                installFile.write(f"cat >> {depModName}/unpublished.patch <<'EOF'"
-                                  + patches[depModPath]['unpublished']
-                                  + "EOF\n")
-            if 'uncommitted' in patches[depModPath]:
-                installFile.write("cat >> {}_uncommitted.patch <<'EOF'\n".format(depModName)
-                                  + patches[depModPath]['uncommitted']
-                                  + "EOF\n")
-
         def writeCommandWithErrorCheck(command, errorMessage, indentationLevel=0):
             unitIndentation = ' '*4
             indent = unitIndentation*indentationLevel
@@ -291,7 +283,17 @@ def writeShellInstallScript(instFileName,
                 ' script is executed.\n\n'
             )
 
-        installFile.write('installModule $URLS $DEPFOLDERS $DEPBRANCHES $DEPSHAS $PATCHES $PATCHFOLDERS\n\n')
+        installFile.write('installModule $URLS $DEPFOLDERS $DEPBRANCHES $DEPSHAS\n\n')
+        for depModPath in set(patchModule):
+            if 'unpublished' in patches[depModPath]:
+                installFile.write(f"cat >> {depModPath}/unpublished.patch <<'EOF'\n"
+                                  + patches[depModPath]['unpublished']
+                                  + "EOF\n")
+            if 'uncommitted' in patches[depModPath]:
+                installFile.write(f"cat >> {depModPath}/uncommitted.patch <<'EOF'\n"
+                                  + patches[depModPath]['uncommitted']
+                                  + "EOF\n")
+        installFile.write('applyPatch $PATCHES $PATCHFOLDERS\n\n')
 
         # write configure command
         installFile.write('echo "-- All modules haven been cloned successfully. '
@@ -400,7 +402,7 @@ def git_apply_patch(folder, patch):
     runCommandFromPath(command=apply, path=folder)
 
 
-def installModule(urls, deps, patches):
+def installModule(urls, deps):
     for url in urls:
         git_clone(url)
     for folder, branch, sha in zip(deps["folders"], deps["branches"], deps["shas"]):
@@ -409,47 +411,20 @@ def installModule(urls, deps, patches):
         git_setrevision(sha)
         os.chdir("..")
 
+
+def applyPatch(patches):
     for folder, patch in zip(patches["folders"], patches["files"]):
         git_apply_patch(folder, patch)\n
 """)
 
-        # main function
+        # write main function and step1: clone repositories, set branches and commits
         installFile.write("\nif __name__ == '__main__':\n")
 
-        # step 1: generate patches
         unitIndentation = ' '*4
         installFile.write(unitIndentation + "#"*80 + "\n")
-        installFile.write(unitIndentation + "# (1/3) Generate Patches\n")
+        installFile.write(unitIndentation + "# (1/3) Clone repositories, set branches and commits\n")
         installFile.write(unitIndentation + "#"*80 + "\n")
-        installFile.write(unitIndentation + 'show_message("(1/3) Creating patches for unpublished commits and uncommitted changes...")\n')
-
-        for depModPath in set(patchModule):
-            depModName = getModuleInfo(depModPath, "Module")
-            if 'unpublished' in patches[depModPath]:
-                patchString = str(patches[depModPath]['unpublished']).replace('\\', r'\\').replace("'", "\\'").replace('"', '\\"')
-                installFile.write(unitIndentation + "with open('{}_unpublished.patch', 'w') as patchFile:\n".format(depModName))
-                installFile.write(
-                    unitIndentation*2 + "patchFile.write(\"\"\""
-                    + patchString
-                    + '\"\"\" )' + "\n"
-                )
-            if 'uncommitted' in patches[depModPath]:
-                patchString = str(patches[depModPath]['uncommitted']).replace('\\', r'\\').replace("'", "\\'").replace('"', '\\"')
-                installFile.write(
-                    unitIndentation + "with open('{}_uncommitted.patch', 'w') as patchFile:\n".format(depModName))
-                installFile.write(
-                    unitIndentation*2 + "patchFile.write(\"\"\""
-                    + patchString
-                    + '\"\"\" )' + "\n"
-                    )
-
-        installFile.write("\n" + unitIndentation + 'show_message("(1/3) Step completed. All patch files are generated.")\n')
-
-        # step2: clone repositories, set branches and commits, apply patches
-        installFile.write(unitIndentation + "#"*80 + "\n")
-        installFile.write(unitIndentation + "# (2/3) Clone repositories, set branches and commits, apply patches\n")
-        installFile.write(unitIndentation + "#"*80 + "\n")
-        installFile.write(unitIndentation + 'show_message("(2/3) Cloning repositories, setting branches and commits, applying patches...")\n')
+        installFile.write(unitIndentation + 'show_message("(1/3) Cloning repositories, setting branches and commits...")\n')
 
         if topFolderName:
             installFile.write('    os.makedirs("./DUMUX", exist_ok=True)\n'
@@ -475,9 +450,36 @@ def installModule(urls, deps, patches):
         for dep in folders:
             installFile.write(unitIndentation*2 + "\"" + versions[dep]['revision'] + "\"," + '\n')
         installFile.write(unitIndentation*2 + ']\n')
+        installFile.write(unitIndentation + 'installModule(urls, deps)\n')
+        installFile.write(unitIndentation + 'show_message("(1/3) Repositories are cloned and set properly.")\n')
 
+        # step 2: generate and apply patches
+        installFile.write(unitIndentation + "#"*80 + "\n")
+        installFile.write(unitIndentation + "# (2/3) Generate and apply patches\n")
+        installFile.write(unitIndentation + "#"*80 + "\n")
+        installFile.write(unitIndentation + 'show_message("(2/3) Creating patches for unpublished commits and uncommitted changes...")\n')
+
+        for depModPath in set(patchModule):
+            if 'unpublished' in patches[depModPath]:
+                patchString = str(patches[depModPath]['unpublished']).replace('\\', r'\\').replace("'", "\\'").replace('"', '\\"')
+                installFile.write(unitIndentation + "with open('{}/unpublished.patch', 'w') as patchFile:\n".format(depModPath))
+                installFile.write(
+                    unitIndentation*2 + "patchFile.write(\"\"\""
+                    + patchString
+                    + '\"\"\" )' + "\n"
+                )
+            if 'uncommitted' in patches[depModPath]:
+                patchString = str(patches[depModPath]['uncommitted']).replace('\\', r'\\').replace("'", "\\'").replace('"', '\\"')
+                installFile.write(
+                    unitIndentation + "with open('{}/uncommitted.patch', 'w') as patchFile:\n".format(depModPath))
+                installFile.write(
+                    unitIndentation*2 + "patchFile.write(\"\"\""
+                    + patchString
+                    + '\"\"\" )' + "\n"
+                    )
+
+        installFile.write(unitIndentation + 'show_message("(2/3) Applying patches for unpublished commits and uncommitted changes...")\n')
         installFile.write(unitIndentation + r'patches = {}' + '\n')
-
         installFile.write(unitIndentation + 'patches["folders"] = [\n')
         for patchfolder in patchModule:
             installFile.write(unitIndentation*2 + "\"" + patchfolder + "\"," + '\n')
@@ -485,13 +487,10 @@ def installModule(urls, deps, patches):
 
         installFile.write(unitIndentation + 'patches["files"] = [\n')
         for patchPath in patchRelPath:
-            if topFolderName:
-                patchPath = os.path.join("..", patchPath)
             installFile.write(unitIndentation*2 + "\"" + patchPath + "\"," + '\n')
         installFile.write(unitIndentation*2 + ']\n')
-
-        installFile.write(unitIndentation + 'installModule(urls, deps, patches)\n')
-        installFile.write(unitIndentation + 'show_message("(2/3) Repositories are cloned and set properly.")\n')
+        installFile.write(unitIndentation + 'applyPatch(patches)\n')
+        installFile.write("\n" + unitIndentation + 'show_message("(2/3) Step completed. All patch files are generated and applied.")\n')
 
         # step3: configure with dunecontrol and build tests
         installFile.write(unitIndentation + "#"*80 + "\n")
