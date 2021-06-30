@@ -12,6 +12,7 @@ from util import getPersistentVersions
 from util import printVersionTable
 from util import getPatches
 from util import writeShellInstallScript
+from util import writePythonInstallScript
 
 try:
     path = os.path.split(os.path.abspath(__file__))[0]
@@ -23,6 +24,21 @@ except Exception:
 
 if sys.version_info[0] < 3:
     sys.exit("\nError': Python3 required")
+
+
+# ask user to speficy the language of the generated script
+def python_or_bash():
+    inp = input('In python or bash do you want to generate'
+                'the install script?[p/b] (p:"Python", b:"Bash")')
+    if inp == "b" or inp == "sh" or inp =="bash" or inp == "shell":
+        print("You choose bash as language for install script.")
+        return "bash"
+    elif inp == "p" or inp == "py" or inp == "python":
+        print("You choose python as language for install script")
+        return "python"
+    else:
+        print("--Error: Unknown type. You must choose between python or bash!")
+        return python_or_bash()
 
 
 def makeInstallScript(path,
@@ -46,7 +62,7 @@ def makeInstallScript(path,
                  "         module path is correct and contains 'dune.module'.")
 
     if not fileName:
-        instFileName = 'install_' + modName + '.sh'
+        instFileName = 'install_' + modName + '.%s'%("sh" if language == "bash" else "py")
     else:
         instFileName = fileName
     print("\n-- Creating install script '{}' for module '{}' in folder '{}'"
@@ -89,10 +105,10 @@ def makeInstallScript(path,
     print("   on top of which we will generate the required patches")
     printVersionTable(versions)
 
-    print("\n-- Creating patches for unpublished commits and uncommitted changes")
+    print("\n-- Determining patches information for unpublished commits and uncommited changes")
     patches = getPatches(versions)
 
-    # write installation shell script (switch to relative paths)
+    # write installation script (switch to relative paths)
     versions = {os.path.relpath(p, modParentPath): v for p, v in versions.items()}
     patches = {os.path.relpath(p, modParentPath): v for p, v in patches.items()}
 
@@ -117,22 +133,21 @@ def makeInstallScript(path,
             patchRelPath.append(os.path.relpath("{}/uncommitted.patch".format(depModName), depModPath))
             patchModule.append(depModPath)
 
-    writeShellInstallScript(instFileName,
-                            modName, modFolder,
-                            folders, versions,
-                            patches, patchModule, patchRelPath,
-                            topFolderName, optsRelPath)
+    argsGenerateScript = (instFileName,
+                          modName, modFolder, folders, versions,
+                          patches, patchModule, patchRelPath,
+                          topFolderName, optsRelPath)
 
-    print("\n-- Successfully created install script file " + instFileName)
+    if language == "bash":
+        writeShellInstallScript(*argsGenerateScript)
+    else:
+        writePythonInstallScript(*argsGenerateScript)
+    print("\n"+"*"*120)
+    print("-- Successfully created install script file " + instFileName)
+    print("*"*120)
 
-    subprocess.call(['chmod', 'u+x', instFileName])  # make script executable
-
-    if len(patches) > 0:
-        if not suppressHints:
-            print("-> You should now commit and publish the 'patches' folder and this install script in your module such that others can use it.\n"
-                  "   IMPORTANT: After you committed the patches, you have to adjust the line of the install script in which your module is checked out to a specific commit.\n"
-                  "              That is, in the line 'git reset --hard COMMIT_SHA' for your module, replace COMMIT_SHA by the commit in which you added the patches.\n"
-                  "              If patches had to be created for your own module, please think about comitting and pushing your local changes and rerunning this script again.")
+    if language == "bash":
+        subprocess.call(['chmod', 'u+x', instFileName])  # make script executable
 
     if not suppressHints:
         print(f"\n-- You might want to put installation instructions into the README.md file of your module, for instance:\n"
@@ -142,7 +157,7 @@ def makeInstallScript(path,
               f"\n"
               f"     ```sh\n"
               f"     wget {versions[modFolder]['remote']}/{instFileName}\n"
-              f"     bash {instFileName}\n"
+              f"     {'bash' if language == 'bash' else 'python3'} {instFileName}\n"
               f"     ```\n")
 
     if topFolderName:
@@ -192,6 +207,8 @@ if __name__ == '__main__':
 
     cmdArgs = vars(parser.parse_args())
 
+    scriptLanguage = python_or_bash()
+
     makeInstallScript(
         path=cmdArgs['path'],
         fileName=cmdArgs.get('filename', None),
@@ -199,5 +216,6 @@ if __name__ == '__main__':
         topFolderName=cmdArgs.get('topfoldername', None),
         optsFile=cmdArgs.get('optsFile', None),
         skipFolders=cmdArgs.get('skipfolders', None),
-        suppressHints=cmdArgs.get('suppresshints', False)
+        suppressHints=cmdArgs.get('suppresshints', False),
+        language=scriptLanguage
     )
