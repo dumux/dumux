@@ -85,6 +85,34 @@ public:
     using ParentType::ParentType;
 
     /*!
+     * \brief Calculatest the term responsible for limiting the flow inside solid phases
+     *
+     * \param problem The problem to solve
+     * \param element The DUNE Codim<0> entity for which the residual
+     *                ought to be calculated
+     * \param fvGeometry The finite-volume geometry of the element
+     * \param elemVolVars The volume variables associated with the element stencil
+     * \param scv The sub-control volume over which we integrate the source term
+     * \note This is the default implementation for all models as sources are computed
+     *       in the user interface of the problem
+     *
+     */
+    NumEqVector computeFlowReduction(const Problem& problem,
+                              const Element& element,
+                              const FVElementGeometry& fvGeometry,
+                              const ElementVolumeVariables& elemVolVars,
+                              const SubControlVolume& scv) const
+    {
+        NumEqVector result(0.0);
+        const static Scalar K = getParam<Scalar>("Phasefield.K");
+        const static Scalar xi = getParam<Scalar>("Phasefield.xi");
+        const static Scalar n = getParam<Scalar>("Phasefield.n");
+        result = -K/xi * (1-problem.phasefield(element, scv))*n /
+            (problem.phasefield(element, scv) + n) * elemVolVars[scv].velocity();
+        return result;
+    }
+
+    /*!
      * \brief Calculate the storage term of the equation
      *
      * \param problem The problem to solve
@@ -127,17 +155,12 @@ public:
                               const ElementVolumeVariables& elemVolVars,
                               const SubControlVolume& scv) const
     {
-        // TODO: add g * q term here or in parent source?
         NumEqVector source = ParentType::computeSource(problem, element, fvGeometry, elemVolVars, scv);
         source += problem.gravity()[scv.directionIndex()] * problem.density(element, scv);
-        const static Scalar K = getParam<Scalar>("Phasefield.K");
-        const static Scalar xi = getParam<Scalar>("Phasefield.xi");
-        const static Scalar n = getParam<Scalar>("Phasefield.n");
-        source += -K/xi * (1-problem.phasefield(element, scv))*n /
-            (problem.phasefield(element, scv) + n) * elemVolVars[scv].velocity();
         source += 0.5 * problem.density(element, scv) * elemVolVars[scv].velocity() *
             (problem.phasefield(element, scv, false) - problem.phasefield(element, scv, true))
             /problem.timestepsize();
+        source += computeFlowReduction(problem, element, fvGeometry, elemVolVars, scv);
 
         // Axisymmetric problems in 2D feature an extra source terms arising from the transformation to cylindrical coordinates.
         // See Ferziger/Peric: Computational methods for fluid dynamics chapter 8.
