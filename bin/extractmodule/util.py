@@ -297,9 +297,9 @@ def writeShellInstallScript(instFileName,
 
         # write configure command
         installFile.write('echo "-- All modules haven been cloned successfully. '
-                        'Configuring project..."\n')
+                          'Configuring project..."\n')
         writeCommandWithErrorCheck(
-            './dune-common/bin/dunecontrol --opts=dumux/cmake.opts all'.format(optsRelPath),
+            './dune-common/bin/dunecontrol --opts={} all'.format(optsRelPath),
             '--Error: could not configure project'
         )
 
@@ -360,9 +360,7 @@ def writePythonInstallScript(instFileName,
         # import libraies
         installFile.write("""
 import os
-import sys
 import subprocess
-import traceback
 
 """)
 
@@ -502,6 +500,6 @@ if __name__ == '__main__':
     show_message("(3/3) Configure and build dune modules and dumux using dunecontrol....")
     runCommandFromPath(command=["./dune-common/bin/dunecontrol", "--opts={0}", "all"])
     os.chdir("{1}/build-cmake")
-    runCommandFromPath(command=["make buildtest"])
+    runCommandFromPath(command=["make", "build_tests"])
     show_message("(3/3) Step completed. Succesfully configured and built tests.")
 """.format(*[optsRelPath, modFolder]))
