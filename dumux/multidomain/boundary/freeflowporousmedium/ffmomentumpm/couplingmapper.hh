@@ -148,7 +148,7 @@ public:
                 const auto& ffElement = freeFlowMomentumGG.element(ffElemIdx);
                 ffFvGeometry.bindElement(ffElement);
 
-                for (const auto& ffScvf : scvfs(ffFvGeometry))
+                for (const auto& ffScvf : scvfs(ffFvGeometry)) // TODO: maybe better iterate over all scvs
                 {
                     // TODO this only takes the scv directly at the interface, maybe extend
                     if (!ffScvf.boundary() || !ffScvf.isFrontal())
@@ -166,13 +166,27 @@ public:
                     isCoupledScvf_[CouplingManager::porousMediumIndex][pmScvf.index()] = true;
                     isCoupledScvf_[CouplingManager::freeFlowMomentumIndex][ffScvf.index()] = true;
 
-                    // add all free-flow scvfs touching the coupling interface
+                    // add all lateral free-flow scvfs touching the coupling interface ("standing" or "lying")
                     for (const auto& otherFfScvf : scvfs(ffFvGeometry, ffScv))
                     {
                         if (otherFfScvf.isLateral())
                         {
+                            // the orthogonal scvf has to lie on the coupling interface
                             const auto& lateralOrthogonalScvf = ffFvGeometry.lateralOrthogonalScvf(otherFfScvf);
                             isCoupledLateralScvf_[lateralOrthogonalScvf.index()] = true;
+
+                            // the "standing" scvf is marked as coupled if it does not lie on a boundary or if that boundary itself is a coupling interface
+                            if (!otherFfScvf.boundary())
+                                isCoupledLateralScvf_[otherFfScvf.index()] = true;
+                            else
+                            {
+                                // for robustness add epsilon in unit outer normal direction
+                                const auto otherScvfEps = (otherFfScvf.ipGlobal() - otherFfScvf.geometry().corner(0)).two_norm()*1e-8;
+                                auto otherScvfGlobalPos = otherFfScvf.center(); otherScvfGlobalPos.axpy(otherScvfEps, otherFfScvf.unitOuterNormal());
+
+                                if (!intersectingEntities(otherScvfGlobalPos, porousMediumGG.boundingBoxTree()).empty())
+                                    isCoupledLateralScvf_[otherFfScvf.index()] = true;
+                            }
                         }
                     }
                     isCoupledFFDof_[ffScv.dofIndex()] = true;
