@@ -105,7 +105,7 @@ struct NavierStokesMomentumBoundaryFluxHelper
                                               * scvf.directionSign();
 
             // advective terms
-            if (problem.enableInertiaTerms())
+            if (problem.enableInertiaTerms()) // TODO revise advection terms! Take care with upwinding!
             {
                 const auto transportingVelocity = [&]()
                 {
@@ -277,19 +277,10 @@ struct NavierStokesMomentumBoundaryFluxHelper
                      }
                 }();
 
-                const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity();
-                const auto outerVelocity = slipVelocity;
-
+                // Do not use upwinding here but directly take the slip velocity located on the boundary. Upwinding with a weight of 0.5
+                // would actually prevent second order grid convergence.
                 const auto rho = problem.getInsideAndOutsideDensity(fvGeometry.element(), fvGeometry, scvf);
-                const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
-
-                const auto insideMomentum = innerVelocity * rho.first;
-                const auto outsideMomentum = outerVelocity * rho.second;
-
-                static const auto upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
-
-                const auto transportedMomentum =  selfIsUpstream ? (upwindWeight * insideMomentum + (1.0 - upwindWeight) * outsideMomentum)
-                                                                    : (upwindWeight * outsideMomentum + (1.0 - upwindWeight) * insideMomentum);
+                const auto transportedMomentum = slipVelocity * rho.second;
 
                 flux[scv.dofAxis()] += transportingVelocity * transportedMomentum * scvf.directionSign();
             }
