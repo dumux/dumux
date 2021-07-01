@@ -30,7 +30,7 @@ if sys.version_info[0] < 3:
 def python_or_bash():
     inp = input('In python or bash do you want to generate'
                 'the install script?[p/b] (p:"Python", b:"Bash")')
-    if inp == "b" or inp == "sh" or inp =="bash" or inp == "shell":
+    if inp == "b" or inp == "sh" or inp == "bash" or inp == "shell":
         print("You choose bash as language for install script.")
         return "bash"
     elif inp == "p" or inp == "py" or inp == "python":
@@ -48,7 +48,10 @@ def makeInstallScript(path,
                       optsFile=None,
                       skipFolders=None,
                       suppressHints=False,
-                      language="bash"):
+                      language=None):
+
+    if language != "bash" and language != "python":
+        language = python_or_bash()
 
     cwd = os.getcwd()
     modPath = os.path.abspath(os.path.join(cwd, path))
@@ -205,9 +208,12 @@ if __name__ == '__main__':
                         required=False, default=False,
                         help='if output needs to be suppressed')
 
-    cmdArgs = vars(parser.parse_args())
+    parser.add_argument('-l', '--language',
+                        required=False, default=None,
+                        help='Language used to write install script, '
+                             'currently only python and bash are supported')
 
-    scriptLanguage = python_or_bash()
+    cmdArgs = vars(parser.parse_args())
 
     makeInstallScript(
         path=cmdArgs['path'],
@@ -217,5 +223,5 @@ if __name__ == '__main__':
         optsFile=cmdArgs.get('optsFile', None),
         skipFolders=cmdArgs.get('skipfolders', None),
         suppressHints=cmdArgs.get('suppresshints', False),
-        language=scriptLanguage
+        language=cmdArgs.get('language', None)
     )
