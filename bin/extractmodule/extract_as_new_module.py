@@ -141,7 +141,7 @@ the module '{module_dir}':
 {os.linesep.join([f"   - {os.path.relpath(f, module_path)}" for f in subfolders])}
 
 and all headers contained in '{module_dir}'
-tha are required to build the exectutables from the sources:
+that are required to build the exectutables from the sources:
 {os.linesep.join([f"   - {s}" for s in source_files])}
 
 The extracted files are copied into a new DUNE module
