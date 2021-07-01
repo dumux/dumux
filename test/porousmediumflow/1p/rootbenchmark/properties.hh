@@ -26,6 +26,8 @@
 #define DUMUX_ONEP_ROOT_BENCHMARK_PROPERTIES_HH
 
 #include <dune/grid/yaspgrid.hh>
+#include <dune/grid/parallelgrid.hh>
+#include <dune/foamgrid/foamgrid.hh>
 
 #include <dumux/discretization/cctpfa.hh>
 
@@ -50,7 +52,8 @@ template<class TypeTag>
 struct Grid<TypeTag, TTag::RootBenchmark>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = Dune::YaspGrid<1, Dune::EquidistantOffsetCoordinates<Scalar, 1>>;
+    //using type = Dune::YaspGrid<1, Dune::EquidistantOffsetCoordinates<Scalar, 1>>;
+    using type = Dune::ParallelGrid<Dune::FoamGrid<1, 1>>;
 };
 
 // Set the problem property

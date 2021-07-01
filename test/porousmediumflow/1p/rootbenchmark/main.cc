@@ -30,7 +30,8 @@
 
 #include <dumux/common/properties.hh>
 
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/amgbackend.hh>
+#include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/pdesolver.hh>
 
 #include <dumux/assembly/fvassembler.hh>
@@ -40,6 +41,9 @@
 #endif
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
+#if HAVE_DUNE_FOAMGRID
+#include <dumux/io/grid/gridmanager_foam.hh>
+#endif
 
 #include "properties.hh"
 
@@ -94,8 +98,8 @@ int main(int argc, char** argv)
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     // the linear solver
-    using LinearSolver = SSORCGBackend;
-    auto linearSolver = std::make_shared<LinearSolver>();
+    using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 
     // the system solver
     using Solver = Dumux::LinearPDESolver<Assembler, LinearSolver>;
