@@ -18,6 +18,7 @@ from functools import partial
 from util import getPersistentVersions
 from util import versionTable
 from makeinstallscript import makeInstallScript
+from makeinstallscript import python_or_bash
 try:
     path = os.path.split(os.path.abspath(__file__))[0]
     sys.path.append(os.path.join(path, '../bin/util'))
@@ -181,7 +182,7 @@ please go to the build folders corresponding to the sources listed above.\n
 ###################################################################
 # Installation part of README.md
 ###################################################################
-def info_readme_installation(remoteurl, install_script_name, new_module_name):
+def info_readme_installation(remoteurl, install_script_name, new_module_name, language):
     return f"""
 
 ## Installation
@@ -195,7 +196,7 @@ provided in this repository to install all dependent modules.
 mkdir DUMUX
 cd DUMUX
 git clone {remoteurl}
-./{new_module_name}/{install_script_name}
+{"./" if language == "bash" else "python3 "}{new_module_name}/{install_script_name}
 ```
 
 This will clone all modules into the directory `DUMUX`,
@@ -424,7 +425,7 @@ if __name__ == "__main__":
 
     # ask user if to write version information into README.md
     if query_yes_no("Write detailed version information"
-                    " (folder/branch/commits/dates) into README.md?"):
+                    " (folder/branch/commits/dates) into README.md?\n"):
         print("Looking for the dune modules in path: "
               + os.path.abspath(".")
               + "...")
@@ -442,11 +443,12 @@ if __name__ == "__main__":
 
     # if there is a remote repository available
     # we can directly push the source code and
-    # also create a "one-click" installation script
-    install_script_name = 'install_' + new_module_name + '.sh'
+    # also create a "one-click" installation scrip
+    language = python_or_bash()
+    install_script_name = 'install_' + new_module_name + '.%s'%("sh" if language == "bash" else "py")
     try:
         makeInstallScript(new_module_path, ignoreUntracked=True, skipFolders=new_module_name,
-                          suppressHints=True, topFolderName=None)
+                          suppressHints=True, topFolderName=None, language=language)
     except Exception:
         sys.exit(
             f"Automatically generate install script {install_script_name} failed."
@@ -464,7 +466,7 @@ if __name__ == "__main__":
 
         # append install information into readme
         with open(readme_path, "a") as readme_file:
-            readme_file.write(info_readme_installation(remoteurl, install_script_name, new_module_name))
+            readme_file.write(info_readme_installation(remoteurl, install_script_name, new_module_name, language))
         run_from_mod('git init')
         run_from_mod('git add .')
         run_from_mod('git commit -m "Initial commit"')
@@ -473,12 +475,12 @@ if __name__ == "__main__":
 
     # output guidance for users to create install script manually
     else:
-        remoteurl = "{$remoteurl$} ({$remoteurl$} is the URL for your remote git repository)"
+        remoteurl = "{$remoteurl$} (needs to be manuelly adapted later)"
         # append install information into readme
         with open(readme_path, "a") as readme_file:
-            readme_file.write(info_readme_installation(remoteurl, install_script_name, new_module_name))
+            readme_file.write(info_readme_installation(remoteurl, install_script_name, new_module_name, language))
         run_from_mod('git init')
         run_from_mod('git add .')
         run_from_mod('git commit -m "Initial commit"')
-        print("Please remember to replace the placeholder $remoteurl$ in README installation\n"
-              "with the correct URL after your remote git repository is created.")
+        print("\nPlease remember to replace placeholder $remoteurl$ in installation part\n"
+              "of the README file with the correct URL of your remote git repository.")
