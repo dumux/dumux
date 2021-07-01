@@ -30,6 +30,11 @@
 #include <dune/foamgrid/dgffoam.hh>
 #endif
 
+// Meta grid for parallelism (meta grid depends on alugrid)
+#if HAVE_DUNE_METAGRID && HAVE_DUNE_ALUGRID
+#include <dune/grid/parallelgrid.hh>
+#endif
+
 #ifndef DUMUX_IO_GRID_MANAGER_BASE_HH
 #include <dumux/io/grid/gridmanager_base.hh>
 #endif
@@ -162,6 +167,37 @@ public:
         ParentType::loadBalance();
     }
 };
+
+#if HAVE_DUNE_METAGRID && HAVE_DUNE_ALUGRID
+
+template<int dim, int dimworld>
+class GridManager<Dune::ParallelGrid<Dune::FoamGrid<dim, dimworld>>>
+: public GridManagerBase<Dune::ParallelGrid<Dune::FoamGrid<dim, dimworld>>>
+{
+    using FoamGrid = Dune::FoamGrid<dim, dimworld>;
+    using ParallelGrid = Dune::ParallelGrid<FoamGrid>;
+    using ParentType = GridManagerBase<ParallelGrid>;
+public:
+    using Grid = ParallelGrid;
+
+    /*!
+     * \brief Make the grid
+     */
+    void init(const std::string& paramGroup = "")
+    {
+        foamGridManager_ = std::make_unique<GridManager<FoamGrid>>();
+        foamGridManager_->init(paramGroup);
+
+        ParentType::gridPtr() = std::make_shared<Grid>(foamGridManager_->grid());
+        ParentType::maybeRefineGrid(paramGroup);
+        ParentType::loadBalance();
+    }
+
+private:
+    std::unique_ptr<GridManager<FoamGrid>> foamGridManager_;
+};
+
+#endif // HAVE_DUNE_METAGRID
 
 #endif // HAVE_DUNE_FOAMGRID
 
