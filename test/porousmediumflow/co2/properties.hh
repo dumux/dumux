@@ -28,6 +28,7 @@
 #include <dune/alugrid/grid.hh>
 
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/ccmpfa.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/co2/model.hh>
 
@@ -51,6 +52,7 @@ namespace TTag {
 struct Heterogeneous { using InheritsFrom = std::tuple<TwoPTwoCCO2>; };
 struct HeterogeneousBox { using InheritsFrom = std::tuple<Heterogeneous, BoxModel>; };
 struct HeterogeneousCCTpfa { using InheritsFrom = std::tuple<Heterogeneous, CCTpfaModel>; };
+struct HeterogeneousCCMpfa { using InheritsFrom = std::tuple<Heterogeneous, CCMpfaModel>; };
 } // end namespace TTag
 
 //Set the grid type
@@ -82,6 +84,19 @@ struct FluidSystem<TypeTag, TTag::Heterogeneous>
 // Use Moles
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::Heterogeneous> { static constexpr bool value = false; };
+
+// solution-independent permeability
+template<class TypeTag>
+struct SolutionDependentAdvection<TypeTag, TTag::Heterogeneous> { static constexpr bool value = false; };
+
+// enable caches
+template<class TypeTag>
+struct EnableGridGeometryCache<TypeTag, TTag::Heterogeneous> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::Heterogeneous> { static constexpr bool value = true; };
+// TODO: Test fails using this cache
+// template<class TypeTag>
+// struct EnableGridFluxVariablesCache<TypeTag, TTag::Heterogeneous> { static constexpr bool value = true; };
 
 #if !ISOTHERMAL
 // Create new type tags
