@@ -40,20 +40,10 @@
 #include <dumux/discretization/facecentered/staggered/fvelementgeometry.hh>
 #include <dumux/discretization/facecentered/staggered/geometryhelper.hh>
 #include <dumux/discretization/facecentered/staggered/connectivitymap.hh>
+#include <dumux/discretization/facecentered/staggered/normalaxis.hh>
 
 
 namespace Dumux {
-
-/*!
- * \ingroup StaggeredDiscretization
- * \brief Returns the dirction index of the facet (0 = x, 1 = y, 2 = z)
- */
-template<class Vector>
-inline static auto directionIndex(Vector&& vector)
-{
-    const auto eps = 1e-8;
-    return std::find_if(vector.begin(), vector.end(), [eps](const auto& x) { return std::abs(x) > eps; } ) - vector.begin();
-}
 
 /*!
  * \ingroup XXX
@@ -288,10 +278,8 @@ public:
             {
                 const auto dofIndex = intersectionMapper().globalIntersectionIndex(element, localScvIdx);
                 const auto localOppositeScvIdx = geometryHelper.localOppositeIdx(localScvIdx);
-                const auto directionIdx = Dumux::directionIndex(intersection.centerUnitOuterNormal());
                 const auto& intersectionGeometry = intersection.geometry();
                 const auto& elementGeometry = element.geometry();
-                const auto& elementCenter = elementGeometry.center();
 
                 // store the local index of the first scvf corresponding to the scv on the current intersection
                 scvfOfScvInfo_[eIdx].push_back(localScvfIdx);
@@ -328,26 +316,17 @@ public:
                                    globalScvIndices[localScvIdx],
                                    localScvIdx,
                                    dofIndex,
-                                   directionIdx,
+                                   Dumux::normalAxis(intersection.centerUnitOuterNormal()),
                                    this->elementMapper().index(element),
                                    onDomainBoundary_(intersection));
 
                 // the frontal sub control volume face at the element center
-                ScvfCornerStorage frontalCorners;
-                assert(frontalCorners.size() == intersectionGeometry.corners()); // we assume a fixed-size container
-                const auto frontalOffSet = intersectionGeometry.center() - elementCenter;
-                for (int i = 0; i < frontalCorners.size(); ++i)
-                    frontalCorners[i] = intersectionGeometry.corner(i) + frontalOffSet;
-
-                scvfs_.emplace_back(elementCenter,
-                                    elementCenter,
-                                    std::move(frontalCorners),
+                scvfs_.emplace_back(elementGeometry,
+                                    intersectionGeometry,
                                     std::array{globalScvIndices[localScvIdx], globalScvIndices[localOppositeScvIdx]},
                                     localScvfIdx,
-                                    intersectionGeometry.volume(),
-                                    directionIdx,
-                                    -sign(intersection.centerUnitOuterNormal()[directionIdx]),
                                     globalScvfIndices[localScvfIdx],
+                                    intersection.centerUnitOuterNormal(),
                                     SubControlVolumeFace::FaceType::frontal,
                                     false);
                 ++localScvfIdx;
@@ -385,37 +364,13 @@ public:
                         return std::array{globalScvIndices[localScvIdx], globalOutsideScvIdx};
                     }();
 
-                    const auto integrationPointPosition = intersectionGeometry.center() + (lateralFacetGeometry.center() - elementCenter);
-                    const auto lateralFaceCenter = 0.5*(lateralFacetGeometry.center() + integrationPointPosition);
-                    const auto& laterUnitOuterNormal = lateralIntersection.centerUnitOuterNormal();
-                    const auto lateralDirIdx = directionIndex(laterUnitOuterNormal);
-
-                    // getting the lateral corners requires some work
-                    ScvfCornerStorage lateralCorners;
-                    assert(lateralCorners.size() == intersectionGeometry.corners()); // we assume a fixed-size container
-                    for (int i = 0; i < lateralCorners.size(); ++i)
-                    {
-                        // copy the corner of the corresponding lateral facet
-                        auto& corner = lateralCorners[i];
-                        corner = lateralFacetGeometry.corner(i);
-
-                        // shift the corner such that the scvf covers half of the lateral facet
-                        // (keep the outer corner positions)
-                        using std::abs;
-                        const auto eps =  1e-8; // TODO
-                        if (abs(corner[directionIdx] - scvs_.back().dofPosition()[directionIdx]) > eps)
-                            corner[directionIdx] = elementCenter[directionIdx];
-                    }
-
-                    scvfs_.emplace_back(lateralFaceCenter,
-                                        integrationPointPosition,
-                                        std::move(lateralCorners),
+                    scvfs_.emplace_back(elementGeometry,
+                                        intersectionGeometry,
+                                        lateralFacetGeometry,
                                         globalScvIndicesForLateralFace, // TODO higher order
                                         localScvfIdx,
-                                        lateralFacetGeometry.volume()*0.5,
-                                        lateralDirIdx,
-                                        sign(laterUnitOuterNormal[lateralDirIdx]),
                                         globalScvfIndices[localScvfIdx],
+                                        lateralIntersection.centerUnitOuterNormal(),
                                         SubControlVolumeFace::FaceType::lateral,
                                         onDomainBoundary_(lateralIntersection));
                     ++localScvfIdx;
@@ -438,25 +393,14 @@ public:
                 if (onDomainBoundary_(intersection))
                 {
                     ++numBoundaryScvf_;
-                    const auto intersectionGeometry = intersection.geometry();
-                    const auto boundaryCenter = intersectionGeometry.center();
-                    const auto directionIdx = Dumux::directionIndex(intersection.centerUnitOuterNormal());
 
                     // the frontal sub control volume face at the boundary
-                    ScvfCornerStorage boundaryCorners;
-                    assert(boundaryCorners.size() == intersectionGeometry.corners()); // we assume a fixed-size container
-                    for (int i = 0; i < boundaryCorners.size(); ++i)
-                        boundaryCorners[i] = intersectionGeometry.corner(i);
-
-                    scvfs_.emplace_back(boundaryCenter,
-                                        boundaryCenter,
-                                        std::move(boundaryCorners),
+                    scvfs_.emplace_back(element.geometry(),
+                                        intersection.geometry(),
                                         std::array{globalScvIndices[localScvIdx], globalScvIndices[localScvIdx]}, // TODO outside boundary, periodic, parallel?
                                         localScvfIdx,
-                                        intersectionGeometry.volume(),
-                                        directionIdx,
-                                        sign(intersection.centerUnitOuterNormal()[directionIdx]),
                                         globalScvfIndices[localScvfIdx],
+                                        intersection.centerUnitOuterNormal(),
                                         SubControlVolumeFace::FaceType::frontal,
                                         true);
                     ++localScvfIdx;
