@@ -31,18 +31,18 @@
 
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
+#include <dumux/discretization/facecentered/staggered/normalaxis.hh>
 #include <dune/geometry/axisalignedcubegeometry.hh>
-
 
 #include <typeinfo>
 
 namespace Dumux {
 
 /*!
- * \ingroup CCDiscretization
- * \brief Default traits class to be used for the sub-control volumes
- *        for the cell-centered finite volume scheme using TPFA
- * \tparam GV the type of the grid view
+ * \ingroup StaggeredDiscretization
+ * \brief Default traits class to be used for the sub-control volume face
+ *        for the face-centered staggered finite volume scheme
+ * \tparam GridView the type of the grid view
  */
 template<class GridView>
 struct FaceCenteredDefaultScvfGeometryTraits
@@ -70,6 +70,9 @@ class FaceCenteredStaggeredSubControlVolumeFace
 
     using SmallLocalIndexType = typename IndexTraits<GridView>::SmallLocalIndex;
 
+    using ElementGeometry = typename Element::Geometry;
+    using IntersectionGeometry = typename GridView::Intersection::Geometry;
+
 public:
     //! state the traits public and thus export all types
     using Traits = T;
@@ -79,35 +82,78 @@ public:
 
     FaceCenteredStaggeredSubControlVolumeFace() = default;
 
-    template<class Corners>
-    FaceCenteredStaggeredSubControlVolumeFace(const GlobalPosition& center,
-                                              const GlobalPosition& ipGlobal,
-                                              Corners&& corners,
+    //! The constructor for frontal faces
+    FaceCenteredStaggeredSubControlVolumeFace(const ElementGeometry& elementGeometry,
+                                              const IntersectionGeometry& intersectionGeometry,
                                               const std::array<GridIndexType, 2> globalScvIndices,
                                               const SmallLocalIndexType localScvfIdx,
-                                              const Scalar area,
-                                              const SmallLocalIndexType normalAxis,
-                                              const std::int_least8_t outerNormalSign,
                                               const GridIndexType globalScvfIdx,
+                                              const GlobalPosition& unitOuterNormal,
                                               const FaceType faceType,
                                               const bool boundary)
-    : center_(center)
-    , ipGlobal_(ipGlobal)
-    , globalScvIndices_(globalScvIndices)
+    : globalScvIndices_(globalScvIndices)
     , localScvfIdx_(localScvfIdx)
-    , area_(area)
-    , normalAxis_(normalAxis)
-    , outerNormalSign_(outerNormalSign)
     , globalScvfIdx_(globalScvfIdx)
+    , area_(intersectionGeometry.volume())
+    , normalAxis_(Dumux::normalAxis(unitOuterNormal))
+    , outerNormalSign_(sign(unitOuterNormal[normalAxis_]))
     , faceType_(faceType)
     , boundary_(boundary)
     {
-        if constexpr (std::is_same_v<Corners, CornerStorage>)
-            corners_ = std::move(corners);
-        else
+        assert(faceType == FaceType::frontal);
+        center_ = boundary ? intersectionGeometry.center() : elementGeometry.center();
+        ipGlobal_ = center_;
+
+        if (!boundary)
+            outerNormalSign_ *= -1.0;
+
+        // the corners (coincide with intersection corners for boundary scvfs)
+        const auto frontalOffSet = boundary ? GlobalPosition(0.0)
+                                    : intersectionGeometry.center() - elementGeometry.center();
+
+        for (int i = 0; i < corners_.size(); ++i)
+            corners_[i] = intersectionGeometry.corner(i) + frontalOffSet;
+    }
+
+    //! The constructor for lateral faces
+    template<class LateralFacetGeometry>
+    FaceCenteredStaggeredSubControlVolumeFace(const ElementGeometry& elementGeometry,
+                                              const IntersectionGeometry& intersectionGeometry,
+                                              const LateralFacetGeometry& lateralFacetGeometry,
+                                              const std::array<GridIndexType, 2> globalScvIndices,
+                                              const SmallLocalIndexType localScvfIdx,
+                                              const GridIndexType globalScvfIdx,
+                                              const GlobalPosition& unitOuterNormal,
+                                              const FaceType faceType,
+                                              const bool boundary)
+    : globalScvIndices_(globalScvIndices)
+    , localScvfIdx_(localScvfIdx)
+    , globalScvfIdx_(globalScvfIdx)
+    , area_(0.5*lateralFacetGeometry.volume())
+    , normalAxis_(Dumux::normalAxis(unitOuterNormal))
+    , outerNormalSign_(sign(unitOuterNormal[normalAxis_]))
+    , faceType_(faceType)
+    , boundary_(boundary)
+    {
+        assert(faceType == FaceType::lateral);
+        const auto shift = intersectionGeometry.center() - elementGeometry.center();
+        ipGlobal_ = lateralFacetGeometry.center() + shift;
+        center_ = 0.5*(lateralFacetGeometry.center() + ipGlobal_);
+
+        const auto dofAxis = Dumux::normalAxis(shift);
+        const auto eps = shift.two_norm() * 1e-8;
+
+        for (int i = 0; i < corners_.size(); ++i)
         {
-            for (int i = 0; i < corners_.size(); ++i)
-                corners_[i] = corners[i];
+            // copy the corner of the corresponding lateral facet
+            auto& corner = corners_[i];
+            corner = lateralFacetGeometry.corner(i);
+
+            // shift the corner such that the scvf covers half of the lateral facet
+            // (keep the outer corner positions)
+            using std::abs;
+            if (abs(corner[dofAxis] - intersectionGeometry.center()[dofAxis]) > eps)
+                corner[dofAxis] = elementGeometry.center()[dofAxis];
         }
     }
 
@@ -182,10 +228,10 @@ private:
     CornerStorage corners_;
     std::array<GridIndexType, 2> globalScvIndices_;
     SmallLocalIndexType localScvfIdx_;
+    GridIndexType globalScvfIdx_;
     Scalar area_;
     SmallLocalIndexType normalAxis_;
     std::int_least8_t outerNormalSign_;
-    GridIndexType globalScvfIdx_;
     FaceType faceType_;
     bool boundary_;
 };
