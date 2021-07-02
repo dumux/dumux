@@ -30,6 +30,7 @@
 #include <dune/geometry/type.hh>
 
 #if HAVE_DUNE_FOAMGRID
+#include <dune/grid/parallelgrid.hh>
 #include <dune/foamgrid/foamgrid.hh>
 #endif
 
@@ -60,7 +61,7 @@ struct TubesTestBox { using InheritsFrom = std::tuple<TubesTest, BoxModel>; };
 // Set the grid type
 #if HAVE_DUNE_FOAMGRID
 template<class TypeTag>
-struct Grid<TypeTag, TTag::TubesTest> { using type = Dune::FoamGrid<1, 3>; };
+struct Grid<TypeTag, TTag::TubesTest> { using type = Dune::ParallelGrid<Dune::FoamGrid<1, 3>>; };
 #endif
 
 // if we have pt scotch use the reordering dof mapper to optimally sort the dofs (cc)
