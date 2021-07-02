@@ -102,6 +102,20 @@ def get_remote_url(repo_path):
             sys.stdout.write("ERROR: The remote reposity is not empty!.\n")
 
 
+def path_check(basedir, subdir):
+    # check if basedir contained in the script path
+    if not os.path.isdir(basedir):
+        sys.exit("ERROR: You need to run the script"
+                 f"one level above the folder {basedir}.\n"
+                 f"Run \"{os.path.basename(__file__)} --help\" for details.")
+
+    # check if subdir immediate subfolder of basedir
+    list_subdir = [subdir.path for subdir in os.scandir(basedir) if subdir.is_dir()]
+    for folder in subdir:
+        if os.path.join(basedir, folder.strip(os.sep)) not in list_subdir:
+            raise NameError(f"Subfolder '{folder}' is not a subfolder of '{basedir}'")
+
+
 def extract_sources_files(module_dir, subfolders):
     def find_files_with_pattern(pattern, path):
         result = []
@@ -114,8 +128,6 @@ def extract_sources_files(module_dir, subfolders):
     sources = []
     for folder in subfolders:
         folder_path = os.path.join(module_dir, folder)
-        if not os.path.isdir(folder_path):
-            raise NameError(f"Subfolder '{folder}' is not a subfolder of '{module_dir}'")
         sources += find_files_with_pattern("*.cc", os.path.abspath(folder_path))
     return sources
 
@@ -261,11 +273,8 @@ if __name__ == "__main__":
     # make unique set of subfolders
     subfolders = list(set(args['subfolder']))
 
-    # check if we are above module_dir
-    if not os.path.isdir(module_dir):
-        sys.exit("ERROR: You need to run the script"
-                 f"one level above the folder {module_dir}.\n"
-                 f"Run \"{os.path.basename(__file__)} --help\" for details.")
+    # check paths to prevenet possible errors
+    path_check(module_dir, subfolders)
 
     # determine all source files in the paths passed as arguments
     source_files = extract_sources_files(module_dir, subfolders)
