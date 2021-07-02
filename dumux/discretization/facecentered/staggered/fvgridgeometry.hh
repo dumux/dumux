@@ -187,6 +187,8 @@ public:
     //! update all fvElementGeometries (do this again after grid adaption)
     void update()
     {
+        ParentType::update();
+
         // clear containers (necessary after grid refinement)
         scvs_.clear();
         scvfs_.clear();
@@ -321,33 +323,12 @@ public:
                 }
 
                 // the sub control volume
-                ScvCornerStorage scvCorners;
-                assert(scvCorners.size() == elementGeometry.corners()); // we assume a fixed-size container
-                for (int i = 0; i < scvCorners.size(); ++i)
-                {
-                    auto& corner = scvCorners[i];
-
-                    // copy the corner of the corresponding element
-                    corner = elementGeometry.corner(i);
-
-                    // shift the corner such that the scvf covers half of the lateral facet
-                    // (keep the outer corner positions)
-                    using std::abs;
-                    const auto eps =  1e-8; // TODO
-                    if (abs(corner[directionIdx] - intersectionGeometry.center()[directionIdx]) > eps)
-                        corner[directionIdx] = elementCenter[directionIdx];
-                }
-
-                const auto scvCenter = 0.5*(intersectionGeometry.center() + elementCenter);
-                scvs_.emplace_back(scvCenter,
-                                   intersectionGeometry.center(),
-                                   std::move(scvCorners),
-                                   elementGeometry.volume()*0.5,
+                scvs_.emplace_back(elementGeometry,
+                                   intersectionGeometry,
                                    globalScvIndices[localScvIdx],
                                    localScvIdx,
                                    dofIndex,
                                    directionIdx,
-                                   sign(intersection.centerUnitOuterNormal()[directionIdx]),
                                    this->elementMapper().index(element),
                                    onDomainBoundary_(intersection));
 
@@ -567,7 +548,7 @@ private:
     std::vector<std::array<GridIndexType, numScvsPerElement>> scvIndicesOfElement_;
     std::vector<std::vector<GridIndexType>> scvfIndicesOfElement_;
 
-        // a map for periodic boundary vertices
+    // a map for periodic boundary vertices
     std::unordered_map<GridIndexType, GridIndexType> periodicFaceMap_;
 };
 
