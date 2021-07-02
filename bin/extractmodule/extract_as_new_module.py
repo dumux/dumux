@@ -311,7 +311,7 @@ if __name__ == "__main__":
     )
 
     # get the base path of the new module
-    new_module_path = module_path.replace(module_dir, new_module_name, 1)
+    new_module_path = new_module_name.join(module_path.rsplit(module_dir,1))
 
     # copy the source tree
     # copy all base folders complete, then delete the unnecessary ones
