@@ -69,42 +69,50 @@ class FaceCenteredStaggeredSubControlVolume
     using GridIndexType = typename T::GridIndexType;
     using SmallLocalIndexType = typename IndexTraits<GridView>::SmallLocalIndex;
 
+    using ElementGeometry = typename Element::Geometry;
+    using IntersectionGeometry = typename GridView::Intersection::Geometry;
+
+
 public:
     //! state the traits public and thus export all types
     using Traits = T;
 
     FaceCenteredStaggeredSubControlVolume() = default;
 
-    template<class Corners>
-    FaceCenteredStaggeredSubControlVolume(const GlobalPosition& center,
-                                          const GlobalPosition& dofPosition,
-                                          Corners&& corners,
-                                          const Scalar volume,
+    FaceCenteredStaggeredSubControlVolume(const ElementGeometry& elementGeometry,
+                                          const IntersectionGeometry& intersectionGeometry,
                                           const GridIndexType globalIndex,
                                           const SmallLocalIndexType indexInElement,
                                           const GridIndexType dofIdx,
                                           const SmallLocalIndexType dofAxis,
-                                          const std::int_least8_t dirSign,
                                           const GridIndexType eIdx,
                                           const bool boundary)
-    : center_(center)
-    , dofPosition_(dofPosition)
-    , volume_(volume)
+    : center_(0.5*(intersectionGeometry.center() + elementGeometry.center()))
+    , dofPosition_(intersectionGeometry.center())
+    , volume_(elementGeometry.volume()*0.5)
     , globalIndex_(globalIndex)
     , indexInElement_(indexInElement)
     , dofIdx_(dofIdx)
     , dofAxis_(dofAxis)
-    , directionSign_(dirSign)
     , eIdx_(eIdx)
     , boundary_(boundary)
     {
-        if constexpr (std::is_same_v<Corners, CornerStorage>)
-            corners_ = std::move(corners);
-        else
+        for (int i = 0; i < corners_.size(); ++i)
         {
-            for (int i = 0; i < corners_.size(); ++i)
-                corners_[i] = corners[i];
+            auto& corner = corners_[i];
+
+            // copy the corner of the corresponding element
+            corner = elementGeometry.corner(i);
+
+            // shift the corner such that the scvf covers half of the lateral facet
+            // (keep the outer corner positions)
+            using std::abs;
+            const auto eps =  1e-8; // TODO
+            if (abs(corner[dofAxis] - intersectionGeometry.center()[dofAxis]) > eps)
+                corner[dofAxis] = elementGeometry.center()[dofAxis];
         }
+
+        directionSign_ = (indexInElement % 2) ? 1.0 : -1.0;
     }
 
     //! The center of the sub control volume
