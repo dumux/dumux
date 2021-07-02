@@ -28,6 +28,7 @@
 #include <dune/alugrid/grid.hh>
 
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/ccmpfa.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/co2/model.hh>
 
@@ -51,6 +52,7 @@ namespace TTag {
 struct Heterogeneous { using InheritsFrom = std::tuple<TwoPTwoCCO2>; };
 struct HeterogeneousBox { using InheritsFrom = std::tuple<Heterogeneous, BoxModel>; };
 struct HeterogeneousCCTpfa { using InheritsFrom = std::tuple<Heterogeneous, CCTpfaModel>; };
+struct HeterogeneousCCMpfa { using InheritsFrom = std::tuple<Heterogeneous, CCMpfaModel>; };
 } // end namespace TTag
 
 //Set the grid type
