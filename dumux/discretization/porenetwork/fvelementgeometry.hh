@@ -50,7 +50,6 @@ class PNMFVElementGeometry<GG, true>
     static constexpr int dimWorld = GridView::dimensionworld;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
-    using Element = typename GridView::template Codim<0>::Entity;
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
 public:
@@ -60,6 +59,8 @@ public:
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
     using GridGeometry = GG;
+    //! export element type
+    using Element = typename GridView::template Codim<0>::Entity;
     //! the maximum number of scvs per element
     static constexpr std::size_t maxNumElementScvs = 2;
 
@@ -170,7 +171,6 @@ class PNMFVElementGeometry<GG, false>
     static constexpr int dimWorld = GridView::dimensionworld;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
-    using Element = typename GridView::template Codim<0>::Entity;
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
 
@@ -181,6 +181,8 @@ public:
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
     using GridGeometry = GG;
+    //! export element type
+    using Element = typename GridView::template Codim<0>::Entity;
     //! the maximum number of scvs per element
     static constexpr std::size_t maxNumElementScvs = 2;
 
