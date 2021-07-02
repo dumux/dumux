@@ -89,7 +89,6 @@ public:
                                               const SmallLocalIndexType normalAxis,
                                               const std::int_least8_t outerNormalSign,
                                               const GridIndexType globalScvfIdx,
-                                              const GridIndexType scvfIdxWithCommonEntity,
                                               const FaceType faceType,
                                               const bool boundary)
     : center_(center)
@@ -100,7 +99,6 @@ public:
     , normalAxis_(normalAxis)
     , outerNormalSign_(outerNormalSign)
     , globalScvfIdx_(globalScvfIdx)
-    , scvfIdxWithCommonEntity_(scvfIdxWithCommonEntity)
     , faceType_(faceType)
     , boundary_(boundary)
     {
@@ -164,9 +162,6 @@ public:
     std::int_least8_t directionSign() const
     { return outerNormalSign_; }
 
-    std::size_t scvfIdxWithCommonEntity() const
-    { return scvfIdxWithCommonEntity_; }
-
     const GlobalPosition& corner(unsigned int localIdx) const
     {
         assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
@@ -191,7 +186,6 @@ private:
     SmallLocalIndexType normalAxis_;
     std::int_least8_t outerNormalSign_;
     GridIndexType globalScvfIdx_;
-    GridIndexType scvfIdxWithCommonEntity_;
     FaceType faceType_;
     bool boundary_;
 };
