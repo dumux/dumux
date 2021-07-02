@@ -419,7 +419,7 @@ private:
 
                 scvfs_.emplace_back(MpfaHelper(),
                                     MpfaHelper::getScvfCorners(isPositions, numCorners, c),
-                                    is.centerUnitOuterNormal(),
+                                    is,
                                     vIdxGlobal,
                                     vIdxLocal,
                                     scvFaceIndices[scvfCounter],
@@ -509,7 +509,7 @@ private:
                 // build scvf
                 neighborScvfs_.emplace_back(MpfaHelper(),
                                             MpfaHelper::getScvfCorners(isPositions, numCorners, c),
-                                            is.centerUnitOuterNormal(),
+                                            is,
                                             vIdxGlobal,
                                             vIdxLocal,
                                             scvFaceIndices[scvfCounter],

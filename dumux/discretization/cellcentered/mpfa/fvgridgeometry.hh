@@ -294,7 +294,7 @@ public:
                     scvfIndexSet.push_back(scvfIdx);
                     scvfs_.emplace_back(MpfaHelper(),
                                         MpfaHelper::getScvfCorners(isPositions, numCorners, c),
-                                        is.centerUnitOuterNormal(),
+                                        is,
                                         vIdxGlobal,
                                         vIdxLocal,
                                         scvfIdx,

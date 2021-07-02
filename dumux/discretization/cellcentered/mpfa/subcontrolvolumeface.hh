@@ -33,6 +33,7 @@
 #include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/common/indextraits.hh>
+#include <dumux/common/boundaryflag.hh>
 
 namespace Dumux {
 
@@ -81,6 +82,7 @@ struct CCMpfaDefaultScvfGeometryTraits
     using Geometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld, ScvfMLGTraits<Scalar> >;
     using CornerStorage = typename ScvfMLGTraits<Scalar>::template CornerStorage<dim-1, dimWorld>::Type;
     using GlobalPosition = typename CornerStorage::value_type;
+    using BoundaryFlag = Dumux::BoundaryFlag<Grid>;
 };
 
 /*!
@@ -99,6 +101,7 @@ class CCMpfaSubControlVolumeFace
     using CornerStorage = typename T::CornerStorage;
     using OutsideGridIndexStorage = typename T::OutsideGridIndexStorage;
     using Geometry = typename T::Geometry;
+    using BoundaryFlag = typename T::BoundaryFlag;
 
 public:
     //! export the type used for global coordinates
@@ -121,6 +124,7 @@ public:
      * \param boundary Boolean to specify whether or not the scvf is on a boundary
      */
     template<class MpfaHelper>
+    [[deprecated("Use constructor taking an intersection instead")]]
     CCMpfaSubControlVolumeFace(const MpfaHelper& helper,
                                CornerStorage&& corners,
                                GlobalPosition&& unitOuterNormal,
@@ -140,6 +144,39 @@ public:
     , corners_(std::move(corners))
     , center_(0.0)
     , unitOuterNormal_(std::move(unitOuterNormal))
+    {
+          // compute the center of the scvf
+          for (const auto& corner : corners_)
+              center_ += corner;
+          center_ /= corners_.size();
+
+          // use helper class to obtain area & integration point
+          ipGlobal_ = helper.getScvfIntegrationPoint(corners_, q);
+          area_ = helper.computeScvfArea(corners_);
+    }
+
+    //! Construction with given intersection
+    template<class MpfaHelper, class Intersection>
+    CCMpfaSubControlVolumeFace(const MpfaHelper& helper,
+                               CornerStorage&& corners,
+                               const Intersection& intersection,
+                               GridIndexType vIdxGlobal,
+                               unsigned int vIdxLocal,
+                               GridIndexType scvfIndex,
+                               GridIndexType insideScvIdx,
+                               const OutsideGridIndexStorage& outsideScvIndices,
+                               Scalar q,
+                               bool boundary)
+    : boundary_(boundary)
+    , vertexIndex_(vIdxGlobal)
+    , scvfIndex_(scvfIndex)
+    , insideScvIdx_(insideScvIdx)
+    , outsideScvIndices_(outsideScvIndices)
+    , vIdxInElement_(vIdxLocal)
+    , corners_(std::move(corners))
+    , center_(0.0)
+    , unitOuterNormal_(intersection.centerUnitOuterNormal())
+    , boundaryFlag_{intersection}
     {
           // compute the center of the scvf
           for (const auto& corner : corners_)
@@ -223,6 +260,10 @@ public:
     Geometry geometry() const
     { return Geometry(Dune::GeometryTypes::cube(Geometry::mydimension), corners_); }
 
+    //! Return the boundary flag
+    typename BoundaryFlag::value_type boundaryFlag() const
+    { return boundaryFlag_.get(); }
+
 private:
     bool boundary_;
     GridIndexType vertexIndex_;
@@ -236,6 +277,7 @@ private:
     GlobalPosition ipGlobal_;
     GlobalPosition unitOuterNormal_;
     Scalar area_;
+    BoundaryFlag boundaryFlag_;
 };
 
 } // end namespace Dumux
