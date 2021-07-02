@@ -74,7 +74,6 @@ public:
     {
         assert(scvf.isLateral());
         const auto otherGlobalIdx = scvfIndices_()[GridGeometry::GeometryHelper::lateralOrthogonalScvfLocalIndex(scvf.localIndex())];
-        assert(gridGeometry().scvf(scvf.scvfIdxWithCommonEntity()).index() == otherGlobalIdx); // TODO remove once scvfIdxWithCommonEntity is removed
         return gridGeometry().scvf(otherGlobalIdx);
     }
 
