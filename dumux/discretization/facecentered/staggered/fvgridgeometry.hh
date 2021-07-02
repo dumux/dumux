@@ -205,7 +205,6 @@ public:
         numBoundaryScv_ = 0;
         numBoundaryScvf_ = 0;
 
-        std::unordered_map<GridIndexType, GridIndexType> globalScvfIdxToGlobalScvfIdxWithCommonEntity;
         GeometryHelper geometryHelper(this->gridView());
 
         // get the global scv indices first
@@ -220,9 +219,6 @@ public:
 
             std::vector<GridIndexType> scvfsIndexSet;
             scvfsIndexSet.reserve(1/*frontal in element*/ + 1 /*frontal on boundary*/ + numLateralScvfsPerScv);
-
-            // a temporary map to store pairs of common entities
-            std::unordered_map<GridIndexType, Dune::ReservedVector<GridIndexType, 2>> commonEntityIdxToScvfsMap;
 
             // keep track of frontal boundary scvfs
             std::size_t numFrontalBoundaryScvfs = 0;
@@ -242,13 +238,9 @@ public:
                     {
                         const auto& lateralIntersection = geometryHelper.getIntersection(lateralFacetIndex, element);
                         if (onProcessorBoundary_(lateralIntersection))
-                        continue;
-
-                        const auto localCommonEntityIdx = geometryHelper.getLocalCommonEntityIndex(localScvIdx, lateralFacetIndex);
-                        const auto integrationPointIndex = this->gridView().indexSet().subIndex(element, localCommonEntityIdx, 2);
+                            continue;
 
                         scvfsIndexSet.push_back(scvfIdx);
-                        commonEntityIdxToScvfsMap[integrationPointIndex].push_back(scvfIdx);
                         ++scvfIdx;
                     }
                 }
@@ -272,14 +264,6 @@ public:
             const auto eIdx = this->elementMapper().index(element);
             scvIndicesOfElement_[eIdx] = std::move(scvsIndexSet);
             scvfIndicesOfElement_[eIdx] = std::move(scvfsIndexSet);
-
-            // create the bi-directional map
-            for (const auto& pair : commonEntityIdxToScvfsMap)
-            {
-                const auto& scvfs = pair.second;
-                globalScvfIdxToGlobalScvfIdxWithCommonEntity[scvfs[0]] = scvfs[1];
-                globalScvfIdxToGlobalScvfIdxWithCommonEntity[scvfs[1]] = scvfs[0];
-            }
         }
 
          // reserve memory
@@ -383,7 +367,6 @@ public:
                                     directionIdx,
                                     -sign(intersection.centerUnitOuterNormal()[directionIdx]),
                                     globalScvfIndices[localScvfIdx],
-                                    0, // should not be used
                                     SubControlVolumeFace::FaceType::frontal,
                                     false);
                 ++localScvfIdx;
@@ -452,7 +435,6 @@ public:
                                         lateralDirIdx,
                                         sign(laterUnitOuterNormal[lateralDirIdx]),
                                         globalScvfIndices[localScvfIdx],
-                                        globalScvfIdxToGlobalScvfIdxWithCommonEntity.at(globalScvfIndices[localScvfIdx]),
                                         SubControlVolumeFace::FaceType::lateral,
                                         onDomainBoundary_(lateralIntersection));
                     ++localScvfIdx;
@@ -494,7 +476,6 @@ public:
                                         directionIdx,
                                         sign(intersection.centerUnitOuterNormal()[directionIdx]),
                                         globalScvfIndices[localScvfIdx],
-                                        0, // should not be used
                                         SubControlVolumeFace::FaceType::frontal,
                                         true);
                     ++localScvfIdx;
