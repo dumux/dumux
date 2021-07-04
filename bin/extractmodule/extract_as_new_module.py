@@ -26,6 +26,7 @@ try:
     from common import callFromPath, runCommand
 except Exception:
     sys.exit('Could not import common modul or getModuleInfo')
+import logging
 
 
 # return the list of included headers including the header itself
@@ -99,12 +100,14 @@ def get_remote_url(repo_path):
         elif (check_remote_repo == ''):
             return remoteurl
         else:
+            logging.error("Remote repository is not empty!")
             sys.stdout.write("ERROR: The remote reposity is not empty!.\n")
 
 
 def path_check(basedir, subdir):
     # check if basedir contained in the script path
     if not os.path.isdir(basedir):
+        logging.error(f"No {basedir} found in your path where the script is running!")
         sys.exit("ERROR: You need to run the script"
                  f"one level above the folder {basedir}.\n"
                  f"Run \"{os.path.basename(__file__)} --help\" for details.")
@@ -113,6 +116,7 @@ def path_check(basedir, subdir):
     list_subdir = [subdir.path for subdir in os.scandir(basedir) if subdir.is_dir()]
     for folder in subdir:
         if os.path.join(basedir, folder.strip(os.sep)) not in list_subdir:
+            logging.error(f"Subfolder '{folder}' is not a subfolder of '{basedir}'")
             raise NameError(f"Subfolder '{folder}' is not a subfolder of '{basedir}'")
 
 
@@ -140,6 +144,7 @@ def check_module(module_name):
                 raise Exception(f"Invalid dune.module in {module_name}")
     except OSError:
         print("Could not find new Dune module. Aborting")
+        logging.error("The module you created is not dune-module!")
         raise
 
 
@@ -247,6 +252,10 @@ if __name__ == "__main__":
     (extracts the subfolders appl and test from the module dumux-fracture)
 
     '''
+    # generate a log file to control all the process
+    logging.basicConfig(filename="extractmodulepart.log", filemode='w', level=logging.DEBUG)
+    logging.info("The main function is going to be executed, preparing to take off.")
+    logging.debug("Passing arguments provided by user...")
     parser = argparse.ArgumentParser(
         prog='extract_as_new_module.py',
         usage='./dumux/bin/extractmodule/extract_as_new_module.py'
@@ -264,6 +273,7 @@ if __name__ == "__main__":
         help='subfolder(s) of module_dir that you want to extract'
     )
     args = vars(parser.parse_args())
+    logging.debug("Parameters from terminal are passed.")
 
     # if module_dir ends with slash(es) remove it/them
     module_dir = args['module_dir'].strip(os.sep)
@@ -272,23 +282,29 @@ if __name__ == "__main__":
     subfolders = list(set(args['subfolder']))
 
     # check paths to prevenet possible errors
+    logging.debug("Checking if base module and subfolders exist...")
     path_check(module_dir, subfolders)
+    logging.debug("Path check is done.")
 
     # determine all source files in the paths passed as arguments
     source_files = extract_sources_files(module_dir, subfolders)
 
     # check if sources have been obtained
+    logging.debug("Checking if sources have been obtained...")
     if not source_files:
+        logging.error("No sources found in the subfolders you provide!")
         sys.exit(
             "ERROR: No source files *.cc found in the subfolders: " +
             ", ".join([str(x) for x in subfolders]) + ".\n"
             "Be sure to provide a list of paths as arguments.\n"
             f"Run '{os.path.basename(__file__)} --help' for details."
         )
+    logging.debug("Sources are found in subfolders.")
 
     # try to find the duneproject script
     dune_project = shutil.which('duneproject', path="dune-common/bin")
     if dune_project is None:
+        logging.error("No duneproject found in dune-common/bin!")
         sys.exit(
             "ERROR: Could not find duneproject.\n"
             "Make sure to have duneproject in dune-common/bin"
@@ -298,30 +314,44 @@ if __name__ == "__main__":
     print(info_explanations(
         module_dir, module_path, subfolders, source_files
     ))
+
     input("Read the above and press [Enter] to proceed...")
 
     # run duneproject
-    subprocess.call([dune_project])
+    try:
+        logging.info("Calling dune-common/bin/duneproject to create the new extracted module...")
+        subprocess.call([dune_project])
+        logging.info("--The new module is created sucessfully.")
+    except Exception:
+        logging.error("Failed to generate new module with duneproject!")
 
     # find the created folder
     # as the one with the most recent modification time
+    logging.debug("Getting the name of the new module...")
     new_module_name = max(
         [d for d in os.listdir() if os.path.isdir(d)],
         key=os.path.getmtime
     )
+    logging.debug(f"Name of the new module is detected as {new_module_name}.")
 
     # verify it's really a Dune module
+    logging.debug("Checking if the new module is dune module...")
     check_module(new_module_name)
+    logging.debug("The new module is checked as dune module.")
     print(
         f"Found new module {new_module_name}\n"
         "Copying source files..."
     )
 
+    logging.info("Extracting required headers and copy useful files to the new module...")
     # get the base path of the new module
+    logging.debug("Specifying paths of new module...")
     new_module_path = new_module_name.join(module_path.rsplit(module_dir,1))
+    logging.debug(f"The path for new module is {new_module_path}.")
 
     # copy the source tree
     # copy all base folders complete, then delete the unnecessary ones
+    logging.debug("Copying old directories cotaining source files into new module...")
     base_folders = list(set([
         os.path.relpath(s, module_path).split(os.path.sep)[0] for s in source_files
     ]))
@@ -329,8 +359,10 @@ if __name__ == "__main__":
         path_in_old_module = os.path.join(module_path, b)
         path_in_new_module = os.path.join(new_module_path, b)
         copy_tree(path_in_old_module, path_in_new_module)
+    logging.debug("Directoies containing source files are copied.")
 
     # add base folders in project-level CMakeLists.txt
+    logging.debug("Adding base folders to CMakeList files in new module...")
     with open(os.path.join(new_module_path, "CMakeLists.txt"), "r") as cml:
         section = 0
         content = []
@@ -346,8 +378,10 @@ if __name__ == "__main__":
     with open(os.path.join(new_module_path, "CMakeLists.txt"), "w") as cml:
         for line in content:
             cml.write(line)
+    logging.debug("CMakelist at top level in new module is confiugred.")
 
     # go through source tree and remove unnecessary directories
+    logging.debug("Handling directories where no source is obtained...")
     new_source_files = [
         s.replace(module_dir, new_module_name, 1) for s in source_files
     ]
@@ -397,29 +431,41 @@ if __name__ == "__main__":
 
                         # make os.walk know about removed folders
                         dirs.remove(d)
+        logging.debug("The folders containg no sources are handled.")
 
     # search for all header (in parallel)
+    logging.debug("Searching for all header files...")
     with mp.Pool() as p:
         headers = itertools.chain.from_iterable(p.map(
             partial(search_headers, module_path=module_path, headers=[]),
             source_files
         ))
+    logging.debug("Head files are found.")
 
     # make unique
+    logging.debug("Making header files unqiue (removing duplicates)...")
     headers = list(set(headers))
+    logging.debug("Duplicates are removed.")
 
     # copy headers to the new module
+    logging.debug("Copying headers to the new module...")
     for header in headers:
         header_dir = os.path.dirname(os.path.realpath(header))
         path_in_new_module = header_dir.replace(module_dir, new_module_name, 1)
         os.makedirs(path_in_new_module, exist_ok=True)
         shutil.copy(header, path_in_new_module)
+    logging.debug("Headers are copied to the new module.")
 
     # copy .gitignore from dumux to the new module
     dumux_gitignore_file = "dumux/.gitignore"
+    logging.debug("Copying .git from dumux into new module...")
     shutil.copy(dumux_gitignore_file, new_module_path)
+    logging.debug(".gitignore is copied.")
+    logging.info("--Requried headers are extracted and useful files are copied into the new module succesfully.")
 
     # delete unnecessary directories to keep the extracted module clean
+    logging.info("Cleaning up the new module...")
+    logging.debug("Deleting dune/src in the extracted module...")
     if "dune" not in subfolders:
         shutil.rmtree(os.path.join(new_module_path, 'dune'))
     if "src" not in subfolders:
@@ -433,16 +479,21 @@ if __name__ == "__main__":
             content = content.replace("add_subdirectory(src)\n", "")
         cml.write(content)
         cml.truncate()
+    logging.debug("Dune/src are deleted.")
+    logging.info("--The new module is cleaned up successfully.")
 
     # create README file
+    logging.info("Creating README file and generating an install script in new module...")
     os.remove(os.path.join(new_module_path, 'README'))
     readme_path = os.path.join(new_module_path, "README.md")
     with open(readme_path, "w") as readme_file:
         readme_file.write(
             info_readme_main(module_dir, subfolders, source_files)
         )
+    logging.debug("README file in new module is created.")
 
     # ask user if to write version information into README.md
+    logging.debug("Ask user if to write version information into README file.")
     if query_yes_no("Write detailed version information"
                     " (folder/branch/commits/dates) into README.md?\n"):
         print("Looking for the dune modules in path: "
@@ -459,16 +510,21 @@ if __name__ == "__main__":
                 "\n## Version Information\n\n" +
                 versionTable(versions)
             )
+        logging.debug("The version information is written into README file.")
 
     # if there is a remote repository available
     # we can directly push the source code and
-    # also create a "one-click" installation scrip
+    # also create a "one-click" installation script
+    logging.debug("Generating an install script...")
+    logging.debug("Ask user to choose python or bash to generate the install script.")
     language = python_or_bash()
     install_script_name = 'install_' + new_module_name + '.%s'%("sh" if language == "bash" else "py")
     try:
         makeInstallScript(new_module_path, ignoreUntracked=True, skipFolders=new_module_name,
                           suppressHints=True, topFolderName=None, language=language)
+        logging.debug("The install script is generated.")
     except Exception:
+        logging.error(f"Failed to generate script {install_script_name} by calling external functino makeInstallScript!")
         sys.exit(
             f"Automatically generate install script {install_script_name} failed."
             "\nTo create the script, use the 'makeinstallscript.py' script in the same folder."
@@ -478,28 +534,54 @@ if __name__ == "__main__":
     shutil.move(install_script_name,
                 os.path.join(new_module_path, install_script_name))
     print(info_make_install(new_module_name))
+    logging.info("--README file and install script are generated succesfully.")
     run_from_mod = callFromPath(new_module_path)(runCommand)
 
+    logging.info("Commiting the new module and pushing to remote if url is provided...")
     if query_yes_no("Do you have an empty remote repository to push the code to (recommended)?"):
+        logging.debug("Trying to get the remote URL.")
         remoteurl = get_remote_url(new_module_path)
+        logging.debug(f"The remote URL proviede by the user is {remoteurl}")
 
         # append install information into readme
+        logging.debug("Writing README file of the new module...")
         with open(readme_path, "a") as readme_file:
             readme_file.write(info_readme_installation(remoteurl, install_script_name, new_module_name, language))
+        logging.debug("The README file is written.")
+        logging.debug("Initializing git repository...")
         run_from_mod('git init')
+        logging.debug("Git repository is initialized.")
+        logging.debug("Adding all the files into git staging area...")
         run_from_mod('git add .')
+        logging.debug("All files are added into staging area.")
+        logging.debug("Commiting all files in staging area as inital commit...")
         run_from_mod('git commit -m "Initial commit"')
+        logging.debug("All files in staging area are commited.")
+        logging.debug(f"Adding remote {remoteurl} to the origin...")
         run_from_mod('git remote add origin {}'.format(remoteurl))
+        logging.debug(f"{remoteurl} added to git remote origin.")
+        logging.debug(f"Pushing all the changes into remote git repository {remoteurl}")
         run_from_mod('git push -u origin master')
+        logging.debug("Commits are pushed to git remote.")
 
     # output guidance for users to create install script manually
     else:
         remoteurl = "{$remoteurl$} (needs to be manuelly adapted later)"
         # append install information into readme
+        logging.debug("Writing README file of the new module...")
         with open(readme_path, "a") as readme_file:
             readme_file.write(info_readme_installation(remoteurl, install_script_name, new_module_name, language))
+        logging.debug("The README file is written.")
+        logging.debug("Initializing git repository...")
         run_from_mod('git init')
+        logging.debug("Git repository is initialized.")
+        logging.debug("Adding all the files into git staging area...")
         run_from_mod('git add .')
+        logging.debug("All files are added into staging area.")
+        logging.debug("Commiting all files in staging area as inital commit...")
         run_from_mod('git commit -m "Initial commit"')
+        logging.debug("All files in staging area are commited.")
         print("\nPlease remember to replace placeholder $remoteurl$ in installation part\n"
               "of the README file with the correct URL of your remote git repository.")
+    logging.info("--Changes are commited (and pushed if remote is known) successfully.")
+    logging.info("Congratulations, everything is fine and landing is smooth!")
