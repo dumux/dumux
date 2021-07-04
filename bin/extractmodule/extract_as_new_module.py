@@ -227,8 +227,6 @@ def info_make_install(new_module_name):
 The extracted module is contained in the subfolder '{new_module_name}'.
 You can configure it with
 ./dune-common/bin/dunecontrol --opts=dumux/cmake.opts —only={new_module_name} all
-To create an install script use the "makeinstallscript.py" script in the same folder.
-You can run 'python3 makeinstallscript.py --help' for more information
 """
 
 
@@ -360,16 +358,28 @@ if __name__ == "__main__":
                     return True
             return False
 
+        no_source_folder = []
         for path, dirs, files in os.walk(os.path.join(new_module_path, b)):
             for d in dirs:
                 dir_path = os.path.join(path, d)
                 keep = matching_path(dir_path, new_source_files)
                 if not keep:
                     rel_dir_path = os.path.relpath(dir_path, new_module_path)
+                    no_source_folder.append(rel_dir_path)
+        if len(no_source_folder) > 1:
+            no_source_lists = ('\n'.join(dir for dir in no_source_folder))
+            yes_to_all = query_yes_no(
+                "No source files found in the following directories:\n{}\n"
+                "Copy them all to the new module?\n"
+                "(Otherwise you need to configure each folder maneully)"
+                .format(no_source_lists)
+            )
+            if not yes_to_all or len(no_source_folder) < 2:
+                for rel_dir_path in no_source_folder:
                     answer_is_yes = query_yes_no(
                         f"{rel_dir_path} does not contain source files."
                         " Copy to new module?",
-                        default="no"
+                        default="yes"
                     )
                     if not answer_is_yes:
                         # remove copy of directory
