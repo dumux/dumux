@@ -118,8 +118,12 @@ int main (int argc, char *argv[]) try
                 for (auto&& scvf : scvfs(fvGeometry, scv))
                 {
                     std::cout << "    scvf (globalIdx) " << scvf.index() << " ip at: " << scvf.ipGlobal() << " normal: " << scvf.unitOuterNormal();
-                    std::cout << " scvfIdxWithCommonEntity: " << scvf.scvfIdxWithCommonEntity()
-                              << ", inside and outside SCVs:" << scvf.insideScvIdx() << ", " << scvf.outsideScvIdx();
+                    if (scvf.isLateral())
+                    {
+                        const auto& lateralScvf = fvGeometry.lateralOrthogonalScvf(scvf);
+                        std::cout << "    lateral scvf (globalIdx ): " << lateralScvf.index() << " ip at: " << lateralScvf.ipGlobal() << " normal: " << lateralScvf.unitOuterNormal();
+                    }
+                    std::cout << ", inside and outside SCVs:" << scvf.insideScvIdx() << ", " << scvf.outsideScvIdx();
 
                     if (scvf.isFrontal())
                         std::cout << ", frontal ";

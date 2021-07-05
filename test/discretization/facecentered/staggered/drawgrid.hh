@@ -168,11 +168,11 @@ namespace {
 
                 // draw arrows at dofs
                 GlobalPosition shiftedIntersectionCenter = intersectionGeometry.center();
-                if (Dumux::directionIndex(intersection.centerUnitOuterNormal()) == 0)
+                if (Dumux::normalAxis(intersection.centerUnitOuterNormal()) == 0)
                     shiftedIntersectionCenter[1] -= 0.05;
                 else
                     shiftedIntersectionCenter[0] -= 0.05;
-                drawArrow(plotFile, shiftedIntersectionCenter, elementRadius, 0.15, Dumux::directionIndex(intersection.centerUnitOuterNormal()));
+                drawArrow(plotFile, shiftedIntersectionCenter, elementRadius, 0.15, Dumux::normalAxis(intersection.centerUnitOuterNormal()));
 
                 // draw an element Box around element index
                 // Thin line with color according to neighbor()
@@ -202,7 +202,7 @@ namespace {
                 }
 
                 // draw shifted frontal scv boundaries
-                int dirIdx = Dumux::directionIndex(intersection.centerUnitOuterNormal());
+                int dirIdx = Dumux::normalAxis(intersection.centerUnitOuterNormal());
                 std::array<GlobalPosition, 4> pseudoScvCorners;
                 pseudoScvCorners[0] = shift(elementCenter,
                                             centrify(elementCenter, intersectionGeometry.corner(0), 0.45),

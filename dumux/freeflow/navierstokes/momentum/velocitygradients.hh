@@ -59,7 +59,7 @@ class StaggeredVelocityGradients
 public:
 
     template<class FVElementGeometry, class ElemVolVars>
-    static auto velocityGradient(const FVElementGeometry fvGeometry,
+    static auto velocityGradient(const FVElementGeometry& fvGeometry,
                                  const typename FVElementGeometry::SubControlVolumeFace& scvf,
                                  const ElemVolVars& elemVolVars,
                                  bool fullGradient = false)
@@ -73,7 +73,7 @@ public:
     }
 
     template<class FVElementGeometry, class ElemVolVars, class BoundaryTypes>
-    static auto velocityGradient(const FVElementGeometry fvGeometry,
+    static auto velocityGradient(const FVElementGeometry& fvGeometry,
                                  const typename FVElementGeometry::SubControlVolumeFace& scvf,
                                  const ElemVolVars& elemVolVars,
                                  const FaceCenteredStaggeredElementBoundaryTypes<BoundaryTypes>& elemBcTypes,
@@ -155,7 +155,7 @@ public:
      * \endverbatim
      */
     template<class FVElementGeometry, class ElemVolVars>
-    static auto velocityGradII(const FVElementGeometry fvGeometry,
+    static auto velocityGradII(const FVElementGeometry& fvGeometry,
                                const typename FVElementGeometry::SubControlVolumeFace& scvf,
                                const ElemVolVars& elemVolVars)
     {
@@ -190,7 +190,7 @@ public:
      * \endverbatim
      */
     template<class FVElementGeometry, class ElemVolVars>
-    static auto velocityGradIJ(const FVElementGeometry fvGeometry,
+    static auto velocityGradIJ(const FVElementGeometry& fvGeometry,
                                const typename FVElementGeometry::SubControlVolumeFace& scvf,
                                const ElemVolVars& elemVolVars)
     {
@@ -231,7 +231,7 @@ public:
      * \endverbatim
      */
     template<class FVElementGeometry, class ElemVolVars>
-    static auto velocityGradJI(const FVElementGeometry fvGeometry,
+    static auto velocityGradJI(const FVElementGeometry& fvGeometry,
                                const typename FVElementGeometry::SubControlVolumeFace& scvf,
                                const ElemVolVars& elemVolVars)
     {
@@ -246,7 +246,7 @@ public:
 private:
 
     template<class FVElementGeometry>
-    static auto getDistanceIJ_(const FVElementGeometry fvGeometry,
+    static auto getDistanceIJ_(const FVElementGeometry& fvGeometry,
                                const typename FVElementGeometry::SubControlVolumeFace& scvf)
     {
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
@@ -295,7 +295,7 @@ private:
 
     //! Get the distance between the DOFs at which the inner and outer velocities are defined.
     template<class FVElementGeometry>
-    static auto getDistanceJI_(const FVElementGeometry fvGeometry,
+    static auto getDistanceJI_(const FVElementGeometry& fvGeometry,
                                const typename FVElementGeometry::SubControlVolumeFace& scvf,
                                const typename FVElementGeometry::SubControlVolumeFace& orthogonalScvf)
     {
