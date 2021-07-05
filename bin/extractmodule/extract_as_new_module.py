@@ -346,7 +346,7 @@ if __name__ == "__main__":
     logging.info("Extracting required headers and copy useful files to the new module...")
     # get the base path of the new module
     logging.debug("Specifying paths of new module...")
-    new_module_path = new_module_name.join(module_path.rsplit(module_dir,1))
+    new_module_path = new_module_name.join(module_path.rsplit(module_dir, 1))
     logging.debug(f"The path for new module is {new_module_path}.")
 
     # copy the source tree
@@ -380,59 +380,6 @@ if __name__ == "__main__":
             cml.write(line)
     logging.debug("CMakelist at top level in new module is confiugred.")
 
-    # go through source tree and remove unnecessary directories
-    logging.debug("Handling directories where no source is obtained...")
-    new_source_files = [
-        s.replace(module_dir, new_module_name, 1) for s in source_files
-    ]
-    for b in base_folders:
-        def matching_path(path, list_of_paths):
-            for p in list_of_paths:
-                if path in p:
-                    return True
-            return False
-
-        no_source_folder = []
-        for path, dirs, files in os.walk(os.path.join(new_module_path, b)):
-            for d in dirs:
-                dir_path = os.path.join(path, d)
-                keep = matching_path(dir_path, new_source_files)
-                if not keep:
-                    rel_dir_path = os.path.relpath(dir_path, new_module_path)
-                    no_source_folder.append(rel_dir_path)
-        if len(no_source_folder) > 1:
-            no_source_lists = ('\n'.join(dir for dir in no_source_folder))
-            yes_to_all = query_yes_no(
-                "No source files found in the following directories:\n{}\n"
-                "Copy them all to the new module?\n"
-                "(Otherwise you need to configure each folder maneully)"
-                .format(no_source_lists)
-            )
-            if not yes_to_all or len(no_source_folder) < 2:
-                for rel_dir_path in no_source_folder:
-                    answer_is_yes = query_yes_no(
-                        f"{rel_dir_path} does not contain source files."
-                        " Copy to new module?",
-                        default="yes"
-                    )
-                    if not answer_is_yes:
-                        # remove copy of directory
-                        shutil.rmtree(dir_path)
-                        # remove entry from CMakeLists.txt
-                        cml_path = os.path.join(module_path, "CMakeLists.txt")
-                        with open(cml_path, "r+") as cml:
-                            content = cml.read()
-                            cml.seek(0)
-                            content = content.replace(
-                                "add_subdirectory({d})\n", ""
-                            )
-                            cml.write(content)
-                            cml.truncate()
-
-                        # make os.walk know about removed folders
-                        dirs.remove(d)
-        logging.debug("The folders containg no sources are handled.")
-
     # search for all header (in parallel)
     logging.debug("Searching for all header files...")
     with mp.Pool() as p:
@@ -449,9 +396,11 @@ if __name__ == "__main__":
 
     # copy headers to the new module
     logging.debug("Copying headers to the new module...")
+    header_dirs = []
     for header in headers:
         header_dir = os.path.dirname(os.path.realpath(header))
         path_in_new_module = header_dir.replace(module_dir, new_module_name, 1)
+        header_dirs.append(path_in_new_module)
         os.makedirs(path_in_new_module, exist_ok=True)
         shutil.copy(header, path_in_new_module)
     logging.debug("Headers are copied to the new module.")
@@ -465,6 +414,58 @@ if __name__ == "__main__":
 
     # delete unnecessary directories to keep the extracted module clean
     logging.info("Cleaning up the new module...")
+    # go through source tree and remove unnecessary directories
+    logging.debug("Handling directories where no source is obtained...")
+    new_source_files = [
+        s.replace(module_dir, new_module_name, 1) for s in source_files
+    ]
+    for b in base_folders:
+        def matching_path(path, list_of_paths, header_dirs):
+            for p in list_of_paths:
+                if path in p or path in header_dirs:
+                    return True
+            return False
+
+        no_source_folder = []
+        for path, dirs, files in os.walk(os.path.join(new_module_path, b)):
+            for d in dirs:
+                dir_path = os.path.join(path, d)
+                keep = matching_path(dir_path, new_source_files, header_dirs)
+                if not keep:
+                    rel_dir_path = os.path.relpath(dir_path, new_module_path)
+                    no_source_folder.append(rel_dir_path)
+
+        no_source_lists = ('\n'.join(dir for dir in no_source_folder))
+        yes_to_all = query_yes_no(
+            "Could not automatically determine if following directories contain data essential for the extracted applications:\n{0}.\n"
+            "Do you want to copy all of them in the new module {1}?\n"
+            "(By choosing no you need to consider each folder seperately)"
+            .format(*[no_source_lists, new_module_name]),
+            default="yes"
+        )
+
+        if not yes_to_all:
+            for rel_dir_path in no_source_folder:
+                answer_is_yes = query_yes_no(
+                    f"Could not automatically determine if {rel_dir_path} contains data essential for the extracted applications.\n"
+                    f"Do you want to copy the files in {rel_dir_path} to the extracted module {new_module_name}",
+                    default="yes"
+                )
+                if not answer_is_yes:
+                    # remove copy of directory
+                    shutil.rmtree(os.path.join(new_module_path, rel_dir_path))
+                    # remove entry from CMakeLists.txt
+                    cml_path = os.path.join(module_path, "CMakeLists.txt")
+                    with open(cml_path, "r+") as cml:
+                        content = cml.read()
+                        cml.seek(0)
+                        content = content.replace(
+                            "add_subdirectory({d})\n", ""
+                        )
+                        cml.write(content)
+                        cml.truncate()
+    logging.debug("The folders containg no sources are handled.")
+
     logging.debug("Deleting dune/src in the extracted module...")
     if "dune" not in subfolders:
         shutil.rmtree(os.path.join(new_module_path, 'dune'))
