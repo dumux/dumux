@@ -239,22 +239,20 @@ public:
 
             getOtherIdx(ownIs.centerUnitOuterNormal());
         }
-        if(ownIdx != map_.size())
+        if (ownIdx != map_.size())
             DUNE_THROW(Dune::InvalidStateException, "Index could not be mapped");
     }
 
     //! Return the local index of the other element's facet with the same position as the own element's facet.
     SmallLocalIndexType localFaceIndexInOtherElement(const SmallLocalIndexType localFaceIndexInOwnElement) const
-    {
-        return map_[localFaceIndexInOwnElement];
-    }
+    { return map_[localFaceIndexInOwnElement]; }
 
 private:
     std::array<SmallLocalIndexType, ParentType::numElementFaces> map_;
 };
 
-template<class GridView>
-class FaceCenteredStaggeredGeometryHelper<GridView, Dune::YaspGrid<GridView::Grid::dimension, typename GridView::Grid::ctype>>
+template<class GridView, class YaspCoordinates>
+class FaceCenteredStaggeredGeometryHelper<GridView, Dune::YaspGrid<GridView::Grid::dimension, YaspCoordinates>>
     : public FaceCenteredStaggeredGeometryHelperBase<GridView, FaceCenteredStaggeredGeometryHelper<GridView, typename GridView::Grid>>
 {
     using ParentType = FaceCenteredStaggeredGeometryHelperBase<GridView, FaceCenteredStaggeredGeometryHelper<GridView, typename GridView::Grid>>;
@@ -272,9 +270,7 @@ public:
     //! Return the local index of the other element's facet with the same position as the own element's facet.
     //! For Yasp grids, this is just the same index.
     SmallLocalIndexType localFaceIndexInOtherElement(const SmallLocalIndexType localFaceIndexInOwnElement) const
-    {
-        return localFaceIndexInOwnElement;
-    }
+    { return localFaceIndexInOwnElement; }
 };
 
 } // end namespace Dumux
