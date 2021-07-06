@@ -105,7 +105,7 @@ public:
         insideK *= insideVolVars.extrusionFactor();
         outsideK *= outsideVolVars.extrusionFactor();
 
-        const auto K = problem.spatialParams().harmonicMean(insideK, outsideK, scvf.unitOuterNormal());
+        auto K = problem.spatialParams().harmonicMean(insideK, outsideK, scvf.unitOuterNormal());
         static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
 
         const auto& shapeValues = fluxVarCache.shapeValues();
@@ -126,6 +126,17 @@ public:
 
         if (enableGravity)
             gradP.axpy(-rho, problem.spatialParams().gravity(scvf.center()));
+
+
+        K = -1.0;
+
+        if (problem.spatialParams().isSwitched())
+        {
+            const auto f = gradP.two_norm();
+
+            static const auto order = getParam<int>("Problem.Order", 2);
+            K *= Dune::power(f, order-2);
+        }
 
         // apply the permeability and return the flux
         return -1.0*vtmv(scvf.unitOuterNormal(), K, gradP)*Extrusion::area(scvf);

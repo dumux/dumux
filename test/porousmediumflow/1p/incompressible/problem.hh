@@ -27,6 +27,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/discretization/evalgradients.hh>
 
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/porousmediumflow/problem.hh>
@@ -75,11 +76,11 @@ public:
     {
         BoundaryTypes values;
 
-        Scalar eps = 1.0e-6;
-        if (globalPos[dimWorld-1] < eps || globalPos[dimWorld-1] > this->gridGeometry().bBoxMax()[dimWorld-1] - eps)
+        // Scalar eps = 1.0e-6;
+        // if (globalPos[dimWorld-1] < eps || globalPos[dimWorld-1] > this->gridGeometry().bBoxMax()[dimWorld-1] - eps)
             values.setAllDirichlet();
-        else
-            values.setAllNeumann();
+        // else
+            // values.setAllNeumann();
 
         return values;
     }
@@ -94,7 +95,7 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0);
-        values[0] = 1.0e+5 + dp_dy_*(globalPos[dimWorld-1] - this->gridGeometry().bBoxMax()[dimWorld-1]);
+        // values[0] = 1.0e+5 + dp_dy_*(globalPos[dimWorld-1] - this->gridGeometry().bBoxMax()[dimWorld-1]);
 
         return values;
     }
@@ -109,6 +110,31 @@ public:
     Scalar temperature() const
     {
         return 283.15; // 10°C
+    }
+
+    template<class FVElementGeometry, class ElementVolumeVariables, class SubControlVolume>
+    PrimaryVariables source(const Element &element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolume &scv) const
+    {
+        PrimaryVariables source(0.0);
+
+        source = -1.0;
+
+        // const auto& elemSol = elementSolution(element, elemVolVars, fvGeometry);
+
+        // const auto grad = evalGradients(element,
+        //               element.geometry(),
+        //               this->gridGeometry(),
+        //               elemSol,
+        //               scv.dofPosition())[0];
+
+        // source = 1 - grad.two_norm();
+
+
+
+        return source;
     }
 
     /*!

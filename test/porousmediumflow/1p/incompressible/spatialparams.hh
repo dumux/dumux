@@ -77,10 +77,29 @@ public:
                                   const SubControlVolume& scv,
                                   const ElementSolution& elemSol) const
     {
-        if (isInLens_(scv.dofPosition()) && !checkIsConstantVelocity_)
-            return permeabilityLens_;
+
+        if (fu_)
+        {
+
+
+
+        const auto grad = evalGradients(element,
+                      element.geometry(),
+                      this->gridGeometry(),
+                      elemSol,
+                      element.geometry().center())[0];
+
+        return -1*(grad.two_norm());
+        }
+
         else
-            return permeability_;
+            return -1;
+
+
+        // if (isInLens_(scv.dofPosition()) && !checkIsConstantVelocity_)
+        //     return permeabilityLens_;
+        // else
+        //     return permeability_;
     }
 
     /*!
@@ -89,7 +108,13 @@ public:
      * \param globalPos The global position
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
-    { return 0.4; }
+    { return 1; }
+
+    void switchme()
+    { fu_ = true; }
+
+    bool isSwitched() const
+    { return fu_ ; }
 
 private:
     bool isInLens_(const GlobalPosition &globalPos) const
@@ -107,6 +132,8 @@ private:
     Scalar permeability_, permeabilityLens_;
 
     static constexpr Scalar eps_ = 1.5e-7;
+
+    bool fu_ = false;
 
     bool checkIsConstantVelocity_;
 };

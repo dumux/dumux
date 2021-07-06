@@ -42,6 +42,7 @@
 #include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
 
 #include <dumux/material/components/simpleh2o.hh>
+#include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include "problem.hh"
@@ -147,7 +148,7 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::OnePIncompressible>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Enable caching

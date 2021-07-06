@@ -1,15 +1,26 @@
 [Problem]
 Name = incompressible
 ExtrusionFactor = 1
+EnableGravity = false
 
 [Grid]
 LowerLeft = 0 0
-UpperRight = 1 1
-Cells = 10 10
+UpperRight = 2 2
+Cells = 50 50
 
 [SpatialParams]
 LensLowerLeft = 0.2 0.2
 LensUpperRight = 0.8 0.8
 
-Permeability = 1e-10 # [m^2]
-PermeabilityLens = 1e-12 # [m^2]
+[Component]
+LiquidDensity = 1
+LiquidKinematicViscosity = 1
+
+[SpatialParams]
+
+Permeability = -9e-2
+PermeabilityLens = -9e-2
+
+[Newton]
+MaxSteps = 30
+MaxRelativeShift = 1e-5

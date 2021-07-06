@@ -45,6 +45,7 @@
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/mpfa/scvgradients.hh>
+#include <dumux/nonlinear/newtonsolver.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 
@@ -139,12 +140,66 @@ int main(int argc, char** argv)
     using Assembler = FVAssembler<TypeTag, NUMDIFFMETHOD>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
-    using LinearSolver = SSORCGBackend;
+    using LinearSolver = UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // solver the linear problem
-    LinearPDESolver solver(assembler, linearSolver);
+
+   // the non-linear solver
+    using NewtonSolver = NewtonSolver<Assembler, LinearSolver>;
+    NewtonSolver solver(assembler, linearSolver);
+
+
+
+    // LinearPDESolver solver(assembler, linearSolver);
     solver.solve(x);
+
+    problem->spatialParams().switchme();
+
+    solver.solve(x);
+
+    std::vector<double> dist(gridGeometry->numDofs());
+    std::vector<double> test(gridGeometry->numDofs());
+
+    auto fvGeometry = localView(*gridGeometry);
+
+    static const auto p = getParam<int>("Problem.Order", 2);
+
+
+    for (const auto& element : elements(leafGridView))
+    {
+        fvGeometry.bindElement(element);
+
+        const auto& elemSol = elementSolution(element, x, *gridGeometry);
+
+        for (const auto& scv : scvs(fvGeometry))
+        {
+            const auto grad = evalGradients(element,
+                                            element.geometry(),
+                                            *gridGeometry,
+                                            elemSol,
+                                            scv.dofPosition())[0];
+
+            auto result = -1.0 * Dune::power(grad.two_norm(), p-1);
+
+            // std::cout << "first res " << result << std::endl;
+            const auto f = (p/(p-1) * x[scv.dofIndex()] + Dune::power(grad.two_norm(), p));
+
+            // std::cout << "f " << f << std::endl;
+            result += std::pow(f, double(double(p-1)/double(p)));
+
+            // std::cout << "new res " << result << ", std::pow(0)" << std::pow(f, double((p-1)/p)) << std::endl;
+
+            dist[scv.dofIndex()] = result;
+
+            test[scv.dofIndex()] = x[scv.dofIndex()];
+
+            // std::cout << "at dof " << scv.dofIndex() << ", pos " << scv.dofPosition() << ", old " << x[scv.dofIndex()] << ", grad " << grad << ", result " << result << std::endl;
+        }
+    }
+
+    vtkWriter.addField(dist, "dist");
+    vtkWriter.addField(test, "test");
 
     // output result to vtk
     vtkWriter.write(1.0);
