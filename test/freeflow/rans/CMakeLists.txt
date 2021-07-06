@@ -1,6 +1,8 @@
 add_input_file_links()
 dune_symlink_to_source_files(FILES references scripts)
 
+add_executable(test_ff_rans_wall_properties EXCLUDE_FROM_ALL main_wallproperties.cc)
+
 add_executable(test_ff_rans_lauferpipe_kepsilon EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_ff_rans_lauferpipe_kepsilon PUBLIC "TYPETAG=PipeLauferKEpsilon")
 
