@@ -2,6 +2,7 @@ Differences Between DuMu<sup>x</sup> 3.4 and DuMu<sup>x</sup> 3.3
 =============================================
 
 ### Improvements and Enhancements
+- __Requirements__: DuMu<sup>x</sup> still requires Dune >=2.7 and CMake >= 3.13. It was successfully tested with OPM 2021.04.
 - __Pore-network models added to DuMu<sup>x</sup>__:
     - Three fully implicit pore-network models (1p, 1pnc, 2p) have been added.
     - A quasi-static 2p PNM for the creation of pc-Sw curves has been added.
