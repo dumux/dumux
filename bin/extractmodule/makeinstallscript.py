@@ -173,7 +173,7 @@ if __name__ == '__main__':
     ###################
     # parse arguments
     parser = argparse.ArgumentParser(
-        description='This script generates an install script for your dune module,'
+        description='This script generates an install script for your dune module, '
                     'taking into account non-published commits & local changes.\n'
                     'This expects that your module is a git repository and that a '
                     'remote origin exists and has been set already.'
