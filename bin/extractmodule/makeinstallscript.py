@@ -33,7 +33,7 @@ def python_or_bash():
         print("You choose bash as language for install script.")
         return "bash"
     elif inp == "p" or inp == "py" or inp == "python":
-        print("You choose python as language for install script")
+        print("Creating Python install script")
         return "python"
     else:
         print("--Error: Unknown type. You must choose between python or bash!")
