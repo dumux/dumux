@@ -30,7 +30,7 @@ if sys.version_info[0] < 3:
 def python_or_bash():
     inp = input('Generate install script in Python (p) or Bash (b)?')
     if inp == "b" or inp == "sh" or inp == "bash" or inp == "shell":
-        print("You choose bash as language for install script.")
+        print("Creating Bash install script.")
         return "bash"
     elif inp == "p" or inp == "py" or inp == "python":
         print("Creating Python install script")
