@@ -14,6 +14,7 @@ import re
 import multiprocessing as mp
 import fnmatch
 import itertools
+from pathlib import Path
 from functools import partial
 from util import getPersistentVersions
 from util import versionTable
@@ -112,12 +113,13 @@ def path_check(basedir, subdir):
                  f"one level above the folder {basedir}.\n"
                  f"Run \"{os.path.basename(__file__)} --help\" for details.")
 
-    # check if subdir immediate subfolder of basedir
-    list_subdir = [subdir.path for subdir in os.scandir(basedir) if subdir.is_dir()]
-    for folder in subdir:
-        if os.path.join(basedir, folder.strip(os.sep)) not in list_subdir:
-            logging.error(f"Subfolder '{folder}' is not a subfolder of '{basedir}'")
-            raise NameError(f"Subfolder '{folder}' is not a subfolder of '{basedir}'")
+    # check whether subdir is a sub-directory of basedir
+    base = Path(basedir)
+    for subfolder in subdir:
+        child = Path(os.path.join(base, subfolder))
+        if base not in child.parents or not os.path.isdir(child):
+            logging.error(f"Subfolder '{subfolder}' is not a subfolder of '{basedir}'")
+            raise NameError(f"Subfolder '{subfolder}' is not a subfolder of '{basedir}'")
 
 
 def extract_sources_files(module_dir, subfolders):
@@ -352,10 +354,7 @@ if __name__ == "__main__":
     # copy the source tree
     # copy all base folders complete, then delete the unnecessary ones
     logging.debug("Copying old directories cotaining source files into new module...")
-    base_folders = list(set([
-        os.path.relpath(s, module_path).split(os.path.sep)[0] for s in source_files
-    ]))
-    for b in base_folders:
+    for b in subfolders:
         path_in_old_module = os.path.join(module_path, b)
         path_in_new_module = os.path.join(new_module_path, b)
         copy_tree(path_in_old_module, path_in_new_module)
@@ -371,7 +370,7 @@ if __name__ == "__main__":
                 section = 1 if section in [0, 1] else 2
             elif section == 1:
                 section = 2
-                for b in base_folders:
+                for b in subfolders:
                     content.append(f"add_subdirectory({b})")
             content.append(line)
 
@@ -419,7 +418,7 @@ if __name__ == "__main__":
     new_source_files = [
         s.replace(module_dir, new_module_name, 1) for s in source_files
     ]
-    for b in base_folders:
+    for b in subfolders:
         def matching_path(path, list_of_paths, header_dirs):
             for p in list_of_paths:
                 if path in p or path in header_dirs:
