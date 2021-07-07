@@ -28,8 +28,7 @@ if sys.version_info[0] < 3:
 
 # ask user to speficy the language of the generated script
 def python_or_bash():
-    inp = input('In python or bash do you want to generate'
-                'the install script?[p/b] (p:"Python", b:"Bash")')
+    inp = input('Generate install script in Python (p) or Bash (b)?')
     if inp == "b" or inp == "sh" or inp == "bash" or inp == "shell":
         print("You choose bash as language for install script.")
         return "bash"
