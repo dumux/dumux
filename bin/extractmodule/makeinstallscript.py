@@ -119,27 +119,34 @@ def makeInstallScript(path,
         optsPath = os.path.abspath(os.path.join(os.getcwd(), optsFile))
         optsRelPath = os.path.relpath(optsPath, modParentPath)
 
+    names = depNames
+    if modName not in names and modFolder not in skipFolders:
+        names.append(modName)
+
     folders = depFolders
-    if modName in depNames and modName not in folders:
-        folders.append(modName)
+    if modFolder not in folders and modFolder not in skipFolders:
+        folders.append(modFolder)
 
     # specific Module required patch and the patch path
-    patchRelPath = []
-    patchModule = []
+    patchFileType = []  # uncommitted or unpublished changes
+    patchModule = []  # names of remote modules containing channges
+    patchFolder = []  # names of local folders containing changes
     for depModPath in patches.keys():
-        depModName = getModuleInfo(depModPath, "Module")
+        depModName = getModuleInfo(os.path.join(modParentPath, depModPath), "Module")
         if 'unpublished' in patches[depModPath]:
-            patchModule.append(depModPath)
-            patchRelPath.append(os.path.relpath("{}/unpublished.patch".format(depModName), depModPath))
+            patchModule.append(depModName)
+            patchFolder.append(depModPath)
+            patchFileType.append("unpublished.patch")
         if 'uncommitted' in patches[depModPath]:
-            patchRelPath.append(os.path.relpath("{}/uncommitted.patch".format(depModName), depModPath))
-            patchModule.append(depModPath)
+            patchFileType.append("uncommitted.patch")
+            patchModule.append(depModName)
+            patchFolder.append(depModPath)
 
     argsGenerateScript = (instFileName,
-                          modName, modFolder, folders, versions,
-                          patches, patchModule, patchRelPath,
+                          modName, modFolder,
+                          folders, names, versions,
+                          patches, patchModule, patchFolder, patchFileType,
                           topFolderName, optsRelPath)
-
     if language == "bash":
         writeShellInstallScript(*argsGenerateScript)
     else:

@@ -139,8 +139,8 @@ def printVersionTable(versions):
 
 def writeShellInstallScript(instFileName,
                             modName, modFolder,
-                            folders, versions,
-                            patches, patchModule, patchRelPath,
+                            folders, names, versions,
+                            patches, patchModule, patchFolder, patchRelPath,
                             topFolderName, optsRelPath="dumux/cmake.opts"):
     """
     function to write the content into the generated shell install script
@@ -154,11 +154,14 @@ def writeShellInstallScript(instFileName,
 
         - folders -- The list containing the folders of the module to be
             installed and all its dependencies
+        - names -- The list containing the names of the module to be
+            installed and all its dependencies
         - versions -- The persistent, remotely available git versions for
             the module to be installed and all its dependencies
 
         - patches -- The patches for unpublished commits and uncommitted changes
-        - patchModule -- The paths for the modules which has unpublished commits and uncommited changes
+        - patchModule -- The names for the modules which has unpublished commits and uncommited changes
+        - patchFolder -- The folders for the modules which has unpublished commits and uncommited changes
         - patchRelPath -- The realative paths of the generated patch files
 
         - topFolderName -- The of the folder that the install script creates upon execution to install the module in.
@@ -225,7 +228,7 @@ def writeShellInstallScript(instFileName,
         installFile.write(')\n\n')
 
         installFile.write('DEPFOLDERS=(\n')
-        installFile.write('\n'.join(folders))
+        installFile.write('\n'.join(names))
         installFile.write('\n)\n\n')
 
         installFile.write('DEPBRANCHES=(\n')
@@ -322,8 +325,8 @@ def writeShellInstallScript(instFileName,
 
 def writePythonInstallScript(instFileName,
                              modName, modFolder,
-                             folders, versions,
-                             patches, patchModule, patchRelPath,
+                             folders, names, versions,
+                             patches, patchModule, patchFolder, patchRelPath,
                              topFolderName, optsRelPath="dumux/cmake.opts"):
     """
     function to write the content into the generated python install script
@@ -337,11 +340,14 @@ def writePythonInstallScript(instFileName,
 
         - folders -- The list containing the folders of the module to be
             installed and all its dependencies
+        - names -- The list containing the names of the module to be
+            installed and all its dependencies
         - versions -- The persistent, remotely available git versions for
             the module to be installed and all its dependencies
 
         - patches -- The patches for unpublished commits and uncommitted changes
-        - patchModule -- The paths for the modules which has unpublished commits and uncommited changes
+        - patchModule -- The names for the modules which has unpublished commits and uncommited changes
+        - patchFolder -- The folders for the modules which has unpublished commits and uncommited changes
         - patchRelPath -- The realative paths of the generated patch files
 
         - topFolderName -- The of the folder that the install script creates upon execution to install the module in.
@@ -436,8 +442,8 @@ if __name__ == '__main__':
         installFile.write(indent + r'deps = {}' + '\n')
 
         installFile.write(indent + 'deps["folders"] = [\n')
-        for dep in folders:
-            installFile.write(indent*2 + "\"" + dep + "\"," + '\n')
+        for name in names:
+            installFile.write(indent*2 + "\"" + name + "\"," + '\n')
         installFile.write(indent*2 + ']\n')
 
         installFile.write(indent + 'deps["branches"] = [\n')
