@@ -29,6 +29,9 @@
 
 #include <dumux/discretization/cctpfa.hh>
 
+#include <dumux/porousmediumflow/2p/model.hh>
+#include <dumux/porousmediumflow/2p/incompressiblelocalresidual.hh>
+
 #include <dumux/material/components/trichloroethene.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
