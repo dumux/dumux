@@ -150,7 +150,7 @@ else:
     test_path += '/implicit/isothermal'
 
 show_message("(Installation complete) To test if everything works, please run the following commands (can be copied to command line):\n\n"
-             "  {}\n"
+             "  cd {}\n"
              "  make test_1p_tpfa\n"
              "  ./test_1p_tpfa\n"
              "  paraview *pvd\n".format(test_path))
