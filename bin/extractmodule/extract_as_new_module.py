@@ -116,13 +116,13 @@ and all headers contained in '{module_dir}'
 that are required to build the exectutables from the sources:
 {os.linesep.join([f"   - {s}" for s in source_files])}
 
-The extracted files are copied into a new DUNE module
-retaining the directory structure. Required files for
-creating a working DUNE module (like CMakeLists.txt)
-will be created and/or updated.
+The extracted files are copied into a new DUNE module retaining the directory
+structure. The files required for creating a working DUNE module (such as
+CMakeLists.txt) will be created and/or updated.
 
-The script 'duneproject' will run now. Please answer all
-upcoming queries to the best of your knowledge.
+In the next step, the 'duneproject' script will be executed to guide the
+creation of your new DUNE module. Please answer all upcoming queries to the
+best of your knowledge.
 
 Important: the new module should NOT depend on the module '{module_dir}'
 """
@@ -270,12 +270,10 @@ if __name__ == "__main__":
             "Make sure to have duneproject in dune-common/bin"
         )
 
-    # give explanations
     print(info_explanations(
         module_dir, module_path, subfolders, source_files
     ))
-
-    input("Read the above and press [Enter] to proceed...")
+    input("Please read the above carefully and press [Enter] to proceed...")
 
     # run duneproject
     try:
