@@ -105,7 +105,7 @@ def get_remote_url(repo_path):
             sys.stdout.write("ERROR: The remote reposity is not empty!.\n")
 
 
-def path_check(basedir, subdir):
+def path_check(basedir, subdirs):
     # check if basedir contained in the script path
     if not os.path.isdir(basedir):
         logging.error(f"No {basedir} found in your path where the script is running!")
@@ -113,13 +113,14 @@ def path_check(basedir, subdir):
                  f"one level above the folder {basedir}.\n"
                  f"Run \"{os.path.basename(__file__)} --help\" for details.")
 
-    # check whether subdir is a sub-directory of basedir
-    base = Path(basedir)
-    for subfolder in subdir:
-        child = Path(os.path.join(base, subfolder))
-        if base not in child.parents or not os.path.isdir(child):
-            logging.error(f"Subfolder '{subfolder}' is not a subfolder of '{basedir}'")
-            raise NameError(f"Subfolder '{subfolder}' is not a subfolder of '{basedir}'")
+    for subdir in subdirs:
+        path = Path(basedir) / Path(subdir)
+        errMsg = 'Cannot handle the given folder {}'.format(str(path))
+        if not path.exists():
+            raise Exception(errMsg + ' because it does not exist.')
+        if not path.is_dir():
+            raise Exception(errMsg + ' because it is not a directory.')
+
 
 
 def extract_sources_files(module_dir, subfolders):
