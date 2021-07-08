@@ -178,7 +178,8 @@ please go to the build folders corresponding to the sources listed above.\n
 ###################################################################
 # Installation part of README.md
 ###################################################################
-def info_readme_installation(remoteurl, install_script_name, new_module_name, language):
+def info_readme_installation(remoteurl, install_script_name, new_module_name):
+    install_script_path = os.path.join(new_module_name, install_script_name)
     return f"""
 
 ## Installation
@@ -192,7 +193,8 @@ provided in this repository to install all dependent modules.
 mkdir DUMUX
 cd DUMUX
 git clone {remoteurl}
-{"./" if language == "bash" else "python3 "}{new_module_name}/{install_script_name}
+chmod u+x {install_script_path}
+./{install_script_path}
 ```
 
 This will clone all modules into the directory `DUMUX`,
@@ -460,7 +462,7 @@ if __name__ == "__main__":
 
     with open(readme_path, "a") as readme_file:
         readme_file.write(info_readme_installation(
-            remote_url, install_script_name, new_module_name, language
+            remote_url, install_script_name, new_module_name
         ))
 
     def run_git_cmd(cmd):
