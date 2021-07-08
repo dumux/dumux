@@ -29,6 +29,10 @@ except Exception:
     sys.exit('Could not import common modul or getModuleInfo')
 
 
+def get_readme_file_name():
+    return "README.md"
+
+
 def make_string_list(items, indentation="   "):
     return os.linesep.join([(indentation + '- ' + str(it)) for it in items])
 
@@ -270,18 +274,28 @@ def query_empty_remote_repo_url():
             remote = input("Please provide the URL of your repository:\n")
 
         try:
+            print("Checking the repo (you may have to introcude credentials):")
             remote_content = runCommand(
                 'git ls-remote {}'.format(remote),
                 suppressTraceBack=True
             )
         except Exception:
-            print("Could not find your repo at {}. ".format(remote))
-            print("Please double-check and reenter correct information")
+            print(" - Could not find your repo at {}. ".format(remote))
+            print(" - Please revisit the provided information.")
             continue
 
         if (remote_content == ''):
             return remote
         raise Exception("Remote reposity is not empty.")
+
+
+def run_git_cmd(path, cmd):
+    print(f"Running {cmd} (you may have to provide your credentials)")
+    callFromPath(path)(runCommand)(cmd)
+
+
+def push_repository(mod_path, remote_url):
+    run_git_cmd(mod_path, 'git push -u origin master')
 
 
 def guide_repository_initialization(mod_path):
@@ -292,16 +306,13 @@ def guide_repository_initialization(mod_path):
     )
     remote_url = None if not has_repo else query_empty_remote_repo_url()
 
-    def run_git_cmd(cmd):
-        print(f"Running {cmd} (you may have to provide your credentials)")
-        callFromPath(mod_path)(runCommand)(cmd)
+    run_git_cmd(mod_path, 'git init')
+    run_git_cmd(mod_path, 'git add .')
+    run_git_cmd(mod_path, 'git commit -m "Initial commit"')
 
-    run_git_cmd('git init')
-    run_git_cmd('git add .')
-    run_git_cmd('git commit -m "Initial commit"')
     if has_repo:
-        run_git_cmd('git remote add origin {}'.format(remote_url))
-        run_git_cmd('git push -u origin master')
+        run_git_cmd(mod_path, 'git remote add origin {}'.format(remote_url))
+        push_repository(mod_path, remote_url)
 
     return remote_url
 
@@ -310,7 +321,7 @@ def guide_versions_in_readme(mod_path, readme=None):
 
     write_version_info = query_yes_no(
         "Write detailed version information"
-        " (folder/branch/commits/dates) into README.md?\n"
+        f" (folder/branch/commits/dates) into {get_readme_file_name()}?\n"
     )
     if write_version_info:
         try:
@@ -322,20 +333,22 @@ def guide_versions_in_readme(mod_path, readme=None):
         except Exception as e:
             sys.exit(f"Error when determining version info: {e}")
 
+        if not readme:
+            readme = os.path.join(mod_path, get_readme_file_name())
+
         append_file_content(
-            (os.path.join(mod_path, "README.md") if not readme else readme),
-            "\n## Version Information\n\n" + versionTable(versions)
+            readme, "\n## Version Information\n\n" + versionTable(versions)
         )
 
 
-def guide_install_script_generation(mod_path, mod_name, skip=[]):
+def guide_install_script_generation(mod_path, script_name_body, skip=[]):
     language = python_or_bash()
     ext = get_script_extension(language)
-    inst_script_name = 'install_' + mod_name + ext
+    inst_script_name = script_name_body + ext
     try:
         makeInstallScript(mod_path,
                           fileName=inst_script_name, ignoreUntracked=True,
-                          skipFolders=skip+[mod_name], suppressHints=True,
+                          skipFolders=skip+[mod_path], suppressHints=True,
                           topFolderName=None, language=language)
     except Exception as e:
         raise Exception(
@@ -344,6 +357,29 @@ def guide_install_script_generation(mod_path, mod_name, skip=[]):
         )
 
     return inst_script_name
+
+
+def process_install_script(script_name, mod_path, remote_url):
+
+    shutil.move(script_name, os.path.join(mod_path, script_name))
+    run_git_cmd(mod_path, f'git add {script_name}')
+    run_git_cmd(mod_path, 'git commit -m "add install script"')
+
+    readme = os.path.join(mod_path, get_readme_file_name())
+    append_file_content(
+        readme,
+        info_readme_installation(remote_url, script_name, new_module_name)
+    )
+    run_git_cmd(mod_path, f'git commit -m "update readme" {readme}')
+
+    if remote_url:
+        push_repository(mod_path, remote_url)
+    else:
+        print(
+            "\n"
+            "Please remember to manually fix the installation instructions\n"
+            "once you know the remote URL where your repository will be hosted"
+        )
 
 
 # Some general information for users of the script
@@ -374,10 +410,18 @@ Important: the new module should NOT depend on the module '{module_dir}'
 """
 
 
-# Main part of README.md
+# Main part of readme
 def info_readme_main(module_dir, subfolders, source_files):
-    subfolders_str = ''.join([f"*   `{d}`\n" for d in subfolders])
-    sources_str = ''.join([f"*   `{s}`\n" for s in source_files])
+    def rel_path(p):
+        return os.path.relpath(p, module_dir)
+
+    subfolders_str = ''.join(
+        [f"*   `{rel_path(d)}`\n" for d in subfolders]
+    )
+    sources_str = ''.join(
+        [f"*   `{rel_path(s)}`\n" for s in source_files]
+    )
+
     return f"""
 This file has been created automatically. Please adapt it to your needs.
 
@@ -395,7 +439,7 @@ please go to the build folders corresponding to the sources listed above.\n
 """
 
 
-# Installation part of README.md
+# Installation part of readme
 def info_readme_installation(remote_url, install_script_name, new_module_name):
     install_script_path = os.path.join(new_module_name, install_script_name)
     remote_hints = ''
@@ -469,16 +513,19 @@ if __name__ == "__main__":
     parser.add_argument('subfolder', nargs='+',
                         help='subfolder(s) of "module_dir" to be extracted')
 
+    # prepare input
     args = vars(parser.parse_args())
     module_dir = args['module_dir'].strip(os.sep)
     module_path = os.path.abspath(module_dir)
     base_folder = os.path.abspath(os.path.join(module_dir, '../'))
 
+    # find sources
     subfolders = remove_redundant_folders(list(set(args['subfolder'])))
     check_module_folder(module_dir)
     check_sub_folders(module_dir, subfolders)
     source_files = extract_source_files(module_dir, subfolders)
 
+    # guide user through new module creation
     print(info_initial(module_dir, module_path, subfolders, source_files))
     input("Please read the above carefully and press [Enter] to proceed...")
 
@@ -487,6 +534,7 @@ if __name__ == "__main__":
     check_new_module(new_module_name)
     new_module_path = os.path.join(base_folder, new_module_name)
 
+    # prepare all data in new module
     copy_sub_folders(subfolders, module_path, new_module_path)
     add_folders_to_cmake_lists(new_module_path, subfolders)
 
@@ -495,6 +543,7 @@ if __name__ == "__main__":
     new_source_files = copy_files(source_files, module_path, new_module_path)
     new_git_ignore = copy_files(["dumux/.gitignore"], "dumux", new_module_path)
 
+    # guide user through deletion of possibly unneccessary folders
     folders_without_sources = find_folders_without_source_files(
         new_module_path, subfolders, new_headers + new_source_files
     )
@@ -506,17 +555,24 @@ if __name__ == "__main__":
         )
         actual_subfolders = [s for s in subfolders if s not in deleted_folders]
 
+    # remove stuff that is created when running duneproject
     if os.path.join(new_module_path, 'dune') not in folders_without_sources:
         remove_folder(new_module_path, 'dune')
     if os.path.join(new_module_path, 'src') not in folders_without_sources:
         remove_folder(new_module_path, 'src')
 
-    new_readme = os.path.join(new_module_path, "README.md")
+    # prepare new readme file
+    dune_readme = os.path.join(new_module_path, "README")
+    if os.path.exists(dune_readme):
+        os.remove(dune_readme)
+
+    new_readme = os.path.join(new_module_path, get_readme_file_name())
     replace_file_content(
         new_readme,
         info_readme_main(module_dir, actual_subfolders, source_files)
     )
 
+    # try to initialize repo (to use its url in later steps)
     remote_url = guide_repository_initialization(new_module_path)
     if not remote_url:
         print(
@@ -528,24 +584,13 @@ if __name__ == "__main__":
             "\n"
         )
 
+    # make install script & finalize readme
     check_path = new_module_path if remote_url else module_path
     skip_path = new_module_path if not remote_url else module_path
 
     guide_versions_in_readme(check_path, new_readme)
+    iscript = 'install_' + new_module_name
+    iscript = guide_install_script_generation(check_path, iscript, [skip_path])
+    process_install_script(iscript, new_module_path, remote_url)
 
-    iscript_name = guide_install_script_generation(
-        check_path, new_module_name, [skip_path]
-    )
-    shutil.move(iscript_name, os.path.join(new_module_path, iscript_name))
-    append_file_content(
-        new_readme,
-        info_readme_installation(remote_url, iscript_name, new_module_name)
-    )
-
-    if not remote_url:
-        print(
-            "\n"
-            "Please remember to manually fix the installation instructions\n"
-            "once you know the remote URL where your repository will be hosted"
-        )
     print(info_configure_module(new_module_name))
