@@ -82,8 +82,8 @@ def query_yes_no(question, default="yes"):
         if not is_valid(choice):
             sys.stdout.write("\nInvalid answer: '{}'. Choose from '{}'.\n"
                              .format(choice, get_choices()))
-
-        return True if is_affirmative(choice) else False
+        else:
+            return True if is_affirmative(choice) else False
 
 
 def header_filter_cpp():
