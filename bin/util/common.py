@@ -47,3 +47,38 @@ def callFromPath(path):
             return result
         return wrapper_callFromPath
     return decorator_callFromPath
+
+
+# query a yes/no answer from the user
+def query_yes_no(question, default="yes"):
+    affirmative = ["yes", "y", "ye"]
+    negative = ["no", "n"]
+
+    def get_choices():
+        return ", ".join(c for c in affirmative + negative)
+
+    def is_affirmative(choice): return choice in affirmative
+    def is_negative(choice): return choice in negative
+    def is_valid(choice): return is_affirmative(choice) or is_negative(choice)
+
+    if not is_valid(default):
+        raise ValueError("\nInvalid default answer: '{}', choices: '{}'\n"
+                         .format(default, get_choices()))
+
+    if default is None:
+        prompt = " [y/n] "
+    else:
+        prompt = " [Y/n] " if is_affirmative(default) else " [y/N] "
+
+    while True:
+        sys.stdout.write(question + prompt)
+        choice = input().lower()
+
+        if default is not None and choice == "":
+            return True if is_affirmative(default) else False
+
+        if not is_valid(choice):
+            sys.stdout.write("\nInvalid answer: '{}'. Choose from '{}'.\n"
+                             .format(choice, get_choices()))
+
+        return True if is_affirmative(choice) else False

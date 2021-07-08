@@ -24,7 +24,7 @@ try:
     path = os.path.split(os.path.abspath(__file__))[0]
     sys.path.append(os.path.join(path, '../bin/util'))
     from getmoduleinfo import getDependencies
-    from common import callFromPath, runCommand
+    from common import callFromPath, runCommand, query_yes_no
 except Exception:
     sys.exit('Could not import common modul or getModuleInfo')
 import logging
@@ -59,29 +59,6 @@ def search_headers(source_file, headers, module_path):
         add_headers_recursively(header_path, headers, module_path)
 
     return headers
-
-
-# function asking user to answer yes or no question
-def query_yes_no(question, default="yes"):
-    valid = {"yes": True, "y": True, "ye": True, "no": False, "n": False}
-    if default is None:
-        prompt = " [y/n] "
-    elif default == "yes":
-        prompt = " [Y/n] "
-    elif default == "no":
-        prompt = " [y/N] "
-    else:
-        raise ValueError("invalid default answer: '%s'" % default)
-    while True:
-        sys.stdout.write("\n\n" + question + prompt)
-        choice = input().lower()
-        if default is not None and choice == "":
-            return valid[default]
-        elif choice in valid:
-            return valid[choice]
-        else:
-            sys.stdout.write("Please respond with 'yes' or 'no' "
-                             "(or 'y' or 'n').\n")
 
 
 def get_dumux_pub_project_url(project_name):
