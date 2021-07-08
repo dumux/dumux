@@ -26,6 +26,19 @@ if sys.version_info[0] < 3:
     sys.exit("\nError': Python3 required")
 
 
+def supported_languages():
+    return ['python', 'bash']
+
+
+def get_script_extension(language):
+    assert language in supported_languages()
+    ext = {
+        'python': '.py',
+        'bash': '.sh'
+    }
+    return ext[language]
+
+
 # ask user to speficy the language of the generated script
 def python_or_bash():
     inp = input('Generate install script in Python (p) or Bash (b)?')
