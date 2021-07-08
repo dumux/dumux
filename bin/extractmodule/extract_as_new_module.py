@@ -10,7 +10,6 @@ import os.path
 import argparse
 import shutil
 from distutils.dir_util import copy_tree
-import re
 import multiprocessing as mp
 import fnmatch
 import itertools
@@ -25,40 +24,10 @@ try:
     sys.path.append(os.path.join(path, '../bin/util'))
     from getmoduleinfo import getDependencies
     from common import callFromPath, runCommand, query_yes_no
+    from common import get_included_project_headers_cpp
 except Exception:
     sys.exit('Could not import common modul or getModuleInfo')
 import logging
-
-
-# return the list of included headers including the header itself
-def add_headers_recursively(header_path, current_headers, module_path):
-    if os.path.exists(header_path):
-        if header_path not in current_headers:
-            current_headers.append(header_path)
-            search_headers(header_path, current_headers, module_path)
-
-
-# function to search matching header files
-def search_headers(source_file, headers, module_path):
-    with open(source_file, 'r') as f:
-        content = f.read()
-        header_in_bracket = re.findall(r'#include\s+<(.+?)>', content)
-        header_in_quotation = re.findall(r'#include\s+"(.+?)"', content)
-
-    # search for includes relative to the module path
-    for header in header_in_bracket:
-        header_path = os.path.join(module_path, header)
-        add_headers_recursively(header_path, headers, module_path)
-
-    # search for includes relative to the path of the including file
-    # only allow quoted includes for this
-    for header in header_in_quotation:
-        if header == "config.h":
-            continue
-        header_path = os.path.join(os.path.dirname(source_file), header)
-        add_headers_recursively(header_path, headers, module_path)
-
-    return headers
 
 
 def get_dumux_pub_project_url(project_name):
@@ -385,11 +354,11 @@ if __name__ == "__main__":
     logging.debug("Searching for all header files...")
     with mp.Pool() as p:
         headers = itertools.chain.from_iterable(p.map(
-            partial(search_headers, module_path=module_path, headers=[]),
+            partial(get_included_project_headers_cpp,
+                    project_base=module_path),
             source_files
         ))
     logging.debug("Head files are found.")
-
     # make unique
     logging.debug("Making header files unqiue (removing duplicates)...")
     headers = list(set(headers))

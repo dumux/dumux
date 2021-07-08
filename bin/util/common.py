@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import functools
 import subprocess
@@ -82,3 +83,41 @@ def query_yes_no(question, default="yes"):
                              .format(choice, get_choices()))
 
         return True if is_affirmative(choice) else False
+
+
+def header_filter_cpp():
+    return lambda file_name: file_name == 'config.h'
+
+
+# get all project headers included by a cpp file
+def get_included_project_headers_cpp(file,
+                                     project_base,
+                                     headers=[],
+                                     header_filter=header_filter_cpp()):
+    file_path = os.path.join(project_base, file)
+    if not os.path.exists(file_path):
+        raise IOError(f'Cpp file {file_path} does not exist')
+
+    with open(file_path, 'r') as f:
+        content = f.read()
+        header_in_bracket = re.findall(r'#include\s+<(.+?)>', content)
+        header_in_quotation = re.findall(r'#include\s+"(.+?)"', content)
+
+        def process(path_in_project):
+            header_path = os.path.join(project_base, path_in_project)
+            if os.path.exists(header_path):
+                if not header_filter(path_in_project):
+                    if header_path not in headers:
+                        headers.append(header_path)
+                        get_included_project_headers_cpp(
+                            header_path, project_base,
+                            headers, header_filter
+                        )
+
+        for header in header_in_bracket:
+            process(header)
+        for header in header_in_quotation:
+            abs_header_path = os.path.join(os.path.dirname(file), header)
+            project_path = os.path.relpath(abs_header_path, project_base)
+            process(project_path)
+    return headers
