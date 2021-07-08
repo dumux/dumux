@@ -85,8 +85,7 @@ def query_yes_no(question, default="yes"):
 
 
 # query for git remote url and make sure it is not empty
-def get_remote_url(repo_path):
-    run_from_mod = callFromPath(repo_path)(runCommand)
+def get_remote_url():
     while True:
         if query_yes_no("Do you own a subfolder in dumux-pub?"):
             nameyearx = input("Type below the information of"
@@ -95,7 +94,7 @@ def get_remote_url(repo_path):
                         '/dumux-pub/{}.git'.format(nameyearx.lower())
         else:
             remoteurl = input("Provide URL of your remote repository:\n")
-        check_remote_repo = run_from_mod('git ls-remote {}'.format(remoteurl))
+        check_remote_repo = runCommand('git ls-remote {}'.format(remoteurl))
         if (check_remote_repo is None):
             sys.stdout.write("\nERROR: Please re-enter correct information.\n")
         elif (check_remote_repo == ''):
@@ -558,7 +557,7 @@ if __name__ == "__main__":
     if query_yes_no("Do you have an empty remote repository to push the code to (recommended)?"):
         logging.debug("Trying to get the remote URL.")
         try:
-            remoteurl = get_remote_url(new_module_path)
+            remoteurl = get_remote_url()
         except Exception as e:
             logging.error(f"{e}")
             sys.exit("Error: " + str(e))
