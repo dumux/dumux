@@ -24,6 +24,7 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/geometry/quadraturerules.hh>
+#include <dumux/common/math.hh>
 
 namespace Dumux {
 
@@ -110,6 +111,72 @@ distancePointSegment(const typename Geometry::GlobalCoordinate& p, const Geometr
     const auto& a = geometry.corner(0);
     const auto& b = geometry.corner(1);
     return distancePointSegment(p, a, b);
+}
+
+/*!
+ * \ingroup Geometry
+ * \brief Compute the distance from a point to the triangle connecting the points a, b and c
+ *        See https://www.iquilezles.org/www/articles/triangledistance/triangledistance.htm.
+ */
+template<class Point>
+inline typename Point::value_type
+distancePointTriangle(const Point& p, const Point& a, const Point& b, const Point& c)
+{
+    const auto ab = b - a;
+    const auto bc = c - b;
+    const auto ca = a - c;
+    const auto normal = crossProduct(ab, ca);
+
+    const auto ap = p - a;
+    const auto bp = p - b;
+    const auto cp = p - c;
+
+    const auto sum = sign(crossProduct(ab, normal)*ap)
+                   + sign(crossProduct(bc, normal)*ab)
+                   + sign(crossProduct(ca, normal)*ca);
+
+    using std::sqrt;
+
+    if (sum < 2.0)
+    {
+        using std::min;
+        using std::clamp;
+
+        auto tmp1 = ab;
+        tmp1 *= clamp((ab*ap) / (ab*ab), 0.0, 1.0);
+        tmp1 -= ap;
+
+        auto tmp2 = bc;
+        tmp2 *= clamp((bc*bp) / (bc*bc), 0.0, 1.0);
+        tmp2 -= bp;
+
+        auto tmp3 = ca;
+        tmp3 *= clamp((ca*cp) / (ca*ca), 0.0, 1.0);
+        tmp3 -= cp;
+
+        return sqrt(min(min(tmp1*tmp1, tmp2*tmp2), tmp3*tmp3));
+    }
+    else
+    {
+        const auto tmp = normal*ap;
+        return sqrt(tmp*tmp / (normal*normal));
+    }
+}
+
+/*!
+ * \ingroup Geometry
+ * \brief Compute the distance from a point to a given triangle geometry
+ */
+template<class Geometry>
+inline typename Geometry::ctype
+distancePointTriangle(const typename Geometry::GlobalCoordinate& p, const Geometry& geometry)
+{
+    static_assert(Geometry::mydimension == 2, "Geometry has to be a triangle");
+    // TODO runtime check ?
+    const auto& a = geometry.corner(0);
+    const auto& b = geometry.corner(1);
+    const auto& c = geometry.corner(2);
+    return distancePointTriangle(p, a, b, c);
 }
 
 /*!
