@@ -24,6 +24,7 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/geometry/quadraturerules.hh>
+#include <dumux/common/math.hh>
 
 namespace Dumux {
 
@@ -110,6 +111,93 @@ distancePointSegment(const typename Geometry::GlobalCoordinate& p, const Geometr
     const auto& a = geometry.corner(0);
     const auto& b = geometry.corner(1);
     return distancePointSegment(p, a, b);
+}
+
+/*!
+ * \ingroup Geometry
+ * \brief Compute the distance from a point to the triangle connecting the points a, b and c
+ */
+template<class Point>
+inline typename Point::value_type
+distancePointTriangle(const Point& p, const Point& a, const Point& b, const Point& c)
+{
+    const auto ab = b - a;
+    const auto bc = c - b;
+    const auto ca = a - c;
+    const auto normal = crossProduct(ab, ca);
+
+    const auto ap = p - a;
+    const auto bp = p - b;
+    const auto cp = p - c;
+
+    const auto sum = sign(crossProduct(ab, normal)*ap)
+                   + sign(crossProduct(bc, normal)*ab)
+                   + sign(crossProduct(ca, normal)*ca);
+
+    using std::sqrt;
+
+    if (sum < 2.0)
+    {
+        using std::min;
+        using std::clamp;
+
+        auto tmp1 = ab;
+        tmp1 *= clamp((ab*ap) / (ab*ab), 0.0, 1.0);
+        tmp1 -= ap;
+
+        auto tmp2 = bc;
+        tmp2 *= clamp((bc*bp) / (bc*bc), 0.0, 1.0);
+        tmp2 -= bp;
+
+        auto tmp3 = ca;
+        tmp3 *= clamp((ca*cp) / (ca*ca), 0.0, 1.0);
+        tmp3 -= cp;
+
+        return sqrt(min(min(tmp1*tmp1, tmp2*tmp2), tmp3*tmp3));
+    }
+    else
+    {
+        const auto tmp = normal*ap;
+        return sqrt(tmp*tmp / (normal*normal));
+    }
+
+
+    // vec3 v21 = v2 - v1; vec3 p1 = p - v1;
+    // vec3 v32 = v3 - v2; vec3 p2 = p - v2;
+    // vec3 v13 = v1 - v3; vec3 p3 = p - v3;
+    // vec3 nor = cross( v21, v13 );
+
+    // return sqrt( // inside/outside test
+    //              (sign(dot(cross(v21,nor),p1)) +
+    //               sign(dot(cross(v32,nor),p2)) +
+    //               sign(dot(cross(v13,nor),p3))<2.0)
+    //               ?
+    //               // 3 edges
+    //               min( min(
+    //               dot2(v21*clamp(dot(v21,p1)/dot2(v21),0.0,1.0)-p1),
+    //               dot2(v32*clamp(dot(v32,p2)/dot2(v32),0.0,1.0)-p2) ),
+    //               dot2(v13*clamp(dot(v13,p3)/dot2(v13),0.0,1.0)-p3) )
+    //               :
+    //               // 1 face
+    //               dot(nor,p1)*dot(nor,p1)/dot2(nor) );
+
+
+}
+
+/*!
+ * \ingroup Geometry
+ * \brief Compute the distance from a point to a given segment geometry
+ */
+template<class Geometry>
+inline typename Geometry::ctype
+distancePointTriangle(const typename Geometry::GlobalCoordinate& p, const Geometry& geometry)
+{
+    static_assert(Geometry::mydimension == 2, "Geometry has to be a triangle");
+    // TODO runtime check
+    const auto& a = geometry.corner(0);
+    const auto& b = geometry.corner(1);
+    const auto& c = geometry.corner(2);
+    return distancePointTriangle(p, a, b, c);
 }
 
 /*!
