@@ -434,35 +434,37 @@ if __name__ == "__main__":
                     rel_dir_path = os.path.relpath(dir_path, new_module_path)
                     no_source_folder.append(rel_dir_path)
 
-        no_source_lists = ('\n'.join(dir for dir in no_source_folder))
-        yes_to_all = query_yes_no(
-            "Could not automatically determine if following directories contain data essential for the extracted applications:\n{0}.\n"
-            "Do you want to copy all of them in the new module {1}?\n"
-            "(By choosing no you need to consider each folder seperately)"
-            .format(*[no_source_lists, new_module_name]),
-            default="yes"
-        )
+        if no_source_folder:
+            no_source_lists = '\n'.join(dir for dir in no_source_folder)
+            yes_to_all = query_yes_no(
+                "Could not automatically determine if the following directories "
+                "contain data essential for the extracted applications:\n{0}.\n"
+                "Do you want to copy all of them in the new module {1}?\n"
+                "(By choosing no you need to consider each folder seperately)"
+                .format(no_source_lists, new_module_name),
+                default="yes"
+            )
 
-        if not yes_to_all:
-            for rel_dir_path in no_source_folder:
-                answer_is_yes = query_yes_no(
-                    f"Could not automatically determine if {rel_dir_path} contains data essential for the extracted applications.\n"
-                    f"Do you want to copy the files in {rel_dir_path} to the extracted module {new_module_name}",
-                    default="yes"
-                )
-                if not answer_is_yes:
-                    # remove copy of directory
-                    shutil.rmtree(os.path.join(new_module_path, rel_dir_path))
-                    # remove entry from CMakeLists.txt
-                    cml_path = os.path.join(module_path, "CMakeLists.txt")
-                    with open(cml_path, "r+") as cml:
-                        content = cml.read()
-                        cml.seek(0)
-                        content = content.replace(
-                            "add_subdirectory({d})\n", ""
-                        )
-                        cml.write(content)
-                        cml.truncate()
+            if not yes_to_all:
+                for rel_dir_path in no_source_folder:
+                    answer_is_yes = query_yes_no(
+                        f"Could not automatically determine if {rel_dir_path} contains data essential for the extracted applications.\n"
+                        f"Do you want to copy the files in {rel_dir_path} to the extracted module {new_module_name}",
+                        default="yes"
+                    )
+                    if not answer_is_yes:
+                        # remove copy of directory
+                        shutil.rmtree(os.path.join(new_module_path, rel_dir_path))
+                        # remove entry from CMakeLists.txt
+                        cml_path = os.path.join(module_path, "CMakeLists.txt")
+                        with open(cml_path, "r+") as cml:
+                            content = cml.read()
+                            cml.seek(0)
+                            content = content.replace(
+                                "add_subdirectory({d})\n", ""
+                            )
+                            cml.write(content)
+                            cml.truncate()
     logging.debug("The folders containg no sources are handled.")
 
     logging.debug("Deleting dune/src in the extracted module...")
