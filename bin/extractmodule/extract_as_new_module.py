@@ -3,6 +3,7 @@
 This script extracts some specified applications into a separate Dune module.
 For example make a dumux-pub repository accompanying a scientific paper.
 """
+
 import sys
 import os
 import subprocess
@@ -26,7 +27,6 @@ try:
     from common import get_included_project_headers_cpp, findMatchingFiles
 except Exception:
     sys.exit('Could not import common modul or getModuleInfo')
-import logging
 
 
 def get_dumux_pub_project_url(project_name):
@@ -34,8 +34,7 @@ def get_dumux_pub_project_url(project_name):
     return base_url + '{}.git'.format(project_name.lower())
 
 
-# query for git remote url and make sure it is not empty
-def get_remote_url():
+def query_empty_remote_repo_url():
     while True:
         if query_yes_no("Is your repository hosted in dumux-pub?"):
             project = input("Please provide the name of your project "
@@ -59,7 +58,7 @@ def get_remote_url():
         raise Exception("Remote reposity is not empty.")
 
 
-def path_check(mod_dir, sub_dirs):
+def check_input_folders(mod_dir, sub_dirs):
     if not os.path.isdir(mod_dir):
         raise Exception(
             f"Module folder {mod_dir} not found. "
@@ -86,7 +85,7 @@ def remove_redundant_subfolders(subfolders):
     ]
 
 
-def extract_sources_files(module_dir, subfolders):
+def extract_source_files(module_dir, subfolders):
     sources = []
     for folder in subfolders:
         folderPath = os.path.abspath(os.path.join(module_dir, folder))
@@ -103,18 +102,43 @@ def check_module(module_name):
         )
 
 
+def add_folders_to_cmake_lists(cml_file, folders):
+    with open(cml_file) as cml:
+        lines_bw = [line for line in reversed(cml.readlines())]
+
+        idx = -1
+        for line in lines_bw:
+            if line.startswith("add_subdirectory"):
+                idx = lines_bw.index(line)
+                break
+
+        new_lines = lines_bw[0:idx]
+        new_lines += [f"add_subdirectory({b})\n" for b in reversed(subfolders)]
+        new_lines += lines_bw[idx:-1]
+        return "".join(line for line in reversed(new_lines))
+
+
+def make_list_string(items, indentation="   "):
+    return os.linesep.join([indentation + i for i in items])
+
+
 ###################################################################
 # Some general information for users of the script
 ###################################################################
 def info_explanations(module_dir, module_path, subfolders, source_files):
+    sources_list = make_list_string(source_files)
+    subfolder_list = make_list_string(
+        [os.path.relpath(f, module_path) for f in subfolders]
+    )
+
     return f"""
 This script will extract the following subfolders of
 the module '{module_dir}':
-{os.linesep.join([f"   - {os.path.relpath(f, module_path)}" for f in subfolders])}
+{subfolder_list}
 
 and all headers contained in '{module_dir}'
 that are required to build the exectutables from the sources:
-{os.linesep.join([f"   - {s}" for s in source_files])}
+{sources_list}
 
 The extracted files are copied into a new DUNE module retaining the directory
 structure. The files required for creating a working DUNE module (such as
@@ -207,10 +231,7 @@ if __name__ == "__main__":
     (extracts the subfolders appl and test from the module dumux-fracture)
 
     '''
-    # generate a log file to control all the process
-    logging.basicConfig(filename="extractmodulepart.log", filemode='w', level=logging.DEBUG)
-    logging.info("The main function is going to be executed, preparing to take off.")
-    logging.debug("Passing arguments provided by user...")
+
     parser = argparse.ArgumentParser(
         prog='extract_as_new_module.py',
         usage='./dumux/bin/extractmodule/extract_as_new_module.py'
@@ -219,244 +240,181 @@ if __name__ == "__main__":
                     ' into a new DUNE module.',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=epilog)
-    parser.add_argument(
-        'module_dir',
-        help='Dune module from which the subfolder is extracted'
-    )
-    parser.add_argument(
-        'subfolder', nargs='+',
-        help='subfolder(s) of module_dir that you want to extract'
-    )
-    args = vars(parser.parse_args())
-    logging.debug("Parameters from terminal are passed.")
+    parser.add_argument('module_dir',
+                        help='Module from which the subfolder is extracted')
+    parser.add_argument('subfolder', nargs='+',
+                        help='subfolder(s) of "module_dir" to be extracted')
 
-    # if module_dir ends with slash(es) remove it/them
+    args = vars(parser.parse_args())
     module_dir = args['module_dir'].strip(os.sep)
     module_path = os.path.abspath(module_dir)
-    # make unique set of subfolders
-    subfolders = list(set(args['subfolder']))
-    subfolders = remove_redundant_subfolders(subfolders)
+    subfolders = remove_redundant_subfolders(list(set(args['subfolder'])))
 
-    # check paths to prevenet possible errors
-    logging.debug("Checking if base module and subfolders exist...")
     try:
-        path_check(module_dir, subfolders)
+        check_input_folders(module_dir, subfolders)
     except Exception as e:
-        logging.error(f"{e}")
-        sys.exit("Error: " + str(e))
-    logging.debug("Path check is done.")
+        sys.exit(f"Error when checking input folders: {e}")
 
-    # determine all source files in the paths passed as arguments
-    source_files = extract_sources_files(module_dir, subfolders)
-
-    # check if sources have been obtained
-    logging.debug("Checking if sources have been obtained...")
+    source_files = extract_source_files(module_dir, subfolders)
     if not source_files:
-        logging.error("No sources found in the subfolders you provide!")
-        sys.exit(
-            "ERROR: No source files *.cc found in the subfolders: " +
-            ", ".join([str(x) for x in subfolders]) + ".\n"
-            "Be sure to provide a list of paths as arguments.\n"
-            f"Run '{os.path.basename(__file__)} --help' for details."
-        )
-    logging.debug("Sources are found in subfolders.")
+        sys.exit("No sources found in the provided subfolders.",
+                 f" Run '{os.path.abspath(__file__)} --help' for details.")
 
-    # try to find the duneproject script
     dune_project = shutil.which('duneproject', path="dune-common/bin")
     if dune_project is None:
-        logging.error("No duneproject found in dune-common/bin!")
-        sys.exit(
-            "ERROR: Could not find duneproject.\n"
-            "Make sure to have duneproject in dune-common/bin"
-        )
+        sys.exit("Could not find 'duneproject' in dune-common/bin.")
 
     print(info_explanations(
         module_dir, module_path, subfolders, source_files
     ))
     input("Please read the above carefully and press [Enter] to proceed...")
 
-    # run duneproject
     try:
-        logging.info("Calling dune-common/bin/duneproject to create the new extracted module...")
         subprocess.call([dune_project])
-        logging.info("--The new module is created sucessfully.")
     except Exception:
-        logging.error("Failed to generate new module with duneproject!")
+        sys.exit("Failed to generate new module with duneproject!")
 
-    # find the created folder
-    # as the one with the most recent modification time
-    logging.debug("Getting the name of the new module...")
-    new_module_name = max(
-        [d for d in os.listdir() if os.path.isdir(d)],
-        key=os.path.getmtime
-    )
-    logging.debug(f"Name of the new module is detected as {new_module_name}.")
-
-    # verify it's really a Dune module
-    logging.debug("Checking if the new module is dune module...")
     try:
+        new_module_name = max(
+            [d for d in os.listdir() if os.path.isdir(d)],
+            key=os.path.getmtime
+        )
         check_module(new_module_name)
     except Exception as e:
-        logging.error(f"{e}.")
-        sys.exit("Error: " + str(e))
+        sys.exit(f"Validity check on new module {new_module_name} returned error: {e}")
 
-    logging.debug("The new module is checked as dune module.")
     print(
-        f"Found new module {new_module_name}\n"
+        "\n-- duneproject done --\n"
+        f"\nFound new module {new_module_name}\n"
         "Copying source files..."
     )
 
-    logging.info("Extracting required headers and copy useful files to the new module...")
-    # get the base path of the new module
-    logging.debug("Specifying paths of new module...")
-    new_module_path = new_module_name.join(module_path.rsplit(module_dir, 1))
-    logging.debug(f"The path for new module is {new_module_path}.")
+    new_module_path = os.path.join(
+        os.path.abspath(os.path.join(module_dir, '../')),
+        new_module_name
+    )
 
-    # copy the source tree
-    # copy all base folders complete, then delete the unnecessary ones
-    logging.debug("Copying old directories cotaining source files into new module...")
-    for b in subfolders:
-        path_in_old_module = os.path.join(module_path, b)
-        path_in_new_module = os.path.join(new_module_path, b)
-        copy_tree(path_in_old_module, path_in_new_module)
-    logging.debug("Directoies containing source files are copied.")
+    try:
+        for b in subfolders:
+            path_in_old_module = os.path.join(module_path, b)
+            path_in_new_module = os.path.join(new_module_path, b)
+            copy_tree(path_in_old_module, path_in_new_module)
+    except Exception as e:
+        sys.exit(f"Error copying the subfolders to new module: {e}")
 
-    # add base folders in project-level CMakeLists.txt
-    logging.debug("Adding base folders to CMakeList files in new module...")
-    with open(os.path.join(new_module_path, "CMakeLists.txt"), "r") as cml:
-        section = 0
-        content = []
-        for line in cml.readlines():
-            if line.startswith("add_subdirectory"):
-                section = 1 if section in [0, 1] else 2
-            elif section == 1:
-                section = 2
-                for b in subfolders:
-                    content.append(f"add_subdirectory({b})\n")
-            content.append(line)
+    try:
+        new_cmake_lists_ = add_folders_to_cmake_lists(
+            os.path.join(new_module_path, "CMakeLists.txt"),
+            subfolders
+        )
 
-    with open(os.path.join(new_module_path, "CMakeLists.txt"), "w") as cml:
-        for line in content:
-            cml.write(line)
-    logging.debug("CMakelist at top level in new module is confiugred.")
+        with open(os.path.join(new_module_path, "CMakeLists.txt"), "w") as cml:
+            cml.write(new_cmake_lists_)
+    except Exception as e:
+        sys.exit(f"Couldn't create the new CMakeLists.txt file, error: {e}")
 
-    # search for all header (in parallel)
-    logging.debug("Searching for all header files...")
-    with mp.Pool() as p:
-        headers = itertools.chain.from_iterable(p.map(
-            partial(get_included_project_headers_cpp,
-                    project_base=module_path),
-            source_files
-        ))
-    logging.debug("Head files are found.")
-    # make unique
-    logging.debug("Making header files unqiue (removing duplicates)...")
-    headers = list(set(headers))
-    logging.debug("Duplicates are removed.")
+    try:
+        with mp.Pool() as p:
+            headers = itertools.chain.from_iterable(p.map(
+                partial(get_included_project_headers_cpp,
+                        project_base=module_path),
+                source_files
+            ))
+        headers = list(set(headers))
+    except Exception:
+        sys.exit("Could not find the headers included by the sources")
 
-    # copy headers to the new module
-    logging.debug("Copying headers to the new module...")
-    header_dirs = []
-    for header in headers:
-        header_dir = os.path.dirname(os.path.realpath(header))
-        path_in_new_module = header_dir.replace(module_dir, new_module_name, 1)
-        header_dirs.append(path_in_new_module)
-        os.makedirs(path_in_new_module, exist_ok=True)
-        shutil.copy(header, path_in_new_module)
-    logging.debug("Headers are copied to the new module.")
+    try:
+        header_dirs = []
+        for header in headers:
+            header_dir = os.path.dirname(os.path.realpath(header))
+            path_in_new_module = header_dir.replace(module_dir, new_module_name, 1)
+            header_dirs.append(path_in_new_module)
+            os.makedirs(path_in_new_module, exist_ok=True)
+            shutil.copy(header, path_in_new_module)
+    except Exception as e:
+        sys.exit(f"Could not copy all required headers to the new module: {e}")
 
-    # copy .gitignore from dumux to the new module
     dumux_gitignore_file = "dumux/.gitignore"
-    logging.debug("Copying .git from dumux into new module...")
     shutil.copy(dumux_gitignore_file, new_module_path)
-    logging.debug(".gitignore is copied.")
-    logging.info("--Requried headers are extracted and useful files are copied into the new module succesfully.")
 
-    # delete unnecessary directories to keep the extracted module clean
-    logging.info("Cleaning up the new module...")
-    # go through source tree and remove unnecessary directories
-    logging.debug("Handling directories where no source is obtained...")
-    new_source_files = [
-        s.replace(module_dir, new_module_name, 1) for s in source_files
-    ]
-    for b in subfolders:
-        def matching_path(path, list_of_paths, header_dirs):
-            for p in list_of_paths:
-                if path in p or path in header_dirs:
-                    return True
-            return False
 
-        no_source_folder = []
-        for path, dirs, files in os.walk(os.path.join(new_module_path, b)):
-            for d in dirs:
-                dir_path = os.path.join(path, d)
-                keep = matching_path(dir_path, new_source_files, header_dirs)
-                if not keep:
-                    rel_dir_path = os.path.relpath(dir_path, new_module_path)
-                    no_source_folder.append(rel_dir_path)
+    try:
+        new_source_files = [
+            s.replace(module_dir, new_module_name, 1) for s in source_files
+        ]
+        for b in subfolders:
+            def matching_path(path, list_of_paths, header_dirs):
+                for p in list_of_paths:
+                    if path in p or path in header_dirs:
+                        return True
+                return False
 
-        if no_source_folder:
-            no_source_lists = '\n'.join(dir for dir in no_source_folder)
-            yes_to_all = query_yes_no(
-                "Could not automatically determine if the following directories "
-                "contain data essential for the extracted applications:\n{0}.\n"
-                "Do you want to copy all of them in the new module {1}?\n"
-                "(By choosing no you need to consider each folder seperately)"
-                .format(no_source_lists, new_module_name),
-                default="yes"
-            )
+            no_source_folder = []
+            for path, dirs, files in os.walk(os.path.join(new_module_path, b)):
+                for d in dirs:
+                    dir_path = os.path.join(path, d)
+                    keep = matching_path(dir_path, new_source_files, header_dirs)
+                    if not keep:
+                        rel_dir_path = os.path.relpath(dir_path, new_module_path)
+                        no_source_folder.append(rel_dir_path)
 
-            if not yes_to_all:
-                for rel_dir_path in no_source_folder:
-                    answer_is_yes = query_yes_no(
-                        f"Could not automatically determine if {rel_dir_path} contains data essential for the extracted applications.\n"
-                        f"Do you want to copy the files in {rel_dir_path} to the extracted module {new_module_name}",
-                        default="yes"
-                    )
-                    if not answer_is_yes:
-                        # remove copy of directory
-                        shutil.rmtree(os.path.join(new_module_path, rel_dir_path))
-                        # remove entry from CMakeLists.txt
-                        cml_path = os.path.join(module_path, "CMakeLists.txt")
-                        with open(cml_path, "r+") as cml:
-                            content = cml.read()
-                            cml.seek(0)
-                            content = content.replace(
-                                "add_subdirectory({d})\n", ""
-                            )
-                            cml.write(content)
-                            cml.truncate()
-    logging.debug("The folders containg no sources are handled.")
+            if no_source_folder:
+                no_source_lists = '\n'.join(dir for dir in no_source_folder)
+                yes_to_all = query_yes_no(
+                    "Could not automatically determine if the following directories "
+                    "contain data essential for the extracted applications:\n{0}.\n"
+                    "Do you want to copy all of them in the new module {1}?\n"
+                    "(By choosing no you need to consider each folder seperately)"
+                    .format(no_source_lists, new_module_name),
+                    default="yes"
+                )
 
-    logging.debug("Deleting dune/src in the extracted module...")
-    if "dune" not in subfolders:
-        shutil.rmtree(os.path.join(new_module_path, 'dune'))
-    if "src" not in subfolders:
-        shutil.rmtree(os.path.join(new_module_path, 'src'))
-    with open(os.path.join(new_module_path, "CMakeLists.txt"), "r+") as cml:
-        content = cml.read()
-        cml.seek(0)
-        if "dune" not in subfolders:
-            content = content.replace("add_subdirectory(dune)\n", "")
-        if "src" not in subfolders:
-            content = content.replace("add_subdirectory(src)\n", "")
-        cml.write(content)
-        cml.truncate()
-    logging.debug("Dune/src are deleted.")
-    logging.info("--The new module is cleaned up successfully.")
+                if not yes_to_all:
+                    for rel_dir_path in no_source_folder:
+                        answer_is_yes = query_yes_no(
+                            f"Could not automatically determine if {rel_dir_path} contains data essential for the extracted applications.\n"
+                            f"Do you want to copy the files in {rel_dir_path} to the extracted module {new_module_name}",
+                            default="yes"
+                        )
+                        if not answer_is_yes:
+                            # remove copy of directory
+                            shutil.rmtree(os.path.join(new_module_path, rel_dir_path))
+                            # remove entry from CMakeLists.txt
+                            cml_path = os.path.join(module_path, "CMakeLists.txt")
+                            with open(cml_path, "r+") as cml:
+                                content = cml.read()
+                                cml.seek(0)
+                                content = content.replace(
+                                    "add_subdirectory({d})\n", ""
+                                )
+                                cml.write(content)
+                                cml.truncate()
+    except Exception:
+        sys.exit("Could not handle folders without sources")
 
-    # create README file
-    logging.info("Creating README file and generating an install script in new module...")
+    delete_folders = ['dune', 'src']
+    try:
+        with open(os.path.join(new_module_path, "CMakeLists.txt"), "r+") as cml:
+            content = cml.read()
+            cml.seek(0)
+            for del_folder in delete_folders:
+                if del_folder not in subfolders:
+                    shutil.rmtree(os.path.join(new_module_path, del_folder))
+                    content = content.replace("add_subdirectory(dune)\n", "")
+            cml.write(content)
+            cml.truncate()
+    except Exception as e:
+        sys.exit("Could not delete the folders: {}, error: {}"
+                 .format(', '.join(delete_folders), e))
+
     os.remove(os.path.join(new_module_path, 'README'))
     readme_path = os.path.join(new_module_path, "README.md")
     with open(readme_path, "w") as readme_file:
         readme_file.write(
             info_readme_main(module_dir, subfolders, source_files)
         )
-    logging.debug("README file in new module is created.")
 
-    # ask user if to write version information into README.md
-    logging.debug("Ask user if to write version information into README file.")
     if query_yes_no("Write detailed version information"
                     " (folder/branch/commits/dates) into README.md?\n"):
         print("Looking for the dune modules in path: "
@@ -467,27 +425,18 @@ if __name__ == "__main__":
             [dep['folder'] for dep in getDependencies(module_path)], True
         )
 
-        # append version information
         with open(readme_path, "a") as readme_file:
             readme_file.write(
                 "\n## Version Information\n\n" +
                 versionTable(versions)
             )
-        logging.debug("The version information is written into README file.")
 
-    # if there is a remote repository available
-    # we can directly push the source code and
-    # also create a "one-click" installation script
-    logging.debug("Generating an install script...")
-    logging.debug("Ask user to choose python or bash to generate the install script.")
     language = python_or_bash()
     install_script_name = 'install_' + new_module_name + '.%s'%("sh" if language == "bash" else "py")
     try:
         makeInstallScript(new_module_path, ignoreUntracked=True, skipFolders=new_module_name,
                           suppressHints=True, topFolderName=None, language=language)
-        logging.debug("The install script is generated.")
     except Exception:
-        logging.error(f"Failed to generate script {install_script_name} by calling external functino makeInstallScript!")
         sys.exit(
             f"Automatically generate install script {install_script_name} failed."
             "\nTo create the script, use the 'makeinstallscript.py' script in the same folder."
@@ -497,57 +446,37 @@ if __name__ == "__main__":
     shutil.move(install_script_name,
                 os.path.join(new_module_path, install_script_name))
     print(info_make_install(new_module_name))
-    logging.info("--README file and install script are generated succesfully.")
-    run_from_mod = callFromPath(new_module_path)(runCommand)
 
-    logging.info("Commiting the new module and pushing to remote if url is provided...")
-    if query_yes_no("Do you have an empty remote repository to push the code to (recommended)?"):
-        logging.debug("Trying to get the remote URL.")
+    remote_url = "{$remoteurl$} (needs to be manuelly adapted later)"
+    has_repo = query_yes_no(
+        "Do you have an empty remote repository to push the code to (recommended)?"
+    )
+
+    if has_repo:
         try:
-            remoteurl = get_remote_url()
+            remote_url = query_empty_remote_repo_url()
         except Exception as e:
-            logging.error(f"{e}")
-            sys.exit("Error: " + str(e))
+            sys.exit(f"Error when trying to get the remote URL: {e}")
 
-        # append install information into readme
-        logging.debug("Writing README file of the new module...")
-        with open(readme_path, "a") as readme_file:
-            readme_file.write(info_readme_installation(remoteurl, install_script_name, new_module_name, language))
-        logging.debug("The README file is written.")
-        logging.debug("Initializing git repository...")
-        run_from_mod('git init')
-        logging.debug("Git repository is initialized.")
-        logging.debug("Adding all the files into git staging area...")
-        run_from_mod('git add .')
-        logging.debug("All files are added into staging area.")
-        logging.debug("Commiting all files in staging area as inital commit...")
-        run_from_mod('git commit -m "Initial commit"')
-        logging.debug("All files in staging area are commited.")
-        logging.debug(f"Adding remote {remoteurl} to the origin...")
-        run_from_mod('git remote add origin {}'.format(remoteurl))
-        logging.debug(f"{remoteurl} added to git remote origin.")
-        logging.debug(f"Pushing all the changes into remote git repository {remoteurl}")
-        run_from_mod('git push -u origin master')
-        logging.debug("Commits are pushed to git remote.")
+    with open(readme_path, "a") as readme_file:
+        readme_file.write(info_readme_installation(
+            remote_url, install_script_name, new_module_name, language
+        ))
 
-    # output guidance for users to create install script manually
-    else:
-        remoteurl = "{$remoteurl$} (needs to be manuelly adapted later)"
-        # append install information into readme
-        logging.debug("Writing README file of the new module...")
-        with open(readme_path, "a") as readme_file:
-            readme_file.write(info_readme_installation(remoteurl, install_script_name, new_module_name, language))
-        logging.debug("The README file is written.")
-        logging.debug("Initializing git repository...")
-        run_from_mod('git init')
-        logging.debug("Git repository is initialized.")
-        logging.debug("Adding all the files into git staging area...")
-        run_from_mod('git add .')
-        logging.debug("All files are added into staging area.")
-        logging.debug("Commiting all files in staging area as inital commit...")
-        run_from_mod('git commit -m "Initial commit"')
-        logging.debug("All files in staging area are commited.")
-        print("\nPlease remember to replace placeholder $remoteurl$ in installation part\n"
-              "of the README file with the correct URL of your remote git repository.")
-    logging.info("--Changes are commited (and pushed if remote is known) successfully.")
-    logging.info("Congratulations, everything is fine and landing is smooth!")
+    def run_git_cmd(cmd):
+        print(f"Running {cmd}")
+        run_from_mod = callFromPath(new_module_path)(runCommand)
+        run_from_mod(cmd)
+
+    try:
+        run_git_cmd('git init')
+        run_git_cmd('git add .')
+        run_git_cmd('git commit -m "Initial commit"')
+        if has_repo:
+            run_git_cmd('git remote add origin {}'.format(remote_url))
+            run_git_cmd('git push -u origin master')
+        else:
+            print("\nPlease remember to replace '$remoteurl' in the installation\n"
+                  "part of the README file with the correct URL of your remote git repository.")
+    except Exception as e:
+        sys.exit(f"Error when pushing the new module: {e}")
