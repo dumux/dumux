@@ -180,3 +180,7 @@ dumux_add_test(NAME test_ff_ransni_lauferpipe_zeroeq
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_ransni_lauferpipe_zeroeq params_nonisothermal.input
                         -Problem.Name test_ff_ransni_lauferpipe_zeroeq")
 target_compile_definitions(test_ff_ransni_lauferpipe_zeroeq PUBLIC "NONISOTHERMAL=1")
+
+dumux_add_test(NAME test_rans_distance
+              SOURCES main_wallproperties.cc
+              LABELS freeflow rans geometry)
