@@ -84,23 +84,34 @@ def query_yes_no(question, default="yes"):
                              "(or 'y' or 'n').\n")
 
 
+def get_dumux_pub_project_url(project_name):
+    base_url = 'https://git.iws.uni-stuttgart.de/dumux-pub/'
+    return base_url + '{}.git'.format(project_name.lower())
+
+
 # query for git remote url and make sure it is not empty
 def get_remote_url():
     while True:
-        if query_yes_no("Do you own a subfolder in dumux-pub?"):
-            nameyearx = input("Type below the information of"
-                              " AuthorLastNameYearx (e.g. Luigi2020b)\n")
-            remoteurl = 'https://git.iws.uni-stuttgart.de'\
-                        '/dumux-pub/{}.git'.format(nameyearx.lower())
+        if query_yes_no("Is your repository hosted in dumux-pub?"):
+            project = input("Please provide the name of your project "
+                            "(usually AuthorLastNameYearX, e.g. Luigi2020b)\n")
+            remote = get_dumux_pub_project_url(project)
         else:
-            remoteurl = input("Provide URL of your remote repository:\n")
-        check_remote_repo = runCommand('git ls-remote {}'.format(remoteurl))
-        if (check_remote_repo is None):
-            sys.stdout.write("\nERROR: Please re-enter correct information.\n")
-        elif (check_remote_repo == ''):
-            return remoteurl
-        else:
-            raise Exception("Remote reposity is not empty.")
+            remote = input("Please provide the URL of your repository:\n")
+
+        try:
+            remote_content = runCommand(
+                'git ls-remote {}'.format(remote),
+                suppressTraceBack=True
+            )
+        except Exception:
+            print("Could not find your repo at {}. ".format(remote))
+            print("Please double-check and reenter correct information")
+            continue
+
+        if (remote_content == ''):
+            return remote
+        raise Exception("Remote reposity is not empty.")
 
 
 def path_check(mod_dir, sub_dirs):
