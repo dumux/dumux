@@ -101,20 +101,18 @@ def get_remote_url(repo_path):
         elif (check_remote_repo == ''):
             return remoteurl
         else:
-            logging.error("Remote repository is not empty!")
-            sys.stdout.write("ERROR: The remote reposity is not empty!.\n")
+            raise Exception("Remote reposity is not empty.")
 
 
-def path_check(basedir, subdirs):
-    # check if basedir contained in the script path
-    if not os.path.isdir(basedir):
-        logging.error(f"No {basedir} found in your path where the script is running!")
-        sys.exit("ERROR: You need to run the script"
-                 f"one level above the folder {basedir}.\n"
-                 f"Run \"{os.path.basename(__file__)} --help\" for details.")
+def path_check(mod_dir, sub_dirs):
+    if not os.path.isdir(mod_dir):
+        raise Exception(
+            f"Module folder {mod_dir} not found. "
+            f"Make sure to run this script from one level above {mod_dir}."
+        )
 
-    for subdir in subdirs:
-        path = Path(basedir) / Path(subdir)
+    for sub_dir in sub_dirs:
+        path = Path(mod_dir) / Path(sub_dir)
         errMsg = 'Cannot handle the given folder {}'.format(str(path))
         if not path.exists():
             raise Exception(errMsg + ' because it does not exist.')
@@ -150,15 +148,11 @@ def extract_sources_files(module_dir, subfolders):
 
 
 def check_module(module_name):
-    try:
-        with open(f"{module_name}/dune.module") as module_file:
-            content = module_file.read()
-            if f"Module: {module_name}" not in content:
-                raise Exception(f"Invalid dune.module in {module_name}")
-    except OSError:
-        print("Could not find new Dune module. Aborting")
-        logging.error("The module you created is not dune-module!")
-        raise
+    mod_file = f"{module_name}/dune.module"
+    if not Path(mod_file).exists():
+        raise Exception(
+            f"Could not find module file in {mod_file}"
+        )
 
 
 ###################################################################
@@ -297,7 +291,11 @@ if __name__ == "__main__":
 
     # check paths to prevenet possible errors
     logging.debug("Checking if base module and subfolders exist...")
-    path_check(module_dir, subfolders)
+    try:
+        path_check(module_dir, subfolders)
+    except Exception as e:
+        logging.error(f"{e}")
+        sys.exit("Error: " + str(e))
     logging.debug("Path check is done.")
 
     # determine all source files in the paths passed as arguments
@@ -350,7 +348,12 @@ if __name__ == "__main__":
 
     # verify it's really a Dune module
     logging.debug("Checking if the new module is dune module...")
-    check_module(new_module_name)
+    try:
+        check_module(new_module_name)
+    except Exception as e:
+        logging.error(f"{e}.")
+        sys.exit("Error: " + str(e))
+
     logging.debug("The new module is checked as dune module.")
     print(
         f"Found new module {new_module_name}\n"
@@ -554,8 +557,11 @@ if __name__ == "__main__":
     logging.info("Commiting the new module and pushing to remote if url is provided...")
     if query_yes_no("Do you have an empty remote repository to push the code to (recommended)?"):
         logging.debug("Trying to get the remote URL.")
-        remoteurl = get_remote_url(new_module_path)
-        logging.debug(f"The remote URL proviede by the user is {remoteurl}")
+        try:
+            remoteurl = get_remote_url(new_module_path)
+        except Exception as e:
+            logging.error(f"{e}")
+            sys.exit("Error: " + str(e))
 
         # append install information into readme
         logging.debug("Writing README file of the new module...")
