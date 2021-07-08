@@ -122,6 +122,16 @@ def path_check(basedir, subdirs):
             raise Exception(errMsg + ' because it is not a directory.')
 
 
+def is_in_subtree(file, base):
+    return Path(base).resolve() in Path(file).resolve().parents
+
+
+def remove_redundant_subfolders(subfolders):
+    return [
+        sf for sf in subfolders
+        if not any(is_in_subtree(sf, base) for base in subfolders)
+    ]
+
 
 def extract_sources_files(module_dir, subfolders):
     def find_files_with_pattern(pattern, path):
@@ -283,6 +293,7 @@ if __name__ == "__main__":
     module_path = os.path.abspath(module_dir)
     # make unique set of subfolders
     subfolders = list(set(args['subfolder']))
+    subfolders = remove_redundant_subfolders(subfolders)
 
     # check paths to prevenet possible errors
     logging.debug("Checking if base module and subfolders exist...")
