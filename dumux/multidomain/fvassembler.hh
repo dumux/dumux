@@ -209,6 +209,8 @@ public:
     //! assemble a residual r
     void assembleResidual(ResidualType& r, const SolutionVector& curSol)
     {
+        r = 0.0;
+
         checkAssemblerState_();
 
         // update the grid variables for the case of active caching
