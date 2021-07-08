@@ -19,10 +19,8 @@
 /*!
  * \file
  * \ingroup RANSTests
- * \brief Pipe flow test for the staggered grid RANS model,
+ * \brief Wall distance tests
  *
- * This test simulates is based on pipe flow experiments by
- * John Laufers experiments in 1954 \cite Laufer1954a.
  */
 #include <config.h>
 
@@ -37,65 +35,119 @@
 #include <dumux/io/grid/gridmanager.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/box/fvgridgeometry.hh>
+#include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 
 #include <dumux/freeflow/rans/wallproperties.hh>
+#include <dune/alugrid/grid.hh>
 
-// #include "properties.hh"
+
+template<class GridGeometry>
+void test(const GridGeometry& gridGeometry, const std::string& paramGroup)
+{
+    using namespace Dumux;
+
+    const auto& gridView = gridGeometry.gridView();
+    Dune::VTKWriter<std::decay_t<decltype(gridView)>> writer(gridView);
+    Dune::Timer timer;
+
+    BoundarySearchWallProperties<GridGeometry> wallProperties(gridGeometry);
+    wallProperties.updateWallDistance();
+
+    if constexpr (GridGeometry::discMethod == DiscretizationMethod::box)
+        writer.addVertexData(wallProperties.wallDinstance(), "distance_search");
+    else
+        writer.addCellData(wallProperties.wallDinstance(), "distance_search");
+
+    std::cout << "Boundary search took " << timer.elapsed() << " seconds" << std::endl;
+    timer.reset();
+
+    PoissonWallProperties<GridGeometry> poissonWallProperties(gridGeometry);
+    poissonWallProperties.updateWallDistance();
+
+    if constexpr (GridGeometry::discMethod == DiscretizationMethod::box)
+        writer.addVertexData(poissonWallProperties.wallDinstance(), "distance_poisson");
+    else
+        writer.addCellData(poissonWallProperties.wallDinstance(), "distance_poisson");
+
+    std::cout << "Poisson problem took " << timer.elapsed() << " seconds" << std::endl;
+
+    if (wallProperties.wallDinstance().size() != poissonWallProperties.wallDinstance().size())
+        DUNE_THROW(Dune::InvalidStateException, "Wrong vector sizes");
+
+    writer.write("result_" + paramGroup);
+}
 
 int main(int argc, char** argv)
 {
     using namespace Dumux;
-
-    // initialize MPI, finalize is done automatically on exit
-    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
+    using Scalar = double;
+    static constexpr bool enableCache = true;
 
     // parse command line arguments and input file
-    Parameters::init(argc, argv);
+    Dumux::Parameters::init(argc, argv);
 
-    // try to create a grid (from the given grid file or the input file)
-    GridManager<Dune::YaspGrid<2>> gridManager;
-    gridManager.init();
+    {
+        using GridManager = Dumux::GridManager<Dune::YaspGrid<2>>;
+        using GridView = typename GridManager::Grid::LeafGridView;
+        GridManager gridManager;
+        gridManager.init("2D");
 
-    ////////////////////////////////////////////////////////////
-    // run instationary non-linear problem on this grid
-    ////////////////////////////////////////////////////////////
+        {
+            std::cout << "Testing 2D box" << std::endl;
+            using GridGeometry = BoxFVGridGeometry<Scalar, GridView, enableCache>;
+            auto gridGeometry = std::make_shared<GridGeometry>(gridManager.grid().leafGridView());
+            gridGeometry->update();
+            test(*gridGeometry, "2D_box");
+        }
+        {
+            std::cout << "Testing 2D cctpfa" << std::endl;
+            using GridGeometry = CCTpfaFVGridGeometry<GridView, enableCache>;
+            auto gridGeometry = std::make_shared<GridGeometry>(gridManager.grid().leafGridView());
+            gridGeometry->update();
+            test(*gridGeometry, "2D_cctpfa");
+        }
+    }
 
-    // we compute on the leaf grid view
-    const auto& leafGridView = gridManager.grid().leafGridView();
+    {
+        using GridManager = Dumux::GridManager<Dune::ALUGrid<3, 3, Dune::simplex, Dune::nonconforming>>;
+        using GridView = typename GridManager::Grid::LeafGridView;
+        GridManager gridManager;
+        gridManager.init("3DTriangle");
 
-    static constexpr bool enableCache = true;
-    using GridView = std::decay_t<decltype(leafGridView)>;
-    using Scalar = double;
-    using GridGeometry = BoxFVGridGeometry<Scalar, GridView, enableCache>;
+        {
+            using GridGeometry = BoxFVGridGeometry<Scalar, GridView, enableCache>;
+            auto gridGeometry = std::make_shared<GridGeometry>(gridManager.grid().leafGridView());
+            gridGeometry->update();
+            test(*gridGeometry, "3D_box_tria");
+        }
+        {
+            using GridGeometry = CCTpfaFVGridGeometry<GridView, enableCache>;
+            auto gridGeometry = std::make_shared<GridGeometry>(gridManager.grid().leafGridView());
+            gridGeometry->update();
+            test(*gridGeometry, "3D_cctpfa_tria");
+        }
 
-    // create the finite volume grid geometry
-    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
-    gridGeometry->update();
+    }
 
-    // stop time for the entire computation
-    Dune::Timer timer;
+    {
+        using GridManager = Dumux::GridManager<Dune::YaspGrid<3>>;
+        using GridView = typename GridManager::Grid::LeafGridView;
+        GridManager gridManager;
+        gridManager.init("3D");
 
-    BoundarySearchWallProperties<GridGeometry> wallProperties(*gridGeometry);
-
-    wallProperties.updateWallDistance();
-
-    const auto& d = wallProperties.wallDinstance();
-
-    Dune::VTKWriter<GridView> writer(leafGridView);
-    writer.addVertexData(d, "distance");
-
-    writer.write("result");
-
-    std::cout << "boundary search took " << timer.elapsed() << " seconds" << std::endl;
-
-    timer.reset();
-
-    PoissonWallProperties<GridGeometry> poissonWallProperties(*gridGeometry);
-
-    poissonWallProperties.solve();
-
-    std::cout << "Poisson problem took " << timer.elapsed() << " seconds" << std::endl;
-
+        {
+            using GridGeometry = BoxFVGridGeometry<Scalar, GridView, enableCache>;
+            auto gridGeometry = std::make_shared<GridGeometry>(gridManager.grid().leafGridView());
+            gridGeometry->update();
+            test(*gridGeometry, "3D_box");
+        }
+        {
+            using GridGeometry = CCTpfaFVGridGeometry<GridView, enableCache>;
+            auto gridGeometry = std::make_shared<GridGeometry>(gridManager.grid().leafGridView());
+            gridGeometry->update();
+            test(*gridGeometry, "3D_cctpfa");
+        }
+    }
 
     return 0;
 } // end main
