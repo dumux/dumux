@@ -31,6 +31,7 @@
 #include <dumux/discretization/fvgridvariables.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/evalgradients.hh>
+#include <dumux/discretization/evalsolution.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
 #include <dumux/discretization/box/fluxvariablescache.hh>
 #include <dumux/assembly/fvassembler.hh>
@@ -38,6 +39,30 @@
 #include <dumux/linear/seqsolverbackend.hh>
 
 namespace Dumux {
+
+namespace Detail {
+
+template <class ct>
+struct TriangleMLGTraits : public Dune::MultiLinearGeometryTraits<ct>
+{
+    // we use static vectors to store the corners as we know
+    // the number of corners in advance (2^(dim-1) corners (1<<(dim-1))
+    template<int mydim, int cdim>
+    struct CornerStorage
+    {
+        using Type = std::array<Dune::FieldVector< ct, cdim >, 3>;
+    };
+
+    // we know all scvfs will have the same geometry type
+    template<int mydim>
+    struct hasSingleGeometryType
+    {
+        static const bool v = true;
+        static const unsigned int topologyId = Dune::GeometryTypes::simplex(mydim).id();
+    };
+};
+
+} // end namespace Detail
 
 /*!
  * \ingroup RANSModel
@@ -51,12 +76,19 @@ class BoundarySearchWallProperties
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using ScvfGeometry = std::decay_t<decltype(std::declval<SubControlVolumeFace>().geometry())>;
     using Scalar = typename GridView::Grid::ctype;
+    using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
+
+    static constexpr auto dim = GridView::dimension;
+    static constexpr auto dimWorld = GridView::dimensionworld;
 
     struct WallScvfData
     {
         GridIndexType eIdx;
         GridIndexType scvfIdx;
     };
+
+    using Triangle = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld, Detail::TriangleMLGTraits<Scalar>>;
+    using Corners = typename Detail::TriangleMLGTraits<Scalar>::template CornerStorage<dim-1, dimWorld>::Type;
 
 public:
 
@@ -71,12 +103,25 @@ public:
     template<class ConsiderFaceFunction>
     void updateWallDistance(const ConsiderFaceFunction& considerFace)
     {
-        struct TempScvfInfo
+        struct TempScvfInfo2D
         {
             ScvfGeometry geometry;
             GridIndexType eIdx;
             GridIndexType scvfIdx;
         };
+
+        struct TempScvfInfo3D
+        {
+            std::array<Triangle, 2> geometry;
+            GridIndexType eIdx;
+            GridIndexType scvfIdx;
+            int numTriangles;
+
+            Dune::ReservedVector<GlobalPosition, 2> circumCenter;
+            Dune::ReservedVector<Scalar, 2> sphereRadius;
+        };
+
+        using TempScvfInfo = std::conditional_t<(dim == 2), TempScvfInfo2D, TempScvfInfo3D>;
 
         std::vector<TempScvfInfo> tempScvfInfo;
         tempScvfInfo.reserve(gridGeometry_.numBoundaryScvf());
@@ -100,7 +145,59 @@ public:
             for (const auto& scvf : scvfs(fvGeometry))
             {
                 if (scvf.boundary() && considerFace(scvf))
-                    tempScvfInfo.push_back({scvf.geometry(), eIdx, scvf.index()});
+                {
+                    auto geo = scvf.geometry();
+
+
+                    if constexpr (dim == 3)
+                    {
+                        Dune::ReservedVector<GlobalPosition, 2> centers;
+                        Dune::ReservedVector<Scalar, 2> radii;
+
+                        Corners corners1;
+                        corners1[0] = geo.corner(0);
+                        corners1[1] = geo.corner(1);
+                        corners1[2] = geo.corner(2);
+                        auto triangle1 = Triangle(Dune::GeometryTypes::simplex(2), corners1);
+
+                        // Circumvent the problem that Dune::MultiLinearGeometry is not default constructible.
+                        // Only the first entry will be used if the scvf itself is a triangle.
+                        std::array<Triangle, 2> triangles{triangle1, std::move(triangle1)};
+                        int numTriangles = 1;
+
+                        if (geo.corners() == 3)
+                        {
+                            // scvf is already triangle, don't add another one
+                            auto [center, radius] = getCircumSphere_(geo);
+                            centers.push_back(std::move(center));
+                            radii.push_back(std::move(radius));
+                        }
+                        else
+                        {
+                            // scvf has four corners, split into two triangles
+                            numTriangles = 2;
+
+                            // second triangle
+                            Corners corners2;
+                            corners2[0] = geo.corner(1);
+                            corners2[1] = geo.corner(2);
+                            corners2[2] = geo.corner(3);
+                            triangles[1] = Triangle(Dune::GeometryTypes::simplex(2), corners2);
+
+                            auto [center1, radius1] = getCircumSphere_(triangles[0]);
+                            centers.push_back(std::move(center1));
+                            radii.push_back(std::move(radius1));
+
+                            auto [center2, radius2] = getCircumSphere_(triangles[1]);
+                            centers.push_back(std::move(center2));
+                            radii.push_back(std::move(radius2));
+                        }
+
+                        tempScvfInfo.push_back({std::move(triangles), eIdx, scvf.index(), numTriangles, std::move(centers), std::move(radii)});
+                    }
+                    else
+                        tempScvfInfo.push_back({std::move(geo), eIdx, scvf.index()});
+                }
             }
         }
 
@@ -113,12 +210,38 @@ public:
             {
                 for (const auto& wallScvfInfo : tempScvfInfo)
                 {
-                    // TODO 3D
-                    const auto d = distancePointSegment(scv.dofPosition(), wallScvfInfo.geometry);
-                    if (d < distance_[scv.dofIndex()])
+                    if constexpr (dim == 3)
                     {
-                        distance_[scv.dofIndex()] = d;
-                        wallScvfData_[scv.dofIndex()] = WallScvfData{wallScvfInfo.eIdx, wallScvfInfo.scvfIdx};
+                        Dune::ReservedVector<bool, 2> skip;
+                        for (int i = 0; i < wallScvfInfo.numTriangles; ++i)
+                        {
+                            if (distanceToSphere_(scv.dofPosition(), wallScvfInfo.circumCenter[i], wallScvfInfo.sphereRadius[i]) > distance_[scv.dofIndex()])
+                                skip.push_back(true);
+                            else
+                                skip.push_back(false);
+                        }
+
+                        if (std::all_of(skip.begin(), skip.end(), [](const bool s) { return s; }))
+                            continue;
+
+                        for (int i = 0; i < wallScvfInfo.numTriangles; ++i)
+                        {
+                            const auto d = getDistance_(scv.dofPosition(), wallScvfInfo.geometry[i]);
+                            if (d < distance_[scv.dofIndex()])
+                            {
+                                distance_[scv.dofIndex()] = d;
+                                wallScvfData_[scv.dofIndex()] = WallScvfData{wallScvfInfo.eIdx, wallScvfInfo.scvfIdx};
+                            }
+                        }
+                    }
+                    else
+                    {
+                        const auto d = getDistance_(scv.dofPosition(), wallScvfInfo.geometry);
+                        if (d < distance_[scv.dofIndex()])
+                        {
+                            distance_[scv.dofIndex()] = d;
+                            wallScvfData_[scv.dofIndex()] = WallScvfData{wallScvfInfo.eIdx, wallScvfInfo.scvfIdx};
+                        }
                     }
                 }
             }
@@ -129,6 +252,41 @@ public:
     { return distance_; }
 
 private:
+
+    template<class Geometry>
+    Scalar getDistance_(const GlobalPosition& point, const Geometry& geo) const
+    {
+        if constexpr (dim == 2)
+            return distancePointSegment(point, geo);
+        else
+            return distancePointTriangle(point, geo);
+    }
+
+    Scalar distanceToSphere_(const GlobalPosition& point, const GlobalPosition& sphereCenter, const Scalar sphereRadius) const
+    {
+        return (point - sphereCenter).two_norm() - sphereRadius;
+    }
+
+    // see https://gamedev.stackexchange.com/a/60631
+    template<class Geometry>
+    auto getCircumSphere_(const Geometry& geo)
+    {
+        const auto& a = geo.corner(0);
+        const auto& b = geo.corner(1);
+        const auto& c = geo.corner(2);
+
+        const auto ac = c - a;
+        const auto ab = b - a;
+        const auto n = crossProduct(ab, ac);
+
+        const auto distCenterToA = (crossProduct(n, ab)*ac.two_norm2() + crossProduct(ac, n)*ab.two_norm2()) / (2.0*n.two_norm2());
+        const auto radius = distCenterToA.two_norm();
+
+        const auto circumCenter = a + distCenterToA ; // now this is the actual 3space location
+
+        return std::make_pair(circumCenter, radius);
+    }
+
     std::vector<Scalar> distance_;
     std::vector<WallScvfData> wallScvfData_;
     const GridGeometry& gridGeometry_;
@@ -267,12 +425,8 @@ public:
                             const SubControlVolumeFace& scvf,
                             const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
-        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-
         // evaluate gradX at integration point and interpolate density
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
-        const auto& shapeValues = fluxVarsCache.shapeValues();
 
         Dune::FieldVector<Scalar, dimWorld> gradP(0.0);
         for (auto&& scv : scvs(fvGeometry))
@@ -376,12 +530,13 @@ public:
     PoissonWallProperties(const GridGeometry& gridGeometry)
     : gridGeometry_(gridGeometry) {}
 
-    void solve()
+    void updateWallDistance()
     {
+        distance_.clear();
+
         using TypeTag = Properties::TTag::PoissonWallProblem<typename GridGeometry::Grid>;
 
         using GG = GetPropType<TypeTag, Properties::GridGeometry>;
-        using GridVolVars = GetPropType<TypeTag, Properties::GridVolumeVariables>;
         using Problem = GetPropType<TypeTag, Properties::Problem>;
 
         auto boxGG = std::make_shared<GG>(gridGeometry_.gridView());
@@ -416,9 +571,6 @@ public:
 
         std::cout << "done " << std::endl;
 
-        Dune::VTKWriter<typename GG::GridView> writer(boxGG->gridView());
-
-
         auto fvGeometry = localView(*boxGG);
 
         auto dist = x;
@@ -447,12 +599,31 @@ public:
             }
         }
 
-        writer.addVertexData(dist, "distance");
-
-        writer.write("result_poisson");
-
-
+        if constexpr (GridGeometry::discMethod == DiscretizationMethod::box)
+        {
+            distance_.resize(dist.size());
+            for (int i = 0; i < distance_.size(); ++i)
+                distance_[i] = dist[i][0];
+        }
+        else
+        {
+            distance_.resize(gridGeometry_.gridView().size(0));
+            for (const auto& element : elements(boxGG->gridView()))
+            {
+                const auto eIdx = boxGG->elementMapper().index(element);
+                const auto& elementGeometry = element.geometry();
+                const auto elemSol = elementSolution(element, dist, *boxGG);
+                distance_[eIdx] = evalSolution(element,
+                                               elementGeometry,
+                                               *boxGG,
+                                               elemSol,
+                                               elementGeometry.center());
+            }
+        }
     }
+
+    const std::vector<Scalar>& wallDinstance() const
+    { return distance_; }
 
 private:
     std::vector<Scalar> distance_;
