@@ -371,7 +371,7 @@ if __name__ == "__main__":
             elif section == 1:
                 section = 2
                 for b in subfolders:
-                    content.append(f"add_subdirectory({b})")
+                    content.append(f"add_subdirectory({b})\n")
             content.append(line)
 
     with open(os.path.join(new_module_path, "CMakeLists.txt"), "w") as cml:
