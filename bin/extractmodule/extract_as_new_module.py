@@ -11,7 +11,6 @@ import argparse
 import shutil
 from distutils.dir_util import copy_tree
 import multiprocessing as mp
-import fnmatch
 import itertools
 from pathlib import Path
 from functools import partial
@@ -24,7 +23,7 @@ try:
     sys.path.append(os.path.join(path, '../bin/util'))
     from getmoduleinfo import getDependencies
     from common import callFromPath, runCommand, query_yes_no
-    from common import get_included_project_headers_cpp
+    from common import get_included_project_headers_cpp, findMatchingFiles
 except Exception:
     sys.exit('Could not import common modul or getModuleInfo')
 import logging
@@ -88,18 +87,11 @@ def remove_redundant_subfolders(subfolders):
 
 
 def extract_sources_files(module_dir, subfolders):
-    def find_files_with_pattern(pattern, path):
-        result = []
-        for root, dirs, files in os.walk(path):
-            for name in files:
-                if fnmatch.fnmatch(name, pattern):
-                    result.append(os.path.join(root, name))
-        return result
-
     sources = []
     for folder in subfolders:
-        folder_path = os.path.join(module_dir, folder)
-        sources += find_files_with_pattern("*.cc", os.path.abspath(folder_path))
+        folderPath = os.path.abspath(os.path.join(module_dir, folder))
+        curSources = findMatchingFiles(folderPath, "*.cc")
+        sources += [os.path.join(folderPath, s) for s in curSources]
     return sources
 
 

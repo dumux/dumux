@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import fnmatch
 import functools
 import subprocess
 import traceback
@@ -121,3 +122,14 @@ def get_included_project_headers_cpp(file,
             project_path = os.path.relpath(abs_header_path, project_base)
             process(project_path)
     return headers
+
+
+# find all files below the given folder that match the given pattern
+def findMatchingFiles(path, pattern):
+    result = []
+    for root, dirs, files in os.walk(path):
+        root_rel = os.path.relpath(root, path)
+        for file in files:
+            if fnmatch.fnmatch(file, pattern):
+                result.append(os.path.join(root_rel, file))
+    return result
