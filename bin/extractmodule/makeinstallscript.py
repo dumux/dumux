@@ -18,7 +18,6 @@ try:
     path = os.path.split(os.path.abspath(__file__))[0]
     sys.path.append(os.path.join(path, '../bin/util'))
 
-    from common import userQuery
     from getmoduleinfo import getModuleInfo, getDependencies
 except Exception:
     sys.exit('Could not import getModuleInfo')
@@ -40,14 +39,6 @@ def get_script_extension(language):
     return ext[language]
 
 
-# ask user to speficy the language of the generated script
-def python_or_bash():
-    return userQuery(
-        'In which language would you like to generate the install script?',
-        supported_languages()
-    )
-
-
 def makeInstallScript(path,
                       fileName=None,
                       ignoreUntracked=False,
@@ -57,8 +48,7 @@ def makeInstallScript(path,
                       suppressHints=False,
                       language=None):
 
-    if language != "bash" and language != "python":
-        language = python_or_bash()
+    assert language in supported_languages()
 
     cwd = os.getcwd()
     modPath = os.path.abspath(os.path.join(cwd, path))
@@ -223,9 +213,9 @@ if __name__ == '__main__':
                         help='if output needs to be suppressed')
 
     parser.add_argument('-l', '--language',
-                        required=False, default=None,
-                        help='Language used to write install script, '
-                             'currently only python and bash are supported')
+                        required=True,
+                        choices=supported_languages(),
+                        help='Language in which to write the install script')
 
     cmdArgs = vars(parser.parse_args())
 

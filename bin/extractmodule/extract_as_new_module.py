@@ -18,14 +18,14 @@ from functools import partial
 
 from util import getPersistentVersions
 from util import versionTable
-from makeinstallscript import makeInstallScript, python_or_bash
+from makeinstallscript import makeInstallScript, supported_languages
 from makeinstallscript import get_script_extension
 
 try:
     path = os.path.split(os.path.abspath(__file__))[0]
     sys.path.append(os.path.join(path, '../bin/util'))
     from getmoduleinfo import getDependencies
-    from common import callFromPath, runCommand, query_yes_no
+    from common import callFromPath, runCommand, userQuery, query_yes_no
     from common import get_included_project_headers_cpp, findMatchingFiles
 except Exception:
     sys.exit('Could not import common modul or getModuleInfo')
@@ -344,7 +344,10 @@ def guide_versions_in_readme(mod_path, readme=None):
 
 
 def guide_install_script_generation(mod_path, script_name_body, skip=[]):
-    language = python_or_bash()
+    language = userQuery(
+        'In which language would you like to generate the install script?',
+        supported_languages()
+    )
     ext = get_script_extension(language)
     inst_script_name = script_name_body + ext
     try:
