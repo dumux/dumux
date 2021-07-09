@@ -37,8 +37,32 @@ void registerParameters(pybind11::handle scope,
 {
     cls.def(pybind11::init());
 
+    auto setParams = [](const std::unordered_map<std::string, std::string>& params)
+    {
+        return [&](Dune::ParameterTree& tree)
+        {
+            for (const auto& p : params)
+                tree[p.first] = p.second;
+        };
+    };
+
     cls.def("init", [](Parameters& self) { self.init(); });
-    cls.def("init", [](Parameters& self, const std::string& parameterFileName) { self.init(parameterFileName); });
+    cls.def("init", [setParams](Parameters& self,
+                                const std::string& parameterFileName,
+                                const std::unordered_map<std::string, std::string>& params,
+                                bool inputFileOverwritesParams)
+            {
+                self.init(parameterFileName, setParams(params), inputFileOverwritesParams);
+            },
+            pybind11::arg("parameterFileName"),
+            pybind11::arg("params") = std::unordered_map<std::string, std::string>{},
+            pybind11::arg("inputFileOverwritesParams") = false);
+
+    cls.def("init", [setParams](Parameters& self,
+                       const std::unordered_map<std::string, std::string>& params)
+            {
+                self.init(setParams(params));
+            });
 }
 
 template<class Scalar>
