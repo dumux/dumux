@@ -121,7 +121,7 @@ print(myModel.getProperties())
 # initialize the GridVariables and the Assembler
 gridVars = GridVariables(problem, myModel)
 diffMethod = 'analytic'
-assembler = FVAssembler(problem, gridVars, myModel, diffMethod)
+assembler = FVAssembler(problem, gridVars, myModel, diffMethod='analytic')
 sol = blockVector(assembler.numDofs())
 gridVars.init(sol)
 assembler.updateGridVariables(sol)
