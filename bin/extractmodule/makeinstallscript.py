@@ -104,11 +104,9 @@ def addDependencyPatches(dependenciesWithVersions):
 def makeInstallScript(modPath,
                       dependencies,
                       scriptName,
-                      language='python',
+                      writer,
                       topFolderName='DUMUX',
                       optsFile=None):
-
-    writer = makeScriptWriter(language)
 
     modPath = os.path.abspath(modPath)
     modParentPath = os.path.abspath(os.path.join(modPath, '../'))
@@ -294,7 +292,7 @@ if __name__ == '__main__':
         modPath=modPath,
         dependencies=deps,
         scriptName=scriptName,
-        language=language,
+        writer=makeScriptWriter(language),
         topFolderName=cmdArgs.get('topfoldername', None),
         optsFile=cmdArgs.get('optsFile', None)
     )

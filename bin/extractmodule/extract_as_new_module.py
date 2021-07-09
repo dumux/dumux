@@ -21,7 +21,7 @@ from util import versionTable
 from makeinstallscript import makeInstallScript, supportedLanguages
 from makeinstallscript import getScriptExtension
 from makeinstallscript import filterDependencies, addDependencyVersions
-from makeinstallscript import addDependencyPatches
+from makeinstallscript import addDependencyPatches, makeScriptWriter
 
 try:
     path = os.path.split(os.path.abspath(__file__))[0]
@@ -365,7 +365,7 @@ def guide_install_script_generation(mod_path,
             modPath=mod_path,
             dependencies=dependencies,
             scriptName=inst_script_name,
-            language=language,
+            writer=makeScriptWriter(language),
             topFolderName=''
         )
     except Exception as e:
