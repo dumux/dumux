@@ -54,16 +54,17 @@ class BlackOil
     static constexpr int numPhases = 3;
     static constexpr int numComponents = 3;
 
-    //! Index of the oil phase
-    static constexpr int oPhaseIdx = 0;
     //! Index of the water phase
-    static constexpr int wPhaseIdx = 1;
+    static constexpr int wPhaseIdx = 0;
+    //! Index of the oil phase
+    static constexpr int oPhaseIdx = 1;
     //! Index of the gas phase
     static constexpr int gPhaseIdx = 2;
-    //! Index of the oil component
-    static constexpr int oCompIdx = 0;
+
     //! Index of the water component
-    static constexpr int wCompIdx = 1;
+    static constexpr int wCompIdx = 0;
+    //! Index of the oil component
+    static constexpr int oCompIdx = 1;
     //! Index of the gas component
     static constexpr int gCompIdx = 2;
     /*!
