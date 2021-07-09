@@ -321,31 +321,38 @@ def guide_repository_initialization(mod_path):
     return remote_url
 
 
-def guide_versions_in_readme(mod_path, readme=None):
+def get_dependencies_and_patches(mod_path, skip=[]):
+    try:
+        print(f"Determining dependencies of the new module {mod_path}")
+        deps = getDependencies(mod_path)
+        deps = filterDependencies(deps, skip+[mod_path])
+        deps = addDependencyVersions(deps, ignoreUntracked=True)
+        deps = addDependencyPatches(deps)
+    except Exception as e:
+        raise Exception(f"Error getting the dependencies: {e}.")
+    return deps
+
+
+def guide_versions_in_readme(mod_path, dependencies, readme=None):
 
     write_version_info = query_yes_no(
         "Write detailed version information"
         f" (folder/branch/commits/dates) into {get_readme_file_name()}?\n"
     )
     if write_version_info:
-        try:
-            deps = getDependencies(mod_path)
-            versions = getPersistentVersions(
-                [dep['folder'] for dep in deps],
-                ignoreUntracked=True
-            )
-        except Exception as e:
-            sys.exit(f"Error when determining version info: {e}")
-
         if not readme:
             readme = os.path.join(mod_path, get_readme_file_name())
 
+        table = versionTable({d['folder']: d for d in dependencies})
         append_file_content(
-            readme, "\n## Version Information\n\n" + versionTable(versions)
+            readme, f"\n## Version Information\n\n{table}\n"
         )
 
 
-def guide_install_script_generation(mod_path, script_name_body, skip=[]):
+def guide_install_script_generation(mod_path,
+                                    dependencies,
+                                    script_name_body,
+                                    skip=[]):
     language = userQuery(
         'In which language would you like to generate the install script?',
         supportedLanguages()
@@ -353,40 +360,17 @@ def guide_install_script_generation(mod_path, script_name_body, skip=[]):
     ext = getScriptExtension(language)
     inst_script_name = script_name_body + ext
 
-    def getModDependencies():
-        try:
-            return getDependencies(mod_path)
-        except Exception as e:
-            raise Exception(f"Error when determining dependencies: {e}")
+    try:
+        makeInstallScript(
+            modPath=mod_path,
+            dependencies=dependencies,
+            scriptName=inst_script_name,
+            language=language,
+            topFolderName=''
+        )
+    except Exception as e:
+        raise Exception(f"Error during install script generation: {e}")
 
-    def processDependencies(deps):
-        try:
-            deps = filterDependencies(deps, skip+[mod_path])
-            deps = addDependencyVersions(deps, ignoreUntracked=True)
-            deps = addDependencyPatches(deps)
-            return deps
-        except Exception as e:
-            raise Exception(f"Error processing the dependencies: {e}.")
-
-    def makeScript(deps):
-        try:
-            makeInstallScript(
-                modPath=mod_path,
-                dependencies=deps,
-                scriptName=inst_script_name,
-                language=language,
-                topFolderName=''
-            )
-        except Exception as e:
-            raise Exception(f"Error during install script generation: {e}")
-
-    deps = getModDependencies()
-    deps = processDependencies(deps)
-    if not deps:
-        print("No dependencies found. Skipping install script generation.")
-        return ''
-
-    makeScript(deps)
     return inst_script_name
 
 
@@ -627,10 +611,15 @@ if __name__ == "__main__":
     check_path = new_module_path if remote_url else module_path
     skip_path = new_module_path if not remote_url else module_path
 
-    guide_versions_in_readme(check_path, new_readme)
-    iscript = 'install_' + new_module_name
-    iscript = guide_install_script_generation(check_path, iscript, [skip_path])
-    if iscript:
-        process_install_script(iscript, new_module_path, remote_url)
+    deps = get_dependencies_and_patches(check_path, [skip_path])
+    if deps:
+        guide_versions_in_readme(check_path, deps, new_readme)
+
+        iscript = 'install_' + new_module_name
+        iscript = guide_install_script_generation(check_path, deps, iscript)
+        if iscript:
+            process_install_script(iscript, new_module_path, remote_url)
+    else:
+        print("No dependencies found. Skipping install script generation")
 
     print(info_final(new_module_name))
