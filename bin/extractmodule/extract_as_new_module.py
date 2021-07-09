@@ -366,7 +366,10 @@ def guide_install_script_generation(mod_path, script_name_body, skip=[]):
 
 def process_install_script(script_name, mod_path, remote_url):
 
-    shutil.move(script_name, os.path.join(mod_path, script_name))
+    new_script = os.path.join(mod_path, script_name)
+    shutil.move(script_name, new_script)
+    subprocess.call(['chmod', 'u+x', new_script])
+
     run_git_cmd(mod_path, f'git add {script_name}')
     run_git_cmd(mod_path, 'git commit -m "add install script"')
 
@@ -476,7 +479,6 @@ provided in this repository to install all dependent modules.
 mkdir DUMUX
 cd DUMUX
 git clone {remote_url}
-chmod u+x {install_script_path}
 ./{install_script_path}
 ```
 
