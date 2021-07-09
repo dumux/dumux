@@ -26,12 +26,12 @@ if sys.version_info[0] < 3:
     sys.exit("\nError': Python3 required")
 
 
-def supported_languages():
+def supportedLanguages():
     return ['python', 'bash']
 
 
-def get_script_extension(language):
-    assert language in supported_languages()
+def getScriptExtension(language):
+    assert language in supportedLanguages()
     ext = {
         'python': '.py',
         'bash': '.sh'
@@ -48,7 +48,7 @@ def makeInstallScript(path,
                       suppressHints=False,
                       language=None):
 
-    assert language in supported_languages()
+    assert language in supportedLanguages()
 
     cwd = os.getcwd()
     modPath = os.path.abspath(os.path.join(cwd, path))
@@ -214,7 +214,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-l', '--language',
                         required=True,
-                        choices=supported_languages(),
+                        choices=supportedLanguages(),
                         help='Language in which to write the install script')
 
     cmdArgs = vars(parser.parse_args())

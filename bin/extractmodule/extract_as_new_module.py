@@ -18,8 +18,8 @@ from functools import partial
 
 from util import getPersistentVersions
 from util import versionTable
-from makeinstallscript import makeInstallScript, supported_languages
-from makeinstallscript import get_script_extension
+from makeinstallscript import makeInstallScript, supportedLanguages
+from makeinstallscript import getScriptExtension
 
 try:
     path = os.path.split(os.path.abspath(__file__))[0]
@@ -346,9 +346,9 @@ def guide_versions_in_readme(mod_path, readme=None):
 def guide_install_script_generation(mod_path, script_name_body, skip=[]):
     language = userQuery(
         'In which language would you like to generate the install script?',
-        supported_languages()
+        supportedLanguages()
     )
-    ext = get_script_extension(language)
+    ext = getScriptExtension(language)
     inst_script_name = script_name_body + ext
     try:
         makeInstallScript(mod_path,
