@@ -11,6 +11,7 @@ from dumux.common import BoundaryTypes, FVProblem, Parameters
 from dumux.material.fluidsystems import FluidSystem
 from dumux.material.components import Component, listComponents
 from dumux.material.spatialparams import SpatialParams
+from dumux.io import VtkOutputModule
 
 # Initialize the paramaters
 parameters = Parameters()
@@ -125,28 +126,32 @@ _, _, converged, _, _ = S(sol, res)
 if not converged:
     raise Exception("CGSolver has not converged")
 
-# Write to vtk
-@gridFunction(gridView)
-def elementGridFunction(element, x):
-    elementIdx = gridView.indexSet.index(element)
-    return sol[elementIdx]
-
-@gridFunction(gridView)
-def vertexGridFunction(element, x):
-    if element.type == dune.geometry.cube(2):
-        bary = (1-x[0])*(1-x[1]), x[0]*(1-x[1]), (1-x[0])*x[1], x[0]*x[1]
-    elif element.type == dune.geometry.simplex(2):
-        bary = 1-x[0]-x[1], x[0], x[1]
-    idx = gridView.indexSet.subIndices(element, 2)
-    return sum(b * sol[i] for b, i in zip(bary, idx))
-
-if discMethod == 'box':
-    gridView.writeVTK(problem.name + '_box',
-                      pointdata={"solution": vertexGridFunction},
-                      outputType=OutputType.ascii)
-else:
-    gridView.writeVTK(problem.name + '_cctpfa',
-                      celldata={"solution": elementGridFunction},
-                      outputType=OutputType.ascii)
-
 listComponents()
+
+# Write to vtk
+output = VtkOutputModule(myModel, gridVars, sol, "test")
+output.addField(sol, "p")
+output.write(1.0)
+
+# @gridFunction(gridView)
+# def elementGridFunction(element, x):
+#     elementIdx = gridView.indexSet.index(element)
+#     return sol[elementIdx]
+
+# @gridFunction(gridView)
+# def vertexGridFunction(element, x):
+#     if element.type == dune.geometry.cube(2):
+#         bary = (1-x[0])*(1-x[1]), x[0]*(1-x[1]), (1-x[0])*x[1], x[0]*x[1]
+#     elif element.type == dune.geometry.simplex(2):
+#         bary = 1-x[0]-x[1], x[0], x[1]
+#     idx = gridView.indexSet.subIndices(element, 2)
+#     return sum(b * sol[i] for b, i in zip(bary, idx))
+
+# if discMethod == 'box':
+#     gridView.writeVTK(problem.name + '_box',
+#                       pointdata={"solution": vertexGridFunction},
+#                       outputType=OutputType.ascii)
+# else:
+#     gridView.writeVTK(problem.name + '_cctpfa',
+#                       celldata={"solution": elementGridFunction},
+#                       outputType=OutputType.ascii)
