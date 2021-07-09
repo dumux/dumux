@@ -15,10 +15,12 @@ import multiprocessing as mp
 import itertools
 from pathlib import Path
 from functools import partial
+
 from util import getPersistentVersions
 from util import versionTable
 from makeinstallscript import makeInstallScript, python_or_bash
 from makeinstallscript import get_script_extension
+
 try:
     path = os.path.split(os.path.abspath(__file__))[0]
     sys.path.append(os.path.join(path, '../bin/util'))
@@ -100,20 +102,20 @@ def run_dune_project():
 
 
 def detect_new_module():
-    return max(
+    print("\nDetecting the newly created module")
+    new_mod = max(
         [d for d in os.listdir() if os.path.isdir(d)],
         key=os.path.getmtime
     )
+    print(f"Found module {new_mod}")
 
-
-def check_new_module(mod_dir, verbose=True):
-    mod_file = f"{mod_dir}/dune.module"
-    if not Path(mod_file).exists():
+    new_mod_file = f"{new_mod}/dune.module"
+    if not os.path.exists(new_mod_file):
         raise Exception(
-            f"Could not find module file {mod_file} in new module {mod_dir}"
+            f"Could not find module file {new_mod_file}"
         )
-    if verbose:
-        print(f"\nSuccessfully found the newly created module {mod_dir}")
+    print(f"Successfully found the newly created module {new_mod}")
+    return new_mod
 
 
 def copy_sub_folders(subfolders, old_path, new_path):
@@ -382,6 +384,18 @@ def process_install_script(script_name, mod_path, remote_url):
         )
 
 
+def no_remote_url_warning(new_mod, old_mod):
+    return f"""
+
+Warning: no remote registered for new module {new_mod}. We will therefore use
+         the old module {old_mod} to determine dependencies. Please make sure
+         that the dependencies listed in the dune.module files match (you
+         should have been asked for the dependencies earlier when creating
+         of the new module).
+
+"""
+
+
 # Some general information for users of the script
 def info_initial(module_dir, module_path, subfolders, source_files):
     sources_list = make_string_list(source_files)
@@ -469,10 +483,12 @@ configure your module with `dunecontrol` and build tests.
 """
 
 
-# Infos on how to configure the new module manually
-def info_configure_module(new_mod_name):
+# Some final remarks
+def info_final(new_mod_name):
     return f"""
 ========================================================================
+
+The module was extracted successfully!
 
 The extracted module is contained in the subfolder '{new_mod_name}'.
 You can configure it with
@@ -519,7 +535,7 @@ if __name__ == "__main__":
     module_path = os.path.abspath(module_dir)
     base_folder = os.path.abspath(os.path.join(module_dir, '../'))
 
-    # find sources
+    # find executable applications
     subfolders = remove_redundant_folders(list(set(args['subfolder'])))
     check_module_folder(module_dir)
     check_sub_folders(module_dir, subfolders)
@@ -531,7 +547,6 @@ if __name__ == "__main__":
 
     run_dune_project()
     new_module_name = detect_new_module()
-    check_new_module(new_module_name)
     new_module_path = os.path.join(base_folder, new_module_name)
 
     # prepare all data in new module
@@ -575,14 +590,7 @@ if __name__ == "__main__":
     # try to initialize repo (to use its url in later steps)
     remote_url = guide_repository_initialization(new_module_path)
     if not remote_url:
-        print(
-            "\n"
-            "Warning: no remote registered for new module. In the following\n"
-            "         we will use the old module to determine dependencies.\n"
-            "         Make sure that the dependencies given in the\n"
-            "         dune.module files match between the two modules.\n"
-            "\n"
-        )
+        print(no_remote_url_warning(new_module_name, module_dir))
 
     # make install script & finalize readme
     check_path = new_module_path if remote_url else module_path
@@ -593,4 +601,4 @@ if __name__ == "__main__":
     iscript = guide_install_script_generation(check_path, iscript, [skip_path])
     process_install_script(iscript, new_module_path, remote_url)
 
-    print(info_configure_module(new_module_name))
+    print(info_final(new_module_name))
