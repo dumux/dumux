@@ -7,6 +7,18 @@ import subprocess
 import traceback
 
 
+def addPrefixToLines(prefix, text, separator=' '):
+    text = text.split('\n')
+    text = [prefix + separator + line for line in text]
+    return '\n'.join(text)
+
+
+def indent(text, indentation='  '):
+    text = text.split('\n')
+    text = [indentation + line for line in text]
+    return '\n'.join(text)
+
+
 def getCommandErrorHints(command):
     if "git " in command:
         return "It seems that a git command failed. Please check:\n" \

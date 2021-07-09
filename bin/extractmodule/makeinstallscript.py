@@ -6,10 +6,11 @@
 import os
 import sys
 import argparse
+import subprocess
 
 from util import getPersistentVersions, versionTable, getPatches
-from util import writeShellInstallScript
-from util import writePythonInstallScript
+from installscriptwriter import InstallScriptWriterBash
+from installscriptwriter import InstallScriptWriterPython
 
 try:
     path = os.path.split(os.path.abspath(__file__))[0]
@@ -34,6 +35,14 @@ def getScriptExtension(language):
         'bash': '.sh'
     }
     return ext[language]
+
+
+def makeScriptWriter(language):
+    if language == 'bash':
+        return InstallScriptWriterBash()
+    elif language == 'python':
+        return InstallScriptWriterPython()
+    raise ValueError(f'Could not create writer for language {language}')
 
 
 def getDefaultScriptName(modName, language):
@@ -99,51 +108,54 @@ def makeInstallScript(modPath,
                       topFolderName='DUMUX',
                       optsFile=None):
 
-    assert language in supportedLanguages()
+    writer = makeScriptWriter(language)
 
     modPath = os.path.abspath(modPath)
     modParentPath = os.path.abspath(os.path.join(modPath, '../'))
-    modFolder = os.path.basename(modPath)
     modName = getModuleInfo(modPath, 'Module')
 
-    # switch to relative paths for script generation
+    # make sure we have relative paths for installation instructions
     def makeRelPath(p):
         return os.path.relpath(p, modParentPath)
 
-    data = {makeRelPath(d['folder']): d for d in dependencies}
+    def modify(dep):
+        result = dep
+        result['folder'] = makeRelPath(result['folder'])
+        return result
+    dependencies = [modify(d) for d in dependencies]
 
     if not optsFile:
         optsFile = os.path.join(modParentPath, 'dumux/cmake.opts')
     optsFile = os.path.abspath(optsFile)
     optsRelPath = makeRelPath(optsFile)
 
-    names = [d['name'] for d in dependencies]
-    folders = [d['folder'] for d in dependencies]
+    with open(scriptName, 'w') as script:
+        writer.writeSheBang(script)
 
-    # specific Module required patch and the patch path
-    patchFileType = []  # uncommitted or unpublished changes
-    patchModule = []  # names of remote modules containing channges
-    patchFolder = []  # names of local folders containing changes
-    for depModPath in data.keys():
-        depModName = getModuleInfo(os.path.join(modParentPath, depModPath), "Module")
-        if 'unpublished' in data[depModPath]:
-            patchModule.append(depModName)
-            patchFolder.append(depModPath)
-            patchFileType.append("unpublished.patch")
-        if 'uncommitted' in data[depModPath]:
-            patchFileType.append("uncommitted.patch")
-            patchModule.append(depModName)
-            patchFolder.append(depModPath)
+        script.write('\n')
+        writer.writeImports(script)
 
-    argsGenerateScript = (scriptName,
-                          modName, modFolder,
-                          folders, names, data,
-                          data, patchModule, patchFolder, patchFileType,
-                          topFolderName, optsRelPath)
-    if language == "bash":
-        writeShellInstallScript(*argsGenerateScript)
-    else:
-        writePythonInstallScript(*argsGenerateScript)
+        script.write('\n')
+        writer.writeComment(
+            "\n"
+            f"This installs the module {modName} and its dependencies.\n"
+            "The exact revivions used are listed in the table below.\n"
+            "However, note that this script may also apply further patches.\n"
+            "\n",
+            script
+        )
+
+        script.write('\n')
+        writer.writeComment(
+            versionTable({d['folder']: d for d in dependencies}),
+            script
+        )
+
+        script.write('\n')
+        writer.writeInstallation(dependencies, script)
+
+        script.write('\n')
+        writer.writeConfiguration(optsRelPath, script)
 
 
 def printFoundDependencies(deps):
@@ -286,6 +298,8 @@ if __name__ == '__main__':
         topFolderName=cmdArgs.get('topfoldername', None),
         optsFile=cmdArgs.get('optsFile', None)
     )
+
+    subprocess.call(['chmod', 'u+x', scriptName])
 
     for d in deps:
         if d['name'] == modName:
