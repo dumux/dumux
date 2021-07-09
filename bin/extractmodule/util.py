@@ -73,9 +73,12 @@ def getPersistentVersions(modFolderPaths, ignoreUntracked=False):
             raise Exception('Folder is not a git repository')
 
         if hasUntrackedFiles(modFolderPath) and not ignoreUntracked:
-            raise Exception("Found untracked files in '{}'."
-                            "Please commit, stash, or remove them."
-                            .format(modFolderPath))
+            raise Exception(
+                "Found untracked files in '{}'. "
+                "Please commit, stash, or remove them. Alternatively, if you "
+                "are sure they are not needed set ignoreUntracked=True"
+                .format(modFolderPath)
+            )
 
         result[modFolderPath] = {}
         result[modFolderPath]['remote'] = getRemote(modFolderPath)
@@ -110,12 +113,9 @@ def getPatches(persistentVersions):
             'git format-patch --stdout {}'.format(gitInfo['revision'])
         )
 
-        if unpubPatch or unCommPatch:
-            result[path] = {}
-            if unpubPatch:
-                result[path]['unpublished'] = unpubPatch
-            if unCommPatch:
-                result[path]['uncommitted'] = unCommPatch
+        result[path] = {}
+        result[path]['unpublished'] = unpubPatch if unpubPatch else None
+        result[path]['uncommitted'] = unCommPatch if unCommPatch else None
     return result
 
 

@@ -20,6 +20,8 @@ from util import getPersistentVersions
 from util import versionTable
 from makeinstallscript import makeInstallScript, supportedLanguages
 from makeinstallscript import getScriptExtension
+from makeinstallscript import filterDependencies, addDependencyVersions
+from makeinstallscript import addDependencyPatches
 
 try:
     path = os.path.split(os.path.abspath(__file__))[0]
@@ -350,17 +352,41 @@ def guide_install_script_generation(mod_path, script_name_body, skip=[]):
     )
     ext = getScriptExtension(language)
     inst_script_name = script_name_body + ext
-    try:
-        makeInstallScript(mod_path,
-                          fileName=inst_script_name, ignoreUntracked=True,
-                          skipFolders=skip+[mod_path], suppressHints=True,
-                          topFolderName=None, language=language)
-    except Exception as e:
-        raise Exception(
-            f"Error occurred when making the install script: {e}.\n"
-            "Run python makeinstallscript.py --help for more information."
-        )
 
+    def getModDependencies():
+        try:
+            return getDependencies(mod_path)
+        except Exception as e:
+            raise Exception(f"Error when determining dependencies: {e}")
+
+    def processDependencies(deps):
+        try:
+            deps = filterDependencies(deps, skip+[mod_path])
+            deps = addDependencyVersions(deps, ignoreUntracked=True)
+            deps = addDependencyPatches(deps)
+            return deps
+        except Exception as e:
+            raise Exception(f"Error processing the dependencies: {e}.")
+
+    def makeScript(deps):
+        try:
+            makeInstallScript(
+                modPath=mod_path,
+                dependencies=deps,
+                scriptName=inst_script_name,
+                language=language,
+                topFolderName=''
+            )
+        except Exception as e:
+            raise Exception(f"Error during install script generation: {e}")
+
+    deps = getModDependencies()
+    deps = processDependencies(deps)
+    if not deps:
+        print("No dependencies found. Skipping install script generation.")
+        return ''
+
+    makeScript(deps)
     return inst_script_name
 
 
@@ -604,6 +630,7 @@ if __name__ == "__main__":
     guide_versions_in_readme(check_path, new_readme)
     iscript = 'install_' + new_module_name
     iscript = guide_install_script_generation(check_path, iscript, [skip_path])
-    process_install_script(iscript, new_module_path, remote_url)
+    if iscript:
+        process_install_script(iscript, new_module_path, remote_url)
 
     print(info_final(new_module_name))

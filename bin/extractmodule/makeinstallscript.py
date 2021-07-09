@@ -6,11 +6,8 @@
 import os
 import sys
 import argparse
-import subprocess
 
-from util import getPersistentVersions
-from util import printVersionTable
-from util import getPatches
+from util import getPersistentVersions, versionTable, getPatches
 from util import writeShellInstallScript
 from util import writePythonInstallScript
 
@@ -39,138 +36,173 @@ def getScriptExtension(language):
     return ext[language]
 
 
-def makeInstallScript(path,
-                      fileName=None,
-                      ignoreUntracked=False,
+def getDefaultScriptName(modName, language):
+    return 'install_{}{}'.format(
+        modName,
+        getScriptExtension(language)
+    )
+
+
+def printProgressInfo(infoLines, indLevel=0):
+    firstPrefix = '\n' + '--'*(indLevel+1)
+    emptyPrefix = firstPrefix.replace('-', ' ').strip('\n')
+    print(f"{firstPrefix} {infoLines[0]}")
+    for line in infoLines[1:]:
+        print(f"{emptyPrefix} {line}")
+
+
+def filterDependencies(dependencies, skipFolders=[]):
+    if not skipFolders:
+        return dependencies
+    else:
+        return [
+            dep for dep in dependencies if dep['folder'] not in skipFolders
+        ]
+
+
+def addDependencyVersions(dependencies, ignoreUntracked=False):
+    def getKey(dependency):
+        return os.path.abspath(dependency['folder'])
+
+    versions = getPersistentVersions(
+        [getKey(d) for d in dependencies], ignoreUntracked
+    )
+    if len(versions) != len(dependencies):
+        raise Exception("Not all versions of all modules could be found.")
+
+    mergedResult = []
+    for depInfo in dependencies:
+        versionInfo = versions[getKey(depInfo)]
+        mergedResult.append({**depInfo, **versionInfo})
+    return mergedResult
+
+
+def addDependencyPatches(dependenciesWithVersions):
+    def getKey(dependency):
+        return os.path.abspath(dependency['folder'])
+
+    patches = getPatches({
+        getKey(d): d for d in dependenciesWithVersions
+    })
+
+    mergedResult = []
+    for depInfo in dependenciesWithVersions:
+        patch = patches[getKey(depInfo)]
+        mergedResult.append({**depInfo, **patch})
+    return mergedResult
+
+
+def makeInstallScript(modPath,
+                      dependencies,
+                      scriptName,
+                      language='python',
                       topFolderName='DUMUX',
-                      optsFile=None,
-                      skipFolders=None,
-                      suppressHints=False,
-                      language=None):
+                      optsFile=None):
 
     assert language in supportedLanguages()
 
-    cwd = os.getcwd()
-    modPath = os.path.abspath(os.path.join(cwd, path))
+    modPath = os.path.abspath(modPath)
     modParentPath = os.path.abspath(os.path.join(modPath, '../'))
-    modFolder = os.path.relpath(modPath, modParentPath)
+    modFolder = os.path.basename(modPath)
+    modName = getModuleInfo(modPath, 'Module')
 
-    try:
-        modName = getModuleInfo(modPath, 'Module')
-    except Exception:
-        sys.exit("\nError: Could not determine module name. Make sure the\n"
-                 "         module path is correct and contains 'dune.module'.")
+    # switch to relative paths for script generation
+    def makeRelPath(p):
+        return os.path.relpath(p, modParentPath)
 
-    if not fileName:
-        instFileName = 'install_' + modName + '.%s'%("sh" if language == "bash" else "py")
-    else:
-        instFileName = fileName
-    print("\n-- Creating install script '{}' for module '{}' in folder '{}'"
-          .format(instFileName, modName, modPath))
+    data = {makeRelPath(d['folder']): d for d in dependencies}
 
-    print("\n-- Determining the dependencies")
-    deps = getDependencies(modPath)
-    if len(deps) > 0:
-        print("-> Found the following dependencies")
-        print("\t| {:^50} | {:^50} |".format('module name', 'module folder'))
-        print("\t" + 107*'-')
-        for dep in deps:
-            print('\t| {:^50} | {:^50} |'.format(dep['name'], dep['folder']))
-    else:
-        sys.exit("Error: Could not determine module dependencies.")
+    if not optsFile:
+        optsFile = os.path.join(modParentPath, 'dumux/cmake.opts')
+    optsFile = os.path.abspath(optsFile)
+    optsRelPath = makeRelPath(optsFile)
 
-    if not skipFolders:
-        depNames = [dep['name'] for dep in deps]
-        depFolders = [dep['folder'] for dep in deps]
-        depFolderPaths = [os.path.abspath(os.path.join(modParentPath, d)) for d in depFolders]
-    else:
-        depNames = [dep['name'] for dep in deps if dep['folder'] != skipFolders]
-        depFolders = [dep['folder'] for dep in deps if dep['folder'] != skipFolders]
-        depFolderPaths = [os.path.abspath(os.path.join(modParentPath, d)) for d in depFolders if d != skipFolders]
-
-    print("\n-- Determining the module versions")
-    try:
-        versions = getPersistentVersions(depFolderPaths, ignoreUntracked)
-    except Exception as err:
-        print('\nCaught exception: ' + str(err))
-        if 'untracked' in str(err):
-            print('If you are certain that the untracked files are not needed for '
-                  'the module installation, run this script with the -i flag.')
-        sys.exit(1)
-
-    if len(versions) != len(depNames):
-        sys.exit("Error': Could not determine versions of all modules")
-
-    print("-> The following (remotely available) versions are used as basis")
-    print("   on top of which we will generate the required patches")
-    printVersionTable(versions)
-
-    print("\n-- Determining patches information for unpublished commits and uncommited changes")
-    patches = getPatches(versions)
-
-    # write installation script (switch to relative paths)
-    versions = {os.path.relpath(p, modParentPath): v for p, v in versions.items()}
-    patches = {os.path.relpath(p, modParentPath): v for p, v in patches.items()}
-
-    optsRelPath = 'dumux/cmake.opts'
-    if optsFile:
-        optsPath = os.path.abspath(os.path.join(os.getcwd(), optsFile))
-        optsRelPath = os.path.relpath(optsPath, modParentPath)
-
-    names = depNames
-    if modName not in names and modFolder not in skipFolders:
-        names.append(modName)
-
-    folders = depFolders
-    if modFolder not in folders and modFolder not in skipFolders:
-        folders.append(modFolder)
+    names = [d['name'] for d in dependencies]
+    folders = [d['folder'] for d in dependencies]
 
     # specific Module required patch and the patch path
     patchFileType = []  # uncommitted or unpublished changes
     patchModule = []  # names of remote modules containing channges
     patchFolder = []  # names of local folders containing changes
-    for depModPath in patches.keys():
+    for depModPath in data.keys():
         depModName = getModuleInfo(os.path.join(modParentPath, depModPath), "Module")
-        if 'unpublished' in patches[depModPath]:
+        if 'unpublished' in data[depModPath]:
             patchModule.append(depModName)
             patchFolder.append(depModPath)
             patchFileType.append("unpublished.patch")
-        if 'uncommitted' in patches[depModPath]:
+        if 'uncommitted' in data[depModPath]:
             patchFileType.append("uncommitted.patch")
             patchModule.append(depModName)
             patchFolder.append(depModPath)
 
-    argsGenerateScript = (instFileName,
+    argsGenerateScript = (scriptName,
                           modName, modFolder,
-                          folders, names, versions,
-                          patches, patchModule, patchFolder, patchFileType,
+                          folders, names, data,
+                          data, patchModule, patchFolder, patchFileType,
                           topFolderName, optsRelPath)
     if language == "bash":
         writeShellInstallScript(*argsGenerateScript)
     else:
         writePythonInstallScript(*argsGenerateScript)
-    print("\n"+"*"*120)
-    print("-- Successfully created install script file " + instFileName)
-    print("*"*120)
 
-    if language == "bash":
-        subprocess.call(['chmod', 'u+x', instFileName])  # make script executable
 
-    if not suppressHints:
-        print(f"\n-- You might want to put installation instructions into the README.md file of your module, for instance:\n"
-              f"     ## Installation\n"
-              f"     The easiest way of installation is to use the script `{instFileName}` provided in this repository.\n"
-              f"     Using `wget`, you can simply install all dependent modules by typing:\n"
-              f"\n"
-              f"     ```sh\n"
-              f"     wget {versions[modFolder]['remote']}/{instFileName}\n"
-              f"     {'bash' if language == 'bash' else 'python3'} {instFileName}\n"
-              f"     ```\n")
+def printFoundDependencies(deps):
+    if len(deps) > 0:
+        infoText = [
+            "Found the following dependencies",
+            "\t| {:^50} | {:^50} |".format('module name', 'module folder'),
+            "\t" + 107*'-']
+        for dep in deps:
+            infoText.append(
+                '\t| {:^50} | {:^50} |'.format(dep['name'], dep['folder'])
+            )
+        printProgressInfo(infoText)
+
+
+def printFoundVersionInfo(dependenciesWithVersions):
+    table = versionTable({
+        d['folder']: d for d in dependenciesWithVersions
+    })
+    printProgressInfo(
+        ["The following (remotely available) versions are used as a basis",
+         "on top of which the required patches will be automatically created:",
+         "\n{}".format(table)]
+    )
+
+
+def printInstallationInstruction(scriptName, remote, topFolderName=None):
 
     if topFolderName:
-        print(f"   This will create a sub-folder `{topFolderName}`, clone all modules into it, configure the entire project and build the applications contained in this module.")
+        description = f"""
+This will create a folder `{topFolderName}`, clone all modules into it,
+configure the entire project and build the contained applications"
+"""
     else:
-        print("   This will clone all modules into the folder from which the script is called, configure the entire project and build the applications contained in this module.")
+        description = """
+This will clone all modules into the folder from which the script is called,
+configure the entire project and build the contained applications"
+"""
+
+    if not remote:
+        remote = "$REMOTE_URL"
+
+    printProgressInfo(['Info:', f"""
+
+You might want to put installation instructions into the README.md file of your
+module, for instance:
+
+     ## Installation
+     The easiest way of installation is to use the script `{scriptName}`
+     provided in this repository. Using `wget`, you can simply install all
+     dependent modules by typing:
+
+     ```sh
+     wget {remote}/{scriptName}
+     ./{scriptName}
+     ```
+
+     {description}
+"""])
 
 
 if __name__ == '__main__':
@@ -178,10 +210,10 @@ if __name__ == '__main__':
     ###################
     # parse arguments
     parser = argparse.ArgumentParser(
-        description='This script generates an install script for your dune module, '
-                    'taking into account non-published commits & local changes.\n'
-                    'This expects that your module is a git repository and that a '
-                    'remote origin exists and has been set already.'
+        description='This script generates an install script for your module, '
+                    'taking into account non-published commits & changes.\n'
+                    'This expects that all modules are git repositories and '
+                    'have a remote origin URL defined.'
     )
     parser.add_argument('-p', '--path',
                         required=True,
@@ -194,38 +226,74 @@ if __name__ == '__main__':
                         help='Use this to ignore untracked files present')
     parser.add_argument('-t', '--topfoldername',
                         required=False, default='DUMUX',
-                        help='Name of the folder that the install script creates '
-                            'upon execution to install the modules in. If you '
-                            'pass an empty string, no folder will be created '
-                            'and installation happens in place.')
+                        help='Folder that the install script creates upon'
+                             'execution to install the modules in. If you '
+                             'pass an empty string, no folder will be created '
+                             'and installation happens in place.')
     parser.add_argument('-o', '--optsfile',
                         required=False,
-                        help='Provide custom opts file to be used for the call to '
-                            'dunecontrol. Note that this file is required to be '
-                            'contained and committed within the module or its '
-                            'dependencies.')
+                        help='Provide custom opts file to be used for project '
+                             'configuration. Note that this file is required '
+                             'to be contained and committed in the module or '
+                             'one of its dependencies.')
     parser.add_argument('-s', '--skipfolders',
-                        required=False, default=None,
+                        required=False, nargs='+',
                         help='a list of module folders to be skipped')
-
-    parser.add_argument('-d', '--suppresshints',
-                        required=False, default=False,
-                        help='if output needs to be suppressed')
-
     parser.add_argument('-l', '--language',
-                        required=True,
+                        required=False, default='python',
                         choices=supportedLanguages(),
                         help='Language in which to write the install script')
 
     cmdArgs = vars(parser.parse_args())
 
+    modPath = cmdArgs['path']
+    skipFolders = cmdArgs['skipfolders']
+    if skipFolders:
+        skipFolders = list(set(skipFolders))
+
+    printProgressInfo(["Determining the module dependencies"])
+    deps = getDependencies(modPath)
+    deps = filterDependencies(deps, skipFolders)
+    printFoundDependencies(deps)
+    if not deps:
+        sys.exit("No dependencies found. Exiting.")
+
+    printProgressInfo(["Determining the module versions"])
+    deps = addDependencyVersions(deps, cmdArgs.get('ignoreuntracked', False))
+    printFoundVersionInfo(deps)
+
+    printProgressInfo(["Making patches for unpublished & uncommited changes"])
+    deps = addDependencyPatches(deps)
+
+    # actual script generation
+    modPath = os.path.abspath(modPath)
+    modName = getModuleInfo(modPath, 'Module')
+    printProgressInfo(
+        ["Creating install script for module '{}' in folder '{}'"
+         .format(modName, modPath)]
+    )
+
+    language = cmdArgs['language']
+    scriptName = cmdArgs.get('filename', None)
+    if not scriptName:
+        scriptName = getDefaultScriptName(modName, language)
+
     makeInstallScript(
-        path=cmdArgs['path'],
-        fileName=cmdArgs.get('filename', None),
-        ignoreUntracked=cmdArgs.get('ignoreuntracked', False),
+        modPath=modPath,
+        dependencies=deps,
+        scriptName=scriptName,
+        language=language,
         topFolderName=cmdArgs.get('topfoldername', None),
-        optsFile=cmdArgs.get('optsFile', None),
-        skipFolders=cmdArgs.get('skipfolders', None),
-        suppressHints=cmdArgs.get('suppresshints', False),
-        language=cmdArgs.get('language', None)
+        optsFile=cmdArgs.get('optsFile', None)
+    )
+
+    for d in deps:
+        if d['name'] == modName:
+            remote = d['remote']
+
+    printProgressInfo([f"Successfully created install script '{scriptName}'"])
+    printInstallationInstruction(
+        scriptName,
+        remote,
+        cmdArgs.get('topfoldername', None)
     )
