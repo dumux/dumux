@@ -37,7 +37,8 @@
 #include <dumux/discretization/box/fvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 
-#include <dumux/freeflow/rans/wallproperties.hh>
+#include <dumux/freeflow/rans/boundarysearchwalldistance.hh>
+#include <dumux/freeflow/rans/plaplacianwalldistance.hh>
 #include <dune/alugrid/grid.hh>
 
 
@@ -50,19 +51,22 @@ void test(const GridGeometry& gridGeometry, const std::string& paramGroup)
     Dune::VTKWriter<std::decay_t<decltype(gridView)>> writer(gridView);
     Dune::Timer timer;
 
-    BoundarySearchWallProperties<GridGeometry> wallProperties(gridGeometry);
-    wallProperties.updateWallDistance();
+    const auto top = gridGeometry.bBoxMax()[1];
+
+    BoundarySearchWallDistance<GridGeometry> boundarySearchWallDistance(gridGeometry);
+    boundarySearchWallDistance.updateWallDistance([top](const auto& scvf) {return scvf.ipGlobal()[1] < top - 1e-6; });
+
 
     if constexpr (GridGeometry::discMethod == DiscretizationMethod::box)
-        writer.addVertexData(wallProperties.wallDinstance(), "distance_search");
+        writer.addVertexData(boundarySearchWallDistance.wallDinstance(), "distance_search");
     else
-        writer.addCellData(wallProperties.wallDinstance(), "distance_search");
+        writer.addCellData(boundarySearchWallDistance.wallDinstance(), "distance_search");
 
     std::cout << "Boundary search took " << timer.elapsed() << " seconds" << std::endl;
     timer.reset();
 
-    PoissonWallProperties<GridGeometry> poissonWallProperties(gridGeometry);
-    poissonWallProperties.updateWallDistance();
+    PLaplaceWallDistance<GridGeometry> poissonWallProperties(gridGeometry);
+    poissonWallProperties.updateWallDistance([top](const auto& pos) {return pos[1] < top - 1e-6; });
 
     if constexpr (GridGeometry::discMethod == DiscretizationMethod::box)
         writer.addVertexData(poissonWallProperties.wallDinstance(), "distance_poisson");
@@ -71,7 +75,7 @@ void test(const GridGeometry& gridGeometry, const std::string& paramGroup)
 
     std::cout << "Poisson problem took " << timer.elapsed() << " seconds" << std::endl;
 
-    if (wallProperties.wallDinstance().size() != poissonWallProperties.wallDinstance().size())
+    if (boundarySearchWallDistance.wallDinstance().size() != poissonWallProperties.wallDinstance().size())
         DUNE_THROW(Dune::InvalidStateException, "Wrong vector sizes");
 
     writer.write("result_" + paramGroup);
