@@ -6,7 +6,7 @@ from dune.istl import blockVector, BlockVector, CGSolver, SeqJacobi
 
 from dumux.discretization import GridGeometry, GridVariables
 from dumux.assembly import FVAssembler
-from dumux.common.properties import TypeTag
+from dumux.common.properties import TypeTag, Property
 from dumux.common import BoundaryTypes, FVProblem, Parameters
 from dumux.material.fluidsystems import FluidSystem
 from dumux.material.components import Component, listComponents
@@ -14,7 +14,10 @@ from dumux.material.spatialparams import SpatialParams
 
 # Initialize the paramaters
 parameters = Parameters()
-parameters.init('params.input')
+
+paramsDict = {"Problem.EnableGravity":"true"}
+# parameters.init('params.input', paramsDict)
+parameters.init('params.input', {"Problem.EnableGravity":"true"})
 
 # Choose the discretization method
 discMethod = 'box'
@@ -27,44 +30,25 @@ gridGeometry.update()
 
 # this TypeTag is for testing purposes only
 testTypeTag = TypeTag("Test")
-testTypeTag["UseMoles"] = False
+testTypeTag["UseMoles"] = Property(value=False)
+
+# TODO automatically forward declare unknown properties
+# testTypeTag["MyScalarValueProp"] = Property(value=123.0)
+# testTypeTag["MyIntValueProp"] = Property(value=123)
 
 # our model TypeTag
 myModel = TypeTag('MyModel', inheritsFrom=[testTypeTag,'OneP', ('BoxModel' if discMethod == "box" else 'CCTpfaModel')])
 
-# set some other TypeTag
-class MyScalar:
-        def __init__(self):
-            self._typeName = 'double'
+myModel['Scalar'] = Property(type='double')
+myModel['Grid'] = Property(type='typename ' + gridView._typeName + '::GridView::Grid', includes=['dune/grid/yaspgrid.hh'])
+myModel['LocalResidual'] = Property(type='OnePIncompressibleLocalResidual<TypeTag>', includes=['dumux/porousmediumflow/1p/incompressiblelocalresidual.hh'])
 
-myModel['Scalar'] = MyScalar()
-
-class MySpecialProperty:
-    def __init__(self):
-        self._typeName = 'Dumux::CubicSpline<Scalar>'
-        self._includes = ['<dumux/common/cubicspline.hh>']
-        self._requiredPropertyTypes = ['Scalar']
-
-class MyGrid:
-    def __init__(self):
-        self._typeName = 'typename ' + gridView._typeName + '::GridView::Grid'
-        self._includes = ['dune/grid/yaspgrid.hh']
-
-myModel['Grid'] = MyGrid()
-
-class MyLocalResidual:
-    def __init__(self):
-        self._typeName = 'OnePIncompressibleLocalResidual<TypeTag>'
-        self._includes = ['dumux/porousmediumflow/1p/incompressiblelocalresidual.hh']
-
-myModel['LocalResidual'] = MyLocalResidual()
-
-spatialParams = SpatialParams(gridGeometry, MyScalar())
-myModel['SpatialParams'] = spatialParams
+spatialParams = SpatialParams(gridGeometry, myModel['Scalar'])
+myModel['SpatialParams'] = Property(object=spatialParams)
 
 h20 = Component("SimpleH2O")
-onePLiquid = FluidSystem(MyScalar(), h20)
-myModel['FluidSystem'] = onePLiquid
+onePLiquid = FluidSystem(myModel['Scalar'], h20)
+myModel['FluidSystem'] = Property(object=onePLiquid)
 
 # define the Problem
 @FVProblem(gridGeometry, spatialParams)
@@ -74,7 +58,9 @@ class Problem:
 
     def boundaryTypes(self, element, scv):
         bTypes = BoundaryTypes(self.numEq)
-        bTypes.setDirichlet()
+        bTypes.setNeumann()
+        if scv.dofPosition()[1] > 1 -1e-8:
+            bTypes.setDirichlet()
         return bTypes
 
     def dirichlet(self, element, entity):
@@ -90,11 +76,11 @@ class Problem:
         return 300.0
 
     def source(self, element, fvGeometry, scv):
-        if discMethod == 'box' and scv.dofIndex() == 134:
-            return 1e-1
+        # if discMethod == 'box' and scv.dofIndex() == 134:
+        #     return 1e-1
 
-        if discMethod == 'cctpfa' and scv.dofIndex() == 50:
-            return 1e-1
+        # if discMethod == 'cctpfa' and scv.dofIndex() == 50:
+        #     return 1e-1
 
         return 0
 
@@ -113,14 +99,13 @@ class Problem:
 problem = Problem()
 print("Name of the problem: {}".format(problem.name))
 print("Includes of the problem: {}".format(problem._includes))
-myModel['Problem'] = problem
+myModel['Problem'] = Property(object=problem)
 
 # print the properties
 print(myModel.getProperties())
 
 # initialize the GridVariables and the Assembler
 gridVars = GridVariables(problem, myModel)
-diffMethod = 'analytic'
 assembler = FVAssembler(problem, gridVars, myModel, diffMethod='analytic')
 sol = blockVector(assembler.numDofs())
 gridVars.init(sol)
