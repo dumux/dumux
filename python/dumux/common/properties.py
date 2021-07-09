@@ -4,6 +4,28 @@
 Properties
 """
 
+class Property:
+    def __init__(self, **kwargs):
+        if 'object' in kwargs:
+            object = kwargs.get('object')
+            assert(hasattr(object, '_typeName'))
+            assert('type' not in kwargs and 'value' not in kwargs)
+            includes = object._includes if hasattr(object, '_includes') else []
+            requiredPropertyTypes = object._requiredPropertyTypes if hasattr(object, '_requiredPropertyTypes') else []
+            self._typeName = object._typeName
+            self._includes = includes
+            self._requiredPropertyTypes = requiredPropertyTypes
+        elif 'type' in kwargs:
+            assert('object' not in kwargs and 'value' not in kwargs)
+            self._typeName = kwargs.get('type')
+            self._includes = kwargs.get('includes', [])
+            self._requiredPropertyTypes = kwargs.get('requiredProperties', [])
+        else:
+            assert('value' in kwargs)
+            assert('object' not in kwargs and 'type' not in kwargs)
+            self._value =  kwargs.get('value')
+
+
 # Converts a Type Property to a string
 def typePropertyToString(propertyName, typeTagName, typeArg):
     propertyString = 'template<class TypeTag>\n'
@@ -13,7 +35,7 @@ def typePropertyToString(propertyName, typeTagName, typeArg):
         propertyString += '    using type = {};\n'.format('double')
     elif isinstance(typeArg, (int)):
         propertyString += '    using type = {};\n'.format('int')
-    elif not isinstance(typeArg, (str)):
+    elif isinstance(typeArg, Property) or not isinstance(typeArg, (str)):
         if hasattr(typeArg, '_requiredPropertyTypes') or hasattr(typeArg, '_requiredPropertyValues'):
             propertyString += 'private:\n'
         if hasattr(typeArg, '_requiredPropertyTypes'):
@@ -96,6 +118,7 @@ class TypeTag:
 
     # the [] operator for setting values
     def __setitem__(self, key, value):
+        assert(isinstance(value, Property))
         self.properties[key] = value
         if hasattr(value, '_includes'):
             for include in value._includes:
@@ -138,8 +161,8 @@ class TypeTag:
         file += '} // end namespace TTag\n\n'
 
         for prop in self.properties:
-            if isinstance(self[prop], (bool, int, float)):
-                file += valuePropertyToString(prop, self.name, self[prop]) +'\n\n'
+            if hasattr(self[prop], '_value'):
+                file += valuePropertyToString(prop, self.name, self[prop]._value) +'\n\n'
             else:
                 file += typePropertyToString(prop, self.name, self[prop]) +'\n\n'
 
