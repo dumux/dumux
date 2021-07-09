@@ -18,6 +18,7 @@ try:
     path = os.path.split(os.path.abspath(__file__))[0]
     sys.path.append(os.path.join(path, '../bin/util'))
 
+    from common import userQuery
     from getmoduleinfo import getModuleInfo, getDependencies
 except Exception:
     sys.exit('Could not import getModuleInfo')
@@ -41,16 +42,10 @@ def get_script_extension(language):
 
 # ask user to speficy the language of the generated script
 def python_or_bash():
-    inp = input('Generate install script in Python (p) or Bash (b)?')
-    if inp == "b" or inp == "sh" or inp == "bash" or inp == "shell":
-        print("Creating Bash install script.")
-        return "bash"
-    elif inp == "p" or inp == "py" or inp == "python":
-        print("Creating Python install script")
-        return "python"
-    else:
-        print("--Error: Unknown type. You must choose between python or bash!")
-        return python_or_bash()
+    return userQuery(
+        'In which language would you like to generate the install script?',
+        supported_languages()
+    )
 
 
 def makeInstallScript(path,

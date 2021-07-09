@@ -51,6 +51,21 @@ def callFromPath(path):
     return decorator_callFromPath
 
 
+# query something from the user
+def userQuery(question, choices):
+    choicesString = ', '.join(str(c) for c in choices)
+    questionHints = f"(choices: {choicesString})\n"
+    if not question.endswith('\n'):
+        questionHints = '\n' + questionHints
+
+    while True:
+        inp = input(question + questionHints)
+        if inp not in choices:
+            print("Invalid answer: '{}'".format(inp))
+        else:
+            return inp
+
+
 # query a yes/no answer from the user
 def query_yes_no(question, default="yes"):
     affirmative = ["yes", "y", "ye"]
