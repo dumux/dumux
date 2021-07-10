@@ -212,9 +212,9 @@ def printFoundVersionInfo(dependenciesWithVersions):
     )
 
 
-def printInstallationInstruction(scriptName,
-                                 patches=[],
-                                 topFolderName=None):
+def printFinalMessage(scriptName,
+                      patches=[],
+                      topFolderName=None):
 
     if topFolderName:
         description = f"""
@@ -226,6 +226,7 @@ into it, configure the entire project and build the contained applications"
 Running this script will clone all modules into the folder from which it is
 called, configure the entire project and build the contained applications"
 """
+
     if not patches:
         printProgressInfo(['Info:', description])
     else:
@@ -327,7 +328,7 @@ if __name__ == '__main__':
 
     subprocess.call(['chmod', 'u+x', scriptName])
     printProgressInfo([f"Successfully created install script '{scriptName}'"])
-    printInstallationInstruction(
+    printFinalMessage(
         scriptName,
         config['patches'],
         cmdArgs.get('topfoldername', None)
