@@ -361,7 +361,7 @@ def guide_install_script_generation(mod_path,
     inst_script_name = script_name_body + ext
 
     try:
-        makeInstallScript(
+        config = makeInstallScript(
             modPath=mod_path,
             dependencies=dependencies,
             scriptName=inst_script_name,
@@ -371,22 +371,26 @@ def guide_install_script_generation(mod_path,
     except Exception as e:
         raise Exception(f"Error during install script generation: {e}")
 
-    return inst_script_name
+    return inst_script_name, config['patches']
 
 
-def process_install_script(script_name, mod_path, remote_url):
+def process_install_script(script, patches, mod_path, remote_url):
 
-    new_script = os.path.join(mod_path, script_name)
-    shutil.move(script_name, new_script)
+    for patch in patches:
+        shutil.move(patch, os.path.join(mod_path, patch))
+        run_git_cmd(mod_path, f'git add {patch}')
+    run_git_cmd(mod_path, 'git commit -m "add patches"')
+
+    new_script = os.path.join(mod_path, script)
+    shutil.move(script, new_script)
     subprocess.call(['chmod', 'u+x', new_script])
-
-    run_git_cmd(mod_path, f'git add {script_name}')
+    run_git_cmd(mod_path, f'git add {script}')
     run_git_cmd(mod_path, 'git commit -m "add install script"')
 
     readme = os.path.join(mod_path, get_readme_file_name())
     append_file_content(
         readme,
-        info_readme_installation(remote_url, script_name, new_module_name)
+        info_readme_installation(remote_url, script, new_module_name)
     )
     run_git_cmd(mod_path, f'git commit -m "update readme" {readme}')
 
@@ -407,7 +411,7 @@ Warning: no remote registered for new module {new_mod}. We will therefore use
          the old module {old_mod} to determine dependencies. Please make sure
          that the dependencies listed in the dune.module files match (you
          should have been asked for the dependencies earlier when creating
-         of the new module).
+         the new module).
 
 """
 
@@ -616,9 +620,10 @@ if __name__ == "__main__":
         guide_versions_in_readme(check_path, deps, new_readme)
 
         iscript = 'install_' + new_module_name
-        iscript = guide_install_script_generation(check_path, deps, iscript)
-        if iscript:
-            process_install_script(iscript, new_module_path, remote_url)
+        iscript, patches = guide_install_script_generation(
+            check_path, deps, iscript
+        )
+        process_install_script(iscript, patches, new_module_path, remote_url)
     else:
         print("No dependencies found. Skipping install script generation")
 

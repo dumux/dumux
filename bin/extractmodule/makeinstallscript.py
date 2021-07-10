@@ -16,6 +16,7 @@ try:
     path = os.path.split(os.path.abspath(__file__))[0]
     sys.path.append(os.path.join(path, '../bin/util'))
 
+    from common import getCurrentTimeStamp
     from getmoduleinfo import getModuleInfo, getDependencies
 except Exception:
     sys.exit('Could not import getModuleInfo')
@@ -109,51 +110,82 @@ def makeInstallScript(modPath,
                       optsFile=None):
 
     modPath = os.path.abspath(modPath)
-    modParentPath = os.path.abspath(os.path.join(modPath, '../'))
     modName = getModuleInfo(modPath, 'Module')
 
-    # make sure we have relative paths for installation instructions
-    def makeRelPath(p):
-        return os.path.relpath(p, modParentPath)
-
-    def modify(dep):
-        result = dep
-        result['folder'] = makeRelPath(result['folder'])
-        return result
-    dependencies = [modify(d) for d in dependencies]
-
     if not optsFile:
-        optsFile = os.path.join(modParentPath, 'dumux/cmake.opts')
-    optsFile = os.path.abspath(optsFile)
-    optsRelPath = makeRelPath(optsFile)
+        optsFile = 'dumux/cmake.opts'
+    if os.path.isabs(optsFile):
+        raise ValueError("Opts file must be given as relative path")
+    if not any(optsFile.startswith(d['folder']) for d in dependencies):
+        print("Warning: opts file is not contained in any of the dependencies")
+
+    patches = []
+    scriptFolder = os.path.dirname(scriptName)
+
+    def makePatchFile(patchBaseName, content):
+        now = getCurrentTimeStamp()
+        now = now.replace(' ', '_')
+        patchName = f'{patchBaseName}_{now}'
+        patchPath = os.path.join(scriptFolder, patchName)
+
+        if os.path.exists(patchPath):
+            raise IOError(f"Patch {patchPath} because it already exists")
+        with open(patchPath, 'w') as patch:
+            patch.write(content)
+
+        patches.append(patchPath)
+        return patchName
 
     with open(scriptName, 'w') as script:
-        writer.writeSheBang(script)
 
-        script.write('\n')
-        writer.writeImports(script)
+        writer.setOutputStream(script)
+        writer.writeSheBang()
 
         script.write('\n')
         writer.writeComment(
             "\n"
             f"This installs the module {modName} and its dependencies.\n"
-            "The exact revivions used are listed in the table below.\n"
+            "The exact revisions used are listed in the table below.\n"
             "However, note that this script may also apply further patches.\n"
-            "\n",
-            script
+            "If so, all patches are required to be the current folder, or, \n."
+            "in the one that you specified as argument to this script"
+            "\n"
         )
 
         script.write('\n')
         writer.writeComment(
-            versionTable({d['folder']: d for d in dependencies}),
-            script
+            versionTable({d['folder']: d for d in dependencies})
         )
 
         script.write('\n')
-        writer.writeInstallation(dependencies, script)
+        writer.writePreamble(topFolderName)
 
         script.write('\n')
-        writer.writeConfiguration(optsRelPath, script)
+        writer.writeRuntimeArgsParse()
+
+        for dep in dependencies:
+            script.write('\n')
+            writer.writeMessageOutput('Installing {}'.format(dep['name']))
+            writer.writeInstallation(dep)
+
+            def writePatch(dep, patchKey):
+                baseName = '{}_{}'.format(dep['name'], patchKey)
+                patchName = makePatchFile(baseName, dep[patchKey])
+
+                script.write('\n')
+                writer.writeMessageOutput(f'Applying patch {patchName}')
+                writer.writePatchApplication(dep['folder'], patchName)
+
+            if dep['unpublished'] is not None:
+                writePatch(dep, 'unpublished')
+            if dep['uncommitted'] is not None:
+                writePatch(dep, 'uncommitted')
+
+        script.write('\n')
+        writer.writeMessageOutput('Configuring project')
+        writer.writeConfiguration(optsFile)
+
+    return {'patches': patches}
 
 
 def printFoundDependencies(deps):
@@ -288,7 +320,7 @@ if __name__ == '__main__':
     if not scriptName:
         scriptName = getDefaultScriptName(modName, language)
 
-    makeInstallScript(
+    config = makeInstallScript(
         modPath=modPath,
         dependencies=deps,
         scriptName=scriptName,

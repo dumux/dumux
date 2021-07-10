@@ -8,58 +8,75 @@ try:
     path = os.path.split(os.path.abspath(__file__))[0]
     sys.path.append(os.path.join(path, '../bin/util'))
 
-    from common import addPrefixToLines, indent
+    from common import addPrefixToLines
 except Exception:
-    sys.exit("Could not import commoon module")
+    sys.exit("Could not import required modules")
 
 
-def preparePatchForWrite(patch):
-    patch = patch.rstrip('\n')
-    patch = patch.replace('\"', '\\"')
-    patch = patch.replace('"', '\"')
-    patch = r'{}\n'.format(patch)
-    return patch
+class InstallScriptWriterInterface():
+    def __init__(self):
+        self.ostream = None
 
+    def setOutputStream(self, stream):
+        self.ostream = stream
 
-class InstallScriptWriteInterface():
-    def writeSheBang(self, file):
+    def writeSheBang(self):
+        raise NotImplementedError("Derived class must provide 'writeSheBang'")
+
+    def writeComment(self, comment):
+        raise NotImplementedError("Derived class must provide 'writeComment'")
+
+    def writeMessageOutput(self, message):
         raise NotImplementedError(
-            "Derived class must implement 'writeSheBang'"
+            "Derived class must provide 'writeMessageOutput'"
         )
 
-    def writeImports(self, file):
+    def writeRuntimeArgsParse(self):
         raise NotImplementedError(
-            "Derived class must implement 'writeImports'"
+            "Derived class must provide 'writeRuntimeArgsParse'"
         )
 
-    def writeComment(self, comment, file):
-        raise NotImplementedError(
-            "Derived class must implement 'writeComment'"
-        )
+    def writePreamble(self, topFolderName=None):
+        pass
 
-    def writeInstallation(self, dependencies, file):
+    def writeInstallation(self, dependency):
         raise NotImplementedError(
             "Derived class must implement 'writeInstallation'"
         )
 
-    def writeConfiguration(self, dependencies, file):
+    def writePatchApplication(self, folder, patchName):
+        raise NotImplementedError(
+            "Derived class must implement 'writePatch'"
+        )
+
+    def writeConfiguration(self, optsFile):
         raise NotImplementedError(
             "Derived class must implement 'writeConfiguration'"
         )
 
 
-class InstallScriptWriterBash(InstallScriptWriteInterface):
+class InstallScriptWriterBash(InstallScriptWriterInterface):
     def __init__(self):
         super().__init__()
-        self.installFunction = """
+
+    def writeSheBang(self):
+        self.ostream.write('#!/bin/bash\n')
+
+    def writeComment(self, comment):
+        comment = addPrefixToLines('#', comment)
+        self.ostream.write(comment)
+
+    def writeMessageOutput(self, message):
+        self.ostream.write(f'echo "{message}"\n')
+
+    def writePreamble(self, topFolderName=None):
+        self.ostream.write("""
 installModule()
 {
     FOLDER=$1
     URL=$2
     BRANCH=$3
     REVISION=$4
-
-    echo "Pulling module code from $URL"
 
     git clone $URL
     pushd $FOLDER
@@ -68,137 +85,125 @@ installModule()
     popd
 }
 
-"""
+applyPatch()
+{
+    FOLDER=$1
+    PATCH=$2
+    if ! test -f $PATCH; then
+        echo "Patch $PATCH does not exist"
+        exit 1
+    fi
 
-    def writeSheBang(self, file):
-        file.write("#!/bin/bash\n")
+    pushd $FOLDER
+        git apply $PATCH
+    popd
+}
+""")
+        top = topFolderName if topFolderName else "."
+        self.ostream.write('TOP="{}"\n'.format(top))
+        self.ostream.write('mkdir -p $TOP\n')
+        self.ostream.write('cd $TOP\n')
 
-    def writeImports(self, file):
-        pass
+    def writeRuntimeArgsParse(self):
+        self.ostream.write("""
+if [[ -z "$1" ]]; then
+    PATCHFOLDER="$(dirname $(realpath -s $0))"
+else
+    PATCHFOLDER="$(realpath -s $1)"
+fi
+""")
 
-    def writeComment(self, comment, file):
-        comment = addPrefixToLines('#', comment)
-        file.write(comment)
+    def writeInstallation(self, dependency):
+        self.writeCommandWithErrorCheck_('installModule {} {} {} {}'
+                                         .format(dependency['folder'],
+                                                 dependency['remote'],
+                                                 dependency['branch'],
+                                                 dependency['revision']))
 
-    def writeInstallation(self, dependencies, file):
-        file.write(f"{self.installFunction}\n")
-        for dep in dependencies:
-            name = dep['name']
-            file.write(f'echo "Installing {name}"\n')
-            file.write('installModule {} {} {} {}\n'
-                       .format(dep['folder'],
-                               dep['remote'],
-                               dep['branch'],
-                               dep['revision']))
-            file.write('\n')
+    def writePatchApplication(self, folder, patchName):
+        self.writeCommandWithErrorCheck_(
+            f'applyPatch {folder} $PATCHFOLDER/{patchName}'
+        )
 
-        file.write('echo "Applying patches"\n')
-        for dep in dependencies:
-            def writePatch(folder, patch):
-                file.write(f'echo "Applying patch in {folder}"\n')
-
-                patch = preparePatchForWrite(patch)
-                file.write('pushd {}\n'.format(folder))
-                file.write('    echo "{}\n" > tmp.patch\n'.format(patch))
-                file.write('    git apply tmp.patch\n')
-                file.write('    rm tmp.patch\n')
-                file.write('popd\n')
-                file.write('\n')
-
-            if dep['uncommitted'] is not None:
-                writePatch(dep['folder'], dep['uncommitted'])
-            if dep['unpublished'] is not None:
-                writePatch(dep['folder'], dep['unpublished'])
-
-    def writeConfiguration(self, opts, file):
-        file.write('echo "configuring project"\n')
-        file.write(
+    def writeConfiguration(self, opts):
+        self.writeCommandWithErrorCheck_(
             f'./dune-common/bin/dunecontrol --opts={opts} all'
         )
 
+    def writeCommandWithErrorCheck_(self, cmd):
+        self.ostream.write(f'if ! {cmd}; then exit 1; fi\n')
 
-class InstallScriptWriterPython(InstallScriptWriteInterface):
-    def __init__(self, version=3, indent=' '*4):
+
+class InstallScriptWriterPython(InstallScriptWriterInterface):
+    def __init__(self):
         super().__init__()
-        self.indentation = indent
-        self.version = str(int(version))
-        self.packages = ['subprocess']
-        self.installFunction = """
-def callFromFolder(folder, cmd):
-    subprocess.call(cmd, cwd=folder)
 
-def installModule(folder, url, branch, revision):
-    print("Pulling module code from {}".format(url))
+    def writeSheBang(self):
+        self.ostream.write('#!/usr/bin/env python3\n')
 
-    callFromFolder(".", ['git', 'clone', url])
-    callFromFolder(folder, ['git', 'checkout', branch])
-    callFromFolder(folder, ['git', 'reset', '--hard', revision])
-
-def applyPatch(folder, patch):
-    print("Applying patch in {}".format(folder))
-
-    callFromFolder(folder, ['git', 'apply', patch])
-
-"""
-
-    def writeSheBang(self, file):
-        file.write("#!/usr/bin/env python{}\n".format(self.version))
-
-    def writeImports(self, file):
-        for pkg in self.packages:
-            file.write(f"import {pkg}\n")
-
-    def writeComment(self, comment, file):
+    def writeComment(self, comment):
         comment = addPrefixToLines('#', comment)
-        file.write(comment)
+        self.ostream.write(comment)
 
-    def writeInstallation(self, dependencies, file):
-        file.write(f"\n{self.installFunction}\n")
-        file.write('\n')
-        file.write('if __name__ == "__main__":\n')
+    def writeMessageOutput(self, message):
+        self.ostream.write(f'print("{message}")\n')
 
-        for dep in dependencies:
-            name = dep['name']
-            self.writeIndented_(f'print("Installing {name}")', file)
-            self.writeIndented_('installModule("{}", "{}", "{}", "{}")'
-                                .format(dep['folder'],
-                                        dep['remote'],
-                                        dep['branch'],
-                                        dep['revision']),
-                                file)
-            file.write('\n')
+    def writePreamble(self, topFolderName=None):
+        top = topFolderName if topFolderName else "."
+        self.ostream.write(f"""
+import os
+import sys
+import subprocess
 
-        self.writeIndented_('print("Applying patches")', file)
-        for dep in dependencies:
-            def writePatch(folder, patch):
-                self.writeIndented_(
-                    f'print("Applying patch in {folder}")', file
-                )
+cwd = os.getcwd()
+top = "{top}"
+os.makedirs(top, exist_ok=True)
 
-                patch = preparePatchForWrite(patch)
-                self.writeIndented_('patch = """', file)
-                file.write('{}\n'.format(patch))
-                file.write('"""\n')
-                self.writeIndented_(
-                    'applyPatch("{}", patch)'.format(folder), file
-                )
-                file.write('\n')
-
-            if dep['uncommitted'] is not None:
-                writePatch(dep['folder'], dep['uncommitted'])
-            if dep['unpublished'] is not None:
-                writePatch(dep['folder'], dep['unpublished'])
-
-    def writeConfiguration(self, opts, file):
-        self.writeIndented_('print("configuring project")', file)
-        self.writeIndented_(
-            'subprocess.call('
-            f'["./dune-common/bin/dunecontrol", "--opts={opts}", "all"]'
-            ')',
-            file
+def runFromSubFolder(cmd, subFolder):
+    folder = os.path.join(top, subFolder)
+    try:
+        subprocess.run(cmd, cwd=folder, check=True)
+    except Exception as e:
+        cmdString = ' '.join(cmd)
+        sys.exit(
+            "Error when calling:\\n{{}}\\n-> folder: {{}}\\n-> error: {{}}"
+            .format(cmdString, folder, str(e))
         )
 
-    def writeIndented_(self, text, file):
-        text.rstrip('\n')
-        file.write(indent(text, self.indentation))
-        file.write('\n')
+def installModule(subFolder, url, branch, revision):
+    runFromSubFolder(['git', 'clone', url], '.')
+    runFromSubFolder(['git', 'checkout', branch], subFolder)
+    runFromSubFolder(['git', 'reset', '--hard', revision], subFolder)
+
+def applyPatch(subFolder, patch):
+    patchPatch = os.path.abspath(patch)
+    runFromSubFolder(['git', 'apply', patchPatch], subFolder)
+""")
+
+    def writeRuntimeArgsParse(self):
+        self.ostream.write("""
+patchFolder = "."
+if len(sys.argv) > 1:
+    patchFolder = sys.argv[1]
+patchFolder = os.path.abspath(patchFolder)
+""")
+
+    def writeInstallation(self, dependency):
+        self.ostream.write('installModule("{}", "{}", "{}", "{}")\n'
+                           .format(dependency['folder'],
+                                   dependency['remote'],
+                                   dependency['branch'],
+                                   dependency['revision']))
+
+    def writePatchApplication(self, folder, patchName):
+        self.ostream.write(
+            f'applyPatch("{folder}", os.path.join(patchFolder, "{patchName}"))'
+        )
+
+    def writeConfiguration(self, opts):
+        self.ostream.write(
+            "runFromSubFolder(\n"
+            f"    ['./dune-common/bin/dunecontrol', '--opts={opts}', 'all'],\n"
+            "    '.'\n"
+            "\n)"
+        )
