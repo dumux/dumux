@@ -342,7 +342,7 @@ def guide_versions_in_readme(mod_path, dependencies, readme=None):
         if not readme:
             readme = os.path.join(mod_path, get_readme_file_name())
 
-        table = versionTable({d['folder']: d for d in dependencies})
+        table = versionTable(dependencies)
         append_file_content(
             readme, f"\n## Version Information\n\n{table}\n"
         )

@@ -119,16 +119,36 @@ def getPatches(persistentVersions):
     return result
 
 
-def versionTable(versions):
-    return "| {:<50} | {:<50} | {:<50} | {:<30} |\n".format(
-        'module folder', 'branch', 'commit hash', 'commit date'
-    ) + "| {:<50} | {:<50} | {:<50} | {:<30} |\n".format(
-        '-'*50, '-'*50, '-'*50, '-'*30
-    ) + "\n".join(
-        ["| {:<50} | {:<50} | {:<50} | {:<30} |".format(
-            folder, versionInfo['branch'], versionInfo['revision'], versionInfo['date']
-        ) for folder, versionInfo in versions.items()]
-    ) + "\n"
+def getDefaultVersionTableConfig():
+    return {
+        'name': 'module name',
+        'branch': 'branch name',
+        'revision': 'commit sha',
+        'date': 'commit date'
+    }
+
+
+def versionTable(versions, config=getDefaultVersionTableConfig(), padding=2):
+
+    def getColWidth(row):
+        return max(len(r) for r in row) + padding*2
+
+    def getCol(key):
+        return [config[key]] + [v[key] for v in versions]
+
+    widths = [getColWidth(getCol(key)) for key in config]
+
+    def makeRow(entries):
+        row = "|"
+        for i, entry in enumerate(entries):
+            row += "{}|".format(entry.center(widths[i]))
+        return row
+
+    table = [makeRow(config[key] for key in config)]
+    table.append('-'*len(table[0]))
+    for row in versions:
+        table.append(makeRow(row[key] for key in config))
+    return '\n'.join(table)
 
 
 def printVersionTable(versions):

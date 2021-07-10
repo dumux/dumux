@@ -153,9 +153,7 @@ def makeInstallScript(modPath,
         )
 
         script.write('\n')
-        writer.writeComment(
-            versionTable({d['folder']: d for d in dependencies})
-        )
+        writer.writeComment(versionTable(dependencies))
 
         script.write('\n')
         writer.writePreamble(topFolderName)
@@ -190,21 +188,17 @@ def makeInstallScript(modPath,
 
 def printFoundDependencies(deps):
     if len(deps) > 0:
-        infoText = [
-            "Found the following dependencies",
-            "\t| {:^50} | {:^50} |".format('module name', 'module folder'),
-            "\t" + 107*'-']
-        for dep in deps:
-            infoText.append(
-                '\t| {:^50} | {:^50} |'.format(dep['name'], dep['folder'])
-            )
+        infoText = ["Found the following dependencies"]
+        infoText.extend(
+            versionTable(
+                deps, {'name': 'module name', 'path': 'folder'}
+            ).split('\n')
+        )
         printProgressInfo(infoText)
 
 
 def printFoundVersionInfo(dependenciesWithVersions):
-    table = versionTable({
-        d['folder']: d for d in dependenciesWithVersions
-    })
+    table = versionTable(dependenciesWithVersions)
     printProgressInfo(
         ["The following (remotely available) versions are used as a basis",
          "on top of which the required patches will be automatically created:",
