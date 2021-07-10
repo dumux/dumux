@@ -291,7 +291,7 @@ if __name__ == '__main__':
         skipFolders = list(set(skipFolders))
 
     printProgressInfo(["Determining the module dependencies"])
-    deps = getDependencies(modPath)
+    deps = getDependencies(modPath, verbose=True)
     deps = filterDependencies(deps, skipFolders)
     printFoundDependencies(deps)
     if not deps:
