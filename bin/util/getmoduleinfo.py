@@ -53,12 +53,17 @@ def getDependencies(modulePath, verbose=False):
         print("Determined the following dependencies: " + ", ".join(deps))
 
     result = []
-    for dir in [d for d in os.listdir(parentPath) if os.path.isdir(os.path.join(parentPath, d))]:
-        try: depModName = getModuleInfo(os.path.join(parentPath, dir), 'Module')
-        except: print('--- Note: skipping folder "' + dir + '" as it could not be identifed as dune module')
+    parentFiles = [os.path.join(parentPath, d) for d in os.listdir(parentPath)]
+    for path in filter(os.path.isdir, parentFiles):
+        try: depModName = getModuleInfo(path, 'Module')
+        except: print('--- Note: skipping folder "' + path + '" as it could not be identifed as dune module')
         else:
             if depModName in deps:
-                result.append({'name': depModName, 'folder': dir})
+                result.append({
+                    'name': depModName,
+                    'folder': os.path.basename(path),
+                    'path': path
+                })
 
     if len(result) != len(deps):
         raise RuntimeError("Could not find the folders of all dependencies")

@@ -71,7 +71,7 @@ def filterDependencies(dependencies, skipFolders=[]):
 
 def addDependencyVersions(dependencies, ignoreUntracked=False):
     def getKey(dependency):
-        return os.path.abspath(dependency['folder'])
+        return dependency['path']
 
     versions = getPersistentVersions(
         [getKey(d) for d in dependencies], ignoreUntracked
@@ -88,7 +88,7 @@ def addDependencyVersions(dependencies, ignoreUntracked=False):
 
 def addDependencyPatches(dependenciesWithVersions):
     def getKey(dependency):
-        return os.path.abspath(dependency['folder'])
+        return dependency['path']
 
     patches = getPatches({
         getKey(d): d for d in dependenciesWithVersions
