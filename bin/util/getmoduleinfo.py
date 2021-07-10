@@ -46,6 +46,10 @@ def getDependencies(modulePath, verbose=False):
     dcOutput = callFromPath(parentPath)(runCommand)(
         './dune-common/bin/dunecontrol --module={}'.format(modName)
     )
+
+    if not dcOutput:
+        raise RuntimeError("Error: call to dunecontrol failed.")
+
     for line in dcOutput.split('\n'):
         if "going to build" in line:
             line = line.replace('going to build', '').strip('-')
