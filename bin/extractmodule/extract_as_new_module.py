@@ -16,7 +16,6 @@ import itertools
 from pathlib import Path
 from functools import partial
 
-from util import getPersistentVersions
 from util import versionTable
 from makeinstallscript import makeInstallScript, supportedLanguages
 from makeinstallscript import getScriptExtension
@@ -278,7 +277,7 @@ def query_empty_remote_repo_url():
             remote = input("Please provide the URL of your repository:\n")
 
         try:
-            print("Checking the repo (you may have to introcude credentials):")
+            print("Checking the repo (you may have to introduce credentials):")
             remote_content = runCommand(
                 'git ls-remote {}'.format(remote),
                 suppressTraceBack=True
@@ -306,7 +305,7 @@ def guide_repository_initialization(mod_path):
 
     has_repo = query_yes_no(
         "Do you have an empty remote repository to push the code to?\n"
-        "(If not, we recommend that you create one and answer with 'yes'.)"
+        "(If not, we recommend that you create one and answer with 'yes')"
     )
     remote_url = None if not has_repo else query_empty_remote_repo_url()
 
