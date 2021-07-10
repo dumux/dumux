@@ -90,7 +90,7 @@ applyPatch()
     FOLDER=$1
     PATCH=$2
     if ! test -f $PATCH; then
-        echo "Patch $PATCH does not exist"
+        echo "Error: patch $PATCH does not exist"
         exit 1
     fi
 
