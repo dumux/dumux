@@ -71,6 +71,13 @@ class InstallScriptWriterBash(InstallScriptWriterInterface):
 
     def writePreamble(self, topFolderName=None):
         self.ostream.write("""
+exitWithError()
+{
+    MSG=$1
+    echo "$MSG"
+    exit 1
+}
+
 installModule()
 {
     FOLDER=$1
@@ -78,10 +85,10 @@ installModule()
     BRANCH=$3
     REVISION=$4
 
-    git clone $URL
+    if ! git clone $URL; then exitWithError "clone failed"; fi
     pushd $FOLDER
-        git checkout $BRANCH
-        git reset --hard $REVISION
+        if ! git checkout $BRANCH; then exitWithError "checkout failed"; fi
+        if ! git reset --hard $REVISION; then exitWithError "reset failed"; fi
     popd
 }
 
@@ -95,9 +102,10 @@ applyPatch()
     fi
 
     pushd $FOLDER
-        git apply $PATCH
+        if ! git apply $PATCH; then exitWithError "patch failed"; fi
     popd
 }
+
 """)
         top = topFolderName if topFolderName else "."
         self.ostream.write('TOP="{}"\n'.format(top))
@@ -107,8 +115,10 @@ applyPatch()
     def writeRuntimeArgsParse(self):
         self.ostream.write("""
 if [[ -z "$1" ]]; then
+    # path of this script
     PATCHFOLDER="$(dirname $(realpath -s $0))"
 else
+    # absolute path of user-given argument
     PATCHFOLDER="$(realpath -s $1)"
 fi
 """)
@@ -155,9 +165,9 @@ import os
 import sys
 import subprocess
 
-cwd = os.getcwd()
 top = "{top}"
 os.makedirs(top, exist_ok=True)
+
 
 def runFromSubFolder(cmd, subFolder):
     folder = os.path.join(top, subFolder)
@@ -170,10 +180,12 @@ def runFromSubFolder(cmd, subFolder):
             .format(cmdString, folder, str(e))
         )
 
+
 def installModule(subFolder, url, branch, revision):
     runFromSubFolder(['git', 'clone', url], '.')
     runFromSubFolder(['git', 'checkout', branch], subFolder)
     runFromSubFolder(['git', 'reset', '--hard', revision], subFolder)
+
 
 def applyPatch(subFolder, patch):
     patchPatch = os.path.abspath(patch)
@@ -197,7 +209,7 @@ patchFolder = os.path.abspath(patchFolder)
 
     def writePatchApplication(self, folder, patchName):
         self.ostream.write(
-            f'applyPatch("{folder}", os.path.join(patchFolder, "{patchName}"))'
+            f'applyPatch("{folder}", os.path.join(patchFolder, "{patchName}"))\n'
         )
 
     def writeConfiguration(self, opts):
@@ -205,5 +217,5 @@ patchFolder = os.path.abspath(patchFolder)
             "runFromSubFolder(\n"
             f"    ['./dune-common/bin/dunecontrol', '--opts={opts}', 'all'],\n"
             "    '.'\n"
-            "\n)"
+            ")\n"
         )
