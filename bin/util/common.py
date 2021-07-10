@@ -5,6 +5,12 @@ import fnmatch
 import functools
 import subprocess
 import traceback
+import datetime
+
+
+def getCurrentTimeStamp(stripMicroSeconds=True):
+    now = str(datetime.datetime.now())
+    return now.split('.')[0]
 
 
 def addPrefixToLines(prefix, text, separator=' '):
