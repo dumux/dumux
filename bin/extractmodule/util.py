@@ -5,7 +5,7 @@ try:
     path = os.path.split(os.path.abspath(__file__))[0]
     sys.path.append(os.path.join(path, '../util'))
 
-    from common import callFromPath, runCommand
+    from common import callFromPath, runCommand, makeTable
 except Exception:
     sys.exit('Could not import common module')
 
@@ -119,36 +119,15 @@ def getPatches(persistentVersions):
     return result
 
 
-def getDefaultVersionTableConfig():
-    return {
-        'name': 'module name',
-        'branch': 'branch name',
-        'revision': 'commit sha',
-        'date': 'commit date'
-    }
-
-
-def versionTable(versions, config=getDefaultVersionTableConfig(), padding=2):
-
-    def getColWidth(row):
-        return max(len(r) for r in row) + padding*2
-
-    def getCol(key):
-        return [config[key]] + [v[key] for v in versions]
-
-    widths = [getColWidth(getCol(key)) for key in config]
-
-    def makeRow(entries):
-        row = "|"
-        for i, entry in enumerate(entries):
-            row += "{}|".format(entry.center(widths[i]))
-        return row
-
-    table = [makeRow(config[key] for key in config)]
-    table.append('-'*len(table[0]))
-    for row in versions:
-        table.append(makeRow(row[key] for key in config))
-    return '\n'.join(table)
+def versionTable(versions,
+                 config={
+                     'name': 'module name',
+                     'branch': 'branch name',
+                     'revision': 'commit sha',
+                     'date': 'commit date'
+                 },
+                 padding=2):
+    return makeTable(versions, config)
 
 
 def printVersionTable(versions):

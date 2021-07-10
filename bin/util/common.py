@@ -25,6 +25,30 @@ def indent(text, indentation='  '):
     return '\n'.join(text)
 
 
+def makeTable(dictList, config=None, padding=2):
+    if config is None:
+        config = {key: key for d in dictList for key in d}
+
+    def getColWidth(row):
+        return max(len(str(r)) for r in row) + padding*2
+
+    def getCol(key):
+        return [config[key]] + [d.get(key, "") for d in dictList]
+
+    widths = {key: getColWidth(getCol(key)) for key in config}
+
+    def makeRow(rowValues):
+        row = "|"
+        for key in config:
+            row += "{}|".format(rowValues.get(key, "").center(widths[key]))
+        return row
+
+    table = [makeRow({key: config[key] for key in config})]
+    table.append('-'*len(table[0]))
+    table.extend(makeRow(row) for row in dictList)
+    return '\n'.join(table)
+
+
 def getCommandErrorHints(command):
     if "git " in command:
         return "It seems that a git command failed. Please check:\n" \
