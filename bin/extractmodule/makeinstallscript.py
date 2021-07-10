@@ -16,7 +16,7 @@ try:
     path = os.path.split(os.path.abspath(__file__))[0]
     sys.path.append(os.path.join(path, '../bin/util'))
 
-    from common import getCurrentTimeStamp
+    from common import getCurrentTimeStamp, addPrefixToLines, indent
     from getmoduleinfo import getModuleInfo, getDependencies
 except Exception:
     sys.exit('Could not import getModuleInfo')
@@ -212,38 +212,34 @@ def printFoundVersionInfo(dependenciesWithVersions):
     )
 
 
-def printInstallationInstruction(scriptName, remote, topFolderName=None):
+def printInstallationInstruction(scriptName,
+                                 patches=[],
+                                 topFolderName=None):
 
     if topFolderName:
         description = f"""
-This will create a folder `{topFolderName}`, clone all modules into it,
-configure the entire project and build the contained applications"
+Running this script will create a folder `{topFolderName}`, clone all modules
+into it, configure the entire project and build the contained applications"
 """
     else:
         description = """
-This will clone all modules into the folder from which the script is called,
-configure the entire project and build the contained applications"
+Running this script will clone all modules into the folder from which it is
+called, configure the entire project and build the contained applications"
 """
+    if not patches:
+        printProgressInfo(['Info:', description])
+    else:
+        patchesList = '\n'.join(patches)
+        patchesList = addPrefixToLines('- ', patchesList)
+        patchesList = indent(patchesList)
+        printProgressInfo(['Info:', f"""
+{description}
 
-    if not remote:
-        remote = "$REMOTE_URL"
+Note that this script requires several patches:
+{patchesList}
 
-    printProgressInfo(['Info:', f"""
-
-You might want to put installation instructions into the README.md file of your
-module, for instance:
-
-     ## Installation
-     The easiest way of installation is to use the script `{scriptName}`
-     provided in this repository. Using `wget`, you can simply install all
-     dependent modules by typing:
-
-     ```sh
-     wget {remote}/{scriptName}
-     ./{scriptName}
-     ```
-
-     {description}
+Make sure that these are in the same folder as the script or pass the folder
+containing them as runtime argument.
 """])
 
 
@@ -330,14 +326,9 @@ if __name__ == '__main__':
     )
 
     subprocess.call(['chmod', 'u+x', scriptName])
-
-    for d in deps:
-        if d['name'] == modName:
-            remote = d['remote']
-
     printProgressInfo([f"Successfully created install script '{scriptName}'"])
     printInstallationInstruction(
         scriptName,
-        remote,
+        config['patches'],
         cmdArgs.get('topfoldername', None)
     )
