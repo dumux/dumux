@@ -115,7 +115,6 @@ def detect_new_module():
         raise Exception(
             f"Could not find module file {new_mod_file}"
         )
-    print(f"Successfully found the newly created module {new_mod}")
     return new_mod
 
 
