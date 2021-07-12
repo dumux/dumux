@@ -3,7 +3,7 @@ from dune.common.hashit import hashIt
 
 # construct a FluidSystem
 # the FluidSystem is JIT compiled
-def FluidSystem(type, component, scalar):
+def FluidSystem(*, type, component, scalar="double"):
     print(component._includes)
     includes = component._includes + ["dumux/python/material/fluidsystems/fluidsystem.hh"]
 
