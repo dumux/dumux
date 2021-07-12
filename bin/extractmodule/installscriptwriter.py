@@ -194,7 +194,7 @@ def applyPatch(subFolder, patch):
 
     def writeRuntimeArgsParse(self):
         self.ostream.write("""
-patchFolder = "."
+patchFolder = __file__
 if len(sys.argv) > 1:
     patchFolder = sys.argv[1]
 patchFolder = os.path.abspath(patchFolder)
