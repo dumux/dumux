@@ -34,5 +34,5 @@ def GridVariables(problem, model):
     holderType = "std::shared_ptr<{}>".format(typeName)
     generator = SimpleGenerator("GridVariables", "Dumux::Python")
     module = generator.load(includes, typeName, moduleName, options=[holderType], preamble=model.getProperties())
-    module.GridVariables._properties = property(lambda self: model.getProperties())
+    module.GridVariables._model = property(lambda self: model)
     return module.GridVariables(problem, problem.gridGeometry())
