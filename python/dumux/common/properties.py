@@ -84,12 +84,23 @@ def listTypeTags():
     print("The following TypeTags are availabe:")
     print(existingTypeTags.keys())
 
+def getKnownProperties():
+    with open('../../dumux/common/properties.hh') as f:
+        result = []
+        for line in f:
+            if line.startswith('struct'):
+                result.append(line.split(' ')[1])
+        return result
+
 class TypeTag:
+    knownProperties = getKnownProperties()
+
     def __init__(self, name, *, inheritsFrom=None):
         self.name = name
         self.inheritsFrom = inheritsFrom
         self.includes = []
         self.properties = {}
+        self.newPropertyDefinitions = []
 
         if name in existingTypeTags.keys():
             if inheritsFrom is not None:
@@ -112,6 +123,7 @@ class TypeTag:
 
             # pick up the properties and includes of the parent TypeTag
             for parentTypeTag in reversed(self.inheritsFrom):
+                self.newPropertyDefinitions += parentTypeTag.newPropertyDefinitions
                 for key in parentTypeTag.properties:
                     self.properties[key] = parentTypeTag.properties[key]
                 if parentTypeTag.includes is not None:
@@ -123,6 +135,10 @@ class TypeTag:
     # the [] operator for setting values
     def __setitem__(self, key, value):
         assert(isinstance(value, Property))
+        if key not in self.knownProperties:
+            print('Adding', key, 'as new property')
+            self.newPropertyDefinitions += [key]
+
         self.properties[key] = value
         if hasattr(value, '_includes'):
             for include in value._includes:
@@ -163,6 +179,10 @@ class TypeTag:
 
         file += 'struct {} {{ using InheritsFrom = std::tuple<{}>; }}; \n'.format(self.name, args)
         file += '} // end namespace TTag\n\n'
+
+        for newDef in self.newPropertyDefinitions:
+            file += 'template<class TypeTag, class MyTypeTag>\n'
+            file += 'struct ' + newDef + ' { using type =  UndefinedProperty; };\n\n'
 
         for prop in self.properties:
             if hasattr(self[prop], '_value'):
