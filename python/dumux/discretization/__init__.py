@@ -3,7 +3,7 @@ from dune.common.hashit import hashIt
 
 # construct a GridGeometry from a gridView
 # the grid geometry is JIT compiled
-def GridGeometry(gridView, discMethod="cctpfa"):
+def GridGeometry(*, gridView, discMethod="cctpfa"):
     includes = gridView._includes + ["dumux/python/discretization/gridgeometry.hh"]
 
     if discMethod == "cctpfa":
@@ -23,7 +23,7 @@ def GridGeometry(gridView, discMethod="cctpfa"):
 
 # construct GridVariables
 # the grid variables is JIT compiled
-def GridVariables(problem, model):
+def GridVariables(*, problem, model):
     includes = ["dumux/discretization/fvgridvariables.hh", "dumux/python/discretization/gridvariables.hh"]
     GG = 'Dumux::GetPropType<{}, Dumux::Properties::GridGeometry>'.format(model.getTypeTag())
     GVV = 'Dumux::GetPropType<{}, Dumux::Properties::GridVolumeVariables>'.format(model.getTypeTag())
