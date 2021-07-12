@@ -132,7 +132,7 @@ def pressure(volVars):
     return volVars.pressure()
 
 # Write to vtk
-output = VtkOutputModule(myModel, gridVars, sol, "test")
+output = VtkOutputModule(gridVars, sol, "test")
 output.addField(sol, "x")
 output.addVolumeVariable(pressure, "p")
 output.addVolumeVariable(lambda vv : vv.density(), "rho")
