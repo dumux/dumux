@@ -26,11 +26,11 @@ discMethod = 'box'
 
 # Set up the grid and the grid geometry
 gridView = structuredGrid([0,0],[1,1],[15,15])
-gridGeometry = GridGeometry(gridView, discMethod=discMethod)
+gridGeometry = GridGeometry(gridView=gridView, discMethod=discMethod)
 gridGeometry.update()
 
 # this TypeTag is for testing purposes only
-testTypeTag = TypeTag("Test")
+testTypeTag = TypeTag(name="Test")
 testTypeTag["UseMoles"] = Property(value=False)
 
 # TODO automatically forward declare unknown properties
@@ -38,17 +38,17 @@ testTypeTag["UseMoles"] = Property(value=False)
 # testTypeTag["MyIntValueProp"] = Property(value=123)
 
 # our model TypeTag
-myModel = TypeTag('MyModel', inheritsFrom=[testTypeTag,'OneP', ('BoxModel' if discMethod == "box" else 'CCTpfaModel')])
+myModel = TypeTag(name='MyModel', inheritsFrom=[testTypeTag,'OneP', ('BoxModel' if discMethod == "box" else 'CCTpfaModel')])
 
 myModel['Scalar'] = Property(type='double')
 myModel['Grid'] = Property(type='typename ' + gridView._typeName + '::GridView::Grid', includes=['dune/grid/yaspgrid.hh'])
 myModel['LocalResidual'] = Property(type='OnePIncompressibleLocalResidual<TypeTag>', includes=['dumux/porousmediumflow/1p/incompressiblelocalresidual.hh'])
 
-spatialParams = SpatialParams(gridGeometry, myModel['Scalar'])
+spatialParams = SpatialParams(scalar=myModel['Scalar'], gridGeometry=gridGeometry)
 myModel['SpatialParams'] = Property(object=spatialParams)
 
-h20 = Component("SimpleH2O")
-onePLiquid = FluidSystem("OnePLiquid", h20, myModel['Scalar'])
+h20 = Component(name="SimpleH2O")
+onePLiquid = FluidSystem(type="OnePLiquid", component=h20, scalar=myModel['Scalar'])
 myModel['FluidSystem'] = Property(object=onePLiquid)
 
 # define the Problem
@@ -106,8 +106,8 @@ myModel['Problem'] = Property(object=problem)
 print(myModel.getProperties())
 
 # initialize the GridVariables and the Assembler
-gridVars = GridVariables(problem, myModel)
-assembler = FVAssembler(problem, gridVars, myModel, diffMethod='analytic')
+gridVars = GridVariables(problem=problem, model=myModel)
+assembler = FVAssembler(problem=problem, gridVariables=gridVars, model=myModel, diffMethod='analytic')
 sol = blockVector(assembler.numDofs())
 gridVars.init(sol)
 assembler.updateGridVariables(sol)
@@ -132,7 +132,7 @@ def pressure(volVars):
     return volVars.pressure()
 
 # Write to vtk
-output = VtkOutputModule(gridVars, sol, "test")
+output = VtkOutputModule(gridVariables=gridVars, solutionVector=sol, name="test")
 output.addField(sol, "x")
 output.addVolumeVariable(pressure, "p")
 output.addVolumeVariable(lambda vv : vv.density(), "rho")
