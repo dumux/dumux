@@ -29,6 +29,8 @@
 #include <dune/python/pybind11/pybind11.h>
 #include <dune/python/pybind11/stl.h>
 
+#include <dumux/python/common/volumevariables.hh>
+
 namespace Dumux::Python {
 
 template <class GridVariables, class SolutionVector, class... options>
@@ -38,6 +40,9 @@ void registerVtkOutputModule(pybind11::handle scope,
     using pybind11::operator""_a;
 
     using VtkOutputModule = Dumux::VtkOutputModule<GridVariables, SolutionVector>;
+    using VolumeVariables = typename VtkOutputModule::VolumeVariables;
+    Dumux::Python::Impl::registerVolumeVariables<VolumeVariables>(scope);
+
 
     cls.def(pybind11::init([](const GridVariables& gridVariables,
                               const SolutionVector& sol,
@@ -53,20 +58,18 @@ void registerVtkOutputModule(pybind11::handle scope,
 
     cls.def("write", [](VtkOutputModule& self, Scalar time){ self.write(time); });
 
-    // TODO: this requires wrapping all VolVars ...
-    // using VolumeVariables = typename VtkOutputModule::VolumeVariables;
-    // cls.def("addVolumeVariable", [](VtkOutputModule& self,
-    //                                 std::function<Scalar(const VolumeVariables&)>&& f,
-    //                                 const std::string& name) {
-    //     self.addVolumeVariable(std::forward<decltype(f)>(f), name);
-    // });
+    cls.def("addVolumeVariable", [](VtkOutputModule& self,
+                                    std::function<Scalar(const VolumeVariables&)>&& f,
+                                    const std::string& name) {
+        self.addVolumeVariable(std::forward<decltype(f)>(f), name);
+    });
 }
 
 template<class GridVariables, class SolutionVector>
 void registerVtkOutputModule(pybind11::handle scope, const char *clsName = "VtkOutputModule")
 {
     pybind11::class_<VtkOutputModule<GridVariables, SolutionVector>> cls(scope, clsName);
-    registerTimeLoop(scope, cls);
+    registerVtkOutputModule(scope, cls);
 }
 
 } // namespace Dumux::Python
