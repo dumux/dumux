@@ -63,12 +63,14 @@ void registerVtkOutputModule(pybind11::handle scope,
                                     const std::string& name) {
         self.addVolumeVariable(std::forward<decltype(f)>(f), name);
     });
-}
+};
+
 
 template<class GridVariables, class SolutionVector>
 void registerVtkOutputModule(pybind11::handle scope, const char *clsName = "VtkOutputModule")
 {
-    pybind11::class_<VtkOutputModule<GridVariables, SolutionVector>> cls(scope, clsName);
+    using VtkOutputModule = Dumux::VtkOutputModule<GridVariables, SolutionVector>;
+    pybind11::class_<VtkOutputModule> cls(scope, clsName);
     registerVtkOutputModule(scope, cls);
 }
 
