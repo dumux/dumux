@@ -80,6 +80,10 @@ existingTypeTags = {'CCTpfaModel':'dumux/discretization/cctpfa.hh',
                     'BoxModel':'dumux/discretization/box.hh',
                     'OneP':'dumux/porousmediumflow/1p/model.hh'}
 
+def listTypeTags():
+    print("The following TypeTags are availabe:")
+    print(existingTypeTags.keys())
+
 class TypeTag:
     def __init__(self, name, *, inheritsFrom=None):
         self.name = name
