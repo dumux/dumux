@@ -6,7 +6,7 @@ components = {"Air" : "dumux/material/components/air.hh",
               "N2" : "dumux/material/components/n2.hh",
               "Calcite" : "dumux/material/components/calcite.hh",}
 
-def Component(name, scalar = "double"):
+def Component(*, name, scalar = "double"):
     moduleName = name
     typeName = "Dumux::Components::" + name + "<" + scalar +  ">"
     includes = ["dumux/python/material/components/component.hh"]
