@@ -1,16 +1,23 @@
 from dune.generator.generator import SimpleGenerator
 from dune.common.hashit import hashIt
 
-# construct a GridGeometry from a gridView
-# the grid geometry is JIT compiled
-def FluidSystem(scalar, component):
+# construct a FluidSystem
+# the FluidSystem is JIT compiled
+def FluidSystem(type, component, scalar):
     print(component._includes)
     includes = component._includes + ["dumux/python/material/fluidsystems/fluidsystem.hh"]
-    includes += ["dumux/material/fluidsystems/1pliquid.hh"]
 
+    availabeFluidSystems = {"OnePLiquid" : [["dumux/material/fluidsystems/1pliquid.hh"],
+                                             "Dumux::FluidSystems::OnePLiquid<{}, {}>".format(scalar._typeName, component._typeName)],
+                            "OnePGas" :    [["dumux/material/fluidsystems/1pgas.hh"],
+                                             "Dumux::FluidSystems::OnePGas<{}, {}>".format(scalar._typeName, component._typeName)]}
 
-    typeName = "Dumux::FluidSystems::OnePLiquid<{}, {}>".format(scalar._typeName, component._typeName)
+    if type not in availabeFluidSystems:
+        raise NotImplementedError("FluidSystem of type " + type + " not implemented.\n"
+                                  "Availabe types are " + ", ".join(availabeFluidSystems.keys()))
 
+    includes += availabeFluidSystems[type][0]
+    typeName = availabeFluidSystems[type][1]
 
     moduleName = "FluidSystem_" + hashIt(typeName)
     generator = SimpleGenerator("FluidSystem", "Dumux::Python")
