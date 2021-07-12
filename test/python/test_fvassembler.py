@@ -33,9 +33,9 @@ gridGeometry.update()
 testTypeTag = TypeTag(name="Test")
 testTypeTag["UseMoles"] = Property(value=False)
 
-# TODO automatically forward declare unknown properties
-# testTypeTag["MyScalarValueProp"] = Property(value=123.0)
-# testTypeTag["MyIntValueProp"] = Property(value=123)
+# Test addition of new, non-standard properties
+testTypeTag["MyScalarValueProp"] = Property(value=123.0)
+testTypeTag["MyIntValueProp"] = Property(value=123)
 
 # our model TypeTag
 myModel = TypeTag(name='MyModel', inheritsFrom=[testTypeTag,'OneP', ('BoxModel' if discMethod == "box" else 'CCTpfaModel')])
