@@ -120,7 +120,7 @@ def query_yes_no(question, default="yes"):
     def is_negative(choice): return choice in negative
     def is_valid(choice): return is_affirmative(choice) or is_negative(choice)
 
-    if not is_valid(default):
+    if default is not None and not is_valid(default):
         raise ValueError("\nInvalid default answer: '{}', choices: '{}'\n"
                          .format(default, get_choices()))
 
