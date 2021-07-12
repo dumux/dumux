@@ -1,6 +1,6 @@
 from dune.generator.generator import SimpleGenerator
 
-def SpatialParams(gridGeometry, scalar):
+def SpatialParams(*, gridGeometry, scalar):
     moduleName = 'spatialparams'
     typeName = "Dumux::FVSpatialParamsOnePConstant<{}, {}>".format(gridGeometry._typeName, scalar._typeName)
     includes = ["dumux/material/spatialparams/fv1pconstant.hh"]
