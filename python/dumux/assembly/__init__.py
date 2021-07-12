@@ -4,7 +4,7 @@ from dune.common.hashit import hashIt
 from dune.generator.generator import SimpleGenerator
 from dune.common.hashit import hashIt
 
-def FVAssembler(problem, gridVariables, model, diffMethod, isImplicit=True):
+def FVAssembler(*, problem, gridVariables, model, diffMethod='numeric', isImplicit=True):
 
     TypeTag = model.getTypeTag()
 
