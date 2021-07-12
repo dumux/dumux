@@ -49,15 +49,25 @@ void registerGridVariables(pybind11::handle scope, pybind11::class_<GV, Options.
         return std::make_shared<GV>(problem, gridGeometry);
     }));
 
-    // cls.def("update", &GG::update);
-    cls.def("curGridVolVars", [](GV& self) { return self.curGridVolVars(); });
-
     cls.def("init", [](GV& self, const SolutionVector& sol) { return self.init(sol); });
+    cls.def("curGridVolVars", [](GV& self) { return self.curGridVolVars(); });
+    cls.def("gridFluxVarsCache", [](GV& self) { return self.gridFluxVarsCache(); });
+    cls.def("prevGridVolVars", [](GV& self) { return self.prevGridVolVars(); });
+    cls.def("advanceTimeStep", &GV::advanceTimeStep);
+    cls.def("gridGeometry", &GV::gridGeometry);
 
-//     cls.def("numDofs", &GG::numDofs);
-//     cls.def("numScv", &GG::numScv);
-//     cls.def("numScvf", &GG::numScvf);
+    cls.def("updateAfterGridAdaption", [](GV& self, const SolutionVector& sol)
+            { return self.updateAfterGridAdaption(sol); }
+    );
 
+    cls.def("resetTimeStep", [](GV& self, const SolutionVector& sol)
+            { return self.resetTimeStep(sol); }
+    );
+
+    cls.def("update", [](GV& self, const SolutionVector& sol,
+                         const bool forceFluxCacheUpdate = false)
+            { return self.update(sol, forceFluxCacheUpdate); }
+    );
 }
 
 } // namespace Dumux::Python
