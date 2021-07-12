@@ -9,5 +9,5 @@ def VtkOutputModule(gridVariables, sol, name):
     typeName = "Dumux::VtkOutputModule<{}, {}>".format(gridVariables._typeName, sol._typeName)
     moduleName = "vtkoutputmodule_" + hashIt(typeName)
     generator = SimpleGenerator("VtkOutputModule", "Dumux::Python")
-    module = generator.load(includes, typeName, moduleName, preamble=gridVariables._properties)
+    module = generator.load(includes, typeName, moduleName, preamble=gridVariables._model.getProperties())
     return module.VtkOutputModule(gridVariables, sol, name)
