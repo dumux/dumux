@@ -33,7 +33,12 @@
 
 #include <nlohmann/json.hpp>
 
-#include <dumux/common/typetraits/isvalid.hh>
+#include <dune/common/hybridutilities.hh>
+#include <dune/common/indices.hh>
+
+#include "dumux/common/properties/propertysystem.hh"
+#include <dumux/common/typetraits/utility.hh>
+#include "dumux/common/typetraits/isvalid.hh"
 
 #include "dumux/assembly/fvassembler.hh"
 #include "dumux/assembly/diffmethod.hh"
@@ -69,6 +74,29 @@ struct isGridVariables
     -> decltype(isConstructable(gv))
     {}
 };
+
+std::string removeNamespace(std::string&& s)
+{
+    std::size_t last = s.find_last_of("::");
+
+    if(last != std::string::npos)
+        s.erase(0, last+1);
+
+    return std::move(s);
+}
+
+template<class TTagTuple, class Collector>
+void collectTypeTagsFromTuple(Collector& collector, int depth=0, int parentBranch=-1)
+{
+    using namespace Dune::Hybrid;
+    forEach(std::make_index_sequence<std::tuple_size_v<TTagTuple>>{},  [&](auto i)
+    {
+        using type = typename std::tuple_element<i, TTagTuple>::type;
+        collector.push_back(std::tuple<int, int, std::string>{depth, parentBranch, removeNamespace(Dune::className<type>())});
+        if constexpr (Dumux::Properties::Detail::hasParentTypeTag<type>(int{}))
+            collectTypeTagsFromTuple<typename type::InheritsFrom>(collector, int{depth+1}, i);
+    });
+}
 
 } // end namespace Detail
 
@@ -120,6 +148,7 @@ public:
 
         return std::move(s);
     }
+
 private:
     JsonTree tree_;
 };
@@ -165,6 +194,14 @@ auto collectMetaData(Collector& collector, const GridVariables& gv, bool hideTem
 {
     auto& obj = collector["GridVariables"];
     obj["Type"] = Metadata::className(gv, hideTemplates);
+}
+
+template<class TypeTag, class Collector>
+auto collectTypeTags(Collector& collector)
+{
+    auto& obj = collector["TTags"];
+    obj = nlohmann::json::array();
+    Detail::collectTypeTagsFromTuple<std::tuple<TypeTag>>(obj);
 }
 
 } // end namespace Dumux
