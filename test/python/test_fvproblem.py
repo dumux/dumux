@@ -29,7 +29,9 @@ gridGeometry.update()
 @FVProblem(gridGeometry)
 class Problem:
     numEq = 2
-    name = "python_problem"
+
+    def name(self):
+        return "python_problem"
 
     def boundaryTypes(self, element, scv):
         bTypes = BoundaryTypes(self.numEq)

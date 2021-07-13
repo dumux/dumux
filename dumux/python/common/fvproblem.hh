@@ -42,12 +42,11 @@ namespace Dumux::Python {
  * \ingroup Common
  * \brief A C++ wrapper for a Python problem
  */
-template<class GridGeometry_, class PrimaryVariables, class SpatialParams_>
+template<class GridGeometry_, class PrimaryVariables, bool enableInternalDirichletConstraints_>
 class FVProblem
 {
 public:
     using GridGeometry = GridGeometry_;
-    using SpatialParams = SpatialParams_;
     using Scalar = typename PrimaryVariables::value_type;
     using NumEqVector = Dune::FieldVector<Scalar, PrimaryVariables::dimension>;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
@@ -61,17 +60,24 @@ public:
     using BoundaryTypes = Dumux::BoundaryTypes<PrimaryVariables::dimension>;
 
     FVProblem(std::shared_ptr<const GridGeometry> gridGeometry,
-              std::shared_ptr<const SpatialParams> spatialParams,
               pybind11::object pyProblem)
     : gridGeometry_(gridGeometry)
-    , spatialParams_(spatialParams)
     , pyProblem_(pyProblem)
-    {}
-
-    std::string name() const
+    , name_("python_problem")
+    , paramGroup_("")
     {
-        return pyProblem_.attr("name").template cast<std::string>();
+        if (pybind11::hasattr(pyProblem_, "name"))
+            name_ = pyProblem.attr("name")().template cast<std::string>();
+
+        if (pybind11::hasattr(pyProblem_, "paramGroup"))
+            paramGroup_ = pyProblem.attr("paramGroup")().template cast<std::string>();
     }
+
+    const std::string& name() const
+    { return name_; }
+
+    const std::string& paramGroup() const
+    { return paramGroup_; }
 
     BoundaryTypes boundaryTypes(const Element &element,
                                 const SubControlVolume &scv) const
@@ -79,7 +85,12 @@ public:
         if constexpr (!isBox)
             DUNE_THROW(Dune::InvalidStateException, "boundaryTypes(..., scv) called for cell-centered method.");
         else
-            return pyProblem_.attr("boundaryTypes")(element, scv).template cast<BoundaryTypes>();
+        {
+            if (pybind11::hasattr(pyProblem_, "boundaryTypes"))
+                return pyProblem_.attr("boundaryTypes")(element, scv).template cast<BoundaryTypes>();
+            else
+                return pyProblem_.attr("boundaryTypesAtPos")(scv.dofPosition()).template cast<BoundaryTypes>();
+        }
     }
 
     BoundaryTypes boundaryTypes(const Element &element,
@@ -88,7 +99,12 @@ public:
         if constexpr (isBox)
             DUNE_THROW(Dune::InvalidStateException, "boundaryTypes(..., scvf) called for box method.");
         else
-            return pyProblem_.attr("boundaryTypes")(element, scvf).template cast<BoundaryTypes>();
+        {
+            if (pybind11::hasattr(pyProblem_, "boundaryTypes"))
+                return pyProblem_.attr("boundaryTypes")(element, scvf).template cast<BoundaryTypes>();
+            else
+                return pyProblem_.attr("boundaryTypesAtPos")(scvf.ipGlobal()).template cast<BoundaryTypes>();
+        }
     }
 
     PrimaryVariables dirichlet(const Element &element,
@@ -97,7 +113,12 @@ public:
         if constexpr (!isBox)
             DUNE_THROW(Dune::InvalidStateException, "dirichlet(scv) called for cell-centered method.");
         else
-            return pyProblem_.attr("dirichlet")(element, scv).template cast<PrimaryVariables>();
+        {
+            if (pybind11::hasattr(pyProblem_, "dirichlet"))
+                return pyProblem_.attr("dirichlet")(element, scv).template cast<PrimaryVariables>();
+            else
+                return pyProblem_.attr("dirichletAtPos")(scv.dofPosition()).template cast<PrimaryVariables>();
+        }
     }
 
     PrimaryVariables dirichlet(const Element &element,
@@ -106,7 +127,12 @@ public:
         if constexpr (isBox)
             DUNE_THROW(Dune::InvalidStateException, "dirichlet(scvf) called for box method.");
         else
-            return pyProblem_.attr("dirichlet")(element, scvf).template cast<PrimaryVariables>();
+        {
+            if (pybind11::hasattr(pyProblem_, "dirichlet"))
+                return pyProblem_.attr("dirichlet")(element, scvf).template cast<PrimaryVariables>();
+            else
+                return pyProblem_.attr("dirichletAtPos")(scvf.ipGlobal()).template cast<PrimaryVariables>();
+        }
     }
 
     template<class ElementVolumeVariables, class ElementFluxVariablesCache>
@@ -116,7 +142,10 @@ public:
                         const ElementFluxVariablesCache& elemFluxVarsCache,
                         const SubControlVolumeFace& scvf) const
     {
-        return pyProblem_.attr("neumann")(element, fvGeometry, scvf).template cast<NumEqVector>();
+        if (pybind11::hasattr(pyProblem_, "neumann"))
+            return pyProblem_.attr("neumann")(element, fvGeometry, scvf).template cast<NumEqVector>();
+        else
+            return pyProblem_.attr("neumannAtPos")(scvf.ipGlobal()).template cast<NumEqVector>();
     }
 
     template<class ElementVolumeVariables>
@@ -125,7 +154,10 @@ public:
                        const ElementVolumeVariables& elemVolVars,
                        const SubControlVolume &scv) const
     {
-        return pyProblem_.attr("source")(element, fvGeometry, scv).template cast<NumEqVector>();
+        if (pybind11::hasattr(pyProblem_, "source"))
+            return pyProblem_.attr("source")(element, fvGeometry, scv).template cast<NumEqVector>();
+        else
+            return pyProblem_.attr("sourceAtPos")(scv.dofPosition()).template cast<NumEqVector>();
     }
 
     NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
@@ -139,7 +171,10 @@ public:
                                 const ElementVolumeVariables& elemVolVars,
                                 const SubControlVolume& scv) const
     {
-        return pyProblem_.attr("scvPointSources")(element, fvGeometry, scv).template cast<NumEqVector>();
+        if (pybind11::hasattr(pyProblem_, "scvPointSources"))
+            return pyProblem_.attr("scvPointSources")(element, fvGeometry, scv).template cast<NumEqVector>();
+        else
+            return NumEqVector(0.0);
     }
 
     template<class Entity>
@@ -161,13 +196,8 @@ public:
         return pyProblem_.attr("temperatureAtPos")(globalPos).template cast<Scalar>();
     }
 
-    const std::string paramGroup() const
-    {
-        return pyProblem_.attr("paramGroup")().template cast<std::string>();
-    }
-
     static constexpr bool enableInternalDirichletConstraints()
-    { return false; } // TODO
+    { return enableInternalDirichletConstraints_; }
 
     /*!
      * \brief Add source term derivative to the Jacobian
@@ -180,20 +210,18 @@ public:
                               const VolumeVariables& volVars,
                               const SubControlVolume& scv) const
     {
-        pyProblem_.attr("addSourceDerivatives")(block, element, fvGeometry, scv).template cast<Scalar>();
+        if (pybind11::hasattr(pyProblem_, "addSourceDerivatives"))
+            pyProblem_.attr("addSourceDerivatives")(block, element, fvGeometry, scv);
     }
-
 
     const GridGeometry& gridGeometry() const
     { return *gridGeometry_; }
 
-    const SpatialParams& spatialParams() const
-    { return *spatialParams_; }
-
 private:
     std::shared_ptr<const GridGeometry> gridGeometry_;
-    std::shared_ptr<const SpatialParams> spatialParams_;
     pybind11::object pyProblem_;
+    std::string name_;
+    std::string paramGroup_;
 };
 
 // Python wrapper for the above FVProblem C++ class
@@ -204,11 +232,9 @@ void registerFVProblem(pybind11::handle scope, pybind11::class_<Problem, options
     using namespace Dune::Python;
 
     using GridGeometry = typename Problem::GridGeometry;
-    using SpatialParams = typename Problem::SpatialParams;
     cls.def(pybind11::init([](std::shared_ptr<const GridGeometry> gridGeometry,
-                              std::shared_ptr<const SpatialParams> spatialParams,
                               pybind11::object p){
-        return std::make_shared<Problem>(gridGeometry, spatialParams, p);
+        return std::make_shared<Problem>(gridGeometry, p);
     }));
 
     cls.def_property_readonly("name", &Problem::name);

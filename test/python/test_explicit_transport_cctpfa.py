@@ -33,10 +33,13 @@ elementMapper = gridView.indexSet
 # Define problem (inital/boundary condtions) #
 ##############################################
 
+
 @FVProblem(gridGeometry)
 class Problem:
     numEq = 1
-    name = "finitevolume"
+
+    def name(self):
+        return "finitevolume"
 
     def boundaryTypes(self, element, scv):
         bTypes = BoundaryTypes(self.numEq)
