@@ -132,6 +132,8 @@ void registerGridGeometry(pybind11::handle scope, pybind11::class_<GG, Options..
     cls.def("numDofs", &GG::numDofs);
     cls.def("numScv", &GG::numScv);
     cls.def("numScvf", &GG::numScvf);
+    cls.def("bBoxMax", &GG::bBoxMax);
+    cls.def("bBoxMin", &GG::bBoxMin);
 
     using SubControlVolume = typename GG::SubControlVolume;
     Impl::registerSubControlVolume<SubControlVolume>(scope);
