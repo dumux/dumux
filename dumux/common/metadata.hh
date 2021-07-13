@@ -31,13 +31,13 @@
 #include <fstream>
 #include <functional>
 
-#include <nlohmann/json.hpp>
-
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/indices.hh>
 
+#include "dumux/io/json/json.hpp"
+
 #include "dumux/common/properties/propertysystem.hh"
-#include <dumux/common/typetraits/utility.hh>
+#include "dumux/common/typetraits/utility.hh"
 #include "dumux/common/typetraits/isvalid.hh"
 
 #include "dumux/assembly/fvassembler.hh"
