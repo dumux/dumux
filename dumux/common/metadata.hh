@@ -143,9 +143,13 @@ template<class Collector, class GridGeometry>
 auto collectMetaData(Collector& collector, const GridGeometry& gg, bool hideTemplates = true)
 -> typename std::enable_if_t<decltype(isValid(Detail::isGridGeometry())(gg))::value, void>
 {
+    using GridView = typename GridGeometry::GridView;
     auto& obj = collector["GridGeometry"];
     obj["Type"] = Metadata::className(gg, hideTemplates);
     obj["GridView"]["Type"] = Metadata::className(gg.gridView(), hideTemplates);
+    obj["GridView"]["dimension"] = GridView::dimension;
+    obj["GridView"]["dimensionWorld"] = GridView::dimensionworld;
+    obj["GridView"]["Grid"]["Type"] = Metadata::className(gg.gridView().grid(), hideTemplates);
     obj["IsPeriodic"] = gg.isPeriodic();
     obj["DiscretisationMethod"] = toString(GridGeometry::discMethod);
     obj["MaxElementStencilSize"] = GridGeometry::maxElementStencilSize;
