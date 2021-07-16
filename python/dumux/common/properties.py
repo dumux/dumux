@@ -1,8 +1,12 @@
 import os
+import string
+import random
+from dune.common.hashit import hashIt
 
 """
 Properties
 """
+
 
 class Property:
     """"Properties are used to construct a model"""
@@ -86,12 +90,21 @@ def valuePropertyToString(propertyName, typeTagName, value):
 
     return propertyString
 
-existingTypeTags = {'CCTpfaModel':{'include':'dumux/discretization/cctpfa.hh',
-                                   'description':'A cell-centered two-point flux finite volume discretization scheme.'},
-                    'BoxModel':{'include':'dumux/discretization/box.hh',
-                                'description':'A node-centered two-point flux finite volume discretization scheme'},
-                    'OneP':{'include':'dumux/porousmediumflow/1p/model.hh',
-                            'description':'A model for single-phase flow in porous media.'}}
+
+TYPETAGS = {
+    'CCTpfaModel': {
+        'include': 'dumux/discretization/cctpfa.hh',
+        'description': 'A cell-centered two-point flux finite volume discretization scheme.'
+    },
+    'BoxModel': {
+        'include': 'dumux/discretization/box.hh',
+        'description': 'A node-centered two-point flux finite volume discretization scheme'
+    },
+    'OneP': {
+        'include': 'dumux/porousmediumflow/1p/model.hh',
+        'description': 'A model for single-phase flow in porous media.'
+    },
+}
 
 
 def listTypeTags():
@@ -99,8 +112,8 @@ def listTypeTags():
 
     print("\n**********************************\n")
     print("The following TypeTags are availabe:")
-    for key in existingTypeTags.keys():
-        print(key,":", existingTypeTags[key]['description'])
+    for key in TYPETAGS.keys():
+        print(key, ":", TYPETAGS[key]['description'])
     print("\n**********************************")
 
 
@@ -117,19 +130,26 @@ def getKnownProperties():
 class TypeTag:
     knownProperties = getKnownProperties()
 
-    def __init__(self, name, *, inheritsFrom=None, gridGeometry=None, scalar='double'):
-        self.name = name
+    def __init__(self, name=None, *, inheritsFrom=None, gridGeometry=None, scalar='double'):
         self.inheritsFrom = inheritsFrom
         self.includes = []
         self.properties = {}
         self.newPropertyDefinitions = []
         self.gridGeometry = gridGeometry
 
-        if name in existingTypeTags.keys():
+        if name is not None:
+            self.name = name
+        else:
+            if gridGeometry is None and inheritsFrom is None:
+                self.name = "typetag_" + ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+            else:
+                self.name = "typetag_" + hashIt("".join(inheritsFrom) + gridGeometry._typeName + scalar)
+
+        if self.name in TYPETAGS.keys():
             if inheritsFrom is not None:
-                raise ValueError("Existing TypeTag {} cannot inherit from other TypeTags. Use TypeTag({}) only.".format(name, name))
+                raise ValueError(f"Existing TypeTag {name} cannot inherit from other TypeTags. Use TypeTag({name}) only.")
             self.isExistingTypeTag = True
-            self.includes = [existingTypeTags[name]['include']]
+            self.includes = [TYPETAGS[self.name]['include']]
         else:
             self.isExistingTypeTag = False
 
@@ -139,9 +159,9 @@ class TypeTag:
                 if not isinstance(parentTypeTag, TypeTag):
                     if not isinstance(parentTypeTag, str):
                         raise ValueError("Unknown parent TypeTag {}. Use either argument of type TypeTag "
-                                         "or a string for an existing TypeTag. List of existing TypeTags: {}".format(parentTypeTag, existingTypeTags.keys()))
-                    if parentTypeTag not in existingTypeTags.keys():
-                        raise ValueError("Unknown TypeTag {}. List of existing TypeTags: {}".format(parentTypeTag, existingTypeTags.keys()))
+                                         "or a string for an existing TypeTag. List of existing TypeTags: {}".format(parentTypeTag, TYPETAGS.keys()))
+                    if parentTypeTag not in TYPETAGS.keys():
+                        raise ValueError("Unknown TypeTag {}. List of existing TypeTags: {}".format(parentTypeTag, TYPETAGS.keys()))
                     self.inheritsFrom[idx] = TypeTag(parentTypeTag)
 
             # pick up the properties and includes of the parent TypeTag
@@ -153,7 +173,7 @@ class TypeTag:
                     for include in parentTypeTag.includes:
                         self.includes.append(include)
 
-        self._typeName = 'Dumux::Properties::TTag::' + name
+        self._typeName = 'Dumux::Properties::TTag::' + self.name
 
         # set the scalar type
         self.__setitem__('Scalar', Property(type=scalar))
