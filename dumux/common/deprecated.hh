@@ -25,6 +25,9 @@
 #ifndef DUMUX_COMMON_DEPRECATED_HH
 #define DUMUX_COMMON_DEPRECATED_HH
 
+#include <dune/common/version.hh>
+#include <dune/common/std/type_traits.hh>
+
 namespace Dumux {
 
 #ifndef DOXYGEN // hide from doxygen
@@ -36,7 +39,20 @@ namespace Dumux {
 // so most likely you don't want to use this in your code
 namespace Deprecated {
 
-// add helpers here
+template <class Mapper, class GridView>
+using GridViewDetector = decltype(std::declval<Mapper>().update(std::declval<GridView>()));
+
+template<class Mapper, class GridView>
+static constexpr bool hasUpdateGridView()
+{ return Dune::Std::is_detected<GridViewDetector, Mapper, GridView>::value; }
+
+// helper class to print deprecated message
+template <class Mapper>
+#if DUNE_VERSION_GTE(DUNE_GRID,2,8)
+[[deprecated("The interface mapper.update() is deprecated. All mappers now have to implement `update(gridView)` instead (with a gridView as argument). Only mappers with the new interface will be support for dune-grid 2.7 is dropped.")]]
+#endif
+void update(Mapper& mapper)
+{ mapper.update(); };
 
 } // end namespace Deprecated
 #endif
