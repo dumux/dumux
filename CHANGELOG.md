@@ -77,6 +77,8 @@ by the assembler in future Dumux versions.
 
 - `Dumux::IsIndexable<T, I>` is deprecated, use `Dune::IsIndexable<T, I>`directly.
 - The property `NumEqVector` has been deprecated. The class `NumEqVector` is now defined in namespace `Dumux` in header file `dumux/common/numeqvector.hh`.
+- The member function `update()` of mappers is deprecated, use `update(gridView)` when updating the mapper after a grid or grid view change.
+- All custom mapper implementation should implement `update(gridView)` replacing `update()`. Mappers with `update()` will no longer be supported after support for dune 2.7 is dropped.
 
 ### New experimental features (possibly subject to backwards-incompatible changes in the future)
 
