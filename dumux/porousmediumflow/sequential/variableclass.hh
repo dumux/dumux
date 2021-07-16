@@ -20,7 +20,7 @@
 #define DUMUX_VARIABLECLASS_HH
 
 #include "properties.hh"
-
+#include <dumux/common/deprecated.hh>
 
 // for  parallelization
 //#include <dumux/parallel/elementhandles.hh>
@@ -89,8 +89,16 @@ public:
      */
     void initialize()
     {
-        elementMapper_.update();
-        vertexMapper_.update();
+        if constexpr (Deprecated::hasUpdateGridView<ElementMapper, GridView>())
+            elementMapper_.update(gridView_);
+        else
+            Deprecated::update(elementMapper_);
+
+        if constexpr (Deprecated::hasUpdateGridView<VertexMapper, GridView>())
+            vertexMapper_.update(gridView_);
+        else
+            Deprecated::update(vertexMapper_);
+
         cellDataVector_.resize(gridView_.size(0));
     }
 
