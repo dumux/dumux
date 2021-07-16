@@ -124,7 +124,7 @@ void registerGridGeometry(pybind11::handle scope, pybind11::class_<GG, Options..
 
     using GridView = typename GG::GridView;
 
-    cls.def(pybind11::init([](GridView gridView){
+    cls.def(pybind11::init([](const GridView& gridView){
         return std::make_shared<GG>(gridView);
     }), "gridView"_a);
 
