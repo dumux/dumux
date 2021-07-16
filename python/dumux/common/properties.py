@@ -153,6 +153,15 @@ class TypeTag:
         else:
             self.isExistingTypeTag = False
 
+        if self.gridGeometry is not None:
+            discretizationMethod = self.gridGeometry.discMethod
+            map = {
+                "box": "BoxModel",
+                "cctpfa": "CCTpfaModel",
+            }
+            if discretizationMethod in map:
+                self.inheritsFrom += [map[discretizationMethod]]
+
         if self.inheritsFrom is not None:
             # treat existing TypeTags by converting the given string to a real TypeTag object
             for idx, parentTypeTag in enumerate(self.inheritsFrom):
