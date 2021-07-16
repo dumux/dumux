@@ -41,6 +41,7 @@
 #include<dune/istl/operators.hh>
 #include<dune/istl/bcrsmatrix.hh>
 
+#include <dumux/common/deprecated.hh>
 #include <dumux/porousmediumflow/sequential/pressureproperties.hh>
 #include <dumux/common/boundaryconditions.hh>
 #include "localstiffness.hh"
@@ -111,7 +112,10 @@ public:
     //! Initialize the CR operator assembler
     void initialize()
     {
-        faceMapper_.update();
+        if constexpr (Deprecated::hasUpdateGridView<FaceMapper, GridView>())
+            faceMapper_.update(gridView_);
+        else
+            Deprecated::update(faceMapper_);
 
         size_ = faceMapper_.size();
         A_.setSize(size_, size_,  nnz());

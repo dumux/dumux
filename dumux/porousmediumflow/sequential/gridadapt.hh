@@ -25,6 +25,7 @@
 
 #include <unordered_map>
 #include <dune/grid/common/partitionset.hh>
+#include <dumux/common/deprecated.hh>
 
 #include "properties.hh"
 #include "gridadaptproperties.hh"
@@ -187,7 +188,11 @@ public:
         //        forceRefineRatio(1);
 
         // update mapper to new cell indices
-        problem_.variables().elementMapper().update();
+        using ElementMapper = std::decay_t<decltype(problem_.variables().elementMapper())>;
+        if constexpr (Deprecated::hasUpdateGridView<ElementMapper, GridView>())
+            problem_.variables().elementMapper().update(problem_.gridView());
+        else
+            Deprecated::update(problem_.variables().elementMapper());
 
         // adapt size of vectors
         problem_.variables().adaptVariableSize(problem_.variables().elementMapper().size());
