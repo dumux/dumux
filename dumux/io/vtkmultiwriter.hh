@@ -38,6 +38,8 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/grid/io/file/vtk/function.hh>
 
+#include <dumux/common/deprecated.hh>
+
 #if HAVE_MPI
 #include <mpi.h>
 #endif
@@ -196,8 +198,15 @@ public:
      */
     void gridChanged()
     {
-        elementMapper_.update();
-        vertexMapper_.update();
+        if constexpr (Deprecated::hasUpdateGridView<ElementMapper, GridView>())
+            elementMapper_.update(gridView_);
+        else
+            Deprecated::update(elementMapper_);
+
+        if constexpr (Deprecated::hasUpdateGridView<VertexMapper, GridView>())
+            vertexMapper_.update(gridView_);
+        else
+            Deprecated::update(vertexMapper_);
     }
 
     /*!

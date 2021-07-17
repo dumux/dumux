@@ -29,6 +29,7 @@
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/common/rangegenerators.hh>
 
+#include <dumux/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -306,7 +307,10 @@ public:
 
     void update()
     {
-        elementMapper_.update();
+        if constexpr (Deprecated::hasUpdateGridView<ElementMapper, GridView>())
+            elementMapper_.update(gridView_);
+        else
+            Deprecated::update(elementMapper_);
 
         intersectionMapGlobal_.clear();
         intersectionMapGlobal_.resize(elementMapper_.size());
