@@ -48,8 +48,23 @@ class ConformingGridIntersectionMapper
 public:
 
     ConformingGridIntersectionMapper(const GridView& gridView)
-    : gridView_(gridView) { }
+    : gridView_(gridView)
+    , indexSet_(&gridView.indexSet())
+    {}
 
+    void update (const GridView& gridView)
+    {
+        gridView_ = gridView;
+        indexSet_ = &gridView_.indexSet();
+    }
+
+    void update (GridView&& gridView)
+    {
+        gridView_ = std::move(gridView);
+        indexSet_ = &gridView_.indexSet();
+    }
+
+    [[deprecated("Use update(gridView) instead! Will be removed after release 3.4.")]]
     void update()
     {}
 
@@ -71,11 +86,12 @@ public:
 
     GridIndexType globalIntersectionIndex(const Element& element, const std::size_t localFaceIdx) const
     {
-        return gridView_.indexSet().subIndex(element, localFaceIdx, codimIntersection);
+        return indexSet_->subIndex(element, localFaceIdx, codimIntersection);
     }
 
 private:
-    const GridView gridView_;
+    GridView gridView_;
+    const typename GridView::IndexSet* indexSet_;
 };
 
 /*!
@@ -93,6 +109,7 @@ class NonConformingGridIntersectionMapper
 public:
     NonConformingGridIntersectionMapper(const GridView& gridview)
     : gridView_(gridview),
+      indexSet_(&gridView_.indexSet()),
       numIntersections_(gridView_.size(1)),
       intersectionMapGlobal_(gridView_.size(0))
     {
@@ -115,7 +132,33 @@ public:
         return intersectionMapGlobal_[index(element)].size();
     }
 
+    void update (const GridView& gridView)
+    {
+        gridView_ = gridView;
+        indexSet_ = &gridView_.indexSet();
+        update_();
+    }
+
+    void update (GridView&& gridView)
+    {
+        gridView_ = std::move(gridView);
+        indexSet_ = &gridView_.indexSet();
+        update_();
+    }
+
+    [[deprecated("Use update(gridView) instead! Will be removed after release 3.4.")]]
     void update()
+    {
+        update_();
+    }
+
+private:
+    GridIndexType index(const Element& element) const
+    {
+        return indexSet_->index(element);
+    }
+
+    void update_()
     {
         intersectionMapGlobal_.clear();
         intersectionMapGlobal_.resize(gridView_.size(0));
@@ -165,13 +208,8 @@ public:
         numIntersections_ = globalIntersectionIdx;
     }
 
-private:
-    GridIndexType index(const Element& element) const
-    {
-        return gridView_.indexSet().index(element);
-    }
-
-    const GridView gridView_;
+    GridView gridView_;
+    const typename GridView::IndexSet* indexSet_;
     unsigned int numIntersections_;
     std::vector<std::unordered_map<int, int> > intersectionMapGlobal_;
 };
@@ -305,7 +343,26 @@ public:
         return intersectionMapLocal_[index(element)].size();
     }
 
+    void update (const GridView &gridView)
+    {
+        gridView_ = gridView;
+        update_();
+    }
+
+    void update (GridView&& gridView)
+    {
+        gridView_ = std::move(gridView);
+        update_();
+    }
+
+    [[deprecated("Use update(gridView) instead! Will be removed after release 3.4.")]]
     void update()
+    {
+        update_();
+    }
+
+protected:
+    void update_()
     {
         if constexpr (Deprecated::hasUpdateGridView<ElementMapper, GridView>())
             elementMapper_.update(gridView_);
@@ -331,7 +388,6 @@ public:
                 fIdx++;
             }
         }
-
         int globalIntersectionIdx = 0;
         for (const auto& element : elements(gridView_))
         {
@@ -384,9 +440,7 @@ public:
         }
         size_ = globalIntersectionIdx;
     }
-
-protected:
-    const GridView gridView_;
+    GridView gridView_;
     ElementMapper elementMapper_;
     unsigned int size_;
     std::vector<std::unordered_map<int, int> > intersectionMapGlobal_;
