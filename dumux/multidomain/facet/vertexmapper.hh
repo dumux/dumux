@@ -216,6 +216,19 @@ public:
 
     //! the update here simply updates the non-enriched map
     //! enrichment has to be done afterwards!
+    void update(const GV& gridView)
+    {
+        gridView_ = gridView;
+        initialize_();
+    }
+
+    void update(GV&& gridView)
+    {
+        gridView_ = std::move(gridView);
+        initialize_();
+    }
+
+    [[deprecated("Use update(gridView) instead! Will be removed after release 2.8.")]]
     void update()
     {
         initialize_();
@@ -285,7 +298,7 @@ private:
 
     // data members
     std::size_t size_;                        //! number of dofs mapped to by this mapper
-    const GV gridView_;                       //! the grid view
+    GV gridView_;                             //! the grid view
     MCMGMapper elementMapper_;                //! unmodified element mapper
     MCMGMapper vertexMapper_;                 //! unmodified vertex mapper
     bool hasEnrichedVertices_;                //! keeps track of if vertices are enriched
