@@ -57,8 +57,8 @@ public:
     template<class Layout>
     ReorderingDofMapper (const GridView& gridView, Layout&& layout)
     : gridView_(gridView)
-    , indexSet_(gridView.indexSet())
-    , codimension_(layout(indexSet_.types(0)[0], GridView::dimension) ? 0 : GridView::dimension)
+    , indexSet_(&gridView.indexSet())
+    , codimension_(layout(indexSet_->types(0)[0], GridView::dimension) ? 0 : GridView::dimension)
     {
         update();
     }
@@ -74,7 +74,7 @@ public:
     Index index (const EntityType& e) const
     {
         // map the index using the permutation obtained from the reordering algorithm
-        return static_cast<Index>(permutation_[indexSet_.index(e)]);
+        return static_cast<Index>(permutation_[indexSet_->index(e)]);
     }
 
     /** @brief Map subentity of codim 0 entity to array index.
@@ -86,7 +86,7 @@ public:
      */
     Index subIndex (const Element& e, int i, unsigned int codim) const
     {
-        return indexSet_.subIndex(e, i, codim);
+        return indexSet_->subIndex(e, i, codim);
     }
 
     /** @brief Return total number of entities in the entity set managed by the mapper.
@@ -99,7 +99,7 @@ public:
      */
     std::size_t size () const
     {
-        return indexSet_.size(codimension_);
+        return indexSet_->size(codimension_);
     }
 
     /** @brief Returns true if the entity is contained in the index set
@@ -125,14 +125,38 @@ public:
      */
     bool contains (const Element& e, int i, int cc, Index& result) const
     {
-        result = indexSet_.subIndex(e, i, cc);
+        result = indexSet_->subIndex(e, i, cc);
         return true;
     }
 
     /*!
      * \brief Recalculates map after mesh adaptation
      */
+    void update (const GridView& gridView)
+    {
+        gridView_ = gridView;
+        indexSet_ = &gridView_.indexSet();
+        update_();
+    }
+
+    void update (GridView&& gridView)
+    {
+        gridView_ = std::move(gridView);
+        indexSet_ = &gridView_.indexSet();
+        update_();
+    }
+
+    /*!
+     * \brief Recalculates map after mesh adaptation
+     */
+    [[deprecated("Use update(gridView) instead! Will be removed after release 3.4.")]]
     void update ()
+    {
+        update_();
+    }
+
+private:
+    void update_()
     {
         // Compute scotch reordering
         Dune::Timer watch;
@@ -144,11 +168,11 @@ public:
         {
             for (const auto& element : elements(gridView_))
             {
-                auto eIdx = indexSet_.index(element);
+                auto eIdx = indexSet_->index(element);
                 for (const auto& intersection : intersections(gridView_, element))
                 {
                     if (intersection.neighbor())
-                        graph[eIdx].push_back(indexSet_.index(intersection.outside()));
+                        graph[eIdx].push_back(indexSet_->index(intersection.outside()));
                 }
             }
         }
@@ -157,10 +181,10 @@ public:
         {
             for (const auto& element : elements(gridView_))
             {
-                auto eIdx = indexSet_.index(element);
+                auto eIdx = indexSet_->index(element);
                 for (int vIdxLocal = 0; vIdxLocal < element.subEntities(codimension_); ++vIdxLocal)
                 {
-                    auto vIdxGlobal = indexSet_.subIndex(element, vIdxLocal, codimension_);
+                    auto vIdxGlobal = indexSet_->subIndex(element, vIdxLocal, codimension_);
                     graph[vIdxGlobal].push_back(eIdx);
                 }
             }
@@ -170,11 +194,9 @@ public:
         std::cout << "Scotch backend reordered index set of size " << size()
                   << " in " << watch.elapsed() << " seconds." << std::endl;
     }
-
-private:
     // GridView is needed to keep the IndexSet valid
-    const GridView gridView_;
-    const typename GridView::IndexSet& indexSet_;
+    GridView gridView_;
+    const typename GridView::IndexSet* indexSet_;
     const int codimension_;
     // the map resulting from the reordering
     std::vector<int> permutation_;
