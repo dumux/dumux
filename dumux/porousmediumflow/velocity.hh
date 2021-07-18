@@ -171,7 +171,7 @@ public:
         }
 
         // get the transposed Jacobian of the element mapping
-        const auto refElement = Dune::referenceElement(geometry);
+        const auto refElement = referenceElement(geometry);
         const auto& localPos = refElement.position(0, 0);
         const auto jacobianT2 = geometry.jacobianTransposed(localPos);
 
