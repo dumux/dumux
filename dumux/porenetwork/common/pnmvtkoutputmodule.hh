@@ -70,7 +70,7 @@ public:
         throatFluxDataInfo_.push_back(ThroatFluxDataInfo{f, name});
         const auto numElems = problem().gridGeometry().gridView().size(0);
         throatFluxData_.push_back(std::vector<Scalar>(numElems));
-        ParentType::addField(throatFluxData_.back(), throatFluxDataInfo_.back().name, ParentType::FieldType::element);
+        ParentType::addField(throatFluxData_.back(), throatFluxDataInfo_.back().name, Vtk::FieldType::element);
     }
 
     //! Gather and process all required data and write them to a vtk file.

@@ -101,9 +101,9 @@ int main(int argc, char** argv) try
     using VtkWriter = PoreNetwork::VtkOutputModule<GridVariables, GetPropType<TypeTag, Properties::FluxVariables>, SolutionVector>;
     VtkWriter vtkWriter(*gridVariables, x, problem->name());
     VtkOutputFields::initOutputModule(vtkWriter);
-    vtkWriter.addField(gridGeometry->poreVolume(), "poreVolume", VtkWriter::FieldType::vertex);
-    vtkWriter.addField(gridGeometry->throatShapeFactor(), "throatShapeFactor", VtkWriter::FieldType::element);
-    vtkWriter.addField(gridGeometry->throatCrossSectionalArea(), "throatCrossSectionalArea", VtkWriter::FieldType::element);
+    vtkWriter.addField(gridGeometry->poreVolume(), "poreVolume", Vtk::FieldType::vertex);
+    vtkWriter.addField(gridGeometry->throatShapeFactor(), "throatShapeFactor", Vtk::FieldType::element);
+    vtkWriter.addField(gridGeometry->throatCrossSectionalArea(), "throatCrossSectionalArea", Vtk::FieldType::element);
 
     // ### Instantiate the solver
     // We use the `LinearPDESolver` class, which is instantiated on the basis

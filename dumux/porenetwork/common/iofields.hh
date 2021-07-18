@@ -36,13 +36,13 @@ public:
     template <class OutputModule>
     static void initOutputModule(OutputModule& out)
     {
-        out.addField(out.problem().gridGeometry().coordinationNumber(), "coordinationNumber", OutputModule::FieldType::vertex);
+        out.addField(out.problem().gridGeometry().coordinationNumber(), "coordinationNumber", Vtk::FieldType::vertex);
 
-        out.addField(out.problem().gridGeometry().poreLabel(), "poreLabel", OutputModule::FieldType::vertex);
+        out.addField(out.problem().gridGeometry().poreLabel(), "poreLabel", Vtk::FieldType::vertex);
 
         out.addVolumeVariable([](const auto& volVars){ return volVars.poreInscribedRadius(); }, "poreInscribedRadius");
 
-        out.addField(out.problem().gridGeometry().throatLabel(), "throatLabel", OutputModule::FieldType::element);
+        out.addField(out.problem().gridGeometry().throatLabel(), "throatLabel", Vtk::FieldType::element);
 
         out.addFluxVariable([](const auto& fluxVars, const auto& fluxVarsCache)
                              { return fluxVarsCache.throatInscribedRadius(); }, "throatInscribedRadius");
