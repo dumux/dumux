@@ -119,7 +119,6 @@ public:
         wallElementIdx_.resize(this->gridGeometry().elementMapper().size());
         wallDistance_.resize(this->gridGeometry().elementMapper().size(), std::numeric_limits<Scalar>::max());
         neighborIdx_.resize(this->gridGeometry().elementMapper().size());
-        cellCenter_.resize(this->gridGeometry().elementMapper().size(), GlobalPosition(0.0));
         velocity_.resize(this->gridGeometry().elementMapper().size(), DimVector(0.0));
         velocityGradients_.resize(this->gridGeometry().elementMapper().size(), DimMatrix(0.0));
         stressTensorScalarProduct_.resize(this->gridGeometry().elementMapper().size(), 0.0);
@@ -203,35 +202,7 @@ public:
             }
         }
 
-        // search for neighbor Idxs
-        for (const auto& element : elements(gridView))
-        {
-            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
-            {
-                neighborIdx_[elementIdx][dimIdx][0] = elementIdx;
-                neighborIdx_[elementIdx][dimIdx][1] = elementIdx;
-            }
-
-            for (const auto& intersection : intersections(gridView, element))
-            {
-                if (intersection.boundary())
-                    continue;
-
-                unsigned int neighborIdx = this->gridGeometry().elementMapper().index(intersection.outside());
-                for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
-                {
-                    if (abs(cellCenter(elementIdx)[dimIdx] - cellCenter(neighborIdx)[dimIdx]) > 1e-8)
-                    {
-                        if (cellCenter(elementIdx)[dimIdx] > cellCenter(neighborIdx)[dimIdx])
-                            neighborIdx_[elementIdx][dimIdx][0] = neighborIdx;
-
-                        if (cellCenter(elementIdx)[dimIdx] < cellCenter(neighborIdx)[dimIdx])
-                            neighborIdx_[elementIdx][dimIdx][1] = neighborIdx;
-                    }
-                }
-            }
-        }
+        findNeighborIndices_();
     }
 
     /*!
@@ -384,7 +355,10 @@ public:
     { return wallDistance_[elementIdx]; }
 
     GlobalPosition cellCenter(const int elementIdx) const
-    { return cellCenter_[elementIdx]; }
+    {
+        const auto& element = this->gridGeometry().element(elementIdx);
+        return element.geometry().center();
+    }
 
     unsigned int neighborIndex(const int elementIdx, const int dimIdx, const int sideIdx) const
     { return neighborIdx_[elementIdx][dimIdx][sideIdx];}
@@ -452,6 +426,39 @@ private:
 
         // Returns if all wall directions are the same
         return std::all_of(wallFaceAxis.begin(), wallFaceAxis.end(), [firstDir=wallFaceAxis[0]](auto dir){ return (dir == firstDir);} ) ;
+    }
+
+    void findNeighborIndices_()
+    {
+        // search for neighbor Idxs
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
+            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            {
+                neighborIdx_[elementIdx][dimIdx][0] = elementIdx;
+                neighborIdx_[elementIdx][dimIdx][1] = elementIdx;
+            }
+
+            for (const auto& intersection : intersections(this->gridGeometry().gridView(), element))
+            {
+                if (intersection.boundary())
+                    continue;
+
+                unsigned int neighborIdx = this->gridGeometry().elementMapper().index(intersection.outside());
+                for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+                {
+                    if (abs(cellCenter(elementIdx)[dimIdx] - cellCenter(neighborIdx)[dimIdx]) > 1e-8)
+                    {
+                        if (cellCenter(elementIdx)[dimIdx] > cellCenter(neighborIdx)[dimIdx])
+                            neighborIdx_[elementIdx][dimIdx][0] = neighborIdx;
+
+                        if (cellCenter(elementIdx)[dimIdx] < cellCenter(neighborIdx)[dimIdx])
+                            neighborIdx_[elementIdx][dimIdx][1] = neighborIdx;
+                    }
+                }
+            }
+        }
     }
 
     void calculateCCVelocities_(const SolutionVector& curSol)
@@ -715,7 +722,6 @@ private:
     std::vector<unsigned int> flowDirectionAxis_;
     std::vector<Scalar> wallDistance_;
     std::vector<unsigned int> wallElementIdx_;
-    std::vector<GlobalPosition> cellCenter_;
     std::vector<std::array<std::array<unsigned int, 2>, dim>> neighborIdx_;
 
     std::vector<DimVector> velocity_;
