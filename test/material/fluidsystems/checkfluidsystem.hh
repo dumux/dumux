@@ -263,7 +263,7 @@ int checkFluidState(const BaseFluidState &fs)
     std::string collectedWarnings;
 
     // make sure the fluid state provides all mandatory methods
-    Scalar DUNE_UNUSED val;
+    [[maybe_unused]] Scalar val;
 
     try
     {
@@ -519,7 +519,7 @@ int checkFluidSystem(bool enablePhaseRestriction = true)
 
     // some value to make sure the return values of the fluid system
     // are convertible to scalars
-    Scalar DUNE_UNUSED val;
+    [[maybe_unused]] Scalar val;
 
     // actually check the fluid system API
     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
@@ -632,10 +632,8 @@ int checkFluidSystem(bool enablePhaseRestriction = true)
     // test for phaseName(), isGas() and isIdealGas()
     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
     {
-        std::string
-        DUNE_UNUSED name = FluidSystem::phaseName(phaseIdx);
-        bool DUNE_UNUSED
-        bVal = FluidSystem::isGas(phaseIdx);
+        [[maybe_unused]] std::string name = FluidSystem::phaseName(phaseIdx);
+        [[maybe_unused]] bool bVal = FluidSystem::isGas(phaseIdx);
         bVal = FluidSystem::isIdealGas(phaseIdx);
     }
 
@@ -643,8 +641,7 @@ int checkFluidSystem(bool enablePhaseRestriction = true)
     for (int compIdx = 0; compIdx < numComponents; ++compIdx)
     {
         val = FluidSystem::molarMass(compIdx);
-        std::string
-        DUNE_UNUSED name = FluidSystem::componentName(compIdx);
+        [[maybe_unused]] std::string name = FluidSystem::componentName(compIdx);
     }
 
     std::cout << collectedErrors;
