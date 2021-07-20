@@ -101,18 +101,13 @@ public:
      */
     RANSProblemBase(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
     : ParentType(gridGeometry, paramGroup)
-    { }
-
-    /*!
-     * \brief Update the static (solution independent) relations to the walls
-     *
-     * This function determines all element with a wall intersection,
-     * the wall distances and the relation to the neighboring elements.
-     */
-    void updateStaticWallProperties()
     {
-        std::cout << "Update static wall properties. ";
-        calledUpdateStaticWallProperties = true;
+        if ( !(hasParamInGroup(this->paramGroup(), "RANS.IsFlatWallBounded")))
+        {
+            std::cout << "The parameter \"Rans.IsFlatWallBounded\" is not specified. \n"
+                    << " -- Based on the grid and the isOnWallAtPos function specified by the user,"
+                    << " this parameter is set to be "<< std::boolalpha << isFlatWallBounded() << "\n";
+        }
 
         // update size and initial values of the global vectors
         wallDistance_.resize(this->gridGeometry().elementMapper().size(), std::numeric_limits<Scalar>::max());
@@ -124,23 +119,22 @@ public:
         flowDirectionAxis_.resize(this->gridGeometry().elementMapper().size(), fixedFlowDirectionAxis_);
         storedViscosity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
         storedDensity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
-        if ( !(hasParamInGroup(this->paramGroup(), "RANS.IsFlatWallBounded")))
-        {
-            std::cout << "The parameter \"Rans.IsFlatWallBounded\" is not specified. \n"
-                    << " -- Based on the grid and the isOnWallAtPos function specified by the user,"
-                    << " this parameter is set to be "<< std::boolalpha << isFlatWallBounded() << "\n";
-        }
+    }
+
+    /*!
+     * \brief Update the static (solution independent) relations to the walls and neighbors
+     */
+    void updateStaticWallProperties()
+    {
+        std::cout << "Update static wall properties. ";
+        calledUpdateStaticWallProperties = true;
 
         findWallDistances_();
         findNeighborIndices_();
     }
 
     /*!
-     * \brief Update the dynamic (solution dependent) relations to the walls
-     *
-     * The basic function calcuates the cell-centered velocities and
-     * the respective gradients.
-     * Further, the kinematic viscosity at the wall is stored.
+     * \brief Update the dynamic (solution dependent) turbulence parameters
      *
      * \param curSol The solution vector.
      */
