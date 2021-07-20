@@ -324,9 +324,8 @@ public:
      *
      * \param temp temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     * \param regularize defines, if the functions is regularized or not, set to true by default
      */
-    static Scalar gasViscosity(Scalar temp, Scalar pressure, bool regularize=true)
+    static Scalar gasViscosity(Scalar temp, Scalar pressure)
     {
         using std::min;
         using std::max;

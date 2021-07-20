@@ -401,9 +401,8 @@ public:
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     * \param regularize defines, if the functions is regularized or not, set to true by default
      */
-    static Scalar gasViscosity(Scalar temperature, Scalar pressure, bool regularize=true)
+    static Scalar gasViscosity(Scalar temperature, Scalar pressure)
     {
         using std::clamp;
         temperature = clamp(temperature, 250.0, 500.0); // regularization
