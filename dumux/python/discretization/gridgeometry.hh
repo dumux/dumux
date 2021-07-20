@@ -48,12 +48,12 @@ void registerSubControlVolume(pybind11::handle scope)
     {
         using pybind11::operator""_a;
 
-        cls.def("center", &SCV::center);
-        cls.def("volume", &SCV::volume);
-        cls.def("dofIndex", &SCV::dofIndex);
-        cls.def("localDofIndex", &SCV::localDofIndex);
-        cls.def("dofPosition", &SCV::dofPosition);
-        cls.def("elementIndex", &SCV::elementIndex);
+        cls.def_property_readonly("center", &SCV::center);
+        cls.def_property_readonly("volume", &SCV::volume);
+        cls.def_property_readonly("dofIndex", &SCV::dofIndex);
+        cls.def_property_readonly("localDofIndex", &SCV::localDofIndex);
+        cls.def_property_readonly("dofPosition", &SCV::dofPosition);
+        cls.def_property_readonly("elementIndex", &SCV::elementIndex);
 
     }
 }
@@ -73,14 +73,14 @@ void registerSubControlVolumeFace(pybind11::handle scope)
     {
         using pybind11::operator""_a;
 
-        cls.def("center", &SCVF::center);
-        cls.def("area", &SCVF::area);
-        cls.def("ipGlobal", &SCVF::ipGlobal);
-        cls.def("boundary", &SCVF::boundary);
-        cls.def("unitOuterNormal", &SCVF::unitOuterNormal);
-        cls.def("insideScvIdx", &SCVF::insideScvIdx);
-        cls.def("outsideScvIdx", [](SCVF& self){ return self.outsideScvIdx(); });
-        cls.def("index", &SCVF::index);
+        cls.def_property_readonly("center", &SCVF::center);
+        cls.def_property_readonly("area", &SCVF::area);
+        cls.def_property_readonly("ipGlobal", &SCVF::ipGlobal);
+        cls.def_property_readonly("boundary", &SCVF::boundary);
+        cls.def_property_readonly("unitOuterNormal", &SCVF::unitOuterNormal);
+        cls.def_property_readonly("insideScvIdx", &SCVF::insideScvIdx);
+        cls.def_property_readonly("outsideScvIdx", [](SCVF& self){ return self.outsideScvIdx(); });
+        cls.def_property_readonly("index", &SCVF::index);
     }
 }
 
@@ -99,10 +99,10 @@ void registerFVElementGeometry(pybind11::handle scope)
     {
         using pybind11::operator""_a;
 
-        cls.def("numScvf", &FVEG::numScv);
-        cls.def("numScv", &FVEG::numScv);
+        cls.def_property_readonly("numScvf", &FVEG::numScv);
+        cls.def_property_readonly("numScv", &FVEG::numScv);
+        cls.def_property_readonly("hasBoundaryScvf", &FVEG::hasBoundaryScvf);
         cls.def("bind", &FVEG::bind, "element"_a);
-        cls.def("hasBoundaryScvf", &FVEG::hasBoundaryScvf);
         cls.def("scvs", [](FVEG& self){
             const auto range = scvs(self);
             return pybind11::make_iterator(range.begin(), range.end());
@@ -129,11 +129,12 @@ void registerGridGeometry(pybind11::handle scope, pybind11::class_<GG, Options..
     }), "gridView"_a);
 
     cls.def("update", &GG::update);
-    cls.def("numDofs", &GG::numDofs);
-    cls.def("numScv", &GG::numScv);
-    cls.def("numScvf", &GG::numScvf);
-    cls.def("bBoxMax", &GG::bBoxMax);
-    cls.def("bBoxMin", &GG::bBoxMin);
+    cls.def_property_readonly("numDofs", &GG::numDofs);
+    cls.def_property_readonly("numScv", &GG::numScv);
+    cls.def_property_readonly("numScvf", &GG::numScvf);
+    cls.def_property_readonly("bBoxMax", &GG::bBoxMax);
+    cls.def_property_readonly("bBoxMin", &GG::bBoxMin);
+    cls.def_property_readonly("gridView", &GG::gridView);
 
     cls.def_property_readonly_static("discMethod", [](const pybind11::object&){
         return toString(GG::discMethod);
