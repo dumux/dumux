@@ -358,6 +358,11 @@ private:
         return std::all_of(wallFaceAxis.begin(), wallFaceAxis.end(), [firstDir=wallFaceAxis[0]](auto dir){ return (dir == firstDir);} ) ;
     }
 
+    /*!
+     * \brief Use the boundary search algorithm to find the shortest distance to a wall for each element
+     *
+     *  Also store the wall element's index, and its direction in the case of flat wall bounded problems
+     */
     void findWallDistances_()
     {
         WallDistance wallInformation(this->gridGeometry(), WallDistance<GridGeometry>::atElementCenters,
@@ -398,6 +403,9 @@ private:
         }
     }
 
+    /*!
+     * \brief Store all direct neighbor indicies for each element
+     */
     void findNeighborIndices_()
     {
         // search for neighbor Idxs
