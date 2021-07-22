@@ -84,10 +84,11 @@ inline typename Point::value_type
 distancePointSegment(const Point& p, const Point& a, const Point& b)
 {
     const auto ab = b - a;
-    auto t = (p - a)*ab;
+    const auto ap = p - a;
+    const auto t = ap*ab;
 
     if (t <= 0.0)
-        return (a - p).two_norm();
+        return ap.two_norm();
 
     const auto lengthSq = ab.two_norm2();
     if (t >= lengthSq)
