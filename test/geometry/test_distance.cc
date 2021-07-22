@@ -35,6 +35,7 @@
 
 #include <dumux/geometry/distance.hh>
 #include <dumux/geometry/normal.hh>
+#include "transformation.hh"
 
 // helper function to make point geometry from field vector
 template<class Point, int dimWorld>
@@ -127,6 +128,33 @@ void runTests()
             checkGeometryDistance(scale, distancePointLine(p.corner(0), segment.corner(0), segment.corner(1)), "segment-segment");
             checkGeometryDistance(scale, distancePointLine(p.corner(0), segment2.corner(0), segment2.corner(1)), "segment-segment");
             checkGeometryDistance(scale, distancePointLine(p.corner(0), segment3.corner(0), segment3.corner(1)), "segment-segment");
+
+            // check distance point-triangle
+            if constexpr(GlobalPosition::dimension == 3)
+            {
+                // create a triangle whose normal is aligned with (p-origin), touching the sphere
+                using Triangle = std::array<GlobalPosition, 3>;
+                auto rotationAxis = p.corner(0); rotationAxis /= rotationAxis.two_norm();
+                const auto rotate1 = make3DTransformation(1.0, origin.corner(0), rotationAxis, 2.0/3.0*M_PI, /*verbose*/false);
+                const auto rotate2 = make3DTransformation(1.0, origin.corner(0), rotationAxis, 4.0/3.0*M_PI, /*verbose*/false);
+                const Triangle firstTriangle = {p.corner(0) + n,
+                                                rotate1(n) + p.corner(0),
+                                                rotate2(n) + p.corner(0)};
+                checkGeometryDistance(scale, distancePointTriangle(origin.corner(0), firstTriangle[0], firstTriangle[1], firstTriangle[2]), "point-triangle");
+
+                // create a triangle with one edge touching the sphere
+                const Triangle secondTriangle = {segment.corner(0),
+                                                 segment.corner(1),
+                                                 0.5*(segment.corner(0) + segment.corner(1)) + n};
+                checkGeometryDistance(scale, distancePointTriangle(origin.corner(0), secondTriangle[0], secondTriangle[1], secondTriangle[2]), "point-triangle");
+                checkGeometryDistance(scale, distancePointTriangle(p.corner(0), secondTriangle[0], secondTriangle[1], secondTriangle[2]), "point-triangle");
+
+                // create a triangle not touching the sphere
+                const Triangle thirdTriangle = {segment2.corner(0),
+                                                segment2.corner(1),
+                                                0.5*(segment2.corner(0) + segment2.corner(1)) + n};
+                checkGeometryDistance(sqrt(2.0)*scale, distancePointTriangle(p.corner(0), thirdTriangle[0], thirdTriangle[1], thirdTriangle[2]), "point-triangle");
+            }
         }
     }
 }
