@@ -121,7 +121,7 @@ void runTests()
 
             v *= 2.0;
             auto segment3 = makeSegment<Segment>(segment.corner(0) + v, segment.corner(1) + v);
-            checkGeometryDistance(sqrt(2.0)*scale, distance(segment2, p), "segment-segment");
+            checkGeometryDistance(sqrt(2.0)*scale, distance(segment3, p), "segment-segment");
 
             // for lines, we should always get a distance of scale
             checkGeometryDistance(scale, distancePointLine(p.corner(0), segment.corner(0), segment.corner(1)), "segment-segment");
