@@ -21,22 +21,49 @@
  * \ingroup Discretization
  * \brief The available discretization methods in Dumux
  */
-#ifndef DUMUX_DISCRETIZARION_METHOD_HH
-#define DUMUX_DISCRETIZARION_METHOD_HH
+#ifndef DUMUX_DISCRETIZATION_METHOD_HH
+#define DUMUX_DISCRETIZATION_METHOD_HH
+
+#include <ostream>
+#include <string>
 
 namespace Dumux {
 
-    /*!
-     * \brief The available discretization methods in Dumux
-     * \ingroup Discretization
-     * \note Use none if specifying a discretization method is required but
-     *       the class in question is not specific to a a discretization method
-     *       or the classification is non-applicable
-     */
-    enum class DiscretizationMethod
+/*!
+ * \brief The available discretization methods in Dumux
+ * \ingroup Discretization
+ * \note Use none if specifying a discretization method is required but
+ *       the class in question is not specific to a a discretization method
+ *       or the classification is non-applicable
+ */
+enum class DiscretizationMethod
+{
+    none, box, cctpfa, ccmpfa, staggered, fem
+};
+
+/*!
+ * \brief Convert discretization method to string
+ * \ingroup Discretization
+ */
+inline std::string toString(DiscretizationMethod m)
+{
+    switch (m)
     {
-        none, box, cctpfa, ccmpfa, staggered, fem
-    };
+        case DiscretizationMethod::box: return "box";
+        case DiscretizationMethod::cctpfa: return "cctpfa";
+        case DiscretizationMethod::ccmpfa: return "ccmpfa";
+        case DiscretizationMethod::staggered: return "staggered";
+        case DiscretizationMethod::fem: return "fem";
+        default: return "none";
+    }
+}
+
+/*!
+ * \brief Write discretization method to stream
+ * \ingroup Discretization
+ */
+inline std::ostream& operator<<(std::ostream& stream, DiscretizationMethod m)
+{ stream << toString(m); return stream; }
 
 } // end namespace Dumux
 
