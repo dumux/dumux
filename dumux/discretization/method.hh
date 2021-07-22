@@ -21,8 +21,8 @@
  * \ingroup Discretization
  * \brief The available discretization methods in Dumux
  */
-#ifndef DUMUX_DISCRETIZARION_METHOD_HH
-#define DUMUX_DISCRETIZARION_METHOD_HH
+#ifndef DUMUX_DISCRETIZATION_METHOD_HH
+#define DUMUX_DISCRETIZATION_METHOD_HH
 
 #include <ostream>
 #include <string>
