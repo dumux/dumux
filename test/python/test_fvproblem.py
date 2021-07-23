@@ -24,7 +24,6 @@ from dumux.common import BoundaryTypes, FVProblem
 gridView = structuredGrid([0,0,0],[1,1,1],[3,3,3])
 
 gridGeometry = GridGeometry(gridView, discMethod="box")
-gridGeometry.update()
 
 @FVProblem(gridGeometry)
 class Problem:

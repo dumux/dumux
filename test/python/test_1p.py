@@ -38,7 +38,6 @@ parameters = Parameters(dict={
 # Set up the grid and the grid geometry
 gridView = structuredGrid([0,0], [1,1], [10,10])
 gridGeometry = GridGeometry(gridView=gridView, discMethod=discMethod)
-gridGeometry.update()
 
 # Set up the model
 model = Model(inheritsFrom=['OneP'], gridGeometry=gridGeometry)

@@ -24,7 +24,6 @@ cells = 20
 gridView = structuredGrid([0]*dimension, [1]*dimension, [cells]*dimension)
 
 gridGeometry = GridGeometry(gridView, discMethod="cctpfa")
-gridGeometry.update()
 
 elementMapper = gridView.indexSet
 
