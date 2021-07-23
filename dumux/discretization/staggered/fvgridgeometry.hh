@@ -24,6 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_FV_GRID_GEOMETRY
 #define DUMUX_DISCRETIZATION_STAGGERED_FV_GRID_GEOMETRY
 
+#include <dumux/common/deprecated.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/basegridgeometry.hh>
 #include <dumux/discretization/checkoverlapsize.hh>
@@ -282,8 +283,10 @@ public:
         scvs_.clear();
         scvfs_.clear();
         scvfIndicesOfScv_.clear();
-        intersectionMapper_.update();
-
+        if constexpr (Deprecated::hasUpdateGridView<IntersectionMapper, GridView>())
+            intersectionMapper_.update(this->gridView());
+        else
+            Deprecated::update(intersectionMapper_);
         // determine size of containers
         std::size_t numScvs = this->gridView().size(0);
         std::size_t numScvf = 0;
@@ -510,7 +513,10 @@ public:
     {
         // clear containers (necessary after grid refinement)
         scvfIndicesOfScv_.clear();
-        intersectionMapper_.update();
+        if constexpr (Deprecated::hasUpdateGridView<IntersectionMapper, GridView>())
+            intersectionMapper_.update(this->gridView());
+        else
+            Deprecated::update(intersectionMapper_);
         neighborVolVarIndices_.clear();
 
         numScvs_ = numCellCenterDofs();
