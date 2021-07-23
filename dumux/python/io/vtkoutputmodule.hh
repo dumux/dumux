@@ -30,6 +30,7 @@
 #include <dune/python/pybind11/stl.h>
 
 #include <dumux/python/common/volumevariables.hh>
+#include <dumux/io/velocityoutput.hh>
 
 namespace Dumux::Python {
 
@@ -62,6 +63,13 @@ void registerVtkOutputModule(pybind11::handle scope,
                                     std::function<Scalar(const VolumeVariables&)>&& f,
                                     const std::string& name) {
         self.addVolumeVariable(std::move(f), name);
+    });
+
+    using VelocityOutputType = Dumux::VelocityOutput<GridVariables>;
+    cls.def("addVelocityOutput", [](VtkOutputModule& self,
+                                    std::shared_ptr<VelocityOutputType> velocityOutput)
+    {
+        self.addVelocityOutput(velocityOutput);
     });
 };
 
