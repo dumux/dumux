@@ -55,7 +55,7 @@ def BoundaryTypes(numEq=1):
     return globals()[cacheKey]()
 
 
-def Parameters(*, file=None, dict={}):
+def Parameters(dict={}, file=None):
     parametersType = "Dumux::Parameters"
     includes = ["dumux/common/parameters.hh", "dumux/python/common/parameters.hh"]
     moduleName = "parameters_" + hashIt(parametersType)

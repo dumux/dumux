@@ -27,7 +27,7 @@ if diffMethod not in ["analytic", "numeric"]:
     raise NotImplementedError(diffMethod + " must be analytic or numeric")
 
 # Initialize the paramaters
-parameters = Parameters(dict={
+parameters = Parameters({
     "Problem.EnableGravity": True,
     "SpatialParams.Porosity": 0.3,
     "SpatialParams.Permeability": 1e-8,
