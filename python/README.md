@@ -69,3 +69,14 @@ You can run all currently existing DuMu<sup>x</sup> Python tests with
 cd dumux/build-cmake
 ctest -L python
 ```
+##  Development
+
+All Python files should be linted by the tool [`black`](https://pypi.org/project/black/).
+You can install `black` with `pip install black` and run it from the dumux top-directory
+
+```
+black ./python
+```
+
+You can also run it on a specific file (replace `./python` by file name)
+This will automatically format the Python files. Run black before every commit changing Python files.
