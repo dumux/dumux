@@ -29,11 +29,12 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
+#include "forchheimervelocity.hh"
 
 namespace Dumux {
 
 // forward declaration
-template <class TypeTag, DiscretizationMethod discMethod>
+template <class TypeTag, class VelocityLaw, DiscretizationMethod discMethod>
 class ForchheimersLawImplementation
 {
     static_assert(discMethod == DiscretizationMethod::cctpfa, "Forchheimer only implemented for cctpfa!");
@@ -45,8 +46,11 @@ class ForchheimersLawImplementation
  * \note Specializations are provided for the different discretization methods.
  * These specializations are found in the headers included below.
  */
+
 template <class TypeTag>
-using ForchheimersLaw = ForchheimersLawImplementation<TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
+using ForchheimersLaw = ForchheimersLawImplementation<TypeTag,
+                                                      ForchheimerVelocity<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::GridGeometry>, GetPropType<TypeTag, Properties::FluxVariables>>,
+                                                      GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
 
 } // end namespace Dumux
 
