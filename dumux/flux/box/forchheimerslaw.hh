@@ -18,11 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup CCTpfaFlux
- * \brief Forchheimers's law for cell-centered finite volume schemes with two-point flux approximation
+ * \ingroup BoxFlux
+ * \brief Forchheimers's law for the box method
  */
-#ifndef DUMUX_DISCRETIZATION_CC_TPFA_FORCHHEIMERS_LAW_HH
-#define DUMUX_DISCRETIZATION_CC_TPFA_FORCHHEIMERS_LAW_HH
+#ifndef DUMUX_DISCRETIZATION_BOX_FORCHHEIMERS_LAW_HH
+#define DUMUX_DISCRETIZATION_BOX_FORCHHEIMERS_LAW_HH
 
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
@@ -34,7 +34,7 @@
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>
-#include <dumux/flux/cctpfa/darcyslaw.hh>
+#include <dumux/flux/box/darcyslaw.hh>
 
 namespace Dumux {
 
@@ -43,105 +43,36 @@ template<class TypeTag, class ForchheimerVelocity, DiscretizationMethod discMeth
 class ForchheimersLawImplementation;
 
 /*!
- * \ingroup CCTpfaFlux
- * \brief Forchheimer's law for cell-centered finite volume schemes with two-point flux approximation
+ * \ingroup BoxFlux
+ * \brief Forchheimer's law for box scheme
  * \note Forchheimer's law is specialized for network and surface grids (i.e. if grid dim < dimWorld)
  * \tparam Scalar the scalar type for scalar physical quantities
  * \tparam GridGeometry the grid geometry
  * \tparam ForchheimerVelocity class for the calculation of the Forchheimer velocity
  * \tparam isNetwork whether we are computing on a network grid embedded in a higher world dimension
  */
-template<class Scalar, class GridGeometry, class ForchheimerVelocity, bool isNetwork>
-class CCTpfaForchheimersLaw;
+template<class Scalar, class GridGeometry, class ForchheimerVelocity>
+class BoxForchheimersLaw;
 
 /*!
- * \ingroup CCTpfaFlux
- * \brief Forchheimer's law for cell-centered finite volume schemes with two-point flux approximation
- * \note Forchheimer's law is specialized for network and surface grids (i.e. if grid dim < dimWorld)
+ * \ingroup BoxFlux
+ * \brief Forchheimer's law for box scheme
  */
 template <class TypeTag, class ForchheimerVelocity>
-class ForchheimersLawImplementation<TypeTag, ForchheimerVelocity, DiscretizationMethod::cctpfa>
-: public CCTpfaForchheimersLaw<GetPropType<TypeTag, Properties::Scalar>,
-                               GetPropType<TypeTag, Properties::GridGeometry>,
-                               ForchheimerVelocity,
-                               (GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension < GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimensionworld)>
+class ForchheimersLawImplementation<TypeTag, ForchheimerVelocity, DiscretizationMethod::box>
+: public BoxForchheimersLaw<GetPropType<TypeTag, Properties::Scalar>,
+                            GetPropType<TypeTag, Properties::GridGeometry>,
+                            ForchheimerVelocity>
 {};
 
 /*!
- * \ingroup CCTpfaFlux
- * \brief Class that fills the cache corresponding to tpfa Forchheimer's Law
- */
-template<class GridGeometry>
-class TpfaForchheimersLawCacheFiller
-{
-    using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
-    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
-
-public:
-    //! Function to fill a TpfaForchheimersLawCache of a given scvf
-    //! This interface has to be met by any advection-related cache filler class
-    //! TODO: Probably get cache type out of the filler
-    template<class FluxVariablesCache, class Problem, class ElementVolumeVariables, class FluxVariablesCacheFiller>
-    static void fill(FluxVariablesCache& scvfFluxVarsCache,
-                     const Problem& problem,
-                     const Element& element,
-                     const FVElementGeometry& fvGeometry,
-                     const ElementVolumeVariables& elemVolVars,
-                     const SubControlVolumeFace& scvf,
-                     const FluxVariablesCacheFiller& fluxVarsCacheFiller)
-    {
-        scvfFluxVarsCache.updateAdvection(problem, element, fvGeometry, elemVolVars, scvf);
-    }
-};
-
-/*!
- * \ingroup CCTpfaFlux
- * \brief The cache corresponding to tpfa Forchheimer's Law
- */
-template<class AdvectionType, class GridGeometry>
-class TpfaForchheimersLawCache
-{
-    using Scalar = typename AdvectionType::Scalar;
-    using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
-    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
-    static constexpr int dimWorld = GridGeometry::GridView::dimensionworld;
-    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
-
-public:
-    using Filler = TpfaForchheimersLawCacheFiller<GridGeometry>;
-
-    template<class Problem, class ElementVolumeVariables>
-    void updateAdvection(const Problem& problem,
-                         const Element& element,
-                         const FVElementGeometry& fvGeometry,
-                         const ElementVolumeVariables& elemVolVars,
-                         const SubControlVolumeFace &scvf)
-    {
-        tij_ = AdvectionType::calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf);
-        harmonicMeanSqrtK_ = AdvectionType::calculateHarmonicMeanSqrtPermeability(problem, elemVolVars, scvf);
-    }
-
-    const Scalar& advectionTij() const
-    { return tij_; }
-
-    const DimWorldMatrix& harmonicMeanSqrtPermeability() const
-    { return harmonicMeanSqrtK_; }
-
-private:
-    Scalar tij_;
-    DimWorldMatrix harmonicMeanSqrtK_;
-};
-
-/*!
- * \ingroup CCTpfaFlux
- * \brief Specialization of the CCTpfaForchheimersLaw grids where dim=dimWorld
+ * \ingroup BoxFlux
+ * \brief Specialization of the BoxForchheimersLaw
  */
 template<class ScalarType, class GridGeometry, class ForchheimerVelocity>
-class CCTpfaForchheimersLaw<ScalarType, GridGeometry, ForchheimerVelocity, /*isNetwork*/ false>
+class BoxForchheimersLaw
 {
-    using ThisType = CCTpfaForchheimersLaw<ScalarType, GridGeometry, ForchheimerVelocity, /*isNetwork*/ false>;
+    using ThisType = BoxForchheimersLaw<ScalarType, GridGeometry, ForchheimerVelocity>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Extrusion = Extrusion_t<GridGeometry>;
@@ -151,17 +82,14 @@ class CCTpfaForchheimersLaw<ScalarType, GridGeometry, ForchheimerVelocity, /*isN
     using DimWorldVector = typename ForchheimerVelocity::DimWorldVector;
     using DimWorldMatrix = typename ForchheimerVelocity::DimWorldMatrix;
 
-    using DarcysLaw = CCTpfaDarcysLaw<ScalarType, GridGeometry, /*isNetwork*/ false>;
+    using DarcysLaw = BoxDarcysLaw<ScalarType, GridGeometry>;
 
-  public:
+public:
     //! state the scalar type of the law
     using Scalar = ScalarType;
 
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
-
-    //! state the type for the corresponding cache
-    using Cache = TpfaForchheimersLawCache<ThisType, GridGeometry>;
+    static const DiscretizationMethod discMethod = DiscretizationMethod::box;
 
     /*! \brief Compute the advective flux of a phase across
     *          the given sub-control volume face using the Forchheimer equation.
@@ -179,19 +107,52 @@ class CCTpfaForchheimersLaw<ScalarType, GridGeometry, ForchheimerVelocity, /*isN
                        int phaseIdx,
                        const ElementFluxVarsCache& elemFluxVarsCache)
     {
-        // Get the volume flux based on Darcy's law. The value returned by this method needs to be multiplied with the
-        // mobility (upwinding).
-        Scalar darcyFlux = DarcysLaw::flux(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, elemFluxVarsCache);
+        const auto& fluxVarCache = elemFluxVarsCache[scvf];
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+        const auto& insideVolVars = elemVolVars[insideScv];
+        const auto& outsideVolVars = elemVolVars[outsideScv];
+
+        auto insideK = insideVolVars.permeability();
+        auto outsideK = outsideVolVars.permeability();
+
+        // scale with correct extrusion factor
+        insideK *= insideVolVars.extrusionFactor();
+        outsideK *= outsideVolVars.extrusionFactor();
+
+        const auto K = problem.spatialParams().harmonicMean(insideK, outsideK, scvf.unitOuterNormal());
+        static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
+
+        const auto& shapeValues = fluxVarCache.shapeValues();
+
+        // evaluate gradP - rho*g at integration point
+        DimWorldVector gradP(0.0);
+        Scalar rho(0.0);
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            const auto& volVars = elemVolVars[scv];
+
+            if (enableGravity)
+                rho += volVars.density(phaseIdx)*shapeValues[scv.indexInElement()][0];
+
+            // the global shape function gradient
+            gradP.axpy(volVars.pressure(phaseIdx), fluxVarCache.gradN(scv.indexInElement()));
+        }
+
+        if (enableGravity)
+            gradP.axpy(-rho, problem.spatialParams().gravity(scvf.center()));
+
+        DimWorldVector darcyVelocity = mv(K, gradP);
+        darcyVelocity *= -1;
+
         auto upwindTerm = [phaseIdx](const auto& volVars){ return volVars.mobility(phaseIdx); };
-        DimWorldVector darcyVelocity = scvf.unitOuterNormal();
-        darcyVelocity *= ForchheimerVelocity::UpwindScheme::apply(elemVolVars, scvf, upwindTerm, darcyFlux, phaseIdx);
-        darcyVelocity /= Extrusion::area(scvf);
+        darcyVelocity *= ForchheimerVelocity::UpwindScheme::multiplier(elemVolVars, scvf, upwindTerm, darcyVelocity*scvf.unitOuterNormal(), phaseIdx);
 
         const auto velocity = ForchheimerVelocity::velocity(fvGeometry,
                                                             elemVolVars,
                                                             scvf,
                                                             phaseIdx,
-                                                            elemFluxVarsCache[scvf].harmonicMeanSqrtPermeability(),
+                                                            calculateHarmonicMeanSqrtPermeability(problem, elemVolVars, scvf),
                                                             darcyVelocity);
 
         Scalar flux = velocity * scvf.unitOuterNormal();
@@ -222,16 +183,6 @@ class CCTpfaForchheimersLaw<ScalarType, GridGeometry, ForchheimerVelocity, /*isN
     {
         return ForchheimerVelocity::calculateHarmonicMeanSqrtPermeability(problem, elemVolVars, scvf);
     }
-};
-
-/*!
- * \ingroup CCTpfaFlux
- * \brief Specialization of the CCTpfaForchheimersLaw grids where dim<dimWorld
- */
-template<class ScalarType, class GridGeometry, class ForchheimerVelocity>
-class CCTpfaForchheimersLaw<ScalarType, GridGeometry, ForchheimerVelocity, /*isNetwork*/ true>
-{
-    static_assert(AlwaysFalse<ScalarType>::value, "Forchheimer not implemented for network grids");
 };
 
 } // end namespace Dumux
