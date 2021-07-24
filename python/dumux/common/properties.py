@@ -1,54 +1,61 @@
+"""
+The DuMux property system in Python consisting of
+Property, TypeTag and Model
+"""
+
 import os
-import string
-import random
+from dataclasses import dataclass
+from typing import List, Union
 from dune.common.hashit import hashIt
 
-"""
-Properties
-"""
 
-
+@dataclass
 class Property:
-    """Properties are used to construct a model"""
+    """
+    Properties are used to construct a model
+    Instances of Property are created with
+    Property.fromInstance(...), Property.fromCppType(...),
+    or  Property.fromValue(...).
+    """
 
-    def __init__(self, object=None, value=None, type=None, includes=[], requiredProperties=[]):
-        if object is not None:
-            assert hasattr(object, "_typeName")
-            if type is not None or value is not None:
-                raise ValueError(
-                    "The Property constructor expects exactly one of the following arguments: object, type, or value."
-                )
-            if includes or requiredProperties:
-                raise ValueError(
-                    "The arguments includes and requiredProperties are ignored if the object argument is specified."
-                )
-            self._typeName = object._typeName
-            self._includes = object._includes if hasattr(object, "_includes") else []
-            self._requiredPropertyTypes = (
-                object._requiredPropertyTypes if hasattr(object, "_requiredPropertyTypes") else []
+    cppType: str = None
+    cppIncludes: List[str] = None
+    requiredPropertyTypes: List[str] = None
+    requiredPropertyValues: List[str] = None
+    value: Union[bool, int, float] = None
+
+    @classmethod
+    def fromInstance(cls, inst):
+        """Create a Property from an instance of a wrapper"""
+        if not hasattr(inst, "_typeName"):
+            raise TypeError(
+                "The given instance {inst} does not have an attribute _typeName. "
+                "Only generated C++ objects (with Python bindings) are accepted."
             )
-        elif value is not None:
-            if object is not None or type is not None:
-                raise ValueError(
-                    "The Property constructor expects exactly one of the following arguments: object, type, or value."
-                )
-            if includes or requiredProperties:
-                raise ValueError(
-                    "The arguments includes and requiredProperties are ignored if the value argument is specified."
-                )
-            self._value = value
-        elif type is not None:
-            if object is not None or value is not None:
-                raise ValueError(
-                    "The Property constructor expects exactly one of the following arguments: object, type, or value."
-                )
-            self._typeName = type
-            self._includes = includes
-            self._requiredPropertyTypes = requiredProperties
-        else:
-            raise ValueError(
-                "The Property constructor expects exactly one of the following arguments: object, type, or value."
-            )
+
+        return cls(cppType=inst._typeName, cppIncludes=inst._includes)
+
+    @classmethod
+    def fromCppType(
+        cls,
+        cppType: str,
+        *,
+        cppIncludes: List[str] = None,
+        requiredPropertyTypes: List[str] = None,
+        requiredPropertyValues: List[str] = None,
+    ):
+        """Create a Property from a given C++ type and includes"""
+        return cls(
+            cppType=cppType,
+            cppIncludes=cppIncludes,
+            requiredPropertyTypes=requiredPropertyTypes,
+            requiredPropertyValues=requiredPropertyValues,
+        )
+
+    @classmethod
+    def fromValue(cls, value):
+        """Create a Property from a given value"""
+        return cls(value=value)
 
 
 def typePropertyToString(propertyName, typeTagName, typeArg):
@@ -61,26 +68,23 @@ def typePropertyToString(propertyName, typeTagName, typeArg):
         propertyString += "    using type = {};\n".format("double")
     elif isinstance(typeArg, (int)):
         propertyString += "    using type = {};\n".format("int")
-    elif isinstance(typeArg, Property) or not isinstance(typeArg, (str)):
-        if hasattr(typeArg, "_requiredPropertyTypes") or hasattr(
-            typeArg, "_requiredPropertyValues"
-        ):
+    elif isinstance(typeArg, Property):
+        if typeArg.requiredPropertyTypes or typeArg.requiredPropertyValues:
             propertyString += "private:\n"
-        if hasattr(typeArg, "_requiredPropertyTypes"):
-            for reqProp in typeArg._requiredPropertyTypes:
+        if typeArg.requiredPropertyTypes is not None:
+            for reqProp in typeArg.requiredPropertyTypes:
                 propertyString += "    using {} = {};\n".format(
                     reqProp, "GetPropType<TypeTag, Properties::{}>".format(reqProp)
                 )
-
-        if hasattr(typeArg, "_requiredPropertyValues"):
-            for reqProp in typeArg._requiredPropertyValues:
+        if typeArg.requiredPropertyValues is not None:
+            for reqProp in typeArg.requiredPropertyValues:
                 reqPropLowerCase = reqProp[0].lower() + reqProp[1:]
                 propertyString += "    static constexpr auto {} = {};\n".format(
                     reqPropLowerCase, "getPropValue<TypeTag, Properties::{}>()".format(reqProp)
                 )
 
         propertyString += "public:\n"
-        propertyString += "    using type = {};\n".format(typeArg._typeName)
+        propertyString += "    using type = {};\n".format(typeArg.cppType)
 
     propertyString += "};"
 
@@ -96,22 +100,26 @@ def valuePropertyToString(propertyName, typeTagName, value):
     # make sure to get the correct C++ types and values
     if isinstance(value, bool):
         value = str(value).lower()
-        type = "bool"
+        cppType = "bool"
     elif isinstance(value, int):
-        type = "int"
-    else:
-        type = "Scalar"
+        cppType = "int"
+    elif isinstance(value, float):
+        cppType = "Scalar"
         propertyString += "\nprivate:\n"
         propertyString += "    using Scalar = GetPropType<TypeTag, Properties::Scalar>;\n"
         propertyString += "public:"
+    else:
+        raise ValueError(f"Invalid argument {value}. Expects bool, int or float.")
 
-    propertyString += "\n    static constexpr {} value = {};\n".format(type, value)
+    propertyString += "\n"
+    propertyString += f"    static constexpr {cppType} value = {value};"
+    propertyString += "\n"
     propertyString += "};"
 
     return propertyString
 
 
-TYPETAGS = {
+_typeTags = {
     "CCTpfaModel": {
         "include": "dumux/discretization/cctpfa.hh",
         "description": "A cell-centered two-point flux finite volume discretization scheme.",
@@ -132,79 +140,63 @@ def listTypeTags():
 
     print("\n**********************************\n")
     print("The following TypeTags are availabe:")
-    for key in TYPETAGS.keys():
-        print(key, ":", TYPETAGS[key]["description"])
+    for key, value in _typeTags.items():
+        print(key, ":", value["description"])
     print("\n**********************************")
 
 
-def getKnownProperties():
-    filepath = os.path.abspath(
+def predefinedProperties():
+    """Create a list of properties defined in properties.hh"""
+
+    propertiesHeader = os.path.abspath(
         os.path.dirname(__file__) + "/../../../../dumux/common/properties.hh"
     )
-    with open(filepath) as f:
-        result = []
-        for line in f:
+    with open(propertiesHeader) as header:
+        properties = []
+        for line in header:
             if line.startswith("struct"):
-                result.append(line.split(" ")[1])
-        return result
+                properties.append(line.split(" ")[1])
+        return properties
 
 
 class TypeTag:
-    knownProperties = getKnownProperties()
+    """TypeTags are inheritable collections of properties"""
 
-    def __init__(self, name=None, *, inheritsFrom=None, gridGeometry=None, scalar="double"):
+    knownProperties = predefinedProperties()
+
+    def __init__(self, name, *, inheritsFrom=None, gridGeometry=None):
         self.inheritsFrom = inheritsFrom
         self.includes = []
         self.properties = {}
         self.newPropertyDefinitions = []
         self.gridGeometry = gridGeometry
+        self.name = name
 
-        if name is not None:
-            self.name = name
-        else:
-            if gridGeometry is None and inheritsFrom is None:
-                self.name = "typetag_" + "".join(
-                    random.choices(string.ascii_uppercase + string.digits, k=8)
-                )
-            else:
-                self.name = "typetag_" + hashIt(
-                    "".join(inheritsFrom) + gridGeometry._typeName + scalar
-                )
-
-        if self.name in TYPETAGS.keys():
+        if self.name in _typeTags.keys():
             if inheritsFrom is not None:
                 raise ValueError(
-                    f"Existing TypeTag {name} cannot inherit from other TypeTags. Use TypeTag({name}) only."
+                    f"Existing TypeTag {name} cannot inherit from other TypeTags."
+                    f" Use TypeTag({name}) only."
                 )
             self.isExistingTypeTag = True
-            self.includes = [TYPETAGS[self.name]["include"]]
+            self.includes = [_typeTags[self.name]["include"]]
         else:
             self.isExistingTypeTag = False
 
-        if self.gridGeometry is not None:
-            discretizationMethod = self.gridGeometry.discMethod
-            map = {
-                "box": "BoxModel",
-                "cctpfa": "CCTpfaModel",
-            }
-            if discretizationMethod in map:
-                self.inheritsFrom += [map[discretizationMethod]]
-
         if self.inheritsFrom is not None:
-            # treat existing TypeTags by converting the given string to a real TypeTag object
+            # treat existing TypeTags by converting the given string to a real TypeTag instance
             for idx, parentTypeTag in enumerate(self.inheritsFrom):
                 if not isinstance(parentTypeTag, TypeTag):
                     if not isinstance(parentTypeTag, str):
                         raise ValueError(
                             "Unknown parent TypeTag {}. Use either argument of type TypeTag "
-                            "or a string for an existing TypeTag. List of existing TypeTags: {}".format(
-                                parentTypeTag, TYPETAGS.keys()
-                            )
+                            "or a string for an existing TypeTag. "
+                            "List of existing TypeTags: {}".format(parentTypeTag, _typeTags.keys())
                         )
-                    if parentTypeTag not in TYPETAGS.keys():
+                    if parentTypeTag not in _typeTags.keys():
                         raise ValueError(
                             "Unknown TypeTag {}. List of existing TypeTags: {}".format(
-                                parentTypeTag, TYPETAGS.keys()
+                                parentTypeTag, _typeTags.keys()
                             )
                         )
                     self.inheritsFrom[idx] = TypeTag(parentTypeTag)
@@ -218,13 +210,8 @@ class TypeTag:
                     for include in parentTypeTag.includes:
                         self.includes.append(include)
 
-        self._typeName = "Dumux::Properties::TTag::" + self.name
-
-        # set the scalar type
-        self.__setitem__("Scalar", Property(type=scalar))
-
-    # the [] operator for setting values
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value: Property):
+        """the [] operator for setting values"""
         if not isinstance(value, Property):
             raise ValueError("Only values of type Property can be assigned to a model")
 
@@ -233,20 +220,23 @@ class TypeTag:
             self.newPropertyDefinitions += [key]
 
         self.properties[key] = value
-        if hasattr(value, "_includes"):
-            for include in value._includes:
+        if value.cppIncludes is not None:
+            for include in value.cppIncludes:
                 self.includes.append(include)
 
-    # the [] operator for getting values
     def __getitem__(self, key):
+        """the [] operator for getting values"""
         return self.properties[key]
 
-    # returns the TypeTag as a string
-    def getTypeTag(self):
+    @property
+    def cppType(self):
+        """Returns the TypeTag as a string"""
         return "Dumux::Properties::TTag::" + self.name
 
-    # creates a string resembling a properties.hh file
-    def getProperties(self):
+    @property
+    def cppHeader(self):
+        """creates a string resembling a properties.hh file"""
+
         file = "#ifndef DUMUX_{}_PROPERTIES_HH\n".format(self.name.upper())
         file += "#define DUMUX_{}_PROPERTIES_HH\n\n".format(self.name.upper())
 
@@ -281,15 +271,15 @@ class TypeTag:
             file += "struct " + newDef + " { using type =  UndefinedProperty; };\n\n"
 
         for prop in self.properties:
-            if hasattr(self[prop], "_value"):
-                file += valuePropertyToString(prop, self.name, self[prop]._value) + "\n\n"
+            if self[prop].value is not None:
+                file += valuePropertyToString(prop, self.name, self[prop].value) + "\n\n"
             else:
                 file += typePropertyToString(prop, self.name, self[prop]) + "\n\n"
 
         if self.gridGeometry is not None:
             file += (
                 typePropertyToString(
-                    "Grid", self.name, Property(type="typename TypeTag::GridGeometry::Grid")
+                    "Grid", self.name, Property.fromCppType("typename TypeTag::GridGeometry::Grid")
                 )
                 + "\n\n"
             )
@@ -301,5 +291,23 @@ class TypeTag:
 
 
 class Model(TypeTag):
-    # TODO maybe rename TypeTag to Model and remove this class here
-    pass
+    """A DuMux model specifies all properties necessary to build a DuMux simulator"""
+
+    def __init__(self, *, inheritsFrom: List[str], gridGeometry, scalar: str = "double"):
+        # generate a generic name
+        genericName = "TypeTag" + hashIt("".join(inheritsFrom) + gridGeometry._typeName + scalar)
+
+        # deduce the discretization tag from the grid geometry
+        discretizationMethod = gridGeometry.discMethod
+        discretizationMap = {
+            "box": "BoxModel",
+            "cctpfa": "CCTpfaModel",
+        }
+        if discretizationMethod in discretizationMap:
+            inheritsFrom += [discretizationMap[discretizationMethod]]
+
+        # call parent constructor
+        super().__init__(name=genericName, inheritsFrom=inheritsFrom, gridGeometry=gridGeometry)
+
+        # set the scalar type
+        self.__setitem__("Scalar", Property.fromCppType(scalar))
