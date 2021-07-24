@@ -1,19 +1,27 @@
-from ._common import *
-
-from dumux.common.properties import Model, Property
+"""
+The DuMux common module
+containing classes and functions needed for most simulations
+"""
 
 from dune.generator.generator import SimpleGenerator
 from dune.common.hashit import hashIt
 
+from dumux.common.properties import Model, Property
+from dumux.wrapping import cppWrapperCreator, cppWrapperClassAlias
 
-# A problem decorator generator for Python problems
-#
-# from dumux.common import FVProblem
-# @FVProblem(gridGeometry)
-# class MyProblem:
-#    ...
-#
-def FVProblem(gridGeometry, enableInternalDirichletConstraints=False):
+from ._common import *
+
+
+@cppWrapperCreator
+def _createFVProblemDecorator(gridGeometry, enableInternalDirichletConstraints=False):
+    """A problem decorator generator for Python problems
+
+    from dumux.common import FVProblem
+    @FVProblem(gridGeometry)
+    class MyProblem:
+        ...
+    """
+
     def createModule(numEq):
         priVarType = "Dune::FieldVector<double, {}>".format(numEq)
         ggType = gridGeometry._typeName
@@ -28,19 +36,26 @@ def FVProblem(gridGeometry, enableInternalDirichletConstraints=False):
         module = generator.load(includes, problemType, moduleName, options=[holderType])
         return module
 
-    def FVProblemDecorator(Cls):
-        module = createModule(Cls.numEq)
+    def decorateFVProblem(cls):
+        module = createModule(cls.numEq)
 
         def createFVProblem():
-            return module.FVProblem(gridGeometry, Cls())
+            return module.FVProblem(gridGeometry, cls())
 
         return createFVProblem
 
-    return FVProblemDecorator
+    return decorateFVProblem
 
 
-# Function for JIT copmilation of Dumux::BoundaryTypes
-def BoundaryTypes(numEq=1):
+@cppWrapperClassAlias(creator=_createFVProblemDecorator)
+class FVProblem:
+    """Class alias used to decorate a Python finite volume problem"""
+
+
+@cppWrapperCreator
+def _createBoundaryTypes(numEq=1):
+    """Create BoundaryTypes instances"""
+
     # only compile this once per numEq
     cacheKey = "BoundaryTypes_{}".format(numEq)
     try:
@@ -55,7 +70,30 @@ def BoundaryTypes(numEq=1):
     return globals()[cacheKey]()
 
 
-def Parameters(dict={}, file=None):
+@cppWrapperClassAlias(creator=_createBoundaryTypes)
+class BoundaryTypes:
+    """Class alias used to create a BoundaryTypes instance"""
+
+
+@cppWrapperCreator
+def _createParameters(params: dict = None, fileName: str = None):
+    """Create Parameters
+
+    Args:
+        params (dict): A dictionary of parameter key-value pairs
+        fileName (str): Optionally a file to read parameters from
+
+    Usage:
+        parameters = Parameters(
+            {
+                "Problem.EnableGravity": True,
+                "SpatialParams.Porosity": 0.3,
+                "SpatialParams.Permeability": 1e-8,
+                "Vtk.AddVelocity": False,
+                "Assembly.NumericDifference.PriVarMagnitude": 1e5,
+            }
+        )
+    """
     parametersType = "Dumux::Parameters"
     includes = ["dumux/common/parameters.hh", "dumux/python/common/parameters.hh"]
     moduleName = "parameters_" + hashIt(parametersType)
@@ -63,11 +101,17 @@ def Parameters(dict={}, file=None):
     module = generator.load(includes, parametersType, moduleName)
 
     # make sure all dict keys are strings
-    for key in dict:
-        if not isinstance(dict[key], str):
-            dict[key] = str(dict[key])
+    if params is None:
+        params = {}
+    for key, value in params.items():
+        params[key] = str(value)
 
-    if file is not None:
-        return module.Parameters(file, dict)
-    else:
-        return module.Parameters(dict)
+    if fileName is not None:
+        return module.Parameters(fileName, params)
+
+    return module.Parameters(params)
+
+
+@cppWrapperClassAlias(creator=_createParameters)
+class Parameters:
+    """Class alias used to create a Parameters instance"""
