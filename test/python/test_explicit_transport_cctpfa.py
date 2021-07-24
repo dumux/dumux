@@ -46,7 +46,7 @@ class Problem:
         return bTypes
 
     def dirichlet(self, element, scvf):
-        if scvf.ipGlobal().two_norm < 0.25:
+        if scvf.ipGlobal.two_norm < 0.25:
             return 1.0
         else:
             return 0.0
@@ -79,7 +79,7 @@ def advectiveFlux(insideConcentration, outsideConcentration, normal):
 # Define solution vector #
 ##########################
 
-solution = np.zeros(gridGeometry.numDofs())
+solution = np.zeros(gridGeometry.numDofs)
 
 
 ###################
@@ -119,36 +119,38 @@ plot(time=0)
 # Implement update #
 ####################
 
+
 def assembleUpdate():
-    update = np.zeros(gridGeometry.numDofs())
+    update = np.zeros(gridGeometry.numDofs)
 
     for element in gridView.elements:
-        fvGeometry = gridGeometry.localView()
+        fvGeometry = gridGeometry.localView
         fvGeometry.bind(element)
 
-        for scvf in fvGeometry.scvfs():
-            insideScvIdx = scvf.insideScvIdx()
+        for scvf in fvGeometry.scvfs:
+            insideScvIdx = scvf.insideScvIdx
             insideConcentration = solution[insideScvIdx]
 
-            if scvf.boundary():
+            if scvf.boundary:
                 bndType = problem.boundaryTypes(element, scvf)
-                if bndType.isDirichlet():
+                if bndType.isDirichlet:
                     outsideConcentration = problem.dirichlet(element, scvf)[0]
                 else:
-                    raise Exception('Only Dirichlet BCs are implemented!')
+                    raise Exception("Only Dirichlet BCs are implemented!")
 
             else:
-                outsideScvIdx = scvf.outsideScvIdx()
+                outsideScvIdx = scvf.outsideScvIdx
                 outsideConcentration = solution[outsideScvIdx]
 
-            flux = advectiveFlux(insideConcentration,
-                                 outsideConcentration,
-                                 scvf.unitOuterNormal())*scvf.area()
+            flux = (
+                advectiveFlux(insideConcentration, outsideConcentration, scvf.unitOuterNormal)
+                * scvf.area
+            )
 
             update[insideScvIdx] -= flux
 
-        for scv in fvGeometry.scvs():
-            update[scv.dofIndex()] /= scv.volume()
+        for scv in fvGeometry.scvs:
+            update[scv.dofIndex] /= scv.volume
 
     return update
 
@@ -162,13 +164,13 @@ timeLoop = TimeLoop(startTime=0.0, dt=dt, endTime=1.0, verbose=True)
 timeLoop.setPeriodicCheckPoint(0.25)
 
 timeLoop.start()
-while not timeLoop.finished():
+while not timeLoop.finished:
     update = assembleUpdate()
-    solution += timeLoop.timeStepSize() * update
+    solution += timeLoop.timeStepSize * update
     timeLoop.advanceTimeStep()
     timeLoop.reportTimeStep()
 
-    if timeLoop.isCheckPoint():
-        plot(time=timeLoop.time())
+    if timeLoop.isCheckPoint:
+        plot(time=timeLoop.time)
 
 timeLoop.finalize()

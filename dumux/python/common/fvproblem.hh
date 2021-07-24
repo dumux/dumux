@@ -239,6 +239,7 @@ void registerFVProblem(pybind11::handle scope, pybind11::class_<Problem, options
 
     cls.def_property_readonly("name", &Problem::name);
     cls.def_property_readonly("numEq", [](Problem&){ return Problem::numEq; });
+    cls.def_property_readonly("gridGeometry", &Problem::gridGeometry);
 
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -263,7 +264,6 @@ void registerFVProblem(pybind11::handle scope, pybind11::class_<Problem, options
     cls.def("initial", &Problem::template initial<Element>);
     cls.def("initial", &Problem::template initial<Vertex>);
     cls.def("extrusionFactor", &Problem::template extrusionFactor<decltype(std::ignore)>);
-    cls.def("gridGeometry", &Problem::gridGeometry);
 }
 
 } // end namespace Dumux::Python

@@ -41,8 +41,8 @@ void registerBoundaryTypes(pybind11::handle scope, pybind11::class_<BoundaryType
     cls.def("reset", &BoundaryTypes::reset);
     cls.def("setNeumann", &BoundaryTypes::setAllNeumann);
     cls.def("setDirichlet", &BoundaryTypes::setAllDirichlet);
-    cls.def("isDirichlet", &BoundaryTypes::hasDirichlet);
-    cls.def("isNeumann", &BoundaryTypes::hasNeumann);
+    cls.def_property_readonly("isDirichlet", &BoundaryTypes::hasDirichlet);
+    cls.def_property_readonly("isNeumann", &BoundaryTypes::hasNeumann);
 }
 
 template <class BoundaryTypes>

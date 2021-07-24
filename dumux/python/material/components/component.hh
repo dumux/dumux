@@ -18,14 +18,14 @@ void registerComponent(pybind11::handle scope,
 
     cls.def(pybind11::init());
 
-    cls.def_static("name", &Comp::name);
-    cls.def_static("molarMass", &Comp::molarMass);
+    cls.def_property_readonly_static("name", &Comp::name);
+    cls.def_property_readonly_static("molarMass", &Comp::molarMass);
 
     if constexpr (ComponentTraits<Comp>::hasLiquidState)
     {
         cls.def_static("liquidDensity", &Comp::liquidDensity, "temperature"_a, "pressure"_a);
         cls.def_static("liquidMolarDensity", &Comp::liquidMolarDensity, "temperature"_a, "pressure"_a);
-        cls.def_static("liquidIsCompressible", &Comp::liquidIsCompressible);
+        cls.def_property_readonly_static("liquidIsCompressible", &Comp::liquidIsCompressible);
         cls.def_static("liquidViscosity", &Comp::liquidViscosity, "temperature"_a, "pressure"_a);
         cls.def_static("liquidEnthalpy", &Comp::liquidEnthalpy, "temperature"_a, "pressure"_a);
         cls.def_static("liquidInternalEnergy", &Comp::liquidInternalEnergy, "temperature"_a, "pressure"_a);
@@ -39,8 +39,8 @@ void registerComponent(pybind11::handle scope,
         using Scalar = typename Comp::Scalar;
         cls.def_static("gasDensity", &Comp::gasDensity, "temperature"_a, "pressure"_a);
         cls.def_static("gasMolarDensity", &Comp::gasMolarDensity, "temperature"_a, "pressure"_a);
-        cls.def_static("gasIsCompressible", &Comp::gasIsCompressible);
-        cls.def_static("gasIsIdeal", &Comp::gasIsIdeal);
+        cls.def_property_readonly_static("gasIsCompressible", &Comp::gasIsCompressible);
+        cls.def_property_readonly_static("gasIsIdeal", &Comp::gasIsIdeal);
         cls.def_static("gasPressure", &Comp::gasPressure, "temperature"_a, "pressure"_a);
         cls.def_static("gasViscosity", &Comp::gasViscosity, "temperature"_a, "pressure"_a);
         cls.def_static("gasEnthalpy", &Comp::gasEnthalpy, "temperature"_a, "pressure"_a);
@@ -51,7 +51,7 @@ void registerComponent(pybind11::handle scope,
 
     if constexpr (ComponentTraits<Comp>::hasSolidState)
     {
-        cls.def_static("solidIsCompressible", &Comp::solidIsCompressible);
+        cls.def_property_readonly_static("solidIsCompressible", &Comp::solidIsCompressible);
         cls.def_static("solidDensity", &Comp::solidDensity, "temperature_a");
         cls.def_static("solidThermalConductivity", &Comp::solidThermalConductivity, "temperature_a");
         cls.def_static("solidHeatCapacity", &Comp::solidHeatCapacity, "temperature_a");
@@ -59,13 +59,13 @@ void registerComponent(pybind11::handle scope,
 
     if constexpr (ComponentTraits<Comp>::isIon)
     {
-        cls.def_static("charge", &Comp::charge);
+        cls.def_property_readonly_static("charge", &Comp::charge);
     }
 
     if constexpr (ComponentTraits<Comp>::hasLiquidState || ComponentTraits<Comp>::hasGasState)
     {
-        cls.def_static("criticalTemperature", &Comp::criticalTemperature);
-        cls.def_static("criticalPressure", &Comp::criticalPressure);
+        cls.def_property_readonly_static("criticalTemperature", &Comp::criticalTemperature);
+        cls.def_property_readonly_static("criticalPressure", &Comp::criticalPressure);
     }
 }
 

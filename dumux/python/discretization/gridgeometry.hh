@@ -103,11 +103,11 @@ void registerFVElementGeometry(pybind11::handle scope)
         cls.def_property_readonly("numScv", &FVEG::numScv);
         cls.def_property_readonly("hasBoundaryScvf", &FVEG::hasBoundaryScvf);
         cls.def("bind", &FVEG::bind, "element"_a);
-        cls.def("scvs", [](FVEG& self){
+        cls.def_property_readonly("scvs", [](FVEG& self){
             const auto range = scvs(self);
             return pybind11::make_iterator(range.begin(), range.end());
         }, pybind11::keep_alive<0, 1>());
-        cls.def("scvfs", [](FVEG& self){
+        cls.def_property_readonly("scvfs", [](FVEG& self){
             const auto range = scvfs(self);
             return pybind11::make_iterator(range.begin(), range.end());
         }, pybind11::keep_alive<0, 1>());
@@ -147,6 +147,8 @@ void registerGridGeometry(pybind11::handle scope, pybind11::class_<GG, Options..
         return toString(GG::discMethod);
     });
 
+    cls.def_property_readonly("localView", [](GG& self){ return localView(self); });
+
     using SubControlVolume = typename GG::SubControlVolume;
     Impl::registerSubControlVolume<SubControlVolume>(scope);
 
@@ -156,8 +158,7 @@ void registerGridGeometry(pybind11::handle scope, pybind11::class_<GG, Options..
     // also compile the corresponding local view
     using LocalView = typename GG::LocalView;
     Impl::registerFVElementGeometry<LocalView>(scope);
-    // and make it accessible
-    cls.def("localView", [](GG& self){ return localView(self); });
+
 }
 
 } // namespace Dumux::Python

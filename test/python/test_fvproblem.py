@@ -38,7 +38,7 @@ class Problem:
         return bTypes
 
     def dirichlet(self, element, scv):
-        if scv.center()[0] > 0.5:
+        if scv.center[0] > 0.5:
             return [0.5, 0.5]
         else:
             return [1.0, 0.0]
@@ -62,15 +62,15 @@ numNeumann = 0
 numDirichlet = 0
 totalSource = 0
 for e in gridView.elements:
-    fvGeometry = problem.gridGeometry().localView()
+    fvGeometry = problem.gridGeometry.localView  # test problem interface
     fvGeometry.bind(e)
-    for scv in fvGeometry.scvs():
+    for scv in fvGeometry.scvs:
         bTypes = problem.boundaryTypes(element=e, scv=scv)
-        if bTypes.isDirichlet():
+        if bTypes.isDirichlet:
             numDirichlet += 1
-        elif bTypes.isNeumann():
+        elif bTypes.isNeumann:
             numNeumann += 1
-        totalSource += problem.sourceAtPos(scv.center())[0]*scv.volume()
+        totalSource += problem.sourceAtPos(scv.center)[0] * scv.volume
 
-print("[python] Found {} Neumann faces and {} Dirichlet faces".format(numNeumann, numDirichlet))
-print("[python] Total source {:.2f} kg/s".format(totalSource))
+print(f"[python] Found {numNeumann} Neumann faces and {numDirichlet} Dirichlet faces")
+print(f"[python] Total source {totalSource:.2f} kg/s")
