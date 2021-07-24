@@ -53,22 +53,22 @@ void registerVtkOutputModule(pybind11::handle scope,
 
     using Scalar = double;
 
-    cls.def("addField", [](VtkOutputModule& self, const SolutionVector& sol, const std::string& name)
-                        { self.addField(sol, name); }
-    );
+    cls.def("addField", [](VtkOutputModule& self, const SolutionVector& sol, const std::string& name){
+        self.addField(sol, name);
+    });
 
-    cls.def("write", [](VtkOutputModule& self, Scalar time){ self.write(time); });
+    cls.def("write", [](VtkOutputModule& self, Scalar time){
+        self.write(time);
+    });
 
     cls.def("addVolumeVariable", [](VtkOutputModule& self,
                                     std::function<Scalar(const VolumeVariables&)>&& f,
-                                    const std::string& name) {
+                                    const std::string& name){
         self.addVolumeVariable(std::move(f), name);
     });
 
     using VelocityOutputType = Dumux::VelocityOutput<GridVariables>;
-    cls.def("addVelocityOutput", [](VtkOutputModule& self,
-                                    std::shared_ptr<VelocityOutputType> velocityOutput)
-    {
+    cls.def("addVelocityOutput", [](VtkOutputModule& self, std::shared_ptr<VelocityOutputType> velocityOutput){
         self.addVelocityOutput(velocityOutput);
     });
 };

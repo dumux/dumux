@@ -37,8 +37,8 @@ void registerPorousMediumFlowVelocityOutput(pybind11::handle scope,
     using pybind11::operator""_a;
     using namespace Dune::Python;
     using VelocityOutput = Dumux::PorousMediumFlowVelocityOutput<GridVariables, FluxVariables>;
-    cls.def(pybind11::init([](const GridVariables& gridVariables)
-    {
+
+    cls.def(pybind11::init([](const GridVariables& gridVariables){
         return std::make_shared<VelocityOutput>(gridVariables);
     }));
 }

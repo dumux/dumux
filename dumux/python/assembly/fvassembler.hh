@@ -59,15 +59,15 @@ void registerFVAssembler(pybind11::handle scope, pybind11::class_<FVAssembler, o
     cls.def_property_readonly("isStationaryProblem", &FVAssembler::isStationaryProblem);
     cls.def_property_readonly("gridVariables", [](FVAssembler& self) { return self.gridVariables(); });
 
-    cls.def("updateGridVariables", [](FVAssembler& self, const SolutionVector& curSol) {
+    cls.def("updateGridVariables", [](FVAssembler& self, const SolutionVector& curSol){
         self.updateGridVariables(curSol);
     });
 
-    cls.def("assembleResidual", [](FVAssembler& self, const SolutionVector& curSol) {
+    cls.def("assembleResidual", [](FVAssembler& self, const SolutionVector& curSol){
         self.assembleResidual(curSol);
     });
 
-    cls.def("assembleJacobianAndResidual", [](FVAssembler& self, const SolutionVector& curSol) {
+    cls.def("assembleJacobianAndResidual", [](FVAssembler& self, const SolutionVector& curSol){
         self.assembleJacobianAndResidual(curSol);
     });
 }

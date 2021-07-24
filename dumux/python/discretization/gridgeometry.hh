@@ -147,7 +147,9 @@ void registerGridGeometry(pybind11::handle scope, pybind11::class_<GG, Options..
         return toString(GG::discMethod);
     });
 
-    cls.def_property_readonly("localView", [](GG& self){ return localView(self); });
+    cls.def_property_readonly("localView", [](GG& self){
+        return localView(self);
+    });
 
     using SubControlVolume = typename GG::SubControlVolume;
     Impl::registerSubControlVolume<SubControlVolume>(scope);

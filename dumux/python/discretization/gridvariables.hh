@@ -49,13 +49,11 @@ void registerElementSolution(pybind11::handle scope)
     {
         using pybind11::operator""_a;
 
-        cls.def("__getitem__",
-                [](const ElementSolution& self, std::size_t i)
-                {
-                    if (i >= self.size())
-                        throw pybind11::index_error();
-                    return self[i];
-                });
+        cls.def("__getitem__", [](const ElementSolution& self, std::size_t i){
+            if (i >= self.size())
+                throw pybind11::index_error();
+            return self[i];
+        });
 
         cls.def_property_readonly("size", &ElementSolution::size);
     }
@@ -88,18 +86,17 @@ void registerGridVariables(pybind11::handle scope, pybind11::class_<GV, Options.
     cls.def_property_readonly("prevGridVolVars", [](GV& self) { return self.prevGridVolVars(); });
     cls.def_property_readonly("gridGeometry", &GV::gridGeometry);
 
-    cls.def("updateAfterGridAdaption", [](GV& self, const SolutionVector& sol)
-            { return self.updateAfterGridAdaption(sol); }
-    );
+    cls.def("updateAfterGridAdaption", [](GV& self, const SolutionVector& sol){
+        return self.updateAfterGridAdaption(sol);
+    });
 
-    cls.def("resetTimeStep", [](GV& self, const SolutionVector& sol)
-            { return self.resetTimeStep(sol); }
-    );
+    cls.def("resetTimeStep", [](GV& self, const SolutionVector& sol){
+        return self.resetTimeStep(sol);
+    });
 
-    cls.def("update", [](GV& self, const SolutionVector& sol,
-                         const bool forceFluxCacheUpdate = false)
-            { return self.update(sol, forceFluxCacheUpdate); }
-    );
+    cls.def("update", [](GV& self, const SolutionVector& sol, const bool forceFluxCacheUpdate = false){
+        return self.update(sol, forceFluxCacheUpdate);
+    });
 
     using ElementSolution = std::decay_t<decltype(elementSolution(std::declval<Element>(),
                                                                   std::declval<SolutionVector>(),

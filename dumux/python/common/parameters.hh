@@ -35,10 +35,10 @@ template <class... options>
 void registerParameters(pybind11::handle scope,
                         pybind11::class_<Parameters, options...> cls)
 {
-    auto setParams = [](const std::unordered_map<std::string, std::string>& params)
-    {
-        return [&](Dune::ParameterTree& tree)
-        {
+    using pybind11::operator""_a;
+
+    auto setParams = [](const std::unordered_map<std::string, std::string>& params){
+        return [&](Dune::ParameterTree& tree){
             for (const auto& p : params)
                 tree[p.first] = p.second;
         };
@@ -46,22 +46,21 @@ void registerParameters(pybind11::handle scope,
 
     cls.def(pybind11::init([setParams](const std::string& parameterFileName,
                                        const std::unordered_map<std::string, std::string>& params,
-                                       bool inputFileOverwritesParams)
-            {
-                auto p = new Parameters();
-                p->init(parameterFileName, setParams(params), inputFileOverwritesParams);
-                return p;
-            }),
-            pybind11::arg("parameterFileName"),
-            pybind11::arg("params") = std::unordered_map<std::string, std::string>{},
-            pybind11::arg("inputFileOverwritesParams") = false);
+                                       bool inputFileOverwritesParams){
+            auto p = new Parameters();
+            p->init(parameterFileName, setParams(params), inputFileOverwritesParams);
+            return p;
+        })
+        , "parameterFileName"_a
+        , "params"_a = std::unordered_map<std::string, std::string>{}
+        , "inputFileOverwritesParams"_a = false
+    );
 
-    cls.def(pybind11::init([setParams](const std::unordered_map<std::string, std::string>& params)
-            {
-                auto p = new Parameters();
-                p->init(setParams(params));
-                return p;
-            }));
+    cls.def(pybind11::init([setParams](const std::unordered_map<std::string, std::string>& params){
+        auto p = new Parameters();
+        p->init(setParams(params));
+        return p;
+    }));
 }
 
 template<class Scalar>
