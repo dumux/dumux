@@ -15,5 +15,7 @@ add_subdirectory(timestepping)
 
 # if Python bindings are enabled, include Python binding tests
 if(DUNE_ENABLE_PYTHONBINDINGS)
-  add_subdirectory(python)
+  if(${dune-common_VERSION} VERSION_GREATER_EQUAL 2.8)
+    add_subdirectory(python)
+  endif()
 endif()
