@@ -1,9 +1,14 @@
+"""DuMux input-output library"""
+
 from dune.generator.generator import SimpleGenerator
 from dune.common.hashit import hashIt
+from dumux.wrapping import cppWrapperCreator, cppWrapperClassAlias
 
-# construct a VtkOutputModule
-# the grid geometry is JIT compiled
-def VtkOutputModule(*, gridVariables, solutionVector, name):
+
+@cppWrapperCreator
+def _createVtkOutputModule(*, gridVariables, solutionVector, name):
+    """Construct a VtkOutputModule"""
+
     includes = gridVariables._includes + solutionVector._includes
     includes += ["dumux/python/io/vtkoutputmodule.hh", "dumux/io/vtkoutputmodule.hh"]
     typeName = "Dumux::VtkOutputModule<{}, {}>".format(
@@ -11,7 +16,10 @@ def VtkOutputModule(*, gridVariables, solutionVector, name):
     )
     moduleName = "vtkoutputmodule_" + hashIt(typeName)
     generator = SimpleGenerator("VtkOutputModule", "Dumux::Python")
-    module = generator.load(
-        includes, typeName, moduleName, preamble=gridVariables._model.getProperties()
-    )
+    module = generator.load(includes, typeName, moduleName, preamble=gridVariables.model.cppHeader)
     return module.VtkOutputModule(gridVariables, solutionVector, name)
+
+
+@cppWrapperClassAlias(creator=_createVtkOutputModule)
+class VtkOutputModule:
+    """Class alias used to instantiate a VtkOutputModule"""
