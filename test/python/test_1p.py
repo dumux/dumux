@@ -16,7 +16,9 @@ try:
     discMethod = sys.argv[1]
     diffMethod = sys.argv[2]
 except IndexError:
-    print("No discretization method and differentiation method given. Defaulting to box and numeric diff.")
+    print(
+        "No discretization method and differentiation method given. Defaulting to box and numeric diff."
+    )
     discMethod = "box"
     diffMethod = "numeric"
 
@@ -27,26 +29,29 @@ if diffMethod not in ["analytic", "numeric"]:
     raise NotImplementedError(diffMethod + " must be analytic or numeric")
 
 # Initialize the paramaters
-parameters = Parameters({
-    "Problem.EnableGravity": True,
-    "SpatialParams.Porosity": 0.3,
-    "SpatialParams.Permeability": 1e-8,
-    "Vtk.AddVelocity": False,
-    "Assembly.NumericDifference.PriVarMagnitude": 1e5,
-})
+parameters = Parameters(
+    {
+        "Problem.EnableGravity": True,
+        "SpatialParams.Porosity": 0.3,
+        "SpatialParams.Permeability": 1e-8,
+        "Vtk.AddVelocity": False,
+        "Assembly.NumericDifference.PriVarMagnitude": 1e5,
+    }
+)
 
 # Set up the grid and the grid geometry
-gridView = structuredGrid([0,0], [1,1], [10,10])
+gridView = structuredGrid([0, 0], [1, 1], [10, 10])
 gridGeometry = GridGeometry(gridView=gridView, discMethod=discMethod)
 
 # Set up the model
-model = Model(inheritsFrom=['OneP'], gridGeometry=gridGeometry)
+model = Model(inheritsFrom=["OneP"], gridGeometry=gridGeometry)
 
 # Tell Dumux to use a particular local residual type
-model['LocalResidual'] = Property(
-    type='OnePIncompressibleLocalResidual<TypeTag>',
-    includes=['dumux/porousmediumflow/1p/incompressiblelocalresidual.hh']
+model["LocalResidual"] = Property.fromCppType(
+    "OnePIncompressibleLocalResidual<TypeTag>",
+    cppIncludes=["dumux/porousmediumflow/1p/incompressiblelocalresidual.hh"],
 )
+
 
 @OnePSpatialParams(gridGeometry=gridGeometry)
 class SpatialParams:
@@ -57,7 +62,9 @@ class SpatialParams:
     def isLens(self, globalPos):
         eps = 1.5e-7
         for i in range(self.dimWorld):
-            if (globalPos[i] < self.lensLowerLeft[i] + eps) or (globalPos[i] > self.lensUpperRight[i] - eps):
+            if (globalPos[i] < self.lensLowerLeft[i] + eps) or (
+                globalPos[i] > self.lensUpperRight[i] - eps
+            ):
                 return False
         return True
 
@@ -66,20 +73,20 @@ class SpatialParams:
         # permeability can be either given
         # as scalar or tensorial value
         if self.isLens(globalPos):
-            return [[1e-12, 0],
-                    [0, 1e-12]]
+            return [[1e-12, 0], [0, 1e-12]]
         else:
             return 1e-10
 
     def porosityAtPos(self, globalPos):
         return 0.4
 
-spatialParams = SpatialParams()
-model['SpatialParams'] = Property(object=spatialParams)
 
-h20 = Component(name="SimpleH2O")
-onePLiquid = FluidSystem(type="OnePLiquid", component=h20, scalar=model['Scalar'])
-model['FluidSystem'] = Property(object=onePLiquid)
+spatialParams = SpatialParams()
+model["SpatialParams"] = Property.fromInstance(spatialParams)
+
+h20 = Component("SimpleH2O")
+onePLiquid = FluidSystem("OnePLiquid", component=h20, scalar=model["Scalar"])
+model["FluidSystem"] = Property.fromInstance(onePLiquid)
 
 # define the Problem
 @PorousMediumFlowProblem(gridGeometry, spatialParams)
@@ -98,8 +105,8 @@ class Problem:
         return bTypes
 
     def dirichletAtPos(self, globalPos):
-        dp_dy_ = -1.0e+5
-        return  1.0e+5 + dp_dy_*(globalPos[1] - gridGeometry.bBoxMax[1])
+        dp_dy_ = -1.0e5
+        return 1.0e5 + dp_dy_ * (globalPos[1] - gridGeometry.bBoxMax[1])
 
     def sourceAtPos(self, globalPos):
         return 0.0
@@ -119,8 +126,9 @@ class Problem:
     def neumann(self, element, fvGeometry, scvf):
         return 0
 
+
 problem = Problem()
-model['Problem'] = Property(object=problem)
+model["Problem"] = Property.fromInstance(problem)
 
 # initialize the GridVariables and the Assembler
 gridVars = GridVariables(problem=problem, model=model)
@@ -149,5 +157,5 @@ testName = "test_1p_" + discMethod + "_" + diffMethod
 output = VtkOutputModule(gridVariables=gridVars, solutionVector=sol, name=testName)
 velocityoutput = PorousMediumFlowVelocityOutput(gridVariables=gridVars)
 output.addVelocityOutput(velocityoutput)
-output.addVolumeVariable(lambda vv : vv.pressure(), "p")
+output.addVolumeVariable(lambda vv: vv.pressure(), "p")
 output.write(1.0)

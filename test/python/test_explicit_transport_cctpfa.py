@@ -9,6 +9,7 @@ import numpy as np
 plotting = True
 try:
     import matplotlib.pyplot as plt
+
     plt.ion()
 except ImportError:
     print("Warning: Plots are not generated as matplotlib could not be found.")
@@ -21,7 +22,7 @@ except ImportError:
 dimension = 2
 cells = 20
 
-gridView = structuredGrid([0]*dimension, [1]*dimension, [cells]*dimension)
+gridView = structuredGrid([0] * dimension, [1] * dimension, [cells] * dimension)
 
 gridGeometry = GridGeometry(gridView, discMethod="cctpfa")
 
@@ -61,7 +62,7 @@ problem = Problem()
 # Transport equation #
 ######################
 
-velocity = FieldVector([1]*dimension)
+velocity = FieldVector([1] * dimension)
 upwindWeight = 1.0
 
 
@@ -71,8 +72,9 @@ def advectiveFlux(insideConcentration, outsideConcentration, normal):
     downwindConcentration = outsideConcentration
     if normalVelocity < 0.0:
         upwindConcentration, downwindConcentration = downwindConcentration, upwindConcentration
-    return normalVelocity*(upwindWeight*upwindConcentration
-                           + (1.0-upwindWeight)*downwindConcentration)
+    return normalVelocity * (
+        upwindWeight * upwindConcentration + (1.0 - upwindWeight) * downwindConcentration
+    )
 
 
 ##########################
@@ -86,6 +88,7 @@ solution = np.zeros(gridGeometry.numDofs)
 # Enable plotting #
 ###################
 
+
 @gridFunction(gridView)
 def solutionGridFunction(element, x):
     elementIdx = elementMapper.index(element)
@@ -96,13 +99,15 @@ def plot(time):
     if plotting and dimension == 2:
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
-        solutionGridFunction.plot(figure=fig, clim=[0, 1+1e-6], gridLines=None)
-        ax.set_title("t = "+"{:0.2f}".format(time))
+        solutionGridFunction.plot(figure=fig, clim=[0, 1 + 1e-6], gridLines=None)
+        ax.set_title("t = " + "{:0.2f}".format(time))
         plt.show()
         plt.pause(1e-3)
-    gridView.writeVTK(problem.name + "-solution-{:0.2f}".format(time).replace(".", ""),
-                      celldata={"solution": solutionGridFunction},
-                      outputType=OutputType.ascii)
+    gridView.writeVTK(
+        problem.name + "-solution-{:0.2f}".format(time).replace(".", ""),
+        celldata={"solution": solutionGridFunction},
+        outputType=OutputType.ascii,
+    )
 
 
 #######################

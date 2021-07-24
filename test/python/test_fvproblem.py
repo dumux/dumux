@@ -14,6 +14,7 @@ def PrintProblemTest(problem):
     module = generator.load(includes, typeName, moduleName)
     return module.PrintProblemTest(problem)
 
+
 ############################################################
 # The actual Python test
 ############################################################
@@ -21,9 +22,10 @@ from dune.grid import structuredGrid
 from dumux.discretization import GridGeometry
 from dumux.common import BoundaryTypes, FVProblem
 
-gridView = structuredGrid([0,0,0],[1,1,1],[3,3,3])
+gridView = structuredGrid([0, 0, 0], [1, 1, 1], [3, 3, 3])
 
 gridGeometry = GridGeometry(gridView, discMethod="box")
+
 
 @FVProblem(gridGeometry)
 class Problem:
@@ -45,6 +47,7 @@ class Problem:
 
     def sourceAtPos(self, globalPos):
         return [globalPos[0]]
+
 
 problem = Problem()
 print("Name of the problem: {}".format(problem.name))
