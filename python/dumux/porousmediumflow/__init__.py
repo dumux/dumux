@@ -1,20 +1,31 @@
+"""Classes and functions related to the porousmedium flow models"""
+
 from dune.generator.generator import SimpleGenerator
 from dune.common.hashit import hashIt
+from dumux.wrapping import cppWrapperCreator, cppWrapperClassAlias
 
-# A problem decorator generator for Python problems
-#
-# from dumux.common import PorousMediumFlowProblem
-# @PorousMediumFlowProblem(gridGeometry)
-# class MyProblem:
-#    ...
-#
-def PorousMediumFlowProblem(gridGeometry, spatialParams, enableInternalDirichletConstraints=False):
+
+@cppWrapperCreator
+def _createPorousMediumFlowProblemDecorator(
+    gridGeometry, spatialParams, enableInternalDirichletConstraints=False
+):
+    """A problem decorator generator for Python problems
+
+    Usage:
+        from dumux.common import PorousMediumFlowProblem
+        @PorousMediumFlowProblem(gridGeometry)
+        class MyProblem:
+            ...
+    """
+
     def createModule(numEq):
-        priVarType = f"Dune::FieldVector<double, {numEq}>"
+        priVars = f"Dune::FieldVector<double, {numEq}>"
         ggType = gridGeometry._typeName
-        spatialParamsType = spatialParams._typeName
-        enableIntDirConstraint = "true" if enableInternalDirichletConstraints else "false"
-        problemType = f"Dumux::Python::PorousMediumFlowProblem<{ggType}, {priVarType}, {spatialParamsType}, {enableIntDirConstraint}>"
+        spType = spatialParams._typeName
+        enableIDC = "true" if enableInternalDirichletConstraints else "false"
+        problemType = (
+            "Dumux::Python::PorousMediumFlowProblem" f"<{ggType}, {priVars}, {spType}, {enableIDC}>"
+        )
         includes = (
             gridGeometry._includes
             + spatialParams._includes
@@ -25,22 +36,30 @@ def PorousMediumFlowProblem(gridGeometry, spatialParams, enableInternalDirichlet
         module = generator.load(includes, problemType, moduleName, holder="std::shared_ptr")
         return module
 
-    def PorousMediumFlowProblemDecorator(Cls):
-        module = createModule(Cls.numEq)
+    def decoratePorousMediumFlowProblem(cls):
+        module = createModule(cls.numEq)
 
         def createPorousMediumFlowProblem():
-            return module.PorousMediumFlowProblem(gridGeometry, spatialParams, Cls())
+            return module.PorousMediumFlowProblem(gridGeometry, spatialParams, cls())
 
         return createPorousMediumFlowProblem
 
-    return PorousMediumFlowProblemDecorator
+    return decoratePorousMediumFlowProblem
 
 
-def PorousMediumFlowVelocityOutput(*, gridVariables):
+@cppWrapperClassAlias(creator=_createPorousMediumFlowProblemDecorator)
+class PorousMediumFlowProblem:
+    """A class alias used to create a problem decorator Python problems"""
+
+
+@cppWrapperCreator
+def _createPorousMediumFlowVelocityOutput(*, gridVariables):
+    """Create a PorousMediumFlowVelocityOutput"""
+
     includes = gridVariables._includes
     includes += ["dumux/python/porousmediumflow/velocityoutput.hh", "dumux/io/velocityoutput.hh"]
     fluxVarsType = (
-        f"Dumux::GetPropType<{gridVariables._model.getTypeTag()}, Dumux::Properties::FluxVariables>"
+        f"Dumux::GetPropType<{gridVariables.model.cppType}, Dumux::Properties::FluxVariables>"
     )
     typeName = f"Dumux::PorousMediumFlowVelocityOutput<{gridVariables._typeName}, {fluxVarsType}>"
     moduleName = "porousmediumflowvelocityoutput_" + hashIt(typeName)
@@ -51,7 +70,12 @@ def PorousMediumFlowVelocityOutput(*, gridVariables):
         typeName,
         moduleName,
         holder="std::shared_ptr",
-        preamble=gridVariables._model.getProperties(),
+        preamble=gridVariables.model.cppHeader,
         baseClasses=baseClass,
     )
     return module.PorousMediumFlowVelocityOutput(gridVariables)
+
+
+@cppWrapperClassAlias(creator=_createPorousMediumFlowVelocityOutput)
+class PorousMediumFlowVelocityOutput:
+    """A class alias used to create PorousMediumFlowVelocityOutput instances"""
