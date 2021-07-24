@@ -1,7 +1,10 @@
+"""Components are building blocks of fluid and solid systems"""
+
 from dune.generator.generator import SimpleGenerator
+from dumux.wrapping import cppWrapperCreator, cppWrapperClassAlias
 
 
-components = {
+_components = {
     "Air": "dumux/material/components/air.hh",
     "H2O": "dumux/material/components/h2o.hh",
     "SimpleH2O": "dumux/material/components/simpleh2o.hh",
@@ -10,16 +13,25 @@ components = {
 }
 
 
-def Component(*, name, scalar="double"):
+def listComponents():
+    """List all available component names"""
+    print("The following components are availabe:")
+    print(_components.keys())
+
+
+@cppWrapperCreator
+def _createComponent(name, *, scalar="double"):
+    """Create a new component of the given name"""
+
     moduleName = name
     typeName = f"Dumux::Components::{name} <{scalar}>"
     includes = ["dumux/python/material/components/component.hh"]
-    includes += [components[name]]
+    includes += [_components[name]]
     generator = SimpleGenerator("Component", "Dumux::Python")
     module = generator.load(includes, typeName, moduleName)
     return module.Component()
 
 
-def listComponents():
-    print("The following components are availabe:")
-    print(components.keys())
+@cppWrapperClassAlias(creator=_createComponent)
+class Component:
+    """Class alias used to instantiate a Component"""

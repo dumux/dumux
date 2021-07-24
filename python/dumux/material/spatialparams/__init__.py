@@ -1,9 +1,15 @@
+"""Spatial parameter classes"""
+
+import numpy as np
 from dune.generator.generator import SimpleGenerator
 from dumux.common import Property
-import numpy as np
+from dumux.wrapping import cppWrapperCreator, cppWrapperClassAlias
 
 
-def OnePSpatialParams(*, gridGeometry, scalar=None):
+@cppWrapperCreator
+def _createOnePSpatialParamsDecorator(*, gridGeometry, scalar: Property = None):
+    """Turn a Python spatial parameter class into an C++/Python hybrid class"""
+
     moduleName = "spatialparams"
     dim = gridGeometry.gridView.dimension
     includes = gridGeometry._includes + [
@@ -12,11 +18,15 @@ def OnePSpatialParams(*, gridGeometry, scalar=None):
     ]
 
     if scalar is None:
-        scalar = Property(type="double")
+        scalar = Property.fromCppType("double")
+    scalarType = scalar.cppType
 
-    typeName = f"Dumux::Python::FVSpatialParamsOneP<{gridGeometry._typeName}, {scalar._typeName}, Dune::FieldMatrix<{scalar._typeName}, {dim}, {dim}>>"
+    permType = f"Dune::FieldMatrix<{scalarType}, {dim}, {dim}>"
+    typeName = (
+        f"Dumux::Python::FVSpatialParamsOneP<{gridGeometry._typeName}, {scalarType}, {permType}>"
+    )
 
-    def OnePSpatialParamsDecorator(Cls):
+    def decorateOnePSpatialParams(cls):
         generator = SimpleGenerator("OnePSpatialParams", "Dumux::Python")
         module = generator.load(includes, typeName, moduleName, holder="std::shared_ptr")
 
@@ -25,10 +35,12 @@ def OnePSpatialParams(*, gridGeometry, scalar=None):
                 matrix = np.zeros(shape=(dim, dim))
                 np.fill_diagonal(matrix, permeabilityValue)
                 return matrix.tolist()
-            else:
-                return permeabilityValue
+
+            return permeabilityValue
 
         class Permeability:
+            """Permeability decorator to make sure permeability has correct type"""
+
             def __init__(self, permeabilityFunction):
                 self.permeabilityFunction = permeabilityFunction
 
@@ -37,6 +49,8 @@ def OnePSpatialParams(*, gridGeometry, scalar=None):
                 return maybeConvertScalarToMatrix(result)
 
         class PermeabilityAtPos:
+            """PermeabilityAtPos decorator to make sure permeability has correct type"""
+
             def __init__(self, permeabilityFunction):
                 self.permeabilityFunction = permeabilityFunction
 
@@ -45,14 +59,18 @@ def OnePSpatialParams(*, gridGeometry, scalar=None):
                 return maybeConvertScalarToMatrix(result)
 
         def createSpatialParams():
-            sp = Cls()
-            if hasattr(Cls, "permeability"):
-                Cls.permeability = Permeability(sp.permeability)
-            else:
-                Cls.permeabilityAtPos = PermeabilityAtPos(sp.permeabilityAtPos)
-            spatialParams = module.OnePSpatialParams(gridGeometry, sp)
-            return spatialParams
+            spatialParams = cls()
+            if hasattr(cls, "permeability"):
+                cls.permeability = Permeability(spatialParams.permeability)
+            if hasattr(cls, "permeabilityAtPos"):
+                cls.permeabilityAtPos = PermeabilityAtPos(spatialParams.permeabilityAtPos)
+            return module.OnePSpatialParams(gridGeometry, spatialParams)
 
         return createSpatialParams
 
-    return OnePSpatialParamsDecorator
+    return decorateOnePSpatialParams
+
+
+@cppWrapperClassAlias(creator=_createOnePSpatialParamsDecorator)
+class OnePSpatialParams:
+    """Class alias used to decorate Python spatial parameter implementations"""
