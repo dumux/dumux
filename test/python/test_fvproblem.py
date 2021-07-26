@@ -65,8 +65,7 @@ numNeumann = 0
 numDirichlet = 0
 totalSource = 0
 for e in gridView.elements:
-    fvGeometry = problem.gridGeometry.localView  # test problem interface
-    fvGeometry.bind(e)
+    fvGeometry = problem.gridGeometry.boundLocalView(e)  # test problem interface
     for scv in fvGeometry.scvs:
         bTypes = problem.boundaryTypes(element=e, scv=scv)
         if bTypes.isDirichlet:

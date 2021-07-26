@@ -103,6 +103,7 @@ void registerFVElementGeometry(pybind11::handle scope)
         cls.def_property_readonly("numScv", &FVEG::numScv);
         cls.def_property_readonly("hasBoundaryScvf", &FVEG::hasBoundaryScvf);
         cls.def("bind", &FVEG::bind, "element"_a);
+        cls.def("bindElement", &FVEG::bindElement, "element"_a);
         cls.def_property_readonly("scvs", [](FVEG& self){
             const auto range = scvs(self);
             return pybind11::make_iterator(range.begin(), range.end());
@@ -151,6 +152,14 @@ void registerGridGeometry(pybind11::handle scope, pybind11::class_<GG, Options..
         return localView(self);
     });
 
+    using LocalView = typename GG::LocalView;
+    using Element = typename LocalView::Element;
+    cls.def("boundLocalView", [](GG& self, const Element& element){
+        auto view = localView(self);
+        view.bind(element);
+        return view;
+    }, "element"_a);
+
     using SubControlVolume = typename GG::SubControlVolume;
     Impl::registerSubControlVolume<SubControlVolume>(scope);
 
@@ -158,7 +167,6 @@ void registerGridGeometry(pybind11::handle scope, pybind11::class_<GG, Options..
     Impl::registerSubControlVolumeFace<SubControlVolumeFace>(scope);
 
     // also compile the corresponding local view
-    using LocalView = typename GG::LocalView;
     Impl::registerFVElementGeometry<LocalView>(scope);
 
 }

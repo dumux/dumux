@@ -11,9 +11,7 @@ print("The total number of scvs is {}".format(gridGeometry.numScv))
 print("The total number of scvfs is {}".format(gridGeometry.numScvf))
 
 for e in gridView.elements:
-    fvGeometry = gridGeometry.localView
-    fvGeometry.bind(e)
-
+    fvGeometry = gridGeometry.boundLocalView(e)
     for scv in fvGeometry.scvs:
         print(f"scv dofIndex: {scv.dofIndex}")
         print(f"scv center: {scv.center}")
