@@ -80,3 +80,18 @@ black ./python
 
 You can also run it on a specific file (replace `./python` by file name)
 This will automatically format the Python files. Run black before every commit changing Python files.
+
+The `dumux` Python module should be get a score of `10` from
+the tool [`pylint`](https://pypi.org/project/pylint/).
+You can install `pylint` with `pip install pylint` and run it from the dumux top-directory
+
+```
+pylint build-cmake/python/dumux
+```
+
+Pylint needs to be able to check imports so the modules need to be properly set up
+with `setup-dunepy.py` (see above). The `pylint` configuration file `dumux/.pylintrc` can
+be used to configure `pylint`. Some exceptions or other parameters than the default
+might be sensible in the future but generally advice given by `pylint` leads to better code.
+Different from `black`, `pylint` does no itself fix the code, you need to do this yourself.
+Always run `black` before checking `pylint`.

@@ -3,8 +3,8 @@ default:
 
 
 stages:
-  - linting
   - configure
+  - linting
   - select
   - build
   - test
@@ -31,7 +31,8 @@ configure:
       - build-cmake
     expire_in: 3 hours
 
-python linting:
+
+black (python):
   stage: linting
   image: registry.gitlab.com/pipeline-components/black:latest
   script:
@@ -39,6 +40,19 @@ python linting:
   # TODO: maybe extend this to the utility scripts?
     - black --check --verbose -- python
     - black --check --verbose -- test/python
+
+
+pylint (python):
+  stage: linting
+  script:
+    - source bin/testing/ci-setup-python-env.sh
+    - |
+      if [ -d build-cmake/python/dumux ] ; then
+        pylint --rcfile=.pylintrc build-cmake/python/dumux
+      fi
+  needs:
+    - job: configure
+      artifacts: true
 
 
 select tests:
