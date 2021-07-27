@@ -1,6 +1,7 @@
 # build system clutter
 build-*
 Testing
+!bin/testing
 
 # auto-saved files
 *~
