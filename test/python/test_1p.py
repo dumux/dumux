@@ -5,39 +5,32 @@ import sys
 from dune.grid import structuredGrid
 from dune.istl import blockVector, CGSolver, SeqSSOR
 
+from dumux.common import initParameters, printParameters, getParam
+from dumux.common import BoundaryTypes, Model, Property
 from dumux.discretization import GridGeometry, GridVariables
 from dumux.assembly import FVAssembler
-from dumux.common import BoundaryTypes, Parameters, Model, Property
 from dumux.porousmediumflow import PorousMediumFlowProblem, PorousMediumFlowVelocityOutput
 from dumux.material import FluidSystem, Component, OnePSpatialParams
 from dumux.io import VtkOutputModule
 
-try:
-    discMethod = sys.argv[1]
-    diffMethod = sys.argv[2]
-except IndexError:
-    print(
-        "No discretization method and differentiation method given. Defaulting to box and numeric diff."
-    )
-    discMethod = "box"
-    diffMethod = "numeric"
+# Initialize parameters
+initParameters(
+    argv=sys.argv,
+    params={
+        "Problem.EnableGravity": True,
+        "Vtk.AddVelocity": False,
+        "Assembly.NumericDifference.PriVarMagnitude": 1e5,
+    },
+)
 
+discMethod = getParam("DiscMethod", default="box")
 if discMethod not in ["box", "cctpfa"]:
     raise NotImplementedError(discMethod + " not supported yet. Use cctpfa or box")
 
+diffMethod = getParam("DiffMethod", default="numeric")
 if diffMethod not in ["analytic", "numeric"]:
     raise NotImplementedError(diffMethod + " must be analytic or numeric")
 
-# Initialize the paramaters
-parameters = Parameters(
-    {
-        "Problem.EnableGravity": True,
-        "SpatialParams.Porosity": 0.3,
-        "SpatialParams.Permeability": 1e-8,
-        "Vtk.AddVelocity": False,
-        "Assembly.NumericDifference.PriVarMagnitude": 1e5,
-    }
-)
 
 # Set up the grid and the grid geometry
 gridView = structuredGrid([0, 0], [1, 1], [10, 10])
@@ -46,13 +39,19 @@ gridGeometry = GridGeometry(gridView=gridView, discMethod=discMethod)
 # Set up the model
 model = Model(inheritsFrom=["OneP"], gridGeometry=gridGeometry)
 
-# Tell Dumux to use a particular local residual type
+# Tell model to use a particular local residual type
 model["LocalResidual"] = Property.fromCppType(
     "OnePIncompressibleLocalResidual<TypeTag>",
     cppIncludes=["dumux/porousmediumflow/1p/incompressiblelocalresidual.hh"],
 )
 
+# Setup the fluid system
+h20 = Component("SimpleH2O")
+onePLiquid = FluidSystem("OnePLiquid", component=h20, scalar=model["Scalar"])
+model["FluidSystem"] = Property.fromInstance(onePLiquid)
 
+
+# Define the spatial parameters
 @OnePSpatialParams(gridGeometry=gridGeometry)
 class SpatialParams:
     dimWorld = gridGeometry.gridView.dimWorld
@@ -71,24 +70,22 @@ class SpatialParams:
     def permeability(self, element, scv, elemSol):
         globalPos = scv.dofPosition
         # permeability can be either given
-        # as scalar or tensorial value
+        # as scalar or tensor
         if self.isLens(globalPos):
             return [[1e-12, 0], [0, 1e-12]]
-        else:
-            return 1e-10
+
+        return 1e-10
 
     def porosityAtPos(self, globalPos):
         return 0.4
 
 
+# and set them as a model property
 spatialParams = SpatialParams()
 model["SpatialParams"] = Property.fromInstance(spatialParams)
 
-h20 = Component("SimpleH2O")
-onePLiquid = FluidSystem("OnePLiquid", component=h20, scalar=model["Scalar"])
-model["FluidSystem"] = Property.fromInstance(onePLiquid)
 
-# define the Problem
+# Define the problem
 @PorousMediumFlowProblem(gridGeometry, spatialParams)
 class Problem:
     numEq = 1
@@ -127,10 +124,11 @@ class Problem:
         return 0
 
 
+# and set it as a model property
 problem = Problem()
 model["Problem"] = Property.fromInstance(problem)
 
-# initialize the GridVariables and the Assembler
+# Initialize the GridVariables and the Assembler
 gridVars = GridVariables(problem=problem, model=model)
 assembler = FVAssembler(problem=problem, gridVariables=gridVars, model=model, diffMethod=diffMethod)
 sol = blockVector(assembler.numDofs)
@@ -159,3 +157,6 @@ velocityoutput = PorousMediumFlowVelocityOutput(gridVariables=gridVars)
 output.addVelocityOutput(velocityoutput)
 output.addVolumeVariable(lambda vv: vv.pressure(), "p")
 output.write(1.0)
+
+# Print used and unused parameters
+printParameters()

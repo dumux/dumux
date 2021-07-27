@@ -27,7 +27,7 @@ dune_python_add_test(NAME test_python_1p_incompressible_box_numdiff
                                 --script fuzzy
                                 --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_box-reference.vtu
                                         ${CMAKE_CURRENT_BINARY_DIR}/test_1p_box_numeric-00000.vtu
-                                --command "${CMAKE_CURRENT_SOURCE_DIR}/test_1p.py box numeric")
+                                --command "${CMAKE_CURRENT_SOURCE_DIR}/test_1p.py -DiscMethod box -DiffMethod numeric")
 
 dune_python_add_test(NAME test_python_1p_incompressible_box_anadiff
                      LABELS python
@@ -36,7 +36,7 @@ dune_python_add_test(NAME test_python_1p_incompressible_box_anadiff
                                 --script fuzzy
                                 --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_box-reference.vtu
                                         ${CMAKE_CURRENT_BINARY_DIR}/test_1p_box_analytic-00000.vtu
-                                --command "${CMAKE_CURRENT_SOURCE_DIR}/test_1p.py box analytic")
+                                --command "${CMAKE_CURRENT_SOURCE_DIR}/test_1p.py -DiscMethod box -DiffMethod analytic")
 
 dune_python_add_test(NAME test_python_1p_incompressible_cctpfa_numdiff
                      LABELS python
@@ -45,7 +45,7 @@ dune_python_add_test(NAME test_python_1p_incompressible_cctpfa_numdiff
                                 --script fuzzy
                                 --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
                                         ${CMAKE_CURRENT_BINARY_DIR}/test_1p_cctpfa_numeric-00000.vtu
-                                --command "${CMAKE_CURRENT_SOURCE_DIR}/test_1p.py cctpfa numeric")
+                                --command "${CMAKE_CURRENT_SOURCE_DIR}/test_1p.py -DiscMethod cctpfa -DiffMethod numeric")
 
 dune_python_add_test(NAME test_python_1p_incompressible_cctpfa_anadiff
                      LABELS python
@@ -54,4 +54,4 @@ dune_python_add_test(NAME test_python_1p_incompressible_cctpfa_anadiff
                                 --script fuzzy
                                 --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
                                         ${CMAKE_CURRENT_BINARY_DIR}/test_1p_cctpfa_analytic-00000.vtu
-                                --command "${CMAKE_CURRENT_SOURCE_DIR}/test_1p.py cctpfa analytic")
+                                --command "${CMAKE_CURRENT_SOURCE_DIR}/test_1p.py -DiscMethod cctpfa -DiffMethod analytic")
