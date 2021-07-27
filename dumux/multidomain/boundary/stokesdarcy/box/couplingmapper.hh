@@ -42,6 +42,42 @@
 
 namespace Dumux {
 
+template<class CouplingFacet, class Container, class IndexSet>
+class FacetIterator : public Dune::ForwardIteratorFacade<FacetIterator<CouplingFacet,
+                                                                       Container,
+                                                                       IndexSet>,
+                                                         const CouplingFacet>
+{
+    using ThisType = FacetIterator<CouplingFacet, Container, IndexSet>;
+    using Iterator = typename IndexSet::const_iterator;
+public:
+    FacetIterator(const Iterator& it, const Container& container)
+    : it_(it), container_(&container) {}
+
+    FacetIterator() : it_(Iterator()), container_(nullptr) {}
+
+    //! dereferencing yields a coupling facet
+    const CouplingFacet& dereference() const
+    {
+        return container_->at(*it_);
+    }
+
+    bool equals(const ThisType& other) const
+    {
+        return it_ == other.it_;
+    }
+
+    void increment()
+    {
+        it_++;
+    }
+
+private:
+    Iterator it_;
+    const Container* container_;
+};
+
+
 /*!
  * \ingroup StokesDarcyCoupling
  * \brief Coupling mapper for Stokes and Darcy domains with equal dimension when using the Box scheme for the Darcy domain.
@@ -50,39 +86,52 @@ template<class MDTraits>
 class StokesDarcyCouplingMapperBox
 {
 private:
-    // obtain the type tags of the sub problems
-    using StokesTypeTag = typename MDTraits::template SubDomain<0>::TypeTag;
-    using DarcyTypeTag = typename MDTraits::template SubDomain<2>::TypeTag;
+    template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
 
-    // sub domain grid geometries & scvf geometries
-    using StokesGG = GetPropType<StokesTypeTag, Properties::GridGeometry>;
-    using DarcyGG = GetPropType<DarcyTypeTag, Properties::GridGeometry>;
-    using StokesScvfGeometry = typename StokesGG::SubControlVolumeFace::Traits::Geometry;
-    using DarcyScvfGeometry = typename DarcyGG::SubControlVolumeFace::Traits::Geometry;
-    using ctype = typename Dune::PromotionTraits<typename StokesGG::GridView::ctype,
-                                                 typename DarcyGG::GridView::ctype>::PromotedType;
+    template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
+    template<std::size_t id> using GridView = typename GridGeometry<id>::GridView;
+    template<std::size_t id> using FVElementGeometry = typename GridGeometry<id>::LocalView;
+    template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
+    template<std::size_t id> using Scvf = typename GridGeometry<id>::SubControlVolumeFace::Traits::Geometry;
 
-    static constexpr int dim = DarcyGG::GridView::dimension;
-    static constexpr int dimWorld = DarcyGG::GridView::dimensionworld;
+    static constexpr auto freeFlowIdx = FreeFlowPorousMediumCouplingManagerBase<MDTraits>::freeFlowIdx;
+    static constexpr auto porousMediumIdx = FreeFlowPorousMediumCouplingManagerBase<MDTraits>::porousMediumIdx;
 
-    static_assert(StokesGG::GridView::dimension == dim, "The grids must have the same dimension");
-    static_assert(StokesGG::GridView::dimensionworld == dimWorld, "The grids must have the same world dimension");
-    static_assert(StokesGG::discMethod == DiscretizationMethod::staggered, "The free flow domain must use the staggered discretization");
-    static_assert(DarcyGG::discMethod == DiscretizationMethod::box, "The Darcy domain must use the Box discretization");
+    static constexpr int dim = GridView<porousMediumIdx>::dimension;
+    static constexpr int dimWorld = GridView<porousMediumIdx>::dimensionworld;
+
+    using ctype = typename Dune::PromotionTraits<typename GridView<freeFlowIdx>::ctype,
+                                                 typename GridView<porousMediumIdx>::ctype>::PromotedType;
+
+    static_assert(GridView<freeFlowIdx>::dimension == dim, "The grids must have the same dimension");
+    static_assert(GridView<freeFlowIdx>::dimensionworld == dimWorld, "The grids must have the same world dimension");
+    static_assert(GridGeometry<freeFlowIdx>::discMethod == DiscretizationMethod::staggered, "The free flow domain must use the staggered discretization");
+    static_assert(GridGeometry<porousMediumIdx>::discMethod == DiscretizationMethod::box, "The Darcy domain must use the Box discretization");
 
 public:
 
     // export the type describing a coupling segment
-    struct CouplingSegment
+    struct CouplingFacet
     {
         // each intersection segment is described by a simplex geometry of codimension one
         using Geometry = Dune::AffineGeometry<ctype, dim-1, dimWorld>;
 
-        std::size_t eIdx;
-        std::size_t scvfIdx;
-        std::size_t flipScvfIdx;
+        std::size_t ffEIdx;
+        std::size_t pmEIdx;
+        std::size_t ffScvfIdx;
+        std::size_t pmScvfIdx;
+        std::size_t idx;
         Geometry geometry;
     };
+
+    template<class IndexSet>
+    inline Dune::IteratorRange<FacetIterator<CouplingFacet, std::vector<CouplingFacet>, IndexSet>>
+    couplingFacets(const IndexSet& indexSet)
+    {
+        using FacetIterator = FacetIterator<CouplingFacet, std::vector<CouplingFacet>, IndexSet>;
+        return Dune::IteratorRange<FacetIterator>(FacetIterator(indexSet.begin(), couplingFacets_),
+                                                  FacetIterator(indexSet.end(), couplingFacets_));
+    }
 
     /*!
      * \brief Main update routine
@@ -102,45 +151,48 @@ public:
         const auto& stokesFvGridGeometry = stokesProblem.gridGeometry();
         const auto& darcyFvGridGeometry = darcyProblem.gridGeometry();
 
-        for(const auto& dataHandle : stokesElementToDarcyElementMap_)
+        for(const auto& dataHandle : ffCouplingFacetIdxMap_)
         {
             const auto stokesEIdx = dataHandle.first;
 
-            for (const auto& darcyData : dataHandle.second)
+            for (const auto& couplingData : dataHandle.second)
             {
-                const auto darcyEIdx = darcyData.eIdx;
-                const auto stokesScvfIdx = darcyData.flipScvfIdx;
-                const auto& stokesScvf = stokesFvGridGeometry.scvf(stokesScvfIdx);
-
-                const auto& darcyElement = darcyFvGridGeometry.element(darcyEIdx);
-                auto darcyFvGeometry = localView(darcyFvGridGeometry);
-                darcyFvGeometry.bind(darcyElement);
-
-                const auto stokesElement = stokesFvGridGeometry.element(stokesEIdx);
-                auto stokesFvGeometry = localView(stokesFvGridGeometry);
-                stokesFvGeometry.bind(stokesElement);
-
-                darcyToStokesCellCenterStencils[darcyEIdx].push_back(stokesEIdx);
-                darcyToStokesFaceStencils[darcyEIdx].first.push_back(stokesScvf.dofIndex());
-                darcyToStokesFaceStencils[darcyEIdx].second.push_back(stokesScvf.index());
-
-                for (auto&& scv : scvs(darcyFvGeometry))
+                for(const auto& couplingFacet : couplingFacets(couplingData))
                 {
-                    stokesCellCenterToDarcyStencils[stokesEIdx].push_back(scv.dofIndex());
-                    stokesFaceToDarcyStencils[stokesScvf.dofIndex()].push_back(scv.dofIndex());
-                }
+                    const auto darcyEIdx = couplingFacet.pmEIdx;
+                    const auto stokesScvfIdx = couplingFacet.ffScvfIdx;
+                    const auto& stokesScvf = stokesFvGridGeometry.scvf(stokesScvfIdx);
 
-                if(!(slipCondition() == SlipCondition::BJS))
-                {
-                    const std::size_t numSubFaces = stokesScvf.pairData().size();
-                    // Account for all interior sub-faces which include data from a boundary with slip condition
-                    for (int localSubFaceIdx = 0; localSubFaceIdx < numSubFaces; ++localSubFaceIdx)
+                    const auto& darcyElement = darcyFvGridGeometry.element(darcyEIdx);
+                    auto darcyFvGeometry = localView(darcyFvGridGeometry);
+                    darcyFvGeometry.bind(darcyElement);
+
+                    const auto stokesElement = stokesFvGridGeometry.element(stokesEIdx);
+                    auto stokesFvGeometry = localView(stokesFvGridGeometry);
+                    stokesFvGeometry.bind(stokesElement);
+
+                    darcyToStokesCellCenterStencils[darcyEIdx].push_back(stokesEIdx);
+                    darcyToStokesFaceStencils[darcyEIdx].first.push_back(stokesScvf.dofIndex());
+                    darcyToStokesFaceStencils[darcyEIdx].second.push_back(stokesScvf.index());
+
+                    for (auto&& scv : scvs(darcyFvGeometry))
                     {
-                        const auto eIdx = stokesScvf.insideScvIdx();
-                        const auto& lateralStokesScvf = stokesFvGeometry.scvf(eIdx, stokesScvf.pairData(localSubFaceIdx).localLateralFaceIdx);
-                        if(lateralStokesScvf.dofIndex() != stokesScvf.dofIndex() && !lateralStokesScvf.boundary())
-                            for (auto&& scv : scvs(darcyFvGeometry))
-                                stokesFaceToDarcyStencils[lateralStokesScvf.dofIndex()].push_back(scv.dofIndex());
+                        stokesCellCenterToDarcyStencils[stokesEIdx].push_back(scv.dofIndex());
+                        stokesFaceToDarcyStencils[stokesScvf.dofIndex()].push_back(scv.dofIndex());
+                    }
+
+                    if(!(slipCondition() == SlipCondition::BJS))
+                    {
+                        const std::size_t numSubFaces = stokesScvf.pairData().size();
+                        // Account for all interior sub-faces which include data from a boundary with slip condition
+                        for (int localSubFaceIdx = 0; localSubFaceIdx < numSubFaces; ++localSubFaceIdx)
+                        {
+                            const auto eIdx = stokesScvf.insideScvIdx();
+                            const auto& lateralStokesScvf = stokesFvGeometry.scvf(eIdx, stokesScvf.pairData(localSubFaceIdx).localLateralFaceIdx);
+                            if(lateralStokesScvf.dofIndex() != stokesScvf.dofIndex() && !lateralStokesScvf.boundary())
+                                for (auto&& scv : scvs(darcyFvGeometry))
+                                    stokesFaceToDarcyStencils[lateralStokesScvf.dofIndex()].push_back(scv.dofIndex());
+                        }
                     }
                 }
             }
@@ -156,8 +208,8 @@ public:
         const auto& stokesFvGridGeometry = stokesProblem.gridGeometry();
         const auto& darcyFvGridGeometry = darcyProblem.gridGeometry();
 
+        std::size_t couplingFaceIdx = 0;
         // find all darcy faces coupling to stokes
-        isCoupledDarcyScvf_.resize(darcyFvGridGeometry.gridView().size(0));
         for (const auto& darcyElement : elements(darcyFvGridGeometry.gridView()))
         {
             const auto darcyEIdx = darcyFvGridGeometry.elementMapper().index(darcyElement);
@@ -175,9 +227,6 @@ public:
                 if (rawIntersections.empty())
                     continue;
 
-                if (isCoupledDarcyScvf_[darcyEIdx].empty())
-                    isCoupledDarcyScvf_[darcyEIdx].assign(darcyFvGeometry.numScvf(), false);
-
                 for (const auto& rawIntersection : rawIntersections)
                 {
                     const auto stokesEIdx = rawIntersection.second();
@@ -191,14 +240,21 @@ public:
                             continue;
 
                         // intersect the geometries
-                        using IntersectionAlgorithm = GeometryIntersection<DarcyScvfGeometry, StokesScvfGeometry>;
+                        using IntersectionAlgorithm = GeometryIntersection<Scvf<porousMediumIdx>, Scvf<freeFlowIdx>>;
                         typename IntersectionAlgorithm::Intersection rawIs;
                         if(IntersectionAlgorithm::intersection(darcyScvfGeometry, stokesScvf.geometry(), rawIs))
                         {
-                            const auto is = typename CouplingSegment::Geometry(Dune::GeometryTypes::simplex(dim-1), rawIs);
-                            isCoupledDarcyScvf_[darcyEIdx][darcyScvf.index()] = true;
-                            darcyElementToStokesElementMap_[darcyEIdx].push_back({stokesEIdx, stokesScvf.index(), darcyScvf.index(), is});
-                            stokesElementToDarcyElementMap_[stokesEIdx].push_back({darcyEIdx, darcyScvf.index(), stokesScvf.index(), is});
+                            if(pmCouplingFacetIdxMap_[darcyEIdx].size() == 0)
+                                pmCouplingFacetIdxMap_[darcyEIdx].resize(darcyFvGeometry.numScvf());
+
+                            if(ffCouplingFacetIdxMap_[stokesEIdx].size() == 0)
+                                ffCouplingFacetIdxMap_[stokesEIdx].resize(stokesFvGeometry.numScvf());
+
+                            const auto is = typename CouplingFacet::Geometry(Dune::GeometryTypes::simplex(dim-1), rawIs);
+                            pmCouplingFacetIdxMap_[darcyEIdx][darcyScvf.index()].push_back(couplingFaceIdx);
+                            ffCouplingFacetIdxMap_[stokesEIdx][stokesScvf.localFaceIdx()].push_back(couplingFaceIdx);
+                            couplingFacets_.push_back({stokesEIdx, darcyEIdx, stokesScvf.index(), darcyScvf.index(), couplingFaceIdx, is});
+                            couplingFaceIdx++;
                         }
                     }
                 }
@@ -211,34 +267,36 @@ public:
      */
     bool isCoupledDarcyScvf(std::size_t eIdx, std::size_t scvfLocalIdx) const
     {
-        if(isCoupledDarcyScvf_[eIdx].size() > 0)
-            return isCoupledDarcyScvf_[eIdx][scvfLocalIdx];
-
-        return false;
+        (pmCouplingFacetIdxMap_.count(eIdx) == 0) ? return false
+                                                  : return pmCouplingFacetIdxMap_.at(eIdx)[scvfLocalIdx].size() > 0;
     }
 
 
     /*!
      * \brief A map that returns all Stokes elements coupled to a Darcy element
      */
-    const auto& darcyElementToStokesElementMap() const
+    const auto& pmCouplingFacetIdxMap() const
     {
-        return darcyElementToStokesElementMap_;
+        return pmCouplingFacetIdxMap_;
     }
 
     /*!
      * \brief A map that returns all Darcy elements coupled to a Stokes element
      */
-    const auto& stokesElementToDarcyElementMap() const
+    const auto& ffCouplingFacetIdxMap() const
     {
-        return stokesElementToDarcyElementMap_;
+        return ffCouplingFacetIdxMap_;
+    }
+
+    const CouplingFacet& couplingFacet(std::size_t idx) const
+    {
+        return couplingFacets_[idx];
     }
 
 private:
-    std::unordered_map<std::size_t, std::vector<CouplingSegment>> darcyElementToStokesElementMap_;
-    std::unordered_map<std::size_t, std::vector<CouplingSegment>> stokesElementToDarcyElementMap_;
-
-    std::vector<std::vector<bool>> isCoupledDarcyScvf_;
+    std::vector<CouplingFacet> couplingFacets_;
+    std::unordered_map<std::size_t, std::vector<std::vector<std::size_t>>> pmCouplingFacetIdxMap_;
+    std::unordered_map<std::size_t, std::vector<std::vector<std::size_t>>> ffCouplingFacetIdxMap_;
 };
 
 } // end namespace Dumux
