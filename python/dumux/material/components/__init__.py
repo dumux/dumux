@@ -1,6 +1,7 @@
 """Components are building blocks of fluid and solid systems"""
 
 from dune.generator.generator import SimpleGenerator
+from dune.common.hashit import hashIt
 from dumux.wrapping import cppWrapperCreator, cppWrapperClassAlias
 
 
@@ -23,8 +24,8 @@ def listComponents():
 def _createComponent(name, *, scalar="double"):
     """Create a new component of the given name"""
 
-    moduleName = name
     typeName = f"Dumux::Components::{name} <{scalar}>"
+    moduleName = f"{name.lower()}_{hashIt(typeName)}"
     includes = ["dumux/python/material/components/component.hh"]
     includes += [_components[name]]
     generator = SimpleGenerator("Component", "Dumux::Python")

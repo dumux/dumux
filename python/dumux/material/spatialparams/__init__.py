@@ -2,6 +2,7 @@
 
 import numpy as np
 from dune.generator.generator import SimpleGenerator
+from dune.common.hashit import hashIt
 from dumux.common import Property
 from dumux.wrapping import cppWrapperCreator, cppWrapperClassAlias
 
@@ -10,7 +11,6 @@ from dumux.wrapping import cppWrapperCreator, cppWrapperClassAlias
 def _createOnePSpatialParamsDecorator(*, gridGeometry, scalar: Property = None):
     """Turn a Python spatial parameter class into an C++/Python hybrid class"""
 
-    moduleName = "spatialparams"
     dim = gridGeometry.gridView.dimension
     includes = gridGeometry._includes + [
         "dumux/python/material/spatialparams/spatialparams.hh",
@@ -25,6 +25,7 @@ def _createOnePSpatialParamsDecorator(*, gridGeometry, scalar: Property = None):
     typeName = (
         f"Dumux::Python::FVSpatialParamsOneP<{gridGeometry._typeName}, {scalarType}, {permType}>"
     )
+    moduleName = f"spatialparams_{hashIt(typeName)}"
 
     def decorateOnePSpatialParams(cls):
         generator = SimpleGenerator("OnePSpatialParams", "Dumux::Python")

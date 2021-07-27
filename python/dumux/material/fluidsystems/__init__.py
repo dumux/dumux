@@ -35,7 +35,7 @@ def _createFluidSystem(name, *, component, scalar: Property = None):
     includes += availableFluidSystems[name]["includes"]
     typeName = availableFluidSystems[name]["type"]
 
-    moduleName = "FluidSystem_" + hashIt(typeName)
+    moduleName = "fluidsystem_" + hashIt(typeName)
     generator = SimpleGenerator("FluidSystem", "Dumux::Python")
     module = generator.load(includes, typeName, moduleName)
     return module.FluidSystem()
