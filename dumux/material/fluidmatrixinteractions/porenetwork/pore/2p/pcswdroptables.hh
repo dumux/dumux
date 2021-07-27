@@ -31,7 +31,7 @@ namespace Dumux {
 //Provides the class with the tabulated values of pc-sw curve
 namespace PcSwTables {
 
-#include "pcswtables.inc"
+#include "pcswtables-rthoatSmall.inc"
 } //end namespace pcswtables
 } //end namespace Dumux
 #endif
