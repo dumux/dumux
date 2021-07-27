@@ -35,8 +35,10 @@ add_subdirectory(examples EXCLUDE_FROM_ALL)
 
 # if Python bindings are enabled, include necessary sub directories.
 if(DUNE_ENABLE_PYTHONBINDINGS)
-  add_subdirectory(python)
-  dune_python_install_package(PATH "python")
+  if(${dune-common_VERSION} VERSION_GREATER_EQUAL 2.8)
+    add_subdirectory(python)
+    dune_python_install_package(PATH "python")
+  endif()
 endif()
 
 # finalize the dune project, e.g. generating config.h etc.
