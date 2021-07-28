@@ -1,24 +1,39 @@
 default:
   image: $IMAGE
 
+
 stages:
   - configure
+  - select
   - build
   - test
+
 
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE=="parent_pipeline"
+
 
 # variables that should be overwritten by the trigger
 variables:
   MR_TARGET_BRANCH_NAME: ""
   REFERENCE_SHA: ""
 
-select tests:
+
+configure:
   stage: configure
   script:
     - dunecontrol --opts=$DUNE_OPTS_FILE --current all
+    - source bin/testing/ci-setup-python-env.sh
+  artifacts:
+    paths:
+      - build-cmake
+    expire_in: 3 hours
+
+
+select tests:
+  stage: select
+  script:
     - |
       if [[ -n "$MR_TARGET_BRANCH_NAME" ]]; then
           echo "Detecting changes w.r.t to target branch '$MR_TARGET_BRANCH_NAME'"
@@ -44,9 +59,12 @@ select tests:
       fi
   artifacts:
     paths:
-      - build-cmake
       - affectedtests.json
     expire_in: 3 hours
+  needs:
+    - job: configure
+      artifacts: true
+
 
 build dumux:
   stage: build
@@ -66,8 +84,11 @@ build dumux:
       - affectedtests.json
     expire_in: 3 hours
   needs:
+    - job: configure
+      artifacts: true
     - job: select tests
       artifacts: true
+
 
 test dumux:
   stage: test
@@ -89,3 +110,19 @@ test dumux:
   artifacts:
     reports:
       junit: junit/dumux-cmake.xml
+
+
+test dumux python:
+  stage: test
+  variables:
+    OMPI_ALLOW_RUN_AS_ROOT: 1
+    OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
+  script:
+    - source bin/testing/ci-setup-python-env.sh
+    - |
+      pushd build-cmake
+        ctest --output-on-failure -L python
+      popd
+  needs:
+    - job: configure
+      artifacts: true
