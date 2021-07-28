@@ -98,8 +98,7 @@ public:
         hasChangedInCurrentIteration_ = false;
         for (auto&& element : elements(problem_.gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(problem_.gridGeometry());
-            fvGeometry.bindElement(element);
+            auto fvGeometry = localView(problem_.gridGeometry()).bindElement(element);
 
             auto elemVolVars = localView(gridVolVars);
             elemVolVars.bind(element, fvGeometry, sol);
@@ -165,8 +164,7 @@ public:
             if (!invadedCurrentIteration_[eIdx] || invadedPreviousTimeStep_[eIdx] == invadedCurrentIteration_[eIdx])
                 continue;
 
-            auto fvGeometry = localView(problem_.gridGeometry());
-            fvGeometry.bindElement(element);
+            auto fvGeometry = localView(problem_.gridGeometry()).bindElement(element);
 
             auto elemVolVars = localView(gridVolVars);
             elemVolVars.bind(element, fvGeometry, sol);

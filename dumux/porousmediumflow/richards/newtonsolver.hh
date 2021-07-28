@@ -79,8 +79,7 @@ private:
             const auto& gridGeometry = this->assembler().gridGeometry();
             for (const auto& element : elements(gridGeometry.gridView()))
             {
-                auto fvGeometry = localView(gridGeometry);
-                fvGeometry.bindElement(element);
+                auto fvGeometry = localView(gridGeometry).bindElement(element);
 
                 for (auto&& scv : scvs(fvGeometry))
                 {

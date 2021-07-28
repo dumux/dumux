@@ -55,8 +55,7 @@ public:
             for (const auto& element : elements(gridGeometry.gridView()))
             {
                 // iterate over the scvfs
-                auto fvGeometry = localView(gridGeometry);
-                fvGeometry.bindElement(element);
+                auto fvGeometry = localView(gridGeometry).bindElement(element);
 
                 for (const auto& scvf : scvfs(fvGeometry))
                 {

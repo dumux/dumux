@@ -95,8 +95,7 @@ public:
         {
             auto eIdx = gridGeometry.elementMapper().index(element);
             // bind the geometries and volume variables to the element (all the elements in stencil)
-            auto fvGeometry = localView(gridGeometry);
-            fvGeometry.bind(element);
+            auto fvGeometry = localView(gridGeometry).bind(element);
 
             auto elemVolVars = localView(gridVolVars);
             elemVolVars.bind(element, fvGeometry, sol);

@@ -208,8 +208,7 @@ public:
         // by default, all coordinate directions are considered for the definition of a boundary
 
         // make sure FVElementGeometry and volume variables are bound to the element
-        auto fvGeometry = localView(localResidual_.problem().gridGeometry());
-        fvGeometry.bind(element);
+        auto fvGeometry = localView(localResidual_.problem().gridGeometry()).bind(element);
 
         auto curElemVolVars = localView(gridVariables_.curGridVolVars());
         curElemVolVars.bind(element, fvGeometry, sol_);

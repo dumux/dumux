@@ -439,8 +439,7 @@ public:
                 const auto& ldGridGeometry = this->problem(lowDimId).gridGeometry();
 
                 const auto elemJ = ldGridGeometry.element(lowDimElemIdx);
-                auto fvGeom = localView(ldGridGeometry);
-                fvGeom.bindElement(elemJ);
+                auto fvGeom = localView(ldGridGeometry).bindElement(elemJ);
 
                 VolumeVariables<lowDimId> volVars;
 
@@ -495,16 +494,15 @@ public:
             const auto bulkElem = bulkGridGeom.element(it->second.embedments[0].first);
             bindCouplingContext(bulkId, bulkElem, assembler);
 
-            // then simply bind the local views of that first neighbor
-            auto bulkFvGeom = localView(bulkGridGeom);
-            auto bulkElemVolVars = Assembler::isImplicit() ? localView(assembler.gridVariables(bulkId).curGridVolVars())
-                                                           : localView(assembler.gridVariables(bulkId).prevGridVolVars());
-            auto bulkElemFluxVarsCache = localView(assembler.gridVariables(bulkId).gridFluxVarsCache());
-
             // evaluate variables on old/new time level depending on time disc scheme
             const auto& bulkSol = Assembler::isImplicit() ? this->curSol()[bulkId] : assembler.prevSol()[bulkId];
-            bulkFvGeom.bind(bulkElem);
+
+            // then simply bind the local views of that first neighbor
+            auto bulkFvGeom = localView(bulkGridGeom).bind(bulkElem);
+            auto bulkElemVolVars = Assembler::isImplicit() ? localView(assembler.gridVariables(bulkId).curGridVolVars())
+                                                           : localView(assembler.gridVariables(bulkId).prevGridVolVars());
             bulkElemVolVars.bind(bulkElem, bulkFvGeom, bulkSol);
+            auto bulkElemFluxVarsCache = localView(assembler.gridVariables(bulkId).gridFluxVarsCache());
             bulkElemFluxVarsCache.bind(bulkElem, bulkFvGeom, bulkElemVolVars);
 
             lowDimContext_.isSet = true;

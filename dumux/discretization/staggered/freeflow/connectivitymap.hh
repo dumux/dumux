@@ -71,8 +71,7 @@ public:
         for(auto&& element: elements(gridGeometry.gridView()))
         {
             // restrict the FvGeometry locally and bind to the element
-            auto fvGeometry = localView(gridGeometry);
-            fvGeometry.bindElement(element);
+            auto fvGeometry = localView(gridGeometry).bindElement(element);
 
             // loop over sub control faces
             for (auto&& scvf : scvfs(fvGeometry))

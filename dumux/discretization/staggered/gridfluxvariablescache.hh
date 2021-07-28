@@ -117,8 +117,7 @@ public:
             for (const auto& element : elements(gridGeometry.gridView()))
             {
                 // Prepare the geometries within the elements of the stencil
-                auto fvGeometry = localView(gridGeometry);
-                fvGeometry.bind(element);
+                auto fvGeometry = localView(gridGeometry).bind(element);
 
                 auto elemVolVars = localView(gridVolVars);
                 elemVolVars.bind(element, fvGeometry, sol);

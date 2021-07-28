@@ -142,8 +142,7 @@ auto getJacobianPattern(const GridGeometry& gridGeometry)
         else
         {
             static constexpr auto faceIdx = GridGeometry::faceIdx();
-            auto fvGeometry = localView(gridGeometry);
-            fvGeometry.bindElement(element);
+            auto fvGeometry = localView(gridGeometry).bindElement(element);
 
             // loop over sub control faces
             for (auto&& scvf : scvfs(fvGeometry))

@@ -163,8 +163,7 @@ public:
                 continue;
 
             // get the fvGeometry and elementVolVars needed for the bc and source interfaces
-            auto fvGeometry = localView(*gridGeometry_);
-            fvGeometry.bind(element);
+            auto fvGeometry = localView(*gridGeometry_).bind(element);
 
             auto elemVolVars = localView(gridVariables_->curGridVolVars());
             elemVolVars.bind(element, fvGeometry, sol);

@@ -194,12 +194,11 @@ private:
 
         for (const auto& element : elements(this->gridGeometry().gridView(), Dune::Partitions::interior))
         {
-            auto fvGeometry = localView(this->gridGeometry());
             auto elemFaceVars = localView(this->gridVariables().curGridFaceVars());
 
             if (!faceVarScalarDataInfo_.empty() || !faceVarVectorDataInfo_.empty())
             {
-                fvGeometry.bind(element);
+                auto fvGeometry = localView(this->gridGeometry()).bind(element);
                 elemFaceVars.bindElement(element, fvGeometry, this->sol());
 
                 for (auto&& scvf : scvfs(fvGeometry))

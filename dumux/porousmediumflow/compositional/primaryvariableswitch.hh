@@ -95,8 +95,7 @@ public:
         for (const auto& element : elements(gridGeometry.gridView()))
         {
             // make sure FVElementGeometry is bound to the element
-            auto fvGeometry = localView(gridGeometry);
-            fvGeometry.bindElement(element);
+            auto fvGeometry = localView(gridGeometry).bindElement(element);
 
             auto elemVolVars = localView(gridVariables.curGridVolVars());
             elemVolVars.bindElement(element, fvGeometry, curSol);
@@ -152,8 +151,7 @@ public:
         if constexpr (GridVariables::GridVolumeVariables::cachingEnabled)
         {
             // make sure FVElementGeometry is bound to the element
-            auto fvGeometry = localView(gridGeometry);
-            fvGeometry.bindElement(element);
+            auto fvGeometry = localView(gridGeometry).bindElement(element);
 
             // update the secondary variables if global caching is enabled
             for (auto&& scv : scvs(fvGeometry))
@@ -191,8 +189,7 @@ public:
             if (asImp_().wasSwitched(dofIdxGlobal))
             {
                 // make sure FVElementGeometry and the volume variables are bound
-                auto fvGeometry = localView(gridGeometry);
-                fvGeometry.bind(element);
+                auto fvGeometry = localView(gridGeometry).bind(element);
                 auto curElemVolVars = localView(gridVariables.curGridVolVars());
                 curElemVolVars.bind(element, fvGeometry, sol);
                 gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
@@ -218,8 +215,7 @@ public:
 
             for (const auto& element : elements(gridGeometry.gridView()))
             {
-                auto fvGeometry = localView(gridGeometry);
-                fvGeometry.bindElement(element);
+                auto fvGeometry = localView(gridGeometry).bindElement(element);
 
                 // skip if the element is not at a boundary or if no internal Dirichlet constraints are set
                 if (!Problem::enableInternalDirichletConstraints() && !fvGeometry.hasBoundaryScvf())

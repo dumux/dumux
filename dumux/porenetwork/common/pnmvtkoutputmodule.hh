@@ -86,16 +86,13 @@ public:
         // iterate over all elements
         for (const auto& element : elements(gridView, Dune::Partitions::interior))
         {
-            // make sure FVElementGeometry & vol vars are bound to the element
-            auto fvElementGeometry = localView(problem().gridGeometry());
-            fvElementGeometry.bindElement(element);
-
             const auto eIdx = problem().gridGeometry().elementMapper().index(element);
 
+            // make sure FVElementGeometry & vol vars are bound to the element
+            auto fvElementGeometry = localView(problem().gridGeometry()).bindElement(element);
             auto elemVolVars = localView(this->gridVariables().curGridVolVars());
-            auto elemFluxVarsCache = localView(this->gridVariables().gridFluxVarsCache());
-
             elemVolVars.bind(element, fvElementGeometry, this->sol());
+            auto elemFluxVarsCache = localView(this->gridVariables().gridFluxVarsCache());
             elemFluxVarsCache.bind(element, fvElementGeometry, elemVolVars);
 
             // treat the throat flux related data

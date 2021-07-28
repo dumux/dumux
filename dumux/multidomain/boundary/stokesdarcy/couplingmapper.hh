@@ -70,13 +70,11 @@ public:
 
         isCoupledDarcyScvf_.resize(darcyFvGridGeometry.numScvf(), false);
 
-        auto darcyFvGeometry = localView(darcyFvGridGeometry);
-        auto stokesFvGeometry = localView(stokesFvGridGeometry);
         const auto& stokesGridView = stokesFvGridGeometry.gridView();
 
         for (const auto& stokesElement : elements(stokesGridView))
         {
-            stokesFvGeometry.bindElement(stokesElement);
+            auto stokesFvGeometry = localView(stokesFvGridGeometry).bindElement(stokesElement);
 
             for (const auto& scvf : scvfs(stokesFvGeometry))
             {
@@ -109,7 +107,7 @@ public:
                 darcyToStokesCellCenterStencils[darcyElementIdx[0]].push_back(stokesElementIdx);
 
                 const auto& darcyElement = darcyFvGridGeometry.element(darcyElementIdx[0]);
-                darcyFvGeometry.bindElement(darcyElement);
+                auto darcyFvGeometry = localView(darcyFvGridGeometry).bindElement(darcyElement);
 
                 // find the corresponding Darcy sub control volume face
                 for (const auto& darcyScvf : scvfs(darcyFvGeometry))

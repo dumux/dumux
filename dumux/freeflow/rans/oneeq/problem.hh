@@ -96,8 +96,7 @@ public:
         {
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
 
-            auto fvGeometry = localView(this->gridGeometry());
-            fvGeometry.bindElement(element);
+            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
                 const int dofIdx = scv.dofIndex();
@@ -130,8 +129,7 @@ public:
             }
 
             // Adjust for dirichlet boundary conditions
-            auto fvGeometry = localView(this->gridGeometry());
-            fvGeometry.bindElement(element);
+            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 const unsigned int normDim = scvf.directionIndex();

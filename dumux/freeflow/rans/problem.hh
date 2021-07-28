@@ -139,11 +139,10 @@ public:
         std::vector<WallElementInformation> wallElements;
 
         const auto gridView = this->gridGeometry().gridView();
-        auto fvGeometry = localView(this->gridGeometry());
 
         for (const auto& element : elements(gridView))
         {
-            fvGeometry.bindElement(element);
+            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
             for (const auto& scvf : scvfs(fvGeometry))
             {
                 // only search for walls at a global boundary
@@ -438,10 +437,9 @@ private:
         wallFaceAxis.reserve(this->gridGeometry().numBoundaryScvf());
 
         const auto gridView = this->gridGeometry().gridView();
-        auto fvGeometry = localView(this->gridGeometry());
         for (const auto& element : elements(gridView))
         {
-            fvGeometry.bindElement(element);
+            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
             for (const auto& scvf : scvfs(fvGeometry))
             {
                 // only search for walls at a global boundary
@@ -459,8 +457,7 @@ private:
         // calculate cell-center-averaged velocities
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->gridGeometry());
-            fvGeometry.bindElement(element);
+            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
 
             // calculate velocities
@@ -500,8 +497,7 @@ private:
                 }
             }
 
-            auto fvGeometry = localView(this->gridGeometry());
-            fvGeometry.bindElement(element);
+            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 // adapt calculations for Dirichlet condition
@@ -688,8 +684,7 @@ private:
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-            auto fvGeometry = localView(this->gridGeometry());
-            fvGeometry.bindElement(element);
+            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
                 const int dofIdx = scv.dofIndex();

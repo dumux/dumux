@@ -246,8 +246,7 @@ private:
             static const Scalar sandGrainRoughness = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.SandGrainRoughness");
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
 
-            auto fvGeometry = localView(this->gridGeometry());
-            fvGeometry.bindElement(element);
+            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
                 using std::sqrt;

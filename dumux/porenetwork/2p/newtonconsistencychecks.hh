@@ -97,7 +97,6 @@ public:
         const auto& curGridVolVars = gridVariables.curGridVolVars();
         const auto& prevGridVolVars = gridVariables.prevGridVolVars();
 
-        auto fvGeometry = localView(problem.gridGeometry());
         auto curElemVolVars = localView(curGridVolVars);
         auto prevElemVolVars = localView(prevGridVolVars);
 
@@ -105,7 +104,7 @@ public:
 
         for (const auto& element : elements(problem.gridGeometry().gridView()))
         {
-            fvGeometry.bindElement(element);
+            auto fvGeometry = localView(problem.gridGeometry()).bindElement(element);
             curElemVolVars.bindElement(element, fvGeometry, uCurrentIter);
             prevElemVolVars.bindElement(element, fvGeometry, prevSol);
 

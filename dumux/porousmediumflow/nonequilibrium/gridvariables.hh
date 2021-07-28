@@ -96,11 +96,10 @@ public:
         {
             const auto eIdxGlobal = this->gridGeometry_->elementMapper().index(element);
 
-            auto fvGeometry = localView(*this->gridGeometry_);
+            auto fvGeometry = localView(*this->gridGeometry_).bind(element);
             auto elemVolVars = localView(this->curGridVolVars());
             auto elemFluxVarsCache = localView(this->gridFluxVarsCache());
 
-            fvGeometry.bind(element);
             elemVolVars.bind(element, fvGeometry, curSol);
             elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
 

@@ -89,8 +89,7 @@ public:
             {
                 const auto bulkElement = bulkFvGridGeometry.element(bulkElemIdx);
 
-                auto fvGeometry = localView(bulkFvGridGeometry);
-                fvGeometry.bindElement(bulkElement);
+                auto fvGeometry = localView(bulkFvGridGeometry).bindElement(bulkElement);
 
                 bool found = false;
                 BulkIndexType embeddedScvfIdx;

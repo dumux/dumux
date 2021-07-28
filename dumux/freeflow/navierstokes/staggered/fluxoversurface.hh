@@ -293,8 +293,7 @@ public:
 
         for(auto&& element : elements(problem_().gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(problem_().gridGeometry());
-            fvGeometry.bind(element);
+            auto fvGeometry = localView(problem_().gridGeometry()).bind(element);
 
             elemVolVars.bind(element, fvGeometry, sol_);
             elemFaceVars.bind(element, fvGeometry, sol_);

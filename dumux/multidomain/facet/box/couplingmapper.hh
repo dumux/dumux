@@ -159,8 +159,7 @@ public:
                 }();
 
                 // we should always find numElementCorners coupling scvfs
-                auto fvGeometry = localView(bulkFvGridGeometry);
-                fvGeometry.bindElement(bulkElement);
+                auto fvGeometry = localView(bulkFvGridGeometry).bindElement(bulkElement);
 
                 unsigned int foundCounter = 0;
                 std::vector<BulkIndexType> embeddedScvfIndices(numElementCorners);

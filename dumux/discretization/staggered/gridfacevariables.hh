@@ -89,8 +89,7 @@ public:
 
         for (auto&& element : elements(gridGeometry.gridView()))
         {
-            auto fvGeometry = localView(gridGeometry);
-            fvGeometry.bindElement(element);
+            auto fvGeometry = localView(gridGeometry).bindElement(element);
 
             for (auto&& scvf : scvfs(fvGeometry))
             {
