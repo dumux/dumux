@@ -285,6 +285,7 @@ public:
     void update()
     {
         ParentType::update();
+        updateIntersectionMapper_();
         update_();
     }
 
@@ -292,12 +293,14 @@ public:
     void update(const GridView& gridView)
     {
         ParentType::update(gridView);
+        updateIntersectionMapper_();
         update_();
     }
 
     void update(GridView&& gridView)
     {
         ParentType::update(std::move(gridView));
+        updateIntersectionMapper_();
         update_();
     }
 
@@ -366,16 +369,21 @@ public:
 
 private:
 
+    void updateIntersectionMapper_()
+    {
+        if constexpr (Deprecated::hasUpdateGridView<IntersectionMapper, GridView>())
+            intersectionMapper_.update(this->gridView());
+        else
+            Deprecated::update(intersectionMapper_);
+    }
+
     void update_()
     {
         // clear containers (necessary after grid refinement)
         scvs_.clear();
         scvfs_.clear();
         scvfIndicesOfScv_.clear();
-        if constexpr (Deprecated::hasUpdateGridView<IntersectionMapper, GridView>())
-            intersectionMapper_.update(this->gridView());
-        else
-            Deprecated::update(intersectionMapper_);
+
         // determine size of containers
         std::size_t numScvs = this->gridView().size(0);
         std::size_t numScvf = 0;
@@ -539,6 +547,7 @@ public:
     void update()
     {
         ParentType::update();
+        updateIntersectionMapper_();
         update_();
     }
 
@@ -546,12 +555,14 @@ public:
     void update(const GridView& gridView)
     {
         ParentType::update(gridView);
+        updateIntersectionMapper_();
         update_();
     }
 
     void update(GridView&& gridView)
     {
         ParentType::update(std::move(gridView));
+        updateIntersectionMapper_();
         update_();
     }
 
@@ -640,14 +651,18 @@ public:
 
 private:
 
-    void update_()
+    void updateIntersectionMapper_()
     {
-        // clear containers (necessary after grid refinement)
-        scvfIndicesOfScv_.clear();
         if constexpr (Deprecated::hasUpdateGridView<IntersectionMapper, GridView>())
             intersectionMapper_.update(this->gridView());
         else
             Deprecated::update(intersectionMapper_);
+    }
+
+    void update_()
+    {
+        // clear containers (necessary after grid refinement)
+        scvfIndicesOfScv_.clear();
         neighborVolVarIndices_.clear();
 
         numScvs_ = numCellCenterDofs();

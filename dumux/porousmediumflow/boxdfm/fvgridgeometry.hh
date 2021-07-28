@@ -36,6 +36,7 @@
 #include <dune/geometry/multilineargeometry.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
+#include <dumux/common/deprecated.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/common/defaultmappertraits.hh>
 #include <dumux/discretization/basegridgeometry.hh>
@@ -504,6 +505,7 @@ public:
     void update(const FractureGridAdapter& fractureGridAdapter)
     {
         ParentType::update();
+        updateFacetMapper_();
         update_(fractureGridAdapter);
     }
 
@@ -511,6 +513,7 @@ public:
     void update(const GridView& gridView, const FractureGridAdapter& fractureGridAdapter)
     {
         ParentType::update(gridView);
+        updateFacetMapper_();
         update_(fractureGridAdapter);
     }
 
@@ -518,6 +521,7 @@ public:
     void update(GridView&& gridView, const FractureGridAdapter& fractureGridAdapter)
     {
         ParentType::update(std::move(gridView));
+        updateFacetMapper_();
         update_(fractureGridAdapter);
     }
 

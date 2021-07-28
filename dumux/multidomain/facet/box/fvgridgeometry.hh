@@ -33,6 +33,7 @@
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
+#include <dumux/common/deprecated.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>
@@ -484,6 +485,7 @@ public:
     {
         // first update the parent (mappers etc)
         ParentType::update();
+        updateFacetMapper_();
         update_(facetGridView, codimOneGridAdapter, verbose);
     }
 
@@ -494,6 +496,7 @@ public:
                 bool verbose = false)
     {
         ParentType::update(gridView);
+        updateFacetMapper_();
         update_(facetGridView, codimOneGridAdapter, verbose);
     }
 
@@ -504,6 +507,7 @@ public:
                 bool verbose = false)
     {
         ParentType::update(std::move(gridView));
+        updateFacetMapper_();
         update_(facetGridView, codimOneGridAdapter, verbose);
     }
 
