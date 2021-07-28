@@ -529,10 +529,19 @@ public:
     using GridView = GV;
 
     //! Constructor
+    [[deprecated("Use GridGeometry(gridView, gridData) instead! Will be removed after release 3.5.")]]
     GridGeometry(const GridView gridView)
     : ParentType(gridView)
     {
         static_assert(GridView::dimension == 1, "Porenetwork model only allow GridView::dimension == 1!");
+    }
+
+    template<class GridData>
+    GridGeometry(const GridView& gridView, const GridData& gridData)
+    : ParentType(gridView)
+    {
+        static_assert(GridView::dimension == 1, "Porenetwork model only allow GridView::dimension == 1!");
+        update_(gridData);
     }
 
     //! the vertex mapper is the dofMapper
@@ -735,11 +744,21 @@ public:
     using GridView = GV;
 
     //! Constructor
+    [[deprecated("Use GridGeometry(gridView, gridData) instead! Will be removed after release 3.5.")]]
     GridGeometry(const GridView gridView)
     : ParentType(gridView)
     {
         static_assert(GridView::dimension == 1, "Porenetwork model only allow GridView::dimension == 1!");
     }
+
+    template<class GridData>
+    GridGeometry(const GridView& gridView, const GridData& gridData)
+    : ParentType(gridView)
+    {
+        static_assert(GridView::dimension == 1, "Porenetwork model only allow GridView::dimension == 1!");
+        update_(gridData);
+    }
+
 
     //! the vertex mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
@@ -765,9 +784,53 @@ public:
 
     //! update all fvElementGeometries (do this again after grid adaption)
     template<class GridData>
+    [[deprecated("Use update(gridView, gridData) instead! Will be removed after release 3.5.")]]
     void update(const GridData& gridData)
     {
         ParentType::update();
+        update_(gridData);
+    }
+
+    //! update all fvElementGeometries (do this again after grid adaption)
+    template<class GridData>
+    void update(const GridView& gridView, const GridData& gridData)
+    {
+        ParentType::update(gridView);
+        update_(gridData);
+    }
+
+    template<class GridData>
+    void update(GridView&& gridView, const GridData& gridData)
+    {
+        ParentType::update(std::move(gridView));
+        update_(gridData);
+    }
+
+    //! The finite element cache for creating local FE bases
+    const FeCache& feCache() const
+    { return feCache_; }
+
+    //! If a vertex / d.o.f. is on the boundary
+    bool dofOnBoundary(GridIndexType dofIdx) const
+    { return boundaryDofIndices_[dofIdx]; }
+
+    //! If a vertex / d.o.f. is on a periodic boundary (not implemented)
+    bool dofOnPeriodicBoundary(GridIndexType dofIdx) const
+    { return false; }
+
+    //! The index of the vertex / d.o.f. on the other side of the periodic boundary
+    GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
+    { DUNE_THROW(Dune::NotImplemented, "Periodic boundaries"); }
+
+    //! Returns the map between dofs across periodic boundaries
+    std::unordered_map<GridIndexType, GridIndexType> periodicVertexMap() const
+    { return std::unordered_map<GridIndexType, GridIndexType>{}; }
+
+private:
+
+    template<class GridData>
+    void update_(const GridData& gridData)
+    {
         PNMData::update(this->gridView(), gridData);
 
         boundaryDofIndices_.assign(numDofs(), false);
@@ -792,28 +855,6 @@ public:
             }
         }
     }
-
-    //! The finite element cache for creating local FE bases
-    const FeCache& feCache() const
-    { return feCache_; }
-
-    //! If a vertex / d.o.f. is on the boundary
-    bool dofOnBoundary(GridIndexType dofIdx) const
-    { return boundaryDofIndices_[dofIdx]; }
-
-    //! If a vertex / d.o.f. is on a periodic boundary (not implemented)
-    bool dofOnPeriodicBoundary(GridIndexType dofIdx) const
-    { return false; }
-
-    //! The index of the vertex / d.o.f. on the other side of the periodic boundary
-    GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
-    { DUNE_THROW(Dune::NotImplemented, "Periodic boundaries"); }
-
-    //! Returns the map between dofs across periodic boundaries
-    std::unordered_map<GridIndexType, GridIndexType> periodicVertexMap() const
-    { return std::unordered_map<GridIndexType, GridIndexType>{}; }
-
-private:
 
     const FeCache feCache_;
 

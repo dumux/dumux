@@ -127,8 +127,19 @@ public:
     using GridView = GV;
 
     //! Constructor
+    [[deprecated("Use BoxFacetCouplingFVGridGeometry(gridView, facetGridView, codimOneGridAdapter) instead! Will be removed after release 3.5.")]]
     BoxFacetCouplingFVGridGeometry(const GridView& gridView)
     : ParentType(gridView) {}
+
+    template<class FacetGridView, class CodimOneGridAdapter>
+    BoxFacetCouplingFVGridGeometry(const GridView& gridView,
+                                   const FacetGridView& facetGridView,
+                                   const CodimOneGridAdapter& codimOneGridAdapter,
+                                   bool verbose = false)
+    : ParentType(gridView)
+    {
+        update_(facetGridView, codimOneGridAdapter, verbose);
+    }
 
     //! the vertex mapper is the dofMapper
     const DofMapper& dofMapper() const
@@ -170,7 +181,7 @@ public:
     {
         // first update the parent (mappers etc)
         ParentType::update();
-        update_();
+        update_(facetGridView, codimOneGridAdapter, verbose);
     }
 
     template<class FacetGridView, class CodimOneGridAdapter>
@@ -229,8 +240,8 @@ private:
 
     template<class FacetGridView, class CodimOneGridAdapter>
     void update_(const FacetGridView& facetGridView,
-                const CodimOneGridAdapter& codimOneGridAdapter,
-                bool verbose = false)
+                 const CodimOneGridAdapter& codimOneGridAdapter,
+                 bool verbose = false)
     {
         // enrich the vertex mapper subject to the provided facet grid
         this->vertexMapper().enrich(facetGridView, codimOneGridAdapter, verbose);
@@ -415,10 +426,22 @@ public:
     using GridView = GV;
 
     //! Constructor
+    [[deprecated("Use BoxFacetCouplingFVGridGeometry(gridView, facetGridView, codimOneGridAdapter) instead! Will be removed after release 3.5.")]]
     BoxFacetCouplingFVGridGeometry(const GridView gridView)
     : ParentType(gridView)
     , facetMapper_(gridView, Dune::mcmgLayout(Dune::template Codim<1>()))
     {}
+
+    template<class FacetGridView, class CodimOneGridAdapter>
+    BoxFacetCouplingFVGridGeometry(const GridView& gridView,
+                                   const FacetGridView& facetGridView,
+                                   const CodimOneGridAdapter& codimOneGridAdapter,
+                                   bool verbose = false)
+    : ParentType(gridView)
+    , facetMapper_(gridView, Dune::mcmgLayout(Dune::template Codim<1>()))
+    {
+        update_(facetGridView, codimOneGridAdapter, verbose);
+    }
 
     //! the vertex mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
@@ -461,7 +484,7 @@ public:
     {
         // first update the parent (mappers etc)
         ParentType::update();
-        update_();
+        update_(facetGridView, codimOneGridAdapter, verbose);
     }
 
     template<class FacetGridView, class CodimOneGridAdapter>
@@ -514,7 +537,18 @@ public:
 
 private:
 
-    void update_()
+    void updateFacetMapper_()
+    {
+        if constexpr (Deprecated::hasUpdateGridView<typename Traits::FacetMapper, GridView>())
+            facetMapper_.update(this->gridView());
+        else
+            Deprecated::update(facetMapper_);
+    }
+
+    template<class FacetGridView, class CodimOneGridAdapter>
+    void update_(const FacetGridView& facetGridView,
+                 const CodimOneGridAdapter& codimOneGridAdapter,
+                 bool verbose)
     {
         // enrich the vertex mapper subject to the provided facet grid
         this->vertexMapper().enrich(facetGridView, codimOneGridAdapter, verbose);

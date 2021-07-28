@@ -133,8 +133,16 @@ public:
     using GridView = GV;
 
     //! Constructor
+    [[deprecated("Use BoxDfmFVGridGeometry(gridView, fractureGridAdapter) instead! Will be removed after release 3.5.")]]
     BoxDfmFVGridGeometry(const GridView gridView)
     : ParentType(gridView) {}
+
+    template< class FractureGridAdapter >
+    BoxDfmFVGridGeometry(const GridView gridView, const FractureGridAdapter& fractureGridAdapter)
+    : ParentType(gridView)
+    {
+        update_(fractureGridAdapter);
+    }
 
     //! The vertex mapper is the dofMapper
     //! This is convenience to have better chance to have the same main files for box/tpfa/mpfa...
@@ -454,10 +462,19 @@ public:
     using GridView = GV;
 
     //! Constructor
+    [[deprecated("Use BoxDfmFVGridGeometry(gridView, fractureGridAdapter) instead! Will be removed after release 3.5.")]]
     BoxDfmFVGridGeometry(const GridView gridView)
     : ParentType(gridView)
     , facetMapper_(gridView, Dune::mcmgLayout(Dune::template Codim<1>()))
     {}
+
+    template< class FractureGridAdapter >
+    BoxDfmFVGridGeometry(const GridView gridView, const FractureGridAdapter& fractureGridAdapter)
+    : ParentType(gridView)
+    , facetMapper_(gridView, Dune::mcmgLayout(Dune::template Codim<1>()))
+    {
+        update_(fractureGridAdapter);
+    }
 
     //! the vertex mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
@@ -527,7 +544,16 @@ public:
 
 private:
 
-    void update_()
+    void updateFacetMapper_()
+    {
+        if constexpr (Deprecated::hasUpdateGridView<typename Traits::FacetMapper, GridView>())
+            facetMapper_.update(this->gridView());
+        else
+            Deprecated::update(facetMapper_);
+    }
+
+    template< class FractureGridAdapter >
+    void update_(const FractureGridAdapter& fractureGridAdapter)
     {
         boundaryDofIndices_.assign(numDofs(), false);
         fractureDofIndices_.assign(numDofs(), false);
