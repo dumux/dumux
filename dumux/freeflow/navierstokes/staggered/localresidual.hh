@@ -300,7 +300,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate boundary boundary fluxes for a face dof
+     * \brief Evaluate boundary fluxes for a face dof
      */
     FaceResidual computeBoundaryFluxForFace(const Problem& problem,
                                             const Element& element,
