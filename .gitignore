@@ -8,6 +8,7 @@ Testing
 # hidden files
 .cproject
 .project
+.vscode
 
 # left overs from git rebase
 *.orig
