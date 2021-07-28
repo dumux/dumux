@@ -101,8 +101,8 @@ int main (int argc, char *argv[])
             DUNE_THROW(Dune::InvalidStateException, "Edge element has domain marker " << domainMarker << " instead of 10");
     }
 
-    // Check boundary boundary segments. There should be mesh
-    // file-defined segments on all sides except the positive x-direction
+    // Check boundary segments. There should be mesh file-defined
+    // segments on all sides except the positive x-direction
     std::size_t bSegmentCount = 0;
     std::size_t posXCount, negXCount, posYCount, negYCount, posZCount, negZCount;
     posXCount = negXCount = posYCount = negYCount = posZCount = negZCount = 0;
