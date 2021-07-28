@@ -25,6 +25,8 @@
 #ifndef DUMUX_DISCRETIZATION_FE_ELEMENT_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_FE_ELEMENT_GEOMETRY_HH
 
+#include <utility>
+
 namespace Dumux {
 
 /*!
@@ -52,14 +54,34 @@ public:
     , feBasisLocalView_(gg.feBasis().localView())
     {}
 
-    //! Prepare element-local data
-    void bind(const Element& element)
+    /*!
+     * \brief bind the local view (r-value overload)
+     * This overload is called when an instance of this class is a temporary in the usage context
+     * This allows a usage like this: `const auto view = localView(...).bind(element);`
+     */
+    FEElementGeometry bind(const Element& element) &&
     {
-        feBasisLocalView_.bind(element);
+        this->bind(element);
+        return std::move(*this);
     }
 
     //! Prepare element-local data
-    void bindElement(const Element& element)
+    void bind(const Element& element) &
+    { feBasisLocalView_.bind(element); }
+
+    /*!
+     * \brief bind the local view (r-value overload)
+     * This overload is called when an instance of this class is a temporary in the usage context
+     * This allows a usage like this: `const auto view = localView(...).bindElement(element);`
+     */
+    FEElementGeometry bindElement(const Element& element) &&
+    {
+        this->bindElement(element);
+        return std::move(*this);
+    }
+
+    //! Prepare element-local data
+    void bindElement(const Element& element) &
     { bind(element); }
 
     //! Returns true if bind/bindElement has already been called

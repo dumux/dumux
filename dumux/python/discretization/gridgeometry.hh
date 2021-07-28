@@ -102,8 +102,15 @@ void registerFVElementGeometry(pybind11::handle scope)
         cls.def_property_readonly("numScvf", &FVEG::numScv);
         cls.def_property_readonly("numScv", &FVEG::numScv);
         cls.def_property_readonly("hasBoundaryScvf", &FVEG::hasBoundaryScvf);
-        cls.def("bind", &FVEG::bind, "element"_a);
-        cls.def("bindElement", &FVEG::bindElement, "element"_a);
+
+        using Element = typename FVEG::Element;
+        cls.def("bind", [](FVEG& self, const Element& element){
+            self.bind(element);
+        }, "element"_a);
+        cls.def("bindElement", [](FVEG& self, const Element& element){
+            self.bindElement(element);
+        }, "element"_a);
+
         cls.def_property_readonly("scvs", [](FVEG& self){
             const auto range = scvs(self);
             return pybind11::make_iterator(range.begin(), range.end());

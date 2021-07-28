@@ -27,6 +27,7 @@
 #define DUMUX_DISCRETIZATION_BOX_FV_ELEMENT_GEOMETRY_HH
 
 #include <optional>
+#include <utility>
 #include <dune/geometry/type.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
@@ -130,18 +131,38 @@ public:
         return gridGeometry().scvfs(eIdx_).size();
     }
 
+    /*!
+     * \brief bind the local view (r-value overload)
+     * This overload is called when an instance of this class is a temporary in the usage context
+     * This allows a usage like this: `const auto view = localView(...).bind(element);`
+     */
+    BoxFVElementGeometry bind(const Element& element) &&
+    {
+        this->bindElement(element);
+        return std::move(*this);
+    }
+
     //! this function is for compatibility reasons with cc methods
     //! The box stencil is always element-local so bind and bindElement
     //! are identical.
-    void bind(const Element& element)
+    void bind(const Element& element) &
+    { this->bindElement(element); }
+
+    /*!
+     * \brief bind the local view (r-value overload)
+     * This overload is called when an instance of this class is a temporary in the usage context
+     * This allows a usage like this: `const auto view = localView(...).bindElement(element);`
+     */
+    BoxFVElementGeometry bindElement(const Element& element) &&
     {
         this->bindElement(element);
+        return std::move(*this);
     }
 
     //! Binding of an element, has to be called before using the fvgeometries
     //! Prepares all the volume variables within the element
     //! For compatibility reasons with the FVGeometry cache being disabled
-    void bindElement(const Element& element)
+    void bindElement(const Element& element) &
     {
         element_ = element;
         // cache element index
@@ -256,18 +277,38 @@ public:
         return scvfs_.size();
     }
 
+    /*!
+     * \brief bind the local view (r-value overload)
+     * This overload is called when an instance of this class is a temporary in the usage context
+     * This allows a usage like this: `const auto view = localView(...).bind(element);`
+     */
+    BoxFVElementGeometry bind(const Element& element) &&
+    {
+        this->bindElement(element);
+        return std::move(*this);
+    }
+
     //! this function is for compatibility reasons with cc methods
     //! The box stencil is always element-local so bind and bindElement
     //! are identical.
-    void bind(const Element& element)
+    void bind(const Element& element) &
+    { this->bindElement(element); }
+
+    /*!
+     * \brief bind the local view (r-value overload)
+     * This overload is called when an instance of this class is a temporary in the usage context
+     * This allows a usage like this: `const auto view = localView(...).bindElement(element);`
+     */
+    BoxFVElementGeometry bindElement(const Element& element) &&
     {
         this->bindElement(element);
+        return std::move(*this);
     }
 
     //! Binding of an element, has to be called before using the fvgeometries
     //! Prepares all the volume variables within the element
     //! For compatibility reasons with the FVGeometry cache being disabled
-    void bindElement(const Element& element)
+    void bindElement(const Element& element) &
     {
         element_ = element;
         eIdx_ = gridGeometry().elementMapper().index(element);
