@@ -40,11 +40,11 @@ Then run dunecontrol which also builds the Dune Python bindings.
 ./dune-common/bin/dunecontrol --opts=cmake.opts all
 ```
 
-Add the Python binding modules to your Python path like this and install them:
+Add the Python binding modules to your Python path like this and install them with
+the setup environment setup script
 
 ```
-export PYTHONPATH=$(pwd)/dune-common/build-cmake/python:$(pwd)/dune-grid/build-cmake/python:$(pwd)/dune-geometry/build-cmake/python:$(pwd)/dune-istl/build-cmake/python:$(pwd)/dune-localfunctions/build-cmake/python:$(pwd)/dumux/build-cmake/python
-python3 dune-common/bin/setup-dunepy.py --opts=cmake.opts install
+source dumux/python/setup-python-env.sh
 ```
 
 If you are getting error with loading MPI in Python you might need to preload the MPI library
