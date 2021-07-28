@@ -29,6 +29,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/staggeredfvproblem.hh>
 #include <dumux/discretization/method.hh>
+//#include <dumux/material/spatialparams/freeflow.hh>
 
 namespace Dumux {
 
@@ -87,6 +88,7 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
     using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
 
 public:
     /*!
@@ -246,6 +248,12 @@ public:
               + velocitySelf) / (betaBJ*distanceNormalToBoundary + 1.0);
     }
 
+    /*!
+     * \brief Returns the spatial parameters object.
+     */
+    const SpatialParams &spatialParams() const
+    { return *spatialParams_; }
+
 private:
     //! Returns a scalar permeability value at the coupling interface
     Scalar interfacePermeability_(const Element& element, const SubControlVolumeFace& scvf, const GlobalPosition& tangentialVector) const
@@ -269,6 +277,9 @@ private:
 
     GravityVector gravity_;
     bool enableInertiaTerms_;
+
+    // material properties of the freeflow domain
+    std::shared_ptr<SpatialParams> spatialParams_;
 };
 
 } // end namespace Dumux
