@@ -33,7 +33,7 @@ namespace Dumux {
  * \brief Compute the average distance from a point to a geometry by integration
  */
 template<class Geometry>
-inline typename Geometry::ctype
+static inline typename Geometry::ctype
 averageDistancePointGeometry(const typename Geometry::GlobalCoordinate& p,
                              const Geometry& geometry,
                              std::size_t integrationOrder = 2)
@@ -50,7 +50,7 @@ averageDistancePointGeometry(const typename Geometry::GlobalCoordinate& p,
  * \brief Compute the squared distance from a point to a line through the points a and b
  */
 template<class Point>
-inline typename Point::value_type
+static inline typename Point::value_type
 squaredDistancePointLine(const Point& p, const Point& a, const Point& b)
 {
     const auto ab = b - a;
@@ -67,7 +67,7 @@ squaredDistancePointLine(const Point& p, const Point& a, const Point& b)
  *       assumes a segment geometry (with two corners) is passed which represents a line geometry.
  */
 template<class Geometry>
-inline typename Geometry::ctype
+static inline typename Geometry::ctype
 squaredDistancePointLine(const typename Geometry::GlobalCoordinate& p, const Geometry& geometry)
 {
     static_assert(Geometry::mydimension == 1, "Geometry has to be a line");
@@ -81,7 +81,7 @@ squaredDistancePointLine(const typename Geometry::GlobalCoordinate& p, const Geo
  * \brief Compute the distance from a point to a line through the points a and b
  */
 template<class Point>
-inline typename Point::value_type
+static inline typename Point::value_type
 distancePointLine(const Point& p, const Point& a, const Point& b)
 { using std::sqrt; return sqrt(squaredDistancePointLine(p, a, b)); }
 
@@ -92,7 +92,7 @@ distancePointLine(const Point& p, const Point& a, const Point& b)
  *       assumes a segment geometry (with two corners) is passed which represents a line geometry.
  */
 template<class Geometry>
-inline typename Geometry::ctype
+static inline typename Geometry::ctype
 distancePointLine(const typename Geometry::GlobalCoordinate& p, const Geometry& geometry)
 { using std::sqrt; return sqrt(squaredDistancePointLine(p, geometry)); }
 
@@ -101,7 +101,7 @@ distancePointLine(const typename Geometry::GlobalCoordinate& p, const Geometry& 
  * \brief Compute the squared distance from a point to the segment connecting the points a and b
  */
 template<class Point>
-inline typename Point::value_type
+static inline typename Point::value_type
 squaredDistancePointSegment(const Point& p, const Point& a, const Point& b)
 {
     const auto ab = b - a;
@@ -125,7 +125,7 @@ squaredDistancePointSegment(const Point& p, const Point& a, const Point& b)
  * \brief Compute the squared distance from a point to a given segment geometry
  */
 template<class Geometry>
-inline typename Geometry::ctype
+static inline typename Geometry::ctype
 squaredDistancePointSegment(const typename Geometry::GlobalCoordinate& p, const Geometry& geometry)
 {
     static_assert(Geometry::mydimension == 1, "Geometry has to be a segment");
@@ -139,7 +139,7 @@ squaredDistancePointSegment(const typename Geometry::GlobalCoordinate& p, const 
  * \brief Compute the distance from a point to the segment connecting the points a and b
  */
 template<class Point>
-inline typename Point::value_type
+static inline typename Point::value_type
 distancePointSegment(const Point& p, const Point& a, const Point& b)
 { using std::sqrt; return sqrt(squaredDistancePointSegment(p, a, b)); }
 
@@ -148,7 +148,7 @@ distancePointSegment(const Point& p, const Point& a, const Point& b)
  * \brief Compute the distance from a point to a given segment geometry
  */
 template<class Geometry>
-inline typename Geometry::ctype
+static inline typename Geometry::ctype
 distancePointSegment(const typename Geometry::GlobalCoordinate& p, const Geometry& geometry)
 { using std::sqrt; return sqrt(squaredDistancePointSegment(p, geometry)); }
 
@@ -158,7 +158,7 @@ distancePointSegment(const typename Geometry::GlobalCoordinate& p, const Geometr
  *        See https://www.iquilezles.org/www/articles/triangledistance/triangledistance.htm.
  */
 template<class Point>
-inline typename Point::value_type
+static inline typename Point::value_type
 squaredDistancePointTriangle(const Point& p, const Point& a, const Point& b, const Point& c)
 {
     static_assert(Point::dimension == 3, "Only works in 3D");
@@ -194,7 +194,7 @@ squaredDistancePointTriangle(const Point& p, const Point& a, const Point& b, con
  * \brief Compute the shortest squared distance from a point to a given triangle geometry
  */
 template<class Geometry>
-inline typename Geometry::ctype
+static inline typename Geometry::ctype
 squaredDistancePointTriangle(const typename Geometry::GlobalCoordinate& p, const Geometry& geometry)
 {
     static_assert(Geometry::coorddimension == 3, "Only works in 3D");
@@ -211,7 +211,7 @@ squaredDistancePointTriangle(const typename Geometry::GlobalCoordinate& p, const
  * \brief Compute the shortest distance from a point to the triangle connecting the points a, b and c
  */
 template<class Point>
-inline typename Point::value_type
+static inline typename Point::value_type
 distancePointTriangle(const Point& p, const Point& a, const Point& b, const Point& c)
 { using std::sqrt; return sqrt(squaredDistancePointTriangle(p, a, b, c)); }
 
@@ -220,7 +220,7 @@ distancePointTriangle(const Point& p, const Point& a, const Point& b, const Poin
  * \brief Compute the shortest distance from a point to a given triangle geometry
  */
 template<class Geometry>
-inline typename Geometry::ctype
+static inline typename Geometry::ctype
 distancePointTriangle(const typename Geometry::GlobalCoordinate& p, const Geometry& geometry)
 { using std::sqrt; return sqrt(squaredDistancePointTriangle(p, geometry)); }
 
@@ -229,7 +229,7 @@ distancePointTriangle(const typename Geometry::GlobalCoordinate& p, const Geomet
  * \brief Compute the average distance from a segment to a geometry by integration
  */
 template<class Geometry>
-inline typename Geometry::ctype
+static inline typename Geometry::ctype
 averageDistanceSegmentGeometry(const typename Geometry::GlobalCoordinate& a,
                                const typename Geometry::GlobalCoordinate& b,
                                const Geometry& geometry,
@@ -247,7 +247,7 @@ averageDistanceSegmentGeometry(const typename Geometry::GlobalCoordinate& a,
  * \brief Compute the shortest distance between two points
  */
 template<class ctype, int dimWorld>
-inline ctype distance(const Dune::FieldVector<ctype, dimWorld>& a,
+static inline ctype distance(const Dune::FieldVector<ctype, dimWorld>& a,
                       const Dune::FieldVector<ctype, dimWorld>& b)
 { return (a-b).two_norm(); }
 
@@ -311,7 +311,7 @@ struct GeometryDistance<Geo1, Geo2, dimWorld, 0, 1>
  * \brief Compute the shortest distance between two geometries
  */
 template<class Geo1, class Geo2>
-inline auto distance(const Geo1& geo1, const Geo2& geo2)
+static inline auto distance(const Geo1& geo1, const Geo2& geo2)
 { return Detail::GeometryDistance<Geo1, Geo2>::distance(geo1, geo2); }
 
 } // end namespace Dumux
