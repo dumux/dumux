@@ -30,6 +30,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/parallel/indexset.hh>
 #include <dune/common/parallel/mpicommunication.hh>
+#include <dune/common/parallel/mpihelper.hh>
 #include <dune/grid/common/capabilities.hh>
 #include <dune/istl/paamg/amg.hh>
 #include <dune/istl/paamg/pinfo.hh>
