@@ -39,7 +39,7 @@ namespace Dumux {
  * geostatistical random fields (see <a href="http://www.gstat.org">http://www.gstat.org</a>
  * or \cite Pebesma1998a).
  *
- * To use this class, execute the installexternal.sh from your DuMuX root
+ * To use this class, execute the installexternal.py from your DuMuX root
  * directory or donwload, unpack and install the tarball from the gstat-website.
  * Then rerun cmake (in the second case set GSTAT_ROOT in your input file to the
  * path where gstat is installed).
