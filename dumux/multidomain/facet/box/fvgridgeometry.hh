@@ -28,6 +28,7 @@
 #define DUMUX_FACETCOUPLING_BOX_GRID_FVGEOMETRY_HH
 
 #include <algorithm>
+#include <utility>
 
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
@@ -162,13 +163,75 @@ public:
      * \param verbose Verbosity level for vertex enrichment
      */
     template<class FacetGridView, class CodimOneGridAdapter>
+    [[deprecated("Use update(gridView) instead! Will be removed after release 3.5.")]]
     void update(const FacetGridView& facetGridView,
                 const CodimOneGridAdapter& codimOneGridAdapter,
                 bool verbose = false)
     {
         // first update the parent (mappers etc)
         ParentType::update();
+        update_();
+    }
 
+    template<class FacetGridView, class CodimOneGridAdapter>
+    void update(const GridView& gridView,
+                const FacetGridView& facetGridView,
+                const CodimOneGridAdapter& codimOneGridAdapter,
+                bool verbose = false)
+    {
+        ParentType::update(gridView);
+        update_(facetGridView, codimOneGridAdapter, verbose);
+    }
+
+    template<class FacetGridView, class CodimOneGridAdapter>
+    void update(GridView&& gridView,
+                const FacetGridView& facetGridView,
+                const CodimOneGridAdapter& codimOneGridAdapter,
+                bool verbose = false)
+    {
+        ParentType::update(std::move(gridView));
+        update_(facetGridView, codimOneGridAdapter, verbose);
+    }
+
+    //! The finite element cache for creating local FE bases
+    const FeCache& feCache() const
+    { return feCache_; }
+
+    //! Get the local scvs for an element
+    const std::vector<SubControlVolume>& scvs(GridIndexType eIdx) const
+    { return scvs_[eIdx]; }
+
+    //! Get the local scvfs for an element
+    const std::vector<SubControlVolumeFace>& scvfs(GridIndexType eIdx) const
+    { return scvfs_[eIdx]; }
+
+    //! If a d.o.f. is on the boundary
+    bool dofOnBoundary(GridIndexType dofIdx) const
+    { return boundaryDofIndices_[dofIdx]; }
+
+    //! If a d.o.f. is on an interior boundary
+    bool dofOnInteriorBoundary(GridIndexType dofIdx) const
+    { return interiorBoundaryDofIndices_[dofIdx]; }
+
+    //! Periodic boundaries are not supported for the box facet coupling scheme
+    bool dofOnPeriodicBoundary(GridIndexType dofIdx) const
+    { return false; }
+
+    //! The index of the vertex / d.o.f. on the other side of the periodic boundary
+    GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
+    { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box facet coupling scheme"); }
+
+    //! Returns the map between dofs across periodic boundaries
+    std::unordered_map<GridIndexType, GridIndexType> periodicVertexMap() const
+    { return std::unordered_map<GridIndexType, GridIndexType>(); }
+
+private:
+
+    template<class FacetGridView, class CodimOneGridAdapter>
+    void update_(const FacetGridView& facetGridView,
+                const CodimOneGridAdapter& codimOneGridAdapter,
+                bool verbose = false)
+    {
         // enrich the vertex mapper subject to the provided facet grid
         this->vertexMapper().enrich(facetGridView, codimOneGridAdapter, verbose);
 
@@ -294,39 +357,6 @@ public:
         }
     }
 
-    //! The finite element cache for creating local FE bases
-    const FeCache& feCache() const
-    { return feCache_; }
-
-    //! Get the local scvs for an element
-    const std::vector<SubControlVolume>& scvs(GridIndexType eIdx) const
-    { return scvs_[eIdx]; }
-
-    //! Get the local scvfs for an element
-    const std::vector<SubControlVolumeFace>& scvfs(GridIndexType eIdx) const
-    { return scvfs_[eIdx]; }
-
-    //! If a d.o.f. is on the boundary
-    bool dofOnBoundary(GridIndexType dofIdx) const
-    { return boundaryDofIndices_[dofIdx]; }
-
-    //! If a d.o.f. is on an interior boundary
-    bool dofOnInteriorBoundary(GridIndexType dofIdx) const
-    { return interiorBoundaryDofIndices_[dofIdx]; }
-
-    //! Periodic boundaries are not supported for the box facet coupling scheme
-    bool dofOnPeriodicBoundary(GridIndexType dofIdx) const
-    { return false; }
-
-    //! The index of the vertex / d.o.f. on the other side of the periodic boundary
-    GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
-    { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box facet coupling scheme"); }
-
-    //! Returns the map between dofs across periodic boundaries
-    std::unordered_map<GridIndexType, GridIndexType> periodicVertexMap() const
-    { return std::unordered_map<GridIndexType, GridIndexType>(); }
-
-private:
     const FeCache feCache_;
 
     std::vector<std::vector<SubControlVolume>> scvs_;
@@ -424,13 +454,68 @@ public:
      * \param verbose Verbosity level
      */
     template<class FacetGridView, class CodimOneGridAdapter>
+    [[deprecated("Use update(gridView) instead! Will be removed after release 3.5.")]]
     void update(const FacetGridView& facetGridView,
                 const CodimOneGridAdapter& codimOneGridAdapter,
                 bool verbose = false)
     {
         // first update the parent (mappers etc)
         ParentType::update();
+        update_();
+    }
 
+    template<class FacetGridView, class CodimOneGridAdapter>
+    void update(const GridView& gridView,
+                const FacetGridView& facetGridView,
+                const CodimOneGridAdapter& codimOneGridAdapter,
+                bool verbose = false)
+    {
+        ParentType::update(gridView);
+        update_(facetGridView, codimOneGridAdapter, verbose);
+    }
+
+    template<class FacetGridView, class CodimOneGridAdapter>
+    void update(GridView&& gridView,
+                const FacetGridView& facetGridView,
+                const CodimOneGridAdapter& codimOneGridAdapter,
+                bool verbose = false)
+    {
+        ParentType::update(std::move(gridView));
+        update_(facetGridView, codimOneGridAdapter, verbose);
+    }
+
+    //! The finite element cache for creating local FE bases
+    const FeCache& feCache() const
+    { return feCache_; }
+
+    //! If a d.o.f. is on the boundary
+    bool dofOnBoundary(unsigned int dofIdx) const
+    { return boundaryDofIndices_[dofIdx]; }
+
+    //! If a d.o.f. is on an interior boundary
+    bool dofOnInteriorBoundary(unsigned int dofIdx) const
+    { return interiorBoundaryDofIndices_[dofIdx]; }
+
+    //! returns true if an intersection is on an interior boundary
+    bool isOnInteriorBoundary(const Element& element, const Intersection& intersection) const
+    { return facetIsOnInteriorBoundary_[ facetMapper_.subIndex(element, intersection.indexInInside(), 1) ]; }
+
+    //! Periodic boundaries are not supported for the box facet coupling scheme
+    bool dofOnPeriodicBoundary(GridIndexType dofIdx) const
+    { return false; }
+
+    //! The index of the vertex / d.o.f. on the other side of the periodic boundary
+    GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
+    { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the facet coupling scheme"); }
+
+    //! Returns the map between dofs across periodic boundaries
+    std::unordered_map<GridIndexType, GridIndexType> periodicVertexMap() const
+    { return std::unordered_map<GridIndexType, GridIndexType>(); }
+
+private:
+
+    void update_()
+    {
         // enrich the vertex mapper subject to the provided facet grid
         this->vertexMapper().enrich(facetGridView, codimOneGridAdapter, verbose);
 
@@ -504,35 +589,6 @@ public:
         }
     }
 
-    //! The finite element cache for creating local FE bases
-    const FeCache& feCache() const
-    { return feCache_; }
-
-    //! If a d.o.f. is on the boundary
-    bool dofOnBoundary(unsigned int dofIdx) const
-    { return boundaryDofIndices_[dofIdx]; }
-
-    //! If a d.o.f. is on an interior boundary
-    bool dofOnInteriorBoundary(unsigned int dofIdx) const
-    { return interiorBoundaryDofIndices_[dofIdx]; }
-
-    //! returns true if an intersection is on an interior boundary
-    bool isOnInteriorBoundary(const Element& element, const Intersection& intersection) const
-    { return facetIsOnInteriorBoundary_[ facetMapper_.subIndex(element, intersection.indexInInside(), 1) ]; }
-
-    //! Periodic boundaries are not supported for the box facet coupling scheme
-    bool dofOnPeriodicBoundary(GridIndexType dofIdx) const
-    { return false; }
-
-    //! The index of the vertex / d.o.f. on the other side of the periodic boundary
-    GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
-    { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the facet coupling scheme"); }
-
-    //! Returns the map between dofs across periodic boundaries
-    std::unordered_map<GridIndexType, GridIndexType> periodicVertexMap() const
-    { return std::unordered_map<GridIndexType, GridIndexType>(); }
-
-private:
     const FeCache feCache_;
 
     // Information on the global number of geometries

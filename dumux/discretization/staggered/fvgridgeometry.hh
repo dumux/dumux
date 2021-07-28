@@ -24,6 +24,8 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_FV_GRID_GEOMETRY
 #define DUMUX_DISCRETIZATION_STAGGERED_FV_GRID_GEOMETRY
 
+#include <utility>
+
 #include <dumux/common/deprecated.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/basegridgeometry.hh>
@@ -277,7 +279,92 @@ public:
     { return this->gridView().size(1); }
 
     //! update all fvElementGeometries (do this again after grid adaption)
+    [[deprecated("Use update(gridView) instead! Will be removed after release 3.5.")]]
     void update()
+    {
+        ParentType::update();
+        update_();
+    }
+
+    //! update all fvElementGeometries (do this again after grid adaption)
+    void update(const GridView& gridView)
+    {
+        ParentType::update(gridView);
+        update_();
+    }
+
+    void update(GridView&& gridView)
+    {
+        ParentType::update(std::move(gridView));
+        update_();
+    }
+
+    //! Get a sub control volume with a global scv index
+    const SubControlVolume& scv(GridIndexType scvIdx) const
+    {
+        return scvs_[scvIdx];
+    }
+
+    //! Get a sub control volume face with a global scvf index
+    const SubControlVolumeFace& scvf(GridIndexType scvfIdx) const
+    {
+        return scvfs_[scvfIdx];
+    }
+
+    //! Get the sub control volume face indices of an scv by global index
+    const std::vector<GridIndexType>& scvfIndicesOfScv(GridIndexType scvIdx) const
+    {
+        return scvfIndicesOfScv_[scvIdx];
+    }
+
+    GridIndexType localToGlobalScvfIndex(GridIndexType eIdx, LocalIndexType localScvfIdx) const
+    {
+        return localToGlobalScvfIndices_[eIdx][localScvfIdx];
+    }
+
+    const SubControlVolumeFace& scvf(GridIndexType eIdx, LocalIndexType localScvfIdx) const
+    {
+        return scvf(localToGlobalScvfIndex(eIdx, localScvfIdx));
+    }
+
+    /*!
+     * \brief Returns the connectivity map of which dofs have derivatives with respect
+     *        to a given dof.
+     */
+    const ConnectivityMap &connectivityMap() const
+    { return connectivityMap_; }
+
+    //! Returns a pointer the cell center specific auxiliary class. Required for the multi-domain FVAssembler's ctor.
+    std::unique_ptr<CellCenterFVGridGeometry<ThisType>> cellCenterFVGridGeometryPtr() const
+    {
+        return std::make_unique<CellCenterFVGridGeometry<ThisType>>(this);
+    }
+
+    //! Returns a pointer the face specific auxiliary class. Required for the multi-domain FVAssembler's ctor.
+    std::unique_ptr<FaceFVGridGeometry<ThisType>> faceFVGridGeometryPtr() const
+    {
+        return std::make_unique<FaceFVGridGeometry<ThisType>>(this);
+    }
+
+    //! Return a copy of the cell center specific auxiliary class.
+    CellCenterFVGridGeometry<ThisType> cellCenterFVGridGeometry() const
+    {
+        return CellCenterFVGridGeometry<ThisType>(this);
+    }
+
+    //! Return a copy of the face specific auxiliary class.
+    FaceFVGridGeometry<ThisType> faceFVGridGeometry() const
+    {
+        return FaceFVGridGeometry<ThisType>(this);
+    }
+
+    //! Returns whether one of the geometry's scvfs lies on a boundary
+    bool hasBoundaryScvf(GridIndexType eIdx) const
+    { return hasBoundaryScvf_[eIdx]; }
+
+private:
+
+    void update_()
     {
         // clear containers (necessary after grid refinement)
         scvs_.clear();
@@ -358,71 +445,6 @@ public:
         // build the connectivity map for an effecient assembly
         connectivityMap_.update(*this);
     }
-
-    //! Get a sub control volume with a global scv index
-    const SubControlVolume& scv(GridIndexType scvIdx) const
-    {
-        return scvs_[scvIdx];
-    }
-
-    //! Get a sub control volume face with a global scvf index
-    const SubControlVolumeFace& scvf(GridIndexType scvfIdx) const
-    {
-        return scvfs_[scvfIdx];
-    }
-
-    //! Get the sub control volume face indices of an scv by global index
-    const std::vector<GridIndexType>& scvfIndicesOfScv(GridIndexType scvIdx) const
-    {
-        return scvfIndicesOfScv_[scvIdx];
-    }
-
-    GridIndexType localToGlobalScvfIndex(GridIndexType eIdx, LocalIndexType localScvfIdx) const
-    {
-        return localToGlobalScvfIndices_[eIdx][localScvfIdx];
-    }
-
-    const SubControlVolumeFace& scvf(GridIndexType eIdx, LocalIndexType localScvfIdx) const
-    {
-        return scvf(localToGlobalScvfIndex(eIdx, localScvfIdx));
-    }
-
-    /*!
-     * \brief Returns the connectivity map of which dofs have derivatives with respect
-     *        to a given dof.
-     */
-    const ConnectivityMap &connectivityMap() const
-    { return connectivityMap_; }
-
-    //! Returns a pointer the cell center specific auxiliary class. Required for the multi-domain FVAssembler's ctor.
-    std::unique_ptr<CellCenterFVGridGeometry<ThisType>> cellCenterFVGridGeometryPtr() const
-    {
-        return std::make_unique<CellCenterFVGridGeometry<ThisType>>(this);
-    }
-
-    //! Returns a pointer the face specific auxiliary class. Required for the multi-domain FVAssembler's ctor.
-    std::unique_ptr<FaceFVGridGeometry<ThisType>> faceFVGridGeometryPtr() const
-    {
-        return std::make_unique<FaceFVGridGeometry<ThisType>>(this);
-    }
-
-    //! Return a copy of the cell center specific auxiliary class.
-    CellCenterFVGridGeometry<ThisType> cellCenterFVGridGeometry() const
-    {
-        return CellCenterFVGridGeometry<ThisType>(this);
-    }
-
-    //! Return a copy of the face specific auxiliary class.
-    FaceFVGridGeometry<ThisType> faceFVGridGeometry() const
-    {
-        return FaceFVGridGeometry<ThisType>(this);
-    }
-
-    //! Returns whether one of the geometry's scvfs lies on a boundary
-    bool hasBoundaryScvf(GridIndexType eIdx) const
-    { return hasBoundaryScvf_[eIdx]; }
-
-private:
 
     // mappers
     ConnectivityMap connectivityMap_;
@@ -509,59 +531,24 @@ public:
     }
 
     //! update all fvElementGeometries (do this again after grid adaption)
+    [[deprecated("Use update(gridView) instead! Will be removed after release 3.5.")]]
     void update()
     {
-        // clear containers (necessary after grid refinement)
-        scvfIndicesOfScv_.clear();
-        if constexpr (Deprecated::hasUpdateGridView<IntersectionMapper, GridView>())
-            intersectionMapper_.update(this->gridView());
-        else
-            Deprecated::update(intersectionMapper_);
-        neighborVolVarIndices_.clear();
+        ParentType::update();
+        update_();
+    }
 
-        numScvs_ = numCellCenterDofs();
-        numScvf_ = 0;
-        numBoundaryScvf_ = 0;
-        scvfIndicesOfScv_.resize(numScvs_);
-        localToGlobalScvfIndices_.resize(numScvs_);
-        neighborVolVarIndices_.resize(numScvs_);
+    //! update all fvElementGeometries (do this again after grid adaption)
+    void update(const GridView& gridView)
+    {
+        ParentType::update(gridView);
+        update_();
+    }
 
-        // Build the scvs and scv faces
-        for (const auto& element : elements(this->gridView()))
-        {
-            auto eIdx = this->elementMapper().index(element);
-
-            // the element-wise index sets for finite volume geometry
-            auto numLocalFaces = intersectionMapper_.numFaces(element);
-            std::vector<GridIndexType> scvfsIndexSet;
-            scvfsIndexSet.reserve(numLocalFaces);
-            localToGlobalScvfIndices_[eIdx].resize(numLocalFaces);
-
-            std::vector<GridIndexType> neighborVolVarIndexSet;
-            neighborVolVarIndexSet.reserve(numLocalFaces);
-
-            for (const auto& intersection : intersections(this->gridView(), element))
-            {
-                const auto localFaceIndex = intersection.indexInInside();
-                localToGlobalScvfIndices_[eIdx][localFaceIndex] = numScvf_;
-                scvfsIndexSet.push_back(numScvf_++);
-
-                if (intersection.neighbor())
-                {
-                    const auto nIdx = this->elementMapper().index(intersection.outside());
-                    neighborVolVarIndexSet.emplace_back(nIdx);
-                }
-                else
-                    neighborVolVarIndexSet.emplace_back(numScvs_ + numBoundaryScvf_++);
-            }
-
-            // Save the scvf indices belonging to this scv to build up fv element geometries fast
-            scvfIndicesOfScv_[eIdx] = scvfsIndexSet;
-            neighborVolVarIndices_[eIdx] = neighborVolVarIndexSet;
-        }
-
-        // build the connectivity map for an effecient assembly
-        connectivityMap_.update(*this);
+    void update(GridView&& gridView)
+    {
+        ParentType::update(std::move(gridView));
+        update_();
     }
 
     //! The total number of sub control volumes
@@ -648,6 +635,61 @@ public:
     { return neighborVolVarIndices_[scvIdx]; }
 
 private:
+
+    void update_()
+    {
+        // clear containers (necessary after grid refinement)
+        scvfIndicesOfScv_.clear();
+        if constexpr (Deprecated::hasUpdateGridView<IntersectionMapper, GridView>())
+            intersectionMapper_.update(this->gridView());
+        else
+            Deprecated::update(intersectionMapper_);
+        neighborVolVarIndices_.clear();
+
+        numScvs_ = numCellCenterDofs();
+        numScvf_ = 0;
+        numBoundaryScvf_ = 0;
+        scvfIndicesOfScv_.resize(numScvs_);
+        localToGlobalScvfIndices_.resize(numScvs_);
+        neighborVolVarIndices_.resize(numScvs_);
+
+        // Build the scvs and scv faces
+        for (const auto& element : elements(this->gridView()))
+        {
+            auto eIdx = this->elementMapper().index(element);
+
+            // the element-wise index sets for finite volume geometry
+            auto numLocalFaces = intersectionMapper_.numFaces(element);
+            std::vector<GridIndexType> scvfsIndexSet;
+            scvfsIndexSet.reserve(numLocalFaces);
+            localToGlobalScvfIndices_[eIdx].resize(numLocalFaces);
+
+            std::vector<GridIndexType> neighborVolVarIndexSet;
+            neighborVolVarIndexSet.reserve(numLocalFaces);
+
+            for (const auto& intersection : intersections(this->gridView(), element))
+            {
+                const auto localFaceIndex = intersection.indexInInside();
+                localToGlobalScvfIndices_[eIdx][localFaceIndex] = numScvf_;
+                scvfsIndexSet.push_back(numScvf_++);
+
+                if (intersection.neighbor())
+                {
+                    const auto nIdx = this->elementMapper().index(intersection.outside());
+                    neighborVolVarIndexSet.emplace_back(nIdx);
+                }
+                else
+                    neighborVolVarIndexSet.emplace_back(numScvs_ + numBoundaryScvf_++);
+            }
+
+            // Save the scvf indices belonging to this scv to build up fv element geometries fast
+            scvfIndicesOfScv_[eIdx] = scvfsIndexSet;
+            neighborVolVarIndices_[eIdx] = neighborVolVarIndexSet;
+        }
+
+        // build the connectivity map for an effecient assembly
+        connectivityMap_.update(*this);
+    }
 
     //! Information on the global number of geometries
     std::size_t numScvs_;

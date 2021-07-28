@@ -25,6 +25,7 @@
 #define DUMUX_DISCRETIZATION_PNM_GRID_GEOMETRY_HH
 
 #include <string>
+#include <utility>
 #include <unordered_map>
 #include <functional>
 
@@ -558,9 +559,65 @@ public:
 
     //! update all fvElementGeometries (do this again after grid adaption)
     template<class GridData>
+    [[deprecated("Use update(gridView, gridData) instead! Will be removed after release 3.5.")]]
     void update(const GridData& gridData)
     {
         ParentType::update();
+        update_(gridData);
+    }
+
+    //! update all fvElementGeometries (do this again after grid adaption)
+    template<class GridData>
+    void update(const GridView& gridView, const GridData& gridData)
+    {
+        ParentType::update(gridView);
+        update_(gridData);
+    }
+
+    template<class GridData>
+    void update(GridView&& gridView, const GridData& gridData)
+    {
+        ParentType::update(std::move(gridView));
+        update_(gridData);
+    }
+
+    //! The finite element cache for creating local FE bases
+    const FeCache& feCache() const
+    { return feCache_; }
+
+    //! Get the local scvs for an element
+    const std::array<SubControlVolume, 2>& scvs(GridIndexType eIdx) const
+    { return scvs_[eIdx]; }
+
+    //! Get the local scvfs for an element
+    const std::array<SubControlVolumeFace, 1>& scvfs(GridIndexType eIdx) const
+    { return scvfs_[eIdx]; }
+
+    //! If a vertex / d.o.f. is on the boundary
+    bool dofOnBoundary(GridIndexType dofIdx) const
+    { return boundaryDofIndices_[dofIdx]; }
+
+    //! If a vertex / d.o.f. is on a periodic boundary (not implemented)
+    bool dofOnPeriodicBoundary(GridIndexType dofIdx) const
+    { return false; }
+
+    //! The index of the vertex / d.o.f. on the other side of the periodic boundary
+    GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
+    { DUNE_THROW(Dune::NotImplemented, "Periodic boundaries"); }
+
+    //! Returns the map between dofs across periodic boundaries
+    std::unordered_map<GridIndexType, GridIndexType> periodicVertexMap() const
+    { return std::unordered_map<GridIndexType, GridIndexType>{}; }
+
+    //! Returns whether one of the geometry's scvfs lies on a boundary
+    bool hasBoundaryScvf(GridIndexType eIdx) const
+    { return hasBoundaryScvf_[eIdx]; }
+
+private:
+
+    template<class GridData>
+    void update_(const GridData& gridData)
+    {
         PNMData::update(this->gridView(), gridData);
 
         scvs_.clear();
@@ -622,39 +679,6 @@ public:
         }
     }
 
-    //! The finite element cache for creating local FE bases
-    const FeCache& feCache() const
-    { return feCache_; }
-
-    //! Get the local scvs for an element
-    const std::array<SubControlVolume, 2>& scvs(GridIndexType eIdx) const
-    { return scvs_[eIdx]; }
-
-    //! Get the local scvfs for an element
-    const std::array<SubControlVolumeFace, 1>& scvfs(GridIndexType eIdx) const
-    { return scvfs_[eIdx]; }
-
-    //! If a vertex / d.o.f. is on the boundary
-    bool dofOnBoundary(GridIndexType dofIdx) const
-    { return boundaryDofIndices_[dofIdx]; }
-
-    //! If a vertex / d.o.f. is on a periodic boundary (not implemented)
-    bool dofOnPeriodicBoundary(GridIndexType dofIdx) const
-    { return false; }
-
-    //! The index of the vertex / d.o.f. on the other side of the periodic boundary
-    GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
-    { DUNE_THROW(Dune::NotImplemented, "Periodic boundaries"); }
-
-    //! Returns the map between dofs across periodic boundaries
-    std::unordered_map<GridIndexType, GridIndexType> periodicVertexMap() const
-    { return std::unordered_map<GridIndexType, GridIndexType>{}; }
-
-    //! Returns whether one of the geometry's scvfs lies on a boundary
-    bool hasBoundaryScvf(GridIndexType eIdx) const
-    { return hasBoundaryScvf_[eIdx]; }
-
-private:
     const FeCache feCache_;
 
     std::vector<std::array<SubControlVolume, 2>> scvs_;

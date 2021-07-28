@@ -29,6 +29,7 @@
 #ifndef DUMUX_POROUSMEDIUMFLOW_BOXDFM_GRID_FVGEOMETRY_HH
 #define DUMUX_POROUSMEDIUMFLOW_BOXDFM_GRID_FVGEOMETRY_HH
 
+#include <utility>
 #include <unordered_map>
 
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
@@ -159,10 +160,53 @@ public:
 
     //! Update all fvElementGeometries (do this again after grid adaption)
     template< class FractureGridAdapter >
+    [[deprecated("Use update(gridView) instead! Will be removed after release 3.5.")]]
     void update(const FractureGridAdapter& fractureGridAdapter)
     {
         ParentType::update();
+        update_(fractureGridAdapter);
+    }
 
+    template< class FractureGridAdapter >
+    void update(const GridView& gridView, const FractureGridAdapter& fractureGridAdapter)
+    {
+        ParentType::update(gridView);
+        update_(fractureGridAdapter);
+    }
+
+    template< class FractureGridAdapter >
+    void update(GridView&& gridView, const FractureGridAdapter& fractureGridAdapter)
+    {
+        ParentType::update(std::move(gridView));
+        update_(fractureGridAdapter);
+    }
+
+    //! The finite element cache for creating local FE bases
+    const FeCache& feCache() const { return feCache_; }
+    //! Get the local scvs for an element
+    const std::vector<SubControlVolume>& scvs(GridIndexType eIdx) const { return scvs_[eIdx]; }
+    //! Get the local scvfs for an element
+    const std::vector<SubControlVolumeFace>& scvfs(GridIndexType eIdx) const { return scvfs_[eIdx]; }
+    //! If a vertex / d.o.f. is on the boundary
+    bool dofOnBoundary(unsigned int dofIdx) const { return boundaryDofIndices_[dofIdx]; }
+    //! If a vertex / d.o.f. is on a fracture
+    bool dofOnFracture(unsigned int dofIdx) const { return fractureDofIndices_[dofIdx]; }
+    //! Periodic boundaries are not supported for the box-dfm scheme
+    bool dofOnPeriodicBoundary(std::size_t dofIdx) const { return false; }
+
+    //! The index of the vertex / d.o.f. on the other side of the periodic boundary
+    std::size_t periodicallyMappedDof(std::size_t dofIdx) const
+    { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box-dfm scheme"); }
+
+    //! Returns the map between dofs across periodic boundaries
+    std::unordered_map<std::size_t, std::size_t> periodicVertexMap() const
+    { return std::unordered_map<std::size_t, std::size_t>(); }
+
+private:
+
+    template< class FractureGridAdapter >
+    void update_(const FractureGridAdapter& fractureGridAdapter)
+    {
         scvs_.clear();
         scvfs_.clear();
 
@@ -353,28 +397,6 @@ public:
         }
     }
 
-    //! The finite element cache for creating local FE bases
-    const FeCache& feCache() const { return feCache_; }
-    //! Get the local scvs for an element
-    const std::vector<SubControlVolume>& scvs(GridIndexType eIdx) const { return scvs_[eIdx]; }
-    //! Get the local scvfs for an element
-    const std::vector<SubControlVolumeFace>& scvfs(GridIndexType eIdx) const { return scvfs_[eIdx]; }
-    //! If a vertex / d.o.f. is on the boundary
-    bool dofOnBoundary(unsigned int dofIdx) const { return boundaryDofIndices_[dofIdx]; }
-    //! If a vertex / d.o.f. is on a fracture
-    bool dofOnFracture(unsigned int dofIdx) const { return fractureDofIndices_[dofIdx]; }
-    //! Periodic boundaries are not supported for the box-dfm scheme
-    bool dofOnPeriodicBoundary(std::size_t dofIdx) const { return false; }
-
-    //! The index of the vertex / d.o.f. on the other side of the periodic boundary
-    std::size_t periodicallyMappedDof(std::size_t dofIdx) const
-    { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box-dfm scheme"); }
-
-    //! Returns the map between dofs across periodic boundaries
-    std::unordered_map<std::size_t, std::size_t> periodicVertexMap() const
-    { return std::unordered_map<std::size_t, std::size_t>(); }
-
-private:
     const FeCache feCache_;
 
     std::vector<std::vector<SubControlVolume>> scvs_;
@@ -459,12 +481,54 @@ public:
     std::size_t numDofs() const
     { return this->gridView().size(dim); }
 
-    //! update all fvElementGeometries (do this again after grid adaption)
+    //! Update all fvElementGeometries (do this again after grid adaption)
     template< class FractureGridAdapter >
+    [[deprecated("Use update(gridView) instead! Will be removed after release 3.5.")]]
     void update(const FractureGridAdapter& fractureGridAdapter)
     {
         ParentType::update();
+        update_(fractureGridAdapter);
+    }
 
+    template< class FractureGridAdapter >
+    void update(const GridView& gridView, const FractureGridAdapter& fractureGridAdapter)
+    {
+        ParentType::update(gridView);
+        update_(fractureGridAdapter);
+    }
+
+    template< class FractureGridAdapter >
+    void update(GridView&& gridView, const FractureGridAdapter& fractureGridAdapter)
+    {
+        ParentType::update(std::move(gridView));
+        update_(fractureGridAdapter);
+    }
+
+    //! The finite element cache for creating local FE bases
+    const FeCache& feCache() const { return feCache_; }
+    //! If a vertex / d.o.f. is on the boundary
+    bool dofOnBoundary(unsigned int dofIdx) const { return boundaryDofIndices_[dofIdx]; }
+    //! If a vertex / d.o.f. is on a fracture
+    bool dofOnFracture(unsigned int dofIdx) const { return fractureDofIndices_[dofIdx]; }
+    //! Periodic boundaries are not supported for the box-dfm scheme
+    bool dofOnPeriodicBoundary(std::size_t dofIdx) const { return false; }
+
+    //! Returns true if an intersection coincides with a fracture element
+    bool isOnFracture(const Element& element, const Intersection& intersection) const
+    { return facetOnFracture_[facetMapper_.subIndex(element, intersection.indexInInside(), 1)]; }
+
+    //! The index of the vertex / d.o.f. on the other side of the periodic boundary
+    std::size_t periodicallyMappedDof(std::size_t dofIdx) const
+    { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box-dfm scheme"); }
+
+    //! Returns the map between dofs across periodic boundaries
+    std::unordered_map<std::size_t, std::size_t> periodicVertexMap() const
+    { return std::unordered_map<std::size_t, std::size_t>(); }
+
+private:
+
+    void update_()
+    {
         boundaryDofIndices_.assign(numDofs(), false);
         fractureDofIndices_.assign(numDofs(), false);
         facetOnFracture_.assign(this->gridView().size(1), false);
@@ -531,29 +595,6 @@ public:
             }
         }
     }
-
-    //! The finite element cache for creating local FE bases
-    const FeCache& feCache() const { return feCache_; }
-    //! If a vertex / d.o.f. is on the boundary
-    bool dofOnBoundary(unsigned int dofIdx) const { return boundaryDofIndices_[dofIdx]; }
-    //! If a vertex / d.o.f. is on a fracture
-    bool dofOnFracture(unsigned int dofIdx) const { return fractureDofIndices_[dofIdx]; }
-    //! Periodic boundaries are not supported for the box-dfm scheme
-    bool dofOnPeriodicBoundary(std::size_t dofIdx) const { return false; }
-
-    //! Returns true if an intersection coincides with a fracture element
-    bool isOnFracture(const Element& element, const Intersection& intersection) const
-    { return facetOnFracture_[facetMapper_.subIndex(element, intersection.indexInInside(), 1)]; }
-
-    //! The index of the vertex / d.o.f. on the other side of the periodic boundary
-    std::size_t periodicallyMappedDof(std::size_t dofIdx) const
-    { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box-dfm scheme"); }
-
-    //! Returns the map between dofs across periodic boundaries
-    std::unordered_map<std::size_t, std::size_t> periodicVertexMap() const
-    { return std::unordered_map<std::size_t, std::size_t>(); }
-
-private:
 
     const FeCache feCache_;
 

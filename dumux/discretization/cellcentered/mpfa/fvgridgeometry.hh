@@ -26,6 +26,8 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_FV_GRID_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_FV_GRID_GEOMETRY_HH
 
+#include <utility>
+
 #include <dumux/common/parameters.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/method.hh>
@@ -169,10 +171,68 @@ public:
     { return false; }
 
     //! update all fvElementGeometries (do this again after grid adaption)
+    [[deprecated("Use update(gridView) instead! Will be removed after release 3.5.")]]
     void update()
     {
         ParentType::update();
+        update_();
+    }
 
+    //! update all fvElementGeometries (do this again after grid adaption)
+    void update(const GridView& gridView)
+    {
+        ParentType::update(gridView);
+        update_();
+    }
+
+    void update(GridView&& gridView)
+    {
+        ParentType::update(std::move(gridView));
+        update_();
+    }
+
+    //! Returns instance of the mpfa helper type
+    MpfaHelper mpfaHelper() const
+    { return MpfaHelper(); }
+
+    //! Get a sub control volume with a global scv index
+    const SubControlVolume& scv(GridIndexType scvIdx) const
+    { return scvs_[scvIdx]; }
+
+    //! Get a sub control volume face with a global scvf index
+    const SubControlVolumeFace& scvf(GridIndexType scvfIdx) const
+    { return scvfs_[scvfIdx]; }
+
+    //! Returns the connectivity map of which dofs
+    //! have derivatives with respect to a given dof.
+    const ConnectivityMap& connectivityMap() const
+    { return connectivityMap_; }
+
+    //! Returns the grid interaction volume index set class.
+    const GridIVIndexSets& gridInteractionVolumeIndexSets() const
+    { return ivIndexSets_; }
+
+    //! Get the sub control volume face indices of an scv by global index
+    const std::vector<GridIndexType>& scvfIndicesOfScv(GridIndexType scvIdx) const
+    { return scvfIndicesOfScv_[scvIdx]; }
+
+    //! Returns the flip scvf index set
+    const FlipScvfIndexSet& flipScvfIndexSet() const
+    { return flipScvfIndices_; }
+
+    //! Get the scvf on the same face but from the other side
+    //! Note that e.g. the normals might be different in the case of surface grids
+    const SubControlVolumeFace& flipScvf(GridIndexType scvfIdx, unsigned int outsideScvfIdx = 0) const
+    { return scvfs_[flipScvfIndices_[scvfIdx][outsideScvfIdx]]; }
+
+    //! Returns whether one of the geometry's scvfs lies on a boundary
+    bool hasBoundaryScvf(GridIndexType eIdx) const
+    { return hasBoundaryScvf_[eIdx]; }
+
+private:
+
+    void update_()
+    {
         // stop the time required for the update
         Dune::Timer timer;
 
@@ -365,45 +425,6 @@ public:
         std::cout << "Initializing of the connectivity map took " << timer.elapsed() << " seconds." << std::endl;
     }
 
-    //! Returns instance of the mpfa helper type
-    MpfaHelper mpfaHelper() const
-    { return MpfaHelper(); }
-
-    //! Get a sub control volume with a global scv index
-    const SubControlVolume& scv(GridIndexType scvIdx) const
-    { return scvs_[scvIdx]; }
-
-    //! Get a sub control volume face with a global scvf index
-    const SubControlVolumeFace& scvf(GridIndexType scvfIdx) const
-    { return scvfs_[scvfIdx]; }
-
-    //! Returns the connectivity map of which dofs
-    //! have derivatives with respect to a given dof.
-    const ConnectivityMap& connectivityMap() const
-    { return connectivityMap_; }
-
-    //! Returns the grid interaction volume index set class.
-    const GridIVIndexSets& gridInteractionVolumeIndexSets() const
-    { return ivIndexSets_; }
-
-    //! Get the sub control volume face indices of an scv by global index
-    const std::vector<GridIndexType>& scvfIndicesOfScv(GridIndexType scvIdx) const
-    { return scvfIndicesOfScv_[scvIdx]; }
-
-    //! Returns the flip scvf index set
-    const FlipScvfIndexSet& flipScvfIndexSet() const
-    { return flipScvfIndices_; }
-
-    //! Get the scvf on the same face but from the other side
-    //! Note that e.g. the normals might be different in the case of surface grids
-    const SubControlVolumeFace& flipScvf(GridIndexType scvfIdx, unsigned int outsideScvfIdx = 0) const
-    { return scvfs_[flipScvfIndices_[scvfIdx][outsideScvfIdx]]; }
-
-    //! Returns whether one of the geometry's scvfs lies on a boundary
-    bool hasBoundaryScvf(GridIndexType eIdx) const
-    { return hasBoundaryScvf_[eIdx]; }
-
-private:
     // connectivity map for efficient assembly
     ConnectivityMap connectivityMap_;
 
@@ -546,9 +567,60 @@ public:
     { return isGhostVertex_[vIdxGlobal]; }
 
     //! Updates all finite volume geometries of the grid. Has to be called again after grid adaption.
+    [[deprecated("Use update(gridView) instead! Will be removed after release 3.5.")]]
     void update()
     {
         ParentType::update();
+        update_();
+    }
+
+    //! update all fvElementGeometries (do this again after grid adaption)
+    void update(const GridView& gridView)
+    {
+        ParentType::update(gridView);
+        update_();
+    }
+
+    void update(GridView&& gridView)
+    {
+        ParentType::update(std::move(gridView));
+        update_();
+    }
+
+    //! Returns instance of the mpfa helper type
+    MpfaHelper mpfaHelper() const
+    { return MpfaHelper(); }
+
+    //! Returns the sub control volume face indices of an scv by global index.
+    const std::vector<GridIndexType>& scvfIndicesOfScv(GridIndexType scvIdx) const
+    { return scvfIndicesOfScv_[scvIdx]; }
+
+    //! Returns the neighboring vol var indices for each scvf contained in an scv.
+    const std::vector<ScvfOutsideGridIndexStorage>& neighborVolVarIndices(GridIndexType scvIdx) const
+    { return neighborVolVarIndices_[scvIdx]; }
+
+    //! Get the index scvf on the same face but from the other side
+    //! Note that e.g. the normals might be different in the case of surface grids
+    const GridIndexType flipScvfIdx(GridIndexType scvfIdx, unsigned int outsideScvfIdx = 0) const
+    { return flipScvfIndices_[scvfIdx][outsideScvfIdx]; }
+
+    //! Returns the flip scvf index set
+    const FlipScvfIndexSet& flipScvfIndexSet() const
+    { return flipScvfIndices_; }
+
+    //! Returns the connectivity map of which dofs
+    //! have derivatives with respect to a given dof.
+    const ConnectivityMap& connectivityMap() const
+    { return connectivityMap_; }
+
+    //! Returns the grid interaction volume seeds class.
+    const GridIVIndexSets& gridInteractionVolumeIndexSets() const
+    { return ivIndexSets_; }
+
+private:
+
+    void update_()
+    {
 
         // stop the time required for the update
         Dune::Timer timer;
@@ -728,37 +800,6 @@ public:
         std::cout << "Initializing of the connectivity map took " << timer.elapsed() << " seconds." << std::endl;
     }
 
-    //! Returns instance of the mpfa helper type
-    MpfaHelper mpfaHelper() const
-    { return MpfaHelper(); }
-
-    //! Returns the sub control volume face indices of an scv by global index.
-    const std::vector<GridIndexType>& scvfIndicesOfScv(GridIndexType scvIdx) const
-    { return scvfIndicesOfScv_[scvIdx]; }
-
-    //! Returns the neighboring vol var indices for each scvf contained in an scv.
-    const std::vector<ScvfOutsideGridIndexStorage>& neighborVolVarIndices(GridIndexType scvIdx) const
-    { return neighborVolVarIndices_[scvIdx]; }
-
-    //! Get the index scvf on the same face but from the other side
-    //! Note that e.g. the normals might be different in the case of surface grids
-    const GridIndexType flipScvfIdx(GridIndexType scvfIdx, unsigned int outsideScvfIdx = 0) const
-    { return flipScvfIndices_[scvfIdx][outsideScvfIdx]; }
-
-    //! Returns the flip scvf index set
-    const FlipScvfIndexSet& flipScvfIndexSet() const
-    { return flipScvfIndices_; }
-
-    //! Returns the connectivity map of which dofs
-    //! have derivatives with respect to a given dof.
-    const ConnectivityMap& connectivityMap() const
-    { return connectivityMap_; }
-
-    //! Returns the grid interaction volume seeds class.
-    const GridIVIndexSets& gridInteractionVolumeIndexSets() const
-    { return ivIndexSets_; }
-
-private:
     // connectivity map for efficient assembly
     ConnectivityMap connectivityMap_;
 
