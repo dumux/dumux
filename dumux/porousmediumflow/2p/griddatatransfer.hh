@@ -45,12 +45,14 @@ namespace Dumux {
  * \brief Class performing the transfer of data on a grid from before to after adaptation.
  */
 template<class TypeTag>
-class TwoPGridDataTransfer : public GridDataTransfer
+class TwoPGridDataTransfer : public GridDataTransfer<GetPropType<TypeTag, Properties::Grid>>
 {
     using Grid = GetPropType<TypeTag, Properties::Grid>;
+    using ParentType = GridDataTransfer<Grid>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Extrusion = Extrusion_t<GridGeometry>;
@@ -119,7 +121,7 @@ public:
                          std::shared_ptr<GridGeometry> gridGeometry,
                          std::shared_ptr<const GridVariables> gridVariables,
                          SolutionVector& sol)
-    : GridDataTransfer()
+    : ParentType()
     , problem_(problem)
     , gridGeometry_(gridGeometry)
     , gridVariables_(gridVariables)
@@ -135,11 +137,10 @@ public:
      * into a container object, before the grid is adapted. Father elements hold averaged
      * information from the son cells for the case of the sons being coarsened.
      */
-    void store() override
+    void store(const Grid& grid) override
     {
         adaptionMap_.resize();
 
-        const auto& grid = gridGeometry_->gridView().grid();
         for (auto level = grid.maxLevel(); level >= 0; level--)
         {
             for (const auto& element : elements(grid.levelGridView(level)))
@@ -201,11 +202,18 @@ public:
      * and then a new son is created. That is then stored into the general data
      * structure (AdaptedValues).
      */
-    void reconstruct() override
+    void reconstruct(const Grid& grid) override
+    {
+        gridGeometry_->update(grid.leafGridView());
+        reconstruct_();
+    }
+
+  private:
+
+    void reconstruct_()
     {
         // resize stuff (grid might have changed)
         adaptionMap_.resize();
-        gridGeometry_->update();
         sol_.resize(gridGeometry_->numDofs());
 
         // vectors storing the mass associated with each vertex, when using the box method
@@ -391,8 +399,6 @@ public:
 //                                                            Dune::ForwardCommunication);
 //#endif
     }
-
-  private:
 
     /*!
      * \brief Stores sons entries into father element for averaging
