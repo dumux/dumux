@@ -69,12 +69,10 @@ int main (int argc, char *argv[])
     using BulkGridView = typename BulkGrid::LeafGridView;
     using BulkFVGridGeometry = Dumux::CCTpfaFVGridGeometry<BulkGridView, true>;
     BulkFVGridGeometry bulkFvGeometry( gridManager.grid<0>().leafGridView() );
-    bulkFvGeometry.update();
 
     using FacetGridView = typename FacetGrid::LeafGridView;
     using FacetFVGridGeometry = Dumux::CCTpfaFVGridGeometry<FacetGridView, true>;
     FacetFVGridGeometry facetFvGeometry( gridManager.grid<1>().leafGridView() );
-    facetFvGeometry.update();
 
     // instantiate and update mapper for all domain combinations
     Dumux::FacetCouplingMapper<BulkFVGridGeometry, FacetFVGridGeometry> mapper;

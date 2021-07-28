@@ -197,7 +197,6 @@ int main(int argc, char** argv)
     // create the finite volume grid geometry
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
-    gridGeometry->update();
 
     // get some time loop parameters
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

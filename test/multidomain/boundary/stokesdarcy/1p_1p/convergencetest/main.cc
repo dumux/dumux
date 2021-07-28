@@ -246,10 +246,8 @@ int main(int argc, char** argv)
     // create the finite volume grid geometry
     using FreeFlowGridGeometry = GetPropType<FreeFlowTypeTag, Properties::GridGeometry>;
     auto freeFlowGridGeometry = std::make_shared<FreeFlowGridGeometry>(freeFlowGridView);
-    freeFlowGridGeometry->update();
     using DarcyGridGeometry = GetPropType<DarcyTypeTag, Properties::GridGeometry>;
     auto darcyGridGeometry = std::make_shared<DarcyGridGeometry>(darcyGridView);
-    darcyGridGeometry->update();
 
     using Traits = StaggeredMultiDomainTraits<FreeFlowTypeTag, FreeFlowTypeTag, DarcyTypeTag>;
 

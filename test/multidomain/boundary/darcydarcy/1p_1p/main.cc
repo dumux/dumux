@@ -122,8 +122,6 @@ int main(int argc, char** argv)
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto fvGridGeometry0 = std::make_shared<GridGeometry>(gridView0);
     auto fvGridGeometry1 = std::make_shared<GridGeometry>(gridView1);
-    fvGridGeometry0->update();
-    fvGridGeometry1->update();
 
     // the mixed dimension type traits
     using Traits = MultiDomainTraits<SubTypeTag0, SubTypeTag1>;

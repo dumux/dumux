@@ -63,8 +63,7 @@ int main(int argc, char** argv)
     using SubGridData = PoreNetwork::SubGridData<HostGridManager::Grid, SubGridManager::Grid>;
     auto gridData = std::make_shared<SubGridData>(subGridManager.grid(), hostGridData);
 
-    PoreNetwork::GridGeometry<double, SubGridManager::Grid::LeafGridView> gridGeometry(subGridManager.grid().leafGridView());
-    gridGeometry.update(*gridData);
+    PoreNetwork::GridGeometry<double, SubGridManager::Grid::LeafGridView> gridGeometry(subGridManager.grid().leafGridView(), *gridData);
 
     const auto& params = gridData->parameters(*(elements(subGridManager.grid().leafGridView()).begin()));
     for (const auto& p : params)

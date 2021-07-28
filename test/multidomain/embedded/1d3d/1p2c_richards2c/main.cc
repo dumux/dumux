@@ -183,10 +183,8 @@ int main(int argc, char** argv)
     // create the finite volume grid geometry
     using BulkFVGridGeometry = GetPropType<BulkTypeTag, Properties::GridGeometry>;
     auto bulkFvGridGeometry = std::make_shared<BulkFVGridGeometry>(bulkGridView);
-    bulkFvGridGeometry->update();
     using LowDimFVGridGeometry = GetPropType<LowDimTypeTag, Properties::GridGeometry>;
     auto lowDimFvGridGeometry = std::make_shared<LowDimFVGridGeometry>(lowDimGridView);
-    lowDimFvGridGeometry->update();
 
     // the mixed dimension type traits
     using Traits = MultiDomainTraits<BulkTypeTag, LowDimTypeTag>;
@@ -269,13 +267,9 @@ int main(int argc, char** argv)
             soilGrid.postAdapt();
         }
 
-        // update the bounding box tree
-        bulkFvGridGeometry->update();
+        // update the grid geometry (including the bounding box tree)
+        bulkFvGridGeometry->update(bulkGridView);
     }
-
-    // update geometry after refinement
-    bulkFvGridGeometry->update();
-    lowDimFvGridGeometry->update();
 
     // output min max h
     double bulkHMin = 1.0; double bulkHMax = 0.0;

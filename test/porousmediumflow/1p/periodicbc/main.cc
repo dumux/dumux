@@ -78,7 +78,6 @@ int main(int argc, char** argv)
     // create the finite volume grid geometry (and make it periodic)
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
-    gridGeometry->update();
 
     bool periodic = gridGeometry->isPeriodic();
     periodic = gridGeometry->gridView().comm().max(periodic);

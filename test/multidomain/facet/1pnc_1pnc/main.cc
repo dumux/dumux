@@ -47,38 +47,40 @@
 namespace Dumux {
 
 /*!
- * \brief Updates the finite volume grid geometry for the box scheme.
+ * \brief Constructs the finite volume grid geometry for the box scheme.
  *
  * This is necessary as the finite volume grid geometry for the box scheme with
- * facet coupling requires additional data for the update. The reason is that
+ * facet coupling requires additional data for the constructor. The reason is that
  * we have to create additional faces on interior boundaries, which wouldn't be
  * created in the standard scheme.
  */
-template< class GridGeometry,
+template< class BulkGridGeometry,
           class GridManager,
-          class FacetGridView,
-          std::enable_if_t<GridGeometry::discMethod == Dumux::DiscretizationMethod::box, int> = 0 >
-void updateBulkFVGridGeometry(GridGeometry& gridGeometry,
-                              const GridManager& gridManager,
-                              const FacetGridView& facetGridView)
+          class BulkGridView,
+          class LowDimGridView,
+          std::enable_if_t<BulkGridGeometry::discMethod == Dumux::DiscretizationMethod::box, int> = 0 >
+auto makeBulkFVGridGeometry(const GridManager& gridManager,
+                            const BulkGridView& bulkGridView,
+                            const LowDimGridView& lowDimGridView)
 {
     using BulkFacetGridAdapter = Dumux::CodimOneGridAdapter<typename GridManager::Embeddings>;
     BulkFacetGridAdapter facetGridAdapter(gridManager.getEmbeddings());
-    gridGeometry.update(facetGridView, facetGridAdapter);
+    return std::make_shared<BulkGridGeometry>(bulkGridView, lowDimGridView, facetGridAdapter);
 }
 
 /*!
- * \brief Updates the finite volume grid geometry for the cell-centered schemes.
+ * \brief Constructs the finite volume grid geometry for the cell-centered schemes.
  */
-template< class GridGeometry,
+template< class BulkGridGeometry,
           class GridManager,
+          class BulkGridView,
           class LowDimGridView,
-          std::enable_if_t<GridGeometry::discMethod != Dumux::DiscretizationMethod::box, int> = 0 >
-void updateBulkFVGridGeometry(GridGeometry& gridGeometry,
-                              const GridManager& gridManager,
-                              const LowDimGridView& lowDimGridView)
+          std::enable_if_t<BulkGridGeometry::discMethod != Dumux::DiscretizationMethod::box, int> = 0 >
+auto makeBulkFVGridGeometry(const GridManager& gridManager,
+                            const BulkGridView& bulkGridView,
+                            const LowDimGridView& lowDimGridView)
 {
-    gridGeometry.update();
+    return std::make_shared<BulkGridGeometry>(bulkGridView);
 }
 
 } // end namespace Dumux
@@ -116,10 +118,8 @@ int main(int argc, char** argv)
     // create the finite volume grid geometries
     using BulkFVGridGeometry = GetPropType<BulkTypeTag, Properties::GridGeometry>;
     using FacetFVGridGeometry = GetPropType<FacetTypeTag, Properties::GridGeometry>;
-    auto bulkFvGridGeometry = std::make_shared<BulkFVGridGeometry>(bulkGridView);
     auto facetFvGridGeometry = std::make_shared<FacetFVGridGeometry>(facetGridView);
-    updateBulkFVGridGeometry(*bulkFvGridGeometry, gridManager, facetGridView);
-    facetFvGridGeometry->update();
+    auto bulkFvGridGeometry  = makeBulkFVGridGeometry<BulkFVGridGeometry>(gridManager, bulkGridView, facetGridView);
 
     // the coupling mapper
     using TestTraits = Properties::TestTraits;

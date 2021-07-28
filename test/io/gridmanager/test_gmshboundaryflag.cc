@@ -87,7 +87,6 @@ int main(int argc, char** argv)
                                                  >
                                              >;
     auto boxFvGridGeometry = std::make_shared<BoxFVGridGeometry>(leafGridView);
-    boxFvGridGeometry->update();
 
     // run the test
     GmshBoundaryFlagTest<Grid>::testGmshBoundaryFlag<BoxFVGridGeometry>(leafGridView, boxFvGridGeometry, gridData);
@@ -104,7 +103,6 @@ int main(int argc, char** argv)
                                                  >
                                              >;
     auto ccTpfaFvGridGeometry = std::make_shared<CCTpfaFVGridGeometry>(leafGridView);
-    ccTpfaFvGridGeometry->update();
 
     // run the test
     GmshBoundaryFlagTest<Grid>::testGmshBoundaryFlag<CCTpfaFVGridGeometry>(leafGridView, ccTpfaFvGridGeometry, gridData);
