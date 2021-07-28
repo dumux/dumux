@@ -60,7 +60,7 @@ public:
     , indexSet_(&gridView.indexSet())
     , codimension_(layout(indexSet_->types(0)[0], GridView::dimension) ? 0 : GridView::dimension)
     {
-        update();
+        update_();
     }
 
     /*!
