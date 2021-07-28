@@ -127,6 +127,7 @@ public:
                                { return is.boundary() || isBranching; } )
     {
         checkOverlapSizeCCMpfa(gridView);
+        update_();
     }
 
     //! Constructor with user-defined indicator function for secondary interaction volumes
@@ -135,6 +136,7 @@ public:
     , secondaryIvIndicator_(indicator)
     {
         checkOverlapSizeCCMpfa(gridView);
+        update_();
     }
 
     //! the element mapper is the dofMapper
@@ -515,6 +517,7 @@ public:
                                { return is.boundary() || isBranching; } )
     {
         checkOverlapSizeCCMpfa(gridView);
+        update_();
     }
 
     //! Constructor with user-defined indicator function for secondary interaction volumes
@@ -523,6 +526,7 @@ public:
     , secondaryIvIndicator_(indicator)
     {
         checkOverlapSizeCCMpfa(gridView);
+        update_();
     }
 
     //! the element mapper is the dofMapper

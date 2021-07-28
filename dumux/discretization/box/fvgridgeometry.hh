@@ -118,7 +118,9 @@ public:
     //! Constructor
     BoxFVGridGeometry(const GridView gridView)
     : ParentType(gridView)
-    {}
+    {
+        update_();
+    }
 
     //! the vertex mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
@@ -403,7 +405,9 @@ public:
     //! Constructor
     BoxFVGridGeometry(const GridView gridView)
     : ParentType(gridView)
-    {}
+    {
+        update_();
+    }
 
     //! the vertex mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...

@@ -241,6 +241,8 @@ public:
         if (!CheckOverlapSize<DiscretizationMethod::staggered>::isValid(gridView))
             DUNE_THROW(Dune::InvalidStateException, "The staggered discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
+
+        update_();
     }
 
     //! The total number of sub control volumes
@@ -528,6 +530,8 @@ public:
         if (!CheckOverlapSize<DiscretizationMethod::staggered>::isValid(gridView))
             DUNE_THROW(Dune::InvalidStateException, "The staggered discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
+
+        update_();
     }
 
     //! update all fvElementGeometries (do this again after grid adaption)

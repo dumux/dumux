@@ -128,6 +128,8 @@ public:
         if (!CheckOverlapSize<DiscretizationMethod::cctpfa>::isValid(gridView))
             DUNE_THROW(Dune::InvalidStateException, "The cctpfa discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
+
+        update_();
     }
 
     //! the element mapper is the dofMapper
@@ -431,6 +433,8 @@ public:
         if (!CheckOverlapSize<DiscretizationMethod::cctpfa>::isValid(gridView))
             DUNE_THROW(Dune::InvalidStateException, "The cctpfa discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
+
+        update_();
     }
 
     //! the element mapper is the dofMapper

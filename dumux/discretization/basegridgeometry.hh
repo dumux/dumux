@@ -84,6 +84,7 @@ public:
     , bBoxMax_(-std::numeric_limits<double>::max())
     {
         computeGlobalBoundingBox_();
+        update_();
     }
 
     /*!
