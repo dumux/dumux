@@ -1,21 +1,34 @@
-from ._common import *
+"""
+The DuMux common module
+containing classes and functions needed for most simulations
+"""
 
 from dune.generator.generator import SimpleGenerator
 from dune.common.hashit import hashIt
 
-# A problem decorator generator for Python problems
-#
-# from dumux.common import FVProblem
-# @FVProblem(gridGeometry)
-# class MyProblem:
-#    ...
-#
-def FVProblem(gridGeometry):
+from dumux.common.properties import Model, Property
+from dumux.wrapping import cppWrapperCreator, cppWrapperClassAlias
+
+from ._common import *
+
+
+@cppWrapperCreator
+def _createFVProblemDecorator(gridGeometry, enableInternalDirichletConstraints=False):
+    """A problem decorator generator for Python problems
+
+    from dumux.common import FVProblem
+    @FVProblem(gridGeometry)
+    class MyProblem:
+        ...
+    """
 
     def createModule(numEq):
         priVarType = "Dune::FieldVector<double, {}>".format(numEq)
         ggType = gridGeometry._typeName
-        problemType = "Dumux::Python::FVProblem<{}, {}>".format(ggType, priVarType)
+        enableIntDirConstraint = "true" if enableInternalDirichletConstraints else "false"
+        problemType = "Dumux::Python::FVProblem<{}, {}, {}>".format(
+            ggType, priVarType, enableIntDirConstraint
+        )
         includes = gridGeometry._includes + ["dumux/python/common/fvproblem.hh"]
         moduleName = "fvproblem_" + hashIt(problemType)
         holderType = "std::shared_ptr<{}>".format(problemType)
@@ -23,18 +36,27 @@ def FVProblem(gridGeometry):
         module = generator.load(includes, problemType, moduleName, options=[holderType])
         return module
 
-    def FVProblemDecorator(Cls):
-        module = createModule(Cls.numEq)
+    def decorateFVProblem(cls):
+        module = createModule(cls.numEq)
+
         def createFVProblem():
-            return module.FVProblem(gridGeometry, Cls())
+            return module.FVProblem(gridGeometry, cls())
+
         return createFVProblem
 
-    return FVProblemDecorator
+    return decorateFVProblem
 
 
-# Function for JIT copmilation of Dumux::BoundaryTypes
-def BoundaryTypes(numEq=1):
-    # only copmile this once per numEq
+@cppWrapperClassAlias(creator=_createFVProblemDecorator)
+class FVProblem:
+    """Class alias used to decorate a Python finite volume problem"""
+
+
+@cppWrapperCreator
+def _createBoundaryTypes(numEq=1):
+    """Create BoundaryTypes instances"""
+
+    # only compile this once per numEq
     cacheKey = "BoundaryTypes_{}".format(numEq)
     try:
         return globals()[cacheKey]()
@@ -44,5 +66,10 @@ def BoundaryTypes(numEq=1):
         moduleName = "boundarytypes_" + hashIt(typeName)
         generator = SimpleGenerator("BoundaryTypes", "Dumux::Python")
         module = generator.load(includes, typeName, moduleName)
-        globals().update({cacheKey : module.BoundaryTypes})
+        globals().update({cacheKey: module.BoundaryTypes})
     return globals()[cacheKey]()
+
+
+@cppWrapperClassAlias(creator=_createBoundaryTypes)
+class BoundaryTypes:
+    """Class alias used to create a BoundaryTypes instance"""

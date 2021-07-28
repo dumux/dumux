@@ -40,11 +40,11 @@ Then run dunecontrol which also builds the Dune Python bindings.
 ./dune-common/bin/dunecontrol --opts=cmake.opts all
 ```
 
-Add the Python binding modules to your Python path like this and install them:
+Add the Python binding modules to your Python path like this and install them with
+the setup environment setup script
 
 ```
-export PYTHONPATH=$(pwd)/dune-common/build-cmake/python:$(pwd)/dune-grid/build-cmake/python:$(pwd)/dune-geometry/build-cmake/python:$(pwd)/dune-istl/build-cmake/python:$(pwd)/dune-localfunctions/build-cmake/python:$(pwd)/dumux/build-cmake/python
-python3 dune-common/bin/setup-dunepy.py --opts=cmake.opts install
+source dumux/python/setup-python-env.sh
 ```
 
 If you are getting error with loading MPI in Python you might need to preload the MPI library
@@ -69,3 +69,29 @@ You can run all currently existing DuMu<sup>x</sup> Python tests with
 cd dumux/build-cmake
 ctest -L python
 ```
+##  Development
+
+All Python files should be linted by the tool [`black`](https://pypi.org/project/black/).
+You can install `black` with `pip install black` and run it from the dumux top-directory
+
+```
+black ./python
+```
+
+You can also run it on a specific file (replace `./python` by file name)
+This will automatically format the Python files. Run black before every commit changing Python files.
+
+The `dumux` Python module should be get a score of `10` from
+the tool [`pylint`](https://pypi.org/project/pylint/).
+You can install `pylint` with `pip install pylint` and run it from the dumux top-directory
+
+```
+pylint build-cmake/python/dumux
+```
+
+Pylint needs to be able to check imports so the modules need to be properly set up
+with `setup-dunepy.py` (see above). The `pylint` configuration file `dumux/.pylintrc` can
+be used to configure `pylint`. Some exceptions or other parameters than the default
+might be sensible in the future but generally advice given by `pylint` leads to better code.
+Different from `black`, `pylint` does no itself fix the code, you need to do this yourself.
+Always run `black` before checking `pylint`.
