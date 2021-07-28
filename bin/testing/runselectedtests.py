@@ -81,7 +81,7 @@ if __name__ == '__main__':
                         help='set the flags passed to make')
     parser.add_argument('-tf', '--testflags',
                         required=False,
-                        default='-j4 --output-on-failure',
+                        default='-j4 --output-on-failure -LE python',
                         help='set the flags passed to ctest')
     args = vars(parser.parse_args())
 
