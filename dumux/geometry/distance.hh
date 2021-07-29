@@ -175,6 +175,9 @@ squaredDistancePointTriangle(const Point& p, const Point& a, const Point& b, con
                    + sign(crossProduct(bc, normal)*bp)
                    + sign(crossProduct(ca, normal)*cp);
 
+    // if there is no orthogonal projection
+    // (point is outside the infinite prism implied by the triangle and its surface normal)
+    // compute distance to the edges (codim-1 facets)
     if (sum < 2.0)
     {
         using std::min;
@@ -182,6 +185,7 @@ squaredDistancePointTriangle(const Point& p, const Point& a, const Point& b, con
                     squaredDistancePointSegment(p, a, c),
                     squaredDistancePointSegment(p, b, c)});
     }
+    // compute distance via orthogonal projection
     else
     {
         const auto tmp = normal*ap;
