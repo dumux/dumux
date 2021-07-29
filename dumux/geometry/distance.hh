@@ -226,6 +226,42 @@ distancePointTriangle(const typename Geometry::GlobalCoordinate& p, const Geomet
 
 /*!
  * \ingroup Geometry
+ * \brief Compute the shortest squared distance from a point to a given polygon geometry
+ * \note We only support triangles and quadrilaterals so far.
+ */
+template<class Geometry>
+static inline typename Geometry::ctype
+squaredDistancePointPolygon(const typename Geometry::GlobalCoordinate& p, const Geometry& geometry)
+{
+    if (geometry.corners() == 3)
+        return squaredDistancePointTriangle(p, geometry);
+    else if (geometry.corners() == 4)
+    {
+        const auto& a = geometry.corner(0);
+        const auto& b = geometry.corner(1);
+        const auto& c = geometry.corner(2);
+        const auto& d = geometry.corner(3);
+
+        using std::min;
+        return min(squaredDistancePointTriangle(p, a, b, d),
+                   squaredDistancePointTriangle(p, a, d, c));
+    }
+    else
+        DUNE_THROW(Dune::NotImplemented, "Polygon with " << geometry.corners() << " corners not supported");
+}
+
+/*!
+ * \ingroup Geometry
+ * \brief Compute the shortest distance from a point to a given polygon geometry
+ * \note We only support triangles and quadrilaterals so far.
+ */
+template<class Geometry>
+static inline typename Geometry::ctype
+distancePointPolygon(const typename Geometry::GlobalCoordinate& p, const Geometry& geometry)
+{ using std::sqrt; return sqrt(squaredDistancePointPolygon(p, geometry)); }
+
+/*!
+ * \ingroup Geometry
  * \brief Compute the average distance from a segment to a geometry by integration
  */
 template<class Geometry>
@@ -248,7 +284,7 @@ averageDistanceSegmentGeometry(const typename Geometry::GlobalCoordinate& a,
  */
 template<class ctype, int dimWorld>
 static inline ctype distance(const Dune::FieldVector<ctype, dimWorld>& a,
-                      const Dune::FieldVector<ctype, dimWorld>& b)
+                             const Dune::FieldVector<ctype, dimWorld>& b)
 { return (a-b).two_norm(); }
 
 /*!
@@ -302,6 +338,24 @@ struct GeometryDistance<Geo1, Geo2, dimWorld, 0, 1>
     static_assert(Geo1::coorddimension == Geo2::coorddimension, "Geometries have to have the same coordinate dimensions");
     static auto distance(const Geo1& geo1, const Geo2& geo2)
     { return distancePointSegment(geo1.corner(0), geo2); }
+};
+
+// distance point-polygon
+template<class Geo1, class Geo2, int dimWorld>
+struct GeometryDistance<Geo1, Geo2, dimWorld, 0, 2>
+{
+    static_assert(Geo1::coorddimension == Geo2::coorddimension, "Geometries have to have the same coordinate dimensions");
+    static inline auto distance(const Geo1& geo1, const Geo2& geo2)
+    { return distancePointPolygon(geo1.corner(0), geo2); }
+};
+
+// distance polygon-point
+template<class Geo1, class Geo2, int dimWorld>
+struct GeometryDistance<Geo1, Geo2, dimWorld, 2, 0>
+{
+    static_assert(Geo1::coorddimension == Geo2::coorddimension, "Geometries have to have the same coordinate dimensions");
+    static inline auto distance(const Geo1& geo1, const Geo2& geo2)
+    { return distancePointPolygon(geo2.corner(0), geo1); }
 };
 
 } // end namespace Detail
