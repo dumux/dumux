@@ -103,9 +103,7 @@ public:
     {
         // make sure FVElementGeometry and volume variables are bound to the element
         auto fvGeometry = localView(gridGeometry).bind(element);
-
-        auto elemVolVars = localView(gridVariables.curGridVolVars());
-        elemVolVars.bind(element, fvGeometry, sol);
+        auto elemVolVars = localView(gridVariables.curGridVolVars()).bind(element, fvGeometry, sol);
 
         ElementResidualVector storage(fvGeometry.numScv());
 

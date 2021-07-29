@@ -90,8 +90,7 @@ public:
 
             // make sure FVElementGeometry & vol vars are bound to the element
             auto fvElementGeometry = localView(problem().gridGeometry()).bindElement(element);
-            auto elemVolVars = localView(this->gridVariables().curGridVolVars());
-            elemVolVars.bind(element, fvElementGeometry, this->sol());
+            auto elemVolVars = localView(this->gridVariables().curGridVolVars()).bind(element, fvElementGeometry, this->sol());
             auto elemFluxVarsCache = localView(this->gridVariables().gridFluxVarsCache());
             elemFluxVarsCache.bind(element, fvElementGeometry, elemVolVars);
 

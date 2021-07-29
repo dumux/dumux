@@ -97,16 +97,13 @@ public:
         const auto& curGridVolVars = gridVariables.curGridVolVars();
         const auto& prevGridVolVars = gridVariables.prevGridVolVars();
 
-        auto curElemVolVars = localView(curGridVolVars);
-        auto prevElemVolVars = localView(prevGridVolVars);
-
         std::vector<bool> dofVisited(uCurrentIter.size(), false);
 
         for (const auto& element : elements(problem.gridGeometry().gridView()))
         {
             auto fvGeometry = localView(problem.gridGeometry()).bindElement(element);
-            curElemVolVars.bindElement(element, fvGeometry, uCurrentIter);
-            prevElemVolVars.bindElement(element, fvGeometry, prevSol);
+            auto curElemVolVars = localView(curGridVolVars).bindElement(element, fvGeometry, uCurrentIter);
+            auto prevElemVolVars = localView(prevGridVolVars).bindElement(element, fvGeometry, prevSol);
 
             for (const auto& scv : scvs(fvGeometry))
             {

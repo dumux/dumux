@@ -209,9 +209,7 @@ public:
 
         // make sure FVElementGeometry and volume variables are bound to the element
         auto fvGeometry = localView(localResidual_.problem().gridGeometry()).bind(element);
-
-        auto curElemVolVars = localView(gridVariables_.curGridVolVars());
-        curElemVolVars.bind(element, fvGeometry, sol_);
+        auto curElemVolVars = localView(gridVariables_.curGridVolVars()).bind(element, fvGeometry, sol_);
 
         auto prevElemVolVars = localView(gridVariables_.prevGridVolVars());
         if (!isStationary_)

@@ -96,9 +96,7 @@ public:
         {
             // make sure FVElementGeometry is bound to the element
             auto fvGeometry = localView(gridGeometry).bindElement(element);
-
-            auto elemVolVars = localView(gridVariables.curGridVolVars());
-            elemVolVars.bindElement(element, fvGeometry, curSol);
+            auto elemVolVars = localView(gridVariables.curGridVolVars()).bindElement(element, fvGeometry, curSol);
 
             const auto curElemSol = elementSolution(element, curSol, gridGeometry);
             for (auto&& scv : scvs(fvGeometry))
@@ -190,8 +188,7 @@ public:
             {
                 // make sure FVElementGeometry and the volume variables are bound
                 auto fvGeometry = localView(gridGeometry).bind(element);
-                auto curElemVolVars = localView(gridVariables.curGridVolVars());
-                curElemVolVars.bind(element, fvGeometry, sol);
+                auto curElemVolVars = localView(gridVariables.curGridVolVars()).bind(element, fvGeometry, sol);
                 gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
             }
         }
@@ -221,8 +218,7 @@ public:
                 if (!Problem::enableInternalDirichletConstraints() && !fvGeometry.hasBoundaryScvf())
                     continue;
 
-                auto elemVolVars = localView(gridVariables.curGridVolVars());
-                elemVolVars.bindElement(element, fvGeometry, sol);
+                auto elemVolVars = localView(gridVariables.curGridVolVars()).bindElement(element, fvGeometry, sol);
 
                 for (const auto& scv : scvs(fvGeometry))
                 {

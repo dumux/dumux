@@ -94,11 +94,10 @@ public:
         for (const auto& element : elements(gridGeometry.gridView()))
         {
             auto eIdx = gridGeometry.elementMapper().index(element);
+
             // bind the geometries and volume variables to the element (all the elements in stencil)
             auto fvGeometry = localView(gridGeometry).bind(element);
-
-            auto elemVolVars = localView(gridVolVars);
-            elemVolVars.bind(element, fvGeometry, sol);
+            auto elemVolVars = localView(gridVolVars).bind(element, fvGeometry, sol);
 
             for (auto&& scvf : scvfs(fvGeometry))
                 cache(eIdx, scvf.index()).update(problem(), element, fvGeometry, elemVolVars, scvf, invasionState().invaded(element));

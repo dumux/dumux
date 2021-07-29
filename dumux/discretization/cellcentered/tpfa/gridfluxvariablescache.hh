@@ -104,9 +104,7 @@ public:
             {
                 // Prepare the geometries within the elements of the stencil
                 auto fvGeometry = localView(gridGeometry).bind(element);
-
-                auto elemVolVars = localView(gridVolVars);
-                elemVolVars.bind(element, fvGeometry, sol);
+                auto elemVolVars = localView(gridVolVars).bind(element, fvGeometry, sol);
 
                 for (auto&& scvf : scvfs(fvGeometry))
                 {

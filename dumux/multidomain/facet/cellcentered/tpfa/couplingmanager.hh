@@ -499,9 +499,8 @@ public:
 
             // then simply bind the local views of that first neighbor
             auto bulkFvGeom = localView(bulkGridGeom).bind(bulkElem);
-            auto bulkElemVolVars = Assembler::isImplicit() ? localView(assembler.gridVariables(bulkId).curGridVolVars())
-                                                           : localView(assembler.gridVariables(bulkId).prevGridVolVars());
-            bulkElemVolVars.bind(bulkElem, bulkFvGeom, bulkSol);
+            auto bulkElemVolVars = Assembler::isImplicit() ? localView(assembler.gridVariables(bulkId).curGridVolVars()).bind(bulkElem, bulkFvGeom, bulkSol)
+                                                           : localView(assembler.gridVariables(bulkId).prevGridVolVars()).bind(bulkElem, bulkFvGeom, bulkSol);
             auto bulkElemFluxVarsCache = localView(assembler.gridVariables(bulkId).gridFluxVarsCache());
             bulkElemFluxVarsCache.bind(bulkElem, bulkFvGeom, bulkElemVolVars);
 
@@ -750,8 +749,7 @@ public:
         // update transmissibilities after low dim context has changed (implicit only)
         if (BulkLocalAssembler::isImplicit())
         {
-            auto elemVolVars = localView(gridVolVars);
-            elemVolVars.bind(bulkLocalAssembler.element(), bulkLocalAssembler.fvGeometry(), this->curSol()[bulkId]);
+            auto elemVolVars = localView(gridVolVars).bind(bulkLocalAssembler.element(), bulkLocalAssembler.fvGeometry(), this->curSol()[bulkId]);
             fluxVarsCache.update(bulkLocalAssembler.element(), bulkLocalAssembler.fvGeometry(), elemVolVars);
         }
     }

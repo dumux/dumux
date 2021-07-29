@@ -538,8 +538,7 @@ public:
                 const auto curBulkElem = bulkGridGeom.element(embedments[i].first);
 
                 auto bulkFvGeom = localView(bulkGridGeom).bind(curBulkElem);
-                auto bulkElemVolVars = localView(assembler.gridVariables(bulkId).curGridVolVars());
-                bulkElemVolVars.bind(curBulkElem, bulkFvGeom, bulkSol);
+                auto bulkElemVolVars = localView(assembler.gridVariables(bulkId).curGridVolVars()).bind(curBulkElem, bulkFvGeom, bulkSol);
                 auto bulkElemFluxVarsCache = localView(assembler.gridVariables(bulkId).gridFluxVarsCache());
                 bulkElemFluxVarsCache.bind(curBulkElem, bulkFvGeom, bulkElemVolVars);
 

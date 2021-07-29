@@ -99,9 +99,7 @@ public:
         for (auto&& element : elements(problem_.gridGeometry().gridView()))
         {
             auto fvGeometry = localView(problem_.gridGeometry()).bindElement(element);
-
-            auto elemVolVars = localView(gridVolVars);
-            elemVolVars.bind(element, fvGeometry, sol);
+            auto elemVolVars = localView(gridVolVars).bind(element, fvGeometry, sol);
 
             auto elemFluxVarsCache = localView(gridFluxVarsCache);
             elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
@@ -165,10 +163,7 @@ public:
                 continue;
 
             auto fvGeometry = localView(problem_.gridGeometry()).bindElement(element);
-
-            auto elemVolVars = localView(gridVolVars);
-            elemVolVars.bind(element, fvGeometry, sol);
-
+            auto elemVolVars = localView(gridVolVars).bind(element, fvGeometry, sol);
             auto elemFluxVarsCache = localView(gridFluxVarsCache);
             elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
 
