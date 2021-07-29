@@ -303,7 +303,7 @@ namespace Detail {
 template<class Geo1, class Geo2,
          int dimWorld = Geo1::coorddimension,
          int dim1 = Geo1::mydimension, int dim2 = Geo2::mydimension>
-struct GeometryDistance
+struct GeometrySquaredDistance
 {
     static_assert(Geo1::coorddimension == Geo2::coorddimension, "Geometries have to have the same coordinate dimensions");
     static auto distance(const Geo1& geo1, const Geo2& geo2)
@@ -315,47 +315,47 @@ struct GeometryDistance
 
 // distance point-point
 template<class Geo1, class Geo2, int dimWorld>
-struct GeometryDistance<Geo1, Geo2, dimWorld, 0, 0>
+struct GeometrySquaredDistance<Geo1, Geo2, dimWorld, 0, 0>
 {
     static_assert(Geo1::coorddimension == Geo2::coorddimension, "Geometries have to have the same coordinate dimensions");
     static auto distance(const Geo1& geo1, const Geo2& geo2)
-    { return Dumux::distance(geo1.corner(0), geo2.corner(0)); }
+    { return Dumux::squaredDistance(geo1.corner(0), geo2.corner(0)); }
 };
 
 // distance segment-point
 template<class Geo1, class Geo2, int dimWorld>
-struct GeometryDistance<Geo1, Geo2, dimWorld, 1, 0>
+struct GeometrySquaredDistance<Geo1, Geo2, dimWorld, 1, 0>
 {
     static_assert(Geo1::coorddimension == Geo2::coorddimension, "Geometries have to have the same coordinate dimensions");
     static auto distance(const Geo1& geo1, const Geo2& geo2)
-    { return distancePointSegment(geo2.corner(0), geo1); }
+    { return squaredDistancePointSegment(geo2.corner(0), geo1); }
 };
 
 // distance point-segment
 template<class Geo1, class Geo2, int dimWorld>
-struct GeometryDistance<Geo1, Geo2, dimWorld, 0, 1>
+struct GeometrySquaredDistance<Geo1, Geo2, dimWorld, 0, 1>
 {
     static_assert(Geo1::coorddimension == Geo2::coorddimension, "Geometries have to have the same coordinate dimensions");
     static auto distance(const Geo1& geo1, const Geo2& geo2)
-    { return distancePointSegment(geo1.corner(0), geo2); }
+    { return squaredDistancePointSegment(geo1.corner(0), geo2); }
 };
 
 // distance point-polygon
 template<class Geo1, class Geo2, int dimWorld>
-struct GeometryDistance<Geo1, Geo2, dimWorld, 0, 2>
+struct GeometrySquaredDistance<Geo1, Geo2, dimWorld, 0, 2>
 {
     static_assert(Geo1::coorddimension == Geo2::coorddimension, "Geometries have to have the same coordinate dimensions");
     static inline auto distance(const Geo1& geo1, const Geo2& geo2)
-    { return distancePointPolygon(geo1.corner(0), geo2); }
+    { return squaredDistancePointPolygon(geo1.corner(0), geo2); }
 };
 
 // distance polygon-point
 template<class Geo1, class Geo2, int dimWorld>
-struct GeometryDistance<Geo1, Geo2, dimWorld, 2, 0>
+struct GeometrySquaredDistance<Geo1, Geo2, dimWorld, 2, 0>
 {
     static_assert(Geo1::coorddimension == Geo2::coorddimension, "Geometries have to have the same coordinate dimensions");
     static inline auto distance(const Geo1& geo1, const Geo2& geo2)
-    { return distancePointPolygon(geo2.corner(0), geo1); }
+    { return squaredDistancePointPolygon(geo2.corner(0), geo1); }
 };
 
 } // end namespace Detail
@@ -365,8 +365,16 @@ struct GeometryDistance<Geo1, Geo2, dimWorld, 2, 0>
  * \brief Compute the shortest distance between two geometries
  */
 template<class Geo1, class Geo2>
+static inline auto squaredDistance(const Geo1& geo1, const Geo2& geo2)
+{ return Detail::GeometrySquaredDistance<Geo1, Geo2>::distance(geo1, geo2); }
+
+/*!
+ * \ingroup Geometry
+ * \brief Compute the shortest distance between two geometries
+ */
+template<class Geo1, class Geo2>
 static inline auto distance(const Geo1& geo1, const Geo2& geo2)
-{ return Detail::GeometryDistance<Geo1, Geo2>::distance(geo1, geo2); }
+{ using std::sqrt; return sqrt(squaredDistance(geo1, geo2)); }
 
 } // end namespace Dumux
 
