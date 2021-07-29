@@ -173,7 +173,7 @@ public:
         // evaluate the volume terms (storage + source terms)
         // forward to the local residual specialized for the discretization methods
         for (auto&& scv : scvs(fvGeometry))
-            asImp().evalSource(residual, this->problem(), element, fvGeometry, elemVolVars, scv);
+            asImp().evalSource(residual, this->problem(), element, fvGeometry, elemVolVars, elemFluxVarsCache, scv);
 
         // forward to the local residual specialized for the discretization methods
         for (auto&& scvf : scvfs(fvGeometry))
@@ -334,11 +334,12 @@ public:
                     const Element& element,
                     const FVElementGeometry& fvGeometry,
                     const ElementVolumeVariables& curElemVolVars,
+                    const ElementFluxVariablesCache& elemFluxVarsCache,
                     const SubControlVolume& scv) const
     {
         //! Compute source with the model specific storage residual
         const auto& curVolVars = curElemVolVars[scv];
-        NumEqVector source = asImp().computeSource(problem, element, fvGeometry, curElemVolVars, scv);
+        NumEqVector source = asImp().computeSource(problem, element, fvGeometry, curElemVolVars, elemFluxVarsCache, scv);
         source *= Extrusion::volume(scv)*curVolVars.extrusionFactor();
 
         //! subtract source from local rate (sign convention in user interface)

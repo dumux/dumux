@@ -118,9 +118,17 @@ class EnergyLocalResidualImplementation<TypeTag, true>
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using BoundaryTypes = Dumux::BoundaryTypes<ModelTraits::numEq()>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Extrusion = Extrusion_t<GridGeometry>;
 
-    enum { energyEqIdx = Indices::energyEqIdx };
+    static constexpr int numPhases = ModelTraits::numFluidPhases();
+    static constexpr int energyEqIdx = Indices::energyEqIdx;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
 
 public:
 
@@ -175,13 +183,6 @@ public:
         { return volVars.density(phaseIdx)*volVars.mobility(phaseIdx)*volVars.internalEnergy(phaseIdx); };
 
         flux[energyEqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
-
-        // volume work
-        const auto insidePressure = fluxVars.elemVolVars()[fluxVars.scvFace().insideScvIdx()].pressure(phaseIdx);
-        const auto velUpwindTerm = [phaseIdx](const auto& volVars)
-        { return volVars.mobility(phaseIdx); };
-
-        flux[energyEqIdx] += -insidePressure*fluxVars.advectiveFlux(phaseIdx, velUpwindTerm);
     }
 
     /*!
@@ -196,6 +197,7 @@ public:
         flux[energyEqIdx] += fluxVars.heatConductionFlux();
     }
 
+
     /*!
      * \brief heat transfer between the phases for nonequilibrium models
      *
@@ -205,6 +207,62 @@ public:
      * \param elemVolVars The volume variables of the current element
      * \param scv The sub-control volume over which we integrate the source term
      */
+    static void computeVolumeWork(NumEqVector& source,
+                                  const Problem& problem,
+                                  const Element& element,
+                                  const FVElementGeometry& fvGeometry,
+                                  const ElementVolumeVariables& elemVolVars,
+                                  const ElementFluxVariablesCache& elemFluxVarsCache,
+                                  const SubControlVolume &scv)
+    {
+        Scalar volumeWork = 0.0;
+
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            // only treat scvfs that are faces of the scv
+            if (isBox && scvf.insideScvIdx() != scv.localDofIndex()
+                && scvf.outsideScvIdx() != scv.localDofIndex())
+                continue;
+
+            // determine boundary types and if the scv is inside relative to the scvf
+            BoundaryTypes bcTypes;
+            bool isInsideScv = true;
+            if constexpr (isBox)
+            {
+                bcTypes = problem.boundaryTypes(element, scv);
+                isInsideScv = scvf.insideScvIdx() == scv.localDofIndex();
+            }
+            else
+                bcTypes = problem.boundaryTypes(element, scvf);
+
+            // \todo: treat general Neumann boundary faces
+            if (!scvf.boundary() || bcTypes.hasDirichlet())
+            {
+                FluxVariables fluxVars;
+                fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+
+                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                {
+                    const auto scvPressure = elemVolVars[scv].pressure(phaseIdx);
+                    const auto velUpwindTerm = [phaseIdx](const auto& volVars)
+                    { return volVars.mobility(phaseIdx); };
+
+                    // add or subtract depending on the orientation of scv and scvf
+                    if (isInsideScv)
+                        volumeWork -= scvPressure*fluxVars.advectiveFlux(phaseIdx, velUpwindTerm);
+                    else
+                        volumeWork += scvPressure*fluxVars.advectiveFlux(phaseIdx, velUpwindTerm);
+                }
+            }
+        }
+
+        // divide by the volume and the extrusion factor as this term is
+        // multiplied with in the general evalSource function
+        volumeWork /= Extrusion::volume(scv)*elemVolVars[scv].extrusionFactor();
+
+        source[energyEqIdx] += volumeWork;
+    }
+
     static void computeSourceEnergy(NumEqVector& source,
                                     const Element& element,
                                     const FVElementGeometry& fvGeometry,
