@@ -35,6 +35,7 @@
 
 #include <dumux/geometry/distance.hh>
 #include <dumux/geometry/normal.hh>
+#include "transformation.hh"
 
 // helper function to make point geometry from field vector
 template<class Point, int dimWorld>
@@ -86,11 +87,15 @@ void checkGeometryDistance(ctype expected, ctype computed, const std::string& ge
 }
 
 // checks the distances between various points with points/segments/lines
-template<class Point, class Segment>
+template<template<class, int, int> class PointType,
+         template<class, int, int> class OtherGeometryType,
+         int coorddim>
 void runTests()
 {
     using namespace Dumux;
 
+    using Point = PointType<double, 0, coorddim>;
+    using Segment = OtherGeometryType<double, 1, coorddim>;
     using ctype = typename Point::ctype;
     using GlobalPosition = typename Point::GlobalCoordinate;
 
@@ -110,48 +115,94 @@ void runTests()
             n *= scale/n.two_norm();
 
             auto segment = makeSegment<Segment>(origin.corner(0) + n, p.corner(0) + n);
-            checkGeometryDistance(scale, distance(segment, p), "point-segment");
+            checkGeometryDistance(scale, distance(segment, p), "segment-point");
 
             // test point-segment distance (where projection is NOT on segment)
             auto v = p.corner(0);
 
             using std::sqrt;
             auto segment2 = makeSegment<Segment>(segment.corner(0) - v, segment.corner(1) - v);
-            checkGeometryDistance(sqrt(2.0)*scale, distance(segment2, p), "segment-segment");
+            checkGeometryDistance(sqrt(2.0)*scale, distance(segment2, p), "segment-point");
 
             v *= 2.0;
             auto segment3 = makeSegment<Segment>(segment.corner(0) + v, segment.corner(1) + v);
-            checkGeometryDistance(sqrt(2.0)*scale, distance(segment2, p), "segment-segment");
+            checkGeometryDistance(sqrt(2.0)*scale, distance(segment3, p), "segment-point");
 
             // for lines, we should always get a distance of scale
-            checkGeometryDistance(scale, distancePointLine(p.corner(0), segment.corner(0), segment.corner(1)), "segment-segment");
-            checkGeometryDistance(scale, distancePointLine(p.corner(0), segment2.corner(0), segment2.corner(1)), "segment-segment");
-            checkGeometryDistance(scale, distancePointLine(p.corner(0), segment3.corner(0), segment3.corner(1)), "segment-segment");
+            checkGeometryDistance(scale, distancePointLine(p.corner(0), segment.corner(0), segment.corner(1)), "point-line");
+            checkGeometryDistance(scale, distancePointLine(p.corner(0), segment2.corner(0), segment2.corner(1)), "point-line");
+            checkGeometryDistance(scale, distancePointLine(p.corner(0), segment3.corner(0), segment3.corner(1)), "point-line");
+
+            // check distance point-triangle
+            if constexpr(GlobalPosition::dimension == 3)
+            {
+                // create a triangle whose normal is aligned with (p-origin), touching the sphere
+                using Points = std::array<GlobalPosition, 3>;
+                auto rotationAxis = p.corner(0); rotationAxis /= rotationAxis.two_norm();
+                const auto rotate1 = make3DTransformation(1.0, origin.corner(0), rotationAxis, 2.0/3.0*M_PI, /*verbose*/false);
+                const auto rotate2 = make3DTransformation(1.0, origin.corner(0), rotationAxis, 4.0/3.0*M_PI, /*verbose*/false);
+                const auto firstTriangle = Points{p.corner(0) + n,
+                                                  rotate1(n) + p.corner(0),
+                                                  rotate2(n) + p.corner(0)};
+                checkGeometryDistance(scale, distancePointTriangle(origin.corner(0), firstTriangle[0], firstTriangle[1], firstTriangle[2]), "point-triangle");
+
+                // check convenience function
+                using Polygon = OtherGeometryType<double, 2, coorddim>;
+                const auto triangleGeometry = Polygon(Dune::GeometryTypes::simplex(2), std::vector<GlobalPosition>{firstTriangle.begin(), firstTriangle.end()});
+                checkGeometryDistance(scale, distance(origin, triangleGeometry), "point-triangle");
+                checkGeometryDistance(scale, distance(triangleGeometry, origin), "point-triangle");
+
+                // check quadrilateral
+                const auto& a = firstTriangle[0];
+                const auto& b = firstTriangle[1];
+                const auto& c = firstTriangle[2];
+                const auto d = b + (b - a);
+                const auto quadGeometry = Polygon(Dune::GeometryTypes::quadrilateral, std::vector<GlobalPosition>{a, b, c, d});
+                checkGeometryDistance(scale, distance(origin, quadGeometry), "point-quadrilateral");
+                checkGeometryDistance(scale, distance(quadGeometry, origin), "point-quadrilateral");
+
+                // shift the first triangle
+                const auto secondTriangle = Points{segment.corner(0),
+                                                   segment.corner(1),
+                                                   0.5*(segment.corner(0) + segment.corner(1)) + n};
+                checkGeometryDistance(scale, distancePointTriangle(origin.corner(0), secondTriangle[0], secondTriangle[1], secondTriangle[2]), "point-triangle");
+                checkGeometryDistance(scale, distancePointTriangle(p.corner(0), secondTriangle[0], secondTriangle[1], secondTriangle[2]), "point-triangle");
+
+                // create a triangle not touching the sphere
+                const auto thirdTriangle = Points{segment2.corner(0),
+                                                  segment2.corner(1),
+                                                  0.5*(segment2.corner(0) + segment2.corner(1)) + n};
+                checkGeometryDistance(sqrt(2.0)*scale, distancePointTriangle(p.corner(0), thirdTriangle[0], thirdTriangle[1], thirdTriangle[2]), "point-triangle");
+            }
         }
     }
 }
 
+// alias to ignore fourth optional template argument of Dune::MultiLinearGeometry
+template<class ct, int mydim, int codim>
+using DuneMultiLinearGeometry = Dune::MultiLinearGeometry<ct, mydim, codim>;
+
 int main(int argc, char** argv)
 {
     // affine geometries (2d)
-    runTests< Dune::AffineGeometry<double, 0, 2>, Dune::AffineGeometry<double, 1, 2> >();
+    runTests<Dune::AffineGeometry, Dune::AffineGeometry, 2>();
 
     // affine geometries (3d)
-    runTests< Dune::AffineGeometry<double, 0, 3>, Dune::AffineGeometry<double, 1, 3> >();
+    runTests<Dune::AffineGeometry, Dune::AffineGeometry, 3>();
 
     // multilinear geometries (2d)
-    runTests< Dune::MultiLinearGeometry<double, 0, 2>, Dune::MultiLinearGeometry<double, 1, 2> >();
+    runTests<DuneMultiLinearGeometry, DuneMultiLinearGeometry, 2>();
 
     // multilinear geometries (3d)
-    runTests< Dune::MultiLinearGeometry<double, 0, 3>, Dune::MultiLinearGeometry<double, 1, 3> >();
+    runTests<DuneMultiLinearGeometry, DuneMultiLinearGeometry, 3>();
 
     // mixed types (2d)
-    runTests< Dune::AffineGeometry<double, 0, 2>, Dune::MultiLinearGeometry<double, 1, 2> >();
-    runTests< Dune::MultiLinearGeometry<double, 0, 2>, Dune::AffineGeometry<double, 1, 2> >();
+    runTests< Dune::AffineGeometry, DuneMultiLinearGeometry, 2>();
+    runTests< DuneMultiLinearGeometry, Dune::AffineGeometry, 2>();
 
     // mixed types (3d)
-    runTests< Dune::AffineGeometry<double, 0, 3>, Dune::MultiLinearGeometry<double, 1, 3> >();
-    runTests< Dune::MultiLinearGeometry<double, 0, 3>, Dune::AffineGeometry<double, 1, 3> >();
+    runTests< Dune::AffineGeometry, DuneMultiLinearGeometry, 3>();
+    runTests< DuneMultiLinearGeometry, Dune::AffineGeometry, 3>();
 
     return 0;
 }
