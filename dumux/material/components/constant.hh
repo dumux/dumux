@@ -27,6 +27,8 @@
 #include <dune/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
 
+#include <dumux/material/idealgas.hh>
+
 #include <dumux/material/components/base.hh>
 #include <dumux/material/components/liquid.hh>
 #include <dumux/material/components/gas.hh>
@@ -57,6 +59,7 @@ class Constant
 , public Components::Gas<Scalar, Constant<id, Scalar> >
 , public Components::Solid<Scalar, Constant<id, Scalar> >
 {
+    using IdealGas = Dumux::IdealGas<Scalar>;
 
 public:
     /*!
@@ -106,6 +109,34 @@ public:
         static const Scalar molarMass = getParamFromGroup<Scalar>(std::to_string(id), "Component.MolarMass");
         return molarMass;
     }
+
+    /*!
+     * \brief Returns the temperature \f$\mathrm{[K]}\f$ at the components's triple point.
+     */
+    static Scalar tripleTemperature()
+    {
+        static const Scalar tripleTemperature = getParamFromGroup<Scalar>(std::to_string(id), "Component.TripleTemperature");
+        return tripleTemperature;
+    }
+
+    /*!
+     * \brief Returns the pressure \f$\mathrm{[Pa]}\f$ at the component's triple point.
+     */
+    static Scalar triplePressure()
+    {
+        static const Scalar triplePressure = getParamFromGroup<Scalar>(std::to_string(id), "Component.TriplePressure");
+        return triplePressure;
+    }
+
+    /*!
+     * \brief The vaporization enthalpy in \f$\mathrm{[J/kg]}\f$ needed to vaporize one kilogram of the liquid component to the gaseous state
+     */
+    static Scalar vaporizationEnthalpy()
+    {
+        static const Scalar vaporizationEnthalpy = getParamFromGroup<Scalar>(std::to_string(id), "Component.EnthalpyOfVaporization");
+        return vaporizationEnthalpy;
+    }
+
 
     /*!
      * \brief Sets the liquid density in \f$\mathrm{[kg/m^3]}\f$.
@@ -259,6 +290,81 @@ public:
         }();
 
         return dynamicViscosity;
+    }
+
+    /*!
+     * \brief Thermal conductivity of the component \f$\mathrm{[W/(m*K)]}\f$ as a gas.
+     * \param temperature temperature of phase in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of phase in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar gasThermalConductivity(Scalar temperature, Scalar pressure)
+    {
+        static const Scalar thermalConductivity = getParamFromGroup<Scalar>(std::to_string(id), "Component.GasThermalConductivity");
+        return thermalConductivity;
+    }
+
+    /*!
+     * \brief Specific internal energy of the component \f$\mathrm{[J/kg]}\f$ as a gas.
+     *
+     *        Definition of enthalpy: \f$h= u + pv = u + p / \rho\f$.
+     *
+     *        Rearranging for internal energy yields: \f$u = h - pv\f$.
+     *
+     *        Exploiting the Ideal Gas assumption (\f$pv = R_{\textnormal{specific}} T\f$)gives: \f$u = h - R / M T \f$.
+     *
+     *        The universal gas constant can only be used in the case of molar formulations.
+     * \param temperature temperature of phase in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of phase in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar gasInternalEnergy(Scalar temperature, Scalar pressure)
+    {
+        // 1/molarMass: conversion from [J/(mol K)] to [J/(kg K)]
+        // R*T/molarMass: pressure *spec. volume for an ideal gas
+        return gasEnthalpy(temperature, pressure) - 1/molarMass()* IdealGas::R*temperature;
+
+    }
+
+    /*!
+     * \brief Specific enthalpy of the component \f$\mathrm{[J/kg]}\f$ as a gas.
+     *
+     * \param temperature temperature of phase in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of phase in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar gasEnthalpy(Scalar temperature, Scalar pressure)
+    {
+        static const Scalar tRef = getParamFromGroup<Scalar>(std::to_string(id), "Component.ReferenceTemperature", 293.15);
+        return gasHeatCapacity(temperature, pressure)*(temperature - tRef) + vaporizationEnthalpy();
+    }
+
+    /*!
+     * \brief Specific isobaric heat capacity of the component \f$\mathrm{[J/(kg*K)]}\f$ as a gas.
+     *
+     * \param temperature temperature of phase in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of phase in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar gasHeatCapacity(Scalar temperature, Scalar pressure)
+    {
+        static const Scalar heatCapacity = getParamFromGroup<Scalar>(std::to_string(id), "Component.GasHeatCapacity");
+        return heatCapacity;
+    }
+
+    /*!
+     * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of a the component
+     *        at a given temperature.
+     *
+     *\param T temperature of component in \f$\mathrm{[K]}\f$
+     *
+     * We use the Clausius-Clapeyron Equation to estimate the vapor pressure. Vapor pressure depends on the enthalpy of vaporization. We use the triple point pressure and temperature as a reference point.
+     */
+    static Scalar vaporPressure(Scalar T)
+    {
+        const Scalar p2 = triplePressure();
+        const Scalar T2 = tripleTemperature();
+        const Scalar exponent = -(vaporizationEnthalpy()*molarMass())/IdealGas::R*(1/T - 1/T2);
+
+        using std::exp;
+        const Scalar vaporPressure = p2*exp(exponent);
+        return vaporPressure;
     }
 
         /*!
