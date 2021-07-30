@@ -29,6 +29,7 @@ This a release issue template with a checklist based on [Release Manager Tasks](
 __Hard Feature Freeze!__
 - [ ]  Check remaining MRs and Issues
 - [ ]  Update the milestone issue
+- [ ]  Generate example documentation with the script generate_example_docs.py
 - [ ]  Update CHANGELOG
 - [ ]  Announce hard feature freeze on the mailing list
 - [ ]  Update all install scripts and the install text in the handbook
@@ -55,8 +56,7 @@ __Important:__ These steps are normally done together with Bernd. Make sure to s
 - [ ]  Create new tags
 - [ ]  Prepare a Zenodo citation
 - [ ]  Include the Zenodo citation to the website (only major releases)
-- [ ]  Write a release email to dumux@listserv.uni-stuttgart.de
 
 # After the release
 - [ ]  Bump version in dune.module to next version
-- [ ]  Sent an E-Mail to the dumux mailing list about updates on supported features and upcoming changes
+- [ ]  Write a release email to dumux@listserv.uni-stuttgart.de about updates on supported features and upcoming changes
