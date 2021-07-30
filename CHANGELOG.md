@@ -11,10 +11,28 @@ Differences Between DuMu<sup>x</sup> 3.5 and DuMu<sup>x</sup> 3.4
   are highly welcome (get in contact via the DuMu<sup>x</sup> mailing list).
 
 ### Improvements and Enhancements
+
 - __Construction and update of GridGeometries changed__: Grid geometries are fully updated after construction.
  Additional call of update functions are therefore only needed after grid adaption. Calling the update functions after construction now leads to a performance penalty.
 
 - __Cake grid creator__: The cake grid creator can now be used in parallel simulations
+
+- __Local views__: The bind function associated with the local view of the FVElementGeometry, the ElementVolumeVariables, and the ElementFluxVariablesCache have been simplified. Now it is possible to directly create each of these objects where they are already bound. The following are examples of each new call:
+
+```cpp
+const auto fvGeometry = localView(gridGeometry).bind(element);
+const auto elemVolVars = localView(gridVolVars).bind(element, fvGeometry, sol);
+const auto elemFluxVarsCache = localView(gridFluxVarsCache).bind(element, fvGeometry, elemVolVars);
+```
+This is also available for the `bind()` `bindElement()` and `bindScvf()` functions. The existing methods for binding will remain.
+
+Please note however that when working with element loops, separating construction and binding of the local view is more efficient, i.e.
+
+```cpp
+auto fvGeometry = localView(gridGeometry);
+for (const auto& element : elements(gridGeometry.gridView()))
+    fvGeometry.bind(element);
+```
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Virtual interface of GridDataTransfer__: The `GridDataTransfer` abstract base class now required the Grid type as a template argument. Furthermore, the `store` and `reconstruct` interface functions do now expect the grid as a function argument. This allows to correctly update grid geometries and corresponding mapper (see "Construction and update of GridGeometries changed" above in the changelog)
