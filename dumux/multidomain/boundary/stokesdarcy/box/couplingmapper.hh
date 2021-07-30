@@ -51,8 +51,8 @@ class FacetIterator : public Dune::ForwardIteratorFacade<FacetIterator<CouplingF
 {
     using ThisType = FacetIterator<CouplingFacet, Container, IndexSet, Iterator>;
 public:
-    FacetIterator(const Iterator& it, const Container& container, const IndexSet& indices)
-    : it_(it), container_(&container), indices_(&indices) {}
+    FacetIterator(const Iterator& it, const Container& container, const IndexSet& indices, std::size_t localIdx)
+    : it_(it), container_(&container), indices_(&indices), localIdx_(localIdx) {}
 
     FacetIterator() : it_(Iterator()), container_(nullptr), indices_(nullptr) {}
 
@@ -67,24 +67,26 @@ public:
         return it_ == other.it_;
     }
 
-    template<bool enable = std::is_integral<IndexSet>::value, std::enable_if_t<!enable, int> = 0>
     void increment()
     {
-        it_++;
-        if(it_ == (*indices_)[localIdx_].end())
+        // Case where the index container contains the indices
+        if constexpr (std::is_integral_v<typename IndexSet::value_type>)
+            it_++;
+        // Case where the index container contains sub-containers which store the indices
+        else
         {
-            localIdx_++;
-            auto it = std::find_if (indices_->begin()+localIdx_, indices_->end(), [] (const auto& idx) { return idx.size() > 0; });
+            it_++;
+            if(it_ == (*indices_)[localIdx_].end())
+            {
+                auto it = std::find_if(indices_->begin()+localIdx_+1, indices_->end(), [] (const auto& idx) { return idx.size() > 0; });
 
-            if(it != indices_->end())
-                it_ = it->begin();
+                if(it != indices_->end())
+                {
+                    it_ = it->begin();
+                    localIdx_ = std::distance(indices_->begin(), it);
+                }
+            }
         }
-    }
-
-    template<bool enable = std::is_integral<IndexSet>::value, std::enable_if_t<enable, int> = 0>
-    void increment()
-    {
-        it_++;
     }
 
 private:
@@ -107,8 +109,8 @@ auto couplingFacets(Dune::index_constant<i> domainI, const Mapper& mapper, std::
                               std::reverse_iterator(indexSet.begin()),
                                 [] (const auto& idx) { return idx.size() > 0; });
 
-    return Dune::IteratorRange<FacetIterator>(FacetIterator(itBegin->begin(), mapper.couplingFacets(), indexSet),
-                                              FacetIterator(itEnd->end(), mapper.couplingFacets(), indexSet));
+    return Dune::IteratorRange<FacetIterator>(FacetIterator(itBegin->begin(), mapper.couplingFacets(), indexSet, std::distance(indexSet.begin(), itBegin)),
+                                              FacetIterator(itEnd->end(), mapper.couplingFacets(), indexSet, std::distance(itEnd, std::reverse_iterator(indexSet.begin()))));
 }
 
 template<class Mapper, std::size_t i>
@@ -117,9 +119,10 @@ auto couplingFacets(Dune::index_constant<i> domainI, const Mapper& mapper, std::
     using FacetContainer = typename Mapper::FacetContainer;
     using IndexContainerScvf = typename Mapper::IndexContainerScvf;
     using FacetIterator = FacetIterator<typename FacetContainer::value_type, FacetContainer, IndexContainerScvf, typename IndexContainerScvf::const_iterator>;
-    const auto& indexSet = mapper.couplingFacetIdxMap(domainI).at(eIdx)[localScvfIdx];
-    return Dune::IteratorRange<FacetIterator>(FacetIterator(indexSet->begin(), mapper.couplingFacets(), indexSet),
-                                              FacetIterator(indexSet->end(), mapper.couplingFacets(), indexSet));
+    const auto& indexSet = mapper.couplingFacetIdxMap(domainI).at(eIdx);
+    const auto& indexSetScvf = indexSet[localScvfIdx];
+    return Dune::IteratorRange<FacetIterator>(FacetIterator(indexSetScvf.begin(), mapper.couplingFacets(), indexSetScvf, localScvfIdx),
+                                              FacetIterator(indexSetScvf.end(), mapper.couplingFacets(), indexSetScvf, localScvfIdx));
 }
 
 /*!
