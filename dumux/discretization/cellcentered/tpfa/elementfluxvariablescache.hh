@@ -27,6 +27,8 @@
 #include <algorithm>
 #include <cassert>
 #include <vector>
+#include <utility>
+
 #include <dune/common/exceptions.hh>
 
 namespace Dumux {
@@ -62,24 +64,67 @@ public:
     CCTpfaElementFluxVariablesCache(const GridFluxVariablesCache& global)
     : gridFluxVarsCachePtr_(&global) {}
 
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    CCTpfaElementFluxVariablesCache bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                                const FVElementGeometry& fvGeometry,
+                                                const ElementVolumeVariables& elemVolVars) &&
+    {
+        this->bindElement(element, fvGeometry, elemVolVars);
+        return std::move(*this);
+    }
+
     //! Specialization for the global caching being enabled - do nothing here
     template<class FVElementGeometry, class ElementVolumeVariables>
     void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
-                     const ElementVolumeVariables& elemVolVars) {}
+                     const ElementVolumeVariables& elemVolVars) & {}
+
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    CCTpfaElementFluxVariablesCache bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                         const FVElementGeometry& fvGeometry,
+                                         const ElementVolumeVariables& elemVolVars) &&
+    {
+        this->bind(element, fvGeometry, elemVolVars);
+        return std::move(*this);
+    }
 
     //! Specialization for the global caching being enabled - do nothing here
     template<class FVElementGeometry, class ElementVolumeVariables>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
-              const ElementVolumeVariables& elemVolVars) {}
+              const ElementVolumeVariables& elemVolVars) & {}
+
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    CCTpfaElementFluxVariablesCache bindScvf(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                             const FVElementGeometry& fvGeometry,
+                                             const ElementVolumeVariables& elemVolVars,
+                                             const typename FVElementGeometry::SubControlVolumeFace& scvf) &&
+    {
+        this->bindScvf(element, fvGeometry, elemVolVars, scvf);
+        return std::move(*this);
+    }
 
     //! Specialization for the global caching being enabled - do nothing here
     template<class FVElementGeometry, class ElementVolumeVariables>
     void bindScvf(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                   const FVElementGeometry& fvGeometry,
                   const ElementVolumeVariables& elemVolVars,
-                  const typename FVElementGeometry::SubControlVolumeFace& scvf) {}
+                  const typename FVElementGeometry::SubControlVolumeFace& scvf) & {}
 
     //! Specialization for the global caching being enabled - do nothing here
     template<class FVElementGeometry, class ElementVolumeVariables>
@@ -121,102 +166,69 @@ public:
     : gridFluxVarsCachePtr_(&global) {}
 
     /*!
-     * \brief Prepares the transmissibilities of the scv faces in an element
-     * \note the fvGeometry is assumed to be bound to the same element
-     * \note this function has to be called prior to flux calculations on the element.
-     */
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    CCTpfaElementFluxVariablesCache bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                                const FVElementGeometry& fvGeometry,
+                                                const ElementVolumeVariables& elemVolVars) &&
+    {
+        this->bindElement_(element, fvGeometry, elemVolVars);
+        return std::move(*this);
+    }
+
+    //! Specialization for the global caching being enabled - do nothing here
     template<class FVElementGeometry, class ElementVolumeVariables>
     void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
-                     const ElementVolumeVariables& elemVolVars)
-    {
-        // resizing of the cache
-        const auto numScvf = fvGeometry.numScvf();
-        fluxVarsCache_.resize(numScvf);
-        globalScvfIndices_.resize(numScvf);
-
-        // instantiate helper class to fill the caches
-        FluxVariablesCacheFiller filler(gridFluxVarsCache().problem());
-
-        std::size_t localScvfIdx = 0;
-        // fill the containers
-        for (auto&& scvf : scvfs(fvGeometry))
-        {
-            filler.fill(*this, fluxVarsCache_[localScvfIdx], element, fvGeometry, elemVolVars, scvf, true);
-            globalScvfIndices_[localScvfIdx] = scvf.index();
-            localScvfIdx++;
-        }
-    }
+                     const ElementVolumeVariables& elemVolVars) &
+    { this->bindElement_(element, fvGeometry, elemVolVars); }
 
     /*!
-     * \brief Prepares the transmissibilities of the scv faces in the stencil of an element
-     * \note the fvGeometry is assumed to be bound to the same element
-     * \note this function has to be called prior to flux calculations on the element.
-     */
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    CCTpfaElementFluxVariablesCache bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                         const FVElementGeometry& fvGeometry,
+                                         const ElementVolumeVariables& elemVolVars) &&
+    {
+        this->bind_(element, fvGeometry, elemVolVars);
+        return std::move(*this);
+    }
+
+    //! Specialization for the global caching being enabled - do nothing here
     template<class FVElementGeometry, class ElementVolumeVariables>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
-              const ElementVolumeVariables& elemVolVars)
-    {
-        const auto& problem = gridFluxVarsCache().problem();
-        const auto& gridGeometry = fvGeometry.gridGeometry();
-        const auto globalI = gridGeometry.elementMapper().index(element);
-        const auto& connectivityMapI = gridGeometry.connectivityMap()[globalI];
-        const auto numNeighbors = connectivityMapI.size();
-
-        // instantiate helper class to fill the caches
-        FluxVariablesCacheFiller filler(problem);
-
-        // find the number of scv faces that need to be prepared
-        auto numScvf = fvGeometry.numScvf();
-        for (unsigned int localIdxJ = 0; localIdxJ < numNeighbors; ++localIdxJ)
-            numScvf += connectivityMapI[localIdxJ].scvfsJ.size();
-
-        // fill the containers with the data on the scv faces inside the actual element
-        fluxVarsCache_.resize(numScvf);
-        globalScvfIndices_.resize(numScvf);
-        unsigned int localScvfIdx = 0;
-        for (auto&& scvf : scvfs(fvGeometry))
-        {
-            filler.fill(*this, fluxVarsCache_[localScvfIdx], element, fvGeometry, elemVolVars, scvf, true);
-            globalScvfIndices_[localScvfIdx] = scvf.index();
-            localScvfIdx++;
-        }
-
-        // add required data on the scv faces in the neighboring elements
-        for (unsigned int localIdxJ = 0; localIdxJ < numNeighbors; ++localIdxJ)
-        {
-            const auto elementJ = gridGeometry.element(connectivityMapI[localIdxJ].globalJ);
-            for (auto scvfIdx : connectivityMapI[localIdxJ].scvfsJ)
-            {
-                auto&& scvfJ = fvGeometry.scvf(scvfIdx);
-                filler.fill(*this, fluxVarsCache_[localScvfIdx], elementJ, fvGeometry, elemVolVars, scvfJ, true);
-                globalScvfIndices_[localScvfIdx] = scvfJ.index();
-                localScvfIdx++;
-            }
-        }
-    }
+              const ElementVolumeVariables& elemVolVars) &
+    { this->bind_(element, fvGeometry, elemVolVars); }
 
     /*!
-     * \brief Prepares the transmissibilities of a single scv face
-     * \note the fvGeometry is assumed to be bound to the same element
-     * \note this function has to be called prior to flux calculations on the element.
-     */
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    CCTpfaElementFluxVariablesCache bindScvf(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                             const FVElementGeometry& fvGeometry,
+                                             const ElementVolumeVariables& elemVolVars,
+                                             const typename FVElementGeometry::SubControlVolumeFace& scvf) &&
+    {
+        this->bindScvf_(element, fvGeometry, elemVolVars, scvf);
+        return std::move(*this);
+    }
+
+    //! Specialization for the global caching being enabled - do nothing here
     template<class FVElementGeometry, class ElementVolumeVariables>
     void bindScvf(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                   const FVElementGeometry& fvGeometry,
                   const ElementVolumeVariables& elemVolVars,
-                  const typename FVElementGeometry::SubControlVolumeFace& scvf)
-    {
-        fluxVarsCache_.resize(1);
-        globalScvfIndices_.resize(1);
-
-        // instantiate helper class to fill the caches
-        FluxVariablesCacheFiller filler(gridFluxVarsCache().problem());
-
-        filler.fill(*this, fluxVarsCache_[0], element, fvGeometry, elemVolVars, scvf, true);
-        globalScvfIndices_[0] = scvf.index();
-    }
+                  const typename FVElementGeometry::SubControlVolumeFace& scvf) &
+    { this->bindScvf_(element, fvGeometry, elemVolVars, scvf); }
 
     /*!
      * \brief Update the transmissibilities if the volume variables have changed
@@ -265,6 +277,105 @@ public:
     {  return *gridFluxVarsCachePtr_; }
 
 private:
+
+    /*!
+     * \brief Prepares the transmissibilities of the scv faces in an element
+     * \note the fvGeometry is assumed to be bound to the same element
+     * \note this function has to be called prior to flux calculations on the element.
+     */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void bindElement_(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                      const FVElementGeometry& fvGeometry,
+                      const ElementVolumeVariables& elemVolVars)
+    {
+        // resizing of the cache
+        const auto numScvf = fvGeometry.numScvf();
+        fluxVarsCache_.resize(numScvf);
+        globalScvfIndices_.resize(numScvf);
+
+        // instantiate helper class to fill the caches
+        FluxVariablesCacheFiller filler(gridFluxVarsCache().problem());
+
+        std::size_t localScvfIdx = 0;
+        // fill the containers
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            filler.fill(*this, fluxVarsCache_[localScvfIdx], element, fvGeometry, elemVolVars, scvf, true);
+            globalScvfIndices_[localScvfIdx] = scvf.index();
+            localScvfIdx++;
+        }
+    }
+
+    /*!
+     * \brief Prepares the transmissibilities of the scv faces in the stencil of an element
+     * \note the fvGeometry is assumed to be bound to the same element
+     * \note this function has to be called prior to flux calculations on the element.
+     */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void bind_(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+               const FVElementGeometry& fvGeometry,
+               const ElementVolumeVariables& elemVolVars)
+    {
+        const auto& problem = gridFluxVarsCache().problem();
+        const auto& gridGeometry = fvGeometry.gridGeometry();
+        const auto globalI = gridGeometry.elementMapper().index(element);
+        const auto& connectivityMapI = gridGeometry.connectivityMap()[globalI];
+        const auto numNeighbors = connectivityMapI.size();
+
+        // instantiate helper class to fill the caches
+        FluxVariablesCacheFiller filler(problem);
+
+        // find the number of scv faces that need to be prepared
+        auto numScvf = fvGeometry.numScvf();
+        for (unsigned int localIdxJ = 0; localIdxJ < numNeighbors; ++localIdxJ)
+            numScvf += connectivityMapI[localIdxJ].scvfsJ.size();
+
+        // fill the containers with the data on the scv faces inside the actual element
+        fluxVarsCache_.resize(numScvf);
+        globalScvfIndices_.resize(numScvf);
+        unsigned int localScvfIdx = 0;
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            filler.fill(*this, fluxVarsCache_[localScvfIdx], element, fvGeometry, elemVolVars, scvf, true);
+            globalScvfIndices_[localScvfIdx] = scvf.index();
+            localScvfIdx++;
+        }
+
+        // add required data on the scv faces in the neighboring elements
+        for (unsigned int localIdxJ = 0; localIdxJ < numNeighbors; ++localIdxJ)
+        {
+            const auto elementJ = gridGeometry.element(connectivityMapI[localIdxJ].globalJ);
+            for (auto scvfIdx : connectivityMapI[localIdxJ].scvfsJ)
+            {
+                auto&& scvfJ = fvGeometry.scvf(scvfIdx);
+                filler.fill(*this, fluxVarsCache_[localScvfIdx], elementJ, fvGeometry, elemVolVars, scvfJ, true);
+                globalScvfIndices_[localScvfIdx] = scvfJ.index();
+                localScvfIdx++;
+            }
+        }
+    }
+
+    /*!
+     * \brief Prepares the transmissibilities of a single scv face
+     * \note the fvGeometry is assumed to be bound to the same element
+     * \note this function has to be called prior to flux calculations on the element.
+     */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void bindScvf_(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                   const FVElementGeometry& fvGeometry,
+                   const ElementVolumeVariables& elemVolVars,
+                   const typename FVElementGeometry::SubControlVolumeFace& scvf)
+    {
+        fluxVarsCache_.resize(1);
+        globalScvfIndices_.resize(1);
+
+        // instantiate helper class to fill the caches
+        FluxVariablesCacheFiller filler(gridFluxVarsCache().problem());
+
+        filler.fill(*this, fluxVarsCache_[0], element, fvGeometry, elemVolVars, scvf, true);
+        globalScvfIndices_[0] = scvf.index();
+    }
+
     const GridFluxVariablesCache* gridFluxVarsCachePtr_;
 
     //! get index of scvf in the local container

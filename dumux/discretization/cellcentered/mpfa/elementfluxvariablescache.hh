@@ -28,6 +28,7 @@
 #include <cassert>
 #include <type_traits>
 #include <vector>
+#include <utility>
 
 #include <dune/common/exceptions.hh>
 
@@ -142,18 +143,159 @@ public:
     : gridFluxVarsCachePtr_(&global)
     {}
 
-    //! Bind the flux var caches for scvfs inside the element only
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    CCMpfaElementFluxVariablesCache bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                                const FVElementGeometry& fvGeometry,
+                                                const ElementVolumeVariables& elemVolVars) &&
+    {
+        this->bindElement_(element, fvGeometry, elemVolVars);
+        return std::move(*this);
+    }
+
+    //! Specialization for the global caching being enabled - do nothing here
     template<class FVElementGeometry, class ElementVolumeVariables>
     void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
-                     const ElementVolumeVariables& elemVolVars)
-    { DUNE_THROW(Dune::NotImplemented, "Local element binding of the flux variables cache in mpfa schemes"); }
+                     const ElementVolumeVariables& elemVolVars) &
+    { this->bindElement_(element, fvGeometry, elemVolVars); }
+
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    CCMpfaElementFluxVariablesCache bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                         const FVElementGeometry& fvGeometry,
+                                         const ElementVolumeVariables& elemVolVars) &&
+    {
+        this->bind_(element, fvGeometry, elemVolVars);
+        return std::move(*this);
+    }
 
     //! Specialization for the global caching being enabled - do nothing here
     template<class FVElementGeometry, class ElementVolumeVariables>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
-              const ElementVolumeVariables& elemVolVars)
+              const ElementVolumeVariables& elemVolVars) &
+    { this->bind_(element, fvGeometry, elemVolVars); }
+
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    CCMpfaElementFluxVariablesCache bindScvf(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                             const FVElementGeometry& fvGeometry,
+                                             const ElementVolumeVariables& elemVolVars,
+                                             const typename FVElementGeometry::SubControlVolumeFace& scvf) &&
+    {
+        this->bindScvf_(element, fvGeometry, elemVolVars, scvf);
+        return std::move(*this);
+    }
+
+    //! Specialization for the global caching being enabled - do nothing here
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void bindScvf(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                  const FVElementGeometry& fvGeometry,
+                  const ElementVolumeVariables& elemVolVars,
+                  const typename FVElementGeometry::SubControlVolumeFace& scvf) &
+    { this->bindScvf_(element, fvGeometry, elemVolVars, scvf); }
+
+    //! Specialization for the global caching being enabled - do nothing here
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void update(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars)
+    {
+        // Update only if the filler puts solution-dependent stuff into the caches
+        if (FluxVariablesCacheFiller::isSolDependent)
+        {
+            // helper class to fill flux variables caches
+            FluxVariablesCacheFiller filler(gridFluxVarsCachePtr_->problem());
+
+            // first, set all the caches to "outdated"
+            for (auto& cache : boundaryCacheData_.fluxVarCaches_)
+                cache.setUpdateStatus(false);
+
+            // go through the caches maybe update them
+            std::size_t cacheIdx = 0;
+            for (auto scvfIdx : boundaryCacheData_.cacheScvfIndices_)
+            {
+                auto& scvfCache = boundaryCacheData_.fluxVarCaches_[cacheIdx++];
+                if (!scvfCache.isUpdated())
+                    filler.fill(boundaryCacheData_, scvfCache, boundaryCacheData_.ivDataStorage_,
+                                element, fvGeometry, elemVolVars, fvGeometry.scvf(scvfIdx));
+            }
+        }
+    }
+
+    //! access operators in the case of caching
+    template<class SubControlVolumeFace>
+    const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
+    { return !isEmbeddedInBoundaryIV_(scvf) ? (*gridFluxVarsCachePtr_)[scvf] : boundaryCacheData_[scvf]; }
+
+    //! access to the interaction volume an scvf is embedded in
+    template<class SubControlVolumeFace>
+    const PrimaryInteractionVolume& primaryInteractionVolume(const SubControlVolumeFace& scvf) const
+    {
+        return isEmbeddedInBoundaryIV_(scvf)
+               ? boundaryCacheData_.ivDataStorage_.primaryInteractionVolumes[ (*this)[scvf].ivIndexInContainer() ]
+               : gridFluxVarsCachePtr_->primaryInteractionVolume(scvf);
+    }
+
+    //! access to the data handle of an interaction volume an scvf is embedded in
+    template<class SubControlVolumeFace>
+    const PrimaryIvDataHandle& primaryDataHandle(const SubControlVolumeFace& scvf) const
+    {
+        return isEmbeddedInBoundaryIV_(scvf)
+               ? boundaryCacheData_.ivDataStorage_.primaryDataHandles[ (*this)[scvf].ivIndexInContainer() ]
+               : gridFluxVarsCachePtr_->primaryDataHandle(scvf);
+    }
+
+    //! access to the interaction volume an scvf is embedded in
+    template<class SubControlVolumeFace>
+    const SecondaryInteractionVolume& secondaryInteractionVolume(const SubControlVolumeFace& scvf) const
+    {
+        return isEmbeddedInBoundaryIV_(scvf)
+               ? boundaryCacheData_.ivDataStorage_.secondaryInteractionVolumes[ (*this)[scvf].ivIndexInContainer() ]
+               : gridFluxVarsCachePtr_->secondaryInteractionVolume(scvf);
+    }
+
+    //! access to the data handle of an interaction volume an scvf is embedded in
+    template<class SubControlVolumeFace>
+    const SecondaryIvDataHandle& secondaryDataHandle(const SubControlVolumeFace& scvf) const
+    {
+        return isEmbeddedInBoundaryIV_(scvf)
+               ? boundaryCacheData_.ivDataStorage_.secondaryDataHandles[ (*this)[scvf].ivIndexInContainer() ]
+               : gridFluxVarsCachePtr_->secondaryDataHandle(scvf);
+    }
+
+    //! The global object we are a restriction of
+    const GridFluxVariablesCache& gridFluxVarsCache() const
+    {  return *gridFluxVarsCachePtr_; }
+
+private:
+
+
+    //! Bind the flux var caches for scvfs inside the element only
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void bindElement_(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                      const FVElementGeometry& fvGeometry,
+                      const ElementVolumeVariables& elemVolVars)
+    { DUNE_THROW(Dune::NotImplemented, "Local element binding of the flux variables cache in mpfa schemes"); }
+
+    //! Specialization for the global caching being enabled - do nothing here
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void bind_(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+               const FVElementGeometry& fvGeometry,
+               const ElementVolumeVariables& elemVolVars)
     {
         boundaryCacheData_.clear();
 
@@ -236,86 +378,12 @@ public:
 
     //! Bind the flux var caches for an individual scvf
     template<class FVElementGeometry, class ElementVolumeVariables>
-    void bindScvf(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
-                  const FVElementGeometry& fvGeometry,
-                  const ElementVolumeVariables& elemVolVars,
-                  const typename FVElementGeometry::SubControlVolumeFace& scvf)
+    void bindScvf_(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                   const FVElementGeometry& fvGeometry,
+                   const ElementVolumeVariables& elemVolVars,
+                   const typename FVElementGeometry::SubControlVolumeFace& scvf)
     { DUNE_THROW(Dune::NotImplemented, "Scvf-local binding of the flux variables cache in mpfa schemes"); }
 
-    //! Specialization for the global caching being enabled - do nothing here
-    template<class FVElementGeometry, class ElementVolumeVariables>
-    void update(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
-                const FVElementGeometry& fvGeometry,
-                const ElementVolumeVariables& elemVolVars)
-    {
-        // Update only if the filler puts solution-dependent stuff into the caches
-        if (FluxVariablesCacheFiller::isSolDependent)
-        {
-            // helper class to fill flux variables caches
-            FluxVariablesCacheFiller filler(gridFluxVarsCachePtr_->problem());
-
-            // first, set all the caches to "outdated"
-            for (auto& cache : boundaryCacheData_.fluxVarCaches_)
-                cache.setUpdateStatus(false);
-
-            // go through the caches maybe update them
-            std::size_t cacheIdx = 0;
-            for (auto scvfIdx : boundaryCacheData_.cacheScvfIndices_)
-            {
-                auto& scvfCache = boundaryCacheData_.fluxVarCaches_[cacheIdx++];
-                if (!scvfCache.isUpdated())
-                    filler.fill(boundaryCacheData_, scvfCache, boundaryCacheData_.ivDataStorage_,
-                                element, fvGeometry, elemVolVars, fvGeometry.scvf(scvfIdx));
-            }
-        }
-    }
-
-    //! access operators in the case of caching
-    template<class SubControlVolumeFace>
-    const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
-    { return !isEmbeddedInBoundaryIV_(scvf) ? (*gridFluxVarsCachePtr_)[scvf] : boundaryCacheData_[scvf]; }
-
-    //! access to the interaction volume an scvf is embedded in
-    template<class SubControlVolumeFace>
-    const PrimaryInteractionVolume& primaryInteractionVolume(const SubControlVolumeFace& scvf) const
-    {
-        return isEmbeddedInBoundaryIV_(scvf)
-               ? boundaryCacheData_.ivDataStorage_.primaryInteractionVolumes[ (*this)[scvf].ivIndexInContainer() ]
-               : gridFluxVarsCachePtr_->primaryInteractionVolume(scvf);
-    }
-
-    //! access to the data handle of an interaction volume an scvf is embedded in
-    template<class SubControlVolumeFace>
-    const PrimaryIvDataHandle& primaryDataHandle(const SubControlVolumeFace& scvf) const
-    {
-        return isEmbeddedInBoundaryIV_(scvf)
-               ? boundaryCacheData_.ivDataStorage_.primaryDataHandles[ (*this)[scvf].ivIndexInContainer() ]
-               : gridFluxVarsCachePtr_->primaryDataHandle(scvf);
-    }
-
-    //! access to the interaction volume an scvf is embedded in
-    template<class SubControlVolumeFace>
-    const SecondaryInteractionVolume& secondaryInteractionVolume(const SubControlVolumeFace& scvf) const
-    {
-        return isEmbeddedInBoundaryIV_(scvf)
-               ? boundaryCacheData_.ivDataStorage_.secondaryInteractionVolumes[ (*this)[scvf].ivIndexInContainer() ]
-               : gridFluxVarsCachePtr_->secondaryInteractionVolume(scvf);
-    }
-
-    //! access to the data handle of an interaction volume an scvf is embedded in
-    template<class SubControlVolumeFace>
-    const SecondaryIvDataHandle& secondaryDataHandle(const SubControlVolumeFace& scvf) const
-    {
-        return isEmbeddedInBoundaryIV_(scvf)
-               ? boundaryCacheData_.ivDataStorage_.secondaryDataHandles[ (*this)[scvf].ivIndexInContainer() ]
-               : gridFluxVarsCachePtr_->secondaryDataHandle(scvf);
-    }
-
-    //! The global object we are a restriction of
-    const GridFluxVariablesCache& gridFluxVarsCache() const
-    {  return *gridFluxVarsCachePtr_; }
-
-private:
     //! returns true if an scvf is contained in an interaction volume that touches the boundary
     template<class SubControlVolumeFace>
     bool isEmbeddedInBoundaryIV_(const SubControlVolumeFace& scvf) const
@@ -376,11 +444,25 @@ public:
     template<class FVElementGeometry, class ElementVolumeVariables>
     void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
-                     const ElementVolumeVariables& elemVolVars)
+                     const ElementVolumeVariables& elemVolVars) &
     {
         // For mpfa schemes we will have to prepare the caches of all scvfs that are
         // embedded in the interaction volumes in which the element-local scvfs are embedded
         DUNE_THROW(Dune::NotImplemented, "Local element binding of the flux variables cache in mpfa schemes");
+    }
+
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    CCMpfaElementFluxVariablesCache bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                                const FVElementGeometry& fvGeometry,
+                                                const ElementVolumeVariables& elemVolVars) &&
+    {
+        this->bindElement(element, fvGeometry, elemVolVars);
+        return std::move(*this);
     }
 
     /*!
@@ -391,7 +473,7 @@ public:
     template<class FVElementGeometry, class ElementVolumeVariables>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
-              const ElementVolumeVariables& elemVolVars)
+              const ElementVolumeVariables& elemVolVars) &
     {
         clear_();
 
@@ -456,6 +538,20 @@ public:
     }
 
     /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    CCMpfaElementFluxVariablesCache bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                         const FVElementGeometry& fvGeometry,
+                                         const ElementVolumeVariables& elemVolVars) &&
+    {
+        this->bind(element, fvGeometry, elemVolVars);
+        return std::move(*this);
+    }
+
+    /*!
      * \brief Prepares the transmissibilities of a single scv face
      * \note the fvGeometry is assumed to be bound to the same element
      * \note this function has to be called prior to flux calculations on this scvf.
@@ -464,11 +560,26 @@ public:
     void bindScvf(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                   const FVElementGeometry& fvGeometry,
                   const ElementVolumeVariables& elemVolVars,
-                  const typename FVElementGeometry::SubControlVolumeFace& scvf)
+                  const typename FVElementGeometry::SubControlVolumeFace& scvf) &
     {
         // For mpfa schemes we will have to prepare the caches of all
         // scvfs that are embedded in the interaction volumes this scvf is embedded
         DUNE_THROW(Dune::NotImplemented, "Scvf-local binding of the flux variables cache in mpfa schemes");
+    }
+
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    CCMpfaElementFluxVariablesCache bindScvf(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                             const FVElementGeometry& fvGeometry,
+                                             const ElementVolumeVariables& elemVolVars,
+                                             const typename FVElementGeometry::SubControlVolumeFace& scvf) &&
+    {
+        this->bindScvf(element, fvGeometry, elemVolVars, scvf);
+        return std::move(*this);
     }
 
     /*!
