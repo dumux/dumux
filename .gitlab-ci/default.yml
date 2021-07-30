@@ -40,6 +40,7 @@ black (python):
   # TODO: maybe extend this to the utility scripts?
     - black --check --verbose -- python
     - black --check --verbose -- test/python
+    - black --check --verbose -- bin
 
 
 pylint-flake8 (python):

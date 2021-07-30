@@ -13,15 +13,20 @@ import argparse
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('folder', type=str, nargs='?', help='the folder to create CMakeLists.txt\'s for', default=None)
+    parser.add_argument(
+        "folder",
+        type=str,
+        nargs="?",
+        help="the folder to create CMakeLists.txt's for",
+        default=None,
+    )
     args = vars(parser.parse_args())
 
     # default to the dumux folder (relative path to the location of this script)
-    if args['folder'] is None:
+    if args["folder"] is None:
         rootDir = os.path.dirname(os.path.abspath(__file__)) + "/../../dumux"
     else:
-        rootDir = args['folder']
-
+        rootDir = args["folder"]
 
     ignore_folders = ["", "io/format/fmt", "io/xml"]
     extensions = [".hh", ".inc"]
@@ -30,7 +35,7 @@ if __name__ == "__main__":
         subFolders = sorted(subFolders)
         files = sorted(files)
         # get folder name relative to dumux
-        folderName = fullFolderName.replace(rootDir + '/', '').replace(rootDir, '')
+        folderName = fullFolderName.replace(rootDir + "/", "").replace(rootDir, "")
         if folderName not in ignore_folders:
             with open(fullFolderName + "/CMakeLists.txt", "w") as cmakelists:
                 # add subfolders
@@ -45,9 +50,16 @@ if __name__ == "__main__":
                         break
 
                 if headersExist:
-                    if subFolders: cmakelists.write("\n")
+                    if subFolders:
+                        cmakelists.write("\n")
                     # collect all files to be installed in a CMake variable
                     headers_variable = "DUMUX_" + folderName.upper().replace("/", "_") + "_HEADERS"
-                    cmakelists.write("file(GLOB {}{})\n".format(headers_variable, " *".join([''] + extensions)))
+                    cmakelists.write(
+                        "file(GLOB {}{})\n".format(headers_variable, " *".join([""] + extensions))
+                    )
                     cmakelists.write("install(FILES ${{{}}}\n".format(headers_variable))
-                    cmakelists.write("        DESTINATION ${{CMAKE_INSTALL_INCLUDEDIR}}/dumux/{})\n".format(folderName))
+                    cmakelists.write(
+                        "        DESTINATION ${{CMAKE_INSTALL_INCLUDEDIR}}/dumux/{})\n".format(
+                            folderName
+                        )
+                    )

@@ -25,14 +25,14 @@ def hasCommonMember(myset, mylist):
 
 
 # make dry run and return the compilation command
-def getCompileCommand(testConfig, buildTreeRoot='.'):
-    target = testConfig['target']
-    lines = subprocess.check_output(["make", "-B", "--dry-run", target],
-                                    encoding='ascii',
-                                    cwd=buildTreeRoot).splitlines()
+def getCompileCommand(testConfig, buildTreeRoot="."):
+    target = testConfig["target"]
+    lines = subprocess.check_output(
+        ["make", "-B", "--dry-run", target], encoding="ascii", cwd=buildTreeRoot
+    ).splitlines()
 
     def hasCppCommand(line):
-        return any(cpp in line for cpp in ['g++', 'clang++'])
+        return any(cpp in line for cpp in ["g++", "clang++"])
 
     # there may be library build commands first, last one is the actual target
     commands = list(filter(lambda line: hasCppCommand(line), lines))
@@ -40,7 +40,7 @@ def getCompileCommand(testConfig, buildTreeRoot='.'):
 
 
 # get the command and folder to compile the given test
-def buildCommandAndDir(testConfig, buildTreeRoot='.'):
+def buildCommandAndDir(testConfig, buildTreeRoot="."):
     compCommand = getCompileCommand(testConfig, buildTreeRoot)
     if compCommand is None:
         raise Exception("Could not determine compile command for {}".format(testConfig))
@@ -50,7 +50,7 @@ def buildCommandAndDir(testConfig, buildTreeRoot='.'):
 
 
 # check if a test is affected by changes in the given files
-def isAffectedTest(testConfigFile, changedFiles, buildTreeRoot='.'):
+def isAffectedTest(testConfigFile, changedFiles, buildTreeRoot="."):
     with open(testConfigFile) as configFile:
         testConfig = json.load(configFile)
 
@@ -61,10 +61,10 @@ def isAffectedTest(testConfigFile, changedFiles, buildTreeRoot='.'):
     # -MM skips headers from system directories
     # -H  prints the name(+path) of each used header
     # for some reason g++ writes to stderr
-    headers = subprocess.run(command + ["-MM", "-H"],
-                             stderr=PIPE, stdout=PIPE, cwd=dir,
-                             encoding='ascii').stderr.splitlines()
-    headers = [h.lstrip('. ') for h in headers]
+    headers = subprocess.run(
+        command + ["-MM", "-H"], stderr=PIPE, stdout=PIPE, cwd=dir, encoding="ascii"
+    ).stderr.splitlines()
+    headers = [h.lstrip(". ") for h in headers]
     headers.append(mainFile)
 
     if hasCommonMember(changedFiles, headers):
@@ -73,27 +73,41 @@ def isAffectedTest(testConfigFile, changedFiles, buildTreeRoot='.'):
     return False, testConfig["name"], testConfig["target"]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # parse input arguments
-    parser = ArgumentParser(description='Find tests affected by changes')
-    parser.add_argument('-l', '--file-list', required=True,
-                        help='A file containing a list of files that changed')
-    parser.add_argument('-np', '--num-processes',
-                        required=False, type=int, default=8,
-                        help='Number of processes (default: 8)')
-    parser.add_argument('-o', '--outfile',
-                        required=False, default='affectedtests.json',
-                        help='The file in which to write the affected tests')
-    parser.add_argument('-b', '--build-dir',
-                        required=False, default='.',
-                        help='The path to the top-level build directory of the project to be checked')
+    parser = ArgumentParser(description="Find tests affected by changes")
+    parser.add_argument(
+        "-l", "--file-list", required=True, help="A file containing a list of files that changed"
+    )
+    parser.add_argument(
+        "-np",
+        "--num-processes",
+        required=False,
+        type=int,
+        default=8,
+        help="Number of processes (default: 8)",
+    )
+    parser.add_argument(
+        "-o",
+        "--outfile",
+        required=False,
+        default="affectedtests.json",
+        help="The file in which to write the affected tests",
+    )
+    parser.add_argument(
+        "-b",
+        "--build-dir",
+        required=False,
+        default=".",
+        help="The path to the top-level build directory of the project to be checked",
+    )
     args = vars(parser.parse_args())
 
-    buildDir = os.path.abspath(args['build_dir'])
-    targetFile = os.path.abspath(args['outfile'])
-    with open(args['file_list']) as files:
-        changedFiles = set([line.strip('\n') for line in files.readlines()])
+    buildDir = os.path.abspath(args["build_dir"])
+    targetFile = os.path.abspath(args["outfile"])
+    with open(args["file_list"]) as files:
+        changedFiles = set([line.strip("\n") for line in files.readlines()])
 
     # clean build directory
     subprocess.run(["make", "clean"], cwd=buildDir)
@@ -104,17 +118,15 @@ if __name__ == '__main__':
     affectedTests = {}
     tests = glob(os.path.join(buildDir, "TestMetaData") + "/*json")
 
-    numProcesses = max(1, args['num_processes'])
-    findAffectedTest = partial(isAffectedTest,
-                               changedFiles=changedFiles,
-                               buildTreeRoot=buildDir)
+    numProcesses = max(1, args["num_processes"])
+    findAffectedTest = partial(isAffectedTest, changedFiles=changedFiles, buildTreeRoot=buildDir)
     with Pool(processes=numProcesses) as p:
         for affected, name, target in p.imap_unordered(findAffectedTest, tests, chunksize=4):
             if affected:
-                affectedTests[name] = {'target': target}
-                print('\t- {} (target: {})'.format(name, target))
+                affectedTests[name] = {"target": target}
+                print("\t- {} (target: {})".format(name, target))
 
     print("Detected {} affected tests".format(len(affectedTests)))
 
-    with open(targetFile, 'w') as jsonFile:
+    with open(targetFile, "w") as jsonFile:
         json.dump(affectedTests, jsonFile)

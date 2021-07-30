@@ -8,8 +8,12 @@ from util.common import addPrefixToLines, escapeCharacters
 
 
 def getRawString(text):
-    def makeRaw(text): return repr(text)
-    def removeEnclosingQuotes(text): return text[1:-1]
+    def makeRaw(text):
+        return repr(text)
+
+    def removeEnclosingQuotes(text):
+        return text[1:-1]
+
     return removeEnclosingQuotes(makeRaw(text))
 
 
@@ -54,17 +58,19 @@ class InstallScriptWriterBash(InstallScriptWriterInterface):
         super().__init__()
 
     def writeSheBang(self):
-        self.ostream.write('#!/bin/bash\n')
+        self.ostream.write("#!/bin/bash\n")
 
     def writeComment(self, comment):
-        comment = addPrefixToLines('#', comment)
+        comment = addPrefixToLines("#", comment)
         self.ostream.write(comment)
 
     def writeMessageOutput(self, message):
         self.ostream.write(f'echo "{message}"\n')
 
     def writePreamble(self, topFolderName=None):
-        self.ostream.write(textwrap.dedent("""\
+        self.ostream.write(
+            textwrap.dedent(
+                """\
 
             exitWithError()
             {
@@ -103,39 +109,44 @@ class InstallScriptWriterBash(InstallScriptWriterInterface):
                 popd
             }
 
-        """))
+        """
+            )
+        )
         top = topFolderName if topFolderName else "."
         self.ostream.write('TOP="{}"\n'.format(top))
-        self.ostream.write('mkdir -p $TOP\n')
-        self.ostream.write('cd $TOP\n')
+        self.ostream.write("mkdir -p $TOP\n")
+        self.ostream.write("cd $TOP\n")
 
     def writeInstallation(self, dependency):
-        self.ostream.write('installModule {} {} {} {}'
-                           .format(dependency['folder'],
-                                   dependency['remote'],
-                                   dependency['branch'],
-                                   dependency['revision']))
+        self.ostream.write(
+            "installModule {} {} {} {}".format(
+                dependency["folder"],
+                dependency["remote"],
+                dependency["branch"],
+                dependency["revision"],
+            )
+        )
 
     def writePatchApplication(self, folder, patchContent):
         def removeEscapedSingleQuotes(line):
             return line.replace(r"\'", "'")
 
         self.ostream.write('PATCH="\n')
-        for line in patchContent.rstrip('\n').split('\n'):
+        for line in patchContent.rstrip("\n").split("\n"):
             line = getRawString(line)
             line = removeEscapedSingleQuotes(line)
             line = escapeCharacters(line, ['"', "$", "`"])
             self.ostream.write(line)
-            self.ostream.write('\n')
+            self.ostream.write("\n")
         self.ostream.write('"\n')
         self.ostream.write(f'applyPatch {folder} "$PATCH"')
 
     def writeConfiguration(self, opts):
         self.ostream.write(
-            f'if ! ./dune-common/bin/dunecontrol --opts={opts} all; then\n'
+            f"if ! ./dune-common/bin/dunecontrol --opts={opts} all; then\n"
             '    echo "Configuration of the project failed"\n'
-            '    exit 1\n'
-            'fi\n'
+            "    exit 1\n"
+            "fi\n"
         )
 
 
@@ -144,10 +155,10 @@ class InstallScriptWriterPython(InstallScriptWriterInterface):
         super().__init__()
 
     def writeSheBang(self):
-        self.ostream.write('#!/usr/bin/env python3\n')
+        self.ostream.write("#!/usr/bin/env python3\n")
 
     def writeComment(self, comment):
-        comment = addPrefixToLines('#', comment)
+        comment = addPrefixToLines("#", comment)
         self.ostream.write(comment)
 
     def writeMessageOutput(self, message):
@@ -155,7 +166,9 @@ class InstallScriptWriterPython(InstallScriptWriterInterface):
 
     def writePreamble(self, topFolderName=None):
         top = topFolderName if topFolderName else "."
-        self.ostream.write(textwrap.dedent(f"""\
+        self.ostream.write(
+            textwrap.dedent(
+                f"""\
 
             import os
             import sys
@@ -194,21 +207,26 @@ class InstallScriptWriterPython(InstallScriptWriterInterface):
                     patchFile.write(patch)
                 runFromSubFolder(['git', 'apply', 'tmp.patch'], subFolder)
                 os.remove(patchPath)
-        """))
+        """
+            )
+        )
 
     def writeInstallation(self, dependency):
-        self.ostream.write('installModule("{}", "{}", "{}", "{}")\n'
-                           .format(dependency['folder'],
-                                   dependency['remote'],
-                                   dependency['branch'],
-                                   dependency['revision']))
+        self.ostream.write(
+            'installModule("{}", "{}", "{}", "{}")\n'.format(
+                dependency["folder"],
+                dependency["remote"],
+                dependency["branch"],
+                dependency["revision"],
+            )
+        )
 
     def writePatchApplication(self, folder, patchContent):
         self.ostream.write('patch = """\n')
-        for line in patchContent.rstrip('\n').split('\n'):
+        for line in patchContent.rstrip("\n").split("\n"):
             line = getRawString(line)
             self.ostream.write(escapeCharacters(line, ['"']))
-            self.ostream.write('\n')
+            self.ostream.write("\n")
         self.ostream.write('"""\n')
 
         self.ostream.write(f'applyPatch("{folder}", patch)\n')

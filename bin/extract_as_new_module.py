@@ -67,11 +67,7 @@ def isInSubTree(file, base):
 def removeRedundantFolders(folders):
     """Remove folders that are duplicates or that are contained in a parent folder"""
     uniqueFolders = list(set(folders))
-    return [
-        sf
-        for sf in uniqueFolders
-        if not any(isInSubTree(sf, base) for base in uniqueFolders)
-    ]
+    return [sf for sf in uniqueFolders if not any(isInSubTree(sf, base) for base in uniqueFolders)]
 
 
 def checkModuleFolder(moduleDirectory):
@@ -166,20 +162,18 @@ def addFoldersToCMakeLists(modulePath, subFolder):
                         break
 
                 newLines = lines[0:idx]
-                newLines += [
-                    f"add_subdirectory({subFolderPATH.split(os.path.sep)[i]})\n"
-                ]
+                newLines += [f"add_subdirectory({subFolderPATH.split(os.path.sep)[i]})\n"]
                 newLines += lines[idx:]
                 newContent = "".join(line for line in reversed(newLines))
 
                 replaceFileContent(cmakeListsFile, newContent)
             else:
                 with open(cmakeListsFile, "w") as cml:
-                    cml.write(
-                        f"add_subdirectory({subFolderPATH.split(os.path.sep)[i]})\n"
-                    )
+                    cml.write(f"add_subdirectory({subFolderPATH.split(os.path.sep)[i]})\n")
             cmakeListsFile = os.path.join(
-                os.path.dirname(cmakeListsFile), subFolderPATH.split(os.path.sep)[i], "CMakeLists.txt"
+                os.path.dirname(cmakeListsFile),
+                subFolderPATH.split(os.path.sep)[i],
+                "CMakeLists.txt",
             )
 
 
@@ -187,9 +181,7 @@ def findHeaders(modulePath, sourceFiles):
     """Find header included (recursively) in the given source files"""
     with mp.Pool() as p:
         headers = itertools.chain.from_iterable(
-            p.map(
-                partial(includedCppProjectHeaders, projectBase=modulePath), sourceFiles
-            )
+            p.map(partial(includedCppProjectHeaders, projectBase=modulePath), sourceFiles)
         )
     return list(set(headers))
 
@@ -218,9 +210,7 @@ def foldersWithoutSourceFiles(modulePath, checkSubFolder, sources):
         return any(isInSubTree(s, directory) for s in sourceDirectories)
 
     def isNotASourceDirectory(directory):
-        return directory not in sourceDirectories and not hasChildSourceDirectory(
-            directory
-        )
+        return directory not in sourceDirectories and not hasChildSourceDirectory(directory)
 
     noSourceDirectories = []
     for sf in checkSubFolder:
@@ -289,8 +279,7 @@ def guideFolderDeletion(modulePath, candidates):
 
     deleted = []
     if queryYesNo(
-        "Do you want to remove some of them "
-        "(by choosing 'no' they are all preserved)?",
+        "Do you want to remove some of them " "(by choosing 'no' they are all preserved)?",
         default="no",
     ):
         for folder in foldersWithoutSources:
@@ -321,9 +310,7 @@ def queryEmptyRemoteURL():
 
         try:
             print("Checking the repo (you may have to introduce credentials):")
-            remoteContent = runCommand(
-                "git ls-remote {}".format(remote), suppressTraceBack=True
-            )
+            remoteContent = runCommand("git ls-remote {}".format(remote), suppressTraceBack=True)
         except subprocess.CalledProcessError:
             print(" - Could not find your repo at {}. ".format(remote))
             print(" - Please revisit the provided information.")
@@ -393,9 +380,7 @@ def guideVersionsReadme(modulePath, dependencies, readme, remoteURL=None):
     if writeVersionInfo:
         table = versionTable(dependencies)
         appendFileContent(readme, f"\n## Version Information\n\n{table}\n")
-        runGitCommand(
-            modulePath, f'git commit {readme} -m "[readme] Update version information"'
-        )
+        runGitCommand(modulePath, f'git commit {readme} -m "[readme] Update version information"')
 
         if remoteURL:
             pushRepository(modulePath, remoteURL)
@@ -599,12 +584,8 @@ if __name__ == "__main__":
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=EPILOG,
     )
-    parser.add_argument(
-        "module_dir", help="Module from which the subfolder is extracted"
-    )
-    parser.add_argument(
-        "subfolder", nargs="+", help='subfolder(s) of "module_dir" to be extracted'
-    )
+    parser.add_argument("module_dir", help="Module from which the subfolder is extracted")
+    parser.add_argument("subfolder", nargs="+", help='subfolder(s) of "module_dir" to be extracted')
 
     # prepare input
     args = vars(parser.parse_args())
@@ -623,9 +604,7 @@ if __name__ == "__main__":
 
     # guide user through new module creation
     print(infoInitial(moduleDirectory, subFolder, sourceFiles))
-    input(
-        "Please read the above carefully and press [Enter] to proceed or abort with [Ctrl-C]..."
-    )
+    input("Please read the above carefully and press [Enter] to proceed or abort with [Ctrl-C]...")
 
     # duneproject creates a new Dune module
     runDuneProject()
@@ -682,9 +661,7 @@ if __name__ == "__main__":
 
     # prepare new README.md file
     newReadme = os.path.join(newModulePath, readmeFileName())
-    replaceFileContent(
-        newReadme, infoReadmeMain(moduleDirectory, actualSubFolder, sourceFiles)
-    )
+    replaceFileContent(newReadme, infoReadmeMain(moduleDirectory, actualSubFolder, sourceFiles))
 
     # try to initialize repo (to use its URL in later steps)
     remoteURL = guideRepositoryInitialization(newModulePath)

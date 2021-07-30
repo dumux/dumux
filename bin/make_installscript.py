@@ -36,9 +36,7 @@ if __name__ == "__main__":
         "This expects that all modules are git repositories and "
         "have a remote origin URL defined."
     )
-    parser.add_argument(
-        "-p", "--path", required=True, help="The path to your dune module"
-    )
+    parser.add_argument("-p", "--path", required=True, help="The path to your dune module")
     parser.add_argument(
         "-f",
         "--filename",
@@ -112,11 +110,7 @@ if __name__ == "__main__":
     modPath = os.path.abspath(modPath)
     modName = getModuleInfo(modPath, "Module")
     printProgressInfo(
-        [
-            "Creating install script for module '{}' in folder '{}'".format(
-                modName, modPath
-            )
-        ]
+        ["Creating install script for module '{}' in folder '{}'".format(modName, modPath)]
     )
 
     language = cmdArgs["language"]

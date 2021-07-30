@@ -24,18 +24,16 @@ def styledBotPrint(s, style="none", **kwargs):
     sys.stdout.write(TERM_FORMATTING["reset"])
 
 
-def addPrefix(prefix, text, separator=' '):
+def addPrefix(prefix, text, separator=" "):
     return prefix + separator + text
 
 
-def addPrefixToLines(prefix, text, separator=' '):
-    return '\n'.join(
-        addPrefix(prefix, line, separator) for line in text.split('\n')
-    )
+def addPrefixToLines(prefix, text, separator=" "):
+    return "\n".join(addPrefix(prefix, line, separator) for line in text.split("\n"))
 
 
 def escapeCharacter(text, character, escCharacter="\\"):
-    return text.replace(character, f'{escCharacter}{character}')
+    return text.replace(character, f"{escCharacter}{character}")
 
 
 def escapeCharacters(text, characters, escCharacter="\\"):
@@ -44,10 +42,10 @@ def escapeCharacters(text, characters, escCharacter="\\"):
     return text
 
 
-def indent(text, indentation='  '):
-    text = text.split('\n')
+def indent(text, indentation="  "):
+    text = text.split("\n")
     text = [indentation + line for line in text]
-    return '\n'.join(text)
+    return "\n".join(text)
 
 
 def makeTable(dictList, config=None, padding=2):
@@ -55,7 +53,7 @@ def makeTable(dictList, config=None, padding=2):
         config = {key: key for d in dictList for key in d}
 
     def getColWidth(row):
-        return max(len(str(r)) for r in row) + padding*2
+        return max(len(str(r)) for r in row) + padding * 2
 
     def getCol(key):
         return [config[key]] + [d.get(key, "") for d in dictList]
@@ -69,20 +67,22 @@ def makeTable(dictList, config=None, padding=2):
         return row
 
     table = [makeRow({key: config[key] for key in config})]
-    table.append('|' + '|'.join('-'*widths[key] for key in config) + '|')
+    table.append("|" + "|".join("-" * widths[key] for key in config) + "|")
     table.extend(makeRow(row) for row in dictList)
-    return '\n'.join(table)
+    return "\n".join(table)
 
 
 def getCommandErrorHints(command):
     if "git " in command:
-        return "It seems that a git command failed. Please check:\n" \
-               "    -- is the module registered as git repository?\n" \
-               "    -- is upstream defined for the branch?"
+        return (
+            "It seems that a git command failed. Please check:\n"
+            "    -- is the module registered as git repository?\n"
+            "    -- is upstream defined for the branch?"
+        )
     return None
 
 
-def runCommand(command, check=True, suppressTraceBack=False, errorMessage=''):
+def runCommand(command, check=True, suppressTraceBack=False, errorMessage=""):
     """execute a command and retrieve the output"""
 
     try:
@@ -116,15 +116,17 @@ def callFromPath(path):
             result = callFunc(*args, **kwargs)
             os.chdir(curPath)
             return result
+
         return wrapper_callFromPath
+
     return decorator_callFromPath
 
 
 def userQuery(query, choices=None):
     """query something from the user"""
 
-    choicesString = ', '.join(str(c) for c in choices) if choices else ''
-    querySuffix = f" (choices: {choicesString})\n" if choices else ' '
+    choicesString = ", ".join(str(c) for c in choices) if choices else ""
+    querySuffix = f" (choices: {choicesString})\n" if choices else " "
 
     while True:
         styledBotPrint(f"{query.strip()}{querySuffix}", style="highlight")
@@ -132,8 +134,7 @@ def userQuery(query, choices=None):
 
         if choices and inp not in choices:
             styledBotPrint(
-                f"Invalid answer: '{inp}'. Choose from {choicesString}.",
-                style="warning"
+                f"Invalid answer: '{inp}'. Choose from {choicesString}.", style="warning"
             )
         else:
             return inp
@@ -148,13 +149,19 @@ def queryYesNo(question, default="yes"):
     def getChoices():
         return ", ".join(c for c in affirmative + negative)
 
-    def isAffirmative(choice): return choice in affirmative
-    def isNegative(choice): return choice in negative
-    def isValid(choice): return isAffirmative(choice) or isNegative(choice)
+    def isAffirmative(choice):
+        return choice in affirmative
+
+    def isNegative(choice):
+        return choice in negative
+
+    def isValid(choice):
+        return isAffirmative(choice) or isNegative(choice)
 
     if default is not None and not isValid(default):
-        raise ValueError("\nInvalid default answer: '{}', choices: '{}'\n"
-                         .format(default, getChoices()))
+        raise ValueError(
+            "\nInvalid default answer: '{}', choices: '{}'\n".format(default, getChoices())
+        )
 
     if default is None:
         prompt = " [y/n] "
@@ -170,30 +177,26 @@ def queryYesNo(question, default="yes"):
 
         if not isValid(choice):
             styledBotPrint(
-                f"Invalid answer: '{choice}'. Choose from '{getChoices()}'",
-                style="warning"
+                f"Invalid answer: '{choice}'. Choose from '{getChoices()}'", style="warning"
             )
         else:
             return True if isAffirmative(choice) else False
 
 
 def cppHeaderFilter():
-    return lambda fileName: fileName == 'config.h'
+    return lambda fileName: fileName == "config.h"
 
 
-def includedCppProjectHeaders(file,
-                              projectBase,
-                              headers=[],
-                              headerFilter=cppHeaderFilter()):
+def includedCppProjectHeaders(file, projectBase, headers=[], headerFilter=cppHeaderFilter()):
     """get all project headers included by a cpp file"""
 
     filePath = os.path.join(projectBase, file)
     if not os.path.exists(filePath):
-        raise IOError(f'Cpp file {filePath} does not exist')
+        raise IOError(f"Cpp file {filePath} does not exist")
 
-    with open(filePath, 'r') as f:
+    with open(filePath, "r") as f:
         content = f.read()
-        headerInBracket = re.findall(r'#include\s+<(.+?)>', content)
+        headerInBracket = re.findall(r"#include\s+<(.+?)>", content)
         headerInQuotation = re.findall(r'#include\s+"(.+?)"', content)
 
         def process(pathInProject):
@@ -202,10 +205,7 @@ def includedCppProjectHeaders(file,
                 if not headerFilter(pathInProject):
                     if headerPath not in headers:
                         headers.append(headerPath)
-                        includedCppProjectHeaders(
-                            headerPath, projectBase,
-                            headers, headerFilter
-                        )
+                        includedCppProjectHeaders(headerPath, projectBase, headers, headerFilter)
 
         for header in headerInBracket:
             process(header)
@@ -228,57 +228,57 @@ def findMatchingFiles(path, pattern):
     return result
 
 
-def isGitRepository(pathToRepo='.'):
+def isGitRepository(pathToRepo="."):
     try:
         run = callFromPath(pathToRepo)(runCommand)
-        run('git status')
+        run("git status")
         return True
     except Exception:
         return False
 
 
-def getRemote(pathToRepo='.'):
+def getRemote(pathToRepo="."):
     run = callFromPath(pathToRepo)(runCommand)
-    return run('git ls-remote --get-url').strip('\n')
+    return run("git ls-remote --get-url").strip("\n")
 
 
-def fetchRepo(remote, pathToRepo='.'):
+def fetchRepo(remote, pathToRepo="."):
     run = callFromPath(pathToRepo)(runCommand)
-    run('git fetch {}'.format(remote))
+    run("git fetch {}".format(remote))
 
 
-def hasUntrackedFiles(pathToRepo='.'):
+def hasUntrackedFiles(pathToRepo="."):
     run = callFromPath(pathToRepo)(runCommand)
-    return run('git ls-files --others --exclude-standard') != ''
+    return run("git ls-files --others --exclude-standard") != ""
 
 
 def isPersistentBranch(branchName):
-    if branchName == 'origin/master':
+    if branchName == "origin/master":
         return True
-    if branchName.startswith('origin/releases/'):
+    if branchName.startswith("origin/releases/"):
         return True
     return False
 
 
 # get the most recent commit that also exists on remote master/release branch
 # may be used to find a commit we can use as basis for a pub module
-def mostRecentCommonCommitWithRemote(modFolderPath,
-                                     branchFilter=isPersistentBranch):
+def mostRecentCommonCommitWithRemote(modFolderPath, branchFilter=isPersistentBranch):
     run = callFromPath(modFolderPath)(runCommand)
 
     def findBranches(sha):
-        candidates = run('git branch -r --contains {}'.format(sha)).split('\n')
-        candidates = [branch.strip().split(' ->')[0] for branch in candidates]
+        candidates = run("git branch -r --contains {}".format(sha)).split("\n")
+        candidates = [branch.strip().split(" ->")[0] for branch in candidates]
         return list(filter(branchFilter, candidates))
 
-    revList = run('git rev-list HEAD').split('\n')
+    revList = run("git rev-list HEAD").split("\n")
     for rev in revList:
         branches = findBranches(rev)
         if branches:
             return branches[0], rev
 
-    raise RuntimeError('Could not find suitable ancestor commit'
-                       ' on a branch that matches the given filter')
+    raise RuntimeError(
+        "Could not find suitable ancestor commit" " on a branch that matches the given filter"
+    )
 
 
 # function to extract persistent, remotely available git versions for all
@@ -288,35 +288,32 @@ def getPersistentVersions(modFolderPaths, ignoreUntracked=False):
     for modFolderPath in modFolderPaths:
 
         if not isGitRepository(modFolderPath):
-            raise Exception('Folder is not a git repository')
+            raise Exception("Folder is not a git repository")
 
         if hasUntrackedFiles(modFolderPath) and not ignoreUntracked:
             raise Exception(
                 "Found untracked files in '{}'. "
                 "Please commit, stash, or remove them. Alternatively, if you "
-                "are sure they are not needed set ignoreUntracked=True"
-                .format(modFolderPath)
+                "are sure they are not needed set ignoreUntracked=True".format(modFolderPath)
             )
 
         result[modFolderPath] = {}
-        result[modFolderPath]['remote'] = getRemote(modFolderPath)
+        result[modFolderPath]["remote"] = getRemote(modFolderPath)
 
         # update remote to make sure we find all upstream commits
-        fetchRepo(result[modFolderPath]['remote'], modFolderPath)
+        fetchRepo(result[modFolderPath]["remote"], modFolderPath)
 
         branch, rev = mostRecentCommonCommitWithRemote(modFolderPath)
         run = callFromPath(modFolderPath)(runCommand)
 
-        result[modFolderPath]['revision'] = rev
-        result[modFolderPath]['date'] = run(
-            'git log -n 1 --format=%ai {}'.format(rev)
-        ).strip('\n')
-        result[modFolderPath]['author'] = run(
-            'git log -n 1 --format=%an {}'.format(rev)
-        ).strip('\n')
+        result[modFolderPath]["revision"] = rev
+        result[modFolderPath]["date"] = run("git log -n 1 --format=%ai {}".format(rev)).strip("\n")
+        result[modFolderPath]["author"] = run("git log -n 1 --format=%an {}".format(rev)).strip(
+            "\n"
+        )
 
         # this may return HEAD if we are on some detached HEAD tree
-        result[modFolderPath]['branch'] = branch
+        result[modFolderPath]["branch"] = branch
 
     return result
 
@@ -326,35 +323,48 @@ def getPatches(persistentVersions):
     for path, gitInfo in persistentVersions.items():
         run = callFromPath(path)(runCommand)
 
-        uncommittedPatch = run('git diff')
-        unpublishedPatch = run(
-            'git format-patch --stdout {}'.format(gitInfo['revision'])
-        )
-        untrackedPatch = ''
-        untrackedFiles = run('git ls-files --others --exclude-standard')
+        uncommittedPatch = run("git diff")
+        unpublishedPatch = run("git format-patch --stdout {}".format(gitInfo["revision"]))
+        untrackedPatch = ""
+        untrackedFiles = run("git ls-files --others --exclude-standard")
         binaryExtension = (
-            '.png', '.gif', '.jpg', '.tiff', '.bmp', '.DS_Store', '.eot', '.otf', '.ttf', '.woff', '.rgb', '.pdf',
+            ".png",
+            ".gif",
+            ".jpg",
+            ".tiff",
+            ".bmp",
+            ".DS_Store",
+            ".eot",
+            ".otf",
+            ".ttf",
+            ".woff",
+            ".rgb",
+            ".pdf",
         )
         if untrackedFiles:
             for file in untrackedFiles.splitlines():
                 if not str(file).endswith(binaryExtension):
-                    untrackedPatch += run('git --no-pager diff /dev/null {}'.format(file), check=False)
+                    untrackedPatch += run(
+                        "git --no-pager diff /dev/null {}".format(file), check=False
+                    )
 
         result[path] = {}
-        result[path]['untracked'] = untrackedPatch if untrackedPatch else None
-        result[path]['unpublished'] = unpublishedPatch if unpublishedPatch else None
-        result[path]['uncommitted'] = uncommittedPatch if uncommittedPatch else None
+        result[path]["untracked"] = untrackedPatch if untrackedPatch else None
+        result[path]["unpublished"] = unpublishedPatch if unpublishedPatch else None
+        result[path]["uncommitted"] = uncommittedPatch if uncommittedPatch else None
     return result
 
 
-def versionTable(versions,
-                 config={
-                     'name': 'module name',
-                     'branch': 'branch name',
-                     'revision': 'commit sha',
-                     'date': 'commit date'
-                 },
-                 padding=2):
+def versionTable(
+    versions,
+    config={
+        "name": "module name",
+        "branch": "branch name",
+        "revision": "commit sha",
+        "date": "commit date",
+    },
+    padding=2,
+):
     return makeTable(versions, config)
 
 
