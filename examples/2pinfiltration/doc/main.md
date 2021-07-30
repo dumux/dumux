@@ -129,7 +129,6 @@ We need the finite volume geometry to build up the subcontrolvolumes (scv) and s
 ```cpp
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
-    gridGeometry->update();
 ```
 
 In the problem, we define the boundary and initial conditions and compute the point sources. The `computePointSourceMap` method is inherited from the fvproblem and therefore specified in the `dumux/common/fvproblem.hh`. It calls the `addPointSources` method specified in the `problem.hh` file.
