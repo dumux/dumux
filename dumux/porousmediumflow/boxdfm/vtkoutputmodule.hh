@@ -230,8 +230,7 @@ private:
                 // velocity output
                 if (this->velocityOutput().enableOutput())
                 {
-                    auto elemFluxVarsCache = localView(this->gridVariables().gridFluxVarsCache());
-                    elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
+                    auto elemFluxVarsCache = localView(this->gridVariables().gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
 
                     for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numFluidPhases(); ++phaseIdx)
                         this->velocityOutput().calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
@@ -414,8 +413,7 @@ private:
                 // velocity output
                 if (this->velocityOutput().enableOutput())
                 {
-                    auto elemFluxVarsCache = localView(this->gridVariables().gridFluxVarsCache());
-                    elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
+                    auto elemFluxVarsCache = localView(this->gridVariables().gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
 
                     for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numFluidPhases(); ++phaseIdx)
                         this->velocityOutput().calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);

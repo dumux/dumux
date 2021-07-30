@@ -539,8 +539,7 @@ public:
 
                 auto bulkFvGeom = localView(bulkGridGeom).bind(curBulkElem);
                 auto bulkElemVolVars = localView(assembler.gridVariables(bulkId).curGridVolVars()).bind(curBulkElem, bulkFvGeom, bulkSol);
-                auto bulkElemFluxVarsCache = localView(assembler.gridVariables(bulkId).gridFluxVarsCache());
-                bulkElemFluxVarsCache.bind(curBulkElem, bulkFvGeom, bulkElemVolVars);
+                auto bulkElemFluxVarsCache = localView(assembler.gridVariables(bulkId).gridFluxVarsCache()).bind(curBulkElem, bulkFvGeom, bulkElemVolVars);
 
                 lowDimContext_.isSet = true;
                 lowDimContext_.bulkElemBcTypes[i].update(this->problem(bulkId), curBulkElem, bulkFvGeom);

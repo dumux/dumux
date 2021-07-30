@@ -98,9 +98,7 @@ public:
 
             auto fvGeometry = localView(*this->gridGeometry_).bind(element);
             auto elemVolVars = localView(this->curGridVolVars()).bind(element, fvGeometry, curSol);
-            auto elemFluxVarsCache = localView(this->gridFluxVarsCache());
-
-            elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
+            auto elemFluxVarsCache = localView(this->gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
 
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             {

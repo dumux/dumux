@@ -167,8 +167,7 @@ public:
             auto elemVolVars = localView(gridVariables_->curGridVolVars()).bind(element, fvGeometry, sol);
 
             // elemFluxVarsCache for neumann interface
-            auto elemFluxVarsCache = localView(gridVariables_->gridFluxVarsCache());
-            elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
+            auto elemFluxVarsCache = localView(gridVariables_->gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
 
             //! Check if we have to refine around a source term
             if (refineAtSource_)

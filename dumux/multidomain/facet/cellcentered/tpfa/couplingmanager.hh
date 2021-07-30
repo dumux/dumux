@@ -501,8 +501,7 @@ public:
             auto bulkFvGeom = localView(bulkGridGeom).bind(bulkElem);
             auto bulkElemVolVars = Assembler::isImplicit() ? localView(assembler.gridVariables(bulkId).curGridVolVars()).bind(bulkElem, bulkFvGeom, bulkSol)
                                                            : localView(assembler.gridVariables(bulkId).prevGridVolVars()).bind(bulkElem, bulkFvGeom, bulkSol);
-            auto bulkElemFluxVarsCache = localView(assembler.gridVariables(bulkId).gridFluxVarsCache());
-            bulkElemFluxVarsCache.bind(bulkElem, bulkFvGeom, bulkElemVolVars);
+            auto bulkElemFluxVarsCache = localView(assembler.gridVariables(bulkId).gridFluxVarsCache()).bind(bulkElem, bulkFvGeom, bulkElemVolVars);
 
             lowDimContext_.isSet = true;
             lowDimContext_.bulkFvGeometry = std::make_unique< FVElementGeometry<bulkId> >( std::move(bulkFvGeom) );

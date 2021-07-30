@@ -91,8 +91,7 @@ public:
             // make sure FVElementGeometry & vol vars are bound to the element
             auto fvElementGeometry = localView(problem().gridGeometry()).bindElement(element);
             auto elemVolVars = localView(this->gridVariables().curGridVolVars()).bind(element, fvElementGeometry, this->sol());
-            auto elemFluxVarsCache = localView(this->gridVariables().gridFluxVarsCache());
-            elemFluxVarsCache.bind(element, fvElementGeometry, elemVolVars);
+            auto elemFluxVarsCache = localView(this->gridVariables().gridFluxVarsCache()).bind(element, fvElementGeometry, elemVolVars);
 
             // treat the throat flux related data
             std::size_t dataIdx = 0;
