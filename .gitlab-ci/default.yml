@@ -42,13 +42,14 @@ black (python):
     - black --check --verbose -- test/python
 
 
-pylint (python):
+pylint-flake8 (python):
   stage: linting
   script:
     - source bin/testing/ci-setup-python-env.sh
     - |
       if [ -d build-cmake/python/dumux ] ; then
         pylint --rcfile=.pylintrc build-cmake/python/dumux
+        flake8 build-cmake/python/dumux
       fi
   needs:
     - job: configure
