@@ -1,7 +1,5 @@
 """Language-specific backends for install script generation"""
 
-import os
-import sys
 import textwrap
 from abc import ABC, abstractmethod
 from util.common import addPrefixToLines, escapeCharacters
@@ -197,7 +195,9 @@ class InstallScriptWriterPython(InstallScriptWriterInterface):
                     runFromSubFolder(['git', 'checkout', branch], subFolder)
                     runFromSubFolder(['git', 'reset', '--hard', revision], subFolder)
                 else:
-                    print(f'Skip cloning {{url}} since target folder "{{targetFolder}}" already exists.')
+                    print(
+                        f"Skip cloning {{url}} since target "{{targetFolder}}" already exists."
+                    )
 
 
             def applyPatch(subFolder, patch):

@@ -122,10 +122,9 @@ for i in range(1, len(reference)):
             float(reference[2][indexReferenceX]) - float(reference[1][indexReferenceX])
         )
     elif i == len(reference) - 1:
-        distance = 0.5 * (
-            float(reference[len(reference) - 1][indexReferenceX])
-            - float(reference[len(reference) - 2][indexReferenceX])
-        )
+        distA = float(reference[len(reference) - 1][indexReferenceX])
+        distB = float(reference[len(reference) - 2][indexReferenceX])
+        distance = 0.5 * (distA - distB)
     else:
         distance = 0.5 * (
             float(reference[i + 1][indexReferenceX]) - float(reference[i - 1][indexReferenceX])

@@ -46,11 +46,10 @@ def compare_data(
     """
 
     if verbose:
-        print("Comparing {} and {}".format(dataFile1, dataFile2))
         print(
-            "... with a maximum relative error of {} and a maximum absolute error of {}*max_abs_parameter_value.".format(
-                relative, absolute
-            )
+            f"Comparing {dataFile1} and {dataFile2}\n"
+            f"... with a maximum relative error of {relative} and "
+            f"a maximum absolute error of {absolute}*max_abs_parameter_value."
         )
 
     # construct element tree from data files
@@ -116,7 +115,10 @@ if __name__ == "__main__":
         "--zeroThreshold",
         type=json.loads,
         default="{}",
-        help='Thresholds for treating numbers as zero for a parameter as a python dict e.g. {"vel":1e-7,"delP":1.0}',
+        help=(
+            "Thresholds for treating numbers as zero for a parameter as a python dict "
+            'e.g. {"vel":1e-7,"delP":1.0}'
+        ),
     )
     args = vars(parser.parse_args())
 

@@ -1,20 +1,42 @@
-#### TODO:
-# - different colors for legend
-# - read-in pvds with time outputs
-# - read-in multiple vtus, e.g. for multidomain
-# - rendering method 2d and 3d
+"""
+Script for exporting 2d screenshots from ParaView
+
+TODO:
+- different colors for legend
+- read-in pvds with time outputs
+- read-in multiple vtus, e.g. for multidomain
+- rendering method 2d and 3d
+"""
 
 # parse arguments
 import argparse
 import os
 import sys
 
+try:
+    from paraview.simple import (
+        XMLUnstructuredGridReader,
+        GetActiveView,
+        CreateRenderView,
+        Show,
+        ColorBy,
+        GetColorTransferFunction,
+        GetScalarBar,
+        RenderAllViews,
+        SaveScreenshot,
+    )
+except ImportError:
+    print("`paraview.simple` not found. Make sure using pvbatch.")
+
 bool = ["True", "False"]
 parameterType = ["CELLS", "POINTS"]
 legendOrientation = ["Horizontal", "Vertical"]
 parser = argparse.ArgumentParser(
     prog="\033[1m\033[94m" + "pvbatch" + "\033[0m" + " " + sys.argv[0],
-    description="Export a screenshot of a standard 2D plot. To change the color palette, change the default in the paraview GUI.",
+    description=(
+        "Export a screenshot of a standard 2D plot. "
+        "To change the color palette, change the default in the paraview GUI."
+    ),
 )
 # on/off-type features
 offscreen = parser.add_mutually_exclusive_group(required=False)
@@ -158,11 +180,6 @@ parser.add_argument(
 parser.add_argument("-v", "--verbosity", type=int, default=2, help="Verbosity of the output")
 args = vars(parser.parse_args())
 
-try:
-    from paraview.simple import *
-except ImportError:
-    print("`paraview.simple` not found. Make sure using pvbatch.")
-
 # import locations
 commonOutDirectory = False
 outDirectory = args["outputDirectory"]
@@ -189,7 +206,8 @@ for curFile in args["files"]:
     vtuFile = XMLUnstructuredGridReader(FileName=curFile)
     if args["parameter"] == "":
         print(
-            "\nNo parameter was specified, use '-p PARAMETER' to specify it. Available parameters are:"
+            "\nNo parameter was specified, use '-p PARAMETER' to specify it. "
+            "Available parameters are:"
         )
         if args["parameterType"] == "CELLS":
             print(vtuFile.CellArrayStatus)
@@ -204,18 +222,19 @@ for curFile in args["files"]:
         renderView1 = CreateRenderView()
 
     # print additional help message for large picture sizes
-    if (args["size"][0] > 1024 or args["size"][1] > 1024) and args["offscreen"] == False:
-        print(
-            "\nIt seems like you want to export a picture greater then your actual screen size. Use:"
+    if (args["size"][0] > 1024 or args["size"][1] > 1024) and not args["offscreen"]:
+        raise IOError(
+            "\nIt seems like you want to export a picture greater "
+            "than your actual screen size. Use:\n"
+            "pvbatch --use-offscreen-rendering SCRIPT OPTIONS --offscreen"
         )
-        print("pvbatch --use-offscreen-rendering SCRIPT OPTIONS --offscreen")
-        exit(2)
+
     renderView1.ViewSize = args["size"]
 
-    if args["showOrientationAxes"] == False:
+    if not args["showOrientationAxes"]:
         renderView1.OrientationAxesVisibility = 0
 
-    if args["showAxesGrid"] == True:
+    if args["showAxesGrid"]:
         renderView1.AxesGrid.Visibility = 1
 
     # show data in view
@@ -229,7 +248,7 @@ for curFile in args["files"]:
     ColorBy(vtuFileDisplay, (args["parameterType"], args["parameter"]))
 
     # show color bar/color legend
-    if args["showLegend"] == True:
+    if args["showLegend"]:
         vtuFileDisplay.SetScalarBarVisibility(renderView1, True)
 
     # get color transfer function/color map for the parameter
@@ -241,7 +260,7 @@ for curFile in args["files"]:
         parameterLUT.VectorComponent = args["parameterComponent"]
         # if args['parameterRange'][0] == 0 and args['parameterRange'][1] == 0:
         # vtuFileDisplay.RescaleTransferFunctionToDataRange(False)
-        if args["showLegend"] == True:
+        if args["showLegend"]:
             velocityLUTColorBar = GetScalarBar(parameterLUT, renderView1)
             velocityLUTColorBar.Title = args["parameter"]
             velocityLUTColorBar.ComponentTitle = str(args["parameterComponent"])
@@ -272,11 +291,11 @@ for curFile in args["files"]:
         legend.ComponentTitle = args["legendComponentTitle"]
 
     # set a white background color and black color for fonts and the grid
-    if args["whiteBackground"] == True:
+    if args["whiteBackground"]:
         renderView1.Background = [255, 255, 255]
         legend.TitleColor = [0.0, 0.0, 0.0]
         legend.LabelColor = [0.0, 0.0, 0.0]
-        if args["showAxesGrid"] == True:
+        if args["showAxesGrid"]:
             renderView1.AxesGrid.GridColor = [0.0, 0.0, 0.0]
             renderView1.AxesGrid.XTitleColor = [0.0, 0.0, 0.0]
             renderView1.AxesGrid.YTitleColor = [0.0, 0.0, 0.0]

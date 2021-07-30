@@ -185,7 +185,7 @@ def printFinalMessage(scriptName, topFolderName=None):
         )
     else:
         description = textwrap.dedent(
-            f"""\
+            """\
             Running this script will clone all modules into the folder from which it is
             called, configure the entire project and build the contained applications
         """

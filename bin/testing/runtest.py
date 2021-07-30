@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 import argparse
 import shlex
-import os, sys
+import os
+import sys
 import subprocess
 import json
 from fuzzycomparevtu import compare_vtk
@@ -20,13 +21,19 @@ parser.add_argument(
     "-s",
     "--script",
     nargs=1,
-    help="The comparison script. [fuzzy, fuzzyData, exact, <path_to_script>] where the script takes two files as arguments.",
+    help=(
+        "The comparison script. [fuzzy, fuzzyData, exact, <path_to_script>]"
+        " where the script takes two files as arguments."
+    ),
 )
 parser.add_argument(
     "-f",
     "--files",
     nargs="+",
-    help="Pairs of file names (first reference, then current). Usage: '[-f ref1 cur1 [[ref2] [cur2] ...]]'",
+    help=(
+        "Pairs of file names (first reference, then current). "
+        "Usage: '[-f ref1 cur1 [[ref2] [cur2] ...]]'"
+    ),
 )
 parser.add_argument(
     "-d", "--delimiter", type=str, default=",", help="Column delimiter for data files"
@@ -50,7 +57,10 @@ parser.add_argument(
     "--zeroThreshold",
     type=json.loads,
     default="{}",
-    help='Thresholds for treating numbers as zero for a parameter as a python dict e.g. {"vel":1e-7,"delP":1.0}',
+    help=(
+        "Thresholds for treating numbers as zero for"
+        ' a parameter as a python dict e.g. {"vel":1e-7,"delP":1.0}'
+    ),
 )
 args = vars(parser.parse_args())
 
@@ -58,7 +68,8 @@ args = vars(parser.parse_args())
 if args["script"]:
     if len(args["files"]) % 2 != 0 or not args["files"]:
         sys.stderr.write(
-            "The files have to be pairs of reference and current solution files. Usage '-f [ref1] [cur1] [[ref2] [cur2] ...]'"
+            "The files have to be pairs of reference and current solution files."
+            " Usage '-f [ref1] [cur1] [[ref2] [cur2] ...]'"
         )
         parser.print_help()
         sys.exit(1)
@@ -67,7 +78,9 @@ if args["script"]:
         ref_dir = os.path.dirname(os.path.abspath(__file__)).rstrip("bin") + "test/references"
         if os.path.dirname(args["files"][(i * 2) + 1]) == ref_dir:
             sys.stderr.write(
-                "Tried to delete a reference solution. Specify reference file first, then the current solution. Usage: '[-f ref1 cur1 [[ref2] [cur2] ...]]'"
+                "Tried to delete a reference solution. "
+                "Specify reference file first, then the current solution. "
+                "Usage: '[-f ref1 cur1 [[ref2] [cur2] ...]]'"
             )
             sys.exit(1)
         subprocess.call(["rm", "-fv", args["files"][(i * 2) + 1]])
@@ -76,7 +89,7 @@ if args["script"]:
 res = 1
 try:
     res = subprocess.call(shlex.split(args["command"][0]))
-except OSError as e:
+except OSError:
     print(args["command"][0].split())
     print("OSError: Command not found. Most likely the executable specified doesn't exist.")
     sys.exit(1)

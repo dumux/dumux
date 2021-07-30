@@ -3,6 +3,17 @@ import csv
 import sys
 import os
 
+try:
+    from paraview.simple import (
+        XMLPolyDataReader,
+        XMLUnstructuredGridReader,
+        SetActiveSource,
+        PlotOverLine,
+        CreateWriter,
+    )
+except ImportError:
+    raise ImportError("`paraview.simple` not found. Make sure using pvpython instead of python.")
+
 # parse arguments
 parser = argparse.ArgumentParser(
     prog="\033[1m\033[94m" + "pvpython" + "\033[0m" + " " + sys.argv[0],
@@ -47,11 +58,6 @@ parser.add_argument(
     help="Verbosity of the output. 1 = print progress. 2 = print data columns",
 )
 args = vars(parser.parse_args())
-
-try:
-    from paraview.simple import *
-except:
-    raise ImportError("`paraview.simple` not found. Make sure using pvpython instead of python.")
 
 # import locations
 outDirectory = args["outputDirectory"]

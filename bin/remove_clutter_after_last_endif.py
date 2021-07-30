@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 
+
 # replace everything after last #endif with new line
 def clearAfterLastEndIf(filename):
     with open(filename, "r") as header:

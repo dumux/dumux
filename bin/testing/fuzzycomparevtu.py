@@ -12,11 +12,9 @@ import json
 import sys
 import math
 import os
-import re
-import glob
 import functools
 
-# fuzzy compare VTK tree from VTK strings
+
 def compare_vtk(vtk1, vtk2, absolute=1.5e-7, relative=1e-2, zeroValueThreshold={}, verbose=True):
     """take two vtk files and compare them. Returns an exit key as returnvalue.
 
@@ -63,11 +61,10 @@ def compare_vtk(vtk1, vtk2, absolute=1.5e-7, relative=1e-2, zeroValueThreshold={
     sortedroot2 = sort_vtk(root2)
 
     if verbose:
-        print("Comparing {} and {}".format(vtk1, vtk2))
         print(
-            "... with a maximum relative error of {} and a maximum absolute error of {}*max_abs_parameter_value.".format(
-                relative, absolute
-            )
+            f"Comparing {vtk1} and {vtk2}\n"
+            f"... with a maximum relative error of {relative} and "
+            f"a maximum absolute error of {absolute}*max_abs_parameter_value."
         )
 
     # sort the vtk file so that the comparison is independent of the
@@ -150,7 +147,8 @@ def convert_pvtu_to_vtu(pvturoot, filename):
             newvalue = " " + str(int(value) + offsets_offset) + " "
             rootOffsets.text += newvalue
 
-        # compute offset for the connectivity vector (it's the number of points of the current root piece)
+        # compute offset for the connectivity vector
+        # (it's the number of points of the current root piece)
         rootNumPoints = int(root.findall(".//Piece")[0].attrib["NumberOfPoints"])
         rootNumCells = int(root.findall(".//Piece")[0].attrib["NumberOfCells"])
 
@@ -177,7 +175,10 @@ def convert_pvtu_to_vtu(pvturoot, filename):
         root.findall(".//Piece")[0].attrib["NumberOfCells"] = str(newNumCells)
 
     # for debugging the merged vtu file can be written out and viewed in paraview
-    # testname = os.path.join(dirname, "comparisontemp-" + os.path.basename(pvturoot.findall(".//Piece")[0].attrib["Source"]))
+    # sourcename = pvturoot.findall(".//Piece")[0].attrib["Source"]
+    # testname = os.path.join(
+    #     dirname, "comparisontemp-" + os.path.basename(vtuname)
+    # )
     # vtu = ET.ElementTree(root)
     # vtu.write(testname)
 
@@ -214,7 +215,7 @@ def is_fuzzy_equal_node(
             else:
                 return False
         if node1child.text or node2child.text:
-            if node1child.get("NumberOfComponents") == None:
+            if node1child.get("NumberOfComponents") is None:
                 numberOfComponents = 1
             else:
                 numberOfComponents = int(node1child.attrib["NumberOfComponents"])
@@ -267,7 +268,8 @@ def is_fuzzy_equal_text(
         lists2.append(list2[i::numComp])
         if numComp > 1:
             parameters.append("{}_{}".format(parameter, i))
-            # if zero threshold was set for all components one component inherits it from the parameter
+            # if zero threshold was set for all components,
+            # one component inherits it from the parameter
             if parameter in zeroValueThreshold:
                 zeroValueThreshold["{}_{}".format(parameter, i)] = zeroValueThreshold[parameter]
         else:
@@ -293,23 +295,19 @@ def is_fuzzy_equal_text(
                 print("Parameter {} contains inf!".format(parameter))
                 return False
 
-        # manipulate the data set for the sake of sensible comparison
-        # if the parameter is listed in the zeroThreshold dictionary replace all float under threshold with zero.
-        # only replace them with zero if the parameters in both lists are under the threshold. Otherwise we
-        # compare a non-zero value with 0 later.
+        # Manipulate the data set for the sake of sensible comparison.
+        # If the parameter is listed in the zeroThreshold dictionary,
+        # replace all float under threshold with zero.
+        # Only replace them with zero if the parameters in both lists are under the threshold.
+        # Otherwise we compare a non-zero value with 0 later.
         if parameter in zeroValueThreshold:
+            zeroThr = float(zeroValueThreshold[parameter])
             floatList1 = [
-                0.0
-                if abs(i) < float(zeroValueThreshold[parameter])
-                and abs(j) < float(zeroValueThreshold[parameter])
-                else i
+                0.0 if (abs(i) < zeroThr) and (abs(j) < zeroThr) else i
                 for i, j in zip(floatList1, floatList2)
             ]
             floatList2 = [
-                0.0
-                if abs(i) < float(zeroValueThreshold[parameter])
-                and abs(j) < float(zeroValueThreshold[parameter])
-                else j
+                0.0 if (abs(i) < zeroThr) and (abs(j) < zeroThr) else j
                 for i, j in zip(floatList1, floatList2)
             ]
 
@@ -347,18 +345,16 @@ def is_fuzzy_equal_text(
                     return False
 
         if verbose and max_relative_difference != 0.0:
-            print("\nData differs in parameter: {}".format(parameter))
-            print(message)
             print(
-                "Info for {}: max_abs_parameter_value={} and min_abs_parameter_value={}.".format(
-                    parameter, magnitude, minimal
-                )
+                f"\nData differs in parameter: {parameter}\n",
+                message,
+                f"Info for {parameter}: "
+                f"max_abs_parameter_value={magnitude} and min_abs_parameter_value={minimal}.",
             )
             if parameter in zeroValueThreshold:
                 print(
-                    "For parameter {} a zero value threshold of {} was given.".format(
-                        parameter, zeroValueThreshold[parameter]
-                    )
+                    f"For parameter {parameter} a zero value threshold"
+                    f" of {zeroValueThreshold[parameter]} was given."
                 )
 
     return is_equal
@@ -390,7 +386,7 @@ def sort_elements(items, newroot):
         # Create a new item to represent the sorted version
         # of the next item, and copy the tag name and contents
         newitem = ET.Element(item.tag)
-        if item.text and item.text.isspace() == False:
+        if item.text and not item.text.isspace():
             newitem.text = item.text
 
         # Copy the attributes (sorted by key) to the new item
@@ -442,7 +438,7 @@ def sort_vtk_by_coordinates(root1, root2, verbose, convertedFromParallelVtu=Fals
                 cellDataArrays.append(dataArray.attrib["Name"])
             for dataArray in root.findall(".//DataArray"):
                 dataArrays[dataArray.attrib["Name"]] = dataArray.text
-                if dataArray.get("NumberOfComponents") == None:
+                if dataArray.get("NumberOfComponents") is None:
                     numberOfComponents[dataArray.attrib["Name"]] = 1
                 else:
                     numberOfComponents[dataArray.attrib["Name"]] = dataArray.attrib[
@@ -459,7 +455,7 @@ def sort_vtk_by_coordinates(root1, root2, verbose, convertedFromParallelVtu=Fals
             if convertedFromParallelVtu:
                 uniqueIdx = []
                 for i in range(len(coords) // dim):
-                    pos = [float(c) for c in coords[i * dim : i * dim + dim]]
+                    pos = [float(c) for c in coords[(i * dim) : (i * dim + dim)]]
                     if pos in vertexArray:
                         uIdx = vertexArray.index(pos)
                     else:
@@ -468,7 +464,7 @@ def sort_vtk_by_coordinates(root1, root2, verbose, convertedFromParallelVtu=Fals
                     uniqueIdx.append(uIdx)
             else:
                 for i in range(len(coords) // dim):
-                    vertexArray.append([float(c) for c in coords[i * dim : i * dim + dim]])
+                    vertexArray.append([float(c) for c in coords[(i * dim) : (i * dim + dim)]])
 
             # group the cells into vertex index tuples
             cellArray = []
@@ -518,6 +514,7 @@ def sort_vtk_by_coordinates(root1, root2, verbose, convertedFromParallelVtu=Fals
             bBoxMax = max(vertexArray)
             bBoxMin = min(vertexArray)
             epsilon = math.sqrt(sum([(a - b) ** 2 for a, b in zip(bBoxMax, bBoxMin)])) * 1e-7
+
             # first compare by coordinates, if the same compare largestCellMidPointForVertex
             # TODO: is there a more pythonic way?
             def vertex_cmp(a, b):
@@ -550,9 +547,10 @@ def sort_vtk_by_coordinates(root1, root2, verbose, convertedFromParallelVtu=Fals
                 for j, vertexIndex in enumerate(cell):
                     cellArray[i][j] = vertexIndexMap[vertexIndex]
 
-            # sort the indices of all cells in case the two grids have different orientation of the elements
-            # this doesn't necessarily have to be a valid vtk order, it's just temporary for a sorted literal comparison
-            # of the files
+            # Sort the indices of all cells in case the two grids
+            # have different orientation of the elements.
+            # This doesn't necessarily have to be a valid vtk order,
+            # it's just temporary for a sorted literal comparison of the files
             for i, cell in enumerate(cellArray):
                 cellArray[i] = sorted(cell)
 
@@ -633,7 +631,10 @@ if __name__ == "__main__":
         "--zeroThreshold",
         type=json.loads,
         default="{}",
-        help='Thresholds for treating numbers as zero for a parameter as a python dict e.g. {"vel":1e-7,"delP":1.0}',
+        help=(
+            "Thresholds for treating numbers as zero for a parameter as a python dict"
+            'e.g. {"vel":1e-7,"delP":1.0}'
+        ),
     )
     parser.add_argument("-v", "--verbose", dest="verbose", action="store_true")
     parser.add_argument("--no-verbose", dest="verbose", action="store_false")

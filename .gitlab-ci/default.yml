@@ -51,6 +51,7 @@ pylint-flake8 (python):
       if [ -d build-cmake/python/dumux ] ; then
         pylint --rcfile=.pylintrc build-cmake/python/dumux
         flake8 build-cmake/python/dumux
+        flake8 bin
       fi
   needs:
     - job: configure

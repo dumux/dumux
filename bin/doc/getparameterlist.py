@@ -7,6 +7,7 @@ for usage of getParam or getParamFromGroup.
 
 import os
 
+
 # find the content of the given string between the first matching pair of opening/closing keys
 def getEnclosedContent(string, openKey, closeKey):
 
@@ -91,9 +92,9 @@ def getParamsFromFile(file):
     # print encountered errors
     if errors:
         print(
-            "\n\n{} parameter{} in file {} could not be retrieved automatically. Please check them yourself:".format(
-                len(errors), "s" if len(errors) > 1 else "", file
-            )
+            f"\n\n{len(errors)} parameter{'s' if len(errors) > 1 else ''}"
+            f"in file {file} could not be retrieved automatically. "
+            "Please check them yourself:"
         )
         for lineIdx in errors:
             print("\n\t-> line {}: {}".format(lineIdx, errors[lineIdx]["line"]))
@@ -140,7 +141,9 @@ for key in parameterDict:
     groupEntry = "-" if not hasGroup else entry["paramName"].split(".")[0]
     paramName = entry["paramName"] if not hasGroup else entry["paramName"].partition(".")[2]
 
-    # In case of multiple occurrences, we use the first entry that is not None and print the others for possible manual editing
+    # In case of multiple occurrences,
+    # we use the first entry that is not None
+    # and print the others for possible manual editing
     paramType = entry["paramType"][0]
     defaultValue = next((e for e in entry["defaultValue"] if e), "-")
 
@@ -154,27 +157,24 @@ for key in parameterDict:
     )
     if hasMultiplePT or hasMultipleDV:
         print(
-            "\nFound multiple occurrences of parameter "
-            + paramName
-            + " with differing specifications: "
+            f"\nFound multiple occurrences of parameter {paramName}",
+            " with differing specifications: "
         )
     if hasMultiplePT:
         print(" -> Specified type names:")
         for typeName in entry["paramType"]:
             print(" " * 8 + typeName)
         print(
-            " ---> For the parameters list, "
-            + paramType
-            + " has been chosen. Please adapt manually if desired."
+            " ---> For the parameters list, {paramType}"
+            " has been chosen. Please adapt manually if desired."
         )
     if hasMultipleDV:
         print(" -> Specified default values:")
         for default in entry["defaultValue"]:
             print(" " * 8 + (default if default else "- (none given)"))
         print(
-            " ---> For the parameters list, "
-            + defaultValue
-            + " has been chosen. Please adapt manually if desired."
+            f" ---> For the parameters list, {defaultValue}"
+            " has been chosen. Please adapt manually if desired."
         )
 
     maxGroupWidth = max(maxGroupWidth, len(groupEntry) + 3)  # +3 because \b will be added later
@@ -219,7 +219,7 @@ tableEntries = tableEntriesWithoutGroup + tableEntriesWithGroup
 
 header = """/*!
  *\\file
- *\ingroup Parameter
+ *\\ingroup Parameter
  *
  *\\brief List of currently useable run-time parameters
  *

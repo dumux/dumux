@@ -4,13 +4,14 @@
 install external stuff for dumux
 """
 import os
-import urllib.request
+import shutil
+import re
+import urllib
 import tarfile
 import sys
 import subprocess
-import shutil
-import re
 import argparse
+import textwrap
 
 
 class ChoicesAction(argparse._StoreAction):
@@ -38,7 +39,8 @@ def show_message(message):
 
 if len(sys.argv) == 1:
     show_message(
-        "No options given. For more information run the following command: \n ./installexternal.py --help"
+        "No options given. For more information "
+        "run the following command: \n ./installexternal.py --help"
     )
     sys.exit()
 
@@ -111,11 +113,14 @@ def run_command(command, currentdir="."):
         return_code = popen.wait()
         if return_code:
             print("\n")
-            message = "\n    (Error) The command {} returned with non-zero exit code\n".format(
-                command
+            message = textwrap.dedent(
+                f"""\
+                (Error) The command {command} returned with non-zero exit code
+                  If you can't fix the problem yourself consider reporting your issue
+                  on the mailing list (dumux@listserv.uni-stuttgart.de) and
+                  attach the file 'installexternal.log'
+            """
             )
-            message += "\n    If you can't fix the problem yourself consider reporting your issue\n"
-            message += "    on the mailing list (dumux@listserv.uni-stuttgart.de) and attach the file 'installexternal.log'\n"
             show_message(message)
             sys.exit(1)
 
@@ -124,7 +129,7 @@ def git_clone(url, branch=None):
     clone = ["git", "clone"]
     if branch:
         clone += ["-b", branch]
-    result = run_command(command=[*clone, url])
+    run_command(command=[*clone, url])
 
 
 def install_external(args):
@@ -244,7 +249,7 @@ def install_external(args):
                         run_command(configcmd, currentdir=ext_dir)
                         try:
                             run_command("make", currentdir=ext_dir)
-                        except:
+                        except subprocess.CalledProcessError:
                             raise Exception("{} installation has failed.".format(package))
                         # Save message to be shown at the end
                         if os.path.exists(ext_dir + "/" + package):
@@ -281,7 +286,9 @@ def install_external(args):
     # Save post installation message about dunecontrol if need be.
     if not cleanup and any(x in pkg for pkg in packages for x in ["dumux", "dune", "opm"]):
         final_message.append(
-            "\n\nPlease run the following command (can be copied to command line):\n\n  ./dune-common/bin/dunecontrol --opts=./dumux/cmake.opts all"
+            "\n\nPlease run the following command "
+            "(can be copied to command line):\n\n  "
+            "./dune-common/bin/dunecontrol --opts=./dumux/cmake.opts all"
         )
 
     # If cleanup and only logfile in the external directory, remove the directory
@@ -295,7 +302,7 @@ def install_external(args):
 
 #################################################################
 #################################################################
-## (1/3) Define th necessary packages and their urls
+# (1/3) Define th necessary packages and their urls
 #################################################################
 #################################################################
 dune_git_baseurl = "https://gitlab.dune-project.org/"
@@ -362,7 +369,7 @@ messages = {
 
 #################################################################
 #################################################################
-## (2/3) Download/Config/Clean the requested packages
+# (2/3) Download/Config/Clean the requested packages
 #################################################################
 #################################################################
 # Start download/configuration/cleaning tasks
@@ -370,7 +377,7 @@ final_message = install_external(args)
 
 #################################################################
 #################################################################
-## (3/3) Show the final message
+# (3/3) Show the final message
 #################################################################
 #################################################################
 # Show final message

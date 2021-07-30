@@ -7,6 +7,7 @@ import os
 import sys
 import argparse
 import subprocess
+import textwrap
 from distutils.spawn import find_executable
 from distutils.version import LooseVersion
 
@@ -65,14 +66,17 @@ def run_command(command, workdir="."):
             print(line, end="")
         popen.stdout.close()
         popen.stderr.close()
-        return_code = popen.wait()
-        if return_code:
-            print("\n")
-            message = "\n    (Error) The command {} returned with non-zero exit code\n".format(
-                command
+        returnCode = popen.wait()
+        if returnCode:
+            message = textwrap.dedent(
+                f"""\
+
+                (Error) The command {command} returned with non-zero exit code
+                  If you can't fix the problem yourself consider reporting your issue
+                  on the mailing list (dumux@listserv.uni-stuttgart.de) and
+                  attach the file 'installdumux.log'
+            """
             )
-            message += "\n    If you can't fix the problem yourself consider reporting your issue\n"
-            message += "    on the mailing list (dumux@listserv.uni-stuttgart.de) and attach the file 'installdumux.log'\n"
             show_message(message)
             sys.exit(1)
 
@@ -125,7 +129,8 @@ os.makedirs("./dumux", exist_ok=True)
 os.chdir("dumux")
 
 show_message(
-    "(2/3) Cloning repositories. This may take a while. Make sure to be connected to the internet..."
+    "(2/3) Cloning repositories. This may take a while. "
+    "Make sure to be connected to the internet..."
 )
 
 # the core modules
@@ -152,7 +157,8 @@ show_message("(2/3) Step completed. All repositories have been cloned into a con
 #################################################################
 #################################################################
 show_message(
-    "(3/3) Configure and build dune modules and dumux using dunecontrol. This may take several minutes..."
+    "(3/3) Configure and build dune modules and dumux using dunecontrol. "
+    "This may take several minutes..."
 )
 
 # run dunecontrol
@@ -172,7 +178,8 @@ else:
     test_path += "/implicit/isothermal"
 
 show_message(
-    "(Installation complete) To test if everything works, please run the following commands (can be copied to command line):\n\n"
+    "(Installation complete) To test if everything works, "
+    "please run the following commands (can be copied to command line):\n\n"
     "  cd {}\n"
     "  make test_1p_tpfa\n"
     "  ./test_1p_tpfa\n"
