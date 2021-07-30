@@ -30,6 +30,8 @@
 
 #include <dune/common/float_cmp.hh>
 #include <dune/common/exceptions.hh>
+#include <dune/geometry/quadraturerules.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/multidomain/staggeredcouplingmanager.hh>
 #include <dumux/discretization/staggered/elementsolution.hh>
@@ -87,8 +89,7 @@ namespace Detail {
         std::size_t darcyScvfIdx;
         std::size_t stokesScvfIdx;
         std::unique_ptr< ElementVolumeVariables<porousMediumIdx> > elementVolVars;
-        std::unique_ptr< ElementFluxVariablesCache<porousMediumIdx> > elementFluxVarsCache;
-        CouplingFacetGeometry segmentGeometry;
+        std::size_t facetIdx;
 
         auto permeability() const
         {
@@ -122,10 +123,7 @@ namespace Detail {
         std::size_t darcyScvfIdx;
         VelocityVector velocity;
         VolumeVariables<freeFlowIdx> volVars;
-        // Darcy context needs information from stokes context because of projection onto stokes faces
-        using Container = StokesCouplingContext<MDTraits, CouplingFacetGeometry>;
-        std::unique_ptr< std::vector<Container> > stokesContext;
-        CouplingFacetGeometry segmentGeometry;
+        std::size_t facetIdx;
     };
 };
 
@@ -197,7 +195,7 @@ public:
     //! Constructor
     StokesDarcyCouplingManagerImplementation(std::shared_ptr<const GridGeometry<freeFlowIdx>> stokesFvGridGeometry,
                                              std::shared_ptr<const GridGeometry<porousMediumIdx>> darcyFvGridGeometry)
-    { }
+    {}
 
     /*!
      * \brief Methods to be accessed by main
@@ -215,12 +213,16 @@ public:
         this->setSubProblems(std::make_tuple(stokesProblem, stokesProblem, darcyProblem));
         this->curSol() = curSol;
         couplingData_ = std::make_shared<CouplingData>(*this);
+        couplingMapper_.update(*this);
         computeStencils();
     }
 
     //! Update after the grid has changed
     void update()
-    { }
+    {
+        couplingMapper_.update(*this);
+        computeStencils();
+    }
 
     // \}
 
@@ -231,11 +233,11 @@ public:
     //! Prepare the coupling stencils
     void computeStencils()
     {
-        couplingMapper_.computeCouplingMapsAndStencils(*this,
-                                                       darcyToStokesCellCenterCouplingStencils_,
-                                                       darcyToStokesFaceCouplingStencils_,
-                                                       stokesCellCenterCouplingStencils_,
-                                                       stokesFaceCouplingStencils_);
+        couplingMapper_.couplingStencils(*this,
+                                         darcyToStokesCellCenterCouplingStencils_,
+                                         darcyToStokesFaceCouplingStencils_,
+                                         stokesCellCenterCouplingStencils_,
+                                         stokesFaceCouplingStencils_);
 
         for(auto&& stencil : darcyToStokesCellCenterCouplingStencils_)
             removeDuplicates_(stencil.second);
@@ -298,12 +300,8 @@ public:
             stokesFvGeometry.bindElement(stokesElement);
 
             VelocityVector faceVelocity(0.0);
-
-            for(const auto& scvf : scvfs(stokesFvGeometry))
-            {
-                if(scvf.index() == couplingFacet.ffScvfIdx)
-                    faceVelocity[scvf.directionIndex()] = this->curSol()[freeFlowFaceIdx][scvf.dofIndex()];
-            }
+            const auto& scvf = stokesFvGeometry.scvf(couplingFacet.ffScvfIdx);
+            faceVelocity[scvf.directionIndex()] = this->curSol()[freeFlowFaceIdx][scvf.dofIndex()];
 
             using PriVarsType = typename VolumeVariables<freeFlowCellCenterIdx>::PrimaryVariables;
             const auto& cellCenterPriVars = this->curSol()[freeFlowCellCenterIdx][couplingFacet.ffEIdx];
@@ -317,10 +315,7 @@ public:
             darcyCouplingContext_.push_back({stokesElement, stokesFvGeometry,
                                             couplingFacet.ffScvfIdx, couplingFacet.pmScvfIdx,
                                             faceVelocity, stokesVolVars,
-                                            std::make_unique< std::vector<StokesCouplingContext> >(),
-                                            couplingFacet.geometry});
-
-            fillCouplingContext(stokesElement, assembler, (*darcyCouplingContext_.back().stokesContext));
+                                            couplingFacet.idx});
         }
     }
 
@@ -336,24 +331,6 @@ public:
                                int pvIdxJ)
     {
         this->curSol()[domainJ][dofIdxGlobalJ][pvIdxJ] = priVarsJ[pvIdxJ];
-        for (auto& dataI : darcyCouplingContext_)
-        {
-            const auto& stokesContext = *(dataI.stokesContext);
-
-            for (const auto& dataJ : stokesContext)
-            {
-                const auto darcyElemSol = elementSolution(dataJ.element, this->curSol()[porousMediumIdx], this->problem(porousMediumIdx).gridGeometry());
-
-                for (auto&& scv : scvs(dataJ.fvGeometry))
-                {
-                    if(scv.dofIndex() == dofIdxGlobalJ)
-                    {
-                        auto& volVars = (*dataJ.elementVolVars)[scv];
-                        volVars.update(darcyElemSol, this->problem(porousMediumIdx), dataJ.element, scv);
-                    }
-                }
-            }
-        }
     }
 
     /*!
@@ -422,7 +399,7 @@ public:
 
         for (auto& data : stokesCouplingContext_)
         {
-            //Derivatives are assumed to be always calculated with respect to unknowns associated with its own element
+            // Derivatives are assumed to be always calculated with respect to unknowns associated with its own element
             const auto darcyElemSol = elementSolution(data.element, this->curSol()[porousMediumIdx], this->problem(porousMediumIdx).gridGeometry());
 
             for (auto&& scv : scvs(data.fvGeometry))
@@ -750,6 +727,123 @@ public:
         }
     }
 
+    // calculate projection of pm solution needed for fluxes of pm residual
+    template<class Function>
+    Scalar calculateProjection(const SubControlVolumeFace<freeFlowIdx>& stokesScvf,
+                               const Element<porousMediumIdx>& darcyElement,
+                               const ElementVolumeVariables<porousMediumIdx>& darcyElemVolVars,
+                               Function evalPriVar) const
+    {
+        Scalar projection = 0.0;
+        auto domainI = Dune::index_constant<freeFlowIdx>();
+        auto fvGeometry = localView(this->problem(porousMediumIdx).gridGeometry());
+        auto elemVolVars = localView(darcyElemVolVars.gridVolVars());
+
+        // integrate darcy pressure over each coupling segment and average
+        for(const auto& couplingFacet : couplingFacets(domainI, couplingMapper_, stokesScvf.insideScvIdx(), stokesScvf.localFaceIdx()))
+        {
+            const auto darcyEIdxI = this->problem(porousMediumIdx).gridGeometry().elementMapper().index(darcyElement);
+            const auto darcyEIdxJ = couplingFacet.pmEIdx;
+
+            const auto& element = this->problem(porousMediumIdx).gridGeometry().boundingBoxTree().entitySet().entity(couplingFacet.pmEIdx);
+            fvGeometry.bind(element);
+
+            if(darcyEIdxI == darcyEIdxJ)
+            {
+                projection += calculateSegmentIntegral(element, fvGeometry, fvGeometry.scvf(couplingFacet.pmScvfIdx), darcyElemVolVars, couplingFacet.geometry, evalPriVar);
+            }
+            else
+            {
+                elemVolVars.bind(element, fvGeometry, this->curSol()[porousMediumIdx]);
+                projection += calculateSegmentIntegral(element, fvGeometry, fvGeometry.scvf(couplingFacet.pmScvfIdx), elemVolVars, couplingFacet.geometry, evalPriVar);
+            }
+
+        }
+
+        projection /= stokesScvf.area();
+
+        return projection;
+    }
+
+    // calculate projection of pm solution needed for fluxes of ff residual
+    template<class Function>
+    Scalar calculateProjection(const Element<freeFlowIdx>& element,
+                               const SubControlVolumeFace<freeFlowIdx>& scvf,
+                               Function evalPriVar) const
+    {
+        if (stokesCouplingContext_.empty() || boundStokesElemIdx_ != scvf.insideScvIdx())
+            DUNE_THROW(Dune::InvalidStateException, "No coupling context found at scvf " << scvf.center());
+
+        Scalar projection = 0.0;
+
+        // integrate darcy pressure over each coupling segment and average
+        for (const auto& data : stokesCouplingContext_)
+        {
+            //ToDo Is this if really necessary?
+            if (scvf.index() == data.stokesScvfIdx)
+            {
+                const auto& elemVolVars = *(data.elementVolVars);
+                const auto& darcyScvf = data.fvGeometry.scvf(data.darcyScvfIdx);
+                const auto& couplingFacet = couplingMapper_.couplingFacet(data.facetIdx);
+                projection += calculateSegmentIntegral(data.element, data.fvGeometry, darcyScvf, elemVolVars, couplingFacet.geometry, evalPriVar);
+            }
+        }
+
+        projection /= scvf.area();
+
+        return projection;
+    }
+
+    template<class CouplingFacetGeometry, class Function>
+    Scalar calculateSegmentIntegral(const Element<porousMediumIdx>& element,
+                                    const FVElementGeometry<porousMediumIdx>& fvGeometry,
+                                    const SubControlVolumeFace<porousMediumIdx>& scvf,
+                                    const ElementVolumeVariables<porousMediumIdx>& elemVolVars,
+                                    const CouplingFacetGeometry& facetGeometry,
+                                    Function evalPriVar) const
+    {
+        Scalar segmentProjection = 0.0;
+        if constexpr (projectionMethod == ProjectionMethod::L2Projection)
+        {
+            const auto& localBasis = fvGeometry.feLocalBasis();
+
+            // do second order integration as box provides linear functions
+            static constexpr int darcyDim = GridGeometry<porousMediumIdx>::GridView::dimension;
+            const auto& rule = Dune::QuadratureRules<Scalar, darcyDim-1>::rule(facetGeometry.type(), 2);
+            for (const auto& qp : rule)
+            {
+                const auto& ipLocal = qp.position();
+                const auto& ipGlobal = facetGeometry.global(ipLocal);
+                const auto& ipElementLocal = element.geometry().local(ipGlobal);
+
+                std::vector<Dune::FieldVector<Scalar, 1>> shapeValues;
+                localBasis.evaluateFunction(ipElementLocal, shapeValues);
+
+                Scalar value = 0.0;
+                for (const auto& scv : scvs(fvGeometry))
+                    value += evalPriVar(elemVolVars, scv)*shapeValues[scv.indexInElement()][0];
+
+                segmentProjection += value*facetGeometry.integrationElement(qp.position())*qp.weight();
+            }
+        }
+        else if constexpr (projectionMethod == ProjectionMethod::AreaWeightedDofEvaluation)
+        {
+            segmentProjection = facetGeometry.volume()*evalPriVar(elemVolVars, fvGeometry.scv(scvf.insideScvIdx()));
+        }
+        else
+        {
+            DUNE_THROW(Dune::NotImplemented, "Unkown projection method!");
+        }
+
+        return segmentProjection;
+    }
+
+    const auto& couplingFacet(std::size_t idx) const
+    {
+        return couplingMapper_.couplingFacet(idx);
+    }
+
+
 protected:
 
     //! Return a reference to an empty stencil
@@ -848,9 +942,8 @@ private:
 
             // add the context
             couplingContext.push_back({darcyElement, darcyFvGeometry, couplingFacet.pmScvfIdx, couplingFacet.ffScvfIdx,
-                                    std::make_unique< ElementVolumeVariables<porousMediumIdx> >( std::move(darcyElemVolVars)),
-                                    std::make_unique< ElementFluxVariablesCache<porousMediumIdx> >( std::move(darcyElemFluxVarsCache)),
-                                    couplingFacet.geometry});
+                                       std::make_unique< ElementVolumeVariables<porousMediumIdx> >( std::move(darcyElemVolVars)),
+                                       couplingFacet.idx});
         }
     }
 

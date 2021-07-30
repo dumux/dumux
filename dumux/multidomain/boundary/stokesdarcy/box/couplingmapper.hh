@@ -174,39 +174,16 @@ public:
     using IndexContainerScvf = std::vector<std::size_t>;
     using IndexContainerElement = std::vector<IndexContainerScvf>;
 
-    // template<class IndexSet, bool enable = std::is_integral<IndexSet>::value, std::enable_if_t<enable, int> = 0>
-    // auto couplingFacets(const std::vector<IndexSet>& indexSet)
-    // {
-    //     using FacetIterator = FacetIterator<CouplingFacet, FacetContainer, std::vector<IndexSet>, typename std::vector<IndexSet>::const_iterator>;
-    //     return Dune::IteratorRange<FacetIterator>(FacetIterator(indexSet->begin(), couplingFacets_, indexSet),
-    //                                               FacetIterator(indexSet->end(), couplingFacets_, indexSet));
-    // }
-
-    // template<class IndexSet, bool enable = std::is_integral<IndexSet>::value, std::enable_if_t<!enable, int> = 0>
-    // auto couplingFacets(const std::vector<IndexSet>& indexSet)
-    // {
-    //     using FacetIterator = FacetIterator<CouplingFacet, FacetContainer, std::vector<IndexSet>, typename IndexSet::const_iterator>;
-    //     auto itBegin = std::find_if (indexSet.begin(), indexSet.end(), [] (const auto& idx) { return idx.size() > 0; });
-    //     auto itEnd = std::find_if(std::reverse_iterator(indexSet.end()),
-    //                               std::reverse_iterator(indexSet.begin()),
-    //                               [] (const auto& idx) { return idx.size() > 0; });
-
-    //     return Dune::IteratorRange<FacetIterator>(FacetIterator(itBegin->begin(), couplingFacets_, indexSet),
-    //                                               FacetIterator(itEnd->end(), couplingFacets_, indexSet));
-    // }
-
     /*!
      * \brief Main update routine
      */
     template<class CouplingManager, class StencilA, class StencilB>
-    void computeCouplingMapsAndStencils(const CouplingManager& couplingManager,
-                                        StencilA& darcyToStokesCellCenterStencils,
-                                        StencilB& darcyToStokesFaceStencils,
-                                        StencilA& stokesCellCenterToDarcyStencils,
-                                        StencilA& stokesFaceToDarcyStencils)
+    void couplingStencils(const CouplingManager& couplingManager,
+                          StencilA& darcyToStokesCellCenterStencils,
+                          StencilB& darcyToStokesFaceStencils,
+                          StencilA& stokesCellCenterToDarcyStencils,
+                          StencilA& stokesFaceToDarcyStencils)
     {
-        computeCouplingMaps(couplingManager);
-
         const auto& stokesProblem = couplingManager.problem(CouplingManager::freeFlowIdx);
         const auto& darcyProblem = couplingManager.problem(CouplingManager::porousMediumIdx);
 
@@ -219,6 +196,9 @@ public:
 
             for(const auto& couplingFacet : Dumux::couplingFacets(Dune::index_constant<freeFlowIdx>(), *this, stokesEIdx))
             {
+                if(stokesEIdx != couplingFacet.ffEIdx)
+                    DUNE_THROW(Dune::InvalidStateException, "Wrong coupling facet!");
+
                 const auto darcyEIdx = couplingFacet.pmEIdx;
                 const auto stokesScvfIdx = couplingFacet.ffScvfIdx;
                 const auto& stokesScvf = stokesFvGridGeometry.scvf(stokesScvfIdx);
@@ -259,8 +239,12 @@ public:
     }
 
     template<class CouplingManager>
-    void computeCouplingMaps(const CouplingManager& couplingManager)
+    void update(const CouplingManager& couplingManager)
     {
+        couplingFacets_.clear();
+        pmCouplingFacetIdxMap_.clear();
+        ffCouplingFacetIdxMap_.clear();
+
         const auto& stokesProblem = couplingManager.problem(CouplingManager::freeFlowIdx);
         const auto& darcyProblem = couplingManager.problem(CouplingManager::porousMediumIdx);
 
@@ -326,7 +310,7 @@ public:
      */
     bool isCoupledDarcyScvf(std::size_t eIdx, std::size_t scvfLocalIdx) const
     {
-        return (pmCouplingFacetIdxMap_.count(eIdx) == 0) ?  false
+        return (pmCouplingFacetIdxMap_.count(eIdx) == 0) ? false
                                                          : pmCouplingFacetIdxMap_.at(eIdx)[scvfLocalIdx].size() > 0;
     }
 

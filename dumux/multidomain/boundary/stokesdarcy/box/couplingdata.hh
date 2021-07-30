@@ -73,9 +73,6 @@ class StokesDarcyCouplingDataBoxBase : public StokesDarcyCouplingDataImplementat
     using ForchheimersLaw = ForchheimersLawImplementation<SubDomainTypeTag<porousMediumIdx>, GridGeometry<porousMediumIdx>::discMethod>;
 
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
-
-    using ProjectionMethod = typename CouplingManager::ProjectionMethod;
-    static constexpr auto projectionMethod = CouplingManager::projectionMethod;
 public:
     StokesDarcyCouplingDataBoxBase(const CouplingManager& couplingmanager): ParentType(couplingmanager) {}
 
@@ -103,8 +100,7 @@ public:
         auto pressure = [darcyPhaseIdx](const auto& elemVolVars, const auto& scv)
                             { return elemVolVars[scv].pressure(darcyPhaseIdx); };
 
-        const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
-        Scalar momentumFlux = this->calculateProjection(scvf, stokesContext, pressure);
+        Scalar momentumFlux = this->couplingManager().calculateProjection(element, scvf, pressure);
 
         // normalize pressure
         if(getPropValue<SubDomainTypeTag<freeFlowIdx>, Properties::NormalizePressure>())
@@ -116,7 +112,7 @@ public:
         {
             static const bool unsymmetrizedGradientForBeaversJoseph = [&]()
             {
-                const bool tmp = getParamFromGroup<bool>(this->couplingManager().problem(freeFlowIdx).paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph", false);
+                static const bool tmp = getParamFromGroup<bool>(this->couplingManager().problem(freeFlowIdx).paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph", false);
                 if (tmp)
                 {
                     std::cerr << "Warning: You are using the deprecated parameter 'EnableUnsymmetrizedVelocityGradientForBeaversJoseph'. Use 'EnableUnsymmetrizedVelocityGradientForIC' instead."  << std::endl;
@@ -202,6 +198,8 @@ public:
         {
             if (scvf.index() == data.stokesScvfIdx)
             {
+                const auto& couplingFacet = this->couplingManager().couplingFacet(data.facetIdx);
+
                 const auto darcyPhaseIdx = couplingPhaseIdx(porousMediumIdx);
                 const auto& elemVolVars = *(data.elementVolVars);
                 const auto& darcyFvGeometry = data.fvGeometry;
@@ -212,11 +210,11 @@ public:
                 const auto& K = data.permeability();
 
                 // do second order integration as box provides linear functions
-                const auto& rule = Dune::QuadratureRules<Scalar, darcyDim-1>::rule(data.segmentGeometry.type(), 2);
+                const auto& rule = Dune::QuadratureRules<Scalar, darcyDim-1>::rule(couplingFacet.geometry.type(), 2);
                 for (const auto& qp : rule)
                 {
                     const auto& ipLocal = qp.position();
-                    const auto& ipGlobal = data.segmentGeometry.global(ipLocal);
+                    const auto& ipGlobal = couplingFacet.geometry.global(ipLocal);
                     const auto& ipElementLocal = data.element.geometry().local(ipGlobal);
 
                     VelocityVector gradP(0.0);
@@ -248,120 +246,19 @@ public:
                         const auto& epsInterface = this->couplingManager().problem(freeFlowIdx).epsInterface(scvf);
                         const auto& M = this->couplingManager().problem(freeFlowIdx).matrixNTangential(scvf);
                         //Add the integrated segment velocity to the sum: v+= -w_k * sqrt(det(A^T*A))*eps**2*M/mu*gradP
-                        velocity += mv(M, mv(qp.weight()*data.segmentGeometry.integrationElement(ipLocal)/elemVolVars[darcyScvf.insideScvIdx()].viscosity(darcyPhaseIdx)*epsInterface*epsInterface, gradP));
+                        velocity += mv(M, mv(qp.weight()*couplingFacet.geometry.integrationElement(ipLocal)/elemVolVars[darcyScvf.insideScvIdx()].viscosity(darcyPhaseIdx)*epsInterface*epsInterface, gradP));
                     }
                     else
                     {
                         //add the integrated segment velocity to the sum: v+= -weight_k * sqrt(det(A^T*A))*K/mu*gradP
-                        velocity += mv(K, mv(-qp.weight()*data.segmentGeometry.integrationElement(ipLocal)/elemVolVars[darcyScvf.insideScvIdx()].viscosity(darcyPhaseIdx), gradP));
+                        velocity += mv(K, mv(-qp.weight()*couplingFacet.geometry.integrationElement(ipLocal)/elemVolVars[darcyScvf.insideScvIdx()].viscosity(darcyPhaseIdx), gradP));
                     }
                 }
-                intersectionLength += data.segmentGeometry.volume();
+                intersectionLength += couplingFacet.geometry.volume();
             }
         }
       velocity /= intersectionLength; //averaging
       return velocity;
-    }
-
-protected:
-    // calculate projection needed for darcy residual
-    template<class StokesContext, class Function>
-    Scalar calculateProjection(const SubControlVolumeFace<freeFlowIdx>& stokesScvf,
-                               const StokesContext& stokesContext,
-                               const Element<porousMediumIdx>& darcyElement,
-                               const ElementVolumeVariables<porousMediumIdx>& darcyElemVolVars,
-                               Function evalPriVar) const
-    {
-        Scalar projection = 0.0;
-
-        // integrate darcy pressure over each coupling segment and average
-        for (const auto& data : stokesContext)
-        {
-            //ToDo Is this if really necessary?
-            if (stokesScvf.index() == data.stokesScvfIdx)
-            {
-                const auto darcyEIdxI = this->couplingManager().problem(porousMediumIdx).gridGeometry().elementMapper().index(darcyElement);
-                const auto darcyEIdxJ = this->couplingManager().problem(porousMediumIdx).gridGeometry().elementMapper().index(data.element);
-                const auto& elemVolVars = (darcyEIdxI == darcyEIdxJ) ? darcyElemVolVars : *(data.elementVolVars);
-                const auto& darcyScvf = data.fvGeometry.scvf(data.darcyScvfIdx);
-
-                projection += calculateSegmentIntegral(data.element, data.fvGeometry, darcyScvf, elemVolVars, data.segmentGeometry, evalPriVar);
-            }
-        }
-
-        projection /= stokesScvf.area();
-
-        return projection;
-    }
-
-    // calculate projection needed for stokes residual
-    template<class StokesContext, class Function>
-    Scalar calculateProjection(const SubControlVolumeFace<freeFlowIdx>& scvf,
-                               const StokesContext& stokesContext,
-                               Function evalPriVar) const
-    {
-        Scalar projection = 0.0;
-
-        // integrate darcy pressure over each coupling segment and average
-        for (const auto& data : stokesContext)
-        {
-            //ToDo Is this if really necessary?
-            if (scvf.index() == data.stokesScvfIdx)
-            {
-                const auto& elemVolVars = *(data.elementVolVars);
-                const auto& darcyScvf = data.fvGeometry.scvf(data.darcyScvfIdx);
-
-                projection += calculateSegmentIntegral(data.element, data.fvGeometry, darcyScvf, elemVolVars, data.segmentGeometry, evalPriVar);
-            }
-        }
-
-        projection /= scvf.area();
-
-        return projection;
-    }
-
-    template<class SegementGeometry, class Function>
-    Scalar calculateSegmentIntegral(const Element<porousMediumIdx>& element,
-                                    const FVElementGeometry<porousMediumIdx>& fvGeometry,
-                                    const SubControlVolumeFace<porousMediumIdx>& scvf,
-                                    const ElementVolumeVariables<porousMediumIdx>& elemVolVars,
-                                    const SegementGeometry& segmentGeometry,
-                                    Function evalPriVar) const
-    {
-        Scalar segmentProjection = 0.0;
-        if constexpr (projectionMethod == ProjectionMethod::L2Projection)
-        {
-            const auto& localBasis = fvGeometry.feLocalBasis();
-
-            // do second order integration as box provides linear functions
-            static constexpr int darcyDim = GridGeometry<porousMediumIdx>::GridView::dimension;
-            const auto& rule = Dune::QuadratureRules<Scalar, darcyDim-1>::rule(segmentGeometry.type(), 2);
-            for (const auto& qp : rule)
-            {
-                const auto& ipLocal = qp.position();
-                const auto& ipGlobal = segmentGeometry.global(ipLocal);
-                const auto& ipElementLocal = element.geometry().local(ipGlobal);
-
-                std::vector<Dune::FieldVector<Scalar, 1>> shapeValues;
-                localBasis.evaluateFunction(ipElementLocal, shapeValues);
-
-                Scalar value = 0.0;
-                for (const auto& scv : scvs(fvGeometry))
-                    value += evalPriVar(elemVolVars, scv)*shapeValues[scv.indexInElement()][0];
-
-                segmentProjection += value*segmentGeometry.integrationElement(qp.position())*qp.weight();
-            }
-        }
-        else if constexpr (projectionMethod == ProjectionMethod::AreaWeightedDofEvaluation)
-        {
-            segmentProjection = segmentGeometry.volume()*evalPriVar(elemVolVars, fvGeometry.scv(scvf.insideScvIdx()));
-        }
-        else
-        {
-            DUNE_THROW(Dune::NotImplemented, "Unkown projection method!");
-        }
-
-        return segmentProjection;
     }
 };
 
@@ -398,9 +295,6 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
 
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
 
-    using ProjectionMethod = typename CouplingManager::ProjectionMethod;
-    static constexpr auto projectionMethod = CouplingManager::projectionMethod;
-
 public:
     using ParentType::ParentType;
     using ParentType::couplingPhaseIdx;
@@ -422,6 +316,8 @@ public:
         {
             if(scvf.index() == data.darcyScvfIdx)
             {
+                const auto& couplingFacet = this->couplingManager().couplingFacet(data.facetIdx);
+
                 const Scalar velocity = data.velocity * scvf.unitOuterNormal();
 
                 Scalar darcyDensity = darcyElemVolVars[scvf.insideScvIdx()].density(darcyPhaseIdx);
@@ -429,7 +325,7 @@ public:
                 const Scalar stokesDensity = data.volVars.density();
                 const bool insideIsUpstream = velocity > 0.0;
                 // Division by scvf.area() is needed, because the final flux results from multiplication with scvf.area()
-                flux += massFlux_(velocity, darcyDensity, stokesDensity, insideIsUpstream)*data.segmentGeometry.volume()/scvf.area();
+                flux += massFlux_(velocity, darcyDensity, stokesDensity, insideIsUpstream)*couplingFacet.geometry.volume()/scvf.area();
             }
         }
 
@@ -454,6 +350,8 @@ public:
         {
             if (scvf.index() == data.stokesScvfIdx)
             {
+                const auto& couplingFacet = this->couplingManager().couplingFacet(data.facetIdx);
+
                 const auto darcyPhaseIdx = couplingPhaseIdx(porousMediumIdx);
                 const auto& elemVolVars = *(data.elementVolVars);
                 const auto& darcyScvf = data.fvGeometry.scvf(data.darcyScvfIdx);
@@ -462,7 +360,7 @@ public:
 
                 const bool insideIsUpstream = velocity > 0.0;
                 // Division by scvf.area() is needed, because the final flux results from multiplication with scvf.area()
-                flux += massFlux_(velocity, stokesDensity, darcyDensity, insideIsUpstream)*data.segmentGeometry.volume()/scvf.area();
+                flux += massFlux_(velocity, stokesDensity, darcyDensity, insideIsUpstream)*couplingFacet.geometry.volume()/scvf.area();
             }
         }
 
@@ -487,6 +385,8 @@ public:
         {
             if(scvf.index() == data.darcyScvfIdx)
             {
+                const auto& couplingFacet = this->couplingManager().couplingFacet(data.facetIdx);
+
                 //calculate the free-flow velocity
                 const Scalar velocity = -1*(data.velocity * scvf.unitOuterNormal());
 
@@ -496,7 +396,7 @@ public:
                 //Calculate the projected temperature value for the stokes face
                 auto temp = [](const auto& elemVolVars, const auto& scv)
                                 { return elemVolVars[scv].temperature(); };
-                Scalar interfaceTemperature = this->calculateProjection(stokesScvf, *data.stokesContext, element, darcyElemVolVars, temp);
+                Scalar interfaceTemperature = this->couplingManager().calculateProjection(stokesScvf, element, darcyElemVolVars, temp);
 
                 const bool insideIsUpstream = velocity > 0.0;
                 flux += -1*energyFlux_(data.fvGeometry,
@@ -506,7 +406,7 @@ public:
                                        velocity,
                                        interfaceTemperature,
                                        insideIsUpstream,
-                                       diffCoeffAvgType)*data.segmentGeometry.volume()/scvf.area();
+                                       diffCoeffAvgType)*couplingFacet.geometry.volume()/scvf.area();
             }
         }
 
@@ -530,13 +430,15 @@ public:
         auto temp = [](const auto& elemVolVars, const auto& scv)
                     { return elemVolVars[scv].temperature(); };
 
-        Scalar interfaceTemperature = this->calculateProjection(scvf, stokesContext, temp);
+        Scalar interfaceTemperature = this->couplingManager().calculateProjection(element, scvf, temp);
 
         Scalar flux = 0.0;
         for (const auto& data : stokesContext)
         {
             if (scvf.index() == data.stokesScvfIdx)
             {
+                const auto& couplingFacet = this->couplingManager().couplingFacet(data.facetIdx);
+
                 const Scalar velocity = stokesElemFaceVars[scvf].velocitySelf() * scvf.directionSign();
 
                 const auto& elemVolVars = *(data.elementVolVars);
@@ -550,7 +452,7 @@ public:
                                     velocity,
                                     interfaceTemperature,
                                     insideIsUpstream,
-                                    diffCoeffAvgType)*data.segmentGeometry.volume()/scvf.area();
+                                    diffCoeffAvgType)*couplingFacet.geometry.volume()/scvf.area();
             }
         }
 
@@ -660,8 +562,6 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
 
     using MolecularDiffusionType = GetPropType<SubDomainTypeTag<freeFlowIdx>, Properties::MolecularDiffusionType>;
 
-    using ProjectionMethod = typename CouplingManager::ProjectionMethod;
-    static constexpr auto projectionMethod = CouplingManager::projectionMethod;
 public:
     using ParentType::ParentType;
     using ParentType::couplingPhaseIdx;
@@ -684,6 +584,8 @@ public:
         {
             if(scvf.index() == data.darcyScvfIdx)
             {
+                const auto& couplingFacet = this->couplingManager().couplingFacet(data.facetIdx);
+
                 // get the free-flow velocity
                 const Scalar velocity = -1*(data.velocity * scvf.unitOuterNormal());
                 const bool insideIsUpstream = velocity > 0.0;
@@ -692,13 +594,12 @@ public:
                 const auto& stokesVolVars = data.volVars;
 
                 // Calculate the projected massOrMoleFraction value for the stokes face
-                const auto& stokesContext = *data.stokesContext;
-                auto interfaceMassOrMoleFraction = [this, &stokesScvf, &stokesContext, &element, &darcyElemVolVars](int compIdx)
+                auto interfaceMassOrMoleFraction = [this, &stokesScvf, &element, &darcyElemVolVars](int compIdx)
                 {
                     auto value = [&compIdx](const auto& elemVolVars, const auto& scv)
                                     { return massOrMoleFraction(elemVolVars[scv], referenceSystemFormulation, couplingPhaseIdx(porousMediumIdx), compIdx); };
 
-                    return this->calculateProjection(stokesScvf, stokesContext, element, darcyElemVolVars, value);
+                    return this->couplingManager().calculateProjection(stokesScvf, element, darcyElemVolVars, value);
                 };
 
                 // Division by scvf.area() is needed, because the final flux results from multiplication with scvf.area()
@@ -713,7 +614,7 @@ public:
                                      velocity,
                                      interfaceMassOrMoleFraction,
                                      insideIsUpstream,
-                                     diffCoeffAvgType)*data.segmentGeometry.volume()/scvf.area();
+                                     diffCoeffAvgType)*couplingFacet.geometry.volume()/scvf.area();
             }
         }
 
@@ -733,12 +634,12 @@ public:
         const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
 
         //Calculate the projected massOrMoleFraction value for the stokes face
-        auto interfaceMassOrMoleFraction = [this, &scvf, &stokesContext](int compIdx)
+        auto interfaceMassOrMoleFraction = [this, &element, &scvf](int compIdx)
         {
             auto value = [&compIdx](const auto& elemVolVars, const auto& scv)
                             { return massOrMoleFraction(elemVolVars[scv], referenceSystemFormulation, couplingPhaseIdx(porousMediumIdx), compIdx); };
 
-            return this->calculateProjection(scvf, stokesContext, value);
+            return this->couplingManager().calculateProjection(element, scvf, value);
         };
 
         NumEqVector flux(0.0);
@@ -747,6 +648,8 @@ public:
         {
             if (scvf.index() == data.stokesScvfIdx)
             {
+                const auto& couplingFacet = this->couplingManager().couplingFacet(data.facetIdx);
+
                 const auto& darcyElemVolVars = *(data.elementVolVars);
                 const auto& darcyScvf = data.fvGeometry.scvf(data.darcyScvfIdx);
 
@@ -763,7 +666,7 @@ public:
                                   velocity,
                                   interfaceMassOrMoleFraction,
                                   insideIsUpstream,
-                                  diffCoeffAvgType)*data.segmentGeometry.volume()/scvf.area();
+                                  diffCoeffAvgType)*couplingFacet.geometry.volume()/scvf.area();
             }
         }
 
@@ -788,6 +691,8 @@ public:
         {
             if(scvf.index() == data.darcyScvfIdx)
             {
+                const auto& couplingFacet = this->couplingManager().couplingFacet(data.facetIdx);
+
                 // get the free-flow velocity
                 const Scalar velocity = -1*(data.velocity * scvf.unitOuterNormal());
                 const bool insideIsUpstream = velocity > 0.0;
@@ -796,19 +701,18 @@ public:
                 const auto& stokesVolVars = data.volVars;
 
                 //Calculate the projected massOrMoleFraction value for the stokes face
-                const auto& stokesContext = *data.stokesContext;
-                auto interfaceMassOrMoleFraction = [this, &stokesScvf, &stokesContext, &element, &darcyElemVolVars](int compIdx)
+                auto interfaceMassOrMoleFraction = [this, &stokesScvf, &element, &darcyElemVolVars](int compIdx)
                 {
                     auto value = [&compIdx](const auto& elemVolVars, const auto& scv)
                                     { return massOrMoleFraction(elemVolVars[scv], referenceSystemFormulation, couplingPhaseIdx(porousMediumIdx), compIdx); };
 
-                    return this->calculateProjection(stokesScvf, stokesContext, element, darcyElemVolVars, value);
+                    return this->couplingManager().calculateProjection(stokesScvf, element, darcyElemVolVars, value);
                 };
 
                 //Calculate the projected temperature value for the stokes face
                 auto temp = [](const auto& elemVolVars, const auto& scv)
                                 { return elemVolVars[scv].temperature(); };
-                Scalar interfaceTemperature = this->calculateProjection(stokesScvf, stokesContext, element, darcyElemVolVars, temp);
+                Scalar interfaceTemperature = this->couplingManager().calculateProjection(stokesScvf, element, darcyElemVolVars, temp);
 
                 // Division by scvf.area() is needed, because the final flux results from multiplication with scvf.area()
                 flux += -1*energyFlux_(porousMediumIdx,
@@ -823,7 +727,7 @@ public:
                                        interfaceMassOrMoleFraction,
                                        interfaceTemperature,
                                        insideIsUpstream,
-                                       diffCoeffAvgType)*data.segmentGeometry.volume()/scvf.area();
+                                       diffCoeffAvgType)*couplingFacet.geometry.volume()/scvf.area();
             }
         }
 
@@ -844,19 +748,19 @@ public:
         const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
 
         //Calculate the projected massOrMoleFraction value for the stokes face
-        auto interfaceMassOrMoleFraction = [this, &scvf, &stokesContext](int compIdx)
+        auto interfaceMassOrMoleFraction = [this, &element, &scvf](int compIdx)
         {
             auto value = [&compIdx](const auto& elemVolVars, const auto& scv)
                             { return massOrMoleFraction(elemVolVars[scv], referenceSystemFormulation, couplingPhaseIdx(porousMediumIdx), compIdx); };
 
-            return this->calculateProjection(scvf, stokesContext, value);
+            return this->couplingManager().calculateProjection(element, scvf, value);
         };
 
         //Calculate the projected temperature value for the stokes face
         auto temp = [](const auto& elemVolVars, const auto& scv)
                     { return elemVolVars[scv].temperature(); };
 
-        Scalar interfaceTemperature = this->calculateProjection(scvf, stokesContext, temp);
+        Scalar interfaceTemperature = this->couplingManager().calculateProjection(element, scvf, temp);
 
         Scalar flux = 0.0;
         const Scalar velocity = stokesElemFaceVars[scvf].velocitySelf() * scvf.directionSign();
@@ -864,6 +768,8 @@ public:
         {
             if (scvf.index() == data.stokesScvfIdx)
             {
+                const auto& couplingFacet = this->couplingManager().couplingFacet(data.facetIdx);
+
                 const auto& darcyElemVolVars = *(data.elementVolVars);
                 const auto& darcyScvf = data.fvGeometry.scvf(data.darcyScvfIdx);
 
@@ -881,7 +787,7 @@ public:
                                     interfaceMassOrMoleFraction,
                                     interfaceTemperature,
                                     insideIsUpstream,
-                                    diffCoeffAvgType)*data.segmentGeometry.volume()/scvf.area();
+                                    diffCoeffAvgType)*couplingFacet.geometry.volume()/scvf.area();
             }
         }
 
