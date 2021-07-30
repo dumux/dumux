@@ -162,10 +162,8 @@ int main(int argc, char** argv)
             const auto pos = element.geometry().center()[GridGeometry::GridView::dimensionworld -1];
             deltaEtaNum[eIdx] = solutionInfiltration->deltaEta(pos*100, t);
 
-            auto fvGeometry = localView(*gridGeometry);
-            auto elemVolVars = localView(gridVariables->curGridVolVars());
-            fvGeometry.bindElement(element);
-            elemVolVars.bindElement(element, fvGeometry, x);
+            auto fvGeometry = localView(*gridGeometry).bindElement(element);
+            auto elemVolVars = localView(gridVariables->curGridVolVars()).bindElement(element, fvGeometry, x);
             for (const auto& scv : scvs(fvGeometry))
                 thetaNum[eIdx] = elemVolVars[scv].saturation() * elemVolVars[scv].porosity();
         }

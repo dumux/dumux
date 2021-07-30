@@ -193,14 +193,11 @@ public:
     {
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->gridGeometry());
-            fvGeometry.bindElement(element);
+            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
                 auto ccDofIdx = scv.dofIndex();
-
-                auto elemVolVars = localView(gridVariables.curGridVolVars());
-                elemVolVars.bind(element, fvGeometry, sol);
+                auto elemVolVars = localView(gridVariables.curGridVolVars()).bind(element, fvGeometry, sol);
 
                 deltaRho_[ccDofIdx] = elemVolVars[scv].density() - 999.694;
             }

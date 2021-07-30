@@ -51,8 +51,7 @@ public:
 
         for(const auto& element : elements(leafGridView))
         {
-            auto fvGeometry = localView(*gridGeometry);
-            fvGeometry.bind(element);
+            auto fvGeometry = localView(*gridGeometry).bind(element);
 
             for (auto&& scvf : scvfs(fvGeometry))
             {

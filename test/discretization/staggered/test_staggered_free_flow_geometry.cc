@@ -106,8 +106,7 @@ int main (int argc, char *argv[])
         if(eIdx == 12 || eIdx == 0)
         {
             std::cout << std::endl << "Checking fvGeometry of element " << eIdx << std::endl;
-            auto fvGeometry = localView(gridGeometry);
-            fvGeometry.bind(element);
+            auto fvGeometry = localView(gridGeometry).bind(element);
 
             auto range = scvs(fvGeometry);
             Detail::NoopFunctor<SubControlVolume> op;

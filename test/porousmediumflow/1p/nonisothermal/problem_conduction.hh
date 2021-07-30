@@ -114,8 +114,7 @@ public:
         auto someElemSol = elementSolution(someElement, curSol, this->gridGeometry());
         const auto someInitSol = initialAtPos(someElement.geometry().center());
 
-        auto someFvGeometry = localView(this->gridGeometry());
-        someFvGeometry.bindElement(someElement);
+        auto someFvGeometry = localView(this->gridGeometry()).bindElement(someElement);
         const auto someScv = *(scvs(someFvGeometry).begin());
 
         VolumeVariables volVars;
@@ -132,8 +131,7 @@ public:
         time = max(time, 1e-10);
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->gridGeometry());
-            fvGeometry.bindElement(element);
+            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
             {

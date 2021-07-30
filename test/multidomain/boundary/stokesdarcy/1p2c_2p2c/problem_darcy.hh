@@ -108,11 +108,8 @@ public:
         // bulk elements
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->gridGeometry());
-            fvGeometry.bindElement(element);
-
-            auto elemVolVars = localView(gridVariables.curGridVolVars());
-            elemVolVars.bindElement(element, fvGeometry, curSol);
+            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
+            auto elemVolVars = localView(gridVariables.curGridVolVars()).bindElement(element, fvGeometry, curSol);
 
             for (auto&& scv : scvs(fvGeometry))
             {

@@ -76,8 +76,7 @@ auto createAnalyticalSolution(const Scalar time, const Problem& problem)
     using Indices = typename Problem::Indices;
     for (const auto& element : elements(gridGeometry.gridView()))
     {
-        auto fvGeometry = localView(gridGeometry);
-        fvGeometry.bindElement(element);
+        auto fvGeometry = localView(gridGeometry).bindElement(element);
         for (auto&& scv : scvs(fvGeometry))
         {
             auto ccDofIdx = scv.dofIndex();
@@ -120,8 +119,7 @@ auto createSource(const Problem& problem)
 
     for (const auto& element : elements(gridGeometry.gridView()))
     {
-        auto fvGeometry = localView(gridGeometry);
-        fvGeometry.bindElement(element);
+        auto fvGeometry = localView(gridGeometry).bindElement(element);
         for (auto&& scv : scvs(fvGeometry))
         {
             auto ccDofIdx = scv.dofIndex();

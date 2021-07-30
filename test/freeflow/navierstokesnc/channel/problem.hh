@@ -211,14 +211,12 @@ public:
     {
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->gridGeometry());
-            fvGeometry.bindElement(element);
+            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
                 auto ccDofIdx = scv.dofIndex();
 
-                auto elemVolVars = localView(gridVariables.curGridVolVars());
-                elemVolVars.bindElement(element, fvGeometry, sol);
+                auto elemVolVars = localView(gridVariables.curGridVolVars()).bindElement(element, fvGeometry, sol);
 
                 deltaP_[ccDofIdx] = elemVolVars[scv].pressure() - 1.1e5;
             }

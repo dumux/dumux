@@ -229,9 +229,7 @@ public:
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             auto elemSol = elementSolution(element, curSol, this->gridGeometry());
-
-            auto fvGeometry = localView(this->gridGeometry());
-            fvGeometry.bindElement(element);
+            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
             {

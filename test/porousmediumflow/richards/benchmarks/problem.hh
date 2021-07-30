@@ -213,12 +213,10 @@ public:
     {
         Scalar rate = 0.0;
 
-        auto fvGeometry = localView(this->gridGeometry());
-        auto elemVolVars = localView(gridVars.curGridVolVars());
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            fvGeometry.bindElement(element);
-            elemVolVars.bindElement(element, fvGeometry, sol);
+            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
+            auto elemVolVars = localView(gridVars.curGridVolVars()).bindElement(element, fvGeometry, sol);
             for (const auto& scvf : scvfs(fvGeometry))
                 if (scvf.boundary())
                     rate += this->neumann(element, fvGeometry, elemVolVars, 0.0, scvf)[0];

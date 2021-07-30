@@ -53,8 +53,7 @@ void printProblemTest(const Problem& problem)
     const auto& gg = problem.gridGeometry();
     for (const auto& element : elements(gg.gridView()))
     {
-        auto fvGeometry = localView(gg);
-        fvGeometry.bindElement(element);
+        auto fvGeometry = localView(gg).bindElement(element);
 
         for (const auto& scv : scvs(fvGeometry))
         {

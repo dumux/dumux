@@ -104,12 +104,9 @@ void computeVolumeFluxes(Storage& volumeFluxes,
 
         // bind local views
         couplingManager.bindCouplingContext(domainId, element, assembler);
-        auto fvGeometry = localView(gridGeometry);
-        auto elemVolVars = localView(gridVariables.curGridVolVars());
-        auto elemFluxVars = localView(gridVariables.gridFluxVarsCache());
-        fvGeometry.bind(element);
-        elemVolVars.bind(element, fvGeometry, sol);
-        elemFluxVars.bind(element, fvGeometry, elemVolVars);
+        auto fvGeometry = localView(gridGeometry).bind(element);
+        auto elemVolVars = localView(gridVariables.curGridVolVars()).bind(element, fvGeometry, sol);
+        auto elemFluxVars = localView(gridVariables.gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
 
         if (isBox)
             volumeFluxes[eIdx].resize(fvGeometry.numScvf(), 0.0);

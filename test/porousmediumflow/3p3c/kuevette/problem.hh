@@ -233,8 +233,7 @@ public:
 
         for (const auto& element : elements(this->gridView()))
         {
-            auto fvGeometry = localView(gg);
-            fvGeometry.bindElement(element);
+            auto fvGeometry = localView(gg).bindElement(element);
 
             for (const auto& scv : scvs(fvGeometry))
                 Kxx_[scv.dofIndex()] = this->spatialParams().intrinsicPermeabilityAtPos(scv.dofPosition());

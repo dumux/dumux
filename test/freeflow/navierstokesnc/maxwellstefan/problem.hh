@@ -98,11 +98,8 @@ public:
             Scalar j = 0.0;
             for (const auto& element : elements(this->gridGeometry().gridView()))
             {
-                auto fvGeometry = localView(this->gridGeometry());
-                fvGeometry.bindElement(element);
-
-                auto elemVolVars = localView(gridVariables.curGridVolVars());
-                elemVolVars.bind(element, fvGeometry, curSol);
+                auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
+                auto elemVolVars = localView(gridVariables.curGridVolVars()).bind(element, fvGeometry, curSol);
                 for (auto&& scv : scvs(fvGeometry))
                 {
                     const auto globalPos = scv.dofPosition();
