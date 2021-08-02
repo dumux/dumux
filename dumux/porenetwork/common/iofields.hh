@@ -24,6 +24,9 @@
 #ifndef DUMUX_PNM_COMMON_OUTPUT_FIELDS_HH
 #define DUMUX_PNM_COMMON_OUTPUT_FIELDS_HH
 
+#include <dumux/io/vtk/function.hh>
+#include <dumux/io/vtk/fieldtype.hh>
+
 namespace Dumux::PoreNetwork {
 
 /*!

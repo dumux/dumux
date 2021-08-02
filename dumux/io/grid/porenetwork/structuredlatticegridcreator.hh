@@ -24,6 +24,8 @@
 #ifndef DUMUX_IO_STRUCTURED_LATTICE_GRID_CREATOR_HH
 #define DUMUX_IO_STRUCTURED_LATTICE_GRID_CREATOR_HH
 
+#if HAVE_DUNE_FOAMGRID
+
 #include <vector>
 #include <memory>
 #include <type_traits>
@@ -37,10 +39,8 @@
 #include <dune/geometry/referenceelements.hh>
 
 // FoamGrid specific includes
-#if HAVE_DUNE_FOAMGRID
 #include <dune/foamgrid/foamgrid.hh>
 #include <dune/foamgrid/dgffoam.hh>
-#endif
 
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/common/parameters.hh>
@@ -623,5 +623,7 @@ private:
 };
 
 } // end namespace Dumux::PoreNetwork
+
+#endif // HAVE_DUNE_FOAMGRID
 
 #endif
