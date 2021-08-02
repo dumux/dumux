@@ -24,7 +24,10 @@
 #ifndef DUMUX_FRACTURE_PROPERTIES_HH
 #define DUMUX_FRACTURE_PROPERTIES_HH
 
+#if HAVE_DUNE_FOAMGRID
 #include <dune/foamgrid/foamgrid.hh>
+#endif
+
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/cctpfa.hh>

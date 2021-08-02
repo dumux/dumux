@@ -24,8 +24,13 @@
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_PROPERTIES_HH
 #define DUMUX_TEST_TPFAFACETCOUPLING_PROPERTIES_HH
 
+#if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
+#endif
+
+#if HAVE_DUNE_FOAMGRID
 #include <dune/foamgrid/foamgrid.hh>
+#endif
 
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>

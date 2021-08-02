@@ -24,7 +24,9 @@
 #ifndef DUMUX_PNM1P2C_PROPERTIES_HH
 #define DUMUX_PNM1P2C_PROPERTIES_HH
 
+#if HAVE_DUNE_FOAMGRID
 #include <dune/foamgrid/foamgrid.hh>
+#endif
 
 #include <dumux/porenetwork/1pnc/model.hh>
 

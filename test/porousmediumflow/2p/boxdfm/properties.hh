@@ -45,8 +45,7 @@
 #include "spatialparams.hh"
 
 #ifndef GRIDTYPE
-#include <dune/alugrid/grid.hh>
-#define GRIDTYPE Dune::ALUGrid<2, 2, Dune::simplex , Dune::conforming>;
+#define GRIDTYPE Dune::YaspGrid<2>;
 #endif
 
 namespace Dumux::Properties {

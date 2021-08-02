@@ -36,7 +36,9 @@
 #endif
 
 #include <dune/grid/yaspgrid.hh>
+#if HAVE_DUNE_FOAMGRID
 #include <dune/foamgrid/foamgrid.hh>
+#endif
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/box.hh>

@@ -25,7 +25,9 @@
 #ifndef DUMUX_HETEROGENEOUS_PROPERTIES_HH
 #define DUMUX_HETEROGENEOUS_PROPERTIES_HH
 
+#if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
+#endif
 
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/ccmpfa.hh>

@@ -20,7 +20,9 @@
 #ifndef DUMUX_TEST_TWOP_ROTATIONALSYMMETRY_PROPERTIES_HH
 #define DUMUX_TEST_TWOP_ROTATIONALSYMMETRY_PROPERTIES_HH
 
+#if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
+#endif
 
 #include <dumux/common/properties.hh>
 

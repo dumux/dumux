@@ -26,7 +26,9 @@
 // ### Includes
 // The header includes will be mentioned in the text below.
 // [[details]] header includes
+#if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
+#endif
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/cctpfa.hh>

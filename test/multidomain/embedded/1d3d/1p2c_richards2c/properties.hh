@@ -28,7 +28,9 @@
 
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/uggrid.hh>
+#if HAVE_DUNE_FOAMGRID
 #include <dune/foamgrid/foamgrid.hh>
+#endif
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/cctpfa.hh>

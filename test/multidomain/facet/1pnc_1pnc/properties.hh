@@ -34,8 +34,12 @@
 #define DIMWORLD 2
 #endif
 
+#if HAVE_DUNE_FOAMGRID
 #include <dune/foamgrid/foamgrid.hh>
+#endif
+#if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
+#endif
 
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/fluidsystems/1padapter.hh>

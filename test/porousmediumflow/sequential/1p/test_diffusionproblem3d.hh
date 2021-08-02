@@ -22,7 +22,9 @@
 #ifndef DUMUX_TEST_DIFFUSION_3D_PROBLEM_HH
 #define DUMUX_TEST_DIFFUSION_3D_PROBLEM_HH
 
+#if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
+#endif
 
 #include <dumux/material/components/constant.hh>
 

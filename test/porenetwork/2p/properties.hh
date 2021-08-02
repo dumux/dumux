@@ -24,7 +24,9 @@
 #ifndef DUMUX_PNM2P_PROPERTIES_HH
 #define DUMUX_PNM2P_PROPERTIES_HH
 
+#if HAVE_DUNE_FOAMGRID
 #include <dune/foamgrid/foamgrid.hh>
+#endif
 
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porenetwork/2p/model.hh>
