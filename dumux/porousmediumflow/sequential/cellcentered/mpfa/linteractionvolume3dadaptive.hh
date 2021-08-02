@@ -26,6 +26,8 @@
  * @author Markus Wolff
  */
 
+#include <set>
+
 #include "linteractionvolume3d.hh"
 
 namespace Dumux
