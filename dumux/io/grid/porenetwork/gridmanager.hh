@@ -24,6 +24,8 @@
 #ifndef DUMUX_PORE_NETWORK_GRID_MANAGER_HH
 #define DUMUX_PORE_NETWORK_GRID_MANAGER_HH
 
+#if HAVE_DUNE_FOAMGRID
+
 #include <iostream>
 #include <algorithm>
 
@@ -32,12 +34,8 @@
 #include <dune/common/timer.hh>
 
 // FoamGrid specific includes
-#if HAVE_DUNE_FOAMGRID
 #include <dune/foamgrid/foamgrid.hh>
 #include <dune/foamgrid/dgffoam.hh>
-#else
-static_assert(false, "dune-foamgrid required!");
-#endif
 
 #include <dumux/common/parameters.hh>
 
@@ -444,5 +442,7 @@ private:
 };
 
 }
+
+#endif // HAVE_DUNE_FOAMGRID
 
 #endif
