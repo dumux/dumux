@@ -2,19 +2,22 @@ Differences Between DuMu<sup>x</sup> 3.4 and DuMu<sup>x</sup> 3.3
 =============================================
 
 ### Improvements and Enhancements
-- __Requirements__: DuMu<sup>x</sup> still requires Dune >=2.7 and CMake >= 3.13. It was successfully tested with OPM 2021.04.
-- __Pore-network models added to DuMu<sup>x</sup>__:
+- __Requirements__: DuMux still requires Dune >=2.7 and CMake >= 3.13. It was successfully tested with OPM 2021.04.
+
+- __Pore-network models added to DuMux__:
     - Three fully implicit pore-network models (1p, 1pnc, 2p) have been added.
     - A quasi-static 2p PNM for the creation of pc-Sw curves has been added.
     - A new namespace `Dumux::PoreNetwork` has been introduced, containing all relevant classes and functions for pore-network modeling.
     - An example introduces the use of the 1p PNM for the estimation of the upscaled Darcy permeability.
-    - Advection type including inertia effect for simulations in the non-creeping flow regime
+    - Advection type including inertia effect for simulations in the non-creeping flow regime is available.
     - Note that this is still considered a rather _experimental_ feature. Everything within namespace `Dumux::PoreNetwork` might undergo (backward-compatibility breaking) changes _without prior notice_.
+
 - __Several scripts have been translated to Python__:
     - `installexternal.sh` to install external modules and libraries now rewritten as python script `bin/installexternal.py`
-    - `getusedversions.sh` to extract the used Dumux/Dune versions of a module (new script: `bin/util/getusedversions.py`)
+    - `getusedversions.sh` to extract the used DuMux/Dune versions of a module (new script: `bin/util/getusedversions.py`)
     - `extractmodulepart.sh` no longer creates an install file, instead, you can now generate install scripts for your module using the new script `bin/util/makeinstallscript.py`.
-    - Note: the old shells script will be removed after release 3.4.
+    - Note: the old shell scripts will be removed after release 3.4.
+
 - __Law for water vapor viscosity in gas mixtures changed__: Polynomial laws for determining the viscosity of vater vapor in gas mixtures are introduced and applied by the new function `h2oGasViscosityInMixture`. The polynomial laws give a better approximation of the gas viscosity especially at higher temperatures ( >273.15 K) and a high water vapor content.
 
 - __Newton line search__: The line search algorithm decreases the step size until the residual decreases. The lower bound
@@ -27,11 +30,11 @@ for internal energy and enthalpy depending on temperature and constant heat capa
 It is now possible to [choose an ordering strategy](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/dumux/linear/seqsolverbackend.hh#L851) for UMFPack via the runtime parameter `LinearSolver.UMFPackOrdering` or by calling the `setOrdering()` method of `UMFPackBackend`. This can have a positive effect on the solver's performance, depending on the matrix structure.
 
 - __Add setRetryTimeStepReductionFactor() function  to NewtonSolver__:
-This function allows to set the factor by which the time step is reduced after al failed iteration. Can be used, e.g., for custom Newton solvers inheriting from this class and using a more sophisticated time step management.
+This function allows to set the factor by which the time step is reduced after a failed iteration. Can be used, e.g., for custom Newton solvers inheriting from this class and using a more sophisticated time step management.
 
 - __Improve upwind interface__:
-    - Additional functions have been added to upwindscheme.hh which can be used to `apply` the upwind scheme without the need of FluxVariables and to get the `multiplier` by which the flux is multiplied.
-    - These additional functions are now used in `CCTpfaForchheimersLaw` by providing the UpwindScheme as additional template argument.
+    - Additional functions have been added to `upwindscheme.hh` which can be used to `apply` the upwind scheme without the need of `FluxVariables` and to get the `multiplier` by which the flux is multiplied.
+    - These additional functions are now used in `CCTpfaForchheimersLaw` by providing the upwind scheme as additional template argument.
 
 - __Simplified use of SubGridManger__: It is now possible to specify pixel dimensions when reading an image file used as grid. For instance, `Grid.PixelDimension = 1e-3 1e-3` will scale the domain automatically such that the grid cells have a side length of 1e-3 m and you don't need to specify `Grid.UpperRight` anymore.
 
@@ -39,18 +42,18 @@ This function allows to set the factor by which the time step is reduced after a
 that can split strings at a given delimiter.
 
 - __Add linearRegression() function  to math.hh__:
-This function gets a set of (x, y) data and calculates/returns the intercept and the slope of the regression line using linear least squares method.
+This function gets a set of (x, y) data and calculates/returns the intercept and the slope of the regression line using the standard least squares method.
 
-- __Python bindings__: There is now a small finite volume example included in the Python tests using the wrapped grid geometry and problem
+- __Python bindings__: There is now a small finite volume example included in the Python tests using the wrapped grid geometry and problem.
 
-- __Shallow water__: Added a heuristic turbulence model based on a mixing length and resulting a turbulent viscosity term
+- __Shallow water__: Added a heuristic turbulence model based on a mixing length and resulting in a turbulent viscosity term.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
-- __MPNC__: The `MPAdapter` can now also be called with a temporary `pcKrSw` objects. For this, the compiler needs to deduce the
-            class's template argument types. You may need to adapt your `spatialParams` from
 - __Newton__: The global parameter defaults have been substituted for local parameter defaults (in nonlinear/newtonsolver.hh). If
               you have been relying on global defaults (reading parameters without supplying a value in the input file nor a default)
               you will get a runtime ParameterException. To solve this simply provide a default or set the value in the input file.
+- __MPNC__: The `MPAdapter` can now also be called with a temporary `pcKrSw` object. For this, the compiler needs to deduce the
+            class' template argument types. You may need to adapt your `spatialParams` from
 ```
 using MPAdapter = Dumux::FluidMatrix::MPAdapter<PcKrSwCurve, 2>;
 ...
@@ -67,29 +70,31 @@ auto fluidMatrixInteractionAtPos(const GlobalPosition &globalPos) const
     return makeFluidMatrixInteraction(FluidMatrix::MPAdapter(pcKrSwCurve_));
 }
 ```
-- __Grid-geometry__: The local views of grid geometries are now required to implement the interfaces
+- __Grid geometry__: The local views of grid geometries are now required to implement the interfaces
 `element()` (returning the bound element) and `isBound()` returning a `bool` which is `true` if the
 functions `bind` or `bindElement` have been called (i.e. the local geometry is in a bound state). These
 interfaces are currently not used (except in the unit tests) but will be required
-by the assembler in future Dumux versions.
+by the assembler in future DuMux versions.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.4:
-
 - `Dumux::IsIndexable<T, I>` is deprecated, use `Dune::IsIndexable<T, I>`directly.
-- The property `NumEqVector` has been deprecated. The class `NumEqVector` is now defined in namespace `Dumux` in header file `dumux/common/numeqvector.hh`.
+
+- The property `NumEqVector` has been deprecated. The class `NumEqVector` is now defined in the namespace `Dumux` in the header file `dumux/common/numeqvector.hh`.
+
 - The member function `update()` of mappers is deprecated, use `update(gridView)` when updating the mapper after a grid or grid view change.
-- All custom mapper implementation should implement `update(gridView)` replacing `update()`. Mappers with `update()` will no longer be supported after support for dune 2.7 is dropped.
+
+- All custom mapper implementations should implement `update(gridView)` replacing `update()`. Mappers with `update()` will no longer be supported after support for Dune 2.7 is dropped.
 
 ### New experimental features (possibly subject to backwards-incompatible changes in the future)
 
 - __Time stepping__: a first implementation of a generic `Dumux::MultiStageTimeStepper` was introduced,
 that allows for using different time integration schemes besides the currently supported implicit and explicit
 Euler schemes. However, this poses new requirements on the linear system assemblers, which are not yet met by
-the standard assemblers provided in Dumux. This will be extended in future versions.
+the standard assemblers provided in DuMux. This will be extended in future versions.
 
 ### Continuous integration
 
-- A first version of the Dumux GitLab CI is now at the disposal of all developers. While every night a complete
+- A first version of the DuMux GitLab CI is now at the disposal of all developers. While every night a complete
 test pipeline is triggered automatically, developers have the possibility to manually start test pipelines
 within merge requests that automatically identify and run only those tests affected by the changes introduced.
 
