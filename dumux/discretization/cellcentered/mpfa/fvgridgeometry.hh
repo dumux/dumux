@@ -180,13 +180,14 @@ public:
         update_();
     }
 
-    //! update all fvElementGeometries (do this again after grid adaption)
+    //! update all fvElementGeometries (call this after grid adaption)
     void update(const GridView& gridView)
     {
         ParentType::update(gridView);
         update_();
     }
 
+    //! update all fvElementGeometries (call this after grid adaption)
     void update(GridView&& gridView)
     {
         ParentType::update(std::move(gridView));
@@ -578,13 +579,14 @@ public:
         update_();
     }
 
-    //! update all fvElementGeometries (do this again after grid adaption)
+    //! update all fvElementGeometries (call this after grid adaption)
     void update(const GridView& gridView)
     {
         ParentType::update(gridView);
         update_();
     }
 
+    //! update all fvElementGeometries (call this after grid adaption)
     void update(GridView&& gridView)
     {
         ParentType::update(std::move(gridView));

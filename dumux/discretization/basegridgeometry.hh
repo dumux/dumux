@@ -97,7 +97,7 @@ public:
     }
 
     /*!
-     * \brief Update all fvElementGeometries (do this again after grid adaption)
+     * \brief Update all fvElementGeometries (call this after grid adaption)
      */
     void update(const GridView& gridView)
     {
@@ -106,7 +106,7 @@ public:
     }
 
     /*!
-     * \brief Update all fvElementGeometries (do this again after grid adaption)
+     * \brief Update all fvElementGeometries (call this after grid adaption)
      */
     void update(GridView&& gridView)
     {

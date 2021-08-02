@@ -176,6 +176,7 @@ public:
         update_(fractureGridAdapter);
     }
 
+    //! update all fvElementGeometries (call this after grid adaption)
     template< class FractureGridAdapter >
     void update(const GridView& gridView, const FractureGridAdapter& fractureGridAdapter)
     {
@@ -183,6 +184,7 @@ public:
         update_(fractureGridAdapter);
     }
 
+    //! update all fvElementGeometries (call this after grid adaption)
     template< class FractureGridAdapter >
     void update(GridView&& gridView, const FractureGridAdapter& fractureGridAdapter)
     {
@@ -509,6 +511,7 @@ public:
         update_(fractureGridAdapter);
     }
 
+    //! update all fvElementGeometries (call this after grid adaption)
     template< class FractureGridAdapter >
     void update(const GridView& gridView, const FractureGridAdapter& fractureGridAdapter)
     {
@@ -517,6 +520,7 @@ public:
         update_(fractureGridAdapter);
     }
 
+    //! update all fvElementGeometries (call this after grid adaption)
     template< class FractureGridAdapter >
     void update(GridView&& gridView, const FractureGridAdapter& fractureGridAdapter)
     {

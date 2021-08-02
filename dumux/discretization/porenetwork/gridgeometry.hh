@@ -575,7 +575,7 @@ public:
         update_(gridData);
     }
 
-    //! update all fvElementGeometries (do this again after grid adaption)
+    //! update all fvElementGeometries (call this after grid adaption)
     template<class GridData>
     void update(const GridView& gridView, const GridData& gridData)
     {
@@ -583,6 +583,7 @@ public:
         update_(gridData);
     }
 
+    //! update all fvElementGeometries (call this after grid adaption)
     template<class GridData>
     void update(GridView&& gridView, const GridData& gridData)
     {
@@ -791,7 +792,7 @@ public:
         update_(gridData);
     }
 
-    //! update all fvElementGeometries (do this again after grid adaption)
+    //! update all fvElementGeometries (call this after grid adaption)
     template<class GridData>
     void update(const GridView& gridView, const GridData& gridData)
     {
@@ -799,6 +800,7 @@ public:
         update_(gridData);
     }
 
+    //! update all fvElementGeometries (call this after grid adaption)
     template<class GridData>
     void update(GridView&& gridView, const GridData& gridData)
     {

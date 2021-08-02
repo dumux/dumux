@@ -185,6 +185,19 @@ public:
         update_(facetGridView, codimOneGridAdapter, verbose);
     }
 
+    /*!
+     * \brief update all fvElementGeometries (call this after grid adaption)
+     * \note This assumes conforming grids!
+     *
+     * \param gridView The grid view of a dim-dimensional grid.
+     *
+     * \param facetGridView The grid view of a (dim-1)-dimensional grid conforming
+     *                      with the facets of this grid view, indicating on which facets
+     *                      nodal dofs should be enriched.
+     * \param codimOneGridAdapter Adapter class that allows access to information on the d-
+     *                            dimensional grid for entities of the (d-1)-dimensional grid
+     * \param verbose Verbosity level for vertex enrichment
+     */
     template<class FacetGridView, class CodimOneGridAdapter>
     void update(const GridView& gridView,
                 const FacetGridView& facetGridView,
@@ -195,6 +208,7 @@ public:
         update_(facetGridView, codimOneGridAdapter, verbose);
     }
 
+    //! update all fvElementGeometries (call this after grid adaption)
     template<class FacetGridView, class CodimOneGridAdapter>
     void update(GridView&& gridView,
                 const FacetGridView& facetGridView,
@@ -489,6 +503,19 @@ public:
         update_(facetGridView, codimOneGridAdapter, verbose);
     }
 
+    /*!
+     * \brief update all fvElementGeometries (call this after grid adaption)
+     * \note This assumes conforming grids!
+     *
+     * \param gridView The grid view of a dim-dimensional grid.
+     *
+     * \param facetGridView The grid view of a (dim-1)-dimensional grid conforming
+     *                      with the facets of this grid view, indicating on which facets
+     *                      nodal dofs should be enriched.
+     * \param codimOneGridAdapter Adapter class that allows access to information on the d-
+     *                            dimensional grid for entities of the (d-1)-dimensional grid
+     * \param verbose Verbosity level for vertex enrichment
+     */
     template<class FacetGridView, class CodimOneGridAdapter>
     void update(const GridView& gridView,
                 const FacetGridView& facetGridView,
@@ -500,6 +527,7 @@ public:
         update_(facetGridView, codimOneGridAdapter, verbose);
     }
 
+    //! update all fvElementGeometries (call this after grid adaption)
     template<class FacetGridView, class CodimOneGridAdapter>
     void update(GridView&& gridView,
                 const FacetGridView& facetGridView,
