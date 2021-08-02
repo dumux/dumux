@@ -52,40 +52,32 @@
 namespace Dumux {
 
 /*!
- * \brief Constructs the finite volume grid geometry for the box scheme.
- *
- * This is necessary as the finite volume grid geometry for the box scheme with
- * facet coupling requires additional data for the constructor. The reason is that
- * we have to create additional faces on interior boundaries, which wouldn't be
- * created in the standard scheme.
+ * \brief Constructs the finite volume grid geometry.
  */
 template< class BulkGridGeometry,
           class GridManager,
           class BulkGridView,
-          class LowDimGridView,
-          std::enable_if_t<BulkGridGeometry::discMethod == Dumux::DiscretizationMethod::box, int> = 0 >
+          class LowDimGridView >
 auto makeBulkFVGridGeometry(const GridManager& gridManager,
                             const BulkGridView& bulkGridView,
                             const LowDimGridView& lowDimGridView)
 {
-    using BulkFacetGridAdapter = Dumux::CodimOneGridAdapter<typename GridManager::Embeddings>;
-    BulkFacetGridAdapter facetGridAdapter(gridManager.getEmbeddings());
-    return std::make_shared<BulkGridGeometry>(bulkGridView, lowDimGridView, facetGridAdapter);
-}
-
-/*!
- * \brief Constructs the finite volume grid geometry for the cell-centered schemes.
- */
-template< class BulkGridGeometry,
-          class GridManager,
-          class BulkGridView,
-          class LowDimGridView,
-          std::enable_if_t<BulkGridGeometry::discMethod != Dumux::DiscretizationMethod::box, int> = 0 >
-auto makeBulkFVGridGeometry(const GridManager& gridManager,
-                            const BulkGridView& bulkGridView,
-                            const LowDimGridView& lowDimGridView)
-{
-    return std::make_shared<BulkGridGeometry>(bulkGridView);
+    /*!
+    * The finite volume grid geometry for the box scheme with facet coupling
+    * requires additional data for the constructor. The reason is that
+    * we have to create additional faces on interior boundaries, which are not
+    * created in the standard scheme.
+    */
+    if constexpr (BulkGridGeometry::discMethod == Dumux::DiscretizationMethod::box)
+    {
+        using BulkFacetGridAdapter = Dumux::CodimOneGridAdapter<typename GridManager::Embeddings>;
+        BulkFacetGridAdapter facetGridAdapter(gridManager.getEmbeddings());
+        return std::make_shared<BulkGridGeometry>(bulkGridView, lowDimGridView, facetGridAdapter);
+    }
+    else
+    {
+        return std::make_shared<BulkGridGeometry>(bulkGridView);
+    }
 }
 
 //! Computes the volume fluxes on all scvfs for a sub-domain.

@@ -97,35 +97,32 @@ void checkScvfEmbedment(const Scvf& scvf, const LowDimGeom& lowDimGeom)
 }
 
 /*!
- * \brief Constructs the finite volume grid geometry for the box scheme.
+ * \brief Constructs the finite volume grid geometry.
  */
 template< class BulkGridGeometry,
           class GridManager,
           class BulkGridView,
-          class LowDimGridView,
-          std::enable_if_t<BulkGridGeometry::discMethod == Dumux::DiscretizationMethod::box, int> = 0 >
+          class LowDimGridView >
 auto makeBulkFVGridGeometry(const GridManager& gridManager,
                             const BulkGridView& bulkGridView,
                             const LowDimGridView& lowDimGridView)
 {
-    using BulkFacetGridAdapter = Dumux::CodimOneGridAdapter<typename GridManager::Embeddings>;
-    BulkFacetGridAdapter facetGridAdapter(gridManager.getEmbeddings());
-    return BulkGridGeometry(bulkGridView, lowDimGridView, facetGridAdapter, true);
-}
-
-/*!
- * \brief Constructs the finite volume grid geometry for the cell-centered schemes.
- */
-template< class BulkGridGeometry,
-          class GridManager,
-          class BulkGridView,
-          class LowDimGridView,
-          std::enable_if_t<BulkGridGeometry::discMethod != Dumux::DiscretizationMethod::box, int> = 0 >
-auto makeBulkFVGridGeometry(const GridManager& gridManager,
-                            const BulkGridView& bulkGridView,
-                            const LowDimGridView& lowDimGridView)
-{
-    return BulkGridGeometry(bulkGridView);
+    /*!
+    * The finite volume grid geometry for the box scheme with facet coupling
+    * requires additional data for the constructor. The reason is that
+    * we have to create additional faces on interior boundaries, which are not
+    * created in the standard scheme.
+    */
+    if constexpr (BulkGridGeometry::discMethod == Dumux::DiscretizationMethod::box)
+    {
+        using BulkFacetGridAdapter = Dumux::CodimOneGridAdapter<typename GridManager::Embeddings>;
+        BulkFacetGridAdapter facetGridAdapter(gridManager.getEmbeddings());
+        return BulkGridGeometry(bulkGridView, lowDimGridView, facetGridAdapter, true);
+    }
+    else
+    {
+        return BulkGridGeometry(bulkGridView);
+    }
 }
 
 // main program
