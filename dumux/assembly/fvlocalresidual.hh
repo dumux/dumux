@@ -29,12 +29,33 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
+#include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/common/reservedblockvector.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
+
+namespace Detail {
+template<class ERV, class P, class E, class EG, class EVV, class EFVC, class SCV>
+struct evalSourceNeedsCache
+{
+    template<class LocalResidual>
+    auto operator()(const LocalResidual& r)
+    -> decltype(r.evalSource(std::declval<ERV&>(), std::declval<P>(), std::declval<E>(), std::declval<EG>(), std::declval<EVV>(), std::declval<EFVC>(), std::declval<SCV>()))
+    {}
+};
+
+template<class P, class E, class EG, class EVV, class EFVC, class SCV>
+struct computeSourceNeedsCache
+{
+    template<class LocalResidual>
+    auto operator()(const LocalResidual& r)
+    -> decltype(r.computeSource(std::declval<P>(), std::declval<E>(), std::declval<EG>(), std::declval<EVV>(), std::declval<EFVC>(), std::declval<SCV>()))
+    {}
+};
+}
 
 /*!
  * \ingroup Assembly
@@ -173,7 +194,14 @@ public:
         // evaluate the volume terms (storage + source terms)
         // forward to the local residual specialized for the discretization methods
         for (auto&& scv : scvs(fvGeometry))
-            asImp().evalSource(residual, this->problem(), element, fvGeometry, elemVolVars, elemFluxVarsCache, scv);
+        {
+            static constexpr auto needsCache = decltype(isValid(Detail::evalSourceNeedsCache<ElementResidualVector, Problem, Element, FVElementGeometry, ElementVolumeVariables, ElementFluxVariablesCache, SubControlVolume>())(asImp()))::value;
+
+            if constexpr (needsCache)
+                asImp().evalSource(residual, this->problem(), element, fvGeometry, elemVolVars, elemFluxVarsCache, scv);
+            else
+                asImp().evalSource(residual, this->problem(), element, fvGeometry, elemVolVars, scv);
+        }
 
         // forward to the local residual specialized for the discretization methods
         for (auto&& scvf : scvfs(fvGeometry))
@@ -339,7 +367,15 @@ public:
     {
         //! Compute source with the model specific storage residual
         const auto& curVolVars = curElemVolVars[scv];
-        NumEqVector source = asImp().computeSource(problem, element, fvGeometry, curElemVolVars, elemFluxVarsCache, scv);
+
+        static constexpr auto needsCache = decltype(isValid(Detail::computeSourceNeedsCache<Problem, Element, FVElementGeometry, ElementVolumeVariables, ElementFluxVariablesCache, SubControlVolume>())(asImp()))::value;
+
+        NumEqVector source;
+        if constexpr (needsCache)
+            source = asImp().computeSource(problem, element, fvGeometry, curElemVolVars, elemFluxVarsCache, scv);
+        else
+            source = asImp().computeSource(problem, element, fvGeometry, curElemVolVars, scv);
+
         source *= Extrusion::volume(scv)*curVolVars.extrusionFactor();
 
         //! subtract source from local rate (sign convention in user interface)
