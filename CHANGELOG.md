@@ -18,6 +18,8 @@ Differences Between DuMu<sup>x</sup> 3.4 and DuMu<sup>x</sup> 3.3
     - `extractmodulepart.sh` no longer creates an install file, instead, you can now generate install scripts for your module using the new script `bin/util/makeinstallscript.py`.
     - Note: the old shell scripts will be removed after release 3.4.
 
+- __Python bindings__: There is now a small finite volume example included in the Python tests using the wrapped grid geometry and problem, see [test_explicit_transport_cctpfa.py](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/releases/3.4/test/python/test_explicit_transport_cctpfa.py).
+
 - __Law for water vapor viscosity in gas mixtures changed__: Polynomial laws for determining the viscosity of vater vapor in gas mixtures are introduced and applied by the new function `h2oGasViscosityInMixture`. The polynomial laws give a better approximation of the gas viscosity especially at higher temperatures ( >273.15 K) and a high water vapor content.
 
 - __Newton line search__: The line search algorithm decreases the step size until the residual decreases. The lower bound
@@ -26,8 +28,10 @@ of the step size can now be set in the input file via the parameter `Newton.Line
 - __Material / Constant component__: The `Component::Constant` can now be used in non-isothermal simulation. Simple relations
 for internal energy and enthalpy depending on temperature and constant heat capacity have been added.
 
+- __Linear PDE solver__: The `LinearPDESolver` can reuse the matrix and thus avoid unnecessary reassembly. See [test/porousmediumflow/tracer/constvel/main.cc](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/releases/3.4/test/porousmediumflow/tracer/constvel/main.cc#L119) for an example.
+
 - __Ordering strategies for UMFPack__:
-It is now possible to [choose an ordering strategy](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/dumux/linear/seqsolverbackend.hh#L851) for UMFPack via the runtime parameter `LinearSolver.UMFPackOrdering` or by calling the `setOrdering()` method of `UMFPackBackend`. This can have a positive effect on the solver's performance, depending on the matrix structure.
+It is now possible to [choose an ordering strategy](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/releases/3.4/dumux/linear/seqsolverbackend.hh#L851) for UMFPack via the runtime parameter `LinearSolver.UMFPackOrdering` or by calling the `setOrdering()` method of `UMFPackBackend`. This can have a positive effect on the solver's performance, depending on the matrix structure.
 
 - __Add setRetryTimeStepReductionFactor() function  to NewtonSolver__:
 This function allows to set the factor by which the time step is reduced after a failed iteration. Can be used, e.g., for custom Newton solvers inheriting from this class and using a more sophisticated time step management.
@@ -43,8 +47,6 @@ that can split strings at a given delimiter.
 
 - __Add linearRegression() function  to math.hh__:
 This function gets a set of (x, y) data and calculates/returns the intercept and the slope of the regression line using the standard least squares method.
-
-- __Python bindings__: There is now a small finite volume example included in the Python tests using the wrapped grid geometry and problem.
 
 - __Shallow water__: Added a heuristic turbulence model based on a mixing length and resulting in a turbulent viscosity term.
 
