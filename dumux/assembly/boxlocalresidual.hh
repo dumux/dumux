@@ -54,9 +54,11 @@ class BoxLocalResidual : public FVLocalResidual<TypeTag>
     using FVElementGeometry = typename GridGeometry::LocalView;
     using Extrusion = Extrusion_t<GridGeometry>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
+    using EnergyLocalResidual = GetPropType<TypeTag, Properties::EnergyLocalResidual>;
 
 public:
     using ElementResidualVector = typename ParentType::ElementResidualVector;
@@ -128,6 +130,42 @@ public:
         }
 
         return flux;
+    }
+
+    /*!
+     * \brief Calculate the source term of the equation
+     *
+     * \param problem The problem to solve
+     * \param element The DUNE Codim<0> entity for which the residual
+     *                ought to be calculated
+     * \param fvGeometry The finite-volume geometry of the element
+     * \param elemVolVars The volume variables associated with the element stencil
+     * \param elemFluxVarsCache The cache related to flux computation
+     * \param scv The sub-control volume over which we integrate the source term
+     * \note This is the default implementation for all models as sources are computed
+     *       in the user interface of the problem
+     *
+     */
+    NumEqVector computeSource(const Problem& problem,
+                              const Element& element,
+                              const FVElementGeometry& fvGeometry,
+                              const ElementVolumeVariables& elemVolVars,
+                              const ElementFluxVariablesCache& elemFluxVarsCache,
+                              const SubControlVolume &scv) const
+    {
+        NumEqVector source(0.0);
+
+        // add contributions from volume flux sources
+        source += problem.source(element, fvGeometry, elemVolVars, scv);
+
+        // add contribution from possible point sources
+        source += problem.scvPointSources(element, fvGeometry, elemVolVars, scv);
+
+        // add the contribution from p.div(v)
+        // for cell-centered, this is part of EnergyLocalResidual::heatConvectionFlux
+        EnergyLocalResidual::computeVolumeWork(source, problem, element, fvGeometry, elemVolVars, elemFluxVarsCache, scv);
+
+        return source;
     }
 };
 

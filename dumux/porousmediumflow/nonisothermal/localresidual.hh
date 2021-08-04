@@ -28,6 +28,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
+#include <dumux/common/boundarytypes.hh>
 
 namespace Dumux {
 
