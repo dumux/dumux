@@ -183,6 +183,17 @@ public:
         { return volVars.density(phaseIdx)*volVars.mobility(phaseIdx)*volVars.internalEnergy(phaseIdx); };
 
         flux[energyEqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
+
+        // by default, add the contribution from p.div(v)
+        // for box, this is done in computeVolumeWork as part of evalSource
+        if constexpr (!isBox)
+        {
+            const auto insidePressure = fluxVars.elemVolVars()[fluxVars.scvFace().insideScvIdx()].pressure(phaseIdx);
+            const auto velUpwindTerm = [phaseIdx](const auto& volVars)
+                                       { return volVars.mobility(phaseIdx); };
+
+            flux[energyEqIdx] += -insidePressure*fluxVars.advectiveFlux(phaseIdx, velUpwindTerm);
+        }
     }
 
     /*!
@@ -215,25 +226,21 @@ public:
                                   const ElementFluxVariablesCache& elemFluxVarsCache,
                                   const SubControlVolume &scv)
     {
+        static_assert(isBox, "This function should only be called for the box discretization.\n"
+                             "Other discretizations are treated by means of heatConvectionFlux.");
+
         Scalar volumeWork = 0.0;
 
         for (auto&& scvf : scvfs(fvGeometry))
         {
             // only treat scvfs that are faces of the scv
-            if (isBox && scvf.insideScvIdx() != scv.localDofIndex()
+            if (scvf.insideScvIdx() != scv.localDofIndex()
                 && scvf.outsideScvIdx() != scv.localDofIndex())
                 continue;
 
             // determine boundary types and if the scv is inside relative to the scvf
-            BoundaryTypes bcTypes;
-            bool isInsideScv = true;
-            if constexpr (isBox)
-            {
-                bcTypes = problem.boundaryTypes(element, scv);
-                isInsideScv = scvf.insideScvIdx() == scv.localDofIndex();
-            }
-            else
-                bcTypes = problem.boundaryTypes(element, scvf);
+            BoundaryTypes bcTypes = problem.boundaryTypes(element, scv);
+            bool isInsideScv = scvf.insideScvIdx() == scv.localDofIndex();
 
             // \todo: treat general Neumann boundary faces
             if (!scvf.boundary() || bcTypes.hasDirichlet())

@@ -57,6 +57,9 @@ class ImmiscibleLocalResidual : public GetPropType<TypeTag, Properties::BaseLoca
     static constexpr int numPhases = ModelTraits::numFluidPhases();
     static constexpr int conti0EqIdx = ModelTraits::Indices::conti0EqIdx; //!< first index for the mass balance
 
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
+
 public:
     using ParentType::ParentType;
 
@@ -164,7 +167,10 @@ public:
         // add contribution from possible point sources
         source += problem.scvPointSources(element, fvGeometry, elemVolVars, scv);
 
-        EnergyLocalResidual::computeVolumeWork(source, problem, element, fvGeometry, elemVolVars, elemFluxVarsCache, scv);
+        // for box, add the contribution from p.div(v)
+        // for cell-centered, this is part of EnergyLocalResidual::heatConvectionFlux
+        if constexpr (isBox)
+            EnergyLocalResidual::computeVolumeWork(source, problem, element, fvGeometry, elemVolVars, elemFluxVarsCache, scv);
 
         return source;
     }
