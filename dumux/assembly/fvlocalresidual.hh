@@ -355,6 +355,7 @@ public:
      * \param fvGeometry The finite-volume geometry of the element
      * \param curElemVolVars The volume averaged variables for all
      *                       sub-control volumes of the element at the current  time level
+     * \param elemFluxVarsCache The cache related to flux computation
      * \param scv The sub control volume the source term is integrated over
      */
     void evalSource(ElementResidualVector& residual,

@@ -51,6 +51,11 @@ class EnergyLocalResidualImplementation<TypeTag, false>
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
 
 public:
     /*!
@@ -99,6 +104,26 @@ public:
      */
     static void heatConductionFlux(NumEqVector& flux,
                                    FluxVariables& fluxVars)
+    {}
+
+    /*!
+     * \brief compute the contribution of p.div(v) for the box method
+     *
+     * \param source The source which ought to be simulated
+     * \param problem The problem to solve
+     * \param element An element which contains part of the control volume
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars The volume variables of the current element
+     * \param elemFluxVarsCache The cache related to flux computation
+     * \param scv The sub-control volume over which we integrate the source term
+     */
+    static void computeVolumeWork(NumEqVector& source,
+                                  const Problem& problem,
+                                  const Element& element,
+                                  const FVElementGeometry& fvGeometry,
+                                  const ElementVolumeVariables& elemVolVars,
+                                  const ElementFluxVariablesCache& elemFluxVarsCache,
+                                  const SubControlVolume &scv)
     {}
 };
 
@@ -208,14 +233,15 @@ public:
         flux[energyEqIdx] += fluxVars.heatConductionFlux();
     }
 
-
     /*!
-     * \brief heat transfer between the phases for nonequilibrium models
+     * \brief compute the contribution of p.div(v) for the box method
      *
      * \param source The source which ought to be simulated
+     * \param problem The problem to solve
      * \param element An element which contains part of the control volume
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars The volume variables of the current element
+     * \param elemFluxVarsCache The cache related to flux computation
      * \param scv The sub-control volume over which we integrate the source term
      */
     static void computeVolumeWork(NumEqVector& source,

@@ -147,6 +147,7 @@ public:
      *                ought to be calculated
      * \param fvGeometry The finite-volume geometry of the element
      * \param elemVolVars The volume variables associated with the element stencil
+     * \param elemFluxVarsCache The cache related to flux computation
      * \param scv The sub-control volume over which we integrate the source term
      * \note This is the default implementation for all models as sources are computed
      *       in the user interface of the problem
