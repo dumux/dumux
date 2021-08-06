@@ -33,8 +33,11 @@
 #include <dune/geometry/affinegeometry.hh>
 #include <dune/geometry/multilineargeometry.hh>
 
+#include <dumux/geometry/circumsphere.hh>
 #include <dumux/geometry/distance.hh>
+#include <dumux/geometry/distancefield.hh>
 #include <dumux/geometry/normal.hh>
+#include <dumux/io/format.hh>
 #include "transformation.hh"
 
 // helper function to make point geometry from field vector
@@ -54,6 +57,29 @@ Segment makeSegment(const Dune::FieldVector<typename Segment::ctype, dimWorld>& 
     using GlobalPosition = Dune::FieldVector<typename Segment::ctype, dimWorld>;
     using Corners = std::vector<GlobalPosition>;
     return { Dune::GeometryTypes::line, Corners{{p1, p2}} };
+}
+
+// helper function to make a triangle geometry from field vectors
+template<class Triangle, int dimWorld>
+Triangle makeTriangle(const Dune::FieldVector<typename Triangle::ctype, dimWorld>& p1,
+                      const Dune::FieldVector<typename Triangle::ctype, dimWorld>& p2,
+                      const Dune::FieldVector<typename Triangle::ctype, dimWorld>& p3)
+{
+    using GlobalPosition = Dune::FieldVector<typename Triangle::ctype, dimWorld>;
+    using Corners = std::vector<GlobalPosition>;
+    return { Dune::GeometryTypes::simplex(2), Corners{{p1, p2, p3}} };
+}
+
+// helper function to make a quadrilateral geometry from field vectors
+template<class Quadrilateral, int dimWorld>
+Quadrilateral makeQuadrilateral(const Dune::FieldVector<typename Quadrilateral::ctype, dimWorld>& p1,
+                                const Dune::FieldVector<typename Quadrilateral::ctype, dimWorld>& p2,
+                                const Dune::FieldVector<typename Quadrilateral::ctype, dimWorld>& p3,
+                                const Dune::FieldVector<typename Quadrilateral::ctype, dimWorld>& p4)
+{
+    using GlobalPosition = Dune::FieldVector<typename Quadrilateral::ctype, dimWorld>;
+    using Corners = std::vector<GlobalPosition>;
+    return { Dune::GeometryTypes::quadrilateral, Corners{{p1, p2, p3, p4}} };
 }
 
 // sample a point on a sphere with the given radius
@@ -84,6 +110,35 @@ void checkGeometryDistance(ctype expected, ctype computed, const std::string& ge
 {
     if (Dune::FloatCmp::ne(expected, computed))
         DUNE_THROW(Dune::InvalidStateException, "Unexpected " << geometryPairName << " distance ");
+}
+
+template<class Geometry>
+void checkDistanceField(const std::vector<Geometry>& geometries,
+                        const typename Geometry::GlobalCoordinate& p,
+                        typename Geometry::ctype expectedDistance,
+                        int expectedIndex)
+{
+    using namespace Dumux;
+    DistanceField<Geometry, false> distanceFieldWithoutBoundingSpheres(geometries);
+    const auto [d, idx] = distanceFieldWithoutBoundingSpheres.distanceAndIndex(p);
+
+    if (Dune::FloatCmp::ne(d, expectedDistance))
+    {
+        DUNE_THROW(Dune::InvalidStateException,
+                   Fmt::format("Distance field returned wrong minimal distance. Expected {}, got {}",
+                               expectedDistance, d));
+    }
+
+    if (idx != expectedIndex)
+        DUNE_THROW(Dune::InvalidStateException, "Distance field returned wrong index for minimal distance "
+                    + std::to_string(idx) + ", expected " + std::to_string(expectedIndex));
+
+    DistanceField<Geometry, true> distanceFieldWithBoundingSpheres(geometries);
+    const auto [d2, idx2] = distanceFieldWithBoundingSpheres.distanceAndIndex(p);
+
+    if (Dune::FloatCmp::ne(d, d2) || idx != idx2)
+        DUNE_THROW(Dune::InvalidStateException, "Distance field using bounding spheres does"
+                    "not return same result as without bounding spheres");
 }
 
 // checks the distances between various points with points/segments/lines
@@ -133,6 +188,11 @@ void runTests()
             checkGeometryDistance(scale, distancePointLine(p.corner(0), segment2.corner(0), segment2.corner(1)), "point-line");
             checkGeometryDistance(scale, distancePointLine(p.corner(0), segment3.corner(0), segment3.corner(1)), "point-line");
 
+            // check distance field class (2D), last segment is closest to p
+            const auto segment4 = makeSegment<Segment>(origin.corner(0) + 0.5*n, p.corner(0) + 0.5*n);
+            const std::vector<Segment> segments{segment, segment2, segment3, segment4};
+            checkDistanceField(segments, origin.corner(0), 0.5*scale, segments.size() - 1);
+
             // check distance point-triangle
             if constexpr(GlobalPosition::dimension == 3)
             {
@@ -141,38 +201,76 @@ void runTests()
                 auto rotationAxis = p.corner(0); rotationAxis /= rotationAxis.two_norm();
                 const auto rotate1 = make3DTransformation(1.0, origin.corner(0), rotationAxis, 2.0/3.0*M_PI, /*verbose*/false);
                 const auto rotate2 = make3DTransformation(1.0, origin.corner(0), rotationAxis, 4.0/3.0*M_PI, /*verbose*/false);
-                const auto firstTriangle = Points{p.corner(0) + n,
-                                                  rotate1(n) + p.corner(0),
-                                                  rotate2(n) + p.corner(0)};
-                checkGeometryDistance(scale, distancePointTriangle(origin.corner(0), firstTriangle[0], firstTriangle[1], firstTriangle[2]), "point-triangle");
+                const auto firstTrianglePoints = Points{
+                    p.corner(0) + n, rotate1(n) + p.corner(0), rotate2(n) + p.corner(0)
+                };
+
+                checkGeometryDistance(
+                    scale,
+                    distancePointTriangle(
+                        origin.corner(0), firstTrianglePoints[0], firstTrianglePoints[1], firstTrianglePoints[2]
+                    ),
+                    "point-triangle"
+                );
 
                 // check convenience function
                 using Polygon = OtherGeometryType<double, 2, coorddim>;
-                const auto triangleGeometry = Polygon(Dune::GeometryTypes::simplex(2), std::vector<GlobalPosition>{firstTriangle.begin(), firstTriangle.end()});
-                checkGeometryDistance(scale, distance(origin, triangleGeometry), "point-triangle");
-                checkGeometryDistance(scale, distance(triangleGeometry, origin), "point-triangle");
+                const auto firstTriangle = makeTriangle<Polygon, coorddim>(
+                    firstTrianglePoints[0], firstTrianglePoints[1], firstTrianglePoints[2]
+                );
+
+                checkGeometryDistance(scale, distance(origin, firstTriangle), "point-triangle");
+                checkGeometryDistance(scale, distance(firstTriangle, origin), "triangle-point");
+
+                // check circumsphere function
+                const auto sphere = circumSphereOfTriangle(firstTriangle);
+                const auto& expectedCenter = firstTriangle.center();
+                const auto expectedRadius = (firstTriangle.corner(0) - expectedCenter).two_norm();
+                if ((sphere.center() - expectedCenter).two_norm() > 1e-12*expectedRadius)
+                    DUNE_THROW(Dune::InvalidStateException, Fmt::format(
+                        "Wrong circumsphere center. Expected {}, got {}.",
+                        expectedCenter, sphere.center()
+                    ));
+
+                if (Dune::FloatCmp::ne(sphere.radius(), expectedRadius))
+                    DUNE_THROW(Dune::InvalidStateException, Fmt::format(
+                        "Wrong circumsphere radius Expected {}, got {}",
+                        expectedRadius, sphere.radius()
+                    ));
 
                 // check quadrilateral
-                const auto& a = firstTriangle[0];
-                const auto& b = firstTriangle[1];
-                const auto& c = firstTriangle[2];
+                const auto& [a, b, c] = firstTrianglePoints;
                 const auto d = b + (b - a);
-                const auto quadGeometry = Polygon(Dune::GeometryTypes::quadrilateral, std::vector<GlobalPosition>{a, b, c, d});
-                checkGeometryDistance(scale, distance(origin, quadGeometry), "point-quadrilateral");
-                checkGeometryDistance(scale, distance(quadGeometry, origin), "point-quadrilateral");
+                const auto quadrilateral = makeQuadrilateral<Polygon, coorddim>(a, b, c, d);
+                checkGeometryDistance(scale, distance(origin, quadrilateral), "point-quadrilateral");
+                checkGeometryDistance(scale, distance(quadrilateral, origin), "quadrilateral-point");
 
                 // shift the first triangle
-                const auto secondTriangle = Points{segment.corner(0),
-                                                   segment.corner(1),
-                                                   0.5*(segment.corner(0) + segment.corner(1)) + n};
-                checkGeometryDistance(scale, distancePointTriangle(origin.corner(0), secondTriangle[0], secondTriangle[1], secondTriangle[2]), "point-triangle");
-                checkGeometryDistance(scale, distancePointTriangle(p.corner(0), secondTriangle[0], secondTriangle[1], secondTriangle[2]), "point-triangle");
+                const auto secondTrianglePoints = Points{
+                    segment.corner(0), segment.corner(1), 0.5*(segment.corner(0) + segment.corner(1)) + n
+                };
+                const auto secondTriangle = makeTriangle<Polygon, coorddim>(
+                    secondTrianglePoints[0], secondTrianglePoints[1], secondTrianglePoints[2]
+                );
+                checkGeometryDistance(scale, distancePointTriangle(origin.corner(0), secondTriangle), "point-triangle");
 
                 // create a triangle not touching the sphere
-                const auto thirdTriangle = Points{segment2.corner(0),
-                                                  segment2.corner(1),
-                                                  0.5*(segment2.corner(0) + segment2.corner(1)) + n};
-                checkGeometryDistance(sqrt(2.0)*scale, distancePointTriangle(p.corner(0), thirdTriangle[0], thirdTriangle[1], thirdTriangle[2]), "point-triangle");
+                const auto thirdTriangle = Points{
+                    segment2.corner(0), segment2.corner(1), 0.5*(segment2.corner(0) + segment2.corner(1)) + n
+                };
+
+                checkGeometryDistance(
+                    sqrt(2.0)*scale,
+                    distancePointTriangle(
+                        p.corner(0), thirdTriangle[0], thirdTriangle[1], thirdTriangle[2]
+                    ),
+                    "point-triangle"
+                );
+
+                // check the distance field class
+                const auto closestQuadrilateral = makeQuadrilateral<Polygon, coorddim>(0.5*a, 0.5*b, 0.5*c, 0.5*d);
+                std::vector<Polygon> polygons{firstTriangle, quadrilateral, secondTriangle, closestQuadrilateral};
+                checkDistanceField(polygons, origin.corner(0), 0.5*scale, polygons.size() - 1);
             }
         }
     }
