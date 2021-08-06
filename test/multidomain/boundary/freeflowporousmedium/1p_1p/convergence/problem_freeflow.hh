@@ -152,19 +152,7 @@ public:
             if (couplingManager().isCoupled(CouplingManager::freeFlowMassIndex, CouplingManager::porousMediumIndex, scvf))
                 values.setAllCouplingNeumann();
             else
-            {
-                if (boundaryConditions_ == BC::dirichlet)
-                    values.setAllDirichlet();
-                else if (boundaryConditions_ == BC::stress)
-                    values.setAllNeumann();
-                else
-                {
-                    if (onLeftBoundary_(scvf.center()))
-                        values.setAllNeumann();
-                    else
-                        values.setAllDirichlet();
-                }
-            }
+                values.setAllNeumann();
         }
 
         return values;
@@ -199,7 +187,19 @@ public:
         // momentum boundary conditions
         if constexpr (ParentType::isMomentumProblem())
         {
-            if (couplingManager().isCoupled(CouplingManager::freeFlowMomentumIndex, CouplingManager::porousMediumIndex, scvf))
+            // We need to take care here: If the integration point of an scvf lies both on the coupling interface and the
+            // domain boundary (i.e., the leftmost and rightmost points of the interface), do not evaluate the coupling or slip condition
+            // because they would require data from the boundary not available in this case (velocities for evaluating gradients,
+            // those would only be available for Dirichlet BCs). Instead, directly use the given Neumann boundary stress.
+            // TODO: Maybe couplingManager().isCoupled(...) could return false for these scvfs.
+            //
+            //                       | <-- left Neumann boundary
+            //                       |
+            // integration point --> o##### <-- scvf lying on coupling interface with integration point touching left Neumann boundary
+            //
+            if (couplingManager().isCoupled(CouplingManager::freeFlowMomentumIndex, CouplingManager::porousMediumIndex, scvf)
+                && scvf.ipGlobal()[0] > this->gridGeometry().bBoxMin()[0] + eps_
+                && scvf.ipGlobal()[0] < this->gridGeometry().bBoxMax()[0] - eps_)
             {
                 values += couplingManager().momentumCouplingCondition(
                     CouplingManager::freeFlowMomentumIndex, CouplingManager::porousMediumIndex,
