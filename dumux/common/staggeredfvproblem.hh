@@ -173,9 +173,10 @@ public:
         sol[cellCenterIdx].resize(this->gridGeometry().numCellCenterDofs());
         sol[faceIdx].resize(this->gridGeometry().numFaceDofs());
 
+        auto fvGeometry = localView(this->gridGeometry());
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            const auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
+            fvGeometry.bindElement(element);
 
             // loop over sub control volumes
             for (auto&& scv : scvs(fvGeometry))

@@ -52,10 +52,11 @@ public:
             for (std::size_t vIdx = 0; vIdx < scvBoundaryTypes.size(); vIdx++)
                 scvBoundaryTypes[vIdx].setAllNeumann();
 
+            auto fvGeometry = localView(gridGeometry);
             for (const auto& element : elements(gridGeometry.gridView()))
             {
                 // iterate over the scvfs
-                const auto fvGeometry = localView(gridGeometry).bindElement(element);
+                fvGeometry.bindElement(element);
 
                 for (const auto& scvf : scvfs(fvGeometry))
                 {

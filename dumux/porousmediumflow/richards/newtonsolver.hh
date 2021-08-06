@@ -77,9 +77,10 @@ private:
         {
             // clamp saturation change to at most 20% per iteration
             const auto& gridGeometry = this->assembler().gridGeometry();
+            auto fvGeometry = localView(gridGeometry);
             for (const auto& element : elements(gridGeometry.gridView()))
             {
-                const auto fvGeometry = localView(gridGeometry).bindElement(element);
+                fvGeometry.bindElement(element);
 
                 for (auto&& scv : scvs(fvGeometry))
                 {

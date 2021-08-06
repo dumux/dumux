@@ -92,11 +92,15 @@ public:
         bool switched = false;
         visited_.assign(wasSwitched_.size(), false);
         std::size_t countSwitched = 0;
+
+        auto fvGeometry = localView(gridGeometry);
+        auto elemVolVars = localView(gridVariables.curGridVolVars());
+
         for (const auto& element : elements(gridGeometry.gridView()))
         {
             // make sure FVElementGeometry is bound to the element
-            const auto fvGeometry = localView(gridGeometry).bindElement(element);
-            const auto elemVolVars = localView(gridVariables.curGridVolVars()).bindElement(element, fvGeometry, curSol);
+            fvGeometry.bindElement(element);
+            elemVolVars.bindElement(element, fvGeometry, curSol);
 
             const auto curElemSol = elementSolution(element, curSol, gridGeometry);
             for (auto&& scv : scvs(fvGeometry))

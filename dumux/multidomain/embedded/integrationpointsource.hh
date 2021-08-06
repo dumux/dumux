@@ -125,9 +125,10 @@ public:
             const auto eIdx = source.elementIndex();
             if constexpr (GridGeometry::discMethod == DiscretizationMethod::box)
             {
+                auto fvGeometry = localView(gridGeometry);
                 // check in which subcontrolvolume(s) we are
                 const auto element = gridGeometry.boundingBoxTree().entitySet().entity(eIdx);
-                const auto fvGeometry = localView(gridGeometry).bindElement(element);
+                fvGeometry.bindElement(element);
                 const auto globalPos = source.position();
 
                 static const bool boxPointSourceLumping = getParamFromGroup<bool>(paramGroup, "PointSource.EnableBoxLumping", true);

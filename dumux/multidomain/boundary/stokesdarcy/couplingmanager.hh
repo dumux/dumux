@@ -203,11 +203,11 @@ public:
 
         // prepare the coupling context
         const auto& darcyIndices = couplingMapper_.stokesElementToDarcyElementMap().at(stokesElementIdx);
-
+        auto darcyFvGeometry = localView(this->problem(darcyIdx).gridGeometry());
         for(auto&& indices : darcyIndices)
         {
             const auto& darcyElement = this->problem(darcyIdx).gridGeometry().boundingBoxTree().entitySet().entity(indices.eIdx);
-            const auto darcyFvGeometry = localView(this->problem(darcyIdx).gridGeometry()).bindElement(darcyElement);
+            darcyFvGeometry.bindElement(darcyElement);
             const auto& scv = (*scvs(darcyFvGeometry).begin());
 
             const auto darcyElemSol = elementSolution(darcyElement, this->curSol()[darcyIdx], this->problem(darcyIdx).gridGeometry());
@@ -242,11 +242,12 @@ public:
 
         // prepare the coupling context
         const auto& stokesElementIndices = couplingMapper_.darcyElementToStokesElementMap().at(darcyElementIdx);
+        auto stokesFvGeometry = localView(this->problem(stokesIdx).gridGeometry());
 
         for(auto&& indices : stokesElementIndices)
         {
             const auto& stokesElement = this->problem(stokesIdx).gridGeometry().boundingBoxTree().entitySet().entity(indices.eIdx);
-            const auto stokesFvGeometry = localView(this->problem(stokesIdx).gridGeometry()).bindElement(stokesElement);
+            stokesFvGeometry.bindElement(stokesElement);
 
             VelocityVector faceVelocity(0.0);
 

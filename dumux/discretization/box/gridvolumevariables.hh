@@ -78,10 +78,11 @@ public:
     void update(const GridGeometry& gridGeometry, const SolutionVector& sol)
     {
         volumeVariables_.resize(gridGeometry.gridView().size(0));
+        auto fvGeometry = localView(gridGeometry);
         for (const auto& element : elements(gridGeometry.gridView()))
         {
             auto eIdx = gridGeometry.elementMapper().index(element);
-            const auto fvGeometry = localView(gridGeometry).bindElement(element);
+            fvGeometry.bindElement(element);
 
             // get the element solution
             auto elemSol = elementSolution(element, sol, gridGeometry);

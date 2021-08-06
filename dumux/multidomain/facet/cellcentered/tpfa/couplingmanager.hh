@@ -432,14 +432,15 @@ public:
             bulkContext_.lowDimFvGeometries.reserve(elementStencil.size());
             bulkContext_.lowDimVolVars.reserve(elementStencil.size());
 
+            const auto& ldGridGeometry = this->problem(lowDimId).gridGeometry();
+            auto fvGeom = localView(ldGridGeometry);
             for (const auto lowDimElemIdx : elementStencil)
             {
                 const auto& ldSol = Assembler::isImplicit() ? this->curSol()[lowDimId] : assembler.prevSol()[lowDimId];
                 const auto& ldProblem = this->problem(lowDimId);
-                const auto& ldGridGeometry = this->problem(lowDimId).gridGeometry();
 
                 const auto elemJ = ldGridGeometry.element(lowDimElemIdx);
-                const auto fvGeom = localView(ldGridGeometry).bindElement(elemJ);
+                fvGeom.bindElement(elemJ);
 
                 VolumeVariables<lowDimId> volVars;
 

@@ -115,6 +115,8 @@ public:
             // save unsorted set of corner indices and search scvfs in adjoined entities
             const auto unsortedElemCorners = elementCorners;
             std::sort(elementCorners.begin(), elementCorners.end());
+
+            auto fvGeometry = localView(bulkFvGridGeometry);
             for (auto bulkElemIdx : adjoinedEntityIndices)
             {
                 const auto bulkElement = bulkFvGridGeometry.element(bulkElemIdx);
@@ -159,7 +161,7 @@ public:
                 }();
 
                 // we should always find numElementCorners coupling scvfs
-                const auto fvGeometry = localView(bulkFvGridGeometry).bindElement(bulkElement);
+                fvGeometry.bindElement(bulkElement);
 
                 unsigned int foundCounter = 0;
                 std::vector<BulkIndexType> embeddedScvfIndices(numElementCorners);

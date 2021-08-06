@@ -445,13 +445,12 @@ private:
             // maybe allocate space for the process rank
             if (addProcessRank) rank.resize(numCells);
 
+            auto fvGeometry = localView(gridGeometry());
+            auto elemVolVars = localView(gridVariables_.curGridVolVars());
+
             for (const auto& element : elements(gridGeometry().gridView(), Dune::Partitions::interior))
             {
                 const auto eIdxGlobal = gridGeometry().elementMapper().index(element);
-
-                auto fvGeometry = localView(gridGeometry());
-                auto elemVolVars = localView(gridVariables_.curGridVolVars());
-
                 // If velocity output is enabled we need to bind to the whole stencil
                 // otherwise element-local data is sufficient
                 if (velocityOutput_->enableOutput())

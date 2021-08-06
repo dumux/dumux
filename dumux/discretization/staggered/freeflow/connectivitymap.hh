@@ -68,10 +68,12 @@ public:
         faceToCellCenterMap_.resize(2*numDofsFace - numBoundaryFacets);
         faceToFaceMap_.resize(2*numDofsFace - numBoundaryFacets);
 
+        // restrict the FvGeometry locally
+        auto fvGeometry = localView(gridGeometry);
         for(auto&& element: elements(gridGeometry.gridView()))
         {
-            // restrict the FvGeometry locally and bind to the element
-            const auto fvGeometry = localView(gridGeometry).bindElement(element);
+            // bind the FvGeometry to the element
+            fvGeometry.bindElement(element);
 
             // loop over sub control faces
             for (auto&& scvf : scvfs(fvGeometry))

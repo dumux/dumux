@@ -140,9 +140,10 @@ public:
 
         const auto gridView = this->gridGeometry().gridView();
 
+        auto fvGeometry = localView(this->gridGeometry());
         for (const auto& element : elements(gridView))
         {
-            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
+            fvGeometry.bindElement(element);
             for (const auto& scvf : scvfs(fvGeometry))
             {
                 // only search for walls at a global boundary
@@ -437,9 +438,10 @@ private:
         wallFaceAxis.reserve(this->gridGeometry().numBoundaryScvf());
 
         const auto gridView = this->gridGeometry().gridView();
+        auto fvGeometry = localView(this->gridGeometry());
         for (const auto& element : elements(gridView))
         {
-            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
+            fvGeometry.bindElement(element);
             for (const auto& scvf : scvfs(fvGeometry))
             {
                 // only search for walls at a global boundary
@@ -454,10 +456,11 @@ private:
 
     void calculateCCVelocities_(const SolutionVector& curSol)
     {
+        auto fvGeometry = localView(this->gridGeometry());
         // calculate cell-center-averaged velocities
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            const auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
+            fvGeometry.bindElement(element);
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
 
             // calculate velocities
@@ -477,10 +480,13 @@ private:
     void calculateCCVelocityGradients_()
     {
         using std::abs;
+
         // calculate cell-center-averaged velocity gradients, maximum, and minimum values
+        auto fvGeometry = localView(this->gridGeometry());
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             const unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
+
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
             {
                 for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
@@ -497,7 +503,7 @@ private:
                 }
             }
 
-            const auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
+            fvGeometry.bindElement(element);
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 // adapt calculations for Dirichlet condition
@@ -681,10 +687,11 @@ private:
     void storeViscosities_(const SolutionVector& curSol)
     {
         // calculate or call all secondary variables
+        auto fvGeometry = localView(this->gridGeometry());
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-            const auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
+            fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
                 const int dofIdx = scv.dofIndex();

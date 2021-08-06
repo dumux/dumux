@@ -96,11 +96,14 @@ public:
     bool update(const SolutionVector& sol, const GridVolumeVariables& gridVolVars, GridFluxVariablesCache& gridFluxVarsCache)
     {
         hasChangedInCurrentIteration_ = false;
+        auto fvGeometry = localView(problem_.gridGeometry());
+        auto elemVolVars = localView(gridVolVars);
+        auto elemFluxVarsCache = localView(gridFluxVarsCache);
         for (auto&& element : elements(problem_.gridGeometry().gridView()))
         {
-            const auto fvGeometry = localView(problem_.gridGeometry()).bindElement(element);
-            const auto elemVolVars = localView(gridVolVars).bind(element, fvGeometry, sol);
-            const auto elemFluxVarsCache = localView(gridFluxVarsCache).bind(element, fvGeometry, elemVolVars);
+            fvGeometry.bindElement(element);
+            elemVolVars.bind(element, fvGeometry, sol);
+            elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
 
             for (auto&& scvf : scvfs(fvGeometry))
             {
@@ -153,6 +156,9 @@ public:
         if (accuracyCriterion < 0.0)
             return;
 
+        auto fvGeometry = localView(problem_.gridGeometry());
+        auto elemVolVars = localView(gridVolVars);
+        auto elemFluxVarsCache = localView(gridFluxVarsCache);
         for (auto&& element : elements(problem_.gridGeometry().gridView()))
         {
             // Only consider throats which have been invaded during the current time step
@@ -160,9 +166,9 @@ public:
             if (!invadedCurrentIteration_[eIdx] || invadedPreviousTimeStep_[eIdx] == invadedCurrentIteration_[eIdx])
                 continue;
 
-            const auto fvGeometry = localView(problem_.gridGeometry()).bindElement(element);
-            const auto elemVolVars = localView(gridVolVars).bind(element, fvGeometry, sol);
-            const auto elemFluxVarsCache = localView(gridFluxVarsCache).bind(element, fvGeometry, elemVolVars);
+            fvGeometry.bindElement(element);
+            elemVolVars.bind(element, fvGeometry, sol);
+            elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
 
             for (auto&& scvf : scvfs(fvGeometry))
             {

@@ -143,6 +143,7 @@ public:
 
         for (auto level = grid.maxLevel(); level >= 0; level--)
         {
+            auto fvGeometry = localView(*gridGeometry_);
             for (const auto& element : elements(grid.levelGridView(level)))
             {
                 // get map entry
@@ -151,7 +152,7 @@ public:
                 // put values in the map for leaf elements
                 if (element.isLeaf())
                 {
-                    const auto fvGeometry = localView(*gridGeometry_).bindElement(element);
+                    fvGeometry.bindElement(element);
 
                     // store current element solution
                     adaptedValues.u = ElementSolution(element, sol_, *gridGeometry_);
@@ -226,13 +227,13 @@ public:
         }
 
         // iterate over leaf and reconstruct the solution
+        auto fvGeometry = localView(*gridGeometry_);
         for (const auto& element : elements(gridGeometry_->gridView().grid().leafGridView(), Dune::Partitions::interior))
         {
             if (!element.isNew())
             {
                 const auto& adaptedValues = adaptionMap_[element];
-
-                const auto fvGeometry = localView(*gridGeometry_).bindElement(element);
+                fvGeometry.bindElement(element);
 
                 // obtain element solution from map (divide by count!)
                 auto elemSol = adaptedValues.u;
@@ -310,7 +311,7 @@ public:
                     auto elemSolSon = adaptedValuesFather.u;
                     elemSolSon[0] /= adaptedValuesFather.count;
 
-                    const auto fvGeometry = localView(*gridGeometry_).bindElement(element);
+                    fvGeometry.bindElement(element);
 
                     for (const auto& scv : scvs(fvGeometry))
                     {
@@ -334,7 +335,7 @@ public:
                 {
                     auto& adaptedValuesFather = adaptionMap_[fatherElement];
 
-                    const auto fvGeometry = localView(*gridGeometry_).bindElement(element);
+                    fvGeometry.bindElement(element);
 
                     // interpolate solution in the father to the vertices of the new son
                     ElementSolution elemSolSon(element, sol_, *gridGeometry_);

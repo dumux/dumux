@@ -475,13 +475,12 @@ public:
             // local view on the bulk fv geometry
             const auto bulkFvGeometry = localView(this->problem(bulkId).gridGeometry()).bindElement(element);
 
+            const auto& ldGridGeometry = this->problem(lowDimId).gridGeometry();
+            auto fvGeom = localView(ldGridGeometry);
             for (const auto lowDimElemIdx : elementStencil)
             {
-                const auto& ldGridGeometry = this->problem(lowDimId).gridGeometry();
-
                 const auto& ldSol = Assembler::isImplicit() ? this->curSol()[lowDimId] : assembler.prevSol()[lowDimId];
                 const auto elemJ = ldGridGeometry.element(lowDimElemIdx);
-                auto fvGeom = localView(ldGridGeometry);
                 fvGeom.bindElement(elemJ);
 
                 std::vector<VolumeVariables<lowDimId>> elemVolVars(fvGeom.numScv());
@@ -532,14 +531,19 @@ public:
             const auto& embedments = it->second.embedments;
             const auto numEmbedments = embedments.size();
             lowDimContext_.resize(numEmbedments);
+
+            auto bulkFvGeom = localView(bulkGridGeom);
+            auto bulkElemVolVars = localView(assembler.gridVariables(bulkId).curGridVolVars());
+            auto bulkElemFluxVarsCache = localView(assembler.gridVariables(bulkId).gridFluxVarsCache());
+
             for (unsigned int i = 0; i < numEmbedments; ++i)
             {
                 const auto& bulkSol = Assembler::isImplicit() ? this->curSol()[bulkId] : assembler.prevSol()[bulkId];
                 const auto curBulkElem = bulkGridGeom.element(embedments[i].first);
 
-                const auto bulkFvGeom = localView(bulkGridGeom).bind(curBulkElem);
-                const auto bulkElemVolVars = localView(assembler.gridVariables(bulkId).curGridVolVars()).bind(curBulkElem, bulkFvGeom, bulkSol);
-                const auto bulkElemFluxVarsCache = localView(assembler.gridVariables(bulkId).gridFluxVarsCache()).bind(curBulkElem, bulkFvGeom, bulkElemVolVars);
+                bulkFvGeom.bind(curBulkElem);
+                bulkElemVolVars.bind(curBulkElem, bulkFvGeom, bulkSol);
+                bulkElemFluxVarsCache.bind(curBulkElem, bulkFvGeom, bulkElemVolVars);
 
                 lowDimContext_.isSet = true;
                 lowDimContext_.bulkElemBcTypes[i].update(this->problem(bulkId), curBulkElem, bulkFvGeom);

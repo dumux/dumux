@@ -99,11 +99,15 @@ public:
 
         std::vector<bool> dofVisited(uCurrentIter.size(), false);
 
+        auto fvGeometry = localView(problem.gridGeometry());
+        auto curElemVolVars = localView(curGridVolVars);
+        auto prevElemVolVars = localView(prevGridVolVars);
+
         for (const auto& element : elements(problem.gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(problem.gridGeometry()).bindElement(element);
-            auto curElemVolVars = localView(curGridVolVars).bindElement(element, fvGeometry, uCurrentIter);
-            auto prevElemVolVars = localView(prevGridVolVars).bindElement(element, fvGeometry, prevSol);
+            fvGeometry.bindElement(element);
+            curElemVolVars.bindElement(element, fvGeometry, uCurrentIter);
+            prevElemVolVars.bindElement(element, fvGeometry, prevSol);
 
             for (const auto& scv : scvs(fvGeometry))
             {

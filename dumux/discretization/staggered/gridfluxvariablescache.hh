@@ -114,11 +114,13 @@ public:
             FluxVariablesCacheFiller filler(problem());
 
             fluxVarsCache_.resize(gridGeometry.numScvf());
+            auto fvGeometry = localView(gridGeometry);
+            auto elemVolVars = localView(gridVolVars);
             for (const auto& element : elements(gridGeometry.gridView()))
             {
                 // Prepare the geometries within the elements of the stencil
-                const auto fvGeometry = localView(gridGeometry).bind(element);
-                const auto elemVolVars = localView(gridVolVars).bind(element, fvGeometry, sol);
+                fvGeometry.bind(element);
+                elemVolVars.bind(element, fvGeometry, sol);
 
                 for (auto&& scvf : scvfs(fvGeometry))
                 {

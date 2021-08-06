@@ -300,14 +300,17 @@ public:
 
             // split the source values equally among all concerned entities
             source.setEmbeddings(entities.size()*source.embeddings());
-            // loop over all concernes elements
+
+            auto fvGeometry = localView(gridGeometry);
+
+            // loop over all concerned elements
             for (const auto eIdx : entities)
             {
                 if constexpr (GridGeometry::discMethod == DiscretizationMethod::box)
                 {
                     // check in which subcontrolvolume(s) we are
                     const auto element = boundingBoxTree.entitySet().entity(eIdx);
-                    const auto fvGeometry = localView(gridGeometry).bindElement(element);
+                    fvGeometry.bindElement(element);
 
                     const auto globalPos = source.position();
                     // loop over all sub control volumes and check if the point source is inside

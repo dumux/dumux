@@ -215,8 +215,7 @@ public:
         if (!isStationary_)
             prevElemVolVars.bindElement(element, fvGeometry, sol_);
 
-        auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache());
-        elemFluxVarsCache.bindElement(element, fvGeometry, curElemVolVars);
+        const auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache()).bindElement(element, fvGeometry, curElemVolVars);
 
         ElementBoundaryTypes elemBcTypes;
         elemBcTypes.update(localResidual_.problem(), element, fvGeometry);

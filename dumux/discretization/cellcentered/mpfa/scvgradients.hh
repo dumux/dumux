@@ -167,6 +167,10 @@ private:
         result.second.reserve(numScvs);
         std::vector<bool> vertexHandled(gridView.size(dim), false);
 
+        auto fvGeometry = localView(gridGeometry);
+        auto elemVolVars = localView(gridVariables.curGridVolVars());
+        auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache());
+
         for (const auto& element : elements(gridView))
         {
             bool allFinished = true;
@@ -179,9 +183,9 @@ private:
                 continue;
 
             // compute gradients in all scvs of all interaction volumes in this element
-            const auto fvGeometry = localView(gridGeometry).bind(element);
-            const auto elemVolVars = localView(gridVariables.curGridVolVars()).bind(element, fvGeometry, x);
-            const auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
+            fvGeometry.bind(element);
+            elemVolVars.bind(element, fvGeometry, x);
+            elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
 
             for (const auto& scvf : scvfs(fvGeometry))
             {

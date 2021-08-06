@@ -71,10 +71,10 @@ public:
         isCoupledDarcyScvf_.resize(darcyFvGridGeometry.numScvf(), false);
 
         const auto& stokesGridView = stokesFvGridGeometry.gridView();
-
+        auto stokesFvGeometry = localView(stokesFvGridGeometry);
         for (const auto& stokesElement : elements(stokesGridView))
         {
-            auto stokesFvGeometry = localView(stokesFvGridGeometry).bindElement(stokesElement);
+            stokesFvGeometry.bindElement(stokesElement);
 
             for (const auto& scvf : scvfs(stokesFvGeometry))
             {

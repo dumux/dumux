@@ -86,10 +86,10 @@ public:
     void update(const GridGeometry& gridGeometry, const SolutionVector& sol)
     {
         faceVariables_.resize(gridGeometry.numScvf());
-
+        auto fvGeometry = localView(gridGeometry);
         for (auto&& element : elements(gridGeometry.gridView()))
         {
-            const auto fvGeometry = localView(gridGeometry).bindElement(element);
+            fvGeometry.bindElement(element);
 
             for (auto&& scvf : scvfs(fvGeometry))
             {

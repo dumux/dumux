@@ -82,13 +82,12 @@ public:
 
         // container to store for each element J the elements I which have J in their flux stencil
         Dune::ReservedVector<std::pair<GridIndexType, DataJ>, maxElemStencilSize> dataJForI;
-
+        auto fvGeometry = localView(gridGeometry);
         for (const auto& element : elements(gridGeometry.gridView()))
         {
             // We are looking for the elements I, for which this element J is in the flux stencil
             const auto globalJ = gridGeometry.elementMapper().index(element);
-
-            const auto fvGeometry = localView(gridGeometry).bindElement(element);
+            fvGeometry.bindElement(element);
 
             // obtain the data of J in elements I
             dataJForI.clear();

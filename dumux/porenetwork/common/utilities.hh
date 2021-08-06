@@ -72,10 +72,13 @@ public:
         std::vector<bool> poreVisited(problem_().gridGeometry().numDofs(), false);
         std::vector<Scalar> weights(averagedQuantityInfo_.size(), 0.0);
 
+        auto fvGeometry = localView(problem_().gridGeometry());
+        auto elemVolVars = localView(gridVariables_.curGridVolVars());
+
         for (const auto& element : elements(problem_().gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(problem_().gridGeometry()).bind(element);
-            auto elemVolVars = localView(gridVariables_.curGridVolVars()).bind(element, fvGeometry, sol_);
+            fvGeometry.bind(element);
+            elemVolVars.bind(element, fvGeometry, sol_);
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv(); ++scvIdx)
             {

@@ -116,11 +116,11 @@ public:
                 elemCornerIndices[i] = codimOneGridAdapter.bulkGridVertexIndex(lowDimElement.template subEntity<lowDimDim>(i));
 
             // Find the scvfs in the adjoined entities coinciding with the low dim element
+            auto fvGeometry = localView(bulkFvGridGeometry);
             for (auto bulkElemIdx : adjoinedEntityIndices)
             {
                 const auto bulkElement = bulkFvGridGeometry.element(bulkElemIdx);
-
-                const auto fvGeometry = localView(bulkFvGridGeometry).bind(bulkElement);
+                fvGeometry.bind(bulkElement);
 
                 std::vector<BulkIndexType> embeddedScvfIndices;
                 for (const auto& scvf : scvfs(fvGeometry))

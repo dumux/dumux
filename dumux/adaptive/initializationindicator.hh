@@ -143,6 +143,12 @@ public:
         //! prepare an indicator for refinement
         indicatorVector_.assign(gridGeometry_->gridView().size(0), false);
 
+        // get the fvGeometry and elementVolVars needed for the bc and source interfaces
+        auto fvGeometry = localView(*gridGeometry_);
+        auto elemVolVars = localView(gridVariables_->curGridVolVars());
+        // elemFluxVarsCache for neumann interface
+        auto elemFluxVarsCache = localView(gridVariables_->gridFluxVarsCache());
+
         for (const auto& element : elements(gridGeometry_->gridView()))
         {
             const auto eIdx = gridGeometry_->elementMapper().index(element);
@@ -162,12 +168,11 @@ public:
             if (element.level() == maxLevel_)
                 continue;
 
-            // get the fvGeometry and elementVolVars needed for the bc and source interfaces
-            const auto fvGeometry = localView(*gridGeometry_).bind(element);
-            const auto elemVolVars = localView(gridVariables_->curGridVolVars()).bind(element, fvGeometry, sol);
+            // Bind all of the local views
+            fvGeometry.bind(element);
+            elemVolVars.bind(element, fvGeometry, sol);
+            elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
 
-            // elemFluxVarsCache for neumann interface
-            const auto elemFluxVarsCache = localView(gridVariables_->gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
 
             //! Check if we have to refine around a source term
             if (refineAtSource_)
