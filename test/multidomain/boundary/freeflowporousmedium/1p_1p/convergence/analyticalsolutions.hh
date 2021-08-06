@@ -318,17 +318,16 @@ Dune::FieldVector<double, 3> stokesRHS(const Dune::FieldVector<double, 2>& globa
 // sigma_ff = vvT + sym(grad(v)) + pI
 Dune::FieldMatrix<double, 2, 2> stokesStress(const Dune::FieldVector<double, 2>& globalPos)
 {
+    using std::sin; using std::cos;
     const double x = globalPos[0];
     const double y = globalPos[1];
-    const double y2 = y*y;
     static constexpr double omega = M_PI;
     const double sinOmegaX = sin(omega*x);
     const double cosOmegaX = cos(omega*x);
-    const double sin2OmegaX = sinOmegaX*sinOmegaX;
 
     Dune::FieldMatrix<double, 2, 2> stress(0.0);
-    stress[0][0] = y2 - y2*sin2OmegaX;
-    stress[0][1] = -y2*sin2OmegaX - 1.0 + omega*y*cosOmegaX;
+    stress[0][0] = y*y * cosOmegaX*cosOmegaX;
+    stress[0][1] = -y*y*sinOmegaX + omega*y*cosOmegaX - 1.0;
     stress[1][0] = stress[0][1]; // symmetric
     stress[1][1] = 2*sinOmegaX;
     return stress;
