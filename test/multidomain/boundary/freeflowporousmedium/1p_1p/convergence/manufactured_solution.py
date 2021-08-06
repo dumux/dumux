@@ -11,8 +11,8 @@ import numpy as np
 from sympy import *
 
 # case = "Rybak"
-# case = "Shiue_1"
-case = "Shiue_2"
+#case = "Shiue_1"
+case = "Schneider"
 
 # divergence of a matrix
 def div(M):
@@ -33,9 +33,12 @@ def analyticalSolutionStokes(case):
     elif case == "Shiue_1":
         vFF = np.array([-1.0/sp.pi * sp.exp(y) * sp.sin(sp.pi*x), (sp.exp(y) - sp.exp(1)) * sp.cos(sp.pi*x)])
         pFF = 2.0*sp.exp(y) * sp.cos(sp.pi*x)
-    else: # Shiue_2
+    elif case == "Shiue_2":
         vFF = np.array([(y-1.0)*(y-1.0) + x*(y-1.0) + 3.0*x - 1.0, x*(x-1.0) - 0.5*(y-1.0)*(y-1.0) - 3.0*y + 1.0])
         pFF = 2.0*x + y - 1.0
+    else: # Schneider
+        vFF = np.array([y, -y*sp.sin(sp.pi*x)])
+        pFF = -y*y*sp.sin(sp.pi*x)*sp.sin(sp.pi*x)
     return [vFF, pFF]
 
 vFF, pFF = analyticalSolutionStokes(case)
@@ -46,15 +49,17 @@ gradV = grad(vFF)
 gradVT = grad(vFF).T
 pI = np.array([[pFF,  0], [0,  pFF]])
 
-print("Stress tensor (only Stokes) for case", case)
-print("-- [0][0]: ", sp.simplify(-(gradV[0][0] + gradVT[0][0]) + pI[0][0]))
-print("-- [1][1]: ", sp.simplify(-(gradV[1][1] + gradVT[1][1]) + pI[1][1]))
-print("-- [0][1] == [1][0]: ", sp.simplify(-(gradV[0][1] + gradVT[0][1])))
-
 # complete momentum flux and its divergence
-#momentumFlux = vvT - (gradV + gradVT) +pI
-momentumFlux = - (gradV + gradVT) +pI # only Stokes
+if case == "Schneider":
+    momentumFlux = vvT - (gradV + gradVT) +pI
+else:
+    momentumFlux = - (gradV + gradVT) +pI # only Stokes
 divMomentumFlux = div(momentumFlux)
+
+print("\n\nStress tensor flux for case", case)
+print("-- [0][0]: ", sp.simplify(momentumFlux[0][0]))
+print("-- [1][1]: ", sp.simplify(momentumFlux[1][1]))
+print("-- [0][1] == [1][0]: ", sp.simplify(momentumFlux[0][1]))
 
 print("\n\nSource terms for case", case)
 
@@ -70,8 +75,10 @@ def analyticalSolutionDarcy(case):
         pD = 0.5*y*y*sp.sin(sp.pi*x)
     elif case == "Shiue_1":
         pD = (sp.exp(y) - y*sp.exp(1)) * sp.cos(sp.pi*x)
-    else: # Shiue_2
+    elif case == "Shiue_2":
         pD = x*(1.0-x)*(y-1.0) + pow(y-1.0, 3)/3.0 + 2.0*x + 2.0*y + 4.0
+    else: # Schneider
+        pD = (sp.exp(y+1) + 2.0 - sp.exp(2))*sp.sin(sp.pi*x)
     return pD
 
 pD = analyticalSolutionDarcy(case)
