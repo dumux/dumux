@@ -20,10 +20,10 @@ GXX_RELEASE_OPTS=" \
 
 SPECIFIC_COMPILER=""
 # if you want to specify a specific compiler, do it by setting (comment the above line)
-#SPECIFIC_COMPILER="
-# -DCMAKE_C_COMPILER=/usr/bin/gcc-8
-# -DCMAKE_CXX_COMPILER=/usr/bin/g++-8
-#"
+SPECIFIC_COMPILER="
+ -DCMAKE_C_COMPILER=/usr/bin/gcc-7
+ -DCMAKE_CXX_COMPILER=/usr/bin/g++-7
+"
 
 SPECIFIC_GENERATOR=""
 # if you want to specify a specific make file generator (e.g. ninja), do it by setting (comment the above line)
