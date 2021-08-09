@@ -19,13 +19,12 @@
 /*!
  * \file
  * \ingroup OnePTests
- * \brief Definition of the spatial parameters for the 1pni problems.
+ * \brief Definition of the spatial parameters for the simple 1pni problem.
  */
 
-#ifndef DUMUX_TEST_1PNI_SPATIAL_PARAMS_HH
-#define DUMUX_TEST_1PNI_SPATIAL_PARAMS_HH
+#ifndef DUMUX_TEST_1PNI_SIMPLE_SPATIAL_PARAMS_HH
+#define DUMUX_TEST_1PNI_SIMPLE_SPATIAL_PARAMS_HH
 
-#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv1p.hh>
 
 namespace Dumux {
@@ -43,7 +42,6 @@ class OnePNISpatialParams
     using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
                                            OnePNISpatialParams<GridGeometry, Scalar>>;
 
-    static const int dimWorld = GridView::dimensionworld;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 

@@ -19,13 +19,11 @@
 /**
  * \file
  * \ingroup OnePTests
- * \brief Test for the OnePModel in combination with the NI model for a conduction problem.
- *
- * The simulation domain is a tube with an elevated temperature on the left hand side.
+ * \brief Test for the OnePModel in combination with the NI model for a simple problem.
  */
 
-#ifndef DUMUX_1PNI_CONDUCTION_PROBLEM_PROPERTIES_HH
-#define DUMUX_1PNI_CONDUCTION_PROBLEM_PROPERTIES_HH
+#ifndef DUMUX_TEST_1PNI_SIMPLE_PROPERTIES_HH
+#define DUMUX_TEST_1PNI_SIMPLE_PROPERTIES_HH
 
 #include <dune/grid/yaspgrid.hh>
 
@@ -34,7 +32,6 @@
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 
 #include "problem.hh"
 #include "spatialparams.hh"

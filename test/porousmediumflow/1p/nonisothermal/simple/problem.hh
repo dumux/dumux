@@ -19,13 +19,16 @@
 /**
  * \file
  * \ingroup OnePTests
- * \brief Test for the OnePModel in combination with the NI model for a conduction problem.
+ * \brief Test for the OnePModel in combination with the NI model for a simple problem.
  *
- * The simulation domain is a tube with an elevated temperature on the left hand side.
+ * The simulation domain is the unit square. While a pressure gradient from left
+ * to right is imposed by corresponding Dirichlet conditions, the prescribed
+ * temperature is the same on both sides. Therefore, a uniform constant temperature
+ * distribution should be expected.
  */
 
-#ifndef DUMUX_1PNI_CONDUCTION_PROBLEM_HH
-#define DUMUX_1PNI_CONDUCTION_PROBLEM_HH
+#ifndef DUMUX_TEST_1PNI_SIMPLE_PROBLEM_HH
+#define DUMUX_TEST_1PNI_SIMPLE_PROBLEM_HH
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -46,11 +49,7 @@ class OnePNISimpleProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
-    using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
