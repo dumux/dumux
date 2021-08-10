@@ -154,7 +154,7 @@ public:
         {
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
-                auto upwindTerm = [phaseIdx, compIdx](const VolumeVariables& volVars)
+                auto upwindTerm = [phaseIdx, compIdx](const auto& volVars)
                 {
 
                     return volVars.density(phaseIdx)*volVars.moleFraction(phaseIdx, compIdx)*volVars.mobility(phaseIdx);
