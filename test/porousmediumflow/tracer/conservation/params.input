@@ -1,0 +1,28 @@
+[TimeLoop]
+DtInitial = 1e4  # [s]
+TEnd = 1e5 # [s]
+
+[Grid]
+UpperRight = 1 10
+Cells = 1 10
+
+[SpatialParams]
+LinearPcEntry = 0.0
+LinearPcMax = 0.0
+Swr = 0.0
+Snr = 0.0
+
+[Problem]
+Name = test_tracer_conservation
+EnableGravity = false
+InjectionMass = 0.001
+BinaryDiffusionCoefficient = 0.0
+UseDirichletForTracer = false
+
+[0]
+Component.LiquidKinematicViscosity = 1.0e-6 # [m2/s]
+Component.LiquidDensity = 1.0e3 # [kg/m3]
+
+[1]
+Component.GasKinematicViscosity = 1.0e-5 # [m2/s]
+Component.GasDensity = 1.0 # [kg/m3]
