@@ -83,7 +83,7 @@ class BlackOilLocalResidual : public GetPropType<TypeTag, Properties::BaseLocalR
 
     static constexpr int wPhaseIdx = FluidSystem::wPhaseIdx;
     static constexpr int gPhaseIdx = FluidSystem::gPhaseIdx;
-    static constexpr int oPhaseIdx = FluidSystem::oPhaseIdx; // TODO: Remove if no problem aroused!!
+    static constexpr int oPhaseIdx = FluidSystem::oPhaseIdx;
     static constexpr int wCompIdx = FluidSystem::wCompIdx;
     static constexpr int oCompIdx = FluidSystem::oCompIdx; // NOTE: In the DUMUX setup the oily-phase is called "n"! In this model we changed this in the model!
     static constexpr int gCompIdx = FluidSystem::gCompIdx;
