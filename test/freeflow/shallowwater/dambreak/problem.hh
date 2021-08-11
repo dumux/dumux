@@ -106,10 +106,12 @@ public:
                                   const Scalar time)
     {
         //compute solution for all elements
+        auto fvGeometry = localView(this->gridGeometry());
+        auto elemVolVars = localView(gridVariables.curGridVolVars());
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            const auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
-            const auto elemVolVars = localView(gridVariables.curGridVolVars()).bindElement(element, fvGeometry, curSol);
+            fvGeometry.bindElement(element);
+            elemVolVars.bindElement(element, fvGeometry, curSol);
 
             const auto& globalPos = element.geometry().center();
 

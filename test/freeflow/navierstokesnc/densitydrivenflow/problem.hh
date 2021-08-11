@@ -191,14 +191,15 @@ public:
     template<class GridVariables, class SolutionVector>
     void calculateDeltaRho(const GridVariables& gridVariables, const SolutionVector& sol)
     {
+        auto fvGeometry = localView(this->gridGeometry());
+        auto elemVolVars = localView(gridVariables.curGridVolVars());
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            const auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
+            fvGeometry.bindElement(element);
+            elemVolVars.bind(element, fvGeometry, sol);
             for (auto&& scv : scvs(fvGeometry))
             {
                 const auto ccDofIdx = scv.dofIndex();
-                const auto elemVolVars = localView(gridVariables.curGridVolVars()).bind(element, fvGeometry, sol);
-
                 deltaRho_[ccDofIdx] = elemVolVars[scv].density() - 999.694;
             }
         }

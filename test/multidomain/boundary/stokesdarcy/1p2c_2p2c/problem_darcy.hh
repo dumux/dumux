@@ -106,10 +106,12 @@ public:
         Scalar massWater = 0.0;
 
         // bulk elements
+        auto fvGeometry = localView(this->gridGeometry());
+        auto elemVolVars = localView(gridVariables.curGridVolVars());
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            const auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
-            const auto elemVolVars = localView(gridVariables.curGridVolVars()).bindElement(element, fvGeometry, curSol);
+            fvGeometry.bindElement(element);
+            elemVolVars.bindElement(element, fvGeometry, curSol);
 
             for (auto&& scv : scvs(fvGeometry))
             {

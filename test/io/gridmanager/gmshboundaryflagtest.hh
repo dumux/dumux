@@ -48,11 +48,10 @@ public:
                                      std::shared_ptr<const GridGeometry> gridGeometry,
                                      std::shared_ptr<const GridData<Grid>> gridData)
     {
-
+        auto fvGeometry = localView(*gridGeometry);
         for(const auto& element : elements(leafGridView))
         {
-            const auto fvGeometry = localView(*gridGeometry).bind(element);
-
+            fvGeometry.bind(element);
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 if (scvf.boundary())

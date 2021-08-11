@@ -62,10 +62,12 @@ void assembleElementStresses(SigmaStorage& sigmaStorage,
                              const GridVariables& gridVariables,
                              const SolutionVector& x)
 {
+    auto fvGeometry = localView(gridGeometry);
+    auto elemVolVars = localView(gridVariables.curGridVolVars());
     for (const auto& element : elements(gridGeometry.gridView()))
     {
-        const auto fvGeometry = localView(gridGeometry).bind(element);
-        const auto elemVolVars = localView(gridVariables.curGridVolVars()).bind(element, fvGeometry, x);
+        fvGeometry.bind(element);
+        elemVolVars.bind(element, fvGeometry, x);
 
         // evaluate flux variables cache at cell center
         using FluxVarsCache = typename GridVariables::GridFluxVariablesCache::FluxVariablesCache;

@@ -205,10 +205,12 @@ public:
     void computeSourceIntegral(const SolutionVector& sol, const GridVariables& gridVars)
     {
         PrimaryVariables source(0.0);
+        auto fvGeometry = localView(this->gridGeometry());
+        auto elemVolVars = localView(gridVars.curGridVolVars());
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            const auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
-            const auto elemVolVars = localView(gridVars.curGridVolVars()).bindElement(element, fvGeometry, sol);
+            fvGeometry.bindElement(element);
+            elemVolVars.bindElement(element, fvGeometry, sol);
 
             for (auto&& scv : scvs(fvGeometry))
             {

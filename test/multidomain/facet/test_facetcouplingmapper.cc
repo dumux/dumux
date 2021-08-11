@@ -199,6 +199,7 @@ int main (int argc, char *argv[])
 
         std::size_t singleCouplings = 0;
         std::size_t doubleCouplings = 0;
+        auto fvElementGeometry = localView(bulkFvGeometry);
         for (const auto& entry : bulkFacetMap)
         {
             const auto cStencilSize = entry.second.couplingStencil.size();
@@ -208,7 +209,7 @@ int main (int argc, char *argv[])
             else DUNE_THROW(Dune::InvalidStateException, "Coupling stencil size is " << cStencilSize << " instead of 1 or 2");
 
             const auto bulkElement = bulkFvGeometry.element(entry.first);
-            const auto fvElementGeometry = localView(bulkFvGeometry).bind(bulkElement);
+            fvElementGeometry.bind(bulkElement);
 
             // check scvf conformity with low dim elements
             for (const auto& elemToScvfs : entry.second.elementToScvfMap)
@@ -253,6 +254,7 @@ int main (int argc, char *argv[])
         else
             std::cout << "Found 32 entries in facet-bulk map" << std::endl;
 
+        auto fvElementGeometry = localView(bulkFvGeometry);
         for (const auto& entry : facetBulkMap)
         {
             const auto lowDimGeom = facetFvGeometry.element(entry.first).geometry();
@@ -270,7 +272,7 @@ int main (int argc, char *argv[])
             for (const auto& embedment : entry.second.embedments)
             {
                 const auto bulkElement = bulkFvGeometry.element(embedment.first);
-                const auto fvElementGeometry = localView(bulkFvGeometry).bind(bulkElement);
+                fvElementGeometry.bind(bulkElement);
 
                 // check if the scvfs of the embedment coincide with low dim element
                 for (auto scvfIdx : embedment.second)

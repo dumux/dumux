@@ -1,3 +1,4 @@
+
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
@@ -215,11 +216,11 @@ public:
         const auto& gridView = this->gridGeometry().gridView();
         xEquilxwn_.resize(gridView.size(dofCodim));
         xEquilxnw_.resize(gridView.size(dofCodim));
+        auto fvGeometry = localView(this->gridGeometry());
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             auto elemSol = elementSolution(element, curSol, this->gridGeometry());
-
-            const auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
+            fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
             {

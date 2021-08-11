@@ -214,15 +214,20 @@ int main(int argc, char** argv)
         // loop over elements to compute fluxes, saturations, densities for tracer
         using FluxVariables = GetPropType<TwoPTypeTag, Properties::FluxVariables>;
         auto upwindTerm = [](const auto& volVars) { return volVars.mobility(0); };
+
+        auto fvGeometry = localView(*gridGeometry);
+        auto elemVolVars = localView(twoPGridVariables->curGridVolVars());
+        auto elemFluxVars = localView(twoPGridVariables->gridFluxVarsCache());
+
         for (const auto& element : elements(leafGridView))
         {
             ////////////////////////////////////////////////////////////
             // compute volume fluxes for the tracer model
             ///////////////////////////////////////////////////////////
 
-            const auto fvGeometry = localView(*gridGeometry).bind(element);
-            const auto elemVolVars = localView(twoPGridVariables->curGridVolVars()).bind(element, fvGeometry, p);
-            const auto elemFluxVars = localView(twoPGridVariables->gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
+            fvGeometry.bind(element);
+            elemVolVars.bind(element, fvGeometry, p);
+            elemFluxVars.bind(element, fvGeometry, elemVolVars);
 
             for (const auto& scvf : scvfs(fvGeometry))
             {

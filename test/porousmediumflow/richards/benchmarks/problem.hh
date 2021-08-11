@@ -213,8 +213,8 @@ public:
     {
         Scalar rate = 0.0;
 
-        auto fvGeometry = localView(this->gridGeometry())
-        auto elemVolVars = localView(gridVars.curGridVolVars())
+        auto fvGeometry = localView(this->gridGeometry());
+        auto elemVolVars = localView(gridVars.curGridVolVars());
 
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {

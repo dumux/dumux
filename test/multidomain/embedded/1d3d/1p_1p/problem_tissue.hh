@@ -78,9 +78,10 @@ public:
         name_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
 
         exactPressure_.resize(this->gridGeometry().numDofs());
+        auto fvGeometry = localView(this->gridGeometry());
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            const auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
+            fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
                 exactPressure_[scv.dofIndex()] = exactSolution(scv.dofPosition());

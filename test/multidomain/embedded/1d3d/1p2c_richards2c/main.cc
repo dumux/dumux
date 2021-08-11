@@ -57,10 +57,12 @@ double computeSourceIntegral(const Problem& problem, const SolutionVector& sol, 
 {
     const auto& gg = problem.gridGeometry();
     typename SolutionVector::block_type source(0.0);
+    auto fvGeometry = localView(gg);
+    auto elemVolVars = localView(gridVars.curGridVolVars());
     for (const auto& element : elements(gg.gridView()))
     {
-        const auto fvGeometry = localView(gg).bindElement(element);
-        const auto elemVolVars = localView(gridVars.curGridVolVars()).bindElement(element, fvGeometry, sol);
+        fvGeometry.bindElement(element);
+        elemVolVars.bindElement(element, fvGeometry, sol);
 
         for (auto&& scv : scvs(fvGeometry))
         {

@@ -156,14 +156,16 @@ int main(int argc, char** argv)
     const auto updateDeltaEtaOutput = [&](auto& deltaEtaNum, auto& thetaNum)
     {
         const auto t = timeLoop->time()/86400.0;
+        auto fvGeometry = localView(*gridGeometry);
+        auto elemVolVars = localView(gridVariables->curGridVolVars());
         for (const auto& element : elements(leafGridView))
         {
             const auto eIdx = leafGridView.indexSet().index(element);
             const auto pos = element.geometry().center()[GridGeometry::GridView::dimensionworld -1];
             deltaEtaNum[eIdx] = solutionInfiltration->deltaEta(pos*100, t);
 
-            const auto fvGeometry = localView(*gridGeometry).bindElement(element);
-            const auto elemVolVars = localView(gridVariables->curGridVolVars()).bindElement(element, fvGeometry, x);
+            fvGeometry.bindElement(element);
+            elemVolVars.bindElement(element, fvGeometry, x);
             for (const auto& scv : scvs(fvGeometry))
                 thetaNum[eIdx] = elemVolVars[scv].saturation() * elemVolVars[scv].porosity();
         }

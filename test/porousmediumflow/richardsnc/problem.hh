@@ -114,11 +114,14 @@ public:
         // compute the mass in the entire domain to make sure the tracer is conserved
         Scalar tracerMass = 0.0;
 
+        auto fvGeometry = localView(this->gridGeometry());
+        auto elemVolVars = localView(gridVariables.curGridVolVars());
+
         // bulk elements
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            const auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
-            const auto elemVolVars = localView(gridVariables.curGridVolVars()).bindElement(element, fvGeometry, curSol);
+            fvGeometry.bindElement(element);
+            elemVolVars.bindElement(element, fvGeometry, curSol);
 
             for (auto&& scv : scvs(fvGeometry))
             {

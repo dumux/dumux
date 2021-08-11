@@ -100,13 +100,14 @@ int main (int argc, char *argv[])
               << "norm in/out - dofIdx on face normal to own face (within own element / in adjacent element)" << std::endl;
 
     // iterate over elements. For every element get fv geometry and loop over scvs and scvfaces
+    auto fvGeometry = localView(gridGeometry);
     for (const auto& element : elements(leafGridView))
     {
         auto eIdx = gridGeometry.elementMapper().index(element);
         if(eIdx == 12 || eIdx == 0)
         {
             std::cout << std::endl << "Checking fvGeometry of element " << eIdx << std::endl;
-            const auto fvGeometry = localView(gridGeometry).bind(element);
+            fvGeometry.bind(element);
 
             auto range = scvs(fvGeometry);
             Detail::NoopFunctor<SubControlVolume> op;

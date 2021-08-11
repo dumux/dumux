@@ -165,9 +165,10 @@ public:
         const Scalar retardedFrontVelocity = darcyVelocity_*storageW/storageTotal/porosity;
         std::cout << "retarded velocity: " << retardedFrontVelocity << '\n';
 
+        auto fvGeometry = localView(this->gridGeometry());
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            const auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
+            fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
                 auto dofIdxGlobal = scv.dofIndex();

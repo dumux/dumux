@@ -71,9 +71,10 @@ auto createAnalyticalSolution(const Problem& problem)
     analyticalVelocityOnFace.resize(gridGeometry.numFaceDofs());
 
     using Indices = typename Problem::Indices;
+    auto fvGeometry = localView(gridGeometry);
     for (const auto& element : elements(gridGeometry.gridView()))
     {
-        const auto fvGeometry = localView(gridGeometry).bindElement(element);
+        fvGeometry.bindElement(element);
         for (auto&& scv : scvs(fvGeometry))
         {
             auto ccDofIdx = scv.dofIndex();
