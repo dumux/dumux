@@ -162,7 +162,9 @@ public:
         Scalar XoG = Rs*rhorefg / rhoo;
         Scalar XoO = 1 - XoG;
 
+
         if (XoG < 0 || XoO < 0) {
+                    std::cout << "globalPos is " << element.geometry().center() << " , pressure is here " << p << std::endl;
             DUNE_THROW(NumericalProblem,
                        "Only positive values are allowed for the mass fractions "
                        "of the oil and the gas components in the oil phase");
@@ -340,6 +342,15 @@ public:
      */
     Scalar mobility(const int phaseIdx) const
     { return mobility_[phaseIdx]; }
+
+    /*!
+     * \brief Returns the dynamic viscosity of the fluid within the
+     *        control volume in \f$\mathrm{[Pa s]}\f$.
+     *
+     * \param phaseIdx The phase index
+     */
+    Scalar viscosity(int phaseIdx) const
+    { return fluidState_.viscosity(phaseIdx); }
 
     /*!
      * \brief Returns the effective capillary pressure within the control volume.
