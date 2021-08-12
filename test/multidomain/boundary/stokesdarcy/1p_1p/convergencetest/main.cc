@@ -167,7 +167,7 @@ int main(int argc, char** argv)
 
     // Define the sub problem type tags
     using FreeFlowTypeTag = Properties::TTag::FreeFlowOneP;
-    using DarcyTypeTag = Properties::TTag::DarcyOneP;
+    using DarcyTypeTag = Properties::TTag::DARCYTYPETAG;
 
     // try to create a grid (from the given grid file or the input file)
     // for both sub-domains
@@ -292,7 +292,7 @@ int main(int argc, char** argv)
     freeFlowVtkWriter.write(1.0);
     darcyVtkWriter.write(1.0);
 
-    printFreeFlowL2Error(*freeFlowProblem, freeFlowSol);
+    printFreeFlowL2Error(freeFlowProblem, freeFlowSol);
     printDarcyL2Error(*darcyProblem, sol[porousMediumIdx]);
 
     ////////////////////////////////////////////////////////////

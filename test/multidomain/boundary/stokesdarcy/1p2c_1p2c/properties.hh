@@ -27,6 +27,7 @@
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/box.hh>
 
 #include <dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh>
 #include <dumux/material/fluidsystems/1padapter.hh>
@@ -48,7 +49,9 @@ namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
-struct DarcyOnePTwoC { using InheritsFrom = std::tuple<OnePNC, CCTpfaModel>; };
+struct DarcyOnePTwoC { using InheritsFrom = std::tuple<OnePNC>; };
+struct DarcyOnePTwoCBox { using InheritsFrom = std::tuple<DarcyOnePTwoC, BoxModel>; };
+struct DarcyOnePTwoCTpfa { using InheritsFrom = std::tuple<DarcyOnePTwoC, CCTpfaModel>; };
 } // end namespace TTag
 
 // Set the problem property
@@ -131,12 +134,12 @@ struct ReplaceCompEqIdx<TypeTag, TTag::StokesOnePTwoC> { static constexpr int va
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::StokesOnePTwoC>
 {
-    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, Properties::TTag::DarcyOnePTwoC>;
+    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, Properties::TTag::DARCYTYPETAG>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;
 };
 
 template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::DarcyOnePTwoC>
+struct CouplingManager<TypeTag, TTag::DARCYTYPETAG>
 {
     using Traits = StaggeredMultiDomainTraits<Properties::TTag::StokesOnePTwoC, Properties::TTag::StokesOnePTwoC, TypeTag>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;

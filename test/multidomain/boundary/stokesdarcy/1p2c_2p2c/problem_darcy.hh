@@ -162,17 +162,41 @@ public:
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
+      * \brief Specifies which kind of boundary condition should be
+      *        used for which equation on a given boundary control volume
+      *        when using the Box method.
+      *
+      * \param element The element
+      * \param scv The boundary sub control volume
+      */
+    BoundaryTypes boundaryTypes(const Element &element, const SubControlVolume &scv) const
+    {
+        BoundaryTypes values;
+        values.setAllNeumann();
+
+        auto fvGeometry = localView(this->gridGeometry());
+        fvGeometry.bindElement(element);
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            if (couplingManager().isCoupledEntity(CouplingManager::porousMediumIdx, element, scvf))
+                values.setAllCouplingNeumann();
+        }
+
+        return values;
+    }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        control volume.
      *
-     * \param element The element for which the Dirichlet boundary condition is set
-     * \param scvf The boundary sub control volume face
-     *
-     * For this method, the \a values parameter stores primary variables.
+     * \param globalPos The position of the center of the finite volume
+     *            for which the dirichlet condition ought to be
+     *            set in global coordinates
      */
-    PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
-        values = initialAtPos(scvf.center());
+        values = initialAtPos(globalPos);
 
         return values;
     }
@@ -194,7 +218,7 @@ public:
     {
         NumEqVector values(0.0);
 
-        if (couplingManager().isCoupledEntity(CouplingManager::porousMediumIdx, scvf))
+        if (couplingManager().isCoupledEntity(CouplingManager::porousMediumIdx, element, scvf))
         {
 #if !NONISOTHERMAL
             values = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf, diffCoeffAvgType_);
@@ -204,7 +228,7 @@ public:
             for(int i = 0; i< massFlux.size(); ++i)
                 values[i] = massFlux[i];
 
-            values[Indices::energyEqIdx] = couplingManager().couplingData().energyCouplingCondition(element, fvGeometry, elemVolVars, scvf, diffCoeffAvgType_);
+            values[Indices::energyEqIdx] = couplingManager().couplingData().energyCouplingCondition(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf, diffCoeffAvgType_);
 #endif
         }
 

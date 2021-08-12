@@ -28,6 +28,7 @@
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/box.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
 
@@ -52,7 +53,9 @@ namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
-struct DarcyTwoP { using InheritsFrom = std::tuple<TwoP, CCTpfaModel>; };
+struct DarcyTwoP { using InheritsFrom = std::tuple<TwoP>; };
+struct DarcyTwoPBox { using InheritsFrom = std::tuple<DarcyTwoP, BoxModel>; };
+struct DarcyTwoPCC { using InheritsFrom = std::tuple<DarcyTwoP, CCTpfaModel>; };
 } // end namespace TTag
 
 // Set the problem property
@@ -99,15 +102,16 @@ struct EnableGridFluxVariablesCache<TypeTag, TTag::StokesOneP> { static constexp
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::StokesOneP> { static constexpr bool value = true; };
 
+
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::StokesOneP>
 {
-    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, Properties::TTag::DarcyTwoP>;
+    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, Properties::TTag::DARCYTYPETAG>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;
 };
 
 template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::DarcyTwoP>
+struct CouplingManager<TypeTag, TTag::DARCYTYPETAG>
 {
     using Traits = StaggeredMultiDomainTraits<Properties::TTag::StokesOneP, Properties::TTag::StokesOneP, TypeTag>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;

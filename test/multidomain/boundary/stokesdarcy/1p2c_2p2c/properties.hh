@@ -28,6 +28,7 @@
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/box.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 
 #include <dumux/material/fluidsystems/h2oair.hh>
@@ -48,9 +49,13 @@ namespace Dumux::Properties {
 // Create new type tags
 namespace TTag {
 #if !NONISOTHERMAL
-struct DarcyTwoPTwoC { using InheritsFrom = std::tuple<TwoPTwoC, CCTpfaModel>; };
+struct DarcyTwoPTwoC { using InheritsFrom = std::tuple<TwoPTwoC>; };
+struct DarcyTwoPTwoCTpfa { using InheritsFrom = std::tuple<DarcyTwoPTwoC, CCTpfaModel>; };
+struct DarcyTwoPTwoCBox { using InheritsFrom = std::tuple<DarcyTwoPTwoC, BoxModel>; };
 #else
-struct DarcyTwoPTwoC { using InheritsFrom = std::tuple<TwoPTwoCNI, CCTpfaModel>; };
+struct DarcyTwoPTwoC { using InheritsFrom = std::tuple<TwoPTwoCNI>; };
+struct DarcyTwoPTwoCTpfa { using InheritsFrom = std::tuple<DarcyTwoPTwoC, CCTpfaModel>; };
+struct DarcyTwoPTwoCBox { using InheritsFrom = std::tuple<DarcyTwoPTwoC, BoxModel>; };
 #endif
 } // end namespace TTag
 
@@ -130,12 +135,12 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::StokesOnePTwoC> { static co
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::StokesOnePTwoC>
 {
-    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, Properties::TTag::DarcyTwoPTwoC>;
+    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, Properties::TTag::DARCYTYPETAG>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;
 };
 
 template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::DarcyTwoPTwoC>
+struct CouplingManager<TypeTag, TTag::DARCYTYPETAG>
 {
     using Traits = StaggeredMultiDomainTraits<Properties::TTag::StokesOnePTwoC, Properties::TTag::StokesOnePTwoC, TypeTag>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;

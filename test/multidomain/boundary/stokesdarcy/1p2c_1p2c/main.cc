@@ -63,7 +63,7 @@ int main(int argc, char** argv)
 
     // Define the sub problem type tags
     using StokesTypeTag = Properties::TTag::StokesOnePTwoC;
-    using DarcyTypeTag = Properties::TTag::DarcyOnePTwoC;
+    using DarcyTypeTag = Properties::TTag::DARCYTYPETAG;
 
     // try to create a grid (from the given grid file or the input file)
     // for both sub-domains
