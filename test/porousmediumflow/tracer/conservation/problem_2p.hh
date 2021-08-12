@@ -18,79 +18,20 @@
  *****************************************************************************/
 /*!
  * \ingroup TwoPTests
- * \brief The properties for the flow problem of a radioactive 2p test.
+ * \brief initial and boundary conditions for the flow problem of the tracer conservation test
  */
 #ifndef DUMUX_TWOP_FLOW_TEST_PROBLEM_HH
 #define DUMUX_TWOP_FLOW_TEST_PROBLEM_HH
 
-#include <iostream>
-
-#include <dune/grid/yaspgrid.hh>
-
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/numeqvector.hh>
-
-#include <dumux/discretization/box.hh>
-#include <dumux/discretization/cctpfa.hh>
-
-#include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/constant.hh>
-#include <dumux/material/fluidsystems/h2oair.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/material/fluidsystems/1pgas.hh>
-#include <dumux/material/fluidsystems/2pimmiscible.hh>
-
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/2p/model.hh>
-#include <dumux/porousmediumflow/2p/incompressiblelocalresidual.hh>
-
-#include "spatialparams_2p.hh"
 
 namespace Dumux {
-// forward declarations
-template<class TypeTag> class TwoPFlowTestProblem;
-
-namespace Properties {
-// Create new type tags
-namespace TTag {
-struct TwoPFlow { using InheritsFrom = std::tuple<TwoP>; };
-struct TwoPFlowTpfa { using InheritsFrom = std::tuple<TwoPFlow, CCTpfaModel>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::TwoPFlow> { using type = Dune::YaspGrid<2>; };
-
-// Set the problem type
-template<class TypeTag>
-struct Problem<TypeTag, TTag::TwoPFlow> { using type = TwoPFlowTestProblem<TypeTag>; };
-
-// Set the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::TwoPFlow>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<0, Scalar> >;
-    using NonwettingPhase = FluidSystems::OnePGas<Scalar, Components::Constant<1, Scalar> >;
-    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
-};
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::TwoPFlow>
-{
-private:
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
-    using type = TwoPFlowTestSpatialParams<GridGeometry, Scalar>;
-};
-
-} // end namespace Properties
 
 /*!
  * \ingroup TwoPTests
- * \brief The properties for the flow problem of a radioactive 2p test.
+ * \brief initial and boundary conditions for the flow problem of the tracer conservation test
  */
 template<class TypeTag>
 class TwoPFlowTestProblem : public PorousMediumFlowProblem<TypeTag>
@@ -120,7 +61,7 @@ public:
     {
         BoundaryTypes values;
 
-        if (onLowerBoundary_(globalPos))
+        if (onRightBoundary_(globalPos))
             values.setAllDirichlet();
         else
             values.setAllNeumann();
@@ -132,7 +73,7 @@ public:
     {
         NumEqVector values(0.0);
 
-        if (onUpperBoundary_(globalPos))
+        if (onLeftBoundary_(globalPos))
         {
             values[conti0EqIdx] = -injectionMass_;
         }
@@ -161,19 +102,17 @@ public:
     { return 293.15; }
 
 private:
-
-    bool onLowerBoundary_(const GlobalPosition &globalPos) const
+    bool onLeftBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] < this->gridGeometry().bBoxMin()[1] + eps_;
+        return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_;
     }
 
-    bool onUpperBoundary_(const GlobalPosition &globalPos) const
+    bool onRightBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_;
+        return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
     }
 
     static constexpr Scalar eps_ = 1e-6;
-
     Scalar injectionMass_;
 };
 

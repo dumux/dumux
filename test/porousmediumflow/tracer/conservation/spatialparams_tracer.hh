@@ -21,8 +21,8 @@
  * \ingroup TracerTests
  * \brief spatial parameters for the tracer conservation test
  */
-#ifndef DUMUX_TEST_SPATIAL_PARAMS_TRACER_HH
-#define DUMUX_TEST_SPATIAL_PARAMS_TRACER_HH
+#ifndef DUMUX_TEST_TRACER_CONSERVATION_SPATIAL_PARAMS_HH
+#define DUMUX_TEST_TRACER_CONSERVATION_SPATIAL_PARAMS_HH
 
 #include <dumux/material/spatialparams/fv.hh>
 

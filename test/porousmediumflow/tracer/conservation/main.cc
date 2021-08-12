@@ -29,6 +29,7 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/float_cmp.hh>
+#include <dune/common/exceptions.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -43,8 +44,7 @@
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
 
-#include "problem_2p.hh"
-#include "problem_tracer.hh"
+#include "properties.hh"
 
 template <class MoleFractionVector, class SaturationVector>
 void equilibrateTracer(MoleFractionVector& moleFracVec,
@@ -57,6 +57,70 @@ void equilibrateTracer(MoleFractionVector& moleFracVec,
         if (!Dune::FloatCmp::eq(newSat, 0.0))
             moleFracVec[i] *= oldSatVec[i]/newSat;
     }
+}
+
+template <class Scalar, class Problem, class SolutionVector, class GridVariables>
+Scalar checkConservation(const Problem& problem,
+                         const SolutionVector& sol,
+                         const GridVariables& gridVars,
+                         Scalar dt,
+                         Scalar accumulatedInflow)
+
+{
+    Scalar storedAmount = 0.0;
+
+    const auto& gridGeometry = problem.gridGeometry();
+    for (const auto& element : elements(gridGeometry.gridView()))
+    {
+        auto fvGeometry = localView(gridGeometry);
+        fvGeometry.bind(element);
+
+        auto elemVolVars = localView(gridVars.curGridVolVars());
+        elemVolVars.bind(element, fvGeometry, sol);
+
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            const auto& volVars = elemVolVars[scv];
+            if(problem.useMoles())
+            {
+                storedAmount += volVars.moleFraction(/*phaseIdx*/0, /*compIdx*/0) * volVars.molarDensity(/*phaseIdx*/0)
+                * scv.volume() * volVars.saturation(/*phaseIdx*/0) * volVars.porosity() * volVars.extrusionFactor();
+            }
+            else
+                storedAmount += volVars.massFraction(/*phaseIdx*/0, /*compIdx*/0) * volVars.density(/*phaseIdx*/0)
+                * scv.volume() * volVars.saturation(/*phaseIdx*/0) * volVars.porosity() * volVars.extrusionFactor();
+        }
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            if (scvf.boundary())
+            {
+                const auto& volVars = elemVolVars[scvf.insideScvIdx()];
+                if (problem.useDirichlet())
+                {
+                    const auto moleFraction = problem.dirichletAtPos(scvf.ipGlobal());
+                    accumulatedInflow -= problem.spatialParams().volumeFlux(element, fvGeometry, elemVolVars, scvf)
+                    * moleFraction
+                    * volVars.molarDensity(/*phaseIdx*/0)
+                    * scvf.area() * volVars.extrusionFactor()
+                    * dt;
+                }
+                else
+                    accumulatedInflow -= problem.neumannAtPos(scvf.ipGlobal())[0]
+                    * scvf.area() * volVars.extrusionFactor()
+                    * dt;
+            }
+        }
+    }
+
+    const std::string unit = problem.useMoles() ? " moles " : " kg ";
+    std::cout << "\033[1;31m" << storedAmount << unit << "tracer are inside the domain. \033[0m" << '\n';
+    std::cout << "\033[1;31m" << accumulatedInflow << unit << "should have flown into the domain. \033[0m" << '\n';
+    std::cout << "\033[1;31m" << accumulatedInflow - storedAmount << unit << "are missing. \033[0m" << '\n';
+
+    if (std::abs(accumulatedInflow - storedAmount) > std::numeric_limits<Scalar>::epsilon())
+        DUNE_THROW(Dune::InvalidStateException, "tracer is not conserved");
+
+    return accumulatedInflow;
 }
 
 int main(int argc, char** argv)
@@ -220,7 +284,7 @@ int main(int argc, char** argv)
     ////////////////////////////////////////////////////////////
 
     // time loop
-    double inflowMass = 0.0;
+    Scalar accumulatedInflow = 0.0;
     timeLoop->start(); do
     {
         // solve the non-linear system with time step control
@@ -228,6 +292,7 @@ int main(int argc, char** argv)
 
         // make the new solution the old solution
         pOld = p;
+        oldSaturation_ = saturation_;
         twoPGridVariables->advanceTimeStep();
 
         // loop over elements to compute fluxes, saturations, densities for tracer
@@ -277,7 +342,6 @@ int main(int argc, char** argv)
                 }
             }
 
-            oldSaturation_ = saturation_;
             for (const auto& scv : scvs(fvGeometry))
             {
                 const auto& volVars = elemVolVars[scv];
@@ -325,7 +389,8 @@ int main(int argc, char** argv)
                   <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"
                   <<  std::endl;
 
-        inflowMass = tracerProblem->printTracerMass(x, *tracerGridVariables, timeLoop->timeStepSize(), inflowMass);
+        accumulatedInflow = checkConservation(*tracerProblem, x, *tracerGridVariables,
+                                              timeLoop->timeStepSize(), accumulatedInflow);
 
         // make the new solution the old solution
         xOld = x;

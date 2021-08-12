@@ -1,10 +1,10 @@
 [TimeLoop]
-DtInitial = 1e4  # [s]
-TEnd = 1e5 # [s]
+DtInitial = 1e5  # [s]
+TEnd = 3e6 # [s]
 
 [Grid]
-UpperRight = 1 10
-Cells = 1 10
+UpperRight = 10
+Cells = 10
 
 [SpatialParams]
 LinearPcEntry = 0.0
