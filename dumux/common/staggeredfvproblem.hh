@@ -175,7 +175,7 @@ public:
 
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
+            const auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
 
             // loop over sub control volumes
             for (auto&& scv : scvs(fvGeometry))

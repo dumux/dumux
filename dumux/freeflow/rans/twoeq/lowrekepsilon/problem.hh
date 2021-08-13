@@ -90,7 +90,7 @@ public:
         {
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
 
-            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
+            const auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
                 const int dofIdx = scv.dofIndex();

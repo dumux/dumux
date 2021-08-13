@@ -120,7 +120,7 @@ public:
             {
                 const auto bulkElement = bulkFvGridGeometry.element(bulkElemIdx);
 
-                auto fvGeometry = localView(bulkFvGridGeometry).bind(bulkElement);
+                const auto fvGeometry = localView(bulkFvGridGeometry).bind(bulkElement);
 
                 std::vector<BulkIndexType> embeddedScvfIndices;
                 for (const auto& scvf : scvfs(fvGeometry))

@@ -51,7 +51,7 @@ void printL2Error(const Problem& problem, const SolutionVector& x)
 
     for (const auto& element : elements(problem.gridGeometry().gridView()))
     {
-        auto fvGeometry = localView(problem.gridGeometry()).bindElement(element);
+        const auto fvGeometry = localView(problem.gridGeometry()).bindElement(element);
 
         for (auto&& scv : scvs(fvGeometry))
         {

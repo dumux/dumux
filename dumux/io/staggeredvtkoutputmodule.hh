@@ -198,7 +198,7 @@ private:
 
             if (!faceVarScalarDataInfo_.empty() || !faceVarVectorDataInfo_.empty())
             {
-                auto fvGeometry = localView(this->gridGeometry()).bind(element);
+                const auto fvGeometry = localView(this->gridGeometry()).bind(element);
                 elemFaceVars.bindElement(element, fvGeometry, this->sol());
 
                 for (auto&& scvf : scvfs(fvGeometry))

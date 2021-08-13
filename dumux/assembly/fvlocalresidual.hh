@@ -102,8 +102,8 @@ public:
                                       const SolutionVector& sol) const
     {
         // make sure FVElementGeometry and volume variables are bound to the element
-        auto fvGeometry = localView(gridGeometry).bind(element);
-        auto elemVolVars = localView(gridVariables.curGridVolVars()).bind(element, fvGeometry, sol);
+        const auto fvGeometry = localView(gridGeometry).bind(element);
+        const auto elemVolVars = localView(gridVariables.curGridVolVars()).bind(element, fvGeometry, sol);
 
         ElementResidualVector storage(fvGeometry.numScv());
 

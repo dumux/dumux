@@ -95,8 +95,8 @@ public:
         for (const auto& element : elements(gridGeometry.gridView()))
         {
             // make sure FVElementGeometry is bound to the element
-            auto fvGeometry = localView(gridGeometry).bindElement(element);
-            auto elemVolVars = localView(gridVariables.curGridVolVars()).bindElement(element, fvGeometry, curSol);
+            const auto fvGeometry = localView(gridGeometry).bindElement(element);
+            const auto elemVolVars = localView(gridVariables.curGridVolVars()).bindElement(element, fvGeometry, curSol);
 
             const auto curElemSol = elementSolution(element, curSol, gridGeometry);
             for (auto&& scv : scvs(fvGeometry))
@@ -149,7 +149,7 @@ public:
         if constexpr (GridVariables::GridVolumeVariables::cachingEnabled)
         {
             // make sure FVElementGeometry is bound to the element
-            auto fvGeometry = localView(gridGeometry).bindElement(element);
+            const auto fvGeometry = localView(gridGeometry).bindElement(element);
 
             // update the secondary variables if global caching is enabled
             for (auto&& scv : scvs(fvGeometry))
@@ -187,8 +187,8 @@ public:
             if (asImp_().wasSwitched(dofIdxGlobal))
             {
                 // make sure FVElementGeometry and the volume variables are bound
-                auto fvGeometry = localView(gridGeometry).bind(element);
-                auto curElemVolVars = localView(gridVariables.curGridVolVars()).bind(element, fvGeometry, sol);
+                const auto fvGeometry = localView(gridGeometry).bind(element);
+                const auto curElemVolVars = localView(gridVariables.curGridVolVars()).bind(element, fvGeometry, sol);
                 gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
             }
         }
@@ -212,13 +212,13 @@ public:
 
             for (const auto& element : elements(gridGeometry.gridView()))
             {
-                auto fvGeometry = localView(gridGeometry).bindElement(element);
+                const auto fvGeometry = localView(gridGeometry).bindElement(element);
 
                 // skip if the element is not at a boundary or if no internal Dirichlet constraints are set
                 if (!Problem::enableInternalDirichletConstraints() && !fvGeometry.hasBoundaryScvf())
                     continue;
 
-                auto elemVolVars = localView(gridVariables.curGridVolVars()).bindElement(element, fvGeometry, sol);
+                const auto elemVolVars = localView(gridVariables.curGridVolVars()).bindElement(element, fvGeometry, sol);
 
                 for (const auto& scv : scvs(fvGeometry))
                 {

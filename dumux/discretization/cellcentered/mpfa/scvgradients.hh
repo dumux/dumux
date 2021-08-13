@@ -179,9 +179,9 @@ private:
                 continue;
 
             // compute gradients in all scvs of all interaction volumes in this element
-            auto fvGeometry = localView(gridGeometry).bind(element);
-            auto elemVolVars = localView(gridVariables.curGridVolVars()).bind(element, fvGeometry, x);
-            auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
+            const auto fvGeometry = localView(gridGeometry).bind(element);
+            const auto elemVolVars = localView(gridVariables.curGridVolVars()).bind(element, fvGeometry, x);
+            const auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
 
             for (const auto& scvf : scvfs(fvGeometry))
             {

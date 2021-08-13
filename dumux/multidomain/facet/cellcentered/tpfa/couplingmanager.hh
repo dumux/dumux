@@ -439,7 +439,7 @@ public:
                 const auto& ldGridGeometry = this->problem(lowDimId).gridGeometry();
 
                 const auto elemJ = ldGridGeometry.element(lowDimElemIdx);
-                auto fvGeom = localView(ldGridGeometry).bindElement(elemJ);
+                const auto fvGeom = localView(ldGridGeometry).bindElement(elemJ);
 
                 VolumeVariables<lowDimId> volVars;
 
@@ -748,7 +748,7 @@ public:
         // update transmissibilities after low dim context has changed (implicit only)
         if (BulkLocalAssembler::isImplicit())
         {
-            auto elemVolVars = localView(gridVolVars).bind(bulkLocalAssembler.element(), bulkLocalAssembler.fvGeometry(), this->curSol()[bulkId]);
+            const auto elemVolVars = localView(gridVolVars).bind(bulkLocalAssembler.element(), bulkLocalAssembler.fvGeometry(), this->curSol()[bulkId]);
             fluxVarsCache.update(bulkLocalAssembler.element(), bulkLocalAssembler.fvGeometry(), elemVolVars);
         }
     }

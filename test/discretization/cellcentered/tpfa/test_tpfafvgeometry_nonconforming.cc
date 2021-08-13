@@ -155,7 +155,7 @@ int main (int argc, char *argv[])
     //! iterate over elements and check for each element the number of scvfs
     for (const auto& element : elements(leafGridView))
     {
-        auto fvGeometry = localView(gridGeometry).bind(element);
+        const auto fvGeometry = localView(gridGeometry).bind(element);
 
         //! For the tpfa scheme there is always one scv per element
         if (fvGeometry.numScv() != 1)

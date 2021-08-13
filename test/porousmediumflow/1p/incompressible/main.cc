@@ -175,9 +175,9 @@ int main(int argc, char** argv)
         {
             const auto eIdx = gridGeometry->elementMapper().index(element);
 
-            auto fvGeometry = localView(*gridGeometry).bind(element);
-            auto elemVolVars = localView(gridVariables->curGridVolVars()).bind(element, fvGeometry, x);
-            auto elemFluxVarsCache = localView(gridVariables->gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
+            const auto fvGeometry = localView(*gridGeometry).bind(element);
+            const auto elemVolVars = localView(gridVariables->curGridVolVars()).bind(element, fvGeometry, x);
+            const auto elemFluxVarsCache = localView(gridVariables->gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
 
             velocityOutput.calculateVelocity(velocity, element, fvGeometry, elemVolVars, elemFluxVarsCache, 0);
 

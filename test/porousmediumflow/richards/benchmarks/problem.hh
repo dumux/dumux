@@ -215,8 +215,8 @@ public:
 
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
-            auto elemVolVars = localView(gridVars.curGridVolVars()).bindElement(element, fvGeometry, sol);
+            const auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
+            const auto elemVolVars = localView(gridVars.curGridVolVars()).bindElement(element, fvGeometry, sol);
             for (const auto& scvf : scvfs(fvGeometry))
                 if (scvf.boundary())
                     rate += this->neumann(element, fvGeometry, elemVolVars, 0.0, scvf)[0];

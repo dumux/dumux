@@ -79,7 +79,7 @@ public:
         {
             const auto elemSol = elementSolution(element, x, gridGeometry);
 
-            auto fvGeometry = localView(gridGeometry).bind(element);
+            const auto fvGeometry = localView(gridGeometry).bind(element);
             for (const auto& scv : scvs(fvGeometry))
             {
                 const auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);

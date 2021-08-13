@@ -81,7 +81,7 @@ public:
         for (const auto& element : elements(gridGeometry.gridView()))
         {
             auto eIdx = gridGeometry.elementMapper().index(element);
-            auto fvGeometry = localView(gridGeometry).bindElement(element);
+            const auto fvGeometry = localView(gridGeometry).bindElement(element);
 
             // get the element solution
             auto elemSol = elementSolution(element, sol, gridGeometry);

@@ -163,11 +163,11 @@ public:
                 continue;
 
             // get the fvGeometry and elementVolVars needed for the bc and source interfaces
-            auto fvGeometry = localView(*gridGeometry_).bind(element);
-            auto elemVolVars = localView(gridVariables_->curGridVolVars()).bind(element, fvGeometry, sol);
+            const auto fvGeometry = localView(*gridGeometry_).bind(element);
+            const auto elemVolVars = localView(gridVariables_->curGridVolVars()).bind(element, fvGeometry, sol);
 
             // elemFluxVarsCache for neumann interface
-            auto elemFluxVarsCache = localView(gridVariables_->gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
+            const auto elemFluxVarsCache = localView(gridVariables_->gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
 
             //! Check if we have to refine around a source term
             if (refineAtSource_)

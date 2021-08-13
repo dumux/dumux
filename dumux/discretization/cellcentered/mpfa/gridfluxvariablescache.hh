@@ -160,8 +160,8 @@ public:
 
             for (const auto& element : elements(gridGeometry.gridView()))
             {
-                auto fvGeometry = localView(gridGeometry).bind(element);
-                auto elemVolVars = localView(gridVolVars).bind(element, fvGeometry, sol);
+                const auto fvGeometry = localView(gridGeometry).bind(element);
+                const auto elemVolVars = localView(gridVolVars).bind(element, fvGeometry, sol);
 
                 // Prepare all caches of the scvfs inside the corresponding interaction volume. Skip
                 // those ivs that are touching a boundary, we only store the data on interior ivs here.

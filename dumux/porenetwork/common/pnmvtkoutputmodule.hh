@@ -89,9 +89,9 @@ public:
             const auto eIdx = problem().gridGeometry().elementMapper().index(element);
 
             // make sure FVElementGeometry & vol vars are bound to the element
-            auto fvElementGeometry = localView(problem().gridGeometry()).bindElement(element);
-            auto elemVolVars = localView(this->gridVariables().curGridVolVars()).bind(element, fvElementGeometry, this->sol());
-            auto elemFluxVarsCache = localView(this->gridVariables().gridFluxVarsCache()).bind(element, fvElementGeometry, elemVolVars);
+            const auto fvElementGeometry = localView(problem().gridGeometry()).bindElement(element);
+            const auto elemVolVars = localView(this->gridVariables().curGridVolVars()).bind(element, fvElementGeometry, this->sol());
+            const auto elemFluxVarsCache = localView(this->gridVariables().gridFluxVarsCache()).bind(element, fvElementGeometry, elemVolVars);
 
             // treat the throat flux related data
             std::size_t dataIdx = 0;

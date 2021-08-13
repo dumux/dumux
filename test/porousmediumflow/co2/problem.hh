@@ -212,7 +212,7 @@ public:
         for (const auto& element : elements(gridView, Dune::Partitions::interior))
         {
             const auto eIdx = this->gridGeometry().elementMapper().index(element);
-            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
+            const auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
 
             for (const auto& scv : scvs(fvGeometry))
             {

@@ -127,7 +127,7 @@ SolutionStorage<TypeTag> solveRefinementLevel(int numCells)
 
         for (const auto& element : elements(gridGeometry->gridView()))
         {
-            auto fvGeometry = localView(*gridGeometry).bindElement(element);
+            const auto fvGeometry = localView(*gridGeometry).bindElement(element);
 
             for (const auto& scv : scvs(fvGeometry))
                 exact[scv.dofIndex()] = problem->exact(scv.dofPosition());

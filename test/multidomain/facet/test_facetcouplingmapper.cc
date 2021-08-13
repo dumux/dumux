@@ -208,7 +208,7 @@ int main (int argc, char *argv[])
             else DUNE_THROW(Dune::InvalidStateException, "Coupling stencil size is " << cStencilSize << " instead of 1 or 2");
 
             const auto bulkElement = bulkFvGeometry.element(entry.first);
-            auto fvElementGeometry = localView(bulkFvGeometry).bind(bulkElement);
+            const auto fvElementGeometry = localView(bulkFvGeometry).bind(bulkElement);
 
             // check scvf conformity with low dim elements
             for (const auto& elemToScvfs : entry.second.elementToScvfMap)
@@ -270,7 +270,7 @@ int main (int argc, char *argv[])
             for (const auto& embedment : entry.second.embedments)
             {
                 const auto bulkElement = bulkFvGeometry.element(embedment.first);
-                auto fvElementGeometry = localView(bulkFvGeometry).bind(bulkElement);
+                const auto fvElementGeometry = localView(bulkFvGeometry).bind(bulkElement);
 
                 // check if the scvfs of the embedment coincide with low dim element
                 for (auto scvfIdx : embedment.second)
@@ -297,7 +297,7 @@ int main (int argc, char *argv[])
         for (const auto& entry : facetEdgeMap)
         {
             const auto bulkElement = facetFvGeometry.element(entry.first);
-            auto fvElementGeometry = localView(facetFvGeometry).bind(bulkElement);
+            const auto fvElementGeometry = localView(facetFvGeometry).bind(bulkElement);
 
             const auto cStencilSize = entry.second.couplingStencil.size();
             if (cStencilSize != 1)
@@ -337,7 +337,7 @@ int main (int argc, char *argv[])
             {
                 const auto& embedment = entry.second.embedments[i];
                 const auto facetElement = facetFvGeometry.element(embedment.first);
-                auto fvElementGeometry = localView(facetFvGeometry).bind(facetElement);
+                const auto fvElementGeometry = localView(facetFvGeometry).bind(facetElement);
 
                 // check if the scvfs of the embedment coincide with low dim element
                 for (auto scvfIdx : embedment.second)

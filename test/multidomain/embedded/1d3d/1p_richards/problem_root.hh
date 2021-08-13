@@ -240,8 +240,8 @@ public:
         PrimaryVariables source(0.0);
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
-            auto elemVolVars = localView(gridVars.curGridVolVars()).bindElement(element, fvGeometry, sol);
+            const auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
+            const auto elemVolVars = localView(gridVars.curGridVolVars()).bindElement(element, fvGeometry, sol);
 
             for (auto&& scv : scvs(fvGeometry))
             {

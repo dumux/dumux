@@ -473,7 +473,7 @@ public:
             bulkContext_.lowDimElemVolVars.reserve(elementStencil.size());
 
             // local view on the bulk fv geometry
-            auto bulkFvGeometry = localView(this->problem(bulkId).gridGeometry()).bindElement(element);
+            const auto bulkFvGeometry = localView(this->problem(bulkId).gridGeometry()).bindElement(element);
 
             for (const auto lowDimElemIdx : elementStencil)
             {
@@ -537,9 +537,9 @@ public:
                 const auto& bulkSol = Assembler::isImplicit() ? this->curSol()[bulkId] : assembler.prevSol()[bulkId];
                 const auto curBulkElem = bulkGridGeom.element(embedments[i].first);
 
-                auto bulkFvGeom = localView(bulkGridGeom).bind(curBulkElem);
-                auto bulkElemVolVars = localView(assembler.gridVariables(bulkId).curGridVolVars()).bind(curBulkElem, bulkFvGeom, bulkSol);
-                auto bulkElemFluxVarsCache = localView(assembler.gridVariables(bulkId).gridFluxVarsCache()).bind(curBulkElem, bulkFvGeom, bulkElemVolVars);
+                const auto bulkFvGeom = localView(bulkGridGeom).bind(curBulkElem);
+                const auto bulkElemVolVars = localView(assembler.gridVariables(bulkId).curGridVolVars()).bind(curBulkElem, bulkFvGeom, bulkSol);
+                const auto bulkElemFluxVarsCache = localView(assembler.gridVariables(bulkId).gridFluxVarsCache()).bind(curBulkElem, bulkFvGeom, bulkElemVolVars);
 
                 lowDimContext_.isSet = true;
                 lowDimContext_.bulkElemBcTypes[i].update(this->problem(bulkId), curBulkElem, bulkFvGeom);

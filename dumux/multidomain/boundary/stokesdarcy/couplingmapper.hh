@@ -107,7 +107,7 @@ public:
                 darcyToStokesCellCenterStencils[darcyElementIdx[0]].push_back(stokesElementIdx);
 
                 const auto& darcyElement = darcyFvGridGeometry.element(darcyElementIdx[0]);
-                auto darcyFvGeometry = localView(darcyFvGridGeometry).bindElement(darcyElement);
+                const auto darcyFvGeometry = localView(darcyFvGridGeometry).bindElement(darcyElement);
 
                 // find the corresponding Darcy sub control volume face
                 for (const auto& darcyScvf : scvfs(darcyFvGeometry))

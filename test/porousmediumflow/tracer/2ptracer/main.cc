@@ -220,9 +220,9 @@ int main(int argc, char** argv)
             // compute volume fluxes for the tracer model
             ///////////////////////////////////////////////////////////
 
-            auto fvGeometry = localView(*gridGeometry).bind(element);
-            auto elemVolVars = localView(twoPGridVariables->curGridVolVars()).bind(element, fvGeometry, p);
-            auto elemFluxVars = localView(twoPGridVariables->gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
+            const auto fvGeometry = localView(*gridGeometry).bind(element);
+            const auto elemVolVars = localView(twoPGridVariables->curGridVolVars()).bind(element, fvGeometry, p);
+            const auto elemFluxVars = localView(twoPGridVariables->gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
 
             for (const auto& scvf : scvfs(fvGeometry))
             {

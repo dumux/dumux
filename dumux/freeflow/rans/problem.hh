@@ -457,7 +457,7 @@ private:
         // calculate cell-center-averaged velocities
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
+            const auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
 
             // calculate velocities
@@ -497,7 +497,7 @@ private:
                 }
             }
 
-            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
+            const auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 // adapt calculations for Dirichlet condition
@@ -684,7 +684,7 @@ private:
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
+            const auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
                 const int dofIdx = scv.dofIndex();

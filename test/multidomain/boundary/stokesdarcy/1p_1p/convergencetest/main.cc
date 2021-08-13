@@ -74,7 +74,7 @@ auto createFreeFlowAnalyticalSolution(const Problem& problem)
     using Indices = typename Problem::Indices;
     for (const auto& element : elements(gridGeometry.gridView()))
     {
-        auto fvGeometry = localView(gridGeometry).bindElement(element);
+        const auto fvGeometry = localView(gridGeometry).bindElement(element);
         for (auto&& scv : scvs(fvGeometry))
         {
             auto ccDofIdx = scv.dofIndex();
@@ -125,7 +125,7 @@ auto createDarcyAnalyticalSolution(const Problem& problem)
 
     for (const auto& element : elements(gridGeometry.gridView()))
     {
-        auto fvGeometry = localView(gridGeometry).bindElement(element);
+        const auto fvGeometry = localView(gridGeometry).bindElement(element);
         for (auto&& scv : scvs(fvGeometry))
         {
             const auto ccDofIdx = scv.dofIndex();
@@ -181,7 +181,7 @@ void printDarcyL2Error(const Problem& problem, const SolutionVector& x)
 
     for (const auto& element : elements(problem.gridGeometry().gridView()))
     {
-        auto fvGeometry = localView(problem.gridGeometry()).bindElement(element);
+        const auto fvGeometry = localView(problem.gridGeometry()).bindElement(element);
 
         for (auto&& scv : scvs(fvGeometry))
         {

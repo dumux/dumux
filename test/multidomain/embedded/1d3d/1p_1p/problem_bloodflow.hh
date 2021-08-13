@@ -73,7 +73,7 @@ public:
 
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
+            const auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
                 exactPressure_[scv.dofIndex()] = exactSolution(scv.dofPosition());
@@ -236,8 +236,8 @@ public:
         Scalar volume = 0.0;
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
-            auto elemVolVars = localView(gridVars.curGridVolVars()).bindElement(element, fvGeometry, sol);
+            const auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
+            const auto elemVolVars = localView(gridVars.curGridVolVars()).bindElement(element, fvGeometry, sol);
 
             for (auto&& scv : scvs(fvGeometry))
             {

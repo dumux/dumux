@@ -96,9 +96,9 @@ public:
         {
             const auto eIdxGlobal = this->gridGeometry_->elementMapper().index(element);
 
-            auto fvGeometry = localView(*this->gridGeometry_).bind(element);
-            auto elemVolVars = localView(this->curGridVolVars()).bind(element, fvGeometry, curSol);
-            auto elemFluxVarsCache = localView(this->gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
+            const auto fvGeometry = localView(*this->gridGeometry_).bind(element);
+            const auto elemVolVars = localView(this->curGridVolVars()).bind(element, fvGeometry, curSol);
+            const auto elemFluxVarsCache = localView(this->gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
 
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             {

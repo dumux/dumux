@@ -98,9 +98,9 @@ public:
         hasChangedInCurrentIteration_ = false;
         for (auto&& element : elements(problem_.gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(problem_.gridGeometry()).bindElement(element);
-            auto elemVolVars = localView(gridVolVars).bind(element, fvGeometry, sol);
-            auto elemFluxVarsCache = localView(gridFluxVarsCache).bind(element, fvGeometry, elemVolVars);
+            const auto fvGeometry = localView(problem_.gridGeometry()).bindElement(element);
+            const auto elemVolVars = localView(gridVolVars).bind(element, fvGeometry, sol);
+            const auto elemFluxVarsCache = localView(gridFluxVarsCache).bind(element, fvGeometry, elemVolVars);
 
             for (auto&& scvf : scvfs(fvGeometry))
             {
@@ -160,9 +160,9 @@ public:
             if (!invadedCurrentIteration_[eIdx] || invadedPreviousTimeStep_[eIdx] == invadedCurrentIteration_[eIdx])
                 continue;
 
-            auto fvGeometry = localView(problem_.gridGeometry()).bindElement(element);
-            auto elemVolVars = localView(gridVolVars).bind(element, fvGeometry, sol);
-            auto elemFluxVarsCache = localView(gridFluxVarsCache).bind(element, fvGeometry, elemVolVars);
+            const auto fvGeometry = localView(problem_.gridGeometry()).bindElement(element);
+            const auto elemVolVars = localView(gridVolVars).bind(element, fvGeometry, sol);
+            const auto elemFluxVarsCache = localView(gridFluxVarsCache).bind(element, fvGeometry, elemVolVars);
 
             for (auto&& scvf : scvfs(fvGeometry))
             {

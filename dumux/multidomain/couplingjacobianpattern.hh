@@ -154,7 +154,7 @@ Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingM
 
     for (const auto& elementI : elements(gridGeometryI.gridView()))
     {
-        auto fvGeometry = localView(gridGeometryI).bindElement(elementI);
+        const auto fvGeometry = localView(gridGeometryI).bindElement(elementI);
 
         // loop over sub control faces
         for (auto&& scvf : scvfs(fvGeometry))
