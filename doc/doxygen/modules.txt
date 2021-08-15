@@ -16,17 +16,6 @@
      * \brief Single-phase (immiscible) Darcy flow
      * For a detailed model description see porousmediumflow/1p/model.hh
      */
-        /*!
-         * \ingroup OnePModel
-         * \defgroup SequentialOnePModel Sequential
-         * \brief Sequential single-phase (immiscible) Darcy flow
-         *
-         * # Pressure
-         * \copydetails Dumux::FVPressure1P
-         *
-         * # Velocity
-         * \copydetails Dumux::FVVelocity1P
-         */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup OnePNCModel 1pnc
@@ -45,17 +34,6 @@
      * \brief Two-phase (immiscible) Darcy flow
      * For a detailed model description see porousmediumflow/2p/model.hh
      */
-        /*!
-         * \ingroup TwoPModel
-         * \defgroup SequentialTwoPModel Sequential
-         * \brief Sequential two-phase (immiscible) Darcy flow
-         *
-         * # Pressure
-         * \copydetails Dumux::FVPressure2P
-         *
-         * # Velocity
-         * \copydetails Dumux::FVVelocity2P
-         */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup TwoPOneCModel 2p1c
@@ -68,17 +46,6 @@
      * \brief Two-phase, two-component Darcy flow
      * For a detailed model description see porousmediumflow/2p2c/model.hh
      */
-        /*!
-         * \ingroup TwoPTwoCModel
-         * \defgroup SequentialTwoPTwoCModel Sequential
-         * \brief Sequential two-phase, two-component Darcy flow
-         *
-         * # Pressure
-         * \copydetails Dumux::FVPressure2P2C
-         *
-         * # Velocity
-         * \copydetails Dumux::FVTransport2P2C
-         */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup TwoPNCModel 2pnc
