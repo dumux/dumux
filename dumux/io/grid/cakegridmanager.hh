@@ -276,32 +276,23 @@ public:
                                          const std::string& modelParamGroup,
                                          bool verbose = false)
     {
-        std::vector<Scalar> dR = polarCoordinates[0];
-        std::vector<Scalar> dA = polarCoordinates[1];
+        const auto& dR = polarCoordinates[0];
+        const auto& dA = polarCoordinates[1];
 
         // For the special case of 360°, the last element is connected with the first one.
         // Thus, one needs to distinguish here between all other cases, were the normal procedure
         // is applied for all elements until the last one  (= dA.size() - 1) and the 360° case,
         // where it is only applied until the second to last element (dA.size() - 2).
-        int maxdA = dA.size() - 1;
-        if (Dune::FloatCmp::eq(dA[dA.size()-1], 2*M_PI))
-        {
-            maxdA = dA.size() - 2;
-        }
-
-        GridFactory gridFactory;
+        const int dAMax = Dune::FloatCmp::eq(dA[dA.size()-1], 2*M_PI) ? dA.size() - 2 : dA.size() - 1;
         constexpr auto type = Dune::GeometryTypes::cube(dim);
-
-        bool hasHole = true;
-        if(dR[0] < 1.0e-8*dR.back())
-            hasHole = false;
+        const bool hasHole = dR[0] >= 1.0e-8*dR.back();
 
         // create nodes
-        if (dim == 3)
+        if constexpr (dim == 3)
         {
             constexpr auto prismType = Dune::GeometryTypes::prism;
             std::vector<Scalar> dZ = polarCoordinates[2];
-            for (int j = 0; j <= maxdA; ++j)
+            for (int j = 0; j <= dAMax; ++j)
             {
                 for (int l = 0; l <= dZ.size() - 1; ++l)
                 {
@@ -350,14 +341,14 @@ public:
             {
                 for (int l = 0; l < dZ.size() - 1; ++l)
                 {
-                    if (j < maxdA)
+                    if (j < dAMax)
                     {
                         for (int i = 0; i < dR.size() - 1; ++i)
                         {
                             if(!hasHole && i==0)
                             {
-                                std::vector<unsigned int> vid({rSize*zSize*(maxdA+1) + l, z, z+rSize*zSize,
-                                                               rSize*zSize*(maxdA+1) + l+1, z+rSize, z+rSize*zSize+rSize});
+                                std::vector<unsigned int> vid({rSize*zSize*(dAMax+1) + l, z, z+rSize*zSize,
+                                                               rSize*zSize*(dAMax+1) + l+1, z+rSize, z+rSize*zSize+rSize});
 
                                 if (verbose)
                                     printIndices(vid);
@@ -388,8 +379,8 @@ public:
                         {
                             if(!hasHole && i==0)
                             {
-                                std::vector<unsigned int> vid({rSize*zSize*(maxdA+1) + l, z, t,
-                                                               rSize*zSize*(maxdA+1) + l+1, z+rSize, t+rSize});
+                                std::vector<unsigned int> vid({rSize*zSize*(dAMax+1) + l, z, t,
+                                                               rSize*zSize*(dAMax+1) + l+1, z+rSize, t+rSize});
 
                                 if (verbose)
                                     printIndices(vid);
@@ -421,11 +412,12 @@ public:
                 z += rSize;
             }
         }
+
         // for dim = 2
         else
         {
             constexpr auto triangleType = Dune::GeometryTypes::simplex(dim);
-            for (int j = 0; j <= maxdA; ++j)
+            for (int j = 0; j <= dAMax; ++j)
             {
                 for (int i = hasHole ? 0 : 1; i <= dR.size()- 1; ++i)
                 {
@@ -461,13 +453,13 @@ public:
             unsigned int rSize = hasHole ? dR.size() : dR.size()-1;
             for (int j = 0; j < dA.size() - 1; ++j)
             {
-                if (j < maxdA)
+                if (j < dAMax)
                 {
                     for (int i = 0; i < dR.size() - 1; ++i)
                     {
                         if(!hasHole && i==0)
                         {
-                            std::vector<unsigned int> vid({rSize*(maxdA+1), z, z+rSize});
+                            std::vector<unsigned int> vid({rSize*(dAMax+1), z, z+rSize});
 
                             if (verbose)
                                 printIndices(vid);
@@ -494,7 +486,7 @@ public:
                     {
                         if(!hasHole && i==0)
                         {
-                            std::vector<unsigned int> vid({rSize*(maxdA+1), z, t});
+                            std::vector<unsigned int> vid({rSize*(dAMax+1), z, t});
 
                             if (verbose)
                                 printIndices(vid);
@@ -521,7 +513,8 @@ public:
                 }
             }
         }
-        // return the grid pointer
+
+        // create the grid
         return std::unique_ptr<Grid>(gridFactory.createGrid());
     }
 
@@ -544,12 +537,7 @@ public:
 
 protected:
     static void printCoordinate(const Dune::FieldVector <double, dim>& v)
-    {
-        std::cout << "Coordinates of : ";
-        for (int k = 0; k < v.size(); ++k)
-            std::cout << v[k] << " ";
-        std::cout << std::endl;
-    }
+    { std::cout << "Coordinates of: " << v << std::endl; }
 
     static void printIndices(const std::vector<unsigned int>& vid)
     {
