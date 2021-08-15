@@ -37,19 +37,19 @@ namespace Dumux {
  *                     transfer from the old to the new grid.
  */
 template<class Grid>
-bool adapt(Grid& grid, GridDataTransfer& dataTransfer)
+bool adapt(Grid& grid, GridDataTransfer<Grid>& dataTransfer)
 {
     // Do pre-adaption step of the grid
     const bool mightCoarsen = grid.preAdapt();
 
     // Let the helper do storage of variables
-    dataTransfer.store();
+    dataTransfer.store(grid);
 
     // adapt the grid
     const bool refine = grid.adapt();
 
     // (Re-)construct variables to new grid
-    dataTransfer.reconstruct();
+    dataTransfer.reconstruct(grid);
 
     // delete markers in grid
     grid.postAdapt();

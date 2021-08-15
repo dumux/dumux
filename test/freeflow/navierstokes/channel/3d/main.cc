@@ -101,7 +101,6 @@ int main(int argc, char** argv)
     // create the finite volume grid geometry
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
-    gridGeometry->update();
 
     // the problem (boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;

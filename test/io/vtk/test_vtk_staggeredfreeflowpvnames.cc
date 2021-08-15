@@ -328,7 +328,6 @@ int main(int argc, char** argv)
     const auto grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lowerLeft, upperRight, cells);
     const auto gridView = grid->leafGridView();
     auto gridGeometry = std::make_shared<GridGeometry>(gridView);
-    gridGeometry->update();
 
     using FluidSystem = GetPropType<CommonTypeTag, Properties::FluidSystem>;
     FluidSystem::init();

@@ -106,8 +106,7 @@ int main(int argc, char** argv)
 
     // create the finite volume grid geometry
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
-    gridGeometry->update(*gridData);
+    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView, *gridData);
 
     // get some network properties
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

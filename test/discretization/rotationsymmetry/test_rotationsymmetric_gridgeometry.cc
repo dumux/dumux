@@ -114,7 +114,6 @@ int main (int argc, char *argv[])
         // obtain leaf and make GridGeometry
         auto leafGridView = grid->leafGridView();
         GridGeometry gg(leafGridView);
-        gg.update();
 
         // compute the annulus area and the surface
         const double refVolume = M_PI*(outerRadius*outerRadius - innerRadius*innerRadius);
@@ -144,7 +143,6 @@ int main (int argc, char *argv[])
         // obtain leaf and make GridGeometry
         auto leafGridView = grid->leafGridView();
         GridGeometry gg(leafGridView);
-        gg.update();
 
         // compute the ball volume and the surface
         const double refVolume = 4.0/3.0*M_PI*(outerRadius*outerRadius*outerRadius - innerRadius*innerRadius*innerRadius);
@@ -177,7 +175,6 @@ int main (int argc, char *argv[])
 
             // make GridGeometry
             GridGeometry gg(leafGridView);
-            gg.update();
 
             // compute the volume and the surface
             const auto centroidRadius = 0.5*(innerRadius + outerRadius);
@@ -195,7 +192,6 @@ int main (int argc, char *argv[])
             { using Extrusion = RotationalExtrusion<1>; };
             using GridGeometry = CCTpfaFVGridGeometry<typename Grid::LeafGridView, /*caching=*/false, GGTraits>;
             GridGeometry gg(leafGridView);
-            gg.update();
 
             // compute the volume and the surface
             const auto centroidRadius = 0.5*height;

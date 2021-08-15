@@ -82,8 +82,6 @@ int main(int argc, char** argv)
     using PoroMechFVGridGeometry = GetPropType<PoroMechTypeTag, Properties::GridGeometry>;
     auto twoPFvGridGeometry = std::make_shared<TwoPFVGridGeometry>(leafGridView);
     auto poroMechFvGridGeometry = std::make_shared<PoroMechFVGridGeometry>(leafGridView);
-    twoPFvGridGeometry->update();
-    poroMechFvGridGeometry->update();
 
     // the coupling manager
     using Traits = MultiDomainTraits<TwoPTypeTag, PoroMechTypeTag>;

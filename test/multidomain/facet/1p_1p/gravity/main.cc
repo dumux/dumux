@@ -88,8 +88,6 @@ int main(int argc, char** argv)
     using LowDimFVGridGeometry = GetPropType<LowDimProblemTypeTag, Properties::GridGeometry>;
     auto bulkFvGridGeometry = std::make_shared<BulkFVGridGeometry>(bulkGridView);
     auto lowDimFvGridGeometry = std::make_shared<LowDimFVGridGeometry>(lowDimGridView);
-    bulkFvGridGeometry->update();
-    lowDimFvGridGeometry->update();
 
     // the coupling mapper
     using TestTraits = Properties::TestTraits<BulkProblemTypeTag, LowDimProblemTypeTag>;

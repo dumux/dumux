@@ -96,21 +96,33 @@ void checkScvfEmbedment(const Scvf& scvf, const LowDimGeom& lowDimGeom)
         DUNE_THROW(Dune::InvalidStateException, "Scvf does not coincide with low dim element");
 }
 
-//! Updates a tpfa finite volume grid geometry.
-template< class BulkFVG, class FacetFVG, class GridManager,
-          std::enable_if_t<BulkFVG::discMethod != Dumux::DiscretizationMethod::box, int> = 0 >
-void updateBulkFvGeometry(BulkFVG& bulkFVG, const FacetFVG& facetFVG, const GridManager& gm)
+/*!
+ * \brief Constructs the finite volume grid geometry.
+ */
+template< class BulkGridGeometry,
+          class GridManager,
+          class BulkGridView,
+          class LowDimGridView >
+auto makeBulkFVGridGeometry(const GridManager& gridManager,
+                            const BulkGridView& bulkGridView,
+                            const LowDimGridView& lowDimGridView)
 {
-    bulkFVG.update();
-}
-
-//! Updates a box finite volume grid geometry.
-template< class BulkFVG, class FacetFVG, class GridManager,
-          std::enable_if_t<BulkFVG::discMethod == Dumux::DiscretizationMethod::box, int> = 0 >
-void updateBulkFvGeometry(BulkFVG& bulkFVG, const FacetFVG& facetFVG, const GridManager& gm)
-{
-    using FacetGridAdapter = Dumux::CodimOneGridAdapter<typename GridManager::Embeddings>;
-    bulkFVG.update(facetFVG.gridView(), FacetGridAdapter(gm.getEmbeddings()), true);
+    /*!
+    * The finite volume grid geometry for the box scheme with facet coupling
+    * requires additional data for the constructor. The reason is that
+    * we have to create additional faces on interior boundaries, which are not
+    * created in the standard scheme.
+    */
+    if constexpr (BulkGridGeometry::discMethod == Dumux::DiscretizationMethod::box)
+    {
+        using BulkFacetGridAdapter = Dumux::CodimOneGridAdapter<typename GridManager::Embeddings>;
+        BulkFacetGridAdapter facetGridAdapter(gridManager.getEmbeddings());
+        return BulkGridGeometry(bulkGridView, lowDimGridView, facetGridAdapter, true);
+    }
+    else
+    {
+        return BulkGridGeometry(bulkGridView);
+    }
 }
 
 // main program
@@ -142,21 +154,18 @@ int main (int argc, char *argv[])
                                                           typename std::conditional<USEMPFAINBULK,
                                                                                     MpfaFVGridGeometry,
                                                                                     TpfaFVGridGeometry>::type >::type;
-    BulkFVGridGeometry bulkFvGeometry( gridManager.grid<0>().leafGridView() );
-
     using FacetGridView = typename FacetGrid::LeafGridView;
     using FacetFVGridGeometry = Dumux::CCTpfaFVGridGeometry<FacetGridView, true>;
     FacetFVGridGeometry facetFvGeometry( gridManager.grid<1>().leafGridView() );
-    facetFvGeometry.update();
 
     using EdgeGridView = typename EdgeGrid::LeafGridView;
     using EdgeFVGridGeometry = Dumux::CCTpfaFVGridGeometry<EdgeGridView, true>;
     EdgeFVGridGeometry edgeFvGeometry( gridManager.grid<2>().leafGridView() );
 
-    // update grid geometries
-    edgeFvGeometry.update();
-    facetFvGeometry.update();
-    updateBulkFvGeometry(bulkFvGeometry, facetFvGeometry, gridManager);
+    // construct bulk grid geometry
+    BulkFVGridGeometry bulkFvGeometry( makeBulkFVGridGeometry<BulkFVGridGeometry>(gridManager,
+                                                                                  gridManager.grid<0>().leafGridView(),
+                                                                                  facetFvGeometry.gridView()));
 
     // instantiate and update mappers for all domain combinations
     Dumux::FacetCouplingMapper<BulkFVGridGeometry, FacetFVGridGeometry> bulkFacetMapper;

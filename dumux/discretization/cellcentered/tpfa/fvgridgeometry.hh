@@ -26,6 +26,7 @@
 #ifndef DUMUX_DISCRETIZATION_CCTPFA_FV_GRID_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_CCTPFA_FV_GRID_GEOMETRY_HH
 
+#include <utility>
 #include <algorithm>
 
 #include <dumux/common/indextraits.hh>
@@ -127,6 +128,8 @@ public:
         if (!CheckOverlapSize<DiscretizationMethod::cctpfa>::isValid(gridView))
             DUNE_THROW(Dune::InvalidStateException, "The cctpfa discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
+
+        update_();
     }
 
     //! the element mapper is the dofMapper
@@ -157,10 +160,67 @@ public:
     { return this->gridView().size(0); }
 
     //! update all fvElementGeometries (do this again after grid adaption)
+    [[deprecated("Use update(gridView) instead! Will be removed after release 3.5.")]]
     void update()
     {
         ParentType::update();
+        update_();
+    }
 
+    //! update all fvElementGeometries (call this after grid adaption)
+    void update(const GridView& gridView)
+    {
+        ParentType::update(gridView);
+        update_();
+    }
+
+    //! update all fvElementGeometries (call this after grid adaption)
+    void update(GridView&& gridView)
+    {
+        ParentType::update(std::move(gridView));
+        update_();
+    }
+
+    //! Get a sub control volume with a global scv index
+    const SubControlVolume& scv(GridIndexType scvIdx) const
+    {
+        return scvs_[scvIdx];
+    }
+
+    //! Get a sub control volume face with a global scvf index
+    const SubControlVolumeFace& scvf(GridIndexType scvfIdx) const
+    {
+        return scvfs_[scvfIdx];
+    }
+
+    //! Get the scvf on the same face but from the other side
+    //! Note that e.g. the normals might be different in the case of surface grids
+    const SubControlVolumeFace& flipScvf(GridIndexType scvfIdx, unsigned int outsideScvfIdx = 0) const
+    {
+        return scvfs_[flipScvfIndices_[scvfIdx][outsideScvfIdx]];
+    }
+
+    //! Get the sub control volume face indices of an scv by global index
+    const std::vector<GridIndexType>& scvfIndicesOfScv(GridIndexType scvIdx) const
+    {
+        return scvfIndicesOfScv_[scvIdx];
+    }
+
+    /*!
+     * \brief Returns the connectivity map of which dofs have derivatives with respect
+     *        to a given dof.
+     */
+    const ConnectivityMap &connectivityMap() const
+    { return connectivityMap_; }
+
+    //! Returns whether one of the geometry's scvfs lies on a boundary
+    bool hasBoundaryScvf(GridIndexType eIdx) const
+    { return hasBoundaryScvf_[eIdx]; }
+
+private:
+
+    void update_()
+    {
         // clear containers (necessary after grid refinement)
         scvs_.clear();
         scvfs_.clear();
@@ -290,43 +350,6 @@ public:
         connectivityMap_.update(*this);
     }
 
-    //! Get a sub control volume with a global scv index
-    const SubControlVolume& scv(GridIndexType scvIdx) const
-    {
-        return scvs_[scvIdx];
-    }
-
-    //! Get a sub control volume face with a global scvf index
-    const SubControlVolumeFace& scvf(GridIndexType scvfIdx) const
-    {
-        return scvfs_[scvfIdx];
-    }
-
-    //! Get the scvf on the same face but from the other side
-    //! Note that e.g. the normals might be different in the case of surface grids
-    const SubControlVolumeFace& flipScvf(GridIndexType scvfIdx, unsigned int outsideScvfIdx = 0) const
-    {
-        return scvfs_[flipScvfIndices_[scvfIdx][outsideScvfIdx]];
-    }
-
-    //! Get the sub control volume face indices of an scv by global index
-    const std::vector<GridIndexType>& scvfIndicesOfScv(GridIndexType scvIdx) const
-    {
-        return scvfIndicesOfScv_[scvIdx];
-    }
-
-    /*!
-     * \brief Returns the connectivity map of which dofs have derivatives with respect
-     *        to a given dof.
-     */
-    const ConnectivityMap &connectivityMap() const
-    { return connectivityMap_; }
-
-    //! Returns whether one of the geometry's scvfs lies on a boundary
-    bool hasBoundaryScvf(GridIndexType eIdx) const
-    { return hasBoundaryScvf_[eIdx]; }
-
-private:
     // find the scvf that has insideScvIdx in its outsideScvIdx list and outsideScvIdx as its insideScvIdx
     GridIndexType findFlippedScvfIndex_(GridIndexType insideScvIdx, GridIndexType outsideScvIdx)
     {
@@ -411,6 +434,8 @@ public:
         if (!CheckOverlapSize<DiscretizationMethod::cctpfa>::isValid(gridView))
             DUNE_THROW(Dune::InvalidStateException, "The cctpfa discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
+
+        update_();
     }
 
     //! the element mapper is the dofMapper
@@ -441,10 +466,45 @@ public:
     { return this->gridView().size(0); }
 
     //! update all fvElementGeometries (do this again after grid adaption)
+    [[deprecated("Use update(gridView) instead! Will be removed after release 3.5.")]]
     void update()
     {
         ParentType::update();
+        update_();
+    }
 
+    //! update all fvElementGeometries (call this after grid adaption)
+    void update(const GridView& gridView)
+    {
+        ParentType::update(gridView);
+        update_();
+    }
+
+    //! update all fvElementGeometries (call this after grid adaption)
+    void update(GridView&& gridView)
+    {
+        ParentType::update(std::move(gridView));
+        update_();
+    }
+
+    const std::vector<GridIndexType>& scvfIndicesOfScv(GridIndexType scvIdx) const
+    { return scvfIndicesOfScv_[scvIdx]; }
+
+    //! Return the neighbor volVar indices for all scvfs in the scv with index scvIdx
+    const std::vector<NeighborVolVarIndices>& neighborVolVarIndices(GridIndexType scvIdx) const
+    { return neighborVolVarIndices_[scvIdx]; }
+
+    /*!
+     * \brief Returns the connectivity map of which dofs have derivatives with respect
+     *        to a given dof.
+     */
+    const ConnectivityMap &connectivityMap() const
+    { return connectivityMap_; }
+
+private:
+
+    void update_()
+    {
         // clear local data
         scvfIndicesOfScv_.clear();
         neighborVolVarIndices_.clear();
@@ -531,22 +591,6 @@ public:
         // build the connectivity map for an effecient assembly
         connectivityMap_.update(*this);
     }
-
-    const std::vector<GridIndexType>& scvfIndicesOfScv(GridIndexType scvIdx) const
-    { return scvfIndicesOfScv_[scvIdx]; }
-
-    //! Return the neighbor volVar indices for all scvfs in the scv with index scvIdx
-    const std::vector<NeighborVolVarIndices>& neighborVolVarIndices(GridIndexType scvIdx) const
-    { return neighborVolVarIndices_[scvIdx]; }
-
-    /*!
-     * \brief Returns the connectivity map of which dofs have derivatives with respect
-     *        to a given dof.
-     */
-    const ConnectivityMap &connectivityMap() const
-    { return connectivityMap_; }
-
-private:
 
     //! Information on the global number of geometries
     std::size_t numScvs_;

@@ -57,7 +57,6 @@ int main(int argc, char** argv)
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
-    gridGeometry->update();
 
     // problem, in which we define the boundary and initial conditions.
     using Problem = GetPropType<TypeTag, Properties::Problem>;

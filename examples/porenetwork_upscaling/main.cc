@@ -73,10 +73,9 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // instantiate the grid geometry
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
     auto gridData = gridManager.getGridData();
-    gridGeometry->update(*gridData);
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView, *gridData);
     // [[/codeblock]]
 
     // ### Initialize the problem and grid variables

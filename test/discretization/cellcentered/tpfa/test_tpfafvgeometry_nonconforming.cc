@@ -143,7 +143,6 @@ int main (int argc, char *argv[])
 
     //! instantiate and update gridGeometry
     GridGeometry gridGeometry(leafGridView);
-    gridGeometry.update();
 
     //! We should have constructed 12 scvfs
     if (gridGeometry.numScv() != 12)

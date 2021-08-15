@@ -74,7 +74,6 @@ int main (int argc, char *argv[])
     // obtain leaf and make GridGeometry
     auto leafGridView = grid->leafGridView();
     GridGeometry gridGeometry(leafGridView);
-    gridGeometry.update();
 
     // iterate over elements. For every element get fv geometry and loop over scvs and scvfaces
     for (const auto& element : elements(leafGridView))

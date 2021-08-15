@@ -80,7 +80,6 @@ int main(int argc, char** argv) try
     // instantiate the grid geometry
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
-    gridGeometry->update();
 ```
 
 ### Initialize the problem and grid variables
@@ -171,7 +170,7 @@ in the input file.
 
         // update the grid geometry, the grid variables and
         // the solution vectors now that the grid has been refined
-        gridGeometry->update();
+        gridGeometry->update(gridManager.grid().leafGridView());
         gridVariables->updateAfterGridAdaption(p);
 
         p.resize(gridGeometry->numDofs());

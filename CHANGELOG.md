@@ -1,3 +1,21 @@
+Differences Between DuMu<sup>x</sup> 3.5 and DuMu<sup>x</sup> 3.4
+=============================================
+
+### Improvements and Enhancements
+- __Construction and update of GridGeometries changed__: Grid geometries are fully updated after construction.
+ Additional call of update functions are therefore only needed after grid adaption. Calling the update functions after construction now leads to a performance penalty.
+
+### Immediate interface changes not allowing/requiring a deprecation period:
+- __Virtual interface of GridDataTransfer__: The `GridDataTransfer` abstract base class now required the Grid type as a template argument. Furthermore, the `store` and `reconstruct` interface functions do now expect the grid as a function argument. This allows to correctly update grid geometries and corresponding mapper (see "Construction and update of GridGeometries changed" above in the changelog)
+
+### Deprecated properties/classes/functions/files, to be removed after 3.5:
+
+- `update()` functions of grid geometries, which do not receive the `gridView`, are deprecated, use `update(gridView)` instead.
+
+### New experimental features (possibly subject to backwards-incompatible changes in the future)
+
+### Continuous integration
+
 Differences Between DuMu<sup>x</sup> 3.4 and DuMu<sup>x</sup> 3.3
 =============================================
 

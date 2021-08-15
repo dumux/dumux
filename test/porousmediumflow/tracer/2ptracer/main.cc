@@ -93,7 +93,6 @@ int main(int argc, char** argv)
     // create the finite volume grid geometry
     using GridGeometry = GetPropType<TwoPTypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
-    gridGeometry->update();
 
     // the problem (initial and boundary conditions)
     using TwoPProblem = GetPropType<TwoPTypeTag, Properties::Problem>;

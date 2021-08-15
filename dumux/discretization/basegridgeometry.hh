@@ -24,6 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_BASE_GRID_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_BASE_GRID_GEOMETRY_HH
 
+#include <utility>
 #include <type_traits>
 
 #include <dune/grid/common/mcmgmapper.hh>
@@ -83,30 +84,34 @@ public:
     , bBoxMax_(-std::numeric_limits<double>::max())
     {
         computeGlobalBoundingBox_();
+        update_();
     }
 
     /*!
      * \brief Update all fvElementGeometries (do this again after grid adaption)
      */
+    [[deprecated("Use update(gridView) instead! Will be removed after release 3.5.")]]
     void update()
     {
-        //! Update the mappers
-        if constexpr (Deprecated::hasUpdateGridView<ElementMapper, GridView>())
-            elementMapper_.update(gridView_);
-        else
-            Deprecated::update(elementMapper_);
+        update_();
+    }
 
-        if constexpr (Deprecated::hasUpdateGridView<VertexMapper, GridView>())
-            vertexMapper_.update(gridView_);
-        else
-            Deprecated::update(vertexMapper_);
+    /*!
+     * \brief Update all fvElementGeometries (call this after grid adaption)
+     */
+    void update(const GridView& gridView)
+    {
+        gridView_ = gridView;
+        update_();
+    }
 
-        //! Compute the bouding box of the entire domain, for e.g. setting boundary conditions
-        computeGlobalBoundingBox_();
-
-        //! reset bounding box tree and the element map until requested the next time
-        boundingBoxTree_.release();
-        elementMap_.reset();
+    /*!
+     * \brief Update all fvElementGeometries (call this after grid adaption)
+     */
+    void update(GridView&& gridView)
+    {
+        gridView_ = std::move(gridView);
+        update_();
     }
 
     /*!
@@ -243,8 +248,29 @@ private:
         }
     }
 
+    void update_()
+    {
+        //! Update the mappers
+        if constexpr (Deprecated::hasUpdateGridView<ElementMapper, GridView>())
+            elementMapper_.update(gridView_);
+        else
+            Deprecated::update(elementMapper_);
+
+        if constexpr (Deprecated::hasUpdateGridView<VertexMapper, GridView>())
+            vertexMapper_.update(gridView_);
+        else
+            Deprecated::update(vertexMapper_);
+
+        //! Compute the bouding box of the entire domain, for e.g. setting boundary conditions
+        computeGlobalBoundingBox_();
+
+        //! reset bounding box tree and the element map until requested the next time
+        boundingBoxTree_.release();
+        elementMap_.reset();
+    }
+
     //! the process grid view
-    const GridView gridView_;
+    GridView gridView_;
 
     //! entity mappers
     ElementMapper elementMapper_;

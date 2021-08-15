@@ -30,6 +30,7 @@ namespace Dumux {
  * \ingroup Adaptive
  * \brief Interface to be used by classes transferring grid data on adpative grids
  */
+template<class Grid>
 class GridDataTransfer
 {
 public:
@@ -37,12 +38,11 @@ public:
     virtual ~GridDataTransfer() = default;
 
     //! store user data before grid adaption
-    virtual void store() = 0;
+    virtual void store(const Grid&) = 0;
 
-    //! store user data after adaption
-    virtual void reconstruct() = 0;
+    //! store user data after grid adaption
+    virtual void reconstruct(const Grid&) = 0;
 };
-
 } // end namespace Dumux
 
 #endif

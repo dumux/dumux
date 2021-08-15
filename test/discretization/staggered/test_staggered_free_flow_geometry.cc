@@ -88,7 +88,6 @@ int main (int argc, char *argv[])
 
     auto leafGridView = grid->leafGridView();
     GridGeometry gridGeometry(leafGridView);
-    gridGeometry.update();
 
     std::cout << "Abbreviatons:\n"
               << "pos - postition of face center\n"
