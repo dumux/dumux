@@ -276,6 +276,12 @@ public:
                                          const std::string& modelParamGroup,
                                          bool verbose = false)
     {
+        GridFactory gridFactory;
+
+        // create grid on rank 0, return empty grid on all other ranks
+        if (gridFactory.comm().rank() != 0)
+            return std::unique_ptr<Grid>(gridFactory.createGrid());
+
         const auto& dR = polarCoordinates[0];
         const auto& dA = polarCoordinates[1];
 

@@ -20,13 +20,15 @@
  * \brief Test for the cake grid manager
  */
 
-#include<string>
-
 #include "config.h"
+
+#include <string>
 #include <iostream>
+
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/vtk.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/io/grid/gridmanager.hh>
@@ -63,10 +65,14 @@ void testCakeGridManager(const std::string& name)
     // make the grid
     Dune::Timer timer;
     gridManager.init();
-    std::cout << "Constructing " << dim << "-d cake grid with " << gridManager.grid().leafGridView().size(0) << " elements took "
-              << timer.elapsed() << " seconds.\n";
-    // construct a vtk output writer and attach the boundaryMakers
-    Dune::VTKWriter<typename Grid<dim>::LeafGridView> vtkWriter(gridManager.grid().leafGridView());
+
+    const auto& gridView = gridManager.grid().leafGridView();
+    if (gridView.comm().rank() == 0)
+        std::cout << "Constructing " << dim << "-d cake grid with " << gridView.size(0) << " elements took "
+                  << timer.elapsed() << " seconds.\n";
+
+    // write the grid to a .vtk file
+    Dune::VTKWriter<typename Grid<dim>::LeafGridView> vtkWriter(gridView);
     vtkWriter.write(name);
 }
 
