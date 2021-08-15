@@ -1,6 +1,15 @@
 Differences Between DuMu<sup>x</sup> 3.5 and DuMu<sup>x</sup> 3.4
 =============================================
 
+- __Sequential__: The old "sequential", "IMPES-style" models have not received updates in several years,
+  are separate from the rest of the code base and increasingly became a maintenance burden. Deprecation warnings
+  are emitted when using the sequential models since the DuMu<sup>x</sup> 3.0 release. For DuMu<sup>x</sup> 3.5,
+  these models are now removed from the code base. To continue using them use `releases/3.4`. IMPES-style algorithms
+  are possible in the DuMu<sup>x</sup> 3.0 style of implementing models but their development did
+  not receive much attention. See https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/merge_requests/2629
+  for the state of current efforts. Further improvements and contributions (MRs) on this front
+  are highly welcome (get in contact via the DuMu<sup>x</sup> mailing list).
+
 ### Improvements and Enhancements
 - __Construction and update of GridGeometries changed__: Grid geometries are fully updated after construction.
  Additional call of update functions are therefore only needed after grid adaption. Calling the update functions after construction now leads to a performance penalty.
@@ -15,6 +24,10 @@ Differences Between DuMu<sup>x</sup> 3.5 and DuMu<sup>x</sup> 3.4
 ### New experimental features (possibly subject to backwards-incompatible changes in the future)
 
 ### Continuous integration
+
+- __Python bindings__: The Python bindings are now tested in the CI. Furthermore, Python scripts are
+  automatically checked with linters, see `dumux/python/README.md` for more information.
+
 
 Differences Between DuMu<sup>x</sup> 3.4 and DuMu<sup>x</sup> 3.3
 =============================================
