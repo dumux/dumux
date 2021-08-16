@@ -14,6 +14,8 @@ Differences Between DuMu<sup>x</sup> 3.5 and DuMu<sup>x</sup> 3.4
 - __Construction and update of GridGeometries changed__: Grid geometries are fully updated after construction.
  Additional call of update functions are therefore only needed after grid adaption. Calling the update functions after construction now leads to a performance penalty.
 
+- __Cake grid creator__: The cake grid creator can now be used in parallel simulations
+
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Virtual interface of GridDataTransfer__: The `GridDataTransfer` abstract base class now required the Grid type as a template argument. Furthermore, the `store` and `reconstruct` interface functions do now expect the grid as a function argument. This allows to correctly update grid geometries and corresponding mapper (see "Construction and update of GridGeometries changed" above in the changelog)
 

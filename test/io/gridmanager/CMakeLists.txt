@@ -19,6 +19,19 @@ dumux_add_test(NAME test_gridmanager_cake_360_ug
                                 ${CMAKE_CURRENT_BINARY_DIR}/cake-2d-ug-360.vtu
                         --relative 1e-6)
 
+dumux_add_test(NAME test_gridmanager_cake_360_ug_parallel
+               TARGET test_gridmanager_cake_ug
+               LABELS unit io
+               CMAKE_GUARD "( MPI_FOUND AND dune-uggrid_FOUND )"
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
+                        --command "${MPIEXEC} -np 3 ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_cake_ug -Grid.Name ug-360"
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_3d_360-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/s0003-cake-3d-ug-360.pvtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_2d_360-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/s0003-cake-2d-ug-360.pvtu
+                        --relative 1e-6)
+
 dumux_add_test(NAME test_gridmanager_cake_360_alu
                TARGET test_gridmanager_cake_alu
                LABELS unit io
@@ -30,6 +43,19 @@ dumux_add_test(NAME test_gridmanager_cake_360_alu
                                 ${CMAKE_CURRENT_BINARY_DIR}/cake-3d-alu-360.vtu
                                 ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_2d_360-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/cake-2d-alu-360.vtu
+                        --relative 1e-6)
+
+dumux_add_test(NAME test_gridmanager_cake_360_alu_parallel
+               TARGET test_gridmanager_cake_alu
+               LABELS unit io
+               CMAKE_GUARD "( MPI_FOUND AND dune-alugrid_FOUND )"
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
+                        --command "${MPIEXEC} -np 3 ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_cake_alu -Grid.Name alu-360"
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_3d_360-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/s0003-cake-3d-alu-360.pvtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_2d_360-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/s0003-cake-2d-alu-360.pvtu
                         --relative 1e-6)
 
 dumux_add_test(NAME test_gridmanager_cake_210_ug
