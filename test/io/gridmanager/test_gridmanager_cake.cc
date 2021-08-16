@@ -29,9 +29,7 @@
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/vtk.hh>
 
-#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/io/grid/gridmanager.hh>
 #include <dumux/io/grid/cakegridmanager.hh>
 
 #if HAVE_DUNE_UGGRID
