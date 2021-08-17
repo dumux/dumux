@@ -60,8 +60,8 @@ public:
 
         out.addVolumeVariable( [](const auto& v){ return v.porosity(); },
                                IOName::porosity());
-//         out.addVolumeVariable( [](const auto& v){ return v.permeability(); },
-//                                IOName::permeability());
+         out.addVolumeVariable( [](const auto& v){ return v.permeability(); },
+                                IOName::permeability());
     }
 
     template <class ModelTraits, class FluidSystem, class SolidSystem = void>
