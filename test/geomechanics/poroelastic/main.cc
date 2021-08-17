@@ -62,11 +62,10 @@ void assembleElementStresses(SigmaStorage& sigmaStorage,
                              const GridVariables& gridVariables,
                              const SolutionVector& x)
 {
+    auto fvGeometry = localView(gridGeometry);
+    auto elemVolVars = localView(gridVariables.curGridVolVars());
     for (const auto& element : elements(gridGeometry.gridView()))
     {
-        auto fvGeometry = localView(gridGeometry);
-        auto elemVolVars = localView(gridVariables.curGridVolVars());
-
         fvGeometry.bind(element);
         elemVolVars.bind(element, fvGeometry, x);
 

@@ -70,12 +70,10 @@ public:
         p_in_ = getParam<Scalar>("BoundaryConditions1D.PressureInput");
         delta_p_ = getParam<Scalar>("BoundaryConditions1D.DeltaPressure");
         exactPressure_.resize(this->gridGeometry().numDofs());
-
+        auto fvGeometry = localView(this->gridGeometry());
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
-
             for (auto&& scv : scvs(fvGeometry))
                 exactPressure_[scv.dofIndex()] = exactSolution(scv.dofPosition());
         }
@@ -235,12 +233,12 @@ public:
         SolutionVector source(sol.size());
         SolutionVector sourceExact(sol.size());
         Scalar volume = 0.0;
+        auto fvGeometry = localView(this->gridGeometry());
+        auto elemVolVars = localView(gridVars.curGridVolVars());
+
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
-
-            auto elemVolVars = localView(gridVars.curGridVolVars());
             elemVolVars.bindElement(element, fvGeometry, sol);
 
             for (auto&& scv : scvs(fvGeometry))

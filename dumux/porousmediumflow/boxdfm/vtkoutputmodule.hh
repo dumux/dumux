@@ -183,12 +183,12 @@ private:
             // maybe allocate space for the process rank
             if (addProcessRank) rank.resize(numCells);
 
+            auto fvGeometry = localView(this->gridGeometry());
+            auto elemVolVars = localView(this->gridVariables().curGridVolVars());
+            auto elemFluxVarsCache = localView(this->gridVariables().gridFluxVarsCache());
             for (const auto& element : elements(gridView, Dune::Partitions::interior))
             {
                 const auto eIdxGlobal = this->gridGeometry().elementMapper().index(element);
-
-                auto fvGeometry = localView(this->gridGeometry());
-                auto elemVolVars = localView(this->gridVariables().curGridVolVars());
 
                 // If velocity output is enabled we need to bind to the whole stencil
                 // otherwise element-local data is sufficient
@@ -230,7 +230,6 @@ private:
                 // velocity output
                 if (this->velocityOutput().enableOutput())
                 {
-                    auto elemFluxVarsCache = localView(this->gridVariables().gridFluxVarsCache());
                     elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
 
                     for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numFluidPhases(); ++phaseIdx)
@@ -414,8 +413,7 @@ private:
                 // velocity output
                 if (this->velocityOutput().enableOutput())
                 {
-                    auto elemFluxVarsCache = localView(this->gridVariables().gridFluxVarsCache());
-                    elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
+                    const auto elemFluxVarsCache = localView(this->gridVariables().gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
 
                     for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numFluidPhases(); ++phaseIdx)
                         this->velocityOutput().calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);

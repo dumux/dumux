@@ -153,9 +153,9 @@ int main (int argc, char *argv[])
         DUNE_THROW(Dune::InvalidStateException, "FvGridGeometry does not have exactly 52 scvfs!");
 
     //! iterate over elements and check for each element the number of scvfs
+    auto fvGeometry = localView(gridGeometry);
     for (const auto& element : elements(leafGridView))
     {
-        auto fvGeometry = localView(gridGeometry);
         fvGeometry.bind(element);
 
         //! For the tpfa scheme there is always one scv per element

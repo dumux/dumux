@@ -83,13 +83,12 @@ public:
             const auto lowDimElemIdx = lowDimFvGridGeometry.elementMapper().index(lowDimElement);
             auto& lowDimData = this->couplingMap_(facetGridId, bulkGridId)[lowDimElemIdx];
 
+            auto fvGeometry = localView(bulkFvGridGeometry);
             // find the scvfs in the adjoined entities coinciding with the low dim element
             // since the bulk domain uses tpfa, there is always only going to be one scvf
             for (auto bulkElemIdx : adjoinedEntityIndices)
             {
                 const auto bulkElement = bulkFvGridGeometry.element(bulkElemIdx);
-
-                auto fvGeometry = localView(bulkFvGridGeometry);
                 fvGeometry.bindElement(bulkElement);
 
                 bool found = false;

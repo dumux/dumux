@@ -170,15 +170,12 @@ int main(int argc, char** argv)
         velocity.resize(numVelocities);
 
         const auto exactVel = problem->velocity();
-
+        auto fvGeometry = localView(*gridGeometry);
+        auto elemVolVars = localView(gridVariables->curGridVolVars());
+        auto elemFluxVarsCache = localView(gridVariables->gridFluxVarsCache());
         for (const auto& element : elements(leafGridView, Dune::Partitions::interior))
         {
             const auto eIdx = gridGeometry->elementMapper().index(element);
-
-            auto fvGeometry = localView(*gridGeometry);
-            auto elemVolVars = localView(gridVariables->curGridVolVars());
-            auto elemFluxVarsCache = localView(gridVariables->gridFluxVarsCache());
-
             fvGeometry.bind(element);
             elemVolVars.bind(element, fvGeometry, x);
             elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);

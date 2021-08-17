@@ -48,12 +48,10 @@ void printL2Error(const Problem& problem, const SolutionVector& x)
     using Scalar = double;
 
     Scalar l2error = 0.0;
-
+    auto fvGeometry = localView(problem.gridGeometry());
     for (const auto& element : elements(problem.gridGeometry().gridView()))
     {
-        auto fvGeometry = localView(problem.gridGeometry());
         fvGeometry.bindElement(element);
-
         for (auto&& scv : scvs(fvGeometry))
         {
             const auto dofIdx = scv.dofIndex();

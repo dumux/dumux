@@ -127,6 +127,7 @@ auto getJacobianPattern(const GridGeometry& gridGeometry)
 
     const auto& connectivityMap = gridGeometry.connectivityMap();
 
+    auto fvGeometry = localView(gridGeometry);
     // evaluate the acutal pattern
     for (const auto& element : elements(gridGeometry.gridView()))
     {
@@ -142,7 +143,6 @@ auto getJacobianPattern(const GridGeometry& gridGeometry)
         else
         {
             static constexpr auto faceIdx = GridGeometry::faceIdx();
-            auto fvGeometry = localView(gridGeometry);
             fvGeometry.bindElement(element);
 
             // loop over sub control faces
@@ -171,10 +171,10 @@ Dune::MatrixIndexSet getFEJacobianPattern(const FEBasis& feBasis)
     Dune::MatrixIndexSet pattern;
     pattern.resize(numDofs, numDofs);
 
+    auto localView = feBasis.localView();
     // matrix pattern for implicit Jacobians
     for (const auto& element : elements(feBasis.gridView()))
     {
-        auto localView = feBasis.localView();
         localView.bind(element);
 
         const auto& finiteElement = localView.tree().finiteElement();

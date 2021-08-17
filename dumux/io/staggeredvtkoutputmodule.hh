@@ -192,11 +192,10 @@ private:
         if(!faceVarVectorDataInfo_.empty())
             faceVarVectorData.resize(faceVarVectorDataInfo_.size(), std::vector<GlobalPosition>(numPoints));
 
+        auto fvGeometry = localView(this->gridGeometry());
+        auto elemFaceVars = localView(this->gridVariables().curGridFaceVars());
         for (const auto& element : elements(this->gridGeometry().gridView(), Dune::Partitions::interior))
         {
-            auto fvGeometry = localView(this->gridGeometry());
-            auto elemFaceVars = localView(this->gridVariables().curGridFaceVars());
-
             if (!faceVarScalarDataInfo_.empty() || !faceVarVectorDataInfo_.empty())
             {
                 fvGeometry.bind(element);

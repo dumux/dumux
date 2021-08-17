@@ -139,8 +139,8 @@ public:
         std::vector<WallElementInformation> wallElements;
 
         const auto gridView = this->gridGeometry().gridView();
-        auto fvGeometry = localView(this->gridGeometry());
 
+        auto fvGeometry = localView(this->gridGeometry());
         for (const auto& element : elements(gridView))
         {
             fvGeometry.bindElement(element);
@@ -456,10 +456,10 @@ private:
 
     void calculateCCVelocities_(const SolutionVector& curSol)
     {
+        auto fvGeometry = localView(this->gridGeometry());
         // calculate cell-center-averaged velocities
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
 
@@ -480,10 +480,13 @@ private:
     void calculateCCVelocityGradients_()
     {
         using std::abs;
+
         // calculate cell-center-averaged velocity gradients, maximum, and minimum values
+        auto fvGeometry = localView(this->gridGeometry());
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             const unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
+
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
             {
                 for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
@@ -500,7 +503,6 @@ private:
                 }
             }
 
-            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scvf : scvfs(fvGeometry))
             {
@@ -685,10 +687,10 @@ private:
     void storeViscosities_(const SolutionVector& curSol)
     {
         // calculate or call all secondary variables
+        auto fvGeometry = localView(this->gridGeometry());
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {

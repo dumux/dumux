@@ -321,16 +321,15 @@ private:
         analyticalPressure_.resize(this->gridGeometry().numCellCenterDofs());
         analyticalVelocity_.resize(this->gridGeometry().numCellCenterDofs());
         analyticalVelocityOnFace_.resize(this->gridGeometry().numFaceDofs());
-
+        auto fvGeometry = localView(this->gridGeometry());
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
-                auto ccDofIdx = scv.dofIndex();
-                auto ccDofPosition = scv.dofPosition();
-                auto analyticalSolutionAtCc = analyticalSolution(ccDofPosition);
+                const auto ccDofIdx = scv.dofIndex();
+                const auto ccDofPosition = scv.dofPosition();
+                const auto analyticalSolutionAtCc = analyticalSolution(ccDofPosition);
 
                 // velocities on faces
                 for (auto&& scvf : scvfs(fvGeometry))

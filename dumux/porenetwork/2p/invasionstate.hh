@@ -96,15 +96,13 @@ public:
     bool update(const SolutionVector& sol, const GridVolumeVariables& gridVolVars, GridFluxVariablesCache& gridFluxVarsCache)
     {
         hasChangedInCurrentIteration_ = false;
+        auto fvGeometry = localView(problem_.gridGeometry());
+        auto elemVolVars = localView(gridVolVars);
+        auto elemFluxVarsCache = localView(gridFluxVarsCache);
         for (auto&& element : elements(problem_.gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(problem_.gridGeometry());
             fvGeometry.bindElement(element);
-
-            auto elemVolVars = localView(gridVolVars);
             elemVolVars.bind(element, fvGeometry, sol);
-
-            auto elemFluxVarsCache = localView(gridFluxVarsCache);
             elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
 
             for (auto&& scvf : scvfs(fvGeometry))
@@ -158,6 +156,9 @@ public:
         if (accuracyCriterion < 0.0)
             return;
 
+        auto fvGeometry = localView(problem_.gridGeometry());
+        auto elemVolVars = localView(gridVolVars);
+        auto elemFluxVarsCache = localView(gridFluxVarsCache);
         for (auto&& element : elements(problem_.gridGeometry().gridView()))
         {
             // Only consider throats which have been invaded during the current time step
@@ -165,13 +166,8 @@ public:
             if (!invadedCurrentIteration_[eIdx] || invadedPreviousTimeStep_[eIdx] == invadedCurrentIteration_[eIdx])
                 continue;
 
-            auto fvGeometry = localView(problem_.gridGeometry());
             fvGeometry.bindElement(element);
-
-            auto elemVolVars = localView(gridVolVars);
             elemVolVars.bind(element, fvGeometry, sol);
-
-            auto elemFluxVarsCache = localView(gridFluxVarsCache);
             elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
 
             for (auto&& scvf : scvfs(fvGeometry))

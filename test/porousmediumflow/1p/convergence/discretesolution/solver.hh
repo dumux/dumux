@@ -124,12 +124,10 @@ SolutionStorage<TypeTag> solveRefinementLevel(int numCells)
         // add exact solution
         using Scalar = GetPropType<TypeTag, Properties::Scalar>;
         std::vector<Scalar> exact(gridGeometry->numDofs());
-
+        auto fvGeometry = localView(*gridGeometry);
         for (const auto& element : elements(gridGeometry->gridView()))
         {
-            auto fvGeometry = localView(*gridGeometry);
             fvGeometry.bindElement(element);
-
             for (const auto& scv : scvs(fvGeometry))
                 exact[scv.dofIndex()] = problem->exact(scv.dofPosition());
         }

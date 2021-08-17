@@ -72,9 +72,9 @@ auto createFreeFlowAnalyticalSolution(const Problem& problem)
     analyticalVelocityOnFace.resize(gridGeometry.numFaceDofs());
 
     using Indices = typename Problem::Indices;
+    auto fvGeometry = localView(gridGeometry);
     for (const auto& element : elements(gridGeometry.gridView()))
     {
-        auto fvGeometry = localView(gridGeometry);
         fvGeometry.bindElement(element);
         for (auto&& scv : scvs(fvGeometry))
         {
@@ -123,10 +123,9 @@ auto createDarcyAnalyticalSolution(const Problem& problem)
 
     analyticalPressure.resize(gridGeometry.numDofs());
     analyticalVelocity.resize(gridGeometry.numDofs());
-
+    auto fvGeometry = localView(gridGeometry);
     for (const auto& element : elements(gridGeometry.gridView()))
     {
-        auto fvGeometry = localView(gridGeometry);
         fvGeometry.bindElement(element);
         for (auto&& scv : scvs(fvGeometry))
         {
@@ -180,10 +179,9 @@ void printDarcyL2Error(const Problem& problem, const SolutionVector& x)
     using Scalar = double;
 
     Scalar l2error = 0.0;
-
+    auto fvGeometry = localView(problem.gridGeometry());
     for (const auto& element : elements(problem.gridGeometry().gridView()))
     {
-        auto fvGeometry = localView(problem.gridGeometry());
         fvGeometry.bindElement(element);
 
         for (auto&& scv : scvs(fvGeometry))

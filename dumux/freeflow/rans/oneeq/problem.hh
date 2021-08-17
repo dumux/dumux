@@ -92,12 +92,12 @@ public:
     {
         ParentType::updateDynamicWallProperties(curSol);
 
+        auto fvGeometry = localView(this->gridGeometry());
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-
-            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
+
             for (auto&& scv : scvs(fvGeometry))
             {
                 const int dofIdx = scv.dofIndex();
@@ -117,6 +117,7 @@ public:
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             const unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
+            fvGeometry.bindElement(element);
 
             for (unsigned int dimIdx = 0; dimIdx < Grid::dimension; ++dimIdx)
             {
@@ -130,8 +131,6 @@ public:
             }
 
             // Adjust for dirichlet boundary conditions
-            auto fvGeometry = localView(this->gridGeometry());
-            fvGeometry.bindElement(element);
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 const unsigned int normDim = scvf.directionIndex();

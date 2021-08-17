@@ -41,9 +41,9 @@ void runTest(const GG& gg, const double refVolume, const double refSurface)
 {
     double volume = 0.0;
     double surface = 0.0;
+    auto fvGeometry = localView(gg);
     for (const auto& element : elements(gg.gridView()))
     {
-        auto fvGeometry = localView(gg);
         fvGeometry.bind(element);
 
         for (const auto& scv : scvs(fvGeometry))

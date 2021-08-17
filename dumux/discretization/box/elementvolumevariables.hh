@@ -25,6 +25,7 @@
 #define DUMUX_DISCRETIZATION_BOX_ELEMENT_VOLUMEVARIABLES_HH
 
 #include <type_traits>
+#include <utility>
 
 #include <dumux/discretization/box/elementsolution.hh>
 
@@ -66,21 +67,49 @@ public:
     const VolumeVariables& operator [](const SubControlVolume& scv) const
     { return gridVolVars().volVars(eIdx_, scv.indexInElement()); }
 
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class SolutionVector>
+    BoxElementVolumeVariables bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                   const FVElementGeometry& fvGeometry,
+                                   const SolutionVector& sol)  &&
+    {
+        this->bindElement(element, fvGeometry, sol);
+        return std::move(*this);
+    }
+
     // For compatibility reasons with the case of not storing the vol vars.
     // function to be called before assembling an element, preparing the vol vars within the stencil
     template<class FVElementGeometry, class SolutionVector>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
-              const SolutionVector& sol)
+              const SolutionVector& sol) &
     {
         bindElement(element, fvGeometry, sol);
+    }
+
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class SolutionVector>
+    BoxElementVolumeVariables bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                          const FVElementGeometry& fvGeometry,
+                                          const SolutionVector& sol)  &&
+    {
+        this->bindElement(element, fvGeometry, sol);
+        return std::move(*this);
     }
 
     // function to prepare the vol vars within the element
     template<class FVElementGeometry, class SolutionVector>
     void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
-                     const SolutionVector& sol)
+                     const SolutionVector& sol) &
     {
         eIdx_ = fvGeometry.gridGeometry().elementMapper().index(element);
     }
@@ -113,20 +142,48 @@ public:
     BoxElementVolumeVariables(const GridVolumeVariables& gridVolVars)
     : gridVolVarsPtr_(&gridVolVars) {}
 
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class SolutionVector>
+    BoxElementVolumeVariables bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                   const FVElementGeometry& fvGeometry,
+                                   const SolutionVector& sol)  &&
+    {
+        this->bindElement(element, fvGeometry, sol);
+        return std::move(*this);
+    }
+
     // specialization for box models, simply forwards to the bindElement method
     template<class FVElementGeometry, class SolutionVector>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
-              const SolutionVector& sol)
+              const SolutionVector& sol) &
     {
         bindElement(element, fvGeometry, sol);
+    }
+
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class SolutionVector>
+    BoxElementVolumeVariables bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                          const FVElementGeometry& fvGeometry,
+                                          const SolutionVector& sol)  &&
+    {
+        this->bindElement(element, fvGeometry, sol);
+        return std::move(*this);
     }
 
     // specialization for box models
     template<class FVElementGeometry, class SolutionVector>
     void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
-                     const SolutionVector& sol)
+                     const SolutionVector& sol) &
     {
         // get the solution at the dofs of the element
         auto elemSol = elementSolution(element, sol, fvGeometry.gridGeometry());

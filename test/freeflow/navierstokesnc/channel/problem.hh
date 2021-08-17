@@ -209,17 +209,15 @@ public:
     template<class GridVariables, class SolutionVector>
     void calculateDeltaP(const GridVariables& gridVariables, const SolutionVector& sol)
     {
+        auto fvGeometry = localView(this->gridGeometry());
+        auto elemVolVars = localView(gridVariables.curGridVolVars());
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
+            elemVolVars.bindElement(element, fvGeometry, sol);
             for (auto&& scv : scvs(fvGeometry))
             {
-                auto ccDofIdx = scv.dofIndex();
-
-                auto elemVolVars = localView(gridVariables.curGridVolVars());
-                elemVolVars.bindElement(element, fvGeometry, sol);
-
+                const auto ccDofIdx = scv.dofIndex();
                 deltaP_[ccDofIdx] = elemVolVars[scv].pressure() - 1.1e5;
             }
         }

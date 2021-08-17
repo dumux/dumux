@@ -26,6 +26,7 @@
 
 #include <cstddef>
 #include <vector>
+#include <utility>
 
 namespace Dumux {
 
@@ -63,26 +64,63 @@ public:
     template<class FVElementGeometry, class ElementVolumeVariables>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
-              const ElementVolumeVariables& elemVolVars)
+              const ElementVolumeVariables& elemVolVars) &
+    { bindElement(element, fvGeometry, elemVolVars); }
+
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    BoxElementFluxVariablesCache bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                      const FVElementGeometry& fvGeometry,
+                                      const ElementVolumeVariables& elemVolVars) &&
     {
-        bindElement(element, fvGeometry, elemVolVars);
+        this->bind(element, fvGeometry, elemVolVars);
+        return std::move(*this);
     }
 
     template<class FVElementGeometry, class ElementVolumeVariables>
     void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
-                     const ElementVolumeVariables& elemVolVars)
+                     const ElementVolumeVariables& elemVolVars) &
+    { eIdx_ = fvGeometry.gridGeometry().elementMapper().index(element); }
+
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    BoxElementFluxVariablesCache bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                             const FVElementGeometry& fvGeometry,
+                                             const ElementVolumeVariables& elemVolVars) &&
     {
-        eIdx_ = fvGeometry.gridGeometry().elementMapper().index(element);
+        this->bindElement(element, fvGeometry, elemVolVars);
+        return std::move(*this);
     }
 
     template<class FVElementGeometry, class ElementVolumeVariables>
     void bindScvf(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                   const FVElementGeometry& fvGeometry,
                   const ElementVolumeVariables& elemVolVars,
-                  const typename FVElementGeometry::SubControlVolumeFace& scvf)
+                  const typename FVElementGeometry::SubControlVolumeFace& scvf) &
+    { bindElement(element, fvGeometry, elemVolVars); }
+
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    BoxElementFluxVariablesCache bindScvf(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                          const FVElementGeometry& fvGeometry,
+                                          const ElementVolumeVariables& elemVolVars,
+                                          const typename FVElementGeometry::SubControlVolumeFace& scvf) &&
     {
-        bindElement(element, fvGeometry, elemVolVars);
+        this->bindScvf(element, fvGeometry, elemVolVars, scvf);
+        return std::move(*this);
     }
 
     // access operator
@@ -121,15 +159,29 @@ public:
     template<class FVElementGeometry, class ElementVolumeVariables>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
-              const ElementVolumeVariables& elemVolVars)
+              const ElementVolumeVariables& elemVolVars) &
     {
         bindElement(element, fvGeometry, elemVolVars);
+    }
+
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    BoxElementFluxVariablesCache bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                      const FVElementGeometry& fvGeometry,
+                                      const ElementVolumeVariables& elemVolVars) &&
+    {
+        this->bind(element, fvGeometry, elemVolVars);
+        return std::move(*this);
     }
 
     template<class FVElementGeometry, class ElementVolumeVariables>
     void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
-                     const ElementVolumeVariables& elemVolVars)
+                     const ElementVolumeVariables& elemVolVars) &
     {
         // temporary resizing of the cache
         fluxVarsCache_.resize(fvGeometry.numScvf());
@@ -137,14 +189,43 @@ public:
             (*this)[scvf].update(gridFluxVarsCache().problem(), element, fvGeometry, elemVolVars, scvf);
     }
 
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    BoxElementFluxVariablesCache bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                             const FVElementGeometry& fvGeometry,
+                                             const ElementVolumeVariables& elemVolVars) &&
+    {
+        this->bindElement(element, fvGeometry, elemVolVars);
+        return std::move(*this);
+    }
+
     template<class FVElementGeometry, class ElementVolumeVariables>
     void bindScvf(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                   const FVElementGeometry& fvGeometry,
                   const ElementVolumeVariables& elemVolVars,
-                  const typename FVElementGeometry::SubControlVolumeFace& scvf)
+                  const typename FVElementGeometry::SubControlVolumeFace& scvf) &
     {
         fluxVarsCache_.resize(fvGeometry.numScvf());
         (*this)[scvf].update(gridFluxVarsCache().problem(), element, fvGeometry, elemVolVars, scvf);
+    }
+
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    BoxElementFluxVariablesCache bindScvf(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                          const FVElementGeometry& fvGeometry,
+                                          const ElementVolumeVariables& elemVolVars,
+                                          const typename FVElementGeometry::SubControlVolumeFace& scvf) &&
+    {
+        this->bindScvf(element, fvGeometry, elemVolVars, scvf);
+        return std::move(*this);
     }
 
     // access operator

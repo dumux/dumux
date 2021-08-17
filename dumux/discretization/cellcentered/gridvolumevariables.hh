@@ -69,12 +69,10 @@ public:
     {
         const auto numScv = gridGeometry.numScv();
         volumeVariables_.resize(numScv);
-
+        auto fvGeometry = localView(gridGeometry);
         for (const auto& element : elements(gridGeometry.gridView()))
         {
-            auto fvGeometry = localView(gridGeometry);
             fvGeometry.bindElement(element);
-
             for (auto&& scv : scvs(fvGeometry))
             {
                 const auto elemSol = elementSolution(element, sol, gridGeometry);

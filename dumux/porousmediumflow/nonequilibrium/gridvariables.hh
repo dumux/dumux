@@ -92,14 +92,14 @@ public:
             else
                 velocity[phaseIdx].resize(this->gridGeometry_->numDofs());
         }
+
+        auto fvGeometry = localView(*this->gridGeometry_);
+        auto elemVolVars = localView(this->curGridVolVars());
+        auto elemFluxVarsCache = localView(this->gridFluxVarsCache());
+
         for (const auto& element : elements(this->gridGeometry_->gridView(), Dune::Partitions::interior))
         {
             const auto eIdxGlobal = this->gridGeometry_->elementMapper().index(element);
-
-            auto fvGeometry = localView(*this->gridGeometry_);
-            auto elemVolVars = localView(this->curGridVolVars());
-            auto elemFluxVarsCache = localView(this->gridFluxVarsCache());
-
             fvGeometry.bind(element);
             elemVolVars.bind(element, fvGeometry, curSol);
             elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);

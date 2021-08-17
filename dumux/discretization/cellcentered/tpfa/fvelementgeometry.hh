@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <array>
 #include <vector>
+#include <utility>
 
 #include <dune/common/exceptions.hh>
 #include <dumux/common/indextraits.hh>
@@ -143,14 +144,35 @@ public:
         return gridGeometry().scvfIndicesOfScv(scvIndices_[0]).size();
     }
 
-    //! Binding of an element, called by the local jacobian to prepare element assembly
-    void bind(const Element& element)
+    /*!
+     * \brief bind the local view (r-value overload)
+     * This overload is called when an instance of this class is a temporary in the usage context
+     * This allows a usage like this: `const auto view = localView(...).bind(element);`
+     */
+    CCTpfaFVElementGeometry bind(const Element& element) &&
+    {
+        this->bindElement(element);
+        return std::move(*this);
+    }
+
+    void bind(const Element& element) &
     {
         this->bindElement(element);
     }
 
+    /*!
+     * \brief bind the local view (r-value overload)
+     * This overload is called when an instance of this class is a temporary in the usage context
+     * This allows a usage like this: `const auto view = localView(...).bindElement(element);`
+     */
+    CCTpfaFVElementGeometry bindElement(const Element& element) &&
+    {
+        this->bindElement(element);
+        return std::move(*this);
+    }
+
     //! Bind only element-local
-    void bindElement(const Element& element)
+    void bindElement(const Element& element) &
     {
         element_ = element;
         scvIndices_[0] = gridGeometry().elementMapper().index(*element_);
@@ -287,11 +309,60 @@ public:
     std::size_t numScvf() const
     { return scvfs_.size(); }
 
+    /*!
+     * \brief bind the local view (r-value overload)
+     * This overload is called when an instance of this class is a temporary in the usage context
+     * This allows a usage like this: `const auto view = localView(...).bind(element);`
+     */
+    CCTpfaFVElementGeometry bind(const Element& element) &&
+    {
+        this->bind_(element);
+        return std::move(*this);
+    }
+
+    void bind(const Element& element) &
+    {
+        this->bind_(element);
+    }
+
+    /*!
+     * \brief bind the local view (r-value overload)
+     * This overload is called when an instance of this class is a temporary in the usage context
+     * This allows a usage like this: `const auto view = localView(...).bindElement(element);`
+     */
+    CCTpfaFVElementGeometry bindElement(const Element& element) &&
+    {
+        this->bindElement_(element);
+        return std::move(*this);
+    }
+
+    void bindElement(const Element& element) &
+    {
+        this->bindElement_(element);
+    }
+
+    //! Returns true if bind/bindElement has already been called
+    bool isBound() const
+    { return static_cast<bool>(element_); }
+
+    //! The bound element
+    const Element& element() const
+    { return *element_; }
+
+    //! The global finite volume geometry we are a restriction of
+    const GridGeometry& gridGeometry() const
+    { return *gridGeometryPtr_; }
+
+    //! Returns whether one of the geometry's scvfs lies on a boundary
+    bool hasBoundaryScvf() const
+    { return hasBoundaryScvf_; }
+
+private:
     //! Binding of an element preparing the geometries of the whole stencil
     //! called by the local jacobian to prepare element assembly
-    void bind(const Element& element)
+    void bind_(const Element& element)
     {
-        bindElement(element);
+        bindElement_(element);
 
         neighborScvs_.reserve(element.subEntities(1));
         neighborScvfIndices_.reserve(element.subEntities(1));
@@ -356,7 +427,7 @@ public:
     }
 
     //! Binding of an element preparing the geometries only inside the element
-    void bindElement(const Element& element)
+    void bindElement_(const Element& element)
     {
         clear();
         element_ = element;
@@ -364,24 +435,6 @@ public:
         scvfIndices_.reserve(element.subEntities(1));
         makeElementGeometries(element);
     }
-
-    //! Returns true if bind/bindElement has already been called
-    bool isBound() const
-    { return static_cast<bool>(element_); }
-
-    //! The bound element
-    const Element& element() const
-    { return *element_; }
-
-    //! The global finite volume geometry we are a restriction of
-    const GridGeometry& gridGeometry() const
-    { return *gridGeometryPtr_; }
-
-    //! Returns whether one of the geometry's scvfs lies on a boundary
-    bool hasBoundaryScvf() const
-    { return hasBoundaryScvf_; }
-
-private:
 
     GridIndexType findFlippedScvfIndex_(GridIndexType insideScvIdx, GridIndexType globalOutsideScvIdx)
     {

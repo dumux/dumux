@@ -215,6 +215,7 @@ public:
 
         auto fvGeometry = localView(this->gridGeometry());
         auto elemVolVars = localView(gridVars.curGridVolVars());
+
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             fvGeometry.bindElement(element);

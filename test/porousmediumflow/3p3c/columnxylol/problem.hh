@@ -208,12 +208,10 @@ public:
         const auto& gg = this->gridGeometry();
         Kxx_.resize(gg.numDofs());
         vtk.addField(Kxx_, "permeability");
-
+        auto fvGeometry = localView(gg);
         for (const auto& element : elements(this->gridView()))
         {
-            auto fvGeometry = localView(gg);
             fvGeometry.bindElement(element);
-
             for (const auto& scv : scvs(fvGeometry))
                 Kxx_[scv.dofIndex()] = this->spatialParams().intrinsicPermeabilityAtPos(scv.dofPosition());
         }

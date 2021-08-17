@@ -74,15 +74,15 @@ auto createAnalyticalSolution(const Scalar time, const Problem& problem)
     analyticalVelocityOnFace.resize(gridGeometry.numFaceDofs());
 
     using Indices = typename Problem::Indices;
+    auto fvGeometry = localView(gridGeometry);
     for (const auto& element : elements(gridGeometry.gridView()))
     {
-        auto fvGeometry = localView(gridGeometry);
         fvGeometry.bindElement(element);
         for (auto&& scv : scvs(fvGeometry))
         {
-            auto ccDofIdx = scv.dofIndex();
-            auto ccDofPosition = scv.dofPosition();
-            auto analyticalSolutionAtCc = problem.analyticalSolution(ccDofPosition, time);
+            const auto ccDofIdx = scv.dofIndex();
+            const auto ccDofPosition = scv.dofPosition();
+            const auto analyticalSolutionAtCc = problem.analyticalSolution(ccDofPosition, time);
 
             // velocities on faces
             for (auto&& scvf : scvfs(fvGeometry))
@@ -118,16 +118,16 @@ auto createSource(const Problem& problem)
         component.resize(gridGeometry.numCellCenterDofs());
     }
 
+    auto fvGeometry = localView(gridGeometry);
     for (const auto& element : elements(gridGeometry.gridView()))
     {
-        auto fvGeometry = localView(gridGeometry);
         fvGeometry.bindElement(element);
         for (auto&& scv : scvs(fvGeometry))
         {
-            auto ccDofIdx = scv.dofIndex();
-            auto ccDofPosition = scv.dofPosition();
+            const auto ccDofIdx = scv.dofIndex();
+            const auto ccDofPosition = scv.dofPosition();
 
-            auto sourceAtPosVal = problem.sourceAtPos(ccDofPosition);
+            const auto sourceAtPosVal = problem.sourceAtPos(ccDofPosition);
 
             source[Indices::momentumXBalanceIdx][ccDofIdx] = sourceAtPosVal[Indices::momentumXBalanceIdx];
             source[Indices::momentumYBalanceIdx][ccDofIdx] = sourceAtPosVal[Indices::momentumYBalanceIdx];

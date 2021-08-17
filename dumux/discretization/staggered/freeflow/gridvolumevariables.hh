@@ -169,12 +169,10 @@ public:
                                                      << "ffGridVariables->init(ffSol);\n\n");
 
         volumeVariables_.resize(gridGeometry.numScv());
-
+        auto fvGeometry = localView(gridGeometry);
         for (const auto& element : elements(gridGeometry.gridView()))
         {
-            auto fvGeometry = localView(gridGeometry);
             fvGeometry.bindElement(element);
-
             for (auto&& scv : scvs(fvGeometry))
             {
                 // construct a privars object from the cell center solution vector

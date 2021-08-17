@@ -198,12 +198,11 @@ public:
     void computeSourceIntegral(const SolutionVector& sol, const GridVariables& gridVars)
     {
         NumEqVector source(0.0);
+        auto fvGeometry = localView(this->gridGeometry());
+        auto elemVolVars = localView(gridVars.curGridVolVars());
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
-
-            auto elemVolVars = localView(gridVars.curGridVolVars());
             elemVolVars.bindElement(element, fvGeometry, sol);
 
             for (auto&& scv : scvs(fvGeometry))

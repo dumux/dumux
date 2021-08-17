@@ -86,12 +86,12 @@ public:
     {
         ParentType::updateDynamicWallProperties(curSol);
 
+        auto fvGeometry = localView(this->gridGeometry());
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-
-            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
+
             for (auto&& scv : scvs(fvGeometry))
             {
                 const int dofIdx = scv.dofIndex();

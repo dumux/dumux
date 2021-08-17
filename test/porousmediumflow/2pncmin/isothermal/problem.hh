@@ -339,23 +339,22 @@ public:
     }
 
     void updateVtkOutput(const SolutionVector& curSol)
+    {
+        auto fvGeometry = localView(this->gridGeometry());
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            for (const auto& element : elements(this->gridGeometry().gridView()))
+            const auto elemSol = elementSolution(element, curSol, this->gridGeometry());
+            fvGeometry.bindElement(element);
+
+            for (auto&& scv : scvs(fvGeometry))
             {
-                const auto elemSol = elementSolution(element, curSol, this->gridGeometry());
-
-                auto fvGeometry = localView(this->gridGeometry());
-                fvGeometry.bindElement(element);
-
-                for (auto&& scv : scvs(fvGeometry))
-                {
-                    VolumeVariables volVars;
-                    volVars.update(elemSol, *this, element, scv);
-                    const auto dofIdxGlobal = scv.dofIndex();
-                    permeability_[dofIdxGlobal] = volVars.permeability();
-                }
+                VolumeVariables volVars;
+                volVars.update(elemSol, *this, element, scv);
+                const auto dofIdxGlobal = scv.dofIndex();
+                permeability_[dofIdxGlobal] = volVars.permeability();
             }
         }
+    }
 
 private:
 

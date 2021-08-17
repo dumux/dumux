@@ -188,11 +188,10 @@ public:
 
         // prepare the fvGeometry and the element volume variables
         // these quantities will be used later to obtain the effective pressure
-        auto fvGeometry = localView( this->problem(pmFlowId).gridGeometry() );
-        auto elemVolVars = localView( assembler.gridVariables(Dune::index_constant<PMFlowId>()).curGridVolVars() );
-
-        fvGeometry.bindElement(element);
-        elemVolVars.bindElement(element, fvGeometry, this->curSol()[Dune::index_constant<PMFlowId>()]);
+        const auto fvGeometry = localView( this->problem(pmFlowId).gridGeometry() ).bindElement(element);
+        const auto elemVolVars = localView(assembler.gridVariables(Dune::index_constant<PMFlowId>()).curGridVolVars()).bindElement(element,
+                                                                                                                             fvGeometry,
+                                                                                                                             this->curSol()[Dune::index_constant<PMFlowId>()]);
 
         poroMechCouplingContext_.pmFlowElement = element;
         poroMechCouplingContext_.pmFlowFvGeometry = std::make_unique< FVElementGeometry<PMFlowId> >(fvGeometry);

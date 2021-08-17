@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <type_traits>
 #include <vector>
+#include <utility>
 
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 
@@ -83,11 +84,64 @@ public:
             return boundaryVolumeVariables_[getLocalIdx_(scvIdx)];
     }
 
-    //! precompute all boundary volume variables in a stencil of an element, the remaining ones are cached
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class SolutionVector>
+    CCTpfaElementVolumeVariables bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                      const FVElementGeometry& fvGeometry,
+                                      const SolutionVector& sol) &&
+    {
+        this->bind_(element, fvGeometry, sol);
+        return std::move(*this);
+    }
+
     template<class FVElementGeometry, class SolutionVector>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
-              const SolutionVector& sol)
+              const SolutionVector& sol) &
+    { this->bind_(element, fvGeometry, sol); }
+
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class SolutionVector>
+    CCTpfaElementVolumeVariables bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                             const FVElementGeometry& fvGeometry,
+                                             const SolutionVector& sol) &&
+    {
+        this->bindElement_(element, fvGeometry, sol);
+        return std::move(*this);
+    }
+
+    template<class FVElementGeometry, class SolutionVector>
+    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                     const FVElementGeometry& fvGeometry,
+                     const SolutionVector& sol) &
+    { this->bindElement_(element, fvGeometry, sol); }
+
+    //! The global volume variables object we are a restriction of
+    const GridVolumeVariables& gridVolVars() const
+    { return *gridVolVarsPtr_; }
+
+private:
+
+    //! Clear all local storage
+    void clear_()
+    {
+        boundaryVolVarIndices_.clear();
+        boundaryVolumeVariables_.clear();
+    }
+
+    //! precompute all boundary volume variables in a stencil of an element, the remaining ones are cached
+    template<class FVElementGeometry, class SolutionVector>
+    void bind_(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+               const FVElementGeometry& fvGeometry,
+               const SolutionVector& sol)
     {
         if (!fvGeometry.hasBoundaryScvf())
             return;
@@ -123,22 +177,10 @@ public:
 
     //! precompute the volume variables of an element - do nothing: volVars are cached
     template<class FVElementGeometry, class SolutionVector>
-    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
-                     const FVElementGeometry& fvGeometry,
-                     const SolutionVector& sol)
+    void bindElement_(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                      const FVElementGeometry& fvGeometry,
+                      const SolutionVector& sol)
     {}
-
-    //! The global volume variables object we are a restriction of
-    const GridVolumeVariables& gridVolVars() const
-    { return *gridVolVarsPtr_; }
-
-private:
-    //! Clear all local storage
-    void clear_()
-    {
-        boundaryVolVarIndices_.clear();
-        boundaryVolumeVariables_.clear();
-    }
 
     const GridVolumeVariables* gridVolVarsPtr_;
 
@@ -173,11 +215,81 @@ public:
     CCTpfaElementVolumeVariables(const GridVolumeVariables& gridVolVars)
     : gridVolVarsPtr_(&gridVolVars) {}
 
-    //! Prepares the volume variables within the element stencil
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class SolutionVector>
+    CCTpfaElementVolumeVariables bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                      const FVElementGeometry& fvGeometry,
+                                      const SolutionVector& sol) &&
+    {
+        this->bind_(element, fvGeometry, sol);
+        return std::move(*this);
+    }
+
     template<class FVElementGeometry, class SolutionVector>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
-              const SolutionVector& sol)
+              const SolutionVector& sol) &
+    { this->bind_(element, fvGeometry, sol); }
+
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class SolutionVector>
+    CCTpfaElementVolumeVariables bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                             const FVElementGeometry& fvGeometry,
+                                             const SolutionVector& sol) &&
+    {
+        this->bindElement_(element, fvGeometry, sol);
+        return std::move(*this);
+    }
+
+    template<class FVElementGeometry, class SolutionVector>
+    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                     const FVElementGeometry& fvGeometry,
+                     const SolutionVector& sol) &
+    { this->bindElement_(element, fvGeometry, sol); }
+
+    //! access operator with scv
+    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
+    const VolumeVariables& operator [](const SubControlVolume& scv) const
+    { return volumeVariables_[getLocalIdx_(scv.dofIndex())]; }
+
+    //! access operator with scv
+    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
+    VolumeVariables& operator [](const SubControlVolume& scv)
+    { return volumeVariables_[getLocalIdx_(scv.dofIndex())]; }
+
+    //! access operator with scv index
+    const VolumeVariables& operator [](std::size_t scvIdx) const
+    { return volumeVariables_[getLocalIdx_(scvIdx)]; }
+
+    //! access operator with scv index
+    VolumeVariables& operator [](std::size_t scvIdx)
+    { return volumeVariables_[getLocalIdx_(scvIdx)]; }
+
+    //! The global volume variables object we are a restriction of
+    const GridVolumeVariables& gridVolVars() const
+    { return *gridVolVarsPtr_; }
+
+private:
+    //! Clear all local storage
+    void clear_()
+    {
+        volVarIndices_.clear();
+        volumeVariables_.clear();
+    }
+
+        //! Prepares the volume variables within the element stencil
+    template<class FVElementGeometry, class SolutionVector>
+    void bind_(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+               const FVElementGeometry& fvGeometry,
+               const SolutionVector& sol)
     {
         clear_();
 
@@ -264,9 +376,9 @@ public:
     }
 
     template<class FVElementGeometry, class SolutionVector>
-    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
-                     const FVElementGeometry& fvGeometry,
-                     const SolutionVector& sol)
+    void bindElement_(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                      const FVElementGeometry& fvGeometry,
+                      const SolutionVector& sol)
     {
         clear_();
 
@@ -281,36 +393,6 @@ public:
                                    element,
                                    scv);
         volVarIndices_[0] = scv.dofIndex();
-    }
-
-    //! access operator with scv
-    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
-    const VolumeVariables& operator [](const SubControlVolume& scv) const
-    { return volumeVariables_[getLocalIdx_(scv.dofIndex())]; }
-
-    //! access operator with scv
-    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
-    VolumeVariables& operator [](const SubControlVolume& scv)
-    { return volumeVariables_[getLocalIdx_(scv.dofIndex())]; }
-
-    //! access operator with scv index
-    const VolumeVariables& operator [](std::size_t scvIdx) const
-    { return volumeVariables_[getLocalIdx_(scvIdx)]; }
-
-    //! access operator with scv index
-    VolumeVariables& operator [](std::size_t scvIdx)
-    { return volumeVariables_[getLocalIdx_(scvIdx)]; }
-
-    //! The global volume variables object we are a restriction of
-    const GridVolumeVariables& gridVolVars() const
-    { return *gridVolVarsPtr_; }
-
-private:
-    //! Clear all local storage
-    void clear_()
-    {
-        volVarIndices_.clear();
-        volumeVariables_.clear();
     }
 
     const GridVolumeVariables* gridVolVarsPtr_;

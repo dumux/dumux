@@ -125,9 +125,9 @@ public:
             const auto eIdx = source.elementIndex();
             if constexpr (GridGeometry::discMethod == DiscretizationMethod::box)
             {
+                auto fvGeometry = localView(gridGeometry);
                 // check in which subcontrolvolume(s) we are
                 const auto element = gridGeometry.boundingBoxTree().entitySet().entity(eIdx);
-                auto fvGeometry = localView(gridGeometry);
                 fvGeometry.bindElement(element);
                 const auto globalPos = source.position();
 

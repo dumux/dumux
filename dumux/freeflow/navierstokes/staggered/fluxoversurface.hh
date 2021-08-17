@@ -287,15 +287,14 @@ public:
         // make sure not to iterate over the same dofs twice
         std::vector<bool> dofVisited(problem_().gridGeometry().numFaceDofs(), false);
 
+        auto fvGeometry = localView(problem_().gridGeometry());
         auto elemVolVars = localView(gridVariables_.curGridVolVars());
-        auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache());
         auto elemFaceVars = localView(gridVariables_.curGridFaceVars());
+        auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache());
 
         for(auto&& element : elements(problem_().gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(problem_().gridGeometry());
             fvGeometry.bind(element);
-
             elemVolVars.bind(element, fvGeometry, sol_);
             elemFaceVars.bind(element, fvGeometry, sol_);
             elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);

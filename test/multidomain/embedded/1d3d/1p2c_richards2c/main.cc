@@ -57,12 +57,11 @@ double computeSourceIntegral(const Problem& problem, const SolutionVector& sol, 
 {
     const auto& gg = problem.gridGeometry();
     typename SolutionVector::block_type source(0.0);
+    auto fvGeometry = localView(gg);
+    auto elemVolVars = localView(gridVars.curGridVolVars());
     for (const auto& element : elements(gg.gridView()))
     {
-        auto fvGeometry = localView(gg);
         fvGeometry.bindElement(element);
-
-        auto elemVolVars = localView(gridVars.curGridVolVars());
         elemVolVars.bindElement(element, fvGeometry, sol);
 
         for (auto&& scv : scvs(fvGeometry))
@@ -94,11 +93,8 @@ double computeGlobalMass(const Problem& problem, const SolutionVector& sol, cons
     const auto& gg = problem.gridGeometry();
     for (const auto& element : elements(gg.gridView()))
     {
-        auto fvGeometry = localView(gg);
-        fvGeometry.bindElement(element);
-
-        auto elemVolVars = localView(gridVars.curGridVolVars());
-        elemVolVars.bindElement(element, fvGeometry, sol);
+        const auto fvGeometry = localView(gg).bindElement(element);
+        const auto elemVolVars = localView(gridVars.curGridVolVars()).bindElement(element, fvGeometry, sol);
 
         for (auto&& scv : scvs(fvGeometry))
         {
@@ -122,14 +118,9 @@ double computeGlobalBoundaryMass(const Problem& problem, const SolutionVector& s
     const auto& gg = problem.gridGeometry();
     for (const auto& element : elements(gg.gridView()))
     {
-        auto fvGeometry = localView(gg);
-        fvGeometry.bind(element);
-
-        auto elemVolVars = localView(gridVars.curGridVolVars());
-        elemVolVars.bind(element, fvGeometry, sol);
-
-        auto elemFluxVarsCache = localView(gridVars.gridFluxVarsCache());
-        elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
+        const auto fvGeometry = localView(gg).bind(element);
+        const auto elemVolVars = localView(gridVars.curGridVolVars()).bind(element, fvGeometry, sol);
+        const auto elemFluxVarsCache = localView(gridVars.gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
 
         for (auto&& scvf : scvfs(fvGeometry))
             if (scvf.boundary())

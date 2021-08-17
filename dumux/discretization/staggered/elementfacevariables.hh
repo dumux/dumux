@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <cassert>
 #include <vector>
+#include <utility>
 
 namespace Dumux {
 
@@ -64,30 +65,68 @@ public:
     const FaceVariables& operator [](const std::size_t scvfIdx) const
     { return gridFaceVariables().faceVars(scvfIdx); }
 
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class SolutionVector>
+    StaggeredElementFaceVariables bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                       const FVElementGeometry& fvGeometry,
+                                       const SolutionVector& sol) &&
+    {
+        this->bind_(element, fvGeometry, sol);
+        return std::move(*this);
+    }
 
-    //! For compatibility reasons with the case of not storing the face vars.
-    //! function to be called before assembling an element, preparing the vol vars within the stencil
     template<class FVElementGeometry, class SolutionVector>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
-              const SolutionVector& sol)
-    {}
+              const SolutionVector& sol) &
+    { this->bind_(element, fvGeometry, sol); }
 
-    //! Binding of an element, prepares only the face variables of the element
-    //! specialization for Staggered models
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class SolutionVector>
+    StaggeredElementFaceVariables bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                              const FVElementGeometry& fvGeometry,
+                                              const SolutionVector& sol) &&
+    {
+        this->bindElement_(element, fvGeometry, sol);
+        return std::move(*this);
+    }
+
     template<class FVElementGeometry, class SolutionVector>
     void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
-                     const SolutionVector& sol)
-    {}
-
+                     const SolutionVector& sol) &
+    { this->bindElement_(element, fvGeometry, sol); }
 
     //! The global volume variables object we are a restriction of
     const GridFaceVariables& gridFaceVariables() const
     { return *gridFaceVariablesPtr_; }
 
-
 private:
+
+    //! For compatibility reasons with the case of not storing the face vars.
+    //! function to be called before assembling an element, preparing the vol vars within the stencil
+    template<class FVElementGeometry, class SolutionVector>
+    void bind_(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+               const FVElementGeometry& fvGeometry,
+               const SolutionVector& sol)
+    {}
+
+    //! Binding of an element, prepares only the face variables of the element
+    //! specialization for Staggered models
+    template<class FVElementGeometry, class SolutionVector>
+    void bindElement_(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                      const FVElementGeometry& fvGeometry,
+                      const SolutionVector& sol)
+    {}
+
     const GridFaceVariables* gridFaceVariablesPtr_;
 };
 
@@ -125,12 +164,58 @@ public:
     FaceVariables& operator [](const std::size_t scvfIdx)
     { return faceVariables_[getLocalIdx_(scvfIdx)]; }
 
-    //! For compatibility reasons with the case of not storing the vol vars.
-    //! function to be called before assembling an element, preparing the vol vars within the stencil
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class SolutionVector>
+    StaggeredElementFaceVariables bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                      const FVElementGeometry& fvGeometry,
+                                      const SolutionVector& sol) &&
+    {
+        this->bind_(element, fvGeometry, sol);
+        return std::move(*this);
+    }
+
     template<class FVElementGeometry, class SolutionVector>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
-              const SolutionVector& sol)
+              const SolutionVector& sol) &
+    { this->bind_(element, fvGeometry, sol); }
+
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class SolutionVector>
+    StaggeredElementFaceVariables bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                                const FVElementGeometry& fvGeometry,
+                                                const SolutionVector& sol) &&
+    {
+        this->bindElement_(element, fvGeometry, sol);
+        return std::move(*this);
+    }
+
+    template<class FVElementGeometry, class SolutionVector>
+    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                     const FVElementGeometry& fvGeometry,
+                     const SolutionVector& sol) &
+    { this->bindElement_(element, fvGeometry, sol); }
+
+    //! The global volume variables object we are a restriction of
+    const GridFaceVariables& gridFaceVariables() const
+    { return *gridFaceVariablesPtr_; }
+
+private:
+
+    //! For compatibility reasons with the case of not storing the vol vars.
+    //! function to be called before assembling an element, preparing the vol vars within the stencil
+    template<class FVElementGeometry, class SolutionVector>
+    void bind_(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+               const FVElementGeometry& fvGeometry,
+               const SolutionVector& sol)
     {
         faceVariables_.resize(fvGeometry.numScvf());
         faceVarIndices_.resize(fvGeometry.numScvf());
@@ -147,9 +232,9 @@ public:
     //! Binding of an element, prepares only the face variables of the element
     //! specialization for Staggered models
     template<class FVElementGeometry, class SolutionVector>
-    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
-                     const FVElementGeometry& fvGeometry,
-                     const SolutionVector& sol)
+    void bindElement_(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                      const FVElementGeometry& fvGeometry,
+                      const SolutionVector& sol)
     {
         faceVariables_.resize(fvGeometry.numScvf());
         faceVarIndices_.resize(fvGeometry.numScvf());
@@ -162,12 +247,6 @@ public:
             faceVarIndices_[scvf.localFaceIdx()] = scvf.index();
         }
     }
-
-    //! The global volume variables object we are a restriction of
-    const GridFaceVariables& gridFaceVariables() const
-    { return *gridFaceVariablesPtr_; }
-
-private:
 
     int getLocalIdx_(const int scvfIdx) const
     {

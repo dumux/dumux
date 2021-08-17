@@ -134,8 +134,7 @@ public:
         auto someElemSol = elementSolution(someElement, curSol, this->gridGeometry());
         const auto someInitSol = initialAtPos(someElement.geometry().center());
 
-        auto someFvGeometry = localView(this->gridGeometry());
-        someFvGeometry.bindElement(someElement);
+        const auto someFvGeometry = localView(this->gridGeometry()).bindElement(someElement);
         const auto someScv = *(scvs(someFvGeometry).begin());
 
         VolumeVariables volVars;
@@ -154,10 +153,9 @@ public:
         time = max(time, 1e-10);
         const Scalar retardedFrontVelocity = darcyVelocity_*storageW/storageTotal/porosity;
         std::cout << "retarded velocity: " << retardedFrontVelocity << '\n';
-
+        auto fvGeometry = localView(this->gridGeometry());
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {

@@ -143,6 +143,7 @@ public:
 
         for (auto level = grid.maxLevel(); level >= 0; level--)
         {
+            auto fvGeometry = localView(*gridGeometry_);
             for (const auto& element : elements(grid.levelGridView(level)))
             {
                 // get map entry
@@ -151,7 +152,6 @@ public:
                 // put values in the map for leaf elements
                 if (element.isLeaf())
                 {
-                    auto fvGeometry = localView(*gridGeometry_);
                     fvGeometry.bindElement(element);
 
                     // store current element solution
@@ -227,13 +227,12 @@ public:
         }
 
         // iterate over leaf and reconstruct the solution
+        auto fvGeometry = localView(*gridGeometry_);
         for (const auto& element : elements(gridGeometry_->gridView().grid().leafGridView(), Dune::Partitions::interior))
         {
             if (!element.isNew())
             {
                 const auto& adaptedValues = adaptionMap_[element];
-
-                auto fvGeometry = localView(*gridGeometry_);
                 fvGeometry.bindElement(element);
 
                 // obtain element solution from map (divide by count!)
@@ -312,7 +311,6 @@ public:
                     auto elemSolSon = adaptedValuesFather.u;
                     elemSolSon[0] /= adaptedValuesFather.count;
 
-                    auto fvGeometry = localView(*gridGeometry_);
                     fvGeometry.bindElement(element);
 
                     for (const auto& scv : scvs(fvGeometry))
@@ -337,7 +335,6 @@ public:
                 {
                     auto& adaptedValuesFather = adaptionMap_[fatherElement];
 
-                    auto fvGeometry = localView(*gridGeometry_);
                     fvGeometry.bindElement(element);
 
                     // interpolate solution in the father to the vertices of the new son

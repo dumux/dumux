@@ -75,12 +75,12 @@ public:
 
         isOnMaterialInterface_.resize(gridGeometry.numDofs(), false);
         pcSwAtDof_.resize(gridGeometry.numDofs(), nullptr);
+        auto fvGeometry = localView(gridGeometry);
         for (const auto& element : elements(gridGeometry.gridView()))
         {
             const auto elemSol = elementSolution(element, x, gridGeometry);
-
-            auto fvGeometry = localView(gridGeometry);
             fvGeometry.bind(element);
+
             for (const auto& scv : scvs(fvGeometry))
             {
                 const auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);

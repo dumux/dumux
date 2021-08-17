@@ -88,14 +88,14 @@ public:
         if (forceUpdate)
         {
             fluxVarsCache_.resize(gridGeometry.gridView().size(0));
+            auto fvGeometry = localView(gridGeometry);
+            auto elemVolVars = localView(gridVolVars);
             for (const auto& element : elements(gridGeometry.gridView()))
             {
                 auto eIdx = gridGeometry.elementMapper().index(element);
-                // bind the geometries and volume variables to the element (all the elements in stencil)
-                auto fvGeometry = localView(gridGeometry);
-                fvGeometry.bind(element);
 
-                auto elemVolVars = localView(gridVolVars);
+                // bind the geometries and volume variables to the element (all the elements in stencil)
+                fvGeometry.bind(element);
                 elemVolVars.bind(element, fvGeometry, sol);
 
                 fluxVarsCache_[eIdx].resize(fvGeometry.numScvf());

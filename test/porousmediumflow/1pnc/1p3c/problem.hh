@@ -122,12 +122,12 @@ public:
             Scalar j = 0.0;
             if (!(time < 0.0))
             {
+                auto fvGeometry = localView(this->gridGeometry());
                 for (const auto& element : elements(this->gridGeometry().gridView()))
                 {
-                    auto fvGeometry = localView(this->gridGeometry());
                     fvGeometry.bindElement(element);
-
                     const auto elemSol = elementSolution(element, curSol, this->gridGeometry());
+
                     for (auto&& scv : scvs(fvGeometry))
                     {
                         const auto& globalPos = scv.dofPosition();

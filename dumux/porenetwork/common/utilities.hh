@@ -69,10 +69,11 @@ public:
         for (auto& q : averagedQuantity_)
             q = 0.0;
 
-        auto fvGeometry = localView(problem_().gridGeometry());
-        auto elemVolVars = localView(gridVariables_.curGridVolVars());
         std::vector<bool> poreVisited(problem_().gridGeometry().numDofs(), false);
         std::vector<Scalar> weights(averagedQuantityInfo_.size(), 0.0);
+
+        auto fvGeometry = localView(problem_().gridGeometry());
+        auto elemVolVars = localView(gridVariables_.curGridVolVars());
 
         for (const auto& element : elements(problem_().gridGeometry().gridView()))
         {

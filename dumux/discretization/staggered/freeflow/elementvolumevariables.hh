@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <cassert>
 #include <vector>
+#include <utility>
 
 #include <dune/common/exceptions.hh>
 #include <dumux/discretization/staggered/elementsolution.hh>
@@ -83,23 +84,76 @@ public:
             return boundaryVolumeVariables_[getLocalIdx_(scvIdx)];
     }
 
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class SolutionVector>
+    StaggeredElementVolumeVariables bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                         const FVElementGeometry& fvGeometry,
+                                         const SolutionVector& sol) &&
+    {
+        this->bind_(element, fvGeometry, sol);
+        return std::move(*this);
+    }
+
+    template<class FVElementGeometry, class SolutionVector>
+    void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+              const FVElementGeometry& fvGeometry,
+              const SolutionVector& sol) &
+    { this->bind_(element, fvGeometry, sol); }
+
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class SolutionVector>
+    StaggeredElementVolumeVariables bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                                const FVElementGeometry& fvGeometry,
+                                                const SolutionVector& sol) &&
+    {
+        this->bindElement_(element, fvGeometry, sol);
+        return std::move(*this);
+    }
+
+    template<class FVElementGeometry, class SolutionVector>
+    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                     const FVElementGeometry& fvGeometry,
+                     const SolutionVector& sol) &
+    { this->bindElement_(element, fvGeometry, sol); }
+
+    //! The global volume variables object we are a restriction of
+    const GridVolumeVariables& gridVolVars() const
+    { return *gridVolVarsPtr_; }
+
+private:
+
+    //! Clear all local storage
+    void clear_()
+    {
+        boundaryVolVarIndices_.clear();
+        boundaryVolumeVariables_.clear();
+    }
+
     //! Binding of an element, prepares the volume variables within the element stencil
     //! called by the local jacobian to prepare element assembly. Specialization callable with MultiTypeBlockVector.
     template<class FVElementGeometry, class SolutionVector, typename std::enable_if_t<isMultiTypeBlockVector<SolutionVector>::value, int> = 0>
-    void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
-              const FVElementGeometry& fvGeometry,
-              const SolutionVector& sol)
+    void bind_(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+               const FVElementGeometry& fvGeometry,
+               const SolutionVector& sol)
     {
         // forward to the actual method
-        bind(element, fvGeometry, sol[FVElementGeometry::GridGeometry::cellCenterIdx()]);
+        bind_(element, fvGeometry, sol[FVElementGeometry::GridGeometry::cellCenterIdx()]);
     }
 
     //! Binding of an element, prepares the volume variables within the element stencil
     //! called by the local jacobian to prepare element assembly
     template<class FVElementGeometry, class SolutionVector, typename std::enable_if_t<!isMultiTypeBlockVector<SolutionVector>::value, int> = 0>
-    void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
-              const FVElementGeometry& fvGeometry,
-              const SolutionVector& sol)
+    void bind_(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+               const FVElementGeometry& fvGeometry,
+               const SolutionVector& sol)
     {
         if (!fvGeometry.hasBoundaryScvf())
             return;
@@ -133,23 +187,10 @@ public:
 
     //! function to prepare the vol vars within the element
     template<class FVElementGeometry, class SolutionVector>
-    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
-                     const FVElementGeometry& fvGeometry,
-                     const SolutionVector& sol)
+    void bindElement_(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                      const FVElementGeometry& fvGeometry,
+                      const SolutionVector& sol)
     {}
-
-    //! The global volume variables object we are a restriction of
-    const GridVolumeVariables& gridVolVars() const
-    { return *gridVolVarsPtr_; }
-
-private:
-
-    //! Clear all local storage
-    void clear_()
-    {
-        boundaryVolVarIndices_.clear();
-        boundaryVolumeVariables_.clear();
-    }
 
     const GridVolumeVariables* gridVolVarsPtr_;
 
@@ -188,23 +229,86 @@ public:
     StaggeredElementVolumeVariables(const GridVolumeVariables& gridVolVars)
     : gridVolVarsPtr_(&gridVolVars) {}
 
-    //! Binding of an element, prepares the volume variables within the element stencil
-    //! called by the local jacobian to prepare element assembly. Specialization callable with MultiTypeBlockVector.
-    template<class FVElementGeometry, class SolutionVector, typename std::enable_if_t<isMultiTypeBlockVector<SolutionVector>::value, int> = 0>
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class SolutionVector>
+    StaggeredElementVolumeVariables bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                         const FVElementGeometry& fvGeometry,
+                                         const SolutionVector& sol) &&
+    {
+        this->bind_(element, fvGeometry, sol);
+        return std::move(*this);
+    }
+
+    template<class FVElementGeometry, class SolutionVector>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
-              const SolutionVector& sol)
+              const SolutionVector& sol) &
+    { this->bind_(element, fvGeometry, sol); }
+
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class SolutionVector>
+    StaggeredElementVolumeVariables bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                                const FVElementGeometry& fvGeometry,
+                                                const SolutionVector& sol) &&
+    {
+        this->bindElement_(element, fvGeometry, sol);
+        return std::move(*this);
+    }
+
+    template<class FVElementGeometry, class SolutionVector>
+    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                     const FVElementGeometry& fvGeometry,
+                     const SolutionVector& sol) &
+    { this->bindElement_(element, fvGeometry, sol); }
+
+    //! const operator for the access with an scv
+    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
+    const VolumeVariables& operator [](const SubControlVolume& scv) const
+    { return volumeVariables_[getLocalIdx_(scv.dofIndex())]; }
+
+    //! operator for the access with an scv
+    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
+    VolumeVariables& operator [](const SubControlVolume& scv)
+    { return volumeVariables_[getLocalIdx_(scv.dofIndex())]; }
+
+    //! const operator for the access with an index
+    const VolumeVariables& operator [](std::size_t scvIdx) const
+    { return volumeVariables_[getLocalIdx_(scvIdx)]; }
+
+    //! operator for the access with an index
+    VolumeVariables& operator [](std::size_t scvIdx)
+    { return volumeVariables_[getLocalIdx_(scvIdx)]; }
+
+    //! The global volume variables object we are a restriction of
+    const GridVolumeVariables& gridVolVars() const
+    { return *gridVolVarsPtr_; }
+
+private:
+        //! Binding of an element, prepares the volume variables within the element stencil
+    //! called by the local jacobian to prepare element assembly. Specialization callable with MultiTypeBlockVector.
+    template<class FVElementGeometry, class SolutionVector, typename std::enable_if_t<isMultiTypeBlockVector<SolutionVector>::value, int> = 0>
+    void bind_(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+               const FVElementGeometry& fvGeometry,
+               const SolutionVector& sol)
     {
         // forward to the actual method
-        bind(element, fvGeometry, sol[FVElementGeometry::GridGeometry::cellCenterIdx()]);
+        bind_(element, fvGeometry, sol[FVElementGeometry::GridGeometry::cellCenterIdx()]);
     }
 
     //! Binding of an element, prepares the volume variables within the element stencil
     //! called by the local jacobian to prepare element assembly
     template<class FVElementGeometry, class SolutionVector, typename std::enable_if_t<!isMultiTypeBlockVector<SolutionVector>::value, int> = 0>
-    void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
-              const FVElementGeometry& fvGeometry,
-              const SolutionVector& sol)
+    void bind_(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+               const FVElementGeometry& fvGeometry,
+               const SolutionVector& sol)
     {
         clear_();
 
@@ -271,20 +375,20 @@ public:
     //! Binding of an element, prepares the volume variables within the element stencil
     //! called by the local jacobian to prepare element assembly. Specialization callable with MultiTypeBlockVector.
     template<class FVElementGeometry, class SolutionVector, typename std::enable_if_t<isMultiTypeBlockVector<SolutionVector>::value, int> = 0>
-    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
-                     const FVElementGeometry& fvGeometry,
-                     const SolutionVector& sol)
+    void bindElement_(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                      const FVElementGeometry& fvGeometry,
+                      const SolutionVector& sol)
     {
         // forward to the actual method
-        bindElement(element, fvGeometry, sol[FVElementGeometry::GridGeometry::cellCenterIdx()]);
+        bindElement_(element, fvGeometry, sol[FVElementGeometry::GridGeometry::cellCenterIdx()]);
     }
 
     //! Binding of an element, prepares only the volume variables of the element.
     //! Specialization for Staggered models
     template<class FVElementGeometry, class SolutionVector, typename std::enable_if_t<!isMultiTypeBlockVector<SolutionVector>::value, int> = 0>
-    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
-                     const FVElementGeometry& fvGeometry,
-                     const SolutionVector& sol)
+    void bindElement_(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                      const FVElementGeometry& fvGeometry,
+                      const SolutionVector& sol)
     {
         clear_();
 
@@ -303,29 +407,6 @@ public:
         volVarIndices_[0] = scv.dofIndex();
     }
 
-    //! const operator for the access with an scv
-    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
-    const VolumeVariables& operator [](const SubControlVolume& scv) const
-    { return volumeVariables_[getLocalIdx_(scv.dofIndex())]; }
-
-    //! operator for the access with an scv
-    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
-    VolumeVariables& operator [](const SubControlVolume& scv)
-    { return volumeVariables_[getLocalIdx_(scv.dofIndex())]; }
-
-    //! const operator for the access with an index
-    const VolumeVariables& operator [](std::size_t scvIdx) const
-    { return volumeVariables_[getLocalIdx_(scvIdx)]; }
-
-    //! operator for the access with an index
-    VolumeVariables& operator [](std::size_t scvIdx)
-    { return volumeVariables_[getLocalIdx_(scvIdx)]; }
-
-    //! The global volume variables object we are a restriction of
-    const GridVolumeVariables& gridVolVars() const
-    { return *gridVolVarsPtr_; }
-
-private:
     //! Clear all local storage
     void clear_()
     {

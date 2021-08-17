@@ -78,9 +78,9 @@ computeL2Error(const double t,
                const GridGeometry& gridGeometry)
 {
     typename SolutionVector::block_type l2Error(0.0);
+    auto fvGeometry = localView(gridGeometry);
     for (const auto& element : elements(gridGeometry.gridView(), Dune::Partitions::interior))
     {
-        auto fvGeometry = localView(gridGeometry);
         fvGeometry.bindElement(element);
 
         using std::pow;

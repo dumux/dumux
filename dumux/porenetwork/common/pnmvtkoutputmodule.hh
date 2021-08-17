@@ -1,4 +1,4 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
  *   See the file COPYING for full copying permissions.                      *
@@ -83,18 +83,16 @@ public:
         for (auto& data : throatFluxData_)
             data.resize(numElems);
 
+        auto fvElementGeometry = localView(problem().gridGeometry());
+        auto elemVolVars = localView(this->gridVariables().curGridVolVars());
+        auto elemFluxVarsCache = localView(this->gridVariables().gridFluxVarsCache());
         // iterate over all elements
         for (const auto& element : elements(gridView, Dune::Partitions::interior))
         {
-            // make sure FVElementGeometry & vol vars are bound to the element
-            auto fvElementGeometry = localView(problem().gridGeometry());
-            fvElementGeometry.bindElement(element);
-
             const auto eIdx = problem().gridGeometry().elementMapper().index(element);
 
-            auto elemVolVars = localView(this->gridVariables().curGridVolVars());
-            auto elemFluxVarsCache = localView(this->gridVariables().gridFluxVarsCache());
-
+            // make sure FVElementGeometry & vol vars are bound to the element
+            fvElementGeometry.bindElement(element);
             elemVolVars.bind(element, fvElementGeometry, this->sol());
             elemFluxVarsCache.bind(element, fvElementGeometry, elemVolVars);
 

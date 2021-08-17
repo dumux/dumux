@@ -241,13 +241,13 @@ private:
     void calculateRoughnessLength_(const SolutionVector& curSol)
     {
         bool printedRangeWarning = false;
+        auto fvGeometry = localView(this->gridGeometry());
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             static const Scalar sandGrainRoughness = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.SandGrainRoughness");
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-
-            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
+
             for (auto&& scv : scvs(fvGeometry))
             {
                 using std::sqrt;

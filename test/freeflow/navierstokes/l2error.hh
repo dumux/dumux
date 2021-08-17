@@ -63,11 +63,10 @@ public:
 
         Scalar totalVolume = 0.0;
 
+        auto fvGeometry = localView(problem.gridGeometry());
         for (const auto& element : elements(problem.gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(problem.gridGeometry());
             fvGeometry.bindElement(element);
-
             for (auto&& scv : scvs(fvGeometry))
             {
                 // treat cell-center dofs

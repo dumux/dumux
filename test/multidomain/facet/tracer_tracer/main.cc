@@ -98,15 +98,15 @@ void computeVolumeFluxes(Storage& volumeFluxes,
     else volumeFluxes.assign(gridGeometry.gridView().size(0), {0.0});
 
     auto upwindTerm = [](const auto& volVars) { return volVars.mobility(0); };
+    auto fvGeometry = localView(gridGeometry);
+    auto elemVolVars = localView(gridVariables.curGridVolVars());
+    auto elemFluxVars = localView(gridVariables.gridFluxVarsCache());
     for (const auto& element : elements(gridGeometry.gridView()))
     {
         const auto eIdx = gridGeometry.elementMapper().index(element);
 
         // bind local views
         couplingManager.bindCouplingContext(domainId, element, assembler);
-        auto fvGeometry = localView(gridGeometry);
-        auto elemVolVars = localView(gridVariables.curGridVolVars());
-        auto elemFluxVars = localView(gridVariables.gridFluxVarsCache());
         fvGeometry.bind(element);
         elemVolVars.bind(element, fvGeometry, sol);
         elemFluxVars.bind(element, fvGeometry, elemVolVars);

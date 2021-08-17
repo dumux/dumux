@@ -51,9 +51,9 @@ void printProblemTest(const Problem& problem)
     std::size_t numDirichlet = 0;
     double totalSource = 0;
     const auto& gg = problem.gridGeometry();
+    auto fvGeometry = localView(gg);
     for (const auto& element : elements(gg.gridView()))
     {
-        auto fvGeometry = localView(gg);
         fvGeometry.bindElement(element);
 
         for (const auto& scv : scvs(fvGeometry))

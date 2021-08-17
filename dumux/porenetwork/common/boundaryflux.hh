@@ -208,18 +208,14 @@ public:
         // by default, all coordinate directions are considered for the definition of a boundary
 
         // make sure FVElementGeometry and volume variables are bound to the element
-        auto fvGeometry = localView(localResidual_.problem().gridGeometry());
-        fvGeometry.bind(element);
-
-        auto curElemVolVars = localView(gridVariables_.curGridVolVars());
-        curElemVolVars.bind(element, fvGeometry, sol_);
+        const auto fvGeometry = localView(localResidual_.problem().gridGeometry()).bind(element);
+        const auto curElemVolVars = localView(gridVariables_.curGridVolVars()).bind(element, fvGeometry, sol_);
 
         auto prevElemVolVars = localView(gridVariables_.prevGridVolVars());
         if (!isStationary_)
             prevElemVolVars.bindElement(element, fvGeometry, sol_);
 
-        auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache());
-        elemFluxVarsCache.bindElement(element, fvGeometry, curElemVolVars);
+        const auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache()).bindElement(element, fvGeometry, curElemVolVars);
 
         ElementBoundaryTypes elemBcTypes;
         elemBcTypes.update(localResidual_.problem(), element, fvGeometry);

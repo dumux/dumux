@@ -445,13 +445,12 @@ private:
             // maybe allocate space for the process rank
             if (addProcessRank) rank.resize(numCells);
 
+            auto fvGeometry = localView(gridGeometry());
+            auto elemVolVars = localView(gridVariables_.curGridVolVars());
+
             for (const auto& element : elements(gridGeometry().gridView(), Dune::Partitions::interior))
             {
                 const auto eIdxGlobal = gridGeometry().elementMapper().index(element);
-
-                auto fvGeometry = localView(gridGeometry());
-                auto elemVolVars = localView(gridVariables_.curGridVolVars());
-
                 // If velocity output is enabled we need to bind to the whole stencil
                 // otherwise element-local data is sufficient
                 if (velocityOutput_->enableOutput())
@@ -486,8 +485,7 @@ private:
                 // velocity output
                 if (velocityOutput_->enableOutput())
                 {
-                    auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache());
-                    elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
+                    const auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
 
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
                         velocityOutput_->calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
@@ -678,8 +676,7 @@ private:
                 // velocity output
                 if (velocityOutput_->enableOutput())
                 {
-                    auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache());
-                    elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
+                    const auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
 
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
                         velocityOutput_->calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
