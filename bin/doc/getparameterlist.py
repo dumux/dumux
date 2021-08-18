@@ -165,7 +165,7 @@ parameters = []
 errorLog = []
 for root, dirs, files in os.walk(args["root"]):
     # exclude the test folder
-    dirs[:] = [d for d in dirs if d != "test"]
+    dirs[:] = [d for d in dirs if d not in ("test", "examples")]
     for file in files:
         if (
             os.path.splitext(file)[1] == ".hh"
