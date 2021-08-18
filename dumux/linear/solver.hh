@@ -55,8 +55,8 @@ public:
     {
         verbosity_ = getParamFromGroup<int>(paramGroup, "LinearSolver.Verbosity", 0);
         maxIter_ = getParamFromGroup<int>(paramGroup, "LinearSolver.MaxIterations", 250);
-        residReduction_ = getParamFromGroup<double>(paramGroup, "LinearSolver.ResidualReduction", 1e-13);
-        relaxation_ = getParamFromGroup<double>(paramGroup, "LinearSolver.Preconditioner.Relaxation", 1);
+        residReduction_ = getParamFromGroup<Scalar>(paramGroup, "LinearSolver.ResidualReduction", 1e-13);
+        relaxation_ = getParamFromGroup<Scalar>(paramGroup, "LinearSolver.Preconditioner.Relaxation", 1);
         precondIter_ = getParamFromGroup<int>(paramGroup, "LinearSolver.Preconditioner.Iterations", 1);
         precondVerbosity_ = getParamFromGroup<int>(paramGroup, "LinearSolver.Preconditioner.Verbosity", 0);
     }
@@ -96,19 +96,19 @@ public:
     { maxIter_ = i; }
 
     //! the linear solver residual reduction
-    double residReduction() const
+    Scalar residReduction() const
     { return residReduction_; }
 
     //! set the linear solver residual reduction
-    void setResidualReduction(double r)
+    void setResidualReduction(Scalar r)
     { residReduction_ = r; }
 
     //! the linear solver relaxation factor
-    double relaxation() const
+    Scalar relaxation() const
     { return relaxation_; }
 
     //! set the linear solver relaxation factor
-    void setRelaxation(double r)
+    void setRelaxation(Scalar r)
     { relaxation_ = r; }
 
     //! the number of preconditioner iterations
@@ -130,8 +130,8 @@ public:
 private:
     int verbosity_;
     int maxIter_;
-    double residReduction_;
-    double relaxation_;
+    Scalar residReduction_;
+    Scalar relaxation_;
     int precondIter_;
     int precondVerbosity_;
     const std::string paramGroup_;
