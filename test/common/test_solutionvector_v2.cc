@@ -15,6 +15,7 @@
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/common/vectoradapter.hh>
+#include <dumux/common/vectorwithstate.hh>
 
 #ifndef VECTORSIZE
 #define VECTORSIZE 2
@@ -328,6 +329,13 @@ int main()
         wrap[0][0] = tmp;
         if (v[0][0] != wrap[0][0])
             DUNE_THROW(Dune::InvalidStateException, "Value modification failed");
+    }
+    {
+        // TODO: does not work yet!
+        // using BV = Dune::BlockVector<RawPriVars>;
+        // Dumux::VectorWithState<BV, int> v(2);
+        // v[0] = 1;
+        // v[1] = 2;
     }
 
     return 0;
