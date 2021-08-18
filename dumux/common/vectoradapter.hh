@@ -83,10 +83,11 @@ template<typename Storage,
 class Adapter
 {
     static constexpr bool isConstNative = Storage::isConst;
+
+public:
     static constexpr bool hasStaticSize = Access::hasStaticSize;
     static constexpr bool isReference = Storage::isReference;
 
-public:
     using Native = typename Storage::Vector;
 
     //! Construction using the factory
