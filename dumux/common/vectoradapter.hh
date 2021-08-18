@@ -21,6 +21,9 @@
  * \ingroup Common
  * \brief docme
  */
+#ifndef DUMUX_COMMON_VECTOR_ADAPTER_HH
+#define DUMUX_COMMON_VECTOR_ADAPTER_HH
+
 #include <memory>
 #include <utility>
 #include <type_traits>
@@ -398,3 +401,5 @@ struct VectorOperators
 { using type = DefaultVectorOperators<Vector>; };
 
 } // end namespace Dumux::VectorAdaptation::Traits
+
+#endif
