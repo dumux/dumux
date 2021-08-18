@@ -218,8 +218,8 @@ public:
         const auto vViscousFlux = turbViscosity * averageDepth * gradV;
 
         // compute the mobility of the flux with the fluxlimiter
-        static const auto upperWaterDepthFluxLimiting = getParamFromGroup<double>(problem.paramGroup(), "FluxLimiterLET.UpperWaterDepth", 1e-3);
-        static const auto lowerWaterDepthFluxLimiting = getParamFromGroup<double>(problem.paramGroup(), "FluxLimiterLET.LowerWaterDepth", 1e-5);
+        static const auto upperWaterDepthFluxLimiting = getParamFromGroup<Scalar>(problem.paramGroup(), "FluxLimiterLET.UpperWaterDepth", 1e-3);
+        static const auto lowerWaterDepthFluxLimiting = getParamFromGroup<Scalar>(problem.paramGroup(), "FluxLimiterLET.LowerWaterDepth", 1e-5);
 
         const auto limitingDepth = (waterDepthLeft + waterDepthRight) * 0.5;
         const auto mobility = ShallowWater::fluxLimiterLET(limitingDepth,
