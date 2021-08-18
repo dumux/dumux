@@ -163,7 +163,9 @@ if args["inputFile"]:
 # TODO: allow runtime args with extensions and folder(s) to be checked
 parameters = []
 errorLog = []
-for root, _, files in os.walk(args["root"]):
+for root, dirs, files in os.walk(args["root"]):
+    # exclude the test folder
+    dirs[:] = [d for d in dirs if d != "test"]
     for file in files:
         if (
             os.path.splitext(file)[1] == ".hh"
