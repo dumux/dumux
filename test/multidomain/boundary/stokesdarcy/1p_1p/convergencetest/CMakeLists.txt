@@ -13,9 +13,10 @@ dune_add_test(NAME test_md_boundary_darcy1ptpfa_stokes1p_convtest
               TIMEOUT 1000
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ./convergencetest.py
-              CMD_ARGS  test_md_boundary_darcy1ptpfa_freeflow1p_convtest params.input
-                        -Problem.TestCase ShiueExampleTwo
-                        -Darcy.SpatialParams.Permeability 1.0)
+              CMD_ARGS -e test_md_boundary_darcy1ptpfa_freeflow1p_convtest
+                       -i params.input
+                       -c ShiueExampleTwo
+                       -Darcy.SpatialParams.Permeability 1.0)
 
 dune_add_test(NAME test_md_boundary_darcy1ptpfa_navierstokes1p_convtest
               TARGET test_md_boundary_darcy1ptpfa_freeflow1p_convtest
@@ -23,10 +24,11 @@ dune_add_test(NAME test_md_boundary_darcy1ptpfa_navierstokes1p_convtest
               TIMEOUT 1000
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ./convergencetest.py
-              CMD_ARGS  test_md_boundary_darcy1ptpfa_freeflow1p_convtest params.input
-                        -Problem.TestCase Schneider
-                        -FreeFlow.Problem.EnableInertiaTerms true
-                        -FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph true)
+              CMD_ARGS -e test_md_boundary_darcy1ptpfa_freeflow1p_convtest
+                       -i params.input
+                       -c Schneider
+                       -FreeFlow.Problem.EnableInertiaTerms true
+                       -FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph true)
 
 dune_add_test(NAME test_md_boundary_darcy1pbox_stokes1p_convtest
               TARGET test_md_boundary_darcy1pbox_freeflow1p_convtest
@@ -34,9 +36,10 @@ dune_add_test(NAME test_md_boundary_darcy1pbox_stokes1p_convtest
               TIMEOUT 1000
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ./convergencetest.py
-              CMD_ARGS  test_md_boundary_darcy1pbox_freeflow1p_convtest params.input
-                          -Problem.TestCase ShiueExampleTwo
-                          -Darcy.SpatialParams.Permeability 1.0)
+              CMD_ARGS -e test_md_boundary_darcy1pbox_freeflow1p_convtest
+                       -i params.input
+                       -c ShiueExampleTwo
+                       -Darcy.SpatialParams.Permeability 1.0)
 
 dune_add_test(NAME test_md_boundary_darcy1pbox_navierstokes1p_convtest
               TARGET test_md_boundary_darcy1pbox_freeflow1p_convtest
@@ -44,10 +47,11 @@ dune_add_test(NAME test_md_boundary_darcy1pbox_navierstokes1p_convtest
               TIMEOUT 1000
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ./convergencetest.py
-              CMD_ARGS  test_md_boundary_darcy1pbox_freeflow1p_convtest params.input
-                          -Problem.TestCase Schneider
-                          -FreeFlow.Problem.EnableInertiaTerms true
-                          -FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph true)
+              CMD_ARGS -e test_md_boundary_darcy1pbox_freeflow1p_convtest
+                       -i params.input
+                       -c Schneider
+                       -FreeFlow.Problem.EnableInertiaTerms true
+                       -FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph true)
 
 dune_add_test(NAME test_md_boundary_darcy1pbox_stokes1p_convtest_bj
               TARGET test_md_boundary_darcy1pbox_freeflow1p_convtest
@@ -55,12 +59,13 @@ dune_add_test(NAME test_md_boundary_darcy1pbox_stokes1p_convtest_bj
               TIMEOUT 1000
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ./convergencetest.py
-              CMD_ARGS  test_md_boundary_darcy1pbox_freeflow1p_convtest params.input
-                          -Problem.TestCase Cao
-                          -Problem.SlipCondition BJ
-                          -Darcy.SpatialParams.AlphaBeaversJoseph -1
-                          -Darcy.SpatialParams.Porosity 1.0
-                          -Darcy.SpatialParams.Permeability "1.0 1.0 0.0")
+              CMD_ARGS -e test_md_boundary_darcy1pbox_freeflow1p_convtest
+                       -i params.input
+                       -c Cao
+                       -Problem.SlipCondition BJ
+                       -Darcy.SpatialParams.Permeability "1.0 1.0 0.0"
+                       -Darcy.SpatialParams.AlphaBeaversJoseph -1
+                       -Darcy.SpatialParams.Porosity 1.0)
 
 dune_add_test(NAME test_md_boundary_darcy1p_stokes1p_newic
               TARGET test_md_boundary_darcy1pbox_freeflow1p_convtest
@@ -68,16 +73,17 @@ dune_add_test(NAME test_md_boundary_darcy1p_stokes1p_newic
               TIMEOUT 1000
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ./convergencetest.py
-              CMD_ARGS  test_md_boundary_darcy1pbox_freeflow1p_convtest params.input
-                          -Problem.TestCase NewICNonSymmetrized
-                          -Problem.SlipCondition ER
-                          -Problem.NewIc true
-                          -FreeFlow.EnableUnsymmetrizedVelocityGradientForIC true
-                          -FreeFlow.EnableUnsymmetrizedVelocityGradient true
-                          -Darcy.InterfaceParams.EpsInterface 1.0
-                          -Darcy.InterfaceParams.N_s_bl 0.5
-                          -Darcy.InterfaceParams.N_1_bl -3.0
-                          -Darcy.InterfaceParams.M_bl "1.0 1.0"
-                          -Darcy.SpatialParams.Porosity 1.0
-                          -Darcy.SpatialParams.Permeability "1.0 1.0 0.0"
-                          -Component.LiquidKinematicViscosity 2.0)
+              CMD_ARGS -e test_md_boundary_darcy1pbox_freeflow1p_convtest
+                       -i params.input
+                       -c NewICNonSymmetrized
+                       -Problem.SlipCondition ER
+                       -Problem.NewIc true
+                       -FreeFlow.EnableUnsymmetrizedVelocityGradientForIC true
+                       -FreeFlow.EnableUnsymmetrizedVelocityGradient true
+                       -Darcy.SpatialParams.Permeability "1.0 1.0 0.0"
+                       -Darcy.InterfaceParams.EpsInterface 1.0
+                       -Darcy.InterfaceParams.N_s_bl 0.5
+                       -Darcy.InterfaceParams.N_1_bl -3.0
+                       -Darcy.InterfaceParams.M_bl "1.0 1.0"
+                       -Darcy.SpatialParams.Porosity 1.0
+                       -Component.LiquidKinematicViscosity 2.0)
