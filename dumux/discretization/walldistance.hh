@@ -214,23 +214,23 @@ private:
         {
             if (isParallel)
             {
-                const auto& mpiHelper = Dune::MPIHelper::instance();
-                const int totalNumberOfBoundaryGeometries = mpiHelper.getCommunication().sum(wallGeometries.size());
+                const auto& communication = gridGeometry_->gridView().comm();
+                const int totalNumberOfBoundaryGeometries = communication.sum(wallGeometries.size());
                 globalWallGeometries.resize(totalNumberOfBoundaryGeometries);
                 globalTempWallData.resize(totalNumberOfBoundaryGeometries);
 
                 // prepare a displacement vector
                 std::vector<int> numGeosPerProcLocal{static_cast<int>(wallGeometries.size())};
-                std::vector<int> numGeosPerProcGlobal(mpiHelper.getCommunication().size());
-                mpiHelper.getCommunication().allgather(numGeosPerProcLocal.data(), 1, numGeosPerProcGlobal.data());
+                std::vector<int> numGeosPerProcGlobal(communication.size());
+                communication.allgather(numGeosPerProcLocal.data(), 1, numGeosPerProcGlobal.data());
 
-                std::vector<int> disp(mpiHelper.getCommunication().size(), 0);
+                std::vector<int> disp(communication.size(), 0);
                 disp[1] = numGeosPerProcGlobal[0];
                 for (int i = 2; i < numGeosPerProcGlobal.size(); ++i)
                     disp[i] = disp[i-1] + numGeosPerProcGlobal[i-1];
 
                 // concatenate the wall geometries and temp scvf data of each process into a global vector
-                mpiHelper.getCommunication().allgatherv(
+                communication.allgatherv(
                     wallGeometries.data(),
                     wallGeometries.size(),
                     globalWallGeometries.data(),
@@ -238,7 +238,7 @@ private:
                     disp.data()
                 );
 
-                mpiHelper.getCommunication().allgatherv(
+                communication.allgatherv(
                     tempWallData.data(),
                     tempWallData.size(),
                     globalTempWallData.data(),
