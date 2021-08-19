@@ -154,14 +154,12 @@ int main(int argc, char** argv)
                 std::cout << "Testing 3D cake cctpfa" << std::endl;
                 using GridGeometry = CCTpfaFVGridGeometry<GridView, enableCache>;
                 auto gridGeometry = std::make_shared<GridGeometry>(gridManager.grid().leafGridView());
-                gridGeometry->update();
                 test(*gridGeometry, "3D_cctpfa_cake");
             }
             {
                 std::cout << "Testing 3D cake box" << std::endl;
                 using GridGeometry = BoxFVGridGeometry<Scalar, GridView, enableCache>;
                 auto gridGeometry = std::make_shared<GridGeometry>(gridManager.grid().leafGridView());
-                gridGeometry->update();
                 test(*gridGeometry, "3D_box_cake");
             }
         }
@@ -179,14 +177,12 @@ int main(int argc, char** argv)
             std::cout << "Testing 2D box" << std::endl;
             using GridGeometry = BoxFVGridGeometry<Scalar, GridView, enableCache>;
             auto gridGeometry = std::make_shared<GridGeometry>(gridManager.grid().leafGridView());
-            gridGeometry->update();
             test(*gridGeometry, "2D_box");
         }
         {
             std::cout << "Testing 2D cctpfa" << std::endl;
             using GridGeometry = CCTpfaFVGridGeometry<GridView, enableCache>;
             auto gridGeometry = std::make_shared<GridGeometry>(gridManager.grid().leafGridView());
-            gridGeometry->update();
             test(*gridGeometry, "2D_cctpfa");
         }
     }
@@ -201,14 +197,12 @@ int main(int argc, char** argv)
             std::cout << "Testing 3D box" << std::endl;
             using GridGeometry = BoxFVGridGeometry<Scalar, GridView, enableCache>;
             auto gridGeometry = std::make_shared<GridGeometry>(gridManager.grid().leafGridView());
-            gridGeometry->update();
             test(*gridGeometry, "3D_box");
         }
         {
             std::cout << "Testing 3D cctpfa" << std::endl;
             using GridGeometry = CCTpfaFVGridGeometry<GridView, enableCache>;
             auto gridGeometry = std::make_shared<GridGeometry>(gridManager.grid().leafGridView());
-            gridGeometry->update();
             test(*gridGeometry, "3D_cctpfa");
         }
     }
