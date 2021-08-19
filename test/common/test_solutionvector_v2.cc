@@ -311,7 +311,7 @@ int main()
 
         // test adapter with ref & const ref
         using FV = Dune::FieldVector<RawPriVars, 2>;
-        FV v; v[0] = 1.0; v[1] = 2.0;
+        FV v; v[0] = 1; v[1] = 2;
         Dumux::VectorViewAdapter<FV> constWrap(v);
         Dumux::VectorProxyAdapter<FV> wrap(v);
 
@@ -331,11 +331,18 @@ int main()
             DUNE_THROW(Dune::InvalidStateException, "Value modification failed");
     }
     {
-        // TODO: does not work yet!
-        // using BV = Dune::BlockVector<RawPriVars>;
-        // Dumux::VectorWithState<BV, int> v(2);
-        // v[0] = 1;
-        // v[1] = 2;
+        using BV = Dune::BlockVector<RawPriVars>;
+        using States = std::vector<int>;
+        Dumux::VectorWithState<BV, States> v;
+
+        v.resize(2);
+        v[0] = 1; v[1] = 2;
+        if (v[0][0] != 1 && v[0][1] != 2)
+            DUNE_THROW(Dune::InvalidStateException, "Value set failed");
+
+        v[0].setState(10); v[1].setState(12);
+        if (v[0].state() != 10 && v[1].state() != 12)
+            DUNE_THROW(Dune::InvalidStateException, "State set failed");
     }
 
     return 0;
