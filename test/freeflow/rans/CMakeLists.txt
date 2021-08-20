@@ -43,6 +43,18 @@ dumux_add_test(NAME test_ff_rans_lauferpipe_lowrekepsilon
                         -Problem.Name test_ff_rans_lauferpipe_lowrekepsilon
                         -RANS.IsFlatWallBounded True")
 
+dumux_add_test(NAME test_ff_rans_lauferpipe_sst
+              SOURCES main.cc
+              COMPILE_DEFINITIONS TYPETAG=PipeLauferKOmegaSST
+              LABELS freeflow rans
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans_lauferpipe_sst-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans_lauferpipe_sst-00053.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans_lauferpipe_sst params.input
+                        -Problem.Name test_ff_rans_lauferpipe_sst
+                        -RANS.IsFlatWallBounded False")
 
 add_executable(test_ff_rans_lauferpipe_komega EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_ff_rans_lauferpipe_komega PUBLIC "TYPETAG=PipeLauferKOmega")
@@ -141,6 +153,21 @@ dumux_add_test(NAME test_ff_ransni_lauferpipe_lowrekepsilon
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_ransni_lauferpipe_lowrekepsilon params_nonisothermal.input
                         -Problem.Name ./test_ff_ransni_lauferpipe_lowrekepsilon")
 target_compile_definitions(test_ff_ransni_lauferpipe_lowrekepsilon PUBLIC "NONISOTHERMAL=1")
+
+dumux_add_test(NAME test_ff_ransni_lauferpipe_sst
+              SOURCES main.cc
+              COMPILE_DEFINITIONS TYPETAG=PipeLauferNIKOmegaSST
+              LABELS freeflow rans
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_ransni_lauferpipe_sst-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_ff_ransni_lauferpipe_sst-00034.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_ransni_lauferpipe_sst params_nonisothermal.input
+                        -Problem.Name test_ff_ransni_lauferpipe_sst
+                        -RANS.IsFlatWallBounded False")
+target_compile_definitions(test_ff_ransni_lauferpipe_sst PUBLIC "NONISOTHERMAL=1")
+
 
 dumux_add_test(NAME test_ff_ransni_lauferpipe_komega
               SOURCES main.cc

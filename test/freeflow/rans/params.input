@@ -18,6 +18,8 @@ EnableGravity = false
 [RANS]
 EddyViscosityModel = "baldwinLomax"
 WallNormalAxis = 1
+TurbulenceModel = SST
+
 
 [KEpsilon]
 YPlusThreshold = 10. # should be small (10-30) for coarse grids
