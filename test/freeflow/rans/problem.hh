@@ -92,7 +92,7 @@ public:
         viscosityTilde_ = 1e-3 * turbulenceProperties.viscosityTilde(inletVelocity_, diameter, kinematicViscosity);
         turbulentKineticEnergy_ = turbulenceProperties.turbulentKineticEnergy(inletVelocity_, diameter, kinematicViscosity);
 
-        if (ModelTraits::turbulenceModel() == TurbulenceModel::komega)
+        if (ModelTraits::turbulenceModel() == TurbulenceModel::komega || ModelTraits::turbulenceModel() == TurbulenceModel::sst)
             dissipation_ = turbulenceProperties.dissipationRate(inletVelocity_, diameter, kinematicViscosity);
         else
             dissipation_ = turbulenceProperties.dissipation(inletVelocity_, diameter, kinematicViscosity);
@@ -190,7 +190,8 @@ public:
     PrimaryVariables dirichlet([[maybe_unused]] const Element& element, const SubControlVolume& scv) const
     {
         if constexpr (ModelTraits::turbulenceModel() == TurbulenceModel::kepsilon
-                   || ModelTraits::turbulenceModel() == TurbulenceModel::komega)
+                   || ModelTraits::turbulenceModel() == TurbulenceModel::komega
+                   || ModelTraits::turbulenceModel() == TurbulenceModel::sst)
             return dirichletTurbulentTwoEq_(element, scv);
         else
         {
@@ -315,7 +316,8 @@ private:
                 return pvIdx == Indices::dissipationEqIdx;
             return false;
         }
-        else if constexpr (ModelTraits::turbulenceModel() == TurbulenceModel::komega)
+        else if constexpr (ModelTraits::turbulenceModel() == TurbulenceModel::komega ||
+                           ModelTraits::turbulenceModel() == TurbulenceModel::sst)
         {
             // For the komega model we set a fixed dissipation (omega) for all cells at the wall
             for (const auto& scvf : scvfs(fvGeometry))
@@ -345,7 +347,8 @@ private:
         }
         else
         {
-            static_assert(ModelTraits::turbulenceModel() == TurbulenceModel::komega, "Only valid for Komega");
+            static_assert(ModelTraits::turbulenceModel() == TurbulenceModel::komega
+                       || ModelTraits::turbulenceModel() == TurbulenceModel::sst, "Only valid for Komega");
             // For the komega model we set a fixed value for the dissipation
             const auto wallDistance = ParentType::wallDistance(elementIdx);
             using std::pow;

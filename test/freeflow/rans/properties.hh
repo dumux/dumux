@@ -44,6 +44,8 @@
 #include <dumux/freeflow/rans/twoeq/kepsilon/problem.hh>
 #include <dumux/freeflow/rans/twoeq/komega/model.hh>
 #include <dumux/freeflow/rans/twoeq/komega/problem.hh>
+#include <dumux/freeflow/rans/twoeq/sst/model.hh>
+#include <dumux/freeflow/rans/twoeq/sst/problem.hh>
 #include <dumux/freeflow/rans/twoeq/lowrekepsilon/problem.hh>
 #include <dumux/freeflow/rans/twoeq/lowrekepsilon/model.hh>
 
@@ -61,12 +63,14 @@ struct PipeLauferOneEq { using InheritsFrom = std::tuple<RANSModel, OneEq>; };
 struct PipeLauferKOmega { using InheritsFrom = std::tuple<RANSModel, KOmega>; };
 struct PipeLauferLowReKEpsilon { using InheritsFrom = std::tuple<RANSModel, LowReKEpsilon>; };
 struct PipeLauferKEpsilon { using InheritsFrom = std::tuple<RANSModel, KEpsilon>; };
+struct PipeLauferSST { using InheritsFrom = std::tuple<RANSModel, SST>; };
 // Non-Isothermal Typetags
 struct PipeLauferNIZeroEq { using InheritsFrom = std::tuple<RANSModel, ZeroEqNI>; };
 struct PipeLauferNIOneEq { using InheritsFrom = std::tuple<RANSModel, OneEqNI>; };
 struct PipeLauferNIKOmega { using InheritsFrom = std::tuple<RANSModel, KOmegaNI>; };
 struct PipeLauferNILowReKEpsilon { using InheritsFrom = std::tuple<RANSModel, LowReKEpsilonNI>; };
 struct PipeLauferNIKEpsilon { using InheritsFrom = std::tuple<RANSModel, KEpsilonNI>; };
+struct PipeLauferNISST { using InheritsFrom = std::tuple<RANSModel, SSTNI>; };
 } // end namespace TTag
 
 // the fluid system
