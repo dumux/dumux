@@ -37,6 +37,47 @@
 #include "diffmethod.hh"
 #include "boxlocalassembler.hh"
 #include "cclocalassembler.hh"
+#include "fclocalassembler.hh"
+
+namespace Dumux::Detail {
+
+template<DiscretizationMethod diffMethod>
+struct LocalAssemblerChooser;
+
+template<>
+struct LocalAssemblerChooser<DiscretizationMethod::box>
+{
+    template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
+    using type = BoxLocalAssembler<TypeTag, Impl, diffMethod, isImplicit>;
+};
+
+template<>
+struct LocalAssemblerChooser<DiscretizationMethod::ccmpfa>
+{
+    template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
+    using type = CCLocalAssembler<TypeTag, Impl, diffMethod, isImplicit>;
+};
+
+template<>
+struct LocalAssemblerChooser<DiscretizationMethod::cctpfa>
+{
+    template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
+    using type = CCLocalAssembler<TypeTag, Impl, diffMethod, isImplicit>;
+};
+
+template<>
+struct LocalAssemblerChooser<DiscretizationMethod::fcstaggered>
+{
+    template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
+    using type = FaceCenteredLocalAssembler<TypeTag, Impl, diffMethod, isImplicit>;
+};
+
+template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
+using LocalAssemblerChooser_t = typename LocalAssemblerChooser<
+    GetPropType<TypeTag, Properties::GridGeometry>::discMethod
+>::template type<TypeTag, Impl, diffMethod, isImplicit>;
+
+} // end namespace Dumux::Detail
 
 namespace Dumux {
 
@@ -50,23 +91,22 @@ namespace Dumux {
 template<class TypeTag, DiffMethod diffMethod, bool isImplicit = true>
 class FVAssembler
 {
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
+    using GridGeo = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridGeo::GridView;
     using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
     using Element = typename GridView::template Codim<0>::Entity;
     using TimeLoop = TimeLoopBase<GetPropType<TypeTag, Properties::Scalar>>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
-    static constexpr DiscretizationMethod discMethod = GetPropType<TypeTag, Properties::GridGeometry>::discMethod;
-    static constexpr bool isBox = discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = GridGeo::discMethod == DiscretizationMethod::box;
 
     using ThisType = FVAssembler<TypeTag, diffMethod, isImplicit>;
-    using LocalAssembler = std::conditional_t<isBox, BoxLocalAssembler<TypeTag, ThisType, diffMethod, isImplicit>,
-                                                     CCLocalAssembler<TypeTag, ThisType, diffMethod, isImplicit>>;
+    using LocalAssembler = typename Detail::LocalAssemblerChooser_t<TypeTag, ThisType, diffMethod, isImplicit>;
 
 public:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GridGeo;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 

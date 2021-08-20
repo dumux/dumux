@@ -137,12 +137,53 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::cctpfa>
     { return false; }
 };
 
+//! Face-centered staggered: use overlapping model
+template<class GridGeometry>
+struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::fcstaggered>
+: public LinearSolverTraitsBase<GridGeometry>
+{
+    class DofMapper
+    {
+    public:
+        DofMapper(const typename GridGeometry::GridView& gridView)
+        : gridView_(gridView) {}
+
+        auto index(const typename GridGeometry::GridView::Intersection& intersection) const
+        { return gridView_.indexSet().index(intersection); }
+
+        template<class Entity>
+        auto index(const Entity& e) const
+        { return gridView_.indexSet().index(e); }
+
+        auto size() const
+        { return gridView_.size(1); }
+
+    private:
+        typename GridGeometry::GridView gridView_;
+    };
+
+    using Grid = typename GridGeometry::GridView::Traits::Grid;
+    static constexpr int dofCodim = 1;
+
+    // TODO: see above for description of this workaround, remove second line if fixed upstream
+    static constexpr bool canCommunicate =
+        Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
+        || Dumux::Temp::Capabilities::canCommunicate<Grid, dofCodim>::v;
+
+    template<class GridView>
+    static bool isNonOverlapping(const GridView& gridView)
+    {
+        assert(gridView.overlapSize(0) > 0);
+        return false;
+    }
+};
+
 //! Cell-centered mpfa: use overlapping model
 template<class GridGeometry>
 struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::ccmpfa>
 : public LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::cctpfa> {};
 
-//! staggered: use overlapping model TODO provide staggered-specific traits, combining overlapping/non-overlapping
+//! staggered: use overlapping model
 template<class GridGeometry>
 struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::staggered>
 : public LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::cctpfa> {};
