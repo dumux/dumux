@@ -39,7 +39,7 @@
 #include <dumux/common/math.hh>
 
 #include <dumux/linear/linearsolvertraits.hh>
-#include <dumux/linear/amgbackend.hh>
+#include <dumux/linear/seqsolverbackend.hh>
 
 #include <dumux/io/format.hh>
 #include <dumux/io/gnuplotinterface.hh>
@@ -95,8 +95,8 @@ int main(int argc, char** argv)
     vtkWriter->addVolumeVariable([](const auto& volVars){ return volVars.saturation(0); }, "saturation");
     vtkWriter->addVolumeVariable([](const auto& volVars){ return volVars.pressure(0); }, "pressure");
 
-    using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
+    using LinearSolver = UMFPackBackend;
+    auto linearSolver = std::make_shared<LinearSolver>();
 
     using Assembler = FVAssembler<TypeTag, DiffMethod::analytic>;
 
