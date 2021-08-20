@@ -1,3 +1,4 @@
+add_subdirectory(momentum)
 add_subdirectory(staggered)
 
 file(GLOB DUMUX_FREEFLOW_NAVIERSTOKES_HEADERS *.hh *.inc)
