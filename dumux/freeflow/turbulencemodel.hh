@@ -35,7 +35,7 @@ namespace Dumux {
      */
     enum class TurbulenceModel
     {
-        none, zeroeq, oneeq, kepsilon, lowrekepsilon, komega
+        none, zeroeq, oneeq, kepsilon, lowrekepsilon, komega, sst
     };
 
     constexpr unsigned int numTurbulenceEq(TurbulenceModel model)
@@ -61,6 +61,7 @@ namespace Dumux {
             case TurbulenceModel::kepsilon: return "KEpsilon";
             case TurbulenceModel::lowrekepsilon: return "LowReKEpsilon";
             case TurbulenceModel::komega: return "KOmega";
+            case TurbulenceModel::sst: return "KOmegaSST";
             default: return "Invalid"; // should never be reached
         }
     }
