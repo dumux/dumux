@@ -18,53 +18,39 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Discretization
- * \brief The available discretization methods in Dumux
+ * \ingroup FaceCenteredStaggeredDiscretization
+ * \copydoc Dumux::FaceCenteredStaggeredFVGridGeometry
  */
-#ifndef DUMUX_DISCRETIZATION_METHOD_HH
-#define DUMUX_DISCRETIZATION_METHOD_HH
+#ifndef DUMUX_DISCRETIZATION_FACECENTERED_STAGGERED_NORMAL_AXIS_HH
+#define DUMUX_DISCRETIZATION_FACECENTERED_STAGGERED_NORMAL_AXIS_HH
 
-#include <ostream>
-#include <string>
+#include <cstddef>
+#include <algorithm>
 
 namespace Dumux {
 
 /*!
- * \brief The available discretization methods in Dumux
- * \ingroup Discretization
- * \note Use none if specifying a discretization method is required but
- *       the class in question is not specific to a a discretization method
- *       or the classification is non-applicable
+ * \file
+ * \ingroup FaceCenteredStaggeredDiscretization
+ * \brief Returns the normal axis index of a unit vector (0 = x, 1 = y, 2 = z)
  */
-enum class DiscretizationMethod
+template<class Vector>
+inline static std::size_t normalAxis(const Vector& v)
 {
-    none, box, cctpfa, ccmpfa, staggered, fem, fcstaggered
-};
+    using std::abs;
 
-/*!
- * \brief Convert discretization method to string
- * \ingroup Discretization
- */
-inline std::string toString(DiscretizationMethod m)
-{
-    switch (m)
-    {
-        case DiscretizationMethod::box: return "box";
-        case DiscretizationMethod::cctpfa: return "cctpfa";
-        case DiscretizationMethod::ccmpfa: return "ccmpfa";
-        case DiscretizationMethod::fcstaggered: return "fcstaggered";
-        case DiscretizationMethod::fem: return "fem";
-        case DiscretizationMethod::staggered: return "staggered";
-        default: return "none";
-    }
+    constexpr auto eps = 1e-8;
+    assert(std::any_of(v.begin(), v.end(), [=](auto x){ return abs(x) > eps; }));
+
+    const auto result = std::distance(
+        std::begin(v), std::find_if(v.begin(), v.end(), [eps=eps](auto x){ return abs(x) > eps; })
+    );
+
+    // make sure there is only one non-zero entry
+    assert(v[result] == std::accumulate(v.begin(), v.end(), 0.0));
+
+    return result;
 }
-
-/*!
- * \brief Write discretization method to stream
- * \ingroup Discretization
- */
-inline std::ostream& operator<<(std::ostream& stream, DiscretizationMethod m)
-{ stream << toString(m); return stream; }
 
 } // end namespace Dumux
 
