@@ -301,12 +301,11 @@ public:
             // split the source values equally among all concerned entities
             source.setEmbeddings(entities.size()*source.embeddings());
 
-            auto fvGeometry = localView(gridGeometry);
-
-            // loop over all concerned elements
-            for (const auto eIdx : entities)
+            if constexpr (GridGeometry::discMethod == DiscretizationMethod::box)
             {
-                if constexpr (GridGeometry::discMethod == DiscretizationMethod::box)
+                // loop over all concerned elements
+                auto fvGeometry = localView(gridGeometry);
+                for (const auto eIdx : entities)
                 {
                     // check in which subcontrolvolume(s) we are
                     const auto element = boundingBoxTree.entitySet().entity(eIdx);
@@ -334,7 +333,10 @@ public:
                         s.setEmbeddings(scvIndices.size()*s.embeddings());
                     }
                 }
-                else
+            }
+            else
+            {
+                for (const auto eIdx : entities)
                 {
                     // add the pointsource to the DOF map
                     const auto key = std::make_pair(eIdx, /*scvIdx=*/ 0);
