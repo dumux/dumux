@@ -151,7 +151,7 @@ def predefinedProperties():
     propertiesHeader = os.path.abspath(
         os.path.dirname(__file__) + "/../../../../dumux/common/properties.hh"
     )
-    with open(propertiesHeader) as header:
+    with open(propertiesHeader, encoding="utf-8") as header:
         properties = []
         for line in header:
             if line.startswith("struct"):
