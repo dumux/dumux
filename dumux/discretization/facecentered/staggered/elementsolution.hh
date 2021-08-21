@@ -128,14 +128,14 @@ private:
  */
 template<class Element, class SolutionVector, class GridGeometry>
 auto elementSolution(const Element& element, const SolutionVector& sol, const GridGeometry& gg)
--> std::enable_if_t<GridGeometry::discMethod == DiscretizationMethod::fcstaggered,
-                    FaceCenteredStaggeredElementSolution<typename GridGeometry::LocalView,
-                                      std::decay_t<decltype(std::declval<SolutionVector>()[0])>>
-                    >
-{
-    using PrimaryVariables = std::decay_t<decltype(std::declval<SolutionVector>()[0])>;
-    return { element, sol, gg };
-}
+-> std::enable_if_t<
+    GridGeometry::discMethod == DiscretizationMethod::fcstaggered,
+    FaceCenteredStaggeredElementSolution<
+        typename GridGeometry::LocalView,
+        std::decay_t<decltype(std::declval<SolutionVector>()[0])>
+    >
+>
+{ return { element, sol, gg }; }
 
 /*!
  * \ingroup FaceCenteredStaggeredDiscretization
@@ -143,12 +143,14 @@ auto elementSolution(const Element& element, const SolutionVector& sol, const Gr
  */
 template<class Element, class ElementVolumeVariables, class FVElementGeometry>
 auto elementSolution(const Element& element, const ElementVolumeVariables& elemVolVars, const FVElementGeometry& gg)
--> std::enable_if_t<FVElementGeometry::GridGeometry::discMethod == DiscretizationMethod::fcstaggered,
-                    FaceCenteredStaggeredElementSolution<FVElementGeometry, typename ElementVolumeVariables::VolumeVariables::PrimaryVariables>>
-{
-    using PrimaryVariables = typename ElementVolumeVariables::VolumeVariables::PrimaryVariables;
-    return { element, elemVolVars, gg };
-}
+-> std::enable_if_t<
+    FVElementGeometry::GridGeometry::discMethod == DiscretizationMethod::fcstaggered,
+    FaceCenteredStaggeredElementSolution<
+        FVElementGeometry,
+        typename ElementVolumeVariables::VolumeVariables::PrimaryVariables
+    >
+>
+{ return { element, elemVolVars, gg }; }
 
 /*!
  * \ingroup FaceCenteredStaggeredDiscretization
@@ -157,11 +159,14 @@ auto elementSolution(const Element& element, const ElementVolumeVariables& elemV
  */
 template<class FVElementGeometry, class PrimaryVariables>
 auto elementSolution(PrimaryVariables&& priVars)
--> std::enable_if_t<FVElementGeometry::GridGeometry::discMethod == DiscretizationMethod::fcstaggered,
-                    FaceCenteredStaggeredElementSolution<FVElementGeometry, std::decay_t<PrimaryVariables>>>
-{
-    return { std::forward<PrimaryVariables>(priVars) };
-}
+-> std::enable_if_t<
+    FVElementGeometry::GridGeometry::discMethod == DiscretizationMethod::fcstaggered,
+    FaceCenteredStaggeredElementSolution<
+        FVElementGeometry,
+        std::decay_t<PrimaryVariables>
+    >
+>
+{ return { std::forward<PrimaryVariables>(priVars) }; }
 
 } // end namespace Dumux
 

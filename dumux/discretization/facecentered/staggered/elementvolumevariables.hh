@@ -45,6 +45,11 @@ class FaceCenteredStaggeredElementVolumeVariables;
 template<class GVV>
 class FaceCenteredStaggeredElementVolumeVariables<GVV, /*cachingEnabled*/true>
 {
+    using ThisType = FaceCenteredStaggeredElementVolumeVariables<GVV, /*cachingEnabled*/true>;
+    using GridGeometry = std::decay_t<decltype(std::declval<GVV>().problem().gridGeometry())>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+
 public:
     //! export type of the grid volume variables
     using GridVolumeVariables = GVV;
@@ -58,7 +63,6 @@ public:
     {}
 
     //! operator for the access with an scvf
-    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
     const VolumeVariables& operator [](const SubControlVolume& scv) const
     {
         if (scv.index() < numScv_)
@@ -82,10 +86,10 @@ public:
     * This overload is called when an instance of this class is a temporary in the usage context
     * This allows a usage like this: `const auto view = localView(...).bind(element);`
     */
-    template<class FVElementGeometry, class SolutionVector>
-    FaceCenteredStaggeredFVElementGeometry bind(const typename FVElementGeometry::Element& element,
-                                                const FVElementGeometry& fvGeometry,
-                                                const SolutionVector& sol) &&
+    template<class SolutionVector>
+    ThisType bind(const typename FVElementGeometry::Element& element,
+                  const FVElementGeometry& fvGeometry,
+                  const SolutionVector& sol) &&
     {
         this->bind(element, fvGeometry, sol);
         return std::move(*this);
@@ -93,7 +97,7 @@ public:
 
     //! For compatibility reasons with the case of not storing the face vars.
     //! function to be called before assembling an element, preparing the vol vars within the stencil
-    template<class FVElementGeometry, class SolutionVector>
+    template<class SolutionVector>
     void bind(const typename FVElementGeometry::Element& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol) &
@@ -150,17 +154,17 @@ public:
     * This overload is called when an instance of this class is a temporary in the usage context
     * This allows a usage like this: `const auto view = localView(...).bind(element);`
     */
-    template<class FVElementGeometry, class SolutionVector>
-    FaceCenteredStaggeredFVElementGeometry bindElement(const typename FVElementGeometry::Element& element,
-                                                       const FVElementGeometry& fvGeometry,
-                                                       const SolutionVector& sol) &&
+    template<class SolutionVector>
+    ThisType bindElement(const typename FVElementGeometry::Element& element,
+                         const FVElementGeometry& fvGeometry,
+                         const SolutionVector& sol) &&
     {
         this->bindElement(element, fvGeometry, sol);
         return std::move(*this);
     }
     //! Binding of an element, prepares only the face variables of the element
     //! specialization for Staggered models
-    template<class FVElementGeometry, class SolutionVector>
+    template<class SolutionVector>
     void bindElement(const typename FVElementGeometry::Element& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol) &
@@ -212,7 +216,11 @@ private:
 template<class GVV>
 class FaceCenteredStaggeredElementVolumeVariables<GVV, /*cachingEnabled*/false>
 {
+    using ThisType = FaceCenteredStaggeredElementVolumeVariables<GVV, /*cachingEnabled*/false>;
     using GridGeometry = std::decay_t<decltype(std::declval<GVV>().problem().gridGeometry())>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+
     static constexpr auto dim = GridGeometry::GridView::dimension;
     static constexpr auto numInsideVolVars = dim * 2;
     static constexpr auto numOutsideVolVars = numInsideVolVars * 2 * (dim - 1);
@@ -224,10 +232,10 @@ public:
     //! export type of the volume variables
     using VolumeVariables = typename GridVolumeVariables::VolumeVariables;
 
-    FaceCenteredStaggeredElementVolumeVariables(const GridVolumeVariables& globalFacesVars) : gridVolumeVariablesPtr_(&globalFacesVars) {}
+    FaceCenteredStaggeredElementVolumeVariables(const GridVolumeVariables& globalFacesVars)
+    : gridVolumeVariablesPtr_(&globalFacesVars) {}
 
     //! const operator for the access with an scvf
-    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
     const VolumeVariables& operator [](const SubControlVolume& scv) const
     { return volumeVariables_[getLocalIdx_(scv.index())]; }
 
@@ -236,7 +244,6 @@ public:
     { return volumeVariables_[getLocalIdx_(scvIdx)]; }
 
     //! operator for the access with an scvf
-    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
     VolumeVariables& operator [](const SubControlVolume& scv)
     { return volumeVariables_[getLocalIdx_(scv.index())]; }
 
@@ -249,16 +256,16 @@ public:
     * This overload is called when an instance of this class is a temporary in the usage context
     * This allows a usage like this: `const auto view = localView(...).bind(element);`
     */
-    template<class FVElementGeometry, class SolutionVector>
-    FaceCenteredStaggeredFVElementGeometry bind(const typename FVElementGeometry::Element& element,
-                                                const FVElementGeometry& fvGeometry,
-                                                const SolutionVector& sol) &&
+    template<class SolutionVector>
+    ThisType bind(const typename FVElementGeometry::Element& element,
+                  const FVElementGeometry& fvGeometry,
+                  const SolutionVector& sol) &&
     {
         this->bind_(element, fvGeometry, sol);
         return std::move(*this);
     }
 
-    template<class FVElementGeometry, class SolutionVector>
+    template<class SolutionVector>
     void bind(const typename FVElementGeometry::Element& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol) &
@@ -271,15 +278,16 @@ public:
     * This overload is called when an instance of this class is a temporary in the usage context
     * This allows a usage like this: `const auto view = localView(...).bind(element);`
     */
-    template<class FVElementGeometry, class SolutionVector>
-    FaceCenteredStaggeredFVElementGeometry bindElement(const typename FVElementGeometry::Element& element,
-                                                       const FVElementGeometry& fvGeometry,
-                                                       const SolutionVector& sol) &&
+    template<class SolutionVector>
+    ThisType bindElement(const typename FVElementGeometry::Element& element,
+                         const FVElementGeometry& fvGeometry,
+                         const SolutionVector& sol) &&
     {
         this->bindElement_(element, fvGeometry, sol);
         return std::move(*this);
     }
 
+    template<class SolutionVector>
     void bindElement(const typename FVElementGeometry::Element& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol) &
@@ -296,7 +304,7 @@ public:
 private:
     //! For compatibility reasons with the case of not storing the vol vars.
     //! function to be called before assembling an element, preparing the vol vars within the stencil
-    template<class FVElementGeometry, class SolutionVector>
+    template<class SolutionVector>
     void bind_(const typename FVElementGeometry::Element& element,
                const FVElementGeometry& fvGeometry,
                const SolutionVector& sol)
@@ -373,7 +381,7 @@ private:
 
     //! Binding of an element, prepares only the face variables of the element
     //! specialization for Staggered models
-    template<class FVElementGeometry, class SolutionVector>
+    template<class SolutionVector>
     void bindElement_(const typename FVElementGeometry::Element& element,
                       const FVElementGeometry& fvGeometry,
                       const SolutionVector& sol)
