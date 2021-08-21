@@ -132,9 +132,4 @@ public:
 
 } // end namespace Detail
 
-// TODO: bundle SolutionVector, JacobianMatrix
-//       in LinearAlgebra traits
-
-} // namespace Dumux::Detail
-
 #endif
