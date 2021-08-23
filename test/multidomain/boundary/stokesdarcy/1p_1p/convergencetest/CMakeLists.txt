@@ -62,6 +62,8 @@ dune_add_test(NAME test_md_boundary_darcy1pbox_stokes1p_convtest_bj
               CMD_ARGS -e test_md_boundary_darcy1pbox_freeflow1p_convtest
                        -i params.input
                        -c Cao
+                       --expectedpressurerate 0.9
+                       --expectedvelocityrate 0.9
                        -Problem.SlipCondition BJ
                        -Darcy.SpatialParams.Permeability "1.0 1.0 0.0"
                        -Darcy.SpatialParams.AlphaBeaversJoseph -1
