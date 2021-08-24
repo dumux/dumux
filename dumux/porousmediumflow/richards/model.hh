@@ -133,6 +133,27 @@ struct RichardsModelTraits
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return enableDiff; }
     static constexpr bool enableEnergyBalance() { return false; }
+
+    //! The Richards model has some assumptions on the fluid systems
+    //! that can be verified with this trait
+    template<class FluidSystem>
+    static constexpr bool fluidSystemIsCompatible()
+    {
+        return !FluidSystem::isGas(FluidSystem::phase0Idx)
+            && FluidSystem::isGas(FluidSystem::phase1Idx);
+    }
+
+    //! The Richards model has some assumptions on the fluid systems
+    //! that can be verified with this trait
+    template<class FluidSystem>
+    static constexpr auto checkFluidSystem(const FluidSystem& fs)
+    {
+        struct FluidSystemCheck {
+            static_assert(fluidSystemIsCompatible<FluidSystem>(),
+                "Richards model currently assumes the first phase to be liquid and the second phase to be gaseous.");
+        };
+        return FluidSystemCheck{};
+    }
 };
 
 /*!

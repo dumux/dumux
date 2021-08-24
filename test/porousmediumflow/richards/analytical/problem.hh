@@ -294,17 +294,17 @@ public:
             Dune::QuadratureRule<Scalar, dim> rule =
                 Dune::QuadratureRules<Scalar, dim>::rule(gt, qOrder);
 
-            for (auto qIt = rule.begin(); qIt != rule.end(); ++qIt)
+            for (const auto& qp : rule)
             {
                 // evaluate analytical solution
-                Dune::FieldVector<Scalar, dim> globalPos = geometry.global(qIt->position());
+                Dune::FieldVector<Scalar, dim> globalPos = geometry.global(qp.position());
                 PrimaryVariables values(0.0);
                 analyticalSolution(values, time, globalPos);
                 // add contributino of current quadrature point
                 l2error += (numericalSolution - values[0]) * (numericalSolution - values[0]) *
-                    qIt->weight() * geometry.integrationElement(qIt->position());
+                    qp.weight() * geometry.integrationElement(qp.position());
                 l2analytic += values[0] * values[0] *
-                    qIt->weight() * geometry.integrationElement(qIt->position());
+                    qp.weight() * geometry.integrationElement(qp.position());
             }
         }
         using std::sqrt;

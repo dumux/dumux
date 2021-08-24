@@ -41,37 +41,37 @@ public:
     template <class OutputModule>
     static void initOutputModule(OutputModule& out)
     {
-        using VolumeVariables = typename OutputModule::VolumeVariables;
-        using FS = typename VolumeVariables::FluidSystem;
+        using VV = typename OutputModule::VolumeVariables;
+        using FS = typename VV::FluidSystem;
 
-        out.addVolumeVariable([](const auto& v){ return v.saturation(FS::liquidPhaseIdx); },
-                              IOName::saturation<FS>(FS::liquidPhaseIdx));
-        out.addVolumeVariable([](const auto& v){ return v.saturation(FS::gasPhaseIdx); },
-                              IOName::saturation<FS>(FS::gasPhaseIdx));
-        out.addVolumeVariable([](const auto& v){ return v.pressure(FS::liquidPhaseIdx); },
-                              IOName::pressure<FS>(FS::liquidPhaseIdx));
-        out.addVolumeVariable([](const auto& v){ return v.pressure(FS::gasPhaseIdx); },
-                              IOName::pressure<FS>(FS::gasPhaseIdx));
+        out.addVolumeVariable([](const auto& v){ return v.saturation(FS::phase0Idx); },
+                              IOName::saturation<FS>(FS::phase0Idx));
+        out.addVolumeVariable([](const auto& v){ return v.saturation(FS::phase1Idx); },
+                              IOName::saturation<FS>(FS::phase1Idx));
+        out.addVolumeVariable([](const auto& v){ return v.pressure(FS::phase0Idx); },
+                              IOName::pressure<FS>(FS::phase0Idx));
+        out.addVolumeVariable([](const auto& v){ return v.pressure(FS::phase1Idx); },
+                              IOName::pressure<FS>(FS::phase1Idx));
         out.addVolumeVariable([](const auto& v){ return v.capillaryPressure(); },
                               IOName::capillaryPressure());
-        out.addVolumeVariable([](const auto& v){ return v.density(FS::liquidPhaseIdx); },
-                              IOName::density<FS>(FS::liquidPhaseIdx));
-        out.addVolumeVariable([](const auto& v){ return v.mobility(FS::liquidPhaseIdx); },
-                              IOName::mobility<FS>(FS::liquidPhaseIdx));
-        out.addVolumeVariable([](const auto& v){ return v.relativePermeability(FS::liquidPhaseIdx); },
-                              IOName::relativePermeability<FS>(FS::liquidPhaseIdx));
+        out.addVolumeVariable([](const auto& v){ return v.density(FS::phase0Idx); },
+                              IOName::density<FS>(FS::phase0Idx));
+        out.addVolumeVariable([](const auto& v){ return v.mobility(FS::phase0Idx); },
+                              IOName::mobility<FS>(FS::phase0Idx));
+        out.addVolumeVariable([](const auto& v){ return v.relativePermeability(FS::phase0Idx); },
+                              IOName::relativePermeability<FS>(FS::phase0Idx));
         out.addVolumeVariable([](const auto& v){ return v.porosity(); },
                               IOName::porosity());
 
         static const bool gravity = getParamFromGroup<bool>(out.paramGroup(), "Problem.EnableGravity");
 
         if(gravity)
-            out.addVolumeVariable([](const auto& v){ return v.pressureHead(FS::liquidPhaseIdx); },
+            out.addVolumeVariable([](const auto& v){ return v.pressureHead(FS::phase0Idx); },
                                   IOName::pressureHead());
         if constexpr (enableWaterDiffusionInAir)
-            out.addVolumeVariable([](const auto& v){ return v.moleFraction(FS::gasPhaseIdx, FS::liquidCompIdx); },
-                                  IOName::moleFraction<FS>(FS::gasPhaseIdx, FS::liquidCompIdx));
-        out.addVolumeVariable([](const auto& v){ return v.waterContent(FS::liquidPhaseIdx); },
+            out.addVolumeVariable([](const auto& v){ return v.moleFraction(FS::phase1Idx, FS::comp0Idx); },
+                                  IOName::moleFraction<FS>(FS::phase1Idx, FS::comp0Idx));
+        out.addVolumeVariable([](const auto& v){ return v.waterContent(FS::phase0Idx); },
                               IOName::waterContent());
 
         out.addVolumeVariable([](const auto& v){ return v.priVars().state(); },
@@ -84,10 +84,9 @@ public:
         using Indices = typename ModelTraits::Indices;
 
         if (state == Indices::gasPhaseOnly)
-            return IOName::moleFraction<FluidSystem>(FluidSystem::gasPhaseIdx,
-                                                     FluidSystem::liquidCompIdx);
+            return IOName::moleFraction<FluidSystem>(FluidSystem::phase1Idx, FluidSystem::phase0Idx);
         else
-            return IOName::pressure<FluidSystem>(FluidSystem::liquidPhaseIdx);
+            return IOName::pressure<FluidSystem>(FluidSystem::phase0Idx);
     }
 };
 

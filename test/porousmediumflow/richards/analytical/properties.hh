@@ -25,11 +25,16 @@
 #define DUMUX_RICHARDS_ANALYTICALPROPERTIES_HH
 
 #include <dune/grid/yaspgrid.hh>
+
 #include <dumux/discretization/cctpfa.hh>
-#include <dumux/discretization/box.hh>
+
 #include <dumux/porousmediumflow/richards/model.hh>
+
 #include <dumux/material/components/simpleh2o.hh>
+#include <dumux/material/components/air.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
+#include <dumux/material/fluidsystems/1pgas.hh>
+#include <dumux/material/fluidsystems/2pimmiscible.hh>
 
 #include "spatialparams.hh"
 #include "problem.hh"
@@ -42,7 +47,6 @@ namespace Dumux::Properties {
 // Create new type tags
 namespace TTag {
 struct RichardsAnalytical { using InheritsFrom = std::tuple<Richards>; };
-struct RichardsAnalyticalBox { using InheritsFrom = std::tuple<RichardsAnalytical, BoxModel>; };
 struct RichardsAnalyticalCC { using InheritsFrom = std::tuple<RichardsAnalytical, CCTpfaModel>; };
 } // end namespace TTag
 
@@ -61,6 +65,19 @@ struct SpatialParams<TypeTag, TTag::RichardsAnalytical>
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = RichardsAnalyticalSpatialParams<GridGeometry, Scalar>;
+};
+
+// Set the fluid system
+// -> this is mainly to test that the Richards model also works with
+// the immiscible two-phase fluid system. The default fluid system (H2OAir)
+// would also work (and the reference solution was created with it)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::RichardsAnalytical>
+{
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using L = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
+    using G = FluidSystems::OnePGas<Scalar, Components::Air<Scalar> >;
+    using type = FluidSystems::TwoPImmiscible<Scalar, L, G>;
 };
 
 } // end namespace Dumux::Properties
