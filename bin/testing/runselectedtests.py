@@ -16,7 +16,7 @@ if sys.version_info.major < 3:
     sys.exit('Python 3 required')
 
 
-def buildTests(config, flags=['-j4', '--keep-going']):
+def buildTests(config, flags=['-j8', '--keep-going']):
 
     if not config:
         print('No tests to be built')
@@ -39,7 +39,7 @@ def buildTests(config, flags=['-j4', '--keep-going']):
                    check=True)
 
 
-def runTests(config, script='', flags=['-j4', '--output-on-failure']):
+def runTests(config, script='', flags=['-j8', '--output-on-failure']):
 
     tests = list(config.keys())
     if not tests:
@@ -77,11 +77,11 @@ if __name__ == '__main__':
                         help='use this flag to run the tests')
     parser.add_argument('-bf', '--buildflags',
                         required=False,
-                        default='-j4 --keep-going',
+                        default='-j8 --keep-going',
                         help='set the flags passed to make')
     parser.add_argument('-tf', '--testflags',
                         required=False,
-                        default='-j4 --output-on-failure -LE python',
+                        default='-j8 --output-on-failure -LE python',
                         help='set the flags passed to ctest')
     args = vars(parser.parse_args())
 
