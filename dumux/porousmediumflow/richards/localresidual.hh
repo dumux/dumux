@@ -79,12 +79,10 @@ class RichardsLocalResidual : public GetPropType<TypeTag, Properties::BaseLocalR
     // first index for the mass balance
     enum { conti0EqIdx = Indices::conti0EqIdx };
 
-    // phase indices
-    enum {
-           liquidPhaseIdx = FluidSystem::liquidPhaseIdx,
-           gasPhaseIdx = FluidSystem::gasPhaseIdx,
-           liquidCompIdx = FluidSystem::liquidCompIdx
-    };
+    // phase & component indices
+    static constexpr auto liquidPhaseIdx = FluidSystem::phase0Idx;
+    static constexpr auto gasPhaseIdx = FluidSystem::phase1Idx;
+    static constexpr auto liquidCompIdx = FluidSystem::comp0Idx;
 
     static constexpr bool enableWaterDiffusionInAir
         = getPropValue<TypeTag, Properties::EnableWaterDiffusionInAir>();
