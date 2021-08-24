@@ -411,6 +411,25 @@ inline bool intersectsBoundingBoxBoundingBox(const ctypea* a, const ctypeb* b)
     return b[0] - eps0 <= a[1] && a[0] <= b[1] + eps0;
 }
 
+/*!
+ * \brief Compute squared distance between point and bounding box
+ * \param point The point
+ * \param b Pointer to bounding box coordinates
+ */
+template<int dimworld, class ctype>
+inline ctype squaredDistancePointBoundingBox(const Dune::FieldVector<ctype, dimworld>& point, const ctype* b)
+{
+    ctype squaredDistance = 0.0;
+    for (int d = 0; d < dimworld; ++d)
+    {
+        if (point[d] < b[d])
+            squaredDistance += (point[d] - b[d])*(point[d] - b[d]);
+        if (point[d] > b[d+dimworld])
+            squaredDistance += (point[d] - b[d+dimworld])*(point[d] - b[d+dimworld]);
+    }
+    return squaredDistance;
+}
+
 } // end namespace Dumux
 
 #endif

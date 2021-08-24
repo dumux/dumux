@@ -24,7 +24,9 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/geometry/quadraturerules.hh>
+
 #include <dumux/common/math.hh>
+#include <dumux/geometry/boundingboxtree.hh>
 
 namespace Dumux {
 
@@ -379,6 +381,160 @@ static inline auto squaredDistance(const Geo1& geo1, const Geo2& geo2)
 template<class Geo1, class Geo2>
 static inline auto distance(const Geo1& geo1, const Geo2& geo2)
 { using std::sqrt; return sqrt(squaredDistance(geo1, geo2)); }
+
+
+//! Distance implementation details
+namespace Detail {
+
+/*!
+ * \ingroup Geometry
+ * \brief Compute the closest entity in an AABB tree (index and shortest squared distance) recursively
+ * \note specialization for geometries with dimension larger than points
+ */
+template<class EntitySet, class ctype, int dimworld,
+         typename std::enable_if_t<(EntitySet::Entity::Geometry::mydimension > 0), int> = 0>
+void closestEntity(const Dune::FieldVector<ctype, dimworld>& point,
+                   const BoundingBoxTree<EntitySet>& tree,
+                   std::size_t node,
+                   ctype& minSquaredDistance,
+                   std::size_t& eIdx)
+{
+    // Get the bounding box for the current node
+    const auto& bBox = tree.getBoundingBoxNode(node);
+
+    // If bounding box is outside radius, then don't search further
+    const auto squaredDistance = squaredDistancePointBoundingBox(
+        point, tree.getBoundingBoxCoordinates(node)
+    );
+
+    // do not continue if the AABB is further away than the current minimum
+    if (squaredDistance > minSquaredDistance) return;
+
+    // If the bounding box is a leaf, update distance and index with primitive test
+    else if (tree.isLeaf(bBox, node))
+    {
+        const std::size_t entityIdx = bBox.child1;
+        const auto squaredDistance = [&]{
+            const auto geometry = tree.entitySet().entity(entityIdx).geometry();
+            if constexpr (EntitySet::Entity::Geometry::mydimension == 2)
+                return squaredDistancePointPolygon(point, geometry);
+            else if constexpr (EntitySet::Entity::Geometry::mydimension == 1)
+                return squaredDistancePointSegment(point, geometry);
+            else
+                DUNE_THROW(Dune::NotImplemented, "squaredDistance to entity with dim>2");
+        }();
+
+        if (squaredDistance < minSquaredDistance)
+        {
+            eIdx = entityIdx;
+            minSquaredDistance = squaredDistance;
+        }
+    }
+
+    // Check the children nodes recursively
+    else
+    {
+        closestEntity(point, tree, bBox.child0, minSquaredDistance, eIdx);
+        closestEntity(point, tree, bBox.child1, minSquaredDistance, eIdx);
+    }
+}
+
+/*!
+ * \ingroup Geometry
+ * \brief Compute the closest entity in an AABB tree (index and shortest squared distance) recursively
+ * \note specialization for point geometries (point cloud AABB tree)
+ */
+template<class EntitySet, class ctype, int dimworld,
+         typename std::enable_if_t<(EntitySet::Entity::Geometry::mydimension == 0), int> = 0>
+void closestEntity(const Dune::FieldVector<ctype, dimworld>& point,
+                   const BoundingBoxTree<EntitySet>& tree,
+                   std::size_t node,
+                   ctype& minSquaredDistance,
+                   std::size_t& eIdx)
+{
+    // Get the bounding box for the current node
+    const auto& bBox = tree.getBoundingBoxNode(node);
+
+    // If the bounding box is a leaf, update distance and index with primitive test
+    if (tree.isLeaf(bBox, node))
+    {
+        const std::size_t entityIdx = bBox.child1;
+        const auto& p = tree.entitySet().entity(entityIdx).geometry().corner(0);
+        const auto squaredDistance = (p-point).two_norm2();
+
+        if (squaredDistance < minSquaredDistance)
+        {
+            eIdx = entityIdx;
+            minSquaredDistance = squaredDistance;
+        }
+    }
+
+    // Check the children nodes recursively
+    else
+    {
+        // If bounding box is outside radius, then don't search further
+        const auto squaredDistance = squaredDistancePointBoundingBox(
+            point, tree.getBoundingBoxCoordinates(node)
+        );
+
+        // do not continue if the AABB is further away than the current minimum
+        if (squaredDistance > minSquaredDistance) return;
+
+        closestEntity(point, tree, bBox.child0, minSquaredDistance, eIdx);
+        closestEntity(point, tree, bBox.child1, minSquaredDistance, eIdx);
+    }
+}
+
+} // end namespace Detail
+
+/*!
+ * \ingroup Geometry
+ * \brief Compute the closest entity in an AABB tree to a point (index and shortest squared distance)
+ * \param point the point
+ * \param tree the AABB tree
+ * \param minSquaredDistance conservative estimate of the minimum distance
+ *
+ * \note it is important that if an estimate is provided for minSquaredDistance to choose
+ *       this estimate to be larger than the expected result. If the minSquaredDistance is smaller
+ *       or equal to the result the returned entity index will be zero and the distance is equal
+ *       to the estimate. However, this can also be the correct result. When in doubt, use the
+ *       default parameter value.
+ */
+template<class EntitySet, class ctype, int dimworld>
+std::pair<ctype, std::size_t> closestEntity(const Dune::FieldVector<ctype, dimworld>& point,
+                                            const BoundingBoxTree<EntitySet>& tree,
+                                            ctype minSquaredDistance = std::numeric_limits<ctype>::max())
+{
+    std::size_t eIdx = 0;
+    Detail::closestEntity(point, tree, tree.numBoundingBoxes() - 1, minSquaredDistance, eIdx);
+    using std::sqrt;
+    return { minSquaredDistance, eIdx };
+}
+
+/*!
+ * \ingroup Geometry
+ * \brief Compute the shortest squared distance to entities in an AABB tree
+ */
+template<class EntitySet, class ctype, int dimworld>
+ctype squaredDistance(const Dune::FieldVector<ctype, dimworld>& point,
+                      const BoundingBoxTree<EntitySet>& tree,
+                      ctype minSquaredDistance = std::numeric_limits<ctype>::max())
+{
+    return closestEntity(point, tree, minSquaredDistance).first;
+}
+
+/*!
+ * \ingroup Geometry
+ * \brief Compute the shortest distance to entities in an AABB tree
+ */
+template<class EntitySet, class ctype, int dimworld>
+ctype distance(const Dune::FieldVector<ctype, dimworld>& point,
+               const BoundingBoxTree<EntitySet>& tree,
+               ctype minSquaredDistance = std::numeric_limits<ctype>::max())
+{
+    using std::sqrt;
+    return sqrt(squaredDistance(point, tree, minSquaredDistance));
+}
 
 } // end namespace Dumux
 
