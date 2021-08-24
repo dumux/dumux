@@ -139,6 +139,16 @@ void checkDistanceField(const std::vector<Geometry>& geometries,
     if (Dune::FloatCmp::ne(d, d2) || idx != idx2)
         DUNE_THROW(Dune::InvalidStateException, "Distance field using bounding spheres does"
                     "not return same result as without bounding spheres");
+
+
+    AABBDistanceField<Geometry> distanceFieldAABB(geometries);
+    const auto [d3, idx3] = distanceFieldAABB.distanceAndIndex(p);
+
+    if (Dune::FloatCmp::ne(d, d3) || idx != idx3)
+        DUNE_THROW(Dune::InvalidStateException,
+            "Distance field using AABB tree does"
+            "not return same result as other distance fields -> "
+            "expected (" << d << ", " << idx << ") got (" << d3 << ", " << idx3 << ")");
 }
 
 // checks the distances between various points with points/segments/lines
