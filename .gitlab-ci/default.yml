@@ -91,7 +91,7 @@ select tests:
       artifacts: true
 
 
-build dumux:
+compile cpp:
   stage: build
   script:
     - |
@@ -115,7 +115,7 @@ build dumux:
       artifacts: true
 
 
-test dumux:
+test cpp:
   stage: test
   variables:
     OMPI_ALLOW_RUN_AS_ROOT: 1
@@ -130,14 +130,14 @@ test dumux:
         fi
       popd
   needs:
-    - job: build dumux
+    - job: compile cpp
       artifacts: true
   artifacts:
     reports:
       junit: junit/dumux-cmake.xml
 
 
-test dumux python:
+test python:
   stage: test
   variables:
     OMPI_ALLOW_RUN_AS_ROOT: 1
