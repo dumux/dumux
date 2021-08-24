@@ -79,6 +79,9 @@ class RichardsLocalResidual : public GetPropType<TypeTag, Properties::BaseLocalR
     // first index for the mass balance
     enum { conti0EqIdx = Indices::conti0EqIdx };
 
+    // checks if the fluid system uses the Richards model index convention
+    static constexpr auto fsCheck = GetPropType<TypeTag, Properties::ModelTraits>::checkFluidSystem(FluidSystem{});
+
     // phase & component indices
     static constexpr auto liquidPhaseIdx = FluidSystem::phase0Idx;
     static constexpr auto gasPhaseIdx = FluidSystem::phase1Idx;

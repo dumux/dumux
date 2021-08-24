@@ -75,6 +75,9 @@ class RichardsVolumeVariables
 
     using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
 
+    // checks if the fluid system uses the Richards model index convention
+    static constexpr auto fsCheck = ModelTraits::checkFluidSystem(typename Traits::FluidSystem{});
+
 public:
     //! Export type of the fluid system
     using FluidSystem = typename Traits::FluidSystem;
@@ -92,9 +95,6 @@ public:
     //! Export phase indices
     static constexpr auto liquidPhaseIdx = Traits::FluidSystem::phase0Idx;
     static constexpr auto gasPhaseIdx = Traits::FluidSystem::phase1Idx;
-
-    static_assert(!Traits::FluidSystem::isGas(liquidPhaseIdx), "Richards model assumes first phase to be liquid");
-    static_assert(Traits::FluidSystem::isGas(gasPhaseIdx), "Richards model assumes second phase to be gaseous");
 
     /*!
      * \brief Updates all quantities for a given control volume.
