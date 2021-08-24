@@ -34,10 +34,10 @@
 namespace Dumux {
 namespace Properties {
 
-// create some Properties (equivalent to old macro NEW_PROP_TAG(...))
+// create some properties:
 // the first type tag is the actual TypeTag for which the property will be obtained
 // (can be used to make properties depend on other properties),
-// the second type tag is for parital specialization (equivalent to old macro SET_PROP(...), see below)
+// the second type tag is for partial specialization
 // the default property should be always undefined to produce a good error message
 // if the user attempt to get an unset property
 template<class TypeTag, class MyTypeTag>
@@ -50,7 +50,7 @@ template<class TypeTag, class MyTypeTag>
 struct UseTpfaFlux { using type = UndefinedProperty; };
 
 namespace TTag {
-// create some TypeTags (equivalent to old macro NEW_TYPE_TAG(..., INHERITS_FROM(...)))
+// create some type tags:
 // the tuple is sorted by precedence, the first one overwriting the following
 struct Base { };
 struct Grid { };
@@ -61,7 +61,7 @@ struct OnePTest { using InheritsFrom = std::tuple<OnePModel, BoxDisc>; };
 
 } // end namespace TTag
 
-// set and overwrite some properties (equivalent to old macro SET_PROP(...){};)
+// set and overwrite some properties
 template<class TypeTag>
 struct Scalar<TypeTag, TTag::Base> { using type = float; };
 
