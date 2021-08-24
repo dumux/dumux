@@ -687,9 +687,7 @@ public:
                 }
         }
 
-//          // For using the ... other way of calculating equilibrium
-//          THIS IS ONLY FOR silencing Valgrind but is not used in this model
-// TODO: Can this be removed???
+        // TODO: Can this be removed, are fugacity coefficients used in the constraint solver?
         for(int phaseIdx=0; phaseIdx<numFluidPhases(); ++phaseIdx)
             for (int compIdx = 0; compIdx < numFluidComps; ++compIdx) {
                 const Scalar phi = FluidSystem::fugacityCoefficient(actualFluidState,
