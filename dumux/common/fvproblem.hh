@@ -39,7 +39,19 @@
 
 #include <dumux/assembly/initialsolution.hh>
 
+
 namespace Dumux {
+
+// Remove this check after release 3.5. The extrusionFactor functions now are held in the spatialParams!
+namespace Detail {
+    template<class Element, class SubControlVolume, class ElementSolution>
+    constexpr auto spatialParamsHasExtrusionFactor = isValid([](auto&& spatialParams) -> decltype(spatialParams.extrusionFactor(Element(TODO), SubControlVolume(TODO), ElementSolution(TODO))
+                                                     { return true; } );
+
+    template<class GlobalPosition>
+    constexpr auto spatialParamsHasExtrusionFactorAtPos = isValid([](auto&& spatialParams) -> decltype(spatialParams.extrusionFactorAtPos(GlobalPosition(0.0)))
+                                                          { return true;} );
+}
 
 /*!
  * \ingroup Common
@@ -545,6 +557,8 @@ public:
      * are assumed to extend 1 m to the back.
      */
     template<class ElementSolution>
+    [[deprecated("The extrusionFactor function has been moved to the spatialParams."
+                 "Please call this using spatialParams().extrusionFactor(element, scv, elemSol)")]]
     Scalar extrusionFactor(const Element& element,
                            const SubControlVolume& scv,
                            const ElementSolution& elemSol) const
@@ -562,11 +576,18 @@ public:
      * thought as pipes with a cross section of 1 m^2 and 2D problems
      * are assumed to extend 1 m to the back.
      */
+    [[deprecated("The extrusionFactorAtPos function has been moved to the spatialParams."
+                 "Please call this using spatialParams().extrusionFactorAtPos(globalPos)")]]
     Scalar extrusionFactorAtPos(const GlobalPosition &globalPos) const
     {
-        // As a default, i.e. if the user's problem does not overload
-        // any extrusion factor method, return 1.0
-        return 1.0;
+        if constexpr ( decltype(Detail::spatialParamsHasExtrusionFactorAtPos<GlobalPosition>(asImp_().spatialParams()))::value )
+            std::cout << "reached " << "\n";
+        else
+        {
+            // As a default, i.e. if the user's problem does not overload
+            // any extrusion factor method, return 1.0
+            return 1.0;
+        }
     }
 
     // \}
