@@ -25,6 +25,11 @@
 #define DUMUX_DISCRETIZATION_WALL_DISTANCE_HH
 
 #include <vector>
+
+#if HAVE_TBB
+#include <tbb/tbb.h>
+#endif
+
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/shared_ptr.hh>
 
@@ -256,35 +261,59 @@ private:
         const DistanceField<SimpleGeometry> distanceField(wallGeometries);
 #endif
 
-        // get the actual distances
+        // compute sampling points
+        std::vector<GlobalPosition> points(numSamplingPoints);
+        if (loc == atElementCenters)
+            for (const auto& element : elements(gridGeometry_->gridView()))
+                points[gridGeometry_->elementMapper().index(element)] = element.geometry().center();
+        else
+            for (const auto& vertex : vertices(gridGeometry_->gridView()))
+                points[gridGeometry_->vertexMapper().index(vertex)] = vertex.geometry().corner(0);
+
+        // get the actual distances (this is the most expensive part)
         if (loc == atElementCenters)
         {
-            for (const auto& element : elements(gridGeometry_->gridView()))
-            {
-                const auto eIdx = gridGeometry_->elementMapper().index(element);
-                const auto [d, idx] = distanceField.distanceAndIndex(element.geometry().center());
+            const auto kernel = [&](std::size_t eIdx){
+                const auto [d, idx] = distanceField.distanceAndIndex(points[eIdx]);
                 distance_[eIdx] = d;
 #if HAVE_MPI
                 wallData_[eIdx] = isParallel ? globalTempWallData[idx] : tempWallData[idx];
 #else
                 wallData_[eIdx] = tempWallData[idx];
 #endif
-            }
+            };
+
+            runKernel_(numSamplingPoints, kernel);
         }
         else
         {
-            for (const auto& vertex : vertices(gridGeometry_->gridView()))
-            {
-                const auto vIdx = gridGeometry_->vertexMapper().index(vertex);
-                const auto [d, idx] = distanceField.distanceAndIndex(vertex.geometry().center());
+            const auto kernel = [&](std::size_t vIdx){
+                const auto [d, idx] = distanceField.distanceAndIndex(points[vIdx]);
                 distance_[vIdx] = d;
 #if HAVE_MPI
                 wallData_[vIdx] = isParallel ? globalTempWallData[idx] : tempWallData[idx];
 #else
                 wallData_[vIdx] = tempWallData[idx];
 #endif
-            }
+            };
+
+            runKernel_(numSamplingPoints, kernel);
         }
+    }
+
+    template<class Kernel>
+    void runKernel_(std::size_t size, const Kernel& kernel)
+    {
+#if HAVE_TBB
+        // parallelize with tbb if we have enough work (enough evaluation points)
+        if (size > 10000)
+            tbb::parallel_for(std::size_t(0), size, [&](std::size_t i){ kernel(i); });
+        else
+            for (std::size_t i = 0; i < size; ++i) kernel(i);
+
+#else
+        for (std::size_t i = 0; i < size; ++i) kernel(i);
+#endif
     }
 
     std::vector<Scalar> distance_;
