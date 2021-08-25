@@ -33,6 +33,8 @@
 
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/indices.hh>
+#include <dune/common/concept.hh>
+#include <dune/grid/common/gridview.hh>
 
 #include "dumux/io/json/json.hpp"
 
@@ -47,56 +49,80 @@
 
 namespace Dumux {
 
+namespace Concept {
+
+//! Concept of GridGeometry
+struct GridGeometry
+{
+    template<class GG>
+    auto require(const GG& gg) -> decltype(
+        gg.isPeriodic(),
+        gg.numScv(),
+        gg.numScvf(),
+        gg.numBoundaryScvf(),
+        gg.numDofs(),
+        GG::discMethod
+    );
+};
+
+template<class GG>
+static constexpr bool isGridGeometry()
+{ return Dune::models<GridGeometry, GG>(); }
+
+//! Concept of GridVariables
+struct GridVariables
+{
+    template<class GV>
+    auto require(const GV& gv) -> decltype(
+        Dune::Concept::requireType<typename GV::GridVolumeVariables>(),
+        Dune::Concept::requireType<typename GV::VolumeVariables>(),
+        Dune::Concept::requireType<typename GV::GridFluxVariablesCache>()
+    );
+};
+
+template<class GV>
+static constexpr bool isGridVariables()
+{ return Dune::models<GridVariables, GV>(); }
+
+//! Concept of GridView
+struct GridView
+{
+    template<class GV>
+    auto require(const GV& gv) -> decltype(
+        Dune::Concept::requireBaseOf<Dune::GridView<typename GV::Traits>, GV>()
+    );
+};
+
+template<class GV>
+static constexpr bool isGridView()
+{ return Dune::models<GridView, GV>(); }
+
+} // end namespace Concept
+
 namespace Detail {
 
-//! Helper to determine whether a given type inherits from BaseGridGeometry
-struct isGridGeometry
-{
-    template<typename ...Args>
-    void isConstructable(const BaseGridGeometry<Args...>&)
-    {}
-
-    template<class GridGeometry>
-    auto operator()(GridGeometry&& gg)
-    -> decltype(isConstructable(gg))
-    {}
-};
-
-//! Helper to determine whether a given type inherits from FVGridVariables
-struct isGridVariables
-{
-    template<typename ...Args>
-    void isConstructable(const FVGridVariables<Args...>&)
-    {}
-
-    template<class GridVariables>
-    auto operator()(GridVariables&& gv)
-    -> decltype(isConstructable(gv))
-    {}
-};
-
-std::string removeNamespace(std::string&& s)
-{
-    std::size_t last = s.find_last_of("::");
-
-    if(last != std::string::npos)
-        s.erase(0, last+1);
-
-    return std::move(s);
-}
-
-template<class TTagTuple, class Collector>
-void collectTypeTagsFromTuple(Collector& collector, int depth=0, int parentBranch=-1)
-{
-    using namespace Dune::Hybrid;
-    forEach(std::make_index_sequence<std::tuple_size_v<TTagTuple>>{},  [&](auto i)
+    std::string removeNamespace(std::string&& s)
     {
-        using type = typename std::tuple_element<i, TTagTuple>::type;
-        collector.push_back(std::tuple<int, int, std::string>{depth, parentBranch, removeNamespace(Dune::className<type>())});
-        if constexpr (Dumux::Properties::Detail::hasParentTypeTag<type>(int{}))
-            collectTypeTagsFromTuple<typename type::InheritsFrom>(collector, int{depth+1}, i);
-    });
-}
+        std::size_t last = s.find_last_of("::");
+
+        if(last != std::string::npos)
+            s.erase(0, last+1);
+
+        return std::move(s);
+    }
+
+    template<class TTagTuple, class Collector>
+    void collectTypeTagsFromTuple(Collector& collector, int depth=0, int parentBranch=-1)
+    {
+        using namespace Dune::Hybrid;
+        forEach(std::make_index_sequence<std::tuple_size_v<TTagTuple>>{},  [&](auto i)
+        {
+            using type = typename std::tuple_element<i, TTagTuple>::type;
+            collector.push_back(std::tuple<int, int, std::string>{depth, parentBranch, removeNamespace(Dune::className<type>())});
+            if constexpr (Dumux::Properties::Detail::hasParentTypeTag<type>(int{}))
+                collectTypeTagsFromTuple<typename type::InheritsFrom>(collector, int{depth+1}, i);
+        });
+    }
 
 } // end namespace Detail
 
@@ -135,6 +161,12 @@ public:
         return hideTemplates ? hideTemplateArguments(Dune::className(c)) : Dune::className(c);
     }
 
+    template <class T>
+    static std::string className(bool hideTemplates)
+    {
+        return hideTemplates ? hideTemplateArguments(Dune::className<T>()) : Dune::className<T>();
+    }
+
     static std::string hideTemplateArguments(std::string&& s)
     {
         std::size_t first = s.find("<");
@@ -168,32 +200,42 @@ void collectMetaData(Collector& collector, const FVAssembler<TypeTag, diffmethod
     obj["Stationary"] = a.isStationaryProblem();
 }
 
-template<class Collector, class GridGeometry>
-auto collectMetaData(Collector& collector, const GridGeometry& gg, bool hideTemplates = true)
--> typename std::enable_if_t<decltype(isValid(Detail::isGridGeometry())(gg))::value, void>
+template<class Collector, class GridGeometry, std::enable_if_t<Concept::isGridGeometry<GridGeometry>(), int> = 0>
+void collectMetaData(Collector& collector, const GridGeometry& gg, bool hideTemplates = true)
 {
-    using GridView = typename GridGeometry::GridView;
     auto& obj = collector["GridGeometry"];
     obj["Type"] = Metadata::className(gg, hideTemplates);
-    obj["GridView"]["Type"] = Metadata::className(gg.gridView(), hideTemplates);
-    obj["GridView"]["dimension"] = GridView::dimension;
-    obj["GridView"]["dimensionWorld"] = GridView::dimensionworld;
-    obj["GridView"]["Grid"]["Type"] = Metadata::className(gg.gridView().grid(), hideTemplates);
     obj["IsPeriodic"] = gg.isPeriodic();
     obj["DiscretisationMethod"] = toString(GridGeometry::discMethod);
-    obj["MaxElementStencilSize"] = GridGeometry::maxElementStencilSize;
     obj["NumScvs"] = gg.numScv();
     obj["NumScvfs"] = gg.numScvf();
     obj["SumBoundaryScvfs"] = gg.numBoundaryScvf();
     obj["NumDofs"] = gg.numDofs();
 }
 
-template<class Collector, class GridVariables>
+template<class Collector, class GridVariables, std::enable_if_t<Concept::isGridVariables<GridVariables>(), int> = 0>
 auto collectMetaData(Collector& collector, const GridVariables& gv, bool hideTemplates = true)
--> typename std::enable_if_t<decltype(isValid(Detail::isGridVariables())(gv))::value, void>
 {
     auto& obj = collector["GridVariables"];
     obj["Type"] = Metadata::className(gv, hideTemplates);
+    obj["GridVolumeVariables"]["Type"] = Metadata::className<typename GridVariables::GridVolumeVariables>(hideTemplates);
+    obj["VolumeVariables"]["Type"] = Metadata::className<typename GridVariables::VolumeVariables>(hideTemplates);
+    obj["GridFluxVariablesCache"]["Type"] = Metadata::className<typename GridVariables::GridFluxVariablesCache>(hideTemplates);
+}
+
+template<class Collector, class GridView, std::enable_if_t<Concept::isGridView<GridView>(), int> = 0>
+auto collectMetaData(Collector& collector, const GridView& gridView, bool hideTemplates = true)
+{
+    auto& obj = collector["GridView"];
+    obj["Type"] = Metadata::className(gridView, hideTemplates);
+    obj["dimension"] = GridView::dimension;
+    obj["dimensionWorld"] = GridView::dimensionworld;
+    obj["conforming"] = GridView::conforming;
+    //obj["Grid"]["Type"] = Metadata::className(gridView.grid(), hideTemplates);
+    for(int codim = 0; codim < GridView::dimension; ++codim)
+       obj["numEntities"]["codim " + std::to_string(codim) ] = gridView.size(codim);
+
+    //TODO parallel runs, i.e. overlapSize() etc.
 }
 
 template<class TypeTag, class Collector>
