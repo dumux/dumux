@@ -3,7 +3,7 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/exceptions.hh>
-
+#include <dune/common/fvector.hh>
 #include <dumux/common/parameters.hh>
 
 int main (int argc, char *argv[])
@@ -20,7 +20,7 @@ int main (int argc, char *argv[])
 
     // initialize parameter tree
     Parameters::init(argc, argv, defaultParams);
-
+std::cout << getParam<Dune::FieldVector<double, 2>>("Grid.UpperRight") << std::endl;
     Parameters::print();
 
     return 0;
