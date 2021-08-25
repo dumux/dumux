@@ -47,7 +47,7 @@
 #include "dumux/discretization/basegridgeometry.hh"
 #include "dumux/discretization/fvgridvariables.hh"
 
-namespace Dumux {
+namespace Dumux::MetaData {
 
 namespace Concept {
 
