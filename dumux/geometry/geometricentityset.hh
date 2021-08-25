@@ -100,13 +100,12 @@ public:
      * \brief get an entity from an index
      */
     Entity entity(std::size_t index) const
-    { return (*entityMap_)[index]; }
+    { assert(index < entityMap_->size()); return (*entityMap_)[index]; }
 
 private:
     GridView gridView_;
     Mapper mapper_;
     std::shared_ptr<const EntityMap> entityMap_;
-
 };
 
 /*!
@@ -228,7 +227,7 @@ public:
      * \brief get an entity from an index
      */
     Entity entity(std::size_t index) const
-    { return entities_[index]; }
+    { assert(index < entities_.size()); return entities_[index]; }
 
 private:
     std::vector<Entity> entities_;
