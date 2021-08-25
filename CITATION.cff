@@ -1,0 +1,19 @@
+cff-version: 1.1.0
+message: "If you use this software, please at least cite the most recent DuMux paper listed below"
+authors:
+  # Authors list
+title: "DuMux -- DUNE for Multi-{Phase, Component, Scale, Physics, ...} flow and transport in porous media"
+version: 3.4
+date-released: 2021-08-03
+doi: 10.5281/zenodo.2479594
+references:
+  - type: article
+    title: "DuMux 3 – an open-source simulator for solving flow and transport problems in porous media with a focus on model coupling."
+    authors:
+      - authors
+    doi: 10.1016/j.camwa.2020.02.012
+  - type: article
+    title: "DuMux: DUNE for Multi-{Phase, Component, Scale, Physics, …} Flow and Transport in Porous Media"
+    authors:
+      - authors
+    doi: 10.1016/j.advwatres.2011.03.007
