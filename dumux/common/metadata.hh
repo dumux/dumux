@@ -65,10 +65,6 @@ struct GridGeometry
     );
 };
 
-template<class GG>
-static constexpr bool isGridGeometry()
-{ return Dune::models<GridGeometry, GG>(); }
-
 //! Concept of GridVariables
 struct GridVariables
 {
@@ -80,10 +76,6 @@ struct GridVariables
     );
 };
 
-template<class GV>
-static constexpr bool isGridVariables()
-{ return Dune::models<GridVariables, GV>(); }
-
 //! Concept of GridView
 struct GridView
 {
@@ -92,10 +84,6 @@ struct GridView
         Dune::Concept::requireBaseOf<Dune::GridView<typename GV::Traits>, GV>()
     );
 };
-
-template<class GV>
-static constexpr bool isGridView()
-{ return Dune::models<GridView, GV>(); }
 
 } // end namespace Concept
 
@@ -200,8 +188,9 @@ void collectMetaData(Collector& collector, const FVAssembler<TypeTag, diffmethod
     obj["Stationary"] = a.isStationaryProblem();
 }
 
-template<class Collector, class GridGeometry, std::enable_if_t<Concept::isGridGeometry<GridGeometry>(), int> = 0>
-void collectMetaData(Collector& collector, const GridGeometry& gg, bool hideTemplates = true)
+template<class Collector, class GridGeometry>
+auto collectMetaData(Collector& collector, const GridGeometry& gg, bool hideTemplates = true)
+-> typename std::enable_if_t<Dune::models<Concept::GridGeometry, GridGeometry>()>
 {
     auto& obj = collector["GridGeometry"];
     obj["Type"] = Metadata::className(gg, hideTemplates);
@@ -213,8 +202,9 @@ void collectMetaData(Collector& collector, const GridGeometry& gg, bool hideTemp
     obj["NumDofs"] = gg.numDofs();
 }
 
-template<class Collector, class GridVariables, std::enable_if_t<Concept::isGridVariables<GridVariables>(), int> = 0>
+template<class Collector, class GridVariables>
 auto collectMetaData(Collector& collector, const GridVariables& gv, bool hideTemplates = true)
+-> typename std::enable_if_t<Dune::models<Concept::GridVariables, GridVariables>()>
 {
     auto& obj = collector["GridVariables"];
     obj["Type"] = Metadata::className(gv, hideTemplates);
@@ -223,8 +213,9 @@ auto collectMetaData(Collector& collector, const GridVariables& gv, bool hideTem
     obj["GridFluxVariablesCache"]["Type"] = Metadata::className<typename GridVariables::GridFluxVariablesCache>(hideTemplates);
 }
 
-template<class Collector, class GridView, std::enable_if_t<Concept::isGridView<GridView>(), int> = 0>
+template<class Collector, class GridView>
 auto collectMetaData(Collector& collector, const GridView& gridView, bool hideTemplates = true)
+-> typename std::enable_if_t<Dune::models<Concept::GridView, GridView>()>
 {
     auto& obj = collector["GridView"];
     obj["Type"] = Metadata::className(gridView, hideTemplates);
