@@ -65,7 +65,7 @@ namespace Detail {
             return ProjectionMethod::L2Projection;
     }
 
-    // Each context object contains the data related to one coupling segment
+    // Each context object contains the data related to one coupling facet
     template <class MDTraits, typename CouplingFacetGeometry>
     struct StokesCouplingContext
     {
@@ -739,7 +739,7 @@ public:
         auto fvGeometry = localView(this->problem(porousMediumIdx).gridGeometry());
         auto elemVolVars = localView(darcyElemVolVars.gridVolVars());
 
-        // integrate darcy pressure over each coupling segment and average
+        // integrate darcy pressure over each coupling facet and average
         for(const auto& couplingFacet : couplingFacets(domainI, couplingMapper_, stokesScvf.insideScvIdx(), stokesScvf.localFaceIdx()))
         {
             const auto darcyEIdxI = this->problem(porousMediumIdx).gridGeometry().elementMapper().index(darcyElement);
@@ -750,12 +750,12 @@ public:
 
             if(darcyEIdxI == darcyEIdxJ)
             {
-                projection += calculateSegmentIntegral(element, fvGeometry, fvGeometry.scvf(couplingFacet.pmScvfIdx), darcyElemVolVars, couplingFacet.geometry, evalPriVar);
+                projection += calculateFacetIntegral(element, fvGeometry, fvGeometry.scvf(couplingFacet.pmScvfIdx), darcyElemVolVars, couplingFacet.geometry, evalPriVar);
             }
             else
             {
                 elemVolVars.bind(element, fvGeometry, this->curSol()[porousMediumIdx]);
-                projection += calculateSegmentIntegral(element, fvGeometry, fvGeometry.scvf(couplingFacet.pmScvfIdx), elemVolVars, couplingFacet.geometry, evalPriVar);
+                projection += calculateFacetIntegral(element, fvGeometry, fvGeometry.scvf(couplingFacet.pmScvfIdx), elemVolVars, couplingFacet.geometry, evalPriVar);
             }
 
         }
@@ -776,7 +776,7 @@ public:
 
         Scalar projection = 0.0;
 
-        // integrate darcy pressure over each coupling segment and average
+        // integrate darcy pressure over each coupling facet and average
         for (const auto& data : stokesCouplingContext_)
         {
             //ToDo Is this if really necessary?
@@ -785,7 +785,7 @@ public:
                 const auto& elemVolVars = *(data.elementVolVars);
                 const auto& darcyScvf = data.fvGeometry.scvf(data.darcyScvfIdx);
                 const auto& couplingFacet = couplingMapper_.couplingFacet(data.facetIdx);
-                projection += calculateSegmentIntegral(data.element, data.fvGeometry, darcyScvf, elemVolVars, couplingFacet.geometry, evalPriVar);
+                projection += calculateFacetIntegral(data.element, data.fvGeometry, darcyScvf, elemVolVars, couplingFacet.geometry, evalPriVar);
             }
         }
 
@@ -795,14 +795,14 @@ public:
     }
 
     template<class CouplingFacetGeometry, class Function>
-    Scalar calculateSegmentIntegral(const Element<porousMediumIdx>& element,
+    Scalar calculateFacetIntegral(const Element<porousMediumIdx>& element,
                                     const FVElementGeometry<porousMediumIdx>& fvGeometry,
                                     const SubControlVolumeFace<porousMediumIdx>& scvf,
                                     const ElementVolumeVariables<porousMediumIdx>& elemVolVars,
                                     const CouplingFacetGeometry& facetGeometry,
                                     Function evalPriVar) const
     {
-        Scalar segmentProjection = 0.0;
+        Scalar facetProjection = 0.0;
         if constexpr (projectionMethod == ProjectionMethod::L2Projection)
         {
             const auto& localBasis = fvGeometry.feLocalBasis();
@@ -823,19 +823,19 @@ public:
                 for (const auto& scv : scvs(fvGeometry))
                     value += evalPriVar(elemVolVars, scv)*shapeValues[scv.indexInElement()][0];
 
-                segmentProjection += value*facetGeometry.integrationElement(qp.position())*qp.weight();
+                facetProjection += value*facetGeometry.integrationElement(qp.position())*qp.weight();
             }
         }
         else if constexpr (projectionMethod == ProjectionMethod::AreaWeightedDofEvaluation)
         {
-            segmentProjection = facetGeometry.volume()*evalPriVar(elemVolVars, fvGeometry.scv(scvf.insideScvIdx()));
+            facetProjection = facetGeometry.volume()*evalPriVar(elemVolVars, fvGeometry.scv(scvf.insideScvIdx()));
         }
         else
         {
             DUNE_THROW(Dune::NotImplemented, "Unkown projection method!");
         }
 
-        return segmentProjection;
+        return facetProjection;
     }
 
     const auto& couplingFacet(std::size_t idx) const

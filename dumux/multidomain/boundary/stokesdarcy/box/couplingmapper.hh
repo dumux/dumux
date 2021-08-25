@@ -156,10 +156,10 @@ private:
     static_assert(GridGeometry<porousMediumIdx>::discMethod == DiscretizationMethod::box, "The Darcy domain must use the Box discretization");
 
 public:
-    // export the type describing a coupling segment
+    // export the type describing a coupling facet
     struct CouplingFacet
     {
-        // each intersection segment is described by a simplex geometry of codimension one
+        // each intersection facet is described by a simplex geometry of codimension one
         using Geometry = Dune::AffineGeometry<ctype, dim-1, dimWorld>;
 
         std::size_t ffEIdx;

@@ -172,7 +172,7 @@ public:
     *
     * The tangential porous medium velocity needs to be evaluated for the classical and new tangential coupling (slipCondition) at the
     * stokes-darcy interface, "Effective coupling conditions for arbitrary flows in Stokes-Darcy systems" by Elissa Eggenweiler.
-    * We use darcys law and perform an integral average over all coupling segments.
+    * We use darcys law and perform an integral average over all coupling facets.
     *
     * Depending on the parameter "Problem.NewIc" the standard permeability tensor K
     * or an altered permeability tensor M is used to evaluate the velocity. The method is using K per default.
@@ -193,7 +193,7 @@ public:
         const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
         static const bool enableGravity = getParamFromGroup<bool>(this->couplingManager().problem(porousMediumIdx).paramGroup(), "Problem.EnableGravity");
 
-        // iteration over the different coupling segments
+        // iteration over the different coupling facets
         for (const auto& data : stokesContext)
         {
             if (scvf.index() == data.stokesScvfIdx)
@@ -245,12 +245,12 @@ public:
                         // darcy spatial dependent parameters
                         const auto& epsInterface = this->couplingManager().problem(freeFlowIdx).epsInterface(scvf);
                         const auto& M = this->couplingManager().problem(freeFlowIdx).matrixNTangential(scvf);
-                        //Add the integrated segment velocity to the sum: v+= -w_k * sqrt(det(A^T*A))*eps**2*M/mu*gradP
+                        //Add the integrated facet velocity to the sum: v+= -w_k * sqrt(det(A^T*A))*eps**2*M/mu*gradP
                         velocity += mv(M, mv(qp.weight()*couplingFacet.geometry.integrationElement(ipLocal)/elemVolVars[darcyScvf.insideScvIdx()].viscosity(darcyPhaseIdx)*epsInterface*epsInterface, gradP));
                     }
                     else
                     {
-                        //add the integrated segment velocity to the sum: v+= -weight_k * sqrt(det(A^T*A))*K/mu*gradP
+                        //add the integrated facet velocity to the sum: v+= -weight_k * sqrt(det(A^T*A))*K/mu*gradP
                         velocity += mv(K, mv(-qp.weight()*couplingFacet.geometry.integrationElement(ipLocal)/elemVolVars[darcyScvf.insideScvIdx()].viscosity(darcyPhaseIdx), gradP));
                     }
                 }
