@@ -62,12 +62,10 @@ class AngeliTestProblem : public NavierStokesProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
-    static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
@@ -79,6 +77,7 @@ public:
         rho_ = getParam<Scalar>("Component.LiquidDensity", 1.0);
         useVelocityAveragingForDirichlet_ = getParam<bool>("Problem.UseVelocityAveragingForDirichlet", false);
         useVelocityAveragingForInitial_ = getParam<bool>("Problem.UseVelocityAveragingForInitial", false);
+        tStart_ = getParam<Scalar>("TimeLoop.TStart", 0.0);
     }
 
     /*!
@@ -143,9 +142,9 @@ public:
     PrimaryVariables dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
     {
         if (useVelocityAveragingForDirichlet_)
-            return averagedVelocity_(scvf);
+            return averagedVelocity_(scvf, time_);
         else
-            return analyticalSolution(scvf.center());
+            return analyticalSolution(scvf.center(), time_);
     }
 
     /*!
@@ -158,7 +157,7 @@ public:
     PrimaryVariables dirichlet(const Element& element, const SubControlVolume& scv) const
     {
         PrimaryVariables priVars(0.0);
-        priVars[Indices::pressureIdx] = analyticalSolution(scv.center())[Indices::pressureIdx];
+        priVars[Indices::pressureIdx] = analyticalSolution(scv.center(), time_)[Indices::pressureIdx];
         return priVars;
     }
 
@@ -166,11 +165,10 @@ public:
      * \brief Returns the analytical solution of the problem at a given time and position.
      * \param globalPos The global position
      */
-    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
+    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos, Scalar t) const
     {
         const Scalar x = globalPos[0];
         const Scalar y = globalPos[1];
-        const Scalar t = time_;
 
         PrimaryVariables values;
 
@@ -179,6 +177,12 @@ public:
         values[Indices::velocityYIdx] = M_PI * std::exp(- 5.0 * kinematicViscosity_ * M_PI * M_PI * t) * std::sin(M_PI * x) * std::cos(2.0 * M_PI * y);
 
         return values;
+    }
+
+    //TODO remove as soon as error calculation is able to deal with time-dependent analytical solution
+    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
+    {
+        return analyticalSolution(globalPos, time_);
     }
 
     // \}
@@ -194,7 +198,7 @@ public:
     PrimaryVariables initial(const SubControlVolume& scv) const
     {
         PrimaryVariables priVars(0.0);
-        priVars[Indices::pressureIdx] = analyticalSolution(scv.center())[Indices::pressureIdx];
+        priVars[Indices::pressureIdx] = analyticalSolution(scv.center(), tStart_)[Indices::pressureIdx];
         return priVars;
     }
 
@@ -211,9 +215,9 @@ public:
     PrimaryVariables initial(const SubControlVolumeFace& scvf) const
     {
         if (useVelocityAveragingForInitial_)
-            return averagedVelocity_(scvf);
+            return averagedVelocity_(scvf, tStart_);
         else
-            return analyticalSolution(scvf.center());
+            return analyticalSolution(scvf.center(), tStart_);
     }
 
     // \}
@@ -227,7 +231,7 @@ public:
     }
 
 private:
-    PrimaryVariables averagedVelocity_(const SubControlVolumeFace& scvf) const
+    PrimaryVariables averagedVelocity_(const SubControlVolumeFace& scvf, Scalar t) const
     {
         PrimaryVariables priVars(0.0);
         const auto geo = scvf.geometry();
@@ -236,7 +240,7 @@ private:
         {
             const auto w = qp.weight()*geo.integrationElement(qp.position());
             const auto globalPos = geo.global(qp.position());
-            const auto sol = analyticalSolution(globalPos);
+            const auto sol = analyticalSolution(globalPos, t);
             priVars[Indices::velocityXIdx] += sol[Indices::velocityXIdx]*w;
             priVars[Indices::velocityYIdx] += sol[Indices::velocityYIdx]*w;
         }
@@ -249,6 +253,7 @@ private:
     Scalar time_ = 0;
     bool useVelocityAveragingForDirichlet_;
     bool useVelocityAveragingForInitial_;
+    Scalar tStart_;
 };
 } // end namespace Dumux
 

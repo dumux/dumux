@@ -58,10 +58,8 @@ class SincosTestProblem : public NavierStokesProblem<TypeTag>
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using FVElementGeometry = typename GridGeometry::LocalView;
 
-    static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;

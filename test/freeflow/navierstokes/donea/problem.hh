@@ -57,17 +57,14 @@ class DoneaTestProblem : public NavierStokesProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
-    static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     DoneaTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
-        createAnalyticalSolution_();
         mu_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
     }
 
@@ -210,30 +207,6 @@ public:
         return values;
     }
 
-   /*!
-     * \brief Returns the analytical solution for the pressure
-     */
-    auto& getAnalyticalPressureSolution() const
-    {
-        return analyticalPressure_;
-    }
-
-   /*!
-     * \brief Returns the analytical solution for the velocity
-     */
-    auto& getAnalyticalVelocitySolution() const
-    {
-        return analyticalVelocity_;
-    }
-
-   /*!
-     * \brief Returns the analytical solution for the velocity at the faces
-     */
-    auto& getAnalyticalVelocitySolutionOnFace() const
-    {
-        return analyticalVelocityOnFace_;
-    }
-
 private:
     Scalar f1_(Scalar x) const
     { return x*(1.0-x); /*x - x^2*/ }
@@ -283,47 +256,7 @@ private:
     Scalar dxxV_ (Scalar x, Scalar y) const
     { return -f2_(y)*dddf2_(x); }
 
-   /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
-     */
-    void createAnalyticalSolution_()
-    {
-        analyticalPressure_.resize(this->gridGeometry().numCellCenterDofs());
-        analyticalVelocity_.resize(this->gridGeometry().numCellCenterDofs());
-        analyticalVelocityOnFace_.resize(this->gridGeometry().numFaceDofs());
-
-        auto fvGeometry = localView(this->gridGeometry());
-        for (const auto& element : elements(this->gridGeometry().gridView()))
-        {
-            fvGeometry.bindElement(element);
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                const auto ccDofIdx = scv.dofIndex();
-                const auto ccDofPosition = scv.dofPosition();
-                const auto analyticalSolutionAtCc = analyticalSolution(ccDofPosition);
-
-                // velocities on faces
-                for (auto&& scvf : scvfs(fvGeometry))
-                {
-                    const auto faceDofIdx = scvf.dofIndex();
-                    const auto faceDofPosition = scvf.center();
-                    const auto dirIdx = scvf.directionIndex();
-                    const auto analyticalSolutionAtFace = analyticalSolution(faceDofPosition);
-                    analyticalVelocityOnFace_[faceDofIdx][dirIdx] = analyticalSolutionAtFace[Indices::velocity(dirIdx)];
-                }
-
-                analyticalPressure_[ccDofIdx] = analyticalSolutionAtCc[Indices::pressureIdx];
-
-                for(int dirIdx = 0; dirIdx < ModelTraits::dim(); ++dirIdx)
-                    analyticalVelocity_[ccDofIdx][dirIdx] = analyticalSolutionAtCc[Indices::velocity(dirIdx)];
-            }
-        }
-     }
-
     bool printL2Error_;
-    std::vector<Scalar> analyticalPressure_;
-    std::vector<VelocityVector> analyticalVelocity_;
-    std::vector<VelocityVector> analyticalVelocityOnFace_;
     Scalar mu_;
 };
 } // end namespace Dumux

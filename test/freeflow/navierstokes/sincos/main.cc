@@ -48,62 +48,14 @@
 
 #include "properties.hh"
 
+#include "../analyticalsolutionvectors.hh"
+
 /*!
 * \brief Creates analytical solution.
 * Returns a tuple of the analytical solution for the pressure, the velocity and the velocity at the faces
 * \param time the time at which to evaluate the analytical solution
 * \param problem the problem for which to evaluate the analytical solution
 */
-template<class Scalar, class Problem>
-auto createAnalyticalSolution(const Scalar time, const Problem& problem)
-{
-    const auto& gridGeometry = problem.gridGeometry();
-    using GridView = typename std::decay_t<decltype(gridGeometry)>::GridView;
-
-    static constexpr auto dim = GridView::dimension;
-    static constexpr auto dimWorld = GridView::dimensionworld;
-
-    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
-
-    std::vector<Scalar> analyticalPressure;
-    std::vector<VelocityVector> analyticalVelocity;
-    std::vector<VelocityVector> analyticalVelocityOnFace;
-
-    analyticalPressure.resize(gridGeometry.numCellCenterDofs());
-    analyticalVelocity.resize(gridGeometry.numCellCenterDofs());
-    analyticalVelocityOnFace.resize(gridGeometry.numFaceDofs());
-
-    using Indices = typename Problem::Indices;
-    auto fvGeometry = localView(gridGeometry);
-    for (const auto& element : elements(gridGeometry.gridView()))
-    {
-        fvGeometry.bindElement(element);
-        for (auto&& scv : scvs(fvGeometry))
-        {
-            const auto ccDofIdx = scv.dofIndex();
-            const auto ccDofPosition = scv.dofPosition();
-            const auto analyticalSolutionAtCc = problem.analyticalSolution(ccDofPosition, time);
-
-            // velocities on faces
-            for (auto&& scvf : scvfs(fvGeometry))
-            {
-                const auto faceDofIdx = scvf.dofIndex();
-                const auto faceDofPosition = scvf.center();
-                const auto dirIdx = scvf.directionIndex();
-                const auto analyticalSolutionAtFace = problem.analyticalSolution(faceDofPosition, time);
-                analyticalVelocityOnFace[faceDofIdx][dirIdx] = analyticalSolutionAtFace[Indices::velocity(dirIdx)];
-            }
-
-            analyticalPressure[ccDofIdx] = analyticalSolutionAtCc[Indices::pressureIdx];
-
-            for(int dirIdx = 0; dirIdx < dim; ++dirIdx)
-                analyticalVelocity[ccDofIdx][dirIdx] = analyticalSolutionAtCc[Indices::velocity(dirIdx)];
-        }
-    }
-
-    return std::make_tuple(analyticalPressure, analyticalVelocity, analyticalVelocityOnFace);
-}
-
 template<class Problem>
 auto createSource(const Problem& problem)
 {
@@ -237,13 +189,26 @@ int main(int argc, char** argv)
     vtkWriter.addField(sourceX, "sourceX");
     vtkWriter.addField(sourceY, "sourceY");
 
-    auto analyticalSolution = createAnalyticalSolution(timeLoop->time(), *problem);
-    vtkWriter.addField(std::get<0>(analyticalSolution), "pressureExact");
-    vtkWriter.addField(std::get<1>(analyticalSolution), "velocityExact");
-    vtkWriter.addFaceField(std::get<2>(analyticalSolution), "faceVelocityExact");
+    const bool isStationary = getParam<bool>("Problem.IsStationary");
+
+    // create analytical solution vectors
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FaceSolutionVector = GetPropType<TypeTag, Properties::FaceSolutionVector>;
+    using CellCenterSolutionVector = GetPropType<TypeTag, Properties::CellCenterSolutionVector>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+
+    Dumux::NavierStokesAnalyticalSolutionVectors<Scalar, FaceSolutionVector, CellCenterSolutionVector, GridGeometry, Problem, Indices> analyticalSolVectors(problem);
+    if (isStationary)
+        analyticalSolVectors.update();
+    else
+        analyticalSolVectors.update(0.0);
+
+    vtkWriter.addField(analyticalSolVectors.getAnalyticalPressureSolution(), "pressureExact");
+    vtkWriter.addField(analyticalSolVectors.getAnalyticalVelocitySolution(), "velocityExact");
+    vtkWriter.addFaceField(analyticalSolVectors.getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");
+
     vtkWriter.write(0.0);
 
-    const bool isStationary = getParam<bool>("Problem.IsStationary");
 
     // the assembler with time loop for instationary problem
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
@@ -272,7 +237,7 @@ int main(int argc, char** argv)
         }
 
         // write vtk output
-        analyticalSolution = createAnalyticalSolution(timeLoop->time(), *problem);
+        analyticalSolVectors.update();
         vtkWriter.write(1.0);
 
         timer.stop();
@@ -302,7 +267,7 @@ int main(int argc, char** argv)
             // advance to the time loop to the next step
             timeLoop->advanceTimeStep();
             problem->updateTime(timeLoop->time());
-            analyticalSolution = createAnalyticalSolution(timeLoop->time(), *problem);
+            analyticalSolVectors.update(timeLoop->time());
 
             // write vtk output
             vtkWriter.write(timeLoop->time());

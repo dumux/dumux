@@ -66,8 +66,6 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
 
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    static constexpr auto dimWorld = GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimensionworld;
-    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
@@ -102,8 +100,6 @@ public:
         const bool isStationary = getParam<bool>("Problem.IsStationary", false);
 
         hasAnalyticalSolution_ = isStationary && useVelocityProfile_ && (outletCondition_ != OutletCondition::doNothing);
-        if (hasAnalyticalSolution_)
-            createAnalyticalSolution_();
     }
 
    /*!
@@ -338,73 +334,12 @@ public:
         return timeLoop_->time();
     }
 
-/*!
-     * \brief Returns the analytical solution for the pressure
-     */
-    auto& getAnalyticalPressureSolution() const
-    {
-        return analyticalPressure_;
-    }
-
-   /*!
-     * \brief Returns the analytical solution for the velocity
-     */
-    auto& getAnalyticalVelocitySolution() const
-    {
-        return analyticalVelocity_;
-    }
-
-   /*!
-     * \brief Returns the analytical solution for the velocity at the faces
-     */
-    auto& getAnalyticalVelocitySolutionOnFace() const
-    {
-        return analyticalVelocityOnFace_;
-    }
-
     bool hasAnalyticalSolution()
     {
         return hasAnalyticalSolution_;
     }
 
 private:
-
-   /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
-     */
-    void createAnalyticalSolution_()
-    {
-        analyticalPressure_.resize(this->gridGeometry().numCellCenterDofs());
-        analyticalVelocity_.resize(this->gridGeometry().numCellCenterDofs());
-        analyticalVelocityOnFace_.resize(this->gridGeometry().numFaceDofs());
-        auto fvGeometry = localView(this->gridGeometry());
-        for (const auto& element : elements(this->gridGeometry().gridView()))
-        {
-            fvGeometry.bindElement(element);
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                auto ccDofIdx = scv.dofIndex();
-                auto ccDofPosition = scv.dofPosition();
-                auto analyticalSolutionAtCc = analyticalSolution(ccDofPosition);
-
-                // velocities on faces
-                for (auto&& scvf : scvfs(fvGeometry))
-                {
-                    const auto faceDofIdx = scvf.dofIndex();
-                    const auto faceDofPosition = scvf.center();
-                    const auto dirIdx = scvf.directionIndex();
-                    const auto analyticalSolutionAtFace = analyticalSolution(faceDofPosition);
-                    analyticalVelocityOnFace_[faceDofIdx][dirIdx] = analyticalSolutionAtFace[Indices::velocity(dirIdx)];
-                }
-
-                analyticalPressure_[ccDofIdx] = analyticalSolutionAtCc[Indices::pressureIdx];
-
-                for(int dirIdx = 0; dirIdx < ModelTraits::dim(); ++dirIdx)
-                    analyticalVelocity_[ccDofIdx][dirIdx] = analyticalSolutionAtCc[Indices::velocity(dirIdx)];
-            }
-        }
-     }
-
     bool isInlet_(const GlobalPosition& globalPos) const
     {
         return globalPos[0] < eps_;
@@ -424,10 +359,6 @@ private:
     bool useVelocityProfile_;
     bool hasAnalyticalSolution_;
     TimeLoopPtr timeLoop_;
-
-    std::vector<Scalar> analyticalPressure_;
-    std::vector<VelocityVector> analyticalVelocity_;
-    std::vector<VelocityVector> analyticalVelocityOnFace_;
 };
 } // end namespace Dumux
 

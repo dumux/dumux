@@ -60,10 +60,8 @@ class KovasznayTestProblem : public NavierStokesProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
-    static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
     static constexpr auto upwindSchemeOrder = getPropValue<TypeTag, Properties::UpwindSchemeOrder>();
 
@@ -78,8 +76,6 @@ public:
         Scalar reynoldsNumber = 1.0 / kinematicViscosity_;
         lambda_ = 0.5 * reynoldsNumber
                         - std::sqrt(reynoldsNumber * reynoldsNumber * 0.25 + 4.0 * M_PI * M_PI);
-
-        createAnalyticalSolution_();
     }
 
    /*!
@@ -214,80 +210,13 @@ public:
         return values;
     }
 
-   /*!
-     * \brief Returns the analytical solution for the pressure.
-     */
-    auto& getAnalyticalPressureSolution() const
-    {
-        return analyticalPressure_;
-    }
-
-   /*!
-     * \brief Returns the analytical solution for the velocity
-     */
-    auto& getAnalyticalVelocitySolution() const
-    {
-        return analyticalVelocity_;
-    }
-
-   /*!
-     * \brief Returns the analytical solution for the velocity at the faces.
-     */
-    auto& getAnalyticalVelocitySolutionOnFace() const
-    {
-        return analyticalVelocityOnFace_;
-    }
-
 private:
-
-   /*!
-     * \brief Adds additional VTK output data to the VTKWriter.
-     *
-     * Function is called by the output module on every write.
-     */
-    void createAnalyticalSolution_()
-    {
-        analyticalPressure_.resize(this->gridGeometry().numCellCenterDofs());
-        analyticalVelocity_.resize(this->gridGeometry().numCellCenterDofs());
-        analyticalVelocityOnFace_.resize(this->gridGeometry().numFaceDofs());
-
-        auto fvGeometry = localView(this->gridGeometry());
-        for (const auto& element : elements(this->gridGeometry().gridView()))
-        {
-            fvGeometry.bindElement(element);
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                const auto ccDofIdx = scv.dofIndex();
-                const auto ccDofPosition = scv.dofPosition();
-                const auto analyticalSolutionAtCc = analyticalSolution(ccDofPosition);
-
-                // velocities on faces
-                for (auto&& scvf : scvfs(fvGeometry))
-                {
-                    const auto faceDofIdx = scvf.dofIndex();
-                    const auto faceDofPosition = scvf.center();
-                    const auto dirIdx = scvf.directionIndex();
-                    const auto analyticalSolutionAtFace = analyticalSolution(faceDofPosition);
-                    analyticalVelocityOnFace_[faceDofIdx][dirIdx] = analyticalSolutionAtFace[Indices::velocity(dirIdx)];
-                }
-
-                analyticalPressure_[ccDofIdx] = analyticalSolutionAtCc[Indices::pressureIdx];
-
-                for(int dirIdx = 0; dirIdx < ModelTraits::dim(); ++dirIdx)
-                    analyticalVelocity_[ccDofIdx][dirIdx] = analyticalSolutionAtCc[Indices::velocity(dirIdx)];
-            }
-        }
-    }
-
     static constexpr Scalar eps_=1e-6;
 
     Scalar rho_;
     Scalar kinematicViscosity_;
     Scalar lambda_;
     bool printL2Error_;
-    std::vector<Scalar> analyticalPressure_;
-    std::vector<VelocityVector> analyticalVelocity_;
-    std::vector<VelocityVector> analyticalVelocityOnFace_;
 };
 } // end namespace Dumux
 
