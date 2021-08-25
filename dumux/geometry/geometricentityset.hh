@@ -226,7 +226,7 @@ public:
     /*!
      * \brief get an entity from an index
      */
-    Entity entity(std::size_t index) const
+    const Entity& entity(std::size_t index) const
     { assert(index < entities_.size()); return entities_[index]; }
 
 private:
