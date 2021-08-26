@@ -23,7 +23,6 @@
  */
 #include <config.h>
 
-#include <ctime>
 #include <iostream>
 
 #include <dune/common/parallel/mpihelper.hh>
@@ -38,25 +37,15 @@
 #include <dumux/discretization/box/fvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 #include <dumux/discretization/walldistance.hh>
-// #include <dumux/freeflow/rans/boundarysearchwalldistance.hh>
 
-// include either UG or ALU grid if one of the is available
-#if HAVE_DUNE_UGGRID
-#include <dune/grid/uggrid.hh>
-#include <dumux/io/grid/cakegridmanager.hh>
-#elif HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
-#include <dumux/io/grid/cakegridmanager.hh>
 #endif
 
-template<class Geometry>
-using DistanceFieldWithBoundingSpheres = Dumux::DistanceField<Geometry, true>;
-
-template<class Geometry>
-using DistanceFieldWithoutBoundingSpheres = Dumux::DistanceField<Geometry, false>;
+namespace Dumux {
 
 template<class WD, class GridGeometry>
-void testBox(const GridGeometry& gridGeometry, const std::string& paramGroup, const std::string& algoName)
+void testVertex(const GridGeometry& gridGeometry, const std::string& outputName, const std::string& algoName)
 {
     const auto& gridView = gridGeometry.gridView();
     Dune::VTKWriter<std::decay_t<decltype(gridView)>> writer(gridView);
@@ -65,11 +54,18 @@ void testBox(const GridGeometry& gridGeometry, const std::string& paramGroup, co
     std::cout << "Update for box with algorithm: " << algoName
                 << " took " << timer.elapsed() << " seconds" << std::endl;
     writer.addVertexData(wallDistance.wallDistance(), "wallDistance");
-    writer.write("result_" + algoName + "_" + paramGroup);
+
+    // We write out wall indices but they are not tested since they
+    // are generally not unique (just to make debugging easier)
+    std::vector<std::size_t> wallElementIndices(gridGeometry.gridView().size(GridGeometry::GridView::dimension));
+    for (int i = 0; i < wallElementIndices.size(); ++i)
+        wallElementIndices[i] = wallDistance.wallData()[i].eIdx;
+    writer.addVertexData(wallElementIndices, "wallElementIndex");
+    writer.write("result_" + algoName + "_" + outputName + "_vertex");
 }
 
 template<class WD, class GridGeometry>
-void testCC(const GridGeometry& gridGeometry, const std::string& paramGroup, const std::string& algoName)
+void testElement(const GridGeometry& gridGeometry, const std::string& outputName, const std::string& algoName)
 {
     const auto& gridView = gridGeometry.gridView();
     Dune::VTKWriter<std::decay_t<decltype(gridView)>> writer(gridView);
@@ -79,8 +75,7 @@ void testCC(const GridGeometry& gridGeometry, const std::string& paramGroup, con
     const auto bottom = gridGeometry.bBoxMin()[GridGeometry::Grid::dimension-1];
 
     // Do not consider scvfs at top or bottom of domain.
-    const auto considerScvf = [&](const auto& scvf)
-    {
+    const auto considerScvf = [&](const auto& scvf){
         return scvf.ipGlobal()[GridGeometry::Grid::dimension-1] < top - 1e-6 &&
                scvf.ipGlobal()[GridGeometry::Grid::dimension-1] > bottom + 1e-6;
     };
@@ -90,122 +85,75 @@ void testCC(const GridGeometry& gridGeometry, const std::string& paramGroup, con
             << " took " << timer.elapsed() << " seconds" << std::endl;
     writer.addCellData(wallDistance.wallDistance(), "wallDistance");
 
-    // Add corresponding wall element indices. We only do this for ccTpfa because
-    // the indices are generally not unique for box.
-    // Attention: This is the process-local wall element index!
-    std::vector<std::size_t> wallElementIndices(gridGeometry.numDofs());
-    for (int dofIdx = 0; dofIdx < wallElementIndices.size(); ++dofIdx)
-        wallElementIndices[dofIdx] = wallDistance.wallData()[dofIdx].eIdx;
+    // We write out wall indices but they are not tested since they
+    // are generally not unique (just to make debugging easier)
+    std::vector<std::size_t> wallElementIndices(gridGeometry.gridView().size(0));
+    for (int i = 0; i < wallElementIndices.size(); ++i)
+        wallElementIndices[i] = wallDistance.wallData()[i].eIdx;
     writer.addCellData(wallElementIndices, "wallElementIndex");
-    writer.write("result_" + algoName + "_" + paramGroup);
+    writer.write("result_" + algoName + "_" + outputName + "_element");
 }
 
+// test extracting wall distance at element or vertex centers
 template<class GridGeometry>
-void test(const GridGeometry& gridGeometry, const std::string& paramGroup)
+void test(const GridGeometry& gridGeometry, const std::string& outputName)
 {
-    using namespace Dumux;
+    testVertex<WallDistance<GridGeometry>>(gridGeometry, outputName, "aabb_tree");
+    testElement<WallDistance<GridGeometry>>(gridGeometry, outputName, "aabb_tree");
+}
 
-    using WDB = WallDistance<GridGeometry, DistanceFieldWithBoundingSpheres>;
-    using WDBF = WallDistance<GridGeometry, DistanceFieldWithoutBoundingSpheres>;
-    using WDAABB = WallDistance<GridGeometry>;
-
-    if constexpr (GridGeometry::discMethod == DiscretizationMethod::box)
+// run test case for given grid and two discretizations (boundary is described by scvfs)
+template<class Grid>
+void run(const std::string& testCase)
+{
+    using GridManager = GridManager<Grid>;
+    using GridView = typename Grid::LeafGridView;
+    GridManager gridManager;
+    gridManager.init(testCase);
+    auto suffix = testCase;
+    std::transform(suffix.begin(), suffix.end(), suffix.begin(),
+        [](unsigned char c){ return std::tolower(c); }
+    );
+    static constexpr bool enableCache = true;
     {
-        testBox<WDB>(gridGeometry, paramGroup, "bounding_spheres");
-        testBox<WDBF>(gridGeometry, paramGroup, "brute_force");
-        testBox<WDAABB>(gridGeometry, paramGroup, "aabb_tree");
+        std::cout << "Testing " + testCase + " for cctpfa grid geometry" << std::endl;
+        using GridGeometry = CCTpfaFVGridGeometry<GridView, enableCache>;
+        auto gridGeometry = std::make_shared<GridGeometry>(gridManager.grid().leafGridView());
+        test(*gridGeometry, suffix + "_cctpfa" );
     }
-    else
     {
-        testCC<WDB>(gridGeometry, paramGroup, "bounding_spheres");
-        testCC<WDBF>(gridGeometry, paramGroup, "brute_force");
-        testCC<WDAABB>(gridGeometry, paramGroup, "aabb_tree");
+        std::cout << "Testing " + testCase + " for box grid geometry" << std::endl;
+        using GridGeometry = BoxFVGridGeometry<double, GridView, enableCache>;
+        auto gridGeometry = std::make_shared<GridGeometry>(gridManager.grid().leafGridView());
+        test(*gridGeometry, suffix + "_box");
     }
 }
+
+} // end namespace Dumux
 
 int main(int argc, char** argv)
 {
     using namespace Dumux;
-    using Scalar = double;
-    static constexpr bool enableCache = true;
 
     // initialize MPI, finalize is done automatically on exit
     Dune::MPIHelper::instance(argc, argv);
 
     // initialize params
-    Dumux::Parameters::init(argc, argv);
+    Parameters::init(argc, argv);
 
-    if (getParam<bool>("Test.RunCakeGrid", false))
-    {
-#if HAVE_DUNE_UGGRID || HAVE_DUNE_ALUGRID
-        // check 3D cake grid
-        {
-#if HAVE_DUNE_UGGRID
-            using Grid = Dune::UGGrid<3>;
+    const auto testCase = getParam<std::string>("TestCase", "2DCube");
+    if (testCase == "3DMesh")
+#if HAVE_DUNE_ALUGRID
+        run<Dune::ALUGrid<3, 3, Dune::simplex, Dune::conforming>>(testCase);
 #else
-            using Grid = Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>;
+        std::cerr << "This case needs Dune::ALUGrid to run!" << std::endl;
 #endif
-            using GridManager = Dumux::CakeGridManager<Grid>;
-            using GridView = typename Grid::LeafGridView;
-            GridManager gridManager;
-            gridManager.init("3DCake");
-
-            {
-                std::cout << "Testing 3D cake cctpfa" << std::endl;
-                using GridGeometry = CCTpfaFVGridGeometry<GridView, enableCache>;
-                auto gridGeometry = std::make_shared<GridGeometry>(gridManager.grid().leafGridView());
-                test(*gridGeometry, "3D_cctpfa_cake");
-            }
-            {
-                std::cout << "Testing 3D cake box" << std::endl;
-                using GridGeometry = BoxFVGridGeometry<Scalar, GridView, enableCache>;
-                auto gridGeometry = std::make_shared<GridGeometry>(gridManager.grid().leafGridView());
-                test(*gridGeometry, "3D_box_cake");
-            }
-        }
-#endif
-    return 0;
-    }
-
-    // check 2D grid (square)
-    {
-        using GridManager = Dumux::GridManager<Dune::YaspGrid<2>>;
-        using GridView = typename GridManager::Grid::LeafGridView;
-        GridManager gridManager;
-        gridManager.init("2D");
-        {
-            std::cout << "Testing 2D box" << std::endl;
-            using GridGeometry = BoxFVGridGeometry<Scalar, GridView, enableCache>;
-            auto gridGeometry = std::make_shared<GridGeometry>(gridManager.grid().leafGridView());
-            test(*gridGeometry, "2D_box");
-        }
-        {
-            std::cout << "Testing 2D cctpfa" << std::endl;
-            using GridGeometry = CCTpfaFVGridGeometry<GridView, enableCache>;
-            auto gridGeometry = std::make_shared<GridGeometry>(gridManager.grid().leafGridView());
-            test(*gridGeometry, "2D_cctpfa");
-        }
-    }
-
-    // check 3D grid (cube)
-    {
-        using GridManager = Dumux::GridManager<Dune::YaspGrid<3>>;
-        using GridView = typename GridManager::Grid::LeafGridView;
-        GridManager gridManager;
-        gridManager.init("3D");
-        {
-            std::cout << "Testing 3D box" << std::endl;
-            using GridGeometry = BoxFVGridGeometry<Scalar, GridView, enableCache>;
-            auto gridGeometry = std::make_shared<GridGeometry>(gridManager.grid().leafGridView());
-            test(*gridGeometry, "3D_box");
-        }
-        {
-            std::cout << "Testing 3D cctpfa" << std::endl;
-            using GridGeometry = CCTpfaFVGridGeometry<GridView, enableCache>;
-            auto gridGeometry = std::make_shared<GridGeometry>(gridManager.grid().leafGridView());
-            test(*gridGeometry, "3D_cctpfa");
-        }
-    }
+    else if (testCase == "3DCube")
+        run<Dune::YaspGrid<3>>(testCase);
+    else if (testCase == "2DCube")
+        run<Dune::YaspGrid<2>>(testCase);
+    else
+        DUNE_THROW(Dune::Exception, "Unknown test case " << testCase);
 
     return 0;
-} // end main
+}

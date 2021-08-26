@@ -14,67 +14,69 @@ dumux_add_test(NAME test_disc_fvgridvariables
 
 add_executable(test_walldistance EXCLUDE_FROM_ALL test_walldistance.cc)
 
-dumux_add_test(NAME test_walldistance
+dumux_add_test(NAME test_walldistance_2dcube
                TARGET test_walldistance
                LABELS unit
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-               CMD_ARGS --script fuzzy
-                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_walldistance params_walldistance.input"
-                        --files ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_2D_cctpfa-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/result_bounding_spheres_2D_cctpfa.vtu
-                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_2D_cctpfa-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/result_brute_force_2D_cctpfa.vtu
-                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_2D_cctpfa-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/result_aabb_tree_2D_cctpfa.vtu
-                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_2D_box-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/result_bounding_spheres_2D_box.vtu
-                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_2D_box-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/result_brute_force_2D_box.vtu
-                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_2D_box-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/result_aabb_tree_2D_box.vtu
-                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_3D_cctpfa-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/result_bounding_spheres_3D_cctpfa.vtu
-                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_3D_cctpfa-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/result_brute_force_3D_cctpfa.vtu
-                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_3D_cctpfa-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/result_aabb_tree_3D_cctpfa.vtu
-                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_3D_box-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/result_bounding_spheres_3D_box.vtu
-                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_3D_box-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/result_brute_force_3D_box.vtu
-                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_3D_box-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/result_aabb_tree_3D_box.vtu
+               CMD_ARGS --script fuzzy --zeroThreshold {"wallElementIndex":10000000}
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_walldistance params_walldistance.input -TestCase 2DCube"
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_2dcube_box_element-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/result_aabb_tree_2dcube_box_element.vtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_2dcube_box_vertex-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/result_aabb_tree_2dcube_box_vertex.vtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_2dcube_cctpfa_element-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/result_aabb_tree_2dcube_cctpfa_element.vtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_2dcube_cctpfa_vertex-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/result_aabb_tree_2dcube_cctpfa_vertex.vtu
                         --relative 1e-6)
 
-dumux_add_test(NAME test_walldistance_parallel
+dumux_add_test(NAME test_walldistance_3dcube
                TARGET test_walldistance
                LABELS unit
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-               CMD_ARGS --script fuzzy --zeroThreshold {"wallElementIndex":1000}
-                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_walldistance params_walldistance.input"
-                        --files ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_2D_cctpfa-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-result_bounding_spheres_2D_cctpfa.pvtu
-                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_2D_box-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-result_bounding_spheres_2D_box.pvtu
-                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_3D_cctpfa-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-result_bounding_spheres_3D_cctpfa.pvtu
-                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_3D_box-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-result_bounding_spheres_3D_box.pvtu
+               CMD_ARGS --script fuzzy --zeroThreshold {"wallElementIndex":10000000}
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_walldistance params_walldistance.input -TestCase 3DCube"
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_3dcube_box_element-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/result_aabb_tree_3dcube_box_element.vtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_3dcube_box_vertex-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/result_aabb_tree_3dcube_box_vertex.vtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_3dcube_cctpfa_element-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/result_aabb_tree_3dcube_cctpfa_element.vtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_3dcube_cctpfa_vertex-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/result_aabb_tree_3dcube_cctpfa_vertex.vtu
                         --relative 1e-6)
 
-dumux_add_test(NAME test_walldistance_cake
+dumux_add_test(NAME test_walldistance_3dcube_parallel
                TARGET test_walldistance
                LABELS unit
-               CMAKE_GUARD "( dune-alugrid_FOUND OR dune-uggrid_FOUND )"
+               CMAKE_GUARD MPI_FOUND
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-               CMD_ARGS --script fuzzy
-                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_walldistance params_walldistance.input -Test.RunCakeGrid true"
-                        --files ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_cake-cctpfa-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/result_bounding_spheres_3D_cctpfa_cake.vtu
-                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_cake-cctpfa-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/result_brute_force_3D_cctpfa_cake.vtu
-                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_cake-box-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/result_bounding_spheres_3D_box_cake.vtu
-                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_cake-box-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/result_brute_force_3D_box_cake.vtu
+               CMD_ARGS --script fuzzy --zeroThreshold {"wallElementIndex":10000000}
+                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_walldistance params_walldistance.input -TestCase 3DCube"
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_3dcube_box_element-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-result_aabb_tree_3dcube_box_element.pvtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_3dcube_box_vertex-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-result_aabb_tree_3dcube_box_vertex.pvtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_3dcube_cctpfa_element-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-result_aabb_tree_3dcube_cctpfa_element.pvtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_3dcube_cctpfa_vertex-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-result_aabb_tree_3dcube_cctpfa_vertex.pvtu
+                        --relative 1e-6)
+
+dune_symlink_to_source_files(FILES heart.msh) # grid file
+dumux_add_test(NAME test_walldistance_3dheart
+               TARGET test_walldistance
+               LABELS unit
+               CMAKE_GUARD dune-alugrid_FOUND
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS --script fuzzy --zeroThreshold {"wallElementIndex":10000000}
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_walldistance params_walldistance.input -TestCase 3DMesh"
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_3dmesh_box_element-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/result_aabb_tree_3dmesh_box_element.vtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_3dmesh_box_vertex-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/result_aabb_tree_3dmesh_box_vertex.vtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_3dmesh_cctpfa_element-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/result_aabb_tree_3dmesh_cctpfa_element.vtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_3dmesh_cctpfa_vertex-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/result_aabb_tree_3dmesh_cctpfa_vertex.vtu
                         --relative 1e-6)
