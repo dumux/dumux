@@ -1,14 +1,14 @@
+# pylint: skip-file
 """
 Script for exporting 2d screenshots from ParaView
 
-TODO:
+Make add the following:
 - different colors for legend
 - read-in pvds with time outputs
 - read-in multiple vtus, e.g. for multidomain
 - rendering method 2d and 3d
 """
 
-# parse arguments
 import argparse
 import os
 import sys
@@ -28,7 +28,6 @@ try:
 except ImportError:
     print("`paraview.simple` not found. Make sure using pvbatch.")
 
-bool = ["True", "False"]
 parameterType = ["CELLS", "POINTS"]
 legendOrientation = ["Horizontal", "Vertical"]
 parser = argparse.ArgumentParser(
@@ -213,7 +212,7 @@ for curFile in args["files"]:
             print(vtuFile.CellArrayStatus)
         else:
             print(vtuFile.PointArrayStatus)
-        exit(1)
+        sys.exit(1)
 
     # get active view
     renderView1 = GetActiveView()

@@ -17,28 +17,39 @@ if sys.version_info[0] < 3:
 
 
 def supportedLanguages():
+    """Supported languages for the install script output"""
     return ["python", "bash"]
 
 
 def getScriptExtension(language):
+    """Default script extension for the given language"""
     assert language in supportedLanguages()
     ext = {"python": ".py", "bash": ".sh"}
     return ext[language]
 
 
+def getScriptLanguageFromExtension(ext):
+    """Default script language for the given extension"""
+    language = {".py": "python", ".sh": "bash"}
+    return language[ext]
+
+
 def makeScriptWriter(language):
+    """Create a new install script writer instance"""
     if language == "bash":
         return InstallScriptWriterBash()
-    elif language == "python":
+    if language == "python":
         return InstallScriptWriterPython()
     raise ValueError(f"Could not create writer for language {language}")
 
 
 def getDefaultScriptName(modName, language):
+    """The default script name"""
     return "install_{}{}".format(modName, getScriptExtension(language))
 
 
 def printProgressInfo(infoLines, indLevel=0):
+    """Inform user about progress"""
     firstPrefix = "\n" + "--" * (indLevel + 1)
     emptyPrefix = firstPrefix.replace("-", " ").strip("\n")
     print(f"{firstPrefix} {infoLines[0]}")
@@ -46,18 +57,20 @@ def printProgressInfo(infoLines, indLevel=0):
         print(f"{emptyPrefix} {line}")
 
 
-def filterDependencies(dependencies, skipFolders=[]):
-    if not skipFolders:
+def filterDependencies(dependencies, skipFolders=None):
+    """Filter dependencies to skip given folders"""
+    if skipFolders is None:
         return dependencies
-    else:
 
-        def skipFolder(folderName):
-            return any(folderName == os.path.basename(path) for path in skipFolders)
+    def skipFolder(folderName):
+        return any(folderName == os.path.basename(path) for path in skipFolders)
 
-        return [dep for dep in dependencies if not skipFolder(dep["folder"])]
+    return [dep for dep in dependencies if not skipFolder(dep["folder"])]
 
 
 def addDependencyVersions(dependencies, ignoreUntracked=False):
+    """Add version info to all dependencies"""
+
     def getKey(dependency):
         return dependency["path"]
 
@@ -73,6 +86,8 @@ def addDependencyVersions(dependencies, ignoreUntracked=False):
 
 
 def addDependencyPatches(dependenciesWithVersions):
+    """Add patch info to all dependencies"""
+
     def getKey(dependency):
         return dependency["path"]
 
@@ -85,10 +100,10 @@ def addDependencyPatches(dependenciesWithVersions):
     return mergedResult
 
 
-def makeInstallScript(
-    modPath, dependencies, scriptName, writer, topFolderName="DUMUX", optsFile=None
-):
-
+def makeInstallScript(modPath, dependencies, scriptName, topFolderName="DUMUX", optsFile=None):
+    """Main driver: create installation script for a dune module"""
+    _, extension = os.path.splitext(scriptName)
+    writer = makeScriptWriter(getScriptLanguageFromExtension(extension))
     modPath = os.path.abspath(modPath)
     modName = getModuleInfo(modPath, "Module")
 
@@ -134,22 +149,21 @@ def makeInstallScript(
             writer.writeMessageOutput("Installing {}".format(dep["name"]))
             writer.writeInstallation(dep)
 
+        def writePatch(patch, description, moduleName, folder):
+            script.write("\n")
+            writer.writeMessageOutput(f"Applying patch for {description} in {moduleName}")
+            writer.writePatchApplication(folder, patch)
+
         for dep in dependencies:
-
-            def writePatch(patch, moduleName, description):
-                script.write("\n")
-                writer.writeMessageOutput(f"Applying patch for {description} in {moduleName}")
-                writer.writePatchApplication(dep["folder"], patch)
-
             if dep["untracked"] is not None:
                 description = "untracked files"
-                writePatch(dep["untracked"], description, dep["name"])
+                writePatch(dep["untracked"], description, dep["name"], dep["folder"])
             if dep["unpublished"] is not None:
                 description = "unpublished commits"
-                writePatch(dep["unpublished"], description, dep["name"])
+                writePatch(dep["unpublished"], description, dep["name"], dep["folder"])
             if dep["uncommitted"] is not None:
                 description = "uncommitted changes"
-                writePatch(dep["uncommitted"], description, dep["name"])
+                writePatch(dep["uncommitted"], description, dep["name"], dep["folder"])
 
         script.write("\n")
         writer.writeMessageOutput("Configuring project")
@@ -157,6 +171,7 @@ def makeInstallScript(
 
 
 def printFoundDependencies(deps):
+    """Output found dependencies"""
     if len(deps) > 0:
         infoText = ["Found the following dependencies"]
         infoText.extend(versionTable(deps, {"name": "module name", "path": "folder"}).split("\n"))
@@ -164,6 +179,7 @@ def printFoundDependencies(deps):
 
 
 def printFoundVersionInfo(dependenciesWithVersions):
+    """Output found versions"""
     table = versionTable(dependenciesWithVersions)
     printProgressInfo(
         [
@@ -174,8 +190,8 @@ def printFoundVersionInfo(dependenciesWithVersions):
     )
 
 
-def printFinalMessage(scriptName, topFolderName=None):
-
+def printFinalMessage(topFolderName=None):
+    """Final message after the install script has been created"""
     if topFolderName:
         description = textwrap.dedent(
             f"""\

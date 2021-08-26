@@ -5,6 +5,9 @@ Automatically updates parameterlist.txt by searching all *.hh files
 for usage of getParam or getParamFromGroup.
 """
 
+# pylint: skip-file
+# Remove this after rewrite!
+
 import os
 
 
@@ -158,7 +161,7 @@ for key in parameterDict:
     if hasMultiplePT or hasMultipleDV:
         print(
             f"\nFound multiple occurrences of parameter {paramName}",
-            " with differing specifications: "
+            " with differing specifications: ",
         )
     if hasMultiplePT:
         print(" -> Specified type names:")

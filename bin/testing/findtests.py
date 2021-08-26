@@ -19,13 +19,13 @@ from multiprocessing import Pool
 from functools import partial
 
 
-# Check if the set a contains a member of list b
 def hasCommonMember(myset, mylist):
+    """Check if the set a contains a member of list b"""
     return not myset.isdisjoint(mylist)
 
 
-# make dry run and return the compilation command
 def getCompileCommand(testConfig, buildTreeRoot="."):
+    """make dry run and return the compilation command"""
     target = testConfig["target"]
     lines = subprocess.check_output(
         ["make", "-B", "--dry-run", target], encoding="ascii", cwd=buildTreeRoot
@@ -35,26 +35,26 @@ def getCompileCommand(testConfig, buildTreeRoot="."):
         return any(cpp in line for cpp in ["g++", "clang++"])
 
     # there may be library build commands first, last one is the actual target
-    commands = list(filter(lambda line: hasCppCommand(line), lines))
+    commands = list(filter(hasCppCommand, lines))
     return commands[-1] if commands else None
 
 
-# get the command and folder to compile the given test
 def buildCommandAndDir(testConfig, buildTreeRoot="."):
+    """get the command and folder to compile the given test"""
     compCommand = getCompileCommand(testConfig, buildTreeRoot)
     if compCommand is None:
         raise Exception("Could not determine compile command for {}".format(testConfig))
-    else:
-        (_, dir), command = [comm.split() for comm in compCommand.split("&&")]
-        return command, dir
+
+    (_, directory), command = [comm.split() for comm in compCommand.split("&&")]
+    return command, directory
 
 
-# check if a test is affected by changes in the given files
 def isAffectedTest(testConfigFile, changedFiles, buildTreeRoot="."):
+    """check if a test is affected by changes in the given files"""
     with open(testConfigFile) as configFile:
         testConfig = json.load(configFile)
 
-    command, dir = buildCommandAndDir(testConfig, buildTreeRoot)
+    command, directory = buildCommandAndDir(testConfig, buildTreeRoot)
     mainFile = command[-1]
 
     # detect headers included in this test
@@ -62,7 +62,12 @@ def isAffectedTest(testConfigFile, changedFiles, buildTreeRoot="."):
     # -H  prints the name(+path) of each used header
     # for some reason g++ writes to stderr
     headers = subprocess.run(
-        command + ["-MM", "-H"], stderr=PIPE, stdout=PIPE, cwd=dir, encoding="ascii"
+        command + ["-MM", "-H"],
+        stderr=PIPE,
+        stdout=PIPE,
+        cwd=directory,
+        encoding="ascii",
+        check=False,
     ).stderr.splitlines()
     headers = [h.lstrip(". ") for h in headers]
     headers.append(mainFile)
@@ -107,11 +112,11 @@ if __name__ == "__main__":
     buildDir = os.path.abspath(args["build_dir"])
     targetFile = os.path.abspath(args["outfile"])
     with open(args["file_list"]) as files:
-        changedFiles = set([line.strip("\n") for line in files.readlines()])
+        changedFileList = set(line.strip("\n") for line in files.readlines())
 
     # clean build directory
-    subprocess.run(["make", "clean"], cwd=buildDir)
-    subprocess.run(["make", "all"], cwd=buildDir)
+    subprocess.run(["make", "clean"], cwd=buildDir, check=False)
+    subprocess.run(["make", "all"], cwd=buildDir, check=False)
 
     # detect affected tests
     print("Detecting affected tests:")
@@ -119,12 +124,14 @@ if __name__ == "__main__":
     tests = glob(os.path.join(buildDir, "TestMetaData") + "/*json")
 
     numProcesses = max(1, args["num_processes"])
-    findAffectedTest = partial(isAffectedTest, changedFiles=changedFiles, buildTreeRoot=buildDir)
-    with Pool(processes=numProcesses) as p:
-        for affected, name, target in p.imap_unordered(findAffectedTest, tests, chunksize=4):
+    findAffectedTest = partial(isAffectedTest, changedFiles=changedFileList, buildTreeRoot=buildDir)
+    with Pool(processes=numProcesses) as pool:
+        for affected, name, cmakeTarget in pool.imap_unordered(
+            findAffectedTest, tests, chunksize=4
+        ):
             if affected:
-                affectedTests[name] = {"target": target}
-                print("\t- {} (target: {})".format(name, target))
+                affectedTests[name] = {"target": cmakeTarget}
+                print("\t- {} (target: {})".format(name, cmakeTarget))
 
     print("Detected {} affected tests".format(len(affectedTests)))
 

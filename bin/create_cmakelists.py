@@ -10,7 +10,9 @@ if no folder was specified.
 import os
 import argparse
 
-if __name__ == "__main__":
+
+def createCMakeLists():
+    """Create the CMakeLists.txt files"""
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -28,7 +30,7 @@ if __name__ == "__main__":
     else:
         rootDir = args["folder"]
 
-    ignore_folders = ["", "io/format/fmt", "io/xml"]
+    ignoreFolders = ["", "io/format/fmt", "io/xml"]
     extensions = [".hh", ".inc"]
     for fullFolderName, subFolders, files in os.walk(rootDir):
         # alphabetically sort
@@ -36,11 +38,11 @@ if __name__ == "__main__":
         files = sorted(files)
         # get folder name relative to dumux
         folderName = fullFolderName.replace(rootDir + "/", "").replace(rootDir, "")
-        if folderName not in ignore_folders:
-            with open(fullFolderName + "/CMakeLists.txt", "w") as cmakelists:
+        if folderName not in ignoreFolders:
+            with open(fullFolderName + "/CMakeLists.txt", "w") as cmakeLists:
                 # add subfolders
                 for subFolder in subFolders:
-                    cmakelists.write("add_subdirectory({})\n".format(subFolder))
+                    cmakeLists.write("add_subdirectory({})\n".format(subFolder))
 
                 headersExist = False
                 for fileName in files:
@@ -51,15 +53,19 @@ if __name__ == "__main__":
 
                 if headersExist:
                     if subFolders:
-                        cmakelists.write("\n")
+                        cmakeLists.write("\n")
                     # collect all files to be installed in a CMake variable
-                    headers_variable = "DUMUX_" + folderName.upper().replace("/", "_") + "_HEADERS"
-                    cmakelists.write(
-                        "file(GLOB {}{})\n".format(headers_variable, " *".join([""] + extensions))
+                    headerGuard = "DUMUX_" + folderName.upper().replace("/", "_") + "_HEADERS"
+                    cmakeLists.write(
+                        "file(GLOB {}{})\n".format(headerGuard, " *".join([""] + extensions))
                     )
-                    cmakelists.write("install(FILES ${{{}}}\n".format(headers_variable))
-                    cmakelists.write(
+                    cmakeLists.write("install(FILES ${{{}}}\n".format(headerGuard))
+                    cmakeLists.write(
                         "        DESTINATION ${{CMAKE_INSTALL_INCLUDEDIR}}/dumux/{})\n".format(
                             folderName
                         )
                     )
+
+
+if __name__ == "__main__":
+    createCMakeLists()

@@ -1,3 +1,7 @@
+"""
+Helper functions used in several utility scripts (e.g. extract_module.py, ...)
+"""
+
 import os
 import re
 import sys
@@ -16,38 +20,45 @@ TERM_FORMATTING = {
 }
 
 
-def styledBotPrint(s, style="none", **kwargs):
+def styledBotPrint(string, style="none", **kwargs):
+    """Styled print to terminal when asking user for input"""
     sys.stdout.write("\n🤖 ")
     sys.stdout.write(TERM_FORMATTING[style])
-    print(s, **kwargs)
+    print(string, **kwargs)
     sys.stdout.write(TERM_FORMATTING["reset"])
 
 
 def addPrefix(prefix, text, separator=" "):
+    """Add prefix to a string"""
     return prefix + separator + text
 
 
 def addPrefixToLines(prefix, text, separator=" "):
+    """Add prefix every line of a multiline string (separated by endline character)"""
     return "\n".join(addPrefix(prefix, line, separator) for line in text.split("\n"))
 
 
 def escapeCharacter(text, character, escCharacter="\\"):
+    """Escape a given character with backslashes"""
     return text.replace(character, f"{escCharacter}{character}")
 
 
 def escapeCharacters(text, characters, escCharacter="\\"):
+    """Escape given characters with backslashes"""
     for char in characters:
         text = escapeCharacter(text, char, escCharacter)
     return text
 
 
 def indent(text, indentation="  "):
+    """Add space indentation to text"""
     text = text.split("\n")
     text = [indentation + line for line in text]
     return "\n".join(text)
 
 
 def makeTable(dictList, config=None, padding=2):
+    """Format as a table"""
     if config is None:
         config = {key: key for d in dictList for key in d}
 
@@ -72,6 +83,7 @@ def makeTable(dictList, config=None, padding=2):
 
 
 def getCommandErrorHints(command):
+    """Maybe give a hint matching command"""
     if "git " in command:
         return (
             "It seems that a git command failed. Please check:\n"
@@ -88,7 +100,7 @@ def runCommand(command, check=True, suppressTraceBack=False, errorMessage=""):
         return subprocess.run(
             shlex.split(command), check=check, text=True, capture_output=True
         ).stdout
-    except Exception:
+    except subprocess.CalledProcessError:
         eType, eValue, eTraceback = sys.exc_info()
         if suppressTraceBack:
             traceback.print_exception(eType, eType(errorMessage), None)
@@ -102,23 +114,24 @@ def runCommand(command, check=True, suppressTraceBack=False, errorMessage=""):
             hints = getCommandErrorHints(command)
             if hints is not None:
                 print(hints)
+        return ""
 
 
 def callFromPath(path):
     """decorator to call function from within the given path"""
 
-    def decorator_callFromPath(callFunc):
+    def decorateCallFromPath(callFunc):
         @functools.wraps(callFunc)
-        def wrapper_callFromPath(*args, **kwargs):
+        def wrapCallFromPath(*args, **kwargs):
             curPath = os.getcwd()
             os.chdir(path)
             result = callFunc(*args, **kwargs)
             os.chdir(curPath)
             return result
 
-        return wrapper_callFromPath
+        return wrapCallFromPath
 
-    return decorator_callFromPath
+    return decorateCallFromPath
 
 
 def userQuery(query, choices=None):
@@ -172,29 +185,34 @@ def queryYesNo(question, default="yes"):
         choice = input().lower()
 
         if default is not None and choice == "":
-            return True if isAffirmative(default) else False
+            return isAffirmative(default)
 
         if not isValid(choice):
             styledBotPrint(
                 f"Invalid answer: '{choice}'. Choose from '{getChoices()}'", style="warning"
             )
         else:
-            return True if isAffirmative(choice) else False
+            return isAffirmative(choice)
 
 
 def cppHeaderFilter():
+    """
+    Filter out source files that are not headers
+    (sources are determined by looking for config.h)
+    """
     return lambda fileName: fileName == "config.h"
 
 
-def includedCppProjectHeaders(file, projectBase, headers=[], headerFilter=cppHeaderFilter()):
+def includedCppProjectHeaders(file, projectBase, headers=None, headerFilter=cppHeaderFilter()):
     """get all project headers included by a cpp file"""
+    headers = headers or []
 
     filePath = os.path.join(projectBase, file)
     if not os.path.exists(filePath):
         raise IOError(f"Cpp file {filePath} does not exist")
 
-    with open(filePath, "r") as f:
-        content = f.read()
+    with open(filePath, "r") as sourceFile:
+        content = sourceFile.read()
         headerInBracket = re.findall(r"#include\s+<(.+?)>", content)
         headerInQuotation = re.findall(r'#include\s+"(.+?)"', content)
 
@@ -219,7 +237,7 @@ def findMatchingFiles(path, pattern):
     """find all files below the given folder that match the given pattern"""
 
     result = []
-    for root, dirs, files in os.walk(path):
+    for root, _, files in os.walk(path):
         relativeRootPath = os.path.relpath(root, path)
         for file in files:
             if fnmatch.fnmatch(file, pattern):
@@ -228,30 +246,35 @@ def findMatchingFiles(path, pattern):
 
 
 def isGitRepository(pathToRepo="."):
+    """Check if git repository exists at given path"""
     try:
         run = callFromPath(pathToRepo)(runCommand)
         run("git status")
         return True
-    except Exception:
+    except subprocess.CalledProcessError:
         return False
 
 
 def getRemote(pathToRepo="."):
+    """Check if git remote exists at given path"""
     run = callFromPath(pathToRepo)(runCommand)
     return run("git ls-remote --get-url").strip("\n")
 
 
 def fetchRepo(remote, pathToRepo="."):
+    """Fetch repo"""
     run = callFromPath(pathToRepo)(runCommand)
     run("git fetch {}".format(remote))
 
 
 def hasUntrackedFiles(pathToRepo="."):
+    """Check for untracked (by git) file for given repo"""
     run = callFromPath(pathToRepo)(runCommand)
     return run("git ls-files --others --exclude-standard") != ""
 
 
 def isPersistentBranch(branchName):
+    """Check if a branch is what we consider persistent (default protected branches)"""
     if branchName == "origin/master":
         return True
     if branchName.startswith("origin/releases/"):
@@ -262,6 +285,7 @@ def isPersistentBranch(branchName):
 # get the most recent commit that also exists on remote master/release branch
 # may be used to find a commit we can use as basis for a pub module
 def mostRecentCommonCommitWithRemote(modFolderPath, branchFilter=isPersistentBranch):
+    """Find most recent commit shared with remote"""
     run = callFromPath(modFolderPath)(runCommand)
 
     def findBranches(sha):
@@ -282,7 +306,7 @@ def mostRecentCommonCommitWithRemote(modFolderPath, branchFilter=isPersistentBra
 
 # function to extract persistent, remotely available git versions for all
 def getPersistentVersions(modFolderPaths, ignoreUntracked=False):
-
+    """Get versions of last commit on a persistent branch"""
     result = {}
     for modFolderPath in modFolderPaths:
 
@@ -318,6 +342,7 @@ def getPersistentVersions(modFolderPaths, ignoreUntracked=False):
 
 
 def getPatches(persistentVersions):
+    """Generate patches"""
     result = {}
     for path, gitInfo in persistentVersions.items():
         run = callFromPath(path)(runCommand)
@@ -354,18 +379,25 @@ def getPatches(persistentVersions):
     return result
 
 
+DEFAULT_VERSION_TABLE_CONFIG = {
+    "name": "module name",
+    "branch": "branch name",
+    "revision": "commit sha",
+    "date": "commit date",
+}
+
+
 def versionTable(
     versions,
-    config={
-        "name": "module name",
-        "branch": "branch name",
-        "revision": "commit sha",
-        "date": "commit date",
-    },
+    config=None,
     padding=2,
 ):
-    return makeTable(versions, config)
+    """Make a table containing module versions"""
+    if config is None:
+        config = DEFAULT_VERSION_TABLE_CONFIG
+    return makeTable(versions, config, padding)
 
 
 def printVersionTable(versions):
+    """Print a table containing module versions"""
     print(versionTable(versions=versions))

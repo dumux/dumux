@@ -9,18 +9,18 @@ import argparse
 import csv
 import json
 import sys
-from fuzzycomparevtu import is_fuzzy_equal_text
+from fuzzycomparevtu import isFuzzyEqualText
 
 
-def compare_data(
+def compareData(
     dataFile1,
     dataFile2,
     delimiter,
     absolute=1.5e-7,
     relative=1e-2,
-    zeroValueThreshold={},
+    zeroValueThreshold=None,
     verbose=True,
-):
+):  # pylint: disable=too-many-arguments
     """take two data files and compare them. Returns an exit key as returnvalue.
 
     Arguments:
@@ -52,9 +52,13 @@ def compare_data(
             f"a maximum absolute error of {absolute}*max_abs_parameter_value."
         )
 
+    zeroValueThreshold = zeroValueThreshold or {}
+
     # construct element tree from data files
-    data1 = list(csv.reader(open(dataFile1, "r"), delimiter=delimiter))
-    data2 = list(csv.reader(open(dataFile2, "r"), delimiter=delimiter))
+    with open(dataFile1, "r") as data1:
+        data1 = list(csv.reader(data1, delimiter=delimiter))
+    with open(dataFile1, "r") as data2:
+        data2 = list(csv.reader(data2, delimiter=delimiter))
 
     if len(data1) != len(data2):
         print(
@@ -64,28 +68,32 @@ def compare_data(
             len(data2),
             ". Aborting!",
         )
-        exit(3)
+        sys.exit(3)
 
-    is_equal = True
+    isEqual = True
     for i in range(0, len(data1[0])):
-        a = data1[0][i]
-        b = data2[0][i]
+        valueA = data1[0][i]
+        valueB = data2[0][i]
         for j in range(1, len(data1)):
-            a += " {0}".format(data1[j][i])
-            b += " {0}".format(data2[j][i])
+            valueA += " {0}".format(data1[j][i])
+            valueB += " {0}".format(data2[j][i])
 
-        if not is_fuzzy_equal_text(
-            a, b, "row {0}".format(i), len(data1), absolute, relative, zeroValueThreshold, verbose
+        if not isFuzzyEqualText(
+            valueA,
+            valueB,
+            "row {0}".format(i),
+            len(data1),
+            absolute,
+            relative,
+            zeroValueThreshold,
+            verbose,
         ):
             if verbose:
-                is_equal = False
+                isEqual = False
             else:
                 return False
 
-    if is_equal:
-        return 0
-    else:
-        return 1
+    return 0 if isEqual else 1
 
 
 # main program if called as script return appropriate error codes
@@ -123,7 +131,7 @@ if __name__ == "__main__":
     args = vars(parser.parse_args())
 
     sys.exit(
-        compare_data(
+        compareData(
             args["data_file_1"],
             args["data_file_2"],
             args["delimiter"],

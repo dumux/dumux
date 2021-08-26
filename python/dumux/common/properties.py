@@ -277,12 +277,10 @@ class TypeTag:
                 file += typePropertyToString(prop, self.name, self[prop]) + "\n\n"
 
         if self.gridGeometry is not None:
-            file += (
-                typePropertyToString(
-                    "Grid", self.name, Property.fromCppType("typename TypeTag::GridGeometry::Grid")
-                )
-                + "\n\n"
+            file += typePropertyToString(
+                "Grid", self.name, Property.fromCppType("typename TypeTag::GridGeometry::Grid")
             )
+            file += "\n\n"
 
         file += "} // end namespace Dumux::Properties \n\n"
         file += "#endif"

@@ -10,12 +10,13 @@ from argparse import ArgumentParser
 
 
 def getCommandOutput(command, cwd=None):
+    """wrapper around subprocess check_output"""
     return subprocess.check_output(command, encoding="ascii", cwd=cwd)
 
 
 # get the files that differ between two trees in a git repo
 def getChangedFiles(gitFolder, sourceTree, targetTree):
-
+    """Find the files that changes between two git trees"""
     gitFolder = os.path.abspath(gitFolder)
     root = getCommandOutput(command=["git", "rev-parse", "--show-toplevel"], cwd=gitFolder).strip(
         "\n"
@@ -61,8 +62,8 @@ if __name__ == "__main__":
     )
     args = vars(parser.parse_args())
 
-    changedFiles = getChangedFiles(args["folder"], args["source_tree"], args["target_tree"])
+    changedFileList = getChangedFiles(args["folder"], args["source_tree"], args["target_tree"])
 
     with open(args["outfile"], "w") as outFile:
-        for file in changedFiles:
+        for file in changedFileList:
             outFile.write(f"{os.path.abspath(file)}\n")

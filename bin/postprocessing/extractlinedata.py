@@ -1,3 +1,7 @@
+"""
+Use paraview to extract data along a line
+"""
+
 import argparse
 import csv
 import sys
@@ -11,8 +15,11 @@ try:
         PlotOverLine,
         CreateWriter,
     )
-except ImportError:
-    raise ImportError("`paraview.simple` not found. Make sure using pvpython instead of python.")
+except ImportError as exc:
+    raise ImportError(
+        "`paraview.simple` not found. Make sure using pvpython instead of python."
+    ) from exc
+
 
 # parse arguments
 parser = argparse.ArgumentParser(
@@ -65,7 +72,7 @@ if outDirectory.strip():
     os.makedirs(outDirectory, exist_ok=True)
 
 # loop over all vtk files
-counter = 0
+COUNTER = 0
 for curFile in args["files"]:
 
     # if no output directory was specified, use the directory of the given file
@@ -79,16 +86,16 @@ for curFile in args["files"]:
             curOutDirectory, os.path.splitext(os.path.basename(curFile))[0] + ".csv"
         )
     elif len(args["files"]) > 1:
-        csvFileName = os.path.join(curOutDirectory, args["outFile"] + "_" + str(counter) + ".csv")
+        csvFileName = os.path.join(curOutDirectory, args["outFile"] + "_" + str(COUNTER) + ".csv")
     else:
         csvFileName = os.path.join(curOutDirectory, args["outFile"] + ".csv")
-    counter += 1
+    COUNTER += 1
 
     # print progress to command line
     if args["verbosity"] == 1:
         print(
             "Processing file ({}/{}): {}".format(
-                counter, len(args["files"]), os.path.basename(curFile)
+                COUNTER, len(args["files"]), os.path.basename(curFile)
             )
         )
 

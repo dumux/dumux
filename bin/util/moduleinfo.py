@@ -1,9 +1,14 @@
+"""
+Read information from dune.module files
+"""
+
 import os
 from util.common import runCommand
 from util.common import callFromPath
 
 
 def extractModuleInfos(moduleFile, keys):
+    """Extract information about a Dune module from its dune.module file"""
     results = {}
     with open(moduleFile, "r") as modFile:
         for line in modFile.readlines():
@@ -16,13 +21,14 @@ def extractModuleInfos(moduleFile, keys):
     if len(results) != len(keys):
         errMsg = "Could not extract requested information for all keys.\n"
         errMsg += "Requested keys: " + ", ".join(keys) + "\n"
-        errMsg += "Processed keys: " + ", ".join([k for k in results])
+        errMsg += "Processed keys: " + ", ".join(list(results))
         raise RuntimeError(errMsg)
 
     return results
 
 
 def getModuleFile(modulePath):
+    """Read the dune.module file"""
     modFile = os.path.join(modulePath, "dune.module")
     if not os.path.exists(modFile):
         raise RuntimeError("Could not find module file")
@@ -30,10 +36,21 @@ def getModuleFile(modulePath):
 
 
 def getModuleInfo(modulePath, key):
+    """Read information about Dune module"""
     return extractModuleInfos(getModuleFile(modulePath), [key])[key]
 
 
+def parseModuleList(dunecontrolOutput):
+    """Determine the module dependencies from dunecontrol terminal output"""
+    for line in dunecontrolOutput.split("\n"):
+        if "going to build" in line:
+            line = line.replace("going to build", "").strip("-").strip("\n").strip().split(" ")
+            return line
+    return []
+
+
 def getDependencies(modulePath, verbose=False, includeSelf=False):
+    """Get the dependencies of a Dune module"""
     modName = getModuleInfo(modulePath, "Module")
     parentPath = os.path.join(modulePath, "../")
     duneControlPath = os.path.join(parentPath, "dune-common/bin/dunecontrol")
@@ -49,18 +66,13 @@ def getDependencies(modulePath, verbose=False, includeSelf=False):
     if not dcOutput:
         raise RuntimeError("Error: call to dunecontrol failed.")
 
-    for line in dcOutput.split("\n"):
-        if "going to build" in line:
-            line = line.replace("going to build", "").strip("-")
-            line = line.strip("\n").strip()
-            line = line.split(" ")
-            deps = line
+    dependencyList = parseModuleList(dcOutput)
 
     if not includeSelf:
-        deps.remove(modName)
+        dependencyList.remove(modName)
 
     if verbose:
-        print(" -- Determined the following dependencies: " + ", ".join(deps))
+        print(" -- Determined the following dependencies: " + ", ".join(dependencyList))
         print(" -- Searching the respective directories...")
 
     result = []
@@ -68,7 +80,7 @@ def getDependencies(modulePath, verbose=False, includeSelf=False):
     for path in filter(os.path.isdir, parentFiles):
         try:
             depModName = getModuleInfo(path, "Module")
-        except Exception:
+        except RuntimeError:
             if verbose:
                 print(
                     f" --- skipping folder '{path}' " "as it could not be identifed as dune module"
@@ -76,11 +88,11 @@ def getDependencies(modulePath, verbose=False, includeSelf=False):
         else:
             if verbose:
                 print(" --- visited module '{}'".format(depModName))
-            if depModName in deps:
+            if depModName in dependencyList:
                 result.append({"name": depModName, "folder": os.path.basename(path), "path": path})
 
-    if len(result) != len(deps):
+    if len(result) != len(dependencyList):
         raise RuntimeError("Could not find the folders of all dependencies")
-    elif verbose:
+    if verbose:
         print(" -- Found all module folders of the dependencies.")
     return result

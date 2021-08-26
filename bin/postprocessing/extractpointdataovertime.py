@@ -1,3 +1,9 @@
+# pylint: skip-file
+
+"""
+Extract data at probe location over time interval using Paraview
+"""
+
 import argparse
 import csv
 import os

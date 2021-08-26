@@ -17,7 +17,6 @@ from util.installscript import (
     getDefaultScriptName,
     filterDependencies,
     makeInstallScript,
-    makeScriptWriter,
     printProgressInfo,
     printFoundDependencies,
     printFoundVersionInfo,
@@ -26,10 +25,9 @@ from util.installscript import (
 )
 
 
-if __name__ == "__main__":
+def runMakeInstallScript():
+    """ "Generate an install script for a dune-module"""
 
-    ###################
-    # parse arguments
     parser = argparse.ArgumentParser(
         description="This script generates an install script for your module, "
         "taking into account non-published commits & changes.\n"
@@ -113,20 +111,20 @@ if __name__ == "__main__":
         ["Creating install script for module '{}' in folder '{}'".format(modName, modPath)]
     )
 
-    language = cmdArgs["language"]
-    scriptName = cmdArgs.get("filename", None)
-    if not scriptName:
-        scriptName = getDefaultScriptName(modName, language)
+    scriptName = cmdArgs.get("filename", getDefaultScriptName(modName, cmdArgs["language"]))
 
     makeInstallScript(
         modPath=modPath,
         dependencies=deps,
         scriptName=scriptName,
-        writer=makeScriptWriter(language),
         topFolderName=cmdArgs.get("topfoldername", None),
         optsFile=cmdArgs.get("optsFile", None),
     )
 
     subprocess.call(["chmod", "u+x", scriptName])
     printProgressInfo([f"Successfully created install script '{scriptName}'"])
-    printFinalMessage(scriptName, cmdArgs.get("topfoldername", None))
+    printFinalMessage(cmdArgs.get("topfoldername", None))
+
+
+if __name__ == "__main__":
+    runMakeInstallScript()

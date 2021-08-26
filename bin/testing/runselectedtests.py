@@ -16,7 +16,10 @@ if sys.version_info.major < 3:
     sys.exit("Python 3 required")
 
 
-def buildTests(config, flags=["-j8", "--keep-going"]):
+def buildTests(config, flags=None):
+    """Compile the test suite"""
+
+    flags = flags or ["-j8", "--keep-going"]
 
     if not config:
         print("No tests to be built")
@@ -38,7 +41,10 @@ def buildTests(config, flags=["-j8", "--keep-going"]):
     subprocess.run(["make", "-f", "TestMakeFile"] + flags + ["testselection"], check=True)
 
 
-def runTests(config, script="", flags=["-j8", "--output-on-failure"]):
+def runTests(config, script="", flags=None):
+    """Run the tests in the test suite"""
+
+    flags = flags or ["-j8", "--output-on-failure"]
 
     tests = list(config.keys())
     if not tests:
@@ -124,11 +130,11 @@ if __name__ == "__main__":
     # use target selection
     else:
         with open(args["config"]) as configFile:
-            config = json.load(configFile)
-            numTests = len(config)
+            configDict = json.load(configFile)
+            numTests = len(configDict)
             print("{} tests found in the configuration file".format(numTests))
 
             if args["build"]:
-                buildTests(config, buildFlags)
+                buildTests(configDict, buildFlags)
             if args["test"]:
-                runTests(config, dunectest, testFlags)
+                runTests(configDict, dunectest, testFlags)

@@ -1,17 +1,29 @@
 #!/usr/bin/env python3
+
+""""
+Remove clutter after the last #endif (header guard)
+in C++ header files
+"""
+
 import os
 
 
-# replace everything after last #endif with new line
-def clearAfterLastEndIf(filename):
-    with open(filename, "r") as header:
+def clearAfterLastEndIf(fileName):
+    """Clear a single headerfile with name fileName"""
+    with open(fileName, "r") as header:
         split = header.read().split("#endif")
         split[-1] = "\n"
-    with open(filename, "w") as header:
+    with open(fileName, "w") as header:
         header.write("#endif".join(split))
 
 
-for root, _, files in os.walk(os.getcwd()):
-    for file in files:
-        if file.endswith(".hh"):
-            clearAfterLastEndIf(os.path.join(root, file))
+def run():
+    """Main driver: go through all header in directory recursively"""
+    for root, _, files in os.walk(os.getcwd()):
+        for file in files:
+            if file.endswith(".hh"):
+                clearAfterLastEndIf(os.path.join(root, file))
+
+
+if __name__ == "__main__":
+    run()
