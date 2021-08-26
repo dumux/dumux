@@ -12,6 +12,12 @@ Differences Between DuMu<sup>x</sup> 3.5 and DuMu<sup>x</sup> 3.4
 
 ### Improvements and Enhancements
 
+- __Geometry__:
+    - Add implementation of sphere and bounding sphere approximation algorithms
+    - Add distance queries for Point->BoundingBoxTree
+    - Add DistanceField - a wrapper around a geometry set for fast distance queries
+    - Add WallDistance - a utility to compute distances to the domain boundary (e.g. for RANS wall functions)
+
 - __Construction and update of GridGeometries changed__: Grid geometries are fully updated after construction.
  Additional call of update functions are therefore only needed after grid adaption. Calling the update functions after construction now leads to a performance penalty.
 
