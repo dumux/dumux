@@ -12,19 +12,12 @@
 #include <dumux/nonlinear/newtonsolver.hh>
 
 /*
-
   This test currently solves a scalar non-linear equation using the
   Dumux::NewtonSolver. The Mock classes expose which dependencies the
   current implementation has on different other classes it interacts with.
-  Several dependencies seem unnecessary. In particular, the current
-  implementation is basically hard-coded to double indexable residual vectors
-  with several math operators. A good idea would seem to somehow delegate
-  this dependency to something like a linear algebra backend or at least
-  the assembler. The assembler requires a lot of interface functions which
-  are not always needed. The linear solver interdependency is much better (small).
-
   This test is to ensure that the dependencies do not grow more in the future.
-
+  The Mock classes can be step-wise reduced in complexity once the Newton
+  implementation required a smaller interface from assembler and solver.
  */
 
 namespace Dumux {
