@@ -28,6 +28,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <vector>
 
 #include <dune/common/classname.hh>
 #include <dune/common/exceptions.hh>
@@ -38,6 +39,7 @@
 #include <dune/foamgrid/dgffoam.hh>
 
 #include <dumux/common/parameters.hh>
+#include <dumux/common/exceptions.hh>
 
 #include "griddata.hh"
 #include "structuredlatticegridcreator.hh"
@@ -72,14 +74,18 @@ public:
         }
         else // no grid file found
         {
-            try
-            {
-                createOneDGrid_();
-            }
-            catch(Dune::RangeError& e)
-            {
+            // create a structured grid (1D grid or lattice grid)
+            const auto numPores = getParamFromGroup<std::vector<unsigned int>>(paramGroup_, "Grid.NumPores");
+            if (numPores.size() == 1)
+                createOneDGrid_(numPores[0]);
+            else if (numPores.size() == dimWorld)
                 makeGridFromStructuredLattice();
-            }
+            else
+                DUNE_THROW(ParameterException,
+                    "Grid.NumPores parameter has wrong size " << numPores.size()
+                    << ". Should be 1 (for 1D grid) or "
+                    << dimWorld << " (for structured lattice grid)."
+                );
 
             loadBalance();
         }
@@ -383,11 +389,10 @@ protected:
 
 private:
 
-    void createOneDGrid_()
+    void createOneDGrid_(unsigned int numPores)
     {
         const auto lowerLeft = getParamFromGroup<GlobalPosition>(paramGroup_, "Grid.LowerLeft", GlobalPosition(0.0));
         const auto upperRight = getParamFromGroup<GlobalPosition>(paramGroup_, "Grid.UpperRight");
-        const auto numPores = getParamFromGroup<unsigned int>(paramGroup_, "Grid.NumPores");
         const auto cells = numPores - 1;
 
         // create a step vector

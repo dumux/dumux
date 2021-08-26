@@ -44,6 +44,7 @@
 
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/exceptions.hh>
 
 namespace Dumux::PoreNetwork {
 
@@ -320,7 +321,7 @@ private:
             directions[11] = "12: (-1, 1, 1)\n";
             directions[12] = "13: (-1, -1, 1)\n";
         }
-        DUNE_THROW(Dumux::ParameterException, "You must specifiy probabilities for all directions (" << numDirections_() << ") \n" << directions << "\nExample (3D):\n\n"
+        DUNE_THROW(ParameterException, "You must specifiy probabilities for all directions (" << numDirections_() << ") \n" << directions << "\nExample (3D):\n\n"
         << "DeletionProbability = 0.5 0.5 0 0 0 0 0 0 0 0 0 0 0 \n\n"
         << "deletes approximately 50% of all throats in x and y direction, while no deletion in any other direction takes place.\n" );
     }
@@ -381,7 +382,10 @@ private:
         {
             const auto lowerLeft = getParamFromGroup<GlobalPosition>(paramGroup_, "Grid.LowerLeft", GlobalPosition(0.0));
             const auto upperRight = getParamFromGroup<GlobalPosition>(paramGroup_, "Grid.UpperRight");
-            const auto numPores = getParamFromGroup<std::array<unsigned int, dimWorld>>(paramGroup_, "Grid.NumPores");
+            const auto numPores = getParamFromGroup<std::vector<unsigned int>>(paramGroup_, "Grid.NumPores");
+            if (numPores.size() != dimWorld)
+                DUNE_THROW(ParameterException, "Grid.NumPores has to be a space-separated list of " << dimWorld << " integers!");
+
             for (int i = 0; i < dimWorld; ++i)
             {
                 positions[i].push_back(lowerLeft[i]);
