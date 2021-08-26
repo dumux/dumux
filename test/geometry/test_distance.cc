@@ -38,6 +38,7 @@
 #include <dumux/geometry/distancefield.hh>
 #include <dumux/geometry/normal.hh>
 #include <dumux/io/format.hh>
+
 #include "transformation.hh"
 
 // helper function to make point geometry from field vector
@@ -118,37 +119,24 @@ void checkDistanceField(const std::vector<Geometry>& geometries,
                         typename Geometry::ctype expectedDistance,
                         int expectedIndex)
 {
-    using namespace Dumux;
-    DistanceField<Geometry, false> distanceFieldWithoutBoundingSpheres(geometries);
-    const auto [d, idx] = distanceFieldWithoutBoundingSpheres.distanceAndIndex(p);
+    Dumux::AABBDistanceField<Geometry> distanceField(geometries);
+    const auto [d, idx] = distanceField.distanceAndIndex(p);
 
     if (Dune::FloatCmp::ne(d, expectedDistance))
-    {
         DUNE_THROW(Dune::InvalidStateException,
-                   Fmt::format("Distance field returned wrong minimal distance. Expected {}, got {}",
-                               expectedDistance, d));
-    }
+            Dumux::Fmt::format(
+                "Distance field returned wrong minimal distance. Expected {}, got {}",
+                expectedDistance, d
+            )
+        );
 
     if (idx != expectedIndex)
-        DUNE_THROW(Dune::InvalidStateException, "Distance field returned wrong index for minimal distance "
-                    + std::to_string(idx) + ", expected " + std::to_string(expectedIndex));
-
-    DistanceField<Geometry, true> distanceFieldWithBoundingSpheres(geometries);
-    const auto [d2, idx2] = distanceFieldWithBoundingSpheres.distanceAndIndex(p);
-
-    if (Dune::FloatCmp::ne(d, d2) || idx != idx2)
-        DUNE_THROW(Dune::InvalidStateException, "Distance field using bounding spheres does"
-                    "not return same result as without bounding spheres");
-
-
-    AABBDistanceField<Geometry> distanceFieldAABB(geometries);
-    const auto [d3, idx3] = distanceFieldAABB.distanceAndIndex(p);
-
-    if (Dune::FloatCmp::ne(d, d3) || idx != idx3)
         DUNE_THROW(Dune::InvalidStateException,
-            "Distance field using AABB tree does"
-            "not return same result as other distance fields -> "
-            "expected (" << d << ", " << idx << ") got (" << d3 << ", " << idx3 << ")");
+            Dumux::Fmt::format(
+                "Distance field returned wrong index for minimal distance. Expected {}, got {}",
+                expectedIndex, idx
+            )
+        );
 }
 
 // checks the distances between various points with points/segments/lines
