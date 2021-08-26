@@ -81,10 +81,12 @@ select tests:
           echo "No reference information given."
           echo "Skipping test selection, build/test stages will consider all tests!"
           touch affectedtests.json
+          touch changedfiles.txt
       fi
   artifacts:
     paths:
       - affectedtests.json
+      - changedfiles.txt
     expire_in: 3 hours
   needs:
     - job: configure
@@ -145,9 +147,21 @@ test python:
   script:
     - source bin/testing/ci-setup-python-env.sh
     - |
-      pushd build-cmake
-        ctest --output-on-failure -L python
-      popd
+      if ([ ! -s changedfiles.txt ] || grep -q python "changedfiles.txt"); then
+        if [ ! -s changedfiles.txt ]; then
+          echo "Skipping test selection: considering all Python tests."
+        else
+          echo "Detected changes in the Python bindings/Python code: considering all Python tests."
+        fi
+        source bin/testing/ci-setup-python-env.sh
+        pushd build-cmake
+          ctest --output-on-failure -L python
+        popd
+      else
+        echo "No changes in the Python bindings/Python code detected: skipping tests."
+      fi
   needs:
     - job: configure
+      artifacts: true
+    - job: select tests
       artifacts: true
