@@ -92,11 +92,6 @@ int main(int argc, char* argv[])
     // maybe initialize MPI
     Dune::MPIHelper::instance(argc, argv);
 
-    // initialize  parameters
-    // TODO this is necessary because there are some global default used in the Newton solver
-    // Do we really need them to be global defaults???
-    Parameters::init(argc, argv);
-
     // use the Newton solver to find a solution to a scalar equation
     using Assembler = MockScalarAssembler;
     using LinearSolver = MockScalarLinearSolver;
