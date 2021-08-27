@@ -46,7 +46,7 @@
 
 #include "properties.hh"
 
-#include "../analyticalsolutionvectors.hh"
+#include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 
 int main(int argc, char** argv)
 {
@@ -109,19 +109,11 @@ int main(int argc, char** argv)
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
-    // create analytical solution vectors
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FaceSolutionVector = GetPropType<TypeTag, Properties::FaceSolutionVector>;
-    using CellCenterSolutionVector = GetPropType<TypeTag, Properties::CellCenterSolutionVector>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-
-    Dumux::NavierStokesAnalyticalSolutionVectors<Scalar, FaceSolutionVector, CellCenterSolutionVector, GridGeometry, Problem, Indices> analyticalSolVectors(problem);
-    analyticalSolVectors.update(tStart);
-
     // initialize the vtk output module
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
+    Dumux::NavierStokesAnalyticalSolutionVectors<Problem> analyticalSolVectors(problem, tStart);
     vtkWriter.addField(analyticalSolVectors.getAnalyticalPressureSolution(), "pressureExact");
     vtkWriter.addField(analyticalSolVectors.getAnalyticalVelocitySolution(), "velocityExact");
     vtkWriter.addFaceField(analyticalSolVectors.getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");
@@ -159,7 +151,7 @@ int main(int argc, char** argv)
             using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
 
             using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
-            const auto [l2errorAbs, l2errorRel] = L2Error::calculateL2Error(*problem, x);
+            const auto [l2errorAbs, l2errorRel] = L2Error::calculateL2Error(*problem, x, timeLoop->time() + timeLoop->timeStepSize());
             const int numCellCenterDofs = gridGeometry->numCellCenterDofs();
             const int numFaceDofs = gridGeometry->numFaceDofs();
             std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "

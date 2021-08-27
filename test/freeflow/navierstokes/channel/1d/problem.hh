@@ -53,7 +53,6 @@ class NavierStokesAnalyticProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
@@ -67,6 +66,8 @@ class NavierStokesAnalyticProblem : public NavierStokesProblem<TypeTag>
     using DimMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
 public:
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+
     NavierStokesAnalyticProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
@@ -207,8 +208,9 @@ public:
      * \brief Returns the analytical solution of the problem at a given position
      *
      * \param globalPos The global position
+     * \param time A parameter for consistent signatures. It is ignored here as this is a stationary test.
      */
-    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
+    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos, Scalar time = 0.0) const
     {
         PrimaryVariables values;
         values[Indices::pressureIdx] = p(globalPos);

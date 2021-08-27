@@ -45,7 +45,7 @@
 
 #include "properties.hh"
 
-#include "../../analyticalsolutionvectors.hh"
+#include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 
 int main(int argc, char** argv)
 {
@@ -110,12 +110,6 @@ int main(int argc, char** argv)
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
-    // create analytical solution vectors
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FaceSolutionVector = GetPropType<TypeTag, Properties::FaceSolutionVector>;
-    using CellCenterSolutionVector = GetPropType<TypeTag, Properties::CellCenterSolutionVector>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-
     // initialize the vtk output module
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
@@ -125,8 +119,7 @@ int main(int argc, char** argv)
 
     if (problem->hasAnalyticalSolution())
     {
-        Dumux::NavierStokesAnalyticalSolutionVectors<Scalar, FaceSolutionVector, CellCenterSolutionVector, GridGeometry, Problem, Indices> analyticalSolVectors(problem);
-        analyticalSolVectors.update();
+        Dumux::NavierStokesAnalyticalSolutionVectors<Problem> analyticalSolVectors(problem);
 
         vtkWriter.addField(analyticalSolVectors.getAnalyticalPressureSolution(), "pressureExact");
         vtkWriter.addField(analyticalSolVectors.getAnalyticalVelocitySolution(), "velocityExact");

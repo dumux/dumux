@@ -57,7 +57,6 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -76,6 +75,8 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
     };
 
 public:
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+
     ChannelTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
@@ -269,8 +270,9 @@ public:
      * \brief Return the analytical solution of the problem at a given position
      *
      * \param globalPos The global position
+     * \param time A parameter for consistent signatures. It is ignored here as this analytical solution is for a stationary version of the test only.
      */
-    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
+    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos, Scalar time = 0.0) const
     {
         Scalar x = globalPos[0];
         Scalar y = globalPos[1];

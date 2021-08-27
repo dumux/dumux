@@ -185,16 +185,6 @@ public:
         return values;
     }
 
-    /*!
-     * \brief Returns the analytical solution of the problem at a given position.
-     *
-     * \param globalPos The global position
-     */
-    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
-    {
-        return analyticalSolution(globalPos, time_+timeStepSize_);
-    }
-
     // \}
 
    /*!

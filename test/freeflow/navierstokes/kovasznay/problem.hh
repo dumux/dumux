@@ -53,7 +53,6 @@ class KovasznayTestProblem : public NavierStokesProblem<TypeTag>
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
@@ -66,6 +65,8 @@ class KovasznayTestProblem : public NavierStokesProblem<TypeTag>
     static constexpr auto upwindSchemeOrder = getPropValue<TypeTag, Properties::UpwindSchemeOrder>();
 
 public:
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+
     KovasznayTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
@@ -174,8 +175,9 @@ public:
      * \brief Returns the analytical solution of the problem at a given position.
      *
      * \param globalPos The global position
+     * \param time A parameter for consistent signatures. It is ignored here as this is a stationary test
      */
-    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
+    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos, Scalar time = 0.0) const
     {
         Scalar x = globalPos[0];
         Scalar y = globalPos[1];

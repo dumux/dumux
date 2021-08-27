@@ -29,71 +29,57 @@ namespace Dumux {
  * \ingroup NavierStokesTests
  * \brief Creates and provides the analytical solution in a form that can be written into the vtk output files
  */
-template<class Scalar, class FaceSolutionVector, class CellCenterSolutionVector, class GridGeometry, class Problem, class Indices>
+template<class Problem, class Scalar = double>
 class NavierStokesAnalyticalSolutionVectors
 {
+    using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
+    static constexpr int dimWorld = GridGeometry::GridView::dimensionworld;
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
+    using Indices = typename Problem::Indices;
 
 public:
-    NavierStokesAnalyticalSolutionVectors(std::shared_ptr<const Problem> problem)
+    NavierStokesAnalyticalSolutionVectors(std::shared_ptr<const Problem> problem, Scalar tInitial = 0.0)
     : problem_(problem)
-    { }
+    { update(tInitial); }
 
     /*!
-     * \brief Creates the instationary analytical solution in a form that can be written into the vtk output files
+     * \brief Creates the analytical solution in a form that can be written into the vtk output files
      */
-    void update(Scalar time)
+    void update(Scalar time = 0.0)
     {
-        auto instationaryAnalyticalPressureSolution = [&](const SubControlVolume& scv)
+        analyticalPressure_.resize(problem_->gridGeometry().numCellCenterDofs());
+        analyticalVelocity_.resize(problem_->gridGeometry().numCellCenterDofs());
+        analyticalVelocityOnFace_.resize(problem_->gridGeometry().numFaceDofs());
+
+        auto fvGeometry = localView(problem_->gridGeometry());
+
+        for (const auto& element : elements((problem_->gridGeometry()).gridView()))
         {
-            return problem_->analyticalSolution(scv.dofPosition(), time)[Indices::pressureIdx];
-        };
+            fvGeometry.bindElement(element);
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                // velocities on faces
+                for (const auto& scvf : scvfs(fvGeometry))
+                {
+                    analyticalVelocityOnFace_[scvf.dofIndex()][scvf.directionIndex()] = problem_->analyticalSolution(scvf.center(), time)[Indices::velocity(scvf.directionIndex())];
+                }
 
-        auto instationaryAnalyticalVelocitySolution = [&](const SubControlVolumeFace& scvf)
-        {
-            return problem_->analyticalSolution(scvf.center(), time)[Indices::velocity(scvf.directionIndex())];
-        };
+                analyticalPressure_[scv.dofIndex()] = problem_->analyticalSolution(scv.dofPosition(), time)[Indices::pressureIdx];
 
-        auto instationaryAnalyticalVelocitySolutionAtScvCenter = [&](const SubControlVolume& scv)
-        {
-            return problem_->analyticalSolution(scv.center(), time);
-        };
-
-        createAnalyticalSolution_(instationaryAnalyticalPressureSolution, instationaryAnalyticalVelocitySolution, instationaryAnalyticalVelocitySolutionAtScvCenter);
-    }
-
-    /*!
-     * \brief Creates the stationary analytical solution in a form that can be written into the vtk output files
-     */
-    void update()
-    {
-        auto analyticalPressureSolution = [&](const SubControlVolume& scv)
-        {
-            return problem_->analyticalSolution(scv.dofPosition())[Indices::pressureIdx];
-        };
-
-        auto analyticalVelocitySolution = [&](const SubControlVolumeFace& scvf)
-        {
-            return problem_->analyticalSolution(scvf.center())[Indices::velocity(scvf.directionIndex())];
-        };
-
-        auto analyticalVelocitySolutionAtScvCenter = [&](const SubControlVolume& scv)
-        {
-            return problem_->analyticalSolution(scv.center());
-        };
-
-        createAnalyticalSolution_(analyticalPressureSolution, analyticalVelocitySolution, analyticalVelocitySolutionAtScvCenter);
+                for (int dirIdx = 0; dirIdx < dimWorld; ++dirIdx)
+                    analyticalVelocity_[scv.dofIndex()][dirIdx] = problem_->analyticalSolution(scv.center(), time)[Indices::velocity(dirIdx)];
+            }
+        }
     }
 
     /*!
      * \brief Returns the analytical solution for the pressure
      */
-    auto& getAnalyticalPressureSolution() const
+    const std::vector<Scalar>& getAnalyticalPressureSolution() const
     {
         return analyticalPressure_;
     }
@@ -101,7 +87,7 @@ public:
    /*!
      * \brief Returns the analytical solution for the velocity
      */
-    auto& getAnalyticalVelocitySolution() const
+    const std::vector<VelocityVector>& getAnalyticalVelocitySolution() const
     {
         return analyticalVelocity_;
     }
@@ -109,47 +95,15 @@ public:
    /*!
      * \brief Returns the analytical solution for the velocity at the faces
      */
-    auto& getAnalyticalVelocitySolutionOnFace() const
+    const std::vector<VelocityVector>& getAnalyticalVelocitySolutionOnFace() const
     {
         return analyticalVelocityOnFace_;
     }
 
 private:
-    /*!
-     * \brief Creates the analytical solution in a form that can be written into the vtk output files
-     */
-    template <class LambdaA, class LambdaB, class LambdaC>
-    void createAnalyticalSolution_(const LambdaA& analyticalPressureSolution,
-                                  const LambdaB& analyticalVelocitySolution,
-                                  const LambdaC& analyticalVelocitySolutionAtScvCenter)
-    {
-        analyticalPressure_.resize((problem_->gridGeometry()).numCellCenterDofs());
-        analyticalVelocity_.resize((problem_->gridGeometry()).numCellCenterDofs());
-        analyticalVelocityOnFace_.resize((problem_->gridGeometry()).numFaceDofs());
-
-        for (const auto& element : elements((problem_->gridGeometry()).gridView()))
-        {
-            auto fvGeometry = localView((problem_->gridGeometry()));
-            fvGeometry.bindElement(element);
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                // velocities on faces
-                for (auto&& scvf : scvfs(fvGeometry))
-                {
-                    analyticalVelocityOnFace_[scvf.dofIndex()][scvf.directionIndex()] = analyticalVelocitySolution(scvf);
-                }
-
-                analyticalPressure_[scv.dofIndex()] = analyticalPressureSolution(scv);
-
-                for(int dirIdx = 0; dirIdx < dimWorld; ++dirIdx)
-                    analyticalVelocity_[scv.dofIndex()][dirIdx] = analyticalVelocitySolutionAtScvCenter(scv)[Indices::velocity(dirIdx)];
-            }
-        }
-     }
-
     std::shared_ptr<const Problem> problem_;
 
-    CellCenterSolutionVector analyticalPressure_;
+    std::vector<Scalar> analyticalPressure_;
     std::vector<VelocityVector> analyticalVelocity_;
     std::vector<VelocityVector> analyticalVelocityOnFace_;
 };

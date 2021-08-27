@@ -48,7 +48,7 @@
 
 #include "properties.hh"
 
-#include "../analyticalsolutionvectors.hh"
+#include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 
 /*!
 * \brief Creates analytical solution.
@@ -89,18 +89,17 @@ auto createSource(const Problem& problem)
     return source;
 }
 
-template<class Problem, class SolutionVector, class GridGeometry>
-void printL2Error(const Problem& problem, const SolutionVector& x, const GridGeometry& gridGeometry)
+template<class Problem, class SolutionVector, class GridGeometry, class Scalar = double>
+void printL2Error(const Problem& problem, const SolutionVector& x, const GridGeometry& gridGeometry, Scalar time = 0.0)
 {
     using namespace Dumux;
-    using Scalar = double;
     using TypeTag = Properties::TTag::SincosTest;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
 
     using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
-    const auto l2error = L2Error::calculateL2Error(*problem, x);
+    const auto l2error = L2Error::calculateL2Error(*problem, x, time);
     const int numCellCenterDofs = gridGeometry->numCellCenterDofs();
     const int numFaceDofs = gridGeometry->numFaceDofs();
     std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
@@ -189,26 +188,14 @@ int main(int argc, char** argv)
     vtkWriter.addField(sourceX, "sourceX");
     vtkWriter.addField(sourceY, "sourceY");
 
-    const bool isStationary = getParam<bool>("Problem.IsStationary");
-
-    // create analytical solution vectors
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FaceSolutionVector = GetPropType<TypeTag, Properties::FaceSolutionVector>;
-    using CellCenterSolutionVector = GetPropType<TypeTag, Properties::CellCenterSolutionVector>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-
-    Dumux::NavierStokesAnalyticalSolutionVectors<Scalar, FaceSolutionVector, CellCenterSolutionVector, GridGeometry, Problem, Indices> analyticalSolVectors(problem);
-    if (isStationary)
-        analyticalSolVectors.update();
-    else
-        analyticalSolVectors.update(0.0);
-
+    Dumux::NavierStokesAnalyticalSolutionVectors<Problem> analyticalSolVectors(problem, 0.0);
     vtkWriter.addField(analyticalSolVectors.getAnalyticalPressureSolution(), "pressureExact");
     vtkWriter.addField(analyticalSolVectors.getAnalyticalVelocitySolution(), "velocityExact");
     vtkWriter.addFaceField(analyticalSolVectors.getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");
 
     vtkWriter.write(0.0);
 
+    const bool isStationary = getParam<bool>("Problem.IsStationary");
 
     // the assembler with time loop for instationary problem
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
@@ -261,7 +248,7 @@ int main(int argc, char** argv)
 
             if (shouldPrintL2Error)
             {
-                printL2Error(problem, x, gridGeometry);
+                printL2Error(problem, x, gridGeometry, timeLoop->time()+timeLoop->timeStepSize());
             }
 
             // advance to the time loop to the next step
