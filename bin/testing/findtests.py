@@ -80,8 +80,8 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--file-list', required=True,
                         help='A file containing a list of files that changed')
     parser.add_argument('-np', '--num-processes',
-                        required=False, type=int, default=4,
-                        help='Number of processes (default: 4)')
+                        required=False, type=int, default=8,
+                        help='Number of processes (default: 8)')
     parser.add_argument('-o', '--outfile',
                         required=False, default='affectedtests.json',
                         help='The file in which to write the affected tests')
