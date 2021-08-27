@@ -100,7 +100,7 @@ int main(int argc, char** argv)
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
 
-    Dumux::NavierStokesAnalyticalSolutionVectors<Problem> analyticalSolVectors(problem);
+    NavierStokesAnalyticalSolutionVectors<Problem> analyticalSolVectors(problem);
     vtkWriter.addField(analyticalSolVectors.getAnalyticalPressureSolution(), "pressureExact");
     vtkWriter.addField(analyticalSolVectors.getAnalyticalVelocitySolution(), "velocityExact");
     vtkWriter.addFaceField(analyticalSolVectors.getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");

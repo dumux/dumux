@@ -77,7 +77,6 @@ public:
         rho_ = getParam<Scalar>("Component.LiquidDensity", 1.0);
         useVelocityAveragingForDirichlet_ = getParam<bool>("Problem.UseVelocityAveragingForDirichlet", false);
         useVelocityAveragingForInitial_ = getParam<bool>("Problem.UseVelocityAveragingForInitial", false);
-        tStart_ = getParam<Scalar>("TimeLoop.TStart", 0.0);
     }
 
     /*!
@@ -164,7 +163,7 @@ public:
     /*!
      * \brief Returns the analytical solution of the problem at a given time and position.
      * \param globalPos The global position
-     * \param time A parameter for consistent signatures. It is ignored here as this is a stationary test
+     * \param time The current simulation time
      */
     PrimaryVariables analyticalSolution(const GlobalPosition& globalPos, Scalar time) const
     {
@@ -193,7 +192,7 @@ public:
     PrimaryVariables initial(const SubControlVolume& scv) const
     {
         PrimaryVariables priVars(0.0);
-        priVars[Indices::pressureIdx] = analyticalSolution(scv.center(), tStart_)[Indices::pressureIdx];
+        priVars[Indices::pressureIdx] = analyticalSolution(scv.center(), time_)[Indices::pressureIdx];
         return priVars;
     }
 
@@ -210,9 +209,9 @@ public:
     PrimaryVariables initial(const SubControlVolumeFace& scvf) const
     {
         if (useVelocityAveragingForInitial_)
-            return averagedVelocity_(scvf, tStart_);
+            return averagedVelocity_(scvf, time_);
         else
-            return analyticalSolution(scvf.center(), tStart_);
+            return analyticalSolution(scvf.center(), time_);
     }
 
     // \}
@@ -248,7 +247,6 @@ private:
     Scalar time_ = 0;
     bool useVelocityAveragingForDirichlet_;
     bool useVelocityAveragingForInitial_;
-    Scalar tStart_;
 };
 } // end namespace Dumux
 

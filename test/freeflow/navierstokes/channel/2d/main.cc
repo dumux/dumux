@@ -119,7 +119,7 @@ int main(int argc, char** argv)
 
     if (problem->hasAnalyticalSolution())
     {
-        Dumux::NavierStokesAnalyticalSolutionVectors<Problem> analyticalSolVectors(problem);
+        NavierStokesAnalyticalSolutionVectors<Problem> analyticalSolVectors(problem);
 
         vtkWriter.addField(analyticalSolVectors.getAnalyticalPressureSolution(), "pressureExact");
         vtkWriter.addField(analyticalSolVectors.getAnalyticalVelocitySolution(), "velocityExact");

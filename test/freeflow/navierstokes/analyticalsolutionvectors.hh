@@ -33,10 +33,6 @@ template<class Problem, class Scalar = double>
 class NavierStokesAnalyticalSolutionVectors
 {
     using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
-    using GridView = typename GridGeometry::GridView;
-    using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     static constexpr int dimWorld = GridGeometry::GridView::dimensionworld;
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
     using Indices = typename Problem::Indices;
@@ -57,7 +53,7 @@ public:
 
         auto fvGeometry = localView(problem_->gridGeometry());
 
-        for (const auto& element : elements((problem_->gridGeometry()).gridView()))
+        for (const auto& element : elements(problem_->gridGeometry().gridView()))
         {
             fvGeometry.bindElement(element);
             for (const auto& scv : scvs(fvGeometry))

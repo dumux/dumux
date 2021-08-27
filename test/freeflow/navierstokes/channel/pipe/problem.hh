@@ -117,7 +117,7 @@ public:
         return values;
     }
 
-    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
+    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos, Scalar time = 0.0) const
     {
         PrimaryVariables values(0.0);
 
