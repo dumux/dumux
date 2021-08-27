@@ -1,5 +1,5 @@
 add_subdirectory(boundingboxtree)
-
+set(CMAKE_BUILD_TYPE Debug)
 dumux_add_test(SOURCES test_0d1d_intersection.cc LABELS unit)
 dumux_add_test(SOURCES test_0d2d_intersection.cc LABELS unit)
 dumux_add_test(SOURCES test_0d3d_intersection.cc LABELS unit)

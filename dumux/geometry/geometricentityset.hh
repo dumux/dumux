@@ -100,19 +100,18 @@ public:
      * \brief get an entity from an index
      */
     Entity entity(std::size_t index) const
-    { return (*entityMap_)[index]; }
+    { assert(index < entityMap_->size()); return (*entityMap_)[index]; }
 
 private:
     GridView gridView_;
     Mapper mapper_;
     std::shared_ptr<const EntityMap> entityMap_;
-
 };
 
 /*!
  * \ingroup Geometry
  * \brief An interface for a set of geometric entities
- * \note This can be used e.g. to contruct a bounding box volume hierarchy of a grid
+ * \note This can be used e.g. to construct a bounding box volume hierarchy of a grid
  * It defines the minimum requirement for such a set
  */
 template<class GeoType>
@@ -227,8 +226,8 @@ public:
     /*!
      * \brief get an entity from an index
      */
-    Entity entity(std::size_t index) const
-    { return entities_[index]; }
+    const Entity& entity(std::size_t index) const
+    { assert(index < entities_.size()); return entities_[index]; }
 
 private:
     std::vector<Entity> entities_;

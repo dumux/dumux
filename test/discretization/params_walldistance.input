@@ -1,0 +1,13 @@
+[2DCube.Grid]
+UpperRight = 1 1
+Cells = 8 8
+Overlap = 1
+
+[3DCube.Grid]
+UpperRight = 1 1 1
+Cells = 8 8 8
+Overlap = 1
+
+[3DMesh.Grid]
+File = heart.msh
+Refinement = 2
