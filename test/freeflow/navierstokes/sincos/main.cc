@@ -188,7 +188,7 @@ int main(int argc, char** argv)
     vtkWriter.addField(sourceX, "sourceX");
     vtkWriter.addField(sourceY, "sourceY");
 
-    NavierStokesAnalyticalSolutionVectors<Problem> analyticalSolVectors(problem, 0.0);
+    NavierStokesAnalyticalSolutionVectors analyticalSolVectors(problem, 0.0);
     vtkWriter.addField(analyticalSolVectors.getAnalyticalPressureSolution(), "pressureExact");
     vtkWriter.addField(analyticalSolVectors.getAnalyticalVelocitySolution(), "velocityExact");
     vtkWriter.addFaceField(analyticalSolVectors.getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");

@@ -113,7 +113,7 @@ int main(int argc, char** argv)
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
-    NavierStokesAnalyticalSolutionVectors<Problem> analyticalSolVectors(problem, tStart);
+    NavierStokesAnalyticalSolutionVectors analyticalSolVectors(problem, tStart);
     vtkWriter.addField(analyticalSolVectors.getAnalyticalPressureSolution(), "pressureExact");
     vtkWriter.addField(analyticalSolVectors.getAnalyticalVelocitySolution(), "velocityExact");
     vtkWriter.addFaceField(analyticalSolVectors.getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");

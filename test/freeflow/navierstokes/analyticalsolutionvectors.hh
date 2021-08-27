@@ -103,6 +103,14 @@ private:
     std::vector<VelocityVector> analyticalVelocity_;
     std::vector<VelocityVector> analyticalVelocityOnFace_;
 };
+
+template<class Problem>
+NavierStokesAnalyticalSolutionVectors(std::shared_ptr<Problem> p)
+-> NavierStokesAnalyticalSolutionVectors<Problem>;
+
+template<class Problem, class Scalar>
+NavierStokesAnalyticalSolutionVectors(std::shared_ptr<Problem> p, Scalar t)
+-> NavierStokesAnalyticalSolutionVectors<Problem, Scalar>;
 } // end namespace Dumux
 
 #endif
