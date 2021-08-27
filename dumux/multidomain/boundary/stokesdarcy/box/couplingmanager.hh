@@ -727,7 +727,7 @@ public:
         }
     }
 
-    // calculate projection of pm solution needed for fluxes of pm residual
+    // calculate projection of pm solution needed for fluxes of the free-flow residual
     template<class Function>
     Scalar calculateProjection(const SubControlVolumeFace<freeFlowIdx>& stokesScvf,
                                const Element<porousMediumIdx>& darcyElement,
@@ -796,11 +796,11 @@ public:
 
     template<class CouplingFacetGeometry, class Function>
     Scalar calculateFacetIntegral(const Element<porousMediumIdx>& element,
-                                    const FVElementGeometry<porousMediumIdx>& fvGeometry,
-                                    const SubControlVolumeFace<porousMediumIdx>& scvf,
-                                    const ElementVolumeVariables<porousMediumIdx>& elemVolVars,
-                                    const CouplingFacetGeometry& facetGeometry,
-                                    Function evalPriVar) const
+                                  const FVElementGeometry<porousMediumIdx>& fvGeometry,
+                                  const SubControlVolumeFace<porousMediumIdx>& scvf,
+                                  const ElementVolumeVariables<porousMediumIdx>& elemVolVars,
+                                  const CouplingFacetGeometry& facetGeometry,
+                                  Function evalPriVar) const
     {
         Scalar facetProjection = 0.0;
         if constexpr (projectionMethod == ProjectionMethod::L2Projection)

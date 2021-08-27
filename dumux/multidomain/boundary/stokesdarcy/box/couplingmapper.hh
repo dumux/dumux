@@ -76,8 +76,9 @@ public:
         else
         {
             it_++;
-            if(it_ == (*indices_)[localIdx_].end())
+            if (it_ == (*indices_)[localIdx_].end())
             {
+                // search for the next non-empty set of indices
                 auto it = std::find_if(indices_->begin()+localIdx_+1, indices_->end(), [] (const auto& idx) { return idx.size() > 0; });
 
                 if(it != indices_->end())
