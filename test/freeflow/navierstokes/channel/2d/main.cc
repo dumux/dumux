@@ -117,10 +117,9 @@ int main(int argc, char** argv)
 
     const bool isStationary = getParam<bool>("Problem.IsStationary", false);
 
+    NavierStokesAnalyticalSolutionVectors analyticalSolVectors(problem);
     if (problem->hasAnalyticalSolution())
     {
-        NavierStokesAnalyticalSolutionVectors analyticalSolVectors(problem);
-
         vtkWriter.addField(analyticalSolVectors.getAnalyticalPressureSolution(), "pressureExact");
         vtkWriter.addField(analyticalSolVectors.getAnalyticalVelocitySolution(), "velocityExact");
         vtkWriter.addFaceField(analyticalSolVectors.getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");
