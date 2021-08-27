@@ -329,24 +329,30 @@ public:
     int wallNormalAxis(const int elementIdx) const
     {
         if (!isFlatWallBounded())
-            DUNE_THROW(Dune::NotImplemented, "\n Due to grid/geometric concerns, models requiring a wallNormalAxis can only be used for flat wall bounded flows. "
-                                          << "\n If your geometry is a flat channel, please set the runtime parameter RANS.IsFlatWallBounded to true. \n");
+            DUNE_THROW(Dune::NotImplemented, "\n Due to grid/geometric concerns, models requiring a wallNormalAxis "
+                                          << "can only be used for flat wall bounded flows. "
+                                          << "\n If your geometry is a flat channel, "
+                                          << "please set the runtime parameter RANS.IsFlatWallBounded to true. \n");
         return wallNormalAxis_[elementIdx];
     }
 
     int flowDirectionAxis(const int elementIdx) const
     {
         if (!isFlatWallBounded())
-            DUNE_THROW(Dune::NotImplemented, "\n Due to grid/geometric concerns, models requiring a flowDirectionAxis can only be used for flat wall bounded flows. "
-                                          << "\n If your geometry is a flat channel, please set the runtime parameter RANS.IsFlatWallBounded to true. \n");
+            DUNE_THROW(Dune::NotImplemented, "\n Due to grid/geometric concerns, models requiring a flowDirectionAxis "
+                                          << "can only be used for flat wall bounded flows. "
+                                          << "\n If your geometry is a flat channel, "
+                                          << "please set the runtime parameter RANS.IsFlatWallBounded to true. \n");
         return flowDirectionAxis_[elementIdx];
     }
 
     unsigned int wallElementIndex(const int elementIdx) const
     {
         if (!isFlatWallBounded())
-            DUNE_THROW(Dune::NotImplemented, "\n Due to grid/geometric concerns, models requiring a wallElementIndex can only be used for flat wall bounded flows. "
-                                          << "\n If your geometry is a flat channel, please set the runtime parameter RANS.IsFlatWallBounded to true. \n");
+            DUNE_THROW(Dune::NotImplemented, "\n Due to grid/geometric concerns, models requiring a wallElementIndex "
+                                          << "can only be used for flat wall bounded flows. "
+                                          << "\n If your geometry is a flat channel, "
+                                          << "please set the runtime parameter RANS.IsFlatWallBounded to true. \n");
         return wallElementIdx_[elementIdx];
 
     }
