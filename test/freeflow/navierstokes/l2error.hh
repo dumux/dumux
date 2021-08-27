@@ -48,7 +48,7 @@ public:
       * \param curSol Vector containing the current solution
       */
     template<class Problem, class SolutionVector>
-    static auto calculateL2Error(const Problem& problem, const SolutionVector& curSol)
+    static auto calculateL2Error(const Problem& problem, const SolutionVector& curSol, Scalar time = 0.0)
     {
         using GridGeometry = std::decay_t<decltype(problem.gridGeometry())>;
         using Extrusion = Extrusion_t<GridGeometry>;
@@ -72,7 +72,7 @@ public:
                 // treat cell-center dofs
                 const auto dofIdxCellCenter = scv.dofIndex();
                 const auto& posCellCenter = scv.dofPosition();
-                const auto analyticalSolutionCellCenter = problem.analyticalSolution(posCellCenter)[Indices::pressureIdx];
+                const auto analyticalSolutionCellCenter = problem.analyticalSolution(posCellCenter, time)[Indices::pressureIdx];
                 const auto numericalSolutionCellCenter = curSol[GridGeometry::cellCenterIdx()][dofIdxCellCenter][Indices::pressureIdx - ModelTraits::dim()];
                 sumError[Indices::pressureIdx] += squaredDiff_(analyticalSolutionCellCenter, numericalSolutionCellCenter) * Extrusion::volume(scv);
                 sumReference[Indices::pressureIdx] += analyticalSolutionCellCenter * analyticalSolutionCellCenter * Extrusion::volume(scv);
@@ -83,7 +83,7 @@ public:
                 {
                     const int dofIdxFace = scvf.dofIndex();
                     const int dirIdx = scvf.directionIndex();
-                    const auto analyticalSolutionFace = problem.analyticalSolution(scvf.center())[Indices::velocity(dirIdx)];
+                    const auto analyticalSolutionFace = problem.analyticalSolution(scvf.center(), time)[Indices::velocity(dirIdx)];
                     const auto numericalSolutionFace = curSol[GridGeometry::faceIdx()][dofIdxFace][0];
                     directionIndex[dofIdxFace] = dirIdx;
                     errorVelocity[dofIdxFace] = squaredDiff_(analyticalSolutionFace, numericalSolutionFace);

@@ -47,60 +47,7 @@
 #include "testcase.hh"
 #include "properties.hh"
 
-/*!
-* \brief Creates analytical solution.
-* Returns a tuple of the analytical solution for the pressure, the velocity and the velocity at the faces
-* \param problem the problem for which to evaluate the analytical solution
-*/
-template<class Scalar, class Problem>
-auto createFreeFlowAnalyticalSolution(const Problem& problem)
-{
-    const auto& gridGeometry = problem.gridGeometry();
-    using GridView = typename std::decay_t<decltype(gridGeometry)>::GridView;
-
-    static constexpr auto dim = GridView::dimension;
-    static constexpr auto dimWorld = GridView::dimensionworld;
-
-    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
-
-    std::vector<Scalar> analyticalPressure;
-    std::vector<VelocityVector> analyticalVelocity;
-    std::vector<Scalar> analyticalVelocityOnFace;
-
-    analyticalPressure.resize(gridGeometry.numCellCenterDofs());
-    analyticalVelocity.resize(gridGeometry.numCellCenterDofs());
-    analyticalVelocityOnFace.resize(gridGeometry.numFaceDofs());
-
-    using Indices = typename Problem::Indices;
-    auto fvGeometry = localView(gridGeometry);
-    for (const auto& element : elements(gridGeometry.gridView()))
-    {
-        fvGeometry.bindElement(element);
-        for (auto&& scv : scvs(fvGeometry))
-        {
-            auto ccDofIdx = scv.dofIndex();
-            auto ccDofPosition = scv.dofPosition();
-            auto analyticalSolutionAtCc = problem.analyticalSolution(ccDofPosition);
-
-            // velocities on faces
-            for (auto&& scvf : scvfs(fvGeometry))
-            {
-                const auto faceDofIdx = scvf.dofIndex();
-                const auto faceDofPosition = scvf.center();
-                const auto dirIdx = scvf.directionIndex();
-                const auto analyticalSolutionAtFace = problem.analyticalSolution(faceDofPosition);
-                analyticalVelocityOnFace[faceDofIdx] = analyticalSolutionAtFace[Indices::velocity(dirIdx)];
-            }
-
-            analyticalPressure[ccDofIdx] = analyticalSolutionAtCc[Indices::pressureIdx];
-
-            for (int dirIdx = 0; dirIdx < dim; ++dirIdx)
-                analyticalVelocity[ccDofIdx][dirIdx] = analyticalSolutionAtCc[Indices::velocity(dirIdx)];
-        }
-    }
-
-    return std::make_tuple(analyticalPressure, analyticalVelocity, analyticalVelocityOnFace);
-}
+#include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 
 /*!
 * \brief Creates analytical solution.
@@ -303,10 +250,12 @@ int main(int argc, char** argv)
     using Scalar = typename Traits::Scalar;
     StaggeredVtkOutputModule<FreeFlowGridVariables, decltype(freeFlowSol)> freeFlowVtkWriter(*freeFlowGridVariables, freeFlowSol, freeFlowProblem->name());
     GetPropType<FreeFlowTypeTag, Properties::IOFields>::initOutputModule(freeFlowVtkWriter);
-    const auto freeFlowAnalyticalSolution = createFreeFlowAnalyticalSolution<Scalar>(*freeFlowProblem);
-    freeFlowVtkWriter.addField(std::get<0>(freeFlowAnalyticalSolution), "pressureExact");
-    freeFlowVtkWriter.addField(std::get<1>(freeFlowAnalyticalSolution), "velocityExact");
-    freeFlowVtkWriter.addFaceField(std::get<2>(freeFlowAnalyticalSolution), "faceVelocityExact");
+
+    NavierStokesAnalyticalSolutionVectors freeFlowAnalyticalSolVectors(freeFlowProblem);
+    freeFlowVtkWriter.addField(freeFlowAnalyticalSolVectors.getAnalyticalPressureSolution(), "pressureExact");
+    freeFlowVtkWriter.addField(freeFlowAnalyticalSolVectors.getAnalyticalVelocitySolution(), "velocityExact");
+    freeFlowVtkWriter.addFaceField(freeFlowAnalyticalSolVectors.getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");
+
     freeFlowVtkWriter.write(0.0);
 
     VtkOutputModule<DarcyGridVariables, GetPropType<DarcyTypeTag, Properties::SolutionVector>> darcyVtkWriter(*darcyGridVariables, sol[darcyIdx],  darcyProblem->name());

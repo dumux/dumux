@@ -46,60 +46,7 @@
 
 #include "properties.hh"
 
-/*!
-* \brief Creates analytical solution.
-* Returns a tuple of the analytical solution for the pressure, the velocity and the velocity at the faces
-* \param problem the problem for which to evaluate the analytical solution
-*/
-template<class Problem, class Scalar = double>
-auto createAnalyticalSolution(const Problem& problem)
-{
-    const auto& gridGeometry = problem.gridGeometry();
-    using GridView = typename std::decay_t<decltype(gridGeometry)>::GridView;
-
-    static constexpr auto dim = GridView::dimension;
-    static constexpr auto dimWorld = GridView::dimensionworld;
-
-    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
-
-    std::vector<Scalar> analyticalPressure;
-    std::vector<VelocityVector> analyticalVelocity;
-    std::vector<VelocityVector> analyticalVelocityOnFace;
-
-    analyticalPressure.resize(gridGeometry.numCellCenterDofs());
-    analyticalVelocity.resize(gridGeometry.numCellCenterDofs());
-    analyticalVelocityOnFace.resize(gridGeometry.numFaceDofs());
-
-    using Indices = typename Problem::Indices;
-    auto fvGeometry = localView(gridGeometry);
-    for (const auto& element : elements(gridGeometry.gridView()))
-    {
-        fvGeometry.bindElement(element);
-        for (auto&& scv : scvs(fvGeometry))
-        {
-            auto ccDofIdx = scv.dofIndex();
-            auto ccDofPosition = scv.dofPosition();
-            auto analyticalSolutionAtCc = problem.analyticalSolution(ccDofPosition);
-
-            // velocities on faces
-            for (auto&& scvf : scvfs(fvGeometry))
-            {
-                const auto faceDofIdx = scvf.dofIndex();
-                const auto faceDofPosition = scvf.center();
-                const auto dirIdx = scvf.directionIndex();
-                const auto analyticalSolutionAtFace = problem.analyticalSolution(faceDofPosition);
-                analyticalVelocityOnFace[faceDofIdx][dirIdx] = analyticalSolutionAtFace[Indices::velocity(dirIdx)];
-            }
-
-            analyticalPressure[ccDofIdx] = analyticalSolutionAtCc[Indices::pressureIdx];
-
-            for(int dirIdx = 0; dirIdx < dim; ++dirIdx)
-                analyticalVelocity[ccDofIdx][dirIdx] = analyticalSolutionAtCc[Indices::velocity(dirIdx)];
-        }
-    }
-
-    return std::make_tuple(analyticalPressure, analyticalVelocity, analyticalVelocityOnFace);
-}
+#include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 
 int main(int argc, char** argv)
 {
@@ -166,11 +113,10 @@ int main(int argc, char** argv)
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
-
-    auto analyticalSolution = createAnalyticalSolution(*problem);
-    vtkWriter.addField(std::get<0>(analyticalSolution), "pressureExact");
-    vtkWriter.addField(std::get<1>(analyticalSolution), "velocityExact");
-    vtkWriter.addFaceField(std::get<2>(analyticalSolution), "faceVelocityExact");
+    NavierStokesAnalyticalSolutionVectors analyticalSolVectors(problem, tStart);
+    vtkWriter.addField(analyticalSolVectors.getAnalyticalPressureSolution(), "pressureExact");
+    vtkWriter.addField(analyticalSolVectors.getAnalyticalVelocitySolution(), "velocityExact");
+    vtkWriter.addFaceField(analyticalSolVectors.getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");
     vtkWriter.write(0.0);
 
     // the assembler with time loop for instationary problem
@@ -205,7 +151,7 @@ int main(int argc, char** argv)
             using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
 
             using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
-            const auto [l2errorAbs, l2errorRel] = L2Error::calculateL2Error(*problem, x);
+            const auto [l2errorAbs, l2errorRel] = L2Error::calculateL2Error(*problem, x, timeLoop->time() + timeLoop->timeStepSize());
             const int numCellCenterDofs = gridGeometry->numCellCenterDofs();
             const int numFaceDofs = gridGeometry->numFaceDofs();
             std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
@@ -218,7 +164,7 @@ int main(int argc, char** argv)
         }
 
         // update the analytical solution
-        analyticalSolution = createAnalyticalSolution(*problem);
+        analyticalSolVectors.update(timeLoop->time() + timeLoop->timeStepSize());
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();

@@ -58,10 +58,8 @@ class SincosTestProblem : public NavierStokesProblem<TypeTag>
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using FVElementGeometry = typename GridGeometry::LocalView;
 
-    static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
@@ -185,16 +183,6 @@ public:
         values[Indices::velocityYIdx] = v_(x,y,t);
 
         return values;
-    }
-
-    /*!
-     * \brief Returns the analytical solution of the problem at a given position.
-     *
-     * \param globalPos The global position
-     */
-    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
-    {
-        return analyticalSolution(globalPos, time_+timeStepSize_);
     }
 
     // \}

@@ -53,7 +53,6 @@ class NavierStokesAnalyticProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
@@ -67,13 +66,14 @@ class NavierStokesAnalyticProblem : public NavierStokesProblem<TypeTag>
     using DimMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
 public:
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+
     NavierStokesAnalyticProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
         density_ = getParam<Scalar>("Component.LiquidDensity");
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity");
-        createAnalyticalSolution_();
     }
 
    /*!
@@ -208,8 +208,9 @@ public:
      * \brief Returns the analytical solution of the problem at a given position
      *
      * \param globalPos The global position
+     * \param time A parameter for consistent signatures. It is ignored here as this is a stationary test.
      */
-    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
+    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos, Scalar time = 0.0) const
     {
         PrimaryVariables values;
         values[Indices::pressureIdx] = p(globalPos);
@@ -285,76 +286,10 @@ public:
         return analyticalSolution(globalPos);
     }
 
-   /*!
-     * \brief Returns the analytical solution for the pressure
-     */
-    auto& getAnalyticalPressureSolution() const
-    {
-        return analyticalPressure_;
-    }
-
-   /*!
-     * \brief Returns the analytical solution for the velocity.
-     */
-    auto& getAnalyticalVelocitySolution() const
-    {
-        return analyticalVelocity_;
-    }
-
-   /*!
-     * \brief Returns the analytical solution for the velocity at the faces.
-     */
-    auto& getAnalyticalVelocitySolutionOnFace() const
-    {
-        return analyticalVelocityOnFace_;
-    }
-
 private:
-
-   /*!
-     * \brief Adds additional VTK output data to the VTKWriter.
-     *
-     * Function is called by the output module on every write.
-     */
-    void createAnalyticalSolution_()
-    {
-        analyticalPressure_.resize(this->gridGeometry().numCellCenterDofs());
-        analyticalVelocity_.resize(this->gridGeometry().numCellCenterDofs());
-        analyticalVelocityOnFace_.resize(this->gridGeometry().numFaceDofs());
-        auto fvGeometry = localView(this->gridGeometry());
-        for (const auto& element : elements(this->gridGeometry().gridView()))
-        {
-            fvGeometry.bindElement(element);
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                const auto ccDofIdx = scv.dofIndex();
-                const auto ccDofPosition = scv.dofPosition();
-                const auto analyticalSolutionAtCc = analyticalSolution(ccDofPosition);
-
-                // velocities on faces
-                for (auto&& scvf : scvfs(fvGeometry))
-                {
-                    const auto faceDofIdx = scvf.dofIndex();
-                    const auto faceDofPosition = scvf.center();
-                    const auto dirIdx = scvf.directionIndex();
-                    const auto analyticalSolutionAtFace = analyticalSolution(faceDofPosition);
-                    analyticalVelocityOnFace_[faceDofIdx][dirIdx] = analyticalSolutionAtFace[Indices::velocity(dirIdx)];
-                }
-
-                analyticalPressure_[ccDofIdx] = analyticalSolutionAtCc[Indices::pressureIdx];
-
-                for(int dirIdx = 0; dirIdx < ModelTraits::dim(); ++dirIdx)
-                    analyticalVelocity_[ccDofIdx][dirIdx] = analyticalSolutionAtCc[Indices::velocity(dirIdx)];
-            }
-        }
-     }
-
     bool printL2Error_;
     Scalar density_;
     Scalar kinematicViscosity_;
-    std::vector<Scalar> analyticalPressure_;
-    std::vector<GlobalPosition> analyticalVelocity_;
-    std::vector<GlobalPosition> analyticalVelocityOnFace_;
 };
 } // end namespace Dumux
 

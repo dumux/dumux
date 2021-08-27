@@ -45,6 +45,8 @@
 
 #include "properties.hh"
 
+#include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
+
 int main(int argc, char** argv)
 {
     using namespace Dumux;
@@ -115,11 +117,12 @@ int main(int argc, char** argv)
 
     const bool isStationary = getParam<bool>("Problem.IsStationary", false);
 
+    NavierStokesAnalyticalSolutionVectors analyticalSolVectors(problem);
     if (problem->hasAnalyticalSolution())
     {
-        vtkWriter.addField(problem->getAnalyticalPressureSolution(), "pressureExact");
-        vtkWriter.addField(problem->getAnalyticalVelocitySolution(), "velocityExact");
-        vtkWriter.addFaceField(problem->getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");
+        vtkWriter.addField(analyticalSolVectors.getAnalyticalPressureSolution(), "pressureExact");
+        vtkWriter.addField(analyticalSolVectors.getAnalyticalVelocitySolution(), "velocityExact");
+        vtkWriter.addFaceField(analyticalSolVectors.getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");
     }
 
     vtkWriter.write(restartTime);
