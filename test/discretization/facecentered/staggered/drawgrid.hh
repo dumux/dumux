@@ -284,7 +284,7 @@ void drawGridGeometry(const GridGeometry& gridGeometry,
             DUNE_THROW(Dune::Exception, "Error running GNUPlot: " << cmd);
     }
 #else
-#warning No gnuplot found. Cannot visualize result.
+    std::cout << "No gnuplot found. Cannot visualize result. \n";
 #endif
 
 }
