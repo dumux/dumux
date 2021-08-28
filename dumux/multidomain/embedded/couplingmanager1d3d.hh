@@ -41,5 +41,6 @@ class Embedded1d3dCouplingManager;
 #include <dumux/multidomain/embedded/couplingmanager1d3d_average.hh>
 #include <dumux/multidomain/embedded/couplingmanager1d3d_surface.hh>
 #include <dumux/multidomain/embedded/couplingmanager1d3d_kernel.hh>
+#include <dumux/multidomain/embedded/couplingmanager1d3d_projection.hh>
 
 #endif
