@@ -6,6 +6,7 @@ stages:
 variables:
   IMAGE_REGISTRY_URL: $CI_REGISTRY/dumux-repositories/dumux-docker-ci
   DUMUX_CI_TRIGGER_LECTURE_BRANCH: master
+  API_URL: https://git.iws.uni-stuttgart.de/api/v4/projects/31
 
 # Cases in which to create pipelines at all. The trigger jobs may further
 # specify how exactly they should be created in different situations.
@@ -16,48 +17,10 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: '$CI_COMMIT_BRANCH =~ /^(master|releases\/)/'
 
-# for commits happening on master, we check if there was a successful
-# pipeline on a related merge request already. If yes, we simply return
-# to propagate that pipeline status on master. Otherwise, we trigger a new run.
-check-pipeline-status:
-  image: $IMAGE_REGISTRY_URL/full:dune-2.7-gcc-ubuntu-20.04
-  stage: check-status
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    - if: $CI_PIPELINE_SOURCE == "pipeline"
-      when: never
-    - if: '$CI_COMMIT_BRANCH =~ /^(master|releases\/)/'
-      when: always
-  script:
-    - |
-      getLastSuccessful() {
-          python3 .gitlab-ci/getpipelineinfo.py \
-                      --access-token $CI_JOB_API_READ_TOKEN \
-                      --look-for latest-merge \
-                      --print-format commit-sha
-      }
-
-      if ! python3 .gitlab-ci/getpipelineinfo.py --access-token $CI_JOB_API_READ_TOKEN \
-                                                 --look-for HEAD \
-                                                 --print-format pipeline-id; then
-          echo "No successful pipeline found."
-
-          REFERENCE_SHA=""
-          if getLastSuccessful; then
-              REFERENCE_SHA=$(getLastSuccessful);
-              echo "Triggering new pipeline against reference commit $REFERENCE_SHA."
-          else
-              echo "Latest successful pipeline not found. Trigger complete pipeline."
-          fi
-
-          curl --request POST --form "token=$CI_JOB_TOKEN" \
-                              --form ref=$CI_COMMIT_BRANCH \
-                              --form "variables[CI_REFERENCE_SHA]=$REFERENCE_SHA" \
-                              "https://git.iws.uni-stuttgart.de/api/v4/projects/31/trigger/pipeline"
-      else
-          echo "Found successful pipeline for the current state of the branch. Not testing again."
-      fi
+include:
+  - local: .gitlab-ci/pipelinestatus.yml
+    rules:
+      - if: '$CI_COMMIT_BRANCH =~ /^(master|releases\/)/'
 
 ###################################################################################
 # Stage 1: trigger the Dumux test pipelines                                       #
