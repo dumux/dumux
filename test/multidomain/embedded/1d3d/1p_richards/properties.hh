@@ -23,11 +23,26 @@
  */
 #ifndef DUMUX_ROOTSOIL_PROPERTIES_HH
 #define DUMUX_ROOTSOIL_PROPERTIES_HH
+
 #ifndef SOILTYPETAG
 #define SOILTYPETAG SoilCC
 #endif
+
+#ifndef SOILGRID
+#define SOILGRID Dune::YaspGrid<3,Dune::EquidistantOffsetCoordinates<double,3>>
+#endif
+
+#ifndef COUPLINGMODE
+#define COUPLINGMODE Average
+#endif
+
 #include <dune/grid/yaspgrid.hh>
+#if HAVE_DUNE_FOAMGRID
 #include <dune/foamgrid/foamgrid.hh>
+#endif
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/cctpfa.hh>
@@ -40,8 +55,9 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
-#include <dumux/multidomain/embedded/couplingmanager1d3d.hh>
 #include <dumux/multidomain/traits.hh>
+#include <dumux/multidomain/embedded/couplingmanager1d3d_average.hh>
+#include <dumux/multidomain/embedded/couplingmanager1d3d_projection.hh>
 
 #include "problem_soil.hh"
 #include "problem_root.hh"
@@ -60,7 +76,7 @@ struct SoilBox { using InheritsFrom = std::tuple<Soil, BoxModel>; };
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::Soil> { using type = Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 3> >; };
+struct Grid<TypeTag, TTag::Soil> { using type = SOILGRID; };
 
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::Soil> { static constexpr bool value = true; };
@@ -136,15 +152,15 @@ struct SpatialParams<TypeTag, TTag::Root>
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::SOILTYPETAG>
 {
-    using Traits = MultiDomainTraits<TypeTag, Properties::TTag::Root>;
-    using type = Embedded1d3dCouplingManager<Traits, Embedded1d3dCouplingMode::Average>;
+    using Traits = MultiDomainTraits<Properties::TTag::SOILTYPETAG, Properties::TTag::Root>;
+    using type = Embedded1d3dCouplingManager<Traits, Embedded1d3dCouplingMode::COUPLINGMODE>;
 };
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::Root>
 {
-    using Traits = MultiDomainTraits<Properties::TTag::SOILTYPETAG, TypeTag>;
-    using type = Embedded1d3dCouplingManager<Traits, Embedded1d3dCouplingMode::Average>;
+    using Traits = MultiDomainTraits<Properties::TTag::SOILTYPETAG, Properties::TTag::Root>;
+    using type = Embedded1d3dCouplingManager<Traits, Embedded1d3dCouplingMode::COUPLINGMODE>;
 };
 
 template<class TypeTag>

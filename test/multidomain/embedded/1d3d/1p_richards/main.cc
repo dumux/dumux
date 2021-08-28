@@ -39,12 +39,20 @@
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/grid/gridmanager_foam.hh>
+#include <dumux/io/grid/gridmanager_alu.hh>
 
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 
 #include "properties.hh"
+
+template<class CouplingManager, class Writer>
+void addElementMarkerForProjection(const CouplingManager& couplingManager, Writer& w)
+{
+    if constexpr(CouplingManager::couplingMode == Dumux::Embedded1d3dCouplingMode::projection)
+        w.addField(couplingManager.bulkElementMarker(), "element marker");
+}
 
 int main(int argc, char** argv)
 {
@@ -140,6 +148,7 @@ int main(int argc, char** argv)
     using BulkSolutionVector = std::decay_t<decltype(sol[bulkIdx])>;
     VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, sol[bulkIdx], bulkProblem->name());
     GetPropType<BulkTypeTag, Properties::IOFields>::initOutputModule(bulkVtkWriter);
+    addElementMarkerForProjection(*couplingManager, bulkVtkWriter);
     bulkVtkWriter.write(0.0);
 
     using LowDimSolutionVector = std::decay_t<decltype(sol[lowDimIdx])>;

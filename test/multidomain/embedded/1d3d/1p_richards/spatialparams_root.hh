@@ -49,7 +49,7 @@ class RootSpatialParams
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     //! Indices to access the parameters in the dgf file
-    enum DGFParamIndices {
+    enum DGFParamIndicesSurfaceModel {
         orderIdx = 0,
         rootIdIdx = 1,
         surfaceIdx = 2,
@@ -75,11 +75,18 @@ public:
         {
             const auto eIdx = gv.indexSet().index(element);
             auto level0element = element;
-            for(auto levelIdx = element.level(); levelIdx != 0; levelIdx--)
+            for (auto levelIdx = element.level(); levelIdx != 0; levelIdx--)
                 level0element = level0element.father();
-            const Scalar rootLength = element.geometry().volume();
-            const Scalar rootSurface = gridData_->parameters(level0element)[DGFParamIndices::surfaceIdx]/(1 << element.level());
-            radii_[eIdx] = rootSurface / rootLength / 2.0 / M_PI;
+
+            const auto& params = gridData_->parameters(level0element);
+            if (params.size() == 1) // assume only radius is given
+                radii_[eIdx] = params[0];
+            else // assume DGFParamIndicesSurfaceModel
+            {
+                const Scalar rootLength = element.geometry().volume();
+                const Scalar rootSurface = gridData_->parameters(level0element)[DGFParamIndicesSurfaceModel::surfaceIdx]/(1 << element.level());
+                radii_[eIdx] = rootSurface / rootLength / 2.0 / M_PI;
+            }
         }
     }
 

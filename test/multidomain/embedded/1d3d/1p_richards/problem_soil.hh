@@ -176,13 +176,22 @@ public:
         const auto& spatialParams = this->couplingManager().problem(Dune::index_constant<1>{}).spatialParams();
         const auto lowDimElementIdx = this->couplingManager().pointSourceData(source.id()).lowDimElementIdx();
         const Scalar Kr = spatialParams.Kr(lowDimElementIdx);
-        const Scalar rootRadius = spatialParams.radius(lowDimElementIdx);
 
         // sink defined as radial flow Jr * density [m^2 s-1]* [kg m-3]
         const auto density = 1000;
-        const Scalar sourceValue = 2* M_PI *rootRadius * Kr *(pressure1D - pressure3D)*density;
-        source = sourceValue*source.quadratureWeight()*source.integrationElement();
+        Scalar sourceValue = Kr *(pressure1D - pressure3D)*density;
 
+        // For the projection method, we are integrating over the two-dimensional root surface
+        // so surface is included in the weight/integration element.
+        // All other currently implemented schemes are implicit interface schemes
+        // that assume cylindrical segments, so we multiply with the cylinder surface here
+        if constexpr(CouplingManager::couplingMode != Embedded1d3dCouplingMode::projection)
+        {
+            const Scalar rootRadius = this->couplingManager().radius(source.id());
+            sourceValue *= 2*M_PI*rootRadius;
+        }
+
+        source = sourceValue*source.quadratureWeight()*source.integrationElement();
     }
 
     /*!
