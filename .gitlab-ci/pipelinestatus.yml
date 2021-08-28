@@ -1,17 +1,20 @@
+variables:
+  CI_SCRIPT_FOLDER: '.'
+
 check-pipeline-status:
   image: $IMAGE_REGISTRY_URL/full:dune-2.7-gcc-ubuntu-20.04
   stage: check-status
   script:
     - |
       getLastSuccessful() {
-          python3 .gitlab-ci/getpipelineinfo.py \
+          python3 $CI_SCRIPT_FOLDER/.gitlab-ci/getpipelineinfo.py \
                       --access-token $CI_JOB_API_READ_TOKEN \
                       --project-api-url $API_URL \
                       --look-for latest-merge \
                       --print-format commit-sha
       }
 
-      if ! python3 .gitlab-ci/getpipelineinfo.py \
+      if ! python3 $CI_SCRIPT_FOLDER/.gitlab-ci/getpipelineinfo.py \
                             --access-token $CI_JOB_API_READ_TOKEN \
                             --project-api-url $API_URL \
                             --look-for HEAD \
