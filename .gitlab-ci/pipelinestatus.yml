@@ -8,17 +8,17 @@ check-pipeline-status:
     - |
       getLastSuccessful() {
           python3 $CI_SCRIPT_FOLDER/.gitlab-ci/getpipelineinfo.py \
-                      --access-token $CI_JOB_API_READ_TOKEN \
-                      --project-api-url $API_URL \
-                      --look-for latest-merge \
-                      --print-format commit-sha
+                            --access-token $CI_JOB_API_READ_TOKEN \
+                            --project-api-url $API_URL \
+                            --look-for latest-merge \
+                            --print-format commit-sha
       }
 
       if ! python3 $CI_SCRIPT_FOLDER/.gitlab-ci/getpipelineinfo.py \
-                            --access-token $CI_JOB_API_READ_TOKEN \
-                            --project-api-url $API_URL \
-                            --look-for HEAD \
-                            --print-format pipeline-id; then
+                             --access-token $CI_JOB_API_READ_TOKEN \
+                             --project-api-url $API_URL \
+                             --look-for HEAD \
+                             --print-format pipeline-id; then
           echo "No successful pipeline found."
 
           REFERENCE_SHA=""
