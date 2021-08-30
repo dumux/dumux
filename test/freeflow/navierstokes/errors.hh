@@ -59,13 +59,16 @@ public:
         logFile << "relative L2 error,";
         for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
             logFile << ",";
-        logFile << "L infinity error,";
+        logFile << "absolute L infinity error,";
+        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
+            logFile << ",";
+        logFile << "relative L infinity error,";
         for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
             logFile << ",";
         logFile << std::endl;
 
         logFile << "time";
-        for (unsigned int i = 0; i < 3/*absolute L2 error, relative L2error, L infinity error*/; ++i)
+        for (unsigned int i = 0; i < 4/*L2 error (abs/rel), L infinity error (abs/rel)*/; ++i)
         {
             auto uvw = [&](unsigned int dirIdx)
             {
@@ -89,7 +92,8 @@ public:
     template<class PrimaryVariables, class Scalar>
     void printErrors(const PrimaryVariables& l2NormAbs,
                      const PrimaryVariables& l2NormRel,
-                     const PrimaryVariables& lInfinityNorm,
+                     const PrimaryVariables& lInfinityNormAbs,
+                     const PrimaryVariables& lInfinityNormRel,
                      Scalar time) const
     {
         std::ofstream logFile(name_ + "_error.csv", std::ios::app);
@@ -103,9 +107,13 @@ public:
         for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
             logFile << Fmt::format(",{}",l2NormRel[Indices::velocity(dirIdx)]);
 
-        logFile << Fmt::format(",{}",lInfinityNorm[Indices::pressureIdx]);
+        logFile << Fmt::format(",{}",lInfinityNormAbs[Indices::pressureIdx]);
         for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
-            logFile << Fmt::format(",{}",lInfinityNorm[Indices::velocity(dirIdx)]);
+            logFile << Fmt::format(",{}",lInfinityNormAbs[Indices::velocity(dirIdx)]);
+
+        logFile << Fmt::format(",{}",lInfinityNormRel[Indices::pressureIdx]);
+        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
+            logFile << Fmt::format(",{}",lInfinityNormRel[Indices::velocity(dirIdx)]);
 
         logFile << std::endl;
     }
@@ -143,10 +151,11 @@ public:
     {
         PrimaryVariables l2NormAbs(0.0);
         PrimaryVariables l2NormRel(0.0);
-        PrimaryVariables lInfinityNorm(0.0);
+        PrimaryVariables lInfinityNormAbs(0.0);
+        PrimaryVariables lInfinityNormRel(0.0);
 
-        calculateErrors_(l2NormAbs, l2NormRel, lInfinityNorm, curSol, time);
-        errorCSVWriter_.printErrors(l2NormAbs, l2NormRel, lInfinityNorm, time);
+        calculateErrors_(l2NormAbs, l2NormRel, lInfinityNormAbs, lInfinityNormRel, curSol, time);
+        errorCSVWriter_.printErrors(l2NormAbs, l2NormRel, lInfinityNormAbs, lInfinityNormRel, time);
     }
 
 private:
@@ -161,6 +170,7 @@ private:
                           const SubControlVolume& scv,
                           Scalar& sumPReference,
                           Scalar& sumPError,
+                          Scalar& maxPReference,
                           Scalar& maxPError,
                           Scalar time) const
     {
@@ -171,6 +181,7 @@ private:
         const Scalar pReference = absDiff_(analyticalSolutionCellCenter, 0.0);
 
         maxPError = std::max(maxPError, pError);
+        maxPReference = std::max(maxPReference, pReference);
         sumPError += pError * pError * Extrusion::volume(scv);
         sumPReference += pReference * pReference * Extrusion::volume(scv);
     }
@@ -181,6 +192,7 @@ private:
                           const SubControlVolumeFace& scvf,
                           Scalar& sumVelReference,
                           Scalar& sumVelError,
+                          Scalar& maxVelReference,
                           Scalar& maxVelError,
                           Scalar time) const
     {
@@ -196,6 +208,7 @@ private:
         const Scalar velReference = absDiff_(analyticalSolutionFace, 0.0);
 
         maxVelError = std::max(maxVelError, velError);
+        maxVelReference = std::max(maxVelReference, velReference);
         sumVelError += velError * velError * staggeredHalfVolume;
         sumVelReference += velReference * velReference * staggeredHalfVolume;
     }
@@ -210,7 +223,8 @@ private:
     template<class SolutionVector>
     void calculateErrors_(PrimaryVariables& l2NormAbs,
                           PrimaryVariables& l2NormRel,
-                          PrimaryVariables& lInfinityNorm,
+                          PrimaryVariables& lInfinityNormAbs,
+                          PrimaryVariables& lInfinityNormRel,
                           const SolutionVector& curSol,
                           Scalar time) const
     {
@@ -219,6 +233,7 @@ private:
 
         PrimaryVariables sumReference(0.0);
         PrimaryVariables sumError(0.0);
+        PrimaryVariables maxReference(0.0);
         PrimaryVariables maxError(0.0);
 
         auto fvGeometry = localView(problem_->gridGeometry());
@@ -230,13 +245,13 @@ private:
             {
                 totalVolume += Extrusion::volume(scv);
 
-                processPressure_(curSol, scv, sumReference[Indices::pressureIdx], sumError[Indices::pressureIdx], maxError[Indices::pressureIdx], time);
+                processPressure_(curSol, scv, sumReference[Indices::pressureIdx], sumError[Indices::pressureIdx], maxReference[Indices::pressureIdx], maxError[Indices::pressureIdx], time);
 
                 // treat face dofs
                 for (auto&& scvf : scvfs(fvGeometry))
                 {
                     unsigned int index = Indices::velocity(scvf.directionIndex());
-                    processVelocity_(curSol, scv, scvf, sumReference[index], sumError[index], maxError[index], time);
+                    processVelocity_(curSol, scv, scvf, sumReference[index], sumError[index], maxReference[index], maxError[index], time);
                 }
             }
         }
@@ -246,7 +261,8 @@ private:
         {
             l2NormAbs[i] = std::sqrt(sumError[i] / totalVolume);
             l2NormRel[i] = std::sqrt(sumError[i] / sumReference[i]);
-            lInfinityNorm[i] = maxError[i];
+            lInfinityNormAbs[i] = maxError[i];
+            lInfinityNormRel[i] = maxError[i] / maxReference[i];
         }
     }
 
