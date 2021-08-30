@@ -44,9 +44,10 @@
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
-#include "properties.hh"
-
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
+#include <test/freeflow/navierstokes/errors.hh>
+
+#include "properties.hh"
 
 int main(int argc, char** argv)
 {
@@ -131,8 +132,11 @@ int main(int argc, char** argv)
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
+    // the discrete L2 and Linfity errors
+    const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
+    const Dumux::NavierStokesErrors<Problem> errors(problem);
+
     // time loop
-    const bool printL2Error = getParam<bool>("Problem.PrintL2Error");
     timeLoop->start(); do
     {
         problem->setTime(timeLoop->time() + timeLoop->timeStepSize());
@@ -144,24 +148,9 @@ int main(int argc, char** argv)
         xOld = x;
         gridVariables->advanceTimeStep();
 
-        if (printL2Error)
-        {
-            using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-            using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-            using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-
-            using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
-            const auto [l2errorAbs, l2errorRel] = L2Error::calculateL2Error(*problem, x, timeLoop->time() + timeLoop->timeStepSize());
-            const int numCellCenterDofs = gridGeometry->numCellCenterDofs();
-            const int numFaceDofs = gridGeometry->numFaceDofs();
-            std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
-                    << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
-                    << std::scientific
-                    << "L2(p) = " << l2errorAbs[Indices::pressureIdx] << " / " << l2errorRel[Indices::pressureIdx]
-                    << ", L2(vx) = " << l2errorAbs[Indices::velocityXIdx] << " / " << l2errorRel[Indices::velocityXIdx]
-                    << ", L2(vy) = " << l2errorAbs[Indices::velocityYIdx] << " / " << l2errorRel[Indices::velocityYIdx]
-                    << std::endl;
-        }
+        // print discrete L2 and Linfity errors
+        if (printErrors)
+            errors.printErrors(x, timeLoop->time() + timeLoop->timeStepSize());
 
         // update the analytical solution
         analyticalSolVectors.update(timeLoop->time() + timeLoop->timeStepSize());

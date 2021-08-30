@@ -43,9 +43,10 @@
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
-#include "properties.hh"
-
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
+#include <test/freeflow/navierstokes/errors.hh>
+
+#include "properties.hh"
 
 int main(int argc, char** argv)
 {
@@ -185,8 +186,12 @@ int main(int argc, char** argv)
         // solve the non-linear system with time step control
         nonLinearSolver.solve(x);
 
-        if(problem->hasAnalyticalSolution())
-            problem->printL2Error(x);
+        // print discrete L2 and Linfity errors
+        if (problem->hasAnalyticalSolution() && getParam<bool>("Problem.PrintErrors", false))
+        {
+            const Dumux::NavierStokesErrors<Problem> errors(problem);
+            errors.printErrors(x);
+        }
 
         // write vtk output
         vtkWriter.write(1.0);

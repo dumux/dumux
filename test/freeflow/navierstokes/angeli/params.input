@@ -10,7 +10,7 @@ Cells = 50 50
 [Problem]
 Name = test_angeli # name passed to the output routines
 EnableGravity = false
-PrintL2Error = false
+PrintErrors = false
 EnableInertiaTerms = true
 UseVelocityAveragingForInitial = false
 UseVelocityAveragingForDirichlet = false

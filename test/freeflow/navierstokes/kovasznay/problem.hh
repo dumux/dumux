@@ -32,8 +32,6 @@
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
 
-#include "../l2error.hh"
-
 namespace Dumux {
 
 /*!
@@ -70,36 +68,12 @@ public:
     KovasznayTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
-        printL2Error_ = getParam<bool>("Problem.PrintL2Error");
         std::cout<< "upwindSchemeOrder is: " << GridGeometry::upwindStencilOrder() << "\n";
         rho_ = getParam<Scalar>("Component.LiquidDensity", 1.0);
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
         Scalar reynoldsNumber = 1.0 / kinematicViscosity_;
         lambda_ = 0.5 * reynoldsNumber
                         - std::sqrt(reynoldsNumber * reynoldsNumber * 0.25 + 4.0 * M_PI * M_PI);
-    }
-
-   /*!
-     * \name Problem parameters
-     */
-    // \{
-
-    void printL2Error(const SolutionVector& curSol) const
-    {
-        if(printL2Error_)
-        {
-            using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
-            const auto l2error = L2Error::calculateL2Error(*this, curSol);
-            const int numCellCenterDofs = this->gridGeometry().numCellCenterDofs();
-            const int numFaceDofs = this->gridGeometry().numFaceDofs();
-            std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
-                    << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
-                    << std::scientific
-                    << "L2(p) = " << l2error.first[Indices::pressureIdx] << " / " << l2error.second[Indices::pressureIdx]
-                    << " , L2(vx) = " << l2error.first[Indices::velocityXIdx] << " / " << l2error.second[Indices::velocityXIdx]
-                    << " , L2(vy) = " << l2error.first[Indices::velocityYIdx] << " / " << l2error.second[Indices::velocityYIdx]
-                    << std::endl;
-        }
     }
 
    /*!
@@ -218,7 +192,6 @@ private:
     Scalar rho_;
     Scalar kinematicViscosity_;
     Scalar lambda_;
-    bool printL2Error_;
 };
 } // end namespace Dumux
 

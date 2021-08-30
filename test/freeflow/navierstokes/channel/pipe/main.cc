@@ -35,37 +35,9 @@
 #include <dumux/assembly/staggeredfvassembler.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
+#include <test/freeflow/navierstokes/errors.hh>
+
 #include "properties.hh"
-#include "../../l2error.hh"
-
-template<class Problem, class SolutionVector, class GridGeometry>
-void printL2Error(const Problem& problem, const SolutionVector& x, const GridGeometry& gridGeometry)
-{
-    using namespace Dumux;
-    using Scalar = double;
-    using TypeTag = Properties::TTag::PipeFlow;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-
-    using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
-    const auto [l2errorAbs, l2errorRel] = L2Error::calculateL2Error(*problem, x);
-    const int numCellCenterDofs = gridGeometry->numCellCenterDofs();
-    const int numFaceDofs = gridGeometry->numFaceDofs();
-    std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
-                << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
-                << std::scientific
-                << "L2(p) = " << l2errorAbs[Indices::pressureIdx] << " / " << l2errorRel[Indices::pressureIdx]
-                << " , L2(vx) = " << l2errorAbs[Indices::velocityXIdx] << " / " << l2errorRel[Indices::velocityXIdx]
-                << " , L2(vy) = " << l2errorAbs[Indices::velocityYIdx] << " / " << l2errorRel[Indices::velocityYIdx]
-                << std::endl;
-
-    // write the norm into a log file
-    std::ofstream logFile;
-    logFile.open(problem->name() + ".log", std::ios::app);
-    logFile << "[ConvergenceTest] L2(p) = " << l2errorAbs[Indices::pressureIdx] << " L2(vx) = " << l2errorAbs[Indices::velocityXIdx] << " L2(vy) = " << l2errorAbs[Indices::velocityYIdx] << std::endl;
-    logFile.close();
-}
 
 int main(int argc, char** argv)
 {
@@ -127,7 +99,12 @@ int main(int argc, char** argv)
     nonLinearSolver.solve(sol);
     vtkWriter.write(1.0);
 
-    printL2Error(problem, sol, gridGeometry);
+    // print discrete L2 and Linfity errors
+    if (getParam<bool>("Problem.PrintErrors", false))
+    {
+        const Dumux::NavierStokesErrors<Problem> errors(problem);
+        errors.printErrors(sol);
+    }
 
     // print dumux end message
     if (mpiHelper.rank() == 0)

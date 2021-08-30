@@ -43,9 +43,10 @@
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/nonlinear/staggerednewtonconvergencewriter.hh>
 
-#include "properties.hh"
-
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
+#include <test/freeflow/navierstokes/errors.hh>
+
+#include "properties.hh"
 
 int main(int argc, char** argv)
 {
@@ -127,8 +128,14 @@ int main(int argc, char** argv)
     Dune::Timer timer;
     nonLinearSolver.solve(x);
 
+    // print discrete L2 and Linfity errors
+    if (getParam<bool>("Problem.PrintErrors", false))
+    {
+        const Dumux::NavierStokesErrors<Problem> errors(problem);
+        errors.printErrors(x);
+    }
+
     // write vtk output
-    problem->printL2Error(x);
     vtkWriter.write(1.0);
 
     timer.stop();

@@ -31,8 +31,6 @@
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
 
-#include "../l2error.hh"
-
 namespace Dumux {
 
 /*!
@@ -65,31 +63,7 @@ public:
     DoneaTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
-        printL2Error_ = getParam<bool>("Problem.PrintL2Error");
         mu_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
-    }
-
-   /*!
-     * \name Problem parameters
-     */
-    // \{
-
-    void printL2Error(const SolutionVector& curSol) const
-    {
-        if(printL2Error_)
-        {
-            using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
-            const auto l2error = L2Error::calculateL2Error(*this, curSol);
-            const int numCellCenterDofs = this->gridGeometry().numCellCenterDofs();
-            const int numFaceDofs = this->gridGeometry().numFaceDofs();
-            std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
-                    << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
-                    << std::scientific
-                    << "L2(p) = " << l2error.first[Indices::pressureIdx] << " / " << l2error.second[Indices::pressureIdx]
-                    << " , L2(vx) = " << l2error.first[Indices::velocityXIdx] << " / " << l2error.second[Indices::velocityXIdx]
-                    << " , L2(vy) = " << l2error.first[Indices::velocityYIdx] << " / " << l2error.second[Indices::velocityYIdx]
-                    << std::endl;
-        }
     }
 
    /*!
@@ -258,7 +232,6 @@ private:
     Scalar dxxV_ (Scalar x, Scalar y) const
     { return -f2_(y)*dddf2_(x); }
 
-    bool printL2Error_;
     Scalar mu_;
 };
 } // end namespace Dumux

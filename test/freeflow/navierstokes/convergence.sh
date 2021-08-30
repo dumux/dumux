@@ -28,7 +28,7 @@ MAXCELLS=$INITIALCELLS
 for (( i=0; i <= $MAX; ++i )); do
   printf "refinement $i / $MAX "
   ((MAXCELLS *=2))
-  ./$1 $2 -Grid.Cells "$GRIDCELLS" -Grid.Refinement $i -Problem.PrintL2Error true &>> $LOGFILE
+  ./$1 $2 -Grid.Cells "$GRIDCELLS" -Grid.Refinement $i -Problem.PrintErrors true &>> $LOGFILE
   echo "done."
 done
 

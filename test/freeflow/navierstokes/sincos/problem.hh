@@ -31,8 +31,6 @@
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
 
-#include "../l2error.hh"
-
 namespace Dumux {
 
 /*!

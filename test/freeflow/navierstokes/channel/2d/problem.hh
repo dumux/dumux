@@ -33,8 +33,6 @@
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
 
-#include "../../l2error.hh"
-
 namespace Dumux {
 
 /*!
@@ -101,26 +99,6 @@ public:
         const bool isStationary = getParam<bool>("Problem.IsStationary", false);
 
         hasAnalyticalSolution_ = isStationary && useVelocityProfile_ && (outletCondition_ != OutletCondition::doNothing);
-    }
-
-   /*!
-     * \name Problem parameters
-     */
-    // \{
-
-    void printL2Error(const SolutionVector& curSol) const
-    {
-        using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
-        const auto l2error = L2Error::calculateL2Error(*this, curSol);
-        const int numCellCenterDofs = this->gridGeometry().numCellCenterDofs();
-        const int numFaceDofs = this->gridGeometry().numFaceDofs();
-        std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
-                << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
-                << std::scientific
-                << "L2(p) = " << l2error.first[Indices::pressureIdx] << " / " << l2error.second[Indices::pressureIdx]
-                << " , L2(vx) = " << l2error.first[Indices::velocityXIdx] << " / " << l2error.second[Indices::velocityXIdx]
-                << " , L2(vy) = " << l2error.first[Indices::velocityYIdx] << " / " << l2error.second[Indices::velocityYIdx]
-                << std::endl;
     }
 
    /*!
@@ -353,7 +331,6 @@ private:
     }
 
     static constexpr Scalar eps_=1e-6;
-    bool printL2Error_;
     Scalar inletVelocity_;
     Scalar dynamicViscosity_;
     Scalar outletPressure_;
