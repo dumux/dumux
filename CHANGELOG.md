@@ -42,6 +42,7 @@ for (const auto& element : elements(gridGeometry.gridView()))
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Virtual interface of GridDataTransfer__: The `GridDataTransfer` abstract base class now required the Grid type as a template argument. Furthermore, the `store` and `reconstruct` interface functions do now expect the grid as a function argument. This allows to correctly update grid geometries and corresponding mapper (see "Construction and update of GridGeometries changed" above in the changelog)
+- `PengRobinsonMixture::computeMolarVolumes` has been removed without deprecation. It was used nowhere and did not translate.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.5:
 
