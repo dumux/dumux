@@ -141,18 +141,29 @@ public:
      * \param params Parameters
      * \param phaseIdx The phase index
      * \param isGasPhase Specifies the phase state
+     * \param handleUnphysicalPhase Special handling of the case when the EOS has only one
+              intersection with the pressure, and the intersection does not correspond to
+              the given phase (the phase is thus considered unphysical). If it happens in
+              the case of critical fluid, the critical molar volume is returned for the
+              unphysical phase. If the fluid is not critical, a proper extremum of the
+              EOS is returned for the unphysical phase. If the parameter is false and the
+              EOS has only one intersection with the pressure, the molar volume is computed
+              from that single intersection, not depending of the given phase (gas or
+              fluid). If the EOS has three intersections with the pressure, this parameter
+              is ignored.
      */
     template <class FluidState, class Params>
     static Scalar computeMolarVolume(const FluidState &fs,
                                      Params &params,
                                      int phaseIdx,
-                                     bool isGasPhase)
+                                     bool isGasPhase,
+                                     bool handleUnphysicalPhase = true)
     {
         Scalar Vm = 0;
 
         Scalar T = fs.temperature(phaseIdx);
         Scalar p = fs.pressure(phaseIdx);
-
+        
         Scalar a = params.a(phaseIdx); // "attractive factor"
         Scalar b = params.b(phaseIdx); // "co-volume"
 
@@ -165,12 +176,22 @@ public:
         Scalar a3 = Astar - Bstar*(3*Bstar + 2);
         Scalar a4 = Bstar*(- Astar + Bstar*(1 + Bstar));
 
+        Scalar Z[3] = {}; // zero-initializer
+        int numSol = invertCubicPolynomial(Z, a1, a2, a3, a4);
+
         // ignore the first two results if the smallest
         // compressibility factor is <= 0.0. (this means that if we
         // would get negative molar volumes for the liquid phase, we
         // consider the liquid phase non-existant.)
-        Scalar Z[3] = {0.0,0.0,0.0};
-        int numSol = invertCubicPolynomial(Z, a1, a2, a3, a4);
+        // Note that invertCubicPolynomial sorts the roots in ascending order
+        if (numSol > 1 && Z[0] <= 0.0) {
+            Z[0] = Z[numSol - 1];
+            numSol = 1;
+        }
+
+        if (numSol > 0 && Z[0] <= 0)
+            DUNE_THROW(NumericalProblem, "No positive compressibility factors found");
+        
         if (numSol == 3) {
             // the EOS has three intersections with the pressure,
             // i.e. the molar volume of gas is the largest one and the
@@ -181,38 +202,22 @@ public:
                 Vm = Z[0]*RT/p;
         }
         else if (numSol == 1) {
-            // the EOS only has one intersection with the pressure,
-            // for the other phase, we take the extremum of the EOS
-            // with the largest distance from the intersection.
-            Scalar VmCubic = Z[0]*RT/p;
+            // the EOS has only one intersection with the pressure
+            
+            Vm = Z[0]*RT/p;
 
-            if (T > criticalTemperature_(a, b)) {
-                // if the EOS does not exhibit any extrema, the fluid
-                // is critical...
-                Vm = VmCubic;
-                handleCriticalFluid_(Vm, fs, params, phaseIdx, isGasPhase);
-            }
-            else {
-                // find the extrema (if they are present)
-                Scalar Vmin, Vmax, pmin, pmax;
-                using std::min;
-                using std::max;
-                if (findExtrema_(Vmin, Vmax,
-                                 pmin, pmax,
-                                 a, b, T))
-                {
-                    if (isGasPhase)
-                        Vm = max(Vmax, VmCubic);
-                    else
-                        Vm = min(Vmin, VmCubic);
-                }
-                else
-                    Vm = VmCubic;
-            }
+            // Handle single root case specially unless told otherwise
+            if (handleUnphysicalPhase)
+                Vm = handleSingleRoot_(Vm, fs, params, phaseIdx, isGasPhase);
         }
+        else
+            DUNE_THROW(NumericalProblem, "Unexpected number of roots in the equation for compressibility factor: " << numSol);
 
         using std::isfinite;
-        assert(isfinite(Vm) && Vm > 0);
+        
+        if (!isfinite(Vm) || Vm <= 0)
+            DUNE_THROW(NumericalProblem, "Bad molar volume");
+
         return Vm;
     }
 
@@ -279,8 +284,43 @@ public:
     { return params.pressure()*computeFugacityCoeff(params); }
 
 protected:
+
+    /*
+     * Handle single-root case in the equation of state. The problem here is
+     * that only one phase exists in this case, while we should also figure out
+     * something to return for the other phase. For reference, see Andreas
+     * Lauser's thesis: http://dx.doi.org/10.18419/opus-516 (page 32).
+     */
     template <class FluidState, class Params>
-    static void handleCriticalFluid_(Scalar &Vm,
+    static Scalar handleSingleRoot_(Scalar Vm,
+                                  const FluidState &fs,
+                                  const Params &params,
+                                  int phaseIdx,
+                                  bool isGasPhase)
+    {
+        Scalar T = fs.temperature(phaseIdx);
+        
+        // for the other phase, we take the extremum of the EOS
+        // with the largest distance from the intersection.
+        if (T > criticalTemperature_(params.a(phaseIdx), params.b(phaseIdx))) {
+            // if the EOS does not exhibit any extrema, the fluid
+            // is critical...
+            return handleCriticalFluid_(Vm, fs, params, phaseIdx, isGasPhase);
+        }
+        else {
+            // find the extrema (if they are present)
+            Scalar Vmin, Vmax, pmin, pmax;
+            using std::min;
+            using std::max;
+            if (findExtrema_(Vmin, Vmax, pmin, pmax,
+                             params.a(phaseIdx), params.b(phaseIdx), T))
+                return isGasPhase ? max(Vmax, Vm) : min(Vmin, Vm);
+        }
+        return Vm;
+    }
+    
+    template <class FluidState, class Params>
+    static Scalar handleCriticalFluid_(Scalar Vm,
                                      const FluidState &fs,
                                      const Params &params,
                                      int phaseIdx,
@@ -290,10 +330,7 @@ protected:
 
         using std::max;
         using std::min;
-        if (isGasPhase)
-            Vm = max(Vm, Vcrit);
-        else
-            Vm = min(Vm, Vcrit);
+        return isGasPhase ? max(Vm, Vcrit) : min(Vm, Vcrit);
     }
 
     static void findCriticalPoint_(Scalar &Tcrit,
