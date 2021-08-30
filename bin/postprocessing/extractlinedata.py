@@ -107,7 +107,7 @@ for curFile in args["files"]:
     SetActiveSource(vtkFile)
 
     # apply and configure PlotOverLine filter
-    plotOverLine = PlotOverLine(Source="High Resolution Line Source")
+    plotOverLine = PlotOverLine(Source="Line")
     plotOverLine.Source.Resolution = args["resolution"]
     plotOverLine.Source.Point1 = args["point1"]
     plotOverLine.Source.Point2 = args["point2"]
