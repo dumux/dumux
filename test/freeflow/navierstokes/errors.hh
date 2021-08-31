@@ -31,148 +31,6 @@
 
 namespace Dumux {
 template<class Problem, class Scalar = double>
-class NavierStokesErrorCSVWriter
-{
-    using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
-    using Indices = typename Problem::Indices;
-
-    static constexpr int dim = GridGeometry::GridView::dimension;
-
-public:
-    NavierStokesErrorCSVWriter(std::shared_ptr<const Problem> problem)
-    : problem_(problem)
-    {
-        name_ = problem->name();
-        const int numCCDofs = problem->gridGeometry().numCellCenterDofs();
-        const int numFaceDofs = problem->gridGeometry().numFaceDofs();
-
-        //prepare headlines in the error file
-        std::ofstream logFile(name_ + "_error.csv");
-
-        logFile << "cc dofs, face dofs, all dofs" << std::endl;
-
-        logFile << Fmt::format("{},{},{}",numCCDofs,numFaceDofs,numCCDofs + numFaceDofs) << std::endl << std::endl;
-
-        logFile << ",absoute L2 error,";
-        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
-            logFile << ",";
-        logFile << "relative L2 error,";
-        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
-            logFile << ",";
-        logFile << "absolute L infinity error,";
-        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
-            logFile << ",";
-        logFile << "relative L infinity error,";
-        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
-            logFile << ",";
-        logFile << std::endl;
-
-        logFile << "time";
-        for (unsigned int i = 0; i < 4/*L2 error (abs/rel), L infinity error (abs/rel)*/; ++i)
-        {
-            auto uvw = [&](unsigned int dirIdx)
-            {
-                if (dirIdx == 0)
-                    return "u";
-                else if (dirIdx == 1)
-                    return "v";
-                else if (dirIdx == 2)
-                    return "w";
-                else
-                    DUNE_THROW(Dune::InvalidStateException, "dim > 3 not allowed.");
-            };
-
-            logFile << ",p";
-            for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
-                logFile << Fmt::format(",{}",uvw(dirIdx));
-        }
-        logFile << std::endl;
-    }
-
-    template<class PrimaryVariables>
-    void printErrors(const PrimaryVariables& l2NormAbs,
-                     const PrimaryVariables& l2NormRel,
-                     const PrimaryVariables& lInfinityNormAbs,
-                     const PrimaryVariables& lInfinityNormRel,
-                     Scalar time = 0.0) const
-    {
-        std::ofstream logFile(name_ + "_error.csv", std::ios::app);
-        logFile << Fmt::format("{}", time);
-
-        logFile << Fmt::format(",{}",l2NormAbs[Indices::pressureIdx]);
-        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
-            logFile << Fmt::format(",{}",l2NormAbs[Indices::velocity(dirIdx)]);
-
-        logFile << Fmt::format(",{}",l2NormRel[Indices::pressureIdx]);
-        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
-            logFile << Fmt::format(",{}",l2NormRel[Indices::velocity(dirIdx)]);
-
-        logFile << Fmt::format(",{}",lInfinityNormAbs[Indices::pressureIdx]);
-        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
-            logFile << Fmt::format(",{}",lInfinityNormAbs[Indices::velocity(dirIdx)]);
-
-        logFile << Fmt::format(",{}",lInfinityNormRel[Indices::pressureIdx]);
-        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
-            logFile << Fmt::format(",{}",lInfinityNormRel[Indices::velocity(dirIdx)]);
-
-        logFile << std::endl;
-    }
-
-private:
-    std::shared_ptr<const Problem> problem_;
-    std::string name_;
-};
-
-template<class Problem>
-NavierStokesErrorCSVWriter(std::shared_ptr<Problem> p)
--> NavierStokesErrorCSVWriter<Problem>;
-
-template<class Problem, class Scalar>
-NavierStokesErrorCSVWriter(std::shared_ptr<Problem> p, Scalar t)
--> NavierStokesErrorCSVWriter<Problem, Scalar>;
-
-template<class Problem, class Scalar = double>
-class NavierStokesErrorConvergenceTestFileWriter
-{
-    using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
-    using Indices = typename Problem::Indices;
-
-    static constexpr int dim = GridGeometry::GridView::dimension;
-
-public:
-    NavierStokesErrorConvergenceTestFileWriter(std::shared_ptr<const Problem> problem)
-    : problem_(problem)
-    {
-        name_ = problem->name();
-        numCCDofs_ = problem->gridGeometry().numCellCenterDofs();
-        numFaceDofs_ = problem->gridGeometry().numFaceDofs();
-    }
-
-    template<class PrimaryVariables>
-    void printConvergenceTestFile(const PrimaryVariables& l2NormAbs) const
-    {
-        std::ofstream logFile;
-        logFile.open(name_ + ".log", std::ios::app);
-        logFile << Fmt::format("[ConvergenceTest] numCCDofs = {} numFaceDofs = {} L2(p) = {} L2(vx) = {} L2(vy) = {}", numCCDofs_, numFaceDofs_, l2NormAbs[Indices::pressureIdx], l2NormAbs[Indices::velocityXIdx], l2NormAbs[Indices::velocityYIdx]) << std::endl;
-        logFile.close();
-    }
-
-private:
-    std::shared_ptr<const Problem> problem_;
-    std::string name_;
-    int numCCDofs_;
-    int numFaceDofs_;
-};
-
-template<class Problem>
-NavierStokesErrorConvergenceTestFileWriter(std::shared_ptr<Problem> p)
--> NavierStokesErrorConvergenceTestFileWriter<Problem>;
-
-template<class Problem, class Scalar>
-NavierStokesErrorConvergenceTestFileWriter(std::shared_ptr<Problem> p, Scalar t)
--> NavierStokesErrorConvergenceTestFileWriter<Problem, Scalar>;
-
-template<class Problem, class Scalar = double>
 class NavierStokesErrors
 {
     using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
@@ -187,23 +45,71 @@ class NavierStokesErrors
     static constexpr int dim = GridGeometry::GridView::dimension;
 
 public:
-    NavierStokesErrors(std::shared_ptr<const Problem> problem)
-    : problem_(problem)
-    { }
-
-    /*!
-      * \brief Calculates the discrete L2 and Linfinity error between the analytical solution and the numerical approximation.
-      *
-      * \param problem The object specifying the problem which ought to be simulated
-      * \param curSol Vector containing the current solution
-      */
     template<class SolutionVector>
-    void calculateErrors(PrimaryVariables& l2NormAbs,
-                          PrimaryVariables& l2NormRel,
-                          PrimaryVariables& lInfinityNormAbs,
-                          PrimaryVariables& lInfinityNormRel,
-                          const SolutionVector& curSol,
-                          Scalar time=0.0) const
+    NavierStokesErrors(std::shared_ptr<const Problem> problem,
+                      const SolutionVector& curSol,
+                      Scalar time=0.0)
+    : problem_(problem)
+    {
+        calculateErrors_(curSol, time);
+    }
+
+   /*!
+    * \brief Updates the discrete L2 and Linfinity error between the analytical solution and the numerical approximation.
+    *
+    * \param curSol Vector containing the current solution
+    */
+    template<class SolutionVector>
+    void update(const SolutionVector& curSol,
+                Scalar time=0.0)
+    {
+        calculateErrors_(curSol, time);
+    }
+
+    Scalar l2ErrorAbs(std::size_t index) const
+    {
+        return l2NormAbs_[index];
+    }
+
+    const PrimaryVariables& l2ErrorAbs() const
+    {
+        return l2NormAbs_;
+    }
+
+    Scalar l2ErrorRel(std::size_t index) const
+    {
+        return l2NormRel_[index];
+    }
+
+    const PrimaryVariables& l2ErrorRel() const
+    {
+        return l2NormRel_;
+    }
+
+    Scalar linfErrorAbs(std::size_t index) const
+    {
+        return lInfinityNormAbs_[index];
+    }
+
+    const PrimaryVariables& linfErrorAbs() const
+    {
+        return lInfinityNormAbs_;
+    }
+
+    Scalar linfErrorRel(std::size_t index) const
+    {
+        return lInfinityNormRel_[index];
+    }
+
+    const PrimaryVariables& linfErrorRel() const
+    {
+        return lInfinityNormRel_;
+    }
+
+private:
+    template<class SolutionVector>
+    void calculateErrors_(const SolutionVector& curSol,
+                          Scalar time)
     {
         // calculate helping variables
         Scalar totalVolume = 0.;
@@ -234,16 +140,15 @@ public:
         }
 
         // calculate errors
-        for (unsigned int i = 0; i < l2NormAbs.size(); ++i)
+        for (unsigned int i = 0; i < l2NormAbs_.size(); ++i)
         {
-            l2NormAbs[i] = std::sqrt(sumError[i] / totalVolume);
-            l2NormRel[i] = std::sqrt(sumError[i] / sumReference[i]);
-            lInfinityNormAbs[i] = maxError[i];
-            lInfinityNormRel[i] = maxError[i] / maxReference[i];
+            l2NormAbs_[i] = std::sqrt(sumError[i] / totalVolume);
+            l2NormRel_[i] = std::sqrt(sumError[i] / sumReference[i]);
+            lInfinityNormAbs_[i] = maxError[i];
+            lInfinityNormRel_[i] = maxError[i] / maxReference[i];
         }
     }
 
-private:
     template<class T>
     T absDiff_(const T& a, const T& b) const
     {
@@ -299,6 +204,11 @@ private:
     }
 
     std::shared_ptr<const Problem> problem_;
+
+    PrimaryVariables l2NormAbs_ = {};
+    PrimaryVariables l2NormRel_ = {};
+    PrimaryVariables lInfinityNormAbs_ = {};
+    PrimaryVariables lInfinityNormRel_ = {};
 };
 
 template<class Problem>
@@ -308,6 +218,137 @@ NavierStokesErrors(std::shared_ptr<Problem> p)
 template<class Problem, class Scalar>
 NavierStokesErrors(std::shared_ptr<Problem> p, Scalar t)
 -> NavierStokesErrors<Problem, Scalar>;
+
+template<class Problem, class Scalar = double>
+class NavierStokesErrorCSVWriter
+{
+    using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
+    using Indices = typename Problem::Indices;
+
+    static constexpr int dim = GridGeometry::GridView::dimension;
+
+public:
+    NavierStokesErrorCSVWriter(std::shared_ptr<const Problem> problem)
+    {
+        name_ = problem->name();
+        const int numCCDofs = problem->gridGeometry().numCellCenterDofs();
+        const int numFaceDofs = problem->gridGeometry().numFaceDofs();
+
+        //prepare headlines in the error file
+        std::ofstream logFile(name_ + "_error.csv");
+
+        logFile << "cc dofs, face dofs, all dofs" << std::endl;
+
+        logFile << Fmt::format("{},{},{}",numCCDofs,numFaceDofs,numCCDofs + numFaceDofs) << std::endl << std::endl;
+
+        logFile << ",absoute L2 error,";
+        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
+            logFile << ",";
+        logFile << "relative L2 error,";
+        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
+            logFile << ",";
+        logFile << "absolute L infinity error,";
+        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
+            logFile << ",";
+        logFile << "relative L infinity error,";
+        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
+            logFile << ",";
+        logFile << std::endl;
+
+        logFile << "time";
+        for (unsigned int i = 0; i < 4/*L2 error (abs/rel), L infinity error (abs/rel)*/; ++i)
+        {
+            auto uvw = [&](unsigned int dirIdx)
+            {
+                if (dirIdx == 0)
+                    return "u";
+                else if (dirIdx == 1)
+                    return "v";
+                else if (dirIdx == 2)
+                    return "w";
+                else
+                    DUNE_THROW(Dune::InvalidStateException, "dim > 3 not allowed.");
+            };
+
+            logFile << ",p";
+            for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
+                logFile << Fmt::format(",{}",uvw(dirIdx));
+        }
+        logFile << std::endl;
+    }
+
+    void printErrors(const NavierStokesErrors<Problem>& errors,
+                     Scalar time = 0.0) const
+    {
+        std::ofstream logFile(name_ + "_error.csv", std::ios::app);
+        logFile << Fmt::format("{}", time);
+
+        logFile << Fmt::format(",{}",errors.l2ErrorAbs(Indices::pressureIdx));
+        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
+            logFile << Fmt::format(",{}",errors.l2ErrorAbs(Indices::velocity(dirIdx)));
+
+        logFile << Fmt::format(",{}",errors.l2ErrorRel(Indices::pressureIdx));
+        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
+            logFile << Fmt::format(",{}",errors.l2ErrorRel(Indices::velocity(dirIdx)));
+
+        logFile << Fmt::format(",{}",errors.linfErrorAbs(Indices::pressureIdx));
+        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
+            logFile << Fmt::format(",{}",errors.linfErrorAbs(Indices::velocity(dirIdx)));
+
+        logFile << Fmt::format(",{}",errors.linfErrorRel(Indices::pressureIdx));
+        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
+            logFile << Fmt::format(",{}",errors.linfErrorRel(Indices::velocity(dirIdx)));
+
+        logFile << std::endl;
+    }
+
+private:
+    std::string name_;
+};
+
+template<class Problem>
+NavierStokesErrorCSVWriter(std::shared_ptr<Problem> p)
+-> NavierStokesErrorCSVWriter<Problem>;
+
+template<class Problem, class Scalar>
+NavierStokesErrorCSVWriter(std::shared_ptr<Problem> p, Scalar t)
+-> NavierStokesErrorCSVWriter<Problem, Scalar>;
+
+template<class Problem, class Scalar = double>
+class NavierStokesErrorConvergenceTestFileWriter
+{
+    using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
+    using Indices = typename Problem::Indices;
+
+    static constexpr int dim = GridGeometry::GridView::dimension;
+
+public:
+    NavierStokesErrorConvergenceTestFileWriter(std::shared_ptr<const Problem> problem)
+    {
+        name_ = problem->name();
+        numCCDofs_ = problem->gridGeometry().numCellCenterDofs();
+        numFaceDofs_ = problem->gridGeometry().numFaceDofs();
+    }
+
+    void printConvergenceTestFile(const NavierStokesErrors<Problem>& errors) const
+    {
+        std::ofstream logFile(name_ + ".log", std::ios::app);
+        logFile << Fmt::format("[ConvergenceTest] numCCDofs = {} numFaceDofs = {} L2(p) = {} L2(vx) = {} L2(vy) = {}", numCCDofs_, numFaceDofs_, errors.l2ErrorAbs(Indices::pressureIdx), errors.l2ErrorAbs(Indices::velocityXIdx), errors.l2ErrorAbs(Indices::velocityYIdx)) << std::endl;
+    }
+
+private:
+    std::string name_;
+    int numCCDofs_;
+    int numFaceDofs_;
+};
+
+template<class Problem>
+NavierStokesErrorConvergenceTestFileWriter(std::shared_ptr<Problem> p)
+-> NavierStokesErrorConvergenceTestFileWriter<Problem>;
+
+template<class Problem, class Scalar>
+NavierStokesErrorConvergenceTestFileWriter(std::shared_ptr<Problem> p, Scalar t)
+-> NavierStokesErrorConvergenceTestFileWriter<Problem, Scalar>;
 } // end namespace Dumux
 
 #endif

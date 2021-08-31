@@ -185,7 +185,7 @@ int main(int argc, char** argv)
 
     // the discrete L2 and Linfity errors
     const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
-    const NavierStokesErrors<Problem> errors(problem);
+    NavierStokesErrors<Problem> errors(problem,x);
     const NavierStokesErrorCSVWriter<Problem> errorCSVWriter(problem);
 
     if (isStationary)
@@ -197,25 +197,18 @@ int main(int argc, char** argv)
         // print discrete L2 and Linfity errors
         if (printErrors)
         {
-            using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-
-            PrimaryVariables l2NormAbs(0.0);
-            PrimaryVariables l2NormRel(0.0);
-            PrimaryVariables lInfinityNormAbs(0.0);
-            PrimaryVariables lInfinityNormRel(0.0);
-
-            errors.calculateErrors(l2NormAbs, l2NormRel, lInfinityNormAbs, lInfinityNormRel, x);
+            errors.update(x);
 
             if (printErrors)
             {
-                errorCSVWriter.printErrors(l2NormAbs, l2NormRel, lInfinityNormAbs, lInfinityNormRel);
+                errorCSVWriter.printErrors(errors);
             }
 
             const bool printConvergenceTestFile = getParam<bool>("Problem.PrintConvergenceTestFile", false);
             if (printConvergenceTestFile)
             {
                 const NavierStokesErrorConvergenceTestFileWriter<Problem> errorConvergenceTestFileWriter(problem);
-                errorConvergenceTestFileWriter.printConvergenceTestFile(l2NormAbs);
+                errorConvergenceTestFileWriter.printConvergenceTestFile(errors);
             }
         }
 
@@ -245,15 +238,8 @@ int main(int argc, char** argv)
             // print discrete L2 and Linfity errors
             if (printErrors)
             {
-                using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-
-                PrimaryVariables l2NormAbs(0.0);
-                PrimaryVariables l2NormRel(0.0);
-                PrimaryVariables lInfinityNormAbs(0.0);
-                PrimaryVariables lInfinityNormRel(0.0);
-
-                errors.calculateErrors(l2NormAbs, l2NormRel, lInfinityNormAbs, lInfinityNormRel, x,timeLoop->time() + timeLoop->timeStepSize());
-                errorCSVWriter.printErrors(l2NormAbs, l2NormRel, lInfinityNormAbs, lInfinityNormRel, timeLoop->time() + timeLoop->timeStepSize());
+                errors.update(x, timeLoop->time() + timeLoop->timeStepSize());
+                errorCSVWriter.printErrors(errors, timeLoop->time() + timeLoop->timeStepSize());
             }
 
             // advance to the time loop to the next step

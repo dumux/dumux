@@ -195,26 +195,18 @@ int main(int argc, char** argv)
 
             if (printErrors || printConvergenceTestFile)
             {
-                using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-
-                PrimaryVariables l2NormAbs(0.0);
-                PrimaryVariables l2NormRel(0.0);
-                PrimaryVariables lInfinityNormAbs(0.0);
-                PrimaryVariables lInfinityNormRel(0.0);
-
-                const Dumux::NavierStokesErrors<Problem> errors(problem);
-                errors.calculateErrors(l2NormAbs, l2NormRel, lInfinityNormAbs, lInfinityNormRel, x);
+                const Dumux::NavierStokesErrors<Problem> errors(problem, x);
 
                 if (printErrors)
                 {
                     const NavierStokesErrorCSVWriter<Problem> errorCSVWriter(problem);
-                    errorCSVWriter.printErrors(l2NormAbs, l2NormRel, lInfinityNormAbs, lInfinityNormRel);
+                    errorCSVWriter.printErrors(errors);
                 }
 
                 if (printConvergenceTestFile)
                 {
                     const NavierStokesErrorConvergenceTestFileWriter<Problem> errorConvergenceTestFileWriter(problem);
-                    errorConvergenceTestFileWriter.printConvergenceTestFile(l2NormAbs);
+                    errorConvergenceTestFileWriter.printConvergenceTestFile(errors);
                 }
             }
         }
