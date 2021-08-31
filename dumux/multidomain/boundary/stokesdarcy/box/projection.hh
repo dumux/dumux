@@ -55,6 +55,27 @@ namespace Detail {
     }
 }
 
+template<class CouplingManager, class Element, std::size_t id>
+struct VolVarsWrapper
+{
+    using Index = Dune::index_constant<id>;
+
+    VolVarsWrapper(const CouplingManager& cm, const Element& element)
+    : cm_(cm), element_(element), domainI_()
+    {}
+
+    template<class SubControlVolume>
+    auto operator[](const SubControlVolume& scv) const
+    {
+        return cm_.volVars(domainI_, element_, scv);
+    }
+
+private:
+    const CouplingManager& cm_;
+    const Element& element_;
+    Index domainI_;
+};
+
 template<class MDTraits, class CouplingManager>
 class Projection
 {
@@ -88,7 +109,6 @@ public:
         Scalar projection = 0.0;
         auto domainI = Dune::index_constant<freeFlowIdx>();
         auto fvGeometry = localView(couplingManager.problem(porousMediumIdx).gridGeometry());
-        auto elemVolVars = localView(darcyElemVolVars.gridVolVars());
 
         // integrate darcy pressure over each coupling facet and average
         for(const auto& couplingFacet : couplingFacets(domainI, couplingManager.couplingMapper(), stokesScvf.insideScvIdx(), stokesScvf.localFaceIdx()))
@@ -105,7 +125,7 @@ public:
             }
             else
             {
-                elemVolVars.bind(element, fvGeometry, couplingManager.sol()[porousMediumIdx]);
+                VolVarsWrapper<CouplingManager, Element<porousMediumIdx>, porousMediumIdx> elemVolVars(couplingManager, element);
                 projection += calculateFacetIntegral(element, fvGeometry, fvGeometry.scvf(couplingFacet.pmScvfIdx), elemVolVars, couplingFacet.geometry, evalPriVar);
             }
 
@@ -143,11 +163,11 @@ public:
         return projection;
     }
 
-    template<class CouplingFacetGeometry, class Function>
+    template<class CouplingFacetGeometry, class ElementVolumeVariables, class Function>
     static Scalar calculateFacetIntegral(const Element<porousMediumIdx>& element,
                                          const FVElementGeometry<porousMediumIdx>& fvGeometry,
                                          const SubControlVolumeFace<porousMediumIdx>& scvf,
-                                         const ElementVolumeVariables<porousMediumIdx>& elemVolVars,
+                                         const ElementVolumeVariables& elemVolVars,
                                          const CouplingFacetGeometry& facetGeometry,
                                          Function evalPriVar)
     {

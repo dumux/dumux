@@ -152,6 +152,7 @@ private:
     template<std::size_t id> using GridView = typename GridGeometry<id>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
     template<std::size_t id> using PrimaryVariables = typename MDTraits::template SubDomain<id>::PrimaryVariables;
+    template<std::size_t id> using SubControlVolume  = typename FVElementGeometry<id>::SubControlVolume;
     template<std::size_t id> using SubControlVolumeFace  = typename FVElementGeometry<id>::SubControlVolumeFace;
 
     using CellCenterSolutionVector = GetPropType<StokesTypeTag, Properties::CellCenterSolutionVector>;
@@ -704,9 +705,16 @@ public:
         }
     }
 
-    const auto sol() const
+    //! Return the volume variables of domain i for a given element and scv
+    template<std::size_t i>
+    VolumeVariables<i> volVars(Dune::index_constant<i> domainI,
+                               const Element<i>& element,
+                               const SubControlVolume<i>& scv) const
     {
-        return this->curSol();
+        VolumeVariables<i> volVars;
+        const auto elemSol = elementSolution(element, this->curSol()[domainI], this->problem(domainI).gridGeometry());
+        volVars.update(elemSol, this->problem(domainI), element, scv);
+        return volVars;
     }
 
     const auto& couplingMapper() const
