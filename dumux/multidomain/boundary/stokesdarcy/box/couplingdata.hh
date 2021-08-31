@@ -101,8 +101,8 @@ public:
     {
         //################# pm contribution #################
         const auto darcyPhaseIdx = couplingPhaseIdx(porousMediumIdx);
-        auto pressure = [darcyPhaseIdx](const auto& elemVolVars, const auto& scv)
-                            { return elemVolVars[scv].pressure(darcyPhaseIdx); };
+        auto pressure = [darcyPhaseIdx](const auto& volVars)
+                            { return volVars.pressure(darcyPhaseIdx); };
 
         Scalar momentumFlux = Projector::calculateProjection(this->couplingManager(), element, scvf, pressure);
 
@@ -400,8 +400,8 @@ public:
                 const auto& stokesVolVars = data.volVars;
 
                 //Calculate the projected temperature value for the stokes face
-                auto temp = [](const auto& elemVolVars, const auto& scv)
-                                { return elemVolVars[scv].temperature(); };
+                auto temp = [](const auto& volVars)
+                                { return volVars.temperature(); };
                 Scalar interfaceTemperature = Projector::calculateProjection(this->couplingManager(), stokesScvf, element, darcyElemVolVars, temp);
 
                 const bool insideIsUpstream = velocity > 0.0;
@@ -433,8 +433,8 @@ public:
         const auto& stokesContext = this->couplingManager().stokesCouplingContext();
 
         //Calculate the projected temperature value for the stokes face
-        auto temp = [](const auto& elemVolVars, const auto& scv)
-                    { return elemVolVars[scv].temperature(); };
+        auto temp = [](const auto& volVars)
+                    { return volVars.temperature(); };
 
         Scalar interfaceTemperature = Projector::calculateProjection(this->couplingManager(), element, scvf, temp);
 
@@ -604,8 +604,8 @@ public:
                 // Calculate the projected massOrMoleFraction value for the stokes face
                 auto interfaceMassOrMoleFraction = [this, &stokesScvf, &element, &darcyElemVolVars](int compIdx)
                 {
-                    auto value = [&compIdx](const auto& elemVolVars, const auto& scv)
-                                    { return massOrMoleFraction(elemVolVars[scv], referenceSystemFormulation, couplingPhaseIdx(porousMediumIdx), compIdx); };
+                    auto value = [&compIdx](const auto& volVars)
+                                    { return massOrMoleFraction(volVars, referenceSystemFormulation, couplingPhaseIdx(porousMediumIdx), compIdx); };
 
                     return Projector::calculateProjection(this->couplingManager(), stokesScvf, element, darcyElemVolVars, value);
                 };
@@ -644,8 +644,8 @@ public:
         //Calculate the projected massOrMoleFraction value for the stokes face
         auto interfaceMassOrMoleFraction = [this, &element, &scvf](int compIdx)
         {
-            auto value = [&compIdx](const auto& elemVolVars, const auto& scv)
-                            { return massOrMoleFraction(elemVolVars[scv], referenceSystemFormulation, couplingPhaseIdx(porousMediumIdx), compIdx); };
+            auto value = [&compIdx](const auto& volVars)
+                            { return massOrMoleFraction(volVars, referenceSystemFormulation, couplingPhaseIdx(porousMediumIdx), compIdx); };
 
             return Projector::calculateProjection(this->couplingManager(), element, scvf, value);
         };
@@ -711,15 +711,15 @@ public:
                 //Calculate the projected massOrMoleFraction value for the stokes face
                 auto interfaceMassOrMoleFraction = [this, &stokesScvf, &element, &darcyElemVolVars](int compIdx)
                 {
-                    auto value = [&compIdx](const auto& elemVolVars, const auto& scv)
-                                    { return massOrMoleFraction(elemVolVars[scv], referenceSystemFormulation, couplingPhaseIdx(porousMediumIdx), compIdx); };
+                    auto value = [&compIdx](const auto& volVars)
+                                    { return massOrMoleFraction(volVars, referenceSystemFormulation, couplingPhaseIdx(porousMediumIdx), compIdx); };
 
                     return Projector::calculateProjection(this->couplingManager(), stokesScvf, element, darcyElemVolVars, value);
                 };
 
                 //Calculate the projected temperature value for the stokes face
-                auto temp = [](const auto& elemVolVars, const auto& scv)
-                                { return elemVolVars[scv].temperature(); };
+                auto temp = [](const auto& volVars)
+                                { return volVars.temperature(); };
                 Scalar interfaceTemperature = Projector::calculateProjection(this->couplingManager(), stokesScvf, element, darcyElemVolVars, temp);
 
                 // Division by scvf.area() is needed, because the final flux results from multiplication with scvf.area()
@@ -758,15 +758,15 @@ public:
         //Calculate the projected massOrMoleFraction value for the stokes face
         auto interfaceMassOrMoleFraction = [this, &element, &scvf](int compIdx)
         {
-            auto value = [&compIdx](const auto& elemVolVars, const auto& scv)
-                            { return massOrMoleFraction(elemVolVars[scv], referenceSystemFormulation, couplingPhaseIdx(porousMediumIdx), compIdx); };
+            auto value = [&compIdx](const auto& volVars)
+                            { return massOrMoleFraction(volVars, referenceSystemFormulation, couplingPhaseIdx(porousMediumIdx), compIdx); };
 
             return Projector::calculateProjection(this->couplingManager(), element, scvf, value);
         };
 
         //Calculate the projected temperature value for the stokes face
-        auto temp = [](const auto& elemVolVars, const auto& scv)
-                    { return elemVolVars[scv].temperature(); };
+        auto temp = [](const auto& volVars)
+                    { return volVars.temperature(); };
 
         Scalar interfaceTemperature = Projector::calculateProjection(this->couplingManager(), element, scvf, temp);
 

@@ -190,14 +190,14 @@ public:
 
                 Scalar value = 0.0;
                 for (const auto& scv : scvs(fvGeometry))
-                    value += evalPriVar(elemVolVars, scv)*shapeValues[scv.indexInElement()][0];
+                    value += evalPriVar(elemVolVars[scv])*shapeValues[scv.indexInElement()][0];
 
                 facetProjection += value*facetGeometry.integrationElement(qp.position())*qp.weight();
             }
         }
         else if constexpr (projectionMethod == ProjectionMethod::AreaWeightedDofEvaluation)
         {
-            facetProjection = facetGeometry.volume()*evalPriVar(elemVolVars, fvGeometry.scv(scvf.insideScvIdx()));
+            facetProjection = facetGeometry.volume()*evalPriVar(elemVolVars[fvGeometry.scv(scvf.insideScvIdx())]);
         }
         else
         {
