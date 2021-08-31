@@ -185,7 +185,8 @@ int main(int argc, char** argv)
 
     // the discrete L2 and Linfity errors
     const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
-    const Dumux::NavierStokesErrors<Problem> errors(problem);
+    const NavierStokesErrors<Problem> errors(problem);
+    const NavierStokesErrorCSVWriter<Problem> errorCSVWriter(problem);
 
     if (isStationary)
     {
@@ -193,8 +194,30 @@ int main(int argc, char** argv)
         Dune::Timer timer;
         nonLinearSolver.solve(x);
 
+        // print discrete L2 and Linfity errors
         if (printErrors)
-            errors.printErrors(x);
+        {
+            using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+
+            PrimaryVariables l2NormAbs(0.0);
+            PrimaryVariables l2NormRel(0.0);
+            PrimaryVariables lInfinityNormAbs(0.0);
+            PrimaryVariables lInfinityNormRel(0.0);
+
+            errors.calculateErrors(l2NormAbs, l2NormRel, lInfinityNormAbs, lInfinityNormRel, x);
+
+            if (printErrors)
+            {
+                errorCSVWriter.printErrors(l2NormAbs, l2NormRel, lInfinityNormAbs, lInfinityNormRel);
+            }
+
+            const bool printConvergenceTestFile = getParam<bool>("Problem.PrintConvergenceTestFile", false);
+            if (printConvergenceTestFile)
+            {
+                const NavierStokesErrorConvergenceTestFileWriter<Problem> errorConvergenceTestFileWriter(problem);
+                errorConvergenceTestFileWriter.printConvergenceTestFile(l2NormAbs);
+            }
+        }
 
         // write vtk output
         analyticalSolVectors.update();
@@ -219,8 +242,19 @@ int main(int argc, char** argv)
             xOld = x;
             gridVariables->advanceTimeStep();
 
+            // print discrete L2 and Linfity errors
             if (printErrors)
-                errors.printErrors(x, timeLoop->time() + timeLoop->timeStepSize());
+            {
+                using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+
+                PrimaryVariables l2NormAbs(0.0);
+                PrimaryVariables l2NormRel(0.0);
+                PrimaryVariables lInfinityNormAbs(0.0);
+                PrimaryVariables lInfinityNormRel(0.0);
+
+                errors.calculateErrors(l2NormAbs, l2NormRel, lInfinityNormAbs, lInfinityNormRel, x,timeLoop->time() + timeLoop->timeStepSize());
+                errorCSVWriter.printErrors(l2NormAbs, l2NormRel, lInfinityNormAbs, lInfinityNormRel, timeLoop->time() + timeLoop->timeStepSize());
+            }
 
             // advance to the time loop to the next step
             timeLoop->advanceTimeStep();

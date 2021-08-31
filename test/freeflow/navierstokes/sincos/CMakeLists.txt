@@ -12,6 +12,7 @@ dumux_add_test(NAME test_ff_navierstokes_sincos
               -Grid.UpperRight "6.28 6.28"
               -Grid.Cells "150 150"
               -Problem.Name test_ff_navierstokes_sincos_stationary_convergence
+              -Problem.PrintConvergenceTestFile true
               -Problem.IsStationary true
               -Component.LiquidKinematicViscosity 0.001)
 

@@ -134,7 +134,8 @@ int main(int argc, char** argv)
 
     // the discrete L2 and Linfity errors
     const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
-    const Dumux::NavierStokesErrors<Problem> errors(problem);
+    const NavierStokesErrors<Problem> errors(problem);
+    const NavierStokesErrorCSVWriter<Problem> errorCSVWriter(problem);
 
     // time loop
     timeLoop->start(); do
@@ -150,7 +151,17 @@ int main(int argc, char** argv)
 
         // print discrete L2 and Linfity errors
         if (printErrors)
-            errors.printErrors(x, timeLoop->time() + timeLoop->timeStepSize());
+        {
+            using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+
+            PrimaryVariables l2NormAbs(0.0);
+            PrimaryVariables l2NormRel(0.0);
+            PrimaryVariables lInfinityNormAbs(0.0);
+            PrimaryVariables lInfinityNormRel(0.0);
+
+            errors.calculateErrors(l2NormAbs, l2NormRel, lInfinityNormAbs, lInfinityNormRel, x,timeLoop->time() + timeLoop->timeStepSize());
+            errorCSVWriter.printErrors(l2NormAbs, l2NormRel, lInfinityNormAbs, lInfinityNormRel, timeLoop->time() + timeLoop->timeStepSize());
+        }
 
         // update the analytical solution
         analyticalSolVectors.update(timeLoop->time() + timeLoop->timeStepSize());
