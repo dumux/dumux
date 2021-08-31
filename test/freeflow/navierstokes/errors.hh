@@ -66,44 +66,14 @@ public:
         calculateErrors_(curSol, time);
     }
 
-    Scalar l2ErrorAbs(std::size_t index) const
+    const std::array<PrimaryVariables, 4>& errorsArray() const
     {
-        return l2NormAbs_[index];
+        return errors_;
     }
 
-    const PrimaryVariables& l2ErrorAbs() const
+    const std::array<std::string, 4>& errorNames() const
     {
-        return l2NormAbs_;
-    }
-
-    Scalar l2ErrorRel(std::size_t index) const
-    {
-        return l2NormRel_[index];
-    }
-
-    const PrimaryVariables& l2ErrorRel() const
-    {
-        return l2NormRel_;
-    }
-
-    Scalar linfErrorAbs(std::size_t index) const
-    {
-        return lInfinityNormAbs_[index];
-    }
-
-    const PrimaryVariables& linfErrorAbs() const
-    {
-        return lInfinityNormAbs_;
-    }
-
-    Scalar linfErrorRel(std::size_t index) const
-    {
-        return lInfinityNormRel_[index];
-    }
-
-    const PrimaryVariables& linfErrorRel() const
-    {
-        return lInfinityNormRel_;
+        return errorNames_;
     }
 
 private:
@@ -140,12 +110,12 @@ private:
         }
 
         // calculate errors
-        for (unsigned int i = 0; i < l2NormAbs_.size(); ++i)
+        for (unsigned int i = 0; i < errors_[0].size(); ++i)
         {
-            l2NormAbs_[i] = std::sqrt(sumError[i] / totalVolume);
-            l2NormRel_[i] = std::sqrt(sumError[i] / sumReference[i]);
-            lInfinityNormAbs_[i] = maxError[i];
-            lInfinityNormRel_[i] = maxError[i] / maxReference[i];
+            errors_[0][i] = std::sqrt(sumError[i] / totalVolume); //L2Abs
+            errors_[1][i] = std::sqrt(sumError[i] / sumReference[i]); //L2Rel
+            errors_[2][i] = maxError[i]; //LinfAbs
+            errors_[3][i] = maxError[i] / maxReference[i]; //LinfRel
         }
     }
 
@@ -204,11 +174,8 @@ private:
     }
 
     std::shared_ptr<const Problem> problem_;
-
-    PrimaryVariables l2NormAbs_ = {};
-    PrimaryVariables l2NormRel_ = {};
-    PrimaryVariables lInfinityNormAbs_ = {};
-    PrimaryVariables lInfinityNormRel_ = {};
+    std::array<PrimaryVariables, 4> errors_ = {};
+    std::array<std::string, 4> errorNames_ = {"L2Abs", "L2Rel", "LinfAbs", "LinfRel"};
 };
 
 template<class Problem>
@@ -228,7 +195,8 @@ class NavierStokesErrorCSVWriter
     static constexpr int dim = GridGeometry::GridView::dimension;
 
 public:
-    NavierStokesErrorCSVWriter(std::shared_ptr<const Problem> problem)
+    NavierStokesErrorCSVWriter(std::shared_ptr<const Problem> problem,
+                               const NavierStokesErrors<Problem>& errors)
     {
         name_ = problem->name();
         const int numCCDofs = problem->gridGeometry().numCellCenterDofs();
@@ -241,22 +209,17 @@ public:
 
         logFile << Fmt::format("{},{},{}",numCCDofs,numFaceDofs,numCCDofs + numFaceDofs) << std::endl << std::endl;
 
-        logFile << ",absoute L2 error,";
-        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
-            logFile << ",";
-        logFile << "relative L2 error,";
-        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
-            logFile << ",";
-        logFile << "absolute L infinity error,";
-        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
-            logFile << ",";
-        logFile << "relative L infinity error,";
-        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
-            logFile << ",";
+        logFile << ",";
+        for (const auto& errorName : errors.errorNames())
+        {
+            logFile << errorName <<",";
+            for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
+                logFile << ",";
+        }
         logFile << std::endl;
 
         logFile << "time";
-        for (unsigned int i = 0; i < 4/*L2 error (abs/rel), L infinity error (abs/rel)*/; ++i)
+        for (unsigned int i = 0; i < errors.errorsArray().size(); ++i)
         {
             auto uvw = [&](unsigned int dirIdx)
             {
@@ -283,21 +246,12 @@ public:
         std::ofstream logFile(name_ + "_error.csv", std::ios::app);
         logFile << Fmt::format("{}", time);
 
-        logFile << Fmt::format(",{}",errors.l2ErrorAbs(Indices::pressureIdx));
-        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
-            logFile << Fmt::format(",{}",errors.l2ErrorAbs(Indices::velocity(dirIdx)));
-
-        logFile << Fmt::format(",{}",errors.l2ErrorRel(Indices::pressureIdx));
-        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
-            logFile << Fmt::format(",{}",errors.l2ErrorRel(Indices::velocity(dirIdx)));
-
-        logFile << Fmt::format(",{}",errors.linfErrorAbs(Indices::pressureIdx));
-        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
-            logFile << Fmt::format(",{}",errors.linfErrorAbs(Indices::velocity(dirIdx)));
-
-        logFile << Fmt::format(",{}",errors.linfErrorRel(Indices::pressureIdx));
-        for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
-            logFile << Fmt::format(",{}",errors.linfErrorRel(Indices::velocity(dirIdx)));
+        for (const auto& error : errors.errorsArray())
+        {
+            logFile << Fmt::format(",{}",error[Indices::pressureIdx]);
+            for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
+                logFile << Fmt::format(",{}",error[Indices::velocity(dirIdx)]);
+        }
 
         logFile << std::endl;
     }
@@ -333,7 +287,12 @@ public:
     void printConvergenceTestFile(const NavierStokesErrors<Problem>& errors) const
     {
         std::ofstream logFile(name_ + ".log", std::ios::app);
-        logFile << Fmt::format("[ConvergenceTest] numCCDofs = {} numFaceDofs = {} L2(p) = {} L2(vx) = {} L2(vy) = {}", numCCDofs_, numFaceDofs_, errors.l2ErrorAbs(Indices::pressureIdx), errors.l2ErrorAbs(Indices::velocityXIdx), errors.l2ErrorAbs(Indices::velocityYIdx)) << std::endl;
+        logFile << Fmt::format("[ConvergenceTest] numCCDofs = {} numFaceDofs = {}", numCCDofs_, numFaceDofs_);
+        for (unsigned int i = 0; i < errors.errorNames().size(); ++i)
+        {
+            logFile << Fmt::format(" {}(p) = {} {}(vx) = {} {}(vy) = {}", errors.errorNames()[i], errors.errorsArray()[i][Indices::pressureIdx], errors.errorNames()[i], errors.errorsArray()[i][Indices::velocityXIdx] , errors.errorNames()[i], errors.errorsArray()[i][Indices::velocityYIdx]);
+        }
+        logFile << std::endl;
     }
 
 private:

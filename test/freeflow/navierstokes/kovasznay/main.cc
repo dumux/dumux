@@ -162,7 +162,7 @@ int main(int argc, char** argv)
 
         if (printErrors)
         {
-            const NavierStokesErrorCSVWriter<Problem> errorCSVWriter(problem);
+            const NavierStokesErrorCSVWriter<Problem> errorCSVWriter(problem, errors);
             errorCSVWriter.printErrors(errors);
         }
 

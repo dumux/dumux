@@ -186,7 +186,7 @@ int main(int argc, char** argv)
     // the discrete L2 and Linfity errors
     const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
     NavierStokesErrors<Problem> errors(problem,x);
-    const NavierStokesErrorCSVWriter<Problem> errorCSVWriter(problem);
+    const NavierStokesErrorCSVWriter<Problem> errorCSVWriter(problem, errors);
 
     if (isStationary)
     {
