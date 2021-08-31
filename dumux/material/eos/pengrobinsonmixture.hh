@@ -50,23 +50,6 @@ class PengRobinsonMixture
     static const Scalar w;
 
 public:
-    /*!
-     * \brief Computes molar volumes \f$\mathrm{[m^3 / mol]}\f$ where the Peng-Robinson EOS is
-     *        true.
-     * \param Vm Molar Volume \f$\mathrm{[m^3 / mol]}\f$
-     * \param fs Thermodynamic state of the fluids
-     * \param params Parameters
-     * \param phaseIdx The phase index
-     * \return Number of solutions.
-     */
-    template <class MutableParams, class FluidState>
-    static int computeMolarVolumes(Scalar *Vm,
-                                   const MutableParams &params,
-                                   int phaseIdx,
-                                   const FluidState &fs)
-    {
-        return PengRobinson::computeMolarVolumes(Vm, params, phaseIdx, fs);
-    }
 
     /*!
      * \brief Returns the fugacity coefficient \f$\mathrm{[-]}\f$ of an individual
