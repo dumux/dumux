@@ -34,6 +34,7 @@
 
 #include <dumux/freeflow/navierstokes/staggered/velocitygradients.hh>
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
+#include "projection.hh"
 #include <optional>
 
 namespace Dumux {
@@ -73,6 +74,9 @@ class StokesDarcyCouplingDataBoxBase : public StokesDarcyCouplingDataImplementat
     using ForchheimersLaw = ForchheimersLawImplementation<SubDomainTypeTag<porousMediumIdx>, GridGeometry<porousMediumIdx>::discMethod>;
 
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
+
+    using Projector = Projection<MDTraits, CouplingManager>;
+
 public:
     StokesDarcyCouplingDataBoxBase(const CouplingManager& couplingmanager): ParentType(couplingmanager) {}
 
@@ -100,7 +104,7 @@ public:
         auto pressure = [darcyPhaseIdx](const auto& elemVolVars, const auto& scv)
                             { return elemVolVars[scv].pressure(darcyPhaseIdx); };
 
-        Scalar momentumFlux = this->couplingManager().calculateProjection(element, scvf, pressure);
+        Scalar momentumFlux = Projector::calculateProjection(this->couplingManager(), element, scvf, pressure);
 
         // normalize pressure
         if(getPropValue<SubDomainTypeTag<freeFlowIdx>, Properties::NormalizePressure>())
@@ -190,7 +194,7 @@ public:
         VelocityVector velocity(0.0);       // velocity darcy                // density darcy
         Scalar intersectionLength = 0.0;    // (total)intersection length, could differ from scvf length
 
-        const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
+        const auto& stokesContext = this->couplingManager().stokesCouplingContext();
         static const bool enableGravity = getParamFromGroup<bool>(this->couplingManager().problem(porousMediumIdx).paramGroup(), "Problem.EnableGravity");
 
         // iteration over the different coupling facets
@@ -295,6 +299,8 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
 
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
 
+    using Projector = Projection<MDTraits, CouplingManager>;
+
 public:
     using ParentType::ParentType;
     using ParentType::couplingPhaseIdx;
@@ -309,7 +315,7 @@ public:
                                  const SubControlVolumeFace<porousMediumIdx>& scvf) const
     {
         const auto darcyPhaseIdx = couplingPhaseIdx(porousMediumIdx);
-        const auto& darcyContext = this->couplingManager().darcyCouplingContextVector(element, scvf);
+        const auto& darcyContext = this->couplingManager().darcyCouplingContext();
 
         Scalar flux = 0.0;
         for(const auto& data : darcyContext)
@@ -341,7 +347,7 @@ public:
                                  const ElementFaceVariables<freeFlowIdx>& stokesElemFaceVars,
                                  const SubControlVolumeFace<freeFlowIdx>& scvf) const
     {
-        const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
+        const auto& stokesContext = this->couplingManager().stokesCouplingContext();
 
         Scalar flux = 0.0;
         const Scalar velocity = stokesElemFaceVars[scvf].velocitySelf() * scvf.directionSign();
@@ -378,7 +384,7 @@ public:
                                    const SubControlVolumeFace<porousMediumIdx>& scvf,
                                    const DiffusionCoefficientAveragingType diffCoeffAvgType = DiffusionCoefficientAveragingType::ffOnly) const
     {
-        const auto& darcyContext = this->couplingManager().darcyCouplingContextVector(element, scvf);
+        const auto& darcyContext = this->couplingManager().darcyCouplingContext();
 
         Scalar flux = 0.0;
         for(const auto& data : darcyContext)
@@ -396,7 +402,7 @@ public:
                 //Calculate the projected temperature value for the stokes face
                 auto temp = [](const auto& elemVolVars, const auto& scv)
                                 { return elemVolVars[scv].temperature(); };
-                Scalar interfaceTemperature = this->couplingManager().calculateProjection(stokesScvf, element, darcyElemVolVars, temp);
+                Scalar interfaceTemperature = Projector::calculateProjection(this->couplingManager(), stokesScvf, element, darcyElemVolVars, temp);
 
                 const bool insideIsUpstream = velocity > 0.0;
                 flux += -1*energyFlux_(data.fvGeometry,
@@ -424,13 +430,13 @@ public:
                                    const SubControlVolumeFace<freeFlowIdx>& scvf,
                                    const DiffusionCoefficientAveragingType diffCoeffAvgType = DiffusionCoefficientAveragingType::ffOnly) const
     {
-        const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
+        const auto& stokesContext = this->couplingManager().stokesCouplingContext();
 
         //Calculate the projected temperature value for the stokes face
         auto temp = [](const auto& elemVolVars, const auto& scv)
                     { return elemVolVars[scv].temperature(); };
 
-        Scalar interfaceTemperature = this->couplingManager().calculateProjection(element, scvf, temp);
+        Scalar interfaceTemperature = Projector::calculateProjection(this->couplingManager(), element, scvf, temp);
 
         Scalar flux = 0.0;
         for (const auto& data : stokesContext)
@@ -562,6 +568,8 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
 
     using MolecularDiffusionType = GetPropType<SubDomainTypeTag<freeFlowIdx>, Properties::MolecularDiffusionType>;
 
+    using Projector = Projection<MDTraits, CouplingManager>;
+
 public:
     using ParentType::ParentType;
     using ParentType::couplingPhaseIdx;
@@ -577,7 +585,7 @@ public:
                                       const SubControlVolumeFace<porousMediumIdx>& scvf,
                                       const DiffusionCoefficientAveragingType diffCoeffAvgType = DiffusionCoefficientAveragingType::ffOnly) const
     {
-        const auto& darcyContext = this->couplingManager().darcyCouplingContextVector(element, scvf);
+        const auto& darcyContext = this->couplingManager().darcyCouplingContext();
 
         NumEqVector flux(0.0);
         for(const auto& data : darcyContext)
@@ -599,7 +607,7 @@ public:
                     auto value = [&compIdx](const auto& elemVolVars, const auto& scv)
                                     { return massOrMoleFraction(elemVolVars[scv], referenceSystemFormulation, couplingPhaseIdx(porousMediumIdx), compIdx); };
 
-                    return this->couplingManager().calculateProjection(stokesScvf, element, darcyElemVolVars, value);
+                    return Projector::calculateProjection(this->couplingManager(), stokesScvf, element, darcyElemVolVars, value);
                 };
 
                 // Division by scvf.area() is needed, because the final flux results from multiplication with scvf.area()
@@ -631,7 +639,7 @@ public:
                                       const SubControlVolumeFace<freeFlowIdx>& scvf,
                                       const DiffusionCoefficientAveragingType diffCoeffAvgType = DiffusionCoefficientAveragingType::ffOnly) const
     {
-        const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
+        const auto& stokesContext = this->couplingManager().stokesCouplingContext();
 
         //Calculate the projected massOrMoleFraction value for the stokes face
         auto interfaceMassOrMoleFraction = [this, &element, &scvf](int compIdx)
@@ -639,7 +647,7 @@ public:
             auto value = [&compIdx](const auto& elemVolVars, const auto& scv)
                             { return massOrMoleFraction(elemVolVars[scv], referenceSystemFormulation, couplingPhaseIdx(porousMediumIdx), compIdx); };
 
-            return this->couplingManager().calculateProjection(element, scvf, value);
+            return Projector::calculateProjection(this->couplingManager(), element, scvf, value);
         };
 
         NumEqVector flux(0.0);
@@ -684,7 +692,7 @@ public:
                                    const SubControlVolumeFace<porousMediumIdx>& scvf,
                                    const DiffusionCoefficientAveragingType diffCoeffAvgType = DiffusionCoefficientAveragingType::ffOnly) const
     {
-        const auto& darcyContext = this->couplingManager().darcyCouplingContextVector(element, scvf);
+        const auto& darcyContext = this->couplingManager().darcyCouplingContext();
 
         Scalar flux = 0.0;
         for(const auto& data : darcyContext)
@@ -706,13 +714,13 @@ public:
                     auto value = [&compIdx](const auto& elemVolVars, const auto& scv)
                                     { return massOrMoleFraction(elemVolVars[scv], referenceSystemFormulation, couplingPhaseIdx(porousMediumIdx), compIdx); };
 
-                    return this->couplingManager().calculateProjection(stokesScvf, element, darcyElemVolVars, value);
+                    return Projector::calculateProjection(this->couplingManager(), stokesScvf, element, darcyElemVolVars, value);
                 };
 
                 //Calculate the projected temperature value for the stokes face
                 auto temp = [](const auto& elemVolVars, const auto& scv)
                                 { return elemVolVars[scv].temperature(); };
-                Scalar interfaceTemperature = this->couplingManager().calculateProjection(stokesScvf, element, darcyElemVolVars, temp);
+                Scalar interfaceTemperature = Projector::calculateProjection(this->couplingManager(), stokesScvf, element, darcyElemVolVars, temp);
 
                 // Division by scvf.area() is needed, because the final flux results from multiplication with scvf.area()
                 flux += -1*energyFlux_(porousMediumIdx,
@@ -745,7 +753,7 @@ public:
                                    const SubControlVolumeFace<freeFlowIdx>& scvf,
                                    const DiffusionCoefficientAveragingType diffCoeffAvgType = DiffusionCoefficientAveragingType::ffOnly) const
     {
-        const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
+        const auto& stokesContext = this->couplingManager().stokesCouplingContext();
 
         //Calculate the projected massOrMoleFraction value for the stokes face
         auto interfaceMassOrMoleFraction = [this, &element, &scvf](int compIdx)
@@ -753,14 +761,14 @@ public:
             auto value = [&compIdx](const auto& elemVolVars, const auto& scv)
                             { return massOrMoleFraction(elemVolVars[scv], referenceSystemFormulation, couplingPhaseIdx(porousMediumIdx), compIdx); };
 
-            return this->couplingManager().calculateProjection(element, scvf, value);
+            return Projector::calculateProjection(this->couplingManager(), element, scvf, value);
         };
 
         //Calculate the projected temperature value for the stokes face
         auto temp = [](const auto& elemVolVars, const auto& scv)
                     { return elemVolVars[scv].temperature(); };
 
-        Scalar interfaceTemperature = this->couplingManager().calculateProjection(element, scvf, temp);
+        Scalar interfaceTemperature = Projector::calculateProjection(this->couplingManager(), element, scvf, temp);
 
         Scalar flux = 0.0;
         const Scalar velocity = stokesElemFaceVars[scvf].velocitySelf() * scvf.directionSign();

@@ -43,28 +43,6 @@
 namespace Dumux {
 
 namespace Detail {
-    enum class ProjectionMethod
-    {
-        L2Projection, AreaWeightedDofEvaluation
-    };
-
-    template <typename T>
-    using ProjectionMethodDetector = decltype(std::declval<T>().projectionMethod());
-
-    template<class T>
-    static constexpr bool hasProjectionMethod()
-    { return Dune::Std::is_detected<ProjectionMethodDetector, T>::value; }
-
-
-    template<class T>
-    static constexpr ProjectionMethod projectionMethod()
-    {
-        if constexpr (hasProjectionMethod<T>())
-            return T::projectionMethod();
-        else
-            return ProjectionMethod::L2Projection;
-    }
-
     // Each context object contains the data related to one coupling facet
     template <class MDTraits, typename CouplingFacetGeometry>
     struct StokesCouplingContext
@@ -144,8 +122,6 @@ public:
     static constexpr auto freeFlowIdx = FreeFlowPorousMediumCouplingManagerBase<MDTraits>::freeFlowIdx;
     static constexpr auto porousMediumIdx = FreeFlowPorousMediumCouplingManagerBase<MDTraits>::porousMediumIdx;
 
-    using ProjectionMethod = Detail::ProjectionMethod;
-    static constexpr auto projectionMethod = Detail::projectionMethod<MDTraits>();
 private:
 
     using SolutionVector = typename MDTraits::SolutionVector;
@@ -460,10 +436,10 @@ public:
     /*!
      * \brief Access the coupling context needed for the Darcy domain
      */
-    const auto& darcyCouplingContextVector(const Element<porousMediumIdx>& element, const SubControlVolumeFace<porousMediumIdx>& scvf) const
+    const auto& darcyCouplingContext() const
     {
-        if (darcyCouplingContext_.empty() || boundDarcyElemIdx_ != this->problem(porousMediumIdx).gridGeometry().elementMapper().index(element))
-            DUNE_THROW(Dune::InvalidStateException, "No coupling context found at scvf " << scvf.center());
+        if (darcyCouplingContext_.empty())
+            DUNE_THROW(Dune::InvalidStateException, "Coupling context is empty!");
 
         return darcyCouplingContext_;
     }
@@ -471,10 +447,11 @@ public:
     /*!
      * \brief Access the coupling context needed for the Stokes domain
      */
-    const auto& stokesCouplingContextVector(const Element<freeFlowIdx>& element, const SubControlVolumeFace<freeFlowIdx>& scvf) const
+    const auto& stokesCouplingContext() const
     {
-        if (stokesCouplingContext_.empty() || boundStokesElemIdx_ != scvf.insideScvIdx())
-            DUNE_THROW(Dune::InvalidStateException, "No coupling context found at scvf " << scvf.center());
+        if (stokesCouplingContext_.empty())
+            DUNE_THROW(Dune::InvalidStateException, "Coupling context is empty!");
+
         return stokesCouplingContext_;
     }
 
@@ -727,115 +704,14 @@ public:
         }
     }
 
-    // calculate projection of pm solution needed for fluxes of the free-flow residual
-    template<class Function>
-    Scalar calculateProjection(const SubControlVolumeFace<freeFlowIdx>& stokesScvf,
-                               const Element<porousMediumIdx>& darcyElement,
-                               const ElementVolumeVariables<porousMediumIdx>& darcyElemVolVars,
-                               Function evalPriVar) const
+    const auto sol() const
     {
-        Scalar projection = 0.0;
-        auto domainI = Dune::index_constant<freeFlowIdx>();
-        auto fvGeometry = localView(this->problem(porousMediumIdx).gridGeometry());
-        auto elemVolVars = localView(darcyElemVolVars.gridVolVars());
-
-        // integrate darcy pressure over each coupling facet and average
-        for(const auto& couplingFacet : couplingFacets(domainI, couplingMapper_, stokesScvf.insideScvIdx(), stokesScvf.localFaceIdx()))
-        {
-            const auto darcyEIdxI = this->problem(porousMediumIdx).gridGeometry().elementMapper().index(darcyElement);
-            const auto darcyEIdxJ = couplingFacet.pmEIdx;
-
-            const auto& element = this->problem(porousMediumIdx).gridGeometry().boundingBoxTree().entitySet().entity(couplingFacet.pmEIdx);
-            fvGeometry.bind(element);
-
-            if(darcyEIdxI == darcyEIdxJ)
-            {
-                projection += calculateFacetIntegral(element, fvGeometry, fvGeometry.scvf(couplingFacet.pmScvfIdx), darcyElemVolVars, couplingFacet.geometry, evalPriVar);
-            }
-            else
-            {
-                elemVolVars.bind(element, fvGeometry, this->curSol()[porousMediumIdx]);
-                projection += calculateFacetIntegral(element, fvGeometry, fvGeometry.scvf(couplingFacet.pmScvfIdx), elemVolVars, couplingFacet.geometry, evalPriVar);
-            }
-
-        }
-
-        projection /= stokesScvf.area();
-
-        return projection;
+        return this->curSol();
     }
 
-    // calculate projection of pm solution needed for fluxes of ff residual
-    template<class Function>
-    Scalar calculateProjection(const Element<freeFlowIdx>& element,
-                               const SubControlVolumeFace<freeFlowIdx>& scvf,
-                               Function evalPriVar) const
+    const auto& couplingMapper() const
     {
-        if (stokesCouplingContext_.empty() || boundStokesElemIdx_ != scvf.insideScvIdx())
-            DUNE_THROW(Dune::InvalidStateException, "No coupling context found at scvf " << scvf.center());
-
-        Scalar projection = 0.0;
-
-        // integrate darcy pressure over each coupling facet and average
-        for (const auto& data : stokesCouplingContext_)
-        {
-            //ToDo Is this if really necessary?
-            if (scvf.index() == data.stokesScvfIdx)
-            {
-                const auto& elemVolVars = *(data.elementVolVars);
-                const auto& darcyScvf = data.fvGeometry.scvf(data.darcyScvfIdx);
-                const auto& couplingFacet = couplingMapper_.couplingFacet(data.facetIdx);
-                projection += calculateFacetIntegral(data.element, data.fvGeometry, darcyScvf, elemVolVars, couplingFacet.geometry, evalPriVar);
-            }
-        }
-
-        projection /= scvf.area();
-
-        return projection;
-    }
-
-    template<class CouplingFacetGeometry, class Function>
-    Scalar calculateFacetIntegral(const Element<porousMediumIdx>& element,
-                                  const FVElementGeometry<porousMediumIdx>& fvGeometry,
-                                  const SubControlVolumeFace<porousMediumIdx>& scvf,
-                                  const ElementVolumeVariables<porousMediumIdx>& elemVolVars,
-                                  const CouplingFacetGeometry& facetGeometry,
-                                  Function evalPriVar) const
-    {
-        Scalar facetProjection = 0.0;
-        if constexpr (projectionMethod == ProjectionMethod::L2Projection)
-        {
-            const auto& localBasis = fvGeometry.feLocalBasis();
-
-            // do second order integration as box provides linear functions
-            static constexpr int darcyDim = GridGeometry<porousMediumIdx>::GridView::dimension;
-            const auto& rule = Dune::QuadratureRules<Scalar, darcyDim-1>::rule(facetGeometry.type(), 2);
-            for (const auto& qp : rule)
-            {
-                const auto& ipLocal = qp.position();
-                const auto& ipGlobal = facetGeometry.global(ipLocal);
-                const auto& ipElementLocal = element.geometry().local(ipGlobal);
-
-                std::vector<Dune::FieldVector<Scalar, 1>> shapeValues;
-                localBasis.evaluateFunction(ipElementLocal, shapeValues);
-
-                Scalar value = 0.0;
-                for (const auto& scv : scvs(fvGeometry))
-                    value += evalPriVar(elemVolVars, scv)*shapeValues[scv.indexInElement()][0];
-
-                facetProjection += value*facetGeometry.integrationElement(qp.position())*qp.weight();
-            }
-        }
-        else if constexpr (projectionMethod == ProjectionMethod::AreaWeightedDofEvaluation)
-        {
-            facetProjection = facetGeometry.volume()*evalPriVar(elemVolVars, fvGeometry.scv(scvf.insideScvIdx()));
-        }
-        else
-        {
-            DUNE_THROW(Dune::NotImplemented, "Unkown projection method!");
-        }
-
-        return facetProjection;
+        return couplingMapper_;
     }
 
     const auto& couplingFacet(std::size_t idx) const
