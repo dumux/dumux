@@ -247,14 +247,12 @@ public:
     void fill(FluxVarsCacheStorage& fluxVarsCacheStorage,
               FluxVariablesCache& scvfFluxVarsCache,
               IVDataStorage& ivDataStorage,
-              const Element& element,
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars,
               const SubControlVolumeFace& scvf,
               bool forceUpdateAll = false)
     {
         // Set pointers
-        elementPtr_ = &element;
         fvGeometryPtr_ = &fvGeometry;
         elemVolVarsPtr_ = &elemVolVars;
         const auto& gridGeometry = fvGeometry.gridGeometry();
@@ -355,7 +353,6 @@ public:
 private:
 
     const Problem& problem() const { return *problemPtr_; }
-    const Element& element() const { return *elementPtr_; }
     const FVElementGeometry& fvGeometry() const { return *fvGeometryPtr_; }
     const ElementVolumeVariables& elemVolVars() const { return *elemVolVarsPtr_; }
 
@@ -680,7 +677,6 @@ private:
     }
 
     const Problem* problemPtr_;
-    const Element* elementPtr_;
     const FVElementGeometry* fvGeometryPtr_;
     const ElementVolumeVariables* elemVolVarsPtr_;
 
