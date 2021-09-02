@@ -65,6 +65,7 @@ class StokesDarcyCouplingDataBoxBase : public StokesDarcyCouplingDataImplementat
     static constexpr auto freeFlowIdx = CouplingManager::freeFlowIdx;
     static constexpr auto porousMediumIdx = CouplingManager::porousMediumIdx;
 
+    using SolutionVector = typename MDTraits::SolutionVector;
     using VelocityVector = typename Element<freeFlowIdx>::Geometry::GlobalCoordinate;
     template<std::size_t id> using BoundaryTypes = typename ProblemTraits<Problem<id>>::BoundaryTypes;
     using StokesVelocityGradients = StaggeredVelocityGradients<Scalar, GridGeometry<freeFlowIdx>, BoundaryTypes<freeFlowIdx>, Indices<freeFlowIdx>>;
@@ -78,7 +79,9 @@ class StokesDarcyCouplingDataBoxBase : public StokesDarcyCouplingDataImplementat
     using Projector = Projection<MDTraits, CouplingManager>;
 
 public:
-    StokesDarcyCouplingDataBoxBase(const CouplingManager& couplingmanager): ParentType(couplingmanager) {}
+    StokesDarcyCouplingDataBoxBase(const CouplingManager& couplingmanager,
+                                   const SolutionVector& sol) : ParentType(couplingmanager), projector_(sol)
+    {}
 
     using ParentType::couplingPhaseIdx;
 
@@ -104,7 +107,7 @@ public:
         auto pressure = [darcyPhaseIdx](const auto& volVars)
                             { return volVars.pressure(darcyPhaseIdx); };
 
-        Scalar momentumFlux = Projector::calculateProjection(this->couplingManager(), element, scvf, pressure);
+        Scalar momentumFlux = this->projector().calculateProjection(this->couplingManager(), element, scvf, pressure);
 
         // normalize pressure
         if(getPropValue<SubDomainTypeTag<freeFlowIdx>, Properties::NormalizePressure>())
@@ -264,6 +267,15 @@ public:
       velocity /= intersectionLength; //averaging
       return velocity;
     }
+
+    const Projector& projector() const
+    {
+        return projector_;
+    }
+
+private:
+    Projector projector_;
+
 };
 
 /*!
@@ -402,7 +414,7 @@ public:
                 //Calculate the projected temperature value for the stokes face
                 auto temp = [](const auto& volVars)
                                 { return volVars.temperature(); };
-                Scalar interfaceTemperature = Projector::calculateProjection(this->couplingManager(), stokesScvf, element, darcyElemVolVars, temp);
+                Scalar interfaceTemperature = this->projector().calculateProjection(this->couplingManager(), stokesScvf, element, darcyElemVolVars, temp);
 
                 const bool insideIsUpstream = velocity > 0.0;
                 flux += -1*energyFlux_(data.fvGeometry,
@@ -436,7 +448,7 @@ public:
         auto temp = [](const auto& volVars)
                     { return volVars.temperature(); };
 
-        Scalar interfaceTemperature = Projector::calculateProjection(this->couplingManager(), element, scvf, temp);
+        Scalar interfaceTemperature = this->projector().calculateProjection(this->couplingManager(), element, scvf, temp);
 
         Scalar flux = 0.0;
         for (const auto& data : stokesContext)
@@ -607,7 +619,7 @@ public:
                     auto value = [&compIdx](const auto& volVars)
                                     { return massOrMoleFraction(volVars, referenceSystemFormulation, couplingPhaseIdx(porousMediumIdx), compIdx); };
 
-                    return Projector::calculateProjection(this->couplingManager(), stokesScvf, element, darcyElemVolVars, value);
+                    return this->projector().calculateProjection(this->couplingManager(), stokesScvf, element, darcyElemVolVars, value);
                 };
 
                 // Division by scvf.area() is needed, because the final flux results from multiplication with scvf.area()
@@ -647,7 +659,7 @@ public:
             auto value = [&compIdx](const auto& volVars)
                             { return massOrMoleFraction(volVars, referenceSystemFormulation, couplingPhaseIdx(porousMediumIdx), compIdx); };
 
-            return Projector::calculateProjection(this->couplingManager(), element, scvf, value);
+            return this->projector().calculateProjection(this->couplingManager(), element, scvf, value);
         };
 
         NumEqVector flux(0.0);
@@ -714,13 +726,13 @@ public:
                     auto value = [&compIdx](const auto& volVars)
                                     { return massOrMoleFraction(volVars, referenceSystemFormulation, couplingPhaseIdx(porousMediumIdx), compIdx); };
 
-                    return Projector::calculateProjection(this->couplingManager(), stokesScvf, element, darcyElemVolVars, value);
+                    return this->projector().calculateProjection(this->couplingManager(), stokesScvf, element, darcyElemVolVars, value);
                 };
 
                 //Calculate the projected temperature value for the stokes face
                 auto temp = [](const auto& volVars)
                                 { return volVars.temperature(); };
-                Scalar interfaceTemperature = Projector::calculateProjection(this->couplingManager(), stokesScvf, element, darcyElemVolVars, temp);
+                Scalar interfaceTemperature = this->projector().calculateProjection(this->couplingManager(), stokesScvf, element, darcyElemVolVars, temp);
 
                 // Division by scvf.area() is needed, because the final flux results from multiplication with scvf.area()
                 flux += -1*energyFlux_(porousMediumIdx,
@@ -761,14 +773,14 @@ public:
             auto value = [&compIdx](const auto& volVars)
                             { return massOrMoleFraction(volVars, referenceSystemFormulation, couplingPhaseIdx(porousMediumIdx), compIdx); };
 
-            return Projector::calculateProjection(this->couplingManager(), element, scvf, value);
+            return this->projector().calculateProjection(this->couplingManager(), element, scvf, value);
         };
 
         //Calculate the projected temperature value for the stokes face
         auto temp = [](const auto& volVars)
                     { return volVars.temperature(); };
 
-        Scalar interfaceTemperature = Projector::calculateProjection(this->couplingManager(), element, scvf, temp);
+        Scalar interfaceTemperature = this->projector().calculateProjection(this->couplingManager(), element, scvf, temp);
 
         Scalar flux = 0.0;
         const Scalar velocity = stokesElemFaceVars[scvf].velocitySelf() * scvf.directionSign();

@@ -189,7 +189,7 @@ public:
 
         this->setSubProblems(std::make_tuple(stokesProblem, stokesProblem, darcyProblem));
         this->curSol() = curSol;
-        couplingData_ = std::make_shared<CouplingData>(*this);
+        couplingData_ = std::make_shared<CouplingData>(*this, this->curSol());
         couplingMapper_.update(*this);
         computeStencils();
     }
@@ -703,18 +703,6 @@ public:
                 this->updateCouplingContext(domainI, localAssemblerI, domainI, dofIndex, origPriVars, pvIdx);
             }
         }
-    }
-
-    //! Return the volume variables of domain i for a given element and scv
-    template<std::size_t i>
-    VolumeVariables<i> volVars(Dune::index_constant<i> domainI,
-                               const Element<i>& element,
-                               const SubControlVolume<i>& scv) const
-    {
-        VolumeVariables<i> volVars;
-        const auto elemSol = elementSolution(element, this->curSol()[domainI], this->problem(domainI).gridGeometry());
-        volVars.update(elemSol, this->problem(domainI), element, scv);
-        return volVars;
     }
 
     const auto& couplingMapper() const

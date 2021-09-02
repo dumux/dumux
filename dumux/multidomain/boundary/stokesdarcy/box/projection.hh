@@ -55,27 +55,6 @@ namespace Detail {
     }
 }
 
-template<class CouplingManager, class Element, std::size_t id>
-struct VolVarsWrapper
-{
-    using Index = Dune::index_constant<id>;
-
-    VolVarsWrapper(const CouplingManager& cm, const Element& element)
-    : cm_(cm), element_(element), domainI_()
-    {}
-
-    template<class SubControlVolume>
-    auto operator[](const SubControlVolume& scv) const
-    {
-        return cm_.volVars(domainI_, element_, scv);
-    }
-
-private:
-    const CouplingManager& cm_;
-    const Element& element_;
-    Index domainI_;
-};
-
 template<class MDTraits, class CouplingManager>
 class Projection
 {
@@ -92,23 +71,28 @@ class Projection
     template<std::size_t id> using FVElementGeometry = typename GridGeometry<id>::LocalView;
     template<std::size_t id> using SubControlVolumeFace = typename GridGeometry<id>::LocalView::SubControlVolumeFace;
     template<std::size_t id> using ElementVolumeVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::LocalView;
+    using SolutionVector = typename MDTraits::SolutionVector;
 
     using ProjectionMethod = Detail::ProjectionMethod;
     static constexpr auto projectionMethod = Detail::projectionMethod<MDTraits>();
 
 public:
 
+    Projection(const SolutionVector& sol) : sol_(sol)
+    { }
+
     // calculate projection of pm solution needed for fluxes of the free-flow residual
     template<class Function>
-    static Scalar calculateProjection(const CouplingManager& couplingManager,
-                                      const SubControlVolumeFace<freeFlowIdx>& stokesScvf,
-                                      const Element<porousMediumIdx>& darcyElement,
-                                      const ElementVolumeVariables<porousMediumIdx>& darcyElemVolVars,
-                                      Function evalPriVar)
+    Scalar calculateProjection(const CouplingManager& couplingManager,
+                               const SubControlVolumeFace<freeFlowIdx>& stokesScvf,
+                               const Element<porousMediumIdx>& darcyElement,
+                               const ElementVolumeVariables<porousMediumIdx>& darcyElemVolVars,
+                               Function evalPriVar) const
     {
         Scalar projection = 0.0;
         auto domainI = Dune::index_constant<freeFlowIdx>();
         auto fvGeometry = localView(couplingManager.problem(porousMediumIdx).gridGeometry());
+        auto elemVolVars = localView(darcyElemVolVars.gridVolVars());
 
         // integrate darcy pressure over each coupling facet and average
         for(const auto& couplingFacet : couplingFacets(domainI, couplingManager.couplingMapper(), stokesScvf.insideScvIdx(), stokesScvf.localFaceIdx()))
@@ -125,7 +109,7 @@ public:
             }
             else
             {
-                VolVarsWrapper<CouplingManager, Element<porousMediumIdx>, porousMediumIdx> elemVolVars(couplingManager, element);
+                elemVolVars.bind(element, fvGeometry, sol_[porousMediumIdx]);
                 projection += calculateFacetIntegral(element, fvGeometry, fvGeometry.scvf(couplingFacet.pmScvfIdx), elemVolVars, couplingFacet.geometry, evalPriVar);
             }
 
@@ -138,10 +122,10 @@ public:
 
     // calculate projection of pm solution needed for fluxes of ff residual
     template<class Function>
-    static Scalar calculateProjection(const CouplingManager& couplingManager,
-                                      const Element<freeFlowIdx>& element,
-                                      const SubControlVolumeFace<freeFlowIdx>& scvf,
-                                      Function evalPriVar)
+    Scalar calculateProjection(const CouplingManager& couplingManager,
+                               const Element<freeFlowIdx>& element,
+                               const SubControlVolumeFace<freeFlowIdx>& scvf,
+                               Function evalPriVar) const
     {
         Scalar projection = 0.0;
 
@@ -206,6 +190,10 @@ public:
 
         return facetProjection;
     }
+
+private:
+
+const SolutionVector& sol_;
 
 };
 
