@@ -384,6 +384,7 @@ private:
         scvs_.clear();
         scvfs_.clear();
         scvfIndicesOfScv_.clear();
+        localToGlobalScvfIndices_.clear();
 
         // determine size of containers
         std::size_t numScvs = this->gridView().size(0);
@@ -396,7 +397,7 @@ private:
         scvfs_.reserve(numScvf);
         scvfIndicesOfScv_.resize(numScvs);
         localToGlobalScvfIndices_.resize(numScvs);
-        hasBoundaryScvf_.resize(numScvs, false);
+        hasBoundaryScvf_.assign(numScvs, false);
 
         // Build the scvs and scv faces
         GridIndexType scvfIdx = 0;
@@ -453,7 +454,7 @@ private:
             scvfIndicesOfScv_[eIdx] = scvfsIndexSet;
         }
 
-        // build the connectivity map for an effecient assembly
+        // build the connectivity map for an efficient assembly
         connectivityMap_.update(*this);
     }
 
@@ -666,6 +667,7 @@ private:
         // clear containers (necessary after grid refinement)
         scvfIndicesOfScv_.clear();
         neighborVolVarIndices_.clear();
+        localToGlobalScvfIndices_.clear();
 
         numScvs_ = numCellCenterDofs();
         numScvf_ = 0;

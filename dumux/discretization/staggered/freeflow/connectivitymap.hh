@@ -63,10 +63,12 @@ public:
         const auto numDofsCC = gridGeometry.gridView().size(0);
         const auto numDofsFace = gridGeometry.gridView().size(1);
         const auto numBoundaryFacets = gridGeometry.numBoundaryScvf();
-        cellCenterToCellCenterMap_.resize(numDofsCC);
-        cellCenterToFaceMap_.resize(numDofsCC);
-        faceToCellCenterMap_.resize(2*numDofsFace - numBoundaryFacets);
-        faceToFaceMap_.resize(2*numDofsFace - numBoundaryFacets);
+
+        // reinitialize maps
+        cellCenterToCellCenterMap_ = Map(numDofsCC);
+        cellCenterToFaceMap_ = Map(numDofsCC);
+        faceToCellCenterMap_ = Map(2*numDofsFace - numBoundaryFacets);
+        faceToFaceMap_ = Map(2*numDofsFace - numBoundaryFacets);
 
         // restrict the FvGeometry locally
         auto fvGeometry = localView(gridGeometry);
