@@ -1,70 +1,87 @@
 """Language-specific backends for install script generation"""
 
-import os
-import sys
 import textwrap
 from abc import ABC, abstractmethod
 from util.common import addPrefixToLines, escapeCharacters
 
 
 def getRawString(text):
-    def makeRaw(text): return repr(text)
-    def removeEnclosingQuotes(text): return text[1:-1]
+    """Get a raw string that can be written to file"""
+
+    def makeRaw(text):
+        return repr(text)
+
+    def removeEnclosingQuotes(text):
+        return text[1:-1]
+
     return removeEnclosingQuotes(makeRaw(text))
 
 
 class InstallScriptWriterInterface(ABC):
+    """Abstract writer interface to be implemented for dune module install script writers"""
+
     def __init__(self):
+        """Initialize"""
+        super().__init__()
         self.ostream = None
 
     def setOutputStream(self, stream):
+        """Where do we write to?"""
         self.ostream = stream
 
     @abstractmethod
     def writeSheBang(self):
-        pass
+        """
+        Write the she bang (first line of the script that
+        specifies program executing the script)
+        """
 
     @abstractmethod
     def writeComment(self, comment):
-        pass
+        """Write a code comment"""
 
     @abstractmethod
     def writeMessageOutput(self, message):
-        pass
+        """Write a message"""
 
     @abstractmethod
     def writePreamble(self, topFolderName=None):
-        pass
+        """Write the preamble of the script"""
 
     @abstractmethod
     def writeInstallation(self, dependency):
-        pass
+        """Write the installation process of module dependencies"""
 
     @abstractmethod
-    def writePatchApplication(self, folder, patchName):
-        pass
+    def writePatchApplication(self, folder, patchContent):
+        """Write the part that applies patches"""
 
     @abstractmethod
-    def writeConfiguration(self, optsFile):
-        pass
+    def writeConfiguration(self, opts):
+        """Write the configuration part"""
 
 
 class InstallScriptWriterBash(InstallScriptWriterInterface):
-    def __init__(self):
-        super().__init__()
+    """Write a bash install script"""
 
     def writeSheBang(self):
-        self.ostream.write('#!/bin/bash\n')
+        """Shebang for bash"""
+        self.ostream.write("#!/bin/bash\n")
 
     def writeComment(self, comment):
-        comment = addPrefixToLines('#', comment)
+        """Write a code comment"""
+        comment = addPrefixToLines("#", comment)
         self.ostream.write(comment)
 
     def writeMessageOutput(self, message):
+        """Write a message"""
         self.ostream.write(f'echo "{message}"\n')
 
     def writePreamble(self, topFolderName=None):
-        self.ostream.write(textwrap.dedent("""\
+        """Write preable of the script (utility functions)"""
+        self.ostream.write(
+            textwrap.dedent(
+                """\
 
             exitWithError()
             {
@@ -103,59 +120,73 @@ class InstallScriptWriterBash(InstallScriptWriterInterface):
                 popd
             }
 
-        """))
+        """
+            )
+        )
         top = topFolderName if topFolderName else "."
         self.ostream.write('TOP="{}"\n'.format(top))
-        self.ostream.write('mkdir -p $TOP\n')
-        self.ostream.write('cd $TOP\n')
+        self.ostream.write("mkdir -p $TOP\n")
+        self.ostream.write("cd $TOP\n")
 
     def writeInstallation(self, dependency):
-        self.ostream.write('installModule {} {} {} {}'
-                           .format(dependency['folder'],
-                                   dependency['remote'],
-                                   dependency['branch'],
-                                   dependency['revision']))
+        """Write installation part of the script"""
+        self.ostream.write(
+            "installModule {} {} {} {}".format(
+                dependency["folder"],
+                dependency["remote"],
+                dependency["branch"],
+                dependency["revision"],
+            )
+        )
 
     def writePatchApplication(self, folder, patchContent):
+        """Write patch application part of the script"""
+
         def removeEscapedSingleQuotes(line):
             return line.replace(r"\'", "'")
 
         self.ostream.write('PATCH="\n')
-        for line in patchContent.rstrip('\n').split('\n'):
+        for line in patchContent.rstrip("\n").split("\n"):
             line = getRawString(line)
             line = removeEscapedSingleQuotes(line)
             line = escapeCharacters(line, ['"', "$", "`"])
             self.ostream.write(line)
-            self.ostream.write('\n')
+            self.ostream.write("\n")
         self.ostream.write('"\n')
         self.ostream.write(f'applyPatch {folder} "$PATCH"')
 
     def writeConfiguration(self, opts):
+        """Write configure part of the script"""
         self.ostream.write(
-            f'if ! ./dune-common/bin/dunecontrol --opts={opts} all; then\n'
+            f"if ! ./dune-common/bin/dunecontrol --opts={opts} all; then\n"
             '    echo "Configuration of the project failed"\n'
-            '    exit 1\n'
-            'fi\n'
+            "    exit 1\n"
+            "fi\n"
         )
 
 
 class InstallScriptWriterPython(InstallScriptWriterInterface):
-    def __init__(self):
-        super().__init__()
+    """Write a Python install script"""
 
     def writeSheBang(self):
-        self.ostream.write('#!/usr/bin/env python3\n')
+        """Shebang for python3"""
+        self.ostream.write("#!/usr/bin/env python3\n")
 
     def writeComment(self, comment):
-        comment = addPrefixToLines('#', comment)
+        """Write a code comment"""
+        comment = addPrefixToLines("#", comment)
         self.ostream.write(comment)
 
     def writeMessageOutput(self, message):
+        """Write a message"""
         self.ostream.write(f'print("{message}")\n')
 
     def writePreamble(self, topFolderName=None):
+        """Write the preamble of the script"""
         top = topFolderName if topFolderName else "."
-        self.ostream.write(textwrap.dedent(f"""\
+        self.ostream.write(
+            textwrap.dedent(
+                f"""\
 
             import os
             import sys
@@ -184,7 +215,9 @@ class InstallScriptWriterPython(InstallScriptWriterInterface):
                     runFromSubFolder(['git', 'checkout', branch], subFolder)
                     runFromSubFolder(['git', 'reset', '--hard', revision], subFolder)
                 else:
-                    print(f'Skip cloning {{url}} since target folder "{{targetFolder}}" already exists.')
+                    print(
+                        f"Skip cloning {{url}} since target "{{targetFolder}}" already exists."
+                    )
 
 
             def applyPatch(subFolder, patch):
@@ -194,26 +227,34 @@ class InstallScriptWriterPython(InstallScriptWriterInterface):
                     patchFile.write(patch)
                 runFromSubFolder(['git', 'apply', 'tmp.patch'], subFolder)
                 os.remove(patchPath)
-        """))
+        """
+            )
+        )
 
     def writeInstallation(self, dependency):
-        self.ostream.write('installModule("{}", "{}", "{}", "{}")\n'
-                           .format(dependency['folder'],
-                                   dependency['remote'],
-                                   dependency['branch'],
-                                   dependency['revision']))
+        """Write installation part of the script"""
+        self.ostream.write(
+            'installModule("{}", "{}", "{}", "{}")\n'.format(
+                dependency["folder"],
+                dependency["remote"],
+                dependency["branch"],
+                dependency["revision"],
+            )
+        )
 
     def writePatchApplication(self, folder, patchContent):
+        """Write patch application part of the script"""
         self.ostream.write('patch = """\n')
-        for line in patchContent.rstrip('\n').split('\n'):
+        for line in patchContent.rstrip("\n").split("\n"):
             line = getRawString(line)
             self.ostream.write(escapeCharacters(line, ['"']))
-            self.ostream.write('\n')
+            self.ostream.write("\n")
         self.ostream.write('"""\n')
 
         self.ostream.write(f'applyPatch("{folder}", patch)\n')
 
     def writeConfiguration(self, opts):
+        """Write configure part of the script"""
         self.ostream.write(
             "runFromSubFolder(\n"
             f"    ['./dune-common/bin/dunecontrol', '--opts={opts}', 'all'],\n"

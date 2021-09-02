@@ -26,11 +26,11 @@ def _createPorousMediumFlowProblemDecorator(
         problemType = (
             "Dumux::Python::PorousMediumFlowProblem" f"<{ggType}, {priVars}, {spType}, {enableIDC}>"
         )
-        includes = (
-            gridGeometry._includes
-            + spatialParams._includes
-            + ["dumux/python/porousmediumflow/problem.hh"]
-        )
+        includes = [
+            *(gridGeometry._includes),
+            *(spatialParams._includes),
+            *["dumux/python/porousmediumflow/problem.hh"],
+        ]
         moduleName = "fvproblem_" + hashIt(problemType)
         generator = SimpleGenerator("PorousMediumFlowProblem", "Dumux::Python")
         module = generator.load(includes, problemType, moduleName, holder="std::shared_ptr")
