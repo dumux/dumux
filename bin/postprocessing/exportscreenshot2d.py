@@ -2,7 +2,7 @@
 """
 Script for exporting 2d screenshots from ParaView
 
-Make add the following:
+The following capabilities may be added in the future
 - different colors for legend
 - read-in pvds with time outputs
 - read-in multiple vtus, e.g. for multidomain
@@ -26,7 +26,7 @@ try:
         SaveScreenshot,
     )
 except ImportError:
-    print("`paraview.simple` not found. Make sure using pvbatch.")
+    print("`paraview.simple` not found. Make sure to call this using pvbatch or pvpython.")
 
 parameterType = ["CELLS", "POINTS"]
 legendOrientation = ["Horizontal", "Vertical"]
