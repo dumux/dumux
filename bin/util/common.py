@@ -198,9 +198,9 @@ def queryYesNo(question, default="yes"):
 def cppHeaderFilter():
     """
     Filter out source files that are not headers
-    (sources are determined by looking for config.h)
+    (consider everything except for config.h)
     """
-    return lambda fileName: fileName == "config.h"
+    return lambda fileName: fileName != "config.h"
 
 
 def includedCppProjectHeaders(file, projectBase, headers=None, headerFilter=cppHeaderFilter()):
@@ -219,7 +219,7 @@ def includedCppProjectHeaders(file, projectBase, headers=None, headerFilter=cppH
         def process(pathInProject):
             headerPath = os.path.join(projectBase, pathInProject)
             if os.path.exists(headerPath):
-                if not headerFilter(pathInProject):
+                if headerFilter(pathInProject):
                     if headerPath not in headers:
                         headers.append(headerPath)
                         includedCppProjectHeaders(headerPath, projectBase, headers, headerFilter)
