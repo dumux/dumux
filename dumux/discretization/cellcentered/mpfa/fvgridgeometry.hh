@@ -251,11 +251,11 @@ private:
         scvs_.resize(numScvs);
         scvfs_.reserve(numScvf);
         scvfIndicesOfScv_.resize(numScvs);
-        hasBoundaryScvf_.resize(numScvs, false);
+        hasBoundaryScvf_.assign(numScvs, false);
 
         // Some methods require to use a second type of interaction volume, e.g.
         // around vertices on the boundary or branching points (surface grids)
-        secondaryInteractionVolumeVertices_.resize(numVert, false);
+        secondaryInteractionVolumeVertices_.assign(numVert, false);
 
         // find vertices on processor boundaries
         const auto isGhostVertex = MpfaHelper::findGhostVertices(this->gridView(), this->vertexMapper());
@@ -639,7 +639,7 @@ private:
         // Some methods require to use a second type of interaction volume, e.g.
         // around vertices on the boundary or branching points (surface grids)
         const auto numVert = this->gridView().size(dim);
-        secondaryInteractionVolumeVertices_.resize(numVert, false);
+        secondaryInteractionVolumeVertices_.assign(numVert, false);
 
         // find vertices on processor boundaries HERE!!
         isGhostVertex_ = MpfaHelper::findGhostVertices(this->gridView(), this->vertexMapper());
