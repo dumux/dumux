@@ -68,7 +68,7 @@ dumux_add_test(NAME test_md_boundary_darcy1p2cbox_stokes1p2c_vertical_diffusion
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
-                      --zeroThreshold {"velocity_liq \(m/s\)":1e-20}
+                      --zeroThreshold {"velocity_liq \(m/s\)":1e-16}
                       --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_darcy1p2cbox_stokes1p2c_vertical_diffusion_stokes-reference.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p2cbox_stokes1p2c_vertical_diffusion_stokes-00003.vtu
                               ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_darcy1p2cbox_stokes1p2c_vertical_diffusion_darcy-reference.vtu

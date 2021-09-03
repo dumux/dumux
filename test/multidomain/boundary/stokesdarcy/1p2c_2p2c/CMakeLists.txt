@@ -60,8 +60,9 @@ dumux_add_test(NAME test_md_boundary_darcy2p2cnibox_stokes1p2cni_horizontal
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                               --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_darcy2p2cnibox_stokes1p2cni_horizontal_stokes-reference.vtu
-                                      ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy2p2cnibox_stokes1p2cni_horizontal_stokes-00044.vtu
+                                      ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy2p2cnibox_stokes1p2cni_horizontal_stokes-00040.vtu
                                       ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_darcy2p2cnibox_stokes1p2cni_horizontal_darcy-reference.vtu
-                                      ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy2p2cnibox_stokes1p2cni_horizontal_darcy-00044.vtu
+                                      ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy2p2cnibox_stokes1p2cni_horizontal_darcy-00040.vtu
                               --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy2p2cnibox_stokes1p2cni_horizontal params_nonisothermal.input
-                              -Vtk.OutputName test_md_boundary_darcy2p2cnibox_stokes1p2cni_horizontal")
+                              -Vtk.OutputName test_md_boundary_darcy2p2cnibox_stokes1p2cni_horizontal
+                              -Newton.MaxRelativeShift  2e-5")
