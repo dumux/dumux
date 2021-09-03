@@ -640,15 +640,7 @@ public:
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState);
 
-        ComponentVector fug;
-        // retrieve component fugacities
-        for (int compIdx = 0; compIdx < numFluidComps; ++compIdx)
-            fug[compIdx] = priVars[Indices::fug0Idx + compIdx];
-
-         updateMoleFraction(fluidState,
-                            paramCache,
-                            priVars);
-
+        updateMoleFraction(fluidState, paramCache, priVars);
 
         // dynamic viscosities
         for (int phaseIdx = 0; phaseIdx < numFluidPhases(); ++phaseIdx) {
