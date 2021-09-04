@@ -72,7 +72,7 @@ public:
     //! Reset all flags
     void reset(const std::size_t numDofs)
     {
-        wasSwitched_.resize(numDofs, false);
+        wasSwitched_.assign(numDofs, false);
     }
 
     /*!
