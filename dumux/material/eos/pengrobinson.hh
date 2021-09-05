@@ -25,8 +25,10 @@
  * See:
  *
  * D.-Y. Peng, D.B. Robinson (1976, pp. 59–64) \cite peng1976 <BR>
+ * https://doi.org/10.1021/i160057a011
  *
- * R. Reid, et al. (1987, pp. 42-44, 82) \cite reid1987
+ * R. Reid, et al. "The properties of gases and liquids" (1987, pp. 42-44, 82)
+ * \cite reid1987
  */
 #ifndef DUMUX_PENG_ROBINSON_HH
 #define DUMUX_PENG_ROBINSON_HH
@@ -212,6 +214,20 @@ public:
         using std::isfinite;
         assert(isfinite(Vm) && Vm > 0);
         return Vm;
+    }
+
+    /*!
+     * \brief Returns the critical temperature for a given mix
+     *
+     * \param params EOS (equation of state) parameters of a single-component fluid \
+     *        (usually PengRobinsonParms) or a mixture (usually PengRobinsonMixtureParams)
+     */
+    template <class Params>
+    static Scalar criticalTemperature(const Params &params)
+    {
+        // Here, a() is the attractive force parameter and b()
+        // is the repulsive force parameter of the EOS
+        return criticalTemperature_(params.a(), params.b());
     }
 
     /*!
