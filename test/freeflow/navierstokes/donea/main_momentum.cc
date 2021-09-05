@@ -46,6 +46,42 @@
 
 #include "properties_momentum.hh"
 
+template<class GridGeometry, class GridVariables, class SolutionVector>
+void updateVelocities(
+    std::vector<Dune::FieldVector<double, 2>>& velocity,
+    std::vector<Dune::FieldVector<double, 2>>& faceVelocity,
+    const GridGeometry& gridGeometry,
+    const GridVariables& gridVariables,
+    const SolutionVector& x
+){
+    auto fvGeometry = localView(gridGeometry);
+    auto elemVolVars = localView(gridVariables.curGridVolVars());
+    for (const auto& element : elements(gridGeometry.gridView()))
+    {
+        fvGeometry.bind(element);
+        elemVolVars.bind(element, fvGeometry, x);
+
+        for (const auto& scv : scvs(fvGeometry))
+        {
+            const auto& vars = elemVolVars[scv];
+            velocity[scv.elementIndex()][scv.dofAxis()] += 0.5*vars.velocity();
+            faceVelocity[scv.dofIndex()][scv.dofAxis()] = vars.velocity();
+        }
+    }
+}
+
+template<class GridGeometry>
+void updateRank(
+    std::vector<int>& rank,
+    const GridGeometry& gridGeometry
+){
+    for (const auto& element : elements(gridGeometry.gridView(), Dune::Partitions::interior))
+    {
+        const auto eIdxGlobal = gridGeometry.elementMapper().index(element);
+        rank[eIdxGlobal] = gridGeometry.gridView().comm().rank();
+    }
+}
+
 int main(int argc, char** argv)
 {
     using namespace Dumux;
@@ -82,6 +118,38 @@ int main(int argc, char** argv)
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
+    std::vector<Dune::FieldVector<double, 2>> velocity(gridGeometry->gridView().size(0));
+    std::vector<Dune::FieldVector<double, 2>> faceVelocity(x.size());
+    updateVelocities(velocity, faceVelocity, *gridGeometry, *gridVariables, x);
+
+    std::vector<int> rank(gridGeometry->gridView().size(0));
+    updateRank(rank, *gridGeometry);
+
+    std::vector<std::size_t> dofIdx(x.size());
+    for (const auto& facet : facets(gridGeometry->gridView()))
+    {
+        const auto idx = gridGeometry->gridView().indexSet().index(facet);
+        dofIdx[idx] = idx;
+    }
+
+    Dune::VTKWriter<typename GridGeometry::GridView> writer(gridGeometry->gridView());
+    using Field = Vtk::template Field<typename GridGeometry::GridView>;
+    writer.addCellData(Field(
+        gridGeometry->gridView(), gridGeometry->elementMapper(), velocity,
+        "velocity", /*numComp*/2, /*codim*/0
+    ).get());
+    writer.addCellData(rank, "rank");
+    writer.write("donea_momentum_0");
+
+    ConformingIntersectionWriter faceVtk(gridGeometry->gridView());
+    faceVtk.addField(dofIdx, "dofIdx");
+    faceVtk.addField(faceVelocity, "velocityVector");
+    faceVtk.addField([&](const auto& is, const auto idx) {
+        const auto& facet = is.inside().template subEntity <1> (is.indexInInside());
+        return facet.partitionType();
+    }, "partitionType");
+    faceVtk.write("donea_momentum_face_0_" + std::to_string(gridGeometry->gridView().comm().rank()), Dune::VTK::ascii);
+
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
@@ -97,60 +165,9 @@ int main(int argc, char** argv)
     ////////////////////////////////////////////////////////////
     // write VTK output
     ////////////////////////////////////////////////////////////
-
-    std::vector<Dune::FieldVector<double,2>> velocity(gridGeometry->gridView().size(0));
-    std::vector<Dune::FieldVector<double,2>> faceVelocityVector(x.size());
-    for (const auto& element : elements(gridGeometry->gridView()))
-    {
-        auto fvGeometry = localView(*gridGeometry);
-        fvGeometry.bind(element);
-
-        auto elemVolVars = localView(gridVariables->curGridVolVars());
-        elemVolVars.bind(element, fvGeometry, x);
-        const auto eIdx = gridGeometry->elementMapper().index(element);
-
-        for (const auto& scv : scvs(fvGeometry))
-        {
-            velocity[eIdx][scv.dofAxis()] += 0.5*elemVolVars[scv].velocity();
-            faceVelocityVector[scv.dofIndex()][scv.dofAxis()] = elemVolVars[scv].velocity();
-        }
-    }
-
-    Dune::VTKWriter<std::decay_t<decltype(gridGeometry->gridView())>> writer(gridGeometry->gridView());
-    using Field = Vtk::template Field<std::decay_t<decltype(gridGeometry->gridView())>>;
-    writer.addCellData(Field(
-        gridGeometry->gridView(), gridGeometry->elementMapper(), velocity,
-        "velocity", /*numComp*/2, /*codim*/0
-    ).get());
-
-    std::vector<int> rank(gridGeometry->gridView().size(0));
-    for (const auto& element : elements(gridGeometry->gridView(), Dune::Partitions::interior))
-    {
-        const auto eIdxGlobal = gridGeometry->elementMapper().index(element);
-        rank[eIdxGlobal] = gridGeometry->gridView().comm().rank();
-    }
-
-    writer.addCellData(rank, "rank");
-    writer.write("donea_new_momentum");
-
-    ConformingIntersectionWriter faceVtk(gridGeometry->gridView());
-    std::vector<std::size_t> dofIdx(x.size());
-    for (const auto& facet : facets(gridGeometry->gridView()))
-    {
-        const auto idx = gridGeometry->gridView().indexSet().index(facet);
-        dofIdx[idx] = idx;
-    }
-    faceVtk.addField(dofIdx, "dofIdx");
-    faceVtk.addField(faceVelocityVector, "velocityVector");
-
-    const auto partionType = [&](const auto& is, const auto idx)
-    {
-        const auto& facet = is.inside().template subEntity <1> (is.indexInInside());
-        return facet.partitionType();
-    };
-
-    faceVtk.addField(partionType, "partitionType");
-    faceVtk.write("facedata_" + std::to_string(gridGeometry->gridView().comm().rank()), Dune::VTK::ascii);
+    updateVelocities(velocity, faceVelocity, *gridGeometry, *gridVariables, x);
+    writer.write("donea_momentum_1");
+    faceVtk.write("donea_momentum_face_1_" + std::to_string(gridGeometry->gridView().comm().rank()), Dune::VTK::ascii);
 
     ////////////////////////////////////////////////////////////
     // finalize, print parameters and Dumux message to say goodbye

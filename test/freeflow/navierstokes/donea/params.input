@@ -23,7 +23,7 @@ MaxRelativeShift = 1e-5
 WriteFaceData = false
 
 [LinearSolver]
-Type = bicgstabsolver
+Type = cgsolver
 #Type = restartedgmressolver
 Verbosity = 1
 ResidualReduction = 1e-13
