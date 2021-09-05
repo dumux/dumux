@@ -105,19 +105,13 @@ int main(int argc, char** argv)
 
     if (printErrors || printConvergenceTestFile)
     {
-        const Dumux::NavierStokesErrors<Problem> errors(problem, sol);
-
-        if (printErrors)
-        {
-            const NavierStokesErrorCSVWriter<Problem> errorCSVWriter(problem, errors);
-            errorCSVWriter.printErrors(errors);
-        }
+        NavierStokesErrors errors(problem, sol);
+        NavierStokesErrorCSVWriter(
+            problem, std::to_string(sol[GridGeometry::cellCenterIdx()].size())
+        ).printErrors(errors);
 
         if (printConvergenceTestFile)
-        {
-            const NavierStokesErrorConvergenceTestFileWriter<Problem> errorConvergenceTestFileWriter(problem);
-            errorConvergenceTestFileWriter.printConvergenceTestFile(errors);
-        }
+            convergenceTestAppendErrors(problem, errors);
     }
 
     // print dumux end message

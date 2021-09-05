@@ -158,19 +158,13 @@ int main(int argc, char** argv)
 
     if (printErrors || printConvergenceTestFile)
     {
-        const Dumux::NavierStokesErrors<Problem> errors(problem,x);
-
-        if (printErrors)
-        {
-            const NavierStokesErrorCSVWriter<Problem> errorCSVWriter(problem, errors);
-            errorCSVWriter.printErrors(errors);
-        }
+        NavierStokesErrors errors(problem, x);
+        NavierStokesErrorCSVWriter(
+            problem, std::to_string(x[GridGeometry::cellCenterIdx()].size())
+        ).printErrors(errors);
 
         if (printConvergenceTestFile)
-        {
-            const NavierStokesErrorConvergenceTestFileWriter<Problem> errorConvergenceTestFileWriter(problem);
-            errorConvergenceTestFileWriter.printConvergenceTestFile(errors);
-        }
+            convergenceTestAppendErrors(problem, errors);
     }
 
     // write vtk output

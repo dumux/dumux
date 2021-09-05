@@ -30,59 +30,63 @@
 #include <dumux/io/format.hh>
 
 namespace Dumux {
+
+/*!
+ * \brief Compute errors between an analytical solution and the numerical approximation
+ */
 template<class Problem, class Scalar = double>
 class NavierStokesErrors
 {
     using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
-    using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
     using Extrusion = Extrusion_t<GridGeometry>;
     using Indices = typename Problem::Indices;
-    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
-    using PrimaryVariables = std::decay_t<decltype(std::declval<Problem>().dirichlet(std::declval<Element>(), std::declval<SubControlVolume>()))>;
+    using Element = typename GridGeometry::LocalView::Element;
+    using PrimaryVariables = std::decay_t<decltype(
+        std::declval<Problem>().dirichlet(std::declval<Element>(), std::declval<SubControlVolume>())
+    )>;
 
     static constexpr int dim = GridGeometry::GridView::dimension;
 
 public:
     template<class SolutionVector>
     NavierStokesErrors(std::shared_ptr<const Problem> problem,
-                      const SolutionVector& curSol,
-                      Scalar time=0.0)
+                       const SolutionVector& curSol,
+                       Scalar time = 0.0)
     : problem_(problem)
-    {
-        calculateErrors_(curSol, time);
-    }
+    { calculateErrors_(curSol, time); }
 
-   /*!
-    * \brief Updates the discrete L2 and Linfinity error between the analytical solution and the numerical approximation.
-    *
-    * \param curSol Vector containing the current solution
-    */
+    /*!
+     * \brief Computes errors between an analytical solution and the numerical approximation
+     *
+     * \param curSol The current solution vector
+     * \param time The current time
+     */
     template<class SolutionVector>
-    void update(const SolutionVector& curSol,
-                Scalar time=0.0)
-    {
-        calculateErrors_(curSol, time);
-    }
+    void update(const SolutionVector& curSol, Scalar time = 0.0)
+    { calculateErrors_(curSol, time); }
 
-    const std::array<PrimaryVariables, 4>& errorsArray() const
-    {
-        return errors_;
-    }
+    //! The (absolute) discrete l2 error
+    const PrimaryVariables& l2Absolute() const { return l2Absolute_; }
+    //! The relative discrete l2 error (relative to the discrete l2 norm of the reference solution)
+    const PrimaryVariables& l2Relative() const { return l2Relative_; }
+    //! The (absolute) discrete l-infinity error
+    const PrimaryVariables& lInfAbsolute() const { return lInfAbsolute_; }
+    //! The relative discrete l-infinity error (relative to the discrete loo norm of the reference solution)
+    const PrimaryVariables& lInfRelative() const { return lInfRelative_; }
 
-    const std::array<std::string, 4>& errorNames() const
-    {
-        return errorNames_;
-    }
+    //! Time corresponding to the error (returns 0 per default)
+    Scalar time() const { return time_; }
 
 private:
     template<class SolutionVector>
-    void calculateErrors_(const SolutionVector& curSol,
-                          Scalar time)
+    void calculateErrors_(const SolutionVector& curSol, Scalar time)
     {
+        // store time information
+        time_ = time;
+
         // calculate helping variables
-        Scalar totalVolume = 0.;
+        Scalar totalVolume = 0.0;
 
         PrimaryVariables sumReference(0.0);
         PrimaryVariables sumError(0.0);
@@ -94,98 +98,84 @@ private:
         {
             fvGeometry.bindElement(element);
 
-            for (auto&& scv : scvs(fvGeometry))
+            for (const auto& scv : scvs(fvGeometry))
             {
                 totalVolume += Extrusion::volume(scv);
 
-                processPressure_(curSol, scv, sumReference[Indices::pressureIdx], sumError[Indices::pressureIdx], maxReference[Indices::pressureIdx], maxError[Indices::pressureIdx], time);
+                // compute the pressure errors
+                const auto analyticalSolutionCellCenter
+                    = problem_->analyticalSolution(scv.dofPosition(), time)[Indices::pressureIdx];
+                const auto numericalSolutionCellCenter
+                    = curSol[GridGeometry::cellCenterIdx()][scv.dofIndex()][Indices::pressureIdx - dim];
 
-                // treat face dofs
-                for (auto&& scvf : scvfs(fvGeometry))
+                const Scalar pError = absDiff_(analyticalSolutionCellCenter, numericalSolutionCellCenter);
+                const Scalar pReference = absDiff_(analyticalSolutionCellCenter, 0.0);
+
+                maxError[Indices::pressureIdx] = std::max(maxError[Indices::pressureIdx], pError);
+                maxReference[Indices::pressureIdx] = std::max(maxReference[Indices::pressureIdx], pReference);
+                sumError[Indices::pressureIdx] += pError * pError * Extrusion::volume(scv);
+                sumReference[Indices::pressureIdx] += pReference * pReference * Extrusion::volume(scv);
+
+                for (const auto& scvf : scvfs(fvGeometry))
                 {
-                    unsigned int index = Indices::velocity(scvf.directionIndex());
-                    processVelocity_(curSol, scv, scvf, sumReference[index], sumError[index], maxReference[index], maxError[index], time);
+                    // compute the velocity errors
+                    const auto velocityIndex = Indices::velocity(scvf.directionIndex());
+
+                    const Scalar staggeredHalfVolume = Extrusion::volume(
+                        typename GridGeometry::Traits::FaceSubControlVolume(
+                            0.5*(scv.center() + scvf.center()), 0.5*Extrusion::volume(scv)
+                        )
+                    );
+
+                    const auto analyticalSolutionFace = problem_->analyticalSolution(scvf.center(), time)[velocityIndex];
+                    const auto numericalSolutionFace = curSol[GridGeometry::faceIdx()][scvf.dofIndex()][0];
+
+                    const Scalar velError = absDiff_(analyticalSolutionFace, numericalSolutionFace);
+                    const Scalar velReference = absDiff_(analyticalSolutionFace, 0.0);
+
+                    maxError[velocityIndex] = std::max(maxError[velocityIndex], velError);
+                    maxReference[velocityIndex] = std::max(maxReference[velocityIndex], velReference);
+                    sumError[velocityIndex] += velError * velError * staggeredHalfVolume;
+                    sumReference[velocityIndex] += velReference * velReference * staggeredHalfVolume;
                 }
             }
         }
 
         // calculate errors
-        for (unsigned int i = 0; i < errors_[0].size(); ++i)
+        for (int i = 0; i < PrimaryVariables::size(); ++i)
         {
-            errors_[0][i] = std::sqrt(sumError[i] / totalVolume); //L2Abs
-            errors_[1][i] = std::sqrt(sumError[i] / sumReference[i]); //L2Rel
-            errors_[2][i] = maxError[i]; //LinfAbs
-            errors_[3][i] = maxError[i] / maxReference[i]; //LinfRel
+            l2Absolute_[i] = std::sqrt(sumError[i] / totalVolume);
+            l2Relative_[i] = std::sqrt(sumError[i] / sumReference[i]);
+            lInfAbsolute_[i] = maxError[i];
+            lInfRelative_[i] = maxError[i] / maxReference[i];
         }
     }
 
     template<class T>
     T absDiff_(const T& a, const T& b) const
-    {
-        return std::abs(a-b);
-    }
-
-    template<class SolutionVector>
-    void processPressure_(const SolutionVector& curSol,
-                          const SubControlVolume& scv,
-                          Scalar& sumPReference,
-                          Scalar& sumPError,
-                          Scalar& maxPReference,
-                          Scalar& maxPError,
-                          Scalar time) const
-    {
-        const auto analyticalSolutionCellCenter = problem_->analyticalSolution(scv.dofPosition(), time)[Indices::pressureIdx];
-        const auto numericalSolutionCellCenter = curSol[GridGeometry::cellCenterIdx()][scv.dofIndex()][Indices::pressureIdx - dim];
-
-        const Scalar pError = absDiff_(analyticalSolutionCellCenter, numericalSolutionCellCenter);
-        const Scalar pReference = absDiff_(analyticalSolutionCellCenter, 0.0);
-
-        maxPError = std::max(maxPError, pError);
-        maxPReference = std::max(maxPReference, pReference);
-        sumPError += pError * pError * Extrusion::volume(scv);
-        sumPReference += pReference * pReference * Extrusion::volume(scv);
-    }
-
-    template<class SolutionVector>
-    void processVelocity_(const SolutionVector& curSol,
-                          const SubControlVolume& scv,
-                          const SubControlVolumeFace& scvf,
-                          Scalar& sumVelReference,
-                          Scalar& sumVelError,
-                          Scalar& maxVelReference,
-                          Scalar& maxVelError,
-                          Scalar time) const
-    {
-        auto faceScvCenter = scv.center() + scvf.center();
-        faceScvCenter *= 0.5;
-        typename GridGeometry::Traits::FaceSubControlVolume faceScv(faceScvCenter, 0.5*Extrusion::volume(scv));
-        const Scalar staggeredHalfVolume = Extrusion::volume(faceScv);
-
-        const auto analyticalSolutionFace = problem_->analyticalSolution(scvf.center(), time)[Indices::velocity(scvf.directionIndex())];
-        const auto numericalSolutionFace = curSol[GridGeometry::faceIdx()][scvf.dofIndex()][0];
-
-        const Scalar velError = absDiff_(analyticalSolutionFace, numericalSolutionFace);
-        const Scalar velReference = absDiff_(analyticalSolutionFace, 0.0);
-
-        maxVelError = std::max(maxVelError, velError);
-        maxVelReference = std::max(maxVelReference, velReference);
-        sumVelError += velError * velError * staggeredHalfVolume;
-        sumVelReference += velReference * velReference * staggeredHalfVolume;
-    }
+    { using std::abs; return abs(a-b); }
 
     std::shared_ptr<const Problem> problem_;
-    std::array<PrimaryVariables, 4> errors_ = {};
-    std::array<std::string, 4> errorNames_ = {"L2Abs", "L2Rel", "LinfAbs", "LinfRel"};
+
+    PrimaryVariables l2Absolute_;
+    PrimaryVariables l2Relative_;
+    PrimaryVariables lInfAbsolute_;
+    PrimaryVariables lInfRelative_;
+    Scalar time_;
 };
 
-template<class Problem>
-NavierStokesErrors(std::shared_ptr<Problem> p)
+template<class Problem, class SolutionVector>
+NavierStokesErrors(std::shared_ptr<Problem>, SolutionVector&&)
 -> NavierStokesErrors<Problem>;
 
-template<class Problem, class Scalar>
-NavierStokesErrors(std::shared_ptr<Problem> p, Scalar t)
+template<class Problem, class SolutionVector, class Scalar>
+NavierStokesErrors(std::shared_ptr<Problem>, SolutionVector&&, Scalar)
 -> NavierStokesErrors<Problem, Scalar>;
 
+
+/*!
+ * \brief An error CSV file writer
+ */
 template<class Problem, class Scalar = double>
 class NavierStokesErrorCSVWriter
 {
@@ -195,119 +185,107 @@ class NavierStokesErrorCSVWriter
     static constexpr int dim = GridGeometry::GridView::dimension;
 
 public:
-    NavierStokesErrorCSVWriter(std::shared_ptr<const Problem> problem,
-                               const NavierStokesErrors<Problem>& errors)
+    NavierStokesErrorCSVWriter(std::shared_ptr<const Problem> problem, const std::string& suffix = "")
+    : name_(problem->name() + (suffix.empty() ? "_error" : "_error_" + suffix))
     {
-        name_ = problem->name();
         const int numCCDofs = problem->gridGeometry().numCellCenterDofs();
         const int numFaceDofs = problem->gridGeometry().numFaceDofs();
 
-        //prepare headlines in the error file
-        std::ofstream logFile(name_ + "_error.csv");
+        // print auxiliary file with the number of dofs
+        std::ofstream logFileDofs(name_ + "_dofs.csv", std::ios::trunc);
+        logFileDofs << "cc dofs, face dofs, all dofs\n"
+                    << numCCDofs << numFaceDofs << numCCDofs + numFaceDofs << "\n";
 
-        logFile << "cc dofs, face dofs, all dofs" << std::endl;
+        // clear error file
+        std::ofstream logFile(name_ + ".csv", std::ios::trunc);
 
-        logFile << Fmt::format("{},{},{}",numCCDofs,numFaceDofs,numCCDofs + numFaceDofs) << std::endl << std::endl;
-
-        logFile << ",";
-        for (const auto& errorName : errors.errorNames())
-        {
-            logFile << errorName <<",";
-            for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
-                logFile << ",";
-        }
-        logFile << std::endl;
-
+        // write header
         logFile << "time";
-        for (unsigned int i = 0; i < errors.errorsArray().size(); ++i)
-        {
-            auto uvw = [&](unsigned int dirIdx)
-            {
-                if (dirIdx == 0)
-                    return "u";
-                else if (dirIdx == 1)
-                    return "v";
-                else if (dirIdx == 2)
-                    return "w";
-                else
-                    DUNE_THROW(Dune::InvalidStateException, "dim > 3 not allowed.");
-            };
-
-            logFile << ",p";
-            for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
-                logFile << Fmt::format(",{}",uvw(dirIdx));
-        }
-        logFile << std::endl;
+        using ErrorNames = std::vector<std::string>;
+        for (const std::string& e : { "L2Abs", "L2Rel", "LinfAbs", "LinfRel" })
+            printError_(logFile, ErrorNames({ e + "(p)", e + "(u)", e + "(v)", e + "(w)" }), "{:s}");
+        logFile << "\n";
     }
 
-    void printErrors(const NavierStokesErrors<Problem>& errors,
-                     Scalar time = 0.0) const
+    void printErrors(const NavierStokesErrors<Problem>& errors) const
     {
-        std::ofstream logFile(name_ + "_error.csv", std::ios::app);
-        logFile << Fmt::format("{}", time);
+        // append to error file
+        std::ofstream logFile(name_ + ".csv", std::ios::app);
 
-        for (const auto& error : errors.errorsArray())
-        {
-            logFile << Fmt::format(",{}",error[Indices::pressureIdx]);
-            for (unsigned int dirIdx = 0; dirIdx < dim; ++dirIdx)
-                logFile << Fmt::format(",{}",error[Indices::velocity(dirIdx)]);
-        }
+        logFile << Fmt::format("{:.5e}", errors.time());
+        printError_(logFile, errors.l2Absolute());
+        printError_(logFile, errors.l2Relative());
+        printError_(logFile, errors.lInfAbsolute());
+        printError_(logFile, errors.lInfRelative());
 
-        logFile << std::endl;
+        logFile << "\n";
     }
 
 private:
+    template<class Error>
+    void printError_(std::ofstream& logFile, const Error& error, const std::string& format = "{:.5e}") const
+    {
+        logFile << Fmt::format(", " + format, error[Indices::pressureIdx]);
+        for (int dirIdx = 0; dirIdx < dim; ++dirIdx)
+            logFile << Fmt::format(", " + format, error[Indices::velocity(dirIdx)]);
+    }
+
     std::string name_;
 };
 
 template<class Problem>
-NavierStokesErrorCSVWriter(std::shared_ptr<Problem> p)
+NavierStokesErrorCSVWriter(std::shared_ptr<Problem>)
 -> NavierStokesErrorCSVWriter<Problem>;
 
-template<class Problem, class Scalar>
-NavierStokesErrorCSVWriter(std::shared_ptr<Problem> p, Scalar t)
--> NavierStokesErrorCSVWriter<Problem, Scalar>;
-
-template<class Problem, class Scalar = double>
-class NavierStokesErrorConvergenceTestFileWriter
-{
-    using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
-    using Indices = typename Problem::Indices;
-
-    static constexpr int dim = GridGeometry::GridView::dimension;
-
-public:
-    NavierStokesErrorConvergenceTestFileWriter(std::shared_ptr<const Problem> problem)
-    {
-        name_ = problem->name();
-        numCCDofs_ = problem->gridGeometry().numCellCenterDofs();
-        numFaceDofs_ = problem->gridGeometry().numFaceDofs();
-    }
-
-    void printConvergenceTestFile(const NavierStokesErrors<Problem>& errors) const
-    {
-        std::ofstream logFile(name_ + ".log", std::ios::app);
-        logFile << Fmt::format("[ConvergenceTest] numCCDofs = {} numFaceDofs = {}", numCCDofs_, numFaceDofs_);
-        for (unsigned int i = 0; i < errors.errorNames().size(); ++i)
-        {
-            logFile << Fmt::format(" {}(p) = {} {}(vx) = {} {}(vy) = {}", errors.errorNames()[i], errors.errorsArray()[i][Indices::pressureIdx], errors.errorNames()[i], errors.errorsArray()[i][Indices::velocityXIdx] , errors.errorNames()[i], errors.errorsArray()[i][Indices::velocityYIdx]);
-        }
-        logFile << std::endl;
-    }
-
-private:
-    std::string name_;
-    int numCCDofs_;
-    int numFaceDofs_;
-};
-
 template<class Problem>
-NavierStokesErrorConvergenceTestFileWriter(std::shared_ptr<Problem> p)
--> NavierStokesErrorConvergenceTestFileWriter<Problem>;
+NavierStokesErrorCSVWriter(std::shared_ptr<Problem>, const std::string&)
+-> NavierStokesErrorCSVWriter<Problem>;
 
-template<class Problem, class Scalar>
-NavierStokesErrorConvergenceTestFileWriter(std::shared_ptr<Problem> p, Scalar t)
--> NavierStokesErrorConvergenceTestFileWriter<Problem, Scalar>;
+
+/*!
+ * \brief Append errors to the log file during a convergence test
+ */
+template<class Problem>
+void convergenceTestAppendErrors(std::ofstream& logFile,
+                                 std::shared_ptr<Problem> problem,
+                                 const NavierStokesErrors<Problem>& errors)
+{
+    const auto numCCDofs = problem->gridGeometry().numCellCenterDofs();
+    const auto numFaceDofs = problem->gridGeometry().numFaceDofs();
+
+    logFile << Fmt::format(
+        "[ConvergenceTest] numCCDofs = {} numFaceDofs = {}",
+        numCCDofs, numFaceDofs
+    );
+
+    const auto print = [&](const auto& e, const std::string& name){
+        using Indices = typename Problem::Indices;
+        logFile << Fmt::format(
+            " {0}(p) = {1} {0}(vx) = {2} {0}(vy) = {3}",
+            name, e[Indices::pressureIdx], e[Indices::velocityXIdx], e[Indices::velocityYIdx]
+        );
+    };
+
+    print(errors.l2Absolute(), "L2Abs");
+    print(errors.l2Relative(), "L2Rel");
+    print(errors.lInfAbsolute(), "LinfAbs");
+    print(errors.lInfRelative(), "LinfRel");
+
+    logFile << "\n";
+}
+
+/*!
+ * \brief Append errors to the log file during a convergence test
+ */
+template<class Problem>
+void convergenceTestAppendErrors(std::shared_ptr<Problem> problem,
+                                 const NavierStokesErrors<Problem>& errors)
+{
+    const auto logFileName = problem->name() + ".log";
+    std::ofstream logFile(logFileName, std::ios::app);
+    convergenceTestAppendErrors(logFile, problem, errors);
+}
+
 } // end namespace Dumux
 
 #endif

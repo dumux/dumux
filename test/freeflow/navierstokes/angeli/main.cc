@@ -134,8 +134,8 @@ int main(int argc, char** argv)
 
     // the discrete L2 and Linfity errors
     const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
-    NavierStokesErrors<Problem> errors(problem,x,0.0);
-    const NavierStokesErrorCSVWriter<Problem> errorCSVWriter(problem, errors);
+    NavierStokesErrors errors(problem, x, 0.0);
+    NavierStokesErrorCSVWriter errorCSVWriter(problem);
 
     // time loop
     timeLoop->start(); do
@@ -152,8 +152,8 @@ int main(int argc, char** argv)
         // print discrete L2 and Linfity errors
         if (printErrors)
         {
-            errors.update(x,timeLoop->time() + timeLoop->timeStepSize());
-            errorCSVWriter.printErrors(errors, timeLoop->time() + timeLoop->timeStepSize());
+            errors.update(x, timeLoop->time() + timeLoop->timeStepSize());
+            errorCSVWriter.printErrors(errors);
         }
 
         // update the analytical solution

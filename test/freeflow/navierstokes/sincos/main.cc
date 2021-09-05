@@ -185,8 +185,9 @@ int main(int argc, char** argv)
 
     // the discrete L2 and Linfity errors
     const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
-    NavierStokesErrors<Problem> errors(problem,x);
-    const NavierStokesErrorCSVWriter<Problem> errorCSVWriter(problem, errors);
+    const bool printConvergenceTestFile = getParam<bool>("Problem.PrintConvergenceTestFile", false);
+    NavierStokesErrors errors(problem, x);
+    NavierStokesErrorCSVWriter errorCSVWriter(problem);
 
     if (isStationary)
     {
@@ -195,21 +196,13 @@ int main(int argc, char** argv)
         nonLinearSolver.solve(x);
 
         // print discrete L2 and Linfity errors
-        if (printErrors)
+        if (printErrors || printConvergenceTestFile)
         {
             errors.update(x);
+            errorCSVWriter.printErrors(errors);
 
-            if (printErrors)
-            {
-                errorCSVWriter.printErrors(errors);
-            }
-
-            const bool printConvergenceTestFile = getParam<bool>("Problem.PrintConvergenceTestFile", false);
             if (printConvergenceTestFile)
-            {
-                const NavierStokesErrorConvergenceTestFileWriter<Problem> errorConvergenceTestFileWriter(problem);
-                errorConvergenceTestFileWriter.printConvergenceTestFile(errors);
-            }
+                convergenceTestAppendErrors(problem, errors);
         }
 
         // write vtk output
@@ -239,7 +232,7 @@ int main(int argc, char** argv)
             if (printErrors)
             {
                 errors.update(x, timeLoop->time() + timeLoop->timeStepSize());
-                errorCSVWriter.printErrors(errors, timeLoop->time() + timeLoop->timeStepSize());
+                errorCSVWriter.printErrors(errors);
             }
 
             // advance to the time loop to the next step
