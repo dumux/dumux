@@ -21,8 +21,8 @@
  * \ingroup NavierStokesTests
  * \copydoc Dumux::NavierStokesTestError
  */
-#ifndef DUMUX_TEST_ERRORS_HH
-#define DUMUX_TEST_ERRORS_HH
+#ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKES_ERRORS_HH
+#define DUMUX_TEST_FREEFLOW_NAVIERSTOKES_ERRORS_HH
 
 #include <vector>
 #include <cmath>
