@@ -46,9 +46,10 @@
 #include <dumux/linear/istlsolverfactorybackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
-#include "properties.hh"
-
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
+#include <test/freeflow/navierstokes/errors.hh>
+
+#include "properties.hh"
 
 /*!
 * \brief Creates analytical solution.
@@ -87,34 +88,6 @@ auto createSource(const Problem& problem)
     }
 
     return source;
-}
-
-template<class Problem, class SolutionVector, class GridGeometry, class Scalar = double>
-void printL2Error(const Problem& problem, const SolutionVector& x, const GridGeometry& gridGeometry, Scalar time = 0.0)
-{
-    using namespace Dumux;
-    using TypeTag = Properties::TTag::SincosTest;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-
-    using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
-    const auto l2error = L2Error::calculateL2Error(*problem, x, time);
-    const int numCellCenterDofs = gridGeometry->numCellCenterDofs();
-    const int numFaceDofs = gridGeometry->numFaceDofs();
-    std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
-                << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
-                << std::scientific
-                << "L2(p) = " << l2error.first[Indices::pressureIdx] << " / " << l2error.second[Indices::pressureIdx]
-                << " , L2(vx) = " << l2error.first[Indices::velocityXIdx] << " / " << l2error.second[Indices::velocityXIdx]
-                << " , L2(vy) = " << l2error.first[Indices::velocityYIdx] << " / " << l2error.second[Indices::velocityYIdx]
-                << std::endl;
-
-    // write the norm into a log file
-    std::ofstream logFile;
-    logFile.open(problem->name() + ".log", std::ios::app);
-    logFile << "[ConvergenceTest] L2(p) = " << l2error.first[Indices::pressureIdx] << " L2(vx) = " << l2error.first[Indices::velocityXIdx] << " L2(vy) = " << l2error.first[Indices::velocityYIdx] << std::endl;
-    logFile.close();
 }
 
 int main(int argc, char** argv)
@@ -210,7 +183,11 @@ int main(int argc, char** argv)
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
-    const bool shouldPrintL2Error = getParam<bool>("Problem.PrintL2Error");
+    // the discrete L2 and Linfity errors
+    const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
+    const bool printConvergenceTestFile = getParam<bool>("Problem.PrintConvergenceTestFile", false);
+    NavierStokesErrors errors(problem, x);
+    NavierStokesErrorCSVWriter errorCSVWriter(problem);
 
     if (isStationary)
     {
@@ -218,9 +195,14 @@ int main(int argc, char** argv)
         Dune::Timer timer;
         nonLinearSolver.solve(x);
 
-        if (shouldPrintL2Error)
+        // print discrete L2 and Linfity errors
+        if (printErrors || printConvergenceTestFile)
         {
-            printL2Error(problem, x, gridGeometry);
+            errors.update(x);
+            errorCSVWriter.printErrors(errors);
+
+            if (printConvergenceTestFile)
+                convergenceTestAppendErrors(problem, errors);
         }
 
         // write vtk output
@@ -246,9 +228,11 @@ int main(int argc, char** argv)
             xOld = x;
             gridVariables->advanceTimeStep();
 
-            if (shouldPrintL2Error)
+            // print discrete L2 and Linfity errors
+            if (printErrors)
             {
-                printL2Error(problem, x, gridGeometry, timeLoop->time()+timeLoop->timeStepSize());
+                errors.update(x, timeLoop->time() + timeLoop->timeStepSize());
+                errorCSVWriter.printErrors(errors);
             }
 
             // advance to the time loop to the next step

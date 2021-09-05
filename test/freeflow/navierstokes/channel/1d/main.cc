@@ -42,9 +42,10 @@
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
-#include "properties.hh"
-
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
+#include <test/freeflow/navierstokes/errors.hh>
+
+#include "properties.hh"
 
 int main(int argc, char** argv)
 {
@@ -121,8 +122,22 @@ int main(int argc, char** argv)
     Dune::Timer timer;
     nonLinearSolver.solve(x);
 
+    // print discrete L2 and Linfity errors
+    const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
+    const bool printConvergenceTestFile = getParam<bool>("Problem.PrintConvergenceTestFile", false);
+
+    if (printErrors || printConvergenceTestFile)
+    {
+        NavierStokesErrors errors(problem, x);
+        NavierStokesErrorCSVWriter(
+            problem, std::to_string(x[GridGeometry::cellCenterIdx()].size())
+        ).printErrors(errors);
+
+        if (printConvergenceTestFile)
+            convergenceTestAppendErrors(problem, errors);
+    }
+
     // write vtk output
-    problem->printL2Error(x);
     vtkWriter.write(1.0);
 
     timer.stop();

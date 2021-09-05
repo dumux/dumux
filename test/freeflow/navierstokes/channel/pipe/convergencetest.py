@@ -30,9 +30,9 @@ for line in logfile:
     line = line.strip("\n")
     line = line.strip("\[ConvergenceTest\]")
     line = line.split()
-    errorP.append(float(line[2]))
-    errorVx.append(float(line[5]))
-    errorVy.append(float(line[8]))
+    errorP.append(float(line[8]))
+    errorVx.append(float(line[11]))
+    errorVy.append(float(line[14]))
 
 resultsP = []
 resultsVx = []

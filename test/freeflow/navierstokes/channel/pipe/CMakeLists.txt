@@ -5,4 +5,5 @@ dumux_add_test(NAME test_ff_stokes_channel_pipe
                LABELS freeflow
                CMAKE_GUARD HAVE_UMFPACK
                COMMAND ./convergencetest.py
-               CMD_ARGS test_ff_stokes_channel_pipe)
+               CMD_ARGS test_ff_stokes_channel_pipe params.input
+                                  -Problem.PrintConvergenceTestFile true)

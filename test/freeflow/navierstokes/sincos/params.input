@@ -10,7 +10,7 @@ Cells = 20 20
 [Problem]
 Name = test_ff_sincos
 EnableGravity = false
-PrintL2Error = true
+PrintErrors = true
 EnableInertiaTerms = true
 IsStationary = false
 

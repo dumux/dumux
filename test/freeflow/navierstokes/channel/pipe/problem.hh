@@ -39,7 +39,6 @@ class FreeFlowPipeProblem : public NavierStokesProblem<TypeTag>
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -47,6 +46,8 @@ class FreeFlowPipeProblem : public NavierStokesProblem<TypeTag>
     using BoundaryTypes = NavierStokesBoundaryTypes<PrimaryVariables::size()>;
 
 public:
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+
     FreeFlowPipeProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
 
