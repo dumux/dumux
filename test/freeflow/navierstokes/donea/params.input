@@ -6,33 +6,24 @@ Overlap = 1
 [Problem]
 Name = test_donea # name passed to the output routines
 EnableGravity = false
-PrintErrors = false
 EnableInertiaTerms = false
-PrintMatrix = false
 UseNeumann = true
 
 [Component]
-LiquidDensity  = 1.0
+LiquidDensity = 1.0
 LiquidKinematicViscosity = 1.0
 
 [ Newton ]
 MaxSteps = 10
 MaxRelativeShift = 1e-5
 
-[Vtk]
-WriteFaceData = false
-
 [LinearSolver]
 Type = cgsolver
-#Type = restartedgmressolver
-Verbosity = 1
 ResidualReduction = 1e-13
 
 [LinearSolver.Preconditioner]
 Type = amg
 AmgAccumulationMode = atOnce
-AmgMaxLevel = 2
-Verbosity = 2
 
 [Assembly]
 NumericDifference.BaseEpsilon = 1e-8
