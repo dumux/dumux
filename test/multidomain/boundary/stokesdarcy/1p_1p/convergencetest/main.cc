@@ -42,12 +42,12 @@
 #include <dumux/multidomain/staggeredtraits.hh>
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
-#include <test/freeflow/navierstokes/l2error.hh>
 
 #include "testcase.hh"
 #include "properties.hh"
 
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
+#include <test/freeflow/navierstokes/errors.hh>
 
 /*!
 * \brief Creates analytical solution.
@@ -90,33 +90,28 @@ auto createDarcyAnalyticalSolution(const Problem& problem)
 }
 
 template<class Problem, class SolutionVector>
-void printFreeFlowL2Error(const Problem& problem, const SolutionVector& x)
+void printFreeFlowL2Error(std::shared_ptr<Problem> problem, const SolutionVector& x)
 {
     using namespace Dumux;
-    using Scalar = double;
-    using TypeTag = Properties::TTag::FreeFlowOneP;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using Indices = typename Problem::Indices;
 
-    using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
-    const auto l2error = L2Error::calculateL2Error(problem, x);
-    const int numCellCenterDofs = problem.gridGeometry().numCellCenterDofs();
-    const int numFaceDofs = problem.gridGeometry().numFaceDofs();
+    NavierStokesErrors errors(problem, x);
+    const int numCellCenterDofs = problem->gridGeometry().numCellCenterDofs();
+    const int numFaceDofs = problem->gridGeometry().numFaceDofs();
     std::ostream tmpOutputObject(std::cout.rdbuf()); // create temporary output with fixed formatting without affecting std::cout
+    const auto l2Abs = errors.l2Absolute();
+    const auto l2Rel = errors.l2Relative();
     tmpOutputObject << std::setprecision(8) << "** L2 error (abs/rel) for "
                     << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
                     << std::scientific
-                    << "L2(p) = " << l2error.first[Indices::pressureIdx] << " / " << l2error.second[Indices::pressureIdx]
-                    << " , L2(vx) = " << l2error.first[Indices::velocityXIdx] << " / " << l2error.second[Indices::velocityXIdx]
-                    << " , L2(vy) = " << l2error.first[Indices::velocityYIdx] << " / " << l2error.second[Indices::velocityYIdx]
+                    << "L2(p) = " << l2Abs[Indices::pressureIdx] << " / " << l2Rel[Indices::pressureIdx]
+                    << " , L2(vx) = " << l2Abs[Indices::velocityXIdx] << " / " << l2Rel[Indices::velocityXIdx]
+                    << " , L2(vy) = " << l2Abs[Indices::velocityYIdx] << " / " << l2Rel[Indices::velocityYIdx]
                     << std::endl;
 
     // write the norm into a log file
-    std::ofstream logFile;
-    logFile.open(problem.name() + ".log", std::ios::app);
-    logFile << "[ConvergenceTest] L2(p) = " << l2error.first[Indices::pressureIdx] << " L2(vx) = " << l2error.first[Indices::velocityXIdx] << " L2(vy) = " << l2error.first[Indices::velocityYIdx] << std::endl;
-    logFile.close();
+    std::ofstream logFile(problem->name() + ".log", std::ios::app);
+    logFile << "[ConvergenceTest] L2(p) = " << l2Abs[Indices::pressureIdx] << " L2(vx) = " << l2Abs[Indices::velocityXIdx] << " L2(vy) = " << l2Abs[Indices::velocityYIdx] << std::endl;
 }
 
 template<class Problem, class SolutionVector>
@@ -293,7 +288,7 @@ int main(int argc, char** argv)
     freeFlowVtkWriter.write(1.0);
     darcyVtkWriter.write(1.0);
 
-    printFreeFlowL2Error(*freeFlowProblem, freeFlowSol);
+    printFreeFlowL2Error(freeFlowProblem, freeFlowSol);
     printDarcyL2Error(*darcyProblem, sol[darcyIdx]);
 
     ////////////////////////////////////////////////////////////
