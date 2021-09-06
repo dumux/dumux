@@ -5,7 +5,7 @@ stages:
 
 variables:
   IMAGE_REGISTRY_URL: $CI_REGISTRY/dumux-repositories/dumux-docker-ci
-  DUMUX_CI_TRIGGER_LECTURE_BRANCH: master
+  DUMUX_CI_TRIGGER_LECTURE_BRANCH: releases/3.4
 
 # Cases in which to create pipelines at all. The trigger jobs may further
 # specify how exactly they should be created in different situations.
