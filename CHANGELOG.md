@@ -40,6 +40,8 @@ for (const auto& element : elements(gridGeometry.gridView()))
     fvGeometry.bind(element);
 ```
 
+- __Embedded coupling__: Add a coupling manager for the 1D-3D projection based scheme with resolved interface introduced in Koch 2021 (https://arxiv.org/abs/2106.06358)
+
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Virtual interface of GridDataTransfer__: The `GridDataTransfer` abstract base class now required the Grid type as a template argument. Furthermore, the `store` and `reconstruct` interface functions do now expect the grid as a function argument. This allows to correctly update grid geometries and corresponding mapper (see "Construction and update of GridGeometries changed" above in the changelog)
 - `PengRobinsonMixture::computeMolarVolumes` has been removed without deprecation. It was used nowhere and did not translate.

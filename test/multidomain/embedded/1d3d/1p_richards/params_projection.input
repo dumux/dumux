@@ -1,0 +1,45 @@
+[MixedDimension]
+# require because the grid is a very coarse approximation
+# of the root surface (discrete radius is too big)
+Projection.CoupledRadiusFactor = 0.5
+Projection.ConsiderFacesWithinBoundingBoxCoupled = true
+
+[TimeLoop]
+DtInitial = 8640 # [s]
+TEnd = 86400 # [s]
+EpisodeLength = 21700 # [s]
+
+[Root.Grid]
+File = tinyroot.dgf
+Refinement = 2
+
+[Soil.Grid]
+File = tinyroot_3d.msh
+
+[Problem]
+EnableGravity = false
+
+[Vtk]
+OutputName = test_md_embedded1d3d_1p_richards_proj
+
+[Soil]
+SpatialParams.Permeability = 2.57e-12 # [m^2]
+SpatialParams.Porosity = 0.3 # [-]
+SpatialParams.Swr = 0.05
+SpatialParams.VanGenuchtenAlpha = 2.956e-4
+SpatialParams.VanGenuchtenN = 1.5
+Problem.Name = 3d
+
+[Root]
+SpatialParams.Kx = 5.0968e-17
+SpatialParams.Kr = 2.04e-13
+Problem.Name = 1d
+
+[BoundaryConditions]
+InitialSoilPressure = -0.9429e4 # [Pa]
+TranspirationRate = 2.15e-8 # [kg / s]
+
+[Newton]
+MaxRelativeShift = 1e-12
+MaxAbsoluteResidual = 1e-21
+EnableAbsoluteResidualCriterion = true
