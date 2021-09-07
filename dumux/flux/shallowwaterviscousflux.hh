@@ -55,10 +55,9 @@ static constexpr bool implementsFrictionLaw()
  * \ingroup Flux
  * \brief Computes the shallow water viscous momentum flux due to (turbulent) viscosity
  *        by adding all surrounding shear stresses.
- *        For now implemented strictly for 2D depth-averaged models (i.e. 3 equations)
+ *        For now implemented strictly for 2D depth-averaged models
  */
-template<class PrimaryVariables, class NumEqVector,
-         typename std::enable_if_t<NumEqVector::size() == 3, int> = 0>
+template<class PrimaryVariables, class NumEqVector>
 class ShallowWaterViscousFlux
 {
 
