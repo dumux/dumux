@@ -1,3 +1,4 @@
+add_subdirectory(mass)
 add_subdirectory(momentum)
 add_subdirectory(staggered)
 
