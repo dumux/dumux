@@ -29,9 +29,13 @@
 #endif
 
 #include <dune/grid/yaspgrid.hh>
-#include <dumux/discretization/staggered/freeflow/properties.hh>
 
-#include <dumux/freeflow/navierstokes/model.hh>
+#include <dumux/discretization/fcstaggered.hh>
+#include <dumux/discretization/cctpfa.hh>
+
+#include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/mass/1p/model.hh>
+
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
@@ -41,10 +45,15 @@ namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
-struct DoneaTest { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
+struct DoneaTest {};
+struct DoneaTestMomentum { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
+struct DoneaTestMass { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMassOneP, CCTpfaModel>; };
 } // end namespace TTag
 
-// the fluid system
+template<class TypeTag>
+struct Problem<TypeTag, TTag::DoneaTest>
+{ using type = DoneaTestProblem<TypeTag>; };
+
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::DoneaTest>
 {
@@ -52,13 +61,9 @@ struct FluidSystem<TypeTag, TTag::DoneaTest>
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
-// Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::DoneaTest> { using type = Dune::YaspGrid<2>; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::DoneaTest> { using type = Dumux::DoneaTestProblem<TypeTag> ; };
+struct Grid<TypeTag, TTag::DoneaTest>
+{ using type = Dune::YaspGrid<2>; };
 
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::DoneaTest> { static constexpr bool value = ENABLECACHING; };
@@ -66,8 +71,14 @@ template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::DoneaTest> { static constexpr bool value = ENABLECACHING; };
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::DoneaTest> { static constexpr bool value = ENABLECACHING; };
+
+// Set the problem property
 template<class TypeTag>
-struct EnableGridFaceVariablesCache<TypeTag, TTag::DoneaTest> { static constexpr bool value = ENABLECACHING; };
+struct CouplingManager<TypeTag, TTag::DoneaTest>
+{
+    using Traits = MultiDomainTraits<TTag::DoneaTestMomentum, TTag::DoneaTestMass>;
+    using type = StaggeredFreeFlowCouplingManager<Traits>;
+};
 
 } // end namespace Dumux::Properties
 
