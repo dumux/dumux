@@ -340,7 +340,7 @@ public:
                                     const bool isPreviousTimeStep = false) const
     {
         if constexpr (isCoupled_)
-            return couplingManager_->getInsideAndOutsideDensity(element, fvGeometry, scvf, isPreviousTimeStep);
+            return couplingManager_->insideAndOutsideDensity(element, fvGeometry, scvf, isPreviousTimeStep);
         else
         {
             const auto rho = asImp_().densityAtPos(scvf.ipGlobal());
