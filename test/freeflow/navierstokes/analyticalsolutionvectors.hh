@@ -21,8 +21,8 @@
  * \ingroup NavierStokesTests
  * \copydoc Dumux::NavierStokesAnalyticalSolutionVectors
  */
-#ifndef DUMUX_TEST_ANALYTICALSOLVECTORS_HH
-#define DUMUX_TEST_ANALYTICALSOLVECTORS_HH
+#ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKES_ANALYTICALSOLVECTORS_HH
+#define DUMUX_TEST_FREEFLOW_NAVIERSTOKES_ANALYTICALSOLVECTORS_HH
 
 namespace Dumux {
 /*!
@@ -111,6 +111,117 @@ NavierStokesAnalyticalSolutionVectors(std::shared_ptr<Problem> p)
 template<class Problem, class Scalar>
 NavierStokesAnalyticalSolutionVectors(std::shared_ptr<Problem> p, Scalar t)
 -> NavierStokesAnalyticalSolutionVectors<Problem, Scalar>;
+
+
+namespace NavierStokesTest {
+
+/*!
+ * \ingroup NavierStokesTests
+ * \brief Creates and provides the analytical solution in a form that can be written into the vtk output files
+ * \TODO make this the new NavierStokesAnalyticalSolutionVectors once all tests are ported to the new staggered
+ */
+template<class MomentumProblem, class MassProblem, class Scalar = double>
+class AnalyticalSolutionVectors
+{
+    using GridGeometry = std::decay_t<decltype(std::declval<MassProblem>().gridGeometry())>;
+    static constexpr int dimWorld = GridGeometry::GridView::dimensionworld;
+    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
+
+    using MassIndices = typename MassProblem::Indices;
+    using MomIndices = typename MomentumProblem::Indices;
+public:
+    AnalyticalSolutionVectors(std::shared_ptr<const MomentumProblem> momentumProblem,
+                              std::shared_ptr<const MassProblem> massProblem,
+                              Scalar tInitial = 0.0)
+    : momentumProblem_(momentumProblem)
+    , massProblem_(massProblem)
+    { update(tInitial); }
+
+    /*!
+     * \brief Creates the analytical solution in a form that can be written into the vtk output files
+     */
+    void update(Scalar time = 0.0)
+    {
+        analyticalPressure_.resize(massProblem_->gridGeometry().numDofs());
+        analyticalVelocity_.resize(massProblem_->gridGeometry().numDofs());
+        analyticalVelocityOnFace_.resize(momentumProblem_->gridGeometry().numDofs());
+
+        // cell-centers (pressure + velocity)
+        {
+            auto fvGeometry = localView(massProblem_->gridGeometry());
+            const auto gridView = massProblem_->gridGeometry().gridView();
+            for (const auto& element : elements(gridView))
+            {
+                fvGeometry.bindElement(element);
+                for (const auto& scv : scvs(fvGeometry))
+                {
+                    analyticalPressure_[scv.dofIndex()]
+                        = massProblem_->analyticalSolution(scv.dofPosition(), time)[MassIndices::pressureIdx];
+
+                    for (int dirIdx = 0; dirIdx < dimWorld; ++dirIdx)
+                        analyticalVelocity_[scv.dofIndex()][dirIdx]
+                            = momentumProblem_->analyticalSolution(scv.center(), time)[MomIndices::velocity(dirIdx)];
+                }
+            }
+        }
+
+        // face-centers (velocity)
+        {
+            auto fvGeometry = localView(momentumProblem_->gridGeometry());
+            const auto gridView = momentumProblem_->gridGeometry().gridView();
+            for (const auto& element : elements(gridView))
+            {
+                fvGeometry.bindElement(element);
+                for (const auto& scv : scvs(fvGeometry))
+                    analyticalVelocityOnFace_[scv.dofIndex()][scv.dofAxis()]
+                        = momentumProblem_->analyticalSolution(scv.center(), time)[MomIndices::velocity(scv.dofAxis())];
+            }
+        }
+    }
+
+    /*!
+     * \brief Returns the analytical solution for the pressure
+     */
+    const std::vector<Scalar>& analyticalPressureSolution() const
+    {
+        return analyticalPressure_;
+    }
+
+    /*!
+     * \brief Returns the analytical solution for the velocity
+     */
+    const std::vector<VelocityVector>& analyticalVelocitySolution() const
+    {
+        return analyticalVelocity_;
+    }
+
+    /*!
+     * \brief Returns the analytical solution for the velocity at the faces
+     */
+    const std::vector<VelocityVector>& analyticalVelocitySolutionOnFace() const
+    {
+        return analyticalVelocityOnFace_;
+    }
+
+private:
+    std::shared_ptr<const MomentumProblem> momentumProblem_;
+    std::shared_ptr<const MassProblem> massProblem_;
+
+    std::vector<Scalar> analyticalPressure_;
+    std::vector<VelocityVector> analyticalVelocity_;
+    std::vector<VelocityVector> analyticalVelocityOnFace_;
+};
+
+template<class MomentumProblem, class MassProblem>
+AnalyticalSolutionVectors(std::shared_ptr<MomentumProblem>, std::shared_ptr<MassProblem>)
+-> AnalyticalSolutionVectors<MomentumProblem, MassProblem>;
+
+template<class MomentumProblem, class MassProblem, class Scalar>
+AnalyticalSolutionVectors(std::shared_ptr<MomentumProblem>, std::shared_ptr<MassProblem>, Scalar)
+-> AnalyticalSolutionVectors<MomentumProblem, MassProblem, Scalar>;
+
+
+} // end namespace NavierStokesTest
 } // end namespace Dumux
 
 #endif
