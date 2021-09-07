@@ -15,7 +15,7 @@ LiquidKinematicViscosity = 1.0
 
 [ Newton ]
 MaxSteps = 10
-MaxRelativeShift = 1e-5
+MaxRelativeShift = 1e-8
 
 [LinearSolver]
 Type = cgsolver
