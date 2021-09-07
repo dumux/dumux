@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup EmbeddedCoupling
- * \brief A quadrature rule for surface coupling in the 1D-3D setting
+ * \brief A quadrature rule using local refinement to approximate partitioned elements
  */
 
 #ifndef DUMUX_MULTIDOMAIN_EMBEDDED_LOCAL_REFINEMENT_QUADRATURE_HH
@@ -32,6 +32,21 @@
 
 namespace Dumux {
 
+/*!
+ * \file
+ * \ingroup EmbeddedCoupling
+ * \brief A quadrature rule using local refinement to approximate partitioned elements
+ *
+ * An indicator function provides a partition of the given geometry. The function returns the partition id
+ * for a given position. The algorithm then virtually refines the geometry using local refinemt to
+ * approximate the partition boundaries. One integration point per partition is added at the centroid
+ * of the partition.
+ *
+ * This can be used, e.g. for low-order integration of the coupling term
+ * in the projection scheme over the interface facets.
+ * Each facet may be coupled to mulitple 1D elements.
+ * See Koch (2021) https://arxiv.org/abs/2106.06358 which also describes this algorithm.
+ */
 template<class Geometry, class IndicatorFunction>
 class LocalRefinementSimplexQuadrature
 {
@@ -102,9 +117,10 @@ public:
     {
         static constexpr int dim = Geometry::mydimension;
         static_assert(dim == 2, "Only triangles are supported so far");
-        
+
         if (geo.corners() != (dim+1))
             DUNE_THROW(Dune::InvalidStateException, "Only simplex geometries are allowed");
+
         // evaluate indicator
         const auto tri = Triangle{{ geo.corner(0), geo.corner(1), geo.corner(2) }};
         const auto triple = IndicatorTriple{{ ind_(tri[0]), ind_(tri[1]), ind_(tri[2]) }};
