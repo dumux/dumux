@@ -297,7 +297,7 @@ class Embedded1d3dCouplingManager;
  *
  * The original paper also includes an algorithm for computing exact intersection for the surface quadrature
  * in case of simple straight vessels. However, as a comparison in the paper shows that the suggested
- * approximate quadrature is exact enough (configured by parameter MixedDimension.SimplexIntegrationRefine
+ * approximate quadrature is exact enough (configured by parameter MixedDimension.Projection.SimplexIntegrationRefine
  * specifying the number of (adaptive local) virtual refinements of a surface facet for integration), only
  * the approximate general purpose algorithm is included in this implementation. Only one quadrature point
  * will be added for each surface element and coupled 1D dof including all contribution evaluated by
@@ -311,16 +311,20 @@ class Embedded1d3dCouplingManager;
  * This algorithm can be configured by several parameters
  * (although this is usually not necessary as there are sensible defaults):
  *
- *   - MixedDimension.SimplexIntegrationRefine
+ *   - MixedDimension.Projection.SimplexIntegrationRefine
  *         number of virtual refinement steps to determine coupled surface area
- *   - MixedDimension.EnableIntersectionOutput
+ *   - MixedDimension.Projection.EnableIntersectionOutput
  *         set to true to enable debug VTK output for intersections
- *   - MixedDimension.EstimateNumberOfPointSources
+ *   - MixedDimension.Projection.EstimateNumberOfPointSources
  *         provide an estimate for the expected number of coupling points for memory allocation
- *   - MixedDimension.ProjectionCoupledRadiusFactor
+ *   - MixedDimension.Projection.CoupledRadiusFactor
  *         threshold distance in which to search for coupled elements (specified as multiple of radius, default 0.1)
- *   - MixedDimension.ProjectionCoupledAngleFactor
+ *   - MixedDimension.Projection.CoupledAngleFactor
  *         angle threshold in which to search for coupled elements (angle in radians from surface normal vector, default 0.3)
+ *   - MixedDimension.Projection.ConsiderFacesWithinBoundingBoxCoupled
+ *         determines if all 3D boundary facets within the mesh bounding box should be consideres as coupling faces
+ *   - MixedDimension.Projection.CoupledBoundingBoxShrinkingFactor
+ *         if ConsiderFacesWithinBoundingBoxCoupled=true shrink the bounding box in all directions by this factor
  *
  */
 template<class MDTraits>
@@ -385,7 +389,7 @@ public:
         std::cout << "Initializing the coupling manager (projection)" << std::endl;
 
         // debug VTK output
-        const bool enableIntersectionOutput = getParam<bool>("MixedDimension.EnableIntersectionOutput", false);
+        const bool enableIntersectionOutput = getParam<bool>("MixedDimension.Projection.EnableIntersectionOutput", false);
         std::unique_ptr<Detail::DebugIntersectionVTKOutput> vtkCoupledFaces =
             enableIntersectionOutput ? std::make_unique<Detail::DebugIntersectionVTKOutput>() : nullptr;
         std::unique_ptr<Detail::DebugIntersectionVTKOutput> vtkIntersections =
@@ -413,7 +417,14 @@ public:
         const auto& bulkGridView = bulkFvGridGeometry.gridView();
         bulkElementMarker_.assign(bulkGridView.size(0), 0);
         bulkVertexMarker_.assign(bulkGridView.size(bulkDim), 0);
-        const GlobalPosition threshold(1e-2*(bulkFvGridGeometry.bBoxMax()-bulkFvGridGeometry.bBoxMin()).two_norm());
+
+        // construct a bounding box that may be used to determine coupled faces
+        // the shrinking factor shrinks this bounding box
+        static const auto bBoxShrinking
+            = getParam<Scalar>("MixedDimension.Projection.CoupledBoundingBoxShrinkingFactor", 1e-2);
+        const GlobalPosition threshold(
+            bBoxShrinking*( bulkFvGridGeometry.bBoxMax()-bulkFvGridGeometry.bBoxMin() ).two_norm()
+        );
         const auto bBoxMinSmall = bulkFvGridGeometry.bBoxMin() + threshold;
         const auto bBoxMaxSmall = bulkFvGridGeometry.bBoxMax() - threshold;
         auto insideBBox = [bBoxMin=bBoxMinSmall, bBoxMax=bBoxMaxSmall](const GlobalPosition& point) -> bool
@@ -429,12 +440,12 @@ public:
 
         // setup simplex "quadrature" rule
         static const auto quadSimplexRefineMaxLevel
-            = getParam<std::size_t>("MixedDimension.SimplexIntegrationRefine", 4);
+            = getParam<std::size_t>("MixedDimension.Projection.SimplexIntegrationRefine", 4);
         const auto indicator = Detail::NetworkIndicatorFunction { network };
 
         // estimate number of point sources for memory allocation
         static const auto estimateNumberOfPointSources
-            = getParam<std::size_t>("MixedDimension.EstimateNumberOfPointSources", bulkFvGridGeometry.gridView().size(0));
+            = getParam<std::size_t>("MixedDimension.Projection.EstimateNumberOfPointSources", bulkFvGridGeometry.gridView().size(0));
 
         this->pointSources(bulkIdx).reserve(estimateNumberOfPointSources);
         this->pointSources(lowDimIdx).reserve(estimateNumberOfPointSources);
@@ -656,13 +667,16 @@ private:
         const auto center = intersection.geometry().center();
         const auto [eIdx, minDist] = network.findClosestSegmentSurface(center);
 
-        // all inner elements are coupled
-        if (insideBBox(center))
+        // all elements in the bounding box are coupled if this is enabled
+        // this is a simplified check that can be enabled for box-shaped domains
+        static const bool considerBBox = getParam<bool>("MixedDimension.Projection.ConsiderFacesWithinBoundingBoxCoupled", false);
+        if (considerBBox && insideBBox(center))
             return std::make_tuple(true, eIdx, minDist);
 
+        // general coupling face detection algorithm:
         // if the distance is under a certain threshold we are coupled (and the angle is not very big)
-        static const auto rFactor = getParam<Scalar>("MixedDimension.ProjectionCoupledRadiusFactor", 0.1);
-        static const auto spFactor = getParam<Scalar>("MixedDimension.ProjectionCoupledAngleFactor", 0.3);
+        static const auto rFactor = getParam<Scalar>("MixedDimension.Projection.CoupledRadiusFactor", 0.1);
+        static const auto spFactor = getParam<Scalar>("MixedDimension.Projection.CoupledAngleFactor", 0.3);
         const auto projPoint = network.projectionPointOnSegment(center, eIdx);
         const auto distVec = projPoint - center;
         const bool isCoupled = minDist < rFactor * network.radius(eIdx) && distVec * intersection.centerUnitOuterNormal() > distVec.two_norm() * spFactor;

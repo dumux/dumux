@@ -1,7 +1,8 @@
 [MixedDimension]
 # require because the grid is a very coarse approximation
 # of the root surface (discrete radius is too big)
-ProjectionCoupledRadiusFactor = 0.5
+Projection.CoupledRadiusFactor = 0.5
+Projection.ConsiderFacesWithinBoundingBoxCoupled = true
 
 [TimeLoop]
 DtInitial = 8640 # [s]
