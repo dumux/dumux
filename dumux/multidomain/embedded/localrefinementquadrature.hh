@@ -100,6 +100,11 @@ public:
     , maxLevel_(maxLevel)
     , geometry_(geo)
     {
+        static constexpr int dim = Geometry::mydimension;
+        static_assert(dim == 2, "Only triangles are supported so far");
+        
+        if (geo.corners() != (dim+1))
+            DUNE_THROW(Dune::InvalidStateException, "Only simplex geometries are allowed");
         // evaluate indicator
         const auto tri = Triangle{{ geo.corner(0), geo.corner(1), geo.corner(2) }};
         const auto triple = IndicatorTriple{{ ind_(tri[0]), ind_(tri[1]), ind_(tri[2]) }};
