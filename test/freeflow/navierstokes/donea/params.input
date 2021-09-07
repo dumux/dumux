@@ -1,20 +1,29 @@
 [Grid]
 UpperRight = 1 1
 Cells = 40 40
+Overlap = 1
 
 [Problem]
 Name = test_donea # name passed to the output routines
 EnableGravity = false
-PrintErrors = false
 EnableInertiaTerms = false
+UseNeumann = true
 
 [Component]
-LiquidDensity  = 1.0
+LiquidDensity = 1.0
 LiquidKinematicViscosity = 1.0
 
 [ Newton ]
 MaxSteps = 10
 MaxRelativeShift = 1e-5
 
-[Vtk]
-WriteFaceData = false
+[LinearSolver]
+Type = cgsolver
+ResidualReduction = 1e-13
+
+[LinearSolver.Preconditioner]
+Type = amg
+AmgAccumulationMode = atOnce
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-8

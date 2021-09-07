@@ -62,6 +62,15 @@ struct CheckOverlapSize<DiscretizationMethod::fem>
     { return feBasis.gridView().comm().size() <= 1 || feBasis.gridView().overlapSize(0) == 0; }
 };
 
+// fc staggered requires an overlap of exactly 1
+template<>
+struct CheckOverlapSize<DiscretizationMethod::fcstaggered>
+{
+    template<class GridView>
+    static bool isValid(const GridView& gridView) noexcept
+    { return gridView.comm().size() <= 1 || gridView.overlapSize(0) == 1; }
+};
+
 } // end namespace Dumux
 
 #endif

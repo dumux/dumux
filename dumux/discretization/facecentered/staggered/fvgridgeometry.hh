@@ -138,7 +138,7 @@ public:
     , intersectionMapper_(gridView)
     {
         // Check if the overlap size is what we expect
-        if (!CheckOverlapSize<DiscretizationMethod::staggered>::isValid(gridView))
+        if (!CheckOverlapSize<DiscretizationMethod::fcstaggered>::isValid(gridView))
             DUNE_THROW(Dune::InvalidStateException, "The staggered discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
 
@@ -229,6 +229,10 @@ public:
     const std::unordered_map<GridIndexType, GridIndexType>& periodicVertexMap() const
     { return periodicFaceMap_; }
 
+    //! get the global index of the orthogonal face sharing a common entity
+    GridIndexType lateralOrthogonalScvf(const SubControlVolumeFace& scvf) const
+    { return lateralOrthogonalScvf_[scvf.index()]; }
+
 private:
 
     void update_()
@@ -238,6 +242,7 @@ private:
         scvfs_.clear();
         scvIndicesOfElement_.clear();
         scvfIndicesOfElement_.clear();
+        lateralOrthogonalScvf_.clear();
         intersectionMapper_.update(this->gridView());
 
         // determine size of containers
@@ -246,6 +251,8 @@ private:
         scvfIndicesOfElement_.resize(numElements);
         hasBoundaryScvf_.resize(numElements, false);
         scvfOfScvInfo_.resize(numElements);
+        // on frontal + maybe boundary per face and  2*(dim-1) laterals per frontal
+        lateralOrthogonalScvf_.resize(numElements*(2*dim*(2 + 2*(dim-1))));
 
         outSideBoundaryVolVarIdx_ = 0;
         numBoundaryScv_ = 0;
@@ -269,6 +276,9 @@ private:
             // keep track of frontal boundary scvfs
             std::size_t numFrontalBoundaryScvfs = 0;
 
+            // a temporary map to store pairs of common entities
+            std::unordered_map<GridIndexType, Dune::ReservedVector<GridIndexType, 2>> commonEntityIdxToScvfsMap;
+
             SmallLocalIndexType localScvIdx = 0;
             for (const auto& intersection : intersections(this->gridView(), element))
             {
@@ -287,6 +297,12 @@ private:
                             continue;
 
                         scvfsIndexSet.push_back(scvfIdx);
+
+                        const auto& lateralFacet = geometryHelper.facet(lateralFacetIndex, element);
+                        const auto commonEntityIdx = geometryHelper.globalCommonEntityIndex(
+                            geometryHelper.facet(localScvIdx, element), lateralFacet
+                        );
+                        commonEntityIdxToScvfsMap[commonEntityIdx].push_back(scvfIdx);
                         ++scvfIdx;
                     }
                 }
@@ -310,6 +326,18 @@ private:
             const auto eIdx = this->elementMapper().index(element);
             scvIndicesOfElement_[eIdx] = std::move(scvsIndexSet);
             scvfIndicesOfElement_[eIdx] = std::move(scvfsIndexSet);
+
+            // create the bi-directional map
+            for (const auto& [_, scvfs] : commonEntityIdxToScvfsMap)
+            {
+                // TODO: this maybe be less than 2 if there is a processor boundary
+                // are we sure that the lateral orthogonal scvf is then never needed?
+                if (scvfs.size() == 2)
+                {
+                    lateralOrthogonalScvf_[scvfs[0]] = scvfs[1];
+                    lateralOrthogonalScvf_[scvfs[1]] = scvfs[0];
+                }
+            }
         }
 
          // reserve memory
@@ -466,6 +494,9 @@ private:
         }
 
         connectivityMap_.update(*this);
+
+        // allow to free the non-needed memory
+        lateralOrthogonalScvf_.resize(scvfs_.size());
     }
 
     bool onDomainBoundary_(const typename GridView::Intersection& intersection) const
@@ -495,6 +526,7 @@ private:
     std::vector<bool> hasBoundaryScvf_;
     std::vector<std::vector<SmallLocalIndexType>> scvfOfScvInfo_;
 
+    std::vector<GridIndexType> lateralOrthogonalScvf_;
     std::vector<std::array<GridIndexType, numScvsPerElement>> scvIndicesOfElement_;
     std::vector<std::vector<GridIndexType>> scvfIndicesOfElement_;
 
@@ -556,7 +588,7 @@ public:
     , intersectionMapper_(gridView)
     {
         // Check if the overlap size is what we expect
-        if (!CheckOverlapSize<DiscretizationMethod::staggered>::isValid(gridView))
+        if (!CheckOverlapSize<DiscretizationMethod::fcstaggered>::isValid(gridView))
             DUNE_THROW(Dune::InvalidStateException, "The staggered discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
 
@@ -636,6 +668,10 @@ public:
     const std::unordered_map<GridIndexType, GridIndexType>& periodicVertexMap() const
     { return periodicFaceMap_; }
 
+    //! get the global index of the orthogonal face sharing a common entity
+    GridIndexType lateralOrthogonalScvf(const SubControlVolumeFace& scvf) const
+    { return lateralOrthogonalScvf_[scvf.index()]; }
+
 private:
 
     void update_()
@@ -649,12 +685,15 @@ private:
         numBoundaryScvf_ = 0;
         hasBoundaryScvf_.clear();
         scvfIndicesOfElement_.clear();
+        lateralOrthogonalScvf_.clear();
         outsideVolVarIndices_.clear();
 
         // determine size of containers
         const auto numElements = this->gridView().size(0);
         scvfIndicesOfElement_.resize(numElements);
         hasBoundaryScvf_.resize(numElements, false);
+        // on frontal + maybe boundary per face and  2*(dim-1) laterals per frontal
+        lateralOrthogonalScvf_.resize(numElements*(2*dim*(2 + 2*(dim-1))));
 
         GeometryHelper geometryHelper(this->gridView());
 
@@ -675,8 +714,10 @@ private:
             // keep track of frontal boundary scvfs
             std::size_t numFrontalBoundaryScvfs = 0;
 
-            SmallLocalIndexType localScvIdx = 0;
+            // a temporary map to store pairs of common entities
+            std::unordered_map<GridIndexType, Dune::ReservedVector<GridIndexType, 2>> commonEntityIdxToScvfsMap;
 
+            SmallLocalIndexType localScvIdx = 0;
             for (const auto& intersection : intersections(this->gridView(), element))
             {
                 ++numScvs_;
@@ -697,6 +738,13 @@ private:
                             outsideVolVarIndices_[scvfIdx] = neighborVolVarIdx++;
 
                         scvfsIndexSet.push_back(scvfIdx);
+
+                        const auto& lateralFacet = geometryHelper.facet(lateralFacetIndex, element);
+                        const auto commonEntityIdx = geometryHelper.globalCommonEntityIndex(
+                            geometryHelper.facet(localScvIdx, element), lateralFacet
+                        );
+                        commonEntityIdxToScvfsMap[commonEntityIdx].push_back(scvfIdx);
+
                         ++scvfIdx;
                     }
                 }
@@ -762,6 +810,18 @@ private:
 
             // Save the scv indices belonging to this element to build up fv element geometries fast
             scvfIndicesOfElement_[eIdx] = std::move(scvfsIndexSet);
+
+            // create the bi-directional map
+            for (const auto& [_, scvfs] : commonEntityIdxToScvfsMap)
+            {
+                // TODO: this maybe be less than 2 if there is a processor boundary
+                // are we sure that the lateral orthogonal scvf is then never needed?
+                if (scvfs.size() == 2)
+                {
+                    lateralOrthogonalScvf_[scvfs[0]] = scvfs[1];
+                    lateralOrthogonalScvf_[scvfs[1]] = scvfs[0];
+                }
+            }
         }
 
         connectivityMap_.update(*this);
@@ -793,6 +853,7 @@ private:
     std::size_t numBoundaryScvf_;
     std::vector<bool> hasBoundaryScvf_;
 
+    std::vector<GridIndexType> lateralOrthogonalScvf_;
     std::vector<std::vector<GridIndexType>> scvfIndicesOfElement_;
 
     // a map for periodic boundary vertices

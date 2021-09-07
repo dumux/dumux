@@ -105,7 +105,6 @@ int main(int argc, char** argv)
     vtkWriter.addField(analyticalSolVectors.getAnalyticalPressureSolution(), "pressureExact");
     vtkWriter.addField(analyticalSolVectors.getAnalyticalVelocitySolution(), "velocityExact");
     vtkWriter.addFaceField(analyticalSolVectors.getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");
-
     vtkWriter.write(0.0);
 
     // use the staggered FV assembler

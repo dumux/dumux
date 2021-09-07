@@ -43,7 +43,7 @@ Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
     pattern.resize(numDofs, numDofs);
 
     // matrix pattern for implicit Jacobians
-    if (isImplicit)
+    if constexpr (isImplicit)
     {
         static constexpr int dim = std::decay_t<decltype(gridGeometry.gridView())>::dimension;
         for (const auto& element : elements(gridGeometry.gridView()))
@@ -203,6 +203,55 @@ template<bool isImplicit, class GridGeometry,
          typename std::enable_if_t<(GridGeometry::discMethod == DiscretizationMethod::fem), int> = 0>
 Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
 { return getFEJacobianPattern(gridGeometry.feBasis()); }
+
+/*!
+ * \ingroup Assembly
+ * \brief Helper function to generate Jacobian pattern for the face-centered staggered method
+ */
+template<bool isImplicit, class GridGeometry,
+         typename std::enable_if_t<( (GridGeometry::discMethod == DiscretizationMethod::fcstaggered) ), int> = 0>
+Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
+{
+    // resize the jacobian and the residual
+    const auto numDofs = gridGeometry.numDofs();
+    Dune::MatrixIndexSet pattern(numDofs, numDofs);
+
+    const auto& connectivityMap = gridGeometry.connectivityMap();
+    auto fvGeometry = localView(gridGeometry);
+
+    // set the pattern
+    for (const auto& element : elements(gridGeometry.gridView()))
+    {
+        fvGeometry.bind(element);
+        for (const auto& scv : scvs(fvGeometry))
+        {
+            const auto globalI = scv.dofIndex();
+            pattern.add(globalI, globalI);
+
+            for (const auto& scvIdxJ : connectivityMap[scv.index()])
+            {
+                const auto globalJ = fvGeometry.scv(scvIdxJ).dofIndex();
+                pattern.add(globalI, globalJ);
+
+                if (gridGeometry.isPeriodic())
+                {
+                    if (gridGeometry.dofOnPeriodicBoundary(globalI) && globalI != globalJ)
+                    {
+                        const auto globalIP = gridGeometry.periodicallyMappedDof(globalI);
+                        pattern.add(globalIP, globalI);
+                        pattern.add(globalI, globalIP);
+
+                        if (globalI > globalIP)
+                            pattern.add(globalIP, globalJ);
+                    }
+                }
+            }
+        }
+    }
+
+    return pattern;
+}
+
 
 } // namespace Dumux
 

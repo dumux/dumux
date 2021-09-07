@@ -84,8 +84,7 @@ public:
     const SubControlVolumeFace& lateralOrthogonalScvf(const SubControlVolumeFace& scvf) const
     {
         assert(scvf.isLateral());
-        const auto otherGlobalIdx = scvfIndices_()[GridGeometry::GeometryHelper::lateralOrthogonalScvfLocalIndex(scvf.localIndex())];
-        return gridGeometry().scvf(otherGlobalIdx);
+        return gridGeometry().scvf(gridGeometry().lateralOrthogonalScvf(scvf));
     }
 
     //! Return the frontal sub control volume face on a the boundary for a given sub control volume
@@ -328,7 +327,7 @@ public:
     const SubControlVolumeFace& lateralOrthogonalScvf(const SubControlVolumeFace& scvf) const
     {
         assert(scvf.isLateral());
-        const auto otherGlobalIdx = scvfIndices_()[GridGeometry::GeometryHelper::lateralOrthogonalScvfLocalIndex(scvf.localIndex())];
+        const auto otherGlobalIdx = gridGeometry().lateralOrthogonalScvf(scvf);
         return scvfs_[findLocalIndex_(otherGlobalIdx, scvfIndices_())];
     }
 
