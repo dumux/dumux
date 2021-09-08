@@ -133,7 +133,7 @@ public:
                 boundaryVolVarIndices_.push_back(scvFace.outsideScvIdx());
             };
 
-            if (bcTypes.hasOnlyDirichlet())
+            if (bcTypes.hasDirichlet())
             {
                 addBoundaryVolVars(scvf);
                 continue;
@@ -141,7 +141,7 @@ public:
 
             // treat domain corners
             if (const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf); orthogonalScvf.boundary())
-                if (problem.boundaryTypes(element, orthogonalScvf).hasOnlyDirichlet())
+                if (problem.boundaryTypes(element, orthogonalScvf).hasDirichlet())
                     addBoundaryVolVars(scvf);
 
         }
@@ -364,7 +364,7 @@ private:
                     volVarIndices_.push_back(scvFace.outsideScvIdx());
                 };
 
-                if (bcTypes.hasOnlyDirichlet())
+                if (bcTypes.hasDirichlet())
                 {
                     addBoundaryVolVars(scvf);
                     continue;
@@ -372,7 +372,7 @@ private:
 
                 // treat domain corners
                 if (const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf); orthogonalScvf.boundary())
-                    if (problem.boundaryTypes(element, orthogonalScvf).hasOnlyDirichlet())
+                    if (problem.boundaryTypes(element, orthogonalScvf).hasDirichlet())
                         addBoundaryVolVars(scvf);
 
             }
