@@ -33,6 +33,9 @@
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
 
+#include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
+#include <dumux/freeflow/navierstokes/scalarfluxhelper.hh>
+
 namespace Dumux {
 
 /*!
@@ -51,20 +54,21 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
 
-    using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
+    using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
+    using PrimaryVariables = typename ParentType::PrimaryVariables;
+    using NumEqVector = typename ParentType::NumEqVector;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
-    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+    static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
+    using Element = typename FVElementGeometry::Element;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
     // the types of outlet boundary conditions
     enum class OutletCondition
@@ -75,30 +79,27 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
 public:
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    ChannelTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry)
+    ChannelTestProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
+    : ParentType(gridGeometry, couplingManager)
     {
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
-        dynamicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0) * getParam<Scalar>("Component.LiquidDensity", 1.0);
+        dynamicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0)
+                            * getParam<Scalar>("Component.LiquidDensity", 1.0);
 
-        const auto tmp = getParam<std::string>("Problem.OutletCondition", "Outflow");
-        if (tmp == "Outflow")
+        const auto outletBC = getParam<std::string>("Problem.OutletCondition", "Outflow");
+        if (outletBC == "Outflow")
             outletCondition_ = OutletCondition::outflow;
-        else if (tmp == "DoNothing")
+        else if (outletBC == "DoNothing")
             outletCondition_ = OutletCondition::doNothing;
-        else if (tmp == "NeumannX_DirichletY")
+        else if (outletBC == "NeumannX_DirichletY")
             outletCondition_ = OutletCondition::neumannXdirichletY;
-        else if (tmp == "NeumannX_NeumannY")
+        else if (outletBC == "NeumannX_NeumannY")
             outletCondition_ = OutletCondition::neumannXneumannY;
         else
-            DUNE_THROW(Dune::InvalidStateException, tmp + " is not a valid outlet boundary condition");
+            DUNE_THROW(Dune::InvalidStateException, outletBC + " is not a valid outlet boundary condition");
 
         useVelocityProfile_ = getParam<bool>("Problem.UseVelocityProfile", false);
         outletPressure_ = getParam<Scalar>("Problem.OutletPressure", 1.1e5);
-
-        const bool isStationary = getParam<bool>("Problem.IsStationary", false);
-
-        hasAnalyticalSolution_ = isStationary && useVelocityProfile_ && (outletCondition_ != OutletCondition::doNothing);
     }
 
    /*!
@@ -121,70 +122,71 @@ public:
      *
      * \param globalPos The position of the center of the finite volume
      */
-    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
 
-        if (isInlet_(globalPos))
+        if constexpr (ParentType::isMomentumProblem())
         {
             values.setDirichlet(Indices::velocityXIdx);
             values.setDirichlet(Indices::velocityYIdx);
-#if NONISOTHERMAL
-            values.setDirichlet(Indices::temperatureIdx);
-#endif
-        }
-        else if (isOutlet_(globalPos))
-        {
-            if (outletCondition_ == OutletCondition::outflow)
-                values.setDirichlet(Indices::pressureIdx);
-            else if (outletCondition_ == OutletCondition::doNothing ||
-                     outletCondition_ == OutletCondition::neumannXneumannY)
+
+            if (isOutlet_(globalPos))
             {
-                values.setNeumann(Indices::momentumXBalanceIdx);
-                values.setNeumann(Indices::momentumYBalanceIdx);
+                if (outletCondition_ == OutletCondition::neumannXdirichletY)
+                {
+                    values.setNeumann(Indices::momentumXBalanceIdx);
+                    values.setDirichlet(Indices::velocityYIdx);
+                }
+                else
+                    values.setAllNeumann();
             }
-            else // (outletCondition_ == OutletCondition::neumannXdirichletY)
-            {
-                values.setDirichlet(Indices::velocityYIdx);
-                values.setNeumann(Indices::momentumXBalanceIdx);
-            }
-#if NONISOTHERMAL
-            values.setOutflow(Indices::energyEqIdx);
-#endif
         }
         else
         {
-            values.setDirichlet(Indices::velocityXIdx);
-            values.setDirichlet(Indices::velocityYIdx);
+            values.setAllNeumann();
+
+            if (isInlet_(globalPos))
+            {
+                values.setDirichlet(Indices::pressureIdx);
 #if NONISOTHERMAL
-            values.setNeumann(Indices::energyEqIdx);
+                values.setDirichlet(Indices::temperatureIdx);
 #endif
+            }
         }
 
         return values;
     }
 
+
     /*!
-      * \brief Evaluates the boundary conditions for a Dirichlet control volume.
-      *
-      * \param globalPos The center of the finite volume which ought to be set.
-      */
-    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
+     *
+     * \param globalPos The center of the finite volume which ought to be set.
+     */
+    PrimaryVariables dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
     {
+        const auto& globalPos = scvf.ipGlobal();
         PrimaryVariables values = initialAtPos(globalPos);
 
-        if(isInlet_(globalPos))
+        if constexpr (ParentType::isMomentumProblem())
         {
-#if NONISOTHERMAL
-            // give the system some time so that the pressure can equilibrate, then start the injection of the hot liquid
-            if(time() >= 200.0)
-                 values[Indices::temperatureIdx] = 293.15;
-#endif
+            values[Indices::velocityXIdx] = parabolicProfile(globalPos[1], inletVelocity_);
+            if (!useVelocityProfile_ && isInlet_(globalPos))
+            values[Indices::velocityXIdx] = inletVelocity_;
         }
         else
-            values[Indices::velocityXIdx] = 0.0;
+        {
+            values[Indices::pressureIdx] = this->couplingManager().cellPressure(element, scvf);
 
-         return values;
+#if NONISOTHERMAL
+        // give the system some time so that the pressure can equilibrate, then start the injection of the hot liquid
+        if (time() >= 200.0)
+            values[Indices::temperatureIdx] = 293.15;
+#endif
+        }
+
+        return values;
     }
 
     /*!
@@ -196,23 +198,45 @@ public:
      * \param elemFaceVars The element face variables
      * \param scvf The boundary sub control volume face
      */
-    template<class ElementVolumeVariables, class ElementFaceVariables>
+    template<class ElementVolumeVariables, class ElementFluxVariablesCache>
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& elemVolVars,
-                        const ElementFaceVariables& elemFaceVars,
+                        const ElementFluxVariablesCache& elemFluxVarsCache,
                         const SubControlVolumeFace& scvf) const
     {
         NumEqVector values(0.0);
 
-        values[scvf.directionIndex()] = initialAtPos(scvf.center())[Indices::pressureIdx];
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            using FluxHelper = NavierStokesMomentumBoundaryFluxHelper;
 
-        // make sure to normalize the pressure if the property is set true
-        if (getPropValue<TypeTag, Properties::NormalizePressure>())
-            values[scvf.directionIndex()] -= initialAtPos(scvf.center())[Indices::pressureIdx];
+            if (outletCondition_ == OutletCondition::doNothing)
+                values = FluxHelper::fixedPressureMomentumFlux(*this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure_, false /*zeroNormalVelocityGradient*/);
+            else if (outletCondition_ == OutletCondition::outflow)
+                values = FluxHelper::fixedPressureMomentumFlux(*this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure_, true /*zeroNormalVelocityGradient*/);
+            else
+            {
+                assert(outletCondition_ == OutletCondition::neumannXneumannY || outletCondition_ == OutletCondition::neumannXdirichletY);
+                values = FluxHelper::fixedPressureMomentumFlux(*this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure_, false /*zeroNormalVelocityGradient*/);
 
-        if (outletCondition_ != OutletCondition::doNothing)
-            values[1] = -dudy(scvf.center()[1], inletVelocity_) * elemVolVars[scvf.insideScvIdx()].viscosity();
+                Dune::FieldMatrix<Scalar, dimWorld, dimWorld> shearRate(0.0); // gradV + gradV^T
+                shearRate[0][1] = dudy(scvf.ipGlobal()[1], inletVelocity_); // we assume du/dx = dv/dy = dv/dx = 0
+                shearRate[1][0] = shearRate[0][1];
+
+                const auto normal = scvf.unitOuterNormal();
+                NumEqVector normalGradient(0.0);
+                shearRate.mv(normal, normalGradient);
+                values -= this->effectiveViscosity(element, fvGeometry, scvf)*normalGradient;
+            }
+        }
+        else
+        {
+            using FluxHelper = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>;
+
+            if (isOutlet_(scvf.ipGlobal()))
+                values = FluxHelper::scalarOutflowFlux(*this, element, fvGeometry, scvf, elemVolVars);
+        }
 
         return values;
     }
@@ -248,24 +272,25 @@ public:
      * \brief Return the analytical solution of the problem at a given position
      *
      * \param globalPos The global position
-     * \param time A parameter for consistent signatures. It is ignored here as this analytical solution is for a stationary version of the test only.
      */
     PrimaryVariables analyticalSolution(const GlobalPosition& globalPos, Scalar time = 0.0) const
     {
-        Scalar x = globalPos[0];
-        Scalar y = globalPos[1];
-
-        const Scalar yMin = this->gridGeometry().bBoxMin()[1];
-        const Scalar yMax = this->gridGeometry().bBoxMax()[1];
-
-        Scalar velocityQuadraticCoefficient = - inletVelocity_ / (0.25*(yMax - yMin)*(yMax - yMin));
-        Scalar pressureLinearCoefficient = 2.0 * velocityQuadraticCoefficient * dynamicViscosity_;
-        Scalar pressureConstant = -pressureLinearCoefficient * this->gridGeometry().bBoxMax()[0]  + outletPressure_;
-
         PrimaryVariables values;
-        values[Indices::pressureIdx] =  pressureLinearCoefficient * x + pressureConstant;
-        values[Indices::velocityXIdx] = parabolicProfile(y, inletVelocity_);
-        values[Indices::velocityYIdx] = 0;
+
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            values[Indices::velocityXIdx] = parabolicProfile(globalPos[1], inletVelocity_);
+            values[Indices::velocityYIdx] = 0.0;
+        }
+        else
+        {
+            const Scalar yMin = this->gridGeometry().bBoxMin()[1];
+            const Scalar yMax = this->gridGeometry().bBoxMax()[1];
+            const Scalar velocityQuadraticCoefficient = - inletVelocity_ / (0.25*(yMax - yMin)*(yMax - yMin));
+            const Scalar pressureLinearCoefficient = 2.0 * velocityQuadraticCoefficient * dynamicViscosity_;
+            const Scalar pressureConstant = -pressureLinearCoefficient * this->gridGeometry().bBoxMax()[0]  + outletPressure_;
+            values[Indices::pressureIdx] =  pressureLinearCoefficient * globalPos[0] + pressureConstant;
+        }
 
         return values;
     }
@@ -277,7 +302,7 @@ public:
      */
     // \{
 
-   /*!
+    /*!
      * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The global position
@@ -286,38 +311,51 @@ public:
     {
         PrimaryVariables values;
 
-        values[Indices::pressureIdx] = outletPressure_;
-        values[Indices::velocityYIdx] = 0.0;
-
-        if (useVelocityProfile_)
-            values[Indices::velocityXIdx] = parabolicProfile(globalPos[1], inletVelocity_);
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            values[Indices::velocityYIdx] = 0.0;
+            if (useVelocityProfile_)
+                values[Indices::velocityXIdx] = parabolicProfile(globalPos[1], inletVelocity_);
+            else
+                values[Indices::velocityXIdx] = inletVelocity_;
+        }
         else
-            values[Indices::velocityXIdx] = inletVelocity_;
-
+        {
+            values[Indices::pressureIdx] = outletPressure_;
 #if NONISOTHERMAL
-        values[Indices::temperatureIdx] = 283.15;
+            values[Indices::temperatureIdx] = 283.15;
 #endif
+        }
+
+
 
         return values;
     }
 
     // \}
-    void setTimeLoop(TimeLoopPtr timeLoop)
+
+    /*!
+     * \brief Returns a reference pressure at a given sub control volume face.
+     *        This pressure is substracted from the actual pressure for the momentum balance
+     *        which potentially helps to improve numerical accuracy by avoiding issues related do floating point arithmetic.
+     */
+    Scalar referencePressure(const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const SubControlVolumeFace& scvf) const
+    { return outletPressure_; }
+
+    void setTime(Scalar time)
     {
-        timeLoop_ = timeLoop;
-        if(inletVelocity_ > eps_)
-            timeLoop_->setCheckPoint({200.0, 210.0});
+        time_ = time;
     }
 
     Scalar time() const
     {
-        return timeLoop_->time();
+        return time_;
     }
 
-    bool hasAnalyticalSolution()
-    {
-        return hasAnalyticalSolution_;
-    }
+    bool hasAnalyticalSolution() const
+    { return outletCondition_ == OutletCondition::neumannXneumannY; }
 
 private:
     bool isInlet_(const GlobalPosition& globalPos) const
@@ -336,8 +374,7 @@ private:
     Scalar outletPressure_;
     OutletCondition outletCondition_;
     bool useVelocityProfile_;
-    bool hasAnalyticalSolution_;
-    TimeLoopPtr timeLoop_;
+    Scalar time_;
 };
 } // end namespace Dumux
 
