@@ -34,7 +34,7 @@ dumux_add_test(NAME test_ff_stokes_channel_neumann_x_neumann_y
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_nxny-00001.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_channel params.input -Grid.UpperRight \"2 1\" -Grid.Cells \"50 25\"
                          -Problem.Name test_ff_stokes_channel_nxny -Problem.OutletCondition NeumannX_NeumannY
-                         -Problem.UseVelocityProfile true -Problem.OutletPressure 0 -Problem.IsStationary 1")
+                         -Problem.UseVelocityProfile true -Problem.OutletPressure 0 -Problem.IsStationary true")
 
 dumux_add_test(NAME test_ff_stokes_channel_do_nothing
               TARGET test_ff_channel
