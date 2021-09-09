@@ -138,20 +138,12 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Both models must use the same gravity vector");
 
         this->setSubProblems(std::make_tuple(stokesProblem, stokesProblem, darcyProblem));
-        this->curSol() = curSol;
+        this->updateSolution(curSol);
         couplingData_ = std::make_shared<CouplingData>(*this);
         computeStencils();
     }
 
-    //! Update after the grid has changed
-    void update()
-    { }
-
     // \}
-
-    //! Update the solution vector before assembly
-    void updateSolution(const SolutionVector& curSol)
-    { this->curSol() = curSol; }
 
     //! Prepare the coupling stencils
     void computeStencils()
