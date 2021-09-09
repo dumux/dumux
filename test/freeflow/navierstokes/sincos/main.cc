@@ -32,59 +32,47 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/grid/io/file/vtk.hh>
 
-#include <dumux/assembly/staggeredfvassembler.hh>
-#include <dumux/assembly/diffmethod.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+
 #include <dumux/io/grid/gridmanager_yasp.hh>
-#include <dumux/io/staggeredvtkoutputmodule.hh>
+#include <dumux/io/vtkoutputmodule.hh>
+
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/istlsolverfactorybackend.hh>
-#include <dumux/nonlinear/newtonsolver.hh>
 
+#include <dumux/multidomain/fvassembler.hh>
+#include <dumux/multidomain/traits.hh>
+#include <dumux/multidomain/newtonsolver.hh>
+
+#include <dumux/freeflow/navierstokes/velocityoutput.hh>
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 #include <test/freeflow/navierstokes/errors.hh>
 
 #include "properties.hh"
 
-/*!
-* \brief Creates analytical solution.
-* Returns a tuple of the analytical solution for the pressure, the velocity and the velocity at the faces
-* \param time the time at which to evaluate the analytical solution
-* \param problem the problem for which to evaluate the analytical solution
-*/
-template<class Problem>
-auto createSource(const Problem& problem)
+template<class MomentumProblem>
+auto createSource(const MomentumProblem& momentumProblem)
 {
     using Scalar = double;
-    using Indices = typename Problem::Indices;
+    using Indices = typename MomentumProblem::Indices;
 
-    const auto& gridGeometry = problem.gridGeometry();
-    std::array<std::vector<Scalar>, Problem::ModelTraits::numEq()> source;
+    const auto& gridGeometry = momentumProblem.gridGeometry();
+    std::array<std::vector<Scalar>, 2> source;
 
     for (auto& component : source)
-    {
-        component.resize(gridGeometry.numCellCenterDofs());
-    }
+        component.resize(gridGeometry.gridView().size(0));
 
-    auto fvGeometry = localView(gridGeometry);
     for (const auto& element : elements(gridGeometry.gridView()))
     {
-        fvGeometry.bindElement(element);
-        for (auto&& scv : scvs(fvGeometry))
-        {
-            const auto ccDofIdx = scv.dofIndex();
-            const auto ccDofPosition = scv.dofPosition();
-
-            const auto sourceAtPosVal = problem.sourceAtPos(ccDofPosition);
-
-            source[Indices::momentumXBalanceIdx][ccDofIdx] = sourceAtPosVal[Indices::momentumXBalanceIdx];
-            source[Indices::momentumYBalanceIdx][ccDofIdx] = sourceAtPosVal[Indices::momentumYBalanceIdx];
-        }
+        const auto& center = element.geometry().center();
+        const auto eIdx = gridGeometry.elementMapper().index(element);
+        auto sourceAtPosVal = momentumProblem.sourceAtPos(center);
+        source[Indices::momentumXBalanceIdx][eIdx] = sourceAtPosVal[Indices::momentumXBalanceIdx];
+        source[Indices::momentumYBalanceIdx][eIdx] = sourceAtPosVal[Indices::momentumYBalanceIdx];
     }
 
     return source;
@@ -95,7 +83,8 @@ int main(int argc, char** argv)
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = Properties::TTag::SincosTest;
+    using MomentumTypeTag = Properties::TTag::SincosTestMomentum;
+    using MassTypeTag = Properties::TTag::SincosTestMass;
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -108,7 +97,7 @@ int main(int argc, char** argv)
     Parameters::init(argc, argv);
 
     // try to create a grid (from the given grid file or the input file)
-    GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
+    GridManager<GetPropType<MomentumTypeTag, Properties::Grid>> gridManager;
     gridManager.init();
 
     ////////////////////////////////////////////////////////////
@@ -119,11 +108,18 @@ int main(int argc, char** argv)
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
+    using MomentumGridGeometry = GetPropType<MomentumTypeTag, Properties::GridGeometry>;
+    auto momentumGridGeometry = std::make_shared<MomentumGridGeometry>(leafGridView);
+    using MassGridGeometry = GetPropType<MassTypeTag, Properties::GridGeometry>;
+    auto massGridGeometry = std::make_shared<MassGridGeometry>(leafGridView);
+
+    // the coupling manager
+    using Traits = MultiDomainTraits<MomentumTypeTag, MassTypeTag>;
+    using CouplingManager = StaggeredFreeFlowCouplingManager<Traits>;
+    auto couplingManager = std::make_shared<CouplingManager>();
 
     // get some time loop parameters
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Scalar = GetPropType<MomentumTypeTag, Properties::Scalar>;
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
@@ -133,61 +129,80 @@ int main(int argc, char** argv)
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the problem (initial and boundary conditions)
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(gridGeometry);
-    problem->updateTimeStepSize(timeLoop->timeStepSize());
+    using MomentumProblem = GetPropType<MomentumTypeTag, Properties::Problem>;
+    auto momentumProblem = std::make_shared<MomentumProblem>(momentumGridGeometry, couplingManager);
+    using MassProblem = GetPropType<MassTypeTag, Properties::Problem>;
+    auto massProblem = std::make_shared<MassProblem>(massGridGeometry, couplingManager);
 
     // the solution vector
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    constexpr auto momentumIdx = CouplingManager::freeFlowMomentumIndex;
+    constexpr auto massIdx = CouplingManager::freeFlowMassIndex;
+    using SolutionVector = typename Traits::SolutionVector;
     SolutionVector x;
-    x[GridGeometry::cellCenterIdx()].resize(gridGeometry->numCellCenterDofs());
-    x[GridGeometry::faceIdx()].resize(gridGeometry->numFaceDofs());
-    problem->applyInitialSolution(x);
+    momentumProblem->applyInitialSolution(x[momentumIdx]);
+    massProblem->applyInitialSolution(x[massIdx]);
     auto xOld = x;
 
     // the grid variables
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
-    gridVariables->init(x);
-
-    // initialize the vtk output module
-    StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
-    using IOFields = GetPropType<TypeTag, Properties::IOFields>;
-    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
-
-    auto source = createSource(*problem);
-    auto sourceX = source[Problem::Indices::momentumXBalanceIdx];
-    auto sourceY = source[Problem::Indices::momentumYBalanceIdx];
-    vtkWriter.addField(sourceX, "sourceX");
-    vtkWriter.addField(sourceY, "sourceY");
-
-    NavierStokesAnalyticalSolutionVectors analyticalSolVectors(problem, 0.0);
-    vtkWriter.addField(analyticalSolVectors.getAnalyticalPressureSolution(), "pressureExact");
-    vtkWriter.addField(analyticalSolVectors.getAnalyticalVelocitySolution(), "velocityExact");
-    vtkWriter.addFaceField(analyticalSolVectors.getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");
-
-    vtkWriter.write(0.0);
+    using MomentumGridVariables = GetPropType<MomentumTypeTag, Properties::GridVariables>;
+    auto momentumGridVariables = std::make_shared<MomentumGridVariables>(momentumProblem, momentumGridGeometry);
+    using MassGridVariables = GetPropType<MassTypeTag, Properties::GridVariables>;
+    auto massGridVariables = std::make_shared<MassGridVariables>(massProblem, massGridGeometry);
 
     const bool isStationary = getParam<bool>("Problem.IsStationary");
+    if (isStationary)
+        couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x);
+    else
+        couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x, xOld);
+
+    massGridVariables->init(x[massIdx]);
+    momentumGridVariables->init(x[momentumIdx]);
+
+    // initialize the vtk output module
+    using IOFields = GetPropType<MassTypeTag, Properties::IOFields>;
+    VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name());
+    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
+    vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
+    NavierStokesTest::AnalyticalSolutionVectors analyticalSolVectors(momentumProblem, massProblem);
+    vtkWriter.addField(analyticalSolVectors.analyticalPressureSolution(), "pressureExact");
+    vtkWriter.addField(analyticalSolVectors.analyticalVelocitySolution(), "velocityExact");
+    const auto source = createSource(*momentumProblem);
+    const auto& sourceX = source[MomentumProblem::Indices::momentumXBalanceIdx];
+    const auto& sourceY = source[MomentumProblem::Indices::momentumYBalanceIdx];
+    vtkWriter.addField(sourceX, "sourceX");
+    vtkWriter.addField(sourceY, "sourceY");
+    vtkWriter.write(0.0);
 
     // the assembler with time loop for instationary problem
-    using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = isStationary ? std::make_shared<Assembler>(problem, gridGeometry, gridVariables)
-                                  : std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
+    using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+    auto assembler = isStationary ?
+        std::make_shared<Assembler>(
+            std::make_tuple(momentumProblem, massProblem),
+            std::make_tuple(momentumGridGeometry, massGridGeometry),
+            std::make_tuple(momentumGridVariables, massGridVariables),
+            couplingManager
+        )
+        :
+        std::make_shared<Assembler>(
+            std::make_tuple(momentumProblem, massProblem),
+            std::make_tuple(momentumGridGeometry, massGridGeometry),
+            std::make_tuple(momentumGridVariables, massGridVariables),
+            couplingManager, timeLoop, xOld
+        );
 
     // the linear solver
     using LinearSolver = LINEARSOLVER;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver);
+    using NewtonSolver = Dumux::MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+    NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
     // the discrete L2 and Linfity errors
     const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
     const bool printConvergenceTestFile = getParam<bool>("Problem.PrintConvergenceTestFile", false);
-    NavierStokesErrors errors(problem, x);
-    NavierStokesErrorCSVWriter errorCSVWriter(problem);
+    NavierStokesTest::Errors errors(momentumProblem, massProblem, x);
+    NavierStokesTest::ErrorCSVWriter errorCSVWriter(momentumProblem, massProblem);
 
     if (isStationary)
     {
@@ -202,7 +217,7 @@ int main(int argc, char** argv)
             errorCSVWriter.printErrors(errors);
 
             if (printConvergenceTestFile)
-                convergenceTestAppendErrors(problem, errors);
+                convergenceTestAppendErrors(momentumProblem, massProblem, errors);
         }
 
         // write vtk output
@@ -221,12 +236,17 @@ int main(int argc, char** argv)
         // time loop
         timeLoop->start(); do
         {
+            // set the correct time level for the problem's boundary conditions
+            momentumProblem->updateTime(timeLoop->time() + timeLoop->timeStepSize());
+            massProblem->updateTime(timeLoop->time() + timeLoop->timeStepSize());
+
             // solve the non-linear system with time step control
             nonLinearSolver.solve(x, *timeLoop);
 
             // make the new solution the old solution
             xOld = x;
-            gridVariables->advanceTimeStep();
+            momentumGridVariables->advanceTimeStep();
+            massGridVariables->advanceTimeStep();
 
             // print discrete L2 and Linfity errors
             if (printErrors)
@@ -237,7 +257,6 @@ int main(int argc, char** argv)
 
             // advance to the time loop to the next step
             timeLoop->advanceTimeStep();
-            problem->updateTime(timeLoop->time());
             analyticalSolVectors.update(timeLoop->time());
 
             // write vtk output
@@ -248,7 +267,6 @@ int main(int argc, char** argv)
 
             // set new dt as suggested by newton solver
             timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
-            problem->updateTimeStepSize(timeLoop->timeStepSize());
 
         } while (!timeLoop->finished());
 

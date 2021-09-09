@@ -47,32 +47,33 @@ class SincosTestProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
 
-    using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
+    using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
+    using NumEqVector = typename ParentType::NumEqVector;
+    using PrimaryVariables = typename ParentType::PrimaryVariables;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using FVElementGeometry = typename GridGeometry::LocalView;
 
-    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+    static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
+    using Element = typename FVElementGeometry::Element;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    SincosTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry), time_(0.0), timeStepSize_(0.0)
+    SincosTestProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
+    : ParentType(gridGeometry, couplingManager), time_(0.0)
     {
         isStationary_ = getParam<bool>("Problem.IsStationary");
-        enableInertiaTerms_ = getParam<bool>("Problem.EnableInertiaTerms");
         rho_ = getParam<Scalar>("Component.LiquidDensity");
-        //kinematic
         Scalar nu = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
-        //dynamic
-        mu_ = rho_*nu;
+        mu_ = rho_*nu; // dynamic viscosity
+        useNeumann_ = getParam<bool>("Problem.UseNeumann", false);
     }
 
    /*!
@@ -83,7 +84,7 @@ public:
     Scalar temperature() const
     { return 298.0; }
 
-   /*!
+    /*!
      * \brief Return the sources within the domain.
      *
      * \param globalPos The global position
@@ -91,20 +92,20 @@ public:
     NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
     {
         NumEqVector source(0.0);
-        const Scalar x = globalPos[0];
-        const Scalar y = globalPos[1];
-        const Scalar t = time_ + timeStepSize_;
-
-        using std::cos;
-        using std::sin;
-
-        source[Indices::momentumXBalanceIdx] = rho_*dtU_(x,y,t) - 2.*mu_*dxxU_(x,y,t) - mu_*dyyU_(x,y,t) - mu_*dxyV_(x,y,t) + dxP_(x,y,t);
-        source[Indices::momentumYBalanceIdx] = rho_*dtV_(x,y,t) - 2.*mu_*dyyV_(x,y,t) - mu_*dxyU_(x,y,t) - mu_*dxxV_(x,y,t) + dyP_(x,y,t);
-
-        if (enableInertiaTerms_)
+        if constexpr (ParentType::isMomentumProblem())
         {
-            source[Indices::momentumXBalanceIdx] += rho_*dxUU_(x,y,t) + rho_*dyUV_(x,y,t);
-            source[Indices::momentumYBalanceIdx] += rho_*dxUV_(x,y,t) + rho_*dyVV_(x,y,t);
+            const Scalar x = globalPos[0];
+            const Scalar y = globalPos[1];
+            const Scalar t = time_;
+
+            source[Indices::momentumXBalanceIdx] = rho_*dtU_(x,y,t) - 2.0*mu_*dxxU_(x,y,t) - mu_*dyyU_(x,y,t) - mu_*dxyV_(x,y,t) + dxP_(x,y,t);
+            source[Indices::momentumYBalanceIdx] = rho_*dtV_(x,y,t) - 2.0*mu_*dyyV_(x,y,t) - mu_*dxyU_(x,y,t) - mu_*dxxV_(x,y,t) + dyP_(x,y,t);
+
+            if (this->enableInertiaTerms())
+            {
+                source[Indices::momentumXBalanceIdx] += rho_*dxUU_(x,y,t) + rho_*dyUV_(x,y,t);
+                source[Indices::momentumYBalanceIdx] += rho_*dxUV_(x,y,t) + rho_*dyVV_(x,y,t);
+            }
         }
 
         return source;
@@ -116,49 +117,139 @@ public:
      */
     // \{
 
-   /*!
+    /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary control volume.
      *
      * \param globalPos The position of the center of the finite volume
      */
-    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
 
-        // set Dirichlet values for the velocity everywhere
-        values.setDirichlet(Indices::velocityXIdx);
-        values.setDirichlet(Indices::velocityYIdx);
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            if (useNeumann_)
+            {
+                if (globalPos[1] > this->gridGeometry().bBoxMax()[1] - 1e-6
+                || globalPos[0] > this->gridGeometry().bBoxMax()[0] - 1e-6
+                || globalPos[1] < this->gridGeometry().bBoxMin()[1] + 1e-6)
+                {
+                    values.setNeumann(Indices::velocityXIdx);
+                    values.setNeumann(Indices::velocityYIdx);
+                }
+                else
+                {
+                    values.setDirichlet(Indices::velocityXIdx);
+                    values.setDirichlet(Indices::velocityYIdx);
+                }
+            }
+            else
+            {
+                // set Dirichlet values for the velocity everywhere
+                values.setAllDirichlet();
+            }
+        }
+        else
+            values.setAllNeumann();
+
+        return values;
+    }
+
+    //! Enable internal Dirichlet constraints
+    static constexpr bool enableInternalDirichletConstraints()
+    { return !ParentType::isMomentumProblem(); }
+
+    /*!
+     * \brief Tag a degree of freedom to carry internal Dirichlet constraints.
+     *        If true is returned for a dof, the equation for this dof is replaced
+     *        by the constraint that its primary variable values must match the
+     *        user-defined values obtained from the function internalDirichlet(),
+     *        which must be defined in the problem.
+     *
+     * \param element The finite element
+     * \param scv The sub-control volume
+     */
+    std::bitset<PrimaryVariables::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
+    {
+        // set fixed pressure in one cell
+        std::bitset<PrimaryVariables::dimension> values;
+
+        if (!useNeumann_ && scv.dofIndex() == 0)
+            values.set(Indices::pressureIdx);
 
         return values;
     }
 
     /*!
-     * \brief Returns whether a fixed Dirichlet value shall be used at a given cell.
-     *
+     * \brief Define the values of internal Dirichlet constraints for a degree of freedom.
      * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param scv The sub control volume
-     * \param pvIdx The primary variable index in the solution vector
+     * \param scv The sub-control volume
      */
-    bool isDirichletCell(const Element& element,
-                         const FVElementGeometry& fvGeometry,
-                         const SubControlVolume& scv,
-                         int pvIdx) const
-    {
-        // set fixed pressure in one cell
-        return (scv.dofIndex() == 0) && pvIdx == Indices::pressureIdx;
-    }
+    PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
+    { return PrimaryVariables(analyticalSolution(scv.center())[Indices::pressureIdx]); }
 
-   /*!
+    /*!
      * \brief Returns Dirichlet boundary values at a given position.
      *
      * \param globalPos The global position
      */
-    PrimaryVariables dirichletAtPos(const GlobalPosition & globalPos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
         // use the values of the analytical solution
-        return analyticalSolution(globalPos, time_+timeStepSize_);
+        return analyticalSolution(globalPos, time_);
+    }
+
+    /*!
+     * \brief Evaluates the boundary conditions for a Neumann control volume.
+     *
+     * \param element The element for which the Neumann boundary condition is set
+     * \param fvGeometry The fvGeometry
+     * \param elemVolVars The element volume variables
+     * \param elemFaceVars The element face variables
+     * \param scvf The boundary sub control volume face
+     */
+    template<class ElementVolumeVariables, class ElementFluxVariablesCache>
+    NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElementFluxVariablesCache& elemFluxVarsCache,
+                        const SubControlVolumeFace& scvf) const
+    {
+        NumEqVector values(0.0);
+
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            const auto flux = [&](Scalar x, Scalar y)
+            {
+                Dune::FieldMatrix<Scalar, dimWorld, dimWorld> momentumFlux(0.0);
+                const Scalar t = time_;
+
+                momentumFlux[0][0] = -2*mu_*dxU_(x,y,t) + p_(x,y,t);
+                momentumFlux[0][1] = -mu_*(dyU_(x,y,t) + dxV_(x,y,t));
+                momentumFlux[1][0] = -mu_*(dyU_(x,y,t) + dxV_(x,y,t));
+                momentumFlux[1][1] = -2*mu_*dyV_(x,y,t) + p_(x,y,t);
+
+                if (this->enableInertiaTerms())
+                {
+                    momentumFlux[0][0] += rho_*u_(x,y,t)*u_(x,y,t);
+                    momentumFlux[0][1] += rho_*u_(x,y,t)*v_(x,y,t);
+                    momentumFlux[1][0] += rho_*v_(x,y,t)*u_(x,y,t);
+                    momentumFlux[1][1] += rho_*v_(x,y,t)*v_(x,y,t);
+                }
+
+                return momentumFlux;
+            };
+
+            flux(scvf.ipGlobal()[0], scvf.ipGlobal()[1]).mv(scvf.unitOuterNormal(), values);
+        }
+        else
+        {
+            const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
+            values[Indices::conti0EqIdx] = insideDensity * (this->faceVelocity(element, fvGeometry, scvf) * scvf.unitOuterNormal());
+        }
+
+        return values;
     }
 
     /*!
@@ -171,14 +262,16 @@ public:
     {
         const Scalar x = globalPos[0];
         const Scalar y = globalPos[1];
-
         const Scalar t = time;
-
         PrimaryVariables values;
 
-        values[Indices::pressureIdx] = (f1_(x) + f1_(y)) * f_(t) * f_(t);
-        values[Indices::velocityXIdx] = u_(x,y,t);
-        values[Indices::velocityYIdx] = v_(x,y,t);
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            values[Indices::velocityXIdx] = u_(x,y,t);
+            values[Indices::velocityYIdx] = v_(x,y,t);
+        }
+        else
+            values[Indices::pressureIdx] = p_(x,y,t);
 
         return values;
     }
@@ -190,7 +283,7 @@ public:
      */
     // \{
 
-   /*!
+    /*!
      * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The global position
@@ -198,18 +291,20 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         if (isStationary_)
-        {
-            PrimaryVariables values;
-            values[Indices::pressureIdx] = 0.0;
-            values[Indices::velocityXIdx] = 0.0;
-            values[Indices::velocityYIdx] = 0.0;
-
-            return values;
-        }
+            return PrimaryVariables(0.0);
         else
-        {
             return analyticalSolution(globalPos, 0.0);
-        }
+    }
+
+
+    /*!
+     * \brief Returns the analytical solution of the problem at a given position.
+     *
+     * \param globalPos The global position
+     */
+    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
+    {
+        return analyticalSolution(globalPos, time_);
     }
 
     /*!
@@ -220,48 +315,45 @@ public:
         time_ = time;
     }
 
-    /*!
-     * \brief Updates the time step size
-     */
-    void updateTimeStepSize(const Scalar timeStepSize)
-    {
-        timeStepSize_ = timeStepSize;
-    }
-
 private:
     Scalar f_(Scalar t) const
     {
+        using std::sin;
         if (isStationary_)
             return 1.0;
         else
-            return std::sin(2.0 * t);
+            return sin(2.0 * t);
     }
 
     Scalar df_(Scalar t) const
     {
+        using std::cos;
         if (isStationary_)
             return 0.0;
         else
-            return 2.0 * std::cos(2.0 * t);
+            return 2.0 * cos(2.0 * t);
     }
 
     Scalar f1_(Scalar x) const
-    { return -0.25 * std::cos(2.0 * x); }
+    { using std::cos; return -0.25 * cos(2.0 * x); }
 
     Scalar df1_(Scalar x) const
-    { return 0.5 * std::sin(2.0 * x); }
+    { using std::sin; return 0.5 * sin(2.0 * x); }
 
     Scalar f2_(Scalar x) const
-    { return - std::cos(x); }
+    { using std::cos; return -cos(x); }
 
     Scalar df2_(Scalar x) const
-    { return std::sin(x); }
+    { using std::sin; return sin(x); }
 
     Scalar ddf2_(Scalar x) const
-    { return std::cos(x); }
+    { using std::cos; return cos(x); }
 
     Scalar dddf2_(Scalar x) const
-    { return -std::sin(x); }
+    { using std::sin; return -sin(x); }
+
+    Scalar p_(Scalar x, Scalar y, Scalar t) const
+    { return (f1_(x) + f1_(y)) * f_(t) * f_(t); }
 
     Scalar dxP_ (Scalar x, Scalar y, Scalar t) const
     { return df1_(x) * f_(t) * f_(t); }
@@ -325,11 +417,10 @@ private:
 
     Scalar rho_;
     Scalar mu_;
-    bool enableInertiaTerms_;
     Scalar time_;
-    Scalar timeStepSize_;
 
     bool isStationary_;
+    bool useNeumann_;
 };
 
 } // end namespace Dumux
