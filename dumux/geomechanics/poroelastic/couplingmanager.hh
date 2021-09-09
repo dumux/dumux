@@ -191,7 +191,7 @@ public:
         const auto fvGeometry = localView( this->problem(pmFlowId).gridGeometry() ).bindElement(element);
         const auto elemVolVars = localView(assembler.gridVariables(Dune::index_constant<PMFlowId>()).curGridVolVars()).bindElement(element,
                                                                                                                              fvGeometry,
-                                                                                                                             this->curSol()[Dune::index_constant<PMFlowId>()]);
+                                                                                                                             this->curSol(Dune::index_constant<PMFlowId>()));
 
         poroMechCouplingContext_.pmFlowElement = element;
         poroMechCouplingContext_.pmFlowFvGeometry = std::make_unique< FVElementGeometry<PMFlowId> >(fvGeometry);
@@ -217,7 +217,7 @@ public:
         // now, update the coupling context (i.e. elemVolVars)
         const auto& element = poroMechCouplingContext_.pmFlowElement;
         const auto& fvGeometry = *poroMechCouplingContext_.pmFlowFvGeometry;
-        poroMechCouplingContext_.pmFlowElemVolVars->bindElement(element, fvGeometry, this->curSol()[pmFlowDomainId]);
+        poroMechCouplingContext_.pmFlowElemVolVars->bindElement(element, fvGeometry, this->curSol(pmFlowDomainId));
     }
 
     /*!
@@ -240,7 +240,7 @@ public:
         // now, update the coupling context (i.e. elemVolVars)
         (*poroMechCouplingContext_.pmFlowElemVolVars).bindElement(poroMechCouplingContext_.pmFlowElement,
                                                                   *poroMechCouplingContext_.pmFlowFvGeometry,
-                                                                  this->curSol()[Dune::index_constant<PMFlowId>()]);
+                                                                  this->curSol(Dune::index_constant<PMFlowId>()));
     }
 
     /*!
@@ -276,7 +276,7 @@ public:
         // update the element volume variables to obtain the updated porosity/permeability
         elemVolVars.bind(pmFlowLocalAssembler.element(),
                          pmFlowLocalAssembler.fvGeometry(),
-                         this->curSol()[pmFlowDomainId]);
+                         this->curSol(pmFlowDomainId));
 
         // update the transmissibilities subject to the new permeabilities
         elemFluxVarsCache.update(pmFlowLocalAssembler.element(),
@@ -297,7 +297,7 @@ public:
     {
         elemVolVars.bind(poroMechLocalAssembler.element(),
                          poroMechLocalAssembler.fvGeometry(),
-                         this->curSol()[poroMechDomainId]);
+                         this->curSol(poroMechDomainId));
     }
 
     /*!
@@ -358,11 +358,14 @@ public:
     }
 
     /*!
-     * \brief the solution vector of the coupled problem
+     * \brief the solution vector of the subproblem
+     * \param domainIdx The domain index
      * \note in case of numeric differentiation the solution vector always carries the deflected solution
      */
-    const SolutionVector& curSol() const
-    { return ParentType::curSol(); }
+    template<std::size_t i>
+    const auto& curSol(Dune::index_constant<i> domainIdx) const
+    { return ParentType::curSol(domainIdx); }
+
 
 private:
     /*!
