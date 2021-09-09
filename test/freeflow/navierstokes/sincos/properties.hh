@@ -26,10 +26,16 @@
 
 #include <dune/grid/yaspgrid.hh>
 
-#include <dumux/discretization/staggered/freeflow/properties.hh>
-#include <dumux/freeflow/navierstokes/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/mass/1p/model.hh>
+
+#include <dumux/discretization/fcstaggered.hh>
+#include <dumux/discretization/cctpfa.hh>
+
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
+
+#include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
 
 #include "problem.hh"
 
@@ -37,7 +43,9 @@ namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
-struct SincosTest { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
+struct SincosTest {};
+struct SincosTestMomentum { using InheritsFrom = std::tuple<SincosTest, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
+struct SincosTestMass { using InheritsFrom = std::tuple<SincosTest, NavierStokesMassOneP, CCTpfaModel>; };
 } // end namespace TTag
 
 // the fluid system
@@ -56,7 +64,7 @@ struct Grid<TypeTag, TTag::SincosTest> { using type = Dune::YaspGrid<2, Dune::Eq
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::SincosTest> { using type = Dumux::SincosTestProblem<TypeTag> ; };
+struct Problem<TypeTag, TTag::SincosTest> { using type = SincosTestProblem<TypeTag> ; };
 
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::SincosTest> { static constexpr bool value = true; };
@@ -64,6 +72,13 @@ template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::SincosTest> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::SincosTest> { static constexpr bool value = true; };
+
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::SincosTest>
+{
+    using Traits = MultiDomainTraits<TTag::SincosTestMomentum, TTag::SincosTestMass>;
+    using type = StaggeredFreeFlowCouplingManager<Traits>;
+};
 
 } // end namespace Dumux::Properties
 
