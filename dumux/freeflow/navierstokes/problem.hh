@@ -385,6 +385,7 @@ public:
     template<class SolutionVector>
     void applyInitialSolution(SolutionVector& sol) const
     {
+        sol.resize(this->gridGeometry().numDofs());
         std::vector<bool> dofHandled(this->gridGeometry().numDofs(), false);
         auto fvGeometry = localView(this->gridGeometry());
         for (const auto& element : elements(this->gridGeometry().gridView()))
