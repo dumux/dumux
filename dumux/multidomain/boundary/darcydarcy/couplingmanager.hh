@@ -233,7 +233,7 @@ public:
                                const SubControlVolume<i>& scv) const
     {
         VolumeVariables<i> volVars;
-        const auto elemSol = elementSolution(element, this->curSol()[domainI], this->problem(domainI).gridGeometry());
+        const auto elemSol = elementSolution(element, this->curSol(domainI), this->problem(domainI).gridGeometry());
         volVars.update(elemSol, this->problem(domainI), element, scv);
         return volVars;
     }

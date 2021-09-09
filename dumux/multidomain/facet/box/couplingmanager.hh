@@ -479,7 +479,7 @@ public:
             auto fvGeom = localView(ldGridGeometry);
             for (const auto lowDimElemIdx : elementStencil)
             {
-                const auto& ldSol = Assembler::isImplicit() ? this->curSol()[lowDimId] : assembler.prevSol()[lowDimId];
+                const auto& ldSol = Assembler::isImplicit() ? this->curSol(lowDimId) : assembler.prevSol()[lowDimId];
                 const auto elemJ = ldGridGeometry.element(lowDimElemIdx);
                 fvGeom.bindElement(elemJ);
 
@@ -538,7 +538,7 @@ public:
 
             for (unsigned int i = 0; i < numEmbedments; ++i)
             {
-                const auto& bulkSol = Assembler::isImplicit() ? this->curSol()[bulkId] : assembler.prevSol()[bulkId];
+                const auto& bulkSol = Assembler::isImplicit() ? this->curSol(bulkId) : assembler.prevSol()[bulkId];
                 const auto curBulkElem = bulkGridGeom.element(embedments[i].first);
 
                 bulkFvGeom.bind(curBulkElem);
@@ -622,7 +622,7 @@ public:
                 const auto& fvGeom = bulkContext_.lowDimFvGeometries[idxInContext];
                 const auto& coupledScvfIndices = couplingEntry.elementToScvfMap.at(eIdxGlobal);
                 makeCoupledLowDimElemVolVars_(bulkLocalAssembler.element(), bulkLocalAssembler.fvGeometry(),
-                                              element, fvGeom, this->curSol()[lowDimId], coupledScvfIndices, elemVolVars);
+                                              element, fvGeom, this->curSol(lowDimId), coupledScvfIndices, elemVolVars);
             }
         }
     }
@@ -691,7 +691,7 @@ public:
                     {
                         // element contains the deflected dof
                         const auto& fvGeom = *lowDimContext_.bulkFvGeometries[embedmentIdx];
-                        (*lowDimContext_.bulkElemVolVars[embedmentIdx]).bindElement(elementJ, fvGeom, this->curSol()[bulkId]);
+                        (*lowDimContext_.bulkElemVolVars[embedmentIdx]).bindElement(elementJ, fvGeom, this->curSol(bulkId));
                     }
                 }
 
@@ -748,7 +748,7 @@ public:
             const auto& scvfIndices = bulkCouplingEntry.elementToScvfMap.at(lowDimContext_.elementIdx);
 
             makeCoupledLowDimElemVolVars_(bulkElement, bulkFvGeometry, element, fvGeom,
-                                          this->curSol()[lowDimId], scvfIndices, elemVolVars);
+                                          this->curSol(lowDimId), scvfIndices, elemVolVars);
         }
     }
 
