@@ -382,11 +382,11 @@ public:
 
     //! Return data for a bulk point source with the identifier id
     PrimaryVariables<bulkIdx> bulkPriVars(std::size_t id) const
-    { return pointSourceData_[id].interpolateBulk(this->curSol()[bulkIdx]); }
+    { return pointSourceData_[id].interpolateBulk(this->curSol(bulkIdx)); }
 
     //! Return data for a low dim point source with the identifier id
     PrimaryVariables<lowDimIdx> lowDimPriVars(std::size_t id) const
-    { return pointSourceData_[id].interpolateLowDim(this->curSol()[lowDimIdx]); }
+    { return pointSourceData_[id].interpolateLowDim(this->curSol(lowDimIdx)); }
 
     //! return the average distance to the coupled bulk cell center
     Scalar averageDistance(std::size_t id) const

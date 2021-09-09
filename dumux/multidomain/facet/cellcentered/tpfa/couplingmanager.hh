@@ -436,7 +436,7 @@ public:
             auto fvGeom = localView(ldGridGeometry);
             for (const auto lowDimElemIdx : elementStencil)
             {
-                const auto& ldSol = Assembler::isImplicit() ? this->curSol()[lowDimId] : assembler.prevSol()[lowDimId];
+                const auto& ldSol = Assembler::isImplicit() ? this->curSol(lowDimId) : assembler.prevSol()[lowDimId];
                 const auto& ldProblem = this->problem(lowDimId);
 
                 const auto elemJ = ldGridGeometry.element(lowDimElemIdx);
@@ -496,7 +496,7 @@ public:
             bindCouplingContext(bulkId, bulkElem, assembler);
 
             // evaluate variables on old/new time level depending on time disc scheme
-            const auto& bulkSol = Assembler::isImplicit() ? this->curSol()[bulkId] : assembler.prevSol()[bulkId];
+            const auto& bulkSol = Assembler::isImplicit() ? this->curSol(bulkId) : assembler.prevSol()[bulkId];
 
             // then simply bind the local views of that first neighbor
             auto bulkFvGeom = localView(bulkGridGeom).bind(bulkElem);
@@ -538,7 +538,7 @@ public:
         {
             const auto& map = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
             const auto& couplingElemStencil = map.find(bulkContext_.elementIdx)->second.couplingElementStencil;
-            const auto& ldSol = this->curSol()[lowDimId];
+            const auto& ldSol = this->curSol(lowDimId);
             const auto& ldProblem = this->problem(lowDimId);
             const auto& ldGridGeometry = this->problem(lowDimId).gridGeometry();
 
@@ -641,7 +641,7 @@ public:
 
             // update corresponding vol vars in context
             const auto& scv = lowDimContext_.bulkFvGeometry->scv(dofIdxGlobalJ);
-            const auto elemSol = elementSolution(elementJ, this->curSol()[bulkId], bulkGridGeom);
+            const auto elemSol = elementSolution(elementJ, this->curSol(bulkId), bulkGridGeom);
             (*lowDimContext_.bulkElemVolVars)[dofIdxGlobalJ].update(elemSol, this->problem(bulkId), elementJ, scv);
 
             // update the element flux variables cache (tij might be solution-dependent)
@@ -680,7 +680,7 @@ public:
         // skip the rest if context is empty
         if (lowDimContext_.isSet)
         {
-            const auto& ldSol = this->curSol()[lowDimId];
+            const auto& ldSol = this->curSol(lowDimId);
             const auto& ldProblem = this->problem(lowDimId);
             const auto& ldGridGeometry = this->problem(lowDimId).gridGeometry();
 
@@ -749,7 +749,7 @@ public:
         // update transmissibilities after low dim context has changed (implicit only)
         if (BulkLocalAssembler::isImplicit())
         {
-            const auto elemVolVars = localView(gridVolVars).bind(bulkLocalAssembler.element(), bulkLocalAssembler.fvGeometry(), this->curSol()[bulkId]);
+            const auto elemVolVars = localView(gridVolVars).bind(bulkLocalAssembler.element(), bulkLocalAssembler.fvGeometry(), this->curSol(bulkId));
             fluxVarsCache.update(bulkLocalAssembler.element(), bulkLocalAssembler.fvGeometry(), elemVolVars);
         }
     }

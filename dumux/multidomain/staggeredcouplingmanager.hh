@@ -72,7 +72,7 @@ public:
                                const PriVarsJ& priVarsJ,
                                int pvIdxJ)
     {
-        auto& curSol = this->curSol()[domainJ];
+        auto& curSol = this->curSol(domainJ);
 
         // only proceed if the solution vector has actually been set in the base class
         // (which is not the case if the staggered model is not coupled to another domain)

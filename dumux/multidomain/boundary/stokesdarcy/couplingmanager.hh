@@ -138,20 +138,12 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Both models must use the same gravity vector");
 
         this->setSubProblems(std::make_tuple(stokesProblem, stokesProblem, darcyProblem));
-        this->curSol() = curSol;
+        this->updateSolution(curSol);
         couplingData_ = std::make_shared<CouplingData>(*this);
         computeStencils();
     }
 
-    //! Update after the grid has changed
-    void update()
-    { }
-
     // \}
-
-    //! Update the solution vector before assembly
-    void updateSolution(const SolutionVector& curSol)
-    { this->curSol() = curSol; }
 
     //! Prepare the coupling stencils
     void computeStencils()
@@ -210,7 +202,7 @@ public:
             darcyFvGeometry.bindElement(darcyElement);
             const auto& scv = (*scvs(darcyFvGeometry).begin());
 
-            const auto darcyElemSol = elementSolution(darcyElement, this->curSol()[darcyIdx], this->problem(darcyIdx).gridGeometry());
+            const auto darcyElemSol = elementSolution(darcyElement, this->curSol(darcyIdx), this->problem(darcyIdx).gridGeometry());
             VolumeVariables<darcyIdx> darcyVolVars;
             darcyVolVars.update(darcyElemSol, this->problem(darcyIdx), darcyElement, scv);
 
@@ -254,11 +246,11 @@ public:
             for(const auto& scvf : scvfs(stokesFvGeometry))
             {
                 if(scvf.index() == indices.scvfIdx)
-                    faceVelocity[scvf.directionIndex()] = this->curSol()[stokesFaceIdx][scvf.dofIndex()];
+                    faceVelocity[scvf.directionIndex()] = this->curSol(stokesFaceIdx)[scvf.dofIndex()];
             }
 
             using PriVarsType = typename VolumeVariables<stokesCellCenterIdx>::PrimaryVariables;
-            const auto& cellCenterPriVars = this->curSol()[stokesCellCenterIdx][indices.eIdx];
+            const auto& cellCenterPriVars = this->curSol(stokesCellCenterIdx)[indices.eIdx];
             const auto elemSol = makeElementSolutionFromCellCenterPrivars<PriVarsType>(cellCenterPriVars);
 
             VolumeVariables<stokesIdx> stokesVolVars;
@@ -281,7 +273,7 @@ public:
                                const PrimaryVariables<darcyIdx>& priVarsJ,
                                int pvIdxJ)
     {
-        this->curSol()[domainJ][dofIdxGlobalJ][pvIdxJ] = priVarsJ[pvIdxJ];
+        this->curSol(domainJ)[dofIdxGlobalJ][pvIdxJ] = priVarsJ[pvIdxJ];
     }
 
     /*!
@@ -295,7 +287,7 @@ public:
                                const PrimaryVariables<stokesCellCenterIdx>& priVars,
                                int pvIdxJ)
     {
-        this->curSol()[domainJ][dofIdxGlobalJ] = priVars;
+        this->curSol(domainJ)[dofIdxGlobalJ] = priVars;
 
         for (auto& data : darcyCouplingContext_)
         {
@@ -323,7 +315,7 @@ public:
                                const PrimaryVariables<stokesFaceIdx>& priVars,
                                int pvIdxJ)
     {
-        this->curSol()[domainJ][dofIdxGlobalJ] = priVars;
+        this->curSol(domainJ)[dofIdxGlobalJ] = priVars;
 
         for (auto& data : darcyCouplingContext_)
         {
@@ -346,7 +338,7 @@ public:
                                const PrimaryVariables<darcyIdx>& priVars,
                                int pvIdxJ)
     {
-        this->curSol()[domainJ][dofIdxGlobalJ] = priVars;
+        this->curSol(domainJ)[dofIdxGlobalJ] = priVars;
 
         for (auto& data : stokesCouplingContext_)
         {
@@ -355,7 +347,7 @@ public:
             if(darcyElemIdx != dofIdxGlobalJ)
                 continue;
 
-            const auto darcyElemSol = elementSolution(data.element, this->curSol()[darcyIdx], this->problem(darcyIdx).gridGeometry());
+            const auto darcyElemSol = elementSolution(data.element, this->curSol(darcyIdx), this->problem(darcyIdx).gridGeometry());
 
             for(const auto& scv : scvs(data.fvGeometry))
                 data.volVars.update(darcyElemSol, this->problem(darcyIdx), data.element, scv);

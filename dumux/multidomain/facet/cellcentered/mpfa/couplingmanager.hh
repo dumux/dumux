@@ -273,7 +273,7 @@ public:
         auto updateContext = [&] (auto elemIdx, auto dofIdx, auto priVars, auto pvIdx)
         {
             // deflect the solution
-            auto& ldSol = this->curSol()[lowDimId];
+            auto& ldSol = this->curSol(lowDimId);
             ldSol[dofIdx][pvIdx] = priVars[pvIdx];
 
             // update the corresponding vol vars in the bulk context
@@ -377,7 +377,7 @@ private:
             for (auto dofIndex : elemDofsJ)
             {
                 auto partialDerivs = origResidual;
-                const auto origPriVars = this->curSol()[lowDimId][dofIndex];
+                const auto origPriVars = this->curSol(lowDimId)[dofIndex];
 
                 // calculate derivatives w.r.t to the privars at the dof at hand
                 static constexpr auto numEq = std::decay_t<decltype(origPriVars)>::dimension;
