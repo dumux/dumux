@@ -63,7 +63,7 @@ public:
             iIt_ = IntersectionIterator(gridView_.ibegin(*eIt_));
     }
 
-    decltype(auto) dereference() const
+    const Intersection& dereference() const
     {
         if constexpr (std::is_lvalue_reference_v<decltype(*std::declval<IntersectionIterator>())>)
             return *iIt_;
