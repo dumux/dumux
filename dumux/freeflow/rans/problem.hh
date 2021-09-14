@@ -28,6 +28,7 @@
 
 #include <dune/common/fmatrix.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/deprecated.hh>
 #include <dumux/common/staggeredfvproblem.hh>
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/method.hh>
@@ -105,7 +106,7 @@ public:
         if ( !(hasParamInGroup(this->paramGroup(), "RANS.IsFlatWallBounded")))
         {
             std::cout << "The parameter \"Rans.IsFlatWallBounded\" is not specified. \n"
-                    << " -- Based on the grid and the isOnWallAtPos function specified by the user,"
+                    << " -- Based on the grid and the boundary conditions specified by the user,"
                     << " this parameter is set to be "<< std::boolalpha << isFlatWallBounded() << "\n";
         }
 
@@ -193,29 +194,11 @@ public:
      *
      * \param scvf The sub control volume face.
      */
-    [[deprecated("Will be removed after release 3.4")]]
+    [[deprecated("The isOnWall and IsOnWallAtPos functions will be removed after release 3.5. "
+                 "Please use the Rans specific boundarytypes, and mark wall boundaries with the setWall() function.")]]
     bool isOnWall(const SubControlVolumeFace& scvf) const
     {
         return asImp_().isOnWallAtPos(scvf.center());
-    }
-
-    bool isOnWall(const Element& element, const SubControlVolumeFace& scvf) const
-    {
-        // Return true if this wall has been marked as a Wall
-        return asImp_().boundaryTypes(element, scvf).hasWall();
-    }
-
-    /*!
-     * \brief Returns whether a given point is on a wall
-     *
-     * \param globalPos The position in global coordinates.
-     */
-    [[deprecated("Will be removed after release 3.4")]]
-    bool isOnWallAtPos(const GlobalPosition &globalPos) const
-    {
-        // Throw an exception if no walls are implemented
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The problem does not provide an isOnWall() method.");
     }
 
     bool isFlatWallBounded() const
@@ -356,9 +339,19 @@ private:
             fvGeometry.bindElement(element);
             for (const auto& scvf : scvfs(fvGeometry))
             {
-                // only search for walls at a global boundary
-                if (!scvf.boundary() && asImp_().isOnWall(element, scvf))
-                    wallFaceAxis.push_back(scvf.directionIndex());
+                // Remove this check after release 3.5. IsOnWall Interface is deprecated
+                if constexpr (Deprecated::hasIsOnWall<Implementation, GlobalPosition>())
+                {
+                    // Remove this part
+                    if (!scvf.boundary() && asImp_().isOnWall(scvf)) // only search for walls at a global boundary
+                        wallFaceAxis.push_back(scvf.directionIndex());
+                }
+                else
+                {
+                    // Keep this part
+                    if (!scvf.boundary() && asImp_().boundaryTypes(element, scvf).hasWall())  // only search for walls at a global boundary
+                        wallFaceAxis.push_back(scvf.directionIndex());
+                }
             }
         }
 
@@ -373,11 +366,23 @@ private:
      */
     void findWallDistances_()
     {
-        WallDistance wallInformation(this->gridGeometry(), WallDistance<GridGeometry>::atElementCenters,
-                    [this] (const FVElementGeometry& fvGeometry, const auto& scvf)
-                    { return asImp_().isOnWall(scvf); });
-        wallDistance_ = wallInformation.wallDistance();
-        storeWallElementAndDirectionIndex_(wallDistance.wallData());
+        // Remove this check after release 3.5. IsOnWall Interface is deprecated
+        if constexpr (Deprecated::hasIsOnWall<Implementation, GlobalPosition>())
+        {
+            WallDistance wallInformation(this->gridGeometry(), WallDistance<GridGeometry>::atElementCenters,
+                [this] (const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
+                { return asImp_().isOnWall(scvf); });
+            wallDistance_ = wallInformation.wallDistance();
+            storeWallElementAndDirectionIndex_(wallInformation.wallData());
+        }
+        else
+        {
+            WallDistance wallInformation(this->gridGeometry(), WallDistance<GridGeometry>::atElementCenters,
+                [this] (const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
+                { return asImp_().boundaryTypes(fvGeometry.element(), scvf).hasWall(); });
+            wallDistance_ = wallInformation.wallDistance();
+            storeWallElementAndDirectionIndex_(wallInformation.wallData());
+        }
     }
 
     template <class WallData>
@@ -701,6 +706,11 @@ private:
         }
     }
 
+    [[deprecated("The isOnWall and IsOnWallAtPos functions will be removed after release 3.5. "
+                "Please use the Rans specific boundarytypes. "
+                "Mark wall boundaries in the rans problems with the setWall() function.")]]
+    void noSetWallCompilerWarning_(){}
+
     const int fixedFlowDirectionAxis_ = getParam<int>("RANS.FlowDirectionAxis", 0);
     const int fixedWallNormalAxis_ = getParam<int>("RANS.WallNormalAxis", 1);
 
@@ -708,7 +718,6 @@ private:
     std::vector<unsigned int> flowDirectionAxis_;
     std::vector<Scalar> wallDistance_;
     std::vector<unsigned int> wallElementIdx_;
-    std::vector<unsigned int> wallDirectionIndex_;
     std::vector<std::array<std::array<unsigned int, 2>, dim>> neighborIdx_;
 
     std::vector<DimVector> velocity_;

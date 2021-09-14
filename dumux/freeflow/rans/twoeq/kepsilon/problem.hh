@@ -27,6 +27,7 @@
 #include <numeric>
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/deprecated.hh>
 #include <dumux/common/staggeredfvproblem.hh>
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/staggered/elementsolution.hh>
@@ -63,6 +64,7 @@ class RANSProblemImpl<TypeTag, TurbulenceModel::kepsilon> : public RANSProblemBa
 
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -309,9 +311,22 @@ public:
     {
         unsigned int elementIdx = asImp_().gridGeometry().elementMapper().index(element);
         auto bcTypes = asImp_().boundaryTypes(element, localSubFace);
-        return asImp_().isOnWall(element, localSubFace)
-               && bcTypes.isDirichlet(eqIdx)
-               && isMatchingPoint(elementIdx);
+
+        // Remove this check after release 3.5. IsOnWall Interface is deprecated
+        if constexpr (Deprecated::hasIsOnWall<Implementation, GlobalPosition>())
+        {
+            // Remove this part
+            return asImp_().isOnWall(localSubFace)
+                && bcTypes.isDirichlet(eqIdx)
+                && isMatchingPoint(elementIdx);
+        }
+        else
+        {
+            // Keep this part
+            return bcTypes.hasWall()
+                && bcTypes.isDirichlet(eqIdx)
+                && isMatchingPoint(elementIdx);
+        }
     }
 
     //! \brief Returns an additional wall function momentum flux (only needed for RANS models)
