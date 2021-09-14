@@ -201,9 +201,8 @@ public:
 
         // write header
         logFile << "time";
-        using ErrorNames = std::vector<std::string>;
         for (const std::string& e : { "L2Abs", "L2Rel", "LinfAbs", "LinfRel" })
-            printError_(logFile, ErrorNames({ e + "(p)", e + "(u)", e + "(v)", e + "(w)" }), "{:s}");
+            printError_(logFile, errorNames_(e), "{:s}");
         logFile << "\n";
     }
 
@@ -228,6 +227,16 @@ private:
         logFile << Fmt::format(", " + format, error[Indices::pressureIdx]);
         for (int dirIdx = 0; dirIdx < dim; ++dirIdx)
             logFile << Fmt::format(", " + format, error[Indices::velocity(dirIdx)]);
+    }
+
+    std::vector<std::string> errorNames_(const std::string& e) const
+    {
+        if constexpr (dim == 1)
+            return { e + "(u)", e + "(p)" };
+        else if constexpr (dim == 2)
+            return { e + "(u)", e + "(v)", e + "(p)" };
+        else
+            return { e + "(u)", e + "(v)", e + "(w)", e + "(p)" };
     }
 
     std::string name_;
