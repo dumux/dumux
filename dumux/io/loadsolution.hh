@@ -42,6 +42,7 @@
 #include <dumux/common/typetraits/state.hh>
 #include <dumux/io/vtk/vtkreader.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/common/gridcapabilities.hh>
 
 namespace Dumux {
 
@@ -360,17 +361,25 @@ void loadSolution(SolutionVector& sol,
         {
             LoadSolutionDataHandle<SolutionVector, typename GridGeometry::ElementMapper, 0>
                 dataHandle(sol, gridGeometry.elementMapper());
-            gridGeometry.gridView().communicate(dataHandle,
-                                                  Dune::InteriorBorder_All_Interface,
-                                                  Dune::ForwardCommunication);
+
+            if constexpr (Detail::canCommunicate<typename GridView::Traits::Grid, 0>)
+                gridGeometry.gridView().communicate(dataHandle,
+                                                    Dune::InteriorBorder_All_Interface,
+                                                    Dune::ForwardCommunication);
+            else
+                DUNE_THROW(Dune::InvalidStateException, "Cannot call loadSolution on multiple processes for a grid that cannot communicate codim-" << 0 << "-entities.");
         }
         else
         {
             LoadSolutionDataHandle<SolutionVector, typename GridGeometry::VertexMapper, GridView::dimension>
                 dataHandle(sol, gridGeometry.vertexMapper());
-            gridGeometry.gridView().communicate(dataHandle,
-                                                  Dune::InteriorBorder_All_Interface,
-                                                  Dune::ForwardCommunication);
+
+            if constexpr (Detail::canCommunicate<typename GridView::Traits::Grid, GridView::dimension>)
+                gridGeometry.gridView().communicate(dataHandle,
+                                                    Dune::InteriorBorder_All_Interface,
+                                                    Dune::ForwardCommunication);
+            else
+                DUNE_THROW(Dune::InvalidStateException, "Cannot call loadSolution on multiple processes for a grid that cannot communicate codim-" <<  GridView::dimension << "-entities.");
         }
     }
 }
