@@ -95,6 +95,7 @@ class RANSProblemBase : public NavierStokesProblem<TypeTag>
     };
 
 public:
+
     /*!
      * \brief The constructor
      * \param gridGeometry The finite volume grid geometry
@@ -130,6 +131,7 @@ public:
         std::cout << "Update static wall properties. ";
         calledUpdateStaticWallProperties = true;
 
+        checkForWalls_();
         findWallDistances_();
         findNeighborIndices_();
     }
@@ -357,6 +359,29 @@ private:
 
         // Returns if all wall directions are the same
         return std::all_of(wallFaceAxis.begin(), wallFaceAxis.end(), [firstDir=wallFaceAxis[0]](auto dir){ return (dir == firstDir);} ) ;
+    }
+
+    void checkForWalls_()
+    {
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            auto fvGeometry = localView(this->gridGeometry());
+            fvGeometry.bindElement(element);
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                if constexpr (Deprecated::hasHasWallBC<decltype(asImp_().boundaryTypes(element, scvf))>())
+                {
+                    if (asImp_().boundaryTypes(element, scvf).hasWall())
+                        return;
+                }
+                else
+                    noSetWallCompilerWarning_();
+            }
+        }
+
+        // If reached, no walls were found, throw exception. Remove check after 3.5
+        if constexpr (!Deprecated::hasIsOnWall<Implementation, GlobalPosition>())
+            DUNE_THROW(Dune::InvalidStateException, "No walls are are specified with the setWall() function");
     }
 
     /*!
