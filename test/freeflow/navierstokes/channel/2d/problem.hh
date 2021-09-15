@@ -73,7 +73,7 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
     // the types of outlet boundary conditions
     enum class OutletCondition
     {
-        outflow, doNothing, neumannXdirichletY, neumannXneumannY
+        outflow, unconstrainedOutflow, neumannXdirichletY, neumannXneumannY
     };
 
 public:
@@ -89,8 +89,8 @@ public:
         const auto outletBC = getParam<std::string>("Problem.OutletCondition", "Outflow");
         if (outletBC == "Outflow")
             outletCondition_ = OutletCondition::outflow;
-        else if (outletBC == "DoNothing")
-            outletCondition_ = OutletCondition::doNothing;
+        else if (outletBC == "UnconstrainedOutflow")
+            outletCondition_ = OutletCondition::unconstrainedOutflow;
         else if (outletBC == "NeumannX_DirichletY")
             outletCondition_ = OutletCondition::neumannXdirichletY;
         else if (outletBC == "NeumannX_NeumannY")
@@ -211,7 +211,7 @@ public:
         {
             using FluxHelper = NavierStokesMomentumBoundaryFluxHelper;
 
-            if (outletCondition_ == OutletCondition::doNothing)
+            if (outletCondition_ == OutletCondition::unconstrainedOutflow)
                 values = FluxHelper::fixedPressureMomentumFlux(*this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure_, false /*zeroNormalVelocityGradient*/);
             else if (outletCondition_ == OutletCondition::outflow)
                 values = FluxHelper::fixedPressureMomentumFlux(*this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure_, true /*zeroNormalVelocityGradient*/);
