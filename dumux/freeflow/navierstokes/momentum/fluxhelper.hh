@@ -151,7 +151,7 @@ struct NavierStokesMomentumBoundaryFluxHelper
                             return elemVolVars[scvf.outsideScvIdx()].velocity();
                     }();
 
-                    const auto rho = problem.getInsideAndOutsideDensity(element, fvGeometry, scvf);
+                    const auto rho = problem.insideAndOutsideDensity(element, fvGeometry, scvf);
                     const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
 
                     const auto insideMomentum = innerVelocity * rho.first;
@@ -277,7 +277,7 @@ struct NavierStokesMomentumBoundaryFluxHelper
 
                 // Do not use upwinding here but directly take the slip velocity located on the boundary. Upwinding with a weight of 0.5
                 // would actually prevent second order grid convergence.
-                const auto rho = problem.getInsideAndOutsideDensity(fvGeometry.element(), fvGeometry, scvf);
+                const auto rho = problem.insideAndOutsideDensity(fvGeometry.element(), fvGeometry, scvf);
                 const auto transportedMomentum = slipVelocity * rho.second;
 
                 flux[scv.dofAxis()] += transportingVelocity * transportedMomentum * scvf.directionSign();
@@ -348,7 +348,7 @@ struct NavierStokesMomentumBoundaryFluxHelper
                         return elemVolVars[scvf.outsideScvIdx()].velocity();
                 }();
 
-                const auto rho = problem.getInsideAndOutsideDensity(fvGeometry.element(), fvGeometry, scvf);
+                const auto rho = problem.insideAndOutsideDensity(fvGeometry.element(), fvGeometry, scvf);
                 const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
 
                 const auto insideMomentum = innerVelocity * rho.first;

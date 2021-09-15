@@ -334,10 +334,10 @@ public:
             return asImp_().densityAtPos(scv.dofPosition());
     }
 
-    auto getInsideAndOutsideDensity(const Element& element,
-                                    const FVElementGeometry& fvGeometry,
-                                    const SubControlVolumeFace& scvf,
-                                    const bool isPreviousTimeStep = false) const
+    auto insideAndOutsideDensity(const Element& element,
+                                 const FVElementGeometry& fvGeometry,
+                                 const SubControlVolumeFace& scvf,
+                                 const bool isPreviousTimeStep = false) const
     {
         if constexpr (isCoupled_)
             return couplingManager_->insideAndOutsideDensity(element, fvGeometry, scvf, isPreviousTimeStep);

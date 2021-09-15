@@ -429,7 +429,7 @@ public:
             const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity();
             const auto outerVelocity = elemVolVars[scvf.outsideScvIdx()].velocity();
 
-            const auto rho = this->problem().getInsideAndOutsideDensity(this->element(), fvGeometry, scvf);
+            const auto rho = this->problem().insideAndOutsideDensity(this->element(), fvGeometry, scvf);
 
             const auto insideMomentum = innerVelocity * rho.first;
             const auto outsideMomentum = outerVelocity * rho.second;
