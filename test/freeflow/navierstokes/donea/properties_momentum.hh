@@ -32,7 +32,7 @@
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
 #include <dumux/discretization/fcstaggered.hh>
 
-#include "problem_momentum.hh"
+#include "problem.hh"
 
 namespace Dumux::Properties {
 
@@ -45,7 +45,7 @@ struct DoneaTestMomentum { using InheritsFrom = std::tuple<NavierStokesMomentum,
 template<class TypeTag>
 struct Problem<TypeTag, TTag::DoneaTestMomentum>
 {
-    using type = Dumux::DoneaTestProblemMomentum<TypeTag> ;
+    using type = Dumux::DoneaTestProblem<TypeTag> ;
 };
 
 // the fluid system

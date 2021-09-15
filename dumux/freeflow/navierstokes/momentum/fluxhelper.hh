@@ -88,6 +88,10 @@ struct NavierStokesMomentumBoundaryFluxHelper
 
         if (scvf.isLateral())
         {
+            // if the lateral scvf is adjacent to a slip boundary, call the helper function for this special case
+            if (scv.boundary() && problem.onSlipBoundary(fvGeometry, fvGeometry.frontalScvfOnBoundary(scv)))
+                return slipVelocityMomentumFlux(problem, fvGeometry, scvf, elemVolVars, elemFluxVarsCache);
+
             // viscous terms
             const Scalar mu = problem.effectiveViscosity(element, fvGeometry, scvf);
 
@@ -101,7 +105,7 @@ struct NavierStokesMomentumBoundaryFluxHelper
                                               * scvf.directionSign();
 
             // advective terms
-            if (problem.enableInertiaTerms())
+            if (problem.enableInertiaTerms()) // TODO revise advection terms! Take care with upwinding!
             {
                 const auto transportingVelocity = [&]()
                 {
@@ -147,7 +151,7 @@ struct NavierStokesMomentumBoundaryFluxHelper
                             return elemVolVars[scvf.outsideScvIdx()].velocity();
                     }();
 
-                    const auto rho = problem.getInsideAndOutsideDensity(element, fvGeometry, scvf);
+                    const auto rho = problem.insideAndOutsideDensity(element, fvGeometry, scvf);
                     const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
 
                     const auto insideMomentum = innerVelocity * rho.first;
@@ -164,11 +168,9 @@ struct NavierStokesMomentumBoundaryFluxHelper
                 // lateral face coinciding with boundary
                 else if (scvf.boundary())
                 {
-                    assert(false);
-                    // this should not happen? TODO revise
-                    // const auto insideDensity = problem.density(element, fvGeometry.scv(scvf.insideScvIdx()));
-                    // const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity();
-                    // flux[scv.dofAxis()] += innerVelocity * transportingVelocity * insideDensity * scvf.directionSign();
+                    const auto insideDensity = problem.density(element, fvGeometry.scv(scvf.insideScvIdx()));
+                    const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity();
+                    flux[scv.dofAxis()] += innerVelocity * transportingVelocity * insideDensity * scvf.directionSign();
                 }
             }
         }
@@ -273,19 +275,10 @@ struct NavierStokesMomentumBoundaryFluxHelper
                      }
                 }();
 
-                const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity();
-                const auto outerVelocity = slipVelocity;
-
-                const auto rho = problem.getInsideAndOutsideDensity(fvGeometry.element(), fvGeometry, scvf);
-                const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
-
-                const auto insideMomentum = innerVelocity * rho.first;
-                const auto outsideMomentum = outerVelocity * rho.second;
-
-                static const auto upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
-
-                const auto transportedMomentum =  selfIsUpstream ? (upwindWeight * insideMomentum + (1.0 - upwindWeight) * outsideMomentum)
-                                                                    : (upwindWeight * outsideMomentum + (1.0 - upwindWeight) * insideMomentum);
+                // Do not use upwinding here but directly take the slip velocity located on the boundary. Upwinding with a weight of 0.5
+                // would actually prevent second order grid convergence.
+                const auto rho = problem.insideAndOutsideDensity(fvGeometry.element(), fvGeometry, scvf);
+                const auto transportedMomentum = slipVelocity * rho.second;
 
                 flux[scv.dofAxis()] += transportingVelocity * transportedMomentum * scvf.directionSign();
             }
@@ -355,7 +348,7 @@ struct NavierStokesMomentumBoundaryFluxHelper
                         return elemVolVars[scvf.outsideScvIdx()].velocity();
                 }();
 
-                const auto rho = problem.getInsideAndOutsideDensity(fvGeometry.element(), fvGeometry, scvf);
+                const auto rho = problem.insideAndOutsideDensity(fvGeometry.element(), fvGeometry, scvf);
                 const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
 
                 const auto insideMomentum = innerVelocity * rho.first;

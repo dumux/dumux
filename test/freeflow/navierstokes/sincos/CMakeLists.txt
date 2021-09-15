@@ -8,7 +8,7 @@ dumux_add_test(NAME test_ff_navierstokes_sincos
               CMAKE_GUARD HAVE_UMFPACK
               COMPILE_DEFINITIONS LINEARSOLVER=UMFPackBackend
               COMMAND ./convergencetest.py
-              CMD_ARGS       test_ff_navierstokes_sincos params.input
+              CMD_ARGS test_ff_navierstokes_sincos params.input
               -Grid.UpperRight "6.28 6.28"
               -Grid.Cells "150 150"
               -Problem.Name test_ff_navierstokes_sincos_stationary_convergence
@@ -38,7 +38,7 @@ dumux_add_test(NAME test_ff_navierstokes_sincos_uzawapreconditioner_factory
               LABELS freeflow
               TIMEOUT 5000
               CMAKE_GUARD "( HAVE_UMFPACK AND ( ( DUNE_ISTL_VERSION VERSION_GREATER 2.7 ) OR ( DUNE_ISTL_VERSION VERSION_EQUAL 2.7 ) ) )"
-              COMPILE_DEFINITIONS LINEARSOLVER=IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>>
+              COMPILE_DEFINITIONS LINEARSOLVER=IstlSolverFactoryBackend<LinearSolverTraits<MassGridGeometry>>
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_sincos_instationary-reference.vtu

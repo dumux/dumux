@@ -29,20 +29,20 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/grid/io/file/vtk.hh>
-#include <dune/istl/io.hh>
 
-#include <dumux/assembly/staggeredfvassembler.hh>
-#include <dumux/assembly/diffmethod.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/io/grid/gridmanager.hh>
-#include <dumux/io/staggeredvtkoutputmodule.hh>
+#include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/linear/seqsolverbackend.hh>
-#include <dumux/nonlinear/newtonsolver.hh>
-#include <dumux/nonlinear/staggerednewtonconvergencewriter.hh>
 
+#include <dumux/multidomain/fvassembler.hh>
+#include <dumux/multidomain/traits.hh>
+#include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
+#include <dumux/multidomain/newtonsolver.hh>
+
+#include <dumux/freeflow/navierstokes/velocityoutput.hh>
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 #include <test/freeflow/navierstokes/errors.hh>
 
@@ -52,8 +52,9 @@ int main(int argc, char** argv)
 {
     using namespace Dumux;
 
-    // define the type tag for this problem
-    using TypeTag = Properties::TTag::DoneaTest;
+    // define the type tags for this problem
+    using MomentumTypeTag = Properties::TTag::DoneaTestMomentum;
+    using MassTypeTag = Properties::TTag::DoneaTestMass;
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -66,65 +67,84 @@ int main(int argc, char** argv)
     Parameters::init(argc, argv);
 
     // try to create a grid (from the given grid file or the input file)
-    using GridManager = Dumux::GridManager<GetPropType<TypeTag, Properties::Grid>>;
+    using GridManager = Dumux::GridManager<GetPropType<MassTypeTag, Properties::Grid>>;
     GridManager gridManager;
     gridManager.init();
 
-    ////////////////////////////////////////////////////////////
-    // run instationary non-linear problem on this grid
-    ////////////////////////////////////////////////////////////
+    // start timer
+    Dune::Timer timer;
 
     // we compute on the leaf grid view
     const auto& leafGridView = gridManager.grid().leafGridView();
 
-    // create the finite volume grid geometry
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
+    // create the finite volume grid geometries
+    using MomentumGridGeometry = GetPropType<MomentumTypeTag, Properties::GridGeometry>;
+    auto momentumGridGeometry = std::make_shared<MomentumGridGeometry>(leafGridView);
 
-    // the problem (boundary conditions)
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(gridGeometry);
+    using MassGridGeometry = GetPropType<MassTypeTag, Properties::GridGeometry>;
+    auto massGridGeometry = std::make_shared<MassGridGeometry>(leafGridView);
+
+    // mass-momentum coupling manager
+    using Traits = MultiDomainTraits<MomentumTypeTag, MassTypeTag>;
+    using CouplingManager = StaggeredFreeFlowCouplingManager<Traits>;
+    auto couplingManager = std::make_shared<CouplingManager>();
+
+    // the problems (boundary conditions)
+    using MomentumProblem = GetPropType<MomentumTypeTag, Properties::Problem>;
+    auto momentumProblem = std::make_shared<MomentumProblem>(momentumGridGeometry, couplingManager);
+
+    using MassProblem = GetPropType<MassTypeTag, Properties::Problem>;
+    auto massProblem = std::make_shared<MassProblem>(massGridGeometry, couplingManager);
 
     // the solution vector
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    constexpr auto momentumIdx = CouplingManager::freeFlowMomentumIndex;
+    constexpr auto massIdx = CouplingManager::freeFlowMassIndex;
+    using SolutionVector = typename Traits::SolutionVector;
     SolutionVector x;
-    x[GridGeometry::cellCenterIdx()].resize(gridGeometry->numCellCenterDofs());
-    x[GridGeometry::faceIdx()].resize(gridGeometry->numFaceDofs());
+    x[momentumIdx].resize(momentumGridGeometry->numDofs());
+    x[massIdx].resize(massGridGeometry->numDofs());
 
     // the grid variables
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
-    gridVariables->init(x);
+    using MomentumGridVariables = GetPropType<MomentumTypeTag, Properties::GridVariables>;
+    auto momentumGridVariables = std::make_shared<MomentumGridVariables>(momentumProblem, momentumGridGeometry);
 
-    // intialize the vtk output module
-    using IOFields = GetPropType<TypeTag, Properties::IOFields>;
-    StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
+    using MassGridVariables = GetPropType<MassTypeTag, Properties::GridVariables>;
+    auto massGridVariables = std::make_shared<MassGridVariables>(massProblem, massGridGeometry);
+
+    // initialize the coupling stencils
+    couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x);
+    // intializing the gridvariables requires the coupling manager to be set up
+    momentumGridVariables->init(x[momentumIdx]);
+    massGridVariables->init(x[massIdx]);
+
+    // initialize the vtk output module
+    using IOFields = GetPropType<MassTypeTag, Properties::IOFields>;
+    VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name());
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
+    vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
 
-    NavierStokesAnalyticalSolutionVectors analyticalSolVectors(problem);
-    vtkWriter.addField(analyticalSolVectors.getAnalyticalPressureSolution(), "pressureExact");
-    vtkWriter.addField(analyticalSolVectors.getAnalyticalVelocitySolution(), "velocityExact");
-    vtkWriter.addFaceField(analyticalSolVectors.getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");
+    NavierStokesTest::AnalyticalSolutionVectors analyticalSolVectors(momentumProblem, massProblem);
+    vtkWriter.addField(analyticalSolVectors.analyticalPressureSolution(), "pressureExact");
+    vtkWriter.addField(analyticalSolVectors.analyticalVelocitySolution(), "velocityExact");
+    //vtkWriter.addFaceField(analyticalSolVectors.analyticalVelocitySolutionOnFace(), "faceVelocityExact");
     vtkWriter.write(0.0);
 
-    // use the staggered FV assembler
-    using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
+    // use the multidomain FV assembler
+    using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+    auto assembler = std::make_shared<Assembler>(std::make_tuple(momentumProblem, massProblem),
+                                                 std::make_tuple(momentumGridGeometry, massGridGeometry),
+                                                 std::make_tuple(momentumGridVariables, massGridVariables),
+                                                 couplingManager);
 
     // the linear solver
     using LinearSolver = Dumux::UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver);
-
-    using NewtonConvergenceWriter = StaggeredNewtonConvergenceWriter<GridGeometry, SolutionVector>;
-    auto convergenceWriter = std::make_shared<NewtonConvergenceWriter>(*gridGeometry);
-    nonLinearSolver.attachConvergenceWriter(convergenceWriter);
+    using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+    NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
     // linearize & solve
-    Dune::Timer timer;
     nonLinearSolver.solve(x);
 
     // print discrete L2 and Linfity errors
@@ -133,13 +153,13 @@ int main(int argc, char** argv)
 
     if (printErrors || printConvergenceTestFile)
     {
-        NavierStokesErrors errors(problem, x);
-        NavierStokesErrorCSVWriter(
-            problem, std::to_string(x[GridGeometry::cellCenterIdx()].size())
+        NavierStokesTest::Errors errors(momentumProblem, massProblem, x);
+        NavierStokesTest::ErrorCSVWriter(
+            momentumProblem, massProblem, std::to_string(x[massIdx].size())
         ).printErrors(errors);
 
         if (printConvergenceTestFile)
-            convergenceTestAppendErrors(problem, errors);
+            NavierStokesTest::convergenceTestAppendErrors(momentumProblem, massProblem, errors);
     }
 
     // write vtk output
