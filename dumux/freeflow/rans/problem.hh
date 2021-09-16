@@ -30,10 +30,10 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/staggeredfvproblem.hh>
 #include <dumux/discretization/localview.hh>
-#include <dumux/discretization/staggered/elementsolution.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/walldistance.hh>
+#include <dumux/discretization/staggered/elementsolution.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
-
 #include "model.hh"
 
 namespace Dumux {
@@ -111,12 +111,10 @@ public:
      */
     void updateStaticWallProperties()
     {
-        using std::abs;
         std::cout << "Update static wall properties. ";
         calledUpdateStaticWallProperties = true;
 
         // update size and initial values of the global vectors
-        wallElementIdx_.resize(this->gridGeometry().elementMapper().size());
         wallDistance_.resize(this->gridGeometry().elementMapper().size(), std::numeric_limits<Scalar>::max());
         neighborIdx_.resize(this->gridGeometry().elementMapper().size());
         velocity_.resize(this->gridGeometry().elementMapper().size(), DimVector(0.0));
@@ -124,10 +122,8 @@ public:
         stressTensorScalarProduct_.resize(this->gridGeometry().elementMapper().size(), 0.0);
         vorticityTensorScalarProduct_.resize(this->gridGeometry().elementMapper().size(), 0.0);
         flowDirectionAxis_.resize(this->gridGeometry().elementMapper().size(), fixedFlowDirectionAxis_);
-        wallNormalAxis_.resize(this->gridGeometry().elementMapper().size(), fixedWallNormalAxis_);
         storedViscosity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
         storedDensity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
-
         if ( !(hasParamInGroup(this->paramGroup(), "RANS.IsFlatWallBounded")))
         {
             std::cout << "The parameter \"Rans.IsFlatWallBounded\" is not specified. \n"
@@ -135,73 +131,7 @@ public:
                     << " this parameter is set to be "<< std::boolalpha << isFlatWallBounded() << "\n";
         }
 
-        std::vector<WallElementInformation> wallElements;
-
-        const auto gridView = this->gridGeometry().gridView();
-
-        auto fvGeometry = localView(this->gridGeometry());
-        for (const auto& element : elements(gridView))
-        {
-            fvGeometry.bindElement(element);
-            for (const auto& scvf : scvfs(fvGeometry))
-            {
-                // only search for walls at a global boundary
-                if (!scvf.boundary())
-                    continue;
-
-                if (asImp_().isOnWall(scvf))
-                {
-                    WallElementInformation wallElementInformation;
-
-                    // store the location of the wall adjacent face's center and all corners
-                    wallElementInformation.wallFaceCenter = scvf.center();
-                    for (int i = 0; i < numCorners; i++)
-                        wallElementInformation.wallFaceCorners[i] = scvf.corner(i);
-
-                    // Store the wall element index and face's normal direction (used only with isFlatWallBounded on)
-                    wallElementInformation.wallElementIdx = this->gridGeometry().elementMapper().index(element);
-                    wallElementInformation.wallFaceNormalAxis = scvf.directionIndex();
-
-                    wallElements.push_back(wallElementInformation);
-                }
-            }
-        }
-        // output the number of wall adjacent faces. Check that this is non-zero.
-        std::cout << "NumWallIntersections=" << wallElements.size() << std::endl;
-        if (wallElements.size() == 0)
-            DUNE_THROW(Dune::InvalidStateException,
-                       "No wall intersections have been found. Make sure that the isOnWall(globalPos) is working properly.");
-
-        // search for shortest distance to the wall for each element
-        for (const auto& element : elements(gridView))
-        {
-            // Store the cell center position for each element
-            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-            cellCenter_[elementIdx] = element.geometry().center();
-
-            for (unsigned int i = 0; i < wallElements.size(); ++i)
-            {
-                // Find the minimum distance from the cell center to the wall face (center and corners)
-                std::array<Scalar,numCorners+1> cellToWallDistances;
-                for (unsigned int j = 0; j < numCorners; j++)
-                    cellToWallDistances[j] = (cellCenter(elementIdx) - wallElements[i].wallFaceCorners[j]).two_norm();
-                cellToWallDistances[numCorners] = (cellCenter(elementIdx) - wallElements[i].wallFaceCenter).two_norm();
-                Scalar distanceToWall = *std::min_element(cellToWallDistances.begin(), cellToWallDistances.end());
-
-                if (distanceToWall < wallDistance_[elementIdx])
-                {
-                    wallDistance_[elementIdx] = distanceToWall;
-                    // If isFlatWallBounded, the corresonding wall element is stored for each element
-                    if (isFlatWallBounded())
-                    {
-                        wallElementIdx_[elementIdx] = wallElements[i].wallElementIdx;
-                        if ( !(hasParam("RANS.WallNormalAxis")) )
-                            wallNormalAxis_[elementIdx] = wallElements[i].wallFaceNormalAxis;
-                    }
-                }
-            }
-        }
-
+        findWallDistances_();
         findNeighborIndices_();
     }
 
@@ -432,6 +362,46 @@ private:
 
         // Returns if all wall directions are the same
         return std::all_of(wallFaceAxis.begin(), wallFaceAxis.end(), [firstDir=wallFaceAxis[0]](auto dir){ return (dir == firstDir);} ) ;
+    }
+
+    void findWallDistances_()
+    {
+        WallDistance wallInformation(this->gridGeometry(), WallDistance<GridGeometry>::atElementCenters,
+                    [this] (const FVElementGeometry& fvGeometry, const auto& scvf)
+                    { return asImp_().isOnWall(scvf); });
+        wallDistance_ = wallInformation.wallDistance();
+        storeWallElementAndDirectionIndex_(wallDistance.wallData());
+    }
+
+    template <class WallData>
+    void storeWallElementAndDirectionIndex_(const WallData& wallData)
+    {
+        // The wall Direction Index is used for flat quadrilateral channel problems only
+        if (!(GridGeometry::discMethod == DiscretizationMethod::staggered))
+            DUNE_THROW(Dune::NotImplemented, "The wall direction Index can only be calculated for quadrilateral structured grids");
+
+        // If isFlatWallBounded, the corresonding wall element is stored for each element
+        if (isFlatWallBounded())
+        {
+            wallNormalAxis_.resize(wallData.size());
+            wallElementIdx_.resize(wallData.size());
+
+            for (const auto& element : elements(this->gridGeometry().gridView()))
+            {
+                unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
+                wallElementIdx_[elementIdx] = wallData[elementIdx].eIdx;
+                if ( ! (hasParam("RANS.WallNormalAxis")) )
+                {
+                    GlobalPosition wallOuterNormal = wallData[elementIdx].scvfOuterNormal;
+                    if constexpr (dim == 2) // 2D
+                        wallNormalAxis_[elementIdx] = (wallOuterNormal[0] == 1) ? 0 : 1;
+                    else // 3D
+                        wallNormalAxis_[elementIdx] = (wallOuterNormal[0] == 1) ? 0 : ((wallOuterNormal[1] == 1) ? 1 : 2);
+                }
+                else
+                    wallNormalAxis_[elementIdx] = fixedWallNormalAxis_;
+            }
+        }
     }
 
     void findNeighborIndices_()
@@ -728,6 +698,7 @@ private:
     std::vector<unsigned int> flowDirectionAxis_;
     std::vector<Scalar> wallDistance_;
     std::vector<unsigned int> wallElementIdx_;
+    std::vector<unsigned int> wallDirectionIndex_;
     std::vector<std::array<std::array<unsigned int, 2>, dim>> neighborIdx_;
 
     std::vector<DimVector> velocity_;
