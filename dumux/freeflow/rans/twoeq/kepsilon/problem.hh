@@ -309,7 +309,7 @@ public:
     {
         unsigned int elementIdx = asImp_().gridGeometry().elementMapper().index(element);
         auto bcTypes = asImp_().boundaryTypes(element, localSubFace);
-        return asImp_().isOnWall(localSubFace)
+        return asImp_().isOnWall(element, localSubFace)
                && bcTypes.isDirichlet(eqIdx)
                && isMatchingPoint(elementIdx);
     }

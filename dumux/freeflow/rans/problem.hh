@@ -193,9 +193,16 @@ public:
      *
      * \param scvf The sub control volume face.
      */
+    [[deprecated("Will be removed after release 3.4")]]
     bool isOnWall(const SubControlVolumeFace& scvf) const
     {
         return asImp_().isOnWallAtPos(scvf.center());
+    }
+
+    bool isOnWall(const Element& element, const SubControlVolumeFace& scvf) const
+    {
+        // Return true if this wall has been marked as a Wall
+        return asImp_().boundaryTypes(element, scvf).hasWall();
     }
 
     /*!
@@ -203,6 +210,7 @@ public:
      *
      * \param globalPos The position in global coordinates.
      */
+    [[deprecated("Will be removed after release 3.4")]]
     bool isOnWallAtPos(const GlobalPosition &globalPos) const
     {
         // Throw an exception if no walls are implemented
@@ -349,7 +357,7 @@ private:
             for (const auto& scvf : scvfs(fvGeometry))
             {
                 // only search for walls at a global boundary
-                if (!scvf.boundary() && asImp_().isOnWall(scvf))
+                if (!scvf.boundary() && asImp_().isOnWall(element, scvf))
                     wallFaceAxis.push_back(scvf.directionIndex());
             }
         }
