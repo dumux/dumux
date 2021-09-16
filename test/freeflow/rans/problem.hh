@@ -32,7 +32,7 @@
 #include <dumux/common/timeloop.hh>
 #include <dumux/common/numeqvector.hh>
 
-#include <dumux/freeflow/navierstokes/boundarytypes.hh>
+#include <dumux/freeflow/rans/boundarytypes.hh>
 #include <dumux/freeflow/rans/problem.hh>
 #include <dumux/freeflow/turbulencemodel.hh>
 #include <dumux/freeflow/turbulenceproperties.hh>
@@ -51,16 +51,17 @@ class PipeLauferProblem : public RANSProblem<TypeTag>
 {
     using ParentType = RANSProblem<TypeTag>;
 
-    using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
+    static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using BoundaryTypes = Dumux::RANSBoundaryTypes<ModelTraits, ModelTraits::numEq()>;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
@@ -69,7 +70,6 @@ class PipeLauferProblem : public RANSProblem<TypeTag>
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
-    static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
 
 public:
     PipeLauferProblem(std::shared_ptr<const GridGeometry> gridGeometry)
@@ -112,12 +112,6 @@ public:
      */
     // \{
 
-    bool isOnWallAtPos(const GlobalPosition &globalPos) const
-    {
-        return globalPos[1] < this->gridGeometry().bBoxMin()[1] + eps_
-               || globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_;
-    }
-
    /*!
      * \brief Returns the temperature [K] within the domain for the isothermal model.
      */
@@ -146,10 +140,12 @@ public:
             values.setDirichlet(Indices::pressureIdx);
         else
         {
-            // walls and inflow
             values.setDirichlet(Indices::velocityXIdx);
             values.setDirichlet(Indices::velocityYIdx);
         }
+
+        if (isLowerWall_(globalPos) || isUpperWall_(globalPos)) //  All walls
+            values.setWall();
 
 #if NONISOTHERMAL
         if(isOutlet_(globalPos))
@@ -191,7 +187,7 @@ public:
         PrimaryVariables values(initialAtPos(globalPos));
 
 #if NONISOTHERMAL
-        values[Indices::temperatureIdx] = isOnWallAtPos(globalPos) ? wallTemperature_ : inletTemperature_;
+        values[Indices::temperatureIdx] =  (isLowerWall_(globalPos) || isUpperWall_(globalPos)) ? wallTemperature_ : inletTemperature_;
 #endif
 
         return values;
@@ -230,10 +226,10 @@ public:
         values[Indices::velocityXIdx] = time() > initializationTime_
                                         ? inletVelocity_
                                         : time() / initializationTime_ * inletVelocity_;
-        if (isOnWallAtPos(globalPos))
+        if (isLowerWall_(globalPos) || isUpperWall_(globalPos))
             values[Indices::velocityXIdx] = 0.0;
 #if NONISOTHERMAL
-        values[Indices::temperatureIdx] = isOnWallAtPos(globalPos) ? wallTemperature_ : inletTemperature_;
+        values[Indices::temperatureIdx] = (isLowerWall_(globalPos) || isUpperWall_(globalPos)) ? wallTemperature_ : inletTemperature_;
 #endif
         // turbulence model-specific initial conditions
         setInitialAtPos_(values, globalPos);
@@ -255,6 +251,12 @@ private:
     bool isOutlet_(const GlobalPosition& globalPos) const
     { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
+    bool isLowerWall_(const GlobalPosition& globalPos) const
+    { return globalPos[1] < this->gridGeometry().bBoxMin()[1] + eps_; }
+
+    bool isUpperWall_(const GlobalPosition& globalPos) const
+    { return globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_; }
+
     //! Initial conditions for the komega, kepsilon and lowrekepsilon turbulence models
     void setInitialAtPos_([[maybe_unused]] PrimaryVariables& values,
                           [[maybe_unused]] const GlobalPosition &globalPos) const
@@ -264,7 +266,7 @@ private:
         else if constexpr (numTurbulenceEq(ModelTraits::turbulenceModel()) == 1)  // one equation models
         {
             values[Indices::viscosityTildeIdx] = viscosityTilde_;
-            if (isOnWallAtPos(globalPos))
+            if (isLowerWall_(globalPos) || isUpperWall_(globalPos))
                 values[Indices::viscosityTildeIdx] = 0.0;
         }
         else // two equation models
@@ -272,7 +274,7 @@ private:
             static_assert(numTurbulenceEq(ModelTraits::turbulenceModel()) == 2, "Only reached by 2eq models");
             values[Indices::turbulentKineticEnergyIdx] = turbulentKineticEnergy_;
             values[Indices::dissipationIdx] = dissipation_;
-            if (isOnWallAtPos(globalPos))
+            if (isLowerWall_(globalPos) || isUpperWall_(globalPos))
             {
                 values[Indices::turbulentKineticEnergyIdx] = 0.0;
                 values[Indices::dissipationIdx] = 0.0;
@@ -330,7 +332,7 @@ private:
         {
             // For the komega model we set a fixed dissipation (omega) for all cells at the wall
             for (const auto& scvf : scvfs(fvGeometry))
-                if (isOnWallAtPos(scvf.center()) && pvIdx == Indices::dissipationIdx)
+                if (this->boundaryTypes(element, scvf).hasWall() && pvIdx == Indices::dissipationIdx)
                     return true;
             return false;
         }
