@@ -37,7 +37,7 @@
 #include <dumux/common/dumuxmessage.hh>
 
 #include <dumux/discretization/staggered/freeflow/properties.hh>
-#include <dumux/freeflow/navierstokes/boundarytypes.hh>
+#include <dumux/freeflow/rans/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
 #include <dumux/freeflow/compositional/kepsilonncmodel.hh>
 #include <dumux/freeflow/compositional/lowrekepsilonncmodel.hh>
@@ -126,7 +126,8 @@ private:
     class MockProblem : public BaseProblem
     {
         using ParentType = BaseProblem;
-        using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
+        using BoundaryTypes = Dumux::RANSBoundaryTypes<MTraits, numEq>;
+        using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
         using Scalar = GetPropType<TTag, Properties::Scalar>;
         using Traits = GetPropType<TTag, Properties::ModelTraits>;
         Scalar eps_ = 1e-6;
@@ -138,8 +139,14 @@ private:
         BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
         {
              BoundaryTypes values;
+             if (globalPos[0] < eps_)
+                values.setWall();
              return values;
         }
+
+        template<class GlobalPosition>
+        PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+        { return PrimaryVariables(0.0); }
 
         Scalar temperature() const
         { return 300; }
@@ -160,9 +167,6 @@ private:
         void updateDynamicWallProperties(const U& u)
         { return ParentType::updateDynamicWallProperties(u); }
 
-        template<class Scvf>
-        bool isOnWall(const Scvf& scvf) const
-        { return (scvf.center()[0] < eps_); }
     };
 
 public:
