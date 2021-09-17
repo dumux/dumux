@@ -38,7 +38,7 @@
 namespace Dumux {
 
 // forward declaration
-template <class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
+template <class TypeTag, class DiscretizationMethod, ReferenceSystemFormulation referenceSystem>
 class MaxwellStefansLawImplementation;
 
 /*!
@@ -46,7 +46,7 @@ class MaxwellStefansLawImplementation;
  * \brief Specialization of Maxwell Stefan's Law for the Staggered method.
  */
 template <class TypeTag, ReferenceSystemFormulation referenceSystem>
-class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::staggered, referenceSystem>
+class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethods::Staggered, referenceSystem>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -75,8 +75,10 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::staggered, 
     static_assert(referenceSystem == ReferenceSystemFormulation::massAveraged, "only the mass averaged reference system is supported for the Maxwell-Stefan formulation");
 
 public:
+    using DiscretizationMethod = DiscretizationMethods::Staggered;
     // state the discretization method this implementation belongs to
-    static const DiscretizationMethod discMethod = DiscretizationMethod::staggered;
+    static constexpr DiscretizationMethod discMethod{};
+
     //return the reference system
     static constexpr ReferenceSystemFormulation referenceSystemFormulation()
     { return referenceSystem; }

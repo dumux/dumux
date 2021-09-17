@@ -35,7 +35,7 @@
 namespace Dumux {
 
 // forward declarations
-template<class TypeTag, DiscretizationMethod discMethod>
+template<class TypeTag, class DiscretizationMethod>
 class DarcysLawImplementation;
 
 /*!
@@ -55,7 +55,7 @@ class CCTpfaDarcysLaw;
  * \note Darcy's law is specialized for network and surface grids (i.e. if grid dim < dimWorld)
  */
 template <class TypeTag>
-class DarcysLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
+class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 : public CCTpfaDarcysLaw<GetPropType<TypeTag, Properties::Scalar>,
                          GetPropType<TypeTag, Properties::GridGeometry>,
                          (GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension < GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimensionworld)>
@@ -145,8 +145,9 @@ class CCTpfaDarcysLaw<ScalarType, GridGeometry, /*isNetwork*/ false>
     //! state the scalar type of the law
     using Scalar = ScalarType;
 
+    using DiscretizationMethod = DiscretizationMethods::CCTpfa;
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
+    static constexpr DiscretizationMethod discMethod{};
 
     //! state the type for the corresponding cache
     using Cache = TpfaDarcysLawCache<ThisType, GridGeometry>;
@@ -309,8 +310,9 @@ public:
     //! state the scalar type of the law
     using Scalar = ScalarType;
 
+    using DiscretizationMethod = DiscretizationMethods::CCTpfa;
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
+    static constexpr DiscretizationMethod discMethod{};
 
     //! state the type for the corresponding cache
     using Cache = TpfaDarcysLawCache<ThisType, GridGeometry>;
