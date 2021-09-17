@@ -35,7 +35,7 @@
 namespace Dumux {
 
 //! forward declaration of the method-specific implementation
-template<class TypeTag, DiscretizationMethod discMethod>
+template<class TypeTag, class DiscretizationMethod>
 class DarcysLawImplementation;
 
 /*!
@@ -44,7 +44,7 @@ class DarcysLawImplementation;
  *        with multi-point flux approximation.
  */
 template<class TypeTag>
-class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
+class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -151,8 +151,9 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
     };
 
 public:
+    using DiscretizationMethod = DiscretizationMethods::CCMpfa;
     // state the discretization method this implementation belongs to
-    static const DiscretizationMethod discMethod = DiscretizationMethod::ccmpfa;
+    static constexpr DiscretizationMethod discMethod{};
 
     // export the type for the corresponding cache
     using Cache = MpfaDarcysLawCache;
