@@ -87,7 +87,7 @@ public:
     , feBasis_(feBasis)
     {
         // Check if the overlap size is what we expect
-        if (!CheckOverlapSize<DiscretizationMethod::fem>::isValid(*feBasis))
+        if (!CheckOverlapSize<DiscretizationMethod>::isValid(*feBasis))
             DUNE_THROW(Dune::InvalidStateException, "The finite element discretization method only works with zero overlap for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
     }
