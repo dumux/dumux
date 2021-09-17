@@ -42,7 +42,7 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
+template<class TypeTag, class DiscretizationMethod, ReferenceSystemFormulation referenceSystem>
 class FicksLawImplementation;
 
 /*!
@@ -50,7 +50,7 @@ class FicksLawImplementation;
  * \brief Specialization of Fick's Law for the staggered free flow method.
  */
 template <class TypeTag, ReferenceSystemFormulation referenceSystem>
-class FicksLawImplementation<TypeTag, DiscretizationMethod::staggered, referenceSystem>
+class FicksLawImplementation<TypeTag, DiscretizationMethods::Staggered, referenceSystem>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -72,8 +72,10 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::staggered, reference
     static_assert(ModelTraits::numFluidPhases() == 1, "Only one phase supported!");
 
 public:
+    using DiscretizationMethod = DiscretizationMethods::Staggered;
     // state the discretization method this implementation belongs to
-    static const DiscretizationMethod discMethod = DiscretizationMethod::staggered;
+    static constexpr DiscretizationMethod discMethod{};
+
     //return the reference system
     static constexpr ReferenceSystemFormulation referenceSystemFormulation()
     { return referenceSystem; }

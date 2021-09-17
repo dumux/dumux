@@ -155,7 +155,8 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/fa
     //! state the scalar type of the law
     using Scalar = ScalarType;
     //! export the discretization method this implementation belongs to
-    static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
+    using DiscretizationMethod = DiscretizationMethods::CCTpfa;
+    static constexpr DiscretizationMethod discMethod{};
     //! export the type for the corresponding cache
     using Cache = CCTpfaFacetCouplingDarcysLawCache<ThisType, GridGeometry, /*isNetwork*/false>;
     //! export the type used to store transmissibilities
@@ -428,7 +429,8 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/tr
     //! state the scalar type of the law
     using Scalar = ScalarType;
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
+    using DiscretizationMethod = DiscretizationMethods::CCTpfa;
+    static constexpr DiscretizationMethod discMethod{};
     //! state the type for the corresponding cache
     using Cache = CCTpfaFacetCouplingDarcysLawCache<ThisType, GridGeometry, /*isNetwork*/true>;
     //! export the type used to store transmissibilities

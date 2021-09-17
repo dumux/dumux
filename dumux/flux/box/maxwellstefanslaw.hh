@@ -40,7 +40,7 @@
 namespace Dumux {
 
 // forward declaration
-template <class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
+template <class TypeTag, class DiscretizationMethod, ReferenceSystemFormulation referenceSystem>
 class MaxwellStefansLawImplementation;
 
 /*!
@@ -48,7 +48,7 @@ class MaxwellStefansLawImplementation;
  * \brief Specialization of Maxwell Stefan's Law for the Box method.
  */
 template <class TypeTag, ReferenceSystemFormulation referenceSystem>
-class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::box, referenceSystem>
+class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethods::Box, referenceSystem>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
