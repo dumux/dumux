@@ -34,12 +34,13 @@
 namespace Dumux {
 
 // definition of primary template
-template <class TypeTag, class VelocityLaw, DiscretizationMethod discMethod>
+template <class TypeTag, class VelocityLaw, class DiscretizationMethod>
 class ForchheimersLawImplementation
 {
     static_assert(
-        discMethod == DiscretizationMethod::cctpfa || discMethod == DiscretizationMethod::box,
-        "Forchheimer only implemented for cctpfa or box!"
+        GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethods::cctpfa || 
+        GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethods::box, 
+        "Forchheimer only implemented for cctpfa or box!")
     );
 };
 
@@ -57,7 +58,7 @@ using ForchheimersLaw = ForchheimersLawImplementation<
         GetPropType<TypeTag, Properties::GridGeometry>,
         GetPropType<TypeTag, Properties::FluxVariables>
     >,
-    GetPropType<TypeTag, Properties::GridGeometry>::discMethod
+    typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod
 >;
 
 } // end namespace Dumux
