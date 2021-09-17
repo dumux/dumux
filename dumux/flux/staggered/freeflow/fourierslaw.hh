@@ -34,7 +34,7 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
+template<class TypeTag, class DiscretizationMethod>
 class FouriersLawImplementation;
 
 /*!
@@ -42,7 +42,7 @@ class FouriersLawImplementation;
  * \brief Specialization of Fourier's Law for the staggered free flow method.
  */
 template <class TypeTag>
-class FouriersLawImplementation<TypeTag, DiscretizationMethod::staggered>
+class FouriersLawImplementation<TypeTag, DiscretizationMethods::Staggered>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -54,8 +54,9 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::staggered>
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
 public:
+    using DiscretizationMethod = DiscretizationMethods::Staggered;
     // state the discretization method this implementation belongs to
-    static const DiscretizationMethod discMethod = DiscretizationMethod::staggered;
+    static constexpr DiscretizationMethod discMethod{};
 
     //! state the type for the corresponding cache
     //! We don't cache anything for this law
