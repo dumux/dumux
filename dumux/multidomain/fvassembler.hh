@@ -104,41 +104,41 @@ private:
     using TimeLoop = TimeLoopBase<Scalar>;
     using ThisType = MultiDomainFVAssembler<MDTraits, CouplingManager, diffMethod, isImplicit()>;
 
-    template<DiscretizationMethod discMethod, std::size_t id>
+    template<class DiscretizationMethod, std::size_t id>
     struct SubDomainAssemblerType;
 
     template<std::size_t id>
-    struct SubDomainAssemblerType<DiscretizationMethod::cctpfa, id>
+    struct SubDomainAssemblerType<DiscretizationMethods::CCTpfa, id>
     {
         using type = SubDomainCCLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id>
-    struct SubDomainAssemblerType<DiscretizationMethod::ccmpfa, id>
+    struct SubDomainAssemblerType<DiscretizationMethods::CCMpfa, id>
     {
         using type = SubDomainCCLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id>
-    struct SubDomainAssemblerType<DiscretizationMethod::box, id>
+    struct SubDomainAssemblerType<DiscretizationMethods::Box, id>
     {
         using type = SubDomainBoxLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id>
-    struct SubDomainAssemblerType<DiscretizationMethod::staggered, id>
+    struct SubDomainAssemblerType<DiscretizationMethods::Staggered, id>
     {
         using type = SubDomainStaggeredLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id>
-    struct SubDomainAssemblerType<DiscretizationMethod::fcstaggered, id>
+    struct SubDomainAssemblerType<DiscretizationMethods::FCStaggered, id>
     {
         using type = SubDomainFaceCenteredLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id>
-    using SubDomainAssembler = typename SubDomainAssemblerType<GridGeometry<id>::discMethod, id>::type;
+    using SubDomainAssembler = typename SubDomainAssemblerType<typename GridGeometry<id>::DiscretizationMethod, id>::type;
 
 public:
 
@@ -253,7 +253,7 @@ public:
 
             if (gridView.comm().size() > 1 && gridView.overlapSize(0) == 0)
             {
-                if constexpr (GridGeometry<domainId>::discMethod == DiscretizationMethod::box)
+                if constexpr (GridGeometry<domainId>::discMethod == DiscretizationMethods::box)
                 {
                     using GV = typename GridGeometry<domainId>::GridView;
                     using DM = typename GridGeometry<domainId>::VertexMapper;
