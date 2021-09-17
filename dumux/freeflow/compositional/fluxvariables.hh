@@ -30,7 +30,7 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
+template<class TypeTag, class DiscretizationMethod>
 class FreeflowNCFluxVariablesImpl;
 
 /*!
@@ -41,7 +41,7 @@ class FreeflowNCFluxVariablesImpl;
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag>
-using FreeflowNCFluxVariables = FreeflowNCFluxVariablesImpl<TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
+using FreeflowNCFluxVariables = FreeflowNCFluxVariablesImpl<TypeTag, typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod>;
 
 
 } // end namespace
