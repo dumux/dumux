@@ -30,7 +30,7 @@
 namespace Dumux {
 
 // forward declaration
-template<class GridGeometry, class FluxVariables, DiscretizationMethod discMethod, bool enableEneryBalance, bool isCompositional>
+template<class GridGeometry, class FluxVariables, class DiscretizationMethod, bool enableEneryBalance, bool isCompositional>
 class FreeFlowEnergyLocalResidualImplementation;
 
 /*!
@@ -42,15 +42,15 @@ template<class GridGeometry, class FluxVariables, bool enableEneryBalance, bool 
 using FreeFlowEnergyLocalResidual =
       FreeFlowEnergyLocalResidualImplementation<GridGeometry,
                                                 FluxVariables,
-                                                GridGeometry::discMethod,
+                                                typename GridGeometry::DiscretizationMethod,
                                                 enableEneryBalance, isCompositional>;
 
 /*!
  * \ingroup FreeflowNIModel
  * \brief Specialization for isothermal models, does nothing
  */
-template<class GridGeometry, class FluxVariables, DiscretizationMethod discMethod, bool isCompositional>
-class FreeFlowEnergyLocalResidualImplementation<GridGeometry, FluxVariables, discMethod, false, isCompositional>
+template<class GridGeometry, class FluxVariables, class DiscretizationMethod, bool isCompositional>
+class FreeFlowEnergyLocalResidualImplementation<GridGeometry, FluxVariables, DiscretizationMethod, false, isCompositional>
 {
 public:
 
@@ -72,7 +72,7 @@ public:
 template<class GridGeometry, class FluxVariables>
 class FreeFlowEnergyLocalResidualImplementation<GridGeometry,
                                                 FluxVariables,
-                                                DiscretizationMethod::staggered,
+                                                DiscretizationMethods::Staggered,
                                                 true, false>
 {
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
@@ -124,16 +124,16 @@ public:
 template<class GridGeometry, class FluxVariables>
 class FreeFlowEnergyLocalResidualImplementation<GridGeometry,
                                                 FluxVariables,
-                                                DiscretizationMethod::staggered,
+                                                DiscretizationMethods::Staggered,
                                                 true, true>
     : public FreeFlowEnergyLocalResidualImplementation<GridGeometry,
                                                        FluxVariables,
-                                                       DiscretizationMethod::staggered,
+                                                       DiscretizationMethods::Staggered,
                                                        true, false>
 {
     using ParentType = FreeFlowEnergyLocalResidualImplementation<GridGeometry,
                                                                  FluxVariables,
-                                                                 DiscretizationMethod::staggered,
+                                                                 DiscretizationMethods::Staggered,
                                                                  true, false>;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GridGeometry::LocalView;
