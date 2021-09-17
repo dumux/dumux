@@ -35,7 +35,7 @@ namespace Dumux {
  * \note for sequential grids every overlap is fine
  * \note specialize this for your discretization method if the default doesn't apply
  */
-template<DiscretizationMethod discMethod>
+template<class DiscretizationMethod>
 struct CheckOverlapSize
 {
     template<class GridView>
@@ -45,7 +45,7 @@ struct CheckOverlapSize
 
 //! specialization for the box method which requires an overlap size of 0
 template<>
-struct CheckOverlapSize<DiscretizationMethod::box>
+struct CheckOverlapSize<DiscretizationMethods::Box>
 {
     template<class GridView>
     static bool isValid(const GridView& gridView) noexcept
@@ -55,7 +55,7 @@ struct CheckOverlapSize<DiscretizationMethod::box>
 //! specialization for the finite element method which requires an overlap size of 0
 //! \note Overloads for bases that require overlap regions can be defined in the future
 template<>
-struct CheckOverlapSize<DiscretizationMethod::fem>
+struct CheckOverlapSize<DiscretizationMethods::Fem>
 {
     template<class FEBasis>
     static bool isValid(const FEBasis& feBasis) noexcept
@@ -64,7 +64,7 @@ struct CheckOverlapSize<DiscretizationMethod::fem>
 
 // fc staggered requires an overlap of exactly 1
 template<>
-struct CheckOverlapSize<DiscretizationMethod::fcstaggered>
+struct CheckOverlapSize<DiscretizationMethods::FCStaggered>
 {
     template<class GridView>
     static bool isValid(const GridView& gridView) noexcept
