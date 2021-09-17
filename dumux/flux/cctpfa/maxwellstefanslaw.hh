@@ -40,7 +40,7 @@
 namespace Dumux {
 
 // forward declaration
-template <class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
+template <class TypeTag, class DiscretizationMethod, ReferenceSystemFormulation referenceSystem>
 class MaxwellStefansLawImplementation;
 
 /*!
@@ -48,7 +48,7 @@ class MaxwellStefansLawImplementation;
  * \brief Specialization of Maxwell Stefan's Law for the CCTpfa method.
  */
 template <class TypeTag, ReferenceSystemFormulation referenceSystem>
-class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::cctpfa, referenceSystem >
+class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethods::CCTpfa, referenceSystem >
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -78,8 +78,10 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::cctpfa, ref
     using ReducedComponentMatrix = Dune::FieldMatrix<Scalar, numComponents-1, numComponents-1>;
 
 public:
+    using DiscretizationMethod = DiscretizationMethods::CCTpfa;
     // state the discretization method this implementation belongs to
-    static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
+    static constexpr DiscretizationMethod discMethod{};
+
     //return the reference system
     static constexpr ReferenceSystemFormulation referenceSystemFormulation()
     { return referenceSystem; }

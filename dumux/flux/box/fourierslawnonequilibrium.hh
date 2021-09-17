@@ -36,7 +36,7 @@
 namespace Dumux {
 
 // forward declaration
-template <class TypeTag, DiscretizationMethod discMethod>
+template <class TypeTag, class DiscretizationMethod>
 class FouriersLawNonEquilibriumImplementation;
 
 /*!
@@ -44,7 +44,7 @@ class FouriersLawNonEquilibriumImplementation;
  * \brief Specialization of Fourier's Law for the box method for thermal nonequilibrium models.
  */
 template <class TypeTag>
-class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::box>
+class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethods::Box>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
