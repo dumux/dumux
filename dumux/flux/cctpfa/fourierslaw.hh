@@ -34,7 +34,7 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
+template<class TypeTag, class DiscretizationMethod>
 class FouriersLawImplementation;
 
 /*!
@@ -42,9 +42,9 @@ class FouriersLawImplementation;
  * \brief Fourier's law for cell-centered finite volume schemes with two-point flux approximation
  */
 template <class TypeTag>
-class FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
+class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 {
-    using Implementation = FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>;
+    using Implementation = FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -103,8 +103,9 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
     };
 
 public:
+    using DiscretizationMethod = DiscretizationMethods::CCTpfa;
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
+    static constexpr DiscretizationMethod discMethod{};
 
     //! export the type for the corresponding cache
     using Cache = TpfaFouriersLawCache;

@@ -49,9 +49,9 @@ namespace Dumux {
  */
 template<class TypeTag, ReferenceSystemFormulation referenceSystem = ReferenceSystemFormulation::massAveraged>
 class BoxFacetCouplingFicksLaw
-: public FicksLawImplementation<TypeTag, DiscretizationMethod::box, referenceSystem>
+: public FicksLawImplementation<TypeTag, DiscretizationMethods::Box, referenceSystem>
 {
-    using ParentType = FicksLawImplementation<TypeTag, DiscretizationMethod::box, referenceSystem>;
+    using ParentType = FicksLawImplementation<TypeTag, DiscretizationMethods::Box, referenceSystem>;
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
