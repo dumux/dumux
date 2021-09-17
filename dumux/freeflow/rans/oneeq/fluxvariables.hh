@@ -31,7 +31,7 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>
+template<class TypeTag, class BaseFluxVariables, class DiscretizationMethod>
 class OneEqFluxVariablesImpl;
 
 /*!
@@ -42,7 +42,7 @@ class OneEqFluxVariablesImpl;
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag, class BaseFluxVariables>
-using OneEqFluxVariables = OneEqFluxVariablesImpl<TypeTag, BaseFluxVariables, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
+using OneEqFluxVariables = OneEqFluxVariablesImpl<TypeTag, BaseFluxVariables, typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod>;
 
 } // end namespace
 

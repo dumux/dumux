@@ -32,7 +32,7 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>
+template<class TypeTag, class BaseLocalResidual, class DiscretizationMethod>
 class OneEqResidualImpl;
 
 /*!
@@ -43,7 +43,7 @@ class OneEqResidualImpl;
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag, class BaseLocalResidual>
-using OneEqResidual = OneEqResidualImpl<TypeTag, BaseLocalResidual, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
+using OneEqResidual = OneEqResidualImpl<TypeTag, BaseLocalResidual, typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod>;
 
 } // end namespace Dumux
 
