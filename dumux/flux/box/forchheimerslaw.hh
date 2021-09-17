@@ -39,7 +39,7 @@
 namespace Dumux {
 
 // forward declarations
-template<class TypeTag, class ForchheimerVelocity, DiscretizationMethod discMethod>
+template<class TypeTag, class ForchheimerVelocity, class DiscretizationMethod>
 class ForchheimersLawImplementation;
 
 /*!
@@ -59,7 +59,7 @@ class BoxForchheimersLaw;
  * \brief Forchheimer's law for box scheme
  */
 template <class TypeTag, class ForchheimerVelocity>
-class ForchheimersLawImplementation<TypeTag, ForchheimerVelocity, DiscretizationMethod::box>
+class ForchheimersLawImplementation<TypeTag, ForchheimerVelocity, DiscretizationMethods::Box>
 : public BoxForchheimersLaw<GetPropType<TypeTag, Properties::Scalar>,
                             GetPropType<TypeTag, Properties::GridGeometry>,
                             ForchheimerVelocity>
@@ -88,8 +88,9 @@ public:
     //! state the scalar type of the law
     using Scalar = ScalarType;
 
+    using DiscretizationMethod = DiscretizationMethods::Box;
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethod discMethod = DiscretizationMethod::box;
+    static constexpr DiscretizationMethod discMethod{};
 
     /*! \brief Compute the advective flux of a phase across
     *          the given sub-control volume face using the Forchheimer equation.

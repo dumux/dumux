@@ -37,7 +37,7 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
+template<class TypeTag, class DiscretizationMethod>
 class DarcysLawImplementation;
 
 // forward declaration
@@ -49,7 +49,7 @@ class BoxDarcysLaw;
  * \brief Specialization of Darcy's Law for the box method.
  */
 template<class TypeTag>
-class DarcysLawImplementation<TypeTag, DiscretizationMethod::box>
+class DarcysLawImplementation<TypeTag, DiscretizationMethods::Box>
 : public BoxDarcysLaw<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::GridGeometry>>
 { };
 
