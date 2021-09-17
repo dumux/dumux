@@ -151,7 +151,7 @@ auto loadSolutionFromVtkFile(SolutionVector& sol,
             }
         }
         // for staggered face data (which is written out as VTK point data) we just read in the vector
-        else if (dataType == VTKReader::DataType::pointData && GridGeometry::discMethod == DiscretizationMethod::staggered)
+        else if (dataType == VTKReader::DataType::pointData && GridGeometry::discMethod == DiscretizationMethods::staggered)
         {
             if (sol.size() != vec.size())
                 DUNE_THROW(Dune::InvalidStateException, "Solution size (" << sol.size() << ") does not match input size (" << vec.size() << ")!");
@@ -333,19 +333,19 @@ void loadSolution(SolutionVector& sol,
                   const GridGeometry& gridGeometry)
 {
     const auto extension = fileName.substr(fileName.find_last_of(".") + 1);
-    auto dataType = GridGeometry::discMethod == DiscretizationMethod::box ?
+    auto dataType = GridGeometry::discMethod == DiscretizationMethods::box ?
                     VTKReader::DataType::pointData : VTKReader::DataType::cellData;
 
     if (extension == "vtu" || extension == "vtp")
     {
-        if (GridGeometry::discMethod == DiscretizationMethod::staggered && extension == "vtp")
+        if (GridGeometry::discMethod == DiscretizationMethods::staggered && extension == "vtp")
             dataType = VTKReader::DataType::pointData;
 
         loadSolutionFromVtkFile(sol, fileName, targetPvNameFunc, gridGeometry, dataType);
     }
     else if (extension == "pvtu" || extension == "pvtp")
     {
-        if (GridGeometry::discMethod == DiscretizationMethod::staggered)
+        if (GridGeometry::discMethod == DiscretizationMethods::staggered)
             DUNE_THROW(Dune::NotImplemented, "reading staggered solution from a parallel vtk file");
 
         loadSolutionFromVtkFile(sol, fileName, targetPvNameFunc, gridGeometry, dataType);
