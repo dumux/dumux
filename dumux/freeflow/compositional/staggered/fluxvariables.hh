@@ -39,11 +39,11 @@ namespace Dumux {
  */
 
 // forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
+template<class TypeTag, class DiscretizationMethod>
 class FreeflowNCFluxVariablesImpl;
 
 template<class TypeTag>
-class FreeflowNCFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
+class FreeflowNCFluxVariablesImpl<TypeTag, DiscretizationMethods::Staggered>
 : public NavierStokesFluxVariables<TypeTag>
 {
     using ParentType = NavierStokesFluxVariables<TypeTag>;
