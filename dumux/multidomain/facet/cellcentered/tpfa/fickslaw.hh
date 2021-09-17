@@ -67,10 +67,10 @@ using CCTpfaFacetCouplingFicksLaw =
  */
 template<class TypeTag, ReferenceSystemFormulation referenceSystem>
 class CCTpfaFacetCouplingFicksLawImpl<TypeTag, referenceSystem, /*isNetwork*/false>
-: public FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa, referenceSystem>
+: public FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa, referenceSystem>
 {
     using Implementation = CCTpfaFacetCouplingFicksLawImpl<TypeTag, referenceSystem, false>;
-    using ParentType = FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa, referenceSystem>;
+    using ParentType = FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa, referenceSystem>;
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
@@ -150,8 +150,9 @@ public:
     //! export the type for the corresponding cache
     using Cache = FacetCouplingFicksLawCache;
 
+    using DiscretizationMethod = DiscretizationMethods::CCTpfa;
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
+    static constexpr DiscretizationMethod discMethod{};
 
     //! Return the reference system
     static constexpr ReferenceSystemFormulation referenceSystemFormulation()
@@ -306,10 +307,10 @@ public:
  */
 template<class TypeTag, ReferenceSystemFormulation referenceSystem>
 class CCTpfaFacetCouplingFicksLawImpl<TypeTag, referenceSystem, /*isNetwork*/true>
-: public FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa, referenceSystem>
+: public FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa, referenceSystem>
 {
     using Implementation = CCTpfaFacetCouplingFicksLawImpl<TypeTag, referenceSystem, true>;
-    using ParentType = FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa, referenceSystem>;
+    using ParentType = FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa, referenceSystem>;
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
@@ -384,8 +385,9 @@ public:
     //! export the type for the corresponding cache
     using Cache = FacetCouplingFicksLawCache;
 
+    using DiscretizationMethod = DiscretizationMethods::CCTpfa;
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
+    static constexpr DiscretizationMethod discMethod{};
 
     //! Return the reference system
     static constexpr ReferenceSystemFormulation referenceSystemFormulation()
