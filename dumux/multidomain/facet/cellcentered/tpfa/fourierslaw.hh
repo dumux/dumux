@@ -64,10 +64,10 @@ using CCTpfaFacetCouplingFouriersLaw =
  */
 template<class TypeTag>
 class CCTpfaFacetCouplingFouriersLawImpl<TypeTag, /*isNetwork*/false>
-: public FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
+: public FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 {
     using Implementation = CCTpfaFacetCouplingFouriersLawImpl<TypeTag, false>;
-    using ParentType = FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>;
+    using ParentType = FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -137,7 +137,8 @@ public:
     using Cache = FacetCouplingFouriersLawCache;
 
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
+    using DiscretizationMethod = DiscretizationMethods::CCTpfa;
+    static constexpr DiscretizationMethod discMethod{};
 
     //! Compute the conductive heat flux
     template< class Problem, class ElementVolumeVariables, class ElementFluxVarsCache >
@@ -270,10 +271,10 @@ public:
  */
 template<class TypeTag>
 class CCTpfaFacetCouplingFouriersLawImpl<TypeTag, /*isNetwork*/true>
-: public FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
+: public FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 {
     using Implementation = CCTpfaFacetCouplingFouriersLawImpl<TypeTag, true>;
-    using ParentType = FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>;
+    using ParentType = FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -338,7 +339,8 @@ public:
     using Cache = FacetCouplingFouriersLawCache;
 
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
+    using DiscretizationMethod = DiscretizationMethods::CCTpfa;
+    static constexpr DiscretizationMethod discMethod{};
 
     //! Compute the conductive heat flux
     template< class Problem, class ElementVolumeVariables, class ElementFluxVarsCache >
