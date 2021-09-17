@@ -38,7 +38,7 @@ namespace Dumux {
  * freedom lie on material interfaces. There the nonwetting phase saturation is
  * generally discontinuous.
  */
-template<DiscretizationMethod M, bool enableReconstruction>
+template<class DiscretizationMethod, bool enableReconstruction>
 class TwoPScvSaturationReconstruction
 {
 public:
@@ -67,7 +67,7 @@ public:
 
 //! Specialization for the box scheme with the interface solver enabled
 template<>
-class TwoPScvSaturationReconstruction<DiscretizationMethod::box, /*enableReconstruction*/true>
+class TwoPScvSaturationReconstruction<DiscretizationMethods::Box, /*enableReconstruction*/true>
 {
 public:
     /*!
