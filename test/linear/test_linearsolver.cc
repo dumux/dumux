@@ -31,7 +31,8 @@ struct MockGridGeometry
     using GridView = Dune::YaspGrid<2>::LeafGridView;
     using DofMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
     using VertexMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
-    static constexpr auto discMethod = DiscretizationMethod::box;
+    using DiscretizationMethod = DiscretizationMethods::Box;
+    static constexpr DiscretizationMethod discMethod{};
 };
 
 template<class M, class X, class V>
