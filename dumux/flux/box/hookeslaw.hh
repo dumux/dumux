@@ -40,7 +40,7 @@ namespace Dumux {
  * \tparam GridGeometry the grid geometry
  */
 template<class ScalarType, class GridGeometry>
-class HookesLaw<ScalarType, GridGeometry, DiscretizationMethod::box>
+class HookesLaw<ScalarType, GridGeometry, typename GridGeometry::DiscretizationMethod>
 {
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
@@ -61,7 +61,10 @@ public:
     //! export the type used for force vectors
     using ForceVector = typename StressTensor::row_type;
     //! state the discretization method this implementation belongs to
-    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::box;
+
+    using DiscretizationMethod = DiscretizationMethods::Box;
+    // state the discretization method this implementation belongs to
+    static constexpr DiscretizationMethod discMethod{};
 
     /*!
      * \brief Returns the force (in Newton) acting on a sub-control volume face.
