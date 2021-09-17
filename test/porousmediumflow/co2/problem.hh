@@ -127,8 +127,10 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
     static constexpr bool useMoles = ModelTraits::useMoles();
 
     // the discretization method we are using
-    static constexpr auto discMethod = GetPropType<TypeTag, Properties::GridGeometry>::discMethod;
-    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
+    using DiscretizationMethod = DiscretizationMethods::Box;
+    static constexpr DiscretizationMethod discMethod{};
+
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethods::box;
 
     // world dimension to access gravity vector
     static constexpr int dimWorld = GridView::dimensionworld;
@@ -441,7 +443,7 @@ private:
 
     // vtk output
     std::vector<Scalar> vtkKxx_, vtkPorosity_, vtkBoxVolume_, vtkTemperature_;
-    ScvfToScvBoundaryTypes<BoundaryTypes, discMethod> scvfToScvBoundaryTypes_;
+    ScvfToScvBoundaryTypes<BoundaryTypes, DiscretizationMethod> scvfToScvBoundaryTypes_;
 };
 
 } // end namespace Dumux
