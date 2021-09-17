@@ -186,7 +186,7 @@ public:
      * \brief return the numeric epsilon used for deflecting primary variables of coupled domain i.
      * \note  specialization for non-staggered schemes
      */
-    template<std::size_t i, typename std::enable_if_t<(GridGeometry<i>::discMethod != DiscretizationMethod::staggered), int> = 0>
+    template<std::size_t i, typename std::enable_if_t<(GridGeometry<i>::discMethod != DiscretizationMethods::staggered), int> = 0>
     decltype(auto) numericEpsilon(Dune::index_constant<i> id,
                                   const std::string& paramGroup) const
     {
@@ -197,7 +197,7 @@ public:
      * \brief return the numeric epsilon used for deflecting primary variables of coupled domain i.
      * \note  specialization for non-staggered schemes
      */
-    template<std::size_t i, typename std::enable_if_t<(GridGeometry<i>::discMethod == DiscretizationMethod::staggered), int> = 0>
+    template<std::size_t i, typename std::enable_if_t<(GridGeometry<i>::discMethod == DiscretizationMethods::staggered), int> = 0>
     decltype(auto) numericEpsilon(Dune::index_constant<i>,
                                   const std::string& paramGroup) const
     {

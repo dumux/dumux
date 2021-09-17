@@ -44,7 +44,7 @@ namespace Dumux {
  * \tparam lowDimId The domain id of the lower-dimensional problem
  */
 template<class BulkFVG, class LowDimFVG, std::size_t bulkId, std::size_t lowDimId>
-class FacetCouplingMapper<BulkFVG, LowDimFVG, bulkId, lowDimId, DiscretizationMethod::box>
+class FacetCouplingMapper<BulkFVG, LowDimFVG, bulkId, lowDimId, DiscretizationMethods::Box>
 : public virtual FacetCouplingMapperBase<BulkFVG, LowDimFVG, bulkId, lowDimId>
 {
     using ParentType = FacetCouplingMapperBase<BulkFVG, LowDimFVG, bulkId, lowDimId>;
@@ -188,7 +188,7 @@ public:
 
                 // add each dof in the low dim element to coupling stencil of the bulk element
                 auto& bulkData = this->couplingMap_(bulkGridId, facetGridId)[bulkElemIdx];
-                const auto lowDimElementDofs = LowDimFVG::discMethod == DiscretizationMethod::box
+                const auto lowDimElementDofs = LowDimFVG::discMethod == DiscretizationMethods::box
                                                ? this->extractNodalDofs_(lowDimElement, lowDimFvGridGeometry)
                                                : std::vector<LowDimIndexType>({lowDimElemIdx});
 
@@ -228,7 +228,7 @@ public:
         std::for_each(lowDimCouplingData.begin(), lowDimCouplingData.end(), makeStencilUnique);
 
         // bulk coupling stencil is only non-unique if box is used
-        if (LowDimFVG::discMethod == DiscretizationMethod::box)
+        if (LowDimFVG::discMethod == DiscretizationMethods::box)
         {
             auto& bulkCouplingData = this->couplingMap_(bulkGridId, facetGridId);
             std::for_each(bulkCouplingData.begin(), bulkCouplingData.end(), makeStencilUnique);
