@@ -50,9 +50,9 @@ namespace Dumux {
  */
 template<class TypeTag>
 class BoxFacetCouplingFouriersLaw
-: public FouriersLawImplementation<TypeTag, DiscretizationMethod::box>
+: public FouriersLawImplementation<TypeTag, DiscretizationMethods::Box>
 {
-    using ParentType = FouriersLawImplementation<TypeTag, DiscretizationMethod::box>;
+    using ParentType = FouriersLawImplementation<TypeTag, DiscretizationMethods::Box>;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;

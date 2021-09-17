@@ -32,7 +32,7 @@
 namespace Dumux {
 
 // forward declaration
-template <class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
+template <class TypeTag, class DiscretizationMethod, ReferenceSystemFormulation referenceSystem>
 class MaxwellStefansLawImplementation
 {};
 
@@ -41,7 +41,7 @@ class MaxwellStefansLawImplementation
  * \brief Evaluates the diffusive mass flux according to Maxwell Stafan's law
  */
 template <class TypeTag, ReferenceSystemFormulation referenceSystem =  ReferenceSystemFormulation::massAveraged>
-using MaxwellStefansLaw = MaxwellStefansLawImplementation<TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod, referenceSystem>;
+using MaxwellStefansLaw = MaxwellStefansLawImplementation<TypeTag, typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod, referenceSystem>;
 
 } // end namespace
 

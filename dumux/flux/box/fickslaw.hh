@@ -39,7 +39,7 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
+template<class TypeTag, class DiscretizationMethod, ReferenceSystemFormulation referenceSystem>
 class FicksLawImplementation;
 
 /*!
@@ -47,7 +47,7 @@ class FicksLawImplementation;
  * \brief Specialization of Fick's Law for the box method.
  */
 template <class TypeTag, ReferenceSystemFormulation referenceSystem>
-class FicksLawImplementation<TypeTag, DiscretizationMethod::box, referenceSystem>
+class FicksLawImplementation<TypeTag, DiscretizationMethods::Box, referenceSystem>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
