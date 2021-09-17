@@ -27,6 +27,8 @@
 #include <ostream>
 #include <string>
 
+#include <dumux/common/tag.hh>
+
 namespace Dumux {
 
 /*!
@@ -40,6 +42,177 @@ enum class DiscretizationMethod
 {
     none, box, cctpfa, ccmpfa, staggered, fem, fcstaggered
 };
+
+
+namespace DiscretizationMethods {
+struct CCTpfa : public Utility::Tag<CCTpfa> {
+    static std::string name() { return "cctpfa"; }
+
+    //comparison operator
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator==(CCTpfa, DiscretizationMethod m) { return m == DiscretizationMethod::cctpfa; }
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator==(DiscretizationMethod m, CCTpfa) { return m == DiscretizationMethod::cctpfa; }
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator!=(CCTpfa, DiscretizationMethod m) { return m != DiscretizationMethod::cctpfa; }
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator!=(DiscretizationMethod m, CCTpfa) { return m != DiscretizationMethod::cctpfa; }
+
+    //conversion operator
+    [[deprecated("Conversion to enum is deprecated. Removed after 3.5. Use tags.")]]
+    constexpr explicit operator DiscretizationMethod() const
+    {
+        return DiscretizationMethod::cctpfa;
+    }
+};
+
+
+struct CCMpfa : public Utility::Tag<CCMpfa> {
+    static std::string name() { return "ccmpfa"; }
+
+    //comparison operator
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator==(CCMpfa, DiscretizationMethod m) { return m == DiscretizationMethod::ccmpfa; }
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator==(DiscretizationMethod m, CCMpfa) { return m == DiscretizationMethod::ccmpfa; }
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator!=(CCMpfa, DiscretizationMethod m) { return m != DiscretizationMethod::ccmpfa; }
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator!=(DiscretizationMethod m, CCMpfa) { return m != DiscretizationMethod::ccmpfa; }
+
+    //conversion operator
+    [[deprecated("Conversion to enum is deprecated. Removed after 3.5. Use tags.")]]
+    constexpr explicit operator DiscretizationMethod() const
+    {
+        return DiscretizationMethod::ccmpfa;
+    }
+};
+
+
+struct Box : public Utility::Tag<Box> {
+    static std::string name() { return "box"; }
+
+    //comparison operator
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator==(Box, DiscretizationMethod m) { return m == DiscretizationMethod::box; }
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator==(DiscretizationMethod m, Box) { return m == DiscretizationMethod::box; }
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator!=(Box, DiscretizationMethod m) { return m != DiscretizationMethod::box; }
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator!=(DiscretizationMethod m, Box) { return m != DiscretizationMethod::box; }
+
+    //conversion operator
+    [[deprecated("Conversion to enum is deprecated. Removed after 3.5. Use tags.")]]
+    constexpr explicit operator DiscretizationMethod() const
+    {
+        return DiscretizationMethod::box;
+    }
+};
+
+
+
+struct Staggered : public Utility::Tag<Staggered> {
+    static std::string name() { return "staggered"; }
+
+    //comparison operator
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator==(Staggered, DiscretizationMethod m) { return m == DiscretizationMethod::staggered; }
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator==(DiscretizationMethod m, Staggered) { return m == DiscretizationMethod::staggered; }
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator!=(Staggered, DiscretizationMethod m) { return m != DiscretizationMethod::staggered; }
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator!=(DiscretizationMethod m, Staggered) { return m != DiscretizationMethod::staggered; }
+
+    //conversion operator
+    [[deprecated("Conversion to enum is deprecated. Removed after 3.5. Use tags.")]]
+    constexpr explicit operator DiscretizationMethod() const
+    {
+        return DiscretizationMethod::staggered;
+    }
+};
+
+
+
+struct Fem : public Utility::Tag<Fem> {
+    static std::string name() { return "fem"; }
+
+    //comparison operator
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator==(Fem, DiscretizationMethod m) { return m == DiscretizationMethod::fem; }
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator==(DiscretizationMethod m, Fem) { return m == DiscretizationMethod::fem; }
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator!=(Fem, DiscretizationMethod m) { return m != DiscretizationMethod::fem; }
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator!=(DiscretizationMethod m, Fem) { return m != DiscretizationMethod::fem; }
+
+    //conversion operator
+    [[deprecated("Conversion to enum is deprecated. Removed after 3.5. Use tags.")]]
+    constexpr explicit operator DiscretizationMethod() const
+    {
+        return DiscretizationMethod::fem;
+    }
+};
+
+
+
+struct FCStaggered : public Utility::Tag<FCStaggered> {
+    static std::string name() { return "fcstaggered"; }
+
+    //comparison operator
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator==(FCStaggered, DiscretizationMethod m) { return m == DiscretizationMethod::fcstaggered; }
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator==(DiscretizationMethod m, FCStaggered) { return m == DiscretizationMethod::fcstaggered; }
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator!=(FCStaggered, DiscretizationMethod m) { return m != DiscretizationMethod::fcstaggered; }
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator!=(DiscretizationMethod m, FCStaggered) { return m != DiscretizationMethod::fcstaggered; }
+
+    //conversion operator
+    [[deprecated("Conversion to enum is deprecated. Removed after 3.5. Use tags.")]]
+    constexpr explicit operator DiscretizationMethod() const
+    {
+        return DiscretizationMethod::fcstaggered;
+    }
+};
+
+
+
+struct None : public Utility::Tag<None> {
+    static std::string name() { return "none"; }
+
+    //comparison operator
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator==(None, DiscretizationMethod m) { return m == DiscretizationMethod::none; }
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator==(DiscretizationMethod m, None) { return m == DiscretizationMethod::none; }
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator!=(None, DiscretizationMethod m) { return m != DiscretizationMethod::none; }
+    [[deprecated("Comparison with enum is deprecated. Removed after 3.5. Use tags.")]]
+    friend constexpr bool operator!=(DiscretizationMethod m, None) { return m != DiscretizationMethod::none; }
+
+    //conversion operator
+    [[deprecated("Conversion to enum is deprecated. Removed after 3.5. Use tags.")]]
+    constexpr explicit operator DiscretizationMethod() const
+    {
+        return DiscretizationMethod::none;
+    }
+};
+
+
+inline constexpr CCTpfa cctpfa{};
+inline constexpr CCMpfa ccmpfa{};
+inline constexpr Box box{};
+inline constexpr Staggered staggered{};
+inline constexpr Fem fem{};
+inline constexpr FCStaggered fcstaggered{};
+inline constexpr None none{};
+} // end namespace DiscretizationMethods
+
+
 
 /*!
  * \brief Convert discretization method to string
