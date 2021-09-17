@@ -110,8 +110,9 @@ public:
     //! export the mpfa helper type
     using MpfaHelper = typename Traits::template MpfaHelper<ThisType>;
 
+    using DiscretizationMethod = DiscretizationMethods::CCMpfa;
     //! export the discretization method this geometry belongs to
-    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::ccmpfa;
+    static constexpr DiscretizationMethod discMethod{};
 
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
     static constexpr int maxElementStencilSize = Traits::maxElementStencilSize;
@@ -501,8 +502,9 @@ public:
     //! export the mpfa helper type
     using MpfaHelper = typename Traits::template MpfaHelper<ThisType>;
 
+    using DiscretizationMethod = DiscretizationMethods::CCMpfa;
     //! export the discretization method this geometry belongs to
-    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::ccmpfa;
+    static constexpr DiscretizationMethod discMethod{};
 
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
     static constexpr int maxElementStencilSize = Traits::maxElementStencilSize;

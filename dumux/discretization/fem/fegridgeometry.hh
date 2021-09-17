@@ -69,8 +69,9 @@ class FEGridGeometry
     using LocalIndexType = typename IndexTraits<typename FEB::GridView>::LocalIndex;
 
 public:
+    using DiscretizationMethod = DiscretizationMethods::Fem;
     //! export discretization method
-    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::fem;
+    static constexpr DiscretizationMethod discMethod{};
 
     //! export the grid view type
     using GridView = typename FEB::GridView;

@@ -115,8 +115,9 @@ class FaceCenteredStaggeredFVGridGeometry<GV, true, Traits>
     using ScvCornerStorage = typename Traits::SubControlVolume::Traits::CornerStorage;
 
 public:
+    using DiscretizationMethod = DiscretizationMethods::FCStaggered;
     //! export discretization method
-    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::fcstaggered;
+    static constexpr DiscretizationMethod discMethod{};
     static constexpr bool cachingEnabled = true;
 
     //! export the type of the fv element geometry (the local view type)
@@ -565,8 +566,9 @@ class FaceCenteredStaggeredFVGridGeometry<GV, false, Traits>
                                                 + numFacesPerElement; // number of potential frontal faces on boundary
 
 public:
+    using DiscretizationMethod = DiscretizationMethods::FCStaggered;
     //! export discretization method
-    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::fcstaggered;
+    static constexpr DiscretizationMethod discMethod{};
     static constexpr bool cachingEnabled = false;
 
     //! export the type of the fv element geometry (the local view type)

@@ -111,8 +111,9 @@ public:
     //! export dof mapper type
     using DofMapper = typename Traits::ElementMapper;
 
+    using DiscretizationMethod = DiscretizationMethods::CCTpfa;
     //! export the discretization method this geometry belongs to
-    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
+    static constexpr DiscretizationMethod discMethod{};
 
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
     static constexpr int maxElementStencilSize = LocalView::maxNumElementScvfs*Traits::maxNumScvfNeighbors + 1;
@@ -417,8 +418,9 @@ public:
     //! export dof mapper type
     using DofMapper = typename Traits::ElementMapper;
 
+    using DiscretizationMethod = DiscretizationMethods::CCTpfa;
     //! Export the discretization method this geometry belongs to
-    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
+    static constexpr DiscretizationMethod discMethod{};
 
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
     static constexpr int maxElementStencilSize = LocalView::maxNumElementScvfs*Traits::maxNumScvfNeighbors + 1;

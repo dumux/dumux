@@ -50,7 +50,10 @@ public:
 
     //! export  the GridView type and the discretization method
     using GridView = typename ActualGridGeometry::GridView;
-    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::staggered;
+
+    using DiscretizationMethod = DiscretizationMethods::Staggered;
+    static constexpr DiscretizationMethod discMethod{};
+
     using LocalView = typename ActualGridGeometry::LocalView;
 
     /*!
@@ -196,8 +199,10 @@ public:
     //! export the traits
     using Traits = typename T::PublicTraits;
 
+    using DiscretizationMethod = DiscretizationMethods::Staggered;
     //! export discretization method
-    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::staggered;
+    static constexpr DiscretizationMethod discMethod{};
+
     static constexpr int upwindSchemeOrder = T::upwindSchemeOrder;
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
     static constexpr bool cachingEnabled = true;
@@ -493,8 +498,10 @@ public:
     //! export the traits
     using Traits = typename T::PublicTraits;
 
+    using DiscretizationMethod = DiscretizationMethods::Staggered;
     //! export discretization method
-    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::staggered;
+    static constexpr DiscretizationMethod discMethod{};
+
     static constexpr int upwindSchemeOrder = T::upwindSchemeOrder;
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
     static constexpr bool cachingEnabled = false;
