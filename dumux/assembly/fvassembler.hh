@@ -41,32 +41,32 @@
 
 namespace Dumux::Detail {
 
-template<DiscretizationMethod diffMethod>
+template<class DiscretizationMethod>
 struct LocalAssemblerChooser;
 
 template<>
-struct LocalAssemblerChooser<DiscretizationMethod::box>
+struct LocalAssemblerChooser<DiscretizationMethods::Box>
 {
     template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
     using type = BoxLocalAssembler<TypeTag, Impl, diffMethod, isImplicit>;
 };
 
 template<>
-struct LocalAssemblerChooser<DiscretizationMethod::ccmpfa>
+struct LocalAssemblerChooser<DiscretizationMethods::CCMpfa>
 {
     template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
     using type = CCLocalAssembler<TypeTag, Impl, diffMethod, isImplicit>;
 };
 
 template<>
-struct LocalAssemblerChooser<DiscretizationMethod::cctpfa>
+struct LocalAssemblerChooser<DiscretizationMethods::CCTpfa>
 {
     template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
     using type = CCLocalAssembler<TypeTag, Impl, diffMethod, isImplicit>;
 };
 
 template<>
-struct LocalAssemblerChooser<DiscretizationMethod::fcstaggered>
+struct LocalAssemblerChooser<DiscretizationMethods::FCStaggered>
 {
     template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
     using type = FaceCenteredLocalAssembler<TypeTag, Impl, diffMethod, isImplicit>;
@@ -74,7 +74,7 @@ struct LocalAssemblerChooser<DiscretizationMethod::fcstaggered>
 
 template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
 using LocalAssemblerChooser_t = typename LocalAssemblerChooser<
-    GetPropType<TypeTag, Properties::GridGeometry>::discMethod
+    typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod
 >::template type<TypeTag, Impl, diffMethod, isImplicit>;
 
 } // end namespace Dumux::Detail
@@ -98,7 +98,7 @@ class FVAssembler
     using TimeLoop = TimeLoopBase<GetPropType<TypeTag, Properties::Scalar>>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
-    static constexpr bool isBox = GridGeo::discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = GridGeo::discMethod == DiscretizationMethods::box;
 
     using ThisType = FVAssembler<TypeTag, diffMethod, isImplicit>;
     using LocalAssembler = typename Detail::LocalAssemblerChooser_t<TypeTag, ThisType, diffMethod, isImplicit>;
@@ -450,7 +450,7 @@ private:
             DUNE_THROW(NumericalProblem, "A process did not succeed in linearizing the system");
     }
 
-    template<class GG> std::enable_if_t<GG::discMethod == DiscretizationMethod::box, void>
+    template<class GG> std::enable_if_t<GG::discMethod == DiscretizationMethods::box, void>
     enforcePeriodicConstraints_(JacobianMatrix& jac, SolutionVector& res, const SolutionVector& curSol, const GG& gridGeometry)
     {
         for (const auto& m : gridGeometry.periodicVertexMap())
@@ -471,7 +471,7 @@ private:
         }
     }
 
-    template<class GG> std::enable_if_t<GG::discMethod != DiscretizationMethod::box, void>
+    template<class GG> std::enable_if_t<GG::discMethod != DiscretizationMethods::box, void>
     enforcePeriodicConstraints_(JacobianMatrix& jac, SolutionVector& res, const SolutionVector& curSol, const GG& gridGeometry) {}
 
     //! pointer to the problem to be solved
