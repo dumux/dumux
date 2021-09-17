@@ -34,10 +34,10 @@
 namespace Dumux {
 
 // forward declaration
-template <class TypeTag, class VelocityLaw, DiscretizationMethod discMethod>
+template <class TypeTag, class VelocityLaw, class DiscretizationMethod>
 class ForchheimersLawImplementation
 {
-    static_assert(discMethod == DiscretizationMethod::cctpfa || discMethod == DiscretizationMethod::box, "Forchheimer only implemented for cctpfa or box!");
+    static_assert(GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethods::cctpfa || GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethods::box, "Forchheimer only implemented for cctpfa or box!");
 };
 
 /*!
@@ -50,7 +50,7 @@ class ForchheimersLawImplementation
 template <class TypeTag>
 using ForchheimersLaw = ForchheimersLawImplementation<TypeTag,
                                                       ForchheimerVelocity<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::GridGeometry>, GetPropType<TypeTag, Properties::FluxVariables>>,
-                                                      GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
+                                                      typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod>;
 
 } // end namespace Dumux
 

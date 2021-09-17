@@ -39,7 +39,7 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
+template<class TypeTag, class DiscretizationMethod, ReferenceSystemFormulation referenceSystem>
 class FicksLawImplementation;
 
 /*!
@@ -47,9 +47,9 @@ class FicksLawImplementation;
  * \brief Fick's law for cell-centered finite volume schemes with two-point flux approximation
  */
 template <class TypeTag, ReferenceSystemFormulation referenceSystem>
-class FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa, referenceSystem>
+class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa, referenceSystem>
 {
-    using Implementation = FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa, referenceSystem>;
+    using Implementation = FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa, referenceSystem>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -117,8 +117,10 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa, referenceSys
     };
 
 public:
+    using DiscretizationMethod = DiscretizationMethods::CCTpfa;
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
+    static constexpr DiscretizationMethod discMethod{};
+
     //! Return the reference system
     static constexpr ReferenceSystemFormulation referenceSystemFormulation()
     { return referenceSystem; }
