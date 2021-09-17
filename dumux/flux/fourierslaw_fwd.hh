@@ -32,7 +32,7 @@
 namespace Dumux {
 
 // declaration of primary template
-template <class TypeTag, DiscretizationMethod discMethod>
+template <class TypeTag, class DiscretizationMethod>
 class FouriersLawImplementation;
 
 /*!
@@ -40,7 +40,7 @@ class FouriersLawImplementation;
  * \brief Evaluates the heat conduction flux according to Fouriers's law
  */
 template <class TypeTag>
-using FouriersLaw = FouriersLawImplementation<TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
+using FouriersLaw = FouriersLawImplementation<TypeTag, typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod>;
 
 } // end namespace Dumux
 

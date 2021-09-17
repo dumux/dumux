@@ -33,7 +33,7 @@
 namespace Dumux {
 
 // declaration of primary template
-template <class TypeTag, DiscretizationMethod discMethod>
+template <class TypeTag, class DiscretizationMethod>
 class DarcysLawImplementation;
 
 /*!
@@ -43,7 +43,7 @@ class DarcysLawImplementation;
  * These specializations are found in the headers included below.
  */
 template <class TypeTag>
-using DarcysLaw = DarcysLawImplementation<TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
+using DarcysLaw = DarcysLawImplementation<TypeTag, typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod>;
 
 } // end namespace Dumux
 

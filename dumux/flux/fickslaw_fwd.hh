@@ -34,7 +34,7 @@
 namespace Dumux {
 
 // declaration of primary template
-template <class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
+template <class TypeTag, class DiscretizationMethod, ReferenceSystemFormulation referenceSystem>
 class FicksLawImplementation;
 
 /*!
@@ -42,7 +42,7 @@ class FicksLawImplementation;
  * \brief Evaluates the diffusive mass flux according to Fick's law
  */
 template <class TypeTag, ReferenceSystemFormulation referenceSystem =  ReferenceSystemFormulation::massAveraged>
-using FicksLaw = FicksLawImplementation<TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod, referenceSystem>;
+using FicksLaw = FicksLawImplementation<TypeTag, typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod, referenceSystem>;
 
 } // end namespace Dumux
 

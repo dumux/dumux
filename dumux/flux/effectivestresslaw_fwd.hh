@@ -35,7 +35,7 @@ namespace Dumux {
  * \note Specializations are provided for the different discretization methods.
  * These specializations are found in the headers included below.
  */
-template <class StressType, class GridGeometry, DiscretizationMethod dm = GridGeometry::discMethod>
+template <class StressType, class GridGeometry, class DiscretizationMethod = typename GridGeometry::DiscretizationMethod>
 class EffectiveStressLaw;
 
 } // end namespace Dumux
