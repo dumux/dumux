@@ -85,7 +85,7 @@ class PorousMediumFlowVelocity
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethods::box;
     static constexpr int dofCodim = isBox ? dim : 0;
     static constexpr bool stationaryVelocityField = FluxTraits::hasStationaryVelocityField();
 
@@ -234,7 +234,7 @@ public:
             // For the number of scvfs per facet (mpfa) we simply obtain the number of
             // corners of the first facet as prisms/pyramids are not supported here anyway
             // -> for prisms/pyramids the number of scvfs would differ from facet to facet
-            static constexpr bool isMpfa = GridGeometry::discMethod == DiscretizationMethod::ccmpfa;
+            static constexpr bool isMpfa = GridGeometry::discMethod == DiscretizationMethods::ccmpfa;
             const int numScvfsPerFace = isMpfa ? element.template subEntity<1>(0).geometry().corners() : 1;
 
             if (fvGeometry.numScvf() != element.subEntities(1)*numScvfsPerFace)

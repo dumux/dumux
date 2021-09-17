@@ -32,7 +32,7 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
+template<class TypeTag, class DiscretizationMethod>
 class PorousMediumFluxVariablesCacheImplementation;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -50,12 +50,12 @@ class PorousMediumFluxVariablesCacheImplementation;
  * cache class are provided for different combinations of processes.
  */
 template<class TypeTag>
-using PorousMediumFluxVariablesCache = PorousMediumFluxVariablesCacheImplementation<TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
+using PorousMediumFluxVariablesCache = PorousMediumFluxVariablesCacheImplementation<TypeTag, typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod>;
 
 //! We only store discretization-related quantities for the box method. Thus, we need no
 //! physics-dependent specialization and simply inherit from the physics-independent implementation.
 template<class TypeTag>
-class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod::box>
+class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::Box>
 : public BoxFluxVariablesCache<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::GridGeometry>>
 {
 public:
@@ -77,7 +77,7 @@ template<class TypeTag> class EnergyCacheChooser<TypeTag, true> : public GetProp
 
 // specialization for the cell centered tpfa method
 template<class TypeTag>
-class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod::cctpfa>
+class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 : public AdvectionCacheChooser<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::enableAdvection()>
 , public DiffusionCacheChooser<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::enableMolecularDiffusion()>
 , public EnergyCacheChooser<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::enableEnergyBalance()>
@@ -90,7 +90,7 @@ public:
 //! Specialization of the flux variables cache for the cell centered finite volume mpfa scheme.
 //! Stores data which is commonly used by all the different types of processes.
 template<class TypeTag>
-class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod::ccmpfa>
+class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 : public AdvectionCacheChooser<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::enableAdvection()>
 , public DiffusionCacheChooser<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::enableMolecularDiffusion()>
 , public EnergyCacheChooser<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::enableEnergyBalance()>
