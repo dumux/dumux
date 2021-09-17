@@ -211,7 +211,7 @@ public:
                                            const ElementFluxVariablesCache& elemFluxVarsCache,
                                            const SubControlVolumeFace& scvf) const
     {
-        static_assert(FVElementGeometry::GridGeometry::discMethod == DiscretizationMethod::fcstaggered); // TODO overload this method for different discretizations
+        static_assert(FVElementGeometry::GridGeometry::discMethod == DiscretizationMethods::fcstaggered); // TODO overload this method for different discretizations
         assert(elemBcTypes.hasNeumann());
 
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
