@@ -32,7 +32,7 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>
+template<class TypeTag, class BaseLocalResidual, class DiscretizationMethod>
 class KEpsilonResidualImpl;
 
 /*!
@@ -43,7 +43,7 @@ class KEpsilonResidualImpl;
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag, class BaseLocalResidual>
-using KEpsilonResidual = KEpsilonResidualImpl<TypeTag, BaseLocalResidual, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
+using KEpsilonResidual = KEpsilonResidualImpl<TypeTag, BaseLocalResidual, typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod>;
 
 }
 
