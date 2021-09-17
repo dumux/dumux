@@ -30,7 +30,7 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>
+template<class TypeTag, class BaseFluxVariables, class DiscretizationMethod>
 class LowReKEpsilonFluxVariablesImpl;
 
 /*!
@@ -41,7 +41,7 @@ class LowReKEpsilonFluxVariablesImpl;
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag, class BaseFluxVariables>
-using LowReKEpsilonFluxVariables = LowReKEpsilonFluxVariablesImpl<TypeTag, BaseFluxVariables, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
+using LowReKEpsilonFluxVariables = LowReKEpsilonFluxVariablesImpl<TypeTag, BaseFluxVariables, typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod>;
 
 } // end namespace
 

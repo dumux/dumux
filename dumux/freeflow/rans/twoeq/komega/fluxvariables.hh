@@ -30,7 +30,7 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>
+template<class TypeTag, class BaseFluxVariables, class DiscretizationMethod>
 class KOmegaFluxVariablesImpl;
 
 /*!
@@ -41,7 +41,7 @@ class KOmegaFluxVariablesImpl;
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag, class BaseFluxVariables>
-using KOmegaFluxVariables = KOmegaFluxVariablesImpl<TypeTag, BaseFluxVariables, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
+using KOmegaFluxVariables = KOmegaFluxVariablesImpl<TypeTag, BaseFluxVariables, typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod>;
 
 } // end namespace
 
