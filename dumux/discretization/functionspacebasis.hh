@@ -40,8 +40,7 @@ namespace Dumux {
  *        scheme underlying a grid geometry class. Specializations
  *        of the traits for different schemes are provided below.
  */
-template< class GridGeometry,
-          DiscretizationMethod dm = GridGeometry::discMethod >
+template< class GridGeometry, class DiscretizationMethod = typename GridGeometry::DiscretizationMethod >
 struct FunctionSpaceBasisTraits;
 
 /*!
@@ -49,7 +48,7 @@ struct FunctionSpaceBasisTraits;
  * \brief Creates a Dune::Functions object of the underlying basis
  *        of a discretization scheme that is not finite elements.
  */
-template<class GridGeometry, std::enable_if_t<GridGeometry::discMethod != DiscretizationMethod::fem, int> = 0>
+template<class GridGeometry, std::enable_if_t<GridGeometry::discMethod != DiscretizationMethods::fem, int> = 0>
 typename FunctionSpaceBasisTraits<GridGeometry>::GlobalBasis
 getFunctionSpaceBasis(const GridGeometry& gridGeometry)
 { return {gridGeometry.gridView()}; }
@@ -58,7 +57,7 @@ getFunctionSpaceBasis(const GridGeometry& gridGeometry)
  * \ingroup Discretization
  * \brief Returns the Dune::Functions object for the basis of a finite element scheme.
  */
-template<class GridGeometry, std::enable_if_t<GridGeometry::discMethod == DiscretizationMethod::fem, int> = 0>
+template<class GridGeometry, std::enable_if_t<GridGeometry::discMethod == DiscretizationMethods::fem, int> = 0>
 const typename FunctionSpaceBasisTraits<GridGeometry>::GlobalBasis&
 getFunctionSpaceBasis(const GridGeometry& gridGeometry)
 { return gridGeometry.feBasis(); }
@@ -70,22 +69,22 @@ getFunctionSpaceBasis(const GridGeometry& gridGeometry)
 
 //! Traits specialization: box scheme uses lagrange basis of order 1
 template< class GridGeometry >
-struct FunctionSpaceBasisTraits<GridGeometry, DiscretizationMethod::box>
+struct FunctionSpaceBasisTraits<GridGeometry, DiscretizationMethods::Box>
 { using GlobalBasis = Dune::Functions::LagrangeBasis<typename GridGeometry::GridView, /*order*/1>; };
 
 //! Traits specialization: cc schemes use lagrange bases of order 0
 template< class GridGeometry >
-struct FunctionSpaceBasisTraits<GridGeometry, DiscretizationMethod::cctpfa>
+struct FunctionSpaceBasisTraits<GridGeometry, DiscretizationMethods::CCTpfa>
 { using GlobalBasis = Dune::Functions::LagrangeBasis<typename GridGeometry::GridView, /*order*/0>; };
 
 //! Traits specialization: cc schemes use lagrange bases of order 0
 template< class GridGeometry >
-struct FunctionSpaceBasisTraits<GridGeometry, DiscretizationMethod::ccmpfa>
+struct FunctionSpaceBasisTraits<GridGeometry, DiscretizationMethods::CCMpfa>
 { using GlobalBasis = Dune::Functions::LagrangeBasis<typename GridGeometry::GridView, /*order*/0>; };
 
 //! Traits specialization: fem defines its basis
 template< class GridGeometry >
-struct FunctionSpaceBasisTraits<GridGeometry, DiscretizationMethod::fem>
+struct FunctionSpaceBasisTraits<GridGeometry, DiscretizationMethods::FEM>
 { using GlobalBasis = typename GridGeometry::FEBasis; };
 
 } // end namespace Dumux
