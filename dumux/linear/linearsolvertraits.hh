@@ -37,12 +37,12 @@
 namespace Dumux {
 
 //! The implementation is specialized for the different discretizations
-template<class GridGeometry, DiscretizationMethod discMethod>
+template<class GridGeometry, class DiscretizationMethod>
 struct LinearSolverTraitsImpl;
 
 //! The type traits required for using the IstlFactoryBackend
 template<class GridGeometry>
-using LinearSolverTraits = LinearSolverTraitsImpl<GridGeometry, GridGeometry::discMethod>;
+using LinearSolverTraits = LinearSolverTraitsImpl<GridGeometry, typename GridGeometry::DiscretizationMethod>;
 
 //! sequential solver traits
 template<class MType, class VType>
@@ -109,7 +109,7 @@ struct LinearSolverTraitsBase
 
 //! Box: use overlapping or non-overlapping model depending on the grid
 template<class GridGeometry>
-struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::box>
+struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::Box>
 : public LinearSolverTraitsBase<GridGeometry>
 {
     using DofMapper = typename GridGeometry::VertexMapper;
@@ -124,7 +124,7 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::box>
 
 //! Cell-centered tpfa: use overlapping model
 template<class GridGeometry>
-struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::cctpfa>
+struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::CCTpfa>
 : public LinearSolverTraitsBase<GridGeometry>
 {
     using DofMapper = typename GridGeometry::ElementMapper;
@@ -139,7 +139,7 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::cctpfa>
 
 //! Face-centered staggered: use overlapping model
 template<class GridGeometry>
-struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::fcstaggered>
+struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::FCStaggered>
 : public LinearSolverTraitsBase<GridGeometry>
 {
     class DofMapper
@@ -180,13 +180,13 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::fcstaggered>
 
 //! Cell-centered mpfa: use overlapping model
 template<class GridGeometry>
-struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::ccmpfa>
-: public LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::cctpfa> {};
+struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::CCMpfa>
+: public LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::CCTpfa> {};
 
 //! staggered: use overlapping model
 template<class GridGeometry>
-struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::staggered>
-: public LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::cctpfa> {};
+struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::Staggered>
+: public LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::CCTpfa> {};
 
 } // end namespace Dumux
 
