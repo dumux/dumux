@@ -40,7 +40,7 @@ class ForchheimersLawImplementation
     static_assert(
         GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethods::cctpfa || 
         GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethods::box, 
-        "Forchheimer only implemented for cctpfa or box!")
+        "Forchheimer only implemented for cctpfa or box!"
     );
 };
 
