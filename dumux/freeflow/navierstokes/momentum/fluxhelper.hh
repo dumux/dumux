@@ -112,12 +112,19 @@ struct NavierStokesMomentumBoundaryFluxHelper
 
             // lateral face normal to boundary (integration point touches boundary)
             if (scv.boundary())
-                flux[scv.dofAxis()] -= mu * StaggeredVelocityGradients::velocityGradIJ(fvGeometry, scvf, elemVolVars)
-                                               * scvf.directionSign();
+            {
+                const auto velGradIJ = StaggeredVelocityGradients::velocityGradIJ(fvGeometry, scvf, elemVolVars);
+                const auto velGradJI = StaggeredVelocityGradients::velocityGradJIZeroOuterVelocity(fvGeometry, scvf, elemVolVars);
+                flux[scv.dofAxis()] -= mu * (velGradIJ + velGradJI) * scvf.directionSign();
+
+            }
             // lateral face coinciding with boundary
             else if (scvf.boundary())
-                flux[scv.dofAxis()] -= mu * StaggeredVelocityGradients::velocityGradJI(fvGeometry, scvf, elemVolVars)
-                                              * scvf.directionSign();
+            {
+                const auto velGradIJ = StaggeredVelocityGradients::velocityGradIJZeroOuterVelocity(fvGeometry, scvf, elemVolVars);
+                const auto velGradJI = StaggeredVelocityGradients::velocityGradJI(fvGeometry, scvf, elemVolVars);
+                flux[scv.dofAxis()] -= mu * (velGradIJ + velGradJI) * scvf.directionSign();
+            }
 
             // advective terms
             if (problem.enableInertiaTerms()) // TODO revise advection terms! Take care with upwinding!
