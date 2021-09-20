@@ -24,6 +24,7 @@
 #ifndef DUMUX_COMPONENTS_CONSTANT_HH
 #define DUMUX_COMPONENTS_CONSTANT_HH
 
+#include <dune/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
 
 #include <dumux/material/components/base.hh>
@@ -131,16 +132,31 @@ public:
     /*!
      * \brief Sets the liquid dynamic viscosity in \f$\mathrm{[Pa*s]}\f$.
      *
-     * Although the dynamic viscosity \f$\mathrm{[Pa*s]}\f$ is returned,
-     * the kinematic viscosity \f$\mathrm{[m^2/s]}\f$ is requested from run time input.
+     * \note We look for Component.LiquidKinematicViscosity or Component.LiquidDynamicViscosity.
+     *       If both parameters are specified, it is considered a configuration error because it can
+     *       be ambiguous if defaults are specified for several constant components in the plain
+     *       "Component" group (without ID-prefix).
      *
      * \param temperature phase temperature in \f$\mathrm{[K]}\f$
      * \param pressure phase pressure in \f$\mathrm{[Pa]}\f$
      */
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {
-        static const Scalar kinematicViscosity = getParamFromGroup<Scalar>(std::to_string(id), "Component.LiquidKinematicViscosity");
-        return kinematicViscosity * liquidDensity(temperature, pressure);
+        static const Scalar dynamicViscosity = [&]
+        {
+            if (hasParamInGroup(std::to_string(id), "Component.LiquidKinematicViscosity"))
+            {
+                if (hasParamInGroup(std::to_string(id), "Component.LiquidDynamicViscosity"))
+                    DUNE_THROW(Dune::InvalidStateException, "Found both Component.LiquidKinematicViscosity and Component.LiquidDynamicViscosity."
+                        << " Please only specify either the kinematic or the dynamic viscosity for all constant components to avoid ambiguities.");
+
+                return getParamFromGroup<Scalar>(std::to_string(id), "Component.LiquidKinematicViscosity") * liquidDensity(temperature, pressure);
+            }
+            else
+                return getParamFromGroup<Scalar>(std::to_string(id), "Component.LiquidDynamicViscosity");
+        }();
+
+        return dynamicViscosity;
     }
 
     /*!
@@ -218,16 +234,31 @@ public:
     /*!
      * \brief Sets the gas dynamic viscosity in \f$\mathrm{[Pa*s]}\f$.
      *
-     * Although the dynamic viscosity \f$\mathrm{[Pa*s]}\f$ is returned,
-     * the kinematic viscosity \f$\mathrm{[m^2/s]}\f$ is requested from run time input.
+     * \note We look for Component.GasKinematicViscosity or Component.GasDynamicViscosity.
+     *       If both parameters are specified, it is considered a configuration error because it can
+     *       be ambiguous if defaults are specified for several constant components in the plain
+     *       "Component" group (without ID-prefix).
      *
      * \param temperature phase temperature in \f$\mathrm{[K]}\f$
      * \param pressure phase pressure in \f$\mathrm{[Pa]}\f$
      */
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)
     {
-        static const Scalar kinematicViscosity = getParamFromGroup<Scalar>(std::to_string(id), "Component.GasKinematicViscosity");
-        return kinematicViscosity * gasDensity(temperature, pressure);
+        static const Scalar dynamicViscosity = [&]
+        {
+            if (hasParamInGroup(std::to_string(id), "Component.GasKinematicViscosity"))
+            {
+                if (hasParamInGroup(std::to_string(id), "Component.GasDynamicViscosity"))
+                    DUNE_THROW(Dune::InvalidStateException, "Found both Component.GasKinematicViscosity and Component.GasDynamicViscosity."
+                        << " Please only specify either the kinematic or the dynamic viscosity for all constant components to avoid ambiguities.");
+
+                return getParamFromGroup<Scalar>(std::to_string(id), "Component.GasKinematicViscosity") * gasDensity(temperature, pressure);
+            }
+            else
+                return getParamFromGroup<Scalar>(std::to_string(id), "Component.GasDynamicViscosity");
+        }();
+
+        return dynamicViscosity;
     }
 
         /*!
