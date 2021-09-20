@@ -75,7 +75,7 @@ void testElement(const GridGeometry& gridGeometry, const std::string& outputName
     const auto bottom = gridGeometry.bBoxMin()[GridGeometry::Grid::dimension-1];
 
     // Do not consider scvfs at top or bottom of domain.
-    const auto considerScvf = [&](const auto& scvf){
+    const auto considerScvf = [&](const auto& fvGeometry, const auto& scvf){
         return scvf.ipGlobal()[GridGeometry::Grid::dimension-1] < top - 1e-6 &&
                scvf.ipGlobal()[GridGeometry::Grid::dimension-1] > bottom + 1e-6;
     };

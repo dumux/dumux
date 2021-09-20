@@ -51,6 +51,8 @@ class WallDistance
     using GridView = typename GridGeometry::GridView;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using Scalar = typename GridView::Grid::ctype;
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
@@ -131,7 +133,7 @@ public:
      */
     template<class LocationTag>
     WallDistance(std::shared_ptr<const GridGeometry> gridGeometry, LocationTag tag)
-    : WallDistance(gridGeometry, tag, [](const SubControlVolumeFace& scvf) { return true; }) {}
+    : WallDistance(gridGeometry, tag, [](const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf) { return true; }) {}
 
     //! caller has to make sure the lifetime of grid geometry exceeds the lifetime of wall distance
     template<class LocationTag, class ScvfSelectionFunctor>
@@ -194,7 +196,7 @@ private:
 
             for (const auto& scvf : scvfs(fvGeometry))
             {
-                if (scvf.boundary() && considerFace(scvf))
+                if (scvf.boundary() && considerFace(fvGeometry, scvf))
                 {
                     const auto& geo = scvf.geometry();
                     CornerStorage corners;

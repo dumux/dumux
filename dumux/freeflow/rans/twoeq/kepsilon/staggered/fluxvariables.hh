@@ -26,6 +26,7 @@
 
 #include <numeric>
 #include <dumux/common/properties.hh>
+#include <dumux/common/deprecated.hh>
 #include <dumux/flux/fluxvariablesbase.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>
@@ -67,6 +68,7 @@ class KEpsilonFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethod
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
     using Extrusion = Extrusion_t<GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -146,20 +148,46 @@ public:
         }
 
         const auto bcTypes = problem.boundaryTypes(element, scvf);
-        if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::turbulentKineticEnergyEqIdx)
-                                  || bcTypes.isSymmetry()
-                                  || problem.isOnWall(scvf))))
+
+        // Remove this check after release 3.5. IsOnWall Interface is deprecated
+        if constexpr (Deprecated::hasIsOnWall<Problem, GlobalPosition>())
         {
-            if (!(insideVolVars.isMatchingPoint() && outsideVolVars.isMatchingPoint())
-                || !(insideVolVars.isMatchingPoint() && outsideVolVars.inNearWallRegion())
-                || !(insideVolVars.inNearWallRegion() && outsideVolVars.isMatchingPoint()))
+            noSetWallCompilerWarning_();
+            // Remove this part
+            if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::turbulentKineticEnergyEqIdx)
+                                    || bcTypes.isSymmetry()
+                                    || problem.isOnWall(scvf))))
             {
-                flux[turbulentKineticEnergyEqIdx]
-                    += coeff_k / distance
-                       * (insideVolVars.turbulentKineticEnergy() - outsideVolVars.turbulentKineticEnergy())
-                       * Extrusion::area(scvf);
+                if (!(insideVolVars.isMatchingPoint() && outsideVolVars.isMatchingPoint())
+                    || !(insideVolVars.isMatchingPoint() && outsideVolVars.inNearWallRegion())
+                    || !(insideVolVars.inNearWallRegion() && outsideVolVars.isMatchingPoint()))
+                {
+                    flux[turbulentKineticEnergyEqIdx]
+                        += coeff_k / distance
+                        * (insideVolVars.turbulentKineticEnergy() - outsideVolVars.turbulentKineticEnergy())
+                        * Extrusion::area(scvf);
+                }
             }
         }
+        else
+        {
+            // Keep this part
+            if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::turbulentKineticEnergyEqIdx)
+                                    || bcTypes.isSymmetry()
+                                    || bcTypes.hasWall())))
+            {
+                if (!(insideVolVars.isMatchingPoint() && outsideVolVars.isMatchingPoint())
+                    || !(insideVolVars.isMatchingPoint() && outsideVolVars.inNearWallRegion())
+                    || !(insideVolVars.inNearWallRegion() && outsideVolVars.isMatchingPoint()))
+                {
+                    flux[turbulentKineticEnergyEqIdx]
+                        += coeff_k / distance
+                        * (insideVolVars.turbulentKineticEnergy() - outsideVolVars.turbulentKineticEnergy())
+                        * Extrusion::area(scvf);
+                }
+            }
+        }
+
         if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::dissipationEqIdx)
                                   || bcTypes.isSymmetry())))
         {
@@ -189,6 +217,13 @@ public:
                + 2.0 / ModelTraits::dim() * insideVolVars.density() * insideVolVars.turbulentKineticEnergy()
                  * Extrusion::area(scvf) * scvf.directionSign() * insideVolVars.extrusionFactor();
     }
+
+private:
+
+    [[deprecated("The isOnWall and IsOnWallAtPos functions will be removed after release 3.5. "
+                 "Please use the Rans specific boundarytypes. "
+                 "Mark wall boundaries in the rans problems with the setWall() function.")]]
+    void noSetWallCompilerWarning_(){}
 };
 
 } // end namespace

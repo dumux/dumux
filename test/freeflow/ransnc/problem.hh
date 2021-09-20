@@ -29,7 +29,7 @@
 #include <dumux/common/timeloop.hh>
 #include <dumux/common/numeqvector.hh>
 
-#include <dumux/freeflow/navierstokes/boundarytypes.hh>
+#include <dumux/freeflow/rans/boundarytypes.hh>
 #include <dumux/freeflow/turbulenceproperties.hh>
 #include <dumux/freeflow/rans/zeroeq/problem.hh>
 #include <dumux/freeflow/rans/oneeq/problem.hh>
@@ -53,16 +53,17 @@ class FlatPlateNCTestProblem : public RANSProblem<TypeTag>
 {
     using ParentType = RANSProblem<TypeTag>;
 
-    using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
+    static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using BoundaryTypes = Dumux::RANSBoundaryTypes<ModelTraits, ModelTraits::numEq()>;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
@@ -71,7 +72,6 @@ class FlatPlateNCTestProblem : public RANSProblem<TypeTag>
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
-    static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
     static constexpr auto transportEqIdx = Indices::conti0EqIdx + 1;
     static constexpr auto transportCompIdx = Indices::conti0EqIdx + 1;
 
@@ -104,14 +104,6 @@ public:
         std::cout << "Using the "<< turbulenceModelName_ << " Turbulence Model. \n";
         std::cout << std::endl;
     }
-
-   /*!
-     * \name Problem parameters
-     */
-    // \{
-
-    bool isOnWallAtPos(const GlobalPosition& globalPos) const
-    { return globalPos[1] < eps_; }
 
    /*!
      * \brief Returns the temperature within the domain in [K].
@@ -157,10 +149,9 @@ public:
             values.setOutflow(Indices::energyEqIdx);
 #endif
         }
-        else if(isOnWallAtPos(globalPos))
+        else if(isLowerWall_(globalPos))
         {
-            values.setDirichlet(Indices::velocityXIdx);
-            values.setDirichlet(Indices::velocityYIdx);
+            values.setWall();
             values.setNeumann(transportEqIdx);
 #if NONISOTHERMAL
             values.setDirichlet(Indices::temperatureIdx);
@@ -205,11 +196,9 @@ public:
         {
             values[transportCompIdx] = (time() > 10.0) ? inletMoleFraction_ : 0.0;
         }
+
 #if NONISOTHERMAL
-        if (time() > 10.0 && isOnWallAtPos(globalPos))
-        {
-            values[Indices::temperatureIdx] = wallTemperature_;
-        }
+        values[Indices::temperatureIdx] = (isLowerWall_(globalPos) && time() > 10.0) ? wallTemperature_ : temperature();
 #endif
 
         return values;
@@ -250,7 +239,7 @@ public:
 #endif
         // block velocity profile
         values[Indices::velocityXIdx] = 0.0;
-        if (!isOnWallAtPos(globalPos))
+        if (!isLowerWall_(globalPos))
             values[Indices::velocityXIdx] =  inletVelocity_;
         values[Indices::velocityYIdx] = 0.0;
 
@@ -274,6 +263,9 @@ private:
     bool isOutlet_(const GlobalPosition& globalPos) const
     { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
+    bool isLowerWall_(const GlobalPosition& globalPos) const
+    { return globalPos[1] < eps_; }
+
     //! Initial conditions for the komega, kepsilon and lowrekepsilon turbulence models
     void setInitialAtPos_([[maybe_unused]] PrimaryVariables& values,
                           [[maybe_unused]] const GlobalPosition &globalPos) const
@@ -283,7 +275,7 @@ private:
         else if constexpr (numTurbulenceEq(ModelTraits::turbulenceModel()) == 1)  // one equation models
         {
             values[Indices::viscosityTildeIdx] = viscosityTilde_;
-            if (isOnWallAtPos(globalPos))
+            if (isLowerWall_(globalPos))
                 values[Indices::viscosityTildeIdx] = 0.0;
         }
         else // two equation models
@@ -291,7 +283,7 @@ private:
             static_assert(numTurbulenceEq(ModelTraits::turbulenceModel()) == 2, "Only reached by 2eq models");
             values[Indices::turbulentKineticEnergyIdx] = turbulentKineticEnergy_;
             values[Indices::dissipationIdx] = dissipation_;
-            if (isOnWallAtPos(globalPos))
+            if (isLowerWall_(globalPos))
             {
                 values[Indices::turbulentKineticEnergyIdx] = 0.0;
                 values[Indices::dissipationIdx] = 0.0;
@@ -349,7 +341,7 @@ private:
         {
             // For the komega model we set a fixed dissipation (omega) for all cells at the wall
             for (const auto& scvf : scvfs(fvGeometry))
-                if (isOnWallAtPos(scvf.center()) && pvIdx == Indices::dissipationIdx)
+                if (this->boundaryTypes(element, scvf).hasWall() && pvIdx == Indices::dissipationIdx)
                     return true;
             return false;
         }

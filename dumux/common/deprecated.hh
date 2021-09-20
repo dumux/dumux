@@ -54,6 +54,20 @@ template <class Mapper>
 void update(Mapper& mapper)
 { mapper.update(); };
 
+template <typename Problem, typename GlobalPosition>
+using HasIsOnWallDetector = decltype(std::declval<Problem>().isOnWallAtPos(std::declval<GlobalPosition>()));
+
+template<class Problem, typename GlobalPosition>
+static constexpr bool hasIsOnWall()
+{ return Dune::Std::is_detected<HasIsOnWallDetector, Problem, GlobalPosition>::value; }
+
+template <typename BcTypes>
+using HasWallBCDetector = decltype(std::declval<BcTypes>().hasWall());
+
+template<class BcTypes>
+static constexpr bool hasHasWallBC()
+{ return Dune::Std::is_detected<HasWallBCDetector, BcTypes>::value; }
+
 } // end namespace Deprecated
 #endif
 
