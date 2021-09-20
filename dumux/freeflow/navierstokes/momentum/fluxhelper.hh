@@ -237,11 +237,11 @@ struct NavierStokesMomentumBoundaryFluxHelper
             /*
             *                     ---------#######:::::::::     x dof position   ***** porous boundary at bottom
             *       slip          |      ||      |       ::
-            *       gradient      |      ||      |  v_i  ::     -- element
+            *       gradient      |      ||      |  velI ::     -- element
             *       ------->      |      || scv  x~~~~>  ::
             *       ------>       |      ||      |       ::     O position at which gradient is evaluated (integration point)
-            *       ----->        |  v_j ^       |       :^
-            *       ---->         -------|-######O::::::::| <----This velocity dof (outer v_j) does not exist if the scv itself lies on a
+            *       ----->        | velJ ^       |       :^
+            *       ---->         -------|-######O::::::::| <----This velocity dof (outer velJ) does not exist if the scv itself lies on a
             *                     ***************~~~>******     non-Dirichlet boundary. In that case, use the given tangentialVelocityGradient.
             *                      frontal scvf  v_slip
             *                      on porous                    || and # staggered half-control-volume (own element)
@@ -249,12 +249,12 @@ struct NavierStokesMomentumBoundaryFluxHelper
             *                                                   :: staggered half-control-volume (neighbor element)
             *
             */
-            const Scalar v_i = elemVolVars[scvf.insideScvIdx()].velocity();
+            const Scalar velI = elemVolVars[scvf.insideScvIdx()].velocity();
 
             // viscous terms
             const Scalar mu = problem.effectiveViscosity(fvGeometry.element(), fvGeometry, scvf);
             const Scalar distance = (scv.dofPosition()- scvf.ipGlobal()).two_norm();
-            const Scalar velocityGrad_ji = [&]
+            const Scalar velGradJI = [&]
             {
                 if (elemVolVars.hasVolVars(orthogonalScvf.outsideScvIdx()))
                     return StaggeredVelocityGradients::velocityGradJI(fvGeometry, scvf, elemVolVars);
@@ -262,15 +262,15 @@ struct NavierStokesMomentumBoundaryFluxHelper
                     return tangentialVelocityGradient;
             }();
 
-            const Scalar slipVelocity = problem.beaversJosephVelocity(fvGeometry, scvf, elemVolVars, velocityGrad_ji)[scv.dofAxis()]; // TODO rename to slipVelocity
-            const Scalar velocityGrad_ij = (slipVelocity - v_i) / distance * scvf.directionSign();
+            const Scalar slipVelocity = problem.beaversJosephVelocity(fvGeometry, scvf, elemVolVars, velGradJI)[scv.dofAxis()]; // TODO rename to slipVelocity
+            const Scalar velGradIJ = (slipVelocity - velI) / distance * scvf.directionSign();
 
-            flux[scv.dofAxis()] -= (mu * (velocityGrad_ij + velocityGrad_ji))*scvf.directionSign();
+            flux[scv.dofAxis()] -= (mu * (velGradIJ + velGradJI))*scvf.directionSign();
 
             // advective terms
             if (problem.enableInertiaTerms())
             {
-                // transporting velocity corresponds to v_j
+                // transporting velocity corresponds to velJ
                 const auto transportingVelocity = [&]()
                 {
                     const auto innerTransportingVelocity = elemVolVars[orthogonalScvf.insideScvIdx()].velocity();
@@ -310,14 +310,14 @@ struct NavierStokesMomentumBoundaryFluxHelper
             /*                                    *
             *                     ---------#######*           x dof position   ***** porous boundary at right side
             *                     |      ||      |*
-            *                     |      ||      |*  v_i      -- element
+            *                     |      ||      |*  velI     -- element
             *                     |      || scv  x~~~~>
             *                     |      ||      |*           O position at which gradient is evaluated (integration point)
-            *                     |  v_j ^       |*^
+            *                     | velJ ^       |*^
             *                     -------|-######O*| v_slip   || and # staggered half-control-volume (own element)
             *                     |              |*
             *                     |  neighbor    |*
-            *                     |   element     ~~~~> v_i outside (Does not exist if lower later lateral scvf lies on non-Dirichlet
+            *                     |   element     ~~~~> velI outside (Does not exist if lower later lateral scvf lies on non-Dirichlet
             *                     |              |*                  boundary. In that case, use the given tangentialVelocityGradient.)
             *                     |              |*
             *                     ----------------*           :: staggered half-control-volume (neighbor element)
@@ -327,13 +327,13 @@ struct NavierStokesMomentumBoundaryFluxHelper
             *                            |   |   |
             *
             */
-            const Scalar v_j = elemVolVars[orthogonalScvf.insideScvIdx()].velocity();
+            const Scalar velJ = elemVolVars[orthogonalScvf.insideScvIdx()].velocity();
 
             // viscous terms
             const Scalar mu = problem.effectiveViscosity(fvGeometry.element(), fvGeometry, scvf);
             const Scalar distance = (fvGeometry.scv(orthogonalScvf.insideScvIdx()).dofPosition()- scvf.ipGlobal()).two_norm();
 
-            const Scalar velocityGrad_ij = [&]
+            const Scalar velGradIJ = [&]
             {
                 if (elemVolVars.hasVolVars(scvf.outsideScvIdx()))
                     return StaggeredVelocityGradients::velocityGradIJ(fvGeometry, scvf, elemVolVars);
@@ -341,15 +341,15 @@ struct NavierStokesMomentumBoundaryFluxHelper
                     return tangentialVelocityGradient;
             }();
 
-            const Scalar slipVelocity = problem.beaversJosephVelocity(fvGeometry, orthogonalScvf, elemVolVars, velocityGrad_ij)[scvf.normalAxis()]; // TODO rename to slipVelocity
-            const Scalar velocityGrad_ji = (slipVelocity - v_j) / distance * orthogonalScvf.directionSign();
+            const Scalar slipVelocity = problem.beaversJosephVelocity(fvGeometry, orthogonalScvf, elemVolVars, velGradIJ)[scvf.normalAxis()]; // TODO rename to slipVelocity
+            const Scalar velGradJI = (slipVelocity - velJ) / distance * orthogonalScvf.directionSign();
 
-            flux[scv.dofAxis()] -= (mu * (velocityGrad_ij + velocityGrad_ji))*scvf.directionSign();
+            flux[scv.dofAxis()] -= (mu * (velGradIJ + velGradJI))*scvf.directionSign();
 
             // advective terms
             if (problem.enableInertiaTerms())
             {
-                // transporting velocity corresponds to v_j
+                // transporting velocity corresponds to velJ
                 const auto transportingVelocity = slipVelocity;
 
                 // if the scvf lies on a boundary and if there are outside volvars, we assume that these come from a Dirichlet condition
