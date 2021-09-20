@@ -201,6 +201,19 @@ public:
         return (outerVelocity - innerVelocity) / distance * scvf.directionSign();
     }
 
+    //! same as above but the outer velocity is assumed to be zero
+    template<class FVElementGeometry, class ElemVolVars>
+    static auto velocityGradIJZeroOuterVelocity(const FVElementGeometry& fvGeometry,
+                                                const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                                const ElemVolVars& elemVolVars)
+    {
+        assert(scvf.isLateral());
+        const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity();
+        const auto outerVelocity = 0.0;
+        const auto distance = getDistanceIJ_(fvGeometry, scvf);
+        return (outerVelocity - innerVelocity) / distance * scvf.directionSign();
+    }
+
     /*!
      * \brief Returns the velocity gradient in line with our current scvf.
      *
@@ -239,6 +252,20 @@ public:
         const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
         const auto innerVelocity = elemVolVars[orthogonalScvf.insideScvIdx()].velocity();
         const auto outerVelocity = elemVolVars[orthogonalScvf.outsideScvIdx()].velocity();
+        const auto distance = getDistanceJI_(fvGeometry, scvf, orthogonalScvf);
+        return (outerVelocity - innerVelocity) / distance * orthogonalScvf.directionSign();
+    }
+
+    //! same as above but the outer velocity is assumed to be zero
+    template<class FVElementGeometry, class ElemVolVars>
+    static auto velocityGradJIZeroOuterVelocity(const FVElementGeometry& fvGeometry,
+                                                const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                                const ElemVolVars& elemVolVars)
+    {
+        assert(scvf.isLateral());
+        const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
+        const auto innerVelocity = elemVolVars[orthogonalScvf.insideScvIdx()].velocity();
+        const auto outerVelocity = 0.0;
         const auto distance = getDistanceJI_(fvGeometry, scvf, orthogonalScvf);
         return (outerVelocity - innerVelocity) / distance * orthogonalScvf.directionSign();
     }
