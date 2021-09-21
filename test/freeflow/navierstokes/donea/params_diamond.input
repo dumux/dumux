@@ -1,7 +1,9 @@
 [Grid]
 UpperRight = 1 1
 Cells = 10 10
-Refinement = 0
+Refinement = 2
+#File = ./grids/2dRandCubic_0.dgf
+#Refinement = 3
 
 [Problem]
 Name = test_donea # name passed to the output routines
@@ -22,7 +24,7 @@ MaxRelativeShift = 1e-5
 WriteFaceData = false
 
 [FreeFlow]
-EnableUnsymmetrizedVelocityGradient = true
+EnableUnsymmetrizedVelocityGradient = false
 
 [Assembly]
 NumericDifference.BaseEpsilon = 1e-8

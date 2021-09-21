@@ -29,6 +29,10 @@
 #define UPWINDSCHEMEORDER 0
 #endif
 
+#ifndef GRIDTYPE
+#define GRIDTYPE Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >
+#endif
+
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -70,7 +74,7 @@ struct FluidSystem<TypeTag, TTag::KovasznayTest>
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::KovasznayTest> { using type = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
+struct Grid<TypeTag, TTag::KovasznayTest> { using type = GRIDTYPE; };
 
 // Set the problem property
 template<class TypeTag>
@@ -126,6 +130,16 @@ class KovasznayTestProblem :  public NavierStokesProblem<TypeTag>
 public:
     KovasznayTestProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(gridGeometry, couplingManager)
+    {
+        // std::cout<< "upwindSchemeOrder is: " << GridGeometry::upwindStencilOrder() << "\n";
+        kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
+        Scalar reynoldsNumber = 1.0 / kinematicViscosity_;
+        lambda_ = 0.5 * reynoldsNumber
+                        - std::sqrt(reynoldsNumber * reynoldsNumber * 0.25 + 4.0 * M_PI * M_PI);
+    }
+
+    KovasznayTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         // std::cout<< "upwindSchemeOrder is: " << GridGeometry::upwindStencilOrder() << "\n";
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
@@ -218,7 +232,7 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        return PrimaryVariables(0.0);
+        return analyticalSolution(globalPos);
     }
 
     //! Enable internal Dirichlet constraints
@@ -278,6 +292,18 @@ public:
      */
     PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
     { return PrimaryVariables(analyticalSolution(scv.dofPosition())[Indices::pressureIdx]); }
+
+    Scalar pressureAtPos(const GlobalPosition& globalPos) const
+    {
+        const Scalar x = globalPos[0];
+        return 0.5 * (1.0 - std::exp(2.0 * lambda_ * x));
+    }
+
+    Scalar densityAtPos(const GlobalPosition& globalPos) const
+    { return 1; }
+
+    Scalar effectiveViscosityAtPos(const GlobalPosition& globalPos) const
+    { return kinematicViscosity_; }
 
 private:
     static constexpr Scalar eps_ = 1e-6;

@@ -187,10 +187,10 @@ int main(int argc, char** argv)
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
 
     vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
-    auto exactPressure = getScalarAnalyticalSolution(*massProblem)[GetPropType<MassTypeTag, Properties::ModelTraits>::Indices::pressureIdx];
-    auto exactVelocity = getVelocityAnalyticalSolution(*momentumProblem);
-    vtkWriter.addField(exactPressure, "pressureExact");
-    vtkWriter.addField(exactVelocity, "velocityExact");
+    //auto exactPressure = getScalarAnalyticalSolution(*massProblem)[GetPropType<MassTypeTag, Properties::ModelTraits>::Indices::pressureIdx];
+    //auto exactVelocity = getVelocityAnalyticalSolution(*momentumProblem);
+    //vtkWriter.addField(exactPressure, "pressureExact");
+    //vtkWriter.addField(exactVelocity, "velocityExact");
     vtkWriter.write(0.0);
 
     // the assembler with time loop for instationary problem
@@ -230,16 +230,16 @@ int main(int argc, char** argv)
         nonLinearSolver.solve(x, *timeLoop);
 
         // update the analytical solution for the new time step
-        exactPressure = getScalarAnalyticalSolution(*massProblem)[GetPropType<MassTypeTag, Properties::ModelTraits>::Indices::pressureIdx];
-        exactVelocity = getVelocityAnalyticalSolution(*momentumProblem);
+        //exactPressure = getScalarAnalyticalSolution(*massProblem)[GetPropType<MassTypeTag, Properties::ModelTraits>::Indices::pressureIdx];
+        //exactVelocity = getVelocityAnalyticalSolution(*momentumProblem);
 
         // make the new solution the old solution
         xOld = x;
         momentumGridVariables->advanceTimeStep();
         massGridVariables->advanceTimeStep();
 
-        if (shouldPrintL2Error)
-           printL2Error(*momentumProblem, *massProblem, x);
+        //if (shouldPrintL2Error)
+        //   printL2Error(*momentumProblem, *massProblem, x);
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();

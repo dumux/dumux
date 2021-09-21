@@ -9,7 +9,8 @@ dumux_add_test(NAME test_donea_momentum_diamond_cr
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>)
 
 dumux_add_test(NAME test_donea_coupled_diamond_rt
-               SOURCES main_coupled_diamond.cc)
+               SOURCES main_coupled_diamond.cc
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>)
 
 dumux_add_test(NAME test_donea_coupled_diamond_cr
                SOURCES main_coupled_diamond.cc

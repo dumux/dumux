@@ -1,12 +1,13 @@
 [Grid]
 UpperRight = 1 1
-Cells = 40 40
+Cells =  10 10
+Refinement = 0
 Overlap = 1
 
 [Problem]
 Name = test_donea # name passed to the output routines
 EnableGravity = false
-PrintL2Error = false
+PrintL2Error = true
 EnableInertiaTerms = false
 PrintMatrix = false
 
@@ -24,7 +25,7 @@ WriteFaceData = false
 [LinearSolver]
 Type = bicgstabsolver
 # Type = restartedgmressolver
-Verbosity = 1
+Verbosity = 0
 ResidualReduction = 1e-13
 
 [LinearSolver.Preconditioner]

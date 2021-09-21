@@ -132,6 +132,8 @@ int main(int argc, char** argv) try
     SolutionVector x;
     x[momentumIdx].resize(momentumGridGeometry->numDofs());
     x[massIdx].resize(massGridGeometry->numDofs());
+    momentumProblem->applyInitialSolution(x[momentumIdx]);
+    massProblem->applyInitialSolution(x[massIdx]);
 
 
     // the grid variables
@@ -162,6 +164,8 @@ int main(int argc, char** argv) try
     const auto exactVelocity = getVelocityAnalyticalSolution(*momentumProblem);
     vtkWriter.addField(exactPressure, "pressureExact");
     vtkWriter.addField(exactVelocity, "velocityExact");
+
+    vtkWriter.write(0.0);
 
     // the linear solver
     // using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>>

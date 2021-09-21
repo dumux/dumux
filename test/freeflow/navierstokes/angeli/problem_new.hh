@@ -29,11 +29,14 @@
 #include <dune/grid/yaspgrid.hh>
 #include <dune/geometry/quadraturerules.hh>
 
-#include <dumux/freeflow/navierstokes/momentum/model.hh>
+//#include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/diamond/model.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
-#include <dumux/discretization/fcstaggered.hh>
+//#include <dumux/discretization/fcstaggered.hh>
+#include <dumux/discretization/fcdiamond.hh>
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/box.hh>
 
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -48,8 +51,10 @@ namespace Properties {
 // Create new type tags
 namespace TTag {
 struct AngeliTest {};
-struct AngeliTestMomentum { using InheritsFrom = std::tuple<AngeliTest, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
-struct AngeliTestMass { using InheritsFrom = std::tuple<AngeliTest, NavierStokesMassOneP, CCTpfaModel>; };
+//struct AngeliTestMomentum { using InheritsFrom = std::tuple<AngeliTest, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
+//struct AngeliTestMass { using InheritsFrom = std::tuple<AngeliTest, NavierStokesMassOneP, CCTpfaModel>; };
+struct AngeliTestMomentum { using InheritsFrom = std::tuple<AngeliTest, NavierStokesMomentumDiamond, FaceCenteredDiamondModel>; };
+struct AngeliTestMass { using InheritsFrom = std::tuple<AngeliTest, NavierStokesMassOneP, BoxModel>; };
 } // end namespace TTag
 
 // the fluid system
@@ -106,6 +111,7 @@ class AngeliTestProblem : public NavierStokesProblem<TypeTag>
 
     static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+    using Vertex = typename GridGeometry::GridView::template Codim<dimWorld>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
@@ -154,14 +160,14 @@ public:
                 values.setAllDirichlet();
         }
         else
-            values.setAllNeumann();
+            values.setAllDirichlet();
 
         return values;
     }
 
     //! Enable internal Dirichlet constraints
     static constexpr bool enableInternalDirichletConstraints()
-    { return !ParentType::isMomentumProblem(); }
+    { return false; }
 
     /*!
      * \brief Tag a degree of freedom to carry internal Dirichlet constraints.
@@ -204,7 +210,7 @@ public:
      * \param scv The sub-control volume
      */
     PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
-    { return analyticalSolution(scv.center()); }
+    { return analyticalSolution(scv.dofPosition()); }
 
 
     /*!
@@ -220,6 +226,19 @@ public:
             return velocityDirichlet_(scvf);
         else
             return analyticalSolution(scvf.center());
+    }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        control volume face (velocities)
+     *
+     * \param element The finite element
+     * \param scvf the sub control volume face
+     */
+    PrimaryVariables dirichlet(const Element& element, const SubControlVolume& scv) const
+    {
+        static_assert(!ParentType::isMomentumProblem(), "Can't be called for momentum problem!");
+        return analyticalSolution(scv.dofPosition());
     }
 
     /*!
@@ -340,6 +359,12 @@ public:
     PrimaryVariables initial(const Element& element) const
     {
         return analyticalSolution(element.geometry().center());
+    }
+
+    template<class Entity>
+    PrimaryVariables initial(const Entity& entity) const
+    {
+        return analyticalSolution(entity.geometry().center());
     }
 
     /*!

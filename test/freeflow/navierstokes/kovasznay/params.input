@@ -1,12 +1,14 @@
 [Grid]
-LowerLeft = -0.5 -0.5
-UpperRight = 2 1.5
-Cells = 50 50
+#LowerLeft = 0 0
+#UpperRight = 1 1
+#Cells = 20 20
+File = ./grids/innercircle_quads.msh
+Refinement = 0
 
 [Problem]
 Name = test_kovasznay # name passed to the output routines
 EnableGravity = false
-PrintL2Error = false
+PrintL2Error = true
 EnableInertiaTerms = true
 
 [Component]
@@ -26,3 +28,7 @@ WriteFaceData = false
 
 [Flux]
 UpwindWeight = 0.5
+
+[FreeFlow]
+EnableUnsymmetrizedVelocityGradient = false
+EnableDilatationTerm = false

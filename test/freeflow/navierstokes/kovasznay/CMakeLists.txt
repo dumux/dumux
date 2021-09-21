@@ -1,9 +1,30 @@
+dune_symlink_to_source_files(FILES grids)
+dune_symlink_to_source_files(FILES runTest.sh)
 
 dumux_add_test(NAME test_ff_navierstokes_kovasznay_diamond_rt
                LABELS freeflow navierstokes
                SOURCES main_new.cc
                COMPILE_DEFINITIONS MOMENTUMTYPETAG=KovasznayTestMomentumDiamond
                COMPILE_DEFINITIONS MASSTYPETAG=KovasznayTestMassDiamond
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
+               CMAKE_GUARD HAVE_UMFPACK
+               COMPILE_DEFINITIONS UPWINDSCHEMEORDER=1)
+
+dumux_add_test(NAME test_ff_navierstokes_kovasznay_momentum_diamond_cr
+               LABELS freeflow navierstokes
+               SOURCES main_momentum_diamond.cc
+               COMPILE_DEFINITIONS MOMENTUMTYPETAG=KovasznayTestMomentumDiamond
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>
+               CMAKE_GUARD HAVE_UMFPACK
+               COMPILE_DEFINITIONS UPWINDSCHEMEORDER=1)
+
+
+dumux_add_test(NAME test_ff_navierstokes_kovasznay_diamond_cr
+               LABELS freeflow navierstokes
+               SOURCES main_new.cc
+               COMPILE_DEFINITIONS MOMENTUMTYPETAG=KovasznayTestMomentumDiamond
+               COMPILE_DEFINITIONS MASSTYPETAG=KovasznayTestMassDiamond
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>
                CMAKE_GUARD HAVE_UMFPACK
                COMPILE_DEFINITIONS UPWINDSCHEMEORDER=1)
 

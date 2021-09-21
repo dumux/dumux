@@ -8,7 +8,7 @@ UpperRight = 1 1
 Cells = 50 50
 
 [Problem]
-Name = test_angeli # name passed to the output routines
+Name = test_angeli_new # name passed to the output routines
 EnableGravity = false
 PrintL2Error = false
 EnableInertiaTerms = true
@@ -21,7 +21,7 @@ LiquidKinematicViscosity = 0.1
 NumericDifference.BaseEpsilon = 1e-8
 
 [Newton]
-MaxSteps = 10
+MaxSteps = 30
 MaxRelativeShift = 1e-10
 
 [Vtk]

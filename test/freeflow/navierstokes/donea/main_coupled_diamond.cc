@@ -67,7 +67,7 @@ struct CouplingManager<TypeTag, TTag::DoneaTestNew>
 private:
     using Traits = MultiDomainTraits<TTag::DoneaTestNewMomentum, TTag::DoneaTestNewMass>;
 public:
-    using type = DiamondFreeFlowCouplingManager<Traits>;
+    using type = StaggeredFreeFlowCouplingManager<Traits>;
 };
 
 }
@@ -114,7 +114,7 @@ int main(int argc, char** argv) try
 
     // the coupling manager
     using Traits = MultiDomainTraits<MomentumTypeTag, MassTypeTag>;
-    using CouplingManager = DiamondFreeFlowCouplingManager<Traits>;
+    using CouplingManager = StaggeredFreeFlowCouplingManager<Traits>;
 
     auto couplingManager = std::make_shared<CouplingManager>();
 
@@ -151,14 +151,14 @@ int main(int argc, char** argv) try
                                                  couplingManager);
 
     // intialize the vtk output module
-    //using IOFields = GetPropType<MassTypeTag, Properties::IOFields>;
-    //VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name());
-    //IOFields::initOutputModule(vtkWriter); // Add model specific output fields
-    //vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
-    // const auto exactPressure = getScalarAnalyticalSolution(*massProblem)[GetPropType<MassTypeTag, Properties::ModelTraits>::Indices::pressureIdx];
-    // const auto exactVelocity = getVelocityAnalyticalSolution(*momentumProblem);
-    // vtkWriter.addField(exactPressure, "pressureExact");
-    // vtkWriter.addField(exactVelocity, "velocityExact");
+    using IOFields = GetPropType<MassTypeTag, Properties::IOFields>;
+    VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name());
+    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
+    vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
+    //const auto exactPressure = getScalarAnalyticalSolution(*massProblem)[GetPropType<MassTypeTag, Properties::ModelTraits>::Indices::pressureIdx];
+    //const auto exactVelocity = getVelocityAnalyticalSolution(*momentumProblem);
+    //vtkWriter.addField(exactPressure, "pressureExact");
+    //vtkWriter.addField(exactVelocity, "velocityExact");
 
     // the linear solver
     using LinearSolver = Dumux::UMFPackBackend;
@@ -171,80 +171,31 @@ int main(int argc, char** argv) try
     // linearize & solve
     nonLinearSolver.solve(x);
 
-    std::vector<Dune::FieldVector<double,2>> velocity(momentumGridGeometry->gridView().size(0));
-    std::vector<Dune::FieldVector<double,2>> faceVelocityVector(x[momentumIdx].size());
-    for (const auto& element : elements(momentumGridGeometry->gridView()))
-    {
-        auto fvGeometry = localView(*momentumGridGeometry);
-        fvGeometry.bind(element);
+    vtkWriter.write(1.0);
 
-        auto elemVolVars = localView(momentumGridVariables->curGridVolVars());
-        elemVolVars.bind(element, fvGeometry, x[momentumIdx]);
-        const auto eIdx = momentumGridGeometry->elementMapper().index(element);
+    using GridView = std::decay_t<decltype(momentumGridGeometry->gridView())>;
+    using SolVec = std::decay_t<decltype(x[momentumIdx])>;
 
-        const auto geometry = element.geometry();
-
-        const auto& localBasis = fvGeometry.feLocalBasis();
-        using ShapeValue = typename Dune::FieldVector<double, 1>;
-        std::vector<ShapeValue> shapeValues;
-
-        // evaluate shape functions and gradients at the integration point
-        const auto ipLocal = geometry.local(geometry.center());
-        localBasis.evaluateFunction(ipLocal, shapeValues);
-
-        for (const auto& scv : scvs(fvGeometry))
-        {
-            velocity[eIdx] += shapeValues[scv.indexInElement()][0]*elemVolVars[scv].velocity();
-            faceVelocityVector[scv.dofIndex()] = elemVolVars[scv].velocity();
-        }
-    }
-
-    Dune::VTKWriter<std::decay_t<decltype(momentumGridGeometry->gridView())>> writer(momentumGridGeometry->gridView());
-    using Field = Vtk::template Field<std::decay_t<decltype(momentumGridGeometry->gridView())>>;
-    writer.addCellData(Field(momentumGridGeometry->gridView(), momentumGridGeometry->elementMapper(), velocity,
-                             "velocity",
-                            /*numComp*/2, /*codim*/0).get());
-
-    writer.addVertexData(x[massIdx],  "pressure");
-
-    // std::vector<int> rank;
-    // rank.resize(momentumGridGeometry->gridView().size(0));
-
-    // for (const auto& element : elements(momentumGridGeometry->gridView(), Dune::Partitions::interior))
-    // {
-    //     const auto eIdxGlobal = momentumGridGeometry->elementMapper().index(element);
-    //     rank[eIdxGlobal] = momentumGridGeometry->gridView().comm().rank();
-    // }
-
-    // writer.addCellData(rank, "rank");
-
-    writer.write("donea_new_momentum");
-
-    //vtkWriter.write(1.0);
-
-    // using GridView = std::decay_t<decltype(momentumGridGeometry->gridView())>;
-    // using SolVec = std::decay_t<decltype(x[momentumIdx])>;
-
-    // class VelocityFunction
+    // class ScalarFunction
     // {
     //     public:
     //     typedef Dune::VTK::SkeletonFunctionTraits<std::decay_t<decltype(momentumGridGeometry->gridView())>, typename std::decay_t<decltype(momentumGridGeometry->gridView())>::ctype>
     //     Traits;
 
-    //     VelocityFunction(const GridView& gv, const SolVec& s) : gv_(gv), s_(s) {}
+    //     ScalarFunction(const GridView& gv, const SolVec& s) : gv_(gv), s_(s) {}
 
     //     //! return number of components
     //     unsigned dimRange() const { return 1; }
 
     //     void evaluate(const typename Traits::Cell& c,
-    //                   const typename Traits::Domain& xl,
-    //                   typename Traits::Range& result) const
+    //                     const typename Traits::Domain& xl,
+    //                     typename Traits::Range& result) const
     //     {
     //         assert(c.conforming());
 
 
     //         const auto globalIdx = gv_.indexSet().subIndex(c.inside(), c.indexInInside(), 1);
-    //         result.resize(2, s_[globalIdx]);
+    //         result.resize(1, s_[globalIdx]);
     //     }
 
     //     private:
@@ -252,7 +203,7 @@ int main(int argc, char** argv) try
     //     const SolVec& s_;
     // };
 
-    // auto faceData = std::make_shared<VelocityFunction>(momentumGridGeometry->gridView(), x[momentumIdx]);
+    //auto faceData = std::make_shared<ScalarFunction>(momentumGridGeometry->gridView(), x[momentumIdx]);
     ConformingIntersectionWriter vtk(momentumGridGeometry->gridView());
     // vtk.addCellData(faceData, "velcocityScalar");
     vtk.write("facedata", Dune::VTK::ascii);
@@ -261,6 +212,7 @@ int main(int argc, char** argv) try
     {
         const auto pressureL2error = calculateL2Error(*massProblem, x[massIdx]);
         const auto velocityL2error = momentumProblem->calculateL2Error(x[momentumIdx]);
+        const auto velocityL2errorParts = calculateL2Error(*momentumProblem, x[momentumIdx]);
 
         std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
                         << std::setw(6) << massGridGeometry->numDofs() << " cc dofs and " << momentumGridGeometry->numDofs()
@@ -268,6 +220,8 @@ int main(int argc, char** argv) try
                         << std::scientific
                         << "L2(p) = " << pressureL2error.absolute[0] << " / " << pressureL2error.relative[0]
                         << " , L2(v) = " << velocityL2error
+                        << " , L2(vx) = " << velocityL2errorParts.absolute[0] << " / " << velocityL2errorParts.relative[0]
+                        << " , L2(vy) = " << velocityL2errorParts.absolute[1] << " / " << velocityL2errorParts.relative[1]
                         << std::endl;
     }
 
