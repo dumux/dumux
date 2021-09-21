@@ -18,10 +18,10 @@ def _createGridGeometry(gridView, discMethod="cctpfa"):
         includes += ["dumux/discretization/box/fvgridgeometry.hh"]
         typeName = "Dumux::BoxFVGridGeometry<double, " + gridView._typeName + ">"
     else:
-        raise ValueError("Unknown discMethod {}".format(discMethod))
+        raise ValueError(f"Unknown discMethod {discMethod}")
 
     moduleName = "gridgeometry_" + hashIt(typeName)
-    holderType = "std::shared_ptr<{}>".format(typeName)
+    holderType = f"std::shared_ptr<{typeName}>"
     generator = SimpleGenerator("GridGeometry", "Dumux::Python")
     module = generator.load(includes, typeName, moduleName, options=[holderType])
     return module.GridGeometry(gridView)
@@ -43,10 +43,10 @@ def _createGridVariables(*, problem, model):
     ggeo = f"Dumux::GetPropType<{model.cppType}, Dumux::Properties::GridGeometry>"
     gvv = f"Dumux::GetPropType<{model.cppType}, Dumux::Properties::GridVolumeVariables>"
     gfc = f"Dumux::GetPropType<{model.cppType}, Dumux::Properties::GridFluxVariablesCache>"
-    typeName = "Dumux::FVGridVariables<{}, {}, {}>".format(ggeo, gvv, gfc)
+    typeName = f"Dumux::FVGridVariables<{ggeo}, {gvv}, {gfc}>"
 
     moduleName = "gridvariables_" + hashIt(typeName)
-    holderType = "std::shared_ptr<{}>".format(typeName)
+    holderType = f"std::shared_ptr<{typeName}>"
     generator = SimpleGenerator("GridVariables", "Dumux::Python")
     module = generator.load(
         includes, typeName, moduleName, options=[holderType], preamble=model.cppHeader
