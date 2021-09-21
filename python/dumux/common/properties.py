@@ -173,7 +173,7 @@ class TypeTag:
         self.gridGeometry = gridGeometry
         self.name = name
 
-        if self.name in _typeTags.keys():
+        if self.name in _typeTags:
             if inheritsFrom is not None:
                 raise ValueError(
                     f"Existing TypeTag {name} cannot inherit from other TypeTags."
