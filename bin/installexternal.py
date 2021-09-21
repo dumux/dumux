@@ -6,7 +6,7 @@ install external stuff for dumux
 import os
 import shutil
 import re
-import urllib
+import urllib.request
 import tarfile
 import sys
 import subprocess
