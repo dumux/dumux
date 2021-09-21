@@ -136,6 +136,15 @@ public:
         const auto& scvf = this->scvFace();
         const auto ipLocal = geometry.local(scvf.ipGlobal());
 
+        // if(fvGeometry.hasboundary())
+        //     return NumEqVector(0.0);
+
+        // const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        // const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+
+        // if(insideScv.boundary())
+        //     return NumEqVector(0.0);
+
         // TODO: Cache the shapeValues
         const auto& localBasis = fvGeometry.feLocalBasis();
         std::vector<ShapeValue> shapeValues;
@@ -155,14 +164,27 @@ public:
         const Scalar density = this->problem().density(this->element(), this->fvGeometry(), scvf);
 
         Scalar upwindFactor = 0.0;
+        NumEqVector vup(0.0);
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-        if(v*scvf.unitOuterNormal() >= 0)
-            upwindFactor = density*(insideVolVars.velocity()*scvf.unitOuterNormal());
-        else
-            upwindFactor = density*(outsideVolVars.velocity()*scvf.unitOuterNormal());
 
-        return upwindFactor*v;
+        //NumEqVector outsideVel = scvf.boundary() ? this->problem().dirichletAtPos(scvf.center()) : outsideVolVars.velocity();
+        NumEqVector outsideVel = outsideVolVars.velocity();
+
+        //ToDo correct upwinding for rho
+        static const auto upwindWeight = getParamFromGroup<Scalar>(this->problem().paramGroup(), "Flux.UpwindWeight");
+        if(v*scvf.unitOuterNormal() > 0)
+        {
+            vup = upwindWeight * insideVolVars.velocity() + (1-upwindWeight)*outsideVel;
+            upwindFactor = density*(v*scvf.unitOuterNormal());
+        }
+        else
+        {
+            vup = upwindWeight * outsideVel + (1-upwindWeight)*insideVolVars.velocity();
+            upwindFactor = density*(v*scvf.unitOuterNormal());
+        }
+
+        return upwindFactor* vup * Extrusion::area(scvf) * extrusionFactor_(elemVolVars, scvf);
     }
 
     /*!
@@ -207,7 +229,7 @@ public:
         static const bool enableDilatationTerm = getParamFromGroup<bool>(this->problem().paramGroup(), "FreeFlow.EnableDilatationTerm", false);
         if (enableDilatationTerm)
         {
-            result += 2.0/3.0 * mu * trace(gradV) * scvf.unitOuterNormal() * Extrusion::area(scvf) * extrusionFactor_(elemVolVars, scvf);;
+            result += 2.0/3.0 * mu * trace(gradV) * scvf.unitOuterNormal() * Extrusion::area(scvf) * extrusionFactor_(elemVolVars, scvf);
         }
 
         return result;
