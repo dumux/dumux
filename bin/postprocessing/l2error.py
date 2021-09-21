@@ -186,16 +186,16 @@ def printL2Error(args, absolute, relative):
     if args["percent"]:
         print(
             "L2_Error_in_%: ",
-            "{0:.5f}%".format(l2normAbs * 100),
+            f"{l2normAbs * 100:.5f}%",
             "Rel_L2_Error_in_%: ",
-            "{0:.5f}%".format(l2normRel * 100),
+            f"{l2normRel * 100:.5f}%",
         )
     else:
         print(
             "L2_Error: ",
-            "{0:.5e}".format(l2normAbs),
+            f"{l2normAbs:.5e}",
             " Rel_L2_Error: ",
-            "{0:.5e}".format(l2normRel),
+            f"{l2normRel:.5e}",
         )
 
 

@@ -52,7 +52,7 @@ def runTests(config, script="", flags=None):
         tests = ["NOOP"]
 
     # turn test names into a regular expression
-    testRegEx = "|".join(["^{}$".format(t) for t in tests])
+    testRegEx = "|".join([f"^{t}$" for t in tests])
 
     # if not given, try system-wide call to dune-ctest
     script = ["dune-ctest"] if not script else script
@@ -132,7 +132,7 @@ if __name__ == "__main__":
         with open(args["config"]) as configFile:
             configDict = json.load(configFile)
             numTests = len(configDict)
-            print("{} tests found in the configuration file".format(numTests))
+            print(f"{numTests} tests found in the configuration file")
 
             if args["build"]:
                 buildTests(configDict, buildFlags)

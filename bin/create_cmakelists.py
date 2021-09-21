@@ -42,7 +42,7 @@ def createCMakeLists():
             with open(fullFolderName + "/CMakeLists.txt", "w") as cmakeLists:
                 # add subfolders
                 for subFolder in subFolders:
-                    cmakeLists.write("add_subdirectory({})\n".format(subFolder))
+                    cmakeLists.write(f"add_subdirectory({subFolder})\n")
 
                 headersExist = False
                 for fileName in files:
@@ -56,14 +56,10 @@ def createCMakeLists():
                         cmakeLists.write("\n")
                     # collect all files to be installed in a CMake variable
                     headerGuard = "DUMUX_" + folderName.upper().replace("/", "_") + "_HEADERS"
+                    cmakeLists.write(f"file(GLOB {headerGuard}{' *'.join([''] + extensions)})\n")
+                    cmakeLists.write(f"install(FILES ${{{headerGuard}}}\n")
                     cmakeLists.write(
-                        "file(GLOB {}{})\n".format(headerGuard, " *".join([""] + extensions))
-                    )
-                    cmakeLists.write("install(FILES ${{{}}}\n".format(headerGuard))
-                    cmakeLists.write(
-                        "        DESTINATION ${{CMAKE_INSTALL_INCLUDEDIR}}/dumux/{})\n".format(
-                            folderName
-                        )
+                        f"        DESTINATION ${{CMAKE_INSTALL_INCLUDEDIR}}/dumux/{folderName})\n"
                     )
 
 

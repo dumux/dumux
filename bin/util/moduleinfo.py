@@ -55,12 +55,10 @@ def getDependencies(modulePath, verbose=False, includeSelf=False):
     parentPath = os.path.join(modulePath, "../")
     duneControlPath = os.path.join(parentPath, "dune-common/bin/dunecontrol")
     if not os.path.exists(duneControlPath):
-        raise RuntimeError(
-            "Could not find dunecontrol, expected it to be in {}".format(duneControlPath)
-        )
+        raise RuntimeError(f"Could not find dunecontrol, expected it to be in {duneControlPath}")
 
     dcOutput = callFromPath(parentPath)(runCommand)(
-        "./dune-common/bin/dunecontrol --module={}".format(modName)
+        f"./dune-common/bin/dunecontrol --module={modName}"
     )
 
     if not dcOutput:
@@ -87,7 +85,7 @@ def getDependencies(modulePath, verbose=False, includeSelf=False):
                 )
         else:
             if verbose:
-                print(" --- visited module '{}'".format(depModName))
+                print(f" --- visited module '{depModName}'")
             if depModName in dependencyList:
                 result.append({"name": depModName, "folder": os.path.basename(path), "path": path})
 

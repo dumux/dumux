@@ -75,13 +75,13 @@ def compareData(
         valueA = data1[0][i]
         valueB = data2[0][i]
         for j in range(1, len(data1)):
-            valueA += " {0}".format(data1[j][i])
-            valueB += " {0}".format(data2[j][i])
+            valueA += f" {data1[j][i]}"
+            valueB += f" {data2[j][i]}"
 
         if not isFuzzyEqualText(
             valueA,
             valueB,
-            "row {0}".format(i),
+            f"row {i}",
             len(data1),
             absolute,
             relative,

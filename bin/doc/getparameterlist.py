@@ -100,8 +100,8 @@ def getParamsFromFile(file):
             "Please check them yourself:"
         )
         for lineIdx in errors:
-            print("\n\t-> line {}: {}".format(lineIdx, errors[lineIdx]["line"]))
-            print("\t\t-> error message: {}".format(errors[lineIdx]["message"]))
+            print(f"\n\t-> line {lineIdx}: {errors[lineIdx]['line']}")
+            print(f"\t\t-> error message: {errors[lineIdx]['message']}")
 
     return parameters
 

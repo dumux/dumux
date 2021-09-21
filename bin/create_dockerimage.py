@@ -57,7 +57,7 @@ if __name__ == "__main__":
     if not templateFolder:
         templateFolder = os.path.join(modulePath, "../dumux/docker")
     if not os.path.exists(templateFolder):
-        sys.exit("Template folder {} could not be found".format(templateFolder))
+        sys.exit(f"Template folder {templateFolder} could not be found")
 
     print("*" * 54)
     print("\n-- Creating a Docker image for module " + moduleName + " --\n")
@@ -82,11 +82,10 @@ if __name__ == "__main__":
     installScriptName = os.path.split(installScriptPath)[1]
     installScript = os.path.join(os.path.join(os.getcwd(), "docker"), installScriptName)
     shutil.copy(installScriptPath, installScript)
-    os.system("chmod +x {}".format(installScript))
+    os.system(f"chmod +x {installScript}")
     print(
-        "--> Using install script: {} to install dependencies for module {}.".format(
-            installScript, moduleName
-        )
+        f"--> Using install script: {installScript} "
+        f"to install dependencies for module {moduleName}."
     )
 
     # write setpermissions helper script
@@ -114,7 +113,7 @@ if __name__ == "__main__":
     print("--> Created README.md on how to use the docker image.")
 
     # write helper file for container spin-up (make it executable after creation)
-    dockerScript = os.path.join(os.getcwd(), "docker/docker_{}.sh".format(dockerTag))
+    dockerScript = os.path.join(os.getcwd(), f"docker/docker_{dockerTag}.sh")
     substituteAndWrite(
         template=os.path.join(templateFolder, "docker.sh.template"),
         target=dockerScript,

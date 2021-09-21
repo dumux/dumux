@@ -84,7 +84,7 @@ def checkSubFolders(moduleDirectory, subDirectories):
     """Verify that subfolders exist in the module"""
     for subDirectory in subDirectories:
         path = Path(moduleDirectory) / Path(subDirectory)
-        errMsg = "Cannot handle the given folder {}".format(str(path))
+        errMsg = f"Cannot handle the given folder {str(path)}"
         if not path.exists():
             raise Exception(errMsg + " because it does not exist.")
         if not path.is_dir():
@@ -294,7 +294,7 @@ def guideFolderDeletion(modulePath, candidates):
 def pubProjectURL(projectName):
     """Default URL for dumux-pub modules"""
     baseURL = "https://git.iws.uni-stuttgart.de/dumux-pub/"
-    return baseURL + "{}.git".format(projectName.lower())
+    return baseURL + f"{projectName.lower()}.git"
 
 
 def queryEmptyRemoteURL():
@@ -311,9 +311,9 @@ def queryEmptyRemoteURL():
 
         try:
             print("Checking the repo (you may have to introduce credentials):")
-            remoteContent = runCommand("git ls-remote {}".format(remote), suppressTraceBack=True)
+            remoteContent = runCommand(f"git ls-remote {remote}", suppressTraceBack=True)
         except subprocess.CalledProcessError:
-            print(" - Could not find your repo at {}. ".format(remote))
+            print(f" - Could not find your repo at {remote}. ")
             print(" - Please revisit the provided information.")
             continue
 
@@ -350,7 +350,7 @@ def guideRepositoryInitialization(modulePath):
     runGitCommand(modulePath, 'git commit -m "Initial commit"')
 
     if hasRepo:
-        runGitCommand(modulePath, "git remote add origin {}".format(remoteURL))
+        runGitCommand(modulePath, f"git remote add origin {remoteURL}")
         pushRepository(modulePath, remoteURL)
 
     return remoteURL

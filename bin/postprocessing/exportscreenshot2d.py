@@ -198,7 +198,7 @@ for curFile in args["files"]:
         outDirectory = os.path.dirname(abspath) + "/"
     basename = os.path.splitext(fileWithoutPath)[0]
     if args["verbosity"] == 1:
-        print("Processing file ({}/{}): {}".format(counter, len(args["files"]), fileWithoutPath))
+        print(f"Processing file ({counter}/{len(args['files'])}): {fileWithoutPath}")
     counter += 1
 
     # read vtu file and print available parameters

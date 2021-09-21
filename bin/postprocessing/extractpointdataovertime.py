@@ -71,7 +71,7 @@ for curFile in args["files"]:
         outDirectory = os.path.dirname(abspath) + "/"
     basename = os.path.splitext(fileWithoutPath)[0]
     if args["verbosity"] == 1:
-        print("Processing file ({}/{}): {}".format(counter, len(args["files"]), curFile))
+        print(f"Processing file ({counter}/{len(args['files'])}): {curFile}")
     counter += 1
 
     # load pvd file
