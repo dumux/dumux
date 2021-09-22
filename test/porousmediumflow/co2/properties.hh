@@ -41,6 +41,10 @@
 #define ISOTHERMAL 1
 #endif
 
+#ifndef FLUXVARSCACHE
+#define FLUXVARSCACHE 0
+#endif
+
 #include "problem.hh"
 #include "spatialparams.hh"
 #include "co2tables.hh"
@@ -94,9 +98,8 @@ template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::Heterogeneous> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::Heterogeneous> { static constexpr bool value = true; };
-// TODO: Test fails using this cache
-// template<class TypeTag>
-// struct EnableGridFluxVariablesCache<TypeTag, TTag::Heterogeneous> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::Heterogeneous> { static constexpr bool value = FLUXVARSCACHE; };
 
 #if !ISOTHERMAL
 // Create new type tags

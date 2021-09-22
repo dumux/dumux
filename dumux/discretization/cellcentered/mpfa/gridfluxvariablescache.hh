@@ -169,7 +169,7 @@ public:
                 // those ivs that are touching a boundary, we only store the data on interior ivs here.
                 for (const auto& scvf : scvfs(fvGeometry))
                     if (!isEmbeddedInBoundaryIV_(scvf, gridGeometry) && !fluxVarsCache_[scvf.index()].isUpdated())
-                        filler.fill(*this, fluxVarsCache_[scvf.index()], ivDataStorage_, element, fvGeometry, elemVolVars, scvf, forceUpdate);
+                        filler.fill(*this, fluxVarsCache_[scvf.index()], ivDataStorage_, fvGeometry, elemVolVars, scvf, forceUpdate);
             }
         }
     }
@@ -201,18 +201,17 @@ public:
             {
                 auto& scvfCache = fluxVarsCache_[scvf.index()];
                 if (!isEmbeddedInBoundaryIV_(scvf, gridGeometry) && !scvfCache.isUpdated())
-                    filler.fill(*this, scvfCache, ivDataStorage_, element, fvGeometry, elemVolVars, scvf);
+                    filler.fill(*this, scvfCache, ivDataStorage_, fvGeometry, elemVolVars, scvf);
             }
 
             for (const auto& dataJ : assemblyMapI)
             {
-                const auto elementJ = gridGeometry.element(dataJ.globalJ);
                 for (const auto scvfIdx : dataJ.scvfsJ)
                 {
                     auto& scvfCache = fluxVarsCache_[scvfIdx];
                     const auto& scvf = fvGeometry.scvf(scvfIdx);
                     if (!isEmbeddedInBoundaryIV_(scvf, gridGeometry) && !scvfCache.isUpdated())
-                        filler.fill(*this, scvfCache, ivDataStorage_, elementJ, fvGeometry, elemVolVars, scvf);
+                        filler.fill(*this, scvfCache, ivDataStorage_, fvGeometry, elemVolVars, scvf);
                 }
             }
         }

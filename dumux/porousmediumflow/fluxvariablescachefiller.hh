@@ -194,6 +194,7 @@ class PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, Discretization
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
@@ -247,14 +248,12 @@ public:
     void fill(FluxVarsCacheStorage& fluxVarsCacheStorage,
               FluxVariablesCache& scvfFluxVarsCache,
               IVDataStorage& ivDataStorage,
-              const Element& element,
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars,
               const SubControlVolumeFace& scvf,
               bool forceUpdateAll = false)
     {
         // Set pointers
-        elementPtr_ = &element;
         fvGeometryPtr_ = &fvGeometry;
         elemVolVarsPtr_ = &elemVolVars;
         const auto& gridGeometry = fvGeometry.gridGeometry();
@@ -355,7 +354,6 @@ public:
 private:
 
     const Problem& problem() const { return *problemPtr_; }
-    const Element& element() const { return *elementPtr_; }
     const FVElementGeometry& fvGeometry() const { return *fvGeometryPtr_; }
     const ElementVolumeVariables& elemVolVars() const { return *elemVolVarsPtr_; }
 
@@ -627,22 +625,23 @@ private:
                             return volVars.effectiveDiffusionCoefficient(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);
                     };
 
-                    // Effective diffusion coefficients might get zero if saturation = 0.
+                    // Effective diffusion coefficients might be zero if saturation = 0.
                     // Compute epsilon to detect obsolete rows in the iv-local matrices during assembly
-                    const auto& scv = *scvs(fvGeometry()).begin();
-                    const auto& scvf = *scvfs(fvGeometry()).begin();
-                    const auto& vv = elemVolVars()[scv];
-                    const auto D = [&] ()
-                    {
-                        // diffusion coefficients below 1e-20 are treated as zeroes!!
-                        using std::max;
-                        if constexpr (!FluidSystem::isTracerFluidSystem())
-                            return max(1e-20, vv.diffusionCoefficient(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx));
-                        else
-                            return max(1e-20, vv.diffusionCoefficient(0, 0, compIdx));
-                    } ();
+                    static const auto zeroD = getParamFromGroup<Scalar>(
+                        problem().paramGroup(),
+                        "Mpfa.ZeroEffectiveDiffusionCoefficientThreshold",
+                        1e-16
+                    );
 
-                    auto eps = 1e-7*computeTpfaTransmissibility(scvf, scv, D, vv.extrusionFactor())*Extrusion::area(scvf);
+                    // compute a representative transmissibility for this interaction volume, using
+                    // the threshold for zero diffusion coefficients, and use this as epsilon
+                    const auto& scv = fvGeometry().scv(iv.localScv(0).gridScvIndex());
+                    const auto& scvf = fvGeometry().scvf(iv.localScvf(0).gridScvfIndex());
+                    const auto& vv = elemVolVars()[scv];
+                    const auto eps = Extrusion::area(scvf)*computeTpfaTransmissibility(
+                        scvf, scv, zeroD, vv.extrusionFactor()
+                    );
+
                     localAssembler.assembleMatrices(handle.diffusionHandle(), iv, getD, eps);
                 }
 
@@ -680,7 +679,6 @@ private:
     }
 
     const Problem* problemPtr_;
-    const Element* elementPtr_;
     const FVElementGeometry* fvGeometryPtr_;
     const ElementVolumeVariables* elemVolVarsPtr_;
 

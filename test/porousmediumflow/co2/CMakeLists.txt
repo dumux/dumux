@@ -43,6 +43,20 @@ dumux_add_test(NAME test_co2_mpfa
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_co2_mpfa-00028.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_co2_mpfa params.input -Problem.Name test_co2_mpfa")
 
+dumux_add_test(NAME test_co2_mpfa_fluxvarscache
+               LABELS porousmediumflow co2
+               TIMEOUT 3600
+               SOURCES main.cc
+               COMPILE_DEFINITIONS TYPETAG=HeterogeneousCCMpfa
+               COMPILE_DEFINITIONS FLUXVARSCACHE=1
+               CMAKE_GUARD "( dune-alugrid_FOUND )"
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_co2_mpfa-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_co2_mpfa_fluxvarscache-00028.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_co2_mpfa_fluxvarscache params.input -Problem.Name test_co2_mpfa_fluxvarscache")
+
+
 dumux_add_test(NAME test_co2_box_parallel
                TARGET test_co2_box
                LABELS porousmediumflow co2 parallel

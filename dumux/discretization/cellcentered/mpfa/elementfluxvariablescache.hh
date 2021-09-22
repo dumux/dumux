@@ -117,7 +117,7 @@ private:
             ivDataStorage_.secondaryDataHandles.clear();
         }
 
-    public:
+    private:
         //! map a global scvf index to the local storage index
         int getLocalIdx_(const int scvfIdx) const
         {
@@ -225,13 +225,13 @@ public:
                 cache.setUpdateStatus(false);
 
             // go through the caches maybe update them
-            std::size_t cacheIdx = 0;
             for (auto scvfIdx : boundaryCacheData_.cacheScvfIndices_)
             {
-                auto& scvfCache = boundaryCacheData_.fluxVarCaches_[cacheIdx++];
+                const auto& scvf = fvGeometry.scvf(scvfIdx);
+                auto& scvfCache = boundaryCacheData_[scvf];
                 if (!scvfCache.isUpdated())
                     filler.fill(boundaryCacheData_, scvfCache, boundaryCacheData_.ivDataStorage_,
-                                element, fvGeometry, elemVolVars, fvGeometry.scvf(scvfIdx));
+                                fvGeometry, elemVolVars, scvf);
             }
         }
     }
@@ -371,7 +371,7 @@ private:
                 auto& cache = boundaryCacheData_[scvf];
                 if (!cache.isUpdated())
                     filler.fill(boundaryCacheData_, cache, boundaryCacheData_.ivDataStorage_,
-                                element, fvGeometry, elemVolVars, scvf, /*forceUpdate*/true);
+                                fvGeometry, elemVolVars, scvf, /*forceUpdate*/true);
             }
         }
     }
@@ -522,17 +522,16 @@ public:
         {
             auto& scvfCache = fluxVarsCache_[i++];
             if (!scvfCache.isUpdated())
-                filler.fill(*this, scvfCache, ivDataStorage_, element, fvGeometry, elemVolVars, scvf, true);
+                filler.fill(*this, scvfCache, ivDataStorage_, fvGeometry, elemVolVars, scvf, true);
         }
 
         for (const auto& dataJ : assemblyMapI)
         {
-            const auto elementJ = gridGeometry.element(dataJ.globalJ);
             for (const auto scvfIdx : dataJ.scvfsJ)
             {
                 auto& scvfCache = fluxVarsCache_[i++];
                 if (!scvfCache.isUpdated())
-                    filler.fill(*this, scvfCache, ivDataStorage_, elementJ, fvGeometry, elemVolVars, fvGeometry.scvf(scvfIdx), true);
+                    filler.fill(*this, scvfCache, ivDataStorage_, fvGeometry, elemVolVars, fvGeometry.scvf(scvfIdx), true);
             }
         }
     }
@@ -612,17 +611,16 @@ public:
             {
                 auto& scvfCache = fluxVarsCache_[i++];
                 if (!scvfCache.isUpdated())
-                    filler.fill(*this, scvfCache, ivDataStorage_, element, fvGeometry, elemVolVars, scvf);
+                    filler.fill(*this, scvfCache, ivDataStorage_, fvGeometry, elemVolVars, scvf);
             }
 
             for (const auto& dataJ : assemblyMapI)
             {
-                const auto elementJ = gridGeometry.element(dataJ.globalJ);
                 for (const auto scvfIdx : dataJ.scvfsJ)
                 {
                     auto& scvfCache = fluxVarsCache_[i++];
                     if (!scvfCache.isUpdated())
-                        filler.fill(*this, scvfCache, ivDataStorage_, elementJ, fvGeometry, elemVolVars, fvGeometry.scvf(scvfIdx));
+                        filler.fill(*this, scvfCache, ivDataStorage_, fvGeometry, elemVolVars, fvGeometry.scvf(scvfIdx));
                 }
             }
         }
