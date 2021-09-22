@@ -206,7 +206,7 @@ def isFuzzyEqualNode(
     for node1child, node2child in zip(node1.iter(), node2.iter()):
         if node1.tag != node2.tag:
             if verbose:
-                print("The name of the node differs in: {} and {}".format(node1.tag, node2.tag))
+                print(f"The name of the node differs in: {node1.tag} and {node2.tag}")
                 isEqual = False
             else:
                 return False
@@ -214,7 +214,7 @@ def isFuzzyEqualNode(
             node2.attrib.items()
         ):
             if verbose:
-                print("Attributes differ in node: {}".format(node1.tag))
+                print(f"Attributes differ in node: {node1.tag}")
                 print("Attributes1: ", list(node1.attrib.items()))
                 print("Attributes2: ", list(node2.attrib.items()))
                 isEqual = False
@@ -222,7 +222,7 @@ def isFuzzyEqualNode(
                 return False
         if len(list(node1.iter())) != len(list(node2.iter())):
             if verbose:
-                print("Number of children differs in node: {}".format(node1.tag))
+                print(f"Number of children differs in node: {node1.tag}")
                 isEqual = False
             else:
                 return False
@@ -249,9 +249,8 @@ def isFuzzyEqualNode(
                 else:
                     if verbose:
                         print(
-                            "Comparing different parameters: {} and {}".format(
-                                node1child.attrib["Name"], node2child.attrib["Name"]
-                            )
+                            "Comparing different parameters: "
+                            f"{node1child.attrib['Name']} and {node2child.attrib['Name']}"
                         )
                         isEqual = False
                     else:
@@ -280,11 +279,11 @@ def isFuzzyEqualText(
         lists1.append(list1[i::numComp])
         lists2.append(list2[i::numComp])
         if numComp > 1:
-            parameters.append("{}_{}".format(parameter, i))
+            parameters.append(f"{parameter}_{i}")
             # if zero threshold was set for all components,
             # one component inherits it from the parameter
             if parameter in zeroValueThreshold:
-                zeroValueThreshold["{}_{}".format(parameter, i)] = zeroValueThreshold[parameter]
+                zeroValueThreshold[f"{parameter}_{i}"] = zeroValueThreshold[parameter]
         else:
             parameters.append(parameter)
 
@@ -302,10 +301,10 @@ def isFuzzyEqualText(
         # check for nan and inf
         for number1, number2 in zip(floatList1, floatList2):
             if math.isnan(number1) or math.isnan(number2):
-                print("Parameter {} contains NaN!".format(param))
+                print(f"Parameter {param} contains NaN!")
                 return False
             if math.isinf(number1) or math.isinf(number2):
-                print("Parameter {} contains inf!".format(param))
+                print(f"Parameter {param} contains inf!")
                 return False
 
         # Manipulate the data set for the sake of sensible comparison.
@@ -349,8 +348,9 @@ def isFuzzyEqualText(
                 if largernumber != 0.0:
                     if diff / largernumber > maxRelativeDifference:
                         maxRelativeDifference = diff / largernumber
-                        message = "Difference is too large: {:.2%} -> between: {} and {}".format(
-                            maxRelativeDifference, number1, number2
+                        message = (
+                            f"Difference is too large: {maxRelativeDifference:.2%} "
+                            f"-> between: {number1} and {number2}"
                         )
             else:
                 return False

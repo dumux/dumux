@@ -45,7 +45,7 @@ def makeScriptWriter(language):
 
 def getDefaultScriptName(modName, language):
     """The default script name"""
-    return "install_{}{}".format(modName, getScriptExtension(language))
+    return f"install_{modName}{getScriptExtension(language)}"
 
 
 def printProgressInfo(infoLines, indLevel=0):
@@ -107,10 +107,10 @@ def makeInstallScript(modPath, dependencies, scriptName, topFolderName="DUMUX", 
     modPath = os.path.abspath(modPath)
     modName = getModuleInfo(modPath, "Module")
 
-    modOptsFile = "{}/cmake.opts".format(modPath)
+    modOptsFile = f"{modPath}/cmake.opts"
     if not optsFile:
         if os.path.isfile(modOptsFile):
-            optsFile = "{}/cmake.opts".format(os.path.relpath(modPath))
+            optsFile = f"{os.path.relpath(modPath)}/cmake.opts"
         else:
             optsFile = "dumux/cmake.opts"
     if os.path.isabs(optsFile):
@@ -146,7 +146,7 @@ def makeInstallScript(modPath, dependencies, scriptName, topFolderName="DUMUX", 
 
         for dep in dependencies:
             script.write("\n")
-            writer.writeMessageOutput("Installing {}".format(dep["name"]))
+            writer.writeMessageOutput(f"Installing {dep['name']}")
             writer.writeInstallation(dep)
 
         def writePatch(patch, description, moduleName, folder):
@@ -185,7 +185,7 @@ def printFoundVersionInfo(dependenciesWithVersions):
         [
             "The following (remotely available) versions are used as a basis",
             "on top of which the required patches will be automatically created:",
-            "\n{}".format(table),
+            f"\n{table}",
         ]
     )
 

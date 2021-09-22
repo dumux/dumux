@@ -150,7 +150,7 @@ def runRegressionTest(args):
     else:
         returnCode = 0
         for i in range(0, len(args["files"]) // 2):
-            print("\n{} comparison...".format(args["script"]))
+            print(f"\n{args['script']} comparison...")
             result = subprocess.call(
                 args["script"], args["files"][i * 2], args["files"][(i * 2) + 1]
             )

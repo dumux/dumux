@@ -124,19 +124,18 @@ class InstallScriptWriterBash(InstallScriptWriterInterface):
             )
         )
         top = topFolderName if topFolderName else "."
-        self.ostream.write('TOP="{}"\n'.format(top))
+        self.ostream.write(f'TOP="{top}"\n')
         self.ostream.write("mkdir -p $TOP\n")
         self.ostream.write("cd $TOP\n")
 
     def writeInstallation(self, dependency):
         """Write installation part of the script"""
         self.ostream.write(
-            "installModule {} {} {} {}".format(
-                dependency["folder"],
-                dependency["remote"],
-                dependency["branch"],
-                dependency["revision"],
-            )
+            "installModule "
+            f"{dependency['folder']} "
+            f"{dependency['remote']} "
+            f"{dependency['branch']} "
+            f"{dependency['revision']}"
         )
 
     def writePatchApplication(self, folder, patchContent):
@@ -234,12 +233,12 @@ class InstallScriptWriterPython(InstallScriptWriterInterface):
     def writeInstallation(self, dependency):
         """Write installation part of the script"""
         self.ostream.write(
-            'installModule("{}", "{}", "{}", "{}")\n'.format(
-                dependency["folder"],
-                dependency["remote"],
-                dependency["branch"],
-                dependency["revision"],
-            )
+            "installModule("
+            f'"{dependency["folder"]}", '
+            f'"{dependency["remote"]}", '
+            f'"{dependency["branch"]}", '
+            f'"{dependency["revision"]}", '
+            ")\n"
         )
 
     def writePatchApplication(self, folder, patchContent):

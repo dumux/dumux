@@ -43,7 +43,7 @@ def buildCommandAndDir(testConfig, buildTreeRoot="."):
     """get the command and folder to compile the given test"""
     compCommand = getCompileCommand(testConfig, buildTreeRoot)
     if compCommand is None:
-        raise Exception("Could not determine compile command for {}".format(testConfig))
+        raise Exception(f"Could not determine compile command for {testConfig}")
 
     (_, directory), command = [comm.split() for comm in compCommand.split("&&")]
     return command, directory
@@ -131,9 +131,9 @@ if __name__ == "__main__":
         ):
             if affected:
                 affectedTests[name] = {"target": cmakeTarget}
-                print("\t- {} (target: {})".format(name, cmakeTarget))
+                print(f"\t- {name} (target: {cmakeTarget})")
 
-    print("Detected {} affected tests".format(len(affectedTests)))
+    print(f"Detected {len(affectedTests)} affected tests")
 
     with open(targetFile, "w") as jsonFile:
         json.dump(affectedTests, jsonFile)

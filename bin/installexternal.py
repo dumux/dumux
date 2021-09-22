@@ -148,10 +148,10 @@ def cleanPackage(package, finalMessage):
         os.remove(package + ".tar.gz")
     if os.path.exists(package):
         shutil.rmtree(package)
-        finalMessage.append("{} has been removed.".format(package))
+        finalMessage.append(f"{package} has been removed.")
     else:
         # Save message to be shown at the end
-        finalMessage.append("The folder {} does not exist.".format(package))
+        finalMessage.append(f"The folder {package} does not exist.")
 
 
 def filterPackageList(packageListOld):
@@ -185,7 +185,7 @@ def installFromTarball(package, parameters, externalDir, finalMessage):
             file.write(dataToWrite)
 
     # Save message to be shown at the end
-    finalMessage.append("{} has been successfully downloaded.".format(package))
+    finalMessage.append(f"{package} has been successfully downloaded.")
 
     # Start Installation if the flag download is set to false.
     if not parameters["download"]:
@@ -209,10 +209,10 @@ def installFromTarball(package, parameters, externalDir, finalMessage):
         try:
             runCommand("make", currentDir=externalDir)
         except subprocess.CalledProcessError as exc:
-            raise Exception("{} installation has failed.".format(package)) from exc
+            raise Exception(f"{package} installation has failed.") from exc
         # Save message to be shown at the end
         if os.path.exists(externalDir + "/" + package):
-            finalMessage.append("{} has been successfully installed.".format(package))
+            finalMessage.append(f"{package} has been successfully installed.")
 
 
 def installExternal(parameters):
@@ -223,10 +223,9 @@ def installExternal(parameters):
     parameters["packages"] = filterPackageList(parameters["packages"])
 
     # print the list of packages to be downloaded/installed/removed
+    action = "removed" if parameters["clean"] else "downloaded"
     print(
-        "The following package(s) will be {0}:\n".format(
-            "removed" if parameters["clean"] else "downloaded"
-        ),
+        f"The following package(s) will be {action}:\n",
         ", ".join(parameters["packages"]),
         "\n",
     )
@@ -266,23 +265,23 @@ def installExternal(parameters):
                 # Clone from repo
                 gitClone(EXTERNAL_URLS[package], branch)
                 # Save message to be shown at the end
-                finalMessage.append("{} has been sucessfully cloned.".format(package))
+                finalMessage.append(f"{package} has been sucessfully cloned.")
         else:
             if tarball:
-                finalMessage.append("{} has been already installed.".format(package))
+                finalMessage.append(f"{package} has been already installed.")
             else:
                 # Checkout to the requested branch
                 os.chdir(topDir + "/" + package)
                 with subprocess.Popen(["git", "checkout", branch]) as _:
                     # Save message to be shown at the end
                     finalMessage.append(
-                        "-- Skip cloning {}, because the folder already exists.".format(package)
+                        f"-- Skip cloning {package}, because the folder already exists."
                     )
-                    finalMessage.append("-- Checking out {} ".format(package) + branch)
+                    finalMessage.append(f"-- Checking out {package} " + branch)
                     continue
 
         # Save post installation message if there is any.
-        if package in MESSAGES.keys():
+        if package in MESSAGES:
             finalMessage.extend(MESSAGES[package])
 
         # Change to topDir

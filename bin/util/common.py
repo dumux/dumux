@@ -73,7 +73,7 @@ def makeTable(dictList, config=None, padding=2):
     def makeRow(rowValues):
         row = "|"
         for key in config:
-            row += "{}|".format(rowValues.get(key, "").center(widths[key]))
+            row += f"{rowValues.get(key, '').center(widths[key])}|"
         return row
 
     table = [makeRow({key: config[key] for key in config})]
@@ -108,8 +108,8 @@ def runCommand(command, check=True, suppressTraceBack=False, errorMessage=""):
             traceback.print_exception(eType, eType(errorMessage), eTraceback)
         else:
             print("An error occurred during subprocess run:")
-            print("-- command: {}".format(command))
-            print("-- folder: {}".format(os.getcwd()))
+            print(f"-- command: {command}")
+            print(f"-- folder: {os.getcwd()}")
             traceback.print_exception(eType, eValue, eTraceback)
             hints = getCommandErrorHints(command)
             if hints is not None:
@@ -171,9 +171,7 @@ def queryYesNo(question, default="yes"):
         return isAffirmative(choice) or isNegative(choice)
 
     if default is not None and not isValid(default):
-        raise ValueError(
-            "\nInvalid default answer: '{}', choices: '{}'\n".format(default, getChoices())
-        )
+        raise ValueError(f"\nInvalid default answer: '{default}', choices: '{getChoices()}'\n")
 
     if default is None:
         prompt = " [y/n] "
@@ -264,7 +262,7 @@ def getRemote(pathToRepo="."):
 def fetchRepo(remote, pathToRepo="."):
     """Fetch repo"""
     run = callFromPath(pathToRepo)(runCommand)
-    run("git fetch {}".format(remote))
+    run(f"git fetch {remote}")
 
 
 def hasUntrackedFiles(pathToRepo="."):
@@ -289,7 +287,7 @@ def mostRecentCommonCommitWithRemote(modFolderPath, branchFilter=isPersistentBra
     run = callFromPath(modFolderPath)(runCommand)
 
     def findBranches(sha):
-        candidates = run("git branch -r --contains {}".format(sha)).split("\n")
+        candidates = run(f"git branch -r --contains {sha}").split("\n")
         candidates = [branch.strip().split(" ->")[0] for branch in candidates]
         return list(filter(branchFilter, candidates))
 
@@ -315,9 +313,9 @@ def getPersistentVersions(modFolderPaths, ignoreUntracked=False):
 
         if hasUntrackedFiles(modFolderPath) and not ignoreUntracked:
             raise Exception(
-                "Found untracked files in '{}'. "
+                f"Found untracked files in '{modFolderPath}'. "
                 "Please commit, stash, or remove them. Alternatively, if you "
-                "are sure they are not needed set ignoreUntracked=True".format(modFolderPath)
+                "are sure they are not needed set ignoreUntracked=True"
             )
 
         result[modFolderPath] = {}
@@ -330,10 +328,8 @@ def getPersistentVersions(modFolderPaths, ignoreUntracked=False):
         run = callFromPath(modFolderPath)(runCommand)
 
         result[modFolderPath]["revision"] = rev
-        result[modFolderPath]["date"] = run("git log -n 1 --format=%ai {}".format(rev)).strip("\n")
-        result[modFolderPath]["author"] = run("git log -n 1 --format=%an {}".format(rev)).strip(
-            "\n"
-        )
+        result[modFolderPath]["date"] = run(f"git log -n 1 --format=%ai {rev}").strip("\n")
+        result[modFolderPath]["author"] = run(f"git log -n 1 --format=%an {rev}").strip("\n")
 
         # this may return HEAD if we are on some detached HEAD tree
         result[modFolderPath]["branch"] = branch
@@ -348,7 +344,7 @@ def getPatches(persistentVersions):
         run = callFromPath(path)(runCommand)
 
         uncommittedPatch = run("git diff")
-        unpublishedPatch = run("git format-patch --stdout {}".format(gitInfo["revision"]))
+        unpublishedPatch = run(f"git format-patch --stdout {gitInfo['revision']}")
         untrackedPatch = ""
         untrackedFiles = run("git ls-files --others --exclude-standard")
         binaryExtension = (
@@ -368,9 +364,7 @@ def getPatches(persistentVersions):
         if untrackedFiles:
             for file in untrackedFiles.splitlines():
                 if not str(file).endswith(binaryExtension):
-                    untrackedPatch += run(
-                        "git --no-pager diff /dev/null {}".format(file), check=False
-                    )
+                    untrackedPatch += run(f"git --no-pager diff /dev/null {file}", check=False)
 
         result[path] = {}
         result[path]["untracked"] = untrackedPatch if untrackedPatch else None

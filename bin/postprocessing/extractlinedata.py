@@ -93,11 +93,7 @@ for curFile in args["files"]:
 
     # print progress to command line
     if args["verbosity"] == 1:
-        print(
-            "Processing file ({}/{}): {}".format(
-                COUNTER, len(args["files"]), os.path.basename(curFile)
-            )
-        )
+        print(f"Processing file ({COUNTER}/{len(args['files'])}): {os.path.basename(curFile)}")
 
     # load vtk file
     if os.path.splitext(curFile)[1] == ".vtp":
@@ -122,4 +118,4 @@ for curFile in args["files"]:
             print(csvFileName)
             paramList = list(csv.reader(csvFile))[0]
             for i, param in enumerate(paramList):
-                print("{:>5}  {}".format(i + 1, param))
+                print(f"{i + 1:>5}  {param}")

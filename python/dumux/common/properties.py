@@ -62,29 +62,30 @@ def typePropertyToString(propertyName, typeTagName, typeArg):
     """Converts a Type Property to a string"""
 
     propertyString = "template<class TypeTag>\n"
-    propertyString += "struct {}<TypeTag, TTag::{}>\n{{\n".format(propertyName, typeTagName)
+    propertyString += f"struct {propertyName}<TypeTag, TTag::{typeTagName}>\n{{\n"
 
     if isinstance(typeArg, (float)):
-        propertyString += "    using type = {};\n".format("double")
+        propertyString += "    using type = double;\n"
     elif isinstance(typeArg, (int)):
-        propertyString += "    using type = {};\n".format("int")
+        propertyString += "    using type = int;\n"
     elif isinstance(typeArg, Property):
         if typeArg.requiredPropertyTypes or typeArg.requiredPropertyValues:
             propertyString += "private:\n"
         if typeArg.requiredPropertyTypes is not None:
             for reqProp in typeArg.requiredPropertyTypes:
-                propertyString += "    using {} = {};\n".format(
-                    reqProp, "GetPropType<TypeTag, Properties::{}>".format(reqProp)
+                propertyString += (
+                    f"    using {reqProp} = " f"GetPropType<TypeTag, Properties::{reqProp}>;\n"
                 )
         if typeArg.requiredPropertyValues is not None:
             for reqProp in typeArg.requiredPropertyValues:
                 reqPropLowerCase = reqProp[0].lower() + reqProp[1:]
-                propertyString += "    static constexpr auto {} = {};\n".format(
-                    reqPropLowerCase, "getPropValue<TypeTag, Properties::{}>()".format(reqProp)
+                propertyString += (
+                    f"    static constexpr auto {reqPropLowerCase} = "
+                    f"getPropValue<TypeTag, Properties::{reqProp}>();\n"
                 )
 
         propertyString += "public:\n"
-        propertyString += "    using type = {};\n".format(typeArg.cppType)
+        propertyString += f"    using type = {typeArg.cppType};\n"
 
     propertyString += "};"
 
@@ -95,7 +96,7 @@ def valuePropertyToString(propertyName, typeTagName, value):
     """Converts a Value Property to a string"""
 
     propertyString = "template<class TypeTag>\n"
-    propertyString += "struct {}<TypeTag, TTag::{}>\n{{".format(propertyName, typeTagName)
+    propertyString += f"struct {propertyName}<TypeTag, TTag::{typeTagName}>\n{{"
 
     # make sure to get the correct C++ types and values
     if isinstance(value, bool):
@@ -172,7 +173,7 @@ class TypeTag:
         self.gridGeometry = gridGeometry
         self.name = name
 
-        if self.name in _typeTags.keys():
+        if self.name in _typeTags:
             if inheritsFrom is not None:
                 raise ValueError(
                     f"Existing TypeTag {name} cannot inherit from other TypeTags."
@@ -189,15 +190,15 @@ class TypeTag:
                 if not isinstance(parentTypeTag, TypeTag):
                     if not isinstance(parentTypeTag, str):
                         raise ValueError(
-                            "Unknown parent TypeTag {}. Use either argument of type TypeTag "
+                            f"Unknown parent TypeTag {parentTypeTag}. "
+                            "Use either argument of type TypeTag "
                             "or a string for an existing TypeTag. "
-                            "List of existing TypeTags: {}".format(parentTypeTag, _typeTags.keys())
+                            f"List of existing TypeTags: {_typeTags.keys()}"
                         )
                     if parentTypeTag not in _typeTags.keys():
                         raise ValueError(
-                            "Unknown TypeTag {}. List of existing TypeTags: {}".format(
-                                parentTypeTag, _typeTags.keys()
-                            )
+                            f"Unknown TypeTag {parentTypeTag}. "
+                            f"List of existing TypeTags: {_typeTags.keys()}"
                         )
                     self.inheritsFrom[idx] = TypeTag(parentTypeTag)
 
@@ -237,14 +238,14 @@ class TypeTag:
     def cppHeader(self):
         """creates a string resembling a properties.hh file"""
 
-        file = "#ifndef DUMUX_{}_PROPERTIES_HH\n".format(self.name.upper())
-        file += "#define DUMUX_{}_PROPERTIES_HH\n\n".format(self.name.upper())
+        file = f"#ifndef DUMUX_{self.name.upper()}_PROPERTIES_HH\n"
+        file += f"#define DUMUX_{self.name.upper()}_PROPERTIES_HH\n\n"
 
         file += "#include <dumux/common/properties.hh>\n"
 
         for include in self.includes:
             assert "<" not in include
-            file += "#include <{}>\n".format(include)
+            file += f"#include <{include}>\n"
 
         file += "\n"
 
@@ -254,7 +255,7 @@ class TypeTag:
         if self.inheritsFrom is not None:
             for otherTypeTag in self.inheritsFrom:
                 if not otherTypeTag.isExistingTypeTag:
-                    file += "struct {}{{}}; \n".format(otherTypeTag.name)
+                    file += f"struct {otherTypeTag.name} {{}}; \n"
 
             args = ",".join(x.name for x in self.inheritsFrom)
         else:

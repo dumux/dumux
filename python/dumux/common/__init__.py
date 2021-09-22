@@ -23,15 +23,13 @@ def _createFVProblemDecorator(gridGeometry, enableInternalDirichletConstraints=F
     """
 
     def createModule(numEq):
-        priVarType = "Dune::FieldVector<double, {}>".format(numEq)
+        priVarType = f"Dune::FieldVector<double, {numEq}>"
         ggType = gridGeometry._typeName
         enableIntDirConstraint = "true" if enableInternalDirichletConstraints else "false"
-        problemType = "Dumux::Python::FVProblem<{}, {}, {}>".format(
-            ggType, priVarType, enableIntDirConstraint
-        )
+        problemType = f"Dumux::Python::FVProblem<{ggType}, {priVarType}, {enableIntDirConstraint}>"
         includes = gridGeometry._includes + ["dumux/python/common/fvproblem.hh"]
         moduleName = "fvproblem_" + hashIt(problemType)
-        holderType = "std::shared_ptr<{}>".format(problemType)
+        holderType = f"std::shared_ptr<{problemType}>"
         generator = SimpleGenerator("FVProblem", "Dumux::Python")
         module = generator.load(includes, problemType, moduleName, options=[holderType])
         return module
@@ -57,12 +55,12 @@ def _createBoundaryTypes(numEq=1):
     """Create BoundaryTypes instances"""
 
     # only compile this once per numEq
-    cacheKey = "BoundaryTypes_{}".format(numEq)
+    cacheKey = f"BoundaryTypes_{numEq}"
     try:
         return globals()[cacheKey]()
     except KeyError:
         includes = ["dumux/python/common/boundarytypes.hh"]
-        typeName = "Dumux::BoundaryTypes<{}>".format(numEq)
+        typeName = f"Dumux::BoundaryTypes<{numEq}>"
         moduleName = "boundarytypes_" + hashIt(typeName)
         generator = SimpleGenerator("BoundaryTypes", "Dumux::Python")
         module = generator.load(includes, typeName, moduleName)

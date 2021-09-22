@@ -45,9 +45,8 @@ def checkCppVersion():
     if LooseVersion(result) < LooseVersion(requiredversion):
         print("-- An error occured while checking for prerequistes.")
         raise Exception(
-            "g++ greater than or equal to {} is required for dumux releases >=3.2!".format(
-                requiredversion
-            )
+            f"g++ greater than or equal to {requiredversion} "
+            "is required for dumux releases >=3.2!"
         )
 
 
@@ -106,7 +105,7 @@ showMessage("(1/3) Checking all prerequistes: " + " ".join(programs) + "...")
 for program in programs:
     if find_executable(program) is None:
         print("-- An error occured while checking for prerequistes.")
-        raise Exception("Program {} has not been found.".format(program))
+        raise Exception(f"Program {program} has not been found.")
 
 if find_executable("paraview") is None:
     print(
@@ -133,11 +132,11 @@ showMessage(
 
 # the core modules
 for module in ["common", "geometry", "grid", "localfunctions", "istl"]:
-    if not os.path.exists("dune-{}".format(module)):
-        gitClone("https://gitlab.dune-project.org/core/dune-{}.git".format(module), duneBranch)
+    if not os.path.exists(f"dune-{module}"):
+        gitClone(f"https://gitlab.dune-project.org/core/dune-{module}.git", duneBranch)
     else:
-        print("-- Skip cloning dune-{} because the folder already exists.".format(module))
-        gitSetBranch("dune-{}".format(module), duneBranch)
+        print(f"-- Skip cloning dune-{module} because the folder already exists.")
+        gitSetBranch(f"dune-{module}", duneBranch)
 
 # dumux
 if not os.path.exists("dumux"):

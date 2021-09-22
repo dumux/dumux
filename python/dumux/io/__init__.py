@@ -11,9 +11,7 @@ def _createVtkOutputModule(*, gridVariables, solutionVector, name):
 
     includes = gridVariables._includes + solutionVector._includes
     includes += ["dumux/python/io/vtkoutputmodule.hh", "dumux/io/vtkoutputmodule.hh"]
-    typeName = "Dumux::VtkOutputModule<{}, {}>".format(
-        gridVariables._typeName, solutionVector._typeName
-    )
+    typeName = f"Dumux::VtkOutputModule<{gridVariables._typeName}, {solutionVector._typeName}>"
     moduleName = "vtkoutputmodule_" + hashIt(typeName)
     generator = SimpleGenerator("VtkOutputModule", "Dumux::Python")
     module = generator.load(includes, typeName, moduleName, preamble=gridVariables.model.cppHeader)
