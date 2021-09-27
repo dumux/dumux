@@ -137,7 +137,7 @@ public:
     template<class SolutionVector>
     void updateMaterialInterfaces(const SolutionVector& x)
     {
-        if (GridGeometry::discMethod == DiscretizationMethod::box)
+        if (GridGeometry::discMethod == DiscretizationMethods::box)
             materialInterfaces_ = std::make_unique<MaterialInterfaces>(this->gridGeometry(), *this, x);
     }
 

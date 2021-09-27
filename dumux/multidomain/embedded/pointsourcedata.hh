@@ -56,7 +56,7 @@ class PointSourceData
 
     template<std::size_t id>
     static constexpr bool isBox()
-    { return GridGeometry<id>::discMethod == DiscretizationMethod::box; }
+    { return GridGeometry<id>::discMethod == DiscretizationMethods::box; }
 
 public:
     void addBulkInterpolation(const ShapeValues& shapeValues,
@@ -165,7 +165,7 @@ class PointSourceDataCircleAverage : public PointSourceData<MDTraits>
 
     template<std::size_t id>
     static constexpr bool isBox()
-    { return GridGeometry<id>::discMethod == DiscretizationMethod::box; }
+    { return GridGeometry<id>::discMethod == DiscretizationMethods::box; }
 
 public:
     PointSourceDataCircleAverage() : enableBulkCircleInterpolation_(false) {}

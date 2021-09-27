@@ -147,7 +147,7 @@ public:
         initGasSaturation_      = getParam<Scalar>("Problem.InitialGasSaturation");
         initSalinity_          = getParam<Scalar>("Problem.InitialSalinity");
 
-        unsigned int codim = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box ? dim : 0;
+        unsigned int codim = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethods::box ? dim : 0;
 
         permeability_.resize(gridGeometry->gridView().size(codim));
         FluidSystem::init(/*Tmin=*/temperatureLow_,

@@ -112,7 +112,7 @@ int main(int argc, char** argv)
 
     // the problem (initial and boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    const std::string paramGroup = GridGeometry::discMethod == DiscretizationMethod::ccmpfa ? "MpfaTest" : "";
+    const std::string paramGroup = GridGeometry::discMethod == DiscretizationMethods::ccmpfa ? "MpfaTest" : "";
     auto problem = std::make_shared<Problem>(gridGeometry, paramGroup);
 
     // get some time loop parameters

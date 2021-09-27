@@ -58,7 +58,7 @@ class NonEquilibriumGridVariables
     static constexpr auto dim = ParentType::GridGeometry::GridView::dimension; // Grid and world dimension
     static constexpr auto dimWorld = ParentType::GridGeometry::GridView::dimensionworld;
     static constexpr int numPhases = ParentType::VolumeVariables::numFluidPhases();
-    static constexpr bool isBox = ParentType::GridGeometry::discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = ParentType::GridGeometry::discMethod == DiscretizationMethods::box;
 
 public:
     //! Export the type used for scalar values

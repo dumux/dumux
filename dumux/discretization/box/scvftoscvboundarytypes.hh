@@ -44,7 +44,7 @@ public:
     void computeBoundaryTypes(const Problem& problem)
     {
         // only do something for box
-        if (discMethod == DiscretizationMethod::box)
+        if (discMethod == DiscretizationMethods::box)
         {
             const auto& gridGeometry = problem.gridGeometry();
             scvBoundaryTypes.resize(gridGeometry.vertexMapper().size());
@@ -81,7 +81,7 @@ public:
     template<class SubControlVolume>
     const BoundaryTypes& boundaryTypes(const SubControlVolume& scv) const
     {
-        if (discMethod == DiscretizationMethod::box)
+        if (discMethod == DiscretizationMethods::box)
             return scvBoundaryTypes[scv.dofIndex()];
         else
             DUNE_THROW(Dune::InvalidStateException, "Only use this for the box discretization!");

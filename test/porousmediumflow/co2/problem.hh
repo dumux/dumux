@@ -129,7 +129,7 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
 
     // the discretization method we are using
     static constexpr auto discMethod = GetPropType<TypeTag, Properties::GridGeometry>::discMethod;
-    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethods::box;
 
     // world dimension to access gravity vector
     static constexpr int dimWorld = GridView::dimensionworld;

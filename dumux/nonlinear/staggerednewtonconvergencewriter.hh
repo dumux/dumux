@@ -59,7 +59,7 @@ class StaggeredNewtonConvergenceWriter : public ConvergenceWriterInterface<Solut
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    static_assert(GridGeometry::discMethod == DiscretizationMethod::staggered,
+    static_assert(GridGeometry::discMethod == DiscretizationMethods::staggered,
                   "This convergence writer does only work for the staggered method, use the NewtonConvergenceWriter instead");
 public:
     /*!

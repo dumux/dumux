@@ -85,7 +85,7 @@ class Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Kernel>
 
     template<std::size_t id>
     static constexpr bool isBox()
-    { return GridGeometry<id>::discMethod == DiscretizationMethod::box; }
+    { return GridGeometry<id>::discMethod == DiscretizationMethods::box; }
 
     static_assert(!isBox<bulkIdx>() && !isBox<lowDimIdx>(), "The kernel coupling method is only implemented for the tpfa method");
     static_assert(Dune::Capabilities::isCartesian<typename GridView<bulkIdx>::Grid>::v, "The kernel coupling method is only implemented for structured grids");

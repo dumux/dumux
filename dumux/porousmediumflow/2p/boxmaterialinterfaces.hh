@@ -69,7 +69,7 @@ public:
                 const SolutionVector& x)
     {
         // make sure this is only called for geometries of the box method!
-        if (GridGeometry::discMethod != DiscretizationMethod::box)
+        if (GridGeometry::discMethod != DiscretizationMethods::box)
             DUNE_THROW(Dune::InvalidStateException, "Determination of the interface material parameters with "
                                                     "this class only makes sense when using the box method!");
 

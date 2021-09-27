@@ -35,7 +35,7 @@ namespace Dumux {
  * \brief Helper function to generate Jacobian pattern for the box method
  */
 template<bool isImplicit, class GridGeometry,
-         typename std::enable_if_t<(GridGeometry::discMethod == DiscretizationMethod::box), int> = 0>
+         typename std::enable_if_t<(GridGeometry::discMethod == DiscretizationMethods::box), int> = 0>
 Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
 {
     const auto numDofs = gridGeometry.numDofs();
@@ -84,8 +84,8 @@ Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
  * \brief Helper function to generate Jacobian pattern for cell-centered methods
  */
 template<bool isImplicit, class GridGeometry,
-         typename std::enable_if_t<( (GridGeometry::discMethod == DiscretizationMethod::cctpfa)
-                                     || (GridGeometry::discMethod == DiscretizationMethod::ccmpfa) ), int> = 0>
+         typename std::enable_if_t<( (GridGeometry::discMethod == DiscretizationMethods::cctpfa)
+                                     || (GridGeometry::discMethod == DiscretizationMethods::ccmpfa) ), int> = 0>
 Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
 {
     const auto numDofs = gridGeometry.numDofs();
@@ -118,7 +118,7 @@ Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
  * \brief Helper function to generate Jacobian pattern for the staggered method
  */
 template<bool isImplicit, class GridGeometry,
-         typename std::enable_if_t<( (GridGeometry::discMethod == DiscretizationMethod::staggered) ), int> = 0>
+         typename std::enable_if_t<( (GridGeometry::discMethod == DiscretizationMethods::staggered) ), int> = 0>
 auto getJacobianPattern(const GridGeometry& gridGeometry)
 {
     // resize the jacobian and the residual
@@ -200,7 +200,7 @@ Dune::MatrixIndexSet getFEJacobianPattern(const FEBasis& feBasis)
  *       in fem is the same independent of the time discretization scheme.
  */
 template<bool isImplicit, class GridGeometry,
-         typename std::enable_if_t<(GridGeometry::discMethod == DiscretizationMethod::fem), int> = 0>
+         typename std::enable_if_t<(GridGeometry::discMethod == DiscretizationMethods::fem), int> = 0>
 Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
 { return getFEJacobianPattern(gridGeometry.feBasis()); }
 
@@ -209,7 +209,7 @@ Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
  * \brief Helper function to generate Jacobian pattern for the face-centered staggered method
  */
 template<bool isImplicit, class GridGeometry,
-         typename std::enable_if_t<( (GridGeometry::discMethod == DiscretizationMethod::fcstaggered) ), int> = 0>
+         typename std::enable_if_t<( (GridGeometry::discMethod == DiscretizationMethods::fcstaggered) ), int> = 0>
 Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
 {
     // resize the jacobian and the residual

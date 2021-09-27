@@ -69,7 +69,7 @@ class TwoPTwoCChemicalNonequilibriumProblem : public PorousMediumFlowProblem<Typ
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethods::box;
     enum { dofCodim = isBox ? dim : 0 };
 public:
     TwoPTwoCChemicalNonequilibriumProblem(std::shared_ptr<const GridGeometry> gridGeometry)

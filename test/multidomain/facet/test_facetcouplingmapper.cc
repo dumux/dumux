@@ -113,7 +113,7 @@ auto makeBulkFVGridGeometry(const GridManager& gridManager,
     * we have to create additional faces on interior boundaries, which are not
     * created in the standard scheme.
     */
-    if constexpr (BulkGridGeometry::discMethod == Dumux::DiscretizationMethod::box)
+    if constexpr (BulkGridGeometry::discMethod == Dumux::DiscretizationMethods::box)
     {
         using BulkFacetGridAdapter = Dumux::CodimOneGridAdapter<typename GridManager::Embeddings>;
         BulkFacetGridAdapter facetGridAdapter(gridManager.getEmbeddings());
@@ -226,7 +226,7 @@ int main (int argc, char *argv[])
                 const auto lowDimElemDofIndices = [&] ()
                 {
                     std::vector< typename FacetGridView::IndexSet::IndexType > dofIndices;
-                    if (FacetFVGridGeometry::discMethod == Dumux::DiscretizationMethod::cctpfa)
+                    if (FacetFVGridGeometry::discMethod == Dumux::DiscretizationMethods::cctpfa)
                         dofIndices.push_back(lowDimElemIdx);
                     else
                         for (int i = 0; i < lowDimGeom.corners(); ++i)

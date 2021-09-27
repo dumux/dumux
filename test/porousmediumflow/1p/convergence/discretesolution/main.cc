@@ -50,7 +50,7 @@ int main(int argc, char** argv)
     using namespace Dumux;
     using TypeTag = Properties::TTag::TYPETAG;
     static constexpr auto dm = GetPropType<TypeTag, Properties::GridGeometry>::discMethod;
-    static constexpr bool isBox = dm == DiscretizationMethod::box;
+    static constexpr bool isBox = dm == DiscretizationMethods::box;
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
