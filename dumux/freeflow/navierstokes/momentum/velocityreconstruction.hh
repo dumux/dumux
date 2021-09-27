@@ -39,7 +39,7 @@ struct StaggeredVelocityReconstruction
     static auto cellCenterVelocity(const VelocityHelper& getFaceVelocity,
                                    const FVElementGeometry& fvGeometry)
     {
-        static_assert(FVElementGeometry::GridGeometry::discMethod == DiscretizationMethod::cctpfa);
+        static_assert(FVElementGeometry::GridGeometry::discMethod == DiscretizationMethods::cctpfa);
         using VelocityVector = typename FVElementGeometry::GridGeometry::GlobalCoordinate;
         VelocityVector result(0.0);
 

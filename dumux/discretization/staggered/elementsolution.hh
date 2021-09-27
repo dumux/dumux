@@ -60,7 +60,7 @@ using StaggeredElementSolution = Dune::BlockVector<PrimaryVariables>;
  */
 template<class FVElementGeometry, class PrimaryVariables>
 auto elementSolution(PrimaryVariables&& priVars)
--> std::enable_if_t<FVElementGeometry::GridGeometry::discMethod == DiscretizationMethod::staggered,
+-> std::enable_if_t<FVElementGeometry::GridGeometry::discMethod == DiscretizationMethods::staggered,
                     StaggeredElementSolution<PrimaryVariables>>
 {
     return StaggeredElementSolution<PrimaryVariables>({std::move(priVars)});

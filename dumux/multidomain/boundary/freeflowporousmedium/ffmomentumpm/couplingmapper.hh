@@ -61,11 +61,11 @@ class FreeFlowMomentumPorousMediumCouplingMapper
 
     template<std::size_t i>
     static constexpr bool isFcStaggered()
-    { return GridGeometry<i>::discMethod == DiscretizationMethod::fcstaggered; }
+    { return GridGeometry<i>::discMethod == DiscretizationMethods::fcstaggered; }
 
     template<std::size_t i>
     static constexpr bool isCCTpfa()
-    { return GridGeometry<i>::discMethod == DiscretizationMethod::cctpfa; }
+    { return GridGeometry<i>::discMethod == DiscretizationMethods::cctpfa; }
 
     struct ScvfInfoPM
     {

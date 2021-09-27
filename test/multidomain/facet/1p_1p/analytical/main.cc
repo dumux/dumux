@@ -133,7 +133,7 @@ auto makeBulkFVGridGeometry(const GridManager& gridManager,
     * we have to create additional faces on interior boundaries, which are not
     * created in the standard scheme.
     */
-    if constexpr (BulkGridGeometry::discMethod == Dumux::DiscretizationMethod::box)
+    if constexpr (BulkGridGeometry::discMethod == Dumux::DiscretizationMethods::box)
     {
         using BulkFacetGridAdapter = Dumux::CodimOneGridAdapter<typename GridManager::Embeddings>;
         BulkFacetGridAdapter facetGridAdapter(gridManager.getEmbeddings());
@@ -233,7 +233,7 @@ int main(int argc, char** argv)
     lowDimGridVariables->init(x[lowDimId]);
 
     // intialize the vtk output modulell
-    const auto bulkDM = BulkFVGridGeometry::discMethod == DiscretizationMethod::box ? Dune::VTK::nonconforming : Dune::VTK::conforming;
+    const auto bulkDM = BulkFVGridGeometry::discMethod == DiscretizationMethods::box ? Dune::VTK::nonconforming : Dune::VTK::conforming;
     using BulkSolutionVector = std::decay_t<decltype(x[bulkId])>;
     using LowDimSolutionVector = std::decay_t<decltype(x[lowDimId])>;
     VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, x[bulkId], bulkProblem->name(), "Bulk", bulkDM);
@@ -257,7 +257,7 @@ int main(int argc, char** argv)
 
         for (const auto& element : elements(bulkFvGridGeometry->gridView()))
         {
-            if (BulkFVGridGeometry::discMethod == DiscretizationMethod::box)
+            if (BulkFVGridGeometry::discMethod == DiscretizationMethods::box)
                 for (int i = 0; i < element.geometry().corners(); ++i)
                     bulkExact[ bulkFvGridGeometry->vertexMapper().subIndex(element, i, BulkGrid::dimension) ]
                             = bulkProblem->exact( element.template subEntity<BulkGrid::dimension>(i).geometry().center() );
@@ -267,7 +267,7 @@ int main(int argc, char** argv)
 
         for (const auto& element : elements(lowDimFvGridGeometry->gridView()))
         {
-            if (LowDimFVGridGeometry::discMethod == DiscretizationMethod::box)
+            if (LowDimFVGridGeometry::discMethod == DiscretizationMethods::box)
                 for (int i = 0; i < element.geometry().corners(); ++i)
                     lowDimExact[ lowDimFvGridGeometry->vertexMapper().subIndex(element, i, LowDimGrid::dimension) ]
                             = lowDimProblem->exact( element.template subEntity<LowDimGrid::dimension>(i).geometry().center() );

@@ -54,7 +54,7 @@
 
 //! Function to write out the scv-wise velocities (overload for mpfa)
 template<class GridGeometry, class GridVariables, class Sol,
-         std::enable_if_t<GridGeometry::discMethod == Dumux::DiscretizationMethod::ccmpfa, int> = 0>
+         std::enable_if_t<GridGeometry::discMethod == Dumux::DiscretizationMethods::ccmpfa, int> = 0>
 void writeMpfaVelocities(const GridGeometry& gridGeometry,
                          const GridVariables& gridVariables,
                          const Sol& x)
@@ -70,7 +70,7 @@ void writeMpfaVelocities(const GridGeometry& gridGeometry,
 
 //! Function to write out the scv-wise velocities (overload for NOT mpfa)
 template<class GridGeometry, class GridVariables, class Sol,
-         std::enable_if_t<GridGeometry::discMethod != Dumux::DiscretizationMethod::ccmpfa, int> = 0>
+         std::enable_if_t<GridGeometry::discMethod != Dumux::DiscretizationMethods::ccmpfa, int> = 0>
 void writeMpfaVelocities(const GridGeometry& gridGeometry,
                          const GridVariables& gridVariables,
                          const Sol& x)
@@ -161,7 +161,7 @@ int main(int argc, char** argv)
         using VelocityVector = typename VelocityOutput::VelocityVector;
         VelocityVector velocity;
 
-        constexpr bool isBox = GridGeometry::discMethod == Dumux::DiscretizationMethod::box;
+        constexpr bool isBox = GridGeometry::discMethod == Dumux::DiscretizationMethods::box;
         constexpr int dimWorld = GridGeometry::GridView::dimensionworld;
         const auto numCells = leafGridView.size(0);
         const auto numDofs = gridGeometry->numDofs();

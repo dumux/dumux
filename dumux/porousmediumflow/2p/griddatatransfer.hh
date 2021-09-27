@@ -81,7 +81,7 @@ class TwoPGridDataTransfer : public GridDataTransfer<GetPropType<TypeTag, Proper
 
     static constexpr int dim = Grid::dimension;
     static constexpr int dimWorld = Grid::dimensionworld;
-    static constexpr bool isBox = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethods::box;
 
     // saturation primary variable index
     enum { saturationIdx = Indices::saturationIdx };

@@ -43,7 +43,7 @@ void assembleInitialSolution(SolutionVector& sol, const Problem& problem)
     using GridGeometry = std::decay_t<decltype(gg)>;
 
     // box method
-    if constexpr (GridGeometry::discMethod == DiscretizationMethod::box)
+    if constexpr (GridGeometry::discMethod == DiscretizationMethods::box)
     {
         constexpr int dim = GridGeometry::GridView::dimension;
         const auto numDofs = gg.vertexMapper().size();
@@ -79,7 +79,7 @@ void assembleInitialSolution(SolutionVector& sol, const Problem& problem)
     }
 
     // staggered methods
-    else if constexpr (GridGeometry::discMethod == DiscretizationMethod::staggered)
+    else if constexpr (GridGeometry::discMethod == DiscretizationMethods::staggered)
     {
         problem.applyInitialSolution(sol);
     }
