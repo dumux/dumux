@@ -239,9 +239,53 @@ struct NavierStokesMomentumBoundaryFluxHelper
         const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
         const auto& orthogonalScv = fvGeometry.scv(orthogonalScvf.insideScvIdx());
 
-        if (scvf.boundary() && problem.onSlipBoundary(fvGeometry, fvGeometry.frontalScvfOnBoundary(orthogonalScv)))
+        // the scvf either has the slip boundary in normal direction, tangential direction, or both directions
+        const bool normalToSlip = scvf.boundary() && problem.onSlipBoundary(fvGeometry, fvGeometry.frontalScvfOnBoundary(orthogonalScv));
+        const bool tangentialToSlip = scv.boundary() && problem.onSlipBoundary(fvGeometry, fvGeometry.frontalScvfOnBoundary(scv));
+
+        if (normalToSlip && tangentialToSlip)
         {
             /*
+            *                     ---------####### *            x dof position   ***** porous boundary at bottom
+            *       slip          |      ||      | *
+            *       gradient      |      ||      | * velI       -- element
+            *       ------->      |      || scv  x~~~~>
+            *       ------>       |      ||      | *            O position at which gradient is evaluated (integration point)
+            *       ----->        | velJ ^       | ^ vSlipJ
+            *       ---->         -------|-######O |              *
+            *                     ************** ~~~~~>         *** porous slip boundaries
+            *                      frontal scvf  vSlipI
+            *                      on porous                    || and # staggered half-control-volume (own element)
+            *                      boundary
+            *
+            *          There are slip velocities
+            *            in both directions (BJS)!
+            */
+
+            // du/dy + dv/dx = betaI vSlipI; where beta = alpha/sqrt(K)
+            // du/dy + dv/dx = betaJ vSlipJ;
+            // if beta is constant, that means the slip velocities have to be equal
+            // --> vSlip = (ΔI velI + ΔJ velJ)/(ΔI ΔJ beta + ΔI + ΔJ)
+
+            const Scalar velI = elemVolVars[scvf.insideScvIdx()].velocity();
+            const Scalar velJ = elemVolVars[orthogonalScvf.insideScvIdx()].velocity();
+            const Scalar mu = problem.effectiveViscosity(fvGeometry.element(), fvGeometry, scvf);
+            const Scalar distanceI = (scv.dofPosition() - scvf.ipGlobal()).two_norm();
+            const Scalar distanceJ = (fvGeometry.scv(orthogonalScvf.insideScvIdx()).dofPosition() - scvf.ipGlobal()).two_norm();
+            typename FVElementGeometry::Element::Geometry::GlobalCoordinate orientation;
+            orientation[scv.dofAxis()] = 1.0;
+            const Scalar beta = problem.betaBJ(fvGeometry, scvf, orientation);
+            const auto vSlip = (distanceI*velI + distanceJ*velJ)/(distanceI*distanceJ*beta + distanceI + distanceJ);
+
+            const Scalar velGradIJ = (vSlip - velI) / distanceI * scvf.directionSign();
+            const Scalar velGradJI = (vSlip - velJ) / distanceJ * scvf.directionSign();
+
+            flux[scv.dofAxis()] -= (mu * (velGradIJ + velGradJI))*scvf.directionSign();
+        }
+
+        else if (normalToSlip)
+        {
+           /*
             *                     ---------#######:::::::::     x dof position   ***** porous boundary at bottom
             *       slip          |      ||      |       ::
             *       gradient      |      ||      |  velI ::     -- element
@@ -312,7 +356,8 @@ struct NavierStokesMomentumBoundaryFluxHelper
                 flux[scv.dofAxis()] += transportingVelocity * transportedMomentum * scvf.directionSign();
             }
         }
-        else if (scv.boundary() && problem.onSlipBoundary(fvGeometry, fvGeometry.frontalScvfOnBoundary(scv)))
+
+        else if (tangentialToSlip)
         {
             /*                                    *
             *                     ---------#######*           x dof position   ***** porous boundary at right side
