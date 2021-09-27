@@ -55,7 +55,7 @@ public:
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethods::box;
     static constexpr std::size_t numEq = static_cast<std::size_t>(PrimaryVariables::dimension);
     using BoundaryTypes = Dumux::BoundaryTypes<PrimaryVariables::dimension>;
 

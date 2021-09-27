@@ -79,11 +79,11 @@ class PoroMechanicsCouplingManager : public virtual CouplingManager< MDTraits >
                   "The grid types of the two sub-problems have to be equal!");
 
     //! this coupling manager is for cc - box only
-    static_assert(GridGeometry<PoroMechId>::discMethod == DiscretizationMethod::box,
+    static_assert(GridGeometry<PoroMechId>::discMethod == DiscretizationMethods::box,
                   "Poro-mechanical problem must be discretized with the box scheme for this coupling manager!");
 
-    static_assert(GridGeometry<PMFlowId>::discMethod == DiscretizationMethod::cctpfa ||
-                  GridGeometry<PMFlowId>::discMethod == DiscretizationMethod::ccmpfa,
+    static_assert(GridGeometry<PMFlowId>::discMethod == DiscretizationMethods::cctpfa ||
+                  GridGeometry<PMFlowId>::discMethod == DiscretizationMethods::ccmpfa,
                   "Porous medium flow problem must be discretized with a cell-centered scheme for this coupling manager!");
 
     //! this does not work for enabled grid volume variables caching (update of local view in context has no effect)

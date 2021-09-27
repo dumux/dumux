@@ -63,7 +63,7 @@ auto makeBulkFVGridGeometry(const GridManager& gridManager,
     * we have to create additional faces on interior boundaries, which are not
     * created in the standard scheme.
     */
-    if constexpr (BulkGridGeometry::discMethod == Dumux::DiscretizationMethod::box)
+    if constexpr (BulkGridGeometry::discMethod == Dumux::DiscretizationMethods::box)
     {
         using BulkFacetGridAdapter = Dumux::CodimOneGridAdapter<typename GridManager::Embeddings>;
         BulkFacetGridAdapter facetGridAdapter(gridManager.getEmbeddings());

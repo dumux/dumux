@@ -62,7 +62,7 @@ struct NavierStokesMomentumBoundaryFluxHelper
                                           const bool zeroNormalVelocityGradient = true)
     {
         // TODO density upwinding?
-        static_assert(FVElementGeometry::GridGeometry::discMethod == DiscretizationMethod::fcstaggered);
+        static_assert(FVElementGeometry::GridGeometry::discMethod == DiscretizationMethods::fcstaggered);
         using NumEqVector = typename Problem::Traits::NumEqVector;
         constexpr std::size_t dim = static_cast<std::size_t>(FVElementGeometry::GridGeometry::GridView::dimension);
         static_assert(
@@ -213,7 +213,7 @@ struct NavierStokesMomentumBoundaryFluxHelper
                                          const ElementFluxVariablesCache& elemFluxVarsCache,
                                          const TangentialVelocityGradient& tangentialVelocityGradient = TangentialVelocityGradient(0.0))
     {
-        static_assert(FVElementGeometry::GridGeometry::discMethod == DiscretizationMethod::fcstaggered);
+        static_assert(FVElementGeometry::GridGeometry::discMethod == DiscretizationMethods::fcstaggered);
         using NumEqVector = typename Problem::Traits::NumEqVector;
         constexpr std::size_t dim = static_cast<std::size_t>(FVElementGeometry::GridGeometry::GridView::dimension);
         static_assert(

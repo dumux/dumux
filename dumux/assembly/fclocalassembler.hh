@@ -477,7 +477,7 @@ public:
                             }
 
                             // also consider lateral faces outside the own element for face-centered staggered schemes
-                            if constexpr (GridGeometry::discMethod == DiscretizationMethod::fcstaggered)
+                            if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcstaggered)
                             {
                                 if (scvf.isLateral())
                                 {
@@ -509,7 +509,7 @@ public:
                             }
 
                             // also consider lateral faces outside the own element for face-centered staggered schemes
-                            if constexpr (GridGeometry::discMethod == DiscretizationMethod::fcstaggered)
+                            if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcstaggered)
                             {
                                 if (scvf.isLateral())
                                 {
@@ -549,7 +549,7 @@ public:
                         }
 
                         // also consider lateral faces outside the own element for face-centered staggered schemes
-                        if constexpr (GridGeometry::discMethod == DiscretizationMethod::fcstaggered)
+                        if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcstaggered)
                         {
                             // treat normal/parallel scvs for parallel runs TODO description, put in function
                             if (problem.gridGeometry().gridView().comm().size() > 1 && element.partitionType() == Dune::InteriorEntity)

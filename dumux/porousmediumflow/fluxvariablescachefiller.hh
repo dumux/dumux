@@ -531,7 +531,7 @@ private:
         if constexpr (advectionEnabled)
         {
             using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
-            if constexpr (AdvectionType::discMethod == DiscretizationMethod::ccmpfa)
+            if constexpr (AdvectionType::discMethod == DiscretizationMethods::ccmpfa)
                 prepareAdvectionHandle_(iv, handle, forceUpdate);
         }
 
@@ -539,7 +539,7 @@ private:
         if constexpr (diffusionEnabled)
         {
             using DiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
-            if constexpr (DiffusionType::discMethod == DiscretizationMethod::ccmpfa)
+            if constexpr (DiffusionType::discMethod == DiscretizationMethods::ccmpfa)
                 prepareDiffusionHandles_(iv, handle, forceUpdate);
         }
 
@@ -547,7 +547,7 @@ private:
         if constexpr (heatConductionEnabled)
         {
             using HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>;
-            if constexpr (HeatConductionType::discMethod == DiscretizationMethod::ccmpfa)
+            if constexpr (HeatConductionType::discMethod == DiscretizationMethods::ccmpfa)
                 prepareHeatConductionHandle_(iv, handle, forceUpdate);
         }
     }

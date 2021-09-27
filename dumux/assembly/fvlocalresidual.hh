@@ -423,7 +423,7 @@ public:
 
     //! Compute the derivative of the flux residual
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<GetPropType<T, Properties::GridGeometry>::discMethod != DiscretizationMethod::box, void>
+    std::enable_if_t<GetPropType<T, Properties::GridGeometry>::discMethod != DiscretizationMethods::box, void>
     addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                             const Problem& problem,
                             const Element& element,
@@ -437,7 +437,7 @@ public:
 
     //! Compute the derivative of the flux residual for the box method
     template<class JacobianMatrix, class T = TypeTag>
-    std::enable_if_t<GetPropType<T, Properties::GridGeometry>::discMethod == DiscretizationMethod::box, void>
+    std::enable_if_t<GetPropType<T, Properties::GridGeometry>::discMethod == DiscretizationMethods::box, void>
     addFluxDerivatives(JacobianMatrix& A,
                             const Problem& problem,
                             const Element& element,

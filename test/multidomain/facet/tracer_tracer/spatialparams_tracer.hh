@@ -47,7 +47,7 @@ class TracerSpatialParams
     using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
                                            TracerSpatialParams<GridGeometry, Scalar>>;
 
-    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethods::box;
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Dune::FieldVector<Scalar, dimWorld>;
 

@@ -111,8 +111,8 @@ private:
  */
 template<class Element, class SolutionVector, class GridGeometry>
 auto elementSolution(const Element& element, const SolutionVector& sol, const GridGeometry& gg)
--> std::enable_if_t<GridGeometry::discMethod == DiscretizationMethod::cctpfa ||
-                    GridGeometry::discMethod == DiscretizationMethod::ccmpfa,
+-> std::enable_if_t<GridGeometry::discMethod == DiscretizationMethods::cctpfa ||
+                    GridGeometry::discMethod == DiscretizationMethods::ccmpfa,
                     CCElementSolution<typename GridGeometry::LocalView,
                                       std::decay_t<decltype(std::declval<SolutionVector>()[0])>>
                     >
@@ -127,8 +127,8 @@ auto elementSolution(const Element& element, const SolutionVector& sol, const Gr
  */
 template<class Element, class ElementVolumeVariables, class FVElementGeometry>
 auto elementSolution(const Element& element, const ElementVolumeVariables& elemVolVars, const FVElementGeometry& gg)
--> std::enable_if_t<FVElementGeometry::GridGeometry::discMethod == DiscretizationMethod::cctpfa ||
-                    FVElementGeometry::GridGeometry::discMethod == DiscretizationMethod::ccmpfa,
+-> std::enable_if_t<FVElementGeometry::GridGeometry::discMethod == DiscretizationMethods::cctpfa ||
+                    FVElementGeometry::GridGeometry::discMethod == DiscretizationMethods::ccmpfa,
                     CCElementSolution<FVElementGeometry, typename ElementVolumeVariables::VolumeVariables::PrimaryVariables>>
 {
     using PrimaryVariables = typename ElementVolumeVariables::VolumeVariables::PrimaryVariables;
@@ -142,8 +142,8 @@ auto elementSolution(const Element& element, const ElementVolumeVariables& elemV
  */
 template<class FVElementGeometry, class PrimaryVariables>
 auto elementSolution(PrimaryVariables&& priVars)
--> std::enable_if_t<FVElementGeometry::GridGeometry::discMethod == DiscretizationMethod::cctpfa ||
-                    FVElementGeometry::GridGeometry::discMethod == DiscretizationMethod::ccmpfa,
+-> std::enable_if_t<FVElementGeometry::GridGeometry::discMethod == DiscretizationMethods::cctpfa ||
+                    FVElementGeometry::GridGeometry::discMethod == DiscretizationMethods::ccmpfa,
                     CCElementSolution<FVElementGeometry, PrimaryVariables>>
 {
     return CCElementSolution<FVElementGeometry, PrimaryVariables>(std::move(priVars));
@@ -156,8 +156,8 @@ auto elementSolution(PrimaryVariables&& priVars)
  */
 template<class FVElementGeometry, class PrimaryVariables>
 auto elementSolution(const PrimaryVariables& priVars)
--> std::enable_if_t<FVElementGeometry::GridGeometry::discMethod == DiscretizationMethod::cctpfa ||
-                    FVElementGeometry::GridGeometry::discMethod == DiscretizationMethod::ccmpfa,
+-> std::enable_if_t<FVElementGeometry::GridGeometry::discMethod == DiscretizationMethods::cctpfa ||
+                    FVElementGeometry::GridGeometry::discMethod == DiscretizationMethods::ccmpfa,
                     CCElementSolution<FVElementGeometry, PrimaryVariables>>
 {
     return CCElementSolution<FVElementGeometry, PrimaryVariables>(priVars);

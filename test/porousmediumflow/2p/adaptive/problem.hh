@@ -47,7 +47,7 @@ class TwoPTestProblemAdaptive : public TwoPTestProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
-    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethods::box;
 
 public:
     TwoPTestProblemAdaptive(std::shared_ptr<const GridGeometry> gridGeometry)

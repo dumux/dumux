@@ -80,7 +80,7 @@ class BoxDfmVtkOutputModule : public VtkOutputModule<GridVariables, SolutionVect
     static_assert(dim > 1, "Box-Dfm output only works for dim > 1");
     static_assert(FractureGrid::dimension == int(dim-1), "Fracture grid must be of codimension one!");
     static_assert(FractureGrid::dimensionworld == int(dimWorld), "Fracture grid has to has the same coordinate dimension!");
-    static_assert(GridGeometry::discMethod == DiscretizationMethod::box, "Box-Dfm output module can only be used with the box scheme!");
+    static_assert(GridGeometry::discMethod == DiscretizationMethods::box, "Box-Dfm output module can only be used with the box scheme!");
 public:
 
     //! The constructor
