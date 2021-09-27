@@ -74,7 +74,7 @@ class DarcyDarcyBoundaryCouplingManager
 
     template<std::size_t i>
     static constexpr bool isCCTpfa()
-    { return GridGeometry<i>::discMethod == DiscretizationMethod::cctpfa; }
+    { return GridGeometry<i>::discMethod == DiscretizationMethods::cctpfa; }
 
     using CouplingStencil = std::vector<std::size_t>;
 public:

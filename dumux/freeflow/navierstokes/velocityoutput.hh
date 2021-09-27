@@ -76,7 +76,7 @@ public:
                            int phaseIdx) const override
     {
         using Problem = std::decay_t<decltype(elemVolVars.gridVolVars().problem())>;
-        if constexpr (Problem::momentumDiscretizationMethod == DiscretizationMethod::fcstaggered)
+        if constexpr (Problem::momentumDiscretizationMethod == DiscretizationMethods::fcstaggered)
             calculateVelocityForStaggeredGrid_(velocity, element, fvGeometry, elemVolVars);
     }
 

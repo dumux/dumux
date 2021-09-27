@@ -321,7 +321,7 @@ class VtkOutputModule : public VtkOutputModuleBase<typename GridVariables::GridG
     using Element = typename GridView::template Codim<0>::Entity;
     using VolVarsVector = Dune::FieldVector<Scalar, dimWorld>;
 
-    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethods::box;
     static constexpr int dofCodim = isBox ? dim : 0;
 
     struct VolVarScalarDataInfo { std::function<Scalar(const VV&)> get; std::string name; Dumux::Vtk::Precision precision_; };

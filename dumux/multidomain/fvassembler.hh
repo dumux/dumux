@@ -558,7 +558,7 @@ private:
     template<std::size_t i, class JacRow, class Sol, class GG>
     void enforcePeriodicConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Sol& res, const GG& gridGeometry, const Sol& curSol)
     {
-        if constexpr (GG::discMethod == DiscretizationMethod::box || GG::discMethod == DiscretizationMethod::fcstaggered)
+        if constexpr (GG::discMethod == DiscretizationMethods::box || GG::discMethod == DiscretizationMethods::fcstaggered)
         {
             for (const auto& m : gridGeometry.periodicVertexMap())
             {

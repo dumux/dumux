@@ -90,7 +90,7 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     static constexpr auto bulkGridId = CouplingMapper::template gridId<bulkDim>();
     static constexpr auto lowDimGridId = CouplingMapper::template gridId<lowDimDim>();
 
-    static constexpr bool lowDimUsesBox = GridGeometry<lowDimId>::discMethod == DiscretizationMethod::box;
+    static constexpr bool lowDimUsesBox = GridGeometry<lowDimId>::discMethod == DiscretizationMethods::box;
 
     /*!
      * \brief The coupling context of the bulk domain. Contains all data of the lower-

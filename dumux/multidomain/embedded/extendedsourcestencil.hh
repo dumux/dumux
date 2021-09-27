@@ -57,7 +57,7 @@ class ExtendedSourceStencil
 
     template<std::size_t id>
     static constexpr bool isBox()
-    { return GridGeometry<id>::discMethod == DiscretizationMethod::box; }
+    { return GridGeometry<id>::discMethod == DiscretizationMethods::box; }
 public:
     /*!
      * \brief extend the jacobian pattern of the diagonal block of domain i

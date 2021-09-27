@@ -414,7 +414,7 @@ private:
     void storeWallElementAndDirectionIndex_(const WallData& wallData)
     {
         // The wall Direction Index is used for flat quadrilateral channel problems only
-        if (!(GridGeometry::discMethod == DiscretizationMethod::staggered))
+        if (!(GridGeometry::discMethod == DiscretizationMethods::staggered))
             DUNE_THROW(Dune::NotImplemented, "The wall direction Index can only be calculated for quadrilateral structured grids");
 
         // If isFlatWallBounded, the corresonding wall element is stored for each element

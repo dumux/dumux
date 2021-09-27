@@ -71,8 +71,8 @@ class FVProblem
     using PointSourceMap = std::map< std::pair<std::size_t, std::size_t>,
                                      std::vector<PointSource> >;
 
-    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
-    static constexpr bool isStaggered = GridGeometry::discMethod == DiscretizationMethod::staggered;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethods::box;
+    static constexpr bool isStaggered = GridGeometry::discMethod == DiscretizationMethods::staggered;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;

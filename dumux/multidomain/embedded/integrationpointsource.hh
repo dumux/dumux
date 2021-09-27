@@ -123,7 +123,7 @@ public:
         {
             // get the index of the element in which the point source falls
             const auto eIdx = source.elementIndex();
-            if constexpr (GridGeometry::discMethod == DiscretizationMethod::box)
+            if constexpr (GridGeometry::discMethod == DiscretizationMethods::box)
             {
                 auto fvGeometry = localView(gridGeometry);
                 // check in which subcontrolvolume(s) we are

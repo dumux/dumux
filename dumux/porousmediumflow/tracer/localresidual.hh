@@ -237,7 +237,7 @@ public:
     }
 
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<GetPropType<T, Properties::GridGeometry>::discMethod != DiscretizationMethod::box, void>
+    std::enable_if_t<GetPropType<T, Properties::GridGeometry>::discMethod != DiscretizationMethods::box, void>
     addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                        const Problem& problem,
                        const Element& element,
@@ -246,7 +246,7 @@ public:
                        const ElementFluxVariablesCache& elemFluxVarsCache,
                        const SubControlVolumeFace& scvf) const
     {
-        if constexpr (FVElementGeometry::GridGeometry::discMethod != DiscretizationMethod::cctpfa)
+        if constexpr (FVElementGeometry::GridGeometry::discMethod != DiscretizationMethods::cctpfa)
             DUNE_THROW(Dune::NotImplemented, "Analytic flux differentiation only implemented for tpfa");
 
         // advective term: we do the same for all tracer components
@@ -299,7 +299,7 @@ public:
     }
 
     template<class JacobianMatrix, class T = TypeTag>
-    std::enable_if_t<GetPropType<T, Properties::GridGeometry>::discMethod == DiscretizationMethod::box, void>
+    std::enable_if_t<GetPropType<T, Properties::GridGeometry>::discMethod == DiscretizationMethods::box, void>
     addFluxDerivatives(JacobianMatrix& A,
                        const Problem& problem,
                        const Element& element,
