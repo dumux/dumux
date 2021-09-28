@@ -92,26 +92,15 @@ check-pipeline-status:
 
 #############################################
 # pipelines to be created in merge requests #
-full-dune-latest-release-gcc:
+test-trigger:
   extends: .base-trigger
-  variables:
-    IMAGE: $IMAGE_REGISTRY_URL/full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-20.04
-
-minimal-dune-latest-release-gcc:
-  extends: .base-trigger
-  variables:
-    IMAGE: $IMAGE_REGISTRY_URL/minimal:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-20.04
-
-full-dune-latest-release-clang:
-  extends: .base-trigger
-  variables:
-    IMAGE: $IMAGE_REGISTRY_URL/full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-clang-ubuntu-20.04
-
-full-dune-master-gcc-cpp-20:
-  extends: .base-trigger
-  variables:
-    IMAGE: $IMAGE_REGISTRY_URL/full:dune-master-gcc-ubuntu-22.04
-    CXX_MAX_STANDARD: "20"
+  parallel:
+    matrix:
+      - IMAGE: ['$IMAGE_REGISTRY_URL/full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-20.04',
+                '$IMAGE_REGISTRY_URL/minimal:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-20.04',
+                '$IMAGE_REGISTRY_URL/full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-clang-ubuntu-20.04']
+      - IMAGE: '$IMAGE_REGISTRY_URL/full:dune-master-gcc-ubuntu-22.04'
+        CXX_MAX_STANDARD: "20"
 
 ##################################
 # additional scheduled pipelines #
