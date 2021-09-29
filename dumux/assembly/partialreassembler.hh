@@ -34,6 +34,7 @@
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/parallel/vectorcommdatahandle.hh>
+#include <dumux/common/gridcapabilities.hh>
 
 #include "entitycolor.hh"
 
@@ -184,9 +185,12 @@ public:
         // the red vertex for yellow border vertices
         VectorCommDataHandleMin<VertexMapper, std::vector<EntityColor>, dim>
             minHandle(vertexMapper, vertexColor_);
-        gridView.communicate(minHandle,
-                             Dune::InteriorBorder_InteriorBorder_Interface,
-                             Dune::ForwardCommunication);
+        if constexpr (Detail::canCommunicate<typename GridGeometry::GridView::Traits::Grid, dim>)
+            gridView.communicate(minHandle,
+                                 Dune::InteriorBorder_InteriorBorder_Interface,
+                                 Dune::ForwardCommunication);
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Cannot call computeColors on multiple processes for a grid that cannot communicate codim-" << dim << "-entities.");
 
         // mark yellow elements
         for (const auto& element : elements(gridView))
@@ -238,9 +242,12 @@ public:
         // demote the border orange vertices
         VectorCommDataHandleMax<VertexMapper, std::vector<EntityColor>, dim>
             maxHandle(vertexMapper, vertexColor_);
-        gridView.communicate(maxHandle,
-                             Dune::InteriorBorder_InteriorBorder_Interface,
-                             Dune::ForwardCommunication);
+        if constexpr (Detail::canCommunicate<typename GridGeometry::GridView::Traits::Grid, dim>)
+            gridView.communicate(maxHandle,
+                                 Dune::InteriorBorder_InteriorBorder_Interface,
+                                 Dune::ForwardCommunication);
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Cannot call computeColors on multiple processes for a grid that cannot communicate codim-" << dim << "-entities.");
 
         // promote the remaining orange vertices to red
         for (unsigned int i=0; i < vertexColor_.size(); ++i) {
