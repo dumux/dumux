@@ -247,9 +247,9 @@ public:
      *
      *    bool hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const;
      *
-     * which returns a bool signifying whether the dof associated with the element/scv pair is contraint.
-     * If true is returned for a dof, the assembler calls problem.internalDirichlet(element, scv).
-     * This means you have to additionally implement the following member function
+     * which returns an indexable container of booleans defining for each equation if the corresponding dof associated
+     * with the element/scv pair is constraint. If true is returned for a dof, the assembler calls
+     * problem.internalDirichlet(element, scv). This means you have to additionally implement the following member function
      *
      *    PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const;
      *
