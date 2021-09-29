@@ -27,11 +27,16 @@
 
 #include <dune/grid/yaspgrid.hh>
 
-#include <dumux/discretization/staggered/freeflow/properties.hh>
-#include <dumux/discretization/extrusion.hh>
-#include <dumux/freeflow/navierstokes/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/mass/1p/model.hh>
+
+#include <dumux/discretization/fcstaggered.hh>
+#include <dumux/discretization/cctpfa.hh>
+
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
+
+#include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
 
 #include "problem.hh"
 
@@ -39,7 +44,9 @@ namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
-struct PipeFlow { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
+struct PipeFlow {};
+struct PipeFlowMomentum { using InheritsFrom = std::tuple<PipeFlow, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
+struct PipeFlowMass { using InheritsFrom = std::tuple<PipeFlow, NavierStokesMassOneP, CCTpfaModel>; };
 } // end namespace TTag
 
 // the fluid system
@@ -69,16 +76,37 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::PipeFlow> { static constexp
 
 // rotation-symmetric grid geometry forming a cylinder channel
 template<class TypeTag>
-struct GridGeometry<TypeTag, TTag::PipeFlow>
+struct GridGeometry<TypeTag, TTag::PipeFlowMomentum>
 {
-    static constexpr auto upwindSchemeOrder = getPropValue<TypeTag, Properties::UpwindSchemeOrder>();
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
     using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
 
-    struct GGTraits : public StaggeredFreeFlowDefaultFVGridGeometryTraits<GridView, upwindSchemeOrder>
+    struct GGTraits : public FaceCenteredStaggeredDefaultGridGeometryTraits<GridView>
     { using Extrusion = RotationalExtrusion<0>; };
 
-    using type = StaggeredFVGridGeometry<GridView, enableCache, GGTraits>;
+    using type = FaceCenteredStaggeredFVGridGeometry<GridView, enableCache, GGTraits>;
+};
+
+// rotation-symmetric grid geometry forming a cylinder channel
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::PipeFlowMass>
+{
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+
+    struct GGTraits : public CCTpfaDefaultGridGeometryTraits<GridView>
+    { using Extrusion = RotationalExtrusion<0>; };
+
+    using type = CCTpfaFVGridGeometry<GridView, enableCache, GGTraits>;
+};
+
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::PipeFlow>
+{
+private:
+    using Traits = MultiDomainTraits<TTag::PipeFlowMomentum, TTag::PipeFlowMass>;
+public:
+    using type = StaggeredFreeFlowCouplingManager<Traits>;
 };
 
 } // end namespace Dumux::Properties
