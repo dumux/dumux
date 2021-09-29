@@ -24,6 +24,7 @@
 #ifndef DUMUX_FV_CONSTANT_SPATIAL_PARAMS_ONE_P_HH
 #define DUMUX_FV_CONSTANT_SPATIAL_PARAMS_ONE_P_HH
 
+#warning "This header will be removed after 3.5 in favor of dumux/porousmediumflow/fv1pconstantspatialparams.hh"
 #include <dumux/porousmediumflow/fv1pconstantspatialparams.hh>
 
 namespace Dumux {
