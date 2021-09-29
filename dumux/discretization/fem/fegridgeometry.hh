@@ -69,8 +69,9 @@ class FEGridGeometry
     using LocalIndexType = typename IndexTraits<typename FEB::GridView>::LocalIndex;
 
 public:
-    //! export discretization method
-    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::fem;
+    //! export the discretization method this geometry belongs to
+    using DiscretizationMethod = DiscretizationMethods::FEM;
+    static constexpr DiscretizationMethod discMethod{};
 
     //! export the grid view type
     using GridView = typename FEB::GridView;
@@ -87,7 +88,7 @@ public:
     , feBasis_(feBasis)
     {
         // Check if the overlap size is what we expect
-        if (!CheckOverlapSize<DiscretizationMethod::fem>::isValid(*feBasis))
+        if (!CheckOverlapSize<DiscretizationMethods::fem>::isValid(*feBasis))
             DUNE_THROW(Dune::InvalidStateException, "The finite element discretization method only works with zero overlap for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
     }
