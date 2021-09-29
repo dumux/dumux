@@ -82,7 +82,6 @@ class NavierStokesProblemImpl<TypeTag, DiscretizationMethod::fcstaggered>
 
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
-    using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
@@ -121,12 +120,8 @@ public:
                             std::shared_ptr<CouplingManager> couplingManager,
                             const std::string& paramGroup = "")
     : ParentType(gridGeometry, paramGroup)
-    , gravity_(0.0)
     , couplingManager_(couplingManager)
     {
-        if (getParamFromGroup<bool>(paramGroup, "Problem.EnableGravity"))
-            gravity_[dim-1]  = -9.81;
-
         enableInertiaTerms_ = getParamFromGroup<bool>(paramGroup, "Problem.EnableInertiaTerms");
     }
 
@@ -223,8 +218,9 @@ public:
      * If the <tt>Problem.EnableGravity</tt> parameter is true, this means
      * \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$, else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$
      */
-    const GravityVector& gravity() const
-    { return gravity_; }
+    [[deprecated("Use problem.spatialParams().gravity(globalPos) instead!")]]
+    decltype(auto) gravity() const
+    { return this->spatialParams().gravity(GlobalPosition{}); }
 
     /*!
      * \brief Returns whether intertia terms should be considered.
@@ -527,7 +523,6 @@ private:
     const Implementation& asImp_() const
     { return *static_cast<const Implementation *>(this); }
 
-    GravityVector gravity_;
     bool enableInertiaTerms_;
     std::shared_ptr<CouplingManager> couplingManager_;
 };
@@ -664,7 +659,7 @@ private:
  * \ingroup NavierStokesModel
  * \brief Navier-Stokes problem base class.
  *
- * This implements gravity (if desired) and a function returning the temperature.
+ * This implements a function returning the temperature.
  * Includes a specialized method used only by the staggered grid discretization.
  */
 template<class TypeTag>
@@ -699,7 +694,6 @@ class NavierStokesProblemImpl<TypeTag, DiscretizationMethod::staggered>
 
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
-    using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     /*!
@@ -709,11 +703,7 @@ public:
      */
     NavierStokesProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
     : ParentType(gridGeometry, paramGroup)
-    , gravity_(0.0)
     {
-        if (getParamFromGroup<bool>(paramGroup, "Problem.EnableGravity"))
-            gravity_[dim-1]  = -9.81;
-
         enableInertiaTerms_ = getParamFromGroup<bool>(paramGroup, "Problem.EnableInertiaTerms");
     }
 
@@ -742,8 +732,9 @@ public:
      * If the <tt>Problem.EnableGravity</tt> parameter is true, this means
      * \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$, else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$
      */
-    const GravityVector& gravity() const
-    { return gravity_; }
+    [[deprecated("Use problem.spatialParams().gravity(globalPos) instead")]]
+    decltype(auto) gravity() const
+    { return this->spatialParams().gravity(GlobalPosition{}); }
 
     /*!
      * \brief Returns whether interia terms should be considered.
@@ -886,7 +877,6 @@ private:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
 
-    GravityVector gravity_;
     bool enableInertiaTerms_;
 };
 
