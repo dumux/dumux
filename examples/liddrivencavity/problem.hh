@@ -50,22 +50,25 @@ class LidDrivenCavityExampleProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
 
-    using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
+    using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
+    using PrimaryVariables = typename ParentType::PrimaryVariables;
+    using NumEqVector = typename ParentType::NumEqVector;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+    static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
+    using Element = typename FVElementGeometry::Element;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
     // Within the constructor, we set the lid velocity to a run-time specified value.
-    LidDrivenCavityExampleProblem(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry)
+    LidDrivenCavityExampleProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
+    : ParentType(gridGeometry, couplingManager)
     {
         lidVelocity_ = getParam<Scalar>("Problem.LidVelocity");
     }
@@ -92,53 +95,122 @@ public:
         BoundaryTypes values;
 
         // We set Dirichlet values for the velocity at each boundary
-        values.setDirichlet(Indices::velocityXIdx);
-        values.setDirichlet(Indices::velocityYIdx);
+        if constexpr (ParentType::isMomentumProblem())
+            values.setAllDirichlet();
+        else
+            values.setAllNeumann();
 
         return values;
     }
     // [[/codeblock]]
-
-    // We define a function for setting a fixed Dirichlet pressure value at a given internal cell.
-    // This is required for having a defined pressure level in our closed system domain.
-    bool isDirichletCell(const Element& element,
-                         const FVElementGeometry& fvGeometry,
-                         const SubControlVolume& scv,
-                         int pvIdx) const
-    {
-        auto isLowerLeftCell = [&](const SubControlVolume& scv)
-        { return scv.dofIndex() == 0; };
-
-        // We set a fixed pressure in one cell
-        return (isLowerLeftCell(scv) && pvIdx == Indices::pressureIdx);
-    }
 
     // The following function specifies the __values on Dirichlet boundaries__.
     // We need to define values for the primary variables (velocity and pressure).
     // [[codeblock]]
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values;
-        values[Indices::pressureIdx] = 1.1e+5;
-        values[Indices::velocityXIdx] = 0.0;
-        values[Indices::velocityYIdx] = 0.0;
+        PrimaryVariables values(0.0);
 
-        // We set the no slip-condition at the top, that means the fluid has the same velocity as the lid
-        if (globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_)
-            values[Indices::velocityXIdx] = lidVelocity_;
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            if (globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_)
+                values[Indices::velocityXIdx] = lidVelocity_;
+        }
+        else
+            values[Indices::pressureIdx] = 1.1e+5;
+
+        return values;
+    }
+
+    /*!
+     * \brief Evaluates the boundary conditions for a Neumann control volume.
+     *
+     * \param element The element for which the Neumann boundary condition is set
+     * \param fvGeometry The fvGeometry
+     * \param elemVolVars The element volume variables
+     * \param elemFaceVars The element face variables
+     * \param scvf The boundary sub control volume face
+     */
+    template<class ElementVolumeVariables, class ElementFluxVariablesCache>
+    NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElementFluxVariablesCache& elemFluxVarsCache,
+                        const SubControlVolumeFace& scvf) const
+    {
+        NumEqVector values(0.0);
+
+        if constexpr (!ParentType::isMomentumProblem())
+        {
+            // Density is constant, so inside or outside does not matter.
+            const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
+
+            // The resulting flux over the boundary is zero anyway, but this will add some non-zero derivatives to the
+            // Jacobian which makes the BC more general.
+            values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
+        }
 
         return values;
     }
     // [[/codeblock]]
 
+    /*!
+     * \brief Returns a reference pressure at a given sub control volume face.
+     *        This pressure is substracted from the actual pressure for the momentum balance
+     *        which potentially helps to improve numerical accuracy by avoiding issues related do floating point arithmetic.
+     */
+    Scalar referencePressure(const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const SubControlVolumeFace& scvf) const
+    { return 1.0e5; }
+
+    //! Enable internal Dirichlet constraints
+    static constexpr bool enableInternalDirichletConstraints()
+    { return !ParentType::isMomentumProblem(); }
+
+    // We define a function for setting a fixed Dirichlet pressure value at a given internal cell.
+    // This is required for having a defined pressure level in our closed system domain.
+    /*!
+     * \brief Tag a degree of freedom to carry internal Dirichlet constraints.
+     *        If true is returned for a dof, the equation for this dof is replaced
+     *        by the constraint that its primary variable values must match the
+     *        user-defined values obtained from the function internalDirichlet(),
+     *        which must be defined in the problem.
+     *
+     * \param element The finite element
+     * \param scv The sub-control volume
+     */
+    std::bitset<PrimaryVariables::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
+    {
+        std::bitset<PrimaryVariables::dimension> values;
+
+        const bool isLowerLeftCell = (scv.dofIndex() == 0);
+
+        if constexpr (!ParentType::isMomentumProblem())
+        {
+            if (isLowerLeftCell)
+                values.set(0);
+        }
+
+        return values;
+    }
+
+    /*!
+     * \brief Define the values of internal Dirichlet constraints for a degree of freedom.
+     * \param element The finite element
+     * \param scv The sub-control volume
+     */
+    PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
+    { return PrimaryVariables(1.1e5); }
+
     // The following function defines the initial conditions.
     // [[codeblock]]
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values;
-        values[Indices::pressureIdx] = 1.0e+5;
-        values[Indices::velocityXIdx] = 0.0;
-        values[Indices::velocityYIdx] = 0.0;
+        PrimaryVariables values(0.0);
+
+        if constexpr (!ParentType::isMomentumProblem())
+            values[Indices::pressureIdx] = 1.0e+5;
 
         return values;
     }

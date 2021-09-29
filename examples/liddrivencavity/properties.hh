@@ -34,14 +34,16 @@
 // Stokes single-phase flow simulations in DuMuX. We will use this in the following to inherit the
 // respective properties and subsequently specialize those properties for our
 // type tag, which we want to modify or for which no meaningful default can be set.
-#include <dumux/freeflow/navierstokes/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 
 // We want to use `YaspGrid`, an implementation of the dune grid interface for structured grids:
 #include <dune/grid/yaspgrid.hh>
 
 // In this example, we want to discretize the equations with the staggered-grid
 // scheme which is so far the only available option for free-flow models in DuMux:
-#include <dumux/discretization/staggered/freeflow/properties.hh>
+#include <dumux/discretization/fcstaggered.hh>
+#include <dumux/discretization/cctpfa.hh>
 
 // The fluid properties are specified in the following headers (we use a liquid with constant properties as the fluid phase):
 #include <dumux/material/components/constant.hh>
@@ -62,7 +64,9 @@ namespace Dumux::Properties {
 // We define the `LidDrivenCavityExample` type tag and let it inherit from the single-phase `NavierStokes`
 // tag (model) and the `StaggeredFreeFlowModel` (discretization scheme).
 namespace TTag {
-struct LidDrivenCavityExample { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
+struct LidDrivenCavityExample {};
+struct LidDrivenCavityExampleMomentum { using InheritsFrom = std::tuple<LidDrivenCavityExample, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
+struct LidDrivenCavityExampleMass { using InheritsFrom = std::tuple<LidDrivenCavityExample, NavierStokesMassOneP, CCTpfaModel>; };
 } // end namespace TTag
 // [[/codeblock]]
 
@@ -77,6 +81,16 @@ struct FluidSystem<TypeTag, TTag::LidDrivenCavityExample>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
+};
+
+// We introduce the coupling manager to the properties system
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::LidDrivenCavityExample>
+{
+private:
+    using Traits = MultiDomainTraits<TTag::LidDrivenCavityExampleMomentum, TTag::LidDrivenCavityExampleMass>;
+public:
+    using type = StaggeredFreeFlowCouplingManager<Traits>;
 };
 
 // This sets the grid type used for the simulation. Here, we use a structured 2D grid.
