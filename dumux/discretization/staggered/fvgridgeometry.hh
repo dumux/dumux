@@ -50,7 +50,11 @@ public:
 
     //! export  the GridView type and the discretization method
     using GridView = typename ActualGridGeometry::GridView;
-    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::staggered;
+
+    //! export the discretization method this geometry belongs to
+    using DiscretizationMethod = DiscretizationMethods::Staggered;
+    static constexpr DiscretizationMethod discMethod{};
+
     using LocalView = typename ActualGridGeometry::LocalView;
 
     /*!
@@ -196,8 +200,10 @@ public:
     //! export the traits
     using Traits = typename T::PublicTraits;
 
-    //! export discretization method
-    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::staggered;
+    //! export the discretization method this geometry belongs to
+    using DiscretizationMethod = DiscretizationMethods::Staggered;
+    static constexpr DiscretizationMethod discMethod{};
+
     static constexpr int upwindSchemeOrder = T::upwindSchemeOrder;
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
     static constexpr bool cachingEnabled = true;
@@ -238,7 +244,7 @@ public:
     , intersectionMapper_(gridView)
     {
         // Check if the overlap size is what we expect
-        if (!CheckOverlapSize<DiscretizationMethod::staggered>::isValid(gridView))
+        if (!CheckOverlapSize<DiscretizationMethods::staggered>::isValid(gridView))
             DUNE_THROW(Dune::InvalidStateException, "The staggered discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
 
@@ -493,8 +499,10 @@ public:
     //! export the traits
     using Traits = typename T::PublicTraits;
 
-    //! export discretization method
-    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::staggered;
+    //! export the discretization method this geometry belongs to
+    using DiscretizationMethod = DiscretizationMethods::Staggered;
+    static constexpr DiscretizationMethod discMethod{};
+
     static constexpr int upwindSchemeOrder = T::upwindSchemeOrder;
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
     static constexpr bool cachingEnabled = false;
@@ -537,7 +545,7 @@ public:
     , intersectionMapper_(gridView)
     {
         // Check if the overlap size is what we expect
-        if (!CheckOverlapSize<DiscretizationMethod::staggered>::isValid(gridView))
+        if (!CheckOverlapSize<DiscretizationMethods::staggered>::isValid(gridView))
             DUNE_THROW(Dune::InvalidStateException, "The staggered discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
 

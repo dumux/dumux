@@ -115,8 +115,10 @@ class FaceCenteredStaggeredFVGridGeometry<GV, true, Traits>
     using ScvCornerStorage = typename Traits::SubControlVolume::Traits::CornerStorage;
 
 public:
-    //! export discretization method
-    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::fcstaggered;
+    //! export the discretization method this geometry belongs to
+    using DiscretizationMethod = DiscretizationMethods::FCStaggered;
+    static constexpr DiscretizationMethod discMethod{};
+
     static constexpr bool cachingEnabled = true;
 
     //! export the type of the fv element geometry (the local view type)
@@ -138,7 +140,7 @@ public:
     , intersectionMapper_(gridView)
     {
         // Check if the overlap size is what we expect
-        if (!CheckOverlapSize<DiscretizationMethod::fcstaggered>::isValid(gridView))
+        if (!CheckOverlapSize<DiscretizationMethods::fcstaggered>::isValid(gridView))
             DUNE_THROW(Dune::InvalidStateException, "The staggered discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
 
@@ -564,8 +566,10 @@ class FaceCenteredStaggeredFVGridGeometry<GV, false, Traits>
                                                 + numFacesPerElement; // number of potential frontal faces on boundary
 
 public:
-    //! export discretization method
-    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::fcstaggered;
+    //! export the discretization method this geometry belongs to
+    using DiscretizationMethod = DiscretizationMethods::FCStaggered;
+    static constexpr DiscretizationMethod discMethod{};
+
     static constexpr bool cachingEnabled = false;
 
     //! export the type of the fv element geometry (the local view type)
@@ -587,7 +591,7 @@ public:
     , intersectionMapper_(gridView)
     {
         // Check if the overlap size is what we expect
-        if (!CheckOverlapSize<DiscretizationMethod::fcstaggered>::isValid(gridView))
+        if (!CheckOverlapSize<DiscretizationMethods::fcstaggered>::isValid(gridView))
             DUNE_THROW(Dune::InvalidStateException, "The staggered discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
 
