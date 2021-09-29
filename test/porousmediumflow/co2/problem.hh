@@ -37,6 +37,7 @@
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/discretization/box/scvftoscvboundarytypes.hh>
 #include <dumux/material/components/co2.hh>
+#include <dumux/common/gridcapabilities.hh>
 
 #include "co2tables.hh"
 
@@ -235,9 +236,12 @@ public:
             {
                 VectorCommDataHandleSum<typename GridGeometry::VertexMapper, std::vector<Scalar>, GridView::dimension>
                 sumVolumeHandle(this->gridGeometry().vertexMapper(), vtkBoxVolume_);
-                gridView.communicate(sumVolumeHandle,
-                                     Dune::InteriorBorder_InteriorBorder_Interface,
-                                     Dune::ForwardCommunication);
+                if constexpr (Detail::canCommunicate<typename GridView::Traits::Grid, GridView::dimension>)
+                    gridView.communicate(sumVolumeHandle,
+                                         Dune::InteriorBorder_InteriorBorder_Interface,
+                                         Dune::ForwardCommunication);
+                else
+                    DUNE_THROW(Dune::InvalidStateException, "Cannot call addFieldsToWriter on multiple processes for a grid that cannot communicate codim-" << GridView::dimension << "-entities.");
             }
         }
     }
