@@ -25,11 +25,16 @@
 #define DUMUX_DONEA_TEST_PROPERTIES_HH
 
 #include <dune/grid/yaspgrid.hh>
-#include <dumux/discretization/staggered/freeflow/properties.hh>
 
-#include <dumux/freeflow/navierstokes/model.hh>
+#include <dumux/discretization/fcstaggered.hh>
+#include <dumux/discretization/cctpfa.hh>
+
+#include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
+
+#include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
 
 #include "problem.hh"
 
@@ -37,7 +42,9 @@ namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
-struct NavierStokesAnalytic { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
+struct NavierStokesAnalytic {};
+struct NavierStokesAnalyticMomentum { using InheritsFrom = std::tuple<NavierStokesAnalytic, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
+struct NavierStokesAnalyticMass { using InheritsFrom = std::tuple<NavierStokesAnalytic, NavierStokesMassOneP, CCTpfaModel>; };
 } // end namespace TTag
 
 // the fluid system
@@ -65,6 +72,13 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::NavierStokesAnalytic> { sta
 
 template<class TypeTag>
 struct NormalizePressure<TypeTag, TTag::NavierStokesAnalytic> { static constexpr bool value = false; };
+
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::NavierStokesAnalytic>
+{
+    using Traits = MultiDomainTraits<TTag::NavierStokesAnalyticMomentum, TTag::NavierStokesAnalyticMass>;
+    using type = StaggeredFreeFlowCouplingManager<Traits>;
+};
 
 } // end namespace Dumux::Properties
 
