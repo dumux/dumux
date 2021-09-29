@@ -50,8 +50,6 @@ class PorousMediumFlowProblem : public FVProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
-
 
 public:
     //! Export spatial parameter type
@@ -68,12 +66,7 @@ public:
                             std::shared_ptr<SpatialParams> spatialParams,
                             const std::string& paramGroup = "")
     : ParentType(gridGeometry, spatialParams, paramGroup)
-    , gravity_(0.0)
-    {
-        const bool enableGravity = getParamFromGroup<bool>(paramGroup, "Problem.EnableGravity");
-        if (enableGravity)
-            gravity_[dimWorld-1]  = -9.81;
-    }
+    {}
 
     /*!
      * \brief Constructor, constructing the spatial parameters.
@@ -117,10 +110,6 @@ public:
     }
 
     // \}
-
-protected:
-    //! The gravity acceleration vector
-    GravityVector gravity_;
 };
 
 } // end namespace Dumux
