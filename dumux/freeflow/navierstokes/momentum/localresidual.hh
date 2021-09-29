@@ -123,7 +123,7 @@ public:
                               const SubControlVolume& scv) const
     {
         NumEqVector source = ParentType::computeSource(problem, element, fvGeometry, elemVolVars, scv);
-        source += problem.gravity()[scv.dofAxis()] * problem.density(element, scv);
+        source += problem.spatialParams().gravity(scv.dofPosition())[scv.dofAxis()] * problem.density(element, scv);
 
         // Axisymmetric problems in 2D feature an extra source terms arising from the transformation to cylindrical coordinates.
         // See Ferziger/Peric: Computational methods for fluid dynamics chapter 8.

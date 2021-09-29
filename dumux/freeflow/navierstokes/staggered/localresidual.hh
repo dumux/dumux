@@ -177,7 +177,7 @@ public:
     {
         FacePrimaryVariables source(0.0);
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-        source += problem.gravity()[scvf.directionIndex()] * insideVolVars.density();
+        source += problem.spatialParams().gravity(scvf.ipGlobal())[scvf.directionIndex()] * insideVolVars.density();
         source += problem.source(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[Indices::velocity(scvf.directionIndex())];
 
         // Axisymmetric problems in 2D feature an extra source terms arising from the transformation to cylindrical coordinates.
