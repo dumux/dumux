@@ -30,6 +30,7 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/math.hh>
+#include <dumux/common/fvspatialparams.hh>
 #include <dumux/common/typetraits/isvalid.hh>
 
 namespace Dumux {
@@ -73,8 +74,9 @@ struct hasPorosityAtPos
  * using a fully implicit discretization method.
  */
 template<class GridGeometry, class Scalar, class Implementation>
-class FVSpatialParamsOneP
+class FVSpatialParamsOneP : public FVSpatialParamsBase<GridGeometry, Scalar, Implementation>
 {
+    using ParentType = FVSpatialParamsBase<GridGeometry, Scalar, Implementation>;
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
@@ -89,13 +91,8 @@ class FVSpatialParamsOneP
 
 public:
     FVSpatialParamsOneP(std::shared_ptr<const GridGeometry> gridGeometry)
-    : gridGeometry_(gridGeometry)
-    , gravity_(0.0)
+    : ParentType(gridGeometry)
     {
-        const bool enableGravity = getParam<bool>("Problem.EnableGravity");
-        if (enableGravity)
-            gravity_[dimWorld-1]  = -9.81;
-
         /* \brief default forchheimer coefficient
          * Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90 \cite ward1964 .
          *        Actually the Forchheimer coefficient is also a function of the dimensions of the
@@ -104,19 +101,6 @@ public:
          */
         forchCoeffDefault_ = getParam<Scalar>("SpatialParams.ForchCoeff", 0.55);
     }
-
-    /*!
-     * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
-     *
-     * The default behaviour is a constant gravity vector;
-     * if the <tt>Problem.EnableGravity</tt> parameter is true,
-     * \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$,
-     * else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$.
-     *
-     * \param pos the spatial position at which to evaulate the gravity vector
-     */
-    const GlobalPosition& gravity(const GlobalPosition &pos) const
-    { return gravity_; }
 
     /*!
      * \brief Harmonic average of a discontinuous scalar field at discontinuity interface
@@ -325,11 +309,6 @@ public:
         return forchCoeffDefault_;
     }
 
-    //! The finite volume grid geometry
-    const GridGeometry& gridGeometry() const
-    { return *gridGeometry_; }
-
-
 protected:
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
@@ -338,8 +317,6 @@ protected:
     { return *static_cast<const Implementation*>(this); }
 
 private:
-    std::shared_ptr<const GridGeometry> gridGeometry_;
-    GlobalPosition gravity_; //!< The gravity vector
     Scalar forchCoeffDefault_;
 };
 
