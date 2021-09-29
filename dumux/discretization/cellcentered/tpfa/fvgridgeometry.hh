@@ -112,7 +112,8 @@ public:
     using DofMapper = typename Traits::ElementMapper;
 
     //! export the discretization method this geometry belongs to
-    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
+    using DiscretizationMethod = DiscretizationMethods::CCTpfa;
+    static constexpr DiscretizationMethod discMethod{};
 
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
     static constexpr int maxElementStencilSize = LocalView::maxNumElementScvfs*Traits::maxNumScvfNeighbors + 1;
@@ -125,7 +126,7 @@ public:
     : ParentType(gridView)
     {
         // Check if the overlap size is what we expect
-        if (!CheckOverlapSize<DiscretizationMethod::cctpfa>::isValid(gridView))
+        if (!CheckOverlapSize<DiscretizationMethods::cctpfa>::isValid(gridView))
             DUNE_THROW(Dune::InvalidStateException, "The cctpfa discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
 
@@ -418,7 +419,8 @@ public:
     using DofMapper = typename Traits::ElementMapper;
 
     //! Export the discretization method this geometry belongs to
-    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
+    using DiscretizationMethod = DiscretizationMethods::CCTpfa;
+    static constexpr DiscretizationMethod discMethod{};
 
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
     static constexpr int maxElementStencilSize = LocalView::maxNumElementScvfs*Traits::maxNumScvfNeighbors + 1;
@@ -431,7 +433,7 @@ public:
     : ParentType(gridView)
     {
         // Check if the overlap size is what we expect
-        if (!CheckOverlapSize<DiscretizationMethod::cctpfa>::isValid(gridView))
+        if (!CheckOverlapSize<DiscretizationMethods::cctpfa>::isValid(gridView))
             DUNE_THROW(Dune::InvalidStateException, "The cctpfa discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
 
