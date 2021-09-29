@@ -18,20 +18,55 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup PorousMediumFlow
  * \ingroup SpatialParameters
  * \brief A spatial params implementation for 1p problem with constant properties
  */
-#ifndef DUMUX_FV_CONSTANT_SPATIAL_PARAMS_ONE_P_HH
-#define DUMUX_FV_CONSTANT_SPATIAL_PARAMS_ONE_P_HH
+#ifndef DUMUX_POROUS_MEDIUM_FLOW_FV_CONSTANT_SPATIAL_PARAMS_ONE_P_HH
+#define DUMUX_POROUS_MEDIUM_FLOW_FV_CONSTANT_SPATIAL_PARAMS_ONE_P_HH
 
-#include <dumux/porousmediumflow/fv1pconstantspatialparams.hh>
+#include <dumux/common/parameters.hh>
+#include "fvspatialparams.hh"
 
 namespace Dumux {
 
+/*!
+ * \ingroup SpatialParameters
+ * \brief A spatial params implementation for 1p problem with constant properties
+ */
 template<class GridGeometry, class Scalar>
-using FVSpatialParamsOnePConstant
-[[deprecated("Use FVSpatialParamsOnePConstant in dumux/porousmediumflow/fv1pconstantspatialparams.hh instead!")]]
-= FVPorousMediumOnePConstantSpatialParams<GridGeometry, Scalar>;
+class FVPorousMediumOnePConstantSpatialParams
+: public FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar, FVPorousMediumOnePConstantSpatialParams<GridGeometry, Scalar>>
+{
+    using ThisType = FVPorousMediumOnePConstantSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
+    using GlobalPosition = typename GridGeometry::GridView::template Codim<0>::Geometry::GlobalCoordinate;
+
+public:
+    using PermeabilityType = Scalar;
+
+    FVPorousMediumOnePConstantSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
+    , porosity_(getParam<Scalar>("SpatialParams.Porosity"))
+    , permeability_(getParam<Scalar>("SpatialParams.Permeability"))
+    {}
+
+    /*!
+     * \brief The (intrinsic) permeability \f$[m^2]\f$
+     */
+    PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
+    { return permeability_; }
+
+    /*!
+     * \brief The porosity \f$[-]\f$
+     */
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
+    { return porosity_; }
+
+private:
+    const Scalar porosity_;
+    const Scalar permeability_;
+};
 
 } // end namespace Dumux
 
