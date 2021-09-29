@@ -27,6 +27,7 @@
 #include <dune/grid/utility/structuredgridfactory.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/float_cmp.hh>
+#include <dune/common/parametertree.hh>
 
 // we use the 1p type tag here in order not to be obliged
 // to define grid flux vars cache & vol vars cache...
@@ -98,7 +99,10 @@ int main (int argc, char *argv[])
     Dune::MPIHelper::instance(argc, argv);
 
     using namespace Dumux;
-    Dumux::Parameters::init(argc, argv);
+    Dumux::Parameters::init(argc, argv, [] (Dune::ParameterTree& tree) {
+        tree["SpatialParams.Porosity"] = "0.1";
+        tree["SpatialParams.Permeability"] = "1e-12";
+    });
 
     using TypeTag = Properties::TTag::GridVariablesTestBox;
     using Grid = GetPropType<TypeTag, Properties::Grid>;

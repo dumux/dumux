@@ -221,6 +221,14 @@ public:
     using type = EmptyCouplingManager;
 };
 
+//! Per default, we use the base spatial parameters
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::NavierStokesMomentum>
+{
+    using type = DefaultFVSpatialParams<GetPropType<TypeTag, Properties::GridGeometry>,
+                                        GetPropType<TypeTag, Properties::Scalar>>;
+};
+
 //! The specific I/O fields
 // template<class TypeTag>
 // struct IOFields<TypeTag, TTag::NavierStokes> { using type = NavierStokesIOFields; };

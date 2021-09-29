@@ -67,9 +67,8 @@ public:
     PorousMediumFlowProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                             std::shared_ptr<SpatialParams> spatialParams,
                             const std::string& paramGroup = "")
-    : ParentType(gridGeometry, paramGroup)
+    : ParentType(gridGeometry, spatialParams, paramGroup)
     , gravity_(0.0)
-    , spatialParams_(spatialParams)
     {
         const bool enableGravity = getParamFromGroup<bool>(paramGroup, "Problem.EnableGravity");
         if (enableGravity)
@@ -117,26 +116,11 @@ public:
         DUNE_THROW(Dune::NotImplemented, "temperature() method not implemented by the user problem");
     }
 
-    /*!
-     * \brief Returns the spatial parameters object.
-     */
-    SpatialParams &spatialParams()
-    { return *spatialParams_; }
-
-    /*!
-     * \brief Returns the spatial parameters object.
-     */
-    const SpatialParams &spatialParams() const
-    { return *spatialParams_; }
-
     // \}
 
 protected:
     //! The gravity acceleration vector
     GravityVector gravity_;
-
-    // material properties of the porous medium
-    std::shared_ptr<SpatialParams> spatialParams_;
 };
 
 } // end namespace Dumux

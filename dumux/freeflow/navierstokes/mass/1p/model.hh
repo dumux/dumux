@@ -146,6 +146,14 @@ template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::NavierStokesMassOneP>
 { using type = NavierStokesMassOnePModelTraits; };
 
+//! Per default, we use the base spatial parameters
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::NavierStokesMassOneP>
+{
+    using type = DefaultFVSpatialParams<GetPropType<TypeTag, Properties::GridGeometry>,
+                                        GetPropType<TypeTag, Properties::Scalar>>;
+};
+
 /*!
  * \brief The fluid state which is used by the volume variables to
  *        store the thermodynamic state. This should be chosen

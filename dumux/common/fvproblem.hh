@@ -80,6 +80,9 @@ class FVProblem
     using BoundaryTypes = Dumux::BoundaryTypes<PrimaryVariables::size()>;
 
 public:
+    //! Export spatial parameter type
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
+
     //! export traits of this problem
     struct Traits
     {
@@ -91,15 +94,31 @@ public:
     /*!
      * \brief Constructor
      * \param gridGeometry The finite volume grid geometry
+     * \param spatialParams Spatially varying parameters
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
-    FVProblem(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
+    FVProblem(std::shared_ptr<const GridGeometry> gridGeometry,
+              std::shared_ptr<SpatialParams> spatialParams,
+              const std::string& paramGroup = "")
     : gridGeometry_(gridGeometry)
+    , spatialParams_(spatialParams)
     , paramGroup_(paramGroup)
     {
         // set a default name for the problem
         problemName_ = getParamFromGroup<std::string>(paramGroup, "Problem.Name");
     }
+
+    /*!
+     * \brief Constructor
+     * \param gridGeometry The finite volume grid geometry
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
+     */
+    FVProblem(std::shared_ptr<const GridGeometry> gridGeometry,
+              const std::string& paramGroup = "")
+    : FVProblem(gridGeometry,
+                std::make_shared<SpatialParams>(gridGeometry),
+                paramGroup)
+    {}
 
     /*!
      * \brief The problem name.
@@ -579,6 +598,14 @@ public:
     const std::string& paramGroup() const
     { return paramGroup_; }
 
+    //! Return the spatial parameters
+    SpatialParams& spatialParams()
+    { return *spatialParams_; }
+
+    //! Return the spatial parameters
+    const SpatialParams& spatialParams() const
+    { return *spatialParams_; }
+
 protected:
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
@@ -591,6 +618,9 @@ protected:
 private:
     //! The finite volume grid geometry
     std::shared_ptr<const GridGeometry> gridGeometry_;
+
+    //! Spatially varying parameters
+    std::shared_ptr<SpatialParams> spatialParams_;
 
     //! The parameter group in which to retrieve runtime parameters
     std::string paramGroup_;
