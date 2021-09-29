@@ -18,7 +18,7 @@ dune_python_add_test(NAME test_python_explicit_transport_cctpfa
                      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                      SCRIPT ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                               --script fuzzy
-                              --files ${CMAKE_SOURCE_DIR}/test/references/test_python_explicit-transport-cctpfa-100.vtu
+                              --files ${CMAKE_SOURCE_DIR}/test/references/test_python_explicit-transport-cctpfa-100-reference.vtu
                                       ${CMAKE_CURRENT_BINARY_DIR}/finitevolume-solution-100.vtu
                               --command "${CMAKE_CURRENT_SOURCE_DIR}/test_explicit_transport_cctpfa.py")
 set_tests_properties(test_python_explicit_transport_cctpfa PROPERTIES TIMEOUT 1200)
