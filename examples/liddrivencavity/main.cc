@@ -147,15 +147,15 @@ int main(int argc, char** argv)
     using CouplingManager = StaggeredFreeFlowCouplingManager<Traits>;
     auto couplingManager = std::make_shared<CouplingManager>();
 
-    // We now instantiate the problem, in which we define the boundary and initial conditions.
+    // We now instantiate the problems, in which we define the boundary and initial conditions.
     using MomentumProblem = GetPropType<MomentumTypeTag, Properties::Problem>;
     auto momentumProblem = std::make_shared<MomentumProblem>(momentumGridGeometry, couplingManager);
     using MassProblem = GetPropType<MassTypeTag, Properties::Problem>;
     auto massProblem = std::make_shared<MassProblem>(massGridGeometry, couplingManager);
 
-    // We set a solution vector which consist of two parts: one part (indexed by `cellCenterIdx`)
+    // We set a solution vector which consist of two parts: one part (indexed by `massIdx`)
     // is for the pressure degrees of freedom (`dofs`) living in grid cell centers. Another part
-    // (indexed by `faceIdx`) is for degrees of freedom defining the normal velocities on grid cell faces.
+    // (indexed by `momentumIdx`) is for degrees of freedom defining the normal velocities on grid cell faces.
     // We initialize the solution vector by what was defined as the initial solution of the the problem.
     constexpr auto momentumIdx = CouplingManager::freeFlowMomentumIndex;
     constexpr auto massIdx = CouplingManager::freeFlowMassIndex;

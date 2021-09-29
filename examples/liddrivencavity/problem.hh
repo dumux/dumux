@@ -83,18 +83,16 @@ public:
 
     // #### Boundary conditions
     // With the following function we define the __type of boundary conditions__ depending on the location.
-    // Three types of boundary conditions can be specified: Dirichlet, Neumann or outflow boundary conditions. On
+    // Three types of boundary conditions can be specified: Dirichlet or Neumann boundary conditions. On
     // Dirichlet boundaries, the values of the primary variables need to be fixed. On a Neumann boundaries,
-    // values for derivatives need to be fixed. Outflow conditions set a gradient of zero in normal direction towards the boundary
-    // for the respective primary variables (excluding pressure).
-    // When Dirichlet conditions are set for the pressure, the velocity gradient
-    // with respect to the direction normal to the boundary is automatically set to zero.
+    // values for derivatives need to be fixed.
     // [[codeblock]]
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
 
-        // We set Dirichlet values for the velocity at each boundary
+        // We set Dirichlet values for the velocity at each boundary. At the same time,
+        // Neumann (no-flow) conditions hold at the boundaries for the mass model.
         if constexpr (ParentType::isMomentumProblem())
             values.setAllDirichlet();
         else
@@ -105,7 +103,7 @@ public:
     // [[/codeblock]]
 
     // The following function specifies the __values on Dirichlet boundaries__.
-    // We need to define values for the primary variables (velocity and pressure).
+    // We need to define values for the primary variables (velocity).
     // [[codeblock]]
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
@@ -116,21 +114,14 @@ public:
             if (globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_)
                 values[Indices::velocityXIdx] = lidVelocity_;
         }
-        else
-            values[Indices::pressureIdx] = 1.1e+5;
 
         return values;
     }
+    // [[/codeblock]]
 
-    /*!
-     * \brief Evaluates the boundary conditions for a Neumann control volume.
-     *
-     * \param element The element for which the Neumann boundary condition is set
-     * \param fvGeometry The fvGeometry
-     * \param elemVolVars The element volume variables
-     * \param elemFaceVars The element face variables
-     * \param scvf The boundary sub control volume face
-     */
+    // The following function specifies the __values on Neumann boundaries__.
+    // We define a (zero) mass flux here.
+    // [[codeblock]]
     template<class ElementVolumeVariables, class ElementFluxVariablesCache>
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
@@ -145,8 +136,8 @@ public:
             // Density is constant, so inside or outside does not matter.
             const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
 
-            // The resulting flux over the boundary is zero anyway, but this will add some non-zero derivatives to the
-            // Jacobian which makes the BC more general.
+            // The resulting flux over the boundary is zero anyway (velocity is zero), but this will add some non-zero derivatives to the
+            // Jacobian and makes the BC more general.
             values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
         }
 
@@ -154,40 +145,22 @@ public:
     }
     // [[/codeblock]]
 
-    /*!
-     * \brief Returns a reference pressure at a given sub control volume face.
-     *        This pressure is substracted from the actual pressure for the momentum balance
-     *        which potentially helps to improve numerical accuracy by avoiding issues related do floating point arithmetic.
-     */
-    Scalar referencePressure(const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const SubControlVolumeFace& scvf) const
-    { return 1.0e5; }
+    // The problem setup considers closed boundaries everywhere. In order to have a defined pressure level, we impose an __internal Dirichlet
+    // constraint for pressure__ in a single cell.
+    // [[codeblock]]
 
-    //! Enable internal Dirichlet constraints
+    // Use internal Dirichlet constraints for the mass problem.
     static constexpr bool enableInternalDirichletConstraints()
     { return !ParentType::isMomentumProblem(); }
 
-    // We define a function for setting a fixed Dirichlet pressure value at a given internal cell.
-    // This is required for having a defined pressure level in our closed system domain.
-    /*!
-     * \brief Tag a degree of freedom to carry internal Dirichlet constraints.
-     *        If true is returned for a dof, the equation for this dof is replaced
-     *        by the constraint that its primary variable values must match the
-     *        user-defined values obtained from the function internalDirichlet(),
-     *        which must be defined in the problem.
-     *
-     * \param element The finite element
-     * \param scv The sub-control volume
-     */
+    // Set a fixed pressure a the lower-left cell.
     std::bitset<PrimaryVariables::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
     {
         std::bitset<PrimaryVariables::dimension> values;
 
-        const bool isLowerLeftCell = (scv.dofIndex() == 0);
-
         if constexpr (!ParentType::isMomentumProblem())
         {
+            const bool isLowerLeftCell = (scv.dofIndex() == 0);
             if (isLowerLeftCell)
                 values.set(0);
         }
@@ -195,13 +168,19 @@ public:
         return values;
     }
 
-    /*!
-     * \brief Define the values of internal Dirichlet constraints for a degree of freedom.
-     * \param element The finite element
-     * \param scv The sub-control volume
-     */
+    // Specify the pressure value in the internal Dirichlet cell.
     PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
     { return PrimaryVariables(1.1e5); }
+    // [[/codeblock]]
+
+    // Setting a __reference pressure__ can help to improve the Newton convergence rate by making the numerical derivatives more exact.
+    // This is related to floating point arithmetic as pressure values are usually much higher than velocities.
+    // [[codeblock]]
+    Scalar referencePressure(const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const SubControlVolumeFace& scvf) const
+    { return 1.0e5; }
+    // [[/codeblock]]
 
     // The following function defines the initial conditions.
     // [[codeblock]]

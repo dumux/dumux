@@ -24,13 +24,11 @@ for which we then specialize properties (compile time options) to the needs of t
 ### Includes
 <details><summary> Click to show includes</summary>
 
-The `NavierStokes` type tag specializes most of the properties required for Navier-
-Stokes single-phase flow simulations in DuMuX. We will use this in the following to inherit the
-respective properties and subsequently specialize those properties for our
-type tag, which we want to modify or for which no meaningful default can be set.
+The single-phase flow Navier-Stokes equations are solved by coupling a momentum balance model to a mass balance model.
 
 ```cpp
-#include <dumux/freeflow/navierstokes/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 ```
 
 We want to use `YaspGrid`, an implementation of the dune grid interface for structured grids:
@@ -39,11 +37,13 @@ We want to use `YaspGrid`, an implementation of the dune grid interface for stru
 #include <dune/grid/yaspgrid.hh>
 ```
 
-In this example, we want to discretize the equations with the staggered-grid
-scheme which is so far the only available option for free-flow models in DuMux:
+In this example, we want to discretize the momentum and mass balance equations with the staggered-grid
+scheme which is so far the only available option for free-flow models in DuMux. Velocities are defined on the
+element edges while pressures are defined on the element centers.
 
 ```cpp
-#include <dumux/discretization/staggered/freeflow/properties.hh>
+#include <dumux/discretization/fcstaggered.hh>
+#include <dumux/discretization/cctpfa.hh>
 ```
 
 The fluid properties are specified in the following headers (we use a liquid with constant properties as the fluid phase):
@@ -63,17 +63,18 @@ We include the problem header used for this simulation.
 
 ### Type tag definition
 
-We define a type tag for our simulation with the name `LidDrivenCavityExample`
-and inherit the properties specialized for the type tags `NavierStokes` and `StaggeredFreeFlowModel`.
+We define a type tag for our simulation with the name `LidDrivenCavityExample`. As we are dealing with a coupled model,
+we also define type tags for the momentum and mass model and inherit from the respective physical models (`NavierStokesMomentum` and `NavierStokesMassOneP`)
+as well as from the appropriate spatial discretization schemes (`FaceCenteredStaggeredModel` and `CCTpfaModel`).
 
 ```cpp
 
 namespace Dumux::Properties {
 
-// We define the `LidDrivenCavityExample` type tag and let it inherit from the single-phase `NavierStokes`
-// tag (model) and the `StaggeredFreeFlowModel` (discretization scheme).
 namespace TTag {
-struct LidDrivenCavityExample { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
+struct LidDrivenCavityExample {};
+struct LidDrivenCavityExampleMomentum { using InheritsFrom = std::tuple<LidDrivenCavityExample, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
+struct LidDrivenCavityExampleMass { using InheritsFrom = std::tuple<LidDrivenCavityExample, NavierStokesMassOneP, CCTpfaModel>; };
 } // end namespace TTag
 ```
 
@@ -91,6 +92,16 @@ struct FluidSystem<TypeTag, TTag::LidDrivenCavityExample>
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
+// We introduce the coupling manager to the properties system
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::LidDrivenCavityExample>
+{
+private:
+    using Traits = MultiDomainTraits<TTag::LidDrivenCavityExampleMomentum, TTag::LidDrivenCavityExampleMass>;
+public:
+    using type = StaggeredFreeFlowCouplingManager<Traits>;
+};
+
 // This sets the grid type used for the simulation. Here, we use a structured 2D grid.
 template<class TypeTag>
 struct Grid<TypeTag, TTag::LidDrivenCavityExample> { using type = Dune::YaspGrid<2>; };
@@ -104,7 +115,7 @@ We also set some properties related to memory management
 throughout the simulation.
 <details><summary> Click to show caching properties</summary>
 
-In Dumux, one has the option to activate/deactivate the grid-wide caching of
+In DuMux, one has the option to activate/deactivate the grid-wide caching of
 geometries and variables. If active, the CPU time can be significantly reduced
 as less dynamic memory allocation procedures are necessary. Per default, grid-wide
 caching is disabled to ensure minimal memory requirements, however, in this example we
@@ -174,22 +185,25 @@ class LidDrivenCavityExampleProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
 
-    using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
+    using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
+    using PrimaryVariables = typename ParentType::PrimaryVariables;
+    using NumEqVector = typename ParentType::NumEqVector;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+    static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
+    using Element = typename FVElementGeometry::Element;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
     // Within the constructor, we set the lid velocity to a run-time specified value.
-    LidDrivenCavityExampleProblem(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry)
+    LidDrivenCavityExampleProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
+    : ParentType(gridGeometry, couplingManager)
     {
         lidVelocity_ = getParam<Scalar>("Problem.LidVelocity");
     }
@@ -207,63 +221,108 @@ This would be important if another fluidsystem was used.
 
 #### Boundary conditions
 With the following function we define the __type of boundary conditions__ depending on the location.
-Three types of boundary conditions can be specified: Dirichlet, Neumann or outflow boundary conditions. On
+Three types of boundary conditions can be specified: Dirichlet or Neumann boundary conditions. On
 Dirichlet boundaries, the values of the primary variables need to be fixed. On a Neumann boundaries,
-values for derivatives need to be fixed. Outflow conditions set a gradient of zero in normal direction towards the boundary
-for the respective primary variables (excluding pressure).
-When Dirichlet conditions are set for the pressure, the velocity gradient
-with respect to the direction normal to the boundary is automatically set to zero.
+values for derivatives need to be fixed.
 
 ```cpp
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
 
-        // We set Dirichlet values for the velocity at each boundary
-        values.setDirichlet(Indices::velocityXIdx);
-        values.setDirichlet(Indices::velocityYIdx);
+        // We set Dirichlet values for the velocity at each boundary. At the same time,
+        // Neumann (no-flow) conditions hold at the boundaries for the mass model.
+        if constexpr (ParentType::isMomentumProblem())
+            values.setAllDirichlet();
+        else
+            values.setAllNeumann();
 
         return values;
-    }
-```
-
-We define a function for setting a fixed Dirichlet pressure value at a given internal cell.
-This is required for having a defined pressure level in our closed system domain.
-
-```cpp
-    bool isDirichletCell(const Element& element,
-                         const FVElementGeometry& fvGeometry,
-                         const SubControlVolume& scv,
-                         int pvIdx) const
-    {
-        auto isLowerLeftCell = [&](const SubControlVolume& scv)
-        { return scv.dofIndex() == 0; };
-```
-
-We set a fixed pressure in one cell
-
-```cpp
-        return (isLowerLeftCell(scv) && pvIdx == Indices::pressureIdx);
     }
 ```
 
 The following function specifies the __values on Dirichlet boundaries__.
-We need to define values for the primary variables (velocity and pressure).
+We need to define values for the primary variables (velocity).
 
 ```cpp
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values;
-        values[Indices::pressureIdx] = 1.1e+5;
-        values[Indices::velocityXIdx] = 0.0;
-        values[Indices::velocityYIdx] = 0.0;
+        PrimaryVariables values(0.0);
 
-        // We set the no slip-condition at the top, that means the fluid has the same velocity as the lid
-        if (globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_)
-            values[Indices::velocityXIdx] = lidVelocity_;
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            if (globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_)
+                values[Indices::velocityXIdx] = lidVelocity_;
+        }
 
         return values;
     }
+```
+
+The following function specifies the __values on Neumann boundaries__.
+We define a (zero) mass flux here.
+
+```cpp
+    template<class ElementVolumeVariables, class ElementFluxVariablesCache>
+    NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElementFluxVariablesCache& elemFluxVarsCache,
+                        const SubControlVolumeFace& scvf) const
+    {
+        NumEqVector values(0.0);
+
+        if constexpr (!ParentType::isMomentumProblem())
+        {
+            // Density is constant, so inside or outside does not matter.
+            const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
+
+            // The resulting flux over the boundary is zero anyway (velocity is zero), but this will add some non-zero derivatives to the
+            // Jacobian and makes the BC more general.
+            values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
+        }
+
+        return values;
+    }
+```
+
+The problem setup considers closed boundaries everywhere. In order to have a defined pressure level, we impose an __internal Dirichlet
+constraint for pressure__ in a single cell.
+
+```cpp
+
+    // Use internal Dirichlet constraints for the mass problem.
+    static constexpr bool enableInternalDirichletConstraints()
+    { return !ParentType::isMomentumProblem(); }
+
+    // Set a fixed pressure a the lower-left cell.
+    std::bitset<PrimaryVariables::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
+    {
+        std::bitset<PrimaryVariables::dimension> values;
+
+        if constexpr (!ParentType::isMomentumProblem())
+        {
+            const bool isLowerLeftCell = (scv.dofIndex() == 0);
+            if (isLowerLeftCell)
+                values.set(0);
+        }
+
+        return values;
+    }
+
+    // Specify the pressure value in the internal Dirichlet cell.
+    PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
+    { return PrimaryVariables(1.1e5); }
+```
+
+Setting a __reference pressure__ can help to improve the Newton convergence rate by making the numerical derivatives more exact.
+This is related to floating point arithmetic as pressure values are usually much higher than velocities.
+
+```cpp
+    Scalar referencePressure(const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const SubControlVolumeFace& scvf) const
+    { return 1.0e5; }
 ```
 
 The following function defines the initial conditions.
@@ -271,10 +330,10 @@ The following function defines the initial conditions.
 ```cpp
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values;
-        values[Indices::pressureIdx] = 1.0e+5;
-        values[Indices::velocityXIdx] = 0.0;
-        values[Indices::velocityYIdx] = 0.0;
+        PrimaryVariables values(0.0);
+
+        if constexpr (!ParentType::isMomentumProblem())
+            values[Indices::pressureIdx] = 1.0e+5;
 
         return values;
     }
@@ -318,13 +377,15 @@ the retrieval of input parameters specified in the input file or via the command
 #include <dumux/common/properties.hh>
 ```
 
-The following files contain the non-linear Newton solver, the available linear solver backends and the assembler for the linear
+The following files contain the multi-domain Newton solver, the available linear solver backends and the assembler for the linear
 systems arising from the staggered-grid discretization.
 
 ```cpp
 #include <dumux/linear/seqsolverbackend.hh>
-#include <dumux/nonlinear/newtonsolver.hh>
-#include <dumux/assembly/staggeredfvassembler.hh>
+#include <dumux/multidomain/fvassembler.hh>
+#include <dumux/multidomain/traits.hh>
+#include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
+#include <dumux/multidomain/newtonsolver.hh>
 ```
 
 The gridmanager constructs a grid from the information in the input or grid file.
@@ -338,7 +399,8 @@ in `gridmanager.hh`.
 This class contains functionality for VTK output for models using the staggered finite volume scheme.
 
 ```cpp
-#include <dumux/io/staggeredvtkoutputmodule.hh>
+#include <dumux/io/vtkoutputmodule.hh>
+#include <dumux/freeflow/navierstokes/velocityoutput.hh>
 ```
 
 We include the problem header used for this simulation.
@@ -348,28 +410,33 @@ We include the problem header used for this simulation.
 ```
 
 </details>
-
 The following function writes the velocities and coordinates at x = 0.5 and y = 0.5 into a log file.
 
 ```cpp
-template<class Problem, class SolutionVector, class GridGeometry>
-void writeSteadyVelocityAndCoordinates(const Problem& problem, const SolutionVector &sol, const GridGeometry gridGeometry)
+template<class Problem, class SolutionVector>
+void writeSteadyVelocityAndCoordinates(const Problem& problem, const SolutionVector& sol)
 {
-    std::ofstream logFilevx(problem->name() + "_vx.log"), logFilevy(problem->name() + "_vy.log");
+    const auto& gridGeometry = problem.gridGeometry();
+    std::ofstream logFilevx(problem.name() + "_vx.log"), logFilevy(problem.name() + "_vy.log");
     logFilevx << "y vx\n";
     logFilevy << "x vy\n";
 
     static constexpr double eps_ = 1.0e-7;
-    for (const auto& element : elements(gridGeometry->gridView()))
+    std::vector<int> dofHandled(gridGeometry.numDofs(), false);
+    for (const auto& element : elements(gridGeometry.gridView()))
     {
-        auto fvGeometry = localView(*gridGeometry);
+        auto fvGeometry = localView(gridGeometry);
         fvGeometry.bind(element);
-        for (const auto& scvf : scvfs(fvGeometry))
+        for (const auto& scv : scvs(fvGeometry))
         {
-            if (!scvf.boundary() && scvf.insideScvIdx() > scvf.outsideScvIdx())
+            if (dofHandled[scv.dofIndex()])
+                continue;
+
+            if (!scv.boundary())
             {
-                const auto& globalPos = scvf.ipGlobal();
-                const auto velocity = sol[gridGeometry->faceIdx()][scvf.dofIndex()][0];
+                const auto& globalPos = scv.dofPosition();
+                const auto velocity = sol[scv.dofIndex()][0];
+                dofHandled[scv.dofIndex()] = true;
 
                 if (std::abs(globalPos[0]-0.5) < eps_)
                     logFilevx << globalPos[1] << " " << velocity << "\n";
@@ -399,13 +466,14 @@ int main(int argc, char** argv)
     Parameters::init(argc, argv);
 ```
 
-We define a convenience alias for the type tag of the problem. The type
+We define a convenience alias for the type tags of the problems. The type
 tag contains all the properties that are needed to define the model and the problem
-setup. Throughout the main file, we will obtain types defined for this type tag
+setup. Throughout the main file, we will obtain types defined each type tag
 using the property system, i.e. with `GetPropType`.
 
 ```cpp
-    using TypeTag = Properties::TTag::LidDrivenCavityExample;
+    using MomentumTypeTag = Properties::TTag::LidDrivenCavityExampleMomentum;
+    using MassTypeTag = Properties::TTag::LidDrivenCavityExampleMass;
 ```
 
 #### Step 1: Create the grid
@@ -414,7 +482,7 @@ This can either be a grid file, or in the case of structured grids, one can spec
 of the corners of the grid and the number of cells to be used to discretize each spatial direction.
 
 ```cpp
-    GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
+    GridManager<GetPropType<MomentumTypeTag, Properties::Grid>> gridManager;
     gridManager.init();
 
     // We compute on the leaf grid view.
@@ -425,47 +493,72 @@ of the corners of the grid and the number of cells to be used to discretize each
 First, a finite volume grid geometry is constructed from the grid that was created above.
 This builds the sub-control volumes (scv) and sub-control volume faces (scvf) for each element
 of the grid partition.
+This is done for both the momentum and mass grid geometries
 
 ```cpp
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
+    using MomentumGridGeometry = GetPropType<MomentumTypeTag, Properties::GridGeometry>;
+    auto momentumGridGeometry = std::make_shared<MomentumGridGeometry>(leafGridView);
+    using MassGridGeometry = GetPropType<MassTypeTag, Properties::GridGeometry>;
+    auto massGridGeometry = std::make_shared<MassGridGeometry>(leafGridView);
 ```
 
-We now instantiate the problem, in which we define the boundary and initial conditions.
+We introduce the multidomain coupling manager, which will coupled the mass and the momentum problems
 
 ```cpp
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(gridGeometry);
+    using Traits = MultiDomainTraits<MomentumTypeTag, MassTypeTag>;
+    using CouplingManager = StaggeredFreeFlowCouplingManager<Traits>;
+    auto couplingManager = std::make_shared<CouplingManager>();
 ```
 
-We set a solution vector which consist of two parts: one part (indexed by `cellCenterIdx`)
+We now instantiate the problems, in which we define the boundary and initial conditions.
+
+```cpp
+    using MomentumProblem = GetPropType<MomentumTypeTag, Properties::Problem>;
+    auto momentumProblem = std::make_shared<MomentumProblem>(momentumGridGeometry, couplingManager);
+    using MassProblem = GetPropType<MassTypeTag, Properties::Problem>;
+    auto massProblem = std::make_shared<MassProblem>(massGridGeometry, couplingManager);
+```
+
+We set a solution vector which consist of two parts: one part (indexed by `massIdx`)
 is for the pressure degrees of freedom (`dofs`) living in grid cell centers. Another part
-(indexed by `faceIdx`) is for degrees of freedom defining the normal velocities on grid cell faces.
+(indexed by `momentumIdx`) is for degrees of freedom defining the normal velocities on grid cell faces.
 We initialize the solution vector by what was defined as the initial solution of the the problem.
 
 ```cpp
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    constexpr auto momentumIdx = CouplingManager::freeFlowMomentumIndex;
+    constexpr auto massIdx = CouplingManager::freeFlowMassIndex;
+    using SolutionVector = typename Traits::SolutionVector;
     SolutionVector x;
-    x[GridGeometry::cellCenterIdx()].resize(gridGeometry->numCellCenterDofs());
-    x[GridGeometry::faceIdx()].resize(gridGeometry->numFaceDofs());
-    problem->applyInitialSolution(x);
+    momentumProblem->applyInitialSolution(x[momentumIdx]);
+    massProblem->applyInitialSolution(x[massIdx]);
     auto xOld = x;
 ```
 
-We use the initial solution vector to intialize the `gridVariables`.
+We use the initial solution vector to create the `gridVariables`.
 The grid variables are used store variables (primary and secondary variables) on sub-control volumes and faces (volume and flux variables).
 
 ```cpp
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
-    gridVariables->init(x);
+    using MomentumGridVariables = GetPropType<MomentumTypeTag, Properties::GridVariables>;
+    auto momentumGridVariables = std::make_shared<MomentumGridVariables>(momentumProblem, momentumGridGeometry);
+    using MassGridVariables = GetPropType<MassTypeTag, Properties::GridVariables>;
+    auto massGridVariables = std::make_shared<MassGridVariables>(massProblem, massGridGeometry);
+```
+
+using the problems and the grid variables, the coupling manager and the grid variables are initialized with the initial solution.
+The grid variables have to be initialized _after_ the coupling manager.
+This is because they require the correct coupling context between the mass and momentum model to be initialized.
+
+```cpp
+    couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x, xOld);
+    momentumGridVariables->init(x[momentumIdx]);
+    massGridVariables->init(x[massIdx]);
 ```
 
 We get some time loop parameters from the input file
 and instantiate the time loop
 
 ```cpp
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Scalar = typename Traits::Scalar;
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     const auto dt = getParam<Scalar>("TimeLoop.DtInitial");
@@ -477,9 +570,10 @@ and instantiate the time loop
 We then initialize the predefined model-specific output vtk output.
 
 ```cpp
-    using IOFields = GetPropType<TypeTag, Properties::IOFields>;
-    StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
+    using IOFields = GetPropType<MassTypeTag, Properties::IOFields>;
+    VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name());
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
+    vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
     vtkWriter.write(0.0);
 ```
 
@@ -488,14 +582,25 @@ which we have to tell how to assemble and solve the system in each
 iteration. Here, we use the direct linear solver UMFPack.
 
 ```cpp
-    using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
+    using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+    auto assembler = std::make_shared<Assembler>(std::make_tuple(momentumProblem, massProblem),
+                                                 std::make_tuple(momentumGridGeometry, massGridGeometry),
+                                                 std::make_tuple(momentumGridVariables, massGridVariables),
+                                                 couplingManager, timeLoop, xOld);
+```
 
+the linear solver
+
+```cpp
     using LinearSolver = Dumux::UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
+```
 
-    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver);
+the non-linear solver
+
+```cpp
+    using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+    NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 ```
 
 ##### The time loop
@@ -510,7 +615,8 @@ the current solution into .vtk files and prepare for the next time step.
 
         // We make the new solution the old solution.
         xOld = x;
-        gridVariables->advanceTimeStep();
+        massGridVariables->advanceTimeStep();
+        momentumGridVariables->advanceTimeStep();
 
         // We advance to the time loop to the next step.
         timeLoop->advanceTimeStep();
@@ -530,7 +636,7 @@ the current solution into .vtk files and prepare for the next time step.
 We write the velocities and coordinates at x = 0.5 and y = 0.5 into a file
 
 ```cpp
-    writeSteadyVelocityAndCoordinates(problem, x, gridGeometry);
+    writeSteadyVelocityAndCoordinates(*momentumProblem, x[momentumIdx]);
 ```
 
 The following piece of code prints a final status report of the time loop
