@@ -34,18 +34,25 @@
 #include <dune/subgrid/subgrid.hh>
 #endif
 
-#include <dumux/discretization/staggered/freeflow/properties.hh>
-#include <dumux/freeflow/navierstokes/model.hh>
+#include <dumux/discretization/fcstaggered.hh>
+#include <dumux/discretization/cctpfa.hh>
+
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
 
+#include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/mass/1p/model.hh>
+
+#include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
 #include "problem.hh"
 
 namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
-struct KovasznayTest { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
+struct KovasznayTest {};
+struct KovasznayTestMomentum { using InheritsFrom = std::tuple<KovasznayTest, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
+struct KovasznayTestMass { using InheritsFrom = std::tuple<KovasznayTest, NavierStokesMassOneP, CCTpfaModel>; };
 } // end namespace TTag
 
 // the fluid system
@@ -67,6 +74,16 @@ struct Grid<TypeTag, TTag::KovasznayTest>
 #else
     using type = HostGrid;
 #endif
+};
+
+// set the coupling manager property
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::KovasznayTest>
+{
+private:
+    using Traits = MultiDomainTraits<TTag::KovasznayTestMomentum, TTag::KovasznayTestMass>;
+public:
+    using type = StaggeredFreeFlowCouplingManager<Traits>;
 };
 
 // Set the problem property

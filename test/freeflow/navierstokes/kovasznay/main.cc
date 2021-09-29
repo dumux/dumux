@@ -29,23 +29,25 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/grid/io/file/vtk.hh>
-#include <dune/istl/io.hh>
 
-#include <dumux/assembly/staggeredfvassembler.hh>
-#include <dumux/assembly/diffmethod.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/io/grid/gridmanager_sub.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
-#include <dumux/io/staggeredvtkoutputmodule.hh>
+
 #include <dumux/linear/seqsolverbackend.hh>
-#include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 #include <test/freeflow/navierstokes/errors.hh>
+
+#include <dumux/multidomain/fvassembler.hh>
+#include <dumux/multidomain/traits.hh>
+#include <dumux/multidomain/newtonsolver.hh>
+
+#include <dumux/io/vtkoutputmodule.hh>
+#include <dumux/freeflow/navierstokes/velocityoutput.hh>
 
 #include "properties.hh"
 
@@ -54,7 +56,8 @@ int main(int argc, char** argv)
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = Properties::TTag::KovasznayTest;
+    using MomentumTypeTag = Properties::TTag::KovasznayTestMomentum;
+    using MassTypeTag = Properties::TTag::KovasznayTestMass;
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -67,7 +70,7 @@ int main(int argc, char** argv)
     Parameters::init(argc, argv);
 
     // create a grid
-    using Grid = GetPropType<TypeTag, Properties::Grid>;
+    using Grid = GetPropType<MomentumTypeTag, Properties::Grid>;
     Dumux::GridManager<Grid> gridManager;
 
 #if HAVE_DUNE_SUBGRID
@@ -106,47 +109,71 @@ int main(int argc, char** argv)
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
+    using MomentumGridGeometry = GetPropType<MomentumTypeTag, Properties::GridGeometry>;
+    auto momentumGridGeometry = std::make_shared<MomentumGridGeometry>(leafGridView);
+    using MassGridGeometry = GetPropType<MassTypeTag, Properties::GridGeometry>;
+    auto massGridGeometry = std::make_shared<MassGridGeometry>(leafGridView);
+
+    // the coupling manager
+    using Traits = MultiDomainTraits<MomentumTypeTag, MassTypeTag>;
+    using CouplingManager = StaggeredFreeFlowCouplingManager<Traits>;
+    auto couplingManager = std::make_shared<CouplingManager>();
 
     // the problem (boundary conditions)
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(gridGeometry);
+    using MomentumProblem = GetPropType<MomentumTypeTag, Properties::Problem>;
+    auto momentumProblem = std::make_shared<MomentumProblem>(momentumGridGeometry, couplingManager);
+
+    using MassProblem = GetPropType<MassTypeTag, Properties::Problem>;
+    auto massProblem = std::make_shared<MassProblem>(massGridGeometry, couplingManager);
 
     // the solution vector
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    constexpr auto momentumIdx = CouplingManager::freeFlowMomentumIndex;
+    constexpr auto massIdx = CouplingManager::freeFlowMassIndex;
+    using SolutionVector = typename Traits::SolutionVector;
     SolutionVector x;
-    x[GridGeometry::cellCenterIdx()].resize(gridGeometry->numCellCenterDofs());
-    x[GridGeometry::faceIdx()].resize(gridGeometry->numFaceDofs());
+    x[momentumIdx].resize(momentumGridGeometry->numDofs());
+    x[massIdx].resize(massGridGeometry->numDofs());
 
     // the grid variables
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
-    gridVariables->init(x);
+    using MomentumGridVariables = GetPropType<MomentumTypeTag, Properties::GridVariables>;
+    auto momentumGridVariables = std::make_shared<MomentumGridVariables>(momentumProblem, momentumGridGeometry);
+
+    using MassGridVariables = GetPropType<MassTypeTag, Properties::GridVariables>;
+    auto massGridVariables = std::make_shared<MassGridVariables>(massProblem, massGridGeometry);
+
+    couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x);
+    massGridVariables->init(x[massIdx]);
+    momentumGridVariables->init(x[momentumIdx]);
 
     // intialize the vtk output module
-    using IOFields = GetPropType<TypeTag, Properties::IOFields>;
-    StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
+    using IOFields = GetPropType<MassTypeTag, Properties::IOFields>;
+    VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name());
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
 
-    NavierStokesAnalyticalSolutionVectors analyticalSolVectors(problem);
-    vtkWriter.addField(analyticalSolVectors.getAnalyticalPressureSolution(), "pressureExact");
-    vtkWriter.addField(analyticalSolVectors.getAnalyticalVelocitySolution(), "velocityExact");
-    vtkWriter.addFaceField(analyticalSolVectors.getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");
+    using AnalyticalSolutionVectors = NavierStokesTest::AnalyticalSolutionVectors<MomentumProblem,MassProblem>;
+    AnalyticalSolutionVectors analyticalSolutionVectors(momentumProblem, massProblem);
+
+    vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
+    const auto exactPressure = analyticalSolutionVectors.analyticalPressureSolution();
+    const auto exactVelocity = analyticalSolutionVectors.analyticalVelocitySolution();
+    vtkWriter.addField(exactPressure, "pressureExact");
+    vtkWriter.addField(exactVelocity, "velocityExact");
 
     vtkWriter.write(0.0);
-
     // the assembler with time loop for instationary problem
-    using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
+    using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+    auto assembler = std::make_shared<Assembler>(std::make_tuple(momentumProblem, massProblem),
+                                                 std::make_tuple(momentumGridGeometry, massGridGeometry),
+                                                 std::make_tuple(momentumGridVariables, massGridVariables),
+                                                 couplingManager);
 
     // the linear solver
-    using LinearSolver = Dumux::UzawaBiCGSTABBackend<LinearSolverTraits<GridGeometry>>; // if rho \neq 1, use UMFPack rather than BIGCStab
+    using LinearSolver = Dumux::UzawaBiCGSTABBackend<LinearSolverTraits<MassGridGeometry>>; // if rho \neq 1, use UMFPack rather than BIGCStab
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver);
+    using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+    NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
     // linearize & solve
     Dune::Timer timer;
@@ -158,13 +185,15 @@ int main(int argc, char** argv)
 
     if (printErrors || printConvergenceTestFile)
     {
-        NavierStokesErrors errors(problem, x);
-        NavierStokesErrorCSVWriter(
-            problem, std::to_string(x[GridGeometry::cellCenterIdx()].size())
+        NavierStokesTest::Errors errors(
+            momentumProblem, massProblem, x
+        );
+        NavierStokesTest::ErrorCSVWriter(
+            momentumProblem, massProblem
         ).printErrors(errors);
 
         if (printConvergenceTestFile)
-            convergenceTestAppendErrors(problem, errors);
+            convergenceTestAppendErrors(momentumProblem, massProblem, errors);
     }
 
     // write vtk output
