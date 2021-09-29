@@ -56,7 +56,7 @@ template<class GridView>
 void checkOverlapSizeCCMpfa(const GridView& gridView)
 {
     // Check if the overlap size is what we expect
-    if (!CheckOverlapSize<DiscretizationMethod::ccmpfa>::isValid(gridView))
+    if (!CheckOverlapSize<DiscretizationMethods::ccmpfa>::isValid(gridView))
         DUNE_THROW(Dune::InvalidStateException, "The ccmpfa discretization method needs at least an overlap of 1 for parallel computations. "
                                                  << " Set the parameter \"Grid.Overlap\" in the input file.");
 }
@@ -111,7 +111,8 @@ public:
     using MpfaHelper = typename Traits::template MpfaHelper<ThisType>;
 
     //! export the discretization method this geometry belongs to
-    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::ccmpfa;
+    using DiscretizationMethod = DiscretizationMethods::CCMpfa;
+    static constexpr DiscretizationMethod discMethod{};
 
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
     static constexpr int maxElementStencilSize = Traits::maxElementStencilSize;
@@ -502,7 +503,8 @@ public:
     using MpfaHelper = typename Traits::template MpfaHelper<ThisType>;
 
     //! export the discretization method this geometry belongs to
-    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::ccmpfa;
+    using DiscretizationMethod = DiscretizationMethods::CCMpfa;
+    static constexpr DiscretizationMethod discMethod{};
 
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
     static constexpr int maxElementStencilSize = Traits::maxElementStencilSize;
