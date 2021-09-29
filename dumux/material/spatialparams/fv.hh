@@ -25,102 +25,14 @@
 #ifndef DUMUX_FV_SPATIAL_PARAMS_HH
 #define DUMUX_FV_SPATIAL_PARAMS_HH
 
-#include <dune/common/exceptions.hh>
-#include <dumux/common/typetraits/isvalid.hh>
-#include "fv1p.hh"
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 
 namespace Dumux {
 
-#ifndef DOXYGEN
-namespace Detail {
-// helper struct detecting if the user-defined spatial params class
-// has a fluidMatrixInteractionAtPos function
-template<class GlobalPosition>
-struct hasFluidMatrixInteractionAtPos
-{
-    template<class SpatialParams>
-    auto operator()(const SpatialParams& a)
-    -> decltype(a.fluidMatrixInteractionAtPos(std::declval<GlobalPosition>()))
-    {}
-};
-} // end namespace Detail
-#endif
-
-/*!
- * \ingroup SpatialParameters
- * \brief The base class for spatial parameters of multi-phase problems
- * using a fully implicit discretization method.
- */
 template<class GridGeometry, class Scalar, class Implementation>
-class FVSpatialParams : public FVSpatialParamsOneP<GridGeometry, Scalar, Implementation>
-{
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, Implementation>;
-    using GridView = typename GridGeometry::GridView;
-    using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolume = typename GridGeometry::SubControlVolume;
-    using Element = typename GridView::template Codim<0>::Entity;
-
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-
-public:
-    FVSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry)
-    {}
-
-    /*!
-     * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
-     *
-     * \param element The current element
-     * \param scv The sub-control volume inside the element.
-     * \param elemSol The solution at the dofs connected to the element.
-     */
-    template<class ElementSolution>
-    decltype(auto) fluidMatrixInteraction(const Element& element,
-                                          const SubControlVolume& scv,
-                                          const ElementSolution& elemSol) const
-    {
-        static_assert(decltype(isValid(Detail::hasFluidMatrixInteractionAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
-        "   Your spatial params class has to either implement\n\n"
-        "         auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const\n\n"
-        "   or overload this function\n\n"
-        "         template<class ElementSolution>\n"
-        "         auto fluidMatrixInteraction(const Element& element,\n"
-        "                                     const SubControlVolume& scv,\n"
-        "                                     const ElementSolution& elemSol) const\n\n");
-
-        return this->asImp_().fluidMatrixInteractionAtPos(scv.center());
-    }
-
-    /*!
-     * \brief Function for defining which phase is to be considered as the wetting phase.
-     *
-     * \param element The current element
-     * \param scv The sub-control volume inside the element.
-     * \param elemSol The solution at the dofs connected to the element.
-     * \return the wetting phase index
-     */
-    template<class FluidSystem, class ElementSolution>
-    int wettingPhase(const Element& element,
-                     const SubControlVolume& scv,
-                     const ElementSolution& elemSol) const
-    {
-        return this->asImp_().template wettingPhaseAtPos<FluidSystem>(scv.center());
-    }
-
-    /*!
-     * \brief Function for defining which phase is to be considered as the wetting phase.
-     *
-     * \return the wetting phase index
-     * \param globalPos The global position
-     */
-    template<class FluidSystem>
-    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
-    {
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The spatial parameters do not provide "
-                   "a wettingPhaseAtPos() method.");
-    }
-};
+using FVSpatialParams
+[[deprecated("Use FVPorousMediumSpatialParams in dumux/porousmediumflow/fvspatialparams.hh instead!")]]
+= FVPorousMediumSpatialParams<GridGeometry, Scalar, Implementation>;
 
 } // namespace Dumux
 
