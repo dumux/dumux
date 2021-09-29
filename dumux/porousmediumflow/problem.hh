@@ -52,34 +52,9 @@ class PorousMediumFlowProblem : public FVProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    //! Export spatial parameter type
-    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
 
-    /*!
-     * \brief Constructor, passing the spatial parameters.
-     *
-     * \param gridGeometry The finite volume grid geometry
-     * \param spatialParams The spatial parameter class
-     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
-     */
-    PorousMediumFlowProblem(std::shared_ptr<const GridGeometry> gridGeometry,
-                            std::shared_ptr<SpatialParams> spatialParams,
-                            const std::string& paramGroup = "")
-    : ParentType(gridGeometry, spatialParams, paramGroup)
-    {}
-
-    /*!
-     * \brief Constructor, constructing the spatial parameters.
-     *
-     * \param gridGeometry The finite volume grid geometry
-     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
-     */
-    PorousMediumFlowProblem(std::shared_ptr<const GridGeometry> gridGeometry,
-                            const std::string& paramGroup = "")
-    : PorousMediumFlowProblem(gridGeometry,
-                              std::make_shared<SpatialParams>(gridGeometry),
-                              paramGroup)
-    {}
+    //! Use constructors of the base class
+    using ParentType::ParentType;
 
     /*!
      * \name Physical parameters for porous media problems
