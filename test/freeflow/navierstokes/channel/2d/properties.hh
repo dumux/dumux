@@ -46,10 +46,10 @@ namespace Dumux::Properties {
 namespace TTag {
 struct ChannelTest {};
 struct ChannelTestMomentum { using InheritsFrom = std::tuple<ChannelTest, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
-#if !NONISOTHERMAL
-struct ChannelTestMass { using InheritsFrom = std::tuple<ChannelTest, NavierStokesMassOneP, CCTpfaModel>; };
-#else
+#if NONISOTHERMAL
 struct ChannelTestMass { using InheritsFrom = std::tuple<ChannelTest, NavierStokesMassOnePNI, CCTpfaModel>; };
+#else
+struct ChannelTestMass { using InheritsFrom = std::tuple<ChannelTest, NavierStokesMassOneP, CCTpfaModel>; };
 #endif
 } // end namespace TTag
 

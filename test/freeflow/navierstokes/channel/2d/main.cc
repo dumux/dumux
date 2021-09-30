@@ -24,8 +24,8 @@
 
 #include <config.h>
 
-#ifndef ISOTHERMAL
-#define ISOTHERMAL 0
+#ifndef NONISOTHERMAL
+#define NONISOTHERMAL 0
 #endif
 
 #include <ctime>
