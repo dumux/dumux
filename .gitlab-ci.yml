@@ -107,18 +107,18 @@ full-dune-2.7-clang:
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/full:dune-2.7-clang-ubuntu-20.04
 
-full-dune-master-gcc:
+full-dune-2.8-gcc:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/full:dune-master-gcc-ubuntu-20.04
+    IMAGE: $IMAGE_REGISTRY_URL/full:dune-2.8-gcc-ubuntu-20.04
 
 
 ##################################
 # additional scheduled pipelines #
-full-dune-master-clang:
+full-dune-2.8-clang:
   extends: .non-mr-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/full:dune-master-clang-ubuntu-20.04
+    IMAGE: $IMAGE_REGISTRY_URL/full:dune-2.8-clang-ubuntu-20.04
 
 
 #########################################################
