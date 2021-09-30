@@ -127,6 +127,37 @@ public:
         return source;
     }
 
+    /*!
+     * \brief Evaluate the boundary conditions for a neumann
+     *        boundary segment.
+     *
+     * This is the method for the case where the Neumann condition is
+     * potentially solution dependent
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars All volume variables for the element
+     * \param elemFluxVarsCache Flux variables caches for all faces in stencil
+     * \param scvf The sub control volume face
+     *
+     * Negative values mean influx.
+     * E.g. for the mass balance that would be the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
+     *
+     * TODO: We actually just want to use this from the base problem. However, the staggered
+     * problem inherits from FVProblem which uses a different (the default) NumEqVector.
+     * Therefore not overloading this would return a vector of wrong size.
+     */
+    template<class ElementVolumeVariables, class ElementFluxVariablesCache>
+    NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElementFluxVariablesCache& elemFluxVarsCache,
+                        const SubControlVolumeFace& scvf) const
+    {
+        // forward it to the interface with only the global position
+        return NumEqVector(0.0);
+    }
+
     // \}
 
     /*!
