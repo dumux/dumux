@@ -6,6 +6,7 @@ stages:
 variables:
   IMAGE_REGISTRY_URL: $CI_REGISTRY/dumux-repositories/dumux-docker-ci
   DUMUX_CI_TRIGGER_LECTURE_BRANCH: master
+  DUMUX_CI_DUNE_LATEST_RELEASE: "2.8"
 
 # Cases in which to create pipelines at all. The trigger jobs may further
 # specify how exactly they should be created in different situations.
@@ -20,7 +21,7 @@ workflow:
 # pipeline on a related merge request already. If yes, we simply return
 # to propagate that pipeline status on master. Otherwise, we trigger a new run.
 check-pipeline-status:
-  image: $IMAGE_REGISTRY_URL/full:dune-2.7-gcc-ubuntu-20.04
+  image: $IMAGE_REGISTRY_URL/full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-20.04
   stage: check-status
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
@@ -92,20 +93,20 @@ check-pipeline-status:
 
 #############################################
 # pipelines to be created in merge requests #
-full-dune-2.7-gcc:
+full-dune-latest-release-gcc:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/full:dune-2.7-gcc-ubuntu-20.04
+    IMAGE: $IMAGE_REGISTRY_URL/full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-20.04
 
-minimal-dune-2.7-gcc:
+minimal-dune-latest-release-gcc:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/minimal:dune-2.7-gcc-ubuntu-20.04
+    IMAGE: $IMAGE_REGISTRY_URL/minimal:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-20.04
 
-full-dune-2.7-clang:
+full-dune-latest-release-clang:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/full:dune-2.7-clang-ubuntu-20.04
+    IMAGE: $IMAGE_REGISTRY_URL/full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-clang-ubuntu-20.04
 
 full-dune-master-gcc:
   extends: .base-trigger
