@@ -30,6 +30,7 @@
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/porosityprecipitation.hh>
 #include <dumux/material/fluidmatrixinteractions/permeabilitykozenycarman.hh>
+#include <dumux/material/fluidmatrixinteractions/mp/mpadapter.hh>
 
 namespace Dumux {
 
@@ -133,9 +134,14 @@ public:
      * \brief Returns the fluid-matrix interaction law at a given location
      * \param globalPos A global coordinate vector
      */
+//     auto fluidMatrixInteractionAtPos(const GlobalPosition &globalPos) const
+//     {
+//         return makeFluidMatrixInteraction(pcKrSwCurve_);
+//     }
+
     auto fluidMatrixInteractionAtPos(const GlobalPosition &globalPos) const
     {
-        return makeFluidMatrixInteraction(pcKrSwCurve_);
+        return makeFluidMatrixInteraction(FluidMatrix::MPAdapter(pcKrSwCurve_));
     }
 
     // define which phase is to be considered as the wetting phase

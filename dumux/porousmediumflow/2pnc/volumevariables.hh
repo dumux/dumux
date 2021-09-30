@@ -147,6 +147,7 @@ public:
         const int nPhaseIdx = 1 - wPhaseIdx;
 
         // mobilities -> require wetting phase saturation as parameter!
+//         const auto relPerm = fluidMatrixInteraction.relativePermeabilities(fluidState_, wPhaseIdx);
         mobility_[wPhaseIdx] = fluidMatrixInteraction.krw(saturation(wPhaseIdx))/fluidState_.viscosity(wPhaseIdx);
         mobility_[nPhaseIdx] = fluidMatrixInteraction.krn(saturation(wPhaseIdx))/fluidState_.viscosity(nPhaseIdx);
 

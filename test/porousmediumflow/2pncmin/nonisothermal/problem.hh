@@ -69,13 +69,13 @@ class SalinizationProblem : public PorousMediumFlowProblem<TypeTag>
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
+//     using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
 
     enum
     {
         // primary variable indices
-        pressureIdx = Indices::pressureIdx,
-        switchIdx = Indices::switchIdx,
+        pressureIdx = 3,//Indices::pressureIdx,
+        switchIdx = 4,//Indices::switchIdx,
 
         // component indices
         // TODO: using xwNaClIdx as privaridx works here, but
@@ -93,7 +93,7 @@ class SalinizationProblem : public PorousMediumFlowProblem<TypeTag>
         gasPhaseIdx = FluidSystem::gasPhaseIdx,
 
         // index of the solid phase
-        sPhaseIdx = SolidSystem::comp0Idx,
+//         sPhaseIdx = SolidSystem::comp0Idx,
 
 
         // Index of the primary component of G and L phase
@@ -103,7 +103,7 @@ class SalinizationProblem : public PorousMediumFlowProblem<TypeTag>
         energyEqIdx = Indices::energyEqIdx,
 
         // Phase State
-        bothPhases = Indices::bothPhases,
+//         bothPhases = Indices::bothPhases,
 
         // Grid and world dimension
         dim = GridView::dimension,
@@ -222,7 +222,7 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables priVars(0.0);
-        priVars.setState(bothPhases);
+//         priVars.setState(bothPhases);
 
         return priVars;
     }
@@ -332,7 +332,7 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables priVars(0.0);
-        priVars.setState(bothPhases);
+//         priVars.setState(bothPhases);
         Scalar density = 1000.00; //FluidSystem::density(, liquidPhaseIdx);
 
         priVars[pressureIdx] = initPressure_ - density*9.81*globalPos[dimWorld-1];
@@ -372,32 +372,32 @@ public:
     {
         NumEqVector source(0.0);
 
-        const auto& volVars = elemVolVars[scv];
-
-        Scalar moleFracNaCl_wPhase = volVars.moleFraction(liquidPhaseIdx, NaClIdx);
-        Scalar massFracNaCl_Max_wPhase = this->spatialParams().solubilityLimit();
-        Scalar moleFracNaCl_Max_wPhase = massToMoleFrac_(massFracNaCl_Max_wPhase);
-        Scalar saltPorosity = this->spatialParams().minimalPorosity(element, scv);
-
-        // precipitation of amount of salt whic hexeeds the solubility limit
-        using std::abs;
-        Scalar precipSalt = volVars.porosity() * volVars.molarDensity(liquidPhaseIdx)
-                                               * volVars.saturation(liquidPhaseIdx)
-                                               * abs(moleFracNaCl_wPhase - moleFracNaCl_Max_wPhase)
-                                               / timeStepSize_;
-        if (moleFracNaCl_wPhase < moleFracNaCl_Max_wPhase)
-            precipSalt *= -1;
-
-        // make sure we don't dissolve more salt than previously precipitated
-        if (precipSalt*timeStepSize_ + volVars.solidVolumeFraction(sPhaseIdx)* volVars.solidComponentMolarDensity(sPhaseIdx)< 0)
-            precipSalt = -volVars.solidVolumeFraction(sPhaseIdx)* volVars.solidComponentMolarDensity(sPhaseIdx)/timeStepSize_;
-
-        // make sure there is still pore space available for precipitation
-        if (volVars.solidVolumeFraction(sPhaseIdx) >= this->spatialParams().referencePorosity(element, scv) - saltPorosity  && precipSalt > 0)
-            precipSalt = 0;
-
-        source[conti0EqIdx + NaClIdx] += -precipSalt;
-        source[precipNaClEqIdx] += precipSalt;
+//         const auto& volVars = elemVolVars[scv];
+//
+//         Scalar moleFracNaCl_wPhase = volVars.moleFraction(liquidPhaseIdx, NaClIdx);
+//         Scalar massFracNaCl_Max_wPhase = this->spatialParams().solubilityLimit();
+//         Scalar moleFracNaCl_Max_wPhase = massToMoleFrac_(massFracNaCl_Max_wPhase);
+//         Scalar saltPorosity = this->spatialParams().minimalPorosity(element, scv);
+//
+//         // precipitation of amount of salt whic hexeeds the solubility limit
+//         using std::abs;
+//         Scalar precipSalt = volVars.porosity() * volVars.molarDensity(liquidPhaseIdx)
+//                                                * volVars.saturation(liquidPhaseIdx)
+//                                                * abs(moleFracNaCl_wPhase - moleFracNaCl_Max_wPhase)
+//                                                / timeStepSize_;
+//         if (moleFracNaCl_wPhase < moleFracNaCl_Max_wPhase)
+//             precipSalt *= -1;
+//
+//         // make sure we don't dissolve more salt than previously precipitated
+//         if (precipSalt*timeStepSize_ + volVars.solidVolumeFraction(sPhaseIdx)* volVars.solidComponentMolarDensity(sPhaseIdx)< 0)
+//             precipSalt = -volVars.solidVolumeFraction(sPhaseIdx)* volVars.solidComponentMolarDensity(sPhaseIdx)/timeStepSize_;
+//
+//         // make sure there is still pore space available for precipitation
+//         if (volVars.solidVolumeFraction(sPhaseIdx) >= this->spatialParams().referencePorosity(element, scv) - saltPorosity  && precipSalt > 0)
+//             precipSalt = 0;
+//
+//         source[conti0EqIdx + NaClIdx] += -precipSalt;
+//         source[precipNaClEqIdx] += precipSalt;
         return source;
     }
 

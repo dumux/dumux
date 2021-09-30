@@ -31,7 +31,8 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/box.hh>
-#include <dumux/porousmediumflow/2pncmin/model.hh>
+// #include <dumux/porousmediumflow/2pncmin/model.hh>
+#include <dumux/porousmediumflow/mpnc/model.hh>
 #include <dumux/material/fluidsystems/brineair.hh>
 
 #include <dumux/material/components/nacl.hh>
@@ -45,7 +46,7 @@ namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
-struct Salinization { using InheritsFrom = std::tuple<TwoPNCMinNI>; };
+struct Salinization { using InheritsFrom = std::tuple<MPNCNI>; };
 struct SalinizationBox { using InheritsFrom = std::tuple<Salinization, BoxModel>; };
 struct SalinizationCCTpfa { using InheritsFrom = std::tuple<Salinization, CCTpfaModel>; };
 } // end namespace TTag
@@ -92,9 +93,9 @@ struct SpatialParams<TypeTag, TTag::Salinization>
 // Set properties here to override the default property settings
 template<class TypeTag>
 struct ReplaceCompEqIdx<TypeTag, TTag::Salinization> { static constexpr int value = 1; }; //!< Replace gas balance by total mass balance
-template<class TypeTag>
-struct Formulation<TypeTag, TTag::Salinization>
-{ static constexpr auto value = TwoPFormulation::p0s1; };
+// template<class TypeTag>
+// struct Formulation<TypeTag, TTag::Salinization>
+// { static constexpr auto value = TwoPFormulation::p0s1; };
 
 } // end namespace Dumux::Properties
 

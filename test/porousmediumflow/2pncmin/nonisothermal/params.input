@@ -45,6 +45,11 @@ VanGenuchtenN           = 14.0                  # Van Genuchten parameter
 Swr                     = 0.25                  # [-] irreducible liquid saturation
 Snr                     = 0.025                 # [-] irreducible gas saturation
 
+[Component]
+SolidDensity = 2700
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 790
+
 [Vtk]
 AddVelocity             = 1                     # Add extra information
 
