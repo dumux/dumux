@@ -109,8 +109,7 @@ public:
         //this is to calculate the maxwellStefan diffusion in a multicomponent system.
         //see: Multicomponent Mass Transfer. R. Taylor u. R. Krishna. J. Wiley & Sons, New York 1993
         ComponentFluxVector componentFlux(0.0);
-        ReducedComponentVector moleFracInside(0.0);
-        ReducedComponentVector moleFracOutside(0.0);
+        ReducedComponentVector moleFractionDifference(0.0);
         ReducedComponentVector reducedFlux(0.0);
         ReducedComponentMatrix reducedDiffusionMatrixInside(0.0);
         ReducedComponentMatrix reducedDiffusionMatrixOutside(0.0);
@@ -120,16 +119,16 @@ public:
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
         const auto rhoInside = insideVolVars.density(phaseIdx);
         const auto rhoOutside = outsideVolVars.density(phaseIdx);
+
         //calculate the mole fraction vectors
         for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
         {
             //calculate x_inside
             const auto xInside = insideVolVars.moleFraction(phaseIdx, compIdx);
-            //calculate outside molefraction with the respective transmissibility
+            //calculate outside molefraction
             const auto xOutside = outsideVolVars.moleFraction(phaseIdx, compIdx);
 
-            moleFracInside[compIdx] = xInside;
-            moleFracOutside[compIdx] = xOutside;
+            moleFractionDifference[compIdx] = xInside - xOutside;
         }
 
         //we cannot solve that if the matrix is 0 everywhere
@@ -141,15 +140,13 @@ public:
                                                   insideScv,
                                                   insideVolVars.extrusionFactor());
 
-            //now we have to do the tpfa: J_i = J_j which leads to: tij(xi -xj) = -rho Bi^-1 omegai(x*-xi) with x* = (omegai Bi^-1 + omegaj Bj^-1)^-1 (xi omegai Bi^-1 + xj omegaj Bj^-1) with i inside and j outside
             reducedDiffusionMatrixInside = setupMSMatrix_(problem, element, fvGeometry, insideVolVars, insideScv, phaseIdx);
 
             //if on boundary
             if (scvf.boundary() || scvf.numOutsideScvs() > 1)
             {
-                moleFracOutside -= moleFracInside;
-                reducedDiffusionMatrixInside.solve(reducedFlux, moleFracOutside);
-                reducedFlux *= omegai*rhoInside;
+                reducedDiffusionMatrixInside.solve(reducedFlux, moleFractionDifference);
+                reducedFlux *= omegai;
             }
             else //we need outside cells as well if we are not on the boundary
             {
@@ -171,30 +168,35 @@ public:
 
                 reducedDiffusionMatrixInside.invert();
                 reducedDiffusionMatrixOutside.invert();
-                reducedDiffusionMatrixInside *= omegai*rhoInside;
-                reducedDiffusionMatrixOutside *= omegaj*rhoOutside;
+                reducedDiffusionMatrixInside *= omegai;
+                reducedDiffusionMatrixOutside *= omegaj;
 
-                //in the helpervector we store the values for x*
-                ReducedComponentVector helperVector(0.0);
-                ReducedComponentVector gradientVectori(0.0);
-                ReducedComponentVector gradientVectorj(0.0);
+                //harmonic mean: Bi^-1 omegai * Bj^-1 omegaj/(Bi^-1 omegai + Bj^-1 omegaj)
+                auto sumDiffusionMatrices = reducedDiffusionMatrixOutside + reducedDiffusionMatrixInside;
+                sumDiffusionMatrices.invert();
 
-                reducedDiffusionMatrixInside.mv(moleFracInside, gradientVectori);
-                reducedDiffusionMatrixOutside.mv(moleFracOutside, gradientVectorj);
+                reducedDiffusionMatrixOutside.rightmultiply(sumDiffusionMatrices);
 
-                auto gradientVectorij = (gradientVectori + gradientVectorj);
+                auto reducedDiffusionMatrixHarmonicMean = reducedDiffusionMatrixInside.leftmultiply(reducedDiffusionMatrixOutside);
 
-                //add the two matrixes to each other
-                reducedDiffusionMatrixOutside += reducedDiffusionMatrixInside;
-
-                reducedDiffusionMatrixOutside.solve(helperVector, gradientVectorij);
-
-                //Bi^-1 omegai rho(x*-xi)
-                helperVector -=moleFracInside;
-                reducedDiffusionMatrixInside.mv(helperVector, reducedFlux);
+                reducedDiffusionMatrixHarmonicMean.mv(moleFractionDifference, reducedFlux);
             }
 
-            reducedFlux *= -Extrusion::area(scvf);
+            // helper lambda to get the averaged density at the scvf
+            const auto getRho = [&](const int phaseIdx, const Scalar rhoInside, const Scalar rhoOutside)
+            {
+                if constexpr (isMixedDimensional_)
+                {
+                    return scvf.numOutsideScvs() == 1 ? 0.5*(rhoInside + rhoOutside)
+                                                    : branchingFacetDensity_(elemVolVars, scvf, phaseIdx, rhoInside);
+                }
+                else
+                    return 0.5*(rhoInside + rhoOutside);
+            };
+
+            const Scalar rho = getRho(phaseIdx, rhoInside, rhoOutside);
+
+            reducedFlux *= Extrusion::area(scvf)*rho;
             for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
             {
                 componentFlux[compIdx] = reducedFlux[compIdx];
@@ -263,6 +265,53 @@ private:
         }
         return reducedDiffusionMatrix;
     }
+
+    //! compute the mole/mass fraction at branching facets for network grids
+    static Scalar branchingFacetX_(const Problem& problem,
+                                   const Element& element,
+                                   const FVElementGeometry& fvGeometry,
+                                   const ElementVolumeVariables& elemVolVars,
+                                   const ElementFluxVariablesCache& elemFluxVarsCache,
+                                   const SubControlVolumeFace& scvf,
+                                   const Scalar insideX, const Scalar insideTi,
+                                   const int phaseIdx, const int compIdx)
+    {
+        Scalar sumTi(insideTi);
+        Scalar sumXTi(insideTi*insideX);
+
+        for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
+        {
+            const auto outsideScvIdx = scvf.outsideScvIdx(i);
+            const auto& outsideVolVars = elemVolVars[outsideScvIdx];
+            const Scalar massOrMoleFractionOutside = massOrMoleFraction(outsideVolVars, referenceSystem, phaseIdx, compIdx);
+            const auto& flippedScvf = fvGeometry.flipScvf(scvf.index(), i);
+
+            const Scalar outsideTi = elemFluxVarsCache[flippedScvf].diffusionTij(phaseIdx, compIdx);
+            sumTi += outsideTi;
+            sumXTi += outsideTi*massOrMoleFractionOutside;
+        }
+
+        return sumTi > 0 ? sumXTi/sumTi : 0;
+    }
+
+    //! compute the density at branching facets for network grids as arithmetic mean
+    static Scalar branchingFacetDensity_(const ElementVolumeVariables& elemVolVars,
+                                         const SubControlVolumeFace& scvf,
+                                         const int phaseIdx,
+                                         const Scalar insideRho)
+    {
+        Scalar rho(insideRho);
+        for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
+        {
+            const auto outsideScvIdx = scvf.outsideScvIdx(i);
+            const auto& outsideVolVars = elemVolVars[outsideScvIdx];
+            const Scalar rhoOutside = massOrMolarDensity(outsideVolVars, referenceSystem, phaseIdx);
+            rho += rhoOutside;
+        }
+        return rho/(scvf.numOutsideScvs()+1);
+    }
+
+    static constexpr bool isMixedDimensional_ = static_cast<int>(GridView::dimension) < static_cast<int>(GridView::dimensionworld);
 
 };
 } // end namespace
