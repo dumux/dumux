@@ -9,7 +9,8 @@ dumux_add_test(NAME test_1pnc_maxwellstefan_tpfa
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1pnc_maxwellstefan_tpfa-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_1pnc_maxwellstefan_tpfa-00019.vtu
-                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pnc_maxwellstefan_tpfa params.input -Problem.Name test_1pnc_maxwellstefan_tpfa")
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pnc_maxwellstefan_tpfa params.input -Problem.Name test_1pnc_maxwellstefan_tpfa
+                        -Newton.MaxRelativeShift 1e-12")
 
 dumux_add_test(NAME test_1pnc_maxwellstefan_box
               LABELS porousmediumflow 1pnc
