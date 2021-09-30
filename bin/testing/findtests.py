@@ -54,6 +54,12 @@ def isAffectedTest(testConfigFile, changedFiles, buildTreeRoot="."):
     with open(testConfigFile) as configFile:
         testConfig = json.load(configFile)
 
+    # first we check if the CMakeLists.txt file of the test is changed
+    # then we always mark the test as affected
+    if f"{testConfig['source_dir']}/CMakeLists.txt" in changedFiles:
+        return True, testConfig["name"], testConfig["target"]
+
+    # next we use the compiler to detect changed header files
     command, directory = buildCommandAndDir(testConfig, buildTreeRoot)
     mainFile = command[-1]
 
