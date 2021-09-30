@@ -31,6 +31,7 @@
 
 #include <dumux/io/grid/gridmanager.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/common/gridcapabilities.hh>
 
 namespace Dumux {
 
@@ -287,9 +288,12 @@ private:
         if (gridView.comm().size() > 1)
         {
             VertexHandleNonZeroMin<GridView> dataHandle(boundaryMarker, gridView);
-            gridView.communicate(dataHandle,
-                                 Dune::InteriorBorder_All_Interface,
-                                 Dune::ForwardCommunication);
+            if constexpr (Detail::canCommunicate<typename GridView::Traits::Grid, GridView::dimension>)
+                gridView.communicate(dataHandle,
+                                     Dune::InteriorBorder_All_Interface,
+                                     Dune::ForwardCommunication);
+            else
+                DUNE_THROW(Dune::InvalidStateException, "Cannot call getBoundaryMarkers_ on multiple processes for a grid that cannot communicate codim-" << GridView::dimension << "-entities");
         }
     }
 };
