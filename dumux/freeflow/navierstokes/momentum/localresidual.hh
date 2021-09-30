@@ -212,6 +212,13 @@ public:
                                            const SubControlVolumeFace& scvf) const
     {
         static_assert(FVElementGeometry::GridGeometry::discMethod == DiscretizationMethod::fcstaggered); // TODO overload this method for different discretizations
+        static_assert(
+            std::decay_t<decltype(
+                problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf)
+            )>::size() == ModelTraits::dim(),
+            "The momentum model expects problem.neumann to return a vector of size dim. "
+            "When in doubt you should be able to use 'using NumEqVector = typename ParentType::NumEqVector;'."
+        );
         assert(elemBcTypes.hasNeumann());
 
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
