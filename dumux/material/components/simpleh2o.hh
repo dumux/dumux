@@ -137,7 +137,7 @@ public:
                                     Scalar pressure)
     {
         static const Scalar tRef = getParam<Scalar>("SimpleH2O.ReferenceTemperature", 293.15);
-        return gasHeatCapacity(temperature, pressure)*(temperature - tRef);
+        return gasHeatCapacity(temperature, pressure)*(temperature - tRef) + vaporizationEnthalpy();
     }
 
     /*!
@@ -153,6 +153,26 @@ public:
         return liquidHeatCapacity(temperature, pressure)*(temperature - tRef)
                 + pressure/liquidDensity(temperature, pressure);
     }
+
+   /*!
+    * \brief The vaporization enthalpy in \f$\mathrm{[J/kg]}\f$ needed to vaporize one kilogram of the liquid water to the gaseous state depending on temperature as found in: C. O. Popiel & J. Wojtkowiak (1998) Simple Formulas for Thermophysical Properties of Liquid Water for Heat Transfer Calculations (from 0°C to 150°C), DOI:10.1080/01457639808939929
+    */
+    static Scalar vaporizationEnthalpy()
+    {
+        constexpr Scalar A = 2500.304;
+        constexpr Scalar B = -2.2521025;
+        constexpr Scalar C = -0.021465847;
+        constexpr Scalar D = 3.1750136e-4 ;
+        constexpr Scalar E = -2.8607959e-5;
+
+        //tRef in °C
+        static const Scalar tRef = getParam<Scalar>("SimpleH2O.ReferenceTemperature", 293.15) - 273.15;
+
+        using std::pow;
+        static const Scalar vaporizationEnthalpy = A + B*tRef + C*(pow(tRef,1.5)) + D*(pow(tRef,2.5)) + E*(pow(tRef,3));
+        return vaporizationEnthalpy;
+    }
+
 
     /*!
      * \brief Specific internal energy of steam \f$\mathrm{[J/kg]}\f$.
