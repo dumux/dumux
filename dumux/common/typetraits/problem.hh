@@ -31,7 +31,7 @@ namespace Dumux {
 
 // forward declare
 namespace Detail {
-template<class Problem, DiscretizationMethod dm>
+template<class Problem, class DiscretizationMethod>
 struct ProblemTraits;
 } // end namespace Detail
 
@@ -43,7 +43,7 @@ template<class Problem>
 struct ProblemTraits
 {
     using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
-    using BoundaryTypes = typename Detail::template ProblemTraits<Problem, GridGeometry::discMethod>::BoundaryTypes;
+    using BoundaryTypes = typename Detail::template ProblemTraits<Problem, typename GridGeometry::DiscretizationMethod>::BoundaryTypes;
 };
 
 } // end namespace Dumux
