@@ -20,15 +20,17 @@
 #ifndef DUMUX_TEST_FREEFLOW_PIPE_PROBLEM_HH
 #define DUMUX_TEST_FREEFLOW_PIPE_PROBLEM_HH
 
-#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/numeqvector.hh>
 
 #include <dumux/freeflow/navierstokes/problem.hh>
-#include <dumux/freeflow/navierstokes/boundarytypes.hh>
+#include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
+#include <dumux/freeflow/navierstokes/scalarfluxhelper.hh>
 
 namespace Dumux {
-
 /*!
+ * \ingroup NavierStokesTests
  * \brief Freeflow problem for pipe flow
  * Simulation of a radially-symmetric pipe flow with circular cross-section
  */
@@ -37,19 +39,24 @@ class FreeFlowPipeProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = typename GridGeometry::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using BoundaryTypes = NavierStokesBoundaryTypes<PrimaryVariables::size()>;
+    using PrimaryVariables = typename ParentType::PrimaryVariables;
+    using NumEqVector = typename ParentType::NumEqVector;
+    using BoundaryTypes = typename ParentType::BoundaryTypes;
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using Indices = typename ModelTraits::Indices;
 
-    FreeFlowPipeProblem(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry)
+    FreeFlowPipeProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
+    : ParentType(gridGeometry, couplingManager)
 
     {
         name_ = getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
@@ -76,34 +83,76 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      */
-    BoundaryTypes boundaryTypes(const Element& element,
-                                const SubControlVolumeFace& scvf) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
-        const auto& globalPos = scvf.dofPosition();
 
-        // inlet
-        if (onLowerBoundary_(globalPos))
+        if constexpr (ParentType::isMomentumProblem())
         {
-            values.setDirichlet(Indices::velocityXIdx);
-            values.setDirichlet(Indices::velocityYIdx);
+            if (onLowerBoundary_(globalPos) || onOuterBoundary_(globalPos))
+                values.setAllDirichlet();
+            else if (onInnerBoundary_(globalPos))
+            {
+                values.setDirichlet(Indices::velocityXIdx);
+                values.setNeumann(Indices::momentumYBalanceIdx);
+            }
+            else
+                values.setAllNeumann();
         }
-        //  outlet
-        else if (onUpperBoundary_(globalPos))
+        else
+            values.setAllNeumann();
+
+        return values;
+    }
+
+    /*!
+     * \brief Evaluates the boundary conditions for a Neumann control volume.
+     *
+     * \param element The element for which the Neumann boundary condition is set
+     * \param fvGeometry The fvGeometry
+     * \param elemVolVars The element volume variables
+     * \param elemFaceVars The element face variables
+     * \param scvf The boundary sub control volume face
+     */
+    template<class ElementVolumeVariables, class ElementFluxVariablesCache>
+    NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElementFluxVariablesCache& elemFluxVarsCache,
+                        const SubControlVolumeFace& scvf) const
+    {
+        NumEqVector values(0.0);
+        const auto& globalPos = scvf.ipGlobal();
+
+        if constexpr (ParentType::isMomentumProblem())
         {
-            values.setDirichlet(Indices::pressureIdx);
+            if (onInnerBoundary_(globalPos))
+                return values; // zero shear stress at symmetry axis
+            if (onUpperBoundary_(globalPos))
+                values = NavierStokesMomentumBoundaryFluxHelper::fixedPressureMomentumFlux(*this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, analyticalPressure(globalPos), true /*zeroNormalVelocityGradient*/);
         }
-        // pipe centerline
-        else if (onInnerBoundary_(globalPos))
+        else
         {
-            values.setAllSymmetry();
+            using FluxHelper = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>;
+            if (onLowerBoundary_(globalPos) || onUpperBoundary_(globalPos))
+                values = FluxHelper::scalarOutflowFlux(*this, element, fvGeometry, scvf, elemVolVars);
         }
-        // pipe wall
-        else if (onOuterBoundary_(globalPos))
-        {
-            values.setDirichlet(Indices::velocityXIdx);
-            values.setDirichlet(Indices::velocityYIdx);
-        }
+
+        return values;
+    }
+
+    /*!
+      * \brief Evaluates the initial value for a control volume.
+      *
+      * \param globalPos The global position
+      */
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
+    {
+        PrimaryVariables values(0.0);
+        if constexpr (ParentType::isMomentumProblem())
+            return values;
+        else
+            values[Indices::pressureIdx] = initialPressure_;
 
         return values;
     }
@@ -111,25 +160,27 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     { return analyticalSolution(globalPos); }
 
-    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
-    {
-        PrimaryVariables values(0.0);
-        values[Indices::pressureIdx] = initialPressure_;
-        return values;
-    }
-
     PrimaryVariables analyticalSolution(const GlobalPosition& globalPos, Scalar time = 0.0) const
     {
         PrimaryVariables values(0.0);
 
         // paraboloid velocity profile
-        const auto r = globalPos[0] - this->gridGeometry().bBoxMin()[0];
-        const auto y = globalPos[1] - this->gridGeometry().bBoxMin()[1];
-        values[Indices::velocityXIdx] = 0.0;
-        values[Indices::velocityYIdx] = 2.0*meanInletVelocity_*(1.0 - r*r/(pipeRadius_*pipeRadius_));
-        values[Indices::pressureIdx] = (pipeLength_-y)*meanInletVelocity_*8.0*mu_/(pipeRadius_*pipeRadius_);
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            const auto r = globalPos[0] - this->gridGeometry().bBoxMin()[0];
+            values[Indices::velocityXIdx] = 0.0;
+            values[Indices::velocityYIdx] = 2.0*meanInletVelocity_*(1.0 - r*r/(pipeRadius_*pipeRadius_));
+        }
+        else
+            values[Indices::pressureIdx] = analyticalPressure(globalPos);
 
         return values;
+    }
+
+    Scalar analyticalPressure(const GlobalPosition& globalPos) const
+    {
+        const auto y = globalPos[1];
+        return (pipeLength_-y)*meanInletVelocity_*8.0*mu_/(pipeRadius_*pipeRadius_);
     }
 
 private:

@@ -18,7 +18,8 @@ print("Removed old log file ({})!".format(testname + '.log'))
 # do the runs with different refinement
 for i in [0, 1, 2]:
     subprocess.call(['./' + testname] + testargs + ['-Grid.Refinement', str(i),
-                                      '-Problem.Name', testname])
+                                      '-Problem.Name', testname,
+                                      '-Problem.PrintConvergenceTestFile', 'true'])
 
 # check the rates and append them to the log file
 logfile = open(testname + '.log', "r+")
