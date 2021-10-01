@@ -56,7 +56,7 @@ template<class GridView>
 void checkOverlapSizeCCMpfa(const GridView& gridView)
 {
     // Check if the overlap size is what we expect
-    if (!CheckOverlapSize<DiscretizationMethods::ccmpfa>::isValid(gridView))
+    if (!CheckOverlapSize<DiscretizationMethods::CCMpfa>::isValid(gridView))
         DUNE_THROW(Dune::InvalidStateException, "The ccmpfa discretization method needs at least an overlap of 1 for parallel computations. "
                                                  << " Set the parameter \"Grid.Overlap\" in the input file.");
 }
