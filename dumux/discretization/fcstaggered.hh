@@ -118,7 +118,7 @@ public:
 namespace Dumux::Detail {
 
 template<class Problem>
-struct ProblemTraits<Problem, DiscretizationMethod::fcstaggered>
+struct ProblemTraits<Problem, DiscretizationMethods::FCStaggered>
 {
 private:
     using GG = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
