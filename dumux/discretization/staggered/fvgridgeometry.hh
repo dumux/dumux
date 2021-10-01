@@ -244,7 +244,7 @@ public:
     , intersectionMapper_(gridView)
     {
         // Check if the overlap size is what we expect
-        if (!CheckOverlapSize<DiscretizationMethods::staggered>::isValid(gridView))
+        if (!CheckOverlapSize<DiscretizationMethod>::isValid(gridView))
             DUNE_THROW(Dune::InvalidStateException, "The staggered discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
 
@@ -545,7 +545,7 @@ public:
     , intersectionMapper_(gridView)
     {
         // Check if the overlap size is what we expect
-        if (!CheckOverlapSize<DiscretizationMethods::staggered>::isValid(gridView))
+        if (!CheckOverlapSize<DiscretizationMethod>::isValid(gridView))
             DUNE_THROW(Dune::InvalidStateException, "The staggered discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
 
