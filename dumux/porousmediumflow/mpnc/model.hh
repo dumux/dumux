@@ -104,6 +104,7 @@
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/simplefluidlumping.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/somerton.hh>
+#include <dumux/material/solidstates/compositionalsolidstate.hh>
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/compositional/localresidual.hh>
@@ -118,6 +119,11 @@
 #include "iofields.hh"
 #include "localresidual.hh"
 #include "pressureformulation.hh"
+
+#include <dumux/porousmediumflow/mineralization/model.hh>
+#include <dumux/porousmediumflow/mineralization/localresidual.hh>
+#include <dumux/porousmediumflow/mineralization/volumevariables.hh>
+#include <dumux/porousmediumflow/mineralization/iofields.hh>
 
 namespace Dumux
 {
@@ -224,8 +230,23 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::MPNC> { using type = MPNCLocalResidual<TypeTag>; };
 
 //! Set the model traits property
+// template<class TypeTag>
+// struct ModelTraits<TypeTag, TTag::MPNC>
+// {
+// private:
+//     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+// public:
+//     using type = MPNCModelTraits<FluidSystem::numPhases,
+//                                  FluidSystem::numComponents,
+//                                  getPropValue<TypeTag, Properties::PressureFormulation>(),
+//                                  getPropValue<TypeTag, Properties::UseMoles>(),
+//                                  getPropValue<TypeTag, Properties::ReplaceCompEqIdx>()>;
+// };
+
+
+//! Set the base model traits
 template<class TypeTag>
-struct ModelTraits<TypeTag, TTag::MPNC>
+struct BaseModelTraits<TypeTag, TTag::MPNC>
 {
 private:
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -236,6 +257,18 @@ public:
                                  getPropValue<TypeTag, Properties::UseMoles>(),
                                  getPropValue<TypeTag, Properties::ReplaceCompEqIdx>()>;
 };
+
+//! The 2pnc model traits define the non-mineralization part
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::MPNC>
+{
+private:
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
+    using NonMineralizationTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
+public:
+    using type = MineralizationModelTraits<NonMineralizationTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
+};
+
 
 //! This model uses the compositional fluid state
 template<class TypeTag>
@@ -264,8 +297,9 @@ private:
     using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
 
     using Traits = MPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, DT, EDM>;
+    using NonMinVolVars = MPNCVolumeVariables<Traits>;
 public:
-    using type = MPNCVolumeVariables<Traits>;
+    using type = MineralizationVolumeVariables<Traits, NonMinVolVars>;
 };
 
 //! Per default, no component mass balance is replaced
@@ -287,7 +321,18 @@ public:
 
 //! Set the vtk output fields specific to this model
 template<class TypeTag>
-struct IOFields<TypeTag, TTag::MPNC> { using type = MPNCIOFields; };
+struct IOFields<TypeTag, TTag::MPNC> { using type = MineralizationIOFields<MPNCIOFields>; };
+
+//! The two-phase model uses the immiscible fluid state
+template<class TypeTag>
+struct SolidState<TypeTag, TTag::MPNC>
+{
+private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
+public:
+    using type = CompositionalSolidState<Scalar, SolidSystem>;
+};
 
 /////////////////////////////////////////////////
 // Properties for the non-isothermal mpnc model
@@ -298,12 +343,11 @@ template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::MPNCNI>
 {
 private:
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using IsothermalTraits = MPNCModelTraits<FluidSystem::numPhases,
-                                             FluidSystem::numComponents,
-                                             getPropValue<TypeTag, Properties::PressureFormulation>(),
-                                             getPropValue<TypeTag, Properties::UseMoles>(),
-                                             getPropValue<TypeTag, Properties::ReplaceCompEqIdx>()>;
+    using NonMinTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
+//     using IsothermalTraits = MineralizationModelTraits< NonMinTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
+    using IsothermalTraits = MineralizationModelTraits<NonMinTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
@@ -327,8 +371,20 @@ private:
     using ETCM = GetPropType< TypeTag, Properties::ThermalConductivityModel>;
     template<class BaseTraits, class ETCM>
     struct NITraits : public BaseTraits { using EffectiveThermalConductivityModel = ETCM; };
+
+
+    template<class BaseTraits, class DT, class EDM, class ETCM>
+    struct NCNITraits : public BaseTraits
+    {
+        using DiffusionType = DT;
+        using EffectiveDiffusivityModel = EDM;
+        using EffectiveThermalConductivityModel = ETCM;
+    };
+
+    using NonMinVolVars = MPNCVolumeVariables<NITraits<BaseTraits, ETCM>>;
 public:
-    using type = MPNCVolumeVariables<NITraits<BaseTraits, ETCM>>;
+    using type = MineralizationVolumeVariables<NCNITraits<BaseTraits, DT, EDM, ETCM>, NonMinVolVars>;
+
 };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
