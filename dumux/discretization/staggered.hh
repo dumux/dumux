@@ -200,7 +200,7 @@ public:
 namespace Detail {
 
 template<class Problem>
-struct ProblemTraits<Problem, DiscretizationMethod::staggered>
+struct ProblemTraits<Problem, DiscretizationMethods::Staggered>
 {
 private:
     using GG = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
