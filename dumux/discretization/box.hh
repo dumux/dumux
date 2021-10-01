@@ -110,7 +110,7 @@ struct BaseLocalResidual<TypeTag, TTag::BoxModel> { using type = BoxLocalResidua
 namespace Detail {
 
 template<class Problem>
-struct ProblemTraits<Problem, DiscretizationMethod::box>
+struct ProblemTraits<Problem, DiscretizationMethods::Box>
 {
 private:
     using GG = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
