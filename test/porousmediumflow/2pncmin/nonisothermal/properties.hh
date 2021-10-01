@@ -71,15 +71,15 @@ struct FluidSystem<TypeTag, TTag::Salinization>
     using type = FluidSystems::BrineAir<Scalar, Components::H2O<Scalar>>;
 };
 
-template<class TypeTag>
-struct SolidSystem<TypeTag, TTag::Salinization>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using ComponentOne = Components::NaCl<Scalar>;
-    using ComponentTwo = Components::Granite<Scalar>;
-    static constexpr int numInertComponents = 1;
-    using type = SolidSystems::CompositionalSolidPhase<Scalar, ComponentOne, ComponentTwo, numInertComponents>;
-};
+// template<class TypeTag>
+// struct SolidSystem<TypeTag, TTag::Salinization>
+// {
+//     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+//     using ComponentOne = Components::NaCl<Scalar>;
+//     using ComponentTwo = Components::Granite<Scalar>;
+//     static constexpr int numInertComponents = 1;
+//     using type = SolidSystems::CompositionalSolidPhase<Scalar, ComponentOne, ComponentTwo, numInertComponents>;
+// };
 
 // Set the spatial parameters
 template<class TypeTag>
