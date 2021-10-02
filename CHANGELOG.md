@@ -47,6 +47,7 @@ for (const auto& element : elements(gridGeometry.gridView()))
 - `PengRobinsonMixture::computeMolarVolumes` has been removed without deprecation. It was used nowhere and did not translate.
 - __Coupling managers__: The coupling managers now store shared_ptrs of the subdomain solutions to be able to manage memory outside. There is compatibility interface that is deprecated but it won't allow for assignments
   of the form `this->curSol() = sol;` since curSol returns a MultiTypeVector of references. If assignment is needed for some reason, use a hybrid loop over all subdomain indices.
+- __ShallowWaterViscousFlux__: The template argument `PrimaryVariables` has been removed without deprecation. It was not needed.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.5:
 

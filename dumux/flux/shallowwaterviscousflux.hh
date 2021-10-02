@@ -57,8 +57,7 @@ static constexpr bool implementsFrictionLaw()
  *        by adding all surrounding shear stresses.
  *        For now implemented strictly for 2D depth-averaged models (i.e. 3 equations)
  */
-template<class PrimaryVariables, class NumEqVector,
-         typename std::enable_if_t<NumEqVector::size() == 3, int> = 0>
+template<class NumEqVector, typename std::enable_if_t<NumEqVector::size() == 3, int> = 0>
 class ShallowWaterViscousFlux
 {
 
@@ -87,7 +86,7 @@ public:
                             const ElementVolumeVariables& elemVolVars,
                             const typename FVElementGeometry::SubControlVolumeFace& scvf)
     {
-        using Scalar = typename PrimaryVariables::value_type;
+        using Scalar = typename NumEqVector::value_type;
 
         NumEqVector localFlux(0.0);
 

@@ -161,7 +161,7 @@ struct AdvectionType<TypeTag, TTag::ShallowWater>
 
 template<class TypeTag>
 struct ViscousFluxType<TypeTag, TTag::ShallowWater>
-{ using type = ShallowWaterViscousFlux< GetPropType<TypeTag, Properties::PrimaryVariables>, Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>> >; };
+{ using type = ShallowWaterViscousFlux< Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>> >; };
 
 } // end properties
 } // end namespace Dumux
