@@ -64,8 +64,19 @@ struct NavierStokesMomentumBoundaryFluxHelper
         // TODO density upwinding?
         static_assert(FVElementGeometry::GridGeometry::discMethod == DiscretizationMethod::fcstaggered);
         using NumEqVector = typename Problem::Traits::NumEqVector;
+        constexpr std::size_t dim = static_cast<std::size_t>(FVElementGeometry::GridGeometry::GridView::dimension);
+        static_assert(
+            NumEqVector::size() == dim,
+            "Expects momentum flux to have as many entries as dimensions."
+        );
+
         NumEqVector flux(0.0);
         const auto& element = fvGeometry.element();
+
+        static_assert(
+            std::decay_t<decltype(problem.dirichlet(element, scvf))>::size() == dim,
+            "Expects problem.dirichlet to return an array with as many entries as dimensions."
+        );
 
         if (scvf.isFrontal())
         {
@@ -198,6 +209,12 @@ struct NavierStokesMomentumBoundaryFluxHelper
     {
         static_assert(FVElementGeometry::GridGeometry::discMethod == DiscretizationMethod::fcstaggered);
         using NumEqVector = typename Problem::Traits::NumEqVector;
+        constexpr std::size_t dim = static_cast<std::size_t>(FVElementGeometry::GridGeometry::GridView::dimension);
+        static_assert(
+            NumEqVector::size() == dim,
+            "Expects momentum flux to have as many entries as dimensions."
+        );
+
         NumEqVector flux(0.0);
 
         // slip velocity momentum contribution only makes sense for lateral scvfs

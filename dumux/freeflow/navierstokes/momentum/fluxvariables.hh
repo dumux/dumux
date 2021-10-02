@@ -93,7 +93,13 @@ public:
     , elemVolVarsPtr_(&elemVolVars)
     , elemFluxVarsCachePtr_(&elemFluxVarsCache)
     , elemBcTypesPtr_(&elemBcTypes)
-    {}
+    {
+        static_assert(
+            std::decay_t<decltype(problem.dirichlet(element, scvFace))>::size()
+                == static_cast<std::size_t>(GridView::dimension),
+            "Expects problem.dirichlet to return an array with as many entries as dimensions."
+        );
+    }
 
     const Problem& problem() const
     { return *problemPtr_; }
