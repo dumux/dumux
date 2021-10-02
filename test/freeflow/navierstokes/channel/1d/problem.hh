@@ -56,18 +56,22 @@ class NavierStokesAnalyticProblem : public NavierStokesProblem<TypeTag>
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using FVElementGeometry = typename GridGeometry::LocalView;
 
     static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
     using DimVector = GlobalPosition;
     using DimMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
 public:
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    NavierStokesAnalyticProblem(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry)
+    NavierStokesAnalyticProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
+    : ParentType(gridGeometry, couplingManager)
     {
         density_ = getParam<Scalar>("Component.LiquidDensity");
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity");
@@ -90,36 +94,41 @@ public:
     {
         NumEqVector source(0.0);
 
-        // mass balance - term div(rho*v)
-        for (unsigned int dimIdx = 0; dimIdx < dimWorld; ++dimIdx)
+        if constexpr (!ParentType::isMomentumProblem())
         {
-            source[Indices::conti0EqIdx] += dvdx(globalPos)[dimIdx][dimIdx];
-        }
-        source[Indices::conti0EqIdx] *= density_;
-
-        // momentum balance
-        for (unsigned int velIdx = 0; velIdx < dimWorld; ++velIdx)
-        {
+            // mass balance - term div(rho*v)
             for (unsigned int dimIdx = 0; dimIdx < dimWorld; ++dimIdx)
             {
-                // inertia term
-                if (this->enableInertiaTerms())
-                  source[Indices::velocity(velIdx)] += density_ * dv2dx(globalPos)[velIdx][dimIdx];
-
-                // viscous term (molecular)
-                source[Indices::velocity(velIdx)] -= density_ * kinematicViscosity_* dvdx2(globalPos)[velIdx][dimIdx];
-                static const bool enableUnsymmetrizedVelocityGradient = getParam<bool>("FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
-                if (!enableUnsymmetrizedVelocityGradient)
-                    source[Indices::velocity(velIdx)] -= density_ * kinematicViscosity_* dvdx2(globalPos)[dimIdx][velIdx];
+                source[Indices::conti0EqIdx] += dvdx(globalPos)[dimIdx][dimIdx];
             }
-            // pressure term
-            source[Indices::velocity(velIdx)] += dpdx(globalPos)[velIdx];
-
-            // gravity term
-            static const bool enableGravity = getParam<bool>("Problem.EnableGravity");
-            if (enableGravity)
+            source[Indices::conti0EqIdx] *= density_;
+        }
+        else
+        {
+            // momentum balance
+            for (unsigned int velIdx = 0; velIdx < dimWorld; ++velIdx)
             {
-                source[Indices::velocity(velIdx)] -= density_ * this->gravity()[velIdx];
+                for (unsigned int dimIdx = 0; dimIdx < dimWorld; ++dimIdx)
+                {
+                    // inertia term
+                    if (this->enableInertiaTerms())
+                        source[Indices::velocity(velIdx)] += density_ * dv2dx(globalPos)[velIdx][dimIdx];
+
+                    // viscous term (molecular)
+                    source[Indices::velocity(velIdx)] -= density_ * kinematicViscosity_* dvdx2(globalPos)[velIdx][dimIdx];
+                    static const bool enableUnsymmetrizedVelocityGradient = getParam<bool>("FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
+                    if (!enableUnsymmetrizedVelocityGradient)
+                        source[Indices::velocity(velIdx)] -= density_ * kinematicViscosity_* dvdx2(globalPos)[dimIdx][velIdx];
+                }
+                // pressure term
+                source[Indices::velocity(velIdx)] += dpdx(globalPos)[velIdx];
+
+                // gravity term
+                static const bool enableGravity = getParam<bool>("Problem.EnableGravity");
+                if (enableGravity)
+                {
+                    source[Indices::velocity(velIdx)] -= density_ * this->gravity()[velIdx];
+                }
             }
         }
 
@@ -141,31 +150,15 @@ public:
     {
         BoundaryTypes values;
 
-        // set Dirichlet values for the velocity everywhere
-        values.setDirichlet(Indices::momentumXBalanceIdx);
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            // set Dirichlet values for the velocity everywhere
+            values.setDirichlet(Indices::momentumXBalanceIdx);
+        }
+        else
+            values.setNeumann(Indices::pressureIdx);
 
         return values;
-    }
-
-    /*!
-     * \brief Returns whether a fixed Dirichlet value shall be used at a given cell.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param scv The sub control volume
-     * \param pvIdx The primary variable index in the solution vector
-     */
-    bool isDirichletCell(const Element& element,
-                         const typename GridGeometry::LocalView& fvGeometry,
-                         const typename GridGeometry::SubControlVolume& scv,
-                         int pvIdx) const
-    {
-        // set a fixed pressure in all cells at the boundary
-        for (const auto& scvf : scvfs(fvGeometry))
-            if (scvf.boundary())
-                return true;
-
-        return false;
     }
 
    /*!
@@ -188,8 +181,12 @@ public:
     PrimaryVariables analyticalSolution(const GlobalPosition& globalPos, Scalar time = 0.0) const
     {
         PrimaryVariables values;
-        values[Indices::pressureIdx] = p(globalPos);
-        values[Indices::velocityXIdx] = v(globalPos);
+
+        if constexpr (ParentType::isMomentumProblem())
+            values[Indices::velocityXIdx] = v(globalPos);
+        else
+            values[Indices::pressureIdx] = p(globalPos);
+
         return values;
     }
 
@@ -243,6 +240,51 @@ public:
         dpdx[0] = -2.0;
         return dpdx;
     }
+
+    //! Enable internal Dirichlet constraints
+    static constexpr bool enableInternalDirichletConstraints()
+    { return !ParentType::isMomentumProblem(); }
+
+    /*!
+     * \brief Tag a degree of freedom to carry internal Dirichlet constraints.
+     *        If true is returned for a dof, the equation for this dof is replaced
+     *        by the constraint that its primary variable values must match the
+     *        user-defined values obtained from the function internalDirichlet(),
+     *        which must be defined in the problem.
+     *
+     * \param element The finite element
+     * \param scv The sub-control volume
+     */
+    std::bitset<PrimaryVariables::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
+    {
+        std::bitset<PrimaryVariables::dimension> values;
+
+        auto fvGeometry = localView(this->gridGeometry());
+        fvGeometry.bindElement(element);
+
+        bool onBoundary = false;
+        for (const auto& scvf : scvfs(fvGeometry))
+            onBoundary = std::max(onBoundary, scvf.boundary());
+
+        if (onBoundary)
+            values.set(0);
+
+        // TODO: only use one cell or pass fvGeometry to hasInternalDirichletConstraint
+
+        // if (scv.dofIndex() == 0)
+        //     values.set(0);
+        // the pure Neumann problem is only defined up to a constant
+        // we create a well-posed problem by fixing the pressure at one dof
+        return values;
+    }
+
+    /*!
+     * \brief Define the values of internal Dirichlet constraints for a degree of freedom.
+     * \param element The finite element
+     * \param scv The sub-control volume
+     */
+    PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
+    { return PrimaryVariables(analyticalSolution(scv.center())[Indices::pressureIdx]); }
 
     // \}
 
