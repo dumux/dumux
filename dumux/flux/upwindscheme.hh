@@ -30,7 +30,7 @@
 namespace Dumux {
 
 //! Forward declaration of the upwind scheme implementation
-template<class GridGeometry, DiscretizationMethod discMethod>
+template<class GridGeometry, class DiscretizationMethod>
 class UpwindSchemeImpl;
 
 /*!
@@ -39,7 +39,7 @@ class UpwindSchemeImpl;
  *        This depends on the chosen discretization method.
  */
 template<class GridGeometry>
-using UpwindScheme = UpwindSchemeImpl<GridGeometry, GridGeometry::discMethod>;
+using UpwindScheme = UpwindSchemeImpl<GridGeometry, typename GridGeometry::DiscretizationMethod>;
 
 namespace Detail {
 
@@ -69,7 +69,7 @@ Scalar upwindSchemeMultiplier(const ElemVolVars& elemVolVars,
 
 //! Upwind scheme for the box method (uses the standard scheme)
 template<class GridGeometry>
-class UpwindSchemeImpl<GridGeometry, DiscretizationMethod::box>
+class UpwindSchemeImpl<GridGeometry, DiscretizationMethods::Box>
 {
 public:
     //! applies a simple upwind scheme to the precalculated advective flux
@@ -104,7 +104,7 @@ public:
 
 //! Upwind scheme for the cell-centered tpfa scheme
 template<class GridGeometry>
-class UpwindSchemeImpl<GridGeometry, DiscretizationMethod::cctpfa>
+class UpwindSchemeImpl<GridGeometry, DiscretizationMethods::CCTpfa>
 {
     using GridView = typename GridGeometry::GridView;
     static constexpr int dim = GridView::dimension;
@@ -205,8 +205,8 @@ public:
 
 //! Upwind scheme for cell-centered mpfa schemes
 template<class GridGeometry>
-class UpwindSchemeImpl<GridGeometry, DiscretizationMethod::ccmpfa>
-: public UpwindSchemeImpl<GridGeometry, DiscretizationMethod::cctpfa> {};
+class UpwindSchemeImpl<GridGeometry, DiscretizationMethods::CCMpfa>
+: public UpwindSchemeImpl<GridGeometry, DiscretizationMethods::CCTpfa> {};
 
 } // end namespace Dumux
 
