@@ -35,12 +35,11 @@
 namespace Dumux {
 
 //! The implementation is specialized for the different discretizations
-template<class TypeTag, DiscretizationMethod discMethod>
-struct NavierStokesParentProblemImpl;
+template<class TypeTag, class DiscretizationMethod> struct NavierStokesParentProblemImpl;
 
 // compatibility with old-style Navier-Stokes models
 template<class TypeTag>
-struct NavierStokesParentProblemImpl<TypeTag, DiscretizationMethod::staggered>
+struct NavierStokesParentProblemImpl<TypeTag, DiscretizationMethods::Staggered>
 {
     using type = StaggeredFVProblem<TypeTag>;
 };
@@ -48,14 +47,14 @@ struct NavierStokesParentProblemImpl<TypeTag, DiscretizationMethod::staggered>
 //! The actual NavierStokesParentProblem
 template<class TypeTag>
 using NavierStokesParentProblem = typename NavierStokesParentProblemImpl<
-    TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod
+    TypeTag, typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod
 >::type;
 
-template<class TypeTag, DiscretizationMethod discMethod>
+template<class TypeTag, class DiscretizationMethod>
 class NavierStokesProblemImpl;
 
 template<class TypeTag>
-class NavierStokesProblemImpl<TypeTag, DiscretizationMethod::fcstaggered>
+class NavierStokesProblemImpl<TypeTag, DiscretizationMethods::FCStaggered>
 : public FVProblem<TypeTag>
 {
     using ParentType = FVProblem<TypeTag>;
@@ -537,7 +536,7 @@ private:
 };
 
 template<class TypeTag>
-class NavierStokesProblemImpl<TypeTag, DiscretizationMethod::cctpfa>
+class NavierStokesProblemImpl<TypeTag, DiscretizationMethods::CCTpfa>
 : public FVProblem<TypeTag>
 {
     using ParentType = FVProblem<TypeTag>;
@@ -663,7 +662,6 @@ private:
     std::shared_ptr<CouplingManager> couplingManager_;
 };
 
-
 /*!
  * \ingroup NavierStokesModel
  * \brief Navier-Stokes problem base class.
@@ -672,7 +670,7 @@ private:
  * Includes a specialized method used only by the staggered grid discretization.
  */
 template<class TypeTag>
-class NavierStokesProblemImpl<TypeTag, DiscretizationMethod::staggered>
+class NavierStokesProblemImpl<TypeTag, DiscretizationMethods::Staggered>
 : public NavierStokesParentProblem<TypeTag>
 {
     using ParentType = NavierStokesParentProblem<TypeTag>;
@@ -757,7 +755,7 @@ public:
 
     //! Applys the initial face solution (velocities on the faces). Specialization for staggered grid discretization.
     template <class SolutionVector, class G = GridGeometry>
-    typename std::enable_if<G::discMethod == DiscretizationMethod::staggered, void>::type
+    typename std::enable_if<G::discMethod == DiscretizationMethods::staggered, void>::type
     applyInitialFaceSolution(SolutionVector& sol,
                              const SubControlVolumeFace& scvf,
                              const PrimaryVariables& initSol) const
@@ -789,7 +787,7 @@ public:
 
     //! Convenience function for staggered grid implementation.
     template <class ElementVolumeVariables, class ElementFaceVariables, class G = GridGeometry>
-    typename std::enable_if<G::discMethod == DiscretizationMethod::staggered, Scalar>::type
+    typename std::enable_if<G::discMethod == DiscretizationMethods::staggered, Scalar>::type
     pseudo3DWallFriction(const SubControlVolumeFace& scvf,
                          const ElementVolumeVariables& elemVolVars,
                          const ElementFaceVariables& elemFaceVars,
@@ -903,7 +901,7 @@ private:
  */
 template<class TypeTag>
 using NavierStokesProblem = NavierStokesProblemImpl<
-    TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod
+    TypeTag, typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod
 >;
 
 } // end namespace Dumux
