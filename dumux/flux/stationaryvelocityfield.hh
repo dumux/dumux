@@ -43,8 +43,9 @@ template <class Scalar>
 class StationaryVelocityField
 {
 public:
+    using DiscretizationMethod = DiscretizationMethods::None;
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethod discMethod = DiscretizationMethod::none;
+    static constexpr DiscretizationMethod discMethod{};
 
     //! state the type for the corresponding cache
     using Cache = FluxVariablesCaching::EmptyAdvectionCache;
