@@ -77,7 +77,7 @@ public:
     {
         using CouplingManager = std::decay_t<decltype(elemVolVars.gridVolVars().problem().couplingManager())>;
         using MomGG = std::decay_t<decltype(std::declval<CouplingManager>().problem(CouplingManager::freeFlowMomentumIndex).gridGeometry())>;
-        if constexpr (MomGG::discMethod == DiscretizationMethod::fcstaggered)
+        if constexpr (MomGG::discMethod == DiscretizationMethods::fcstaggered)
             calculateVelocityForStaggeredGrid_(velocity, element, fvGeometry, elemVolVars);
     }
 

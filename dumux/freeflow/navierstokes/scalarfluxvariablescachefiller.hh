@@ -35,7 +35,7 @@
 namespace Dumux {
 
 // forward declaration
-template<class Problem, class ModelTraits, bool diffusionIsSolDependent, bool heatConductionIsSolDependent, DiscretizationMethod discMethod>
+template<class Problem, class ModelTraits, bool diffusionIsSolDependent, bool heatConductionIsSolDependent, class DiscretizationMethod>
 class FreeFlowScalarFluxVariablesCacheFillerImplementation;
 
 /*!
@@ -45,11 +45,11 @@ class FreeFlowScalarFluxVariablesCacheFillerImplementation;
  * Helps filling the flux variables cache depending several policies
  */
 template<class Problem, class ModelTraits, bool diffusionIsSolDependent, bool heatConductionIsSolDependent>
-using FreeFlowScalarFluxVariablesCacheFiller = FreeFlowScalarFluxVariablesCacheFillerImplementation<Problem, ModelTraits, diffusionIsSolDependent, heatConductionIsSolDependent, ProblemTraits<Problem>::GridGeometry::discMethod>;
+using FreeFlowScalarFluxVariablesCacheFiller = FreeFlowScalarFluxVariablesCacheFillerImplementation<Problem, ModelTraits, diffusionIsSolDependent, heatConductionIsSolDependent, typename ProblemTraits<Problem>::GridGeometry::DiscretizationMethod>;
 
 //! Specialization of the flux variables cache filler for the cell centered tpfa method
 template<class Problem, class ModelTraits, bool diffusionIsSolDependent, bool heatConductionIsSolDependent>
-class FreeFlowScalarFluxVariablesCacheFillerImplementation<Problem, ModelTraits, diffusionIsSolDependent, heatConductionIsSolDependent, DiscretizationMethod::cctpfa>
+class FreeFlowScalarFluxVariablesCacheFillerImplementation<Problem, ModelTraits, diffusionIsSolDependent, heatConductionIsSolDependent, DiscretizationMethods::CCTpfa>
 {
     using GridGeometry = typename ProblemTraits<Problem>::GridGeometry;
     using GridView = typename GridGeometry::GridView;
