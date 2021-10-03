@@ -49,11 +49,11 @@ namespace Dumux {
  */
 
 // forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
+template<class TypeTag, class DiscretizationMethod>
 class NavierStokesFluxVariablesImpl;
 
 template<class TypeTag>
-class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
+class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethods::Staggered>
 : public FluxVariablesBase<GetPropType<TypeTag, Properties::Problem>,
                            typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView,
                            typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView,
