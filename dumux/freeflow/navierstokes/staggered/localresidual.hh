@@ -48,11 +48,11 @@ static constexpr bool isRotationalExtrusion<RotationalExtrusion<radialAxis>> = t
  */
 
 // forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
+template<class TypeTag, class DiscretizationMethod>
 class NavierStokesResidualImpl;
 
 template<class TypeTag>
-class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
+class NavierStokesResidualImpl<TypeTag, DiscretizationMethods::Staggered>
 : public StaggeredLocalResidual<TypeTag>
 {
     using ParentType = StaggeredLocalResidual<TypeTag>;

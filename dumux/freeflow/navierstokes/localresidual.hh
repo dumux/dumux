@@ -31,7 +31,7 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
+template<class TypeTag, class DiscretizationMethod>
 class NavierStokesResidualImpl;
 
 /*!
@@ -42,7 +42,7 @@ class NavierStokesResidualImpl;
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag>
-using NavierStokesResidual = NavierStokesResidualImpl<TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
+using NavierStokesResidual = NavierStokesResidualImpl<TypeTag, typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod>;
 
 } // end namespace Dumux
 
