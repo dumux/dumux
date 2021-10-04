@@ -915,8 +915,7 @@ protected:
         const Scalar insideDistance = this->getDistance_(scvI, scvfI);
         const Scalar outsideDistance = this->getDistance_(scvJ, scvfI);
 
-        ReducedComponentVector moleFracInside(0.0);
-        ReducedComponentVector moleFracOutside(0.0);
+        ReducedComponentVector moleFractionDifference(0.0);
         ReducedComponentVector reducedFlux(0.0);
         ReducedComponentMatrix reducedDiffusionMatrixInside(0.0);
         ReducedComponentMatrix reducedDiffusionMatrixOutside(0.0);
@@ -933,13 +932,10 @@ protected:
             const Scalar xInside = volVarsI.moleFraction(couplingPhaseIdx(domainI), domainICompIdx);
             //calculate outside molefraction with the respective transmissibility
             const Scalar xOutside = volVarsJ.moleFraction(couplingPhaseIdx(domainJ), domainJCompIdx);
-            moleFracInside[domainICompIdx] = xInside;
-            moleFracOutside[domainICompIdx] = xOutside;
+            moleFractionDifference[compIdx] = xInside - xOutside;
         }
 
-        //now we have to do the tpfa: J_i = -J_j which leads to: J_i = -rho_i Bi^-1 omegai(x*-xi) with x* = (omegai rho_i Bi^-1 + omegaj rho_j Bj^-1)^-1 (xi omegai rho_i Bi^-1 + xj omegaj rho_j Bj^-1) with i inside and j outside.
-
-        //first set up the matrices containing the binary diffusion coefficients and mole fractions
+        //first set up the matrices containing the binary diffusion coefficients, mole fractions and molar mass of the components K-N.
 
         //inside matrix. KIdx and LIdx are the indices for the k and l-th component, N for the n-th component
         for (int compKIdx = 0; compKIdx < numComponents-1; compKIdx++)
@@ -1005,30 +1001,25 @@ protected:
         const Scalar omegaj = 1/outsideDistance;
 
         reducedDiffusionMatrixInside.invert();
-        reducedDiffusionMatrixInside *= omegai*volVarsI.density(couplingPhaseIdx(domainI));
         reducedDiffusionMatrixOutside.invert();
-        reducedDiffusionMatrixOutside *= omegaj*volVarsJ.density(couplingPhaseIdx(domainJ));
+        reducedDiffusionMatrixInside *= omegai;
+        reducedDiffusionMatrixOutside *= omegaj;
 
-        //in the helpervector we store the values for x*
-        ReducedComponentVector helperVector(0.0);
-        ReducedComponentVector gradientVectori(0.0);
-        ReducedComponentVector gradientVectorj(0.0);
+        //harmonic mean: Bi^-1 omegai * Bj^-1 omegaj/(Bi^-1 omegai + Bj^-1 omegaj)
+        auto sumDiffusionMatrices = reducedDiffusionMatrixOutside + reducedDiffusionMatrixInside;
+        sumDiffusionMatrices.invert();
 
-        reducedDiffusionMatrixInside.mv(moleFracInside, gradientVectori);
-        reducedDiffusionMatrixOutside.mv(moleFracOutside, gradientVectorj);
+        reducedDiffusionMatrixOutside.rightmultiply(sumDiffusionMatrices);
 
-        auto gradientVectorij = (gradientVectori + gradientVectorj);
+        auto reducedDiffusionMatrixHarmonicMean =
+        reducedDiffusionMatrixInside.leftmultiply(reducedDiffusionMatrixOutside);
 
-        //add the two matrixes to each other
-        reducedDiffusionMatrixOutside += reducedDiffusionMatrixInside;
+        reducedDiffusionMatrixHarmonicMean.mv(moleFractionDifference, reducedFlux);
 
-        reducedDiffusionMatrixOutside.solve(helperVector, gradientVectorij);
-
-        //Bi^-1 omegai rho_i (x*-xi). As we previously multiplied rho_i and omega_i wit the insidematrix, this does not need to be done again
-        helperVector -=moleFracInside;
-        reducedDiffusionMatrixInside.mv(helperVector, reducedFlux);
-
-        reducedFlux *= -1;
+        const Scalar rhoInside = volVarsI.density(couplingPhaseIdx(domainI));
+        const Scalar rhoOutside = volVarsJ.density(couplingPhaseIdx(domainJ));
+        const Scalar rho = 0.5*(rhoInside + rhoOutside);
+        reducedFlux *= rho;
 
         for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
         {
