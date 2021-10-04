@@ -105,8 +105,7 @@ public:
         //this is to calculate the maxwellStefan diffusion in a multicomponent system.
         //see: Multicomponent Mass Transfer. R. Taylor u. R. Krishna. J. Wiley & Sons, New York 1993
         CellCenterPrimaryVariables componentFlux(0.0);
-        ReducedComponentVector moleFracInside(0.0);
-        ReducedComponentVector moleFracOutside(0.0);
+        ReducedComponentVector moleFractionDifference(0.0);
         ReducedComponentVector reducedFlux(0.0);
         ReducedComponentMatrix reducedDiffusionMatrixInside(0.0);
         ReducedComponentMatrix reducedDiffusionMatrixOutside(0.0);
@@ -137,18 +136,14 @@ public:
         for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
         {
             //calculate x_inside
-            const auto xInside = insideVolVars.moleFraction(compIdx);
-            //calculate outside molefraction with the respective transmissibility
-            const auto xOutside = outsideVolVars.moleFraction(compIdx);
+            const auto xInside = insideVolVars.moleFraction(0, compIdx);
+            //calculate outside molefraction
+            const auto xOutside = outsideVolVars.moleFraction(0, compIdx);
 
-            moleFracInside[compIdx] = xInside;
-            moleFracOutside[compIdx] = xOutside;
+            moleFractionDifference[compIdx] = xInside - xOutside;
         }
 
-        //now we have to do the tpfa: J_i = J_j which leads to: tij(xi -xj) = -rho Bi^-1 omegai(x*-xi) with x* = (omegai Bi^-1 + omegaj Bj^-1)^-1 (xi omegai Bi^-1 + xj omegaj Bj^-1) with i inside and j outside
         reducedDiffusionMatrixInside = setupMSMatrix_(problem, fvGeometry, insideVolVars, scvf);
-
-        reducedDiffusionMatrixOutside = setupMSMatrix_(problem, fvGeometry, outsideVolVars, scvf);
 
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
@@ -162,41 +157,35 @@ public:
         //if on boundary
         if (scvf.boundary())
         {
-            moleFracOutside -= moleFracInside;
-            reducedDiffusionMatrixInside.solve(reducedFlux, moleFracOutside);
-            reducedFlux *= omegai*rhoInside;
+                reducedDiffusionMatrixInside.solve(reducedFlux, moleFractionDifference);
+                reducedFlux *= omegai;
         }
         else
         {
             const Scalar outsideDistance = (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
             const Scalar omegaj = calculateOmega_(outsideDistance, outsideVolVars.extrusionFactor());
 
+            reducedDiffusionMatrixOutside = setupMSMatrix_(problem, fvGeometry, outsideVolVars, scvf);
+
             reducedDiffusionMatrixInside.invert();
             reducedDiffusionMatrixOutside.invert();
-            reducedDiffusionMatrixInside *= omegai*rhoInside;
-            reducedDiffusionMatrixOutside *= omegaj*rhoOutside;
+            reducedDiffusionMatrixInside *= omegai;
+            reducedDiffusionMatrixOutside *= omegaj;
 
-            //in the helpervector we store the values for x*
-            ReducedComponentVector helperVector(0.0);
-            ReducedComponentVector gradientVectori(0.0);
-            ReducedComponentVector gradientVectorj(0.0);
+            //harmonic mean: Bi^-1 omegai * Bj^-1 omegaj/(Bi^-1 omegai + Bj^-1 omegaj)
+            auto sumDiffusionMatrices = reducedDiffusionMatrixOutside + reducedDiffusionMatrixInside;
+            sumDiffusionMatrices.invert();
 
-            reducedDiffusionMatrixInside.mv(moleFracInside, gradientVectori);
-            reducedDiffusionMatrixOutside.mv(moleFracOutside, gradientVectorj);
+            reducedDiffusionMatrixOutside.rightmultiply(sumDiffusionMatrices);
 
-            auto gradientVectorij = (gradientVectori + gradientVectorj);
+            auto reducedDiffusionMatrixHarmonicMean = reducedDiffusionMatrixInside.leftmultiply(reducedDiffusionMatrixOutside);
 
-            //add the two matrixes to each other
-            reducedDiffusionMatrixOutside += reducedDiffusionMatrixInside;
-
-            reducedDiffusionMatrixOutside.solve(helperVector, gradientVectorij);
-
-            //Bi^-1 omegai rho(x*-xi)
-            helperVector -=moleFracInside;
-            reducedDiffusionMatrixInside.mv(helperVector, reducedFlux);
+            reducedDiffusionMatrixHarmonicMean.mv(moleFractionDifference, reducedFlux);
         }
 
-        reducedFlux *= -Extrusion::area(scvf);
+        const Scalar rho = 0.5*(rhoInside + rhoOutside);
+
+        reducedFlux *= Extrusion::area(scvf)*rho;
 
         for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
         {
