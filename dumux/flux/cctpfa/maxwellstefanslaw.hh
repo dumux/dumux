@@ -182,19 +182,7 @@ public:
                 reducedDiffusionMatrixHarmonicMean.mv(moleFractionDifference, reducedFlux);
             }
 
-            // helper lambda to get the averaged density at the scvf
-            const auto getRho = [&](const int phaseIdx, const Scalar rhoInside, const Scalar rhoOutside)
-            {
-                if constexpr (isMixedDimensional_)
-                {
-                    return scvf.numOutsideScvs() == 1 ? 0.5*(rhoInside + rhoOutside)
-                                                    : branchingFacetDensity_(elemVolVars, scvf, phaseIdx, rhoInside);
-                }
-                else
-                    return 0.5*(rhoInside + rhoOutside);
-            };
-
-            const Scalar rho = getRho(phaseIdx, rhoInside, rhoOutside);
+            const Scalar rho = 0.5*(rhoInside + rhoOutside);
 
             reducedFlux *= Extrusion::area(scvf)*rho;
             for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
@@ -265,54 +253,6 @@ private:
         }
         return reducedDiffusionMatrix;
     }
-
-    //! compute the mole/mass fraction at branching facets for network grids
-    static Scalar branchingFacetX_(const Problem& problem,
-                                   const Element& element,
-                                   const FVElementGeometry& fvGeometry,
-                                   const ElementVolumeVariables& elemVolVars,
-                                   const ElementFluxVariablesCache& elemFluxVarsCache,
-                                   const SubControlVolumeFace& scvf,
-                                   const Scalar insideX, const Scalar insideTi,
-                                   const int phaseIdx, const int compIdx)
-    {
-        Scalar sumTi(insideTi);
-        Scalar sumXTi(insideTi*insideX);
-
-        for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
-        {
-            const auto outsideScvIdx = scvf.outsideScvIdx(i);
-            const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            const Scalar massOrMoleFractionOutside = massOrMoleFraction(outsideVolVars, referenceSystem, phaseIdx, compIdx);
-            const auto& flippedScvf = fvGeometry.flipScvf(scvf.index(), i);
-
-            const Scalar outsideTi = elemFluxVarsCache[flippedScvf].diffusionTij(phaseIdx, compIdx);
-            sumTi += outsideTi;
-            sumXTi += outsideTi*massOrMoleFractionOutside;
-        }
-
-        return sumTi > 0 ? sumXTi/sumTi : 0;
-    }
-
-    //! compute the density at branching facets for network grids as arithmetic mean
-    static Scalar branchingFacetDensity_(const ElementVolumeVariables& elemVolVars,
-                                         const SubControlVolumeFace& scvf,
-                                         const int phaseIdx,
-                                         const Scalar insideRho)
-    {
-        Scalar rho(insideRho);
-        for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
-        {
-            const auto outsideScvIdx = scvf.outsideScvIdx(i);
-            const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            const Scalar rhoOutside = massOrMolarDensity(outsideVolVars, referenceSystem, phaseIdx);
-            rho += rhoOutside;
-        }
-        return rho/(scvf.numOutsideScvs()+1);
-    }
-
-    static constexpr bool isMixedDimensional_ = static_cast<int>(GridView::dimension) < static_cast<int>(GridView::dimensionworld);
-
 };
 } // end namespace
 
