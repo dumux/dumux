@@ -109,7 +109,7 @@ def runMakeInstallScript():
     modName = getModuleInfo(modPath, "Module")
     printProgressInfo([f"Creating install script for module '{modName}' in folder '{modPath}'"])
 
-    scriptName = cmdArgs.get("filename")
+    scriptName = cmdArgs["filename"]
     if not scriptName:
         scriptName = getDefaultScriptName(modName, cmdArgs["language"])
 
