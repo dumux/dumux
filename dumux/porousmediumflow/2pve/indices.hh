@@ -1,0 +1,49 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
+/*****************************************************************************
+ *   See the file COPYING for full copying permissions.                      *
+ *                                                                           *
+ *   This program is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation, either version 3 of the License, or       *
+ *   (at your option) any later version.                                     *
+ *                                                                           *
+ *   This program is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   GNU General Public License for more details.                            *
+ *                                                                           *
+ *   You should have received a copy of the GNU General Public License       *
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ *****************************************************************************/
+/*!
+ * \file
+ * \ingroup TwoPVEModel
+ * \brief Defines the indices required for the two-phase fully implicit model.
+ */
+
+#ifndef DUMUX_2PVE_INDICES_HH
+#define DUMUX_2PVE_INDICES_HH
+
+#include "formulation.hh"
+
+namespace Dumux {
+
+/*!
+ * \ingroup TwoPModel
+ * \brief Defines the indices required for the two-phase fully implicit model.
+ */
+struct TwoPVEIndices
+{
+    // Primary variable indices
+    static constexpr int pressureIdx = 0; //!< index for first/second phase pressure (depending on formulation) in a solution vector
+    static constexpr int saturationIdx = 1; //!< index of the saturation of the first/second phase
+
+    // indices of the equations
+    static constexpr int conti0EqIdx = 0; //!< index of the first continuity equation
+};
+
+} // namespace Dumux
+
+
+#endif
