@@ -112,6 +112,7 @@ public:
      * \brief Constructor
      * \param gridGeometry The finite volume grid geometry
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
+     * \note This constructor assumes the spatial parameters to be constructible from a grid geometry
      */
     FVProblem(std::shared_ptr<const GridGeometry> gridGeometry,
               const std::string& paramGroup = "")
