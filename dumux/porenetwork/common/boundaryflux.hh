@@ -98,7 +98,7 @@ public:
     }
 
     /*!
-     * \brief Returns the cumulative flux in \f$\mathrm{[\frac{kg}{s}]}\f$, \f$\mathrm{[\frac{mole}{s}]}\f$ or \f$\mathrm{[\frac{J}{s}]}\f$ of several pore throats for a given list of pore labels to consider
+     * \brief Returns the cumulative flux in \f$\mathrm{[\frac{kg}{s}]}\f$, \f$\mathrm{[\frac{mole}{s}]}\f$ or \f$\mathrm{[\frac{J}{s}]}\f$ of several pores for a given list of pore labels to consider
      *
      * \param labels A list of pore labels which will be considered for the flux calculation
      * \param verbose If set true, the fluxes at all individual SCVs are printed
@@ -119,7 +119,7 @@ public:
 
         // sum up the fluxes
         for (const auto& element : elements(localResidual_.problem().gridGeometry().gridView()))
-            getFlux(element, restriction, verbose);
+            computeBoundaryFlux_(element, restriction, verbose);
 
         Result result;
         result.totalFlux = std::accumulate(boundaryFluxes_.begin(), boundaryFluxes_.end(), NumEqVector(0.0));;
@@ -133,7 +133,7 @@ public:
     }
 
     /*!
-     * \brief Returns the cumulative flux in \f$\mathrm{[\frac{kg}{s}]}\f$, \f$\mathrm{[\frac{mole}{s}]}\f$ or \f$\mathrm{[\frac{J}{s}]}\f$ of several pore throats at a given location on the boundary
+     * \brief Returns the cumulative flux in \f$\mathrm{[\frac{kg}{s}]}\f$, \f$\mathrm{[\frac{mole}{s}]}\f$ or \f$\mathrm{[\frac{J}{s}]}\f$ of several pores at a given location on the boundary
      *
      * \param minMax Consider bBoxMin or bBoxMax by setting "min" or "max"
      * \param coord x, y or z coordinate at which bBoxMin or bBoxMax is evaluated
@@ -177,7 +177,7 @@ public:
 
         // sum up the fluxes
         for (const auto& element : elements(localResidual_.problem().gridGeometry().gridView()))
-            getFlux(element, restriction, verbose);
+            computeBoundaryFlux_(element, restriction, verbose);
 
         Result result;
         result.totalFlux = std::accumulate(boundaryFluxes_.begin(), boundaryFluxes_.end(), NumEqVector(0.0));;
@@ -188,23 +188,22 @@ public:
         }
 
         return result;
-
     }
 
+private:
+
     /*!
-     * \brief Returns the cumulative flux in \f$\mathrm{[\frac{kg}{s}]}\f$, \f$\mathrm{[\frac{mole}{s}]}\f$ or \f$\mathrm{[\frac{J}{s}]}\f$ of several pore throats at a given location on the boundary
+     * \brief Computes the cumulative flux in \f$\mathrm{[\frac{kg}{s}]}\f$, \f$\mathrm{[\frac{mole}{s}]}\f$ or \f$\mathrm{[\frac{J}{s}]}\f$ of an individual pore on the boundary
      *
      * \param element The element
      * \param considerScv A lambda function to decide whether to consider a scv or not
      * \param verbose If set true, the fluxes at all individual SCVs are printed
      */
     template<class RestrictingFunction>
-    NumEqVector getFlux(const Element& element,
-                        RestrictingFunction considerScv,
-                        const bool verbose = false) const
+    void computeBoundaryFlux_(const Element& element,
+                              RestrictingFunction considerScv,
+                              const bool verbose = false) const
     {
-        NumEqVector flux(0.0);
-
         // by default, all coordinate directions are considered for the definition of a boundary
 
         // make sure FVElementGeometry and volume variables are bound to the element
@@ -215,11 +214,9 @@ public:
         if (!isStationary_)
             prevElemVolVars.bindElement(element, fvGeometry, sol_);
 
-        const auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache()).bindElement(element, fvGeometry, curElemVolVars);
-
         ElementBoundaryTypes elemBcTypes;
         elemBcTypes.update(localResidual_.problem(), element, fvGeometry);
-
+        const auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache()).bindElement(element, fvGeometry, curElemVolVars);
         auto residual = localResidual_.evalFluxAndSource(element, fvGeometry, curElemVolVars, elemFluxVarsCache, elemBcTypes);
 
         if (!isStationary_)
@@ -232,21 +229,37 @@ public:
             {
                 isConsidered_[scv.dofIndex()] = true;
 
+                // get the type of the boundary condition on the scv
+                const auto& bcTypes = elemBcTypes[scv.localDofIndex()];
+
+                NumEqVector flux(0.0);
+                for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
+                {
+                    // Check the type of the boudary condition.
+                    // If BC is Dirichlet type, the flux is equal to the local residual of the element's scv on the boundary.
+                    // Otherwise the flux is either zero or equal to a source term at the element's scv on the boundary.
+                    // Technicaly, the PNM considers source terms instead of Neumann BCs.
+                    if (!bcTypes.isDirichlet(eqIdx))
+                    {
+                        auto source = localResidual_.computeSource(localResidual_.problem(), element, fvGeometry, curElemVolVars, scv);
+                        source *= scv.volume() * curElemVolVars[scv].extrusionFactor();
+                        flux[eqIdx] = source[eqIdx];
+                    }
+                    else
+                        flux[eqIdx] = residual[scv.indexInElement()][eqIdx];
+                }
+
                 // The flux must be substracted:
                 // On an inlet boundary, the flux part of the local residual will be positive, since all fluxes will leave the SCV towards to interior domain.
                 // For the domain itself, however, the sign has to be negative, since mass is entering the system.
-                flux -= residual[scv.indexInElement()];
-
-                boundaryFluxes_[scv.dofIndex()] -= residual[scv.indexInElement()];
+                boundaryFluxes_[scv.dofIndex()] -= flux;
 
                 if (verbose)
-                    std::cout << "SCV of element " << scv.elementIndex()  << " at vertex " << scv.dofIndex() << " has flux: " << residual[scv.indexInElement()] << std::endl;
+                    std::cout << "SCV of element " << scv.elementIndex()  << " at vertex " << scv.dofIndex() << " has flux: " << flux << std::endl;
             }
         }
-        return flux;
     }
 
-private:
     const LocalResidual localResidual_; // store a copy of the local residual
     const GridVariables& gridVariables_;
     const SolutionVector& sol_;
