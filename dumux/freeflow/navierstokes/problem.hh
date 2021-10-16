@@ -536,6 +536,15 @@ public:
         return orientation;
     }
 
+    const CouplingManager& couplingManager() const
+    {
+        if constexpr (isCoupled_)
+            return *couplingManager_;
+        else
+            DUNE_THROW(Dune::InvalidStateException,
+                "Accessing coupling manager of an uncoupled problem is not possible."
+            );
+    }
 
 private:
     //! Returns a scalar permeability value at the coupling interface
@@ -675,9 +684,15 @@ public:
         DUNE_THROW(Dune::NotImplemented, "temperature() method not implemented by the actual problem");
     }
 
-protected:
     const CouplingManager& couplingManager() const
-    { return *couplingManager_; }
+    {
+        if constexpr (isCoupled_)
+            return *couplingManager_;
+        else
+            DUNE_THROW(Dune::InvalidStateException,
+                "Accessing coupling manager of an uncoupled problem is not possible."
+            );
+    }
 
 private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
