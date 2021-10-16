@@ -32,41 +32,6 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/freeflow/navierstokes/momentum/boundarytypes.hh>
 
-namespace Dumux::Detail {
-
-//! Helper class to get the discretization method of the mass and momentum model
-//! Helps to make the Navier-Stokes problem usable in an uncoupled context
-template<class CouplingManager>
-class DiscMethod
-{
-public:
-    static constexpr DiscretizationMethod momentum()
-    {
-        if constexpr (std::is_empty_v<CouplingManager>)
-            return DiscretizationMethod::none;
-        else
-            return discMethod_(CouplingManager::freeFlowMomentumIndex);
-    }
-
-    static constexpr DiscretizationMethod mass()
-    {
-        if constexpr (std::is_empty_v<CouplingManager>)
-            return DiscretizationMethod::none;
-        else
-            return discMethod_(CouplingManager::freeFlowMassIndex);
-    }
-
-private:
-    template<class IdxType>
-    static constexpr DiscretizationMethod discMethod_(IdxType idx)
-    {
-        using GridGeometry = std::decay_t<decltype(std::declval<CouplingManager>().problem(idx).gridGeometry())>;
-        return GridGeometry::discMethod;
-    }
-};
-
-} // end namespace Dumux::Detail
-
 namespace Dumux {
 
 //! The implementation is specialized for the different discretizations
@@ -145,12 +110,6 @@ public:
 
     //! This problem is used for the momentum balance model.
     static constexpr bool isMomentumProblem() { return true; }
-
-    //! Export the discretization method for the momentum problem.
-    static constexpr DiscretizationMethod momentumDiscretizationMethod = GridGeometry::discMethod;
-
-    //! Export the discretization method for the mass problem.
-    static constexpr DiscretizationMethod massDiscretizationMethod = Detail::DiscMethod<CouplingManager>::mass();
 
     /*!
      * \brief The constructor
@@ -536,6 +495,15 @@ public:
         return orientation;
     }
 
+    const CouplingManager& couplingManager() const
+    {
+        if constexpr (isCoupled_)
+            return *couplingManager_;
+        else
+            DUNE_THROW(Dune::InvalidStateException,
+                "Accessing coupling manager of an uncoupled problem is not possible."
+            );
+    }
 
 private:
     //! Returns a scalar permeability value at the coupling interface
@@ -605,12 +573,6 @@ public:
     //! this problem is used for the mass balance model
     static constexpr bool isMomentumProblem() { return false; }
 
-    //! Export the discretization method for the momentum problem.
-    static constexpr DiscretizationMethod momentumDiscretizationMethod = Detail::DiscMethod<CouplingManager>::momentum();
-
-    //! Export the discretization method for the mass problem.
-    static constexpr DiscretizationMethod massDiscretizationMethod = GridGeometry::discMethod;
-
     /*!
      * \brief The constructor
      * \param gridGeometry The finite volume grid geometry
@@ -675,9 +637,15 @@ public:
         DUNE_THROW(Dune::NotImplemented, "temperature() method not implemented by the actual problem");
     }
 
-protected:
     const CouplingManager& couplingManager() const
-    { return *couplingManager_; }
+    {
+        if constexpr (isCoupled_)
+            return *couplingManager_;
+        else
+            DUNE_THROW(Dune::InvalidStateException,
+                "Accessing coupling manager of an uncoupled problem is not possible."
+            );
+    }
 
 private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
