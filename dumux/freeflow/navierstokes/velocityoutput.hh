@@ -75,8 +75,9 @@ public:
                            const ElementFluxVarsCache& elemFluxVarsCache,
                            int phaseIdx) const override
     {
-        using Problem = std::decay_t<decltype(elemVolVars.gridVolVars().problem())>;
-        if constexpr (Problem::momentumDiscretizationMethod == DiscretizationMethod::fcstaggered)
+        using CouplingManager = std::decay_t<decltype(elemVolVars.gridVolVars().problem().couplingManager())>;
+        using MomGG = std::decay_t<decltype(std::declval<CouplingManager>().problem(CouplingManager::freeFlowMomentumIndex).gridGeometry())>;
+        if constexpr (MomGG::discMethod == DiscretizationMethod::fcstaggered)
             calculateVelocityForStaggeredGrid_(velocity, element, fvGeometry, elemVolVars);
     }
 
@@ -95,7 +96,7 @@ private:
         velocity[eIdx] = StaggeredVelocityReconstruction::cellCenterVelocity(getFaceVelocity, fvGeometry);
     }
 
-bool enableOutput_;
+    bool enableOutput_;
 };
 
 } // end namespace Dumux
