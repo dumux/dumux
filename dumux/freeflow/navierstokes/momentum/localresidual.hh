@@ -328,4 +328,4 @@ public:
 
 } // end namespace Dumux
 
-#endif   // DUMUX_STAGGERED_NAVIERSTOKES_LOCAL_RESIDUAL_HH
+#endif

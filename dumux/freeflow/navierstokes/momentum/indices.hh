@@ -58,6 +58,16 @@ struct NavierStokesMomentumIndices // TODO specialize for staggered / diamond / 
     {
         return dirIdx;
     }
+
+    /*!
+     * \brief Index of the momentum balance equation given the direction
+     *
+     * \param dirIdx The index of the direction.
+     */
+    static constexpr int momentumBalanceIdx(int dirIdx)
+    {
+        return dirIdx;
+    }
 };
 
 } // end namespace Dumux

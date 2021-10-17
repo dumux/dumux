@@ -70,7 +70,6 @@ struct NavierStokesMomentumBoundaryFluxHelper
             "Expects momentum flux to have as many entries as dimensions."
         );
 
-        NumEqVector flux(0.0);
         const auto& element = fvGeometry.element();
 
         static_assert(
@@ -80,30 +79,35 @@ struct NavierStokesMomentumBoundaryFluxHelper
 
         if (scvf.isFrontal())
         {
+            NumEqVector flux(0.0);
+
             // pressure contribution
             flux[scvf.normalAxis()] = (pressure - problem.referencePressure(element, fvGeometry, scvf)) * scvf.directionSign();
 
+            // advective terms
             if (problem.enableInertiaTerms())
             {
                 const auto v = elemVolVars[scvf.insideScvIdx()].velocity();
                 flux[scvf.normalAxis()] += v*v * problem.density(element, fvGeometry, scvf) * scvf.directionSign();
             }
-        }
 
-        // if no zero velocity gradient is desired we are done here, ....
-        if (!zeroNormalVelocityGradient)
             return flux;
-
-        // ..., otherwise, make sure the flow does not diverge by accounting for the off-diagonal entries of the stress tensor
-        const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-
-        if (scvf.isLateral())
+        }
+        else if (scvf.isLateral())
         {
+            // if no zero velocity gradient is desired the lateral flux is zero
+            if (!zeroNormalVelocityGradient)
+                return NumEqVector(0.0);
+
+            // otherwise, make sure the flow does not diverge by accounting for the off-diagonal entries of the stress tensor
+
             // if the lateral scvf is adjacent to a slip boundary, call the helper function for this special case
+            const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
             if (scv.boundary() && problem.onSlipBoundary(fvGeometry, fvGeometry.frontalScvfOnBoundary(scv)))
                 return slipVelocityMomentumFlux(problem, fvGeometry, scvf, elemVolVars, elemFluxVarsCache);
 
             // viscous terms
+            NumEqVector flux(0.0);
             const Scalar mu = problem.effectiveViscosity(element, fvGeometry, scvf);
 
             // lateral face normal to boundary (integration point touches boundary)
@@ -184,9 +188,11 @@ struct NavierStokesMomentumBoundaryFluxHelper
                     flux[scv.dofAxis()] += innerVelocity * transportingVelocity * insideDensity * scvf.directionSign();
                 }
             }
+
+            return flux;
         }
 
-        return flux;
+        DUNE_THROW(Dune::InvalidStateException, "Face is neither lateral nor frontal.");
     }
 
     /*!
@@ -259,8 +265,7 @@ struct NavierStokesMomentumBoundaryFluxHelper
             const Scalar slipVelocity = problem.beaversJosephVelocity(fvGeometry, scvf, elemVolVars, velocityGrad_ji)[scv.dofAxis()]; // TODO rename to slipVelocity
             const Scalar velocityGrad_ij = (slipVelocity - v_i) / distance * scvf.directionSign();
 
-            flux[scv.dofAxis()] -= mu * velocityGrad_ij*scvf.directionSign();
-            flux[scv.dofAxis()] -= mu * velocityGrad_ji*scvf.directionSign();
+            flux[scv.dofAxis()] -= (mu * (velocityGrad_ij + velocityGrad_ji))*scvf.directionSign();
 
             // advective terms
             if (problem.enableInertiaTerms())
@@ -339,8 +344,7 @@ struct NavierStokesMomentumBoundaryFluxHelper
             const Scalar slipVelocity = problem.beaversJosephVelocity(fvGeometry, orthogonalScvf, elemVolVars, velocityGrad_ij)[scvf.normalAxis()]; // TODO rename to slipVelocity
             const Scalar velocityGrad_ji = (slipVelocity - v_j) / distance * orthogonalScvf.directionSign();
 
-            flux[scv.dofAxis()] -= mu * velocityGrad_ij*scvf.directionSign();
-            flux[scv.dofAxis()] -= mu * velocityGrad_ji*scvf.directionSign();
+            flux[scv.dofAxis()] -= (mu * (velocityGrad_ij + velocityGrad_ji))*scvf.directionSign();
 
             // advective terms
             if (problem.enableInertiaTerms())

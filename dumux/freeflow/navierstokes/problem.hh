@@ -479,10 +479,10 @@ public:
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
 
         // create a unit normal vector oriented in positive coordinate direction
-        GlobalPosition orientation;
+        GlobalPosition orientation(0.0);
         orientation[scv.dofAxis()] = 1.0;
 
-        // du/dy + dv/dx = alpha/sqrt(K) * (u_boundary-uPM)
+        // du/dy + dv/dx = beta * (u_boundary-uPM)
         // beta = alpha/sqrt(K)
         const Scalar betaBJ = asImp_().betaBJ(fvGeometry, scvf, orientation);
         const Scalar distanceNormalToBoundary = (scvf.ipGlobal() - scv.dofPosition()).two_norm();
