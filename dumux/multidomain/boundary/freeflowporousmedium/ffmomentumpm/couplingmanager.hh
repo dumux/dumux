@@ -315,21 +315,6 @@ public:
         return velocity;
     }
 
-
-    //! Return the volume variables of domain i for a given element and scv
-    template<std::size_t i>
-    VolumeVariables<i> volVars(Dune::index_constant<i> domainI,
-                               const Element<i>& element,
-                               const SubControlVolume<i>& scv) const
-    {
-        VolumeVariables<i> volVars;
-        const auto elemSol = elementSolution(
-            element, this->curSol(domainI), problem(domainI).gridGeometry()
-        );
-        volVars.update(elemSol, problem(domainI), element, scv);
-        return volVars;
-    }
-
     template<std::size_t i>
     Problem<i>& problem(Dune::index_constant<i> domainI)
     {
@@ -349,6 +334,20 @@ public:
     }
 
 private:
+    //! Return the volume variables of domain i for a given element and scv
+    template<std::size_t i>
+    VolumeVariables<i> volVars_(Dune::index_constant<i> domainI,
+                                const Element<i>& element,
+                                const SubControlVolume<i>& scv) const
+    {
+        VolumeVariables<i> volVars;
+        const auto elemSol = elementSolution(
+            element, this->curSol(domainI), problem(domainI).gridGeometry()
+        );
+        volVars.update(elemSol, problem(domainI), element, scv);
+        return volVars;
+    }
+
     /*!
      * \brief Returns whether a given scvf is coupled to the other domain
      */
@@ -398,7 +397,7 @@ private:
                     // there is only one scv for TPFA
                     context.push_back({
                         otherElement,
-                        volVars(domainJ, otherElement, *std::begin(scvs(otherFvGeometry))),
+                        volVars_(domainJ, otherElement, *std::begin(scvs(otherFvGeometry))),
                         std::move(otherFvGeometry),
                         scvf.index(),
                         couplingMapper_.flipScvfIndex(domainI, scvf),

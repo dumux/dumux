@@ -222,20 +222,6 @@ public:
     bool isCoupled(Dune::index_constant<i> domainI, const SubControlVolumeFace<i>& scvf) const
     { return couplingMapper_.isCoupled(domainI, scvf); }
 
-    //! Return the volume variables of domain i for a given element and scv
-    template<std::size_t i>
-    VolumeVariables<i> volVars(Dune::index_constant<i> domainI,
-                               const Element<i>& element,
-                               const SubControlVolume<i>& scv) const
-    {
-        VolumeVariables<i> volVars;
-        const auto elemSol = elementSolution(
-            element, this->curSol(domainI), problem(domainI).gridGeometry()
-        );
-        volVars.update(elemSol, problem(domainI), element, scv);
-        return volVars;
-    }
-
     template<std::size_t i>
     Problem<i>& problem(Dune::index_constant<i> domainI)
     {
@@ -261,6 +247,20 @@ private:
     template<std::size_t i>
     bool isCoupledElement_(Dune::index_constant<i> domainI, std::size_t eIdx) const
     { return couplingMapper_.isCoupledElement(domainI, eIdx); }
+
+    //! Return the volume variables of domain i for a given element and scv
+    template<std::size_t i>
+    VolumeVariables<i> volVars_(Dune::index_constant<i> domainI,
+                                const Element<i>& element,
+                                const SubControlVolume<i>& scv) const
+    {
+        VolumeVariables<i> volVars;
+        const auto elemSol = elementSolution(
+            element, this->curSol(domainI), this->problem(domainI).gridGeometry()
+        );
+        volVars.update(elemSol, this->problem(domainI), element, scv);
+        return volVars;
+    }
 
     /*!
      * \brief prepares all data and variables that are necessary to evaluate the residual of an Darcy element (i.e. Stokes information)
@@ -302,7 +302,7 @@ private:
                 // there is only one scv for TPFA
                 context.push_back({
                     otherElement,
-                    volVars(domainJ, otherElement, *std::begin(scvs(otherFvGeometry))),
+                    volVars_(domainJ, otherElement, *std::begin(scvs(otherFvGeometry))),
                     std::move(otherFvGeometry),
                     otherElementIdx,
                     scvf.index(),
