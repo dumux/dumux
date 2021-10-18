@@ -123,18 +123,25 @@ public:
     }
 
     //! Map two facets to a global common entity index (vertex in 2D or edge in 3D)
-    auto globalCommonEntityIndex(const Facet& facet0, const Facet& facet1) const
+    auto globalCommonEntityIndex(const Element& element, SmallLocalIndexType localFacetIdx0, SmallLocalIndexType localFacetIdx1) const
     {
-        assert(facet0.subEntities(2) == facet1.subEntities(2));
+        const auto refElement = referenceElement(element);
+
+        assert(refElement.size(localFacetIdx0, 1, 2) == refElement.size(localFacetIdx1, 1, 2));
         std::array<GridIndexType, dim == 2 ? 2 : 4> cache = {};
         std::bitset<dim == 2 ? 2 : 4> valueCached = {};
 
-        for (int i = 0; i < facet0.subEntities(2); ++i)
+        for (int i = 0; i < refElement.size(localFacetIdx0, 1, 2); ++i)
         {
-            const auto globalEntityIdx0 = gridView().indexSet().subIndex(facet0, i, 2);
-            for (int j = 0; j < facet1.subEntities(2); ++j)
+            // get local sub index of subentity w.r.t. to the element
+            const auto localEntityIdx0 = refElement.subEntity(localFacetIdx0, 1, i, 2);
+            // and with the local index we can get the global index of the vertex/edge (2d/3d)
+            const auto globalEntityIdx0 = gridView().indexSet().subIndex(element, localEntityIdx0, 2);
+            for (int j = 0; j < refElement.size(localFacetIdx1, 1, 2); ++j)
             {
-                const auto globalEntityIdx1 = valueCached[j] ? cache[j] : gridView().indexSet().subIndex(facet1, j, 2);
+                const auto globalEntityIdx1 = valueCached[j] ? cache[j]
+                    : gridView().indexSet().subIndex(element, refElement.subEntity(localFacetIdx1, 1, j, 2), 2);
+
                 if (globalEntityIdx0 == globalEntityIdx1)
                     return globalEntityIdx0;
                 else

@@ -298,9 +298,8 @@ private:
 
                         scvfsIndexSet.push_back(scvfIdx);
 
-                        const auto& lateralFacet = geometryHelper.facet(lateralFacetIndex, element);
                         const auto commonEntityIdx = geometryHelper.globalCommonEntityIndex(
-                            geometryHelper.facet(localScvIdx, element), lateralFacet
+                            element, localScvIdx, lateralFacetIndex
                         );
                         commonEntityIdxToScvfsMap[commonEntityIdx].push_back(scvfIdx);
                         ++scvfIdx;
@@ -739,9 +738,8 @@ private:
 
                         scvfsIndexSet.push_back(scvfIdx);
 
-                        const auto& lateralFacet = geometryHelper.facet(lateralFacetIndex, element);
                         const auto commonEntityIdx = geometryHelper.globalCommonEntityIndex(
-                            geometryHelper.facet(localScvIdx, element), lateralFacet
+                            element, localScvIdx, lateralFacetIndex
                         );
                         commonEntityIdxToScvfsMap[commonEntityIdx].push_back(scvfIdx);
 
