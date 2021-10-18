@@ -25,24 +25,7 @@
 #ifndef DUMUX_DISCRETIZATION_FOURIERS_LAW_NONEQUILIBRIUM_HH
 #define DUMUX_DISCRETIZATION_FOURIERS_LAW_NONEQUILIBRIUM_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/discretization/method.hh>
-
-namespace Dumux {
-
-// forward declaration
-template <class TypeTag, DiscretizationMethod discMethod>
-class FouriersLawNonEquilibriumImplementation
-{};
-
-/*!
- * \ingroup Flux
- * \brief Evaluates the heat conduction flux according to Fouriers's law
- */
-template <class TypeTag>
-using FouriersLawNonEquilibrium = FouriersLawNonEquilibriumImplementation<TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
-
-} // end namespace Dumux
+#include <dumux/flux/fourierslawnonequilibrium_fwd.hh>
 
 #include <dumux/flux/cctpfa/fourierslawnonequilibrium.hh>
 #include <dumux/flux/box/fourierslawnonequilibrium.hh>

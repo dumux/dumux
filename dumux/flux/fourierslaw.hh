@@ -23,27 +23,10 @@
  *        This file contains the data which is required to calculate
  *        diffusive mass fluxes due to molecular diffusion with Fourier's law.
  */
-#ifndef DUMUX_DISCRETIZATION_FOURIERS_LAW_HH
-#define DUMUX_DISCRETIZATION_FOURIERS_LAW_HH
+#ifndef DUMUX_FLUX_FOURIERS_LAW_HH
+#define DUMUX_FLUX_FOURIERS_LAW_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/discretization/method.hh>
-
-namespace Dumux {
-
-// forward declaration
-template <class TypeTag, DiscretizationMethod discMethod>
-class FouriersLawImplementation
-{};
-
-/*!
- * \ingroup Flux
- * \brief Evaluates the heat conduction flux according to Fouriers's law
- */
-template <class TypeTag>
-using FouriersLaw = FouriersLawImplementation<TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
-
-} // end namespace Dumux
+#include <dumux/flux/fourierslaw_fwd.hh>
 
 #include <dumux/flux/cctpfa/fourierslaw.hh>
 #include <dumux/flux/ccmpfa/fourierslaw.hh>

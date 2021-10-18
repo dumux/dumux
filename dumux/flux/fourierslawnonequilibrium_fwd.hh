@@ -19,17 +19,28 @@
 /*!
  * \file
  * \ingroup Flux
- * \brief Forchheimer's law specialized for different discretization schemes
- *        This file contains the data which is required to calculate
- *        volume and mass fluxes of fluid phases over a face of a finite volume by means
- *        of the Forchheimer approximation. Specializations are provided for the different discretization methods.
+ * \brief This file contains the data which is required to calculate
+ *        diffusive mass fluxes due to molecular diffusion with Fourier's law.
  */
-#ifndef DUMUX_FLUX_FORCHHEIMERS_LAW_HH
-#define DUMUX_FLUX_FORCHHEIMERS_LAW_HH
+#ifndef DUMUX_DISCRETIZATION_FOURIERS_LAW_NONEQUILIBRIUM_FWD_HH
+#define DUMUX_DISCRETIZATION_FOURIERS_LAW_NONEQUILIBRIUM_FWD_HH
 
-#include <dumux/flux/forchheimerslaw_fwd.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/discretization/method.hh>
 
-#include <dumux/flux/cctpfa/forchheimerslaw.hh>
-#include <dumux/flux/box/forchheimerslaw.hh>
+namespace Dumux {
+
+// forward declaration
+template <class TypeTag, DiscretizationMethod discMethod>
+class FouriersLawNonEquilibriumImplementation;
+
+/*!
+ * \ingroup Flux
+ * \brief Evaluates the heat conduction flux according to Fouriers's law
+ */
+template <class TypeTag>
+using FouriersLawNonEquilibrium = FouriersLawNonEquilibriumImplementation<TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
+
+} // end namespace Dumux
 
 #endif

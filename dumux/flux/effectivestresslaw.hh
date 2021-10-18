@@ -22,24 +22,10 @@
  * \brief The effective stress law specialized for different discretization schemes.
  *        This computes the stress tensor and surface forces resulting from poro-mechanical deformation.
  */
-#ifndef DUMUX_DISCRETIZATION_EFFECIVESTRESS_LAW_HH
-#define DUMUX_DISCRETIZATION_EFFECIVESTRESS_LAW_HH
+#ifndef DUMUX_FLUX_EFFECIVESTRESS_LAW_HH
+#define DUMUX_FLUX_EFFECIVESTRESS_LAW_HH
 
-#include <dumux/discretization/method.hh>
-
-namespace Dumux {
-
-/*!
- * \ingroup Flux
- * \brief This computes the stress tensor and surface forces resulting from poro-mechanical deformation.
- * \note Specializations are provided for the different discretization methods.
- * These specializations are found in the headers included below.
- */
-template <class StressType, class GridGeometry, DiscretizationMethod dm = GridGeometry::discMethod>
-class EffectiveStressLaw;
-
-} // end namespace Dumux
-
+#include <dumux/flux/effectivestresslaw_fwd.hh>
 #include <dumux/flux/box/effectivestresslaw.hh>
 
 #endif

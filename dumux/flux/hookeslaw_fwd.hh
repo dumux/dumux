@@ -19,17 +19,25 @@
 /*!
  * \file
  * \ingroup Flux
- * \brief Forchheimer's law specialized for different discretization schemes
- *        This file contains the data which is required to calculate
- *        volume and mass fluxes of fluid phases over a face of a finite volume by means
- *        of the Forchheimer approximation. Specializations are provided for the different discretization methods.
+ * \brief Hooke's law specialized for different discretization schemes.
+ *        This computes the stress tensor and surface forces resulting from mechanical deformation.
  */
-#ifndef DUMUX_FLUX_FORCHHEIMERS_LAW_HH
-#define DUMUX_FLUX_FORCHHEIMERS_LAW_HH
+#ifndef DUMUX_DISCRETIZATION_HOOKES_LAW_FWD_HH
+#define DUMUX_DISCRETIZATION_HOOKES_LAW_FWD_HH
 
-#include <dumux/flux/forchheimerslaw_fwd.hh>
+#include <dumux/discretization/method.hh>
 
-#include <dumux/flux/cctpfa/forchheimerslaw.hh>
-#include <dumux/flux/box/forchheimerslaw.hh>
+namespace Dumux {
+
+/*!
+ * \ingroup Flux
+ * \brief This computes the stress tensor and surface forces resulting from mechanical deformation.
+ * \note Specializations are provided for the different discretization methods.
+ * These specializations are found in the headers included below.
+ */
+template <class Scalar, class GridGeometry, DiscretizationMethod dm = GridGeometry::discMethod>
+class HookesLaw;
+
+} // end namespace Dumux
 
 #endif
