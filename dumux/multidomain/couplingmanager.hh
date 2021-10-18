@@ -92,11 +92,11 @@ public:
     CouplingManager()
     {
         using namespace Dune::Hybrid;
-        forEach(problems_, [&](const auto* problem){
+        forEach(problems_, [](auto& problem){
             problem = nullptr;
         });
 
-        forEach(curSols_, [&](auto&& solutionVector){
+        forEach(curSols_, [](auto& solutionVector){
             solutionVector = std::make_shared<typename std::decay_t<decltype(solutionVector)>::element_type>();
         });
     }
