@@ -61,8 +61,8 @@ class CouplingManager
     template<std::size_t id> using GridView = typename GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
-    template<std::size_t id> using ProblemWeakPtr = std::weak_ptr<const Problem<id>>;
-    using Problems = typename Traits::template Tuple<ProblemWeakPtr>;
+    template<std::size_t id> using ProblemPtr = const Problem<id> *;
+    using ProblemPtrs = typename Traits::template Tuple<ProblemPtr>;
 
     template<std::size_t id>
     using SubSolutionVector
@@ -92,6 +92,10 @@ public:
     CouplingManager()
     {
         using namespace Dune::Hybrid;
+        forEach(problems_, [&](const auto* problem){
+            problem = nullptr;
+        });
+
         forEach(curSols_, [&](auto&& solutionVector){
             solutionVector = std::make_shared<typename std::decay_t<decltype(solutionVector)>::element_type>();
         });
@@ -291,7 +295,11 @@ public:
      */
     template<typename... SubProblems>
     void setSubProblems(const std::tuple<std::shared_ptr<SubProblems>...>& problems)
-    { problems_ = problems; }
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(size(problems_)), [&](const auto i)
+        { setSubProblem(std::get<i>(problems), i); });
+    }
 
     /*!
      * \brief set a pointer to one of the sub problems
@@ -300,19 +308,19 @@ public:
      */
     template<class SubProblem, std::size_t i>
     void setSubProblem(std::shared_ptr<SubProblem> problem, Dune::index_constant<i> domainIdx)
-    { std::get<i>(problems_) = problem; }
+    { std::get<i>(problems_) = problem.get(); }
 
     /*!
      * \brief Return a reference to the sub problem
      * \param domainIdx The domain index
+     * We avoid exception handling here because the performance of this function is critical
      */
     template<std::size_t i>
     const Problem<i>& problem(Dune::index_constant<i> domainIdx) const
     {
-        if (!std::get<i>(problems_).expired())
-            return *std::get<i>(problems_).lock();
-        else
-            DUNE_THROW(Dune::InvalidStateException, "The problem pointer was not set or has already expired. Use setSubProblems() before calling this function");
+        const Problem<i>* p = std::get<i>(problems_);
+        assert(p && "The problem pointer is invalid. Use setSubProblems() before calling this function");
+        return *p;
     }
 
 protected:
@@ -383,10 +391,10 @@ private:
     SolutionVectorStorage curSols_;
 
     /*!
-     * \brief A tuple of std::weak_ptrs to the sub problems
-     * \note these are weak pointers and not shared pointers to break the cyclic dependency between coupling manager and problems
+     * \brief A tuple of (raw) pointers to the sub problems
+     * \note these are raw pointers and not shared pointers to break the cyclic dependency between coupling manager and problems
      */
-    Problems problems_;
+    ProblemPtrs problems_;
 };
 
 } // end namespace Dumux
