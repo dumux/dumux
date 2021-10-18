@@ -43,17 +43,21 @@ struct HasIndex<i, std::tuple<Indices...>>
 : std::disjunction<std::is_same<Dune::index_constant<i>, Indices>...>
 {};
 
-template<class Map, std::size_t i, std::size_t j>
-constexpr bool isCoupled(Dune::index_constant<i> I, Dune::index_constant<j>)
-{ return HasIndex<j, std::decay_t<decltype(Map::coupledDomains(I))>>::value; }
-
 } // end namespace Detail
 
 /*!
  * \ingroup MultiDomain
  * \brief Coupling manager that combines an arbitrary number of binary coupling manager (coupling two domains each)
+ * \tparam MDTraits the multidomain traits
+ * \tparam CouplingMap a coupling policy class
+ * \tparam CouplingMgrs the binary sub-coupling manager types
+ *
+ * The coupling policy has to provide the interfaces
+ * - CouplingMap::coupledDomains(i): returns a tuple of Dune::index_constants with the coupled domains
+ * - CouplingMap::globalToLocal(i, j): maps the indices i, j to the local index pair of the responsible sub coupling manager
+ * - CouplingMap::managerMap(): returns a two-dimensional array mapping two indices to the coupling manager index
  */
-template<class MDTraits, class CouplingManagerMaps, class ...CouplingMgrs>
+template<class MDTraits, class CouplingMap, class ...CouplingMgrs>
 class MultiBinaryCouplingManager
 {
     // the sub domain type tags
@@ -78,12 +82,35 @@ class MultiBinaryCouplingManager
     using SubSolutionVector = std::decay_t<decltype(std::declval<typename MDTraits::SolutionVector>()[Dune::index_constant<id>()])>;
     using SolutionVectors = typename MDTraits::template TupleOfSharedPtr<SubSolutionVector>;
 
-public:
+    static constexpr auto couplingManagerMap_ = CouplingMap::managerMap();
 
-    static constexpr auto couplingManagerMap = CouplingManagerMaps::makeCouplingManagerMap();
-
+    //! Returns the local domain indices used within the binary sub coupling managers.
     template<std::size_t i, std::size_t j>
-    using SubCouplingManager = SubCouplingManagerT<couplingManagerMap[i][j]>;
+    static constexpr auto globalToLocal_(Dune::index_constant<i> domainI, Dune::index_constant<j> domainJ)
+    {
+        static_assert(i <= MDTraits::numSubDomains && j <= MDTraits::numSubDomains);
+        return CouplingMap::globalToLocal(domainI, domainJ);
+    }
+
+    //! If two domain are coupled
+    template<class Map, std::size_t i, std::size_t j>
+    static constexpr bool isCoupled_(Dune::index_constant<i> domainI, Dune::index_constant<j>)
+    { return Detail::HasIndex<j, std::decay_t<decltype(Map::coupledDomains(domainI))>>::value; }
+
+    //! Returns the coupling manager index for a given domain combination
+    template<std::size_t i, std::size_t j>
+    static constexpr auto subCouplingManagerIndex_(Dune::index_constant<i> domainI, Dune::index_constant<j> domainJ)
+    {
+        static_assert(
+            isCoupled_<CouplingMap>(domainI, domainJ),
+            "Sub-coupling manager only exists for coupled domains."
+        );
+        return couplingManagerMap_[i][j];
+    }
+
+public:
+    template<std::size_t i, std::size_t j>
+    using SubCouplingManager = SubCouplingManagerT<couplingManagerMap_[i][j]>;
 
     MultiBinaryCouplingManager()
     {
@@ -99,31 +126,12 @@ public:
         });
     }
 
-    //! Returns the local domain indices used within the binary sub coupling managers.
-    template<std::size_t i, std::size_t j>
-    static constexpr auto globalToLocalDomainIndices(Dune::index_constant<i> domainI, Dune::index_constant<j> domainJ)
-    {
-        static_assert(i <= MDTraits::numSubDomains && j <= MDTraits::numSubDomains);
-        return CouplingManagerMaps::globalToLocalDomainIndices(domainI, domainJ);
-    }
-
-    //! Returns the coupling manager index for a given domain combination
-    template<std::size_t i, std::size_t j>
-    static constexpr auto getCouplingManagerIndex(Dune::index_constant<i> domainI, Dune::index_constant<j> domainJ)
-    {
-        static_assert(
-            Detail::template isCoupled<CouplingManagerMaps>(domainI, domainJ),
-            "Sub-coupling manager only exists for coupled domains."
-        );
-        return couplingManagerMap[i][j];
-    }
-
     //! return the binary sub-coupling manager
     template<std::size_t i, std::size_t j>
     auto& subCouplingManager(Dune::index_constant<i> domainI,
                              Dune::index_constant<j> domainJ)
     {
-        constexpr auto idx = getCouplingManagerIndex(domainI, domainJ);
+        constexpr auto idx = subCouplingManagerIndex_(domainI, domainJ);
         return *std::get<idx>(couplingManagers_);
     }
 
@@ -132,8 +140,50 @@ public:
     const auto& subCouplingManager(Dune::index_constant<i> domainI,
                                    Dune::index_constant<j> domainJ) const
     {
-        constexpr auto idx = getCouplingManagerIndex(domainI, domainJ);
+        constexpr auto idx = subCouplingManagerIndex_(domainI, domainJ);
         return *std::get<idx>(couplingManagers_);
+    }
+
+    //! apply a function to the domainI-domainJ sub coupling manager using its local indices
+    template<std::size_t i, std::size_t j, class Apply>
+    decltype(auto) subApply(Dune::index_constant<i> domainI,
+                            Dune::index_constant<j> domainJ,
+                            Apply&& apply)
+    {
+        constexpr auto localIndices = globalToLocal_(domainI, domainJ);
+        return apply(subCouplingManager(domainI, domainJ), localIndices.first, localIndices.second);
+    }
+
+    //! apply a function to the domainI-domainJ sub coupling manager using its local indices
+    template<std::size_t i, std::size_t j, class Apply>
+    decltype(auto) subApply(Dune::index_constant<i> domainI,
+                            Dune::index_constant<j> domainJ,
+                            const Apply& apply) const
+    {
+        constexpr auto localIndices = globalToLocal_(domainI, domainJ);
+        return apply(subCouplingManager(domainI, domainJ), localIndices.first, localIndices.second);
+    }
+
+    //! apply a function to a sub coupling manager containing this domain
+    template<std::size_t i, class Apply>
+    decltype(auto) subApply(Dune::index_constant<i> domainI, Apply&& apply)
+    {
+        constexpr auto dm = CouplingMap::coupledDomains(domainI);
+        static_assert(std::tuple_size_v<std::decay_t<decltype(dm)>> != 0, "subApply on uncoupled domain!");
+        constexpr auto domainJ = std::get<0>(dm);
+        constexpr auto localIndices = globalToLocal_(domainI, domainJ);
+        return apply(subCouplingManager(domainI, domainJ), localIndices.first);
+    }
+
+    //! apply a function to a sub coupling manager containing this domain
+    template<std::size_t i, class Apply>
+    decltype(auto) subApply(Dune::index_constant<i> domainI, const Apply& apply) const
+    {
+        constexpr auto dm = CouplingMap::coupledDomains(domainI);
+        static_assert(std::tuple_size_v<std::decay_t<decltype(dm)>> != 0, "subApply on uncoupled domain!");
+        constexpr auto domainJ = std::get<0>(dm);
+        constexpr auto localIndices = globalToLocal_(domainI, domainJ);
+        return apply(subCouplingManager(domainI, domainJ), localIndices.first);
     }
 
     //! Update the solution vector before assembly
@@ -167,11 +217,10 @@ public:
                                 Dune::index_constant<j> domainJ) const
     {
         // if the domains are coupled according to the map, forward to sub-coupling manager
-        if constexpr (Detail::template isCoupled<CouplingManagerMaps>(domainI, domainJ))
-            return subCouplingManager(domainI, domainJ).couplingStencil(
-                globalToLocalDomainIndices(domainI, domainJ).domainI, entity,
-                globalToLocalDomainIndices(domainI, domainJ).domainJ
-            );
+        if constexpr (isCoupled_<CouplingMap>(domainI, domainJ))
+            return subApply(domainI, domainJ, [&](const auto& cm, auto&& ii, auto&& jj) -> const auto& {
+                return cm.couplingStencil(ii, entity, jj);
+            });
         else
             return emptyStencil_;
     }
@@ -185,13 +234,10 @@ public:
                                         Dune::index_constant<j> domainJ,
                                         std::size_t dofIdxGlobalJ) const
     {
-        if constexpr (i == j || Detail::template isCoupled<CouplingManagerMaps>(domainI, domainJ))
-            return subCouplingManager(domainI, domainJ).evalCouplingResidual(
-                globalToLocalDomainIndices(domainI, domainJ).domainI,
-                scvfI, localAssemblerI,
-                globalToLocalDomainIndices(domainI, domainJ).domainJ,
-                dofIdxGlobalJ
-            );
+        if constexpr (i == j || isCoupled_<CouplingMap>(domainI, domainJ))
+            return subApply(domainI, domainJ, [&](const auto& cm, auto&& ii, auto&& jj) -> decltype(auto) {
+                return cm.evalCouplingResidual(ii, scvfI, localAssemblerI, jj, dofIdxGlobalJ);
+            });
         else
         {
             DUNE_THROW(Dune::InvalidStateException,
@@ -209,13 +255,10 @@ public:
                                         Dune::index_constant<j> domainJ,
                                         std::size_t dofIdxGlobalJ) const
     {
-        if constexpr (i == j || Detail::template isCoupled<CouplingManagerMaps>(domainI, domainJ))
-            return subCouplingManager(domainI, domainJ).evalCouplingResidual(
-                globalToLocalDomainIndices(domainI, domainJ).domainI,
-                localAssemblerI,
-                globalToLocalDomainIndices(domainI, domainJ).domainJ,
-                dofIdxGlobalJ
-            );
+        if constexpr (i == j || isCoupled_<CouplingMap>(domainI, domainJ))
+            return subApply(domainI, domainJ, [&](const auto& cm, auto&& ii, auto&& jj) -> decltype(auto) {
+                return cm.evalCouplingResidual(ii, localAssemblerI, jj, dofIdxGlobalJ);
+            });
         else
         {
             DUNE_THROW(Dune::InvalidStateException,
@@ -234,14 +277,10 @@ public:
                                         Dune::index_constant<j> domainJ,
                                         std::size_t dofIdxGlobalJ) const
     {
-        if constexpr (i == j || Detail::template isCoupled<CouplingManagerMaps>(domainI, domainJ))
-            return subCouplingManager(domainI, domainJ).evalCouplingResidual(
-                globalToLocalDomainIndices(domainI, domainJ).domainI,
-                localAssemblerI,
-                scvI,
-                globalToLocalDomainIndices(domainI, domainJ).domainJ,
-                dofIdxGlobalJ
-            );
+        if constexpr (i == j || isCoupled_<CouplingMap>(domainI, domainJ))
+            return subApply(domainI, domainJ, [&](const auto& cm, auto&& ii, auto&& jj) -> decltype(auto) {
+                return cm.evalCouplingResidual(ii, localAssemblerI, scvI, jj, dofIdxGlobalJ);
+            });
         else
         {
             DUNE_THROW(Dune::InvalidStateException,
@@ -265,32 +304,21 @@ public:
         // only one other manager needs to take action if i != j
         if constexpr (i != j)
         {
-            if constexpr (Detail::template isCoupled<CouplingManagerMaps>(domainI, domainJ))
-                subCouplingManager(domainI, domainJ).updateCouplingContext(
-                    globalToLocalDomainIndices(domainI, domainJ).domainI,
-                    localAssemblerI,
-                    globalToLocalDomainIndices(domainI, domainJ).domainJ,
-                    dofIdxGlobalJ,
-                    priVars,
-                    pvIdxJ
-                );
+            if constexpr (isCoupled_<CouplingMap>(domainI, domainJ))
+                subApply(domainI, domainJ, [&](auto& cm, auto&& ii, auto&& jj){
+                    cm.updateCouplingContext(ii, localAssemblerI, jj, dofIdxGlobalJ, priVars, pvIdxJ);
+                });
         }
         else
         {
             // for i == j, we need to call all relevant managers where domainI is involved and make sure that the
-            // context is updated with respect to its own domain
+            // context is updated with respect to its own domain (I-I coupling context)
             using namespace Dune::Hybrid;
-            forEach(CouplingManagerMaps::coupledDomains(domainI), [&](const auto domainJ)
-            {
+            forEach(CouplingMap::coupledDomains(domainI), [&](const auto domainJ){
                 static_assert(domainI != domainJ);
-                subCouplingManager(domainI, domainJ).updateCouplingContext(
-                    globalToLocalDomainIndices(domainI, domainJ).domainI,
-                    localAssemblerI,
-                    globalToLocalDomainIndices(domainI, domainJ).domainI,
-                    dofIdxGlobalJ,
-                    priVars,
-                    pvIdxJ
-                );
+                subApply(domainI, domainJ, [&](auto& cm, auto&& ii, auto&& jj){
+                    cm.updateCouplingContext(ii, localAssemblerI, ii, dofIdxGlobalJ, priVars, pvIdxJ);
+                });
             });
         }
     }
@@ -301,11 +329,10 @@ public:
     {
         // for the coupling blocks
         using namespace Dune::Hybrid;
-        forEach(CouplingManagerMaps::coupledDomains(domainI), [&](const auto domainJ)
-        {
-            this->subCouplingManager(domainI, domainJ).bindCouplingContext(
-                globalToLocalDomainIndices(domainI, domainJ).domainI, element, assembler
-            );
+        forEach(CouplingMap::coupledDomains(domainI), [&](const auto domainJ){
+            subApply(domainI, domainJ, [&](auto& cm, auto&& ii, auto&& jj) -> void {
+                cm.bindCouplingContext(ii, element, assembler);
+            });
         });
     }
 
@@ -317,8 +344,9 @@ public:
     decltype(auto) numericEpsilon(Dune::index_constant<i> domainI,
                                   const std::string& paramGroup) const
     {
-        static constexpr auto someOtherDomain = std::get<0>(CouplingManagerMaps::coupledDomains(domainI));
-        return subCouplingManager(domainI, someOtherDomain).numericEpsilon(globalToLocalDomainIndices(domainI, someOtherDomain).domainI, paramGroup);
+        return subApply(domainI, [&](const auto& cm, auto&& ii) -> decltype(auto) {
+            return cm.numericEpsilon(ii, paramGroup);
+        });
     }
 
     /*!
@@ -343,14 +371,10 @@ public:
     {
         // for the coupling blocks
         using namespace Dune::Hybrid;
-        forEach(CouplingManagerMaps::coupledDomains(domainI), [&](const auto domainJ)
-        {
-            subCouplingManager(domainI, domainJ).updateCoupledVariables(
-                globalToLocalDomainIndices(domainI, domainJ).domainI,
-                localAssemblerI,
-                elemVolVars,
-                elemFluxVarsCache
-            );
+        forEach(CouplingMap::coupledDomains(domainI), [&](const auto domainJ){
+            subApply(domainI, domainJ, [&](auto& cm, auto&& ii, auto&& jj){
+                cm.updateCoupledVariables(ii, localAssemblerI, elemVolVars, elemFluxVarsCache);
+            });
         });
     }
 

@@ -117,10 +117,8 @@ public:
               std::shared_ptr<Problem<porousMediumIndex>> darcyProblem,
               SolutionVectorStorage& curSol)
     {
+        this->setSubProblems(std::make_tuple(freeFlowMassProblem, darcyProblem));
         this->attachSolution(curSol);
-
-        freeFlowMassProblemPtr_ = &(*freeFlowMassProblem);
-        porousMediumProblemPtr_ = &(*darcyProblem);
 
         couplingMapper_.update(*this);
     }
@@ -164,9 +162,9 @@ public:
         {
             if (c.dofIdx == dofIdxGlobalJ)
             {
-                const auto elemSol = elementSolution(c.element, this->curSol(domainJ), problem(domainJ).gridGeometry());
+                const auto elemSol = elementSolution(c.element, this->curSol(domainJ), this->problem(domainJ).gridGeometry());
                 const auto& scv = *scvs(c.fvGeometry).begin();
-                c.volVars.update(elemSol, problem(domainJ), c.element, scv);
+                c.volVars.update(elemSol, this->problem(domainJ), c.element, scv);
             }
         }
     }
@@ -209,7 +207,7 @@ public:
                                            const Element<i>& element,
                                            Dune::index_constant<j> domainJ) const
     {
-        const auto eIdx = problem(domainI).gridGeometry().elementMapper().index(element);
+        const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(element);
         return couplingMapper_.couplingStencil(domainI, eIdx, domainJ);
     }
 
@@ -221,24 +219,6 @@ public:
     template<std::size_t i>
     bool isCoupled(Dune::index_constant<i> domainI, const SubControlVolumeFace<i>& scvf) const
     { return couplingMapper_.isCoupled(domainI, scvf); }
-
-    template<std::size_t i>
-    Problem<i>& problem(Dune::index_constant<i> domainI)
-    {
-        if constexpr (i == freeFlowMassIndex)
-            return *freeFlowMassProblemPtr_;
-        else
-            return *porousMediumProblemPtr_;
-    }
-
-    template<std::size_t i>
-    const Problem<i>& problem(Dune::index_constant<i> domainI) const
-    {
-        if constexpr (i == freeFlowMassIndex)
-            return *freeFlowMassProblemPtr_;
-        else
-            return *porousMediumProblemPtr_;
-    }
 
 private:
     /*!
@@ -268,7 +248,7 @@ private:
     template<std::size_t i>
     void bindCouplingContext_(Dune::index_constant<i> domainI, const Element<i>& element) const
     {
-        const auto fvGeometry = localView(problem(domainI).gridGeometry()).bindElement(element);
+        const auto fvGeometry = localView(this->problem(domainI).gridGeometry()).bindElement(element);
         bindCouplingContext_(domainI, fvGeometry);
     }
 
@@ -281,7 +261,7 @@ private:
         auto& context = std::get<domainI>(couplingContext_);
         context.clear();
 
-        const auto eIdx = problem(domainI).gridGeometry().elementMapper().index(fvGeometry.element());
+        const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(fvGeometry.element());
 
         // do nothing if the element is not coupled to the other domain
         if (!isCoupledElement_(domainI, eIdx))
@@ -295,7 +275,7 @@ private:
             {
                 const auto otherElementIdx = couplingMapper_.outsideElementIndex(domainI, scvf);
                 constexpr auto domainJ = Dune::index_constant<1-domainI>();
-                const auto& otherGridGeometry = problem(domainJ).gridGeometry();
+                const auto& otherGridGeometry = this->problem(domainJ).gridGeometry();
                 const auto& otherElement = otherGridGeometry.element(otherElementIdx);
                 auto otherFvGeometry = localView(otherGridGeometry).bindElement(otherElement);
 
@@ -315,9 +295,6 @@ private:
 
     mutable std::tuple<std::vector<FreeFlowMassCouplingContext>, std::vector<PorousMediumCouplingContext>> couplingContext_;
     mutable std::array<std::size_t, 2> couplingContextBoundForElement_;
-
-    Problem<freeFlowMassIndex>* freeFlowMassProblemPtr_ = nullptr;
-    Problem<porousMediumIndex>* porousMediumProblemPtr_ = nullptr;
 
     CouplingMapper couplingMapper_;
 };

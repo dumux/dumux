@@ -83,33 +83,26 @@ constexpr auto coupledDomains(Dune::index_constant<i> domainI)
 }
 
 template<std::size_t i, std::size_t j>
-struct LocalIndices
-{
-    static constexpr auto domainI = Dune::index_constant<i>();
-    static constexpr auto domainJ = Dune::index_constant<j>();
-};
-
-template<std::size_t i, std::size_t j>
 constexpr auto globalToLocalDomainIndices(Dune::index_constant<i>, Dune::index_constant<j>)
 {
     static_assert(i <= 2 && j <= 2);
     static_assert(i != j);
 
     if constexpr (i < j)
-        return LocalIndices<0, 1>();
+        return std::pair<Dune::index_constant<0>, Dune::index_constant<1>>{};
     else
-        return LocalIndices<1, 0>();
+        return std::pair<Dune::index_constant<1>, Dune::index_constant<0>>{};
 }
 
-struct CouplingManagerMaps
+struct CouplingMaps
 {
-    static constexpr auto makeCouplingManagerMap()
+    static constexpr auto managerMap()
     {
         return  FreeFlowPorousMediumDetail::makeCouplingManagerMap();
     }
 
     template<std::size_t i, std::size_t j>
-    static constexpr auto globalToLocalDomainIndices(Dune::index_constant<i> domainI, Dune::index_constant<j> domainJ)
+    static constexpr auto globalToLocal(Dune::index_constant<i> domainI, Dune::index_constant<j> domainJ)
     {
         return FreeFlowPorousMediumDetail::globalToLocalDomainIndices(domainI, domainJ);
     }
@@ -158,7 +151,7 @@ template<class MDTraits>
 class FreeFlowPorousMediumCouplingManager
 : public MultiBinaryCouplingManager<
     MDTraits,
-    FreeFlowPorousMediumDetail::CouplingManagerMaps,
+    FreeFlowPorousMediumDetail::CouplingMaps,
     typename FreeFlowPorousMediumDetail::CouplingManagers<MDTraits>::FreeFlowCouplingManager,
     typename FreeFlowPorousMediumDetail::CouplingManagers<MDTraits>::FreeFlowMomentumPorousMediumCouplingManager,
     typename FreeFlowPorousMediumDetail::CouplingManagers<MDTraits>::FreeFlowMassPorousMediumCouplingManager
@@ -166,7 +159,7 @@ class FreeFlowPorousMediumCouplingManager
 {
     using ParentType = MultiBinaryCouplingManager<
         MDTraits,
-        FreeFlowPorousMediumDetail::CouplingManagerMaps,
+        FreeFlowPorousMediumDetail::CouplingMaps,
         typename FreeFlowPorousMediumDetail::CouplingManagers<MDTraits>::FreeFlowCouplingManager,
         typename FreeFlowPorousMediumDetail::CouplingManagers<MDTraits>::FreeFlowMomentumPorousMediumCouplingManager,
         typename FreeFlowPorousMediumDetail::CouplingManagers<MDTraits>::FreeFlowMassPorousMediumCouplingManager
@@ -202,6 +195,8 @@ public:
     static constexpr auto porousMediumIndex = FreeFlowPorousMediumDetail::porousMediumIndex;
 
 public:
+    using ParentType::ParentType;
+
     template<class GridVarsTuple>
     void init(std::shared_ptr<Problem<freeFlowMomentumIndex>> freeFlowMomentumProblem,
               std::shared_ptr<Problem<freeFlowMassIndex>> freeFlowMassProblem,
@@ -247,9 +242,9 @@ public:
     {
         static_assert(domainI != freeFlowMomentumIndex && domainJ != freeFlowMomentumIndex);
 
-        auto& couplingContext = this->subCouplingManager(domainI, domainJ).couplingContext(
-            ParentType::globalToLocalDomainIndices(domainI, domainJ).domainI, fvGeometry, scvf
-        );
+        const auto& couplingContext = this->subApply(domainI, domainJ, [&](const auto& cm, auto&& ii, auto&& jj) -> const auto& {
+            return cm.couplingContext(ii, fvGeometry, scvf);
+        });
 
         const auto& freeFlowElement = [&]
         {
@@ -358,8 +353,9 @@ public:
                    const SubControlVolumeFace<freeFlowMomentumIndex>& scvf,
                    const bool considerPreviousTimeStep = false) const
     {
-        return this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex)
-                .density(element, fvGeometry, scvf, considerPreviousTimeStep);
+        return this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).density(
+            element, fvGeometry, scvf, considerPreviousTimeStep
+        );
     }
 
     auto insideAndOutsideDensity(const Element<freeFlowMomentumIndex>& element,
@@ -407,43 +403,12 @@ public:
         );
     }
 
-
     template<std::size_t i>
-    const auto& problem(Dune::index_constant<i> domainI) const
+    const Problem<i>& problem(Dune::index_constant<i> domainI) const
     {
-        if constexpr (domainI == freeFlowMomentumIndex)
-            return this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).problem(
-                ParentType::globalToLocalDomainIndices(freeFlowMomentumIndex, freeFlowMassIndex).domainI
-            );
-        else if constexpr (domainI == freeFlowMassIndex)
-            return this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).problem(
-                ParentType::globalToLocalDomainIndices(freeFlowMomentumIndex, freeFlowMassIndex).domainJ
-            );
-        else if constexpr (domainI == porousMediumIndex)
-            return this->subCouplingManager(porousMediumIndex, freeFlowMassIndex).problem(
-                ParentType::globalToLocalDomainIndices(porousMediumIndex, freeFlowMassIndex).domainI
-            );
-        else
-            DUNE_THROW(Dune::InvalidStateException, "Wrong index");
-    }
-
-    template<std::size_t i>
-    auto& problem(Dune::index_constant<i> domainI)
-    {
-        if constexpr (domainI == freeFlowMomentumIndex)
-            return this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).problem(
-                ParentType::globalToLocalDomainIndices(freeFlowMomentumIndex, freeFlowMassIndex).domainI
-            );
-        else if constexpr (domainI == freeFlowMassIndex)
-            return this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).problem(
-                ParentType::globalToLocalDomainIndices(freeFlowMomentumIndex, freeFlowMassIndex).domainJ
-            );
-        else if constexpr (domainI == porousMediumIndex)
-            return this->subCouplingManager(porousMediumIndex, freeFlowMassIndex).problem(
-                ParentType::globalToLocalDomainIndices(porousMediumIndex, freeFlowMassIndex).domainI
-            );
-        else
-            DUNE_THROW(Dune::InvalidStateException, "Wrong index");
+        return this->subApply(domainI, [&](const auto& cm, auto&& ii) -> const auto& {
+            return cm.problem(ii);
+        });
     }
 
     template<std::size_t i, std::size_t j>
@@ -451,9 +416,9 @@ public:
                    Dune::index_constant<j> domainJ,
                    const SubControlVolumeFace<i>& scvf) const
     {
-        return this->subCouplingManager(domainI, domainJ).isCoupled(
-            ParentType::globalToLocalDomainIndices(domainI, domainJ).domainI, scvf
-        );
+        return this->subApply(domainI, domainJ, [&](const auto& cm, auto&& ii, auto&& jj){
+            return cm.isCoupled(ii, scvf);
+        });
     }
 
     /*!
@@ -466,9 +431,9 @@ public:
                    Dune::index_constant<j> domainJ,
                    const SubControlVolume<i>& scv) const
     {
-        return this->subCouplingManager(domainI, domainJ).isCoupled(
-            ParentType::globalToLocalDomainIndices(domainI, domainJ).domainI, scv
-        );
+        return this->subApply(domainI, domainJ, [&](const auto& cm, auto&& ii, auto&& jj){
+            return cm.isCoupled(ii, scv);
+        });
     }
 
     /*!
@@ -478,9 +443,9 @@ public:
                               Dune::index_constant<porousMediumIndex> domainJ,
                               const SubControlVolumeFace<freeFlowMomentumIndex>& scvf) const
     {
-        return this->subCouplingManager(domainI, domainJ).isCoupledLateralScvf(
-            ParentType::globalToLocalDomainIndices(domainI, domainJ).domainI, scvf
-        );
+        return this->subApply(domainI, domainJ, [&](const auto& cm, auto&& ii, auto&& jj){
+            return cm.isCoupledLateralScvf(ii, scvf);
+        });
     }
 
 
@@ -501,11 +466,9 @@ public:
                                 Dune::index_constant<j> domainJ) const
     {
         static_assert(freeFlowMomentumIndex != j);
-        return this->subCouplingManager(domainI, domainJ).couplingStencil(
-            ParentType::globalToLocalDomainIndices(domainI, domainJ).domainI,
-            elementI, scvI,
-            ParentType::globalToLocalDomainIndices(domainI, domainJ).domainJ
-        );
+        return this->subApply(domainI, domainJ, [&](const auto& cm, auto&& ii, auto&& jj) -> const auto& {
+            return cm.couplingStencil(ii, elementI, scvI, jj);
+        });
     }
 };
 

@@ -116,10 +116,8 @@ public:
               std::shared_ptr<Problem<porousMediumIndex>> porousMediumProblem,
               SolutionVectorStorage& curSol)
     {
+        this->setSubProblems(std::make_tuple(freeFlowMomentumProblem, porousMediumProblem));
         this->attachSolution(curSol);
-
-        freeFlowMomentumProblemPtr_ = &(*freeFlowMomentumProblem);
-        porousMediumProblemPtr_ = &(*porousMediumProblem);
 
         couplingMapper_.update(*this);
     }
@@ -187,7 +185,7 @@ public:
                     const auto& ggJ = c.fvGeometry.gridGeometry();
                     const auto& scv = *scvs(c.fvGeometry).begin();
                     const auto elemSol = elementSolution(c.element, this->curSol(domainJ), ggJ);
-                    c.volVars.update(elemSol, problem(domainJ), c.element, scv);
+                    c.volVars.update(elemSol, this->problem(domainJ), c.element, scv);
                 }
             }
         }
@@ -230,7 +228,7 @@ public:
                                            const Element<porousMediumIndex>& element,
                                            Dune::index_constant<freeFlowMomentumIndex> domainJ) const
     {
-        const auto eIdx = problem(domainI).gridGeometry().elementMapper().index(element);
+        const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(element);
         return couplingMapper_.couplingStencil(domainI, eIdx, domainJ);
     }
 
@@ -315,24 +313,6 @@ public:
         return velocity;
     }
 
-    template<std::size_t i>
-    Problem<i>& problem(Dune::index_constant<i> domainI)
-    {
-        if constexpr (i == freeFlowMomentumIndex)
-            return *freeFlowMomentumProblemPtr_;
-        else
-            return *porousMediumProblemPtr_;
-    }
-
-    template<std::size_t i>
-    const Problem<i>& problem(Dune::index_constant<i> domainI) const
-    {
-        if constexpr (i == freeFlowMomentumIndex)
-            return *freeFlowMomentumProblemPtr_;
-        else
-            return *porousMediumProblemPtr_;
-    }
-
 private:
     //! Return the volume variables of domain i for a given element and scv
     template<std::size_t i>
@@ -342,9 +322,9 @@ private:
     {
         VolumeVariables<i> volVars;
         const auto elemSol = elementSolution(
-            element, this->curSol(domainI), problem(domainI).gridGeometry()
+            element, this->curSol(domainI), this->problem(domainI).gridGeometry()
         );
-        volVars.update(elemSol, problem(domainI), element, scv);
+        volVars.update(elemSol, this->problem(domainI), element, scv);
         return volVars;
     }
 
@@ -361,7 +341,7 @@ private:
     template<std::size_t i>
     void bindCouplingContext_(Dune::index_constant<i> domainI, const Element<i>& element) const
     {
-        const auto fvGeometry = localView(problem(domainI).gridGeometry()).bindElement(element);
+        const auto fvGeometry = localView(this->problem(domainI).gridGeometry()).bindElement(element);
         bindCouplingContext_(domainI, fvGeometry);
     }
 
@@ -374,7 +354,7 @@ private:
         auto& context = std::get<domainI>(couplingContext_);
         context.clear();
 
-        const auto eIdx = problem(domainI).gridGeometry().elementMapper().index(fvGeometry.element());
+        const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(fvGeometry.element());
 
         // do nothing if the element is not coupled to the other domain
         if (!isCoupledElement_(domainI, eIdx))
@@ -390,7 +370,7 @@ private:
                 {
                     const auto otherElementIdx = couplingMapper_.outsideElementIndex(domainI, scvf);
                     constexpr auto domainJ = Dune::index_constant<1-i>();
-                    const auto& otherGridGeometry = problem(domainJ).gridGeometry();
+                    const auto& otherGridGeometry = this->problem(domainJ).gridGeometry();
                     const auto& otherElement = otherGridGeometry.element(otherElementIdx);
                     auto otherFvGeometry = localView(otherGridGeometry).bindElement(otherElement);
 
@@ -402,7 +382,7 @@ private:
                         scvf.index(),
                         couplingMapper_.flipScvfIndex(domainI, scvf),
                         otherElementIdx,
-                        problem(domainJ).spatialParams().gravity(scvf.center())
+                        this->problem(domainJ).spatialParams().gravity(scvf.center())
                     });
                 }
 
@@ -410,7 +390,7 @@ private:
                 {
                     const auto otherElementIdx = couplingMapper_.outsideElementIndex(domainI, scvf);
                     constexpr auto domainJ = Dune::index_constant<1-i>();
-                    const auto& otherGridGeometry = problem(domainJ).gridGeometry();
+                    const auto& otherGridGeometry = this->problem(domainJ).gridGeometry();
                     const auto& otherElement = otherGridGeometry.element(otherElementIdx);
                     auto otherFvGeometry = localView(otherGridGeometry).bindElement(otherElement);
 
@@ -433,9 +413,6 @@ private:
 
     mutable std::tuple<std::vector<FreeFlowMomentumCouplingContext>, std::vector<PorousMediumCouplingContext>> couplingContext_;
     mutable std::array<std::size_t, 2> couplingContextBoundForElement_;
-
-    Problem<freeFlowMomentumIndex>* freeFlowMomentumProblemPtr_ = nullptr;
-    Problem<porousMediumIndex>* porousMediumProblemPtr_ = nullptr;
 
     CouplingMapper couplingMapper_;
 };
