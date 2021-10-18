@@ -20,7 +20,6 @@ dumux_add_test(NAME test_ff_navierstokes_angeli_averaged
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_angeli params.input
                              -TimeLoop.TEnd 1e-6 -TimeLoop.DtInitial 1e-6
                              -Problem.Name test_ff_navierstokes_angeli_averaged
-                             -Problem.UseVelocityAveragingForInitial true
-                             -Problem.UseVelocityAveragingForDirichlet true")
+                             -Problem.InterpolateExactVelocity true")
 
 dune_symlink_to_source_files(FILES "params.input")

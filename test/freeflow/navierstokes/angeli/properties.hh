@@ -26,11 +26,17 @@
 #define DUMUX_ANGELI_TEST_PROPERTIES_HH
 
 #include <dune/grid/yaspgrid.hh>
-#include <dumux/discretization/staggered/freeflow/properties.hh>
 
-#include <dumux/freeflow/navierstokes/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/mass/1p/model.hh>
+
+#include <dumux/discretization/fcstaggered.hh>
+#include <dumux/discretization/cctpfa.hh>
+
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
+
+#include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
 
 #include "problem.hh"
 
@@ -38,7 +44,9 @@ namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
-struct AngeliTest { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
+struct AngeliTest {};
+struct AngeliTestMomentum { using InheritsFrom = std::tuple<AngeliTest, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
+struct AngeliTestMass { using InheritsFrom = std::tuple<AngeliTest, NavierStokesMassOneP, CCTpfaModel>; };
 } // end namespace TTag
 
 // the fluid system
@@ -66,6 +74,15 @@ struct EnableGridFluxVariablesCache<TypeTag, TTag::AngeliTest> { static constexp
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::AngeliTest> { static constexpr bool value = true; };
 
-} // end namespace Dumux::Properties
+// Set the problem property
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::AngeliTest>
+{
+private:
+    using Traits = MultiDomainTraits<TTag::AngeliTestMomentum, TTag::AngeliTestMass>;
+public:
+    using type = StaggeredFreeFlowCouplingManager<Traits>;
+};
 
+} // end namespace Dumux::Properties
 #endif

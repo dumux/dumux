@@ -12,8 +12,6 @@ Name = test_angeli # name passed to the output routines
 EnableGravity = false
 PrintErrors = false
 EnableInertiaTerms = true
-UseVelocityAveragingForInitial = false
-UseVelocityAveragingForDirichlet = false
 
 [Component]
 LiquidDensity = 1
