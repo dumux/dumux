@@ -29,10 +29,12 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>
-#include <dumux/discretization/method.hh>
+
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
-#include <dumux/flux/referencesystemformulation.hh>
-#include <dumux/multidomain/couplingmanager.hh>
+
+#include <dumux/flux/darcyslaw_fwd.hh>
+#include <dumux/flux/fickslaw_fwd.hh>
+#include <dumux/flux/forchheimerslaw_fwd.hh>
 
 namespace Dumux {
 
@@ -99,10 +101,6 @@ struct IsSameFluidSystem<FS, FS>
     static constexpr bool value = std::is_same<FS, FS>::value; // always true
 };
 
-// forward declaration
-template <class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
-class FicksLawImplementation;
-
 /*!
  * \ingroup FreeFlowPorousMediumCoupling
  * \brief This structs indicates that Fick's law is not used for diffusion.
@@ -116,8 +114,8 @@ struct IsFicksLaw : public std::false_type {};
  * \brief This structs indicates that Fick's law is used for diffusion.
  * \tparam DiffLaw The diffusion law.
  */
-template<class T, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
-struct IsFicksLaw<FicksLawImplementation<T, discMethod, referenceSystem>> : public std::true_type {};
+template<class T>
+struct IsFicksLaw<Dumux::FicksLaw<T>> : public std::true_type {};
 
 /*!
  * \ingroup FreeFlowPorousMediumCoupling
@@ -193,15 +191,6 @@ struct IndexHelper<stokesIdx, porousMediumIndex, FFFS, true>
     { return FFFS::compIdx(coupledCompdIdx); }
 };
 
-//! forward declare
-template <class TypeTag, DiscretizationMethod discMethod>
-class DarcysLawImplementation;
-
-//! forward declare
-template <class TypeTag, DiscretizationMethod discMethod>
-class ForchheimersLawImplementation;
-
-
 template<class MDTraits, class CouplingManager, bool enableEnergyBalance, bool isCompositional>
 class FreeFlowPorousMediumCouplingConditionsImplementation;
 
@@ -211,9 +200,12 @@ class FreeFlowPorousMediumCouplingConditionsImplementation;
 *        with a (Navier-)Stokes model (staggerd grid).
 */
 template<class MDTraits, class CouplingManager>
-using FreeFlowPorousMediumCouplingConditions = FreeFlowPorousMediumCouplingConditionsImplementation<MDTraits, CouplingManager,
-                                                                      GetPropType<typename MDTraits::template SubDomain<0>::TypeTag, Properties::ModelTraits>::enableEnergyBalance(),
-                                                                      (GetPropType<typename MDTraits::template SubDomain<0>::TypeTag, Properties::ModelTraits>::numFluidComponents() > 1)>;
+using FreeFlowPorousMediumCouplingConditions
+    = FreeFlowPorousMediumCouplingConditionsImplementation<
+        MDTraits, CouplingManager,
+        GetPropType<typename MDTraits::template SubDomain<0>::TypeTag, Properties::ModelTraits>::enableEnergyBalance(),
+        (GetPropType<typename MDTraits::template SubDomain<0>::TypeTag, Properties::ModelTraits>::numFluidComponents() > 1)
+    >;
 
 /*!
  * \ingroup FreeFlowPorousMediumCoupling
@@ -246,8 +238,8 @@ public:
 private:
 
     using AdvectionType = GetPropType<SubDomainTypeTag<porousMediumIndex>, Properties::AdvectionType>;
-    using DarcysLaw = DarcysLawImplementation<SubDomainTypeTag<porousMediumIndex>, GridGeometry<porousMediumIndex>::discMethod>;
-    using ForchheimersLaw = ForchheimersLawImplementation<SubDomainTypeTag<porousMediumIndex>, GridGeometry<porousMediumIndex>::discMethod>;
+    using DarcysLaw = Dumux::DarcysLaw<SubDomainTypeTag<porousMediumIndex>>;
+    using ForchheimersLaw = Dumux::ForchheimersLaw<SubDomainTypeTag<porousMediumIndex>>;
 
     static constexpr bool adapterUsed = ModelTraits<porousMediumIndex>::numFluidPhases() > 1;
     using IndexHelper = Dumux::IndexHelper<freeFlowMassIndex, porousMediumIndex, FluidSystem<freeFlowMassIndex>, adapterUsed>;
@@ -311,6 +303,7 @@ public:
             momentumFlux[scvf.normalAxis()] = context.volVars.pressure(pmPhaseIdx);
         else // use pressure reconstruction for single phase models
             momentumFlux[scvf.normalAxis()] = pressureAtInterface_(fvGeometry, scvf, elemVolVars, context);
+
         // TODO: generalize for permeability tensors
 
         // normalize pressure
@@ -398,13 +391,12 @@ protected:
         const Scalar outsideDistance = getDistance_(scvJ, scvfI);
 
         const Scalar deltaT = volVarsJ.temperature() - volVarsI.temperature();
-        const Scalar tij = transmissibility_(domainI,
-                                             domainJ,
-                                             insideDistance,
-                                             outsideDistance,
-                                             volVarsI.effectiveThermalConductivity(),
-                                             volVarsJ.effectiveThermalConductivity(),
-                                             diffCoeffAvgType);
+        const Scalar tij = transmissibility_(
+            domainI, domainJ,
+            insideDistance, outsideDistance,
+            volVarsI.effectiveThermalConductivity(), volVarsJ.effectiveThermalConductivity(),
+            diffCoeffAvgType
+        );
 
         return -tij * deltaT;
     }
