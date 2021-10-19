@@ -81,6 +81,20 @@ using HasEnableThermalDispersionDetector = decltype(ModelTraits::enableThermalDi
 template<class ModelTraits>
 static constexpr bool hasEnableThermalDispersion()
 { return Dune::Std::is_detected<HasEnableThermalDispersionDetector, ModelTraits>::value; }
+
+template<class SpatialParams, class GlobalPosition>
+using HasTemperatureDetector = decltype(std::declval<SpatialParams>().temperature(std::declval<GlobalPosition>()));
+
+template<typename Problem, typename GlobalPosition>
+decltype(auto) temperature(const Problem& problem, const GlobalPosition& globalPos)
+{
+    using SpatialParams = std::decay_t<decltype(problem.spatialParams())>;
+    if constexpr (Dune::Std::is_detected<HasTemperatureDetector, SpatialParams, GlobalPosition>::value)
+        return problem.spatialParams().temperature(globalPos);
+    else
+        return problem.temperatureAtPos(globalPos);
+}
+
 } // end namespace Deprecated
 #endif
 
