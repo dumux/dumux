@@ -215,7 +215,7 @@ class InstallScriptWriterPython(InstallScriptWriterInterface):
                     runFromSubFolder(['git', 'reset', '--hard', revision], subFolder)
                 else:
                     print(
-                        f"Skip cloning {{url}} since target "{{targetFolder}}" already exists."
+                        f"Skip cloning {{url}} since target '{{targetFolder}}' already exists."
                     )
 
 
