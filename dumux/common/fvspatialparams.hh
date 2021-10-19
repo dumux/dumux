@@ -53,7 +53,7 @@ class FVSpatialParams
     using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-    FVSpatialParamsBase(std::shared_ptr<const GridGeometry> gridGeometry)
+    FVSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : gridGeometry_(gridGeometry)
     , gravity_(0.0)
     {
