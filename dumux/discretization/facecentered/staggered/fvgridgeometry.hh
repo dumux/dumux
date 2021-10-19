@@ -822,6 +822,9 @@ private:
             }
         }
 
+        // set number of subcontrolvolume faces
+        numScvf_ = scvfIdx;
+
         connectivityMap_.update(*this);
     }
 

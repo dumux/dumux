@@ -471,7 +471,7 @@ public:
     const VelocityVector beaversJosephVelocity(const FVElementGeometry& fvGeometry,
                                                const SubControlVolumeFace& scvf,
                                                const ElementVolumeVariables& elemVolVars,
-                                               const Scalar tangentialVelocityGradient) const
+                                               Scalar tangentialVelocityGradient) const
     {
         assert(scvf.isLateral());
         assert(scvf.boundary());
@@ -486,6 +486,10 @@ public:
         // beta = alpha/sqrt(K)
         const Scalar betaBJ = asImp_().betaBJ(fvGeometry, scvf, orientation);
         const Scalar distanceNormalToBoundary = (scvf.ipGlobal() - scv.dofPosition()).two_norm();
+
+        static const bool onlyNormalGradient = getParamFromGroup<bool>(this->paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph", false);
+        if (onlyNormalGradient)
+            tangentialVelocityGradient = 0.0;
 
         const Scalar scalarSlipVelocity = (tangentialVelocityGradient*distanceNormalToBoundary
             + asImp_().porousMediumVelocity(fvGeometry, scvf) * orientation * betaBJ * distanceNormalToBoundary

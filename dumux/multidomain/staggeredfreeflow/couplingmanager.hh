@@ -48,9 +48,14 @@ template<class Traits>
 class StaggeredFreeFlowCouplingManager
 : public CouplingManager<Traits>
 {
+    using ParentType = CouplingManager<Traits>;
 public:
     static constexpr auto freeFlowMomentumIndex = typename Traits::template SubDomain<0>::Index();
     static constexpr auto freeFlowMassIndex = typename Traits::template SubDomain<1>::Index();
+
+    // this can be used if the coupling manager is used inside a meta-coupling manager (e.g. multi-binary)
+    // to manager the solution vector storage outside this class
+    using SolutionVectorStorage = typename ParentType::SolutionVectorStorage;
 private:
     template<std::size_t id> using SubDomainTypeTag = typename Traits::template SubDomain<id>::TypeTag;
     template<std::size_t id> using PrimaryVariables = GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>;
@@ -68,8 +73,6 @@ private:
 
     using Scalar = typename Traits::Scalar;
     using SolutionVector = typename Traits::SolutionVector;
-
-    using ParentType = CouplingManager<Traits>;
 
     using CouplingStencilType = std::vector<std::size_t>;
 
