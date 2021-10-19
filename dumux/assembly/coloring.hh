@@ -213,6 +213,13 @@ auto coloredElementSets(const GridGeometry& gg, int verbosity = 1)
     return std::make_tuple(elementSets, colors);
 }
 
+//! Traits specifying if a given discretization tag supports coloring
+template<DiscretizationMethod discMethod>
+struct SupportsColoring : public std::false_type {};
+
+template<> struct SupportsColoring<DiscretizationMethod::cctpfa> : public std::true_type {};
+template<> struct SupportsColoring<DiscretizationMethod::box> : public std::true_type {};
+
 } // end namespace Dumux
 
 #endif
