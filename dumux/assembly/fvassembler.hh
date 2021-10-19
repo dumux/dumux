@@ -25,10 +25,10 @@
 #define DUMUX_FV_ASSEMBLER_HH
 
 #if HAVE_TBB
-#include "tbb/parallel_for.h"
-// Maybe change this to true at some point,
-// together with some heuristic based on number of elements, scheme,...
-// #define DUMUX_MULTITHREADING_ASSEMBLY_DEFAULT true
+#include <oneapi/tbb/info.h>
+#include <oneapi/tbb/parallel_for.h>
+#include <oneapi/tbb/task_arena.h>
+#define DUMUX_MULTITHREADING_ASSEMBLY_DEFAULT true
 #endif
 
 #ifndef DUMUX_MULTITHREADING_ASSEMBLY_DEFAULT
@@ -144,7 +144,10 @@ public:
     , isStationaryProblem_(true)
     {
         static_assert(isImplicit, "Explicit assembler for stationary problem doesn't make sense!");
-        enableMultithreading_ = getParam<bool>("Assembly.Multithreading", DUMUX_MULTITHREADING_ASSEMBLY_DEFAULT);
+        enableMultithreading_ = SupportsColoring<GridGeometry::discMethod>::value
+            && getParam<bool>("Assembly.Multithreading", DUMUX_MULTITHREADING_ASSEMBLY_DEFAULT);
+
+        completeConfiguration_();
     }
 
     /*!
@@ -164,7 +167,10 @@ public:
     , prevSol_(&prevSol)
     , isStationaryProblem_(!timeLoop)
     {
-        enableMultithreading_ = getParam<bool>("Assembly.Multithreading", DUMUX_MULTITHREADING_ASSEMBLY_DEFAULT);
+        enableMultithreading_ = SupportsColoring<GridGeometry::discMethod>::value
+            && getParam<bool>("Assembly.Multithreading", DUMUX_MULTITHREADING_ASSEMBLY_DEFAULT);
+
+        completeConfiguration_();
     }
 
     /*!
@@ -401,6 +407,18 @@ public:
     }
 
 private:
+    // some final configuration steps
+    void completeConfiguration_()
+    {
+#if !HAVE_TBB
+        if (enableMultithreading_)
+            DUNE_THROW(Dune::Exception,
+                "Multithread assembly has been explicitly requested but TBB has not been found! Please install TBB first.");
+#else
+        maxNumThreads_ = getParam<int>("Assembly.MaxNumThreads", oneapi::tbb::info::default_concurrency());
+#endif
+    }
+
     // reset the residual vector to 0.0
     void resetResidual_()
     {
@@ -451,40 +469,36 @@ private:
         // try assembling using the local assembly function
         try
         {
+#if HAVE_TBB
             // make this element loop run in parallel
             // for this we have to color the elements so that we don't get
             // race conditions when writing into the global matrix
             // each color can be assembled using multiple threads
-            // this is because locking with mutexes is expensive and
-            // we assume that we still have enough elements per color
-            // to make use of multiple cores
 
-            // let the local assembler add the element contributions
             if (enableMultithreading_)
             {
-#if HAVE_TBB
-                for (const auto& elements : elementSets_)
+                // constrict thread pool to maxNumThreads_
+                oneapi::tbb::task_arena arena(maxNumThreads_);
+                arena.execute([&]
                 {
-                    tbb::parallel_for(tbb::blocked_range<std::size_t>(0, elements.size()),
-                    [&](const tbb::blocked_range<size_t>& r)
+                    for (const auto& elements : elementSets_)
                     {
-                        for (std::size_t i=r.begin(); i<r.end(); ++i)
+                        oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<std::size_t>(0, elements.size()),
+                        [&](const oneapi::tbb::blocked_range<size_t>& r)
                         {
-                            const auto element = gridView().grid().entity(elements[i]);
-                            assembleElement(element);
-                        }
-                    });
-                }
-#else
-                DUNE_THROW(Dune::Exception,
-                    "Multithread assembly has been explicitly requested but TBB has not been found!");
-#endif // HAVE_TBB
+                            for (std::size_t i=r.begin(); i<r.end(); ++i)
+                            {
+                                const auto element = gridView().grid().entity(elements[i]);
+                                assembleElement(element);
+                            }
+                        });
+                    }
+                });
             }
             else
-            {
-                for (const auto& element : elements(gridView()))
-                    assembleElement(element);
-            }
+#endif
+            for (const auto& element : elements(gridView()))
+                assembleElement(element);
 
             // if we get here, everything worked well on this process
             succeeded = true;
@@ -555,6 +569,7 @@ private:
 
     //! element sets for parallel assembly
     bool enableMultithreading_ = false;
+    int maxNumThreads_ = 1;
     std::deque<std::vector<ElementSeed>> elementSets_;
 };
 
