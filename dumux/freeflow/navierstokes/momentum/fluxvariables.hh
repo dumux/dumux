@@ -347,13 +347,9 @@ public:
 
         const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
 
-        FaceCenteredStaggeredUpwindHelper<TypeTag> upwindHelper(this->element(),
-                                                                this->fvGeometry(),
-                                                                this->problem(),
-                                                                scvf,
-                                                                elemVolVars);
+        FaceCenteredStaggeredUpwindHelper upwindHelper(this->fvGeometry(), scvf, elemVolVars);
 
-        const Scalar transportedMomentum = upwindHelper.computeUpwindFrontalMomentum(selfIsUpstream);
+        const Scalar transportedMomentum = upwindHelper.upwindFrontalMomentum(selfIsUpstream);
 
         return  transportingVelocity * transportedMomentum * scvf.directionSign() * Extrusion::area(scvf) * extrusionFactor_(elemVolVars, scvf);
     }
@@ -425,11 +421,7 @@ public:
 
         const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
 
-        FaceCenteredStaggeredUpwindHelper<TypeTag> upwindHelper(this->element(),
-                                                                fvGeometry,
-                                                                problem,
-                                                                scvf,
-                                                                elemVolVars);
+        FaceCenteredStaggeredUpwindHelper upwindHelper(fvGeometry, scvf, elemVolVars);
 
         const Scalar transportedMomentum = upwindHelper.computeUpwindLateralMomentum(selfIsUpstream);
 
