@@ -37,18 +37,18 @@ namespace Dumux {
  * \brief The stress variables cache classes for models involving geomechanics.
  *        Store data required for stress calculation.
  */
-template< class Scalar, class GridGeometry, DiscretizationMethod dm = GridGeometry::discMethod >
+template< class Scalar, class GridGeometry, class DiscretizationMethod = typename GridGeometry::DiscretizationMethod >
 class StressVariablesCache;
 
 //! We only store discretization-related quantities for the box method.
 template< class Scalar, class GridGeometry >
-class StressVariablesCache<Scalar, GridGeometry, DiscretizationMethod::box>
+class StressVariablesCache<Scalar, GridGeometry, DiscretizationMethods::Box>
 : public BoxFluxVariablesCache< Scalar, GridGeometry >
 {};
 
 // specialization for the cell centered tpfa method
 template< class Scalar, class GridGeometry >
-class StressVariablesCache<Scalar, GridGeometry, DiscretizationMethod::cctpfa>
+class StressVariablesCache<Scalar, GridGeometry, DiscretizationMethods::CCTpfa>
 : public FluxVariablesCaching::_EmptyCache
 {
 public:
@@ -76,8 +76,8 @@ public:
 
 // specialization for the cell centered mpfa method
 template< class Scalar, class GridGeometry >
-class StressVariablesCache<Scalar, GridGeometry, DiscretizationMethod::ccmpfa>
-: public StressVariablesCache<Scalar, GridGeometry, DiscretizationMethod::cctpfa>
+class StressVariablesCache<Scalar, GridGeometry, DiscretizationMethods::CCMpfa>
+: public StressVariablesCache<Scalar, GridGeometry, DiscretizationMethods::CCTpfa>
 {};
 
 } // end namespace Dumux
