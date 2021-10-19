@@ -53,7 +53,6 @@ public:
     OnePTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry), velocity_(0.0)
     {
-        extrusionFactor_ = getParam<Scalar>("Problem.ExtrusionFactor");
         Scalar permeability = getParam<Scalar>("SpatialParams.Permeability");
         dp_dy_ = -1.0e+5;
 
@@ -61,7 +60,9 @@ public:
         if(checkIsConstantVelocity)
         {
             velocity_[dimWorld-1] = -permeability * dp_dy_;
-            velocity_[dimWorld-1] /= FluidSystem::viscosity(temperature(), Scalar(1.0e5));
+            velocity_[dimWorld-1] /= FluidSystem::viscosity(
+                this->spatialParams().temperature(), Scalar{1.0e5}
+            );
         }
     }
 
@@ -100,29 +101,6 @@ public:
     }
 
     /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ for an isothermal problem.
-     *
-     * This is not specific to the discretization. By default it just
-     * throws an exception so it must be overloaded by the problem if
-     * no energy equation is used.
-     */
-    Scalar temperature() const
-    {
-        return 283.15; // 10°C
-    }
-
-    /*!
-     * \brief Returns how much the domain is extruded at a given position.
-     *
-     * This means the factor by which a lower-dimensional
-     * entity needs to be expanded to get a full-dimensional cell.
-     */
-    Scalar extrusionFactorAtPos(const GlobalPosition &globalPos) const
-    {
-        return extrusionFactor_;
-    }
-
-    /*!
      * \brief Returns the velocity
      *
      * The velocity is given for the case of a linear pressure solution
@@ -134,7 +112,6 @@ public:
     }
 
 private:
-    Scalar extrusionFactor_;
     Scalar dp_dy_;
     GlobalPosition velocity_;
 };
