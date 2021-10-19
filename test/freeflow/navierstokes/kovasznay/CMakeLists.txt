@@ -10,18 +10,6 @@ dumux_add_test(NAME test_ff_navierstokes_kovasznay
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_kovasznay params.input
                              -Problem.Name test_ff_navierstokes_kovasznay")
 
-dumux_add_test(NAME test_ff_navierstokes_kovasznay_new
-              LABELS freeflow navierstokes
-              SOURCES main_new.cc
-              CMAKE_GUARD HAVE_UMFPACK
-              COMPILE_DEFINITIONS UPWINDSCHEMEORDER=1
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS       --script fuzzy
-                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_kovasznay-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_kovasznay-00000.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_kovasznay_new params.input
-                             -Problem.Name test_ff_navierstokes_kovasznay")
-
 add_executable(test_ff_navierstokes_kovasznay_higherorder EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_ff_navierstokes_kovasznay_higherorder PUBLIC "UPWINDSCHEMEORDER=2")
 
@@ -54,7 +42,7 @@ dumux_add_test(NAME test_ff_navierstokes_kovasznay_higherorder_staircase
                              -Flux.TvdApproach Hou
                              -Flux.DifferencingScheme Vanleer")
 
-add_executable(test_ff_navierstokes_kovasznay_new_higherorder EXCLUDE_FROM_ALL main_new.cc)
+add_executable(test_ff_navierstokes_kovasznay_new_higherorder EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_ff_navierstokes_kovasznay_new_higherorder PUBLIC "UPWINDSCHEMEORDER=2")
 
 dumux_add_test(NAME test_ff_navierstokes_kovasznay_new_higherorder_cuboid
