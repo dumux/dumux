@@ -88,6 +88,7 @@ class NavierStokesProblemImpl<TypeTag, DiscretizationMethod::fcstaggered>
     static constexpr bool isCoupled_ = !std::is_empty_v<CouplingManager>;
 
 public:
+    using typename ParentType::SpatialParams;
 
     //! Export traits of this problem
     struct Traits
@@ -126,6 +127,23 @@ public:
     }
 
     /*!
+     * \brief The constructor
+     * \param gridGeometry The finite volume grid geometry
+     * \param spatialParams Spatially varying parameters
+     * \param couplingManager The coupling manager (couples mass and momentum equations)
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
+     */
+    NavierStokesProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry,
+                            std::shared_ptr<SpatialParams> spatialParams,
+                            std::shared_ptr<CouplingManager> couplingManager,
+                            const std::string& paramGroup = "")
+    : ParentType(gridGeometry, spatialParams, paramGroup)
+    , couplingManager_(couplingManager)
+    {
+        enableInertiaTerms_ = getParamFromGroup<bool>(paramGroup, "Problem.EnableInertiaTerms");
+    }
+
+    /*!
      * \brief The constructor for usage without a coupling manager
      * \param gridGeometry The finite volume grid geometry
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
@@ -133,6 +151,18 @@ public:
     NavierStokesProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry,
                             const std::string& paramGroup = "")
     : NavierStokesProblemImpl(gridGeometry, {}, paramGroup)
+    {}
+
+    /*!
+     * \brief The constructor for usage without a coupling manager
+     * \param gridGeometry The finite volume grid geometry
+     * \param spatialParams Spatially varying parameters
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
+     */
+    NavierStokesProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry,
+                            std::shared_ptr<SpatialParams> spatialParams,
+                            const std::string& paramGroup = "")
+    : NavierStokesProblemImpl(gridGeometry, spatialParams, {}, paramGroup)
     {}
 
     /*!
@@ -548,6 +578,8 @@ class NavierStokesProblemImpl<TypeTag, DiscretizationMethod::cctpfa>
     static constexpr bool isCoupled_ = !std::is_empty_v<CouplingManager>;
 
 public:
+    using typename ParentType::SpatialParams;
+
     //! Export traits of this problem
     struct Traits
     {
@@ -582,11 +614,38 @@ public:
     {}
 
     /*!
+     * \brief The constructor
+     * \param gridGeometry The finite volume grid geometry
+     * \param spatialParams Spatially varying parameters
+     * \param couplingManager The coupling manager (couples mass and momentum equations)
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
+     */
+    NavierStokesProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry,
+                            std::shared_ptr<SpatialParams> spatialParams,
+                            std::shared_ptr<CouplingManager> couplingManager,
+                            const std::string& paramGroup = "")
+    : ParentType(gridGeometry, spatialParams, paramGroup)
+    , couplingManager_(couplingManager)
+    {}
+
+    /*!
      * \brief The constructor for usage without a coupling manager
      * \param gridGeometry The finite volume grid geometry
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
     NavierStokesProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry,
+                            const std::string& paramGroup = "")
+    : NavierStokesProblemImpl(gridGeometry, {}, paramGroup)
+    {}
+
+    /*!
+     * \brief The constructor for usage without a coupling manager
+     * \param gridGeometry The finite volume grid geometry
+     * \param spatialParams Spatially varying parameters
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
+     */
+    NavierStokesProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry,
+                            std::shared_ptr<SpatialParams> spatialParams,
                             const std::string& paramGroup = "")
     : NavierStokesProblemImpl(gridGeometry, {}, paramGroup)
     {}
@@ -696,6 +755,8 @@ class NavierStokesProblemImpl<TypeTag, DiscretizationMethod::staggered>
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
+    using typename ParentType::SpatialParams;
+
     /*!
      * \brief The constructor
      * \param gridGeometry The finite volume grid geometry
@@ -703,6 +764,20 @@ public:
      */
     NavierStokesProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
     : ParentType(gridGeometry, paramGroup)
+    {
+        enableInertiaTerms_ = getParamFromGroup<bool>(paramGroup, "Problem.EnableInertiaTerms");
+    }
+
+    /*!
+     * \brief The constructor
+     * \param gridGeometry The finite volume grid geometry
+     * \param spatialParams Spatially varying parameters
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
+     */
+    NavierStokesProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry,
+                            std::shared_ptr<SpatialParams> spatialParams,
+                            const std::string& paramGroup = "")
+    : ParentType(gridGeometry, spatialParams, paramGroup)
     {
         enableInertiaTerms_ = getParamFromGroup<bool>(paramGroup, "Problem.EnableInertiaTerms");
     }
