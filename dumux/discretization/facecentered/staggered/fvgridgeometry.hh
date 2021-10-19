@@ -52,7 +52,7 @@ namespace Dumux {
  *        Defines the scv and scvf types and the mapper types
  * \tparam GridView the grid view type
  */
-template<class GridView>
+template<class GridView, int upOrd = 1>
 struct FaceCenteredStaggeredDefaultGridGeometryTraits : public DefaultMapperTraits<GridView>
 {
     using SubControlVolume = FaceCenteredStaggeredSubControlVolume<GridView>;
@@ -72,6 +72,8 @@ struct FaceCenteredStaggeredDefaultGridGeometryTraits : public DefaultMapperTrai
 
     template<class GridGeometry, bool enableCache>
     using LocalView = FaceCenteredStaggeredFVElementGeometry<GridGeometry, enableCache>;
+
+    static constexpr int upwindOrder = upOrd;
 };
 
 /*!
@@ -82,8 +84,7 @@ struct FaceCenteredStaggeredDefaultGridGeometryTraits : public DefaultMapperTrai
  */
 template<class GridView,
          bool cachingEnabled = false,
-         int upwOrder = 1,
-         class Traits = FaceCenteredStaggeredDefaultGridGeometryTraits<GridView>>
+         class Traits = FaceCenteredStaggeredDefaultGridGeometryTraits<GridView, /*upwindOrder*/1>>
 class FaceCenteredStaggeredFVGridGeometry;
 
 /*!
@@ -92,11 +93,11 @@ class FaceCenteredStaggeredFVGridGeometry;
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element. Specialization in case the FVElementGeometries are stored.
  */
-template<class GV, int upwOrder, class Traits>
-class FaceCenteredStaggeredFVGridGeometry<GV, true, upwOrder, Traits>
+template<class GV, class Traits>
+class FaceCenteredStaggeredFVGridGeometry<GV, true, Traits>
 : public BaseGridGeometry<GV, Traits>
 {
-    using ThisType = FaceCenteredStaggeredFVGridGeometry<GV, true, upwOrder, Traits>;
+    using ThisType = FaceCenteredStaggeredFVGridGeometry<GV, true, Traits>;
     using ParentType = BaseGridGeometry<GV, Traits>;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
@@ -129,7 +130,7 @@ public:
     static constexpr DiscretizationMethod discMethod = DiscretizationMethod::fcstaggered;
     static constexpr bool cachingEnabled = true;
 
-    static constexpr int upwindSchemeOrder = upwOrder;
+    static constexpr int upwindSchemeOrder = Traits::upwindOrder;
     static_assert(upwindSchemeOrder <= 2, "Not implemented: Order higher than 2!");
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
     using UpwindScheme = StaggeredUpwindMethods<Scalar, upwindSchemeOrder>;
@@ -248,6 +249,9 @@ public:
     //! get the global index of the orthogonal face sharing a common entity
     GridIndexType lateralOrthogonalScvf(const SubControlVolumeFace& scvf) const
     { return lateralOrthogonalScvf_[scvf.index()]; }
+
+    const UpwindScheme& staggeredUpwindMethods() const
+    { return staggeredUpwindMethods_; }
 
 private:
 
@@ -556,6 +560,8 @@ private:
 
     // a map for periodic boundary vertices
     std::unordered_map<GridIndexType, GridIndexType> periodicFaceMap_;
+
+    const UpwindScheme staggeredUpwindMethods_;
 };
 
 /*!
@@ -592,6 +598,11 @@ public:
     //! export discretization method
     static constexpr DiscretizationMethod discMethod = DiscretizationMethod::fcstaggered;
     static constexpr bool cachingEnabled = false;
+
+    static constexpr int upwindSchemeOrder = Traits::upwindOrder;
+    static_assert(upwindSchemeOrder <= 2, "Not implemented: Order higher than 2!");
+    static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
+    using UpwindScheme = StaggeredUpwindMethods<typename GV::ctype, upwindSchemeOrder>;
 
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, false>;
