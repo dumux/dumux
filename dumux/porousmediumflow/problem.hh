@@ -63,6 +63,7 @@ public:
      *
      * \param globalPos The position in global coordinates where the temperature should be specified.
      */
+    [[deprecated("temperature should now be defined in the spatial params with temperature(globalPos)")]]
     Scalar temperatureAtPos(const GlobalPosition &globalPos) const
     { return this->asImp_().temperature(); }
 
@@ -73,6 +74,7 @@ public:
      * throws an exception so it must be overloaded by the problem if
      * no energy equation is used.
      */
+    [[deprecated("temperature should now be defined in the spatial params with temperature(globalPos)")]]
     Scalar temperature() const
     {
         DUNE_THROW(Dune::NotImplemented, "temperature() method not implemented by the user problem");
