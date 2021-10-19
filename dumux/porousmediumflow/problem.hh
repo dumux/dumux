@@ -24,7 +24,8 @@
 #ifndef DUMUX_POROUS_MEDIUM_FLOW_PROBLEM_HH
 #define DUMUX_POROUS_MEDIUM_FLOW_PROBLEM_HH
 
-#include <dumux/common/fvproblem.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/fvproblemwithspatialparams.hh>
 
 namespace Dumux {
 
@@ -35,59 +36,19 @@ namespace Dumux {
  * TODO: derive from base problem property?
  */
 template<class TypeTag>
-class PorousMediumFlowProblem : public FVProblem<TypeTag>
+class PorousMediumFlowProblem : public FVProblemWithSpatialParams<TypeTag>
 {
-    using ParentType = FVProblem<TypeTag>;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
-
-    enum {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
-    };
+    using ParentType = FVProblemWithSpatialParams<TypeTag>;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using Element = typename GridView::template Codim<0>::Entity;
-
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
-
 
 public:
-    //! Export spatial parameter type
-    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
 
-    /*!
-     * \brief Constructor, passing the spatial parameters.
-     *
-     * \param gridGeometry The finite volume grid geometry
-     * \param spatialParams The spatial parameter class
-     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
-     */
-    PorousMediumFlowProblem(std::shared_ptr<const GridGeometry> gridGeometry,
-                            std::shared_ptr<SpatialParams> spatialParams,
-                            const std::string& paramGroup = "")
-    : ParentType(gridGeometry, paramGroup)
-    , gravity_(0.0)
-    , spatialParams_(spatialParams)
-    {
-        const bool enableGravity = getParamFromGroup<bool>(paramGroup, "Problem.EnableGravity");
-        if (enableGravity)
-            gravity_[dimWorld-1]  = -9.81;
-    }
-
-    /*!
-     * \brief Constructor, constructing the spatial parameters.
-     *
-     * \param gridGeometry The finite volume grid geometry
-     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
-     */
-    PorousMediumFlowProblem(std::shared_ptr<const GridGeometry> gridGeometry,
-                            const std::string& paramGroup = "")
-    : PorousMediumFlowProblem(gridGeometry,
-                              std::make_shared<SpatialParams>(gridGeometry),
-                              paramGroup)
-    {}
+    //! Use constructors of the base class
+    using ParentType::ParentType;
 
     /*!
      * \name Physical parameters for porous media problems
@@ -117,26 +78,7 @@ public:
         DUNE_THROW(Dune::NotImplemented, "temperature() method not implemented by the user problem");
     }
 
-    /*!
-     * \brief Returns the spatial parameters object.
-     */
-    SpatialParams &spatialParams()
-    { return *spatialParams_; }
-
-    /*!
-     * \brief Returns the spatial parameters object.
-     */
-    const SpatialParams &spatialParams() const
-    { return *spatialParams_; }
-
     // \}
-
-protected:
-    //! The gravity acceleration vector
-    GravityVector gravity_;
-
-    // material properties of the porous medium
-    std::shared_ptr<SpatialParams> spatialParams_;
 };
 
 } // end namespace Dumux
