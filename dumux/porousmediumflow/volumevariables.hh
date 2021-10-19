@@ -26,6 +26,8 @@
 #ifndef DUMUX_POROUSMEDIUMFLOW_VOLUME_VARIABLES_HH
 #define DUMUX_POROUSMEDIUMFLOW_VOLUME_VARIABLES_HH
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 
 /*!
@@ -67,7 +69,7 @@ public:
                 const Scv& scv)
     {
         priVars_ = elemSol[scv.localDofIndex()];
-        extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
+        extrusionFactor_ = Deprecated::extrusionFactor(problem, element, scv, elemSol);
     }
 
     /*!
