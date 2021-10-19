@@ -43,20 +43,16 @@ namespace Dumux {
  * \ingroup NavierStokesModel
  * \brief The upwinding variables class for the Navier-Stokes model using the staggered grid discretization.
  */
-template<class TypeTag>
+template<class FVElementGeometry, class ElementVolumeVariables>
 class FaceCenteredStaggeredUpwindHelper
 {
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using GridGeometry = typename GridVariables::GridGeometry;
-    using FVElementGeometry = typename GridGeometry::LocalView;
-    using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
-    using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
+    using Problem = std::decay_t<decltype(std::declval<ElementVolumeVariables>().gridVolVars().problem())>;
+    using GridGeometry = typename FVElementGeometry::GridGeometry;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Scalar = double; // TODO
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     static constexpr int upwindSchemeOrder = GridGeometry::upwindSchemeOrder;
@@ -66,12 +62,11 @@ class FaceCenteredStaggeredUpwindHelper
 
 public:
     FaceCenteredStaggeredUpwindHelper(const FVElementGeometry& fvGeometry,
-                                      const Problem& problem,
                                       const SubControlVolumeFace& scvf,
                                       const ElementVolumeVariables& elemVolVars)
     : element_(fvGeometry.element())
     , fvGeometry_(fvGeometry)
-    , problem_(problem)
+    , problem_(elemVolVars.gridVolVars().problem())
     , scvf_(scvf)
     , elemVolVars_(elemVolVars)
     , upwindScheme_(fvGeometry.staggeredUpwindMethods())
@@ -122,7 +117,7 @@ public:
         // of interest is located.
 
         // collect the inside and outside densities
-        const auto densityPair = problem_.getInsideAndOutsideDensity(element_, fvGeometry_, scvf_);
+        const auto densityPair = problem_.insideAndOutsideDensity(element_, fvGeometry_, scvf_);
 
         // for higher order schemes do higher order upwind reconstruction
         if constexpr (useHigherOrder)
@@ -382,9 +377,16 @@ private:
 
     SubControlVolumeFace makeCornerFace_(const SubControlVolumeFace& lateralScvf) const
     {
-        assert(lateralScvf.boundary() || fvGeometry_.hasHalfParallelNeighbor(lateralScvf) || fvGeometry_.hasCornerParallelNeighbor(lateralScvf));
-        const GlobalPosition& cornerPosition = fvGeometry_.cornerBoundaryPosition(lateralScvf);
-        return makeFaceCenteredSCVF(lateralScvf, cornerPosition);
+        return lateralScvf; // TODO!!
+        // assert(lateralScvf.boundary() || fvGeometry_.hasHalfParallelNeighbor(lateralScvf) || fvGeometry_.hasCornerParallelNeighbor(lateralScvf));
+        // const GlobalPosition& cornerPosition = fvGeometry_.cornerBoundaryPosition(lateralScvf);
+        //
+        //
+        // return SubControlVolumeFace(element.geometry(), )
+        //
+        //
+        //
+        // return makeFaceCenteredSCVF(lateralScvf, cornerPosition);
     }
 
    /*!
