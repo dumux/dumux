@@ -56,8 +56,9 @@ private:
     using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
     static constexpr int upwindSchemeOrder = getPropValue<TypeTag, Properties::UpwindSchemeOrder>();
+    using Traits = FaceCenteredStaggeredDefaultGridGeometryTraits<GridView, upwindSchemeOrder>;
 public:
-    using type = FaceCenteredStaggeredFVGridGeometry<GridView, enableCache, upwindSchemeOrder>;
+    using type = FaceCenteredStaggeredFVGridGeometry<GridView, enableCache, Traits>;
 };
 
 //! The grid volume variables vector class
