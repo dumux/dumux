@@ -25,3 +25,6 @@ Swr = 0.05
 Snr = 0.0
 VanGenuchtenAlpha = 0.0037
 VanGenuchtenN = 4.7
+
+[Vtk]
+AddVelocity = true
