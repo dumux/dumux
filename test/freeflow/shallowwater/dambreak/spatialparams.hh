@@ -24,7 +24,7 @@
 #ifndef DUMUX_DAM_BREAK_SPATIAL_PARAMETERS_HH
 #define DUMUX_DAM_BREAK_SPATIAL_PARAMETERS_HH
 
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 
 namespace Dumux {
 
@@ -35,11 +35,11 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class DamBreakSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
+: public FVPorousMediumSpatialParams<GridGeometry, Scalar,
                          DamBreakSpatialParams<GridGeometry, Scalar>>
 {
     using ThisType = DamBreakSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumSpatialParams<GridGeometry, Scalar, ThisType>;
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;

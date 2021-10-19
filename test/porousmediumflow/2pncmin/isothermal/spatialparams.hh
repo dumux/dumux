@@ -26,7 +26,7 @@
 #ifndef DUMUX_INJECTION_SPATIAL_PARAMETERS_HH
 #define DUMUX_INJECTION_SPATIAL_PARAMETERS_HH
 
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/porosityprecipitation.hh>
 #include <dumux/material/fluidmatrixinteractions/permeabilitykozenycarman.hh>
@@ -40,7 +40,7 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class DissolutionSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
+: public FVPorousMediumSpatialParams<GridGeometry, Scalar,
                          DissolutionSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
@@ -48,7 +48,7 @@ class DissolutionSpatialParams
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using ParentType = FVSpatialParams<GridGeometry, Scalar,
+    using ParentType = FVPorousMediumSpatialParams<GridGeometry, Scalar,
                                        DissolutionSpatialParams<GridGeometry, Scalar>>;
 
     using PcKrSwCurve = FluidMatrix::BrooksCoreyDefault<Scalar>;

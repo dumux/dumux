@@ -26,7 +26,7 @@
 #define DUMUX_1PNC_TEST_SPATIAL_PARAMS_HH
 
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 #include <dumux/material/spatialparams/fvnonequilibrium.hh>
 #include <dumux/material/fluidmatrixinteractions/1pia/fluidsolidinterfacialareashiwang.hh>
 

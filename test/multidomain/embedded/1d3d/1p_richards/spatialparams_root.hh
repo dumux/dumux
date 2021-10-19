@@ -28,7 +28,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/io/grid/griddata.hh>
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 
 namespace Dumux {
 
@@ -38,10 +38,10 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class RootSpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar, RootSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar, RootSpatialParams<GridGeometry, Scalar>>
 {
     using ThisType = RootSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
     using Grid = typename GridGeometry::Grid;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;

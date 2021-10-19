@@ -27,7 +27,7 @@
 
 #include <dumux/discretization/elementsolution.hh>
 
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 #include <dumux/material/spatialparams/gstatrandomfield.hh>
 #include <dumux/material/fluidmatrixinteractions/porositydeformation.hh>
@@ -40,7 +40,7 @@ namespace Dumux {
  * \brief The spatial parameters class for the two-phase sub problem in the el2p test problem.
  */
 template<class GridGeometry, class Scalar, class CouplingManager>
-class TwoPSpatialParams : public FVSpatialParams<GridGeometry, Scalar,
+class TwoPSpatialParams : public FVPorousMediumSpatialParams<GridGeometry, Scalar,
                                                  TwoPSpatialParams<GridGeometry, Scalar, CouplingManager>>
 {
     using SubControlVolume = typename GridGeometry::SubControlVolume;
@@ -49,7 +49,7 @@ class TwoPSpatialParams : public FVSpatialParams<GridGeometry, Scalar,
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using ThisType = TwoPSpatialParams<GridGeometry, Scalar, CouplingManager>;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumSpatialParams<GridGeometry, Scalar, ThisType>;
 
     using PcKrSwCurve = FluidMatrix::BrooksCoreyDefault<Scalar>;
 

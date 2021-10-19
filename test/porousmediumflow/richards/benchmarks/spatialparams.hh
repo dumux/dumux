@@ -27,7 +27,7 @@
 
 #include <dumux/common/parameters.hh>
 
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 
 namespace Dumux {
@@ -38,10 +38,10 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class RichardsBenchmarkSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar, RichardsBenchmarkSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumSpatialParams<GridGeometry, Scalar, RichardsBenchmarkSpatialParams<GridGeometry, Scalar>>
 {
     using ThisType = RichardsBenchmarkSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumSpatialParams<GridGeometry, Scalar, ThisType>;
     using GridView = typename GridGeometry::GridView;
     using GlobalPosition = typename GridView::template Codim<0>::Geometry::GlobalCoordinate;
     using PcKrSwCurve = FluidMatrix::VanGenuchtenDefault<Scalar>;

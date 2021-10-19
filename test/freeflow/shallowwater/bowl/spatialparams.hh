@@ -25,7 +25,7 @@
 #define DUMUX_BOWL_SPATIAL_PARAMETERS_HH
 
 #include <dumux/common/parameters.hh>
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/frictionlaw.hh>
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/nofriction.hh>
 
@@ -40,11 +40,11 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar, class VolumeVariables>
 class BowlSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
+: public FVPorousMediumSpatialParams<GridGeometry, Scalar,
                          BowlSpatialParams<GridGeometry, Scalar, VolumeVariables>>
 {
     using ThisType = BowlSpatialParams<GridGeometry, Scalar, VolumeVariables>;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumSpatialParams<GridGeometry, Scalar, ThisType>;
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;

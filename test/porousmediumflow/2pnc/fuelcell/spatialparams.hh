@@ -27,7 +27,7 @@
 #define DUMUX_FUELCELL_SPATIAL_PARAMS_HH
 
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 
 namespace Dumux {
@@ -38,11 +38,11 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class FuelCellSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
+: public FVPorousMediumSpatialParams<GridGeometry, Scalar,
                          FuelCellSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar,
+    using ParentType = FVPorousMediumSpatialParams<GridGeometry, Scalar,
                                        FuelCellSpatialParams<GridGeometry, Scalar>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;

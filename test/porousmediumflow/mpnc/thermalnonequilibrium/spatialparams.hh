@@ -35,7 +35,7 @@
 #include <dumux/material/fluidmatrixinteractions/mp/mpadapter.hh>
 #include <dumux/material/fluidmatrixinteractions/1pia/fluidsolidinterfacialareashiwang.hh>
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 
 namespace Dumux {
 

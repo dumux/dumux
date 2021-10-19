@@ -31,7 +31,7 @@
 //
 // ### Include files
 // We include the basic spatial parameters file for finite volumes, from which we will inherit.
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 // We include all friction laws.
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/frictionlaw.hh>
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/manning.hh>
@@ -50,12 +50,12 @@ namespace Dumux {
 
 template<class GridGeometry, class Scalar, class VolumeVariables>
 class RoughChannelSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
+: public FVPorousMediumSpatialParams<GridGeometry, Scalar,
                          RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>>
 {
     // This convenience aliases will be used throughout this class
     using ThisType = RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumSpatialParams<GridGeometry, Scalar, ThisType>;
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;

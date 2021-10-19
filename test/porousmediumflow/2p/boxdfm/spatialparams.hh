@@ -27,7 +27,7 @@
 
 #include <dumux/discretization/method.hh>
 
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 
 #include <dumux/porousmediumflow/2p/boxmaterialinterfaces.hh>
@@ -40,10 +40,10 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class TwoPTestSpatialParams
-: public FVSpatialParams< GridGeometry, Scalar, TwoPTestSpatialParams<GridGeometry, Scalar> >
+: public FVPorousMediumSpatialParams< GridGeometry, Scalar, TwoPTestSpatialParams<GridGeometry, Scalar> >
 {
     using ThisType = TwoPTestSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumSpatialParams<GridGeometry, Scalar, ThisType>;
 
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;

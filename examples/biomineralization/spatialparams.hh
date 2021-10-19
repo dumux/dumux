@@ -31,7 +31,7 @@
 // ### Include files
 // [[details]] includes
 // We include the basic spatial parameters for finite volumes file from which we will inherit
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 // We include the files for the two-phase laws: the Brooks-Corey pc-Sw and relative permeability laws
 #include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 // We include the laws for changing porosity due to precipitation
@@ -51,11 +51,11 @@ namespace Dumux {
 // In the ICPSpatialParams class we define all functions needed to describe the spatial distributed parameters.
 template<class GridGeometry, class Scalar>
 class ICPSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar, ICPSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumSpatialParams<GridGeometry, Scalar, ICPSpatialParams<GridGeometry, Scalar>>
 {
     // We introduce using declarations that are derived from the property system which we need in this class
     using ThisType =  ICPSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumSpatialParams<GridGeometry, Scalar, ThisType>;
     using GridView = typename GridGeometry::GridView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;

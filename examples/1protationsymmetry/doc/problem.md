@@ -306,7 +306,7 @@ by finite volume schemes, from which the spatial parameters defined for this
 example inherit.
 
 ```cpp
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 ```
 
 ### The spatial parameters class
@@ -322,10 +322,10 @@ namespace Dumux {
 
 template<class GridGeometry, class Scalar>
 class RotSymExampleSpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar, RotSymExampleSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar, RotSymExampleSpatialParams<GridGeometry, Scalar>>
 {
     using ThisType = RotSymExampleSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 public:

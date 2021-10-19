@@ -25,7 +25,7 @@
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_THREEDOMAIN_ONEP_SPATIALPARAMS_HH
 #define DUMUX_TEST_TPFAFACETCOUPLING_THREEDOMAIN_ONEP_SPATIALPARAMS_HH
 
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 
 namespace Dumux {
 
@@ -34,7 +34,7 @@ namespace Dumux {
  * \brief The spatial parameters for the single-phase facet coupling test.
  */
 template<class GridGeometry, class Scalar>
-class OnePSpatialParams : public FVSpatialParamsOneP<GridGeometry, Scalar,
+class OnePSpatialParams : public FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar,
                                                      OnePSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
@@ -42,7 +42,7 @@ class OnePSpatialParams : public FVSpatialParamsOneP<GridGeometry, Scalar,
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using ThisType = OnePSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
 
 public:
     //! Export the type used for permeability

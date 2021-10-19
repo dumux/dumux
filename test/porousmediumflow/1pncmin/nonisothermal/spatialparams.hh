@@ -26,7 +26,7 @@
 #ifndef DUMUX_THERMOCHEM_SPATIAL_PARAMS_HH
 #define DUMUX_THERMOCHEM_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 
 namespace Dumux {
 
@@ -37,14 +37,14 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class ThermoChemSpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar,
+: public FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar,
                              ThermoChemSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
+    using ParentType = FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar,
                                            ThermoChemSpatialParams<GridGeometry, Scalar>>;
 
     enum { dimWorld=GridView::dimensionworld };

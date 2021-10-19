@@ -25,7 +25,7 @@
 #ifndef DUMUX_BlOOD_FLOW_SPATIALPARAMS_HH
 #define DUMUX_BlOOD_FLOW_SPATIALPARAMS_HH
 
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 
 namespace Dumux {
 
@@ -35,10 +35,10 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class BloodFlowSpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar, BloodFlowSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar, BloodFlowSpatialParams<GridGeometry, Scalar>>
 {
     using ThisType = BloodFlowSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
     using GlobalPosition = typename GridGeometry::GlobalCoordinate;
 
 public:

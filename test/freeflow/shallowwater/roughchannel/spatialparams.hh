@@ -24,7 +24,7 @@
 #ifndef DUMUX_ROUGH_CHANNEL_SPATIAL_PARAMETERS_HH
 #define DUMUX_ROUGH_CHANNEL_SPATIAL_PARAMETERS_HH
 
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/frictionlaw.hh>
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/manning.hh>
@@ -39,11 +39,11 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar, class VolumeVariables>
 class RoughChannelSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
+: public FVPorousMediumSpatialParams<GridGeometry, Scalar,
                          RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>>
 {
     using ThisType = RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumSpatialParams<GridGeometry, Scalar, ThisType>;
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;

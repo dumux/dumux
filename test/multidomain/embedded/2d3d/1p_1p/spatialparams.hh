@@ -25,7 +25,7 @@
 #ifndef DUMUX_FRACTURE_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_FRACTURE_TEST_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 
 namespace Dumux {
 
@@ -35,10 +35,10 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class MatrixFractureSpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar, MatrixFractureSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar, MatrixFractureSpatialParams<GridGeometry, Scalar>>
 {
     using ThisType = MatrixFractureSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename GridGeometry::SubControlVolume;

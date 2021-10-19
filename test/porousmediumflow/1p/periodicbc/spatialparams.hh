@@ -25,7 +25,7 @@
 #define DUMUX_INCOMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
 
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 
 namespace Dumux {
 
@@ -36,7 +36,7 @@ namespace Dumux {
  */
 template<class TypeTag>
 class OnePTestSpatialParams
-: public FVSpatialParamsOneP<GetPropType<TypeTag, Properties::GridGeometry>,
+: public FVPorousMediumSpatialParamsOneP<GetPropType<TypeTag, Properties::GridGeometry>,
                              GetPropType<TypeTag, Properties::Scalar>,
                              OnePTestSpatialParams<TypeTag>>
 {
@@ -46,7 +46,7 @@ class OnePTestSpatialParams
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, OnePTestSpatialParams<TypeTag>>;
+    using ParentType = FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar, OnePTestSpatialParams<TypeTag>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;

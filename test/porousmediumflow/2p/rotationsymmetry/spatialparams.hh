@@ -23,17 +23,17 @@
 #ifndef DUMUX_TEST_TWOP_ROTATIONALSYMMETRY_SPATIAL_PARAMS_HH
 #define DUMUX_TEST_TWOP_ROTATIONALSYMMETRY_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 
 namespace Dumux {
 
 template<class GridGeometry, class Scalar>
 class TwoPRotationalSymmetrySpatialParams
-: public FVSpatialParams<GridGeometry, Scalar, TwoPRotationalSymmetrySpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumSpatialParams<GridGeometry, Scalar, TwoPRotationalSymmetrySpatialParams<GridGeometry, Scalar>>
 {
     using ThisType = TwoPRotationalSymmetrySpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumSpatialParams<GridGeometry, Scalar, ThisType>;
 
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;

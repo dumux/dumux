@@ -27,7 +27,7 @@
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
 
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 
 namespace Dumux {
 
@@ -38,11 +38,11 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar, class VolumeVariables>
 class PoiseuilleFlowSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
+: public FVPorousMediumSpatialParams<GridGeometry, Scalar,
                          PoiseuilleFlowSpatialParams<GridGeometry, Scalar, VolumeVariables>>
 {
     using ThisType = PoiseuilleFlowSpatialParams<GridGeometry, Scalar, VolumeVariables>;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumSpatialParams<GridGeometry, Scalar, ThisType>;
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;

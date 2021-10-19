@@ -27,7 +27,7 @@
 #define DUMUX_1P_TEST_SPATIALPARAMS_HH
 
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 #include <dumux/material/spatialparams/gstatrandomfield.hh>
 
 namespace Dumux {
@@ -39,14 +39,14 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class OnePTestSpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar,
+: public FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar,
                              OnePTestSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using IndexSet = typename GridView::IndexSet;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
+    using ParentType = FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar,
                                            OnePTestSpatialParams<GridGeometry, Scalar>>;
 
     enum {

@@ -25,7 +25,7 @@
 #ifndef DUMUX_MULTIDOMAIN_1P_2P_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_MULTIDOMAIN_1P_2P_TEST_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 
 namespace Dumux {
@@ -37,10 +37,10 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class TestSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar, TestSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumSpatialParams<GridGeometry, Scalar, TestSpatialParams<GridGeometry, Scalar>>
 {
     using ThisType = TestSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumSpatialParams<GridGeometry, Scalar, ThisType>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GridGeometry::LocalView;

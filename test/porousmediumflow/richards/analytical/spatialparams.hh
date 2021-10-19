@@ -25,7 +25,7 @@
 #ifndef DUMUX_RICHARDS_ANALYTICAL_SPATIAL_PARAMETERS_HH
 #define DUMUX_RICHARDS_ANALYTICAL_SPATIAL_PARAMETERS_HH
 
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 
 #include <dumux/porousmediumflow/richards/model.hh>
@@ -39,10 +39,10 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class RichardsAnalyticalSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
+: public FVPorousMediumSpatialParams<GridGeometry, Scalar,
                          RichardsAnalyticalSpatialParams<GridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParams<GridGeometry, Scalar,
+    using ParentType = FVPorousMediumSpatialParams<GridGeometry, Scalar,
                                        RichardsAnalyticalSpatialParams<GridGeometry, Scalar>>;
 
     using GridView = typename GridGeometry::GridView;

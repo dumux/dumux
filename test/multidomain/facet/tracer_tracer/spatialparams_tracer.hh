@@ -26,7 +26,7 @@
 #define DUMUX_TEST_TPFAFACETCOUPLING_TRACER_SPATIALPARAMS_HH
 
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 
 namespace Dumux {
 
@@ -36,7 +36,7 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class TracerSpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar,
+: public FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar,
                              TracerSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
@@ -44,7 +44,7 @@ class TracerSpatialParams
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
+    using ParentType = FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar,
                                            TracerSpatialParams<GridGeometry, Scalar>>;
 
     static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;

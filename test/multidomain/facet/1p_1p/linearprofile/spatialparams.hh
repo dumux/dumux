@@ -25,7 +25,7 @@
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_ONEP_SPATIALPARAMS_HH
 #define DUMUX_TEST_TPFAFACETCOUPLING_ONEP_SPATIALPARAMS_HH
 
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 
 namespace Dumux {
 
@@ -35,10 +35,10 @@ namespace Dumux {
  */
 template< class GridGeometry, class Scalar >
 class OnePSpatialParams
-: public FVSpatialParamsOneP< GridGeometry, Scalar, OnePSpatialParams<GridGeometry, Scalar> >
+: public FVPorousMediumSpatialParamsOneP< GridGeometry, Scalar, OnePSpatialParams<GridGeometry, Scalar> >
 {
     using ThisType = OnePSpatialParams< GridGeometry, Scalar >;
-    using ParentType = FVSpatialParamsOneP< GridGeometry, Scalar, ThisType >;
+    using ParentType = FVPorousMediumSpatialParamsOneP< GridGeometry, Scalar, ThisType >;
 
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;

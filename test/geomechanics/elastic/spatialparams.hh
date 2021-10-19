@@ -26,7 +26,7 @@
 #define DUMUX_ELASTIC_SPATIAL_PARAMS_HH
 
 #include <dumux/geomechanics/lameparams.hh>
-#include <dumux/material/spatialparams/fvelastic.hh>
+#include <dumux/geomechanics/elastic/fvspatialparams.hh>
 
 namespace Dumux {
 

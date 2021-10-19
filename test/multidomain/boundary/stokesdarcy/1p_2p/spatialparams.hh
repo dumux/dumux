@@ -25,7 +25,7 @@
 #ifndef DUMUX_CONSERVATION_SPATIAL_PARAMS_HH
 #define DUMUX_CONSERVATION_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 
 namespace Dumux {
@@ -38,7 +38,7 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class ConservationSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
+: public FVPorousMediumSpatialParams<GridGeometry, Scalar,
                          ConservationSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
@@ -46,7 +46,7 @@ class ConservationSpatialParams
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using ThisType = ConservationSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumSpatialParams<GridGeometry, Scalar, ThisType>;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 

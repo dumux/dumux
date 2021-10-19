@@ -25,7 +25,7 @@
 #define DUMUX_POROELASTIC_SPATIAL_PARAMS_HH
 
 #include <dumux/geomechanics/lameparams.hh>
-#include <dumux/material/spatialparams/fvporoelastic.hh>
+#include <dumux/geomechanics/poroelastic/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/porositydeformation.hh>
 
 namespace Dumux {
@@ -41,7 +41,7 @@ class PoroElasticSpatialParams : public FVSpatialParamsPoroElastic< Scalar,
                                                                     PoroElasticSpatialParams<Scalar, GridGeometry> >
 {
     using ThisType = PoroElasticSpatialParams<Scalar, GridGeometry>;
-    using ParentType = FVSpatialParamsPoroElastic<Scalar, GridGeometry, ThisType>;
+    using ParentType = FVPorousMediumSpatialParamsPoroElastic<Scalar, GridGeometry, ThisType>;
 
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using GridView = typename GridGeometry::GridView;

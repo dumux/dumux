@@ -26,7 +26,7 @@
 #define DUMUX_MPNC_COMPARISON_SPATIAL_PARAMS_HH
 
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/mp/mpadapter.hh>
 
@@ -39,7 +39,7 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class MPNCComparisonSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
+: public FVPorousMediumSpatialParams<GridGeometry, Scalar,
                          MPNCComparisonSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
@@ -47,7 +47,7 @@ class MPNCComparisonSpatialParams
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar,
+    using ParentType = FVPorousMediumSpatialParams<GridGeometry, Scalar,
                                        MPNCComparisonSpatialParams<GridGeometry, Scalar>>;
 
     using GlobalPosition = typename SubControlVolume::GlobalPosition;

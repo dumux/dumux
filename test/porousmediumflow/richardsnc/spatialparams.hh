@@ -25,7 +25,7 @@
 #ifndef DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
 #define DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
 
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 
 #include <dumux/porousmediumflow/richards/model.hh>
@@ -39,11 +39,11 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class RichardsWellTracerSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
+: public FVPorousMediumSpatialParams<GridGeometry, Scalar,
                          RichardsWellTracerSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar,
+    using ParentType = FVPorousMediumSpatialParams<GridGeometry, Scalar,
                                        RichardsWellTracerSpatialParams<GridGeometry, Scalar>>;
 
     enum { dimWorld=GridView::dimensionworld };

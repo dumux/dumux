@@ -25,7 +25,7 @@
 #ifndef DUMUX_FV_SPATIALPARAMS_NONEQUILIBRIUM_HH
 #define DUMUX_FV_SPATIALPARAMS_NONEQUILIBRIUM_HH
 
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 
 namespace Dumux {
 
@@ -35,9 +35,9 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar, class Implementation>
 class FVNonEquilibriumSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar, Implementation>
+: public FVPorousMediumSpatialParams<GridGeometry, Scalar, Implementation>
 {
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, Implementation>;
+    using ParentType = FVPorousMediumSpatialParams<GridGeometry, Scalar, Implementation>;
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;

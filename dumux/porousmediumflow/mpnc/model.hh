@@ -100,7 +100,7 @@
 
 #include <dumux/material/fluidstates/nonequilibrium.hh>
 #include <dumux/material/fluidstates/compositional.hh>
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/simplefluidlumping.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/somerton.hh>

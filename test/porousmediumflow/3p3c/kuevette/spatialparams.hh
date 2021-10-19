@@ -28,7 +28,7 @@
 #include <dune/common/float_cmp.hh>
 
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 
 #include <dumux/material/fluidmatrixinteractions/3p/parkervangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/napladsorption.hh>
@@ -41,7 +41,7 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class KuevetteSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
+: public FVPorousMediumSpatialParams<GridGeometry, Scalar,
                          KuevetteSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
@@ -49,7 +49,7 @@ class KuevetteSpatialParams
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar,
+    using ParentType = FVPorousMediumSpatialParams<GridGeometry, Scalar,
                                        KuevetteSpatialParams<GridGeometry, Scalar>>;
 
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
