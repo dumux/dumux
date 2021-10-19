@@ -250,7 +250,7 @@ public:
     GridIndexType lateralOrthogonalScvf(const SubControlVolumeFace& scvf) const
     { return lateralOrthogonalScvf_[scvf.index()]; }
 
-    const UpwindScheme& staggeredUpwindMethods() const
+    const UpwindScheme& upwindMethods() const
     { return staggeredUpwindMethods_; }
 
 private:
@@ -707,7 +707,7 @@ public:
     GridIndexType lateralOrthogonalScvf(const SubControlVolumeFace& scvf) const
     { return lateralOrthogonalScvf_[scvf.index()]; }
 
-    const UpwindScheme& staggeredUpwindMethods() const
+    const UpwindScheme& upwindMethods() const
     { return staggeredUpwindMethods_; }
 
 private:
