@@ -423,7 +423,7 @@ public:
 
         FaceCenteredStaggeredUpwindHelper upwindHelper(fvGeometry, scvf, elemVolVars);
 
-        const Scalar transportedMomentum = upwindHelper.computeUpwindLateralMomentum(selfIsUpstream);
+        const Scalar transportedMomentum = upwindHelper.upwindLateralMomentum(selfIsUpstream);
 
         return  transportingVelocity * transportedMomentum * scvf.directionSign() * Extrusion::area(scvf) * extrusionFactor_(elemVolVars, scvf);
     }
