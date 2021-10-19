@@ -41,11 +41,11 @@ namespace Dumux {
  */
 
 // forward declaration
-template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>
+template<class TypeTag, class BaseFluxVariables, class DiscretizationMethod>
 class KEpsilonFluxVariablesImpl;
 
 template<class TypeTag, class BaseFluxVariables>
-class KEpsilonFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethod::staggered>
+class KEpsilonFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethods::Staggered>
 : public BaseFluxVariables
 {
     using ParentType = BaseFluxVariables;
