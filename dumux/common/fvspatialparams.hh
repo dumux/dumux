@@ -34,15 +34,16 @@ namespace Dumux {
 
 /*!
  * \ingroup SpatialParameters
- * \brief The base class for spatial parameters of multi-phase problems
- * using a fully implicit discretization method.
+ * \brief The base class for spatial parameters.
  */
 template<class GridGeometry,
-         class Scalar = typename GridGeometry::GridView::ctype>
+         class Scalar,
+         class Implementation>
 class FVSpatialParamsBase
 {
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
@@ -56,6 +57,34 @@ public:
     {
         if (getParam<bool>("Problem.EnableGravity"))
             gravity_[dimWorld-1] = -9.81;
+    }
+
+    /*!
+     * \brief Return how much the domain is extruded at a given sub-control volume.
+     *
+     * This means the factor by which a lower-dimensional (1D or 2D)
+     * entity needs to be expanded to get a full dimensional cell. The
+     * default is 1.0 which means that 1D problems are actually
+     * thought as pipes with a cross section of 1 m^2 and 2D problems
+     * are assumed to extend 1 m to the back.
+     */
+    template<class ElementSolution>
+    Scalar extrusionFactor(const Element& element,
+                           const SubControlVolume& scv,
+                           const ElementSolution& elemSol) const
+    {
+        // forward to generic interface
+        return asImp_().extrusionFactorAtPos(scv.center());
+    }
+
+    /*!
+     * \brief Return how much the domain is extruded at a given position.
+     */
+    Scalar extrusionFactorAtPos(const GlobalPosition& globalPos) const
+    {
+        // As a default, i.e. if the user's problem does not overload
+        // any extrusion factor method, return 1.0
+        return 1.0;
     }
 
     /*!
@@ -75,9 +104,36 @@ public:
     const GridGeometry& gridGeometry() const
     { return *gridGeometry_; }
 
+protected:
+    //! Returns the implementation of the spatial parameters (static polymorphism)
+    Implementation &asImp_()
+    { return *static_cast<Implementation *>(this); }
+
+    //! \copydoc asImp_()
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation *>(this); }
+
 private:
     std::shared_ptr<const GridGeometry> gridGeometry_;
     GravityVector gravity_;
+};
+
+/*!
+ * \ingroup SpatialParameters
+ * \brief Default spatial parameters class to be reused in models
+ *        that solely need to define gravity and extrusion.
+ */
+template<typename GridGeometry, typename Scalar>
+class DefaultFVSpatialParams
+: public FVSpatialParamsBase<GridGeometry,
+                             Scalar,
+                             DefaultFVSpatialParams<GridGeometry, Scalar>>
+{
+    using ThisType = DefaultFVSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVSpatialParamsBase<GridGeometry, Scalar, ThisType>;
+
+public:
+    using ParentType::ParentType;
 };
 
 } // namespace Dumux
