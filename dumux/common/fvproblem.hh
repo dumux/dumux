@@ -565,6 +565,7 @@ public:
      * are assumed to extend 1 m to the back.
      */
     template<class ElementSolution>
+    [[deprecated("Use problem.spatialParams().extrusionFactor() instead!")]]
     Scalar extrusionFactor(const Element& element,
                            const SubControlVolume& scv,
                            const ElementSolution& elemSol) const
@@ -582,6 +583,7 @@ public:
      * thought as pipes with a cross section of 1 m^2 and 2D problems
      * are assumed to extend 1 m to the back.
      */
+    [[deprecated("Use problem.spatialParams().extrusionFactorAtPos() instead!")]]
     Scalar extrusionFactorAtPos(const GlobalPosition &globalPos) const
     {
         // As a default, i.e. if the user's problem does not overload
