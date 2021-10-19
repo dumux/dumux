@@ -27,6 +27,7 @@
 #include <memory>
 
 #include <dumux/common/parameters.hh>
+#include <dumux/common/fvspatialparams.hh>
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/material/spatialparams/fv1p.hh>
 
@@ -76,38 +77,16 @@ struct hasBiotCoeffAtPos
  */
 template<class Scalar, class GridGeometry, class Implementation>
 class FVSpatialParamsPoroElastic
+: public FVSpatialParamsBase<GridGeometry, Scalar, Implementation>
 {
+    using ParentType = FVSpatialParamsBase<GridGeometry, Scalar, Implementation>;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
-    using GridView = typename GridGeometry::GridView;
-    using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    enum { dimWorld = GridView::dimensionworld };
-
 public:
-    //! The constructor
-    FVSpatialParamsPoroElastic(std::shared_ptr<const GridGeometry> gridGeometry)
-    : gridGeometry_(gridGeometry)
-    , gravity_(0.0)
-    {
-        const bool enableGravity = getParam<bool>("Problem.EnableGravity");
-        if (enableGravity)
-            gravity_[dimWorld-1]  = -9.81;
-    }
-
-    /*!
-     * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
-     *
-     * The default behaviour is a constant gravity vector;
-     * if the <tt>Problem.EnableGravity</tt> parameter is true,
-     * \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$,
-     * else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$.
-     *
-     * \param pos the spatial position at which to evaulate the gravity vector
-     */
-    const GlobalPosition& gravity(const GlobalPosition &pos) const
-    { return gravity_; }
+    using ParentType::ParentType;
 
     /*!
      * \brief Function for defining the porosity.
@@ -133,7 +112,7 @@ public:
         "                         const SubControlVolume& scv,\n"
         "                         const ElementSolution& elemSol) const\n\n");
 
-        return asImp_().porosityAtPos(scv.center());
+        return this->asImp_().porosityAtPos(scv.center());
     }
 
     /*!
@@ -161,7 +140,7 @@ public:
                                const SubControlVolume& scv,
                                const ElementSolution& elemSol,
                                int compIdx) const
-    { return 1.0 - asImp_().porosity(element, scv, elemSol); }
+    { return 1.0 - this->asImp_().porosity(element, scv, elemSol); }
 
     // specialization if there are no inert components at all
     template<class SolidSystem, class ElementSolution, typename std::enable_if_t<SolidSystem::numInertComponents == 0, int> = 0>
@@ -198,7 +177,7 @@ public:
         "                                    const ElementSolution& elemSol,\n"
         "                                    int compIdx) const\n\n");
 
-        return asImp_().template inertVolumeFractionAtPos<SolidSystem>(scv.center(), compIdx);
+        return this->asImp_().template inertVolumeFractionAtPos<SolidSystem>(scv.center(), compIdx);
     }
 
     /*!
@@ -246,7 +225,7 @@ public:
         "                                    const ElementSolution& elemSol,\n"
         "                                    int compIdx) const\n\n");
 
-        return asImp_().template reactiveVolumeFractionAtPos<SolidSystem>(scv.center(), compIdx);
+        return this->asImp_().template reactiveVolumeFractionAtPos<SolidSystem>(scv.center(), compIdx);
     }
 
     /*!
@@ -278,7 +257,7 @@ public:
         "                                      const ElemVolVars& elemVolVars,\n"
         "                                      const FluxVarsCache& fluxVarsCache) const\n\n");
 
-        return asImp_().lameParamsAtPos(fluxVarsCache.ipGlobal());
+        return this->asImp_().lameParamsAtPos(fluxVarsCache.ipGlobal());
     }
 
     /*!
@@ -310,23 +289,10 @@ public:
         "                                      const ElemVolVars& elemVolVars,\n"
         "                                      const FluxVarsCache& fluxVarsCache) const\n\n");
 
-        return asImp_().biotCoefficientAtPos(fluxVarsCache.ipGlobal());
+        return this->asImp_().biotCoefficientAtPos(fluxVarsCache.ipGlobal());
     }
-
-    //! The finite volume grid geometry
-    const GridGeometry& gridGeometry() const
-    { return *gridGeometry_; }
-
-protected:
-    Implementation &asImp_()
-    { return *static_cast<Implementation*>(this); }
-
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }
-
-private:
-    std::shared_ptr<const GridGeometry> gridGeometry_;
-    GlobalPosition gravity_; //!< The gravity vector
 };
+
 } // end namespace Dumux
+
 #endif
