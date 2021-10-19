@@ -65,12 +65,11 @@ class FaceCenteredStaggeredUpwindHelper
     using UpwindScheme = StaggeredUpwindMethods<Scalar, upwindSchemeOrder>;
 
 public:
-    FaceCenteredStaggeredUpwindHelper(const Element& element,
-                                      const FVElementGeometry& fvGeometry,
+    FaceCenteredStaggeredUpwindHelper(const FVElementGeometry& fvGeometry,
                                       const Problem& problem,
                                       const SubControlVolumeFace& scvf,
                                       const ElementVolumeVariables& elemVolVars)
-    : element_(element)
+    : element_(fvGeometry.element())
     , fvGeometry_(fvGeometry)
     , problem_(problem)
     , scvf_(scvf)
@@ -86,7 +85,7 @@ public:
      *        Then the corresponding set of momenta are collected and the prescribed
      *        upwinding method is used to calculate the momentum.
      */
-    Scalar computeUpwindFrontalMomentum(const bool selfIsUpstream) const
+    Scalar upwindFrontalMomentum(const bool selfIsUpstream) const
     {
         const auto density = problem_.density(element_, fvGeometry_, scvf_);
 
