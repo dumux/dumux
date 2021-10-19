@@ -95,6 +95,26 @@ decltype(auto) temperature(const Problem& problem, const GlobalPosition& globalP
         return problem.temperatureAtPos(globalPos);
 }
 
+template<class SpatialParams, class Element, class SubControlVolume, class ElementSolution>
+using HasExtrusionFactorDetector = decltype(std::declval<SpatialParams>().extrusionFactor(
+        std::declval<Element>(),
+        std::declval<SubControlVolume>(),
+        std::declval<ElementSolution>()
+    ));
+
+template<class Problem, class Element, class SubControlVolume, class ElementSolution>
+decltype(auto) extrusionFactor(const Problem& problem,
+                               const Element& element,
+                               const SubControlVolume& scv,
+                               const ElementSolution& elemSol)
+{
+    using SpatialParams = std::decay_t<decltype(problem.spatialParams())>;
+    if constexpr (Dune::Std::is_detected<HasExtrusionFactorDetector, SpatialParams, Element, SubControlVolume, ElementSolution>::value)
+        return problem.spatialParams().extrusionFactor(element, scv, elemSol);
+    else
+        return problem.extrusionFactor(element, scv, elemSol);
+}
+
 } // end namespace Deprecated
 #endif
 
