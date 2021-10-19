@@ -24,12 +24,42 @@
  *        volume and mass fluxes of fluid phases over a face of a finite volume by means
  *        of the Forchheimer approximation. Specializations are provided for the different discretization methods.
  */
-#ifndef DUMUX_FLUX_FORCHHEIMERS_LAW_HH
-#define DUMUX_FLUX_FORCHHEIMERS_LAW_HH
+#ifndef DUMUX_FLUX_FORCHHEIMERS_LAW_FWD_HH
+#define DUMUX_FLUX_FORCHHEIMERS_LAW_FWD_HH
 
-#include <dumux/flux/forchheimerslaw_fwd.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/discretization/method.hh>
+#include <dumux/flux/forchheimervelocity.hh>
 
-#include <dumux/flux/cctpfa/forchheimerslaw.hh>
-#include <dumux/flux/box/forchheimerslaw.hh>
+namespace Dumux {
+
+// definition of primary template
+template <class TypeTag, class VelocityLaw, DiscretizationMethod discMethod>
+class ForchheimersLawImplementation
+{
+    static_assert(
+        discMethod == DiscretizationMethod::cctpfa || discMethod == DiscretizationMethod::box,
+        "Forchheimer only implemented for cctpfa or box!"
+    );
+};
+
+/*!
+ * \ingroup Flux
+ * \brief Evaluates the normal component of the Forchheimer velocity on a (sub)control volume face.
+ * \note Specializations are provided for the different discretization methods.
+ * These specializations are found in the headers included below.
+ */
+template <class TypeTag>
+using ForchheimersLaw = ForchheimersLawImplementation<
+    TypeTag,
+    ForchheimerVelocity<
+        GetPropType<TypeTag, Properties::Scalar>,
+        GetPropType<TypeTag, Properties::GridGeometry>,
+        GetPropType<TypeTag, Properties::FluxVariables>
+    >,
+    GetPropType<TypeTag, Properties::GridGeometry>::discMethod
+>;
+
+} // end namespace Dumux
 
 #endif

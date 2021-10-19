@@ -19,17 +19,32 @@
 /*!
  * \file
  * \ingroup Flux
- * \brief Forchheimer's law specialized for different discretization schemes
+ * \brief Darcy's law specialized for different discretization schemes
  *        This file contains the data which is required to calculate
  *        volume and mass fluxes of fluid phases over a face of a finite volume by means
- *        of the Forchheimer approximation. Specializations are provided for the different discretization methods.
+ *        of the Darcy approximation. Specializations are provided for the different discretization methods.
  */
-#ifndef DUMUX_FLUX_FORCHHEIMERS_LAW_HH
-#define DUMUX_FLUX_FORCHHEIMERS_LAW_HH
+#ifndef DUMUX_FLUX_DARCYS_LAW_FWD_HH
+#define DUMUX_FLUX_DARCYS_LAW_FWD_HH
 
-#include <dumux/flux/forchheimerslaw_fwd.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/discretization/method.hh>
 
-#include <dumux/flux/cctpfa/forchheimerslaw.hh>
-#include <dumux/flux/box/forchheimerslaw.hh>
+namespace Dumux {
+
+// declaration of primary template
+template <class TypeTag, DiscretizationMethod discMethod>
+class DarcysLawImplementation;
+
+/*!
+ * \ingroup Flux
+ * \brief Evaluates the normal component of the Darcy velocity on a (sub)control volume face.
+ * \note Specializations are provided for the different discretization methods.
+ * These specializations are found in the headers included below.
+ */
+template <class TypeTag>
+using DarcysLaw = DarcysLawImplementation<TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
+
+} // end namespace Dumux
 
 #endif

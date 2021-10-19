@@ -20,30 +20,12 @@
  * \file
  * \ingroup Flux
  * \brief This file contains the data which is required to calculate
- *        diffusive mass fluxes due to molecular diffusion with Fick's law.
+ *        diffusive mass fluxes due to molecular diffusion with Maxwell-Stefan's law.
  */
-#ifndef DUMUX_DISCRETIZATION_MAXWELL_STEFAN_LAW_HH
-#define DUMUX_DISCRETIZATION_MAXWELL_STEFAN_LAW_HH
+#ifndef DUMUX_FLUX_MAXWELL_STEFAN_LAW_HH
+#define DUMUX_FLUX_MAXWELL_STEFAN_LAW_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/discretization/method.hh>
-#include <dumux/flux/referencesystemformulation.hh>
-
-namespace Dumux {
-
-// forward declaration
-template <class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
-class MaxwellStefansLawImplementation
-{};
-
-/*!
- * \ingroup Flux
- * \brief Evaluates the diffusive mass flux according to Maxwell Stafan's law
- */
-template <class TypeTag, ReferenceSystemFormulation referenceSystem =  ReferenceSystemFormulation::massAveraged>
-using MaxwellStefansLaw = MaxwellStefansLawImplementation<TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod, referenceSystem>;
-
-} // end namespace
+#include <dumux/flux/maxwellstefanslaw_fwd.hh>
 
 #include <dumux/flux/cctpfa/maxwellstefanslaw.hh>
 #include <dumux/flux/box/maxwellstefanslaw.hh>

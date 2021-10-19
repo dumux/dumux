@@ -23,27 +23,10 @@
  *        This file contains the data which is required to calculate
  *        diffusive mass fluxes due to molecular diffusion with Fick's law.
  */
-#ifndef DUMUX_DISCRETIZATION_FICKS_LAW_HH
-#define DUMUX_DISCRETIZATION_FICKS_LAW_HH
+#ifndef DUMUX_FLUX_FICKS_LAW_HH
+#define DUMUX_FLUX_FICKS_LAW_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/discretization/method.hh>
-#include <dumux/flux/referencesystemformulation.hh>
-
-namespace Dumux {
-
-// forward declaration
-template <class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
-class FicksLawImplementation;
-
-/*!
- * \ingroup Flux
- * \brief Evaluates the diffusive mass flux according to Fick's law
- */
-template <class TypeTag, ReferenceSystemFormulation referenceSystem =  ReferenceSystemFormulation::massAveraged>
-using FicksLaw = FicksLawImplementation<TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod, referenceSystem>;
-
-} // end namespace Dumux
+#include <dumux/flux/fickslaw_fwd.hh>
 
 #include <dumux/flux/cctpfa/fickslaw.hh>
 #include <dumux/flux/ccmpfa/fickslaw.hh>

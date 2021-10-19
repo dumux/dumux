@@ -19,17 +19,31 @@
 /*!
  * \file
  * \ingroup Flux
- * \brief Forchheimer's law specialized for different discretization schemes
+ * \brief Fick's law specilized for different discretization schemes.
  *        This file contains the data which is required to calculate
- *        volume and mass fluxes of fluid phases over a face of a finite volume by means
- *        of the Forchheimer approximation. Specializations are provided for the different discretization methods.
+ *        diffusive mass fluxes due to molecular diffusion with Fick's law.
  */
-#ifndef DUMUX_FLUX_FORCHHEIMERS_LAW_HH
-#define DUMUX_FLUX_FORCHHEIMERS_LAW_HH
+#ifndef DUMUX_FLUX_FICKS_LAW_FWD_HH
+#define DUMUX_FLUX_FICKS_LAW_FWD_HH
 
-#include <dumux/flux/forchheimerslaw_fwd.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/discretization/method.hh>
 
-#include <dumux/flux/cctpfa/forchheimerslaw.hh>
-#include <dumux/flux/box/forchheimerslaw.hh>
+#include <dumux/flux/referencesystemformulation.hh>
+
+namespace Dumux {
+
+// declaration of primary template
+template <class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
+class FicksLawImplementation;
+
+/*!
+ * \ingroup Flux
+ * \brief Evaluates the diffusive mass flux according to Fick's law
+ */
+template <class TypeTag, ReferenceSystemFormulation referenceSystem =  ReferenceSystemFormulation::massAveraged>
+using FicksLaw = FicksLawImplementation<TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod, referenceSystem>;
+
+} // end namespace Dumux
 
 #endif

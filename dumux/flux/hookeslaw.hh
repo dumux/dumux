@@ -25,21 +25,7 @@
 #ifndef DUMUX_DISCRETIZATION_HOOKES_LAW_HH
 #define DUMUX_DISCRETIZATION_HOOKES_LAW_HH
 
-#include <dumux/discretization/method.hh>
-
-namespace Dumux {
-
-/*!
- * \ingroup Flux
- * \brief This computes the stress tensor and surface forces resulting from mechanical deformation.
- * \note Specializations are provided for the different discretization methods.
- * These specializations are found in the headers included below.
- */
-template <class Scalar, class GridGeometry, DiscretizationMethod dm = GridGeometry::discMethod>
-class HookesLaw;
-
-} // end namespace Dumux
-
+#include <dumux/flux/hookeslaw_fwd.hh>
 #include <dumux/flux/box/hookeslaw.hh>
 
 #endif
