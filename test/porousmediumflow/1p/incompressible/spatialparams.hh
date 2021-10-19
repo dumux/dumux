@@ -26,7 +26,7 @@
 #define DUMUX_INCOMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
 
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams1p.hh>
 
 namespace Dumux {
 
@@ -37,15 +37,16 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class OnePTestSpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar,
-                             OnePTestSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar,
+                                         OnePTestSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
-                                           OnePTestSpatialParams<GridGeometry, Scalar>>;
+
+    using ThisType = OnePTestSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -55,6 +56,7 @@ public:
     OnePTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
+        extrusionFactor_ = getParam<Scalar>("Problem.ExtrusionFactor");
         permeability_ = getParam<Scalar>("SpatialParams.Permeability");
         permeabilityLens_ = getParam<Scalar>("SpatialParams.PermeabilityLens");
 
@@ -91,6 +93,25 @@ public:
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.4; }
 
+    /*!
+     * \brief Define the temperature in the domain in Kelvin.
+     * \param globalPos The global position
+     */
+    Scalar temperature(const GlobalPosition& globalPos) const
+    { return temperature(); }
+
+    /*!
+     * \brief Define the temperature in the domain in Kelvin.
+     */
+    Scalar temperature() const
+    { return 283.15; }
+
+    /*!
+     * \brief Define the extrusion of the domain at a given position.
+     */
+    Scalar extrusionFactorAtPos(const GlobalPosition& globalPos) const
+    { return extrusionFactor_; }
+
 private:
     bool isInLens_(const GlobalPosition &globalPos) const
     {
@@ -104,7 +125,7 @@ private:
     GlobalPosition lensLowerLeft_;
     GlobalPosition lensUpperRight_;
 
-    Scalar permeability_, permeabilityLens_;
+    Scalar extrusionFactor_, permeability_, permeabilityLens_;
 
     static constexpr Scalar eps_ = 1.5e-7;
 
