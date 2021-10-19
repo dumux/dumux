@@ -76,8 +76,8 @@ public:
     : gridGeometry_(&gridGeometry)
     {}
 
-    const UpwindScheme& staggeredUpwindMethods() const
-    { return gridGeometry().staggeredUpwindMethods(); }
+    const UpwindScheme& upwindMethods() const
+    { return gridGeometry().upwindMethods(); }
 
     //! Get a sub control volume  with a global scv index
     const SubControlVolume& scv(GridIndexType scvIdx) const
