@@ -34,6 +34,7 @@
 #include <dumux/common/typetraits/problem.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/facecentered/staggered/upwindgeometryhelper.hh>
 #include <dumux/freeflow/staggeredupwindmethods.hh>
 #include "velocitygradients.hh"
 
@@ -69,7 +70,8 @@ public:
     , problem_(elemVolVars.gridVolVars().problem())
     , scvf_(scvf)
     , elemVolVars_(elemVolVars)
-    , upwindScheme_(fvGeometry.staggeredUpwindMethods())
+    , upwindScheme_(fvGeometry.upwindMethods())
+    , upwindgeometryHelper_(fvGeometry)
     {}
 
     /*!
@@ -110,8 +112,9 @@ public:
      *        Then the corresponding set of momenta are collected and the prescribed
      *        upwinding method is used to calculate the momentum.
      */
-    Scalar computeUpwindLateralMomentum(const bool selfIsUpstream) const
+    Scalar upwindLateralMomentum(const bool selfIsUpstream) const
     {
+        getLateralDistances_(selfIsUpstream);
         // Check whether the own or the neighboring element is upstream.
         // Get the transporting velocity, located at the scvf perpendicular to the current scvf where the dof
         // of interest is located.
@@ -197,17 +200,17 @@ private:
         if (selfIsUpstream)
         {
             std::array<Scalar, 3> distances;
-            distances[0] = fvGeometry_.selfToOppositeDistance(scvf_);
-            distances[1] = fvGeometry_.selfToForwardDistance(scvf_);
-            distances[2] = 0.5 * (fvGeometry_.selfToOppositeDistance(scvf_) + fvGeometry_.oppositeToBackwardDistance(scvf_));
+            distances[0] = upwindgeometryHelper_.selfToOppositeDistance(scvf_);
+            distances[1] = upwindgeometryHelper_.selfToForwardDistance(scvf_);
+            distances[2] = 0.5 * (upwindgeometryHelper_.selfToOppositeDistance(scvf_) + upwindgeometryHelper_.oppositeToBackwardDistance(scvf_));
             return distances;
         }
         else
         {
             std::array<Scalar, 3> distances;
-            distances[0] = fvGeometry_.selfToOppositeDistance(scvf_);
-            distances[1] = fvGeometry_.oppositeToBackwardDistance(scvf_);
-            distances[2] = 0.5 * (fvGeometry_.selfToOppositeDistance(scvf_) + fvGeometry_.selfToForwardDistance(scvf_));
+            distances[0] = upwindgeometryHelper_.selfToOppositeDistance(scvf_);
+            distances[1] = upwindgeometryHelper_.oppositeToBackwardDistance(scvf_);
+            distances[2] = 0.5 * (upwindgeometryHelper_.selfToOppositeDistance(scvf_) + upwindgeometryHelper_.selfToForwardDistance(scvf_));
             return distances;
         }
     }
@@ -305,14 +308,14 @@ private:
     */
     std::array<Scalar, 3> getLateralDistances_(const bool selfIsUpstream) const
     {
-        static_assert(useHigherOrder, "Should only be reached if higher order methods are enabled");
+        // static_assert(useHigherOrder, "Should only be reached if higher order methods are enabled");
         assert(scvf_.isLateral());
 
         std::array<Scalar, 3> distances;
         if (selfIsUpstream)
         {
-            distances[0] = fvGeometry_.selfToParallelDistance(scvf_);
-            distances[1] = fvGeometry_.selfToParallelDistance(fvGeometry_.oppositeLateralScvf(scvf_));
+            distances[0] = upwindgeometryHelper_.selfToParallelDistance(scvf_);
+            distances[1] = upwindgeometryHelper_.selfToParallelDistance(fvGeometry_.oppositeLateralScvf(scvf_));
 
             if (fvGeometry_.hasParallelNeighbor(scvf_))
                 distances[2] = fvGeometry_.outsideScvLateralLength(scvf_);
@@ -459,6 +462,7 @@ private:
     const SubControlVolumeFace& scvf_;
     const ElementVolumeVariables& elemVolVars_;
     const UpwindScheme& upwindScheme_;
+    FaceCenteredStaggeredUpwindGeometryHelper<FVElementGeometry> upwindgeometryHelper_;
 };
 
 } // end namespace Dumux
