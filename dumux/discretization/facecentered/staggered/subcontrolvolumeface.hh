@@ -62,7 +62,7 @@ struct FaceCenteredDefaultScvfGeometryTraits
  * \ingroup FaceCenteredStaggeredDiscretization
  * \brief Helper function to turn a given scvf into a fake boundary face with it's center at a new location
  */
-template<class FaceCenteredStaggeredSubControlVolumeFace>
+template<class FCStaggeredSCVF>
 FaceCenteredStaggeredSubControlVolumeFace makeFaceCenteredSCVF(const FaceCenteredStaggeredSubControlVolumeFace& scvf,
                                                                const typename FaceCenteredStaggeredSubControlVolumeFace::GlobalPosition& newCenter)
 {
