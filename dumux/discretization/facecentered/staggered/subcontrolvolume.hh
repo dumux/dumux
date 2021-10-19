@@ -153,7 +153,7 @@ public:
     GlobalPosition innerUnitNormal() const
     {
         GlobalPosition innerUnitNormal(0.0);
-        innerUnitNormal[dofAxis()] = directionSign();
+        innerUnitNormal[dofAxis_] = directionSign_;
         return innerUnitNormal;
     }
 
