@@ -52,10 +52,10 @@ namespace Dumux {
  * \tparam lowDimDomainId The domain id of the lower-dimensional problem
  */
 template<class MDTraits, class CouplingMapper, std::size_t bulkDomainId, std::size_t lowDimDomainId>
-class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainId, DiscretizationMethod::ccmpfa>
-: public FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainId, DiscretizationMethod::cctpfa>
+class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainId, DiscretizationMethods::CCMpfa>
+: public FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainId, DiscretizationMethods::CCTpfa>
 {
-    using ParentType = FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainId, DiscretizationMethod::cctpfa>;
+    using ParentType = FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainId, DiscretizationMethods::CCTpfa>;
 
     // domain id instances
     using BulkIdType = typename MDTraits::template SubDomain<bulkDomainId>::Index;
@@ -89,7 +89,7 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     static constexpr auto bulkGridId = CouplingMapper::template gridId<bulkDim>();
     static constexpr auto lowDimGridId = CouplingMapper::template gridId<lowDimDim>();
 
-    static constexpr bool lowDimUsesBox = GridGeometry<lowDimId>::discMethod == DiscretizationMethod::box;
+    static constexpr bool lowDimUsesBox = GridGeometry<lowDimId>::discMethod == DiscretizationMethods::box;
 
 public:
 
