@@ -72,32 +72,6 @@ public:
     : ParentType(gridGeometry) {}
 
     /*!
-     * \name Problem parameters
-     */
-    // \{
-
-    /*!
-     * \brief Returns the temperature \f$ K \f$
-     *
-     * This problem assumes a uniform temperature of 20 degrees Celsius.
-     */
-    Scalar temperature() const
-    { return 273.15 + 20; }
-
-    /*!
-     * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given boundary segment.
-     *
-     * \param globalPos The global position where to set the BC types
-     */
-    Scalar extrusionFactorAtPos(const GlobalPosition &globalPos) const
-    {
-        return 0.1;
-    }
-
-    // \}
-
-    /*!
      * \name Boundary conditions
      */
     // \{
