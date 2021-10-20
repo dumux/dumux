@@ -832,6 +832,177 @@ public:
 
 /*!
  * \ingroup Geometry
+ * \brief A class for polygon--polygon intersections in 3d space
+ */
+template <class Geometry1, class Geometry2, class Policy>
+class GeometryIntersection<Geometry1, Geometry2, Policy, 3, 2, 2>
+{
+    enum { dimworld = 3 };
+    enum { dim1 = 2 };
+    enum { dim2 = 2 };
+
+public:
+    using ctype = typename Policy::ctype;
+    using Point = typename Policy::Point;
+    using Intersection = typename Policy::Intersection;
+
+private:
+    static constexpr ctype eps_ = 1.5e-7; // base epsilon for floating point comparisons
+    using ReferenceElementsGeo1 = typename Dune::ReferenceElements<ctype, dim1>;
+    using ReferenceElementsGeo2 = typename Dune::ReferenceElements<ctype, dim2>;
+
+public:
+    /*!
+     * \brief Colliding two polygons
+     * \note First we find the vertex candidates for the intersection region as follows:
+     *       Add vertices of first polygon that are inside the second polygon
+     *       Add intersections of polygon edges
+     *       Remove duplicate points from the list
+     *       Compute the convex hull polygon
+     * \param geo1/geo2 The geometries to intersect
+     * \param intersection Container to store the corner points of the polygon (as convex hull)
+     * \note This overload is used when polygon like intersections are seeked
+     */
+    template<class P = Policy, std::enable_if_t<P::dimIntersection == 2, int> = 0>
+    static bool intersection(const Geometry1& geo1, const Geometry2& geo2, Intersection& intersection)
+    {
+        static_assert(int(dimworld) == int(Geometry2::coorddimension), "Can only collide geometries of same coordinate dimension");
+
+        // if the geometries are not parallel, there cannot be a polygon intersection
+        const auto a1 = geo1.corner(1) - geo1.corner(0);
+        const auto b1 = geo1.corner(2) - geo1.corner(0);
+        auto n1 = crossProduct(a1, b1);
+        n1 /= n1.two_norm();
+
+        const auto a2 = geo2.corner(1) - geo2.corner(0);
+        const auto b2 = geo2.corner(2) - geo2.corner(0);
+        auto n2 = crossProduct(a2, b2);
+        n2 /= n2.two_norm();
+
+        // TODO: Use two_norm2() over two_norm() & modify check accordingly
+        using std::abs;
+        if ( abs(abs(n1*n2) - 1.0) > eps_)
+            return false;
+
+        // they are parallel, verify that they are on the same plane
+        auto d1 = geo2.corner(0) - geo1.corner(0);
+        if (d1.two_norm2() < eps_*eps_)
+            d1 = geo2.corner(1) - geo1.corner(0);
+        d1 /= d1.two_norm();
+
+        if (abs(d1*n2) > eps_)
+            return false;
+
+        // the candidate intersection points
+        std::vector<Point> points; points.reserve(6);
+
+        // add polygon1 corners that are inside polygon2
+        for (int i = 0; i < geo1.corners(); ++i)
+            if (intersectsPointGeometry(geo1.corner(i), geo2))
+                points.emplace_back(geo1.corner(i));
+
+        const auto numPoints1 = points.size();
+        const bool resultIsGeo1 = numPoints1 == geo1.corners();
+        if (!resultIsGeo1)
+        {
+            // add polygon2 corners that are inside polygon1
+            for (int i = 0; i < geo2.corners(); ++i)
+                if (intersectsPointGeometry(geo2.corner(i), geo1))
+                    points.emplace_back(geo2.corner(i));
+
+            const bool resultIsGeo2 = (points.size() - numPoints1) == geo2.corners();
+            if (!resultIsGeo2)
+            {
+                const auto referenceElement1 = ReferenceElementsGeo1::general(geo1.type());
+                const auto referenceElement2 = ReferenceElementsGeo2::general(geo2.type());
+
+                // add intersections of edges
+                using SegGeometry = Dune::MultiLinearGeometry<ctype, 1, dimworld>;
+                using PointPolicy = IntersectionPolicy::PointPolicy<ctype, dimworld>;
+                for (int i = 0; i < referenceElement1.size(dim1-1); ++i)
+                {
+                    const auto localEdgeGeom1 = referenceElement1.template geometry<dim1-1>(i);
+                    const auto edge1 = SegGeometry( Dune::GeometryTypes::line,
+                                                    std::vector<Point>( {geo1.global(localEdgeGeom1.corner(0)),
+                                                                         geo1.global(localEdgeGeom1.corner(1))} ));
+
+                    for (int j = 0; j < referenceElement2.size(dim2-1); ++j)
+                    {
+                        const auto localEdgeGeom2 = referenceElement2.template geometry<dim2-1>(j);
+                        const auto edge2 = SegGeometry( Dune::GeometryTypes::line,
+                                                        std::vector<Point>( {geo2.global(localEdgeGeom2.corner(0)),
+                                                                             geo2.global(localEdgeGeom2.corner(1))} ));
+
+                        using EdgeTest = GeometryIntersection<SegGeometry, SegGeometry, PointPolicy>;
+                        typename EdgeTest::Intersection edgeIntersection;
+                        if (EdgeTest::intersection(edge1, edge2, edgeIntersection))
+                            points.emplace_back(edgeIntersection);
+                    }
+                }
+            }
+        }
+
+        if (points.empty())
+            return false;
+
+        // remove duplicates
+        const auto eps = (geo1.corner(0) - geo1.corner(1)).two_norm()*eps_;
+        std::sort(points.begin(), points.end(), [&eps](const auto& a, const auto& b) -> bool
+        {
+            using std::abs;
+            return (abs(a[0]-b[0]) > eps ? a[0] < b[0]
+                                         : (abs(a[1]-b[1]) > eps ? a[1] < b[1]
+                                                                 : (a[2] < b[2])));
+        });
+
+        auto removeIt = std::unique(points.begin(), points.end(),
+                                    [&eps] (const auto& a, const auto&b) {
+                                        return (b-a).two_norm() < eps;
+                                    });
+
+        points.erase(removeIt, points.end());
+
+        // return false if we don't have at least three unique points
+        if (points.size() < 3)
+            return false;
+
+        // intersection polygon is convex hull of above points
+        intersection = grahamConvexHull<2>(points);
+        assert(!intersection.empty());
+        return true;
+    }
+
+    /*!
+     * \brief Colliding two polygons
+     * \param geo1/geo2 The geometries to intersect
+     * \param intersection Container to store the corners of intersection segment
+     * \note this overload is used when segment-like intersections are seeked
+     * \todo implement this query
+     */
+    template<class P = Policy, std::enable_if_t<P::dimIntersection == 1, int> = 0>
+    static bool intersection(const Geometry1& geo1, const Geometry2& geo2, Intersection& intersection)
+    {
+        static_assert(int(dimworld) == int(Geometry2::coorddimension), "Can only collide geometries of same coordinate dimension");
+        DUNE_THROW(Dune::NotImplemented, "Polygon-polygon intersection detection for segment-like intersections");
+    }
+
+    /*!
+     * \brief Colliding two polygons
+     * \param geo1/geo2 The geometries to intersect
+     * \param intersection The intersection point
+     * \note this overload is used when point-like intersections are seeked
+     * \todo implement this query
+     */
+    template<class P = Policy, std::enable_if_t<P::dimIntersection == 0, int> = 0>
+    static bool intersection(const Geometry1& geo1, const Geometry2& geo2, Intersection& intersection)
+    {
+        static_assert(int(dimworld) == int(Geometry2::coorddimension), "Can only collide geometries of same coordinate dimension");
+        DUNE_THROW(Dune::NotImplemented, "Polygon-polygon intersection detection for touching points");
+    }
+};
+
+/*!
+ * \ingroup Geometry
  * \brief A class for polyhedron--polygon intersection in 3d space
  */
 template <class Geometry1, class Geometry2, class Policy>
