@@ -871,26 +871,32 @@ public:
         // if the geometries are not parallel, there cannot be a polygon intersection
         const auto a1 = geo1.corner(1) - geo1.corner(0);
         const auto b1 = geo1.corner(2) - geo1.corner(0);
-        auto n1 = crossProduct(a1, b1);
-        n1 /= n1.two_norm();
+        const auto n1 = crossProduct(a1, b1);
 
         const auto a2 = geo2.corner(1) - geo2.corner(0);
         const auto b2 = geo2.corner(2) - geo2.corner(0);
-        auto n2 = crossProduct(a2, b2);
-        n2 /= n2.two_norm();
+        const auto n2 = crossProduct(a2, b2);
 
-        // TODO: Use two_norm2() over two_norm() & modify check accordingly
+        using std::max;
+        using std::sqrt;
+        const auto a1Norm2 = a1.two_norm2();
+        const auto b1Norm2 = b1.two_norm2();
+        const auto maxNorm2 = max(a1Norm2, b1Norm2);
+        const auto eps2 = maxNorm2*eps_;
+        const auto eps = sqrt(maxNorm2)*eps_;
+        const auto eps3 = eps*eps2;
+
+        // early exit if polygons are not parallel
         using std::abs;
-        if ( abs(abs(n1*n2) - 1.0) > eps_)
+        if (crossProduct(n1, n2).two_norm2() > eps2*maxNorm2)
             return false;
 
         // they are parallel, verify that they are on the same plane
         auto d1 = geo2.corner(0) - geo1.corner(0);
-        if (d1.two_norm2() < eps_*eps_)
+        if (d1.two_norm2() < eps2)
             d1 = geo2.corner(1) - geo1.corner(0);
-        d1 /= d1.two_norm();
 
-        if (abs(d1*n2) > eps_)
+        if (abs(d1*n2) > eps3)
             return false;
 
         // the candidate intersection points
@@ -946,7 +952,6 @@ public:
             return false;
 
         // remove duplicates
-        const auto eps = (geo1.corner(0) - geo1.corner(1)).two_norm()*eps_;
         std::sort(points.begin(), points.end(), [&eps](const auto& a, const auto& b) -> bool
         {
             using std::abs;
