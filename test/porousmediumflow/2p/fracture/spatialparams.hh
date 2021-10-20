@@ -26,9 +26,9 @@
 #ifndef DUMUX_TWOP_FRACTURE_TEST_SPATIALPARAMS_HH
 #define DUMUX_TWOP_FRACTURE_TEST_SPATIALPARAMS_HH
 
-#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 #include <dumux/porousmediumflow/2p/model.hh>
 
 namespace Dumux {
@@ -40,15 +40,15 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class FractureSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
-                         FractureSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumSpatialParams<GridGeometry, Scalar,
+                                     FractureSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar,
-                                       FractureSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = FVPorousMediumSpatialParams<GridGeometry, Scalar,
+                                                   FractureSpatialParams<GridGeometry, Scalar>>;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -78,6 +78,20 @@ public:
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.4; }
+
+    /*!
+     * \brief Returns the temperature in the domain \f$[K]\f$
+     * \param globalPos The global position
+     */
+    Scalar temperature(const GlobalPosition& globalPos) const
+    { return 273.15 + 20; }
+
+    /*!
+     * \brief Specifies how much the domain is extruded at a given position.
+     * \param globalPos The global position where to define the extrusion
+     */
+    Scalar extrusionFactorAtPos(const GlobalPosition &globalPos) const
+    { return 0.1; }
 
     /*!
      * \brief Returns the parameter object for the Brooks-Corey material law
