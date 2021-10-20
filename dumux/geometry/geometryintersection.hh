@@ -1328,20 +1328,17 @@ public:
         const auto v2 = geo2.corner(1) - geo2.corner(0);
         const auto ac = geo2.corner(0) - geo1.corner(0);
 
-        const auto v1Norm = v1.two_norm();
-        const auto eps = eps_*v1Norm;
-        const auto eps2 = eps*eps;
-        const auto eps3 = eps2*eps;
+        const auto v1Norm2 = v1.two_norm2();
+        const auto eps2 = eps_*v1Norm2;
 
         const auto n = crossProduct(v1, v2);
 
         // first check if segments are parallel
         using std::abs;
-        if ( n.two_norm2() < eps3*v1Norm )
+        if ( n.two_norm2() < eps2*v1Norm2 )
         {
             // check if they lie on the same line
-            const auto acNorm = ac.two_norm();
-            if (abs(ac*v1) < acNorm*v1Norm)
+            if (crossProduct(v1, ac).two_norm2() > eps2)
                 return false;
 
             // they lie on the same line,
@@ -1349,7 +1346,7 @@ public:
             const auto sp = v1*v2;
             if ( sp < 0.0 )
             {
-                if ( acNorm < eps )
+                if ( ac.two_norm2() < eps2 )
                 { intersection = geo2.corner(0); return true; }
 
                 if ( (geo2.corner(1) - geo1.corner(1)).two_norm2() < eps2 )
@@ -1370,7 +1367,6 @@ public:
 
         // in-plane normal vector on v1
         auto v1Normal = crossProduct(v1, n);
-        v1Normal /= v1Normal.two_norm();
 
         // intersection point on v2 in local coords
         const auto t2 = - 1.0*(ac*v1Normal) / (v2*v1Normal);
@@ -1380,12 +1376,12 @@ public:
             return false;
 
         // compute global coordinates
-        auto isPoint = geo2.global(t2);
+        auto intersectionPoint = geo2.global(t2);
 
         // check if point lies on v1
-        if (intersectsPointGeometry(isPoint, geo1))
+        if (intersectsPointGeometry(intersectionPoint, geo1))
         {
-            intersection = std::move(isPoint);
+            intersection = std::move(intersectionPoint);
             return true;
         }
 
