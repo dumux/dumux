@@ -56,6 +56,7 @@ class FaceCenteredStaggeredFVElementGeometry<GG, /*cachingEnabled*/true>
     static constexpr auto dim = GridView::dimension;
     static constexpr auto numFacesPerElement = dim * 2;
     static constexpr auto numScvsPerElement = numFacesPerElement;
+    using UpwindData = typename GG::UpwindData;
 
 public:
     //! export type of subcontrol volume face
@@ -550,6 +551,7 @@ private:
     const Element* elementPtr_;
     GridIndexType eIdx_;
     const GridGeometry* gridGeometry_;
+    UpwindData upwindData_;
 };
 
 /*!

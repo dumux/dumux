@@ -46,6 +46,17 @@
 
 namespace Dumux {
 
+template<int upwindOrder>
+class HigherOrderData;
+
+template<>
+class HigherOrderData<1>
+{};
+
+template<>
+class HigherOrderData<2>
+{};
+
 /*!
  * \ingroup FaceCenteredStaggeredDiscretization
  * \brief The default traits for the face-center staggered finite volume grid geometry
@@ -74,6 +85,8 @@ struct FaceCenteredStaggeredDefaultGridGeometryTraits : public DefaultMapperTrai
     using LocalView = FaceCenteredStaggeredFVElementGeometry<GridGeometry, enableCache>;
 
     static constexpr int upwindOrder = upOrd;
+
+    using UpwindData = Dumux::HigherOrderData<upOrd>;
 };
 
 /*!
@@ -134,6 +147,7 @@ public:
     static_assert(upwindSchemeOrder <= 2, "Not implemented: Order higher than 2!");
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
     using UpwindScheme = StaggeredUpwindMethods<Scalar, upwindSchemeOrder>;
+    using UpwindData = typename Traits::UpwindData;
 
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, true>;
