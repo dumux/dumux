@@ -128,14 +128,68 @@ void testPolygonIntersections(std::vector<bool>& returns)
     }
 }
 
+void testParallelPolygons(std::vector<bool>& returns)
+{
+    using Point = Dune::FieldVector<double, 3>;
+
+    for (auto scaling : {1.0, 1e3, 1e12, 1e-12})
+    {
+        const double unit = 1.0*scaling;
+        const double offUnit = (1.0 + 1e-6)*scaling;
+
+        std::cout << "Test with scaling " << scaling << std::endl;
+        const auto tria1 = makeTriangle( Point{{0.0, 0.0, unit}},
+                                         Point{{unit, 0.0, unit}},
+                                         Point{{unit, unit, unit}} );
+        const auto tria2 = makeTriangle( Point{{0.0, 0.0, offUnit}},
+                                         Point{{0.0, unit, offUnit}},
+                                         Point{{unit, 0.0, offUnit}} );
+        returns.push_back(testPolygonIntersection<3>(tria1, tria2, false));
+    }
+
+    std::cout << std::endl;
+}
+
+void testNonParallelPolygons(std::vector<bool>& returns)
+{
+    using Point = Dune::FieldVector<double, 3>;
+
+    for (auto scaling : {1.0, 1e3, 1e12, 1e-12})
+    {
+        const double unit = 1.0*scaling;
+        const double offUnit = (1.0 + 1e-6)*scaling;
+
+        std::cout << "Test with scaling " << scaling << std::endl;
+        const auto tria1 = makeTriangle( Point{{0.0, 0.0, unit}},
+                                         Point{{unit, 0.0, unit}},
+                                         Point{{unit, unit, unit}} );
+        const auto tria2 = makeTriangle( Point{{0.0, 0.0, unit}},
+                                         Point{{0.0, unit, unit}},
+                                         Point{{unit, 0.0, offUnit}} );
+        returns.push_back(testPolygonIntersection<3>(tria1, tria2, false));
+    }
+
+    std::cout << std::endl;
+}
+
 #endif
 
 int main(int argc, char* argv[])
 {
     std::vector<bool> returns;
+
+    std::cout << "Testing intersections in 2d space" << std::endl;
     testPolygonIntersections<2>(returns);
 
-    // TODO: implement and test intersections in 3d
+    std::cout << "Testing intersecions in 3d space" << std::endl;
+    testPolygonIntersections<3>(returns);
+
+    std::cout << "Testing parallel polygons in 3d space" << std::endl;
+    testParallelPolygons(returns);
+
+    std::cout << "Testing non-parallel polygons in 3d space" << std::endl;
+    testNonParallelPolygons(returns);
+
     // TODO: implement and test point and segment intersections
 
     // determine the exit code
