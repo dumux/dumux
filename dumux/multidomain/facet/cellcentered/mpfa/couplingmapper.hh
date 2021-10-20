@@ -46,7 +46,7 @@ namespace Dumux {
  * \tparam lowDimId The index of the facet grid within the hierarchy of grids
  */
 template<class BulkFVG, class LowDimFVG, std::size_t bulkId, std::size_t lowDimId>
-class FacetCouplingMapper<BulkFVG, LowDimFVG, bulkId, lowDimId, DiscretizationMethod::ccmpfa>
+class FacetCouplingMapper<BulkFVG, LowDimFVG, bulkId, lowDimId, DiscretizationMethods::CCMpfa>
 : public virtual FacetCouplingMapperBase<BulkFVG, LowDimFVG, bulkId, lowDimId>
 {
     using ParentType = FacetCouplingMapperBase<BulkFVG, LowDimFVG, bulkId, lowDimId>;
@@ -150,7 +150,7 @@ public:
 
                 // add each dof in the low dim element to coupling stencil of the bulk element and vice versa
                 auto& bulkData = this->couplingMap_(bulkGridId, facetGridId)[bulkElemIdx];
-                const auto lowDimElementDofs = LowDimFVG::discMethod == DiscretizationMethod::box
+                const auto lowDimElementDofs = LowDimFVG::discMethod == DiscretizationMethods::box
                                                ? this->extractNodalDofs_(lowDimElement, lowDimFvGridGeometry)
                                                : std::vector<LowDimIndexType>( {lowDimElemIdx} );
 
@@ -161,7 +161,7 @@ public:
 
                 // sort the scvfs according to the corners of the low dim element if box is used
                 // that allows identifying which scvf flux enters which low dim scv later
-                if (LowDimFVG::discMethod == DiscretizationMethod::box)
+                if (LowDimFVG::discMethod == DiscretizationMethods::box)
                 {
                     const auto copy = embeddedScvfIndices;
 

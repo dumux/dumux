@@ -48,7 +48,7 @@ template< class BulkFVG,
           class LowDimFVG,
           std::size_t bulkId = 0,
           std::size_t lowDimId = 1,
-          DiscretizationMethod bulkDM = BulkFVG::discMethod >
+          class DiscretizationMethod = typename BulkFVG::DiscretizationMethod >
 class FacetCouplingMapper;
 
 /*!

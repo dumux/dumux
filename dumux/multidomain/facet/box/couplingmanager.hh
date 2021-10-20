@@ -48,7 +48,7 @@ namespace Dumux {
  * \tparam lowDimDomainId The domain id of the lower-dimensional problem
  */
 template<class MDTraits, class CouplingMapper, std::size_t bulkDomainId, std::size_t lowDimDomainId>
-class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainId, DiscretizationMethod::box>
+class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainId, DiscretizationMethods::Box>
 : public virtual CouplingManager< MDTraits >
 {
     using ParentType = CouplingManager< MDTraits >;
