@@ -91,7 +91,7 @@ template< class MDTraits,
           class CouplingMapper,
           std::size_t bulkDomainId = 0,
           std::size_t lowDimDomainId = 1,
-          DiscretizationMethod bulkDM = GetPropType<typename MDTraits::template SubDomain<bulkDomainId>::TypeTag, Properties::GridGeometry>::discMethod >
+          class DiscretizationMethod = typename GetPropType<typename MDTraits::template SubDomain<bulkDomainId>::TypeTag, Properties::GridGeometry>::DiscretizationMethod >
 class FacetCouplingManager;
 
 /*!
@@ -148,7 +148,7 @@ class FacetCouplingThreeDomainManager
     // helper function to check if a domain uses mpfa
     template<std::size_t id>
     static constexpr bool usesMpfa(Dune::index_constant<id> domainId)
-    { return GridGeometry<domainId>::discMethod == DiscretizationMethod::ccmpfa; }
+    { return GridGeometry<domainId>::discMethod == DiscretizationMethods::ccmpfa; }
 
 public:
     //! types used for coupling stencils
