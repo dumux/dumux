@@ -112,6 +112,7 @@
 #include "volumevariables.hh"
 #include "iofields.hh"
 #include "localresidual.hh"
+#include "velocityoutput.hh"
 
 namespace Dumux {
 
@@ -215,6 +216,15 @@ private:
 
 public:
     using type = RichardsIOFields<enableWaterDiffusionInAir>;
+};
+
+template<class TypeTag>
+struct VelocityOutput<TypeTag, TTag::Richards>
+{
+    using type = RichardsVelocityOutput<
+        GetPropType<TypeTag, Properties::GridVariables>,
+        GetPropType<TypeTag, Properties::FluxVariables>
+    >;
 };
 
 //! The model traits
