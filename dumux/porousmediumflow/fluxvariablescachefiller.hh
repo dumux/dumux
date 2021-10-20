@@ -35,7 +35,7 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
+template<class TypeTag, class DiscretizationMethod>
 class PorousMediumFluxVariablesCacheFillerImplementation;
 
 /*!
@@ -45,11 +45,11 @@ class PorousMediumFluxVariablesCacheFillerImplementation;
  * Helps filling the flux variables cache depending several policies
  */
 template<class TypeTag>
-using PorousMediumFluxVariablesCacheFiller = PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
+using PorousMediumFluxVariablesCacheFiller = PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod>;
 
 //! Specialization of the flux variables cache filler for the cell centered tpfa method
 template<class TypeTag>
-class PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, DiscretizationMethod::cctpfa>
+class PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 {
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -188,7 +188,7 @@ private:
 
 //! Specialization of the flux variables cache filler for the cell centered mpfa method
 template<class TypeTag>
-class PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, DiscretizationMethod::ccmpfa>
+class PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 {
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
