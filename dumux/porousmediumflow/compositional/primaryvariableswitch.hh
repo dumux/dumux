@@ -49,6 +49,7 @@ public:
     template<typename... Args> bool update(Args&&...) { return false; }
     template<typename... Args> void updateSwitchedVolVars(Args&&...) {}
     template<typename... Args> void updateSwitchedFluxVarsCache(Args&&...) {}
+    template<typename... Args> void updateDirichletConstraints(Args&&...) {}
 };
 
 /*!
