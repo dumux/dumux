@@ -245,9 +245,6 @@ public:
     const IntersectionMapper& intersectionMapper() const
     { return intersectionMapper_; }
 
-    SmallLocalIndexType firstLocalScvfIdxOfScv(const GridIndexType eIdx, const SmallLocalIndexType localScvIdx) const
-    { return scvfOfScvInfo_[eIdx][localScvIdx]; }
-
     //! If a d.o.f. is on a periodic boundary
     bool dofOnPeriodicBoundary(GridIndexType dofIdx) const
     { return periodicFaceMap_.count(dofIdx); }
@@ -284,7 +281,6 @@ private:
         scvIndicesOfElement_.resize(numElements);
         scvfIndicesOfElement_.resize(numElements);
         hasBoundaryScvf_.resize(numElements, false);
-        scvfOfScvInfo_.resize(numElements);
         // on frontal + maybe boundary per face and  2*(dim-1) laterals per frontal
         lateralOrthogonalScvf_.resize(numElements*(2*dim*(2 + 2*(dim-1))));
 
@@ -385,7 +381,6 @@ private:
             const auto eIdx = this->elementMapper().index(element);
             const auto& globalScvIndices = scvIndicesOfElement_[eIdx];
             const auto& globalScvfIndices = scvfIndicesOfElement_[eIdx];
-            scvfOfScvInfo_[eIdx].reserve(maxNumScvfsPerScv);
 
             SmallLocalIndexType localScvIdx = 0; // also corresponds to local element face index (one scv per face)
             SmallLocalIndexType localScvfIdx = 0;
@@ -395,9 +390,6 @@ private:
                 const auto localOppositeScvIdx = geometryHelper.localOppositeIdx(localScvIdx);
                 const auto& intersectionGeometry = intersection.geometry();
                 const auto& elementGeometry = element.geometry();
-
-                // store the local index of the first scvf corresponding to the scv on the current intersection
-                scvfOfScvInfo_[eIdx].push_back(localScvfIdx);
 
                 // store neighbor Element Index for higher order dofs
                 auto neighborElementIndex = -1;
@@ -566,7 +558,6 @@ private:
     GridIndexType numBoundaryScvf_;
     GridIndexType outSideBoundaryVolVarIdx_;
     std::vector<bool> hasBoundaryScvf_;
-    std::vector<std::vector<SmallLocalIndexType>> scvfOfScvInfo_;
 
     std::vector<GridIndexType> lateralOrthogonalScvf_;
     std::vector<std::array<GridIndexType, numScvsPerElement>> scvIndicesOfElement_;
