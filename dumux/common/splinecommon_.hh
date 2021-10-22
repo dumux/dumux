@@ -347,8 +347,8 @@ protected:
             int idx = i;
             if (reverse)
                 idx = numSamples - i - 1;
-            destX[i] = (*it)[0];
-            destY[i] = (*it)[1];
+            destX[idx] = (*it)[0];
+            destY[idx] = (*it)[1];
         }
     }
 
@@ -382,8 +382,8 @@ protected:
             int idx = i;
             if (reverse)
                 idx = numSamples - i - 1;
-            destX[i] = std::get<0>(*it);
-            destY[i] = std::get<1>(*it);
+            destX[idx] = std::get<0>(*it);
+            destY[idx] = std::get<1>(*it);
         }
     }
 
