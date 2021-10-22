@@ -310,9 +310,11 @@ protected:
 
         // copy sample points, make sure that the first x value is
         // smaller than the last one
+        bool reverse = (srcX[0] > srcX[numSamples - 1]);
+
         for (int i = 0; i < numSamples; ++i) {
             int idx = i;
-            if (srcX[0] > srcX[numSamples - 1])
+            if (reverse)
                 idx = numSamples - i - 1;
             destX[i] = srcX[idx];
             destY[i] = srcY[idx];
@@ -337,9 +339,7 @@ protected:
         // find out whether the x values are in reverse order
         ListIterator it = srcBegin;
         ++it;
-        bool reverse = false;
-        if ((*srcBegin)[0] > (*it)[0])
-            reverse = true;
+        bool reverse = ((*srcBegin)[0] > (*it)[0]);
         --it;
 
         // loop over all sampling points
@@ -374,9 +374,7 @@ protected:
         // find out whether the x values are in reverse order
         ListIterator it = srcBegin;
         ++it;
-        bool reverse = false;
-        if (std::get<0>(*srcBegin) > std::get<0>(*it))
-            reverse = true;
+        bool reverse = (std::get<0>(*srcBegin) > std::get<0>(*it));
         --it;
 
         // loop over all sampling points
