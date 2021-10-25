@@ -136,7 +136,7 @@ public:
      *                    will be extended beyond its range by
      *                    straight lines, if false calling extrapolate
      *                    for \f$ x \not [x_{min}, x_{max}]\f$ will
-     *                    cause a failed assertation.
+     *                    cause a failed assertion.
      */
     Scalar eval(Scalar x, bool extrapolate=false) const
     {
@@ -169,7 +169,7 @@ public:
      *                    will be extended beyond its range by
      *                    straight lines, if false calling extrapolate
      *                    for \f$ x \not [x_{min}, x_{max}]\f$ will
-     *                    cause a failed assertation.
+     *                    cause a failed assertion.
 
      */
      Scalar evalDerivative(Scalar x, bool extrapolate=false) const
@@ -187,7 +187,7 @@ public:
 
     /*!
      * \brief Find the intersections of the spline with a cubic
-     *        polynomial in the whole intervall, throws
+     *        polynomial in the whole interval, throws
      *        Dune::MathError exception if there is more or less than
      *        one solution.
      */
@@ -198,7 +198,7 @@ public:
 
     /*!
      * \brief Find the intersections of the spline with a cubic
-     *        polynomial in a sub-intervall of the spline, throws
+     *        polynomial in a sub-interval of the spline, throws
      *        Dune::MathError exception if there is more or less than
      *        one solution.
      */
@@ -230,7 +230,7 @@ public:
 
     /*!
      * \brief Returns 1 if the spline is monotonically increasing, -1
-     *        if the spline is mononously decreasing and 0 if the
+     *        if the spline is monotonously decreasing and 0 if the
      *        spline is not monotonous in the interval (x0, x1).
      *
      * In the corner case where the whole spline is flat, it returns
@@ -267,7 +267,7 @@ public:
             return monotonic_(i, x0, x1);
         }
 
-        // make sure that the segments which are completly in the
+        // make sure that the segments which are completely in the
         // interval [x0, x1] all exhibit the same monotonicity.
         int iEnd = segmentIdx_(x1);
         int r = monotonic_(i, x0, x_(1));
@@ -310,15 +310,23 @@ protected:
 
         // copy sample points, make sure that the first x value is
         // smaller than the last one
+        bool reverse = (srcX[0] > srcX[numSamples - 1]);
+
         for (int i = 0; i < numSamples; ++i) {
             int idx = i;
-            if (srcX[0] > srcX[numSamples - 1])
+            if (reverse)
                 idx = numSamples - i - 1;
             destX[i] = srcX[idx];
             destY[i] = srcY[idx];
         }
     }
 
+    /*!
+     * \brief Set the sampling point vectors.
+     *
+     * This takes care that the order of the x-values is ascending,
+     * although the input must be ordered already!
+     */
     template <class DestVector, class ListIterator>
     void assignFromArrayList_(DestVector &destX,
                               DestVector &destY,
@@ -328,12 +336,10 @@ protected:
     {
         assert(numSamples >= 2);
 
-        // find out wether the x values are in reverse order
+        // find out whether the x values are in reverse order
         ListIterator it = srcBegin;
         ++it;
-        bool reverse = false;
-        if ((*srcBegin)[0] > (*it)[0])
-            reverse = true;
+        bool reverse = ((*srcBegin)[0] > (*it)[0]);
         --it;
 
         // loop over all sampling points
@@ -341,8 +347,8 @@ protected:
             int idx = i;
             if (reverse)
                 idx = numSamples - i - 1;
-            destX[i] = (*it)[0];
-            destY[i] = (*it)[1];
+            destX[idx] = (*it)[0];
+            destY[idx] = (*it)[1];
         }
     }
 
@@ -365,12 +371,10 @@ protected:
         // copy sample points, make sure that the first x value is
         // smaller than the last one
 
-        // find out wether the x values are in reverse order
+        // find out whether the x values are in reverse order
         ListIterator it = srcBegin;
         ++it;
-        bool reverse = false;
-        if (std::get<0>(*srcBegin) > std::get<0>(*it))
-            reverse = true;
+        bool reverse = (std::get<0>(*srcBegin) > std::get<0>(*it));
         --it;
 
         // loop over all sampling points
@@ -378,8 +382,8 @@ protected:
             int idx = i;
             if (reverse)
                 idx = numSamples - i - 1;
-            destX[i] = std::get<0>(*it);
-            destY[i] = std::get<1>(*it);
+            destX[idx] = std::get<0>(*it);
+            destY[idx] = std::get<1>(*it);
         }
     }
 
@@ -599,10 +603,10 @@ protected:
         x0 = max(x_(segIdx), x0);
         x1 = max(x_(segIdx+1), x1);
 
-        // filter the intersections outside of the specified intervall
+        // filter the intersections outside of the specified interval
         int k = 0;
         for (int j = 0; j < n; ++j) {
-            sol[j] += x_(segIdx); // add the offset of the intervall. For details see Stoer
+            sol[j] += x_(segIdx); // add the offset of the interval. For details see Stoer
             if (x0 <= sol[j] && sol[j] <= x1) {
                 sol[k] = sol[j];
                 ++k;
