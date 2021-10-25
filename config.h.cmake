@@ -70,6 +70,12 @@
 /* Define to 1 if quadmath was found */
 #cmakedefine HAVE_QUAD 1
 
+/* Set if Kokkos was found */
+#cmakedefine HAVE_KOKKOS ENABLE_KOKKOS
+
+/* Set if OpenMP was found */
+#cmakedefine HAVE_OPENMP ENABLE_OPENMP
+
 /* end dumux
    Everything below here will be overwritten
 */
