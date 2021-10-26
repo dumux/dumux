@@ -105,12 +105,7 @@ public:
     //! for (auto&& scv : scvs(fvGeometry))
     friend inline auto
     scvs(const FaceCenteredStaggeredFVElementGeometry& fvGeometry)
-    {
-        using IndexContainerType = std::decay_t<decltype(fvGeometry.scvIndices_())>;
-        using ScvIterator = Dumux::ScvIterator<SubControlVolume, IndexContainerType, ThisType>;
-        return Dune::IteratorRange<ScvIterator>(ScvIterator(fvGeometry.scvIndices_().begin(), fvGeometry),
-                                                ScvIterator(fvGeometry.scvIndices_().end(), fvGeometry));
-    }
+    { return fvGeometry.gridGeometry().scvs(fvGeometry); }
 
     //! iterator range for sub control volumes faces. Iterates over
     //! all scvfs of the bound element.

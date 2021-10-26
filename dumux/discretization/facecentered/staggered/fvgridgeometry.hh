@@ -199,6 +199,15 @@ public:
     const SubControlVolume& scv(GridIndexType scvIdx) const
     { return scvs_[scvIdx]; }
 
+    //! Iterator range for sub control volumes. Iterates over
+    //! all scvs of the element-local fvGeometry.
+    auto scvs(const LocalView& fvGeometry) const
+    {
+        const auto begin = scvs_.cbegin() + numScvsPerElement*fvGeometry.elementIndex();
+        const auto end = begin + numScvsPerElement;
+        return Dune::IteratorRange<decltype(begin)>(begin, end);
+    }
+
     //! Get a sub control volume face with a global scvf index
     const SubControlVolumeFace& scvf(GridIndexType scvfIdx) const
     { return scvfs_[scvfIdx]; }
