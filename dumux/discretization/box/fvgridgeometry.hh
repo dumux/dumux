@@ -97,8 +97,9 @@ class BoxFVGridGeometry<Scalar, GV, true, Traits>
                                              typename Traits::SubControlVolumeFace>;
 
 public:
-    //! export discretization method
-    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::box;
+    //! export the discretization method this geometry belongs to
+    using DiscretizationMethod = DiscretizationMethods::Box;
+    static constexpr DiscretizationMethod discMethod{};
 
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, true>;
@@ -385,8 +386,9 @@ class BoxFVGridGeometry<Scalar, GV, false, Traits>
     using CoordScalar = typename GV::ctype;
 
 public:
-    //! export discretization method
-    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::box;
+    //! export the discretization method this geometry belongs to
+    using DiscretizationMethod = DiscretizationMethods::Box;
+    static constexpr DiscretizationMethod discMethod{};
 
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, false>;
