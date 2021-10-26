@@ -361,9 +361,11 @@ private:
         for (const auto& element : elements(this->gridView()))
         {
             const auto eIdx = this->elementMapper().index(element);
-            const auto& globalScvIndices = scvIndicesOfElement_[eIdx];
             const auto& globalScvfIndices = scvfIndicesOfElement_[eIdx];
             scvfOfScvInfo_[eIdx].reserve(globalScvfIndices.size());
+
+            auto globalScvIdx = [&](const auto elementIdx, const auto localScvIdx)
+            { return numScvsPerElement*elementIdx + localScvIdx; };
 
             SmallLocalIndexType localScvIdx = 0; // also corresponds to local element face index (one scv per face)
             SmallLocalIndexType localScvfIdx = 0;
@@ -406,7 +408,7 @@ private:
                 // the sub control volume
                 scvs_.emplace_back(elementGeometry,
                                    intersectionGeometry,
-                                   globalScvIndices[localScvIdx],
+                                   globalScvIdx(eIdx, localScvIdx),
                                    localScvIdx,
                                    dofIndex,
                                    Dumux::normalAxis(intersection.centerUnitOuterNormal()),
@@ -416,7 +418,7 @@ private:
                 // the frontal sub control volume face at the element center
                 scvfs_.emplace_back(elementGeometry,
                                     intersectionGeometry,
-                                    std::array{globalScvIndices[localScvIdx], globalScvIndices[localOppositeScvIdx]},
+                                    std::array{globalScvIdx(eIdx, localScvIdx), globalScvIdx(eIdx, localOppositeScvIdx)},
                                     localScvfIdx,
                                     globalScvfIndices[localScvfIdx],
                                     intersection.centerUnitOuterNormal(),
@@ -447,14 +449,13 @@ private:
                             {
                                 const auto parallelElemIdx = this->elementMapper().index(lateralIntersection.outside());
                                 const auto localOutsideScvIdx = geometryHelper.localFaceIndexInOtherElement(localScvIdx);
-                                const auto& globalScvIndicesOfNeighborElement = scvIndicesOfElement_[parallelElemIdx];
-                                return globalScvIndicesOfNeighborElement[localOutsideScvIdx];
+                                return globalScvIdx(parallelElemIdx, localOutsideScvIdx);
                             }
                             else
                                 return numInteriorScvs + outSideBoundaryVolVarIdx_++;
                         }();
 
-                        return std::array{globalScvIndices[localScvIdx], globalOutsideScvIdx};
+                        return std::array{globalScvIdx(eIdx, localScvIdx), globalOutsideScvIdx};
                     }();
 
                     scvfs_.emplace_back(elementGeometry,
@@ -490,7 +491,7 @@ private:
                     // the frontal sub control volume face at the boundary
                     scvfs_.emplace_back(element.geometry(),
                                         intersection.geometry(),
-                                        std::array{globalScvIndices[localScvIdx], globalScvIndices[localScvIdx]}, // TODO outside boundary, periodic, parallel?
+                                        std::array{globalScvIdx(eIdx, localScvIdx), globalScvIdx(eIdx, localScvIdx)}, // TODO outside boundary, periodic, parallel?
                                         localScvfIdx,
                                         globalScvfIndices[localScvfIdx],
                                         intersection.centerUnitOuterNormal(),
