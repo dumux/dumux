@@ -2,7 +2,7 @@ dune_symlink_to_source_files(FILES "params.input" "periodic.dgf")
 dumux_add_test(NAME test_ff_navierstokes_periodic
                LABELS freeflow navierstokes
                SOURCES main.cc
-               CMAKE_GUARD HAVE_UMFPACK
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-spgrid_FOUND )"
                COMPILE_DEFINITIONS UPWINDSCHEMEORDER=1
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS      --script fuzzy --zeroThreshold {"velocity_liq \(m/s\)":1e-12}

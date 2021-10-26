@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <optional>
 #include <dune/common/math.hh>
 #include <dumux/common/optionalscalar.hh>
 #include <dumux/common/spline.hh>
