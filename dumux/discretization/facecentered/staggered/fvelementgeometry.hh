@@ -138,9 +138,7 @@ public:
 
     //! number of sub control volumes in this fv element geometry
     std::size_t numScv() const
-    {
-        return scvIndices_().size();
-    }
+    { return numScvsPerElement; }
 
     //! number of sub control volumes in this fv element geometry
     std::size_t numScvf() const
@@ -200,11 +198,6 @@ public:
     { return *elementPtr_; }
 
 private:
-
-    const auto& scvIndices_() const
-    {
-        return gridGeometry().scvIndicesOfElement(eIdx_);
-    }
 
     const auto& scvfIndices_() const
     {

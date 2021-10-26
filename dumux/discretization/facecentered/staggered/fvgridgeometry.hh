@@ -212,10 +212,6 @@ public:
     const SubControlVolumeFace& scvf(GridIndexType scvfIdx) const
     { return scvfs_[scvfIdx]; }
 
-    //! Get the global sub control volume indices of an element
-    const std::array<GridIndexType, numScvsPerElement>& scvIndicesOfElement(GridIndexType eIdx) const
-    { return scvIndicesOfElement_[eIdx]; }
-
     //! Get the global sub control volume face indices of an element
     const std::vector<GridIndexType>& scvfIndicesOfElement(GridIndexType eIdx) const
     { return scvfIndicesOfElement_[eIdx]; }
@@ -261,14 +257,12 @@ private:
         // clear containers (necessary after grid refinement)
         scvs_.clear();
         scvfs_.clear();
-        scvIndicesOfElement_.clear();
         scvfIndicesOfElement_.clear();
         lateralOrthogonalScvf_.clear();
         intersectionMapper_.update(this->gridView());
 
         // determine size of containers
         const auto numElements = this->gridView().size(0);
-        scvIndicesOfElement_.resize(numElements);
         scvfIndicesOfElement_.resize(numElements);
         hasBoundaryScvf_.resize(numElements, false);
         scvfOfScvInfo_.resize(numElements);
@@ -288,9 +282,6 @@ private:
         {
             assert(numScvsPerElement == element.subEntities(1));
 
-            // the element-wise index sets for finite volume geometry
-            std::array<GridIndexType, numScvsPerElement> scvsIndexSet;
-
             std::vector<GridIndexType> scvfsIndexSet;
             scvfsIndexSet.reserve(1/*frontal in element*/ + 1 /*frontal on boundary*/ + numLateralScvfsPerScv);
 
@@ -303,8 +294,6 @@ private:
             SmallLocalIndexType localScvIdx = 0;
             for (const auto& intersection : intersections(this->gridView(), element))
             {
-                scvsIndexSet[localScvIdx] = scvIdx++; // one scv per element face
-
                 // the frontal sub control volume face at the element center
                 scvfsIndexSet.push_back(scvfIdx++);
 
@@ -344,7 +333,6 @@ private:
 
             // Save the scv indices belonging to this element to build up fv element geometries fast
             const auto eIdx = this->elementMapper().index(element);
-            scvIndicesOfElement_[eIdx] = std::move(scvsIndexSet);
             scvfIndicesOfElement_[eIdx] = std::move(scvfsIndexSet);
 
             // create the bi-directional map
@@ -361,7 +349,7 @@ private:
         }
 
          // reserve memory
-        const auto numInteriorScvs = scvIdx;
+        const auto numInteriorScvs = numElements*numScvsPerElement;
         scvs_.reserve(numInteriorScvs);
         scvfs_.reserve((numScvsPerElement/*one interior frontal scvf per scv*/
                         +numLateralScvfsPerElement)*numElements + numBoundaryScv_);
@@ -548,7 +536,6 @@ private:
     std::vector<std::vector<SmallLocalIndexType>> scvfOfScvInfo_;
 
     std::vector<GridIndexType> lateralOrthogonalScvf_;
-    std::vector<std::array<GridIndexType, numScvsPerElement>> scvIndicesOfElement_;
     std::vector<std::vector<GridIndexType>> scvfIndicesOfElement_;
 
     // a map for periodic boundary vertices
