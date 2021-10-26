@@ -57,7 +57,7 @@ class NewtonConvergenceWriter : public ConvergenceWriterInterface<SolutionVector
     static constexpr auto numEq = SolutionVector::block_type::dimension;
     using Scalar = typename SolutionVector::block_type::value_type;
 
-    static_assert(GridGeometry::discMethod != DiscretizationMethod::staggered,
+    static_assert(GridGeometry::discMethod != DiscretizationMethods::staggered,
                   "This convergence writer does not work for the staggered method, use the StaggeredNewtonConvergenceWriter instead");
 public:
     /*!
@@ -72,7 +72,7 @@ public:
     {
         resize();
 
-        if (GridGeometry::discMethod == DiscretizationMethod::box)
+        if (GridGeometry::discMethod == DiscretizationMethods::box)
         {
             for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
             {

@@ -73,7 +73,7 @@ class TubesTestProblem : public PorousMediumFlowProblem<TypeTag>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    enum { isBox = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box };
+    enum { isBox = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethods::box };
 
 public:
     TubesTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)

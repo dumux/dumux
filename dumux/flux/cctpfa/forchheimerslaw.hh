@@ -39,7 +39,7 @@
 namespace Dumux {
 
 // forward declarations
-template<class TypeTag, class ForchheimerVelocity, DiscretizationMethod discMethod>
+template<class TypeTag, class ForchheimerVelocity, class DiscretizationMethod>
 class ForchheimersLawImplementation;
 
 /*!
@@ -60,7 +60,7 @@ class CCTpfaForchheimersLaw;
  * \note Forchheimer's law is specialized for network and surface grids (i.e. if grid dim < dimWorld)
  */
 template <class TypeTag, class ForchheimerVelocity>
-class ForchheimersLawImplementation<TypeTag, ForchheimerVelocity, DiscretizationMethod::cctpfa>
+class ForchheimersLawImplementation<TypeTag, ForchheimerVelocity, DiscretizationMethods::CCTpfa>
 : public CCTpfaForchheimersLaw<GetPropType<TypeTag, Properties::Scalar>,
                                GetPropType<TypeTag, Properties::GridGeometry>,
                                ForchheimerVelocity,
@@ -157,8 +157,9 @@ class CCTpfaForchheimersLaw<ScalarType, GridGeometry, ForchheimerVelocity, /*isN
     //! state the scalar type of the law
     using Scalar = ScalarType;
 
+    using DiscretizationMethod = DiscretizationMethods::CCTpfa;
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
+    static constexpr DiscretizationMethod discMethod{};
 
     //! state the type for the corresponding cache
     using Cache = TpfaForchheimersLawCache<ThisType, GridGeometry>;

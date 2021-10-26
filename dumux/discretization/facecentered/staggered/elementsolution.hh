@@ -129,7 +129,7 @@ private:
 template<class Element, class SolutionVector, class GridGeometry>
 auto elementSolution(const Element& element, const SolutionVector& sol, const GridGeometry& gg)
 -> std::enable_if_t<
-    GridGeometry::discMethod == DiscretizationMethod::fcstaggered,
+    GridGeometry::discMethod == DiscretizationMethods::fcstaggered,
     FaceCenteredStaggeredElementSolution<
         typename GridGeometry::LocalView,
         std::decay_t<decltype(std::declval<SolutionVector>()[0])>
@@ -144,7 +144,7 @@ auto elementSolution(const Element& element, const SolutionVector& sol, const Gr
 template<class Element, class ElementVolumeVariables, class FVElementGeometry>
 auto elementSolution(const Element& element, const ElementVolumeVariables& elemVolVars, const FVElementGeometry& gg)
 -> std::enable_if_t<
-    FVElementGeometry::GridGeometry::discMethod == DiscretizationMethod::fcstaggered,
+    FVElementGeometry::GridGeometry::discMethod == DiscretizationMethods::fcstaggered,
     FaceCenteredStaggeredElementSolution<
         FVElementGeometry,
         typename ElementVolumeVariables::VolumeVariables::PrimaryVariables
@@ -160,7 +160,7 @@ auto elementSolution(const Element& element, const ElementVolumeVariables& elemV
 template<class FVElementGeometry, class PrimaryVariables>
 auto elementSolution(PrimaryVariables&& priVars)
 -> std::enable_if_t<
-    FVElementGeometry::GridGeometry::discMethod == DiscretizationMethod::fcstaggered,
+    FVElementGeometry::GridGeometry::discMethod == DiscretizationMethods::fcstaggered,
     FaceCenteredStaggeredElementSolution<
         FVElementGeometry,
         std::decay_t<PrimaryVariables>

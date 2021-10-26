@@ -184,7 +184,7 @@ public:
                                      const SolutionVector& sol)
     {
         if constexpr (GridVariables::GridFluxVariablesCache::cachingEnabled
-                      && GridVariables::GridGeometry::discMethod != DiscretizationMethod::box)
+                      && GridVariables::GridGeometry::discMethod != DiscretizationMethods::box)
         {
             // update the flux variables if global caching is enabled
             const auto dofIdxGlobal = gridGeometry.dofMapper().index(element);
@@ -210,7 +210,7 @@ public:
                                     GridVariables& gridVariables,
                                     SolutionVector& sol)
     {
-        if constexpr (GridVariables::GridGeometry::discMethod == DiscretizationMethod::box || Problem::enableInternalDirichletConstraints())
+        if constexpr (GridVariables::GridGeometry::discMethod == DiscretizationMethods::box || Problem::enableInternalDirichletConstraints())
         {
             std::vector<bool> stateChanged(sol.size(), false);
             std::size_t countChanged = 0;
@@ -232,7 +232,7 @@ public:
                     if (stateChanged[dofIdx])
                         continue;
 
-                    if constexpr (GridVariables::GridGeometry::discMethod == DiscretizationMethod::box)
+                    if constexpr (GridVariables::GridGeometry::discMethod == DiscretizationMethods::box)
                     {
                         if (gridGeometry.dofOnBoundary(dofIdx))
                         {
@@ -328,7 +328,7 @@ protected:
                            const Problem& problem)
     {
         // Dofs can be only constrained when using the Box method or when imposing internal Dirichlet constraints
-        if constexpr (Geometry::GridGeometry::discMethod != DiscretizationMethod::box && !Problem::enableInternalDirichletConstraints())
+        if constexpr (Geometry::GridGeometry::discMethod != DiscretizationMethods::box && !Problem::enableInternalDirichletConstraints())
             return false;
 
         // check for internally constrained Dofs
@@ -347,7 +347,7 @@ protected:
             return true;
 
         // check for a Dirichlet BC when using the Box method
-        if constexpr (Geometry::GridGeometry::discMethod == DiscretizationMethod::box)
+        if constexpr (Geometry::GridGeometry::discMethod == DiscretizationMethods::box)
         {
             if (!fvGeometry.hasBoundaryScvf())
                 return false;

@@ -70,7 +70,7 @@ public:
 };
 
 //! the partial reassembler engine specialized for discretization methods
-template<class Assembler, DiscretizationMethod discMethod>
+template<class Assembler, class DiscretizationMethod>
 class PartialReassemblerEngine
 {
 public:
@@ -98,7 +98,7 @@ public:
  * \brief The partial reassembler engine specialized for the box method
  */
 template<class Assembler>
-class PartialReassemblerEngine<Assembler, DiscretizationMethod::box>
+class PartialReassemblerEngine<Assembler, DiscretizationMethods::Box>
 {
     using Scalar = typename Assembler::Scalar;
     using GridGeometry = typename Assembler::GridGeometry;
@@ -310,7 +310,7 @@ private:
  * \brief The partial reassembler engine specialized for the cellcentered TPFA method
  */
 template<class Assembler>
-class PartialReassemblerEngine<Assembler, DiscretizationMethod::cctpfa>
+class PartialReassemblerEngine<Assembler, DiscretizationMethods::CCTpfa>
 {
     using Scalar = typename Assembler::Scalar;
     using GridGeometry = typename Assembler::GridGeometry;
@@ -407,10 +407,10 @@ private:
  * \brief The partial reassembler engine specialized for the cellcentered MPFA method
  */
 template<class Assembler>
-class PartialReassemblerEngine<Assembler, DiscretizationMethod::ccmpfa>
-: public PartialReassemblerEngine<Assembler, DiscretizationMethod::cctpfa>
+class PartialReassemblerEngine<Assembler, DiscretizationMethods::CCMpfa>
+: public PartialReassemblerEngine<Assembler, DiscretizationMethods::CCTpfa>
 {
-    using ParentType = PartialReassemblerEngine<Assembler, DiscretizationMethod::cctpfa>;
+    using ParentType = PartialReassemblerEngine<Assembler, DiscretizationMethods::CCTpfa>;
 public:
     using ParentType::ParentType;
 };
@@ -435,8 +435,8 @@ class PartialReassembler
     using JacobianMatrix = typename Assembler::JacobianMatrix;
     using VertexMapper = typename GridGeometry::VertexMapper;
 
-    static constexpr DiscretizationMethod discMethod = GridGeometry::discMethod;
-    using Engine = PartialReassemblerEngine<Assembler, discMethod>;
+    using DiscretizationMethod = typename GridGeometry::DiscretizationMethod;
+    using Engine = PartialReassemblerEngine<Assembler, DiscretizationMethod>;
 
 public:
 

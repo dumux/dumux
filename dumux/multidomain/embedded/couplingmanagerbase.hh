@@ -102,7 +102,7 @@ class EmbeddedCouplingManagerBase
 
     template<std::size_t id>
     static constexpr bool isBox()
-    { return GridGeometry<id>::discMethod == DiscretizationMethod::box; }
+    { return GridGeometry<id>::discMethod == DiscretizationMethods::box; }
 
     using GlobalPosition = typename Element<bulkIdx>::Geometry::GlobalCoordinate;
     using GlueType = MultiDomainGlue<GridView<bulkIdx>, GridView<lowDimIdx>, ElementMapper<bulkIdx>, ElementMapper<lowDimIdx>>;
@@ -463,7 +463,7 @@ protected:
     template<std::size_t i, class FVGG, class Geometry, class ShapeValues>
     void getShapeValues(Dune::index_constant<i> domainI, const FVGG& gridGeometry, const Geometry& geo, const GlobalPosition& globalPos, ShapeValues& shapeValues)
     {
-        if constexpr (FVGG::discMethod == DiscretizationMethod::box)
+        if constexpr (FVGG::discMethod == DiscretizationMethods::box)
         {
             const auto ipLocal = geo.local(globalPos);
             const auto& localBasis = this->problem(domainI).gridGeometry().feCache().get(geo.type()).localBasis();

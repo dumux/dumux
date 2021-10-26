@@ -35,7 +35,7 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
+template<class TypeTag, class DiscretizationMethod>
 class PorousMediumFluxVariablesCacheFillerImplementation;
 
 /*!
@@ -45,11 +45,11 @@ class PorousMediumFluxVariablesCacheFillerImplementation;
  * Helps filling the flux variables cache depending several policies
  */
 template<class TypeTag>
-using PorousMediumFluxVariablesCacheFiller = PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
+using PorousMediumFluxVariablesCacheFiller = PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod>;
 
 //! Specialization of the flux variables cache filler for the cell centered tpfa method
 template<class TypeTag>
-class PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, DiscretizationMethod::cctpfa>
+class PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 {
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -188,7 +188,7 @@ private:
 
 //! Specialization of the flux variables cache filler for the cell centered mpfa method
 template<class TypeTag>
-class PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, DiscretizationMethod::ccmpfa>
+class PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 {
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -531,7 +531,7 @@ private:
         if constexpr (advectionEnabled)
         {
             using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
-            if constexpr (AdvectionType::discMethod == DiscretizationMethod::ccmpfa)
+            if constexpr (AdvectionType::discMethod == DiscretizationMethods::ccmpfa)
                 prepareAdvectionHandle_(iv, handle, forceUpdate);
         }
 
@@ -539,7 +539,7 @@ private:
         if constexpr (diffusionEnabled)
         {
             using DiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
-            if constexpr (DiffusionType::discMethod == DiscretizationMethod::ccmpfa)
+            if constexpr (DiffusionType::discMethod == DiscretizationMethods::ccmpfa)
                 prepareDiffusionHandles_(iv, handle, forceUpdate);
         }
 
@@ -547,7 +547,7 @@ private:
         if constexpr (heatConductionEnabled)
         {
             using HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>;
-            if constexpr (HeatConductionType::discMethod == DiscretizationMethod::ccmpfa)
+            if constexpr (HeatConductionType::discMethod == DiscretizationMethods::ccmpfa)
                 prepareHeatConductionHandle_(iv, handle, forceUpdate);
         }
     }

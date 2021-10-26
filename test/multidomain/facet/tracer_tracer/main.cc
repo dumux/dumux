@@ -68,7 +68,7 @@ auto makeBulkFVGridGeometry(const GridManager& gridManager,
     * we have to create additional faces on interior boundaries, which are not
     * created in the standard scheme.
     */
-    if constexpr (BulkGridGeometry::discMethod == Dumux::DiscretizationMethod::box)
+    if constexpr (BulkGridGeometry::discMethod == Dumux::DiscretizationMethods::box)
     {
         using BulkFacetGridAdapter = Dumux::CodimOneGridAdapter<typename GridManager::Embeddings>;
         BulkFacetGridAdapter facetGridAdapter(gridManager.getEmbeddings());
@@ -91,7 +91,7 @@ void computeVolumeFluxes(Storage& volumeFluxes,
                          const Sol& sol,
                          Dune::index_constant<id> domainId)
 {
-    static constexpr bool isBox = GV::GridGeometry::discMethod == Dumux::DiscretizationMethod::box;
+    static constexpr bool isBox = GV::GridGeometry::discMethod == Dumux::DiscretizationMethods::box;
 
     // resize depending on the scheme
     if (!isBox) volumeFluxes.assign(gridGeometry.numScvf(), {0.0});
@@ -242,7 +242,7 @@ int main(int argc, char** argv)
         lowDimGridVariables->init(x[lowDimId]);
 
         // intialize the vtk output module
-        const auto bulkDM = BulkFVGridGeometry::discMethod == DiscretizationMethod::box ? Dune::VTK::nonconforming : Dune::VTK::conforming;
+        const auto bulkDM = BulkFVGridGeometry::discMethod == DiscretizationMethods::box ? Dune::VTK::nonconforming : Dune::VTK::conforming;
         using BulkSolutionVector = std::decay_t<decltype(x[bulkId])>;
         using LowDimSolutionVector = std::decay_t<decltype(x[lowDimId])>;
         VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, x[bulkId], bulkProblem->name(), "Bulk.OneP", bulkDM);
@@ -336,7 +336,7 @@ int main(int argc, char** argv)
     lowDimGridVariables->init(x[lowDimId]);
 
     // intialize the vtk output modules
-    const auto bulkDM = BulkFVGridGeometry::discMethod == DiscretizationMethod::box ? Dune::VTK::nonconforming : Dune::VTK::conforming;
+    const auto bulkDM = BulkFVGridGeometry::discMethod == DiscretizationMethods::box ? Dune::VTK::nonconforming : Dune::VTK::conforming;
     using BulkSolutionVector = std::decay_t<decltype(x[bulkId])>;
     using LowDimSolutionVector = std::decay_t<decltype(x[lowDimId])>;
     VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, x[bulkId], bulkProblem->name(), "Bulk.Tracer", bulkDM);

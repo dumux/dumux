@@ -136,7 +136,7 @@ private:
     using SST = GetPropType<TypeTag, Properties::SolidState>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
-    static constexpr auto DM = GetPropType<TypeTag, Properties::GridGeometry>::discMethod;
+    using DM = typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod;
     static constexpr bool enableIS = getPropValue<TypeTag, Properties::EnableBoxInterfaceSolver>();
     // class used for scv-wise reconstruction of nonwetting phase saturations
     using SR = TwoPScvSaturationReconstruction<DM, enableIS>;
@@ -212,7 +212,7 @@ private:
     using SST = GetPropType<TypeTag, Properties::SolidState>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
-    static constexpr auto DM = GetPropType<TypeTag, Properties::GridGeometry>::discMethod;
+    using DM = typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod;
     static constexpr bool enableIS = getPropValue<TypeTag, Properties::EnableBoxInterfaceSolver>();
     // class used for scv-wise reconstruction of nonwetting phase saturations
     using SR = TwoPScvSaturationReconstruction<DM, enableIS>;

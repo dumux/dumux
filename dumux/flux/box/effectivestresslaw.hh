@@ -39,7 +39,7 @@ namespace Dumux {
  * \tparam GridGeometry the finite volume grid geometry
  */
 template<class StressType, class GridGeometry>
-class EffectiveStressLaw<StressType, GridGeometry, DiscretizationMethod::box>
+class EffectiveStressLaw<StressType, GridGeometry, typename GridGeometry::DiscretizationMethod>
 {
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -51,7 +51,7 @@ class EffectiveStressLaw<StressType, GridGeometry, DiscretizationMethod::box>
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
     static_assert(dim == dimWorld, "EffectiveStressLaw not implemented for network/surface grids");
-    static_assert(StressType::discMethod == DiscretizationMethod::box, "The provided stress type must be specialized for the box scheme");
+    static_assert(StressType::discMethod == DiscretizationMethods::box, "The provided stress type must be specialized for the box scheme");
 
 public:
     //! export the type used for scalar values
@@ -61,7 +61,10 @@ public:
     //! export the type used for force vectors
     using ForceVector = typename StressType::ForceVector;
     //! state the discretization method this implementation belongs to
-    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::box;
+
+    using DiscretizationMethod = DiscretizationMethods::Box;
+    // state the discretization method this implementation belongs to
+    static constexpr DiscretizationMethod discMethod{};
 
     /*!
      * \brief Computes the force (in Newton) acting on a sub-control volume face.

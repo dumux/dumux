@@ -48,7 +48,7 @@ namespace Dumux {
  * \tparam lowDimDomainId The domain id of the lower-dimensional problem
  */
 template<class MDTraits, class CouplingMapper, std::size_t bulkDomainId, std::size_t lowDimDomainId>
-class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainId, DiscretizationMethod::box>
+class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainId, DiscretizationMethods::Box>
 : public virtual CouplingManager< MDTraits >
 {
     using ParentType = CouplingManager< MDTraits >;
@@ -90,7 +90,7 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     static constexpr auto bulkGridId = CouplingMapper::template gridId<bulkDim>();
     static constexpr auto lowDimGridId = CouplingMapper::template gridId<lowDimDim>();
 
-    static constexpr bool lowDimUsesBox = GridGeometry<lowDimId>::discMethod == DiscretizationMethod::box;
+    static constexpr bool lowDimUsesBox = GridGeometry<lowDimId>::discMethod == DiscretizationMethods::box;
 
     /*!
      * \brief The coupling context of the bulk domain. Contains all data of the lower-

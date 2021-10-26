@@ -301,7 +301,7 @@ public:
             // split the source values equally among all concerned entities
             source.setEmbeddings(entities.size()*source.embeddings());
 
-            if constexpr (GridGeometry::discMethod == DiscretizationMethod::box)
+            if constexpr (GridGeometry::discMethod == DiscretizationMethods::box)
             {
                 // loop over all concerned elements
                 auto fvGeometry = localView(gridGeometry);

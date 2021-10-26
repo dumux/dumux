@@ -142,7 +142,7 @@ public:
         temperatureHigh_        = getParam<Scalar>("FluidSystem.TemperatureHigh");
         name_                   = getParam<std::string>("Problem.Name");
 
-        unsigned int codim = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box ? dim : 0;
+        unsigned int codim = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethods::box ? dim : 0;
         permeability_.resize(gridGeometry->gridView().size(codim));
 
         FluidSystem::init(/*Tmin=*/temperatureLow_,

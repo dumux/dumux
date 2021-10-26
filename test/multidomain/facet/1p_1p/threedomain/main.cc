@@ -59,7 +59,7 @@ namespace Dumux {
 template< class GridGeometry,
           class GridManager,
           class LowDimGridView,
-          std::enable_if_t<GridGeometry::discMethod == Dumux::DiscretizationMethod::box, int> = 0 >
+          std::enable_if_t<GridGeometry::discMethod == Dumux::DiscretizationMethods::box, int> = 0 >
 void updateFVGridGeometry(GridGeometry& gridGeometry,
                           const GridManager& gridManager,
                           const LowDimGridView& lowDimGridView)
@@ -76,7 +76,7 @@ void updateFVGridGeometry(GridGeometry& gridGeometry,
 template< class GridGeometry,
           class GridManager,
           class LowDimGridView,
-          std::enable_if_t<GridGeometry::discMethod != Dumux::DiscretizationMethod::box, int> = 0 >
+          std::enable_if_t<GridGeometry::discMethod != Dumux::DiscretizationMethods::box, int> = 0 >
 void updateFVGridGeometry(GridGeometry& gridGeometry,
                           const GridManager& gridManager,
                           const LowDimGridView& lowDimGridView)

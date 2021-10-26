@@ -33,7 +33,7 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
+template<class TypeTag, class DiscretizationMethod>
 class FouriersLawNonEquilibriumImplementation;
 
 /*!
@@ -41,9 +41,9 @@ class FouriersLawNonEquilibriumImplementation;
  * \brief Fourier's law for cell-centered finite volume schemes with two-point flux approximation
  */
 template <class TypeTag>
-class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::cctpfa>
+class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 {
-    using Implementation = FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::cctpfa>;
+    using Implementation = FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethods::CCTpfa>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -66,8 +66,9 @@ class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::cct
     static constexpr auto sPhaseIdx = ModelTraits::numFluidPhases();
 
 public:
+    using DiscretizationMethod = DiscretizationMethods::CCTpfa;
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
+    static constexpr DiscretizationMethod discMethod{};
 
     using Cache = FluxVariablesCaching::EmptyHeatConductionCache;
 

@@ -62,10 +62,10 @@ public:
         const auto& stokesFvGridGeometry = couplingManager.problem(CouplingManager::stokesIdx).gridGeometry();
         const auto& darcyFvGridGeometry = couplingManager.problem(CouplingManager::darcyIdx).gridGeometry();
 
-        static_assert(std::decay_t<decltype(stokesFvGridGeometry)>::discMethod == DiscretizationMethod::staggered,
+        static_assert(std::decay_t<decltype(stokesFvGridGeometry)>::discMethod == DiscretizationMethods::staggered,
                       "The free flow domain must use the staggered discretization");
 
-        static_assert(std::decay_t<decltype(darcyFvGridGeometry)>::discMethod == DiscretizationMethod::cctpfa,
+        static_assert(std::decay_t<decltype(darcyFvGridGeometry)>::discMethod == DiscretizationMethods::cctpfa,
                       "The Darcy domain must use the CCTpfa discretization");
 
         isCoupledDarcyScvf_.resize(darcyFvGridGeometry.numScvf(), false);

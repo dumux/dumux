@@ -37,11 +37,11 @@ namespace Dumux {
  */
 
 // forward declaration
-template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>
+template<class TypeTag, class BaseLocalResidual, class DiscretizationMethod>
 class LowReKEpsilonResidualImpl;
 
 template<class TypeTag, class BaseLocalResidual>
-class LowReKEpsilonResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethod::staggered>
+class LowReKEpsilonResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethods::Staggered>
 : public BaseLocalResidual
 {
     using ParentType = BaseLocalResidual;

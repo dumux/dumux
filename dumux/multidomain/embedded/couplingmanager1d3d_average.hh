@@ -87,7 +87,7 @@ class Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Average>
 
     template<std::size_t id>
     static constexpr bool isBox()
-    { return GridGeometry<id>::discMethod == DiscretizationMethod::box; }
+    { return GridGeometry<id>::discMethod == DiscretizationMethods::box; }
 
 
 public:

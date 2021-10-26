@@ -75,7 +75,7 @@ class ElectroChemistry
     };
 
     using GridView = typename GridGeometry::GridView;
-    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethods::box;
     using GlobalPosition = typename Dune::FieldVector<typename GridView::ctype, GridView::dimensionworld>;
 
 public:

@@ -100,7 +100,7 @@ struct IsSameFluidSystem<FS, FS>
 };
 
 // forward declaration
-template <class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
+template <class TypeTag, class DiscretizationMethod, ReferenceSystemFormulation referenceSystem>
 class FicksLawImplementation;
 
 /*!
@@ -116,8 +116,8 @@ struct IsFicksLaw : public std::false_type {};
  * \brief This structs indicates that Fick's law is used for diffusion.
  * \tparam DiffLaw The diffusion law.
  */
-template<class T, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
-struct IsFicksLaw<FicksLawImplementation<T, discMethod, referenceSystem>> : public std::true_type {};
+template<class T, class DiscretizationMethod, ReferenceSystemFormulation referenceSystem>
+struct IsFicksLaw<FicksLawImplementation<T, DiscretizationMethod, referenceSystem>> : public std::true_type {};
 
 /*!
  * \ingroup StokesDarcyCoupling
@@ -194,11 +194,11 @@ struct IndexHelper<stokesIdx, darcyIdx, FFFS, true>
 };
 
 //! forward declare
-template <class TypeTag, DiscretizationMethod discMethod>
+template <class TypeTag, class DiscretizationMethod>
 class DarcysLawImplementation;
 
 //! forward declare
-template <class TypeTag, DiscretizationMethod discMethod>
+template <class TypeTag, class DiscretizationMethod>
 class ForchheimersLawImplementation;
 
 
@@ -241,8 +241,8 @@ class StokesDarcyCouplingDataImplementationBase
     static constexpr auto darcyIdx = CouplingManager::darcyIdx;
 
     using AdvectionType = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::AdvectionType>;
-    using DarcysLaw = DarcysLawImplementation<SubDomainTypeTag<darcyIdx>, GridGeometry<darcyIdx>::discMethod>;
-    using ForchheimersLaw = ForchheimersLawImplementation<SubDomainTypeTag<darcyIdx>, GridGeometry<darcyIdx>::discMethod>;
+    using DarcysLaw = DarcysLawImplementation<SubDomainTypeTag<darcyIdx>, typename GridGeometry<darcyIdx>::DiscretizationMethod>;
+    using ForchheimersLaw = ForchheimersLawImplementation<SubDomainTypeTag<darcyIdx>, typename GridGeometry<darcyIdx>::DiscretizationMethod>;
 
     static constexpr bool adapterUsed = ModelTraits<darcyIdx>::numFluidPhases() > 1;
     using IndexHelper = Dumux::IndexHelper<stokesIdx, darcyIdx, FluidSystem<stokesIdx>, adapterUsed>;

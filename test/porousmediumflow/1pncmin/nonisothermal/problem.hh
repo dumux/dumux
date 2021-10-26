@@ -117,7 +117,7 @@ public:
         boundaryVaporMoleFrac_ = getParam<Scalar>("Problem.BoundaryMoleFraction");
         boundaryTemperature_ = getParam<Scalar>("Problem.BoundaryTemperature");
 
-        unsigned int codim = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box ? dim : 0;
+        unsigned int codim = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethods::box ? dim : 0;
         permeability_.resize(gridGeometry->gridView().size(codim));
         porosity_.resize(gridGeometry->gridView().size(codim));
         reactionRate_.resize(gridGeometry->gridView().size(codim));
