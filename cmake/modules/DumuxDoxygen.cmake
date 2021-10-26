@@ -1,6 +1,8 @@
 # add_dumux_doxgen_target
 #
 # make sure, that the doxygen links to todo list, bibliography, etc. are correct
+include_guard(GLOBAL)
+
 MACRO (add_dumux_doxygen_target)
   if(DOXYGEN_FOUND)
     add_doxygen_target()

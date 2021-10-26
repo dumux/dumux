@@ -199,6 +199,7 @@
 #       Example: Write CMAKE_GUARD dune-foo_FOUND if you want to set a variable
 #       that is only true if the module dune-foo has been found.
 #
+include_guard(GLOBAL)
 
 # Note: This forwards to dune_add_test but enables another layer in case we need to support
 # future Dune features with older Dune versions supported by Dumux

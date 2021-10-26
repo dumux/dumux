@@ -22,6 +22,7 @@
 #   for the gmsh library in the given path before inspecting
 #   system paths.
 #
+include_guard(GLOBAL)
 
 # look for header files, only at positions given by the user
 find_program(GMSH_EXECUTABLE
