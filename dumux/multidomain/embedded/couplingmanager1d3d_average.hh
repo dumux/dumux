@@ -135,7 +135,7 @@ public:
                                          JacobianMatrixDiagBlock& A,
                                          GridVariables& gridVariables)
     {
-        extendedSourceStencil_.evalAdditionalDomainDerivatives(*this, domainI, localAssemblerI, this->curSol(), A, gridVariables);
+        extendedSourceStencil_.evalAdditionalDomainDerivatives(*this, domainI, localAssemblerI, A, gridVariables);
     }
 
     /* \brief Compute integration point point sources and associated data
