@@ -46,6 +46,7 @@ set(HAVE_GMSH ${gmsh_FOUND})
 set(GMSH_EXECUTABLE ${GMSH_EXECUTABLE})
 
 # text for feature summary
+include(FeatureSummary)
 set_package_properties("Gmsh" PROPERTIES
   DESCRIPTION "Meshing tool"
   PURPOSE "Generate structured and unstructured grids")

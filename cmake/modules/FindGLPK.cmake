@@ -101,5 +101,6 @@ if(GLPK_FOUND)
 endif()
 
 # text for feature summary
+include(FeatureSummary)
 set_package_properties("GLPK" PROPERTIES
   DESCRIPTION "GNU Linear Programming Kit")
