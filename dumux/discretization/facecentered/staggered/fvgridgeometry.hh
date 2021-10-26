@@ -231,9 +231,6 @@ public:
     const IntersectionMapper& intersectionMapper() const
     { return intersectionMapper_; }
 
-    SmallLocalIndexType firstLocalScvfIdxOfScv(const GridIndexType eIdx, const SmallLocalIndexType localScvIdx) const
-    { return scvfOfScvInfo_[eIdx][localScvIdx]; }
-
     //! If a d.o.f. is on a periodic boundary
     bool dofOnPeriodicBoundary(GridIndexType dofIdx) const
     { return periodicFaceMap_.count(dofIdx); }
@@ -265,7 +262,6 @@ private:
         const auto numElements = this->gridView().size(0);
         scvfIndicesOfElement_.resize(numElements);
         hasBoundaryScvf_.resize(numElements, false);
-        scvfOfScvInfo_.resize(numElements);
         // on frontal + maybe boundary per face and  2*(dim-1) laterals per frontal
         lateralOrthogonalScvf_.resize(numElements*(2*dim*(2 + 2*(dim-1))));
 
@@ -358,7 +354,6 @@ private:
         {
             const auto eIdx = this->elementMapper().index(element);
             const auto& globalScvfIndices = scvfIndicesOfElement_[eIdx];
-            scvfOfScvInfo_[eIdx].reserve(globalScvfIndices.size());
 
             auto getGlobalScvIdx = [&](const auto elementIdx, const auto localScvIdx)
             { return numScvsPerElement*elementIdx + localScvIdx; };
@@ -373,8 +368,6 @@ private:
                 const auto& intersectionGeometry = intersection.geometry();
                 const auto& elementGeometry = element.geometry();
 
-                // store the local index of the first scvf corresponding to the scv on the current intersection
-                scvfOfScvInfo_[eIdx].push_back(localScvfIdx);
 
                 // handle periodic boundaries
                 if (onPeriodicBoundary_(intersection))
@@ -531,7 +524,6 @@ private:
     GridIndexType numBoundaryScvf_;
     GridIndexType outSideBoundaryVolVarIdx_;
     std::vector<bool> hasBoundaryScvf_;
-    std::vector<std::vector<SmallLocalIndexType>> scvfOfScvInfo_;
 
     std::vector<GridIndexType> lateralOrthogonalScvf_;
     std::vector<std::vector<GridIndexType>> scvfIndicesOfElement_;
