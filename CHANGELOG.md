@@ -12,6 +12,14 @@ Differences Between DuMu<sup>x</sup> 3.5 and DuMu<sup>x</sup> 3.4
 
 ### Improvements and Enhancements
 
+- __Discretization tags__: We introduced tags in the namespace `DiscretizationMethods` (with s) for each discretization method.
+  These tags replace the `enum class DiscretizationMethod`. Tags have several advantages over the enum. Each tag is a named type
+  (see `dumux/common/tag.hh`) so they can for example be used in tag dispatch. Moreover specializing with tags is extensible.
+  For example we specialize the template `DarcysLawImplementation` for each discretization. When using the enum no new discretization
+  methods can be added without changing `enum class DiscretizationMethod`. With tags you can make your own tag and specialize a
+  class for that tag. This means new discretization methods can be developed in a modular fashion. The introduction of tags
+  involves a couple of non-backwards-compatible changes, mostly in implementation classes that shouldn't affect most users (see below).
+
 - __Geometry__:
     - Add implementation of sphere and bounding sphere approximation algorithms
     - Add distance queries for Point->BoundingBoxTree
@@ -48,10 +56,14 @@ for (const auto& element : elements(gridGeometry.gridView()))
 - __Coupling managers__: The coupling managers now store shared_ptrs of the subdomain solutions to be able to manage memory outside. There is compatibility interface that is deprecated but it won't allow for assignments
   of the form `this->curSol() = sol;` since curSol returns a MultiTypeVector of references. If assignment is needed for some reason, use a hybrid loop over all subdomain indices.
 - __ShallowWaterViscousFlux__: The template argument `PrimaryVariables` has been removed without deprecation. It was not needed.
+- __Discretization tags__: The following classes have changed from a template argument of type `DiscretizationMethod` (an `enum`) to
+  class type template arguments and are now specialized for tags: `TwoPScvSaturationReconstruction`, `ScvfToScvBoundaryTypes`, `ProblemTraits`, `FluxStencil`, `EffectiveStressLaw`, `HookesLaw`, `FacetCouplingManager`, `FacetCouplingMapper`. Moreover this affects the following helper classes: `IsFicksLaw`, `CheckOverlapSize`, `PartialReassemblerEngine`, `SubDomainAssemblerType`. Finally, this change has been made for many implementation classes. These should not have been used directly anyway, so we do not explicitly list them here. Examples are `DarcysLawImplementation`, `LinearSolverTraitsImpl`. See !2844 for more details.
+  If you face a compiler error from these changes, contact us. Most like the solution is to simply try replacing occurrences of `DiscretizationMethod` with the corresponding tag from `DiscretizationMethods`, or types `DiscretizationMethod` in template arguments by generic `class`.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.5:
 
 - `update()` functions of grid geometries, which do not receive the `gridView`, are deprecated, use `update(gridView)` instead.
+- `enum class DiscretizationMethod` and associated functions, to be replaced by tags
 
 ### New experimental features (possibly subject to backwards-incompatible changes in the future)
 
