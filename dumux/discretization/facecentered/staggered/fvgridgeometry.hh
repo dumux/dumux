@@ -276,7 +276,6 @@ private:
         GeometryHelper geometryHelper(this->gridView());
 
         // get the global scv indices first
-        GridIndexType scvIdx = 0;
         GridIndexType scvfIdx = 0;
         for (const auto& element : elements(this->gridView()))
         {
@@ -350,7 +349,7 @@ private:
 
          // reserve memory
         const auto numInteriorScvs = numElements*numScvsPerElement;
-        scvs_.reserve(numInteriorScvs);
+        scvs_.resize(numInteriorScvs);
         scvfs_.reserve((numScvsPerElement/*one interior frontal scvf per scv*/
                         +numLateralScvfsPerElement)*numElements + numBoundaryScv_);
 
@@ -361,13 +360,14 @@ private:
             const auto& globalScvfIndices = scvfIndicesOfElement_[eIdx];
             scvfOfScvInfo_[eIdx].reserve(globalScvfIndices.size());
 
-            auto globalScvIdx = [&](const auto elementIdx, const auto localScvIdx)
+            auto getGlobalScvIdx = [&](const auto elementIdx, const auto localScvIdx)
             { return numScvsPerElement*elementIdx + localScvIdx; };
 
-            SmallLocalIndexType localScvIdx = 0; // also corresponds to local element face index (one scv per face)
             SmallLocalIndexType localScvfIdx = 0;
             for (const auto& intersection : intersections(this->gridView(), element))
             {
+                const auto localScvIdx = intersection.indexInInside();
+                const auto globalScvIdx = getGlobalScvIdx(eIdx, localScvIdx);
                 const auto dofIndex = intersectionMapper().globalIntersectionIndex(element, localScvIdx);
                 const auto localOppositeScvIdx = geometryHelper.localOppositeIdx(localScvIdx);
                 const auto& intersectionGeometry = intersection.geometry();
@@ -403,19 +403,19 @@ private:
                 }
 
                 // the sub control volume
-                scvs_.emplace_back(elementGeometry,
-                                   intersectionGeometry,
-                                   globalScvIdx(eIdx, localScvIdx),
-                                   localScvIdx,
-                                   dofIndex,
-                                   Dumux::normalAxis(intersection.centerUnitOuterNormal()),
-                                   this->elementMapper().index(element),
-                                   onDomainBoundary_(intersection));
+                scvs_[globalScvIdx] = SubControlVolume(elementGeometry,
+                                                       intersectionGeometry,
+                                                       globalScvIdx,
+                                                       localScvIdx,
+                                                       dofIndex,
+                                                       Dumux::normalAxis(intersection.centerUnitOuterNormal()),
+                                                       this->elementMapper().index(element),
+                                                       onDomainBoundary_(intersection));
 
                 // the frontal sub control volume face at the element center
                 scvfs_.emplace_back(elementGeometry,
                                     intersectionGeometry,
-                                    std::array{globalScvIdx(eIdx, localScvIdx), globalScvIdx(eIdx, localOppositeScvIdx)},
+                                    std::array{globalScvIdx, getGlobalScvIdx(eIdx, localOppositeScvIdx)},
                                     localScvfIdx,
                                     globalScvfIndices[localScvfIdx],
                                     intersection.centerUnitOuterNormal(),
@@ -446,13 +446,13 @@ private:
                             {
                                 const auto parallelElemIdx = this->elementMapper().index(lateralIntersection.outside());
                                 const auto localOutsideScvIdx = geometryHelper.localFaceIndexInOtherElement(localScvIdx);
-                                return globalScvIdx(parallelElemIdx, localOutsideScvIdx);
+                                return getGlobalScvIdx(parallelElemIdx, localOutsideScvIdx);
                             }
                             else
                                 return numInteriorScvs + outSideBoundaryVolVarIdx_++;
                         }();
 
-                        return std::array{globalScvIdx(eIdx, localScvIdx), globalOutsideScvIdx};
+                        return std::array{globalScvIdx, globalOutsideScvIdx};
                     }();
 
                     scvfs_.emplace_back(elementGeometry,
@@ -473,22 +473,22 @@ private:
                     }
                 } // end loop over lateral facets
 
-                ++localScvIdx;
             } // end first loop over intersections
 
             // do a second loop over all intersections to add frontal boundary faces
-            localScvIdx = 0;
             for (const auto& intersection : intersections(this->gridView(), element))
             {
                 // the frontal sub control volume face at a domain boundary (coincides with element face)
                 if (onDomainBoundary_(intersection))
                 {
+                    const auto localScvIdx = intersection.indexInInside();
+                    const auto globalScvIdx = getGlobalScvIdx(eIdx, localScvIdx);
                     ++numBoundaryScvf_;
 
                     // the frontal sub control volume face at the boundary
                     scvfs_.emplace_back(element.geometry(),
                                         intersection.geometry(),
-                                        std::array{globalScvIdx(eIdx, localScvIdx), globalScvIdx(eIdx, localScvIdx)}, // TODO outside boundary, periodic, parallel?
+                                        std::array{globalScvIdx, globalScvIdx}, // TODO outside boundary, periodic, parallel?
                                         localScvfIdx,
                                         globalScvfIndices[localScvfIdx],
                                         intersection.centerUnitOuterNormal(),
@@ -497,8 +497,6 @@ private:
                     ++localScvfIdx;
                     hasBoundaryScvf_[eIdx] = true;
                 }
-
-                ++localScvIdx;
             }
         }
 
