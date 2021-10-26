@@ -900,7 +900,7 @@ public:
             return false;
 
         // the candidate intersection points
-        std::vector<Point> points; points.reserve(6);
+        std::vector<Point> points; points.reserve(8);
 
         // add polygon1 corners that are inside polygon2
         for (int i = 0; i < geo1.corners(); ++i)
@@ -928,16 +928,24 @@ public:
                 for (int i = 0; i < referenceElement1.size(dim1-1); ++i)
                 {
                     const auto localEdgeGeom1 = referenceElement1.template geometry<dim1-1>(i);
-                    const auto edge1 = SegGeometry( Dune::GeometryTypes::line,
-                                                    std::vector<Point>( {geo1.global(localEdgeGeom1.corner(0)),
-                                                                         geo1.global(localEdgeGeom1.corner(1))} ));
+                    const auto edge1 = SegGeometry(
+                        Dune::GeometryTypes::line,
+                        std::vector<Point>({
+                            geo1.global(localEdgeGeom1.corner(0)),
+                            geo1.global(localEdgeGeom1.corner(1))
+                        })
+                    );
 
                     for (int j = 0; j < referenceElement2.size(dim2-1); ++j)
                     {
                         const auto localEdgeGeom2 = referenceElement2.template geometry<dim2-1>(j);
-                        const auto edge2 = SegGeometry( Dune::GeometryTypes::line,
-                                                        std::vector<Point>( {geo2.global(localEdgeGeom2.corner(0)),
-                                                                             geo2.global(localEdgeGeom2.corner(1))} ));
+                        const auto edge2 = SegGeometry(
+                            Dune::GeometryTypes::line,
+                            std::vector<Point>({
+                                geo2.global(localEdgeGeom2.corner(0)),
+                                geo2.global(localEdgeGeom2.corner(1))
+                            })
+                        );
 
                         using EdgeTest = GeometryIntersection<SegGeometry, SegGeometry, PointPolicy>;
                         typename EdgeTest::Intersection edgeIntersection;
@@ -952,7 +960,7 @@ public:
             return false;
 
         // remove duplicates
-        std::sort(points.begin(), points.end(), [&eps](const auto& a, const auto& b) -> bool
+        std::sort(points.begin(), points.end(), [&eps] (const auto& a, const auto& b) -> bool
         {
             using std::abs;
             return (abs(a[0]-b[0]) > eps ? a[0] < b[0]
@@ -960,12 +968,12 @@ public:
                                                                  : (a[2] < b[2])));
         });
 
-        auto removeIt = std::unique(points.begin(), points.end(),
-                                    [&eps] (const auto& a, const auto&b) {
-                                        return (b-a).two_norm() < eps;
-                                    });
-
-        points.erase(removeIt, points.end());
+        const auto squaredEps = eps*eps;
+        points.erase(std::unique(
+            points.begin(), points.end(),
+            [&squaredEps] (const auto& a, const auto&b) { return (b-a).two_norm2() < squaredEps; }),
+            points.end()
+        );
 
         // return false if we don't have at least three unique points
         if (points.size() < 3)
@@ -1127,18 +1135,20 @@ public:
 
         // remove duplicates
         const auto eps = (geo1.corner(0) - geo1.corner(1)).two_norm()*eps_;
-        std::sort(points.begin(), points.end(), [&eps](const auto& a, const auto& b) -> bool
+        const auto notEqual = [&eps] (auto a, auto b) { using std::abs; return abs(b-a) > eps; };
+        std::sort(points.begin(), points.end(), [&notEqual](const auto& a, const auto& b) -> bool
         {
-            using std::abs;
-            return (abs(a[0]-b[0]) > eps ? a[0] < b[0] : (abs(a[1]-b[1]) > eps ? a[1] < b[1] : (a[2] < b[2])));
+            return (notEqual(a[0], b[0]) ? a[0] < b[0]
+                                         : (notEqual(a[1], b[1]) ? a[1] < b[1]
+                                                                 : (a[2] < b[2])));
         });
 
-        auto removeIt = std::unique(points.begin(), points.end(), [&eps](const auto& a, const auto&b)
-        {
-            return (b-a).two_norm() < eps;
-        });
-
-        points.erase(removeIt, points.end());
+        const auto squaredEps = eps*eps;
+        points.erase(std::unique(
+            points.begin(), points.end(),
+            [&squaredEps] (const auto& a, const auto&b) { return (b-a).two_norm2() < squaredEps; }),
+            points.end()
+        );
 
         // return false if we don't have more than three unique points
         if (points.size() < 3) return false;
@@ -1542,7 +1552,7 @@ public:
         }
 
         // in-plane normal vector on v1
-        auto v1Normal = crossProduct(v1, n);
+        const auto v1Normal = crossProduct(v1, n);
 
         // intersection point on v2 in local coords
         const auto t2 = - 1.0*(ac*v1Normal) / (v2*v1Normal);
@@ -1551,15 +1561,8 @@ public:
         if (t2 < -1.0*eps_ || t2 > 1.0 + eps_)
             return false;
 
-        // compute global coordinates
-        auto intersectionPoint = geo2.global(t2);
-
-        // check if point lies on v1
-        if (intersectsPointGeometry(intersectionPoint, geo1))
-        {
-            intersection = std::move(intersectionPoint);
-            return true;
-        }
+        if (auto ip = geo2.global(t2); intersectsPointGeometry(ip, geo1))
+        { intersection = std::move(ip); return true; }
 
         return false;
     }
