@@ -10,6 +10,7 @@
 # NLOPT_INCLUDE_DIRS    Path to the NLOPT include dirs.
 # NLOPT_LIBRARIES       Name to the NLOPT library.
 #
+include_guard(GLOBAL)
 
 # look for header files, only at positions given by the user
 find_path(NLOPT_INCLUDE_DIR
