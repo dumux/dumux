@@ -143,11 +143,11 @@ try:
         p3d, p1d, q, h = get_errors(result=result)
         hR = np.array(h)/radius
         axes[0].plot(hR, p3d, "--" + marker[exec], label=label[exec])
-        axes[0].set_title(r"$\vert\vert p^\mathbb{M}_{t,e} -p^\mathbb{M}_t \vert\vert_2$")
+        axes[0].set_title(r"$|| p^\mathbb{M}_{t,e} -p^\mathbb{M}_t ||_2$")
         axes[1].plot(hR, p1d, "--" + marker[exec], label=label[exec])
-        axes[1].set_title(r"$\vert\vert p_{v,e} - p_v \vert\vert_2$")
+        axes[1].set_title(r"$|| p_{v,e} - p_v ||_2$")
         axes[2].plot(hR, q, "--" + marker[exec], label=label[exec])
-        axes[2].set_title(r"$\vert\vert q_e - q \vert\vert_2$")
+        axes[2].set_title(r"$|| q_e - q ||_2$")
 
     x = np.linspace(np.min(hR), np.max(hR), 10)
     axes[0].plot(x, np.power(x*radius*0.4, 1.5), "--k", label=r"$\Delta$ 1.5")
