@@ -152,7 +152,7 @@ void registerGridGeometry(pybind11::handle scope, pybind11::class_<GG, Options..
     cls.def_property_readonly("gridView", &GG::gridView);
 
     cls.def_property_readonly_static("discMethod", [](const pybind11::object&){
-        return toString(GG::discMethod);
+        return GG::discMethod.name();
     });
 
     cls.def_property_readonly("localView", [](GG& self){
