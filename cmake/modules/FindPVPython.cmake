@@ -22,6 +22,7 @@
 #   for the pvpython library in the given path before inspecting
 #   system paths.
 #
+include_guard(GLOBAL)
 
 # look for header files, only at positions given by the user
 find_program(PVPYTHON_EXECUTABLE
@@ -45,6 +46,7 @@ set(HAVE_PVPYTHON ${PVPYTHON_FOUND})
 set(PVPYTHON_EXECUTABLE ${PVPYTHON_EXECUTABLE})
 
 # text for feature summary
+include(FeatureSummary)
 set_package_properties("PVPython" PROPERTIES
   DESCRIPTION "ParaView python client"
   PURPOSE "Extract data over line or time in post-processing")

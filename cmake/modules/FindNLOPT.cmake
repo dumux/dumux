@@ -10,6 +10,7 @@
 # NLOPT_INCLUDE_DIRS    Path to the NLOPT include dirs.
 # NLOPT_LIBRARIES       Name to the NLOPT library.
 #
+include_guard(GLOBAL)
 
 # look for header files, only at positions given by the user
 find_path(NLOPT_INCLUDE_DIR
@@ -101,5 +102,6 @@ if(NLOPT_FOUND)
 endif()
 
 # text for feature summary
+include(FeatureSummary)
 set_package_properties("NLOPT" PROPERTIES
   DESCRIPTION "Library for nonlinear optimization")

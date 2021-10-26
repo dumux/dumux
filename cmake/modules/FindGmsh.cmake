@@ -22,6 +22,7 @@
 #   for the gmsh library in the given path before inspecting
 #   system paths.
 #
+include_guard(GLOBAL)
 
 # look for header files, only at positions given by the user
 find_program(GMSH_EXECUTABLE
@@ -35,16 +36,17 @@ find_program(GMSH_EXECUTABLE
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
-  "gmsh"
+  "Gmsh"
   DEFAULT_MSG
   GMSH_EXECUTABLE
 )
 
 # set macros for config.h
-set(HAVE_GMSH ${gmsh_FOUND})
+set(HAVE_GMSH ${Gmsh_FOUND})
 set(GMSH_EXECUTABLE ${GMSH_EXECUTABLE})
 
 # text for feature summary
+include(FeatureSummary)
 set_package_properties("Gmsh" PROPERTIES
   DESCRIPTION "Meshing tool"
   PURPOSE "Generate structured and unstructured grids")

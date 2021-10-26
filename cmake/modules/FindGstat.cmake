@@ -22,6 +22,7 @@
 #   for the gstat library in the given path before inspecting
 #   system paths.
 #
+include_guard(GLOBAL)
 
 # look for header files, only at positions given by the user
 find_program(GSTAT_EXECUTABLE
@@ -45,6 +46,7 @@ set(HAVE_GSTAT ${GSTAT_FOUND})
 set(GSTAT_EXECUTABLE ${GSTAT_EXECUTABLE})
 
 # text for feature summary
+include(FeatureSummary)
 set_package_properties("Gstat" PROPERTIES
   DESCRIPTION "Geostatistic library"
   PURPOSE "Generate random permeability and porosity fields")

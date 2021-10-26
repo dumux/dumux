@@ -10,6 +10,7 @@
 # GLPK_INCLUDE_DIRS    Path to the GLPK include dirs.
 # GLPK_LIBRARIES       Name to the GLPK library.
 #
+include_guard(GLOBAL)
 
 # look for header files, only at positions given by the user
 find_path(GLPK_INCLUDE_DIR
@@ -100,5 +101,6 @@ if(GLPK_FOUND)
 endif()
 
 # text for feature summary
+include(FeatureSummary)
 set_package_properties("GLPK" PROPERTIES
   DESCRIPTION "GNU Linear Programming Kit")
