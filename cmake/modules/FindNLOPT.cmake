@@ -102,5 +102,6 @@ if(NLOPT_FOUND)
 endif()
 
 # text for feature summary
+include(FeatureSummary)
 set_package_properties("NLOPT" PROPERTIES
   DESCRIPTION "Library for nonlinear optimization")

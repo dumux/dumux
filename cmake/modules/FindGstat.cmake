@@ -46,6 +46,7 @@ set(HAVE_GSTAT ${GSTAT_FOUND})
 set(GSTAT_EXECUTABLE ${GSTAT_EXECUTABLE})
 
 # text for feature summary
+include(FeatureSummary)
 set_package_properties("Gstat" PROPERTIES
   DESCRIPTION "Geostatistic library"
   PURPOSE "Generate random permeability and porosity fields")
