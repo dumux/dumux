@@ -94,15 +94,15 @@ public:
      *       term depends on a non-local average of a quantity of the same domain
      * \note This is the same for box and cc
      */
-    template<std::size_t i, class LocalAssemblerI, class SolutionVector, class JacobianMatrixDiagBlock, class GridVariables>
+    template<std::size_t i, class LocalAssemblerI, class JacobianMatrixDiagBlock, class GridVariables>
     void evalAdditionalDomainDerivatives(CouplingManager& couplingManager,
                                          Dune::index_constant<i> domainI,
                                          const LocalAssemblerI& localAssemblerI,
-                                         const SolutionVector& curSol,
                                          JacobianMatrixDiagBlock& A,
                                          GridVariables& gridVariables) const
     {
-        constexpr auto numEq = std::decay_t<decltype(curSol[domainI][0])>::size();
+        const auto& curSolI = couplingManager.curSol(domainI);
+        constexpr auto numEq = std::decay_t<decltype(curSolI[0])>::size();
         const auto& elementI = localAssemblerI.element();
 
         // only do something if we have an extended stencil
@@ -116,7 +116,7 @@ public:
         for (const auto dofIndex : extendedSourceStencil_(couplingManager, domainI, elementI))
         {
             auto partialDerivs = origResidual;
-            const auto origPriVars = curSol[domainI][dofIndex];
+            const auto origPriVars = curSolI[dofIndex];
 
             // calculate derivatives w.r.t to the privars at the dof at hand
             for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
@@ -135,7 +135,7 @@ public:
 
                 // derive the residuals numerically
                 static const int numDiffMethod = getParam<int>("Assembly.NumericDifferenceMethod");
-                NumericDifferentiation::partialDerivative(evalResiduals, curSol[domainI][dofIndex][pvIdx],
+                NumericDifferentiation::partialDerivative(evalResiduals, curSolI[dofIndex][pvIdx],
                                                           partialDerivs, origResidual, numDiffMethod);
 
                 // update the global stiffness matrix with the current partial derivatives
@@ -157,6 +157,21 @@ public:
         }
     }
 
+    /*!
+     * \brief Deprecated overload
+     */
+    template<std::size_t i, class LocalAssemblerI, class SolutionVector, class JacobianMatrixDiagBlock, class GridVariables>
+    [[deprecated("Use signature without curSol. Will be removed after release 3.5")]]
+    void evalAdditionalDomainDerivatives(CouplingManager& couplingManager,
+                                         Dune::index_constant<i> domainI,
+                                         const LocalAssemblerI& localAssemblerI,
+                                         const SolutionVector& curSol,
+                                         JacobianMatrixDiagBlock& A,
+                                         GridVariables& gridVariables) const
+    {
+        evalAdditionalDomainDerivatives(couplingManager, domainI, localAssemblerI, A, gridVariables);
+    }
+
     //! clear the internal data
     void clear() { sourceStencils_.clear(); }
 
@@ -175,7 +190,7 @@ private:
             if (auto stencil = sourceStencils_.find(bulkElementIdx); stencil != sourceStencils_.end())
                 return stencil->second;
         }
-        
+
         return couplingManager.emptyStencil(domainId);
     }
 

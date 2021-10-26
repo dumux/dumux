@@ -419,7 +419,26 @@ public:
     const CouplingStencil<i>& emptyStencil(Dune::index_constant<i> dom) const
     { return std::get<i>(emptyStencil_); }
 
+    /*!
+     * \brief the solution vector of the subproblem
+     * \param domainIdx The domain index
+     * \note in case of numeric differentiation the solution vector always carries the deflected solution
+     */
+    template<std::size_t i>
+    auto& curSol(Dune::index_constant<i> domainIdx)
+    { return ParentType::curSol(domainIdx); }
+
+    /*!
+     * \brief the solution vector of the subproblem
+     * \param domainIdx The domain index
+     * \note in case of numeric differentiation the solution vector always carries the deflected solution
+     */
+    template<std::size_t i>
+    const auto& curSol(Dune::index_constant<i> domainIdx) const
+    { return ParentType::curSol(domainIdx); }
+
 protected:
+    using ParentType::curSol;
 
     //! computes the vertex indices per element for the box method
     template<std::size_t id>
