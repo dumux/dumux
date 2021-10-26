@@ -960,7 +960,7 @@ public:
             return false;
 
         // remove duplicates
-        std::sort(points.begin(), points.end(), [&eps] (const auto& a, const auto& b) -> bool
+        std::sort(points.begin(), points.end(), [eps] (const auto& a, const auto& b) -> bool
         {
             using std::abs;
             return (abs(a[0]-b[0]) > eps ? a[0] < b[0]
@@ -971,7 +971,7 @@ public:
         const auto squaredEps = eps*eps;
         points.erase(std::unique(
             points.begin(), points.end(),
-            [&squaredEps] (const auto& a, const auto&b) { return (b-a).two_norm2() < squaredEps; }),
+            [squaredEps] (const auto& a, const auto&b) { return (b-a).two_norm2() < squaredEps; }),
             points.end()
         );
 
@@ -1135,8 +1135,8 @@ public:
 
         // remove duplicates
         const auto eps = (geo1.corner(0) - geo1.corner(1)).two_norm()*eps_;
-        const auto notEqual = [&eps] (auto a, auto b) { using std::abs; return abs(b-a) > eps; };
-        std::sort(points.begin(), points.end(), [&notEqual](const auto& a, const auto& b) -> bool
+        const auto notEqual = [eps] (auto a, auto b) { using std::abs; return abs(b-a) > eps; };
+        std::sort(points.begin(), points.end(), [notEqual](const auto& a, const auto& b) -> bool
         {
             return (notEqual(a[0], b[0]) ? a[0] < b[0]
                                          : (notEqual(a[1], b[1]) ? a[1] < b[1]
@@ -1146,7 +1146,7 @@ public:
         const auto squaredEps = eps*eps;
         points.erase(std::unique(
             points.begin(), points.end(),
-            [&squaredEps] (const auto& a, const auto&b) { return (b-a).two_norm2() < squaredEps; }),
+            [squaredEps] (const auto& a, const auto&b) { return (b-a).two_norm2() < squaredEps; }),
             points.end()
         );
 
