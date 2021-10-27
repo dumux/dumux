@@ -67,7 +67,7 @@ public:
     /*!
      * \brief The temperature \f$[K]\f$
      */
-    Scalar temperature(const GlobalPosition& globalPos) const
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
     { return temperature_; }
 
 private:
