@@ -80,13 +80,6 @@ public:
     { return 0.4; }
 
     /*!
-     * \brief Returns the temperature in the domain \f$[K]\f$
-     * \param globalPos The global position
-     */
-    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
-    { return 273.15 + 20; }
-
-    /*!
      * \brief Specifies how much the domain is extruded at a given position.
      * \param globalPos The global position where to define the extrusion
      */
