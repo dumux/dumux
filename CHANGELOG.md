@@ -64,6 +64,9 @@ for (const auto& element : elements(gridGeometry.gridView()))
 
 - `update()` functions of grid geometries, which do not receive the `gridView`, are deprecated, use `update(gridView)` instead.
 - `enum class DiscretizationMethod` and associated functions, to be replaced by tags
+- `test_dumux.sh` is deprecated.
+- `compareparameters.sh` is deprecated, use `getparameterlist.py` instead.
+- `replace_property_macros.sh` is removed.
 
 ### New experimental features (possibly subject to backwards-incompatible changes in the future)
 
