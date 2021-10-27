@@ -33,10 +33,10 @@
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/1p/model.hh>
+#include <dumux/porousmediumflow/fvspatialparams1pconstant.hh>
 
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/material/spatialparams/fv1pconstant.hh>
 
 #ifndef GRIDTYPE // default to yasp grid if not provided by CMake
 #define GRIDTYPE Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >
@@ -73,7 +73,7 @@ struct SpatialParams<TypeTag, TTag::OnePSingularity>
 {
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FVSpatialParamsOnePConstant<GridGeometry, Scalar>;
+    using type = FVPorousMediumSpatialParamsOnePConstant<GridGeometry, Scalar>;
 };
 
 } // end namespace Dumux
