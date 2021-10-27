@@ -115,16 +115,6 @@ public:
     }
 
     /*!
-     * \brief Set all boundary conditions to Neumann.
-     */
-    [[deprecated("Will be removed after release 3.4")]]
-    void setAllOutflow()
-    {
-        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-            setOutflow(eqIdx);
-    }
-
-    /*!
      * \brief Set all boundary conditions to Dirichlet-like coupling
      */
     void setAllCouplingDirichlet()
@@ -172,20 +162,6 @@ public:
         // update the equation <-> primary variable mapping
         eq2pvIdx_[eqIdx] = pvIdx;
         pv2eqIdx_[pvIdx] = eqIdx;
-    }
-
-    /*!
-     * \brief Set a Neumann boundary condition for a single equation.
-     *
-     * \param eqIdx The index of the equation on which the outflow
-     *              condition applies.
-     */
-    [[deprecated("Will be removed after release 3.4")]]
-    void setOutflow(int eqIdx)
-    {
-        resetEq(eqIdx);
-        boundaryInfo_[eqIdx].visited = true;
-        boundaryInfo_[eqIdx].isOutflow = true;
     }
 
     /*!
@@ -299,29 +275,6 @@ public:
                            boundaryInfo_.end(),
                            [](const BoundaryInfo& b){ return b.isNeumann ||
                                                              b.isCouplingNeumann; }
-                           );
-    }
-
-    /*!
-     * \brief Returns true if an equation is used to specify an
-     *        outflow condition.
-     *
-     * \param eqIdx The index of the equation
-     */
-    [[deprecated("Will be removed after release 3.4")]]
-    bool isOutflow(unsigned eqIdx) const
-    { return boundaryInfo_[eqIdx].isOutflow; }
-
-    /*!
-     * \brief Returns true if some equation is used to specify an
-     *        outflow condition.
-     */
-    [[deprecated("Will be removed after release 3.4")]]
-    bool hasOutflow() const
-    {
-        return std::any_of(boundaryInfo_.begin(),
-                           boundaryInfo_.end(),
-                           [](const BoundaryInfo& b){ return b.isOutflow; }
                            );
     }
 
