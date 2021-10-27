@@ -111,7 +111,7 @@ public:
 
         for (const auto& scvf : scvfs(fvGeometry))
         {
-            if (!scvf.boundary() || scvf.isFrontal())
+            if (!scvf.boundary() || scvf.isFrontal() || scvf.processorBoundary())
                 continue;
 
             // check if boundary is a pure dirichlet boundary

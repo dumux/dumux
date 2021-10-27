@@ -385,7 +385,8 @@ public:
 
             auto evalFlux = [&](ElementResidualVector& residual, const SubControlVolumeFace& scvf)
             {
-                this->localResidual().evalFlux(residual, problem, element, fvGeometry, curElemVolVars, this->elemBcTypes(), this->elemFluxVarsCache(), scvf);
+                if (!scvf.processorBoundary())
+                    this->localResidual().evalFlux(residual, problem, element, fvGeometry, curElemVolVars, this->elemBcTypes(), this->elemFluxVarsCache(), scvf);
             };
 
             // derivative w.r.t. own DOF
@@ -470,6 +471,9 @@ public:
 
                         for (const auto& scvf : scvfs(fvGeometry, scv))
                         {
+                            if (scvf.processorBoundary())
+                                continue;
+
                             if (scvf.outsideScvIdx() == scvJ.index())
                             {
                                 evalFlux(residual, scvf);
@@ -502,6 +506,9 @@ public:
 
                         for (const auto& scvf : scvfs(fvGeometry, scv))
                         {
+                            if (scvf.processorBoundary())
+                                continue;
+
                             if (scvf.outsideScvIdx() == scvJ.index())
                             {
                                 evalFlux(result, scvf);
