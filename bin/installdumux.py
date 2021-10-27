@@ -17,7 +17,7 @@ parser = argparse.ArgumentParser(
     description="This script downloads and compiles the latest release of Dumux.",
 )
 # Optional arguments
-parser.add_argument("--dune-version", default="2.7", help="Dune version to be checked out.")
+parser.add_argument("--dune-version", default="2.8", help="Dune version to be checked out.")
 parser.add_argument("--dumux-version", default="3.4", help="Dumux version to be checked out.")
 args = vars(parser.parse_args())
 
