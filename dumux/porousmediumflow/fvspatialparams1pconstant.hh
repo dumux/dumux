@@ -18,16 +18,15 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup PorousMediumFlow
  * \ingroup SpatialParameters
  * \brief A spatial params implementation for 1p problem with constant properties
  */
-#ifndef DUMUX_FV_CONSTANT_SPATIAL_PARAMS_ONE_P_HH
-#define DUMUX_FV_CONSTANT_SPATIAL_PARAMS_ONE_P_HH
-
-#warning "This file is deprecated, use FVPorousMediumSpatialParamsOnePConstant from dumux/porousmediumflow/fvspatialparams1pconstant.hh instead!"
+#ifndef DUMUX_POROUS_MEDIUM_FLOW_FV_SPATIAL_PARAMS_ONEP_CONSTANT_HH
+#define DUMUX_POROUS_MEDIUM_FLOW_FV_SPATIAL_PARAMS_ONEP_CONSTANT_HH
 
 #include <dumux/common/parameters.hh>
-#include <dumux/material/spatialparams/fv1p.hh>
+#include "fvspatialparams1p.hh"
 
 namespace Dumux {
 
@@ -36,22 +35,21 @@ namespace Dumux {
  * \brief A spatial params implementation for 1p problem with constant properties
  */
 template<class GridGeometry, class Scalar>
-class
-[[deprecated("Use FVPorousMediumSpatialParamsOnePConstant from dumux/porousmediumflow/fvspatialparams1pconstant.hh instead!")]]
-FVSpatialParamsOnePConstant
-: public FVSpatialParamsOneP<GridGeometry, Scalar, FVSpatialParamsOnePConstant<GridGeometry, Scalar>>
+class FVPorousMediumSpatialParamsOnePConstant
+: public FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar, FVPorousMediumSpatialParamsOnePConstant<GridGeometry, Scalar>>
 {
-    using ThisType = FVSpatialParamsOnePConstant<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
+    using ThisType = FVPorousMediumSpatialParamsOnePConstant<GridGeometry, Scalar>;
+    using ParentType = FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
     using GlobalPosition = typename GridGeometry::GridView::template Codim<0>::Geometry::GlobalCoordinate;
 
 public:
     using PermeabilityType = Scalar;
 
-    FVSpatialParamsOnePConstant(std::shared_ptr<const GridGeometry> gridGeometry)
+    FVPorousMediumSpatialParamsOnePConstant(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     , porosity_(getParam<Scalar>("SpatialParams.Porosity"))
     , permeability_(getParam<Scalar>("SpatialParams.Permeability"))
+    , temperature_(getParam<Scalar>("SpatialParams.Temperature"))
     {}
 
     /*!
@@ -66,9 +64,16 @@ public:
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return porosity_; }
 
+    /*!
+     * \brief The temperature \f$[K]\f$
+     */
+    Scalar temperature(const GlobalPosition& globalPos) const
+    { return temperature_; }
+
 private:
     const Scalar porosity_;
     const Scalar permeability_;
+    const Scalar temperature_;
 };
 
 } // end namespace Dumux
