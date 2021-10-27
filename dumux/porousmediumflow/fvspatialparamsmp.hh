@@ -32,7 +32,7 @@
 #include <dumux/common/fvspatialparams.hh>
 #include <dumux/common/typetraits/isvalid.hh>
 
-#include "fvspatialparams1p.hh"
+#include "fvspatialparams.hh"
 
 namespace Dumux {
 
@@ -57,9 +57,9 @@ struct hasFluidMatrixInteractionAtPos
  */
 template<class GridGeometry, class Scalar, class Implementation>
 class FVPorousMediumSpatialParamsMP
-: public FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar, Implementation>
+: public FVPorousMediumSpatialParams<GridGeometry, Scalar, Implementation>
 {
-    using ParentType = FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar, Implementation>;
+    using ParentType = FVPorousMediumSpatialParams<GridGeometry, Scalar, Implementation>;
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
