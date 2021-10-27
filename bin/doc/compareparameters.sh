@@ -1,5 +1,8 @@
 #!/bin/sh
 
+echo "DeprecationWarning: This script will be removed after 3.5!!!"
+echo "Use instead getparameterlist.py"
+
 # 1. obtain a list new_parameters.csv of all current parameters
 # retrieve all occurrences of GET_PARAM and GET_RUNTIME_PARAM
 find dumux/ -name '*.[ch][ch]' -exec  awk '/getParam</,/;/' {} \; >new_parameters.csv
