@@ -61,7 +61,7 @@ public:
         {
             velocity_[dimWorld-1] = -permeability * dp_dy_;
             velocity_[dimWorld-1] /= FluidSystem::viscosity(
-                this->spatialParams().temperature(), Scalar{1.0e5}
+                this->spatialParams().temperatureAtPos(GlobalPosition(0.0)), Scalar{1.0e5}
             );
         }
     }
