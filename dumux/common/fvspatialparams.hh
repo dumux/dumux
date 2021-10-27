@@ -93,8 +93,8 @@ public:
      * \brief Return the temperature in the domain at the given position
      * \param globalPos The position in global coordinates where the temperature should be specified.
      */
-    Scalar temperature(const GlobalPosition& globalPos) const
-    { DUNE_THROW(Dune::NotImplemented, "Implementation does not provide temperature()"); }
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    { DUNE_THROW(Dune::NotImplemented, "Implementation does not provide temperatureAtPos()"); }
 
     /*!
      * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
