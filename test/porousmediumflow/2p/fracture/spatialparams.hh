@@ -28,7 +28,7 @@
 
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 
-#include <dumux/porousmediumflow/fvspatialparams.hh>
+#include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 #include <dumux/porousmediumflow/2p/model.hh>
 
 namespace Dumux {
@@ -40,15 +40,15 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class FractureSpatialParams
-: public FVPorousMediumSpatialParams<GridGeometry, Scalar,
-                                     FractureSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumSpatialParamsMP<GridGeometry, Scalar,
+                                       FractureSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVPorousMediumSpatialParams<GridGeometry, Scalar,
-                                                   FractureSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = FVPorousMediumSpatialParamsMP<GridGeometry, Scalar,
+                                                     FractureSpatialParams<GridGeometry, Scalar>>;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 

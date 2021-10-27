@@ -21,8 +21,8 @@
  * \ingroup SpatialParameters
  * \brief The base class for spatial parameters in multi-phase porous-medium-flow problems.
  */
-#ifndef DUMUX_POROUS_MEDIUM_FLOW_FV_SPATIAL_PARAMS_HH
-#define DUMUX_POROUS_MEDIUM_FLOW_FV_SPATIAL_PARAMS_HH
+#ifndef DUMUX_POROUS_MEDIUM_FLOW_FV_SPATIAL_PARAMS_MP_HH
+#define DUMUX_POROUS_MEDIUM_FLOW_FV_SPATIAL_PARAMS_MP_HH
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/fmatrix.hh>
@@ -56,7 +56,7 @@ struct hasFluidMatrixInteractionAtPos
  * \brief The base class for spatial parameters of multi-phase problems
  */
 template<class GridGeometry, class Scalar, class Implementation>
-class FVPorousMediumSpatialParams
+class FVPorousMediumSpatialParamsMP
 : public FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar, Implementation>
 {
     using ParentType = FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar, Implementation>;
@@ -68,7 +68,7 @@ class FVPorousMediumSpatialParams
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    FVPorousMediumSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    FVPorousMediumSpatialParamsMP(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {}
 
