@@ -321,7 +321,7 @@ EXTERNAL_URLS = {
     "dune-uggrid": DUNE_GIT_BASEURL + "/staging/dune-uggrid.git",
     "dune-alugrid": DUNE_GIT_BASEURL + "extensions/dune-alugrid.git",
     "dune-foamgrid": DUNE_GIT_BASEURL + "extensions/dune-foamgrid.git",
-    "dune-subgrid": "https://git.imp.fu-berlin.de/agnumpde/dune-subgrid.git",
+    "dune-subgrid": DUNE_GIT_BASEURL + "extensions/dune-subgrid.git",
     "dune-spgrid": DUNE_GIT_BASEURL + "extensions/dune-spgrid.git",
     "dune-mmesh": DUNE_GIT_BASEURL + "samuel.burbulla/dune-mmesh.git",
     "dune-functions": DUNE_GIT_BASEURL + "staging/dune-functions.git",
