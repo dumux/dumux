@@ -26,6 +26,7 @@
 #define DUMUX_COMMON_DEPRECATED_HH
 
 #include <dune/common/version.hh>
+#include <dune/common/exceptions.hh>
 #include <dune/common/std/type_traits.hh>
 
 namespace Dumux {
@@ -89,13 +90,48 @@ using HasExtrusionFactorDetector = decltype(std::declval<SpatialParams>().extrus
     ));
 
 template<class Problem, class Element, class SubControlVolume, class ElementSolution>
+using HasBaseProblemExtrusionFactorDetector = decltype(std::declval<Problem>().extrusionFactor(
+        std::declval<Element>(),
+        std::declval<SubControlVolume>(),
+        std::declval<ElementSolution>(),
+        double{}
+    ));
+
+template<class Problem, class GlobalPosition>
+using HasBaseProblemExtrusionFactorAtPosDetector = decltype(std::declval<Problem>().extrusionFactorAtPos(
+        std::declval<GlobalPosition>(),
+        double{}
+    ));
+
+template<class Problem, class Element, class SubControlVolume, class ElementSolution>
 decltype(auto) extrusionFactor(const Problem& problem,
                                const Element& element,
                                const SubControlVolume& scv,
                                const ElementSolution& elemSol)
 {
     using SpatialParams = std::decay_t<decltype(problem.spatialParams())>;
-    if constexpr (Dune::Std::is_detected<HasExtrusionFactorDetector, SpatialParams, Element, SubControlVolume, ElementSolution>::value)
+    using GlobalPosition = std::decay_t<decltype(scv.center())>;
+
+    static constexpr bool hasNewSpatialParamsInterface = Dune::Std::is_detected<
+        HasExtrusionFactorDetector, SpatialParams, Element, SubControlVolume, ElementSolution
+    >::value;
+
+    static constexpr bool hasBaseProblemInterface = Dune::Std::is_detected<
+        HasBaseProblemExtrusionFactorDetector, Problem, Element, SubControlVolume, ElementSolution
+    >::value;
+
+    static constexpr bool hasBaseProblemAtPosInterface = Dune::Std::is_detected<
+        HasBaseProblemExtrusionFactorAtPosDetector, Problem, GlobalPosition
+    >::value;
+
+    static constexpr bool hasUserDefinedProblemExtrusionFactor = !hasBaseProblemInterface || !hasBaseProblemAtPosInterface;
+
+    if constexpr (hasNewSpatialParamsInterface && hasUserDefinedProblemExtrusionFactor)
+        DUNE_THROW(Dune::InvalidStateException,
+                   "Extrusion factor defined both in problem implementation (deprecated interface) and spatial params (new interface). "
+                   "Please move the overload in your problem implementation to your spatial parameters.");
+
+    if constexpr (hasNewSpatialParamsInterface)
         return problem.spatialParams().extrusionFactor(element, scv, elemSol);
     else
         return problem.extrusionFactor(element, scv, elemSol);
