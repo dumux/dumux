@@ -97,13 +97,7 @@ public:
      * \brief Define the temperature in the domain in Kelvin.
      * \param globalPos The global position
      */
-    Scalar temperature(const GlobalPosition& globalPos) const
-    { return temperature(); }
-
-    /*!
-     * \brief Define the temperature in the domain in Kelvin.
-     */
-    Scalar temperature() const
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
     { return 283.15; }
 
     /*!

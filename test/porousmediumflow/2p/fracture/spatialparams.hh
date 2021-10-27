@@ -83,7 +83,7 @@ public:
      * \brief Returns the temperature in the domain \f$[K]\f$
      * \param globalPos The global position
      */
-    Scalar temperature(const GlobalPosition& globalPos) const
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
     { return 273.15 + 20; }
 
     /*!
