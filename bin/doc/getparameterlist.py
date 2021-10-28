@@ -9,7 +9,6 @@ import os
 import argparse
 import json
 
-
 # find the content of the given string between the first matching pair of opening/closing keys
 def getEnclosedContent(string, openKey, closeKey):
 
@@ -75,15 +74,11 @@ def extractParamName(line):
     if paramName[0] != '"' or paramName[-1] != '"' or " " in paramName:
         raise IOError("Could not correctly process parameter name")
 
-    return {
-        "paramType": paramType,
-        "paramName": paramName.strip('"'),
-        "defaultValue": defaultValue,
-    }
+    return {"paramType": paramType, "paramName": paramName.strip('"'), "defaultValue": defaultValue}
 
 
 # extract all parameters from a given file
-def getParamsFromFile(file, errorMsg):
+def getParamsFromFile(file, log):
     parameters = []
     errors = {}
     with open(file) as f:
@@ -97,17 +92,18 @@ def getParamsFromFile(file, errorMsg):
 
     # print encountered errors
     if errors:
-        errorMsg.append(
+        log.append(
             "\n\n{} parameter{} in file {} could not be retrieved automatically. Please check them yourself:".format(
                 len(errors), "s" if len(errors) > 1 else "", file
             )
         )
         for lineIdx in errors:
-            errorMsg.append("\n\t-> line {}: {}".format(lineIdx, errors[lineIdx]["line"]))
-            errorMsg.append("\n\t\t-> error message: {}".format(errors[lineIdx]["message"]))
-        errorMsg.append(" ")
+            log.append("\n\t-> line {}: {}".format(lineIdx, errors[lineIdx]["line"]))
+            log.append("\n\t\t-> error message: {}".format(errors[lineIdx]["message"]))
+        log.append(" ")
 
     return parameters
+
 
 class CheckExistAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string):
@@ -117,13 +113,13 @@ class CheckExistAction(argparse.Action):
         else:
             parser.error("File {} does not exist!".format(values))
 
-
 parser = argparse.ArgumentParser(
     description="""
-    Generate a json file of parameters list from header files.
+    This script generates parameters list from header files.
+    The header files "test" and "examples" folders are not included.
     ----------------------------------------------------------------
     If input file is given, the descriptions will be copied from the input.
-    If no input file is given, the descriptions will be empty.
+    Multientry of parameters are allowed in input files.
     """,
     formatter_class=argparse.RawDescriptionHelpFormatter,
 )
@@ -139,42 +135,26 @@ parser.add_argument(
     action=CheckExistAction,
     metavar="input",
     dest="inputFile",
+    default="../../doc/doxygen/extradoc/currentParameters.json",
 )
-"""
 parser.add_argument(
     "--output",
     help="relative path (to the root path) of the output file",
     metavar="output",
-    default="doc/doxygen/extradoc/newparameterlist.json",
-)"""
-
+    default="doc/doxygen/extradoc/parameterlist.txt",
+)
 args = vars(parser.parse_args())
-
-maxExplanationWidth = 0
-
-# get the explanations from current parameter json file
-oldDataDict = {}
-if args["inputFile"]:
-    with open(args["inputFile"], "r") as f:
-        data = f.read()
-        oldDataDict = json.loads(data)
 
 # search all *.hh files for parameters
 # TODO: allow runtime args with extensions and folder(s) to be checked
 parameters = []
-errorLog = []
-for root, dirs, files in os.walk(args["root"]):
-    # exclude the test folder
+log = []
+rootDir = args["root"]
+for root, dirs, files in os.walk(rootDir):
     dirs[:] = [d for d in dirs if d not in ("test", "examples")]
     for file in files:
-        if (
-            os.path.splitext(file)[1] == ".hh"
-            and os.path.splitext(file)[0] != "parameters"
-        ):
-            parameters.extend(getParamsFromFile(os.path.join(root, file),errorLog))
-
-with open("parameterlist_error.log","w") as f:
-    f.writelines(errorLog)
+        if os.path.splitext(file)[1] == ".hh" and os.path.splitext(file)[0] != "parameters":
+            parameters.extend(getParamsFromFile(os.path.join(root, file),log))
 
 # make sorted dictionary of the entries
 # treat duplicates (could have differing default values or type names - e.g. via aliases)
@@ -188,81 +168,208 @@ for params in parameters:
         parameterDict[key] = params
         parameterDict[key]["defaultValue"] = [params["defaultValue"]]
         parameterDict[key]["paramType"] = [params["paramType"]]
-parameterDict = {key: value for key, value in sorted(parameterDict.items())}
 
+# get the explanations from current parameter json file
+inputDict = {}
+if args["inputFile"]:
+    with open(args["inputFile"], "r") as f:
+        data = f.read()
+        inputDict = json.loads(data)
+
+# add the missing parameters from input
+missingParameters = [key for key in inputDict if key.replace("-.","") not in parameterDict]
+
+for missingkey in missingParameters:
+    key = missingkey.replace("-.","")
+    parameterDict[key] = inputDict[missingkey]
+    parameterDict[key]["defaultValue"] = inputDict[missingkey]["Default Value"]
+    parameterDict[key]["paramType"] = inputDict[missingkey]["Type"]
+    parameterDict[key]["paramName"] = inputDict[missingkey]["Group"]+"."+inputDict[missingkey]["Parameter"]
+    log.append("\nAdd missing parameter "+ parameterDict[key]["paramName"] + " from input")
+parameterDict = {key: value for key, value in sorted(parameterDict.items())}
 # determine actual entries (from duplicates)
-tableEntryData = {}
-multiValueLog = []
+# and determine maximum occurring column widths
+maxGroupWidth = 0
+maxParamWidth = 0
+maxTypeWidth = 0
+maxDefaultWidth = 0
+maxExplanationWidth = 0
+
+tableEntryData = []
 for key in parameterDict:
 
     entry = parameterDict[key]
     hasGroup = True if entry["paramName"].count(".") != 0 else False
     groupEntry = "-" if not hasGroup else entry["paramName"].split(".")[0]
-    paramName = (
-        entry["paramName"] if not hasGroup else entry["paramName"].partition(".")[2]
-    )
+    paramName = entry["paramName"] if not hasGroup else entry["paramName"].partition(".")[2]
 
-    # In case of multiple occurrences, we use the first entry that is not None and print the others for possible manual editing
+    # In case of multiple occurrences,
+    # we prefer the default value from input
+    # otherwise use the first entry that is not None
+    # and write the others in log for possible manual editing
+    #determin multiple entries in input
+    keyInput = groupEntry+"."+paramName
+    numOfEntries = 0
+    if keyInput in inputDict:
+        numOfEntries = max(len(inputDict[keyInput]["Default Value"]),
+                           len(inputDict[keyInput]["Type"]),
+                           len(inputDict[keyInput]["Explanation"]))
+
     paramType = entry["paramType"][0]
     defaultValue = next((e for e in entry["defaultValue"] if e), "-")
 
-    hasMultiplePT = (
-        True if not all(pt == paramType for pt in entry["paramType"]) else False
-    )
+    hasMultiplePT = True if not all(pt == paramType for pt in entry["paramType"]) else False
     hasMultipleDV = (
         True
         if not all(
-            dv == (defaultValue if defaultValue != "-" else None)
-            for dv in entry["defaultValue"]
+            dv == (defaultValue if defaultValue != "-" else None) for dv in entry["defaultValue"]
         )
         else False
     )
     if hasMultiplePT or hasMultipleDV:
-        multiValueLog.append(
-            "\nFound multiple occurrences of parameter "
-            + paramName
-            + " with differing specifications: " + '\n'
+        log.append(
+            "\n\nFound multiple occurrences of parameter " + paramName  +
+            " with differing specifications: "
         )
     if hasMultiplePT:
-        multiValueLog.append(" -> Specified type names:" + '\n')
-        for typeName in set(entry["paramType"]):
-            multiValueLog.append(" " * 8 + typeName + '\n')
-        multiValueLog.append(
-            " ---> For the parameters list, " + '\n'
-            + " " * 8 + paramType + '\n'
-            + " has been chosen. Please adapt manually if desired." + '\n'
-        )
-
+        log.append("\n -> Specified type names:")
+        for typeName in entry["paramType"]:
+            log.append("\n" + " " * 8 + typeName)
+        if numOfEntries == 0:
+            log.append(
+                "\n ---> For the parameters list, " + paramType +
+                " has been chosen. Please adapt manually if desired."
+            )
+        else:
+            paramType = inputDict[keyInput]["Type"]
+            log.append(
+                "\n ---> For the parameters list, " + str(paramType) +
+                " has been chosen. Type is from input file."
+            )
     if hasMultipleDV:
-        multiValueLog.append(" -> Specified default values:" + '\n' )
-        for default in set(entry["defaultValue"]):
-            multiValueLog.append(" " * 8 + (default if default else "- (none given)") + '\n' )
-        multiValueLog.append(
-            " ---> For the parameters list," + '\n'
-            + " " * 8 + defaultValue  + '\n'
-            + " has been chosen. Please adapt manually if desired."  + '\n'
-        )
+        log.append("\n -> Specified default values:")
+        for default in entry["defaultValue"]:
+            log.append("\n" + " " * 8 + (default if default else "- (none given)"))
+        if numOfEntries == 0:
+            log.append(
+                "\n ---> For the parameters list, "+ defaultValue +
+                " has been chosen. Please adapt manually if desired."
+            )
+        else:
+            defaultValue = inputDict[keyInput]["Default Value"]
+            log.append(
+                "\n ---> For the parameters list, "+ str(defaultValue) +
+                " has been chosen. Default value is from input file."
+            )
 
-    paramKey = groupEntry + "." + paramName
-    explanation = (
-        "" if paramKey not in oldDataDict else oldDataDict[paramKey]["Explanation"]
+    # get explanation
+    explanation = ""
+    if numOfEntries > 0:
+        explanation = inputDict[keyInput]["Explanation"]
+        paramType = inputDict[keyInput]["Type"]
+        defaultValue = inputDict[keyInput]["Default Value"]
+
+    if numOfEntries == 0:
+        maxGroupWidth = max(maxGroupWidth, len(groupEntry) + 3)  # +3 because \b will be added later
+        maxParamWidth = max(maxParamWidth, len(paramName))
+        maxTypeWidth = max(maxTypeWidth, len(paramType))
+        maxDefaultWidth = max(maxDefaultWidth, len(defaultValue))
+        tableEntryData.append(
+        {"group": groupEntry, "name": paramName, "type": paramType, "default": defaultValue,"explanation":explanation}
+        )
+    else:
+        for i in range(numOfEntries):
+            # maybe fewer entries for some keys
+            if len(defaultValue) < i+1:
+                defaultValue.append(defaultValue[i-1])
+            if len(explanation) < i+1:
+                explanation.append(explanation[i-1])
+            if len(paramType) < i+1:
+                paramType.append(paramType[i-1])
+
+            maxGroupWidth = max(maxGroupWidth, len(groupEntry) + 3)
+            maxParamWidth = max(maxParamWidth, len(paramName))
+            maxTypeWidth = max(maxTypeWidth, len(paramType[i]))
+            maxDefaultWidth = max(maxDefaultWidth, len(defaultValue[i]))
+            maxExplanationWidth = max(maxExplanationWidth, len(explanation[i]))
+            tableEntryData.append(
+            {"group": groupEntry, "name": paramName, "type": paramType[i], "default": defaultValue[i],"explanation":explanation[i]}
+            )
+
+# generate actual table entries
+tableEntriesWithGroup = []
+tableEntriesWithoutGroup = []
+previousGroupEntry = None
+
+for data in tableEntryData:
+
+    groupEntry = data["group"]
+    paramName = data["name"]
+    paramType = data["type"]
+    defaultValue = data["default"]
+    explanation = data["explanation"]
+
+    if groupEntry != previousGroupEntry:
+        previousGroupEntry = groupEntry
+        if groupEntry != "-":
+            groupEntry = "\\b " + groupEntry
+
+    if len(explanation.strip()) == 0:
+        log.append("\n parameter "
+                     + groupEntry + "."+paramName
+                     + " has no explanation.")
+
+    tableEntry = " * | {} | {} | {} | {} | {} |".format(
+        groupEntry.ljust(maxGroupWidth),
+        paramName.ljust(maxParamWidth),
+        paramType.ljust(maxTypeWidth),
+        defaultValue.ljust(maxDefaultWidth),
+        explanation.ljust(maxExplanationWidth)
     )
 
-    keysList = ["Group", "Parameter", "Type", "Default Value", "Explanation"]
-    valuesList = [groupEntry,
-                  paramName,
-                  paramType,
-                  defaultValue,
-                  explanation]
-    tableEntryData.update({paramKey:dict(zip(keysList, valuesList))})
+    if groupEntry != "-":
+        tableEntriesWithGroup.append(tableEntry)
+    else:
+        tableEntriesWithoutGroup.append(tableEntry)
 
-#save the output of multiple values
-with open("parameterlist_multivalue.log","w") as f:
-    f.writelines(multiValueLog)
+# combine entries
+tableEntries = tableEntriesWithoutGroup + tableEntriesWithGroup
 
-#make the json file readable
-entryDataJson = json.dumps(tableEntryData, indent = 4, ensure_ascii= False, sort_keys = True)
-with open('newparameters.json', 'w') as fp:
-    fp.writelines(entryDataJson)
+header = """/*!
+ *\\file
+ *\\ingroup Parameter
+ *
+ *\\brief List of currently useable run-time parameters
+ *
+ * The listed run-time parameters are available in general,
+ * but we point out that a certain model might not be able
+ * to use every parameter!
+ *\n"""
+header += " * | " + "Group".ljust(maxGroupWidth)
+header += " | " + "Parameter".ljust(maxParamWidth)
+header += " | " + "Type".ljust(maxTypeWidth)
+header += " | " + "Default Value".ljust(maxDefaultWidth)
+header += " | Explanation |\n"
 
-print("File newparameters.json is generated.")
+header += " * | " + ":-".ljust(maxGroupWidth)
+header += " | " + ":-".ljust(maxParamWidth)
+header += " | " + ":-".ljust(maxTypeWidth)
+header += " | " + ":-".ljust(maxDefaultWidth)
+header += " | :-         |\n"
+
+header += " * | " + "".ljust(maxGroupWidth)
+header += " | " + "ParameterFile".ljust(maxParamWidth)
+header += " | " + "std::string".ljust(maxTypeWidth)
+header += " | " + "executable.input".ljust(maxDefaultWidth)
+header += " | :-         |\n"
+
+# overwrite the old parameterlist.txt file
+with open(os.path.join(rootDir, args["output"]), "w") as outputfile:
+    outputfile.write(header)
+    for e in tableEntries:
+        outputfile.write(e + "\n")
+    outputfile.write(" */\n")
+    print("Finished, check the output file and log.")
+
+with open("getParams.log","w") as f:
+    f.writelines(log)
