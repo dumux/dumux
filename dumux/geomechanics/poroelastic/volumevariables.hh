@@ -24,6 +24,7 @@
 #ifndef DUMUX_POROELASTIC_VOLUME_VARIABLES_HH
 #define DUMUX_POROELASTIC_VOLUME_VARIABLES_HH
 
+#include <dumux/common/deprecated.hh>
 #include <dumux/discretization/evalgradients.hh>
 
 namespace Dumux {
@@ -69,12 +70,12 @@ public:
                 const Scv& scv)
     {
         priVars_ = elemSol[scv.localDofIndex()];
-        extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
+        extrusionFactor_ = Deprecated::extrusionFactor(problem, element, scv, elemSol);
 
         //! set the volume fractions of the solid components
         updateSolidVolumeFractions_(elemSol, problem, element, scv);
         // set the temperature of the solid phase
-        setSolidTemperature_(problem, elemSol);
+        setSolidTemperature_(problem, scv);
         // update the density of the solid phase
         solidState_.setDensity(SolidSystem::density(solidState_));
     }
@@ -138,16 +139,16 @@ private:
 
     //! sets the temperature in the solid state for non-isothermal models
     static constexpr bool enableEnergyBalance = ModelTraits::enableEnergyBalance();
-    template< class Problem, class ElemSol,
+    template< class Problem, class Scv,
               bool enableEB = enableEnergyBalance, typename std::enable_if_t<enableEB, bool> = 0 >
-    void setSolidTemperature_(const Problem& problem, const ElemSol& elemSol)
+    void setSolidTemperature_(const Problem& problem, const Scv& scv)
     { DUNE_THROW(Dune::InvalidStateException, "Non-isothermal elastic model."); }
 
     //! sets the temperature in the solid state for isothermal models
-    template< class Problem, class ElemSol,
+    template< class Problem, class Scv,
               bool enableEB = enableEnergyBalance, typename std::enable_if_t<!enableEB, bool> = 0 >
-    void setSolidTemperature_(const Problem& problem, const ElemSol& elemSol)
-    { solidState_.setTemperature(problem.temperature()); }
+    void setSolidTemperature_(const Problem& problem, const Scv& scv)
+    { solidState_.setTemperature(Deprecated::temperature(problem, scv.dofPosition())); }
 
     // data members
     Scalar extrusionFactor_;
