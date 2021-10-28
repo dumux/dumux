@@ -1457,196 +1457,196 @@
             "bool"
         ]
     },
-    "Grid..FixedPoreRadiusForLabel": {
+    "Grid.FixedPoreRadiusForLabel": {
         "Default Value": [
             "std::vector<Scalar>{}"
         ],
         "Explanation": [
             "Vector of pore radii to be set to the corresponding pores not belonging to a subregion indicated by PoreLabelsToSetFixedRadius."
         ],
-        "Group": "Grid.",
+        "Group": "Grid",
         "Parameter": "FixedPoreRadiusForLabel",
         "Type": [
             "std::vector<Scalar>"
         ]
     },
-    "Grid..MaxPoreInscribedRadius": {
+    "Grid.MaxPoreInscribedRadius": {
         "Default Value": [
             "-"
         ],
         "Explanation": [
             "In the case of a uniform random distribution, this specifies the maximum pore radius."
         ],
-        "Group": "Grid.",
+        "Group": "Grid",
         "Parameter": "MaxPoreInscribedRadius",
         "Type": [
             "Scalar"
         ]
     },
-    "Grid..MeanPoreInscribedRadius": {
+    "Grid.MeanPoreInscribedRadius": {
         "Default Value": [
             "-"
         ],
         "Explanation": [
             "In the case of a lognormal random distribution, this specifies the mean pore radius."
         ],
-        "Group": "Grid.",
+        "Group": "Grid",
         "Parameter": "MeanPoreInscribedRadius",
         "Type": [
             "Scalar"
         ]
     },
-    "Grid..MinPoreInscribedRadius": {
+    "Grid.MinPoreInscribedRadius": {
         "Default Value": [
             "-"
         ],
         "Explanation": [
             "In the case of a uniform random distribution, this specifies the minimum pore radius."
         ],
-        "Group": "Grid.",
+        "Group": "Grid",
         "Parameter": "MinPoreInscribedRadius",
         "Type": [
             "Scalar"
         ]
     },
-    "Grid..ParameterRandomNumberSeed": {
+    "Grid.ParameterRandomNumberSeed": {
         "Default Value": [
             "std::random_device{}()"
         ],
         "Explanation": [
             "If PoreInscribedRadius is not set, this allows to specify a seed to get reproducible results."
         ],
-        "Group": "Grid.",
+        "Group": "Grid",
         "Parameter": "ParameterRandomNumberSeed",
         "Type": [
             "unsigned int"
         ]
     },
-    "Grid..ParameterType": {
+    "Grid.ParameterType": {
         "Default Value": [
             "\"lognormal\""
         ],
         "Explanation": [
             "If PoreInscribedRadius is not set, this allows to specify the type of random distribution for the radii. Possible values are \"lognormal\" and \"uniform\"."
         ],
-        "Group": "Grid.",
+        "Group": "Grid",
         "Parameter": "ParameterType",
         "Type": [
             "std::string"
         ]
     },
-    "Grid..PoreInscribedRadius": {
+    "Grid.PoreInscribedRadius": {
         "Default Value": [
             "-1.0"
         ],
         "Explanation": [
             "If this is set, all pore radii of pore bodies not belonging to a subregion are set to this value. If this is not set, a random radius is set according to a user-specified distribution."
         ],
-        "Group": "Grid.",
+        "Group": "Grid",
         "Parameter": "PoreInscribedRadius",
         "Type": [
             "Scalar"
         ]
     },
-    "Grid..PoreLabelsToApplyFactorForRadius": {
+    "Grid.PoreLabelsToApplyFactorForRadius": {
         "Default Value": [
             "std::vector<int>{}"
         ],
         "Explanation": [
             "Lables of pores of pores bodies not belonging to a subregion which should be treated by applying a factor for the radius."
         ],
-        "Group": "Grid.",
+        "Group": "Grid",
         "Parameter": "PoreLabelsToApplyFactorForRadius",
         "Type": [
             "std::vector<int>"
         ]
     },
-    "Grid..PoreLabelsToSetFixedRadius": {
+    "Grid.PoreLabelsToSetFixedRadius": {
         "Default Value": [
             "std::vector<int>{}"
         ],
         "Explanation": [
             "Lables of pores of pores bodies not belonging to a subregion which should be treated by setting a fixed radius."
         ],
-        "Group": "Grid.",
+        "Group": "Grid",
         "Parameter": "PoreLabelsToSetFixedRadius",
         "Type": [
             "std::vector<int>"
         ]
     },
-    "Grid..PoreRadiusFactorForLabel": {
+    "Grid.PoreRadiusFactorForLabel": {
         "Default Value": [
             "std::vector<Scalar>{}"
         ],
         "Explanation": [
             "Vector of factors for the radii of the corresponding pores not belonging to a subregion indicated by PoreLabelsToApplyFactorForRadius."
         ],
-        "Group": "Grid.",
+        "Group": "Grid",
         "Parameter": "PoreRadiusFactorForLabel",
         "Type": [
             "std::vector<Scalar>"
         ]
     },
-    "Grid..StandardDeviationPoreInscribedRadius": {
+    "Grid.StandardDeviationPoreInscribedRadius": {
         "Default Value": [
             "-"
         ],
         "Explanation": [
             "In the case of a lognormal random distribution, this specifies the standard deviation of the pore radius."
         ],
-        "Group": "Grid.",
+        "Group": "Grid",
         "Parameter": "StandardDeviationPoreInscribedRadius",
         "Type": [
             "Scalar"
         ]
     },
-    "Grid..SubstractRadiiFromThroatLength": {
+    "Grid.SubstractRadiiFromThroatLength": {
         "Default Value": [
             "true"
         ],
         "Explanation": [
             "Decide whether to substract the pore radii from the throat length or not for a pore throat not belonging to a subregion."
         ],
-        "Group": "Grid.",
+        "Group": "Grid",
         "Parameter": "SubstractRadiiFromThroatLength",
         "Type": [
             "bool"
         ]
     },
-    "Grid..ThroatInscribedRadius": {
+    "Grid.ThroatInscribedRadius": {
         "Default Value": [
             "-1.0"
         ],
         "Explanation": [
             "Radius of a pore throat not belonging to a subregion."
         ],
-        "Group": "Grid.",
+        "Group": "Grid",
         "Parameter": "ThroatInscribedRadius",
         "Type": [
             "Scalar"
         ]
     },
-    "Grid..ThroatInscribedRadiusN": {
+    "Grid.ThroatInscribedRadiusN": {
         "Default Value": [
             "0.1"
         ],
         "Explanation": [
             "Shape parameter for the calculation of the radius of a pore throat not belonging to a subregion when ThroatInscribedRadius is not set."
         ],
-        "Group": "Grid.",
+        "Group": "Grid",
         "Parameter": "ThroatInscribedRadiusN",
         "Type": [
             "Scalar"
         ]
     },
-    "Grid..ThroatLength": {
+    "Grid.ThroatLength": {
         "Default Value": [
             "-1.0"
         ],
         "Explanation": [
             "Length of a pore throat not belonging to a subregion."
         ],
-        "Group": "Grid.",
+        "Group": "Grid",
         "Parameter": "ThroatLength",
         "Type": [
             "Scalar"
