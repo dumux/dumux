@@ -28,22 +28,14 @@
 
 #include <dumux/common/fvspatialparams.hh>
 #include <dumux/common/typetraits/isvalid.hh>
-#include <dumux/porousmediumflow/fvspatialparams1p.hh> // For some helpers in Detail namespace
+
+#include <dumux/geomechanics/elastic/fvspatialparams.hh> // For some helpers in Detail namespace
+#include <dumux/porousmediumflow/fvspatialparams1p.hh>   // For some helpers in Detail namespace
 
 namespace Dumux {
 
 #ifndef DOXYGEN
 namespace Detail {
-// helper struct detecting if the user-defined spatial params class has a lameParamsAtPos function
-// for g++ > 5.3, this can be replaced by a lambda
-template<class GlobalPosition>
-struct hasLameParamsAtPos
-{
-    template<class SpatialParams>
-    auto operator()(const SpatialParams& a)
-    -> decltype(a.lameParamsAtPos(std::declval<GlobalPosition>()))
-    {}
-};
 
 // helper struct detecting if the user-defined spatial params class has a reactiveVolumeFractionAtPos function
 // for g++ > 5.3, this can be replaced by a lambda
