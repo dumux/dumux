@@ -21,8 +21,10 @@
  * \ingroup SpatialParameters
  * \brief The base class for spatial parameters of linear elastic geomechanical problems
  */
-#ifndef DUMUX_GEOMECHANICS_ELASTIC_FV_SPATIAL_PARAMS_HH
-#define DUMUX_GEOMECHANICS_ELASTIC_FV_SPATIAL_PARAMS_HH
+#ifndef DUMUX_MATERIAL_GEOMECHANICS_ELASTIC_FV_SPATIAL_PARAMS_HH
+#define DUMUX_MATERIAL_GEOMECHANICS_ELASTIC_FV_SPATIAL_PARAMS_HH
+
+#warning "This file is deprecated, use FVElasticSpatialParams from dumux/geomechanics/elastic/fvspatialparams.hh instead!"
 
 #include <memory>
 
@@ -54,7 +56,9 @@ struct hasLameParamsAtPos
  * \brief The base class for spatial parameters of linear elastic geomechanical problems
  */
 template<class Scalar, class GridGeometry, class Implementation>
-class FVSpatialParamsElastic
+class
+[[deprecated("Use FVElasticSpatialParams from dumux/geomechanics/elastic/fvspatialparams.hh instead. This class will be removed after 3.5.")]]
+FVSpatialParamsElastic
 {
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
