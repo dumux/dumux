@@ -3,6 +3,7 @@ The DuMux common module
 containing classes and functions needed for most simulations
 """
 
+from ._common import *
 from dune.generator.generator import SimpleGenerator
 from dune.common.hashit import hashIt
 
