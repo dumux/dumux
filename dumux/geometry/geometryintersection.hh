@@ -33,8 +33,19 @@
 #include <dumux/geometry/intersectspointgeometry.hh>
 #include <dumux/geometry/grahamconvexhull.hh>
 #include <dumux/geometry/boundingboxtree.hh>
+#include <dumux/geometry/precision.hh>
 
 namespace Dumux {
+
+namespace Detail {
+
+template<class Geo1, class Geo2>
+using PromotedCoordinateType = typename Dune::PromotionTraits<
+    typename Geo1::ctype, typename Geo2::ctype
+>::PromotedType;
+
+} // end namespace Detail
+
 namespace IntersectionPolicy {
 
 //! Policy structure for point-like intersections
@@ -98,7 +109,7 @@ class DefaultPolicyChooser
                   "Geometries must have the same coordinate dimension!");
     static_assert(int(Geometry1::mydimension) <= 3 && int(Geometry2::mydimension) <= 3,
                   "Geometries must have dimension 3 or less.");
-    using ctype = typename Dune::PromotionTraits<typename Geometry1::ctype, typename Geometry2::ctype>::PromotedType;
+    using ctype = Detail::PromotedCoordinateType<Geometry1, Geometry2>;
 
     using DefaultPolicies = std::tuple<PointPolicy<ctype, dimworld>,
                                        SegmentPolicy<ctype, dimworld>,
@@ -209,6 +220,7 @@ bool computeSegmentIntersection(const Geo1& geo1, const Geo2& geo2, ctype baseEp
 template
 <class Geometry1, class Geometry2,
  class Policy = IntersectionPolicy::DefaultPolicy<Geometry1, Geometry2>,
+ class Precision = Dumux::Precision<Detail::PromotedCoordinateType<Geometry1, Geometry2>>,
  int dimworld = Geometry1::coorddimension,
  int dim1 = Geometry1::mydimension,
  int dim2 = Geometry2::mydimension>
@@ -234,15 +246,15 @@ public:
  * \ingroup Geometry
  * \brief A class for segment--segment intersection in 2d space
  */
-template <class Geometry1, class Geometry2, class Policy>
-class GeometryIntersection<Geometry1, Geometry2, Policy, 2, 1, 1>
+template <class Geometry1, class Geometry2, class Policy, class Precision>
+class GeometryIntersection<Geometry1, Geometry2, Policy, Precision, 2, 1, 1>
 {
     enum { dimworld = 2 };
     enum { dim1 = 1 };
     enum { dim2 = 1 };
 
     // base epsilon for floating point comparisons
-    static constexpr typename Policy::ctype eps_ = 1.5e-7;
+    static constexpr auto eps_ = Precision::relativeTolerance();
 
 public:
     using ctype = typename Policy::ctype;
@@ -391,8 +403,8 @@ public:
  * \ingroup Geometry
  * \brief A class for polygon--segment intersection in 2d space
  */
-template <class Geometry1, class Geometry2, class Policy>
-class GeometryIntersection<Geometry1, Geometry2, Policy, 2, 2, 1>
+template <class Geometry1, class Geometry2, class Policy, class Precision>
+class GeometryIntersection<Geometry1, Geometry2, Policy, Precision, 2, 2, 1>
 {
     enum { dimworld = 2 };
     enum { dim1 = 2 };
@@ -404,7 +416,7 @@ public:
     using Intersection = typename Policy::Intersection;
 
 private:
-    static constexpr ctype eps_ = 1.5e-7; // base epsilon for floating point comparisons
+    static constexpr ctype eps_ = Precision::relativeTolerance(); // base epsilon for floating point comparisons
 
 public:
     /*!
@@ -511,11 +523,11 @@ private:
  * \ingroup Geometry
  * \brief A class for segment--polygon intersection in 2d space
  */
-template <class Geometry1, class Geometry2, class Policy>
-class GeometryIntersection<Geometry1, Geometry2, Policy, 2, 1, 2>
-: public GeometryIntersection<Geometry2, Geometry1, Policy, 2, 2, 1>
+template <class Geometry1, class Geometry2, class Policy, class Precision>
+class GeometryIntersection<Geometry1, Geometry2, Policy, Precision, 2, 1, 2>
+: public GeometryIntersection<Geometry2, Geometry1, Policy, Precision, 2, 2, 1>
 {
-    using Base = GeometryIntersection<Geometry2, Geometry1, Policy, 2, 2, 1>;
+    using Base = GeometryIntersection<Geometry2, Geometry1, Policy, Precision, 2, 2, 1>;
 
 public:
     /*!
