@@ -36,6 +36,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/geometry/geometryintersection.hh>
 #include <dumux/geometry/intersectingentities.hh>
+#include <dumux/geometry/triangulation.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/freeflow/slipcondition.hh>
@@ -283,10 +284,34 @@ public:
                         if (!stokesScvf.boundary())
                             continue;
 
-                        // intersect the geometries
-                        using IntersectionAlgorithm = GeometryIntersection<Scvf<porousMediumIdx>, Scvf<freeFlowIdx>>;
-                        typename IntersectionAlgorithm::Intersection rawIs;
-                        if(IntersectionAlgorithm::intersection(darcyScvfGeometry, stokesScvf.geometry(), rawIs))
+                        const auto intersectionAlreadyComputed = [&] () {
+                            if (pmCouplingFacetIdxMap_.count(darcyEIdx))
+                            {
+                                const auto& darcyElemMapEntry = pmCouplingFacetIdxMap_.at(darcyEIdx);
+                                const bool hasIntersectionsRegistered = darcyElemMapEntry.size() > 0;
+                                if (hasIntersectionsRegistered)
+                                    return std::any_of(
+                                        darcyElemMapEntry[darcyScvf.index()].begin(),
+                                        darcyElemMapEntry[darcyScvf.index()].end(),
+                                        [&] (const auto couplingFacetIdx) {
+                                            return couplingFacets_[couplingFacetIdx].ffScvfIdx == stokesScvf.index();
+                                        }
+                                    );
+                            }
+
+                            return false;
+                        };
+
+
+                        if (intersectionAlreadyComputed())
+                            continue;
+
+                        // get the geometries composing the intersection between the faces
+                        const auto couplingFacetGeometries = getCouplingFacetGeometries_(
+                            darcyScvfGeometry, stokesScvf.geometry()
+                        );
+
+                        for (const auto& facetGeometry : couplingFacetGeometries)
                         {
                             if(pmCouplingFacetIdxMap_[darcyEIdx].size() == 0)
                                 pmCouplingFacetIdxMap_[darcyEIdx].resize(darcyFvGeometry.numScvf());
@@ -294,10 +319,9 @@ public:
                             if(ffCouplingFacetIdxMap_[stokesEIdx].size() == 0)
                                 ffCouplingFacetIdxMap_[stokesEIdx].resize(stokesFvGeometry.numScvf());
 
-                            const auto is = typename CouplingFacet::Geometry(Dune::GeometryTypes::simplex(dim-1), rawIs);
                             pmCouplingFacetIdxMap_[darcyEIdx][darcyScvf.index()].push_back(couplingFaceIdx);
                             ffCouplingFacetIdxMap_[stokesEIdx][stokesScvf.localFaceIdx()].push_back(couplingFaceIdx);
-                            couplingFacets_.push_back({stokesEIdx, darcyEIdx, stokesScvf.index(), darcyScvf.index(), couplingFaceIdx, is});
+                            couplingFacets_.push_back({stokesEIdx, darcyEIdx, stokesScvf.index(), darcyScvf.index(), couplingFaceIdx, facetGeometry});
                             couplingFaceIdx++;
                         }
                     }
@@ -339,6 +363,40 @@ public:
 
 
 private:
+    template<class Geometry1, class Geometry2>
+    std::vector<typename CouplingFacet::Geometry>
+    getCouplingFacetGeometries_(const Geometry1& geo1, const Geometry2& geo2) const
+    {
+        using CouplingFacetGeometry = typename CouplingFacet::Geometry;
+        using IntersectionAlgorithm = GeometryIntersection<Geometry1, Geometry2>;
+
+        static constexpr int dimWorld = Geometry1::coorddimension;
+        static constexpr int dimIntersection = Geometry1::mydimension;
+        static_assert(Geometry1::coorddimension == Geometry2::coorddimension);
+        static_assert(Geometry1::mydimension == Geometry2::mydimension);
+        static_assert(dimIntersection == 1 || dimIntersection == 2);
+
+        typename IntersectionAlgorithm::Intersection rawIs;
+        if (IntersectionAlgorithm::intersection(geo1, geo2, rawIs))
+        {
+            if constexpr (dimIntersection == 2)
+            {
+                const auto triangulation = triangulate<dimIntersection, dimWorld>(rawIs);
+                std::vector<CouplingFacetGeometry> couplingFacets;
+                couplingFacets.reserve(triangulation.size());
+                for (unsigned int i = 0; i < triangulation.size(); ++i)
+                    couplingFacets.emplace_back(
+                        CouplingFacetGeometry{Dune::GeometryTypes::simplex(dimIntersection), triangulation[i]}
+                );
+                return couplingFacets;
+            }
+            else
+                return {{CouplingFacetGeometry{Dune::GeometryTypes::simplex(dimIntersection), rawIs}}};
+        }
+
+        return {};
+    }
+
     FacetContainer couplingFacets_;
     std::unordered_map<std::size_t, IndexContainerElement> pmCouplingFacetIdxMap_;
     std::unordered_map<std::size_t, IndexContainerElement> ffCouplingFacetIdxMap_;
