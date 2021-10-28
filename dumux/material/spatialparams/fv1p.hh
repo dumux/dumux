@@ -76,7 +76,7 @@ struct hasPorosityAtPos
  */
 template<class GridGeometry, class Scalar, class Implementation>
 class
-[[deprecated("Use FVPorousMediumSpatialParamsOneP from dumux/porousmediumflow/fvspatialparamsmp.hh instead!")]]
+[[deprecated("Use FVPorousMediumSpatialParamsOneP from dumux/porousmediumflow/fvspatialparamsmp.hh instead. This class will be removed after 3.5.")]]
 FVSpatialParamsOneP
 {
     using GridView = typename GridGeometry::GridView;
