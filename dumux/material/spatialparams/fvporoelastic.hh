@@ -24,6 +24,8 @@
 #ifndef DUMUX_GEOMECHANICS_POROELASTIC_FV_SPATIAL_PARAMS_HH
 #define DUMUX_GEOMECHANICS_POROELASTIC_FV_SPATIAL_PARAMS_HH
 
+#warning "This file is deprecated, use FVPoroElasticSpatialParams from dumux/geomechanics/poroelastic/fvspatialparams.hh instead!"
+
 #include <memory>
 
 #include <dumux/common/parameters.hh>
@@ -75,7 +77,9 @@ struct hasBiotCoeffAtPos
  * \brief The base class for spatial parameters of poro-elastic geomechanical problems
  */
 template<class Scalar, class GridGeometry, class Implementation>
-class FVSpatialParamsPoroElastic
+class
+[[deprecated("Use FVPoroElasticSpatialParams from dumux/geomechanics/poroelastic/fvspatialparams.hh instead. This class will be removed after 3.5.")]]
+FVSpatialParamsPoroElastic
 {
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
