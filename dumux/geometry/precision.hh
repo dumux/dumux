@@ -22,7 +22,6 @@
 #ifndef DUMUX_GEOMETRY_PRECISION_HH
 #define DUMUX_GEOMETRY_PRECISION_HH
 
-#include <string>
 #include <dumux/common/parameters.hh>
 
 namespace Dumux::Geometry {
