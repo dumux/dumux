@@ -308,19 +308,41 @@ public:
         //                                                                                              //
         //////////////////////////////////////////////////////////////////////////////////////////////////
 
+        // if all volvars in the stencil have to be updated or if it's enough to only update the
+        // volVars for the scv whose associated dof has been deflected
+        static const bool localUpdate = getParamFromGroup<bool>(this->problem().paramGroup(), "Assembly.BoxVolVarsDependOnOneDofOnly", true);
+
         // create the element solution
         auto elemSol = elementSolution(element, curSol, fvGeometry.gridGeometry());
 
         // create the vector storing the partial derivatives
         ElementResidualVector partialDerivs(element.subEntities(dim));
 
+        // Original and current volvars (used in depends-on-one-dof case)
+        VolumeVariables  origVolVars;
+        VolumeVariables *curVolVars = nullptr;
+
+        // Container storing the original volvars (used in depends-on-all-dof case)
+        std::vector<VolumeVariables> allOrigVolVars;
+
+        if (!localUpdate)
+        {
+            allOrigVolVars.reserve(fvGeometry.numScv());
+            for (const auto& scv : scvs(fvGeometry))
+                allOrigVolVars.push_back(this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv));
+        }
+
         // calculation of the derivatives
         for (auto&& scv : scvs(fvGeometry))
         {
             // dof index and corresponding actual pri vars
             const auto dofIdx = scv.dofIndex();
-            auto& curVolVars = this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv);
-            const VolumeVariables origVolVars(curVolVars);
+
+            if (localUpdate)
+            {
+                curVolVars = &this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv);
+                origVolVars = *curVolVars;
+            }
 
             // calculate derivatives w.r.t to the privars at the dof at hand
             for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
@@ -331,7 +353,14 @@ public:
                 {
                     // update the volume variables and compute element residual
                     elemSol[scv.localDofIndex()][pvIdx] = priVar;
-                    curVolVars.update(elemSol, this->problem(), element, scv);
+                    if (localUpdate)
+                        curVolVars->update(elemSol, this->problem(), element, scv);
+                    else
+                    {
+                        for (const auto& scvJ : scvs(fvGeometry))
+                            this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvJ).update(elemSol, this->problem(), element, scvJ);
+                    }
+
                     return this->evalLocalResidual();
                 };
 
@@ -360,11 +389,18 @@ public:
                 }
 
                 // restore the original state of the scv's volume variables
-                curVolVars = origVolVars;
+                if (localUpdate)
+                    *curVolVars = origVolVars;
+                // or restore the original state of all deflected volume variables
+                else
+                {
+                    int localScvIfxJ = 0;
+                    for (const auto& scvJ : scvs(fvGeometry))
+                        this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvJ) = allOrigVolVars[localScvIfxJ++];
+                }
 
                 // restore the original element solution
                 elemSol[scv.localDofIndex()][pvIdx] = curSol[scv.dofIndex()][pvIdx];
-                // TODO additional dof dependencies
             }
         }
         return origResiduals;
