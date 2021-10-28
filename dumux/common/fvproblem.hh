@@ -547,7 +547,7 @@ public:
      * \note The default value was introduced to make the deprecation phase easier
      */
     template<class ElementSolution>
-    [[deprecated("extrusionFactor() should now be defined in the spatial params")]]
+    [[deprecated("extrusionFactor() should now be defined in the spatial params. This interface will be removed after 3.5.")]]
     Scalar extrusionFactor(const Element& element,
                            const SubControlVolume& scv,
                            const ElementSolution& elemSol,
@@ -568,7 +568,7 @@ public:
      *
      * \note The default value was introduced to make the deprecation phase easier
      */
-    [[deprecated("extrusionFactorAtPos() should now be defined in the spatial params")]]
+    [[deprecated("extrusionFactorAtPos() should now be defined in the spatial params. This interface will be removed after 3.5.")]]
     Scalar extrusionFactorAtPos(const GlobalPosition &globalPos, double defaultValue = 1.0) const
     {
         // As a default, i.e. if the user's problem does not overload

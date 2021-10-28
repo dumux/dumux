@@ -37,7 +37,7 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class
-[[deprecated("Use FVPorousMediumSpatialParamsOnePConstant from dumux/porousmediumflow/fvspatialparams1pconstant.hh instead!")]]
+[[deprecated("Use FVPorousMediumSpatialParamsOnePConstant from dumux/porousmediumflow/fvspatialparams1pconstant.hh instead. This class will be removed after 3.5.")]]
 FVSpatialParamsOnePConstant
 : public FVSpatialParamsOneP<GridGeometry, Scalar, FVSpatialParamsOnePConstant<GridGeometry, Scalar>>
 {
