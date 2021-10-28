@@ -1,13 +1,16 @@
 from setuptools import setup, find_namespace_packages
 
+REQUIRED_PACKAGES = '${RequiredPythonModules}'.replace(';',' ').split(' ')
+
 setup(
     name="${ProjectName}",
     description="${ProjectDescription}",
     version="${ProjectVersionString}",
     author="${ProjectAuthor}",
     author_email="${ProjectMaintainerEmail}",
-    packages=find_namespace_packages(include=["dumux.*"]),
+    packages=find_namespace_packages(include=["dumux", "dumux.*"]),
     zip_safe=0,
     package_data={"": ["*.so"]},
-    install_requires="${ProjectPythonRequires}".split(" "),
+    install_requires=REQUIRED_PACKAGES,
+    include_package_data=True,
 )
