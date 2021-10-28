@@ -55,7 +55,7 @@ struct hasFluidMatrixInteractionAtPos
  */
 template<class GridGeometry, class Scalar, class Implementation>
 class
-[[deprecated("Use FVPorousMediumSpatialParamsMP from dumux/porousmediumflow/fvspatialparamsmp.hh instead!")]]
+[[deprecated("Use FVPorousMediumSpatialParamsMP from dumux/porousmediumflow/fvspatialparamsmp.hh instead. This class will be removed after 3.5.")]]
 FVSpatialParams : public FVSpatialParamsOneP<GridGeometry, Scalar, Implementation>
 {
     using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, Implementation>;
