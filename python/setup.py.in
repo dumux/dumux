@@ -8,7 +8,7 @@ setup(
     version="${ProjectVersionString}",
     author="${ProjectAuthor}",
     author_email="${ProjectMaintainerEmail}",
-    packages=find_namespace_packages(include=["dumux", "dumux.*"]),
+    packages=find_namespace_packages(include=["dumux", "dumux.*","dune.*"]),
     zip_safe=0,
     package_data={"": ["*.so"]},
     install_requires=REQUIRED_PACKAGES,
