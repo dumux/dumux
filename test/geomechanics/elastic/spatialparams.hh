@@ -26,7 +26,7 @@
 #define DUMUX_ELASTIC_SPATIAL_PARAMS_HH
 
 #include <dumux/geomechanics/lameparams.hh>
-#include <dumux/material/spatialparams/fvelastic.hh>
+#include <dumux/geomechanics/elastic/fvspatialparams.hh>
 
 namespace Dumux {
 
@@ -35,12 +35,12 @@ namespace Dumux {
  * \brief Definition of the spatial parameters for the linear elasticity problem.
  */
 template<class Scalar, class GridGeometry>
-class ElasticSpatialParams : public FVSpatialParamsElastic< Scalar,
-                                                            GridGeometry,
+class ElasticSpatialParams : public FVElasticSpatialParams< GridGeometry,
+                                                            Scalar,
                                                             ElasticSpatialParams<Scalar, GridGeometry> >
 {
     using ThisType = ElasticSpatialParams<Scalar, GridGeometry>;
-    using ParentType = FVSpatialParamsElastic<Scalar, GridGeometry, ThisType>;
+    using ParentType = FVElasticSpatialParams<GridGeometry, Scalar, ThisType>;
 
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using GridView = typename GridGeometry::GridView;
