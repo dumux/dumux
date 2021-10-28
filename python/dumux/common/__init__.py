@@ -9,8 +9,6 @@ from dune.common.hashit import hashIt
 from dumux.common.properties import Model, Property
 from dumux.wrapping import cppWrapperCreator, cppWrapperClassAlias
 
-from ._common import *
-
 
 @cppWrapperCreator
 def _createFVProblemDecorator(gridGeometry, enableInternalDirichletConstraints=False):
