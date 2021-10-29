@@ -1,7 +1,11 @@
 #!/bin/bash
-# Adds all Python modules found in other Dune modules to the PYTHONPATH
-#./dune-common/bin/dunecontrol bexec "echo -n :\$(pwd)/python >> $(pwd)/pythonpath.txt"
-#export PYTHONPATH=$PYTHONPATH$(cat pythonpath.txt)
-#rm pythonpath.txt
-# Sets up the dune-py module for JIT compilation of Python binding codei (only needed for dune 2.8)
-./dune-common/bin/dunecontrol --opts=cmake.opts make install_python
+
+{ # try
+    # Use internal venv of DUNE
+    source ./dune-common/build-cmake/dune-env/bin/activate &&
+} || { # catch
+    # Install the python packages into custom venv (only needed for dune 2.8)
+    python3 -m venv dune-venv
+    source dune-venv/bin/activate
+    ./dune-common/bin/dunecontrol --opts=cmake.opts make install_python
+}
