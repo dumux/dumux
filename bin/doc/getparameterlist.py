@@ -70,6 +70,9 @@ def extractParamName(line):
     if defaultValue:
         defaultValue = defaultValue.strip(" ")
 
+    # if we get an empty name
+    if(len(paramName) == 0):
+        raise IOError("Could not correctly process parameter name")
     # if interior spaces occur in the parameter name, we can't identify it
     if paramName[0] != '"' or paramName[-1] != '"' or " " in paramName:
         raise IOError("Could not correctly process parameter name")
