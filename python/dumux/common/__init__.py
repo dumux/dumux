@@ -3,12 +3,12 @@ The DuMux common module
 containing classes and functions needed for most simulations
 """
 
-from ._common import *
 from dune.generator.generator import SimpleGenerator
 from dune.common.hashit import hashIt
 
 from dumux.common.properties import Model, Property
 from dumux.wrapping import cppWrapperCreator, cppWrapperClassAlias
+from dumux.common._common import *
 
 
 @cppWrapperCreator
