@@ -1,8 +1,11 @@
 #!/bin/bash
 
-if [ -L /dune/bin/setup-python ] && [ -e /dune/bin/setup-python ] ; then
-    dunecontrol bexec "echo -n :\$(pwd)/python >> $(pwd)/pythonpath.txt"
-    export PYTHONPATH=$PYTHONPATH$(cat pythonpath.txt)
-    rm pythonpath.txt
-    setup-python --opts=$DUNE_OPTS_FILE install
-fi
+{ # try
+    # Use internal venv of DUNE
+    source ./dune-common/build-cmake/dune-env/bin/activate &&
+} || { # catch
+    # Install the python packages into custom venv (only needed for dune 2.8)
+    python3 -m venv dune-venv
+    source dune-venv/bin/activate
+    ./dune-common/bin/dunecontrol --opts=cmake.opts make install_python
+}
