@@ -1,8 +1,8 @@
 #!/bin/bash
 
-if [ -d "/dune/modules/dune-common/build-cmake/dune-env" ]; then
+if [ -d "./dune-common/build-cmake/dune-env" ]; then
     # Use internal venv of DUNE
-    source /dune/modules/dune-common/build-cmake/dune-env/bin/activate
+    source ./dune-common/build-cmake/dune-env/bin/activate
 else
     # Adds all Python modules found in other Dune modules to the PYTHONPATH (only needed for dune 2.8)
     ./dune-common/bin/dunecontrol bexec "echo -n :\$(pwd)/python >> $(pwd)/pythonpath.txt"
