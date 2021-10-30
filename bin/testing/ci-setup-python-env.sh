@@ -3,6 +3,8 @@
 if [ -d "/dune/modules/dune-common/build-cmake/dune-env" ]; then
     # Use internal venv of DUNE
     echo "Activating the Python virtual environment of dune-common"
+    ls /dune/modules/dune-common/build-cmake/dune-env/
+    ls /dune/modules/dune-common/build-cmake/dune-env/bin
     source /dune/modules/dune-common/build-cmake/dune-env/bin/activate
 else
     if [ -L /dune/bin/setup-python ] && [ -e /dune/bin/setup-python ] ; then
