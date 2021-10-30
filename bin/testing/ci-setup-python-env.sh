@@ -9,6 +9,6 @@ else
         dunecontrol bexec "echo -n :\$(pwd)/python >> $(pwd)/pythonpath.txt"
         export PYTHONPATH=$PYTHONPATH$(cat pythonpath.txt)
         rm pythonpath.txt
-        setup-python --opts=$DUNE_OPTS_FILE install
+        dunecontrol --current --opts=$DUNE_OPTS_FILE make install_python
     fi
 fi
