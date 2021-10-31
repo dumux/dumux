@@ -3,9 +3,8 @@
 if [ -d "/dune/modules/dune-common/build-cmake/dune-env" ]; then
     # Use internal venv of DUNE
     echo "Activating the Python virtual environment of dune-common"
-    ls /dune/modules/dune-common/build-cmake/dune-env/
-    ls /dune/modules/dune-common/build-cmake/dune-env/bin
     source /dune/modules/dune-common/build-cmake/dune-env/bin/activate
+    python -m pip install pylint flake8
 else
     if [ -L /dune/bin/setup-python ] && [ -e /dune/bin/setup-python ] ; then
         dunecontrol bexec "echo -n :\$(pwd)/python >> $(pwd)/pythonpath.txt"
