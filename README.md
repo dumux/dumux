@@ -101,7 +101,6 @@ make -j8 build_2p_tests && ctest -j8 -L ^2p$
 
 __Running individual tests__
 
-Often it may be helpful to start with one of the tests when developing your own application on top of DuMu<sup>x</sup>.
 To find out how to build a test inspect the `CMakeLists.txt` file in the respective test folder. 
 
 The `dumux_add_test`
