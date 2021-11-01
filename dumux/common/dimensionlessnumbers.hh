@@ -24,8 +24,8 @@
  * All the input to the dimensionless numbers has to be provided as function arguments.
  * Rendering this collection generic in the sense that it can be used by any model.
  */
-#ifndef DIMENSIONLESS_NUMBERS_HH
-#define DIMENSIONLESS_NUMBERS_HH
+#ifndef DUMUX_COMMON_DIMENSIONLESS_NUMBERS_HH
+#define DUMUX_COMMON_DIMENSIONLESS_NUMBERS_HH
 
 #include <cmath>
 #include <iostream>
