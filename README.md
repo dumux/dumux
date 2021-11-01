@@ -80,8 +80,9 @@ You can also cite specific releases published on Zenodo:
 
 
 
-Automated Testing
-==================
+Automated Testing / Test suite
+===============================
+
 * Master branch (development): [![master build badge](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/badges/master/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines?page=1&scope=all&ref=master)
 * Latest release: [![release build badge](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/badges/releases/3.4/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines?page=1&scope=all&ref=releases/3.4)
 
@@ -97,6 +98,22 @@ You can build and run tests of a specific label (e.g. `2p` for two-phase flow po
 ```
 make -j8 build_2p_tests && ctest -j8 -L ^2p$
 ```
+
+__Running individual tests__
+
+Often it may be helpful to start with one of the tests when developing your own application on top of DuMu<sup>x</sup>.
+To find out how to build a test inspect the `CMakeLists.txt` file in the respective test folder. The `dumux_add_test`
+command specifies some important parameters: `NAME` sets the name of the test. There is either `SOURCES` or `TARGET`
+specified. If `SOURCES` is specified `NAME` corresponds to the build target, otherwise `TARGET` is the build target.
+You can build the test by running `make <PUT_TARGET_HERE>` (when using GNU Makefiles (default) this is possible
+within the test folder in the build directory, for `ninja` it has to be executed in the top-most build folder level).
+Some test may depend on additional optional dependencies. You can find this by inspecting the argument `CMAKE_GUARD`,
+e.g. `HAVE_UMFPACK` means UMFPack is required (via installing Suitesparse), or `( "dune-foamgrid_FOUND" AND "dune-alugrid_FOUND" )`
+means that the test requires the additional Dune modules `dune-foamgrid` and `dune-alugrid`. For installing
+external dependencies, have a look at the [Handbook](https://dumux.org/docs/handbook/master/dumux-handbook.pdf)
+and the script [dumux/bin/installexternal.py](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/bin/installexternal.py).
+
+__Test coverage__
 
 [![coverage report](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-coverage/badges/master/coverage.svg)](https://pages.iws.uni-stuttgart.de/dumux-repositories/dumux-coverage/)
 
