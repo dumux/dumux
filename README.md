@@ -80,11 +80,10 @@ You can also cite specific releases published on Zenodo:
 
 
 
-Automated Testing
-==================
+Automated Testing / Test suite
+===============================
 * Latest release (3.4): [![release build badge](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/badges/releases/3.4/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines?page=1&scope=all&ref=releases/3.4)
 * Master branch (development / unstable): [![master build badge](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/badges/master/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines?page=1&scope=all&ref=master)
-
 
 
 DuMu<sup>x</sup> features many tests (some unit tests and test problems) that
@@ -98,6 +97,25 @@ You can build and run tests of a specific label (e.g. `2p` for two-phase flow po
 ```
 make -j8 build_2p_tests && ctest -j8 -L ^2p$
 ```
+
+__Running individual tests__
+
+To find out how to build a test inspect the `CMakeLists.txt` file in the respective test folder. 
+
+The `dumux_add_test`
+command specifies some important parameters: `NAME` sets the name of the test. There is either `SOURCES` or `TARGET`
+specified. If `SOURCES` is specified `NAME`, corresponds to the build target, otherwise `TARGET` is the build target.
+
+You can build the test by running `make REPLACE_BY_NAME_OF_BUILD_TARGET` (when using GNU Makefiles (default) this is possible
+within the test folder in the build directory, for `ninja` it has to be executed in the top-most build folder level).
+
+Some tests may depend on additional optional dependencies. You can find this by inspecting the argument `CMAKE_GUARD`,
+e.g. `HAVE_UMFPACK` means UMFPack is required (via installing Suitesparse), or `( "dune-foamgrid_FOUND" AND "dune-alugrid_FOUND" )`
+means that the test requires the additional Dune modules `dune-foamgrid` and `dune-alugrid`. For installing
+external dependencies, have a look at the [Handbook](https://dumux.org/docs/handbook/master/dumux-handbook.pdf)
+and the script [dumux/bin/installexternal.py](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/bin/installexternal.py).
+
+__Test coverage__
 
 [![coverage report](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-coverage/badges/master/coverage.svg)](https://pages.iws.uni-stuttgart.de/dumux-repositories/dumux-coverage/)
 
@@ -119,17 +137,17 @@ or send us formatted patches.
 Backwards Compatibility
 =======================
 
-For a detailed description of the backwards compatibility policy, 
+For a detailed description of the backwards compatibility policy,
 please see [contribution guidelines](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/CONTRIBUTING.md).
 
-DuMu<sup>x</sup> releases are split into major(e.g. 2.0, 3.0) and minor (e.g. 3.1, 3.2, 3.3) releases. 
-Major releases are not required to maintain backwards compatibility (see below), 
-but would provide a detailed guide on how to update dependent modules. 
+DuMu<sup>x</sup> releases are split into major(e.g. 2.0, 3.0) and minor (e.g. 3.1, 3.2, 3.3) releases.
+Major releases are not required to maintain backwards compatibility (see below),
+but would provide a detailed guide on how to update dependent modules.
 For each minor release, maintaining backwards compatibility is strongly encouraged and recommended.
 
 Despite the goal of maintaining backwards compatibility across minor releases,
-for more complicated changes, this is decided upon on a case to case basis, due to limited developer resources. 
-In the case that implementing full backwards compatibility for an update is not feasible, or would require unreasonable resources, 
+for more complicated changes, this is decided upon on a case to case basis, due to limited developer resources.
+In the case that implementing full backwards compatibility for an update is not feasible, or would require unreasonable resources,
 the degree of backwards compatibility be decided by a vote in one of the monthly core developer meetings.
 
 Major version update, 2.12 to 3.0
