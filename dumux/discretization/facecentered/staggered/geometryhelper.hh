@@ -155,12 +155,10 @@ public:
     //! Returns an element's intersection based on the local facet index.
     auto intersection(const SmallLocalIndexType localFacetIdx, const Element& element) const
     {
-        SmallLocalIndexType counter = 0;
         for (const auto& intersection : intersections(gridView(), element))
         {
-            if (counter == localFacetIdx)
+            if (intersection.indexInInside() == localFacetIdx)
                 return intersection;
-            ++counter;
         }
         DUNE_THROW(Dune::InvalidStateException, "localFacetIdx " << localFacetIdx << " out of range");
     }
