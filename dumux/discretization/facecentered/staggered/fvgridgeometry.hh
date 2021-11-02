@@ -64,6 +64,19 @@ struct FaceCenteredStaggeredDefaultGridGeometryTraits : public DefaultMapperTrai
 
     template<class GridGeometry, bool enableCache>
     using LocalView = FaceCenteredStaggeredFVElementGeometry<GridGeometry, enableCache>;
+
+    struct StaticInfo
+    {
+        static constexpr auto dim = GridView::Grid::dimension;
+        static constexpr auto numFacesPerElement = dim * 2;
+        static constexpr auto numScvsPerElement = numFacesPerElement;
+        static constexpr auto numLateralScvfsPerScv = 2 * (dim - 1);
+        static constexpr auto numLateralScvfsPerElement = numFacesPerElement*numLateralScvfsPerScv;
+        static constexpr auto minNumScvfsPerElement = numLateralScvfsPerElement  // number of lateral faces
+                                                    + numFacesPerElement;  // number of central frontal faces
+        static constexpr auto maxNumScvfsPerElement = minNumScvfsPerElement
+                                                    + numFacesPerElement; // number of potential frontal faces on boundary
+    };
 };
 
 /*!
@@ -99,17 +112,12 @@ class FaceCenteredStaggeredFVGridGeometry<GV, true, Traits>
 
     using Scalar = typename GV::ctype;
 
-    static constexpr auto dim = GV::Grid::dimension;
-    static constexpr auto numFacesPerElement = dim * 2;
-    static constexpr auto numScvsPerElement = numFacesPerElement;
-    static constexpr auto numLateralScvfsPerScv = 2 * (dim - 1);
-    static constexpr auto numLateralScvfsPerElement = numFacesPerElement*numLateralScvfsPerScv;
-
-    static constexpr auto maxNumScvfsPerElement = numLateralScvfsPerElement  // number of lateral faces
-                                                + numFacesPerElement  // number of central frontal faces
-                                                + numFacesPerElement; // number of potential frontal faces on boundary
-
-    // static_assert(maxNumScvfsPerElement == 16); // TODO remove
+    static constexpr auto dim = Traits::StaticInfo::dim;
+    static constexpr auto numScvsPerElement = Traits::StaticInfo::numScvsPerElement;
+    static constexpr auto numLateralScvfsPerScv = Traits::StaticInfo::numLateralScvfsPerScv;
+    static constexpr auto numLateralScvfsPerElement = Traits::StaticInfo::numLateralScvfsPerElement;
+    static constexpr auto minNumScvfsPerElement = Traits::StaticInfo::minNumScvfsPerElement;
+    static constexpr auto maxNumScvfsPerElement = Traits::StaticInfo::maxNumScvfsPerElement;
 
     using ScvfCornerStorage = typename Traits::SubControlVolumeFace::Traits::CornerStorage;
     using ScvCornerStorage = typename Traits::SubControlVolume::Traits::CornerStorage;
@@ -131,6 +139,8 @@ public:
     using GridView = GV;
     //! export the geometry helper type
     using GeometryHelper = typename Traits::GeometryHelper;
+    //! export static information
+    using StaticInformation = typename Traits::StaticInfo;
     //! export the type of extrusion
     using Extrusion = Extrusion_t<Traits>;
 
@@ -555,15 +565,12 @@ class FaceCenteredStaggeredFVGridGeometry<GV, false, Traits>
     using IntersectionMapper = typename Traits::IntersectionMapper;
     using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType>;
 
-    static constexpr auto dim = GV::Grid::dimension;
-    static constexpr auto numFacesPerElement = dim * 2;
-    static constexpr auto numScvsPerElement = numFacesPerElement;
-    static constexpr auto numLateralScvfsPerScv = 2 * (dim - 1);
-    static constexpr auto numLateralScvfsPerElement = numFacesPerElement*numLateralScvfsPerScv;
-
-    static constexpr auto maxNumScvfsPerElement = numLateralScvfsPerElement  // number of lateral faces
-                                                + numFacesPerElement  // number of central frontal faces
-                                                + numFacesPerElement; // number of potential frontal faces on boundary
+    static constexpr auto dim = Traits::StaticInfo::dim;
+    static constexpr auto numScvsPerElement = Traits::StaticInfo::numScvsPerElement;
+    static constexpr auto numLateralScvfsPerScv = Traits::StaticInfo::numLateralScvfsPerScv;
+    static constexpr auto numLateralScvfsPerElement = Traits::StaticInfo::numLateralScvfsPerElement;
+    static constexpr auto minNumScvfsPerElement = Traits::StaticInfo::minNumScvfsPerElement;
+    static constexpr auto maxNumScvfsPerElement = Traits::StaticInfo::maxNumScvfsPerElement;
 
 public:
     //! export the discretization method this geometry belongs to
@@ -582,6 +589,8 @@ public:
     using GridView = GV;
     //! export the geometry helper type
     using GeometryHelper = typename Traits::GeometryHelper;
+    //! export static information
+    using StaticInformation = typename Traits::StaticInfo;
     //! export the type of extrusion
     using Extrusion = Extrusion_t<Traits>;
 
