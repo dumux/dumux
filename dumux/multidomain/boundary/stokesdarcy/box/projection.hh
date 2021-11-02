@@ -135,7 +135,7 @@ public:
             //ToDo Is this if really necessary?
             if (scvf.index() == data.stokesScvfIdx)
             {
-                const auto& elemVolVars = *(data.elementVolVars);
+                const auto& elemVolVars = data.elementVolVars;
                 const auto& darcyScvf = data.fvGeometry.scvf(data.darcyScvfIdx);
                 const auto& couplingFacet = couplingManager.couplingMapper().couplingFacet(data.facetIdx);
                 projection += calculateFacetIntegral(data.element, data.fvGeometry, darcyScvf, elemVolVars, couplingFacet.geometry, evalPriVar);
@@ -174,14 +174,14 @@ public:
 
                 Scalar value = 0.0;
                 for (const auto& scv : scvs(fvGeometry))
-                    value += evalPriVar(elemVolVars[scv])*shapeValues[scv.indexInElement()][0];
+                    value += evalPriVar(elemVolVars[scv.localDofIndex()])*shapeValues[scv.indexInElement()][0];
 
                 facetProjection += value*facetGeometry.integrationElement(qp.position())*qp.weight();
             }
         }
         else if constexpr (projectionMethod == ProjectionMethod::AreaWeightedDofEvaluation)
         {
-            facetProjection = facetGeometry.volume()*evalPriVar(elemVolVars[fvGeometry.scv(scvf.insideScvIdx())]);
+            facetProjection = facetGeometry.volume()*evalPriVar(elemVolVars[fvGeometry.scv(scvf.insideScvIdx()).localDofIndex()]);
         }
         else
         {

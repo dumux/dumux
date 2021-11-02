@@ -67,13 +67,14 @@ namespace Detail {
         FVElementGeometry<porousMediumIdx> fvGeometry;
         std::size_t darcyScvfIdx;
         std::size_t stokesScvfIdx;
-        std::unique_ptr< ElementVolumeVariables<porousMediumIdx> > elementVolVars;
+        std::vector< VolumeVariables<porousMediumIdx> > elementVolVars;
         std::size_t facetIdx;
 
         auto permeability() const
         {
             const auto& darcyScvf = fvGeometry.scvf(darcyScvfIdx);
-            return (*elementVolVars)[darcyScvf.insideScvIdx()].permeability();
+            const auto& insideScv = fvGeometry.scv(darcyScvf.insideScvIdx());
+            return elementVolVars[insideScv.localDofIndex()].permeability();
         }
     };
 
@@ -384,7 +385,7 @@ public:
             {
                 if(scv.dofIndex() == dofIdxGlobalJ)
                 {
-                    auto& volVars = (*data.elementVolVars)[scv];
+                    auto& volVars = data.elementVolVars[scv.localDofIndex()];
                     volVars.update(darcyElemSol, this->problem(porousMediumIdx), data.element, scv);
                 }
             }
@@ -813,10 +814,16 @@ private:
             darcyElemVolVars.bind(darcyElement, darcyFvGeometry, this->curSol()[porousMediumIdx]);
             darcyElemFluxVarsCache.bind(darcyElement, darcyFvGeometry, darcyElemVolVars);
 
+            std::vector<VolumeVariables<porousMediumIdx>> elemVolVarsCopy;
+            elemVolVarsCopy.reserve(darcyFvGeometry.numScv());
+            for (const auto& scv : scvs(darcyFvGeometry))
+                elemVolVarsCopy.emplace_back(std::move(darcyElemVolVars[scv]));
+
             // add the context
-            couplingContext.push_back({darcyElement, darcyFvGeometry, couplingFacet.pmScvfIdx, couplingFacet.ffScvfIdx,
-                                       std::make_unique< ElementVolumeVariables<porousMediumIdx> >( std::move(darcyElemVolVars)),
-                                       couplingFacet.idx});
+            couplingContext.push_back({
+                darcyElement, darcyFvGeometry, couplingFacet.pmScvfIdx,
+                couplingFacet.ffScvfIdx, std::move(elemVolVarsCopy), couplingFacet.idx
+            });
         }
     }
 
