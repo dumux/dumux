@@ -51,10 +51,7 @@ class FaceCenteredStaggeredFVElementGeometry<GG, /*cachingEnabled*/true>
     using ThisType = FaceCenteredStaggeredFVElementGeometry<GG, /*cachingEnabled*/true>;
     using GridView = typename GG::GridView;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
-
-    static constexpr auto dim = GridView::dimension;
-    static constexpr auto numFacesPerElement = dim * 2;
-    static constexpr auto numScvsPerElement = numFacesPerElement;
+    static constexpr auto numScvsPerElement = GG::StaticInformation::numScvsPerElement;
 
 public:
     //! export type of subcontrol volume face
@@ -64,9 +61,7 @@ public:
     using GridGeometry = GG;
 
     //! the maximum number of scvs per element
-    static constexpr std::size_t maxNumElementScvs = 2*GridView::dimension;
-    // //! the maximum number of scvfs per element (use cubes for maximum)
-    // static constexpr std::size_t maxNumElementScvfs = 2*GridView::dimension;
+    static constexpr std::size_t maxNumElementScvs = numScvsPerElement;
 
     FaceCenteredStaggeredFVElementGeometry(const GridGeometry& gridGeometry)
     : gridGeometry_(&gridGeometry)
@@ -239,20 +234,15 @@ class FaceCenteredStaggeredFVElementGeometry<GG, /*cachingEnabled*/false>
     using GridView = typename GG::GridView;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
 
-    static constexpr std::size_t maxNumScvfs = 16; // TODO 3D
-
     //TODO include assert that checks for quad geometry
-    static constexpr auto codimIntersection =  1;
 
-    static constexpr auto dim = GridView::dimension;
-    static constexpr auto numFacesPerElement = dim * 2;
-    static constexpr auto numScvsPerElement = numFacesPerElement;
-    static constexpr auto numLateralScvfsPerScv = 2 * (dim - 1);
-    static constexpr auto numLateralScvfsPerElement = numFacesPerElement*numLateralScvfsPerScv;
-
-    static constexpr auto maxNumScvfsPerElement = numLateralScvfsPerElement  // number of lateral faces
-                                                + numFacesPerElement  // number of central frontal faces
-                                                + numFacesPerElement; // number of potential frontal faces on boundary
+    using StaticInfo = typename GG::StaticInformation;
+    static constexpr auto dim = StaticInfo::dim;
+    static constexpr auto numScvsPerElement = StaticInfo::numScvsPerElement;
+    static constexpr auto numLateralScvfsPerScv = StaticInfo::numLateralScvfsPerScv;
+    static constexpr auto numLateralScvfsPerElement = StaticInfo::numLateralScvfsPerElement;
+    static constexpr auto minNumScvfsPerElement = StaticInfo::minNumScvfsPerElement;
+    static constexpr auto maxNumScvfsPerElement = StaticInfo::maxNumScvfsPerElement;
 
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
 
@@ -353,15 +343,11 @@ public:
 
     //! number of sub control volumes in this fv element geometry
     std::size_t numScv() const
-    {
-        return numScvsPerElement;
-    }
+    { return numScvsPerElement; }
 
     //! number of sub control volumes in this fv element geometry
     std::size_t numScvf() const
-    {
-        return scvfIndices_().size();
-    }
+    { return scvfIndices_().size(); }
 
     /*!
     * \brief bind the local view (r-value overload)
@@ -592,7 +578,7 @@ private:
         return !intersection.neighbor() && intersection.boundary();
     }
 
-    Dune::ReservedVector<SubControlVolumeFace, maxNumScvfs> scvfs_;
+    Dune::ReservedVector<SubControlVolumeFace, maxNumScvfsPerElement> scvfs_;
 
     Dune::ReservedVector<SubControlVolume, numLateralScvfsPerElement> neighborScvs_;
     Dune::ReservedVector<GridIndexType, numLateralScvfsPerElement> neighborScvIndices_;
