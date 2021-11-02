@@ -877,14 +877,13 @@ public:
         const auto b2 = geo2.corner(2) - geo2.corner(0);
         const auto n2 = crossProduct(a2, b2);
 
-        using std::max;
-        using std::sqrt;
+        // compute an epsilon scaled with larger edge length
         const auto a1Norm2 = a1.two_norm2();
         const auto b1Norm2 = b1.two_norm2();
+
+        using std::max;
         const auto maxNorm2 = max(a1Norm2, b1Norm2);
         const auto eps2 = maxNorm2*eps_;
-        const auto eps = sqrt(maxNorm2)*eps_;
-        const auto eps3 = eps*eps2;
 
         // early exit if polygons are not parallel
         using std::abs;
@@ -895,6 +894,10 @@ public:
         auto d1 = geo2.corner(0) - geo1.corner(0);
         if (d1.two_norm2() < eps2)
             d1 = geo2.corner(1) - geo1.corner(0);
+
+        using std::sqrt;
+        const auto maxNorm = sqrt(maxNorm2);
+        const auto eps3 = maxNorm*eps2;
 
         if (abs(d1*n2) > eps3)
             return false;
@@ -960,6 +963,7 @@ public:
             return false;
 
         // remove duplicates
+        const auto eps = maxNorm*eps_;
         std::sort(points.begin(), points.end(), [eps] (const auto& a, const auto& b) -> bool
         {
             using std::abs;
