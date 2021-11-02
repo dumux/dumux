@@ -146,15 +146,6 @@ public:
         update_();
     }
 
-    /*!
-     * \brief Recalculates map after mesh adaptation
-     */
-    [[deprecated("Use update(gridView) instead! Will be removed after release 3.4.")]]
-    void update ()
-    {
-        update_();
-    }
-
 private:
     void update_()
     {

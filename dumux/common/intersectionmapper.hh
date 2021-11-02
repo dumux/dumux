@@ -29,8 +29,6 @@
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/common/rangegenerators.hh>
 
-#include <dumux/common/deprecated.hh>
-
 namespace Dumux {
 
 /*!
@@ -63,10 +61,6 @@ public:
         gridView_ = std::move(gridView);
         indexSet_ = &gridView_.indexSet();
     }
-
-    [[deprecated("Use update(gridView) instead! Will be removed after release 3.4.")]]
-    void update()
-    {}
 
     //! The total number of intersections
     std::size_t numIntersections() const
@@ -143,12 +137,6 @@ public:
     {
         gridView_ = std::move(gridView);
         indexSet_ = &gridView_.indexSet();
-        update_();
-    }
-
-    [[deprecated("Use update(gridView) instead! Will be removed after release 3.4.")]]
-    void update()
-    {
         update_();
     }
 
@@ -355,19 +343,10 @@ public:
         update_();
     }
 
-    [[deprecated("Use update(gridView) instead! Will be removed after release 3.4.")]]
-    void update()
-    {
-        update_();
-    }
-
 protected:
     void update_()
     {
-        if constexpr (Deprecated::hasUpdateGridView<ElementMapper, GridView>())
-            elementMapper_.update(gridView_);
-        else
-            Deprecated::update(elementMapper_);
+        elementMapper_.update(gridView_);
 
         intersectionMapGlobal_.clear();
         intersectionMapGlobal_.resize(elementMapper_.size());
