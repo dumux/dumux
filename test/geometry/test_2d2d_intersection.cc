@@ -172,6 +172,28 @@ void testNonParallelPolygons(std::vector<bool>& returns)
     std::cout << std::endl;
 }
 
+// unit test discovered in a simulation, that originally failed on commit 51fc9c1e3
+void testSimulationCase(std::vector<bool>& returns)
+{
+    using Position = Dune::FieldVector<double, 3>;
+    const auto quad1 = makeQuadrilateral(
+        Position{{9.49264705847428835739e-01, 1.40073529420942810564e-01, 4.00000000000000077716e-01}},
+        Position{{9.44669117627101373458e-01, 1.42095588240539000280e-01, 4.00000000000000077716e-01}},
+        Position{{9.49632352923713174420e-01, 1.45036764710471721695e-01, 4.00000000000000022204e-01}},
+        Position{{9.46446078418066827354e-01, 1.44730392160359544462e-01, 4.00000000000000077716e-01}}
+    );
+    const auto quad2 = makeQuadrilateral(
+        Position{{9.39999999999999946709e-01, 1.39999999999999985567e-01, 4.00000000000000022204e-01}},
+        Position{{9.59999999999999964473e-01, 1.39999999999999985567e-01, 4.00000000000000022204e-01}},
+        Position{{9.39999999999999946709e-01, 1.60000000000000003331e-01, 4.00000000000000022204e-01}},
+        Position{{9.59999999999999964473e-01, 1.60000000000000003331e-01, 4.00000000000000022204e-01}}
+    );
+
+    returns.push_back(testPolygonIntersection<3>(quad1, quad2, true));
+
+    std::cout << std::endl;
+}
+
 #endif
 
 int main(int argc, char* argv[])
@@ -189,6 +211,9 @@ int main(int argc, char* argv[])
 
     std::cout << "Testing non-parallel polygons in 3d space" << std::endl;
     testNonParallelPolygons(returns);
+
+    std::cout << "Testing 3d unit test from actual simulation" << std::endl;
+    testSimulationCase(returns);
 
     // TODO: implement and test point and segment intersections
 
