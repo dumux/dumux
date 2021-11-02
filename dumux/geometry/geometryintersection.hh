@@ -882,9 +882,10 @@ public:
         const auto a1Norm2 = a1.two_norm2();
         const auto b1Norm2 = b1.two_norm2();
         const auto maxNorm2 = max(a1Norm2, b1Norm2);
+        const auto maxNorm = sqrt(maxNorm2);
         const auto eps2 = maxNorm2*eps_;
-        const auto eps = sqrt(maxNorm2)*eps_;
-        const auto eps3 = eps*eps2;
+        const auto eps = maxNorm*eps_;
+        const auto eps3 = maxNorm*eps2;
 
         // early exit if polygons are not parallel
         using std::abs;
