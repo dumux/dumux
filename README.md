@@ -134,8 +134,8 @@ over the mailing list, or file an [issue](https://git.iws.uni-stuttgart.de/dumux
 feature implementations open a [merge request](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/merge_requests)
 or send us formatted patches.
 
-Backwards Compatibility
-=======================
+Releases and backwards compatibility policy
+============================================
 
 For a detailed description of the backwards compatibility policy,
 please see [contribution guidelines](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/CONTRIBUTING.md).
@@ -149,15 +149,6 @@ Despite the goal of maintaining backwards compatibility across minor releases,
 for more complicated changes, this is decided upon on a case to case basis, due to limited developer resources.
 In the case that implementing full backwards compatibility for an update is not feasible, or would require unreasonable resources,
 the degree of backwards compatibility be decided by a vote in one of the monthly core developer meetings.
-
-Major version update, 2.12 to 3.0
-===================================
-
-With the version update to version 3, many features have been added and a lot has been improved in DuMu<sup>x</sup>. See the
-[changelog](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/CHANGELOG.md) for a list of changes.
-If you decide to update from version 2.12, please have a look at our small
-[guide](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/wikis/Hints/Upgrade-to-Dumux-3)
-on how to update an application to the new version.
 
 [0]: https://dumux.org
 [1]: https://dune-project.org/
