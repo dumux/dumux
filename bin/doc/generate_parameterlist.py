@@ -231,8 +231,8 @@ for key in parameterDict:
     paramType = entry["paramType"][0]
     defaultValue = next((e for e in entry["defaultValue"] if e), "-")
 
-    hasMultiplePT = bool(not all(pt == paramType for pt in entry["paramType"]))
-    hasMultipleDV = bool(
+    hasMultiplePT = (not all(pt == paramType for pt in entry["paramType"]))
+    hasMultipleDV = (
         not all(
             dv == (defaultValue if defaultValue != "-" else None) for dv in entry["defaultValue"]
         )
