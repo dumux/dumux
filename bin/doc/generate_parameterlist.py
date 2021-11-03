@@ -366,6 +366,17 @@ header = """/*!
  *
  *\\brief List of currently useable run-time parameters
  *
+ *  _    _                  _
+ * | |  | |                (_)
+ * | |  | | __ _ _ __ _ __  _ _ __   __ _
+ * | |/\| |/ _` | '__| '_ \| | '_ \ / _` |
+ * \  /\  / (_| | |  | | | | | | | | (_| |
+ *  \/  \/ \__,_|_|  |_| |_|_|_| |_|\__, |
+ *                                   __/ |
+ *                                  |___/ 
+ * WARNING: This file is auto-generated. Do not manually edit. 
+ * Run bin/doc/generate_parameterlist.py
+ *
  * The listed run-time parameters are available in general,
  * but we point out that a certain model might not be able
  * to use every parameter!
