@@ -253,6 +253,11 @@ public:
                     }
                 }
 
+                // if the circle stencil is empty (that is the circle is entirely outside the domain)
+                // we do not add a (zero) point source
+                if (circleStencil.empty())
+                    continue;
+
                 // export low dim circle stencil
                 if constexpr (isBox<bulkIdx>())
                 {
