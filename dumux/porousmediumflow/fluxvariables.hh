@@ -63,11 +63,13 @@ class PorousMediumFluxVariables
 public:
     using UpwindScheme = UpScheme;
     using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
+    using DispersionFluxType = GetPropType<TypeTag, Properties::DispersionFluxType>;
     using MolecularDiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
     using HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>;
 
     static constexpr bool enableAdvection = ModelTraits::enableAdvection();
     static constexpr bool enableMolecularDiffusion = ModelTraits::enableMolecularDiffusion();
+    static constexpr bool enableCompositionalDispersion = ModelTraits::enableCompositionalDispersion();
     static constexpr bool enableEnergyBalance = ModelTraits::enableEnergyBalance();
     static constexpr bool enableThermalNonEquilibrium = getPropValue<TypeTag, Properties::EnableThermalNonEquilibrium>();
 
@@ -119,6 +121,23 @@ public:
                                                 this->scvFace(),
                                                 phaseIdx,
                                                 this->elemFluxVarsCache());
+        else
+            return Dune::FieldVector<Scalar, numComponents>(0.0);
+    }
+
+    /*!
+     * \brief Returns the compositional dispersion flux computed by the respective law.
+     */
+    Dune::FieldVector<Scalar, numComponents> compositionalDispersionFlux([[maybe_unused]] const int phaseIdx) const
+    {
+        if constexpr (enableCompositionalDispersion)
+            return DispersionFluxType::compositionalDispersionFlux(this->problem(),
+                                                                   this->element(),
+                                                                   this->fvGeometry(),
+                                                                   this->elemVolVars(),
+                                                                   this->scvFace(),
+                                                                   phaseIdx,
+                                                                   this->elemFluxVarsCache());
         else
             return Dune::FieldVector<Scalar, numComponents>(0.0);
     }

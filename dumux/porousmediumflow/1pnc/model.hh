@@ -339,20 +339,22 @@ private:
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
     using BaseTraits = OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 
+    using DTL = GetPropType<TypeTag, Properties::DispersionTensorLaw>;
     using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
     using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
     using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
-    template<class BaseTraits, class DT, class EDM, class ETCM>
+    template<class BaseTraits, class DTL, class DT, class EDM, class ETCM>
     struct NCNITraits : public BaseTraits
     {
+        using DispersionTensorLaw = DTL;
         using DiffusionType = DT;
         using EffectiveDiffusivityModel = EDM;
         using EffectiveThermalConductivityModel = ETCM;
     };
 
-    using EquilibriumVolVars = OnePNCVolumeVariables<NCNITraits<BaseTraits, DT, EDM, ETCM>>;
+    using EquilibriumVolVars = OnePNCVolumeVariables<NCNITraits<BaseTraits, DTL, DT, EDM, ETCM>>;
 public:
-    using type = NonEquilibriumVolumeVariables<NCNITraits<BaseTraits, DT, EDM, ETCM>, EquilibriumVolVars>;
+    using type = NonEquilibriumVolumeVariables<NCNITraits<BaseTraits, DTL, DT, EDM, ETCM>, EquilibriumVolVars>;
 };
 
 } // end namespace Properties
