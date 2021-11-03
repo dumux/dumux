@@ -99,7 +99,7 @@ def getParamsFromFile(file, log):
     if errors:
         log.append(
             ("\n\n{} parameter{} in file {} could not be retrieved automatically. "
-            "Please check them yourself:").format(
+             "Please check them yourself:").format(
                 len(errors), "s" if len(errors) > 1 else "", file
             )
         )
@@ -373,8 +373,8 @@ header = """/*!
  * \  /\  / (_| | |  | | | | | | | | (_| |
  *  \/  \/ \__,_|_|  |_| |_|_|_| |_|\__, |
  *                                   __/ |
- *                                  |___/ 
- * WARNING: This file is auto-generated. Do not manually edit. 
+ *                                  |___/
+ * WARNING: This file is auto-generated. Do not manually edit.
  * Run bin/doc/generate_parameterlist.py
  *
  * The listed run-time parameters are available in general,
