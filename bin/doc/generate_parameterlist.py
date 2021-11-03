@@ -194,7 +194,7 @@ for missingkey in missingParameters:
     parameterDict[key]["defaultValue"] = inputDict[missingkey]["default"]
     parameterDict[key]["paramType"] = inputDict[missingkey]["type"]
     parameterDict[key]["paramName"] = (
-        inputDict[missingkey]["Group"] + "." + inputDict[missingkey]["Parameter"]
+        inputDict[missingkey]["group"] + "." + inputDict[missingkey]["parameter"]
     )
     log.append("\nAdd missing parameter " + parameterDict[key]["paramName"] + " from input")
 parameterDict = dict(sorted(parameterDict.items(), key=lambda kv: kv[0]))

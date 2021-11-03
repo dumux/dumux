@@ -7,8 +7,8 @@
         "explanation": [
             "A coefficient for capillary-pressure-saturation-interfacial-area relations described by a polynomial of second order."
         ],
-        "Group": "-",
-        "Parameter": "A00",
+        "group": "-",
+        "parameter": "A00",
         "type": [
                 "Scalar",
                 "Bool"
@@ -21,8 +21,8 @@
         "explanation": [
             "A coefficient for capillary-pressure-saturation-interfacial-area relations described by a polynomial of second order."
         ],
-        "Group": "-",
-        "Parameter": "A01",
+        "group": "-",
+        "parameter": "A01",
         "type": [
             "Scalar"
         ]
@@ -34,8 +34,8 @@
         "explanation": [
             "A coefficient for capillary-pressure-saturation-interfacial-area relations described by a polynomial of second order."
         ],
-        "Group": "-",
-        "Parameter": "A02",
+        "group": "-",
+        "parameter": "A02",
         "type": [
             "Scalar"
         ]
@@ -47,8 +47,8 @@
         "explanation": [
             "A coefficient for capillary-pressure-saturation-interfacial-area relations described by a polynomial of second order."
         ],
-        "Group": "-",
-        "Parameter": "A1",
+        "group": "-",
+        "parameter": "A1",
         "type": [
             "Scalar"
         ]
@@ -60,8 +60,8 @@
         "explanation": [
             "A coefficient for capillary-pressure-saturation-interfacial-area relations described by a polynomial of second order."
         ],
-        "Group": "-",
-        "Parameter": "A10",
+        "group": "-",
+        "parameter": "A10",
         "type": [
             "Scalar"
         ]
@@ -73,8 +73,8 @@
         "explanation": [
             "A coefficient for capillary-pressure-saturation-interfacial-area relations described by a polynomial of second order."
         ],
-        "Group": "-",
-        "Parameter": "A11",
+        "group": "-",
+        "parameter": "A11",
         "type": [
             "Scalar"
         ]
@@ -86,8 +86,8 @@
         "explanation": [
             "A coefficient for capillary-pressure-saturation-interfacial-area relations described by a polynomial of second order."
         ],
-        "Group": "-",
-        "Parameter": "A2",
+        "group": "-",
+        "parameter": "A2",
         "type": [
             "Scalar"
         ]
@@ -99,8 +99,8 @@
         "explanation": [
             "A coefficient for capillary-pressure-saturation-interfacial-area relations described by a polynomial of second order."
         ],
-        "Group": "-",
-        "Parameter": "A20",
+        "group": "-",
+        "parameter": "A20",
         "type": [
             "Scalar"
         ]
@@ -112,8 +112,8 @@
         "explanation": [
             "A coefficient for capillary-pressure-saturation-interfacial-area relations described by a polynomial of second order."
         ],
-        "Group": "-",
-        "Parameter": "A3",
+        "group": "-",
+        "parameter": "A3",
         "type": [
             "Scalar"
         ]
@@ -125,8 +125,8 @@
         "explanation": [
             "Parameter lambda in Brooks Corey."
         ],
-        "Group": "-",
-        "Parameter": "BrooksCoreyLambda",
+        "group": "-",
+        "parameter": "BrooksCoreyLambda",
         "type": [
             "Scalar"
         ]
@@ -138,8 +138,8 @@
         "explanation": [
             "Entry capillary pressure in Brooks Corey."
         ],
-        "Group": "-",
-        "Parameter": "BrooksCoreyPcEntry",
+        "group": "-",
+        "parameter": "BrooksCoreyPcEntry",
         "type": [
             "Scalar"
         ]
@@ -151,8 +151,8 @@
         "explanation": [
             "For effective wetting phase saturations below this value, capillary pressure is given by a regularized capillary pressure-saturation curve."
         ],
-        "Group": "-",
-        "Parameter": "BrooksCoreyPcLowSweThreshold",
+        "group": "-",
+        "parameter": "BrooksCoreyPcLowSweThreshold",
         "type": [
             "Scalar"
         ]
@@ -164,8 +164,8 @@
         "explanation": [
             "Parameter gamma in heat pipe law."
         ],
-        "Group": "-",
-        "Parameter": "HeatpipeLawGamma",
+        "group": "-",
+        "parameter": "HeatpipeLawGamma",
         "type": [
             "Scalar"
         ]
@@ -177,8 +177,8 @@
         "explanation": [
             "Parameter p0 in heat pipe law."
         ],
-        "Group": "-",
-        "Parameter": "HeatpipeLawP0",
+        "group": "-",
+        "parameter": "HeatpipeLawP0",
         "type": [
             "Scalar"
         ]
@@ -190,8 +190,8 @@
         "explanation": [
             "A regularization method for the capillary pressure at high wetting saturations. Possible values are \"Linear\", \"Spline\" and \"PowerLaw\"."
         ],
-        "Group": "-",
-        "Parameter": "HighSwRegularizationMethod",
+        "group": "-",
+        "parameter": "HighSwRegularizationMethod",
         "type": [
             "std::string"
         ]
@@ -203,8 +203,8 @@
         "explanation": [
             "Whether to use a zero slope of the capillary pressure at high wetting saturations."
         ],
-        "Group": "-",
-        "Parameter": "HighSwSplineZeroSlope",
+        "group": "-",
+        "parameter": "HighSwSplineZeroSlope",
         "type": [
             "bool"
         ]
@@ -216,8 +216,8 @@
         "explanation": [
             "Relative permeability for the non-wetting phase data for spline material law."
         ],
-        "Group": "-",
-        "Parameter": "KrnData",
+        "group": "-",
+        "parameter": "KrnData",
         "type": [
             "std::vector<Scalar>"
         ]
@@ -229,8 +229,8 @@
         "explanation": [
             "Relative permeability for the wetting phase data for spline material law."
         ],
-        "Group": "-",
-        "Parameter": "KrwData",
+        "group": "-",
+        "parameter": "KrwData",
         "type": [
             "std::vector<Scalar>"
         ]
@@ -242,8 +242,8 @@
         "explanation": [
             "Entry capillary pressure for the linear capillary pressure and relative permeability <-> saturation relations."
         ],
-        "Group": "-",
-        "Parameter": "LinearPcEntry",
+        "group": "-",
+        "parameter": "LinearPcEntry",
         "type": [
             "Scalar"
         ]
@@ -255,8 +255,8 @@
         "explanation": [
             "Maximum capillary pressure for the linear capillary pressure and relative permeability <-> saturation relations."
         ],
-        "Group": "-",
-        "Parameter": "LinearPcMax",
+        "group": "-",
+        "parameter": "LinearPcMax",
         "type": [
             "Scalar"
         ]
@@ -268,8 +268,8 @@
         "explanation": [
             "Command line argument: overwrite parameter file if one was specified on the command line"
         ],
-        "Group": "-",
-        "Parameter": "ParameterFile",
+        "group": "-",
+        "parameter": "ParameterFile",
         "type": [
             "std::string"
         ]
@@ -281,8 +281,8 @@
         "explanation": [
             "Shape parameter \\f$\\mathrm{\\alpha}\\f$ \\f$\\mathrm{[1/Pa]}\\f$ in Parker/vanGenuchten laws."
         ],
-        "Group": "-",
-        "Parameter": "ParkerVanGenuchtenAlpha",
+        "group": "-",
+        "parameter": "ParkerVanGenuchtenAlpha",
         "type": [
             "Scalar"
         ]
@@ -294,8 +294,8 @@
         "explanation": [
             "Scaling parameter \\f$\\mathrm{betaGn}\\f$ \\f$\\mathrm{[-]}\\f$ in Parker/vanGenuchten laws."
         ],
-        "Group": "-",
-        "Parameter": "ParkerVanGenuchtenBetaGn",
+        "group": "-",
+        "parameter": "ParkerVanGenuchtenBetaGn",
         "type": [
             "Scalar"
         ]
@@ -307,8 +307,8 @@
         "explanation": [
             "Scaling parameter \\f$\\mathrm{betaGw}\\f$ \\f$\\mathrm{[-]}\\f$ in Parker/vanGenuchten laws."
         ],
-        "Group": "-",
-        "Parameter": "ParkerVanGenuchtenBetaGw",
+        "group": "-",
+        "parameter": "ParkerVanGenuchtenBetaGw",
         "type": [
             "Scalar"
         ]
@@ -320,8 +320,8 @@
         "explanation": [
             "Scaling parameter \\f$\\mathrm{betaNw}\\f$ \\f$\\mathrm{[-]}\\f$ in Parker/vanGenuchten laws."
         ],
-        "Group": "-",
-        "Parameter": "ParkerVanGenuchtenBetaNw",
+        "group": "-",
+        "parameter": "ParkerVanGenuchtenBetaNw",
         "type": [
             "Scalar"
         ]
@@ -333,8 +333,8 @@
         "explanation": [
             "The threshold saturation below which the relative permeability of the nonwetting phase gets regularized in Parker/vanGenuchten laws."
         ],
-        "Group": "-",
-        "Parameter": "ParkerVanGenuchtenKrgLowSteThreshold",
+        "group": "-",
+        "parameter": "ParkerVanGenuchtenKrgLowSteThreshold",
         "type": [
             "Scalar"
         ]
@@ -346,8 +346,8 @@
         "explanation": [
             "The threshold saturation below which the relative permeability of the nonwetting phase gets regularized in Parker/vanGenuchten laws."
         ],
-        "Group": "-",
-        "Parameter": "ParkerVanGenuchtenKrnLowSweThreshold",
+        "group": "-",
+        "parameter": "ParkerVanGenuchtenKrnLowSweThreshold",
         "type": [
             "Scalar"
         ]
@@ -359,8 +359,8 @@
         "explanation": [
             "The threshold saturation above which the relative permeability of the wetting phase gets regularized in Parker/vanGenuchten laws."
         ],
-        "Group": "-",
-        "Parameter": "ParkerVanGenuchtenKrwHighSweThreshold",
+        "group": "-",
+        "parameter": "ParkerVanGenuchtenKrwHighSweThreshold",
         "type": [
             "Scalar"
         ]
@@ -372,8 +372,8 @@
         "explanation": [
             "Shape parameter \\f$\\mathrm{n}\\f$ \\f$\\mathrm{[-]}\\f$ in Parker/vanGenuchten laws."
         ],
-        "Group": "-",
-        "Parameter": "ParkerVanGenuchtenN",
+        "group": "-",
+        "parameter": "ParkerVanGenuchtenN",
         "type": [
             "Scalar"
         ]
@@ -385,8 +385,8 @@
         "explanation": [
             "Threshold saturation above which the capillary pressure is regularized in Parker/vanGenuchten laws."
         ],
-        "Group": "-",
-        "Parameter": "ParkerVanGenuchtenPcHighSweThreshold",
+        "group": "-",
+        "parameter": "ParkerVanGenuchtenPcHighSweThreshold",
         "type": [
             "Scalar"
         ]
@@ -398,8 +398,8 @@
         "explanation": [
             "Threshold saturation below which the capillary pressure is regularized in Parker/vanGenuchten laws. Most problems are very sensitive to this value (e.g. making it smaller might result in very high capillary pressures)."
         ],
-        "Group": "-",
-        "Parameter": "ParkerVanGenuchtenPcLowSweThreshold",
+        "group": "-",
+        "parameter": "ParkerVanGenuchtenPcLowSweThreshold",
         "type": [
             "Scalar"
         ]
@@ -411,8 +411,8 @@
         "explanation": [
             "In Parker/vanGenuchten laws regard the relative non-wetting saturation in the permeability of the non-wetting phase, see Helmig1997."
         ],
-        "Group": "-",
-        "Parameter": "ParkerVanGenuchtenRegardSnrForKrn",
+        "group": "-",
+        "parameter": "ParkerVanGenuchtenRegardSnrForKrn",
         "type": [
             "bool"
         ]
@@ -424,8 +424,8 @@
         "explanation": [
             "Capillary pressure data for spline material law."
         ],
-        "Group": "-",
-        "Parameter": "PcData",
+        "group": "-",
+        "parameter": "PcData",
         "type": [
             "std::vector<Scalar>"
         ]
@@ -437,8 +437,8 @@
         "explanation": [
             "Maximum capillary pressure for calculating the interfacial area between the nonwetting and wetting phase as in Nuske 2014 (https://elib.uni-stuttgart.de/handle/11682/614, page 60) \\cite nuske2014."
         ],
-        "Group": "-",
-        "Parameter": "PcMax",
+        "group": "-",
+        "parameter": "PcMax",
         "type": [
             "Scalar"
         ]
@@ -450,8 +450,8 @@
         "explanation": [
             "The capillary pressure at high wetting saturations."
         ],
-        "Group": "-",
-        "Parameter": "RegularizationHighSw",
+        "group": "-",
+        "parameter": "RegularizationHighSw",
         "type": [
             "Scalar"
         ]
@@ -463,8 +463,8 @@
         "explanation": [
             "A fixed slope of the capillary pressure at high wetting saturations."
         ],
-        "Group": "-",
-        "Parameter": "RegularizationHighSwFixedSlope",
+        "group": "-",
+        "parameter": "RegularizationHighSwFixedSlope",
         "type": [
             "Scalar"
         ]
@@ -476,8 +476,8 @@
         "explanation": [
             "The capillary pressure at low wetting saturations."
         ],
-        "Group": "-",
-        "Parameter": "RegularizationLowSw",
+        "group": "-",
+        "parameter": "RegularizationLowSw",
         "type": [
             "Scalar"
         ]
@@ -489,8 +489,8 @@
         "explanation": [
             "The restart time stamp for a previously interrupted simulation"
         ],
-        "Group": "-",
-        "Parameter": "Restart",
+        "group": "-",
+        "parameter": "Restart",
         "type": [
             "double"
         ]
@@ -502,8 +502,8 @@
         "explanation": [
             "Residual gas phase saturation."
         ],
-        "Group": "-",
-        "Parameter": "Sgr",
+        "group": "-",
+        "parameter": "Sgr",
         "type": [
             "Scalar"
         ]
@@ -515,8 +515,8 @@
         "explanation": [
             "If the saturation is higher than this value, smoothed linear material law changes to a spline for the relative permeability."
         ],
-        "Group": "-",
-        "Parameter": "SmoothedLinearLawKrHighS",
+        "group": "-",
+        "parameter": "SmoothedLinearLawKrHighS",
         "type": [
             "Scalar"
         ]
@@ -528,8 +528,8 @@
         "explanation": [
             "If the saturation is lower than this value, smoothed linear material law changes to a spline for the relative permeability."
         ],
-        "Group": "-",
-        "Parameter": "SmoothedLinearLawKrLowS",
+        "group": "-",
+        "parameter": "SmoothedLinearLawKrLowS",
         "type": [
             "Scalar"
         ]
@@ -541,8 +541,8 @@
         "explanation": [
             "The maximum capillary pressure used in the smoothed linear law."
         ],
-        "Group": "-",
-        "Parameter": "SmoothedLinearLawPcMax",
+        "group": "-",
+        "parameter": "SmoothedLinearLawPcMax",
         "type": [
             "Scalar"
         ]
@@ -554,8 +554,8 @@
         "explanation": [
             "The entry pressure used in the smoothed linear law."
         ],
-        "Group": "-",
-        "Parameter": "SmoothedLinearLawPe",
+        "group": "-",
+        "parameter": "SmoothedLinearLawPe",
         "type": [
             "Scalar"
         ]
@@ -567,8 +567,8 @@
         "explanation": [
             "Residual non-wetting phase saturation."
         ],
-        "Group": "-",
-        "Parameter": "Snr",
+        "group": "-",
+        "parameter": "Snr",
         "type": [
             "Scalar"
         ]
@@ -580,8 +580,8 @@
         "explanation": [
             "Number of sample points from which the wetting saturation spline is built."
         ],
-        "Group": "-",
-        "Parameter": "SplineNumSwSamples",
+        "group": "-",
+        "parameter": "SplineNumSwSamples",
         "type": [
             "Scalar"
         ]
@@ -593,8 +593,8 @@
         "explanation": [
             "Effective wetting saturation interval for spline material law."
         ],
-        "Group": "-",
-        "Parameter": "SplineSweInterval",
+        "group": "-",
+        "parameter": "SplineSweInterval",
         "type": [
             "std::array<Scalar, 2>"
         ]
@@ -606,8 +606,8 @@
         "explanation": [
             "Wetting saturation pressure data for spline material law."
         ],
-        "Group": "-",
-        "Parameter": "SwData",
+        "group": "-",
+        "parameter": "SwData",
         "type": [
             "std::vector<Scalar>"
         ]
@@ -619,8 +619,8 @@
         "explanation": [
             "Residual wetting phase saturation."
         ],
-        "Group": "-",
-        "Parameter": "Swr",
+        "group": "-",
+        "parameter": "Swr",
         "type": [
             "Scalar"
         ]
@@ -632,8 +632,8 @@
         "explanation": [
             "kd parameter for the adsportion of NAPL in a 3 phase simulation."
         ],
-        "Group": "-",
-        "Parameter": "ThreePNAPLAdsorptionKdNAPL",
+        "group": "-",
+        "parameter": "ThreePNAPLAdsorptionKdNAPL",
         "type": [
             "Scalar"
         ]
@@ -645,8 +645,8 @@
         "explanation": [
             "bulk density for calculating the adsorption of NAPL in a 3 phase simulation."
         ],
-        "Group": "-",
-        "Parameter": "ThreePNAPLAdsorptionRhoBulk",
+        "group": "-",
+        "parameter": "ThreePNAPLAdsorptionRhoBulk",
         "type": [
             "Scalar"
         ]
@@ -658,8 +658,8 @@
         "explanation": [
             "Shape parameter \\f$\\mathrm{\\alpha}\\f$ \\f$\\mathrm{[1/Pa]}\\f$ in vanGenuchten laws."
         ],
-        "Group": "-",
-        "Parameter": "VanGenuchtenAlpha",
+        "group": "-",
+        "parameter": "VanGenuchtenAlpha",
         "type": [
             "Scalar"
         ]
@@ -671,8 +671,8 @@
         "explanation": [
             "If specified, a constant value is used for regularization in Parker/vanGenuchten."
         ],
-        "Group": "-",
-        "Parameter": "VanGenuchtenConstantRegularization",
+        "group": "-",
+        "parameter": "VanGenuchtenConstantRegularization",
         "type": [
             "bool"
         ]
@@ -684,8 +684,8 @@
         "explanation": [
             "The threshold saturation below which the relative permeability of the nonwetting phase gets regularized in vanGenuchten laws."
         ],
-        "Group": "-",
-        "Parameter": "VanGenuchtenKrnLowSweThreshold",
+        "group": "-",
+        "parameter": "VanGenuchtenKrnLowSweThreshold",
         "type": [
             "Scalar"
         ]
@@ -697,8 +697,8 @@
         "explanation": [
             "The threshold saturation above which the relative permeability of the wetting phase gets regularized in vanGenuchten laws."
         ],
-        "Group": "-",
-        "Parameter": "VanGenuchtenKrwHighSweThreshold",
+        "group": "-",
+        "parameter": "VanGenuchtenKrwHighSweThreshold",
         "type": [
             "Scalar"
         ]
@@ -710,8 +710,8 @@
         "explanation": [
             "Shape parameter \\f$\\mathrm{m}\\f$ \\f$\\mathrm{[-]}\\f$ in vanGenuchten laws."
         ],
-        "Group": "-",
-        "Parameter": "VanGenuchtenL",
+        "group": "-",
+        "parameter": "VanGenuchtenL",
         "type": [
             "Scalar"
         ]
@@ -723,8 +723,8 @@
         "explanation": [
             "Shape parameter \\f$\\mathrm{n}\\f$ \\f$\\mathrm{[-]}\\f$ in vanGenuchten laws."
         ],
-        "Group": "-",
-        "Parameter": "VanGenuchtenN",
+        "group": "-",
+        "parameter": "VanGenuchtenN",
         "type": [
             "Scalar"
         ]
@@ -736,8 +736,8 @@
         "explanation": [
             "Threshold saturation above which the capillary pressure is regularized in vanGenuchten laws."
         ],
-        "Group": "-",
-        "Parameter": "VanGenuchtenPcHighSweThreshold",
+        "group": "-",
+        "parameter": "VanGenuchtenPcHighSweThreshold",
         "type": [
             "Scalar"
         ]
@@ -749,8 +749,8 @@
         "explanation": [
             "Threshold saturation below which the capillary pressure is regularized in vanGenuchten laws."
         ],
-        "Group": "-",
-        "Parameter": "VanGenuchtenPcLowSweThreshold",
+        "group": "-",
+        "parameter": "VanGenuchtenPcLowSweThreshold",
         "type": [
             "Scalar"
         ]
@@ -762,8 +762,8 @@
         "explanation": [
             "The threshold above which fluxes are treated as non-zero"
         ],
-        "Group": "Adaptive",
-        "Parameter": "BCRefinementThreshold",
+        "group": "Adaptive",
+        "parameter": "BCRefinementThreshold",
         "type": [
             "Scalar"
         ]
@@ -775,8 +775,8 @@
         "explanation": [
             "The maximum refinement level"
         ],
-        "Group": "Adaptive",
-        "Parameter": "MaxLevel",
+        "group": "Adaptive",
+        "parameter": "MaxLevel",
         "type": [
             "int"
         ]
@@ -788,8 +788,8 @@
         "explanation": [
             "The minimum refinement level"
         ],
-        "Group": "Adaptive",
-        "Parameter": "MinLevel",
+        "group": "Adaptive",
+        "parameter": "MinLevel",
         "type": [
             "int"
         ]
@@ -801,8 +801,8 @@
         "explanation": [
             "Whether to refine at Dirichlet boundaries"
         ],
-        "Group": "Adaptive",
-        "Parameter": "RefineAtDirichletBC",
+        "group": "Adaptive",
+        "parameter": "RefineAtDirichletBC",
         "type": [
             "bool"
         ]
@@ -814,8 +814,8 @@
         "explanation": [
             "Whether to refine at Neumann/Robin boundaries"
         ],
-        "Group": "Adaptive",
-        "Parameter": "RefineAtFluxBC",
+        "group": "Adaptive",
+        "parameter": "RefineAtFluxBC",
         "type": [
             "bool"
         ]
@@ -827,8 +827,8 @@
         "explanation": [
             "Whether to refine where source terms are specified"
         ],
-        "Group": "Adaptive",
-        "Parameter": "RefineAtSource",
+        "group": "Adaptive",
+        "parameter": "RefineAtSource",
         "type": [
             "bool"
         ]
@@ -840,8 +840,8 @@
         "explanation": [
             "The basic numeric epsilon used in the differentiation  for deflecting primary variables"
         ],
-        "Group": "Assembly",
-        "Parameter": "NumericDifference.BaseEpsilon",
+        "group": "Assembly",
+        "parameter": "NumericDifference.BaseEpsilon",
         "type": [
             "Scalar"
         ]
@@ -853,8 +853,8 @@
         "explanation": [
             "The magnitude of the primary variables used for finding a good numeric epsilon for deflecting primary variables."
         ],
-        "Group": "Assembly",
-        "Parameter": "NumericDifference.PriVarMagnitude",
+        "group": "Assembly",
+        "parameter": "NumericDifference.PriVarMagnitude",
         "type": [
             "NumEqVector"
         ]
@@ -866,8 +866,8 @@
         "explanation": [
             "The numeric difference method (1: foward differences (default), 0: central differences, -1: backward differences)"
         ],
-        "Group": "Assembly",
-        "Parameter": "NumericDifferenceMethod",
+        "group": "Assembly",
+        "parameter": "NumericDifferenceMethod",
         "type": [
             "int"
         ]
@@ -879,8 +879,8 @@
         "explanation": [
             "The binary diffusion coefficient in gas"
         ],
-        "Group": "BinaryCoefficients",
-        "Parameter": "GasDiffCoeff",
+        "group": "BinaryCoefficients",
+        "parameter": "GasDiffCoeff",
         "type": [
             "Scalar"
         ]
@@ -892,8 +892,8 @@
         "explanation": [
             "The binary diffusion coefficient in liquid"
         ],
-        "Group": "BinaryCoefficients",
-        "Parameter": "LiquidDiffCoeff",
+        "group": "BinaryCoefficients",
+        "parameter": "LiquidDiffCoeff",
         "type": [
             "Scalar"
         ]
@@ -905,8 +905,8 @@
         "explanation": [
             "The salinity"
         ],
-        "Group": "Brine",
-        "Parameter": "Salinity",
+        "group": "Brine",
+        "parameter": "Salinity",
         "type": [
             "Scalar"
         ]
@@ -918,8 +918,8 @@
         "explanation": [
             "The density of the gas"
         ],
-        "Group": "Component",
-        "Parameter": "GasDensity",
+        "group": "Component",
+        "parameter": "GasDensity",
         "type": [
             "Scalar"
         ]
@@ -931,8 +931,8 @@
         "explanation": [
             "Binary diffusion coefficient for molecular water and the constant component"
         ],
-        "Group": "Component",
-        "Parameter": "GasDiffusionCoefficient",
+        "group": "Component",
+        "parameter": "GasDiffusionCoefficient",
         "type": [
             "Scalar"
         ]
@@ -944,8 +944,8 @@
         "explanation": [
             "The gas kinematic viscosity"
         ],
-        "Group": "Component",
-        "Parameter": "GasKinematicViscosity",
+        "group": "Component",
+        "parameter": "GasKinematicViscosity",
         "type": [
             "Scalar"
         ]
@@ -957,8 +957,8 @@
         "explanation": [
             "Henry coefficient for the constant component in liquid water"
         ],
-        "Group": "Component",
-        "Parameter": "HenryComponentInWater",
+        "group": "Component",
+        "parameter": "HenryComponentInWater",
         "type": [
             "Scalar"
         ]
@@ -970,8 +970,8 @@
         "explanation": [
             "Henry coefficient for water in the constant component"
         ],
-        "Group": "Component",
-        "Parameter": "HenryWaterInComponent",
+        "group": "Component",
+        "parameter": "HenryWaterInComponent",
         "type": [
             "Scalar"
         ]
@@ -983,8 +983,8 @@
         "explanation": [
             "The density of the liquid"
         ],
-        "Group": "Component",
-        "Parameter": "LiquidDensity",
+        "group": "Component",
+        "parameter": "LiquidDensity",
         "type": [
             "Scalar"
         ]
@@ -996,8 +996,8 @@
         "explanation": [
             "Diffusion coefficient for the constant component in liquid water"
         ],
-        "Group": "Component",
-        "Parameter": "LiquidDiffusionCoefficient",
+        "group": "Component",
+        "parameter": "LiquidDiffusionCoefficient",
         "type": [
             "Scalar"
         ]
@@ -1009,8 +1009,8 @@
         "explanation": [
             "Specific isobaric heat capacity of the component \\f$\\mathrm{[J/(kg*K)]}\\f$ as a liquid."
         ],
-        "Group": "Component",
-        "Parameter": "LiquidHeatCapacity",
+        "group": "Component",
+        "parameter": "LiquidHeatCapacity",
         "type": [
             "Scalar"
         ]
@@ -1022,8 +1022,8 @@
         "explanation": [
             "The liquid kinematic viscosity"
         ],
-        "Group": "Component",
-        "Parameter": "LiquidKinematicViscosity",
+        "group": "Component",
+        "parameter": "LiquidKinematicViscosity",
         "type": [
             "Scalar"
         ]
@@ -1035,8 +1035,8 @@
         "explanation": [
             "Thermal conductivity of the component \\f$\\mathrm{[W/(m*K)]}\\f$ as a liquid."
         ],
-        "Group": "Component",
-        "Parameter": "LiquidThermalConductivity",
+        "group": "Component",
+        "parameter": "LiquidThermalConductivity",
         "type": [
             "Scalar"
         ]
@@ -1048,8 +1048,8 @@
         "explanation": [
             "The mass in one mole of the component"
         ],
-        "Group": "Component",
-        "Parameter": "MolarMass",
+        "group": "Component",
+        "parameter": "MolarMass",
         "type": [
             "Scalar"
         ]
@@ -1061,8 +1061,8 @@
         "explanation": [
             "A human readable name for the component"
         ],
-        "Group": "Component",
-        "Parameter": "Name",
+        "group": "Component",
+        "parameter": "Name",
         "type": [
             "std::string"
         ]
@@ -1074,8 +1074,8 @@
         "explanation": [
             "The reference termperature in \\f$\\mathrm{[K]}\\f$ used when calculating the specific internal energy of a constant component as a liquid."
         ],
-        "Group": "Component",
-        "Parameter": "ReferenceTemperature",
+        "group": "Component",
+        "parameter": "ReferenceTemperature",
         "type": [
             "Scalar"
         ]
@@ -1087,8 +1087,8 @@
         "explanation": [
             "The density of the component in solid state"
         ],
-        "Group": "Component",
-        "Parameter": "SolidDensity",
+        "group": "Component",
+        "parameter": "SolidDensity",
         "type": [
             "Scalar"
         ]
@@ -1100,8 +1100,8 @@
         "explanation": [
             "Specific isobaric heat capacity of the component as a solid"
         ],
-        "Group": "Component",
-        "Parameter": "SolidHeatCapacity",
+        "group": "Component",
+        "parameter": "SolidHeatCapacity",
         "type": [
             "Scalar"
         ]
@@ -1113,8 +1113,8 @@
         "explanation": [
             "Thermal conductivity of the component as a solid"
         ],
-        "Group": "Component",
-        "Parameter": "SolidThermalConductivity",
+        "group": "Component",
+        "parameter": "SolidThermalConductivity",
         "type": [
             "Scalar"
         ]
@@ -1126,8 +1126,8 @@
         "explanation": [
             "The activation barrier to calculate the exchange current density."
         ],
-        "Group": "ElectroChemistry",
-        "Parameter": "ActivationBarrier",
+        "group": "ElectroChemistry",
+        "parameter": "ActivationBarrier",
         "type": [
             "Scalar"
         ]
@@ -1139,8 +1139,8 @@
         "explanation": [
             "The voltage of the fuel cell."
         ],
-        "Group": "ElectroChemistry",
-        "Parameter": "CellVoltage",
+        "group": "ElectroChemistry",
+        "parameter": "CellVoltage",
         "type": [
             "Scalar"
         ]
@@ -1152,8 +1152,8 @@
         "explanation": [
             "The maximum number of iterations in iteatively (Newton solver) calculating the current density."
         ],
-        "Group": "ElectroChemistry",
-        "Parameter": "MaxIterations",
+        "group": "ElectroChemistry",
+        "parameter": "MaxIterations",
         "type": [
             "int"
         ]
@@ -1165,8 +1165,8 @@
         "explanation": [
             "The number of electrons for the calculation of activation and concentration losses."
         ],
-        "Group": "ElectroChemistry",
-        "Parameter": "NumElectrons",
+        "group": "ElectroChemistry",
+        "parameter": "NumElectrons",
         "type": [
             "Scalar"
         ]
@@ -1178,8 +1178,8 @@
         "explanation": [
             "The reference current density to calculate the exchange current density."
         ],
-        "Group": "ElectroChemistry",
-        "Parameter": "RefCurrentDensity",
+        "group": "ElectroChemistry",
+        "parameter": "RefCurrentDensity",
         "type": [
             "Scalar"
         ]
@@ -1191,8 +1191,8 @@
         "explanation": [
             "The reference oxygen partial pressure."
         ],
-        "Group": "ElectroChemistry",
-        "Parameter": "RefO2PartialPressure",
+        "group": "ElectroChemistry",
+        "parameter": "RefO2PartialPressure",
         "type": [
             "Scalar"
         ]
@@ -1204,8 +1204,8 @@
         "explanation": [
             "The reference temperature to calculate the exchange current density."
         ],
-        "Group": "ElectroChemistry",
-        "Parameter": "RefTemperature",
+        "group": "ElectroChemistry",
+        "parameter": "RefTemperature",
         "type": [
             "Scalar"
         ]
@@ -1217,8 +1217,8 @@
         "explanation": [
             "The reversible voltage."
         ],
-        "Group": "ElectroChemistry",
-        "Parameter": "ReversibleVoltage",
+        "group": "ElectroChemistry",
+        "parameter": "ReversibleVoltage",
         "type": [
             "Scalar"
         ]
@@ -1230,8 +1230,8 @@
         "explanation": [
             "The specific resistance, see \\cite A3:acosta:2006."
         ],
-        "Group": "ElectroChemistry",
-        "Parameter": "SpecificResistance",
+        "group": "ElectroChemistry",
+        "parameter": "SpecificResistance",
         "type": [
             "Scalar"
         ]
@@ -1243,8 +1243,8 @@
         "explanation": [
             "The surface-increasing factor to calculate the exchange current density."
         ],
-        "Group": "ElectroChemistry",
-        "Parameter": "SurfaceIncreasingFactor",
+        "group": "ElectroChemistry",
+        "parameter": "SurfaceIncreasingFactor",
         "type": [
             "Scalar"
         ]
@@ -1256,8 +1256,8 @@
         "explanation": [
             "Thermoneutral voltage for the non-isothermal electrochemistry model."
         ],
-        "Group": "ElectroChemistry",
-        "Parameter": "ThermoneutralVoltage",
+        "group": "ElectroChemistry",
+        "parameter": "ThermoneutralVoltage",
         "type": [
             "Scalar"
         ]
@@ -1269,8 +1269,8 @@
         "explanation": [
             "The transport coefficient."
         ],
-        "Group": "ElectroChemistry",
-        "Parameter": "TransferCoefficient",
+        "group": "ElectroChemistry",
+        "parameter": "TransferCoefficient",
         "type": [
             "Scalar"
         ]
@@ -1282,8 +1282,8 @@
         "explanation": [
             "The water transport number to calculate the osmotic term in the membrane."
         ],
-        "Group": "ElectroChemistry",
-        "Parameter": "TransportNumberH20",
+        "group": "ElectroChemistry",
+        "parameter": "TransportNumberH20",
         "type": [
             "Scalar"
         ]
@@ -1295,8 +1295,8 @@
         "explanation": [
             "The oxygen pressure at the inlet."
         ],
-        "Group": "ElectroChemistry",
-        "Parameter": "pO2Inlet",
+        "group": "ElectroChemistry",
+        "parameter": "pO2Inlet",
         "type": [
             "Scalar"
         ]
@@ -1308,8 +1308,8 @@
         "explanation": [
             "The xi factor for coupling conditions"
         ],
-        "Group": "FacetCoupling",
-        "Parameter": "Xi",
+        "group": "FacetCoupling",
+        "parameter": "Xi",
         "type": [
             "Scalar"
         ]
@@ -1321,8 +1321,8 @@
         "explanation": [
             "Choice of a staggered TVD method"
         ],
-        "Group": "Flux",
-        "Parameter": "DifferencingScheme",
+        "group": "Flux",
+        "parameter": "DifferencingScheme",
         "type": [
             "std::string"
         ]
@@ -1334,8 +1334,8 @@
         "explanation": [
             "If you use a staggered grid with a TVD approach: For a uniform grid \"Uniform\" is fine. For a nonuniform grid decide between \"Li\" and \"Hou\" (two literature-based methods)."
         ],
-        "Group": "Flux",
-        "Parameter": "TvdApproach",
+        "group": "Flux",
+        "parameter": "TvdApproach",
         "type": [
             "std::string"
         ]
@@ -1347,8 +1347,8 @@
         "explanation": [
             "Upwind weight in staggered upwind method"
         ],
-        "Group": "Flux",
-        "Parameter": "UpwindWeight",
+        "group": "Flux",
+        "parameter": "UpwindWeight",
         "type": [
             "Scalar"
         ]
@@ -1360,8 +1360,8 @@
         "explanation": [
             "The lower water depth"
         ],
-        "Group": "FluxLimiterLET",
-        "Parameter": "LowerWaterDepth",
+        "group": "FluxLimiterLET",
+        "parameter": "LowerWaterDepth",
         "type": [
             "Scalar"
         ]
@@ -1373,8 +1373,8 @@
         "explanation": [
             "The upper water depth"
         ],
-        "Group": "FluxLimiterLET",
-        "Parameter": "UpperWaterDepth",
+        "group": "FluxLimiterLET",
+        "parameter": "UpperWaterDepth",
         "type": [
             "Scalar"
         ]
@@ -1386,8 +1386,8 @@
         "explanation": [
             "If this is set true, the upwind water depth from the flux direction is used. This can improve stability."
         ],
-        "Group": "FluxLimiterLET",
-        "Parameter": "UpwindFluxLimiting",
+        "group": "FluxLimiterLET",
+        "parameter": "UpwindFluxLimiting",
         "type": [
             "bool"
         ]
@@ -1399,8 +1399,8 @@
         "explanation": [
             "For enabling or disabling the console output"
         ],
-        "Group": "FluxOverSurface",
-        "Parameter": "Verbose",
+        "group": "FluxOverSurface",
+        "parameter": "Verbose",
         "type": [
             "bool"
         ]
@@ -1412,8 +1412,8 @@
         "explanation": [
             "The maximum number of Newton iterations for solving the Forchheimer equation"
         ],
-        "Group": "Forchheimer",
-        "Parameter": "MaxIterations",
+        "group": "Forchheimer",
+        "parameter": "MaxIterations",
         "type": [
             "std::size_t"
         ]
@@ -1425,8 +1425,8 @@
         "explanation": [
             "The error tolerance in the Newton method for solving the Forchheimer equation"
         ],
-        "Group": "Forchheimer",
-        "Parameter": "NewtonTolerance",
+        "group": "Forchheimer",
+        "parameter": "NewtonTolerance",
         "type": [
             "Scalar"
         ]
@@ -1438,8 +1438,8 @@
         "explanation": [
             "For enabling unsymmetrized velocity gradient. If false consider the shear stress caused by the gradient of the velocities normal to our face of interest."
         ],
-        "Group": "FreeFlow",
-        "Parameter": "EnableUnsymmetrizedVelocityGradient",
+        "group": "FreeFlow",
+        "parameter": "EnableUnsymmetrizedVelocityGradient",
         "type": [
             "bool"
         ]
@@ -1451,8 +1451,8 @@
         "explanation": [
             "For enabling unsymmetrized velocity gradient for the Beavers Joseph coupling condition. If true and if the current scvf is on a boundary and if a Dirichlet BC for the pressure or a BJ condition for the slip velocity is set there, assume a tangential velocity gradient of zero along the lateral face."
         ],
-        "Group": "FreeFlow",
-        "Parameter": "EnableUnsymmetrizedVelocityGradientForBeaversJoseph",
+        "group": "FreeFlow",
+        "parameter": "EnableUnsymmetrizedVelocityGradientForBeaversJoseph",
         "type": [
             "bool"
         ]
@@ -1464,8 +1464,8 @@
         "explanation": [
             "Vector of pore radii to be set to the corresponding pores not belonging to a subregion indicated by PoreLabelsToSetFixedRadius."
         ],
-        "Group": "Grid",
-        "Parameter": "FixedPoreRadiusForLabel",
+        "group": "Grid",
+        "parameter": "FixedPoreRadiusForLabel",
         "type": [
             "std::vector<Scalar>"
         ]
@@ -1477,8 +1477,8 @@
         "explanation": [
             "In the case of a uniform random distribution, this specifies the maximum pore radius."
         ],
-        "Group": "Grid",
-        "Parameter": "MaxPoreInscribedRadius",
+        "group": "Grid",
+        "parameter": "MaxPoreInscribedRadius",
         "type": [
             "Scalar"
         ]
@@ -1490,8 +1490,8 @@
         "explanation": [
             "In the case of a lognormal random distribution, this specifies the mean pore radius."
         ],
-        "Group": "Grid",
-        "Parameter": "MeanPoreInscribedRadius",
+        "group": "Grid",
+        "parameter": "MeanPoreInscribedRadius",
         "type": [
             "Scalar"
         ]
@@ -1503,8 +1503,8 @@
         "explanation": [
             "In the case of a uniform random distribution, this specifies the minimum pore radius."
         ],
-        "Group": "Grid",
-        "Parameter": "MinPoreInscribedRadius",
+        "group": "Grid",
+        "parameter": "MinPoreInscribedRadius",
         "type": [
             "Scalar"
         ]
@@ -1516,8 +1516,8 @@
         "explanation": [
             "If PoreInscribedRadius is not set, this allows to specify a seed to get reproducible results."
         ],
-        "Group": "Grid",
-        "Parameter": "ParameterRandomNumberSeed",
+        "group": "Grid",
+        "parameter": "ParameterRandomNumberSeed",
         "type": [
             "unsigned int"
         ]
@@ -1529,8 +1529,8 @@
         "explanation": [
             "If PoreInscribedRadius is not set, this allows to specify the type of random distribution for the radii. Possible values are \"lognormal\" and \"uniform\"."
         ],
-        "Group": "Grid",
-        "Parameter": "ParameterType",
+        "group": "Grid",
+        "parameter": "ParameterType",
         "type": [
             "std::string"
         ]
@@ -1542,8 +1542,8 @@
         "explanation": [
             "If this is set, all pore radii of pore bodies not belonging to a subregion are set to this value. If this is not set, a random radius is set according to a user-specified distribution."
         ],
-        "Group": "Grid",
-        "Parameter": "PoreInscribedRadius",
+        "group": "Grid",
+        "parameter": "PoreInscribedRadius",
         "type": [
             "Scalar"
         ]
@@ -1555,8 +1555,8 @@
         "explanation": [
             "Lables of pores of pores bodies not belonging to a subregion which should be treated by applying a factor for the radius."
         ],
-        "Group": "Grid",
-        "Parameter": "PoreLabelsToApplyFactorForRadius",
+        "group": "Grid",
+        "parameter": "PoreLabelsToApplyFactorForRadius",
         "type": [
             "std::vector<int>"
         ]
@@ -1568,8 +1568,8 @@
         "explanation": [
             "Lables of pores of pores bodies not belonging to a subregion which should be treated by setting a fixed radius."
         ],
-        "Group": "Grid",
-        "Parameter": "PoreLabelsToSetFixedRadius",
+        "group": "Grid",
+        "parameter": "PoreLabelsToSetFixedRadius",
         "type": [
             "std::vector<int>"
         ]
@@ -1581,8 +1581,8 @@
         "explanation": [
             "Vector of factors for the radii of the corresponding pores not belonging to a subregion indicated by PoreLabelsToApplyFactorForRadius."
         ],
-        "Group": "Grid",
-        "Parameter": "PoreRadiusFactorForLabel",
+        "group": "Grid",
+        "parameter": "PoreRadiusFactorForLabel",
         "type": [
             "std::vector<Scalar>"
         ]
@@ -1594,8 +1594,8 @@
         "explanation": [
             "In the case of a lognormal random distribution, this specifies the standard deviation of the pore radius."
         ],
-        "Group": "Grid",
-        "Parameter": "StandardDeviationPoreInscribedRadius",
+        "group": "Grid",
+        "parameter": "StandardDeviationPoreInscribedRadius",
         "type": [
             "Scalar"
         ]
@@ -1607,8 +1607,8 @@
         "explanation": [
             "Decide whether to substract the pore radii from the throat length or not for a pore throat not belonging to a subregion."
         ],
-        "Group": "Grid",
-        "Parameter": "SubstractRadiiFromThroatLength",
+        "group": "Grid",
+        "parameter": "SubstractRadiiFromThroatLength",
         "type": [
             "bool"
         ]
@@ -1620,8 +1620,8 @@
         "explanation": [
             "Radius of a pore throat not belonging to a subregion."
         ],
-        "Group": "Grid",
-        "Parameter": "ThroatInscribedRadius",
+        "group": "Grid",
+        "parameter": "ThroatInscribedRadius",
         "type": [
             "Scalar"
         ]
@@ -1633,8 +1633,8 @@
         "explanation": [
             "Shape parameter for the calculation of the radius of a pore throat not belonging to a subregion when ThroatInscribedRadius is not set."
         ],
-        "Group": "Grid",
-        "Parameter": "ThroatInscribedRadiusN",
+        "group": "Grid",
+        "parameter": "ThroatInscribedRadiusN",
         "type": [
             "Scalar"
         ]
@@ -1646,8 +1646,8 @@
         "explanation": [
             "Length of a pore throat not belonging to a subregion."
         ],
-        "Group": "Grid",
-        "Parameter": "ThroatLength",
+        "group": "Grid",
+        "parameter": "ThroatLength",
         "type": [
             "Scalar"
         ]
@@ -1659,8 +1659,8 @@
         "explanation": [
             "Whether to add the throat volume to the pore volume."
         ],
-        "Group": "Grid",
-        "Parameter": "AddThroatVolumeToPoreVolume",
+        "group": "Grid",
+        "parameter": "AddThroatVolumeToPoreVolume",
         "type": [
             "bool"
         ]
@@ -1672,8 +1672,8 @@
         "explanation": [
             "Wether to allow diagonals to intersect in the context of the generation of a structured-lattice pore-network."
         ],
-        "Group": "Grid",
-        "Parameter": "AllowIntersectingDiagonals",
+        "group": "Grid",
+        "parameter": "AllowIntersectingDiagonals",
         "type": [
             "bool"
         ]
@@ -1685,8 +1685,8 @@
         "explanation": [
             "min/max value for angular coordinate. Cake grids can be created by either specifying Radial,Angular or Axial in all coordinate directions."
         ],
-        "Group": "Grid",
-        "Parameter": "Angular0/1/2",
+        "group": "Grid",
+        "parameter": "Angular0/1/2",
         "type": [
             "std::vector<Scalar>"
         ]
@@ -1698,8 +1698,8 @@
         "explanation": [
             "min/max value for axial coordinate. Cake grids can be created by either specifying Radial,Angular or Axial in all coordinate directions."
         ],
-        "Group": "Grid",
-        "Parameter": "Axial0/1/2",
+        "group": "Grid",
+        "parameter": "Axial0/1/2",
         "type": [
             "std::vector<Scalar>"
         ]
@@ -1711,8 +1711,8 @@
         "explanation": [
             "With this, the boundary faces can be set in the format xmin xmax ymin ymax (zmin zmax)."
         ],
-        "Group": "Grid",
-        "Parameter": "BoundaryFaceMarker",
+        "group": "Grid",
+        "parameter": "BoundaryFaceMarker",
         "type": [
             "BoundaryList"
         ]
@@ -1724,8 +1724,8 @@
         "explanation": [
             "For the dune gmsh reader: Whether to insert boundary segments into the grid"
         ],
-        "Group": "Grid",
-        "Parameter": "BoundarySegments",
+        "group": "Grid",
+        "parameter": "BoundarySegments",
         "type": [
             "bool"
         ]
@@ -1737,8 +1737,8 @@
         "explanation": [
             "If true a maximal pore radius is set."
         ],
-        "Group": "Grid",
-        "Parameter": "CapPoreRadii",
+        "group": "Grid",
+        "parameter": "CapPoreRadii",
         "type": [
             "bool"
         ]
@@ -1750,8 +1750,8 @@
         "explanation": [
             "A vector of boundary indices of for which the pore volume should be halved in a direction within automatically determining the pore volume"
         ],
-        "Group": "Grid",
-        "Parameter": "CapPoresOnBoundaries",
+        "group": "Grid",
+        "parameter": "CapPoresOnBoundaries",
         "type": [
             "std::vector<int>"
         ]
@@ -1763,8 +1763,8 @@
         "explanation": [
             "\"Cube\" or \"Simplex\" to be used for structured grids"
         ],
-        "Group": "Grid",
-        "Parameter": "CellType",
+        "group": "Grid",
+        "parameter": "CellType",
         "type": [
             "std::string"
         ]
@@ -1776,8 +1776,8 @@
         "explanation": [
             "The number of elements in a structured uniform grid in x, y and z direction"
         ],
-        "Group": "Grid",
-        "Parameter": "Cells",
+        "group": "Grid",
+        "parameter": "Cells",
         "type": [
             "std::array<int, dim>"
         ]
@@ -1789,8 +1789,8 @@
         "explanation": [
             "For a grid with zones, number of cells of the leftmost zone, number of cells of the second-leftmost zone, ..., number of cells of the rightmost zone, spaceseparated. (assuming x-axis points to the right)"
         ],
-        "Group": "Grid",
-        "Parameter": "Cells0",
+        "group": "Grid",
+        "parameter": "Cells0",
         "type": [
             "std::vector<int>"
         ]
@@ -1802,8 +1802,8 @@
         "explanation": [
             "Spaceseparated list of the number of cells per zone in y-direction (see more details for x-direction in Cells1)."
         ],
-        "Group": "Grid",
-        "Parameter": "Cells1",
+        "group": "Grid",
+        "parameter": "Cells1",
         "type": [
             "std::vector<int>"
         ]
@@ -1815,8 +1815,8 @@
         "explanation": [
             "Spaceseparated list of the number of cells per zone in z-direction (see more details for x-direction in Cells1)."
         ],
-        "Group": "Grid",
-        "Parameter": "Cells2",
+        "group": "Grid",
+        "parameter": "Cells2",
         "type": [
             "std::vector<int>"
         ]
@@ -1828,8 +1828,8 @@
         "explanation": [
             "Decide whether to add a green closure to locally refined grid sections or not: \"Green\" (Standard red/green refinement) or \"None\" (No closure, results in nonconforming meshes)"
         ],
-        "Group": "Grid",
-        "Parameter": "ClosureType",
+        "group": "Grid",
+        "parameter": "ClosureType",
         "type": [
             "std::string"
         ]
@@ -1841,8 +1841,8 @@
         "explanation": [
             "To construct a 1D grid with just a coordinates vector"
         ],
-        "Group": "Grid",
-        "Parameter": "Coordinates",
+        "group": "Grid",
+        "parameter": "Coordinates",
         "type": [
             "std::vector<ctype>"
         ]
@@ -1854,8 +1854,8 @@
         "explanation": [
             "For a non-regular lattice, you must specifiy deletion probabilities for deleting throats in all directions. For example (3D): DeletionProbability = 0.5 0.5 0 0 0 0 0 0 0 0 0 0 0 deletes approximately 50% of all throats in x and y direction, while no deletion in any other direction takes place. In 2D four values are required (x (1,0),y (0,1) and two diagnals through cell midpoint (1,1),(1,-1)). In 3D thirteen values are required (x(1,0,0),y(0,1,0),z(0,0,1), six face diagonals (1,1,0),(1,-1,0),(1,0,1),(1,0,-1),(0,1,1),(0,1,-1) and four diagonals through cell midpoint (1,1,1),(1,1,-1),(-1,1,1),(-1,-1,1)."
         ],
-        "Group": "Grid",
-        "Parameter": "DeletionProbability",
+        "group": "Grid",
+        "parameter": "DeletionProbability",
         "type": [
             "std::array<double, numDirections>"
         ]
@@ -1867,8 +1867,8 @@
         "explanation": [
             "A seed for the random number generation for the random deletion of connecting throats."
         ],
-        "Group": "Grid",
-        "Parameter": "DeletionRandomNumberSeed",
+        "group": "Grid",
+        "parameter": "DeletionRandomNumberSeed",
         "type": [
             "std::size_t"
         ]
@@ -1880,8 +1880,8 @@
         "explanation": [
             "Whether the grid managers work with domain markers."
         ],
-        "Group": "Grid",
-        "Parameter": "DomainMarkers",
+        "group": "Grid",
+        "parameter": "DomainMarkers",
         "type": [
             "bool"
         ]
@@ -1893,8 +1893,8 @@
         "explanation": [
             "A DGF or gmsh file to load from"
         ],
-        "Group": "Grid",
-        "Parameter": "File",
+        "group": "Grid",
+        "parameter": "File",
         "type": [
             "std::string"
         ]
@@ -1906,8 +1906,8 @@
         "explanation": [
             ""
         ],
-        "Group": "Grid",
-        "Parameter": "GmshPhysicalEntityThreshold",
+        "group": "Grid",
+        "parameter": "GmshPhysicalEntityThreshold",
         "type": [
             "std::size_t"
         ]
@@ -1919,8 +1919,8 @@
         "explanation": [
             "For a grid with zones, grading factors for the x-zones. 1.0 means all cells within this zone have equal extension in x-direction. Negative factors are possible."
         ],
-        "Group": "Grid",
-        "Parameter": "Grading0",
+        "group": "Grid",
+        "parameter": "Grading0",
         "type": [
             "std::vector<Scalar>"
         ]
@@ -1932,8 +1932,8 @@
         "explanation": [
             "For a grid with zones, grading factors for the y-zones."
         ],
-        "Group": "Grid",
-        "Parameter": "Grading1",
+        "group": "Grid",
+        "parameter": "Grading1",
         "type": [
             "std::vector<Scalar>"
         ]
@@ -1945,8 +1945,8 @@
         "explanation": [
             "For a grid with zones, grading factors for the z-zones."
         ],
-        "Group": "Grid",
-        "Parameter": "Grading2",
+        "group": "Grid",
+        "parameter": "Grading2",
         "type": [
             "std::vector<Scalar>"
         ]
@@ -1958,8 +1958,8 @@
         "explanation": [
             "The image file if the sub grid is constructed from a raster image"
         ],
-        "Group": "Grid",
-        "Parameter": "Image",
+        "group": "Grid",
+        "parameter": "Image",
         "type": [
             "std::string"
         ]
@@ -1971,8 +1971,8 @@
         "explanation": [
             "Whether to keep the physical overlap in physical size or in number of cells upon refinement"
         ],
-        "Group": "Grid",
-        "Parameter": "KeepPhysicalOverlap",
+        "group": "Grid",
+        "parameter": "KeepPhysicalOverlap",
         "type": [
             "bool"
         ]
@@ -1984,8 +1984,8 @@
         "explanation": [
             "The start coordinate of a 1D grid"
         ],
-        "Group": "Grid",
-        "Parameter": "LeftBoundary",
+        "group": "Grid",
+        "parameter": "LeftBoundary",
         "type": [
             "Scalar"
         ]
@@ -1997,8 +1997,8 @@
         "explanation": [
             "The lowerLeft corner of a structured grid"
         ],
-        "Group": "Grid",
-        "Parameter": "LowerLeft",
+        "group": "Grid",
+        "parameter": "LowerLeft",
         "type": [
             "GlobalPosition"
         ]
@@ -2010,8 +2010,8 @@
         "explanation": [
             "To customize the subgrid generation."
         ],
-        "Group": "Grid",
-        "Parameter": "Marker",
+        "group": "Grid",
+        "parameter": "Marker",
         "type": [
             "bool"
         ]
@@ -2023,8 +2023,8 @@
         "explanation": [
             "The minimum pore throat length."
         ],
-        "Group": "Grid",
-        "Parameter": "MinThroatLength",
+        "group": "Grid",
+        "parameter": "MinThroatLength",
         "type": [
             "Scalar"
         ]
@@ -2036,8 +2036,8 @@
         "explanation": [
             "The number of pores for a 1D grid. For a more-dimensional grid the number of pores in x,y (and z) direction."
         ],
-        "Group": "Grid",
-        "Parameter": "NumPores",
+        "group": "Grid",
+        "parameter": "NumPores",
         "type": [
             "std::array<unsigned int, dimWorld>"
         ]
@@ -2049,8 +2049,8 @@
         "explanation": [
             "The number of subregions within a pore-network model."
         ],
-        "Group": "Grid",
-        "Parameter": "NumSubregions",
+        "group": "Grid",
+        "parameter": "NumSubregions",
         "type": [
             "std::size_t"
         ]
@@ -2062,8 +2062,8 @@
         "explanation": [
             "The overlap size in cells"
         ],
-        "Group": "Grid",
-        "Parameter": "Overlap",
+        "group": "Grid",
+        "parameter": "Overlap",
         "type": [
             "int"
         ]
@@ -2075,8 +2075,8 @@
         "explanation": [
             "If Grid.ThroatCrossSectionShape is set, here one can set to overwrite the grid data with the shape-specific values."
         ],
-        "Group": "Grid",
-        "Parameter": "OverwriteGridDataWithShapeSpecificValues",
+        "group": "Grid",
+        "parameter": "OverwriteGridDataWithShapeSpecificValues",
         "type": [
             "bool"
         ]
@@ -2088,8 +2088,8 @@
         "explanation": [
             "A non-standard load-balancing, number of processors per direction"
         ],
-        "Group": "Grid",
-        "Parameter": "Partitioning",
+        "group": "Grid",
+        "parameter": "Partitioning",
         "type": [
             "std::array<int, dim>"
         ]
@@ -2101,8 +2101,8 @@
         "explanation": [
             "True or false for each direction"
         ],
-        "Group": "Grid",
-        "Parameter": "Periodic",
+        "group": "Grid",
+        "parameter": "Periodic",
         "type": [
             "std::bitset<dim>"
         ]
@@ -2114,8 +2114,8 @@
         "explanation": [
             "For subgrid generation, this can be used to specify the UpperRight position. To calculate UpperRight this is in every dimension multiplied by the number of cells and added to LowerLeft."
         ],
-        "Group": "Grid",
-        "Parameter": "PixelDimensions",
+        "group": "Grid",
+        "parameter": "PixelDimensions",
         "type": [
             "GlobalPosition"
         ]
@@ -2127,8 +2127,8 @@
         "explanation": [
             "Pore geometry shape. Possibilities are \"Square\", \"Circle\", \"Cube\", \"Sphere\", \"Cylinder\", \"Tetrahedron\", \"Octahedron\", \"Icosahedron\" or \"Dodecahedron\"."
         ],
-        "Group": "Grid",
-        "Parameter": "PoreGeometry",
+        "group": "Grid",
+        "parameter": "PoreGeometry",
         "type": [
             "std::string"
         ]
@@ -2140,8 +2140,8 @@
         "explanation": [
             "A fixed pore height."
         ],
-        "Group": "Grid",
-        "Parameter": "PoreHeight",
+        "group": "Grid",
+        "parameter": "PoreHeight",
         "type": [
             "Scalar"
         ]
@@ -2153,8 +2153,8 @@
         "explanation": [
             "For a grid with zones, x-positions of the left of the leftmost zone followed by the right of all zones (from left to right). (assuming x-axis points to the right)"
         ],
-        "Group": "Grid",
-        "Parameter": "Positions0",
+        "group": "Grid",
+        "parameter": "Positions0",
         "type": [
             "std::vector<ctype>"
         ]
@@ -2166,8 +2166,8 @@
         "explanation": [
             "For a grid with zones, y-positions for zoning in y (more details in Positions0 for x)."
         ],
-        "Group": "Grid",
-        "Parameter": "Positions1",
+        "group": "Grid",
+        "parameter": "Positions1",
         "type": [
             "std::vector<ctype>"
         ]
@@ -2179,8 +2179,8 @@
         "explanation": [
             "For a grid with zones, z-positions for zoning in z (more details in Positions0 for x)."
         ],
-        "Group": "Grid",
-        "Parameter": "Positions2",
+        "group": "Grid",
+        "parameter": "Positions2",
         "type": [
             "std::vector<ctype>"
         ]
@@ -2192,8 +2192,8 @@
         "explanation": [
             "The priority which decides the order the vertices on the boundary are indexed. By default, vertices on min/max faces in x direction have the highest priority, followed by y and z."
         ],
-        "Group": "Grid",
-        "Parameter": "PriorityList",
+        "group": "Grid",
+        "parameter": "PriorityList",
         "type": [
             "BoundaryList"
         ]
@@ -2205,8 +2205,8 @@
         "explanation": [
             "Indices from which to start the search process for finding elements not connected to pores at a Dirichlet boundary, which are then removed."
         ],
-        "Group": "Grid",
-        "Parameter": "PruningSeedIndices",
+        "group": "Grid",
+        "parameter": "PruningSeedIndices",
         "type": [
             "std::vector<int>"
         ]
@@ -2218,8 +2218,8 @@
         "explanation": [
             "min/max value for radial coordinate. Cake grids can be created by either specifying Radial,Angular or Axial in all coordinate directions."
         ],
-        "Group": "Grid",
-        "Parameter": "Radial0/1/2",
+        "group": "Grid",
+        "parameter": "Radial0/1/2",
         "type": [
             "std::vector<Scalar>"
         ]
@@ -2231,8 +2231,8 @@
         "explanation": [
             "The number of global refines to perform"
         ],
-        "Group": "Grid",
-        "Parameter": "Refinement",
+        "group": "Grid",
+        "parameter": "Refinement",
         "type": [
             "int"
         ]
@@ -2244,8 +2244,8 @@
         "explanation": [
             "e.g. UGGrid \"Local\" (New level consists only of the refined elements and the closure) or \"Copy\" (New level consists of the refined elements and the unrefined ones, too)"
         ],
-        "Group": "Grid",
-        "Parameter": "RefinementType",
+        "group": "Grid",
+        "parameter": "RefinementType",
         "type": [
             "std::string"
         ]
@@ -2257,8 +2257,8 @@
         "explanation": [
             "A regular lattice is when pore are always connected parallel to the main axes and never connected in other directions."
         ],
-        "Group": "Grid",
-        "Parameter": "RegularLattice",
+        "group": "Grid",
+        "parameter": "RegularLattice",
         "type": [
             "bool"
         ]
@@ -2270,8 +2270,8 @@
         "explanation": [
             "Whether the throats on the boundary should be removed."
         ],
-        "Group": "Grid",
-        "Parameter": "RemoveThroatsOnBoundary",
+        "group": "Grid",
+        "parameter": "RemoveThroatsOnBoundary",
         "type": [
             "std::vector<std::size_t>"
         ]
@@ -2283,8 +2283,8 @@
         "explanation": [
             "The end coordinate of a 1D grid"
         ],
-        "Group": "Grid",
-        "Parameter": "RightBoundary",
+        "group": "Grid",
+        "parameter": "RightBoundary",
         "type": [
             "Scalar"
         ]
@@ -2296,8 +2296,8 @@
         "explanation": [
             "The mode of sanitation. Sanitation is a post-processing to remove insular groups of elements that are not connected to a Dirichlet boundary. Possible modes are \"UsePoreLabels\" (keep cluster connected to a specific pore given by a pore label) and \"KeepLargestCluster\"."
         ],
-        "Group": "Grid",
-        "Parameter": "SanitationMode",
+        "group": "Grid",
+        "parameter": "SanitationMode",
         "type": [
             "std::string"
         ]
@@ -2309,8 +2309,8 @@
         "explanation": [
             "Whether to sanitize the grid. Sanitizing is a post-processing to remove insular groups of elements that are not connected to a Dirichlet boundary."
         ],
-        "Group": "Grid",
-        "Parameter": "Sanitize",
+        "group": "Grid",
+        "parameter": "Sanitize",
         "type": [
             "bool"
         ]
@@ -2322,8 +2322,8 @@
         "explanation": [
             "Vector of pore radii to be set to the corresponding pores within this subregion indicated by PoreLabelsToSetFixedRadius."
         ],
-        "Group": "Grid.Subregion0,1,...",
-        "Parameter": "FixedPoreRadiusForLabel",
+        "group": "Grid.Subregion0,1,...",
+        "parameter": "FixedPoreRadiusForLabel",
         "type": [
             "std::vector<Scalar>"
         ]
@@ -2335,8 +2335,8 @@
         "explanation": [
             "Gives the lower left corner position of the subregion grid in the context of a pore-network."
         ],
-        "Group": "Grid.Subregion0,1,...",
-        "Parameter": "LowerLeft",
+        "group": "Grid.Subregion0,1,...",
+        "parameter": "LowerLeft",
         "type": [
             "GlobalPosition"
         ]
@@ -2348,8 +2348,8 @@
         "explanation": [
             "In the case of a uniform random distribution, this specifies the maximum pore radius."
         ],
-        "Group": "Grid.Subregion0,1,...",
-        "Parameter": "MaxPoreInscribedRadius",
+        "group": "Grid.Subregion0,1,...",
+        "parameter": "MaxPoreInscribedRadius",
         "type": [
             "Scalar"
         ]
@@ -2361,8 +2361,8 @@
         "explanation": [
             "In the case of a lognormal random distribution, this specifies the mean pore radius."
         ],
-        "Group": "Grid.Subregion0,1,...",
-        "Parameter": "MeanPoreInscribedRadius",
+        "group": "Grid.Subregion0,1,...",
+        "parameter": "MeanPoreInscribedRadius",
         "type": [
             "Scalar"
         ]
@@ -2374,8 +2374,8 @@
         "explanation": [
             "In the case of a uniform random distribution, this specifies the minimum pore radius."
         ],
-        "Group": "Grid.Subregion0,1,...",
-        "Parameter": "MinPoreInscribedRadius",
+        "group": "Grid.Subregion0,1,...",
+        "parameter": "MinPoreInscribedRadius",
         "type": [
             "Scalar"
         ]
@@ -2387,8 +2387,8 @@
         "explanation": [
             "If PoreInscribedRadius is not set, this allows to specify a seed to get reproducible results."
         ],
-        "Group": "Grid.Subregion0,1,...",
-        "Parameter": "ParameterRandomNumberSeed",
+        "group": "Grid.Subregion0,1,...",
+        "parameter": "ParameterRandomNumberSeed",
         "type": [
             "unsigned int"
         ]
@@ -2400,8 +2400,8 @@
         "explanation": [
             "If PoreInscribedRadius is not set, this allows to specify the type of random distribution for the radii. Possible values are \"lognormal\" and \"uniform\"."
         ],
-        "Group": "Grid.Subregion0,1,...",
-        "Parameter": "ParameterType",
+        "group": "Grid.Subregion0,1,...",
+        "parameter": "ParameterType",
         "type": [
             "std::string"
         ]
@@ -2413,8 +2413,8 @@
         "explanation": [
             "If this is set, all pore radii of pore bodies of this subregion are set to this value. If this is not set, a random radius is set according to a user-specified distribution."
         ],
-        "Group": "Grid.Subregion0,1,...",
-        "Parameter": "PoreInscribedRadius",
+        "group": "Grid.Subregion0,1,...",
+        "parameter": "PoreInscribedRadius",
         "type": [
             "Scalar"
         ]
@@ -2426,8 +2426,8 @@
         "explanation": [
             "Lables of pores of pores bodies within this subregion which should be treated by applying a factor for the radius, case with subregions."
         ],
-        "Group": "Grid.Subregion0,1,...",
-        "Parameter": "PoreLabelsToApplyFactorForRadius",
+        "group": "Grid.Subregion0,1,...",
+        "parameter": "PoreLabelsToApplyFactorForRadius",
         "type": [
             "std::vector<int>"
         ]
@@ -2439,8 +2439,8 @@
         "explanation": [
             "Lables of pores of pores bodies within this subregion which should be treated by setting a fixed radius."
         ],
-        "Group": "Grid.Subregion0,1,...",
-        "Parameter": "PoreLabelsToSetFixedRadius",
+        "group": "Grid.Subregion0,1,...",
+        "parameter": "PoreLabelsToSetFixedRadius",
         "type": [
             "std::vector<int>"
         ]
@@ -2452,8 +2452,8 @@
         "explanation": [
             "Vector of factors for the radii of the corresponding pores within this subregion indicated by PoreLabelsToApplyFactorForRadius."
         ],
-        "Group": "Grid.Subregion0,1,...",
-        "Parameter": "PoreRadiusFactorForLabel",
+        "group": "Grid.Subregion0,1,...",
+        "parameter": "PoreRadiusFactorForLabel",
         "type": [
             "std::vector<Scalar>"
         ]
@@ -2465,8 +2465,8 @@
         "explanation": [
             "In the case of a lognormal random distribution, this specifies the standard deviation of the pore radius."
         ],
-        "Group": "Grid.Subregion0,1,...",
-        "Parameter": "StandardDeviationPoreInscribedRadius",
+        "group": "Grid.Subregion0,1,...",
+        "parameter": "StandardDeviationPoreInscribedRadius",
         "type": [
             "Scalar"
         ]
@@ -2478,8 +2478,8 @@
         "explanation": [
             "Decide whether to substract the pore radii from the throat length or not for a pore throat belonging to this subregion."
         ],
-        "Group": "Grid.Subregion0,1,...",
-        "Parameter": "SubstractRadiiFromThroatLength",
+        "group": "Grid.Subregion0,1,...",
+        "parameter": "SubstractRadiiFromThroatLength",
         "type": [
             "bool"
         ]
@@ -2491,8 +2491,8 @@
         "explanation": [
             "Radius of a pore throat belonging to this subregion."
         ],
-        "Group": "Grid.Subregion0,1,...",
-        "Parameter": "ThroatInscribedRadius",
+        "group": "Grid.Subregion0,1,...",
+        "parameter": "ThroatInscribedRadius",
         "type": [
             "Scalar"
         ]
@@ -2504,8 +2504,8 @@
         "explanation": [
             "Shape parameter for the calculation of the radius of a pore throat belonging to this subregion when ThroatInscribedRadius is not set."
         ],
-        "Group": "Grid.Subregion0,1,...",
-        "Parameter": "ThroatInscribedRadiusN",
+        "group": "Grid.Subregion0,1,...",
+        "parameter": "ThroatInscribedRadiusN",
         "type": [
             "Scalar"
         ]
@@ -2517,8 +2517,8 @@
         "explanation": [
             "Length of a pore throat belonging to this subregion."
         ],
-        "Group": "Grid.Subregion0,1,...",
-        "Parameter": "ThroatLength",
+        "group": "Grid.Subregion0,1,...",
+        "parameter": "ThroatLength",
         "type": [
             "Scalar"
         ]
@@ -2530,8 +2530,8 @@
         "explanation": [
             "Gives the upper right corner position of the subregion grid in the context of a pore-network."
         ],
-        "Group": "Grid.Subregion0,1,...",
-        "Parameter": "UpperRight",
+        "group": "Grid.Subregion0,1,...",
+        "parameter": "UpperRight",
         "type": [
             "GlobalPosition"
         ]
@@ -2543,8 +2543,8 @@
         "explanation": [
             "A geometry that should be used for all throatcrosssections. The possibilities are \"ScaleneTriangle\", \"EquilateralTriangle\", \"Square\", \"Rectangle\", \"Circle\", \"TwoPlates\", \"Polygon\"."
         ],
-        "Group": "Grid",
-        "Parameter": "ThroatCrossSectionShape",
+        "group": "Grid",
+        "parameter": "ThroatCrossSectionShape",
         "type": [
             "std::string"
         ]
@@ -2556,8 +2556,8 @@
         "explanation": [
             "Throat height for a rectangle-shaped throat cross section."
         ],
-        "Group": "Grid",
-        "Parameter": "ThroatHeight",
+        "group": "Grid",
+        "parameter": "ThroatHeight",
         "type": [
             "Scalar"
         ]
@@ -2569,8 +2569,8 @@
         "explanation": [
             "A user-specified fixed throat lenght."
         ],
-        "Group": "Grid",
-        "Parameter": "ThroatLength",
+        "group": "Grid",
+        "parameter": "ThroatLength",
         "type": [
             "Scalar"
         ]
@@ -2582,8 +2582,8 @@
         "explanation": [
             "Throat shape factor for a polygonal throat cross section or a scalene triangle one."
         ],
-        "Group": "Grid",
-        "Parameter": "ThroatShapeFactor",
+        "group": "Grid",
+        "parameter": "ThroatShapeFactor",
         "type": [
             "Scalar"
         ]
@@ -2595,8 +2595,8 @@
         "explanation": [
             "The upperright corner of a structured grid"
         ],
-        "Group": "Grid",
-        "Parameter": "UpperRight",
+        "group": "Grid",
+        "parameter": "UpperRight",
         "type": [
             "GlobalPosition"
         ]
@@ -2608,8 +2608,8 @@
         "explanation": [
             "Whether the grid construction should output to standard out"
         ],
-        "Group": "Grid",
-        "Parameter": "Verbosity",
+        "group": "Grid",
+        "parameter": "Verbosity",
         "type": [
             "bool"
         ]
@@ -2621,8 +2621,8 @@
         "explanation": [
             "The time step interval for adaption"
         ],
-        "Group": "GridAdapt",
-        "Parameter": "AdaptionInterval",
+        "group": "GridAdapt",
+        "parameter": "AdaptionInterval",
         "type": [
             "int"
         ]
@@ -2634,8 +2634,8 @@
         "explanation": [
             "Coarsening threshold to decide whether a cell should be marked for coarsening"
         ],
-        "Group": "GridAdapt",
-        "Parameter": "CoarsenTolerance",
+        "group": "GridAdapt",
+        "parameter": "CoarsenTolerance",
         "type": [
             "Scalar"
         ]
@@ -2647,8 +2647,8 @@
         "explanation": [
             "Whether to use initial grid adaption"
         ],
-        "Group": "GridAdapt",
-        "Parameter": "EnableInitializationIndicator",
+        "group": "GridAdapt",
+        "parameter": "EnableInitializationIndicator",
         "type": [
             "bool"
         ]
@@ -2660,8 +2660,8 @@
         "explanation": [
             "Whether to enable mpfa on hanging nodes"
         ],
-        "Group": "GridAdapt",
-        "Parameter": "EnableMultiPointFluxApproximation",
+        "group": "GridAdapt",
+        "parameter": "EnableMultiPointFluxApproximation",
         "type": [
             "bool"
         ]
@@ -2673,8 +2673,8 @@
         "explanation": [
             "The maximum number of interaction volumes considered"
         ],
-        "Group": "GridAdapt",
-        "Parameter": "MaxInteractionVolumes",
+        "group": "GridAdapt",
+        "parameter": "MaxInteractionVolumes",
         "type": [
             "int"
         ]
@@ -2686,8 +2686,8 @@
         "explanation": [
             "The maximum allowed level"
         ],
-        "Group": "GridAdapt",
-        "Parameter": "MaxLevel",
+        "group": "GridAdapt",
+        "parameter": "MaxLevel",
         "type": [
             "int"
         ]
@@ -2699,8 +2699,8 @@
         "explanation": [
             "The minimum allowed level"
         ],
-        "Group": "GridAdapt",
-        "Parameter": "MinLevel",
+        "group": "GridAdapt",
+        "parameter": "MinLevel",
         "type": [
             "int"
         ]
@@ -2712,8 +2712,8 @@
         "explanation": [
             "To switch for refinement at Dirichlet BCs"
         ],
-        "Group": "GridAdapt",
-        "Parameter": "RefineAtDirichletBC",
+        "group": "GridAdapt",
+        "parameter": "RefineAtDirichletBC",
         "type": [
             "bool"
         ]
@@ -2725,8 +2725,8 @@
         "explanation": [
             "To switch for refinement at Neumann BCs"
         ],
-        "Group": "GridAdapt",
-        "Parameter": "RefineAtFluxBC",
+        "group": "GridAdapt",
+        "parameter": "RefineAtFluxBC",
         "type": [
             "bool"
         ]
@@ -2738,8 +2738,8 @@
         "explanation": [
             "To switch for refinement at sources"
         ],
-        "Group": "GridAdapt",
-        "Parameter": "RefineAtSource",
+        "group": "GridAdapt",
+        "parameter": "RefineAtSource",
         "type": [
             "bool"
         ]
@@ -2751,8 +2751,8 @@
         "explanation": [
             "Coarsening threshold to decide whether a cell should be marked for refinement"
         ],
-        "Group": "GridAdapt",
-        "Parameter": "RefineTolerance",
+        "group": "GridAdapt",
+        "parameter": "RefineTolerance",
         "type": [
             "Scalar"
         ]
@@ -2764,8 +2764,8 @@
         "explanation": [
             "Specifies the allowed relative deviation of the capillary pressure of the upstream pore from the throat's entry capillary pressure after an invasion event. This effectively forces the Newton scheme to use very small time steps at invasion events. A value of 0.9 means that pc must not be smaller than 0.9*pc_entry after the invasion."
         ],
-        "Group": "InvasionState",
-        "Parameter": "AccuracyCriterion",
+        "group": "InvasionState",
+        "parameter": "AccuracyCriterion",
         "type": [
             "Scalar"
         ]
@@ -2777,8 +2777,8 @@
         "explanation": [
             "A vector of labels of throats. Block non-wetting phase flux out of the outlet."
         ],
-        "Group": "InvasionState",
-        "Parameter": "BlockNonwettingPhaseAtThroatLabel",
+        "group": "InvasionState",
+        "parameter": "BlockNonwettingPhaseAtThroatLabel",
         "type": [
             "std::vector<int>"
         ]
@@ -2790,8 +2790,8 @@
         "explanation": [
             "Whether to restrict the invasion behavior by a global capillary pressure defined in the problem."
         ],
-        "Group": "InvasionState",
-        "Parameter": "RestrictInvasionToGlobalCapillaryPressure",
+        "group": "InvasionState",
+        "parameter": "RestrictInvasionToGlobalCapillaryPressure",
         "type": [
             "bool"
         ]
@@ -2803,8 +2803,8 @@
         "explanation": [
             "Whether to print detailed invasion information."
         ],
-        "Group": "InvasionState",
-        "Parameter": "Verbosity",
+        "group": "InvasionState",
+        "parameter": "Verbosity",
         "type": [
             "bool"
         ]
@@ -2816,8 +2816,8 @@
         "explanation": [
             "Whether to match the potential zeroeq eddy viscosities for two-layer model at the matching point"
         ],
-        "Group": "KEpsilon",
-        "Parameter": "EnableZeroEqScaling",
+        "group": "KEpsilon",
+        "parameter": "EnableZeroEqScaling",
         "type": [
             "bool"
         ]
@@ -2829,8 +2829,8 @@
         "explanation": [
             "yPlus below this value is considered as near-wall region"
         ],
-        "Group": "KEpsilon",
-        "Parameter": "YPlusThreshold",
+        "group": "KEpsilon",
+        "parameter": "YPlusThreshold",
         "type": [
             "Scalar"
         ]
@@ -2842,8 +2842,8 @@
         "explanation": [
             "Whether to enable the dissipation limiter"
         ],
-        "Group": "KOmega",
-        "Parameter": "EnableDissipationLimiter",
+        "group": "KOmega",
+        "parameter": "EnableDissipationLimiter",
         "type": [
             "bool"
         ]
@@ -2855,8 +2855,8 @@
         "explanation": [
             "Whether to enable the production limiter"
         ],
-        "Group": "KOmega",
-        "Parameter": "EnableProductionLimiter",
+        "group": "KOmega",
+        "parameter": "EnableProductionLimiter",
         "type": [
             "bool"
         ]
@@ -2868,8 +2868,8 @@
         "explanation": [
             "cycles before restarting"
         ],
-        "Group": "LinearSolver",
-        "Parameter": "GMResRestart",
+        "group": "LinearSolver",
+        "parameter": "GMResRestart",
         "type": [
             "int"
         ]
@@ -2881,8 +2881,8 @@
         "explanation": [
             "The maximum iterations of the linear solver"
         ],
-        "Group": "LinearSolver",
-        "Parameter": "MaxIterations",
+        "group": "LinearSolver",
+        "parameter": "MaxIterations",
         "type": [
             "int"
         ]
@@ -2894,8 +2894,8 @@
         "explanation": [
             "Maximal number of previous vectors which are orthogonalized against the new search direction"
         ],
-        "Group": "LinearSolver",
-        "Parameter": "MaxOrthogonalizationVectors",
+        "group": "LinearSolver",
+        "parameter": "MaxOrthogonalizationVectors",
         "type": [
             "int"
         ]
@@ -2907,8 +2907,8 @@
         "explanation": [
             "If and how data is agglomerated on coarser level to fewer processors. (\"atOnce\": do agglomeration once and to one process; \"successive\": Multiple agglomerations to fewer proceses until all data is on one process; \"none\": Do no agglomeration at all and solve coarse level iteratively)."
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.AmgAccumulationMode",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.AmgAccumulationMode",
         "type": [
             "std::string"
         ]
@@ -2920,8 +2920,8 @@
         "explanation": [
             "Whether to use additive multigrid."
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.AmgAdditive",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.AmgAdditive",
         "type": [
             "bool"
         ]
@@ -2933,8 +2933,8 @@
         "explanation": [
             "Scaling value for marking connections as strong."
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.AmgAlpha",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.AmgAlpha",
         "type": [
             "double"
         ]
@@ -2946,8 +2946,8 @@
         "explanation": [
             "Threshold for marking nodes as isolated."
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.AmgBeta",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.AmgBeta",
         "type": [
             "double"
         ]
@@ -2959,8 +2959,8 @@
         "explanation": [
             "Maximum number of unknowns on the coarsest level."
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.AmgCoarsenTarget",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.AmgCoarsenTarget",
         "type": [
             "int"
         ]
@@ -2972,8 +2972,8 @@
         "explanation": [
             "If true use SymmetricCriterion (default), else UnSymmetricCriterion"
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.AmgCriterionSymmetric",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.AmgCriterionSymmetric",
         "type": [
             "bool"
         ]
@@ -2985,8 +2985,8 @@
         "explanation": [
             "Dimension of the problem (used for setting default aggregate size)."
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.AmgDefaultAggregationDimension",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.AmgDefaultAggregationDimension",
         "type": [
             "std::size_t"
         ]
@@ -2998,8 +2998,8 @@
         "explanation": [
             "Whether to set default values depending on isotropy of problem uses parameters \"defaultAggregationDimension\" and \"maxAggregateDistance\" (isotropic: For and isotropic problem; anisotropic: for an anisotropic problem)."
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.AmgDefaultAggregationSizeMode",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.AmgDefaultAggregationSizeMode",
         "type": [
             "std::string"
         ]
@@ -3011,8 +3011,8 @@
         "explanation": [
             "The index to use for the diagonal strength (default 0) if this is i and strengthMeasure is \"diagonal\", then block[i][i] will be used when determining strength of connection."
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.AmgDiagonalRowIndex",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.AmgDiagonalRowIndex",
         "type": [
             "int"
         ]
@@ -3024,8 +3024,8 @@
         "explanation": [
             "1 for V-cycle, 2 for W-cycle."
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.AmgGamma",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.AmgGamma",
         "type": [
             "std::size_t"
         ]
@@ -3037,8 +3037,8 @@
         "explanation": [
             "Maximum distance in an aggregte (in term of minimum edges needed to travel. one vertex to another within the aggregate)."
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.AmgMaxAggregateDistance",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.AmgMaxAggregateDistance",
         "type": [
             "std::size_t"
         ]
@@ -3050,8 +3050,8 @@
         "explanation": [
             "Maximum number of vertices an aggregate should consist of."
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.AmgMaxAggregateSize",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.AmgMaxAggregateSize",
         "type": [
             "std::size_t"
         ]
@@ -3063,8 +3063,8 @@
         "explanation": [
             "Maximum number of levels allowed in the hierarchy."
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.AmgMaxLevel",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.AmgMaxLevel",
         "type": [
             "int"
         ]
@@ -3076,8 +3076,8 @@
         "explanation": [
             "Minimum number of vertices an aggregate should consist of."
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.AmgMinAggregateSize",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.AmgMinAggregateSize",
         "type": [
             "std::size_t"
         ]
@@ -3089,8 +3089,8 @@
         "explanation": [
             "Coarsening will stop if the rate is below this threshold."
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.AmgMinCoarseningRate",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.AmgMinCoarseningRate",
         "type": [
             "int"
         ]
@@ -3102,8 +3102,8 @@
         "explanation": [
             "Number of postsmoothing steps."
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.AmgPostSmoothingSteps",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.AmgPostSmoothingSteps",
         "type": [
             "std::size_t"
         ]
@@ -3115,8 +3115,8 @@
         "explanation": [
             "Number of presmoothing steps."
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.AmgPreSmoothingSteps",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.AmgPreSmoothingSteps",
         "type": [
             "std::size_t"
         ]
@@ -3128,8 +3128,8 @@
         "explanation": [
             "Damping factor for the prolongation."
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.AmgProlongationDampingFactor",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.AmgProlongationDampingFactor",
         "type": [
             "double"
         ]
@@ -3141,8 +3141,8 @@
         "explanation": [
             "The number of iterations to perform."
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.AmgSmootherIterations",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.AmgSmootherIterations",
         "type": [
             "int"
         ]
@@ -3154,8 +3154,8 @@
         "explanation": [
             "The relaxation factor"
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.AmgSmootherRelaxation",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.AmgSmootherRelaxation",
         "type": [
             "typename SmootherArgs::RelaxationFactor"
         ]
@@ -3167,8 +3167,8 @@
         "explanation": [
             "What conversion to use to convert a matrix block to a scalar when determining strength of connection: diagonal (use a diagonal of row diagonalRowIndex, class Diagonal, default); rowSum (rowSum norm), frobenius (Frobenius norm); one (use always one and neglect the actual entries)."
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.AmgStrengthMeasure",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.AmgStrengthMeasure",
         "type": [
             "std::string"
         ]
@@ -3180,8 +3180,8 @@
         "explanation": [
             "Whether within the Uzawa algorithm the parameter omega is the relaxation factor is estimated by use of AMG"
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.DetermineRelaxationFactor",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.DetermineRelaxationFactor",
         "type": [
             "bool"
         ]
@@ -3193,8 +3193,8 @@
         "explanation": [
             "Whether within the Uzawa algorithm a direct solver is used for inverting the 00 matrix block."
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.DirectSolverForA",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.DirectSolverForA",
         "type": [
             "bool"
         ]
@@ -3206,8 +3206,8 @@
         "explanation": [
             "The order of the ILU decomposition."
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.ILUOrder",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.ILUOrder",
         "type": [
             "int"
         ]
@@ -3219,8 +3219,8 @@
         "explanation": [
             "true if a resort of the computed ILU for improved performance should be done."
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.ILUResort",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.ILUResort",
         "type": [
             "bool"
         ]
@@ -3232,8 +3232,8 @@
         "explanation": [
             "Usually specifies the number of times the preconditioner is applied"
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.Iterations",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.Iterations",
         "type": [
             "int"
         ]
@@ -3245,8 +3245,8 @@
         "explanation": [
             "Number of iterations done to estimate the relaxation factor within the Uzawa algorithm."
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.PowerLawIterations",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.PowerLawIterations",
         "type": [
             "std::size_t"
         ]
@@ -3258,8 +3258,8 @@
         "explanation": [
             "The relaxation parameter for the preconditioner"
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.Relaxation",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.Relaxation",
         "type": [
             "double"
         ]
@@ -3271,8 +3271,8 @@
         "explanation": [
             "The preconditioner type."
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.Type",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.Type",
         "type": [
             "std::string"
         ]
@@ -3284,8 +3284,8 @@
         "explanation": [
             "The preconditioner verbosity level"
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Preconditioner.Verbosity",
+        "group": "LinearSolver",
+        "parameter": "Preconditioner.Verbosity",
         "type": [
             "int"
         ]
@@ -3297,8 +3297,8 @@
         "explanation": [
             "The residual reduction threshold, i.e. stopping criterion"
         ],
-        "Group": "LinearSolver",
-        "Parameter": "ResidualReduction",
+        "group": "LinearSolver",
+        "parameter": "ResidualReduction",
         "type": [
             "double"
         ]
@@ -3310,8 +3310,8 @@
         "explanation": [
             "cycles before restarting"
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Restart",
+        "group": "LinearSolver",
+        "parameter": "Restart",
         "type": [
             "int"
         ]
@@ -3323,8 +3323,8 @@
         "explanation": [
             "The type of linear solver, e.g. restartedflexiblegmressolver or uzawa"
         ],
-        "Group": "LinearSolver",
-        "Parameter": "type",
+        "group": "LinearSolver",
+        "parameter": "type",
         "type": [
             "std::string"
         ]
@@ -3336,8 +3336,8 @@
         "explanation": [
             "You can chosse from one of the following ordering strategies: 0: UMFPACK_ORDERING_CHOLMOD, 1: UMFPACK_ORDERING_AMD (default), 2: UMFPACK_ORDERING_GIVEN, 3: UMFPACK_ORDERING_METIS, 4: UMFPACK_ORDERING_BEST, 5: UMFPACK_ORDERING_NONE, 6: UMFPACK_ORDERING_USER. See https://fossies.org/linux/SuiteSparse/UMFPACK/Doc/UMFPACK_UserGuide.pdf page 17 for details."
         ],
-        "Group": "LinearSolver",
-        "Parameter": "UMFPackOrdering",
+        "group": "LinearSolver",
+        "parameter": "UMFPackOrdering",
         "type": [
             "int"
         ]
@@ -3349,8 +3349,8 @@
         "explanation": [
             "The verbosity level of the linear solver"
         ],
-        "Group": "LinearSolver",
-        "Parameter": "Verbosity",
+        "group": "LinearSolver",
+        "parameter": "Verbosity",
         "type": [
             "int"
         ]
@@ -3362,8 +3362,8 @@
         "explanation": [
             "Names of cell-centered primary variables of a model with staggered grid discretization"
         ],
-        "Group": "LoadSolution",
-        "Parameter": "CellCenterPriVarNames",
+        "group": "LoadSolution",
+        "parameter": "CellCenterPriVarNames",
         "type": [
             "std::vector<std::string>"
         ]
@@ -3375,8 +3375,8 @@
         "explanation": [
             "Names of primary variables on the cell faces of a model with staggered grid discretization"
         ],
-        "Group": "LoadSolution",
-        "Parameter": "FacePriVarNames",
+        "group": "LoadSolution",
+        "parameter": "FacePriVarNames",
         "type": [
             "std::vector<std::string>"
         ]
@@ -3388,8 +3388,8 @@
         "explanation": [
             "Primary variable names"
         ],
-        "Group": "LoadSolution",
-        "Parameter": "PriVarNames",
+        "group": "LoadSolution",
+        "parameter": "PriVarNames",
         "type": [
             "std::vector<std::string>"
         ]
@@ -3401,8 +3401,8 @@
         "explanation": [
             "Primary variable names state, e.g. p_liq S_gas"
         ],
-        "Group": "LoadSolution",
-        "Parameter": "PriVarNamesState...",
+        "group": "LoadSolution",
+        "parameter": "PriVarNamesState...",
         "type": [
             "std::vector<std::string>"
         ]
@@ -3414,8 +3414,8 @@
         "explanation": [
             "Primary variable names state, e.g. p_liq x^N2_liq"
         ],
-        "Group": "LoadSolution",
-        "Parameter": "PriVarNamesState1",
+        "group": "LoadSolution",
+        "parameter": "PriVarNamesState1",
         "type": [
             "std::vector<std::string>"
         ]
@@ -3427,8 +3427,8 @@
         "explanation": [
             "Primary variable names state, e.g. p_liq x^H2O_gas"
         ],
-        "Group": "LoadSolution",
-        "Parameter": "PriVarNamesState2",
+        "group": "LoadSolution",
+        "parameter": "PriVarNamesState2",
         "type": [
             "std::vector<std::string>"
         ]
@@ -3440,8 +3440,8 @@
         "explanation": [
             "Indicates if velocity is reconstructed in the pressure step or in the transport step"
         ],
-        "Group": "MPFA",
-        "Parameter": "CalcVelocityInTransport",
+        "group": "MPFA",
+        "parameter": "CalcVelocityInTransport",
         "type": [
             "bool"
         ]
@@ -3453,8 +3453,8 @@
         "explanation": [
             "Whether to enable the two non-centered flux stencils"
         ],
-        "Group": "MPFA",
-        "Parameter": "EnableComplexLStencil",
+        "group": "MPFA",
+        "parameter": "EnableComplexLStencil",
         "type": [
             "bool"
         ]
@@ -3466,8 +3466,8 @@
         "explanation": [
             "Whether to enable the two centered flux stencils"
         ],
-        "Group": "MPFA",
-        "Parameter": "EnableSimpleLStencil",
+        "group": "MPFA",
+        "parameter": "EnableSimpleLStencil",
         "type": [
             "bool"
         ]
@@ -3479,8 +3479,8 @@
         "explanation": [
             "Whether to enable the use of TPFA if neighboring cells are of the same grid level"
         ],
-        "Group": "MPFA",
-        "Parameter": "EnableTPFA",
+        "group": "MPFA",
+        "parameter": "EnableTPFA",
         "type": [
             "bool"
         ]
@@ -3492,8 +3492,8 @@
         "explanation": [
             "The quadrature point parameterizaion to be used on scvfs"
         ],
-        "Group": "MPFA",
-        "Parameter": "Q",
+        "group": "MPFA",
+        "parameter": "Q",
         "type": [
             "CoordScalar"
         ]
@@ -3505,8 +3505,8 @@
         "explanation": [
             ""
         ],
-        "Group": "MPFA",
-        "Parameter": "TransmissibilityCriterion",
+        "group": "MPFA",
+        "parameter": "TransmissibilityCriterion",
         "type": [
             "int"
         ]
@@ -3518,8 +3518,8 @@
         "explanation": [
             ""
         ],
-        "Group": "MPFA",
-        "Parameter": "TransmissibilityCriterionThreshold",
+        "group": "MPFA",
+        "parameter": "TransmissibilityCriterionThreshold",
         "type": [
             "Scalar"
         ]
@@ -3531,8 +3531,8 @@
         "explanation": [
             "Only set non-zero value if original matrix entry is larger than this."
         ],
-        "Group": "MatrixConverter",
-        "Parameter": "DeletePatternEntriesBelowAbsThreshold",
+        "group": "MatrixConverter",
+        "parameter": "DeletePatternEntriesBelowAbsThreshold",
         "type": [
             "Scalar"
         ]
@@ -3544,8 +3544,8 @@
         "explanation": [
             "The integration order for coupling source"
         ],
-        "Group": "MixedDimension",
-        "Parameter": "IntegrationOrder",
+        "group": "MixedDimension",
+        "parameter": "IntegrationOrder",
         "type": [
             "int"
         ]
@@ -3557,8 +3557,8 @@
         "explanation": [
             "The characteristic relative length"
         ],
-        "Group": "MixedDimension",
-        "Parameter": "KernelIntegrationCRL",
+        "group": "MixedDimension",
+        "parameter": "KernelIntegrationCRL",
         "type": [
             "double"
         ]
@@ -3570,8 +3570,8 @@
         "explanation": [
             "The kernel width factor"
         ],
-        "Group": "MixedDimension",
-        "Parameter": "KernelWidthFactor",
+        "group": "MixedDimension",
+        "parameter": "KernelWidthFactor",
         "type": [
             "Scalar"
         ]
@@ -3583,8 +3583,8 @@
         "explanation": [
             "The number of circle segements in the context of integration points."
         ],
-        "Group": "MixedDimension",
-        "Parameter": "NumCircleSegments",
+        "group": "MixedDimension",
+        "parameter": "NumCircleSegments",
         "type": [
             "int"
         ]
@@ -3596,8 +3596,8 @@
         "explanation": [
             "if we use the circle average as the 3D values or a point evaluation"
         ],
-        "Group": "MixedDimension",
-        "Parameter": "UseCircleAverage",
+        "group": "MixedDimension",
+        "parameter": "UseCircleAverage",
         "type": [
             "bool"
         ]
@@ -3609,8 +3609,8 @@
         "explanation": [
             "Whether to write integration points to a file"
         ],
-        "Group": "MixedDimension",
-        "Parameter": "WriteIntegrationPointsToFile",
+        "group": "MixedDimension",
+        "parameter": "WriteIntegrationPointsToFile",
         "type": [
             "bool"
         ]
@@ -3622,8 +3622,8 @@
         "explanation": [
             "Maximum allowed (relative or absolute) shift of saturation  between to consecutive time steps. If this is not set, any shift is allowed. If SaturationChangeIsRelative is true, relative shifts are considered (while not dividing by zero). If SaturationChangeIsRelative is false, absolute shifts are considered."
         ],
-        "Group": "Newton",
-        "Parameter": "AllowedSaturationChange",
+        "group": "Newton",
+        "parameter": "AllowedSaturationChange",
         "type": [
             "Scalar"
         ]
@@ -3635,8 +3635,8 @@
         "explanation": [
             "For Newton iterations to stop the absolute residual is demanded to be below a threshold value. At least two iterations."
         ],
-        "Group": "Newton",
-        "Parameter": "EnableAbsoluteResidualCriterion",
+        "group": "Newton",
+        "parameter": "EnableAbsoluteResidualCriterion",
         "type": [
             "bool"
         ]
@@ -3648,8 +3648,8 @@
         "explanation": [
             "chop the Newton update at the beginning of the non-linear solver"
         ],
-        "Group": "Newton",
-        "Parameter": "EnableChop",
+        "group": "Newton",
+        "parameter": "EnableChop",
         "type": [
             "bool"
         ]
@@ -3661,8 +3661,8 @@
         "explanation": [
             "Prints current information about assembly and solution process in the coarse of the simulation."
         ],
-        "Group": "Newton",
-        "Parameter": "EnableDynamicOutput",
+        "group": "Newton",
+        "parameter": "EnableDynamicOutput",
         "type": [
             "bool"
         ]
@@ -3674,8 +3674,8 @@
         "explanation": [
             "Every entity where the primary variables exhibit a relative shift summed up since the last linearization above 'eps' will be reassembled."
         ],
-        "Group": "Newton",
-        "Parameter": "EnablePartialReassembly",
+        "group": "Newton",
+        "parameter": "EnablePartialReassembly",
         "type": [
             "bool"
         ]
@@ -3687,8 +3687,8 @@
         "explanation": [
             "declare convergence if the initial residual is reduced by the factor ResidualReduction"
         ],
-        "Group": "Newton",
-        "Parameter": "EnableResidualCriterion",
+        "group": "Newton",
+        "parameter": "EnableResidualCriterion",
         "type": [
             "bool"
         ]
@@ -3700,8 +3700,8 @@
         "explanation": [
             "For Newton iterations to stop the maximum relative shift abs(uLastIter - uNew)/scalarmax(1.0, abs(uLastIter + uNew)*0.5) is demanded to be below a threshold value. At least two iterations."
         ],
-        "Group": "Newton",
-        "Parameter": "EnableShiftCriterion",
+        "group": "Newton",
+        "parameter": "EnableShiftCriterion",
         "type": [
             "bool"
         ]
@@ -3713,8 +3713,8 @@
         "explanation": [
             "A minimum relaxation factor for the line serach process."
         ],
-        "Group": "Newton",
-        "Parameter": "LineSearchMinRelaxationFactor",
+        "group": "Newton",
+        "parameter": "LineSearchMinRelaxationFactor",
         "type": [
             "Scalar"
         ]
@@ -3726,8 +3726,8 @@
         "explanation": [
             "The maximum acceptable absolute residual for declaring convergence"
         ],
-        "Group": "Newton",
-        "Parameter": "MaxAbsoluteResidual",
+        "group": "Newton",
+        "parameter": "MaxAbsoluteResidual",
         "type": [
             "Scalar"
         ]
@@ -3739,8 +3739,8 @@
         "explanation": [
             "Set the maximum acceptable difference of any primary variable between two iterations for declaring convergence"
         ],
-        "Group": "Newton",
-        "Parameter": "MaxRelativeShift",
+        "group": "Newton",
+        "parameter": "MaxRelativeShift",
         "type": [
             "Scalar"
         ]
@@ -3752,8 +3752,8 @@
         "explanation": [
             "The number of iterations after we give up"
         ],
-        "Group": "Newton",
-        "Parameter": "MaxSteps",
+        "group": "Newton",
+        "parameter": "MaxSteps",
         "type": [
             "int"
         ]
@@ -3765,8 +3765,8 @@
         "explanation": [
             "The maximum number of time-step divisions"
         ],
-        "Group": "Newton",
-        "Parameter": "MaxTimeStepDivisions",
+        "group": "Newton",
+        "parameter": "MaxTimeStepDivisions",
         "type": [
             "std::size_t"
         ]
@@ -3778,8 +3778,8 @@
         "explanation": [
             "The minimum number of iterations"
         ],
-        "Group": "Newton",
-        "Parameter": "MinSteps",
+        "group": "Newton",
+        "parameter": "MinSteps",
         "type": [
             "int"
         ]
@@ -3791,8 +3791,8 @@
         "explanation": [
             "If this is set true, an error is thrown is a saturation is not between zero and one."
         ],
-        "Group": "Newton",
-        "Parameter": "PlausibilityCheck",
+        "group": "Newton",
+        "parameter": "PlausibilityCheck",
         "type": [
             "bool"
         ]
@@ -3804,8 +3804,8 @@
         "explanation": [
             "'maxEps' in reassembly threshold max( minEps, min(maxEps, omega*(currently achieved maximum relative shift)) ). Increasing/decreasing 'maxEps' leads to less/more reassembly if 'omega*shift' is large, i.e., for the first Newton iterations."
         ],
-        "Group": "Newton",
-        "Parameter": "ReassemblyMaxThreshold",
+        "group": "Newton",
+        "parameter": "ReassemblyMaxThreshold",
         "type": [
             "Scalar"
         ]
@@ -3817,8 +3817,8 @@
         "explanation": [
             "'minEps' in reassembly threshold max( minEps, min(maxEps, omega*(currently achieved maximum relative shift)) ). Increasing/decreasing 'minEps' leads to less/more reassembly if 'omega*shift' is small, i.e., for the last Newton iterations."
         ],
-        "Group": "Newton",
-        "Parameter": "ReassemblyMinThreshold",
+        "group": "Newton",
+        "parameter": "ReassemblyMinThreshold",
         "type": [
             "Scalar"
         ]
@@ -3830,8 +3830,8 @@
         "explanation": [
             "'omega' in reassembly threshold max( minEps, min(maxEps, omega*(currently achieved maximum relative shift)) ). Increasing/decreasing 'maxEps' leads to less/more reassembly if 'omega*shift' is large, i.e., for the first Newton iterations."
         ],
-        "Group": "Newton",
-        "Parameter": "ReassemblyShiftWeight",
+        "group": "Newton",
+        "parameter": "ReassemblyShiftWeight",
         "type": [
             "Scalar"
         ]
@@ -3843,8 +3843,8 @@
         "explanation": [
             "The maximum acceptable residual norm reduction"
         ],
-        "Group": "Newton",
-        "Parameter": "ResidualReduction",
+        "group": "Newton",
+        "parameter": "ResidualReduction",
         "type": [
             "Scalar"
         ]
@@ -3856,8 +3856,8 @@
         "explanation": [
             "Factor for reducing the current time-step"
         ],
-        "Group": "Newton",
-        "Parameter": "RetryTimeStepReductionFactor",
+        "group": "Newton",
+        "parameter": "RetryTimeStepReductionFactor",
         "type": [
             "Scalar"
         ]
@@ -3869,8 +3869,8 @@
         "explanation": [
             "declare convergence only if both criteria are met"
         ],
-        "Group": "Newton",
-        "Parameter": "SatisfyResidualAndShiftCriterion",
+        "group": "Newton",
+        "parameter": "SatisfyResidualAndShiftCriterion",
         "type": [
             "bool"
         ]
@@ -3882,8 +3882,8 @@
         "explanation": [
             "See explanatio of AllowedSaturationChange."
         ],
-        "Group": "Newton",
-        "Parameter": "SaturationChangeIsRelative",
+        "group": "Newton",
+        "parameter": "SaturationChangeIsRelative",
         "type": [
             "Scalar"
         ]
@@ -3895,8 +3895,8 @@
         "explanation": [
             "The number of iterations which are considered \"optimal\""
         ],
-        "Group": "Newton",
-        "Parameter": "TargetSteps",
+        "group": "Newton",
+        "parameter": "TargetSteps",
         "type": [
             "int"
         ]
@@ -3908,8 +3908,8 @@
         "explanation": [
             "Whether to use line search"
         ],
-        "Group": "Newton",
-        "Parameter": "UseLineSearch",
+        "group": "Newton",
+        "parameter": "UseLineSearch",
         "type": [
             "bool"
         ]
@@ -3921,8 +3921,8 @@
         "explanation": [
             "The verbosity level of the Newton solver"
         ],
-        "Group": "Newton",
-        "Parameter": "Verbosity",
+        "group": "Newton",
+        "parameter": "Verbosity",
         "type": [
             "int"
         ]
@@ -3934,8 +3934,8 @@
         "explanation": [
             "For a DOF-index to point source map distribute source using a check if point sources are inside a subcontrolvolume instead of using basis function weights."
         ],
-        "Group": "PointSource",
-        "Parameter": "EnableBoxLumping",
+        "group": "PointSource",
+        "parameter": "EnableBoxLumping",
         "type": [
             "bool"
         ]
@@ -3947,8 +3947,8 @@
         "explanation": [
             "Verbosity level of the primary variable switch."
         ],
-        "Group": "PrimaryVariableSwitch",
-        "Parameter": "Verbosity",
+        "group": "PrimaryVariableSwitch",
+        "parameter": "Verbosity",
         "type": [
             "int"
         ]
@@ -3960,8 +3960,8 @@
         "explanation": [
             "Whether to enable the gravity term"
         ],
-        "Group": "Problem",
-        "Parameter": "EnableGravity",
+        "group": "Problem",
+        "parameter": "EnableGravity",
         "type": [
             "bool"
         ]
@@ -3973,8 +3973,8 @@
         "explanation": [
             "Whether to enable the inertia terms"
         ],
-        "Group": "Problem",
-        "Parameter": "EnableInertiaTerms",
+        "group": "Problem",
+        "parameter": "EnableInertiaTerms",
         "type": [
             "bool"
         ]
@@ -3986,8 +3986,8 @@
         "explanation": [
             "Set a name for a problem"
         ],
-        "Group": "Problem",
-        "Parameter": "Name",
+        "group": "Problem",
+        "parameter": "Name",
         "type": [
             "std::string"
         ]
@@ -3999,8 +3999,8 @@
         "explanation": [
             "The sand grain roughness"
         ],
-        "Group": "Problem",
-        "Parameter": "SandGrainRoughness",
+        "group": "Problem",
+        "parameter": "SandGrainRoughness",
         "type": [
             "Scalar"
         ]
@@ -4012,8 +4012,8 @@
         "explanation": [
             "Whether to perform variable switch at a degree of freedom location"
         ],
-        "Group": "Problem",
-        "Parameter": "UsePrimaryVariableSwitch",
+        "group": "Problem",
+        "parameter": "UsePrimaryVariableSwitch",
         "type": [
             "bool"
         ]
@@ -4025,8 +4025,8 @@
         "explanation": [
             "Choose the eddy viscosity model"
         ],
-        "Group": "RANS",
-        "Parameter": "EddyViscosityModel",
+        "group": "RANS",
+        "parameter": "EddyViscosityModel",
         "type": [
             "std::string"
         ]
@@ -4038,8 +4038,8 @@
         "explanation": [
             "The flow direction axis"
         ],
-        "Group": "RANS",
-        "Parameter": "FlowDirectionAxis",
+        "group": "RANS",
+        "parameter": "FlowDirectionAxis",
         "type": [
             "int"
         ]
@@ -4051,8 +4051,8 @@
         "explanation": [
             "Set to true, if geometry consists of flat walls"
         ],
-        "Group": "RANS",
-        "Parameter": "IsFlatWallBounded",
+        "group": "RANS",
+        "parameter": "IsFlatWallBounded",
         "type": [
             "bool"
         ]
@@ -4064,8 +4064,8 @@
         "explanation": [
             "The turbulent Prandtl number"
         ],
-        "Group": "RANS",
-        "Parameter": "TurbulentPrandtlNumber",
+        "group": "RANS",
+        "parameter": "TurbulentPrandtlNumber",
         "type": [
             "Scalar"
         ]
@@ -4077,8 +4077,8 @@
         "explanation": [
             "The turbulent Schmidt number"
         ],
-        "Group": "RANS",
-        "Parameter": "TurbulentSchmidtNumber",
+        "group": "RANS",
+        "parameter": "TurbulentSchmidtNumber",
         "type": [
             "Scalar"
         ]
@@ -4090,8 +4090,8 @@
         "explanation": [
             "Whether to use the stored eddy viscosity"
         ],
-        "Group": "RANS",
-        "Parameter": "UseStoredEddyViscosity",
+        "group": "RANS",
+        "parameter": "UseStoredEddyViscosity",
         "type": [
             "bool"
         ]
@@ -4103,8 +4103,8 @@
         "explanation": [
             "The normal wall axis of a flat wall bounded flow"
         ],
-        "Group": "RANS",
-        "Parameter": "WallNormalAxis",
+        "group": "RANS",
+        "parameter": "WallNormalAxis",
         "type": [
             "int"
         ]
@@ -4116,8 +4116,8 @@
         "explanation": [
             "Whether to write output fields for flat wall geometries"
         ],
-        "Group": "RANS",
-        "Parameter": "WriteFlatWallBoundedFields",
+        "group": "RANS",
+        "parameter": "WriteFlatWallBoundedFields",
         "type": [
             "bool"
         ]
@@ -4129,8 +4129,8 @@
         "explanation": [
             "Whether to include a viscous flux contribution."
         ],
-        "Group": "ShallowWater",
-        "Parameter": "EnableViscousFlux",
+        "group": "ShallowWater",
+        "parameter": "EnableViscousFlux",
         "type": [
             "bool"
         ]
@@ -4142,8 +4142,8 @@
         "explanation": [
             "For the turbulence model base on the mixing length: The Smagorinsky-like horizontal turbulence coefficient."
         ],
-        "Group": "ShallowWater",
-        "Parameter": "HorizontalCoefficientOfMixingLengthModel",
+        "group": "ShallowWater",
+        "parameter": "HorizontalCoefficientOfMixingLengthModel",
         "type": [
             "Scalar"
         ]
@@ -4155,8 +4155,8 @@
         "explanation": [
             "The (constant) background turbulent viscosity."
         ],
-        "Group": "ShallowWater",
-        "Parameter": "TurbulentViscosity",
+        "group": "ShallowWater",
+        "parameter": "TurbulentViscosity",
         "type": [
             "Scalar"
         ]
@@ -4168,8 +4168,8 @@
         "explanation": [
             "Whether the mixing-length turbulence model is used."
         ],
-        "Group": "ShallowWater",
-        "Parameter": "UseMixingLengthTurbulenceModel",
+        "group": "ShallowWater",
+        "parameter": "UseMixingLengthTurbulenceModel",
         "type": [
             "bool"
         ]
@@ -4181,8 +4181,8 @@
         "explanation": [
             "For the turbulence model base on the mixing length: The Elder-like vertical turbulence coefficient."
         ],
-        "Group": "ShallowWater",
-        "Parameter": "VerticalCoefficientOfMixingLengthModel",
+        "group": "ShallowWater",
+        "parameter": "VerticalCoefficientOfMixingLengthModel",
         "type": [
             "Scalar"
         ]
@@ -4194,8 +4194,8 @@
         "explanation": [
             "The reference temperature in \\f$\\mathrm{[K]}\\f$ for calculating the (liquid or gas) enthalpy of simple H2O."
         ],
-        "Group": "SimpleH2O",
-        "Parameter": "ReferenceTemperature",
+        "group": "SimpleH2O",
+        "parameter": "ReferenceTemperature",
         "type": [
             "Scalar"
         ]
@@ -4207,8 +4207,8 @@
         "explanation": [
             "Compute volume-specific interfacial area between the wetting and solid phase from interfacial area between nonwetting and solid phase and maximum capillary pressure."
         ],
-        "Group": "SpatialParams",
-        "Parameter": "ComputeAwsFromAnsAndPcMax",
+        "group": "SpatialParams",
+        "parameter": "ComputeAwsFromAnsAndPcMax",
         "type": [
             "bool"
         ]
@@ -4220,8 +4220,8 @@
         "explanation": [
             "This contact angle \\f$[rad]\\f$ is set both as the contact angle within a pore throat and the one within a pore body. It can be overloaded for solution-dependent values."
         ],
-        "Group": "SpatialParams",
-        "Parameter": "ContactAngle",
+        "group": "SpatialParams",
+        "parameter": "ContactAngle",
         "type": [
             "Scalar"
         ]
@@ -4233,8 +4233,8 @@
         "explanation": [
             "The Forchheimer coefficient"
         ],
-        "Group": "SpatialParams",
-        "Parameter": "ForchCoeff",
+        "group": "SpatialParams",
+        "parameter": "ForchCoeff",
         "type": [
             "Scalar"
         ]
@@ -4246,8 +4246,8 @@
         "explanation": [
             "The minimum permeability"
         ],
-        "Group": "SpatialParams",
-        "Parameter": "MinBoundaryPermeability",
+        "group": "SpatialParams",
+        "parameter": "MinBoundaryPermeability",
         "type": [
             "Scalar"
         ]
@@ -4259,8 +4259,8 @@
         "explanation": [
             "The permeability"
         ],
-        "Group": "SpatialParams",
-        "Parameter": "Permeability",
+        "group": "SpatialParams",
+        "parameter": "Permeability",
         "type": [
             "Scalar"
         ]
@@ -4272,8 +4272,8 @@
         "explanation": [
             "The porosity"
         ],
-        "Group": "SpatialParams",
-        "Parameter": "Porosity",
+        "group": "SpatialParams",
+        "parameter": "Porosity",
         "type": [
             "Scalar"
         ]
@@ -4285,8 +4285,8 @@
         "explanation": [
             "The value of the surface tension \\f$[N/m]\\f$. It defaults to the surface tension of water/air."
         ],
-        "Group": "SpatialParams",
-        "Parameter": "SurfaceTension",
+        "group": "SpatialParams",
+        "parameter": "SurfaceTension",
         "type": [
             "Scalar"
         ]
@@ -4298,8 +4298,8 @@
         "explanation": [
             "The tortuosity"
         ],
-        "Group": "SpatialParams",
-        "Parameter": "Tortuosity",
+        "group": "SpatialParams",
+        "parameter": "Tortuosity",
         "type": [
             "Scalar"
         ]
@@ -4311,8 +4311,8 @@
         "explanation": [
             "The restart time stamp for a previously interrupted simulation"
         ],
-        "Group": "TimeLoop",
-        "Parameter": "Restart",
+        "group": "TimeLoop",
+        "parameter": "Restart",
         "type": [
             "double"
         ]
@@ -4324,8 +4324,8 @@
         "explanation": [
             "Whether or not the pore resistance should be considered on runtime."
         ],
-        "Group": "Transmissibility",
-        "Parameter": "ConsiderPoreResistance",
+        "group": "Transmissibility",
+        "parameter": "ConsiderPoreResistance",
         "type": [
             "bool"
         ]
@@ -4337,8 +4337,8 @@
         "explanation": [
             "Whether to add a process rank"
         ],
-        "Group": "Vtk",
-        "Parameter": "AddProcessRank",
+        "group": "Vtk",
+        "parameter": "AddProcessRank",
         "type": [
             "bool"
         ]
@@ -4350,8 +4350,8 @@
         "explanation": [
             "Whether to enable velocity output"
         ],
-        "Group": "Vtk",
-        "Parameter": "AddVelocity",
+        "group": "Vtk",
+        "parameter": "AddVelocity",
         "type": [
             "bool"
         ]
@@ -4363,8 +4363,8 @@
         "explanation": [
             "The output precision of coordinates."
         ],
-        "Group": "Vtk",
-        "Parameter": "CoordPrecision",
+        "group": "Vtk",
+        "parameter": "CoordPrecision",
         "type": [
             "std::string"
         ]
@@ -4376,8 +4376,8 @@
         "explanation": [
             "in sequential models: indicates which values the VTK output contains, e.g. if the OutputLevel is zero, only primary variables are written"
         ],
-        "Group": "Vtk",
-        "Parameter": "OutputLevel",
+        "group": "Vtk",
+        "parameter": "OutputLevel",
         "type": [
             "int"
         ]
@@ -4389,8 +4389,8 @@
         "explanation": [
             "Precision of the vtk output"
         ],
-        "Group": "Vtk",
-        "Parameter": "Precision",
+        "group": "Vtk",
+        "parameter": "Precision",
         "type": [
             "std::string"
         ]
@@ -4402,8 +4402,8 @@
         "explanation": [
             "For the staggered grid approach, write face-related data into vtp files."
         ],
-        "Group": "Vtk",
-        "Parameter": "WriteFaceData",
+        "group": "Vtk",
+        "parameter": "WriteFaceData",
         "type": [
             "bool"
         ]
