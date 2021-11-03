@@ -191,8 +191,8 @@ missingParameters = [key for key in inputDict if key.replace("-.", "") not in pa
 for missingkey in missingParameters:
     key = missingkey.replace("-.", "")
     parameterDict[key] = inputDict[missingkey]
-    parameterDict[key]["defaultValue"] = inputDict[missingkey]["Default Value"]
-    parameterDict[key]["paramType"] = inputDict[missingkey]["Type"]
+    parameterDict[key]["defaultValue"] = inputDict[missingkey]["default"]
+    parameterDict[key]["paramType"] = inputDict[missingkey]["type"]
     parameterDict[key]["paramName"] = (
         inputDict[missingkey]["Group"] + "." + inputDict[missingkey]["Parameter"]
     )
@@ -223,9 +223,9 @@ for key in parameterDict:
     numOfEntries = 0
     if keyInput in inputDict:
         numOfEntries = max(
-            len(inputDict[keyInput]["Default Value"]),
-            len(inputDict[keyInput]["Type"]),
-            len(inputDict[keyInput]["Explanation"]),
+            len(inputDict[keyInput]["default"]),
+            len(inputDict[keyInput]["type"]),
+            len(inputDict[keyInput]["explanation"]),
         )
 
     paramType = entry["paramType"][0]
@@ -254,7 +254,7 @@ for key in parameterDict:
                 + " has been chosen. Please adapt manually if desired."
             )
         else:
-            paramType = inputDict[keyInput]["Type"]
+            paramType = inputDict[keyInput]["type"]
             log.append(
                 "\n ---> For the parameters list, "
                 + str(paramType)
@@ -271,7 +271,7 @@ for key in parameterDict:
                 + " has been chosen. Please adapt manually if desired."
             )
         else:
-            defaultValue = inputDict[keyInput]["Default Value"]
+            defaultValue = inputDict[keyInput]["default"]
             log.append(
                 "\n ---> For the parameters list, "
                 + str(defaultValue)
@@ -281,9 +281,9 @@ for key in parameterDict:
     # get explanation
     explanation = ""
     if numOfEntries > 0:
-        explanation = inputDict[keyInput]["Explanation"]
-        paramType = inputDict[keyInput]["Type"]
-        defaultValue = inputDict[keyInput]["Default Value"]
+        explanation = inputDict[keyInput]["explanation"]
+        paramType = inputDict[keyInput]["type"]
+        defaultValue = inputDict[keyInput]["default"]
 
     if numOfEntries == 0:
         maxGroupWidth = max(maxGroupWidth, len(groupEntry) + 3)  # +3 because \b will be added later
