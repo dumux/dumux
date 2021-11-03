@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Automatically updates newparameters.json by searching all *.hh files
+Automatically updates parameterlist.txt by searching all *.hh files
 for usage of getParam or getParamFromGroup.
 """
 
