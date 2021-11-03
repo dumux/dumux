@@ -68,6 +68,13 @@ template<class BcTypes>
 static constexpr bool hasHasWallBC()
 { return Dune::Std::is_detected<HasWallBCDetector, BcTypes>::value; }
 
+template <typename ModelTraits>
+using HasEnableDispersionDetector = decltype(ModelTraits::enableDispersion());
+
+template<class ModelTraits>
+static constexpr bool hasEnableDispersion()
+{ return Dune::Std::is_detected<HasEnableDispersionDetector, ModelTraits>::value; }
+
 } // end namespace Deprecated
 #endif
 

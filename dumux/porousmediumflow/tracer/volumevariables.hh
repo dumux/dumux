@@ -63,6 +63,8 @@ class TracerVolumeVariables
     static constexpr int numFluidComps = ParentType::numFluidComponents();
 
 public:
+    //! Export the dispersion tensor law
+    using DispersionTensorType = typename Traits::DispersionTensorType;
     //! Export the fluid system type
     using FluidSystem = typename Traits::FluidSystem;
     //! Export the solid state type
