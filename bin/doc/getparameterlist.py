@@ -138,7 +138,7 @@ parser.add_argument(
     action=CheckExistAction,
     metavar="input",
     dest="inputFile",
-    default="../../doc/doxygen/extradoc/currentParameters.json",
+    default="../../doc/doxygen/extradoc/parameters.json",
 )
 parser.add_argument(
     "--output",
