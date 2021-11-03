@@ -362,10 +362,6 @@ for data in tableEntryData:
 tableEntries = tableEntriesWithoutGroup + tableEntriesWithGroup
 
 header = """/*!
- *\\file
- *\\ingroup Parameter
- *
- *\\brief List of currently useable run-time parameters
  *
  *  _    _                  _
  * | |  | |                (_)
@@ -377,6 +373,11 @@ header = """/*!
  *                                  |___/
  * WARNING: This file is auto-generated. Do not manually edit.
  * Run bin/doc/generate_parameterlist.py
+ *
+ *\\file
+ *\\ingroup Parameter
+ *
+ *\\brief List of currently useable run-time parameters
  *
  * The listed run-time parameters are available in general,
  * but we point out that a certain model might not be able
