@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Fluidsystems
- * \brief @copybrief Dumux::FluidSystems::H2OAirMesitylene
+ * \brief @copybrief Dumux::FluidSystems::BlackOilFluidsystem
  */
 #ifndef DUMUX_BLACKOIL_FLUID_SYSTEM_HH
 #define DUMUX_BLACKOIL_FLUID_SYSTEM_HH
