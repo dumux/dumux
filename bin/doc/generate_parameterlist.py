@@ -362,15 +362,16 @@ for data in tableEntryData:
 tableEntries = tableEntriesWithoutGroup + tableEntriesWithGroup
 
 header = """/*!
- *
- *  _    _                  _
- * | |  | |                (_)
- * | |  | | __ _ _ __ _ __  _ _ __   __ _
- * | |/\| |/ _` | '__| '_ \| | '_ \ / _` |
- * \  /\  / (_| | |  | | | | | | | | (_| |
- *  \/  \/ \__,_|_|  |_| |_|_|_| |_|\__, |
- *                                   __/ |
- *                                  |___/
+ *@verbatim
+   _    _                  _
+  | |  | |                (_)
+  | |  | | __ _ _ __ _ __  _ _ __   __ _
+  | |/\| |/ _` | '__| '_ \| | '_ \ / _` |
+  \  /\  / (_| | |  | | | | | | | | (_| |
+   \/  \/ \__,_|_|  |_| |_|_|_| |_|\__, |
+                                    __/ |
+                                   |___/
+  @endverbatim
  * WARNING: This file is auto-generated. Do not manually edit.
  * Run bin/doc/generate_parameterlist.py
  *
