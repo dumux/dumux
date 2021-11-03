@@ -210,7 +210,7 @@ tableEntryData = []
 for key in parameterDict:
 
     entry = parameterDict[key]
-    hasGroup = bool(entry["paramName"].count(".") != 0)
+    hasGroup = entry["paramName"].count(".") > 0
     groupEntry = "-" if not hasGroup else entry["paramName"].split(".")[0]
     paramName = entry["paramName"] if not hasGroup else entry["paramName"].partition(".")[2]
 
@@ -409,5 +409,5 @@ with open(os.path.join(rootDir, args["output"]), "w") as outputfile:
     outputfile.write(" */\n")
     print("Finished, check the output file and log.")
 
-with open("getParams.log", "w") as f:
+with open("generate_parameterlist.log", "w") as f:
     f.writelines(log)
