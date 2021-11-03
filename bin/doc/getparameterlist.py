@@ -9,8 +9,10 @@ import os
 import argparse
 import json
 
-# find the content of the given string between the first matching pair of opening/closing keys
+
 def getEnclosedContent(string, openKey, closeKey):
+    """ find the content of the given string between
+    the first matching pair of opening/closing keys """
 
     # cut off everything before the first occurence of openKey
     string = openKey + string.partition(openKey)[2]
@@ -31,8 +33,8 @@ def getEnclosedContent(string, openKey, closeKey):
     return result.partition(openKey)[2].rpartition(closeKey)[0]
 
 
-# extract a parameter from a given line
 def extractParamName(line):
+    """extract a parameter from a given line"""
 
     # split occurrences of getParam<T>(CALLARGS) or getParamFromGroup<T>(CALLARGS)
     # into the template arguments T and the function arguments CALLARGS
@@ -80,8 +82,8 @@ def extractParamName(line):
     return {"paramType": paramType, "paramName": paramName.strip('"'), "defaultValue": defaultValue}
 
 
-# extract all parameters from a given file
 def getParamsFromFile(file, log):
+    """ extract all parameters from a given file """
     parameters = []
     errors = {}
     with open(file) as f:
@@ -96,7 +98,8 @@ def getParamsFromFile(file, log):
     # print encountered errors
     if errors:
         log.append(
-            "\n\n{} parameter{} in file {} could not be retrieved automatically. Please check them yourself:".format(
+            ("\n\n{} parameter{} in file {} could not be retrieved automatically. "
+            "Please check them yourself:").format(
                 len(errors), "s" if len(errors) > 1 else "", file
             )
         )
@@ -109,6 +112,7 @@ def getParamsFromFile(file, log):
 
 
 class CheckExistAction(argparse.Action):
+    """check if the input file exists """
     def __call__(self, parser, namespace, values, option_string):
         if os.path.isfile(values):
             setattr(namespace, self.dest, values)
