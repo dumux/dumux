@@ -11,8 +11,8 @@ import json
 
 
 def getEnclosedContent(string, openKey, closeKey):
-    """ find the content of the given string between
-    the first matching pair of opening/closing keys """
+    """find the content of the given string between
+    the first matching pair of opening/closing keys"""
 
     # cut off everything before the first occurence of openKey
     string = openKey + string.partition(openKey)[2]
@@ -83,7 +83,7 @@ def extractParamName(line):
 
 
 def getParamsFromFile(file, log):
-    """ extract all parameters from a given file """
+    """extract all parameters from a given file"""
     parameters = []
     errors = {}
     with open(file) as f:
@@ -98,10 +98,10 @@ def getParamsFromFile(file, log):
     # print encountered errors
     if errors:
         log.append(
-            ("\n\n{} parameter{} in file {} could not be retrieved automatically. "
-             "Please check them yourself:").format(
-                len(errors), "s" if len(errors) > 1 else "", file
-            )
+            (
+                "\n\n{} parameter{} in file {} could not be retrieved automatically. "
+                "Please check them yourself:"
+            ).format(len(errors), "s" if len(errors) > 1 else "", file)
         )
         for lineIdx in errors:
             log.append("\n\t-> line {}: {}".format(lineIdx, errors[lineIdx]["line"]))
@@ -112,7 +112,8 @@ def getParamsFromFile(file, log):
 
 
 class CheckExistAction(argparse.Action):
-    """check if the input file exists """
+    """check if the input file exists"""
+
     def __call__(self, parser, namespace, values, option_string):
         if os.path.isfile(values):
             setattr(namespace, self.dest, values)
