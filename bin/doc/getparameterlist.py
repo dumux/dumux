@@ -192,7 +192,7 @@ for missingkey in missingParameters:
         inputDict[missingkey]["Group"] + "." + inputDict[missingkey]["Parameter"]
     )
     log.append("\nAdd missing parameter " + parameterDict[key]["paramName"] + " from input")
-parameterDict = dict(sorted(parameterDict.items(),key = lambda kv:kv[0]))
+parameterDict = dict(sorted(parameterDict.items(), key=lambda kv: kv[0]))
 # determine actual entries (from duplicates)
 # and determine maximum occurring column widths
 maxGroupWidth = 0
@@ -227,7 +227,11 @@ for key in parameterDict:
     defaultValue = next((e for e in entry["defaultValue"] if e), "-")
 
     hasMultiplePT = bool(not all(pt == paramType for pt in entry["paramType"]))
-    hasMultipleDV = bool(not all(dv == (defaultValue if defaultValue != "-" else None) for dv in entry["defaultValue"]))
+    hasMultipleDV = bool(
+        not all(
+            dv == (defaultValue if defaultValue != "-" else None) for dv in entry["defaultValue"]
+        )
+    )
     if hasMultiplePT or hasMultipleDV:
         log.append(
             "\n\nFound multiple occurrences of parameter "
