@@ -115,20 +115,20 @@ private:
     static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
     using BaseTraits = OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 
-    using DTL = GetPropType<TypeTag, Properties::DispersionTensorLaw>;
+    using DTT = GetPropType<TypeTag, Properties::DispersionTensorType>;
     using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
     using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
-    template<class BaseTraits, class DTL, class DT, class EDM>
+    template<class BaseTraits, class DTT, class DT, class EDM>
     struct NCTraits : public BaseTraits
     {
-        using DispersionTensorLaw = DTL;
+        using DispersionTensorType = DTT;
         using DiffusionType = DT;
         using EffectiveDiffusivityModel = EDM;
     };
 
-    using NonMinVolVars = OnePNCVolumeVariables<NCTraits<BaseTraits, DTL, DT, EDM>>;
+    using NonMinVolVars = OnePNCVolumeVariables<NCTraits<BaseTraits, DTT, DT, EDM>>;
 public:
-    using type = MineralizationVolumeVariables<NCTraits<BaseTraits, DTL, DT, EDM>, NonMinVolVars>;
+    using type = MineralizationVolumeVariables<NCTraits<BaseTraits, DTT, DT, EDM>, NonMinVolVars>;
 };
 
 // Use the mineralization local residual
@@ -203,21 +203,21 @@ private:
     static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
     using BaseTraits = OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 
-    using DTL = GetPropType<TypeTag, Properties::DispersionTensorLaw>;
+    using DTT = GetPropType<TypeTag, Properties::DispersionTensorType>;
     using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
     using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
     using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
-    template<class BaseTraits, class DTL, class DT, class EDM, class ETCM>
+    template<class BaseTraits, class DTT, class DT, class EDM, class ETCM>
     struct NCNITraits : public BaseTraits
     {
-        using DispersionTensorLaw = DTL;
+        using DispersionTensorType = DTT;
         using DiffusionType = DT;
         using EffectiveDiffusivityModel = EDM;
         using EffectiveThermalConductivityModel = ETCM;
     };
-    using NonMinVolVars = OnePNCVolumeVariables<NCNITraits<BaseTraits, DTL, DT, EDM, ETCM>>;
+    using NonMinVolVars = OnePNCVolumeVariables<NCNITraits<BaseTraits, DTT, DT, EDM, ETCM>>;
 public:
-    using type = MineralizationVolumeVariables<NCNITraits<BaseTraits, DTL, DT, EDM, ETCM>, NonMinVolVars>;
+    using type = MineralizationVolumeVariables<NCNITraits<BaseTraits, DTT, DT, EDM, ETCM>, NonMinVolVars>;
 };
 //! Use the average for effective conductivities
 template<class TypeTag>
