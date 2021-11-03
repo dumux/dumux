@@ -117,7 +117,7 @@ class CheckExistAction(argparse.Action):
             parser.error("File {} does not exist!".format(values))
 
 
-parser = argparse.ArgumentParser(
+argumentParser = argparse.ArgumentParser(
     description="""
     This script generates parameters list from header files.
     The header files "test" and "examples" folders are not included.
@@ -127,13 +127,13 @@ parser = argparse.ArgumentParser(
     """,
     formatter_class=argparse.RawDescriptionHelpFormatter,
 )
-parser.add_argument(
+argumentParser.add_argument(
     "--root",
     help="root path of Dumux",
     metavar="rootpath",
     default=os.path.abspath(os.path.join(os.path.abspath(__file__), "../../../")),
 )
-parser.add_argument(
+argumentParser.add_argument(
     "--input",
     help="json file of given paratemers",
     action=CheckExistAction,
@@ -141,13 +141,13 @@ parser.add_argument(
     dest="inputFile",
     default="../../doc/doxygen/extradoc/parameters.json",
 )
-parser.add_argument(
+argumentParser.add_argument(
     "--output",
     help="relative path (to the root path) of the output file",
     metavar="output",
     default="doc/doxygen/extradoc/parameterlist.txt",
 )
-args = vars(parser.parse_args())
+args = vars(argumentParser.parse_args())
 
 # search all *.hh files for parameters
 # TODO: allow runtime args with extensions and folder(s) to be checked
@@ -192,7 +192,7 @@ for missingkey in missingParameters:
         inputDict[missingkey]["Group"] + "." + inputDict[missingkey]["Parameter"]
     )
     log.append("\nAdd missing parameter " + parameterDict[key]["paramName"] + " from input")
-parameterDict = {key: value for key, value in sorted(parameterDict.items())}
+parameterDict = dict(sorted(parameterDict.items(),key = lambda kv:kv[0]))
 # determine actual entries (from duplicates)
 # and determine maximum occurring column widths
 maxGroupWidth = 0
@@ -205,7 +205,7 @@ tableEntryData = []
 for key in parameterDict:
 
     entry = parameterDict[key]
-    hasGroup = True if entry["paramName"].count(".") != 0 else False
+    hasGroup = bool(entry["paramName"].count(".") != 0)
     groupEntry = "-" if not hasGroup else entry["paramName"].split(".")[0]
     paramName = entry["paramName"] if not hasGroup else entry["paramName"].partition(".")[2]
 
@@ -226,14 +226,8 @@ for key in parameterDict:
     paramType = entry["paramType"][0]
     defaultValue = next((e for e in entry["defaultValue"] if e), "-")
 
-    hasMultiplePT = True if not all(pt == paramType for pt in entry["paramType"]) else False
-    hasMultipleDV = (
-        True
-        if not all(
-            dv == (defaultValue if defaultValue != "-" else None) for dv in entry["defaultValue"]
-        )
-        else False
-    )
+    hasMultiplePT = bool(not all(pt == paramType for pt in entry["paramType"]))
+    hasMultipleDV = bool(not all(dv == (defaultValue if defaultValue != "-" else None) for dv in entry["defaultValue"]))
     if hasMultiplePT or hasMultipleDV:
         log.append(
             "\n\nFound multiple occurrences of parameter "
