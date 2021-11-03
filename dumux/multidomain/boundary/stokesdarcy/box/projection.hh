@@ -93,11 +93,11 @@ public:
         auto domainI = Dune::index_constant<freeFlowIdx>();
         auto fvGeometry = localView(couplingManager.problem(porousMediumIdx).gridGeometry());
         auto elemVolVars = localView(darcyElemVolVars.gridVolVars());
+        const auto darcyEIdxI = couplingManager.problem(porousMediumIdx).gridGeometry().elementMapper().index(darcyElement);
 
         // integrate darcy pressure over each coupling facet and average
         for(const auto& couplingFacet : couplingFacets(domainI, couplingManager.couplingMapper(), stokesScvf.insideScvIdx(), stokesScvf.localFaceIdx()))
         {
-            const auto darcyEIdxI = couplingManager.problem(porousMediumIdx).gridGeometry().elementMapper().index(darcyElement);
             const auto darcyEIdxJ = couplingFacet.pmEIdx;
 
             const auto& element = couplingManager.problem(porousMediumIdx).gridGeometry().boundingBoxTree().entitySet().entity(couplingFacet.pmEIdx);
