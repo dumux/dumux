@@ -110,6 +110,8 @@ struct RichardsNCModelTraits
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return true; }
     static constexpr bool enableEnergyBalance() { return false; }
+    static constexpr bool enableCompositionalDispersion() { return false; }
+    static constexpr bool enableThermalDispersion() { return false; }
 
     static constexpr bool useMoles() { return useMol; }
 };

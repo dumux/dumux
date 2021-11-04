@@ -74,6 +74,7 @@ struct OnePModelTraits
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return false; }
     static constexpr bool enableEnergyBalance() { return false; }
+    static constexpr bool enableThermalDispersion() { return false; }
 };
 
 /*!

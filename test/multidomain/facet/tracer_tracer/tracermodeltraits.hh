@@ -30,10 +30,11 @@
 namespace Dumux {
 
 //! Custom model traits disabling diffusion
-template<int nComp, bool useMol>
-struct TracerTestModelTraits : public TracerModelTraits<nComp, useMol>
+template<int nComp, bool useMol, bool enableCompDisp>
+struct TracerTestModelTraits : public TracerModelTraits<nComp, useMol, enableCompDisp>
 {
     static constexpr bool enableMolecularDiffusion() { return false; }
+    static constexpr bool enableCompositionalDispersion() { return enableCompDisp; }
 };
 
 } // end namespace Dumux
