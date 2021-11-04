@@ -2157,7 +2157,8 @@
         "parameter": "Positions0",
         "type": [
             "std::vector<ctype>"
-        ]
+        ],
+        "mode":"manual"
     },
     "Grid.Positions1": {
         "default": [

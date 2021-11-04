@@ -189,14 +189,27 @@ if args["inputFile"]:
 missingParameters = [key for key in inputDict if key.replace("-.", "") not in parameterDict]
 
 for missingkey in missingParameters:
-    key = missingkey.replace("-.", "")
-    parameterDict[key] = inputDict[missingkey]
-    parameterDict[key]["defaultValue"] = inputDict[missingkey]["default"]
-    parameterDict[key]["paramType"] = inputDict[missingkey]["type"]
-    parameterDict[key]["paramName"] = (
-        inputDict[missingkey]["group"] + "." + inputDict[missingkey]["parameter"]
-    )
-    log.append("\nAdd missing parameter " + parameterDict[key]["paramName"] + " from input")
+
+    paramName = inputDict[missingkey]["group"] + "." + inputDict[missingkey]["parameter"]
+
+    hasMode = "mode" in inputDict[missingkey].keys()
+    mode = ""
+    if hasMode: mode = inputDict[missingkey]["mode"]
+    if  mode == "manual":
+        key = missingkey.replace("-.", "")
+        parameterDict[key] = inputDict[missingkey]
+        parameterDict[key]["defaultValue"] = inputDict[missingkey]["default"]
+        parameterDict[key]["paramType"] = inputDict[missingkey]["type"]
+        parameterDict[key]["paramName"] = paramName
+
+        log.append("\nAdd to parameter list: '"
+        + paramName
+        + "' which could not be extracted from code but is explicitly added in input file. \n")
+
+    else:
+        log.append("\nFound parameter in input file: '"
+        + paramName
+        + "' , set mode to manuel if it is to be kept.\n")
 parameterDict = dict(sorted(parameterDict.items(), key=lambda kv: kv[0]))
 # determine actual entries (from duplicates)
 # and determine maximum occurring column widths
