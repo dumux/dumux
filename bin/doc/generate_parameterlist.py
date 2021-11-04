@@ -204,12 +204,14 @@ for missingkey in missingParameters:
 
         log.append("\nAdd to parameter list: '"
         + paramName
-        + "' which could not be extracted from code but is explicitly added in input file. \n")
+        + "' which could not be extracted from code but is explicitly added in "
+        + args["inputFile"] +  "\n")
 
     else:
-        log.append("\nFound parameter in input file: '"
+        log.append("\nFound parameter in "
+        + args["inputFile"] + ": '"
         + paramName
-        + "' , set mode to manuel if it is to be kept.\n")
+        + "', set mode to manuel if it is to be kept.\n")
 parameterDict = dict(sorted(parameterDict.items(), key=lambda kv: kv[0]))
 # determine actual entries (from duplicates)
 # and determine maximum occurring column widths
