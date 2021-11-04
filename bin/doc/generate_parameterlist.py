@@ -330,6 +330,11 @@ tableEntriesWithGroup = []
 tableEntriesWithoutGroup = []
 previousGroupEntry = None
 
+groupEntryLength = 20
+paramNameLength = 45
+paramTypeLength = 24
+defaultValueLength = 15
+explanationLength = 80
 for data in tableEntryData:
 
     groupEntry = data["group"]
@@ -347,11 +352,11 @@ for data in tableEntryData:
         log.append("\n parameter " + groupEntry + "." + paramName + " has no explanation.")
 
     tableEntry = " * | {} | {} | {} | {} | {} |".format(
-        groupEntry.ljust(20),
-        paramName.ljust(45),
-        paramType.ljust(25),
-        defaultValue.ljust(15),
-        explanation.ljust(80)
+        groupEntry.ljust(groupEntryLength),
+        paramName.ljust(paramNameLength),
+        paramType.ljust(paramTypeLength),
+        defaultValue.ljust(defaultValueLength),
+        explanation.ljust(explanationLength)
     )
 
     if groupEntry != "-":
@@ -386,23 +391,23 @@ header = """/*!
  * but we point out that a certain model might not be able
  * to use every parameter!
  *\n"""
-header += " * | " + "Group".ljust(20)
-header += " | " + "Parameter".ljust(45)
-header += " | " + "Type".ljust(25)
-header += " | " + "Default Value".ljust(15)
-header += " | Explanation |\n"
+header += " * | " + "Group".ljust(groupEntryLength)
+header += " | " + "Parameter".ljust(paramNameLength)
+header += " | " + "Type".ljust(paramTypeLength)
+header += " | " + "Default Value".ljust(defaultValueLength)
+header += " | Explanation ".ljust(explanationLength) + "|\n"
 
-header += " * | " + ":-".ljust(20)
-header += " | " + ":-".ljust(45)
-header += " | " + ":-".ljust(25)
-header += " | " + ":-".ljust(15)
-header += " | :- |\n"
+header += " * | " + ":-".ljust(groupEntryLength)
+header += " | " + ":-".ljust(paramNameLength)
+header += " | " + ":-".ljust(paramTypeLength)
+header += " | " + ":-".ljust(defaultValueLength)
+header += " | :- ".ljust(explanationLength) + "|\n"
 
-header += " * | " + "-".ljust(20)
-header += " | " + "ParameterFile".ljust(45)
-header += " | " + "std::string".ljust(25)
-header += " | " + "executable.input".ljust(15)
-header += " | :-|\n"
+header += " * | " + "-".ljust(groupEntryLength)
+header += " | " + "ParameterFile".ljust(paramNameLength)
+header += " | " + "std::string".ljust(paramTypeLength)
+header += " | " + "executable.input".ljust(defaultValueLength)
+header += " | :- ".ljust(explanationLength) + "|\n"
 
 # overwrite the old parameterlist.txt file
 with open(os.path.join(rootDir, args["output"]), "w") as outputfile:
