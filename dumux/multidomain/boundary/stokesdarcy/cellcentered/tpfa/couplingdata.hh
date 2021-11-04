@@ -28,6 +28,8 @@
 #include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
 #include <dumux/multidomain/couplingmanager.hh>
 
+#include <dumux/flux/forchheimervelocity.hh>
+
 namespace Dumux {
 /*!
  * \ingroup StokesDarcyCoupling
@@ -61,7 +63,9 @@ class StokesDarcyCouplingDataTpfaBase : public StokesDarcyCouplingDataImplementa
 
     using AdvectionType = GetPropType<SubDomainTypeTag<porousMediumIdx>, Properties::AdvectionType>;
     using DarcysLaw = DarcysLawImplementation<SubDomainTypeTag<porousMediumIdx>, GridGeometry<porousMediumIdx>::discMethod>;
-    using ForchheimersLaw = ForchheimersLawImplementation<SubDomainTypeTag<porousMediumIdx>, GridGeometry<porousMediumIdx>::discMethod>;
+    using ForchheimersLaw = ForchheimersLawImplementation<SubDomainTypeTag<porousMediumIdx>,
+                                                          ForchheimerVelocity<Scalar, GridGeometry<porousMediumIdx>, GetPropType<SubDomainTypeTag<porousMediumIdx>, Properties::FluxVariables>>,
+                                                          GridGeometry<porousMediumIdx>::discMethod>;
 
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
 

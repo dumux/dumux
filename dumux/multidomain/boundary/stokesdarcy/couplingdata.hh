@@ -197,7 +197,7 @@ template <class TypeTag, DiscretizationMethod discMethod>
 class DarcysLawImplementation;
 
 //! forward declare
-template <class TypeTag, DiscretizationMethod discMethod>
+template <class TypeTag, class VelocityLaw, DiscretizationMethod discMethod>
 class ForchheimersLawImplementation;
 
 
