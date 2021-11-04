@@ -213,11 +213,6 @@ for missingkey in missingParameters:
 parameterDict = dict(sorted(parameterDict.items(), key=lambda kv: kv[0]))
 # determine actual entries (from duplicates)
 # and determine maximum occurring column widths
-maxGroupWidth = 0
-maxParamWidth = 0
-maxTypeWidth = 0
-maxDefaultWidth = 0
-maxExplanationWidth = 0
 
 tableEntryData = []
 for key in parameterDict:
@@ -299,10 +294,6 @@ for key in parameterDict:
         defaultValue = inputDict[keyInput]["default"]
 
     if numOfEntries == 0:
-        maxGroupWidth = max(maxGroupWidth, len(groupEntry) + 3)  # +3 because \b will be added later
-        maxParamWidth = max(maxParamWidth, len(paramName))
-        maxTypeWidth = max(maxTypeWidth, len(paramType))
-        maxDefaultWidth = max(maxDefaultWidth, len(defaultValue))
         tableEntryData.append(
             {
                 "group": groupEntry,
@@ -322,11 +313,6 @@ for key in parameterDict:
             if len(paramType) < i + 1:
                 paramType.append(paramType[i - 1])
 
-            maxGroupWidth = max(maxGroupWidth, len(groupEntry) + 3)
-            maxParamWidth = max(maxParamWidth, len(paramName))
-            maxTypeWidth = max(maxTypeWidth, len(paramType[i]))
-            maxDefaultWidth = max(maxDefaultWidth, len(defaultValue[i]))
-            maxExplanationWidth = max(maxExplanationWidth, len(explanation[i]))
             tableEntryData.append(
                 {
                     "group": groupEntry,
@@ -359,11 +345,11 @@ for data in tableEntryData:
         log.append("\n parameter " + groupEntry + "." + paramName + " has no explanation.")
 
     tableEntry = " * | {} | {} | {} | {} | {} |".format(
-        groupEntry.ljust(maxGroupWidth),
-        paramName.ljust(maxParamWidth),
-        paramType.ljust(maxTypeWidth),
-        defaultValue.ljust(maxDefaultWidth),
-        explanation.ljust(maxExplanationWidth),
+        groupEntry.ljust(len(groupEntry)+4),
+        paramName.ljust(len(paramName)+4),
+        paramType.ljust(len(paramType)+4),
+        defaultValue.ljust(len(defaultValue)+4),
+        explanation.ljust(len(explanation)+4),
     )
 
     if groupEntry != "-":
@@ -398,22 +384,22 @@ header = """/*!
  * but we point out that a certain model might not be able
  * to use every parameter!
  *\n"""
-header += " * | " + "Group".ljust(maxGroupWidth)
-header += " | " + "Parameter".ljust(maxParamWidth)
-header += " | " + "Type".ljust(maxTypeWidth)
-header += " | " + "Default Value".ljust(maxDefaultWidth)
+header += " * | " + "Group"
+header += " | " + "Parameter"
+header += " | " + "Type"
+header += " | " + "Default Value"
 header += " | Explanation |\n"
 
-header += " * | " + ":-".ljust(maxGroupWidth)
-header += " | " + ":-".ljust(maxParamWidth)
-header += " | " + ":-".ljust(maxTypeWidth)
-header += " | " + ":-".ljust(maxDefaultWidth)
+header += " * | " + ":-"
+header += " | " + ":-"
+header += " | " + ":-"
+header += " | " + ":-"
 header += " | :-         |\n"
 
-header += " * | " + "".ljust(maxGroupWidth)
-header += " | " + "ParameterFile".ljust(maxParamWidth)
-header += " | " + "std::string".ljust(maxTypeWidth)
-header += " | " + "executable.input".ljust(maxDefaultWidth)
+header += " * | " + "-"
+header += " | " + "ParameterFile"
+header += " | " + "std::string"
+header += " | " + "executable.input"
 header += " | :-         |\n"
 
 # overwrite the old parameterlist.txt file
