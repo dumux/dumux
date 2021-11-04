@@ -347,11 +347,11 @@ for data in tableEntryData:
         log.append("\n parameter " + groupEntry + "." + paramName + " has no explanation.")
 
     tableEntry = " * | {} | {} | {} | {} | {} |".format(
-        groupEntry.ljust(len(groupEntry)+4),
-        paramName.ljust(len(paramName)+4),
-        paramType.ljust(len(paramType)+4),
-        defaultValue.ljust(len(defaultValue)+4),
-        explanation.ljust(len(explanation)+4),
+        groupEntry.ljust(20),
+        paramName.ljust(45),
+        paramType.ljust(25),
+        defaultValue.ljust(15),
+        explanation.ljust(80)
     )
 
     if groupEntry != "-":
@@ -386,23 +386,23 @@ header = """/*!
  * but we point out that a certain model might not be able
  * to use every parameter!
  *\n"""
-header += " * | " + "Group"
-header += " | " + "Parameter"
-header += " | " + "Type"
-header += " | " + "Default Value"
+header += " * | " + "Group".ljust(20)
+header += " | " + "Parameter".ljust(45)
+header += " | " + "Type".ljust(25)
+header += " | " + "Default Value".ljust(15)
 header += " | Explanation |\n"
 
-header += " * | " + ":-"
-header += " | " + ":-"
-header += " | " + ":-"
-header += " | " + ":-"
-header += " | :-         |\n"
+header += " * | " + ":-".ljust(20)
+header += " | " + ":-".ljust(45)
+header += " | " + ":-".ljust(25)
+header += " | " + ":-".ljust(15)
+header += " | :- |\n"
 
-header += " * | " + "-"
-header += " | " + "ParameterFile"
-header += " | " + "std::string"
-header += " | " + "executable.input"
-header += " | :-         |\n"
+header += " * | " + "-".ljust(20)
+header += " | " + "ParameterFile".ljust(45)
+header += " | " + "std::string".ljust(25)
+header += " | " + "executable.input".ljust(15)
+header += " | :-|\n"
 
 # overwrite the old parameterlist.txt file
 with open(os.path.join(rootDir, args["output"]), "w") as outputfile:
