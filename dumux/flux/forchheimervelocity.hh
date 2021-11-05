@@ -28,6 +28,7 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/fmatrixev.hh>
 
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
@@ -239,25 +240,30 @@ class ForchheimerVelocity
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideVolVars = elemVolVars[insideScvIdx];
         const auto& Ki = getPermeability_(problem, insideVolVars, scvf.ipGlobal());
-        // Make sure the permeability matrix does not have off-diagonal entries
-        // TODO implement method using eigenvalues and eigenvectors for general tensors
-        if (!isDiagonal_(Ki))
-            DUNE_THROW(Dune::NotImplemented, "Only diagonal permeability tensors are supported.");
+
+        DimWorldMatrix eigenVectors;
+        DimWorldVector eigenValues;
+        Dune::FMatrixHelp::eigenValuesVectors(Ki, eigenValues, eigenVectors);
 
         for (int i = 0; i < dim; ++i)
-            sqrtKi[i][i] = sqrt(Ki[i][i]);
+            sqrtKi[i][i] = sqrt(eigenValues[i]);
+
+        sqrtKi = getTransposed(eigenVectors) * sqrtKi * eigenVectors;
 
         if (!scvf.boundary())
         {
             const auto outsideScvIdx = scvf.outsideScvIdx();
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
             const auto& Kj = getPermeability_(problem, outsideVolVars, scvf.ipGlobal());
-            // Make sure the permeability matrix does not have off-diagonal entries
-            if (!isDiagonal_(Kj))
-                DUNE_THROW(Dune::NotImplemented, "Only diagonal permeability tensors are supported.");
+
+            eigenVectors = 0.0;
+            eigenValues = 0.0;
+            Dune::FMatrixHelp::eigenValuesVectors(Kj, eigenValues, eigenVectors);
 
             for (int i = 0; i < dim; ++i)
-                sqrtKj[i][i] = sqrt(Kj[i][i]);
+                sqrtKj[i][i] = sqrt(eigenValues[i]);
+
+            sqrtKj = getTransposed(eigenVectors) * sqrtKj * eigenVectors;
 
             harmonicMeanSqrtK = problem.spatialParams().harmonicMean(sqrtKi, sqrtKj, scvf.unitOuterNormal());
         }
