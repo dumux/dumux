@@ -129,6 +129,56 @@ public:
                         map_[ownScvIndex].push_back(orthogonalScvf.outsideScvIdx());
                 }
             }
+
+            if constexpr (GridGeometry::upwindSchemeOrder > 1)
+            {
+                typename GridGeometry::LocalIntersectionMapper localIsMapper;
+                localIsMapper.update(gridGeometry.gridView(), element);
+
+                typename GridGeometry::GeometryHelper geometryHelper;
+                for (const auto& intersection : intersections(gridGeometry.gridView(), element))
+                {
+                    if (intersection.neighbor())
+                    {
+                        const auto eIdx = gridGeometry.elementMapper().index(element);
+                        const auto ownLocalScvIdx = localIsMapper.realToRefIdx(intersection.indexInInside());
+                        const auto ownGlobalScvIdx = gridGeometry.globalScvIndex(eIdx, ownLocalScvIdx);
+                        const auto ownLocalOppositeScvIdx = geometryHelper.localOppositeIdx(ownLocalScvIdx);
+                        const auto& neighborElement = intersection.outside();
+                        const auto neighborElementIdx = gridGeometry.elementMapper().index(neighborElement);
+                        map_[ownGlobalScvIdx].push_back(gridGeometry.globalScvIndex(neighborElementIdx, ownLocalScvIdx));
+
+                        for (const auto& neighborIntersection : intersections(gridGeometry.gridView(), neighborElement))
+                        {
+                            typename GridGeometry::LocalIntersectionMapper localNeighborIsMapper;
+                            localNeighborIsMapper.update(gridGeometry.gridView(), neighborElement);
+                            const auto localNeighborScvIdx = localNeighborIsMapper.realToRefIdx(neighborIntersection.indexInInside());
+
+                            if (neighborIntersection.neighbor() && localNeighborScvIdx == ownLocalScvIdx)
+                            {
+                                const auto& secondNeighborElement = neighborIntersection.outside();
+                                const auto secondNeighborElementIdx = gridGeometry.elementMapper().index(secondNeighborElement);
+                                typename GridGeometry::LocalIntersectionMapper localSecondNeighborIsMapper;
+                                localSecondNeighborIsMapper.update(gridGeometry.gridView(), secondNeighborElement);
+
+                                for (const auto& secondNeighborIntersection : intersections(gridGeometry.gridView(), secondNeighborElement))
+                                {
+                                    const auto localSecondNeighborScvIdx = localSecondNeighborIsMapper.realToRefIdx(secondNeighborIntersection.indexInInside());
+
+                                    if (localSecondNeighborScvIdx == ownLocalScvIdx)
+                                        map_[ownGlobalScvIdx].push_back(gridGeometry.globalScvIndex(secondNeighborElement, ownLocalScvIdx));
+                                    else if (localSecondNeighborScvIdx != ownLocalOppositeScvIdx)
+                                    {
+                                        const auto otherGlobalScvIdxInOwnElement = gridGeometry.globalScvIndex(eIdx, localSecondNeighborScvIdx);
+                                        const auto globalScvIdxInSecondNeighborElement = gridGeometry.globalScvIndex(secondNeighborElementIdx, localSecondNeighborScvIdx);
+                                        map_[otherGlobalScvIdxInOwnElement].push_back(globalScvIdxInSecondNeighborElement);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         // make stencils unique
