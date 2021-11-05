@@ -405,11 +405,6 @@ private:
                 const auto localOppositeScvIdx = geometryHelper_.localOppositeIdx(localScvIdx);
                 const auto& neighborElement = intersection.outside();
                 const auto neighborElementIdx = gridGeometry().elementMapper().index(neighborElement);
-                const auto& neighborElementGeometry = neighborElement.geometry();
-
-                // todo: could be done easier?
-                std::array<GridIndexType, numScvsPerElement> globalScvIndicesOfNeighborElement;
-                std::iota(globalScvIndicesOfNeighborElement.begin(), globalScvIndicesOfNeighborElement.end(), neighborElementIdx*numScvsPerElement);
 
                 typename GG::LocalIntersectionMapper localNeighborIsMapper;
                 localNeighborIsMapper.update(gridGeometry().gridView(), neighborElement);
@@ -417,14 +412,16 @@ private:
                 for (const auto& neighborIntersection : intersections(gridGeometry().gridView(), neighborElement))
                 {
                     const auto localNeighborScvIdx = localNeighborIsMapper.realToRefIdx(neighborIntersection.indexInInside());
-                    if (localNeighborScvIdx != localScvIdx && localNeighborScvIdx != localOppositeScvIdx)
+                    const bool addScvForFirstOrder = localNeighborScvIdx != localScvIdx && localNeighborScvIdx != localOppositeScvIdx;
+                    const bool addScvForSecondOrder = GG::upwindSchemeOrder > 1 && localNeighborScvIdx == localScvIdx;
+                    if (addScvForFirstOrder || addScvForSecondOrder)
                     {
-
                         const auto dofIndex = gridGeometry().intersectionMapper().globalIntersectionIndex(neighborElement, neighborIntersection.indexInInside());
+                        const auto globalScvIndex = gridGeometry().globalScvIndex(neighborElementIdx, localNeighborScvIdx);
                         neighborScvs_.push_back(SubControlVolume(
-                            neighborElementGeometry,
+                            neighborElement.geometry(),
                             neighborIntersection.geometry(),
-                            globalScvIndicesOfNeighborElement[localNeighborScvIdx],
+                            globalScvIndex,
                             localNeighborScvIdx,
                             dofIndex,
                             Dumux::normalAxis(neighborIntersection.centerUnitOuterNormal()),
@@ -432,7 +429,39 @@ private:
                             onDomainBoundary_(neighborIntersection)
                         ));
 
-                        neighborScvIndices_.push_back(globalScvIndicesOfNeighborElement[localNeighborScvIdx]);
+                        neighborScvIndices_.push_back(globalScvIndex);
+                    }
+
+                    if constexpr (GG::upwindSchemeOrder > 1)
+                    {
+                        // treat element right next to neighbor element
+                        if (localNeighborScvIdx == localScvIdx)
+                        {
+                            const auto& secondNeighborElement = neighborIntersection.outside();
+                            typename GG::LocalIntersectionMapper localSecondNeighborIsMapper;
+                            localSecondNeighborIsMapper.update(gridGeometry().gridView(), secondNeighborElement);
+                            for (const auto& secondNeighborIntersection : intersections(gridGeometry().gridView(), secondNeighborElement))
+                            {
+                                const auto localSecondNeighborScvIdx = localSecondNeighborIsMapper.realToRefIdx(secondNeighborIntersection.indexInInside());
+                                if (localSecondNeighborScvIdx != localOppositeScvIdx)
+                                {
+                                    const auto dofIndex = gridGeometry().intersectionMapper().globalIntersectionIndex(secondNeighborElement, secondNeighborIntersection.indexInInside());
+                                    const auto globalScvIndex = gridGeometry().globalScvIndex(secondNeighborElement, localSecondNeighborScvIdx);
+                                    neighborScvs_.push_back(SubControlVolume(
+                                        secondNeighborElement.geometry(),
+                                        neighborIntersection.geometry(),
+                                        globalScvIndex,
+                                        localSecondNeighborScvIdx,
+                                        dofIndex,
+                                        Dumux::normalAxis(secondNeighborIntersection.centerUnitOuterNormal()),
+                                        neighborElementIdx,
+                                        onDomainBoundary_(secondNeighborIntersection)
+                                    ));
+
+                                    neighborScvIndices_.push_back(globalScvIndex);
+                                }
+                            }
+                        }
                     }
                 }
             }
