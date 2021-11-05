@@ -144,7 +144,8 @@ argumentParser.add_argument(
     action=CheckExistAction,
     metavar="input",
     dest="inputFile",
-    default=os.path.dirname(__file__)+"/../../doc/doxygen/extradoc/parameters.json",
+    default=os.path.abspath(os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),"../../doc/doxygen/extradoc/parameters.json"))
 )
 argumentParser.add_argument(
     "--output",
