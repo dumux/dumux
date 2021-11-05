@@ -327,19 +327,22 @@ private:
             {
                 for (int k = 0; k <= i; k++)
                 {
-                    derivative[i][k] = sqrtK[i][i] * velocity[i] * velocity[k] * forchCoeff
+                    derivative[i][k] = velocity[i] * velocity[k] * forchCoeff
                     / absV  * rhoOverMu;
 
                     if (k < i)
                         derivative[k][i] = derivative[i][k];
                 }
             }
+            derivative = sqrtK * derivative;
         }
 
-        // add on the main diagonal:
-        // 1 + sqrtK_i forchCoeff density |v| / viscosity
+        // Id + sqrtK forchCoeff density |v| / viscosity
+        DimWorldMatrix Id(0.0);
         for (int i = 0; i < dim; i++)
-            derivative[i][i] += (1.0 + (sqrtK[i][i]*forchCoeff * absV * rhoOverMu));
+            Id[i][i] = 1.0;
+
+        derivative += Id + (forchCoeff * absV * rhoOverMu)*sqrtK;
     }
 
     /*!
