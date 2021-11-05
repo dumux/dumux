@@ -28,7 +28,11 @@
 #define ENABLECACHING 0
 #endif
 
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#else
 #include <dune/grid/yaspgrid.hh>
+#endif
 
 #include <dumux/discretization/fcstaggered.hh>
 #include <dumux/discretization/cctpfa.hh>
@@ -63,7 +67,11 @@ struct FluidSystem<TypeTag, TTag::DoneaTest>
 
 template<class TypeTag>
 struct Grid<TypeTag, TTag::DoneaTest>
+#if HAVE_DUNE_ALUGRID
+{ using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
+#else
 { using type = Dune::YaspGrid<2>; };
+#endif
 
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::DoneaTest> { static constexpr bool value = ENABLECACHING; };

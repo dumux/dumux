@@ -58,20 +58,19 @@ public:
             if (element.partitionType() == Dune::InteriorEntity)
                 continue;
 
+            assert(element.partitionType() == Dune::OverlapEntity);
+
             // restrict the FvGeometry locally and bind to the element
             fvGeometry.bind(element);
             // loop over sub control faces
             for (const auto& scvf : scvfs(fvGeometry))
             {
-                if (scvf.isFrontal() && !scvf.boundary())
+                if (scvf.isFrontal() && !scvf.boundary() && !scvf.processorBoundary())
                 {
                     const auto& ownScv = fvGeometry.scv(scvf.insideScvIdx());
                     const auto& facet = element.template subEntity <1> (ownScv.indexInElement());
-                    if (facet.partitionType() == 1)
-                    {
-                        const auto& oppositeScv =  fvGeometry.scv(scvf.outsideScvIdx());
-                        map_[ownScv.index()].push_back(oppositeScv.index());
-                    }
+                    if (facet.partitionType() == Dune::BorderEntity)
+                        map_[ownScv.index()].push_back(scvf.outsideScvIdx());
                 }
             }
         }
@@ -83,6 +82,7 @@ public:
             // loop over sub control faces
             for (const auto& scvf : scvfs(fvGeometry))
             {
+                assert(!scvf.processorBoundary());
                 const auto& ownScv = fvGeometry.scv(scvf.insideScvIdx());
                 const auto ownDofIndex = ownScv.dofIndex();
                 const auto ownScvIndex = ownScv.index();
@@ -90,7 +90,7 @@ public:
                 if (scvf.isFrontal())
                 {
                     if (!scvf.boundary()) // opposite dof
-                        map_[ownScvIndex].push_back(fvGeometry.scv(scvf.outsideScvIdx()).index());
+                        map_[ownScvIndex].push_back(scvf.outsideScvIdx());
                     else
                     {
                         // treat frontal faces on boundaries
@@ -111,7 +111,7 @@ public:
                     //           |v|
                     //           |f|
                     if (!scvf.boundary())
-                        map_[ownScvIndex].push_back(fvGeometry.scv(scvf.outsideScvIdx()).index());
+                        map_[ownScvIndex].push_back(scvf.outsideScvIdx());
 
 
                     // the normal DOF scv
@@ -124,9 +124,9 @@ public:
                     // |f|
                     const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
                     assert(orthogonalScvf.isLateral());
-                    map_[ownScvIndex].push_back(fvGeometry.scv(orthogonalScvf.insideScvIdx()).index());
+                    map_[ownScvIndex].push_back(orthogonalScvf.insideScvIdx());
                     if (!orthogonalScvf.boundary())
-                        map_[ownScvIndex].push_back(fvGeometry.scv(orthogonalScvf.outsideScvIdx()).index());
+                        map_[ownScvIndex].push_back(orthogonalScvf.outsideScvIdx());
                 }
             }
         }

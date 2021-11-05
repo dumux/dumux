@@ -77,7 +77,8 @@ public:
     using Traits = T;
 
     using GlobalPosition = typename T::GlobalPosition;
-    enum class FaceType {frontal, lateral};
+    enum class FaceType : SmallLocalIndexType {frontal, lateral};
+    enum class BoundaryType : SmallLocalIndexType {interior, physicalBoundary, processorBoundary};
 
     FaceCenteredStaggeredSubControlVolumeFace() = default;
 
@@ -89,7 +90,7 @@ public:
                                               const GridIndexType globalScvfIdx,
                                               const GlobalPosition& unitOuterNormal,
                                               const FaceType faceType,
-                                              const bool boundary)
+                                              const BoundaryType boundaryType)
     : globalScvIndices_(globalScvIndices)
     , localScvfIdx_(localScvfIdx)
     , globalScvfIdx_(globalScvfIdx)
@@ -97,17 +98,17 @@ public:
     , normalAxis_(Dumux::normalAxis(unitOuterNormal))
     , outerNormalSign_(sign(unitOuterNormal[normalAxis_]))
     , faceType_(faceType)
-    , boundary_(boundary)
+    , boundaryType_(boundaryType)
     {
         assert(faceType == FaceType::frontal);
-        center_ = boundary ? intersectionGeometry.center() : elementGeometry.center();
+        center_ = boundary() ? intersectionGeometry.center() : elementGeometry.center();
         ipGlobal_ = center_;
 
-        if (!boundary)
+        if (!boundary())
             outerNormalSign_ *= -1.0;
 
         // the corners (coincide with intersection corners for boundary scvfs)
-        const auto frontalOffSet = boundary ? GlobalPosition(0.0)
+        const auto frontalOffSet = boundary() ? GlobalPosition(0.0)
                                     : intersectionGeometry.center() - elementGeometry.center();
 
         for (int i = 0; i < corners_.size(); ++i)
@@ -124,7 +125,7 @@ public:
                                               const GridIndexType globalScvfIdx,
                                               const GlobalPosition& unitOuterNormal,
                                               const FaceType faceType,
-                                              const bool boundary)
+                                              const BoundaryType boundaryType)
     : globalScvIndices_(globalScvIndices)
     , localScvfIdx_(localScvfIdx)
     , globalScvfIdx_(globalScvfIdx)
@@ -132,7 +133,7 @@ public:
     , normalAxis_(Dumux::normalAxis(unitOuterNormal))
     , outerNormalSign_(sign(unitOuterNormal[normalAxis_]))
     , faceType_(faceType)
-    , boundary_(boundary)
+    , boundaryType_(boundaryType)
     {
         assert(faceType == FaceType::lateral);
         const auto shift = intersectionGeometry.center() - elementGeometry.center();
@@ -190,7 +191,10 @@ public:
     { return faceType_; }
 
     bool boundary() const
-    { return boundary_; }
+    { return boundaryType_ == BoundaryType::physicalBoundary; }
+
+    bool processorBoundary() const
+    { return boundaryType_ == BoundaryType::processorBoundary; }
 
     bool isFrontal() const
     { return faceType_ == FaceType::frontal; }
@@ -232,7 +236,7 @@ private:
     SmallLocalIndexType normalAxis_;
     std::int_least8_t outerNormalSign_;
     FaceType faceType_;
-    bool boundary_;
+    BoundaryType boundaryType_;
 };
 
 } // end namespace Dumux

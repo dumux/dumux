@@ -36,6 +36,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/typetraits/typetraits.hh>
 #include <dumux/multidomain/couplingmanager.hh>
+#include <dumux/discretization/facecentered/staggered/consistentlyorientedgrid.hh>
 
 namespace Dumux {
 
@@ -93,6 +94,11 @@ private:
 
     struct MassAndEnergyCouplingContext
     {
+        MassAndEnergyCouplingContext(FVElementGeometry<freeFlowMomentumIndex>&& f, const std::size_t i)
+        : fvGeometry(std::move(f))
+        , eIdx(i)
+        {}
+
         FVElementGeometry<freeFlowMomentumIndex> fvGeometry;
         std::size_t eIdx;
     };
@@ -328,12 +334,14 @@ public:
     {
         // TODO: rethink this! Maybe we only need scvJ.dofIndex()
         bindCouplingContext_(Dune::index_constant<freeFlowMassIndex>(), element, scvf.insideScvIdx()/*eIdx*/);
-        const auto& scvJ = massAndEnergyCouplingContext_[0].fvGeometry.scv(scvf.index()/*corresponds to scvIdx of staggered*/);
+
+        // the TPFA scvf index corresponds to the staggered scv index (might need mapping)
+        const auto localMomentumScvIdx = massScvfToMomentumScvIdx_(scvf, massAndEnergyCouplingContext_[0].fvGeometry);
+        const auto& scvJ = massAndEnergyCouplingContext_[0].fvGeometry.scv(localMomentumScvIdx);
 
         // create a unit normal vector oriented in positive coordinate direction
-        auto velocity = scvf.unitOuterNormal();
-        using std::abs;
-        std::for_each(velocity.begin(), velocity.end(), [](auto& v){ v = abs(v); });
+        typename SubControlVolumeFace<freeFlowMassIndex>::GlobalPosition velocity;
+        velocity[scvJ.dofAxis()] = 1.0;
 
         // create the actual velocity vector
         velocity *= this->curSol(freeFlowMomentumIndex)[scvJ.dofIndex()];
@@ -505,10 +513,10 @@ private:
     {
         if (massAndEnergyCouplingContext_.empty())
         {
-            auto fvGeometry = localView(this->problem(freeFlowMomentumIndex).gridGeometry());
+            const auto& gridGeometry = this->problem(freeFlowMomentumIndex).gridGeometry();
+            auto fvGeometry = localView(gridGeometry);
             fvGeometry.bindElement(elementI);
-
-            massAndEnergyCouplingContext_.emplace_back(MassAndEnergyCouplingContext{std::move(fvGeometry), eIdx});
+            massAndEnergyCouplingContext_.emplace_back(std::move(fvGeometry), eIdx);
         }
         else if (eIdx != massAndEnergyCouplingContext_[0].eIdx)
         {
@@ -578,6 +586,28 @@ private:
                     }
                 }
             }
+        }
+    }
+
+    std::size_t massScvfToMomentumScvIdx_(const SubControlVolumeFace<freeFlowMassIndex>& massScvf,
+                                          [[maybe_unused]] const FVElementGeometry<freeFlowMomentumIndex>& momentumFVGeometry) const
+    {
+        if constexpr (ConsistentlyOrientedGrid<typename GridView<freeFlowMomentumIndex>::Grid>{})
+            return massScvf.index();
+        else
+        {
+            static const bool makeConsistentlyOriented = getParam<bool>("Grid.MakeConsistentlyOriented", true);
+            if (!makeConsistentlyOriented)
+                return massScvf.index();
+
+            for (const auto& momentumScv : scvs(momentumFVGeometry))
+            {
+                typename SubControlVolumeFace<freeFlowMassIndex>::GlobalPosition momentumUnitOuterNormal(0.0);
+                momentumUnitOuterNormal[momentumScv.dofAxis()] = momentumScv.directionSign();
+                if (Dune::FloatCmp::eq<typename GridView<freeFlowMomentumIndex>::ctype>(massScvf.unitOuterNormal()*momentumUnitOuterNormal, 1.0))
+                    return momentumScv.index();
+            }
+            DUNE_THROW(Dune::InvalidStateException, "No Momentum SCV found");
         }
     }
 
