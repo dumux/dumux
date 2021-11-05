@@ -70,10 +70,7 @@ public:
                     const auto& ownScv = fvGeometry.scv(scvf.insideScvIdx());
                     const auto& facet = element.template subEntity <1> (ownScv.indexInElement());
                     if (facet.partitionType() == Dune::BorderEntity)
-                    {
-                        const auto& oppositeScv =  fvGeometry.scv(scvf.outsideScvIdx());
-                        map_[ownScv.index()].push_back(oppositeScv.index());
-                    }
+                        map_[ownScv.index()].push_back(scvf.outsideScvIdx());
                 }
             }
         }
@@ -93,7 +90,7 @@ public:
                 if (scvf.isFrontal())
                 {
                     if (!scvf.boundary()) // opposite dof
-                        map_[ownScvIndex].push_back(fvGeometry.scv(scvf.outsideScvIdx()).index());
+                        map_[ownScvIndex].push_back(scvf.outsideScvIdx());
                     else
                     {
                         // treat frontal faces on boundaries
@@ -114,7 +111,7 @@ public:
                     //           |v|
                     //           |f|
                     if (!scvf.boundary())
-                        map_[ownScvIndex].push_back(fvGeometry.scv(scvf.outsideScvIdx()).index());
+                        map_[ownScvIndex].push_back(scvf.outsideScvIdx());
 
 
                     // the normal DOF scv
@@ -127,9 +124,9 @@ public:
                     // |f|
                     const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
                     assert(orthogonalScvf.isLateral());
-                    map_[ownScvIndex].push_back(fvGeometry.scv(orthogonalScvf.insideScvIdx()).index());
+                    map_[ownScvIndex].push_back(orthogonalScvf.insideScvIdx());
                     if (!orthogonalScvf.boundary())
-                        map_[ownScvIndex].push_back(fvGeometry.scv(orthogonalScvf.outsideScvIdx()).index());
+                        map_[ownScvIndex].push_back(orthogonalScvf.outsideScvIdx());
                 }
             }
         }
