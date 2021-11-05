@@ -44,8 +44,12 @@ namespace Dumux {
  * \file
  * \ingroup MultiDomain
  * \brief The interface of the coupling manager for free flow systems
+ * \tparam Traits The multi-domain traits class
+ * \tparam implicitFullVelocityGradient If set true, velocity gradients can
+ *         be calculated in a fully implicit manner thanks to an extended stencil for the
+ *         mass model. This can be useful, e.g., for RANS models or when using shear-dependent viscosities.
  */
-template<class Traits>
+template<class Traits, bool implicitFullVelocityGradient = false>
 class StaggeredFreeFlowCouplingManager
 : public CouplingManager<Traits>
 {
@@ -566,22 +570,33 @@ private:
         for (const auto& element : elements(momentumGridGeometry.gridView()))
         {
             const auto eIdx = momentumGridGeometry.elementMapper().index(element);
-            momentumFvGeometry.bindElement(element);
+
+            static constexpr bool extendedStencil = FluidSystem::isCompressible(0/*phaseIdx*/) || implicitFullVelocityGradient;
+            // TODO                                 || !FluidSystem::viscosityIsConstant(0/*phaseIdx*/)); --> fix fluid systems
+            if constexpr (extendedStencil)
+                momentumFvGeometry.bind(element);
+            else
+                momentumFvGeometry.bindElement(element);
+
             for (const auto& scv : scvs(momentumFvGeometry))
             {
                 massAndEnergyToMomentumStencils_[eIdx].push_back(scv.dofIndex());
                 momentumToMassAndEnergyStencils_[scv.index()].push_back(eIdx);
 
-                // extend the stencil for fluids with variable viscosity and density,
-                if constexpr (FluidSystem::isCompressible(0/*phaseIdx*/))
-                // if constexpr (FluidSystem::isCompressible(0/*phaseIdx*/) || !FluidSystem::viscosityIsConstant(0/*phaseIdx*/)) // TODO fix on master
+                // extend the stencil for fluids with variable viscosity and density or if implicit calculation of full velocity gradients is needed
+                if constexpr (extendedStencil)
                 {
                     for (const auto& scvf : scvfs(momentumFvGeometry, scv))
                     {
                         if (scvf.isLateral() && !scvf.boundary())
                         {
                             const auto& outsideScv = momentumFvGeometry.scv(scvf.outsideScvIdx());
-                            momentumToMassAndEnergyStencils_[scv.index()].push_back(outsideScv.elementIndex());
+
+                            if constexpr (FluidSystem::isCompressible(0/*phaseIdx*/))
+                                momentumToMassAndEnergyStencils_[scv.index()].push_back(outsideScv.elementIndex());
+
+                            if constexpr (implicitFullVelocityGradient)
+                                massAndEnergyToMomentumStencils_[eIdx].push_back(outsideScv.dofIndex());
                         }
                     }
                 }
