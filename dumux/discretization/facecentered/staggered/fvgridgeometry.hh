@@ -91,6 +91,7 @@ struct FaceCenteredStaggeredDefaultGridGeometryTraits : public DefaultMapperTrai
  */
 template<class GridView,
          bool cachingEnabled = false,
+         int upwindOrder = 1,
          class Traits = FaceCenteredStaggeredDefaultGridGeometryTraits<GridView>>
 class FaceCenteredStaggeredFVGridGeometry;
 
@@ -100,11 +101,11 @@ class FaceCenteredStaggeredFVGridGeometry;
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element. Specialization in case the FVElementGeometries are stored.
  */
-template<class GV, class Traits>
-class FaceCenteredStaggeredFVGridGeometry<GV, true, Traits>
+template<class GV, int upwindOrder, class Traits>
+class FaceCenteredStaggeredFVGridGeometry<GV, true, upwindOrder, Traits>
 : public BaseGridGeometry<GV, Traits>
 {
-    using ThisType = FaceCenteredStaggeredFVGridGeometry<GV, true, Traits>;
+    using ThisType = FaceCenteredStaggeredFVGridGeometry<GV, true, upwindOrder, Traits>;
     using ParentType = BaseGridGeometry<GV, Traits>;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
@@ -132,6 +133,7 @@ public:
     static constexpr DiscretizationMethod discMethod{};
 
     static constexpr bool cachingEnabled = true;
+    static constexpr int upwindSchemeOrder = upwindOrder;
 
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, true>;
@@ -515,11 +517,11 @@ private:
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element. Specialization in case the FVElementGeometries are stored.
  */
-template<class GV, class Traits>
-class FaceCenteredStaggeredFVGridGeometry<GV, false, Traits>
+template<class GV, int upwindOrder, class Traits>
+class FaceCenteredStaggeredFVGridGeometry<GV, false, upwindOrder, Traits>
 : public BaseGridGeometry<GV, Traits>
 {
-    using ThisType = FaceCenteredStaggeredFVGridGeometry<GV, false, Traits>;
+    using ThisType = FaceCenteredStaggeredFVGridGeometry<GV, false, upwindOrder, Traits>;
     using ParentType = BaseGridGeometry<GV, Traits>;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
@@ -542,6 +544,7 @@ public:
     static constexpr DiscretizationMethod discMethod{};
 
     static constexpr bool cachingEnabled = false;
+    static constexpr int upwindSchemeOrder = upwindOrder;
 
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, false>;
