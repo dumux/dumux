@@ -281,7 +281,7 @@ public:
      */
     template<bool scalarPerm = std::is_same<typename Problem<porousMediumIdx>::SpatialParams::PermeabilityType, Scalar>::value,
              std::enable_if_t<scalarPerm, int> = 0>
-    Scalar darcyPermeability(const Element<freeFlowIdx>& element, const SubControlVolumeFace<freeFlowIdx>& scvf) const
+    auto darcyPermeability(const Element<freeFlowIdx>& element, const SubControlVolumeFace<freeFlowIdx>& scvf) const
     {
         const auto& stokesContext = couplingManager().stokesCouplingContext(element, scvf);
         const auto perm = stokesContext.permeability();
@@ -294,13 +294,12 @@ public:
      */
     template<bool scalarPerm = std::is_same<typename Problem<porousMediumIdx>::SpatialParams::PermeabilityType, Scalar>::value,
              std::enable_if_t<!scalarPerm, int> = 0>
-    Scalar darcyPermeability(const Element<freeFlowIdx>& element, const SubControlVolumeFace<freeFlowIdx>& scvf) const
+    auto darcyPermeability(const Element<freeFlowIdx>& element, const SubControlVolumeFace<freeFlowIdx>& scvf) const
     {
         const auto& stokesContext = couplingManager().stokesCouplingContext(element, scvf);
         const auto perm = stokesContext.permeability();
-        const auto dirIdx = 1 - scvf.directionIndex();
 
-        return perm[dirIdx][dirIdx];
+        return perm;
     }
 
     /*!
