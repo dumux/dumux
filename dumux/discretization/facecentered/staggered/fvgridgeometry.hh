@@ -249,6 +249,10 @@ public:
     const std::unordered_map<GridIndexType, GridIndexType>& periodicVertexMap() const
     { return periodicFaceMap_; }
 
+    //! Returns the global scv index given an element index a local scv index
+    GridIndexType globalScvIndex(GridIndexType eIdx, SmallLocalIndexType localScvIdx) const
+    { return numScvsPerElement*eIdx + localScvIdx; }
+
 private:
 
     void update_()
@@ -310,9 +314,6 @@ private:
             globalScvfIndices.resize(minNumScvfsPerElement);
             globalScvfIndices.reserve(maxNumScvfsPerElement);
 
-            auto getGlobalScvIdx = [&](const auto elementIdx, const auto localScvIdx)
-            { return numScvsPerElement*elementIdx + localScvIdx; };
-
             LocalIntersectionMapper localIsMapper;
             localIsMapper.update(this->gridView(), element);
 
@@ -322,7 +323,7 @@ private:
                 const auto localScvIdx = localIsMapper.realToRefIdx(intersection.indexInInside());
                 auto localScvfIdx = localScvIdx*(1 + numLateralScvfsPerScv);
 
-                const auto globalScvIdx = getGlobalScvIdx(eIdx, localScvIdx);
+                const auto globalScvIdx = globalScvIndex(eIdx, localScvIdx);
                 const auto dofIndex = intersectionMapper().globalIntersectionIndex(element, intersection.indexInInside());
                 const auto localOppositeScvIdx = geometryHelper.localOppositeIdx(localScvIdx);
                 const auto& intersectionGeometry = intersection.geometry();
@@ -371,7 +372,7 @@ private:
                 // the frontal sub control volume face at the element center
                 scvfs_.emplace_back(elementGeometry,
                     intersectionGeometry,
-                    std::array{globalScvIdx, getGlobalScvIdx(eIdx, localOppositeScvIdx)},
+                    std::array{globalScvIdx, globalScvIndex(eIdx, localOppositeScvIdx)},
                     localScvfIdx,
                     globalScvfIdx,
                     intersectionUnitOuterNormal,
@@ -397,7 +398,7 @@ private:
                             if (lateralIntersection.neighbor())
                             {
                                 const auto parallelElemIdx = this->elementMapper().index(lateralIntersection.outside());
-                                return getGlobalScvIdx(parallelElemIdx, localScvIdx);
+                                return globalScvIndex(parallelElemIdx, localScvIdx);
                             }
                             else if (onDomainBoundary_(lateralIntersection))
                                 return numScvs + outSideBoundaryVolVarIdx_++;
@@ -450,7 +451,7 @@ private:
                 if (onDomainBoundary_(intersection))
                 {
                     const auto localScvIdx = localIsMapper.realToRefIdx(intersection.indexInInside());
-                    const auto globalScvIdx = getGlobalScvIdx(eIdx, localScvIdx);
+                    const auto globalScvIdx = globalScvIndex(eIdx, localScvIdx);
                     ++numBoundaryScvf_;
 
                     // the frontal sub control volume face at the boundary
@@ -644,6 +645,10 @@ public:
     //! Returns the map between dofs across periodic boundaries // TODO rename to periodic dof map in fvassembler
     const std::unordered_map<GridIndexType, GridIndexType>& periodicVertexMap() const
     { return periodicFaceMap_; }
+
+    //! Returns the global scv index given an element index a local scv index
+    GridIndexType globalScvIndex(GridIndexType eIdx, SmallLocalIndexType localScvIdx) const
+    { return numScvsPerElement*eIdx + localScvIdx; }
 
 private:
 
