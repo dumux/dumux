@@ -22,8 +22,8 @@
  * \brief This file contains the data which is required to calculate
  *        dispersive fluxes.
  */
-#ifndef DUMUX_DISCRETIZATION_BOX_DISPERSION_HH
-#define DUMUX_DISCRETIZATION_BOX_DISPERSION_LAW_HH
+#ifndef DUMUX_DISCRETIZATION_BOX_DISPERSION_FLUX_HH
+#define DUMUX_DISCRETIZATION_BOX_DISPERSION_FLUX_HH
 
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
@@ -76,6 +76,7 @@ class OnePDispersionFluxImplementation<TypeTag, DiscretizationMethods::Box, refe
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
+    using HeatFluxScalar = Scalar;
 
     static constexpr bool stationaryVelocityField = FluxTraits::hasStationaryVelocityField();
 
@@ -101,7 +102,7 @@ public:
     {
         ComponentFluxVector componentFlux(0.0);
 
-        // evaluate gradX at integration point and interpolate density
+        // collect the dispersion tensor, the fluxVarsCache and the shape values
         const DimWorldMatrix dispersionTensor = VolumeVariables::DispersionTensorType::dispersionTensor(problem, scvf, fvGeometry,
                                                                                                        elemVolVars, elemFluxVarsCache);
 
@@ -132,6 +133,31 @@ public:
                 componentFlux[phaseIdx] -= componentFlux[compIdx];
         }
         return componentFlux;
+    }
+
+    /*!
+     * \brief Returns the thermal dispersive flux
+     *        across the given sub-control volume face.
+     */
+    static HeatFluxScalar thermalDispersionFlux(const Problem& problem,
+                                                const Element& element,
+                                                const FVElementGeometry& fvGeometry,
+                                                const ElementVolumeVariables& elemVolVars,
+                                                const SubControlVolumeFace& scvf,
+                                                const int phaseIdx,
+                                                const ElementFluxVariablesCache& elemFluxVarsCache)
+    {
+        // collect the dispersion tensor
+        const DimWorldMatrix dispersionTensor = VolumeVariables::DispersionTensorType::dispersionTensor(problem, scvf, fvGeometry,
+                                                                                                       elemVolVars, elemFluxVarsCache);
+        // compute the temperature gradient with the shape functions
+        const auto& fluxVarsCache = elemFluxVarsCache[scvf];
+        Dune::FieldVector<Scalar, GridView::dimensionworld> gradTemp(0.0);
+        for (auto&& scv : scvs(fvGeometry))
+            gradTemp.axpy(elemVolVars[scv].temperature(), fluxVarsCache.gradN(scv.indexInElement()));
+
+        // compute the heat conduction flux
+        return -1.0*vtmv(scvf.unitOuterNormal(), dispersionTensor, gradTemp)*Extrusion::area(scvf);
     }
 
 };

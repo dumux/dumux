@@ -233,8 +233,9 @@ public:
                 enableCompositionalDispersionMissing_<ModelTraits>();
         }
 
-        //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
+        //! Add diffusive and dispersive energy fluxes. For isothermal model the contribution is zero.
         EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
+        EnergyLocalResidual::heatDispersionFlux(flux, fluxVars);
 
         return flux;
     }

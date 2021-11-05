@@ -89,6 +89,9 @@ template<class TypeTag, class MyTypeTag>
 struct BalanceEqOpts { using type = UndefinedProperty; };          //!< A class that collects options for the evaluation of the balance equations
 template<class TypeTag, class MyTypeTag>
 struct EnableCompositionalDispersion { using type = UndefinedProperty; };        //!< Property whether to include compositional dispersion
+template<class TypeTag, class MyTypeTag>
+struct EnableThermalDispersion { using type = UndefinedProperty; };              //!< Property whether to include thermal dispersion
+
 /////////////////////////////////////////////
 // Properties used by finite volume schemes:
 /////////////////////////////////////////////

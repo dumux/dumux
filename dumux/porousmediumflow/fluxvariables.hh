@@ -70,6 +70,7 @@ public:
     static constexpr bool enableAdvection = ModelTraits::enableAdvection();
     static constexpr bool enableMolecularDiffusion = ModelTraits::enableMolecularDiffusion();
     static constexpr bool enableCompositionalDispersion = ModelTraits::enableCompositionalDispersion();
+    static constexpr bool enableThermalDispersion = ModelTraits::enableThermalDispersion();
     static constexpr bool enableEnergyBalance = ModelTraits::enableEnergyBalance();
     static constexpr bool enableThermalNonEquilibrium = getPropValue<TypeTag, Properties::EnableThermalNonEquilibrium>();
 
@@ -140,6 +141,23 @@ public:
                                                                    this->elemFluxVarsCache());
         else
             return Dune::FieldVector<Scalar, numComponents>(0.0);
+    }
+
+    /*!
+     * \brief Returns the thermal dispersion flux computed by the respective law.
+     */
+    Dune::FieldVector<Scalar, 1> thermalDispersionFlux([[maybe_unused]] const int phaseIdx = 0) const
+    {
+        if constexpr (enableThermalDispersion)
+            return DispersionFluxType::thermalDispersionFlux(this->problem(),
+                                                             this->element(),
+                                                             this->fvGeometry(),
+                                                             this->elemVolVars(),
+                                                             this->scvFace(),
+                                                             phaseIdx,
+                                                             this->elemFluxVarsCache());
+        else
+            return Dune::FieldVector<Scalar, 1>(0.0);
     }
 
     /*!

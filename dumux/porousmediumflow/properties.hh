@@ -79,6 +79,9 @@ struct MolecularDiffusionType<TypeTag, TTag::PorousMediumFlow> { using type = Fi
 template<class TypeTag>
 struct EnableCompositionalDispersion<TypeTag, TTag::PorousMediumFlow> { static constexpr bool value = false; };
 
+//! Per default, we do not include thermal dispersion effects
+template<class TypeTag>
+struct EnableThermalDispersion<TypeTag, TTag::PorousMediumFlow> { static constexpr bool value = false; };
 
 //! By default, we use a diffusive flux for the dispersive fluxes
 template<class TypeTag>
