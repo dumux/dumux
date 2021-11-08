@@ -37,6 +37,47 @@
 
 namespace Dumux {
 
+namespace Detail {
+
+template<class GG, int order>
+class UpwindInformation;
+
+template<class GG>
+class UpwindInformation<GG, 1> {};
+
+template<class GG>
+class UpwindInformation<GG, 2>
+{
+    using GridView = typename GG::GridView;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
+    using Map = Dune::ReservedVector<std::pair<GridIndexType, GridIndexType>, GG::StaticInformation::numScvsPerElement>;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+public:
+
+    void add(GridIndexType elementIndex, GridIndexType nextElementIndex)
+    { map_.push_back(std::make_pair(elementIndex, nextElementIndex)); }
+
+    void clear()
+    { map_.clear(); }
+
+    std::pair<bool, GridIndexType> maybeGetNextElementIndex(GridIndexType elementIndex) const
+    {
+        const auto it = std::find_if(map_.begin(), map_.end(), [&] (const auto& x) { return x.first == elementIndex; });
+        if (it != map_.end())
+            return std::make_pair(true, map_[std::distance(map_.begin(), it)].second);
+        else
+            return std::make_pair(false, 0);
+    }
+
+private:
+    Map map_;
+};
+
+
+
+} // end namespace Detail
+
 template<class GG, bool cachingEnabled>
 class FaceCenteredStaggeredFVElementGeometry;
 
@@ -163,7 +204,39 @@ public:
 
     //! Binding of an element, called by the local jacobian to prepare element assembly
     void bind(const Element& element) &
-    { this->bindElement(element); }
+    {
+        this->bindElement(element);
+
+        // if ...
+        {
+            upwindInformation_.clear();
+            for (const auto& intersection : intersections(gridGeometry().gridView(), element))
+            {
+                typename GG::LocalIntersectionMapper localIsMapper;
+                localIsMapper.update(gridGeometry().gridView(), element);
+                const auto localScvIdx = localIsMapper.realToRefIdx(intersection.indexInInside());
+
+                if (intersection.neighbor())
+                {
+                    const auto& neighborElement = intersection.outside();
+                    typename GG::LocalIntersectionMapper localNeighborIsMapper;
+                    localNeighborIsMapper.update(gridGeometry().gridView(), neighborElement);
+
+                    for (const auto& neighborIntersection: intersections(gridGeometry().gridView(), neighborElement))
+                    {
+                        const auto localNeighborScvIdx = localNeighborIsMapper.realToRefIdx(neighborIntersection.indexInInside());
+
+                        if (neighborIntersection.neighbor() && localScvIdx == localNeighborScvIdx)
+                        {
+                            const auto neighborElementIndex = gridGeometry().elementMapper().index(neighborElement);
+                            const auto secondNeighborElementIndex = gridGeometry().elementMapper().index(neighborIntersection.outside());
+                            upwindInformation_.add(neighborElementIndex, secondNeighborElementIndex);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     /*!
     * \brief bind the local view (r-value overload)
@@ -197,6 +270,71 @@ public:
     const Element& element() const
     { return *elementPtr_; }
 
+    //! Get the global indices of sub control volumes aligned in positive direction of the scvf's normal (needed for upwind schemes)
+    Dune::ReservedVector<GridIndexType, GridGeometry::upwindSchemeOrder> scvIndicesInNormalDirection(const SubControlVolumeFace& scvf) const
+    {
+        Dune::ReservedVector<GridIndexType, GridGeometry::upwindSchemeOrder> result;
+
+        if (scvf.isFrontal())
+        {
+            result.push_back(scvf.outsideScvIdx());
+            if constexpr (GridGeometry::upwindSchemeOrder == 1)
+                return result;
+
+            if (const auto& oppositeScv = scv(scvf.outsideScvIdx()); !oppositeScv.boundary())
+            {
+                const auto firstLateralScvfLocalIdx = 1 + oppositeScv.indexInElement()*(GG::StaticInformation::numLateralScvfsPerScv + 1);
+                const auto& firstLateralScvf = this->scvf(scvfIndices_()[firstLateralScvfLocalIdx]);
+                const auto forwardNeighborElementindex = this->scv(lateralOrthogonalScvf(firstLateralScvf).outsideScvIdx()).elementIndex();
+                result.push_back(gridGeometry().globalScvIndex(forwardNeighborElementindex, oppositeScv.indexInElement()));
+            }
+        }
+        else if (!scvf.boundary())
+        {
+            result.push_back(scvf.outsideScvIdx());
+            if constexpr (GridGeometry::upwindSchemeOrder == 1)
+                return result;
+
+            const auto& neighborScv = scv(scvf.outsideScvIdx());
+            const auto neighborElementIndex = neighborScv.elementIndex();
+
+            if (const auto info = upwindInformation_.maybeGetNextElementIndex(neighborElementIndex); info.first)
+                result.push_back(gridGeometry().globalScvIndex(info.second, neighborScv.indexInElement()));
+        }
+        return result;
+    }
+
+    //! Get the global indices of sub control volumes aligned in negative direction of the scvf's normal (needed for upwind schemes)
+    Dune::ReservedVector<GridIndexType, GridGeometry::upwindSchemeOrder> scvIndicesInOppositeNormalDirection(const SubControlVolumeFace& scvf) const
+    {
+        Dune::ReservedVector<GridIndexType, GridGeometry::upwindSchemeOrder> result;
+
+        const auto& scv = this->scv(scvf.insideScvIdx());
+        result.push_back(scv.index());
+        if constexpr (GridGeometry::upwindSchemeOrder == 1)
+            return result;
+
+        if (scvf.isFrontal() && !scv.boundary())
+        {
+            const auto firstLateralScvfLocalIdx = 1 + scv.indexInElement()*(GG::StaticInformation::numLateralScvfsPerScv + 1);
+            const auto& firstLateralScvf = this->scvf(scvfIndices_()[firstLateralScvfLocalIdx]);
+            const auto backwardNeighborElementindex = this->scv(lateralOrthogonalScvf(firstLateralScvf).outsideScvIdx()).elementIndex();
+            result.push_back(gridGeometry().globalScvIndex(backwardNeighborElementindex, scv.indexInElement()));
+        }
+        else if (scvf.isLateral())
+        {
+            const auto oppositeScvfIdx = GridGeometry::GeometryHelper::localLateralOppositeScvfIndex(scv.indexInElement(), scvf.localIndex());
+            const auto& oppositeScvf = this->scvf(scvfIndices_()[oppositeScvfIdx]);
+            if (!oppositeScvf.boundary())
+            {
+                const auto neighborElementIdx = this->scv(oppositeScvf.outsideScvIdx()).elementIndex();
+                result.push_back(gridGeometry().globalScvIndex(neighborElementIdx, scv.indexInElement()));
+            }
+        }
+
+        return result;
+    }
+
 private:
 
     const auto& scvfIndices_() const
@@ -207,6 +345,8 @@ private:
     const Element* elementPtr_;
     GridIndexType eIdx_;
     const GridGeometry* gridGeometry_;
+
+    Detail::UpwindInformation<GridGeometry, 2> upwindInformation_;
 };
 
 /*!
