@@ -62,7 +62,18 @@ public:
         return (ownLocalFaceIndex % 2) ? (ownLocalFaceIndex - 1) : (ownLocalFaceIndex + 1);
     }
 
-       //! Return the local index of a lateral orthogonal scvf
+    //! Returns the local index of the opposing lateral scvf.
+    static constexpr SmallLocalIndexType localLateralOppositeScvfIndex(const SmallLocalIndexType localScvIndex,
+                                                                       const SmallLocalIndexType localScvfIndex)
+    {
+        const auto offSet = localScvIndex % 2 ? 1 : -1;
+        if (localScvfIndex % 2)
+            return localScvfIndex - offSet;
+        else
+            return localScvfIndex + offSet;
+    }
+
+    //! Return the local index of a lateral orthogonal scvf
     static constexpr int lateralOrthogonalScvfLocalIndex(const SmallLocalIndexType ownLocalScvfIndex)
     {
         if constexpr(GridView::Grid::dimension == 1)
