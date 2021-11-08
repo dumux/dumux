@@ -144,9 +144,12 @@ public:
                         const auto ownLocalScvIdx = localIsMapper.realToRefIdx(intersection.indexInInside());
                         const auto ownGlobalScvIdx = gridGeometry.globalScvIndex(eIdx, ownLocalScvIdx);
                         const auto ownLocalOppositeScvIdx = geometryHelper.localOppositeIdx(ownLocalScvIdx);
+                        const auto ownGlobalOppositeScvIdx = gridGeometry.globalScvIndex(eIdx, ownLocalOppositeScvIdx);
                         const auto& neighborElement = intersection.outside();
                         const auto neighborElementIdx = gridGeometry.elementMapper().index(neighborElement);
-                        map_[ownGlobalScvIdx].push_back(gridGeometry.globalScvIndex(neighborElementIdx, ownLocalScvIdx));
+                        const auto outsideGlobalScvIdx = gridGeometry.globalScvIndex(neighborElementIdx, ownLocalScvIdx);
+                        map_[ownGlobalScvIdx].push_back(outsideGlobalScvIdx);
+                        map_[ownGlobalOppositeScvIdx].push_back(outsideGlobalScvIdx);
 
                         for (const auto& neighborIntersection : intersections(gridGeometry.gridView(), neighborElement))
                         {
@@ -164,10 +167,7 @@ public:
                                 for (const auto& secondNeighborIntersection : intersections(gridGeometry.gridView(), secondNeighborElement))
                                 {
                                     const auto localSecondNeighborScvIdx = localSecondNeighborIsMapper.realToRefIdx(secondNeighborIntersection.indexInInside());
-
-                                    if (localSecondNeighborScvIdx == ownLocalScvIdx)
-                                        map_[ownGlobalScvIdx].push_back(gridGeometry.globalScvIndex(secondNeighborElement, ownLocalScvIdx));
-                                    else if (localSecondNeighborScvIdx != ownLocalOppositeScvIdx)
+                                    if (localSecondNeighborScvIdx != ownLocalOppositeScvIdx && localSecondNeighborScvIdx != ownLocalScvIdx)
                                     {
                                         const auto otherGlobalScvIdxInOwnElement = gridGeometry.globalScvIndex(eIdx, localSecondNeighborScvIdx);
                                         const auto globalScvIdxInSecondNeighborElement = gridGeometry.globalScvIndex(secondNeighborElementIdx, localSecondNeighborScvIdx);
