@@ -583,7 +583,7 @@ private:
                             for (const auto& secondNeighborIntersection : intersections(gridGeometry().gridView(), secondNeighborElement))
                             {
                                 const auto localSecondNeighborScvIdx = localSecondNeighborIsMapper.realToRefIdx(secondNeighborIntersection.indexInInside());
-                                if (localSecondNeighborScvIdx != localOppositeScvIdx)
+                                if (localSecondNeighborScvIdx != localOppositeScvIdx && localSecondNeighborScvIdx != localScvIdx)
                                 {
                                     const auto dofIndex = gridGeometry().intersectionMapper().globalIntersectionIndex(secondNeighborElement, secondNeighborIntersection.indexInInside());
                                     const auto globalScvIndex = gridGeometry().globalScvIndex(secondNeighborElement, localSecondNeighborScvIdx);
