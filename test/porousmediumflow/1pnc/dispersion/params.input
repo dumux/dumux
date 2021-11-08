@@ -1,0 +1,24 @@
+[TimeLoop]
+DtInitial = 5 # [s]
+TEnd = 1e6# [s]
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 1
+Cells = 20 20
+
+[Problem]
+Name = default
+EnableGravity = true
+BoundaryConcentration = 0.04 # molfrac
+CounterFlowRate = 1e-4
+Pressure = 1e5
+AlphaL = 0.1 # longitual dispersivity
+AlphaT = 0.01 # transversal dispersivity
+DispersionTensor = 1e-7
+
+[Newton]
+UseLineSearch = true
+
+[Vtk]
+AddVelocity = 1 # enable velocity output
