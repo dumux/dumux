@@ -1,5 +1,4 @@
 add_subdirectory(dumux)
-add_subdirectory(dune)
 
 configure_file(setup.py.in setup.py)
 
@@ -14,7 +13,7 @@ endif()
 
 dune_python_install_package(
   PATH "."
-  CMAKE_METADATA_FILE dune/dumux/metadata.cmake
+  CMAKE_METADATA_FILE dumux/metadata.cmake
   DEPENDS _common
   CMAKE_METADATA_FLAGS DUNE_OPTS_FILE
 )

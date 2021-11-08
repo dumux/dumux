@@ -7,7 +7,7 @@ import os
 from dataclasses import dataclass
 from typing import List, Union
 from dune.common.hashit import hashIt
-import dune.dumux as metaInfo
+import dumux
 
 
 @dataclass
@@ -150,7 +150,7 @@ def listTypeTags():
 def propertiesHeaderPath():
     """Find the path to the properties.hh C++ header"""
 
-    path, _ = os.path.split(metaInfo.__file__)
+    path, _ = os.path.split(dumux.__file__)
     metaDataFile = os.path.join(path, "metadata.cmake")
     if os.path.exists(metaDataFile):
         data = {}

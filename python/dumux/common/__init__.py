@@ -8,7 +8,7 @@ from dune.common.hashit import hashIt
 
 from dumux.common.properties import Model, Property
 from dumux.wrapping import cppWrapperCreator, cppWrapperClassAlias
-from dumux.common._common import *
+from ._common import *
 
 
 @cppWrapperCreator
