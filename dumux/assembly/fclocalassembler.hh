@@ -471,31 +471,42 @@ public:
 
                         for (const auto& scvf : scvfs(fvGeometry, scv))
                         {
-                            if (scvf.processorBoundary())
-                                continue;
-
-                            if (scvf.outsideScvIdx() == scvJ.index())
-                            {
+                            // consider the fluxes over all scvfs for higher-order upwinding
+                            // because one deflected dof may affect multiple fluxes
+                            if constexpr (GridGeometry::upwindSchemeOrder == 2)
                                 evalFlux(residual, scvf);
-                                return residual;
-                            }
-
-                            // also consider lateral faces outside the own element for face-centered staggered schemes
-                            if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcstaggered)
+                            else
                             {
-                                if (scvf.isLateral())
+                                // calculate only one flux in case of first-order upwinding for improved efficiency
+                                if (scvf.processorBoundary())
+                                    continue;
+
+                                if (scvf.outsideScvIdx() == scvJ.index())
                                 {
-                                    if (const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
-                                        orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
+                                    evalFlux(residual, scvf);
+                                    return residual;
+                                }
+
+                                // also consider lateral faces outside the own element for face-centered staggered schemes
+                                if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcstaggered)
+                                {
+                                    if (scvf.isLateral())
                                     {
-                                        evalFlux(residual, scvf);
-                                        return residual;
+                                        if (const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
+                                            orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
+                                        {
+                                            evalFlux(residual, scvf);
+                                            return residual;
+                                        }
                                     }
                                 }
                             }
                         }
 
-                        DUNE_THROW(Dune::InvalidStateException, "No scvf found");
+                        if constexpr (GridGeometry::upwindSchemeOrder == 2)
+                            return residual;
+                        else
+                            DUNE_THROW(Dune::InvalidStateException, "No scvf found");
                     };
 
                     // get original flux from the neighbor
@@ -506,30 +517,42 @@ public:
 
                         for (const auto& scvf : scvfs(fvGeometry, scv))
                         {
-                            if (scvf.processorBoundary())
-                                continue;
-
-                            if (scvf.outsideScvIdx() == scvJ.index())
-                            {
+                            // consider the fluxes over all scvfs for higher-order upwinding
+                            // because one deflected dof may affect multiple fluxes
+                            if constexpr (GridGeometry::upwindSchemeOrder == 2)
                                 evalFlux(result, scvf);
-                                return result;
-                            }
-
-                            // also consider lateral faces outside the own element for face-centered staggered schemes
-                            if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcstaggered)
+                            else
                             {
-                                if (scvf.isLateral())
+                                // calculate only one flux in case of first-order upwinding for improved efficiency
+                                if (scvf.processorBoundary())
+                                    continue;
+
+                                if (scvf.outsideScvIdx() == scvJ.index())
                                 {
-                                    if (const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
-                                        orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
+                                    evalFlux(result, scvf);
+                                    return result;
+                                }
+
+                                // also consider lateral faces outside the own element for face-centered staggered schemes
+                                if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcstaggered)
+                                {
+                                    if (scvf.isLateral())
                                     {
-                                        evalFlux(result, scvf);
-                                        return result;
+                                        if (const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
+                                            orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
+                                        {
+                                            evalFlux(result, scvf);
+                                            return result;
+                                        }
                                     }
                                 }
                             }
                         }
-                        DUNE_THROW(Dune::InvalidStateException, "No scvf found");
+
+                        if constexpr (GridGeometry::upwindSchemeOrder == 2)
+                            return result;
+                        else
+                            DUNE_THROW(Dune::InvalidStateException, "No scvf found");
                     }();
 
                     // derive the residuals numerically
