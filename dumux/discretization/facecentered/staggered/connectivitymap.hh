@@ -135,7 +135,7 @@ public:
                 typename GridGeometry::LocalIntersectionMapper localIsMapper;
                 localIsMapper.update(gridGeometry.gridView(), element);
 
-                typename GridGeometry::GeometryHelper geometryHelper;
+                typename GridGeometry::GeometryHelper geometryHelper(gridGeometry.gridView());
                 for (const auto& intersection : intersections(gridGeometry.gridView(), element))
                 {
                     if (intersection.neighbor())
