@@ -339,6 +339,7 @@ public:
         assert(scvf.isFrontal());
 
         const auto& problem = this->problem();
+        const auto& fvGeometry = this->fvGeometry();
         const auto& elemVolVars = this->elemVolVars();
         const auto velocitySelf = elemVolVars[scvf.insideScvIdx()].velocity();
         const auto velocityOpposite = elemVolVars[scvf.outsideScvIdx()].velocity();
@@ -348,12 +349,45 @@ public:
         const Scalar density = this->problem().density(this->element(), this->fvGeometry(), scvf);
         const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
 
-        // TODO use higher order helper
-        static const auto upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
-        const Scalar transportedMomentum = selfIsUpstream ? (upwindWeight * velocitySelf + (1.0 - upwindWeight) * velocityOpposite) * density
-                                                          : (upwindWeight * velocityOpposite + (1.0 - upwindWeight) * velocitySelf) * density;
+        const auto& upwindMethod = this->elemFluxVarsCache().gridFluxVarsCache().upwindMethod();
 
-        return  transportingVelocity * transportedMomentum * scvf.directionSign() * Extrusion::area(scvf) * extrusionFactor_(elemVolVars, scvf);
+        const auto upstreamScvIndices = selfIsUpstream ? this->fvGeometry().scvIndicesInOppositeNormalDirection(scvf)
+                                                        : this->fvGeometry().scvIndicesInNormalDirection(scvf);
+        const auto downstreamScvIndices = selfIsUpstream ? this->fvGeometry().scvIndicesInNormalDirection(scvf)
+                                                        : this->fvGeometry().scvIndicesInOppositeNormalDirection(scvf);
+        if (upstreamScvIndices.size() == 1 || downstreamScvIndices.size() == 1) // TODO: is this correct?
+        {
+            const Scalar downstreamMomentum = elemVolVars[downstreamScvIndices[0]].velocity()*density;
+            const Scalar upstreamMomentum = elemVolVars[upstreamScvIndices[0]].velocity()*density;
+            return upwindMethod.upwind(downstreamMomentum, upstreamMomentum)
+                   * transportingVelocity * scvf.directionSign() * Extrusion::area(scvf) * extrusionFactor_(elemVolVars, scvf);
+        }
+        else
+        {
+            const auto getDistance = [&] (std::size_t scvIdx0, std::size_t scvIdx1)
+            {
+                const auto& scv0 = fvGeometry.scv(scvIdx0);
+                const auto& scv1 = fvGeometry.scv(scvIdx1);
+                return (scv0.dofPosition() - scv1.dofPosition()).two_norm();
+            };
+
+            // distances {upstream to downstream distance, up-upstream to upstream distance, downstream staggered cell size}
+            std::array<Scalar, 3> distances;
+            distances[0] = getDistance(upstreamScvIndices[0], downstreamScvIndices[0]);
+            distances[1] = getDistance(upstreamScvIndices[1], upstreamScvIndices[0]);
+            distances[2] = 0.5 * (distances[0] + getDistance(downstreamScvIndices[1], downstreamScvIndices[0]));
+
+            std::array<Scalar, 3> momenta; // down, up, up-up
+            momenta[0] = elemVolVars[downstreamScvIndices[0]].velocity()*density;
+            momenta[1] = elemVolVars[upstreamScvIndices[0]].velocity()*density;
+            momenta[1] = elemVolVars[upstreamScvIndices[1]].velocity()*density;
+
+            const auto& upwindMethod = this->elemFluxVarsCache().gridFluxVarsCache().upwindMethod();
+            return upwindMethod.tvd(momenta, distances, selfIsUpstream, upwindMethod.tvdApproach())
+                   * transportingVelocity * scvf.directionSign() * Extrusion::area(scvf) * extrusionFactor_(elemVolVars, scvf);
+
+            // TODO boundary handling, slip velocities
+        }
     }
 
     /*!
