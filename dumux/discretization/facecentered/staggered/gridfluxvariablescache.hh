@@ -24,9 +24,13 @@
 #ifndef DUMUX_DISCRETIZATION_FACECENTERED_STAGGERED_GRID_FLUXVARSCACHE_HH
 #define DUMUX_DISCRETIZATION_FACECENTERED_STAGGERED_GRID_FLUXVARSCACHE_HH
 
+
 // make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
+
+#include <dumux/common/typetraits/problem.hh>
 #include <dumux/discretization/facecentered/staggered/elementfluxvariablescache.hh>
+#include <dumux/freeflow/staggeredupwindmethods.hh>
 
 namespace Dumux {
 
@@ -43,6 +47,9 @@ struct FaceCenteredStaggeredDefaultGridFVCTraits
 
     template<class GridFluxVariablesCache, bool cachingEnabled>
     using LocalView = FaceCenteredStaggeredElementFluxVariablesCache<GridFluxVariablesCache, cachingEnabled>;
+
+    using UpwindMethod = StaggeredUpwindMethods<typename ProblemTraits<Problem>::GridGeometry::GridView::ctype,
+                                                ProblemTraits<Problem>::GridGeometry::upwindSchemeOrder>;
 };
 
 /*!
@@ -79,7 +86,10 @@ public:
     //! export the type of the local view
     using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
 
-    FaceCenteredStaggeredGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
+    FaceCenteredStaggeredGridFluxVariablesCache(const Problem& problem)
+    : problemPtr_(&problem)
+    , upwindMethod_(problem.paramGroup())
+    {}
 
     // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
     template<class GridGeometry, class GridVolumeVariables, class SolutionVector>
@@ -123,10 +133,14 @@ public:
     FluxVariablesCache& operator [](const SubControlVolumeFace& scvf)
     { return fluxVarsCache_[scvf.index()]; }
 
+    const typename Traits::UpwindMethod& upwindMethod() const
+    { return upwindMethod_; }
+
 private:
     // currently bound element
     const Problem* problemPtr_;
     std::vector<FluxVariablesCache> fluxVarsCache_;
+    typename Traits::UpwindMethod upwindMethod_;
 };
 
 /*!
@@ -162,6 +176,7 @@ public:
 
 private:
     const Problem* problemPtr_;
+    typename Traits::UpwindMethods upwindMethods_;
 };
 
 } // end namespace Dumux
