@@ -38,6 +38,9 @@
 #include <dumux/flux/fickslaw_fwd.hh>
 #include <dumux/flux/forchheimerslaw_fwd.hh>
 
+#include <dumux/multidomain/boundary/freeflowporousmedium/traits.hh>
+#include <dumux/multidomain/boundary/freeflowporousmedium/indexhelper.hh>
+
 namespace Dumux {
 
 /*!
@@ -75,122 +78,6 @@ struct FreeFlowPorousMediumCouplingOptions
             DUNE_THROW(Dune::IOError, "Unknown DiffusionCoefficientAveragingType");
     }
 
-};
-
-/*!
- * \ingroup FreeFlowPorousMediumCoupling
- * \brief This structs helps to check if the two sub models use the same fluidsystem.
- *        Specialization for the case of using an adapter only for the free-flow model.
- * \tparam FFFS The free-flow fluidsystem
- * \tparam PMFS The porous-medium flow fluidsystem
- */
-template<class FFFS, class PMFS>
-struct IsSameFluidSystem
-{
-    static_assert(FFFS::numPhases == 1, "Only single-phase fluidsystems may be used for free flow.");
-    static constexpr bool value = std::is_same<typename FFFS::MultiPhaseFluidSystem, PMFS>::value;
-};
-
-/*!
- * \ingroup FreeFlowPorousMediumCoupling
- * \brief This structs helps to check if the two sub models use the same fluidsystem.
- * \tparam FS The fluidsystem
- */
-template<class FS>
-struct IsSameFluidSystem<FS, FS>
-{
-    static_assert(FS::numPhases == 1, "Only single-phase fluidsystems may be used for free flow.");
-    static constexpr bool value = std::is_same<FS, FS>::value; // always true
-};
-
-/*!
- * \ingroup FreeFlowPorousMediumCoupling
- * \brief This structs indicates that Fick's law is not used for diffusion.
- * \tparam DiffLaw The diffusion law.
- */
-template<class DiffLaw>
-struct IsFicksLaw : public std::false_type {};
-
-/*!
- * \ingroup FreeFlowPorousMediumCoupling
- * \brief This structs indicates that Fick's law is used for diffusion.
- * \tparam DiffLaw The diffusion law.
- */
-template<class T>
-struct IsFicksLaw<Dumux::FicksLaw<T>> : public std::true_type {};
-
-/*!
- * \ingroup FreeFlowPorousMediumCoupling
- * \brief Helper struct to choose the correct index for phases and components. This is need if the porous-medium-flow model
-          features more fluid phases than the free-flow model.
- * \tparam stokesIdx The domain index of the free-flow model.
- * \tparam porousMediumIndex The domain index of the porous-medium-flow model.
- * \tparam FFFS The free-flow fluidsystem.
- * \tparam hasAdapter Specifies whether an adapter class for the fluidsystem is used.
- */
-template<std::size_t stokesIdx, std::size_t porousMediumIndex, class FFFS, bool hasAdapter>
-struct IndexHelper;
-
-/*!
- * \ingroup FreeFlowPorousMediumCoupling
- * \brief Helper struct to choose the correct index for phases and components. This is need if the porous-medium-flow model
-          features more fluid phases than the free-flow model. Specialization for the case that no adapter is used.
- * \tparam stokesIdx The domain index of the free-flow model.
- * \tparam porousMediumIndex The domain index of the porous-medium-flow model.
- * \tparam FFFS The free-flow fluidsystem.
- */
-template<std::size_t stokesIdx, std::size_t porousMediumIndex, class FFFS>
-struct IndexHelper<stokesIdx, porousMediumIndex, FFFS, false>
-{
-    /*!
-     * \brief No adapter is used, just return the input index.
-     */
-    template<std::size_t i>
-    static constexpr auto couplingPhaseIdx(Dune::index_constant<i>, int coupledPhaseIdx = 0)
-    { return coupledPhaseIdx; }
-
-    /*!
-     * \brief No adapter is used, just return the input index.
-     */
-    template<std::size_t i>
-    static constexpr auto couplingCompIdx(Dune::index_constant<i>, int coupledCompdIdx)
-    { return coupledCompdIdx; }
-};
-
-/*!
- * \ingroup FreeFlowPorousMediumCoupling
- * \brief Helper struct to choose the correct index for phases and components. This is need if the porous-medium-flow model
-          features more fluid phases than the free-flow model. Specialization for the case that a adapter is used.
- * \tparam stokesIdx The domain index of the free-flow model.
- * \tparam porousMediumIndex The domain index of the porous-medium-flow model.
- * \tparam FFFS The free-flow fluidsystem.
- */
-template<std::size_t stokesIdx, std::size_t porousMediumIndex, class FFFS>
-struct IndexHelper<stokesIdx, porousMediumIndex, FFFS, true>
-{
-    /*!
-     * \brief The free-flow model always uses phase index 0.
-     */
-    static constexpr int couplingPhaseIdx(Dune::index_constant<stokesIdx>, int coupledPhaseIdx = 0)
-    { return 0; }
-
-    /*!
-     * \brief The phase index of the porous-medium-flow model is given by the adapter fluidsytem (i.e., user input).
-     */
-    static constexpr auto couplingPhaseIdx(Dune::index_constant<porousMediumIndex>, int coupledPhaseIdx = 0)
-    { return FFFS::multiphaseFluidsystemPhaseIdx; }
-
-    /*!
-     * \brief The free-flow model does not need any change of the component index.
-     */
-    static constexpr auto couplingCompIdx(Dune::index_constant<stokesIdx>, int coupledCompdIdx)
-    { return coupledCompdIdx; }
-
-    /*!
-     * \brief The component index of the porous-medium-flow model is mapped by the adapter fluidsytem.
-     */
-    static constexpr auto couplingCompIdx(Dune::index_constant<porousMediumIndex>, int coupledCompdIdx)
-    { return FFFS::compIdx(coupledCompdIdx); }
 };
 
 template<class MDTraits, class CouplingManager, bool enableEnergyBalance, bool isCompositional>
@@ -244,14 +131,14 @@ private:
     using ForchheimersLaw = Dumux::ForchheimersLaw<SubDomainTypeTag<porousMediumIndex>>;
 
     static constexpr bool adapterUsed = ModelTraits<porousMediumIndex>::numFluidPhases() > 1;
-    using IndexHelper = Dumux::IndexHelper<freeFlowMassIndex, porousMediumIndex, FluidSystem<freeFlowMassIndex>, adapterUsed>;
+    using IndexHelper = FreeFlowPorousMediumCoupling::IndexHelper<freeFlowMassIndex, porousMediumIndex, FluidSystem<freeFlowMassIndex>, adapterUsed>;
 
     static constexpr int enableEnergyBalance = GetPropType<SubDomainTypeTag<freeFlowMassIndex>, Properties::ModelTraits>::enableEnergyBalance();
     static_assert(GetPropType<SubDomainTypeTag<porousMediumIndex>, Properties::ModelTraits>::enableEnergyBalance() == enableEnergyBalance,
                   "All submodels must both be either isothermal or non-isothermal");
 
-    static_assert(IsSameFluidSystem<FluidSystem<freeFlowMassIndex>,
-                                    FluidSystem<porousMediumIndex>>::value,
+    static_assert(FreeFlowPorousMediumCoupling::IsSameFluidSystem<FluidSystem<freeFlowMassIndex>,
+                  FluidSystem<porousMediumIndex>>::value,
                   "All submodels must use the same fluid system");
 
     using DiffusionCoefficientAveragingType = typename FreeFlowPorousMediumCouplingOptions::DiffusionCoefficientAveragingType;
@@ -268,8 +155,8 @@ public:
      * \brief Returns the corresponding component index needed for coupling.
      */
     template<std::size_t i>
-    static constexpr auto couplingCompIdx(Dune::index_constant<i> id, int coupledCompdIdx)
-    { return IndexHelper::couplingCompIdx(id, coupledCompdIdx); }
+    static constexpr auto couplingCompIdx(Dune::index_constant<i> id, int coupledCompIdx)
+    { return IndexHelper::couplingCompIdx(id, coupledCompIdx); }
 
     /*!
      * \brief Returns the intrinsic permeability of the coupled Darcy element.
