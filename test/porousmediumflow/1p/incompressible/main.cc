@@ -38,6 +38,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
+#include <dumux/common/initialize.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
@@ -82,8 +83,12 @@ int main(int argc, char** argv)
 
     using TypeTag = Properties::TTag::TYPETAG;
 
-    // initialize MPI, finalize is done automatically on exit
-    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
+    // initialize Dumux (parallel helpers)
+    // always call this before any other code
+    Dumux::initialize(argc, argv);
+
+    // get an instance of the MPI helper
+    const auto& mpiHelper = Dune::MPIHelper::instance();
 
     // print dumux start message
     if (mpiHelper.rank() == 0)
