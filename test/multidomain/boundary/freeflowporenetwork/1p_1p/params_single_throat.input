@@ -1,0 +1,40 @@
+[PNM.Grid]
+NumPores = 2
+LowerLeft = 0.0e-3 -1e-3
+UpperRight = 0.5e-3 0.0
+PoreInscribedRadius = 1e-4
+PoreGeometry = Sphere
+ThroatCrossSectionShape = TwoPlates
+
+[FreeFlow.Grid]
+LowerLeft = 0 0
+UpperRight = 1e-3 1e-3
+UpstreamCells0 = 5
+CellsPerThroat = 5
+DownstreamCells0 = 5
+Cells1 = 10
+
+[Problem]
+Name = test
+EnableGravity = false
+SingleThroat = true
+
+[FreeFlow.Problem]
+Name = ff
+PressureDifference = 1000
+EnableInertiaTerms = false
+
+[PNM.Problem]
+Name = pnm
+PressureBottom = 1
+
+[Vtk]
+OutputName = test
+AddVelocity = true
+
+[Component]
+LiquidDensity = 1e3
+LiquidKinematicViscosity = 1e-6
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-4
