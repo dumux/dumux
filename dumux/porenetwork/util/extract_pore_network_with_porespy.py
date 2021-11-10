@@ -9,85 +9,102 @@ Requires the PoreSpy (https://porespy.org/) and OpenPNM package (https://openpnm
 
 from argparse import ArgumentParser
 import numpy as np
-import openpnm as op
-import porespy as ps
-from porespy.tools import randomize_colors
-from loguru import logger
+import openpnm as op  # pylint: disable=import-error
+import porespy as ps  # pylint: disable=import-error
+from porespy.tools import randomize_colors  # pylint: disable=import-error
+from loguru import logger  # pylint: disable=import-error
 
 
 def printReadMessage(fileName, fileType, numVoxels):
-    dim = len(numVoxels)
+    """DOC ME!"""
+
+    dimension = len(numVoxels)
     print(
         "Reading",
-        str(dim) + "D",
+        str(dimension) + "D",
         fileType,
         "image file",
         fileName,
         "with",
         numVoxels,
-        "voxels" if dim == 3 else "pixels",
+        "voxels" if dimension == 3 else "pixels",
     )
 
 
 def openRawFile(fileName, numVoxels):
+    """DOC ME!"""
+
     assert len(numVoxels) == 2 or len(numVoxels) == 3
-    im = np.fromfile(fileName, dtype="uint8", sep="").reshape(numVoxels)
-    im = np.array(im, dtype=bool)
-    dim = len(im.shape)
-    printReadMessage(fileName, "raw", im.shape)
-    if dim == 3:
-        im = np.swapaxes(im, 0, 2)
-    return im
+    image = np.fromfile(fileName, dtype="uint8", sep="").reshape(numVoxels)
+    image = np.array(image, dtype=bool)
+    dimension = len(image.shape)
+    printReadMessage(fileName, "raw", image.shape)
+    if dimension == 3:
+        image = np.swapaxes(image, 0, 2)
+    return image
 
 
 def openNrrdFile(fileName):
-    import nrrd
+    """DOC ME!"""
 
-    im, header = nrrd.read(fileName)
-    im = np.array(im, dtype=bool)
-    printReadMessage(fileName, "nrrd", im.shape)
-    return im
+    import nrrd  # pylint: disable=import-outside-toplevel,import-error
+
+    image, _ = nrrd.read(fileName)
+    image = np.array(image, dtype=bool)
+    printReadMessage(fileName, "nrrd", image.shape)
+    return image
 
 
 def openPngFile(fileName):
-    import matplotlib.pyplot as plt
+    """DOC ME!"""
 
-    im = plt.imread(fileName)
-    im = np.array(im, dtype=bool)
-    printReadMessage(fileName, "png", im.shape)
-    return im
+    import matplotlib.pyplot as plt  # pylint: disable=import-outside-toplevel,import-error
+
+    image = plt.imread(fileName)
+    image = np.array(image, dtype=bool)
+    printReadMessage(fileName, "png", image.shape)
+    return image
 
 
 def openFile(fileName, numVoxels):
+    """Opens the image with fileName detecting the file type from extension"""
+
     if fileName.endswith(".raw"):
         return openRawFile(fileName, numVoxels)
-    elif fileName.endswith(".nrrd"):
+    if fileName.endswith(".nrrd"):
         if len(numVoxels) > 0:
             logger.warning("Argument numVoxels ignored for nrrd files")
         return openNrrdFile(fileName)
-    elif fileName.endswith(".png"):
+    if fileName.endswith(".png"):
         if len(numVoxels) > 0:
             logger.warning("Argument numVoxels ignored for png files")
         return openPngFile(fileName)
-    else:
-        raise NotImplementedError(fileName + "not supported")
+
+    raise NotImplementedError(fileName + "not supported")
 
 
-def extrude2D(im, layers, topAndBottomValues):
-    if not len(im.shape) == 2:
+def extrude2D(image, layers, topAndBottomValues):
+    """DOC ME!"""
+
+    if not len(image.shape) == 2:
         raise IOError("Extrusion only works for 2D images")
     if not len(topAndBottomValues) == 2:
         raise IOError("topAndBottomValues can only have two entries")
-    im = np.tile(np.atleast_3d(im), reps=[1, 1, layers])
-    im[..., 0:1] = topAndBottomValues[0]
-    im[..., -1:] = topAndBottomValues[1]
+    image = np.tile(np.atleast_3d(image), reps=[1, 1, layers])
+    image[..., 0:1] = topAndBottomValues[0]
+    image[..., -1:] = topAndBottomValues[1]
     print("Extruding image to 3D.")
-    return im
+    return image
 
 
-def runSnow(im, resolution, sigma, rMax, boundaryWidth, useMarchingCubes):
+def runSnow(
+    image, resolution, sigma, rMax, boundaryWidth, useMarchingCubes
+):  # pylint: disable=too-many-arguments
+    """DOC ME!"""
+
+    # pylint: disable=no-member
     return ps.networks.snow2(
-        im,
+        image,
         voxel_size=resolution,
         sigma=sigma,
         r_max=rMax,
@@ -96,9 +113,14 @@ def runSnow(im, resolution, sigma, rMax, boundaryWidth, useMarchingCubes):
     )
 
 
-def runDualSnow(im, resolution, sigma, rMax, boundaryWidth, useMarchingCubes):
+def runDualSnow(
+    image, resolution, sigma, rMax, boundaryWidth, useMarchingCubes
+):  # pylint: disable=too-many-arguments
+    """DOC ME!"""
+
+    # pylint: disable=no-member
     return ps.networks.snow2(
-        im + 1,
+        image + 1,
         voxel_size=resolution,
         sigma=sigma,
         r_max=rMax,
@@ -109,8 +131,10 @@ def runDualSnow(im, resolution, sigma, rMax, boundaryWidth, useMarchingCubes):
 
 
 def writeSegmentationInfoFile(snowOutput, fileName, resolution):
-    dim = len(snowOutput.phases.shape)
-    if dim == 2:
+    """DOC ME!"""
+
+    dimension = len(snowOutput.phases.shape)
+    if dimension == 2:
         ps.io.to_vtk(
             np.array(randomize_colors(snowOutput.regions), dtype=int)[:, :, np.newaxis],
             fileName,
@@ -133,7 +157,7 @@ def extractNetwork(
     boundaryWidth=3,
     dualSnow=False,
     useMarchingCubes=False,
-):
+):  # pylint: disable=too-many-arguments
     """
     Extracts a porenetwork from an image file and exports
     it as VTK Polydata file (*.vtp) and OpenPNM network file (*.pnm).
@@ -142,11 +166,11 @@ def extractNetwork(
     to the Dune grid file format (*.dgf) that can be read by DuMux.
     """
 
-    print("Porosity is", ps.metrics.porosity(im))
+    print("Porosity is", ps.metrics.porosity(image))
 
     if not dualSnow:
         snowOutput = runSnow(
-            im=im,
+            image=image,
             resolution=resolution,
             sigma=sigma,
             rMax=rMax,
@@ -155,7 +179,7 @@ def extractNetwork(
         )
     else:
         snowOutput = runDualSnow(
-            im=im,
+            image=image,
             resolution=resolution,
             sigma=sigma,
             rMax=rMax,
@@ -167,22 +191,22 @@ def extractNetwork(
     writeSegmentationInfoFile(snowOutput, outputName + "_segmentation", resolution)
 
     # use PoreSpy to sanitize some parameters (might become obsolete as some point)
-    pn, geo = op.io.PoreSpy.import_data(snowOutput.network)
+    porenetwork, _ = op.io.PoreSpy.import_data(snowOutput.network)
 
     # trimming pore network to avoid singularity
-    print("Number of pores before trimming: ", pn.Np)
-    h = pn.check_network_health()
-    op.topotools.trim(network=pn, pores=h["trim_pores"])
-    print("Number of pores after trimming: ", pn.Np)
+    print("Number of pores before trimming: ", porenetwork.Np)
+    health = porenetwork.check_network_health()
+    op.topotools.trim(network=porenetwork, pores=health["trim_pores"])
+    print("Number of pores after trimming: ", porenetwork.Np)
 
     filename = outputName + ("_dual" if dualSnow else "")
 
     # export to vtk
-    op.io.VTK.save(network=pn, filename=filename)
+    op.io.VTK.save(network=porenetwork, filename=filename)
     print("Writing", filename + ".vtp")
 
     # export network for OpenPNM
-    pn.project.save_project(filename)
+    porenetwork.project.save_project(filename)
     print("Writing", filename + ".pnm")
 
 
@@ -230,43 +254,36 @@ if __name__ == "__main__":
         help="The number of pixels/voxels in each direction",
         default=[],
     )
-    parser.add_argument(
-        "-n", "--outputName", type=str, help="The output file name", default=""
-    )
+    parser.add_argument("-n", "--outputName", type=str, help="The output file name", default="")
     parser.add_argument(
         "-m",
         "--marchingCubesArea",
         action="store_true",
         help="Use marching cubes alg. to calculate throat area",
     )
-    parser.add_argument(
-        "-d", "--dualSnow", action="store_true", help="Extract dual network"
-    )
-    parser.add_argument(
-        "-i", "--invert", action="store_true", help="Invert the image data"
-    )
+    parser.add_argument("-d", "--dualSnow", action="store_true", help="Extract dual network")
+    parser.add_argument("-i", "--invert", action="store_true", help="Invert the image data")
     args = vars(parser.parse_args())
 
-    im = openFile(args["file"], args["numVoxels"])
-    dim = len(im.shape)
+    imageData = openFile(args["file"], args["numVoxels"])
 
     if not args["outputName"]:
-        # poreSpy has issues with dots in file names. Replace with underscores here and strip file suffix.
+        # poreSpy has issues with dots in file names
+        # Replace with underscores here and strip file suffix.
         args["outputName"] = ("_").join((args["file"]).split(".")[0:-1])
 
     if len(args["boundaryWidth"]) == 0:
         args["boundaryWidth"] = 3
 
     if args["extrusionLayers"] > 0:
-        im = extrude2D(im, args["extrusionLayers"], args["topAndBottomValues"])
-        dim = 3
+        imageData = extrude2D(imageData, args["extrusionLayers"], args["topAndBottomValues"])
 
     if args["invert"]:
         print("Inverting data")
-        im = ~im
+        imageData = ~imageData
 
     extractNetwork(
-        im,
+        imageData,
         args["resolution"],
         outputName=args["outputName"],
         sigma=args["sigma"],

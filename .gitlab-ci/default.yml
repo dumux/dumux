@@ -46,6 +46,7 @@ black (python):
     - black --check --verbose -- python
     - black --check --verbose -- test/python
     - black --check --verbose -- bin
+    - black --check --verbose -- dumux/porenetwork/util
 
 
 pylint-flake8 (python):
@@ -61,10 +62,12 @@ pylint-flake8 (python):
       if [ -d build-cmake/python/dumux ] ; then
         source bin/testing/ci-setup-python-env.sh
         pylint --rcfile=.pylintrc build-cmake/python/dumux
-        pylint --rcfile=.pylintrc bin
         flake8 build-cmake/python/dumux
-        flake8 bin
       fi
+      pylint --rcfile=.pylintrc bin
+      pylint --rcfile=.pylintrc dumux/porenetwork/util/*.py
+      flake8 bin
+      flake8 dumux/porenetwork/util
   needs:
     - job: configure
       artifacts: true
