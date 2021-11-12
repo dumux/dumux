@@ -155,16 +155,7 @@ struct NavierStokesMomentumBoundaryFluxHelper
                 if (scv.boundary())
                 {
                     const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity();
-                    const auto outerVelocity = [&]
-                    {
-                        if (scvf.boundary())
-                        {
-                            assert(problem.boundaryTypes(element, scvf).isDirichlet(scv.dofAxis()));
-                            return problem.dirichlet(element, scvf)[scv.dofAxis()];
-                        }
-                        else
-                            return elemVolVars[scvf.outsideScvIdx()].velocity();
-                    }();
+                    const auto outerVelocity = elemVolVars[scvf.outsideScvIdx()].velocity();
 
                     const auto rho = problem.insideAndOutsideDensity(element, fvGeometry, scvf);
                     const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
