@@ -147,7 +147,7 @@ public:
     }
 
     //! Returns an element's facet based on the local facet index.
-    Facet facet(const SmallLocalIndexType localFacetIdx, const Element& element) const
+    static Facet facet(const SmallLocalIndexType localFacetIdx, const Element& element)
     {
         return element.template subEntity <1> (localFacetIdx);
     }
