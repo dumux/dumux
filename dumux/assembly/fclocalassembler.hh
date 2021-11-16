@@ -161,7 +161,6 @@ public:
 
             jac[scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
 
-
             // if a periodic dof has Dirichlet values also apply the same Dirichlet values to the other dof TODO periodic
             // if (this->assembler().gridGeometry().dofOnPeriodicBoundary(scvI.dofIndex()))
             // {
@@ -216,7 +215,7 @@ public:
                                    const auto eqIdx,
                                    const auto pvIdx)
         {
-            res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
+            res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[eqIdx] - dirichletValues[pvIdx];
         };
 
         this->asImp_().enforceDirichletConstraints(applyDirichlet);
@@ -252,16 +251,15 @@ public:
                     if (bcTypes.hasDirichlet())
                     {
                         const auto& scv = this->fvGeometry().scv(scvf.insideScvIdx());
-                        const PrimaryVariables dirichletValues(this->asImp_().problem().dirichlet(this->element(), scvf)[scv.dofAxis()]); // TODO
+                        const auto dirichletValues = this->asImp_().problem().dirichlet(this->element(), scvf);
 
                         // set the Dirichlet conditions in residual and jacobian
                         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
                         {
-                            if (bcTypes.isDirichlet(eqIdx))
+                            for (int pvIdx = 0; pvIdx < GridView::dimension; ++pvIdx)
                             {
-                                const auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
-                                assert(0 <= pvIdx && pvIdx < numEq);
-                                applyDirichlet(scv, dirichletValues, eqIdx, pvIdx);
+                                if (bcTypes.isDirichlet(pvIdx) && pvIdx == scv.dofAxis()) // TODO?
+                                    applyDirichlet(scv, dirichletValues, eqIdx, pvIdx);
                             }
                         }
                     }
@@ -356,60 +354,55 @@ public:
         //                                                                                              //
         //////////////////////////////////////////////////////////////////////////////////////////////////
 
-        // create the element solution
-        auto elemSol = elementSolution(element, curSol, fvGeometry.gridGeometry());
-
         // one residual per element facet
         const auto numElementResiduals = element.subEntities(1);
 
         // create the vector storing the partial derivatives
         ElementResidualVector partialDerivs(numElementResiduals);
 
-        // calculation of the derivatives
-        for (auto&& scv : scvs(fvGeometry))
+        const auto evalSource = [&](ElementResidualVector& residual, const SubControlVolume& scv)
         {
-            // dof index and corresponding actual pri vars
-            const auto dofIdx = scv.dofIndex();
-            auto& curVolVars = this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv);
-            const VolumeVariables origVolVars(curVolVars);
+            this->localResidual().evalSource(residual, problem, element, fvGeometry, curElemVolVars, scv);
+        };
 
-            auto evalSource = [&](ElementResidualVector& residual, const SubControlVolume& scv)
-            {
-                this->localResidual().evalSource(residual, problem, element, fvGeometry, curElemVolVars, scv);
-            };
+        const auto evalStorage = [&](ElementResidualVector& residual, const SubControlVolume& scv)
+        {
+            this->localResidual().evalStorage(residual, problem, element, fvGeometry, this->prevElemVolVars(), curElemVolVars, scv);
+        };
 
-            auto evalStorage = [&](ElementResidualVector& residual, const SubControlVolume& scv)
-            {
-                this->localResidual().evalStorage(residual, problem, element, fvGeometry, this->prevElemVolVars(), curElemVolVars, scv);
-            };
+        const auto evalFlux = [&](ElementResidualVector& residual, const SubControlVolumeFace& scvf)
+        {
+            if (!scvf.processorBoundary())
+                this->localResidual().evalFlux(residual, problem, element, fvGeometry, curElemVolVars, this->elemBcTypes(), this->elemFluxVarsCache(), scvf);
+        };
 
-            auto evalFlux = [&](ElementResidualVector& residual, const SubControlVolumeFace& scvf)
-            {
-                if (!scvf.processorBoundary())
-                    this->localResidual().evalFlux(residual, problem, element, fvGeometry, curElemVolVars, this->elemBcTypes(), this->elemFluxVarsCache(), scvf);
-            };
-
+        const auto evalDerivative = [&] (const auto& scvI, const auto& scvJ)
+        {
             // derivative w.r.t. own DOF
             for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
             {
                 partialDerivs = 0.0;
+                const auto& otherElement = fvGeometry.gridGeometry().element(scvJ.elementIndex());
+                auto otherElemSol = elementSolution(otherElement, curSol, fvGeometry.gridGeometry()); // TODO allow selective creation of elemsol (for one scv)
+                auto& curOtherVolVars = this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvJ);
+                const VolumeVariables origOtherVolVars(curOtherVolVars);
 
                 auto evalResiduals = [&](Scalar priVar)
                 {
                     // update the volume variables and compute element residual
-                    elemSol[scv.localDofIndex()][pvIdx] = priVar;
-                    curVolVars.update(elemSol, problem, element, scv);
-                    this->asImp_().maybeUpdateCouplingContext(scv, elemSol, pvIdx);
+                    otherElemSol[scvJ.localDofIndex()][pvIdx] = priVar;
+                    curOtherVolVars.update(otherElemSol, problem, otherElement, scvJ);
+                    this->asImp_().maybeUpdateCouplingContext(scvJ, otherElemSol, pvIdx);
 
                     ElementResidualVector residual(numElementResiduals);
                     residual = 0;
 
-                    evalSource(residual, scv);
+                    evalSource(residual, scvI);
 
                     if (!this->assembler().isStationaryProblem())
-                        evalStorage(residual, scv);
+                        evalStorage(residual, scvI);
 
-                    for (const auto& scvf : scvfs(fvGeometry, scv))
+                    for (const auto& scvf : scvfs(fvGeometry, scvI))
                         evalFlux(residual, scvf);
 
                     return residual;
@@ -418,185 +411,91 @@ public:
                 // derive the residuals numerically
                 static const NumericEpsilon<Scalar, numEq> eps_{this->asImp_().problem().paramGroup()};
                 static const int numDiffMethod = getParamFromGroup<int>(this->asImp_().problem().paramGroup(), "Assembly.NumericDifferenceMethod");
-                NumericDifferentiation::partialDerivative(evalResiduals, elemSol[scv.localDofIndex()][pvIdx], partialDerivs, origResiduals,
-                                                          eps_(elemSol[scv.localDofIndex()][pvIdx], pvIdx), numDiffMethod);
+                NumericDifferentiation::partialDerivative(evalResiduals, otherElemSol[scvJ.localDofIndex()][pvIdx], partialDerivs, origResiduals,
+                                                        eps_(otherElemSol[scvJ.localDofIndex()][pvIdx], pvIdx), numDiffMethod);
 
-
-                for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+                const auto updateJacobian = [&]()
                 {
-                    // A[i][col][eqIdx][pvIdx] is the rate of change of
-                    // the residual of equation 'eqIdx' at dof 'i'
-                    // depending on the primary variable 'pvIdx' at dof
-                    // 'col'.
-                    A[dofIdx][dofIdx][eqIdx][pvIdx] += partialDerivs[scv.localDofIndex()][eqIdx];
-                }
-
-                // restore the original state of the scv's volume variables
-                curVolVars = origVolVars;
-
-                // restore the original element solution
-                elemSol[scv.localDofIndex()][pvIdx] = curSol[scv.dofIndex()][pvIdx];
-                this->asImp_().maybeUpdateCouplingContext(scv, elemSol, pvIdx);
-                // TODO additional dof dependencies
-
-            }
-
-            // derivative w.r.t. other DOFs
-            const auto& otherScvIndices = fvGeometry.gridGeometry().connectivityMap()[scv.index()];
-            for (const auto globalJ : otherScvIndices)
-            {
-                ElementResidualVector partialDerivsFluxOnly(numElementResiduals);
-                partialDerivsFluxOnly = 0;
-
-                const auto scvJ = fvGeometry.scv(globalJ);
-                auto& curOtherVolVars = this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvJ);
-                const VolumeVariables origOtherVolVars(curOtherVolVars);
-
-                const auto& otherElement = fvGeometry.gridGeometry().element(scvJ.elementIndex());
-                auto otherElemSol = elementSolution(otherElement, curSol, fvGeometry.gridGeometry()); // TODO allow selective creation of elemsol (for one scv)
-
-                for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
-                {
-                    partialDerivsFluxOnly = 0.0;
-
-                    auto evalResiduals = [&](Scalar priVar)
-                    {
-                        // update the volume variables and compute element residual
-                        otherElemSol[scvJ.localDofIndex()][pvIdx] = priVar;
-                        curOtherVolVars.update(otherElemSol, problem, otherElement, scvJ);
-                        this->asImp_().maybeUpdateCouplingContext(scvJ, otherElemSol, pvIdx);
-
-                        ElementResidualVector residual(numElementResiduals);
-                        residual = 0;
-
-                        for (const auto& scvf : scvfs(fvGeometry, scv))
-                        {
-                            if (scvf.processorBoundary())
-                                continue;
-
-                            if (scvf.outsideScvIdx() == scvJ.index())
-                            {
-                                evalFlux(residual, scvf);
-                                return residual;
-                            }
-
-                            // also consider lateral faces outside the own element for face-centered staggered schemes
-                            if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcstaggered)
-                            {
-                                if (scvf.isLateral())
-                                {
-                                    if (const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
-                                        orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
-                                    {
-                                        evalFlux(residual, scvf);
-                                        return residual;
-                                    }
-                                }
-                            }
-                        }
-
-                        DUNE_THROW(Dune::InvalidStateException, "No scvf found");
-                    };
-
-                    // get original flux from the neighbor
-                    const auto origFluxResidual = [&]()
-                    {
-                        ElementResidualVector result(numElementResiduals);
-                        result = 0;
-
-                        for (const auto& scvf : scvfs(fvGeometry, scv))
-                        {
-                            if (scvf.processorBoundary())
-                                continue;
-
-                            if (scvf.outsideScvIdx() == scvJ.index())
-                            {
-                                evalFlux(result, scvf);
-                                return result;
-                            }
-
-                            // also consider lateral faces outside the own element for face-centered staggered schemes
-                            if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcstaggered)
-                            {
-                                if (scvf.isLateral())
-                                {
-                                    if (const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
-                                        orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
-                                    {
-                                        evalFlux(result, scvf);
-                                        return result;
-                                    }
-                                }
-                            }
-                        }
-                        DUNE_THROW(Dune::InvalidStateException, "No scvf found");
-                    }();
-
-                    // derive the residuals numerically
-                    static const NumericEpsilon<Scalar, numEq> eps_{problem.paramGroup()};
-                    static const int numDiffMethod = getParamFromGroup<int>(problem.paramGroup(), "Assembly.NumericDifferenceMethod");
-                    NumericDifferentiation::partialDerivative(evalResiduals, otherElemSol[scvJ.localDofIndex()][pvIdx], partialDerivsFluxOnly, origFluxResidual,
-                                                            eps_(otherElemSol[scvJ.localDofIndex()][pvIdx], pvIdx), numDiffMethod);
-
                     for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
                     {
                         // A[i][col][eqIdx][pvIdx] is the rate of change of
                         // the residual of equation 'eqIdx' at dof 'i'
                         // depending on the primary variable 'pvIdx' at dof
                         // 'col'.
-                        if (element.partitionType() == Dune::InteriorEntity)
-                            A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
-                        else
-                        {
-                            const auto& facetI = element.template subEntity <1> (scv.indexInElement());
-                            const auto& facetJ = element.template subEntity <1> (scvJ.indexInElement());
-                            // add contribution of opposite scv lying within the overlap zone TODO this only works for overlap=1 --> make more robust
-                            if (facetI.partitionType() == Dune::BorderEntity && facetJ.partitionType() == Dune::FrontEntity)
-                                A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
-                        }
+                        A[scvI.dofIndex()][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivs[scvI.localDofIndex()][eqIdx];
+                    }
+                };
 
-                        // also consider lateral faces outside the own element for face-centered staggered schemes
-                        if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcstaggered)
+                using GeometryHelper = typename std::decay_t<decltype(fvGeometry.gridGeometry())>::GeometryHelper;
+                using LocalIntersectionMapper = typename std::decay_t<decltype(fvGeometry.gridGeometry())>::LocalIntersectionMapper;
+                LocalIntersectionMapper localIsMapper;
+
+                const bool isParallel = fvGeometry.gridGeometry().gridView().comm().size() > 1;
+                if (isParallel)
+                    localIsMapper.update(fvGeometry.gridGeometry().gridView(), element);
+
+                if (element.partitionType() == Dune::InteriorEntity)
+                    updateJacobian();
+                else
+                {
+                    const auto localIdxI = scvI.indexInElement();
+                    const auto localIdxJ = scvJ.indexInElement();
+
+                    const auto& facetI = GeometryHelper::facet(localIsMapper.refToRealIdx(localIdxI), element);
+                    // add contribution of opposite scv lying within the overlap/ghost zone
+                    if (facetI.partitionType() == Dune::BorderEntity &&
+                        (localIdxJ == GeometryHelper::localOppositeIdx(localIdxI) || scvJ.dofIndex() == scvI.dofIndex()))
+                        updateJacobian();
+                }
+
+                if (isParallel && element.partitionType() == Dune::InteriorEntity)
+                {
+                    const auto localIdxI = scvI.indexInElement();
+                    const auto& facetI = GeometryHelper::facet(localIsMapper.refToRealIdx(localIdxI), element);
+                    if (facetI.partitionType() == Dune::BorderEntity)
+                    {
+                        for (const auto& scvf : scvfs(fvGeometry, scvI))
                         {
-                            // treat normal/parallel scvs for parallel runs TODO description, put in function
-                            if (problem.gridGeometry().gridView().comm().size() > 1 && element.partitionType() == Dune::InteriorEntity)
+                            if (scvf.isFrontal() || scvf.boundary())
+                                continue;
+
+                            // parallel scvs TODO drawing
+                            if (scvf.outsideScvIdx() == scvJ.index())
+                                updateJacobian();
+                            else
                             {
-                                const auto& myfacet = element.template subEntity <1> (scv.indexInElement());
-                                if (myfacet.partitionType() == Dune::BorderEntity) // TODO
-                                {
-                                    for (const auto& scvf : scvfs(fvGeometry, scv))
-                                    {
-                                        if (scvf.isFrontal() || scvf.boundary())
-                                            continue;
+                                // normal scvs
+                                const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
+                                if (orthogonalScvf.boundary())
+                                    continue;
 
-                                        // parallel scvs TODO drawing
-                                        if (scvf.outsideScvIdx() == scvJ.index())
-                                            A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
-                                        else
-                                        {
-                                            // normal scvs
-                                            const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
-                                            if (orthogonalScvf.boundary())
-                                                continue;
-
-                                            if (orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
-                                                A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
-                                        }
-                                    }
-                                }
+                                if (orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
+                                    updateJacobian();
                             }
                         }
                     }
-
-                    // restore the original state of the scv's volume variables
-                    curOtherVolVars = origOtherVolVars;
-
-                    // restore the original element solution
-                    otherElemSol[scvJ.localDofIndex()][pvIdx] = curSol[scvJ.dofIndex()][pvIdx];
-                    this->asImp_().maybeUpdateCouplingContext(scvJ, otherElemSol, pvIdx);
-                    // TODO additional dof dependencies
                 }
+
+                // restore the original state of the scv's volume variables
+                curOtherVolVars = origOtherVolVars;
+
+                // restore the original element solution
+                otherElemSol[scvJ.localDofIndex()][pvIdx] = curSol[scvJ.dofIndex()][pvIdx];
+                this->asImp_().maybeUpdateCouplingContext(scvJ, otherElemSol, pvIdx);
+                // TODO additional dof dependencies
             }
+        };
+
+        // calculation of the derivatives
+        for (const auto& scvI : scvs(fvGeometry))
+        {
+            // derivative w.r.t. own DOFs
+            evalDerivative(scvI, scvI);
+
+            // derivative w.r.t. other DOFs
+            const auto& otherScvIndices = fvGeometry.gridGeometry().connectivityMap()[scvI.index()];
+            for (const auto globalJ : otherScvIndices)
+                evalDerivative(scvI, fvGeometry.scv(globalJ));
         }
 
         // evaluate additional derivatives that might arise from the coupling
@@ -604,7 +503,6 @@ public:
 
         return origResiduals;
     }
-
 };
 
 
