@@ -135,7 +135,9 @@ public:
                                               const FluxVariablesCache& fluxVarsCache,
                                               const int phaseIdx)
     {
-        const auto shapeFactor = fluxVarsCache.throatShapeFactor();
+        assert(fluxVarsCache.throatCrossSectionShape() != Throat::Shape::twoPlates && "TwoPlates not supported. Use TransmissibilityBruus instead!");
+
+        const Scalar shapeFactor = fluxVarsCache.throatShapeFactor();
         const Scalar area = fluxVarsCache.throatCrossSectionalArea();
         const Scalar throatLength = fluxVarsCache.throatLength();
         const Scalar throatTransmissibility = singlePhaseTransmissibility(shapeFactor, throatLength, area);
@@ -158,11 +160,11 @@ public:
             const Scalar poreLength0 = spatialParams.poreLength(element, scv0, elemSol);
             const Scalar poreLength1 = spatialParams.poreLength(element, scv1, elemSol);
 
-            const auto poreShapeFactor0 = spatialParams.poreShapeFactor(element, scv0, elemSol);
-            const auto poreShapeFactor1 = spatialParams.poreShapeFactor(element, scv1, elemSol);
+            const Scalar poreShapeFactor0 = spatialParams.poreShapeFactor(element, scv0, elemSol);
+            const Scalar poreShapeFactor1 = spatialParams.poreShapeFactor(element, scv1, elemSol);
 
-            const auto poreCrossSectionalArea0 = spatialParams.poreCrossSectionalArea(element, scv0, elemSol);
-            const auto poreCrossSectionalArea1 = spatialParams.poreCrossSectionalArea(element, scv1, elemSol);
+            const Scalar poreCrossSectionalArea0 = spatialParams.poreCrossSectionalArea(element, scv0, elemSol);
+            const Scalar poreCrossSectionalArea1 = spatialParams.poreCrossSectionalArea(element, scv1, elemSol);
 
             const Scalar poreTransmissibility0 = singlePhaseTransmissibility(poreShapeFactor0, poreLength0, poreCrossSectionalArea0);
             const Scalar poreTransmissibility1 = singlePhaseTransmissibility(poreShapeFactor1, poreLength1, poreCrossSectionalArea1);
