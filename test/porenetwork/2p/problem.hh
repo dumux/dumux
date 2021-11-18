@@ -119,10 +119,8 @@ public:
         if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
             bcTypes.setAllDirichlet();
         else if (isOutletPore_(scv))
-           bcTypes.setAllDirichlet();
+            bcTypes.setAllDirichlet();
 
-        else // neuman for the remaining boundaries
-           bcTypes.setAllNeumann();
 #if !ISOTHERMAL
         bcTypes.setDirichlet(temperatureIdx);
 #endif
