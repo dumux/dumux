@@ -8,6 +8,44 @@ for usage of getParam or getParamFromGroup.
 import os
 import argparse
 import json
+import logging
+import sys
+
+# setup a logger
+logger = logging.getLogger(__name__)
+LOG_LEVEL = logging.INFO
+try:
+    LOG_LEVEL = getattr(logging, os.environ["DUMUX_LOG_LEVEL"].upper())
+except KeyError:
+    pass
+except AttributeError:
+    logger.warning("Invalid log level in environment variable DUMUX_LOG_LEVEL")
+
+logger.setLevel(LOG_LEVEL)
+loggingFileHandler = logging.FileHandler("generate_parameterlist.log", mode="w")
+loggingFormatter = logging.Formatter("%(levelname)-8s %(message)s")
+loggingFileHandler.setFormatter(loggingFormatter)
+loggingFileHandler.setLevel(LOG_LEVEL)
+logger.addHandler(loggingFileHandler)
+
+
+class ErrorLoggerCounted:
+    """A logger wrapper to count the number of errors"""
+
+    def __init__(self, method):
+        self.method = method
+        self.counter = 0
+
+    def __call__(self, *args, **kwargs):
+        self.counter += 1
+        return self.method(*args, **kwargs)
+
+
+logger.error = ErrorLoggerCounted(logger.error)
+logger.info(
+    "Please fix all ERRORs, WARNINGs may require attention, INFO/DEBUG is just information."
+)
+logger.info("--------------------------------------------------------------------------------")
 
 
 def getEnclosedContent(string, openKey, closeKey):
@@ -24,9 +62,8 @@ def getEnclosedContent(string, openKey, closeKey):
         rest = rest.partition(closeKey)
         if rest[1] == "":
             raise IOError(
-                'Could not get content between "{}" and "{}" in given string "{}"'.format(
-                    openKey, closeKey, string
-                )
+                f"Could not get content between '{openKey}'"
+                f" and '{closeKey}' in given string '{string}'"
             )
         result, rest = result + rest[0] + closeKey, rest[2]
 
@@ -86,7 +123,7 @@ def extractParameterName(line):
     }
 
 
-def getParameterListFromFile(fileName, logMessage):
+def getParameterListFromFile(fileName):
     """extract all parameters from a given file"""
     parameterList = []
     errors = {}
@@ -101,16 +138,14 @@ def getParameterListFromFile(fileName, logMessage):
 
     # print encountered errors
     if errors:
-        logMessage.append(
-            (
-                "\n\n{} parameter{} in file {} could not be retrieved automatically. "
-                "Please check them yourself:"
-            ).format(len(errors), "s" if len(errors) > 1 else "", fileName)
+        logger.warning(
+            f"{len(errors)} parameter(s) in file {fileName}"
+            " could not be retrieved automatically."
+            " Please check them..."
         )
         for lineIdx, errorInfo in errors.items():
-            logMessage.append(f"\n\t-> line {lineIdx}: {errorInfo['line']}")
-            logMessage.append(f"\n\t\t-> error message: {errorInfo['message']}")
-        logMessage.append(" ")
+            logger.warning(f"\t-> line {lineIdx}: {errorInfo['line']}")
+            logger.warning(f"\t\t-> error message: {errorInfo['message']}")
 
     return parameterList
 
@@ -123,7 +158,7 @@ class CheckExistAction(argparse.Action):
             setattr(namespace, self.dest, values)
             setattr(namespace, "hasInput", True)
         else:
-            parser.error("File {} does not exist!".format(values))
+            parser.error(f"File {values} does not exist!")
 
 
 argumentParser = argparse.ArgumentParser(
@@ -160,17 +195,19 @@ argumentParser.add_argument(
     metavar="output",
     default="doc/doxygen/extradoc/parameterlist.txt",
 )
-args = vars(argumentParser.parse_args())
+cmdArgs = vars(argumentParser.parse_args())
 
 # search all *.hh files for parameters
+logger.info("Searching for parameters in the source file tree")
+logger.info("--------------------------------------------------------------------------------")
 parameters = []
-log = []
-rootDir = args["root"]
+rootDir = cmdArgs["root"]
 for root, dirs, files in os.walk(rootDir):
     dirs[:] = [d for d in dirs if d not in ("test", "examples")]
     for file in files:
         if os.path.splitext(file)[1] == ".hh" and os.path.splitext(file)[0] != "parameters":
-            parameters.extend(getParameterListFromFile(os.path.join(root, file), log))
+            parameters.extend(getParameterListFromFile(os.path.join(root, file)))
+logger.info("--------------------------------------------------------------------------------")
 
 # make sorted dictionary of the entries
 # treat duplicates (could have differing default values or type names - e.g. via aliases)
@@ -187,8 +224,8 @@ for params in parameters:
 
 # get the explanations from current parameter json file
 inputDict = {}
-if args["inputFile"]:
-    with open(args["inputFile"], "r") as f:
+if cmdArgs["inputFile"]:
+    with open(cmdArgs["inputFile"], "r") as f:
         data = f.read()
         inputDict = json.loads(data)
 
@@ -210,16 +247,17 @@ for missingKey in missingParameters:
         parameterDict[key]["paramType"] = inputDict[missingKey]["type"]
         parameterDict[key]["paramName"] = parameter
 
-        log.append(
-            f"\nAdd to parameter list: '{parameter}'"
-            " which could not be extracted from code"
-            f" but is explicitly added in {args['inputFile']}\n"
+        logger.info(
+            f"Added parameter '{parameter}' to the parameter list. The parameter"
+            " could not be extracted from code"
+            f" but has been explicitly added in {cmdArgs['inputFile']}"
         )
 
     else:
-        log.append(
-            f"\nFound parameter in {args['inputFile']}: "
-            f"'{parameter}', set mode to 'manual' in the input file if it is to be kept.\n"
+        logger.error(
+            f"Found parameter '{parameter}' in {cmdArgs['inputFile']}"
+            f" which has not been found in the code "
+            "--> Set mode to 'manual' in the input file if it is to be kept otherwise delete it!"
         )
 
 parameterDict = dict(sorted(parameterDict.items(), key=lambda kv: kv[0]))
@@ -256,40 +294,38 @@ for key in parameterDict:
         dv == (defaultValue if defaultValue != "-" else None) for dv in entry["defaultValue"]
     )
     if hasMultiplePT or hasMultipleDV:
-        log.append(
-            f"\n\nFound multiple occurrences of parameter {parameter}"
+        writeLog = logger.error if NUM_ENTRIES == 0 else logger.debug
+        writeLog(
+            f"Found multiple occurrences of parameter {parameter}"
             " with differing specifications: "
         )
-    if hasMultiplePT:
-        log.append("\n -> Specified type names:")
-        for typeName in entry["paramType"]:
-            log.append("\n" + " " * 8 + typeName)
-        if NUM_ENTRIES == 0:
-            log.append(
-                f"\n ---> For the parameters list, {parameterTypeName}"
-                " has been chosen. Please adapt manually if desired."
-            )
-        else:
-            parameterTypeName = inputDict[keyInput]["type"]
-            log.append(
-                f"\n ---> For the parameters list, {parameterTypeName}"
-                " has been chosen. Type is from input file."
-            )
-    if hasMultipleDV:
-        log.append("\n -> Specified default values:")
-        for default in entry["defaultValue"]:
-            log.append("\n" + " " * 8 + (default if default else "- (none given)"))
-        if NUM_ENTRIES == 0:
-            log.append(
-                f"\n ---> For the parameters list, {defaultValue}"
-                " has been chosen. Please adapt manually if desired."
-            )
-        else:
-            defaultValue = inputDict[keyInput]["default"]
-            log.append(
-                f"\n ---> For the parameters list, {defaultValue}"
-                " has been chosen. Default value is from input file."
-            )
+        if hasMultiplePT:
+            writeLog(" -> Specified type names:")
+            for typeName in entry["paramType"]:
+                writeLog(f"        {typeName}")
+            if NUM_ENTRIES == 0:
+                writeLog(" ---> Please provide parameter type manually in input file!")
+            else:
+                parameterTypeName = inputDict[keyInput]["type"]
+                writeLog(
+                    f" ---> For the parameters list, {parameterTypeName}"
+                    " has been chosen. Type is from input file."
+                )
+        if hasMultipleDV:
+            writeLog(" -> Specified default values:")
+            for default in entry["defaultValue"]:
+                if default:
+                    writeLog(f"        {default}")
+                else:
+                    writeLog("        - (none given)")
+            if NUM_ENTRIES == 0:
+                writeLog(" ---> Please provide default value manually in input file!")
+            else:
+                defaultValue = inputDict[keyInput]["default"]
+                writeLog(
+                    f" ---> For the parameters list, {defaultValue}"
+                    " has been chosen. Default value is from input file."
+                )
 
     if NUM_ENTRIES == 0:
         tableEntryData.append(
@@ -333,17 +369,18 @@ GROUP_ENTRY_LENGTH = 20
 PARAM_NAME_LENGTH = 45
 PARAM_TYPE_LENGTH = 24
 DEFAULT_VALUE_LENGTH = 15
-EXPLANATION_LENGTH = 80
+EXPLANATION_LENGTH = 150
 
 
 def tableEntry(groupEntry, paramName, paramTypeName, defaultParamValue, explanation):
     """Create a table entry for a parameter"""
-    return " * | {} | {} | {} | {} | {} |".format(
-        groupEntry.ljust(GROUP_ENTRY_LENGTH),
-        paramName.ljust(PARAM_NAME_LENGTH),
-        paramTypeName.ljust(PARAM_TYPE_LENGTH),
-        defaultParamValue.ljust(DEFAULT_VALUE_LENGTH),
-        explanation.ljust(EXPLANATION_LENGTH),
+    return (
+        f" * "
+        f"| {groupEntry.ljust(GROUP_ENTRY_LENGTH)} "
+        f"| {paramName.ljust(PARAM_NAME_LENGTH)} "
+        f"| {paramTypeName.ljust(PARAM_TYPE_LENGTH)} "
+        f"| {defaultParamValue.ljust(DEFAULT_VALUE_LENGTH)} "
+        f"| {explanation.ljust(EXPLANATION_LENGTH)} |"
     )
 
 
@@ -356,7 +393,9 @@ for data in tableEntryData:
             groupName = "\\b " + groupName
 
     if len(data["explanation"].strip()) == 0:
-        log.append(f"\n parameter {groupName}.{data['name']} has no explanation.")
+        logger.error(
+            f"Parameter {groupName}.{data['name']} has no explanation. Add it to the input file!"
+        )
 
     TABLE_ENTRY = tableEntry(
         groupEntry=groupName,
@@ -371,7 +410,7 @@ for data in tableEntryData:
         tableEntriesWithoutGroup.append(TABLE_ENTRY)
 
 # combine entries
-tableEntries = tableEntriesWithoutGroup + tableEntriesWithGroup
+tableEntries = tableEntriesWithGroup + tableEntriesWithoutGroup
 
 HEADER = """/*!
  *\\internal
@@ -409,12 +448,20 @@ HEADER += " | " + "executable.input".ljust(DEFAULT_VALUE_LENGTH)
 HEADER += " | :- ".ljust(EXPLANATION_LENGTH) + "|\n"
 
 # overwrite the old parameterlist.txt file
-with open(os.path.join(rootDir, args["output"]), "w") as outputfile:
+PARAMETER_FILE_NAME = os.path.join(rootDir, cmdArgs["output"])
+logger.info("--------------------------------------------------------------------------------")
+logger.info(f"Overwriting parameter file in {PARAMETER_FILE_NAME}")
+logger.info("--------------------------------------------------------------------------------")
+with open(PARAMETER_FILE_NAME, "w") as outputfile:
     outputfile.write(HEADER)
     for e in tableEntries:
         outputfile.write(e + "\n")
     outputfile.write(" */\n")
-    print("Finished, check the output file and log.")
 
-with open("generate_parameterlist.log", "w") as f:
-    f.writelines(log)
+if logger.error.counter > 0:
+    print("Finished with errors! Check log file!")
+    logger.error(f"Counted {logger.error.counter} error message lines. Please fix the errors!")
+    sys.exit(1)
+else:
+    print(f"Successfully create new parameter list at {PARAMETER_FILE_NAME}")
+    logger.info("Finished without errors")
