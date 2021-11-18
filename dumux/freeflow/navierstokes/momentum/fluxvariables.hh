@@ -428,6 +428,8 @@ public:
             {
                 if (const auto& scv = fvGeometry.scv(scvf.insideScvIdx()); this->elemBcTypes()[scvf.localIndex()].isDirichlet(scv.dofAxis()))
                     return problem.dirichlet(this->element(), scvf)[scv.dofAxis()] * this->problem().density(this->element(), scv);
+                else
+                    DUNE_THROW(Dune::InvalidStateException, "Neither Dirichlet nor Neumann BC set at " << scvf.ipGlobal());
             }
 
             const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
