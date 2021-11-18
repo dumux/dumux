@@ -87,8 +87,6 @@ public:
         BoundaryTypes bcTypes;
         if (isInletPore_(scv) || isOutletPore_(scv))
             bcTypes.setAllDirichlet();
-        else // neuman for the remaining boundaries
-            bcTypes.setAllNeumann();
 #if !ISOTHERMAL
         bcTypes.setDirichlet(Indices::temperatureIdx);
 #endif
