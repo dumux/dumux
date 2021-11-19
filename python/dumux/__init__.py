@@ -9,3 +9,12 @@ DuMux is
 
 https://dumux.org/
 """
+
+try:
+    from dune.common import registerExternalModule
+
+    # register dumux to be recognized by dune-py (code generation module)
+    # as a module of the dune univers
+    registerExternalModule("dumux")
+except ImportError:
+    pass
