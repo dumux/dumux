@@ -9,3 +9,12 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
 else()
   execute_process(COMMAND ${CMAKE_COMMAND} "-E" "create_symlink" "${CMAKE_SOURCE_DIR}/dumux/common/properties.hh" "${CMAKE_CURRENT_BINARY_DIR}/properties.hh")
 endif()
+
+if(${dune-common_VERSION} VERSION_GREATER_EQUAL 2.9)
+  dune_python_install_package(
+    PATH "."
+    CMAKE_METADATA_FILE dumux/metadata.cmake
+    DEPENDS _common
+    CMAKE_METADATA_FLAGS DUNE_OPTS_FILE
+  )
+endif()
