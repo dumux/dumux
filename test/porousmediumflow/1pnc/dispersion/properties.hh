@@ -31,6 +31,10 @@
 #endif
 #include <dune/grid/yaspgrid.hh>
 
+#ifndef NONISOTHERMAL // default to false if not set through CMake
+#define NONISOTHERMAL false
+#endif
+
 #include <dumux/common/math.hh>
 
 #include <dumux/discretization/cctpfa.hh>
@@ -54,6 +58,7 @@ namespace Dumux::Properties {
 namespace TTag {
 struct DispersionTest { using InheritsFrom = std::tuple<BoxModel>; };
 struct OnePNCDispersionTestBox { using InheritsFrom = std::tuple<DispersionTest, OnePNC>; };
+struct OnePNCNIDispersionTestBox { using InheritsFrom = std::tuple<DispersionTest, OnePNCNI>; };
 } // end namespace TTag
 
 // Set the grid type
@@ -95,6 +100,7 @@ template<class TypeTag>
 struct EnableCompositionalDispersion<TypeTag, TTag::DispersionTest> { static constexpr bool value = true; };
 
 template<class TypeTag>
+struct EnableThermalDispersion<TypeTag, TTag::DispersionTest> { static constexpr bool value = NONISOTHERMAL; };
 
 template<class TypeTag>
 struct DispersionFluxType<TypeTag, TTag::DispersionTest> { using type = OnePDiffusiveDispersionFlux<TypeTag>; };

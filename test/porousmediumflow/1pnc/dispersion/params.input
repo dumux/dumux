@@ -11,6 +11,7 @@ Cells = 20 20
 Name = default
 EnableGravity = true
 BoundaryConcentration = 0.04 # molfrac
+BoundaryTemperatureDifference = 3 # K
 CounterFlowRate = 1e-4
 Pressure = 1e5
 AlphaL = 0.1 # longitual dispersivity
@@ -22,3 +23,8 @@ UseLineSearch = true
 
 [Vtk]
 AddVelocity = 1 # enable velocity output
+
+[Component]
+SolidDensity = 2700
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 790

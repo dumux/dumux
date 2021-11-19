@@ -87,13 +87,15 @@ class OnePNCDispersionProblem : public PorousMediumFlowProblem<TypeTag>
 
     enum
     {
+#if NONISOTHERMAL
+        energyEqIdx = Indices::energyEqIdx,
+#endif
         // indices of the primary variables
         pressureIdx = Indices::pressureIdx,
 
         // component indices
         H2OIdx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::H2OIdx),
         N2Idx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::N2Idx),
-
         // indices of the equations
         contiH2OEqIdx = Indices::conti0EqIdx + H2OIdx,
         contiN2EqIdx = Indices::conti0EqIdx + N2Idx
@@ -119,6 +121,7 @@ public:
             std::cout<<"problem uses mass fractions" << '\n';
 
         boundaryConcentration_ = getParam<Scalar>("Problem.BoundaryConcentration");
+        temperatureDifference_ = getParam<Scalar>("Problem.BoundaryTemperatureDifference");
         counterFlowRate_ = getParam<Scalar>("Problem.CounterFlowRate");
         pressure_ = getParam<Scalar>("Problem.Pressure");
         problemName_ = getParam<std::string>("Problem.Name");
@@ -169,6 +172,9 @@ public:
         if (isLeftBoundary_(globalPos))
         {
             values[contiN2EqIdx] =  boundaryConcentration_;
+#if NONISOTHERMAL
+            values[energyEqIdx] = temperature() + temperatureDifference_;
+#endif
         }
 
         return values;
@@ -201,7 +207,7 @@ public:
         const auto globalPos = element.geometry().corner(scvf.insideScvIdx());
         NumEqVector values(0.0);
         if (isRightBoundary_(globalPos))
-            values[contiH2OEqIdx] = -1.0 * counterFlowRate_; //-5E-2; //5e-5*m2/s*1000kg/m^3
+            values[contiH2OEqIdx] = -1.0 * counterFlowRate_;
         return values;
     }
 
@@ -233,6 +239,9 @@ public:
 
         values[Indices::pressureIdx] = pressure_ - (density * gravity * depth); //initial condition for the pressure
         values[contiN2EqIdx] = 0.0; //initial condition for the molefraction
+#if NONISOTHERMAL
+        values[energyEqIdx] = temperature();
+#endif
         return values;
     }
 
@@ -252,6 +261,7 @@ private:
     static constexpr Scalar eps_ = 1e-6;
     Scalar pressure_;
     Scalar counterFlowRate_;
+    Scalar temperatureDifference_;
     Scalar boundaryConcentration_;
     std::string problemName_;
 };
