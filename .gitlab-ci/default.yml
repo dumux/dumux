@@ -51,13 +51,15 @@ black (python):
 pylint-flake8 (python):
   stage: linting
   script:
+    # restore Python virtual env from cache (job:configure artifacts) (Dune 2.9)
+    - |
+      if [ -d "build-cmake/dune-env" ]; then
+        rm -r /dune/modules/dune-common/build-cmake/dune-env
+        mv build-cmake/dune-env /dune/modules/dune-common/build-cmake/dune-env
+      fi
     - |
       if [ -d build-cmake/python/dumux ] ; then
         source bin/testing/ci-setup-python-env.sh
-        # if we are in venv (Dune 2.9) install linters
-        if [ -d "/dune/modules/dune-common/build-cmake/dune-env" ]; then
-          python -m pip install pylint flake8
-        fi
         pylint --rcfile=.pylintrc build-cmake/python/dumux
         pylint --rcfile=.pylintrc bin
         flake8 build-cmake/python/dumux
