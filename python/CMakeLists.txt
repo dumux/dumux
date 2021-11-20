@@ -13,7 +13,7 @@ endif()
 if(${dune-common_VERSION} VERSION_GREATER_EQUAL 2.9)
   dune_python_install_package(
     PATH "."
-    CMAKE_METADATA_FILE dumux/metadata.cmake
+    PACKAGENAME dumux
     DEPENDS _common
     CMAKE_METADATA_FLAGS DUNE_OPTS_FILE
   )

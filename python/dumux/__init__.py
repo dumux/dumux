@@ -11,10 +11,14 @@ https://dumux.org/
 """
 
 try:
-    from dune.common import registerExternalModule
+    from dune.packagemetadata import registerExternalModule
+    import pathlib
 
     # register dumux to be recognized by dune-py (code generation module)
     # as a module of the dune univers
-    registerExternalModule("dumux")
+    registerExternalModule(
+        moduleName="dumux",
+        modulePath=str(pathlib.Path(__file__).parent.resolve()),
+    )
 except ImportError:
     pass
