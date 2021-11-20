@@ -33,9 +33,12 @@ add_subdirectory(dumux)
 add_subdirectory(test EXCLUDE_FROM_ALL)
 add_subdirectory(examples EXCLUDE_FROM_ALL)
 
-# if Python bindings are enabled, include necessary sub directories.
-if(DUNE_ENABLE_PYTHONBINDINGS)
-  if(${dune-common_VERSION} VERSION_GREATER_EQUAL 2.8)
+# from Dune 2.9 on Python bindings are enabled per default
+if(${dune-common_VERSION} VERSION_GREATER_EQUAL 2.9)
+  add_subdirectory(python)
+else()
+  # with Dune 2.8, only if Python bindings are enabled
+  if(DUNE_ENABLE_PYTHONBINDINGS)
     add_subdirectory(python)
     dune_python_install_package(PATH "python")
   endif()

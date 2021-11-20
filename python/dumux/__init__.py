@@ -10,4 +10,11 @@ DuMux is
 https://dumux.org/
 """
 
-__import__("pkg_resources").declare_namespace(__name__)
+try:
+    from dune.common import registerExternalModule
+
+    # register dumux to be recognized by dune-py (code generation module)
+    # as a module of the dune univers
+    registerExternalModule("dumux")
+except ImportError:
+    pass

@@ -7,6 +7,7 @@ import os
 from dataclasses import dataclass
 from typing import List, Union
 from dune.common.hashit import hashIt
+import dumux
 
 
 @dataclass
@@ -146,12 +147,46 @@ def listTypeTags():
     print("\n**********************************")
 
 
+def propertiesHeaderPath():
+    """Find the path to the properties.hh C++ header"""
+
+    path, _ = os.path.split(dumux.__file__)
+    metaDataFile = os.path.join(path, "data/metadata.cmake")
+    if os.path.exists(metaDataFile):
+        data = {}
+        with open(metaDataFile, "r") as metaData:
+            for line in metaData:
+                try:
+                    key, value = line.split("=", 1)
+                    data[key] = value.strip()
+                except ValueError:  # no '=' in line
+                    pass
+        return os.path.abspath(
+            os.path.join(
+                data["DEPBUILDDIRS"].split(";")[0],
+                "python",
+                "properties.hh",
+            )
+        )
+
+    # as fall-back try relative path
+    propertiesHeader = os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__),
+            "../../../../dumux/common/properties.hh",
+        )
+    )
+
+    if os.path.exists(propertiesHeader):
+        return propertiesHeader
+
+    raise RuntimeError("Could not find properties.hh header")
+
+
 def predefinedProperties():
     """Create a list of properties defined in properties.hh"""
 
-    propertiesHeader = os.path.abspath(
-        os.path.dirname(__file__) + "/../../../../dumux/common/properties.hh"
-    )
+    propertiesHeader = propertiesHeaderPath()
     with open(propertiesHeader, encoding="utf-8") as header:
         properties = []
         for line in header:
