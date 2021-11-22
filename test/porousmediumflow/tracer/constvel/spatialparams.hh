@@ -53,7 +53,13 @@ class TracerTestSpatialParams
 public:
 
     TracerTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry) {}
+    : ParentType(gridGeometry)
+    {
+#if ENABLEDISPERSION
+        alphaL_ = getParam<Scalar>("Problem.AlphaL");
+        alphaT_ = getParam<Scalar>("Problem.AlphaT");
+#endif
+    }
 
     /*!
      * \brief Defines the porosity \f$\mathrm{[-]}\f$.
@@ -116,6 +122,19 @@ public:
         return velocity(scvf) * scvf.unitOuterNormal() * scvf.area()
                * elemVolVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
     }
+
+
+    /*!
+     * \brief Defines the dispersion tensor \f$\mathrm{[-]}\f$.
+     *
+     * \param globalPos The global position
+     */
+    std::array<Scalar, 2> dispersionAlphas(const GlobalPosition& globalPos) const
+    { return { alphaL_, alphaT_ }; }
+
+private:
+    Scalar alphaL_;
+    Scalar alphaT_;
 };
 
 } // end namespace Dumux

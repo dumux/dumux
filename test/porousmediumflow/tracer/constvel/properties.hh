@@ -39,6 +39,10 @@
 #define USEMOLES true
 #endif
 
+#ifndef ENABLEDISPERSION // default to false if not set through CMake
+#define ENABLEDISPERSION false
+#endif
+
 #include "problem.hh"
 
 namespace Dumux::Properties {
@@ -78,6 +82,9 @@ struct SpatialParams<TypeTag, TTag::TracerTest>
 // Define whether mole(true) or mass (false) fractions are used
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::TracerTest> { static constexpr bool value = USEMOLES; };
+
+template<class TypeTag>
+struct EnableCompositionalDispersion<TypeTag, TTag::TracerTest> { static constexpr bool value = ENABLEDISPERSION; };
 
 //! A simple fluid system with one tracer component
 template<class TypeTag>
