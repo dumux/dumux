@@ -50,6 +50,29 @@ for (const auto& element : elements(gridGeometry.gridView()))
 
 - __Embedded coupling__: Add a coupling manager for the 1D-3D projection based scheme with resolved interface introduced in Koch 2021 (https://arxiv.org/abs/2106.06358)
 
+- __Dispersion__: Dispersion fluxes have been added as an option for the compositional and thermal porous medium flow models. These models use either a scheidegger dispersion tensor, which is dependent on the velocity field and two length parameters, or a full open tensor that can be user defined. For compositional models coupled with flow models (e.g. 1pnc), using the scheidegger dispersion tensor is only allowed when using the box discretization method. Otherwise all dispersion fluxes should be availble for the tpfa and the box discretization methods.
+
+To enable either thermal or compositional dispersion, please define these properties within your `properties.hh` header. For example:
+```cpp
+template<class TypeTag>
+struct EnableCompositionalDispersion<TypeTag, TTag::MyTest> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableThermalDispersion<TypeTag, TTag::MyTest> { static constexpr bool value = true; };
+```
+
+To determine which type of dispersion tensor you would prefer to use, please define this property within your `properties.hh` header. For example:
+```cpp
+template<class TypeTag>
+struct DispersionTensorType<TypeTag, TTag::MyTest> { using type = ScheideggersDispersionTensor<TypeTag>; };
+```
+or
+```cpp
+template<class TypeTag>
+struct DispersionTensorType<TypeTag, TTag::MyTest> { using type = FullDispersionTensor<TypeTag>; };
+```
+
+The parameters describing your dispersion tensor can then be included in your `spatialparameters.hh` file, and passed via input parameters. An example of this can be seen in the `test/porousmediumflow/1pnc/dispersion/` folder, and in the `test/porousmediumflow/tracer/constvel/` folders.
+
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Virtual interface of GridDataTransfer__: The `GridDataTransfer` abstract base class now required the Grid type as a template argument. Furthermore, the `store` and `reconstruct` interface functions do now expect the grid as a function argument. This allows to correctly update grid geometries and corresponding mapper (see "Construction and update of GridGeometries changed" above in the changelog)
 - `PengRobinsonMixture::computeMolarVolumes` has been removed without deprecation. It was used nowhere and did not translate.
