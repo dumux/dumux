@@ -81,3 +81,16 @@ dumux_add_test(NAME test_tracer_implicit_dispersion_box
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_tracer_implicit_dispersion_box params.input -Problem.Name test_tracer_implicit_dispersion_box
                        -Problem.AlphaL 0.02
                        -Problem.AlphaT 0.008")
+
+dumux_add_test(NAME test_tracer_implicit_dispersion_tpfa
+              LABELS porousmediumflow tracer dispersion
+              SOURCES main.cc
+              COMPILE_DEFINITIONS TYPETAG=TracerTestTpfa IMPLICIT=true USEMOLES=false ENABLEDISPERSION=true
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_tracer_implicit_dispersion_tpfa-reference.vtu
+                            ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_implicit_dispersion_tpfa-00010.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_tracer_implicit_dispersion_tpfa params.input -Problem.Name test_tracer_implicit_dispersion_tpfa
+                       -Problem.AlphaL 0.02
+                       -Problem.AlphaT 0.008")
