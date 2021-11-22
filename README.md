@@ -12,6 +12,8 @@ therapy and more. Have a look at our publications
 (see below: [How to cite](#how-to-cite))
 for a more detailed description of the goals and motivations behind DuMu<sup>x</sup>.
 
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+
 
 Installation
 ===============
