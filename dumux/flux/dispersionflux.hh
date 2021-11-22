@@ -26,5 +26,6 @@
 
 #include <dumux/flux/dispersionflux_fwd.hh>
 #include <dumux/flux/box/dispersionflux.hh>
+#include <dumux/flux/cctpfa/dispersionflux.hh>
 
 #endif

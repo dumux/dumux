@@ -213,12 +213,9 @@ public:
     {
         if constexpr (Deprecated::hasEnableThermalDispersion<ModelTraits>())
         {
-            if constexpr (ModelTraits::enableCompositionalDispersion())
+            if constexpr (ModelTraits::enableThermalDispersion())
             {
-                if constexpr (FVElementGeometry::GridGeometry::discMethod == DiscretizationMethods::box && numPhases == 1)
-                    flux[energyEqIdx] += fluxVars.thermalDispersionFlux();
-                else
-                    DUNE_THROW(Dune::NotImplemented, "Dispersion Fluxes are only implemented for single phase flows using the Box method.");
+                flux[energyEqIdx] += fluxVars.thermalDispersionFlux();
             }
         }
         else

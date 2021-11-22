@@ -113,7 +113,7 @@ public:
                 velocity /= -0.5 * (insideVolVars.viscosity() + outsideVolVars.viscosity());
             }
             else
-                DUNE_THROW(Dune::NotImplemented, "\n Scheidegger Dispersion for compositional models is only implemented using the Box method.");
+                DUNE_THROW(Dune::NotImplemented, "\n Scheidegger Dispersion for compositional models without given constant velocity field is only implemented using the Box method.");
         }
 
         //calculate dispersion tensor
