@@ -110,10 +110,12 @@ select tests:
 compile cpp:
   stage: build
   script:
-    # remove cached Python dune-env if existing (not needed for C++) (Dune 2.9)
+    # restore Python virtual env from cache (job:configure artifacts) (Dune 2.9)
+    # shouldn't be needed to compile C++ but currently is (https://gitlab.dune-project.org/core/dune-common/-/issues/279)
     - |
       if [ -d "build-cmake/dune-env" ]; then
-        rm -r build-cmake/dune-env
+        rm -r /dune/modules/dune-common/build-cmake/dune-env
+        mv build-cmake/dune-env /dune/modules/dune-common/build-cmake/dune-env
       fi
     - |
       pushd build-cmake
