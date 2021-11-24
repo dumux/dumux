@@ -49,7 +49,10 @@ public:
     : ParentType(gridGeometry)
     , porosity_(getParam<Scalar>("SpatialParams.Porosity"))
     , permeability_(getParam<Scalar>("SpatialParams.Permeability"))
-    , temperature_(getParam<Scalar>("SpatialParams.Temperature"))
+    , temperature_(
+        getParam<Scalar>("SpatialParams.Temperature",
+        ParentType::temperatureAtPos(GlobalPosition{0.0}))
+    )
     {}
 
     /*!
