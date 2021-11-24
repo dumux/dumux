@@ -87,7 +87,7 @@ public:
     {
         PrimaryVariables values;
         GetPropType<TypeTag, Properties::FluidState> fluidState;
-        fluidState.setTemperature(temperature());
+        fluidState.setTemperature(this->spatialParams().temperatureAtPos(globalPos));
         fluidState.setPressure(waterPhaseIdx, /*pressure=*/1e5);
         fluidState.setPressure(dnaplPhaseIdx, /*pressure=*/1e5);
 
@@ -136,7 +136,7 @@ public:
     {
         PrimaryVariables values;
         GetPropType<TypeTag, Properties::FluidState> fluidState;
-        fluidState.setTemperature(temperature());
+        fluidState.setTemperature(this->spatialParams().temperatureAtPos(globalPos));
         fluidState.setPressure(waterPhaseIdx, /*pressure=*/1e5);
         fluidState.setPressure(dnaplPhaseIdx, /*pressure=*/1e5);
 
@@ -150,17 +150,6 @@ public:
         return values;
     }
 
-    /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ for an isothermal problem.
-     *
-     * This is not specific to the discretization. By default it just
-     * throws an exception so it must be overloaded by the problem if
-     * no energy equation is used.
-     */
-    Scalar temperature() const
-    {
-        return 293.15; // 10°C
-    }
 
 private:
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
