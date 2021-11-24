@@ -566,7 +566,7 @@ private:
         for (const auto& element : elements(momentumGridGeometry.gridView()))
         {
             const auto eIdx = momentumGridGeometry.elementMapper().index(element);
-            momentumFvGeometry.bindElement(element);
+            momentumFvGeometry.bind(element);
             for (const auto& scv : scvs(momentumFvGeometry))
             {
                 massAndEnergyToMomentumStencils_[eIdx].push_back(scv.dofIndex());
