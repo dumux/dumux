@@ -89,7 +89,6 @@
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 
 #include <dumux/material/fluidstates/compositional.hh>
-#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
 
