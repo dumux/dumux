@@ -26,7 +26,7 @@
 #define DUMUX_MPNC_COMPARISON_SPATIAL_PARAMS_HH
 
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 
 namespace Dumux {
@@ -37,16 +37,16 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class TwoPTwoCComparisonSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
-                         TwoPTwoCComparisonSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
+                                       TwoPTwoCComparisonSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar,
-                                       TwoPTwoCComparisonSpatialParams<GridGeometry, Scalar>>;
+    using ThisType = TwoPTwoCComparisonSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar, ThisType>;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -69,6 +69,9 @@ public:
 
         // the porosity
         porosity_ = 0.3;
+
+        // the temperature
+        temperature_ = 273.15 + 25; // -> 25°C
     }
 
     template<class ElementSolution>
@@ -116,6 +119,15 @@ public:
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
     { return FluidSystem::H2OIdx; }
 
+    /*!
+     * \brief Returns the temperature in the domain at the given position
+     * \param globalPos The position in global coordinates where the temperature should be specified.
+     */
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    {
+        return temperature_;
+    }
+
 private:
     /*!
      * \brief Returns whether a given global position is in the
@@ -132,6 +144,7 @@ private:
     Scalar coarseK_;
     Scalar fineK_;
     Scalar porosity_;
+    Scalar temperature_;
 
     const PcKrSwCurve finePcKrSwCurve_;
     const PcKrSwCurve coarsePcKrSwCurve_;
