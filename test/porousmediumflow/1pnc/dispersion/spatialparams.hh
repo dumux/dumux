@@ -26,7 +26,7 @@
 #define DUMUX_1PNC_TEST_SPATIAL_PARAMS_HH
 
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams1p.hh>
 
 namespace Dumux {
 
@@ -36,14 +36,14 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class OnePNCTestSpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar,
+: public FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
                              OnePNCTestSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
+    using ParentType = FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
                                            OnePNCTestSpatialParams<GridGeometry, Scalar>>;
 
     static const int dimWorld = GridView::dimensionworld;
@@ -79,6 +79,14 @@ public:
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return porosity_; }
+
+    /*!
+     * \brief Returns the temperature within the domain [K].
+     *
+     * \param globalPos The global position
+     */
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    { return 273.15 + 20; } // in [K]
 
     /*!
      * \brief Defines the dispersion tensor \f$\mathrm{[-]}\f$.
