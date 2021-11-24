@@ -1,8 +1,7 @@
 {
     "-.A00": {
         "default": [
-            "0.0",
-            "true"
+            "0.0"
         ],
         "explanation": [
             "A coefficient for capillary-pressure-saturation-interfacial-area relations described by a polynomial of second order."
@@ -10,8 +9,7 @@
         "group": "-",
         "parameter": "A00",
         "type": [
-                "Scalar",
-                "Bool"
+                "Scalar"
         ]
     },
     "-.A01": {
@@ -272,7 +270,8 @@
         "parameter": "ParameterFile",
         "type": [
             "std::string"
-        ]
+        ],
+        "mode": "manual"
     },
     "-.ParkerVanGenuchtenAlpha": {
         "default": [
@@ -937,6 +936,19 @@
             "Scalar"
         ]
     },
+    "Component.GasDynamicViscosity": {
+        "default": [
+            "-"
+        ],
+        "explanation": [
+            "The dynamic viscosity of the gas"
+        ],
+        "group": "Component",
+        "parameter": "GasDynamicViscosity",
+        "type": [
+            "Scalar"
+        ]
+    },
     "Component.GasKinematicViscosity": {
         "default": [
             "-"
@@ -998,6 +1010,19 @@
         ],
         "group": "Component",
         "parameter": "LiquidDiffusionCoefficient",
+        "type": [
+            "Scalar"
+        ]
+    },
+    "Component.LiquidDynamicViscosity": {
+        "default": [
+            "-"
+        ],
+        "explanation": [
+            "The dynamic viscosity of the liquid"
+        ],
+        "group": "Component",
+        "parameter": "LiquidDynamicViscosity",
         "type": [
             "Scalar"
         ]
@@ -1327,6 +1352,19 @@
             "std::string"
         ]
     },
+    "Flux.EnableOutflowReversalWarning": {
+        "default": [
+            "true"
+        ],
+        "explanation": [
+            "Whether to print warning by flow reversal"
+        ],
+        "group": "Flux",
+        "parameter": "EnableOutflowReversalWarning",
+        "type": [
+            "bool"
+        ]
+    },
     "Flux.TvdApproach": {
         "default": [
             "Uniform"
@@ -1405,6 +1443,19 @@
             "bool"
         ]
     },
+    "FluxOverAxisAlignedSurface.Verbose": {
+        "default": [
+            "false"
+        ],
+        "explanation": [
+            "For enabling or disabling the console output"
+        ],
+        "group": "FluxOverAxisAlignedSurface",
+        "parameter": "Verbose",
+        "type": [
+            "bool"
+        ]
+    },
     "Forchheimer.MaxIterations": {
         "default": [
             "30"
@@ -1429,6 +1480,19 @@
         "parameter": "NewtonTolerance",
         "type": [
             "Scalar"
+        ]
+    },
+    "FreeFlow.EnableDilatationTerm": {
+        "default": [
+            "false"
+        ],
+        "explanation": [
+            "For enabling the turbulent dilation term."
+        ],
+        "group": "FreeFlow",
+        "parameter": "EnableDilatationTerm",
+        "type": [
+            "bool"
         ]
     },
     "FreeFlow.EnableUnsymmetrizedVelocityGradient": {
@@ -1457,6 +1521,72 @@
             "bool"
         ]
     },
+    "FreeFlow.UseOldTransportingVelocity": {
+        "default": [
+            "true"
+        ],
+        "explanation": [
+            ""
+        ],
+        "group": "FreeFlow",
+        "parameter": "UseOldTransportingVelocity",
+        "type": [
+            "bool"
+        ]
+    },
+    "Grid.CouplingNormal":{
+        "default": [
+            "[0...,1]"
+        ],
+        "explanation": [
+            ""
+        ],
+        "group": "Grid",
+        "parameter": "CouplingNormal",
+        "type": [
+            "GlobalPosition"
+        ],
+        "mode": "manual"
+    },
+    "Grid.MakeConsistentlyOriented":{
+        "default": [
+            "true"
+        ],
+        "explanation": [
+            ""
+        ],
+        "group": "Grid",
+        "parameter": "MakeConsistentlyOriented",
+        "type": [
+            "bool"
+        ]
+    },
+    "Grid.CouplingPlaneLowerLeft":{
+        "default": [
+            "gridLowerLeft"
+        ],
+        "explanation": [
+            "the lower left point of the coupling plane"
+        ],
+        "group": "Grid",
+        "parameter": "CouplingPlaneLowerLeft",
+        "type": [
+            "GlobalPosition"
+        ]
+    },
+    "Grid.CouplingPlaneUpperRight":{
+        "default": [
+            "-"
+        ],
+        "explanation": [
+            "The upper right point of the coupling plane. Default value is based on the gridLowerLeft and uses the coordinate of gridUpperRight in the direction parallel to the coupling plane."
+        ],
+        "group": "Grid",
+        "parameter": "CouplingPlaneUpperRight",
+        "type": [
+            "GlobalPosition"
+        ]
+    },
     "Grid.FixedPoreRadiusForLabel": {
         "default": [
             "std::vector<Scalar>{}"
@@ -1468,7 +1598,8 @@
         "parameter": "FixedPoreRadiusForLabel",
         "type": [
             "std::vector<Scalar>"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.MaxPoreInscribedRadius": {
         "default": [
@@ -1481,7 +1612,8 @@
         "parameter": "MaxPoreInscribedRadius",
         "type": [
             "Scalar"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.MeanPoreInscribedRadius": {
         "default": [
@@ -1494,7 +1626,8 @@
         "parameter": "MeanPoreInscribedRadius",
         "type": [
             "Scalar"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.MinPoreInscribedRadius": {
         "default": [
@@ -1507,7 +1640,8 @@
         "parameter": "MinPoreInscribedRadius",
         "type": [
             "Scalar"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.ParameterRandomNumberSeed": {
         "default": [
@@ -1520,7 +1654,8 @@
         "parameter": "ParameterRandomNumberSeed",
         "type": [
             "unsigned int"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.ParameterType": {
         "default": [
@@ -1533,7 +1668,8 @@
         "parameter": "ParameterType",
         "type": [
             "std::string"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.PoreInscribedRadius": {
         "default": [
@@ -1546,7 +1682,8 @@
         "parameter": "PoreInscribedRadius",
         "type": [
             "Scalar"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.PoreLabelsToApplyFactorForRadius": {
         "default": [
@@ -1559,7 +1696,8 @@
         "parameter": "PoreLabelsToApplyFactorForRadius",
         "type": [
             "std::vector<int>"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.PoreLabelsToSetFixedRadius": {
         "default": [
@@ -1572,7 +1710,8 @@
         "parameter": "PoreLabelsToSetFixedRadius",
         "type": [
             "std::vector<int>"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.PoreRadiusFactorForLabel": {
         "default": [
@@ -1585,7 +1724,8 @@
         "parameter": "PoreRadiusFactorForLabel",
         "type": [
             "std::vector<Scalar>"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.StandardDeviationPoreInscribedRadius": {
         "default": [
@@ -1598,7 +1738,8 @@
         "parameter": "StandardDeviationPoreInscribedRadius",
         "type": [
             "Scalar"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.SubstractRadiiFromThroatLength": {
         "default": [
@@ -1611,7 +1752,8 @@
         "parameter": "SubstractRadiiFromThroatLength",
         "type": [
             "bool"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.ThroatInscribedRadius": {
         "default": [
@@ -1624,7 +1766,8 @@
         "parameter": "ThroatInscribedRadius",
         "type": [
             "Scalar"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.ThroatInscribedRadiusN": {
         "default": [
@@ -1637,7 +1780,8 @@
         "parameter": "ThroatInscribedRadiusN",
         "type": [
             "Scalar"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.ThroatLength": {
         "default": [
@@ -1689,7 +1833,8 @@
         "parameter": "Angular0/1/2",
         "type": [
             "std::vector<Scalar>"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.Axial0/1/2": {
         "default": [
@@ -1702,7 +1847,8 @@
         "parameter": "Axial0/1/2",
         "type": [
             "std::vector<Scalar>"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.BoundaryFaceMarker": {
         "default": [
@@ -1782,7 +1928,33 @@
             "std::array<int, dim>"
         ]
     },
-    "Grid.Cells0": {
+    "Grid.CellsPerThroat": {
+        "default": [
+            "-"
+        ],
+        "explanation": [
+            "the number of cells above the porous medium"
+        ],
+        "group": "Grid",
+        "parameter": "CellsPerThroat",
+        "type": [
+            "int"
+        ]
+    },
+    "Grid.FixedCellsBetweenThroats": {
+        "default": [
+            "-1"
+        ],
+        "explanation": [
+            "the number of cells between two throats"
+        ],
+        "group": "Grid",
+        "parameter": "FixedCellsBetweenThroats",
+        "type": [
+            "int"
+        ]
+    },
+    "Grid.Cells0/1/2": {
         "default": [
             "-"
         ],
@@ -1790,36 +1962,11 @@
             "For a grid with zones, number of cells of the leftmost zone, number of cells of the second-leftmost zone, ..., number of cells of the rightmost zone, spaceseparated. (assuming x-axis points to the right)"
         ],
         "group": "Grid",
-        "parameter": "Cells0",
+        "parameter": "Cells0/1/2",
         "type": [
             "std::vector<int>"
-        ]
-    },
-    "Grid.Cells1": {
-        "default": [
-            "-"
         ],
-        "explanation": [
-            "Spaceseparated list of the number of cells per zone in y-direction (see more details for x-direction in Cells1)."
-        ],
-        "group": "Grid",
-        "parameter": "Cells1",
-        "type": [
-            "std::vector<int>"
-        ]
-    },
-    "Grid.Cells2": {
-        "default": [
-            "-"
-        ],
-        "explanation": [
-            "Spaceseparated list of the number of cells per zone in z-direction (see more details for x-direction in Cells1)."
-        ],
-        "group": "Grid",
-        "parameter": "Cells2",
-        "type": [
-            "std::vector<int>"
-        ]
+        "mode": "manual"
     },
     "Grid.ClosureType": {
         "default": [
@@ -1912,7 +2059,7 @@
             "std::size_t"
         ]
     },
-    "Grid.Grading0": {
+    "Grid.Grading0/1/2": {
         "default": [
             "-"
         ],
@@ -1920,36 +2067,11 @@
             "For a grid with zones, grading factors for the x-zones. 1.0 means all cells within this zone have equal extension in x-direction. Negative factors are possible."
         ],
         "group": "Grid",
-        "parameter": "Grading0",
+        "parameter": "Grading0/1/2",
         "type": [
             "std::vector<Scalar>"
-        ]
-    },
-    "Grid.Grading1": {
-        "default": [
-            "-"
         ],
-        "explanation": [
-            "For a grid with zones, grading factors for the y-zones."
-        ],
-        "group": "Grid",
-        "parameter": "Grading1",
-        "type": [
-            "std::vector<Scalar>"
-        ]
-    },
-    "Grid.Grading2": {
-        "default": [
-            "-"
-        ],
-        "explanation": [
-            "For a grid with zones, grading factors for the z-zones."
-        ],
-        "group": "Grid",
-        "parameter": "Grading2",
-        "type": [
-            "std::vector<Scalar>"
-        ]
+        "mode": "manual"
     },
     "Grid.Image": {
         "default": [
@@ -2146,45 +2268,19 @@
             "Scalar"
         ]
     },
-    "Grid.Positions0": {
+    "Grid.Positions0/1/2": {
         "default": [
             "-"
         ],
         "explanation": [
-            "For a grid with zones, x-positions of the left of the leftmost zone followed by the right of all zones (from left to right). (assuming x-axis points to the right)"
+            "For a grid with zones, x/y/z-positions of the left of the leftmost zone followed by the right of all zones (from left to right). (assuming x-axis points to the right)"
         ],
         "group": "Grid",
-        "parameter": "Positions0",
+        "parameter": "Positions0/1/2",
         "type": [
             "std::vector<ctype>"
         ],
         "mode":"manual"
-    },
-    "Grid.Positions1": {
-        "default": [
-            "-"
-        ],
-        "explanation": [
-            "For a grid with zones, y-positions for zoning in y (more details in Positions0 for x)."
-        ],
-        "group": "Grid",
-        "parameter": "Positions1",
-        "type": [
-            "std::vector<ctype>"
-        ]
-    },
-    "Grid.Positions2": {
-        "default": [
-            "-"
-        ],
-        "explanation": [
-            "For a grid with zones, z-positions for zoning in z (more details in Positions0 for x)."
-        ],
-        "group": "Grid",
-        "parameter": "Positions2",
-        "type": [
-            "std::vector<ctype>"
-        ]
     },
     "Grid.PriorityList": {
         "default": [
@@ -2223,7 +2319,8 @@
         "parameter": "Radial0/1/2",
         "type": [
             "std::vector<Scalar>"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.Refinement": {
         "default": [
@@ -2327,7 +2424,8 @@
         "parameter": "FixedPoreRadiusForLabel",
         "type": [
             "std::vector<Scalar>"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.Subregion0,1,....LowerLeft": {
         "default": [
@@ -2340,7 +2438,8 @@
         "parameter": "LowerLeft",
         "type": [
             "GlobalPosition"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.Subregion0,1,....MaxPoreInscribedRadius": {
         "default": [
@@ -2353,7 +2452,8 @@
         "parameter": "MaxPoreInscribedRadius",
         "type": [
             "Scalar"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.Subregion0,1,....MeanPoreInscribedRadius": {
         "default": [
@@ -2366,7 +2466,8 @@
         "parameter": "MeanPoreInscribedRadius",
         "type": [
             "Scalar"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.Subregion0,1,....MinPoreInscribedRadius": {
         "default": [
@@ -2379,7 +2480,8 @@
         "parameter": "MinPoreInscribedRadius",
         "type": [
             "Scalar"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.Subregion0,1,....ParameterRandomNumberSeed": {
         "default": [
@@ -2392,7 +2494,8 @@
         "parameter": "ParameterRandomNumberSeed",
         "type": [
             "unsigned int"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.Subregion0,1,....ParameterType": {
         "default": [
@@ -2405,7 +2508,8 @@
         "parameter": "ParameterType",
         "type": [
             "std::string"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.Subregion0,1,....PoreInscribedRadius": {
         "default": [
@@ -2418,7 +2522,8 @@
         "parameter": "PoreInscribedRadius",
         "type": [
             "Scalar"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.Subregion0,1,....PoreLabelsToApplyFactorForRadius": {
         "default": [
@@ -2431,7 +2536,8 @@
         "parameter": "PoreLabelsToApplyFactorForRadius",
         "type": [
             "std::vector<int>"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.Subregion0,1,....PoreLabelsToSetFixedRadius": {
         "default": [
@@ -2444,7 +2550,8 @@
         "parameter": "PoreLabelsToSetFixedRadius",
         "type": [
             "std::vector<int>"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.Subregion0,1,....PoreRadiusFactorForLabel": {
         "default": [
@@ -2457,7 +2564,8 @@
         "parameter": "PoreRadiusFactorForLabel",
         "type": [
             "std::vector<Scalar>"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.Subregion0,1,....StandardDeviationPoreInscribedRadius": {
         "default": [
@@ -2470,7 +2578,8 @@
         "parameter": "StandardDeviationPoreInscribedRadius",
         "type": [
             "Scalar"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.Subregion0,1,....SubstractRadiiFromThroatLength": {
         "default": [
@@ -2483,7 +2592,8 @@
         "parameter": "SubstractRadiiFromThroatLength",
         "type": [
             "bool"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.Subregion0,1,....ThroatInscribedRadius": {
         "default": [
@@ -2496,7 +2606,8 @@
         "parameter": "ThroatInscribedRadius",
         "type": [
             "Scalar"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.Subregion0,1,....ThroatInscribedRadiusN": {
         "default": [
@@ -2509,7 +2620,8 @@
         "parameter": "ThroatInscribedRadiusN",
         "type": [
             "Scalar"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.Subregion0,1,....ThroatLength": {
         "default": [
@@ -2522,7 +2634,8 @@
         "parameter": "ThroatLength",
         "type": [
             "Scalar"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.Subregion0,1,....UpperRight": {
         "default": [
@@ -2535,7 +2648,8 @@
         "parameter": "UpperRight",
         "type": [
             "GlobalPosition"
-        ]
+        ],
+        "mode": "manual"
     },
     "Grid.ThroatCrossSectionShape": {
         "default": [
@@ -2602,6 +2716,90 @@
             "GlobalPosition"
         ]
     },
+    "Grid.UpstreamPositions0/1/2":{
+        "default": [
+            "-"
+        ],
+        "explanation": [
+            "User-defined additional points in each normal direction in the upstream area of a snappy grid. "
+        ],
+        "group": "Grid",
+        "parameter": "UpstreamPositions0/1/2",
+        "type": [
+            "std::vector<Scalar>"
+        ],
+        "mode": "manual"
+    },
+    "Grid.UpstreamCells0/1/2":{
+        "default": [
+            "-"
+        ],
+        "explanation": [
+            "(The number of the user-defined additional points + 1) in each normal direction in the upstream area of a snappy grid. "
+        ],
+        "group": "Grid",
+        "parameter": "UpstreamCells0/1/2",
+        "type": [
+            "std::vector<Int>"
+        ],
+        "mode": "manual"
+    },
+    "Grid.UpstreamGrading0/1/2":{
+        "default": [
+            "-"
+        ],
+        "explanation": [
+            "Grading factor for the user-defined additional points  in each normal direction in the upstream area of a snappy grid. "
+        ],
+        "group": "Grid",
+        "parameter": "UpstreamCells0/1/2",
+        "type": [
+            "std::vector<Scalar>"
+        ],
+        "mode": "manual"
+    },
+    "Grid.DownstreamPositions0/1/2":{
+        "default": [
+            "-"
+        ],
+        "explanation": [
+            "User-defined additional points in the normal directions in the downstream area of a snappy grid."
+        ],
+        "group": "Grid",
+        "parameter": "DownstreamPositions0/1/2",
+        "type": [
+            "std::vector<Scalar>"
+        ],
+        "mode": "manual"
+    },
+    "Grid.DownstreamCells0/1/2":{
+        "default": [
+            "-"
+        ],
+        "explanation": [
+            "(The number of the user-defined additional points + 1) in each normal direction in the downstream area of a snappy grid. "
+        ],
+        "group": "Grid",
+        "parameter": "DownstreamCells0/1/2",
+        "type": [
+            "std::vector<Int>"
+        ],
+        "mode": "manual"
+    },
+    "Grid.DownstreamGrading0/1/2":{
+        "default": [
+            "-"
+        ],
+        "explanation": [
+            "Grading factor for the user-defined additional points  in each normal direction in the downstream area of a snappy grid. "
+        ],
+        "group": "Grid",
+        "parameter": "DownstreamGrading0/1/2",
+        "type": [
+            "std::vector<Scalar>"
+        ],
+        "mode": "manual"
+    },
     "Grid.Verbosity": {
         "default": [
             "false"
@@ -2613,149 +2811,6 @@
         "parameter": "Verbosity",
         "type": [
             "bool"
-        ]
-    },
-    "GridAdapt.AdaptionInterval": {
-        "default": [
-            "1"
-        ],
-        "explanation": [
-            "The time step interval for adaption"
-        ],
-        "group": "GridAdapt",
-        "parameter": "AdaptionInterval",
-        "type": [
-            "int"
-        ]
-    },
-    "GridAdapt.CoarsenTolerance": {
-        "default": [
-            "0.001"
-        ],
-        "explanation": [
-            "Coarsening threshold to decide whether a cell should be marked for coarsening"
-        ],
-        "group": "GridAdapt",
-        "parameter": "CoarsenTolerance",
-        "type": [
-            "Scalar"
-        ]
-    },
-    "GridAdapt.EnableInitializationIndicator": {
-        "default": [
-            "false"
-        ],
-        "explanation": [
-            "Whether to use initial grid adaption"
-        ],
-        "group": "GridAdapt",
-        "parameter": "EnableInitializationIndicator",
-        "type": [
-            "bool"
-        ]
-    },
-    "GridAdapt.EnableMultiPointFluxApproximation": {
-        "default": [
-            "true"
-        ],
-        "explanation": [
-            "Whether to enable mpfa on hanging nodes"
-        ],
-        "group": "GridAdapt",
-        "parameter": "EnableMultiPointFluxApproximation",
-        "type": [
-            "bool"
-        ]
-    },
-    "GridAdapt.MaxInteractionVolumes": {
-        "default": [
-            "4"
-        ],
-        "explanation": [
-            "The maximum number of interaction volumes considered"
-        ],
-        "group": "GridAdapt",
-        "parameter": "MaxInteractionVolumes",
-        "type": [
-            "int"
-        ]
-    },
-    "GridAdapt.MaxLevel": {
-        "default": [
-            "1"
-        ],
-        "explanation": [
-            "The maximum allowed level"
-        ],
-        "group": "GridAdapt",
-        "parameter": "MaxLevel",
-        "type": [
-            "int"
-        ]
-    },
-    "GridAdapt.MinLevel": {
-        "default": [
-            "0"
-        ],
-        "explanation": [
-            "The minimum allowed level"
-        ],
-        "group": "GridAdapt",
-        "parameter": "MinLevel",
-        "type": [
-            "int"
-        ]
-    },
-    "GridAdapt.RefineAtDirichletBC": {
-        "default": [
-            "false"
-        ],
-        "explanation": [
-            "To switch for refinement at Dirichlet BCs"
-        ],
-        "group": "GridAdapt",
-        "parameter": "RefineAtDirichletBC",
-        "type": [
-            "bool"
-        ]
-    },
-    "GridAdapt.RefineAtFluxBC": {
-        "default": [
-            "false"
-        ],
-        "explanation": [
-            "To switch for refinement at Neumann BCs"
-        ],
-        "group": "GridAdapt",
-        "parameter": "RefineAtFluxBC",
-        "type": [
-            "bool"
-        ]
-    },
-    "GridAdapt.RefineAtSource": {
-        "default": [
-            "false"
-        ],
-        "explanation": [
-            "To switch for refinement at sources"
-        ],
-        "group": "GridAdapt",
-        "parameter": "RefineAtSource",
-        "type": [
-            "bool"
-        ]
-    },
-    "GridAdapt.RefineTolerance": {
-        "default": [
-            "0.05"
-        ],
-        "explanation": [
-            "Coarsening threshold to decide whether a cell should be marked for refinement"
-        ],
-        "group": "GridAdapt",
-        "parameter": "RefineTolerance",
-        "type": [
-            "Scalar"
         ]
     },
     "InvasionState.AccuracyCriterion": {
@@ -2873,7 +2928,8 @@
         "parameter": "GMResRestart",
         "type": [
             "int"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.MaxIterations": {
         "default": [
@@ -2886,7 +2942,8 @@
         "parameter": "MaxIterations",
         "type": [
             "int"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.MaxOrthogonalizationVectors": {
         "default": [
@@ -2899,7 +2956,8 @@
         "parameter": "MaxOrthogonalizationVectors",
         "type": [
             "int"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.AmgAccumulationMode": {
         "default": [
@@ -2912,7 +2970,8 @@
         "parameter": "Preconditioner.AmgAccumulationMode",
         "type": [
             "std::string"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.AmgAdditive": {
         "default": [
@@ -2925,7 +2984,8 @@
         "parameter": "Preconditioner.AmgAdditive",
         "type": [
             "bool"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.AmgAlpha": {
         "default": [
@@ -2938,7 +2998,8 @@
         "parameter": "Preconditioner.AmgAlpha",
         "type": [
             "double"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.AmgBeta": {
         "default": [
@@ -2951,7 +3012,8 @@
         "parameter": "Preconditioner.AmgBeta",
         "type": [
             "double"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.AmgCoarsenTarget": {
         "default": [
@@ -2964,7 +3026,8 @@
         "parameter": "Preconditioner.AmgCoarsenTarget",
         "type": [
             "int"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.AmgCriterionSymmetric": {
         "default": [
@@ -2977,7 +3040,8 @@
         "parameter": "Preconditioner.AmgCriterionSymmetric",
         "type": [
             "bool"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.AmgDefaultAggregationDimension": {
         "default": [
@@ -2990,7 +3054,8 @@
         "parameter": "Preconditioner.AmgDefaultAggregationDimension",
         "type": [
             "std::size_t"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.AmgDefaultAggregationSizeMode": {
         "default": [
@@ -3003,7 +3068,8 @@
         "parameter": "Preconditioner.AmgDefaultAggregationSizeMode",
         "type": [
             "std::string"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.AmgDiagonalRowIndex": {
         "default": [
@@ -3016,7 +3082,8 @@
         "parameter": "Preconditioner.AmgDiagonalRowIndex",
         "type": [
             "int"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.AmgGamma": {
         "default": [
@@ -3029,7 +3096,8 @@
         "parameter": "Preconditioner.AmgGamma",
         "type": [
             "std::size_t"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.AmgMaxAggregateDistance": {
         "default": [
@@ -3042,7 +3110,8 @@
         "parameter": "Preconditioner.AmgMaxAggregateDistance",
         "type": [
             "std::size_t"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.AmgMaxAggregateSize": {
         "default": [
@@ -3055,7 +3124,8 @@
         "parameter": "Preconditioner.AmgMaxAggregateSize",
         "type": [
             "std::size_t"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.AmgMaxLevel": {
         "default": [
@@ -3068,7 +3138,8 @@
         "parameter": "Preconditioner.AmgMaxLevel",
         "type": [
             "int"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.AmgMinAggregateSize": {
         "default": [
@@ -3081,7 +3152,8 @@
         "parameter": "Preconditioner.AmgMinAggregateSize",
         "type": [
             "std::size_t"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.AmgMinCoarseningRate": {
         "default": [
@@ -3094,7 +3166,8 @@
         "parameter": "Preconditioner.AmgMinCoarseningRate",
         "type": [
             "int"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.AmgPostSmoothingSteps": {
         "default": [
@@ -3107,7 +3180,8 @@
         "parameter": "Preconditioner.AmgPostSmoothingSteps",
         "type": [
             "std::size_t"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.AmgPreSmoothingSteps": {
         "default": [
@@ -3120,7 +3194,8 @@
         "parameter": "Preconditioner.AmgPreSmoothingSteps",
         "type": [
             "std::size_t"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.AmgProlongationDampingFactor": {
         "default": [
@@ -3133,7 +3208,8 @@
         "parameter": "Preconditioner.AmgProlongationDampingFactor",
         "type": [
             "double"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.AmgSmootherIterations": {
         "default": [
@@ -3146,7 +3222,8 @@
         "parameter": "Preconditioner.AmgSmootherIterations",
         "type": [
             "int"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.AmgSmootherRelaxation": {
         "default": [
@@ -3158,8 +3235,9 @@
         "group": "LinearSolver",
         "parameter": "Preconditioner.AmgSmootherRelaxation",
         "type": [
-            "typename SmootherArgs::RelaxationFactor"
-        ]
+            "SmootherArgs::RelaxationFactor"
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.AmgStrengthMeasure": {
         "default": [
@@ -3172,7 +3250,8 @@
         "parameter": "Preconditioner.AmgStrengthMeasure",
         "type": [
             "std::string"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.DetermineRelaxationFactor": {
         "default": [
@@ -3185,7 +3264,8 @@
         "parameter": "Preconditioner.DetermineRelaxationFactor",
         "type": [
             "bool"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.DirectSolverForA": {
         "default": [
@@ -3198,7 +3278,8 @@
         "parameter": "Preconditioner.DirectSolverForA",
         "type": [
             "bool"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.ILUOrder": {
         "default": [
@@ -3211,7 +3292,8 @@
         "parameter": "Preconditioner.ILUOrder",
         "type": [
             "int"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.ILUResort": {
         "default": [
@@ -3224,7 +3306,8 @@
         "parameter": "Preconditioner.ILUResort",
         "type": [
             "bool"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.Iterations": {
         "default": [
@@ -3237,7 +3320,8 @@
         "parameter": "Preconditioner.Iterations",
         "type": [
             "int"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.PowerLawIterations": {
         "default": [
@@ -3250,7 +3334,8 @@
         "parameter": "Preconditioner.PowerLawIterations",
         "type": [
             "std::size_t"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.Relaxation": {
         "default": [
@@ -3263,7 +3348,8 @@
         "parameter": "Preconditioner.Relaxation",
         "type": [
             "double"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.Type": {
         "default": [
@@ -3276,7 +3362,8 @@
         "parameter": "Preconditioner.Type",
         "type": [
             "std::string"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Preconditioner.Verbosity": {
         "default": [
@@ -3289,7 +3376,8 @@
         "parameter": "Preconditioner.Verbosity",
         "type": [
             "int"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.ResidualReduction": {
         "default": [
@@ -3302,7 +3390,8 @@
         "parameter": "ResidualReduction",
         "type": [
             "double"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Restart": {
         "default": [
@@ -3315,7 +3404,8 @@
         "parameter": "Restart",
         "type": [
             "int"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.Type": {
         "default": [
@@ -3325,10 +3415,11 @@
             "The type of linear solver, e.g. restartedflexiblegmressolver or uzawa"
         ],
         "group": "LinearSolver",
-        "parameter": "type",
+        "parameter": "Type",
         "type": [
             "std::string"
-        ]
+        ],
+        "mode": "manual"
     },
     "LinearSolver.UMFPackOrdering": {
         "default": [
@@ -3406,85 +3497,8 @@
         "parameter": "PriVarNamesState...",
         "type": [
             "std::vector<std::string>"
-        ]
-    },
-    "LoadSolution.PriVarNamesState1": {
-        "default": [
-            "-"
         ],
-        "explanation": [
-            "Primary variable names state, e.g. p_liq x^N2_liq"
-        ],
-        "group": "LoadSolution",
-        "parameter": "PriVarNamesState1",
-        "type": [
-            "std::vector<std::string>"
-        ]
-    },
-    "LoadSolution.PriVarNamesState2": {
-        "default": [
-            "-"
-        ],
-        "explanation": [
-            "Primary variable names state, e.g. p_liq x^H2O_gas"
-        ],
-        "group": "LoadSolution",
-        "parameter": "PriVarNamesState2",
-        "type": [
-            "std::vector<std::string>"
-        ]
-    },
-    "MPFA.CalcVelocityInTransport": {
-        "default": [
-            "-"
-        ],
-        "explanation": [
-            "Indicates if velocity is reconstructed in the pressure step or in the transport step"
-        ],
-        "group": "MPFA",
-        "parameter": "CalcVelocityInTransport",
-        "type": [
-            "bool"
-        ]
-    },
-    "MPFA.EnableComplexLStencil": {
-        "default": [
-            "true"
-        ],
-        "explanation": [
-            "Whether to enable the two non-centered flux stencils"
-        ],
-        "group": "MPFA",
-        "parameter": "EnableComplexLStencil",
-        "type": [
-            "bool"
-        ]
-    },
-    "MPFA.EnableSimpleLStencil": {
-        "default": [
-            "true"
-        ],
-        "explanation": [
-            "Whether to enable the two centered flux stencils"
-        ],
-        "group": "MPFA",
-        "parameter": "EnableSimpleLStencil",
-        "type": [
-            "bool"
-        ]
-    },
-    "MPFA.EnableTPFA": {
-        "default": [
-            "false"
-        ],
-        "explanation": [
-            "Whether to enable the use of TPFA if neighboring cells are of the same grid level"
-        ],
-        "group": "MPFA",
-        "parameter": "EnableTPFA",
-        "type": [
-            "bool"
-        ]
+        "mode": "manual"
     },
     "MPFA.Q": {
         "default": [
@@ -3499,31 +3513,19 @@
             "CoordScalar"
         ]
     },
-    "MPFA.TransmissibilityCriterion": {
+    "MPFA.ZeroEffectiveDiffusionCoefficientThreshold": {
         "default": [
-            "0"
+            "1e-16"
         ],
         "explanation": [
             ""
         ],
         "group": "MPFA",
-        "parameter": "TransmissibilityCriterion",
-        "type": [
-            "int"
-        ]
-    },
-    "MPFA.TransmissibilityCriterionThreshold": {
-        "default": [
-            "1e-8"
-        ],
-        "explanation": [
-            ""
-        ],
-        "group": "MPFA",
-        "parameter": "TransmissibilityCriterionThreshold",
+        "parameter": "ZeroEffectiveDiffusionCoefficientThreshold",
         "type": [
             "Scalar"
-        ]
+        ],
+        "mode": "manual"
     },
     "MatrixConverter.DeletePatternEntriesBelowAbsThreshold": {
         "default": [
@@ -3586,6 +3588,97 @@
         ],
         "group": "MixedDimension",
         "parameter": "NumCircleSegments",
+        "type": [
+            "int"
+        ]
+    },
+    "MixedDimension.Projection.ConsiderFacesWithinBoundingBoxCoupled": {
+        "default": [
+            "false"
+        ],
+        "explanation": [
+            "determines if all 3D boundary facets within the mesh bounding box should be consideres as coupling "
+        ],
+        "group": "MixedDimension",
+        "parameter": "Projection.CoupledAngleFactor",
+        "type": [
+            "bool"
+        ]
+    },
+    "MixedDimension.Projection.CoupledAngleFactor": {
+        "default": [
+            "0.3"
+        ],
+        "explanation": [
+            "angle threshold in which to search for coupled elements (angle in radians from surface normal vector)"
+        ],
+        "group": "MixedDimension",
+        "parameter": "Projection.CoupledAngleFactor",
+        "type": [
+            "Scalar"
+        ]
+    },
+    "MixedDimension.Projection.CoupledBoundingBoxShrinkingFactor": {
+        "default": [
+            "1e-2"
+        ],
+        "explanation": [
+            "if ConsiderFacesWithinBoundingBoxCoupled=true shrink the bounding box in all directions by this factor"
+        ],
+        "group": "MixedDimension",
+        "parameter": "Projection.CoupledBoundingBoxShrinkingFactor",
+        "type": [
+            "Scalar"
+        ]
+    },
+    "MixedDimension.Projection.CoupledRadiusFactor": {
+        "default": [
+            "0.1"
+        ],
+        "explanation": [
+            "threshold distance in which to search for coupled elements (specified as multiple of radius)"
+        ],
+        "group": "MixedDimension",
+        "parameter": "Projection.CoupledRadiusFactor",
+        "type": [
+            "Scalar"
+        ]
+    },
+    "MixedDimension.Projection.EnableIntersectionOutput": {
+        "default": [
+            "-"
+        ],
+        "explanation": [
+            "set to true to enable debug VTK output for intersections"
+        ],
+        "group": "MixedDimension",
+        "parameter": "Projection.EnableIntersectionOutput",
+        "type": [
+            "bool"
+        ]
+    },
+    "MixedDimension.Projection.EstimateNumberOfPointSources": {
+        "default": [
+            "-"
+        ],
+        "explanation": [
+            "provide an estimate for the expected number of coupling points for memory allocation"
+        ],
+        "group": "MixedDimension",
+        "parameter": "Projection.EstimateNumberOfPointSources",
+        "type": [
+            "int"
+        ]
+    },
+    "MixedDimension.Projection.SimplexIntegrationRefine": {
+        "default": [
+            "-"
+        ],
+        "explanation": [
+            "The number of virtual refinement steps to determine coupled surface area."
+        ],
+        "group": "MixedDimension",
+        "parameter": "Projection.SimplexIntegrationRefine",
         "type": [
             "int"
         ]
@@ -4240,19 +4333,6 @@
             "Scalar"
         ]
     },
-    "SpatialParams.MinBoundaryPermeability": {
-        "default": [
-            "-"
-        ],
-        "explanation": [
-            "The minimum permeability"
-        ],
-        "group": "SpatialParams",
-        "parameter": "MinBoundaryPermeability",
-        "type": [
-            "Scalar"
-        ]
-    },
     "SpatialParams.Permeability": {
         "default": [
             "-"
@@ -4301,6 +4381,19 @@
         ],
         "group": "SpatialParams",
         "parameter": "Tortuosity",
+        "type": [
+            "Scalar"
+        ]
+    },
+    "SpatialParams.Temperature": {
+        "default": [
+            "-"
+        ],
+        "explanation": [
+            "The temperature"
+        ],
+        "group": "SpatialParams",
+        "parameter": "Temperature",
         "type": [
             "Scalar"
         ]
@@ -4368,19 +4461,6 @@
         "parameter": "CoordPrecision",
         "type": [
             "std::string"
-        ]
-    },
-    "Vtk.OutputLevel": {
-        "default": [
-            "-"
-        ],
-        "explanation": [
-            "in sequential models: indicates which values the VTK output contains, e.g. if the OutputLevel is zero, only primary variables are written"
-        ],
-        "group": "Vtk",
-        "parameter": "OutputLevel",
-        "type": [
-            "int"
         ]
     },
     "Vtk.Precision": {
