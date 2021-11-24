@@ -125,14 +125,6 @@ public:
      */
     // \{
 
-    /*!
-     * \brief Returns the temperature within the domain [K].
-     *
-     * This problem assumes a temperature of 20 degrees Celsius.
-     */
-    Scalar temperature() const
-    { return 273.15 + 20; } // in [K]
-
     // \}
 
     /*!

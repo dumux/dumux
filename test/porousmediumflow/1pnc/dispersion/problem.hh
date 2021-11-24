@@ -128,14 +128,6 @@ public:
     }
 
     /*!
-     * \brief Returns the temperature within the domain [K].
-     *
-     * This problem assumes a temperature of 20 degrees Celsius.
-     */
-    Scalar temperature() const
-    { return 273.15 + 20; } // in [K]
-
-    /*!
      * \brief The problem name.
      */
     const std::string& name() const
@@ -173,7 +165,7 @@ public:
         {
             values[contiN2EqIdx] =  boundaryConcentration_;
 #if NONISOTHERMAL
-            values[energyEqIdx] = temperature() + temperatureDifference_;
+            values[energyEqIdx] = this->spatialParams().temperatureAtPos(globalPos) + temperatureDifference_;
 #endif
         }
 
@@ -231,7 +223,7 @@ public:
         PrimaryVariables values;
 
         GetPropType<TypeTag, Properties::FluidState> fluidState;
-        fluidState.setTemperature(temperature());
+        fluidState.setTemperature(this->spatialParams().temperatureAtPos(globalPos));
         fluidState.setPressure(0, pressure_);
         Scalar density = FluidSystem::density(fluidState, 0);
         const Scalar depth = this->gridGeometry().bBoxMax()[1] - globalPos[1];
@@ -240,7 +232,7 @@ public:
         values[Indices::pressureIdx] = pressure_ - (density * gravity * depth); //initial condition for the pressure
         values[contiN2EqIdx] = 0.0; //initial condition for the molefraction
 #if NONISOTHERMAL
-        values[energyEqIdx] = temperature();
+        values[energyEqIdx] = this->spatialParams().temperatureAtPos(globalPos);
 #endif
         return values;
     }
