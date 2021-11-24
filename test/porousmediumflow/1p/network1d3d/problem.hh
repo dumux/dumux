@@ -102,31 +102,6 @@ public:
         return name_;
     }
 
-    /*!
-     * \brief Returns the temperature within the domain in [K].
-     *
-     */
-    Scalar temperature() const
-    { return 273.15 + 37.0; } // Body temperature
-
-    /*!
-     * \brief Returns how much the domain is extruded at a given sub-control volume.
-     *
-     * This means the factor by which a lower-dimensional (1D or 2D)
-     * entity needs to be expanded to get a full dimensional cell. The
-     * default is 1.0 which means that 1D problems are actually
-     * thought as pipes with a cross section of 1 m^2 and 2D problems
-     * are assumed to extend 1 m to the back.
-     */
-    template<class ElementSolution>
-    Scalar extrusionFactor(const Element &element,
-                           const SubControlVolume &scv,
-                           const ElementSolution& elemSol) const
-    {
-        const auto radius = this->spatialParams().radius(scv);
-        return M_PI*radius*radius;
-    }
-
     // \}
     /*!
      * \name Boundary conditions
