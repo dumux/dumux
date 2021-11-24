@@ -88,7 +88,6 @@ public:
         pressureHigh_       = getParam<Scalar>("Problem.PressureHigh");
         temperatureLow_     = getParam<Scalar>("Problem.TemperatureLow");
         temperatureHigh_    = getParam<Scalar>("Problem.TemperatureHigh");
-        temperature_        = getParam<Scalar>("Problem.InitialTemperature");
 
         name_               = getParam<std::string>("Problem.Name");
 
@@ -113,14 +112,6 @@ public:
      */
     const std::string& name() const
     { return name_; }
-
-    /*!
-     * \brief Returns the temperature within the domain.
-     *
-     * This problem assumes a temperature of 10 degrees Celsius.
-     */
-    Scalar temperature() const
-    { return temperature_; }
 
     //! \copydoc Dumux::FVProblem::source()
     NumEqVector source(const Element &element,
@@ -181,7 +172,7 @@ public:
             priVars[Indices::switchIdx] = 0.3;//Sw for bothPhases
             priVars[Indices::switchIdx+1] = pO2Inlet_/4.315e9; //moleFraction xlO2 for bothPhases
 #ifdef NONISOTHERMAL
-            priVars[Indices::temperatureIdx] = 293.15;
+            priVars[Indices::temperatureIdx] = this->spatialParams().temperatureAtPos(globalPos);
 #endif
         }
 
@@ -276,7 +267,7 @@ private:
         priVars[Indices::switchIdx] = 0.3;//Sw for bothPhases
         priVars[Indices::switchIdx+1] = pO2Inlet_/4.315e9; //moleFraction xlO2 for bothPhases
 #ifdef NONISOTHERMAL
-        priVars[Indices::temperatureIdx] = 293.15;
+        priVars[Indices::temperatureIdx] = this->spatialParams().temperatureAtPos(globalPos);
 #endif
 
         return priVars;
@@ -288,7 +279,6 @@ private:
     bool inReactionLayer_(const GlobalPosition& globalPos) const
     { return globalPos[1] < 0.1*(this->gridGeometry().bBoxMax()[1] - this->gridGeometry().bBoxMin()[1]) + eps_; }
 
-    Scalar temperature_;
     static constexpr Scalar eps_ = 1e-6;
     int nTemperature_;
     int nPressure_;

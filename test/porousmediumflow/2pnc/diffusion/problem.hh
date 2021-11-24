@@ -95,12 +95,6 @@ public:
     const std::string& name() const
     { return name_; }
 
-    /*!
-     * \brief Returns the temperature [K]
-     */
-    Scalar temperature() const
-    { return 293.15; }
-
     // \}
 
     /*!
@@ -192,7 +186,6 @@ private:
         return priVars;
     }
 
-    Scalar temperature_;
     static constexpr Scalar eps_ = 1e-6;
 
    std::string name_ ;

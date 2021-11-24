@@ -27,7 +27,7 @@
 #define DUMUX_TWOPNC_DIFFUSION_SPATIAL_PARAMS_HH
 
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 
 namespace Dumux {
@@ -38,12 +38,12 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class TwoPNCDiffusionSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
-                         TwoPNCDiffusionSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
+                                       TwoPNCDiffusionSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar,
-                                       TwoPNCDiffusionSpatialParams<GridGeometry, Scalar>>;
+    using ThisType = TwoPNCDiffusionSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar, ThisType>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
@@ -101,6 +101,15 @@ public:
     template<class FluidSystem>
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
     { return FluidSystem::H2OIdx; }
+
+    /*!
+     * \brief Returns the temperature in the domain at the given position
+     * \param globalPos The position in global coordinates where the temperature should be specified.
+     */
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    {
+        return 293.15;
+    }
 
 private:
     DimWorldMatrix K_;
