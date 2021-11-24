@@ -491,15 +491,19 @@ public:
      * \param fluidState An abitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      *
-     * \todo TODO: For the thermal conductivity of the phases the contribution of
-     *       NaCl is neglected. This contribution is probably not big, but somebody
-     *       would have to find out its influence.
+     * The thermal conductivity of brine is implemented based on the contribution of NaCl ($\lambda_{brine}$/$\lambda_{H_2O}$) of \cite{Yusufova1975} https://link.springer.com/content/pdf/10.1007/BF00867119.pdf, also discussed in \cite{Ozbek1980} https://docecity.com/thermal-conductivity-of-aqueous-sodium-chloride-acs-publicat-5f10766acba00.html
      */
     template <class FluidState>
     static Scalar thermalConductivity(const FluidState& fluidState, int phaseIdx)
     {
         if (phaseIdx == liquidPhaseIdx)
-            return H2O::liquidThermalConductivity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
+        {
+            Scalar tempC = fluidState.temperature(phaseIdx)-273.15;
+            Scalar m = fluidState.molefraction(phaseIdx, NaClIdx)/(molarMass(H2OIdx)*(1- fluidState.molefraction(phaseIdx, NaClIdx))); // molality of NaCl
+            Scalar S = 5844.3 * m / (1000 + 58.443 *m);
+            Scalar contribNaClFactor = 1.0 - (2.3434e-3 - 7.924e-6*tempC + 3.924e-8*tempC*tempC)*S + (1.06e-5 - 2.0e-8*tempC + 1.2e-10*tempC*tempC)*S*S;
+            return contribNaClFactor * H2O::liquidThermalConductivity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
+        }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index: " << phaseIdx);
     }
 
