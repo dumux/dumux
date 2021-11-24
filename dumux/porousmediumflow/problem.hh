@@ -62,20 +62,20 @@ public:
      * calls temperature().
      *
      * \param globalPos The position in global coordinates where the temperature should be specified.
+     * \note The deprecation helper int was introduced to facilitate the deprecation phase, by checking
+     *       if users have overloaded this function.
      */
     [[deprecated("temperature should now be defined in the spatial params with temperature(globalPos)")]]
-    Scalar temperatureAtPos(const GlobalPosition &globalPos) const
+    Scalar temperatureAtPos(const GlobalPosition &globalPos, int deprecationHelper = 0) const
     { return this->asImp_().temperature(); }
 
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ for an isothermal problem.
-     *
-     * This is not specific to the discretization. By default it just
-     * throws an exception so it must be overloaded by the problem if
-     * no energy equation is used.
+     * \note The deprecation helper int was introduced to facilitate the deprecation phase, by checking
+     *       if users have overloaded this function.
      */
     [[deprecated("temperature should now be defined in the spatial params with temperature(globalPos)")]]
-    Scalar temperature() const
+    Scalar temperature(int deprecationHelper = 0) const
     {
         DUNE_THROW(Dune::NotImplemented, "temperature() method not implemented by the user problem");
     }
