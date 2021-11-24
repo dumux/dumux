@@ -24,7 +24,7 @@
 #ifndef DUMUX_TEST_SOLIDENERGY_SPATIAL_PARAMS_HH
 #define DUMUX_TEST_SOLIDENERGY_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams1p.hh>
 
 namespace Dumux {
 
@@ -34,12 +34,12 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class SolidEnergySpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar,
-                             SolidEnergySpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
+                                         SolidEnergySpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
-                                           SolidEnergySpatialParams<GridGeometry, Scalar>>;
+    using ParentType = FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
+                                                       SolidEnergySpatialParams<GridGeometry, Scalar>>;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -50,7 +50,6 @@ public:
 
     /*!
      * \brief Define the porosity \f$\mathrm{[-]}\f$.
-     *
      * \param globalPos The global position
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
