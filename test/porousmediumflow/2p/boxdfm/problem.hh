@@ -74,26 +74,6 @@ public:
     {}
 
     /*!
-     * \brief Returns how much the domain is extruded at a given sub-control volume.
-     *
-     * Here, we extrude the fracture scvs by half the aperture
-     */
-    template<class ElementSolution>
-    Scalar extrusionFactor(const Element& element,
-                           const SubControlVolume& scv,
-                           const ElementSolution& elemSol) const
-    {
-        // In the box-scheme, we compute fluxes etc element-wise,
-        // thus per element we compute only half a fracture !!!
-        static const Scalar aHalf = getParam<Scalar>("SpatialParams.FractureAperture")/2.0;
-
-        if (scv.isOnFracture())
-            return aHalf;
-
-        return 1.0;
-    }
-
-    /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment
      *
@@ -147,8 +127,6 @@ public:
         return values;
     }
 
-    //! Returns the temperature \f$\mathrm{[K]}\f$ for an isothermal problem.
-    Scalar temperature() const { return 293.15; /* 10°C */ }
 };
 
 } // end namespace Dumux

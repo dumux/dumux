@@ -74,11 +74,7 @@ public:
         return values;
     }
 
-    /*!
-     * \brief The temperature \f$\mathrm{[K]}\f$ in the domain
-     */
-    Scalar temperature() const
-    { return 293.15; }
+
 };
 
 } // end namespace Dumux
