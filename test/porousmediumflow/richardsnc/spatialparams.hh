@@ -25,7 +25,7 @@
 #ifndef DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
 #define DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
 
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 
 #include <dumux/porousmediumflow/richards/model.hh>
@@ -39,12 +39,12 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class RichardsWellTracerSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
-                         RichardsWellTracerSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumSpatialParamsMP<GridGeometry, Scalar,
+                                       RichardsWellTracerSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar,
-                                       RichardsWellTracerSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = FVPorousMediumSpatialParamsMP<GridGeometry, Scalar,
+                                                     RichardsWellTracerSpatialParams<GridGeometry, Scalar>>;
 
     enum { dimWorld=GridView::dimensionworld };
     using Element = typename GridView::template Codim<0>::Entity;
@@ -104,6 +104,14 @@ public:
         else
             return makeFluidMatrixInteraction(outerPcKrSwCurve_);
     }
+
+    /*!
+     * \brief Returns the temperature [K] at a given location
+     *
+     * \param globalPos The global coordinates for the given location
+     */
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    { return 273.15 + 10.0; }; // -> 10°C
 
 private:
     bool isInLens_(const GlobalPosition &globalPos) const
