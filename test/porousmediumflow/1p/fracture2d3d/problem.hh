@@ -86,16 +86,6 @@ public:
     }
 
     /*!
-     * \brief Returns the temperature \f$ K \f$
-     *
-     * This problem assumes a uniform temperature of 20 degrees Celsius.
-     */
-    Scalar temperature() const
-    { return 273.15 + 20; }
-
-    // \}
-
-    /*!
      * \name Boundary conditions
      */
     // \{
