@@ -17,3 +17,4 @@ SmoothedLinearLawPe = 0.0
 SmoothedLinearLawPcMax = 0.0
 SmoothedLinearLawKrLowS = 0.05
 SmoothedLinearLawKrHighS = 0.95
+Temperature = 298.15
