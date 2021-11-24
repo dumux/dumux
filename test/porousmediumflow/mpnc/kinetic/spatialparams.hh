@@ -27,7 +27,7 @@
 #define DUMUX_EVAPORATION_ATMOSPHERE_SPATIALPARAMS_HH
 
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/material/spatialparams/fvnonequilibrium.hh>
+#include <dumux/porousmediumflow/fvspatialparamsnonequilibrium.hh>
 
 #include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
@@ -48,15 +48,15 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class EvaporationAtmosphereSpatialParams
-: public FVNonEquilibriumSpatialParams<GridGeometry, Scalar,
-                                       EvaporationAtmosphereSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsNonEquilibrium<GridGeometry, Scalar,
+                                                   EvaporationAtmosphereSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
     using ThisType = EvaporationAtmosphereSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVNonEquilibriumSpatialParams<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumFlowSpatialParamsNonEquilibrium<GridGeometry, Scalar, ThisType>;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 

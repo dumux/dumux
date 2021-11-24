@@ -10,6 +10,7 @@ Cells = 24 16
 Swr = 0.2
 BrooksCoreyPcEntry = 1e4
 BrooksCoreyLambda = 2.0
+Temperature = 298.15
 
 [LinearSolver]
 ResidualReduction = 1e-12
