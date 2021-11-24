@@ -28,7 +28,7 @@
 #if HAVE_OPM_GRID
 #include <opm/parser/eclipse/Deck/Deck.hpp>
 
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 
 namespace Dumux {
@@ -39,14 +39,14 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class TwoPCornerPointTestSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar, TwoPCornerPointTestSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar, TwoPCornerPointTestSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using ThisType = TwoPCornerPointTestSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar, ThisType>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -155,6 +155,7 @@ public:
         int eIdx = this->gridGeometry().gridView().indexSet().index(element);
         return porosity_[eIdx];
     }
+
 
     /*!
      * \brief Returns the parameter object for the material law.

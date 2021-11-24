@@ -27,7 +27,7 @@
 
 #include <dumux/discretization/method.hh>
 
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 
 #include <dumux/porousmediumflow/2p/boxmaterialinterfaces.hh>
@@ -40,10 +40,10 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class TwoPTestSpatialParams
-: public FVSpatialParams< GridGeometry, Scalar, TwoPTestSpatialParams<GridGeometry, Scalar> >
+: public FVPorousMediumFlowSpatialParamsMP< GridGeometry, Scalar, TwoPTestSpatialParams<GridGeometry, Scalar> >
 {
     using ThisType = TwoPTestSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar, ThisType>;
 
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -66,6 +66,23 @@ public:
     {}
 
     /*!
+     * \brief Returns how much the domain is extruded at a given sub-control volume.
+     *        Here, we extrude the fracture scvs by half the aperture
+     */
+    template<class ElementSolution>
+    Scalar extrusionFactor(const Element& element,
+                           const SubControlVolume& scv,
+                           const ElementSolution& elemSol) const
+    {
+        // In the box-scheme, we compute fluxes etc element-wise,
+        // thus per element we compute only half a fracture !!!
+        static const Scalar aHalf = getParam<Scalar>("SpatialParams.FractureAperture")/2.0;
+        if (scv.isOnFracture())
+            return aHalf;
+        return 1.0;
+    }
+
+    /*!
      * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
      *        In this test, we use element-wise distributed permeabilities.
      *
@@ -84,6 +101,7 @@ public:
         else
             return 1e-12;
     }
+
 
     /*!
      * \brief Returns the porosity \f$[-]\f$
