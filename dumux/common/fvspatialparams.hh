@@ -90,6 +90,18 @@ public:
     }
 
     /*!
+     * \brief Return the temperature in the given sub-control volume.
+     */
+    template<class ElementSolution>
+    Scalar temperature(const Element& element,
+                       const SubControlVolume& scv,
+                       const ElementSolution& elemSol) const
+    {
+        // forward to generic interface
+        return asImp_().temperatureAtPos(scv.center());
+    }
+
+    /*!
      * \brief Return the temperature in the domain at the given position
      * \param globalPos The position in global coordinates where the temperature should be specified.
      */

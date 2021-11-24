@@ -83,17 +83,21 @@ template<class ModelTraits>
 static constexpr bool hasEnableThermalDispersion()
 { return Dune::Std::is_detected<HasEnableThermalDispersionDetector, ModelTraits>::value; }
 
-template<class SpatialParams, class GlobalPosition>
-using HasTemperatureDetector = decltype(std::declval<SpatialParams>().temperatureAtPos(std::declval<GlobalPosition>()));
+template<class SpatialParams, class Element, class Scv, class ElemSol>
+using HasTemperatureDetector = decltype(std::declval<SpatialParams>().temperature(
+    std::declval<Element>(),
+    std::declval<Scv>(),
+    std::declval<ElemSol>()
+));
 
-template<typename Problem, typename GlobalPosition>
-decltype(auto) temperature(const Problem& problem, const GlobalPosition& globalPos)
+template<typename Problem, typename Element, typename Scv, typename ElemSol>
+decltype(auto) temperature(const Problem& problem, const Element& element, const Scv& scv, const ElemSol& elemSol)
 {
     using SpatialParams = std::decay_t<decltype(problem.spatialParams())>;
-    if constexpr (Dune::Std::is_detected<HasTemperatureDetector, SpatialParams, GlobalPosition>::value)
-        return problem.spatialParams().temperatureAtPos(globalPos);
+    if constexpr (Dune::Std::is_detected<HasTemperatureDetector, SpatialParams, Element, Scv, ElemSol>::value)
+        return problem.spatialParams().temperature(element, scv, elemSol);
     else
-        return problem.temperatureAtPos(globalPos);
+        return problem.temperatureAtPos(scv.dofPosition());
 }
 
 template<class SpatialParams, class Element, class SubControlVolume, class ElementSolution>
