@@ -104,18 +104,6 @@ public:
     {
         return PrimaryVariables(1.0e5);
     }
-
-    /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ for an isothermal problem.
-     *
-     * This is not specific to the discretization. By default it just
-     * throws an exception so it must be overloaded by the problem if
-     * no energy equation is used.
-     */
-    Scalar temperature() const
-    {
-        return 283.15; // 10°C
-    }
 };
 
 } // end namespace Dumux

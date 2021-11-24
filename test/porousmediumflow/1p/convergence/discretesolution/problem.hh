@@ -133,14 +133,6 @@ public:
     }
 
     /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ for an isothermal problem.
-     */
-    Scalar temperature() const
-    {
-        return 283.15;
-    }
-
-    /*!
      * \brief Returns the exact solution at a position.
      * \param globalPos The center of the finite volume for which it is to be set.
      */
