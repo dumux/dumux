@@ -604,13 +604,15 @@ public:
 
         if (phaseIdx == liquidPhaseIdx)
             return Brine::enthalpy(BrineAdapter<FluidState>(fluidState), Brine::liquidPhaseIdx);
-        else
+        else if  (phaseIdx == gasPhaseIdx)
         {
             // This assumes NaCl not to be present in the gas phase
             const Scalar XAir = fluidState.massFraction(gasPhaseIdx, AirIdx);
             const Scalar XH2O = fluidState.massFraction(gasPhaseIdx, H2OIdx);
             return XH2O*H2O::gasEnthalpy(T, p) + XAir*Air::gasEnthalpy(T, p);
         }
+
+        DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
    /*!
@@ -647,17 +649,21 @@ public:
      * \param fluidState An abitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      *
-     * \todo TODO: For the thermal conductivity of the air phase the contribution of the minor
-     *       components is neglected. This contribution is probably not big, but somebody
-     *       would have to find out its influence.
+     * \note We assume an ideal mixture for the gas-phase thermal conductivity, as a first approximation.
+     * In porous media, gas-phase thermal conductivities are negligible, as they are
+     * orders of magnitude lower than the thermal conductivity in solid and liquids (gas: 0.0x compared to solid: x.).
+     * However, moisture can have a significant influce on the thermal conductivity of moist air, see e.g. \cite{Beirao2012},
+     * which could be relevant for free-flow systems.
      */
     template <class FluidState>
     static Scalar thermalConductivity(const FluidState& fluidState, int phaseIdx)
     {
         if (phaseIdx == liquidPhaseIdx)
             return Brine::thermalConductivity(BrineAdapter<FluidState>(fluidState), Brine::liquidPhaseIdx);
+        // This assumes NaCl not to be present in the gas phase
         else if (phaseIdx == gasPhaseIdx)
-            return Air::gasThermalConductivity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
+            return Air::gasThermalConductivity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx)) * fluidState.massFraction(gasPhaseIdx, AirIdx)
+            H2O::gasThermalConductivity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx)) * fluidState.massFraction(gasPhaseIdx, H2OIdx);
 
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
@@ -668,9 +674,9 @@ public:
      * \param fluidState An abitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      *
-     * \todo TODO: The calculation of the isobaric heat capacity is preliminary. A better
-     *       description of the influence of the composition on the air phase property
-     *       has to be found.
+     * \note We assume an ideal mixture for the gas-phase specific isobaric heat capacity, as a first approximation.
+     * In porous media, gas-phase heat capacities are, due to the usually low densities of gases, negligible anyway.
+     * A better implementation might be relevant for free-flow systems.
      */
     using Base::heatCapacity;
     template <class FluidState>
@@ -684,8 +690,8 @@ public:
 
         // We assume NaCl not to be present in the gas phase here
         else if (phaseIdx == gasPhaseIdx)
-            return Air::gasHeatCapacity(T, p)*fluidState.moleFraction(gasPhaseIdx, AirIdx)
-                   + H2O::gasHeatCapacity(T, p)*fluidState.moleFraction(gasPhaseIdx, H2OIdx);
+            return Air::gasHeatCapacity(T, p)*fluidState.massFraction(gasPhaseIdx, AirIdx)
+                   + H2O::gasHeatCapacity(T, p)*fluidState.massFraction(gasPhaseIdx, H2OIdx);
 
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
