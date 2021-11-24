@@ -84,17 +84,44 @@ static constexpr bool hasEnableThermalDispersion()
 { return Dune::Std::is_detected<HasEnableThermalDispersionDetector, ModelTraits>::value; }
 
 template<class SpatialParams, class Element, class Scv, class ElemSol>
-using HasTemperatureDetector = decltype(std::declval<SpatialParams>().temperature(
+using HasNewTemperatureDetector = decltype(std::declval<SpatialParams>().temperature(
     std::declval<Element>(),
     std::declval<Scv>(),
     std::declval<ElemSol>()
 ));
 
+template<class Problem, class GlobalPosition>
+using HasBaseProblemTemperatureAtPosDetector = decltype(std::declval<Problem>().temperatureAtPos(
+    std::declval<GlobalPosition>(), int{}
+));
+
+template<class Problem>
+using HasBaseProblemTemperatureDetector = decltype(std::declval<Problem>().temperature(int{}));
+
 template<typename Problem, typename Element, typename Scv, typename ElemSol>
 decltype(auto) temperature(const Problem& problem, const Element& element, const Scv& scv, const ElemSol& elemSol)
 {
     using SpatialParams = std::decay_t<decltype(problem.spatialParams())>;
-    if constexpr (Dune::Std::is_detected<HasTemperatureDetector, SpatialParams, Element, Scv, ElemSol>::value)
+    using GlobalPosition = std::decay_t<decltype(scv.dofPosition())>;
+
+    static constexpr bool hasBaseProbTempAtPosInterface = Dune::Std::is_detected<
+        HasBaseProblemTemperatureAtPosDetector, Problem, GlobalPosition
+    >::value;
+    static constexpr bool hasBaseProbTempInterface = Dune::Std::is_detected<
+        HasBaseProblemTemperatureDetector, Problem
+    >::value;
+    static constexpr bool spatialParamsHaveNewInterface = Dune::Std::is_detected<
+        HasNewTemperatureDetector, SpatialParams, Element, Scv, ElemSol
+    >::value;
+
+    static constexpr bool problemHasUserDefinedTemperature = !hasBaseProbTempAtPosInterface || !hasBaseProbTempInterface;
+
+    if constexpr (problemHasUserDefinedTemperature && spatialParamsHaveNewInterface)
+        DUNE_THROW(Dune::InvalidStateException,
+                   "Temperature defined both in problem implementation (deprecated interface) and spatial params (new interface). "
+                   "Please move the temperature definition in your problem implementation to your spatial parameters.");
+
+    if constexpr (spatialParamsHaveNewInterface)
         return problem.spatialParams().temperature(element, scv, elemSol);
     else
         return problem.temperatureAtPos(scv.dofPosition());
