@@ -26,7 +26,7 @@
 #define DUMUX_ONEP_ROOTBENCHMARK_SPATIALPARAMS_HH
 
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams1p.hh>
 
 namespace Dumux {
 
@@ -36,15 +36,16 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class RootBenchmarkSpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar,
-                             RootBenchmarkSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
+                                         RootBenchmarkSpatialParams<GridGeometry, Scalar>>
 {
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
-                                           RootBenchmarkSpatialParams<GridGeometry, Scalar>>;
+
+    using ThisType = RootBenchmarkSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -97,6 +98,13 @@ public:
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 1.0; }
+
+    /*!
+     * \brief Returns how much the domain is extruded at a given sub-control volume.
+     * Assume circular cross section with given radius
+     */
+    Scalar extrusionFactorAtPos(const GlobalPosition& globalPos) const
+    { return M_PI*radius_*radius_; }
 
 private:
     Scalar radius_, permeability_, Kx_, Kr_;

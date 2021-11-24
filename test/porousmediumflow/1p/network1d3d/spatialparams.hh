@@ -27,7 +27,7 @@
 #define DUMUX_ONEP_TUBES_TEST_SPATIALPARAMS_HH
 
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams1p.hh>
 
 namespace Dumux {
 
@@ -38,15 +38,16 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class TubesTestSpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar,
-                             TubesTestSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
+                                         TubesTestSpatialParams<GridGeometry, Scalar>>
 {
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
-                                           TubesTestSpatialParams<GridGeometry, Scalar>>;
+
+    using ThisType = TubesTestSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -102,6 +103,24 @@ public:
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 1; }
+
+    /*!
+     * \brief Returns how much the domain is extruded at a given sub-control volume.
+     *
+     * This means the factor by which a lower-dimensional (1D or 2D)
+     * entity needs to be expanded to get a full dimensional cell. The
+     * default is 1.0 which means that 1D problems are actually
+     * thought as pipes with a cross section of 1 m^2 and 2D problems
+     * are assumed to extend 1 m to the back.
+     */
+    template<class ElementSolution>
+    Scalar extrusionFactor(const Element &element,
+                           const SubControlVolume &scv,
+                           const ElementSolution& elemSol) const
+    {
+        const auto radius = this->radius(scv);
+        return M_PI*radius*radius;
+    }
 
 private:
     Scalar radius_, radiusMain_;
