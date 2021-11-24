@@ -26,7 +26,7 @@
 #define DUMUX_STEAMINJECTION_SPATIAL_PARAMS_HH
 
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 
 namespace Dumux {
@@ -36,15 +36,15 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class InjectionProblemSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
-                         InjectionProblemSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
+                                       InjectionProblemSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar,
-                                       InjectionProblemSpatialParams<GridGeometry, Scalar>>;
+    using ThisType = InjectionProblemSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar, ThisType>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
