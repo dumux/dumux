@@ -109,7 +109,7 @@ public:
                            SolidState& solidState)
     {
         // retrieve temperature from solution vector, all phases have the same temperature
-        Scalar T = Deprecated::temperature(problem, scv.dofPosition());
+        Scalar T = Deprecated::temperature(problem, element, scv, elemSol);
         for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
         {
             fluidState.setTemperature(phaseIdx, T);
