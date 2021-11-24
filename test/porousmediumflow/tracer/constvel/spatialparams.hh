@@ -55,10 +55,8 @@ public:
     TracerTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
-#if ENABLEDISPERSION
-        alphaL_ = getParam<Scalar>("Problem.AlphaL");
-        alphaT_ = getParam<Scalar>("Problem.AlphaT");
-#endif
+        alphaL_ = getParam<Scalar>("Problem.AlphaL", 0.0);
+        alphaT_ = getParam<Scalar>("Problem.AlphaT", 0.0);
     }
 
     /*!
