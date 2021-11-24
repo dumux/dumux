@@ -32,8 +32,9 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/numeqvector.hh>
+
 #include <dumux/porousmediumflow/problem.hh>
 
 namespace Dumux {
@@ -53,12 +54,17 @@ class OnePNISimpleProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
 
 public:
     OnePNISimpleProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
         name_ = getParam<std::string>("Problem.Name");
+        rightPressure_ = getParam<Scalar>("Problem.RightPressure", 1e5);
+        injectionRate_ = getParam<Scalar>("Problem.InjectionRate", 0.0);
+        multiplier_ = getParam<Scalar>("Problem.Multiplier", 1.0);
     }
 
     const std::string& name() const
@@ -82,7 +88,20 @@ public:
         if (globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_)
             return {1e5, 300.0};
         else
-            return {10e5, 300.0};
+            return {rightPressure_, 300.0};
+    }
+
+    NumEqVector sourceAtPos(const GlobalPosition& globalPos) const
+    {
+        NumEqVector values(0.0);
+
+        if (globalPos[0] < 0.6 && globalPos[0] > 0.4 && globalPos[1] < 0.6 && globalPos[1] > 0.4)
+        {
+            values[Indices::conti0EqIdx] = injectionRate_;
+            values[Indices::conti0EqIdx] = injectionRate_*multiplier_;
+        }
+
+        return values;
     }
 
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
@@ -91,6 +110,9 @@ public:
 private:
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
+    Scalar rightPressure_;
+    Scalar injectionRate_;
+    Scalar multiplier_;
 };
 
 } // end namespace Dumux
