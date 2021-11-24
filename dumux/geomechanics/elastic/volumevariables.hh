@@ -81,7 +81,7 @@ public:
         //! set the volume fractions of the solid components
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, /*numFluidComps=*/0);
         // set the temperature of the solid phase
-        setSolidTemperature_(problem, scv);
+        setSolidTemperature_(problem, element, scv, elemSol);
         // update the density of the solid phase
         solidState_.setDensity(SolidSystem::density(solidState_));
     }
@@ -118,16 +118,16 @@ public:
 private:
     //! sets the temperature in the solid state for non-isothermal models
     static constexpr bool enableEnergyBalance = ModelTraits::enableEnergyBalance();
-    template< class Problem, class Scv,
+    template< class Problem, class Element, class Scv, class ElemSol,
               bool enableEB = enableEnergyBalance, typename std::enable_if_t<enableEB, bool> = 0 >
-    void setSolidTemperature_(const Problem& problem, const Scv& scv)
+    void setSolidTemperature_(const Problem& problem, const Element& element, const Scv& scv, const ElemSol& elemSol)
     { DUNE_THROW(Dune::InvalidStateException, "Non-isothermal elastic model."); }
 
     //! sets the temperature in the solid state for isothermal models
-    template< class Problem, class Scv,
+    template< class Problem, class Element, class Scv, class ElemSol,
               bool enableEB = enableEnergyBalance, typename std::enable_if_t<!enableEB, bool> = 0 >
-    void setSolidTemperature_(const Problem& problem, const Scv& scv)
-    { solidState_.setTemperature(Deprecated::temperature(problem, scv.dofPosition())); }
+    void setSolidTemperature_(const Problem& problem, const Element& element, const Scv& scv, const ElemSol& elemSol)
+    { solidState_.setTemperature(Deprecated::temperature(problem, element, scv, elemSol)); }
 
     // data members
     Scalar extrusionFactor_;
