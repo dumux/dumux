@@ -25,6 +25,8 @@
 #ifndef DUMUX_FV_SPATIALPARAMS_NONEQUILIBRIUM_HH
 #define DUMUX_FV_SPATIALPARAMS_NONEQUILIBRIUM_HH
 
+#warning "This file is deprecated, use FVPorousMediumSpatialParamsNonEquilibrium from dumux/porousmediumflow/fvspatialparamsnonequilibrium.hh instead!"
+
 #include <dumux/material/spatialparams/fv.hh>
 
 namespace Dumux {
@@ -34,7 +36,9 @@ namespace Dumux {
  * \brief Definition of the spatial parameters for non-equilibrium
  */
 template<class GridGeometry, class Scalar, class Implementation>
-class FVNonEquilibriumSpatialParams
+class
+[[deprecated("Use FVPorousMediumSpatialParamsNonEquilibrium from dumux/porousmediumflow/fvspatialparamsnonequilibrium.hh instead. This class will be removed after 3.5.")]]
+FVNonEquilibriumSpatialParams
 : public FVSpatialParams<GridGeometry, Scalar, Implementation>
 {
     using ParentType = FVSpatialParams<GridGeometry, Scalar, Implementation>;
