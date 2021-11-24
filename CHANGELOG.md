@@ -50,7 +50,7 @@ for (const auto& element : elements(gridGeometry.gridView()))
 
 - __Embedded coupling__: Add a coupling manager for the 1D-3D projection based scheme with resolved interface introduced in Koch 2021 (https://arxiv.org/abs/2106.06358)
 
-- __Dispersion__: Dispersion fluxes have been added as an option for the compositional and thermal porous medium flow models. These models use either a scheidegger dispersion tensor, which is dependent on the velocity field and two length parameters, or a full open tensor that can be user defined. For compositional models coupled with flow models (e.g. 1pnc), using the scheidegger dispersion tensor is only allowed when using the box discretization method. Otherwise all dispersion fluxes should be availble for the tpfa and the box discretization methods.
+- __Dispersion__: Dispersion fluxes have been added as an option for the compositional and thermal one-phase porous medium flow models. These models use either a Scheidegger-type dispersion tensor, which is dependent on the velocity field and two length parameters, or a full and constant (_not_ solution-dependent, but possibly spatially varying) tensor that can be user defined in the spatial parameters. For compositional models coupled with flow models (e.g. 1pnc), using the Scheidegger-type dispersion tensor is only implemented for the box discretization method.
 
 To enable either thermal or compositional dispersion, please define these properties within your `properties.hh` header. For example:
 ```cpp
@@ -60,7 +60,7 @@ template<class TypeTag>
 struct EnableThermalDispersion<TypeTag, TTag::MyTest> { static constexpr bool value = true; };
 ```
 
-To determine which type of dispersion tensor you would prefer to use, please define this property within your `properties.hh` header. For example:
+To determine the type of dispersion tensor, please define the property `DispersionTensorType` within your `properties.hh` header. For example:
 ```cpp
 template<class TypeTag>
 struct DispersionTensorType<TypeTag, TTag::MyTest> { using type = ScheideggersDispersionTensor<TypeTag>; };
