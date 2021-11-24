@@ -75,11 +75,9 @@ public:
     TwoPTwoCChemicalNonequilibriumProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
-        temperature_ = 273.15 + 25; // -> 25°C
-
         // initialize the tables of the fluid system
-        Scalar Tmin = temperature_ - 1.0;
-        Scalar Tmax = temperature_ + 1.0;
+        Scalar Tmin = this->spatialParams().temperatureAtPos(GlobalPosition()) - 1.0;
+        Scalar Tmax = this->spatialParams().temperatureAtPos(GlobalPosition()) + 1.0;
         int nT = 3;
 
         Scalar pmin = 1.0e5 * 0.75;
@@ -108,13 +106,6 @@ public:
      */
     const std::string name() const
     { return name_; }
-
-    /*!
-     * \brief Returns the temperature \f$ K \f$
-     *
-     */
-    Scalar temperature() const
-    { return temperature_; }
 
     /*!
      * \name Boundary conditions
@@ -179,7 +170,8 @@ public:
 
             values[Indices::energyEqIdx] = FluidSystem::enthalpy(volVars.fluidState(), FluidSystem::gasPhaseIdx) * evaporationRate;
             values[Indices::energyEqIdx] += FluidSystem::thermalConductivity(volVars.fluidState(), FluidSystem::gasPhaseIdx)
-                                            * (volVars.temperature() - temperature_)/boundaryLayerThickness;
+                                            * (volVars.temperature() - this->spatialParams().temperatureAtPos(globalPos))
+                                            /boundaryLayerThickness;
         }
         return values;
     }
@@ -244,13 +236,12 @@ private:
         values[Indices::switchIdx] = 0.8; // gas saturation
         values[2] = 5e-4; // xwn higher than equil, equil is 3.4e-5
         values[3] = 1e-2; // xnw lower than 1.3e-2
-        values[Indices::temperatureIdx] = temperature_;
+        values[Indices::temperatureIdx] = this->spatialParams().temperatureAtPos(globalPos);
         values.setState(Indices::bothPhases);
 
         return values;
     }
 
-    Scalar temperature_;
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
 
