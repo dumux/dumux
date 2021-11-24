@@ -30,12 +30,11 @@
 #include <dune/common/parametertreeparser.hh>
 #include <dune/common/math.hh>
 
-#include <dumux/material/spatialparams/fvnonequilibrium.hh>
+#include <dumux/porousmediumflow/fvspatialparamsnonequilibrium.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/heatpipelaw.hh>
 #include <dumux/material/fluidmatrixinteractions/mp/mpadapter.hh>
 #include <dumux/material/fluidmatrixinteractions/1pia/fluidsolidinterfacialareashiwang.hh>
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/material/spatialparams/fv.hh>
 
 namespace Dumux {
 
@@ -44,15 +43,15 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class CombustionSpatialParams
-: public FVNonEquilibriumSpatialParams<GridGeometry, Scalar,
-                                       CombustionSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsNonEquilibrium<GridGeometry, Scalar,
+                                                   CombustionSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
     using ThisType = CombustionSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVNonEquilibriumSpatialParams<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumFlowSpatialParamsNonEquilibrium<GridGeometry, Scalar, ThisType>;
 
     enum {dimWorld = GridView::dimensionworld};
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
