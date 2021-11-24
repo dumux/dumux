@@ -62,6 +62,8 @@ struct NonEquilibriumModelTraits : public ET
     static constexpr int numEnergyEqSolid() { return therm ? numES : 0; }
     static constexpr int numEnergyEq() { return numEnergyEqFluid()+numEnergyEqSolid(); }
 
+    static constexpr bool enableCompositionalDispersion() { return false; }
+    static constexpr bool enableThermalDispersion() { return false; }
     static constexpr bool enableEnergyBalance() { return ET::enableEnergyBalance() || therm; }
     static constexpr bool enableThermalNonEquilibrium() { return therm; }
     static constexpr bool enableChemicalNonEquilibrium() { return chem; }

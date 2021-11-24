@@ -70,7 +70,7 @@ namespace Dumux {
  * \tparam nComp the number of components to be considered.
  * \tparam useMol whether mole or mass balances are used
  */
-template<int nComp, bool useMol>
+template<int nComp, bool useMol, bool enableCompDisp>
 struct TracerModelTraits
 {
     using Indices = TracerIndices;
@@ -82,6 +82,7 @@ struct TracerModelTraits
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return true; }
     static constexpr bool enableEnergyBalance() { return false; }
+    static constexpr bool enableCompositionalDispersion() { return enableCompDisp; }
 
     static constexpr bool useMoles() { return useMol; }
 };
@@ -94,7 +95,7 @@ struct TracerModelTraits
  * \tparam FSY The fluid system type
  * \tparam MT The model traits
  */
-template<class PV, class FSY, class SSY, class SST, class MT, class DT, class EDM>
+template<class PV, class FSY, class SSY, class SST, class MT, class DTT, class DT, class EDM>
 struct TracerVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
@@ -102,6 +103,7 @@ struct TracerVolumeVariablesTraits
     using SolidSystem = SSY;
     using SolidState = SST;
     using ModelTraits = MT;
+    using DispersionTensorType = DTT;
     using DiffusionType = DT;
     using EffectiveDiffusivityModel = EDM;
 };
@@ -134,7 +136,9 @@ struct ModelTraits<TypeTag, TTag::Tracer>
 private:
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
-    using type = TracerModelTraits<FluidSystem::numComponents, getPropValue<TypeTag, Properties::UseMoles>()>;
+    using type = TracerModelTraits<FluidSystem::numComponents,
+                                   getPropValue<TypeTag, Properties::UseMoles>(),
+                                   getPropValue<TypeTag, Properties::EnableCompositionalDispersion>()>;
 };
 
 //! Use the tracer local residual function for the tracer model
@@ -155,10 +159,11 @@ private:
     using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
     using SST = GetPropType<TypeTag, Properties::SolidState>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using DTT = GetPropType<TypeTag, Properties::DispersionTensorType>;
     using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
     using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
 
-    using Traits = TracerVolumeVariablesTraits<PV, FSY, SSY, SST, MT, DT, EDM>;
+    using Traits = TracerVolumeVariablesTraits<PV, FSY, SSY, SST, MT, DTT, DT, EDM>;
 public:
     using type = TracerVolumeVariables<Traits>;
 };

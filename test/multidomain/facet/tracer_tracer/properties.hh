@@ -157,6 +157,10 @@ struct SpatialParams<TypeTag, TTag::TracerTestBulk>
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::TracerTestBulk> { static constexpr bool value = false; };
 
+// Define whether mole(true) or mass (false) fractions are used
+template<class TypeTag>
+struct EnableCompositionalDispersion<TypeTag, TTag::TracerTestBulk> { static constexpr bool value = false; };
+
 //! set the model traits (with disabled diffusion)
 template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::TracerTestBulk>
@@ -164,7 +168,8 @@ struct ModelTraits<TypeTag, TTag::TracerTestBulk>
 private:
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
-    using type = TracerTestModelTraits<FluidSystem::numComponents, getPropValue<TypeTag, Properties::UseMoles>()>;
+    using type = TracerTestModelTraits<FluidSystem::numComponents, getPropValue<TypeTag, Properties::UseMoles>(),
+                                                                   getPropValue<TypeTag, Properties::EnableCompositionalDispersion>()>;
 };
 
 // use the test-specific fluid system
@@ -202,6 +207,10 @@ struct SpatialParams<TypeTag, TTag::TracerTestLowDim>
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::TracerTestLowDim> { static constexpr bool value = false; };
 
+// Define whether mole(true) or mass (false) fractions are used
+template<class TypeTag>
+struct EnableCompositionalDispersion<TypeTag, TTag::TracerTestLowDim> { static constexpr bool value = false; };
+
 //! set the model traits (with disabled diffusion)
 template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::TracerTestLowDim>
@@ -209,13 +218,13 @@ struct ModelTraits<TypeTag, TTag::TracerTestLowDim>
 private:
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
-    using type = TracerTestModelTraits<FluidSystem::numComponents, getPropValue<TypeTag, Properties::UseMoles>()>;
+    using type = TracerTestModelTraits<FluidSystem::numComponents, getPropValue<TypeTag, Properties::UseMoles>(),
+                                                                   getPropValue<TypeTag, Properties::EnableCompositionalDispersion>()>;
 };
 
 // use the test-specific fluid system
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::TracerTestLowDim> { using type = TracerFluidSystem<TypeTag>; };
-
 
 template< class BulkTypeTag, class LowDimTypeTag >
 class TestTraits

@@ -87,6 +87,10 @@ template<class TypeTag, class MyTypeTag>
 struct ReplaceCompEqIdx { using type = UndefinedProperty; };       //!< The component balance index that should be replaced by the total mass/mole balance
 template<class TypeTag, class MyTypeTag>
 struct BalanceEqOpts { using type = UndefinedProperty; };          //!< A class that collects options for the evaluation of the balance equations
+template<class TypeTag, class MyTypeTag>
+struct EnableCompositionalDispersion { using type = UndefinedProperty; };        //!< Property whether to include compositional dispersion
+template<class TypeTag, class MyTypeTag>
+struct EnableThermalDispersion { using type = UndefinedProperty; };              //!< Property whether to include thermal dispersion
 
 /////////////////////////////////////////////
 // Properties used by finite volume schemes:
@@ -140,9 +144,13 @@ struct SolutionDependentAdvection { using type = UndefinedProperty; };          
 template<class TypeTag, class MyTypeTag>
 struct MolecularDiffusionType { using type = UndefinedProperty; };              //!< The type for the calculation of the molecular diffusion fluxes
 template<class TypeTag, class MyTypeTag>
+struct DispersionFluxType { using type = UndefinedProperty; };                  //!< The type for the calculation of the dispersive fluxes
+template<class TypeTag, class MyTypeTag>
 struct SolutionDependentMolecularDiffusion { using type = UndefinedProperty; }; //!< specifies if the parameters for the diffusive fluxes depend on the solution
 template<class TypeTag, class MyTypeTag>
 struct HeatConductionType { using type = UndefinedProperty; };                  //!< The type for the calculation of the heat conduction fluxes
+template<class TypeTag, class MyTypeTag>
+struct DispersionTensorType { using type = UndefinedProperty; };                //!< The type for the calculation of the dispersion tensor
 template<class TypeTag, class MyTypeTag>
 struct SolutionDependentHeatConduction { using type = UndefinedProperty; };     //!< specifies if the parameters for the heat conduction fluxes depend on the solution
 

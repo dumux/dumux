@@ -145,6 +145,8 @@ struct MPNCModelTraits
     static constexpr bool enableEnergyBalance() { return false; }
     static constexpr bool enableThermalNonEquilibrium() { return false; }
     static constexpr bool enableChemicalNonEquilibrium() { return false; }
+    static constexpr bool enableCompositionalDispersion() { return false; }
+    static constexpr bool enableThermalDispersion() { return false; }
 
     static constexpr MpNcPressureFormulation pressureFormulation() { return formulation; }
 

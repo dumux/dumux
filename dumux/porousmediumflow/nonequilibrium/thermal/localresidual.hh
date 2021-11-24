@@ -100,6 +100,15 @@ public:
         }
     }
 
+    /*!
+     * \brief The dispersive energy fluxes
+     *
+     * \param flux The flux
+     * \param fluxVars The flux variables.
+     */
+    static void heatDispersionFlux(NumEqVector& flux,
+                                   FluxVariables& fluxVars)
+    {}
 
     //! The advective phase energy fluxes
     static void heatConvectionFlux(NumEqVector& flux,
@@ -299,6 +308,17 @@ public:
             flux[energyEqSolidIdx+sPhaseIdx] += fluxVars.heatConductionFlux(numPhases + sPhaseIdx);
         }
     }
+
+    /*!
+     * \brief The dispersive energy fluxes
+     *
+     * \param flux The flux
+     * \param fluxVars The flux variables.
+     */
+    static void heatDispersionFlux(NumEqVector& flux,
+                                   FluxVariables& fluxVars)
+    {}
+
     /*!
      * \brief Calculates the source term of the equation.
      *

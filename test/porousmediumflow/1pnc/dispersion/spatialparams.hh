@@ -18,12 +18,12 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup TracerTests
- * \brief Definition of the spatial parameters for the tracer problem.
+ * \ingroup OnePNCTests
+ * \brief Definition of the spatial parameters for the 1pnc problems.
  */
 
-#ifndef DUMUX_TRACER_TEST_SPATIAL_PARAMS_HH
-#define DUMUX_TRACER_TEST_SPATIAL_PARAMS_HH
+#ifndef DUMUX_1PNC_TEST_SPATIAL_PARAMS_HH
+#define DUMUX_1PNC_TEST_SPATIAL_PARAMS_HH
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv1p.hh>
@@ -31,35 +31,46 @@
 namespace Dumux {
 
 /*!
- * \ingroup TracerTests
- * \brief Definition of the spatial parameters for the tracer problem.
+ * \ingroup OnePNCTests
+ * \brief Definition of the spatial parameters for the 1pnc test problems.
  */
 template<class GridGeometry, class Scalar>
-class TracerTestSpatialParams
+class OnePNCTestSpatialParams
 : public FVSpatialParamsOneP<GridGeometry, Scalar,
-                             TracerTestSpatialParams<GridGeometry, Scalar>>
+                             OnePNCTestSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
     using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
-                                           TracerTestSpatialParams<GridGeometry, Scalar>>;
+                                           OnePNCTestSpatialParams<GridGeometry, Scalar>>;
 
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Dune::FieldVector<Scalar, dimWorld>;
 
 public:
+    // export permeability type
+    using PermeabilityType = Scalar;
+    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
-    TracerTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    OnePNCTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
-#if ENABLEDISPERSION
+        permeability_ = 1e-10;
+        porosity_ = 0.4;
         alphaL_ = getParam<Scalar>("Problem.AlphaL");
         alphaT_ = getParam<Scalar>("Problem.AlphaT");
-#endif
+        dispersionTensorCoefficients_ = getParam<std::vector<Scalar>>("Problem.DispersionTensor");
     }
+
+    /*!
+     * \brief Defines the intrinsic permeability \f$\mathrm{[m^2]}\f$.
+     *
+     * \param globalPos The global position
+     */
+    PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
+    { return permeability_; }
 
     /*!
      * \brief Defines the porosity \f$\mathrm{[-]}\f$.
@@ -67,62 +78,7 @@ public:
      * \param globalPos The global position
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
-    { return 0.2; }
-
-    /*!
-     * \brief Defines the dispersivity.
-     *
-     * \param element The finite element
-     * \param scv The sub-control volume
-     * \param elemSol The solution for all dofs of the element
-     */
-    template<class ElementSolution>
-    Scalar dispersivity(const Element &element,
-                        const SubControlVolume& scv,
-                        const ElementSolution& elemSol) const
-    { return 0; }
-
-    //! Fluid properties that are spatial parameters in the tracer model
-    //! They can possibly vary with space but are usually constants
-
-    //! Fluid density
-    Scalar fluidDensity(const Element &element,
-                        const SubControlVolume& scv) const
-    { return 1000; }
-
-    //! Fluid molar mass
-    Scalar fluidMolarMass(const Element &element,
-                          const SubControlVolume& scv) const
-    { return 18.0; }
-
-    Scalar fluidMolarMass(const GlobalPosition &globalPos) const
-    { return 18.0; }
-
-    //! Velocity field
-    GlobalPosition velocity(const SubControlVolumeFace& scvf) const
-    {
-        GlobalPosition vel(1e-5);
-        const auto globalPos = scvf.ipGlobal();
-        const auto& x = globalPos[0];
-        const auto& y = globalPos[1];
-
-        vel[0] *= x*x * (1.0 - x)*(1.0 - x) * (2.0*y - 6.0*y*y + 4.0*y*y*y);
-        vel[1] *= -1.0*y*y * (1.0 - y)*(1.0 - y) * (2.0*x - 6.0*x*x + 4.0*x*x*x);
-
-        return vel;
-    }
-
-    //! Velocity field
-    template<class ElementVolumeVariables>
-    Scalar volumeFlux(const Element &element,
-                      const FVElementGeometry& fvGeometry,
-                      const ElementVolumeVariables& elemVolVars,
-                      const SubControlVolumeFace& scvf) const
-    {
-        return velocity(scvf) * scvf.unitOuterNormal() * scvf.area()
-               * elemVolVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
-    }
-
+    { return porosity_; }
 
     /*!
      * \brief Defines the dispersion tensor \f$\mathrm{[-]}\f$.
@@ -132,9 +88,47 @@ public:
     std::array<Scalar, 2> dispersionAlphas(const GlobalPosition& globalPos) const
     { return { alphaL_, alphaT_ }; }
 
+    /*!
+     * \brief Defines the dispersion tensor \f$\mathrm{[-]}\f$.
+     *
+     * \param globalPos The global position
+     */
+    DimWorldMatrix dispersionTensor(const GlobalPosition& globalPos) const
+    {
+        DimWorldMatrix dispersionTensor(0.0);
+        if (dispersionTensorCoefficients_.size() > 1)
+        {
+            if (dispersionTensorCoefficients_.size() != (dimWorld*dimWorld))
+                DUNE_THROW(Dune::InvalidStateException, "For anisotropic dispersion tensors, please list all entries (dim x dim).");
+
+            int k = 0;
+            for (int i = 0; i < dimWorld; i++)
+            {
+                for (int j = 0; j < dimWorld; j++)
+                {
+                    dispersionTensor[i][j] = dispersionTensorCoefficients_[k];
+                    k++;
+                }
+            }
+        }
+        else
+        {
+            if (dispersionTensorCoefficients_.size() != 1)
+                DUNE_THROW(Dune::InvalidStateException, "For isotropic dispersion tensors, please one scalar value.");
+
+            for (int i = 0; i < dimWorld; i++)
+                dispersionTensor[i][i] = dispersionTensorCoefficients_[0];
+        }
+
+        return dispersionTensor;
+    }
+
 private:
+    Scalar permeability_;
+    Scalar porosity_;
     Scalar alphaL_;
     Scalar alphaT_;
+    std::vector<Scalar> dispersionTensorCoefficients_;
 };
 
 } // end namespace Dumux

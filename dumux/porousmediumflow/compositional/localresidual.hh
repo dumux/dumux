@@ -28,6 +28,7 @@
 
 #include <vector>
 #include <dune/common/exceptions.hh>
+#include <dumux/common/deprecated.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/flux/referencesystemformulation.hh>
@@ -211,10 +212,30 @@ public:
 
             //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
             EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx);
+
+            if constexpr (Deprecated::hasEnableCompositionalDispersion<ModelTraits>())
+            {
+                if constexpr (ModelTraits::enableCompositionalDispersion())
+                {
+                    if constexpr (FVElementGeometry::GridGeometry::discMethod == DiscretizationMethods::box && numPhases == 1)
+                    {
+                        const auto dispersionFluxes = fluxVars.compositionalDispersionFlux(phaseIdx);
+                        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                        {
+                            flux[compIdx] += dispersionFluxes[compIdx];
+                        }
+                    }
+                    else
+                        DUNE_THROW(Dune::NotImplemented, "Dispersion Fluxes are only implemented for single phase flows using the Box method.");
+                }
+            }
+            else
+                enableCompositionalDispersionMissing_<ModelTraits>();
         }
 
-        //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
+        //! Add diffusive and dispersive energy fluxes. For isothermal model the contribution is zero.
         EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
+        EnergyLocalResidual::heatDispersionFlux(flux, fluxVars);
 
         return flux;
     }
@@ -225,6 +246,11 @@ protected:
 
     const Implementation *asImp_() const
     { return static_cast<const Implementation *> (this); }
+
+    template <class T = ModelTraits>
+    [[deprecated("All compositional models must specifiy if dispersion is enabled."
+                 "Please add enableCompositionalDispersion to the ModelTraits in your model header.")]]
+    void enableCompositionalDispersionMissing_() const {}
 };
 
 } // end namespace Dumux

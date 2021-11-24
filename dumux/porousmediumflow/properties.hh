@@ -38,10 +38,12 @@
 #include <dumux/flux/darcyslaw.hh>
 #include <dumux/flux/fickslaw.hh>
 #include <dumux/flux/fourierslaw.hh>
+#include <dumux/flux/dispersionflux.hh>
 
 #include <dumux/material/solidstates/inertsolidstate.hh>
 #include <dumux/material/solidsystems/1csolid.hh>
 #include <dumux/material/components/constant.hh>
+#include <dumux/material/fluidmatrixinteractions/dispersiontensors/scheidegger.hh>
 
 namespace Dumux {
 namespace Properties {
@@ -72,6 +74,22 @@ struct AdvectionType<TypeTag, TTag::PorousMediumFlow> { using type = DarcysLaw<T
 //! By default, we use fick's law for the diffusive fluxes
 template<class TypeTag>
 struct MolecularDiffusionType<TypeTag, TTag::PorousMediumFlow> { using type = FicksLaw<TypeTag>; };
+
+//! Per default, we do not include compositional dispersion effects
+template<class TypeTag>
+struct EnableCompositionalDispersion<TypeTag, TTag::PorousMediumFlow> { static constexpr bool value = false; };
+
+//! Per default, we do not include thermal dispersion effects
+template<class TypeTag>
+struct EnableThermalDispersion<TypeTag, TTag::PorousMediumFlow> { static constexpr bool value = false; };
+
+//! By default, we use a diffusive flux for the dispersive fluxes
+template<class TypeTag>
+struct DispersionFluxType<TypeTag, TTag::PorousMediumFlow> { using type = OnePDiffusiveDispersionFlux<TypeTag>; };
+
+//! By default, we use Scheideggers's law for the dispersive tensor calculation
+template<class TypeTag>
+struct DispersionTensorType<TypeTag, TTag::PorousMediumFlow> { using type = ScheideggersDispersionTensor<TypeTag>; };
 
 //! By default, we use fourier's law as the default for heat conduction fluxes
 template<class TypeTag>

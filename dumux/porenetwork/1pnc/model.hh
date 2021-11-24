@@ -158,17 +158,19 @@ private:
     static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
     using BaseTraits = Dumux::OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 
+    using DTT = GetPropType<TypeTag, Properties::DispersionTensorType>;
     using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
     using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
-    template<class BaseTraits, class DT, class EDM>
+    template<class BaseTraits, class DTT, class DT, class EDM>
     struct NCTraits : public BaseTraits
     {
+        using DispersionTensorType = DTT;
         using DiffusionType = DT;
         using EffectiveDiffusivityModel = EDM;
     };
 
 public:
-    using type = Dumux::PoreNetwork::OnePNCVolumeVariables<NCTraits<BaseTraits, DT, EDM>>;
+    using type = Dumux::PoreNetwork::OnePNCVolumeVariables<NCTraits<BaseTraits, DTT, DT, EDM>>;
 };
 
 //!< Set the vtk output fields specific to this model
@@ -189,7 +191,10 @@ struct ModelTraits<TypeTag, TTag::PNMOnePNCNI>
 {
 private:
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using IsothermalTraits = OnePNCModelTraits<FluidSystem::numComponents, getPropValue<TypeTag, Properties::UseMoles>(), getPropValue<TypeTag, Properties::ReplaceCompEqIdx>()>;
+    using IsothermalTraits = OnePNCModelTraits<FluidSystem::numComponents, getPropValue<TypeTag, Properties::UseMoles>(),
+                                                                           getPropValue<TypeTag, Properties::EnableCompositionalDispersion>(),
+                                                                           getPropValue<TypeTag, Properties::EnableThermalDispersion>(),
+                                                                           getPropValue<TypeTag, Properties::ReplaceCompEqIdx>()>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
@@ -211,19 +216,21 @@ private:
     static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
     using BaseTraits = Dumux::OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 
+    using DTT = GetPropType<TypeTag, Properties::DispersionTensorType>;
     using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
     using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
     using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
-    template<class BaseTraits, class DT, class EDM, class ETCM>
+    template<class BaseTraits, class DTT, class DT, class EDM, class ETCM>
     struct NCNITraits : public BaseTraits
     {
+        using DispersionTensorType = DTT;
         using DiffusionType = DT;
         using EffectiveDiffusivityModel = EDM;
         using EffectiveThermalConductivityModel = ETCM;
     };
 
 public:
-    using type = Dumux::PoreNetwork::OnePNCVolumeVariables<NCNITraits<BaseTraits, DT, EDM, ETCM>>;
+    using type = Dumux::PoreNetwork::OnePNCVolumeVariables<NCNITraits<BaseTraits, DTT, DT, EDM, ETCM>>;
 };
 
 template<class TypeTag>

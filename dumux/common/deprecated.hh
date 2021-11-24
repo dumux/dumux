@@ -68,6 +68,19 @@ template<class BcTypes>
 static constexpr bool hasHasWallBC()
 { return Dune::Std::is_detected<HasWallBCDetector, BcTypes>::value; }
 
+template <typename ModelTraits>
+using HasEnableCompositionalDispersionDetector = decltype(ModelTraits::enableCompositionalDispersion());
+
+template<class ModelTraits>
+static constexpr bool hasEnableCompositionalDispersion()
+{ return Dune::Std::is_detected<HasEnableCompositionalDispersionDetector, ModelTraits>::value; }
+
+template <typename ModelTraits>
+using HasEnableThermalDispersionDetector = decltype(ModelTraits::enableThermalDispersion());
+
+template<class ModelTraits>
+static constexpr bool hasEnableThermalDispersion()
+{ return Dune::Std::is_detected<HasEnableThermalDispersionDetector, ModelTraits>::value; }
 } // end namespace Deprecated
 #endif
 

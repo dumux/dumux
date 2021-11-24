@@ -64,6 +64,8 @@ class OnePNCVolumeVariables
     };
 
 public:
+    //! Export the dispersion tensor law
+    using DispersionTensorType = typename Traits::DispersionTensorType;
     //! Export fluid state type
     using FluidState = typename Traits::FluidState;
     //! Export fluid system type

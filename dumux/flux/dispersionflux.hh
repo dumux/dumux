@@ -18,25 +18,14 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup FacetTests
- * \brief The model traits used in the tracer facet coupling test.
+ * \ingroup Flux
+ * \brief Dispersion flux for different discretization schemes
  */
+#ifndef DUMUX_FLUX_DISPERSION_FLUX_HH
+#define DUMUX_FLUX_DISPERSION_FLUX_HH
 
-#ifndef DUMUX_TEST_TPFAFACETCOUPLING_TRACER_MODELTRAITS_HH
-#define DUMUX_TEST_TPFAFACETCOUPLING_TRACER_MODELTRAITS_HH
-
-#include <dumux/porousmediumflow/tracer/model.hh>
-
-namespace Dumux {
-
-//! Custom model traits disabling diffusion
-template<int nComp, bool useMol, bool enableCompDisp>
-struct TracerTestModelTraits : public TracerModelTraits<nComp, useMol, enableCompDisp>
-{
-    static constexpr bool enableMolecularDiffusion() { return false; }
-    static constexpr bool enableCompositionalDispersion() { return enableCompDisp; }
-};
-
-} // end namespace Dumux
+#include <dumux/flux/dispersionflux_fwd.hh>
+#include <dumux/flux/box/dispersionflux.hh>
+#include <dumux/flux/cctpfa/dispersionflux.hh>
 
 #endif

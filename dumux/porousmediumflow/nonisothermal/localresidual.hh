@@ -28,6 +28,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
+#include <dumux/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -100,6 +101,16 @@ public:
     static void heatConductionFlux(NumEqVector& flux,
                                    FluxVariables& fluxVars)
     {}
+
+    /*!
+     * \brief The dispersive energy fluxes
+     *
+     * \param flux The flux
+     * \param fluxVars The flux variables.
+     */
+    static void heatDispersionFlux(NumEqVector& flux,
+                                   FluxVariables& fluxVars)
+    {}
 };
 
 /*!
@@ -118,8 +129,10 @@ class EnergyLocalResidualImplementation<TypeTag, true>
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Indices = typename ModelTraits::Indices;
 
+    static constexpr int numPhases = ModelTraits::numFluidPhases();
     enum { energyEqIdx = Indices::energyEqIdx };
 
 public:
@@ -190,6 +203,27 @@ public:
     }
 
     /*!
+     * \brief The dispersive energy fluxes
+     *
+     * \param flux The flux
+     * \param fluxVars The flux variables.
+     */
+    static void heatDispersionFlux(NumEqVector& flux,
+                                   FluxVariables& fluxVars)
+    {
+        if constexpr (Deprecated::hasEnableThermalDispersion<ModelTraits>())
+        {
+            if constexpr (ModelTraits::enableThermalDispersion())
+            {
+                flux[energyEqIdx] += fluxVars.thermalDispersionFlux();
+            }
+        }
+        else
+            enableThermalDispersionMissing_<ModelTraits>();
+    }
+
+
+    /*!
      * \brief heat transfer between the phases for nonequilibrium models
      *
      * \param source The source which ought to be simulated
@@ -204,6 +238,14 @@ public:
                                     const ElementVolumeVariables& elemVolVars,
                                     const SubControlVolume &scv)
     {}
+
+private:
+
+    template <class T = ModelTraits>
+    [[deprecated("All non-isothermal models must specifiy if thermal dispersion is enabled."
+                 "Please add enableThermalDispersion to the ModelTraits in your model header.")]]
+    static void enableThermalDispersionMissing_() {}
+
 };
 
 } // end namespace Dumux

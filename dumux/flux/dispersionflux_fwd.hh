@@ -18,24 +18,29 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup FacetTests
- * \brief The model traits used in the tracer facet coupling test.
+ * \ingroup Flux
+ * \brief Dispersion flux for different discretization schemes
  */
+#ifndef DUMUX_FLUX_DISPERSION_FWD_HH
+#define DUMUX_FLUX_DISPERSION_FWD_HH
 
-#ifndef DUMUX_TEST_TPFAFACETCOUPLING_TRACER_MODELTRAITS_HH
-#define DUMUX_TEST_TPFAFACETCOUPLING_TRACER_MODELTRAITS_HH
-
-#include <dumux/porousmediumflow/tracer/model.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/discretization/method.hh>
 
 namespace Dumux {
 
-//! Custom model traits disabling diffusion
-template<int nComp, bool useMol, bool enableCompDisp>
-struct TracerTestModelTraits : public TracerModelTraits<nComp, useMol, enableCompDisp>
-{
-    static constexpr bool enableMolecularDiffusion() { return false; }
-    static constexpr bool enableCompositionalDispersion() { return enableCompDisp; }
-};
+// declaration of primary template
+template<class TypeTag, class DiscretizationMethod, ReferenceSystemFormulation referenceSystem>
+class OnePDispersionFluxImplementation;
+
+/*!
+ * \ingroup Flux
+ * \brief Evaluates the dispersive flux
+ */
+template<class TypeTag, ReferenceSystemFormulation referenceSystem = ReferenceSystemFormulation::massAveraged>
+using OnePDiffusiveDispersionFlux = OnePDispersionFluxImplementation<TypeTag,
+                                                                     typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod,
+                                                                     referenceSystem>;
 
 } // end namespace Dumux
 
