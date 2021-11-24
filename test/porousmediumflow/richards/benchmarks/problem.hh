@@ -100,17 +100,9 @@ public:
     const std::string& name() const
     { return name_; }
 
-    // reference temperature (unused but required)
-    Scalar temperature() const
-    { return 273.15 + 10; };
-
     // reference pressure
     Scalar nonwettingReferencePressure() const
     { return 1.0e5; };
-
-    // column cross-section area
-    Scalar extrusionFactorAtPos(const GlobalPosition &globalPos) const
-    { return surfaceArea_; }
 
     /*!
      * \brief Specifies which kind of boundary condition should be
