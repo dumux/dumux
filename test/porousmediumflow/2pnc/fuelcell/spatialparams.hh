@@ -27,7 +27,7 @@
 #define DUMUX_FUELCELL_SPATIAL_PARAMS_HH
 
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 
 namespace Dumux {
@@ -38,12 +38,12 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class FuelCellSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
-                         FuelCellSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
+                                       FuelCellSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar,
-                                       FuelCellSpatialParams<GridGeometry, Scalar>>;
+    using ThisType = FuelCellSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar, ThisType>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
@@ -65,6 +65,7 @@ public:
         // intrinsic permeabilities
         K_[0][0] = 5e-11;
         K_[1][1] = 5e-11;
+        temperature_ = getParam<Scalar>("Problem.InitialTemperature");
     }
 
     /*!
@@ -103,10 +104,20 @@ public:
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
     { return FluidSystem::gasPhaseIdx; }
 
+    /*!
+     * \brief Returns the temperature in the domain at the given position
+     * \param globalPos The position in global coordinates where the temperature should be specified.
+     */
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    {
+        return temperature_;
+    }
+
 private:
     DimWorldMatrix K_;
     static constexpr Scalar eps_ = 1e-6;
     const PcKrSwCurve pcKrSwCurve_;
+    Scalar temperature_;
 };
 
 } // end namespace Dumux
