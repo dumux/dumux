@@ -27,7 +27,7 @@
 #define DUMUX_INFILTRATION_THREEP_SPATIAL_PARAMS_HH
 
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/parkervangenuchten.hh>
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/common/enumerate.hh>
@@ -39,15 +39,15 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class InfiltrationThreePSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
-                         InfiltrationThreePSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
+                                       InfiltrationThreePSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar,
-                                       InfiltrationThreePSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
+                                                     InfiltrationThreePSpatialParams<GridGeometry, Scalar>>;
 
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
@@ -150,6 +150,16 @@ public:
     auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
         return makeFluidMatrixInteraction(pcKrSwCurve_);
+    }
+
+    /*!
+     * \brief Returns the temperature at a given location
+     *
+     * \param globalPos The global coordinates for the given location
+     */
+    Scalar temperatureAtPos(const GlobalPosition &globalPos) const
+    {
+        return 273.15 + 10.0; // -> 10 degrees Celsius
     }
 
 private:
