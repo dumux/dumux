@@ -30,7 +30,6 @@ RefTemperature = 298.15 # [K]
 Name = darcy
 Pressure = 1.0e5
 Saturation = 0.5 # initial Sw
-Temperature = 298.15 # [K]
 InitPhasePresence = 3 # bothPhases
 
 [SpatialParams]
@@ -41,6 +40,7 @@ Swr = 0.005
 Snr = 0.01
 VanGenuchtenAlpha = 6.371e-4
 VanGenuchtenN = 6.9
+PorousMediumTemperature = 298.15 # [K]
 
 [Problem]
 Name = test_stokes1p2cdarcy2p2chorizontal

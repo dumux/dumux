@@ -75,19 +75,6 @@ public:
     { return problemName_; }
 
     /*!
-     * \name Problem parameters
-     */
-    // \{
-
-    /*!
-     * \brief Returns the temperature within the domain in [K].
-     *
-     */
-    Scalar temperature() const
-    { return 273.15 + 10; } // 10°C
-    // \}
-
-    /*!
      * \name Boundary conditions
      */
     // \{
