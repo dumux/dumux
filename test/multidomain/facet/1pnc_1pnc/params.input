@@ -4,7 +4,6 @@ TEnd = 1e10
 
 [Problem]
 EnableGravity = false
-FacetExtrusion = 1e-3
 
 [Grid]
 File = ./grids/square.msh
@@ -17,6 +16,7 @@ SpatialParams.Porosity = 1e-4
 [Facet]
 Problem.Name = facet
 SpatialParams.Permeability = 1e-12
+SpatialParams.Aperture = 1e-3
 SpatialParams.Porosity = 0.1
 
 [FacetCoupling]
