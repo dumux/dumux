@@ -158,15 +158,11 @@ public:
 
         if constexpr (enableHeatConduction)
         {
-            values[Indices::temperatureIdx] = temperature();
+            values[Indices::temperatureIdx] = this->spatialParams().temperatureAtPos(globalPos);
         }
 
         return values;
     }
-
-    //! Returns the temperature in \f$\mathrm{[K]}\f$ in the domain.
-    Scalar temperature() const
-    { return 283.15; /*10°*/ }
 
     //! Returns reference to the coupling manager.
     const CouplingManager& couplingManager() const

@@ -68,7 +68,7 @@ public:
     : ParentType(gridGeometry, spatialParams, paramGroup)
     , couplingManagerPtr_(couplingManagerPtr)
     , lowDimPermeability_(getParam<Scalar>("LowDim.SpatialParams.Permeability"))
-    , aperture_(getParam<Scalar>("Problem.FractureAperture"))
+    , aperture_(getParam<Scalar>("LowDim.SpatialParams.Aperture"))
     {
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
     }
@@ -155,10 +155,6 @@ public:
     //! Evaluates the initial conditions.
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(1.0); }
-
-    //! Returns the temperature in \f$\mathrm{[K]}\f$ in the domain.
-    Scalar temperature() const
-    { return 283.15; /*10°*/ }
 
     //! Returns reference to the coupling manager.
     const CouplingManager& couplingManager() const

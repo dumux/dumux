@@ -1,6 +1,5 @@
 [Problem]
 EnableGravity = false
-FractureAperture = 1e-3
 
 [Grid]
 File = ./grids/linear.msh
@@ -12,6 +11,7 @@ SpatialParams.Permeability = 1
 [LowDim]
 Problem.Name = lowdim
 SpatialParams.Permeability = 1e-4
+SpatialParams.Aperture = 1e-3
 
 [FacetCoupling]
 Xi = 1.0
