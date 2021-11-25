@@ -81,10 +81,6 @@ public:
         return problemName_;
     }
 
-    //! Returns the temperature in the domain
-    static constexpr Scalar temperature()
-    { return 273.15; }
-
     //! Evaluates the initial value for a control volume.
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(0.0); }
