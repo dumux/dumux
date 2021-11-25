@@ -25,7 +25,7 @@
 #ifndef DUMUX_1P_TEST_SPATIALPARAMS_HH
 #define DUMUX_1P_TEST_SPATIALPARAMS_HH
 
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams1p.hh>
 
 namespace Dumux {
 
@@ -36,12 +36,12 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class OnePSpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar,
-                             OnePSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
+                                         OnePSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
-                                           OnePSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
+                                                       OnePSpatialParams<GridGeometry, Scalar>>;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -73,6 +73,13 @@ public:
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return porosity_; }
+
+    /*! \brief Defines the temperature in [K].
+     *
+     * \param globalPos The global position
+     */
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    { return 273.15 + 10; }
 
     /*! \brief Defines the Beavers-Joseph coefficient in [-].
      *

@@ -25,7 +25,7 @@
 #ifndef DUMUX_CONSERVATION_SPATIAL_PARAMS_HH
 #define DUMUX_CONSERVATION_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 
 namespace Dumux {
@@ -38,15 +38,15 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class ConservationSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
-                         ConservationSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
+                                       ConservationSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using ThisType = ConservationSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar, ThisType>;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -62,6 +62,7 @@ public:
         permeability_ = getParam<Scalar>("SpatialParams.Permeability");
         porosity_ = getParam<Scalar>("SpatialParams.Porosity");
         alphaBJ_ = getParam<Scalar>("SpatialParams.AlphaBJ");
+        temperature_ = getParam<Scalar>("SpatialParams.PorousMediumTemperature");
     }
 
     /*!
@@ -79,6 +80,13 @@ public:
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return porosity_; }
+
+    /*! \brief Defines the temperature in [K].
+     *
+     * \param globalPos The global position
+     */
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    { return temperature_; }
 
     /*! \brief Defines the Beavers-Joseph coefficient in [-].
      *
@@ -111,6 +119,7 @@ private:
     Scalar permeability_;
     Scalar porosity_;
     Scalar alphaBJ_;
+    Scalar temperature_;
     const PcKrSwCurve pcKrSwCurve_;
     static constexpr Scalar eps_ = 1.0e-7;
 };
