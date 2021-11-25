@@ -126,10 +126,6 @@ int main(int argc, char* argv[])
     // maybe initialize MPI
     Dune::MPIHelper::instance(argc, argv);
 
-    // initialize  parameters
-    // TODO Try to remove this once the Newton does not depend on global default parameters anymore (#1003)
-    Parameters::init(argc, argv);
-
     using Assembler = ScalarAssembler;
     using LinearSolver = ScalarLinearSolver;
     using NewtonSolver = NewtonSolver<Assembler, LinearSolver, DefaultPartialReassembler>;
