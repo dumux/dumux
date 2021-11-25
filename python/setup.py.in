@@ -10,7 +10,7 @@ setup(
     author_email="${ProjectMaintainerEmail}",
     packages=find_packages(),
     zip_safe=0,
-    package_data={"": ["*.so"]},
+    package_data={"": ["*.so"], "dumux": ["data/*.cmake"]},
     install_requires=REQUIRED_PACKAGES,
     include_package_data=True,
 )

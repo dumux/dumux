@@ -151,7 +151,7 @@ def propertiesHeaderPath():
     """Find the path to the properties.hh C++ header"""
 
     path, _ = os.path.split(dumux.__file__)
-    metaDataFile = os.path.join(path, "data/metadata.cmake")
+    metaDataFile = os.path.join(path, "data/dumux.cmake")
     if os.path.exists(metaDataFile):
         data = {}
         with open(metaDataFile, "r") as metaData:
