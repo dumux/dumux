@@ -1,7 +1,9 @@
 [Problem]
 UseInteriorDirichletBCs = false
 EnableGravity = false
-FractureAperture = 1e-3
+
+[LowDim.SpatialParams]
+Aperture = 1e-3
 
 [Grid]
 NumElemsPerSide = 25

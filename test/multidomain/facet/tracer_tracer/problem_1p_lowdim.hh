@@ -69,7 +69,6 @@ public:
                       const std::string& paramGroup = "")
     : ParentType(gridGeometry, spatialParams, paramGroup)
     , couplingManagerPtr_(couplingManager)
-    , aperture_(getParamFromGroup<Scalar>(paramGroup, "Problem.FractureAperture"))
     {
         problemName_  =  getParamFromGroup<std::string>(this->paramGroup(), "Vtk.OutputName") + "_" +
                          getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
@@ -103,17 +102,9 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     { return initialAtPos(globalPos); }
 
-    //! Sets the aperture as extrusion factor.
-    Scalar extrusionFactorAtPos(const GlobalPosition& globalPos) const
-    { return aperture_; }
-
     //! Evaluates the initial conditions.
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(1.0e5); }
-
-    //! Returns the temperature in \f$\mathrm{[K]}\f$ in the domain.
-    Scalar temperature() const
-    { return 283.15; /*10°*/ }
 
     //! Returns reference to the coupling manager.
     const CouplingManager& couplingManager() const
@@ -121,7 +112,6 @@ public:
 
 private:
     std::shared_ptr<CouplingManager> couplingManagerPtr_;
-    Scalar aperture_;
     std::string problemName_;
 };
 

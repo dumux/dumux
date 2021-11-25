@@ -24,7 +24,7 @@
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_ONEP_SPATIALPARAMS_HH
 #define DUMUX_TEST_TPFAFACETCOUPLING_ONEP_SPATIALPARAMS_HH
 
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams1p.hh>
 
 namespace Dumux {
 
@@ -34,10 +34,10 @@ namespace Dumux {
  */
 template< class GridGeometry, class Scalar >
 class OnePSpatialParams
-: public FVSpatialParamsOneP< GridGeometry, Scalar, OnePSpatialParams<GridGeometry, Scalar> >
+: public FVPorousMediumFlowSpatialParamsOneP< GridGeometry, Scalar, OnePSpatialParams<GridGeometry, Scalar> >
 {
     using ThisType = OnePSpatialParams< GridGeometry, Scalar >;
-    using ParentType = FVSpatialParamsOneP< GridGeometry, Scalar, ThisType >;
+    using ParentType = FVPorousMediumFlowSpatialParamsOneP< GridGeometry, Scalar, ThisType >;
 
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -52,6 +52,7 @@ public:
     {
         permeability_ = getParamFromGroup<Scalar>(paramGroup, "SpatialParams.Permeability");
         porosity_ = getParamFromGroup<Scalar>(paramGroup, "SpatialParams.Porosity");
+        extrusion_ = getParamFromGroup<Scalar>(paramGroup, "SpatialParams.Aperture", 1.0);
     }
 
     //! Function for defining the (intrinsic) permeability \f$[m^2]\f$.
@@ -62,9 +63,18 @@ public:
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return porosity_; }
 
+    //! Returns the extrusion factor
+    Scalar extrusionFactorAtPos(const GlobalPosition& globalPos) const
+    { return extrusion_; }
+
+    //! Returns the temperature at the given position
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    { return 283.15; }
+
 private:
     PermeabilityType permeability_;
     Scalar porosity_;
+    Scalar extrusion_;
 };
 
 } // end namespace Dumux
