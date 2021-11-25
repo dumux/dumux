@@ -26,7 +26,7 @@
 #define DUMUX_INCOMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
 
 #include <limits>
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams1p.hh>
 
 namespace Dumux {
 namespace LensSpatialParams {
@@ -58,10 +58,10 @@ bool pointInLens(const GlobalPosition& globalPos,
  */
 template<class GridGeometry, class Scalar>
 class OnePTestSpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar, OnePTestSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar, OnePTestSpatialParams<GridGeometry, Scalar>>
 {
     using ThisType = OnePTestSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GridGeometry::LocalView;
