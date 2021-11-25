@@ -33,10 +33,6 @@ public:
 
     void setLinearSystem() {}
 
-    ResidualType prevSol() { return ResidualType(0.0); }
-
-    void resetTimeStep(const ResidualType& sol) {}
-
     void assembleResidual(const ResidualType& sol)
     {
         res_ = sol*sol - 5.0;
