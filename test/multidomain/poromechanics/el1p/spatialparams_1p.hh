@@ -28,7 +28,7 @@
 
 #include <dumux/discretization/elementsolution.hh>
 
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams1p.hh>
 #include <dumux/material/spatialparams/gstatrandomfield.hh>
 #include <dumux/material/fluidmatrixinteractions/porositydeformation.hh>
 
@@ -40,8 +40,8 @@ namespace Dumux {
  *        1p box model.
  */
 template<class GridGeometry, class Scalar, class CouplingManager>
-class OnePSpatialParams : public FVSpatialParamsOneP<GridGeometry, Scalar,
-                                                     OnePSpatialParams<GridGeometry, Scalar, CouplingManager>>
+class OnePSpatialParams : public FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
+                                                                 OnePSpatialParams<GridGeometry, Scalar, CouplingManager>>
 {
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using GridView = typename GridGeometry::GridView;
@@ -49,7 +49,7 @@ class OnePSpatialParams : public FVSpatialParamsOneP<GridGeometry, Scalar,
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using ThisType = OnePSpatialParams<GridGeometry, Scalar, CouplingManager>;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
 
 public:
     // export permeability type
