@@ -26,7 +26,7 @@
 #define DUMUX_SOIL_SPATIAL_PARAMS_HH
 
 #include <dumux/common/parameters.hh>
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 
 namespace Dumux {
@@ -37,10 +37,10 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class SoilSpatialParams
-: public FVSpatialParams<GridGeometry,Scalar, SoilSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsMP<GridGeometry,Scalar, SoilSpatialParams<GridGeometry, Scalar>>
 {
     using ThisType = SoilSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar, ThisType>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
@@ -89,6 +89,16 @@ public:
                     const ElementSolution& elemSol) const
     {
         return porosity_;
+    }
+
+    /*!
+     * \brief Returns the temperature \f$[K]\f$.
+     *
+     * \param globalPos the scv center
+     */
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    {
+        return 273.15 + 10.0;
     }
 
     /*!
