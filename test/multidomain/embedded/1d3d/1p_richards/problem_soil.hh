@@ -86,14 +86,6 @@ public:
     const std::string& name() const
     { return name_; }
 
-    /*!
-     * \brief Returns the temperature within the domain [K].
-     *
-     * This problem assumes a temperature of 10 degrees Celsius.
-     */
-    Scalar temperature() const
-    { return 273.15 + 10; } // in [K]
-
     /*
       * \brief Returns the reference pressure [Pa] of the nonwetting
      *        fluid phase within a finite volume.
