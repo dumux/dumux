@@ -30,7 +30,8 @@
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/ccmpfa.hh>
 #include <dumux/porousmediumflow/2pnc/model.hh>
-#include <dumux/material/fluidsystems/h2on2.hh>
+// #include <dumux/material/fluidsystems/h2on2.hh>
+#include <dumux/material/fluidsystems/h2oairxylene.hh>
 #include <dumux/flux/maxwellstefanslaw.hh>
 
 #ifndef DIFFUSIONTYPE // default to Fick's law if not set through CMake

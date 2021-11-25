@@ -86,7 +86,8 @@ class ColumnProblem : public PorousMediumFlowProblem<TypeTag>
         contiNEqIdx = Indices::conti0EqIdx + FluidSystem::nCompIdx, //!< Index of the mass conservation equation for the contaminant component
 
         // Phase State
-        threePhases = Indices::threePhases
+        threePhases = Indices::threePhases,
+        wgPhaseOnly = Indices::wgPhaseOnly
     };
 
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -136,7 +137,8 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes bcTypes;
-        if (globalPos[1] < eps_)
+        const auto yMax = this->gridGeometry().bBoxMax()[1];
+        if (globalPos[1] < eps_ || globalPos[1] > yMax - eps_)
             bcTypes.setAllDirichlet();
         else
             bcTypes.setAllNeumann();
@@ -152,7 +154,13 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-       return initial_(globalPos);
+        PrimaryVariables priVars(0.0);
+        priVars.setState(wgPhaseOnly);
+
+        priVars = initial_(globalPos);
+        priVars[switch2Idx] = 0.0;
+        return priVars;
+//        return initial_(globalPos);
     }
 
     /*!
@@ -167,14 +175,14 @@ public:
     {
         NumEqVector values(0.0);
 
-        // negative values for injection
-        if (globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_)
-        {
-            values[contiWEqIdx] = -0.395710;
-            values[contiGEqIdx] = -0.000001;
-            values[contiNEqIdx] = -0.00;
-            values[energyEqIdx] = -17452.97;
-        }
+//         // negative values for injection
+//         if (globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_)
+//         {
+//             values[contiWEqIdx] = -0.395710;
+//             values[contiGEqIdx] = -0.000001;
+//             values[contiNEqIdx] = -0.00;
+//             values[energyEqIdx] = -17452.97;
+//         }
         return values;
     }
 
@@ -225,58 +233,19 @@ private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
-        values.setState(threePhases);
-        const auto y = globalPos[1];
-        const auto yMax = this->gridGeometry().bBoxMax()[1];
-
-        values[temperatureIdx] = 296.15;
-        values[pressureIdx] = 1.e5;
-        values[switch1Idx] = 0.005;
-
-        if (y > yMax - eps_)
-            values[switch2Idx] = 0.112;
-        else if (y > yMax - 0.0148 - eps_)
-            values[switch2Idx] = 0 + ((yMax - y)/0.0148)*0.112;
-        else if (y > yMax - 0.0296 - eps_)
-            values[switch2Idx] = 0.112 + (((yMax - y) - 0.0148)/0.0148)*(0.120 - 0.112);
-        else if (y > yMax - 0.0444 - eps_)
-            values[switch2Idx] = 0.120 + (((yMax - y) - 0.0296)/0.0148)*(0.125 - 0.120);
-        else if (y > yMax - 0.0592 - eps_)
-            values[switch2Idx] = 0.125 + (((yMax - y) - 0.0444)/0.0148)*(0.137 - 0.125);
-        else if (y > yMax - 0.0740 - eps_)
-            values[switch2Idx] = 0.137 + (((yMax - y) - 0.0592)/0.0148)*(0.150 - 0.137);
-        else if (y > yMax - 0.0888 - eps_)
-            values[switch2Idx] = 0.150 + (((yMax - y) - 0.0740)/0.0148)*(0.165 - 0.150);
-        else if (y > yMax - 0.1036 - eps_)
-            values[switch2Idx] = 0.165 + (((yMax - y) - 0.0888)/0.0148)*(0.182 - 0.165);
-        else if (y > yMax - 0.1184 - eps_)
-            values[switch2Idx] = 0.182 + (((yMax - y) - 0.1036)/0.0148)*(0.202 - 0.182);
-        else if (y > yMax - 0.1332 - eps_)
-            values[switch2Idx] = 0.202 + (((yMax - y) - 0.1184)/0.0148)*(0.226 - 0.202);
-        else if (y > yMax - 0.1480 - eps_)
-            values[switch2Idx] = 0.226 + (((yMax - y) - 0.1332)/0.0148)*(0.257 - 0.226);
-        else if (y > yMax - 0.1628 - eps_)
-            values[switch2Idx] = 0.257 + (((yMax - y) - 0.1480)/0.0148)*(0.297 - 0.257);
-        else if (y > yMax - 0.1776 - eps_)
-            values[switch2Idx] = 0.297 + (((yMax - y) - 0.1628)/0.0148)*(0.352 - 0.297);
-        else if (y > yMax - 0.1924 - eps_)
-            values[switch2Idx] = 0.352 + (((yMax - y) - 0.1776)/0.0148)*(0.426 - 0.352);
-        else if (y > yMax - 0.2072 - eps_)
-            values[switch2Idx] = 0.426 + (((yMax - y) - 0.1924)/0.0148)*(0.522 - 0.426);
-        else if (y > yMax - 0.2220 - eps_)
-            values[switch2Idx] = 0.522 + (((yMax - y) - 0.2072)/0.0148)*(0.640 - 0.522);
-        else if (y > yMax - 0.2368 - eps_)
-            values[switch2Idx] = 0.640 + (((yMax - y) - 0.2220)/0.0148)*(0.767 - 0.640);
-        else if (y > yMax - 0.2516 - eps_)
-            values[switch2Idx] = 0.767 + (((yMax - y) - 0.2368)/0.0148)*(0.878 - 0.767);
-        else if (y > yMax - 0.2664 - eps_)
-            values[switch2Idx] = 0.878 + (((yMax - y) - 0.2516)/0.0148)*(0.953 - 0.878);
-        else if (y > yMax - 0.2812 - eps_)
-            values[switch2Idx] = 0.953 + (((yMax - y) - 0.2664)/0.0148)*(0.988 - 0.953);
-        else if (y > yMax - 0.3000 - eps_)
-            values[switch2Idx] = 0.988;
+//         const auto y = globalPos[1];
+//         const auto yMax = this->gridGeometry().bBoxMax()[1];
+        bool hasInitialXylenePhase = getParam<bool>("Problem.HasInitialXylenePhase", true);
+        if (hasInitialXylenePhase)
+            values.setState(threePhases);
         else
-            values[switch2Idx] = 1.e-4;
+            values.setState(wgPhaseOnly);
+
+        values[temperatureIdx] = getParam<Scalar>("Problem.Temperature", 296.15);
+        values[pressureIdx] = 1.e5;
+        values[switch1Idx] = getParam<Scalar>("Problem.InitialAirSaturation", 0.5);
+        values[switch2Idx] = getParam<Scalar>("Problem.InitialXylene", 0.001);
+
         return values;
     }
 

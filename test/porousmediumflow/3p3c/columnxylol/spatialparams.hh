@@ -60,11 +60,19 @@ public:
     , pcKrSwCurveCoarse_("SpatialParams.Coarse")
     {
         // intrinsic permeabilities
-        fineK_ = 1.4e-11;
-        coarseK_ = 1.4e-8;
+        fineK_ = getParam<Scalar>("SpatialParams.Fine.Permeability",1.0e-15);
+        coarseK_ = getParam<Scalar>("SpatialParams.Coarse.Permeability",1.0e-8);
 
         // porosities
-        porosity_ = 0.46;
+        finePoro_ = getParam<Scalar>("SpatialParams.Fine.Porosity",0.3);
+        coarsePoro_ = getParam<Scalar>("SpatialParams.Coarse.Porosity",0.5);
+
+        // Lense positions
+        isHeterogen_ = getParam<bool>("SpatialParams.IsHeterogen",false);
+        hasLayers_ = getParam<bool>("SpatialParams.HasLayers",false);
+        fineThickness_ = getParam<Scalar>("SpatialParams.FineLayerThickness", 0.1);
+        upperFine_ = getParam<Scalar>("SpatialParams.UpperFine",0.7);
+        lowerFine_ = getParam<Scalar>("SpatialParams.LowerFine",0.4);
 
         // specific heat capacities
         fineHeatCap_ = getParam<Scalar>("Component.SolidHeatCapacityFine", 850.0);
@@ -97,7 +105,9 @@ public:
     */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
-        return porosity_;
+        if (isFineMaterial_(globalPos))
+            return finePoro_;
+        return coarsePoro_;
     }
 
     /*!
@@ -144,13 +154,41 @@ public:
 private:
     bool isFineMaterial_(const GlobalPosition &globalPos) const
     {
-        return (0.90 - eps_ <= globalPos[1]);
+        if (hasLayers_)
+        {
+            Scalar d = fineThickness_/2;
+            if (lowerFine_ - d - eps_ <= globalPos[1] && lowerFine_ + d + eps_ >= globalPos[1])
+                return true;
+            else if (upperFine_ - d - eps_ <= globalPos[1] && upperFine_ + d + eps_ >= globalPos[1])
+                return true;
+            else
+                return false;
+        }
+        if (isHeterogen_)
+        {
+            Scalar d = fineThickness_/2;
+            if (lowerFine_ - d - eps_ <= globalPos[0] && lowerFine_ + d + eps_ >= globalPos[0] && lowerFine_ - d - eps_ <= globalPos[1] && lowerFine_ + d + eps_ >= globalPos[1])
+                return true;
+            else if (upperFine_ - d - eps_ <= globalPos[0] && upperFine_ + d + eps_ >= globalPos[0] && upperFine_ - d - eps_ <= globalPos[1] && upperFine_ + d + eps_ >= globalPos[1])
+                return true;
+            else
+                return false;
+        }
+        else
+            return false;
     }
 
     Scalar fineK_;
     Scalar coarseK_;
 
-    Scalar porosity_;
+    Scalar finePoro_;
+    Scalar coarsePoro_;
+
+    bool isHeterogen_;
+    bool hasLayers_;
+    Scalar fineThickness_;
+    Scalar upperFine_;
+    Scalar lowerFine_;
 
     Scalar fineHeatCap_;
     Scalar coarseHeatCap_;
