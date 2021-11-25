@@ -222,7 +222,7 @@ public:
                 const auto dofIdxGlobal = scv.dofIndex();
                 vtkBoxVolume_[dofIdxGlobal] += scv.volume();
 #if ISOTHERMAL
-                vtkTemperature_[dofIdxGlobal] = initialTemperatureField_(scv.dofPosition());
+                vtkTemperature_[dofIdxGlobal] = this->spatialParams().temperatureAtPos(scv.dofPosition());
 #endif
             }
 
@@ -259,17 +259,6 @@ public:
      */
     const std::string& name() const
     { return name_; }
-
-    /*!
-     * \brief Returns the temperature within the domain.
-     *
-     * \param globalPos The global position
-     *
-     * This problem assumes a geothermal gradient with
-     * a surface temperature of 10 degrees Celsius.
-     */
-    Scalar temperatureAtPos(const GlobalPosition &globalPos) const
-    { return initialTemperatureField_(globalPos); }
 
     // \}
 
@@ -397,7 +386,7 @@ private:
         PrimaryVariables values(0.0);
         values.setState(firstPhaseOnly);
 
-        const Scalar temp = initialTemperatureField_(globalPos);
+        const Scalar temp = this->spatialParams().temperatureAtPos(globalPos);
         const Scalar densityW = FluidSystem::Brine::liquidDensity(temp, 1e7);
 
         const Scalar moleFracLiquidCO2 = 0.00;
@@ -417,11 +406,6 @@ private:
         values[temperatureIdx] = temp;
 #endif
         return values;
-    }
-
-    Scalar initialTemperatureField_(const GlobalPosition globalPos) const
-    {
-        return 283.0 + (depthBOR_ - globalPos[dimWorld-1])*0.03;
     }
 
     Scalar depthBOR_;
