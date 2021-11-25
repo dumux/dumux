@@ -76,7 +76,6 @@ public:
     {
         pressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Pressure");
         saturation_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Saturation");
-        temperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Temperature");
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
     }
 
@@ -87,19 +86,6 @@ public:
     {
         return problemName_;
     }
-
-    /*!
-     * \name Problem parameters
-     */
-    // \{
-
-    /*!
-     * \brief Returns the temperature within the domain in [K].
-     *
-     */
-    Scalar temperature() const
-    { return temperature_; }
-    // \}
 
      /*!
      * \name Boundary conditions
@@ -239,7 +225,6 @@ private:
     Scalar eps_;
     Scalar pressure_;
     Scalar saturation_;
-    Scalar temperature_;
     std::string problemName_;
     std::shared_ptr<CouplingManager> couplingManager_;
 };
