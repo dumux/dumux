@@ -161,6 +161,19 @@ public:
         this->asImp_().bindLocalViews();
         const auto globalI = this->fvGeometry().gridGeometry().elementMapper().index(this->element());
         res[globalI] = this->evalLocalResidual()[0]; // forward to the internal implementation
+
+        if constexpr (Problem::enableInternalDirichletConstraints())
+        {
+            const auto applyDirichlet = [&] (const auto& scvI,
+                                             const auto& dirichletValues,
+                                             const auto eqIdx,
+                                             const auto pvIdx)
+            {
+                res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
+            };
+
+            this->asImp_().enforceInternalDirichletConstraints(applyDirichlet);
+        }
     }
 
     /*!
