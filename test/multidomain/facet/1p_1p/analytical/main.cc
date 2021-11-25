@@ -74,7 +74,7 @@ computeL2Norm(const GridView& gridView,
     Scalar uMax = std::numeric_limits<Scalar>::min();
 
     // some necessary parameters
-    const auto a = Dumux::getParam<Scalar>("Problem.FractureAperture");
+    const auto a = Dumux::getParam<Scalar>("LowDim.SpatialParams.Aperture");
     const auto numE = Dumux::getParam<int>("Grid.NumElemsPerSide");
     const auto order = Dumux::getParam<int>("L2Error.QuadratureOrder");
 
