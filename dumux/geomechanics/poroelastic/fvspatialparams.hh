@@ -29,6 +29,7 @@
 #include <dumux/common/fvspatialparams.hh>
 #include <dumux/common/typetraits/isvalid.hh>
 
+// TODO: we should probably define a header where we put those helpers to be included by spatial params headers
 #include <dumux/geomechanics/elastic/fvspatialparams.hh> // For some helpers in Detail namespace
 #include <dumux/porousmediumflow/fvspatialparams1p.hh>   // For some helpers in Detail namespace
 
