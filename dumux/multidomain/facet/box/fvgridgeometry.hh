@@ -176,7 +176,7 @@ public:
      * \param verbose Verbosity level for vertex enrichment
      */
     template<class FacetGridView, class CodimOneGridAdapter>
-    [[deprecated("Use update(gridView) instead! Will be removed after release 3.5.")]]
+    [[deprecated("Use update(gridView, facetGridView, codimOneGridAdapter) instead! Will be removed after release 3.5.")]]
     void update(const FacetGridView& facetGridView,
                 const CodimOneGridAdapter& codimOneGridAdapter,
                 bool verbose = false)
