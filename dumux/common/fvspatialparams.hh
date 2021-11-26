@@ -110,7 +110,7 @@ public:
         static const Scalar defaultTemperature = [] () {
             const Scalar defaultTemp = 293.15; // 20°C
             std::cout << " -- Using the default temperature of " << defaultTemp << " in the entire domain. "
-                      << "Overload temperatureAtPos() in your spatial params class to define a different one."
+                      << "Overload temperatureAtPos() in your spatial params class to define a custom temperature field."
                       << std::endl;
             return defaultTemp;
         } ();
