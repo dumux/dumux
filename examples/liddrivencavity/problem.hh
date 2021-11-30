@@ -50,22 +50,25 @@ class LidDrivenCavityExampleProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
 
-    using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
+    using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
+    using PrimaryVariables = typename ParentType::PrimaryVariables;
+    using NumEqVector = typename ParentType::NumEqVector;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+    static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
+    using Element = typename FVElementGeometry::Element;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
     // Within the constructor, we set the lid velocity to a run-time specified value.
-    LidDrivenCavityExampleProblem(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry)
+    LidDrivenCavityExampleProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
+    : ParentType(gridGeometry, couplingManager)
     {
         lidVelocity_ = getParam<Scalar>("Problem.LidVelocity");
     }
@@ -80,65 +83,113 @@ public:
 
     // #### Boundary conditions
     // With the following function we define the __type of boundary conditions__ depending on the location.
-    // Three types of boundary conditions can be specified: Dirichlet, Neumann or outflow boundary conditions. On
+    // Three types of boundary conditions can be specified: Dirichlet or Neumann boundary conditions. On
     // Dirichlet boundaries, the values of the primary variables need to be fixed. On a Neumann boundaries,
-    // values for derivatives need to be fixed. Outflow conditions set a gradient of zero in normal direction towards the boundary
-    // for the respective primary variables (excluding pressure).
-    // When Dirichlet conditions are set for the pressure, the velocity gradient
-    // with respect to the direction normal to the boundary is automatically set to zero.
+    // values for derivatives need to be fixed.
     // [[codeblock]]
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
 
-        // We set Dirichlet values for the velocity at each boundary
-        values.setDirichlet(Indices::velocityXIdx);
-        values.setDirichlet(Indices::velocityYIdx);
+        // We set Dirichlet values for the velocity at each boundary. At the same time,
+        // Neumann (no-flow) conditions hold at the boundaries for the mass model.
+        if constexpr (ParentType::isMomentumProblem())
+            values.setAllDirichlet();
+        else
+            values.setAllNeumann();
 
         return values;
     }
     // [[/codeblock]]
 
-    // We define a function for setting a fixed Dirichlet pressure value at a given internal cell.
-    // This is required for having a defined pressure level in our closed system domain.
-    bool isDirichletCell(const Element& element,
-                         const FVElementGeometry& fvGeometry,
-                         const SubControlVolume& scv,
-                         int pvIdx) const
-    {
-        auto isLowerLeftCell = [&](const SubControlVolume& scv)
-        { return scv.dofIndex() == 0; };
-
-        // We set a fixed pressure in one cell
-        return (isLowerLeftCell(scv) && pvIdx == Indices::pressureIdx);
-    }
-
     // The following function specifies the __values on Dirichlet boundaries__.
-    // We need to define values for the primary variables (velocity and pressure).
+    // We need to define values for the primary variables (velocity).
     // [[codeblock]]
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values;
-        values[Indices::pressureIdx] = 1.1e+5;
-        values[Indices::velocityXIdx] = 0.0;
-        values[Indices::velocityYIdx] = 0.0;
+        PrimaryVariables values(0.0);
 
-        // We set the no slip-condition at the top, that means the fluid has the same velocity as the lid
-        if (globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_)
-            values[Indices::velocityXIdx] = lidVelocity_;
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            if (globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_)
+                values[Indices::velocityXIdx] = lidVelocity_;
+        }
 
         return values;
     }
+    // [[/codeblock]]
+
+    // The following function specifies the __values on Neumann boundaries__.
+    // We define a (zero) mass flux here.
+    // [[codeblock]]
+    template<class ElementVolumeVariables, class ElementFluxVariablesCache>
+    NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElementFluxVariablesCache& elemFluxVarsCache,
+                        const SubControlVolumeFace& scvf) const
+    {
+        NumEqVector values(0.0);
+
+        if constexpr (!ParentType::isMomentumProblem())
+        {
+            // Density is constant, so inside or outside does not matter.
+            const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
+
+            // The resulting flux over the boundary is zero anyway (velocity is zero), but this will add some non-zero derivatives to the
+            // Jacobian and makes the BC more general.
+            values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
+        }
+
+        return values;
+    }
+    // [[/codeblock]]
+
+    // The problem setup considers closed boundaries everywhere. In order to have a defined pressure level, we impose an __internal Dirichlet
+    // constraint for pressure__ in a single cell.
+    // [[codeblock]]
+
+    // Use internal Dirichlet constraints for the mass problem.
+    static constexpr bool enableInternalDirichletConstraints()
+    { return !ParentType::isMomentumProblem(); }
+
+    // Set a fixed pressure a the lower-left cell.
+    std::bitset<PrimaryVariables::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
+    {
+        std::bitset<PrimaryVariables::dimension> values;
+
+        if constexpr (!ParentType::isMomentumProblem())
+        {
+            const bool isLowerLeftCell = (scv.dofIndex() == 0);
+            if (isLowerLeftCell)
+                values.set(0);
+        }
+
+        return values;
+    }
+
+    // Specify the pressure value in the internal Dirichlet cell.
+    PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
+    { return PrimaryVariables(1.1e5); }
+    // [[/codeblock]]
+
+    // Setting a __reference pressure__ can help to improve the Newton convergence rate by making the numerical derivatives more exact.
+    // This is related to floating point arithmetic as pressure values are usually much higher than velocities.
+    // [[codeblock]]
+    Scalar referencePressure(const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const SubControlVolumeFace& scvf) const
+    { return 1.0e5; }
     // [[/codeblock]]
 
     // The following function defines the initial conditions.
     // [[codeblock]]
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values;
-        values[Indices::pressureIdx] = 1.0e+5;
-        values[Indices::velocityXIdx] = 0.0;
-        values[Indices::velocityYIdx] = 0.0;
+        PrimaryVariables values(0.0);
+
+        if constexpr (!ParentType::isMomentumProblem())
+            values[Indices::pressureIdx] = 1.0e+5;
 
         return values;
     }

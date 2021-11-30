@@ -30,18 +30,18 @@
 // ### Includes
 // [[details]] includes
 //
-// The `NavierStokes` type tag specializes most of the properties required for Navier-
-// Stokes single-phase flow simulations in DuMuX. We will use this in the following to inherit the
-// respective properties and subsequently specialize those properties for our
-// type tag, which we want to modify or for which no meaningful default can be set.
-#include <dumux/freeflow/navierstokes/model.hh>
+// The single-phase flow Navier-Stokes equations are solved by coupling a momentum balance model to a mass balance model.
+#include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 
 // We want to use `YaspGrid`, an implementation of the dune grid interface for structured grids:
 #include <dune/grid/yaspgrid.hh>
 
-// In this example, we want to discretize the equations with the staggered-grid
-// scheme which is so far the only available option for free-flow models in DuMux:
-#include <dumux/discretization/staggered/freeflow/properties.hh>
+// In this example, we want to discretize the momentum and mass balance equations with the staggered-grid
+// scheme which is so far the only available option for free-flow models in DuMux. Velocities are defined on the
+// element edges while pressures are defined on the element centers.
+#include <dumux/discretization/fcstaggered.hh>
+#include <dumux/discretization/cctpfa.hh>
 
 // The fluid properties are specified in the following headers (we use a liquid with constant properties as the fluid phase):
 #include <dumux/material/components/constant.hh>
@@ -53,16 +53,17 @@
 //
 // ### Type tag definition
 //
-// We define a type tag for our simulation with the name `LidDrivenCavityExample`
-// and inherit the properties specialized for the type tags `NavierStokes` and `StaggeredFreeFlowModel`.
+// We define a type tag for our simulation with the name `LidDrivenCavityExample`. As we are dealing with a coupled model,
+// we also define type tags for the momentum and mass model and inherit from the respective physical models (`NavierStokesMomentum` and `NavierStokesMassOneP`)
+// as well as from the appropriate spatial discretization schemes (`FaceCenteredStaggeredModel` and `CCTpfaModel`).
 // [[codeblock]]
 
 namespace Dumux::Properties {
 
-// We define the `LidDrivenCavityExample` type tag and let it inherit from the single-phase `NavierStokes`
-// tag (model) and the `StaggeredFreeFlowModel` (discretization scheme).
 namespace TTag {
-struct LidDrivenCavityExample { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
+struct LidDrivenCavityExample {};
+struct LidDrivenCavityExampleMomentum { using InheritsFrom = std::tuple<LidDrivenCavityExample, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
+struct LidDrivenCavityExampleMass { using InheritsFrom = std::tuple<LidDrivenCavityExample, NavierStokesMassOneP, CCTpfaModel>; };
 } // end namespace TTag
 // [[/codeblock]]
 
@@ -79,6 +80,16 @@ struct FluidSystem<TypeTag, TTag::LidDrivenCavityExample>
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
+// We introduce the coupling manager to the properties system
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::LidDrivenCavityExample>
+{
+private:
+    using Traits = MultiDomainTraits<TTag::LidDrivenCavityExampleMomentum, TTag::LidDrivenCavityExampleMass>;
+public:
+    using type = StaggeredFreeFlowCouplingManager<Traits>;
+};
+
 // This sets the grid type used for the simulation. Here, we use a structured 2D grid.
 template<class TypeTag>
 struct Grid<TypeTag, TTag::LidDrivenCavityExample> { using type = Dune::YaspGrid<2>; };
@@ -92,7 +103,7 @@ struct Problem<TypeTag, TTag::LidDrivenCavityExample> { using type = Dumux::LidD
 // throughout the simulation.
 // [[details]] caching properties
 //
-// In Dumux, one has the option to activate/deactivate the grid-wide caching of
+// In DuMux, one has the option to activate/deactivate the grid-wide caching of
 // geometries and variables. If active, the CPU time can be significantly reduced
 // as less dynamic memory allocation procedures are necessary. Per default, grid-wide
 // caching is disabled to ensure minimal memory requirements, however, in this example we
