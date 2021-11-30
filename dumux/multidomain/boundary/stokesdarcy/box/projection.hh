@@ -95,6 +95,8 @@ public:
         auto elemVolVars = localView(darcyElemVolVars.gridVolVars());
         const auto darcyEIdxI = couplingManager.problem(porousMediumIdx).gridGeometry().elementMapper().index(darcyElement);
 
+        Scalar sumFacetArea = 0.0;
+
         // integrate darcy pressure over each coupling facet and average
         for(const auto& couplingFacet : couplingFacets(domainI, couplingManager.couplingMapper(), stokesScvf.insideScvIdx(), stokesScvf.localFaceIdx()))
         {
@@ -112,10 +114,10 @@ public:
                 elemVolVars.bind(element, fvGeometry, sol_[porousMediumIdx]);
                 projection += calculateFacetIntegral(element, fvGeometry, fvGeometry.scvf(couplingFacet.pmScvfIdx), elemVolVars, couplingFacet.geometry, evalPriVar);
             }
-
+            sumFacetArea += couplingFacet.geometry.volume();
         }
 
-        projection /= stokesScvf.area();
+        projection /= sumFacetArea;
 
         return projection;
     }
@@ -128,6 +130,7 @@ public:
                                Function evalPriVar) const
     {
         Scalar projection = 0.0;
+        Scalar sumFacetArea = 0.0;
 
         // integrate darcy pressure over each coupling facet and average
         for (const auto& data : couplingManager.stokesCouplingContext())
@@ -139,10 +142,11 @@ public:
                 const auto& darcyScvf = data.fvGeometry.scvf(data.darcyScvfIdx);
                 const auto& couplingFacet = couplingManager.couplingMapper().couplingFacet(data.facetIdx);
                 projection += calculateFacetIntegral(data.element, data.fvGeometry, darcyScvf, elemVolVars, couplingFacet.geometry, evalPriVar);
+                sumFacetArea += couplingFacet.geometry.volume();
             }
         }
 
-        projection /= scvf.area();
+        projection /= sumFacetArea;
 
         return projection;
     }
