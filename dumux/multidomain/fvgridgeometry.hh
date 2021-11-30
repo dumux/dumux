@@ -33,6 +33,21 @@
 
 namespace Dumux {
 
+namespace Multidomain::Detail {
+
+template<class T>
+struct IsStdTuple_
+: public std::false_type {};
+
+template<class... Args>
+struct IsStdTuple_<std::tuple<Args...>>
+: public std::true_type {};
+
+template<class T>
+inline constexpr bool isStdTuple = IsStdTuple_<T>::value;
+
+} // end namespace Multidomain::Detail
+
 /*!
  * \ingroup MultiDomain
  * \brief A multidomain wrapper for multiple grid geometries
@@ -42,6 +57,44 @@ template<class MDTraits>
 class MultiDomainFVGridGeometry
 {
     static constexpr std::size_t numSubDomains = MDTraits::numSubDomains;
+
+    // unwrap the tuple and pass its elements as arguments to the constructor of the ith element
+    template<std::size_t i, class Tuple, size_t... Is>
+    void constructFromTupleOfArgs_(Tuple&& t, std::index_sequence<Is...>)
+    {
+        std::get<i>(gridGeometries_) = std::make_shared<Type<i>>(std::get<Is>(std::forward<Tuple>(t))...);
+    }
+
+    // construct the ith element in this multidomain wrapper
+    template<std::size_t i, class Arg>
+    void construct_(Arg&& arg)
+    {
+        using ArgT = std::decay_t<Arg>;
+        // use perfect forwarding of the argument(s) in both cases
+        if constexpr (Multidomain::Detail::template isStdTuple<ArgT>)
+            constructFromTupleOfArgs_<i>(std::forward<Arg>(arg), std::make_index_sequence<std::tuple_size_v<ArgT>>{});
+        else
+            std::get<i>(gridGeometries_) = std::make_shared<Type<i>>(std::forward<Arg>(arg));
+    }
+
+    // unwrap the tuple and pass its elements as arguments to the update function of the ith element
+    template<std::size_t i, class Tuple, size_t... Is>
+    void updateWithTupleOfArgs_(Tuple&& t, std::index_sequence<Is...>)
+    {
+        std::get<i>(gridGeometries_)->update(std::get<Is>(std::forward<Tuple>(t))...);
+    }
+
+    // update the ith element in this multidomain wrapper
+    template<std::size_t i, class Arg>
+    void update_(Arg&& arg)
+    {
+        using ArgT = std::decay_t<Arg>;
+        // use perfect forwarding of the argument(s) in both cases
+        if constexpr (Multidomain::Detail::template isStdTuple<ArgT>)
+            updateWithTupleOfArgs_<i>(std::forward<Arg>(arg), std::make_index_sequence<std::tuple_size_v<ArgT>>{});
+        else
+            std::get<i>(gridGeometries_)->update(std::forward<Arg>(arg));
+    }
 
 public:
     //! export base types of the stored type
@@ -58,54 +111,76 @@ public:
     /*!
      * \brief The default constructor
      */
+    [[deprecated("Will be removed after release 3.5. Use variadic constructor!")]]
     MultiDomainFVGridGeometry() = default;
 
     /*!
-     * \brief Contruct the problem
-     * \param gridViews a tuple of gridViews
+     * \brief Construct grid geometries for all subdomains
+     * \param args a list of arguments to pass to the constructors
+     *
+     * The number of arguments has to match the number of subdomains.
+     * In case a constructor needs multiple arguments, they have to be wrapped in a std::tuple.
+     * Use std::make_tuple and possible wrap arguments using std::ref/std::cref or use std::forward_as_tuple.
+     * If an argument is a tuple, it will be unpacked and its members will be passed to the constructor.
+     * In the corner case where you need to pass a tuple to the constructor,
+     * you therefore need to additionally wrap the tuple in a tuple before passing.
      */
-    template<class GridViews>
-    MultiDomainFVGridGeometry(GridViews&& gridViews)
+    template<typename... Args>
+    MultiDomainFVGridGeometry(Args&&... args)
     {
+        static_assert(numSubDomains == sizeof...(Args), "Number of arguments has to match number of subdomains");
+
         using namespace Dune::Hybrid;
-        forEach(std::make_index_sequence<numSubDomains>{}, [&](auto&& id)
+        forEach(std::make_index_sequence<numSubDomains>{}, [this, t = std::forward_as_tuple(args...)](auto&& id)
         {
             constexpr auto i = std::decay_t<decltype(id)>::value;
-            elementAt(gridGeometries_, id) = std::make_shared<Type<i>>(std::get<i>(gridViews));
+            this->construct_<i>(std::get<i>(t));
         });
     }
 
     /*!
-     * \brief Update all grid geometries (do this again after grid adaption)
+     * \brief Update all grid geometries (do this e.g. after grid adaption)
+     * \param args a list of arguments to pass to the update functions
+     *
+     * The number of arguments has to match the number of subdomains.
+     * In case the update function needs multiple arguments, they have to be wrapped in a std::tuple.
+     * Use std::make_tuple and possible wrap arguments using std::ref/std::cref or use std::forward_as_tuple.
+     * If an argument is a tuple, it will be unpacked and its members will be passed to the constructor.
+     * In the corner case where you need to pass a tuple to the constructor,
+     * you therefore need to additionally wrap the tuple in a tuple before passing.
      */
-    void update()
+    template<typename... Args>
+    void update(Args&&... args)
     {
+        static_assert(numSubDomains == sizeof...(Args), "Number of arguments has to match number of subdomains");
+
         using namespace Dune::Hybrid;
-        forEach(std::make_index_sequence<numSubDomains>{}, [&](auto&& id)
+        forEach(std::make_index_sequence<numSubDomains>{}, [this, t = std::forward_as_tuple(args...)](auto&& id)
         {
-            elementAt(gridGeometries_, id)->update();
+            constexpr auto i = std::decay_t<decltype(id)>::value;
+            this->update_<i>(std::get<i>(t));
         });
     }
 
     //! return the grid geometry for domain with index i
     template<std::size_t i>
-    const Type<i>& operator[] (Dune::index_constant<i> id) const
-    { return *Dune::Hybrid::elementAt(gridGeometries_, id); }
+    const Type<i>& operator[] (Dune::index_constant<i>) const
+    { return *std::get<i>(gridGeometries_); }
 
     //! return the grid geometry for domain with index i
     template<std::size_t i>
-    Type<i>& operator[] (Dune::index_constant<i> id)
-    { return *Dune::Hybrid::elementAt(gridGeometries_, id); }
+    Type<i>& operator[] (Dune::index_constant<i>)
+    { return *std::get<i>(gridGeometries_); }
 
-    ///! return the grid geometry pointer for domain with index i
+    ///! create a copy of the grid geometry pointer for domain with index i
     template<std::size_t i>
     PtrType<i> get(Dune::index_constant<i> id = Dune::index_constant<i>{})
-    { return Dune::Hybrid::elementAt(gridGeometries_, id); }
+    { return std::get<i>(gridGeometries_); }
 
     //! set the pointer for sub domain i
     template<std::size_t i>
     void set(PtrType<i> p, Dune::index_constant<i> id = Dune::index_constant<i>{})
-    { Dune::Hybrid::elementAt(gridGeometries_, Dune::index_constant<i>{}) = p; }
+    { std::get<i>(gridGeometries_) = p; }
 
     /*!
      * \brief return the grid variables tuple we are wrapping
