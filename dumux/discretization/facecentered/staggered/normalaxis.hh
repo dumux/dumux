@@ -26,6 +26,7 @@
 
 #include <cstddef>
 #include <algorithm>
+#include <numeric>
 
 namespace Dumux {
 
