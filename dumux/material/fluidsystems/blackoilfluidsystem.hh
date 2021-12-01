@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Fluidsystems
- * \brief @copybrief Dumux::FluidSystems::BlackOilFluidsystem
+ * \brief @copybrief Dumux::FluidSystems::H2OAirMesitylene
  */
 #ifndef DUMUX_BLACKOIL_FLUID_SYSTEM_HH
 #define DUMUX_BLACKOIL_FLUID_SYSTEM_HH
@@ -249,10 +249,56 @@ class BlackOil
             X_oG = saturatedOilGasMassFraction(pSat);
 
             std::pair<Scalar, Scalar> val(X_oG, pSat);
-            pSatSamplePoints.push_back(val);;
+            pSatSamplePoints.push_back(val);
         };
         saturationPressureSpline_.setContainerOfTuples(pSatSamplePoints);
 
+        // we want to see, what is inside this saturation pressure spline
+        static constexpr int testpoints = 500;
+        std::cout << "XoG = [";
+        for (int ii=0; ii<testpoints-1;ii++)
+        {
+            std::cout<< 0.7*(double)ii/(double)testpoints << ", ";
+        }
+        std::cout << 0.7 <<"]"<<std::endl;
+
+        std::vector<Scalar> pSats;
+        std::cout << "pSats = [";
+        for (int ii=0; ii<testpoints-1; ii++)
+        {
+            std::cout << saturationPressureSpline_.eval(0.7*ii/(double)testpoints, true) << ", ";
+            pSats.push_back(saturationPressureSpline_.eval(0.7*ii/(double)testpoints, true) );
+        }
+        std::cout << saturationPressureSpline_.eval(0.7, true) << "]" << std::endl;
+        pSats.push_back(saturationPressureSpline_.eval(0.7, true) );
+
+        std::cout << "Rss = [";
+        for (int ii=0;ii<testpoints-1;ii++)
+        {
+            std::cout << gasFormationFactorSpline_.eval(pSats[ii],true) << ", ";
+        }
+        std::cout << gasFormationFactorSpline_.eval(pSats.back() ,true) << "]" << std::endl;
+        std::cout << "Bgs = [";
+        for (int ii=0;ii<testpoints-1;ii++)
+        {
+            std::cout<< gasFormationVolumeFactorSpline_.eval(pSats[ii],true) << ", ";
+        }
+        std::cout << gasFormationVolumeFactorSpline_.eval(pSats.back() ,true) <<"]"<<std::endl;
+        std::cout << "Bos = [";
+        for (int ii=0;ii<testpoints-1;ii++)
+        {
+            std::cout << oilFormationVolumeFactorSpline_.eval(pSats[ii] ,true)<<", ";
+        }
+        std::cout << oilFormationVolumeFactorSpline_.eval(pSats.back(), true) << "]"<<std::endl;
+
+//         std::cout << "Values exceeding XoG = 0.7, for impressive diagrams"<<std::endl;
+//         static constexpr int overtestpoints = testpoints+45;
+//         std::cout << "XoG = [";
+//         for (int ii=testpoints; ii<overtestpoints-1;ii++)
+//         {
+//             std::cout<< 0.7*(double)ii/(double)testpoints << ", ";
+//         }
+//         std::cout << 0.7 <<"]"<<std::endl;
 #if 0
         {
             int n = 1000;
@@ -615,7 +661,7 @@ class BlackOil
             Scalar delta = f/fPrime;
             pSat -= delta;
 
-            if (std::abs(delta) < pSat * 1e-10)
+            if (std::abs(delta) < pSat *1e-10)
                 return pSat;
         }
 
