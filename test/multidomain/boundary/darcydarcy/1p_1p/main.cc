@@ -48,6 +48,7 @@
 #endif
 
 #include <dumux/multidomain/traits.hh>
+#include <dumux/multidomain/fvgridgeometry.hh>
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 
@@ -118,15 +119,16 @@ int main(int argc, char** argv)
     // run the multidomain simulation on two grids
     ////////////////////////////////////////////////
 
-    // create the finite volume grid geometries
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto fvGridGeometry0 = std::make_shared<GridGeometry>(gridView0);
-    auto fvGridGeometry1 = std::make_shared<GridGeometry>(gridView1);
-
     // the mixed dimension type traits
     using Traits = MultiDomainTraits<SubTypeTag0, SubTypeTag1>;
     constexpr auto domain0Idx = Traits::template SubDomain<0>::Index();
     constexpr auto domain1Idx = Traits::template SubDomain<1>::Index();
+
+    // create the finite volume grid geometries
+    MultiDomainFVGridGeometry<Traits> mdGridGeometry(std::make_tuple(gridView0, gridView1));
+    mdGridGeometry.update(std::make_tuple(gridView0, gridView1));
+    auto fvGridGeometry0 = mdGridGeometry.template get<domain0Idx>();
+    auto fvGridGeometry1 = mdGridGeometry.template get<domain1Idx>();
 
     // the coupling manager
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
