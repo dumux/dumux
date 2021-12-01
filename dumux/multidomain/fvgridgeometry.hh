@@ -78,12 +78,27 @@ public:
     /*!
      * \brief Update all grid geometries (do this again after grid adaption)
      */
+    [[deprecated("Use update(gridViews) instead! Will be removed after release 3.5.")]]
     void update()
     {
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<numSubDomains>{}, [&](auto&& id)
         {
             elementAt(gridGeometries_, id)->update();
+        });
+    }
+
+    /*!
+     * \brief Update all grid geometries using the given grid views.
+     */
+    template<class GridViews>
+    void update(GridViews&& gridViews)
+    {
+        using namespace Dune::Hybrid;
+        forEach(std::make_index_sequence<numSubDomains>{}, [&](auto&& id)
+        {
+            constexpr auto i = std::decay_t<decltype(id)>::value;
+            elementAt(gridGeometries_, id)->update(std::get<i>(gridViews));
         });
     }
 
