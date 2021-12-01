@@ -48,6 +48,7 @@
 #endif
 
 #include <dumux/multidomain/traits.hh>
+#include <dumux/multidomain/fvgridgeometry.hh>
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 
@@ -118,15 +119,29 @@ int main(int argc, char** argv)
     // run the multidomain simulation on two grids
     ////////////////////////////////////////////////
 
+    // the mixed dimension type traits
+    using Traits = MultiDomainTraits<SubTypeTag0, SubTypeTag1>;
+    constexpr auto domain0Idx = Traits::template SubDomain<0>::Index();
+    constexpr auto domain1Idx = Traits::template SubDomain<1>::Index();
+
     // create the finite volume grid geometries
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto fvGridGeometry0 = std::make_shared<GridGeometry>(gridView0);
     auto fvGridGeometry1 = std::make_shared<GridGeometry>(gridView1);
 
-    // the mixed dimension type traits
-    using Traits = MultiDomainTraits<SubTypeTag0, SubTypeTag1>;
-    constexpr auto domain0Idx = Traits::template SubDomain<0>::Index();
-    constexpr auto domain1Idx = Traits::template SubDomain<1>::Index();
+    // the usage of multidomain fv grid geometry is unnecessarily complicated
+    // but we want to test its constructor and a coupled of interfaces
+    MultiDomainFVGridGeometry<Traits> mdGridGeometry(std::make_tuple(
+        fvGridGeometry0, fvGridGeometry1
+    ));
+
+    // the update here is unnecessary because update is already done in the constructor
+    // we do this just for testing purposes here! This means the grid geometry is updated twice.
+    mdGridGeometry.update(gridView0, gridView1);
+
+    // this is an identity operation, just to test the interface
+    fvGridGeometry0 = mdGridGeometry.template get<domain0Idx>();
+    fvGridGeometry1 = mdGridGeometry.template get<domain1Idx>();
 
     // the coupling manager
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
