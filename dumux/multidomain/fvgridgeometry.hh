@@ -28,6 +28,7 @@
 #include <memory>
 #include <utility>
 
+#include <dune/common/exceptions.hh>
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/indices.hh>
 
@@ -98,6 +99,10 @@ public:
         forEach(std::make_index_sequence<numSubDomains>{}, [&](auto&& id)
         {
             constexpr auto i = std::decay_t<decltype(id)>::value;
+            if (!elementAt(gridGeometries_, id))
+                DUNE_THROW(Dune::InvalidStateException,
+                           "No valid pointer set for grid geometry with id " << i << ". "
+                           << "Please use set() or pass a tuple of gridviews to the constructor");
             elementAt(gridGeometries_, id)->update(std::get<i>(gridViews));
         });
     }
