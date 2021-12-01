@@ -139,6 +139,14 @@ public:
     }
 
     /*!
+     * \brief Construct wrapper from a tuple of grid geometries
+     * \param ggTuple a tuple of shared_ptrs to the grid geometries
+     */
+    MultiDomainFVGridGeometry(TupleType ggTuple)
+    : gridGeometries_(ggTuple)
+    {}
+
+    /*!
      * \brief Update all grid geometries (do this e.g. after grid adaption)
      * \param args a list of arguments to pass to the update functions
      *
@@ -162,6 +170,19 @@ public:
         });
     }
 
+    /*!
+     * \brief Update all grid geometries (do this again after grid adaption)
+     */
+    [[deprecated("Will be removed after release 3.5. Use variadic update!")]]
+    void update()
+    {
+        using namespace Dune::Hybrid;
+        forEach(std::make_index_sequence<numSubDomains>{}, [&](auto&& id)
+        {
+            elementAt(gridGeometries_, id)->update();
+        });
+    }
+
     //! return the grid geometry for domain with index i
     template<std::size_t i>
     const Type<i>& operator[] (Dune::index_constant<i>) const
@@ -179,6 +200,7 @@ public:
 
     //! set the pointer for sub domain i
     template<std::size_t i>
+    [[deprecated("Will be removed after release 3.5. Use one of the constructors instead.")]]
     void set(PtrType<i> p, Dune::index_constant<i> id = Dune::index_constant<i>{})
     { std::get<i>(gridGeometries_) = p; }
 
