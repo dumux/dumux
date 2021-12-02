@@ -96,6 +96,11 @@ class MultiDomainFVGridGeometry
             std::get<i>(gridGeometries_)->update(std::forward<Arg>(arg));
     }
 
+    // remove this after 3.5
+    template<std::size_t i>
+    using GV = typename MDTraits::template SubDomain<i>::GridGeometry::GridView;
+    using GVTuple = typename MDTraits::template Tuple<GV>;
+
 public:
     //! export base types of the stored type
     template<std::size_t i>
@@ -145,6 +150,20 @@ public:
     MultiDomainFVGridGeometry(TupleType ggTuple)
     : gridGeometries_(ggTuple)
     {}
+
+    /*!
+     * \brief Construct wrapper from a tuple of grid views
+     */
+    [[deprecated("Will be removed after release 3.5. Use variadic constructor!")]]
+    MultiDomainFVGridGeometry(GVTuple gvTuple)
+    {
+        using namespace Dune::Hybrid;
+        forEach(std::make_index_sequence<numSubDomains>{}, [&](auto&& id)
+        {
+            constexpr auto i = std::decay_t<decltype(id)>::value;
+            this->construct_<i>(std::get<i>(gvTuple));
+        });
+    }
 
     /*!
      * \brief Update all grid geometries (do this e.g. after grid adaption)
