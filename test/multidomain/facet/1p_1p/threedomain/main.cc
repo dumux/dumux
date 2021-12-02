@@ -46,8 +46,6 @@
 
 #include "properties.hh"
 
-namespace Dumux {
-
 /*!
  * \brief Updates the finite volume grid geometry for the box scheme.
  *
@@ -60,14 +58,14 @@ template< class GridGeometry,
           class GridManager,
           class LowDimGridView,
           std::enable_if_t<GridGeometry::discMethod == Dumux::DiscretizationMethods::box, int> = 0 >
-void updateFVGridGeometry(GridGeometry& gridGeometry,
-                          const GridManager& gridManager,
-                          const LowDimGridView& lowDimGridView)
+auto gridGeometryArgs(const typename GridGeometry::GridView& gridView,
+                      const GridManager& gridManager,
+                      const LowDimGridView& lowDimGridView)
 {
     static constexpr int higherGridId = int(GridGeometry::GridView::dimension) == 3 ? 0 : 1;
     using BulkFacetGridAdapter = Dumux::CodimOneGridAdapter<typename GridManager::Embeddings, higherGridId, higherGridId+1>;
     BulkFacetGridAdapter facetGridAdapter(gridManager.getEmbeddings());
-    gridGeometry.update(lowDimGridView, facetGridAdapter);
+    return std::make_tuple(gridView, lowDimGridView, std::move(facetGridAdapter));
 }
 
 /*!
@@ -77,14 +75,12 @@ template< class GridGeometry,
           class GridManager,
           class LowDimGridView,
           std::enable_if_t<GridGeometry::discMethod != Dumux::DiscretizationMethods::box, int> = 0 >
-void updateFVGridGeometry(GridGeometry& gridGeometry,
-                          const GridManager& gridManager,
-                          const LowDimGridView& lowDimGridView)
-{
-    gridGeometry.update();
-}
+const typename GridGeometry::GridView&
+gridGeometryArgs(const typename GridGeometry::GridView& gridView,
+                 const GridManager& gridManager,
+                 const LowDimGridView& lowDimGridView)
+{ return gridView; }
 
-} // end namespace Dumux
 
 int main(int argc, char** argv)
 {
@@ -133,10 +129,14 @@ int main(int argc, char** argv)
     const auto& edgeGridView = gridManager.template grid<edgeId>().leafGridView();
 
     // create the finite volume grid geometries
-    MultiDomainFVGridGeometry<Traits> gridGeometry(std::make_tuple(bulkGridView, facetGridView, edgeGridView));
-    updateFVGridGeometry(gridGeometry[bulkId], gridManager, facetGridView);
-    updateFVGridGeometry(gridGeometry[facetId], gridManager, edgeGridView);
-    gridGeometry[edgeId].update();
+    using BulkGridGeometry = typename MultiDomainFVGridGeometry<Traits>::template Type<bulkId>;
+    using FacetGridGeometry = typename MultiDomainFVGridGeometry<Traits>::template Type<facetId>;
+
+    MultiDomainFVGridGeometry<Traits> gridGeometry(
+        gridGeometryArgs<BulkGridGeometry>(bulkGridView, gridManager, facetGridView),
+        gridGeometryArgs<FacetGridGeometry>(facetGridView, gridManager, edgeGridView),
+        edgeGridView
+    );
 
     // the coupling manager
     using CouplingManager = typename TestTraits::CouplingManager;
