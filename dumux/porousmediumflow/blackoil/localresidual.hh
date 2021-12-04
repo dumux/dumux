@@ -56,24 +56,7 @@ class BlackOilLocalResidual : public GetPropType<TypeTag, Properties::BaseLocalR
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using EnergyLocalResidual = GetPropType<TypeTag, Properties::EnergyLocalResidual>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-/*
-    enum {
-        numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numFluidPhases(),
-        numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numFluidComponents(),
 
-        contiWEqIdx = Indices::conti0EqIdx + FluidSystem::wPhaseIdx,//!< index of the mass conservation equation for the water component
-        contiNEqIdx = Indices::conti0EqIdx + FluidSystem::nPhaseIdx,//!< index of the mass conservation equation for the contaminant component
-        contiGEqIdx = Indices::conti0EqIdx + FluidSystem::gPhaseIdx,//!< index of the mass conservation equation for the gas component
-
-        wPhaseIdx = FluidSystem::wPhaseIdx,
-        nPhaseIdx = FluidSystem::nPhaseIdx,
-        gPhaseIdx = FluidSystem::gPhaseIdx,
-
-        wCompIdx = FluidSystem::wCompIdx,
-        nCompIdx = FluidSystem::nCompIdx,
-        gCompIdx = FluidSystem::gCompIdx
-    };
-    */
     static constexpr int numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numFluidPhases();
     static constexpr int numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numFluidComponents();
 
