@@ -195,6 +195,31 @@ def predefinedProperties():
         return properties
 
 
+def predefinedTypeTags(inheritsFrom=None):
+    """Create a list of predefined TypeTags"""
+    result = _typeTags
+    if inheritsFrom is not None:
+        for parentTypeTag in inheritsFrom:
+            if isinstance(parentTypeTag, CppTypeTag):
+                result[parentTypeTag.name] = {
+                    "include": parentTypeTag.includes[0],
+                    "description": parentTypeTag.description,
+                }
+    return result
+
+
+class CppTypeTag:
+    """Creates a TypeTag from an existing c++ TypeTag"""
+
+    def __init__(self, *, name, include, description=None):
+        self.name = name
+        self.includes = [include]
+        self.description = description
+        self.isExistingTypeTag = True
+        self.properties = {}
+        self.newPropertyDefinitions = []
+
+
 class TypeTag:
     """TypeTags are inheritable collections of properties"""
 
@@ -208,32 +233,34 @@ class TypeTag:
         self.gridGeometry = gridGeometry
         self.name = name
 
-        if self.name in _typeTags:
+        existingTypeTags = predefinedTypeTags(self.inheritsFrom)
+
+        if self.name in existingTypeTags:
             if inheritsFrom is not None:
                 raise ValueError(
                     f"Existing TypeTag {name} cannot inherit from other TypeTags."
                     f" Use TypeTag({name}) only."
                 )
             self.isExistingTypeTag = True
-            self.includes = [_typeTags[self.name]["include"]]
+            self.includes = [existingTypeTags[self.name]["include"]]
         else:
             self.isExistingTypeTag = False
 
         if self.inheritsFrom is not None:
             # treat existing TypeTags by converting the given string to a real TypeTag instance
             for idx, parentTypeTag in enumerate(self.inheritsFrom):
-                if not isinstance(parentTypeTag, TypeTag):
+                if not isinstance(parentTypeTag, (CppTypeTag, TypeTag)):
                     if not isinstance(parentTypeTag, str):
                         raise ValueError(
                             f"Unknown parent TypeTag {parentTypeTag}. "
                             "Use either argument of type TypeTag "
                             "or a string for an existing TypeTag. "
-                            f"List of existing TypeTags: {_typeTags.keys()}"
+                            f"List of existing TypeTags: {existingTypeTags.keys()}"
                         )
-                    if parentTypeTag not in _typeTags.keys():
+                    if parentTypeTag not in existingTypeTags.keys():
                         raise ValueError(
                             f"Unknown TypeTag {parentTypeTag}. "
-                            f"List of existing TypeTags: {_typeTags.keys()}"
+                            f"List of existing TypeTags: {existingTypeTags.keys()}"
                         )
                     self.inheritsFrom[idx] = TypeTag(parentTypeTag)
 
@@ -327,9 +354,24 @@ class TypeTag:
 class Model(TypeTag):
     """A DuMux model specifies all properties necessary to build a DuMux simulator"""
 
-    def __init__(self, *, inheritsFrom: List[str], gridGeometry, scalar: str = "double"):
+    def __init__(self, *, inheritsFrom, gridGeometry, scalar: str = "double"):
+
+        inheritsFromNames = []
+        for parentModel in inheritsFrom:
+            if isinstance(parentModel, str):
+                inheritsFromNames.append(parentModel)
+            elif isinstance(parentModel, (CppTypeTag, TypeTag)):
+                inheritsFromNames.append(parentModel.name)
+            else:
+                raise ValueError(
+                    "Arguments passed to inheritsFrom must be either names (strings) of "
+                    "known TypeTags, TypeTag objects or CppTypeTag objects."
+                )
+
         # generate a generic name
-        genericName = "TypeTag" + hashIt("".join(inheritsFrom) + gridGeometry._typeName + scalar)
+        genericName = "TypeTag" + hashIt(
+            "".join(inheritsFromNames) + gridGeometry._typeName + scalar
+        )
 
         # deduce the discretization tag from the grid geometry
         discretizationMethod = gridGeometry.discMethod
