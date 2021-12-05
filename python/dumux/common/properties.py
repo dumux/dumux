@@ -257,7 +257,7 @@ class TypeTag:
                             "or a string for an existing TypeTag. "
                             f"List of existing TypeTags: {existingTypeTags.keys()}"
                         )
-                    if parentTypeTag not in existingTypeTags.keys():
+                    if parentTypeTag not in existingTypeTags:
                         raise ValueError(
                             f"Unknown TypeTag {parentTypeTag}. "
                             f"List of existing TypeTags: {existingTypeTags.keys()}"
