@@ -66,10 +66,6 @@ public:
     : ParentType(gridGeometry)
     {}
 
-    //! Returns the temperature in the domain.
-    static constexpr Scalar temperature()
-    { return 273.15; }
-
     //! Evaluates the initial value for a control volume.
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(0.0); }
@@ -87,7 +83,9 @@ public:
     {
         // This test uses the constant component, obtain density only once
         using FS = GetPropType<TypeTag, Properties::FluidSystem>;
-        static const Scalar rho = FS::density( effectivePorePressureAtPos(globalPos), temperature() );
+        static const Scalar rho = FS::density(
+            effectivePorePressureAtPos(globalPos), this->spatialParams().temperatureAtPos(globalPos)
+        );
         return rho;
     }
 
