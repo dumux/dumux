@@ -25,7 +25,7 @@
 #ifndef DUMUX_FV_SPATIAL_PARAMS_HH
 #define DUMUX_FV_SPATIAL_PARAMS_HH
 
-#warning "This file is deprecated, use FVPorousMediumSpatialParamsMP from dumux/porousmediumflow/fvspatialparamsmp.hh instead!"
+#warning "This file is deprecated, use FVPorousMediumFlowSpatialParamsMP from dumux/porousmediumflow/fvspatialparamsmp.hh instead!"
 
 #include <dune/common/exceptions.hh>
 #include <dumux/common/typetraits/isvalid.hh>
@@ -55,7 +55,7 @@ struct hasFluidMatrixInteractionAtPos
  */
 template<class GridGeometry, class Scalar, class Implementation>
 class
-[[deprecated("Use FVPorousMediumSpatialParamsMP from dumux/porousmediumflow/fvspatialparamsmp.hh instead. This class will be removed after 3.5.")]]
+[[deprecated("Use FVPorousMediumFlowSpatialParamsMP from dumux/porousmediumflow/fvspatialparamsmp.hh instead. This class will be removed after 3.5.")]]
 FVSpatialParams : public FVSpatialParamsOneP<GridGeometry, Scalar, Implementation>
 {
     using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, Implementation>;

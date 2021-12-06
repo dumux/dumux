@@ -56,10 +56,10 @@ struct hasFluidMatrixInteractionAtPos
  * \brief The base class for spatial parameters of multi-phase problems
  */
 template<class GridGeometry, class Scalar, class Implementation>
-class FVPorousMediumSpatialParamsMP
-: public FVPorousMediumSpatialParams<GridGeometry, Scalar, Implementation>
+class FVPorousMediumFlowSpatialParamsMP
+: public FVPorousMediumFlowSpatialParams<GridGeometry, Scalar, Implementation>
 {
-    using ParentType = FVPorousMediumSpatialParams<GridGeometry, Scalar, Implementation>;
+    using ParentType = FVPorousMediumFlowSpatialParams<GridGeometry, Scalar, Implementation>;
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
@@ -68,7 +68,7 @@ class FVPorousMediumSpatialParamsMP
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    FVPorousMediumSpatialParamsMP(std::shared_ptr<const GridGeometry> gridGeometry)
+    FVPorousMediumFlowSpatialParamsMP(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {}
 
