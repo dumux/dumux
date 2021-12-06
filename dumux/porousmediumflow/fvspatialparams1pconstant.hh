@@ -35,8 +35,8 @@ namespace Dumux {
  * \brief A spatial params implementation for 1p problem with constant properties
  */
 template<class GridGeometry, class Scalar>
-class FVPorousMediumSpatialParamsOnePConstant
-: public FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar, FVPorousMediumSpatialParamsOnePConstant<GridGeometry, Scalar>>
+class FVPorousMediumFlowSpatialParamsOnePConstant
+: public FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar, FVPorousMediumSpatialParamsOnePConstant<GridGeometry, Scalar>>
 {
     using ThisType = FVPorousMediumSpatialParamsOnePConstant<GridGeometry, Scalar>;
     using ParentType = FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
@@ -45,7 +45,7 @@ class FVPorousMediumSpatialParamsOnePConstant
 public:
     using PermeabilityType = Scalar;
 
-    FVPorousMediumSpatialParamsOnePConstant(std::shared_ptr<const GridGeometry> gridGeometry)
+    FVPorousMediumFlowSpatialParamsOnePConstant(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     , porosity_(getParam<Scalar>("SpatialParams.Porosity"))
     , permeability_(getParam<Scalar>("SpatialParams.Permeability"))

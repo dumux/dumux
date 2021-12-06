@@ -40,15 +40,15 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class FractureSpatialParams
-: public FVPorousMediumSpatialParamsMP<GridGeometry, Scalar,
-                                       FractureSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
+                                           FractureSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVPorousMediumSpatialParamsMP<GridGeometry, Scalar,
-                                                     FractureSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
+                                                         FractureSpatialParams<GridGeometry, Scalar>>;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
