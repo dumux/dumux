@@ -72,7 +72,7 @@ struct hasPorosityAtPos
  * \brief The base class for spatial parameters of porous-medium-flow problems.
  */
 template<class GridGeometry, class Scalar, class Implementation>
-class FVPorousMediumSpatialParams
+class FVPorousMediumFlowSpatialParams
 : public FVSpatialParams<GridGeometry, Scalar, Implementation>
 {
     using ParentType = FVSpatialParams<GridGeometry, Scalar, Implementation>;
@@ -89,7 +89,7 @@ class FVPorousMediumSpatialParams
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    FVPorousMediumSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    FVPorousMediumFlowSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
         /* \brief default forchheimer coefficient

@@ -37,8 +37,8 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class OnePTestSpatialParams
-: public FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar,
-                                         OnePTestSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
+                                             OnePTestSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -46,7 +46,7 @@ class OnePTestSpatialParams
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
     using ThisType = OnePTestSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVPorousMediumSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;

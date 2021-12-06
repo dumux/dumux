@@ -33,10 +33,10 @@ namespace Dumux {
  * \brief The base class for spatial parameters of single-phase problems.
  */
 template<class GridGeometry, class Scalar, class Implementation>
-class FVPorousMediumSpatialParamsOneP
-: public FVPorousMediumSpatialParams<GridGeometry, Scalar, Implementation>
+class FVPorousMediumFlowSpatialParamsOneP
+: public FVPorousMediumFlowSpatialParams<GridGeometry, Scalar, Implementation>
 {
-    using ParentType = FVPorousMediumSpatialParams<GridGeometry, Scalar, Implementation>;
+    using ParentType = FVPorousMediumFlowSpatialParams<GridGeometry, Scalar, Implementation>;
 
 public:
     using ParentType::ParentType;
