@@ -24,7 +24,7 @@
 #ifndef DUMUX_FV_CONSTANT_SPATIAL_PARAMS_ONE_P_HH
 #define DUMUX_FV_CONSTANT_SPATIAL_PARAMS_ONE_P_HH
 
-#warning "This file is deprecated, use FVPorousMediumSpatialParamsOnePConstant from dumux/porousmediumflow/fvspatialparams1pconstant.hh instead!"
+#warning "This file is deprecated, use FVPorousMediumFlowSpatialParamsOnePConstant from dumux/porousmediumflow/fvspatialparams1pconstant.hh instead!"
 
 #include <dumux/common/parameters.hh>
 #include <dumux/material/spatialparams/fv1p.hh>
@@ -37,7 +37,7 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class
-[[deprecated("Use FVPorousMediumSpatialParamsOnePConstant from dumux/porousmediumflow/fvspatialparams1pconstant.hh instead. This class will be removed after 3.5.")]]
+[[deprecated("Use FVPorousMediumFlowSpatialParamsOnePConstant from dumux/porousmediumflow/fvspatialparams1pconstant.hh instead. This class will be removed after 3.5.")]]
 FVSpatialParamsOnePConstant
 : public FVSpatialParamsOneP<GridGeometry, Scalar, FVSpatialParamsOnePConstant<GridGeometry, Scalar>>
 {

@@ -34,10 +34,10 @@ namespace Dumux {
  * \brief Definition of the spatial parameters for non-equilibrium
  */
 template<class GridGeometry, class Scalar, class Implementation>
-class FVPorousMediumSpatialParamsNonEquilibrium
-: public FVPorousMediumSpatialParamsMP<GridGeometry, Scalar, Implementation>
+class FVPorousMediumFlowSpatialParamsNonEquilibrium
+: public FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar, Implementation>
 {
-    using ParentType = FVPorousMediumSpatialParamsMP<GridGeometry, Scalar, Implementation>;
+    using ParentType = FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar, Implementation>;
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
@@ -50,7 +50,7 @@ public:
     using AwsSurfaceParams = Scalar;
     using AnsSurfaceParams = Scalar;
 
-    FVPorousMediumSpatialParamsNonEquilibrium(std::shared_ptr<const GridGeometry> gridGeometry)
+    FVPorousMediumFlowSpatialParamsNonEquilibrium(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {}
 

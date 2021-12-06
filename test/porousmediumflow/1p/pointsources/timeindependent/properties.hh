@@ -73,7 +73,7 @@ struct SpatialParams<TypeTag, TTag::OnePSingularity>
 {
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FVPorousMediumSpatialParamsOnePConstant<GridGeometry, Scalar>;
+    using type = FVPorousMediumFlowSpatialParamsOnePConstant<GridGeometry, Scalar>;
 };
 
 } // end namespace Dumux
