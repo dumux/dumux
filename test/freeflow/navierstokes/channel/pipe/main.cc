@@ -22,10 +22,13 @@
 #include <iostream>
 
 #include <dune/common/parallel/mpihelper.hh>
+#include <dune/common/float_cmp.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/partial.hh>
+
+#include <dumux/geometry/diameter.hh>
 
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/vtkoutputmodule.hh>
@@ -40,6 +43,7 @@
 #include <dumux/multidomain/newtonsolver.hh>
 
 #include <dumux/freeflow/navierstokes/velocityoutput.hh>
+#include <dumux/freeflow/navierstokes/fluxoveraxisalignedsurface.hh>
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 #include <test/freeflow/navierstokes/errors.hh>
 
@@ -136,15 +140,53 @@ int main(int argc, char** argv)
     NavierStokesTest::Errors errors(momentumProblem, massProblem, x);
     NavierStokesTest::ErrorCSVWriter errorCSVWriter(momentumProblem, massProblem);
 
-     if (printErrors || printConvergenceTestFile)
-     {
+    if (printErrors || printConvergenceTestFile)
+    {
         NavierStokesTest::Errors errors(momentumProblem, massProblem, x);
         NavierStokesTest::ErrorCSVWriter errorCSVWriter(momentumProblem, massProblem);
         errorCSVWriter.printErrors(errors);
 
-         if (printConvergenceTestFile)
+        if (printConvergenceTestFile)
             convergenceTestAppendErrors(momentumProblem, massProblem, errors);
-     }
+    }
+
+    // Use FluxOverAxisAlignedSurface class to calculate fluxes entering and leaving the domain.
+    auto fluxOverSurface = FluxOverAxisAlignedSurface(*massGridVariables, x[massIdx], assembler->localResidual(massIdx));
+    using GlobalPosition = typename MassGridGeometry::SubControlVolume::GlobalPosition;
+
+    // Add a surface at the lower bottom (inlet).
+    GlobalPosition inletLowerLeft = massGridGeometry->bBoxMin();
+    GlobalPosition inletUpperRight = GlobalPosition{
+        massGridGeometry->bBoxMax()[0], massGridGeometry->bBoxMin()[1]
+    };
+
+    // The surface has to coincide with the element's faces. Let's assume the user does not give that position
+    // correctly but places the surface somewhere in-between. The FluxOverAxisAlignedSurface class
+    // will automatically shift that surface to the closest valid position.
+    const auto firstElement = (*elements(massGridGeometry->gridView()).begin());
+    const auto offset = 0.25*diameter(firstElement.geometry());
+    inletLowerLeft[1] += offset;
+    inletUpperRight[1] += offset;
+    fluxOverSurface.addAxisAlignedSurface("inlet", inletLowerLeft, inletUpperRight);
+
+    // Add a plane (infinite extend) at the outlet.
+    const GlobalPosition planeCenter = massGridGeometry->bBoxMax(); // the exact position in x-direction does not matter
+    const std::size_t directionIndex = 1; // plane normal points in y-direction
+    fluxOverSurface.addAxisAlignedPlane("outlet", planeCenter, directionIndex);
+
+    // Calculate and print fluxes
+    fluxOverSurface.calculateAllFluxes();
+    fluxOverSurface.printAllFluxes();
+
+    // Sanity check
+    if (Dune::FloatCmp::ne(fluxOverSurface.flux("inlet"), -fluxOverSurface.flux("outlet")))
+        DUNE_THROW(Dune::InvalidStateException, "Inlet and outlet fluxes differ");
+
+    const auto analyticalMassFlux = massProblem->analyticalMassFlux();
+    std::cout << "Analytical mass flux " << analyticalMassFlux << std::endl;
+
+    if (Dune::FloatCmp::ne(fluxOverSurface.flux("outlet")[0], analyticalMassFlux, 5e-3))
+        DUNE_THROW(Dune::InvalidStateException, "Outlet flux differs too much from analytical solution");
 
     // print dumux end message
     if (mpiHelper.rank() == 0)

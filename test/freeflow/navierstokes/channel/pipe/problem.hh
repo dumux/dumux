@@ -62,13 +62,15 @@ public:
         name_ = getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
         meanInletVelocity_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.MeanInletVelocity");
         initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure");
-        mu_ = getParam<Scalar>("Component.LiquidKinematicViscosity")*getParam<Scalar>("Component.LiquidDensity");
+        const Scalar nu = getParam<Scalar>("Component.LiquidKinematicViscosity");
+        rho_ = getParam<Scalar>("Component.LiquidDensity");
+        mu_ = nu*rho_;
 
         pipeRadius_ = this->gridGeometry().bBoxMax()[0] - this->gridGeometry().bBoxMin()[0];
         pipeLength_ = this->gridGeometry().bBoxMax()[1] - this->gridGeometry().bBoxMin()[1];
         eps_ = 1e-7*pipeRadius_;
 
-        std::cout << "-- Reynolds number: " << 2*pipeRadius_*meanInletVelocity_/getParam<Scalar>("Component.LiquidKinematicViscosity") << std::endl;
+        std::cout << "-- Reynolds number: " << 2*pipeRadius_*meanInletVelocity_/nu << std::endl;
     }
 
     const std::string& name() const
@@ -183,6 +185,11 @@ public:
         return (pipeLength_-y)*meanInletVelocity_*8.0*mu_/(pipeRadius_*pipeRadius_);
     }
 
+    Scalar analyticalMassFlux() const
+    {
+        return meanInletVelocity_ * M_PI * pipeRadius_*pipeRadius_ * rho_;
+    }
+
 private:
     bool onInnerBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_; }
@@ -200,6 +207,7 @@ private:
     Scalar initialPressure_;
     Scalar meanInletVelocity_;
     Scalar mu_;
+    Scalar rho_;
     Scalar pipeRadius_, pipeLength_;
     Scalar eps_;
 };
