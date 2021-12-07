@@ -35,6 +35,7 @@
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/linear/trilinossolverbackend.hh>
 #include <dumux/linear/pdesolver.hh>
+#include <dumux/linear/linearsolvertraits.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -141,10 +142,11 @@ int main(int argc, char** argv)
 
 #ifdef SOLVERBACKEND
     using LinearSolver = SOLVERBACKEND;
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 #else
     using LinearSolver = SSORCGBackend;
-#endif
     auto linearSolver = std::make_shared<LinearSolver>();
+#endif
 
     // solver the linear problem
     LinearPDESolver solver(assembler, linearSolver);

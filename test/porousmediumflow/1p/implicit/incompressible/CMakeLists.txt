@@ -1,4 +1,5 @@
 dune_symlink_to_source_files(FILES "params.input")
+dune_symlink_to_source_files(FILES "ParameterList_Thyra.xml")
 dune_symlink_to_source_files(FILES grids)
 
 # using tpfa and analytical Jacobian
@@ -40,12 +41,12 @@ dumux_add_test(NAME test_1p_incompressible_tpfa_trilinos
               LABELS porousmediumflow 1p
               SOURCES main.cc
               CMAKE_GUARD HAVE_TRILINOS
-              COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleTpfa NUMDIFFMETHOD=DiffMethod::analytic SOLVERBACKEND=TrilinosSolverBackend
+              COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleTpfa NUMDIFFMETHOD=DiffMethod::analytic SOLVERBACKEND=TrilinosSolverBackend<LinearSolverTraits<GridGeometry>>
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS  --script fuzzy
-                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_tpfa_trilinos-00001.vtu
-                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_tpfa_trilinos params.input -Problem.Name test_1p_incompressible_tpfa_trilinos")
+              CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
+                       ${CMAKE_CURRENT_BINARY_DIR}/s0004-test_1p_incompressible_tpfa_trilinos-00001.pvtu
+              --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_tpfa_trilinos params.input -Problem.Name test_1p_incompressible_tpfa_trilinos")
 
 # using mpfa and analytical Jacobian
 dumux_add_test(NAME test_1p_incompressible_mpfa
