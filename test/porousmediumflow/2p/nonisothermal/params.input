@@ -27,3 +27,4 @@ CoarseMaterial.Swr = 0.2
 CoarseMaterial.Snr = 0.0
 CoarseMaterial.BrooksCoreyPcEntry = 1e4
 CoarseMaterial.BrooksCoreyLambda = 2.0
+InitialTemperature = 313.15
