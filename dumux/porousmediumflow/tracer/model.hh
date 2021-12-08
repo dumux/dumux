@@ -51,7 +51,6 @@
 #define DUMUX_TRACER_MODEL_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/material/spatialparams/fv1p.hh>
 #include <dumux/flux/stationaryvelocityfield.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh>
 #include <dumux/porousmediumflow/properties.hh>
