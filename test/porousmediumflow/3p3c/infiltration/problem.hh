@@ -105,9 +105,8 @@ public:
     InfiltrationThreePThreeCProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
-        temperature_ = 273.15 + 10.0; // -> 10 degrees Celsius
-        FluidSystem::init(/*tempMin=*/temperature_ - 1,
-                          /*tempMax=*/temperature_ + 1,
+        FluidSystem::init(/*tempMin=*/282.15,
+                          /*tempMax=*/284.15,
                           /*nTemp=*/3,
                           /*pressMin=*/0.8*1e5,
                           /*pressMax=*/3*1e5,
@@ -123,18 +122,6 @@ public:
      */
     const std::string& name() const
     { return name_; }
-
-    /*!
-     * \brief Returns the temperature within the domain.
-     *
-     * \param globalPos The global position
-     *
-     * This problem assumes a temperature of 10 degrees Celsius.
-     */
-    Scalar temperatureAtPos(const GlobalPosition &globalPos) const
-    {
-        return temperature_;
-    }
 
     // \}
 
@@ -273,7 +260,6 @@ private:
         return(sw);
     }
 
-    Scalar temperature_;
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
 };
