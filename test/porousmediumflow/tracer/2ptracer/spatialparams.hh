@@ -24,9 +24,8 @@
 #ifndef DUMUX_TWOP_TRACER_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_TWOP_TRACER_TEST_SPATIAL_PARAMS_HH
 
-#include <dumux/porousmediumflow/properties.hh>
-#include <dumux/material/spatialparams/fv.hh>
 #include <iostream>
+#include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 
 namespace Dumux {
 
@@ -36,20 +35,19 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class TwoPTracerTestSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
-                         TwoPTracerTestSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
+                                           TwoPTracerTestSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar,
-                                       TwoPTracerTestSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
+                                                         TwoPTracerTestSpatialParams<GridGeometry, Scalar>>;
 
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Dune::FieldVector<Scalar, dimWorld>;
-
 
 public:
 
