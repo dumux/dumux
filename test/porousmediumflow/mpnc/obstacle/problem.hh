@@ -107,11 +107,11 @@ public:
     ObstacleProblem(std::shared_ptr<const GridGeometry> gridGeometry)
         : ParentType(gridGeometry)
     {
-        temperature_ = 273.15 + 25; // -> 25°C
+        const auto temperature = getParam<Scalar>("SpatialParams.Temperature");
 
         // initialize the tables of the fluid system
-        Scalar Tmin = temperature_ - 1.0;
-        Scalar Tmax = temperature_ + 1.0;
+        Scalar Tmin = temperature - 1.0;
+        Scalar Tmax = temperature + 1.0;
         int nT = 3;
 
         Scalar pmin = 1.0e5 * 0.75;
@@ -134,12 +134,6 @@ public:
      */
     const std::string name() const
     { return name_; }
-
-    /*!
-     * \brief Returns the temperature \f$ K \f$
-     */
-    Scalar temperature() const
-    { return temperature_; }
 
     // \}
 
@@ -233,7 +227,7 @@ private:
         int otherPhaseIdx;
 
         // set the fluid temperatures
-        fs.setTemperature(this->temperatureAtPos(globalPos));
+        fs.setTemperature(this->spatialParams().temperatureAtPos(globalPos));
 
         if (onInlet_(globalPos))
         {
@@ -318,7 +312,6 @@ private:
         return x < eps_ && y <= 10 + eps_;
     }
 
-    Scalar temperature_;
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
 };

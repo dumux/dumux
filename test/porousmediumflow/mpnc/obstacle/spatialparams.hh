@@ -26,7 +26,7 @@
 #define DUMUX_OBSTACLE_SPATIAL_PARAMS_HH
 
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 #include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/smoothedlinearlaw.hh>
 #include <dumux/material/fluidmatrixinteractions/mp/mpadapter.hh>
@@ -40,15 +40,15 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class ObstacleSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
-                         ObstacleSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
+                                       ObstacleSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar,
-                                       ObstacleSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
+                                                     ObstacleSpatialParams<GridGeometry, Scalar>>;
 
     enum {dimWorld=GridView::dimensionworld};
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
@@ -66,6 +66,7 @@ public:
     , coarseK_(1e-12) // intrinsic permeability
     , fineK_(1e-15) // intrinsic permeability
     , porosity_(0.3)
+    , temperature_(getParam<Scalar>("SpatialParams.Temperature"))
     {}
 
     template<class ElementSolution>
@@ -86,6 +87,13 @@ public:
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return porosity_; }
+
+    /*!
+     * \brief Defines the temperature \f$[K]\f$ at the given position
+     * \param globalPos The global position
+     */
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    { return temperature_; }
 
     /*!
      * \brief Returns the fluid-matrix interaction law at a given location
@@ -123,6 +131,7 @@ private:
     const Scalar coarseK_;
     const Scalar fineK_;
     const Scalar porosity_;
+    const Scalar temperature_;
     static constexpr Scalar eps_ = 1e-6;
 };
 
