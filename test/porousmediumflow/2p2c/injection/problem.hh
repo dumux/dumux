@@ -122,7 +122,6 @@ public:
         pressureHigh_       = getParam<Scalar>("Problem.PressureHigh");
         temperatureLow_     = getParam<Scalar>("Problem.TemperatureLow");
         temperatureHigh_    = getParam<Scalar>("Problem.TemperatureHigh");
-        temperature_        = getParam<Scalar>("Problem.InitialTemperature");
         depthBOR_           = getParam<Scalar>("Problem.DepthBOR");
         name_               = getParam<std::string>("Problem.Name");
 
@@ -153,12 +152,6 @@ public:
      */
     const std::string& name() const
     { return name_; }
-
-    /*!
-     * \brief Returns the temperature [K]
-     */
-    Scalar temperature() const
-    { return temperature_; }
 
     // \}
 
@@ -258,10 +251,11 @@ private:
         PrimaryVariables priVars(0.0);
         priVars.setState(wPhaseOnly);
 
-        Scalar densityW = FluidSystem::H2O::liquidDensity(temperature_, 1e5);
+        Scalar densityW =
+            FluidSystem::H2O::liquidDensity(this->spatialParams().temperatureAtPos(globalPos), 1e5);
 
         Scalar pl = 1e5 - densityW*this->spatialParams().gravity(globalPos)[1]*(depthBOR_ - globalPos[1]);
-        Scalar moleFracLiquidN2 = pl*0.95/BinaryCoeff::H2O_N2::henry(temperature_);
+        Scalar moleFracLiquidN2 = pl*0.95/BinaryCoeff::H2O_N2::henry(this->spatialParams().temperatureAtPos(globalPos));
         Scalar moleFracLiquidH2O = 1.0 - moleFracLiquidN2;
 
         Scalar meanM =
@@ -282,7 +276,6 @@ private:
         return priVars;
     }
 
-    Scalar temperature_;
     Scalar depthBOR_;
     static constexpr Scalar eps_ = 1e-6;
 

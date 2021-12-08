@@ -27,7 +27,7 @@
 #define DUMUX_INJECTION_SPATIAL_PARAMS_HH
 
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 
 namespace Dumux {
@@ -39,14 +39,15 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class InjectionSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
-                         InjectionSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
+                                       InjectionSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, InjectionSpatialParams<GridGeometry, Scalar>>;
+    using ThisType = InjectionSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar, ThisType>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
@@ -72,6 +73,9 @@ public:
         // porosities
         finePorosity_ = 0.3;
         coarsePorosity_ = 0.3;
+
+        // temperature
+        temperature_ = getParam<Scalar>("SpatialParams.InitialTemperature");
     }
 
     /*!
@@ -122,6 +126,15 @@ public:
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
     { return FluidSystem::H2OIdx; }
 
+    /*!
+     * \brief Returns the temperature at the domain at the given position
+     * \param globalPos The position in global coordinates where the temperature should be specified
+     */
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    {
+        return temperature_;
+    }
+
 private:
     bool isFineMaterial_(const GlobalPosition &globalPos) const
     { return globalPos[dimWorld-1] > layerBottom_; }
@@ -132,6 +145,8 @@ private:
 
     Scalar finePorosity_;
     Scalar coarsePorosity_;
+
+    Scalar temperature_;
 
     const PcKrSwCurve finePcKrSwCurve_;
     const PcKrSwCurve coarsePcKrSwCurve_;
