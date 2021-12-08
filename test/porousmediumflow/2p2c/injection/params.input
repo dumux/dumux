@@ -9,10 +9,7 @@ Cells = 24 16
 
 [Problem]
 Name = injectioncc # [-] the name of the output files
-
-InitialTemperature = 313.15 # [K] 40°C initial temperature in the reservoir
 DepthBOR = 2700 # [m] depth below ground surface
-
 NTemperature = 3 # [-] number of temperature table entries
 NPressure = 200 # [-] number of pressure table entries
 PressureLow = 1e5 # [Pa] lower pressure limit for tabularization
@@ -34,3 +31,4 @@ CoarseMaterial.Swr = 0.2
 CoarseMaterial.Snr = 0.0
 CoarseMaterial.BrooksCoreyPcEntry = 1e4
 CoarseMaterial.BrooksCoreyLambda = 2.0
+InitialTemperature = 313.15 # [K] 40°C initial temperature in the reservoir

@@ -75,7 +75,7 @@ public:
         coarsePorosity_ = 0.3;
 
         // temperature
-        temperature_ = getParam<Scalar>("Problem.InitialTemperature");
+        temperature_ = getParam<Scalar>("SpatialParams.InitialTemperature");
     }
 
     /*!
