@@ -148,14 +148,14 @@ public:
      * \note the grid variables might be temporarily changed during assembly (if caching is enabled)
      *       it is however guaranteed that the state after assembly will be the same as before
      */
-    MultiDomainFVAssembler(ProblemTuple&& problem,
-                           GridGeometryTuple&& gridGeometry,
-                           GridVariablesTuple&& gridVariables,
+    MultiDomainFVAssembler(ProblemTuple problem,
+                           GridGeometryTuple gridGeometry,
+                           GridVariablesTuple gridVariables,
                            std::shared_ptr<CouplingManager> couplingManager)
     : couplingManager_(couplingManager)
-    , problemTuple_(problem)
-    , gridGeometryTuple_(gridGeometry)
-    , gridVariablesTuple_(gridVariables)
+    , problemTuple_(std::move(problem))
+    , gridGeometryTuple_(std::move(gridGeometry))
+    , gridVariablesTuple_(std::move(gridVariables))
     , timeLoop_()
     , isStationaryProblem_(true)
     , warningIssued_(false)
@@ -169,16 +169,16 @@ public:
      * \note the grid variables might be temporarily changed during assembly (if caching is enabled)
      *       it is however guaranteed that the state after assembly will be the same as before
      */
-    MultiDomainFVAssembler(ProblemTuple&& problem,
-                           GridGeometryTuple&& gridGeometry,
-                           GridVariablesTuple&& gridVariables,
+    MultiDomainFVAssembler(ProblemTuple problem,
+                           GridGeometryTuple gridGeometry,
+                           GridVariablesTuple gridVariables,
                            std::shared_ptr<CouplingManager> couplingManager,
                            std::shared_ptr<const TimeLoop> timeLoop,
                            const SolutionVector& prevSol)
     : couplingManager_(couplingManager)
-    , problemTuple_(problem)
-    , gridGeometryTuple_(gridGeometry)
-    , gridVariablesTuple_(gridVariables)
+    , problemTuple_(std::move(problem))
+    , gridGeometryTuple_(std::move(gridGeometry))
+    , gridVariablesTuple_(std::move(gridVariables))
     , timeLoop_(timeLoop)
     , prevSol_(&prevSol)
     , isStationaryProblem_(false)
