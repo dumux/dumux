@@ -255,6 +255,7 @@ class BlackOil
 
         // we want to see, what is inside this saturation pressure spline
         static constexpr int testpoints = 500;
+        if(getParam<bool>("Problem.BlackOilParamsOutprint", false)){
         std::cout << "XoG = [";
         for (int ii=0; ii<testpoints-1;ii++)
         {
@@ -299,6 +300,7 @@ class BlackOil
 //             std::cout<< 0.7*(double)ii/(double)testpoints << ", ";
 //         }
 //         std::cout << 0.7 <<"]"<<std::endl;
+        }
 #if 0
         {
             int n = 1000;
