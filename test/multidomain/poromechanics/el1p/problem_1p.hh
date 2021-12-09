@@ -73,10 +73,6 @@ public:
         return problemName_;
     }
 
-    //! Returns the temperature within the domain in [K].
-    Scalar temperature() const
-    { return 273.15 + 10; } // 10C
-
     //! Evaluates the boundary conditions for a Dirichlet boundary segment.
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     { return initialAtPos(globalPos); }

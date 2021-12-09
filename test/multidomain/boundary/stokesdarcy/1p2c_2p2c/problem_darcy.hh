@@ -80,7 +80,6 @@ public:
     {
         pressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Pressure");
         initialSw_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Saturation");
-        temperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Temperature");
         initialPhasePresence_ = getParamFromGroup<int>(this->paramGroup(), "Problem.InitPhasePresence");
 
         diffCoeffAvgType_ = StokesDarcyCouplingOptions::stringToEnum(DiffusionCoefficientAveragingType{},
@@ -126,18 +125,6 @@ public:
 
         std::cout << std::setprecision(15) << "mass of water is: " << massWater << std::endl;
     }
-
-    /*!
-     * \name Problem parameters
-     */
-    // \{
-
-    /*!
-     * \brief Returns the temperature within the domain in [K].
-     */
-    Scalar temperature() const
-    { return temperature_; }
-    // \}
 
      /*!
      * \name Boundary conditions
@@ -254,7 +241,7 @@ public:
         values[switchIdx] = initialSw_;
 
 #if NONISOTHERMAL
-        values[Indices::temperatureIdx] = temperature_;
+        values[Indices::temperatureIdx] = this->spatialParams().temperatureAtPos(globalPos);
 #endif
         return values;
     }
@@ -280,7 +267,6 @@ private:
 
     Scalar pressure_;
     Scalar initialSw_;
-    Scalar temperature_;
     int initialPhasePresence_;
     std::string problemName_;
     Scalar eps_;

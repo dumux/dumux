@@ -13,17 +13,15 @@ Problem.Name = bulk
 SpatialParams.Permeability = 1
 FacetCoupling.Xi = 1.0
 
-[Extrusion]
-Aperture = 1e-2
-
 [Facet]
 SpatialParams.Permeability = 1e3
+SpatialParams.Aperture = 1e-2
 Problem.Name = facet
-Problem.Aperture = 1e-2
 FacetCoupling.Xi = 1.0
 
 [Edge]
 SpatialParams.Permeability = 1e5
+SpatialParams.Aperture = 1e-4
 Problem.Name = edge
 Problem.Aperture = 1e-3
 

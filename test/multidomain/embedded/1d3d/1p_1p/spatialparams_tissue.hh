@@ -25,7 +25,7 @@
 #ifndef DUMUX_TISSUE_SPATIAL_PARAMS_HH
 #define DUMUX_TISSUE_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams1p.hh>
 
 namespace Dumux {
 
@@ -35,10 +35,10 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class TissueSpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar, TissueSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar, TissueSpatialParams<GridGeometry, Scalar>>
 {
     using ThisType = TissueSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename GridGeometry::SubControlVolume;

@@ -73,21 +73,6 @@ public:
     }
 
     /*!
-     * \brief Returns how much the domain is extruded at a given sub-control volume.
-     *
-     * The extrusion factor here extrudes the 1d line to a circular tube with
-     * cross-section area pi*r^2.
-     */
-    template<class ElementSolution>
-    Scalar extrusionFactor(const Element &element,
-                           const SubControlVolume &scv,
-                           const ElementSolution& elemSol) const
-    {
-        static const Scalar aperture = getParamFromGroup<Scalar>("Fracture", "SpatialParams.Aperture");
-        return aperture;
-    }
-
-    /*!
      * \name Problem parameters
      */
     // \{
@@ -99,13 +84,6 @@ public:
      */
     const std::string& name() const
     { return name_; }
-
-    /*!
-     * \brief Returns the temperature within the domain in [K].
-     *
-     */
-    Scalar temperature() const
-    { return 273.15 + 37.0; } // Body temperature
 
     // \}
     /*!

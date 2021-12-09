@@ -109,10 +109,6 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(1.0 + globalPos[0]/this->gridGeometry().bBoxMax()[0]); }
 
-    //! Returns the temperature in \f$\mathrm{[K]}\f$ in the domain.
-    Scalar temperature() const
-    { return 283.15; /*10°*/ }
-
     //! Returns reference to the coupling manager.
     const CouplingManager& couplingManager() const
     { return *couplingManagerPtr_; }

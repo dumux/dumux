@@ -70,7 +70,6 @@ public:
                       const std::string& paramGroup = "")
     : ParentType(gridGeometry, spatialParams, paramGroup)
     , couplingManagerPtr_(couplingManager)
-    , aperture_(getParamFromGroup<Scalar>(paramGroup, "Problem.FractureAperture"))
     {
         // stating in the console whether mole or mass fractions are used
         const auto problemName = getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
@@ -155,17 +154,12 @@ public:
         return NumEqVector(0.0);
     }
 
-    //! Sets the aperture as extrusion factor.
-    Scalar extrusionFactorAtPos(const GlobalPosition& globalPos) const
-    { return aperture_; }
-
     //! Returns reference to the coupling manager.
     const CouplingManager& couplingManager() const
     { return *couplingManagerPtr_; }
 
 private:
     std::shared_ptr<CouplingManager> couplingManagerPtr_;
-    Scalar aperture_;
     std::string problemName_;
 };
 

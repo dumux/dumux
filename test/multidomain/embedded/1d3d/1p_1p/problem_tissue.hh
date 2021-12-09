@@ -96,14 +96,6 @@ public:
     const std::string& name() const
     { return name_; }
 
-    /*!
-     * \brief Returns the temperature within the domain [K].
-     *
-     * This problem assumes a temperature of 37 degrees Celsius.
-     */
-    Scalar temperature() const
-    { return 273.15 + 37; } // in [K]
-
     // \}
 
     /*!

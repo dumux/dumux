@@ -25,7 +25,7 @@
 #ifndef DUMUX_FRACTURE_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_FRACTURE_TEST_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams1p.hh>
 
 namespace Dumux {
 
@@ -35,10 +35,10 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class MatrixFractureSpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar, MatrixFractureSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar, MatrixFractureSpatialParams<GridGeometry, Scalar>>
 {
     using ThisType = MatrixFractureSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
@@ -53,6 +53,7 @@ public:
     {
         permeability_ = getParamFromGroup<Scalar>(paramGroup, "SpatialParams.Permeability");
         porosity_ = getParamFromGroup<Scalar>(paramGroup, "SpatialParams.Porosity", 1.0);
+        extrusion_ = getParamFromGroup<Scalar>(paramGroup, "SpatialParams.Aperture", 1.0);
     }
 
     /*!
@@ -85,9 +86,22 @@ public:
         return porosity_;
     }
 
+    /*!
+     * \brief Returns how much the domain is extruded at a given sub-control volume.
+     *
+     * The extrusion factor here extrudes the 1d line to a circular tube with
+     * cross-section area pi*r^2.
+     */
+    template<class ElementSolution>
+    Scalar extrusionFactor(const Element &element,
+                           const SubControlVolume &scv,
+                           const ElementSolution& elemSol) const
+    { return extrusion_; }
+
 private:
     Scalar permeability_;
     Scalar porosity_;
+    Scalar extrusion_;
 };
 
 } // end namespace Dumux

@@ -26,7 +26,7 @@
 #define DUMUX_TEST_TPFAFACETCOUPLING_TRACER_SPATIALPARAMS_HH
 
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams1p.hh>
 
 namespace Dumux {
 
@@ -36,16 +36,16 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class TracerSpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar,
-                             TracerSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
+                                         TracerSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
-                                           TracerSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
+                                                       TracerSpatialParams<GridGeometry, Scalar>>;
 
     static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethods::box;
     static constexpr int dimWorld = GridView::dimensionworld;
@@ -59,6 +59,7 @@ public:
     : ParentType(gridGeometry)
     , volumeFlux_(volumeFluxes)
     , porosity_(getParamFromGroup<Scalar>(paramGroup, "SpatialParams.Porosity"))
+    , extrusion_(getParamFromGroup<Scalar>(paramGroup, "SpatialParams.Aperture", 1.0))
     {}
 
     /*!
@@ -68,6 +69,10 @@ public:
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return porosity_; }
+
+    //! Returns the extrusion factor
+    Scalar extrusionFactorAtPos(const GlobalPosition& globalPos) const
+    { return extrusion_; }
 
     //! Fluid properties that are spatial parameters in the tracer model.
     //! They can possibly vary with space but are usually constants.
@@ -98,6 +103,7 @@ public:
 private:
     std::vector< std::vector<Scalar> > volumeFlux_;
     Scalar porosity_;
+    Scalar extrusion_;
 };
 
 } // end namespace Dumux

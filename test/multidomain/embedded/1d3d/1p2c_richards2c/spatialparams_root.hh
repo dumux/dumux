@@ -28,7 +28,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/io/grid/griddata.hh>
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams1p.hh>
 
 namespace Dumux {
 
@@ -38,10 +38,10 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class RootSpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar, RootSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar, RootSpatialParams<GridGeometry, Scalar>>
 {
     using ThisType = RootSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
     using Grid = typename GridGeometry::Grid;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -129,6 +129,32 @@ public:
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
         return porosity_;
+    }
+
+    /*!
+     * \brief Returns the temperature \f$[K]\f$.
+     *
+     * \param globalPos the scv center
+     */
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    {
+        return 273.15 + 10.0;
+    }
+
+    /*!
+     * \brief Returns how much the domain is extruded at a given sub-control volume.
+     *
+     * The extrusion factor here extrudes the 1d line to a circular tube with
+     * cross-section area pi*r^2.
+     */
+    template<class ElementSolution>
+    Scalar extrusionFactor(const Element &element,
+                           const SubControlVolume &scv,
+                           const ElementSolution& elemSol) const
+    {
+        const auto eIdx = this->gridGeometry().elementMapper().index(element);
+        const auto r = radius(eIdx);
+        return M_PI*r*r;
     }
 
 private:

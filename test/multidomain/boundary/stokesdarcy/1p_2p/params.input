@@ -22,7 +22,6 @@ Temperature = 293.15
 Name = darcy
 Pressure = 1.0e5
 Saturation = 0.5
-Temperature = 298.15
 
 [SpatialParams]
 Porosity = 0.41
@@ -32,6 +31,7 @@ Swr = 0.005
 Snr = 0.01
 VanGenuchtenAlpha = 6.371e-4
 VanGenuchtenN = 8.0
+PorousMediumTemperature = 298.15
 
 [Problem]
 EnableGravity = false
