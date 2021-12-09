@@ -1,4 +1,4 @@
-dune_symlink_to_source_files(FILES params.input)
+dune_symlink_to_source_files(FILES params.input params_ni.input)
 
 # isothermal tests
 dumux_add_test(NAME test_2pnc_fuelcell_box
@@ -30,4 +30,4 @@ dumux_add_test(NAME test_2pncni_fuelcell_box
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2pncni_fuelcell_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2pncni_fuelcell_box-00015.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pncni_fuelcell_box -ParameterFile params.input -Problem.Name test_2pncni_fuelcell_box")
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pncni_fuelcell_box -ParameterFile params_ni.input -Problem.Name test_2pncni_fuelcell_box")
