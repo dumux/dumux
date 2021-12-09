@@ -40,6 +40,7 @@
 
 #include <dumux/linear/amgbackend.hh>
 #include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/trilinossolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
 #include <dumux/assembly/fvassembler.hh>
@@ -164,7 +165,11 @@ int main(int argc, char** argv)
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
+#ifdef SOLVERBACKEND
+    using LinearSolver = SOLVERBACKEND;
+#else
     using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
+#endif
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 
     // the non-linear solver
