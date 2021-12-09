@@ -69,6 +69,7 @@ class TrilinosSolverBackend : public LinearSolver
     using GridView = typename LinearSolverTraits::GridView;
     using Mapper = typename LinearSolverTraits::DofMapper;
 
+    static constexpr int dim = GridView::dimension;
 public:
     TrilinosSolverBackend(const typename LinearSolverTraits::GridView& gridView,
                           const typename LinearSolverTraits::DofMapper& dofMapper,
@@ -79,8 +80,6 @@ public:
     , mapper_(dofMapper)
     , globalIdSet_(gridView.grid().globalIdSet())
     , isParallel_(Dune::MPIHelper::getCollectiveCommunication().size() > 1)
-    , duneToTrilinosMap_(gridView.size(0),-1)
-    , duneToTrilinosMapOverlap_(gridView.size(0),-1)
 #endif
     {}
 
@@ -104,10 +103,10 @@ public:
         using matrixPtr = RCP<Xpetra::Matrix<SC,LO,GO,NO> >;
         using matrixFactory = MatrixFactory<SC,LO,GO,NO>;
 
-        static_assert(isBCRSMatrix<Matrix>::value, "SuperLU only works with BCRS matrices!");
         using BlockType = typename Matrix::block_type;
-        static_assert(BlockType::rows == BlockType::cols, "Matrix block must be quadratic!");
         constexpr auto blockSize = BlockType::rows;
+        duneToTrilinosMap_.resize(gridView_.size(0)*blockSize,-1);
+        duneToTrilinosMapOverlap_.resize(gridView_.size(0)*blockSize,-1);
 
         RCP<const Comm<int> > comm = DefaultPlatform::getDefaultPlatform().getComm();
 
@@ -116,30 +115,44 @@ public:
         for (const auto& element : elements(gridView_)) {
             if (element.partitionType() == Dune::InteriorEntity) numInteriorRows++;
         }
-        mapPtr mapXpetra = mapFactory::Build(UseTpetra,-1,numInteriorRows,0,comm);
+        mapPtr mapXpetra = mapFactory::Build(UseTpetra,-1,numInteriorRows*blockSize,0,comm);
 
         // Build overlapping map and the Dune-to-Trilinos mappings
-        std::vector<int> globalIDs(gridView_.size(0),-1);
+        std::array<int, blockSize> minus1;
+        for (auto i = 0u; i < blockSize; ++i)
+            minus1[i] = -1;
+        std::vector<std::array<int, blockSize>> globalIDs(gridView_.size(0),minus1);
         int indAll = 0, indInt = 0;
         for (const auto& element : elements(gridView_))
         {
             if (element.partitionType() == Dune::InteriorEntity)
             {
-                globalIDs[indAll] = mapXpetra->getGlobalElement(indInt);
-                duneToTrilinosMap_.at(mapper_.index(element)) = indInt;
-                indInt++;
+                for (auto i = 0u; i < blockSize; ++i, ++indInt) {
+                    globalIDs[indAll][i] = mapXpetra->getGlobalElement(indInt);
+                    duneToTrilinosMap_.at(mapper_.index(element)*blockSize+i) = indInt;
+                }
             }
-            duneToTrilinosMapOverlap_.at(mapper_.index(element)) = indAll;
+            for (auto i = 0u; i < blockSize; ++i)
+                duneToTrilinosMapOverlap_.at(mapper_.index(element)*blockSize+i) = indAll*blockSize+i;
             indAll++;
         }
-        VectorCommDataHandleMax<Mapper,std::vector<int>,0> maxHandle(mapper_,globalIDs);
+        VectorCommDataHandleMax<Mapper,std::vector<std::array<int, blockSize>>,0> maxHandle(mapper_,globalIDs);
         gridView_.communicate(maxHandle,Dune::InteriorBorder_All_Interface,Dune::ForwardCommunication);
 
-        Teuchos::ArrayView<int> globalIDsOverlap(globalIDs);
+        std::vector<int> globalIDsFlat(gridView_.size(0)*blockSize,-1);
+        for (auto i = 0u; i < globalIDs.size(); ++i)
+        {
+            for (auto j = 0u; j < blockSize; ++j)
+            {
+                // cout << Dune::MPIHelper::getCollectiveCommunication().rank() << ": globalIDs[" << i << "][" << j << "] = " << globalIDs[i][j] << endl;
+                globalIDsFlat[i*blockSize + j] = globalIDs[i][j];
+            }
+        }
+        Teuchos::ArrayView<int> globalIDsOverlap(globalIDsFlat);
         mapPtr mapXpetraOverlap = mapFactory::Build(UseTpetra,-1,globalIDsOverlap,0,comm);
 
         // Build matrix and vectors
-        size_t maxNumEntriesPerRow = 10; // Can we estimate this?
+        size_t maxNumEntriesPerRow = blockSize*(2*dim + 1); // TPFA on cubes: 2*dim element neighbors plus self
         matrixPtr AXpetra = matrixFactory::Build(mapXpetra,mapXpetraOverlap,maxNumEntriesPerRow);
 
         vectorPtr xXpetra = vectorFactory::Build(mapXpetra,1);
@@ -162,20 +175,21 @@ public:
 
         // Fill matrix
         for (auto rowIt = A.begin(); rowIt != A.end(); ++rowIt) {
-            int rowidx = duneToTrilinosMap_.at(rowIt.index()*blockSize); // only for blocksize = 1
-            if (rowidx!=-1) {
-                for (auto colIt = rowIt->begin(); colIt != rowIt->end(); ++colIt) {
-                    int colidx = duneToTrilinosMapOverlap_.at(colIt.index()*blockSize); // only for blocksize = 1
-                    if (colidx!=-1) {
-                        for (auto i = 0u; i < blockSize; ++i) {
-                            Array<GO> cols(blockSize);
-                            Array<SC> vals(blockSize);
-                            for (auto j = 0u; j < blockSize; ++j) {
+            for (auto i = 0u; i < blockSize; ++i) {
+                int rowidx = duneToTrilinosMap_.at(rowIt.index()*blockSize+i);
+                if (rowidx!=-1) {
+                    for (auto colIt = rowIt->begin(); colIt != rowIt->end(); ++colIt) {
+                        Array<GO> cols(blockSize);
+                        Array<SC> vals(blockSize);
+                        for (auto j = 0u; j < blockSize; ++j) {
+                            int colidx = duneToTrilinosMapOverlap_.at(colIt.index()*blockSize+j);
+                            if (colidx!=-1) {
                                 cols[j] = colidx;
                                 vals[j] = (*colIt)[i][j];
                             }
-                            AXpetra->insertLocalValues(rowidx,cols(),vals());
                         }
+                        if (duneToTrilinosMapOverlap_.at(colIt.index()*blockSize)!=-1)
+                            AXpetra->insertLocalValues(rowidx,cols(),vals());
                     }
                 }
             }
@@ -208,10 +222,13 @@ public:
         ArrayRCP<const SC> vals = xXpetra->getData(0);
         for (auto blockIdx = 0u; blockIdx < x.size(); ++blockIdx) {
             for (auto i = 0u; i < blockSize; ++i) {
-                int rowidx = duneToTrilinosMap_.at(blockIdx*blockSize);
+                int rowidx = duneToTrilinosMap_.at(blockIdx*blockSize+i);
                 if (rowidx!=-1) x[blockIdx][i] = vals[rowidx];
             }
         }
+
+        VectorCommDataHandleEqual<Mapper,Vector,0> equalHandle(mapper_,x);
+        gridView_.communicate(equalHandle,Dune::InteriorBorder_All_Interface,Dune::ForwardCommunication);
 
         result_.converged = true; // this should depend on status
 

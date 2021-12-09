@@ -32,9 +32,9 @@ dumux_add_test(NAME test_2pncminni_salinization_tpfa_parallel_amg
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/test_2pncminni_salinization_tpfa-reference_fine.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/s0004-test_2pncminni_salinization_tpfa_parallel_amg-00046.pvtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0004-test_2pncminni_salinization_tpfa_parallel_amg-00028.pvtu
                             --zeroThreshold {"velocity_liq \(m/s\)_0":1e-18,"velocity_gas \(m/s\)_0":1e-14,"process rank":100}
-                            --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_2pncminni_salinization_tpfa -ParameterFile params.input -Problem.Name test_2pncminni_salinization_tpfa_parallel_amg -Grid.Cells0 8 -Grid.Cells1 \"8 12\"")
+                            --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_2pncminni_salinization_tpfa -ParameterFile params.input -Problem.Name test_2pncminni_salinization_tpfa_parallel_amg -TimeLoop.TEnd 80000 -Grid.Cells0 8 -Grid.Cells1 \"8 12\"")
 
 dumux_add_test(NAME test_2pncminni_salinization_tpfa_parallel_trilinos
               LABELS porousmediumflow 2pncmin
@@ -44,6 +44,6 @@ dumux_add_test(NAME test_2pncminni_salinization_tpfa_parallel_trilinos
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/test_2pncminni_salinization_tpfa-reference_fine.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/s0004-test_2pncminni_salinization_tpfa_parallel_trilinos-00046.pvtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0004-test_2pncminni_salinization_tpfa_parallel_trilinos-00028.pvtu
                             --zeroThreshold {"velocity_liq \(m/s\)_0":1e-18,"velocity_gas \(m/s\)_0":1e-14,"process rank":100}
-                            --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_2pncminni_salinization_tpfa_parallel_trilinos -ParameterFile params.input -Problem.Name test_2pncminni_salinization_tpfa_parallel_trilinos -Grid.Cells0 8 -Grid.Cells1 \"8 12\"")
+                            --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_2pncminni_salinization_tpfa_parallel_trilinos -ParameterFile params.input -Problem.Name test_2pncminni_salinization_tpfa_parallel_trilinos -TimeLoop.TEnd 80000 -Grid.Cells0 8 -Grid.Cells1 \"8 12\"")
