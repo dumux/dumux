@@ -11,6 +11,7 @@ _components = {
     "SimpleH2O": "dumux/material/components/simpleh2o.hh",
     "N2": "dumux/material/components/n2.hh",
     "Calcite": "dumux/material/components/calcite.hh",
+    "Constant": "dumux/material/components/constant.hh",
 }
 
 
@@ -21,10 +22,12 @@ def listComponents():
 
 
 @cppWrapperCreator
-def _createComponent(name, *, scalar="double"):
+def _createComponent(name, *, scalar="double", componentId=0):
     """Create a new component of the given name"""
-
-    typeName = f"Dumux::Components::{name} <{scalar}>"
+    if name == "Constant":
+        typeName = f"Dumux::Components::{name} <{componentId}, {scalar}>"
+    else:
+        typeName = f"Dumux::Components::{name} <{scalar}>"
     moduleName = f"{name.lower()}_{hashIt(typeName)}"
     includes = ["dumux/python/material/components/component.hh"]
     includes += [_components[name]]
