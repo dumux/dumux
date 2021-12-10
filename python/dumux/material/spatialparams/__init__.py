@@ -11,7 +11,7 @@ from dumux.wrapping import cppWrapperCreator, cppWrapperClassAlias
 def _createOnePSpatialParamsDecorator(*, gridGeometry, scalar: Property = None):
     """Turn a Python spatial parameter class into an C++/Python hybrid class"""
 
-    dim = gridGeometry.gridView.dimension
+    dim = gridGeometry.gridView.dimensionworld
     includes = gridGeometry._includes + [
         "dumux/python/material/spatialparams/spatialparams.hh",
         "dune/common/fmatrix.hh",
