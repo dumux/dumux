@@ -88,6 +88,62 @@ void writeVTKPolyDataTriangle(const TriangleVector& triangles,
          << "</VTKFile>\n";
 }
 
+//! TetrahedronVector has to be a nested vector of tets in 3d
+template<class TetrahedronVector>
+void writeVTUTetrahedron(const TetrahedronVector& tets,
+                         const std::string& filename)
+{
+    std::ofstream fout(filename + ".vtu");
+    fout << "<?xml version=\"1.0\"?>\n"
+         << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n"
+         << "  <UnstructuredGrid>\n"
+         << "    <Piece NumberOfPoints=\"" << tets.size()*4 << "\" NumberOfCells=\"" << tets.size() << "\">\n"
+         << "      <Points>\n"
+         << "        <DataArray type=\"Float32\" Name=\"Points\" NumberOfComponents=\"3\" format=\"ascii\">\n";
+
+    for (const auto& t : tets)
+    {
+        for (const auto& p : t)
+            fout << p << " ";
+
+        fout << '\n';
+    }
+
+    fout << "        </DataArray>\n"
+         << "      </Points>\n"
+         << "      <Cells>\n"
+         << "        <DataArray type=\"Int32\" Name=\"connectivity\" NumberOfComponents=\"1\" format=\"ascii\">\n";
+
+    int offset = 0;
+    for (const auto& t : tets)
+    {
+        fout << offset << " " << offset+1 << " " << offset+2 << " " << offset+3  << "\n";
+        offset += t.size();
+    }
+
+    fout << "        </DataArray>\n";
+    fout << "        <DataArray type=\"Int32\" Name=\"offsets\" NumberOfComponents=\"1\" format=\"ascii\">\n";
+
+    offset = 4;
+    for (const auto& t : tets)
+    {
+        fout << offset << '\n';
+        offset += t.size();
+    }
+
+    fout << "        </DataArray>\n";
+    fout << "        <DataArray type=\"UInt8\" Name=\"types\" NumberOfComponents=\"1\" format=\"ascii\">\n";
+
+    for (int i = 0; i < tets.size(); ++i)
+        fout << "10\n";
+
+    fout << "        </DataArray>\n"
+         << "      </Cells>\n"
+         << "    </Piece>\n"
+         << "</UnstructuredGrid>\n"
+         << "</VTKFile>\n";
+}
+
 template<class LineVector>
 void writeVTKPolyDataLines(const LineVector& lines,
                            const std::string& filename)
