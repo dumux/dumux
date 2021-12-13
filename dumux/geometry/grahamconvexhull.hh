@@ -18,7 +18,6 @@
  * \file
  * \ingroup Geometry
  * \brief A function to compute the convex hull of a point cloud
- *        and a function to triangulate the polygon area spanned by the convex hull
  */
 #ifndef DUMUX_GEOMETRY_GRAHAM_CONVEX_HULL_HH
 #define DUMUX_GEOMETRY_GRAHAM_CONVEX_HULL_HH
@@ -32,7 +31,6 @@
 #include <dune/common/fvector.hh>
 
 #include <dumux/common/math.hh>
-#include <dumux/geometry/triangulation.hh>
 
 namespace Dumux {
 
@@ -59,7 +57,7 @@ int getOrientation(const Dune::FieldVector<ctype, 3>& a,
 /*!
  * \ingroup Geometry
  * \brief Compute the points making up the convex hull around the given set of unordered points
- * \note We assume that all points are coplanar and there are no indentical points in the list
+ * \note We assume that all points are coplanar and there are no identical points in the list
  * \note This algorithm changes the order of the given points a bit
  *       as they are unordered anyway this shouldn't matter too much
  */
@@ -192,7 +190,7 @@ grahamConvexHullImpl(const std::vector<Dune::FieldVector<ctype, 2>>& points)
 /*!
  * \ingroup Geometry
  * \brief Compute the points making up the convex hull around the given set of unordered points
- * \note We assume that all points are coplanar and there are no indentical points in the list
+ * \note We assume that all points are coplanar and there are no identical points in the list
  */
 template<int dim, class ctype, int dimWorld>
 std::vector<Dune::FieldVector<ctype, dimWorld>> grahamConvexHull(std::vector<Dune::FieldVector<ctype, dimWorld>>& points)
@@ -203,7 +201,7 @@ std::vector<Dune::FieldVector<ctype, dimWorld>> grahamConvexHull(std::vector<Dun
 /*!
  * \ingroup Geometry
  * \brief Compute the points making up the convex hull around the given set of unordered points
- * \note We assume that all points are coplanar and there are no indentical points in the list
+ * \note We assume that all points are coplanar and there are no identical points in the list
  * \note This is the overload if we are not allowed to write into the given points vector
  */
 template<int dim, class ctype, int dimWorld>
