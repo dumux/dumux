@@ -34,7 +34,7 @@ namespace Dumux {
 /*!
  * \ingroup Geometry
  * \brief An interface for a set of geometric entities based on a GridView
- * \note This can be used e.g. to contruct a bounding box volume hierarchy of a grid
+ * \note This can be used e.g. to construct a bounding box volume hierarchy of a grid
  * It defines the minimum requirement for such a set
  */
 template <class GridView, int codim = 0, class Mapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>>
