@@ -331,12 +331,13 @@ void intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
         using Policy = IntersectionPolicy::DefaultPolicy<GeometryA, GeometryB>;
         using IntersectionAlgorithm = GeometryIntersection<GeometryA, GeometryB, Policy>;
         using Intersection = typename IntersectionAlgorithm::Intersection;
-        Intersection intersection;
 
-        if (IntersectionAlgorithm::intersection(geometryA, geometryB, intersection))
+        if (Intersection intersection; IntersectionAlgorithm::intersection(geometryA, geometryB, intersection))
         {
             static constexpr int dimIntersection = Policy::dimIntersection;
 
+            // intersection is returned as a point cloud for dim >= 2
+            // so we have to triangulate first
             if (dimIntersection >= 2)
             {
                 const auto triangulation = triangulate<dimIntersection, dimworld>(intersection);
