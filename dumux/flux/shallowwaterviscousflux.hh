@@ -211,24 +211,19 @@ public:
             }
         }();
 
-        // Compute the viscous momentum fluxes
-        const auto [gradU, gradV] = gradVelocity;
-        const auto uViscousFlux = turbViscosity * averageDepth * gradU;
-        const auto vViscousFlux = turbViscosity * averageDepth * gradV;
-
-        // compute the mobility of the flux with the fluxlimiter
-        static const auto upperWaterDepthFluxLimiting = getParamFromGroup<Scalar>(problem.paramGroup(), "FluxLimiterLET.UpperWaterDepth", 1e-3);
-        static const auto lowerWaterDepthFluxLimiting = getParamFromGroup<Scalar>(problem.paramGroup(), "FluxLimiterLET.LowerWaterDepth", 1e-5);
-
-        const auto limitingDepth = (waterDepthLeft + waterDepthRight) * 0.5;
-        const auto mobility = ShallowWater::fluxLimiterLET(limitingDepth,
-                                                           limitingDepth,
-                                                           upperWaterDepthFluxLimiting,
-                                                           lowerWaterDepthFluxLimiting);
+        // Compute the viscous momentum fluxes with connecting water depth at the interface
+        using std::min;
+        using std::max;
+        const auto freeSurfaceInside = insideVolVars.waterDepth() + insideVolVars.bedSurface();
+        const auto freeSurfaceOutside = outsideVolVars.waterDepth() + outsideVolVars.bedSurface();
+        const auto interfaceWaterDepth = max(min(freeSurfaceInside , freeSurfaceOutside) - max(insideVolVars.bedSurface(),outsideVolVars.bedSurface()),0.0);
+        const auto& [gradU, gradV] = gradVelocity;
+        const auto uViscousFlux = turbViscosity * interfaceWaterDepth * gradU;
+        const auto vViscousFlux = turbViscosity * interfaceWaterDepth * gradV;
 
         localFlux[0] = 0.0;
-        localFlux[1] = -uViscousFlux * mobility * scvf.area();
-        localFlux[2] = -vViscousFlux * mobility * scvf.area();
+        localFlux[1] = -uViscousFlux * scvf.area();
+        localFlux[2] = -vViscousFlux * scvf.area();
 
         return localFlux;
     }
