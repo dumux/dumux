@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Geometry
- * \brief A class representing the intersection entites two geometric entity sets
+ * \brief A class representing the intersection entities of two geometric entity sets
  */
 
 #ifndef DUMUX_GEOMETRY_INTERSECTION_ENTITY_SET_HH
