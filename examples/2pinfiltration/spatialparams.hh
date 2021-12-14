@@ -25,19 +25,19 @@
 //
 // ### Includes
 // We include the basic spatial parameters for finite volumes file from which we will inherit
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 
 // We include all laws which are needed to define the interaction between the solid matrix and the fluids, e.g. laws for capillary pressure saturation relationships.
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 
 // ### The spatial parameters class
-// In the TwoPTestSpatialParams class we define all functions needed to describe the porous matrix, e.g. porosity and permeability. We inherit from the `FVSpatialParams` class, which is the base class for multiphase porous medium flow applications.
+// In the TwoPTestSpatialParams class we define all functions needed to describe the porous matrix, e.g. porosity and permeability. We inherit from the `FVPorousMediumFlowSpatialParamsMP` class, which is the base class for multiphase porous medium flow applications.
 // [[codeblock]]
 namespace Dumux {
 
 template<class GridGeometry, class Scalar>
 class TwoPTestSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar, TwoPTestSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar, TwoPTestSpatialParams<GridGeometry, Scalar>>
 {
     //we introduce using declarations that are derived from the property system which we need in this class
     using GridView = typename GridGeometry::GridView;
@@ -45,7 +45,7 @@ class TwoPTestSpatialParams
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using ThisType = TwoPTestSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar, ThisType>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;

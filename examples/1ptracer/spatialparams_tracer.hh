@@ -33,13 +33,13 @@
 // ### Include files
 // We include the spatial parameters class for single-phase models discretized by
 // finite volume schemes, from which the spatial parameters defined for this example will inherit.
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams1p.hh>
 
 // ### The spatial parameters class
 //
 // In the OnePTestSpatialParams class, we define all functions needed to define
 // the spatially-dependent parameters for the tracer problem.
-// We inherit from the FVSpatialParamsOneP class here, which is the base class for
+// We inherit from the FVPorousMediumFlowSpatialParamsOneP class here, which is the base class for
 // spatial parameters in the context of single-phase porous medium flow applications
 // using finite volume discretization schemes.
 // [[codeblock]]
@@ -47,7 +47,7 @@ namespace Dumux {
 
 template<class GridGeometry, class Scalar>
 class TracerTestSpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar,
+: public FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
                              TracerTestSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
@@ -55,7 +55,7 @@ class TracerTestSpatialParams
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
+    using ParentType = FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
                                            TracerTestSpatialParams<GridGeometry, Scalar>>;
 
     static const int dimWorld = GridView::dimensionworld;

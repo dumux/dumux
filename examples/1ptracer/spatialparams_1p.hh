@@ -43,13 +43,13 @@
 // We include the spatial parameters class for single-phase models discretized
 // by finite volume schemes, from which the spatial parameters defined for this
 // example will inherit.
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams1p.hh>
 //
 // ### The spatial parameters class
 //
 // In the `OnePTestSpatialParams` class, we define all functions needed to describe
 // the porous medium, e.g. porosity and permeability, for the single-phase problem.
-// We inherit from the `FVSpatialParamsOneP` class here, which is the base class
+// We inherit from the `FVPorousMediumFlowSpatialParamsOneP` class here, which is the base class
 // for spatial parameters in the context of single-phase porous medium flow
 // applications using finite volume discretization schemes.
 // [[codeblock]]
@@ -57,7 +57,7 @@ namespace Dumux {
 
 template<class GridGeometry, class Scalar>
 class OnePTestSpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar,
+: public FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
                              OnePTestSpatialParams<GridGeometry, Scalar>>
 {
     // The following convenience aliases will be used throughout this class
@@ -65,7 +65,7 @@ class OnePTestSpatialParams
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
+    using ParentType = FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
                                            OnePTestSpatialParams<GridGeometry, Scalar>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
@@ -135,7 +135,7 @@ public:
     // Note that in case you want to use solution-dependent porosities, you can
     // use the overload
     // `porosity(const Element&, const SubControlVolume&, const ElementSolution&)`
-    // that is defined in the base class `FVSpatialParamsOneP`. Per default, this
+    // that is defined in the base class `FVPorousMediumFlowSpatialParamsOneP`. Per default, this
     // fowards to the `porosityAtPos` function per default, which we overload here.
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.2; }
