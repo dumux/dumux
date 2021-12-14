@@ -21,8 +21,8 @@
  * \ingroup MultiDomain
  * \brief Multidomain wrapper for multiple grid geometries
  */
-#ifndef DUMUX_MULTIDOMAIN_FVGRIDGEOMETRY_HH
-#define DUMUX_MULTIDOMAIN_FVGRIDGEOMETRY_HH
+#ifndef DUMUX_MULTIDOMAIN_FV_GRIDGEOMETRY_HH
+#define DUMUX_MULTIDOMAIN_FV_GRIDGEOMETRY_HH
 
 #include <tuple>
 #include <memory>
@@ -148,7 +148,7 @@ public:
      * \param ggTuple a tuple of shared_ptrs to the grid geometries
      */
     MultiDomainFVGridGeometry(TupleType ggTuple)
-    : gridGeometries_(ggTuple)
+    : gridGeometries_(std::move(ggTuple))
     {}
 
     /*!
@@ -212,9 +212,14 @@ public:
     Type<i>& operator[] (Dune::index_constant<i>)
     { return *std::get<i>(gridGeometries_); }
 
-    ///! create a copy of the grid geometry pointer for domain with index i
+    ///! access the grid geometry pointer for domain with index i
     template<std::size_t i>
-    PtrType<i> get(Dune::index_constant<i> id = Dune::index_constant<i>{})
+    const PtrType<i>& get(Dune::index_constant<i> id = Dune::index_constant<i>{}) const
+    { return std::get<i>(gridGeometries_); }
+
+    ///! access the the grid geometry pointer for domain with index i
+    template<std::size_t i>
+    PtrType<i>& get(Dune::index_constant<i> id = Dune::index_constant<i>{})
     { return std::get<i>(gridGeometries_); }
 
     //! set the pointer for sub domain i
@@ -227,7 +232,20 @@ public:
      * \brief return the grid variables tuple we are wrapping
      * \note the copy is not expensive since it is a tuple of shared pointers
      */
+    [[deprecated("Use asTuple. Will be removed after release 3.5")]]
     TupleType getTuple()
+    { return gridGeometries_; }
+
+    /*!
+     * \brief Access the underlying tuple representation
+     */
+    TupleType& asTuple()
+    { return gridGeometries_; }
+
+    /*!
+     * \brief Access the underlying tuple representation
+     */
+    const TupleType& asTuple() const
     { return gridGeometries_; }
 
 private:

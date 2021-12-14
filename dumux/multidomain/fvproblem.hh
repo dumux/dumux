@@ -21,8 +21,8 @@
  * \ingroup MultiDomain
  * \brief Multidomain wrapper for multiple problems
  */
-#ifndef DUMUX_MULTIDOMAIN_PROBLEM_HH
-#define DUMUX_MULTIDOMAIN_PROBLEM_HH
+#ifndef DUMUX_MULTIDOMAIN_FV_PROBLEM_HH
+#define DUMUX_MULTIDOMAIN_FV_PROBLEM_HH
 
 #include <tuple>
 #include <memory>
@@ -30,6 +30,8 @@
 
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/indices.hh>
+
+#include <dumux/multidomain/fvgridgeometry.hh>
 
 namespace Dumux {
 
@@ -63,21 +65,30 @@ public:
     /*!
      * \brief The default constructor
      */
+    [[deprecated("Will be removed after release 3.5. Use one of the constructors instead.")]]
     MultiDomainFVProblem() = default;
 
     /*!
      * \brief Contruct the problem
      * \param gridGeometries a tuple of grid geometry shared pointers
      */
-    MultiDomainFVProblem(GridGeometries&& gridGeometries)
+    MultiDomainFVProblem(MultiDomainFVGridGeometry<MDTraits> gridGeometries)
     {
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<numSubDomains>{}, [&](auto&& id)
         {
             constexpr auto i = std::decay_t<decltype(id)>::value;
-            elementAt(problems_, id) = std::make_shared<Type<i>>(std::get<i>(gridGeometries));
+            std::get<i>(problems_) = std::make_shared<Type<i>>(gridGeometries.template get<i>());
         });
     }
+
+    /*!
+     * \brief Construct wrapper from a tuple of problems
+     * \param ggTuple a tuple of shared_ptrs to the problems
+     */
+    MultiDomainFVProblem(TupleType problemTuple)
+    : problems_(std::move(problemTuple))
+    {}
 
     /*!
      * \brief Applies the initial solution for all degrees of freedom of the grid.
@@ -95,20 +106,26 @@ public:
     //! return the problem for domain with index i
     template<std::size_t i>
     const Type<i>& operator[] (Dune::index_constant<i> id) const
-    { return *Dune::Hybrid::elementAt(problems_, id); }
+    { return *std::get<i>(problems_); }
 
     //! return the problem for domain with index i
     template<std::size_t i>
     Type<i>& operator[] (Dune::index_constant<i> id)
-    { return *Dune::Hybrid::elementAt(problems_, id); }
+    { return *std::get<i>(problems_); }
 
-    //! return the problem for domain with index i
+    //! access the problem ptr for domain with index i
     template<std::size_t i>
-    PtrType<i> get(Dune::index_constant<i> id = Dune::index_constant<i>{})
-    { return Dune::Hybrid::elementAt(problems_, id); }
+    const PtrType<i>& get(Dune::index_constant<i> id = Dune::index_constant<i>{}) const
+    { return std::get<i>(problems_); }
+
+    //! access the problem ptr for domain with index i
+    template<std::size_t i>
+    PtrType<i>& get(Dune::index_constant<i> id = Dune::index_constant<i>{})
+    { return std::get<i>(problems_); }
 
     //! set the pointer for sub domain i
     template<std::size_t i>
+    [[deprecated("Will be removed after release 3.5. Use one of the constructors instead.")]]
     void set(PtrType<i> p, Dune::index_constant<i> id = Dune::index_constant<i>{})
     { Dune::Hybrid::elementAt(problems_, Dune::index_constant<i>{}) = p; }
 
@@ -116,7 +133,20 @@ public:
      * \brief return the grid variables tuple we are wrapping
      * \note the copy is not expensive since it is a tuple of shared pointers
      */
+    [[deprecated("Use asTuple. Will be removed after release 3.5")]]
     TupleType getTuple()
+    { return problems_; }
+
+    /*!
+     * \brief Access the underlying tuple representation
+     */
+    TupleType& asTuple()
+    { return problems_; }
+
+    /*!
+     * \brief Access the underlying tuple representation
+     */
+    const TupleType& asTuple() const
     { return problems_; }
 
 private:

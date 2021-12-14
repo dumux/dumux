@@ -64,9 +64,9 @@ public:
      * \param gridGeometryTuple A tuple of grid geometries
      * \param name Base name of the vtk output
      */
-    MultiDomainNewtonConvergenceWriter(GridGeometryTuple&& gridGeometryTuple,
+    MultiDomainNewtonConvergenceWriter(GridGeometryTuple gridGeometryTuple,
                                        const std::string& name = "newton_convergence")
-    : gridGeometryTuple_(gridGeometryTuple)
+    : gridGeometryTuple_(std::move(gridGeometryTuple))
     {
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<MDTraits::numSubDomains>{}, [&](auto&& id)
