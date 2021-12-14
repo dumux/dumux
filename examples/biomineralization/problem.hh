@@ -230,8 +230,7 @@ public:
     { episodeIdx_ = epIdx; }
     // [[/codeblock]]
 
-    // Here, functions to return the injectionType, the name of the problem and the temperature
-    // are defined
+    // Here, functions to return the injectionType and the name of the problem are defined
     // [[codeblock]]
     int injectionType(int episodeIdx) const
     { return injectionType_[episodeIdx]; }
