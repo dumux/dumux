@@ -542,7 +542,7 @@ private:
 };
 
 template<class Traits>
-class FreeFlowCouplingManagerImplementation<Traits, DiscretizationMethod::fcstaggered> : public FreeFlowCouplingManagerBase<Traits>
+class FreeFlowCouplingManagerImplementation<Traits, DiscretizationMethods::FCStaggered> : public FreeFlowCouplingManagerBase<Traits>
 {
 public:
     static constexpr auto freeFlowMomentumIdx = typename Traits::template SubDomain<0>::Index();
@@ -575,7 +575,7 @@ private:
 
     using ParentType = FreeFlowCouplingManagerBase<Traits>;
 
-    static_assert(GridGeometry<freeFlowMassIdx>::discMethod == DiscretizationMethod::cctpfa);
+    static_assert(GridGeometry<freeFlowMassIdx>::discMethod == DiscretizationMethods::cctpfa);
 
 public:
     static constexpr auto pressureIdx = ParentType::pressureIdx;
@@ -854,7 +854,7 @@ private:
 
 
 template<class Traits>
-class FreeFlowCouplingManagerImplementation<Traits, DiscretizationMethod::fcdiamond> : public FreeFlowCouplingManagerBase<Traits>
+class FreeFlowCouplingManagerImplementation<Traits, DiscretizationMethods::FCDiamond> : public FreeFlowCouplingManagerBase<Traits>
 {
 public:
     static constexpr auto freeFlowMomentumIdx = typename Traits::template SubDomain<0>::Index();
@@ -945,7 +945,7 @@ public:
         assert(!(considerPreviousTimeStep && !this->isTransient_));
         this->bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
 
-        if constexpr (massDiscMethod ==  DiscretizationMethod::cctpfa)
+        if constexpr (massDiscMethod ==  DiscretizationMethods::cctpfa)
         {
             const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
             const auto& insideMassScv = this->momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
@@ -966,7 +966,7 @@ public:
             return considerPreviousTimeStep ? rho(this->momentumCouplingContext_[0].prevElemVolVars)
                                             : rho(this->momentumCouplingContext_[0].curElemVolVars);
         }
-        else if constexpr (massDiscMethod ==  DiscretizationMethod::box)
+        else if constexpr (massDiscMethod ==  DiscretizationMethods::box)
         {
             // ToDo Cache the shape values when Box method is used
             using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
@@ -1001,13 +1001,13 @@ public:
         this->bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, scv.elementIndex());
 
         Scalar rho = 0;
-        if constexpr (massDiscMethod ==  DiscretizationMethod::cctpfa)
+        if constexpr (massDiscMethod ==  DiscretizationMethods::cctpfa)
         {
             const auto& massScv = (*scvs(this->momentumCouplingContext_[0].fvGeometry).begin());
             rho = considerPreviousTimeStep ? this->momentumCouplingContext_[0].prevElemVolVars[massScv].density()
                                            : this->momentumCouplingContext_[0].curElemVolVars[massScv].density();
         }
-        else if constexpr (massDiscMethod ==  DiscretizationMethod::box)
+        else if constexpr (massDiscMethod ==  DiscretizationMethods::box)
         {
             // ToDo Cache the shape values when Box method is used
             using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
@@ -1039,7 +1039,7 @@ public:
     {
         this->bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
 
-        if constexpr (massDiscMethod ==  DiscretizationMethod::cctpfa)
+        if constexpr (massDiscMethod ==  DiscretizationMethods::cctpfa)
         {
             const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
             const auto& insideMassScv = this->momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
@@ -1058,7 +1058,7 @@ public:
 
             return mu(this->momentumCouplingContext_[0].curElemVolVars);
         }
-        else if constexpr (massDiscMethod ==  DiscretizationMethod::box)
+        else if constexpr (massDiscMethod ==  DiscretizationMethods::box)
         {
             // ToDo Cache the shape values when Box method is used
             using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
@@ -1131,7 +1131,7 @@ public:
                                const PrimaryVariables<j>& priVarsJ,
                                int pvIdxJ)
     {
-        if constexpr (ParentType::massDiscMethod ==  DiscretizationMethod::box)
+        if constexpr (ParentType::massDiscMethod ==  DiscretizationMethods::box)
         {
             this->curSol()[domainJ][dofIdxGlobalJ][pvIdxJ] = priVarsJ[pvIdxJ];
 
