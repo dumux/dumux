@@ -116,7 +116,7 @@ struct RansohoffRadke
         for (int i = 0; i < numCorners; ++i)
             result += fluxVarsCache.wettingLayerCrossSectionalArea(i) * rC*rC / (throatLength*fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i));
 
-        assert(std::isnormal(result));
+        assert(std::isfinite(result));
         return result;
     }
 };
