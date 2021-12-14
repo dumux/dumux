@@ -29,13 +29,13 @@
 // We include the spatial parameters class for single-phase models discretized
 // by finite volume schemes, from which the spatial parameters defined for this
 // example inherit.
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams1p.hh>
 
 // ### The spatial parameters class
 //
 // In the `RotSymExampleSpatialParams` class, we define the functions needed to describe
 // the porous medium, that is, porosity and permeability.
-// We inherit from the `FVSpatialParamsOneP` class here, which is the base class
+// We inherit from the `FVPorousMediumFlowSpatialParamsOneP` class here, which is the base class
 // for spatial parameters in the context of single-phase porous medium flow
 // applications using finite volume discretization schemes.
 // [[codeblock]]
@@ -43,10 +43,10 @@ namespace Dumux {
 
 template<class GridGeometry, class Scalar>
 class RotSymExampleSpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar, RotSymExampleSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar, RotSymExampleSpatialParams<GridGeometry, Scalar>>
 {
     using ThisType = RotSymExampleSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 public:

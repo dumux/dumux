@@ -31,7 +31,7 @@
 // ### Include files
 // [[details]] includes
 // We include the basic spatial parameters for finite volumes file from which we will inherit
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 // We include the files for the two-phase laws: the Brooks-Corey pc-Sw and relative permeability laws
 #include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 // We include the laws for changing porosity due to precipitation
@@ -43,7 +43,7 @@
 // ### The spatial parameters class
 // In the `ICPSpatialParams` class, we define all functions needed to describe
 // the porous medium, e.g. porosity and permeability.
-// We inherit from the `FVSpatialParams` class which is the base class for spatial paramters using finite volume discretization schemes.
+// We inherit from the `FVPorousMediumFlowSpatialParamsMP` class which is the base class for spatial paramters using finite volume discretization schemes.
 
 // [[codeblock]]
 namespace Dumux {
@@ -51,11 +51,11 @@ namespace Dumux {
 // In the ICPSpatialParams class we define all functions needed to describe the spatial distributed parameters.
 template<class GridGeometry, class Scalar>
 class ICPSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar, ICPSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar, ICPSpatialParams<GridGeometry, Scalar>>
 {
     // We introduce using declarations that are derived from the property system which we need in this class
     using ThisType =  ICPSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar, ThisType>;
     using GridView = typename GridGeometry::GridView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -74,8 +74,9 @@ public:
     , pcKrSw_("SpatialParams") // initialize from input file
     {
         // We read reference values for porosity and permeability from the input
-        referencePorosity_     = getParam<Scalar>("SpatialParams.ReferencePorosity", 0.4);
+        referencePorosity_ = getParam<Scalar>("SpatialParams.ReferencePorosity", 0.4);
         referencePermeability_ = getParam<Scalar>("SpatialParams.ReferencePermeability", 2.e-10);
+        temperature_ = getParam<Scalar>("Problem.Temperature");
     }
 
     // We return the reference or initial porosity.
@@ -115,6 +116,10 @@ public:
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
     { return FluidSystem::H2OIdx; }
 
+    // Define the temperature field (constant here)
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    { return temperature_; }
+
     // The remainder of this class contains the data members and defines the porosity law which describes the change of porosity due to calcium carbonate precipitation.
     // Additionally the change of porosity results in a change of permeability. This relation is described in the permeability law, in this case the Kozeny-Carman porosity-permeability relation
     // [[codeblock]]
@@ -129,6 +134,8 @@ private:
     Scalar referencePorosity_;
     //The reference permeability is the known (measured) permeability, of the porous medium in the initial condition, before the solid phases change during the simulation
     PermeabilityType referencePermeability_ = 0.0;
+    // the reference temperature field (for fluid properties)
+    Scalar temperature_;
 };// end class definition of ICPSpatialParams
 } //end namespace Dumux
 // [[/codeblock]]
