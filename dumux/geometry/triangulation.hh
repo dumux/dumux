@@ -335,7 +335,7 @@ triangulate(const RandomAccessContainer& points)
                     // faces of the convex hull, if yes, compute (2d) convex hull first and triangulate
                     if (!coplanarPointBuffer.empty())
                     {
-                        const auto triangles = triangulate<2, 3>(grahamConvexHull<2>(coplanarPointBuffer));
+                        const auto triangles = triangulate<2, 3, TriangulationPolicy::ConvexHullPolicy>(coplanarPointBuffer);
                         for (const auto& triangle : triangles)
                         {
                             const auto ab = triangle[1] - triangle[0];
