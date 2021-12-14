@@ -75,13 +75,6 @@ public:
         initialValues_ = readFileToContainer<std::vector<PrimaryVariables>>("initialsolutioncc.txt");
     }
 
-    // For isothermal problems, Dumux requires problem classes to implement a `temperature()`
-    // member function. Fluid properties that depend on temperature will be calculated with the specified temperature.
-    Scalar temperature() const
-    {
-        return 293.15; // 10°C
-    }
-
     // #### Boundary types
     // We define the type of boundary conditions depending on location. Two types of boundary conditions
     // can be specified: Dirichlet or Neumann boundary condition. On a Dirichlet boundary, the values of the
@@ -111,7 +104,7 @@ public:
         // To determine the density of water for a given state, we build a fluid state with the given conditions:
         PrimaryVariables values;
         GetPropType<TypeTag, Properties::FluidState> fluidState;
-        fluidState.setTemperature(temperature());
+        fluidState.setTemperature(this->spatialParams().temperatureAtPos({}));
         fluidState.setPressure(waterPhaseIdx, /*pressure=*/1e5);
         fluidState.setPressure(dnaplPhaseIdx, /*pressure=*/1e5);
 

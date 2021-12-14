@@ -106,13 +106,6 @@ public:
     }
     // [[/codeblock]]
 
-    // #### Temperature distribution
-    // We need to specify a constant temperature for our isothermal problem.
-    // Fluid properties that depend on temperature will be calculated with this value.
-    // [[codeblock]]
-    Scalar temperature() const
-    { return 283.15; /*10°C*/ }
-
 }; // end class definition of OnePTestProblem
 } // end namespace Dumux
 // [[/codeblock]]
