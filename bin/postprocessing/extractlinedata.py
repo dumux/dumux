@@ -14,6 +14,7 @@ try:
         SetActiveSource,
         PlotOverLine,
         CreateWriter,
+        GetParaViewVersion,
     )
 except ImportError as exc:
     raise ImportError(
@@ -102,8 +103,12 @@ for curFile in args["files"]:
         vtkFile = XMLUnstructuredGridReader(FileName=curFile)
     SetActiveSource(vtkFile)
 
+    pvPythonVersion = GetParaViewVersion()
     # apply and configure PlotOverLine filter
-    plotOverLine = PlotOverLine(Source="Line")
+    if pvPythonVersion >= 5.9:
+        plotOverLine = PlotOverLine(Source="Line")
+    else:
+        plotOverLine = PlotOverLine(Source="High Resolution Line Source")
     plotOverLine.Source.Resolution = args["resolution"]
     plotOverLine.Source.Point1 = args["point1"]
     plotOverLine.Source.Point2 = args["point2"]
