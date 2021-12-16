@@ -29,36 +29,33 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/grid/io/file/dgfparser/dgfexception.hh>
-#include <dune/grid/io/file/vtk.hh>
-#include <dune/istl/io.hh>
 
-#include <dumux/assembly/fvassembler.hh>
-#include <dumux/assembly/diffmethod.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+
 #include <dumux/io/grid/gridmanager.hh>
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/vtkfunction.hh>
+#include <dumux/io/vtk/function.hh>
+#include <dumux/io/vtk/intersectionwriter.hh>
+#include <dumux/io/vtkoutputmodule.hh>
+
+#include <dumux/assembly/fvassembler.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
-
 
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 
-#include <dumux/io/vtk/intersectionwriter.hh>
-#include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/freeflow/navierstokes/velocityoutput.hh>
 
-#include "../l2error.hh"
-#include "../analyticalsolution.hh"
+// #include "../l2error.hh"
+// #include "../analyticalsolution.hh"
 #include "problem_diamond.hh"
 
-namespace Dumux::Properties{
+namespace Dumux::Properties {
 
 // Set the problem property
 template<class TypeTag>
@@ -67,12 +64,12 @@ struct CouplingManager<TypeTag, TTag::DoneaTestNew>
 private:
     using Traits = MultiDomainTraits<TTag::DoneaTestNewMomentum, TTag::DoneaTestNewMass>;
 public:
-    using type = DiamondFreeFlowCouplingManager<Traits>;
+    using type = StaggeredFreeFlowCouplingManager<Traits>;
 };
 
-}
+} // end namespace Dumux::Properties
 
-int main(int argc, char** argv) try
+int main(int argc, char** argv)
 {
     using namespace Dumux;
 
@@ -106,15 +103,13 @@ int main(int argc, char** argv) try
     Dune::Timer timer;
     using MomentumGridGeometry = GetPropType<MomentumTypeTag, Properties::GridGeometry>;
     auto momentumGridGeometry = std::make_shared<MomentumGridGeometry>(leafGridView);
-    momentumGridGeometry->update();
 
     using MassGridGeometry = GetPropType<MassTypeTag, Properties::GridGeometry>;
     auto massGridGeometry = std::make_shared<MassGridGeometry>(leafGridView);
-    massGridGeometry->update();
 
     // the coupling manager
     using Traits = MultiDomainTraits<MomentumTypeTag, MassTypeTag>;
-    using CouplingManager = DiamondFreeFlowCouplingManager<Traits>;
+    using CouplingManager = GetPropType<MassTypeTag, Properties::CouplingManager>;
 
     auto couplingManager = std::make_shared<CouplingManager>();
 
@@ -126,8 +121,8 @@ int main(int argc, char** argv) try
     auto massProblem = std::make_shared<MassProblem>(massGridGeometry, couplingManager);
 
     // the solution vector
-    constexpr auto momentumIdx = Dune::index_constant<0>();
-    constexpr auto massIdx = Dune::index_constant<1>();
+    constexpr auto momentumIdx = CouplingManager::freeFlowMomentumIndex;
+    constexpr auto massIdx = CouplingManager::freeFlowMassIndex;
     using SolutionVector = typename Traits::SolutionVector;
     SolutionVector x;
     x[momentumIdx].resize(momentumGridGeometry->numDofs());
@@ -218,7 +213,7 @@ int main(int argc, char** argv) try
 
     // writer.addCellData(rank, "rank");
 
-    writer.write("donea_new_momentum");
+    writer.write("donea_new_momentum_coupled_diamond");
 
     //vtkWriter.write(1.0);
 
@@ -257,19 +252,19 @@ int main(int argc, char** argv) try
     // vtk.addCellData(faceData, "velcocityScalar");
     vtk.write("facedata", Dune::VTK::ascii);
 
-    if (getParam<bool>("Problem.PrintL2Error"))
-    {
-        const auto pressureL2error = calculateL2Error(*massProblem, x[massIdx]);
-        const auto velocityL2error = momentumProblem->calculateL2Error(x[momentumIdx]);
+    // if (getParam<bool>("Problem.PrintL2Error", true))
+    // {
+    //     const auto pressureL2error = calculateL2Error(*massProblem, x[massIdx]);
+    //     const auto velocityL2error = momentumProblem->calculateL2Error(x[momentumIdx]);
 
-        std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
-                        << std::setw(6) << massGridGeometry->numDofs() << " cc dofs and " << momentumGridGeometry->numDofs()
-                        << " face dofs (total: " << massGridGeometry->numDofs() + momentumGridGeometry->numDofs() << "): "
-                        << std::scientific
-                        << "L2(p) = " << pressureL2error.absolute[0] << " / " << pressureL2error.relative[0]
-                        << " , L2(v) = " << velocityL2error
-                        << std::endl;
-    }
+    //     std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
+    //                     << std::setw(6) << massGridGeometry->numDofs() << " cc dofs and " << momentumGridGeometry->numDofs()
+    //                     << " face dofs (total: " << massGridGeometry->numDofs() + momentumGridGeometry->numDofs() << "): "
+    //                     << std::scientific
+    //                     << "L2(p) = " << pressureL2error.absolute[0] << " / " << pressureL2error.relative[0]
+    //                     << " , L2(v) = " << velocityL2error
+    //                     << std::endl;
+    // }
 
     timer.stop();
 
@@ -290,28 +285,4 @@ int main(int argc, char** argv) try
     }
 
     return 0;
-} // end main
-catch (Dumux::ParameterException &e)
-{
-    std::cerr << std::endl << e << " ---> Abort!" << std::endl;
-    return 1;
-}
-catch (Dune::DGFException & e)
-{
-    std::cerr << "DGF exception thrown (" << e <<
-                 "). Most likely, the DGF file name is wrong "
-                 "or the DGF file is corrupted, "
-                 "e.g. missing hash at end of file or wrong number (dimensions) of entries."
-                 << " ---> Abort!" << std::endl;
-    return 2;
-}
-catch (Dune::Exception &e)
-{
-    std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
-    return 3;
-}
-catch (...)
-{
-    std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
-    return 4;
 }
