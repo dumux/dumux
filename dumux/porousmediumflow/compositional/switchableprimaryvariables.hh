@@ -25,6 +25,7 @@
 #ifndef DUMUX_SWITCHABLE_PRIMARY_VARIABLES_HH
 #define DUMUX_SWITCHABLE_PRIMARY_VARIABLES_HH
 
+#include <dune/common/ftraits.hh>
 #include <dune/common/exceptions.hh>
 #include <dumux/common/numeqvector.hh>
 
@@ -86,5 +87,15 @@ struct NumEqVectorTraits<SwitchablePrimaryVariables<PrimaryVariables, StateType>
 };
 
 } // end namespace Dumux
+
+// specialize field traits for this type
+namespace Dune {
+
+template <class PrimaryVariables, class StateType>
+struct FieldTraits<Dumux::SwitchablePrimaryVariables<PrimaryVariables, StateType>>
+: public FieldTraits<PrimaryVariables>
+{};
+
+} // end namespace Dune
 
 #endif
