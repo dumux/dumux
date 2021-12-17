@@ -35,7 +35,7 @@ void writeVTKPolyDataTriangle(const TriangleVector& triangles,
 {
     std::ofstream fout(filename + ".vtp");
     fout << "<?xml version=\"1.0\"?>\n"
-         << "<VTKFile type=\"PolyData\" version=\"0.1\" byte_order=\"LittleEndian\">\n"
+         << "<VTKFile type=\"PolyData\" version=\"0.1\">\n"
          << "  <PolyData>\n"
          << "    <Piece NumberOfPoints=\"" << triangles.size()*3 << "\" NumberOfLines=\"" << triangles.size()*3 << "\">\n"
          << "      <Points>\n"
@@ -95,7 +95,7 @@ void writeVTUTetrahedron(const TetrahedronVector& tets,
 {
     std::ofstream fout(filename + ".vtu");
     fout << "<?xml version=\"1.0\"?>\n"
-         << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n"
+         << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\">\n"
          << "  <UnstructuredGrid>\n"
          << "    <Piece NumberOfPoints=\"" << tets.size()*4 << "\" NumberOfCells=\"" << tets.size() << "\">\n"
          << "      <Points>\n"
@@ -150,7 +150,7 @@ void writeVTKPolyDataLines(const LineVector& lines,
 {
     std::ofstream fout(filename + ".vtp");
     fout << "<?xml version=\"1.0\"?>\n"
-         << "<VTKFile type=\"PolyData\" version=\"0.1\" byte_order=\"LittleEndian\">\n"
+         << "<VTKFile type=\"PolyData\" version=\"0.1\">\n"
          << "  <PolyData>\n"
          << "    <Piece NumberOfPoints=\"" << lines.size()*2 << "\" NumberOfLines=\"" << lines.size() << "\">\n"
          << "      <Points>\n"
