@@ -26,6 +26,7 @@
 
 #include <iostream>
 #include <dune/common/parallel/mpihelper.hh>
+#include <dune/common/fvector.hh>
 
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/parameters.hh>
@@ -56,17 +57,45 @@ void updateVelocities(
 ){
     auto fvGeometry = localView(gridGeometry);
     auto elemVolVars = localView(gridVariables.curGridVolVars());
+
+    using ShapeValue = typename Dune::FieldVector<double, 1>;
+    std::vector<ShapeValue> shapeValues;
+
     for (const auto& element : elements(gridGeometry.gridView()))
     {
         fvGeometry.bind(element);
         elemVolVars.bind(element, fvGeometry, x);
+        const auto eIdx = gridGeometry.elementMapper().index(element);
 
-        for (const auto& scv : scvs(fvGeometry))
+        if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::fcstaggered)
         {
-            const auto& vars = elemVolVars[scv];
-            velocity[scv.elementIndex()][scv.dofAxis()] += 0.5*vars.velocity();
-            faceVelocity[scv.dofIndex()][scv.dofAxis()] = vars.velocity();
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                const auto& vars = elemVolVars[scv];
+                velocity[eIdx][scv.dofAxis()] += 0.5*vars.velocity();
+                faceVelocity[scv.dofIndex()][scv.dofAxis()] = vars.velocity();
+            }
         }
+        else if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::fcdiamond)
+        {
+            auto elemSol = elementSolution(element, x, gridGeometry);
+            const auto elemGeom = element.geometry();
+
+            // TODO use evalSolution (would be good to have eval solution for a list of coordinates too)
+            const auto& localBasis = fvGeometry.feLocalBasis();
+            const auto centerLocal = elemGeom.local(elemGeom.center());
+            localBasis.evaluateFunction(centerLocal, shapeValues);
+
+            velocity[eIdx] = 0.0;
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                const auto& volVars = elemVolVars[scv];
+                velocity[eIdx].axpy(shapeValues[scv.indexInElement()][0], volVars.velocity());
+                faceVelocity[scv.dofIndex()] = volVars.velocity();
+            }
+        }
+        else
+            DUNE_THROW(Dune::Exception, "Unknown discretization type: " << GridGeometry::discMethod);
     }
 }
 
@@ -132,6 +161,8 @@ int main(int argc, char** argv)
         dofIdx[idx] = idx;
     }
 
+    std::string discSuffix = std::string("_") + GridGeometry::DiscretizationMethod::name();
+    std::string rankSuffix = std::string("_") + std::to_string(gridGeometry->gridView().comm().rank());
     Dune::VTKWriter<typename GridGeometry::GridView> writer(gridGeometry->gridView());
     using Field = Vtk::template Field<typename GridGeometry::GridView>;
     writer.addCellData(Field(
@@ -139,7 +170,7 @@ int main(int argc, char** argv)
         "velocity", /*numComp*/2, /*codim*/0
     ).get());
     writer.addCellData(rank, "rank");
-    writer.write("donea_momentum_0");
+    writer.write("donea_momentum" + discSuffix + "_0");
 
     ConformingIntersectionWriter faceVtk(gridGeometry->gridView());
     faceVtk.addField(dofIdx, "dofIdx");
@@ -148,7 +179,7 @@ int main(int argc, char** argv)
         const auto& facet = is.inside().template subEntity <1> (is.indexInInside());
         return facet.partitionType();
     }, "partitionType");
-    faceVtk.write("donea_momentum_face_0_" + std::to_string(gridGeometry->gridView().comm().rank()), Dune::VTK::ascii);
+    faceVtk.write("donea_momentum_face" + discSuffix + rankSuffix + "_0", Dune::VTK::ascii);
 
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
@@ -166,8 +197,8 @@ int main(int argc, char** argv)
     // write VTK output
     ////////////////////////////////////////////////////////////
     updateVelocities(velocity, faceVelocity, *gridGeometry, *gridVariables, x);
-    writer.write("donea_momentum_1");
-    faceVtk.write("donea_momentum_face_1_" + std::to_string(gridGeometry->gridView().comm().rank()), Dune::VTK::ascii);
+    writer.write("donea_momentum" + discSuffix + "_1");
+    faceVtk.write("donea_momentum_face" + discSuffix + rankSuffix + "_1", Dune::VTK::ascii);
 
     ////////////////////////////////////////////////////////////
     // finalize, print parameters and Dumux message to say goodbye

@@ -16,7 +16,7 @@ UseNeumann = true
 LiquidDensity = 1.0
 LiquidKinematicViscosity = 1.0
 
-[ Newton ]
+[Newton]
 MaxSteps = 10
 MaxRelativeShift = 1e-8
 
@@ -30,3 +30,6 @@ AmgAccumulationMode = atOnce
 
 [Assembly]
 NumericDifference.BaseEpsilon = 1e-8
+
+[FreeFlow]
+EnableUnsymmetrizedVelocityGradient = false
