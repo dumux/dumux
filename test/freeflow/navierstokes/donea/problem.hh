@@ -281,7 +281,7 @@ public:
      * \param scv The sub-control volume
      */
     PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
-    { return PrimaryVariables(analyticalSolution(scv.center())[Indices::pressureIdx]); }
+    { return PrimaryVariables(analyticalSolution(scv.dofPosition())[Indices::pressureIdx]); }
 
 private:
     Scalar p_(Scalar x) const

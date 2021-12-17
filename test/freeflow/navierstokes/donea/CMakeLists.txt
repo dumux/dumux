@@ -1,6 +1,7 @@
 add_input_file_links()
 dune_symlink_to_source_files(FILES grids)
 
+# tests with staggered
 dumux_add_test(NAME test_ff_stokes_donea_momentum
                LABELS freeflow navierstokes
                SOURCES main_momentum.cc
@@ -8,7 +9,7 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/donea_momentum_1.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/donea_momentum_fcstaggered_1.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum")
 
 dumux_add_test(NAME test_ff_stokes_donea_momentum_parallel
@@ -18,22 +19,8 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_parallel
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS      --script fuzzy --zeroThreshold {"rank":100}
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/s0004-donea_momentum_1.pvtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/s0004-donea_momentum_fcstaggered_1.pvtu
                              --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum")
-
-dumux_add_test(NAME test_donea_momentum_diamond_rt
-               SOURCES main_momentum_diamond.cc)
-
-dumux_add_test(NAME test_donea_momentum_diamond_cr
-               SOURCES main_momentum_diamond.cc
-               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>)
-
-dumux_add_test(NAME test_donea_coupled_diamond_rt
-               SOURCES main_coupled_diamond.cc)
-
-dumux_add_test(NAME test_donea_coupled_diamond_cr
-               SOURCES main_coupled_diamond.cc
-               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>)
 
 dumux_add_test(NAME test_ff_stokes_donea_nocaching
               LABELS freeflow navierstokes
@@ -108,3 +95,30 @@ dumux_add_test(NAME test_ff_stokes_donea_donut_twisted
                                -Grid.File grids/donut_twisted.dgf
                                -Problem.Name test_ff_stokes_donea_donut_twisted -Problem.UseNeumann false"
                                --zeroThreshold {"connectivity":1e6})
+
+# tests with diamond scheme
+dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_quad
+               SOURCES main_momentum.cc
+               COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredDiamondModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_diamond_quad
+               CMD_ARGS params.input -Problem.UseNeumann false)
+
+dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_simplex
+               SOURCES main_momentum.cc
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
+               COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredDiamondModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_diamond_simplex
+               CMD_ARGS params.input -Problem.UseNeumann false -FreeFlow.EnableUnsymmetrizedVelocityGradient true)
+
+dumux_add_test(NAME test_ff_stokes_donea_diamond_quad
+               SOURCES main_coupled_diamond.cc
+               COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredDiamondModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond)
+
+dumux_add_test(NAME test_ff_stokes_donea_diamond_simplex
+               SOURCES main_coupled_diamond.cc
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
+               COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredDiamondModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond)

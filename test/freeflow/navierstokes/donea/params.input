@@ -16,7 +16,7 @@ UseNeumann = true
 LiquidDensity = 1.0
 LiquidKinematicViscosity = 1.0
 
-[ Newton ]
+[Newton]
 MaxSteps = 10
 MaxRelativeShift = 1e-8
 
@@ -33,3 +33,6 @@ NumericDifference.BaseEpsilon = 1e-8
 
 [SpatialParams]
 Temperature = 298.0
+
+[FreeFlow]
+EnableUnsymmetrizedVelocityGradient = false
