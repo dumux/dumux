@@ -30,6 +30,7 @@
 #include <dumux/flux/fourierslaw.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
 #include "turbulencemodel.hh"
+#include "spatialparams.hh"
 
 namespace Dumux {
 namespace Properties {
@@ -53,6 +54,15 @@ struct FluxVariablesCacheFiller<TypeTag, TTag::FreeFlow> { using type = FluxVari
 //! Use Fourier's Law as default heat conduction type
 template<class TypeTag>
 struct HeatConductionType<TypeTag, TTag::FreeFlow> { using type = FouriersLaw<TypeTag>; };
+
+// Set the spatial parameters
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::FreeFlow>
+{
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using type = FreeFlowSpatialParams<GridGeometry, Scalar>;
+};
 
 } // namespace Properties
 } // namespace Dumux
