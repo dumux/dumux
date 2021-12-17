@@ -33,14 +33,6 @@
 
 namespace Dumux {
 
-namespace Impl {
-template<class T>
-static constexpr bool isRotationalExtrusion = false;
-
-template<int radialAxis>
-static constexpr bool isRotationalExtrusion<RotationalExtrusion<radialAxis>> = true;
-} // end namespace Impl
-
 /*!
  * \ingroup NavierStokesModel
  * \brief Element-wise calculation of the Navier-Stokes residual for models using the staggered discretization
@@ -128,7 +120,7 @@ public:
         // Axisymmetric problems in 2D feature an extra source terms arising from the transformation to cylindrical coordinates.
         // See Ferziger/Peric: Computational methods for fluid dynamics chapter 8.
         // https://doi.org/10.1007/978-3-540-68228-8 (page 301)
-        if constexpr (dim == 2 && Impl::isRotationalExtrusion<Extrusion>)
+        if constexpr (dim == 2 && isRotationalExtrusion<Extrusion>)
         {
             if (scv.dofAxis() == Extrusion::radialAxis)
             {

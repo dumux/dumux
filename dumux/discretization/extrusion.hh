@@ -176,6 +176,18 @@ public:
 template<class T>
 using Extrusion_t = typename Extrusion<T>::type;
 
+/*!
+ * \brief Convenience trait to check whether the extrusion is rotational
+ */
+template<class T>
+inline constexpr bool isRotationalExtrusion = false;
+
+/*!
+ * \brief Convenience trait to check whether the extrusion is rotational
+ */
+template<int radialAxis>
+inline constexpr bool isRotationalExtrusion<RotationalExtrusion<radialAxis>> = true;
+
 } // end namespace Dumux
 
 #endif
