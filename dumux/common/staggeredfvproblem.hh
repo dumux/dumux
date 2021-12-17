@@ -28,7 +28,7 @@
 #include <dune/common/rangeutilities.hh>
 
 #include <dumux/common/properties.hh>
-#include <dumux/common/fvproblem.hh>
+#include <dumux/common/fvproblemwithspatialparams.hh>
 #include <dumux/common/numeqvector.hh>
 
 namespace Dumux {
@@ -44,9 +44,9 @@ namespace Dumux {
  *       to have a cross section of \f$1m \times 1m\f$.
  */
 template<class TypeTag>
-class StaggeredFVProblem : public FVProblem<TypeTag>
+class StaggeredFVProblem : public FVProblemWithSpatialParams<TypeTag>
 {
-    using ParentType = FVProblem<TypeTag>;
+    using ParentType = FVProblemWithSpatialParams<TypeTag>;
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -79,7 +79,8 @@ public:
      * \param gridGeometry The finite volume grid geometry
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
-    StaggeredFVProblem(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
+    StaggeredFVProblem(std::shared_ptr<const GridGeometry> gridGeometry,
+                       const std::string& paramGroup = "")
     : ParentType(gridGeometry, paramGroup)
     { }
 
