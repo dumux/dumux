@@ -26,7 +26,7 @@
 #ifndef DUMUX_INJECTION_SPATIAL_PARAMETERS_HH
 #define DUMUX_INJECTION_SPATIAL_PARAMETERS_HH
 
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/porosityprecipitation.hh>
 #include <dumux/material/fluidmatrixinteractions/permeabilitykozenycarman.hh>
@@ -40,16 +40,16 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class DissolutionSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
-                         DissolutionSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
+                                           DissolutionSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using ParentType = FVSpatialParams<GridGeometry, Scalar,
-                                       DissolutionSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
+                                                         DissolutionSpatialParams<GridGeometry, Scalar>>;
 
     using PcKrSwCurve = FluidMatrix::BrooksCoreyDefault<Scalar>;
 
@@ -66,7 +66,21 @@ public:
         solubilityLimit_       = getParam<Scalar>("SpatialParams.SolubilityLimit", 0.26);
         referencePorosity_     = getParam<Scalar>("SpatialParams.referencePorosity", 0.11);
         referencePermeability_ = getParam<Scalar>("SpatialParams.referencePermeability", 2.23e-14);
+        temperature_           = getParam<Scalar>("Problem.Temperature");
     }
+
+    /*!
+     * \brief Returns the temperature within the domain.
+     *
+     *  \param element The finite volume element
+     *  \param scv The sub-control volume
+     *  \param elemSol The element solution
+     */
+    template<class ElementSolution>
+    Scalar temperature(const Element& element,
+                       const SubControlVolume& scv,
+                       const ElementSolution& elemSol) const
+    { return temperature_; }
 
     /*!
      *  \brief Defines the minimum porosity \f$[-]\f$ distribution
@@ -150,6 +164,7 @@ private:
     Scalar referencePorosity_;
     PermeabilityType referencePermeability_ = 0.0;
     const PcKrSwCurve pcKrSwCurve_;
+    Scalar temperature_;
 };
 
 } // end namespace Dumux
