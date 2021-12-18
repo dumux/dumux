@@ -25,7 +25,7 @@
 #define DUMUX_BOWL_SPATIAL_PARAMETERS_HH
 
 #include <dumux/common/parameters.hh>
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/common/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/frictionlaw.hh>
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/nofriction.hh>
 

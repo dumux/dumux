@@ -24,8 +24,8 @@
 #ifndef DUMUX_ROUGH_CHANNEL_SPATIAL_PARAMETERS_HH
 #define DUMUX_ROUGH_CHANNEL_SPATIAL_PARAMETERS_HH
 
-#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/frictionlaw.hh>
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/manning.hh>
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/nikuradse.hh>

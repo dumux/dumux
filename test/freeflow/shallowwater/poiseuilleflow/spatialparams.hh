@@ -26,8 +26,7 @@
 
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
-
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/common/fvspatialparams.hh>
 
 namespace Dumux {
 
