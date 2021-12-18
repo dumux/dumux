@@ -24,7 +24,7 @@
 #ifndef DUMUX_DAM_BREAK_SPATIAL_PARAMETERS_HH
 #define DUMUX_DAM_BREAK_SPATIAL_PARAMETERS_HH
 
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/common/fvspatialparams.hh>
 
 namespace Dumux {
 

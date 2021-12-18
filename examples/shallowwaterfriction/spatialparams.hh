@@ -31,7 +31,7 @@
 //
 // ### Include files
 // We include the basic spatial parameters file for finite volumes, from which we will inherit.
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/common/fvspatialparams.hh>
 // We include all friction laws.
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/frictionlaw.hh>
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/manning.hh>
