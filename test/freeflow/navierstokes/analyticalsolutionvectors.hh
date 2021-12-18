@@ -24,6 +24,8 @@
 #ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKES_ANALYTICALSOLVECTORS_HH
 #define DUMUX_TEST_FREEFLOW_NAVIERSTOKES_ANALYTICALSOLVECTORS_HH
 
+#include <dumux/discretization/method.hh>
+
 namespace Dumux {
 /*!
  * \ingroup NavierStokesTests
@@ -123,8 +125,9 @@ namespace NavierStokesTest {
 template<class MomentumProblem, class MassProblem, class Scalar = double>
 class AnalyticalSolutionVectors
 {
-    using GridGeometry = std::decay_t<decltype(std::declval<MassProblem>().gridGeometry())>;
-    static constexpr int dimWorld = GridGeometry::GridView::dimensionworld;
+    using MassGridGeometry = std::decay_t<decltype(std::declval<MassProblem>().gridGeometry())>;
+    using MomentumGridGeometry = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>;
+    static constexpr int dimWorld = MassGridGeometry::GridView::dimensionworld;
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
     using MassIndices = typename MassProblem::Indices;
@@ -143,7 +146,7 @@ public:
     void update(Scalar time = 0.0)
     {
         analyticalPressure_.resize(massProblem_->gridGeometry().numDofs());
-        analyticalVelocity_.resize(massProblem_->gridGeometry().numDofs());
+        analyticalVelocity_.resize(massProblem_->gridGeometry().gridView().size(0));
         analyticalVelocityOnFace_.resize(momentumProblem_->gridGeometry().numDofs());
 
         // cell-centers (pressure + velocity)
@@ -152,16 +155,18 @@ public:
             const auto gridView = massProblem_->gridGeometry().gridView();
             for (const auto& element : elements(gridView))
             {
+                // output velocity always on elements
+                const auto eIdx = massProblem_->gridGeometry().elementMapper().index(element);
+                const auto center = element.geometry().center();
+                for (int dirIdx = 0; dirIdx < dimWorld; ++dirIdx)
+                        analyticalVelocity_[eIdx][dirIdx]
+                            = momentumProblem_->analyticalSolution(center, time)[MomIndices::velocity(dirIdx)];
+
+                // this works for box and cc methods
                 fvGeometry.bindElement(element);
                 for (const auto& scv : scvs(fvGeometry))
-                {
                     analyticalPressure_[scv.dofIndex()]
                         = massProblem_->analyticalSolution(scv.dofPosition(), time)[MassIndices::pressureIdx];
-
-                    for (int dirIdx = 0; dirIdx < dimWorld; ++dirIdx)
-                        analyticalVelocity_[scv.dofIndex()][dirIdx]
-                            = momentumProblem_->analyticalSolution(scv.center(), time)[MomIndices::velocity(dirIdx)];
-                }
             }
         }
 
@@ -172,9 +177,20 @@ public:
             for (const auto& element : elements(gridView))
             {
                 fvGeometry.bindElement(element);
-                for (const auto& scv : scvs(fvGeometry))
-                    analyticalVelocityOnFace_[scv.dofIndex()][scv.dofAxis()]
-                        = momentumProblem_->analyticalSolution(scv.center(), time)[MomIndices::velocity(scv.dofAxis())];
+
+                if constexpr (MomentumGridGeometry::discMethod == DiscretizationMethods::fcstaggered)
+                    for (const auto& scv : scvs(fvGeometry))
+                        analyticalVelocityOnFace_[scv.dofIndex()][scv.dofAxis()]
+                            = momentumProblem_->analyticalSolution(scv.center(), time)[MomIndices::velocity(scv.dofAxis())];
+
+                else if constexpr (MomentumGridGeometry::discMethod == DiscretizationMethods::fcdiamond)
+                    for (const auto& scv : scvs(fvGeometry))
+                        for (int dirIdx = 0; dirIdx < dimWorld; ++dirIdx)
+                            analyticalVelocityOnFace_[scv.dofIndex()][dirIdx]
+                                = momentumProblem_->analyticalSolution(scv.dofPosition(), time)[MomIndices::velocity(dirIdx)];
+
+                else
+                    DUNE_THROW(Dune::Exception, "Unknown discretization method: " << MomentumGridGeometry::discMethod);
             }
         }
     }
