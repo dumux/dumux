@@ -35,6 +35,7 @@
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/discretization/box/elementsolution.hh>
 #include <dumux/discretization/cellcentered/elementsolution.hh>
+#include <dumux/discretization/facecentered/diamond/elementsolution.hh>
 
 namespace Dumux {
 
@@ -262,6 +263,77 @@ PrimaryVariables evalSolution(const Element& element,
                               bool ignoreState = false)
 {
     return elemSol[0];
+}
+
+/*!
+ * \brief Interpolates a given box element solution at a given global position.
+ *        Uses the finite element cache of the grid geometry.
+ * \ingroup Discretization
+ *
+ * \return the interpolated primary variables
+ * \param element The element
+ * \param geometry The element geometry
+ * \param gridGeometry The finite volume grid geometry
+ * \param elemSol The primary variables at the dofs of the element
+ * \param globalPos The global position
+ * \param ignoreState If true, the state of primary variables is ignored
+ *
+ * \todo This is the same implementation as for Box. It works for any solution that
+ *       represents a finite element space with access to local shape functions.
+ *       This should be unified to avoid code duplication.
+ */
+template<class Element, class FVElementGeometry, class PrimaryVariables>
+PrimaryVariables evalSolution(const Element& element,
+                              const typename Element::Geometry& geometry,
+                              const typename FVElementGeometry::GridGeometry& gridGeometry,
+                              const FaceCenteredDiamondElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
+                              const typename Element::Geometry::GlobalCoordinate& globalPos,
+                              bool ignoreState = false)
+{
+    // determine if all states are the same at all vertices
+    using HasState = decltype(isValid(Detail::hasState())(elemSol[0]));
+    bool allStatesEqual = ignoreState || Detail::allStatesEqual(elemSol, HasState{});
+
+    if (allStatesEqual)
+    {
+        using Scalar = typename PrimaryVariables::value_type;
+
+        // interpolate the solution
+        const auto& localBasis = gridGeometry.feCache().get(geometry.type()).localBasis();
+
+        // evaluate the shape functions at the scv center
+        const auto localPos = geometry.local(globalPos);
+        std::vector< Dune::FieldVector<Scalar, 1> > shapeValues;
+        localBasis.evaluateFunction(localPos, shapeValues);
+
+        PrimaryVariables result(0.0);
+        for (int i = 0; i < geometry.corners(); ++i)
+        {
+            auto value = elemSol[i];
+            value *= shapeValues[i][0];
+            result += value;
+        }
+
+        // set an arbitrary state if the model requires a state (models constexpr if)
+        if constexpr (HasState{})
+            if (!ignoreState)
+                result.setState(elemSol[0].state());
+
+        return result;
+    }
+    else
+    {
+        static bool warnedAboutUsingMinDist = false;
+        if (!warnedAboutUsingMinDist)
+        {
+            std::cout << "Warning: Using nearest-neighbor interpolation in evalSolution"
+            << "\nbecause not all states are equal and ignoreState is false!"
+            << std::endl;
+            warnedAboutUsingMinDist = true;
+        }
+
+        return Detail::minDistVertexSol(geometry, globalPos, elemSol);
+    }
 }
 
 } // namespace Dumux
