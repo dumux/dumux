@@ -38,9 +38,9 @@
 #include <dumux/discretization/fvgridvariables.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
+#include <dumux/porousmediumflow/fvspatialparams1pconstant.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/material/spatialparams/fv1pconstant.hh>
 
 namespace Dumux::Properties {
 
@@ -66,7 +66,7 @@ private:
     using Scalar = GetPropType<TypeTag, Scalar>;
     using GG = GetPropType<TypeTag, GridGeometry>;
 public:
-    using type = FVSpatialParamsOnePConstant<GG, Scalar>;
+    using type = FVPorousMediumFlowSpatialParamsOnePConstant<GG, Scalar>;
 };
 
 template<class TypeTag>
