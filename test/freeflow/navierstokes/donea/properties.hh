@@ -25,7 +25,27 @@
 #define DUMUX_DONEA_TEST_PROPERTIES_HH
 
 #ifndef ENABLECACHING
-#define ENABLECACHING 0
+#define ENABLECACHING true
+#endif
+
+#ifndef GRIDTYPE
+#if HAVE_DUNE_ALUGRID
+#define GRIDTYPE Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
+#else
+#define GRIDTYPE Dune::YaspGrid<2>
+#endif
+#endif
+
+#ifndef NAVIER_STOKES_MODEL
+#define NAVIER_STOKES_MODEL NavierStokesMomentum
+#endif
+
+#ifndef MOMENTUM_DISCRETIZATION_MODEL
+#define MOMENTUM_DISCRETIZATION_MODEL FaceCenteredStaggeredModel
+#endif
+
+#ifndef MASS_DISCRETIZATION_MODEL
+#define MASS_DISCRETIZATION_MODEL CCTpfaModel
 #endif
 
 #if HAVE_DUNE_ALUGRID
@@ -35,13 +55,18 @@
 #endif
 
 #include <dumux/discretization/fcstaggered.hh>
+#include <dumux/discretization/fcdiamond.hh>
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/box.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/diamond/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
+
+#include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
 
 #include "problem.hh"
 
@@ -50,8 +75,8 @@ namespace Dumux::Properties {
 // Create new type tags
 namespace TTag {
 struct DoneaTest {};
-struct DoneaTestMomentum { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
-struct DoneaTestMass { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMassOneP, CCTpfaModel>; };
+struct DoneaTestMomentum { using InheritsFrom = std::tuple<DoneaTest, NAVIER_STOKES_MODEL, MOMENTUM_DISCRETIZATION_MODEL>; };
+struct DoneaTestMass { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMassOneP, MASS_DISCRETIZATION_MODEL>; };
 } // end namespace TTag
 
 template<class TypeTag>
@@ -67,11 +92,7 @@ struct FluidSystem<TypeTag, TTag::DoneaTest>
 
 template<class TypeTag>
 struct Grid<TypeTag, TTag::DoneaTest>
-#if HAVE_DUNE_ALUGRID
-{ using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
-#else
-{ using type = Dune::YaspGrid<2>; };
-#endif
+{ using type = GRIDTYPE; };
 
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::DoneaTest> { static constexpr bool value = ENABLECACHING; };

@@ -33,6 +33,8 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/integrate.hh>
+
 #include <dumux/io/grid/gridmanager.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/linear/seqsolverbackend.hh>
@@ -47,6 +49,82 @@
 #include <test/freeflow/navierstokes/errors.hh>
 
 #include "properties.hh"
+
+namespace Dumux {
+
+template<class MassGridProblem, class MomentumProblem, class CouplingManager, class SolutionVector, class AnalyticSolVecs>
+void printErrors(std::shared_ptr<MassGridProblem> massProblem,
+                 std::shared_ptr<MomentumProblem> momentumProblem,
+                 std::shared_ptr<CouplingManager> couplingManager,
+                 const SolutionVector& x,
+                 const AnalyticSolVecs& analyticalSolVectors)
+{
+    const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
+    const bool printConvergenceTestFile = getParam<bool>("Problem.PrintConvergenceTestFile", false);
+    constexpr auto momentumIdx = CouplingManager::freeFlowMomentumIndex;
+    constexpr auto massIdx = CouplingManager::freeFlowMassIndex;
+
+    if (printErrors || printConvergenceTestFile)
+    {
+        using MomentumGridGeometry = std::decay_t<decltype(momentumProblem->gridGeometry())>;
+        if constexpr (MomentumGridGeometry::discMethod == DiscretizationMethods::fcstaggered)
+        {
+            // print discrete L2 and Linfity errors
+            NavierStokesTest::Errors errors(momentumProblem, massProblem, x);
+            NavierStokesTest::ErrorCSVWriter csvWriter(
+                momentumProblem, massProblem, std::to_string(x[massIdx].size())
+            );
+            csvWriter.printErrors(errors);
+
+            if (printConvergenceTestFile)
+                NavierStokesTest::convergenceTestAppendErrors(momentumProblem, massProblem, errors);
+        }
+        else if (MomentumGridGeometry::discMethod == DiscretizationMethods::fcdiamond)
+        {
+            // convert format to solution vector type
+            const auto& vOnFace = analyticalSolVectors.analyticalVelocitySolutionOnFace();
+            const auto& pOnDof = analyticalSolVectors.analyticalPressureSolution();
+            auto analyticVel = x[momentumIdx];
+            auto analyticPressure = x[massIdx];
+            auto momFVGeometry = localView(momentumProblem->gridGeometry());
+            auto massFVGeometry = localView(massProblem->gridGeometry());
+            for (const auto& element : elements(massProblem->gridGeometry().gridView()))
+            {
+                momFVGeometry.bindElement(element);
+                for (const auto& scv : scvs(momFVGeometry))
+                    analyticVel[scv.dofIndex()] = vOnFace[scv.dofIndex()];
+
+                massFVGeometry.bindElement(element);
+                for (const auto& scv : scvs(massFVGeometry))
+                    analyticPressure[scv.dofIndex()] = pOnDof[scv.dofIndex()];
+            }
+
+            const auto l2ErrorVel = integrateL2Error(
+                momentumProblem->gridGeometry(), x[momentumIdx], analyticVel, 3
+            );
+
+            auto zeroVel = analyticVel; zeroVel = 0.0;
+            const auto l2ErrorNormalizerVel = integrateL2Error(
+                momentumProblem->gridGeometry(), zeroVel, analyticVel, 3
+            );
+
+            std::cout << "Velocity L2 error: " << l2ErrorVel/l2ErrorNormalizerVel << std::endl;
+
+            const auto l2ErrorPressure = integrateL2Error(
+                massProblem->gridGeometry(), x[massIdx], analyticPressure, 3
+            );
+
+            auto zeroP = analyticPressure; zeroP = 0.0;
+            const auto l2ErrorNormalizerP = integrateL2Error(
+                massProblem->gridGeometry(), zeroP, analyticPressure, 3
+            );
+
+            std::cout << "Pressure L2 error: " << l2ErrorPressure/l2ErrorNormalizerP << std::endl;
+        }
+    }
+}
+
+} // end namespace Dumux
 
 int main(int argc, char** argv)
 {
@@ -86,7 +164,7 @@ int main(int argc, char** argv)
 
     // mass-momentum coupling manager
     using Traits = MultiDomainTraits<MomentumTypeTag, MassTypeTag>;
-    using CouplingManager = StaggeredFreeFlowCouplingManager<Traits>;
+    using CouplingManager = GetPropType<MassTypeTag, Properties::CouplingManager>;
     auto couplingManager = std::make_shared<CouplingManager>();
 
     // the problems (boundary conditions)
@@ -147,20 +225,8 @@ int main(int argc, char** argv)
     // linearize & solve
     nonLinearSolver.solve(x);
 
-    // print discrete L2 and Linfity errors
-    const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
-    const bool printConvergenceTestFile = getParam<bool>("Problem.PrintConvergenceTestFile", false);
-
-    if (printErrors || printConvergenceTestFile)
-    {
-        NavierStokesTest::Errors errors(momentumProblem, massProblem, x);
-        NavierStokesTest::ErrorCSVWriter(
-            momentumProblem, massProblem, std::to_string(x[massIdx].size())
-        ).printErrors(errors);
-
-        if (printConvergenceTestFile)
-            NavierStokesTest::convergenceTestAppendErrors(momentumProblem, massProblem, errors);
-    }
+    // maybe print errors
+    printErrors(massProblem, momentumProblem, couplingManager, x, analyticalSolVectors);
 
     // write vtk output
     vtkWriter.write(1.0);

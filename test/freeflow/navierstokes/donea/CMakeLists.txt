@@ -26,7 +26,7 @@ dumux_add_test(NAME test_ff_stokes_donea_nocaching
               LABELS freeflow navierstokes
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
-              COMPILE_DEFINITIONS ENABLECACHING=0
+              COMPILE_DEFINITIONS ENABLECACHING=false
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea-reference.vtu
@@ -63,7 +63,7 @@ dumux_add_test(NAME test_ff_stokes_donea
               LABELS freeflow navierstokes
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
-              COMPILE_DEFINITIONS ENABLECACHING=1
+              COMPILE_DEFINITIONS ENABLECACHING=true
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea-reference.vtu
@@ -99,6 +99,7 @@ dumux_add_test(NAME test_ff_stokes_donea_donut_twisted
 # tests with diamond scheme
 dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_quad
                SOURCES main_momentum.cc
+               LABELS freeflow navierstokes
                COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredDiamondModel
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_diamond_quad
@@ -106,6 +107,7 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_quad
 
 dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_simplex
                SOURCES main_momentum.cc
+               LABELS freeflow navierstokes
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
                COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredDiamondModel
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
@@ -113,12 +115,20 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_simplex
                CMD_ARGS params.input -Problem.UseNeumann false -FreeFlow.EnableUnsymmetrizedVelocityGradient true)
 
 dumux_add_test(NAME test_ff_stokes_donea_diamond_quad
-               SOURCES main_coupled_diamond.cc
-               COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredDiamondModel
-               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond)
+               SOURCES main.cc
+               LABELS freeflow navierstokes
+               COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION_MODEL=FaceCenteredDiamondModel
+               COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=BoxModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_diamond_quad
+               CMD_ARGS params.input -Problem.UseNeumann false)
 
 dumux_add_test(NAME test_ff_stokes_donea_diamond_simplex
-               SOURCES main_coupled_diamond.cc
+               SOURCES main.cc
+               LABELS freeflow navierstokes
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
-               COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredDiamondModel
-               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond)
+               COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION_MODEL=FaceCenteredDiamondModel
+               COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=BoxModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_diamond_simplex
+               CMD_ARGS params.input -Problem.UseNeumann false -FreeFlow.EnableUnsymmetrizedVelocityGradient true)
