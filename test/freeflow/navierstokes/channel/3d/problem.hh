@@ -37,10 +37,6 @@
 #include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
 #include <dumux/freeflow/navierstokes/scalarfluxhelper.hh>
 
-#ifndef GRID_DIM
-#define GRID_DIM 3
-#endif
-
 namespace Dumux {
 
 /*!
@@ -77,26 +73,20 @@ class ThreeDChannelTestProblem : public NavierStokesProblem<TypeTag>
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
-
-    static constexpr bool enablePseudoThreeDWallFriction = !(GRID_DIM == 3);
     static constexpr int dim = GridGeometry::GridView::dimension;
+    static constexpr bool enablePseudoThreeDWallFriction = dim != 3;
 
 public:
     ThreeDChannelTestProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(gridGeometry, couplingManager)
     {
         deltaP_ = getParam<Scalar>("Problem.DeltaP");
-        height_ = getParam<Scalar>("Problem.Height");
         rho_ = getParam<Scalar>("Component.LiquidDensity");
         nu_ = getParam<Scalar>("Component.LiquidKinematicViscosity");
 
+        height_ = getParam<Scalar>("Problem.Height");
         if(dim == 3 && !Dune::FloatCmp::eq(height_, this->gridGeometry().bBoxMax()[2]))
             DUNE_THROW(Dune::InvalidStateException, "z-dimension must equal height");
-
-        if constexpr (enablePseudoThreeDWallFriction)
-            extrusionFactor_ = 2.0/3.0 * height_;
-        else
-            extrusionFactor_ = 1.0;
     }
 
     /*!
@@ -134,10 +124,6 @@ public:
 
         return source;
     }
-
-    //! the domain's extrusion factor
-    Scalar extrusionFactorAtPos(const GlobalPosition& pos) const
-    { return extrusionFactor_; }
 
     // \}
     /*!
@@ -238,7 +224,6 @@ private:
 
     static constexpr Scalar eps_=1e-6;
     Scalar deltaP_;
-    Scalar extrusionFactor_;
     Scalar height_;
     Scalar rho_;
     Scalar nu_;
