@@ -28,6 +28,10 @@
 #define ENABLECACHING 1
 #endif
 
+#ifndef GRID_DIM
+#define GRID_DIM 3
+#endif
+
 #include <dune/grid/yaspgrid.hh>
 
 #if HAVE_DUNE_SUBGRID
@@ -44,6 +48,7 @@
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
+#include "spatialparams.hh"
 #include "problem.hh"
 
 namespace Dumux::Properties {
@@ -76,6 +81,15 @@ struct Grid<TypeTag, TTag::ThreeDChannelTest>
 #else
     using type = HostGrid;
 #endif
+};
+
+// Set the spatial parameters
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::ThreeDChannelTest>
+{
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using type = Channel3DSpatialParams<GridGeometry, Scalar>;
 };
 
 // Set the problem property
