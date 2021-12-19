@@ -42,7 +42,8 @@ class OnePSpatialParams
     using GridView = typename GridGeometry::GridView;
     using ParentType = FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
                                                        OnePSpatialParams<GridGeometry, Scalar>>;
-
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -74,11 +75,17 @@ public:
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return porosity_; }
 
-    /*! \brief Defines the temperature in [K].
+    /*!
+     * \brief Returns the temperature within the domain.
      *
-     * \param globalPos The global position
+     *  \param element The finite volume element
+     *  \param scv The sub-control volume
+     *  \param elemSol The element solution
      */
-    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    template<class ElementSolution>
+    Scalar temperature(const Element& element,
+                       const SubControlVolume& scv,
+                       const ElementSolution& elemSol) const
     { return 273.15 + 10; }
 
     /*! \brief Defines the Beavers-Joseph coefficient in [-].
