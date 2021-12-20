@@ -30,7 +30,7 @@ dumux_add_test(NAME test_ff_stokes_donea_nocaching
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_nocaching-00001.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_nocaching_fcstaggered-00001.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_nocaching params.input
                              -Problem.Name test_ff_stokes_donea_nocaching -Problem.UseNeumann false")
 
@@ -41,7 +41,7 @@ dumux_add_test(NAME test_ff_stokes_donea_donut_nocaching
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_donut-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_donut_nocaching-00001.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_donut_nocaching_fcstaggered-00001.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_nocaching params.input
                              -Grid.File grids/donut.dgf
                              -Problem.Name test_ff_stokes_donea_donut_nocaching -Problem.UseNeumann false")
@@ -53,7 +53,7 @@ dumux_add_test(NAME test_ff_stokes_donea_donut_twisted_nocaching
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_donut-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_donut_twisted_nocaching-00001.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_donut_twisted_nocaching_fcstaggered-00001.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_nocaching params.input
                              -Grid.File grids/donut_twisted.dgf
                              -Problem.Name test_ff_stokes_donea_donut_twisted_nocaching -Problem.UseNeumann false"
@@ -67,7 +67,7 @@ dumux_add_test(NAME test_ff_stokes_donea
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea-00001.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_fcstaggered-00001.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea params.input
                              -Problem.Name test_ff_stokes_donea -Problem.UseNeumann false")
 
@@ -78,7 +78,7 @@ dumux_add_test(NAME test_ff_stokes_donea_donut
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS       --script fuzzy
                                --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_donut-reference.vtu
-                                       ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_donut-00001.vtu
+                                       ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_donut_fcstaggered-00001.vtu
                                --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea params.input
                                -Grid.File grids/donut.dgf
                                -Problem.Name test_ff_stokes_donea_donut -Problem.UseNeumann false")
@@ -90,7 +90,7 @@ dumux_add_test(NAME test_ff_stokes_donea_donut_twisted
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS       --script fuzzy
                                --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_donut-reference.vtu
-                                       ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_donut_twisted-00001.vtu
+                                       ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_donut_twisted_fcstaggered-00001.vtu
                                --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea params.input
                                -Grid.File grids/donut_twisted.dgf
                                -Problem.Name test_ff_stokes_donea_donut_twisted -Problem.UseNeumann false"

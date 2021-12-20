@@ -35,9 +35,10 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/integrate.hh>
 
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
+#include <dumux/io/grid/gridmanager_alu.hh>
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/incompressiblestokessolver.hh>
 
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
@@ -197,7 +198,8 @@ int main(int argc, char** argv)
 
     // initialize the vtk output module
     using IOFields = GetPropType<MassTypeTag, Properties::IOFields>;
-    VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name());
+    std::string discSuffix = std::string("_") + MomentumGridGeometry::DiscretizationMethod::name();
+    VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name() + discSuffix);
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
 
@@ -215,8 +217,8 @@ int main(int argc, char** argv)
                                                  couplingManager);
 
     // the linear solver
-    using LinearSolver = Dumux::UMFPackBackend;
-    auto linearSolver = std::make_shared<LinearSolver>();
+    using LinearSolver = IncompressibleStokesSolver<typename Assembler::JacobianMatrix, typename Assembler::ResidualType>;
+    auto linearSolver = std::make_shared<LinearSolver>(*couplingManager);
 
     // the non-linear solver
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
