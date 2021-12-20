@@ -103,7 +103,7 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_quad
                COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredDiamondModel
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_diamond_quad
-               CMD_ARGS params.input -Problem.UseNeumann false)
+               CMD_ARGS params.input -Problem.UseNeumann true)
 
 dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_simplex
                SOURCES main_momentum.cc
@@ -112,7 +112,7 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_simplex
                COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredDiamondModel
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_diamond_simplex
-               CMD_ARGS params.input -Problem.UseNeumann false -FreeFlow.EnableUnsymmetrizedVelocityGradient true)
+               CMD_ARGS params.input -Problem.UseNeumann true -FreeFlow.EnableUnsymmetrizedVelocityGradient true)
 
 dumux_add_test(NAME test_ff_stokes_donea_diamond_quad
                SOURCES main.cc
