@@ -55,7 +55,8 @@ if __name__ == "__main__":
     # get folder with the template files
     templateFolder = args["templateFolder"]
     if not templateFolder:
-        templateFolder = os.path.join(modulePath, "../dumux/docker")
+        templateFolder = os.path.join(__file__, "../dumux/docker")
+        print(f"Folder with template files not given. Defaulting to '{templateFolder}'.")
     if not os.path.exists(templateFolder):
         sys.exit(f"Template folder {templateFolder} could not be found")
 
