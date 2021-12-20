@@ -164,7 +164,7 @@ if __name__ == "__main__":
     else:
         print(
             "You can build your Docker image later by running "
-            f"'docker build -f Dockerfile -t {dockerTag}' "
+            f"'docker build -f Dockerfile -t {dockerTag}' ."
             "from within the folder 'docker' that was created by this script, "
             "and in which you should find the 'Dockerfile'."
         )
