@@ -189,7 +189,8 @@ public:
         if (scvf.boundary())
         {
             const auto& bcTypes = elemBcTypes[scvf.localIndex()];
-            const auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+            const auto extrusionFactor = elemVolVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
+            const auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf) * Extrusion::area(scvf) * extrusionFactor;
             for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
             {
                 if (bcTypes.isNeumann(eqIdx))
