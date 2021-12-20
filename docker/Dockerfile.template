@@ -1,7 +1,7 @@
 # ${modName} docker container
 # see https://github.com/phusion/baseimage-docker for information on the base image
 # It is Ubuntu LTS customized for better Docker compatibility
-FROM phusion/baseimage:18.04-1.0.0
+FROM phusion/baseimage:focal-1.1.0
 MAINTAINER ${modMaintainer}
 
 # run Ubuntu update as advised on https://github.com/phusion/baseimage-docker
@@ -20,6 +20,7 @@ RUN apt-get update \
     python3-pip \
     git \
     pkg-config \
+    cmake \
     build-essential \
     gfortran \
     mpi-default-bin \
@@ -31,11 +32,6 @@ RUN apt-get update \
     wget \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# get cmake 3.18 and export it to path
-RUN mkdir -p cmake-3.18
-RUN wget -qO- "https://cmake.org/files/v3.18/cmake-3.18.0-Linux-x86_64.tar.gz" | tar --strip-components=1 -xz -C cmake-3.18
-ENV PATH="/cmake-3.18/bin:$${PATH}"
 
 # add the permission helper script to the my_init service
 COPY setpermissions.sh /etc/my_init.d/setpermissions.sh
