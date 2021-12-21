@@ -169,7 +169,7 @@ public:
     void bindElement(const Element& element)
     {
         elemGeometryType_ = element.type();
-        elementPtr_ = &element;
+        element_ = element;
         eIdx_ = gridGeometry().elementMapper().index(element);
     }
 
@@ -182,6 +182,14 @@ public:
 
     std::size_t elementIndex() const
     { return eIdx_; }
+
+    //! Returns true if bind/bindElement has already been called
+    bool isBound() const
+    { return static_cast<bool>(element_); }
+
+    //! The bound element
+    const Element& element() const
+    { return *element_; }
 
 private:
 
@@ -196,12 +204,10 @@ private:
     }
 
     Dune::GeometryType elemGeometryType_;
-    const Element* elementPtr_; //TODO maybe remove
+    std::optional<Element> element_;
     GridIndexType eIdx_;
     const GridGeometry* gridGeometryPtr_;
 };
-
-
 
 
 template<class GG>
