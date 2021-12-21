@@ -29,6 +29,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/geometry/type.hh>
 
+#include <dumux/common/boundaryflag.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
@@ -69,6 +70,7 @@ struct FaceCenteredDiamondScvfGeometryTraits
     using Geometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld, ScvfMLGTraits<Scalar>>;
     using CornerStorage = typename ScvfMLGTraits<Scalar>::template CornerStorage<dim-1, dimWorld>::Type;
     using GlobalPosition = typename CornerStorage::value_type;
+    using BoundaryFlag = Dumux::BoundaryFlag<Grid>;
 
     static Dune::GeometryType geometryType()
     {
@@ -84,6 +86,7 @@ class FaceCenteredDiamondSubControlVolumeFace
     using LocalIndexType = typename T::LocalIndexType;
     using CornerStorage = typename T::CornerStorage;
     using Geometry = typename T::Geometry;
+    using BoundaryFlag = typename T::BoundaryFlag;
 
 public:
     //! state the traits public and thus export all types
@@ -110,7 +113,9 @@ public:
     , localScvfIdx_(localScvfIdx)
     , area_(geometry_.value().volume())
     , globalScvfIdx_(globalScvfIdx)
-    , boundary_(boundary) {}
+    , boundary_(boundary)
+    , boundaryFlag_{}
+    {}
 
     template<class Intersection>
     FaceCenteredDiamondSubControlVolumeFace(const CornerStorage& corners,
@@ -130,7 +135,9 @@ public:
     , localScvfIdx_(localScvfIdx)
     , area_(geometry_.value().volume())
     , globalScvfIdx_(globalScvfIdx)
-    , boundary_(boundary) {}
+    , boundary_(boundary)
+    , boundaryFlag_{intersection}
+    {}
 
     //! The center of the sub control volume face
     const GlobalPosition& center() const
@@ -181,6 +188,12 @@ public:
         return geometry_.value();
     }
 
+    //! Return the boundary flag
+    typename BoundaryFlag::value_type boundaryFlag() const
+    {
+        return boundaryFlag_.get();
+    }
+
 private:
     CornerStorage corners_;
     std::optional<Geometry> geometry_;
@@ -194,6 +207,7 @@ private:
     GridIndexType globalScvfIdx_;
     GridIndexType scvfIdxWithCommonEntity_;
     bool boundary_;
+    BoundaryFlag boundaryFlag_;
 };
 
 
