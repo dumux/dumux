@@ -387,3 +387,8 @@ dumux_add_test(NAME test_pnm_gridmanager_remove_throats_on_boundary_all
 dumux_add_test(SOURCES test_pnm_subgriddata.cc
                LABELS unit io porenetwork
                CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-subgrid_FOUND )")
+
+dumux_add_test(NAME test_gridmanager_column
+              SOURCES test_gridmanager_column.cc
+              LABELS unit io
+              )
