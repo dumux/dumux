@@ -26,6 +26,7 @@
 
 #include <ctime>
 #include <iostream>
+#include <random>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
@@ -182,6 +183,51 @@ int main(int argc, char** argv)
     SolutionVector x;
     x[momentumIdx].resize(momentumGridGeometry->numDofs());
     x[massIdx].resize(massGridGeometry->numDofs());
+
+    // random initial solution
+    if (getParam<bool>("Problem.RandomInitialGuess", true))
+    {
+        std::mt19937 rnd { 0 }; // seed with 0 for reproducible results
+        std::uniform_real_distribution<> dist { 0.0, 1.0 };
+
+        using namespace Dune::Hybrid;
+        forEach(std::make_index_sequence<Traits::SolutionVector::size()>(), [&](const auto i)
+        {
+            for (std::size_t j = 0; j < x[i].size(); ++j)
+                for (std::size_t k = 0; k < x[i][j].size(); ++k)
+                    x[i][j][k] = dist(rnd);
+
+            auto sum = 0.0;
+            std::size_t size = 0;
+            for (std::size_t j = 0; j < x[i].size(); ++j)
+                for (std::size_t k = 0; k < x[i][j].size(); ++k)
+                {
+                    ++size;
+                    sum += x[i][j][k];
+                }
+
+            const auto avg = sum/double(size);
+            for (auto& e : x[i]) // make it zero mean
+                e[0] -= avg;
+        });
+
+        // make Dirichlet dofs zero
+        auto fvGeometry = localView(*momentumGridGeometry);
+        for (const auto& element : elements(momentumGridGeometry->gridView()))
+        {
+            fvGeometry.bind(element);
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                // mark Dirichlet boundaries
+                if (scv.boundary())
+                {
+                    auto bcTypes = momentumProblem->boundaryTypesAtPos(scv.dofPosition());
+                    if (bcTypes.hasDirichlet())
+                        x[momentumIdx][scv.dofIndex()] = 0.0;
+                }
+            }
+        }
+    }
 
     // the grid variables
     using MomentumGridVariables = GetPropType<MomentumTypeTag, Properties::GridVariables>;
