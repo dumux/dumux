@@ -1,0 +1,25 @@
+[Grid]
+File = channel.msh
+Verbosity = 1
+DomainMarkers = true # read domain markers (gmsh physical entities)
+BoundarySegments = true # read boundary markers (gmsh physical entities)
+
+[Problem]
+Name = test_channel # name passed to the output routines
+DeltaP = 1
+EnableGravity = false
+EnableInertiaTerms = false
+
+[Component]
+LiquidDensity = 1e3
+LiquidKinematicViscosity = 1e-6
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-5
+
+[Newton]
+MaxSteps = 10
+MaxRelativeShift = 1e-8
+
+[MatrixConverter]
+DeletePatternEntriesBelowAbsThreshold = 1e-12
