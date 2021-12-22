@@ -63,6 +63,21 @@ public:
             for (const auto& scv : scvs(fvGeometry))
                 std::copy_if(scvIndices.begin(), scvIndices.end(), std::back_inserter(map_[scv.index()]),
                              [&scv](GridIndexType idx) { return idx != scv.index(); });
+
+            for (const auto& intersection : intersections(gridGeometry.gridView(), element))
+            {
+                if (intersection.neighbor())
+                {
+                    const auto scvIndicesJ = gridGeometry.scvIndicesOfElement(gridGeometry.elementMapper().index(intersection.outside()));
+
+                    // loop over sub control faces and all all scvs except the own
+                    for (const auto& scv : scvs(fvGeometry))
+                        std::copy_if(scvIndicesJ.begin(), scvIndicesJ.end(), std::back_inserter(map_[scv.index()]),
+                                        [&scv](GridIndexType idx) { return idx != scv.index(); });
+
+                }
+            }
+
         }
 
         // make stencils unique
