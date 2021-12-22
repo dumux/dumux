@@ -57,16 +57,17 @@ public:
         center_ = elementGeom.center();
         const auto refElement = referenceElement(elementGeom);
 
-        // loop over all faces
+        // loop over all codim-1 entities / facets
+        // and connect facet vertices to center point for scvs
         pScv_.resize(element.subEntities(1));
         scvDofPos_.resize(element.subEntities(1));
         for(int idx=0; idx<element.subEntities(1); ++idx)
         {
-            const auto numVertices = refElement.size(idx, 1, 2);
-            pScv_[idx].reserve(numVertices);
+            const auto numVertices = refElement.size(idx, 1, dim);
+            pScv_[idx].reserve(numVertices + 1);
             for (int localVIdx = 0; localVIdx < numVertices; ++localVIdx)
             {
-                const auto vIdx = refElement.subEntity(idx, 1, localVIdx, 2);
+                const auto vIdx = refElement.subEntity(idx, 1, localVIdx, dim);
                 pScv_[idx].push_back(elementGeom.corner(vIdx));
             }
             pScv_[idx].push_back(center_);
@@ -74,7 +75,8 @@ public:
             scvDofPos_[idx] = elementGeom.global(refElement.position(idx, 1));
         }
 
-        // loop over all faces
+        // loop over all codim-2 entities (edges in 3D, vertices in 2D)
+        // and connect its vertices to center point for scvfs
         numInteriorScvf_ = element.subEntities(2);
         pScvf_.resize(numInteriorScvf_);
         for(int idx=0; idx<numInteriorScvf_; ++idx)
@@ -172,34 +174,25 @@ private:
         // proceed according to number of corners of the element
         switch (corners)
         {
-        case 4: // tetrahedron
-        {
-            return ScvPairStorage{ {0,1},
-                                   {0,2},
-                                   {0,3},
-                                   {1,2},
-                                   {1,3},
-                                   {2,3} };
-        }
-        case 8: // hexahedron
-        {
-            return ScvPairStorage{ {0,2},
-                                   {1,2},
-                                   {0,3},
-                                   {1,3},
-                                   {0,4},
-                                   {1,4},
-                                   {2,4},
-                                   {3,4},
-                                   {0,5},
-                                   {1,5},
-                                   {2,5},
-                                   {3,5} };
-        }
-        default:
-            DUNE_THROW(Dune::NotImplemented, "Dimond scheme scv pairs for dim=" << dim
-                                                                 << " dimWorld=" << dimWorld
-                                                                 << " corners=" << corners);
+            case 4: // tetrahedron
+                return ScvPairStorage{
+                    {0,1}, {0,2}, {0,3},
+                    {1,2}, {1,3}, {2,3}
+                };
+
+            case 8: // hexahedron
+                return ScvPairStorage{
+                    {0,2}, {1,2},
+                    {0,3}, {1,3},
+                    {0,4}, {1,4}, {2,4}, {3,4},
+                    {0,5}, {1,5}, {2,5}, {3,5}
+                };
+
+            default:
+                DUNE_THROW(Dune::NotImplemented,
+                    "Diamond scheme scv pairs for dim=" << dim
+                    << " dimWorld=" << dimWorld << " corners=" << corners
+                );
         }
     }
 
@@ -210,23 +203,21 @@ private:
         // proceed according to number of corners of the element
         switch (corners)
         {
-        case 3: // triangle
-        {
-            return ScvPairStorage{ {0,1},
-                                   {0,2},
-                                   {1,2} };
-        }
-        case 4: // quadrilateral
-        {
-            return ScvPairStorage{ {0,2},
-                                   {1,2},
-                                   {0,3},
-                                   {1,3} };
-        }
-        default:
-            DUNE_THROW(Dune::NotImplemented, "Dimond scheme scv pairs for dim=" << dim
-                                                                 << " dimWorld=" << dimWorld
-                                                                 << " corners=" << corners);
+            case 3: // triangle
+                return ScvPairStorage{
+                    {0,1}, {0,2}, {1,2}
+                };
+
+            case 4: // quadrilateral
+                return ScvPairStorage{
+                    {0,2}, {1,2}, {0,3}, {1,3}
+                };
+
+            default:
+                DUNE_THROW(Dune::NotImplemented,
+                    "Diamond scheme scv pairs for dim=" << dim
+                    << " dimWorld=" << dimWorld << " corners=" << corners
+                );
         }
     }
 
