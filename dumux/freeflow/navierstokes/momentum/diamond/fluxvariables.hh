@@ -199,33 +199,24 @@ public:
         //TODO Boundary handling
         const auto& fvGeometry = this->fvGeometry();
         const auto& elemVolVars = this->elemVolVars();
-        const auto& geometry = this->element().geometry();
         const auto& scvf = this->scvFace();
-        const auto ipLocal = geometry.local(scvf.ipGlobal());
-
-        const auto& localBasis = fvGeometry.feLocalBasis();
-
-        // TODO cache these values
-        const auto jacInvT = geometry.jacobianInverseTransposed(ipLocal);
-        std::vector<ShapeJacobian> shapeJacobian;
-        localBasis.evaluateJacobian(ipLocal, shapeJacobian);
-
-        // compute the gradN at for every scv/dof
-        std::vector<GlobalPosition> gradN(fvGeometry.numScv(), GlobalPosition(0));
-        for (const auto& scv: scvs(fvGeometry))
-            jacInvT.mv(shapeJacobian[scv.localDofIndex()][0], gradN[scv.indexInElement()]);
+        const auto& fluxVarCache = this->elemFluxVarsCache()[scvf];
 
         Tensor gradV(0.0);
-        for (int dir = 0; dir < dim; ++dir)
-            for (const auto& scv : scvs(fvGeometry))
-                gradV[dir].axpy(elemVolVars[scv].velocity(dir), gradN[scv.indexInElement()]);
+        for (const auto& scv : scvs(fvGeometry))
+        {
+            const auto& volVars = elemVolVars[scv];
+            for (int dir = 0; dir < dim; ++dir)
+                gradV[dir].axpy(volVars.velocity(dir), fluxVarCache.gradN(scv.indexInElement()));
+        }
 
         static const bool enableUnsymmetrizedVelocityGradient
             = getParamFromGroup<bool>(this->problem().paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
 
+        const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(this->element());
         result = enableUnsymmetrizedVelocityGradient ?
             mv(gradV, scvf.unitOuterNormal())
-            : 2.0*mv(gradV - neighborhoodAverageSkewGradV_(this->element(), fvGeometry.gridGeometry(), elemVolVars.gridVolVars()), scvf.unitOuterNormal());
+            : 2.0*mv(gradV - this->elemFluxVarsCache()[eIdx].avgSkewGradV, scvf.unitOuterNormal());
 
         const auto mu = this->problem().effectiveViscosity(this->element(), this->fvGeometry(), this->scvFace());
         result *= -mu * Extrusion::area(scvf) * extrusionFactor_(elemVolVars, scvf);
@@ -272,59 +263,6 @@ private:
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
         return harmonicMean(insideVolVars.extrusionFactor(), outsideVolVars.extrusionFactor());
     }
-
-    Tensor elementAverageSkewGradV_(const Element& element, const GridGeometry& gridGeometry, const GridVolumeVariables& gridVolVars) const
-    {
-        auto fvGeometry = localView(gridGeometry);
-        fvGeometry.bind(element);
-        const auto& geometry = element.geometry();
-        const auto ipLocal = geometry.local(geometry.center());
-
-        const auto& localBasis = fvGeometry.feLocalBasis();
-
-        // TODO cache these values
-        const auto jacInvT = geometry.jacobianInverseTransposed(ipLocal);
-        std::vector<ShapeJacobian> shapeJacobian;
-        localBasis.evaluateJacobian(ipLocal, shapeJacobian);
-
-        // compute the gradN at for every scv/dof
-        std::vector<GlobalPosition> gradN(fvGeometry.numScv(), GlobalPosition(0));
-        for (const auto& scv: scvs(fvGeometry))
-            jacInvT.mv(shapeJacobian[scv.localDofIndex()][0], gradN[scv.indexInElement()]);
-
-        // integrate tensor with midpoint rule
-        Tensor skewGradV(0.0);
-        for (int dir = 0; dir < dim; ++dir)
-            for (const auto& scv : scvs(fvGeometry))
-                skewGradV[dir].axpy(gridVolVars.volVars(scv).velocity(dir), gradN[scv.indexInElement()]);
-
-        // we need the skew-symmetric part here, i.e. 0.5*(gradV - gradV^T)
-        skewGradV -= getTransposed(skewGradV);
-        skewGradV *= 0.5;
-
-        return skewGradV;
-    }
-
-    Tensor neighborhoodAverageSkewGradV_(const Element& element, const GridGeometry& gridGeometry, const GridVolumeVariables& gridVolVars) const
-    {
-        Scalar totalVolume = element.geometry().volume();
-        Tensor skewGradV(0.0);
-        skewGradV += elementAverageSkewGradV_(element, gridGeometry, gridVolVars) * totalVolume;
-        for (const auto& intersection : intersections(gridGeometry.gridView(), element))
-        {
-            if (intersection.neighbor())
-            {
-                const auto vol = intersection.outside().geometry().volume();
-                skewGradV += elementAverageSkewGradV_(intersection.outside(), gridGeometry, gridVolVars) * vol;
-                totalVolume += vol;
-            }
-        }
-
-        skewGradV /= totalVolume;
-
-        return skewGradV;
-    }
-
 
     const Problem* problemPtr_;                             //!< Pointer to the problem
     const Element* elementPtr_;                             //!< Pointer to the element at hand
