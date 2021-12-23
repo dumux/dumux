@@ -220,12 +220,12 @@ public:
             for (const auto& scv : scvs(fvGeometry))
                 gradV[dir].axpy(elemVolVars[scv].velocity(dir), gradN[scv.indexInElement()]);
 
-        Tensor avgGradV = averagedTensor(this->element(), fvGeometry.gridGeometry(), elemVolVars.gridVolVars());
-
         static const bool enableUnsymmetrizedVelocityGradient
             = getParamFromGroup<bool>(this->problem().paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
 
-        result = enableUnsymmetrizedVelocityGradient ? mv(gradV,scvf.unitOuterNormal()) : mv(gradV + getTransposed(avgGradV),scvf.unitOuterNormal());
+        result = enableUnsymmetrizedVelocityGradient ?
+            mv(gradV, scvf.unitOuterNormal())
+            : 2.0*mv(gradV - neighborhoodAverageSkewGradV_(this->element(), fvGeometry.gridGeometry(), elemVolVars.gridVolVars()), scvf.unitOuterNormal());
 
         const auto mu = this->problem().effectiveViscosity(this->element(), this->fvGeometry(), this->scvFace());
         result *= -mu * Extrusion::area(scvf) * extrusionFactor_(elemVolVars, scvf);
@@ -273,7 +273,7 @@ private:
         return harmonicMean(insideVolVars.extrusionFactor(), outsideVolVars.extrusionFactor());
     }
 
-    Tensor integratedTensor(const Element& element, const GridGeometry& gridGeometry, const GridVolumeVariables& gridVolVars) const
+    Tensor elementAverageSkewGradV_(const Element& element, const GridGeometry& gridGeometry, const GridVolumeVariables& gridVolVars) const
     {
         auto fvGeometry = localView(gridGeometry);
         fvGeometry.bind(element);
@@ -292,33 +292,37 @@ private:
         for (const auto& scv: scvs(fvGeometry))
             jacInvT.mv(shapeJacobian[scv.localDofIndex()][0], gradN[scv.indexInElement()]);
 
-        Tensor gradV(0.0);
+        // integrate tensor with midpoint rule
+        Tensor skewGradV(0.0);
         for (int dir = 0; dir < dim; ++dir)
             for (const auto& scv : scvs(fvGeometry))
-                gradV[dir].axpy(gridVolVars.volVars(scv).velocity(dir), gradN[scv.indexInElement()]);
+                skewGradV[dir].axpy(gridVolVars.volVars(scv).velocity(dir), gradN[scv.indexInElement()]);
 
-        gradV *= geometry.volume();
+        // we need the skew-symmetric part here, i.e. 0.5*(gradV - gradV^T)
+        skewGradV -= getTransposed(skewGradV);
+        skewGradV *= 0.5;
 
-        return gradV;
+        return skewGradV;
     }
 
-    Tensor averagedTensor(const Element& element, const GridGeometry& gridGeometry, const GridVolumeVariables& gridVolVars) const
+    Tensor neighborhoodAverageSkewGradV_(const Element& element, const GridGeometry& gridGeometry, const GridVolumeVariables& gridVolVars) const
     {
-        Tensor gradV(0.0);
-        gradV += integratedTensor(element, gridGeometry, gridVolVars);
         Scalar totalVolume = element.geometry().volume();
+        Tensor skewGradV(0.0);
+        skewGradV += elementAverageSkewGradV_(element, gridGeometry, gridVolVars) * totalVolume;
         for (const auto& intersection : intersections(gridGeometry.gridView(), element))
         {
             if (intersection.neighbor())
             {
-                gradV += integratedTensor(intersection.outside(), gridGeometry, gridVolVars);
-                totalVolume += intersection.outside().geometry().volume();
+                const auto vol = intersection.outside().geometry().volume();
+                skewGradV += elementAverageSkewGradV_(intersection.outside(), gridGeometry, gridVolVars) * vol;
+                totalVolume += vol;
             }
         }
 
-        gradV /= totalVolume;
+        skewGradV /= totalVolume;
 
-        return gradV;
+        return skewGradV;
     }
 
 
