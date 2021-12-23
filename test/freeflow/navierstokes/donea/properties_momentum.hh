@@ -42,6 +42,8 @@
 
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/flux/fluxvariablescaching.hh>
+
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
 
@@ -73,6 +75,20 @@ struct FluidSystem<TypeTag, TTag::DoneaTestMomentum>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
+};
+
+template<class TypeTag>
+struct FluxVariablesCache<TypeTag, TTag::DoneaTestMomentum>
+{
+private:
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+public:
+    using type = std::conditional_t<
+        GridGeometry::discMethod == DiscretizationMethods::fcdiamond,
+        FaceCenteredDiamondFluxVariablesCache<Scalar, GridGeometry>,
+        FluxVariablesCaching::EmptyCache<Scalar>
+    >;
 };
 
 // Set the grid type
