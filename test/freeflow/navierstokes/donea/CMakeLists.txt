@@ -116,7 +116,7 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_simplex
                COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredDiamondModel
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_diamond_simplex
-               CMD_ARGS params.input -Problem.UseNeumann true -FreeFlow.EnableUnsymmetrizedVelocityGradient true)
+               CMD_ARGS params.input -Problem.UseNeumann true -FreeFlow.EnableUnsymmetrizedVelocityGradient false)
 
 # full Stokes equations
 dumux_add_test(NAME test_ff_stokes_donea_diamond_tpfa_quad
@@ -128,7 +128,7 @@ dumux_add_test(NAME test_ff_stokes_donea_diamond_tpfa_quad
                COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=CCTpfaModel
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_diamond_tpfa_quad
-               CMD_ARGS params.input -Problem.UseNeumann false)
+               CMD_ARGS params.input -Problem.UseNeumann true)
 
 dumux_add_test(NAME test_ff_stokes_donea_diamond_box_quad
                SOURCES main.cc
@@ -139,7 +139,7 @@ dumux_add_test(NAME test_ff_stokes_donea_diamond_box_quad
                COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=BoxModel
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_diamond_box_quad
-               CMD_ARGS params.input -Problem.UseNeumann false)
+               CMD_ARGS params.input -Problem.UseNeumann true)
 
 dumux_add_test(NAME test_ff_stokes_donea_diamond_tpfa_simplex
                SOURCES main.cc
@@ -150,7 +150,7 @@ dumux_add_test(NAME test_ff_stokes_donea_diamond_tpfa_simplex
                COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=CCTpfaModel
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_diamond_tpfa_simplex
-               CMD_ARGS params.input -Problem.UseNeumann false -FreeFlow.EnableUnsymmetrizedVelocityGradient true)
+               CMD_ARGS params.input -Problem.UseNeumann true -FreeFlow.EnableUnsymmetrizedVelocityGradient false)
 
 dumux_add_test(NAME test_ff_stokes_donea_diamond_box_simplex
                SOURCES main.cc
@@ -161,4 +161,4 @@ dumux_add_test(NAME test_ff_stokes_donea_diamond_box_simplex
                COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=BoxModel
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_diamond_box_simplex
-               CMD_ARGS params.input -Problem.UseNeumann false -FreeFlow.EnableUnsymmetrizedVelocityGradient true)
+               CMD_ARGS params.input -Problem.UseNeumann true -FreeFlow.EnableUnsymmetrizedVelocityGradient false)
