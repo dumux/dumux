@@ -24,6 +24,7 @@ MaxRelativeShift = 1e-8
 Type = cgsolver
 ResidualReduction = 1e-13
 Verbosity = 1
+Velocity.UseDirectSolver = true
 
 [LinearSolver.Preconditioner]
 Type = amg
