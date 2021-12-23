@@ -30,6 +30,7 @@
 #include <dumux/discretization/fcdiamond.hh>
 #include <dumux/discretization/facecentered/diamond/subcontrolvolumeface.hh>
 #include <dumux/discretization/facecentered/diamond/fvgridgeometry.hh>
+#include <dumux/discretization/facecentered/diamond/fluxvariablescache.hh>
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/cellcentered/tpfa/subcontrolvolumeface.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
@@ -110,6 +111,16 @@ struct GridGeometry<TypeTag, TTag::ThreeDChannelTestMass>
     // { using SubControlVolumeFace = BoxSubControlVolumeFace<GridView, MyScvfTraits>; };
 
     // using type = BoxFVGridGeometry<double, GridView, enableCache, MyGGTraits>;
+};
+
+template<class TypeTag>
+struct FluxVariablesCache<TypeTag, TTag::ThreeDChannelTestMomentum>
+{
+private:
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+public:
+    using type = FaceCenteredDiamondFluxVariablesCache<Scalar, GridGeometry>;
 };
 
 // Set the problem property

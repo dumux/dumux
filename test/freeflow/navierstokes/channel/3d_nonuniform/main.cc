@@ -100,6 +100,7 @@ int main(int argc, char** argv)
     SolutionVector x;
     x[momentumIdx].resize(momentumGridGeometry->numDofs());
     x[massIdx].resize(massGridGeometry->numDofs());
+    std::cout << "Total number of dofs: " << massGridGeometry->numDofs() + momentumGridGeometry->numDofs()*MomentumGridGeometry::GridView::dimension << std::endl;
 
     // the grid variables
     using MomentumGridVariables = GetPropType<MomentumTypeTag, Properties::GridVariables>;

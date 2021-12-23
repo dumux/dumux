@@ -185,26 +185,15 @@ public:
         {
             if (isOutlet_(scvf) || isInlet_(scvf))
             {
-                using FeLocalBasis = typename GridGeometry::FeCache::FiniteElementType::Traits::LocalBasisType;
-                using ShapeJacobian = typename FeLocalBasis::Traits::JacobianType;
-                using Tensor = Dune::FieldMatrix<Scalar, dim, dimWorld>;
-
-                const auto geometry = element.geometry();
-                const auto ipLocal = geometry.local(scvf.ipGlobal());
-                const auto& localBasis = fvGeometry.feLocalBasis();
-                const auto& jacInvT = geometry.jacobianInverseTransposed(ipLocal);
-                std::vector<ShapeJacobian> shapeJacobian;
-                localBasis.evaluateJacobian(ipLocal, shapeJacobian);
-
-                // compute the gradN at for every scv/dof
-                std::vector<GlobalPosition> gradN(fvGeometry.numScv(), GlobalPosition(0));
-                for (const auto& scv : scvs(fvGeometry))
-                    jacInvT.mv(shapeJacobian[scv.localDofIndex()][0], gradN[scv.indexInElement()]);
-
+                const auto& fluxVarCache = elemFluxVarsCache[scvf];
+                using Tensor = Dune::FieldMatrix<Scalar, dim>;
                 Tensor gradV(0.0);
-                for (int dir = 0; dir < dim; ++dir)
-                    for (const auto& scv : scvs(fvGeometry))
-                        gradV[dir].axpy(elemVolVars[scv].velocity(dir), gradN[scv.indexInElement()]);
+                for (const auto& scv : scvs(fvGeometry))
+                {
+                    const auto& volVars = elemVolVars[scv];
+                    for (int dir = 0; dir < dim; ++dir)
+                        gradV[dir].axpy(volVars.velocity(dir), fluxVarCache.gradN(scv.indexInElement()));
+                }
 
                 static const bool enableUnsymmetrizedVelocityGradient
                     = getParamFromGroup<bool>(this->paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
