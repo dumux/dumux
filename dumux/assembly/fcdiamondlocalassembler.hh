@@ -346,38 +346,32 @@ public:
         const auto origResiduals = this->evalLocalResidual();
 
         //////////////////////////////////////////////////////////////////////////////////////////////////
-        //                                                                                              //
-        // Calculate derivatives of all dofs in stencil with respect to the dofs in the element. In the //
-        // neighboring elements we do so by computing the derivatives of the fluxes which depend on the //
-        // actual element. In the actual element we evaluate the derivative of the entire residual.     //
-        //                                                                                              //
+        // Calculate derivatives of all dofs in the element with respect to the dofs in the stencil.    //
         //////////////////////////////////////////////////////////////////////////////////////////////////
 
-        // create the element solution
-        auto elemSol = elementSolution(element, curSol, fvGeometry.gridGeometry());
+        // one residual per element facet
+        const auto numElementResiduals = element.subEntities(1);
 
         // create the vector storing the partial derivatives
-        ElementResidualVector partialDerivs(fvGeometry.numScv());
+        ElementResidualVector partialDerivs(numElementResiduals);
 
-        // calculation of the derivatives
-        for (auto&& scv : scvs(fvGeometry))
+        const auto evalDerivative = [&] (const auto& scvI, const auto& scvJ)
         {
-            // dof index and corresponding actual pri vars
-            const auto dofIdx = scv.dofIndex();
-            auto& curVolVars = this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv);
-            const VolumeVariables origVolVars(curVolVars);
+            const auto& otherElement = fvGeometry.gridGeometry().element(scvJ.elementIndex());
+            auto otherElemSol = elementSolution(otherElement, curSol, fvGeometry.gridGeometry()); // TODO allow selective creation of elemsol (for one scv)
+            auto& curOtherVolVars = this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvJ);
+            const VolumeVariables origOtherVolVars(curOtherVolVars);
 
             // calculate derivatives w.r.t to the privars at the dof at hand
             for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
             {
                 partialDerivs = 0.0;
-
-                auto evalResiduals = [&](Scalar priVar)
+                const auto evalResiduals = [&](Scalar priVar)
                 {
                     // update the volume variables and compute element residual
-                    elemSol[scv.localDofIndex()][pvIdx] = priVar;
-                    curVolVars.update(elemSol, problem, element, scv);
-                    this->asImp_().maybeUpdateCouplingContext(scv, elemSol, pvIdx);
+                    otherElemSol[scvJ.localDofIndex()][pvIdx] = priVar;
+                    curOtherVolVars.update(otherElemSol, problem, element, scvJ);
+                    this->asImp_().maybeUpdateCouplingContext(scvJ, otherElemSol, pvIdx);
 
                     return this->evalLocalResidual();
                 };
@@ -385,33 +379,37 @@ public:
                 // derive the residuals numerically
                 static const NumericEpsilon<Scalar, numEq> eps_{this->asImp_().problem().paramGroup()};
                 static const int numDiffMethod = getParamFromGroup<int>(this->asImp_().problem().paramGroup(), "Assembly.NumericDifferenceMethod");
-                NumericDifferentiation::partialDerivative(evalResiduals, elemSol[scv.localDofIndex()][pvIdx], partialDerivs, origResiduals,
-                                                          eps_(elemSol[scv.localDofIndex()][pvIdx], pvIdx), numDiffMethod);
+                NumericDifferentiation::partialDerivative(evalResiduals, otherElemSol[scvJ.localDofIndex()][pvIdx], partialDerivs, origResiduals,
+                                                          eps_(otherElemSol[scvJ.localDofIndex()][pvIdx], pvIdx), numDiffMethod);
 
-                // update the global stiffness matrix with the current partial derivatives
-                for (auto&& scvJ : scvs(fvGeometry))
+                for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
                 {
-                    // don't add derivatives for green vertices
-                    if (!partialReassembler
-                        || partialReassembler->dofColor(scvJ.dofIndex()) != EntityColor::green)
-                    {
-                        for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
-                        {
-                            // A[i][col][eqIdx][pvIdx] is the rate of change of
-                            // the residual of equation 'eqIdx' at dof 'i'
-                            // depending on the primary variable 'pvIdx' at dof
-                            // 'col'.
-                            A[scvJ.dofIndex()][dofIdx][eqIdx][pvIdx] += partialDerivs[scvJ.localDofIndex()][eqIdx];
-                        }
-                    }
+                    // A[i][col][eqIdx][pvIdx] is the rate of change of
+                    // the residual of equation 'eqIdx' at dof 'i'
+                    // depending on the primary variable 'pvIdx' at dof
+                    // 'col'.
+                    A[scvI.dofIndex()][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivs[scvI.localDofIndex()][eqIdx];
                 }
+
                 // restore the original state of the scv's volume variables
-                curVolVars = origVolVars;
+                curOtherVolVars = origOtherVolVars;
 
                 // restore the original element solution
-                elemSol[scv.localDofIndex()][pvIdx] = curSol[scv.dofIndex()][pvIdx];
-                this->asImp_().maybeUpdateCouplingContext(scv, elemSol, pvIdx);
+                otherElemSol[scvJ.localDofIndex()][pvIdx] = curSol[scvJ.dofIndex()][pvIdx];
+                this->asImp_().maybeUpdateCouplingContext(scvJ, otherElemSol, pvIdx);
             }
+        };
+
+        // calculation of the derivatives
+        for (const auto& scvI : scvs(fvGeometry))
+        {
+            // derivative w.r.t. own DOFs
+            evalDerivative(scvI, scvI);
+
+            // derivative w.r.t. other DOFs
+            const auto& otherScvIndices = fvGeometry.gridGeometry().connectivityMap()[scvI.index()];
+            for (const auto globalJ : otherScvIndices)
+                evalDerivative(scvI, fvGeometry.scv(globalJ));
         }
 
         // evaluate additional derivatives that might arise from the coupling
