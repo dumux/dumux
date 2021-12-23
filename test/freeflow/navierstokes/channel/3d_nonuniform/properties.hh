@@ -33,6 +33,9 @@
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/cellcentered/tpfa/subcontrolvolumeface.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
+#include <dumux/discretization/box.hh>
+#include <dumux/discretization/box/subcontrolvolumeface.hh>
+#include <dumux/discretization/box/fvgridgeometry.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/diamond/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
@@ -49,7 +52,7 @@ namespace Dumux::Properties {
 namespace TTag {
 struct ThreeDChannelTest {};
 struct ThreeDChannelTestMomentum { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMomentumDiamond, FaceCenteredDiamondModel>; };
-struct ThreeDChannelTestMass { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMassOneP, CCTpfaModel>; };
+struct ThreeDChannelTestMass { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMassOneP, CCTpfaModel/*BoxModel*/>; };
 } // end namespace TTag
 
 // the fluid system
@@ -98,6 +101,15 @@ struct GridGeometry<TypeTag, TTag::ThreeDChannelTestMass>
     { using SubControlVolumeFace = CCTpfaSubControlVolumeFace<GridView, MyScvfTraits>; };
 
     using type = CCTpfaFVGridGeometry<GridView, enableCache, MyGGTraits>;
+
+    // // use boundary segment index (works with gmsh files and not with dgf when using ALUGrid)
+    // struct MyScvfTraits : public BoxDefaultScvfGeometryTraits<GridView>
+    // { using BoundaryFlag = BoundarySegmentIndexFlag; };
+
+    // struct MyGGTraits : public BoxDefaultGridGeometryTraits<GridView>
+    // { using SubControlVolumeFace = BoxSubControlVolumeFace<GridView, MyScvfTraits>; };
+
+    // using type = BoxFVGridGeometry<double, GridView, enableCache, MyGGTraits>;
 };
 
 // Set the problem property

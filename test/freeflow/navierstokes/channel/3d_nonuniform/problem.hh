@@ -138,6 +138,22 @@ public:
     }
 
     /*!
+     * \brief Specifies which kind of boundary condition should be
+     *        used for which equation on a given boundary segment.
+     *
+     * \param element The finite element
+     * \param scvf The sub control volume face
+     */
+    BoundaryTypes boundaryTypes(const Element& element,
+                                const SubControlVolume& scv) const
+    {
+        BoundaryTypes values;
+        static_assert(!ParentType::isMomentumProblem());
+        values.setNeumann(Indices::conti0EqIdx);
+        return values;
+    }
+
+    /*!
      * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
      * \param globalPos The center of the finite volume which ought to be set.
@@ -167,39 +183,42 @@ public:
         NumEqVector values(0.0);
         if constexpr (ParentType::isMomentumProblem())
         {
-            using FeLocalBasis = typename GridGeometry::FeCache::FiniteElementType::Traits::LocalBasisType;
-            using ShapeJacobian = typename FeLocalBasis::Traits::JacobianType;
-            using Tensor = Dune::FieldMatrix<Scalar, dim, dimWorld>;
+            if (isOutlet_(scvf) || isInlet_(scvf))
+            {
+                using FeLocalBasis = typename GridGeometry::FeCache::FiniteElementType::Traits::LocalBasisType;
+                using ShapeJacobian = typename FeLocalBasis::Traits::JacobianType;
+                using Tensor = Dune::FieldMatrix<Scalar, dim, dimWorld>;
 
-            const auto geometry = element.geometry();
-            const auto ipLocal = geometry.local(scvf.ipGlobal());
-            const auto& localBasis = fvGeometry.feLocalBasis();
-            const auto& jacInvT = geometry.jacobianInverseTransposed(ipLocal);
-            std::vector<ShapeJacobian> shapeJacobian;
-            localBasis.evaluateJacobian(ipLocal, shapeJacobian);
+                const auto geometry = element.geometry();
+                const auto ipLocal = geometry.local(scvf.ipGlobal());
+                const auto& localBasis = fvGeometry.feLocalBasis();
+                const auto& jacInvT = geometry.jacobianInverseTransposed(ipLocal);
+                std::vector<ShapeJacobian> shapeJacobian;
+                localBasis.evaluateJacobian(ipLocal, shapeJacobian);
 
-            // compute the gradN at for every scv/dof
-            std::vector<GlobalPosition> gradN(fvGeometry.numScv(), GlobalPosition(0));
-            for (const auto& scv : scvs(fvGeometry))
-                jacInvT.mv(shapeJacobian[scv.localDofIndex()][0], gradN[scv.indexInElement()]);
-
-            Tensor gradV(0.0);
-            for (int dir = 0; dir < dim; ++dir)
+                // compute the gradN at for every scv/dof
+                std::vector<GlobalPosition> gradN(fvGeometry.numScv(), GlobalPosition(0));
                 for (const auto& scv : scvs(fvGeometry))
-                    gradV[dir].axpy(elemVolVars[scv].velocity(dir), gradN[scv.indexInElement()]);
+                    jacInvT.mv(shapeJacobian[scv.localDofIndex()][0], gradN[scv.indexInElement()]);
 
-            static const bool enableUnsymmetrizedVelocityGradient
-                = getParamFromGroup<bool>(this->paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
+                Tensor gradV(0.0);
+                for (int dir = 0; dir < dim; ++dir)
+                    for (const auto& scv : scvs(fvGeometry))
+                        gradV[dir].axpy(elemVolVars[scv].velocity(dir), gradN[scv.indexInElement()]);
 
-            values = enableUnsymmetrizedVelocityGradient ?
-                mv(gradV, scvf.unitOuterNormal())
-                : mv(gradV + getTransposed(gradV), scvf.unitOuterNormal());
+                static const bool enableUnsymmetrizedVelocityGradient
+                    = getParamFromGroup<bool>(this->paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
 
-            values *= -this->effectiveViscosity(element, fvGeometry, scvf);
+                values = enableUnsymmetrizedVelocityGradient ?
+                    NumEqVector(0.0)//mv(gradV, scvf.unitOuterNormal())
+                    : mv(getTransposed(gradV), scvf.unitOuterNormal()); //mv(gradV + getTransposed(gradV), scvf.unitOuterNormal());
 
-            const auto referencePressure = this->referencePressure(element, fvGeometry, scvf);
-            const auto p = (isInlet_(scvf) ? deltaP_ : 0.0) - referencePressure;
-            values.axpy(p, scvf.unitOuterNormal());
+                values *= -this->effectiveViscosity(element, fvGeometry, scvf);
+
+                const auto referencePressure = this->referencePressure(element, fvGeometry, scvf);
+                const auto p = (isInlet_(scvf) ? deltaP_ : 0.0) - referencePressure;
+                values.axpy(p, scvf.unitOuterNormal());
+            }
         }
         else
         {

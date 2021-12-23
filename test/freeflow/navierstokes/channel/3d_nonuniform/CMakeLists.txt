@@ -1,4 +1,5 @@
-dune_symlink_to_source_files(FILES "params.input" "channel.msh")
+set(CMAKE_BUILD_TYPE Release)
+dune_symlink_to_source_files(FILES "params.input" "channel.msh" "cube.msh" "cube3d.msh")
 dumux_add_test(NAME test_ff_stokes_channel_3d_nonuniform
                SOURCES main.cc
                LABELS freeflow navierstokes
