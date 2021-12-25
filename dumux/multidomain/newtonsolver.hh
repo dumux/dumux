@@ -46,7 +46,7 @@ using GetPVSwitchMultiDomain = Dune::Std::detected_or<int, DetectPVSwitchMultiDo
  */
 template <class Assembler, class LinearSolver, class CouplingManager,
           class Reassembler = DefaultPartialReassembler,
-          class Comm = Dune::CollectiveCommunication<Dune::MPIHelper::MPICommunicator> >
+          class Comm = Dune::Communication<Dune::MPIHelper::MPICommunicator> >
 class MultiDomainNewtonSolver: public NewtonSolver<Assembler, LinearSolver, Reassembler, Comm>
 {
     using ParentType = NewtonSolver<Assembler, LinearSolver, Reassembler, Comm>;
@@ -74,7 +74,7 @@ public:
     MultiDomainNewtonSolver(std::shared_ptr<Assembler> assembler,
                             std::shared_ptr<LinearSolver> linearSolver,
                             std::shared_ptr<CouplingManager> couplingManager,
-                            const Comm& comm = Dune::MPIHelper::getCollectiveCommunication(),
+                            const Comm& comm = Dune::MPIHelper::getCommunication(),
                             const std::string& paramGroup = "")
     : ParentType(assembler, linearSolver, comm, paramGroup)
     , couplingManager_(couplingManager)

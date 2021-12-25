@@ -82,7 +82,7 @@ public:
                 std::cerr << "Warning: You are using a deprecated restart mechanism. The usage will change in the future.\n";
             }
 
-            const int rank = Dune::MPIHelper::getCollectiveCommunication().rank();
+            const int rank = Dune::MPIHelper::getCommunication().rank();
             const std::string name = getParamFromGroup<std::string>(modelParamGroup, "Problem.Name");
             std::ostringstream oss;
             oss << name << "_time=" << restartTime << "_rank=" << rank << ".grs";
@@ -187,7 +187,7 @@ public:
             {
                 auto gridFactory = std::make_unique<Dune::GridFactory<Grid>>();
 
-                if (Dune::MPIHelper::getCollectiveCommunication().rank() == 0)
+                if (Dune::MPIHelper::getCommunication().rank() == 0)
                 Dune::GmshReader<Grid>::read(*gridFactory, fileName, verbose, boundarySegments);
 
                 ParentType::gridPtr() = std::shared_ptr<Grid>(gridFactory->createGrid());

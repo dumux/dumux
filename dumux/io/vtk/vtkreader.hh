@@ -64,7 +64,7 @@ public:
     explicit VTKReader(const std::string& fileName)
     {
         using namespace tinyxml2;
-        fileName_ = Dune::MPIHelper::getCollectiveCommunication().size() > 1 ?
+        fileName_ = Dune::MPIHelper::getCommunication().size() > 1 ?
                         getProcessFileName_(fileName) : fileName;
 
         const auto eResult = doc_.LoadFile(fileName_.c_str());
@@ -193,7 +193,7 @@ private:
 
         // get the first piece node
         const XMLElement* pieceNode = getPieceNode_(pDoc, pvtkFileName);
-        const auto myrank = Dune::MPIHelper::getCollectiveCommunication().rank();
+        const auto myrank = Dune::MPIHelper::getCommunication().rank();
         for (int rank = 0; rank < myrank; ++rank)
         {
             pieceNode = pieceNode->NextSiblingElement("Piece");

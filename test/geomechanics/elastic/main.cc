@@ -132,7 +132,7 @@ int main(int argc, char** argv)
     vtkWriter.write(1.0);
 
     // print time and say goodbye
-    const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
+    const auto& comm = Dune::MPIHelper::getCommunication();
     if (mpiHelper.rank() == 0)
         std::cout << "Simulation took " << timer.elapsed() << " seconds on "
                   << comm.size() << " processes.\n"

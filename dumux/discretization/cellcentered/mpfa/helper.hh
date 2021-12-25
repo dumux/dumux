@@ -550,7 +550,7 @@ public:
         std::vector<bool> ghostVertices(gridView.size(dim), false);
 
         // if not run in parallel, skip the rest
-        if (Dune::MPIHelper::getCollectiveCommunication().size() == 1)
+        if (Dune::MPIHelper::getCommunication().size() == 1)
             return ghostVertices;
 
         // mpfa methods cannot yet handle ghost cells

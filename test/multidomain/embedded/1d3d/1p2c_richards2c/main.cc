@@ -408,7 +408,7 @@ int main(int argc, char** argv)
 
     outFile.close();
 
-    timeLoop->finalize(mpiHelper.getCollectiveCommunication());
+    timeLoop->finalize(mpiHelper.getCommunication());
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

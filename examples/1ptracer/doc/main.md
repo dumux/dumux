@@ -199,7 +199,7 @@ problem defined in `problem_1p.hh`. Let us now write this solution to a VTK file
 
     // print overall CPU time required for assembling and solving the 1p problem.
     timer.stop();
-    const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
+    const auto& comm = Dune::MPIHelper::getCommunication();
     std::cout << "Simulation took " << timer.elapsed() << " seconds on "
               << comm.size() << " processes.\n"
               << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";

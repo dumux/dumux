@@ -126,7 +126,7 @@ public:
      */
     IstlSolverFactoryBackend(const std::string& paramGroup = "")
     : paramGroup_(paramGroup)
-    , isParallel_(Dune::MPIHelper::getCollectiveCommunication().size() > 1)
+    , isParallel_(Dune::MPIHelper::getCommunication().size() > 1)
     {
         if (isParallel_)
             DUNE_THROW(Dune::InvalidStateException, "Using sequential constructor for parallel run. Use signature with gridView and dofMapper!");
@@ -147,7 +147,7 @@ public:
                              const std::string& paramGroup = "")
     : paramGroup_(paramGroup)
 #if HAVE_MPI
-    , isParallel_(Dune::MPIHelper::getCollectiveCommunication().size() > 1)
+    , isParallel_(Dune::MPIHelper::getCommunication().size() > 1)
 #endif
     {
         firstCall_ = true;

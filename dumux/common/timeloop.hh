@@ -156,7 +156,7 @@ public:
     {
         verbose_ =
             verbose &&
-            Dune::MPIHelper::getCollectiveCommunication().rank() == 0;
+            Dune::MPIHelper::getCommunication().rank() == 0;
 
         time_ = startTime;
         endTime_ = tEnd;
@@ -359,8 +359,8 @@ public:
     /*!
      * \brief Print final status and stops tracking the time.
      */
-    template< class Communicator = Dune::CollectiveCommunication<typename Dune::MPIHelper::MPICommunicator> >
-    void finalize(const Communicator& comm = Dune::MPIHelper::getCollectiveCommunication())
+    template< class Communicator = Dune::Communication<typename Dune::MPIHelper::MPICommunicator> >
+    void finalize(const Communicator& comm = Dune::MPIHelper::getCommunication())
     {
         auto cpuTime = timer_.stop();
 

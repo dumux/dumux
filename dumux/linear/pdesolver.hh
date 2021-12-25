@@ -327,7 +327,7 @@ private:
     //! initialize the parameters by reading from the parameter tree
     void initParams_(const std::string& group = "")
     {
-        verbose_ = (Dune::MPIHelper::getCollectiveCommunication().rank() == 0);
+        verbose_ = (Dune::MPIHelper::getCommunication().rank() == 0);
     }
 
     //! switches on/off verbosity

@@ -161,7 +161,7 @@ int main(int argc, char** argv) try
 
     // print overall CPU time required for assembling and solving the 1p problem.
     timer.stop();
-    const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
+    const auto& comm = Dune::MPIHelper::getCommunication();
     std::cout << "Simulation took " << timer.elapsed() << " seconds on "
               << comm.size() << " processes.\n"
               << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
