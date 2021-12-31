@@ -95,10 +95,11 @@ struct GridFluxVariablesCache<TypeTag, TTag::FaceCenteredDiamondModel>
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
     using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
     using FluxVariablesCacheFiller = GetPropType<TypeTag, Properties::FluxVariablesCacheFiller>;
 public:
-    using type = FaceCenteredDiamondGridFluxVariablesCache<Problem, FluxVariablesCache, FluxVariablesCacheFiller, enableCache>;
+    using type = FaceCenteredDiamondGridFluxVariablesCache<Problem, GridGeometry, FluxVariablesCache, FluxVariablesCacheFiller, enableCache>;
 };
 
 //! Set the grid variables (volume, flux and face variables)

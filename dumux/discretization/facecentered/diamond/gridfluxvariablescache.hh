@@ -32,10 +32,11 @@ namespace Dumux {
 /*!
  * \brief DOC ME
  */
-template<class P, class FVC, class FVCF>
+template<class P, class GG, class FVC, class FVCF>
 struct FaceCenteredDiamondDefaultGridFVCTraits
 {
     using Problem = P;
+    using GridGeometry = GG;
     using FluxVariablesCache = FVC;
     using FluxVariablesCacheFiller = FVCF;
 
@@ -49,10 +50,11 @@ struct FaceCenteredDiamondDefaultGridFVCTraits
  * \note The class is specialized for a version with and without grid caching
  */
 template<class Problem,
+         class GridGeometry,
          class FluxVariablesCache,
          class FluxVariablesCacheFiller,
          bool cachingEnabled = false,
-         class Traits = FaceCenteredDiamondDefaultGridFVCTraits<Problem, FluxVariablesCache, FluxVariablesCacheFiller>>
+         class Traits = FaceCenteredDiamondDefaultGridFVCTraits<Problem, GridGeometry, FluxVariablesCache, FluxVariablesCacheFiller>>
 class FaceCenteredDiamondGridFluxVariablesCache;
 
 //! Element-wise flux cache (variables that are the same for all scvfs in an element)
@@ -67,13 +69,13 @@ struct FluxVariablesElementCache
  * \brief Flux variable caches on a gridview with grid caching enabled
  * \note The flux caches of the gridview are stored which is memory intensive but faster
  */
-template<class P, class FVC, class FVCF, class Traits>
-class FaceCenteredDiamondGridFluxVariablesCache<P, FVC, FVCF, true, Traits>
+template<class P, class GG, class FVC, class FVCF, class Traits>
+class FaceCenteredDiamondGridFluxVariablesCache<P, GG, FVC, FVCF, true, Traits>
 {
     using Problem = typename Traits::Problem;
-    using ThisType = FaceCenteredDiamondGridFluxVariablesCache<P, FVC, FVCF, true, Traits>;
+    using ThisType = FaceCenteredDiamondGridFluxVariablesCache<P, GG, FVC, FVCF, true, Traits>;
     using FluxVariablesCacheFiller = typename Traits::FluxVariablesCacheFiller;
-    using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
+    using GridGeometry = typename Traits::GridGeometry;
     using Element = typename GridGeometry::GridView::Grid::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     static constexpr int dim = GridGeometry::GridView::dimension;
@@ -99,7 +101,7 @@ public:
     FaceCenteredDiamondGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
     // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
-    template<class GridGeometry, class GridVolumeVariables, class SolutionVector>
+    template<class GridVolumeVariables, class SolutionVector>
     void update(const GridGeometry& gridGeometry,
                 const GridVolumeVariables& gridVolVars,
                 const SolutionVector& sol,
@@ -217,11 +219,11 @@ private:
  * \ingroup FaceCenteredStaggeredDiscretization
  * \brief Flux variable caches on a gridview with grid caching disabled
  */
-template<class P, class FVC, class FVCF, class Traits>
-class FaceCenteredDiamondGridFluxVariablesCache<P, FVC, FVCF, false, Traits>
+template<class P, class GG, class FVC, class FVCF, class Traits>
+class FaceCenteredDiamondGridFluxVariablesCache<P, GG, FVC, FVCF, false, Traits>
 {
     using Problem = typename Traits::Problem;
-    using ThisType = FaceCenteredDiamondGridFluxVariablesCache<P, FVC, FVCF, false, Traits>;
+    using ThisType = FaceCenteredDiamondGridFluxVariablesCache<P, GG, FVC, FVCF, false, Traits>;
 
 public:
     //! export the flux variable cache type
