@@ -98,7 +98,7 @@ parser.add_argument("--dune-branch", default="releases/2.8", help="Dune branch t
 parser.add_argument(
     "--dumux-branch", default="releases/3.4", help="Dumux branch to be checked out."
 )
-parser.add_argument("--opm-branch", default="release/2020.10", help="Opm branch to be checked out.")
+parser.add_argument("--opm-branch", default="release/2021.10", help="Opm branch to be checked out.")
 parser.add_argument("--mmesh-branch", default="release/1.2", help="Mmesh branch to be checked out.")
 
 args = vars(parser.parse_args())
@@ -366,6 +366,8 @@ MESSAGES = {
         "In addition, it might be necessary to set manually some",
         "CMake variables in the CMAKE_FLAGS section of the .opts-file:",
         "  -DUSE_MPI=ON",
+        "It might also be required to apply a patch,",
+        "have a look at patches/README.md in the dumux folder.",
         "Currently, compiling opm with clang is not possible.",
         "",
         "Maybe you also have to install the following packages (see the",

@@ -31,6 +31,7 @@
 #include <opm/parser/eclipse/Parser/Parser.hpp>
 #include <opm/parser/eclipse/Parser/ParseContext.hpp>
 #include <opm/parser/eclipse/Deck/Deck.hpp>
+#include <opm/parser/eclipse/EclipseState/EclipseState.hpp>
 
 #include <dumux/common/parameters.hh>
 
@@ -54,8 +55,9 @@ public:
         const auto fileName = getParamFromGroup<std::string>(paramGroup, "Grid.File");
         deck_ = std::make_shared<Opm::Deck>(Opm::Parser().parseFile(fileName));
         Opm::EclipseGrid eclGrid(*deck_);
+        Opm::EclipseState eclState(*deck_);
         grid_ = std::make_shared<Grid>();
-        grid_->processEclipseFormat(&eclGrid, false, false, false);
+        grid_->processEclipseFormat(&eclGrid, &eclState, false, false, false);
         loadBalance();
     }
 
