@@ -25,10 +25,11 @@
 #ifndef DUMUX_CHANNEL_NC_TEST_PROBLEM_HH
 #define DUMUX_CHANNEL_NC_TEST_PROBLEM_HH
 
-#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/timeloop.hh>
-#include <dumux/common/numeqvector.hh>
+#include <dumux/common/properties.hh>
+
+#include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
+#include <dumux/freeflow/navierstokes/scalarfluxhelper.hh>
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
@@ -48,198 +49,246 @@ template <class TypeTag>
 class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
-
-    using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using InitialValues = typename ParentType::InitialValues;
+    using Sources = typename ParentType::Sources;
+    using DirichletValues = typename ParentType::DirichletValues;
+    using BoundaryFluxes = typename ParentType::BoundaryFluxes;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
     static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
+
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
+    static constexpr bool useMoles = ModelTraits::useMoles();
+    static constexpr bool isNonisothermal = ModelTraits::enableEnergyBalance();
     static constexpr auto compIdx = 1;
-    static constexpr auto transportCompIdx = Indices::conti0EqIdx + compIdx;
-    static constexpr auto transportEqIdx = Indices::conti0EqIdx + compIdx;
 
 public:
-    ChannelNCTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry), eps_(1e-6)
+    ChannelNCTestProblem(std::shared_ptr<const GridGeometry> gridGeometry,
+                         std::shared_ptr<CouplingManager> couplingManager)
+    : ParentType(gridGeometry, couplingManager)
+    , eps_(1e-6)
     {
-        inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
         FluidSystem::init();
-        deltaP_.resize(this->gridGeometry().numCellCenterDofs());
+        inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
     }
 
-   /*!
-     * \name Boundary conditions
+    /*!
+     * \brief Returns a reference pressure at a given sub control volume face.
+     *        This pressure is substracted from the actual pressure for the momentum balance
+     *        which potentially helps to improve numerical accuracy by avoiding issues related do floating point arithmetic.
      */
-    // \{
+    Scalar referencePressure(const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const SubControlVolumeFace& scvf) const
+    { return 1.1e5; }
 
-   /*!
+    /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary control volume.
      *
      * \param globalPos The position of the center of the finite volume
      */
-    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
 
-        if(isInlet_(globalPos))
+        if constexpr (ParentType::isMomentumProblem())
         {
             values.setDirichlet(Indices::velocityXIdx);
             values.setDirichlet(Indices::velocityYIdx);
-            values.setDirichlet(transportCompIdx);
-#if NONISOTHERMAL
-            values.setDirichlet(Indices::temperatureIdx);
-#endif
-        }
-        else if(isOutlet_(globalPos))
-        {
-            values.setDirichlet(Indices::pressureIdx);
-            values.setOutflow(transportEqIdx);
-#if NONISOTHERMAL
-            values.setOutflow(Indices::energyEqIdx);
-#endif
+
+            if (isOutlet_(globalPos))
+                values.setAllNeumann();
         }
         else
         {
-            // set Dirichlet values for the velocity everywhere
-            values.setDirichlet(Indices::velocityXIdx);
-            values.setDirichlet(Indices::velocityYIdx);
-            values.setNeumann(Indices::conti0EqIdx);
-            values.setNeumann(transportEqIdx);
-#if NONISOTHERMAL
-            values.setNeumann(Indices::energyEqIdx);
-#endif
+            values.setAllNeumann();
+
+            if (isInlet_(globalPos))
+            {
+                values.setDirichlet(Indices::pressureIdx);
+                values.setDirichlet(Indices::conti0EqIdx + compIdx);
+                if constexpr (isNonisothermal)
+                    values.setDirichlet(Indices::temperatureIdx);
+            }
         }
 
         return values;
     }
 
-   /*!
+    /*!
      * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
      * \param globalPos The center of the finite volume which ought to be set.
      */
-    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+    DirichletValues dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
     {
-        PrimaryVariables values = initialAtPos(globalPos);
+        const auto& globalPos = scvf.ipGlobal();
+        DirichletValues values = initialAtPos(globalPos);
 
-        // give the system some time so that the pressure can equilibrate, then start the injection of the tracer
-        if(isInlet_(globalPos))
+        if constexpr (!ParentType::isMomentumProblem())
         {
-            if(time() >= 10.0 || inletVelocity_  < eps_)
+            // give the system some time so that the pressure can equilibrate, then start the injection of the tracer
+            if (isInlet_(globalPos))
             {
-                Scalar moleFracTransportedComp = 1e-3;
-#if USE_MASS
-                Scalar averageMolarMassPhase = moleFracTransportedComp * FluidSystem::molarMass(compIdx)
-                                               + (1. - moleFracTransportedComp)  * FluidSystem::molarMass(1-compIdx);
-                values[transportCompIdx] = moleFracTransportedComp * FluidSystem::molarMass(compIdx)
-                                           / averageMolarMassPhase;
-#else
-                values[transportCompIdx] = moleFracTransportedComp;
-#endif
-#if NONISOTHERMAL
-            values[Indices::temperatureIdx] = 293.15;
-#endif
+                values[Indices::pressureIdx] = this->couplingManager().cellPressure(element, scvf);
+
+                if (time() >= 10.0 || inletVelocity_  < eps_)
+                {
+                    Scalar moleFracTransportedComp = 1e-3;
+                    if constexpr (useMoles)
+                        values[Indices::conti0EqIdx+compIdx] = moleFracTransportedComp;
+                    else
+                    {
+                        Scalar averageMolarMassPhase = moleFracTransportedComp * FluidSystem::molarMass(compIdx)
+                                                   + (1. - moleFracTransportedComp)  * FluidSystem::molarMass(1-compIdx);
+                        values[Indices::conti0EqIdx+compIdx] = moleFracTransportedComp * FluidSystem::molarMass(compIdx)
+                                                / averageMolarMassPhase;
+                    }
+
+                if constexpr (isNonisothermal)
+                    values[Indices::temperatureIdx] = 293.15;
+                }
             }
         }
 
         return values;
     }
 
-    // \}
-
-   /*!
-     * \name Volume terms
+    /*!
+     * \brief Evaluates the boundary conditions for a Neumann control volume.
+     *
+     * \param element The element for which the Neumann boundary condition is set
+     * \param fvGeometry The fvGeometry
+     * \param elemVolVars The element volume variables
+     * \param elemFaceVars The element face variables
+     * \param scvf The boundary sub control volume face
      */
-    // \{
+    template<class ElementVolumeVariables, class ElementFluxVariablesCache>
+    BoundaryFluxes neumann(const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const ElementVolumeVariables& elemVolVars,
+                           const ElementFluxVariablesCache& elemFluxVarsCache,
+                           const SubControlVolumeFace& scvf) const
+    {
+        BoundaryFluxes values(0.0);
 
-   /*!
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            using FluxHelper = NavierStokesMomentumBoundaryFluxHelper;
+            values = FluxHelper::fixedPressureMomentumFlux(*this, fvGeometry, scvf,
+                                                           elemVolVars, elemFluxVarsCache,
+                                                           referencePressure(element, fvGeometry, scvf), true /*zeroNormalVelocityGradient*/);
+        }
+        else
+        {
+            const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
+            values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
+
+            using FluxHelper = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>;
+            if (isOutlet_(scvf.ipGlobal()))
+                values = FluxHelper::scalarOutflowFlux( *this, element, fvGeometry, scvf, elemVolVars);
+        }
+
+        return values;
+    }
+
+    /*!
      * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The global position
      */
-    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
+    InitialValues initialAtPos(const GlobalPosition& globalPos) const
     {
-        PrimaryVariables values;
-        values[Indices::pressureIdx] = 1.1e+5;
-        values[transportCompIdx] = 0.0;
-#if NONISOTHERMAL
-        values[Indices::temperatureIdx] = 283.15;
-#endif
+        InitialValues values(0.0);
 
-        // parabolic velocity profile
-        values[Indices::velocityXIdx] =  inletVelocity_*(globalPos[1] - this->gridGeometry().bBoxMin()[1])*(this->gridGeometry().bBoxMax()[1] - globalPos[1])
-                                      / (0.25*(this->gridGeometry().bBoxMax()[1] - this->gridGeometry().bBoxMin()[1])*(this->gridGeometry().bBoxMax()[1] - this->gridGeometry().bBoxMin()[1]));
-
-        values[Indices::velocityYIdx] = 0.0;
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            // parabolic velocity profile
+            values[Indices::velocityXIdx] = parabolicProfile(globalPos[1], inletVelocity_);
+        }
+        else
+        {
+            values[Indices::pressureIdx] = 1.1e+5;
+            if constexpr (isNonisothermal)
+                values[Indices::temperatureIdx] = 283.15;
+        }
 
         return values;
     }
 
-   /*!
-     * \brief Adds additional VTK output data to the VTKWriter.
+    /*!
+     * \brief A parabolic velocity profile.
      *
-     * Function is called by the output module on every write.
-     *
-     * \param gridVariables The grid variables
-     * \param sol The solution vector
+     * \param y The position where the velocity is evaluated.
+     * \param vMax The profile's maxmium velocity.
      */
-    template<class GridVariables, class SolutionVector>
-    void calculateDeltaP(const GridVariables& gridVariables, const SolutionVector& sol)
+    Scalar parabolicProfile(const Scalar y, const Scalar vMax) const
     {
-        auto fvGeometry = localView(this->gridGeometry());
-        auto elemVolVars = localView(gridVariables.curGridVolVars());
-        for (const auto& element : elements(this->gridGeometry().gridView()))
-        {
-            fvGeometry.bindElement(element);
-            elemVolVars.bindElement(element, fvGeometry, sol);
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                const auto ccDofIdx = scv.dofIndex();
-                deltaP_[ccDofIdx] = elemVolVars[scv].pressure() - 1.1e5;
-            }
-        }
+        const Scalar yMin = this->gridGeometry().bBoxMin()[1];
+        const Scalar yMax = this->gridGeometry().bBoxMax()[1];
+        return  vMax * (y - yMin)*(yMax - y) / (0.25*(yMax - yMin)*(yMax - yMin));
     }
-
-    auto& getDeltaP() const
-    { return deltaP_; }
-
-    // \}
 
     void setTimeLoop(TimeLoopPtr timeLoop)
-    {
-        timeLoop_ = timeLoop;
-    }
+    { timeLoop_ = timeLoop; }
 
     Scalar time() const
+    { return timeLoop_->time(); }
+
+    //! Enable internal Dirichlet constraints
+    static constexpr bool enableInternalDirichletConstraints()
+    { return !ParentType::isMomentumProblem(); }
+
+    /*!
+     * \brief Tag a degree of freedom to carry internal Dirichlet constraints.
+     *        If true is returned for a dof, the equation for this dof is replaced
+     *        by the constraint that its primary variable values must match the
+     *        user-defined values obtained from the function internalDirichlet(),
+     *        which must be defined in the problem.
+     *
+     * \param element The finite element
+     * \param scv The sub-control volume
+     */
+    std::bitset<DirichletValues::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
     {
-        return timeLoop_->time();
+        std::bitset<DirichletValues::dimension> values;
+        return values;
     }
+
+    /*!
+     * \brief Define the values of internal Dirichlet constraints for a degree of freedom.
+     * \param element The finite element
+     * \param scv The sub-control volume
+     */
+    DirichletValues internalDirichlet(const Element& element, const SubControlVolume& scv) const
+    { return DirichletValues(1.1e5); }
 
 private:
-
     bool isInlet_(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] < eps_;
-    }
+    { return globalPos[0] < eps_; }
 
     bool isOutlet_(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
-    }
+    { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
     const Scalar eps_;
     Scalar inletVelocity_;
     TimeLoopPtr timeLoop_;
-    std::vector<Scalar> deltaP_;
 };
 } // end namespace Dumux
 

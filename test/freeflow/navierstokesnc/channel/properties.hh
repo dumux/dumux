@@ -28,14 +28,24 @@
 #define ENABLECACHING 1
 #endif
 
+#ifndef USEMOLES
+#define USEMOLES 1
+#endif
+
 #include <dune/grid/yaspgrid.hh>
 
-#include <dumux/discretization/staggered/freeflow/properties.hh>
-
-#include <dumux/freeflow/compositional/navierstokesncmodel.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1padapter.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
+
+#include <dumux/freeflow/navierstokes/problem.hh>
+#include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/mass/1pnc/model.hh>
+
+#include <dumux/discretization/staggered/freeflow/properties.hh>
+#include <dumux/discretization/fcstaggered.hh>
+#include <dumux/discretization/cctpfa.hh>
+#include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
 
 #include "problem.hh"
 
@@ -43,12 +53,24 @@ namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
+struct ChannelNCTest {};
+struct ChannelNCTestMomentum { using InheritsFrom = std::tuple<ChannelNCTest, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
 #if !NONISOTHERMAL
-struct ChannelNCTest { using InheritsFrom = std::tuple<NavierStokesNC, StaggeredFreeFlowModel>; };
+struct ChannelNCTestMass { using InheritsFrom = std::tuple<ChannelNCTest, NavierStokesMassOnePNC, CCTpfaModel>; };
 #else
-struct ChannelNCTest { using InheritsFrom = std::tuple<NavierStokesNCNI, StaggeredFreeFlowModel>; };
+struct ChannelNCTestMass { using InheritsFrom = std::tuple<ChannelNCTest, NavierStokesMassOnePNCNI, CCTpfaModel>; };
 #endif
 } // end namespace TTag
+
+// Set the problem property
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::ChannelNCTest>
+{
+private:
+    using Traits = MultiDomainTraits<TTag::ChannelNCTestMomentum, TTag::ChannelNCTestMass>;
+public:
+    using type = StaggeredFreeFlowCouplingManager<Traits>;
+};
 
 // Select the fluid system
 template<class TypeTag>
@@ -80,13 +102,8 @@ template<class TypeTag>
 struct EnableGridFaceVariablesCache<TypeTag, TTag::ChannelNCTest> { static constexpr bool value = ENABLECACHING; };
 
 // Use mole fraction formulation
-#if USE_MASS
 template<class TypeTag>
-struct UseMoles<TypeTag, TTag::ChannelNCTest> { static constexpr bool value = false; };
-#else
-template<class TypeTag>
-struct UseMoles<TypeTag, TTag::ChannelNCTest> { static constexpr bool value = true; };
-#endif
+struct UseMoles<TypeTag, TTag::ChannelNCTest> { static constexpr bool value = USEMOLES; };
 
 } // end namespace Dumux::Properties
 
