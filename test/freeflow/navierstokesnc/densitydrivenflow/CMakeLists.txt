@@ -1,6 +1,7 @@
+dune_symlink_to_source_files(FILES "params.input")
 
 dumux_add_test(NAME test_ff_stokes2c_densitydrivenflow
-              LABELS freeflow navierstokes
+              LABELS freeflow navierstokesnc navierstokes
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -8,10 +9,4 @@ dumux_add_test(NAME test_ff_stokes2c_densitydrivenflow
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes2c_densitydrivenflow-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c_densitydrivenflow-00021.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c_densitydrivenflow params.input
-                             -Problem.Name test_ff_stokes2c_densitydrivenflow"
-                             --zeroThreshold {"X^Air_liq":1e-12}
-                             --zeroThreshold {"x^Air_liq":1e-12}
-                             --zeroThreshold {"velocity_liq \(m/s\)":1e-10}
-                             --zeroThreshold {"deltaRho":1e-7})
-
-dune_symlink_to_source_files(FILES "params.input")
+                             -Problem.Name test_ff_stokes2c_densitydrivenflow")
