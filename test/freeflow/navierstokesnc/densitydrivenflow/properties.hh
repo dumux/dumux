@@ -26,9 +26,15 @@
 
 #include <dune/grid/yaspgrid.hh>
 
-#include <dumux/discretization/staggered/freeflow/properties.hh>
+#include <dumux/freeflow/navierstokes/problem.hh>
+#include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/mass/1pnc/model.hh>
 
-#include <dumux/freeflow/compositional/navierstokesncmodel.hh>
+#include <dumux/discretization/staggered/freeflow/properties.hh>
+#include <dumux/discretization/fcstaggered.hh>
+#include <dumux/discretization/cctpfa.hh>
+#include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
+
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1padapter.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
@@ -39,12 +45,28 @@ namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
-struct DensityDrivenFlow { using InheritsFrom = std::tuple<NavierStokesNC, StaggeredFreeFlowModel>; };
+struct DensityDrivenFlowTest {};
+struct DensityDrivenFlowMomentum { using InheritsFrom = std::tuple<DensityDrivenFlowTest, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
+#if !NONISOTHERMAL
+struct DensityDrivenFlowMass { using InheritsFrom = std::tuple<DensityDrivenFlowTest, NavierStokesMassOnePNC, CCTpfaModel>; };
+#else
+struct DensityDrivenFlowMass { using InheritsFrom = std::tuple<DensityDrivenFlowTest, NavierStokesMassOnePNCNI, CCTpfaModel>; };
+#endif
 } // end namespace TTag
+
+// Set the problem property
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::DensityDrivenFlowTest>
+{
+private:
+    using Traits = MultiDomainTraits<TTag::DensityDrivenFlowMomentum, TTag::DensityDrivenFlowMass>;
+public:
+    using type = StaggeredFreeFlowCouplingManager<Traits>;
+};
 
 // Select the fluid system
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::DensityDrivenFlow>
+struct FluidSystem<TypeTag, TTag::DensityDrivenFlowTest>
 {
     using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
     static constexpr int phaseIdx = H2OAir::liquidPhaseIdx;
@@ -52,25 +74,25 @@ struct FluidSystem<TypeTag, TTag::DensityDrivenFlow>
 };
 
 template<class TypeTag>
-struct ReplaceCompEqIdx<TypeTag, TTag::DensityDrivenFlow> { static constexpr int value = 0; };
+struct ReplaceCompEqIdx<TypeTag, TTag::DensityDrivenFlowTest> { static constexpr int value = 0; };
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::DensityDrivenFlow> { using type = Dune::YaspGrid<2>; };
+struct Grid<TypeTag, TTag::DensityDrivenFlowTest> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::DensityDrivenFlow> { using type = Dumux::DensityDrivenFlowProblem<TypeTag> ; };
+struct Problem<TypeTag, TTag::DensityDrivenFlowTest> { using type = Dumux::DensityDrivenFlowProblem<TypeTag> ; };
 
 template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::DensityDrivenFlow> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::DensityDrivenFlowTest> { static constexpr bool value = true; };
 template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::DensityDrivenFlow> { static constexpr bool value = true; };
+struct EnableGridFluxVariablesCache<TypeTag, TTag::DensityDrivenFlowTest> { static constexpr bool value = true; };
 template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::DensityDrivenFlow> { static constexpr bool value = true; };
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::DensityDrivenFlowTest> { static constexpr bool value = true; };
 
 template<class TypeTag>
-struct UseMoles<TypeTag, TTag::DensityDrivenFlow> { static constexpr bool value = true; };
+struct UseMoles<TypeTag, TTag::DensityDrivenFlowTest> { static constexpr bool value = true; };
 
 } // end namespace Dumux::Properties
 
