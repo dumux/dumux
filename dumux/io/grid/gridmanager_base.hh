@@ -95,7 +95,7 @@ public:
      */
     void loadBalance()
     {
-        if (Dune::MPIHelper::getCollectiveCommunication().size() > 1)
+        if (Dune::MPIHelper::getCommunication().size() > 1)
         {
             // if we may have dgf parameters use load balancing of the dgf pointer
             if(enableDgfGridPointer_)
@@ -230,7 +230,7 @@ protected:
         // VTK file formats for unstructured grids
         else if (extension == "vtu" || extension == "vtp")
         {
-            if (Dune::MPIHelper::getCollectiveCommunication().size() > 1)
+            if (Dune::MPIHelper::getCommunication().size() > 1)
                 DUNE_THROW(Dune::NotImplemented, "Reading grids in parallel from VTK file formats is currently not supported!");
 
             VTKReader vtkReader(fileName);

@@ -130,7 +130,7 @@ public:
     using Point = Corner;
     using PointIterator = CornerIterator;
     using ConnectivityWriter = Dune::VTK::NonConformingConnectivityWriter<Cell>;
-    using CollectiveCommunication = typename GridView::CollectiveCommunication;
+    using Communication = typename GridView::CollectiveCommunication;
 
     explicit NonConformingIntersectionIteratorFactory(const GridView& gv)
     : gridView_(gv) {}
@@ -156,7 +156,7 @@ public:
     ConnectivityWriter makeConnectivity() const
     { return ConnectivityWriter(); }
 
-    const CollectiveCommunication& comm() const
+    const Communication& comm() const
     { return gridView_.comm(); }
 
 private:

@@ -205,7 +205,7 @@ int main(int argc, char** argv)
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
     }
 
-    timeLoop->finalize(mpiHelper.getCollectiveCommunication());
+    timeLoop->finalize(mpiHelper.getCommunication());
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

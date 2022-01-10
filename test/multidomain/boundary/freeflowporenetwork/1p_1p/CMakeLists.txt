@@ -3,7 +3,7 @@ add_input_file_links()
 dumux_add_test(NAME test_md_boundary_ff1p_pnm1p
               LABELS multidomain multidomain_boundary freeflowpnm 1p navierstokes
               SOURCES main.cc
-              CMAKE_GUARD HAVE_UMFPACK
+              CMAKE_GUARD "( HAVE_UMFPACK AND dune-foamgrid_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p_pnm1p_ff-reference.vtu

@@ -152,13 +152,13 @@ struct GmshGridDataHandle<Dune::UGGrid<dimgrid>, GridFactory, Data>
         // all processes of the boundary markers vector is zero. If yes, assume
         // that the root process contains all markers and broadcast them.
         auto bmSizeMin = boundaryMarkers_.size();
-        Dune::MPIHelper::getCollectiveCommunication().min(&bmSizeMin, 1);
+        Dune::MPIHelper::getCommunication().min(&bmSizeMin, 1);
         if (bmSizeMin == 0)
         {
             auto bmSize = boundaryMarkers_.size();
-            Dune::MPIHelper::getCollectiveCommunication().broadcast(&bmSize, 1, 0);
+            Dune::MPIHelper::getCommunication().broadcast(&bmSize, 1, 0);
             boundaryMarkers_.resize(bmSize);
-            Dune::MPIHelper::getCollectiveCommunication().broadcast(&boundaryMarkers_.front(), bmSize, 0);
+            Dune::MPIHelper::getCommunication().broadcast(&boundaryMarkers_.front(), bmSize, 0);
         }
     }
 

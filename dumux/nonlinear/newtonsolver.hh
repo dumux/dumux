@@ -211,7 +211,7 @@ using BlockType = typename BlockTypeHelper<SolutionVector, Dune::IsNumber<Soluti
  */
 template <class Assembler, class LinearSolver,
           class Reassembler = PartialReassembler<Assembler>,
-          class Comm = Dune::CollectiveCommunication<Dune::MPIHelper::MPICommunicator> >
+          class Comm = Dune::Communication<Dune::MPIHelper::MPICommunicator> >
 class NewtonSolver : public PDESolver<Assembler, LinearSolver>
 {
     using ParentType = PDESolver<Assembler, LinearSolver>;
@@ -244,7 +244,7 @@ public:
      */
     NewtonSolver(std::shared_ptr<Assembler> assembler,
                  std::shared_ptr<LinearSolver> linearSolver,
-                 const Communication& comm = Dune::MPIHelper::getCollectiveCommunication(),
+                 const Communication& comm = Dune::MPIHelper::getCommunication(),
                  const std::string& paramGroup = "")
     : ParentType(assembler, linearSolver)
     , endIterMsgStream_(std::ostringstream::out)

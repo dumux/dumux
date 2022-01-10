@@ -167,7 +167,7 @@ int main(int argc, char** argv)
 
     timer.stop();
 
-    const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
+    const auto& comm = Dune::MPIHelper::getCommunication();
     std::cout << "Simulation took " << timer.elapsed() << " seconds on "
               << comm.size() << " processes.\n"
               << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";

@@ -107,7 +107,7 @@ public:
      */
     void loadBalance()
     {
-        if (Dune::MPIHelper::getCollectiveCommunication().size() > 1)
+        if (Dune::MPIHelper::getCommunication().size() > 1)
             this->grid().loadBalance();
     }
 

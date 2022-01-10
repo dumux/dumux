@@ -197,7 +197,7 @@ int main(int argc, char** argv)
         }
     }
 
-    const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
+    const auto& comm = Dune::MPIHelper::getCommunication();
     if (mpiHelper.rank() == 0)
         std::cout << "Simulation took " << timer.elapsed() << " seconds on "
                   << comm.size() << " processes.\n"
