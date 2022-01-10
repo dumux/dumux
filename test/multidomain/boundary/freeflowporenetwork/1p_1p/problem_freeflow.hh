@@ -70,7 +70,6 @@ public:
         deltaP_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.PressureDifference", 0.0);
         singleThroatTest_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.SingleThroatTest", true);
         enablePseudoThreeDWallFriction_ = !singleThroatTest_;
-        extrusionFactor_ = enablePseudoThreeDWallFriction_ ? getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Height") : 1.0;
     }
 
     /*!
@@ -230,9 +229,6 @@ public:
         return values;
     }
 
-    Scalar extrusionFactorAtPos(const GlobalPosition &globalPos) const
-    { return extrusionFactor_;  }
-
     /*!
      * \brief Evaluates the source term for all phases within a given
      *        sub-control volume
@@ -249,7 +245,7 @@ public:
         {
             if (enablePseudoThreeDWallFriction_)
             {
-                const Scalar height = extrusionFactor_;
+                const Scalar height = elemVolVars[scv].extrusionFactor();
                 static const Scalar factor = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.PseudoWallFractionFactor", 8.0);
                 source[scv.dofAxis()] = this->pseudo3DWallFriction(element, fvGeometry, elemVolVars, scv, height, factor);
             }
@@ -302,7 +298,6 @@ private:
     Scalar deltaP_;
     bool singleThroatTest_;
     bool enablePseudoThreeDWallFriction_;
-    Scalar extrusionFactor_;
 
     std::shared_ptr<CouplingManager> couplingManager_;
 };

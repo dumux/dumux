@@ -34,11 +34,11 @@
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/fcstaggered.hh>
-
 #include <dumux/multidomain/boundary/freeflowporenetwork/couplingmanager.hh>
 
 #include "problem_pnm.hh"
 #include "problem_freeflow.hh"
+#include "spatialparams_freeflow.hh"
 
 namespace Dumux::Properties {
 
@@ -70,7 +70,6 @@ public:
     using type =  Dumux::PoreNetwork::CreepingFlow<Scalar, TransmissibilityLaw>;
 };
 
-
 // Set the grid type
 template<class TypeTag>
 struct Grid<TypeTag, TTag::PNMOnePModel> { using type = Dune::FoamGrid<1, 2>; };
@@ -96,6 +95,15 @@ struct Grid<TypeTag, TTag::FreeFlowOneP>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<Scalar, 2>>;
+};
+
+// Set the spatial parameters
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::FreeFlowOneP>
+{
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using type = ChannelSpatialParams<GridGeometry, Scalar>;
 };
 
 // Set the problem property
