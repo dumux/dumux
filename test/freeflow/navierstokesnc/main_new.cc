@@ -95,11 +95,11 @@ int main(int argc, char** argv)
     // create the finite volume grid geometry
     using MomentumGridGeometry = GetPropType<MomentumTypeTag, Properties::GridGeometry>;
     auto momentumGridGeometry = std::make_shared<MomentumGridGeometry>(leafGridView);
-    momentumGridGeometry->update();
+//     momentumGridGeometry->update();
 
     using MassGridGeometry = GetPropType<MassTypeTag, Properties::GridGeometry>;
     auto massGridGeometry = std::make_shared<MassGridGeometry>(leafGridView);
-    massGridGeometry->update();
+//     massGridGeometry->update();
 
     // the coupling manager
     using Traits = MultiDomainTraits<MomentumTypeTag, MassTypeTag>;
@@ -126,8 +126,9 @@ int main(int argc, char** argv)
     Scalar restartTime = getParam<Scalar>("Restart.Time", 0);
 
     // the solution vector
-    constexpr auto momentumIdx = Dune::index_constant<0>();
-    constexpr auto massIdx = Dune::index_constant<1>();
+    constexpr auto momentumIdx = CouplingManager::freeFlowMomentumIndex;
+    constexpr auto massIdx = CouplingManager::freeFlowMassIndex;
+
     using SolutionVector = typename Traits::SolutionVector;
     SolutionVector x;
     x[momentumIdx].resize(momentumGridGeometry->numDofs());

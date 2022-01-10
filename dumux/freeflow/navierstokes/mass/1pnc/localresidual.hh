@@ -26,6 +26,7 @@
 
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/discretization/method.hh>
 
 namespace Dumux {
 
@@ -58,7 +59,7 @@ class NavierStokesMassOnePNCLocalResidual : public GetPropType<TypeTag, Properti
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
 
-    static_assert(GridGeometry::discMethod == DiscretizationMethod::cctpfa);
+    static_assert(GridGeometry::discMethod == DiscretizationMethods::cctpfa,"");
     static constexpr bool useMoles = ModelTraits::useMoles();
     static constexpr auto numComponents = ModelTraits::numFluidComponents();
 
