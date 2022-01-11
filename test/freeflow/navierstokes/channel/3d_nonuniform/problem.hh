@@ -185,24 +185,25 @@ public:
         {
             if (isOutlet_(scvf) || isInlet_(scvf))
             {
-                const auto& fluxVarCache = elemFluxVarsCache[scvf];
-                using Tensor = Dune::FieldMatrix<Scalar, dim>;
-                Tensor gradV(0.0);
-                for (const auto& scv : scvs(fvGeometry))
-                {
-                    const auto& volVars = elemVolVars[scv];
-                    for (int dir = 0; dir < dim; ++dir)
-                        gradV[dir].axpy(volVars.velocity(dir), fluxVarCache.gradN(scv.indexInElement()));
-                }
+                // const auto& fluxVarCache = elemFluxVarsCache[scvf];
+                // using Tensor = Dune::FieldMatrix<Scalar, dim>;
+                // Tensor gradV(0.0);
+                // for (const auto& scv : scvs(fvGeometry))
+                // {
+                //     const auto& volVars = elemVolVars[scv];
+                //     for (int dir = 0; dir < dim; ++dir)
+                //         gradV[dir].axpy(volVars.velocity(dir), fluxVarCache.gradN(scv.indexInElement()));
+                // }
 
                 static const bool enableUnsymmetrizedVelocityGradient
                     = getParamFromGroup<bool>(this->paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
+                const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
 
                 values = enableUnsymmetrizedVelocityGradient ?
-                    NumEqVector(0.0)//mv(gradV, scvf.unitOuterNormal())
-                    : mv(getTransposed(gradV), scvf.unitOuterNormal()); //mv(gradV + getTransposed(gradV), scvf.unitOuterNormal());
+                    NumEqVector(0.0)//2*mv(gradV, scvf.unitOuterNormal())
+                    : mv(-elemFluxVarsCache[eIdx].avgSkewGradV, scvf.unitOuterNormal()); //2*mv(gradV - elemFluxVarsCache[eIdx].avgSkewGradV, scvf.unitOuterNormal());
 
-                values *= -this->effectiveViscosity(element, fvGeometry, scvf);
+                values *= -2.0*this->effectiveViscosity(element, fvGeometry, scvf);
 
                 const auto referencePressure = this->referencePressure(element, fvGeometry, scvf);
                 const auto p = (isInlet_(scvf) ? deltaP_ : 0.0) - referencePressure;
@@ -219,6 +220,35 @@ public:
         }
 
         return values;
+    }
+
+    template<class VelSolutionVector>
+    void computeFluxes(const VelSolutionVector& sol)
+    {
+        Scalar influx = 0.0;
+        Scalar outflux = 0.0;
+        auto fvGeometry = localView(this->gridGeometry());
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            fvGeometry.bind(element);
+            for (const auto& scvf : scvfs(fvGeometry))
+            {
+                if (scvf.boundary())
+                {
+                    if (isInlet_(scvf))
+                        influx += scvf.area() * (sol[fvGeometry.scv(scvf.insideScvIdx()).dofIndex()] * scvf.unitOuterNormal());
+
+                    else if (isOutlet_(scvf))
+                        outflux += scvf.area() * (sol[fvGeometry.scv(scvf.insideScvIdx()).dofIndex()] * scvf.unitOuterNormal());
+                }
+            }
+        }
+
+        std::cout << "Influx: " << influx << " m^3/s" << std::endl;
+        std::cout << "Outflux: " << outflux << " m^3/s" << std::endl;
+        std::cout << "Balance: " << outflux+influx << " m^3/s" << std::endl;
+
+        std::cout << "Transmissibility: " << outflux / deltaP_ << " m^3/(s*Pa)" << std::endl;
     }
 
     // \}

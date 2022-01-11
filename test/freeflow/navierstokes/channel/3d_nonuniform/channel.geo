@@ -1,4 +1,5 @@
 cl__1 = 0.3;
+Mesh.ScalingFactor = 1e-3;
 
 Point(1) = {-18.41805320736, -7.067145485502, -3.75, cl__1};
 Point(2) = {-18.41805320736, -7.067145485502, -3, cl__1};
@@ -280,17 +281,83 @@ Curve Loop(30) = {26, -54, 7, -58};
 //+
 Plane Surface(30) = {30};
 //+
-Surface Loop(1) = {14, 13, 12, 11, 28, 27, 26, 25, 24, 15, 16, 1, 2, 3, 4, 5, 6, 29, 10, 18, 19, 20, 21, 22, 23, 17, 8, 7, 30, 9};
-//+
-Volume(1) = {1};
-//+
 Physical Surface(1) = {8};
 //+
 Physical Surface(2) = {16};
 //+
 Physical Surface(0) = {1, 24, 15, 23, 2, 14, 25, 22, 13, 21, 3, 26, 27, 4, 20, 12, 11, 19, 5, 28, 10, 29, 6, 18, 9, 30, 7, 17};
+
+//Mesh.SubdivisionAlgorithm = 2;
+
 //+
-Physical Volume(0) = {1};
+Curve Loop(31) = {37, 35, 60, 36};
+//+
+Plane Surface(31) = {31};
+//+
+Curve Loop(32) = {38, 39, 40, 41};
+//+
+Plane Surface(32) = {32};
+//+
+Curve Loop(33) = {42, 43, 44, 45};
+//+
+Plane Surface(33) = {33};
+//+
+Curve Loop(34) = {49, 46, 47, 48};
+//+
+Plane Surface(34) = {34};
+//+
+Curve Loop(35) = {53, 50, 51, 52};
+//+
+Plane Surface(35) = {35};
+//+
+Curve Loop(36) = {57, 54, 55, 56};
+//+
+Plane Surface(36) = {36};
+//+
+Surface Loop(1) = {16, 24, 15, 23, 1, 31};
+//+
+Volume(1) = {1};
+//+
+Surface Loop(2) = {31, 25, 14, 22, 2, 32};
+//+
+Volume(2) = {2};
+//+
+Surface Loop(3) = {32, 3, 26, 13, 21, 33};
+//+
+Volume(3) = {3};
+//+
+Surface Loop(4) = {33, 27, 12, 20, 4, 34};
+//+
+Volume(4) = {4};
+//+
+Surface Loop(5) = {5, 28, 11, 19, 34, 35};
+//+
+Volume(5) = {5};
+//+
+Surface Loop(6) = {29, 10, 18, 6, 35, 36};
+//+
+Volume(6) = {6};
+//+
+Surface Loop(7) = {36, 30, 9, 17, 8, 7};
+//+
+Volume(7) = {7};
+//+
+Physical Volume(0) = {1, 2, 3, 4, 5, 6, 7};
 
-Mesh.SubdivisionAlgorithm = 2;
+Transfinite Curve {37, 35, 60, 36} = 5;
+Transfinite Curve {38, 39, 40, 41} = 5;
+Transfinite Curve {42, 43, 44, 45} = 5;
+Transfinite Curve {49, 46, 47, 48} = 5;
+Transfinite Curve {53, 50, 51, 52} = 5;
+Transfinite Curve {57, 54, 55, 56} = 5;
+Transfinite Curve {8, 59, 25, 58} = 5;
+Transfinite Curve {34, -16, 33, -17} = 5;
 
+Transfinite Curve {15, 18, 1, 32, 7, 9, 24, 26} = 4;
+Transfinite Curve {3, 30, 13, 20, 11, 22, 5, 28} = 3;
+Transfinite Curve {2, 31, 14, 19, 6, 10, 23, 27} = 10;
+Transfinite Curve {12, 21, 4, 29} = 7;
+
+Transfinite Surface "*";
+Recombine Surface "*";
+Transfinite Volume "*";

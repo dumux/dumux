@@ -20,3 +20,6 @@ NumericDifference.BaseEpsilon = 1e-5
 [Newton]
 MaxSteps = 10
 MaxRelativeShift = 1e-8
+
+[MatrixConverter]
+DeletePatternEntriesBelowAbsThreshold = 1e-12
