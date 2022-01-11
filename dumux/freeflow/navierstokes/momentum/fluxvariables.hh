@@ -435,24 +435,28 @@ public:
 
             auto getDirichletMomentumFlux = [&]()
             {
-                if (this->elemBcTypes()[scvf.localIndex()].isDirichlet(insideScv.dofAxis()))
-                    return problem.dirichlet(this->element(), scvf)[insideScv.dofAxis()] * this->problem().density(this->element(), insideScv);
-                else
-                    DUNE_THROW(Dune::InvalidStateException, "Neither Dirichlet nor Neumann BC set at " << scvf.ipGlobal());
+                return problem.dirichlet(this->element(), scvf)[insideScv.dofAxis()] * this->problem().density(this->element(), insideScv);
             };
 
             // use the Dirichlet velocity as for transported momentum if the lateral face is on a Dirichlet boundary
             if (scvf.boundary())
+            {
+                if (!this->elemBcTypes()[scvf.localIndex()].isDirichlet(insideScv.dofAxis()))
+                    DUNE_THROW(Dune::InvalidStateException, "Neither Dirichlet nor Neumann BC set at " << scvf.ipGlobal());
+
                 return getDirichletMomentumFlux();
+            }
             else
             {
-                const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
-                int onBoundaryCounter = 0;
-                onBoundaryCounter += static_cast<int>(insideScv.boundary());
-                onBoundaryCounter += static_cast<int>(outsideScv.boundary());
-                const bool scvfOnCorner = (onBoundaryCounter == 1);
-                if (scvfOnCorner)
+                if (fvGeometry.scvfIntegrationPointInConcaveCorner(scvf))
+                {
+                    // TODO: we could put this into an assert, as the construction of outsideScvfWithSameIntegrationPoint is quite expensive
+                    const auto& outsideScvfWithSameIntegrationPoint = fvGeometry.outsideScvfWithSameIntegrationPoint(scvf);
+                    if (!this->problem().boundaryTypes(this->element(), outsideScvfWithSameIntegrationPoint).isDirichlet(insideScv.dofAxis()))
+                        DUNE_THROW(Dune::InvalidStateException, "Neither Dirichlet nor Neumann BC set at " << outsideScvfWithSameIntegrationPoint.ipGlobal());
+
                     return getDirichletMomentumFlux();
+                }
             }
 
             const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
