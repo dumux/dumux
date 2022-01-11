@@ -197,6 +197,14 @@ public:
     const Element& element() const
     { return *elementPtr_; }
 
+    //! Returns true if the IP of an scvf lies on a concave corner
+    bool scvfIntegrationPointInConcaveCorner(const SubControlVolumeFace& scvf) const
+    { return GG::GeometryHelper::scvfIntegrationPointInConcaveCorner(*this, scvf); }
+
+    //! Returns the the scvf of neighbor element with the same integration point and unit outer normal
+    const SubControlVolumeFace& outsideScvfWithSameIntegrationPoint(const SubControlVolumeFace& scvf) const
+    { return GG::GeometryHelper::outsideScvfWithSameIntegrationPoint(*this, scvf); }
+
 private:
 
     const auto& scvfIndices_() const
@@ -249,7 +257,7 @@ public:
     , geometryHelper_(gridGeometry.gridView())
     {}
 
-    //! Get a sub control volume face with a local scv index
+    //! Get a sub control volume face with a global scvf index
     const SubControlVolumeFace& scvf(const GridIndexType scvfIdx) const
     { return scvfs_[findLocalIndex_(scvfIdx, scvfIndices_())]; }
 
@@ -384,6 +392,14 @@ public:
         assert(gridGeometry_);
         return *gridGeometry_;
     }
+
+    //! Returns true if the IP of an scvf lies on a concave corner
+    bool scvfIntegrationPointInConcaveCorner(const SubControlVolumeFace& scvf) const
+    { return GG::GeometryHelper::scvfIntegrationPointInConcaveCorner(*this, scvf); }
+
+    //! Returns the the scvf of neighbor element with the same integration point and unit outer normal
+    const SubControlVolumeFace& outsideScvfWithSameIntegrationPoint(const SubControlVolumeFace& scvf) const
+    { return GG::GeometryHelper::outsideScvfWithSameIntegrationPoint(*this, scvf); }
 
 private:
     //! Binding of an element preparing the geometries of the whole stencil
