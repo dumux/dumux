@@ -116,6 +116,25 @@ struct ModelTraits<TypeTag, TTag::RANSTwoEq>
     using type = TwoEqModelTraits<BaseMassTraits>;
 };
 
+//! The flux variables
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::RANSTwoEq>
+{
+private:
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+    using BaseFluxVars = FluxVariablesBase<Problem, FVElementGeometry, ElementVolumeVariables, ElementFluxVariablesCache>;
+public:
+    using type = TwoEqFluxVariables<TypeTag, BaseFluxVars>;
+};
+
+//! The local residual
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::RANSTwoEq>
+{ using type = TwoEqResidual<TypeTag, NavierStokesMassOnePLocalResidual<TypeTag>>; };
+
 //! Set the volume variables property
 template<class TypeTag>
 struct VolumeVariables<TypeTag, TTag::RANSTwoEq>
