@@ -391,20 +391,28 @@ public:
         // get the transporting velocity which is perpendicular to our own (inner) velocity
         const Scalar transportingVelocity = [&]()
         {
+            const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
+            const Scalar innerTransportingVelocity = elemVolVars[orthogonalScvf.insideScvIdx()].velocity();
+
             static const bool useOldScheme = getParam<bool>("FreeFlow.UseOldTransportingVelocity", true); // TODO how to deprecate?
 
+            if (useOldScheme)
+            {
+                if (scvf.boundary() && fvGeometry.scv(scvf.insideScvIdx()).boundary())
+                {
+                    if (this->elemBcTypes()[scvf.localIndex()].isDirichlet(scvf.normalAxis()))
+                        return problem.dirichlet(this->element(), scvf)[scvf.normalAxis()];
+                }
+                else
+                    return innerTransportingVelocity;
+            }
+
             // use the Dirichlet velocity as transporting velocity if the lateral face is on a Dirichlet boundary
-            if (!useOldScheme && scvf.boundary())
+            if (scvf.boundary())
             {
                 if (this->elemBcTypes()[scvf.localIndex()].isDirichlet(scvf.normalAxis()))
                     return problem.dirichlet(this->element(), scvf)[scvf.normalAxis()];
             }
-
-            const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
-            const Scalar innerTransportingVelocity = elemVolVars[orthogonalScvf.insideScvIdx()].velocity();
-
-            if (useOldScheme)
-                return innerTransportingVelocity;
 
             if (orthogonalScvf.boundary())
             {
@@ -423,13 +431,28 @@ public:
 
         const Scalar transportedMomentum = [&]()
         {
-            // use the Dirichlet velocity as for transported momentum if the lateral face is on a Dirichlet boundary
-            if (scvf.boundary())
+            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+
+            auto getDirichletMomentumFlux = [&]()
             {
-                if (const auto& scv = fvGeometry.scv(scvf.insideScvIdx()); this->elemBcTypes()[scvf.localIndex()].isDirichlet(scv.dofAxis()))
-                    return problem.dirichlet(this->element(), scvf)[scv.dofAxis()] * this->problem().density(this->element(), scv);
+                if (this->elemBcTypes()[scvf.localIndex()].isDirichlet(insideScv.dofAxis()))
+                    return problem.dirichlet(this->element(), scvf)[insideScv.dofAxis()] * this->problem().density(this->element(), insideScv);
                 else
                     DUNE_THROW(Dune::InvalidStateException, "Neither Dirichlet nor Neumann BC set at " << scvf.ipGlobal());
+            };
+
+            // use the Dirichlet velocity as for transported momentum if the lateral face is on a Dirichlet boundary
+            if (scvf.boundary())
+                return getDirichletMomentumFlux();
+            else
+            {
+                const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+                int onBoundaryCounter = 0;
+                onBoundaryCounter += static_cast<int>(insideScv.boundary());
+                onBoundaryCounter += static_cast<int>(outsideScv.boundary());
+                const bool scvfOnCorner = (onBoundaryCounter == 1);
+                if (scvfOnCorner)
+                    return getDirichletMomentumFlux();
             }
 
             const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
