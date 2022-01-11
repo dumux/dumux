@@ -74,20 +74,17 @@ class NavierStokesProblemImpl<TypeTag, DiscretizationMethods::FCStaggered>
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    enum {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
-      };
-
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
-    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
-    using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static constexpr bool isCoupled_ = !std::is_empty_v<CouplingManager>;
 
 public:
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
+    using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
 
     //! Export traits of this problem
     struct Traits
@@ -541,15 +538,20 @@ class NavierStokesProblemImpl<TypeTag, DiscretizationMethods::CCTpfa>
 {
     using ParentType = FVProblem<TypeTag>;
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
-
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeometry::GridView;
+    enum {
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld
+      };
     using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
-    using VelocityVector = GlobalPosition;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using VelocityVector = GlobalPosition;
+    using VelocityGradientTensor = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
@@ -619,6 +621,26 @@ public:
     VelocityVector velocityAtPos(const GlobalPosition&) const
     {
         DUNE_THROW(Dune::NotImplemented, "velocityAtPos not implemented");
+    }
+
+    /*!
+     * \brief Returns the normal velocity at a given sub control volume face.
+     */
+    VelocityGradientTensor ccVelocityGradients(const Element& element,
+                                               const SubControlVolume& scv) const
+    {
+        if constexpr (isCoupled_)
+            return couplingManager_->ccVelocityGradients(element, scv);
+        else
+            return asImp_().ccVelocityGradientsAtPos(scv.ipGlobal());
+    }
+
+    /*!
+     * \brief Returns the velocity at a given position.
+     */
+    VelocityGradientTensor ccVelocityGradientsAtPos(const GlobalPosition&) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "ccVelocityGradientsAtPos not implemented");
     }
 
     /*!

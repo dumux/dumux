@@ -36,6 +36,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/typetraits/typetraits.hh>
 #include <dumux/multidomain/couplingmanager.hh>
+#include <dumux/freeflow/navierstokes/momentum/velocitygradients.hh>
 #include <dumux/discretization/facecentered/staggered/consistentlyorientedgrid.hh>
 
 namespace Dumux {
@@ -82,6 +83,9 @@ private:
     using FluidSystem = typename VolumeVariables<freeFlowMassIndex>::FluidSystem;
 
     using VelocityVector = typename SubControlVolumeFace<freeFlowMassIndex>::GlobalPosition;
+    static constexpr int dimWorld = GridView<freeFlowMassIndex>::dimensionworld;
+    using VelocityGradientTensor = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
+
     static_assert(std::is_same_v<VelocityVector, typename SubControlVolumeFace<freeFlowMomentumIndex>::GlobalPosition>);
 
     struct MomentumCouplingContext
@@ -94,12 +98,16 @@ private:
 
     struct MassAndEnergyCouplingContext
     {
-        MassAndEnergyCouplingContext(FVElementGeometry<freeFlowMomentumIndex>&& f, const std::size_t i)
+        MassAndEnergyCouplingContext(FVElementGeometry<freeFlowMomentumIndex>&& f,
+                                     ElementVolumeVariables<freeFlowMomentumIndex>&& cEVV,
+                                     const std::size_t i)
         : fvGeometry(std::move(f))
+        , curElemVolVars(std::move(cEVV))
         , eIdx(i)
         {}
 
         FVElementGeometry<freeFlowMomentumIndex> fvGeometry;
+        ElementVolumeVariables<freeFlowMomentumIndex> curElemVolVars;
         std::size_t eIdx;
     };
 
@@ -340,13 +348,32 @@ public:
         const auto& scvJ = massAndEnergyCouplingContext_[0].fvGeometry.scv(localMomentumScvIdx);
 
         // create a unit normal vector oriented in positive coordinate direction
-        typename SubControlVolumeFace<freeFlowMassIndex>::GlobalPosition velocity;
+        VelocityVector velocity;
         velocity[scvJ.dofAxis()] = 1.0;
 
         // create the actual velocity vector
         velocity *= this->curSol(freeFlowMomentumIndex)[scvJ.dofIndex()];
 
         return velocity;
+    }
+
+     /*!
+     * \brief Returns the velocity gradient at the cell center of the sub control volume face's inside element
+     */
+    VelocityGradientTensor ccVelocityGradients(const Element<freeFlowMassIndex>& element,
+                                               const SubControlVolume<freeFlowMassIndex>& massScv) const
+    {
+        bindCouplingContext_(Dune::index_constant<freeFlowMassIndex>(), element, massScv.dofIndex()/*eIdx*/);
+
+        const auto& momentumFVGeometry = massAndEnergyCouplingContext_[0].fvGeometry;
+
+        const auto& momentumScv = (*scvs(momentumFVGeometry).begin());
+        const auto& momentumScvf = (*scvfs(momentumFVGeometry, momentumScv).begin());
+
+        return StaggeredVelocityGradients::velocityGradient(momentumFVGeometry,
+                                                            momentumScvf,
+                                                            massAndEnergyCouplingContext_[0].curElemVolVars,
+                                                            true);
     }
 
     /*!
@@ -516,12 +543,19 @@ private:
             const auto& gridGeometry = this->problem(freeFlowMomentumIndex).gridGeometry();
             auto fvGeometry = localView(gridGeometry);
             fvGeometry.bindElement(elementI);
-            massAndEnergyCouplingContext_.emplace_back(std::move(fvGeometry), eIdx);
+
+            auto curElemVolVars = localView(gridVars_(freeFlowMomentumIndex).curGridVolVars());
+            curElemVolVars.bind(elementI, fvGeometry, this->curSol(freeFlowMomentumIndex));
+
+            massAndEnergyCouplingContext_.emplace_back(std::move(fvGeometry), std::move(curElemVolVars), eIdx);
         }
         else if (eIdx != massAndEnergyCouplingContext_[0].eIdx)
         {
             massAndEnergyCouplingContext_[0].eIdx = eIdx;
             massAndEnergyCouplingContext_[0].fvGeometry.bindElement(elementI);
+            massAndEnergyCouplingContext_[0].curElemVolVars.bind(elementI,
+                                                                 massAndEnergyCouplingContext_[0].fvGeometry,
+                                                                 this->curSol(freeFlowMomentumIndex));
         }
     }
 
