@@ -1,0 +1,36 @@
+[TimeLoop]
+DtInitial = 1e-3 # [s]
+TEnd = 100 # [s]
+
+[Grid]
+Verbosity = true
+Positions0 = 0.0 10.0
+Positions1 = 0.0 0.25 0.5
+Cells0 = 25
+Cells1 = 15 15
+Grading1 = 1.2 -1.2
+
+[Problem]
+Name = test_channel_rans
+InletVelocity = 2.5 # [m/s]
+EnableGravity = false
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 1.0
+
+[RANS]
+EnableKOmegaDissipationLimiter = true
+TwoEqTurbulenceModelName = Wilcox
+
+[ Newton ]
+MaxSteps = 10
+TargetSteps = 5
+MaxRelativeShift = 1e-8
+
+[Vtk]
+WriteFaceData = false
+
+[Assembly]
+NumericDifferenceMethod = 0
+NumericDifference.BaseEpsilon = 1e-8

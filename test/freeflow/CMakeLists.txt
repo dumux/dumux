@@ -1,5 +1,6 @@
 add_subdirectory(navierstokes)
 add_subdirectory(navierstokesnc)
 add_subdirectory(rans)
+add_subdirectory(rans_new)
 add_subdirectory(ransnc)
 add_subdirectory(shallowwater)
