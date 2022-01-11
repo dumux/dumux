@@ -1,0 +1,5 @@
+add_subdirectory(twoeq)
+
+file(GLOB DUMUX_FREEFLOW_NAVIERSTOKES_TURBULENCE_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_FREEFLOW_NAVIERSTOKES_TURBULENCE_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/freeflow/navierstokes/turbulence)

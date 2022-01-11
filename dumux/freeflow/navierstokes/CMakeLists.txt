@@ -1,3 +1,4 @@
+add_subdirectory(turbulence)
 add_subdirectory(energy)
 add_subdirectory(mass)
 add_subdirectory(momentum)
