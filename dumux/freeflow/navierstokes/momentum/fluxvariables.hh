@@ -411,13 +411,13 @@ public:
             if (scvf.boundary())
             {
                 if (this->elemBcTypes()[scvf.localIndex()].isDirichlet(scvf.normalAxis()))
-                    return problem.dirichlet(this->element(), scvf)[scvf.normalAxis()];
+                    return 0.5*(problem.dirichlet(this->element(), scvf)[scvf.normalAxis()] + innerTransportingVelocity);
             }
 
             if (orthogonalScvf.boundary())
             {
                 if (this->elemBcTypes()[orthogonalScvf.localIndex()].isDirichlet(scvf.normalAxis()))
-                    return problem.dirichlet(this->element(), scvf)[scvf.normalAxis()];
+                    return 0.5*(problem.dirichlet(this->element(), scvf)[scvf.normalAxis()] + innerTransportingVelocity);
                 else
                     return innerTransportingVelocity; // fallback value, should actually never be called
             }
