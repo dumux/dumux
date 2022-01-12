@@ -61,7 +61,7 @@ struct FaceCenteredStaggeredDefaultGridGeometryTraits : public DefaultMapperTrai
     using SubControlVolumeFace = FaceCenteredStaggeredSubControlVolumeFace<GridView>;
     using IntersectionMapper = ConformingGridIntersectionMapper<GridView>;
     using LocalIntersectionMapper = FaceCenteredStaggeredLocalIntersectionIndexMapper<GridView>;
-    using GeometryHelper = FaceCenteredStaggeredGeometryHelper<GridView, typename GridView::Grid>;
+    using GeometryHelper = FaceCenteredStaggeredGeometryHelper<GridView>;
 
     template<class GridGeometry>
     using ConnectivityMap = FaceCenteredStaggeredConnectivityMap<GridGeometry>;

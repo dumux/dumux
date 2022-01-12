@@ -25,17 +25,17 @@
  * to mimic the 3D behavior of the flow.
  */
 
-#ifndef DUMUX_3D_CHANNEL_PROBLEM_HH
-#define DUMUX_3D_CHANNEL_PROBLEM_HH
+#ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKES_3D_CHANNEL_PROBLEM_HH
+#define DUMUX_TEST_FREEFLOW_NAVIERSTOKES_3D_CHANNEL_PROBLEM_HH
 
 #include <dune/common/float_cmp.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/numeqvector.hh>
 
-#include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
+#include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
+#include <dumux/freeflow/navierstokes/scalarfluxhelper.hh>
 
 #ifndef GRID_DIM
 #define GRID_DIM 3
@@ -59,33 +59,31 @@ class ThreeDChannelTestProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
 
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
-    using Element = typename GridView::template Codim<0>::Entity;
-
+    using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using NumEqVector = typename ParentType::NumEqVector;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PrimaryVariables = typename ParentType::PrimaryVariables;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
-    static constexpr int dim = GridView::dimension;
-    static constexpr int dimWorld = GridView::dimensionworld;
+    static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
-    using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
-    using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
-
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
     static constexpr bool enablePseudoThreeDWallFriction = !(GRID_DIM == 3);
+    static constexpr int dim = GridGeometry::GridView::dimension;
 
 public:
-    ThreeDChannelTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry)
+    ThreeDChannelTestProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
+    : ParentType(gridGeometry, couplingManager)
     {
         deltaP_ = getParam<Scalar>("Problem.DeltaP");
         height_ = getParam<Scalar>("Problem.Height");
@@ -95,7 +93,7 @@ public:
         if(dim == 3 && !Dune::FloatCmp::eq(height_, this->gridGeometry().bBoxMax()[2]))
             DUNE_THROW(Dune::InvalidStateException, "z-dimension must equal height");
 
-        if(enablePseudoThreeDWallFriction)
+        if constexpr (enablePseudoThreeDWallFriction)
             extrusionFactor_ = 2.0/3.0 * height_;
         else
             extrusionFactor_ = 1.0;
@@ -117,30 +115,29 @@ public:
 
     /*!
      * \brief Evaluates the source term for all phases within a given
-     *        sub-control volume face.
+     *        sub-control volume
      */
-    using ParentType::source;
-    template<class ElementVolumeVariables, class ElementFaceVariables>
-    NumEqVector source(const Element &element,
+    template<class ElementVolumeVariables>
+    NumEqVector source(const Element& element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
-                       const ElementFaceVariables& elemFaceVars,
-                       const SubControlVolumeFace &scvf) const
+                       const SubControlVolume& scv) const
     {
         auto source = NumEqVector(0.0);
 
-#if GRID_DIM != 3
+        if constexpr (ParentType::isMomentumProblem() && enablePseudoThreeDWallFriction)
+        {
             static const Scalar height = getParam<Scalar>("Problem.Height");
             static const Scalar factor = getParam<Scalar>("Problem.PseudoWallFractionFactor", 8.0);
-            source[scvf.directionIndex()] = this->pseudo3DWallFriction(scvf, elemVolVars, elemFaceVars, height, factor);
-#endif
+            source[scv.dofAxis()] = this->pseudo3DWallFriction(element, fvGeometry, elemVolVars, scv, height, factor);
+        }
 
         return source;
     }
 
+    //! the domain's extrusion factor
     Scalar extrusionFactorAtPos(const GlobalPosition& pos) const
     { return extrusionFactor_; }
-
 
     // \}
     /*!
@@ -158,16 +155,14 @@ public:
     {
         BoundaryTypes values;
 
-        // set a fixed pressure at the inlet and outlet
-        if (isOutlet_(globalPos) || isInlet_(globalPos))
-            values.setDirichlet(Indices::pressureIdx);
-        else
+        if constexpr (ParentType::isMomentumProblem())
         {
-            values.setDirichlet(Indices::velocityXIdx);
-            values.setDirichlet(Indices::velocityYIdx);
-            if(dim == 3)
-                values.setDirichlet(Indices::velocityZIdx);
+            values.setAllDirichlet();
+            if (isOutlet_(globalPos) || isInlet_(globalPos))
+                values.setAllNeumann();
         }
+        else
+            values.setNeumann(Indices::conti0EqIdx);
 
         return values;
     }
@@ -179,29 +174,47 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values(0.0);
+        // no-flow/no-slip
+        return PrimaryVariables(0.0);
+    }
 
-        if(isInlet_(globalPos))
-            values[Indices::pressureIdx] = 1e5 + deltaP_;
+    /*!
+     * \brief Evaluates the boundary conditions for a Neumann control volume.
+     *
+     * \param element The element for which the Neumann boundary condition is set
+     * \param fvGeometry The fvGeometry
+     * \param elemVolVars The element volume variables
+     * \param elemFaceVars The element face variables
+     * \param scvf The boundary sub control volume face
+     */
+    template<class ElementVolumeVariables, class ElementFluxVariablesCache>
+    NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElementFluxVariablesCache& elemFluxVarsCache,
+                        const SubControlVolumeFace& scvf) const
+    {
+        NumEqVector values(0.0);
+        const auto& globalPos = scvf.ipGlobal();
 
-        if(isOutlet_(globalPos))
-            values[Indices::pressureIdx] = 1e5;
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            const auto p = isInlet_(globalPos) ? 1e5 + deltaP_ : 1e5;
+            values = NavierStokesMomentumBoundaryFluxHelper::fixedPressureMomentumFlux(
+                *this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, p
+            );
+        }
+        else
+        {
+            values = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>::scalarOutflowFlux(
+                *this, element, fvGeometry, scvf, elemVolVars
+            );
+        }
 
         return values;
     }
 
     // \}
-
-    /*!
-     * \brief Evaluates the initial value for a control volume.
-     *
-     * \param globalPos The global position
-     */
-    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
-    {
-        PrimaryVariables values(0.0);
-        return values;
-    }
 
     //! Returns the analytical solution for the flux through the rectangular channel
     Scalar analyticalFlux() const
@@ -218,14 +231,10 @@ public:
 private:
 
     bool isInlet_(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] < eps_;
-    }
+    { return globalPos[0] < eps_; }
 
     bool isOutlet_(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
-    }
+    { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
     static constexpr Scalar eps_=1e-6;
     Scalar deltaP_;
@@ -234,6 +243,7 @@ private:
     Scalar rho_;
     Scalar nu_;
 };
+
 } // end namespace Dumux
 
 #endif

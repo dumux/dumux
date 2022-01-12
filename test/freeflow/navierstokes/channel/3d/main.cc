@@ -29,20 +29,22 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/grid/io/file/vtk.hh>
-#include <dune/istl/io.hh>
 
-#include <dumux/assembly/staggeredfvassembler.hh>
-#include <dumux/assembly/diffmethod.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
-#include <dumux/freeflow/navierstokes/staggered/fluxoversurface.hh>
+
+#include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_sub.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
-#include <dumux/io/staggeredvtkoutputmodule.hh>
+
 #include <dumux/linear/seqsolverbackend.hh>
-#include <dumux/nonlinear/newtonsolver.hh>
+#include <dumux/multidomain/fvassembler.hh>
+#include <dumux/multidomain/traits.hh>
+#include <dumux/multidomain/newtonsolver.hh>
+
+#include <dumux/freeflow/navierstokes/velocityoutput.hh>
+#include <dumux/freeflow/navierstokes/fluxoveraxisalignedsurface.hh>
 
 #include "properties.hh"
 
@@ -51,7 +53,8 @@ int main(int argc, char** argv)
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = Properties::TTag::ThreeDChannelTest;
+    using MomentumTypeTag = Properties::TTag::ThreeDChannelTestMomentum;
+    using MassTypeTag = Properties::TTag::ThreeDChannelTestMass;
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -64,8 +67,8 @@ int main(int argc, char** argv)
     Parameters::init(argc, argv);
 
     // create a grid
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using Grid = GetPropType<TypeTag, Properties::Grid>;
+    using Scalar = GetPropType<MassTypeTag, Properties::Scalar>;
+    using Grid = GetPropType<MassTypeTag, Properties::Grid>;
     Dumux::GridManager<Grid> gridManager;
 
 #if HAVE_DUNE_SUBGRID && GRID_DIM == 3
@@ -87,6 +90,8 @@ int main(int argc, char** argv)
     };
 
     gridManager.init(selector, "Internal");
+#elif HAVE_DUNE_SUBGRID
+    gridManager.init([&](const auto& element) { return true; });
 #else
     gridManager.init();
 #endif
@@ -99,110 +104,110 @@ int main(int argc, char** argv)
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
+    using MomentumGridGeometry = GetPropType<MomentumTypeTag, Properties::GridGeometry>;
+    auto momentumGridGeometry = std::make_shared<MomentumGridGeometry>(leafGridView);
+    using MassGridGeometry = GetPropType<MassTypeTag, Properties::GridGeometry>;
+    auto massGridGeometry = std::make_shared<MassGridGeometry>(leafGridView);
 
-    // the problem (boundary conditions)
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(gridGeometry);
+    // the coupling manager
+    using Traits = MultiDomainTraits<MomentumTypeTag, MassTypeTag>;
+    using CouplingManager = StaggeredFreeFlowCouplingManager<Traits>;
+    auto couplingManager = std::make_shared<CouplingManager>();
+
+    // the problems (boundary conditions)
+    using MomentumProblem = GetPropType<MomentumTypeTag, Properties::Problem>;
+    auto momentumProblem = std::make_shared<MomentumProblem>(momentumGridGeometry, couplingManager);
+    using MassProblem = GetPropType<MassTypeTag, Properties::Problem>;
+    auto massProblem = std::make_shared<MassProblem>(massGridGeometry, couplingManager);
 
     // the solution vector
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    constexpr auto momentumIdx = CouplingManager::freeFlowMomentumIndex;
+    constexpr auto massIdx = CouplingManager::freeFlowMassIndex;
+    using SolutionVector = typename Traits::SolutionVector;
     SolutionVector x;
-    x[GridGeometry::cellCenterIdx()].resize(gridGeometry->numCellCenterDofs());
-    x[GridGeometry::faceIdx()].resize(gridGeometry->numFaceDofs());
+    x[momentumIdx].resize(momentumGridGeometry->numDofs());
+    x[massIdx].resize(massGridGeometry->numDofs());
 
     // the grid variables
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
-    gridVariables->init(x);
+    using MomentumGridVariables = GetPropType<MomentumTypeTag, Properties::GridVariables>;
+    auto momentumGridVariables = std::make_shared<MomentumGridVariables>(momentumProblem, momentumGridGeometry);
+    using MassGridVariables = GetPropType<MassTypeTag, Properties::GridVariables>;
+    auto massGridVariables = std::make_shared<MassGridVariables>(massProblem, massGridGeometry);
 
-    // intialize the vtk output module
-    using IOFields = GetPropType<TypeTag, Properties::IOFields>;
-    StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
+    // compute coupling stencil and afterwards initialize grid variables (need coupling information)
+    couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x);
+    massGridVariables->init(x[massIdx]);
+    momentumGridVariables->init(x[momentumIdx]);
+
+    using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+    auto assembler = std::make_shared<Assembler>(std::make_tuple(momentumProblem, massProblem),
+                                                 std::make_tuple(momentumGridGeometry, massGridGeometry),
+                                                 std::make_tuple(momentumGridVariables, massGridVariables),
+                                                 couplingManager);
+
+    // initialize the vtk output module
+    using IOFields = GetPropType<MassTypeTag, Properties::IOFields>;
+    VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name());
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
+    vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
     vtkWriter.write(0.0);
-
-    // the assembler with time loop for instationary problem
-    using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     // the linear solver
     using LinearSolver = Dumux::UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver);
+    using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+    NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
-    // set up two planes over which fluxes are calculated
-    FluxOverSurface<GridVariables,
-                    SolutionVector,
-                    GetPropType<TypeTag, Properties::ModelTraits>,
-                    GetPropType<TypeTag, Properties::LocalResidual>> flux(*gridVariables, x);
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
+    // set up three planes over which fluxes are calculated
+    FluxOverAxisAlignedSurface flux(*massGridVariables, x[massIdx], assembler->localResidual(massIdx));
+
+    using GridView = typename GetPropType<MassTypeTag, Properties::GridGeometry>::GridView;
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
 
-    const Scalar xMin = gridGeometry->bBoxMin()[0];
-    const Scalar xMax = gridGeometry->bBoxMax()[0];
-    const Scalar yMin = gridGeometry->bBoxMin()[1];
-    const Scalar yMax = gridGeometry->bBoxMax()[1];
+    const Scalar xMin = massGridGeometry->bBoxMin()[0];
+    const Scalar xMax = massGridGeometry->bBoxMax()[0];
+    const Scalar yMin = massGridGeometry->bBoxMin()[1];
+    const Scalar yMax = massGridGeometry->bBoxMax()[1];
 
 #if GRID_DIM == 3
-    const Scalar zMin = gridGeometry->bBoxMin()[2];
-    const Scalar zMax = gridGeometry->bBoxMax()[2];
+    const Scalar zMin = massGridGeometry->bBoxMin()[2];
+    const Scalar zMax = massGridGeometry->bBoxMax()[2];
 #endif
 
-    // The first plane shall be placed at the middle of the channel.
-    // If we have an odd number of cells in x-direction, there would not be any cell faces
-    // at the postion of the plane (which is required for the flux calculation).
-    // In this case, we add half a cell-width to the x-position in order to make sure that
-    // the cell faces lie on the plane. This assumes a regular cartesian grid.
-    // The second plane is placed at the outlet of the channel.
+    // the first plane is at the inlet
 #if GRID_DIM == 3
-    const auto p0inlet = GlobalPosition{xMin, yMin, zMin};
-    const auto p1inlet = GlobalPosition{xMin, yMax, zMin};
-    const auto p2inlet = GlobalPosition{xMin, yMin, zMax};
-    const auto p3inlet = GlobalPosition{xMin, yMax, zMax};
-    flux.addSurface("inlet", p0inlet, p1inlet, p2inlet, p3inlet);
+    const auto inletLowerLeft = GlobalPosition{xMin, yMin, zMin};
+    const auto inletUpperRight = GlobalPosition{xMin, yMax, zMax};
+    flux.addAxisAlignedSurface("inlet", inletLowerLeft, inletUpperRight);
 #else
-    const auto p0inlet = GlobalPosition{xMin, yMin};
-    const auto p1inlet = GlobalPosition{xMin, yMax};
-    flux.addSurface("inlet", p0inlet, p1inlet);
+    const auto inletLowerLeft = GlobalPosition{xMin, yMin};
+    const auto inletUpperRight = GlobalPosition{xMin, yMax};
+    flux.addAxisAlignedSurface("inlet", inletLowerLeft, inletUpperRight);
 #endif
 
+    // the second plane is at the middle of the channel
     const Scalar planePosMiddleX = xMin + 0.5*(xMax - xMin);
-    int numCellsX = getParam<std::vector<int>>("Grid.Cells")[0];
-
-    const unsigned int refinement = getParam<unsigned int>("Grid.Refinement", 0);
-
-    numCellsX *= (1<<refinement);
-
-    const Scalar offsetX = (numCellsX % 2 == 0) ? 0.0 : 0.5*((xMax - xMin) / numCellsX);
-
 #if GRID_DIM == 3
-    const auto p0middle = GlobalPosition{planePosMiddleX + offsetX, yMin, zMin};
-    const auto p1middle = GlobalPosition{planePosMiddleX + offsetX, yMax, zMin};
-    const auto p2middle = GlobalPosition{planePosMiddleX + offsetX, yMin, zMax};
-    const auto p3middle = GlobalPosition{planePosMiddleX + offsetX, yMax, zMax};
-    flux.addSurface("middle", p0middle, p1middle, p2middle, p3middle);
+    const auto middleLowerLeft = GlobalPosition{planePosMiddleX, yMin, zMin};
+    const auto middleUpperRight = GlobalPosition{planePosMiddleX, yMax, zMax};
+    flux.addAxisAlignedSurface("middle", middleLowerLeft, middleUpperRight);
 #else
-    const auto p0middle = GlobalPosition{planePosMiddleX + offsetX, yMin};
-    const auto p1middle = GlobalPosition{planePosMiddleX + offsetX, yMax};
-flux.addSurface("middle", p0middle, p1middle);
+    const auto middleLowerLeft = GlobalPosition{planePosMiddleX, yMin};
+    const auto middleUpperRight = GlobalPosition{planePosMiddleX, yMax};
+    flux.addAxisAlignedSurface("middle", middleLowerLeft, middleUpperRight);
 #endif
 
-    // The second plane is placed at the outlet of the channel.
+    // The last plane is placed at the outlet of the channel.
 #if GRID_DIM == 3
-    const auto p0outlet = GlobalPosition{xMax, yMin, zMin};
-    const auto p1outlet = GlobalPosition{xMax, yMax, zMin};
-    const auto p2outlet = GlobalPosition{xMax, yMin, zMax};
-    const auto p3outlet = GlobalPosition{xMax, yMax, zMax};
-    flux.addSurface("outlet", p0outlet, p1outlet, p2outlet, p3outlet);
+    const auto outletLowerLeft = GlobalPosition{xMax, yMin, zMin};
+    const auto outletUpperRight = GlobalPosition{xMax, yMax, zMax};
+    flux.addAxisAlignedSurface("outlet", outletLowerLeft, outletUpperRight);
 #else
-    const auto p0outlet = GlobalPosition{xMax, yMin};
-    const auto p1outlet = GlobalPosition{xMax, yMax};
-    flux.addSurface("outlet", p0outlet, p1outlet);
+    const auto outletLowerLeft = GlobalPosition{xMax, yMin};
+    const auto outletUpperRight = GlobalPosition{xMax, yMax};
+    flux.addAxisAlignedSurface("outlet", outletLowerLeft, outletUpperRight);
 #endif
 
     // linearize & solve
@@ -213,36 +218,18 @@ flux.addSurface("middle", p0middle, p1middle);
     vtkWriter.write(1.0);
 
     // calculate and print mass fluxes over the planes
-    flux.calculateMassOrMoleFluxes();
-    if(GetPropType<TypeTag, Properties::ModelTraits>::enableEnergyBalance())
-    {
-        std::cout << "mass / energy flux at inlet is: " << flux.netFlux("inlet") << std::endl;
-        std::cout << "mass / energy flux at middle is: " << flux.netFlux("middle") << std::endl;
-        std::cout << "mass / energy flux at outlet is: " << flux.netFlux("outlet") << std::endl;
-    }
-    else
-    {
-        std::cout << "mass flux at inlet is: " << flux.netFlux("inlet") << std::endl;
-        std::cout << "mass flux at middle is: " << flux.netFlux("middle") << std::endl;
-        std::cout << "mass flux at outlet is: " << flux.netFlux("outlet") << std::endl;
-    }
-
-    // calculate and print volume fluxes over the planes
-    flux.calculateVolumeFluxes();
-    std::cout << "volume flux at inlet is: " << flux.netFlux("inlet")[0] << std::endl;
-    std::cout << "volume flux at middle is: " << flux.netFlux("middle")[0] << std::endl;
-    std::cout << "volume flux at outlet is: " << flux.netFlux("outlet")[0] << std::endl;
-
+    flux.calculateAllFluxes();
+    std::cout << "mass flux at inlet is: " << flux.flux("inlet") << std::endl;
+    std::cout << "mass flux at middle is: " << flux.flux("middle") << std::endl;
+    std::cout << "mass flux at outlet is: " << flux.flux("outlet") << std::endl;
+    std::cout << "analyticalFlux: " << massProblem->analyticalFlux()*1e3 << std::endl;
 
     timer.stop();
-
-    std::cout << "analyticalFlux: " << problem->analyticalFlux() << std::endl;
 
     const auto& comm = Dune::MPIHelper::getCommunication();
     std::cout << "Simulation took " << timer.elapsed() << " seconds on "
               << comm.size() << " processes.\n"
               << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
-
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
@@ -256,4 +243,4 @@ flux.addSurface("middle", p0middle, p1middle);
     }
 
     return 0;
-} // end main
+}

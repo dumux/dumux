@@ -24,25 +24,15 @@
 #ifndef DUMUX_DISCRETIZATION_FACECENTERED_STAGGERED_GEOMETRY_HELPER_HH
 #define DUMUX_DISCRETIZATION_FACECENTERED_STAGGERED_GEOMETRY_HELPER_HH
 
-#include <dune/common/float_cmp.hh>
+#include <array>
+#include <cassert>
 #include <dumux/common/indextraits.hh>
-#include <dune/common/reservedvector.hh>
-#include <dumux/common/math.hh>
-#include <dumux/discretization/basegridgeometry.hh>
-#include <dumux/discretization/checkoverlapsize.hh>
-#include <dumux/discretization/method.hh>
-
-namespace Dune {
-
-template<int dim, class Coordinates>
-class YaspGrid;
-
-}
+#include <dumux/discretization/facecentered/staggered/gridsupportsconcavecorners.hh>
 
 namespace Dumux {
 
-template<class GridView, class Implementation>
-class FaceCenteredStaggeredGeometryHelperBase
+template<class GridView>
+class FaceCenteredStaggeredGeometryHelper
 {
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using SmallLocalIndexType = typename IndexTraits<GridView>::SmallLocalIndex;
@@ -54,15 +44,15 @@ public:
     static constexpr auto numElementFaces = dim * 2;
     static constexpr auto numLateralFacesPerScv = 2 * (dim - 1);
 
-    FaceCenteredStaggeredGeometryHelperBase(const GridView& gridView) : gridView_(gridView) {}
+    FaceCenteredStaggeredGeometryHelper(const GridView& gridView) : gridView_(gridView) {}
 
     //! Returns the local index of the opposing face.
     static constexpr SmallLocalIndexType localOppositeIdx(const SmallLocalIndexType ownLocalFaceIndex)
     {
-        return (ownLocalFaceIndex % 2) ? (ownLocalFaceIndex - 1) : (ownLocalFaceIndex + 1);
+        return isOdd_(ownLocalFaceIndex) ? (ownLocalFaceIndex - 1) : (ownLocalFaceIndex + 1);
     }
 
-       //! Return the local index of a lateral orthogonal scvf
+    //! Return the local index of a lateral orthogonal scvf
     static constexpr int lateralOrthogonalScvfLocalIndex(const SmallLocalIndexType ownLocalScvfIndex)
     {
         if constexpr(GridView::Grid::dimension == 1)
@@ -128,7 +118,6 @@ public:
         }
     }
 
-
      //! Returns the local indices of the faces lateral to the own one.
     static constexpr auto localLaterFaceIndices(const SmallLocalIndexType ownLocalFaceIndex)
     {
@@ -163,144 +152,60 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "localFacetIdx " << localFacetIdx << " out of range");
     }
 
-    //! Map two local facet indices to a local common entity index (vertex in 2D or edge in 3D)
-    SmallLocalIndexType localCommonEntityIndex(SmallLocalIndexType localFacetIdx0, SmallLocalIndexType localFacetIdx1) const
+     //! Returns true if the IP of an scvf lies on a concave corner
+    template<class FVElementGeometry, class SubControlVolumeFace>
+    static bool scvfIntegrationPointInConcaveCorner(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
     {
-        constexpr auto table = []
-        {
-            using Table = std::array<std::array<SmallLocalIndexType, 2>, dim == 2 ? 4 : 12>;
-            if constexpr (dim == 2)
-                return Table {{ {0,2}, {1,2}, {0,3}, {1,3} }};
-            else
-                return Table {{ {0,2}, {1,2}, {0,3}, {1,3}, {0,4}, {1,4}, {2,4}, {3,4}, {0,5}, {1,5}, {2,5}, {3,5} }};
-        }();
+        assert (scvf.isLateral());
 
-        using std::swap;
-        if (localFacetIdx0 > localFacetIdx1)
-            swap(localFacetIdx0, localFacetIdx1);
-
-        const auto idx = std::find(table.begin(), table.end(), std::array<SmallLocalIndexType, 2>{localFacetIdx0, localFacetIdx1});
-
-        if (idx != std::end(table))
-            return std::distance(table.begin(), idx);
+        using Grid = typename FVElementGeometry::GridGeometry::Grid;
+        if constexpr (!GridSupportsConcaveCorners<Grid>::value)
+            return false;
         else
-            DUNE_THROW(Dune::InvalidStateException, "Faces with local indices " << localFacetIdx0 <<  " and "  << localFacetIdx1 << " do not intersect");
+        {
+            if (scvf.boundary())
+                return false;
+
+            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+            const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+            int onBoundaryCounter = 0;
+            onBoundaryCounter += static_cast<int>(insideScv.boundary());
+            onBoundaryCounter += static_cast<int>(outsideScv.boundary());
+            return onBoundaryCounter == 1;
+        }
     }
 
-    //! Map two facets to a global common entity index (vertex in 2D or edge in 3D)
-    auto globalCommonEntityIndex(const Element& element, SmallLocalIndexType localFacetIdx0, SmallLocalIndexType localFacetIdx1) const
+    template<class FVElementGeometry, class SubControlVolumeFace>
+    static const SubControlVolumeFace& outsideScvfWithSameIntegrationPoint(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
     {
-        const auto refElement = referenceElement(element);
+        const auto& lateralOrthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
+        assert(!lateralOrthogonalScvf.boundary());
 
-        assert(refElement.size(localFacetIdx0, 1, 2) == refElement.size(localFacetIdx1, 1, 2));
-        std::array<GridIndexType, dim == 2 ? 2 : 4> cache = {};
-        std::bitset<dim == 2 ? 2 : 4> valueCached = {};
+        const int offset = (dim == 2) ? 3 : 5;
+        const auto otherLocalIdx = isOdd_(scvf.localIndex()) ? scvf.localIndex() - offset : scvf.localIndex() + offset;
 
-        for (int i = 0; i < refElement.size(localFacetIdx0, 1, 2); ++i)
+        auto outsideFVGeometry = localView(fvGeometry.gridGeometry());
+        const auto outsideElementIdx = fvGeometry.scv(lateralOrthogonalScvf.outsideScvIdx()).elementIndex();
+        outsideFVGeometry.bindElement(fvGeometry.gridGeometry().element(outsideElementIdx));
+
+        for (const auto& otherScvf : scvfs(outsideFVGeometry))
         {
-            // get local sub index of subentity w.r.t. to the element
-            const auto localEntityIdx0 = refElement.subEntity(localFacetIdx0, 1, i, 2);
-            // and with the local index we can get the global index of the vertex/edge (2d/3d)
-            const auto globalEntityIdx0 = gridView().indexSet().subIndex(element, localEntityIdx0, 2);
-            for (int j = 0; j < refElement.size(localFacetIdx1, 1, 2); ++j)
-            {
-                const auto globalEntityIdx1 = valueCached[j] ? cache[j]
-                    : gridView().indexSet().subIndex(element, refElement.subEntity(localFacetIdx1, 1, j, 2), 2);
-
-                if (globalEntityIdx0 == globalEntityIdx1)
-                    return globalEntityIdx0;
-                else
-                {
-                    cache[j] = globalEntityIdx1;
-                    valueCached.set(j);
-                }
-            }
+            if (otherScvf.localIndex() == otherLocalIdx)
+                return otherScvf;
         }
-        DUNE_THROW(Dune::InvalidStateException, "No common entity found");
+
+        DUNE_THROW(Dune::InvalidStateException, "No outside scvf found");
     }
 
     const GridView& gridView() const
     { return gridView_; }
 
-protected:
-
-    Implementation &asImp()
-    { return *static_cast<Implementation*>(this); }
-
-    const Implementation &asImp() const
-    { return *static_cast<const Implementation*>(this); }
-
 private:
+
+    static constexpr bool isOdd_(int number)
+    { return number % 2; }
+
     GridView gridView_;
-};
-
-
-template<class GridView, class Grid = typename GridView::Grid>
-class FaceCenteredStaggeredGeometryHelper
-    : public FaceCenteredStaggeredGeometryHelperBase<GridView, FaceCenteredStaggeredGeometryHelper<GridView, Grid>>
-{
-    using ParentType = FaceCenteredStaggeredGeometryHelperBase<GridView, FaceCenteredStaggeredGeometryHelper<GridView, Grid>>;
-    using SmallLocalIndexType = typename IndexTraits<GridView>::SmallLocalIndex;
-    using Element = typename GridView::template Codim<0>::Entity;
-public:
-
-    using ParentType::ParentType;
-
-    //! Update the map for getting the corresponding local face indices in another element.
-    void update(const Element& ownElement, const Element& otherElement)
-    {
-        SmallLocalIndexType ownIdx = 0;
-        SmallLocalIndexType otherIdx = 0;
-        for (const auto& ownIs : intersections(this->gridView(), ownElement))
-        {
-            // helper lambda to make sure the inner loop stops once the other index is found
-            const auto computeOtherIdx = [&] (const auto& ownOuterNormal)
-            {
-                for (const auto& otherIs : intersections(this->gridView(), otherElement))
-                {
-                    const auto& otherOuterNormal = otherIs.centerUnitOuterNormal();
-                    if (Dune::FloatCmp::eq<typename GridView::ctype>(ownOuterNormal*otherOuterNormal, 1.0))
-                    {
-                        map_[ownIdx++] = otherIdx++;
-                        return;
-                    }
-                }
-            };
-
-            computeOtherIdx(ownIs.centerUnitOuterNormal());
-        }
-        if (ownIdx != map_.size())
-            DUNE_THROW(Dune::InvalidStateException, "Index could not be mapped");
-    }
-
-    //! Return the local index of the other element's facet with the same position as the own element's facet.
-    SmallLocalIndexType localFaceIndexInOtherElement(const SmallLocalIndexType localFaceIndexInOwnElement) const
-    { return map_[localFaceIndexInOwnElement]; }
-
-private:
-    std::array<SmallLocalIndexType, ParentType::numElementFaces> map_;
-};
-
-template<class GridView, class YaspCoordinates>
-class FaceCenteredStaggeredGeometryHelper<GridView, Dune::YaspGrid<GridView::Grid::dimension, YaspCoordinates>>
-    : public FaceCenteredStaggeredGeometryHelperBase<GridView, FaceCenteredStaggeredGeometryHelper<GridView, typename GridView::Grid>>
-{
-    using ParentType = FaceCenteredStaggeredGeometryHelperBase<GridView, FaceCenteredStaggeredGeometryHelper<GridView, typename GridView::Grid>>;
-    using SmallLocalIndexType = typename IndexTraits<GridView>::SmallLocalIndex;
-    using Element = typename GridView::template Codim<0>::Entity;
-public:
-
-    using ParentType::ParentType;
-
-    //! Update the map for getting the corresponding local face indices in another element.
-    //! Nothing needs to be done here.
-    void update(const Element& ownElement, const Element& otherElement)
-    {}
-
-    //! Return the local index of the other element's facet with the same position as the own element's facet.
-    //! For Yasp grids, this is just the same index.
-    SmallLocalIndexType localFaceIndexInOtherElement(const SmallLocalIndexType localFaceIndexInOwnElement) const
-    { return localFaceIndexInOwnElement; }
 };
 
 } // end namespace Dumux
