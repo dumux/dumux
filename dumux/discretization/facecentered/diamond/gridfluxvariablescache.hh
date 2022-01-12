@@ -110,19 +110,25 @@ public:
         // only do the update if fluxes are solution dependent or if update is forced
         fluxVarsCache_.resize(gridGeometry.numScvf());
         fluxVarsElementCache_.resize(gridGeometry.gridView().size(0));
+        fluxVarsElementCenterGradN_.resize(gridGeometry.gridView().size(0));
+        auto fvGeometry = localView(gridGeometry);
         for (const auto& element : elements(gridGeometry.gridView()))
         {
             // Prepare the geometries within the elements of the stencil
-            auto fvGeometry = localView(gridGeometry);
             fvGeometry.bind(element);
 
             auto elemVolVars = localView(gridVolVars);
             elemVolVars.bind(element, fvGeometry, sol);
 
-            // compute element-wise tensor
             const auto eIdx = gridGeometry.elementMapper().index(element);
+
+            // only update shape functions at element centers if update is forced
+            if (forceUpdate)
+                fluxVarsElementCenterGradN_[eIdx] = computeCenterShapeFunctionGradients_(fvGeometry);
+
+            // compute element-wise tensor
             fluxVarsElementCache_[eIdx] = FluxVariablesElementCache<Tensor>{
-                neighborhoodAverageSkewGradV_(element, gridGeometry, gridVolVars)
+                neighborhoodAverageSkewGradV_(fvGeometry, gridVolVars)
             };
 
             // only update shape functions for fluxes if update is forced
@@ -140,7 +146,7 @@ public:
         // update element-wise tensor
         const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
         fluxVarsElementCache_[eIdx] = FluxVariablesElementCache<Tensor>{
-            neighborhoodAverageSkewGradV_(element, fvGeometry.gridGeometry(), elemVolVars.gridVolVars())
+            neighborhoodAverageSkewGradV_(fvGeometry, elemVolVars.gridVolVars())
         };
     }
 
@@ -160,11 +166,9 @@ public:
     { return fluxVarsElementCache_[eIdx]; }
 
 private:
-    template<class GridVolumeVariables>
-    Tensor elementAverageSkewGradV_(const Element& element, const GridGeometry& gridGeometry, const GridVolumeVariables& gridVolVars) const
+    std::vector<GlobalPosition> computeCenterShapeFunctionGradients_(const FVElementGeometry& fvGeometry) const
     {
-        auto fvGeometry = localView(gridGeometry);
-        fvGeometry.bind(element);
+        const auto& element = fvGeometry.element();
         const auto& geometry = element.geometry();
         const auto ipLocal = geometry.local(geometry.center());
 
@@ -177,34 +181,49 @@ private:
 
         // compute the gradN at for every scv/dof
         std::vector<GlobalPosition> gradN(fvGeometry.numScv(), GlobalPosition(0));
-        for (const auto& scv: scvs(fvGeometry))
+        for (const auto& scv : scvs(fvGeometry))
             jacInvT.mv(shapeJacobian[scv.localDofIndex()][0], gradN[scv.indexInElement()]);
+
+        return gradN;
+    }
+
+    template<class GridVolumeVariables>
+    Tensor elementAverageSkewGradV_(const FVElementGeometry& fvGeometry, const GridVolumeVariables& gridVolVars) const
+    {
+        const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(fvGeometry.element());
+        const auto& gradN = fluxVarsElementCenterGradN_[eIdx];
 
         // integrate tensor with midpoint rule
         Tensor skewGradV(0.0);
-        for (int dir = 0; dir < dim; ++dir)
-            for (const auto& scv : scvs(fvGeometry))
-                skewGradV[dir].axpy(gridVolVars.volVars(scv).velocity(dir), gradN[scv.indexInElement()]);
+        for (const auto& scv : scvs(fvGeometry))
+        {
+            const auto& thisGradN = gradN[scv.indexInElement()];
+            const auto& volVars = gridVolVars.volVars(scv);
+            for (int dir = 0; dir < dim; ++dir)
+                skewGradV[dir].axpy(0.5*volVars.velocity(dir), thisGradN);
+        }
 
         // we need the skew-symmetric part here, i.e. 0.5*(gradV - gradV^T)
-        skewGradV -= getTransposed(skewGradV);
-        skewGradV *= 0.5;
+        skewGradV.axpy(-0.5, getTransposed(skewGradV));
 
         return skewGradV;
     }
 
     template<class GridVolumeVariables>
-    Tensor neighborhoodAverageSkewGradV_(const Element& element, const GridGeometry& gridGeometry, const GridVolumeVariables& gridVolVars) const
+    Tensor neighborhoodAverageSkewGradV_(const FVElementGeometry& fvGeometry, const GridVolumeVariables& gridVolVars) const
     {
+        const auto& element = fvGeometry.element();
         Scalar totalVolume = element.geometry().volume();
         Tensor skewGradV(0.0);
-        skewGradV += elementAverageSkewGradV_(element, gridGeometry, gridVolVars) * totalVolume;
-        for (const auto& intersection : intersections(gridGeometry.gridView(), element))
+        skewGradV += elementAverageSkewGradV_(fvGeometry, gridVolVars) * totalVolume;
+        for (const auto& intersection : intersections(fvGeometry.gridGeometry().gridView(), element))
         {
             if (intersection.neighbor())
             {
-                const auto vol = intersection.outside().geometry().volume();
-                skewGradV += elementAverageSkewGradV_(intersection.outside(), gridGeometry, gridVolVars) * vol;
+                const auto neighbor = intersection.outside();
+                const auto fvGeometryNeighbor = localView(fvGeometry.gridGeometry()).bind(neighbor);
+                const auto vol = neighbor.geometry().volume();
+                skewGradV += elementAverageSkewGradV_(fvGeometry, gridVolVars) * vol;
                 totalVolume += vol;
             }
         }
@@ -214,10 +233,10 @@ private:
         return skewGradV;
     }
 
-    // currently bound element
     const Problem* problemPtr_;
     std::vector<FluxVariablesCache> fluxVarsCache_;
     std::vector<FluxVariablesElementCache<Tensor>> fluxVarsElementCache_;
+    std::vector<std::vector<GlobalPosition>> fluxVarsElementCenterGradN_;
 };
 
 /*!
