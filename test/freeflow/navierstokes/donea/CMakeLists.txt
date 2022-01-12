@@ -130,6 +130,12 @@ dumux_add_test(NAME test_ff_stokes_donea_diamond_tpfa_quad
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_diamond_tpfa_quad
                CMD_ARGS params.input -Problem.UseNeumann true)
 
+dumux_add_test(NAME test_ff_stokes_donea_diamond_tpfa_quad_unstructured
+               TARGET test_ff_stokes_donea_diamond_tpfa_quad
+               LABELS freeflow navierstokes donea
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_diamond_tpfa_quad
+               CMD_ARGS params.input -Problem.UseNeumann true -Grid.File ./grids/unstructured_quad.msh -Grid.Refinement 2)
+
 dumux_add_test(NAME test_ff_stokes_donea_diamond_box_quad
                SOURCES main.cc
                LABELS freeflow navierstokes donea
