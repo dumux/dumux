@@ -127,28 +127,39 @@ struct NavierStokesMomentumBoundaryFluxHelper
                     const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
                     const auto innerTransportingVelocity = elemVolVars[orthogonalScvf.insideScvIdx()].velocity();
 
+                    static const bool useOldScheme = getParam<bool>("FreeFlow.UseOldTransportingVelocity", true); // TODO how to deprecate?
+
+                    if (useOldScheme)
+                    {
+                        if (scvf.boundary())
+                        {
+                            if (problem.boundaryTypes(element, scvf).isDirichlet(scvf.normalAxis()))
+                                return problem.dirichlet(element, scvf)[scvf.normalAxis()];
+                        }
+                        else
+                            return innerTransportingVelocity;
+                    }
+
+                    // use the Dirichlet velocity as transporting velocity if the lateral face is on a Dirichlet boundary
                     if (scvf.boundary())
                     {
-                        if (const auto bcTypes = problem.boundaryTypes(element, scvf); bcTypes.isDirichlet(scvf.normalAxis()))
-                            return problem.dirichlet(element, scvf)[scvf.normalAxis()];
-                        else
-                            return
-                                innerTransportingVelocity; // fallback
+                        if (problem.boundaryTypes(element, scvf).isDirichlet(scvf.normalAxis()))
+                            return 0.5*(problem.dirichlet(element, scvf)[scvf.normalAxis()] + innerTransportingVelocity);
                     }
-                    else
+
+                    if (orthogonalScvf.boundary())
                     {
-                        static const bool useOldScheme = getParam<bool>("FreeFlow.UseOldTransportingVelocity", true); // TODO how to deprecate?
-                        if (useOldScheme)
-                            return innerTransportingVelocity;
+                        if (problem.boundaryTypes(element, orthogonalScvf).isDirichlet(scvf.normalAxis()))
+                            return 0.5*(problem.dirichlet(element, scvf)[scvf.normalAxis()] + innerTransportingVelocity);
                         else
-                        {
-                            // average the transporting velocity by weighting with the scv volumes
-                            const auto insideVolume = fvGeometry.scv(orthogonalScvf.insideScvIdx()).volume();
-                            const auto outsideVolume = fvGeometry.scv(orthogonalScvf.outsideScvIdx()).volume();
-                            const auto outerTransportingVelocity = elemVolVars[orthogonalScvf.outsideScvIdx()].velocity();
-                            return (insideVolume*innerTransportingVelocity + outsideVolume*outerTransportingVelocity) / (insideVolume + outsideVolume);
-                        }
+                            return innerTransportingVelocity; // fallback value, should actually never be called
                     }
+
+                    // average the transporting velocity by weighting with the scv volumes
+                    const auto insideVolume = fvGeometry.scv(orthogonalScvf.insideScvIdx()).volume();
+                    const auto outsideVolume = fvGeometry.scv(orthogonalScvf.outsideScvIdx()).volume();
+                    const auto outerTransportingVelocity = elemVolVars[orthogonalScvf.outsideScvIdx()].velocity();
+                    return (insideVolume*innerTransportingVelocity + outsideVolume*outerTransportingVelocity) / (insideVolume + outsideVolume);
                 }();
 
                 // lateral face normal to boundary (integration point touches boundary)
