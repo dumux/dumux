@@ -51,6 +51,7 @@ auto wilcoxTKESource(const Problem& problem,
 
     return source;
 }
+
 template <class Problem, class VolumeVariables>
 auto wilcoxDissipationSource(const Problem& problem,
                              const VolumeVariables& volVars)
@@ -80,10 +81,47 @@ auto wilcoxDissipationSource(const Problem& problem,
             gradientProduct += volVars.storedTurbulentKineticEnergyGradient()[i]
                              * volVars.storedDissipationGradient()[i];
         if (gradientProduct > 0.0)
-            source += 0.125 *volVars.density() / volVars.dissipation() * gradientProduct;
+            source += 0.125 * volVars.density() / volVars.dissipation() * gradientProduct;
     }
     return source;
 }
+
+template <class Problem, class VolumeVariables>
+auto shearStressTransportTKESource(const Problem& problem,
+                                   const VolumeVariables& volVars)
+{
+    // production
+    using Scalar = typename VolumeVariables::PrimaryVariables::value_type;
+    Scalar source = 2.0 * volVars.dynamicEddyViscosity() * volVars.stressTensorScalarProduct();
+
+    // destruction
+    source -= volVars.betaStar() * volVars.density() * volVars.turbulentKineticEnergy() * volVars.dissipation();
+
+    return source;
+}
+
+template <class Problem, class VolumeVariables>
+auto shearStressTransportDissipationSource(const Problem& problem,
+                                           const VolumeVariables& volVars)
+{
+    using Scalar = typename VolumeVariables::PrimaryVariables::value_type;
+    // production
+    Scalar productionTerm = 2.0 * volVars.dynamicEddyViscosity() * volVars.stressTensorScalarProduct();
+    Scalar source =  volVars.gammaWeighted() / volVars.kinematicEddyViscosity() * productionTerm;
+
+    // destruction
+    source -= volVars.betaWeighted() * volVars.density() * volVars.dissipation() * volVars.dissipation();
+
+    // cross-diffusion term
+    Scalar gradientProduct = 0.0;
+    for (unsigned int i = 0; i < volVars.storedTurbulentKineticEnergyGradient().size(); ++i)
+        gradientProduct += volVars.storedTurbulentKineticEnergyGradient()[i]
+                         * volVars.storedDissipationGradient()[i];
+    source += 2.0 * volVars.density() * (1.0 - volVars.fInner()) * volVars.sigmaOmegaInner() / volVars.dissipation() * gradientProduct;
+
+    return source;
+}
+
 
 } // end namespace Dumux
 

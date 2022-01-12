@@ -101,9 +101,10 @@ public:
             source[turbulentKineticEnergyEqIdx] += TwoEqSources::wilcoxTKESource(problem, volVars);
             source[dissipationEqIdx] += TwoEqSources::wilcoxDissipationSource(problem, volVars);
         }
-        else if (problem.twoEqTurbulenceModelName() == "SST")
+        else if (problem.twoEqTurbulenceModelName() == "SST" || problem.twoEqTurbulenceModelName() == "BSL")
         {
-            //TODO: Add more
+            source[turbulentKineticEnergyEqIdx] += TwoEqSources::shearStressTransportTKESource(problem, volVars);
+            source[dissipationEqIdx] += TwoEqSources::shearStressTransportDissipationSource(problem, volVars);
         }
         else
         {

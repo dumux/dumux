@@ -127,7 +127,7 @@ public:
         // effective diffusion coefficients
         Scalar insideCoeff_k = (insideVolVars.viscosity() + (insideVolVars.sigmaK() * insideVolVars.dynamicEddyViscosity()))
                               * insideVolVars.extrusionFactor();
-        Scalar outsideCoeff_k = (outsideVolVars.viscosity() + (outsideVolVars.sigmaK() * outsideVolVars.dynamicEddyViscosity()))
+        Scalar outsideCoeff_k = (outsideVolVars.viscosity() + (outsideVolVars.sigmaK() * outsideVolVars.dynamicEddyViscosity())) // TODO: Call these coeffs correctly
                               * outsideVolVars.extrusionFactor();
         Scalar insideCoeff_w = (insideVolVars.viscosity() + (insideVolVars.sigmaOmega() * insideVolVars.dynamicEddyViscosity()))
                               * insideVolVars.extrusionFactor();

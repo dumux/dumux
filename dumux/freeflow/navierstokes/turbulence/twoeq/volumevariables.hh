@@ -91,6 +91,9 @@ public:
         dissipation_ = elemSol[0][Indices::dissipationIdx];
         twoEqTurbulenceModelName_ = problem.twoEqTurbulenceModelName();
 
+        if ( twoEqTurbulenceModelName() == "SST" || twoEqTurbulenceModelName() == "BSL")
+            updateFParameters();
+
         // Solve the eddy viscosity
         updateEddyViscositites();
 
@@ -101,10 +104,10 @@ public:
 
     void updateEddyViscositites()
     {
+        using std::sqrt;
+        using std::max;
         if (twoEqTurbulenceModelName() == "Wilcox")
         {
-            using std::sqrt;
-            using std::max;
             // use the Dissipation limiter proposed in wilcox2008
             Scalar limitiedDissipation = std::numeric_limits<Scalar>::min();
             static const auto enableKOmegaDissipationLimiter = getParam<bool>("RANS.EnableKOmegaDissipationLimiter", true);
@@ -115,12 +118,13 @@ public:
         }
         else if (twoEqTurbulenceModelName() == "SST")
         {
-            //TODO:
+            const Scalar possibleMax1 = 0.31 * dissipation();
+            const Scalar possibleMax2 = absoluteValueVorticity() * fOuter();
+            const Scalar divisor = max(possibleMax1, possibleMax2);
+            dynamicEddyViscosity_ =  0.31 * turbulentKineticEnergy() / divisor * RANSParentType::density();
         }
         else if (twoEqTurbulenceModelName() == "BSL")
-        {
-            //TODO:
-        }
+            dynamicEddyViscosity_ = turbulentKineticEnergy() / dissipation() * RANSParentType::density();
         else if (twoEqTurbulenceModelName() == "LowReKEpsilon")
         {
             //TODO:
@@ -175,6 +179,37 @@ public:
             DUNE_THROW(Dune::NotImplemented, "This turbulence model " << twoEqTurbulenceModelName() <<
                                              " is not available, try a different two-eq model.");
     }
+
+    //! \brief Updates the parameters F1 and F2 used as weighting functions in the K-Omega SST and BSL models
+    void updateFParameters()
+    {
+        Scalar gradientProduct = 0.0;
+        for (unsigned int i = 0; i < dim; ++i)
+            gradientProduct += storedTurbulentKineticEnergyGradient()[i] * storedDissipationGradient()[i];
+
+        Scalar positiveCrossDiffusion = 2.0 * RANSParentType::density() * sigmaOmegaOuter() / dissipation() * gradientProduct;
+        positiveCrossDiffusion = std::max(positiveCrossDiffusion,1e-20);
+
+        const Scalar possibleMin2 = (4.0 * RANSParentType::density() * sigmaOmegaInner() * turbulentKineticEnergy())
+                                  / (positiveCrossDiffusion * RANSParentType::wallDistance() * RANSParentType::wallDistance());
+
+        const Scalar possibleMax1 = (std::sqrt(turbulentKineticEnergy())) / (0.09 * dissipation() * RANSParentType::wallDistance());
+        const Scalar possibleMax2 = (500.0 * this->viscosity()) / (RANSParentType::wallDistance() * RANSParentType::wallDistance() * dissipation());
+        const Scalar possibleMin1 = std::max(possibleMax1, possibleMax2);
+
+        const Scalar argumentFInner = std::min(possibleMin1,possibleMin2);
+        fInner_ =  tanh(argumentFInner * argumentFInner * argumentFInner * argumentFInner);
+
+        const Scalar argumentFOuter = std::max(2.0 * possibleMax1, possibleMax2);
+        fOuter_ =  tanh(argumentFOuter * argumentFOuter);
+    }
+
+    Scalar fInner() const
+    { return fInner_; }
+
+    Scalar fOuter() const
+    { return fOuter_; }
+
     //! \brief Returns the gradient of the turbulent kinetic energy \f$ m^2/s^2 \f$
     DimVector storedTurbulentKineticEnergyGradient() const
     { return DimVector(0.0); }// TODO: Figure this out
@@ -183,8 +218,47 @@ public:
     DimVector storedDissipationGradient() const
     { return DimVector(0.0); }// TODO: Figure this out
 
-    const std::string twoEqTurbulenceModelName() const
-    { return twoEqTurbulenceModelName_; }
+    //! \brief Returns the absolute value of the vorticity \f$ \Omega \f$
+    Scalar absoluteValueVorticity() const
+    { return std::sqrt(2.0 * RANSParentType::vorticityTensorScalarProduct()); }
+
+    //! \brief Returns the weighted \f$ \sigma_{k} \f$ constant
+    const Scalar sigmaKWeighted(const bool isSST) const
+    { return fInner()*sigmaKInner(isSST) + (1-fInner())*sigmaKOuter(); }
+
+    const Scalar sigmaKInner(const bool isSST) const
+    { return isSST ? 0.85 : 0.5; }
+    const Scalar sigmaKOuter() const
+    { return 1.0; }
+
+    //! \brief Returns the weighted \f$ \sigma_{\omega} \f$ constant
+    const Scalar sigmaOmegaWeighted() const
+    { return fInner()*sigmaOmegaInner() + (1-fInner())*sigmaOmegaOuter(); }
+
+    const Scalar sigmaOmegaInner() const
+    { return 0.5; }
+    const Scalar sigmaOmegaOuter() const
+    { return 0.856; }
+
+    //! \brief Returns the weighted \f$ \beta_{SST} \f$ constant
+    const Scalar betaWeighted() const
+    { return fInner()*betaInner() + (1-fInner())*betaOuter(); }
+
+    const Scalar betaInner() const
+    { return 0.0750; }
+    const Scalar betaOuter() const
+    { return 0.0820; }
+    //! \brief Returns the \f$ \beta^{*} \f$ constant
+    const Scalar betaStar() const
+    { return 0.09; }
+
+    //! \brief Returns the weighted \f$ \gamma \f$ constant
+    const Scalar gammaWeighted() const
+    { return fInner()*gammaInner() + (1-fInner())*gammaOuter(); }
+    const Scalar gammaInner() const
+    { return (betaInner() / betaStar()) - ((sigmaOmegaInner() * RANSParentType::karmanConstant() * RANSParentType::karmanConstant()) / (std::sqrt(betaStar())) ); }
+    const Scalar gammaOuter() const
+    { return (betaOuter() / betaStar()) - ((sigmaOmegaOuter() * RANSParentType::karmanConstant() * RANSParentType::karmanConstant()) / (std::sqrt(betaStar())) ); }
 
     //! \brief Returns the \f$ \alpha \f$ value
     const Scalar alpha() const
@@ -206,7 +280,12 @@ public:
     const Scalar betaOmega() const
     { return 0.0708; }
 
+    const std::string twoEqTurbulenceModelName() const
+    { return twoEqTurbulenceModelName_; }
 protected:
+
+    Scalar fInner_;
+    Scalar fOuter_;
     Scalar dissipation_ = 0.0;
     Scalar turbulentKineticEnergy_ = 0.0;
     Scalar dynamicEddyViscosity_;
