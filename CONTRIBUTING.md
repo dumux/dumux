@@ -36,13 +36,14 @@ If you have any questions or complaints about this workflow of contributing to D
 * Format commit messages as follows:
 
     ```
-    [topic] Brief description of the change
+    [topic] Add brief description of the change
 
     Long description containing the status quo,
     the changes the commit introduces and why.
     ```
 
     where `topic` is usually a foldername, `[assembly]`, a model `[2p2c]`, or any other topic, e.g. `[cmake]`.
+    For consistency and brevity use imperative `Add`/`Change`/`Improve`/`Remove` etc. instead of other verb forms like `Added`/`Adding`.
 
 * Use `git rebase -i master` to update branches to the changes on the master branch.
 * Feature branches should be called `feature/my-bla-feature`.
