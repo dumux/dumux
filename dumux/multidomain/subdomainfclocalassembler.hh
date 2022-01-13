@@ -388,12 +388,12 @@ public:
                             // For other dofs, add the contribution of the partial derivative.
                             for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
                             {
-                                for (int pvIdx = 0; pvIdx < GridView::dimension; ++pvIdx)
+                                for (int pvIdx = 0; pvIdx < JacobianBlock::block_type::cols; ++pvIdx)
                                 {
-                                    if (bcTypes.isCouplingDirichlet(pvIdx) && pvIdx == scv.dofAxis()) // TODO?
-                                        A[scv.dofIndex()][globalJ][eqIdx][eqIdx] = partialDerivs[scv.localDofIndex()][eqIdx];
-                                    else if (bcTypes.isDirichlet(pvIdx) && pvIdx == scv.dofAxis())
-                                        A[scv.dofIndex()][globalJ][eqIdx][eqIdx] = 0.0;
+                                    if (bcTypes.isCouplingDirichlet(eqIdx))
+                                        A[scv.dofIndex()][globalJ][eqIdx][pvIdx] = partialDerivs[scv.localDofIndex()][pvIdx];
+                                    else if (bcTypes.isDirichlet(eqIdx))
+                                        A[scv.dofIndex()][globalJ][eqIdx][pvIdx] = 0.0;
                                 }
                             }
                         }
