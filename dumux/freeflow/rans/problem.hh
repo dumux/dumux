@@ -301,8 +301,8 @@ public:
     DimMatrix velocityGradientTensor(const int elementIdx) const
     { return velocityGradients_[elementIdx]; }
 
-    Scalar velocityGradient(const int elementIdx, const int dimIdx, const int velIdx) const
-    { return velocityGradients_[elementIdx][dimIdx][velIdx]; }
+    Scalar velocityGradient(const int elementIdx, const int velIdx, const int dimIdx) const
+    { return velocityGradients_[elementIdx][velIdx][dimIdx]; }
 
     Scalar stressTensorScalarProduct(const int elementIdx) const
     { return stressTensorScalarProduct_[elementIdx]; }
