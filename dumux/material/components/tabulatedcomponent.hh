@@ -238,7 +238,7 @@ public:
     static const Scalar gasEnthalpy(Scalar temperature, Scalar pressure)
     {
         Scalar result = interpolateTP_(gasEnthalpy_, temperature, pressure,
-                                       pressGasIdx_, minGasPressure_, maxGasPressure_, "gas");
+                                       pressGasIdx_, minGasPressure_, maxGasPressure_);
         using std::isnan;
         if (isnan(result))
         {
@@ -265,7 +265,7 @@ public:
     static const Scalar liquidEnthalpy(Scalar temperature, Scalar pressure)
     {
         Scalar result = interpolateTP_(liquidEnthalpy_, temperature, pressure,
-                                       pressLiquidIdx_, minLiquidPressure_, maxLiquidPressure_, "liquid");
+                                       pressLiquidIdx_, minLiquidPressure_, maxLiquidPressure_);
         using std::isnan;
         if (isnan(result))
         {
@@ -292,7 +292,7 @@ public:
     static const Scalar gasHeatCapacity(Scalar temperature, Scalar pressure)
     {
         Scalar result = interpolateTP_(gasHeatCapacity_, temperature, pressure,
-                                       pressGasIdx_, minGasPressure_, maxGasPressure_, "gas");
+                                       pressGasIdx_, minGasPressure_, maxGasPressure_);
         using std::isnan;
         if (isnan(result))
         {
@@ -319,7 +319,7 @@ public:
     static const Scalar liquidHeatCapacity(Scalar temperature, Scalar pressure)
     {
         Scalar result = interpolateTP_(liquidHeatCapacity_, temperature, pressure,
-                                       pressLiquidIdx_, minLiquidPressure_, maxLiquidPressure_, "liquid");
+                                       pressLiquidIdx_, minLiquidPressure_, maxLiquidPressure_);
         using std::isnan;
         if (isnan(result))
         {
@@ -456,7 +456,7 @@ public:
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
         Scalar result = interpolateTP_(gasDensity_, temperature, pressure,
-                                       pressGasIdx_, minGasPressure_, maxGasPressure_, "gas");
+                                       pressGasIdx_, minGasPressure_, maxGasPressure_);
         using std::isnan;
         if (isnan(result))
         {
@@ -495,7 +495,7 @@ public:
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
         Scalar result = interpolateTP_(liquidDensity_, temperature, pressure,
-                                       pressLiquidIdx_, minLiquidPressure_, maxLiquidPressure_, "liquid");
+                                       pressLiquidIdx_, minLiquidPressure_, maxLiquidPressure_);
         using std::isnan;
         if (isnan(result))
         {
@@ -538,7 +538,7 @@ public:
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)
     {
         Scalar result = interpolateTP_(gasViscosity_, temperature, pressure,
-                                       pressGasIdx_, minGasPressure_, maxGasPressure_, "gas");
+                                       pressGasIdx_, minGasPressure_, maxGasPressure_);
         using std::isnan;
         if (isnan(result))
         {
@@ -565,7 +565,7 @@ public:
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {
         Scalar result = interpolateTP_(liquidViscosity_, temperature, pressure,
-                                       pressLiquidIdx_, minLiquidPressure_, maxLiquidPressure_, "liquid");
+                                       pressLiquidIdx_, minLiquidPressure_, maxLiquidPressure_);
         using std::isnan;
         if (isnan(result))
         {
@@ -592,7 +592,7 @@ public:
     static Scalar gasThermalConductivity(Scalar temperature, Scalar pressure)
     {
         Scalar result = interpolateTP_(gasThermalConductivity_, temperature, pressure,
-                                       pressGasIdx_, minGasPressure_, maxGasPressure_, "gas");
+                                       pressGasIdx_, minGasPressure_, maxGasPressure_);
         using std::isnan;
         if (isnan(result))
         {
@@ -619,7 +619,7 @@ public:
     static Scalar liquidThermalConductivity(Scalar temperature, Scalar pressure)
     {
         Scalar result = interpolateTP_(liquidThermalConductivity_, temperature, pressure,
-                                       pressLiquidIdx_, minLiquidPressure_, maxLiquidPressure_, "liquid");
+                                       pressLiquidIdx_, minLiquidPressure_, maxLiquidPressure_);
         using std::isnan;
         if (isnan(result))
         {
@@ -786,8 +786,7 @@ private:
     //! returns an interpolated value depending on temperature and pressure
     template<class GetPIdx, class MinPFunc, class MaxPFunc>
     static Scalar interpolateTP_(const std::vector<typename RawComponent::Scalar>& values, Scalar T, Scalar p,
-                                 GetPIdx&& getPIdx, MinPFunc&& minP, MaxPFunc&& maxP,
-                                 const std::string& phaseName)
+                                 GetPIdx&& getPIdx, MinPFunc&& minP, MaxPFunc&& maxP)
     {
         Scalar alphaT = tempIdx_(T);
         if (alphaT < 0 || alphaT >= nTemp_ - 1) {
@@ -811,10 +810,10 @@ private:
             DUNE_THROW(NumericalProblem, "Temperature out of range: "
                        << "T=" << T << " range: [" << tempMin_ << ", " << tempMax_ << "]");
         if(!(0 <= alphaP1 && alphaP1 <= 1.0))
-            DUNE_THROW(NumericalProblem, "First " << phaseName " pressure out of range: "
+            DUNE_THROW(NumericalProblem, "First pressure out of range: "
                        << "p=" << p << " range: [" << minP(tempIdx_(T)) << ", " << maxP(tempIdx_(T)) << "]");
         if(!(0 <= alphaP2 && alphaP2 <= 1.0))
-            DUNE_THROW(NumericalProblem, "Second " << phaseName " pressure out of range: "
+            DUNE_THROW(NumericalProblem, "Second pressure out of range: "
                        << "p=" << p << " range: [" << minP(tempIdx_(T) + 1) << ", " << maxP(tempIdx_(T) + 1) << "]");
 #endif
 
