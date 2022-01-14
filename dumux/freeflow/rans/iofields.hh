@@ -46,11 +46,13 @@ struct RANSIOFields
         static constexpr auto dim = decltype(std::declval<typename OutputModule::VolumeVariables>().ccVelocityVector())::dimension;
 
         out.addVolumeVariable([](const auto& v){ return v.ccVelocityVector()[0] / v.velocityMaximum()[0]; }, "v_x/v_x,max");
-        out.addVolumeVariable([](const auto& v){ return v.velocityGradients()[0]; }, "dv_x/dx_");
+
+        // velocityGradients is a tensor, gradient of each velocity component is added here.
+        out.addVolumeVariable([](const auto& v){ return v.velocityGradients()[0]; }, "dv_x/ds_");
         if (dim > 1)
-            out.addVolumeVariable([](const auto& v){ return v.velocityGradients()[1]; }, "dv_y/dx_");
+            out.addVolumeVariable([](const auto& v){ return v.velocityGradients()[1]; }, "dv_y/ds_");
         if (dim > 2)
-            out.addVolumeVariable([](const auto& v){ return v.velocityGradients()[2]; }, "dv_z/dx_");
+            out.addVolumeVariable([](const auto& v){ return v.velocityGradients()[2]; }, "dv_z/ds_");
         out.addVolumeVariable([](const auto& v){ return v.pressure() - 1e5; }, "p_rel");
         out.addVolumeVariable([](const auto& v){ return v.viscosity() / v.density(); }, "nu");
         out.addVolumeVariable([](const auto& v){ return v.kinematicEddyViscosity(); }, "nu_t");
