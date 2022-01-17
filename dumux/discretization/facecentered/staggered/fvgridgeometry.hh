@@ -27,6 +27,7 @@
 #include <memory>
 
 #include <dune/common/rangeutilities.hh>
+#include <dune/grid/common/scsgmapper.hh>
 
 #include <dumux/common/defaultmappertraits.hh>
 #include <dumux/common/indextraits.hh>
@@ -57,6 +58,7 @@ namespace Dumux {
 template<class GridView>
 struct FaceCenteredStaggeredDefaultGridGeometryTraits : public DefaultMapperTraits<GridView>
 {
+    using ElementMapper = Dune::SingleCodimSingleGeomTypeMapper<GridView, 0/*codim*/>;
     using SubControlVolume = FaceCenteredStaggeredSubControlVolume<GridView>;
     using SubControlVolumeFace = FaceCenteredStaggeredSubControlVolumeFace<GridView>;
     using IntersectionMapper = ConformingGridIntersectionMapper<GridView>;
