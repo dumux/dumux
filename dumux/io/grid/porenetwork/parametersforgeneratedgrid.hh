@@ -273,15 +273,15 @@ private:
                 }
                 // make sure that a priority for each direction is set
                 catch(Dune::RangeError& e) {
-                    DUNE_THROW(Dumux::ParameterException, "You must specifiy priorities for all directions (" << dimWorld << ") \n" << e.what());
+                    DUNE_THROW(Dumux::ParameterException, "You must specify priorities for all directions (" << dimWorld << ") \n" << e.what());
                 }
                 // make sure each direction is only set once
                 if (!isUnique_(priorityList))
-                    DUNE_THROW(Dumux::ParameterException, "You must specifiy priorities for all directions (duplicate directions)");
+                    DUNE_THROW(Dumux::ParameterException, "You must specify priorities for all directions (duplicate directions)");
 
                 //make sure that the directions are correct (ranging from 0 to dimWorld-1)
                 if (std::any_of(priorityList.begin(), priorityList.end(), []( const int i ){ return (i < 0 || i >= 2*dimWorld); }))
-                    DUNE_THROW(Dumux::ParameterException, "You must specifiy priorities for correct directions (0-" << 2*(dimWorld-1) << ")");
+                    DUNE_THROW(Dumux::ParameterException, "You must specify priorities for correct directions (0-" << 2*(dimWorld-1) << ")");
             }
             return priorityList;
         }();
