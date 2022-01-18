@@ -10,7 +10,7 @@ MeanPoreInscribedRadius = 1e-5
 StandardDeviationPoreInscribedRadius = 3e-6
 PoreGeometry = Sphere
 
-BoundaryFaceMarker = 2 3 1 1 1 1
+BoundaryPoreLabels = xMax:3 xMin:2 yMin:1 yMax:1 zMin:1 zMax:1 # xMin and xMax flipped for testing
 MinThroatLength = 1e-9
 DeletionProbability = 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
 RemoveThroatsOnBoundary = 0 1 2 3 4 5
@@ -33,7 +33,7 @@ MeanPoreInscribedRadius = 1e-5
 StandardDeviationPoreInscribedRadius = 3e-6
 PoreGeometry = Cube
 
-BoundaryFaceMarker = 2 3 1 1
+BoundaryPoreLabels = xMin:2 xMax:3 yMin:1 yMax:1
 MinThroatLength = 1e-9
 DeletionProbability = 0.4 0.4 0.4 0.4
 RemoveThroatsOnBoundary = 0 1 2 3
@@ -57,7 +57,7 @@ StandardDeviationPoreInscribedRadius = 3e-6
 PoreGeometry = Cylinder
 PoreHeight = 1e-5
 
-BoundaryFaceMarker = 1 1
+BoundaryPoreLabels = xMin:1 xMax:1
 ParameterRandomNumberSeed = 22
 
 [Dgf1D.Grid]

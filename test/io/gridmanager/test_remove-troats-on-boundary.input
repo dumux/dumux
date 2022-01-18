@@ -10,5 +10,5 @@ PoreInscribedRadius = 1e-4
 ThroatRadius = 1e-5
 PoreGeometry = Sphere
 
-BoundaryFaceMarker = 0 1 2 3
+BoundaryPoreLabels = xMin:0 xMax:1 yMin:2 yMax:3
 DeletionProbability = 0 0 1 1
