@@ -590,7 +590,15 @@ private:
         const std::string prefix = subregionId < 0 ? "Grid." : "Grid.Subregion" + std::to_string(subregionId) + ".";
         const Scalar inputThroatLength = getParamFromGroup<Scalar>(paramGroup_, prefix + "ThroatLength", -1.0);
         // decide whether to substract the pore radii from the throat length or not
-        const bool substractRadiiFromThroatLength = getParamFromGroup<bool>(paramGroup_, prefix + "SubstractRadiiFromThroatLength", true);
+        // TODO remove if/else after 3.5 and use const bool subtractRadiiFromThroatLength = getParamFromGroup<bool>(paramGroup_, prefix + "SubtractPoreInscribedRadiiFromThroatLength", true);
+        bool subtractRadiiFromThroatLength = true;
+        if (hasParamInGroup(paramGroup_, prefix + "SubstractRadiiFromThroatLength"))
+        {
+            std::cout << "\n\n ****** \n Warning: SubstractRadiiFromThroatLength is deprecated and will be removed after 3.5. Use SubtractPoreInscribedRadiiFromThroatLength instead \n\n ******" << std::endl;
+            subtractRadiiFromThroatLength = getParamFromGroup<bool>(paramGroup_, prefix + "SubstractRadiiFromThroatLength");
+        }
+        else
+            subtractRadiiFromThroatLength = getParamFromGroup<bool>(paramGroup_, prefix + "SubtractPoreInscribedRadiiFromThroatLength", true);
 
         return [=](const Element& element)
         {
@@ -598,7 +606,7 @@ private:
                 return inputThroatLength;
 
             const Scalar delta = element.geometry().volume();
-            if (substractRadiiFromThroatLength)
+            if (subtractRadiiFromThroatLength)
             {
                 const std::array<Vertex, 2> vertices = {element.template subEntity<dim>(0), element.template subEntity<dim>(1)};
                 const Scalar result = delta - getParameter(vertices[0], "PoreInscribedRadius") - getParameter(vertices[1], "PoreInscribedRadius");
