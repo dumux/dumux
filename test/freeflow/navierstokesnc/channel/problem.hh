@@ -150,9 +150,11 @@ public:
         {
             static constexpr bool useMoles = getPropValue<TypeTag, Dumux::Properties::UseMoles>();
             const auto& volVars = elemVolVars[scvf.insideScvIdx()];
-            const auto density = useMoles ? volVars.molarDensity() : volVars.density();
-            const auto fraction = useMoles ? volVars.moleFraction(0, 1) : volVars.massFraction(0, 1);
-            result[transportCompIdx] = elemFaceVars[scvf].velocitySelf() * scvf.directionSign() * density * fraction;
+            const auto density= useMoles ? volVars.molarDensity() : volVars.density();
+            // const auto fraction0 = useMoles ? volVars.moleFraction(0, 0) : volVars.massFraction(0, 0);
+            const auto fraction1 = useMoles ? volVars.moleFraction(0, 1) : volVars.massFraction(0, 1);
+            result[transportCompIdx] = elemFaceVars[scvf].velocitySelf() * scvf.directionSign() * density * fraction1;
+            result[Indices::conti0EqIdx] = elemFaceVars[scvf].velocitySelf() * scvf.directionSign() * density;
             // DUNE_THROW(Dune::InvalidStateException, "Fu");
             return result;
         }

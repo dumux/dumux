@@ -252,7 +252,7 @@ public:
 
                 for (int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
                 {
-                    if (bcTypes.isNeumann(eqIdx + cellCenterOffset))
+                    // if (bcTypes.isNeumann(eqIdx + cellCenterOffset))
                         result[eqIdx] = neumannFluxes[eqIdx + cellCenterOffset] * extrusionFactor * Extrusion::area(scvf);
                 }
             }
