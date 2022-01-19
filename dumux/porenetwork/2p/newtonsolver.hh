@@ -41,10 +41,23 @@ template<class Assembler, class LinearSolver,
 class TwoPNewtonSolver : public Dumux::NewtonSolver<Assembler, LinearSolver>
 {
     using ParentType =  Dumux::NewtonSolver<Assembler, LinearSolver>;
-    using SolutionVector = typename Assembler::ResidualType;
+    using ConstSolutionVector = typename Assembler::ResidualType;
+    using SolutionVector = std::remove_const_t<ConstSolutionVector>;
+    using Variables = typename PDESolver<Assembler, LinearSolver>::Variables;
+    using Backend = VariablesBackend<Variables>;
 
 public:
     using ParentType::ParentType;
+
+    void newtonBegin(Variables &vars)
+    {
+        auto& gridVariables = this->assembler().gridVariables();
+        auto& invasionState = gridVariables.gridFluxVarsCache().invasionState();
+        auto& uCurrentIter = Backend::dofs(vars);
+        invasionState.updateForFirstStep(uCurrentIter, gridVariables.curGridVolVars(),
+                                         gridVariables.gridFluxVarsCache());
+        ParentType::newtonBegin(vars);
+    }
 
     /*!
      * \brief Called after each Newton update
