@@ -82,9 +82,7 @@ public:
     {
         if constexpr (ModelTraits::enableAdvection())
         {
-            const auto& scvf = this->scvFace();
-            const auto velocity = this->problem().faceVelocity(this->element(), this->fvGeometry(), scvf);
-            const Scalar volumeFlux = velocity*scvf.unitOuterNormal()*Extrusion::area(scvf)*extrusionFactor_(this->elemVolVars(), scvf);
+            const Scalar volumeFlux = AdvectionType::flux(this->problem(), this->element(), this->fvGeometry(), this->scvFace(), this->elemFluxVarsCache());
             return UpwindScheme::apply(*this, upwindTerm, volumeFlux, 0/*phaseIdx*/);
         }
         else
