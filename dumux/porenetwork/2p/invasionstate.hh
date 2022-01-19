@@ -123,6 +123,49 @@ public:
         return hasChangedInCurrentIteration_;
     }
 
+    template<class SolutionVector, class GridVolumeVariables, class GridFluxVariablesCache>
+    bool updateForFirstStep(SolutionVector& sol, GridVolumeVariables& gridVolVars, GridFluxVariablesCache& gridFluxVarsCache)
+    {
+        hasChangedInCurrentIteration_ = false;
+        auto fvGeometry = localView(problem_.gridGeometry());
+        auto elemVolVars = localView(gridVolVars);
+        auto elemFluxVarsCache = localView(gridFluxVarsCache);
+        for (auto&& element : elements(problem_.gridGeometry().gridView()))
+        {
+            fvGeometry.bindElement(element);
+            elemVolVars.bind(element, fvGeometry, sol);
+            elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
+            static constexpr auto dim = std::decay_t<decltype(problem_.gridGeometry().gridView())>::dimension;
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                // checks if invasion or snap-off occured after Newton iteration step
+                if (const auto invasionResult = invasionSwitch_(element, elemVolVars, elemFluxVarsCache[scvf]); invasionResult)
+                {
+                    hasChangedInCurrentIteration_ = true;
+                    // set downstream staturation such that pc_downstream = pc_upstream
+                    const auto upstreamIdx = elemVolVars[0].capillaryPressure() > elemVolVars[1].capillaryPressure() ? 0 : 1;
+                    const auto downStreamIdx = 1 - upstreamIdx;
+                    const auto pcUpstream = elemVolVars[upstreamIdx].capillaryPressure();
+                    auto elemSol = elementSolution(element, sol, fvGeometry.gridGeometry());
+                    for (auto&& scv : scvs(fvGeometry))
+                    {
+                        auto fluidMatrixInteraction = problem_.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
+                        const auto swDownStream = fluidMatrixInteraction.sw(pcUpstream);
+                        const auto globalDownStreamIdx = fvGeometry.gridGeometry().gridView().indexSet().subIndex(element, downStreamIdx, dim);                        sol[globalDownStreamIdx][1] = 1.0 - swDownStream;
+                    }
+                    // TODO: update elemVolVars in case of caching
+                    if constexpr (GridFluxVariablesCache::cachingEnabled)
+                    {
+                        const auto eIdx = problem_.gridGeometry().elementMapper().index(element);
+                        gridFluxVarsCache.cache(eIdx, scvf.index()).update(problem_, element, fvGeometry, elemVolVars, scvf, invadedCurrentIteration_[eIdx]);
+                    }
+                }
+            }
+        }
+        numThroatsInvaded_ = std::count(invadedCurrentIteration_.begin(), invadedCurrentIteration_.end(), true);
+        return hasChangedInCurrentIteration_;
+    }
+
     //! Restore the old invasion state after a Newton iteration has failed.
     void reset()
     {

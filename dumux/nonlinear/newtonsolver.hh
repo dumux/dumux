@@ -670,13 +670,17 @@ public:
         // When the Newton iterations are done: ask the model to check whether it makes sense
         // TODO: how do we realize this? -> do this here in the Newton solver
         // model_().checkPlausibility();
+
     }
 
     /*!
      * \brief Called if the Newton method ended
      *        (not known yet if we failed or succeeded)
      */
-    virtual void newtonEnd()  {}
+    virtual void newtonEnd()  {
+        std::ofstream logfile("NewtonLog.txt", std::ios::app);
+        logfile << "NumIterations" << " " << numSteps_ << " " << std::endl;
+    }
 
     /*!
      * \brief Returns true if the error of the solution is below the
