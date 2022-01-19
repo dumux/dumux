@@ -138,7 +138,6 @@ int main(int argc, char** argv)
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
     vtkWriter.addVolumeVariable([](const auto& volVars){ return volVars.pressure() - 1.1e5; }, "deltaP");
-    vtkWriter.write(0);
 
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(std::make_tuple(momentumProblem, massProblem),
@@ -149,6 +148,21 @@ int main(int argc, char** argv)
     // the linear solver
     using LinearSolver = Dumux::UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
+
+    assembler->assembleResidual(x);
+    const auto& resi = assembler->residual()[massIdx];
+    std::vector<double> resi0(resi.size());
+    std::vector<double> resi1(resi.size());
+
+    for(int i  = 0; i < resi.size(); ++i)
+    {
+        resi0[i] = resi[i][0];
+        resi1[i] = resi[i][1];
+    }
+
+    vtkWriter.addField(resi0, "resi0");
+    vtkWriter.addField(resi1, "resi1");
+    vtkWriter.write(0);
 
     // the non-linear solver
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
