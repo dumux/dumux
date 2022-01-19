@@ -41,6 +41,7 @@
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
+#include <dumux/nonlinear/staggerednewtonconvergencewriter.hh>
 
 #include "properties.hh"
 
@@ -109,11 +110,36 @@ int main(int argc, char** argv)
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.addField(problem->getDeltaP(), "deltaP");
-    vtkWriter.write(0.0);
+
+
+
+
+
+
+    auto convwriter = std::make_shared<StaggeredNewtonConvergenceWriter<GridGeometry, SolutionVector>>(*gridGeometry);
+
+
 
     // the assembler with time loop for instationary problem
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
+
+    assembler->assembleResidual(x);
+    const auto resi = assembler->residual()[GridGeometry::cellCenterIdx()];
+    std::vector<double> resi0(resi.size());
+    std::vector<double> resi1(resi.size());
+
+    for(int i = 0; i < resi.size(); ++i)
+    {
+        resi0[i] = resi[i][0];
+        resi1[i] = resi[i][1];
+    }
+
+    vtkWriter.addField(resi0, "resi0");
+    vtkWriter.addField(resi1, "resi1");
+
+    vtkWriter.write(0.0);
+
 
     // the linear solver
     using LinearSolver = Dumux::UMFPackBackend;
@@ -122,6 +148,7 @@ int main(int argc, char** argv)
     // the non-linear solver
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
+    nonLinearSolver.attachConvergenceWriter(convwriter);
 
     // time loop
     timeLoop->start(); do

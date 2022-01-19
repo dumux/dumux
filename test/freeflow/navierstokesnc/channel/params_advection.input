@@ -10,7 +10,7 @@ Cells = 50 25
 Name = test_advection # name passed to the output routines
 InletVelocity = 1e-2
 EnableGravity = false
-
+PrintMatrix = 1
 [Assembly]
 NumericDifference.BaseEpsilon = 1e-8
 
@@ -19,4 +19,4 @@ MaxSteps = 10
 MaxRelativeShift = 1e-8
 
 [Vtk]
-WriteFaceData = false
+WriteFaceData = true

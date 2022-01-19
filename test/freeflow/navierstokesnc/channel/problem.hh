@@ -116,7 +116,7 @@ public:
         else if(isOutlet_(globalPos))
         {
             values.setDirichlet(Indices::pressureIdx);
-            values.setOutflow(transportEqIdx);
+            values.setNeumann(transportEqIdx);
 #if NONISOTHERMAL
             values.setOutflow(Indices::energyEqIdx);
 #endif
@@ -134,6 +134,30 @@ public:
         }
 
         return values;
+    }
+
+    template<class Element, class FVElementGeometry, class  ElementVolumeVariables, class ElementFaceVariables, class SubControlVolumeFace>
+        NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElementFaceVariables& elemFaceVars,
+                        const SubControlVolumeFace& scvf) const
+    {
+        const auto globalPos = scvf.dofPosition();
+        NumEqVector result(0.0);
+
+        if (isOutlet_(globalPos))
+        {
+            static constexpr bool useMoles = getPropValue<TypeTag, Dumux::Properties::UseMoles>();
+            const auto& volVars = elemVolVars[scvf.insideScvIdx()];
+            const auto density = useMoles ? volVars.molarDensity() : volVars.density();
+            const auto fraction = useMoles ? volVars.moleFraction(0, 1) : volVars.massFraction(0, 1);
+            result[transportCompIdx] = elemFaceVars[scvf].velocitySelf() * scvf.directionSign() * density * fraction;
+            // DUNE_THROW(Dune::InvalidStateException, "Fu");
+            return result;
+        }
+
+        return result;
     }
 
    /*!
