@@ -28,6 +28,7 @@
 #include <dumux/flux/referencesystemformulation.hh>
 #include <dumux/flux/upwindscheme.hh>
 #include <dumux/freeflow/navierstokes/scalarfluxvariables.hh>
+#include <dumux/discretization/extrusion.hh>
 
 #include "advectiveflux.hh"
 
@@ -112,21 +113,21 @@ public:
                     DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
             }
 
-            // in case one balance is substituted by the total mole balance
-            if constexpr(useTotalMoleOrMassBalance)
-            {
-                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                {
-                    //check for the reference system and adapt units of the diffusive flux accordingly.
-                    if constexpr (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
-                        result[replaceCompEqIdx] += useMoles ? diffusiveFluxes[compIdx]/FluidSystem::molarMass(compIdx) : diffusiveFluxes[compIdx];
-                    else if constexpr (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
-                        result[replaceCompEqIdx] += useMoles ? diffusiveFluxes[compIdx]
-                                                : diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
-                    else
-                        DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
-                }
-            }
+            // // in case one balance is substituted by the total mole balance
+            // if constexpr(useTotalMoleOrMassBalance)
+            // {
+            //     for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            //     {
+            //         //check for the reference system and adapt units of the diffusive flux accordingly.
+            //         if constexpr (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+            //             result[replaceCompEqIdx] += useMoles ? diffusiveFluxes[compIdx]/FluidSystem::molarMass(compIdx) : diffusiveFluxes[compIdx];
+            //         else if constexpr (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
+            //             result[replaceCompEqIdx] += useMoles ? diffusiveFluxes[compIdx]
+            //                                     : diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
+            //         else
+            //             DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
+            //     }
+            // }
         }
 
         return result;
@@ -174,6 +175,28 @@ public:
         return result;
     }
 
+    template<class UpwindTerm>
+    Scalar advectiveFluxForCellCenter(UpwindTerm upwindTerm) const
+    {
+        const auto& scvf = this->scvFace();
+        const auto velocity = this->problem().faceVelocity(this->element(), this->fvGeometry(), scvf);
+        const bool insideIsUpstream = !signbit(scvf.unitOuterNormal()*velocity);
+        static const Scalar upwindWeight = getParamFromGroup<Scalar>(this->problem().paramGroup(), "Flux.UpwindWeight");
+
+        const auto& insideVolVars = this->elemVolVars()[scvf.insideScvIdx()];
+        const auto& outsideVolVars = this->elemVolVars()[scvf.outsideScvIdx()];
+
+        const auto& upstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
+        const auto& downstreamVolVars = insideIsUpstream ? outsideVolVars : insideVolVars;
+
+        using Extrusion = Extrusion_t<typename ProblemTraits<Problem>::GridGeometry>;
+        const Scalar flux = (upwindWeight * upwindTerm(upstreamVolVars) +
+                            (1.0 - upwindWeight) * upwindTerm(downstreamVolVars))
+                            * velocity*scvf.unitOuterNormal() * Extrusion::area(scvf);
+
+        return flux;
+    }
+
     /*!
      * \brief Returns all fluxes for the single-phase flow, multi-component
      *        Navier-Stokes model: the advective mass flux in kg/s
@@ -184,9 +207,35 @@ public:
     {
         const auto diffusiveFlux = molecularDiffusionFlux(phaseIdx);
         NumEqVector flux = diffusiveFlux;
+        // flux *= 0.0;
         // g++ requires to capture 'this' by value
-        const auto upwinding = [this](const auto& term) { return this->getAdvectiveFlux(term); };
-        AdvectiveFlux<ModelTraits>::addAdvectiveFlux(flux, upwinding);
+        // const auto upwinding = [this](const auto& term) { return this->getAdvectiveFlux(term); };
+        // AdvectiveFlux<ModelTraits>::addAdvectiveFlux(flux, upwinding);
+        static constexpr bool useMoles = ModelTraits::useMoles();
+
+        for (int compIdx = 0; compIdx < ModelTraits::numFluidComponents(); ++compIdx)
+        {
+
+        auto upwindTerm = [compIdx](const auto& volVars)
+            {
+                const auto density = useMoles ? volVars.molarDensity() : volVars.density();
+                const auto fraction =  useMoles ? volVars.moleFraction(compIdx) : volVars.massFraction(compIdx);
+
+                return density * fraction;
+            };
+
+            flux[compIdx] += advectiveFluxForCellCenter(upwindTerm);
+
+        }
+
+
+
+
+        // in case one balance is substituted by the total mass balance
+        if constexpr (ModelTraits::replaceCompEqIdx() < ModelTraits::numFluidComponents())
+        {
+            flux[ModelTraits::replaceCompEqIdx()] = std::accumulate(flux.begin(), flux.end(), 0.0);
+        }
 
         if constexpr (ModelTraits::enableEnergyBalance())
         {

@@ -45,6 +45,7 @@
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/newtonsolver.hh>
+#include <dumux/io/vtk/intersectionwriter.hh>
 
 #include "properties.hh"
 
@@ -160,10 +161,28 @@ int main(int argc, char** argv)
         resi1[i] = resi[i][1];
     }
 
-    vtkWriter.addField(resi0, "resi0");
-    vtkWriter.addField(resi1, "resi1");
+    // vtkWriter.addField(resi0, "resi0");
+    // vtkWriter.addField(resi1, "resi1");
     vtkWriter.write(0);
 
+    std::vector<std::size_t> dofIdx(x[momentumIdx].size());
+    for (const auto& facet : facets(momentumGridGeometry->gridView()))
+    {
+        const auto idx = momentumGridGeometry->gridView().indexSet().index(facet);
+        dofIdx[idx] = idx;
+    }
+
+    std::vector<double> momResi(dofIdx.size());
+
+    ConformingIntersectionWriter faceVtk(momentumGridGeometry->gridView());
+    faceVtk.addField(dofIdx, "dofIdx");
+
+    for(int i = 0; i < momResi.size(); ++i)
+        momResi[i] = assembler->residual()[momentumIdx][i];
+
+    faceVtk.addField(momResi, "momResi");
+
+    faceVtk.write("face", Dune::VTK::ascii);
     // the non-linear solver
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);

@@ -202,12 +202,24 @@ public:
         }
         else
         {
-            const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
-            values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
+            //const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
+            //values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
 
             using FluxHelper = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>;
             if (isOutlet_(scvf.ipGlobal()))
-                values = FluxHelper::scalarOutflowFlux(*this, element, fvGeometry, scvf, elemVolVars);
+            {
+                static constexpr bool useMoles = getPropValue<TypeTag, Dumux::Properties::UseMoles>();
+                const auto& volVars = elemVolVars[scvf.insideScvIdx()];
+                const auto density= useMoles ? volVars.molarDensity() : volVars.density();
+                const auto fraction0 = useMoles ? volVars.moleFraction(0, 0) : volVars.massFraction(0, 0);
+                const auto fraction1 = useMoles ? volVars.moleFraction(0, 1) : volVars.massFraction(0, 1);
+                values[1] = this->faceVelocity(element, fvGeometry, scvf) * scvf.unitOuterNormal() * density * fraction1;
+
+            // auto fu  = elemFaceVars[scvf].velocitySelf() * scvf.directionSign() * density * fraction0;
+            // result[Indices::conti0EqIdx] = result[transportCompIdx] + fu;
+              values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf) * scvf.unitOuterNormal() * density * fraction0;
+            }
+                // values = FluxHelper::scalarOutflowFlux(*this, element, fvGeometry, scvf, elemVolVars);
         }
 
         return values;

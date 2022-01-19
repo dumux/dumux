@@ -73,6 +73,12 @@ struct NavierStokesScalarBoundaryFluxHelper
         // add advective fluxes based on physical type of model
         AdvectiveFlux::addAdvectiveFlux(flux, upwind);
 
+        // in case one balance is substituted by the total mass balance
+        // if constexpr (ModelTraits::replaceCompEqIdx() < ModelTraits::numFluidComponents())
+        // {
+            flux[0] = std::accumulate(flux.begin(), flux.end(), 0.0);
+        // }
+
         // for non-isothermal models, add the energy flux
         if constexpr (Detail::isNonIsothermal<Indices>())
         {

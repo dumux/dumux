@@ -1237,6 +1237,20 @@ private:
         using BlockVector = typename Dune::BlockVector<VectorBlock>;
         BlockVector y(numRows);
 
+            static const bool printmatrix = getParam<bool>("Problem.PrintMatrix", false);
+
+    if (printmatrix)
+    {
+        static int counter = 0;
+        const auto rank = Dune::MPIHelper::getCollectiveCommunication().rank();
+
+        Dune::storeMatrixMarket(M, "matrix_" + std::to_string(rank) +  "_iter_" + std::to_string(counter) + ".log");
+        Dune::storeMatrixMarket(bTmp, "rhs_" + std::to_string(rank) +  "_iter_" + std::to_string(counter) + ".log");
+        counter++;
+
+
+    }
+
         // solve
         const bool converged = ls.solve(M, y, bTmp);
 

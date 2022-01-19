@@ -85,7 +85,7 @@ public:
             const auto& scvf = this->scvFace();
             const auto velocity = this->problem().faceVelocity(this->element(), this->fvGeometry(), scvf);
             const Scalar volumeFlux = velocity*scvf.unitOuterNormal()*Extrusion::area(scvf)*extrusionFactor_(this->elemVolVars(), scvf);
-            return UpwindScheme::apply(*this, upwindTerm, volumeFlux, 0/*phaseIdx*/);
+            return UpwindScheme::apply(*this, upwindTerm, velocity*Extrusion::area(scvf)*scvf.unitOuterNormal(), 0/*phaseIdx*/);
         }
         else
             return 0.0;

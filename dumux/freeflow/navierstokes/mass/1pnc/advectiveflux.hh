@@ -63,8 +63,8 @@ struct AdvectiveFlux<NavierStokesMassOnePNCModelTraits<nComp, useM, repCompEqIdx
             // get equation index
             const auto eqIdx = ModelTraits::Indices::conti0EqIdx + compIdx;
 
-            if (eqIdx == replaceCompEqIdx)
-                continue;
+            // if (eqIdx == replaceCompEqIdx)
+            //     continue;
 
             auto upwindTerm = [&]()
             {
@@ -77,19 +77,19 @@ struct AdvectiveFlux<NavierStokesMassOnePNCModelTraits<nComp, useM, repCompEqIdx
             flux[eqIdx] += upwind(upwindTerm);
         }
 
-        // in case one balance is substituted by the total mole balance
-        if constexpr(useTotalMoleOrMassBalance)
-        {
-            auto upwindTerm = [&]()
-            {
-                if constexpr (useMoles)
-                    return [](const auto& volVars) { return volVars.molarDensity(); };
-                else
-                    return [](const auto& volVars) { return volVars.density(); };
-            }();
+        // // in case one balance is substituted by the total mole balance
+        // if constexpr(useTotalMoleOrMassBalance)
+        // {
+        //     auto upwindTerm = [&]()
+        //     {
+        //         if constexpr (useMoles)
+        //             return [](const auto& volVars) { return volVars.molarDensity(); };
+        //         else
+        //             return [](const auto& volVars) { return volVars.density(); };
+        //     }();
 
-            flux[replaceCompEqIdx] += upwind(upwindTerm);
-        }
+        //     flux[replaceCompEqIdx] += upwind(upwindTerm);
+        // }
     }
 };
 
