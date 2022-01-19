@@ -204,6 +204,9 @@ public:
 
         // Build the solver
         RCP<ParameterList> parameterList = getParametersFromXmlFile("ParameterList_Thyra.xml");
+        sublist(sublist(parameterList,"Preconditioner Types"),"FROSch")->set("DofOrdering","NodeWise");
+        sublist(sublist(parameterList,"Preconditioner Types"),"FROSch")->set("DofsPerNode",int(blockSize));
+        
         DefaultLinearSolverBuilder linearSolverBuilder;
         enableFROSch<int,int,KokkosClassic::DefaultNode::DefaultNodeType>(linearSolverBuilder);
         linearSolverBuilder.setParameterList(parameterList);
