@@ -993,7 +993,7 @@ private:
             return true;
 
         }
-        catch (const NumericalProblem &e)
+        catch (const std::exception &e)
         {
             if (verbosity_ >= 1)
                 std::cout << "Newton: Caught exception: \"" << e.what() << "\"\n";
