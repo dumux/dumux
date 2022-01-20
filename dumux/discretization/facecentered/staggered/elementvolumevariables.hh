@@ -198,6 +198,9 @@ private:
     //! map a global scv index to the local storage index
     int getLocalIdx_(const std::size_t volVarIdx) const
     {
+        std::cout << "volVarIdx" << volVarIdx << "\n";
+        for (int i = 0; i < boundaryVolVarIndices_.size(); i++)
+            std::cout << "boundaryVolVarIndices_[i]" << boundaryVolVarIndices_[i] << "\n";
         const auto it = std::find(boundaryVolVarIndices_.begin(), boundaryVolVarIndices_.end(), volVarIdx);
         assert(it != boundaryVolVarIndices_.end() && "Could not find the current volume variables for volVarIdx!");
         return std::distance(boundaryVolVarIndices_.begin(), it);

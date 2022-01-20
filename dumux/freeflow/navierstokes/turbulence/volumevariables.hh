@@ -29,7 +29,6 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/volumevariables.hh>
-#include <dumux/freeflow/navierstokes/turbulence/ransvelocitygradients.hh>
 
 namespace Dumux {
 
@@ -64,7 +63,6 @@ public:
                 const SubControlVolume& scv)
     {
         NavierStokesParentType::update(elemSol, problem, element, scv);
-        updateRANSVariables(elemSol, problem, element, scv);
     }
 
     template<class ElementSolution, class Problem, class Element, class SubControlVolume>
@@ -73,11 +71,6 @@ public:
                              const Element& element,
                              const SubControlVolume& scv)
     {
-        stressTensorScalarProduct_ = RansVelocityGradients::stressTensorScalarProduct(problem, element, scv);
-        vorticityTensorScalarProduct_ = RansVelocityGradients::vorticityTensorScalarProduct(problem, element, scv);
-        ccVelocityGradients_ = RansVelocityGradients::velocityGradientMatrix(problem, element, scv);
-
-        // TODO: These do not need to be updated. How to make static? (Need Problem)
         elementIdx_ = problem.gridGeometry().elementMapper().index(element);
         const auto& spatialParams = problem.spatialParams();
         wallDistance_ = spatialParams.wallDistance(elementIdx_);
@@ -104,15 +97,6 @@ public:
         else
             eddyThermalConductivity_ = 0.0;
     }
-
-    Scalar stressTensorScalarProduct() const
-    { return stressTensorScalarProduct_; }
-
-    Scalar vorticityTensorScalarProduct() const
-    { return vorticityTensorScalarProduct_;}
-
-    VelocityGradientMatrix ccVelocityGradients() const
-    { return ccVelocityGradients_; }
 
     Scalar dynamicEddyViscosity() const
     { return dynamicEddyViscosity_; }

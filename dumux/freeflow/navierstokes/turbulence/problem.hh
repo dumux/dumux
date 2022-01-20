@@ -90,6 +90,8 @@ class RANSProblemImpl<TypeTag, DiscretizationMethods::CCTpfa>
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
+
+    static constexpr bool isCoupled_ = !std::is_empty_v<CouplingManager>;
 public:
     //! Export spatial parameter type
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
@@ -136,6 +138,42 @@ public:
         checkForWalls_();
         manageWallInformation_();
     }
+
+    /*!
+     * \brief Returns the normal velocity at a given sub control volume face.
+     */
+    Scalar stressTensorScalarProduct(const Element& element,
+                                     const SubControlVolume& scv) const
+    {
+        if constexpr (isCoupled_)
+            return this->couplingManager().stressTensorScalarProduct(element, scv);
+        else
+            return asImp_().stressTensorScalarProductAtPos(scv.ipGlobal());
+    }
+
+    /*!
+     * \brief Returns the velocity at a given position.
+     */
+    Scalar stressTensorScalarProductAtPos(const GlobalPosition&) const
+    { DUNE_THROW(Dune::NotImplemented, "stressTensorScalarProductAtPos not implemented"); }
+
+    /*!
+     * \brief Returns the normal velocity at a given sub control volume face.
+     */
+    Scalar vorticityTensorScalarProduct(const Element& element,
+                                        const SubControlVolume& scv) const
+    {
+        if constexpr (isCoupled_)
+            return this->couplingManager().vorticityTensorScalarProduct(element, scv);
+        else
+            return asImp_().vorticityTensorScalarProductAtPos(scv.ipGlobal());
+    }
+
+    /*!
+     * \brief Returns the velocity at a given position.
+     */
+    Scalar vorticityTensorScalarProductAtPos(const GlobalPosition&) const
+    { DUNE_THROW(Dune::NotImplemented, "vorticityTensorScalarProductAtPos not implemented");    }
 
     std::string twoEqTurbulenceModelName() const
     { return twoEqTurbulenceModelName_; }

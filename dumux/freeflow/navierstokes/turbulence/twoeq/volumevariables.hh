@@ -95,14 +95,17 @@ public:
             updateFParameters();
 
         // Solve the eddy viscosity
-        updateEddyViscositites();
+        updateEddyViscositites(problem, element, scv);
 
         // Update the compositional and non-isothermal diffusive coeffs
         RANSParentType::calculateEddyDiffusivity();
         RANSParentType::calculateEddyThermalConductivity();
     }
 
-    void updateEddyViscositites()
+    template<class Problem, class Element, class SubControlVolume>
+    void updateEddyViscositites(const Problem &problem,
+                                const Element &element,
+                                const SubControlVolume& scv)
     {
         using std::sqrt;
         using std::max;
@@ -112,14 +115,14 @@ public:
             Scalar limitiedDissipation = std::numeric_limits<Scalar>::min();
             static const auto enableKOmegaDissipationLimiter = getParam<bool>("RANS.EnableKOmegaDissipationLimiter", true);
             if (enableKOmegaDissipationLimiter)
-                limitiedDissipation = (7.0 / 8.0) * sqrt(2.0 * this->stressTensorScalarProduct() / betaK());
+                limitiedDissipation = (7.0 / 8.0) * sqrt(2.0 * problem.stressTensorScalarProduct(element, scv) / betaK());
 
             dynamicEddyViscosity_ = turbulentKineticEnergy() / max(dissipation(), limitiedDissipation) * RANSParentType::density();
         }
         else if (twoEqTurbulenceModelName() == "SST")
         {
             const Scalar possibleMax1 = 0.31 * dissipation();
-            const Scalar possibleMax2 = absoluteValueVorticity() * fOuter();
+            const Scalar possibleMax2 = absoluteValueVorticity(problem, element, scv) * fOuter();
             const Scalar divisor = max(possibleMax1, possibleMax2);
             dynamicEddyViscosity_ =  0.31 * turbulentKineticEnergy() / divisor * RANSParentType::density();
         }
@@ -219,8 +222,9 @@ public:
     { return DimVector(0.0); }// TODO: Figure this out
 
     //! \brief Returns the absolute value of the vorticity \f$ \Omega \f$
-    Scalar absoluteValueVorticity() const
-    { return std::sqrt(2.0 * RANSParentType::vorticityTensorScalarProduct()); }
+    template<class Problem, class Element, class SubControlVolume>
+    Scalar absoluteValueVorticity(const Problem& problem, const Element& element, const SubControlVolume& scv) const
+    { return std::sqrt(2.0 * problem.vorticityTensorScalarProduct(element, scv)); }
 
     //! \brief Returns the weighted \f$ \sigma_{k} \f$ constant
     const Scalar sigmaKWeighted(const bool isSST) const

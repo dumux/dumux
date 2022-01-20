@@ -377,6 +377,42 @@ public:
     }
 
     /*!
+     * \brief Returns the Vorticity Tensor's Scalar Product at the cell center of the sub control volume face's inside element
+     */
+    Scalar vorticityTensorScalarProduct(const Element<freeFlowMassIndex>& element,
+                                        const SubControlVolume<freeFlowMassIndex>& massScv) const
+    {
+        bindCouplingContext_(Dune::index_constant<freeFlowMassIndex>(), element, massScv.dofIndex()/*eIdx*/);
+
+        const auto& momentumFVGeometry = massAndEnergyCouplingContext_[0].fvGeometry;
+
+        const auto& momentumScv = (*scvs(momentumFVGeometry).begin());
+        const auto& momentumScvf = (*scvfs(momentumFVGeometry, momentumScv).begin());
+
+        return StaggeredVelocityGradients::vorticityTensorScalarProduct(momentumFVGeometry,
+                                                                        momentumScvf,
+                                                                        massAndEnergyCouplingContext_[0].curElemVolVars);
+    }
+
+    /*!
+     * \brief Returns the Stress Tensor's Scalar Product at the cell center of the sub control volume face's inside element
+     */
+    Scalar stressTensorScalarProduct(const Element<freeFlowMassIndex>& element,
+                                     const SubControlVolume<freeFlowMassIndex>& massScv) const
+    {
+        bindCouplingContext_(Dune::index_constant<freeFlowMassIndex>(), element, massScv.dofIndex()/*eIdx*/);
+
+        const auto& momentumFVGeometry = massAndEnergyCouplingContext_[0].fvGeometry;
+
+        const auto& momentumScv = (*scvs(momentumFVGeometry).begin());
+        const auto& momentumScvf = (*scvfs(momentumFVGeometry, momentumScv).begin());
+
+        return StaggeredVelocityGradients::stressTensorScalarProduct(momentumFVGeometry,
+                                                                     momentumScvf,
+                                                                     massAndEnergyCouplingContext_[0].curElemVolVars);
+    }
+
+    /*!
      * \brief The coupling stencil of domain I, i.e. which domain J DOFs
      *        the given domain I element's residual depends on.
      */
@@ -542,7 +578,7 @@ private:
         {
             const auto& gridGeometry = this->problem(freeFlowMomentumIndex).gridGeometry();
             auto fvGeometry = localView(gridGeometry);
-            fvGeometry.bindElement(elementI);
+            fvGeometry.bind(elementI);
 
             auto curElemVolVars = localView(gridVars_(freeFlowMomentumIndex).curGridVolVars());
             curElemVolVars.bind(elementI, fvGeometry, this->curSol(freeFlowMomentumIndex));

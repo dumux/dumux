@@ -108,7 +108,11 @@ public:
         {
             values.setAllNeumann();
             if (isInlet_(globalPos))
+            {
                 values.setDirichlet(Indices::pressureIdx);
+                values.setDirichlet(Indices::turbulentKineticEnergyIdx);
+                values.setDirichlet(Indices::dissipationIdx);
+            }
 
             if (isLowerWall_(globalPos) || isUpperWall_(globalPos)) //  All walls
                 values.setWall();

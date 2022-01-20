@@ -29,16 +29,18 @@
 
 namespace Dumux::TwoEqSources {
 
-template <class Problem, class VolumeVariables>
+template <class Problem, class VolumeVariables, class Element, class SubControlVolume>
 auto wilcoxTKESource(const Problem& problem,
-                     const VolumeVariables& volVars)
+                     const VolumeVariables& volVars,
+                     const Element& element,
+                     const SubControlVolume scv)
 {
     using Scalar = typename VolumeVariables::PrimaryVariables::value_type;
     static const auto enableKOmegaProductionLimiter = getParamFromGroup<bool>(problem.paramGroup(), "KOmega.EnableProductionLimiter", false);
     using std::min;
 
     // production
-    Scalar productionTerm = 2.0 * volVars.dynamicEddyViscosity() * volVars.stressTensorScalarProduct();
+    Scalar productionTerm = 2.0 * volVars.dynamicEddyViscosity() * problem.stressTensorScalarProduct(element, scv);
     if (enableKOmegaProductionLimiter)
     {
         Scalar productionAlternative = 20.0 * volVars.density() * volVars.betaK() * volVars.turbulentKineticEnergy() * volVars.dissipation();
@@ -52,9 +54,11 @@ auto wilcoxTKESource(const Problem& problem,
     return source;
 }
 
-template <class Problem, class VolumeVariables>
+template <class Problem, class VolumeVariables, class Element, class SubControlVolume>
 auto wilcoxDissipationSource(const Problem& problem,
-                             const VolumeVariables& volVars)
+                             const VolumeVariables& volVars,
+                             const Element& element,
+                             const SubControlVolume scv)
 {
     using Scalar = typename VolumeVariables::PrimaryVariables::value_type;
     static const auto enableKOmegaProductionLimiter = getParamFromGroup<bool>(problem.paramGroup(), "KOmega.EnableProductionLimiter", false);
@@ -62,7 +66,7 @@ auto wilcoxDissipationSource(const Problem& problem,
     using std::min;
 
     // production
-    Scalar productionTerm = 2.0 * volVars.dynamicEddyViscosity() * volVars.stressTensorScalarProduct();
+    Scalar productionTerm = 2.0 * volVars.dynamicEddyViscosity() * problem.stressTensorScalarProduct(element, scv);
     if (enableKOmegaProductionLimiter)
     {
         Scalar productionAlternative = 20.0 * volVars.density() * volVars.betaK() * volVars.turbulentKineticEnergy() * volVars.dissipation();
@@ -86,13 +90,15 @@ auto wilcoxDissipationSource(const Problem& problem,
     return source;
 }
 
-template <class Problem, class VolumeVariables>
+template <class Problem, class VolumeVariables, class Element, class SubControlVolume>
 auto shearStressTransportTKESource(const Problem& problem,
-                                   const VolumeVariables& volVars)
+                                   const VolumeVariables& volVars,
+                                   const Element& element,
+                                   const SubControlVolume scv)
 {
     // production
     using Scalar = typename VolumeVariables::PrimaryVariables::value_type;
-    Scalar source = 2.0 * volVars.dynamicEddyViscosity() * volVars.stressTensorScalarProduct();
+    Scalar source = 2.0 * volVars.dynamicEddyViscosity() * problem.stressTensorScalarProduct(element, scv);
 
     // destruction
     source -= volVars.betaStar() * volVars.density() * volVars.turbulentKineticEnergy() * volVars.dissipation();
@@ -100,13 +106,15 @@ auto shearStressTransportTKESource(const Problem& problem,
     return source;
 }
 
-template <class Problem, class VolumeVariables>
+template <class Problem, class VolumeVariables, class Element, class SubControlVolume>
 auto shearStressTransportDissipationSource(const Problem& problem,
-                                           const VolumeVariables& volVars)
+                                           const VolumeVariables& volVars,
+                                           const Element& element,
+                                           const SubControlVolume scv)
 {
     using Scalar = typename VolumeVariables::PrimaryVariables::value_type;
     // production
-    Scalar productionTerm = 2.0 * volVars.dynamicEddyViscosity() * volVars.stressTensorScalarProduct();
+    Scalar productionTerm = 2.0 * volVars.dynamicEddyViscosity() * problem.stressTensorScalarProduct(element, scv);
     Scalar source =  volVars.gammaWeighted() / volVars.kinematicEddyViscosity() * productionTerm;
 
     // destruction

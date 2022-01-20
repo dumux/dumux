@@ -98,13 +98,13 @@ public:
 
         if (problem.twoEqTurbulenceModelName() == "Wilcox")
         {
-            source[turbulentKineticEnergyEqIdx] += TwoEqSources::wilcoxTKESource(problem, volVars);
-            source[dissipationEqIdx] += TwoEqSources::wilcoxDissipationSource(problem, volVars);
+            source[turbulentKineticEnergyEqIdx] += TwoEqSources::wilcoxTKESource(problem, volVars, element, scv);
+            source[dissipationEqIdx] += TwoEqSources::wilcoxDissipationSource(problem, volVars, element, scv);
         }
         else if (problem.twoEqTurbulenceModelName() == "SST" || problem.twoEqTurbulenceModelName() == "BSL")
         {
-            source[turbulentKineticEnergyEqIdx] += TwoEqSources::shearStressTransportTKESource(problem, volVars);
-            source[dissipationEqIdx] += TwoEqSources::shearStressTransportDissipationSource(problem, volVars);
+            source[turbulentKineticEnergyEqIdx] += TwoEqSources::shearStressTransportTKESource(problem, volVars, element, scv);
+            source[dissipationEqIdx] += TwoEqSources::shearStressTransportDissipationSource(problem, volVars, element, scv);
         }
         else
         {

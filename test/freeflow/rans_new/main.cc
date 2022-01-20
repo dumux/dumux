@@ -117,18 +117,30 @@ int main(int argc, char** argv)
     momentumProblem->applyInitialSolution(x[momentumIdx]);
     massProblem->applyInitialSolution(x[massIdx]);
     auto xOld = x;
+    std::cout << "reached 1 \n";
+
+    std::cout << "momentumIx: " << momentumIdx << "\n";
+    std::cout << "massIdx: " << massIdx << "\n";
 
     // the grid variables
     using MomentumGridVariables = GetPropType<MomentumTypeTag, Properties::GridVariables>;
     auto momentumGridVariables = std::make_shared<MomentumGridVariables>(momentumProblem, momentumGridGeometry);
+    std::cout << "reached 2 \n";
 
     using MassGridVariables = GetPropType<MassTypeTag, Properties::GridVariables>;
     auto massGridVariables = std::make_shared<MassGridVariables>(massProblem, massGridGeometry);
+    std::cout << "reached 3 \n";
 
     couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x, xOld);
+    std::cout << "reached 4: coupling init \n";
+
+    std::cout << "MassProblemCheck: " << massProblem->twoEqTurbulenceModelName() << "\n";
+
+    momentumGridVariables->init(x[momentumIdx]);
+    std::cout << "reached 4: momentum done \n";
 
     massGridVariables->init(x[massIdx]);
-    momentumGridVariables->init(x[momentumIdx]);
+    std::cout << "reached 4: mass done \n";
 
     // intialize the vtk output module
     using IOFields = GetPropType<MassTypeTag, Properties::IOFields>;
@@ -136,6 +148,7 @@ int main(int argc, char** argv)
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
     vtkWriter.write(0.0);
+    std::cout << "reached 5 \n";
 
     // the assembler with time loop for instationary problem
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
@@ -143,15 +156,16 @@ int main(int argc, char** argv)
                                                  std::make_tuple(momentumGridGeometry, massGridGeometry),
                                                  std::make_tuple(momentumGridVariables, massGridVariables),
                                                  couplingManager, timeLoop, xOld);
+    std::cout << "reached 6 \n";
 
     // the linear solver
     using LinearSolver = Dumux::UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    // the non-linear solver
     using NewtonSolver = Dumux::MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+    std::cout << "reached 7 \n";
 
     // time loop
     timeLoop->start(); do

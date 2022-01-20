@@ -243,6 +243,95 @@ public:
         return (outerVelocity - innerVelocity) / distance * orthogonalScvf.directionSign();
     }
 
+    template<class FVElementGeometry, class ElemVolVars>
+    static auto stressTensor(const FVElementGeometry& fvGeometry,
+                             const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                             const ElemVolVars& elemVolVars)
+    {
+        using Scalar = typename FVElementGeometry::GridGeometry::GlobalCoordinate::value_type;
+        static constexpr auto dim = FVElementGeometry::GridGeometry::GlobalCoordinate::dimension;
+        using DimWorldMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
+        DimWorldMatrix gradient(0.0);
+
+        DimWorldMatrix stressTensor(0.0);
+        const auto velocityGradients = velocityGradient(fvGeometry, scvf, elemVolVars, true);
+        for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
+        {
+            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            {
+                stressTensor[velIdx][dimIdx] = 0.5 * velocityGradients[velIdx][dimIdx]
+                                             + 0.5 * velocityGradients[dimIdx][velIdx];
+            }
+        }
+        return stressTensor;
+    }
+
+    template<class FVElementGeometry, class ElemVolVars>
+    static auto stressTensorScalarProduct(const FVElementGeometry& fvGeometry,
+                                          const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                          const ElemVolVars& elemVolVars)
+    {
+        using Scalar = typename FVElementGeometry::GridGeometry::GlobalCoordinate::value_type;
+        static constexpr auto dim = FVElementGeometry::GridGeometry::GlobalCoordinate::dimension;
+        using DimWorldMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
+        DimWorldMatrix gradient(0.0);
+
+        Scalar stressTensorScalarProduct = 0.0;
+        const auto sTensor = stressTensor(fvGeometry, scvf, elemVolVars);
+        for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
+        {
+            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            {
+                stressTensorScalarProduct += sTensor[velIdx][dimIdx] * sTensor[velIdx][dimIdx];
+            }
+        }
+        return stressTensorScalarProduct;
+    }
+    template<class FVElementGeometry, class ElemVolVars>
+    static auto vorticityTensor(const FVElementGeometry& fvGeometry,
+                                const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                const ElemVolVars& elemVolVars)
+    {
+        using Scalar = typename FVElementGeometry::GridGeometry::GlobalCoordinate::value_type;
+        static constexpr auto dim = FVElementGeometry::GridGeometry::GlobalCoordinate::dimension;
+        using DimWorldMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
+        DimWorldMatrix gradient(0.0);
+
+        DimWorldMatrix vorticityTensor(0.0);
+        const auto velocityGradients = velocityGradient(fvGeometry, scvf, elemVolVars, true);
+        for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
+        {
+            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            {
+                vorticityTensor[velIdx][dimIdx] = 0.5 * velocityGradients[velIdx][dimIdx]
+                                                - 0.5 * velocityGradients[dimIdx][velIdx];
+            }
+        }
+        return vorticityTensor;
+    }
+
+    template<class FVElementGeometry, class ElemVolVars>
+    static auto vorticityTensorScalarProduct(const FVElementGeometry& fvGeometry,
+                                             const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                             const ElemVolVars& elemVolVars)
+    {
+        using Scalar = typename FVElementGeometry::GridGeometry::GlobalCoordinate::value_type;
+        static constexpr auto dim = FVElementGeometry::GridGeometry::GlobalCoordinate::dimension;
+        using DimWorldMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
+        DimWorldMatrix gradient(0.0);
+
+        Scalar vorticityTensorScalarProduct = 0.0;
+        const auto vortTensor = vorticityTensor(fvGeometry, scvf, elemVolVars);
+        for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
+        {
+            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            {
+                vorticityTensorScalarProduct += vortTensor[velIdx][dimIdx] * vortTensor[velIdx][dimIdx];
+            }
+        }
+        return vorticityTensorScalarProduct;
+    }
+
 private:
 
     template<class FVElementGeometry>

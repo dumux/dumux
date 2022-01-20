@@ -40,7 +40,7 @@ struct RANSIOFields
     {
         NavierStokesIOFields::initOutputModule(out);
 
-        out.addVolumeVariable([](const auto& v){ return v.ccVelocityGradients()[0][0]; }, "vel_gradient");
+//         out.addVolumeVariable([](const auto& v){ return v.ccVelocityGradients()[0][0]; }, "vel_gradient");
         out.addVolumeVariable([](const auto& v){ return v.pressure() - 1e5; }, "p_rel");
         out.addVolumeVariable([](const auto& v){ return v.viscosity() / v.density(); }, "nu");
         out.addVolumeVariable([](const auto& v){ return v.kinematicEddyViscosity(); }, "nu_t");

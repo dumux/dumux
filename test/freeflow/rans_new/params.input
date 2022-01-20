@@ -4,11 +4,10 @@ TEnd = 100 # [s]
 
 [Grid]
 Verbosity = true
-Positions0 = 0.0 10.0
-Positions1 = 0.0 0.25 0.5
-Cells0 = 25
-Cells1 = 15 15
-Grading1 = 1.2 -1.2
+Positions0 = 0.0 6.0
+Positions1 = 0.0 6.0
+Cells0 = 3
+Cells1 = 3
 
 [Problem]
 Name = test_channel_rans
