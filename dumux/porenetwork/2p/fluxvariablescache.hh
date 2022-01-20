@@ -83,6 +83,11 @@ public:
                 wettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(curvatureRadius(), theta, cornerHalfAngles[i]);
 
             throatCrossSectionalArea_[wPhaseIdx()] = std::accumulate(wettingLayerArea_.begin(), wettingLayerArea_.end(), 0.0);
+            if (const Scalar totalArea = spatialParams.throatCrossSectionalArea(element, elemVolVars); throatCrossSectionalArea_[wPhaseIdx()] > totalArea)
+            {
+                std::cout << "\n\n *** WARNING : Sum of wetting phase layer areas exceeds total throat cross-sectional area. Clamping the result. *** \n" << std::endl;
+                throatCrossSectionalArea_[wPhaseIdx()] = totalArea;
+            }
             throatCrossSectionalArea_[nPhaseIdx()] = spatialParams.throatCrossSectionalArea(element, elemVolVars) - throatCrossSectionalArea_[wPhaseIdx()];
         }
         else // single-phase flow
