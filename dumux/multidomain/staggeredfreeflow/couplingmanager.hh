@@ -114,6 +114,7 @@ private:
 public:
 
     static constexpr auto pressureIdx = VolumeVariables<freeFlowMassIndex>::Indices::pressureIdx;
+    static constexpr auto usesTurbulenceModel = VolumeVariables<freeFlowMassIndex>::ModelTraits::usesTurbulenceModel();
 
     /*!
      * \brief Methods to be accessed by main
@@ -222,6 +223,25 @@ public:
     {
         assert(scvf.isFrontal() && !scvf.isLateral() && !scvf.boundary());
         return this->curSol(freeFlowMassIndex)[fvGeometry.elementIndex()][pressureIdx];
+    }
+
+    /*!
+     * \brief Returns the pressure at a given _frontal_ sub control volume face.
+     */
+    Scalar turbulentKineticEnergy(const Element<freeFlowMomentumIndex>& element,
+                                  const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                                  const SubControlVolumeFace<freeFlowMomentumIndex>& scvf) const
+    {
+        assert(scvf.isFrontal() && !scvf.isLateral() && !scvf.boundary());
+        if constexpr (usesTurbulenceModel)
+        {
+            if constexpr ( VolumeVariables<freeFlowMassIndex>::usesTKETurbulenceModel )
+                return this->curSol(freeFlowMassIndex)[fvGeometry.elementIndex()]
+                                                      [VolumeVariables<freeFlowMassIndex>::Indices::turbulentKineticEnergyIdx];
+        }
+        else
+            DUNE_THROW(Dune::InvalidStateException, "An additional turbulent dilitation term is only added for RANS models with TKE.");
+
     }
 
     /*!

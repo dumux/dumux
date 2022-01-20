@@ -52,6 +52,8 @@ public:
     using FluidSystem = typename Traits::FluidSystem;
     //! Export the fluid state type
     using FluidState = typename Traits::FluidState;
+    //! Export the model traits
+    using ModelTraits = typename Traits::ModelTraits;
 
     //! Return number of phases considered by the model
     static constexpr int numFluidPhases() { return Traits::ModelTraits::numFluidPhases(); }

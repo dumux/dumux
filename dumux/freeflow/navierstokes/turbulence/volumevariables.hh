@@ -46,6 +46,7 @@ class RANSVolumeVariables
 
     static constexpr bool enableEnergyBalance = Traits::ModelTraits::enableEnergyBalance();
 public:
+    static constexpr bool usesTKETurbulenceModel = Traits::ModelTraits::numTurbulenceEqs() > 0;
 
     /*!
      * \brief Update all quantities for a given control volume

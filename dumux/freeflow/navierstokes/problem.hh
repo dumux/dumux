@@ -86,6 +86,8 @@ public:
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
     using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
 
+    static constexpr bool usesTurbulenceModel = CouplingManager::usesTurbulenceModel;
+
     //! Export traits of this problem
     struct Traits
     {
@@ -248,6 +250,28 @@ public:
     Scalar pressureAtPos(const GlobalPosition&) const
     {
         DUNE_THROW(Dune::NotImplemented, "pressureAtPos not implemented");
+    }
+
+    /*!
+     * \brief Returns the pressure at a given sub control volume face.
+     * \note  Overload this if a fixed pressure shall be prescribed (e.g., given by an analytical solution).
+     */
+    Scalar turbulentKineticEnergy(const Element& element,
+                                  const FVElementGeometry& fvGeometry,
+                                  const SubControlVolumeFace& scvf) const
+    {
+        if constexpr (isCoupled_)
+            return couplingManager_->turbulentKineticEnergy(element, fvGeometry, scvf);
+        else
+            return asImp_().turbulentKineticEnergyAtPos(scvf.ipGlobal());
+    }
+
+    /*!
+     * \brief Returns the pressure at a given position.
+     */
+    Scalar turbulentKineticEnergyAtPos(const GlobalPosition&) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "turbulentKineticEnergyAtPos not implemented");
     }
 
     /*!

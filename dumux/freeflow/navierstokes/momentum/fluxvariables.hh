@@ -77,7 +77,9 @@ class NavierStokesMomentumFluxVariables
 
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
 
+    static constexpr bool usesTurbulenceModel = Problem::usesTurbulenceModel;
 public:
+
 
     NavierStokesMomentumFluxVariables(const Problem& problem,
                                       const Element& element,
@@ -205,6 +207,12 @@ public:
             // std::cout << "divergence at " << scvf.center() << " is " << divergence << std::endl;
             // std::cout << std::setprecision(15) << "old term " << factor * mu * velocityGrad_ii * scvf.area() * elemVolVars[scvf.insideScvIdx()].extrusionFactor() << ", div term " << 2.0/3.0 * mu * divergence * scvf.directionSign() * scvf.area() * elemVolVars[scvf.insideScvIdx()].extrusionFactor() << std::endl;
             result += 2.0/3.0 * mu * divergence * scvf.directionSign() * Extrusion::area(scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
+            if constexpr (usesTurbulenceModel)
+            {
+                const Scalar density = this->problem().density(this->element(), this->fvGeometry(), scvf);
+                const Scalar tke = this->problem().turbulentKineticEnergy(this->element(), this->fvGeometry(), scvf);
+                result += 2.0 / 3.0 * density * tke * scvf.directionSign() * Extrusion::area(scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
+            }
         }
 
 
