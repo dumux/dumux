@@ -53,15 +53,15 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/flux/porenetwork/advection.hh>
+
 #include <dumux/porenetwork/properties.hh>
+#include <dumux/porenetwork/1p/spatialparams.hh>
 
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/porousmediumflow/nonisothermal/iofields.hh>
-
 #include <dumux/porousmediumflow/1p/model.hh>
 
-#include <dumux/material/spatialparams/porenetwork/porenetwork1p.hh>
 #include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility1p.hh>
 
 #include "iofields.hh"
@@ -105,7 +105,7 @@ public:
 };
 
 //! The spatial parameters to be employed.
-//! Use OnePDefaultSpatialParams by default.
+//! Use PNMOnePSpatialParams by default.
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::PNMOneP>
 {
@@ -113,7 +113,7 @@ private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = Dumux::PoreNetwork::OnePDefaultSpatialParams<GridGeometry, Scalar>;
+    using type = Dumux::PoreNetwork::PNMOnePSpatialParams<GridGeometry, Scalar>;
 };
 
 //! The flux variables cache

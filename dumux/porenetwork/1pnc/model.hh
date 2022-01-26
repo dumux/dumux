@@ -63,10 +63,10 @@
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility1p.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
-#include <dumux/material/spatialparams/porenetwork/porenetwork1p.hh>
 
 #include <dumux/porenetwork/properties.hh>
 #include <dumux/porenetwork/1p/model.hh>
+#include <dumux/porenetwork/1p/spatialparams.hh>
 
 #include <dumux/porousmediumflow/compositional/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
@@ -105,7 +105,7 @@ private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = Dumux::PoreNetwork::OnePDefaultSpatialParams<GridGeometry, Scalar>;
+    using type = Dumux::PoreNetwork::PNMOnePSpatialParams<GridGeometry, Scalar>;
 };
 
 //! The advection type
