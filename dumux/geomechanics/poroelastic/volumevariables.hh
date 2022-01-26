@@ -131,6 +131,9 @@ private:
                                           sp.template inertVolumeFraction<SolidSystem>(element, scv, elemSol, sCompIdx));
 
         // second, set the volume fractions of the (possibly) reacting components
+        // these may come from a coupled flow model which considers mineralization,
+        // so we make reactiveVolumeFraction a params interface in which users can
+        // retrieve the current volume fractions from the flow model.
         if (!(SolidState::isInert()))
             for (int sCompIdx = 0; sCompIdx < numSolidComp-numInertComp; ++sCompIdx)
                 solidState_.setVolumeFraction(sCompIdx,

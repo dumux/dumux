@@ -81,7 +81,9 @@ public:
 
     /*!
      * \brief Function for defining the solid volume fraction of a solid
-     *        component that takes part in some sort of reaction.
+     *        component that takes part in some sort of reaction. The reaction
+     *        may be described in a flow model coupled to the poroelastic model,
+     *        so implementations may access quantities of the coupled domain.
      *
      * \param element The current element
      * \param scv The sub-control volume inside the element.
