@@ -1,0 +1,107 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
+/*****************************************************************************
+ *   See the file COPYING for full copying permissions.                      *
+ *                                                                           *
+ *   This program is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation, either version 3 of the License, or       *
+ *   (at your option) any later version.                                     *
+ *                                                                           *
+ *   This program is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   GNU General Public License for more details.                            *
+ *                                                                           *
+ *   You should have received a copy of the GNU General Public License       *
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SpatialParameters
+ * \brief The base class for spatial parameters of linear elastic geomechanical problems
+ */
+#ifndef DUMUX_GEOMECHANICS_SPATIAL_PARAMS_TRAITS_HH
+#define DUMUX_GEOMECHANICS_SPATIAL_PARAMS_TRAITS_HH
+
+namespace Dumux {
+
+#ifndef DOXYGEN
+namespace Detail {
+// helper struct detecting if the user-defined spatial params class has a lameParamsAtPos function
+// for g++ > 5.3, this can be replaced by a lambda
+template<class GlobalPosition>
+struct hasLameParamsAtPos
+{
+    template<class SpatialParams>
+    auto operator()(const SpatialParams& a)
+    -> decltype(a.lameParamsAtPos(std::declval<GlobalPosition>()))
+    {}
+};
+
+} // end namespace Detail
+#endif
+
+/*!
+ * \ingroup SpatialParameters
+ * \brief The helper for spatial parameters of linear elastic geomechanical problems
+ */
+template<class Scalar, class GridGeometry, class Implementation>
+class ElasticSpatialParamsTraits
+{
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using GridView = typename GridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+public:
+    //! The constructor
+    ElasticSpatialParamsTraits(std::shared_ptr<const GridGeometry> gridGeometry)
+    : gridGeometry_(gridGeometry)
+    {}
+
+    /*!
+     * \brief Define the Lame parameters
+     * \note  These are possibly solution dependent and are evaluated
+     *        for an integration point inside the element. Therefore,
+     *        a flux variables cache object is passed to this function
+     *        containing data on shape functions at the integration point.
+     *
+     * \param element The current element
+     * \param fvGeometry The local finite volume geometry
+     * \param elemVolVars Primary/Secondary variables inside the element
+     * \param fluxVarsCache Contains data on shape functions at the integration point
+     * \return lame parameters
+     */
+    template<class ElemVolVars, class FluxVarsCache>
+    decltype(auto) lameParams(const Element& element,
+                              const FVElementGeometry& fvGeometry,
+                              const ElemVolVars& elemVolVars,
+                              const FluxVarsCache& fluxVarsCache) const
+    {
+        static_assert(decltype(isValid(Detail::hasLameParamsAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
+        "   Your spatial params class has to either implement\n\n"
+        "         const LameParams& lameParamsAtPos(const GlobalPosition& globalPos) const\n\n"
+        "   or overload this function\n\n"
+        "         template<class ElementSolution>\n"
+        "         const LameParams& lameParams(const Element& element,\n"
+        "                                      const FVElementGeometry& fvGeometry,\n"
+        "                                      const ElemVolVars& elemVolVars,\n"
+        "                                      const FluxVarsCache& fluxVarsCache) const\n\n");
+
+        return asImp_().lameParamsAtPos(fluxVarsCache.ipGlobal());
+    }
+
+protected:
+    Implementation &asImp_()
+    { return *static_cast<Implementation*>(this); }
+
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation*>(this); }
+
+private:
+    std::shared_ptr<const GridGeometry> gridGeometry_;
+};
+} // end namespace Dumuxs
+#endif
