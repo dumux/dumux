@@ -16,13 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_GEOMECHANICS_SPATIAL_PARAMS_HELPER_HH
-#define DUMUX_GEOMECHANICS_SPATIAL_PARAMS_HELPER_HH
-
-namespace Dumux {
-
+#ifndef DUMUX_GEOMECHANICS_SPATIAL_PARAMS_TRAITS__HH
+#define DUMUX_GEOMECHANICS_SPATIAL_PARAMS_TRAITS__HH
 #ifndef DOXYGEN
-namespace Detail {
+
+namespace Dumux::Detail {
+
 // helper struct detecting if the user-defined spatial params class has a lameParamsAtPos function
 template<class GlobalPosition>
 struct hasLameParamsAtPos
@@ -33,8 +32,6 @@ struct hasLameParamsAtPos
     {}
 };
 
-} // end namespace Detail
-#endif
-
-} // end namespace Dumux
+} // end namespace Dumux::Detail
+#endif  // DOXYGEN
 #endif
