@@ -27,8 +27,8 @@
 #include <memory>
 
 #include <dumux/common/typetraits/isvalid.hh>
-#include <dumux/geomechanics/elastic/fvspatialparams.hh> // for some helpers in detail namespace
 #include <dumux/common/fvporousmediumspatialparams.hh>
+#include <dumux/geomechanics/spatialparamstraits_.hh>
 
 namespace Dumux {
 
