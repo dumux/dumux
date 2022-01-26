@@ -97,14 +97,6 @@ public:
             return (timeStepIndex % vtpOutputFrequency_ == 0 || gridVariables.gridFluxVarsCache().invasionState().hasChanged());
     }
 
-#if ISOTHERMAL
-
-    //! Return the temperature within the domain in [K].
-    Scalar temperature() const
-    { return 273.15 + 10; } // 10°C
-    // \}
-#endif
-
      /*!
      * \name Boundary conditions
      */
