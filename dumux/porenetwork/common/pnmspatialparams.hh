@@ -22,8 +22,8 @@
  * \ingroup SpatialParameters
  * \brief The base class for spatial parameters for pore-network models.
  */
-#ifndef DUMUX_PNM_SPATIAL_PARAMS_BASE_HH
-#define DUMUX_PNM_SPATIAL_PARAMS_BASE_HH
+#ifndef DUMUX_PNM_SPATIAL_PARAMS_HH
+#define DUMUX_PNM_SPATIAL_PARAMS_HH
 
 #include <type_traits>
 #include <memory>
@@ -88,8 +88,7 @@ struct hasPorosityAtPos
  * \brief The base class for spatial parameters for pore-network models.
  */
 template<class GridGeometry, class Scalar, class Implementation>
-[[deprecated("Use PNMSpatialParams from dumux/porenetwork/common/pnmspatialparams.hh instead. This class will be removed after 3.5.")]]
-class BaseSpatialParams
+class PNMSpatialParams
 {
     using GridView = typename GridGeometry::GridView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
@@ -101,7 +100,7 @@ class BaseSpatialParams
 public:
     using PermeabilityType = Scalar;
 
-    BaseSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    PNMSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : gridGeometry_(gridGeometry)
     , gravity_(0.0)
     {
@@ -303,6 +302,62 @@ public:
         "                                    int compIdx) const\n\n");
 
         return asImp_().template inertVolumeFractionAtPos<SolidSystem>(scv.center(), compIdx);
+    }
+    /*!
+     * \brief Return how much the domain is extruded at a given sub-control volume.
+     *
+     * This means the factor by which a lower-dimensional (1D or 2D)
+     * entity needs to be expanded to get a full dimensional cell. The
+     * default is 1.0 which means that 1D problems are actually
+     * thought as pipes with a cross section of 1 m^2 and 2D problems
+     * are assumed to extend 1 m to the back.
+     */
+    template<class ElementSolution>
+    Scalar extrusionFactor(const Element& element,
+                           const SubControlVolume& scv,
+                           const ElementSolution& elemSol) const
+    {
+        // forward to generic interface
+        return asImp_().extrusionFactorAtPos(scv.center());
+    }
+
+    /*!
+     * \brief Return how much the domain is extruded at a given position.
+     */
+    Scalar extrusionFactorAtPos(const GlobalPosition& globalPos) const
+    {
+        // As a default, i.e. if the user's problem does not overload
+        // any extrusion factor method, return 1.0
+        return 1.0;
+    }
+
+    /*!
+     * \brief Return the temperature in the given sub-control volume.
+     */
+    template<class ElementSolution>
+    Scalar temperature(const Element& element,
+                       const SubControlVolume& scv,
+                       const ElementSolution& elemSol) const
+    {
+        // forward to generic interface
+        return asImp_().temperatureAtPos(scv.center());
+    }
+
+    /*!
+     * \brief Return the temperature in the domain at the given position
+     * \param globalPos The position in global coordinates where the temperature should be specified.
+     */
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    {
+        static const Scalar defaultTemperature = [] () {
+            const Scalar defaultTemp = 283.15; // 20°C
+            std::cout << " -- Using the default temperature of " << defaultTemp << " in the entire domain. "
+                      << "Overload temperatureAtPos() in your spatial params class to define a custom temperature field."
+                      << std::endl;
+            return defaultTemp;
+        } ();
+
+        return defaultTemperature;
     }
 
 protected:
