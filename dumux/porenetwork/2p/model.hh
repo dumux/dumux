@@ -60,7 +60,6 @@
 
 #include <dumux/porenetwork/properties.hh>
 
-#include <dumux/material/spatialparams/porenetwork/porenetwork2p.hh>
 #include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility1p.hh>
 #include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility2p.hh>
 #include <dumux/material/fluidmatrixinteractions/porenetwork/pore/2p/multishapelocalrules.hh>
@@ -75,6 +74,7 @@
 #include "gridfluxvariablescache.hh"
 #include "iofields.hh"
 #include "volumevariables.hh"
+#include "spatialparams.hh"
 
 namespace Dumux::Properties {
 // \{
@@ -137,7 +137,7 @@ public:
 };
 
 //! The spatial parameters to be employed.
-//! Use PNMTwoPSpatialParams by default.
+//! Use PNMTwoPDefaultSpatialParams by default.
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::PNMTwoP>
 {
@@ -146,7 +146,7 @@ private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using LocalRules = Dumux::PoreNetwork::FluidMatrix::MultiShapeTwoPLocalRules<Scalar>;
 public:
-    using type = Dumux::PoreNetwork::TwoPDefaultSpatialParams<GridGeometry, Scalar, LocalRules>;
+    using type = Dumux::PoreNetwork::PNMTwoPDefaultSpatialParams<GridGeometry, Scalar, LocalRules>;
 };
 
 //! The advection type
