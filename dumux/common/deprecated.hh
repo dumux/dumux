@@ -190,6 +190,21 @@ decltype(auto) temperature(const Problem& problem, const Element& element, const
         return problem.temperatureAtPos(scv.dofPosition());
 }
 
+[[deprecated("The isOnWall and IsOnWallAtPos functions in the problem class will be removed after release 3.5. "
+             "Please use the Rans specific boundarytypes. Mark wall boundaries in the rans problems with the setWall() function.")]]
+void noSetWallCompilerWarning() {}
+
+template<typename Problem, typename GlobalPosition>
+constexpr bool usesOldWallBCs()
+{
+    if constexpr (hasIsOnWall<Problem, GlobalPosition>())
+    {
+        noSetWallCompilerWarning();
+        return true;
+    }
+    return false;
+}
+
 } // end namespace Deprecated
 #endif
 
