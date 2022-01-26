@@ -40,6 +40,10 @@ namespace Dumux {
 // so most likely you don't want to use this in your code
 namespace Deprecated {
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif // __clang__
 template <class Mapper, class GridView>
 using GridViewDetector = decltype(std::declval<Mapper>().update(std::declval<GridView>()));
 
@@ -47,23 +51,15 @@ template<class Mapper, class GridView>
 static constexpr bool hasUpdateGridView()
 { return Dune::Std::is_detected<GridViewDetector, Mapper, GridView>::value; }
 
-// helper class to print deprecated message
-template <class Mapper>
-#if DUNE_VERSION_GTE(DUNE_GRID,2,8)
-[[deprecated("The interface mapper.update() is deprecated. All mappers now have to implement `update(gridView)` instead (with a gridView as argument). Only mappers with the new interface will be support for dune-grid 2.7 is dropped.")]]
-#endif
-void update(Mapper& mapper)
-{ mapper.update(); };
-
 template <typename Problem, typename GlobalPosition>
 using HasIsOnWallDetector = decltype(std::declval<Problem>().isOnWallAtPos(std::declval<GlobalPosition>()));
+
+template <typename BcTypes>
+using HasWallBCDetector = decltype(std::declval<BcTypes>().hasWall());
 
 template<class Problem, typename GlobalPosition>
 static constexpr bool hasIsOnWall()
 { return Dune::Std::is_detected<HasIsOnWallDetector, Problem, GlobalPosition>::value; }
-
-template <typename BcTypes>
-using HasWallBCDetector = decltype(std::declval<BcTypes>().hasWall());
 
 template<class BcTypes>
 static constexpr bool hasHasWallBC()
@@ -98,35 +94,6 @@ using HasBaseProblemTemperatureAtPosDetector = decltype(std::declval<Problem>().
 template<class Problem>
 using HasBaseProblemTemperatureDetector = decltype(std::declval<Problem>().temperature(int{}));
 
-template<typename Problem, typename Element, typename Scv, typename ElemSol>
-decltype(auto) temperature(const Problem& problem, const Element& element, const Scv& scv, const ElemSol& elemSol)
-{
-    using SpatialParams = std::decay_t<decltype(problem.spatialParams())>;
-    using GlobalPosition = std::decay_t<decltype(scv.dofPosition())>;
-
-    static constexpr bool hasBaseProbTempAtPosInterface = Dune::Std::is_detected<
-        HasBaseProblemTemperatureAtPosDetector, Problem, GlobalPosition
-    >::value;
-    static constexpr bool hasBaseProbTempInterface = Dune::Std::is_detected<
-        HasBaseProblemTemperatureDetector, Problem
-    >::value;
-    static constexpr bool spatialParamsHaveNewInterface = Dune::Std::is_detected<
-        HasNewTemperatureDetector, SpatialParams, Element, Scv, ElemSol
-    >::value;
-
-    static constexpr bool problemHasUserDefinedTemperature = !hasBaseProbTempAtPosInterface || !hasBaseProbTempInterface;
-
-    if constexpr (problemHasUserDefinedTemperature && spatialParamsHaveNewInterface)
-        DUNE_THROW(Dune::InvalidStateException,
-                   "Temperature defined both in problem implementation (deprecated interface) and spatial params (new interface). "
-                   "Please move the temperature definition in your problem implementation to your spatial parameters.");
-
-    if constexpr (spatialParamsHaveNewInterface)
-        return problem.spatialParams().temperature(element, scv, elemSol);
-    else
-        return problem.temperatureAtPos(scv.dofPosition());
-}
-
 template<class SpatialParams, class Element, class SubControlVolume, class ElementSolution>
 using HasExtrusionFactorDetector = decltype(std::declval<SpatialParams>().extrusionFactor(
         std::declval<Element>(),
@@ -147,6 +114,18 @@ using HasBaseProblemExtrusionFactorAtPosDetector = decltype(std::declval<Problem
         std::declval<GlobalPosition>(),
         double{}
     ));
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif  // __clang__
+
+// helper class to print deprecated message
+template <class Mapper>
+#if DUNE_VERSION_GTE(DUNE_GRID,2,8)
+[[deprecated("The interface mapper.update() is deprecated. All mappers now have to implement `update(gridView)` instead (with a gridView as argument). Only mappers with the new interface will be support for dune-grid 2.7 is dropped.")]]
+#endif
+void update(Mapper& mapper)
+{ mapper.update(); };
 
 template<class Problem, class Element, class SubControlVolume, class ElementSolution>
 decltype(auto) extrusionFactor(const Problem& problem,
@@ -180,6 +159,35 @@ decltype(auto) extrusionFactor(const Problem& problem,
         return problem.spatialParams().extrusionFactor(element, scv, elemSol);
     else
         return problem.extrusionFactor(element, scv, elemSol);
+}
+
+template<typename Problem, typename Element, typename Scv, typename ElemSol>
+decltype(auto) temperature(const Problem& problem, const Element& element, const Scv& scv, const ElemSol& elemSol)
+{
+    using SpatialParams = std::decay_t<decltype(problem.spatialParams())>;
+    using GlobalPosition = std::decay_t<decltype(scv.dofPosition())>;
+
+    static constexpr bool hasBaseProbTempAtPosInterface = Dune::Std::is_detected<
+        HasBaseProblemTemperatureAtPosDetector, Problem, GlobalPosition
+    >::value;
+    static constexpr bool hasBaseProbTempInterface = Dune::Std::is_detected<
+        HasBaseProblemTemperatureDetector, Problem
+    >::value;
+    static constexpr bool spatialParamsHaveNewInterface = Dune::Std::is_detected<
+        HasNewTemperatureDetector, SpatialParams, Element, Scv, ElemSol
+    >::value;
+
+    static constexpr bool problemHasUserDefinedTemperature = !hasBaseProbTempAtPosInterface || !hasBaseProbTempInterface;
+
+    if constexpr (problemHasUserDefinedTemperature && spatialParamsHaveNewInterface)
+        DUNE_THROW(Dune::InvalidStateException,
+                   "Temperature defined both in problem implementation (deprecated interface) and spatial params (new interface). "
+                   "Please move the temperature definition in your problem implementation to your spatial parameters.");
+
+    if constexpr (spatialParamsHaveNewInterface)
+        return problem.spatialParams().temperature(element, scv, elemSol);
+    else
+        return problem.temperatureAtPos(scv.dofPosition());
 }
 
 } // end namespace Deprecated
