@@ -16,36 +16,22 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/*!
- * \file
- *
- * \ingroup SpatialParameters
- * \brief The default class for spatial parameters for single-phase pore-network models.
- */
-#ifndef DUMUX_PNM_SPATIAL_PARAMS_1P_HH
-#define DUMUX_PNM_SPATIAL_PARAMS_1P_HH
+#ifndef DUMUX_PORENETWORK_SPATIAL_PARAMS_TRAITS__HH
+#define DUMUX_PORENETWORK_SPATIAL_PARAMS_TRAITS__HH
+#ifndef DOXYGEN
 
-#warning "This file is deprecated, use PNMOnePSpatialParams from dumux/porenetwork/1p/spatialparams.hh instead!"
+namespace Dumux::Detail {
 
-#include "porenetworkbase.hh"
-
-namespace Dumux::PoreNetwork {
-
-/*!
-* \ingroup SpatialParameters
-* \brief The default class for spatial parameters for single-phase pore-network models.
-*/
-template<class GridGeometry, class Scalar>
-[[deprecated("Use PNMOnePSpatialParams from dumux/porenetwork/1p/spatialparams.hh instead. This class will be removed after 3.5.")]]
-class OnePDefaultSpatialParams : public BaseSpatialParams<GridGeometry, Scalar,
-                                                          OnePDefaultSpatialParams<GridGeometry, Scalar>>
+// helper struct detecting if the user-defined spatial params class has a materialLawParamsAtPos function
+template<class GlobalPosition>
+struct hasMaterialLawParamsAtPos
 {
-    using ParentType = BaseSpatialParams<GridGeometry, Scalar,
-                                         OnePDefaultSpatialParams<GridGeometry, Scalar>>;
-public:
-    using ParentType::ParentType;
+    template<class SpatialParams>
+    auto operator()(const SpatialParams& a)
+    -> decltype(a.materialLawParamsAtPos(std::declval<GlobalPosition>()))
+    {}
 };
 
-} // namespace Dumux::PoreNetwork
-
+} // end namespace Dumux::Detail
+#endif  // DOXYGEN
 #endif
