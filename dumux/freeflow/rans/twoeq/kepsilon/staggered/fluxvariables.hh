@@ -152,7 +152,15 @@ public:
         // Remove this check after release 3.5. IsOnWall Interface is deprecated
         if constexpr (Deprecated::hasIsOnWall<Problem, GlobalPosition>())
         {
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif // __clang__
             noSetWallCompilerWarning_();
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif  // __clang__
+
             // Remove this part
             if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::turbulentKineticEnergyEqIdx)
                                     || bcTypes.isSymmetry()
@@ -224,6 +232,7 @@ private:
                  "Please use the Rans specific boundarytypes. "
                  "Mark wall boundaries in the rans problems with the setWall() function.")]]
     void noSetWallCompilerWarning_(){}
+
 };
 
 } // end namespace

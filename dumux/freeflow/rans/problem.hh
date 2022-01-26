@@ -375,7 +375,16 @@ private:
                         return;
                 }
                 else
+                {
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif // __clang__
                     noSetWallCompilerWarning_();
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif  // __clang__
+                }
             }
         }
 
@@ -735,6 +744,7 @@ private:
                 "Please use the Rans specific boundarytypes. "
                 "Mark wall boundaries in the rans problems with the setWall() function.")]]
     void noSetWallCompilerWarning_(){}
+
 
     const int fixedFlowDirectionAxis_ = getParam<int>("RANS.FlowDirectionAxis", 0);
     const int fixedWallNormalAxis_ = getParam<int>("RANS.WallNormalAxis", 1);
