@@ -108,6 +108,38 @@ using HasBaseProblemExtrusionFactorAtPosDetector = decltype(std::declval<Problem
         double{}
     ));
 
+
+template<class Problem, class Element, class SubControlVolume>
+using HasBaseProblemEffectiveFluidDensity = decltype(std::declval<Problem>().effectiveFluidDensity(
+      std::declval<Element>(),
+      std::declval<SubControlVolume>(),
+      double{}
+    ));
+
+template<class Problem, class GlobalPosition>
+using HasEffectiveFluidDensityAtPos = decltype(std::declval<Problem>().effectiveFluidDensityAtPos(
+      std::declval<GlobalPosition>()
+    ));
+
+template<class Problem,
+         class Element,
+         class FVElementGeometry,
+         class ElemVolVars,
+         class FluxVarsCache>
+using HasBaseProblemEffectivePorePressure = decltype(std::declval<Problem>().effectivePorePressure(
+      std::declval<Element>(),
+      std::declval<FVElementGeometry>(),
+      std::declval<ElemVolVars>(),
+      std::declval<FluxVarsCache>(),
+      double{}
+    ));
+
+template<class Problem, class GlobalPosition>
+using HasEffectivePorePressureAtPos = decltype(std::declval<Problem>().effectivePorePressureAtPos(
+      std::declval<GlobalPosition>()
+    ));
+
+
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif  // __clang__
@@ -181,6 +213,65 @@ decltype(auto) temperature(const Problem& problem, const Element& element, const
         return problem.spatialParams().temperature(element, scv, elemSol);
     else
         return problem.temperatureAtPos(scv.dofPosition());
+}
+
+template<class Problem, class Element, class SubControlVolume>
+decltype(auto) effectiveFluidDensity(const Problem& problem,
+                                     const Element& element,
+                                     const SubControlVolume& scv)
+{
+    using GlobalPosition = typename SubControlVolume::Traits::GlobalPosition;
+
+    static constexpr bool hasBaseProblemDensity = Dune::Std::is_detected<
+        HasBaseProblemEffectiveFluidDensity, Problem, Element, SubControlVolume
+    >::value;
+
+    static constexpr bool hasProblemDensityAtPos = Dune::Std::is_detected<
+        HasEffectiveFluidDensityAtPos, Problem, GlobalPosition
+    >::value;
+
+    static constexpr bool problemDefinesUserDensity =
+        hasProblemDensityAtPos || !hasBaseProblemDensity;
+
+    if constexpr (problemDefinesUserDensity)
+        return problem.effectiveFluidDensity(element, scv);
+    else
+        return problem.spatialParams().effectiveFluidDensity(element, scv);
+}
+
+template<class Problem, class Element, class FVElementGeometry, class ElemVolVars, class FluxVarsCache>
+decltype(auto) effectivePorePressure(const Problem& problem,
+                                     const Element& element,
+                                     const FVElementGeometry& fvGeometry,
+                                     const ElemVolVars& elemVolVars,
+                                     const FluxVarsCache& fluxVarsCache)
+{
+    using GlobalPosition = typename FVElementGeometry::GridGeometry::SubControlVolume::Traits::GlobalPosition;
+
+    static constexpr bool hasBaseProblemPressure = Dune::Std::is_detected<
+        HasBaseProblemEffectivePorePressure,
+        Problem,
+        Element,
+        FVElementGeometry,
+        ElemVolVars,
+        FluxVarsCache
+    >::value;
+
+    static constexpr bool hasProblemPressureAtPos = Dune::Std::is_detected<
+        HasEffectivePorePressureAtPos, Problem, GlobalPosition
+    >::value;
+
+    static constexpr bool problemDefinesUserPressure =
+        hasProblemPressureAtPos || !hasBaseProblemPressure;
+
+    if constexpr (problemDefinesUserPressure)
+        return problem.effectivePorePressure(
+            element, fvGeometry, elemVolVars, fluxVarsCache
+        );
+    else
+        return problem.spatialParams().effectivePorePressure(
+            element, fvGeometry, elemVolVars, fluxVarsCache
+        );
 }
 
 } // end namespace Deprecated

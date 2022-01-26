@@ -35,6 +35,28 @@ namespace Dumux {
 #ifndef DOXYGEN
 namespace Detail {
 
+// helper struct detecting if the user-defined problem class has an effectiveFluidDensityAtPos function
+// for g++ > 5.3, this can be replaced by a lambda
+template<class GlobalPosition>
+struct hasEffFluidDensityAtPos
+{
+    template<class Problem>
+    auto operator()(const Problem& a)
+    -> decltype(a.effectiveFluidDensityAtPos(std::declval<GlobalPosition>()))
+    {}
+};
+
+// helper struct detecting if the user-defined problem class has an effectivePorePressureAtPos function
+// for g++ > 5.3, this can be replaced by a lambda
+template<class GlobalPosition>
+struct hasEffPorePressureAtPos
+{
+    template<class Problem>
+    auto operator()(const Problem& a)
+    -> decltype(a.effectivePorePressureAtPos(std::declval<GlobalPosition>()))
+    {}
+};
+
 // helper struct detecting if the user-defined spatial params class has a reactiveVolumeFractionAtPos function
 template<class GlobalPosition, class SolidSystem>
 struct hasReactiveVolumeFractionAtPos
@@ -78,6 +100,59 @@ public:
     FVPoroElasticSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {}
+
+    /*!
+     * \brief Returns the effective fluid density within an scv.
+     * \note This is only enabled if the model considers fluid phases.
+     *
+     * \param element The current element
+     * \param scv The sub-control volume
+     */
+    Scalar effectiveFluidDensity(const Element& element,
+                                 const SubControlVolume& scv) const
+    {
+        static_assert(decltype(isValid(Detail::hasEffFluidDensityAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
+        "   Your problem class has to either implement\n\n"
+        "         Scalar effectiveFluidDensityAtPos(const GlobalPosition& globalPos) const\n\n"
+        "   or overload this function\n\n"
+        "         template<class ElementSolution>\n"
+        "         Scalar effectiveFluidDensity(const Element& element,\n\
+                                               const SubControlVolume& scv) const\n\n");
+
+        return this->asImp_().effectiveFluidDensityAtPos(scv.center());
+    }
+
+    /*!
+     * \brief Returns the effective pore pressure
+     * \note This is only enabled if the model considers fluid phases.
+     *       This is possibly solution dependent and is evaluated
+     *       for an integration point inside the element. Therefore,
+     *       a flux variables cache object is passed to this function
+     *       containing data on shape functions at the integration point.
+     *
+     * \param element The current element
+     * \param fvGeometry The local finite volume geometry
+     * \param elemVolVars Primary/Secondary variables inside the element
+     * \param fluxVarsCache Contains data on shape functions at the integration point
+     */
+    template<class ElemVolVars, class FluxVarsCache>
+    Scalar effectivePorePressure(const Element& element,
+                                 const FVElementGeometry& fvGeometry,
+                                 const ElemVolVars& elemVolVars,
+                                 const FluxVarsCache& fluxVarsCache) const
+    {
+        static_assert(decltype(isValid(Detail::hasEffPorePressureAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
+        "   Your problem class has to either implement\n\n"
+        "         Scalar effectivePorePressureAtPos(const GlobalPosition& globalPos) const\n\n"
+        "   or overload this function\n\n"
+        "         template<class ElementSolution>\n"
+        "         Scalar effectivePorePressure(const Element& element,\n"
+        "                                      const FVElementGeometry& fvGeometry,\n"
+        "                                      const ElemVolVars& elemVolVars,\n"
+        "                                      const FluxVarsCache& fluxVarsCache) const\n\n");
+
+        return this->asImp_().effectivePorePressureAtPos(element.geometry().center());
+    }
 
     /*!
      * \brief Function for defining the solid volume fraction of a solid
