@@ -1,7 +1,7 @@
 add_input_file_links()
 
 dumux_add_test(NAME test_md_boundary_ff1p_pnm1p
-              LABELS multidomain multidomain_boundary freeflowpnm 1p navierstokes
+              LABELS multidomain multidomain_boundary freeflowpnm 1p navierstokes porenetwork
               SOURCES main.cc
               CMAKE_GUARD "( HAVE_UMFPACK AND dune-foamgrid_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -14,7 +14,7 @@ dumux_add_test(NAME test_md_boundary_ff1p_pnm1p
                                    -Vtk.OutputName test_md_boundary_ff1p_pnm1p")
 
 dumux_add_test(NAME test_md_boundary_ff1p_pnm1p_single_throat
-              LABELS multidomain multidomain_boundary freeflowpnm 1p navierstokes
+              LABELS multidomain multidomain_boundary freeflowpnm 1p navierstokes porenetwork
               TARGET test_md_boundary_ff1p_pnm1p
               CMAKE_GUARD "( HAVE_UMFPACK AND dune-foamgrid_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
