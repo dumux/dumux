@@ -313,7 +313,8 @@ public:
      * \brief Vapor pressure of a component \f$\mathrm{[Pa]}\f$.
      * \note The vapor pressure of brine decreases with the mole fraction of water in the liquid phase.
      * This is described by Raoult's law, see Thomas Fetzer's Dissertation Eq. 2.11.
-     * It is also the simplified version of the Kelvin equation, neglecting the influence of the capillary pressure here.
+     * It is also the simplified version of the Kelvin equation, without the influence of the capillary pressure
+     * as we have one-phase flow.
      *
      * \param fluidState The fluid state
      * \param compIdx The index of the component to consider
@@ -372,7 +373,7 @@ public:
 
         const Scalar hw = H2O::liquidEnthalpy(T, p)/1E3; /* kJ/kg */
 
-        /*DAUBERT and DANNER*/
+        /*component enthalpy of soluted NaCl after DAUBERT and DANNER*/
         const Scalar h_NaCl = (3.6710E4*T + 0.5*(6.2770E1)*T*T - ((6.6670E-2)/3)*T*T*T
                               + ((2.8000E-5)/4)*(T*T*T*T))/(58.44E3)- 2.045698e+02; /* U [kJ/kg] */
 
@@ -384,7 +385,7 @@ public:
             for (int j=0; j<=2; j++)
                 d_h = d_h + a[i][j] * power(theta, i) * power(m, j);
 
-        /* heat of dissolution for halite according to Michaelides 1971 */
+        /* heat of dissolution for halite according to Michaelides 1981 */
         const Scalar delta_h = (4.184/(1E3 + (58.44 * m)))*d_h;
 
         /* Enthalpy of brine without any dissolved gas */
