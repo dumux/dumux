@@ -25,6 +25,7 @@
 #define DUMUX_KEPSILON_STAGGERED_FLUXVARIABLES_HH
 
 #include <numeric>
+#include <dune/common/exceptions.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/deprecated.hh>
 #include <dumux/flux/fluxvariablesbase.hh>
@@ -150,7 +151,7 @@ public:
         const auto bcTypes = problem.boundaryTypes(element, scvf);
 
         // Remove this check after release 3.5. IsOnWall Interface is deprecated
-        if constexpr (Deprecated::usesOldWallBCs<Problem, GlobalPosition>())
+        if constexpr (Deprecated::hasIsOnWall<Problem, GlobalPosition>())
         {
             // Remove this part
             if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::turbulentKineticEnergyEqIdx)
@@ -168,7 +169,7 @@ public:
                 }
             }
         }
-        else
+        else if constexpr (Deprecated::usesHasWallBCs<decltype(bcTypes)>())
         {
             // Keep this part
             if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::turbulentKineticEnergyEqIdx)
@@ -186,9 +187,12 @@ public:
                 }
             }
         }
+        else
+            DUNE_THROW(Dune::Exception, "Please use the RANS boundary types to set wall conditions.");
+
 
         if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::dissipationEqIdx)
-                                  || bcTypes.isSymmetry())))
+                               || bcTypes.isSymmetry())))
         {
             flux[dissipationEqIdx]
                 += coeff_e / distance
@@ -216,13 +220,6 @@ public:
                + 2.0 / ModelTraits::dim() * insideVolVars.density() * insideVolVars.turbulentKineticEnergy()
                  * Extrusion::area(scvf) * scvf.directionSign() * insideVolVars.extrusionFactor();
     }
-
-private:
-
-    [[deprecated("The isOnWall and IsOnWallAtPos functions will be removed after release 3.5. "
-                 "Please use the Rans specific boundarytypes. "
-                 "Mark wall boundaries in the rans problems with the setWall() function.")]]
-    void noSetWallCompilerWarning_(){}
 
 };
 

@@ -368,13 +368,13 @@ private:
             auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scvf : scvfs(fvGeometry))
-                if constexpr (!Deprecated::usesOldWallBCs<Implementation, GlobalPosition>())
+                if constexpr (Deprecated::usesHasWallBCs<decltype(asImp_().boundaryTypes(element, scvf))>())
                     if (asImp_().boundaryTypes(element, scvf).hasWall())
                         return;
         }
 
         // If reached, no walls were found, throw exception. Remove check after 3.5
-        if constexpr (!Deprecated::usesOldWallBCs<Implementation, GlobalPosition>())
+        if constexpr (!Deprecated::usesIsOnWall<Implementation, GlobalPosition>())
             DUNE_THROW(Dune::InvalidStateException, "No walls are are specified with the setWall() function");
     }
 

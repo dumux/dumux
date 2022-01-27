@@ -40,6 +40,10 @@ namespace Dumux {
 // so most likely you don't want to use this in your code
 namespace Deprecated {
 
+[[deprecated("The isOnWall and IsOnWallAtPos functions in the problem class will be removed after release 3.5. "
+             "Please use the Rans specific boundarytypes. Mark wall boundaries in the rans problems with the setWall() function.")]]
+void ransWallsCompilerWarning() {}
+
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -114,6 +118,27 @@ using HasBaseProblemExtrusionFactorAtPosDetector = decltype(std::declval<Problem
         std::declval<GlobalPosition>(),
         double{}
     ));
+
+template<class BcTypes>
+constexpr bool usesHasWallBCs()
+{
+    if constexpr (hasHasWallBC<BcTypes>())
+        return true;
+
+    ransWallsCompilerWarning();
+    return false;
+}
+
+template<typename Problem, typename GlobalPosition>
+constexpr bool usesIsOnWall()
+{
+    if constexpr (hasIsOnWall<Problem, GlobalPosition>())
+    {
+        ransWallsCompilerWarning();
+        return true;
+    }
+    return false;
+}
 
 #ifdef __clang__
 #pragma clang diagnostic pop
@@ -190,20 +215,6 @@ decltype(auto) temperature(const Problem& problem, const Element& element, const
         return problem.temperatureAtPos(scv.dofPosition());
 }
 
-[[deprecated("The isOnWall and IsOnWallAtPos functions in the problem class will be removed after release 3.5. "
-             "Please use the Rans specific boundarytypes. Mark wall boundaries in the rans problems with the setWall() function.")]]
-void noSetWallCompilerWarning() {}
-
-template<typename Problem, typename GlobalPosition>
-constexpr bool usesOldWallBCs()
-{
-    if constexpr (hasIsOnWall<Problem, GlobalPosition>())
-    {
-        noSetWallCompilerWarning();
-        return true;
-    }
-    return false;
-}
 
 } // end namespace Deprecated
 #endif
