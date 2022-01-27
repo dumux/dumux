@@ -30,23 +30,9 @@
 
 #include <dumux/common/fvspatialparams.hh>
 #include <dumux/common/typetraits/isvalid.hh>
+#include <dumux/geomechanics/spatialparamstraits_.hh>
 
 namespace Dumux {
-
-#ifndef DOXYGEN
-namespace Detail {
-// helper struct detecting if the user-defined spatial params class has a lameParamsAtPos function
-template<class GlobalPosition>
-struct hasLameParamsAtPos
-{
-    template<class SpatialParams>
-    auto operator()(const SpatialParams& a)
-    -> decltype(a.lameParamsAtPos(std::declval<GlobalPosition>()))
-    {}
-};
-
-} // end namespace Detail
-#endif
 
 /*!
  * \ingroup SpatialParameters
