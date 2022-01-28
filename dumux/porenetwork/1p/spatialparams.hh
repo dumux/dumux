@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \ingroup SpatialParameters
  * \brief The default class for spatial parameters for single-phase pore-network models.
  */
