@@ -44,7 +44,7 @@ class UpscalingSpatialParams : public PNMSpatialParams<GridGeometry, Scalar,
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
-
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 public:
 
     UpscalingSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
@@ -67,6 +67,9 @@ public:
         for (int i = 0; i < totalAreaSharedWithAdjacentThroats.size(); ++i)
             poreShapeFactor_[i] /= totalAreaSharedWithAdjacentThroats[i];
     }
+
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    { return 283.15; }
 
     template<class ElementSolutionVector>
     Scalar poreLength(const Element& element,
