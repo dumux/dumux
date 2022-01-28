@@ -42,6 +42,7 @@
 #include <dumux/nonlinear/newtonsolver.hh>
 
 #include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/algebratraits.hh>
 #include <dumux/linear/istlsolverfactorybackend.hh>
 
 #include "properties_momentum.hh"
@@ -153,7 +154,8 @@ int main(int argc, char** argv)
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
-    using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>>;
+    using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>,
+                                                  LinearAlgebraTraitsFromAssembler<Assembler>>;
     const auto dofMapper = LinearSolverTraits<GridGeometry>::DofMapper(gridGeometry->gridView());
     auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), dofMapper);
 
