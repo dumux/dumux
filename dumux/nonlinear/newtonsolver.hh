@@ -182,12 +182,6 @@ void assign(To& to, const From& from)
         DUNE_THROW(Dune::Exception, "Values are not assignable to each other!");
 }
 
-template<class T, std::enable_if_t<Dune::IsNumber<std::decay_t<T>>::value, int> = 0>
-constexpr std::size_t blockSize() { return 1; }
-
-template<class T, std::enable_if_t<!Dune::IsNumber<std::decay_t<T>>::value, int> = 0>
-constexpr std::size_t blockSize() { return std::decay_t<T>::size(); }
-
 template<class S, bool isScalar = false>
 struct BlockTypeHelper
 { using type = std::decay_t<decltype(std::declval<S>()[0])>; };
