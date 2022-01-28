@@ -373,7 +373,7 @@ using ILUBiCGSTABIstlSolver =
     IstlIterativeLinearSolver<LSTraits, LATraits,
         Dune::BiCGSTABSolver<typename LATraits::SingleTypeVector>,
         Detail::IstlDefaultBlockLevelPreconditionerFactory<Dune::SeqILU>,
-        /*accepts multi-type istl types?*/ false
+        /*accepts multi-type istl types?*/ true
     >;
 
 /*!
