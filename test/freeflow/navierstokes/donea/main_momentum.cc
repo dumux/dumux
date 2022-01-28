@@ -49,6 +49,7 @@
 #include <dumux/nonlinear/newtonsolver.hh>
 
 #include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/algebratraits.hh>
 #include <dumux/linear/istlsolverfactorybackend.hh>
 
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
@@ -233,7 +234,8 @@ int main(int argc, char** argv)
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
-    using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>>;
+    using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>,
+                                                  LinearAlgebraTraitsFromAssembler<Assembler>>;
     const auto& dofMapper = LinearSolverTraits<GridGeometry>::dofMapper(*gridGeometry);
     auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), dofMapper);
 
