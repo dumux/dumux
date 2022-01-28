@@ -26,6 +26,12 @@
 #define DUMUX_GEOMECHANICS_ELONEP_PROPERTIES_HH
 
 #include <dune/grid/yaspgrid.hh>
+#if HAVE_DUNE_ALUGRID
+#include <dumux/io/grid/gridmanager_alu.hh>
+#endif
+#if HAVE_DUNE_UGGRID
+#include <dumux/io/grid/gridmanager_ug.hh>
+#endif
 
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/box.hh>
@@ -62,7 +68,11 @@ struct FluidSystem<TypeTag, TTag::OnePSub>
 
 // Set the grid type
 template<class TypeTag>
+#ifndef GRIDTYPE
 struct Grid<TypeTag, TTag::OnePSub> { using type = Dune::YaspGrid<2>; };
+#else
+struct Grid<TypeTag, TTag::OnePSub> { using type = GRIDTYPE; };
+#endif
 // Set the problem property
 template<class TypeTag>
 struct Problem<TypeTag, TTag::OnePSub> { using type = OnePSubProblem<TypeTag> ; };
@@ -82,7 +92,11 @@ struct PoroElasticSub { using InheritsFrom = std::tuple<PoroElastic, BoxModel>; 
 } // end namespace TTag
 // Set the grid type
 template<class TypeTag>
+#ifndef GRIDTYPE
 struct Grid<TypeTag, TTag::PoroElasticSub> { using type = Dune::YaspGrid<2>; };
+#else
+struct Grid<TypeTag, TTag::PoroElasticSub> { using type = GRIDTYPE; };
+#endif
 // Set the problem property
 template<class TypeTag>
 struct Problem<TypeTag, TTag::PoroElasticSub> { using type = Dumux::PoroElasticSubProblem<TypeTag>; };
