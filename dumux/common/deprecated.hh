@@ -54,16 +54,9 @@ static constexpr bool hasUpdateGridView()
 template <typename Problem, typename GlobalPosition>
 using HasIsOnWallDetector = decltype(std::declval<Problem>().isOnWallAtPos(std::declval<GlobalPosition>()));
 
-template <typename BcTypes>
-using HasWallBCDetector = decltype(std::declval<BcTypes>().hasWall());
-
 template<class Problem, typename GlobalPosition>
 static constexpr bool hasIsOnWall()
 { return Dune::Std::is_detected<HasIsOnWallDetector, Problem, GlobalPosition>::value; }
-
-template<class BcTypes>
-static constexpr bool hasHasWallBC()
-{ return Dune::Std::is_detected<HasWallBCDetector, BcTypes>::value; }
 
 template <typename ModelTraits>
 using HasEnableCompositionalDispersionDetector = decltype(ModelTraits::enableCompositionalDispersion());
@@ -189,6 +182,7 @@ decltype(auto) temperature(const Problem& problem, const Element& element, const
     else
         return problem.temperatureAtPos(scv.dofPosition());
 }
+
 
 } // end namespace Deprecated
 #endif

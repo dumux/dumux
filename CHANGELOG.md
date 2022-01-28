@@ -50,6 +50,8 @@ for (const auto& element : elements(gridGeometry.gridView()))
 
 - __Embedded coupling__: Add a coupling manager for the 1D-3D projection based scheme with resolved interface introduced in Koch 2021 (https://arxiv.org/abs/2106.06358)
 
+- __RANS Boundary Types__: Wall boundaries for the RANS turbulence models can now be set using the `setWall` method in the `RANSBoundaryTypes` class. This replaces the old `isOnWall` and `isOnWallAtPos` functions.
+
 - __Dispersion__: Dispersion fluxes have been added as an option for the compositional and thermal one-phase porous medium flow models. These models use either a Scheidegger-type dispersion tensor, which is dependent on the velocity field and two length parameters, or a full and constant (_not_ solution-dependent, but possibly spatially varying) tensor that can be user defined in the spatial parameters. For compositional models coupled with flow models (e.g. 1pnc), using the Scheidegger-type dispersion tensor is only implemented for the box discretization method.
 
 To enable either thermal or compositional dispersion, please define these properties within your `properties.hh` header. For example:
@@ -90,6 +92,7 @@ The parameters describing your dispersion tensor can then be included in your `s
 - `test_dumux.sh` is deprecated.
 - `compareparameters.sh` is deprecated, use `getparameterlist.py` instead.
 - `replace_property_macros.sh` is removed.
+- `isOnWallAtPos` and `isOnWall` are no longer used in the RANS models to designate wall boundaries. These boundaries are now directly set in the RANSBoundaryTypes using the setWall() function.
 
 ### New experimental features (possibly subject to backwards-incompatible changes in the future)
 
