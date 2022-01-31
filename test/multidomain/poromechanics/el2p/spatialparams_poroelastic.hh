@@ -35,25 +35,29 @@ namespace Dumux {
  * \brief Definition of the spatial parameters for the poro-elastic
  *        sub-problem in the coupled poro-mechanical el1p problem.
  */
-template<class Scalar, class GridGeometry>
+template<class Scalar, class GridGeometry, class CouplingManager, class FluidSystem>
 class PoroElasticSpatialParams : public FVPoroElasticSpatialParams< GridGeometry,
                                                                     Scalar,
-                                                                    PoroElasticSpatialParams<Scalar, GridGeometry> >
+                                                                    PoroElasticSpatialParams<Scalar, GridGeometry, CouplingManager,
+                                                                    FluidSystem> >
 {
-    using ThisType = PoroElasticSpatialParams<Scalar, GridGeometry>;
+    using ThisType = PoroElasticSpatialParams<Scalar, GridGeometry, CouplingManager, FluidSystem>;
     using ParentType = FVPoroElasticSpatialParams<GridGeometry, Scalar, ThisType>;
 
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     //! Export the type of the lame parameters
     using LameParams = Dumux::LameParams<Scalar>;
 
-    PoroElasticSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    PoroElasticSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry,
+                             std::shared_ptr<CouplingManager> couplingManagerPtr)
     : ParentType(gridGeometry)
+    , couplingManagerPtr_(couplingManagerPtr)
     , initPorosity_(getParam<Scalar>("SpatialParams.InitialPorosity"))
     {
         // Young's modulus [Pa]
@@ -79,6 +83,40 @@ public:
         return PorosityDeformation<Scalar>::evaluatePorosity(this->gridGeometry(), element, scv, elemSol, initPorosity_);
     }
 
+    /*!
+     * \brief Returns the effective fluid density.
+     */
+    Scalar effectiveFluidDensity(const Element& element, const SubControlVolume& scv) const
+    {
+        // get porous medium flow volume variables from coupling manager
+        const auto pmFlowVolVars = couplingManager().getPMFlowVolVars(element);
+
+        Scalar wPhaseDensity = pmFlowVolVars.density(FluidSystem::phase0Idx);
+        Scalar nPhaseDensity = pmFlowVolVars.density(FluidSystem::phase1Idx);
+        Scalar Sw = pmFlowVolVars.saturation(FluidSystem::phase0Idx);
+        Scalar Sn = pmFlowVolVars.saturation(FluidSystem::phase1Idx);
+        return (wPhaseDensity * Sw + nPhaseDensity * Sn);
+    }
+
+    /*!
+     * \brief Returns the effective pore pressure.
+     */
+    template<class ElementVolumeVariables, class FluxVarsCache >
+    Scalar effectivePorePressure(const Element& element,
+                                 const FVElementGeometry& fvGeometry,
+                                 const ElementVolumeVariables& elemVolVars,
+                                 const FluxVarsCache& fluxVarsCache) const
+    {
+        // get porous medium flow volume variables from coupling manager
+        const auto pmFlowVolVars = couplingManager().getPMFlowVolVars(element);
+
+        Scalar pw = pmFlowVolVars.pressure(FluidSystem::phase0Idx);
+        Scalar pn = pmFlowVolVars.pressure(FluidSystem::phase1Idx);
+        Scalar Sw = pmFlowVolVars.saturation(FluidSystem::phase0Idx);
+        Scalar Sn = pmFlowVolVars.saturation(FluidSystem::phase1Idx);
+        return (pw * Sw + pn * Sn);
+    }
+
     //! Returns the Biot coefficient of the porous medium.
     Scalar biotCoefficientAtPos(const GlobalPosition& globalPos) const
     { return 1.0; }
@@ -87,7 +125,12 @@ public:
     Scalar temperatureAtPos(const GlobalPosition& globalPos) const
     { return 273.15 + 10; }
 
+    //! Returns reference to the coupling manager.
+    const CouplingManager& couplingManager() const
+    { return *couplingManagerPtr_; }
+
 private:
+    std::shared_ptr<const CouplingManager> couplingManagerPtr_;
     Scalar initPorosity_;
     LameParams lameParams_;
 };

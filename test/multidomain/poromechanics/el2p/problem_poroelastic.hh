@@ -47,7 +47,6 @@ class PoroElasticSubProblem : public GeomechanicsFVProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
-    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
 
@@ -65,10 +64,9 @@ class PoroElasticSubProblem : public GeomechanicsFVProblem<TypeTag>
 
 public:
     PoroElasticSubProblem(std::shared_ptr<const GridGeometry> gridGeometry,
-                          std::shared_ptr<CouplingManager> couplingManagerPtr,
+                          std::shared_ptr<GetPropType<TypeTag, Properties::SpatialParams>> spatialParams,
                           const std::string& paramGroup = "PoroElastic")
-    : ParentType(gridGeometry, paramGroup)
-    , couplingManagerPtr_(couplingManagerPtr)
+    : ParentType(gridGeometry, spatialParams, paramGroup)
     {
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
     }
@@ -94,40 +92,6 @@ public:
     { return PrimaryVariables(0.0); }
 
     /*!
-     * \brief Returns the effective fluid density.
-     */
-    Scalar effectiveFluidDensity(const Element& element, const SubControlVolume& scv) const
-    {
-        // get porous medium flow volume variables from coupling manager
-        const auto pmFlowVolVars = couplingManager().getPMFlowVolVars(element);
-
-        Scalar wPhaseDensity = pmFlowVolVars.density(FluidSystem::phase0Idx);
-        Scalar nPhaseDensity = pmFlowVolVars.density(FluidSystem::phase1Idx);
-        Scalar Sw = pmFlowVolVars.saturation(FluidSystem::phase0Idx);
-        Scalar Sn = pmFlowVolVars.saturation(FluidSystem::phase1Idx);
-        return (wPhaseDensity * Sw + nPhaseDensity * Sn);
-    }
-
-    /*!
-     * \brief Returns the effective pore pressure.
-     */
-    template< class FluxVarsCache >
-    Scalar effectivePorePressure(const Element& element,
-                                 const FVElementGeometry& fvGeometry,
-                                 const ElementVolumeVariables& elemVolVars,
-                                 const FluxVarsCache& fluxVarsCache) const
-    {
-        // get porous medium flow volume variables from coupling manager
-        const auto pmFlowVolVars = couplingManager().getPMFlowVolVars(element);
-
-        Scalar pw = pmFlowVolVars.pressure(FluidSystem::phase0Idx);
-        Scalar pn = pmFlowVolVars.pressure(FluidSystem::phase1Idx);
-        Scalar Sw = pmFlowVolVars.saturation(FluidSystem::phase0Idx);
-        Scalar Sn = pmFlowVolVars.saturation(FluidSystem::phase1Idx);
-        return (pw * Sw + pn * Sn);
-    }
-
-    /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      *
@@ -150,12 +114,7 @@ public:
                             const SubControlVolume& scv) const
     { return PrimaryVariables(0.0); }
 
-    //! Returns reference to the coupling manager.
-    const CouplingManager& couplingManager() const
-    { return *couplingManagerPtr_; }
-
 private:
-    std::shared_ptr<const CouplingManager> couplingManagerPtr_;
     static constexpr Scalar eps_ = 3e-6;
     std::string problemName_;
 };
