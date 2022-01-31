@@ -81,9 +81,6 @@ struct hasPorosityAtPos
 
 /*!
  * \ingroup SpatialParameters
- */
-
-/**
  * \ingroup PoreNetworkModels
  * \brief The base class for spatial parameters for pore-network models.
  */
@@ -110,8 +107,8 @@ public:
     }
 
     /*!
-     *\brief Length of the throat \f$[m]\f$.
-     *       Can be solution-dependent.
+     * \brief Length of the throat \f$[m]\f$.
+     *        Can be solution-dependent.
      *
      *  \param element The finite volume element
      *  \param elemVolVars The element volume variables.
@@ -125,8 +122,8 @@ public:
     }
 
     /*!
-     *\brief Inscribed radius of the throat \f$[m]\f$.
-     *       Can be solution-dependent.
+     * \brief Inscribed radius of the throat \f$[m]\f$.
+     *        Can be solution-dependent.
      *
      *  \param element The finite volume element
      *  \param elemVolVars The element volume variables.
@@ -140,8 +137,8 @@ public:
     }
 
     /*!
-     *\brief Cross-sectional area of the throat \f$[m]\f$.
-     *       Can be solution-dependent.
+     * \brief Cross-sectional area of the throat \f$[m]\f$.
+     *        Can be solution-dependent.
      *
      *  \param element The finite volume element
      *  \param elemVolVars The element volume variables.
@@ -155,8 +152,8 @@ public:
     }
 
    /*!
-    *\brief Inscribed radius of the pore body \f$[m]\f$.
-    *       Can be solution-dependent.
+    * \brief Inscribed radius of the pore body \f$[m]\f$.
+    *        Can be solution-dependent.
     *
     *  \param element The finite volume element
     *  \param scv The sub-control volume
@@ -178,7 +175,7 @@ public:
 
 
     /*! Intrinsic permeability tensor K \f$[m^2]\f$.
-     *\note This is only required for compatibility reasons.
+     * \note This is only required for compatibility reasons.
      */
     template<class ElementSolutionVector>
     Scalar permeability(const Element& element,
