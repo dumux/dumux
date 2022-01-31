@@ -25,6 +25,8 @@
 #ifndef DUMUX_PNM_SPATIAL_PARAMS_1P_HH
 #define DUMUX_PNM_SPATIAL_PARAMS_1P_HH
 
+#warning "This file is deprecated, use PNMOnePSpatialParams from dumux/porenetwork/1p/spatialparams.hh instead!"
+
 #include "porenetworkbase.hh"
 
 namespace Dumux::PoreNetwork {

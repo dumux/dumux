@@ -25,6 +25,8 @@
 #ifndef DUMUX_PNM_SPATIAL_PARAMS_BASE_HH
 #define DUMUX_PNM_SPATIAL_PARAMS_BASE_HH
 
+#warning "This file is deprecated, use PNMSpatialParams from  dumux/porenetwork/common/pnmspatialparams.hh instead!"
+
 #include <type_traits>
 #include <memory>
 
