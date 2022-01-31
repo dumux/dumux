@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup PoreNetworkModels
  * \ingroup SpatialParameters
  * \brief The default class for spatial parameters for single-phase pore-network models.
  */
@@ -29,7 +30,8 @@
 namespace Dumux::PoreNetwork {
 
 /*!
-* \ingroup SpatialParameters
+ * \ingroup PoreNetworkModels
+ * \ingroup SpatialParameters
 * \brief The default class for spatial parameters for single-phase pore-network models.
 */
 template<class GridGeometry, class Scalar>
