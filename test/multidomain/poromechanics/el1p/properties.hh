@@ -97,8 +97,10 @@ struct FluidSystem<TypeTag, TTag::PoroElasticSub>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::PoroElasticSub>
 {
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
     using type = PoroElasticSpatialParams< GetPropType<TypeTag, Properties::Scalar>,
-                                           GetPropType<TypeTag, Properties::GridGeometry> >;
+                                           GetPropType<TypeTag, Properties::GridGeometry>,
+                                           CouplingManager>;
 };
 
 template<class TypeTag>
