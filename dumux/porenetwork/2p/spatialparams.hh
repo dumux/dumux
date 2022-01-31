@@ -88,8 +88,8 @@ public:
     { return 0; }
 
     /*!
-     *\brief The contact angle within a pore throat \f$[rad]\f$.
-     *\note Overload for solution-dependent values.
+     * \brief The contact angle within a pore throat \f$[rad]\f$.
+     * \note Overload for solution-dependent values.
      *
      *  \param element The element
      *  \param elemVolVars The element  volume variables
@@ -103,8 +103,8 @@ public:
     }
 
     /*!
-     *\brief The contact angle within a pore body \f$[rad]\f$.
-     *\note Overload for solution-dependent values.
+     * \brief The contact angle within a pore body \f$[rad]\f$.
+     * \note Overload for solution-dependent values.
      *
      *  \param element The element
      *  \param scv The sub-control volume
