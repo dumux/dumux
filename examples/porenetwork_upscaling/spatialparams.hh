@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup PoreNetworkModels
  * \ingroup SpatialParameters
  * \brief The default class for spatial parameters for single-phase pore-network models.
  */
@@ -30,9 +30,10 @@
 namespace Dumux::PoreNetwork {
 
 /*!
-* \ingroup SpatialParameters
-* \brief Spatial parameters for the upscaling example
-*/
+ * \ingroup PoreNetworkModels
+ * \ingroup SpatialParameters
+ * \brief Spatial parameters for the upscaling example
+ */
 template <class GridGeometry, class Scalar>
 class UpscalingSpatialParams : public PNMSpatialParams<GridGeometry, Scalar,
                                                        UpscalingSpatialParams<GridGeometry, Scalar>>

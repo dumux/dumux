@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup PoreNetworkModels
  * \ingroup SpatialParameters
  * \brief Spatial parameters for a pore-network model with non-creeping flow.
  */
