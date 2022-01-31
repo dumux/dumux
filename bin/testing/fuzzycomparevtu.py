@@ -335,7 +335,7 @@ def isFuzzyEqualText(
 
             # If the absolute criterion is satisfied we consider the numbers equal...
             # scale the absolute tolerance with the magnitude of the parameter
-            if diff <= absolute * magnitude:
+            if diff <= absolute:
                 continue
 
             # ...if not check the relative criterion
