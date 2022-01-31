@@ -61,8 +61,12 @@ struct FluidSystem<TypeTag, TTag::TestPoroElastic>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TestPoroElastic>
 {
+    using FS = GetPropType<TypeTag, Properties::FluidSystem>;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using type = PoroElasticSpatialParams< GetPropType<TypeTag, Properties::Scalar>,
-                                           GetPropType<TypeTag, Properties::GridGeometry> >;
+                                           GetPropType<TypeTag, Properties::GridGeometry>,
+                                           FS, PV, Indices>;
 };
 
 } // end namespace Dumux::Properties

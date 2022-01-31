@@ -75,32 +75,6 @@ public:
     { return PrimaryVariables(0.0); }
 
     /*!
-     * \brief Returns the effective fluid density.
-     *
-     * \param globalPos The global position
-     */
-    Scalar effectiveFluidDensityAtPos(const GlobalPosition& globalPos) const
-    {
-        // This test uses the constant component, obtain density only once
-        using FS = GetPropType<TypeTag, Properties::FluidSystem>;
-        static const Scalar rho = FS::density(
-            effectivePorePressureAtPos(globalPos), this->spatialParams().temperatureAtPos(globalPos)
-        );
-        return rho;
-    }
-
-    /*!
-     * \brief Returns the effective pore pressure
-     *
-     * \note We use the x-displacement as pressure solution. The shift to
-     *       higher values is done to see a mor pronounced effect in stresses.
-     *
-     * \param globalPos The global position
-     */
-    Scalar effectivePorePressureAtPos(const GlobalPosition& globalPos) const
-    { return exactSolution(globalPos)[0] + 10; }
-
-    /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      *
@@ -154,22 +128,6 @@ public:
         divSigma[Indices::momentum(/*x-dir*/0)] = lambda*(dE11_dx + dE22_dx) + 2*mu*(dE11_dx + dE12_dy);
         divSigma[Indices::momentum(/*y-dir*/1)] = lambda*(dE11_dy + dE22_dy) + 2*mu*(dE21_dx + dE22_dy);
         return divSigma;
-    }
-
-    /*!
-     * \brief Evaluates the exact displacement to this problem at a given position.
-     */
-    PrimaryVariables exactSolution(const GlobalPosition& globalPos) const
-    {
-        using std::sin;
-
-        const auto x = globalPos[0];
-        const auto y = globalPos[1];
-
-        PrimaryVariables exact(0.0);
-        exact[Indices::momentum(/*x-dir*/0)] = (x-x*x)*sin(2*pi*y);
-        exact[Indices::momentum(/*y-dir*/1)] = sin(2*pi*x)*sin(2*pi*y);
-        return exact;
     }
 
     /*!
