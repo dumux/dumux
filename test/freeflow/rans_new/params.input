@@ -19,7 +19,7 @@ LiquidDensity = 1.0
 LiquidKinematicViscosity = 1.0
 
 [RANS]
-EnableKOmegaDissipationLimiter = true
+EnableKOmegaDissipationLimiter = false
 TwoEqTurbulenceModelName = Wilcox
 
 [ Newton ]

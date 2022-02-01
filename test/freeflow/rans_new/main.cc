@@ -136,11 +136,11 @@ int main(int argc, char** argv)
 
     std::cout << "MassProblemCheck: " << massProblem->twoEqTurbulenceModelName() << "\n";
 
-    momentumGridVariables->init(x[momentumIdx]);
-    std::cout << "reached 4: momentum done \n";
-
     massGridVariables->init(x[massIdx]);
     std::cout << "reached 4: mass done \n";
+
+    momentumGridVariables->init(x[momentumIdx]);
+    std::cout << "reached 4: momentum done \n";
 
     // intialize the vtk output module
     using IOFields = GetPropType<MassTypeTag, Properties::IOFields>;

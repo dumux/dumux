@@ -24,9 +24,8 @@
 #ifndef FREEFLOW_TURBULENCE_BOUNDARY_TYPES_HH
 #define FREEFLOW_TURBULENCE_BOUNDARY_TYPES_HH
 
-#include <dumux/common/typetraits/typetraits.hh>
-#include <dumux/freeflow/navierstokes/boundarytypes.hh>
-
+#include <dumux/common/boundarytypes.hh>
+#include <dumux/freeflow/navierstokes/momentum/boundarytypes.hh>
 namespace Dumux {
 
 /*!
@@ -40,6 +39,7 @@ class RANSCCBoundaryTypes : public BoundaryTypes<numEq>
     using Indices = typename ModelTraits::Indices;
 public:
     RANSCCBoundaryTypes()
+    : ParentType()^
     {
         for (int eqIdx=0; eqIdx < numEq; ++eqIdx)
             resetEq(eqIdx);
@@ -53,12 +53,12 @@ public:
             if constexpr (numTurbulenceEq(ModelTraits::turbulenceModel()) == 1)
             {
                 if (eqIdx == Indices::viscosityTildeIdx)
-                    BoundaryTypes<numEq>::boundaryInfo_[eqIdx].isDirichlet = true;
+                    ParentType::boundaryInfo_[eqIdx].isDirichlet = true;
             }
             else if constexpr (numTurbulenceEq(ModelTraits::turbulenceModel()) == 2)
             {
                 if (eqIdx == Indices::turbulentKineticEnergyEqIdx || eqIdx == Indices::dissipationEqIdx)
-                    BoundaryTypes<numEq>::boundaryInfo_[eqIdx].isDirichlet = true;
+                    ParentType::boundaryInfo_[eqIdx].isDirichlet = true;
             }
         }
     }
@@ -83,7 +83,6 @@ protected:
     bool isWall_;
 };
 
-
 /*!
  * \ingroup RANSModel
  * \brief Class to specify the type of a boundary condition for the RANS extension to the Navier-Stokes model.
@@ -92,38 +91,16 @@ template <class ModelTraits, int numEq>
 class RANSFCBoundaryTypes : public NavierStokesMomentumBoundaryTypes<numEq>
 {
     using ParentType = NavierStokesMomentumBoundaryTypes<numEq>;
-    static constexpr auto dimWorld = ModelTraits::dim();
-    using Indices = typename ModelTraits::Indices;
-    static_assert(dimWorld > 1, "Wall conditions cannot be set for 1D domains.");
 public:
     RANSFCBoundaryTypes()
+    : ParentType()
     {
         for (int eqIdx=0; eqIdx < numEq; ++eqIdx)
             resetEq(eqIdx);
     }
 
     void setWall()
-    {
-        isWall_ = true;
-        for (int eqIdx=0; eqIdx < numEq; ++eqIdx)
-        {
-            if constexpr (dimWorld == 3)
-            {
-                if ((eqIdx == Indices::velocityXIdx)
-                 || (eqIdx == Indices::velocityYIdx)
-                 || (eqIdx == Indices::velocityZIdx))
-                    BoundaryTypes<numEq>::boundaryInfo_[eqIdx].isDirichlet = true;
-            }
-            else if constexpr (dimWorld == 2)
-            {
-                if ((eqIdx == Indices::velocityXIdx)
-                 || (eqIdx == Indices::velocityYIdx))
-                    BoundaryTypes<numEq>::boundaryInfo_[eqIdx].isDirichlet = true;
-            }
-            else
-                DUNE_THROW(Dune::NotImplemented, "1D Turbulence models are not supported");
-        }
-    }
+    { isWall_ = true; }
 
     /*!
      * \brief Returns true if some equation is used to specify a

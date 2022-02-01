@@ -27,8 +27,8 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numeqvector.hh>
-#include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/discretization/walldistance.hh>
+#include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/freeflow/navierstokes/turbulence/boundarytypes.hh>
 
 namespace Dumux {
@@ -57,7 +57,7 @@ class RANSProblemImpl<TypeTag, DiscretizationMethods::FCStaggered>
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 public:
-    using BoundaryTypes = Dumux::RANSFCBoundaryTypes<ModelTraits, ModelTraits::numEq()>;
+    using BoundaryTypes = Dumux::RANSFCBoundaryTypes<ModelTraits::dim()>;
 
     RANSProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry,
                     std::shared_ptr<CouplingManager> couplingManager,
