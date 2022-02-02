@@ -76,19 +76,6 @@ public:
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return porosity_; }
 
-    /*!
-     * \brief Defines the dispersivity.
-     *
-     * \param element The finite element
-     * \param scv The sub-control volume
-     * \param elemSol The solution for all dofs of the element
-     */
-    template<class ElementSolution>
-    Scalar dispersivity(const Element &element,
-                        const SubControlVolume& scv,
-                        const ElementSolution& elemSol) const
-    { return 0; }
-
 private:
     Scalar permeability_;
     Scalar porosity_;
