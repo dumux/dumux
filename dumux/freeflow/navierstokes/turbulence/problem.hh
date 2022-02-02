@@ -116,6 +116,7 @@ public:
         twoEqTurbulenceModelName_ = getParam<std::string>("RANS.TwoEqTurbulenceModelName");
         checkForWalls_();
         manageWallInformation_();
+        storeIndices_();
     }
 
     /*!
@@ -187,6 +188,15 @@ public:
     const SpatialParams &spatialParams() const
     { return *spatialParams_; }
 
+    /*!
+     * \brief Returns the distance to the closest wall for the passed element
+     */
+    Scalar wallDistance(const Element& element) const
+    { return spatialParams().wallDistance(this->gridGeometry().elementMapper().index(element)); }
+
+    unsigned int neighborIndex(const int elementIdx, const int dimIdx, const int sideIdx) const
+    { return neighborIdx_[elementIdx][dimIdx][sideIdx];}
+
 private:
 
     void checkForWalls_()
@@ -221,12 +231,58 @@ private:
             spatialParams().setWallData(wallInformation.wallData(), this->gridGeometry());
     }
 
+    GlobalPosition cellCenter(const int elementIdx) const
+    {
+        const auto& element = this->gridGeometry().element(elementIdx);
+        return element.geometry().center();
+    }
+
+    void storeIndices_()
+    {
+        // each element has a set of neighbors in all directions
+        neighborIdx_.resize(this->gridGeometry().elementMapper().size());
+
+        // search for neighbor Idxs
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
+            GlobalPosition elementCC = element.geometry().center();
+            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            {
+                neighborIdx_[elementIdx][dimIdx][0] = elementIdx;
+                neighborIdx_[elementIdx][dimIdx][1] = elementIdx;
+            }
+
+            for (const auto& intersection : intersections(this->gridGeometry().gridView(), element))
+            {
+                if (intersection.boundary())
+                    continue;
+
+                auto neighborElement = intersection.outside();
+                unsigned int neighborIdx = this->gridGeometry().elementMapper().index(neighborElement);
+                GlobalPosition neighborElementCC = neighborElement.geometry().center();
+
+                for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+                {
+                    if (abs(elementCC[dimIdx] - neighborElementCC[dimIdx]) > 1e-8)
+                    {
+                        if (elementCC[dimIdx] > neighborElementCC[dimIdx])
+                            neighborIdx_[elementIdx][dimIdx][0] = neighborIdx;
+
+                        if (elementCC[dimIdx] < neighborElementCC[dimIdx])
+                            neighborIdx_[elementIdx][dimIdx][1] = neighborIdx;
+                    }
+                }
+            }
+        }
+    }
 
 protected:
     // material properties of the porous medium
     std::shared_ptr<SpatialParams> spatialParams_;
     bool isFlatWallBounded_;
     std::string twoEqTurbulenceModelName_;
+    std::vector<std::array<std::array<unsigned int, 2>, dim>> neighborIdx_;
 
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()

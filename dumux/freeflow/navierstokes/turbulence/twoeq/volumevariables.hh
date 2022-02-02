@@ -85,11 +85,14 @@ public:
     {
         // Update the base Rans Volvars
         RANSParentType::updateRANSVariables(elemSol, problem, element, scv);
+        // Save the Rans Model name
+        twoEqTurbulenceModelName_ = problem.twoEqTurbulenceModelName();
 
         // Save the primary variables
         turbulentKineticEnergy_ = elemSol[0][Indices::turbulentKineticEnergyIdx];
         dissipation_ = elemSol[0][Indices::dissipationIdx];
-        twoEqTurbulenceModelName_ = problem.twoEqTurbulenceModelName();
+
+//         updateCCGradients(problem);
 
         if ( twoEqTurbulenceModelName() == "SST" || twoEqTurbulenceModelName() == "BSL")
             updateFParameters();
@@ -187,8 +190,8 @@ public:
     void updateFParameters()
     {
         Scalar gradientProduct = 0.0;
-        for (unsigned int i = 0; i < dim; ++i)
-            gradientProduct += storedTurbulentKineticEnergyGradient()[i] * storedDissipationGradient()[i];
+//         for (unsigned int i = 0; i < dim; ++i)
+//             gradientProduct += storedTurbulentKineticEnergyGradient()[i] * storedDissipationGradient()[i];
 
         Scalar positiveCrossDiffusion = 2.0 * RANSParentType::density() * sigmaOmegaOuter() / dissipation() * gradientProduct;
         positiveCrossDiffusion = std::max(positiveCrossDiffusion,1e-20);
@@ -206,6 +209,14 @@ public:
         const Scalar argumentFOuter = std::max(2.0 * possibleMax1, possibleMax2);
         fOuter_ =  tanh(argumentFOuter * argumentFOuter);
     }
+/*
+    //! \brief Returns the gradient of the turbulent kinetic energy \f$ m^2/s^2 \f$
+    DimVector turbulentKineticEnergyGradient() const
+    { return turbulentKineticEnergyGradient_; }
+
+    //! \brief Returns the gradient of the effective dissipation \f$ m^2/s^3 \f$
+    DimVector dissipationGradient() const
+    { return dissipationGradient_; }*/
 
     Scalar fInner() const
     { return fInner_; }

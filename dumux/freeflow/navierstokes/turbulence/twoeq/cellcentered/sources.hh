@@ -29,13 +29,77 @@
 
 namespace Dumux::TwoEqSources {
 
-template <class Problem, class VolumeVariables, class Element, class SubControlVolume>
-auto wilcoxTKESource(const Problem& problem,
-                     const VolumeVariables& volVars,
-                     const Element& element,
-                     const SubControlVolume scv)
+template <class Problem, class Element, class FVElementGeometry, class ElementVolumeVariables, class SubControlVolume>
+auto tkeCCGradients(const Problem& problem,
+                    const Element& element,
+                    const FVElementGeometry& fvGeometry,
+                    const ElementVolumeVariables& elemVolVars,
+                    const SubControlVolume& scv)
 {
-    using Scalar = typename VolumeVariables::PrimaryVariables::value_type;
+    using Scalar = typename ElementVolumeVariables::VolumeVariables::PrimaryVariables::value_type;
+    static constexpr int dim = Element::Geometry::GlobalCoordinate::dimension;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
+
+    DimVector tkeGradient(0.0);
+
+    const Scalar insideTKE = elemVolVars[scv].turbulentKineticEnergy();
+    for (auto&& scvf : scvfs(fvGeometry))
+    {
+        auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+        Scalar outsideTKE = elemVolVars[scvf.outsideScvIdx()].turbulentKineticEnergy();
+
+        Scalar faceTKE = arithmeticMean(insideTKE, outsideTKE,
+                                       (outsideScv.center() - scvf.center()).two_norm(),
+                                       (scv.center() - scvf.center()).two_norm());
+
+        tkeGradient += (faceTKE - insideTKE) * scvf.unitOuterNormal();
+    }
+
+    tkeGradient /= scv.volume();
+
+    return tkeGradient;
+}
+
+template <class Problem, class Element, class FVElementGeometry, class ElementVolumeVariables, class SubControlVolume>
+auto dissipationCCGradients(const Problem& problem,
+                            const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const SubControlVolume& scv)
+{
+    using Scalar = typename ElementVolumeVariables::VolumeVariables::PrimaryVariables::value_type;
+    static constexpr int dim = Element::Geometry::GlobalCoordinate::dimension;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
+
+    DimVector dissipationCCGradient(0.0);
+
+    const Scalar insideDissipation = elemVolVars[scv].dissipation();
+    for (auto&& scvf : scvfs(fvGeometry))
+    {
+        auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+        Scalar outsideDissipation = elemVolVars[scvf.outsideScvIdx()].dissipation();
+
+        Scalar faceDissipation = arithmeticMean(insideDissipation, outsideDissipation,
+                                (outsideScv.center() - scvf.center()).two_norm(),
+                                (scv.center() - scvf.center()).two_norm());
+
+        dissipationCCGradient += (faceDissipation - insideDissipation) * scvf.unitOuterNormal();
+    }
+
+    dissipationCCGradient /= scv.volume();
+
+    return dissipationCCGradient;
+}
+
+template <class Problem, class Element, class FVElementGeometry, class ElementVolumeVariables, class SubControlVolume>
+auto wilcoxTKESource(const Problem& problem,
+                     const Element& element,
+                     const FVElementGeometry& fvGeometry,
+                     const ElementVolumeVariables& elemVolVars,
+                     const SubControlVolume& scv)
+{
+    const auto& volVars = elemVolVars[scv];
+    using Scalar = typename ElementVolumeVariables::VolumeVariables::PrimaryVariables::value_type;
     static const auto enableKOmegaProductionLimiter = getParamFromGroup<bool>(problem.paramGroup(), "KOmega.EnableProductionLimiter", false);
     using std::min;
 
@@ -54,16 +118,21 @@ auto wilcoxTKESource(const Problem& problem,
     return source;
 }
 
-template <class Problem, class VolumeVariables, class Element, class SubControlVolume>
+template <class Problem, class Element, class FVElementGeometry, class ElementVolumeVariables, class SubControlVolume>
 auto wilcoxDissipationSource(const Problem& problem,
-                             const VolumeVariables& volVars,
                              const Element& element,
-                             const SubControlVolume scv)
+                             const FVElementGeometry& fvGeometry,
+                             const ElementVolumeVariables& elemVolVars,
+                             const SubControlVolume& scv)
 {
-    using Scalar = typename VolumeVariables::PrimaryVariables::value_type;
+    const auto& volVars = elemVolVars[scv];
+    static constexpr int dim = Element::Geometry::GlobalCoordinate::dimension;
+    using Scalar = typename ElementVolumeVariables::VolumeVariables::PrimaryVariables::value_type;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
+    using std::min;
+
     static const auto enableKOmegaProductionLimiter = getParamFromGroup<bool>(problem.paramGroup(), "KOmega.EnableProductionLimiter", false);
     static const auto enableKOmegaCrossDiffusion = getParamFromGroup<bool>(problem.paramGroup(), "KOmega.EnableCrossDiffusion", true);
-    using std::min;
 
     // production
     Scalar productionTerm = 2.0 * volVars.dynamicEddyViscosity() * problem.stressTensorScalarProduct(element, scv);
@@ -81,23 +150,28 @@ auto wilcoxDissipationSource(const Problem& problem,
     if (enableKOmegaCrossDiffusion)
     {
         Scalar gradientProduct = 0.0;
-        for (unsigned int i = 0; i < volVars.storedTurbulentKineticEnergyGradient().size(); ++i)
-            gradientProduct += volVars.storedTurbulentKineticEnergyGradient()[i]
-                             * volVars.storedDissipationGradient()[i];
+        DimVector tkeCCGradient = tkeCCGradients(problem, element, fvGeometry, elemVolVars, scv);
+        DimVector dissipationCCGradient = dissipationCCGradients(problem, element, fvGeometry, elemVolVars, scv);
+        for (unsigned int i = 0; i < dim; ++i)
+            gradientProduct += tkeCCGradient[i] * dissipationCCGradient[i];
+
         if (gradientProduct > 0.0)
             source += 0.125 * volVars.density() / volVars.dissipation() * gradientProduct;
     }
     return source;
 }
 
-template <class Problem, class VolumeVariables, class Element, class SubControlVolume>
+template <class Problem, class Element, class FVElementGeometry, class ElementVolumeVariables, class SubControlVolume>
 auto shearStressTransportTKESource(const Problem& problem,
-                                   const VolumeVariables& volVars,
                                    const Element& element,
-                                   const SubControlVolume scv)
+                                   const FVElementGeometry& fvGeometry,
+                                   const ElementVolumeVariables& elemVolVars,
+                                   const SubControlVolume& scv)
 {
+    const auto& volVars = elemVolVars[scv];
+    using Scalar = typename ElementVolumeVariables::VolumeVariables::PrimaryVariables::value_type;
+
     // production
-    using Scalar = typename VolumeVariables::PrimaryVariables::value_type;
     Scalar source = 2.0 * volVars.dynamicEddyViscosity() * problem.stressTensorScalarProduct(element, scv);
 
     // destruction
@@ -106,13 +180,18 @@ auto shearStressTransportTKESource(const Problem& problem,
     return source;
 }
 
-template <class Problem, class VolumeVariables, class Element, class SubControlVolume>
+template <class Problem, class Element, class FVElementGeometry, class ElementVolumeVariables, class SubControlVolume>
 auto shearStressTransportDissipationSource(const Problem& problem,
-                                           const VolumeVariables& volVars,
                                            const Element& element,
-                                           const SubControlVolume scv)
+                                           const FVElementGeometry& fvGeometry,
+                                           const ElementVolumeVariables& elemVolVars,
+                                           const SubControlVolume& scv)
 {
-    using Scalar = typename VolumeVariables::PrimaryVariables::value_type;
+    const auto& volVars = elemVolVars[scv];
+    using Scalar = typename ElementVolumeVariables::VolumeVariables::PrimaryVariables::value_type;
+    static constexpr int dim = Element::Geometry::GlobalCoordinate::dimension;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
+
     // production
     Scalar productionTerm = 2.0 * volVars.dynamicEddyViscosity() * problem.stressTensorScalarProduct(element, scv);
     Scalar source =  volVars.gammaWeighted() / volVars.kinematicEddyViscosity() * productionTerm;
@@ -122,14 +201,16 @@ auto shearStressTransportDissipationSource(const Problem& problem,
 
     // cross-diffusion term
     Scalar gradientProduct = 0.0;
-    for (unsigned int i = 0; i < volVars.storedTurbulentKineticEnergyGradient().size(); ++i)
-        gradientProduct += volVars.storedTurbulentKineticEnergyGradient()[i]
-                         * volVars.storedDissipationGradient()[i];
+    DimVector tkeCCGradient = tkeCCGradients(problem, element, fvGeometry, elemVolVars, scv);
+    DimVector dissipationCCGradient = dissipationCCGradients(problem, element, fvGeometry, elemVolVars, scv);
+
+    for (unsigned int i = 0; i < dim; ++i)
+            gradientProduct += tkeCCGradient[i] * dissipationCCGradient[i];
+
     source += 2.0 * volVars.density() * (1.0 - volVars.fInner()) * volVars.sigmaOmegaInner() / volVars.dissipation() * gradientProduct;
 
     return source;
 }
-
 
 } // end namespace Dumux
 

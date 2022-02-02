@@ -72,9 +72,7 @@ public:
                              const Element& element,
                              const SubControlVolume& scv)
     {
-        elementIdx_ = problem.gridGeometry().elementMapper().index(element);
-        const auto& spatialParams = problem.spatialParams();
-        wallDistance_ = spatialParams.wallDistance(elementIdx_);
+        wallDistance_ = problem.wallDistance(element);
     }
 
     /*!
