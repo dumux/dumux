@@ -76,9 +76,7 @@ public:
             for (auto&& scv : scvs(fvGeometry))
             {
                 const auto elemSol = elementSolution(element, sol, gridGeometry);
-                std::cout << "\nBegin scv.dofIndex: " << scv.dofIndex() << "\n";
                 volumeVariables_[scv.dofIndex()].update(elemSol, problem(), element, scv);
-                std::cout << "End scv.dofIndex: " << scv.dofIndex() << "\n \n";
             }
         }
     }

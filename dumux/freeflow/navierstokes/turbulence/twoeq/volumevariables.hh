@@ -130,11 +130,11 @@ public:
             dynamicEddyViscosity_ = turbulentKineticEnergy() / dissipation() * RANSParentType::density();
         else if (twoEqTurbulenceModelName() == "LowReKEpsilon")
         {
-            //TODO:
+            //TODO: Port this from old RANS
         }
         else if (twoEqTurbulenceModelName() == "KEpsilon")
         {
-            //TODO:
+            //TODO: Port this from old RANS
         }
         else
         {
@@ -212,14 +212,6 @@ public:
 
     Scalar fOuter() const
     { return fOuter_; }
-
-    //! \brief Returns the gradient of the turbulent kinetic energy \f$ m^2/s^2 \f$
-    DimVector storedTurbulentKineticEnergyGradient() const
-    { return DimVector(0.0); }// TODO: Figure this out
-
-    //! \brief Returns the gradient of the effective dissipation \f$ m^2/s^3 \f$
-    DimVector storedDissipationGradient() const
-    { return DimVector(0.0); }// TODO: Figure this out
 
     //! \brief Returns the absolute value of the vorticity \f$ \Omega \f$
     template<class Problem, class Element, class SubControlVolume>

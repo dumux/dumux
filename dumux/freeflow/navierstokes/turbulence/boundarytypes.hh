@@ -39,7 +39,7 @@ class RANSCCBoundaryTypes : public BoundaryTypes<numEq>
     using Indices = typename ModelTraits::Indices;
 public:
     RANSCCBoundaryTypes()
-    : ParentType()^
+    : ParentType()
     {
         for (int eqIdx=0; eqIdx < numEq; ++eqIdx)
             resetEq(eqIdx);

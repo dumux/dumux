@@ -117,9 +117,6 @@ public:
     Scalar karmanConstant() const
     { return 0.41; }
 
-    unsigned int elementIdx() const
-    { return elementIdx_; }
-
     Scalar wallDistance() const
     { return wallDistance_; }
 
@@ -133,7 +130,6 @@ protected:
     Scalar eddyDiffusivity_ = 0.0;
     Scalar eddyThermalConductivity_ = 0.0;
 
-    unsigned int elementIdx_;
     Scalar wallDistance_;
 };
 } // end namespace Dumux

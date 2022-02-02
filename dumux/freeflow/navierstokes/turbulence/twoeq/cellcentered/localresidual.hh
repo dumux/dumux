@@ -94,17 +94,16 @@ public:
                               const SubControlVolume &scv) const
     {
         NumEqVector source(0.0);
-        const auto& volVars = elemVolVars[scv];
 
         if (problem.twoEqTurbulenceModelName() == "Wilcox")
         {
-            source[turbulentKineticEnergyEqIdx] += TwoEqSources::wilcoxTKESource(problem, volVars, element, scv);
-            source[dissipationEqIdx] += TwoEqSources::wilcoxDissipationSource(problem, volVars, element, scv);
+            source[turbulentKineticEnergyEqIdx] += TwoEqSources::wilcoxTKESource(problem, element, fvGeometry, elemVolVars, scv);
+            source[dissipationEqIdx] += TwoEqSources::wilcoxDissipationSource(problem, element, fvGeometry, elemVolVars, scv);
         }
         else if (problem.twoEqTurbulenceModelName() == "SST" || problem.twoEqTurbulenceModelName() == "BSL")
         {
-            source[turbulentKineticEnergyEqIdx] += TwoEqSources::shearStressTransportTKESource(problem, volVars, element, scv);
-            source[dissipationEqIdx] += TwoEqSources::shearStressTransportDissipationSource(problem, volVars, element, scv);
+            source[turbulentKineticEnergyEqIdx] += TwoEqSources::shearStressTransportTKESource(problem, element, fvGeometry, elemVolVars, scv);
+            source[dissipationEqIdx] += TwoEqSources::shearStressTransportDissipationSource(problem, element, fvGeometry, elemVolVars, scv);
         }
         else
         {

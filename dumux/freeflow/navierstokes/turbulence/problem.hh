@@ -57,7 +57,7 @@ class RANSProblemImpl<TypeTag, DiscretizationMethods::FCStaggered>
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 public:
-    using BoundaryTypes = Dumux::RANSFCBoundaryTypes<ModelTraits::dim()>;
+    using BoundaryTypes = Dumux::RANSFCBoundaryTypes<ModelTraits, ModelTraits::dim()>;
 
     RANSProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry,
                     std::shared_ptr<CouplingManager> couplingManager,
@@ -131,13 +131,7 @@ public:
                       couplingManager,
                       std::make_shared<SpatialParams>(gridGeometry),
                       paramGroup)
-    {
-        // TODO: Do I need to have this initalization here? Or only in the base constructor?
-        isFlatWallBounded_ = getParam<bool>("RANS.IsFlatWallBounded", false);
-        twoEqTurbulenceModelName_ = getParam<std::string>("RANS.TwoEqTurbulenceModelName");
-        checkForWalls_();
-        manageWallInformation_();
-    }
+    { }
 
     /*!
      * \brief Returns the normal velocity at a given sub control volume face.
@@ -175,6 +169,9 @@ public:
     Scalar vorticityTensorScalarProductAtPos(const GlobalPosition&) const
     { DUNE_THROW(Dune::NotImplemented, "vorticityTensorScalarProductAtPos not implemented");    }
 
+    /*!
+     * \brief Returns the name of the turbulence model
+     */
     std::string twoEqTurbulenceModelName() const
     { return twoEqTurbulenceModelName_; }
 
@@ -224,7 +221,6 @@ private:
             spatialParams().setWallData(wallInformation.wallData(), this->gridGeometry());
     }
 
-    // \}
 
 protected:
     // material properties of the porous medium
