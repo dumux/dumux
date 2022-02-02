@@ -57,9 +57,7 @@ public:
 
     PNMSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
-    {
-        defaultPNMTemperature_ = getParam<Scalar>("SpatialParameters.Temperature", 283.15);
-    }
+    {}
 
     /*!
      * \brief Length of the throat \f$[m]\f$.
@@ -134,15 +132,7 @@ public:
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 1.0; }
 
-    /*!
-     * \brief Return the temperature in the domain at the given position
-     * \param globalPos The position in global coordinates where the temperature should be specified.
-     */
-    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
-    { return defaultPNMTemperature_; }
-
 private:
-    Scalar defaultPNMTemperature_;
 };
 
 } // namespace Dumux::PoreNetwork

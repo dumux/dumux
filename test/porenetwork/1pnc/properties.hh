@@ -27,6 +27,7 @@
 #include <dune/foamgrid/foamgrid.hh>
 
 #include <dumux/porenetwork/1pnc/model.hh>
+#include <dumux/porenetwork/1p/spatialparams.hh>
 
 #include <dumux/common/properties.hh>
 
@@ -34,6 +35,7 @@
 #include <dumux/material/fluidsystems/1padapter.hh>
 
 #include "problem.hh"
+#include "spatialparams.hh"
 
 //////////
 // Specify the properties
@@ -60,6 +62,16 @@ struct FluidSystem<TypeTag, TTag::PNMOnePTwoCProblem>
     using Policy = FluidSystems::H2ON2DefaultPolicy</*simple*/true>;
     using H2ON2 = FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>, Policy>;
     using type = FluidSystems::OnePAdapter<H2ON2>;
+};
+
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::PNMOnePTwoCProblem>
+{
+private:
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+public:
+    using type = Dumux::PoreNetwork::CompositionalPNMSpatialParams<GridGeometry, Scalar>;
 };
 
 // Set the grid type
