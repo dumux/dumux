@@ -19,12 +19,16 @@ computational domain  into subdomains. Some grid managers also support external
 tools like METIS, ParMETIS, PTScotch or ZOLTAN for partitioning.
 On the other hand, linear algebra types such as matrices and vectors
 do not know that they are in a parallel environment. Communication is then handled by the components of the
-parallel solvers. Currently, the only parallel solver backend is \texttt{Dumux::AMGBiCGSTABBackend}, a parallel AMG-preconditioned
-BiCGSTAB solver.
+parallel solvers. Currently, there are two parallel solver backends available.
+First, the \texttt{Dumux::AMGBiCGSTABBackend}, a parallel AMG-preconditioned BiCGSTAB solver.
+Second, the \texttt{Dumux::IstlSolverFactoryBackend}, which provides a selections of different parallel solvers and preconditioners.
+This backend makes it also possible to choose solver and preconditioner during runtime,
+but this flexibility is achieved by the cost of an increased compile time.
 
 In order for \Dumux simulation to run in parallel, an
 MPI library (e.g. OpenMPI, MPICH or IntelMPI) implementation
 must be installed on the system.
+However, not all parts of \Dumux can be used in parallel.
 
 Furthermore, we note that the parallel AMG preconditioner of \texttt{dune-istl}
 defaults to an iterative SSOR coarse grid solver if no direct solver is found on your system. Unfortunately,
@@ -34,26 +38,41 @@ to install one of the direct solver libraries supported by \texttt{dune-istl}. T
 in SuiteSparse, or SuperLU, see Section~\ref{sec:listofexternallibs}.
 
 \subsection{Prepare a Parallel Application}
-Not all parts of \Dumux can be used in parallel. In order to switch to the parallel \texttt{Dumux::AMGBiCGSTABBackend}
-solver backend include the respective header
+In order to switch to a parallel solver backend include the respective header
 
 \begin{lstlisting}[style=DumuxCode]
 #include <dumux/linear/amgbackend.hh>
 \end{lstlisting}
+or
+\begin{lstlisting}[style=DumuxCode]
+#include <dumux/linear/istlsolverfactorybackend.hh>
+\end{lstlisting}
 
-Second, the linear solver must be switched to the AMG backend
+Second, the linear solver must be switched to the parallel solver backend
 
 \begin{lstlisting}[style=DumuxCode]
 using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
 \end{lstlisting}
+or
+\begin{lstlisting}[style=DumuxCode]
+using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>>;
+\end{lstlisting}
 
-and the application must be recompiled. The parallel \texttt{Dumux::AMGBiCGSTABBackend} instance has to be
+The parallel instance of the linear solver has to be
 constructed with a \texttt{Dune::GridView} object and a mapper, in order to construct the
 parallel index set needed for communication.
 
 \begin{lstlisting}[style=DumuxCode]
 auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 \end{lstlisting}
+
+When using the \texttt{Dumux::IstlSolverFactoryBackend}, solver and preconditioner have to be specified
+in the file \texttt{params.input} by the parameters \texttt{LinearSolver.Type} and \texttt{LinearSolver.Preconditioner.Type}.
+Possible solvers are \texttt{bicgstabsolver} or \texttt{restartedgmressolver}, possible preconditioners \texttt{ilu} or \texttt{gs}.
+Depending on the chosen solver and preconditioner additional parameters can be specified.
+If not the global default parameters are used as shown in section \ref{sc_parameterfiles}.
+More information about the options and the other available solvers and preconditioners can be found in
+\texttt{dune-istl} (\texttt{solvers.hh} and \texttt{preconditioners.hh}).
 
 \subsection{Run a Parallel Application}
 The starting procedure for parallel simulations depends on the chosen MPI library.

@@ -29,10 +29,11 @@ NumericDifferenceMethod = "1"
 UpwindWeight = "1.0"
 [ LinearSolver ]
 MaxIterations = "250"
-PreconditionerIterations = "1"
-PreconditionerRelaxation = "1.0"
 ResidualReduction = "1e-13"
 Verbosity = "0"
+[ LinarSolver.Preconditioner ]
+Iterations = "1"
+Relaxation = "1.0"
 [ Newton ]
 EnableAbsoluteResidualCriterion = "false"
 EnableChop = "false"
