@@ -1,0 +1,34 @@
+[TimeManager]
+TEnd = 86400 # [s]
+DtInitial = 60 # [s]
+MaxTimeStepSize = 60 # [s]
+
+[Grid]
+Verbosity = true
+LowerLeft = 0
+UpperRight = 100
+Cells = 100
+
+[Problem]
+Name = surfactant
+OutputTimeInterval = 600
+InitialSw = 0.45
+InjectionWellPressure = 2e9
+ProductionWellPressure = 0
+InjectionSurfactantConcentration = 5e-3
+InitialPressure = 1e5
+
+[SpatialParams]
+SrwSurf = 0.05
+SroSurf = 0.05
+Smin = 0.01
+Smax = 0.99
+
+[FluidSystem]
+WettingPhaseViscosity = 0.1  # Pa s
+NonwettingPhaseViscosity = 0.002  # Pa s
+WettingPhaseDensity = 1000
+NonwettingPhaseDensity = 773
+
+[Assembly]
+BoxVolVarsDependOnAllElementDofs = true
