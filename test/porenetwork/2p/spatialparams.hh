@@ -44,8 +44,36 @@ public:
     using PermeabilityType = Scalar;
     using ParentType::ParentType;
 
+    PNMTwoPDrainageSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
+    {
+        temperature_ = getParam<Scalar>("SpatialParams.Temperature", 283.15);
+        gamma_ = getParam<Scalar>("SpatialParams.SurfaceTension", 0.0725); // default to surface tension of water/air
+        theta_ = getParam<Scalar>("SpatialParams.ContactAngle", 0.0);
+    }
+
+    //! \brief Function for defining the temperature
     Scalar temperatureAtPos(const GlobalPosition& globalPos) const
-    { return 273.15 + 10.0; }
+    { return temperature_; }
+
+    //! \brief Function for defining the wetting phase
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    { return FluidSystem::phase0Idx; }
+
+
+    //! \brief Function for defining the contact angle
+    int contactAngleAtPos(const GlobalPosition& globalPos) const
+    { return theta_; }
+
+    //! \brief Function for defining the surface tension
+    Scalar surfaceTensionAtPos(const GlobalPosition& globalPos) const
+    { return gamma_; }
+
+private:
+    Scalar temperature_;
+    Scalar gamma_;
+    Scalar theta_;
 };
 } // end namespace Dumux::PoreNetwork
 

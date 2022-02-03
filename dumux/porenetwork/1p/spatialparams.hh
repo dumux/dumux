@@ -20,7 +20,7 @@
  * \file
  * \ingroup PoreNetworkModels
  * \ingroup SpatialParameters
- * \brief The default class for spatial parameters for single-phase pore-network models.
+ * \brief The spatial parameters for single-phase pore-network models.
  */
 #ifndef DUMUX_PNM_1P_SPATIAL_PARAMS_HH
 #define DUMUX_PNM_1P_SPATIAL_PARAMS_HH
@@ -32,18 +32,30 @@ namespace Dumux::PoreNetwork {
 /*!
  * \ingroup PoreNetworkModels
  * \ingroup SpatialParameters
-* \brief The default class for spatial parameters for single-phase pore-network models.
-*/
-template<class GridGeometry, class Scalar>
-class PNMOnePSpatialParams : public PNMSpatialParams<GridGeometry, Scalar,
-                                                     PNMOnePSpatialParams<GridGeometry, Scalar>>
+ * \brief The base class for spatial parameters for single-phase pore-network models.
+ */
+template<class GridGeometry, class Scalar, class Implementation>
+class PNMOnePSpatialParams
+: public PNMSpatialParams<GridGeometry, Scalar, Implementation>
 {
-    using ParentType = PNMSpatialParams<GridGeometry, Scalar,
-                                        PNMOnePSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = PNMSpatialParams<GridGeometry, Scalar, Implementation>;
 public:
     using ParentType::ParentType;
 };
 
+/*!
+ * \ingroup PoreNetworkModels
+ * \ingroup SpatialParameters
+ * \brief The default class for spatial parameters for single-phase pore-network models.
+ */
+template<class GridGeometry, class Scalar>
+class PNMOnePDefaultSpatialParams
+: public PNMOnePSpatialParams<GridGeometry, Scalar, PNMOnePDefaultSpatialParams<GridGeometry, Scalar>>
+{
+    using ParentType = PNMOnePSpatialParams<GridGeometry, Scalar, PNMOnePDefaultSpatialParams<GridGeometry, Scalar>>;
+public:
+    using ParentType::ParentType;
+};
 } // namespace Dumux::PoreNetwork
 
 #endif

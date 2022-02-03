@@ -132,7 +132,6 @@ public:
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 1.0; }
 
-private:
 };
 
 } // namespace Dumux::PoreNetwork
