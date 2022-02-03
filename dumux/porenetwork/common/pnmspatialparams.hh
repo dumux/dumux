@@ -30,7 +30,7 @@
 
 #include <dune/common/fvector.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/fvporousmediumspatialparams.hh>
+#include <dumux/porousmediumflow/fvspatialparams.hh>
 #include <dumux/porenetwork/common/spatialparamstraits_.hh>
 
 namespace Dumux::PoreNetwork {
@@ -42,9 +42,9 @@ namespace Dumux::PoreNetwork {
  */
 template<class GridGeometry, class Scalar, class Implementation>
 class PNMSpatialParams
-: public FVPorousMediumSpatialParams<GridGeometry, Scalar, Implementation>
+: public FVPorousMediumFlowSpatialParams<GridGeometry, Scalar, Implementation>
 {
-    using ParentType = FVPorousMediumSpatialParams<GridGeometry, Scalar, Implementation>;
+    using ParentType = FVPorousMediumFlowSpatialParams<GridGeometry, Scalar, Implementation>;
     using GridView = typename GridGeometry::GridView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -126,16 +126,11 @@ public:
     const GridView& gridView() const
     { return this->gridGeometry().gridView(); }
 
-
-    /*! Intrinsic permeability tensor K \f$[m^2]\f$.
-     * \note This is only required for compatibility reasons.
-     */
-    template<class ElementSolutionVector>
-    Scalar permeability(const Element& element,
-                        const SubControlVolume& scv,
-                        const ElementSolutionVector& elemSol) const
+    //! Required for compatibility reasons with porous medium-flow models.
+    Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
     { return 1.0; }
 
+    //! Required for compatibility reasons with porous medium-flow models.
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 1.0; }
 
