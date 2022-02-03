@@ -18,23 +18,23 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup PoreNetworkModels
  * \ingroup SpatialParameters
  * \brief Spatial parameters for a pore-network model with non-creeping flow.
  */
 #ifndef DUMUX_PNM_NONCREEPING_SPATIAL_PARAMS_1P_HH
 #define DUMUX_PNM_NONCREEPING_SPATIAL_PARAMS_1P_HH
 
-#include <dumux/material/spatialparams/porenetwork/porenetworkbase.hh>
+#include <dumux/porenetwork/common/pnmspatialparams.hh>
 #include <dumux/porenetwork/common/poreproperties.hh>
 #include <dumux/porenetwork/common/throatproperties.hh>
 
 namespace Dumux::PoreNetwork {
 
 template<class GridGeometry, class Scalar>
-class NonCreepingSpatialParams : public BaseSpatialParams<GridGeometry, Scalar, NonCreepingSpatialParams<GridGeometry, Scalar>>
+class NonCreepingSpatialParams : public PNMSpatialParams<GridGeometry, Scalar, NonCreepingSpatialParams<GridGeometry, Scalar>>
 {
-    using ParentType = BaseSpatialParams<GridGeometry, Scalar, NonCreepingSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = PNMSpatialParams<GridGeometry, Scalar, NonCreepingSpatialParams<GridGeometry, Scalar>>;
 
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -44,6 +44,18 @@ class NonCreepingSpatialParams : public BaseSpatialParams<GridGeometry, Scalar, 
 public:
     using PermeabilityType = Scalar;
     using ParentType::ParentType;
+
+    template<class ElementSolutionVector>
+    auto temperature(const Element& element,
+                     const SubControlVolume& scv,
+                     const ElementSolutionVector& elemSol) const
+    { return 273.15 + 10.0; }
+
+    template<class ElementSolutionVector>
+    auto extrusionFactor(const Element& element,
+                         const SubControlVolume& scv,
+                         const ElementSolutionVector& elemSol) const
+    { return 1.0; }
 
     template<class ElementSolutionVector>
     auto poreShapeFactor(const Element& element,

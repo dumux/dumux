@@ -78,12 +78,6 @@ public:
         return problemName;
     }
 
-    /*!
-     * \brief Return the temperature within the domain in [K].
-     */
-    Scalar temperature() const
-    { return 273.15 + 10; } // 10°C
-
     // \}
 
     /*!
@@ -124,6 +118,7 @@ public:
      * \name Volume terms
      */
     // \{
+
     /*!
      * \brief Evaluate the source term for all phases within a given
      *        sub-control-volume.

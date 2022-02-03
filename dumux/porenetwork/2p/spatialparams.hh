@@ -18,46 +18,39 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup PoreNetworkModels
  * \ingroup SpatialParameters
  * \brief The two-phase spatial parameters for pore-network models.
  */
-#ifndef DUMUX_PNM2P_SPATIAL_PARAMS_HH
-#define DUMUX_PNM2P_SPATIAL_PARAMS_HH
-
-#warning "This file is deprecated, use PNMTwoPSpatialParams from dumux/porenetwork/2p/spatialparams.hh instead!"
+#ifndef DUMUX_PNM_2P_SPATIAL_PARAMS_HH
+#define DUMUX_PNM_2P_SPATIAL_PARAMS_HH
 
 #include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
 #include <dumux/material/fluidmatrixinteractions/porenetwork/throat/thresholdcapillarypressures.hh>
 
+#include <dumux/porenetwork/common/pnmspatialparams.hh>
 #include <dumux/porenetwork/common/poreproperties.hh>
 #include <dumux/porenetwork/common/throatproperties.hh>
-
-#include "porenetworkbase.hh"
 
 namespace Dumux::PoreNetwork {
 
 /*!
+ * \ingroup PoreNetworkModels
  * \ingroup SpatialParameters
- * \ingroup PNMTwoPModel
- */
-
-/**
  * \brief The base class for spatial parameters for pore-network models.
  */
 template<class GridGeometry, class Scalar, class LocalRules, class Implementation>
-[[deprecated("Use PNMTwoPSpatialParams from dumux/porenetwork/2p/spatialparams.hh instead. This class will be removed after 3.5.")]]
-class TwoPBaseSpatialParams
-: public BaseSpatialParams<GridGeometry, Scalar, TwoPBaseSpatialParams<GridGeometry, Scalar, LocalRules, Implementation>>
+class PNMTwoPSpatialParams
+: public PNMSpatialParams<GridGeometry, Scalar, PNMTwoPSpatialParams<GridGeometry, Scalar, LocalRules, Implementation>>
 {
-    using ParentType = BaseSpatialParams<GridGeometry, Scalar, TwoPBaseSpatialParams<GridGeometry, Scalar, LocalRules, Implementation>>;
+    using ParentType = PNMSpatialParams<GridGeometry, Scalar, PNMTwoPSpatialParams<GridGeometry, Scalar, LocalRules, Implementation>>;
     using GridView = typename GridGeometry::GridView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
 
-    TwoPBaseSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    PNMTwoPSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
         if (!gridGeometry->useSameGeometryForAllPores() && LocalRules::supportsMultipleGeometries())
@@ -96,8 +89,8 @@ public:
     { return 0; }
 
     /*!
-     *\brief The contact angle within a pore throat \f$[rad]\f$.
-     *\note Overload for solution-dependent values.
+     * \brief The contact angle within a pore throat \f$[rad]\f$.
+     * \note Overload for solution-dependent values.
      *
      *  \param element The element
      *  \param elemVolVars The element  volume variables
@@ -111,8 +104,8 @@ public:
     }
 
     /*!
-     *\brief The contact angle within a pore body \f$[rad]\f$.
-     *\note Overload for solution-dependent values.
+     * \brief The contact angle within a pore body \f$[rad]\f$.
+     * \note Overload for solution-dependent values.
      *
      *  \param element The element
      *  \param scv The sub-control volume
@@ -207,13 +200,13 @@ private:
     std::vector<Dune::ReservedVector<Scalar, 4>> cornerHalfAngles_;
 };
 
-// TODO docme
+// Default 2p spatial params
 template<class GridGeometry, class Scalar, class MaterialLawT>
-class TwoPDefaultSpatialParams : public TwoPBaseSpatialParams<GridGeometry, Scalar, MaterialLawT,
-                                                              TwoPDefaultSpatialParams<GridGeometry, Scalar, MaterialLawT>>
+class PNMTwoPDefaultSpatialParams : public PNMTwoPSpatialParams<GridGeometry, Scalar, MaterialLawT,
+                                                                PNMTwoPDefaultSpatialParams<GridGeometry, Scalar, MaterialLawT>>
 {
-    using ParentType = TwoPBaseSpatialParams<GridGeometry, Scalar, MaterialLawT,
-                                             TwoPDefaultSpatialParams<GridGeometry, Scalar, MaterialLawT>>;
+    using ParentType = PNMTwoPSpatialParams<GridGeometry, Scalar, MaterialLawT,
+                                            PNMTwoPDefaultSpatialParams<GridGeometry, Scalar, MaterialLawT>>;
 public:
     using ParentType::ParentType;
 };

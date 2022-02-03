@@ -82,16 +82,6 @@ public:
         FluidSystem::init();
     }
 
-
-#if ISOTHERMAL
-    /*!
-     * \brief Return the temperature within the domain in [K].
-     *
-     */
-    Scalar temperature() const
-    { return 273.15 + 10; } // 10°C
-    // \}
-#endif
      /*!
      * \name Boundary conditions
      */
