@@ -222,7 +222,7 @@ public:
     using type = struct EmptyCouplingManager {};
 };
 
-// Set the spatial parameters
+// Set the default spatial parameters
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::NavierStokesMassOneP>
 {

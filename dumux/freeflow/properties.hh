@@ -55,7 +55,7 @@ struct FluxVariablesCacheFiller<TypeTag, TTag::FreeFlow> { using type = FluxVari
 template<class TypeTag>
 struct HeatConductionType<TypeTag, TTag::FreeFlow> { using type = FouriersLaw<TypeTag>; };
 
-// Set the spatial parameters
+// Set the default spatial parameters
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::FreeFlow>
 {

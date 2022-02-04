@@ -43,9 +43,6 @@ public:
     FreeFlowSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {}
-
-private:
-
 };
 
 } // end namespace Dumux

@@ -231,8 +231,8 @@ private:
 /*!
  * \ingroup PoreNetworkModels
  * \ingroup SpatialParameters
-* \brief The default class for spatial parameters for two-phase pore-network models.
-*/
+ * \brief The default class for spatial parameters for two-phase pore-network models.
+ */
 template<class GridGeometry, class Scalar, class LocalRules>
 class PNMTwoPDefaultSpatialParams
 : public PNMTwoPSpatialParams<GridGeometry, Scalar, LocalRules, PNMTwoPDefaultSpatialParams<GridGeometry, Scalar, LocalRules>>

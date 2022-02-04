@@ -183,7 +183,6 @@ decltype(auto) temperature(const Problem& problem, const Element& element, const
         return problem.temperatureAtPos(scv.dofPosition());
 }
 
-
 } // end namespace Deprecated
 #endif
 
