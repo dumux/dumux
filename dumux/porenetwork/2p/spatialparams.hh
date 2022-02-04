@@ -37,16 +37,18 @@ namespace Dumux::PoreNetwork {
 /*!
  * \ingroup PoreNetworkModels
  * \ingroup SpatialParameters
+ * \ingroup PNMTwoPModel
  * \brief The base class for spatial parameters for pore-network models.
  */
 template<class GridGeometry, class Scalar, class LocalRules, class Implementation>
 class PNMTwoPSpatialParams
-: public PNMSpatialParams<GridGeometry, Scalar, PNMTwoPSpatialParams<GridGeometry, Scalar, LocalRules, Implementation>>
+: public PNMSpatialParams<GridGeometry, Scalar, Implementation>
 {
-    using ParentType = PNMSpatialParams<GridGeometry, Scalar, PNMTwoPSpatialParams<GridGeometry, Scalar, LocalRules, Implementation>>;
+    using ParentType = PNMSpatialParams<GridGeometry, Scalar, Implementation>;
     using GridView = typename GridGeometry::GridView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
 
@@ -78,15 +80,32 @@ public:
      * \brief The index of the wetting phase within a pore throat
      */
     template<class FS, class ElementVolumeVariables>
-    int wettingPhase(const Element&, const ElementVolumeVariables& elemVolVars) const
-    { return 0; }
+    int wettingPhase(const Element& element,
+                     const ElementVolumeVariables& elemVolVars) const
+    { return this->asImp_().template wettingPhaseAtPos<FS>(element.geometry().center()); }
 
     /*!
      * \brief The index of the wetting phase within a pore body
      */
     template<class FS, class ElementSolutionVector>
-    int wettingPhase(const Element&, const SubControlVolume& scv, const ElementSolutionVector& elemSol) const
-    { return 0; }
+    int wettingPhase(const Element& element,
+                     const SubControlVolume& scv,
+                     const ElementSolutionVector& elemSol) const
+    { return this->asImp_().template wettingPhaseAtPos<FS>(scv.center()); }
+
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The global position
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    {
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The spatial parameters do not provide "
+                   "a wettingPhaseAtPos() method.");
+    }
 
     /*!
      * \brief The contact angle within a pore throat \f$[rad]\f$.
@@ -98,10 +117,7 @@ public:
     template<class ElementVolumeVariables>
     Scalar contactAngle(const Element& element,
                         const ElementVolumeVariables& elemVolVars) const
-    {
-        static const Scalar theta = getParam<Scalar>("SpatialParams.ContactAngle", 0.0);
-        return theta;
-    }
+    { return this->asImp_().contactAngleAtPos(element.geometry().center()); }
 
     /*!
      * \brief The contact angle within a pore body \f$[rad]\f$.
@@ -115,9 +131,35 @@ public:
     Scalar contactAngle(const Element& element,
                         const SubControlVolume& scv,
                         const ElementSolutionVector& elemSol) const
+    { return this->asImp_().contactAngleAtPos(scv.center()); }
+
+    //! \brief Function for defining the Contact Angle
+    int contactAngleAtPos(const GlobalPosition& globalPos) const
     {
-        static const Scalar theta = getParam<Scalar>("SpatialParams.ContactAngle", 0.0);
-        return theta;
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The spatial parameters do not provide "
+                   "a contactAngleAtPos() method.");
+    }
+
+    /*!
+     * \brief Returns the surface tension \f$ [N/m] \f$
+     *
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     */
+    template<class ElementSolution>
+    Scalar surfaceTension(const Element& element,
+                          const SubControlVolume& scv,
+                          const ElementSolution& elemSol) const
+    { return this->asImp_().surfaceTensionAtPos(scv.center()); }
+
+    //! \brief Function for defining the surface Tension
+    Scalar surfaceTensionAtPos(const GlobalPosition& globalPos) const
+    {
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The spatial parameters do not provide "
+                   "a surfaceTensionAtPos() method.");
     }
 
     /*!
@@ -126,7 +168,8 @@ public:
      * \param elemVolVars The element volume variables
      */
     template<class ElementVolumeVariables>
-    const Scalar pcEntry(const Element& element, const ElementVolumeVariables& elemVolVars) const
+    const Scalar pcEntry(const Element& element,
+                         const ElementVolumeVariables& elemVolVars) const
     {
         const auto eIdx = this->gridGeometry().elementMapper().index(element);
         // take the average of both adjacent pores TODO: is this correct?
@@ -143,29 +186,14 @@ public:
      * \param elemVolVars The element volume variables
      */
     template<class ElementVolumeVariables>
-    const Scalar pcSnapoff(const Element& element, const ElementVolumeVariables& elemVolVars) const
+    const Scalar pcSnapoff(const Element& element,
+                           const ElementVolumeVariables& elemVolVars) const
     {
         // take the average of both adjacent pores TODO: is this correct?
         const Scalar surfaceTension = 0.5*(elemVolVars[0].surfaceTension() + elemVolVars[1].surfaceTension());
         return ThresholdCapillaryPressures::pcSnapoff(surfaceTension,
                                                       this->asImp_().contactAngle(element, elemVolVars),
                                                       this->asImp_().throatInscribedRadius(element, elemVolVars));
-    }
-
-    /*!
-     * \brief Returns the surface tension \f$ [N/m] \f$
-     *
-     * \param element The current element
-     * \param scv The sub-control volume inside the element.
-     * \param elemSol The solution at the dofs connected to the element.
-     */
-    template<class ElementSolution>
-    Scalar surfaceTension(const Element& element,
-                          const SubControlVolume& scv,
-                          const ElementSolution& elemSol) const
-    {
-        static const Scalar gamma = getParam<Scalar>("SpatialParams.SurfaceTension", 0.0725); // default to surface tension of water/air
-        return gamma;
     }
 
     /*!
@@ -200,15 +228,61 @@ private:
     std::vector<Dune::ReservedVector<Scalar, 4>> cornerHalfAngles_;
 };
 
-// Default 2p spatial params
-template<class GridGeometry, class Scalar, class MaterialLawT>
-class PNMTwoPDefaultSpatialParams : public PNMTwoPSpatialParams<GridGeometry, Scalar, MaterialLawT,
-                                                                PNMTwoPDefaultSpatialParams<GridGeometry, Scalar, MaterialLawT>>
+/*!
+ * \ingroup PoreNetworkModels
+ * \ingroup SpatialParameters
+* \brief The default class for spatial parameters for two-phase pore-network models.
+*/
+template<class GridGeometry, class Scalar, class LocalRules>
+class PNMTwoPDefaultSpatialParams
+: public PNMTwoPSpatialParams<GridGeometry, Scalar, LocalRules, PNMTwoPDefaultSpatialParams<GridGeometry, Scalar, LocalRules>>
 {
-    using ParentType = PNMTwoPSpatialParams<GridGeometry, Scalar, MaterialLawT,
-                                            PNMTwoPDefaultSpatialParams<GridGeometry, Scalar, MaterialLawT>>;
+    using ParentType = PNMTwoPSpatialParams<GridGeometry, Scalar, LocalRules,
+                                            PNMTwoPDefaultSpatialParams<GridGeometry, Scalar, LocalRules>>;
+    using GridView = typename GridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 public:
     using ParentType::ParentType;
+
+    PNMTwoPDefaultSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
+    { }
+
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The global position
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    { return FluidSystem::phase0Idx; }
+
+    /*!
+     * \brief Function for defining the Contact Angle
+     *
+     * \return the contact angle
+     * \param globalPos The global position
+     */
+    int contactAngleAtPos(const GlobalPosition& globalPos) const
+    {
+        static const Scalar theta = getParam<Scalar>("SpatialParams.ContactAngle", 0.0);
+        return theta;
+    }
+
+    /*!
+     * \brief Function for defining the surface Tension
+     *
+     * \return the surface tension
+     * \param globalPos The global position
+     */
+    Scalar surfaceTensionAtPos(const GlobalPosition& globalPos) const
+    {
+        static const Scalar gamma = getParam<Scalar>("SpatialParams.SurfaceTension", 0.0725); // default to surface tension of water/air
+        return gamma;
+    }
+
 };
 
 } // namespace Dumux::PoreNetwork
