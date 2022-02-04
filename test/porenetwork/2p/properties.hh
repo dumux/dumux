@@ -28,6 +28,8 @@
 
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porenetwork/2p/model.hh>
+#include <dumux/porenetwork/2p/spatialparams.hh>
+#include <dumux/material/fluidmatrixinteractions/porenetwork/pore/2p/multishapelocalrules.hh>
 
 #include <dumux/common/properties.hh>
 
@@ -35,8 +37,8 @@
 #include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/porenetwork/common/utilities.hh>
 
-// the problem
 #include "problem.hh"
+#include "spatialparams.hh"
 
 //////////
 // Specify the properties
@@ -61,6 +63,17 @@ struct FluidSystem<TypeTag, TTag::DrainageProblem>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = Dumux::FluidSystems::H2OAir<Scalar, Dumux::Components::SimpleH2O<Scalar>>;
+};
+
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::DrainageProblem>
+{
+private:
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using LocalRules = Dumux::PoreNetwork::FluidMatrix::MultiShapeTwoPLocalRules<Scalar>;
+public:
+    using type = Dumux::PoreNetwork::PNMTwoPDrainageSpatialParams<GridGeometry, Scalar, LocalRules>;
 };
 
 // Set the grid type
