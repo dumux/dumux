@@ -105,7 +105,7 @@ private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = Dumux::PoreNetwork::PNMOnePSpatialParams<GridGeometry, Scalar>;
+    using type = Dumux::PoreNetwork::PNMOnePDefaultSpatialParams<GridGeometry, Scalar>;
 };
 
 //! The advection type
