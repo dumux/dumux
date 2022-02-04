@@ -48,6 +48,8 @@ public:
  * \ingroup PoreNetworkModels
  * \ingroup SpatialParameters
  * \brief The default class for spatial parameters for single-phase pore-network models.
+ * \note We have this layer for consistency with the two-phase pore-network models. Also, we
+ *       may use this in the feature to define defaults for newly added parameter interfaces.
  */
 template<class GridGeometry, class Scalar>
 class PNMOnePDefaultSpatialParams
