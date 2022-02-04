@@ -105,7 +105,7 @@ public:
 };
 
 //! The spatial parameters to be employed.
-//! Use PNMOnePSpatialParams by default.
+//! Use PNMOnePDefaultSpatialParams by default.
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::PNMOneP>
 {
