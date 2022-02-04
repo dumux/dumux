@@ -124,7 +124,7 @@ public:
                        const Entity &e) const
     {
         // forward to solution independent, fully-implicit specific interface
-        return asImp_().sourceAtPos(e.center());
+        return this->asImp_().sourceAtPos(e.center());
     }
 
     /*!
@@ -149,7 +149,7 @@ public:
                         const SubControlVolumeFace& scvf) const
     {
         // forward it to the interface with only the global position
-        return asImp_().neumannAtPos(scvf.ipGlobal());
+        return this->asImp_().neumannAtPos(scvf.ipGlobal());
     }
 
     /*!
@@ -161,7 +161,7 @@ public:
     template<class Entity>
     PrimaryVariables initial(const Entity& entity) const
     {
-        return asImp_().initialAtPos(entity.center());
+        return this->asImp_().initialAtPos(entity.center());
     }
 
     /*!
@@ -184,15 +184,15 @@ public:
             {
                 // let the problem do the dirty work of nailing down
                 // the initial solution.
-                auto initPriVars = asImp_().initial(scv);
-                asImp_().applyInitialCellCenterSolution(sol, scv, initPriVars);
+                auto initPriVars = this->asImp_().initial(scv);
+                this->asImp_().applyInitialCellCenterSolution(sol, scv, initPriVars);
             }
 
             // loop over faces
             for(auto&& scvf : scvfs(fvGeometry))
             {
-                auto initPriVars = asImp_().initial(scvf);
-                asImp_().applyInitialFaceSolution(sol, scvf, initPriVars);
+                auto initPriVars = this->asImp_().initial(scvf);
+                this->asImp_().applyInitialFaceSolution(sol, scvf, initPriVars);
             }
         }
     }
@@ -222,14 +222,6 @@ public:
             sol[faceIdx][scvf.dofIndex()][pvIdx] = initSol[pvIdx];
     }
 
-protected:
-    //! Returns the implementation of the problem (i.e. static polymorphism)
-    Implementation &asImp_()
-    { return *static_cast<Implementation *>(this); }
-
-    //! \copydoc asImp_()
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation *>(this); }
 };
 
 } // end namespace Dumux
