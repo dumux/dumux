@@ -65,6 +65,7 @@ class OnePDispersionFluxImplementation<TypeTag, DiscretizationMethods::Box, refe
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Indices = typename ModelTraits::Indices;
 
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
@@ -102,10 +103,6 @@ public:
     {
         ComponentFluxVector componentFlux(0.0);
 
-        // collect the dispersion tensor, the fluxVarsCache and the shape values
-        const DimWorldMatrix dispersionTensor = VolumeVariables::DispersionTensorType::dispersionTensor(problem, scvf, fvGeometry,
-                                                                                                       elemVolVars, elemFluxVarsCache);
-
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
         const auto& shapeValues = fluxVarsCache.shapeValues();
 
@@ -119,6 +116,10 @@ public:
 
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
+            // collect the dispersion tensor, the fluxVarsCache and the shape values
+            const DimWorldMatrix dispersionTensor = VolumeVariables::DispersionTensorType::dispersionTensor(problem, scvf, fvGeometry,
+                                                                                                            elemVolVars, elemFluxVarsCache, compIdx);
+
             // the mole/mass fraction gradient
             Dune::FieldVector<Scalar, dimWorld> gradX(0.0);
             for (auto&& scv : scvs(fvGeometry))
@@ -149,7 +150,7 @@ public:
     {
         // collect the dispersion tensor
         const DimWorldMatrix dispersionTensor = VolumeVariables::DispersionTensorType::dispersionTensor(problem, scvf, fvGeometry,
-                                                                                                       elemVolVars, elemFluxVarsCache);
+                                                                                                        elemVolVars, elemFluxVarsCache, Indices::energyEqIdx);
         // compute the temperature gradient with the shape functions
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
         Dune::FieldVector<Scalar, GridView::dimensionworld> gradTemp(0.0);

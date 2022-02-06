@@ -47,8 +47,9 @@ public:
                                            [[maybe_unused]] const SubControlVolumeFace& scvf,
                                            [[maybe_unused]] const FVElementGeometry& fvGeometry,
                                            [[maybe_unused]] const ElementVolumeVariables& elemVolVars,
-                                           [[maybe_unused]] const ElementFluxVariablesCache& elemFluxVarsCache)
-    { return problem.spatialParams().dispersionTensor(scvf.center()); }
+                                           [[maybe_unused]] const ElementFluxVariablesCache& elemFluxVarsCache,
+                                           [[maybe_unused]] const int compIdx)
+    { return problem.spatialParams().dispersionTensor(scvf.center(), compIdx); }
 
 };
 

@@ -66,6 +66,7 @@ class OnePDispersionFluxImplementation<TypeTag, DiscretizationMethods::CCTpfa, r
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Indices = typename ModelTraits::Indices;
 
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
@@ -110,16 +111,16 @@ public:
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
-        const DimWorldMatrix dispersionTensor = VolumeVariables::DispersionTensorType::dispersionTensor(problem, scvf, fvGeometry,
-                                                                                                        elemVolVars, elemFluxVarsCache);
-        const auto dij = computeTpfaTransmissibility(scvf, fvGeometry.scv(scvf.insideScvIdx()), dispersionTensor, insideVolVars.extrusionFactor());
-
         const auto rhoInside = massOrMolarDensity(insideVolVars, referenceSystem, phaseIdx);
         const auto rhoOutside = massOrMolarDensity(outsideVolVars, referenceSystem, phaseIdx);
         const Scalar rho = 0.5*(rhoInside + rhoOutside);
 
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
+            const auto& dispersionTensor = VolumeVariables::DispersionTensorType::dispersionTensor(problem, scvf, fvGeometry,
+                                                                                                            elemVolVars, elemFluxVarsCache, compIdx);
+            const auto dij = computeTpfaTransmissibility(scvf, fvGeometry.scv(scvf.insideScvIdx()), dispersionTensor, insideVolVars.extrusionFactor());
+
             const auto xInside = massOrMoleFraction(insideVolVars, referenceSystem, phaseIdx, compIdx);
             const auto xOutide = massOrMoleFraction(outsideVolVars, referenceSystem, phaseIdx, compIdx);
 
@@ -150,7 +151,7 @@ public:
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         const DimWorldMatrix dispersionTensor = VolumeVariables::DispersionTensorType::dispersionTensor(problem, scvf, fvGeometry,
-                                                                                                        elemVolVars, elemFluxVarsCache);
+                                                                                                        elemVolVars, elemFluxVarsCache, Indices::energyEqIdx);
         const auto dij = computeTpfaTransmissibility(scvf, fvGeometry.scv(scvf.insideScvIdx()), dispersionTensor, insideVolVars.extrusionFactor());
 
         // get the inside/outside temperatures

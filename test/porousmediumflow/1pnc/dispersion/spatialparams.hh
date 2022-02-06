@@ -25,6 +25,7 @@
 #ifndef DUMUX_1PNC_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_1PNC_TEST_SPATIAL_PARAMS_HH
 
+#include <dune/common/exceptions.hh>
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/fvspatialparams1p.hh>
 
@@ -93,7 +94,7 @@ public:
      *
      * \param globalPos The global position
      */
-    std::array<Scalar, 2> dispersionAlphas(const GlobalPosition& globalPos) const
+    std::array<Scalar, 2> dispersionAlphas(const GlobalPosition& globalPos, int compIdx) const
     { return { alphaL_, alphaT_ }; }
 
     /*!
@@ -101,7 +102,7 @@ public:
      *
      * \param globalPos The global position
      */
-    DimWorldMatrix dispersionTensor(const GlobalPosition& globalPos) const
+    DimWorldMatrix dispersionTensor(const GlobalPosition& globalPos, int compIdx) const
     {
         DimWorldMatrix dispersionTensor(0.0);
         if (dispersionTensorCoefficients_.size() > 1)
