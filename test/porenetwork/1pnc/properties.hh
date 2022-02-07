@@ -53,7 +53,7 @@ struct PNMOnePTwoCProblem { using InheritsFrom = std::tuple<PNMOnePNCNI>; };
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::PNMOnePTwoCProblem> { using type = Dumux::PNMOnePTwoCProblem<TypeTag>; };
+struct Problem<TypeTag, TTag::PNMOnePTwoCProblem> { using type = PNMOnePTwoCProblem<TypeTag>; };
 
 // Set fluid configuration
 template<class TypeTag>
@@ -71,7 +71,7 @@ private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = Dumux::PoreNetwork::CompositionalPNMSpatialParams<GridGeometry, Scalar>;
+    using type = PoreNetwork::CompositionalSpatialParams<GridGeometry, Scalar>;
 };
 
 // Set the grid type
@@ -84,9 +84,9 @@ struct AdvectionType<TypeTag, TTag::PNMOnePTwoCProblem>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using TransmissibilityLaw = Dumux::PoreNetwork::TransmissibilityAzzamDullien<Scalar>;
+    using TransmissibilityLaw = PoreNetwork::TransmissibilityAzzamDullien<Scalar>;
 public:
-    using type = Dumux::PoreNetwork::CreepingFlow<Scalar, TransmissibilityLaw>;
+    using type = PoreNetwork::CreepingFlow<Scalar, TransmissibilityLaw>;
 };
 
 } //end namespace Dumux::Properties

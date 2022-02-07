@@ -25,16 +25,16 @@
 #ifndef DUMUX_PNM_NONCREEPING_SPATIAL_PARAMS_1P_HH
 #define DUMUX_PNM_NONCREEPING_SPATIAL_PARAMS_1P_HH
 
-#include <dumux/porenetwork/common/pnmspatialparams.hh>
+#include <dumux/porenetwork/common/spatialparams.hh>
 #include <dumux/porenetwork/common/poreproperties.hh>
 #include <dumux/porenetwork/common/throatproperties.hh>
 
 namespace Dumux::PoreNetwork {
 
 template<class GridGeometry, class Scalar>
-class NonCreepingSpatialParams : public PNMSpatialParams<GridGeometry, Scalar, NonCreepingSpatialParams<GridGeometry, Scalar>>
+class NonCreepingSpatialParams : public SpatialParams<GridGeometry, Scalar, NonCreepingSpatialParams<GridGeometry, Scalar>>
 {
-    using ParentType = PNMSpatialParams<GridGeometry, Scalar, NonCreepingSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = SpatialParams<GridGeometry, Scalar, NonCreepingSpatialParams<GridGeometry, Scalar>>;
 
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;

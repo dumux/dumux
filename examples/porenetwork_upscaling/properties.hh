@@ -83,7 +83,7 @@ private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = Dumux::PoreNetwork::UpscalingSpatialParams<GridGeometry, Scalar>;
+    using type = PoreNetwork::UpscalingSpatialParams<GridGeometry, Scalar>;
 };
 
 //! The advection type.
@@ -92,9 +92,9 @@ struct AdvectionType<TypeTag, TTag::PNMUpscaling>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using TransmissibilityLaw = Dumux::PoreNetwork::TransmissibilityPatzekSilin<Scalar, true/*considerPoreBodyResistance*/>;
+    using TransmissibilityLaw = PoreNetwork::TransmissibilityPatzekSilin<Scalar, true/*considerPoreBodyResistance*/>;
 public:
-    using type = Dumux::PoreNetwork::CreepingFlow<Scalar, TransmissibilityLaw>;
+    using type = PoreNetwork::CreepingFlow<Scalar, TransmissibilityLaw>;
 };
 
 // We use a single liquid phase consisting of a component with constant fluid properties.

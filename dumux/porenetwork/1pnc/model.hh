@@ -31,13 +31,13 @@
  * \f$\varrho\f$ either of the upstream pore body \f$i\f$ or \f$j\f$ (upwinding) or on the respective averaged value. \f$q_i\f$ is a mass sink or source
  * term defined on pore body \f$i\f$.
  *
- * Per default, the volume flow rate \f$Q_{ij}\f$ follows a linear Hagen-Poiseuille-type law (Dumux::PoreNetworkModel::CreepingFlow) which is only valid for \f$Re < 1\f$:
+ * Per default, the volume flow rate \f$Q_{ij}\f$ follows a linear Hagen-Poiseuille-type law (PoreNetworkModel::CreepingFlow) which is only valid for \f$Re < 1\f$:
  *
  * \f[
  *	Q_{ij} = g_{ij} (p_{i} - p_{j} + \Psi)  ~.
  * \f]
  *
- * \f$g_{ij}\f$ is a suitable throat conductance value (see e.g. Dumux::PoreNetwork::TransmissibilityPatzekSilin) while \f$p_i\f$ and \f$p_j\f$ are averaged pore body pressures.
+ * \f$g_{ij}\f$ is a suitable throat conductance value (see e.g. PoreNetwork::TransmissibilityPatzekSilin) while \f$p_i\f$ and \f$p_j\f$ are averaged pore body pressures.
  *
  * The (optional) influence of gravity is given by
  *
@@ -105,7 +105,7 @@ private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = Dumux::PoreNetwork::PNMOnePDefaultSpatialParams<GridGeometry, Scalar>;
+    using type = PoreNetwork::OnePDefaultSpatialParams<GridGeometry, Scalar>;
 };
 
 //! The advection type
@@ -114,9 +114,9 @@ struct AdvectionType<TypeTag, TTag::PNMOnePNC>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using TransmissibilityLaw = Dumux::PoreNetwork::TransmissibilityPatzekSilin<Scalar, false/*considerPoreBodyResistance*/>;
+    using TransmissibilityLaw = PoreNetwork::TransmissibilityPatzekSilin<Scalar, false/*considerPoreBodyResistance*/>;
 public:
-    using type = Dumux::PoreNetwork::CreepingFlow<Scalar, TransmissibilityLaw>;
+    using type = PoreNetwork::CreepingFlow<Scalar, TransmissibilityLaw>;
 };
 
 //! Set as default that no component mass balance is replaced by the total mass balance
@@ -137,7 +137,7 @@ private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 public:
-    using type = Dumux::PoreNetwork::PNMFicksLaw<Scalar, ModelTraits::numFluidPhases(), ModelTraits::numFluidComponents()>;
+    using type = PoreNetwork::PNMFicksLaw<Scalar, ModelTraits::numFluidPhases(), ModelTraits::numFluidComponents()>;
 };
 
 //! Set the volume variables property
@@ -156,7 +156,7 @@ private:
     static_assert(FST::numComponents == MT::numFluidComponents(), "Number of components mismatch between model and fluid state");
     static_assert(FSY::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid system");
     static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
-    using BaseTraits = Dumux::OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+    using BaseTraits = OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 
     using DTT = GetPropType<TypeTag, Properties::DispersionTensorType>;
     using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
@@ -170,13 +170,13 @@ private:
     };
 
 public:
-    using type = Dumux::PoreNetwork::OnePNCVolumeVariables<NCTraits<BaseTraits, DTT, DT, EDM>>;
+    using type = PoreNetwork::OnePNCVolumeVariables<NCTraits<BaseTraits, DTT, DT, EDM>>;
 };
 
 //!< Set the vtk output fields specific to this model
 template<class TypeTag>
 struct IOFields<TypeTag, TTag::PNMOnePNC>
-{ using type = Dumux::PoreNetwork::OnePNCIOFields<GetPropType<TypeTag, Properties::FluidSystem>>; };
+{ using type = PoreNetwork::OnePNCIOFields<GetPropType<TypeTag, Properties::FluidSystem>>; };
 
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::PNMOnePNC> { static constexpr bool value = true; };
@@ -214,7 +214,7 @@ private:
     static_assert(FST::numComponents == MT::numFluidComponents(), "Number of components mismatch between model and fluid state");
     static_assert(FSY::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid system");
     static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
-    using BaseTraits = Dumux::OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+    using BaseTraits = OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 
     using DTT = GetPropType<TypeTag, Properties::DispersionTensorType>;
     using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
@@ -230,7 +230,7 @@ private:
     };
 
 public:
-    using type = Dumux::PoreNetwork::OnePNCVolumeVariables<NCNITraits<BaseTraits, DTT, DT, EDM, ETCM>>;
+    using type = PoreNetwork::OnePNCVolumeVariables<NCNITraits<BaseTraits, DTT, DT, EDM, ETCM>>;
 };
 
 template<class TypeTag>
@@ -238,7 +238,7 @@ struct IOFields<TypeTag, TTag::PNMOnePNCNI>
 {
 private:
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using IsothermalFields = Dumux::PoreNetwork::OnePNCIOFields<FluidSystem>;
+    using IsothermalFields = PoreNetwork::OnePNCIOFields<FluidSystem>;
 public:
     using type = EnergyIOFields<IsothermalFields>;
 };
@@ -253,7 +253,7 @@ struct ThermalConductivityModel<TypeTag, TTag::PNMOnePNCNI>
 // struct HeatConductionType<TypeTag, TTag::PNMOnePNCNI>
 // {
 //     TODO uncomment this as soon as there is a generalized approach for component enthalpies in all fluid systems
-//     using type = Dumux::PoreNetwork::PNMFouriersLaw<GetPropType<TypeTag, MolecularDiffusionType>>;
+//     using type = PoreNetwork::PNMFouriersLaw<GetPropType<TypeTag, MolecularDiffusionType>>;
 // }; //!< Use Fourier's law and also consider enthalpy transport by molecular diffusion
 
 } // end namespace Dumux::Properties

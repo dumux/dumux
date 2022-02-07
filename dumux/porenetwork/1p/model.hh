@@ -31,13 +31,13 @@
  * \f$\varrho\f$ either of the upstream pore body \f$i\f$ or \f$j\f$ (upwinding) or on the respective averaged value. \f$q_i\f$ is a mass sink or source
  * term defined on pore body \f$i\f$.
  *
- * Per default, the volume flow rate \f$Q_{ij}\f$ follows a linear Hagen-Poiseuille-type law (Dumux::PoreNetworkModel::CreepingFlow) which is only valid for \f$Re < 1\f$:
+ * Per default, the volume flow rate \f$Q_{ij}\f$ follows a linear Hagen-Poiseuille-type law (PoreNetworkModel::CreepingFlow) which is only valid for \f$Re < 1\f$:
  *
  * \f[
  *	Q_{ij} = g_{ij} (p_{i} - p_{j} + \Psi)  ~.
  * \f]
  *
- * \f$g_{ij}\f$ is a suitable throat conductance value (see e.g. Dumux::PoreNetwork::TransmissibilityPatzekSilin) while \f$p_i\f$ and \f$p_j\f$ are averaged pore body pressures.
+ * \f$g_{ij}\f$ is a suitable throat conductance value (see e.g. PoreNetwork::TransmissibilityPatzekSilin) while \f$p_i\f$ and \f$p_j\f$ are averaged pore body pressures.
  *
  * The (optional) influence of gravity is given by
  *
@@ -99,9 +99,9 @@ private:
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
-    using Traits = Dumux::OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+    using Traits = OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
-    using type = Dumux::PoreNetwork::OnePVolumeVariables<Traits>;
+    using type = PoreNetwork::OnePVolumeVariables<Traits>;
 };
 
 //! The spatial parameters to be employed.
@@ -113,17 +113,17 @@ private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = Dumux::PoreNetwork::PNMOnePDefaultSpatialParams<GridGeometry, Scalar>;
+    using type = PoreNetwork::OnePDefaultSpatialParams<GridGeometry, Scalar>;
 };
 
 //! The flux variables cache
 template<class TypeTag>
 struct FluxVariablesCache<TypeTag, TTag::PoreNetworkModel>
-{ using type = Dumux::PoreNetwork::OnePFluxVariablesCache<GetPropType<TypeTag, Properties::AdvectionType>>; };
+{ using type = PoreNetwork::OnePFluxVariablesCache<GetPropType<TypeTag, Properties::AdvectionType>>; };
 
 //! Default I/O fields specific to this model
 template<class TypeTag>
-struct IOFields<TypeTag, TTag::PNMOneP> { using type = Dumux::PoreNetwork::OnePIOFields; };
+struct IOFields<TypeTag, TTag::PNMOneP> { using type = PoreNetwork::OnePIOFields; };
 
 //! The advection type
 template<class TypeTag>
@@ -131,9 +131,9 @@ struct AdvectionType<TypeTag, TTag::PNMOneP>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using TransmissibilityLaw = Dumux::PoreNetwork::TransmissibilityPatzekSilin<Scalar, false/*considerPoreBodyResistance*/>;
+    using TransmissibilityLaw = PoreNetwork::TransmissibilityPatzekSilin<Scalar, false/*considerPoreBodyResistance*/>;
 public:
-    using type = Dumux::PoreNetwork::CreepingFlow<Scalar, TransmissibilityLaw>;
+    using type = PoreNetwork::CreepingFlow<Scalar, TransmissibilityLaw>;
 };
 
 //////////////////////////////////////////////////////////////////
@@ -159,12 +159,12 @@ private:
     struct NITraits : public BaseTraits { using EffectiveThermalConductivityModel = ETCM; };
 
 public:
-    using type = Dumux::PoreNetwork::OnePVolumeVariables<NITraits<BaseTraits, ETCM>>;
+    using type = PoreNetwork::OnePVolumeVariables<NITraits<BaseTraits, ETCM>>;
 };
 
 //! Add temperature to the output
 template<class TypeTag>
-struct IOFields<TypeTag, TTag::PNMOnePNI> { using type = EnergyIOFields<Dumux::PoreNetwork::OnePIOFields>; };
+struct IOFields<TypeTag, TTag::PNMOnePNI> { using type = EnergyIOFields<PoreNetwork::OnePIOFields>; };
 
 //! The model traits of the non-isothermal model
 template<class TypeTag>

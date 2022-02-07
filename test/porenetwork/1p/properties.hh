@@ -61,7 +61,7 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::PNMOnePProblem>
 {
     using Scalar = GetPropType<TypeTag, Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::SimpleH2O<Scalar> > ;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> > ;
 };
 
 // the grid
@@ -75,9 +75,9 @@ struct AdvectionType<TypeTag, TTag::PNMOnePProblem>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using TransmissibilityLaw = Dumux::PoreNetwork::TransmissibilityPatzekSilin<Scalar, false/*considerPoreBodyResistance*/>;
+    using TransmissibilityLaw = PoreNetwork::TransmissibilityPatzekSilin<Scalar, false/*considerPoreBodyResistance*/>;
 public:
-    using type =  Dumux::PoreNetwork::CreepingFlow<Scalar, TransmissibilityLaw>;
+    using type =  PoreNetwork::CreepingFlow<Scalar, TransmissibilityLaw>;
 };
 
 // use the incompressible local residual (provides analytic jacobian)

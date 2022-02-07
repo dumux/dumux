@@ -31,7 +31,7 @@
  * \f$\varrho\f$ either of the upstream pore body \f$i\f$ or \f$j\f$ (upwinding) or on the respective averaged value. \f$q_\alpha\f$ is a mass sink or source
  * term defined on pore body \f$i\f$.
  *
- * Per default, the volume flow rate \f$Q_{\alpha,ij}\f$ follows a linear Hagen-Poiseuille-type law (Dumux::PoreNetworkModel::CreepingFlow) which is only valid for \f$Re < 1\f$:
+ * Per default, the volume flow rate \f$Q_{\alpha,ij}\f$ follows a linear Hagen-Poiseuille-type law (PoreNetworkModel::CreepingFlow) which is only valid for \f$Re < 1\f$:
  *
  * \f[
  *	Q_{\alpha,ij} = g_{\alpha, ij} (p_{\alpha, i} - p_{\alpha, j} + \Psi_\alpha)  ~.
@@ -48,7 +48,7 @@
  * where \f$\mathbf{x_i} - \mathbf{x_j}\f$  is the distance vector between the centers of pore bodies \f$i\f$ and \f$j\f$ and \f$\mathbf{g}\f$ is the gravitational acceleration.
  *
  * The primary variables are the wetting phase pressure and the the nonwetting phase saturation (\f$p_w\f$ and \f$S_n\f$) or the nonwetting phase pressure and the the wetting phase saturation (\f$p_n\f$ and \f$S_w\f$),
- * depending on the chose formulation (see Dumux::TwoPModel).
+ * depending on the chose formulation (see TwoPModel).
  */
 
 #ifndef DUMUX_PNM2P_MODEL_HH
@@ -115,13 +115,13 @@ private:
 
     using Traits = TwoPVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, SR>;
 public:
-    using type = Dumux::PoreNetwork::TwoPVolumeVariables<Traits>;
+    using type = PoreNetwork::TwoPVolumeVariables<Traits>;
 };
 
 //! The flux variables cache
 template<class TypeTag>
 struct FluxVariablesCache<TypeTag, TTag::PNMTwoP>
-{ using type = Dumux::PoreNetwork::TwoPFluxVariablesCache<GetPropType<TypeTag, Properties::AdvectionType>>; };
+{ using type = PoreNetwork::TwoPFluxVariablesCache<GetPropType<TypeTag, Properties::AdvectionType>>; };
 
 //! The grid flux variables cache vector class
 template<class TypeTag>
@@ -131,9 +131,9 @@ private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
-    using Traits = Dumux::PoreNetwork::PNMTwoPDefaultGridFVCTraits<Problem, FluxVariablesCache>;
+    using Traits = PoreNetwork::PNMTwoPDefaultGridFVCTraits<Problem, FluxVariablesCache>;
 public:
-    using type = Dumux::PoreNetwork::PNMTwoPGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache, Traits>;
+    using type = PoreNetwork::PNMTwoPGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache, Traits>;
 };
 
 //! The spatial parameters to be employed.
@@ -144,9 +144,9 @@ struct SpatialParams<TypeTag, TTag::PNMTwoP>
 private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using LocalRules = Dumux::PoreNetwork::FluidMatrix::MultiShapeTwoPLocalRules<Scalar>;
+    using LocalRules = PoreNetwork::FluidMatrix::MultiShapeTwoPLocalRules<Scalar>;
 public:
-    using type = Dumux::PoreNetwork::PNMTwoPDefaultSpatialParams<GridGeometry, Scalar, LocalRules>;
+    using type = PoreNetwork::TwoPDefaultSpatialParams<GridGeometry, Scalar, LocalRules>;
 };
 
 //! The advection type
@@ -155,19 +155,19 @@ struct AdvectionType<TypeTag, TTag::PNMTwoP>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using S = Dumux::PoreNetwork::TransmissibilityPatzekSilin<Scalar>;
-    using W = Dumux::PoreNetwork::WettingLayerTransmissibility::RansohoffRadke<Scalar>;
-    using N = Dumux::PoreNetwork::NonWettingPhaseTransmissibility::BakkeOren<Scalar>;
+    using S = PoreNetwork::TransmissibilityPatzekSilin<Scalar>;
+    using W = PoreNetwork::WettingLayerTransmissibility::RansohoffRadke<Scalar>;
+    using N = PoreNetwork::NonWettingPhaseTransmissibility::BakkeOren<Scalar>;
 
 public:
-    using type = Dumux::PoreNetwork::CreepingFlow<Scalar, S, W, N>;
+    using type = PoreNetwork::CreepingFlow<Scalar, S, W, N>;
 };
 
 template<class TypeTag>
 struct EnergyLocalResidual<TypeTag, TTag::PNMTwoP> { using type = Dumux::EnergyLocalResidual<TypeTag> ; };
 
 template<class TypeTag>
-struct IOFields<TypeTag, TTag::PNMTwoP> { using type = Dumux::PoreNetwork::TwoPIOFields; };
+struct IOFields<TypeTag, TTag::PNMTwoP> { using type = PoreNetwork::TwoPIOFields; };
 
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model
@@ -199,8 +199,8 @@ private:
     using DM = typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod;
     static constexpr bool enableIS = getPropValue<TypeTag, Properties::EnableBoxInterfaceSolver>();
     // class used for scv-wise reconstruction of non-wetting phase saturations
-    using SR = Dumux::TwoPScvSaturationReconstruction<DM, enableIS>;
-    using BaseTraits = Dumux::TwoPVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, SR>;
+    using SR = TwoPScvSaturationReconstruction<DM, enableIS>;
+    using BaseTraits = TwoPVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, SR>;
 
     using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
 
@@ -208,12 +208,12 @@ private:
     struct NITraits : public BaseTraits { using EffectiveThermalConductivityModel = ETCM; };
 
 public:
-    using type = Dumux::PoreNetwork::TwoPVolumeVariables<NITraits<BaseTraits, ETCM>>;
+    using type = PoreNetwork::TwoPVolumeVariables<NITraits<BaseTraits, ETCM>>;
 };
 
 //! Set the vtk output fields specific to the non-isothermal two-phase model
 template<class TypeTag>
-struct IOFields<TypeTag, TTag::PNMTwoPNI> { using type = EnergyIOFields<Dumux::PoreNetwork::TwoPIOFields>; };
+struct IOFields<TypeTag, TTag::PNMTwoPNI> { using type = EnergyIOFields<PoreNetwork::TwoPIOFields>; };
 
 template<class TypeTag>
 struct ThermalConductivityModel<TypeTag, TTag::PNMTwoPNI>
