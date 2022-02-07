@@ -25,8 +25,6 @@
 
 #include <type_traits>
 
-#include <dune/common/typetraits.hh>
-
 namespace Dumux {
     /*!
      * \brief Template which always yields a false value
@@ -34,16 +32,6 @@ namespace Dumux {
      */
     template<typename T>
     struct AlwaysFalse : public std::false_type {};
-
-    /*! \brief We define our own is_indexable type in order
-     *         to avoid several version checks throughout dumux.
-     *         This should be deleted when the deprecation phase is over.
-     *
-     * \deprecated Use <code>Dune::IsIndexable<T, I></code> instead. Will
-     *             be removed after DuMux 3.4.
-     */
-    template<typename T, typename I = std::size_t>
-    using IsIndexable [[deprecated("Use Dune::IsIndexable<T, I> instead. Will be removed after 3.4")]] = typename Dune::IsIndexable<T, I>;
 
 } // end namespace Dumux
 #endif
