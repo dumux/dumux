@@ -25,15 +25,15 @@
 #ifndef DUMUX_COMPOSITIONAL_PNM_SPATIAL_PARAMS_1P_HH
 #define DUMUX_COMPOSITIONAL_PNM_SPATIAL_PARAMS_1P_HH
 
-#include <dumux/porenetwork/common/pnmspatialparams.hh>
+#include <dumux/porenetwork/common/spatialparams.hh>
 
 namespace Dumux::PoreNetwork {
 
 template<class GridGeometry, class Scalar>
-class CompositionalPNMSpatialParams
-: public PNMSpatialParams<GridGeometry, Scalar, CompositionalPNMSpatialParams<GridGeometry, Scalar>>
+class CompositionalSpatialParams
+: public SpatialParams<GridGeometry, Scalar, CompositionalSpatialParams<GridGeometry, Scalar>>
 {
-    using ParentType = PNMSpatialParams<GridGeometry, Scalar, CompositionalPNMSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = SpatialParams<GridGeometry, Scalar, CompositionalSpatialParams<GridGeometry, Scalar>>;
 
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -44,7 +44,7 @@ public:
     using PermeabilityType = Scalar;
     using ParentType::ParentType;
 
-    CompositionalPNMSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    CompositionalSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     { }
 

@@ -25,7 +25,7 @@
 #ifndef DUMUX_PNM_1P_SPATIAL_PARAMS_HH
 #define DUMUX_PNM_1P_SPATIAL_PARAMS_HH
 
-#include <dumux/porenetwork/common/pnmspatialparams.hh>
+#include <dumux/porenetwork/common/spatialparams.hh>
 
 namespace Dumux::PoreNetwork {
 
@@ -36,10 +36,10 @@ namespace Dumux::PoreNetwork {
  * \brief The base class for spatial parameters for single-phase pore-network models.
  */
 template<class GridGeometry, class Scalar, class Implementation>
-class PNMOnePSpatialParams
-: public PNMSpatialParams<GridGeometry, Scalar, Implementation>
+class OnePSpatialParams
+: public SpatialParams<GridGeometry, Scalar, Implementation>
 {
-    using ParentType = PNMSpatialParams<GridGeometry, Scalar, Implementation>;
+    using ParentType = SpatialParams<GridGeometry, Scalar, Implementation>;
 public:
     using ParentType::ParentType;
 };
@@ -52,10 +52,10 @@ public:
  *       may use this in the feature to define defaults for newly added parameter interfaces.
  */
 template<class GridGeometry, class Scalar>
-class PNMOnePDefaultSpatialParams
-: public PNMOnePSpatialParams<GridGeometry, Scalar, PNMOnePDefaultSpatialParams<GridGeometry, Scalar>>
+class OnePDefaultSpatialParams
+: public OnePSpatialParams<GridGeometry, Scalar, OnePDefaultSpatialParams<GridGeometry, Scalar>>
 {
-    using ParentType = PNMOnePSpatialParams<GridGeometry, Scalar, PNMOnePDefaultSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = OnePSpatialParams<GridGeometry, Scalar, OnePDefaultSpatialParams<GridGeometry, Scalar>>;
 public:
     using ParentType::ParentType;
 };

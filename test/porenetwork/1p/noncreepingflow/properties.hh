@@ -52,7 +52,7 @@ private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = Dumux::PoreNetwork::NonCreepingSpatialParams<GridGeometry, Scalar>;
+    using type = PoreNetwork::NonCreepingSpatialParams<GridGeometry, Scalar>;
 };
 
 //! The advection type
@@ -61,9 +61,9 @@ struct AdvectionType<TypeTag, TTag::PNMOnePNonCreepingProblem>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using TransmissibilityLaw = Dumux::PoreNetwork::TransmissibilityPatzekSilin<Scalar, false/*considerPoreBodyResistance*/>;
+    using TransmissibilityLaw =  PoreNetwork::TransmissibilityPatzekSilin<Scalar, false/*considerPoreBodyResistance*/>;
 public:
-    using type = Dumux::PoreNetwork::NonCreepingFlow<Scalar, TransmissibilityLaw>;
+    using type = PoreNetwork::NonCreepingFlow<Scalar, TransmissibilityLaw>;
 };
 
 } //end namespace Dumux::Properties

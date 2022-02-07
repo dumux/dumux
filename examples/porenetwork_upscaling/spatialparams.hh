@@ -25,7 +25,7 @@
 #ifndef DUMUX_PNM_ONEP_PERMEABILITY_UPSCALING_SPATIAL_PARAMS_1P_HH
 #define DUMUX_PNM_ONEP_PERMEABILITY_UPSCALING_SPATIAL_PARAMS_1P_HH
 
-#include <dumux/porenetwork/common/pnmspatialparams.hh>
+#include <dumux/porenetwork/common/spatialparams.hh>
 
 namespace Dumux::PoreNetwork {
 
@@ -35,11 +35,11 @@ namespace Dumux::PoreNetwork {
  * \brief Spatial parameters for the upscaling example
  */
 template <class GridGeometry, class Scalar>
-class UpscalingSpatialParams : public PNMSpatialParams<GridGeometry, Scalar,
-                                                       UpscalingSpatialParams<GridGeometry, Scalar>>
+class UpscalingSpatialParams : public SpatialParams<GridGeometry, Scalar,
+                                                    UpscalingSpatialParams<GridGeometry, Scalar>>
 {
-    using ParentType = PNMSpatialParams<GridGeometry, Scalar,
-                                        UpscalingSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = SpatialParams<GridGeometry, Scalar,
+                                     UpscalingSpatialParams<GridGeometry, Scalar>>;
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;

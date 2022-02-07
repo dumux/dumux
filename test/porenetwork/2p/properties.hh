@@ -56,13 +56,13 @@ struct DrainageProblem { using InheritsFrom = std::tuple<PNMTwoPNI>; };
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::DrainageProblem> { using type = Dumux::DrainageProblem<TypeTag>; };
+struct Problem<TypeTag, TTag::DrainageProblem> { using type = DrainageProblem<TypeTag>; };
 
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::DrainageProblem>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = Dumux::FluidSystems::H2OAir<Scalar, Dumux::Components::SimpleH2O<Scalar>>;
+    using type = FluidSystems::H2OAir<Scalar, Components::SimpleH2O<Scalar>>;
 };
 
 template<class TypeTag>
@@ -71,9 +71,9 @@ struct SpatialParams<TypeTag, TTag::DrainageProblem>
 private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using LocalRules = Dumux::PoreNetwork::FluidMatrix::MultiShapeTwoPLocalRules<Scalar>;
+    using LocalRules = PoreNetwork::FluidMatrix::MultiShapeTwoPLocalRules<Scalar>;
 public:
-    using type = Dumux::PoreNetwork::PNMTwoPDrainageSpatialParams<GridGeometry, Scalar, LocalRules>;
+    using type = PoreNetwork::TwoPDrainageSpatialParams<GridGeometry, Scalar, LocalRules>;
 };
 
 // Set the grid type

@@ -41,7 +41,7 @@ namespace Dumux::PoreNetwork {
  * \brief The base class for spatial parameters for pore-network models.
  */
 template<class GridGeometry, class Scalar, class Implementation>
-class PNMSpatialParams
+class SpatialParams
 : public FVPorousMediumFlowSpatialParams<GridGeometry, Scalar, Implementation>
 {
     using ParentType = FVPorousMediumFlowSpatialParams<GridGeometry, Scalar, Implementation>;
@@ -55,7 +55,7 @@ class PNMSpatialParams
 public:
     using PermeabilityType = Scalar;
 
-    PNMSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    SpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {}
 

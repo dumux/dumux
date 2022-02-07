@@ -28,7 +28,7 @@
 #include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
 #include <dumux/material/fluidmatrixinteractions/porenetwork/throat/thresholdcapillarypressures.hh>
 
-#include <dumux/porenetwork/common/pnmspatialparams.hh>
+#include <dumux/porenetwork/common/spatialparams.hh>
 #include <dumux/porenetwork/common/poreproperties.hh>
 #include <dumux/porenetwork/common/throatproperties.hh>
 
@@ -41,10 +41,10 @@ namespace Dumux::PoreNetwork {
  * \brief The base class for spatial parameters for pore-network models.
  */
 template<class GridGeometry, class Scalar, class LocalRules, class Implementation>
-class PNMTwoPSpatialParams
-: public PNMSpatialParams<GridGeometry, Scalar, Implementation>
+class TwoPSpatialParams
+: public SpatialParams<GridGeometry, Scalar, Implementation>
 {
-    using ParentType = PNMSpatialParams<GridGeometry, Scalar, Implementation>;
+    using ParentType = SpatialParams<GridGeometry, Scalar, Implementation>;
     using GridView = typename GridGeometry::GridView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -52,7 +52,7 @@ class PNMTwoPSpatialParams
 
 public:
 
-    PNMTwoPSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    TwoPSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
         if (!gridGeometry->useSameGeometryForAllPores() && LocalRules::supportsMultipleGeometries())
@@ -234,18 +234,18 @@ private:
  * \brief The default class for spatial parameters for two-phase pore-network models.
  */
 template<class GridGeometry, class Scalar, class LocalRules>
-class PNMTwoPDefaultSpatialParams
-: public PNMTwoPSpatialParams<GridGeometry, Scalar, LocalRules, PNMTwoPDefaultSpatialParams<GridGeometry, Scalar, LocalRules>>
+class TwoPDefaultSpatialParams
+: public TwoPSpatialParams<GridGeometry, Scalar, LocalRules, TwoPDefaultSpatialParams<GridGeometry, Scalar, LocalRules>>
 {
-    using ParentType = PNMTwoPSpatialParams<GridGeometry, Scalar, LocalRules,
-                                            PNMTwoPDefaultSpatialParams<GridGeometry, Scalar, LocalRules>>;
+    using ParentType = TwoPSpatialParams<GridGeometry, Scalar, LocalRules,
+                                         TwoPDefaultSpatialParams<GridGeometry, Scalar, LocalRules>>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 public:
     using ParentType::ParentType;
 
-    PNMTwoPDefaultSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    TwoPDefaultSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     { }
 
