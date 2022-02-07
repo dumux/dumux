@@ -23,11 +23,11 @@
 #include <memory>
 #include <string>
 
+#include <dune/common/typetraits.hh>
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/grid/io/file/vtk/basicwriter.hh>
 #include <dune/grid/io/file/vtk/function.hh>
 #include <dune/grid/io/file/vtk/skeletonfunction.hh>
-#include <dumux/common/typetraits/typetraits.hh>
 
 namespace Dumux::Detail {
 
@@ -179,9 +179,9 @@ public:
     {
         if constexpr (std::is_invocable_v<F, Intersection, int>)
         {
-            if constexpr (IsIndexable<std::decay_t<decltype(field(std::declval<Intersection>(), 0))>>{})
+            if constexpr (Dune::IsIndexable<std::decay_t<decltype(field(std::declval<Intersection>(), 0))>>{})
             {
-                if constexpr (IsIndexable<std::decay_t<decltype(field(std::declval<Intersection>(), 0)[0])>>{})
+                if constexpr (Dune::IsIndexable<std::decay_t<decltype(field(std::declval<Intersection>(), 0)[0])>>{})
                     DUNE_THROW(Dune::InvalidStateException, "Invalid field type");
                 else
                 {
@@ -190,10 +190,10 @@ public:
                 }
             }
         }
-        else if constexpr (IsIndexable<std::decay_t<decltype(field[0])>>{})
+        else if constexpr (Dune::IsIndexable<std::decay_t<decltype(field[0])>>{})
         {
             assert(field.size() == gv.size(1));
-            if constexpr (IsIndexable<std::decay_t<decltype(field[0][0])>>{})
+            if constexpr (Dune::IsIndexable<std::decay_t<decltype(field[0][0])>>{})
               DUNE_THROW(Dune::InvalidStateException, "Invalid field type");
             else
               components_ = field[0].size();
@@ -215,14 +215,14 @@ public:
         {
             if constexpr (std::is_invocable_v<F, Intersection, int>)
             {
-                if constexpr (IsIndexable<std::decay_t<decltype(field_(intersection, idx))>>{})
+                if constexpr (Dune::IsIndexable<std::decay_t<decltype(field_(intersection, idx))>>{})
                     return field_(intersection, idx)[i];
                 else
                     return field_(intersection, idx);
             }
             else
             {
-                if constexpr (IsIndexable<std::decay_t<decltype(std::declval<F>()[0])>>{})
+                if constexpr (Dune::IsIndexable<std::decay_t<decltype(std::declval<F>()[0])>>{})
                     return field_[idx][i];
                 else
                     return field_[idx];
