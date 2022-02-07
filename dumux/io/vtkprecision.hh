@@ -24,7 +24,7 @@
 #ifndef DUMUX_IO_VTKPRECISION_HH
 #define DUMUX_IO_VTKPRECISION_HH
 
-#warning "This file is deprecated, include dumux/io/vtk/precision.hh instead!"
+#warning "This file is deprecated. Will be removed after release 3.5. Include dumux/io/vtk/precision.hh instead!"
 #include <dumux/io/vtk/precision.hh>
 
 #endif
