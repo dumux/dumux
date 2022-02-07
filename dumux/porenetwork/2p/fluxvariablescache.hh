@@ -75,6 +75,7 @@ public:
 
         const auto& cornerHalfAngles = spatialParams.cornerHalfAngles(element);
         wettingLayerArea_.clear(); wettingLayerArea_.resize(cornerHalfAngles.size());
+        const Scalar totalThroatCrossSectionalArea = spatialParams.throatCrossSectionalArea(element, elemVolVars);
 
         if (invaded) // two-phase flow
         {
@@ -82,20 +83,19 @@ public:
             for (int i = 0; i< cornerHalfAngles.size(); ++i)
                 wettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(curvatureRadius(), theta, cornerHalfAngles[i]);
 
-            throatCrossSectionalArea_[wPhaseIdx()] = std::accumulate(wettingLayerArea_.begin(), wettingLayerArea_.end(), 0.0);
-            if (const Scalar totalArea = spatialParams.throatCrossSectionalArea(element, elemVolVars); throatCrossSectionalArea_[wPhaseIdx()] > totalArea)
-            {
-                std::cout << "\n\n *** WARNING : Sum of wetting phase layer areas exceeds total throat cross-sectional area. Clamping the result. *** \n" << std::endl;
-                throatCrossSectionalArea_[wPhaseIdx()] = totalArea;
-            }
-            throatCrossSectionalArea_[nPhaseIdx()] = spatialParams.throatCrossSectionalArea(element, elemVolVars) - throatCrossSectionalArea_[wPhaseIdx()];
+            // make sure the wetting phase area does not exceed the total cross-section area
+            throatCrossSectionalArea_[wPhaseIdx()] = std::min(
+                std::accumulate(wettingLayerArea_.begin(), wettingLayerArea_.end(), 0.0),
+                totalThroatCrossSectionalArea
+            );
+            throatCrossSectionalArea_[nPhaseIdx()] = totalThroatCrossSectionalArea - throatCrossSectionalArea_[wPhaseIdx()];
         }
         else // single-phase flow
         {
             for (int i = 0; i< cornerHalfAngles.size(); ++i)
                 wettingLayerArea_[i] = 0.0;
 
-            throatCrossSectionalArea_[wPhaseIdx()] = spatialParams.throatCrossSectionalArea(element, elemVolVars);
+            throatCrossSectionalArea_[wPhaseIdx()] = totalThroatCrossSectionalArea;
             throatCrossSectionalArea_[nPhaseIdx()] = 0.0;
         }
 
@@ -107,7 +107,11 @@ public:
         }
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-            transmissibility_[phaseIdx] = AdvectionType::calculateTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, *this, phaseIdx);
+        {
+            transmissibility_[phaseIdx] = AdvectionType::calculateTransmissibility(
+                problem, element, fvGeometry, scvf, elemVolVars, *this, phaseIdx
+            );
+        }
     }
 
     /*!
