@@ -193,7 +193,7 @@ public:
      */
     Scalar intersect(Scalar a, Scalar b, Scalar c, Scalar d) const
     {
-        return intersectIntervall(xMin(), xMax(), a, b, c, d);
+        return intersectInterval(xMin(), xMax(), a, b, c, d);
     }
 
     /*!
