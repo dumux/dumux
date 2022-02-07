@@ -124,7 +124,7 @@ public:
      * \param boundary Boolean to specify whether or not the scvf is on a boundary
      */
     template<class MpfaHelper>
-    [[deprecated("Use constructor taking an intersection instead")]]
+    [[deprecated("Use constructor taking an intersection instead. Will be removed after release 3.5")]]
     CCMpfaSubControlVolumeFace(const MpfaHelper& helper,
                                CornerStorage&& corners,
                                GlobalPosition&& unitOuterNormal,
