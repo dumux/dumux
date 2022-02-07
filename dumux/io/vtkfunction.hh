@@ -24,7 +24,7 @@
 #ifndef DUMUX_IO_VTKFUNCTION_HH
 #define DUMUX_IO_VTKFUNCTION_HH
 
-#warning "This file is deprecated. Please include dumux/io/vtk/function.hh instead."
+#warning "This file is deprecated. Will be removed after release 3.5. Please include dumux/io/vtk/function.hh instead."
 #include <dumux/io/vtk/function.hh>
 
 #endif
