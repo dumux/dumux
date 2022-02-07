@@ -81,6 +81,8 @@ public:
         // calculate the pressure difference
         const Scalar deltaP = insideVolVars.pressure(phaseIdx) - outsideVolVars.pressure(phaseIdx);
         const Scalar transmissibility = fluxVarsCache.transmissibility(phaseIdx);
+        using std::isfinite;    
+        assert(isfinite(transmissibility));
 
         Scalar volumeFlow = transmissibility*deltaP;
 
@@ -283,6 +285,8 @@ public:
         }
         const Scalar creepingFlowTransmissibility = fluxVarsCache.transmissibility(phaseIdx);
         const Scalar throatCrossSectionalArea = fluxVarsCache.throatCrossSectionalArea();
+        using std::isfinite;
+        assert(isfinite(creepingFlowTransmissibility));
 
         assert(scvf.insideScvIdx() == 0);
         assert(scvf.outsideScvIdx() == 1);
