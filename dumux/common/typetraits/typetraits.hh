@@ -25,8 +25,6 @@
 
 #include <type_traits>
 
-#include <dune/common/typetraits.hh>
-
 namespace Dumux {
     /*!
      * \brief Template which always yields a false value
