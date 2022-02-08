@@ -187,8 +187,6 @@ public:
             }
         }
 
-
-
         if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::dissipationEqIdx)
                                || bcTypes.isSymmetry())))
         {
