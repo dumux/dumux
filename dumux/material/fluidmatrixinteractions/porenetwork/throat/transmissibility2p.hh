@@ -116,7 +116,6 @@ struct RansohoffRadke
         for (int i = 0; i < numCorners; ++i)
             result += fluxVarsCache.wettingLayerCrossSectionalArea(i) * rC*rC / (throatLength*fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i));
 
-        assert(std::isfinite(result));
         return result;
     }
 };
@@ -143,7 +142,6 @@ struct Mogensen
         const Scalar aNw = fluxVarsCache.throatCrossSectionalArea(nPhaseIdx);
         const Scalar rEff = 0.5*(sqrt(aNw / M_PI) + fluxVarsCache.throatInscribedRadius());
         const Scalar result = M_PI/(8*throatLength) * rEff*rEff*rEff*rEff;
-        assert(std::isnormal(result));
         return result;
     }
 };
@@ -169,7 +167,6 @@ struct Valvatne
         const Scalar result = SinglePhaseTransmissibilityLaw::singlePhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache)
                               * aNw / aTot;
 
-        assert(std::isnormal(result));
         return result;
     }
 };
@@ -197,7 +194,6 @@ struct BakkeOren
         const Scalar aNw = fluxVarsCache.throatCrossSectionalArea(nPhaseIdx);
         const Scalar rEff = 0.5*(sqrt(aNw / M_PI) + fluxVarsCache.throatInscribedRadius());
         const Scalar result = rEff*rEff*aNw / (8.0*throatLength);
-        assert(std::isnormal(result));
         return result;
     }
 };
