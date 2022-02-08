@@ -140,7 +140,6 @@ public:
 
         //problem
         name_ = getParam<std::string>("Problem.Name");
-        temperature_            = getParam<Scalar>("Problem.Temperature");
 
         //inital conditions
         initPressure_      = getParam<Scalar>("Problem.InitialPressure");
@@ -187,15 +186,6 @@ public:
      */
     const std::string& name() const
     { return name_; }
-
-    /*!
-     * \brief Returns the temperature within the domain.
-     *
-     * This problem assumes a temperature of 10 degrees Celsius.
-     */
-    Scalar temperature() const
-    { return temperature_; }
-
 
     /*!
      * \name Boundary conditions
@@ -339,7 +329,7 @@ public:
         priVars[switchIdx]   = initGasSaturation_;                 // Sg primary variable
         priVars[xwNaClIdx]   = massToMoleFrac_(initSalinity_);     // mole fraction
         priVars[precipNaClIdx] = 0.0; // [kg/m^3]
-        priVars[energyEqIdx] = temperature_; // [K]
+        priVars[energyEqIdx] = this->spatialParams().temperature(); // [K]
 
         return priVars;
     }
@@ -429,11 +419,6 @@ public:
         }
     }
 
-    Scalar extrusionFactorAtPos(const GlobalPosition& globalPos) const
-    {
-        return 0.054977871437821;
-    }
-
 private:
 
     /*!
@@ -458,8 +443,6 @@ private:
     Scalar initPressure_;
     Scalar initGasSaturation_;
     Scalar initSalinity_;
-
-    Scalar temperature_;
 
     Scalar pressureLow_, pressureHigh_;
     Scalar temperatureLow_, temperatureHigh_;
