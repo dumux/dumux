@@ -105,7 +105,7 @@ public:
 };
 
 //! The spatial parameters to be employed.
-//! Use PNMOnePDefaultSpatialParams by default.
+//! Use PoreNetwork::OnePDefaultSpatialParams by default.
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::PNMOneP>
 {

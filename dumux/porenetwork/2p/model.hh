@@ -137,7 +137,7 @@ public:
 };
 
 //! The spatial parameters to be employed.
-//! Use PNMTwoPDefaultSpatialParams by default.
+//! Use PoreNetwork::TwoPDefaultSpatialParams by default.
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::PNMTwoP>
 {
