@@ -157,7 +157,7 @@ public:
         "                                              const SubControlVolume& scv,\n"
         "                                              const ElementSolution& elemSol) const\n\n");
 
-        return asImp_().permeabilityAtPos(scv.center());
+        return this->asImp_().permeabilityAtPos(scv.center());
     }
 
     /*!
@@ -191,13 +191,6 @@ public:
     {
         return forchCoeffDefault_;
     }
-
-protected:
-    Implementation &asImp_()
-    { return *static_cast<Implementation*>(this); }
-
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }
 
 private:
     Scalar forchCoeffDefault_;

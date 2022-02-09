@@ -37,7 +37,7 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar, class Implementation>
 class
-[[deprecated("Use FVPorousMediumSpatialParamsNonEquilibrium from dumux/porousmediumflow/fvspatialparamsnonequilibrium.hh instead. This class will be removed after 3.5.")]]
+[[deprecated("Use FVPorousMediumFlowSpatialParamsNonEquilibrium from dumux/porousmediumflow/fvspatialparamsnonequilibrium.hh instead. This class will be removed after 3.5.")]]
 FVNonEquilibriumSpatialParams
 : public FVSpatialParams<GridGeometry, Scalar, Implementation>
 {

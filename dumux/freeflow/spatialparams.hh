@@ -21,7 +21,6 @@
  * \ingroup FreeflowModels
  * \brief Definition of the spatial parameters for the freeflow problems.
  */
-
 #ifndef DUMUX_FREEFLOW_SPATIAL_PARAMS_HH
 #define DUMUX_FREEFLOW_SPATIAL_PARAMS_HH
 
