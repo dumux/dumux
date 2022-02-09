@@ -39,43 +39,59 @@ template<class TypeTag>
 class UpscalingProblem : public PorousMediumFlowProblem<TypeTag>
 {
     // [[details]] convenience aliases
+    // [[codeblock]]
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using BoundaryTypes = Dumux::BoundaryTypes<PrimaryVariables::size()>;
-    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    // [[/codeblock]]
     // [[/details]]
-
-    // ### The constructor of our problem.
+    //
+    // #### The constructor of our problem.
     // [[codeblock]]
 public:
-    template<class SpatialParams>
-    UpscalingProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<SpatialParams> spatialParams)
-    : ParentType(gridGeometry, spatialParams)
+    UpscalingProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         // the applied pressure gradient
-        pressureGradient_ = getParam<Scalar>("Problem.PressureGradient");
+        pressureGradient_ = getParam<Scalar>("Problem.PressureGradient", 1e5);
 
         // We can either use pore labels (given in the grid file) to identify inlet and outlet pores
         // or use the network's bounding box to find these pores automatically. Using labels is usually much
         // more accurate, so this is the default here.
         useLabels_ = getParam<bool>("Problem.UseLabels", true);
 
-        // an epsilon value for the bounding box approach
+        // an epsilon value for the floating point comparisons to determine inlet/outlet pores
         eps_ = getParam<Scalar>("Problem.Epsilon", 1e-7);
     }
     // [[/codeblock]]
 
+    // #### Temperature
+    // We need to specify a constant temperature for our isothermal problem.
+    // Fluid properties that depend on temperature will be calculated with this value.
+    // [[codeblock]]
+    Scalar temperature() const
+    { return 283.15; }
+    // [[codeblock]]
+
+    // #### Pressure gradient
+    // Set the pressure gradient to be applied to the network
+    // [[codeblock]]
+    void setPressureGradient(Scalar pressureGradient)
+    { pressureGradient_ = pressureGradient; }
+    // [[codeblock]]
+
     // #### Boundary conditions
     // This function is used to define the __type of boundary conditions__ used depending on the location.
     // Here, we use Dirichlet boundary conditions (fixed pressures) at the inlet and outlet and Neumann
-    // boundary conditions at all remaining boundaries. Note that the PNM only supports Neumann no-flow boundaries.
-    // The specify a certain mass flux, we would have to use a source term on the boundary pores (which is not done in this example).
+    // boundary conditions at all remaining boundaries. Note that the PNM does not support Neumann boundaries.
+    // The specify a certain mass flux on a boundary, we would have to use a source term on the boundary pores (which is not done in this example).
     // [[codeblock]]
     BoundaryTypes boundaryTypes(const Element &element, const SubControlVolume& scv) const
     {
@@ -84,8 +100,6 @@ public:
         // fix the pressure at the inlet and outlet pores
         if (isInletPore_(scv)|| isOutletPore_(scv))
             bcTypes.setAllDirichlet();
-        else // Neumann (no-flow) for the remaining boundaries
-            bcTypes.setAllNeumann();
 
         return bcTypes;
     }
@@ -187,12 +201,10 @@ private:
     int direction_;
     GlobalPosition length_;
     bool useLabels_;
-
-    // [[/codeblock]]
-    // [[/details]]
 };
 
 } // end namespace Dumux
 // [[/codeblock]]
+// [[/details]]
 // [[/content]]
 #endif
