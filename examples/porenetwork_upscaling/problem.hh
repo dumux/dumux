@@ -91,7 +91,7 @@ public:
     // This function is used to define the __type of boundary conditions__ used depending on the location.
     // Here, we use Dirichlet boundary conditions (fixed pressures) at the inlet and outlet and Neumann
     // boundary conditions at all remaining boundaries. Note that the PNM does not support Neumann boundaries.
-    // The specify a certain mass flux on a boundary, we would have to use a source term on the boundary pores (which is not done in this example).
+    // To specify a certain mass flux on a boundary, we would have to use a source term on the boundary pores (which is not done in this example).
     // [[codeblock]]
     BoundaryTypes boundaryTypes(const Element &element, const SubControlVolume& scv) const
     {

@@ -39,42 +39,45 @@ template<class Scalar>
 class UpscalingHelper
 {
 public:
-
-    // ### Set sample points to calculate intrinsic permeability and Forchheimer coefficient
+    // ### Set data points to calculate intrinsic permeability and Forchheimer coefficient
     // This function first evaluates the mass flux leaving the network in the direction of the applied pressure gradient.
-    // Afterwards, the mass flux is converted into an area specify volume flux which with its corresponding pressure gradient are stored as
-    // sample points to be used in regression operation to find intrinsic permeability and Forchheimer coefficient
+    // Afterwards, the mass flux is converted into an volume flux which is used to calculate the apparent velocity.
+    // Then apparent permeability of the network is computed and stored for furthure calculations.
     // [[codeblock]]
-    template<class Problem>
-    void setSamplePoints(const Problem& problem, const Scalar totalMassFlux)
+    template <class Problem>
+    void setDataPoints(const Problem &problem, const Scalar totalMassFlux)
     {
         // get the domain side lengths from the problem
         auto sideLengths = problem.sideLengths();
 
+
+        // get the applied pressure gradient
+        const auto pressureGradient = problem.pressureGradient();
+        const auto pressureDrop = pressureGradient * sideLengths[problem.direction()];
+
+        // get the fluid properties
+        const auto liquidDensity = problem.liquidDensity();
+        const auto liquidDynamicViscosity = problem.liquidDynamicViscosity();
+
         // convert mass to volume flux
-        const auto volumeFlux = totalMassFlux / problem.liquidDensity();;
+        const auto volumeFlux = totalMassFlux / liquidDensity;
+        ;
 
         // calculate apparent velocity
         sideLengths[problem.direction()] = 1.0;
         const auto outflowArea = std::accumulate(sideLengths.begin(), sideLengths.end(), 1.0, std::multiplies<Scalar>());
-        const auto vApparent= volumeFlux / outflowArea;
-
-        // set sample point for permability calculation
-        const auto samplePointY = problem.pressureGradient() / problem.liquidDynamicViscosity() / vApparent;
-        const auto samplePointX = problem.liquidDensity() * vApparent / problem.liquidDynamicViscosity();
-
-        samplePointsX_[problem.direction()].push_back(samplePointX);
-        samplePointsY_[problem.direction()].push_back(samplePointY);
+        const auto vApparent = volumeFlux / outflowArea;
 
         // compute apparent permeability
-        const auto K = vApparent / problem.pressureGradient() * problem.liquidDynamicViscosity();
+        const auto KApparent = vApparent / pressureGradient * liquidDynamicViscosity;
+        // calculate rho v / mu, called inertia to viscous ratio in the rest of the code
+        const auto inertiaToViscousRatio = liquidDensity * vApparent / liquidDynamicViscosity;
 
-        // calculate Forchheimer number (Forchheimer coefficient will be included later)
-        const auto forchheimerNumber = problem.liquidDensity() * vApparent / problem.liquidDynamicViscosity();
-
-        // store apparent permeability and corresponding Forchheimer number
-        apparentPermeability_[problem.direction()].push_back(K);
-        forchheimerNumber_[problem.direction()].push_back(forchheimerNumber);
+        // store the required data for further calculations
+        totalPressureDrop_[problem.direction()].push_back(pressureDrop);
+        apparentVelocity_[problem.direction()].push_back(vApparent);
+        apparentPermeability_[problem.direction()].push_back(KApparent);
+        inertiaToViscousRatio_[problem.direction()].push_back(inertiaToViscousRatio);
     }
     // [[/codeblock]]
 
@@ -83,14 +86,37 @@ public:
     // and reports them. It also plot the apparent permeability of the porous medium versus Forchheimer number/pressure gradient in each
     // simulation.
     // [[codeblock]]
-    void calculateUpscaledProperties(bool isCreepingFlow)
+    template <class Problem>
+    void calculateUpscaledProperties(const Problem &problem, bool isCreepingFlow)
     {
-        for (int dirIdx = 0; dirIdx < 3; dirIdx++)
+        const auto sideLengths = problem.sideLengths();
+        const auto liquidDynamicViscosity = problem.liquidDynamicViscosity();
+
+        for (const auto dirIdx : directions_)
         {
             // determine Darcy permeability as the maximum permeability of the domain
             darcyPermeability_[dirIdx] = *max_element(apparentPermeability_[dirIdx].begin(), apparentPermeability_[dirIdx].end());
             if (!isCreepingFlow)
             {
+                for (int i = 0; i < totalPressureDrop_[dirIdx].size(); i++)
+                {
+                    // calculate the Darcy pressure drop.
+                    const Scalar darcyPressureDrop = liquidDynamicViscosity * apparentVelocity_[dirIdx][i] * sideLengths[dirIdx] / darcyPermeability_[dirIdx];
+
+                    // claculate the ratio of Dracy to total pressure drop
+
+                    const Scalar pressureDropRatio = darcyPressureDrop / totalPressureDrop_[dirIdx][i];
+
+                    std::cout<<std::endl<<"  the ratio  "<<pressureDropRatio<<std::endl;
+
+                    // set sample points for upscaling of Forchheimer parameters.
+                    // first, check the permability ratio to see if the flow regime is Forchheimer.
+                    if (pressureDropRatio < 0.99)
+                    {
+                        samplePointsX_[dirIdx].push_back(inertiaToViscousRatio_[dirIdx][i]);
+                        samplePointsY_[dirIdx].push_back(1 / apparentPermeability_[dirIdx][i]);
+                    }
+                }
                 // determine regression line and accordingly the Forchheimer permeability and the Forchheimer coefficient
                 const auto [intercept, slope] = linearRegression(samplePointsX_[dirIdx], samplePointsY_[dirIdx]);
                 forchheimerPermeability_[dirIdx] = 1.0 / intercept;
@@ -124,27 +150,11 @@ public:
     // [[codeblock]]
     void plot()
     {
-        // using gnuplot interface
-        Dumux::GnuplotInterface<Scalar> gnuplot(true);
-        gnuplot.setOpenPlotWindow(true);
-        std::string title{}, option{};
-        for (int dirIdx = 0; dirIdx < 3; dirIdx++)
-        {
-            // add the data in each direction for plot
-            gnuplot.addFileToPlot(dirName_[dirIdx] + "-dir.dat");
-            // set the properties of lines to be plotted
-            option += Fmt::format("set linetype {0} linecolor {0} linewidth 7\n", dirIdx+1);
-            // report the darcy permeability in each direction as the title of the plot
-            title += Fmt::format("{}-permeability= {:.3e} m^2   ", dirName_[dirIdx], darcyPermeability_[dirIdx]);
-        }
-        option +="set title \"" + title + "\"\n";
-        option += "set logscale x""\n";
-        option += "set format x '10^{%L}'""\n";
+        // plot permeability ratio vs. Forchheimer number
+        plotPermeabilityratioVsForchheimerNumber_();
 
-        gnuplot.setXlabel("Forchheimer Number [-]");
-        gnuplot.setYlabel("Apparent permeability / Darcy permeability [-]");
-        gnuplot.setOption(option);
-        gnuplot.plot("permeability_ratio_versus_forchheimer_number");
+        // plot inverse of apparent permability vs. rho v / mu
+        plotInversePrmeabilityVsInertiaToViscousRatio_();
     }
     // [[/codeblock]]
     //
@@ -152,21 +162,11 @@ public:
     // [[codeblock]]
     void writePlotDataToFile(std::size_t dirIdx)
     {
-        // Open a logfile
-        std::ofstream logfile(dirName_[dirIdx]+"-dir.dat");
+        // write permeability ratio vs. Forchheimer number
+        writePermeabilityratioVsForchheimerNumber_(dirIdx);
 
-        // Save the data needed to be plotted in logfile
-        for (int i = 0; i < apparentPermeability_[dirIdx].size(); i++)
-        {
-             // Include characteristics length, sqrt(permeability) to Reynolds number calculation
-            const Scalar forchheimerNumber
-                = darcyPermeability_[dirIdx] * forchheimerCoefficient_[dirIdx] * forchheimerNumber_[dirIdx][i];
-            // Ratio between apparrent permeability and darcy permeability
-            const Scalar permeabilityRatio
-                = apparentPermeability_[dirIdx][i] / darcyPermeability_[dirIdx];
-
-            logfile << forchheimerNumber<< " " << permeabilityRatio << std::endl;
-        }
+        // write inverse of apparent permability vs. rho v / mu
+        writeInversePrmeabilityVsInertiaToViscousRatio_(dirIdx);
     }
     // [[/codeblock]]
     //
@@ -175,7 +175,7 @@ public:
     void report(bool isCreepingFlow)
     {
         // Report the results for each direction
-        for (int dirIdx = 0; dirIdx < 3; dirIdx++)
+        for (const auto dirIdx : directions_)
         {
             std::cout << Fmt::format("\n{:#>{}}\n\n", "", 40)
                       << Fmt::format("{}-direction:\n", dirName_[dirIdx])
@@ -197,7 +197,7 @@ public:
     // [[codeblock]]
     void compareWithReference(std::vector<Scalar> referenceData)
     {
-        for (int dirIdx = 0; dirIdx < 3; dirIdx++)
+        for (const auto dirIdx : directions_)
         {
             const auto K = darcyPermeability_[dirIdx];
             static const Scalar eps = getParam<Scalar>("Problem.TestEpsilon", 1e-3);
@@ -210,15 +210,141 @@ public:
         }
     }
     // [[/codeblock]]
+    //
+    // ### Set the directions that need to be considered
+    //
+    // [[codeblock]]
+    void setDirections(std::vector<std::size_t> directions)
+    {
+        directions_ = directions;
+    }
+    // [[codeblock]]
+
 private:
+    // ### Save the relevant data for plot of permeability ratio vs. Forchheimer number
+    // [[codeblock]]
+    void writePermeabilityratioVsForchheimerNumber_(std::size_t dirIdx)
+    {
+        // open a logfile
+        std::ofstream logfile(dirName_[dirIdx] + "-dir-PermeabilityratioVsForchheimerNumber.dat");
+
+        // save the data needed to be plotted in logfile
+        for (int i = 0; i < apparentPermeability_[dirIdx].size(); i++)
+        {
+            // compute the Forchheimer number
+            const Scalar forchheimerNumber = darcyPermeability_[dirIdx] * forchheimerCoefficient_[dirIdx] * inertiaToViscousRatio_[dirIdx][i];
+            // ratio between apparrent permeability and darcy permeability
+            const Scalar permeabilityRatio = apparentPermeability_[dirIdx][i] / darcyPermeability_[dirIdx];
+
+            logfile << forchheimerNumber << " " << permeabilityRatio << std::endl;
+        }
+    }
+    // [[/codeblock]]
+
+    // ### Save the relevant data for plot of inverse of apparent permability vs. rho v / mu
+    // [[codeblock]]
+    void writeInversePrmeabilityVsInertiaToViscousRatio_(std::size_t dirIdx)
+    {
+        // open a logfile and write inverese of apparent permeability given by the model vs. inertial to viscous ratio (rho v / mu)
+        std::ofstream logfile(dirName_[dirIdx] + "-dir-InversePrmeabilityVsInertiaToViscousRatio.dat");
+
+        // save the data needed to be plotted in logfile
+        for (int i = 0; i < apparentPermeability_[dirIdx].size(); i++)
+        {
+            const Scalar inertiaToViscousRatio = inertiaToViscousRatio_[dirIdx][i];
+            const Scalar inverseAppPermeability = 1 / apparentPermeability_[dirIdx][i];
+
+            // compute inverse of apparent permeability using the Forchheimer permeability and coefficient
+            const Scalar inverseAppPermeabilityForchheimer = 1 / forchheimerPermeability_[dirIdx] + inertiaToViscousRatio * forchheimerCoefficient_[dirIdx];
+
+            logfile << inertiaToViscousRatio << " " << 1e-12 * inverseAppPermeability << " " << 1e-12 * inverseAppPermeabilityForchheimer << std::endl;
+        }
+    }
+    // [[/codeblock]]
+    //
+    // ### Plot permeability ratio vs. Forchheimer number using Gnuplot
+    //
+    // [[codeblock]]
+    void plotPermeabilityratioVsForchheimerNumber_()
+    {
+        // using gnuplot interface
+        Dumux::GnuplotInterface<Scalar> gnuplot(true);
+        gnuplot.setOpenPlotWindow(true);
+
+        for (const auto dirIdx : directions_)
+        {
+            gnuplot.resetAll();
+            std::string title{}, option{};
+
+            // add the data in each direction for plot
+            gnuplot.addFileToPlot(dirName_[dirIdx] + "-dir-PermeabilityratioVsForchheimerNumber.dat", "notitle with lines");
+            // set the properties of lines to be plotted
+            option += "set linetype 1 linecolor 1 linewidth 7\n";
+            // report the darcy permeability in each direction as the title of the plot
+            title += Fmt::format("{}-direction, Darcy permeability= {:.3e} m^2   ", dirName_[dirIdx], darcyPermeability_[dirIdx]);
+
+            option += "set title \"" + title + "\"\n";
+            option += "set logscale x""\n";
+
+            gnuplot.setXlabel("Forchheimer Number [-]");
+            gnuplot.setYlabel("Apparent permeability / Darcy permeability [-]");
+            gnuplot.setOption(option);
+            gnuplot.plot("permeability_ratio_versus_forchheimer_number");
+        }
+    }
+    // [[/codeblock]]
+    //
+    // ### Plot inverse of apparent permability vs. rho v / mu using Gnuplot
+    //
+    // [[codeblock]]
+    void plotInversePrmeabilityVsInertiaToViscousRatio_()
+    {
+        // using gnuplot interface
+        Dumux::GnuplotInterface<Scalar> gnuplot(true);
+        gnuplot.setOpenPlotWindow(true);
+
+        for (const auto dirIdx : directions_)
+        {
+            gnuplot.resetAll();
+            std::string title{}, option{};
+            std::string legend0 = "u 1:2 title \"Network model\" with lines";
+            // add the data in each direction for plot, first set of data
+            gnuplot.addFileToPlot(dirName_[dirIdx] + "-dir-InversePrmeabilityVsInertiaToViscousRatio.dat", legend0);
+
+            // set the properties of lines to be plotted
+            option += "set linetype 1 linecolor 1 linewidth 5\n";
+
+            std::string legend1 = "u 1:3 title \"Forchheimer equation\" with lines";
+            // add the data in each direction for plot, second set of data
+            gnuplot.addFileToPlot(dirName_[dirIdx] + "-dir-InversePrmeabilityVsInertiaToViscousRatio.dat", legend1);
+
+            // set the properties of lines to be plotted
+            option += "set linetype 2 linecolor 2 linewidth 5\n";
+
+            // report the darcy permeability in each direction as the title of the plot
+            title += Fmt::format("{}-direction, Darcy permeability= {:.3e} m^2   ", dirName_[dirIdx], darcyPermeability_[dirIdx]);
+
+            option += "set title \"" + title + "\"\n";
+            option += "set logscale x""\n";
+
+            gnuplot.setXlabel("{/Symbol r} u / {/Symbol m} [1/m]");
+            gnuplot.setYlabel("1/ Apparent permeability [1/m^2]  x 1e12");
+            gnuplot.setOption(option);
+            gnuplot.plot("inverse_apppermeability_versus_rhoumu");
+        }
+    }
+    // [[/codeblock]]
     std::array<std::vector<Scalar>, 3> samplePointsX_;
     std::array<std::vector<Scalar>, 3> samplePointsY_;
+    std::array<std::vector<Scalar>, 3>totalPressureDrop_;
+    std::array<std::vector<Scalar>, 3> apparentVelocity_;
     std::array<std::vector<Scalar>, 3> apparentPermeability_;
-    std::array<std::vector<Scalar>, 3> forchheimerNumber_;
+    std::array<std::vector<Scalar>, 3> inertiaToViscousRatio_;
     std::array<Scalar, 3> darcyPermeability_;
     std::array<Scalar, 3> forchheimerPermeability_;
     std::array<Scalar, 3> forchheimerCoefficient_;
     const std::array<std::string, 3> dirName_ = {"X", "Y", "Z"};
+    std::vector<std::size_t> directions_;
 };
 
 } // end namespace Dumux

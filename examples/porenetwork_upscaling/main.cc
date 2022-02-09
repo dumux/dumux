@@ -27,6 +27,8 @@
 
 #include <iostream>
 
+#include <algorithm>
+
 #include <dune/common/float_cmp.hh> // for floating point comparison
 
 #include <dumux/common/properties.hh> // for GetPropType
@@ -147,16 +149,22 @@ void runExample()
     problem->setSideLengths(sideLengths);
     // [[/codeblock]]
 
-    // Get the maximum pressure gradient and the population of sample points specified in the input file
+    // Get the maximum and minimum pressure gradient and the population of sample points specified in the input file
     // [[codeblock]]
-    const Scalar maxPressureGradient = getParam<Scalar>("Problem.MaximumPressureGradient");
+    const Scalar minPressureGradient = getParam<Scalar>("Problem.MinimumPressureGradient", 1e1);
+    const Scalar maxPressureGradient = getParam<Scalar>("Problem.MaximumPressureGradient", 1e10);
+
+    if (!(minPressureGradient < maxPressureGradient))
+        throw std::runtime_error("maximum pressure gradient must be greater than minimum pressure gradient");
+
     const int numberOfSamples = getParam<int>("Problem.NumberOfPressureGradients", 1);
     // [[/codeblock]]
 
     // Iterate over all directions specified before, apply several pressure gradient, calculated the mass flux
     // and finally determine the the upscaled properties.
     // [[codeblock]]
-    const auto directions = getParam<std::vector<int>>("Problem.Directions", std::vector<int>{0, 1, 2});
+    const auto directions = getParam<std::vector<std::size_t>>("Problem.Directions", std::vector<std::size_t>{0, 1, 2});
+    upscalingHelper.setDirections(directions);
     for (int dimIdx : directions)
     {
         // set the direction in which the pressure gradient will be applied
@@ -168,7 +176,10 @@ void runExample()
             x = 0;
 
             // set the pressure gradient to be applied
-            Scalar pressureGradient = maxPressureGradient*std::exp(i+1 - numberOfSamples);
+            Scalar pressureGradient = maxPressureGradient * std::exp(i + 1 - numberOfSamples);
+            if (i == 0)
+                pressureGradient = std::min(minPressureGradient, pressureGradient);
+
             problem->setPressureGradient(pressureGradient);
 
             // solve problem
@@ -176,7 +187,7 @@ void runExample()
 
             // set the sample points
             const Scalar totalFluidMassFlux = boundaryFlux.getFlux(std::vector<int>{ problem->outletPoreLabel() })[0];
-            upscalingHelper.setSamplePoints(*problem, totalFluidMassFlux);
+            upscalingHelper.setDataPoints(*problem, totalFluidMassFlux);
         }
 
         // write a vtu file for the given direction for the last sample
@@ -185,7 +196,7 @@ void runExample()
 
     // calculate and report the upscaled properties
     constexpr bool isCreepingFlow = std::is_same_v<TypeTag, Properties::TTag::PNMUpscalingCreepingFlow>;
-    upscalingHelper.calculateUpscaledProperties(isCreepingFlow);
+    upscalingHelper.calculateUpscaledProperties(*problem, isCreepingFlow);
     upscalingHelper.report(isCreepingFlow);
 
     // compare the Darcy permeability with reference data if provided in input file and report in case of inconsistency
