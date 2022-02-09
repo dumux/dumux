@@ -124,19 +124,6 @@ public:
     { return name_; }
 
     /*!
-     * \brief Returns the temperature within the domain in [K].
-     */
-    Scalar temperature() const
-    { return 273.15 + 10.0; }
-
-    /*!
-     * \brief Returns how much the domain is extruded at a given sub-control volume.
-     * Assume circular cross section with given radius
-     */
-    Scalar extrusionFactorAtPos(const GlobalPosition& globalPos) const
-    { return M_PI*radius_*radius_; }
-
-    /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary control volume.
      */

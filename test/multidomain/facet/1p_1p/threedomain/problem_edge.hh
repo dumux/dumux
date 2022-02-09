@@ -67,8 +67,6 @@ public:
     : ParentType(gridGeometry, spatialParams, paramGroup)
     , couplingManagerPtr_(couplingManagerPtr)
     {
-        const auto a = getParam<Scalar>("Extrusion.Aperture");
-        exFactor_ = a*a;
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
     }
 
@@ -103,17 +101,9 @@ public:
         return source;
     }
 
-    //! Sets the aperture squared as extrusion factor.
-    Scalar extrusionFactorAtPos(const GlobalPosition& globalPos) const
-    { return exFactor_; }
-
     //! Evaluates the initial conditions.
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(1.0); }
-
-    //! Returns the temperature \f$\mathrm{[K]}\f$ for an isothermal problem.
-    Scalar temperature() const
-    { return 283.15; /*10°*/ }
 
     //! Returns const reference to the coupling manager.
     const CouplingManager& couplingManager() const
@@ -122,7 +112,6 @@ public:
 private:
     std::shared_ptr<CouplingManager> couplingManagerPtr_;
     std::string problemName_;
-    Scalar exFactor_;
 };
 
 } // end namespace Dumux

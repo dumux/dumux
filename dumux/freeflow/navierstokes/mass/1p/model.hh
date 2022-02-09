@@ -53,6 +53,7 @@
 
 #include <dumux/material/fluidstates/immiscible.hh>
 
+#include <dumux/freeflow/spatialparams.hh>
 #include <dumux/freeflow/navierstokes/iofields.hh>
 #include <dumux/freeflow/turbulencemodel.hh>
 #include <dumux/freeflow/navierstokes/energy/model.hh>
@@ -221,6 +222,14 @@ public:
     using type = struct EmptyCouplingManager {};
 };
 
+// Set the default spatial parameters
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::NavierStokesMassOneP>
+{
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using type = FreeFlowSpatialParams<GridGeometry, Scalar>;
+};
 ///////////////////////////////////////////////////////////////////////////
 // Properties for the non-isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////

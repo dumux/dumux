@@ -24,6 +24,7 @@
 #ifndef DUMUX_POROELASTIC_VOLUME_VARIABLES_HH
 #define DUMUX_POROELASTIC_VOLUME_VARIABLES_HH
 
+#include <dumux/common/deprecated.hh>
 #include <dumux/discretization/evalgradients.hh>
 
 namespace Dumux {
@@ -69,12 +70,12 @@ public:
                 const Scv& scv)
     {
         priVars_ = elemSol[scv.localDofIndex()];
-        extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
+        extrusionFactor_ = Deprecated::extrusionFactor(problem, element, scv, elemSol);
 
         //! set the volume fractions of the solid components
         updateSolidVolumeFractions_(elemSol, problem, element, scv);
         // set the temperature of the solid phase
-        setSolidTemperature_(problem, elemSol);
+        setSolidTemperature_(problem, element, scv, elemSol);
         // update the density of the solid phase
         solidState_.setDensity(SolidSystem::density(solidState_));
     }
@@ -130,6 +131,9 @@ private:
                                           sp.template inertVolumeFraction<SolidSystem>(element, scv, elemSol, sCompIdx));
 
         // second, set the volume fractions of the (possibly) reacting components
+        // these may come from a coupled flow model which considers mineralization,
+        // so we make reactiveVolumeFraction a params interface in which users can
+        // retrieve the current volume fractions from the flow model.
         if (!(SolidState::isInert()))
             for (int sCompIdx = 0; sCompIdx < numSolidComp-numInertComp; ++sCompIdx)
                 solidState_.setVolumeFraction(sCompIdx,
@@ -138,16 +142,16 @@ private:
 
     //! sets the temperature in the solid state for non-isothermal models
     static constexpr bool enableEnergyBalance = ModelTraits::enableEnergyBalance();
-    template< class Problem, class ElemSol,
+    template< class Problem, class Element, class Scv, class ElemSol,
               bool enableEB = enableEnergyBalance, typename std::enable_if_t<enableEB, bool> = 0 >
-    void setSolidTemperature_(const Problem& problem, const ElemSol& elemSol)
-    { DUNE_THROW(Dune::InvalidStateException, "Non-isothermal elastic model."); }
+    void setSolidTemperature_(const Problem& problem, const Element& element, const Scv& scv, const ElemSol& elemSol)
+    { DUNE_THROW(Dune::NotImplemented, "Non-isothermal poroelastic model."); }
 
     //! sets the temperature in the solid state for isothermal models
-    template< class Problem, class ElemSol,
+    template< class Problem, class Element, class Scv, class ElemSol,
               bool enableEB = enableEnergyBalance, typename std::enable_if_t<!enableEB, bool> = 0 >
-    void setSolidTemperature_(const Problem& problem, const ElemSol& elemSol)
-    { solidState_.setTemperature(problem.temperature()); }
+    void setSolidTemperature_(const Problem& problem, const Element& element, const Scv& scv, const ElemSol& elemSol)
+    { solidState_.setTemperature(Deprecated::temperature(problem, element, scv, elemSol)); }
 
     // data members
     Scalar extrusionFactor_;

@@ -30,7 +30,7 @@
 #include <dumux/io/plotpckrsw.hh>
 #include <dumux/io/plotthermalconductivitymodel.hh>
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 
 namespace Dumux {
@@ -41,11 +41,11 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class WaterAirSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
-                         WaterAirSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
+                                       WaterAirSpatialParams<GridGeometry, Scalar>>
 {
     using ThisType = WaterAirSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar, ThisType>;
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;

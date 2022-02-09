@@ -25,6 +25,8 @@
 #ifndef DUMUX_PNM_SPATIAL_PARAMS_BASE_HH
 #define DUMUX_PNM_SPATIAL_PARAMS_BASE_HH
 
+#warning "This file is deprecated, use PoreNetwork::SpatialParams from dumux/porenetwork/common/spatialparams.hh instead!"
+
 #include <type_traits>
 #include <memory>
 
@@ -88,6 +90,7 @@ struct hasPorosityAtPos
  * \brief The base class for spatial parameters for pore-network models.
  */
 template<class GridGeometry, class Scalar, class Implementation>
+[[deprecated("Use PoreNetwork::SpatialParams from dumux/porenetwork/common/spatialparams.hh instead. This class will be removed after 3.5.")]]
 class BaseSpatialParams
 {
     using GridView = typename GridGeometry::GridView;

@@ -25,6 +25,8 @@
 #ifndef DUMUX_PNM2P_SPATIAL_PARAMS_HH
 #define DUMUX_PNM2P_SPATIAL_PARAMS_HH
 
+#warning "This file is deprecated, use PoreNetwork::TwoPDefaultSpatialParams from dumux/porenetwork/2p/spatialparams.hh instead!"
+
 #include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
 #include <dumux/material/fluidmatrixinteractions/porenetwork/throat/thresholdcapillarypressures.hh>
 
@@ -44,6 +46,7 @@ namespace Dumux::PoreNetwork {
  * \brief The base class for spatial parameters for pore-network models.
  */
 template<class GridGeometry, class Scalar, class LocalRules, class Implementation>
+[[deprecated("Use PoreNetwork::TwoPSpatialParams from dumux/porenetwork/2p/spatialparams.hh instead. This class will be removed after 3.5.")]]
 class TwoPBaseSpatialParams
 : public BaseSpatialParams<GridGeometry, Scalar, TwoPBaseSpatialParams<GridGeometry, Scalar, LocalRules, Implementation>>
 {
@@ -206,6 +209,7 @@ private:
 
 // TODO docme
 template<class GridGeometry, class Scalar, class MaterialLawT>
+[[deprecated("Use PoreNetwork::TwoPDefaultSpatialParams from dumux/porenetwork/2p/spatialparams.hh instead. This class will be removed after 3.5.")]]
 class TwoPDefaultSpatialParams : public TwoPBaseSpatialParams<GridGeometry, Scalar, MaterialLawT,
                                                               TwoPDefaultSpatialParams<GridGeometry, Scalar, MaterialLawT>>
 {

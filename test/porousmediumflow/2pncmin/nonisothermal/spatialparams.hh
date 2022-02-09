@@ -26,7 +26,7 @@
 #ifndef DUMUX_SALINIZATION_SPATIAL_PARAMETERS_HH
 #define DUMUX_SALINIZATION_SPATIAL_PARAMETERS_HH
 
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/porosityprecipitation.hh>
 #include <dumux/material/fluidmatrixinteractions/permeabilitykozenycarman.hh>
@@ -40,16 +40,16 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class SalinizationSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
-                         SalinizationSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
+                                           SalinizationSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using ParentType = FVSpatialParams<GridGeometry, Scalar,
-                                       SalinizationSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
+                                                         SalinizationSpatialParams<GridGeometry, Scalar>>;
 
     using PcKrSwCurve = FluidMatrix::VanGenuchtenDefault<Scalar>;
 
@@ -63,6 +63,7 @@ public:
     : ParentType(gridGeometry)
     , pcKrSwCurve_("SpatialParams")
     {
+        temperature_           = getParam<Scalar>("Problem.Temperature");
         solubilityLimit_       = getParam<Scalar>("SpatialParams.SolubilityLimit", 0.26);
         referencePorosity_     = getParam<Scalar>("SpatialParams.referencePorosity", 0.11);
         referencePermeability_ = getParam<Scalar>("SpatialParams.referencePermeability", 2.23e-14);
@@ -143,12 +144,25 @@ public:
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
     { return FluidSystem::H2OIdx; }
 
+    //! Return the temperature in the domain at the given position
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    { return temperature(); }
+
+    //! Return the constant temperature in the domain
+    Scalar temperature() const
+    { return temperature_; }
+
+    //! Return the extrusion of the domain at the given position
+    Scalar extrusionFactorAtPos(const GlobalPosition& globalPos) const
+    { return 0.054977871437821; }
+
 private:
 
     const PcKrSwCurve pcKrSwCurve_;
 
     PermeabilityKozenyCarman<PermeabilityType> permLaw_;
 
+    Scalar temperature_;
     Scalar solubilityLimit_;
     Scalar referencePorosity_;
     PermeabilityType referencePermeability_ = 0.0;

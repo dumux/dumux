@@ -157,17 +157,7 @@ public:
         return values;
     }
 
-    /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ for an isothermal problem.
-     *
-     * This is not specific to the discretization. By default it just
-     * throws an exception so it must be overloaded by the problem if
-     * no energy equation is used.
-     */
-    Scalar temperature() const
-    {
-        return 293.15;
-    }
+
 
     /*!
      * \brief Appends all quantities of interest which can be derived

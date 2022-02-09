@@ -25,7 +25,7 @@
 #ifndef DUMUX_RICHARDS_ANALYTICAL_SPATIAL_PARAMETERS_HH
 #define DUMUX_RICHARDS_ANALYTICAL_SPATIAL_PARAMETERS_HH
 
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 
 #include <dumux/porousmediumflow/richards/model.hh>
@@ -39,11 +39,11 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class RichardsAnalyticalSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
-                         RichardsAnalyticalSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
+                                       RichardsAnalyticalSpatialParams<GridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParams<GridGeometry, Scalar,
-                                       RichardsAnalyticalSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
+                                                     RichardsAnalyticalSpatialParams<GridGeometry, Scalar>>;
 
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -89,6 +89,13 @@ public:
     {
         return makeFluidMatrixInteraction(*pcKrSwCurve_);
     }
+
+    /*!
+     * \brief Returns the temperature [K] at a given location
+     * \param globalPos A global coordinate vector
+     */
+    Scalar temperatureAtPos(const GlobalPosition &globalPos) const
+    { return 273.15 + 10.0; } // -> 10°C
 
 private:
     Scalar permeability_;

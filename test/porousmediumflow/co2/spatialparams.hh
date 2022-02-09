@@ -28,7 +28,7 @@
 #define DUMUX_HETEROGENEOUS_SPATIAL_PARAMS_HH
 
 #include <dumux/io/grid/griddata.hh>
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 
 #include <dumux/porousmediumflow/co2/model.hh>
@@ -43,20 +43,22 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class HeterogeneousSpatialParams
-: public FVSpatialParams<GridGeometry,
-                         Scalar,
-                         HeterogeneousSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsMP<GridGeometry,
+                                       Scalar,
+                                       HeterogeneousSpatialParams<GridGeometry, Scalar>>
 {
     using Grid = typename GridGeometry::Grid;
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, HeterogeneousSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar, HeterogeneousSpatialParams<GridGeometry, Scalar>>;
 
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
     using PcKrSwCurve = FluidMatrix::BrooksCoreyDefault<Scalar>;
+
+    static constexpr int dimWorld = GridView::dimensionworld;
 
 public:
     using PermeabilityType = Scalar;
@@ -76,6 +78,8 @@ public:
         barrierTopPorosity_ = 0.001;
         barrierMiddlePorosity_ = 0.05;
         reservoirPorosity_ = 0.2;
+
+        depthBOR_ = getParam<Scalar>("Problem.DepthBOR");
     }
 
     /*!
@@ -184,6 +188,17 @@ public:
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
     { return FluidSystem::BrineIdx; }
 
+    /*!
+     * \brief Returns the temperature within the domain.
+     *
+     * \param globalPos The global position
+     *
+     * This problem assumes a geothermal gradient with
+     * a surface temperature of 10 degrees Celsius.
+     */
+    Scalar temperatureAtPos(const GlobalPosition &globalPos) const
+    { return 283.0 + (depthBOR_ - globalPos[dimWorld-1])*0.03; }
+
 private:
 
     std::shared_ptr<const GridData<Grid>> gridData_;
@@ -199,6 +214,8 @@ private:
     Scalar barrierTopK_;
     Scalar barrierMiddleK_;
     Scalar reservoirK_;
+
+    Scalar depthBOR_;
 
     std::vector<int> paramIdx_;
     const PcKrSwCurve pcKrSwCurve_;

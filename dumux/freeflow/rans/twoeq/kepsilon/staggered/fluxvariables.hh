@@ -152,7 +152,6 @@ public:
         // Remove this check after release 3.5. IsOnWall Interface is deprecated
         if constexpr (Deprecated::hasIsOnWall<Problem, GlobalPosition>())
         {
-            noSetWallCompilerWarning_();
             // Remove this part
             if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::turbulentKineticEnergyEqIdx)
                                     || bcTypes.isSymmetry()
@@ -189,7 +188,7 @@ public:
         }
 
         if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::dissipationEqIdx)
-                                  || bcTypes.isSymmetry())))
+                               || bcTypes.isSymmetry())))
         {
             flux[dissipationEqIdx]
                 += coeff_e / distance
@@ -218,12 +217,6 @@ public:
                  * Extrusion::area(scvf) * scvf.directionSign() * insideVolVars.extrusionFactor();
     }
 
-private:
-
-    [[deprecated("The isOnWall and IsOnWallAtPos functions will be removed after release 3.5. "
-                 "Please use the Rans specific boundarytypes. "
-                 "Mark wall boundaries in the rans problems with the setWall() function.")]]
-    void noSetWallCompilerWarning_(){}
 };
 
 } // end namespace

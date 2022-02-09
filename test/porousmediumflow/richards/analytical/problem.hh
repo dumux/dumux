@@ -107,14 +107,6 @@ public:
     { time_ = time; }
 
     /*!
-     * \brief Returns the temperature [K] within a finite volume
-     *
-     * This problem assumes a temperature of 10 degrees Celsius.
-     */
-    Scalar temperature() const
-    { return 273.15 + 10; } // -> 10°C
-
-    /*!
      * \brief Returns the reference pressure [Pa] of the nonwetting
      *        fluid phase within a finite volume
      *

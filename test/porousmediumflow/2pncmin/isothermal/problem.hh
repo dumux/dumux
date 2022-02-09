@@ -122,7 +122,6 @@ public:
     : ParentType(gridGeometry)
     {
         outerSalinity_          = getParam<Scalar>("Problem.OuterSalinity");
-        temperature_            = getParam<Scalar>("Problem.Temperature");
         reservoirPressure_      = getParam<Scalar>("Problem.ReservoirPressure");
         initLiqSaturation_      = getParam<Scalar>("Problem.LiquidSaturation");
         initPrecipitatedSaltBlock_  = getParam<Scalar>("Problem.InitPrecipitatedSaltBlock");
@@ -175,14 +174,6 @@ public:
      */
     const std::string& name() const
     { return name_; }
-
-    /*!
-     * \brief Returns the temperature within the domain.
-     *
-     * This problem assumes a temperature of 10 degrees Celsius.
-     */
-    Scalar temperature() const
-    { return temperature_; }
 
     /*!
      * \name Boundary conditions
@@ -384,7 +375,6 @@ private:
     Scalar reservoirPressure_;
     Scalar innerPressure_;
     Scalar outerPressure_;
-    Scalar temperature_;
     Scalar initLiqSaturation_;
     Scalar outerLiqSaturation_;
     Scalar innerLiqSaturation_;

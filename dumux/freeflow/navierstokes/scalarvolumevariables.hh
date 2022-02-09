@@ -24,6 +24,7 @@
 #ifndef DUMUX_NAVIERSTOKES_SCALAR_CONSERVATION_MODEL_VOLUME_VARIABLES_HH
 #define DUMUX_NAVIERSTOKES_SCALAR_CONSERVATION_MODEL_VOLUME_VARIABLES_HH
 
+#include <dumux/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -67,7 +68,7 @@ public:
                 const SubControlVolume& scv)
     {
         priVars_ = elemSol[scv.indexInElement()];
-        extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
+        extrusionFactor_ = Deprecated::extrusionFactor(problem, element, scv, elemSol);
     }
 
     /*!

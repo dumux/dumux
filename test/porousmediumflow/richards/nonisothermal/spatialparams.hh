@@ -26,22 +26,22 @@
 #define DUMUX_RICHARDSNI_SPATIAL_PARAMS_HH
 
 #include <dumux/porousmediumflow/richards/model.hh>
+#include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
-#include <dumux/material/spatialparams/fv.hh>
 
 namespace Dumux {
 
 template<class GridGeometry, class Scalar>
 class RichardsNISpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
-                         RichardsNISpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
+                                           RichardsNISpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar,
-                                       RichardsNISpatialParams<GridGeometry, Scalar>>;
+    using ParentType = FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
+                                                         RichardsNISpatialParams<GridGeometry, Scalar>>;
 
     enum { dimWorld=GridView::dimensionworld };
 

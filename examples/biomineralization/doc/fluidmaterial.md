@@ -62,6 +62,7 @@ The real work (creating the tables) is done by some external program by Span and
 ```cpp
 
 #include <assert.h>
+#include <dumux/material/components/co2tablereader.hh>
 namespace Dumux::ICP {
 #include "co2valueslaboratory.inc"
 }// end namespace Dumux::ICP

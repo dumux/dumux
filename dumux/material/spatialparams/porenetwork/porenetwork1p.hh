@@ -25,6 +25,8 @@
 #ifndef DUMUX_PNM_SPATIAL_PARAMS_1P_HH
 #define DUMUX_PNM_SPATIAL_PARAMS_1P_HH
 
+#warning "This file is deprecated, use PoreNetwork::OnePDefaultSpatialParams from dumux/porenetwork/1p/spatialparams.hh instead!"
+
 #include "porenetworkbase.hh"
 
 namespace Dumux::PoreNetwork {
@@ -34,6 +36,7 @@ namespace Dumux::PoreNetwork {
 * \brief The default class for spatial parameters for single-phase pore-network models.
 */
 template<class GridGeometry, class Scalar>
+[[deprecated("Use PoreNetwork::OnePDefaultSpatialParams from dumux/porenetwork/1p/spatialparams.hh instead. This class will be removed after 3.5.")]]
 class OnePDefaultSpatialParams : public BaseSpatialParams<GridGeometry, Scalar,
                                                           OnePDefaultSpatialParams<GridGeometry, Scalar>>
 {

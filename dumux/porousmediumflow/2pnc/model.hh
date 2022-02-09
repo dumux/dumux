@@ -89,7 +89,6 @@
 
 #include <dumux/common/properties.hh>
 
-#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/somerton.hh>
 

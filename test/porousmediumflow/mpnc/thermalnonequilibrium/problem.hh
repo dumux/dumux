@@ -122,15 +122,6 @@ public:
     { return *gridVariables_; }
 
     /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ for an isothermal problem.
-     *
-     * This is not specific to the discretization.
-     */
-    Scalar temperature() const
-    {   return TInitial_;}
-
-
-    /*!
      * \name Problem Params
      */
     // \{

@@ -25,9 +25,8 @@
 #ifndef DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
 #define DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
 
-#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
-
+#include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 #include <dumux/porousmediumflow/richards/model.hh>
 
 namespace Dumux {
@@ -39,15 +38,17 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class RichardsWellTracerSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
-                         RichardsWellTracerSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
+                                           RichardsWellTracerSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar,
-                                       RichardsWellTracerSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
+                                                         RichardsWellTracerSpatialParams<GridGeometry, Scalar>>;
 
     enum { dimWorld=GridView::dimensionworld };
     using Element = typename GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using PcKrSwCurve = FluidMatrix::VanGenuchtenNoReg<Scalar>;
@@ -79,6 +80,19 @@ public:
             return lensK_;
         return outerK_;
     }
+
+    /*!
+     * \brief Returns the temperature within the domain.
+     *
+     *  \param element The finite volume element
+     *  \param scv The sub-control volume
+     *  \param elemSol The element solution
+     */
+    template<class ElementSolution>
+    Scalar temperature(const Element& element,
+                       const SubControlVolume& scv,
+                       const ElementSolution& elemSol) const
+    { return 273.15 + 10; }; // -> 10°C
 
     /*!
      * \brief Returns the porosity [] at a given location

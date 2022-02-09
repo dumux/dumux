@@ -368,15 +368,9 @@ private:
             auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scvf : scvfs(fvGeometry))
-            {
-                if constexpr (Deprecated::hasHasWallBC<decltype(asImp_().boundaryTypes(element, scvf))>())
-                {
+                if constexpr (!Deprecated::hasIsOnWall<Implementation, GlobalPosition>())
                     if (asImp_().boundaryTypes(element, scvf).hasWall())
                         return;
-                }
-                else
-                    noSetWallCompilerWarning_();
-            }
         }
 
         // If reached, no walls were found, throw exception. Remove check after 3.5
@@ -730,11 +724,6 @@ private:
             }
         }
     }
-
-    [[deprecated("The isOnWall and IsOnWallAtPos functions will be removed after release 3.5. "
-                "Please use the Rans specific boundarytypes. "
-                "Mark wall boundaries in the rans problems with the setWall() function.")]]
-    void noSetWallCompilerWarning_(){}
 
     const int fixedFlowDirectionAxis_ = getParam<int>("RANS.FlowDirectionAxis", 0);
     const int fixedWallNormalAxis_ = getParam<int>("RANS.WallNormalAxis", 1);

@@ -25,7 +25,7 @@
 #ifndef DUMUX_BlOOD_FLOW_SPATIALPARAMS_HH
 #define DUMUX_BlOOD_FLOW_SPATIALPARAMS_HH
 
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams1p.hh>
 
 namespace Dumux {
 
@@ -35,11 +35,13 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class BloodFlowSpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar, BloodFlowSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar, BloodFlowSpatialParams<GridGeometry, Scalar>>
 {
     using ThisType = BloodFlowSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
+    using ParentType = FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
     using GlobalPosition = typename GridGeometry::GlobalCoordinate;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
 
 public:
     // export permeability type
@@ -83,6 +85,22 @@ public:
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
         return 1.0;
+    }
+
+    /*!
+     * \brief Returns how much the domain is extruded at a given sub-control volume.
+     *
+     * The extrusion factor here extrudes the 1d line to a circular tube with
+     * cross-section area pi*r^2.
+     */
+    template<class ElementSolution>
+    Scalar extrusionFactor(const Element &element,
+                           const SubControlVolume &scv,
+                           const ElementSolution& elemSol) const
+    {
+        const auto eIdx = this->gridGeometry().elementMapper().index(element);
+        const auto r = radius(eIdx);
+        return M_PI*r*r;
     }
 
 private:

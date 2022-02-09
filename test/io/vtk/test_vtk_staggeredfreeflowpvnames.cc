@@ -165,7 +165,7 @@ private:
         // for ZeroEq model
         template<class U, bool enable = Traits::usesTurbulenceModel(), std::enable_if_t<enable, int> = 0>
         void updateDynamicWallProperties(const U& u)
-        { return ParentType::updateDynamicWallProperties(u); }
+        { ParentType::updateDynamicWallProperties(u); }
 
     };
 
@@ -314,6 +314,7 @@ int main(int argc, char** argv)
     {
         params["Problem.Name"] = "test";
         params["Vtk.WriteFaceData"] = "true";
+        params["RANS.IsFlatWallBounded"] = "true";
     };
 
     Parameters::init(parameters);

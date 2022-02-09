@@ -29,7 +29,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
 #include <dune/common/fmatrix.hh>
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams1p.hh>
 #include "testcase.hh"
 
 namespace Dumux {
@@ -41,12 +41,12 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class ConvergenceTestSpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar,
-                             ConvergenceTestSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
+                                         ConvergenceTestSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
-                                           ConvergenceTestSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
+                                                       ConvergenceTestSpatialParams<GridGeometry, Scalar>>;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;

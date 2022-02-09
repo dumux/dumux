@@ -25,7 +25,7 @@
 #ifndef DUMUX_1P_TEST_SPATIALPARAMS_HH
 #define DUMUX_1P_TEST_SPATIALPARAMS_HH
 
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams1p.hh>
 
 namespace Dumux {
 
@@ -36,13 +36,14 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class OnePSpatialParams
-: public FVSpatialParamsOneP<GridGeometry, Scalar,
-                             OnePSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
+                                         OnePSpatialParams<GridGeometry, Scalar>>
 {
     using GridView = typename GridGeometry::GridView;
-    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
-                                           OnePSpatialParams<GridGeometry, Scalar>>;
-
+    using ParentType = FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
+                                                       OnePSpatialParams<GridGeometry, Scalar>>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -73,6 +74,19 @@ public:
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return porosity_; }
+
+    /*!
+     * \brief Returns the temperature within the domain.
+     *
+     *  \param element The finite volume element
+     *  \param scv The sub-control volume
+     *  \param elemSol The element solution
+     */
+    template<class ElementSolution>
+    Scalar temperature(const Element& element,
+                       const SubControlVolume& scv,
+                       const ElementSolution& elemSol) const
+    { return 273.15 + 10; }
 
     /*! \brief Defines the Beavers-Joseph coefficient in [-].
      *

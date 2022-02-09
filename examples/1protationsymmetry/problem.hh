@@ -68,11 +68,6 @@ public:
     }
     // [[/codeblock]]
 
-    // We need to specify a constant temperature for our isothermal problem.
-    // Fluid properties that depend on temperature will be calculated with this value.
-    Scalar temperature() const
-    { return 283.15; }
-
     // #### Specify the types of boundary conditions
     // This function is used to define the type of boundary conditions used depending on the location.
     // Two types of boundary  conditions can be specified: Dirichlet or Neumann boundary condition.

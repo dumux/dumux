@@ -78,7 +78,6 @@ public:
                         const std::string& paramGroup = "")
     : ParentType(gridGeometry, spatialParams, paramGroup)
     , couplingManagerPtr_(couplingManager)
-    , extrusion_(getParam<Scalar>("Problem.FacetExtrusion"))
     {
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" +
                          getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
@@ -112,10 +111,6 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     { return initialAtPos(globalPos); }
 
-    //! Returns the extrusion factor.
-    Scalar extrusionFactorAtPos(const GlobalPosition& globalPos) const
-    { return extrusion_; }
-
     //! Evaluates the initial conditions.
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
@@ -125,15 +120,11 @@ public:
 
         if constexpr (enableHeatConduction)
         {
-            values[Indices::temperatureIdx] = temperature();
+            values[Indices::temperatureIdx] = this->spatialParams().temperatureAtPos(globalPos);
         }
 
         return values;
     }
-
-    //! Returns the temperature in \f$\mathrm{[K]}\f$ in the domain.
-    Scalar temperature() const
-    { return 283.15; /*10°*/ }
 
     //! Returns reference to the coupling manager.
     const CouplingManager& couplingManager() const
@@ -141,7 +132,6 @@ public:
 
 private:
     std::shared_ptr<CouplingManager> couplingManagerPtr_;
-    Scalar extrusion_;
     std::string problemName_;
 };
 

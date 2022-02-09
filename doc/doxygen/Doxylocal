@@ -29,7 +29,7 @@ HTML_FILE_EXTENSION    = .xhtml
 
 USE_MATHJAX            = YES
 
-EXCLUDE_PATTERNS       =
+EXCLUDE_PATTERNS       = *_.hh
 
 ALIASES               += "warning=\xrefitem warning \"Warning List\" \"Warning List\""
 

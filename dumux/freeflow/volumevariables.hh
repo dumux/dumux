@@ -26,6 +26,7 @@
 #define DUMUX_FREEFLOW_VOLUME_VARIABLES_HH
 
 #include <dumux/material/fluidstates/immiscible.hh>
+#include <dumux/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -77,7 +78,7 @@ public:
                 const SubControlVolume& scv)
     {
         priVars_ = elemSol[scv.localDofIndex()];
-        extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
+        extrusionFactor_ = Deprecated::extrusionFactor(problem, element, scv, elemSol);
     }
 
     /*!

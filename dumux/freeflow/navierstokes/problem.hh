@@ -28,6 +28,7 @@
 #include <dune/common/typetraits.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/fvproblemwithspatialparams.hh>
 #include <dumux/common/staggeredfvproblem.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/freeflow/navierstokes/momentum/boundarytypes.hh>
@@ -55,9 +56,9 @@ class NavierStokesProblemImpl;
 
 template<class TypeTag>
 class NavierStokesProblemImpl<TypeTag, DiscretizationMethods::FCStaggered>
-: public FVProblem<TypeTag>
+: public FVProblemWithSpatialParams<TypeTag>
 {
-    using ParentType = FVProblem<TypeTag>;
+    using ParentType = FVProblemWithSpatialParams<TypeTag>;
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -537,9 +538,9 @@ private:
 
 template<class TypeTag>
 class NavierStokesProblemImpl<TypeTag, DiscretizationMethods::CCTpfa>
-: public FVProblem<TypeTag>
+: public FVProblemWithSpatialParams<TypeTag>
 {
-    using ParentType = FVProblem<TypeTag>;
+    using ParentType = FVProblemWithSpatialParams<TypeTag>;
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -598,7 +599,6 @@ public:
                             const std::string& paramGroup = "")
     : NavierStokesProblemImpl(gridGeometry, {}, paramGroup)
     {}
-
 
     /*!
      * \brief Returns the normal velocity at a given sub control volume face.
