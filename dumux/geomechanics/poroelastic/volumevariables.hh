@@ -145,7 +145,7 @@ private:
     template< class Problem, class Element, class Scv, class ElemSol,
               bool enableEB = enableEnergyBalance, typename std::enable_if_t<enableEB, bool> = 0 >
     void setSolidTemperature_(const Problem& problem, const Element& element, const Scv& scv, const ElemSol& elemSol)
-    { DUNE_THROW(Dune::InvalidStateException, "Non-isothermal elastic model."); }
+    { DUNE_THROW(Dune::NotImplemented, "Non-isothermal poroelastic model."); }
 
     //! sets the temperature in the solid state for isothermal models
     template< class Problem, class Element, class Scv, class ElemSol,
