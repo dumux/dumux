@@ -118,7 +118,7 @@ namespace Detail {
 
 /*!
  * \ingroup Geometry
- * \brief Algorithm to find segment-like intersections of a polgon/polyhedron with a
+ * \brief Algorithm to find segment-like intersections of a polygon/polyhedron with a
  *        segment. The result is stored in the form of the local coordinates tfirst
  *        and tlast on the segment geo1.
  * \param geo1 the first geometry
@@ -1091,7 +1091,7 @@ public:
             using PolySegTest = GeometryIntersection<Geometry2, SegGeometry, PointPolicy>;
             typename PolySegTest::Intersection polySegIntersection;
             if (PolySegTest::intersection(geo2, segGeo, polySegIntersection))
-                points.emplace_back(polySegIntersection);
+                points.emplace_back(std::move(polySegIntersection));
         }
 
         // add intersection points of all polygon faces (codim 1) with the polyhedron faces
@@ -1130,7 +1130,7 @@ public:
                 using PolySegTest = GeometryIntersection<PolyhedronFaceGeometry, SegGeometry, PointPolicy>;
                 typename PolySegTest::Intersection polySegIntersection;
                 if (PolySegTest::intersection(faceGeo, segGeo, polySegIntersection))
-                    points.emplace_back(polySegIntersection);
+                    points.emplace_back(std::move(polySegIntersection));
             }
         }
 
@@ -1207,6 +1207,188 @@ public:
     static bool intersection(const Geometry1& geo1, const Geometry2& geo2, typename Base::Intersection& intersection)
     {
         return Base::intersection(geo2, geo1, intersection);
+    }
+};
+
+/*!
+ * \ingroup Geometry
+ * \brief A class for polyhedron--polyhedron intersection in 3d space
+ */
+template <class Geometry1, class Geometry2, class Policy>
+class GeometryIntersection<Geometry1, Geometry2, Policy, 3, 3, 3>
+{
+    enum { dimworld = 3 };
+    enum { dim1 = 3 };
+    enum { dim2 = 3 };
+
+public:
+    using ctype = typename Policy::ctype;
+    using Point = typename Policy::Point;
+    using Intersection = typename Policy::Intersection;
+
+private:
+    static constexpr ctype eps_ = 1.5e-7; // base epsilon for floating point comparisons
+
+public:
+    /*!
+     * \brief Colliding two convex polyhedra
+     * \note First we find the vertex candidates for the intersection region as follows:
+     *       Add vertices that are inside the other geometry for both geometries
+     *       Add all intersection points of edges (codim 2) with the other tetrahedron's faces triangle
+     *       Remove duplicate points from the list
+     *       Return a triangulation of the polyhedron formed by the convex hull of the point cloud
+     * \param geo1/geo2 The geometries to intersect
+     * \param intersection Container to store the corner points of the polygon (as convex hull)
+     * \note This overload is used when polyhedron-like intersections are seeked
+     */
+    template<class P = Policy, std::enable_if_t<P::dimIntersection == 3, int> = 0>
+    static bool intersection(const Geometry1& geo1, const Geometry2& geo2, Intersection& intersection)
+    {
+        static_assert(
+            int(dimworld) == int(Geometry2::coorddimension),
+            "Can only collide geometries of same coordinate dimension"
+        );
+
+        const auto refElement1 = referenceElement(geo1);
+        const auto refElement2 = referenceElement(geo2);
+
+        // the candidate intersection points
+        std::vector<Point> points;
+        points.reserve(refElement1.size(2) + refElement2.size(2));
+
+        // add corners inside the other geometry
+        const auto addPointIntersections = [&](const auto& g1, const auto& g2)
+        {
+            for (int i = 0; i < g1.corners(); ++i)
+                if (const auto& c = g1.corner(i); intersectsPointGeometry(c, g2))
+                    points.emplace_back(c);
+        };
+
+        addPointIntersections(geo1, geo2);
+        addPointIntersections(geo2, geo1);
+
+        // get geometry types for the facets
+        using PolyhedronFaceGeometry = Dune::MultiLinearGeometry<ctype, 2, dimworld>;
+        using SegGeometry = Dune::MultiLinearGeometry<ctype, 1, dimworld>;
+
+        // intersection policy for point-like intersections (used later)
+        using PointPolicy = IntersectionPolicy::PointPolicy<ctype, dimworld>;
+
+        // add intersection points of all edges with the faces of the other polyhedron
+        const auto addEdgeIntersections = [&](const auto& g1, const auto& g2, const auto& ref1, const auto& ref2)
+        {
+            for (int i = 0; i < ref1.size(1); ++i)
+            {
+                const auto faceGeo = [&]()
+                {
+                    const auto localFaceGeo = ref1.template geometry<1>(i);
+                    if (localFaceGeo.corners() == 4)
+                    {
+                        const auto a = g1.global(localFaceGeo.corner(0));
+                        const auto b = g1.global(localFaceGeo.corner(1));
+                        const auto c = g1.global(localFaceGeo.corner(2));
+                        const auto d = g1.global(localFaceGeo.corner(3));
+
+                        return PolyhedronFaceGeometry(
+                            Dune::GeometryTypes::cube(2), std::vector<Point>{a, b, c, d}
+                        );
+                    }
+                    else
+                    {
+                        const auto a = g1.global(localFaceGeo.corner(0));
+                        const auto b = g1.global(localFaceGeo.corner(1));
+                        const auto c = g1.global(localFaceGeo.corner(2));
+
+                        return PolyhedronFaceGeometry(
+                            Dune::GeometryTypes::simplex(2), std::vector<Point>{a, b, c}
+                        );
+                    }
+                }();
+
+                for (int j = 0; j < ref2.size(2); ++j)
+                {
+                    const auto localEdgeGeom = ref2.template geometry<2>(j);
+                    const auto p = g2.global(localEdgeGeom.corner(0));
+                    const auto q = g2.global(localEdgeGeom.corner(1));
+
+                    const auto segGeo = SegGeometry(Dune::GeometryTypes::line, std::vector<Point>{p, q});
+
+                    using PolySegTest = GeometryIntersection<PolyhedronFaceGeometry, SegGeometry, PointPolicy>;
+                    typename PolySegTest::Intersection polySegIntersection;
+                    if (PolySegTest::intersection(faceGeo, segGeo, polySegIntersection))
+                        points.emplace_back(std::move(polySegIntersection));
+                }
+            }
+        };
+
+        addEdgeIntersections(geo1, geo2, refElement1, refElement2);
+        addEdgeIntersections(geo2, geo1, refElement2, refElement1);
+
+        // return if no intersection points were found
+        if (points.empty())
+            return false;
+
+        // remove duplicates
+        const auto norm = (geo1.corner(0) - geo1.corner(1)).two_norm();
+        const auto eps = norm*eps_;
+        const auto notEqual = [eps] (auto a, auto b) { using std::abs; return abs(b-a) > eps; };
+        std::sort(points.begin(), points.end(), [notEqual](const auto& a, const auto& b) -> bool
+        {
+            return (notEqual(a[0], b[0]) ? a[0] < b[0]
+                                         : (notEqual(a[1], b[1]) ? a[1] < b[1]
+                                                                 : (a[2] < b[2])));
+        });
+
+        const auto squaredEps = eps*eps;
+        points.erase(std::unique(
+            points.begin(), points.end(),
+            [squaredEps] (const auto& a, const auto&b) { return (b-a).two_norm2() < squaredEps; }),
+            points.end()
+        );
+
+        // return false if we don't have more than four unique points (dim+1)
+        if (points.size() < 4)
+            return false;
+
+        // check if the points are coplanar (then we don't have a 3-dimensional intersection)
+        const bool coplanar = [&]
+        {
+            const auto p0 = points[0];
+            const auto normal = crossProduct(points[1] - p0, points[2] - p0);
+            // include the normal in eps (intead of norm*norm) since the normal can become very small
+            // if the first three points are very close together
+            const auto epsCoplanar = normal.two_norm()*norm*eps_;
+            for (int i = 3; i < points.size(); ++i)
+            {
+                const auto ad = points[i] - p0;
+                using std::abs;
+                if (abs(normal*ad) > epsCoplanar)
+                    return false;
+            }
+
+            return true;
+        }();
+
+        if (coplanar)
+            return false;
+
+        // we return the intersection as point cloud (that can be triangulated later)
+        intersection = points;
+
+        return true;
+    }
+
+    /*!
+     * \brief Colliding segment and convex polyhedron
+     * \param geo1/geo2 The geometries to intersect
+     * \param intersection Container to store the intersection result
+     * \todo implement overloads for polygon-, segment- or point-like intersections
+     */
+    template<class P = Policy, std::enable_if_t<P::dimIntersection != 3, int> = 0>
+    static bool intersection(const Geometry1& geo1, const Geometry2& geo2, Intersection& intersection)
+    {
+        static_assert(int(dimworld) == int(Geometry2::coorddimension), "Can only collide geometries of same coordinate dimension");
+        DUNE_THROW(Dune::NotImplemented, "Polyhedron-polygon intersection detection only implemented for polygon-like intersections");
     }
 };
 

@@ -19,5 +19,9 @@ dumux_add_test(NAME test_geometry_fracture
               CMAKE_GUARD dune-foamgrid_FOUND
               LABELS unit)
 
+dumux_add_test(NAME test_3d3d_grid_intersection
+              SOURCES test_3d3d_grid_intersection.cc
+              LABELS unit)
+
 # symlink the input file in the build directory
 dune_symlink_to_source_files(FILES "network1d.msh" "network2d.msh" "fracture.msh")

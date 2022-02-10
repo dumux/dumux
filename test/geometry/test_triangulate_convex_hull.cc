@@ -120,7 +120,7 @@ int main(int argc, char* argv[])
 
     Dune::Timer timer2;
     auto triangles = triangulate<2, 3>(convexHullPoints);
-    std::cout << "Computed triangulation of convex hull with " << convexHullPoints.size()
+    std::cout << "Computed 2D (in 3D) triangulation of convex hull with " << convexHullPoints.size()
               << " points in " << timer2.elapsed() << " seconds." << std::endl;
 
     writeVTKPolyDataTriangle(triangles, "triangulation");
@@ -137,6 +137,56 @@ int main(int argc, char* argv[])
     points = {{2.0,3.0,3.0}, {0.0,0.0,4.0}, {0.0,0.0,0.0}, {0.0,0.0,1.0}, {0.0,0.0,2.0}, {0.0,0.0,3.0}};
     hull = grahamConvexHull<2>(points);
     if (hull.empty()) DUNE_THROW(Dune::InvalidStateException, "Didn't find convex hull!");
+
+    // 3d triangulation tests
+    const auto tetPoints = std::vector<Point>{{0.0,0.0,0.0}, {1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}};
+    const auto hull3D1 = triangulate<3, 3>(tetPoints);
+    writeVTUTetrahedron(hull3D1, "hulltriangulation3d_simplex");
+    std::cout << "Created triangulation with " << hull3D1.size() << " tetrahedra" << std::endl;
+    if (hull3D1.size() != 1)
+        DUNE_THROW(Dune::InvalidStateException, "Incorrect hull for simplex!");
+
+    // in the general case with more than exactly four points, we find triangulations with the mid point rule
+    // therefore, we use more than one tetrahedron even if the convex hull is a tetrahedron
+    const auto tetPointsInclusion = std::vector<Point>{{0.0,0.0,0.0}, {1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}, {0.25,0.25,0.1}};
+    const auto hull3D2 = triangulate<3, 3>(tetPointsInclusion);
+    writeVTUTetrahedron(hull3D2, "hulltriangulation3d_simplexincl");
+    std::cout << "Created triangulation with " << hull3D2.size() << " tetrahedra" << std::endl;
+    if (hull3D2.size() != 4)
+        DUNE_THROW(Dune::InvalidStateException, "Incorrect hull for simplex with inclusion!");
+
+    const auto tetPointsCoplanar = std::vector<Point>{{0.0,0.0,0.0}, {1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}, {0.1,0.1,0.0}};
+    const auto hull3D3 = triangulate<3, 3>(tetPointsCoplanar);
+    writeVTUTetrahedron(hull3D3, "hulltriangulation3d_coplanar");
+    std::cout << "Created triangulation with " << hull3D3.size() << " tetrahedra" << std::endl;
+    if (hull3D3.size() != 4)
+        DUNE_THROW(Dune::InvalidStateException, "Incorrect hull for simplex with coplanar face inclusion!");
+
+    const auto complexPyramidPoints = std::vector<Point>{
+        {0.0,0.0,0.0}, {0.5,0.87,0.0}, {1.5,0.87,0.0},
+        {2.0,0.0,0.0}, {1.5,-0.87,0.0}, {0.5,-0.87,0.0},
+        {1.0,0.0,1.0}
+    };
+
+    const auto hullPyramid = triangulate<3, 3>(complexPyramidPoints);
+    writeVTUTetrahedron(hullPyramid, "hulltriangulation3d_pyramid");
+    std::cout << "Created triangulation with " << hullPyramid.size() << " tetrahedra" << std::endl;
+    if (hullPyramid.size() != 6*2)
+        DUNE_THROW(Dune::InvalidStateException, "Incorrect hull for pyramid with hexagonal base!");
+
+    points.clear();
+    UniformDistributedRandomNumber<double> dice(-1.0, 1.0);
+    for (int i = 0; i < 10; ++i)
+        points.emplace_back(Point{ dice(), dice(), dice() });
+
+    Dune::Timer timer3;
+    const auto hull3D4Rnd = triangulate<3, 3>(points);
+    std::cout << "Created triangulation with " << hull3D4Rnd.size() << " tetrahedra" << std::endl;
+    std::cout << "Computed 3D (in 3D) convex hull based triangulation of point cloud with " << points.size()
+              << " points in " << timer3.elapsed() << " seconds." << std::endl;
+    writeVTUTetrahedron(hull3D4Rnd, "hulltriangulation3d_rnd");
+    if (hull3D4Rnd.size() < 4)
+        DUNE_THROW(Dune::InvalidStateException, "Incorrect hull for random points!");
 
     return 0;
 }
