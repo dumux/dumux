@@ -459,11 +459,8 @@ private:
     void bindCouplingContext_(Dune::index_constant<freeFlowMomentumIndex> domainI,
                               const Element<freeFlowMomentumIndex>& elementI) const
     {
-        // The call to this->problem() is expensive because of std::weak_ptr (see base class). Here we try to avoid it if possible.
-        if (momentumCouplingContext_.empty())
-            bindCouplingContext_(domainI, elementI, this->problem(freeFlowMomentumIndex).gridGeometry().elementMapper().index(elementI));
-        else
-            bindCouplingContext_(domainI, elementI, momentumCouplingContext_[0].fvGeometry.gridGeometry().elementMapper().index(elementI));
+        const auto eIdx = this->problem(freeFlowMomentumIndex).gridGeometry().elementMapper().index(elementI);
+        bindCouplingContext_(domainI, elementI, eIdx);
     }
 
     void bindCouplingContext_(Dune::index_constant<freeFlowMomentumIndex> domainI,
@@ -500,11 +497,8 @@ private:
     void bindCouplingContext_(Dune::index_constant<freeFlowMassIndex> domainI,
                               const Element<freeFlowMassIndex>& elementI) const
     {
-        // The call to this->problem() is expensive because of std::weak_ptr (see base class). Here we try to avoid it if possible.
-        if (massAndEnergyCouplingContext_.empty())
-            bindCouplingContext_(domainI, elementI, this->problem(freeFlowMassIndex).gridGeometry().elementMapper().index(elementI));
-        else
-            bindCouplingContext_(domainI, elementI, massAndEnergyCouplingContext_[0].fvGeometry.gridGeometry().elementMapper().index(elementI));
+        const auto eIdx = this->problem(freeFlowMassIndex).gridGeometry().elementMapper().index(elementI);
+        bindCouplingContext_(domainI, elementI, eIdx);
     }
 
     void bindCouplingContext_(Dune::index_constant<freeFlowMassIndex> domainI,
