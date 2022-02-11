@@ -44,6 +44,10 @@ class TwoPFluxVariablesCache
     using NumCornerVector = Dune::ReservedVector<Scalar, maxNumCorners>;
 
 public:
+    TwoPFluxVariablesCache()
+    {
+        deltaPc_ = getParam<Scalar>("Regularization.DeltaPc");
+    }
 
     template<class Problem, class Element, class FVElementGeometry,
              class ElementVolumeVariables, class SubControlVolumeFace>
@@ -69,19 +73,29 @@ public:
         using FluidSystem = typename ElementVolumeVariables::VolumeVariables::FluidSystem;
         const auto& spatialParams = problem.spatialParams();
         nPhaseIdx_ = 1 - spatialParams.template wettingPhase<FluidSystem>(element, elemVolVars);
-
         // take the average surface tension of both adjacent pores TODO: is this correct?
         surfaceTension_ = 0.5*(elemVolVars[0].surfaceTension() + elemVolVars[1].surfaceTension());
 
         const auto& cornerHalfAngles = spatialParams.cornerHalfAngles(element);
+
         wettingLayerArea_.clear(); wettingLayerArea_.resize(cornerHalfAngles.size());
         const Scalar totalThroatCrossSectionalArea = spatialParams.throatCrossSectionalArea(element, elemVolVars);
+        entryWettingLayerArea_.clear(); entryWettingLayerArea_.resize(cornerHalfAngles.size());
+        snapoffWettingLayerArea_.clear(); snapoffWettingLayerArea_.resize(cornerHalfAngles.size());
+        deltaPcEntryWettingLayerArea_.clear(); deltaPcEntryWettingLayerArea_.resize(cornerHalfAngles.size());
+        deltaPcSnapoffWettingLayerArea_.clear(); deltaPcSnapoffWettingLayerArea_.resize(cornerHalfAngles.size());
 
         if (invaded) // two-phase flow
         {
             const Scalar theta = spatialParams.contactAngle(element, elemVolVars);
             for (int i = 0; i< cornerHalfAngles.size(); ++i)
+            {
                 wettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(curvatureRadius(), theta, cornerHalfAngles[i]);
+                entryWettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(entryCurvatureRadius(), theta, cornerHalfAngles[i]);
+                deltaPcEntryWettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(delatEntryCurvatureRadius(), theta, cornerHalfAngles[i]);
+                deltaPcSnapoffWettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(delatSnapoffCurvatureRadius(), theta, cornerHalfAngles[i]);
+                snapoffWettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(snapoffCurvatureRadius(), theta, cornerHalfAngles[i]);
+            }
 
             // make sure the wetting phase area does not exceed the total cross-section area
             throatCrossSectionalArea_[wPhaseIdx()] = std::min(
@@ -89,6 +103,22 @@ public:
                 totalThroatCrossSectionalArea
             );
             throatCrossSectionalArea_[nPhaseIdx()] = totalThroatCrossSectionalArea - throatCrossSectionalArea_[wPhaseIdx()];
+
+            // returns the throat cross sectional area for both phases at critical status corresponds entry pressure
+            entryThroatCrossSectionalArea_[wPhaseIdx()] = std::accumulate(entryWettingLayerArea_.begin(), entryWettingLayerArea_.end(), 0.0);
+            entryThroatCrossSectionalArea_[nPhaseIdx()] = spatialParams.throatCrossSectionalArea(element, elemVolVars) - entryThroatCrossSectionalArea_[wPhaseIdx()];
+
+            // returns the throat cross sectional area for both phases at critical status corresponds snapoff pressure
+            snapoffThroatCrossSectionalArea_[wPhaseIdx()] = std::accumulate(snapoffWettingLayerArea_.begin(), snapoffWettingLayerArea_.end(), 0.0);
+            snapoffThroatCrossSectionalArea_[nPhaseIdx()] = spatialParams.throatCrossSectionalArea(element, elemVolVars) - snapoffThroatCrossSectionalArea_[wPhaseIdx()];
+
+            auto deltaPcEntryThroatCrossSectionalArea = std::accumulate(deltaPcEntryWettingLayerArea_.begin(), deltaPcEntryWettingLayerArea_.end(), 0.0);
+            auto deltaPcSnapoffThroatCrossSectionalArea = std::accumulate(deltaPcSnapoffWettingLayerArea_.begin(), deltaPcSnapoffWettingLayerArea_.end(), 0.0);
+
+            entryDerivativeCrossSectionalAreaPc_[wPhaseIdx()] =(deltaPcEntryThroatCrossSectionalArea - throatCrossSectionalArea_[wPhaseIdx()])/deltaPc_;
+            entryDerivativeCrossSectionalAreaPc_[nPhaseIdx()] = - entryDerivativeCrossSectionalAreaPc_[wPhaseIdx()];
+            snapoffDerivativeCrossSectionalAreaPc_[wPhaseIdx()] = (deltaPcSnapoffThroatCrossSectionalArea - throatCrossSectionalArea_[wPhaseIdx()])/deltaPc_;
+            snapoffDerivativeCrossSectionalAreaPc_[wPhaseIdx()] = - snapoffDerivativeCrossSectionalAreaPc_[nPhaseIdx()];
         }
         else // single-phase flow
         {
@@ -193,11 +223,42 @@ public:
     { return surfaceTension_ / pc_;}
 
     /*!
+     * \brief Returns the curvature radius within the throat corresponds to entry pressure.
+     */
+    Scalar entryCurvatureRadius() const
+    { return surfaceTension_ / pcEntry_;}
+
+    Scalar delatEntryCurvatureRadius() const
+    { return surfaceTension_ / (pcEntry_ + deltaPc_); }
+
+    Scalar delatSnapoffCurvatureRadius() const
+    { return surfaceTension_ / (pcSnapoff_ + deltaPc_); }
+
+
+    /*!
+     * \brief Returns the curvature radius within the throat corresponds to snap off pressure.
+     */
+    Scalar snapoffCurvatureRadius() const
+    { return surfaceTension_ / pcSnapoff_;}
+
+    /*!
      * \brief Returns the cross-sectional area of a wetting layer within
      *        one of the throat's corners.
      */
     Scalar wettingLayerCrossSectionalArea(const int cornerIdx) const
     { return wettingLayerArea_[cornerIdx]; }
+
+    Scalar entryWettingLayerArea(const int cornerIdx) const
+    { return entryWettingLayerArea_[cornerIdx]; }
+
+    Scalar snapoffWettingLayerArea(const int cornerIdx) const
+    { return snapoffWettingLayerArea_[cornerIdx]; }
+
+    Scalar deltaPcSnapoffWettingLayerArea(const int cornerIdx) const
+    { return deltaPcSnapoffWettingLayerArea_[cornerIdx]; }
+
+    Scalar deltaPcEntryWettingLayerArea(const int cornerIdx) const
+    { return deltaPcEntryWettingLayerArea_[cornerIdx]; }
 
     /*!
      * \brief Returns the index of the wetting phase.
@@ -235,25 +296,50 @@ public:
     Scalar poreToPoreDistance() const
     { return poreToPoreDistance_; }
 
+
+    Scalar entryThroatCrossSectionalArea(const int phaseIdx) const
+    { return entryThroatCrossSectionalArea_[phaseIdx]; }
+
+    Scalar snapoffThroatCrossSectionalArea(const int phaseIdx) const
+    { return snapoffThroatCrossSectionalArea_[phaseIdx]; }
+
+    Scalar entryDerivativeCrossSectionalAreaPc(const int phaseIdx) const
+    { return entryDerivativeCrossSectionalAreaPc_[phaseIdx]; }
+
+    Scalar snapoffDerivativeCrossSectionalAreaPc(const int phaseIdx) const
+    { return snapoffDerivativeCrossSectionalAreaPc_[phaseIdx]; }
+
+    Scalar deltaPc() const
+    { return deltaPc_; }
+
 private:
     Throat::Shape throatCrossSectionShape_;
     Scalar throatShapeFactor_;
     std::array<Scalar, numPhases> transmissibility_;
     std::array<Scalar, numPhases> throatCrossSectionalArea_;
+    std::array<Scalar, numPhases> entryDerivativeCrossSectionalAreaPc_;
+    std::array<Scalar, numPhases> snapoffDerivativeCrossSectionalAreaPc_;
+
     Scalar throatLength_;
     Scalar throatInscribedRadius_;
     Scalar pcEntry_;
     Scalar pcSnapoff_;
     Scalar pc_;
+    Scalar deltaPc_;
     Scalar surfaceTension_;
     bool invaded_;
-    NumCornerVector wettingLayerArea_;
+    NumCornerVector wettingLayerArea_, entryWettingLayerArea_, snapoffWettingLayerArea_;
+    NumCornerVector deltaPcEntryWettingLayerArea_, deltaPcSnapoffWettingLayerArea_;
+
     std::size_t nPhaseIdx_;
     Scalar poreToPoreDistance_;
 
     typename AdvectionType::Transmissibility::SinglePhaseCache singlePhaseCache_;
     typename AdvectionType::Transmissibility::NonWettingPhaseCache nonWettingPhaseCache_;
     typename AdvectionType::Transmissibility::WettingLayerCache wettingLayerCache_;
+
+    std::array<Scalar, numPhases> entryThroatCrossSectionalArea_;
+    std::array<Scalar, numPhases> snapoffThroatCrossSectionalArea_;
 };
 
 } // end Dumux::PoreNetwork
