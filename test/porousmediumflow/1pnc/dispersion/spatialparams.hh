@@ -118,7 +118,7 @@ public:
      *
      * \param globalPos The global position
      */
-    std::array<Scalar, 2> dispersionAlphas(const GlobalPosition& globalPos, int compIdx) const
+    std::array<Scalar, 2> dispersionAlphas(const GlobalPosition& globalPos, int phaseIdx = 0, int compIdx = 0) const
     { return { alphaL_, alphaT_ }; }
 
     /*!
@@ -126,10 +126,8 @@ public:
      *
      * \param globalPos The global position
      */
-    const DimWorldMatrix &dispersionTensor(const GlobalPosition& globalPos, int compIdx) const
-    {
-        return dispersionTensor_;
-    }
+    const DimWorldMatrix &dispersionTensor(const GlobalPosition& globalPos, int phaseIdx = 0, int compIdx = 0) const
+    { return dispersionTensor_; }
 
 private:
     Scalar permeability_;

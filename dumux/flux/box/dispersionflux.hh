@@ -117,8 +117,9 @@ public:
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
             // collect the dispersion tensor, the fluxVarsCache and the shape values
-            const DimWorldMatrix dispersionTensor = VolumeVariables::DispersionTensorType::dispersionTensor(problem, scvf, fvGeometry,
-                                                                                                            elemVolVars, elemFluxVarsCache, compIdx);
+            const auto& dispersionTensor =
+                VolumeVariables::DispersionTensorType::dispersionTensor(problem, scvf, fvGeometry,
+                                                                        elemVolVars, elemFluxVarsCache, phaseIdx, compIdx);
 
             // the mole/mass fraction gradient
             Dune::FieldVector<Scalar, dimWorld> gradX(0.0);
@@ -149,8 +150,9 @@ public:
                                                 const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         // collect the dispersion tensor
-        const DimWorldMatrix dispersionTensor = VolumeVariables::DispersionTensorType::dispersionTensor(problem, scvf, fvGeometry,
-                                                                                                        elemVolVars, elemFluxVarsCache, Indices::energyEqIdx);
+        const auto& dispersionTensor =
+            VolumeVariables::DispersionTensorType::dispersionTensor(problem, scvf, fvGeometry,
+                                                                    elemVolVars, elemFluxVarsCache, phaseIdx, Indices::energyEqIdx);
         // compute the temperature gradient with the shape functions
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
         Dune::FieldVector<Scalar, GridView::dimensionworld> gradTemp(0.0);

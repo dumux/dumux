@@ -65,6 +65,7 @@ public:
                                            [[maybe_unused]] const FVElementGeometry& fvGeometry,
                                            [[maybe_unused]] const ElementVolumeVariables& elemVolVars,
                                            [[maybe_unused]] const ElementFluxVariablesCache& elemFluxVarsCache,
+                                           [[maybe_unused]] const int phaseIdx,
                                            [[maybe_unused]] const int compIdx)
     {
         DimWorldMatrix dispersionTensor(0.0);
@@ -121,7 +122,7 @@ public:
         //calculate dispersion tensor
 
         // collect the dispersion alphas at this location
-        std::array<Scalar,2> dispersivity = problem.spatialParams().dispersionAlphas(scvf.center(), compIdx);
+        std::array<Scalar,2> dispersivity = problem.spatialParams().dispersionAlphas(scvf.center(), phaseIdx, compIdx);
 
         //matrix multiplication of the velocity at the interface: vv^T
         for (int i=0; i < dimWorld; i++)
