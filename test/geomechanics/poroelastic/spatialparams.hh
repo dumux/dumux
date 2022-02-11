@@ -78,7 +78,7 @@ public:
      * \brief Returns the effective pore pressure
      *
      * \note We use the x-displacement as pressure solution. The shift to
-     *       higher values is done to see a mor pronounced effect in stresses.
+     *       higher values is done to see a more pronounced effect in stresses.
      *
      * \param globalPos The global position
      */
