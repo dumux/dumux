@@ -57,9 +57,6 @@ class PoroElasticProblem : public GeomechanicsFVProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     static constexpr Scalar pi = M_PI;
-    static constexpr int dim = GridView::dimension;
-    static constexpr int dimWorld = GridView::dimensionworld;
-    using GradU = Dune::FieldMatrix<Scalar, dim, dimWorld>;
 
 public:
     PoroElasticProblem(std::shared_ptr<const GridGeometry> gridGeometry)
@@ -123,33 +120,29 @@ public:
         const Scalar dE12_dy = 0.5*pi_2_square*(cos_2pix*cos_2piy - (x-x*x)*sin_2piy);
         const Scalar dE21_dx = 0.5*((1.0-2*x)*pi_2*cos_2piy - pi_2_square*sin_2pix*sin_2piy);
 
-        // compute exact divergence of sigma
+        // The source term is composed of the divergence of the stress tensor
+        // resulting from the exact solution minus the pressure gradient
         PrimaryVariables divSigma(0.0);
         divSigma[Indices::momentum(/*x-dir*/0)] = lambda*(dE11_dx + dE22_dx) + 2*mu*(dE11_dx + dE12_dy);
         divSigma[Indices::momentum(/*y-dir*/1)] = lambda*(dE11_dy + dE22_dy) + 2*mu*(dE21_dx + dE22_dy);
+        divSigma -= this->spatialParams().effectivePorePressureGradient(ipGlobal);
         return divSigma;
     }
 
     /*!
-     * \brief Evaluates the exact displacement gradient to this problem at a given position.
+     * \brief Evaluates the exact displacement to this problem at a given position.
      */
-    GradU exactGradient(const GlobalPosition& globalPos) const
+    PrimaryVariables exactDisplacement(const GlobalPosition& globalPos) const
     {
         using std::sin;
-        using std::cos;
 
         const auto x = globalPos[0];
         const auto y = globalPos[1];
 
-        static constexpr int xIdx = Indices::momentum(/*x-dir*/0);
-        static constexpr int yIdx = Indices::momentum(/*y-dir*/1);
-
-        GradU exactGrad(0.0);
-        exactGrad[xIdx][xIdx] = (1-2*x)*sin(2*pi*y);
-        exactGrad[xIdx][yIdx] = (x - x*x)*2*pi*cos(2*pi*y);
-        exactGrad[yIdx][xIdx] = 2*pi*cos(2*pi*x)*sin(2*pi*y);
-        exactGrad[yIdx][yIdx] = 2*pi*sin(2*pi*x)*cos(2*pi*y);
-        return exactGrad;
+        PrimaryVariables exact(0.0);
+        exact[Indices::momentum(/*x-dir*/0)] = (x-x*x)*sin(2*pi*y);
+        exact[Indices::momentum(/*y-dir*/1)] = sin(2*pi*x)*sin(2*pi*y);
+        return exact;
     }
 
 private:

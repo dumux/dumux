@@ -83,7 +83,28 @@ public:
      * \param globalPos The global position
      */
     Scalar effectivePorePressureAtPos(const GlobalPosition& globalPos) const
-    { return exactSolution(globalPos)[0] + 10; }
+    {
+        using std::sin;
+        const auto x = globalPos[0];
+        const auto y = globalPos[1];
+        return (x-x*x)*sin(2.*pi*y) + 10;
+    }
+
+    /*!
+     * \brief Returns the effective pore pressure gradient
+     * \param globalPos The global position
+     */
+    GlobalPosition effectivePorePressureGradient(const GlobalPosition& globalPos) const
+    {
+        using std::sin;
+        using std::cos;
+        const auto x = globalPos[0];
+        const auto y = globalPos[1];
+        return {{
+            (1.-2.*x)*sin(2.*pi*y),
+            2.*pi*(x-x*x)*cos(2.*pi*y),
+        }};
+    }
 
     /*!
      * \brief Returns the effective fluid density.
@@ -102,22 +123,6 @@ public:
     //! Returns the Biot coefficient of the porous medium.
     Scalar biotCoefficientAtPos(const GlobalPosition& globalPos) const
     { return 1.0; }
-
-    /*!
-     * \brief Evaluates the exact displacement to this problem at a given position.
-     */
-    PrimaryVariables exactSolution(const GlobalPosition& globalPos) const
-    {
-        using std::sin;
-
-        const auto x = globalPos[0];
-        const auto y = globalPos[1];
-
-        PrimaryVariables exact(0.0);
-        exact[Indices::momentum(/*x-dir*/0)] = (x-x*x)*sin(2*pi*y);
-        exact[Indices::momentum(/*y-dir*/1)] = sin(2*pi*x)*sin(2*pi*y);
-        return exact;
-    }
 
 private:
     LameParams lameParams_;
