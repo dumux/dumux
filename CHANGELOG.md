@@ -96,6 +96,7 @@ The parameters describing your dispersion tensor can then be included in your `s
 - the `temperature` and `extrusionFactor` interfaces in the problem class have been deprecated and have been moved to the spatial parameters.
 - Porous medium flow models should now inherit from the new base spatial parameters that can be found in the folder `dumux/porousmediumflow/`, which allow users to overload the new `temperature` and `extrusionFactor` interfaces.
 - Free flow and pore network models now also expect the user problems to expose spatial parameters, in which `gravity`, `temperature` and `extrusionFactor` are defined. The respective problem interfaces have been deprecated.
+- The problem interfaces for fluid properties in the poroelastic model, namely `effectiveFluidDensity` and `effectivePorePressure`, have been deprecated and were moved to the spatial parameters.
 
 ### New experimental features (possibly subject to backwards-incompatible changes in the future)
 
