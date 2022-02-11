@@ -63,6 +63,30 @@ public:
         alphaL_ = getParam<Scalar>("Problem.AlphaL");
         alphaT_ = getParam<Scalar>("Problem.AlphaT");
         dispersionTensorCoefficients_ = getParam<std::vector<Scalar>>("Problem.DispersionTensor");
+
+        if (dispersionTensorCoefficients_.size() > 1)
+        {
+            if (dispersionTensorCoefficients_.size() != (dimWorld*dimWorld))
+                DUNE_THROW(Dune::InvalidStateException, "For anisotropic dispersion tensors, please list all entries (dim x dim).");
+
+            int k = 0;
+            for (int i = 0; i < dimWorld; i++)
+            {
+                for (int j = 0; j < dimWorld; j++)
+                {
+                    dispersionTensor_[i][j] = dispersionTensorCoefficients_[k];
+                    k++;
+                }
+            }
+        }
+        else
+        {
+            if (dispersionTensorCoefficients_.size() != 1)
+                DUNE_THROW(Dune::InvalidStateException, "For isotropic dispersion tensors, please one scalar value.");
+
+            for (int i = 0; i < dimWorld; i++)
+                dispersionTensor_[i][i] = dispersionTensorCoefficients_[0];
+        }
     }
 
     /*!
@@ -102,34 +126,9 @@ public:
      *
      * \param globalPos The global position
      */
-    DimWorldMatrix dispersionTensor(const GlobalPosition& globalPos, int compIdx) const
+    const DimWorldMatrix &dispersionTensor(const GlobalPosition& globalPos, int compIdx) const
     {
-        DimWorldMatrix dispersionTensor(0.0);
-        if (dispersionTensorCoefficients_.size() > 1)
-        {
-            if (dispersionTensorCoefficients_.size() != (dimWorld*dimWorld))
-                DUNE_THROW(Dune::InvalidStateException, "For anisotropic dispersion tensors, please list all entries (dim x dim).");
-
-            int k = 0;
-            for (int i = 0; i < dimWorld; i++)
-            {
-                for (int j = 0; j < dimWorld; j++)
-                {
-                    dispersionTensor[i][j] = dispersionTensorCoefficients_[k];
-                    k++;
-                }
-            }
-        }
-        else
-        {
-            if (dispersionTensorCoefficients_.size() != 1)
-                DUNE_THROW(Dune::InvalidStateException, "For isotropic dispersion tensors, please one scalar value.");
-
-            for (int i = 0; i < dimWorld; i++)
-                dispersionTensor[i][i] = dispersionTensorCoefficients_[0];
-        }
-
-        return dispersionTensor;
+        return dispersionTensor_;
     }
 
 private:
@@ -138,6 +137,7 @@ private:
     Scalar alphaL_;
     Scalar alphaT_;
     std::vector<Scalar> dispersionTensorCoefficients_;
+    DimWorldMatrix dispersionTensor_;
 };
 
 } // end namespace Dumux
