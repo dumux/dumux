@@ -55,7 +55,7 @@ public:
     PoroElasticSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry,
                              std::shared_ptr<CouplingManager> couplingManagerPtr)
     : ParentType(gridGeometry)
-    , couplingManagerPtr_(couplingManagerPtr)
+    , couplingManager_(couplingManagerPtr)
     , initPorosity_(getParam<Scalar>("SpatialParams.InitialPorosity"))
     {
         // Young's modulus [Pa]
@@ -88,7 +88,7 @@ public:
                                  const SubControlVolume& scv) const
     {
         // get porous medium flow volume variables from coupling manager
-        const auto pmFlowVolVars = couplingManager().getPMFlowVolVars(element);
+        const auto& pmFlowVolVars = couplingManager().getPMFlowVolVars(element);
         return pmFlowVolVars.density();
     }
 
@@ -102,7 +102,7 @@ public:
                                  const FluxVarsCache& fluxVarsCache) const
     {
         // get porous medium flow volume variables from coupling manager
-        const auto pmFlowVolVars = couplingManager().getPMFlowVolVars(element);
+        const auto& pmFlowVolVars = couplingManager().getPMFlowVolVars(element);
         return pmFlowVolVars.pressure();
     }
 
@@ -112,10 +112,10 @@ public:
 
     //! Returns reference to the coupling manager.
     const CouplingManager& couplingManager() const
-    { return *couplingManagerPtr_; }
+    { return *couplingManager_; }
 
 private:
-    std::shared_ptr<const CouplingManager> couplingManagerPtr_;
+    std::shared_ptr<const CouplingManager> couplingManager_;
     Scalar initPorosity_;
     LameParams lameParams_;
 };

@@ -113,11 +113,10 @@ public:
      */
     Scalar effectiveFluidDensityAtPos(const GlobalPosition& globalPos) const
     {
-        // This test uses the constant component, obtain density only once
-        static const Scalar rho = FluidSystem::density(
-            effectivePorePressureAtPos(globalPos), this->temperatureAtPos(globalPos)
+        return FluidSystem::density(
+            effectivePorePressureAtPos(globalPos),
+            this->temperatureAtPos(globalPos)
         );
-        return rho;
     }
 
     //! Returns the Biot coefficient of the porous medium.

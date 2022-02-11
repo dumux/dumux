@@ -27,7 +27,7 @@
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-// for helpers in detail namespace (TODO: Remove after deprecation period)
+// for helpers in detail namespace (TODO: Remove after deprecation period after release 3.5)
 #include "poroelastic/fvspatialparams.hh"
 
 namespace Dumux {
