@@ -27,35 +27,10 @@
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
+// for helpers in detail namespace (TODO: Remove after deprecation period after release 3.5)
+#include "poroelastic/fvspatialparams.hh"
+
 namespace Dumux {
-
-#ifndef DOXYGEN
-namespace Detail {
-// helper struct detecting if the user-defined problem class has an effectiveFluidDensityAtPos function
-// for g++ > 5.3, this can be replaced by a lambda
-template<class GlobalPosition>
-struct hasEffFluidDensityAtPos
-{
-    template<class Problem>
-    auto operator()(const Problem& a)
-    -> decltype(a.effectiveFluidDensityAtPos(std::declval<GlobalPosition>()))
-    {}
-};
-
-// helper struct detecting if the user-defined problem class has an effectivePorePressureAtPos function
-// for g++ > 5.3, this can be replaced by a lambda
-template<class GlobalPosition>
-struct hasEffPorePressureAtPos
-{
-    template<class Problem>
-    auto operator()(const Problem& a)
-    -> decltype(a.effectivePorePressureAtPos(std::declval<GlobalPosition>()))
-    {}
-};
-
-} // end namespace Detail
-#endif
-
 
 /*!
  * \ingroup Geomechanics
@@ -85,13 +60,18 @@ public:
     /*!
      * \brief Returns the effective fluid density within an scv.
      * \note This is only enabled if the model considers fluid phases.
+     * \note This is deprecated and moved into poroelastic/fvspatialparams
      *
      * \param element The current element
      * \param scv The sub-control volume
+     * \param deprecationHelper Helper to distinguish this interface from
+     *                          user-provided implementations.
      */
     template< int n = numFP, std::enable_if_t<(n > 0), int> = 0 >
+    [[deprecated("effectiveFluidDensity() is now defined in the spatial params. This interface will be removed after release 3.5.")]]
     Scalar effectiveFluidDensity(const Element& element,
-                                 const SubControlVolume& scv) const
+                                 const SubControlVolume& scv,
+                                 int deprecationHelper = 0) const
     {
         static_assert(decltype(isValid(Detail::hasEffFluidDensityAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
         "   Your problem class has to either implement\n\n"
@@ -111,17 +91,22 @@ public:
      *       for an integration point inside the element. Therefore,
      *       a flux variables cache object is passed to this function
      *       containing data on shape functions at the integration point.
+     * \note This is deprecated and moved into poroelastic/fvspatialparams
      *
      * \param element The current element
      * \param fvGeometry The local finite volume geometry
      * \param elemVolVars Primary/Secondary variables inside the element
      * \param fluxVarsCache Contains data on shape functions at the integration point
+     * \param deprecationHelper Helper to distinguish this interface from
+     *                          user-provided implementations.
      */
     template< class ElemVolVars, class FluxVarsCache, int n = numFP, std::enable_if_t<(n > 0), int> = 0 >
+    [[deprecated("effectivePorePressure() is now defined in the spatial params. This interface will be removed after release 3.5.")]]
     Scalar effectivePorePressure(const Element& element,
                                  const FVElementGeometry& fvGeometry,
                                  const ElemVolVars& elemVolVars,
-                                 const FluxVarsCache& fluxVarsCache) const
+                                 const FluxVarsCache& fluxVarsCache,
+                                 int deprecationHelper = 0) const
     {
         static_assert(decltype(isValid(Detail::hasEffPorePressureAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
         "   Your problem class has to either implement\n\n"
