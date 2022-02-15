@@ -39,7 +39,6 @@ namespace Dumux::PoreNetwork {
 #ifndef DOXYGEN
 namespace Detail {
 // helper struct detecting if the user-defined spatial params class has a materialLawParamsAtPos function
-// for g++ > 5.3, this can be replaced by a lambda
 template<class GlobalPosition>
 struct hasMaterialLawParamsAtPos
 {
@@ -50,7 +49,6 @@ struct hasMaterialLawParamsAtPos
 };
 
 // helper struct detecting if the user-defined spatial params class has a permeabilityAtPos function
-// for g++ > 5.3, this can be replaced by a lambda
 template<class GlobalPosition>
 struct hasPermeabilityAtPos
 {
