@@ -33,3 +33,6 @@ MaxRelativeShift = 1e-6
 
 [Vtk]
 WriteFaceData = false
+
+[SpatialParams]
+Temperature = 283.15

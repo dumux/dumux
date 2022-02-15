@@ -26,3 +26,6 @@ WriteFaceData = false
 
 [Flux]
 UpwindWeight = 0.5
+
+[SpatialParams]
+Temperature = 298.0

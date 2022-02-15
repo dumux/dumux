@@ -45,3 +45,6 @@ GMResRestart = 50
 Type = uzawa
 Verbosity = 1
 Iterations = 5
+
+[SpatialParams]
+Temperature = 298.0

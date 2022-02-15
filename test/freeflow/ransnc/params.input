@@ -32,3 +32,6 @@ NumericEpsilon.BaseEpsilon = 1e-8
 [Newton]
 MaxSteps = 8
 MaxRelativeShift = 1e-9
+
+[SpatialParams]
+Temperature = 283.15

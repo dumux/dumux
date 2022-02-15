@@ -22,3 +22,6 @@ AddVelocity = 1
 
 [Assembly]
 NumericDifference.BaseEpsilon =  1e-3
+
+[SpatialParams]
+Temperature = 293.15

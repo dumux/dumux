@@ -27,3 +27,6 @@ WriteFaceData = false
 
 [Flux]
 UpwindWeight = 0.5 # set to 0.5 for reproducing Ghia et al. (1982)
+
+[SpatialParams]
+Temperature = 283.15

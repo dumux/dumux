@@ -74,13 +74,6 @@ public:
     }
     // [[/codeblock]]
 
-    // #### Temperature distribution
-    // We need to specify a constant temperature for our isothermal problem.
-    // Fluid properties that depend on temperature will be calculated with this value.
-    // This would be important if another fluidsystem was used.
-    Scalar temperature() const
-    { return 273.15 + 10; } // 10°C
-
     // #### Boundary conditions
     // With the following function we define the __type of boundary conditions__ depending on the location.
     // Three types of boundary conditions can be specified: Dirichlet or Neumann boundary conditions. On
