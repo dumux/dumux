@@ -41,17 +41,8 @@ namespace Dumux {
  * except the top and bottom boundaries (Dirichlet), where water is
  * flowing from bottom to top.
  *
- * In the middle of the domain, a lens with low permeability (\f$K=10e-12\f$)
- * compared to the surrounding material (\f$ K=10e-10\f$) is defined.
- *
- * To run the simulation execute the following line in shell:
- * <tt>./test_box1p -parameterFile test_box1p.input</tt> or
- * <tt>./test_cc1p -parameterFile test_cc1p.input</tt>
- *
- * The same parameter file can be also used for 3d simulation but you need to change line
- * <tt>using type = Dune::YaspGrid<2>;</tt> to
- * <tt>using type = Dune::YaspGrid<3>;</tt> in the problem file
- * and use <tt>test_1p_3d.dgf</tt> in the parameter file.
+ * In the middle of the domain, a lens with low permeability
+ * compared to the surrounding material is defined.
  */
 template <class TypeTag>
 class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>

@@ -8,10 +8,10 @@ InjectionRate = 1e-3
 EnableGravity = false
 
 [PoroElastic.Problem]
-Name = poroelastic # name passed to the output routines
+Name = poroelastic
 
 [OneP.Problem]
-Name = onep # name passed to the output routines
+Name = onep
 
 [SpatialParams]
 Permeability = 1e-12 # [m^2]

@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test for the non-isothermal pore-network model with non-creeping flow
+ * \brief Test for the non-isothermal pore-network model with non-creeping flow
  */
 #include <config.h>
 

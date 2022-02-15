@@ -49,16 +49,8 @@ namespace Dumux {
  * temperature and on the right hand side a Dirichlet boundary with constant pressure,
  * saturation and temperature is applied.
  *
- * The results are compared to an analytical solution for a diffusion process:
-  \f[
-     T =T_{high} + (T_{init} - T_{high})erf \left(0.5\sqrt{\frac{x^2 S_{total}}{t \lambda_{eff}}}\right)
- \f]
- *
+ * The results are compared to an analytical solution for a diffusion process.
  * This problem uses the \ref OnePModel and \ref NIModel model.
- *
- * To run the simulation execute the following line in shell: <br>
- * <tt>./test_box1pniconduction -ParameterFile ./test_box1pniconduction.input</tt> or <br>
- * <tt>./test_cc1pniconduction -ParameterFile ./test_cc1pniconduction.input</tt>
  */
 template <class TypeTag>
 class OnePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
@@ -106,7 +98,13 @@ public:
         return temperatureExact_;
     }
 
-    //! Udpate the analytical temperature
+    /*!
+     * \brief Update the analytical temperature
+     * The results are compared to an analytical solution for a diffusion process:
+      \f[
+         T =T_{high} + (T_{init} - T_{high})erf \left(0.5\sqrt{\frac{x^2 S_{total}}{t \lambda_{eff}}}\right)
+      \f]
+     */
     void updateExactTemperature(const SolutionVector& curSol, Scalar time)
     {
         const auto someElement = *(elements(this->gridGeometry().gridView()).begin());

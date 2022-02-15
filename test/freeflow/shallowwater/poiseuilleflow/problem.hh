@@ -36,15 +36,10 @@ namespace Dumux {
  * \ingroup ShallowWaterTests
  * \brief A simple test for the 2D flow in a channel with rough side walls (Poiseuille flow).
  *
- * The domain has a length L =  400 meters long and a width W = 100 meters.
- * The domain extent is from (x,y) = (0.0, -50.0) to (400.0, 50.0), i.e. the channel centreline is at y = 0.
- * The bed level is sloped from z = -9.98 (x = 0) to z = -10.0 meters (x = L).
- * The initital water depth corresponds to the analytical solution:
- * having a slope equal to \f$ ib = d \Theta / L \f$ , where \f$ d \Theta \f$ is the water level difference between upstream and downstream: \f$ d \Theta \f$ = 0.02 m (positive downwards).
- * With L = 400 m, the slope is ib = 0.00005 m/m, resulting in a constant water depth along the channel of H = 10.0 m.
-
- * At the west/left  (inflow)  boundary a discharge is prescribed of \f$ Q_{in} = -408.75 m^3/s \f$ or \f$ q_{in} = 4.0875 m^2/s \f$ per meter.
- * At the east/right (outflow) boundary a fixed water level is prescribed of \f$ \Theta \f$ = 0.0 m.
+ * The initial water depth corresponds to the analytical solution:
+ * having a slope equal to \f$ ib = d \Theta / L \f$ , where \f$ d \Theta \f$ is the water level difference between upstream and downstream and \f$ L \f$ is the domain length.
+ * At the west/left  (inflow)  boundary a discharge is prescribed of \f$ Q_{in} \f$ or \f$ q_{in} \f$ per meter.
+ * At the east/right (outflow) boundary a fixed water level is prescribed of \f$ \Theta \f$.
  * The south and north boundaries are set to roughwall type boundaries,
  * with a coefficient alphaWall = 1.0, where:
  *      alphaWall = 0.0: full    slip (smooth wall)
@@ -74,12 +69,6 @@ namespace Dumux {
  * The velocity has a maximum value at y = 0:
   \f[
   u_{max} = \frac{g d \Theta W^2}{8 \nu_T L}
-  \f]
- *
- * Therefore \f$ u_{max} \f$ can be calculated to be:
- *
-  \f[
-  u_{max} = \frac{9.81*0.02*100^2}{8*0.1*400} = 6.13125 m/s
   \f]
  *
   The formula for \f$ u(y) \f$ is also used to calculate the analytic solution.

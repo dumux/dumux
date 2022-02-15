@@ -7,7 +7,7 @@ KeepPhysicalOverlap = true
 Refinement = 0
 
 [Problem]
-Name = test_donea # name passed to the output routines
+Name = test_donea
 EnableGravity = false
 EnableInertiaTerms = false
 UseNeumann = true

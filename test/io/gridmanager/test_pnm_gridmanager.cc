@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test for the pore network model grid creator
+ * \brief Test for the pore network model grid creator
  */
 #include "config.h"
 

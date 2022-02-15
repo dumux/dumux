@@ -38,8 +38,7 @@ namespace Dumux {
  * \ingroup ShallowWaterTests
  * \brief A wetting and drying test with sloshing water in a bowl.
  *
- * The domain is 4 meters long and 4 meters wide. The center of the domain is loacted at
- * x = 0 and y = 0. There is no flow over the boundaries and no friction is considered.
+ * There is no flow over the boundaries and no friction is considered.
  *
  * This example is demanding for the implicit model if a high mesh resolution is applied
  * (e.g. 150x150 cells) in combination with a large time step size. Using the new limiting
@@ -57,7 +56,7 @@ namespace Dumux {
  * in SWASHES (Shallow Water Analytic Solutions for Hydraulic and Environmental Studies,
  * https://www.idpoisson.fr/swashes/).
  *
- * This problem uses the \ref ShallowWaterModel
+ * This problem uses the \ref ShallowWaterModel.
  */
 template <class TypeTag>
 class BowlProblem : public ShallowWaterProblem<TypeTag>

@@ -8,7 +8,7 @@ PoreGeometry = Cube
 ThroatCrossSectionShape = Square
 
 [Problem]
-Name = test_pnm_1pni_noncreepingflow # name passed to the output routines
+Name = test_pnm_1pni_noncreepingflow
 Verbose = true
 InletPressure = 1e5
 OutletPressure = 0.9e5

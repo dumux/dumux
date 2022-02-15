@@ -16,7 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
+/*!
+ * \file
+ * \ingroup ShallowWaterTests
+ * \brief The properties for the Poiseuille flow problem.
+ */
 #ifndef DUMUX_POISEUILLE_FLOW_TEST_PROPERTIES_HH
 #define DUMUX_POISEUILLE_FLOW_TEST_PROPERTIES_HH
 
@@ -36,6 +40,11 @@
 
 namespace Dumux::Properties {
 
+/*!
+ * \ingroup ShallowWaterTests
+ * \brief The properties for the Poiseuille flow problem test.
+ *
+ */
 namespace TTag {
 struct PoiseuilleFlow { using InheritsFrom = std::tuple<ShallowWater, CCTpfaModel>; };
 } // namespace TTag

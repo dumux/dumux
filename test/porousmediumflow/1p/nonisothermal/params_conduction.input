@@ -10,15 +10,15 @@ Cells = 200 1
 
 [Problem]
 Name = 1pnifv_conduction # name passed to the output routines
-OutputInterval = 5 # every 5th timestep an output file is written
+OutputInterval = 5 # every n-th timestep an output file is written
 DarcyVelocity = 1e-4 # [m/s] inflow at the left boundary
-EnableGravity = false # disable gravity
+EnableGravity = false
 
 [Vtk]
-AddVelocity = true # enable velocity output
+AddVelocity = true
 
 [MpfaTest.Vtk]
-AddVelocity = false # enable velocity output
+AddVelocity = false
 
 [Component]
 SolidDensity = 2700

@@ -33,7 +33,7 @@ namespace Dumux {
 /*!
  * \ingroup PoromechanicsTests
  * \brief Definition of the spatial parameters for the poro-elastic
- *        sub-problem in the coupled poro-mechanical el1p problem.
+ *        sub-problem in the coupled poro-mechanical el2p problem.
  */
 template<class Scalar, class GridGeometry, class CouplingManager, class FluidSystem>
 class PoroElasticSpatialParams : public FVPoroElasticSpatialParams< GridGeometry,

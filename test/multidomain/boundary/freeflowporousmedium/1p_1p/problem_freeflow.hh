@@ -89,8 +89,6 @@ public:
 
     /*!
      * \brief Returns the temperature within the domain in [K].
-     *
-     * This problem assumes a temperature of 10 degrees Celsius.
      */
     Scalar temperature() const
     { return 298.0; }

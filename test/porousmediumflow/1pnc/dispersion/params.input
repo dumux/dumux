@@ -22,7 +22,7 @@ DispersionTensor = 1e-7
 UseLineSearch = true
 
 [Vtk]
-AddVelocity = 1 # enable velocity output
+AddVelocity = true
 
 [Component]
 SolidDensity = 2700

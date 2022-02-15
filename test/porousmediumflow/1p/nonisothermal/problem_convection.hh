@@ -51,17 +51,8 @@ namespace Dumux {
  * On the left hand side water is injected at a constant rate and on the right hand side
  * a Dirichlet boundary with constant pressure, saturation and temperature is applied.
  *
- * The results are compared to an analytical solution where a retarded front velocity is calculated as follows:
-  \f[
-     v_{Front}=\frac{q S_{water}}{\phi S_{total}}
- \f]
- *
  * The result of the analytical solution is written into the vtu files.
  * This problem uses the \ref OnePModel and \ref NIModel model.
- *
- * To run the simulation execute the following line in shell: <br>
- * <tt>./test_box1pniconvection -ParameterFile ./test_box1pniconvection.input</tt> or <br>
- * <tt>./test_cc1pniconvection -ParameterFile ./test_cc1pniconvection.input</tt>
  */
 template <class TypeTag>
 class OnePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
@@ -126,7 +117,13 @@ public:
         return temperatureExact_;
     }
 
-    //! Udpate the analytical temperature
+    /*!
+     * \brief Update the analytical temperature
+     * The results are compared to an analytical solution where a retarded front velocity is calculated as follows:
+      \f[
+         v_{Front}=\frac{q S_{water}}{\phi S_{total}}
+      \f]
+     */
     void updateExactTemperature(const SolutionVector& curSol, Scalar time)
     {
         const auto someElement = *(elements(this->gridGeometry().gridView()).begin());

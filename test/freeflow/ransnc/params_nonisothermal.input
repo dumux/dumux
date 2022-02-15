@@ -11,7 +11,7 @@ Cells1 = 20
 Grading1 = 1.4
 
 [Problem]
-Name = test_ff_rans2cni # name passed to the output routines
+Name = test_ff_rans2cni
 InletVelocity = 0.1 # [m/s]
 EnableGravity = false
 

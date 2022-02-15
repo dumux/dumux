@@ -40,10 +40,6 @@ namespace Dumux {
  * The domain is box shaped. All sides have Dirichlet boundary conditions.
  *
  * In the middle of the domain, water is injected simulating a small diameter well.
- *
- * To run the simulation execute the following line in shell:
- * <tt>./test_box1p_pointsources</tt> or
- * <tt>./test_cc1p_pointsources</tt>
  */
 template <class TypeTag>
 class OnePSingularityProblem : public PorousMediumFlowProblem<TypeTag>

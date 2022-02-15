@@ -11,11 +11,11 @@ Cells = 200 1
 
 [Problem]
 Name = test_1p2cni_conduction # name passed to the output routines
-OutputInterval = 5 # every 5th timestep an output file is written
-EnableGravity = 0 # disable gravity
+OutputInterval = 5 # every n-th timestep an output file is written
+EnableGravity = false
 
 [Vtk]
-AddVelocity = 1 # enable velocity output
+AddVelocity = true
 
 [Component]
 SolidDensity = 2700

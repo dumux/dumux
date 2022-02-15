@@ -8,7 +8,7 @@ UpperRight = 1 1
 Cells = 50 50
 
 [Problem]
-Name = test_angeli # name passed to the output routines
+Name = test_angeli
 EnableGravity = false
 PrintErrors = false
 EnableInertiaTerms = true

@@ -2,7 +2,7 @@
 File = periodic.dgf
 
 [Problem]
-Name = test_kovasznay # name passed to the output routines
+Name = test_kovasznay
 EnableGravity = true
 PrintL2Error = false
 EnableInertiaTerms = true

@@ -46,7 +46,7 @@ namespace Dumux {
  * Dry air is entering from the left side and flows above a 1-D a flat plate.
  * In the middle of the inlet, water vapor is injected, which spreads by turbulent diffusion.
  * For the non-isothermal model the bottom has a constant temperature
- * which is \f$ \unit[30]{K} \f$ higher than the initial and inlet temperature.
+ * which is higher than the initial and inlet temperature.
  */
 template <class TypeTag>
 class FlatPlateNCTestProblem : public RANSProblem<TypeTag>

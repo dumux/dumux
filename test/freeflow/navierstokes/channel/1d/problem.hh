@@ -39,10 +39,6 @@ namespace Dumux {
 /*!
  * \ingroup NavierStokesTests
  * \brief Test for the 1-D Navier-Stokes model with an analytical solution.
- *
- * The 1-D analytic solution is given by
- * \f[ p = 2 - 2 \cdot x \f]
- * \f[ v_\text{x} = 2 \cdot x^3 \f].
  */
 template <class TypeTag>
 class NavierStokesAnalyticProblem : public NavierStokesProblem<TypeTag>
@@ -79,8 +75,6 @@ public:
 
    /*!
      * \brief Returns the temperature within the domain in [K].
-     *
-     * This problem assumes a temperature of 10 degrees Celsius.
      */
     Scalar temperature() const
     { return 298.0; }
