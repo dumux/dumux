@@ -80,13 +80,8 @@ public:
     const std::string& name() const
     { return problemName_; }
 
-    /*!
-     * \brief Returns the temperature within the domain in [K].
-     */
-    Scalar temperature() const
-    { return 298.0; }
-
     // \}
+
     /*!
      * \name Boundary conditions
      */

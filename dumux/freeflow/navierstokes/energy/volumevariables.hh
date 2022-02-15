@@ -28,6 +28,7 @@
 
 #include <type_traits>
 #include <dune/common/std/type_traits.hh>
+#include <dumux/common/deprecated.hh>
 
 namespace Dumux {
 

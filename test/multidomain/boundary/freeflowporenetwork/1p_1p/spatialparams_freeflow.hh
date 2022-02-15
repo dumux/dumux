@@ -25,7 +25,7 @@
 #ifndef DUMUX_CHANNEL_SPATIAL_PARAMS_HH
 #define DUMUX_CHANNEL_SPATIAL_PARAMS_HH
 
-#include <dumux/common/fvspatialparams.hh>
+#include <dumux/freeflow/spatialparams.hh>
 
 namespace Dumux {
 
@@ -35,9 +35,9 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class ChannelSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar, FreeFlowSpatialParams<GridGeometry, Scalar>>
+: public FreeFlowSpatialParams<GridGeometry, Scalar, ChannelSpatialParams<GridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, FreeFlowSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = FreeFlowSpatialParams<GridGeometry, Scalar, ChannelSpatialParams<GridGeometry, Scalar>>;
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;

@@ -74,7 +74,6 @@ public:
     {
         inletVelocity_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Velocity");
         pressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Pressure");
-        temperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Temperature");
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
     }
 
@@ -90,12 +89,6 @@ public:
      * \name Problem parameters
      */
     // \{
-
-   /*!
-     * \brief Returns the temperature within the domain in [K].
-     */
-    Scalar temperature() const
-    { return temperature_; }
 
    /*!
      * \brief Returns the sources within the domain.
@@ -241,7 +234,6 @@ private:
     Scalar eps_;
     Scalar inletVelocity_;
     Scalar pressure_;
-    Scalar temperature_;
     std::string problemName_;
     std::shared_ptr<CouplingManager> couplingManager_;
 };

@@ -40,3 +40,6 @@ MaxRelativeShift = 1e-10
 
 [Assembly]
 NumericDifference.BaseEpsilon = 1e-8
+
+[SpatialParams]
+Temperature = 283.15

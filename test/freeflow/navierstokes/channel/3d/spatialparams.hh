@@ -62,6 +62,13 @@ public:
     }
 
     /*!
+     * \brief Return the temperature in the domain at the given position
+     * \param globalPos The position in global coordinates where the temperature should be specified.
+     */
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    { return 283.15; }
+
+    /*!
      * \brief Return how much the domain is extruded at a given sub-control volume.
      */
     template<class ElementSolution>

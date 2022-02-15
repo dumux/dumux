@@ -27,6 +27,9 @@ WriteFaceData = false
 [Assembly]
 NumericDifference.BaseEpsilon =  1e-3
 
+[SpatialParams]
+Temperature = 283.15
+
 # This test does actually not require setting the primary variable magnitues.
 # This rather serves as a demonstration of how to use the feature.
 # [CellCenter.Assembly]

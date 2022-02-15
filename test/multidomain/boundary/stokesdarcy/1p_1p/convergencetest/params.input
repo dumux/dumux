@@ -32,3 +32,6 @@ NumericDifference.BaseEpsilon = 1e-4
 
 [FreeFlow.Flux]
 UpwindWeight = 0.5
+
+[SpatialParams]
+Temperature = 283.15
