@@ -36,7 +36,6 @@ namespace Dumux {
 namespace Detail {
 
 // helper struct detecting if the user-defined problem class has an effectiveFluidDensityAtPos function
-// for g++ > 5.3, this can be replaced by a lambda
 template<class GlobalPosition>
 struct hasEffFluidDensityAtPos
 {
@@ -47,7 +46,6 @@ struct hasEffFluidDensityAtPos
 };
 
 // helper struct detecting if the user-defined problem class has an effectivePorePressureAtPos function
-// for g++ > 5.3, this can be replaced by a lambda
 template<class GlobalPosition>
 struct hasEffPorePressureAtPos
 {
