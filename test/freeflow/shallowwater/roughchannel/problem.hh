@@ -38,7 +38,7 @@ namespace Dumux {
  * \ingroup ShallowWaterTests
  * \brief A simple flow in a rough channel with friction law after Manning.
  *
- * The domain is 500 meters long and 5 meters wide. At the left border a discharge
+ * At the left border a discharge
  * boundary condition is applied and at the right border a water depth boundary condition.
  * All other boundaries are set to no-flow. Normal flow is assumed, therefor the water depth
  * at the right border can be calculated with the formular of Gaukler-Manning-Strickler.

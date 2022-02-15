@@ -10,7 +10,7 @@ Cells0 = 10
 Cells1 = 5
 
 [Problem]
-Name = test_ff_rans2c # name passed to the output routines
+Name = test_ff_rans2c
 InletVelocity = 0.1 # [m/s]
 WallTemperature = 313.15
 InletTemperature = 283.15

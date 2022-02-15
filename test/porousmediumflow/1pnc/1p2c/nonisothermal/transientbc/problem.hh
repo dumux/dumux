@@ -55,10 +55,6 @@ namespace Dumux {
  * The result of the analytical solution is written into the vtu files.
  *
  * This problem uses the \ref OnePModel and \ref NIModel model.
- *
- * To run the simulation execute the following line in shell: <br>
- * <tt>./test_box1p2cniconvection -ParameterFile ./test_box1p2cniconvection.input</tt> or <br>
- * <tt>./test_cc1p2cniconvection -ParameterFile ./test_cc1p2cniconvection.input</tt>
  */
 
 template <class TypeTag>

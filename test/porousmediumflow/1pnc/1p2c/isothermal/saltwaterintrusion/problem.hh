@@ -39,10 +39,8 @@ namespace Dumux {
  * \brief Definition of a problem involving salt water intrusion into a
  *        fresh water aquifer.
  *
- * The aquifer is in contact with salt water with a salinity of 0.03 on the
+ * The aquifer is in contact with salt water with a specific salinity on the
  * right boundary.
- * \note To run the simulation execute the following line in shell:
- * <tt>./test_saltwaterintrusion -parameterFile saltwaterintrusion.input</tt> or
  */
 template <class TypeTag>
 class SaltWaterIntrusionTestProblem : public PorousMediumFlowProblem<TypeTag>

@@ -9,7 +9,7 @@ Cells = 20 5
 
 [Problem]
 Name = saltwaterintrusion # name passed to the output routines
-EnableGravity = true # enable gravity
+EnableGravity = true
 
 [Vtk]
-AddVelocity = true # enable velocity output
+AddVelocity = true

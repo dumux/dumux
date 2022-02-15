@@ -10,7 +10,7 @@ BoundaryFaceMarker = 1 1 1 1 2 1
 PriorityList = 4 5 0 1 2 3
 
 [Problem]
-Name = test_pnm_1p_gravity # name passed to the output routines
+Name = test_pnm_1p_gravity
 InletPressure = 1e5
 OutletPressure = 0.9e5
 EnableGravity = true

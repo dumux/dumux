@@ -36,27 +36,17 @@
 namespace Dumux {
 
 /*!
- * \ingroup ShallowWaterTests
- * \brief A simple dam break test for the shallow water equations
- */
-
-/*!
  * \ingroup Shallow water equations model
  * \ingroup ImplicitTestProblems
  *
  * \brief A simple dam break test (1D wet dam break).
  *
- * The domain is 20 meters long with a gate in the middle. On the left
- * side the water depth is 4 meters and on the right side the depth is 1 meter.
+ * The domain is a long rectangle with a gate in the middle. On the left
+ * side the water depth is larger than on the right side.
  * All boundaries are set to no-flow.
  *
- * This problem uses the \ref ShallowWaterModel
+ * This problem uses the \ref ShallowWaterModel.
  *
- * To run the simulation execute the following line in shell:
- * <tt>./test_shallowwater -parameterFile test_shallowwater.input -TimeManager.TEnd 10</tt>
- *
- * where the initial time step is 0.01 seconds, and the end of the
- * simulation time is 10 seconds
  */
 template <class TypeTag>
 class DamBreakProblem : public ShallowWaterProblem<TypeTag>

@@ -44,22 +44,17 @@ namespace Dumux {
  * Nitrogen is dissolved in the water phase and is transported with the
  * water flow from the left side to the right.
  *
- * The model domain is 1m times 1m with a discretization length of 0.05m
- * and homogeneous soil properties (\f$ \mathrm{K=10e-10, \Phi=0.4, \tau=0.28}\f$).
+ * The model domain is specified in the input file and
+ * we use homogeneous soil properties.
  * Initially, the domain is filled with pure water.
  *
- * At the left side, a Dirichlet condition defines a nitrogen mole fraction
- * of 0.3mol/mol.
- * The water phase flows from the left side to the right due to the applied pressure
- * gradient of 1e5Pa/m. The nitrogen is transported with the water flow
- * and leaves the domain at the right boundary, where again Dirichlet boundary
- * conditions are applied. Here, the nitrogen mole fraction is set to 0.0mol/mol.
+ * At the left side, a Dirichlet condition defines a nitrogen mole fraction.
+ * The water phase flows from the left side to the right if the applied pressure
+ * gradient is >0. The nitrogen is transported with the water flow
+ * and leaves the domain at theboundary, where again Dirichlet boundary
+ * conditions are applied.
  *
  * This problem uses the \ref OnePNCModel model.
- *
- * To run the simulation execute the following line in shell:
- * <tt>./test_box1pnc -parameterFile ./test_box1pnc.input</tt> or
- * <tt>./test_cc1pnc -parameterFile ./test_cc1pnc.input</tt>
  */
 template <class TypeTag>
 class OnePNCDispersionProblem : public PorousMediumFlowProblem<TypeTag>

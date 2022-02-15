@@ -9,11 +9,11 @@ Cells = 20 2
 
 [Problem]
 Name = outflowtest # name passed to the output routines
-EnableGravity = 0 # disable gravity
+EnableGravity = false
 UseNitscheTypeBc = true
 
 [Newton]
 UseLineSearch = true
 
 [Vtk]
-AddVelocity = 1 # enable velocity output
+AddVelocity = true

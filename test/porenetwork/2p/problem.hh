@@ -120,7 +120,7 @@ public:
     }
 
 
-    //! Evaluate the boundary conditions for a dirichlet control volume.
+    //! Evaluate the boundary conditions for a Dirichlet control volume.
     PrimaryVariables dirichlet(const Element& element,
                                const SubControlVolume& scv) const
     {

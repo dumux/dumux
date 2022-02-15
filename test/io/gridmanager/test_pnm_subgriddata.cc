@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test for subgrid data wrapper
+ * \brief Test for subgrid data wrapper
  */
 #include "config.h"
 

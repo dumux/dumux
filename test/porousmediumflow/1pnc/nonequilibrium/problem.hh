@@ -41,18 +41,14 @@ namespace Dumux {
  * \ingroup OnePNCTests
  * \brief Definition of a problem, for the 1pnc problem.
  *
- * The model domain is 1m times 1m with a discretization length of 0.05m
- * and homogeneous soil properties (\f$ \mathrm{K=10e-11, \Phi=0.4}\f$).
- * Initially, the domain is filled with water and a small nitrogen fraction
+ * The model domain is specified in the input file and
+ * we use homogeneous soil properties.
+ * Initially, the domain is filled with water and a specified nitrogen fraction
  *
  * At the right side warmer water is injected via a Neumann boundary and at the left side
  * Dirichlet values are set to the inital conditions.
  *
  * This problem uses the \ref OnePNCModel model.
- *
- * To run the simulation execute the following line in shell:
- * <tt>./test_1p2c_nonequilibrium_box params.input</tt> or
- * <tt>./test_1p2c_nonequilibrium_tpfa params.input</tt>
  */
 template <class TypeTag>
 class OnePTwoCThermalNonequilibriumProblem : public PorousMediumFlowProblem<TypeTag>

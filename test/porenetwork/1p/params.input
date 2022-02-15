@@ -4,7 +4,7 @@ PoreGeometry = Cube
 ThroatCrossSectionShape = Square
 
 [Problem]
-Name = test_pnm_1p # name passed to the output routines
+Name = test_pnm_1p
 InletPressure = 1e5
 OutletPressure = 0.9e5
 EnableGravity = false

@@ -9,11 +9,11 @@ Cells = 200 1
 
 [Problem]
 Name = test_1p2c_nonequilibrium # name passed to the output routines
-EnableGravity = 0 # disable gravity
+EnableGravity = false
 DarcyVelocity = 1e-4 # [m/s] inflow at the left boundary
 
 [Vtk]
-AddVelocity = 1 # enable velocity output
+AddVelocity = true
 
 [Component]
 SolidDensity = 2700

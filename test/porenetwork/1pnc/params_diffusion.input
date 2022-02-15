@@ -8,7 +8,7 @@ PoreGeometry = Cube
 ThroatCrossSectionShape = Square
 
 [Problem]
-Name = test_pnm_1p2c_diffusion # name passed to the output routines
+Name = test_pnm_1p2c_diffusion
 Verbose = true
 InletPressure = 1e5
 OutletPressure = 1e5

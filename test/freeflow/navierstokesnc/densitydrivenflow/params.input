@@ -8,7 +8,7 @@ UpperRight = 1 1
 Cells = 40 40
 
 [Problem]
-Name = test_densitydrivenflow # name passed to the output routines
+Name = test_densitydrivenflow
 EnableGravity = true
 EnableInertiaTerms = false
 UseWholeLength = false

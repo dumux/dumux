@@ -7,7 +7,7 @@ UpperRight = 0.5 0.025
 Cells = 100 50
 
 [Problem]
-Name = test_channel_stokesni_convection # name passed to the output routines
+Name = test_channel_stokesni_convection
 InletVelocity = 1e-2
 EnableGravity = false
 EnableInertiaTerms = false

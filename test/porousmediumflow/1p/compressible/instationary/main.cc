@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup OnePTests
- * \brief test for the one-phase CC model
+ * \brief Test for the one-phase CC model
  */
 
 #include <config.h>

@@ -7,7 +7,7 @@ UpperRight = 5 1
 Cells = 50 10
 
 [Problem]
-Name = test_stokes2cni_diffusion # name passed to the output routines
+Name = test_stokes2cni_diffusion
 InletVelocity = 0
 EnableGravity = false
 

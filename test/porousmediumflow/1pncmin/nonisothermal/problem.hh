@@ -45,9 +45,6 @@ namespace Dumux {
  *
  * The boundary conditions of the batch test are such, that there are no gradients
  * for temperature, pressure and gas water concentration within the reactor.
- *
- * To run the simulation execute the following line in shell:
- * <tt>./test_1pncminni_box -ParameterFile </tt>
  * The test only runs for the box discretization.
  */
 template <class TypeTag>

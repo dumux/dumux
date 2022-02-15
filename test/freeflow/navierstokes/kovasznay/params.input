@@ -4,7 +4,7 @@ UpperRight = 2 1.5
 Cells = 50 50
 
 [Problem]
-Name = test_kovasznay # name passed to the output routines
+Name = test_kovasznay
 EnableGravity = false
 PrintErrors = false
 EnableInertiaTerms = true

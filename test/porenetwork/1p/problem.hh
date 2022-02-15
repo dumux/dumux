@@ -85,10 +85,10 @@ public:
     }
 
         /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
+     * \brief Evaluate the boundary conditions for a Dirichlet
      *        control volume.
      *
-     * \param values The dirichlet values for the primary variables
+     * \param values The Dirichlet values for the primary variables
      * \param vertex The vertex (pore body) for which the condition is evaluated
      *
      * For this method, the \a values parameter stores primary variables.

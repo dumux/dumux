@@ -37,9 +37,6 @@ namespace Dumux {
 /*!
  * \ingroup OnePTests
  * \brief  Test problem for the compressible one-phase model.
- *
- * Can be run as <tt>./test_box1pfv</tt> or
- * <tt>./test_cc1pfv</tt>
  */
 template<class TypeTag>
 class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>

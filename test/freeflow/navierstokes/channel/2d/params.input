@@ -7,7 +7,7 @@ UpperRight = 10 1
 Cells = 100 50
 
 [Problem]
-Name = test_channel_stokes # name passed to the output routines
+Name = test_channel_stokes
 InletVelocity = 1
 EnableGravity = false
 EnableInertiaTerms = false

@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test for the non-isothermal 1p pore-network model
+ * \brief Test for the non-isothermal 1p pore-network model
  */
 #include <config.h>
 

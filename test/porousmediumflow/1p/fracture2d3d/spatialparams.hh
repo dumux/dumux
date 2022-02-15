@@ -58,7 +58,7 @@ public:
     {}
 
     /*!
-     * \brief Returns the scalar intrinsic permeability \f$[m^2]\f$
+     * \brief Returns the scalar intrinsic permeability \f$[m^2]\f$.
      *
      * \param globalPos The global position
      */
@@ -66,7 +66,7 @@ public:
     { return 1e-12; }
 
     /*!
-     * \brief Returns the porosity \f$[-]\f$
+     * \brief Returns the porosity \f$[-]\f$.
      *
      * \param globalPos The global position
      */
