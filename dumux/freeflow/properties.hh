@@ -61,7 +61,7 @@ struct SpatialParams<TypeTag, TTag::FreeFlow>
 {
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FreeFlowSpatialParams<GridGeometry, Scalar>;
+    using type = FreeFlowDefaultSpatialParams<GridGeometry, Scalar>;
 };
 
 } // namespace Properties

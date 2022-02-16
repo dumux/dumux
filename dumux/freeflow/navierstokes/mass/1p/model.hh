@@ -228,7 +228,7 @@ struct SpatialParams<TypeTag, TTag::NavierStokesMassOneP>
 {
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FreeFlowSpatialParams<GridGeometry, Scalar>;
+    using type = FreeFlowDefaultSpatialParams<GridGeometry, Scalar>;
 };
 ///////////////////////////////////////////////////////////////////////////
 // Properties for the non-isothermal single phase model
