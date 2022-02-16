@@ -108,7 +108,7 @@ public:
                               const Element &element,
                               const SubControlVolume &scv)
     {
-        return problem.temperatureAtPos(scv.dofPosition());
+        return Deprecated::temperature(problem, element, scv, elemSol);
     }
 
     //! The phase enthalpy is zero for isothermal models

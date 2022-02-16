@@ -82,7 +82,7 @@ public:
         if constexpr (enableEnergyBalance)
             return elemSol[scv.localDofIndex()][Traits::ModelTraits::Indices::temperatureIdx];
         else
-            return problem.temperatureAtPos(scv.dofPosition());
+            return Deprecated::temperature(problem, element, scv, elemSol);
     }
 
 

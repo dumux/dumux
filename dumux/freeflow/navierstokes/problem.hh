@@ -629,13 +629,15 @@ public:
      *
      * \param globalPos The position in global coordinates where the temperature should be specified.
      */
-    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    [[deprecated("temperature should now be defined in the spatial params with temperature(globalPos)")]]
+    Scalar temperatureAtPos(const GlobalPosition& globalPos, int deprecationHelper = 0) const
     { return asImp_().temperature(); }
 
     /*!
      * \brief Returns the temperature within the domain.
      */
-    Scalar temperature() const
+    [[deprecated("temperature should now be defined in the spatial params with temperature(globalPos)")]]
+    Scalar temperature(int deprecationHelper = 0) const
     {
         DUNE_THROW(Dune::NotImplemented, "temperature() method not implemented by the actual problem");
     }
@@ -727,7 +729,8 @@ public:
      *
      * \param globalPos The position in global coordinates where the temperature should be specified.
      */
-    Scalar temperatureAtPos(const GlobalPosition &globalPos) const
+    [[deprecated("temperature should now be defined in the spatial params with temperature(globalPos)")]]
+    Scalar temperatureAtPos(const GlobalPosition &globalPos, int deprecationHelper = 0) const
     { return asImp_().temperature(); }
 
     /*!
@@ -735,7 +738,8 @@ public:
      *
      * This method MUST be overwritten by the actual problem.
      */
-    Scalar temperature() const
+    [[deprecated("temperature should now be defined in the spatial params with temperature(globalPos)")]]
+    Scalar temperature(int deprecationHelper = 0) const
     { DUNE_THROW(Dune::NotImplemented, "temperature() method not implemented by the actual problem"); }
 
     /*!
