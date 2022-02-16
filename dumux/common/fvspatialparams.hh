@@ -107,12 +107,18 @@ public:
      */
     Scalar temperatureAtPos(const GlobalPosition& globalPos) const
     {
-        static const Scalar defaultTemperature = [] () {
-            const Scalar defaultTemp = 293.15; // 20°C
-            std::cout << " -- Using the default temperature of " << defaultTemp << " in the entire domain. "
-                      << "Overload temperatureAtPos() in your spatial params class to define a custom temperature field."
-                      << std::endl;
-            return defaultTemp;
+        static const Scalar defaultTemperature = [] ()
+        {
+            Scalar defaultTemp = 293.15; // 20°C
+            if (!hasParam("SpatialParams.Temperature"))
+            {
+                std::cout << " -- Using the default temperature of " << defaultTemp << " in the entire domain. "
+                          << "Overload temperatureAtPos() in your spatial params class to define a custom temperature field."
+                          << "Or provide the preferred domain temperature via the SpatialParams.Temperature parameter."
+                          << std::endl;
+            }
+            const Scalar temperature = getParam<Scalar>("SpatialParams.Temperature", defaultTemp);
+            return temperature;
         } ();
 
         return defaultTemperature;
