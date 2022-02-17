@@ -51,11 +51,15 @@ public:
 
     void newtonBegin(Variables &vars)
     {
-        auto& gridVariables = this->assembler().gridVariables();
-        auto& invasionState = gridVariables.gridFluxVarsCache().invasionState();
-        auto& uCurrentIter = Backend::dofs(vars);
-        invasionState.updateForFirstStep(uCurrentIter, gridVariables.curGridVolVars(),
-                                         gridVariables.gridFluxVarsCache());
+        auto upwindNewtonInitial = getParam<bool>("Newton.UpwindInitial", false);
+        if (upwindNewtonInitial)
+        {
+            auto& gridVariables = this->assembler().gridVariables();
+            auto& invasionState = gridVariables.gridFluxVarsCache().invasionState();
+            auto& uCurrentIter = Backend::dofs(vars);
+            invasionState.updateForFirstStep(uCurrentIter, gridVariables.curGridVolVars(),
+                                         gridVariables.gridFluxVarsCache(), preIndex_);
+        }
         ParentType::newtonBegin(vars);
     }
 
@@ -65,15 +69,16 @@ public:
      * \param uCurrentIter The current global solution vector
      * \param uLastIter The previous global solution vector
      */
-     void newtonEndStep(SolutionVector &uCurrentIter,
-                        const SolutionVector &uLastIter) final
+     void newtonEnd(SolutionVector &uCurrentIter,
+                    const SolutionVector &uLastIter) final
     {
         // call the method of the base class
-        ParentType::newtonEndStep(uCurrentIter, uLastIter);
+        ParentType::newtonEnd(uCurrentIter, uLastIter);
 
         auto& gridVariables = this->assembler().gridVariables();
         auto& invasionState = gridVariables.gridFluxVarsCache().invasionState();
-        switchedInLastIteration_ = invasionState.update(uCurrentIter, gridVariables.curGridVolVars(), gridVariables.gridFluxVarsCache());
+
+        invasionState.update(uCurrentIter, gridVariables.curGridVolVars(), gridVariables.gridFluxVarsCache());
 
         // If the solution is about to be accepted, check for accuracy and trigger a retry
         // with a decreased time step size if necessary.
@@ -91,7 +96,8 @@ public:
      */
     bool newtonConverged() const final
     {
-        if (switchedInLastIteration_)
+        //!TODO: last iteration not chopped
+        if (lastIterationWasChopped_)
             return false;
 
         return ParentType::newtonConverged();
@@ -108,18 +114,83 @@ public:
         gridVariables.gridFluxVarsCache().invasionState().reset();
     }
 
-    /*!
-     * \brief Called if the Newton method ended successfully
-     * This method is called _after_ newtonEnd() and advances the invasion state.
-     */
+    // /*!
+    //  * \brief Called if the Newton method ended successfully
+    //  * This method is called _after_ newtonEnd() and advances the invasion state.
+    //  */
     void newtonSucceed() final
     {
         auto& gridVariables = this->assembler().gridVariables();
         gridVariables.gridFluxVarsCache().invasionState().advance();
     }
 
+    void setIndex(std::vector<bool> poreindex)
+    { preIndex_ = poreindex; }
+
 private:
+
+    /*!
+     * \brief Update the current solution of the Newton method
+     *
+     * \param varsCurrentIter The variables after the current Newton iteration \f$ u^{k+1} \f$
+     * \param uLastIter The solution after the last Newton iteration \f$ u^k \f$
+     * \param deltaU The vector of differences between the last
+     *               iterative solution and the next one \f$ \Delta u^k \f$
+     */
+    void choppedUpdate_(Variables &varsCurrentIter,
+                        const SolutionVector &uLastIter,
+                        const SolutionVector &deltaU) final
+    {
+        auto uCurrentIter = uLastIter;
+        uCurrentIter -= deltaU;
+
+        // do not clamp anything after 5 iterations
+        if (this->numSteps_ <= 4)
+        {
+            // clamp saturation change to at most 20% per iteration
+            const auto& gridGeometry = this->assembler().gridGeometry();
+            auto fvGeometry = localView(gridGeometry);
+            for (const auto& element : elements(gridGeometry.gridView()))
+            {
+                fvGeometry.bindElement(element);
+
+                for (auto&& scv : scvs(fvGeometry))
+                {
+                    auto dofIdxGlobal = scv.dofIndex();
+
+                    // calculate the old wetting phase saturation
+                    const auto& spatialParams = this->assembler().problem().spatialParams();
+                    const auto elemSol = elementSolution(element, uCurrentIter, gridGeometry);
+
+                    const auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
+                    const double pw = uLastIter[dofIdxGlobal][0];
+                    const double SnOld = uLastIter[dofIdxGlobal][1];
+                    const double SwOld = 1.0 - SnOld;
+                    const double pcOld = fluidMatrixInteraction.pc(SwOld);
+                    const double pn = pcOld + pw;
+
+                    // convert into minimum and maximum wetting phase pressures
+                    const double pwMin = pn - fluidMatrixInteraction.pc(SwOld - 0.1);
+                    const double pwMax = pn - fluidMatrixInteraction.pc(SwOld + 0.1);
+
+                    // clamp the result
+                    using std::clamp;
+                    uCurrentIter[dofIdxGlobal][0] = clamp(uCurrentIter[dofIdxGlobal][0], pwMin, pwMax);
+                    uCurrentIter[dofIdxGlobal][1] = clamp(uCurrentIter[dofIdxGlobal][1], (SnOld - 0.1), (SnOld + 0.1));
+                }
+            }
+        }
+
+        // update the variables
+        this->solutionChanged_(varsCurrentIter, uCurrentIter);
+
+        if (this->enableResidualCriterion())
+            this->computeResidualReduction_(varsCurrentIter);
+    }
+
+    bool lastIterationWasChopped_ = false;
     bool switchedInLastIteration_{false};
+    std::vector<bool> preIndex_; // return the pore indicies which are predicted to be invaded
 };
 
 } // end namespace Dumux::PoreNetwork
