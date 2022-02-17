@@ -330,6 +330,22 @@ struct BakkeOren
         return result;
     }
 
+    template<class Element, class FVElementGeometry, class FluxVariablesCache>
+    static Scalar entryIntervalNonWettingPhaseTransmissibility(const Element& element,
+                                                               const FVElementGeometry& fvGeometry,
+                                                               const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                                               const FluxVariablesCache& fluxVarsCache)
+    {
+        // Tora et al. (2012), quite close for single-phase value of square
+        using std::sqrt;
+        const Scalar throatLength = fluxVarsCache.throatLength();
+        const auto nPhaseIdx = fluxVarsCache.nPhaseIdx();
+        const Scalar aNwCrit = fluxVarsCache.intervalNonWettingCrossSectionalEntry();
+        const Scalar rEff = 0.5*(sqrt(aNwCrit / M_PI) + fluxVarsCache.throatInscribedRadius());
+        const Scalar result = rEff*rEff*aNwCrit / (8.0*throatLength);
+        return result;
+    }
+
     /*!
     * \brief Returns the conductivity of a throat at snap-off pressure.
     *
@@ -352,6 +368,79 @@ struct BakkeOren
     }
 
     /*!
+    * \brief Returns the conductivity of a throat at entry pressure.
+    *
+    * See Bakke & Oren (1997), eq. 9
+    */
+    template<class Element, class FVElementGeometry, class FluxVariablesCache>
+    static Scalar dKndPcEntry(const Element& element,
+                              const FVElementGeometry& fvGeometry,
+                              const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                              const FluxVariablesCache& fluxVarsCache)
+    {
+        // Tora et al. (2012), quite close for single-phase value of square
+        using std::sqrt;
+        const Scalar throatLength = fluxVarsCache.throatLength();
+        const auto nPhaseIdx = fluxVarsCache.nPhaseIdx();
+        const Scalar aNwCrit = fluxVarsCache.entryThroatCrossSectionalArea(nPhaseIdx);
+        const Scalar rEff = 0.5*(sqrt(aNwCrit / M_PI) + fluxVarsCache.throatInscribedRadius());
+        const Scalar Kn = rEff*rEff*aNwCrit / (8.0*throatLength);
+        const Scalar aNwCritDelta = fluxVarsCache.deltaNonWettingCrossSectionalAreaEntry();
+        const Scalar rEffDelta = 0.5*(sqrt(aNwCritDelta / M_PI) + fluxVarsCache.throatInscribedRadius());
+        const Scalar KnDelta = rEffDelta*rEffDelta*aNwCritDelta / (8.0*throatLength);
+        const auto deltaPc = fluxVarsCache.deltaPc();
+        auto result = (KnDelta - Kn)/deltaPc;
+        return result;
+    }
+
+    template<class Element, class FVElementGeometry, class FluxVariablesCache>
+    static Scalar dKndPcEntryInterval(const Element& element,
+                                      const FVElementGeometry& fvGeometry,
+                                      const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                      const FluxVariablesCache& fluxVarsCache)
+    {
+        // Tora et al. (2012), quite close for single-phase value of square
+        using std::sqrt;
+        const Scalar throatLength = fluxVarsCache.throatLength();
+        const auto nPhaseIdx = fluxVarsCache.nPhaseIdx();
+        const Scalar aNwCrit = fluxVarsCache.intervalNonWettingCrossSectionalEntry();
+        const Scalar rEff = 0.5*(sqrt(aNwCrit / M_PI) + fluxVarsCache.throatInscribedRadius());
+        const Scalar Kn = rEff*rEff*aNwCrit / (8.0*throatLength);
+        const Scalar aNwCritDelta = fluxVarsCache.deltaIntervalNonWettingCrossSectionalEntry();
+        const Scalar rEffDelta = 0.5*(sqrt(aNwCritDelta / M_PI) + fluxVarsCache.throatInscribedRadius());
+        const Scalar KnDelta = rEffDelta*rEffDelta*aNwCritDelta / (8.0*throatLength);
+        const auto deltaPc = fluxVarsCache.deltaPc();
+        auto result = (KnDelta - Kn)/deltaPc;
+        return result;
+    }
+
+    /*!
+    * \brief Returns the conductivity of a throat at snap-off pressure.
+    *
+    * See Bakke & Oren (1997), eq. 9
+    */
+    template<class Element, class FVElementGeometry, class FluxVariablesCache>
+    static Scalar dKndPcSnapoff(const Element& element,
+                                                          const FVElementGeometry& fvGeometry,
+                                                          const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                                          const FluxVariablesCache& fluxVarsCache)
+    {
+        // Tora et al. (2012), quite close for single-phase value of square
+        using std::sqrt;
+        const Scalar throatLength = fluxVarsCache.throatLength();
+        const auto nPhaseIdx = fluxVarsCache.nPhaseIdx();
+        const Scalar aNwCrit = fluxVarsCache.snapoffThroatCrossSectionalArea(nPhaseIdx);
+        const Scalar rEff = 0.5*(sqrt(aNwCrit / M_PI) + fluxVarsCache.throatInscribedRadius());
+        const Scalar Kn = rEff*rEff*aNwCrit / (8.0*throatLength);
+        const Scalar aNwCritDelta = fluxVarsCache.deltaNonWettingCrossSectionalAreaSnapoff();
+        const Scalar rEffDelta = 0.5*(sqrt(aNwCritDelta / M_PI) + fluxVarsCache.throatInscribedRadius());
+        const Scalar KnDelta = rEffDelta*rEffDelta*aNwCritDelta / (8.0*throatLength);
+        const auto deltaPc = fluxVarsCache.deltaPc();
+        auto result = (KnDelta - Kn)/deltaPc;
+        return result;
+    }
+
+    /*!
     * \brief Returns the derivative of the conducitivity of a throat at entry pressure
     */
     template<class Element, class FVElementGeometry, class FluxVariablesCache>
@@ -366,7 +455,7 @@ struct BakkeOren
         const auto nPhaseIdx = fluxVarsCache.nPhaseIdx();
         const Scalar aNw = fluxVarsCache.entryThroatCrossSectionalArea(nPhaseIdx);
         const Scalar rThroat = fluxVarsCache.throatInscribedRadius();
-        const Scalar result = (M_PI*rThroat + aNw)*(M_PI*rThroat + 3.0* aNw) / (32.0*throatLength*M_PI*M_PI);
+        const Scalar result = (rThroat*rThroat + 3.0*rThroat*sqrt(aNw/M_PI) + 2*aNw/M_PI) / (32.0*throatLength);
         return result;
     }
 
@@ -385,7 +474,7 @@ struct BakkeOren
         const auto nPhaseIdx = fluxVarsCache.nPhaseIdx();
         const Scalar aNw = fluxVarsCache.snapoffThroatCrossSectionalArea(nPhaseIdx);
         const Scalar rThroat = fluxVarsCache.throatInscribedRadius();
-        const Scalar result = (M_PI*rThroat + aNw)*(M_PI*rThroat + 3.0* aNw) / (32.0*throatLength*M_PI*M_PI);
+        const Scalar result = (rThroat*rThroat + 3.0*rThroat*sqrt(aNw/M_PI) + 2* aNw/M_PI) / (32.0*throatLength);
         return result;
     }
 };
