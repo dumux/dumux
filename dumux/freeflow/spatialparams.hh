@@ -53,12 +53,8 @@ class FreeFlowDefaultSpatialParams
 : public FreeFlowSpatialParams<GridGeometry, Scalar, FreeFlowDefaultSpatialParams<GridGeometry, Scalar>>
 {
     using ParentType = FreeFlowSpatialParams<GridGeometry, Scalar, FreeFlowDefaultSpatialParams<GridGeometry, Scalar>>;
-    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 public:
-    FreeFlowDefaultSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry)
-    {}
+    using ParentType::ParentType;
 };
 
 } // end namespace Dumux
