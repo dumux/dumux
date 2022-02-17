@@ -103,7 +103,7 @@ public:
         poreInscribedRadius_.resize(numPores);
         poreLabel_.resize(numPores);
         poreVolume_.resize(numPores);
-        adjacentThroatIndex_.resize(numPores);
+        adjacentThroat_.resize(numPores);
 
 
         // first check if the same geometry shall be used for all entities ...
@@ -207,11 +207,10 @@ public:
 
         for (const auto& element : elements(gridView))
         {
-            const int eIdx = gridView.indexSet().index(element);
             for (int vIdxLocal = 0; vIdxLocal < 2; ++vIdxLocal)
             {
                 const auto vIdx = gridView.indexSet().subIndex(element, vIdxLocal, dim);
-                adjacentThroatIndex_[vIdx].push_back(eIdx);
+                adjacentThroat_[vIdx].push_back(element);
             }
         }
     }
@@ -273,8 +272,8 @@ public:
     { return coordinationNumber_; }
 
     //! Returns the vector of adjacent throat indicies
-    const std::vector<GridIndex> adjacentThroatMapper(const GridIndex vIdx) const
-    { return adjacentThroatIndex_[vIdx]; }
+    const std::vector<Element>& adjacentThroatMapper(const GridIndex vIdx) const
+    { return adjacentThroat_[vIdx]; }
 
     //! the geometry of the pore
     Pore::Shape poreGeometry(const GridIndex vIdx) const
@@ -348,7 +347,7 @@ public:
 
 private:
     //! a vector to store the adjacent throat index for a pore
-    std::vector< std::vector<GridIndex> > adjacentThroatIndex_;
+    std::vector< std::vector<Element> > adjacentThroat_;
 
     //! determine the pore geometry provided as scalar value by the grid file
     template<class GridData>
