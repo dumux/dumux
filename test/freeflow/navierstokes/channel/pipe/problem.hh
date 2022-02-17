@@ -78,9 +78,6 @@ public:
         return name_;
     }
 
-    Scalar temperature() const
-    { return 293.15; }
-
     /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.

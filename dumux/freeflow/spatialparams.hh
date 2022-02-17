@@ -32,16 +32,29 @@ namespace Dumux {
  * \ingroup FreeflowModels
  * \brief Definition of the spatial parameters for the freeflow problems.
  */
-template<class GridGeometry, class Scalar>
+template<class GridGeometry, class Scalar, class Implementation>
 class FreeFlowSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar, FreeFlowSpatialParams<GridGeometry, Scalar>>
+: public FVSpatialParams<GridGeometry, Scalar, Implementation>
 {
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, FreeFlowSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar, Implementation>;
 
 public:
     FreeFlowSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {}
+};
+
+/*!
+ * \ingroup FreeflowModels
+ * \brief Definition of the spatial parameters for the freeflow problems.
+ */
+template<class GridGeometry, class Scalar>
+class FreeFlowDefaultSpatialParams
+: public FreeFlowSpatialParams<GridGeometry, Scalar, FreeFlowDefaultSpatialParams<GridGeometry, Scalar>>
+{
+    using ParentType = FreeFlowSpatialParams<GridGeometry, Scalar, FreeFlowDefaultSpatialParams<GridGeometry, Scalar>>;
+public:
+    using ParentType::ParentType;
 };
 
 } // end namespace Dumux

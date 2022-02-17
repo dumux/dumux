@@ -89,7 +89,7 @@ public:
         FluidState fluidState;
         const auto phaseIdx = 0;
         fluidState.setPressure(phaseIdx, 1e5);
-        fluidState.setTemperature(temperature());
+        fluidState.setTemperature(this->spatialParams().temperatureAtPos({}));
         fluidState.setMassFraction(phaseIdx, phaseIdx, 1.0);
         Scalar density = FluidSystem::density(fluidState, phaseIdx);
         Scalar kinematicViscosity = FluidSystem::viscosity(fluidState, phaseIdx) / density;
@@ -105,21 +105,12 @@ public:
         std::cout << std::endl;
     }
 
-   /*!
-     * \brief Returns the temperature within the domain in [K].
-     *
-     * The isothermal problem assumes a temperature of 10 degrees Celsius.
-     */
-    Scalar temperature() const
-    { return 273.15 + 10; } // 10C
-
-    // \}
-   /*!
+    /*!
      * \name Boundary conditions
      */
     // \{
 
-   /*!
+    /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary control volume.
      *
@@ -198,7 +189,7 @@ public:
         }
 
 #if NONISOTHERMAL
-        values[Indices::temperatureIdx] = (isLowerWall_(globalPos) && time() > 10.0) ? wallTemperature_ : temperature();
+        values[Indices::temperatureIdx] = (isLowerWall_(globalPos) && time() > 10.0) ? wallTemperature_ : inletTemperature_;
 #endif
 
         return values;
@@ -235,7 +226,7 @@ public:
         values[Indices::pressureIdx] = 1.0e+5;
         values[transportCompIdx] = 0.0;
 #if NONISOTHERMAL
-        values[Indices::temperatureIdx] = temperature();
+        values[Indices::temperatureIdx] = inletTemperature_;
 #endif
         // block velocity profile
         values[Indices::velocityXIdx] = 0.0;

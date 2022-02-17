@@ -35,3 +35,6 @@ NumericEpsilon.BaseEpsilon = 1e-8
 MaxSteps = 10
 TargetSteps = 8
 MaxRelativeShift = 1e-5
+
+[SpatialParams]
+Temperature = 283.15

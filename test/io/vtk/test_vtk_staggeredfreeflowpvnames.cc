@@ -148,9 +148,6 @@ private:
         PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
         { return PrimaryVariables(0.0); }
 
-        Scalar temperature() const
-        { return 300; }
-
         template<class T = TTag, bool enable = GetPropType<T, Properties::ModelTraits>::usesTurbulenceModel(), std::enable_if_t<!enable, int> = 0>
         void updateStaticWallProperties() {}
 

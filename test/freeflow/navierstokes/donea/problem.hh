@@ -82,8 +82,6 @@ public:
      */
     // \{
 
-    Scalar temperature() const { return 298.0; }
-
     /*!
      * \brief Return the sources within the domain.
      *

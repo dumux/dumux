@@ -89,6 +89,11 @@ public:
     }
 
     /*!
+     * \name Problem parameters
+     */
+    // \{
+
+    /*!
      * \brief The problem name.
      */
     const std::string& name() const
@@ -96,18 +101,7 @@ public:
         return problemName_;
     }
 
-   /*!
-     * \name Problem parameters
-     */
-    // \{
-
-   /*!
-     * \brief Returns the temperature within the domain in [K].
-     */
-    Scalar temperature() const
-    { return refTemperature_; }
-
-   /*!
+    /*!
      * \brief Returns the sources within the domain.
      *
      * \param globalPos The global position

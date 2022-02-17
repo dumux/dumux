@@ -16,7 +16,6 @@ Cells = 20 20
 Name = stokes
 Velocity = -1e-3
 Pressure = 1.0e5
-Temperature = 293.15
 
 [Darcy.Problem]
 Name = darcy
@@ -32,6 +31,7 @@ Snr = 0.01
 VanGenuchtenAlpha = 6.371e-4
 VanGenuchtenN = 8.0
 PorousMediumTemperature = 298.15
+Temperature = 293.15
 
 [Problem]
 EnableGravity = false

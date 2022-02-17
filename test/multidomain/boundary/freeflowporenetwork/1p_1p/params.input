@@ -45,3 +45,6 @@ NumericDifference.BaseEpsilon = 1e-4
 
 [FluxOverAxisAlignedSurface]
 Verbose = false
+
+[SpatialParams]
+Temperature = 298.0

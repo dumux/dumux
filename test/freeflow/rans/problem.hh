@@ -83,7 +83,7 @@ public:
         Dumux::TurbulenceProperties<Scalar, dimWorld, true> turbulenceProperties;
         FluidState fluidState;
         fluidState.setPressure(0, 1e5);
-        fluidState.setTemperature(temperature());
+        fluidState.setTemperature(this->spatialParams().temperatureAtPos({}));
         Scalar density = FluidSystem::density(fluidState, 0);
         Scalar kinematicViscosity = FluidSystem::viscosity(fluidState, 0) / density;
         Scalar diameter = this->gridGeometry().bBoxMax()[1] - this->gridGeometry().bBoxMin()[1];
@@ -107,25 +107,12 @@ public:
         std::cout << std::endl;
     }
 
-   /*!
-     * \name Problem parameters
-     */
-    // \{
-
-   /*!
-     * \brief Returns the temperature [K] within the domain for the isothermal model.
-     */
-    Scalar temperature() const
-    { return inletTemperature_; }
-
-    // \}
-
-   /*!
+    /*!
      * \name Boundary conditions
      */
     // \{
 
-   /*!
+    /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary control volume.
      *

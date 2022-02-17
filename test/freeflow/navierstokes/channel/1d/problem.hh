@@ -73,13 +73,7 @@ public:
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity");
     }
 
-   /*!
-     * \brief Returns the temperature within the domain in [K].
-     */
-    Scalar temperature() const
-    { return 298.0; }
-
-   /*!
+    /*!
      * \brief Returns the sources within the domain.
      *
      * \param globalPos The global position
@@ -129,12 +123,12 @@ public:
         return source;
     }
     // \}
-   /*!
+    /*!
      * \name Boundary conditions
      */
     // \{
 
-   /*!
+    /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary control volume.
      *
@@ -155,7 +149,7 @@ public:
         return values;
     }
 
-   /*!
+    /*!
      * \brief Returns Dirichlet boundary values at a given position
      *
      * \param globalPos The global position

@@ -28,6 +28,7 @@
 
 #include <type_traits>
 #include <dune/common/std/type_traits.hh>
+#include <dumux/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -82,7 +83,7 @@ public:
         if constexpr (enableEnergyBalance)
             return elemSol[scv.localDofIndex()][Traits::ModelTraits::Indices::temperatureIdx];
         else
-            return problem.temperatureAtPos(scv.dofPosition());
+            return Deprecated::temperature(problem, element, scv, elemSol);
     }
 
 

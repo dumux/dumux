@@ -31,3 +31,6 @@ EnableInertiaTerms = false
 
 [Vtk]
 AddVelocity = 1
+
+[SpatialParams]
+Temperature = 298.0

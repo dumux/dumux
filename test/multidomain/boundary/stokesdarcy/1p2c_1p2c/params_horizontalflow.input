@@ -37,3 +37,6 @@ OutputName = test_md_boundary_darcy1p2c_stokes1p2c_horizontal
 
 [Assembly.NumericDifference]
 BaseEpsilon = 1e-6
+
+[SpatialParams]
+Temperature = 283.15

@@ -25,3 +25,6 @@ UpwindWeight = 0.5
 
 [Assembly]
 NumericDifference.BaseEpsilon = 1e-4
+
+[SpatialParams]
+Temperature = 298.0

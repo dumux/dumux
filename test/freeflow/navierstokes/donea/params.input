@@ -30,3 +30,6 @@ AmgAccumulationMode = atOnce
 
 [Assembly]
 NumericDifference.BaseEpsilon = 1e-8
+
+[SpatialParams]
+Temperature = 298.0

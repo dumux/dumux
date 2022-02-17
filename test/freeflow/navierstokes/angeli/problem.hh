@@ -84,13 +84,6 @@ public:
     }
 
     /*!
-     * \brief Returns the temperature within the domain in [K].
-     * This problem assumes a temperature of 20 degrees Celsius (unused)
-     */
-    Scalar temperature() const
-    { return 293.15; }
-
-    /*!
      * \name Boundary conditions
      */
     // \{

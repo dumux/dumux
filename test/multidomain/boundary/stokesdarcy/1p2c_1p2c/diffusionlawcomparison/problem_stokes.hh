@@ -78,26 +78,19 @@ public:
         inletMoleFraction_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InletMoleFraction");
     }
 
-   /*!
+    /*!
      * \name Problem parameters
      */
     // \{
 
-   /*!
-     * \brief Returns the temperature within the domain in [K].
-     *
-     * This problem assumes a temperature of 10 degrees Celsius.
-     */
-    Scalar temperature() const
-    { return 273.15 + 10; } // 10°C
-
-   /*!
+    /*!
      * \brief Returns the sources within the domain.
      *
      * \param globalPos The global position
      */
     NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
     { return NumEqVector(0.0); }
+
     // \}
 
    /*!

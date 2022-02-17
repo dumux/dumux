@@ -25,7 +25,7 @@
 #ifndef DUMUX_CHANNEL3D_SPATIAL_PARAMS_HH
 #define DUMUX_CHANNEL3D_SPATIAL_PARAMS_HH
 
-#include <dumux/common/fvspatialparams.hh>
+#include <dumux/freeflow/spatialparams.hh>
 
 namespace Dumux {
 
@@ -35,9 +35,9 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class Channel3DSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar, FreeFlowSpatialParams<GridGeometry, Scalar>>
+: public FreeFlowSpatialParams<GridGeometry, Scalar, Channel3DSpatialParams<GridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, FreeFlowSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = FreeFlowSpatialParams<GridGeometry, Scalar, Channel3DSpatialParams<GridGeometry, Scalar>>;
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -60,6 +60,13 @@ public:
             extrusionFactor_ = 1.0;
 
     }
+
+    /*!
+     * \brief Return the temperature in the domain at the given position
+     * \param globalPos The position in global coordinates where the temperature should be specified.
+     */
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    { return 283.15; }
 
     /*!
      * \brief Return how much the domain is extruded at a given sub-control volume.
