@@ -137,69 +137,78 @@ public:
 
             if (phaseIdx == wPhaseIdx)
             {
-                if (!invaded && pc < invasionLeft)
-                    return Kw1p;
-                else if (!invaded && pc < invasionRight)
+                if (!invaded) // not invaded in last time step
                 {
-                    auto entryKw = Transmissibility::entryWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
-                    auto slopeEntry =  Transmissibility::dKwdPcEntry(element, fvGeometry, scvf, fluxVarsCache);
-                    const auto slopes =  std::array{0.0, slopeEntry};
-                    auto optionalKnSpline_ = Spline<Scalar>(invasionLeft, invasionRight,// x0, x1
-                                                            Kw1p, entryKw, // y0, y1
-                                                            slopes[0], slopes[1]); // m0, m1
-                    return optionalKnSpline_.eval(pc);
+                    if ( pc < invasionLeft )
+                        return Kw1p;
+                    else if ( pc < invasionRight )
+                    {
+                        auto entryKw = Transmissibility::entryWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                        auto slopeEntry =  Transmissibility::dKwdPcEntry(element, fvGeometry, scvf, fluxVarsCache);
+                        const auto slopes =  std::array{0.0, slopeEntry};
+                        auto optionalKnSpline_ = Spline<Scalar>(invasionLeft, invasionRight,// x0, x1
+                                                                Kw1p, entryKw, // y0, y1
+                                                                slopes[0], slopes[1]); // m0, m1
+                        return optionalKnSpline_.eval(pc);
+                    }
+                    else
+                        return Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
                 }
-                else if (!invaded)
-                    return Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
-                else if (invaded && pc > snapoffRight)
-                    return Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
-
-                else if (invaded && pc > snapoffLeft)
+                else // invaded in last time step
                 {
-                    // const auto slopeForPcEntry = Transmissibility::dKn_daNw_entry(element, fvGeometry, scvf, fluxVarsCache)*0.0;
-                    auto snapoffKn = Transmissibility::snapoffWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
-                    auto slopeSnapoff = Transmissibility::dKwdPcSnapoff(element, fvGeometry, scvf, fluxVarsCache);
-                    const auto slopes =  std::array{slopeSnapoff, 0.0};
-                    auto optionalKnSpline_ = Spline<Scalar>(snapoffRight, snapoffLeft, // x0, x1
-                                                            snapoffKn, Kw1p, // y0, y1
-                                                            slopes[0], slopes[1]); // m0, m1
-                    return optionalKnSpline_.eval(pc);
+                    if (pc > snapoffRight)
+                        return Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                    else if (pc > snapoffLeft)
+                    {
+                        // const auto slopeForPcEntry = Transmissibility::dKn_daNw_entry(element, fvGeometry, scvf, fluxVarsCache)*0.0;
+                        auto snapoffKn = Transmissibility::snapoffWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                        auto slopeSnapoff = Transmissibility::dKwdPcSnapoff(element, fvGeometry, scvf, fluxVarsCache);
+                        const auto slopes =  std::array{slopeSnapoff, 0.0};
+                        auto optionalKnSpline_ = Spline<Scalar>(snapoffRight, snapoffLeft, // x0, x1
+                                                                snapoffKn, Kw1p, // y0, y1
+                                                                slopes[0], slopes[1]); // m0, m1
+                        return optionalKnSpline_.eval(pc);
+                    }
+                    else
+                        return Kw1p;
                 }
-                else if (invaded)
-                    return Kw1p;
             }
             else // non-wetting phase
             {
-                if (!invaded && pc < invasionLeft)
-                    return 0.0;
-                else if (!invaded && pc < invasionRight)
+                if (!invaded)
                 {
-                    auto entryKn = Transmissibility::entryNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
-                    auto slopeEntry = Transmissibility::dKndPcEntry(element, fvGeometry, scvf, fluxVarsCache);
-                    const auto slopes =  std::array{0.0, slopeEntry};
-                    auto optionalKnSpline_ = Spline<Scalar>(invasionLeft, invasionRight, // x0, x1
-                                                            0.0, entryKn, // y0, y1
-                                                            slopes[0], slopes[1]); // m0, m1
-                    return optionalKnSpline_.eval(pc);
+                    if (pc < invasionLeft)
+                        return 0.0;
+                    else if (pc < invasionRight)
+                    {
+                        auto entryKn = Transmissibility::entryNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                        auto slopeEntry = Transmissibility::dKndPcEntry(element, fvGeometry, scvf, fluxVarsCache);
+                        const auto slopes =  std::array{0.0, slopeEntry};
+                        auto optionalKnSpline_ = Spline<Scalar>(invasionLeft, invasionRight, // x0, x1
+                                                                0.0, entryKn, // y0, y1
+                                                                slopes[0], slopes[1]); // m0, m1
+                        return optionalKnSpline_.eval(pc);
+                    }
+                    else
+                        return Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
                 }
-                else if (!invaded)
-                    return Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
-
-
-                if (invaded && pc > snapoffRight)
-                    return Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
-                else if (invaded && pc > snapoffLeft)
+                else
                 {
-                    auto snapoffKn = Transmissibility::snapoffNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
-                    auto slopeSnapoff = Transmissibility::dKndPcSnapoff(element, fvGeometry, scvf, fluxVarsCache);
-                    const auto slopes =  std::array{slopeSnapoff, 0.0};
-                    auto optionalKnSpline_ = Spline<Scalar>(snapoffRight, snapoffLeft, // x0, x1
-                                                            snapoffKn, 0.0, // y0, y1
-                                                            slopes[0], slopes[1]); // m0, m1
-                    return optionalKnSpline_.eval(pc);
+                    if (pc > snapoffRight)
+                        return Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                    else if (pc > snapoffLeft)
+                    {
+                        auto snapoffKn = Transmissibility::snapoffNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                        auto slopeSnapoff = Transmissibility::dKndPcSnapoff(element, fvGeometry, scvf, fluxVarsCache);
+                        const auto slopes =  std::array{slopeSnapoff, 0.0};
+                        auto optionalKnSpline_ = Spline<Scalar>(snapoffRight, snapoffLeft, // x0, x1
+                                                                snapoffKn, 0.0, // y0, y1
+                                                                slopes[0], slopes[1]); // m0, m1
+                        return optionalKnSpline_.eval(pc);
+                    }
+                    else
+                        return 0.0;
                 }
-                else if (invaded)
-                    return 0.0;
             }
         }
     }
