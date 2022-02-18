@@ -129,8 +129,7 @@ struct RansohoffRadke
                                                     const FluxVariablesCache& fluxVarsCache)
     {
         const Scalar throatLength = fluxVarsCache.throatLength();
-        const Scalar rC = fluxVarsCache.entryCurvatureRadius();
-
+        const Scalar rC = fluxVarsCache.curvatureRadiusEntry(0);
         const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
         const auto shape = fvGeometry.gridGeometry().throatCrossSectionShape(eIdx);
         const auto numCorners = Throat::numCorners(shape);
@@ -138,7 +137,7 @@ struct RansohoffRadke
         // treat the wetting film layer in each corner of the throat individually (might have different corner half-angle and beta)
         Scalar result = 0.0;
         for (int i = 0; i < numCorners; ++i)
-            result += fluxVarsCache.wettingLayerCrossSectionalArea(i) * rC*rC / (throatLength*fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i));
+            result += fluxVarsCache.entryWettingLayerArea(i) * rC*rC / (throatLength*fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i));
 
         return result;
     }
@@ -153,7 +152,7 @@ struct RansohoffRadke
                                                       const FluxVariablesCache& fluxVarsCache)
     {
         const Scalar throatLength = fluxVarsCache.throatLength();
-        const Scalar rC = fluxVarsCache.snapoffCurvatureRadius();
+        const Scalar rC = fluxVarsCache.curvatureRadiusSnapoff(0);
 
         const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
         const auto shape = fvGeometry.gridGeometry().throatCrossSectionShape(eIdx);
@@ -162,7 +161,7 @@ struct RansohoffRadke
         // treat the wetting film layer in each corner of the throat individually (might have different corner half-angle and beta)
         Scalar result = 0.0;
         for (int i = 0; i < numCorners; ++i)
-            result += fluxVarsCache.wettingLayerCrossSectionalArea(i) * rC*rC / (throatLength*fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i));
+            result += fluxVarsCache.snapoffWettingLayerArea(i) * rC*rC / (throatLength*fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i));
 
         return result;
     }
@@ -178,18 +177,15 @@ struct RansohoffRadke
                               const typename FVElementGeometry::SubControlVolumeFace& scvf,
                               const FluxVariablesCache& fluxVarsCache)
     {
+        const Scalar Kw = entryWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
         const Scalar throatLength = fluxVarsCache.throatLength();
-        const Scalar rC = fluxVarsCache.entryCurvatureRadius();
-        const Scalar rCdelta = fluxVarsCache.delatEntryCurvatureRadius();
+        const Scalar rCdelta = fluxVarsCache.curvatureRadiusEntry(1);
 
         const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
         const auto shape = fvGeometry.gridGeometry().throatCrossSectionShape(eIdx);
         const auto numCorners = Throat::numCorners(shape);
 
         // treat the wetting film layer in each corner of the throat individually (might have different corner half-angle and beta)
-        Scalar Kw = 0.0;
-        for (int i = 0; i < numCorners; ++i)
-            Kw += fluxVarsCache.entryWettingLayerArea(i) * rC*rC / (throatLength*fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i));
         Scalar deltaKw = 0.0;
         for (int i = 0; i < numCorners; ++i)
             deltaKw += fluxVarsCache.deltaPcEntryWettingLayerArea(i) * rCdelta*rCdelta / (throatLength*fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i));
@@ -210,18 +206,15 @@ struct RansohoffRadke
                                 const typename FVElementGeometry::SubControlVolumeFace& scvf,
                                 const FluxVariablesCache& fluxVarsCache)
     {
+        const Scalar Kw = snapoffWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
         const Scalar throatLength = fluxVarsCache.throatLength();
-        const Scalar rC = fluxVarsCache.snapoffCurvatureRadius();
-        const Scalar rCdelta = fluxVarsCache.delatSnapoffCurvatureRadius();
+        const Scalar rCdelta = fluxVarsCache.curvatureRadiusSnapoff(1);
 
         const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
         const auto shape = fvGeometry.gridGeometry().throatCrossSectionShape(eIdx);
         const auto numCorners = Throat::numCorners(shape);
 
         // treat the wetting film layer in each corner of the throat individually (might have different corner half-angle and beta)
-        Scalar Kw = 0.0;
-        for (int i = 0; i < numCorners; ++i)
-            Kw += fluxVarsCache.snapoffWettingLayerArea(i) * rC*rC / (throatLength*fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i));
         Scalar deltaKw = 0.0;
         for (int i = 0; i < numCorners; ++i)
             deltaKw += fluxVarsCache.deltaPcSnapoffWettingLayerArea(i) * rCdelta*rCdelta / (throatLength*fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i));
@@ -316,31 +309,14 @@ struct BakkeOren
     */
     template<class Element, class FVElementGeometry, class FluxVariablesCache>
     static Scalar entryNonWettingPhaseTransmissibility(const Element& element,
-                                                          const FVElementGeometry& fvGeometry,
-                                                          const typename FVElementGeometry::SubControlVolumeFace& scvf,
-                                                          const FluxVariablesCache& fluxVarsCache)
+                                                       const FVElementGeometry& fvGeometry,
+                                                       const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                                       const FluxVariablesCache& fluxVarsCache)
     {
         // Tora et al. (2012), quite close for single-phase value of square
         using std::sqrt;
         const Scalar throatLength = fluxVarsCache.throatLength();
-        const auto nPhaseIdx = fluxVarsCache.nPhaseIdx();
-        const Scalar aNwCrit = fluxVarsCache.entryThroatCrossSectionalArea(nPhaseIdx);
-        const Scalar rEff = 0.5*(sqrt(aNwCrit / M_PI) + fluxVarsCache.throatInscribedRadius());
-        const Scalar result = rEff*rEff*aNwCrit / (8.0*throatLength);
-        return result;
-    }
-
-    template<class Element, class FVElementGeometry, class FluxVariablesCache>
-    static Scalar entryIntervalNonWettingPhaseTransmissibility(const Element& element,
-                                                               const FVElementGeometry& fvGeometry,
-                                                               const typename FVElementGeometry::SubControlVolumeFace& scvf,
-                                                               const FluxVariablesCache& fluxVarsCache)
-    {
-        // Tora et al. (2012), quite close for single-phase value of square
-        using std::sqrt;
-        const Scalar throatLength = fluxVarsCache.throatLength();
-        const auto nPhaseIdx = fluxVarsCache.nPhaseIdx();
-        const Scalar aNwCrit = fluxVarsCache.intervalNonWettingCrossSectionalEntry();
+        const Scalar aNwCrit = fluxVarsCache.regularBoundaryNonWettingThroatAreaEntry(0);
         const Scalar rEff = 0.5*(sqrt(aNwCrit / M_PI) + fluxVarsCache.throatInscribedRadius());
         const Scalar result = rEff*rEff*aNwCrit / (8.0*throatLength);
         return result;
@@ -360,8 +336,7 @@ struct BakkeOren
         // Tora et al. (2012), quite close for single-phase value of square
         using std::sqrt;
         const Scalar throatLength = fluxVarsCache.throatLength();
-        const auto nPhaseIdx = fluxVarsCache.nPhaseIdx();
-        const Scalar aNwCrit = fluxVarsCache.snapoffThroatCrossSectionalArea(nPhaseIdx);
+        const Scalar aNwCrit = fluxVarsCache.regularBoundaryNonWettingThroatAreaSnapoff(0);
         const Scalar rEff = 0.5*(sqrt(aNwCrit / M_PI) + fluxVarsCache.throatInscribedRadius());
         const Scalar result = rEff*rEff*aNwCrit / (8.0*throatLength);
         return result;
@@ -379,34 +354,10 @@ struct BakkeOren
                               const FluxVariablesCache& fluxVarsCache)
     {
         // Tora et al. (2012), quite close for single-phase value of square
+        const Scalar Kn = entryNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
         using std::sqrt;
         const Scalar throatLength = fluxVarsCache.throatLength();
-        const auto nPhaseIdx = fluxVarsCache.nPhaseIdx();
-        const Scalar aNwCrit = fluxVarsCache.entryThroatCrossSectionalArea(nPhaseIdx);
-        const Scalar rEff = 0.5*(sqrt(aNwCrit / M_PI) + fluxVarsCache.throatInscribedRadius());
-        const Scalar Kn = rEff*rEff*aNwCrit / (8.0*throatLength);
-        const Scalar aNwCritDelta = fluxVarsCache.deltaNonWettingCrossSectionalAreaEntry();
-        const Scalar rEffDelta = 0.5*(sqrt(aNwCritDelta / M_PI) + fluxVarsCache.throatInscribedRadius());
-        const Scalar KnDelta = rEffDelta*rEffDelta*aNwCritDelta / (8.0*throatLength);
-        const auto deltaPc = fluxVarsCache.deltaPc();
-        auto result = (KnDelta - Kn)/deltaPc;
-        return result;
-    }
-
-    template<class Element, class FVElementGeometry, class FluxVariablesCache>
-    static Scalar dKndPcEntryInterval(const Element& element,
-                                      const FVElementGeometry& fvGeometry,
-                                      const typename FVElementGeometry::SubControlVolumeFace& scvf,
-                                      const FluxVariablesCache& fluxVarsCache)
-    {
-        // Tora et al. (2012), quite close for single-phase value of square
-        using std::sqrt;
-        const Scalar throatLength = fluxVarsCache.throatLength();
-        const auto nPhaseIdx = fluxVarsCache.nPhaseIdx();
-        const Scalar aNwCrit = fluxVarsCache.intervalNonWettingCrossSectionalEntry();
-        const Scalar rEff = 0.5*(sqrt(aNwCrit / M_PI) + fluxVarsCache.throatInscribedRadius());
-        const Scalar Kn = rEff*rEff*aNwCrit / (8.0*throatLength);
-        const Scalar aNwCritDelta = fluxVarsCache.deltaIntervalNonWettingCrossSectionalEntry();
+        const Scalar aNwCritDelta = fluxVarsCache.regularBoundaryNonWettingThroatAreaEntry(1);
         const Scalar rEffDelta = 0.5*(sqrt(aNwCritDelta / M_PI) + fluxVarsCache.throatInscribedRadius());
         const Scalar KnDelta = rEffDelta*rEffDelta*aNwCritDelta / (8.0*throatLength);
         const auto deltaPc = fluxVarsCache.deltaPc();
@@ -421,60 +372,19 @@ struct BakkeOren
     */
     template<class Element, class FVElementGeometry, class FluxVariablesCache>
     static Scalar dKndPcSnapoff(const Element& element,
-                                                          const FVElementGeometry& fvGeometry,
-                                                          const typename FVElementGeometry::SubControlVolumeFace& scvf,
-                                                          const FluxVariablesCache& fluxVarsCache)
+                                const FVElementGeometry& fvGeometry,
+                                const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                const FluxVariablesCache& fluxVarsCache)
     {
         // Tora et al. (2012), quite close for single-phase value of square
+        const Scalar Kn = snapoffNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
         using std::sqrt;
         const Scalar throatLength = fluxVarsCache.throatLength();
-        const auto nPhaseIdx = fluxVarsCache.nPhaseIdx();
-        const Scalar aNwCrit = fluxVarsCache.snapoffThroatCrossSectionalArea(nPhaseIdx);
-        const Scalar rEff = 0.5*(sqrt(aNwCrit / M_PI) + fluxVarsCache.throatInscribedRadius());
-        const Scalar Kn = rEff*rEff*aNwCrit / (8.0*throatLength);
-        const Scalar aNwCritDelta = fluxVarsCache.deltaNonWettingCrossSectionalAreaSnapoff();
+        const Scalar aNwCritDelta = fluxVarsCache.regularBoundaryNonWettingThroatAreaSnapoff(1);
         const Scalar rEffDelta = 0.5*(sqrt(aNwCritDelta / M_PI) + fluxVarsCache.throatInscribedRadius());
         const Scalar KnDelta = rEffDelta*rEffDelta*aNwCritDelta / (8.0*throatLength);
         const auto deltaPc = fluxVarsCache.deltaPc();
         auto result = (KnDelta - Kn)/deltaPc;
-        return result;
-    }
-
-    /*!
-    * \brief Returns the derivative of the conducitivity of a throat at entry pressure
-    */
-    template<class Element, class FVElementGeometry, class FluxVariablesCache>
-    static Scalar dKn_daNw_entry(const Element& element,
-                                 const FVElementGeometry& fvGeometry,
-                                 const typename FVElementGeometry::SubControlVolumeFace& scvf,
-                                 const FluxVariablesCache& fluxVarsCache)
-    {
-        // Tora et al. (2012), quite close for single-phase value of square
-        using std::sqrt;
-        const Scalar throatLength = fluxVarsCache.throatLength();
-        const auto nPhaseIdx = fluxVarsCache.nPhaseIdx();
-        const Scalar aNw = fluxVarsCache.entryThroatCrossSectionalArea(nPhaseIdx);
-        const Scalar rThroat = fluxVarsCache.throatInscribedRadius();
-        const Scalar result = (rThroat*rThroat + 3.0*rThroat*sqrt(aNw/M_PI) + 2*aNw/M_PI) / (32.0*throatLength);
-        return result;
-    }
-
-    /*!
-    * \brief Returns the derivative of the conducitivity of a throat at snap-off pressure
-    */
-    template<class Element, class FVElementGeometry, class FluxVariablesCache>
-    static Scalar dKn_daNw_snapoff(const Element& element,
-                                  const FVElementGeometry& fvGeometry,
-                                  const typename FVElementGeometry::SubControlVolumeFace& scvf,
-                                  const FluxVariablesCache& fluxVarsCache)
-    {
-        // Tora et al. (2012), quite close for single-phase value of square
-        using std::sqrt;
-        const Scalar throatLength = fluxVarsCache.throatLength();
-        const auto nPhaseIdx = fluxVarsCache.nPhaseIdx();
-        const Scalar aNw = fluxVarsCache.snapoffThroatCrossSectionalArea(nPhaseIdx);
-        const Scalar rThroat = fluxVarsCache.throatInscribedRadius();
-        const Scalar result = (rThroat*rThroat + 3.0*rThroat*sqrt(aNw/M_PI) + 2* aNw/M_PI) / (32.0*throatLength);
         return result;
     }
 };
