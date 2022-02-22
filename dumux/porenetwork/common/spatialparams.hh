@@ -31,7 +31,6 @@
 #include <dune/common/fvector.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/porousmediumflow/fvspatialparams.hh>
-#include <dumux/porenetwork/common/spatialparamstraits_.hh>
 
 namespace Dumux::PoreNetwork {
 
