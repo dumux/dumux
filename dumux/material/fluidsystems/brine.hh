@@ -515,14 +515,14 @@ public:
      * \param fluidState An abitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      *
-     * \todo TODO: The calculation of the isobaric heat capacity is preliminary. A better
-     *       description of the influence of NaCl on the phase property has to be found.
      */
     template <class FluidState>
     static Scalar heatCapacity(const FluidState &fluidState, int phaseIdx)
     {
-        if (phaseIdx == liquidPhaseIdx)
-            return H2O::liquidHeatCapacity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
+        if (phaseIdx == liquidPhaseIdx){
+            const Scalar eps = fluidState.temperature(phaseIdx)*1e-8;
+            return (liquidEnthalpy(fluidState.temperature(phaseIdx) + eps, fluidState.pressure(phaseIdx))- liquidEnthalpy(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx)))/eps;
+        }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 };
