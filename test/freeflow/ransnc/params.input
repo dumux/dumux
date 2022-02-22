@@ -24,6 +24,7 @@ TurbulentSchmidtNumber = 0.7
 WallNormalAxis = 1
 IsFlatWallBounded = True
 WriteFlatWallBoundedFields = True
+SSTModelVersion = SST
 
 [Assembly]
 NumericDifferenceMethod = 0

@@ -32,6 +32,7 @@
 #include <dumux/freeflow/compositional/komegancmodel.hh>
 #include <dumux/freeflow/compositional/lowrekepsilonncmodel.hh>
 #include <dumux/freeflow/compositional/kepsilonncmodel.hh>
+#include <dumux/freeflow/compositional/sstncmodel.hh>
 
 #include <dumux/material/fluidsystems/1padapter.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
@@ -50,12 +51,14 @@ struct FlatPlateNCOneEq { using InheritsFrom = std::tuple<RANSNCModel, OneEqNC>;
 struct FlatPlateNCKOmega { using InheritsFrom = std::tuple<RANSNCModel, KOmegaNC>; };
 struct FlatPlateNCLowReKEpsilon { using InheritsFrom = std::tuple<RANSNCModel, LowReKEpsilonNC>; };
 struct FlatPlateNCKEpsilon { using InheritsFrom = std::tuple<RANSNCModel, KEpsilonNC>; };
+struct FlatPlateNCSST { using InheritsFrom = std::tuple<RANSNCModel, SSTNC>; };
 // Isothermal Typetags
 struct FlatPlateNCNIZeroEq { using InheritsFrom = std::tuple<RANSNCModel, ZeroEqNCNI>; };
 struct FlatPlateNCNIOneEq { using InheritsFrom = std::tuple<RANSNCModel, OneEqNCNI>; };
 struct FlatPlateNCNIKOmega { using InheritsFrom = std::tuple<RANSNCModel, KOmegaNCNI>; };
 struct FlatPlateNCNILowReKEpsilon { using InheritsFrom = std::tuple<RANSNCModel, LowReKEpsilonNCNI>; };
 struct FlatPlateNCNIKEpsilon { using InheritsFrom = std::tuple<RANSNCModel, KEpsilonNCNI>; };
+struct FlatPlateNCNISST { using InheritsFrom = std::tuple<RANSNCModel, SSTNCNI>; };
 } // end namespace TTag
 
 // The fluid system
