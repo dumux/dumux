@@ -438,12 +438,17 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
-     * \todo TODO: For the thermal conductivity the salinity contribution is
-     *       neglected. This contribution is probably not big, but somebody
-     *       would have to find out its influence.
+     * The thermal conductivity of brine is implemented based on the contribution of NaCl ($\lambda_{brine}$/$\lambda_{H_2O}$) of \cite{Yusufova1975} https://link.springer.com/content/pdf/10.1007/BF00867119.pdf, also discussed in \cite{Ozbek1980} https://docecity.com/thermal-conductivity-of-aqueous-sodium-chloride-acs-publicat-5f10766acba00.html
      */
     static Scalar liquidThermalConductivity(Scalar temperature, Scalar pressure)
-    { return H2O::liquidThermalConductivity(temperature, pressure); }
+    {
+            Scalar tempC = temperature-273.15;
+            Scalar xNaCl = ThisType::salinity() * H2O::molarMass() / (ThisType::salinity() * H2O::molarMass() + (1-ThisType::salinity() )*Components::NaCl<Scalar>::molarMass()); // mole fraction of NaCl
+            Scalar m = xNaCl/(H2O::molarMass()*(1- xNaCl)); // molality of NaCl
+            Scalar S = 5844.3 * m / (1000 + 58.443 *m);
+            Scalar contribNaClFactor = 1.0 - (2.3434e-3 - 7.924e-6*tempC + 3.924e-8*tempC*tempC)*S + (1.06e-5 - 2.0e-8*tempC + 1.2e-10*tempC*tempC)*S*S;
+            return contribNaClFactor * H2O::liquidThermalConductivity(temperature, pressure);
+    }
 };
 
 template <class Scalar, class H2O>
