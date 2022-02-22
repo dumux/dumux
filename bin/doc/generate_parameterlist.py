@@ -339,8 +339,8 @@ for key in parameterDict:
         )
     else:
         explanationMsg = inputDict[keyInput]["explanation"]
-        parameterTypeName = inputDict[keyInput]["type"]
-        defaultValue = inputDict[keyInput]["default"]
+        parameterTypeName = inputDict[keyInput]["type"] if hasMultiplePT else [parameterTypeName]
+        defaultValue = inputDict[keyInput]["default"] if (hasMultipleDV or defaultValue == "-") else [defaultValue]
         for i in range(NUM_ENTRIES):
             # maybe fewer entries for some keys
             if len(defaultValue) < i + 1:
