@@ -21,6 +21,12 @@ Differences Between DuMu<sup>x</sup> 3.5 and DuMu<sup>x</sup> 3.4
   class for that tag. This means new discretization methods can be developed in a modular fashion. The introduction of tags
   involves a couple of non-backwards-compatible changes, mostly in implementation classes that shouldn't affect most users (see below).
 
+- __Box__: The box scheme now supports the case that volume variables depend on all dofs in the element. In that case, previously
+  only a Jacobian approximation was assembled. As computing the added derivatives causes a significant
+  overhead in the assembly, the feature is disabled per default. To enable the full Jacobian in this case set the parameter
+  `Assembly.BoxVolVarsDependOnAllElementDofs = true`. The new feature is tested in the new test `test_2p3c_surfactant` which
+  features relative permeability that depend on the pressure gradient. The test only passes with the full Jacobian.
+
 - __Geometry__:
     - Add implementation of sphere and bounding sphere approximation algorithms
     - Add distance queries for Point->BoundingBoxTree
