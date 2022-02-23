@@ -25,6 +25,7 @@
 #ifndef DUMUX_BOX_LOCAL_ASSEMBLER_HH
 #define DUMUX_BOX_LOCAL_ASSEMBLER_HH
 
+#include <dune/common/reservedvector.hh>
 #include <dune/istl/matrixindexset.hh>
 #include <dune/istl/bvector.hh>
 
@@ -39,6 +40,77 @@
 #include <dumux/discretization/box/elementsolution.hh>
 
 namespace Dumux {
+
+#ifndef DOXYGEN
+
+namespace Detail {
+
+template<class VolVarAccessor, class FVElementGeometry>
+class VolVarsDeflectionHelper
+{
+    static constexpr int maxNumscvs = FVElementGeometry::maxNumElementScvs;
+
+    using SubControlVolume = typename FVElementGeometry::GridGeometry::SubControlVolume;
+    using VolumeVariablesRef = std::invoke_result_t<VolVarAccessor, const SubControlVolume&>;
+    using VolumeVariables = std::decay_t<VolumeVariablesRef>;
+    static_assert(std::is_lvalue_reference_v<VolumeVariablesRef>
+                  && !std::is_const_v<std::remove_reference_t<VolumeVariablesRef>>);
+
+public:
+    VolVarsDeflectionHelper(VolVarAccessor&& accessor,
+                            const FVElementGeometry& fvGeometry,
+                            bool deflectAllVolVars)
+    : deflectAll_(deflectAllVolVars)
+    , accessor_(std::move(accessor))
+    , fvGeometry_(fvGeometry)
+    {
+        if (deflectAll_)
+            for (const auto& curScv : scvs(fvGeometry))
+                origVolVars_.push_back(accessor_(curScv));
+    }
+
+    void setCurrent(const SubControlVolume& scv)
+    {
+        if (!deflectAll_)
+        {
+            origVolVars_.clear();
+            origVolVars_.push_back(accessor_(scv));
+        }
+    }
+
+    template<class ElementSolution, class Problem>
+    void deflect(const ElementSolution& elemSol,
+                 const SubControlVolume& scv,
+                 const Problem& problem)
+    {
+        if (deflectAll_)
+            for (const auto& curScv : scvs(fvGeometry_))
+                accessor_(curScv).update(elemSol, problem, fvGeometry_.element(), curScv);
+        else
+            accessor_(scv).update(elemSol, problem, fvGeometry_.element(), scv);
+    }
+
+    void restore(const SubControlVolume& scv)
+    {
+        if (!deflectAll_)
+            accessor_(scv) = origVolVars_[0];
+        else
+            for (const auto& curScv : scvs(fvGeometry_))
+                accessor_(curScv) = origVolVars_[curScv.localDofIndex()];
+    }
+
+private:
+    const bool deflectAll_;
+    VolVarAccessor accessor_;
+    const FVElementGeometry& fvGeometry_;
+    Dune::ReservedVector<VolumeVariables, maxNumscvs> origVolVars_;
+};
+
+template<class Accessor, class FVElementGeometry>
+VolVarsDeflectionHelper(Accessor&&, FVElementGeometry&&) -> VolVarsDeflectionHelper<Accessor, std::decay_t<FVElementGeometry>>;
+
+} // end namespace Detail
+#endif // DOXYGEN
 
 /*!
  * \ingroup Assembly
@@ -310,7 +382,9 @@ public:
 
         // if all volvars in the stencil have to be updated or if it's enough to only update the
         // volVars for the scv whose associated dof has been deflected
-        static const bool localUpdate = getParamFromGroup<bool>(this->problem().paramGroup(), "Assembly.BoxVolVarsDependOnOneDofOnly", true);
+        static const bool updateAllVolVars = getParamFromGroup<bool>(
+            this->problem().paramGroup(), "Assembly.BoxVolVarsDependOnAllElementDofs", false
+        );
 
         // create the element solution
         auto elemSol = elementSolution(element, curSol, fvGeometry.gridGeometry());
@@ -318,31 +392,20 @@ public:
         // create the vector storing the partial derivatives
         ElementResidualVector partialDerivs(element.subEntities(dim));
 
-        // Original and current volvars (used in depends-on-one-dof case)
-        VolumeVariables  origVolVars;
-        VolumeVariables *curVolVars = nullptr;
-
-        // Container storing the original volvars (used in depends-on-all-dof case)
-        std::vector<VolumeVariables> allOrigVolVars;
-
-        if (!localUpdate)
-        {
-            allOrigVolVars.reserve(fvGeometry.numScv());
-            for (const auto& scv : scvs(fvGeometry))
-                allOrigVolVars.push_back(this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv));
-        }
+        Detail::VolVarsDeflectionHelper deflectionHelper(
+            [&] (const auto& scv) -> VolumeVariables& {
+                return this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv);
+            },
+            fvGeometry,
+            updateAllVolVars
+        );
 
         // calculation of the derivatives
         for (auto&& scv : scvs(fvGeometry))
         {
             // dof index and corresponding actual pri vars
             const auto dofIdx = scv.dofIndex();
-
-            if (localUpdate)
-            {
-                curVolVars = &this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv);
-                origVolVars = *curVolVars;
-            }
+            deflectionHelper.setCurrent(scv);
 
             // calculate derivatives w.r.t to the privars at the dof at hand
             for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
@@ -353,14 +416,7 @@ public:
                 {
                     // update the volume variables and compute element residual
                     elemSol[scv.localDofIndex()][pvIdx] = priVar;
-                    if (localUpdate)
-                        curVolVars->update(elemSol, this->problem(), element, scv);
-                    else
-                    {
-                        for (const auto& scvJ : scvs(fvGeometry))
-                            this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvJ).update(elemSol, this->problem(), element, scvJ);
-                    }
-
+                    deflectionHelper.deflect(elemSol, scv, this->problem());
                     return this->evalLocalResidual();
                 };
 
@@ -389,15 +445,7 @@ public:
                 }
 
                 // restore the original state of the scv's volume variables
-                if (localUpdate)
-                    *curVolVars = origVolVars;
-                // or restore the original state of all deflected volume variables
-                else
-                {
-                    int localScvIfxJ = 0;
-                    for (const auto& scvJ : scvs(fvGeometry))
-                        this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvJ) = allOrigVolVars[localScvIfxJ++];
-                }
+                deflectionHelper.restore(scv);
 
                 // restore the original element solution
                 elemSol[scv.localDofIndex()][pvIdx] = curSol[scv.dofIndex()][pvIdx];
