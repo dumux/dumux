@@ -639,16 +639,15 @@ if __name__ == "__main__":
         newModulePath,
     )
 
-    cmakeModuleFolder = "cmake/modules"
-    # get the macro file name in extracted folder
-    macroCmakeFilePattern = "*Macros.cmake"
-    targetCMakePattern = os.path.join(newModulePath, cmakeModuleFolder, macroCmakeFilePattern)
-    targetCMakeFileName = glob.glob(targetCMakePattern)
-    # copy the cmake module folder from parent module to extracted module
+    # get the CMake macro file name of the new module
+    cmakeMacroPattern = os.path.join(newModulePath, "cmake/modules/*Macros.cmake")
+    sourceCMakeMacroName = glob.glob(cmakeMacroPattern)[0]
+    # remove the generated CMake directory and copy the one from the source module
+    os.remove(os.path.join(newModulePath, "cmake"))
     copySubFolders([cmakeModuleFolder], modulePath, newModulePath)
-    # get the copied macro file name and rename it to the original one
-    targetCMakeFileAfterCopy = glob.glob(targetCMakePattern)
-    os.rename(targetCMakeFileAfterCopy[0], targetCMakeFileName[0])
+    # get the name of the extracted CMake macro file name and rename it to match the new module name
+    newModuleCMakeMacroFile = glob.glob(cmakeMacroPattern)[0]
+    os.rename(newModuleCMakeMacroFile, sourceCMakeMacroName)
 
     # guide user through removal of possibly unnecessary folders
     foldersWithoutSources = foldersWithoutSourceFiles(
