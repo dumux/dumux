@@ -1,0 +1,49 @@
+diff --git a/opm/io/eclipse/SummaryNode.hpp b/opm/io/eclipse/SummaryNode.hpp
+index e1f659acb..05dce39f5 100644
+--- a/opm/io/eclipse/SummaryNode.hpp
++++ b/opm/io/eclipse/SummaryNode.hpp
+@@ -25,6 +25,7 @@
+ #include <string>
+ #include <unordered_set>
+ #include <array>
++#include <limits>
+ 
+ namespace Opm { namespace EclIO {
+ 
+diff --git a/opm/parser/eclipse/Deck/DeckTree.hpp b/opm/parser/eclipse/Deck/DeckTree.hpp
+index 3fbaad819..a1a2de317 100644
+--- a/opm/parser/eclipse/Deck/DeckTree.hpp
++++ b/opm/parser/eclipse/Deck/DeckTree.hpp
+@@ -23,7 +23,7 @@
+ #include <string>
+ #include <unordered_map>
+ #include <unordered_set>
+-
++#include <optional>
+ 
+ namespace Opm {
+ 
+diff --git a/opm/parser/eclipse/EclipseState/Schedule/Well/NameOrder.hpp b/opm/parser/eclipse/EclipseState/Schedule/Well/NameOrder.hpp
+index 4cd3e73ba..f84aef012 100644
+--- a/opm/parser/eclipse/EclipseState/Schedule/Well/NameOrder.hpp
++++ b/opm/parser/eclipse/EclipseState/Schedule/Well/NameOrder.hpp
+@@ -23,6 +23,7 @@
+ #include <string>
+ #include <unordered_map>
+ #include <vector>
++#include <optional>
+ 
+ namespace Opm {
+ 
+diff --git a/src/opm/output/eclipse/Inplace.cpp b/src/opm/output/eclipse/Inplace.cpp
+index 61bf4c5f8..cd62e12e5 100644
+--- a/src/opm/output/eclipse/Inplace.cpp
++++ b/src/opm/output/eclipse/Inplace.cpp
+@@ -19,6 +19,7 @@
+ 
+ #include <algorithm>
+ #include <exception>
++#include <optional>
+ 
+ #include <fmt/format.h>
+ 
