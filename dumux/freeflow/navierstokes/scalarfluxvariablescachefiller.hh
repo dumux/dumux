@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup FreeflowModels
+ * \ingroup NavierStokesModel
  * \brief A helper class to fill the flux variables cache
  */
 #ifndef DUMUX_FREEFLOW_SCALAR_FLUXVARIABLESCACHE_FILLER_HH
@@ -39,7 +39,7 @@ template<class Problem, class ModelTraits, bool diffusionIsSolDependent, bool he
 class FreeFlowScalarFluxVariablesCacheFillerImplementation;
 
 /*!
- * \ingroup PorousmediumflowModels
+ * \ingroup NavierStokesModel
  * \brief The flux variables cache filler class for free flow
  *
  * Helps filling the flux variables cache depending several policies

@@ -206,7 +206,7 @@ template<class MDTraits, class CouplingManager, bool enableEnergyBalance, bool i
 class StokesDarcyCouplingDataImplementation;
 
 /*!
-* \ingroup BoundaryCoupling
+* \ingroup StokesDarcyCoupling
 * \brief Data for the coupling of a Darcy model (cell-centered finite volume)
 *        with a (Navier-)Stokes model (staggerd grid).
 */

@@ -32,7 +32,7 @@
 namespace Dumux::Python {
 
 /*!
- * \ingroup Common
+ * \ingroup PorousmediumflowModels
  * \brief A C++ wrapper for a Python PorousMediumFlow problem
  */
 template<class GridGeometry_, class PrimaryVariables, class SpatialParams_,

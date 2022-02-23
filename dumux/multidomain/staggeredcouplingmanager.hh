@@ -19,6 +19,7 @@
 /*!
  * \file
  * \ingroup MultiDomain
+ * \ingroup StaggeredDiscretization
  * \brief The interface of the coupling manager for multi domain problems
  */
 
@@ -157,6 +158,7 @@ public:
 
      /*!
       * \ingroup MultiDomain
+      * \ingroup StaggeredDiscretization
       * \brief evaluates the face residual of a coupled face of domain i which depends on the variables
       *        at the degree of freedom with index dofIdxGlobalJ of domain j
       *

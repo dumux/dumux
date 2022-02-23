@@ -425,7 +425,7 @@ private:
 };
 
 /*!
- * \ingroup BoxDiscretization
+ * \ingroup BoxDFMModel
  * \brief Base class for the finite volume geometry vector for box schemes
  *        This builds up the sub control volumes and sub control volume faces
  * \note For caching disabled we store only some essential index maps to build up local systems on-demand in

@@ -27,7 +27,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Shallow water model
+ * \ingroup ShallowWaterModel
  * \brief Volume variables for the shallow water equations model.
  */
 template <class Traits>

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup NIModel
+ * \ingroup FreeflowNIModel
  * \brief Base class for the model specific class which provides
  *        access to all volume averaged quantities.
  */
@@ -51,7 +51,7 @@ struct FreeFlowHeatCondType<true, Traits>
 } // end namespace Detail
 
 /*!
- * \ingroup NIModel
+ * \ingroup FreeflowNIModel
  * \brief The isothermal base class
  */
 template<class Traits, class Impl>

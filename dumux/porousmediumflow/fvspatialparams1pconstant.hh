@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PorousMediumFlow
+ * \ingroup PorousmediumflowModels
  * \ingroup SpatialParameters
  * \brief A spatial params implementation for 1p problem with constant properties
  */
@@ -31,6 +31,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup PorousmediumflowModels
  * \ingroup SpatialParameters
  * \brief A spatial params implementation for 1p problem with constant properties
  */

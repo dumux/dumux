@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup KOmegaEqModel
+ * \ingroup KOmegaModel
  *
  * \copydoc Dumux::KOmegaVolumeVariables
  */
@@ -32,7 +32,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup KOmegaEqModel
+ * \ingroup KOmegaModel
  * \brief Volume variables for the isothermal single-phase k-omega 2-Eq model.
  */
 template <class Traits, class NSVolumeVariables>

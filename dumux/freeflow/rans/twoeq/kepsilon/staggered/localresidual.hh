@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup KepsilonModel
+ * \ingroup KEpsilonModel
  * \copydoc Dumux::KEpsilonResidualImpl
  */
 #ifndef DUMUX_STAGGERED_KEPSILON_LOCAL_RESIDUAL_HH

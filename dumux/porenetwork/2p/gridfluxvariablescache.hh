@@ -48,7 +48,7 @@ struct PNMTwoPDefaultGridFVCTraits
 };
 
 /*!
- * \ingroup PoreNetworkDiscretization
+ * \ingroup PNMTwoPModel
  * \brief Flux variable caches on a gridview
  * \note The class is specialized for a version with and without grid caching
  */
@@ -59,7 +59,7 @@ template<class Problem,
 class PNMTwoPGridFluxVariablesCache;
 
 /*!
- * \ingroup PoreNetworkDiscretization
+ * \ingroup PNMTwoPModel
  * \brief The grid flux variables cache for the two-phase PNM hodling the invasion state of the throats
  * \note The flux caches of the gridview are stored which is memory intensive but faster
  */
@@ -130,7 +130,7 @@ private:
 };
 
 /*!
- * \ingroup PoreNetworkDiscretization
+ * \ingroup PNMTwoPModel
  * \brief The grid flux variables cache for the two-phase PNM hodling the invasion state of the throats
  * \note The flux caches of the gridview are stored which is memory intensive but faster
  */

@@ -19,6 +19,7 @@
 /*!
  * \file
  * \ingroup FreeflowNCModel
+ * \ingroup ZeroEqModel
  *
  * \brief A single-phase, multi-component Reynolds-Averaged Navier-Stokes 0-Eq. model
  *

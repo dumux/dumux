@@ -154,7 +154,8 @@ struct MPNCModelTraits
 };
 
 /*!
- * \ingroup PorousmediumNonEquilibriumModel
+ * \ingroup MPNCModel
+ * \ingroup NonEquilibriumModel
  * \brief Specifies a number properties of the m-phase n-component model
  *        in conjunction with non-equilibrium. This is necessary because
  *        the mpnc indices are affected by the non-equilibrium which can
