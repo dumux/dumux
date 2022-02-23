@@ -203,7 +203,7 @@ public:
         /*!
      * \brief returns an iteratable container of all indices of degrees of freedom of domain j
      *        that couple with / influence the element residual of the given element of domain i
-     * \param eIdxI the index of the coupled element of domain í
+     * \param eIdxI the index of the coupled element of domain i
      */
     const std::vector<std::size_t>& freeFlowMassToPoreNetworkCouplingStencil(const std::size_t eIdxI) const
     {
@@ -216,7 +216,7 @@ public:
     /*!
      * \brief returns an iteratable container of all indices of degrees of freedom of domain j
      *        that couple with / influence the element residual of the given element of domain i
-     * \param eIdxI the index of the coupled element of domain í
+     * \param dofIndex the degree of freedom index
      */
     const std::vector<std::size_t>& freeFlowMomentumToPoreNetworkCouplingStencil(const std::size_t dofIndex) const
     {

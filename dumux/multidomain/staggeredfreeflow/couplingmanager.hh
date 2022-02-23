@@ -161,6 +161,7 @@ public:
      *
      * \param domainI the domain index of domain i
      * \param localAssemblerI the local assembler assembling the element residual of an element of domain i
+     * \param scvI the sub-control-volume of domain i
      * \param domainJ the domain index of domain j
      * \param dofIdxGlobalJ the index of the degree of freedom of domain j which has an influence on the element residual of domain i
      *

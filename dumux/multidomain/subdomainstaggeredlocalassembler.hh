@@ -714,8 +714,6 @@ public:
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix.
-     *
-     * \return The element residual at the current solution.
      */
     template<class JacobianBlock, class GridVariables>
     void assembleJacobianCellCenterCoupling(Dune::index_constant<faceId> domainJ, JacobianBlock& A,
@@ -836,8 +834,6 @@ public:
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix.
-     *
-     * \return The element residual at the current solution.
      */
     template<class JacobianBlock, class ElementResidualVector, class GridVariables>
     void assembleJacobianFaceCoupling(Dune::index_constant<cellCenterId> domainJ, JacobianBlock& A,

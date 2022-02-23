@@ -294,8 +294,6 @@ public:
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix.
-     *
-     * \return The element residual at the current solution.
      */
     template<std::size_t otherId, class JacobianBlock, class GridVariables>
     void assembleJacobianCoupling(Dune::index_constant<otherId> domainJ, JacobianBlock& A,

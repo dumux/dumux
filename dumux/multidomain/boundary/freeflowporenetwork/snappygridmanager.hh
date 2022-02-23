@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \copydoc Dumux::SnappyGridManager
+ * A grid creator that matches a free-flow grid to a PNM grid.
  */
 #ifndef DUMUX_MULTIDOMAIN_BOUNDARY_FREEFLOW_PORENETWORK_SNAPPY_GRID_MANAGER_HH
 #define DUMUX_MULTIDOMAIN_BOUNDARY_FREEFLOW_PORENETWORK_SNAPPY_GRID_MANAGER_HH
@@ -133,10 +133,11 @@ public:
     /*!
      * \brief Returns the lowDim positions intersecting with a given line.
      *
+     * \param bulkGridLowerLeft The lower left position of the bulk grid
+     * \param bulkGridUpperRight The upper right position of the bulk grid
+     * \param couplingPlaneNormal The normal vector of the coupling plane
      * \param lowDimGridView The lowDim gridView
      * \param lowDimGridData The lowDim grid data
-     * \param couplingPlaneNormal The normal vector of the coupling plane
-     * \param line The line to check for intersections
      * \param modelParamGroup The bulk model parameter group
      */
     template<class LowDimGridView, class LowDimGridData>
@@ -202,10 +203,11 @@ public:
     /*!
      * \brief Returns the lowDim positions intersecting with a given line.
      *
+     * \param bulkGridLowerLeft The lower left position of the bulk grid
+     * \param bulkGridUpperRight The upper right position of the bulk grid
+     * \param couplingPlaneNormal The normal vector of the coupling plane
      * \param lowDimGridView The lowDim gridView
      * \param lowDimGridData The lowDim grid data
-     * \param couplingPlaneNormal The normal vector of the coupling plane
-     * \param line The line to check for intersections
      * \param modelParamGroup The bulk model parameter group
      */
     template<class LowDimGridView, class LowDimGridData>
@@ -220,6 +222,7 @@ public:
 
         const auto axisParallelLines = makeAxisParallelLinesFromCouplingPlane(bulkGridLowerLeft, bulkGridUpperRight, couplingPlaneNormal, modelParamGroup);
 
+        //The line to check for intersections
         const auto line = [&]()
         {
             for (const auto& l : axisParallelLines)

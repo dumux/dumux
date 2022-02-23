@@ -91,6 +91,7 @@ public:
      * \param problem The problem to solve
      * \param scv The sub-control volume over which we integrate the storage term
      * \param volVars The volume variables associated with the scv
+     * \param isPreviousStorage Bool transferring the information if the storage term is computed at the current or previous time step
      * \note has to be implemented by the model specific residual class
      *
      */
@@ -157,6 +158,7 @@ public:
      * \param elemVolVars The volume variables for all flux stencil elements
      * \param scvf The sub control volume face to compute the flux on
      * \param elemFluxVarsCache The cache related to flux computation
+     * \param elemBcTypes The element boundary condition types
      */
     NumEqVector computeFlux(const Problem& problem,
                             const Element& element,

@@ -125,7 +125,7 @@ public:
      *
      * The number of arguments has to match the number of subdomains.
      * In case a constructor needs multiple arguments, they have to be wrapped in a std::tuple.
-     * Use std::make_tuple and possible wrap arguments using std::ref/std::cref or use std::forward_as_tuple.
+     * Use std::make_tuple and possible wrap arguments using std::ref / std::cref or use std::forward_as_tuple.
      * If an argument is a tuple, it will be unpacked and its members will be passed to the constructor.
      * In the corner case where you need to pass a tuple to the constructor,
      * you therefore need to additionally wrap the tuple in a tuple before passing.
@@ -171,7 +171,7 @@ public:
      *
      * The number of arguments has to match the number of subdomains.
      * In case the update function needs multiple arguments, they have to be wrapped in a std::tuple.
-     * Use std::make_tuple and possible wrap arguments using std::ref/std::cref or use std::forward_as_tuple.
+     * Use std::make_tuple and possible wrap arguments using std::ref / std::cref or use std::forward_as_tuple.
      * If an argument is a tuple, it will be unpacked and its members will be passed to the constructor.
      * In the corner case where you need to pass a tuple to the constructor,
      * you therefore need to additionally wrap the tuple in a tuple before passing.
