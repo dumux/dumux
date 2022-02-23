@@ -198,6 +198,12 @@
              * \brief Low-Re k-epsilon model
              * For a detailed model description see freeflow/rans/twoeq/lowrekepsilon/model.hh
              */
+            /*!
+             * \ingroup TwoEqModel
+             * \defgroup SSTModel SST model
+             * \brief SST model
+             * For a detailed model description see freeflow/rans/twoeq/sst/model.hh
+             */
     /*!
      * \ingroup FreeflowModels
      * \defgroup FreeflowNCModel Compositional

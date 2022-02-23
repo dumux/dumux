@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup SSTEqModel
+ * \ingroup SSTModel
  *
  * \copydoc Dumux::SSTVolumeVariables
  */
@@ -33,7 +33,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup SSTEqModel
+ * \ingroup SSTModel
  * \brief Volume variables for the isothermal single-phase SST 2-Eq model.
  */
 template <class Traits, class NSVolumeVariables>
