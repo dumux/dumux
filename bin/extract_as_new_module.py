@@ -643,8 +643,8 @@ if __name__ == "__main__":
     cmakeMacroPattern = os.path.join(newModulePath, "cmake/modules/*Macros.cmake")
     sourceCMakeMacroName = glob.glob(cmakeMacroPattern)[0]
     # remove the generated CMake directory and copy the one from the source module
-    os.remove(os.path.join(newModulePath, "cmake"))
-    copySubFolders([cmakeModuleFolder], modulePath, newModulePath)
+    shutil. rmtree(os.path.join(newModulePath, "cmake"))
+    copySubFolders(["cmake"], modulePath, newModulePath)
     # get the name of the extracted CMake macro file name and rename it to match the new module name
     newModuleCMakeMacroFile = glob.glob(cmakeMacroPattern)[0]
     os.rename(newModuleCMakeMacroFile, sourceCMakeMacroName)
