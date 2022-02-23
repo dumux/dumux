@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Typetraits
+ * \ingroup FaceCenteredStaggeredDiscretization
  * \copydoc Dumux::ConsistentlyOrientedGrid
  */
 #ifndef DUMUX_DISCRETIZATION_FACECENTERED_STAGGERED_CONSISTENTLY_ORIENTED_GRID_HH

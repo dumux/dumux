@@ -264,8 +264,13 @@
          */
     /*!
      * \ingroup Discretization
+     * \defgroup FaceCenteredStaggeredDiscretization Face-centered staggered FV scheme
+     * \brief A staggered finite volume scheme with degrees of freedom at cell-centers and facets. In this implementation, momentum control volumes exist.
+     */
+    /*!
+     * \ingroup Discretization
      * \defgroup StaggeredDiscretization Staggered FV scheme
-     * \brief A staggered finite volume scheme with degrees of freedom at cell-centers and facets.
+     * \brief A staggered finite volume scheme with degrees of freedom at cell-centers and facets. In this implementation, momentum control volumes do not explicitly exist, but the implementation uses workarounds.
      */
     /*!
      * \ingroup Discretization

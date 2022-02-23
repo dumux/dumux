@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Typetraits
+ * \ingroup FaceCenteredStaggeredDiscretization
  * \copydoc Dumux::GridSupportsConcaveCorners
  */
 #ifndef DUMUX_DISCRETIZATION_FACECENTERED_STAGGERED_GRID_SUPPORTS_CONCAVE_CORNERS_HH
