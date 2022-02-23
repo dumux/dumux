@@ -13,6 +13,7 @@ import argparse
 import shutil
 import textwrap
 import itertools
+import glob
 import multiprocessing as mp
 from distutils.dir_util import copy_tree
 from pathlib import Path
@@ -637,6 +638,16 @@ if __name__ == "__main__":
         os.path.join(baseFolder, "dumux"),
         newModulePath,
     )
+
+    # get the CMake macro file name of the new module
+    cmakeMacroPattern = os.path.join(newModulePath, "cmake/modules/*Macros.cmake")
+    sourceCMakeMacroName = glob.glob(cmakeMacroPattern)[0]
+    # remove the generated CMake directory and copy the one from the source module
+    shutil. rmtree(os.path.join(newModulePath, "cmake"))
+    copySubFolders(["cmake"], modulePath, newModulePath)
+    # get the name of the extracted CMake macro file name and rename it to match the new module name
+    newModuleCMakeMacroFile = glob.glob(cmakeMacroPattern)[0]
+    os.rename(newModuleCMakeMacroFile, sourceCMakeMacroName)
 
     # guide user through removal of possibly unnecessary folders
     foldersWithoutSources = foldersWithoutSourceFiles(
