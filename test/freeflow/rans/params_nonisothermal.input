@@ -24,6 +24,7 @@ TurbulentPrandtlNumber = 0.85
 WallNormalAxis = 1
 IsFlatWallBounded = True
 WriteFlatWallBoundedFields = True
+SSTModelVersion = SST
 
 [Assembly]
 NumericDifferenceMethod = 0

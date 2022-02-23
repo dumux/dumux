@@ -27,6 +27,20 @@ dumux_add_test(NAME test_ff_rans2c_kepsilon_wallfunctions
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_kepsilon params_wallfunction.input
                              -Problem.Name test_ff_rans2c_kepsilon_wallfunctions")
 
+dumux_add_test(NAME test_ff_rans2c_sst
+              SOURCES main.cc
+              COMPILE_DEFINITIONS TYPETAG=FlatPlateNCSST
+              LABELS freeflow rans
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2c_sst-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_sst-00035.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_sst params.input
+                        -Problem.Name test_ff_rans2c_sst
+                        -RANS.WriteFlatWallBoundedFields False
+                        -RANS.SSTModelVersion SST")
+
 dumux_add_test(NAME test_ff_rans2c_komega
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FlatPlateNCKOmega
@@ -85,7 +99,7 @@ target_compile_definitions(test_ff_rans2cni_kepsilon PUBLIC "TYPETAG=FlatPlateNC
 
 dumux_add_test(NAME test_ff_rans2cni_kepsilon_twolayer
               TARGET test_ff_rans2cni_kepsilon
-              LABELS freeflow rans
+              LABELS freeflow rans ransnc
               TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -97,7 +111,7 @@ dumux_add_test(NAME test_ff_rans2cni_kepsilon_twolayer
 
 dumux_add_test(NAME test_ff_rans2cni_kepsilon_wallfunction
               TARGET test_ff_rans2cni_kepsilon
-              LABELS freeflow rans
+              LABELS freeflow rans ransnc
               TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -107,11 +121,28 @@ dumux_add_test(NAME test_ff_rans2cni_kepsilon_wallfunction
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_kepsilon params_nonisothermal_wallfunction.input
                              -Problem.Name test_ff_rans2cni_kepsilon_wallfunction")
 
+dumux_add_test(NAME test_ff_rans2cni_sst
+              SOURCES main.cc
+              COMPILE_DEFINITIONS TYPETAG=FlatPlateNCNISST
+              COMPILE_DEFINITIONS NONISOTHERMAL
+              LABELS freeflow rans ransnc
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2cni_sst-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_sst-00031.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_sst params_nonisothermal.input
+                        -Problem.Name test_ff_rans2cni_sst
+                        -RANS.WriteFlatWallBoundedFields False
+                        -RANS.IsFlatWallBounded True
+                        -RANS.SSTModelVersion SST
+                        -Newton.TargetSteps 12")
+
 dumux_add_test(NAME test_ff_rans2cni_komega
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FlatPlateNCNIKOmega
               COMPILE_DEFINITIONS NONISOTHERMAL
-              LABELS freeflow rans
+              LABELS freeflow rans ransnc
               TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -141,7 +172,7 @@ dumux_add_test(NAME test_ff_rans2cni_komega_loadsolution
 dumux_add_test(NAME test_ff_rans2cni_lowrekepsilon
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FlatPlateNCNILowReKEpsilon
-              LABELS freeflow rans
+              LABELS freeflow rans ransnc
               TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -155,7 +186,7 @@ target_compile_definitions(test_ff_rans2cni_lowrekepsilon PUBLIC "NONISOTHERMAL"
 dumux_add_test(NAME test_ff_rans2cni_oneeq
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FlatPlateNCNIOneEq
-              LABELS freeflow rans
+              LABELS freeflow rans ransnc
               TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -170,7 +201,7 @@ target_compile_definitions(test_ff_rans2cni_oneeq PUBLIC "NONISOTHERMAL")
 dumux_add_test(NAME test_ff_rans2cni_zeroeq
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FlatPlateNCNIZeroEq
-              LABELS freeflow rans
+              LABELS freeflow rans ransnc
               TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
