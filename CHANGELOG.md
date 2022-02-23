@@ -1,6 +1,6 @@
 Differences Between DuMu<sup>x</sup> 3.5 and DuMu<sup>x</sup> 3.4
 =============================================
-- __Requirements__: DuMux requires Dune >=2.8 and CMake >= 3.13. It was successfully tested with OPM 2021.10, see also [patches](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/tree/master/patches).
+- __Requirements__: DuMux requires Dune >=2.8 and CMake >= 3.13. It was successfully tested with OPM 2021.10 (which in turn requires Dune <= 2.8), see also [patches](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/tree/master/patches).
 
 - __Sequential__: The old "sequential", "IMPES-style" models have not received updates in several years,
   are separate from the rest of the code base and increasingly became a maintenance burden. Deprecation warnings
