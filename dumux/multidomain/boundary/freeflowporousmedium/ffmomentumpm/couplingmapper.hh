@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup DarcyDarcyCoupling
+ * \ingroup FreeFlowPorousMediumCoupling
  * \copydoc Dumux::FreeFlowMomentumPorousMediumCouplingMapper
  */
 
@@ -40,7 +40,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup DarcyDarcyCoupling
+ * \ingroup FreeFlowPorousMediumCoupling
  * \brief the default mapper for conforming equal dimension boundary coupling between two domains (box or cc)
  * \todo how to extend to arbitrary number of domains?
  */

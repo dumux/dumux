@@ -558,6 +558,11 @@
          */
         /*!
          * \ingroup BoundaryCoupling
+         * \defgroup FreeFlowPorousMediumCoupling Free flow-Porous medium domain coupling
+         * \brief Couples domains with equal-dimension multi-physics problems in a Free flow-Porous medium coupling.
+         */
+        /*!
+         * \ingroup BoundaryCoupling
          * \defgroup StokesDarcyCoupling Stokes-Darcy domain coupling
          * \brief Couples domains with equal-dimension multi-physics problems in a Stokes-Darcy coupling.
          */
