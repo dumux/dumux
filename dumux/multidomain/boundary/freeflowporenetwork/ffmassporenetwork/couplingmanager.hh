@@ -38,7 +38,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup StokesDarcyCoupling
+ * \ingroup FreeFlowPoreNetworkCoupling
  * \brief Coupling manager for free-flow mass and pore-network models.
  */
 template<class MDTraits>

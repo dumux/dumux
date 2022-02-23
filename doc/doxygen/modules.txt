@@ -553,6 +553,11 @@
          */
         /*!
          * \ingroup BoundaryCoupling
+         * \defgroup FreeFlowPoreNetworkCoupling Free flow-Pore network domain coupling
+         * \brief Couples domains with equal-dimension multi-physics problems in a Free flow-Pore network coupling.
+         */
+        /*!
+         * \ingroup BoundaryCoupling
          * \defgroup StokesDarcyCoupling Stokes-Darcy domain coupling
          * \brief Couples domains with equal-dimension multi-physics problems in a Stokes-Darcy coupling.
          */

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup BoundaryCoupling
+ * \ingroup FreeFlowPoreNetworkCoupling
  * \copydoc Dumux::FreeFlowPoreNetworkCouplingManager
  */
 
@@ -144,7 +144,7 @@ struct CouplingManagers
 } // end namespace Detail
 
 /*!
- * \ingroup BoundaryCoupling
+ * \ingroup FreeFlowPoreNetworkCoupling
  * \brief Coupling manager for coupling freeflow and pore-network models
  */
 template<class MDTraits>
