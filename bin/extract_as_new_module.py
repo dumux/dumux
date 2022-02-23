@@ -570,7 +570,7 @@ if __name__ == "__main__":
     -----------------------------------------------------------
 
     Example usage:
-    ./dumux/bin/extractmodule/extract_as_new_module.py dumux-fracture appl test
+    python3 dumux/bin/extract_as_new_module.py dumux-fracture appl test
 
     (extracts the subFolder appl and test from the module dumux-fracture)
 
@@ -643,7 +643,7 @@ if __name__ == "__main__":
     cmakeMacroPattern = os.path.join(newModulePath, "cmake/modules/*Macros.cmake")
     sourceCMakeMacroName = glob.glob(cmakeMacroPattern)[0]
     # remove the generated CMake directory and copy the one from the source module
-    shutil. rmtree(os.path.join(newModulePath, "cmake"))
+    shutil.rmtree(os.path.join(newModulePath, "cmake"))
     copySubFolders(["cmake"], modulePath, newModulePath)
     # get the name of the extracted CMake macro file name and rename it to match the new module name
     newModuleCMakeMacroFile = glob.glob(cmakeMacroPattern)[0]
