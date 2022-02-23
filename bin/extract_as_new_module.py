@@ -570,7 +570,7 @@ if __name__ == "__main__":
     -----------------------------------------------------------
 
     Example usage:
-    ./dumux/bin/extractmodule/extract_as_new_module.py dumux-fracture appl test
+    python3 dumux/bin/extract_as_new_module.py dumux-fracture appl test
 
     (extracts the subFolder appl and test from the module dumux-fracture)
 
