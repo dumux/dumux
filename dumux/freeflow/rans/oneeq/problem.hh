@@ -119,15 +119,15 @@ public:
             const unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
             fvGeometry.bindElement(element);
 
-            for (unsigned int dimIdx = 0; dimIdx < Grid::dimension; ++dimIdx)
+            for (unsigned int axisIdx = 0; axisIdx < Grid::dimension; ++axisIdx)
             {
-                const unsigned int neighborIndex0 = ParentType::neighborIndex(elementIdx, dimIdx, 0);
-                const unsigned int neighborIndex1 = ParentType::neighborIndex(elementIdx, dimIdx, 1);
+                const unsigned int neighborIndex0 = ParentType::neighborIndex(elementIdx, axisIdx, 0);
+                const unsigned int neighborIndex1 = ParentType::neighborIndex(elementIdx, axisIdx, 1);
 
                 // calculate cell-centered turbulentEddyViscosity (viscosityTilde) gradient
-                storedViscosityTildeGradient_[elementIdx][dimIdx]
+                storedViscosityTildeGradient_[elementIdx][axisIdx]
                     = (storedViscosityTilde(neighborIndex1) - storedViscosityTilde(neighborIndex0))
-                    / (ParentType::cellCenter(neighborIndex1)[dimIdx] - ParentType::cellCenter(neighborIndex0)[dimIdx]);
+                    / (ParentType::cellCenter(neighborIndex1)[axisIdx] - ParentType::cellCenter(neighborIndex0)[axisIdx]);
             }
 
             // Adjust for dirichlet boundary conditions

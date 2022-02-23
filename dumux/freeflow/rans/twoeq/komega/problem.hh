@@ -117,19 +117,19 @@ public:
         {
             const unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
 
-            for (unsigned int dimIdx = 0; dimIdx < DimVector::dimension; ++dimIdx)
+            for (unsigned int axisIdx = 0; axisIdx < DimVector::dimension; ++axisIdx)
             {
-                const unsigned neighborIdx0 = ParentType::neighborIndex(elementIdx, dimIdx, 0);
-                const unsigned neighborIdx1 = ParentType::neighborIndex(elementIdx, dimIdx, 1);
+                const unsigned neighborIdx0 = ParentType::neighborIndex(elementIdx, axisIdx, 0);
+                const unsigned neighborIdx1 = ParentType::neighborIndex(elementIdx, axisIdx, 1);
 
                 // Cell centered TKE Gradient
-                storedTurbulentKineticEnergyGradient_[elementIdx][dimIdx]
+                storedTurbulentKineticEnergyGradient_[elementIdx][axisIdx]
                     = (storedTurbulentKineticEnergy(neighborIdx1) - storedTurbulentKineticEnergy(neighborIdx0))
-                    / (ParentType::cellCenter(neighborIdx1)[dimIdx] - ParentType::cellCenter(neighborIdx0)[dimIdx]);
+                    / (ParentType::cellCenter(neighborIdx1)[axisIdx] - ParentType::cellCenter(neighborIdx0)[axisIdx]);
                 // Cell centered Omega Gradient
-                storedDissipationGradient_[elementIdx][dimIdx]
+                storedDissipationGradient_[elementIdx][axisIdx]
                     = (storedDissipation(neighborIdx1) - storedDissipation(neighborIdx0))
-                    / (ParentType::cellCenter(neighborIdx1)[dimIdx] - ParentType::cellCenter(neighborIdx0)[dimIdx]);
+                    / (ParentType::cellCenter(neighborIdx1)[axisIdx] - ParentType::cellCenter(neighborIdx0)[axisIdx]);
             }
         }
     }

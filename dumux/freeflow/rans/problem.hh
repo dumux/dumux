@@ -283,14 +283,14 @@ public:
         return element.geometry().center();
     }
 
-    unsigned int neighborIndex(const int elementIdx, const int dimIdx, const int sideIdx) const
-    { return neighborIdx_[elementIdx][dimIdx][sideIdx];}
+    unsigned int neighborIndex(const int elementIdx, const int axisIdx, const int sideIdx) const
+    { return neighborIdx_[elementIdx][axisIdx][sideIdx];}
 
     DimVector ccVelocityVector(const int elementIdx) const
     { return velocity_[elementIdx]; }
 
-    Scalar ccVelocity(const int elementIdx, const int dimIdx) const
-    { return velocity_[elementIdx][dimIdx]; }
+    Scalar ccVelocity(const int elementIdx, const int axisIdx) const
+    { return velocity_[elementIdx][axisIdx]; }
 
     DimVector velocityMaximum(const int elementIdx) const
     { return velocityMaximum_[elementIdx]; }
@@ -301,8 +301,8 @@ public:
     DimMatrix velocityGradientTensor(const int elementIdx) const
     { return velocityGradients_[elementIdx]; }
 
-    Scalar velocityGradient(const int elementIdx, const int velIdx, const int dimIdx) const
-    { return velocityGradients_[elementIdx][velIdx][dimIdx]; }
+    Scalar velocityGradient(const int elementIdx, const int i, const int j) const
+    { return velocityGradients_[elementIdx][i][j]; }
 
     Scalar stressTensorScalarProduct(const int elementIdx) const
     { return stressTensorScalarProduct_[elementIdx]; }
@@ -444,10 +444,10 @@ private:
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            for (unsigned int axisIdx = 0; axisIdx < dim; ++axisIdx)
             {
-                neighborIdx_[elementIdx][dimIdx][0] = elementIdx;
-                neighborIdx_[elementIdx][dimIdx][1] = elementIdx;
+                neighborIdx_[elementIdx][axisIdx][0] = elementIdx;
+                neighborIdx_[elementIdx][axisIdx][1] = elementIdx;
             }
 
             for (const auto& intersection : intersections(this->gridGeometry().gridView(), element))
@@ -456,15 +456,15 @@ private:
                     continue;
 
                 unsigned int neighborIdx = this->gridGeometry().elementMapper().index(intersection.outside());
-                for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+                for (unsigned int axisIdx = 0; axisIdx < dim; ++axisIdx)
                 {
-                    if (abs(cellCenter(elementIdx)[dimIdx] - cellCenter(neighborIdx)[dimIdx]) > 1e-8)
+                    if (abs(cellCenter(elementIdx)[axisIdx] - cellCenter(neighborIdx)[axisIdx]) > 1e-8)
                     {
-                        if (cellCenter(elementIdx)[dimIdx] > cellCenter(neighborIdx)[dimIdx])
-                            neighborIdx_[elementIdx][dimIdx][0] = neighborIdx;
+                        if (cellCenter(elementIdx)[axisIdx] > cellCenter(neighborIdx)[axisIdx])
+                            neighborIdx_[elementIdx][axisIdx][0] = neighborIdx;
 
-                        if (cellCenter(elementIdx)[dimIdx] < cellCenter(neighborIdx)[dimIdx])
-                            neighborIdx_[elementIdx][dimIdx][1] = neighborIdx;
+                        if (cellCenter(elementIdx)[axisIdx] < cellCenter(neighborIdx)[axisIdx])
+                            neighborIdx_[elementIdx][axisIdx][1] = neighborIdx;
                     }
                 }
             }
@@ -488,8 +488,8 @@ private:
                 const auto numericalSolutionFace = curSol[GridGeometry::faceIdx()][dofIdxFace][Indices::velocity(scvf.directionIndex())];
                 velocityTemp[scvf.directionIndex()] += numericalSolutionFace;
             }
-            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
-                velocity_[elementIdx][dimIdx] = velocityTemp[dimIdx] * 0.5; // faces are equidistant to cell center
+            for (unsigned int axisIdx = 0; axisIdx < dim; ++axisIdx)
+                velocity_[elementIdx][axisIdx] = velocityTemp[axisIdx] * 0.5; // faces are equidistant to cell center
         }
     }
 
@@ -504,19 +504,19 @@ private:
         {
             const unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
 
-            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            for (unsigned int j = 0; j < dim; ++j)
             {
-                for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
+                for (unsigned int i = 0; i < dim; ++i)
                 {
-                    const unsigned int neighborIndex0 = neighborIndex(elementIdx, dimIdx, 0);
-                    const unsigned int neighborIndex1 = neighborIndex(elementIdx, dimIdx, 1);
+                    const unsigned int neighborIndex0 = neighborIndex(elementIdx, j, 0);
+                    const unsigned int neighborIndex1 = neighborIndex(elementIdx, j, 1);
 
-                    velocityGradients_[elementIdx][velIdx][dimIdx]
-                        = (ccVelocity(neighborIndex1, velIdx) - ccVelocity(neighborIndex0, velIdx))
-                        / (cellCenter(neighborIndex1)[dimIdx] - cellCenter(neighborIndex0)[dimIdx]);
+                    velocityGradients_[elementIdx][i][j]
+                        = (ccVelocity(neighborIndex1, i) - ccVelocity(neighborIndex0, i))
+                        / (cellCenter(neighborIndex1)[j] - cellCenter(neighborIndex0)[j]);
 
-                    if (abs(cellCenter(neighborIndex1)[dimIdx] - cellCenter(neighborIndex0)[dimIdx]) < 1e-8)
-                        velocityGradients_[elementIdx][velIdx][dimIdx] = 0.0;
+                    if (abs(cellCenter(neighborIndex1)[j] - cellCenter(neighborIndex0)[j]) < 1e-8)
+                        velocityGradients_[elementIdx][i][j] = 0.0;
                 }
             }
 
@@ -524,7 +524,7 @@ private:
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 // adapt calculations for Dirichlet condition
-                unsigned int scvfNormDim = scvf.directionIndex();
+                unsigned int axisIdx = scvf.directionIndex();
                 if (scvf.boundary())
                 {
                     for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
@@ -534,13 +534,13 @@ private:
 
                         Scalar dirichletVelocity = asImp_().dirichlet(element, scvf)[Indices::velocity(velIdx)];
 
-                        unsigned int neighborIdx = neighborIndex(elementIdx, scvfNormDim, 0);
-                        if (scvf.center()[scvfNormDim] < cellCenter(elementIdx)[scvfNormDim])
-                            neighborIdx = neighborIndex(elementIdx, scvfNormDim, 1);
+                        unsigned int neighborIdx = neighborIndex(elementIdx, axisIdx, 0);
+                        if (scvf.center()[axisIdx] < cellCenter(elementIdx)[axisIdx])
+                            neighborIdx = neighborIndex(elementIdx, axisIdx, 1);
 
-                        velocityGradients_[elementIdx][velIdx][scvfNormDim]
+                        velocityGradients_[elementIdx][velIdx][axisIdx]
                             = (ccVelocity(neighborIdx, velIdx) - dirichletVelocity)
-                              / (cellCenter(neighborIdx)[scvfNormDim] - scvf.center()[scvfNormDim]);
+                              / (cellCenter(neighborIdx)[axisIdx] - scvf.center()[axisIdx]);
                     }
                 }
 
@@ -549,40 +549,40 @@ private:
                 std::vector<unsigned int> bjsNeighbor(dim, 0);
                 DimVector bjsVelocityAverage(0.0);
                 DimVector normalNormCoordinate(0.0);
-                unsigned int velIdx = Indices::velocity(scvfNormDim);
+                unsigned int velCompIdx = Indices::velocity(scvf.directionIndex());
                 const int numSubFaces = scvf.pairData().size();
                 for(int localSubFaceIdx = 0; localSubFaceIdx < numSubFaces; ++localSubFaceIdx)
                 {
                     const auto& lateralFace = fvGeometry.scvf(scvf.insideScvIdx(), scvf.pairData()[localSubFaceIdx].localLateralFaceIdx);
 
                     // adapt calculations for Beavers-Joseph-Saffman condition
-                    unsigned int normalNormDim = lateralFace.directionIndex();
-                    if (lateralFace.boundary() && (asImp_().boundaryTypes(element, lateralFace).isBeaversJoseph(Indices::velocity(velIdx))))
+                    unsigned int lateralAxisIdx = lateralFace.directionIndex();
+                    if (lateralFace.boundary() && (asImp_().boundaryTypes(element, lateralFace).isBeaversJoseph(Indices::velocity(velCompIdx))))
                     {
-                        unsigned int neighborIdx = neighborIndex(elementIdx, normalNormDim, 0);
-                        if (lateralFace.center()[normalNormDim] < cellCenter(elementIdx)[normalNormDim])
-                            neighborIdx = neighborIndex(elementIdx, normalNormDim, 1);
+                        unsigned int neighborIdx = neighborIndex(elementIdx, lateralAxisIdx, 0);
+                        if (lateralFace.center()[lateralAxisIdx] < cellCenter(elementIdx)[lateralAxisIdx])
+                            neighborIdx = neighborIndex(elementIdx, lateralAxisIdx, 1);
 
                         const SubControlVolume& scv = fvGeometry.scv(scvf.insideScvIdx());
-                        bjsVelocityAverage[normalNormDim] += ParentType::beaversJosephVelocity(element, scv, scvf, lateralFace, ccVelocity(elementIdx, velIdx), 0.0);
-                        if (bjsNumFaces[normalNormDim] > 0 && neighborIdx != bjsNeighbor[normalNormDim])
+                        bjsVelocityAverage[lateralAxisIdx] += ParentType::beaversJosephVelocity(element, scv, scvf, lateralFace, ccVelocity(elementIdx, velCompIdx), 0.0);
+                        if (bjsNumFaces[lateralAxisIdx] > 0 && neighborIdx != bjsNeighbor[lateralAxisIdx])
                             DUNE_THROW(Dune::InvalidStateException, "Two different neighborIdx should not occur");
-                        bjsNeighbor[normalNormDim] = neighborIdx;
-                        normalNormCoordinate[normalNormDim] = lateralFace.center()[normalNormDim];
-                        bjsNumFaces[normalNormDim]++;
+                        bjsNeighbor[lateralAxisIdx] = neighborIdx;
+                        normalNormCoordinate[lateralAxisIdx] = lateralFace.center()[lateralAxisIdx];
+                        bjsNumFaces[lateralAxisIdx]++;
                     }
                 }
-                for (unsigned dirIdx = 0; dirIdx < dim; ++dirIdx)
+                for (unsigned axisIdx = 0; axisIdx < dim; ++axisIdx)
                 {
-                    if (bjsNumFaces[dirIdx] == 0)
+                    if (bjsNumFaces[axisIdx] == 0)
                         continue;
 
-                    unsigned int neighborIdx = bjsNeighbor[dirIdx];
-                    bjsVelocityAverage[dirIdx] /= bjsNumFaces[dirIdx];
+                    unsigned int neighborIdx = bjsNeighbor[axisIdx];
+                    bjsVelocityAverage[axisIdx] /= bjsNumFaces[axisIdx];
 
-                    velocityGradients_[elementIdx][velIdx][dirIdx]
-                        = (ccVelocity(neighborIdx, velIdx) - bjsVelocityAverage[dirIdx])
-                        / (cellCenter(neighborIdx)[dirIdx] - normalNormCoordinate[dirIdx]);
+                    velocityGradients_[elementIdx][velCompIdx][axisIdx]
+                        = (ccVelocity(neighborIdx, velCompIdx) - bjsVelocityAverage[axisIdx])
+                        / (cellCenter(neighborIdx)[axisIdx] - normalNormCoordinate[axisIdx]);
 
                 }
             }
@@ -608,19 +608,19 @@ private:
                 Scalar maxVelocity = 0.0;
                 const unsigned int wallElementIdx = wallElementIndex(elementIdx);
 
-                for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+                for (unsigned int axisIdx = 0; axisIdx < dim; ++axisIdx)
                 {
-                    if (abs(ccVelocity(elementIdx, dimIdx)) > abs(velocityMaximum_[wallElementIdx][dimIdx]))
-                        velocityMaximum_[wallElementIdx][dimIdx] = ccVelocity(elementIdx, dimIdx);
+                    if (abs(ccVelocity(elementIdx, axisIdx)) > abs(velocityMaximum_[wallElementIdx][axisIdx]))
+                        velocityMaximum_[wallElementIdx][axisIdx] = ccVelocity(elementIdx, axisIdx);
 
-                    if (abs(ccVelocity(elementIdx, dimIdx)) < abs(velocityMinimum_[wallElementIdx][dimIdx]))
-                        velocityMinimum_[wallElementIdx][dimIdx] = ccVelocity(elementIdx, dimIdx);
+                    if (abs(ccVelocity(elementIdx, axisIdx)) < abs(velocityMinimum_[wallElementIdx][axisIdx]))
+                        velocityMinimum_[wallElementIdx][axisIdx] = ccVelocity(elementIdx, axisIdx);
 
                     // Set the flow direction axis as the direction of the max velocity
-                    if ((hasParam("RANS.FlowDirectionAxis") != 1) && (maxVelocity) < abs(ccVelocity(elementIdx, dimIdx)))
+                    if ((hasParam("RANS.FlowDirectionAxis") != 1) && (maxVelocity) < abs(ccVelocity(elementIdx, axisIdx)))
                     {
-                        maxVelocity = abs(ccVelocity(elementIdx, dimIdx));
-                        flowDirectionAxis_[elementIdx] = dimIdx;
+                        maxVelocity = abs(ccVelocity(elementIdx, axisIdx));
+                        flowDirectionAxis_[elementIdx] = axisIdx;
                     }
                 }
             }
@@ -637,13 +637,13 @@ private:
             {
                 const unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
 
-                for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+                for (unsigned int axisIdx = 0; axisIdx < dim; ++axisIdx)
                 {
-                    if (abs(ccVelocity(elementIdx, dimIdx)) > abs(maxVelocity[dimIdx]))
-                        maxVelocity[dimIdx] = ccVelocity(elementIdx, dimIdx);
+                    if (abs(ccVelocity(elementIdx, axisIdx)) > abs(maxVelocity[axisIdx]))
+                        maxVelocity[axisIdx] = ccVelocity(elementIdx, axisIdx);
 
-                    if (abs(ccVelocity(elementIdx, dimIdx)) < abs(minVelocity[dimIdx]))
-                        minVelocity[dimIdx] = ccVelocity(elementIdx, dimIdx);
+                    if (abs(ccVelocity(elementIdx, axisIdx)) < abs(minVelocity[axisIdx]))
+                        minVelocity[axisIdx] = ccVelocity(elementIdx, axisIdx);
                 }
             }
             velocityMaximum_.assign(this->gridGeometry().elementMapper().size(), maxVelocity);
@@ -657,20 +657,20 @@ private:
         {
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
             Dune::FieldMatrix<Scalar, GridView::dimension, GridView::dimension> stressTensor(0.0);
-            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            for (unsigned int j = 0; j < dim; ++j)
             {
-                for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
+                for (unsigned int i = 0; i < dim; ++i)
                 {
-                    stressTensor[dimIdx][velIdx] = 0.5 * velocityGradient(elementIdx, dimIdx, velIdx)
-                                                 + 0.5 * velocityGradient(elementIdx, velIdx, dimIdx);
+                    stressTensor[j][i] = 0.5 * velocityGradient(elementIdx, j, i)
+                                                 + 0.5 * velocityGradient(elementIdx, i, j);
               }
             }
             stressTensorScalarProduct_[elementIdx] = 0.0;
-            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            for (unsigned int j = 0; j < dim; ++j)
             {
-                for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
+                for (unsigned int i = 0; i < dim; ++i)
                 {
-                    stressTensorScalarProduct_[elementIdx] += stressTensor[dimIdx][velIdx] * stressTensor[dimIdx][velIdx];
+                    stressTensorScalarProduct_[elementIdx] += stressTensor[j][i] * stressTensor[j][i];
                 }
             }
         }
@@ -682,20 +682,20 @@ private:
         {
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
             Dune::FieldMatrix<Scalar, GridView::dimension, GridView::dimension> vorticityTensor(0.0);
-            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            for (unsigned int j = 0; j < dim; ++j)
             {
-                for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
+                for (unsigned int i = 0; i < dim; ++i)
                 {
-                    vorticityTensor[dimIdx][velIdx] = 0.5 * velocityGradient(elementIdx, dimIdx, velIdx)
-                                                    - 0.5 * velocityGradient(elementIdx, velIdx, dimIdx);
+                    vorticityTensor[j][i] = 0.5 * velocityGradient(elementIdx, j, i)
+                                                    - 0.5 * velocityGradient(elementIdx, i, j);
               }
             }
             vorticityTensorScalarProduct_[elementIdx] = 0.0;
-            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            for (unsigned int j = 0; j < dim; ++j)
             {
-                for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
+                for (unsigned int i = 0; i < dim; ++i)
                 {
-                    vorticityTensorScalarProduct_[elementIdx] += vorticityTensor[dimIdx][velIdx] * vorticityTensor[dimIdx][velIdx];
+                    vorticityTensorScalarProduct_[elementIdx] += vorticityTensor[j][i] * vorticityTensor[j][i];
                 }
             }
         }

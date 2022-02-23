@@ -176,12 +176,12 @@ public:
 
             Scalar maxVelocityNorm = 0.0;
             Scalar minVelocityNorm = 0.0;
-            for (unsigned dimIdx = 0; dimIdx < dim; ++dimIdx)
+            for (unsigned axisIdx = 0; axisIdx < dim; ++axisIdx)
             {
-                maxVelocityNorm += asImp_().velocityMaximum(asImp_().wallElementIndex(elementIdx))[dimIdx]
-                                   * asImp_().velocityMaximum(asImp_().wallElementIndex(elementIdx))[dimIdx];
-                minVelocityNorm += asImp_().velocityMinimum(asImp_().wallElementIndex(elementIdx))[dimIdx]
-                                   * asImp_().velocityMinimum(asImp_().wallElementIndex(elementIdx))[dimIdx];
+                maxVelocityNorm += asImp_().velocityMaximum(asImp_().wallElementIndex(elementIdx))[axisIdx]
+                                   * asImp_().velocityMaximum(asImp_().wallElementIndex(elementIdx))[axisIdx];
+                minVelocityNorm += asImp_().velocityMinimum(asImp_().wallElementIndex(elementIdx))[axisIdx]
+                                   * asImp_().velocityMinimum(asImp_().wallElementIndex(elementIdx))[axisIdx];
             }
 
             Scalar deltaU = sqrt(maxVelocityNorm) - sqrt(minVelocityNorm);
