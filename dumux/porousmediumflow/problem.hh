@@ -62,6 +62,7 @@ public:
      * calls temperature().
      *
      * \param globalPos The position in global coordinates where the temperature should be specified.
+     * \param deprecationHelper The deprecation helper.
      * \note The deprecation helper int was introduced to facilitate the deprecation phase, by checking
      *       if users have overloaded this function.
      */

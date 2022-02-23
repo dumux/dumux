@@ -423,7 +423,8 @@ public:
 
     /*!
      * \brief If the boundary entity is on a coupling boundary
-     * \param domainI the domain index for which to compute the flux
+     * \param domainI the domain index of domain i for which to compute the flux
+     * \param domainJ the domain index of domain j for which to compute the flux
      * \param scv the sub control volume
      */
     template<std::size_t i, std::size_t j>

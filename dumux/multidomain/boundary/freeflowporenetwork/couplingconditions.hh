@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup FreeFlowPoreNetworkCoupling
- * \copydoc Dumux::FreeFlowPoreNetworkCouplingData
+ * \copydoc Dumux::FreeFlowPoreNetworkCouplingConditions
  */
 
 #ifndef DUMUX_MD_FREEFLOW_PORENETWORK_COUPLINGCONDITIONS_HH

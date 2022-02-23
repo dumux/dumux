@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup FreeFlowPorousMediumCoupling
- * \copydoc Dumux::FreeFlowPorousMediumCouplingData
+ * \copydoc Dumux::FreeFlowPorousMediumCouplingConditions
  */
 
 #ifndef DUMUX_MD_FREEFLOW_POROUSMEDIUM_COUPLINGCONDITIONS_HH

@@ -238,7 +238,6 @@ public:
      * \param fluxVarsCacheStorage Class that holds the scvf flux vars caches
      * \param scvfFluxVarsCache The flux var cache to be updated corresponding to the given scvf
      * \param ivDataStorage Class that stores the interaction volumes & handles
-     * \param element The finite element
      * \param fvGeometry The finite volume geometry
      * \param elemVolVars The element volume variables (primary/secondary variables)
      * \param scvf The corresponding sub-control volume face

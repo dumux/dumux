@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Typetraits
- * \copydoc Type trait to determine if a grid is oriented consistently
+ * \copydoc Dumux::ConsistentlyOrientedGrid
  */
 #ifndef DUMUX_DISCRETIZATION_FACECENTERED_STAGGERED_CONSISTENTLY_ORIENTED_GRID_HH
 #define DUMUX_DISCRETIZATION_FACECENTERED_STAGGERED_CONSISTENTLY_ORIENTED_GRID_HH
