@@ -230,7 +230,8 @@ public:
      *        that couple with / influence the element residual of the given element of domain i
      *
      * \param domainI the domain index of domain i
-     * \param eIdxI the index of the coupled element of domain í
+     * \param elementI the coupled element of domain i
+     * \param scvI the coupled sub control volume of domain i
      * \param domainJ the domain index of domain j
      *
      * \note  The element residual definition depends on the discretization scheme of domain i

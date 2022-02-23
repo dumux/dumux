@@ -628,6 +628,7 @@ public:
      * calls temperature().
      *
      * \param globalPos The position in global coordinates where the temperature should be specified.
+     * \param deprecationHelper The deprecation helper
      */
     [[deprecated("temperature should now be defined in the spatial params with temperature(globalPos)")]]
     Scalar temperatureAtPos(const GlobalPosition& globalPos, int deprecationHelper = 0) const
@@ -728,6 +729,7 @@ public:
      * calls temperature().
      *
      * \param globalPos The position in global coordinates where the temperature should be specified.
+     * \param deprecationHelper The deprecation helper
      */
     [[deprecated("temperature should now be defined in the spatial params with temperature(globalPos)")]]
     Scalar temperatureAtPos(const GlobalPosition &globalPos, int deprecationHelper = 0) const

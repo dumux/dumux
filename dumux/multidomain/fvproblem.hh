@@ -84,7 +84,7 @@ public:
 
     /*!
      * \brief Construct wrapper from a tuple of problems
-     * \param ggTuple a tuple of shared_ptrs to the problems
+     * \param problemTuple a tuple of shared_ptrs to the problems
      */
     MultiDomainFVProblem(TupleType problemTuple)
     : problems_(std::move(problemTuple))

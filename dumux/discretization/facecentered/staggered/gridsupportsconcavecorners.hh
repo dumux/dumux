@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Typetraits
- * \copydoc Type trait to determine if a grid supports concave corners (e.g. by cutting out a hole from the domain interior)
+ * \copydoc Dumux::GridSupportsConcaveCorners
  */
 #ifndef DUMUX_DISCRETIZATION_FACECENTERED_STAGGERED_GRID_SUPPORTS_CONCAVE_CORNERS_HH
 #define DUMUX_DISCRETIZATION_FACECENTERED_STAGGERED_GRID_SUPPORTS_CONCAVE_CORNERS_HH
