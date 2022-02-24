@@ -60,13 +60,13 @@ class ScheideggersDispersionTensor
 
 public:
     template <class ElementFluxVariablesCache>
-    static DimWorldMatrix dispersionTensor(const Problem& problem,
-                                           const SubControlVolumeFace& scvf,
-                                           [[maybe_unused]] const FVElementGeometry& fvGeometry,
-                                           [[maybe_unused]] const ElementVolumeVariables& elemVolVars,
-                                           [[maybe_unused]] const ElementFluxVariablesCache& elemFluxVarsCache,
-                                           [[maybe_unused]] const int phaseIdx,
-                                           [[maybe_unused]] const int compIdx)
+    static DimWorldMatrix compositionalDispersionTensor(const Problem& problem,
+                                                        const SubControlVolumeFace& scvf,
+                                                        [[maybe_unused]] const FVElementGeometry& fvGeometry,
+                                                        [[maybe_unused]] const ElementVolumeVariables& elemVolVars,
+                                                        [[maybe_unused]] const ElementFluxVariablesCache& elemFluxVarsCache,
+                                                        [[maybe_unused]] const int phaseIdx,
+                                                        [[maybe_unused]] const int compIdx)
     {
         DimWorldMatrix dispersionTensor(0.0);
 

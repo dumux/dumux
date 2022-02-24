@@ -89,7 +89,7 @@ struct DispersionFluxType<TypeTag, TTag::PorousMediumFlow> { using type = Diffus
 
 //! By default, we use Scheideggers's law for the dispersive tensor calculation
 template<class TypeTag>
-struct DispersionTensorType<TypeTag, TTag::PorousMediumFlow> { using type = ScheideggersDispersionTensor<TypeTag>; };
+struct CompositionalDispersionTensorType<TypeTag, TTag::PorousMediumFlow> { using type = ScheideggersDispersionTensor<TypeTag>; };
 
 //! By default, we use fourier's law as the default for heat conduction fluxes
 template<class TypeTag>

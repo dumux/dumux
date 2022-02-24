@@ -118,7 +118,7 @@ public:
         {
             // collect the dispersion tensor, the fluxVarsCache and the shape values
             const auto& dispersionTensor =
-                VolumeVariables::DispersionTensorType::dispersionTensor(problem, scvf, fvGeometry,
+                VolumeVariables::CompositionalDispersionTensorType::compositionalDispersionTensor(problem, scvf, fvGeometry,
                                                                         elemVolVars, elemFluxVarsCache, phaseIdx, compIdx);
 
             // the mole/mass fraction gradient

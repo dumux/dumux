@@ -64,7 +64,7 @@ class TracerVolumeVariables
 
 public:
     //! Export the dispersion tensor law
-    using DispersionTensorType = typename Traits::DispersionTensorType;
+    using CompositionalDispersionTensorType = typename Traits::CompositionalDispersionTensorType;
     //! Export the fluid system type
     using FluidSystem = typename Traits::FluidSystem;
     //! Export the solid state type
