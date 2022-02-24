@@ -39,14 +39,14 @@ namespace Dumux {
 
 // forward declaration
 template<class TypeTag, class DiscretizationMethod, ReferenceSystemFormulation referenceSystem>
-class OnePDispersionFluxImplementation;
+class DispersionFluxImplementation;
 
 /*!
  * \ingroup CCTpfaFlux
  * \brief Specialization of a Dispersion flux for the cctpfa method
  */
 template <class TypeTag, ReferenceSystemFormulation referenceSystem>
-class OnePDispersionFluxImplementation<TypeTag, DiscretizationMethods::CCTpfa, referenceSystem>
+class DispersionFluxImplementation<TypeTag, DiscretizationMethods::CCTpfa, referenceSystem>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;

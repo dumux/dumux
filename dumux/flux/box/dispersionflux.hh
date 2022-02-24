@@ -38,14 +38,14 @@ namespace Dumux {
 
 // forward declaration
 template<class TypeTag, class DiscretizationMethod, ReferenceSystemFormulation referenceSystem>
-class OnePDispersionFluxImplementation;
+class DispersionFluxImplementation;
 
 /*!
  * \ingroup BoxFlux
  * \brief Specialization of a dispersion flux for the box method
  */
 template <class TypeTag, ReferenceSystemFormulation referenceSystem>
-class OnePDispersionFluxImplementation<TypeTag, DiscretizationMethods::Box, referenceSystem>
+class DispersionFluxImplementation<TypeTag, DiscretizationMethods::Box, referenceSystem>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;

@@ -85,7 +85,7 @@ struct EnableThermalDispersion<TypeTag, TTag::PorousMediumFlow> { static constex
 
 //! By default, we use a diffusive flux for the dispersive fluxes
 template<class TypeTag>
-struct DispersionFluxType<TypeTag, TTag::PorousMediumFlow> { using type = OnePDiffusiveDispersionFlux<TypeTag>; };
+struct DispersionFluxType<TypeTag, TTag::PorousMediumFlow> { using type = DiffusiveDispersionFlux<TypeTag>; };
 
 //! By default, we use Scheideggers's law for the dispersive tensor calculation
 template<class TypeTag>
