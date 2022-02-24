@@ -6,6 +6,10 @@
 
 namespace Dumux::FluidMatrix {
 
+/*!
+ * \brief This is based on the surfactant model described
+ *        in K. Jørgensen's master thesis (NTNU, 2013) http://hdl.handle.net/11250/240038
+ */
 template <class Scalar>
 class SurfactantPcKrSw
 {
