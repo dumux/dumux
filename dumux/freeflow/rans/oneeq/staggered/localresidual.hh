@@ -106,11 +106,11 @@ public:
                                        * volVars.viscosityTilde() * volVars.viscosityTilde()
                                        / volVars.wallDistance() / volVars.wallDistance() * volVars.density();;
 
-        for (unsigned int dimIdx = 0; dimIdx < ModelTraits::dim(); ++dimIdx)
+        for (unsigned int axisIdx = 0; axisIdx < ModelTraits::dim(); ++axisIdx)
         {
             source[viscosityTildeEqIdx] += volVars.cb2() / volVars.sigma()
-                                           * volVars.storedViscosityTildeGradient()[dimIdx]
-                                           * volVars.storedViscosityTildeGradient()[dimIdx]
+                                           * volVars.storedViscosityTildeGradient()[axisIdx]
+                                           * volVars.storedViscosityTildeGradient()[axisIdx]
                                            * volVars.density();
         }
 
