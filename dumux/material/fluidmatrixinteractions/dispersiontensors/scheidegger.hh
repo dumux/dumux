@@ -70,6 +70,14 @@ public:
     {
         DimWorldMatrix dispersionTensor(0.0);
 
+        // Get the velocity either from the reconstruction, or from the spatialparams
+        auto velocity = dispersionVelocity_(problem, scvf, fvGeometry, elemVolVars, elemFluxVarsCache);
+
+        // collect the dispersion alphas at this location
+        std::array<Scalar,2> dispersivity = problem.spatialParams().dispersionAlphas(scvf.center(), phaseIdx, compIdx);
+
+        return scheideggerTensor_(dispersivity, velocity);
+    }
 
     template <class ElementFluxVariablesCache>
     static DimWorldMatrix thermalDispersionTensor(const Problem& problem,
@@ -90,6 +98,15 @@ public:
         return scheideggerTensor_(dispersivity, velocity);
     }
 
+private:
+
+    template <class ElementFluxVariablesCache>
+    static Dune::FieldVector<Scalar, dimWorld> dispersionVelocity_(const Problem& problem,
+                                                                   const SubControlVolumeFace& scvf,
+                                                                   [[maybe_unused]] const FVElementGeometry& fvGeometry,
+                                                                   [[maybe_unused]] const ElementVolumeVariables& elemVolVars,
+                                                                   [[maybe_unused]] const ElementFluxVariablesCache& elemFluxVarsCache)
+    {
         // Calculate Darcy's velocity
         Dune::FieldVector<Scalar, dimWorld> velocity(0.0);
         if constexpr (stationaryVelocityField)
@@ -139,31 +156,34 @@ public:
                 DUNE_THROW(Dune::NotImplemented, "\n Scheidegger Dispersion for compositional models without given constant velocity field is only implemented using the Box method.");
         }
 
-        //calculate dispersion tensor
+        return velocity;
+    }
 
-        // collect the dispersion alphas at this location
-        std::array<Scalar,2> dispersivity = problem.spatialParams().dispersionAlphas(scvf.center(), phaseIdx, compIdx);
+    static DimWorldMatrix scheideggerTensor_(const std::array<Scalar,2>& dispersivity,
+                                             const Dune::FieldVector<Scalar, dimWorld>& velocity)
+    {
+        DimWorldMatrix scheideggerTensor(0.0);
 
         //matrix multiplication of the velocity at the interface: vv^T
         for (int i=0; i < dimWorld; i++)
             for (int j = 0; j < dimWorld; j++)
-                dispersionTensor[i][j] = velocity[i]*velocity[j];
+                scheideggerTensor[i][j] = velocity[i]*velocity[j];
 
         //normalize velocity product --> vv^T/||v||, [m/s]
         Scalar vNorm = velocity.two_norm();
 
-        dispersionTensor /= vNorm;
+        scheideggerTensor /= vNorm;
         if (vNorm < 1e-20)
-            dispersionTensor = 0;
+            scheideggerTensor = 0;
 
         //multiply with dispersivity difference: vv^T/||v||*(alphaL - alphaT), [m^2/s] --> alphaL = longitudinal disp., alphaT = transverse disp.
-        dispersionTensor *= (dispersivity[0] - dispersivity[1]);
+        scheideggerTensor *= (dispersivity[0] - dispersivity[1]);
 
         //add ||v||*alphaT to the main diagonal:vv^T/||v||*(alphaL - alphaT) + ||v||*alphaT, [m^2/s]
         for (int i = 0; i < dimWorld; i++)
-            dispersionTensor[i][i] += vNorm*dispersivity[1];
+            scheideggerTensor[i][i] += vNorm*dispersivity[1];
 
-        return dispersionTensor;
+        return scheideggerTensor;
     }
 
 };
