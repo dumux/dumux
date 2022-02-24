@@ -1,0 +1,46 @@
+[TimeLoop]
+DtInitial = 1000 # [s]
+MaxTimeStepSize = 1e3
+TEnd = 1e4 # [s]
+
+[Grid]
+UpperRight = 10 10
+Cells = 20 20
+
+[Problem]
+Name = evaporation_constantcomponent
+EnableGravity = false
+
+[1.Component]
+SolidDensity = 2700
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 790
+
+[2.Component]
+Name = ConstantH2O
+MolarMass = 18.0e-3
+LiquidDensity = 1000.0
+LiquidKinematicViscosity = 1e-3
+TriplePressure = 610
+TripleTemperature = 273.15
+EnthalpyOfVaporization =  2453.5e3
+LiquidHeatCapacity = 4180.0
+GasHeatCapacity = 1
+LiquidThermalConductivity = 0.68
+
+[3.Component]
+Name = ConstantN2
+MolarMass = 28.0e-3
+GasKinematicViscosity = 1e-05
+GasDensity = 1
+GasHeatCapacity = 1
+GasThermalConductivity = 6.5e-5
+EnthalpyOfVaporization =  2792
+HenryComponentInWater = 1e10
+
+
+[SpatialParams]
+BrooksCoreyPcEntry = 1e4
+BrooksCoreyLambda = 2
+Swr = 0.2
+Snr = 0.0

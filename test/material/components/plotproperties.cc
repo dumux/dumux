@@ -378,6 +378,9 @@ int main(int argc, char *argv[])
             params["Component.SolidDensity"] = "1e3";
             params["Component.SolidThermalConductivity"] = "0.679";
             params["Component.SolidHeatCapacity"] = "4.2e3";
+            params["Component.EnthalpyOfVaporization"] ="2453e3";
+            params["Component.GasThermalConductivity"] ="1";
+            params["Component.GasHeatCapacity"] ="1";
         });
         plotStuff< Components::Constant<1, double> >(openPlotWindow);
     }
