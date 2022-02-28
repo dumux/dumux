@@ -351,46 +351,10 @@ public:
     template <class FluidState>
     static Scalar enthalpy(const FluidState& fluidState, int phaseIdx)
     {
-        /*Numerical coefficients from PALLISER*/
-        static const Scalar f[] = { 2.63500E-1, 7.48368E-6, 1.44611E-6, -3.80860E-10 };
-
-        /*Numerical coefficients from MICHAELIDES for the enthalpy of brine*/
-        static const Scalar a[4][3] = { { +9633.6, -4080.0, +286.49 },
-                                        { +166.58, +68.577, -4.6856 },
-                                        { -0.90963, -0.36524, +0.249667E-1 },
-                                        { +0.17965E-2, +0.71924E-3, -0.4900E-4 } };
-
-        const Scalar p = fluidState.pressure(phaseIdx);
-        const Scalar T = fluidState.temperature(phaseIdx);
-        const Scalar theta = T - 273.15;
-        const Scalar salSat = f[0] + f[1]*theta + f[2]*theta*theta + f[3]*theta*theta*theta;
-
-        /*Regularization*/
-        using std::min;
-        using std::max;
-        const Scalar xNaCl = fluidState.massFraction(phase0Idx, NaClIdx);
-        const Scalar salinity = min(max(xNaCl,0.0), salSat);
-
-        const Scalar hw = H2O::liquidEnthalpy(T, p)/1E3; /* kJ/kg */
-
-        /*component enthalpy of soluted NaCl after DAUBERT and DANNER*/
-        const Scalar h_NaCl = (3.6710E4*T + 0.5*(6.2770E1)*T*T - ((6.6670E-2)/3)*T*T*T
-                              + ((2.8000E-5)/4)*(T*T*T*T))/(58.44E3)- 2.045698e+02; /* U [kJ/kg] */
-
-        const Scalar m = (1E3/58.44)*(salinity/(1-salinity));
-
-        using Dune::power;
-        Scalar d_h = 0;
-        for (int i = 0; i<=3; i++)
-            for (int j=0; j<=2; j++)
-                d_h = d_h + a[i][j] * power(theta, i) * power(m, j);
-
-        /* heat of dissolution for halite according to Michaelides 1981 */
-        const Scalar delta_h = (4.184/(1E3 + (58.44 * m)))*d_h;
-
-        /* Enthalpy of brine without any dissolved gas */
-        const Scalar h_ls1 =(1-salinity)*hw + salinity*h_NaCl + salinity*delta_h; /* kJ/kg */
-        return h_ls1*1E3; /*J/kg*/
+        //use private enthalpy function to recycle it for the heat capacity calculation
+        return enthalpy_(fluidState.pressure(phaseIdx),
+                        fluidState.temperature(phaseIdx),
+                        fluidState.massFraction(phase0Idx, NaClIdx)); /*J/kg*/
     }
 
     /*!
@@ -521,9 +485,67 @@ public:
     {
         if (phaseIdx == liquidPhaseIdx){
             const Scalar eps = fluidState.temperature(phaseIdx)*1e-8;
-            return (liquidEnthalpy(fluidState.temperature(phaseIdx) + eps, fluidState.pressure(phaseIdx))- liquidEnthalpy(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx)))/eps;
+            //calculate heat capacity from the difference in enthalpy with temperature at constant pressure.
+            return (enthalpy_(fluidState.pressure(phaseIdx),
+                        fluidState.temperature(phaseIdx) +eps ,
+                        fluidState.massFraction(phase0Idx, NaClIdx))
+                        - enthalpy_(fluidState.pressure(phaseIdx),
+                        fluidState.temperature(phaseIdx),
+                        fluidState.massFraction(phase0Idx, NaClIdx)))/eps; /*J/kg*/
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
+    }
+
+private:
+    /*!
+     * \brief Given a phase's composition, temperature and pressure,
+     *        return its specific enthalpy \f$\mathrm{[J/kg]}\f$.
+     *
+     * Equations given in:
+     * - Palliser & McKibbin (1998) \cite palliser1998 <BR>
+     * - Michaelides (1981) \cite michaelides1981 <BR>
+     * - Daubert & Danner (1989) \cite daubert1989
+     *
+     */
+    static Scalar enthalpy_(const Scalar p, const Scalar T, const Scalar xNaCl)
+    {
+        /*Numerical coefficients from PALLISER*/
+        static const Scalar f[] = { 2.63500E-1, 7.48368E-6, 1.44611E-6, -3.80860E-10 };
+
+        /*Numerical coefficients from MICHAELIDES for the enthalpy of brine*/
+        static const Scalar a[4][3] = { { +9633.6, -4080.0, +286.49 },
+                                        { +166.58, +68.577, -4.6856 },
+                                        { -0.90963, -0.36524, +0.249667E-1 },
+                                        { +0.17965E-2, +0.71924E-3, -0.4900E-4 } };
+
+        const Scalar theta = T - 273.15;
+        const Scalar salSat = f[0] + f[1]*theta + f[2]*theta*theta + f[3]*theta*theta*theta;
+
+        /*Regularization*/
+        using std::min;
+        using std::max;
+        const Scalar salinity = min(max(xNaCl,0.0), salSat);
+
+        const Scalar hw = H2O::liquidEnthalpy(T, p)/1E3; /* kJ/kg */
+
+        /*component enthalpy of soluted NaCl after DAUBERT and DANNER*/
+        const Scalar h_NaCl = (3.6710E4*T + 0.5*(6.2770E1)*T*T - ((6.6670E-2)/3)*T*T*T
+                              + ((2.8000E-5)/4)*(T*T*T*T))/(58.44E3)- 2.045698e+02; /* U [kJ/kg] */
+
+        const Scalar m = (1E3/58.44)*(salinity/(1-salinity));
+
+        using Dune::power;
+        Scalar d_h = 0;
+        for (int i = 0; i<=3; i++)
+            for (int j=0; j<=2; j++)
+                d_h = d_h + a[i][j] * power(theta, i) * power(m, j);
+
+        /* heat of dissolution for halite according to Michaelides 1981 */
+        const Scalar delta_h = (4.184/(1E3 + (58.44 * m)))*d_h;
+
+        /* Enthalpy of brine without any dissolved gas */
+        const Scalar h_ls1 =(1-salinity)*hw + salinity*h_NaCl + salinity*delta_h; /* kJ/kg */
+        return h_ls1*1E3; /*J/kg*/
     }
 };
 
