@@ -500,7 +500,7 @@ public:
         if (phaseIdx == liquidPhaseIdx)
         {
             Scalar tempC = fluidState.temperature(phaseIdx)-273.15;
-            Scalar m = fluidState.molefraction(phaseIdx, NaClIdx)/(molarMass(H2OIdx)*(1- fluidState.molefraction(phaseIdx, NaClIdx))); // molality of NaCl
+            Scalar m = fluidState.moleFraction(phaseIdx, NaClIdx)/(molarMass(H2OIdx)*(1- fluidState.moleFraction(phaseIdx, NaClIdx))); // molality of NaCl
             Scalar S = 5844.3 * m / (1000 + 58.443 *m);
             Scalar contribNaClFactor = 1.0 - (2.3434e-3 - 7.924e-6*tempC + 3.924e-8*tempC*tempC)*S + (1.06e-5 - 2.0e-8*tempC + 1.2e-10*tempC*tempC)*S*S;
             return contribNaClFactor * H2O::liquidThermalConductivity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));

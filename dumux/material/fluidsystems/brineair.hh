@@ -663,7 +663,7 @@ public:
         // This assumes NaCl not to be present in the gas phase
         else if (phaseIdx == gasPhaseIdx)
             return Air::gasThermalConductivity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx)) * fluidState.massFraction(gasPhaseIdx, AirIdx)
-            H2O::gasThermalConductivity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx)) * fluidState.massFraction(gasPhaseIdx, H2OIdx);
+            + H2O::gasThermalConductivity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx)) * fluidState.massFraction(gasPhaseIdx, H2OIdx);
 
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
