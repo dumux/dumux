@@ -130,7 +130,7 @@ You learn how to
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 7: Permeability estimation using a pore-network model](porenetwork_upscaling/README.md)
+### [:open_file_folder: Example 8: Permeability estimation using a pore-network model](porenetwork_upscaling/README.md)
 
 <table><tr><td>
 
