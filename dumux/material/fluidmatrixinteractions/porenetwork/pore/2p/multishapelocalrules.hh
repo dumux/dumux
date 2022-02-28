@@ -18,9 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Fluidmatrixinteractions
  * \brief Implementation of capillary pressure curves for multiple pore body geometries
- *
  */
 #ifndef DUMUX_PNM_2P_LOCAL_RULES_HH
 #define DUMUX_PNM_2P_LOCAL_RULES_HH
@@ -30,7 +29,10 @@
 #include "localrulesforplatonicbody.hh"
 
 namespace Dumux::PoreNetwork::FluidMatrix {
-
+/*!
+ * \ingroup Fluidmatrixinteractions
+ * \brief LocalRulesTraits for implementation of capillary pressure curves for multiple pore body geometries
+ */
 template<class ScalarT>
 struct LocalRulesTraits
 {
@@ -41,6 +43,10 @@ struct LocalRulesTraits
     using Dodecahedron = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::dodecahedron, ScalarT>;
 };
 
+/*!
+ * \ingroup Fluidmatrixinteractions
+ * \brief Implementation of capillary pressure curves for multiple pore body geometries
+ */
 template<class ScalarT>
 class MultiShapeTwoPLocalRules : public Dumux::FluidMatrix::Adapter<MultiShapeTwoPLocalRules<ScalarT>, Dumux::FluidMatrix::PcKrSw>
 {

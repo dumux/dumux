@@ -16,7 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
+/*!
+ * \file
+ * \ingroup InputOutput
+ * \brief Intersection writer
+ */
 #ifndef DUMUX_IO_VTK_INTERSECTIONWRITER_HH
 #define DUMUX_IO_VTK_INTERSECTIONWRITER_HH
 
@@ -32,6 +36,7 @@
 namespace Dumux::Detail {
 
 /*!
+ * \ingroup InputOutput
  * \brief Iterate over the GridViews boundary intersections
  * This will visit all intersections for which boundary() is true and
  * neighbor() is false.
@@ -118,6 +123,10 @@ private:
     mutable Intersection intersection_;
 };
 
+/*!
+ * \ingroup InputOutput
+ * \brief Non conforming intersection iterator factory
+ */
 template<class GridView>
 class NonConformingIntersectionIteratorFactory
 {
@@ -163,7 +172,10 @@ private:
     GridView gridView_;
 };
 
-
+/*!
+ * \ingroup InputOutput
+ * \brief Skeleton function for intersection writer
+ */
 template<class GridView, class Mapper, class F>
 class SkeletonFunction
 {
@@ -247,7 +259,10 @@ private:
 } // end namespace Dumux::Detail
 
 namespace Dumux {
-
+/*!
+ * \ingroup InputOutput
+ * \brief Conforming intersection writer
+ */
 template<class GridView>
 class ConformingIntersectionWriter
 : public Detail::NonConformingIntersectionIteratorFactory<GridView>

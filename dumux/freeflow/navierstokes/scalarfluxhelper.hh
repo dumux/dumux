@@ -16,7 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
+/*!
+ * \file
+ * \ingroup NavierStokesModel
+ * \brief Navier Stokes scalar boundary flux helper
+ */
 #ifndef DUMUX_NAVIERSTOKES_SCALAR_BOUNDARY_FLUXHELPER_HH
 #define DUMUX_NAVIERSTOKES_SCALAR_BOUNDARY_FLUXHELPER_HH
 
@@ -41,6 +45,10 @@ static constexpr bool isNonIsothermal()
 } // end namespace Detail
 #endif
 
+/*!
+ * \ingroup NavierStokesModel
+ * \brief Navier Stokes scalar boundary flux helper
+ */
 template<class AdvectiveFlux>
 struct NavierStokesScalarBoundaryFluxHelper
 {
