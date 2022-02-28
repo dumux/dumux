@@ -31,7 +31,6 @@
 namespace Dumux {
 
 /*!
- * \file
  * \brief A simple uniform distribution
  * based on a biased uniform number generator
  * \note Use this if you need a fast library implementation independent generator
@@ -91,7 +90,6 @@ private:
 };
 
 /*!
- * \file
  * \brief A simple normal distribution
  * based on a biased uniform number generator and the Box-Mueller transform
  * \note Use this if you need a fast library implementation independent generator
@@ -187,7 +185,6 @@ private:
 };
 
 /*!
- * \file
  * \brief A simple log-normal distribution
  * \note Use this if you need a fast library implementation independent generator
  *       without strict requirements about the bias

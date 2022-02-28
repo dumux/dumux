@@ -32,7 +32,6 @@
 namespace Dumux {
 
 /*!
- * \file
  * \ingroup Assembly
  * \brief Set a solution vector to the initial solution provided by the problem
  */
@@ -94,7 +93,6 @@ void assembleInitialSolution(SolutionVector& sol, const Problem& problem)
 }
 
 /*!
- * \file
  * \ingroup Assembly
  * \brief Create a solution vector filled with the initial solution provided by the problem
  */

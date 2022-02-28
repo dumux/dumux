@@ -42,7 +42,6 @@
 namespace Dumux {
 
 /*!
- * \file
  * \ingroup MultiDomain
  * \ingroup StaggeredDiscretization
  * \brief The interface of the coupling manager for free flow systems
