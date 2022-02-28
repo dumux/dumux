@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup FaceCenteredStaggeredDiscretization
- * \copydoc Dumux::FreeFlowStaggeredSubControlVolumeFace
+ * \copydoc Dumux::FaceCenteredStaggeredSubControlVolumeFace
  */
 #ifndef DUMUX_DISCRETIZATION_FACECENTERED_STAGGERED_SUBCONTROLVOLUMEFACE_HH
 #define DUMUX_DISCRETIZATION_FACECENTERED_STAGGERED_SUBCONTROLVOLUMEFACE_HH
@@ -58,6 +58,10 @@ struct FaceCenteredDefaultScvfGeometryTraits
     using Geometry = Dune::AxisAlignedCubeGeometry<Scalar, dim-1, dimWorld>;
 };
 
+/*!
+ * \ingroup FaceCenteredStaggeredDiscretization
+ * \brief Face centered staggered sub control volume face
+ */
 template<class GridView, class T = FaceCenteredDefaultScvfGeometryTraits<GridView>>
 class FaceCenteredStaggeredSubControlVolumeFace
 {

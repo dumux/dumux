@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup FreeflowNIModel
- * \copydoc Dumux::FreeflowNonIsothermalIndices
+ * \copydoc Dumux::NavierStokesEnergyIndices
  */
 #ifndef DUMUX_FREEFLOW_NAVIER_STOKES_ENERGY_INDICES_HH
 #define DUMUX_FREEFLOW_NAVIER_STOKES_ENERGY_INDICES_HH

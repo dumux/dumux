@@ -55,7 +55,10 @@ struct FaceCenteredDefaultScvGeometryTraits
     using Geometry = Dune::AxisAlignedCubeGeometry<Scalar, dim, dimWorld>;
 };
 
-
+/*!
+ * \ingroup FaceCenteredStaggeredDiscretization
+ * \brief Face centered staggered sub control volume
+ */
 template<class GridView, class T = FaceCenteredDefaultScvGeometryTraits<GridView>>
 class FaceCenteredStaggeredSubControlVolume
 {

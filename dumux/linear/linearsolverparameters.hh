@@ -33,7 +33,10 @@
 #include <dumux/common/parameters.hh>
 
 namespace Dumux {
-
+/*!
+ * \ingroup Linear
+ * \brief Generates a parameter tree required for the linear solvers and precondioners of the Dune ISTL
+ */
 template<class LinearSolverTraits>
 class LinearSolverParameters
 {
