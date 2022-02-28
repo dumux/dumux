@@ -183,6 +183,7 @@ class UpscalingProblem : public PorousMediumFlowProblem<TypeTag>
 ```
 
 </details>
+
 ### The constructor of our problem.
 
 ```cpp
@@ -202,15 +203,6 @@ public:
         // an epsilon value for the bounding box approach
         eps_ = getParam<Scalar>("Problem.Epsilon", 1e-7);
     }
-```
-
-#### Temperature
-We need to specify a constant temperature for our isothermal problem.
-Fluid properties that depend on temperature will be calculated with this value.
-
-```cpp
-    Scalar temperature() const
-    { return 283.15; }
 ```
 
 #### Boundary conditions
