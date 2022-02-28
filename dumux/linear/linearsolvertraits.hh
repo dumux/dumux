@@ -40,7 +40,10 @@ namespace Dumux {
 template<class GridGeometry, class DiscretizationMethod>
 struct LinearSolverTraitsImpl;
 
-//! The type traits required for using the IstlFactoryBackend
+/*!
+ * \file
+ * \brief The type traits required for using the IstlFactoryBackend
+ */
 template<class GridGeometry>
 using LinearSolverTraits = LinearSolverTraitsImpl<GridGeometry, typename GridGeometry::DiscretizationMethod>;
 

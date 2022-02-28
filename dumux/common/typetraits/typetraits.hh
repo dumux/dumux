@@ -19,6 +19,7 @@
 /*!
  * \file
  * \ingroup TypeTraits
+ * \brief Type traits.
  */
 #ifndef DUMUX_TYPE_TRAITS_HH
 #define DUMUX_TYPE_TRAITS_HH

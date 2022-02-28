@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup FreeflowNIModel
- * \copydoc Dumux::FreeflowNonIsothermalIOFields
+ * \copydoc Dumux::NavierStokesEnergyIOFields
  */
 #ifndef DUMUX_FREEFLOW_NAVIERSTOKES_ENERGY_IO_FIELDS_HH
 #define DUMUX_FREEFLOW_NAVIERSTOKES_ENERGY_IO_FIELDS_HH

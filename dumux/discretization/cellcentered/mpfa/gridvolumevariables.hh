@@ -29,6 +29,10 @@
 
 namespace Dumux {
 
+/*!
+ * \ingroup CCMpfaDiscretization
+ * \brief Traits for the base class for the grid volume variables
+ */
 template<class P, class VV>
 struct CCMpfaDefaultGridVolumeVariablesTraits
 {
