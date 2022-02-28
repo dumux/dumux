@@ -464,7 +464,7 @@ surface has a non constant distribution.
 We include the basic spatial parameters file for finite volumes, from which we will inherit.
 
 ```cpp
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/common/fvspatialparams.hh>
 ```
 
 We include all friction laws.
