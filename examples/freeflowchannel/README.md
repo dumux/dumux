@@ -323,16 +323,6 @@ The following function defines the initial conditions.
     }
 ```
 
-#### Temperature distribution
-We need to specify a constant temperature for our isothermal problem.
-Fluid properties that depend on temperature will be calculated with this value.
-This would be important if another fluidsystem was used.
-
-```cpp
-    Scalar temperature() const
-    { return 273.15 + 10; }
-```
-
 The inlet is on the left side of the physical domain.
 
 ```cpp
