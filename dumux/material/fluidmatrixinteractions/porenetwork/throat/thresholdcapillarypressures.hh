@@ -20,6 +20,7 @@
 /*!
  * \file
  * \ingroup Fluidmatrixinteractions
+ * \ingroup PoreNetworkModels
  * \brief Specification of threshold capillary pressures for the PNM.
  */
 #ifndef DUMUX_PNM_THRESHOLD_CAPILLARY_PRESSURES_HH

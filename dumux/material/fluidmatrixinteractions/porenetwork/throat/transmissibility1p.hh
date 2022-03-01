@@ -19,6 +19,7 @@
 /*!
  * \file
  * \ingroup Fluidmatrixinteractions
+ * \ingroup PoreNetworkModels
  * \brief Implementation of the single-phase transmissibility laws for throats
  */
 #ifndef DUMUX_PNM_THROAT_TRANSMISSIBILITY_1P_HH
@@ -32,6 +33,7 @@ namespace Dumux::PoreNetwork {
 
 /*!
  * \ingroup Fluidmatrixinteractions
+ * \ingroup PoreNetworkModels
  * \brief Collection of single-phase flow throat transmissibilities based on
  *        Bruus, H. (2011). Acoustofluidics 1: Governing equations in microfluidics. Lab on a Chip, 11(22), 3742-3751.
  *        https://backend.orbit.dtu.dk/ws/portalfiles/portal/5900070/rsc%5B1%5D.pdf
@@ -116,6 +118,7 @@ protected:
 
 /*!
  * \ingroup Fluidmatrixinteractions
+ * \ingroup PoreNetworkModels
  * \brief Single-phase flow throat transmissibility based on Patzek & Silin (2001) https://doi.org/10.1006/jcis.2000.7413
  */
 template<class Scalar, bool considerPoreResistance = false, bool interpolateK = false>

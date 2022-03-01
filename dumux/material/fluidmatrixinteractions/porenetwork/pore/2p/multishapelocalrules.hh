@@ -19,6 +19,7 @@
 /*!
  * \file
  * \ingroup Fluidmatrixinteractions
+ * \ingroup PoreNetworkModels
  * \brief Implementation of capillary pressure curves for multiple pore body geometries
  */
 #ifndef DUMUX_PNM_2P_LOCAL_RULES_HH
@@ -31,6 +32,7 @@
 namespace Dumux::PoreNetwork::FluidMatrix {
 /*!
  * \ingroup Fluidmatrixinteractions
+ * \ingroup PoreNetworkModels
  * \brief LocalRulesTraits for implementation of capillary pressure curves for multiple pore body geometries
  */
 template<class ScalarT>
@@ -45,6 +47,7 @@ struct LocalRulesTraits
 
 /*!
  * \ingroup Fluidmatrixinteractions
+ * \ingroup PoreNetworkModels
  * \brief Implementation of capillary pressure curves for multiple pore body geometries
  */
 template<class ScalarT>

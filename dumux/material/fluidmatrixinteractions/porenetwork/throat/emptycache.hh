@@ -19,6 +19,7 @@
 /*!
  * \file
  * \ingroup Fluidmatrixinteractions
+ * \ingroup PoreNetworkModels
  * \brief An empty cache for transmissibility laws using only standard quantities
  */
 #ifndef DUMUX_PNM_EMPTY_CACHE_HH

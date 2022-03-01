@@ -19,6 +19,7 @@
 /*!
  * \file
  * \ingroup Fluidmatrixinteractions
+ * \ingroup PoreNetworkModels
  * \brief Implementation of the transmissibility laws for throats
  */
 #ifndef DUMUX_PNM_THROAT_TRANSMISSIBILITY_2P_HH
