@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * A grid creator that matches a free-flow grid to a PNM grid.
+ * \ingroup FreeFlowPoreNetworkCoupling
+ * \brief A grid creator that matches a free-flow grid to a PNM grid.
  */
 #ifndef DUMUX_MULTIDOMAIN_BOUNDARY_FREEFLOW_PORENETWORK_SNAPPY_GRID_MANAGER_HH
 #define DUMUX_MULTIDOMAIN_BOUNDARY_FREEFLOW_PORENETWORK_SNAPPY_GRID_MANAGER_HH
@@ -34,7 +34,10 @@
 namespace Dumux::PoreNetwork {
 
 namespace Detail {
-
+/*!
+ * \ingroup FreeFlowPoreNetworkCoupling
+ * \brief A helper for the grid creator that matches a free-flow grid to a PNM grid.
+ */
 template<class GridView>
 class SnappyGridManagerHelper
 {
@@ -284,6 +287,7 @@ public:
 } // end namespace Detail
 
 /*!
+ * \ingroup FreeFlowPoreNetworkCoupling
  * \brief  A grid creator that matches a free-flow grid to a PNM grid.
  */
 template<int dim, class OtherGridCreator, class DiscMethod = DiscretizationMethods::None>

@@ -19,6 +19,7 @@
 /*!
  * \file
  * \ingroup Fluidmatrixinteractions
+ * \ingroup PoreNetworkModels
  * \brief Base classes for standard pore-local pc-Sw curves.
  */
 #ifndef DUMUX_PNM_2P_SINGLE_SHAPE_LOCAL_RULES_HH
@@ -33,6 +34,7 @@ namespace Dumux::PoreNetwork::FluidMatrix {
 
 /*!
  * \ingroup Fluidmatrixinteractions
+ * \ingroup PoreNetworkModels
  * \brief Base class for all standard pore-local pc-Sw curves.
  */
 template<class ScalarType,

@@ -49,7 +49,6 @@ auto toRef(const std::tuple<Args...>& v, std::index_sequence<Is...> indices)
 } // end namespace Detail
 
 /*!
- * \file
  * \ingroup MultiDomain
  * \brief The interface of the coupling manager for multi domain problems
  */

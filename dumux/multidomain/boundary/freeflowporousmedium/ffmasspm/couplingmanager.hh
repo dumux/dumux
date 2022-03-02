@@ -38,7 +38,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup StokesDarcyCoupling
+ * \ingroup FreeFlowPorousMediumCoupling
  * \brief Coupling manager for Stokes and Darcy domains with equal dimension.
  */
 template<class MDTraits>

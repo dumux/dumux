@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup StaggeredDiscretization
+ * \ingroup NavierStokesModel
  * \copydoc Dumux::StaggeredFreeFlowVelocityOutput
  */
 #ifndef DUMUX_FREEFLOW_NAVIERSTOKES_VELOCITYOUTPUT_HH
@@ -32,7 +32,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup StaggeredDiscretization
+ * \ingroup NavierStokesModel
  * \brief Velocity output for staggered free-flow models
  */
 template<class GridVariables>

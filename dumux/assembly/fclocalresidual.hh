@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Assembly
- * \ingroup BoxDiscretization
+ * \ingroup FaceCenteredStaggeredDiscretization
  * \brief Calculates the element-wise residual for the box scheme
  */
 #ifndef DUMUX_FACECENTERED_LOCAL_RESIDUAL_HH
@@ -37,7 +37,7 @@ namespace Dumux {
 
 /*!
  * \ingroup Assembly
- * \ingroup BoxDiscretization
+ * \ingroup FaceCenteredStaggeredDiscretization
  * \brief The element-wise residual for the box scheme
  * \tparam TypeTag the TypeTag
  */

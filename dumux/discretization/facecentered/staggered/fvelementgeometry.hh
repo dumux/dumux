@@ -218,7 +218,7 @@ private:
 };
 
 /*!
- * \ingroup StaggeredDiscretization
+ * \ingroup FaceCenteredStaggeredDiscretization
  * \brief Stencil-local finite volume geometry (scvs and scvfs) for face-centered staggered models
  *        Specialization for grid caching disabled
  */

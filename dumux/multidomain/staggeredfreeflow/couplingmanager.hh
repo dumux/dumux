@@ -19,6 +19,7 @@
 /*!
  * \file
  * \ingroup MultiDomain
+ * \ingroup StaggeredDiscretization
  * \brief The interface of the coupling manager for multi domain problems
  */
 
@@ -41,8 +42,8 @@
 namespace Dumux {
 
 /*!
- * \file
  * \ingroup MultiDomain
+ * \ingroup StaggeredDiscretization
  * \brief The interface of the coupling manager for free flow systems
  */
 template<class Traits>
@@ -156,6 +157,7 @@ public:
 
     /*!
      * \ingroup MultiDomain
+     * \ingroup StaggeredDiscretization
      * \brief evaluates the element residual of a coupled element of domain i which depends on the variables
      *        at the degree of freedom with index dofIdxGlobalJ of domain j
      *
@@ -409,6 +411,7 @@ public:
 
     /*!
      * \ingroup MultiDomain
+     * \ingroup StaggeredDiscretization
      * \brief updates all data and variables that are necessary to evaluate the residual of the element of domain i
      *        this is called whenever one of the primary variables that the element residual depends on changes in domain j
      *

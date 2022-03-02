@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PoreNetworkModels
+ * \ingroup PNMOnePModel
  * \ingroup SpatialParameters
  * \brief The spatial parameters for single-phase pore-network models.
  */
@@ -30,7 +30,6 @@
 namespace Dumux::PoreNetwork {
 
 /*!
- * \ingroup PoreNetworkModels
  * \ingroup SpatialParameters
  * \ingroup PNMOnePModel
  * \brief The base class for spatial parameters for single-phase pore-network models.
@@ -45,7 +44,7 @@ public:
 };
 
 /*!
- * \ingroup PoreNetworkModels
+ * \ingroup PNMOnePModel
  * \ingroup SpatialParameters
  * \brief The default class for spatial parameters for single-phase pore-network models.
  * \note We have this layer for consistency with the two-phase pore-network models. Also, we

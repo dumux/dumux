@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup FaceCenteredStaggeredFVElementGeometry
+ * \ingroup FaceCenteredStaggeredDiscretization
  * \copydoc Dumux::FaceCenteredStaggeredFVGridGeometry
  */
 #ifndef DUMUX_DISCRETIZATION_FACECENTERED_STAGGERED_FV_GRID_GEOMETRY
@@ -97,7 +97,7 @@ template<class GridView,
 class FaceCenteredStaggeredFVGridGeometry;
 
 /*!
- * \ingroup StaggeredDiscretization
+ * \ingroup FaceCenteredStaggeredDiscretization
  * \brief Base class for the finite volume geometry vector for staggered models
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element. Specialization in case the FVElementGeometries are stored.

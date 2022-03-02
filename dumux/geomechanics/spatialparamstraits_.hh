@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup Geomechanics
+ * \brief helper struct detecting if the user-defined spatial params class has a lameParamsAtPos function
+ */
 #ifndef DUMUX_GEOMECHANICS_SPATIAL_PARAMS_TRAITS__HH
 #define DUMUX_GEOMECHANICS_SPATIAL_PARAMS_TRAITS__HH
 #ifndef DOXYGEN

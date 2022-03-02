@@ -84,7 +84,7 @@ template<class MDTraits, class CouplingManager, bool enableEnergyBalance, bool i
 class FreeFlowPorousMediumCouplingConditionsImplementation;
 
 /*!
-* \ingroup BoundaryCoupling
+* \ingroup FreeFlowPorousMediumCoupling
 * \brief Data for the coupling of a Darcy model (cell-centered finite volume)
 *        with a (Navier-)Stokes model (staggerd grid).
 */

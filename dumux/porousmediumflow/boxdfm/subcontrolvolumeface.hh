@@ -86,7 +86,7 @@ struct BoxDfmDefaultScvfGeometryTraits
 };
 
 /*!
- * \ingroup BoxDiscretization
+ * \ingroup BoxDFMModel
  * \brief Class for a sub control volume face in the box discrete fracture method, i.e a
  *        part of the boundary of a sub control volume we compute fluxes on.
  * \tparam GV the type of the grid view

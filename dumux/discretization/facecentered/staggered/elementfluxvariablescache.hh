@@ -143,7 +143,7 @@ private:
 };
 
 /*!
- * \ingroup BoxDiscretization
+ * \ingroup FaceCenteredStaggeredDiscretization
  * \brief The flux variables caches for an element with caching disabled
  */
 template<class GFVC>

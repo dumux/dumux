@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PorousmediumflowModels
+ * \ingroup RichardsModel
  * \brief Velocity output for the Richards model.
  */
 
@@ -30,7 +30,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup PorousmediumflowModels
+ * \ingroup RichardsModel
  * \brief Velocity output policy for the Richards model.
  */
 template<class GridVariables, class FluxVariables>

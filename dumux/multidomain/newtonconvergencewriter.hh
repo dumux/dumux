@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup MultiDomain
  * \ingroup Nonlinear
  * \brief This class provides the infrastructure to write the
  *        convergence behaviour of the Newton method for
@@ -33,6 +34,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup MultiDomain
  * \ingroup Nonlinear
  * \brief Writes the intermediate solutions for every Newton iteration
  * \note To use this create a shared_ptr to an instance of this class in the main file

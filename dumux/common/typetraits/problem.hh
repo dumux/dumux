@@ -36,7 +36,7 @@ struct ProblemTraits;
 } // end namespace Detail
 
 /*!
- * \ingroup Common
+ * \ingroup Typetraits
  * \brief Type traits for problem classes.
  */
 template<class Problem>

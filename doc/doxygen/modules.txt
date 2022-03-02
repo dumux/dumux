@@ -198,6 +198,12 @@
              * \brief Low-Re k-epsilon model
              * For a detailed model description see freeflow/rans/twoeq/lowrekepsilon/model.hh
              */
+            /*!
+             * \ingroup TwoEqModel
+             * \defgroup SSTModel SST model
+             * \brief SST model
+             * For a detailed model description see freeflow/rans/twoeq/sst/model.hh
+             */
     /*!
      * \ingroup FreeflowModels
      * \defgroup FreeflowNCModel Compositional
@@ -264,8 +270,13 @@
          */
     /*!
      * \ingroup Discretization
+     * \defgroup FaceCenteredStaggeredDiscretization Face-centered staggered FV scheme
+     * \brief A staggered finite volume scheme with degrees of freedom at cell-centers and facets. In this implementation, momentum control volumes exist.
+     */
+    /*!
+     * \ingroup Discretization
      * \defgroup StaggeredDiscretization Staggered FV scheme
-     * \brief A staggered finite volume scheme with degrees of freedom at cell-centers and facets.
+     * \brief A staggered finite volume scheme with degrees of freedom at cell-centers and facets. In this implementation, momentum control volumes do not explicitly exist, but the implementation uses workarounds.
      */
     /*!
      * \ingroup Discretization
@@ -539,6 +550,16 @@
          * \ingroup BoundaryCoupling
          * \defgroup DarcyDarcyCoupling Darcy-Darcy domain coupling
          * \brief Couples domains with equal-dimension multi-physics problems in a Darcy-Darcy coupling.
+         */
+        /*!
+         * \ingroup BoundaryCoupling
+         * \defgroup FreeFlowPoreNetworkCoupling Free flow-Pore network domain coupling
+         * \brief Couples domains with equal-dimension multi-physics problems in a Free flow-Pore network coupling.
+         */
+        /*!
+         * \ingroup BoundaryCoupling
+         * \defgroup FreeFlowPorousMediumCoupling Free flow-Porous medium domain coupling
+         * \brief Couples domains with equal-dimension multi-physics problems in a Free flow-Porous medium coupling.
          */
         /*!
          * \ingroup BoundaryCoupling

@@ -43,7 +43,7 @@ template<class MDTraits, class CouplingManager, bool enableEnergyBalance, bool i
 class FreeFlowPoreNetworkCouplingConditionsImplementation;
 
 /*!
-* \ingroup BoundaryCoupling
+* \ingroup FreeFlowPoreNetworkCoupling
 * \brief Coupling conditions for the coupling of a pore-network model
 *        with a (Navier-)Stokes model (staggerd grid).
 */

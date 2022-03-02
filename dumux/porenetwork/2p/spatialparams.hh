@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PoreNetworkModels
+ * \ingroup PNMTwoPModel
  * \ingroup SpatialParameters
  * \brief The two-phase spatial parameters for pore-network models.
  */
@@ -35,9 +35,8 @@
 namespace Dumux::PoreNetwork {
 
 /*!
- * \ingroup PoreNetworkModels
- * \ingroup SpatialParameters
  * \ingroup PNMTwoPModel
+ * \ingroup SpatialParameters
  * \brief The base class for spatial parameters for pore-network models.
  */
 template<class GridGeometry, class Scalar, class LocalRules, class Implementation>
@@ -229,7 +228,7 @@ private:
 };
 
 /*!
- * \ingroup PoreNetworkModels
+ * \ingroup PNMTwoPModel
  * \ingroup SpatialParameters
  * \brief The default class for spatial parameters for two-phase pore-network models.
  */

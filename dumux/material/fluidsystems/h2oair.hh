@@ -43,7 +43,7 @@
 namespace Dumux {
 namespace FluidSystems {
 /*!
- * \ingroup Fluidsytems
+ * \ingroup Fluidsystems
  * \brief Policy for the H2O-air fluid system
  */
 template<bool fastButSimplifiedRelations = false>

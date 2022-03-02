@@ -35,6 +35,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup Common
  * \ingroup SpatialParameters
  * \brief The base class for spatial parameters used with finite-volume schemes.
  */
