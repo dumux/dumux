@@ -103,7 +103,7 @@ template<class TypeTag>
 struct EnableThermalDispersion<TypeTag, TTag::DispersionTest> { static constexpr bool value = NONISOTHERMAL; };
 
 template<class TypeTag>
-struct CompositionalDispersionTensorType<TypeTag, TTag::DispersionTest>
+struct CompositionalDispersionModel<TypeTag, TTag::DispersionTest>
 {
 #if SCHEIDEGGER
     using type = ScheideggersDispersionTensor<TypeTag>;

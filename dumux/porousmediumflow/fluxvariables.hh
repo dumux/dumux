@@ -152,7 +152,7 @@ public:
         if constexpr (enableThermalDispersion)
         {
             // TODO: Here?
-            if constexpr (Deprecated::hasThermalDispersionTensorType<ModelTraits>())
+            if constexpr (Deprecated::hasThermalDispersionModel<ModelTraits>())
             {
                 return DispersionFluxType::thermalDispersionFlux(this->problem(),
                                                                  this->element(),
@@ -163,7 +163,7 @@ public:
                                                                  this->elemFluxVarsCache());
             }
             else
-                DUNE_THROW(Dune::InvalidStateException, "Please pass the ThermalDispersionTensorType to the model traits");
+                DUNE_THROW(Dune::InvalidStateException, "Please pass the ThermalDispersionModel to the model traits");
         }
         else
             return Dune::FieldVector<Scalar, 1>(0.0);

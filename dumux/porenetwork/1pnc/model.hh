@@ -158,19 +158,19 @@ private:
     static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
     using BaseTraits = OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 
-    using CDTT = GetPropType<TypeTag, Properties::CompositionalDispersionTensorType>;
+    using CDM = GetPropType<TypeTag, Properties::CompositionalDispersionModel>;
     using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
     using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
-    template<class BaseTraits, class CDTT, class DT, class EDM>
+    template<class BaseTraits, class CDM, class DT, class EDM>
     struct NCTraits : public BaseTraits
     {
-        using CompositionalDispersionTensorType = CDTT;
+        using CompositionalDispersionModel = CDM;
         using DiffusionType = DT;
         using EffectiveDiffusivityModel = EDM;
     };
 
 public:
-    using type = PoreNetwork::OnePNCVolumeVariables<NCTraits<BaseTraits, CDTT, DT, EDM>>;
+    using type = PoreNetwork::OnePNCVolumeVariables<NCTraits<BaseTraits, CDM, DT, EDM>>;
 };
 
 //!< Set the vtk output fields specific to this model
@@ -216,21 +216,21 @@ private:
     static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
     using BaseTraits = OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 
-    using CDTT = GetPropType<TypeTag, Properties::CompositionalDispersionTensorType>;
+    using CDM = GetPropType<TypeTag, Properties::CompositionalDispersionModel>;
     using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
     using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
     using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
-    template<class BaseTraits, class CDTT, class TDTT, class DT, class EDM, class ETCM>
+    template<class BaseTraits, class CDM, class DT, class EDM, class ETCM>
     struct NCNITraits : public BaseTraits
     {
-        using CompositionalDispersionTensorType = CDTT;
+        using CompositionalDispersionModel = CDM;
         using DiffusionType = DT;
         using EffectiveDiffusivityModel = EDM;
         using EffectiveThermalConductivityModel = ETCM;
     };
 
 public:
-    using type = PoreNetwork::OnePNCVolumeVariables<NCNITraits<BaseTraits, CDTT, TDTT, DT, EDM, ETCM>>;
+    using type = PoreNetwork::OnePNCVolumeVariables<NCNITraits<BaseTraits, CDM, DT, EDM, ETCM>>;
 };
 
 template<class TypeTag>

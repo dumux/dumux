@@ -65,14 +65,14 @@ namespace Dumux {
  *
  * \tparam IsothermalTraits Model traits of the isothermal model
  */
-template<class IsothermalT, class TDTT = int>
+template<class IsothermalT, class TDM = int>
 struct PorousMediumFlowNIModelTraits : public IsothermalT
 {
     //! Export the isothermal model traits
     using IsothermalTraits = IsothermalT;
 
     //! Export the thermal dispersion tensor type
-    using ThermalDispersionTensorType = TDTT;
+    using ThermalDispersionModel = TDM;
 
     //! We solve for one more equation, i.e. the energy balance
     static constexpr int numEq() { return IsothermalTraits::numEq()+1; }

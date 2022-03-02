@@ -118,9 +118,9 @@ public:
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
             const auto& dispersionTensor =
-                VolumeVariables::CompositionalDispersionTensorType::compositionalDispersionTensor(problem, scvf, fvGeometry,
-                                                                                     elemVolVars, elemFluxVarsCache,
-                                                                                     phaseIdx, compIdx);
+                VolumeVariables::CompositionalDispersionModel::compositionalDispersionTensor(problem, scvf, fvGeometry,
+                                                                                             elemVolVars, elemFluxVarsCache,
+                                                                                             phaseIdx, compIdx);
             const auto dij = computeTpfaTransmissibility(scvf, fvGeometry.scv(scvf.insideScvIdx()), dispersionTensor, insideVolVars.extrusionFactor());
 
             const auto xInside = massOrMoleFraction(insideVolVars, referenceSystem, phaseIdx, compIdx);
@@ -152,9 +152,9 @@ public:
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         const auto& dispersionTensor =
-            ModelTraits::ThermalDispersionTensorType::thermalDispersionTensor(problem, scvf, fvGeometry,
-                                                                              elemVolVars, elemFluxVarsCache,
-                                                                              phaseIdx);
+            ModelTraits::ThermalDispersionModel::thermalDispersionTensor(problem, scvf, fvGeometry,
+                                                                         elemVolVars, elemFluxVarsCache,
+                                                                         phaseIdx);
         const auto dij = computeTpfaTransmissibility(scvf, fvGeometry.scv(scvf.insideScvIdx()), dispersionTensor, insideVolVars.extrusionFactor());
 
         // get the inside/outside temperatures

@@ -69,15 +69,12 @@ template<class TypeTag>
 struct EnableThermalDispersion<TypeTag, TTag::MyTest> { static constexpr bool value = true; };
 ```
 
-To determine the type of dispersion tensor, please define the property `DispersionTensorType` within your `properties.hh` header. For example:
+To determine the type of dispersion tensor, please define the property `CompositionalDispersionModel` within your `properties.hh` header. Per default, the `ThermalDispersionModel` is set to the same model as the `CompositionalDispersionModel`, but this can be set specifically as well. For example:
 ```cpp
 template<class TypeTag>
-struct DispersionTensorType<TypeTag, TTag::MyTest> { using type = ScheideggersDispersionTensor<TypeTag>; };
-```
-or
-```cpp
+struct CompositionalDispersionModel<TypeTag, TTag::MyTest> { using type = ScheideggersDispersionTensor<TypeTag>; };
 template<class TypeTag>
-struct DispersionTensorType<TypeTag, TTag::MyTest> { using type = FullDispersionTensor<TypeTag>; };
+struct ThermalDispersionModel<TypeTag, TTag::MyTest> { using type = FullDispersionTensor<TypeTag>; };
 ```
 
 The parameters describing your dispersion tensor can then be included in your `spatialparameters.hh` file, and passed via input parameters. An example of this can be seen in the `test/porousmediumflow/1pnc/dispersion/` folder, and in the `test/porousmediumflow/tracer/constvel/` folders.
