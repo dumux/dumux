@@ -28,6 +28,7 @@
 #include <bitset>
 #include <array>
 
+#include <dumux/common/deprecated.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/flux/fluxvariablesbase.hh>
 #include <dumux/flux/upwindscheme.hh>
@@ -149,13 +150,21 @@ public:
     Dune::FieldVector<Scalar, 1> thermalDispersionFlux([[maybe_unused]] const int phaseIdx = 0) const
     {
         if constexpr (enableThermalDispersion)
-            return DispersionFluxType::thermalDispersionFlux(this->problem(),
-                                                             this->element(),
-                                                             this->fvGeometry(),
-                                                             this->elemVolVars(),
-                                                             this->scvFace(),
-                                                             phaseIdx,
-                                                             this->elemFluxVarsCache());
+        {
+            // TODO: Here?
+            if constexpr (Deprecated::hasThermalDispersionTensorType<ModelTraits>())
+            {
+                return DispersionFluxType::thermalDispersionFlux(this->problem(),
+                                                                 this->element(),
+                                                                 this->fvGeometry(),
+                                                                 this->elemVolVars(),
+                                                                 this->scvFace(),
+                                                                 phaseIdx,
+                                                                 this->elemFluxVarsCache());
+            }
+            else
+                DUNE_THROW(Dune::InvalidStateException, "Please pass the ThermalDispersionTensorType to the model traits");
+        }
         else
             return Dune::FieldVector<Scalar, 1>(0.0);
     }

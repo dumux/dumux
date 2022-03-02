@@ -220,7 +220,7 @@ private:
     using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
     using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
     using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
-    template<class BaseTraits, class DTT, class DT, class EDM, class ETCM>
+    template<class BaseTraits, class CDTT, class TDTT, class DT, class EDM, class ETCM>
     struct NCNITraits : public BaseTraits
     {
         using CompositionalDispersionTensorType = CDTT;
@@ -230,7 +230,7 @@ private:
     };
 
 public:
-    using type = PoreNetwork::OnePNCVolumeVariables<NCNITraits<BaseTraits, DTT, DT, EDM, ETCM>>;
+    using type = PoreNetwork::OnePNCVolumeVariables<NCNITraits<BaseTraits, CDTT, TDTT, DT, EDM, ETCM>>;
 };
 
 template<class TypeTag>

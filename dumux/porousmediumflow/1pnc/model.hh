@@ -228,8 +228,9 @@ struct ModelTraits<TypeTag, TTag::OnePNCNI>
 {
 private:
     using IsothermalTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
+    using TDTT = GetPropType<TypeTag, Properties::ThermalDispersionTensorType>;
 public:
-    using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
+    using type = PorousMediumFlowNIModelTraits<IsothermalTraits, TDTT>;
 };
 
 template<class TypeTag>
@@ -253,7 +254,7 @@ private:
     using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
     using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
     using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
-    template<class BaseTraits, class DTT, class DT, class EDM, class ETCM>
+    template<class BaseTraits, class CDTT, class DT, class EDM, class ETCM>
     struct NCNITraits : public BaseTraits
     {
         using CompositionalDispersionTensorType = CDTT;
@@ -263,7 +264,7 @@ private:
     };
 
 public:
-    using type = OnePNCVolumeVariables<NCNITraits<BaseTraits, DTT, DT, EDM, ETCM>>;
+    using type = OnePNCVolumeVariables<NCNITraits<BaseTraits, CDTT, DT, EDM, ETCM>>;
 };
 
 } // end namespace Properties
@@ -358,7 +359,7 @@ private:
     using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
     using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
     using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
-    template<class BaseTraits, class DTT, class DT, class EDM, class ETCM>
+    template<class BaseTraits, class CDTT, class DT, class EDM, class ETCM>
     struct NCNITraits : public BaseTraits
     {
         using CompositionalDispersionTensorType = CDTT;
@@ -367,9 +368,9 @@ private:
         using EffectiveThermalConductivityModel = ETCM;
     };
 
-    using EquilibriumVolVars = OnePNCVolumeVariables<NCNITraits<BaseTraits, DTT, DT, EDM, ETCM>>;
+    using EquilibriumVolVars = OnePNCVolumeVariables<NCNITraits<BaseTraits, CDTT, DT, EDM, ETCM>>;
 public:
-    using type = NonEquilibriumVolumeVariables<NCNITraits<BaseTraits, DTT, DT, EDM, ETCM>, EquilibriumVolVars>;
+    using type = NonEquilibriumVolumeVariables<NCNITraits<BaseTraits, CDTT, DT, EDM, ETCM>, EquilibriumVolVars>;
 };
 
 } // end namespace Properties

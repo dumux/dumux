@@ -72,6 +72,10 @@ template<class ModelTraits>
 static constexpr bool hasEnableThermalDispersion()
 { return Dune::Std::is_detected<HasEnableThermalDispersionDetector, ModelTraits>::value; }
 
+template<class ModelTraits>
+static constexpr bool hasThermalDispersionTensorType()
+{ return !std::is_same<typename ModelTraits::ThermalDispersionTensorType, int>::value; }
+
 template<class SpatialParams, class Element, class Scv, class ElemSol>
 using HasNewTemperatureDetector = decltype(std::declval<SpatialParams>().temperature(
     std::declval<Element>(),

@@ -152,6 +152,8 @@ struct HeatConductionType { using type = UndefinedProperty; };                  
 template<class TypeTag, class MyTypeTag>
 struct CompositionalDispersionTensorType { using type = UndefinedProperty; };   //!< The type for the calculation of the compositional dispersion tensor
 template<class TypeTag, class MyTypeTag>
+struct ThermalDispersionTensorType { using type = UndefinedProperty; };         //!< The type for the calculation of the thermal dispersion tensor
+template<class TypeTag, class MyTypeTag>
 struct SolutionDependentHeatConduction { using type = UndefinedProperty; };     //!< specifies if the parameters for the heat conduction fluxes depend on the solution
 
 template<class TypeTag, class MyTypeTag>

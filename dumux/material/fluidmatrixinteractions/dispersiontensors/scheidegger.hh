@@ -70,6 +70,26 @@ public:
     {
         DimWorldMatrix dispersionTensor(0.0);
 
+
+    template <class ElementFluxVariablesCache>
+    static DimWorldMatrix thermalDispersionTensor(const Problem& problem,
+                                                  const SubControlVolumeFace& scvf,
+                                                  [[maybe_unused]] const FVElementGeometry& fvGeometry,
+                                                  [[maybe_unused]] const ElementVolumeVariables& elemVolVars,
+                                                  [[maybe_unused]] const ElementFluxVariablesCache& elemFluxVarsCache,
+                                                  [[maybe_unused]] const int phaseIdx)
+    {
+        DimWorldMatrix dispersionTensor(0.0);
+
+        // Get the velocity either from the reconstruction, or from the spatialparams
+        auto velocity = dispersionVelocity_(problem, scvf, fvGeometry, elemVolVars, elemFluxVarsCache);
+
+        // collect the dispersion alphas at this location
+        std::array<Scalar,2> dispersivity = problem.spatialParams().dispersionAlphas(scvf.center(), phaseIdx); //TODO: fix this?
+
+        return scheideggerTensor_(dispersivity, velocity);
+    }
+
         // Calculate Darcy's velocity
         Dune::FieldVector<Scalar, dimWorld> velocity(0.0);
         if constexpr (stationaryVelocityField)

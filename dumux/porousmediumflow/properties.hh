@@ -91,6 +91,11 @@ struct DispersionFluxType<TypeTag, TTag::PorousMediumFlow> { using type = Diffus
 template<class TypeTag>
 struct CompositionalDispersionTensorType<TypeTag, TTag::PorousMediumFlow> { using type = ScheideggersDispersionTensor<TypeTag>; };
 
+//! By default, we use the same dispersion tensor type as the componsitonal dispersion for the thermal disperion tensor
+template<class TypeTag>
+struct ThermalDispersionTensorType<TypeTag, TTag::PorousMediumFlow>
+{ using type = GetPropType<TypeTag, Properties::CompositionalDispersionTensorType>; };
+
 //! By default, we use fourier's law as the default for heat conduction fluxes
 template<class TypeTag>
 struct HeatConductionType<TypeTag, TTag::PorousMediumFlow> { using type = FouriersLaw<TypeTag>; };

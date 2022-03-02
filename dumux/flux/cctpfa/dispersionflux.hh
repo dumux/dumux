@@ -131,7 +131,6 @@ public:
         return componentFlux;
     }
 
-
     /*!
      * \brief Returns the thermal dispersive flux
      *        across the given sub-control volume face.
@@ -153,8 +152,9 @@ public:
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         const auto& dispersionTensor =
-            VolumeVariables::DispersionTensorType::dispersionTensor(problem, scvf, fvGeometry,
-                                                                    elemVolVars, elemFluxVarsCache, phaseIdx, Indices::energyEqIdx);
+            ModelTraits::ThermalDispersionTensorType::thermalDispersionTensor(problem, scvf, fvGeometry,
+                                                                              elemVolVars, elemFluxVarsCache,
+                                                                              phaseIdx);
         const auto dij = computeTpfaTransmissibility(scvf, fvGeometry.scv(scvf.insideScvIdx()), dispersionTensor, insideVolVars.extrusionFactor());
 
         // get the inside/outside temperatures

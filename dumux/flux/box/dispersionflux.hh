@@ -151,8 +151,9 @@ public:
     {
         // collect the dispersion tensor
         const auto& dispersionTensor =
-            VolumeVariables::DispersionTensorType::dispersionTensor(problem, scvf, fvGeometry,
-                                                                    elemVolVars, elemFluxVarsCache, phaseIdx, Indices::energyEqIdx);
+            ModelTraits::ThermalDispersionTensorType::thermalDispersionTensor(problem, scvf, fvGeometry,
+                                                                                  elemVolVars, elemFluxVarsCache,
+                                                                                  phaseIdx);
         // compute the temperature gradient with the shape functions
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
         Dune::FieldVector<Scalar, GridView::dimensionworld> gradTemp(0.0);

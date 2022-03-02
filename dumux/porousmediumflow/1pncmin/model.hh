@@ -207,7 +207,7 @@ private:
     using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
     using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
     using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
-    template<class BaseTraits, class DTT, class DT, class EDM, class ETCM>
+    template<class BaseTraits, class CDTT, class TDTT, class DT, class EDM, class ETCM>
     struct NCNITraits : public BaseTraits
     {
         using CompositionalDispersionTensorType = CDTT;
@@ -215,9 +215,9 @@ private:
         using EffectiveDiffusivityModel = EDM;
         using EffectiveThermalConductivityModel = ETCM;
     };
-    using NonMinVolVars = OnePNCVolumeVariables<NCNITraits<BaseTraits, DTT, DT, EDM, ETCM>>;
+    using NonMinVolVars = OnePNCVolumeVariables<NCNITraits<BaseTraits, CDTT, TDTT, DT, EDM, ETCM>>;
 public:
-    using type = MineralizationVolumeVariables<NCNITraits<BaseTraits, DTT, DT, EDM, ETCM>, NonMinVolVars>;
+    using type = MineralizationVolumeVariables<NCNITraits<BaseTraits, CDTT, TDTT, DT, EDM, ETCM>, NonMinVolVars>;
 };
 //! Use the average for effective conductivities
 template<class TypeTag>
