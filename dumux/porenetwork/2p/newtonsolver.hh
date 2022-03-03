@@ -58,7 +58,7 @@ public:
             auto& invasionState = gridVariables.gridFluxVarsCache().invasionState();
             auto& uCurrentIter = Backend::dofs(vars);
             invasionState.updateForFirstStep(uCurrentIter, gridVariables.curGridVolVars(),
-                                         gridVariables.gridFluxVarsCache(), preIndex_);
+                                         gridVariables.gridFluxVarsCache());
         }
         ParentType::newtonBegin(vars);
     }
@@ -112,6 +112,7 @@ public:
         ParentType::newtonFail(u);
         auto& gridVariables = this->assembler().gridVariables();
         gridVariables.gridFluxVarsCache().invasionState().reset();
+        lastIterationWasChopped_ = false;
     }
 
     // /*!
@@ -145,8 +146,10 @@ private:
         uCurrentIter -= deltaU;
 
         // do not clamp anything after 5 iterations
-        if (this->numSteps_ <= 4)
+        static const int maxNumChoppedUpdates = getParam<int>("Newton.NumChoppedUpdates", 4);
+        if (maxNumChoppedUpdates && this->numSteps_ <= maxNumChoppedUpdates)
         {
+            lastIterationWasChopped_ = true;
             // clamp saturation change to at most 20% per iteration
             const auto& gridGeometry = this->assembler().gridGeometry();
             auto fvGeometry = localView(gridGeometry);
@@ -165,13 +168,15 @@ private:
                     const auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
                     const double pw = uLastIter[dofIdxGlobal][0];
                     const double SnOld = uLastIter[dofIdxGlobal][1];
-                    const double SwOld = 1.0 - SnOld;
-                    const double pcOld = fluidMatrixInteraction.pc(SwOld);
-                    const double pn = pcOld + pw;
 
-                    // convert into minimum and maximum wetting phase pressures
-                    const double pwMin = pn - fluidMatrixInteraction.pc(SwOld - 0.1);
-                    const double pwMax = pn - fluidMatrixInteraction.pc(SwOld + 0.1);
+                    // const double SwOld = 1.0 - SnOld;
+                    // const double pcOld = fluidMatrixInteraction.pc(SwOld);
+                    // const double pn = pcOld + pw;
+                    // const double pwMin = pn - fluidMatrixInteraction.pc(SwOld - 0.1);
+                    // const double pwMax = pn - fluidMatrixInteraction.pc(SwOld + 0.1);
+
+                    const double pwMin = pw - 1000;
+                    const double pwMax = pw + 1000;
 
                     // clamp the result
                     using std::clamp;
@@ -180,6 +185,8 @@ private:
                 }
             }
         }
+        else
+            lastIterationWasChopped_ = false;
 
         // update the variables
         this->solutionChanged_(varsCurrentIter, uCurrentIter);
