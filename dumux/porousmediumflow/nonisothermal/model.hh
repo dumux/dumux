@@ -65,7 +65,7 @@ namespace Dumux {
  *
  * \tparam IsothermalTraits Model traits of the isothermal model
  */
-template<class IsothermalT, class TDM = int>
+template<class IsothermalT, class TDM = void>
 struct PorousMediumFlowNIModelTraits : public IsothermalT
 {
     //! Export the isothermal model traits

@@ -118,9 +118,9 @@ public:
         {
             // collect the dispersion tensor, the fluxVarsCache and the shape values
             const auto& dispersionTensor =
-                VolumeVariables::CompositionalDispersionModel::compositionalDispersionTensor(problem, scvf, fvGeometry,
-                                                                                             elemVolVars, elemFluxVarsCache,
-                                                                                             phaseIdx, compIdx);
+                ModelTraits::CompositionalDispersionModel::compositionalDispersionTensor(problem, scvf, fvGeometry,
+                                                                                         elemVolVars, elemFluxVarsCache,
+                                                                                         phaseIdx, compIdx);
 
             // the mole/mass fraction gradient
             Dune::FieldVector<Scalar, dimWorld> gradX(0.0);

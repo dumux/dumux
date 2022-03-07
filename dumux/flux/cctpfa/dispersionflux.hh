@@ -118,9 +118,9 @@ public:
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
             const auto& dispersionTensor =
-                VolumeVariables::CompositionalDispersionModel::compositionalDispersionTensor(problem, scvf, fvGeometry,
-                                                                                             elemVolVars, elemFluxVarsCache,
-                                                                                             phaseIdx, compIdx);
+                ModelTraits::CompositionalDispersionModel::compositionalDispersionTensor(problem, scvf, fvGeometry,
+                                                                                         elemVolVars, elemFluxVarsCache,
+                                                                                         phaseIdx, compIdx);
             const auto dij = computeTpfaTransmissibility(scvf, fvGeometry.scv(scvf.insideScvIdx()), dispersionTensor, insideVolVars.extrusionFactor());
 
             const auto xInside = massOrMoleFraction(insideVolVars, referenceSystem, phaseIdx, compIdx);

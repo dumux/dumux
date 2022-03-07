@@ -114,8 +114,8 @@ public:
      * \param globalPos The global position
      */
     std::array<Scalar, 2> dispersionAlphas(const GlobalPosition& globalPos,
-                                           const int& phaseIdx = 0,
-                                           const int& compIdx = 0) const
+                                           const int phaseIdx = 0,
+                                           const int compIdx = 0) const
     { return { alphaL_, alphaT_ }; }
 
 private:
