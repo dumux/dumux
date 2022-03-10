@@ -1,0 +1,40 @@
+[Grid]
+#File = ../../donea/grids/cube3d_subdicision.msh
+File = ../../donea/grids/cube3d.msh
+Overlap = 1
+# when refining grid make sure overlap stays 1 (only 1 currently works)
+KeepPhysicalOverlap = true
+Refinement =2
+
+[Problem]
+Name = test_donea # name passed to the output routines
+EnableGravity = false
+EnableInertiaTerms = false
+PrintErrors = true
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 1.0
+
+[Newton]
+MaxSteps = 10
+MaxRelativeShift = 1e-8
+
+[LinearSolver]
+Type = cgsolver
+ResidualReduction = 1e-13
+Verbosity = 1
+Velocity.UseDirectSolver = true
+
+[LinearSolver.Preconditioner]
+Type = amg
+AmgAccumulationMode = atOnce
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-1
+
+[FreeFlow]
+EnableUnsymmetrizedVelocityGradient = true
+
+[SpatialParams]
+Temperature = 298.0
