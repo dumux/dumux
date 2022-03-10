@@ -1,10 +1,9 @@
 [Grid]
-#File = ../../donea/grids/cube3d_subdicision.msh
-File = ../../donea/grids/cube3d.msh
+File = ./grids/cube3d.msh
 Overlap = 1
 # when refining grid make sure overlap stays 1 (only 1 currently works)
 KeepPhysicalOverlap = true
-Refinement =2
+Refinement = 0
 
 [Problem]
 Name = test_donea # name passed to the output routines

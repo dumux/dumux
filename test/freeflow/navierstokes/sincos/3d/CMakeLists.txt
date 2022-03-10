@@ -1,3 +1,4 @@
+dune_symlink_to_source_files(FILES grids)
 add_input_file_links()
 
 dumux_add_test(NAME test_ff_stokes_trigonometric_momentum_diamond_quad
