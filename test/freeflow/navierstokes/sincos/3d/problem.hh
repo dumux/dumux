@@ -237,7 +237,8 @@ public:
 
         bool onBoundary = false;
         for (const auto& scvf : scvfs(fvGeometry))
-            onBoundary = std::max(onBoundary, scvf.boundary());
+            if(fvGeometry.scv(scvf.insideScvIdx()).dofIndex() == scv.dofIndex())
+                onBoundary = std::max(onBoundary, scvf.boundary());
 
         if (onBoundary)
             values.set(0);
