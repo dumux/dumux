@@ -213,10 +213,14 @@ public:
         static const bool enableUnsymmetrizedVelocityGradient
             = getParamFromGroup<bool>(this->problem().paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
 
+        static const bool enableWeakSymmetry
+            = getParamFromGroup<bool>(this->problem().paramGroup(), "FreeFlow.EnableWeakSymmetry", true);
+
         const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(this->element());
         result = enableUnsymmetrizedVelocityGradient ?
             mv(gradV, scvf.unitOuterNormal())
-            : 2.0*mv(gradV - this->elemFluxVarsCache()[eIdx].avgSkewGradV, scvf.unitOuterNormal());
+            : (enableWeakSymmetry ?  2.0*mv(gradV - this->elemFluxVarsCache()[eIdx].avgSkewGradV, scvf.unitOuterNormal())
+               : mv(gradV + getTransposed(gradV),scvf.unitOuterNormal()));
 
         const auto mu = this->problem().effectiveViscosity(this->element(), this->fvGeometry(), this->scvFace());
         result *= -mu * Extrusion::area(scvf) * extrusionFactor_(elemVolVars, scvf);
