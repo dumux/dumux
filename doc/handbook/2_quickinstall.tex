@@ -25,7 +25,7 @@ After the download is complete, execute the script. This can be done with
 $ python installdumux.py
 \end{lstlisting}
 
-This script will download each of the \Dune-modules that \Dumux depends on at their 2.7 release,
+This script will download each of the \Dune-modules that \Dumux depends on at their \DuneVersion{} release,
 as well as \Dumux's \DumuxVersion{} release. After these individual modules are downloaded, \Dune and \Dumux
 are automatically configured using the command-line script \texttt{dunecontrol}, located in
 \texttt{dune-common/bin/dunecontrol}, optimized using configure options defined in the \texttt{cmake.opts}
@@ -56,7 +56,7 @@ make test_1p_tpfa
 paraview *pvd
 \end{lstlisting}
 \item Advance ParaView to the next frame (green arrow button) and rescale to data range
-(green double arrow on top right) to admire the colorful pressure distribution.
+(green double arrow on top left) to admire the colorful pressure distribution.
 \end{enumerate}
 
 For further information on how to get started with dumux, see section \ref{chp:tutorial}.

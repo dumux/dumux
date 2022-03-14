@@ -230,8 +230,8 @@ diagram for the car types above might look like outlined in Figure
       \node[propertyBox] (speed) [below=of gasUsage] {TopSpeed};
       \node[propertyBox] (seats) [below=of speed] {NumSeats};
       \node[propertyBox] (automatic) [below=of seats] {AutomaticTransmission};
-      \node[propertyBox] (calibre) [below=of automatic] {CannonCalibre};
-      \node[propertyBox] (payload) [below=of calibre] {Payload};
+      \node[propertyBox] (caliber) [below=of automatic] {CannonCaliber};
+      \node[propertyBox] (payload) [below=of caliber] {Payload};
     \end{tikzpicture}
     \label{fig:car-propertynames}
   }
@@ -275,7 +275,7 @@ struct NumSeats { using type = UndefinedProperty; }; // []
 template<class TypeTag, class MyTypeTag>
 struct AutomaticTransmission { using type = UndefinedProperty; }; // true/false
 template<class TypeTag, class MyTypeTag>
-struct CanonCaliber { using type = UndefinedProperty; }; // [mm]
+struct CannonCaliber { using type = UndefinedProperty; }; // [mm]
 template<class TypeTag, class MyTypeTag>
 struct Payload { using type = UndefinedProperty; }; // [t]
 \end{lstlisting}
@@ -293,7 +293,7 @@ the following:
   of seats is $2$, it uses $\unitfrac[18]{l}{100km}$ and has a cargo payload of
   $\unit[35]{t}$.
 \item A tank exhibits a top speed of $\unitfrac[60]{km}{h}$, uses $\unitfrac[65]{l}{100km}$
-  and features a $\unit[120]{mm}$ diameter canon
+  and features a $\unit[120]{mm}$ diameter cannon
 \item A sedan has a gas usage of $\unitfrac[7]{l}{100km}$, as well as an automatic
   transmission, in every other aspect it is like a compact car.
 \item A pick-up truck has a top speed of $\unitfrac[120]{km}{h}$ and a payload of
@@ -337,7 +337,7 @@ template<class TypeTag>
 struct GasUsage<TypeTag, TTag::Tank> { static constexpr int value = 65; };
 
 template<class TypeTag>
-struct CanonCaliber<TypeTag, TTag::Tank> { static constexpr int value = 120; };
+struct CannonCaliber<TypeTag, TTag::Tank> { static constexpr int value = 120; };
 
 template<class TypeTag>
 struct GasUsage<TypeTag, TTag::Sedan> { static constexpr int value = 7; };
