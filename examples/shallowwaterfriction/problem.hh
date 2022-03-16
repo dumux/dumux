@@ -161,20 +161,20 @@ public:
     // Accordingly, the third entry of the `bottomFrictionSource` is equal to the second component of the `bottomShearStress`.
     // [[codeblock]]
     NumEqVector bottomFrictionSource(const Element& element,
-                                      const FVElementGeometry& fvGeometry,
-                                      const ElementVolumeVariables& elemVolVars,
-                                      const SubControlVolume &scv) const
+                                     const FVElementGeometry& fvGeometry,
+                                     const ElementVolumeVariables& elemVolVars,
+                                     const SubControlVolume &scv) const
     {
         NumEqVector bottomFrictionSource(0.0);
         const auto& volVars = elemVolVars[scv];
 
         // bottom shear stress vector
-        Dune::FieldVector<Scalar, 2> bottomShearStress = this->spatialParams().frictionLaw(element, scv).shearStress(volVars);
+        Dune::FieldVector<Scalar, 2> bottomShearStress = this->spatialParams().frictionLaw(element, scv).bottomShearStress(volVars);
 
         // source term due to bottom friction
         bottomFrictionSource[0] = 0.0;
-        bottomFrictionSource[1] = bottomShearStress[0];
-        bottomFrictionSource[2] = bottomShearStress[1];
+        bottomFrictionSource[1] = -bottomShearStress[0] / volVars.density();
+        bottomFrictionSource[2] = -bottomShearStress[1] / volVars.density();
 
         return bottomFrictionSource;
     }

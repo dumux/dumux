@@ -43,18 +43,21 @@ class FrictionLaw
     using Scalar = typename VolumeVariables::PrimaryVariables::value_type;
 public:
     /*!
-     * \brief Compute the shear stress.
+     * \brief Compute the bottom shear stress.
      *
-     * \param volVar Volume Variables.
+     * \param volVars Volume variables
      *
-     * Compute the shear stress due to friction. The shear stress is not a tensor as know
-     * from contiuums mechanics, but a force projected on an area. Therefore it is a
-     * vector with two entries.
+     * Compute the bottom shear stress due to bottom friction.
+     * The bottom shear stress is a projection of the shear stress tensor onto the river bed.
+     * It can therefore be represented by a (tangent) vector with two entries.
      *
      * \return shear stress [N/m^2]. First entry is the x-component, the second the y-component.
      */
+    virtual Dune::FieldVector<Scalar, 2> bottomShearStress(const VolumeVariables& volVars) const = 0;
 
-    virtual Dune::FieldVector<Scalar, 2> shearStress(const VolumeVariables& volVar) const = 0;
+    [[deprecated("Use bottomShearStress. Note that the unit and sign of the return value is different. Will be removed after release 3.5")]]
+    virtual Dune::FieldVector<Scalar, 2> shearStress(const VolumeVariables& volVars) const
+    { auto bss = bottomShearStress(volVars); bss /= -volVars.density(); return bss; }
 
     /*!
      * \brief Limit the friction for small water depth.

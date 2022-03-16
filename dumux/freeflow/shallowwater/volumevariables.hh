@@ -38,6 +38,8 @@ class ShallowWaterVolumeVariables
 
 public:
     using PrimaryVariables = typename Traits::PrimaryVariables;
+    //! export the underlying fluid system
+    using FluidSystem = typename Traits::FluidSystem;
 
     template<class ElemSol, class Problem, class Element, class Scv>
     void update(const ElemSol &elemSol,
@@ -88,6 +90,21 @@ public:
     Scalar bedSurface() const
     {
         return bedSurface_;
+    }
+
+    /*!
+     * \brief Return the fluid density
+     *
+     */
+    Scalar density(int phaseIdx = 0) const
+    {
+        static_assert(!FluidSystem::isCompressible(0),
+            "The shallow water model assumes incompressible fluids"
+        );
+
+        // call with hard-coded sensible default values for water/river applications for now
+        return FluidSystem::density(283.15, 1e5);
+
     }
 
 private:

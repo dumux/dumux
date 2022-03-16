@@ -69,6 +69,8 @@
 #include <dumux/flux/shallowwaterflux.hh>
 #include <dumux/flux/shallowwaterviscousflux.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
+#include <dumux/material/components/simpleh2o.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include "localresidual.hh"
 #include "volumevariables.hh"
@@ -98,13 +100,16 @@ struct ShallowWaterModelTraits
  * \brief Traits class for the volume variables of the shallow water model.
  *
  * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
  * \tparam MT The model traits
  */
 template<class PV,
+         class FSY,
          class MT>
 struct ShallowWaterVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
+    using FluidSystem = FSY;
     using ModelTraits = MT;
 };
 
@@ -137,8 +142,9 @@ struct VolumeVariables<TypeTag, TTag::ShallowWater>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
-    using Traits = ShallowWaterVolumeVariablesTraits<PV, MT>;
+    using Traits = ShallowWaterVolumeVariablesTraits<PV, FSY, MT>;
 public:
     using type = ShallowWaterVolumeVariables<Traits>;
 };
@@ -162,6 +168,15 @@ struct AdvectionType<TypeTag, TTag::ShallowWater>
 template<class TypeTag>
 struct ViscousFluxType<TypeTag, TTag::ShallowWater>
 { using type = ShallowWaterViscousFlux< Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>> >; };
+
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::ShallowWater>
+{
+private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+public:
+    using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar>>;
+};
 
 } // end properties
 } // end namespace Dumux

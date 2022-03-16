@@ -45,23 +45,23 @@ public:
     /*!
      * \brief Constructor
      *
-     * \param ks Equivalent sand roughness [m]
+     * \param ks Equivalent sand roughness (in m)
      */
     FrictionLawNikuradse(const Scalar ks)
-        : ks_(ks) {}
+    : ks_(ks) {}
 
     /*!
-     * \brief Compute the shear stress.
+     * \brief Compute the bottom shear stress.
      *
      * \param volVars Volume variables
      *
-     * Compute the shear stress due to friction. The shear stress is not a tensor as know
-     * from contiuums mechanics, but a force projected on an area. Therefore it is a
-     * vector with two entries.
+     * Compute the bottom shear stress due to bottom friction.
+     * The bottom shear stress is a projection of the shear stress tensor onto the river bed.
+     * It can therefore be represented by a (tangent) vector with two entries.
      *
-     * \return shear stress [N/m^2]. First entry is the x-component, the second the y-component.
+     * \return shear stress in N/m^2. First entry is the x-component, the second the y-component.
      */
-    Dune::FieldVector<Scalar, 2> shearStress(const VolumeVariables& volVars) const final
+    Dune::FieldVector<Scalar, 2> bottomShearStress(const VolumeVariables& volVars) const final
     {
         using Dune::power;
         using std::log;
@@ -71,14 +71,16 @@ public:
 
         Scalar roughnessHeight = ks_;
         roughnessHeight = this->limitRoughH(roughnessHeight, volVars.waterDepth());
-        const Scalar ustarH = power(0.41,2)/power(log((12*(volVars.waterDepth() + roughnessHeight))/ks_),2);
+        const Scalar karmanConstant = 0.41; // Karman's constant is dimensionless
+        const Scalar dimensionlessFactor = power(karmanConstant, 2)/power(log((12*(volVars.waterDepth() + roughnessHeight))/ks_), 2);
         const Scalar uv = hypot(volVars.velocity(0),volVars.velocity(1));
 
-        shearStress[0] = -ustarH * volVars.velocity(0) * uv;
-        shearStress[1] = -ustarH * volVars.velocity(1) * uv;
+        shearStress[0] = dimensionlessFactor * volVars.velocity(0) * uv * volVars.density();
+        shearStress[1] = dimensionlessFactor * volVars.velocity(1) * uv * volVars.density();
 
         return shearStress;
     }
+
 private:
     Scalar ks_;
 };
