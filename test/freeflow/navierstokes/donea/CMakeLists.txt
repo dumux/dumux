@@ -168,3 +168,27 @@ dumux_add_test(NAME test_ff_stokes_donea_diamond_box_simplex
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_diamond_box_simplex
                CMD_ARGS params.input -Problem.UseNeumann true -FreeFlow.EnableUnsymmetrizedVelocityGradient false)
+
+dumux_add_test(NAME test_ff_stokes_donea_diamond_tpfa_simplex_pseudo3d
+               SOURCES main.cc
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD dune-alugrid_FOUND
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<3,3,Dune::simplex,Dune::conforming>
+               COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION_MODEL=FaceCenteredDiamondModel
+               COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=CCTpfaModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_diamond_tpfa_simplex_pseudo3d
+               CMD_ARGS params.input -Problem.UseNeumann true -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                                     -Grid.UpperRight "1 1 1" -Grid.Cells "10 10 10")
+
+dumux_add_test(NAME test_ff_stokes_donea_diamond_box_simplex_pseudo3d
+               SOURCES main.cc
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD dune-alugrid_FOUND
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<3,3,Dune::simplex,Dune::conforming>
+               COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION_MODEL=FaceCenteredDiamondModel
+               COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=BoxModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_diamond_box_simplex_pseudo3d
+               CMD_ARGS params.input -Problem.UseNeumann true -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                                     -Grid.UpperRight "1 1 1" -Grid.Cells "10 10 10")

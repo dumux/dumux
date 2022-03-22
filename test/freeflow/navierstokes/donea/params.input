@@ -38,3 +38,4 @@ Temperature = 298.0
 
 [FreeFlow]
 EnableUnsymmetrizedVelocityGradient = false
+EnableWeakSymmetry = true
