@@ -1,6 +1,8 @@
 dune_symlink_to_source_files(FILES "convergencetest.py")
 dune_symlink_to_source_files(FILES "params.input")
 
+add_subdirectory(3d)
+
 dumux_add_test(NAME test_ff_navierstokes_sincos
               SOURCES main.cc
               LABELS freeflow
