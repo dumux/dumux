@@ -183,35 +183,46 @@ class CCTpfaDarcysLaw<ScalarType, GridGeometry, /*isNetwork*/ false>
         if (enableGravity)
         {
             // do averaging for the density over all neighboring elements
-            const auto rho = scvf.boundary() ? outsideVolVars.density(phaseIdx)
-                                             : (insideVolVars.density(phaseIdx) + outsideVolVars.density(phaseIdx))*0.5;
+            // const auto rho = scvf.boundary() ? outsideVolVars.density(phaseIdx)
+            //                                  : (insideVolVars.density(phaseIdx) + outsideVolVars.density(phaseIdx))*0.5;
 
             // Obtain inside and outside pressures
-            const auto pInside = insideVolVars.pressure(phaseIdx);
-            const auto pOutside = outsideVolVars.pressure(phaseIdx);
+            auto pInside = insideVolVars.pressure(phaseIdx);
+            auto pOutside = outsideVolVars.pressure(phaseIdx);
 
-            const auto& tij = fluxVarsCache.advectionTij();
+            using std::abs;
+            const auto& tij = abs(fluxVarsCache.advectionTij());
             const auto& g = problem.spatialParams().gravity(scvf.ipGlobal());
+            const auto globalPosInside = insideScv.center();
 
-            //! compute alpha := n^T*K*g
-            const auto alpha_inside = vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g)*insideVolVars.extrusionFactor();
+            // Calculate the phase density at the integration point. We only
+            // do this if the phase is present in both cells
+            Scalar SI = insideVolVars.saturation(phaseIdx);
+            Scalar SJ = outsideVolVars.saturation(phaseIdx);
+            Scalar rhoI = insideVolVars.density(phaseIdx);
+            Scalar rhoJ = outsideVolVars.density(phaseIdx);
+            Scalar fI = std::max(0.0, std::min(SI/1e-5, 0.5));
+            Scalar fJ = std::max(0.0, std::min(SJ/1e-5, 0.5));
+            if (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(fI + fJ, 0.0, 1.0e-30))
+                fI = fJ =0.5;
+            const Scalar density = (fI*rhoI+fJ*rhoJ)/(fI+fJ);
 
-            Scalar flux = tij*(pInside - pOutside) + rho*Extrusion::area(scvf)*alpha_inside;
+            // Calculate the pressure inside the grid block
+            pInside -= density*(g*globalPosInside);
 
-            //! On interior faces we have to add K-weighted gravitational contributions
+            // Caclulate the pressure of interior neighbors
             if (!scvf.boundary())
             {
                 const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
-                const auto outsideK = outsideVolVars.permeability();
-                const auto outsideTi = fvGeometry.gridGeometry().isPeriodic()
-                    ? computeTpfaTransmissibility(fvGeometry.flipScvf(scvf.index()), outsideScv, outsideK, outsideVolVars.extrusionFactor())
-                    : -1.0*computeTpfaTransmissibility(scvf, outsideScv, outsideK, outsideVolVars.extrusionFactor());
-                const auto alpha_outside = vtmv(scvf.unitOuterNormal(), outsideK, g)*outsideVolVars.extrusionFactor();
-
-                flux -= rho*tij/outsideTi*(alpha_inside - alpha_outside);
+                const auto globalPosOutside = outsideScv.center();
+                pOutside -= density*(g*globalPosOutside);
             }
-
-            return flux;
+            // Calculate the pressure
+            else
+            {
+                pOutside -=density*(g*scvf.ipGlobal());
+            }
+            return tij*(pInside-pOutside);
         }
         else
         {
@@ -220,7 +231,8 @@ class CCTpfaDarcysLaw<ScalarType, GridGeometry, /*isNetwork*/ false>
             const auto pOutside = outsideVolVars.pressure(phaseIdx);
 
             // return flux
-            return fluxVarsCache.advectionTij()*(pInside - pOutside);
+            using std::abs;
+            return abs(fluxVarsCache.advectionTij())*(pInside - pOutside);
         }
     }
 
