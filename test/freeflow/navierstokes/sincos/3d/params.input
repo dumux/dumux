@@ -33,7 +33,8 @@ AmgAccumulationMode = atOnce
 NumericDifference.BaseEpsilon = 1e-1
 
 [FreeFlow]
-EnableUnsymmetrizedVelocityGradient = true
+EnableUnsymmetrizedVelocityGradient = false
+EnableWeakSymmetry = true
 
 [SpatialParams]
 Temperature = 298.0
