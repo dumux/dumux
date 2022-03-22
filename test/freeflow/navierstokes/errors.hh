@@ -195,7 +195,7 @@ public:
         // print auxiliary file with the number of dofs
         std::ofstream logFileDofs(name_ + "_dofs.csv", std::ios::trunc);
         logFileDofs << "cc dofs, face dofs, all dofs\n"
-                    << numCCDofs << numFaceDofs << numCCDofs + numFaceDofs << "\n";
+                    << numCCDofs << ", " << numFaceDofs << ", " << numCCDofs + numFaceDofs << "\n";
 
         // clear error file
         std::ofstream logFile(name_ + ".csv", std::ios::trunc);
@@ -366,24 +366,44 @@ private:
                 fvGeometry.bindElement(element);
                 for (const auto& scv : scvs(fvGeometry))
                 {
-                    using GridGeometry = std::decay_t<decltype(std::declval<MassProblem>().gridGeometry())>;
+                    using GridGeometry = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>;
                     using Extrusion = Extrusion_t<GridGeometry>;
+                    if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcstaggered)
+                    {
+                        // compute the velocity errors
+                        using Indices = typename MomentumProblem::Indices;
+                        const auto velIdx = Indices::velocity(scv.dofAxis());
+                        const auto analyticalSolution
+                            = momentumProblem_->analyticalSolution(scv.dofPosition(), time)[velIdx];
+                        const auto numericalSolution
+                            = curSol[_0][scv.dofIndex()][0];
 
-                    // compute the pressure errors
-                    using Indices = typename MomentumProblem::Indices;
-                    const auto velIdx = Indices::velocity(scv.dofAxis());
-                    const auto analyticalSolution
-                        = momentumProblem_->analyticalSolution(scv.dofPosition(), time)[velIdx];
-                    const auto numericalSolution
-                        = curSol[_0][scv.dofIndex()][0];
+                        const Scalar vError = absDiff_(analyticalSolution, numericalSolution);
+                        const Scalar vReference = absDiff_(analyticalSolution, 0.0);
 
-                    const Scalar vError = absDiff_(analyticalSolution, numericalSolution);
-                    const Scalar vReference = absDiff_(analyticalSolution, 0.0);
+                        maxError[velIdx+1] = std::max(maxError[velIdx+1], vError);
+                        maxReference[velIdx+1] = std::max(maxReference[velIdx+1], vReference);
+                        sumError[velIdx+1] += vError * vError * Extrusion::volume(scv);
+                        sumReference[velIdx+1] += vReference * vReference * Extrusion::volume(scv);
+                    }
+                    else if (GridGeometry::discMethod == DiscretizationMethods::fcdiamond)
+                    {
+                        for (int dirIdx = 0; dirIdx < dim; ++dirIdx)
+                        {
+                            const auto analyticalSolution
+                                = momentumProblem_->analyticalSolution(scv.dofPosition(), time)[dirIdx];
+                            const auto numericalSolution
+                                = curSol[_0][scv.dofIndex()][dirIdx];
 
-                    maxError[velIdx+1] = std::max(maxError[velIdx+1], vError);
-                    maxReference[velIdx+1] = std::max(maxReference[velIdx+1], vReference);
-                    sumError[velIdx+1] += vError * vError * Extrusion::volume(scv);
-                    sumReference[velIdx+1] += vReference * vReference * Extrusion::volume(scv);
+                            const Scalar vError = absDiff_(analyticalSolution, numericalSolution);
+                            const Scalar vReference = absDiff_(analyticalSolution, 0.0);
+
+                            maxError[dirIdx+1] = std::max(maxError[dirIdx+1], vError);
+                            maxReference[dirIdx+1] = std::max(maxReference[dirIdx+1], vReference);
+                            sumError[dirIdx+1] += vError * vError * Extrusion::volume(scv);
+                            sumReference[dirIdx+1] += vReference * vReference * Extrusion::volume(scv);
+                        }
+                    }
                 }
             }
         }
@@ -396,7 +416,7 @@ private:
                 fvGeometry.bindElement(element);
                 for (const auto& scv : scvs(fvGeometry))
                 {
-                    using GridGeometry = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>;
+                    using GridGeometry = std::decay_t<decltype(std::declval<MassProblem>().gridGeometry())>;
                     using Extrusion = Extrusion_t<GridGeometry>;
                     totalVolume += Extrusion::volume(scv);
 
@@ -472,7 +492,7 @@ public:
         // print auxiliary file with the number of dofs
         std::ofstream logFileDofs(name_ + "_dofs.csv", std::ios::trunc);
         logFileDofs << "cc dofs, face dofs, all dofs\n"
-                    << numCCDofs << numFaceDofs << numCCDofs + numFaceDofs << "\n";
+                    << numCCDofs << ", " << numFaceDofs << ", " << numCCDofs + numFaceDofs << "\n";
 
         // clear error file
         std::ofstream logFile(name_ + ".csv", std::ios::trunc);
@@ -507,7 +527,7 @@ private:
         using MomIndices = typename MomentumProblem::Indices;
         logFile << Fmt::format(", " + format, error[MassIndices::pressureIdx]);
         for (int dirIdx = 0; dirIdx < dim; ++dirIdx)
-            logFile << Fmt::format(", " + format, error[MomIndices::velocity(dirIdx)]);
+            logFile << Fmt::format(", " + format, error[MomIndices::velocity(dirIdx)+1]);
     }
 
     std::string name_;
