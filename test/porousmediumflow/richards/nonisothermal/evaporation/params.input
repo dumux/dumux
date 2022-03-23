@@ -5,7 +5,7 @@ MaxTimeStepSize = 1e3 # [s]
 
 [Grid]
 UpperRight = 10 20
-Cells = 5 20
+Cells = 5 30
 
 [Problem]
 Name = test_richardsevaporation # name passed to the output routines
