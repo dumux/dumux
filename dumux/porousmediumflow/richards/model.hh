@@ -112,6 +112,7 @@
 #include "iofields.hh"
 #include "localresidual.hh"
 #include "velocityoutput.hh"
+#include "balanceequationopts.hh"
 
 namespace Dumux {
 
@@ -299,6 +300,11 @@ private:
 public:
     using type = ImmiscibleFluidState<Scalar, FluidSystem>;
 };
+
+//! Set a richards specific class for the balance equation options
+template<class TypeTag>
+struct BalanceEqOpts<TypeTag, TTag::Richards>
+{ using type = RichardsBalanceEquationOptions<GetPropType<TypeTag, Properties::FluidSystem>>; };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 template<class TypeTag>
