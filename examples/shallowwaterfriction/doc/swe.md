@@ -461,10 +461,11 @@ surface has a non constant distribution.
 
 
 ### Include files
-We include the basic spatial parameters file for finite volumes, from which we will inherit.
+We include the basic spatial parameters file for free flow, from which we will inherit.
 
 ```cpp
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/freeflow/spatialparams.hh>
+
 ```
 
 We include all friction laws.
@@ -480,21 +481,20 @@ We include all friction laws.
 
 In the `RoughChannelSpatialParams` class, we define all functions needed to describe
 the rough channel for the shallow water problem.
-We inherit from the `FVSpatialParams` class, which is the base class
-for spatial parameters in the context of
-applications using finite volume discretization schemes.
+We inherit from the `FreeFlowSpatialParams` class, which is the base class
+for spatial parameters in the context of free-flow applications.
 
 ```cpp
 namespace Dumux {
 
 template<class GridGeometry, class Scalar, class VolumeVariables>
 class RoughChannelSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar,
+: public FreeFlowSpatialParams<GridGeometry, Scalar,
                          RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>>
 {
     // This convenience aliases will be used throughout this class
     using ThisType = RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using ParentType = FreeFlowSpatialParams<GridGeometry, Scalar, ThisType>;
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;

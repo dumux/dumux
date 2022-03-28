@@ -455,17 +455,6 @@ We define the same porosity for the whole domain as in the 1p spatialparams.
     { return 0.2; }
 ```
 
-We do not consider dispersivity for the tracer transport. Thus, we set the
-dispersivity coefficient to zero.
-
-```cpp
-    template<class ElementSolution>
-    Scalar dispersivity(const Element &element,
-                        const SubControlVolume& scv,
-                        const ElementSolution& elemSol) const
-    { return 0; }
-```
-
 #### Properties of the fluid phase
 In the following, we define fluid phase properties that are spatial parameters
 in the tracer model.

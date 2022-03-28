@@ -97,7 +97,7 @@ private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = Dumux::PoreNetwork::UpscalingSpatialParams<GridGeometry, Scalar>;
+    using type = PoreNetwork::UpscalingSpatialParams<GridGeometry, Scalar>;
 };
 
 //! The advection type.
@@ -106,9 +106,9 @@ struct AdvectionType<TypeTag, TTag::PNMUpscaling>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using TransmissibilityLaw = Dumux::PoreNetwork::TransmissibilityPatzekSilin<Scalar, true/*considerPoreBodyResistance*/>;
+    using TransmissibilityLaw = PoreNetwork::TransmissibilityPatzekSilin<Scalar, true/*considerPoreBodyResistance*/>;
 public:
-    using type = Dumux::PoreNetwork::CreepingFlow<Scalar, TransmissibilityLaw>;
+    using type = PoreNetwork::CreepingFlow<Scalar, TransmissibilityLaw>;
 };
 
 // We use a single liquid phase consisting of a component with constant fluid properties.
@@ -183,6 +183,7 @@ class UpscalingProblem : public PorousMediumFlowProblem<TypeTag>
 ```
 
 </details>
+
 ### The constructor of our problem.
 
 ```cpp
@@ -202,15 +203,6 @@ public:
         // an epsilon value for the bounding box approach
         eps_ = getParam<Scalar>("Problem.Epsilon", 1e-7);
     }
-```
-
-#### Temperature
-We need to specify a constant temperature for our isothermal problem.
-Fluid properties that depend on temperature will be calculated with this value.
-
-```cpp
-    Scalar temperature() const
-    { return 283.15; }
 ```
 
 #### Boundary conditions
