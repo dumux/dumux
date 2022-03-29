@@ -408,13 +408,13 @@ public:
     {
         numSteps_ = 0;
 
-        if constexpr (hasPriVarsSwitch<PriVarSwitchVariables>)
-        {
-            if constexpr (assemblerExportsVariables)
-                priVarSwitchAdapter_->initialize(Backend::dofs(initVars), initVars);
-            else // this assumes assembly with solution (i.e. Variables=SolutionVector)
-                priVarSwitchAdapter_->initialize(initVars, this->assembler().gridVariables());
-        }
+        // if constexpr (hasPriVarsSwitch<PriVarSwitchVariables>)
+        // {
+        //     if constexpr (assemblerExportsVariables)
+        //         priVarSwitchAdapter_->initialize(Backend::dofs(initVars), initVars);
+        //     else // this assumes assembly with solution (i.e. Variables=SolutionVector)
+        //         priVarSwitchAdapter_->initialize(initVars, this->assembler().gridVariables());
+        // }
 
         const auto& initSol = Backend::dofs(initVars);
 
@@ -638,13 +638,13 @@ public:
     virtual void newtonEndStep(Variables &vars,
                                const SolutionVector &uLastIter)
     {
-        if constexpr (hasPriVarsSwitch<PriVarSwitchVariables>)
-        {
-            if constexpr (assemblerExportsVariables)
-                priVarSwitchAdapter_->invoke(Backend::dofs(vars), vars);
-            else // this assumes assembly with solution (i.e. Variables=SolutionVector)
-                priVarSwitchAdapter_->invoke(vars, this->assembler().gridVariables());
-        }
+        // if constexpr (hasPriVarsSwitch<PriVarSwitchVariables>)
+        // {
+        //     if constexpr (assemblerExportsVariables)
+        //         priVarSwitchAdapter_->invoke(Backend::dofs(vars), vars);
+        //     else // this assumes assembly with solution (i.e. Variables=SolutionVector)
+        //         priVarSwitchAdapter_->invoke(vars, this->assembler().gridVariables());
+        // }
 
         ++numSteps_;
 
@@ -686,8 +686,8 @@ public:
     {
         // in case the model has a priVar switch and some some primary variables
         // actually switched their state in the last iteration, enforce another iteration
-        if (priVarSwitchAdapter_->switched())
-            return false;
+        // if (priVarSwitchAdapter_->switched())
+        //     return false;
 
         if (enableShiftCriterion_ && !enableResidualCriterion_)
         {
