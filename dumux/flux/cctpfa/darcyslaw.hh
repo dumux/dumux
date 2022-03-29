@@ -171,57 +171,7 @@ class CCTpfaDarcysLaw<ScalarType, GridGeometry, /*isNetwork*/ false>
                        int phaseIdx,
                        const ElementFluxVarsCache& elemFluxVarsCache)
     {
-        static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
-
-        const auto& fluxVarsCache = elemFluxVarsCache[scvf];
-
-        // Get the inside and outside volume variables
-        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& insideVolVars = elemVolVars[insideScv];
-        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-
-        if (enableGravity)
-        {
-            // do averaging for the density over all neighboring elements
-            const auto rho = scvf.boundary() ? outsideVolVars.density(phaseIdx)
-                                             : (insideVolVars.density(phaseIdx) + outsideVolVars.density(phaseIdx))*0.5;
-
-            // Obtain inside and outside pressures
-            const auto pInside = insideVolVars.pressure(phaseIdx);
-            const auto pOutside = outsideVolVars.pressure(phaseIdx);
-
-            const auto& tij = fluxVarsCache.advectionTij();
-            const auto& g = problem.spatialParams().gravity(scvf.ipGlobal());
-
-            //! compute alpha := n^T*K*g
-            const auto alpha_inside = vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g)*insideVolVars.extrusionFactor();
-
-            Scalar flux = tij*(pInside - pOutside) + rho*Extrusion::area(scvf)*alpha_inside;
-
-            //! On interior faces we have to add K-weighted gravitational contributions
-            if (!scvf.boundary())
-            {
-                const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
-                const auto outsideK = outsideVolVars.permeability();
-                const auto outsideTi = fvGeometry.gridGeometry().isPeriodic()
-                    ? computeTpfaTransmissibility(fvGeometry.flipScvf(scvf.index()), outsideScv, outsideK, outsideVolVars.extrusionFactor())
-                    : -1.0*computeTpfaTransmissibility(scvf, outsideScv, outsideK, outsideVolVars.extrusionFactor());
-                const auto alpha_outside = vtmv(scvf.unitOuterNormal(), outsideK, g)*outsideVolVars.extrusionFactor();
-
-                flux -= rho*tij/outsideTi*(alpha_inside - alpha_outside);
-            }
-
-            return flux;
-        }
-        else
-        {
-            // Obtain inside and outside pressures
-            const auto pInside = insideVolVars.pressure(phaseIdx);
-            const auto pOutside = outsideVolVars.pressure(phaseIdx);
-
-            // return flux
-            return fluxVarsCache.advectionTij()*(pInside - pOutside);
-        }
+        return 0.0;
     }
 
     // The flux variables cache has to be bound to an element prior to flux calculations
