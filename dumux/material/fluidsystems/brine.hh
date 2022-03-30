@@ -219,7 +219,12 @@ public:
     using Base::density;
     /*!
      * \brief Return the phase density [kg/m^3].
-     * \note The density is compuated as a function of the salt mass fraction
+     * \note The density is computed as a function of the salt mass fraction, pressure and temperature.
+     * The used function is an empirical relationship fitted to experimental data.
+     * It is presented by Batzle and Wang, 1992 (DOI: 10.1190/1.1443207) \cite batzle1992,
+     * better description and comparison with other approaches in Adams and Bachu, 2002
+     * (DOI: 10.1046/j.1468-8123.2002.00041.x) \cite adams2002.
+     *
      */
     template <class FluidState>
     static Scalar density(const FluidState& fluidState, int phaseIdx = liquidPhaseIdx)
@@ -276,6 +281,12 @@ public:
     using Base::viscosity;
     /*!
      * \brief Return the viscosity of the phase.
+     * \note The viscosity is computed as a function of the salt mass fraction and temperature.
+     * The used function is an empirical relationship fitted to experimental data.
+     * It is presented by Batzle and Wang, 1992 (DOI: 10.1190/1.1443207)  \cite batzle1992,
+     * better description and comparison with other approaches in Adams and Bachu, 2002 (DOI: 10.1046/j.1468-8123.2002.00041.x) \cite adams2002.
+     * However, the equation given in Adams and Bachu, 2002(DOI: 10.1046/j.1468-8123.2002.00041.x) \cite adams2002
+     * is obviously wrong when compared to the original by Batzle and Wang, 1992 (DOI: 10.1190/1.1443207)  \cite batzle1992.
      */
     template <class FluidState>
     static Scalar viscosity(const FluidState& fluidState, int phaseIdx = liquidPhaseIdx)
@@ -300,6 +311,10 @@ public:
 
     /*!
      * \brief Vapor pressure of a component \f$\mathrm{[Pa]}\f$.
+     * \note The vapor pressure of brine decreases with the mole fraction of water in the liquid phase.
+     * This is described by Raoult's law, see Thomas Fetzer's Dissertation Eq. 2.11.
+     * It is also the simplified version of the Kelvin equation, without the influence of the capillary pressure
+     * as we have one-phase flow.
      *
      * \param fluidState The fluid state
      * \param compIdx The index of the component to consider
@@ -309,9 +324,9 @@ public:
     {
         if (compIdx == H2OIdx)
         {
-            // simplified version of Eq 2.29 in Vishal Jambhekar's Promo
             const Scalar temperature = fluidState.temperature(H2OIdx);
-            return H2O::vaporPressure(temperature)/fluidState.massFraction(phase0Idx, H2OIdx);
+            // Raoult's law, see Thomas Fetzer's Dissertation Eq. 2.11.
+            return H2O::vaporPressure(temperature)*fluidState.moleFraction(phase0Idx, H2OIdx);
         }
         else if (compIdx == NaClIdx)
             DUNE_THROW(Dune::NotImplemented, "NaCl::vaporPressure(t)");
@@ -336,46 +351,10 @@ public:
     template <class FluidState>
     static Scalar enthalpy(const FluidState& fluidState, int phaseIdx)
     {
-        /*Numerical coefficients from PALLISER*/
-        static const Scalar f[] = { 2.63500E-1, 7.48368E-6, 1.44611E-6, -3.80860E-10 };
-
-        /*Numerical coefficients from MICHAELIDES for the enthalpy of brine*/
-        static const Scalar a[4][3] = { { +9633.6, -4080.0, +286.49 },
-                                        { +166.58, +68.577, -4.6856 },
-                                        { -0.90963, -0.36524, +0.249667E-1 },
-                                        { +0.17965E-2, +0.71924E-3, -0.4900E-4 } };
-
-        const Scalar p = fluidState.pressure(phaseIdx);
-        const Scalar T = fluidState.temperature(phaseIdx);
-        const Scalar theta = T - 273.15;
-        const Scalar salSat = f[0] + f[1]*theta + f[2]*theta*theta + f[3]*theta*theta*theta;
-
-        /*Regularization*/
-        using std::min;
-        using std::max;
-        const Scalar xNaCl = fluidState.massFraction(phase0Idx, NaClIdx);
-        const Scalar salinity = min(max(xNaCl,0.0), salSat);
-
-        const Scalar hw = H2O::liquidEnthalpy(T, p)/1E3; /* kJ/kg */
-
-        /*DAUBERT and DANNER*/
-        const Scalar h_NaCl = (3.6710E4*T + 0.5*(6.2770E1)*T*T - ((6.6670E-2)/3)*T*T*T
-                              + ((2.8000E-5)/4)*(T*T*T*T))/(58.44E3)- 2.045698e+02; /* U [kJ/kg] */
-
-        const Scalar m = (1E3/58.44)*(salinity/(1-salinity));
-
-        using Dune::power;
-        Scalar d_h = 0;
-        for (int i = 0; i<=3; i++)
-            for (int j=0; j<=2; j++)
-                d_h = d_h + a[i][j] * power(theta, i) * power(m, j);
-
-        /* heat of dissolution for halite according to Michaelides 1971 */
-        const Scalar delta_h = (4.184/(1E3 + (58.44 * m)))*d_h;
-
-        /* Enthalpy of brine without any dissolved gas */
-        const Scalar h_ls1 =(1-salinity)*hw + salinity*h_NaCl + salinity*delta_h; /* kJ/kg */
-        return h_ls1*1E3; /*J/kg*/
+        //use private enthalpy function to recycle it for the heat capacity calculation
+        return enthalpy_(fluidState.pressure(phaseIdx),
+                        fluidState.temperature(phaseIdx),
+                        fluidState.massFraction(phase0Idx, NaClIdx)); /*J/kg*/
     }
 
     /*!
@@ -410,9 +389,9 @@ public:
      *        the fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
      *
      * The molar density for the simple relation is defined by the
-     * mass density \f$\rho_\alpha\f$ and the molar mass of the main component \f$M_\kappa\f$:
+     * mass density \f$\rho_\alpha\f$ and the average molar mass of the phase \f$M_\alpha\f$:
      *
-     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{M_\kappa} \;.\f]
+     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{M_\alpha} \;.\f]
      */
     template <class FluidState>
     static Scalar molarDensity(const FluidState& fluidState, int phaseIdx = liquidPhaseIdx)
@@ -440,6 +419,11 @@ public:
      * \param phaseIdx Index of the fluid phase
      * \param compIIdx Index of the component i
      * \param compJIdx Index of the component j
+     *
+     * The implemented value for NaCl is for a molar concentration of 2.5984 mol/l and a temperature of 25°C,
+     * see Rard and Miller, 1979 (DOI: 10.1007/BF00648776) \cite Rard1979.
+     * Dependent on the salt concentration the coefficient can vary between 1.47e-9 m^2/s and 1.6e-9 m^2/s, see Rard and Miller, 1979.
+     * It also depends on temperature; values for different temparatures can e.g. found here: Alanis et al., 2000 (DOI: 10.1117/1.602422) \cite Alanis2000.
      */
     template <class FluidState>
     static Scalar binaryDiffusionCoefficient(const FluidState& fluidState,
@@ -454,11 +438,9 @@ public:
                 using std::swap;
                 swap(compIIdx, compJIdx);
             }
-            //! \todo TODO implement binary coefficients
-            // http://webserver.dmt.upm.es/~isidoro/dat1/Mass%20diffusivity%20data.pdf
-            // The link above was given as a reference in brine_air fluid system.
+
             if (compJIdx == NaClIdx)
-                return 0.12e-9;
+                return 1.54e-9;
             else
                 DUNE_THROW(Dune::NotImplemented, "Binary diffusion coefficient of components "
                                                  << compIIdx << " and " << compJIdx
@@ -474,15 +456,19 @@ public:
      * \param fluidState An abitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      *
-     * \todo TODO: For the thermal conductivity of the phases the contribution of
-     *       NaCl is neglected. This contribution is probably not big, but somebody
-     *       would have to find out its influence.
+     * The thermal conductivity of brine is implemented based on the contribution of NaCl ($\lambda_{brine}$/$\lambda_{H_2O}$) of \cite{Yusufova1975} https://link.springer.com/content/pdf/10.1007/BF00867119.pdf, also discussed in \cite{Ozbek1980} https://docecity.com/thermal-conductivity-of-aqueous-sodium-chloride-acs-publicat-5f10766acba00.html
      */
     template <class FluidState>
     static Scalar thermalConductivity(const FluidState& fluidState, int phaseIdx)
     {
         if (phaseIdx == liquidPhaseIdx)
-            return H2O::liquidThermalConductivity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
+        {
+            Scalar tempC = fluidState.temperature(phaseIdx)-273.15;
+            Scalar m = fluidState.moleFraction(phaseIdx, NaClIdx)/(molarMass(H2OIdx)*(1- fluidState.moleFraction(phaseIdx, NaClIdx))); // molality of NaCl
+            Scalar S = 5844.3 * m / (1000 + 58.443 *m);
+            Scalar contribNaClFactor = 1.0 - (2.3434e-3 - 7.924e-6*tempC + 3.924e-8*tempC*tempC)*S + (1.06e-5 - 2.0e-8*tempC + 1.2e-10*tempC*tempC)*S*S;
+            return contribNaClFactor * H2O::liquidThermalConductivity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
+        }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index: " << phaseIdx);
     }
 
@@ -493,15 +479,73 @@ public:
      * \param fluidState An abitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      *
-     * \todo TODO: The calculation of the isobaric heat capacity is preliminary. A better
-     *       description of the influence of NaCl on the phase property has to be found.
      */
     template <class FluidState>
     static Scalar heatCapacity(const FluidState &fluidState, int phaseIdx)
     {
-        if (phaseIdx == liquidPhaseIdx)
-            return H2O::liquidHeatCapacity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
+        if (phaseIdx == liquidPhaseIdx){
+            const Scalar eps = fluidState.temperature(phaseIdx)*1e-8;
+            //calculate heat capacity from the difference in enthalpy with temperature at constant pressure.
+            return (enthalpy_(fluidState.pressure(phaseIdx),
+                        fluidState.temperature(phaseIdx) +eps ,
+                        fluidState.massFraction(phase0Idx, NaClIdx))
+                        - enthalpy_(fluidState.pressure(phaseIdx),
+                        fluidState.temperature(phaseIdx),
+                        fluidState.massFraction(phase0Idx, NaClIdx)))/eps; /*J/kg*/
+        }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
+    }
+
+private:
+    /*!
+     * \brief Given a phase's composition, temperature and pressure,
+     *        return its specific enthalpy \f$\mathrm{[J/kg]}\f$.
+     *
+     * Equations given in:
+     * - Palliser & McKibbin (1998) \cite palliser1998 <BR>
+     * - Michaelides (1981) \cite michaelides1981 <BR>
+     * - Daubert & Danner (1989) \cite daubert1989
+     *
+     */
+    static Scalar enthalpy_(const Scalar p, const Scalar T, const Scalar xNaCl)
+    {
+        /*Numerical coefficients from PALLISER*/
+        static const Scalar f[] = { 2.63500E-1, 7.48368E-6, 1.44611E-6, -3.80860E-10 };
+
+        /*Numerical coefficients from MICHAELIDES for the enthalpy of brine*/
+        static const Scalar a[4][3] = { { +9633.6, -4080.0, +286.49 },
+                                        { +166.58, +68.577, -4.6856 },
+                                        { -0.90963, -0.36524, +0.249667E-1 },
+                                        { +0.17965E-2, +0.71924E-3, -0.4900E-4 } };
+
+        const Scalar theta = T - 273.15;
+        const Scalar salSat = f[0] + f[1]*theta + f[2]*theta*theta + f[3]*theta*theta*theta;
+
+        /*Regularization*/
+        using std::min;
+        using std::max;
+        const Scalar salinity = min(max(xNaCl,0.0), salSat);
+
+        const Scalar hw = H2O::liquidEnthalpy(T, p)/1E3; /* kJ/kg */
+
+        /*component enthalpy of soluted NaCl after DAUBERT and DANNER*/
+        const Scalar h_NaCl = (3.6710E4*T + 0.5*(6.2770E1)*T*T - ((6.6670E-2)/3)*T*T*T
+                              + ((2.8000E-5)/4)*(T*T*T*T))/(58.44E3)- 2.045698e+02; /* U [kJ/kg] */
+
+        const Scalar m = (1E3/58.44)*(salinity/(1-salinity));
+
+        using Dune::power;
+        Scalar d_h = 0;
+        for (int i = 0; i<=3; i++)
+            for (int j=0; j<=2; j++)
+                d_h = d_h + a[i][j] * power(theta, i) * power(m, j);
+
+        /* heat of dissolution for halite according to Michaelides 1981 */
+        const Scalar delta_h = (4.184/(1E3 + (58.44 * m)))*d_h;
+
+        /* Enthalpy of brine without any dissolved gas */
+        const Scalar h_ls1 =(1-salinity)*hw + salinity*h_NaCl + salinity*delta_h; /* kJ/kg */
+        return h_ls1*1E3; /*J/kg*/
     }
 };
 

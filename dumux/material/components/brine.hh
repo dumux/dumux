@@ -89,46 +89,52 @@ public:
 
     /*!
      * \brief Returns the critical temperature \f$\mathrm{[K]}\f$ of brine. Here, it is assumed to be equal to that of pure water.
+     * The critical temperature of brine is dependent on the salt concentration.
+     * With increasing NaCl mass fraction the critical point shifts to higher temperatures, see Bakker, 2018 (DOI: 10.1016/j.cageo.2018.03.003).
      */
     static Scalar criticalTemperature()
     { return H2O::criticalTemperature(); }
 
     /*!
      * \brief Returns the critical pressure \f$\mathrm{[Pa]}\f$ of brine. Here, it is assumed to be equal to that of pure water.
+     * The critical pressure of brine is dependent on the salt concentration.
+     * With increasing NaCl mass fraction the critical point shifts to higher pressures, see Bakker, 2018 (DOI: 10.1016/j.cageo.2018.03.003).
      */
     static Scalar criticalPressure()
     { return H2O::criticalPressure(); }
 
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ at brine's triple point. Here, it is assumed to be equal to that of pure water.
+     * The triple temperature of brine is dependent on the salt concentration, see Bakker, 2018 (DOI: 10.1016/j.cageo.2018.03.003).
      */
     static Scalar tripleTemperature()
     { return H2O::tripleTemperature(); }
 
     /*!
      * \brief Returns the pressure \f$\mathrm{[Pa]}\f$ at brine's triple point. Here, it is assumed to be equal to that of pure water.
+     * The triple pressure of brine is dependent on the salt concentration, see Bakker, 2018 (DOI: 10.1016/j.cageo.2018.03.003).
      */
     static Scalar triplePressure()
     { return H2O::triplePressure(); }
 
     /*!
      * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of pure brine
-     *        at a given temperature. Here, it is assumed to be equal to that of pure water.
+     *        at a given temperature.
+     * \note The vapor pressure of brine decreases with the mole fraction of water in the liquid phase.
+     * This is described by Raoult's law, see Thomas Fetzer's Dissertation Eq. 2.11.
+     * It is also the simplified version of the Kelvin equation, neglecting the influence of the capillary pressure here.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      */
     static Scalar vaporPressure(Scalar temperature)
     {
-        Scalar ps = H2O::vaporPressure(temperature); //Saturation vapor pressure for pure water
-        Scalar pi = 0;
-        using std::log;
-        if (ThisType::salinity() < 0.26) // here we have hard coded the solubility limit for NaCl
-            pi = (R * temperature * log(1- ThisType::salinity())); // simplified version of Eq 2.29 in Vishal Jambhekar's dissertation (http://dx.doi.org/10.18419/opus-8979)
-        else
-            pi = (R * temperature * log(0.74));
-        using std::exp;
-        ps *= exp((pi)/(R*temperature));// Kelvin's law for reduction in saturation vapor pressure due to osmotic potential
-        return ps;
+        //calculate mole fraction
+        const Scalar M1 = H2O::molarMass();
+        const Scalar M2 = Components::NaCl<Scalar>::molarMass(); // molar mass of NaCl [kg/mol]
+        const Scalar xNaClLiquid = - M1 * ThisType::salinity() / ((M2-M1) * ThisType::salinity() - M2);
+
+        // Raoult's law, see Thomas Fetzer's Dissertation Eq. 2.11.
+        return H2O::vaporPressure(temperature) * (1 - xNaClLiquid);
     }
 
     /*!
@@ -303,9 +309,11 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
-     * Equations given in:
-     *                        - Batzle & Wang (1992) \cite batzle1992 <BR>
-     *                        - cited by: Adams & Bachu in Geofluids (2002) 2, 257-271 \cite adams2002
+     * \note The density is computed as a function of the salt mass fraction, pressure and temperature.
+     * The used function is an empirical relationship fitted to experimental data.
+     * It is presented by Batzle and Wang, 1992 (DOI: 10.1190/1.1443207) \cite batzle1992,
+     * better description and comparison with other approaches in Adams and Bachu, 2002
+     * (DOI: 10.1046/j.1468-8123.2002.00041.x) \cite adams2002.
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
@@ -401,10 +409,12 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
-     * Equation given in:
-     *                         - Batzle & Wang (1992) \cite batzle1992 <BR>
-     *                         - cited by: Bachu & Adams (2002)
-     *                           "Equations of State for basin geofluids" \cite adams2002
+     * \note The viscosity is computed as a function of the salt mass fraction and temperature.
+     * The used function is an empirical relationship fitted to experimental data.
+     * It is presented by Batzle and Wang, 1992 (DOI: 10.1190/1.1443207)  \cite batzle1992,
+     * better description and comparison with other approaches in Adams and Bachu, 2002 (DOI: 10.1046/j.1468-8123.2002.00041.x) \cite adams2002.
+     * However, the equation given in Adams and Bachu, 2002(DOI: 10.1046/j.1468-8123.2002.00041.x) \cite adams2002
+     * is obviously wrong when compared to the original by Batzle and Wang, 1992 (DOI: 10.1190/1.1443207)  \cite batzle1992.
      */
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {
@@ -418,9 +428,9 @@ public:
         using std::exp;
         const Scalar T_C = temperature - 273.15;
         const Scalar A = (0.42*power((pow(salinity, 0.8)-0.17), 2) + 0.045)*pow(T_C, 0.8);
-        const Scalar mu_brine = 0.1 + 0.333*salinity + (1.65+91.9*salinity*salinity*salinity)*exp(-A);
+        const Scalar mu_brine = 0.1 + 0.333*salinity + (1.65+91.9*salinity*salinity*salinity)*exp(-A); //[cP]
         assert(mu_brine > 0.0);
-        return mu_brine/1000.0;
+        return mu_brine/1000.0; //[Pa s]
     }
 
     /*!
@@ -428,12 +438,17 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
-     * \todo TODO: For the thermal conductivity the salinity contribution is
-     *       neglected. This contribution is probably not big, but somebody
-     *       would have to find out its influence.
+     * The thermal conductivity of brine is implemented based on the contribution of NaCl ($\lambda_{brine}$/$\lambda_{H_2O}$) of \cite{Yusufova1975} https://link.springer.com/content/pdf/10.1007/BF00867119.pdf, also discussed in \cite{Ozbek1980} https://docecity.com/thermal-conductivity-of-aqueous-sodium-chloride-acs-publicat-5f10766acba00.html
      */
     static Scalar liquidThermalConductivity(Scalar temperature, Scalar pressure)
-    { return H2O::liquidThermalConductivity(temperature, pressure); }
+    {
+            Scalar tempC = temperature-273.15;
+            Scalar xNaCl = ThisType::salinity() * H2O::molarMass() / (ThisType::salinity() * H2O::molarMass() + (1-ThisType::salinity() )*Components::NaCl<Scalar>::molarMass()); // mole fraction of NaCl
+            Scalar m = xNaCl/(H2O::molarMass()*(1- xNaCl)); // molality of NaCl
+            Scalar S = 5844.3 * m / (1000 + 58.443 *m);
+            Scalar contribNaClFactor = 1.0 - (2.3434e-3 - 7.924e-6*tempC + 3.924e-8*tempC*tempC)*S + (1.06e-5 - 2.0e-8*tempC + 1.2e-10*tempC*tempC)*S*S;
+            return contribNaClFactor * H2O::liquidThermalConductivity(temperature, pressure);
+    }
 };
 
 template <class Scalar, class H2O>
