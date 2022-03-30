@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup TracerTests
- * \brief  A 2p problem with multiple tracer bands in a porous groundwater reservoir with a lens
+ * \brief Multiple tracer bands are diluted by diffusion and two-phase flow.
  */
 #ifndef DUMUX_TWOP_TRACER_TEST_PROBLEM_HH
 #define DUMUX_TWOP_TRACER_TEST_PROBLEM_HH
@@ -32,10 +32,10 @@ namespace Dumux {
 /*!
  * \ingroup TracerTests
  *
- * \brief Definition of a problem, for the tracer problem:
- * A lens of contaminant tracer is diluted by diffusion and a base groundwater flow
+ * \brief Definition of the tracer problem:
+ * Multiple tracer bands are diluted by diffusion and two-phase flow.
  *
- * This problem uses the \ref Tracer model.
+ * This problem uses the \ref TracerModel model.
  */
 template <class TypeTag>
 class TwoPTracerTestProblem : public PorousMediumFlowProblem<TypeTag>
@@ -71,6 +71,11 @@ public:
     }
 
     /*!
+     * \name Boundary conditions
+     */
+    // \{
+
+    /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      *
@@ -85,6 +90,12 @@ public:
             values.setAllNeumann();
         return values;
     }
+    // \}
+
+    /*!
+     * \name Volume terms
+     */
+    // \{
 
     /*!
      * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
@@ -101,6 +112,9 @@ public:
      * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated
+     *
+     * For this method, the \a values parameter stores primary
+     * variables.
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {

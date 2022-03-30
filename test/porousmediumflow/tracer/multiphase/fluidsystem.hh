@@ -19,7 +19,7 @@
 /**
  * \file
  * \ingroup TracerTests
- * \brief The test fluidsystem
+ * \brief A simple fluid system with two independent tracer components
  */
 
 #ifndef DUMUX_TRACER_MULTIPHASE_TEST_FLUIDSYSTEM_HH

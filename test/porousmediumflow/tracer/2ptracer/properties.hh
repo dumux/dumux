@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup TracerTests
- * \brief The properties of the 2p problem with multiple tracer bands in a porous groundwater reservoir with a lens
+ * \brief The properties of the 2p tracer test.
  */
 #ifndef DUMUX_2P_TRACER_TEST_PROPERTIES_HH
 #define DUMUX_2P_TRACER_TEST_PROPERTIES_HH
