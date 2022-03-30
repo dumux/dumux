@@ -36,29 +36,8 @@ namespace Dumux {
 
 /*!
  * \ingroup TwoPNCMinTests
- * \brief Problem where water is evaporating at the top of a porous media filled
- * container saturated with brine and air, which causes precipitation at the top.
+ * \brief Problem where water is evaporating at the top of a porous media filled container saturated with brine and air, which causes precipitation at the top.
  *
- * Problem with a porous media in a container, which is open to the atmosphere
- * at the top boundary. The container has dimensions of 0.2m by 0.2m. Neumann
- * no-flow boundaries are applied at the left, right and bottom boundary.
- * The grid is refined towards the upper boundary to capter the relevant processes.
- *
- * Initially the porous medium is 50 % saturated with brine. Evaporation takes
- * place at the top boundary and hence the temperature and liquid saturation
- * decreases first at the top, then in the whole system, whereas the sodium
- * chloride (NaCl) concentration increases. This results in precipitaion of NaCl
- * at the top as the solubility limit is exceeded. Due to the low liquid saturation
- * the top after some time, top temperature rises again.
- *
- * The model uses mole fractions of dissolved components and volume fractions of
- * precipitated salt as primary variables. Make sure that the according units
- * are used in the problem set-up.
- *
- * This problem uses the \ref TwoPNCMinModel.
- *
- * To run the simulation execute the following line in shell:
- * <tt>./test_2pncminni_salinization</tt>
  */
 template <class TypeTag>
 class SalinizationProblem : public PorousMediumFlowProblem<TypeTag>
@@ -175,9 +154,6 @@ public:
         timeStepSize_ = timeStepSize;
      }
 
-    /*!
-     * \name Problem parameters
-     */
 
     /*!
      * \brief The problem name.
@@ -186,11 +162,6 @@ public:
      */
     const std::string& name() const
     { return name_; }
-
-    /*!
-     * \name Boundary conditions
-     */
-    // \{
 
     /*!
      * \brief Specifies which kind of boundary condition should be
@@ -333,11 +304,6 @@ public:
 
         return priVars;
     }
-
-    /*!
-     * \name Volume terms
-     */
-    // \{
 
     /*!
      * \brief Evaluates the source term for all phases within a given

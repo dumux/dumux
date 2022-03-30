@@ -19,8 +19,7 @@
 /*!
  * \file
  * \ingroup TwoPTests
- * \brief The spatial parameters for the LensProblem which uses the
- *        two-phase fully implicit model.
+ * \brief The spatial parameters for a discrete fracture network embedded in an impermeable matrix.
  */
 
 #ifndef DUMUX_TWOP_FRACTURE_TEST_SPATIALPARAMS_HH
@@ -35,8 +34,7 @@ namespace Dumux {
 
 /*!
  * \ingroup TwoPTests
- * \brief The spatial parameters for the LensProblem which uses the
- *        two-phase fully implicit model.
+ * \brief The spatial parameters for for a discrete fracture network embedded in an impermeable matrix.
  */
 template<class GridGeometry, class Scalar>
 class FractureSpatialParams

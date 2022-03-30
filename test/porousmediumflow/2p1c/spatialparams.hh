@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup TwoPOneCTests
- * \brief Definition of the spatial parameters for the steam injection problem.
+ * \brief Spatial parameters non-isothermal steam injection test problem for the 2p1cni model.
  */
 
 #ifndef DUMUX_STEAMINJECTION_SPATIAL_PARAMS_HH

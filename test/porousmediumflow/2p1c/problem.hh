@@ -38,7 +38,6 @@ namespace Dumux {
  * \ingroup TwoPOneCTests
  * \brief Non-isothermal 2D problem where steam is injected on the lower left side of the domain.
  *
- * This problem uses the \ref TwoPOneCModel.
  */
 template <class TypeTag>
 class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
@@ -84,11 +83,6 @@ public:
     : ParentType(gridGeometry)
     { FluidSystem::init(); }
 
-    /*!
-     * \name Problem parameters
-     */
-    // \{
-
 
     //! \copydoc Dumux::FVProblem::source()
     NumEqVector source(const Element &element,
@@ -96,11 +90,6 @@ public:
                        const ElementVolumeVariables& elemVolVars,
                        const SubControlVolume &scv) const
     { return NumEqVector(0.0); }
-
-    /*!
-     * \name Boundary conditions
-     */
-    // \{
 
     /*!
      * \brief Specifies which kind of boundary condition should be
@@ -168,13 +157,6 @@ public:
         }
         return values;
     }
-
-    // \}
-
-    /*!
-     * \name Volume terms
-     */
-    // \{
 
     /*!
      * \brief Evaluates the initial values for a control volume.

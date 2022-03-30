@@ -71,10 +71,6 @@ public:
     FractureProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry) {}
 
-    /*!
-     * \name Boundary conditions
-     */
-    // \{
 
     /*!
      * \brief Specifies which kind of boundary condition should be
@@ -128,22 +124,14 @@ public:
         return values;
     }
 
-    // \}
-
-    /*!
-     * \name Volume terms
-     */
-    // \{
-
-
     /*!
      * \brief Evaluates the initial values for a control volume.
      *
      * \param globalPos The global position
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
-    { return dirichletAtPos(globalPos); }
-    // \}
+    { return dirichletAtPos(globalPos);}
+
 
 private:
 

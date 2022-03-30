@@ -19,8 +19,8 @@
 /*!
  * \file
  * \ingroup TwoPNCTests
- * \brief Definition of the spatial parameters for the fuel cell
- *        problem which uses the isothermal/non-insothermal 2pnc box model.
+ * \brief Definition of the spatial parameters for a diffusion
+ *        problem which uses the isothermal 2p2c box model.
  */
 
 #ifndef DUMUX_TWOPNC_DIFFUSION_SPATIAL_PARAMS_HH
@@ -33,7 +33,7 @@
 namespace Dumux {
 /*!
  * \ingroup TwoPNCTests
- * \brief Definition of the spatial parameters for the TwoPNCDiffusion
+ * \brief Definition of the spatial parameters for a diffusion
  *        problem which uses the isothermal 2p2c box model.
  */
 template<class GridGeometry, class Scalar>

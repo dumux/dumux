@@ -19,7 +19,8 @@
 /*!
  * \file
  * \ingroup TwoPNCTests
- * \brief Test for the 2pnc cc model used for water management in PEM fuel cells.
+ * \brief Test for a diffusion
+ *        problem which uses the isothermal 2p2c box model.
  */
 #include <config.h>
 

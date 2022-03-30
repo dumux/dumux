@@ -20,9 +20,7 @@
 /*!
  * \file
  * \ingroup TwoPTwoCTests
- * \brief Problem where air is injected in a unsaturated porous medium.
- *
- * Tests a 2p2c model assuming chemical nonequiibrium.
+ * \brief Problem for the 2p2c chemical nonequilibrium problem.
  */
 
 #ifndef DUMUX_TWOPTWOC_NONEQUILIBRIUM_PROBLEM_HH
@@ -39,9 +37,7 @@ namespace Dumux {
 
 /*!
  * \ingroup TwoPTwoCTests
- * \brief Problem where air is injected in a unsaturated porous medium.
- *
- * This test compares a mpnc problem with a 2p2c problem.
+ * \brief Problem for the 2p2c chemical nonequilibrium problem.
  */
 template <class TypeTag>
 class TwoPTwoCChemicalNonequilibriumProblem : public PorousMediumFlowProblem<TypeTag>
@@ -94,10 +90,6 @@ public:
     const GridVariables& gridVariables() const
     { return *gridVariables_; }
 
-    /*!
-     * \name Problem parameters
-     */
-    // \{
 
     /*!
      * \brief Returns the problem name
@@ -176,7 +168,7 @@ public:
         return values;
     }
 
-    // \}
+
 
     /*!
      * \brief Evaluates the initial value for a control volume.
@@ -224,8 +216,6 @@ public:
             }
         }
     }
-
-    // \}
 
 private:
     // the internal method for the initial condition

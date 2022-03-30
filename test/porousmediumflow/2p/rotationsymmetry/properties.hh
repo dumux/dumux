@@ -16,6 +16,10 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \brief The properties of 2p rotational symmetry test
+ */
 
 #ifndef DUMUX_TEST_TWOP_ROTATIONALSYMMETRY_PROPERTIES_HH
 #define DUMUX_TEST_TWOP_ROTATIONALSYMMETRY_PROPERTIES_HH

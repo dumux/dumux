@@ -1,3 +1,26 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
+/*****************************************************************************
+ *   See the file COPYING for full copying permissions.                      *
+ *                                                                           *
+ *   This program is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation, either version 3 of the License, or       *
+ *   (at your option) any later version.                                     *
+ *                                                                           *
+ *   This program is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   GNU General Public License for more details.                            *
+ *                                                                           *
+ *   You should have received a copy of the GNU General Public License       *
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ *****************************************************************************/
+/*!
+ * \file
+ * \ingroup TwoPNCTests
+ * \brief Definition of the spatial parameters for a surfactant model.
+ */
 #ifndef DUMUX_TEST_2P3C_SURFACTANT_SPATIALPARAMS_HH
 #define DUMUX_TEST_2P3C_SURFACTANT_SPATIALPARAMS_HH
 
@@ -11,7 +34,10 @@
 #include "materiallaw.hh"
 
 namespace Dumux {
-
+/*!
+ * \ingroup TwoPNCTests
+ * \brief Definition of the spatial parameters for a surfactant model.
+ */
 template<class GridGeometry, class Scalar>
 class TestSurfactantSpatialParams
 : public FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar,
@@ -45,16 +71,27 @@ public:
         sroSurf_ = getParam<Scalar>("SpatialParams.SroSurf");
     }
 
+    /*!
+     * \brief Defines the porosity \f$[-]\f$ of the spatial parameters
+     * \param globalPos The global position
+     */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
         return 0.18;
     }
 
+    /*!
+     * \brief Returns the hydraulic conductivity \f$[m^2]\f$
+     */
     PermeabilityType permeability(const Element& element) const
     {
         return 1e-13;
     }
 
+    /*!
+     * \brief Returns the temperature in the domain at the given position
+     * \param globalPos The position in global coordinates where the temperature should be specified.
+     */
     Scalar temperatureAtPos(const GlobalPosition& globalPos) const
     {
         return 300.0;
@@ -97,7 +134,11 @@ public:
         return MaterialLaw(Ncv, sMinKr_, sMaxKr_, srwSurf_, sroSurf_);
     }
 
-
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     * \param globalPos The position of the center of the element
+     * \return The wetting phase index
+     */
     template<class FluidSystem>
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
     {

@@ -42,10 +42,8 @@ namespace Dumux {
 
 /*!
  * \ingroup TwoPNCTests
- * \brief Problem or water management in PEM fuel cells.
+ * \brief Problem for water management in PEM fuel cells.
  *
- * To run the simulation execute the following line in shell:
- * <tt>./test_box2pnc</tt>
  */
 template <class TypeTag>
 class FuelCellProblem : public PorousMediumFlowProblem<TypeTag>
@@ -101,9 +99,6 @@ public:
                           /*np=*/nPressure_);
     }
 
-    /*!
-     * \name Problem parameters
-     */
 
     /*!
      * \brief The problem name.
@@ -134,10 +129,6 @@ public:
     }
 
 
-    /*!
-     * \name Boundary conditions
-     */
-    // \{
 
     /*!
      * \brief Specifies which kind of boundary condition should be
@@ -179,9 +170,6 @@ public:
         return priVars;
     }
 
-    /*!
-     * \name Volume terms
-     */
 
 
     /*!

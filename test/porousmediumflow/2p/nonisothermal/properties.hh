@@ -19,10 +19,8 @@
 /*!
  * \file
  * \ingroup TwoPTests
- * \brief Non-isothermal gas injection problem where a gas (e.g. air) is injected into a fully
- *        water saturated medium.
+ * \brief Non-isothermal gas injection problem where a gas (e.g. air) is injected into a fully water saturated medium.
  *
- * During buoyancy driven upward migration the gas passes a high temperature area.
  */
 
 #ifndef DUMUX_INJECTION_PROPERTIES_2PNI_HH
