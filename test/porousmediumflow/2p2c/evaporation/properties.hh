@@ -30,6 +30,7 @@
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/2p2c/model.hh>
+#include <dumux/material/components/simpleh2o.hh>
 
 #include "spatialparams.hh"
 #include "constant2p2cfluidsystem.hh"
@@ -57,7 +58,7 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::EvaporationConstantComponent>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::ConstantTwoPTwoCFluidsystem<Scalar, Components::Constant<2, Scalar>, Components::Constant<3, Scalar> >;
+    using type = FluidSystems::ConstantTwoPTwoCFluidsystem<Scalar, WETTINGCOMPONENT, Components::Constant<3, Scalar> >;
 };
 
 // Set the spatial parameters

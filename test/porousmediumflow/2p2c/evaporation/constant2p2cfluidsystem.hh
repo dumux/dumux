@@ -500,26 +500,16 @@ public:
     {
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
         // liquid phase
+        const Scalar temperature  = fluidState.temperature(phaseIdx);
+        const Scalar pressure = fluidState.pressure(phaseIdx);
         if (phaseIdx == phase0Idx)
         {
-            return ComponentOne::liquidHeatCapacity(fluidState.temperature(phaseIdx),
-                                           fluidState.pressure(phaseIdx));
+            return ComponentOne::liquidHeatCapacity(temperature, pressure);
         }
         else if (phaseIdx == phase1Idx) // gas phase
         {
-            Scalar c_pComponentTwo;
-            Scalar c_pComponentOne;
-            c_pComponentTwo = ComponentTwo::gasHeatCapacity(fluidState.temperature(phaseIdx),
-                                        fluidState.pressure(phaseIdx)
-                                        * fluidState.moleFraction(phaseIdx, comp1Idx));
-
-            c_pComponentOne = ComponentOne::gasHeatCapacity(fluidState.temperature(phaseIdx),
-                                          fluidState.pressure(phaseIdx)
-                                          * fluidState.moleFraction(phaseIdx, comp0Idx));
-
-        // mangle both components together
-        return c_pComponentOne*fluidState.massFraction(phase1Idx, comp0Idx)
-               + c_pComponentTwo*fluidState.massFraction(phase1Idx, comp1Idx);
+            return ComponentOne::gasHeatCapacity(temperature, pressure) * fluidState.moleFraction(phase1Idx, comp0Idx)
+                   + ComponentTwo::gasHeatCapacity(temperature, pressure) * fluidState.moleFraction(phase1Idx, comp1Idx);
         }
         else DUNE_THROW(Dune::NotImplemented, "Wrong phase index");
     }
