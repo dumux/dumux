@@ -27,6 +27,7 @@
 
 #include <dune/common/float_cmp.hh>
 #include <dumux/common/exceptions.hh>
+#warning "This header is deprecated and will be removed after release 3.5. Use generated tables (bin/util/make_co2_tables.py), see test/porousmediumflow/co2/"
 
 namespace Dumux {
 /*!

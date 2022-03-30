@@ -1,0 +1,60 @@
+/* Tables for CO2 fluid properties calculated according to Span and
+ * Wagner (1996) and using a web service of the National Institute
+ * of Standards and Techlology of the U.S. Department of Commerce:
+ * https://webbook.nist.gov/
+ *
+ * THIS AN AUTO-GENERATED FILE! DO NOT EDIT IT!
+ *
+ ********************************************************************
+
+    In case you are using this the data generated with this script
+    please cite the following publications:
+
+    P.J. Linstrom and W.G. Mallard, Eds.,
+    NIST Chemistry WebBook, NIST Standard Reference Database Number 69,
+    National Institute of Standards and Technology, Gaithersburg MD, 20899,
+    https://doi.org/10.18434/T4D303, (retrieved $DATE).
+
+    Span, Roland, and Wolfgang Wagner.
+    "A new equation of state for carbon dioxide covering
+    the fluid region from the triple‐point temperature
+    to 1100 K at pressures up to 800 MPa."
+    Journal of physical and chemical reference data 25.6 (1996): 1509-1596.
+    https://doi.org/10.1063/1.555991
+
+ ********************************************************************
+ *
+ * Generated using:
+ *
+ * ./make_co2_table.py -t1 $MIN_TEMP -t2 $MAX_TEMP -nt $NUM_TEMP_SAMPLES -p1 $MIN_PRESS -p2 $MAX_PRESS -np $NUM_PRESS_SAMPLES
+ */
+
+struct TabulatedDensityTraits
+{
+    using Scalar = double;
+    static constexpr std::string_view name = "density";
+    static constexpr int numTempSteps = $NUM_TEMP_SAMPLES;
+    static constexpr Scalar minTemp = $MIN_TEMP;
+    static constexpr Scalar maxTemp = $MAX_TEMP;
+    static constexpr int numPressSteps = $NUM_PRESS_SAMPLES;
+    static constexpr Scalar minPress = $MIN_PRESS;
+    static constexpr Scalar maxPress = $MAX_PRESS;
+    static constexpr Scalar vals[numTempSteps][numPressSteps] = {
+    $DENSITY_VALS
+    };
+};
+
+struct TabulatedEnthalpyTraits
+{
+    using Scalar = double;
+    static constexpr std::string_view name = "enthalpy";
+    static constexpr int numTempSteps = $NUM_TEMP_SAMPLES;
+    static constexpr Scalar minTemp = $MIN_TEMP;
+    static constexpr Scalar maxTemp = $MAX_TEMP;
+    static constexpr int numPressSteps = $NUM_PRESS_SAMPLES;
+    static constexpr Scalar minPress = $MIN_PRESS;
+    static constexpr Scalar maxPress = $MAX_PRESS;
+    static constexpr Scalar vals[numTempSteps][numPressSteps] = {
+    $ENTHALPY_VALS
+    };
+};
