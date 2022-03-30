@@ -29,7 +29,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup SolidEnergyTests
+ * \ingroup OnePTests
  * \brief Definition of the spatial parameters for the solid energy test
  */
 template<class GridGeometry, class Scalar>
