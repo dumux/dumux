@@ -93,7 +93,7 @@ int main()
 
     success += checkBinaryCoefficients<Scalar, Air_Mesitylene>();
     success += checkBinaryCoefficients<Scalar, Air_Xylene>();
-    success += checkBinaryCoefficients<Scalar, Brine_CO2<Scalar, HeterogeneousCO2Tables::CO2Tables>>();
+    success += checkBinaryCoefficients<Scalar, Brine_CO2<Scalar, GeneratedCO2Tables::CO2Tables>>();
     success += checkBinaryCoefficients<Scalar, H2O_Air>();
     success += checkBinaryCoefficients<Scalar, H2O_CH4>();
     success += checkBinaryCoefficients<Scalar, H2O_Component<Scalar, Components::Constant<0, Scalar>>>();

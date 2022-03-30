@@ -36,7 +36,6 @@
 
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/discretization/box/scvftoscvboundarytypes.hh>
-#include <dumux/material/components/co2.hh>
 #include <dumux/common/gridcapabilities.hh>
 
 #include "co2tables.hh"
@@ -122,7 +121,7 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
-    using CO2 = Components::CO2<Scalar, HeterogeneousCO2Tables::CO2Tables>;
+    using CO2 = typename FluidSystem::CO2;
 
     //! Property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = ModelTraits::useMoles();

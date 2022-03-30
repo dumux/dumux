@@ -22,122 +22,127 @@
  * \brief A generic template for tabulated material laws that depend
  *        on two parameters.
  */
-#ifndef DUMUX_TEST_CO2_CO2TABLES_HH
-#define DUMUX_TEST_CO2_CO2TABLES_HH
+#ifndef DUMUX_TABULATED_CO2_HH
+#define DUMUX_TABULATED_CO2_HH
 
 #include <dune/common/float_cmp.hh>
+#include <dumux/common/exceptions.hh>
 
-namespace Dumux::GeneratedCO2Tables {
-
+namespace Dumux {
 /*!
  * \ingroup Components
  * \brief A generic template for tabulated material laws that depend
  *        on two parameters.
  */
 template <class Traits>
-class TabulatedProperties
+class TabulatedCO2Properties
 {
     using Scalar = typename Traits::Scalar;
-
-    static constexpr auto numTempSteps = Traits::numTempSteps;
-    static constexpr auto numPressSteps = Traits::numPressSteps;
+    enum { numTempSteps = Traits::numTempSteps, numPressSteps = Traits::numPressSteps };
 
 public:
-    TabulatedProperties() = default;
+    TabulatedCO2Properties() = default;
 
-    constexpr Scalar minTemp() const { return Traits::minTemp; }
-    constexpr Scalar maxTemp() const { return Traits::maxTemp; }
-    constexpr Scalar minPress() const { return Traits::minPress; }
-    constexpr Scalar maxPress() const { return Traits::maxPress; }
+    constexpr Scalar minTemp() const
+    { return Traits::minTemp; }
+
+    constexpr Scalar maxTemp() const
+    { return Traits::maxTemp; }
+
+    constexpr Scalar minPress() const
+    { return Traits::minPress; }
+
+    constexpr Scalar maxPress() const
+    { return Traits::maxPress; }
 
     constexpr bool applies(Scalar temperature, Scalar pressure) const
     {
         return minTemp() <= temperature && temperature <= maxTemp() &&
-               minPress() <= pressure && pressure <= maxPress();
+            minPress() <= pressure && pressure <= maxPress();
     }
 
     constexpr Scalar at(Scalar temperature, Scalar pressure) const
     {
-        if (!applies(temperature, pressure))
+        if (!applies(temperature,pressure))
         {
-            if (temperature<minTemp()) temperature = minTemp();
-            else if (temperature>maxTemp()) temperature = maxTemp();
-
-            if (pressure<minPress()) pressure = minPress();
-            else if (pressure>maxPress()) pressure = maxPress();
+            if (temperature<minTemp())
+                temperature=minTemp();
+            if(temperature>maxTemp())
+                temperature=maxTemp();
+            if(pressure<minPress())
+                pressure=minPress();
+            if(pressure>maxPress())
+                pressure=maxPress();
         }
 
-        const int i = findTempIdx_(temperature);
-        const int j = findPressIdx_(pressure);
+        int i = findTempIdx_(temperature);
+        int j = findPressIdx_(pressure);
 
-        const Scalar tempAtI = temperatureAt_(i);
-        const Scalar tempAtI1 = temperatureAt_(i + 1);
-        const Scalar pressAtI = pressureAt_(j);
-        const Scalar pressAtI1 = pressureAt_(j + 1);
+        Scalar tempAtI = temperatureAt_(i);
+        Scalar tempAtI1 = temperatureAt_(i + 1);
+        Scalar pressAtI = pressureAt_(j);
+        Scalar pressAtI1 = pressureAt_(j + 1);
 
-        const Scalar alpha = (temperature - tempAtI)/(tempAtI1 - tempAtI);
-        const Scalar beta = (pressure - pressAtI)/(pressAtI1 - pressAtI);
+        Scalar alpha = (temperature - tempAtI)/(tempAtI1 - tempAtI);
+        Scalar beta = (pressure - pressAtI)/(pressAtI1 - pressAtI);
 
         // bi-linear interpolation
-        const Scalar lowresValue =
+        Scalar lowresValue =
             (1-alpha)*(1-beta)*val(i, j) +
             (1-alpha)*(  beta)*val(i, j + 1) +
             (  alpha)*(1-beta)*val(i + 1, j) +
             (  alpha)*(  beta)*val(i + 1, j + 1);
 
-        // return the weighted sum of the low- and high-resolution values
+        // return the weighted sum of the low- and high-resolution
+        // values
         return lowresValue;
     }
 
     constexpr Scalar val(int i, int j) const
-    { return Traits::vals[i][j]; }
+    {
+#if !defined NDEBUG
+        if (i < 0 || i >= Traits::numTempSteps ||
+            j < 0 || j >= Traits::numPressSteps) {
+            DUNE_THROW(NumericalProblem,
+                       "Attempt to access element ("
+                       << i << ", " << j
+                       << ") on a " << Traits::name << " table of size ("
+                       << Traits::numTempSteps << ", " << Traits::numPressSteps
+                       << ")\n");
+        }
+#endif
+        return Traits::vals[i][j];
+    }
 
-private:
+protected:
     constexpr int findTempIdx_(Scalar temperature) const
     {
         if (Dune::FloatCmp::eq<Scalar>(temperature, maxTemp()))
             return numTempSteps - 2;
-
         const int result = static_cast<int>((temperature - minTemp())/(maxTemp() - minTemp())*(numTempSteps - 1));
 
-        using std::clamp;
-        return clamp(result, 0, numTempSteps - 2);
+        using std::min;
+        using std::max;
+        return max(0, min(result, numTempSteps - 2));
     }
 
     constexpr int findPressIdx_(Scalar pressure) const
     {
         if (Dune::FloatCmp::eq<Scalar>(pressure, maxPress()))
             return numPressSteps - 2;
-
         const int result = static_cast<int>((pressure - minPress())/(maxPress() - minPress())*(numPressSteps - 1));
 
-        using std::clamp;
-        return clamp(result, 0, numPressSteps - 2);
+        using std::min;
+        using std::max;
+        return max(0, min(result, numPressSteps - 2));
     }
 
     constexpr Scalar temperatureAt_(int i) const
     { return i*(maxTemp() - minTemp())/(numTempSteps - 1) + minTemp(); }
-
     constexpr Scalar pressureAt_(int j) const
     { return j*(maxPress() - minPress())/(numPressSteps - 1) + minPress(); }
 };
 
-#ifndef DOXYGEN // hide from doxygen
-// the real work is done by some external program which provides
-// ready-to-use tables.
-#include "co2values.inc"
-#endif
-
-using TabulatedDensity = TabulatedProperties<TabulatedDensityTraits>;
-using TabulatedEnthalpy = TabulatedProperties<TabulatedEnthalpyTraits>;
-
-// this class collects all the tabulated quantities in one convenient place
-struct CO2Tables
-{
-   static constexpr inline TabulatedEnthalpy tabulatedEnthalpy = {};
-   static constexpr inline TabulatedDensity tabulatedDensity = {};
-};
-
-} // end namespace Dumux::GeneratedCO2Tables
+} // end namespace Dumux
 
 #endif
