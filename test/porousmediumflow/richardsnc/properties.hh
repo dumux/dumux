@@ -34,7 +34,6 @@
 #include "spatialparams.hh"
 #include "problem.hh"
 
-// Specify the properties for the lens problem
 namespace Dumux::Properties {
 
 // Create new type tags
@@ -61,7 +60,7 @@ struct SpatialParams<TypeTag, TTag::RichardsWellTracer>
     using type = RichardsWellTracerSpatialParams<GridGeometry, Scalar>;
 };
 
-// Set the physical problem to be solved
+// Set the point source
 template<class TypeTag>
 struct PointSource<TypeTag, TTag::RichardsWellTracer> { using type = SolDependentPointSource<TypeTag>; };
 
