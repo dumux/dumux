@@ -24,7 +24,7 @@
  * The whole domain is porous medium, but the upper half has properties mimicing
  * the ones of a free-flow domain.
  * This way a poor man's coupling approach is accomplished: Without the
- * complications of coupling, the main characteristics a porous and a free-flow
+ * complications of coupling, the main characteristics of a porous and a free-flow
  * domain are depicted.
  *
  * The porous domain is bypassed with dry air. This way the equilibration
