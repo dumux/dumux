@@ -36,22 +36,13 @@
 
 #include <dumux/material/components/brine.hh>
 #include <dumux/material/components/co2.hh>
-#include <dumux/material/components/co2tablereader.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
 
 #include <dumux/material/binarycoefficients/brine_co2.hh>
 
 #include <dumux/io/name.hh>
 
-namespace Dumux {
-
-// include the default tables for CO2
-#ifndef DOXYGEN // hide tables from doxygen
-#include <dumux/material/components/co2tables.inc>
-#endif
-
-namespace FluidSystems {
-namespace Detail {
+namespace Dumux::FluidSystems::Detail {
 
     /*!
      * \brief Class that exports some indices that should
@@ -86,7 +77,11 @@ namespace Detail {
         static constexpr int NaClIdx = 2;
         static constexpr int comp2Idx = 2;
     };
-} // end namespace Detail
+
+} // end namespace Dumux::FluidSystems::Detail
+
+
+namespace Dumux::FluidSystems {
 
 /*!
  * \ingroup Fluidsystems
@@ -107,7 +102,7 @@ struct BrineCO2DefaultPolicy
  * \note Depending on the chosen policy, the salinity is assumed to be constant
  *       (in which case Brine is used as a pseudo component) or salt (here NaCl)
  *       is considered as an individual component.
- * \note This implemetation always assumes NaCl stays in the liquid phase.
+ * \note This implementation always assumes NaCl stays in the liquid phase.
  */
 template< class Scalar,
           class CO2Table,
@@ -866,7 +861,6 @@ private:
     }
 };
 
-} // end namespace FluidSystems
-} // end namespace Dumux
+} // end namespace Dumux::FluidSystems
 
 #endif
