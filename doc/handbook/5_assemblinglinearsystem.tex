@@ -44,14 +44,14 @@ we calculate the direction of maximum growth $\textbf{x}^i$. We subtract it from
 our current solution to get a new, better solution
 $\textbf{u}^{i+1} = \textbf{u}^i - \textbf{x}^i$.
 
-We repeat the calculation of of the Jacobian $J_{\textbf{r}(\textbf{u}^i)}$ and the
+We repeat the calculation of the Jacobian $J_{\textbf{r}(\textbf{u}^i)}$ and the
 direction of maximum growth $\textbf{x}^i$ until our approximated solution becomes good enough.
 
 \subsection{Structure of matrix and vectors}
 To understand the meaning of an entry in the matrix or the vector of the linear system, we have
-to define their structure. Both have a blocking structure. Each block contains the degrees of
+to define their structure. Both have a block structure. Each block contains the degrees of
 freedom (also called variables or unknowns) for a control volume. The equation index is used
-to order of the degrees of freedom. For each control volume we have one block. The mapper is
+to order the degrees of freedom. For each control volume we have one block. The mapper is
 used to order the blocks.
 
 \begin{figure}[htbp]

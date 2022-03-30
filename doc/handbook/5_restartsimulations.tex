@@ -11,7 +11,7 @@ a restart using \texttt{BackupRestoreFacility} with plain Dune.
 For VTK files the output can be read with the free function \texttt{loadSolution}. Grids can be read with
 the \texttt{Dumux::VTKReader} or you can simply recreate the grid as you did in the first simulation run.
 
-Writing double-precision floating point numbers to VTK files is available with the newest \Dune release 2.7. If you are using that version, it is now possible to specify output precision in the input file using \texttt{Vtk.Precision} followed by either \texttt{Float32}, \texttt{Float64}, \texttt{UInt32}, \texttt{UInt8} or \texttt{Int32}. \texttt{Float32} is set as the default. We especially advice the use of \texttt{Float64} when working with restart files.
+Writing double-precision floating point numbers to VTK files is available since \Dune release 2.7. If you are using that version, it is now possible to specify output precision in the input file using \texttt{Vtk.Precision} followed by either \texttt{Float32}, \texttt{Float64}, \texttt{UInt32}, \texttt{UInt8} or \texttt{Int32}. \texttt{Float32} is set as the default. We especially advice the use of \texttt{Float64} when working with restart files.
 
 The restart capabilities will hopefully be improved in future versions of \Dumux-3.
 We are looking forward to any contributions (especially HDF5 / XDMF support, improvement of VTK support).

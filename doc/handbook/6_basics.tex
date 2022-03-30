@@ -1,5 +1,5 @@
 \section{Physical Basics}
-Here the basic definitions, the general models concept, and a list of
+Here, the basic definitions, the general models concept, and a list of
 models available in \Dumux are given. The actual differential equations
 can be found in the local residuals (see Doxygen documentation of the
 model's \texttt{LocalResidual} class).
@@ -363,8 +363,8 @@ As an example, if two volumes of gas A and B at equal pressure are mixed, the pr
 %
 The density of the mixture, $\varrho$, can be calculated as follows:
 \begin{equation}
-\varrho = \frac{m}{V} = \frac{m}{V_\mathrm{A} + V_\mathrm{B}} = \frac{m}{\frac{m_\mathrm{A}}{\varrho_\mathrm{A}} \frac{m_\mathrm{B}}{\varrho_\mathrm{B}}} =
-\frac{m}{\frac{X_\mathrm{A} m}{\varrho_\mathrm{A}} \frac{X_\mathrm{B} m}{\varrho_\mathrm{B}}} = \frac{1}{\frac{X_\mathrm{A}}{\varrho_\mathrm{A}} \frac{X_\mathrm{B}}{\varrho_\mathrm{B}}},
+\varrho = \frac{m}{V} = \frac{m}{V_\mathrm{A} + V_\mathrm{B}} = \frac{m}{\frac{m_\mathrm{A}}{\varrho_\mathrm{A}} + \frac{m_\mathrm{B}}{\varrho_\mathrm{B}}} =
+\frac{m}{\frac{X_\mathrm{A} m}{\varrho_\mathrm{A}} + \frac{X_\mathrm{B} m}{\varrho_\mathrm{B}}} = \frac{1}{\frac{X_\mathrm{A}}{\varrho_\mathrm{A}} + \frac{X_\mathrm{B}}{\varrho_\mathrm{B}}},
 \end{equation}
 %
 or for an arbitrary number of gases:
