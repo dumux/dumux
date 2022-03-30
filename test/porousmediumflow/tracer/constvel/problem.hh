@@ -40,11 +40,7 @@ namespace Dumux {
  * \brief Definition of a problem for the tracer problem:
  * A lens of contaminant tracer is diluted by diffusion and a base groundwater flow
  *
- * This problem uses the \ref TracerModel model.
- *
- * To run the simulation execute the following line in shell:
- * <tt>./test_boxtracer -ParameterFile ./test_boxtracer.input</tt> or
- * <tt>./test_cctracer -ParameterFile ./test_cctracer.input</tt>
+ * This problem uses the \ref Tracer model.
  */
 template <class TypeTag>
 class TracerTest : public PorousMediumFlowProblem<TypeTag>
@@ -77,11 +73,6 @@ public:
     }
 
     /*!
-     * \name Boundary conditions
-     */
-    // \{
-
-    /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      *
@@ -93,20 +84,11 @@ public:
         values.setAllNeumann(); // no-flow
         return values;
     }
-    // \}
-
-    /*!
-     * \name Volume terms
-     */
-    // \{
 
     /*!
      * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated
-     *
-     * For this method, the \a values parameter stores primary
-     * variables.
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
@@ -118,9 +100,8 @@ public:
             else
                 initialValues = 1e-9*FluidSystem::molarMass(0)/this->spatialParams().fluidMolarMass(globalPos);
         }
-        return initialValues; }
-
-    // \}
+        return initialValues;
+    }
 
 private:
     static constexpr Scalar eps_ = 1e-6;
