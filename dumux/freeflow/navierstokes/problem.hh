@@ -158,7 +158,6 @@ public:
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
-    template<class ElementVolumeVariables>
     NumEqVector source(const Element& element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
@@ -216,6 +215,29 @@ public:
     {
         return asImp_().dirichletAtPos(scvf.ipGlobal());
     }
+
+    /*!
+     * \brief Evaluates the boundary conditions for a Neumann control volume.
+     *
+     * \param element The element for which the Neumann boundary condition is set
+     * \param fvGeometry The fvGeometry
+     * \param elemVolVars The element volume variables
+     * \param elemFaceVars The element face variables
+     * \param scvf The boundary sub control volume face
+     */
+    template<class ElementFluxVariablesCache>
+    NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElementFluxVariablesCache& elemFluxVarsCache,
+                        const SubControlVolumeFace& scvf) const
+    { return asImp_().neumannAtPos(scvf.ipGlobal()); }
+
+    /*!
+     * \brief Returns the neumann flux at a given position.
+     */
+    NumEqVector neumannAtPos(const GlobalPosition& globalPos) const
+    { return NumEqVector(0.0); } //! A default, i.e. if the user's does not overload any neumann method
 
     /*!
      * \brief Returns the acceleration due to gravity.
@@ -462,7 +484,6 @@ public:
     {
         return VelocityVector(0.0);
     }
-
 
     /*!
      * \brief Returns the slip velocity at a porous boundary based on the Beavers-Joseph(-Saffman) condition.
