@@ -33,8 +33,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup RichardsModel
- * \ingroup ImplicitTestProblems
+ * \ingroup RichardsTests
  * \brief The spatial parameters for the RichardsAnalyticalProblem.
  */
 template<class GridGeometry, class Scalar>

@@ -43,10 +43,9 @@
 namespace Dumux {
 
 /*!
- * \ingroup RichardsModel
- * \ingroup ImplicitTestProblems
+ * \ingroup RichardsTests
  *
- *\brief A water infiltration problem using Richards model and comparing
+ * \brief A water infiltration problem using Richards model and comparing
  *        to an analytical solution. Implemented by using the source term
  *        defined as the analytical solution.
  *

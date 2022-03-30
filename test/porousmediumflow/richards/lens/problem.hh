@@ -54,13 +54,6 @@ namespace Dumux {
  * water instead of a %DNAPL infiltrates from the top.
  *
  * This problem uses the \ref RichardsModel
- *
- * To run the simulation execute the following line in shell:
- * <tt>./test_boxrichards -parameterFile test_boxrichards.input -TimeManager.TEnd 10000000</tt>
- * <tt>./test_ccrichards -parameterFile test_ccrichards.input -TimeManager.TEnd 10000000</tt>
- *
- * where the initial time step is 100 seconds, and the end of the
- * simulation time is 10,000,000 seconds (115.7 days)
  */
 template <class TypeTag>
 class RichardsLensProblem : public PorousMediumFlowProblem<TypeTag>
