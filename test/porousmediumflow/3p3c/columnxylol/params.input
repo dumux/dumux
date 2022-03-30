@@ -1,14 +1,14 @@
 [TimeLoop]
 DtInitial = 1 # [s]
 TEnd = 200 # [s]
-MaxTimeStepSize= 4 # Set the maximum time step size
+MaxTimeStepSize= 4
 
 [Grid]
 UpperRight = 0.1 1.20
 Cells = 1 120
 
 [Problem]
-Name = columnxylol # name passed to the output routines
+Name = columnxylol
 
 [Assembly]
 NumericDifferenceMethod = 0 # -1 backward differences, 0: central differences, +1: forward differences

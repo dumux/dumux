@@ -51,14 +51,6 @@ namespace Dumux {
  * The bottom is a Dirichlet boundary.
  *
  * This problem uses the \ref ThreePThreeCModel and \ref NIModel model.
- *
- * This problem should typically be simulated for 200 days.
- * A good choice for the initial time step size is 1 s.
- * To adjust the simulation time it is necessary to edit the input file.
- *
- * To run the simulation execute the following line in shell:
- * <tt>./test_box3p3cnicolumnxylol test_columnxylol_fv.input</tt> or
- * <tt>./test_cc3p3cnicolumnxylol test_columnxylol_fv.input</tt>
  */
 template <class TypeTag >
 class ColumnProblem : public PorousMediumFlowProblem<TypeTag>

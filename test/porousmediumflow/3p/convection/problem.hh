@@ -56,13 +56,6 @@ namespace Dumux {
   \f[
      v_{Front}=\frac{q S_{water}}{\phi S_{total}}
  \f]
- *
- * The result of the analytical solution is written into the vtu files.
- * This problem uses the \ref ThreePModel and \ref NIModel model.
- *
- * To run the simulation execute the following line in shell: <br>
- * <tt>./test_box3pcniconvection -ParameterFile ./test_box3pniconvection.input</tt> or <br>
- * <tt>./test_cc3pcniconvection -ParameterFile ./test_cc3pniconvection.input</tt>
  */
 template <class TypeTag>
 class ThreePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>

@@ -19,7 +19,8 @@
 /*!
  * \file
  * \ingroup ThreePWaterOilTests
- * \brief The properties of the non-isothermal SAGD problem.
+ * \brief The properties of the non-isothermal steam-assisted gravity
+ *        drainage (SAGD) problem.
  */
 
 #ifndef DUMUX_SAGDPROPERTIES_HH

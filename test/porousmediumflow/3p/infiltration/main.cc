@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup ThreePTests
- * \brief Test for the three-phase CC model.
+ * \brief Test for the three-phase isothermal NAPL infiltration model.
  */
 #include <config.h>
 #include "properties.hh"

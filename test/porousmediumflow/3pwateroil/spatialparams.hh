@@ -19,7 +19,8 @@
 /*!
  * \file
  * \ingroup ThreePWaterOilTests
- * \brief Definition of the spatial parameters for the SAGD problem.
+ * \brief Definition of the spatial parameters for the steam-assisted gravity
+ *        drainage (SAGD) problem.
  */
 
 #ifndef DUMUX_SAGD_SPATIAL_PARAMS_HH
@@ -34,7 +35,8 @@ namespace Dumux {
 
 /*!
  * \ingroup ThreePWaterOilTests
- * \brief Definition of the spatial parameters for the SAGD problem
+ * \brief Definition of the spatial parameters for the steam-assisted gravity
+ *        drainage (SAGD) problem
  */
 template<class GridGeometry, class Scalar>
 class SagdSpatialParams

@@ -61,11 +61,6 @@ namespace Dumux {
  * To see the basic effect and the differences to scenarios with pure steam or
  * pure air injection, it is sufficient to simulate for about 2-3 hours (10000 s).
  * Complete remediation of the domain requires much longer (about 10 days simulated time).
- * To adjust the simulation time it is necessary to edit the input file.
- *
- * To run the simulation execute:
- * <tt>./test_box3p3cnikuevette test_box3p3cnikuevette.input</tt> or
- * <tt>./test_cc3p3cnikuevette test_cc3p3cnikuevette.input</tt>
  */
 template <class TypeTag >
 class KuevetteProblem : public PorousMediumFlowProblem<TypeTag>
