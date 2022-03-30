@@ -192,7 +192,7 @@ class CCTpfaDarcysLaw<ScalarType, GridGeometry, /*isNetwork*/ false>
 
             using std::abs;
             const auto& tij = abs(fluxVarsCache.advectionTij());
-            const auto& g = problem.spatialParams().gravityAtPos(scvf.ipGlobal());
+            const auto& g = problem.spatialParams().gravity(scvf.ipGlobal());
             const auto globalPosInside = insideScv.center();
 
             // Calculate the phase density at the integration point. We only
