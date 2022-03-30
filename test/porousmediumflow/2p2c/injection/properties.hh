@@ -19,8 +19,7 @@
 /*!
  * \file
  * \ingroup TwoPTwoCTests
- * \brief The properties of the problem where air is injected under a low permeable layer in a depth
- *        of 2700m.
+ * \brief The properties of the problem where air is injected under a low permeable layer in a depth of 2700m.
  */
 
 #ifndef DUMUX_INJECTION_PROPERTIES_HH

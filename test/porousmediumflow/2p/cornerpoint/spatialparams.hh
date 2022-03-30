@@ -35,7 +35,7 @@ namespace Dumux {
 
 /*!
  * \ingroup TwoPTests
- * \brief The spatial params for the incompressible 2p test.
+ * \brief The spatial params for the 2p cornerpoint test.
  */
 template<class GridGeometry, class Scalar>
 class TwoPCornerPointTestSpatialParams

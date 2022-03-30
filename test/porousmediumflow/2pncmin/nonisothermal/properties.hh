@@ -19,8 +19,7 @@
 /*!
  * \file
  * \ingroup TwoPNCMinTests
- * \brief The properties of the problem where brine is evaporating at the top boundary. The system
- *        is closed at the remaining boundaries.
+ * \brief The properties of the problem where brine is evaporating at the top boundary. The system is closed at the remaining boundaries.
  */
 #ifndef DUMUX_SALINIZATION_PROPERTIES_HH
 #define DUMUX_SALINIZATION_PROPERTIES_HH

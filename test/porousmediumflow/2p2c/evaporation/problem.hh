@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup TwoPTwoCTests
- * \brief Evaporation problem where two components with constant propierties mix and evaporate.
+ * \brief Evaporation problem where two components with constant properties mix and evaporate.
  */
 
 #ifndef DUMUX_EVAPORATION_CONSTANT_COMPONENT_PROBLEM_HH
@@ -36,16 +36,9 @@ namespace Dumux {
 
 /*!
  * \ingroup TwoPTwoCModel
- * \brief Evaporation problem where two components with constant propierties mix and evaporate.
+ * \brief Evaporation problem where two components with constant properties mix and evaporate.
  *
- * The constant fluid properties are specified in the params.input file. The first component uses simplified properties of H2O and the second component simplified properties of N2.
- *
- * This problem uses the \ref TwoPTwoCModel and \ref NIModel model.
- *
- * To run the simulation execute the following line in shell:
- * <tt>./test_2p2cni_evaporation_box</tt> or
- * <tt>./test_2p2cni_evaporation_tpfa</tt>
- *  */
+ */
 template <class TypeTag >
 class EvaporationConstantComponentProblem : public PorousMediumFlowProblem<TypeTag>
 {
@@ -103,10 +96,6 @@ public:
             std::cout << "The problem uses mass-fractions" << std::endl;
     }
 
-    /*!
-     * \name Problem parameters
-     */
-    // \{
 
     /*!
      * \brief The problem name.
@@ -115,13 +104,6 @@ public:
      */
     const std::string& name() const
     { return name_; }
-
-    // \}
-
-    /*!
-     * \name Boundary conditions
-     */
-    // \{
 
     /*!
      * \brief Specifies which kind of boundary condition should be
@@ -197,12 +179,7 @@ public:
 
     }
 
-    // \}
 
-    /*!
-     * \name Volume terms
-     */
-    // \{
 
     /*!
      * \brief Evaluates the initial value for a control volume.

@@ -19,8 +19,7 @@
 /*!
  * \file
  * \ingroup TwoPTests
- * \brief The spatial parameters for the LensProblem which uses the
- *        two-phase fully implicit model.
+ * \brief The spatial parameters for A discrete fracture network embedded in an impermeable matrix.
  */
 
 #ifndef DUMUX_TWOP_FRACTURE_TEST_SPATIALPARAMS_HH

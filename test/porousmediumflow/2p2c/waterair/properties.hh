@@ -19,8 +19,7 @@
 /*!
  * \file
  * \ingroup TwoPTwoCTests
- * \brief The properties of the non-isothermal gas injection problem where a gas (e.g. air)
- *        is injected into a fully water saturated medium.
+ * \brief The properties of the non-isothermal gas injection problem where a gas (e.g. air) is injected into a fully water saturated medium.
  */
 
 #ifndef DUMUX_WATER_AIR_PROPERTIES_HH
