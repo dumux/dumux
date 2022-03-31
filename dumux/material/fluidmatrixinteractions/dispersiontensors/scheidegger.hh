@@ -62,11 +62,11 @@ public:
     template <class ElementFluxVariablesCache>
     static DimWorldMatrix compositionalDispersionTensor(const Problem& problem,
                                                         const SubControlVolumeFace& scvf,
-                                                        [[maybe_unused]] const FVElementGeometry& fvGeometry,
-                                                        [[maybe_unused]] const ElementVolumeVariables& elemVolVars,
-                                                        [[maybe_unused]] const ElementFluxVariablesCache& elemFluxVarsCache,
-                                                        [[maybe_unused]] const int phaseIdx,
-                                                        [[maybe_unused]] const int compIdx)
+                                                        const FVElementGeometry& fvGeometry,
+                                                        const ElementVolumeVariables& elemVolVars,
+                                                        const ElementFluxVariablesCache& elemFluxVarsCache,
+                                                        const int phaseIdx,
+                                                        const int compIdx)
     {
         DimWorldMatrix dispersionTensor(0.0);
 
@@ -82,10 +82,10 @@ public:
     template <class ElementFluxVariablesCache>
     static DimWorldMatrix thermalDispersionTensor(const Problem& problem,
                                                   const SubControlVolumeFace& scvf,
-                                                  [[maybe_unused]] const FVElementGeometry& fvGeometry,
-                                                  [[maybe_unused]] const ElementVolumeVariables& elemVolVars,
-                                                  [[maybe_unused]] const ElementFluxVariablesCache& elemFluxVarsCache,
-                                                  [[maybe_unused]] const int phaseIdx)
+                                                  const FVElementGeometry& fvGeometry,
+                                                  const ElementVolumeVariables& elemVolVars,
+                                                  const ElementFluxVariablesCache& elemFluxVarsCache,
+                                                  const int phaseIdx)
     {
         DimWorldMatrix dispersionTensor(0.0);
 
