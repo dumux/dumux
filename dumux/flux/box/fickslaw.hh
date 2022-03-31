@@ -35,6 +35,7 @@
 
 #include <dumux/flux/fickiandiffusioncoefficients.hh>
 #include <dumux/flux/referencesystemformulation.hh>
+#include <dumux/flux/facetensoraverage.hh>
 
 namespace Dumux {
 
@@ -180,7 +181,7 @@ private:
         outsideD *= outsideVV.extrusionFactor();
 
         // the resulting averaged diffusion tensor
-        return problem.spatialParams().harmonicMean(insideD, outsideD, scvf.unitOuterNormal());
+        return faceTensorAverage(insideD, outsideD, scvf.unitOuterNormal());
     }
 
     static std::pair<Scalar, Scalar>

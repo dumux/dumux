@@ -34,6 +34,8 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/typetraits/typetraits.hh>
 
+#include <dumux/flux/facetensoraverage.hh>
+
 namespace Dumux {
 
 /*!
@@ -207,7 +209,7 @@ class ForchheimerVelocity
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
             const Scalar Kj = getPermeability_(problem, outsideVolVars, scvf.ipGlobal());
             const Scalar sqrtKj = sqrt(Kj);
-            harmonicMeanSqrtK = problem.spatialParams().harmonicMean(sqrtKi, sqrtKj, scvf.unitOuterNormal());
+            harmonicMeanSqrtK = faceTensorAverage(sqrtKi, sqrtKj, scvf.unitOuterNormal());
         }
         else
             harmonicMeanSqrtK = sqrtKi;
@@ -259,7 +261,7 @@ class ForchheimerVelocity
             for (int i = 0; i < dim; ++i)
                 sqrtKj[i][i] = sqrt(Kj[i][i]);
 
-            harmonicMeanSqrtK = problem.spatialParams().harmonicMean(sqrtKi, sqrtKj, scvf.unitOuterNormal());
+            harmonicMeanSqrtK = faceTensorAverage(sqrtKi, sqrtKj, scvf.unitOuterNormal());
         }
         else
             harmonicMeanSqrtK = sqrtKi;

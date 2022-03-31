@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <cmath>
 #include <dune/common/math.hh>
+#include <dumux/flux/facetensoraverage.hh>
 
 namespace Dumux {
 
@@ -86,9 +87,9 @@ public:
                 // get inside and outside permeability tensors and calculate the harmonic mean
                 const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
                 const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-                const auto K = problem.spatialParams().harmonicMean(insideVolVars.permeability(),
-                                                                    outsideVolVars.permeability(),
-                                                                    scvf.unitOuterNormal());
+                const auto K = faceTensorAverage(insideVolVars.permeability(),
+                                                 outsideVolVars.permeability(),
+                                                 scvf.unitOuterNormal());
 
                 // evaluate gradP - rho*g at integration point
                 Dune::FieldVector<Scalar, dimWorld> gradP(0.0);
