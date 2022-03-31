@@ -34,30 +34,6 @@
 
 namespace Dumux {
 
-namespace Detail {
-
-template<typename ModelTraits>
-using HasCompositionalDispersionModelType = typename ModelTraits::CompositionalDispersionModel;
-
-template<class ModelTraits>
-static constexpr bool hasCompositionalDispersionModel()
-{
-    return Dune::Std::is_detected<HasCompositionalDispersionModelType, ModelTraits>::value
-        && !std::is_void_v<typename ModelTraits::CompositionalDispersionModel>;
-}
-
-template<typename ModelTraits>
-using HasThermalDispersionModelType = typename ModelTraits::ThermalDispersionModel;
-
-template<class ModelTraits>
-static constexpr bool hasThermalDispersionModel()
-{
-    return Dune::Std::is_detected<HasThermalDispersionModelType, ModelTraits>::value
-        && !std::is_void_v<typename ModelTraits::ThermalDispersionModel>;
-}
-}
-
-
 /*!
  * \ingroup PorousmediumflowModels
  * \brief The porous medium flux variables class that computes advective / convective,
@@ -157,18 +133,13 @@ public:
     {
         if constexpr (enableCompositionalDispersion)
         {
-            if constexpr (Detail::hasCompositionalDispersionModel<ModelTraits>())
-            {
-                return DispersionFluxType::compositionalDispersionFlux(this->problem(),
-                                                                       this->element(),
-                                                                       this->fvGeometry(),
-                                                                       this->elemVolVars(),
-                                                                       this->scvFace(),
-                                                                       phaseIdx,
-                                                                       this->elemFluxVarsCache());
-            }
-            else
-                DUNE_THROW(Dune::InvalidStateException, "Please pass the CompositionalDispersionModel to the model traits");
+            return DispersionFluxType::compositionalDispersionFlux(this->problem(),
+                                                                   this->element(),
+                                                                   this->fvGeometry(),
+                                                                   this->elemVolVars(),
+                                                                   this->scvFace(),
+                                                                   phaseIdx,
+                                                                   this->elemFluxVarsCache());
         }
         else
             return Dune::FieldVector<Scalar, numComponents>(0.0);
@@ -181,18 +152,13 @@ public:
     {
         if constexpr (enableThermalDispersion)
         {
-            if constexpr (Detail::hasThermalDispersionModel<ModelTraits>())
-            {
-                return DispersionFluxType::thermalDispersionFlux(this->problem(),
-                                                                 this->element(),
-                                                                 this->fvGeometry(),
-                                                                 this->elemVolVars(),
-                                                                 this->scvFace(),
-                                                                 phaseIdx,
-                                                                 this->elemFluxVarsCache());
-            }
-            else
-                DUNE_THROW(Dune::InvalidStateException, "Please pass the ThermalDispersionModel to the model traits");
+            return DispersionFluxType::thermalDispersionFlux(this->problem(),
+                                                             this->element(),
+                                                             this->fvGeometry(),
+                                                             this->elemVolVars(),
+                                                             this->scvFace(),
+                                                             phaseIdx,
+                                                             this->elemFluxVarsCache());
         }
         else
             return Dune::FieldVector<Scalar, 1>(0.0);
