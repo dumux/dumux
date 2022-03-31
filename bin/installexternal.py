@@ -301,6 +301,7 @@ def installExternal(parameters):
     ):
         finalMessage.append(
             "\n\nPlease run the following commands "
+            "to clear the CMake cache, reconfigure and rebuild "
             "(can be copied to command line):\n\n  "
             "./dune-common/bin/dunecontrol bexec rm -r CMakeFiles CMakeCache.txt\n  "
             "./dune-common/bin/dunecontrol --opts=./dumux/cmake.opts all"
