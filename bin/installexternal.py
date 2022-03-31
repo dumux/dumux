@@ -61,7 +61,13 @@ parser.register("action", "store_choice", ChoicesAction)
 # Positional arguments
 group = parser.add_argument_group(title="your choice of packages")
 packages = group.add_argument("packages", nargs="+", metavar="PACKAGES", action="store_choice")
-packages.add_choice("dumux-extensions", help="Download dumux-course and dumux-lecture.")
+packages.add_choice(
+    "dumux-extensions",
+    help="Download dumux-course, dumux-lecture, dune-alugrid, dune-foamgrid and dune-subgrid.",
+)
+packages.add_choice(
+    "dumux-course", help="Download dumux-course, dune-alugrid, dune-foamgrid and dune-subgrid."
+)
 packages.add_choice(
     "dune-extensions",
     help="Download dune-uggrid, dune-alugrid, dune-foamgrid, \
@@ -335,7 +341,14 @@ EXTERNAL_URLS = {
 }
 
 PACKAGE_NAMES = {
-    "dumux-extensions": ["dumux-lecture", "dumux-course"],
+    "dumux-extensions": [
+        "dumux-lecture",
+        "dumux-course",
+        "dune-alugrid",
+        "dune-foamgrid",
+        "dune-subgrid",
+    ],
+    "dumux-course": ["dumux-course", "dune-alugrid", "dune-foamgrid", "dune-subgrid"],
     "dune-extensions": [
         "dune-uggrid",
         "dune-alugrid",
