@@ -61,7 +61,13 @@ parser.register("action", "store_choice", ChoicesAction)
 # Positional arguments
 group = parser.add_argument_group(title="your choice of packages")
 packages = group.add_argument("packages", nargs="+", metavar="PACKAGES", action="store_choice")
-packages.add_choice("dumux-extensions", help="Download dumux-course and dumux-lecture.")
+packages.add_choice(
+    "dumux-extensions",
+    help="Download dumux-course, dumux-lecture, dune-alugrid, dune-foamgrid and dune-subgrid.",
+)
+packages.add_choice(
+    "dumux-course", help="Download dumux-course, dune-alugrid, dune-foamgrid and dune-subgrid."
+)
 packages.add_choice(
     "dune-extensions",
     help="Download dune-uggrid, dune-alugrid, dune-foamgrid, \
@@ -99,7 +105,7 @@ parser.add_argument(
     "--dumux-branch", default="releases/3.4", help="Dumux branch to be checked out."
 )
 parser.add_argument("--opm-branch", default="release/2021.10", help="Opm branch to be checked out.")
-parser.add_argument("--mmesh-branch", default="release/1.2", help="Mmesh branch to be checked out.")
+parser.add_argument("--mmesh-branch", default="release/1.3", help="Mmesh branch to be checked out.")
 
 args = vars(parser.parse_args())
 
@@ -294,8 +300,10 @@ def installExternal(parameters):
         x in pkg for pkg in parameters["packages"] for x in ["dumux", "dune", "opm"]
     ):
         finalMessage.append(
-            "\n\nPlease run the following command "
+            "\n\nPlease run the following commands "
+            "to clear the CMake cache, reconfigure and rebuild "
             "(can be copied to command line):\n\n  "
+            "./dune-common/bin/dunecontrol bexec rm -r CMakeFiles CMakeCache.txt\n  "
             "./dune-common/bin/dunecontrol --opts=./dumux/cmake.opts all"
         )
 
@@ -335,7 +343,14 @@ EXTERNAL_URLS = {
 }
 
 PACKAGE_NAMES = {
-    "dumux-extensions": ["dumux-lecture", "dumux-course"],
+    "dumux-extensions": [
+        "dumux-lecture",
+        "dumux-course",
+        "dune-alugrid",
+        "dune-foamgrid",
+        "dune-subgrid",
+    ],
+    "dumux-course": ["dumux-course", "dune-alugrid", "dune-foamgrid", "dune-subgrid"],
     "dune-extensions": [
         "dune-uggrid",
         "dune-alugrid",
