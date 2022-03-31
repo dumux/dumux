@@ -36,6 +36,7 @@
 #include <dumux/flux/maxwellstefandiffusioncoefficients.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
 #include <dumux/flux/referencesystemformulation.hh>
+#include <dumux/flux/facetensoraverage.hh>
 
 namespace Dumux {
 
@@ -181,7 +182,7 @@ private:
             tinOutside *= outsideVolVars.extrusionFactor();
 
             // the resulting averaged diffusion tensor
-            const auto tin = problem.spatialParams().harmonicMean(tinInside, tinOutside, scvf.unitOuterNormal());
+            const auto tin = faceTensorAverage(tinInside, tinOutside, scvf.unitOuterNormal());
 
             //begin the entrys of the diffusion matrix of the diagonal
             reducedDiffusionMatrix[compIIdx][compIIdx] += xi*avgMolarMass/(tin*Mn);
@@ -207,7 +208,7 @@ private:
                 tijOutside *= outsideVolVars.extrusionFactor();
 
                 // the resulting averaged diffusion tensor
-                const auto tij = problem.spatialParams().harmonicMean(tijInside, tijOutside, scvf.unitOuterNormal());
+                const auto tij = faceTensorAverage(tijInside, tijOutside, scvf.unitOuterNormal());
 
                 reducedDiffusionMatrix[compIIdx][compIIdx] += xj*avgMolarMass/(tij*Mi);
                 if (compJIdx < numComponents-1)

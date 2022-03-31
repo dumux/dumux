@@ -35,6 +35,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/flux/box/darcyslaw.hh>
+#include <dumux/flux/facetensoraverage.hh>
 
 namespace Dumux {
 
@@ -121,7 +122,7 @@ public:
         insideK *= insideVolVars.extrusionFactor();
         outsideK *= outsideVolVars.extrusionFactor();
 
-        const auto K = problem.spatialParams().harmonicMean(insideK, outsideK, scvf.unitOuterNormal());
+        const auto K = faceTensorAverage(insideK, outsideK, scvf.unitOuterNormal());
         static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
 
         const auto& shapeValues = fluxVarCache.shapeValues();

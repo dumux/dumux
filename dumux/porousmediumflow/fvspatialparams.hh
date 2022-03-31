@@ -29,6 +29,7 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/math.hh>
+#include <dumux/flux/facetensoraverage.hh> // remove include after release 3.5
 #include <dumux/common/fvporousmediumspatialparams.hh>
 #include <dumux/common/typetraits/isvalid.hh>
 
@@ -90,6 +91,7 @@ public:
      * \param T2 second scalar parameter
      * \param normal The unit normal vector of the interface
      */
+    [[deprecated("Use Dumux::faceTensorAverage from dumux/flux/facetensoraverage.hh instead. This function will be removed after 3.5.")]]
     Scalar harmonicMean(const Scalar T1,
                         const Scalar T2,
                         const GlobalPosition& normal) const
@@ -104,33 +106,12 @@ public:
      * \param T2 second tensor
      * \param normal The unit normal vector of the interface
      */
+    [[deprecated("Use Dumux::faceTensorAverage from dumux/flux/facetensoraverage.hh instead. This function will be removed after 3.5.")]]
     DimWorldMatrix harmonicMean(const DimWorldMatrix& T1,
                                 const DimWorldMatrix& T2,
                                 const GlobalPosition& normal) const
     {
-        // determine nT*k*n
-        GlobalPosition tmp;
-        GlobalPosition tmp2;
-        T1.mv(normal, tmp);
-        T2.mv(normal, tmp2);
-        const Scalar alpha1 = tmp*normal;
-        const Scalar alpha2 = tmp2*normal;
-
-        const Scalar alphaHarmonic = Dumux::harmonicMean(alpha1, alpha2);
-        const Scalar alphaAverage = 0.5*(alpha1 + alpha2);
-
-        DimWorldMatrix T(0.0);
-        for (int i = 0; i < dimWorld; ++i)
-        {
-            for (int j = 0; j < dimWorld; ++j)
-            {
-                T[i][j] += 0.5*(T1[i][j] + T2[i][j]);
-                if (i == j)
-                    T[i][j] += alphaHarmonic - alphaAverage;
-            }
-        }
-
-        return T;
+        return faceTensorAverage(T1, T2, normal);
     }
 
     /*!

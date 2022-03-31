@@ -29,6 +29,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>
+#include <dumux/flux/facetensoraverage.hh>
 
 namespace Dumux {
 
@@ -84,7 +85,7 @@ public:
         outsideLambda *= outsideVolVars.extrusionFactor();
 
         // the resulting averaged diffusion tensor
-        const auto lambda = problem.spatialParams().harmonicMean(insideLambda, outsideLambda, scvf.unitOuterNormal());
+        const auto lambda = faceTensorAverage(insideLambda, outsideLambda, scvf.unitOuterNormal());
 
         // evaluate gradTemp at integration point
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
