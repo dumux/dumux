@@ -150,7 +150,9 @@ struct SolutionDependentMolecularDiffusion { using type = UndefinedProperty; }; 
 template<class TypeTag, class MyTypeTag>
 struct HeatConductionType { using type = UndefinedProperty; };                  //!< The type for the calculation of the heat conduction fluxes
 template<class TypeTag, class MyTypeTag>
-struct DispersionTensorType { using type = UndefinedProperty; };                //!< The type for the calculation of the dispersion tensor
+struct CompositionalDispersionModel { using type = UndefinedProperty; };         //!< The type for the calculation of the compositional dispersion tensor
+template<class TypeTag, class MyTypeTag>
+struct ThermalDispersionModel { using type = UndefinedProperty; };              //!< The type for the calculation of the thermal dispersion tensor
 template<class TypeTag, class MyTypeTag>
 struct SolutionDependentHeatConduction { using type = UndefinedProperty; };     //!< specifies if the parameters for the heat conduction fluxes depend on the solution
 

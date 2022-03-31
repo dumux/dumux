@@ -132,6 +132,7 @@ public:
     Dune::FieldVector<Scalar, numComponents> compositionalDispersionFlux([[maybe_unused]] const int phaseIdx) const
     {
         if constexpr (enableCompositionalDispersion)
+        {
             return DispersionFluxType::compositionalDispersionFlux(this->problem(),
                                                                    this->element(),
                                                                    this->fvGeometry(),
@@ -139,6 +140,7 @@ public:
                                                                    this->scvFace(),
                                                                    phaseIdx,
                                                                    this->elemFluxVarsCache());
+        }
         else
             return Dune::FieldVector<Scalar, numComponents>(0.0);
     }
@@ -149,6 +151,7 @@ public:
     Dune::FieldVector<Scalar, 1> thermalDispersionFlux([[maybe_unused]] const int phaseIdx = 0) const
     {
         if constexpr (enableThermalDispersion)
+        {
             return DispersionFluxType::thermalDispersionFlux(this->problem(),
                                                              this->element(),
                                                              this->fvGeometry(),
@@ -156,6 +159,7 @@ public:
                                                              this->scvFace(),
                                                              phaseIdx,
                                                              this->elemFluxVarsCache());
+        }
         else
             return Dune::FieldVector<Scalar, 1>(0.0);
     }

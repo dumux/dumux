@@ -85,10 +85,11 @@ namespace Dumux {
  *
  * \tparam nComp the number of components to be considered.
  */
-template<int nComp, bool useM, int enableCompDisp, int enableThermDisp, int repCompEqIdx = nComp>
+template<int nComp, bool useM, int enableCompDisp, int enableThermDisp, int repCompEqIdx = nComp, class CDM = void>
 struct OnePNCModelTraits
 {
     using Indices = OnePNCIndices;
+    using CompositionalDispersionModel = CDM;
 
     static constexpr int numEq() { return nComp; }
     static constexpr int numFluidPhases() { return 1; }
@@ -130,13 +131,14 @@ struct BaseModelTraits<TypeTag, TTag::OnePNC>
 {
 private:
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-
+    using CDM = GetPropType<TypeTag, Properties::CompositionalDispersionModel>;
 public:
     using type = OnePNCModelTraits<FluidSystem::numComponents,
                                    getPropValue<TypeTag, Properties::UseMoles>(),
                                    getPropValue<TypeTag, Properties::EnableCompositionalDispersion>(),
                                    getPropValue<TypeTag, Properties::EnableThermalDispersion>(),
-                                   getPropValue<TypeTag, Properties::ReplaceCompEqIdx>()>;
+                                   getPropValue<TypeTag, Properties::ReplaceCompEqIdx>(),
+                                   CDM>;
 };
 template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::OnePNC> { using type = GetPropType<TypeTag, Properties::BaseModelTraits>; }; //!< default the actually used traits to the base traits
@@ -190,19 +192,17 @@ private:
     static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
     using BaseTraits = OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 
-    using DTT = GetPropType<TypeTag, Properties::DispersionTensorType>;
     using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
     using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
-    template<class BaseTraits, class DTT, class DT, class EDM>
+    template<class BaseTraits, class DT, class EDM>
     struct NCTraits : public BaseTraits
     {
-        using DispersionTensorType = DTT;
         using DiffusionType = DT;
         using EffectiveDiffusivityModel = EDM;
     };
 
 public:
-    using type = OnePNCVolumeVariables<NCTraits<BaseTraits, DTT, DT, EDM>>;
+    using type = OnePNCVolumeVariables<NCTraits<BaseTraits, DT, EDM>>;
 };
 
 //! Set the vtk output fields specific to this model
@@ -228,8 +228,9 @@ struct ModelTraits<TypeTag, TTag::OnePNCNI>
 {
 private:
     using IsothermalTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
+    using TDM = GetPropType<TypeTag, Properties::ThermalDispersionModel>;
 public:
-    using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
+    using type = PorousMediumFlowNIModelTraits<IsothermalTraits, TDM>;
 };
 
 template<class TypeTag>
@@ -249,21 +250,19 @@ private:
     static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
     using BaseTraits = OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 
-    using DTT = GetPropType<TypeTag, Properties::DispersionTensorType>;
     using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
     using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
     using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
-    template<class BaseTraits, class DTT, class DT, class EDM, class ETCM>
+    template<class BaseTraits, class DT, class EDM, class ETCM>
     struct NCNITraits : public BaseTraits
     {
-        using DispersionTensorType = DTT;
         using DiffusionType = DT;
         using EffectiveDiffusivityModel = EDM;
         using EffectiveThermalConductivityModel = ETCM;
     };
 
 public:
-    using type = OnePNCVolumeVariables<NCNITraits<BaseTraits, DTT, DT, EDM, ETCM>>;
+    using type = OnePNCVolumeVariables<NCNITraits<BaseTraits, DT, EDM, ETCM>>;
 };
 
 } // end namespace Properties
@@ -354,22 +353,20 @@ private:
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
     using BaseTraits = OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 
-    using DTT = GetPropType<TypeTag, Properties::DispersionTensorType>;
     using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
     using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
     using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
-    template<class BaseTraits, class DTT, class DT, class EDM, class ETCM>
+    template<class BaseTraits, class DT, class EDM, class ETCM>
     struct NCNITraits : public BaseTraits
     {
-        using DispersionTensorType = DTT;
         using DiffusionType = DT;
         using EffectiveDiffusivityModel = EDM;
         using EffectiveThermalConductivityModel = ETCM;
     };
 
-    using EquilibriumVolVars = OnePNCVolumeVariables<NCNITraits<BaseTraits, DTT, DT, EDM, ETCM>>;
+    using EquilibriumVolVars = OnePNCVolumeVariables<NCNITraits<BaseTraits, DT, EDM, ETCM>>;
 public:
-    using type = NonEquilibriumVolumeVariables<NCNITraits<BaseTraits, DTT, DT, EDM, ETCM>, EquilibriumVolVars>;
+    using type = NonEquilibriumVolumeVariables<NCNITraits<BaseTraits, DT, EDM, ETCM>, EquilibriumVolVars>;
 };
 
 } // end namespace Properties

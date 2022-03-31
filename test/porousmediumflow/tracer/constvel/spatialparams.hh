@@ -108,13 +108,14 @@ public:
                * elemVolVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
     }
 
-
     /*!
      * \brief Defines the dispersion tensor \f$\mathrm{[-]}\f$.
      *
      * \param globalPos The global position
      */
-    std::array<Scalar, 2> dispersionAlphas(const GlobalPosition& globalPos) const
+    std::array<Scalar, 2> dispersionAlphas(const GlobalPosition& globalPos,
+                                           const int phaseIdx = 0,
+                                           const int compIdx = 0) const
     { return { alphaL_, alphaT_ }; }
 
 private:

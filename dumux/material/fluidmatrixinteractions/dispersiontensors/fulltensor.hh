@@ -43,12 +43,23 @@ class FullDispersionTensor
 public:
 
     template <class ElementFluxVariablesCache>
-    static DimWorldMatrix dispersionTensor([[maybe_unused]] const Problem& problem,
-                                           [[maybe_unused]] const SubControlVolumeFace& scvf,
-                                           [[maybe_unused]] const FVElementGeometry& fvGeometry,
-                                           [[maybe_unused]] const ElementVolumeVariables& elemVolVars,
-                                           [[maybe_unused]] const ElementFluxVariablesCache& elemFluxVarsCache)
-    { return problem.spatialParams().dispersionTensor(scvf.center()); }
+    static DimWorldMatrix compositionalDispersionTensor(const Problem& problem,
+                                                        const SubControlVolumeFace& scvf,
+                                                        const FVElementGeometry&,
+                                                        const ElementVolumeVariables&,
+                                                        const ElementFluxVariablesCache&,
+                                                        const int phaseIdx,
+                                                        const int compIdx)
+    { return problem.spatialParams().dispersionTensor(scvf.center(), phaseIdx, compIdx); }
+
+    template <class ElementFluxVariablesCache>
+    static DimWorldMatrix thermalDispersionTensor(const Problem& problem,
+                                                  const SubControlVolumeFace& scvf,
+                                                  const FVElementGeometry&,
+                                                  const ElementVolumeVariables&,
+                                                  const ElementFluxVariablesCache&,
+                                                  const int phaseIdx)
+    { return problem.spatialParams().dispersionTensor(scvf.center(), phaseIdx); }
 
 };
 

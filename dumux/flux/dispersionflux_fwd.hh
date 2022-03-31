@@ -31,16 +31,16 @@ namespace Dumux {
 
 // declaration of primary template
 template<class TypeTag, class DiscretizationMethod, ReferenceSystemFormulation referenceSystem>
-class OnePDispersionFluxImplementation;
+class DispersionFluxImplementation;
 
 /*!
  * \ingroup Flux
  * \brief Evaluates the dispersive flux
  */
 template<class TypeTag, ReferenceSystemFormulation referenceSystem = ReferenceSystemFormulation::massAveraged>
-using OnePDiffusiveDispersionFlux = OnePDispersionFluxImplementation<TypeTag,
-                                                                     typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod,
-                                                                     referenceSystem>;
+using DiffusiveDispersionFlux = DispersionFluxImplementation<TypeTag,
+                                                             typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod,
+                                                             referenceSystem>;
 
 } // end namespace Dumux
 
