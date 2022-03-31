@@ -300,8 +300,9 @@ def installExternal(parameters):
         x in pkg for pkg in parameters["packages"] for x in ["dumux", "dune", "opm"]
     ):
         finalMessage.append(
-            "\n\nPlease run the following command "
+            "\n\nPlease run the following commands "
             "(can be copied to command line):\n\n  "
+            "./dune-common/bin/dunecontrol bexec rm -r CMakeFiles CMakeCache.txt\n  "
             "./dune-common/bin/dunecontrol --opts=./dumux/cmake.opts all"
         )
 
