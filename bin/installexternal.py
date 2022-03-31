@@ -105,7 +105,7 @@ parser.add_argument(
     "--dumux-branch", default="releases/3.4", help="Dumux branch to be checked out."
 )
 parser.add_argument("--opm-branch", default="release/2021.10", help="Opm branch to be checked out.")
-parser.add_argument("--mmesh-branch", default="release/1.2", help="Mmesh branch to be checked out.")
+parser.add_argument("--mmesh-branch", default="release/1.3", help="Mmesh branch to be checked out.")
 
 args = vars(parser.parse_args())
 
