@@ -29,7 +29,7 @@
 #include <dumux/discretization/elementsolution.hh>
 
 #include <dumux/porousmediumflow/fvspatialparams1p.hh>
-#include <dumux/material/spatialparams/gstatrandomfield.hh>
+#include <dumux/material/gstatrandomfield.hh>
 #include <dumux/material/fluidmatrixinteractions/porositydeformation.hh>
 
 namespace Dumux {

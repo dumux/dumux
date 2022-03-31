@@ -28,7 +28,7 @@
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/fvspatialparams1p.hh>
-#include <dumux/material/spatialparams/gstatrandomfield.hh>
+#include <dumux/material/gstatrandomfield.hh>
 
 namespace Dumux {
 
