@@ -32,15 +32,15 @@ namespace Dumux {
  * \ingroup NavierStokesModel
  * \brief Class to specify the type of a boundary condition for the Navier-Stokes model.
  */
-template <int numEq>
-class NavierStokesMomentumBoundaryTypes : public BoundaryTypes<numEq>
+template <int size>
+class NavierStokesMomentumBoundaryTypes : public BoundaryTypes<size>
 {
-    using ParentType = BoundaryTypes<numEq>;
+    using ParentType = BoundaryTypes<size>;
 
 public:
     NavierStokesMomentumBoundaryTypes()
     {
-        for (int eqIdx=0; eqIdx < numEq; ++eqIdx)
+        for (int eqIdx=0; eqIdx < size; ++eqIdx)
             resetEq(eqIdx);
     }
 
@@ -60,7 +60,7 @@ public:
      */
     void setAllSymmetry()
     {
-        for (int eqIdx=0; eqIdx < numEq; ++eqIdx)
+        for (int eqIdx=0; eqIdx < size; ++eqIdx)
         {
             resetEq(eqIdx);
             boundaryInfo_[eqIdx].isSymmetry = true;
@@ -98,7 +98,7 @@ public:
      */
     bool hasBeaversJoseph() const
     {
-        for (int i = 0; i < numEq; ++i)
+        for (int i = 0; i < size; ++i)
             if (boundaryInfo_[i].isBeaversJoseph)
                 return true;
         return false;
@@ -112,7 +112,7 @@ protected:
         bool isBeaversJoseph : 1;
     };
 
-    std::array<NavierStokesBoundaryInfo, numEq> boundaryInfo_;
+    std::array<NavierStokesBoundaryInfo, size> boundaryInfo_;
 };
 
 } // end namespace Dumux

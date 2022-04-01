@@ -31,7 +31,6 @@
 //
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/numeqvector.hh>
 
 // Include the `NavierStokesProblem` class, the base
 // class from which we will derive.
@@ -56,8 +55,10 @@ class LidDrivenCavityExampleProblem : public NavierStokesProblem<TypeTag>
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using PrimaryVariables = typename ParentType::PrimaryVariables;
-    using NumEqVector = typename ParentType::NumEqVector;
+    using InitialValues = typename ParentType::InitialValues;
+    using Sources = typename ParentType::Sources;
+    using DirichletValues = typename ParentType::DirichletValues;
+    using BoundaryFluxes = typename ParentType::BoundaryFluxes;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
@@ -98,9 +99,9 @@ public:
     // The following function specifies the __values on Dirichlet boundaries__.
     // We need to define values for the primary variables (velocity).
     // [[codeblock]]
-    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+    DirichletValues dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values(0.0);
+        DirichletValues values(0.0);
 
         if constexpr (ParentType::isMomentumProblem())
         {
@@ -116,13 +117,13 @@ public:
     // We define a (zero) mass flux here.
     // [[codeblock]]
     template<class ElementVolumeVariables, class ElementFluxVariablesCache>
-    NumEqVector neumann(const Element& element,
-                        const FVElementGeometry& fvGeometry,
-                        const ElementVolumeVariables& elemVolVars,
-                        const ElementFluxVariablesCache& elemFluxVarsCache,
-                        const SubControlVolumeFace& scvf) const
+    BoundaryFluxes neumann(const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const ElementVolumeVariables& elemVolVars,
+                           const ElementFluxVariablesCache& elemFluxVarsCache,
+                           const SubControlVolumeFace& scvf) const
     {
-        NumEqVector values(0.0);
+        BoundaryFluxes values(0.0);
 
         if constexpr (!ParentType::isMomentumProblem())
         {
@@ -147,9 +148,9 @@ public:
     { return !ParentType::isMomentumProblem(); }
 
     // Set a fixed pressure a the lower-left cell.
-    std::bitset<PrimaryVariables::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
+    std::bitset<DirichletValues::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
     {
-        std::bitset<PrimaryVariables::dimension> values;
+        std::bitset<DirichletValues::dimension> values;
 
         if constexpr (!ParentType::isMomentumProblem())
         {
@@ -162,8 +163,8 @@ public:
     }
 
     // Specify the pressure value in the internal Dirichlet cell.
-    PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
-    { return PrimaryVariables(1.1e5); }
+    DirichletValues internalDirichlet(const Element& element, const SubControlVolume& scv) const
+    { return DirichletValues(1.1e5); }
     // [[/codeblock]]
 
     // Setting a __reference pressure__ can help to improve the Newton convergence rate by making the numerical derivatives more exact.
@@ -177,9 +178,9 @@ public:
 
     // The following function defines the initial conditions.
     // [[codeblock]]
-    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
+    InitialValues initialAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values(0.0);
+        InitialValues values(0.0);
 
         if constexpr (!ParentType::isMomentumProblem())
             values[Indices::pressureIdx] = 1.0e+5;

@@ -61,9 +61,11 @@ class ThreeDChannelTestProblem : public NavierStokesProblem<TypeTag>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using NumEqVector = typename ParentType::NumEqVector;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-    using PrimaryVariables = typename ParentType::PrimaryVariables;
+    using InitialValues = typename ParentType::InitialValues;
+    using Sources = typename ParentType::Sources;
+    using DirichletValues = typename ParentType::DirichletValues;
+    using BoundaryFluxes = typename ParentType::BoundaryFluxes;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
@@ -99,12 +101,12 @@ public:
      *        sub-control volume
      */
     template<class ElementVolumeVariables>
-    NumEqVector source(const Element& element,
-                       const FVElementGeometry& fvGeometry,
-                       const ElementVolumeVariables& elemVolVars,
-                       const SubControlVolume& scv) const
+    Sources source(const Element& element,
+                   const FVElementGeometry& fvGeometry,
+                   const ElementVolumeVariables& elemVolVars,
+                   const SubControlVolume& scv) const
     {
-        auto source = NumEqVector(0.0);
+        auto source = Sources(0.0);
 
         if constexpr (ParentType::isMomentumProblem() && enablePseudoThreeDWallFriction)
         {
@@ -150,10 +152,10 @@ public:
      *
      * \param globalPos The center of the finite volume which ought to be set.
      */
-    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+    DirichletValues dirichletAtPos(const GlobalPosition &globalPos) const
     {
         // no-flow/no-slip
-        return PrimaryVariables(0.0);
+        return DirichletValues(0.0);
     }
 
     /*!
@@ -166,13 +168,13 @@ public:
      * \param scvf The boundary sub control volume face
      */
     template<class ElementVolumeVariables, class ElementFluxVariablesCache>
-    NumEqVector neumann(const Element& element,
-                        const FVElementGeometry& fvGeometry,
-                        const ElementVolumeVariables& elemVolVars,
-                        const ElementFluxVariablesCache& elemFluxVarsCache,
-                        const SubControlVolumeFace& scvf) const
+    BoundaryFluxes neumann(const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const ElementVolumeVariables& elemVolVars,
+                           const ElementFluxVariablesCache& elemFluxVarsCache,
+                           const SubControlVolumeFace& scvf) const
     {
-        NumEqVector values(0.0);
+        BoundaryFluxes values(0.0);
         const auto& globalPos = scvf.ipGlobal();
 
         if constexpr (ParentType::isMomentumProblem())

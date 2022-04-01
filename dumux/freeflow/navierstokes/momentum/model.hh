@@ -79,8 +79,8 @@ struct NavierStokesMomentumModelTraits
     //! The dimension of the model
     static constexpr int dim() { return dimension; }
 
-    //! There are as many momentum balance equations as dimensions
-    //! and one mass balance equation.
+    //! For the structured FC staggered discretization,
+    //! there is one momentum balance equation per face.
     static constexpr int numEq() { return 1; }
 
     //! The number of phases is 1

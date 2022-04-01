@@ -88,25 +88,20 @@ class NavierStokesProblemImpl<TypeTag, DiscretizationMethods::FCStaggered>
 
     static constexpr bool isCoupled_ = !std::is_empty_v<CouplingManager>;
 
-public:
 
-    //! Export traits of this problem
-    struct Traits
-    {
-        using Scalar = NavierStokesProblemImpl::Scalar;
-        using NumEqVector = Dune::FieldVector<Scalar, ModelTraits::dim()>;
-        using PrimaryVariables = NumEqVector;
-    };
+public:
+    //! These types are used in place of the typical NumEqVector type.
+    //! In the numeqvector assembly type, only one equation per DOF (face) is considered
+    //! while the type here provides one entry for each world dimension.
+    using InitialValues = Dune::FieldVector<Scalar, dimWorld>;
+    using Sources = Dune::FieldVector<Scalar, dimWorld>;
+    using DirichletValues = Dune::FieldVector<Scalar, dimWorld>;
+    using BoundaryFluxes = Dune::FieldVector<Scalar, dimWorld>;
+
+    using MomentumFluxType = Dune::FieldVector<Scalar, dimWorld>;
 
     //! Export the boundary types.
     using BoundaryTypes = NavierStokesMomentumBoundaryTypes<ModelTraits::dim()>;
-
-    //! Export the NumEqVector type for setting boundary conditions. This differs from the NumEqVector type used in the assembly
-    //! because there, only one equation per DOF (face) is considered while the type here provides one entry for each world dimension.
-    using NumEqVector = Dune::FieldVector<Scalar, ModelTraits::dim()>;
-
-    //! Export the PrimaryVariables type for setting boundary conditions.
-    using PrimaryVariables = NumEqVector;
 
     //! This problem is used for the momentum balance model.
     static constexpr bool isMomentumProblem() { return true; }
@@ -158,11 +153,10 @@ public:
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
-    template<class ElementVolumeVariables>
-    NumEqVector source(const Element& element,
-                       const FVElementGeometry& fvGeometry,
-                       const ElementVolumeVariables& elemVolVars,
-                       const SubControlVolume& scv) const
+    Sources source(const Element& element,
+                   const FVElementGeometry& fvGeometry,
+                   const ElementVolumeVariables& elemVolVars,
+                   const SubControlVolume& scv) const
     {
         // forward to solution independent, fully-implicit specific interface
         return asImp_().sourceAtPos(scv.dofPosition());
@@ -181,11 +175,11 @@ public:
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
-    NumEqVector sourceAtPos(const GlobalPosition& globalPos) const
+    Sources sourceAtPos(const GlobalPosition& globalPos) const
     {
         //! As a default, i.e. if the user's problem does not overload any source method
         //! return 0.0 (no source terms)
-        return NumEqVector(0.0);
+        return Sources(0.0);
     }
 
     /*!
@@ -212,10 +206,33 @@ public:
      * \param scvf the sub control volume face
      * \note used for cell-centered discretization schemes
      */
-    auto dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
+    DirichletValues dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
     {
         return asImp_().dirichletAtPos(scvf.ipGlobal());
     }
+
+    /*!
+     * \brief Evaluates the boundary conditions for a Neumann control volume.
+     *
+     * \param element The element for which the Neumann boundary condition is set
+     * \param fvGeometry The fvGeometry
+     * \param elemVolVars The element volume variables
+     * \param elemFaceVars The element face variables
+     * \param scvf The boundary sub control volume face
+     */
+    template<class ElementFluxVariablesCache>
+    BoundaryFluxes neumann(const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const ElementVolumeVariables& elemVolVars,
+                           const ElementFluxVariablesCache& elemFluxVarsCache,
+                           const SubControlVolumeFace& scvf) const
+    { return asImp_().neumannAtPos(scvf.ipGlobal()); }
+
+    /*!
+     * \brief Returns the neumann flux at a given position.
+     */
+    BoundaryFluxes neumannAtPos(const GlobalPosition& globalPos) const
+    { return BoundaryFluxes(0.0); } //! A default, i.e. if the user's does not overload any neumann method
 
     /*!
      * \brief Returns the acceleration due to gravity.
@@ -365,7 +382,7 @@ public:
     /*!
      * \brief Evaluate the initial value at an sub control volume
      */
-    auto initial(const SubControlVolume& scv) const
+    InitialValues initial(const SubControlVolume& scv) const
     {
         return asImp_().initialAtPos(scv.dofPosition());
     }
@@ -463,7 +480,6 @@ public:
         return VelocityVector(0.0);
     }
 
-
     /*!
      * \brief Returns the slip velocity at a porous boundary based on the Beavers-Joseph(-Saffman) condition.
      * \note This only returns a vector filled with one component of the slip velocity (corresponding to the dof axis of the scv the svf belongs to)
@@ -557,22 +573,18 @@ class NavierStokesProblemImpl<TypeTag, DiscretizationMethods::CCTpfa>
     static constexpr bool isCoupled_ = !std::is_empty_v<CouplingManager>;
 
 public:
-    //! Export traits of this problem
-    struct Traits
-    {
-        using Scalar = NavierStokesProblemImpl::Scalar;
-        using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-        using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
-    };
+
+    //! These types are used in place of the typical NumEqVector type.
+    //! In the momentum problem, there is a descrepancy between
+    //! the assembly NumEqVector type, and the type used in the residual.
+    //! These aliases are used in both problems to differentiate.
+    using InitialValues = Dune::FieldVector<Scalar, ModelTraits::numEq()>;
+    using Sources = Dune::FieldVector<Scalar, ModelTraits::numEq()>;
+    using DirichletValues = Dune::FieldVector<Scalar, ModelTraits::numEq()>;
+    using BoundaryFluxes = Dune::FieldVector<Scalar, ModelTraits::numEq()>;
 
     //! Export the boundary types.
     using BoundaryTypes = Dumux::BoundaryTypes<ModelTraits::numEq()>;
-
-    //! Export the NumEqVector type for setting boundary conditions.
-    using NumEqVector = typename Traits::NumEqVector;
-
-    //! Export the PrimaryVariables type for setting boundary conditions.
-    using PrimaryVariables = NumEqVector;
 
     //! this problem is used for the mass balance model
     static constexpr bool isMomentumProblem() { return false; }

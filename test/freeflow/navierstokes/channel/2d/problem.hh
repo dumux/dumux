@@ -28,7 +28,6 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
-#include <dumux/common/numeqvector.hh>
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
@@ -58,8 +57,10 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
-    using PrimaryVariables = typename ParentType::PrimaryVariables;
-    using NumEqVector = typename ParentType::NumEqVector;
+    using InitialValues = typename ParentType::InitialValues;
+    using Sources = typename ParentType::Sources;
+    using DirichletValues = typename ParentType::DirichletValues;
+    using BoundaryFluxes = typename ParentType::BoundaryFluxes;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -155,10 +156,10 @@ public:
      *
      * \param globalPos The center of the finite volume which ought to be set.
      */
-    PrimaryVariables dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
+    DirichletValues dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
     {
         const auto& globalPos = scvf.ipGlobal();
-        PrimaryVariables values = initialAtPos(globalPos);
+        DirichletValues values = initialAtPos(globalPos);
 
         if constexpr (ParentType::isMomentumProblem())
         {
@@ -190,13 +191,13 @@ public:
      * \param scvf The boundary sub control volume face
      */
     template<class ElementVolumeVariables, class ElementFluxVariablesCache>
-    NumEqVector neumann(const Element& element,
-                        const FVElementGeometry& fvGeometry,
-                        const ElementVolumeVariables& elemVolVars,
-                        const ElementFluxVariablesCache& elemFluxVarsCache,
-                        const SubControlVolumeFace& scvf) const
+    BoundaryFluxes neumann(const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const ElementVolumeVariables& elemVolVars,
+                           const ElementFluxVariablesCache& elemFluxVarsCache,
+                           const SubControlVolumeFace& scvf) const
     {
-        NumEqVector values(0.0);
+        BoundaryFluxes values(0.0);
 
         if constexpr (ParentType::isMomentumProblem())
         {
@@ -216,7 +217,7 @@ public:
                 shearRate[1][0] = shearRate[0][1];
 
                 const auto normal = scvf.unitOuterNormal();
-                NumEqVector normalGradient(0.0);
+                BoundaryFluxes normalGradient(0.0);
                 shearRate.mv(normal, normalGradient);
                 values -= this->effectiveViscosity(element, fvGeometry, scvf)*normalGradient;
             }
@@ -264,9 +265,9 @@ public:
      *
      * \param globalPos The global position
      */
-    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos, Scalar time = 0.0) const
+    DirichletValues analyticalSolution(const GlobalPosition& globalPos, Scalar time = 0.0) const
     {
-        PrimaryVariables values;
+        DirichletValues values;
 
         if constexpr (ParentType::isMomentumProblem())
         {
@@ -298,9 +299,9 @@ public:
      *
      * \param globalPos The global position
      */
-    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
+    InitialValues initialAtPos(const GlobalPosition& globalPos) const
     {
-        PrimaryVariables values;
+        InitialValues values;
 
         if constexpr (ParentType::isMomentumProblem())
         {

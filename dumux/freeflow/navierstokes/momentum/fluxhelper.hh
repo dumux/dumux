@@ -63,10 +63,10 @@ struct NavierStokesMomentumBoundaryFluxHelper
     {
         // TODO density upwinding?
         static_assert(FVElementGeometry::GridGeometry::discMethod == DiscretizationMethods::fcstaggered);
-        using NumEqVector = typename Problem::Traits::NumEqVector;
+        using MomentumFlux = typename Problem::MomentumFluxType;
         constexpr std::size_t dim = static_cast<std::size_t>(FVElementGeometry::GridGeometry::GridView::dimension);
         static_assert(
-            NumEqVector::size() == dim,
+            MomentumFlux::size() == dim,
             "Expects momentum flux to have as many entries as dimensions."
         );
 
@@ -79,7 +79,7 @@ struct NavierStokesMomentumBoundaryFluxHelper
 
         if (scvf.isFrontal())
         {
-            NumEqVector flux(0.0);
+            MomentumFlux flux(0.0);
 
             // pressure contribution
             flux[scvf.normalAxis()] = (pressure - problem.referencePressure(element, fvGeometry, scvf)) * scvf.directionSign();
@@ -97,7 +97,7 @@ struct NavierStokesMomentumBoundaryFluxHelper
         {
             // if no zero velocity gradient is desired the lateral flux is zero
             if (!zeroNormalVelocityGradient)
-                return NumEqVector(0.0);
+                return MomentumFlux(0.0);
 
             // otherwise, make sure the flow does not diverge by accounting for the off-diagonal entries of the stress tensor
 
@@ -107,7 +107,7 @@ struct NavierStokesMomentumBoundaryFluxHelper
                 return slipVelocityMomentumFlux(problem, fvGeometry, scvf, elemVolVars, elemFluxVarsCache);
 
             // viscous terms
-            NumEqVector flux(0.0);
+            MomentumFlux flux(0.0);
             const Scalar mu = problem.effectiveViscosity(element, fvGeometry, scvf);
 
             // lateral face normal to boundary (integration point touches boundary)
@@ -216,14 +216,14 @@ struct NavierStokesMomentumBoundaryFluxHelper
                                          const TangentialVelocityGradient& tangentialVelocityGradient = TangentialVelocityGradient(0.0))
     {
         static_assert(FVElementGeometry::GridGeometry::discMethod == DiscretizationMethods::fcstaggered);
-        using NumEqVector = typename Problem::Traits::NumEqVector;
+        using MomentumFlux = typename Problem::MomentumFluxType;
         constexpr std::size_t dim = static_cast<std::size_t>(FVElementGeometry::GridGeometry::GridView::dimension);
         static_assert(
-            NumEqVector::size() == dim,
+            MomentumFlux::size() == dim,
             "Expects momentum flux to have as many entries as dimensions."
         );
 
-        NumEqVector flux(0.0);
+        MomentumFlux flux(0.0);
 
         // slip velocity momentum contribution only makes sense for lateral scvfs
         if (scvf.isFrontal())
