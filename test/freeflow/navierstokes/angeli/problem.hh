@@ -30,7 +30,6 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
-#include <dumux/common/numeqvector.hh>
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
@@ -55,8 +54,10 @@ class AngeliTestProblem : public NavierStokesProblem<TypeTag>
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-    using NumEqVector = typename ParentType::NumEqVector;
-    using PrimaryVariables = typename ParentType::PrimaryVariables;
+    using InitialValues = typename ParentType::InitialValues;
+    using Sources = typename ParentType::Sources;
+    using DirichletValues = typename ParentType::DirichletValues;
+    using BoundaryFluxes = typename ParentType::BoundaryFluxes;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
@@ -129,9 +130,9 @@ public:
      * \param element The finite element
      * \param scv The sub-control volume
      */
-    std::bitset<PrimaryVariables::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
+    std::bitset<DirichletValues::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
     {
-        std::bitset<PrimaryVariables::dimension> values;
+        std::bitset<DirichletValues::dimension> values;
 
         // We don't need internal Dirichlet conditions if a Neumann BC is set for the momentum balance (which accounts for the pressure).
         // If only Dirichlet BCs are set for the momentum balance, fix the pressure at some cells such that the solution is fully defined.
@@ -150,7 +151,7 @@ public:
      * \param element The finite element
      * \param scv The sub-control volume
      */
-    PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
+    DirichletValues internalDirichlet(const Element& element, const SubControlVolume& scv) const
     { return analyticalSolution(scv.center(), time_); }
 
 
@@ -164,7 +165,7 @@ public:
      *
      * Concerning the usage of averagedVelocity_, see the explanation of the initial function.
      */
-    PrimaryVariables dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
+    DirichletValues dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
     {
         if (ParentType::isMomentumProblem() && interpolateExactVelocity_)
             return velocityDirichlet_(scvf);
@@ -182,13 +183,13 @@ public:
      * \param scvf The boundary sub control volume face
      */
     template<class ElementVolumeVariables, class ElementFluxVariablesCache>
-    NumEqVector neumann(const Element& element,
-                        const FVElementGeometry& fvGeometry,
-                        const ElementVolumeVariables& elemVolVars,
-                        const ElementFluxVariablesCache& elemFluxVarsCache,
-                        const SubControlVolumeFace& scvf) const
+    BoundaryFluxes neumann(const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const ElementVolumeVariables& elemVolVars,
+                           const ElementFluxVariablesCache& elemFluxVarsCache,
+                           const SubControlVolumeFace& scvf) const
     {
-        NumEqVector values(0.0);
+        BoundaryFluxes values(0.0);
 
         if constexpr (!ParentType::isMomentumProblem())
         {
@@ -223,12 +224,12 @@ public:
      * \param globalPos The global position
      * \param time The current simulation time
      */
-    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos, Scalar time) const
+    DirichletValues analyticalSolution(const GlobalPosition& globalPos, Scalar time) const
     {
         const Scalar x = globalPos[0];
         const Scalar y = globalPos[1];
 
-        PrimaryVariables values;
+        DirichletValues values;
         using std::exp;
         using std::sin;
         using std::cos;
@@ -254,7 +255,7 @@ public:
     /*!
      * \brief Evaluates the initial value for a control volume (velocity)
      */
-    PrimaryVariables initial(const SubControlVolume& scv) const
+    InitialValues initial(const SubControlVolume& scv) const
     {
         // We can either evaluate the analytical solution point-wise at the
         // momentum balance integration points or use an averaged velocity.
@@ -285,7 +286,7 @@ public:
     /*!
      * \brief Evaluates the initial value for an element (pressure)
      */
-    PrimaryVariables initial(const Element& element) const
+    InitialValues initial(const Element& element) const
     {
         return analyticalSolution(element.geometry().center(), 0.0);
     }
@@ -302,9 +303,9 @@ public:
 
 private:
     template<class Entity>
-    PrimaryVariables velocityDirichlet_(const Entity& entity) const
+    DirichletValues velocityDirichlet_(const Entity& entity) const
     {
-        PrimaryVariables priVars(0.0);
+        DirichletValues priVars(0.0);
         const auto geo = entity.geometry();
         const auto& quad = Dune::QuadratureRules<Scalar, decltype(geo)::mydimension>::rule(geo.type(), 3);
         for (auto&& qp : quad)

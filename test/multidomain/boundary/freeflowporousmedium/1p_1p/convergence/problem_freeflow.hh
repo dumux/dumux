@@ -51,8 +51,10 @@ class FreeFlowSubProblem : public NavierStokesProblem<TypeTag>
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using PrimaryVariables = typename ParentType::PrimaryVariables;
-    using NumEqVector = typename ParentType::NumEqVector;
+    using InitialValues = typename ParentType::InitialValues;
+    using Sources = typename ParentType::Sources;
+    using DirichletValues = typename ParentType::DirichletValues;
+    using BoundaryFluxes = typename ParentType::BoundaryFluxes;
     using BoundaryTypes = typename ParentType::BoundaryTypes;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
@@ -153,7 +155,7 @@ public:
     /*!
      * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      */
-    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
+    DirichletValues dirichletAtPos(const GlobalPosition& globalPos) const
     { return analyticalSolution(globalPos); }
 
     /*!
@@ -166,13 +168,13 @@ public:
      * \param scvf The boundary sub control volume face
      */
     template<class ElementVolumeVariables, class ElementFluxVariablesCache>
-    NumEqVector neumann(const Element& element,
-                        const FVElementGeometry& fvGeometry,
-                        const ElementVolumeVariables& elemVolVars,
-                        const ElementFluxVariablesCache& elemFluxVarsCache,
-                        const SubControlVolumeFace& scvf) const
+    BoundaryFluxes neumann(const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const ElementVolumeVariables& elemVolVars,
+                           const ElementFluxVariablesCache& elemFluxVarsCache,
+                           const SubControlVolumeFace& scvf) const
     {
-        NumEqVector values(0.0);
+        BoundaryFluxes values(0.0);
         const auto& globalPos = scvf.ipGlobal();
         using FluxHelper = NavierStokesMomentumBoundaryFluxHelper;
 
@@ -260,9 +262,9 @@ public:
      * \brief Returns the sources within the domain.
      * \param globalPos The global position
      */
-    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
+    Sources sourceAtPos(const GlobalPosition &globalPos) const
     {
-        const auto select = [&](const auto& rhs) -> NumEqVector {
+        const auto select = [&](const auto& rhs) -> Sources {
             if constexpr (ParentType::isMomentumProblem())
                 return { rhs[0], rhs[1] };
             else
@@ -289,8 +291,8 @@ public:
      * \brief Evaluates the initial value for a control volume.
      * \param globalPos The global position
      */
-    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
-    { return PrimaryVariables(0.0); }
+    InitialValues initialAtPos(const GlobalPosition& globalPos) const
+    { return InitialValues(0.0); }
 
     /*!
      * \brief Returns the intrinsic permeability of required as input parameter
@@ -334,7 +336,7 @@ public:
      * \param globalPos The global position
      * Returns analytical solution depending on the type of sub-problem
      */
-    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos, Scalar time = 0.0) const
+    DirichletValues analyticalSolution(const GlobalPosition& globalPos, Scalar time = 0.0) const
     {
         using namespace Solution::DarcyStokes;
         const auto sol = fullAnalyticalSolution(globalPos);

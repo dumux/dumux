@@ -48,9 +48,11 @@ class DoneaTestProblem : public NavierStokesProblem<TypeTag>
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using NumEqVector = typename ParentType::NumEqVector;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-    using PrimaryVariables = typename ParentType::PrimaryVariables;
+    using InitialValues = typename ParentType::InitialValues;
+    using Sources = typename ParentType::Sources;
+    using DirichletValues = typename ParentType::DirichletValues;
+    using BoundaryFluxes = typename ParentType::BoundaryFluxes;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
@@ -87,11 +89,11 @@ public:
      *
      * \param globalPos The global position
      */
-    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
+    Sources sourceAtPos(const GlobalPosition &globalPos) const
     {
         if constexpr (ParentType::isMomentumProblem())
         {
-            NumEqVector source;
+            Sources source;
             const Scalar x = globalPos[0];
             const Scalar y = globalPos[1];
 
@@ -101,7 +103,7 @@ public:
         }
         else
         {
-            return NumEqVector(0.0);
+            return Sources(0.0);
         }
     }
     // \}
@@ -149,10 +151,8 @@ public:
      *
      * \param globalPos The global position
      */
-    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
-    {
-        return analyticalSolution(globalPos);
-    }
+    DirichletValues dirichletAtPos(const GlobalPosition& globalPos) const
+    { return analyticalSolution(globalPos); }
 
     /*!
      * \brief Evaluates the boundary conditions for a Neumann control volume.
@@ -164,13 +164,13 @@ public:
      * \param scvf The boundary sub control volume face
      */
     template<class ElementVolumeVariables, class ElementFluxVariablesCache>
-    NumEqVector neumann(const Element& element,
-                        const FVElementGeometry& fvGeometry,
-                        const ElementVolumeVariables& elemVolVars,
-                        const ElementFluxVariablesCache& elemFluxVarsCache,
-                        const SubControlVolumeFace& scvf) const
+    BoundaryFluxes neumann(const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const ElementVolumeVariables& elemVolVars,
+                           const ElementFluxVariablesCache& elemFluxVarsCache,
+                           const SubControlVolumeFace& scvf) const
     {
-        NumEqVector values(0.0);
+        BoundaryFluxes values(0.0);
 
         if constexpr (ParentType::isMomentumProblem())
         {
@@ -200,9 +200,9 @@ public:
      *
      * \param globalPos The global position
      */
-    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos, Scalar time = 0.0) const
+    DirichletValues analyticalSolution(const GlobalPosition& globalPos, Scalar time = 0.0) const
     {
-        PrimaryVariables values;
+        DirichletValues values;
 
         if constexpr (ParentType::isMomentumProblem())
         {
@@ -248,9 +248,9 @@ public:
      * \param element The finite element
      * \param scv The sub-control volume
      */
-    std::bitset<PrimaryVariables::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
+    std::bitset<DirichletValues::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
     {
-        std::bitset<PrimaryVariables::dimension> values;
+        std::bitset<DirichletValues::dimension> values;
 
         if (!useNeumann_)
         {
@@ -280,8 +280,8 @@ public:
      * \param element The finite element
      * \param scv The sub-control volume
      */
-    PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
-    { return PrimaryVariables(analyticalSolution(scv.center())[Indices::pressureIdx]); }
+    DirichletValues internalDirichlet(const Element& element, const SubControlVolume& scv) const
+    { return DirichletValues(analyticalSolution(scv.center())[Indices::pressureIdx]); }
 
 private:
     Scalar p_(Scalar x) const

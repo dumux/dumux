@@ -48,8 +48,10 @@ class PeriodicTestProblem : public NavierStokesProblem<TypeTag>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using NumEqVector = typename ParentType::NumEqVector;
-    using PrimaryVariables = typename ParentType::PrimaryVariables;
+    using InitialValues = typename ParentType::InitialValues;
+    using Sources = typename ParentType::Sources;
+    using DirichletValues = typename ParentType::DirichletValues;
+    using BoundaryFluxes = typename ParentType::BoundaryFluxes;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
@@ -88,18 +90,16 @@ public:
      *
      * \param globalPos The global position
      */
-    PrimaryVariables dirichletAtPos(const GlobalPosition & globalPos) const
-    {
-        return PrimaryVariables(0.0);
-    }
+    DirichletValues dirichletAtPos(const GlobalPosition & globalPos) const
+    { return DirichletValues(0.0); }
 
     template<class ElementVolumeVariables>
-    NumEqVector source(const Element& element,
-                       const FVElementGeometry& fvGeometry,
-                       const ElementVolumeVariables& elemVolVars,
-                       const SubControlVolume& scv) const
+    Sources source(const Element& element,
+                   const FVElementGeometry& fvGeometry,
+                   const ElementVolumeVariables& elemVolVars,
+                   const SubControlVolume& scv) const
     {
-        NumEqVector source;
+        Sources source;
 
         if constexpr (ParentType::isMomentumProblem())
         {
@@ -111,37 +111,6 @@ public:
         }
 
         return source;
-    }
-
-    /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
-     *
-     * This is the method for the case where the Neumann condition is
-     * potentially solution dependent
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param elemVolVars All volume variables for the element
-     * \param elemFluxVarsCache Flux variables caches for all faces in stencil
-     * \param scvf The sub control volume face
-     *
-     * Negative values mean influx.
-     * E.g. for the mass balance that would be the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
-     *
-     * TODO: We actually just want to use this from the base problem. However, the staggered
-     * problem inherits from FVProblem which uses a different (the default) NumEqVector.
-     * Therefore not overloading this would return a vector of wrong size.
-     */
-    template<class ElementVolumeVariables, class ElementFluxVariablesCache>
-    NumEqVector neumann(const Element& element,
-                        const FVElementGeometry& fvGeometry,
-                        const ElementVolumeVariables& elemVolVars,
-                        const ElementFluxVariablesCache& elemFluxVarsCache,
-                        const SubControlVolumeFace& scvf) const
-    {
-        // forward it to the interface with only the global position
-        return NumEqVector(0.0);
     }
 
     // \}
@@ -165,9 +134,9 @@ public:
      * \param element The finite element
      * \param scv The sub-control volume
      */
-    std::bitset<PrimaryVariables::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
+    std::bitset<DirichletValues::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
     {
-        std::bitset<PrimaryVariables::dimension> values;
+        std::bitset<DirichletValues::dimension> values;
 
         for (const auto& intersection : intersections(this->gridGeometry().gridView(), element))
         {
@@ -184,9 +153,9 @@ public:
      * \param element The finite element
      * \param scv The sub-control volume
      */
-    PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
+    DirichletValues internalDirichlet(const Element& element, const SubControlVolume& scv) const
     {
-        return PrimaryVariables(1.0);
+        return DirichletValues(1.0);
     }
 
 private:

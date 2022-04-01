@@ -22,7 +22,6 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
-#include <dumux/common/numeqvector.hh>
 
 #include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
@@ -47,8 +46,10 @@ class FreeFlowPipeProblem : public NavierStokesProblem<TypeTag>
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using PrimaryVariables = typename ParentType::PrimaryVariables;
-    using NumEqVector = typename ParentType::NumEqVector;
+    using InitialValues = typename ParentType::InitialValues;
+    using Sources = typename ParentType::Sources;
+    using DirichletValues = typename ParentType::DirichletValues;
+    using BoundaryFluxes = typename ParentType::BoundaryFluxes;
     using BoundaryTypes = typename ParentType::BoundaryTypes;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
@@ -114,13 +115,13 @@ public:
      * \param scvf The boundary sub control volume face
      */
     template<class ElementVolumeVariables, class ElementFluxVariablesCache>
-    NumEqVector neumann(const Element& element,
-                        const FVElementGeometry& fvGeometry,
-                        const ElementVolumeVariables& elemVolVars,
-                        const ElementFluxVariablesCache& elemFluxVarsCache,
-                        const SubControlVolumeFace& scvf) const
+    BoundaryFluxes neumann(const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const ElementVolumeVariables& elemVolVars,
+                           const ElementFluxVariablesCache& elemFluxVarsCache,
+                           const SubControlVolumeFace& scvf) const
     {
-        NumEqVector values(0.0);
+        BoundaryFluxes values(0.0);
         const auto& globalPos = scvf.ipGlobal();
 
         if constexpr (ParentType::isMomentumProblem())
@@ -145,9 +146,9 @@ public:
       *
       * \param globalPos The global position
       */
-    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
+    InitialValues initialAtPos(const GlobalPosition& globalPos) const
     {
-        PrimaryVariables values(0.0);
+        InitialValues values(0.0);
         if constexpr (ParentType::isMomentumProblem())
             return values;
         else
@@ -156,12 +157,12 @@ public:
         return values;
     }
 
-    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
+    DirichletValues dirichletAtPos(const GlobalPosition& globalPos) const
     { return analyticalSolution(globalPos); }
 
-    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos, Scalar time = 0.0) const
+    DirichletValues analyticalSolution(const GlobalPosition& globalPos, Scalar time = 0.0) const
     {
-        PrimaryVariables values(0.0);
+        DirichletValues values(0.0);
 
         // paraboloid velocity profile
         if constexpr (ParentType::isMomentumProblem())

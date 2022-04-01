@@ -26,7 +26,6 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
-#include <dumux/common/numeqvector.hh>
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
@@ -49,8 +48,10 @@ class SincosTestProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using NumEqVector = typename ParentType::NumEqVector;
-    using PrimaryVariables = typename ParentType::PrimaryVariables;
+    using InitialValues = typename ParentType::InitialValues;
+    using Sources = typename ParentType::Sources;
+    using DirichletValues = typename ParentType::DirichletValues;
+    using BoundaryFluxes = typename ParentType::BoundaryFluxes;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
@@ -81,9 +82,9 @@ public:
      *
      * \param globalPos The global position
      */
-    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
+    Sources sourceAtPos(const GlobalPosition &globalPos) const
     {
-        NumEqVector source(0.0);
+        Sources source(0.0);
         if constexpr (ParentType::isMomentumProblem())
         {
             const Scalar x = globalPos[0];
@@ -162,10 +163,10 @@ public:
      * \param element The finite element
      * \param scv The sub-control volume
      */
-    std::bitset<PrimaryVariables::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
+    std::bitset<DirichletValues::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
     {
         // set fixed pressure in one cell
-        std::bitset<PrimaryVariables::dimension> values;
+        std::bitset<DirichletValues::dimension> values;
 
         if (!useNeumann_ && scv.dofIndex() == 0)
             values.set(Indices::pressureIdx);
@@ -178,15 +179,15 @@ public:
      * \param element The finite element
      * \param scv The sub-control volume
      */
-    PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
-    { return PrimaryVariables(analyticalSolution(scv.center())[Indices::pressureIdx]); }
+    DirichletValues internalDirichlet(const Element& element, const SubControlVolume& scv) const
+    { return DirichletValues(analyticalSolution(scv.center())[Indices::pressureIdx]); }
 
     /*!
      * \brief Returns Dirichlet boundary values at a given position.
      *
      * \param globalPos The global position
      */
-    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
+    DirichletValues dirichletAtPos(const GlobalPosition& globalPos) const
     {
         // use the values of the analytical solution
         return analyticalSolution(globalPos, time_);
@@ -202,13 +203,13 @@ public:
      * \param scvf The boundary sub control volume face
      */
     template<class ElementVolumeVariables, class ElementFluxVariablesCache>
-    NumEqVector neumann(const Element& element,
-                        const FVElementGeometry& fvGeometry,
-                        const ElementVolumeVariables& elemVolVars,
-                        const ElementFluxVariablesCache& elemFluxVarsCache,
-                        const SubControlVolumeFace& scvf) const
+    BoundaryFluxes neumann(const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const ElementVolumeVariables& elemVolVars,
+                           const ElementFluxVariablesCache& elemFluxVarsCache,
+                           const SubControlVolumeFace& scvf) const
     {
-        NumEqVector values(0.0);
+        BoundaryFluxes values(0.0);
 
         if constexpr (ParentType::isMomentumProblem())
         {
@@ -250,12 +251,12 @@ public:
      * \param globalPos The global position
      * \param time The current simulation time
      */
-    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos, const Scalar time) const
+    DirichletValues analyticalSolution(const GlobalPosition& globalPos, const Scalar time) const
     {
         const Scalar x = globalPos[0];
         const Scalar y = globalPos[1];
         const Scalar t = time;
-        PrimaryVariables values;
+        DirichletValues values;
 
         if constexpr (ParentType::isMomentumProblem())
         {
@@ -280,10 +281,10 @@ public:
      *
      * \param globalPos The global position
      */
-    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
+    InitialValues initialAtPos(const GlobalPosition &globalPos) const
     {
         if (isStationary_)
-            return PrimaryVariables(0.0);
+            return InitialValues(0.0);
         else
             return analyticalSolution(globalPos, 0.0);
     }
@@ -294,7 +295,7 @@ public:
      *
      * \param globalPos The global position
      */
-    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
+    DirichletValues analyticalSolution(const GlobalPosition& globalPos) const
     {
         return analyticalSolution(globalPos, time_);
     }

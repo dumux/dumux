@@ -30,7 +30,6 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/numeqvector.hh>
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
 
@@ -47,8 +46,10 @@ class NavierStokesAnalyticProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
+    using InitialValues = typename ParentType::InitialValues;
+    using Sources = typename ParentType::Sources;
+    using DirichletValues = typename ParentType::DirichletValues;
+    using BoundaryFluxes = typename ParentType::BoundaryFluxes;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -78,9 +79,9 @@ public:
      *
      * \param globalPos The global position
      */
-    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
+    Sources sourceAtPos(const GlobalPosition &globalPos) const
     {
-        NumEqVector source(0.0);
+        Sources source(0.0);
 
         if constexpr (!ParentType::isMomentumProblem())
         {
@@ -154,7 +155,7 @@ public:
      *
      * \param globalPos The global position
      */
-    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
+    DirichletValues dirichletAtPos(const GlobalPosition& globalPos) const
     {
         // use the values of the analytical solution
         return analyticalSolution(globalPos);
@@ -166,9 +167,9 @@ public:
      * \param globalPos The global position
      * \param time A parameter for consistent signatures. It is ignored here as this is a stationary test.
      */
-    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos, Scalar time = 0.0) const
+    DirichletValues analyticalSolution(const GlobalPosition& globalPos, Scalar time = 0.0) const
     {
-        PrimaryVariables values;
+        DirichletValues values;
 
         if constexpr (ParentType::isMomentumProblem())
             values[Indices::velocityXIdx] = v(globalPos);
@@ -243,9 +244,9 @@ public:
      * \param element The finite element
      * \param scv The sub-control volume
      */
-    std::bitset<PrimaryVariables::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
+    std::bitset<DirichletValues::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
     {
-        std::bitset<PrimaryVariables::dimension> values;
+        std::bitset<DirichletValues::dimension> values;
 
         auto fvGeometry = localView(this->gridGeometry());
         fvGeometry.bindElement(element);
@@ -271,8 +272,8 @@ public:
      * \param element The finite element
      * \param scv The sub-control volume
      */
-    PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
-    { return PrimaryVariables(analyticalSolution(scv.center())[Indices::pressureIdx]); }
+    DirichletValues internalDirichlet(const Element& element, const SubControlVolume& scv) const
+    { return DirichletValues(analyticalSolution(scv.center())[Indices::pressureIdx]); }
 
     // \}
 
@@ -286,7 +287,7 @@ public:
      *
      * \param globalPos The global position
      */
-    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
+    InitialValues initialAtPos(const GlobalPosition& globalPos) const
     {
         return analyticalSolution(globalPos);
     }
