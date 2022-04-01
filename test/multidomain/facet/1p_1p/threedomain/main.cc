@@ -143,8 +143,6 @@ int main(int argc, char** argv)
     auto couplingManager = std::make_shared<CouplingManager>();
 
     // the problems (boundary conditions)
-    MultiDomainFVProblem<Traits> problem;
-
     using BulkProblem = MultiDomainFVProblem<Traits>::template Type<bulkId>;
     using FacetProblem = MultiDomainFVProblem<Traits>::template Type<facetId>;
     using EdgeProblem = MultiDomainFVProblem<Traits>::template Type<edgeId>;
@@ -153,9 +151,11 @@ int main(int argc, char** argv)
     auto facetSpatialParams = std::make_shared<typename FacetProblem::SpatialParams>(gridGeometry.get(facetId), "Facet");
     auto edgeSpatialParams = std::make_shared<typename EdgeProblem::SpatialParams>(gridGeometry.get(edgeId), "Edge");
 
-    problem.set(std::make_shared<BulkProblem>(gridGeometry.get(bulkId), bulkSpatialParams, couplingManager, "Bulk"), bulkId);
-    problem.set(std::make_shared<FacetProblem>(gridGeometry.get(facetId), facetSpatialParams, couplingManager, "Facet"), facetId);
-    problem.set(std::make_shared<EdgeProblem>(gridGeometry.get(edgeId), edgeSpatialParams, couplingManager, "Edge"), edgeId);
+    auto bulkProblem = std::make_shared<BulkProblem>(gridGeometry.get(bulkId), bulkSpatialParams, couplingManager, "Bulk");
+    auto facetProblem = std::make_shared<FacetProblem>(gridGeometry.get(facetId), facetSpatialParams, couplingManager, "Facet");
+    auto edgeProblem = std::make_shared<EdgeProblem>(gridGeometry.get(edgeId), edgeSpatialParams, couplingManager, "Edge");
+
+    MultiDomainFVProblem<Traits> problem(std::make_tuple(bulkProblem, facetProblem, edgeProblem));
 
     // the solution vector
     typename Traits::SolutionVector x;
@@ -171,18 +171,18 @@ int main(int argc, char** argv)
 
     // the grid variables
     using GridVariables = MultiDomainFVGridVariables<Traits>;
-    GridVariables gridVars(gridGeometry.getTuple(), problem.getTuple());
+    GridVariables gridVars(gridGeometry.asTuple(), problem.asTuple());
     gridVars.init(x);
 
     // intialize the vtk output module
     const std::array<std::string, 3> vtkOutputNames{{problem[bulkId].name(), problem[facetId].name(), problem[edgeId].name()}};
-    MultiDomainVtkOutputModule<Traits> vtkWriter(gridVars.getTuple(), x, vtkOutputNames);
+    MultiDomainVtkOutputModule<Traits> vtkWriter(gridVars.asTuple(), x, vtkOutputNames);
     vtkWriter.initDefaultOutputFields();
     vtkWriter.write(0.0);
 
     // the assembler
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric, /*implicit?*/true>;
-    auto assembler = std::make_shared<Assembler>( problem.getTuple(), gridGeometry.getTuple(), gridVars.getTuple(), couplingManager);
+    auto assembler = std::make_shared<Assembler>( problem.asTuple(), gridGeometry.asTuple(), gridVars.asTuple(), couplingManager);
 
     // the linear solver
     using LinearSolver = ILU0BiCGSTABBackend;
