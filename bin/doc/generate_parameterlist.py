@@ -11,6 +11,64 @@ import json
 import logging
 import sys
 
+
+class CheckExistAction(argparse.Action):
+    """check if the input file exists"""
+
+    def __call__(self, parser, namespace, values, option_strings=None):
+        if os.path.isfile(values):
+            setattr(namespace, self.dest, values)
+            setattr(namespace, "hasInput", True)
+        else:
+            parser.error(f"File {values} does not exist!")
+
+
+argumentParser = argparse.ArgumentParser(
+    description="""
+    This script generates parameters list from header files.
+    The header files "test" and "examples" folders are not included.
+    ----------------------------------------------------------------
+    If input file is given, the descriptions will be copied from the input.
+    Multientry of parameters are allowed in input files.
+    """,
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+)
+argumentParser.add_argument(
+    "--root",
+    help="root path of Dumux",
+    metavar="rootpath",
+    default=os.path.abspath(os.path.join(os.path.abspath(__file__), "../../../")),
+)
+argumentParser.add_argument(
+    "--input",
+    help="json file of given paratemers",
+    action=CheckExistAction,
+    metavar="input",
+    dest="inputFile",
+    default=os.path.abspath(
+        os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "../../doc/doxygen/extradoc/parameters.json"
+        )
+    ),
+)
+argumentParser.add_argument(
+    "--output",
+    help="relative path (to the root path) of the output file",
+    metavar="output",
+    default="doc/doxygen/extradoc/parameterlist.txt",
+)
+argumentParser.add_argument(
+    "--known-warnings",
+    help="relative path (to the root path) of the output file",
+    metavar="warningInput",
+    dest="warningInput",
+    default=os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "../../doc/doxygen/extradoc/known_parameter_warnings.json",
+    ),
+)
+cmdArgs = vars(argumentParser.parse_args())
+
 # setup a logger
 logger = logging.getLogger(__name__)
 LOG_LEVEL = logging.INFO
@@ -123,6 +181,10 @@ def extractParameterName(line):
     }
 
 
+with open(cmdArgs["warningInput"]) as f:
+    warningDict = json.load(f)
+
+
 def getParameterListFromFile(fileName):
     """extract all parameters from a given file"""
     parameterList = []
@@ -134,68 +196,29 @@ def getParameterListFromFile(fileName):
                 if param:
                     parameterList.append(param)
             except IOError as exc:
-                errors[lineIdx] = {"line": line.strip(), "message": exc}
+                errors[lineIdx + 1] = {"line": line.strip(), "message": exc}
 
     # print encountered errors
     if errors:
-        logger.warning(
-            f"{len(errors)} parameter(s) in file {fileName}"
-            " could not be retrieved automatically."
-            " Please check them..."
-        )
+        # remove the known warnings
+        for lineIdx in list(errors.keys()):
+            searchKey = os.path.basename(fileName) + "." + str(lineIdx)
+            if searchKey in warningDict:
+                if errors[lineIdx]["line"] == warningDict[searchKey]["text"]:
+                    errors.pop(lineIdx)
+
+        if len(errors) > 0:
+            logger.warning(
+                f"{len(errors)} parameter(s) in file {fileName}"
+                " could not be retrieved automatically."
+                " Please check them..."
+            )
         for lineIdx, errorInfo in errors.items():
             logger.warning(f"\t-> line {lineIdx}: {errorInfo['line']}")
             logger.warning(f"\t\t-> error message: {errorInfo['message']}")
 
     return parameterList
 
-
-class CheckExistAction(argparse.Action):
-    """check if the input file exists"""
-
-    def __call__(self, parser, namespace, values, option_strings=None):
-        if os.path.isfile(values):
-            setattr(namespace, self.dest, values)
-            setattr(namespace, "hasInput", True)
-        else:
-            parser.error(f"File {values} does not exist!")
-
-
-argumentParser = argparse.ArgumentParser(
-    description="""
-    This script generates parameters list from header files.
-    The header files "test" and "examples" folders are not included.
-    ----------------------------------------------------------------
-    If input file is given, the descriptions will be copied from the input.
-    Multientry of parameters are allowed in input files.
-    """,
-    formatter_class=argparse.RawDescriptionHelpFormatter,
-)
-argumentParser.add_argument(
-    "--root",
-    help="root path of Dumux",
-    metavar="rootpath",
-    default=os.path.abspath(os.path.join(os.path.abspath(__file__), "../../../")),
-)
-argumentParser.add_argument(
-    "--input",
-    help="json file of given paratemers",
-    action=CheckExistAction,
-    metavar="input",
-    dest="inputFile",
-    default=os.path.abspath(
-        os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "../../doc/doxygen/extradoc/parameters.json"
-        )
-    ),
-)
-argumentParser.add_argument(
-    "--output",
-    help="relative path (to the root path) of the output file",
-    metavar="output",
-    default="doc/doxygen/extradoc/parameterlist.txt",
-)
-cmdArgs = vars(argumentParser.parse_args())
 
 # search all *.hh files for parameters
 logger.info("Searching for parameters in the source file tree")
@@ -234,28 +257,24 @@ missingParameters = [key for key in inputDict if key.replace("-.", "") not in pa
 
 for missingKey in missingParameters:
 
-    parameter = inputDict[missingKey]["group"] + "." + inputDict[missingKey]["parameter"]
+    MODE = inputDict[missingKey].get("mode")
 
-    hasMode = "mode" in inputDict[missingKey].keys()
-    MODE = ""
-    if hasMode:
-        MODE = inputDict[missingKey]["mode"]
     if MODE == "manual":
         key = missingKey.replace("-.", "")
         parameterDict[key] = inputDict[missingKey]
-        parameterDict[key]["defaultValue"] = inputDict[missingKey]["default"]
+        parameterDict[key]["defaultValue"] = inputDict[missingKey]["defaultValue"]
         parameterDict[key]["paramType"] = inputDict[missingKey]["type"]
-        parameterDict[key]["paramName"] = parameter
+        parameterDict[key]["paramName"] = key
 
         logger.info(
-            f"Added parameter '{parameter}' to the parameter list. The parameter"
+            f"Added parameter '{key}' to the parameter list. The parameter"
             " could not be extracted from code"
             f" but has been explicitly added in {cmdArgs['inputFile']}"
         )
 
     else:
         logger.error(
-            f"Found parameter '{parameter}' in {cmdArgs['inputFile']}"
+            f"Found parameter '{key}' in {cmdArgs['inputFile']}"
             f" which has not been found in the code "
             "--> Set mode to 'manual' in the input file if it is to be kept otherwise delete it!"
         )
@@ -277,88 +296,91 @@ for key in parameterDict:
     # otherwise use the first entry that is not None
     # and write the others in log for possible manual editing
     # determin multiple entries in input
-    keyInput = group + "." + parameter
-    NUM_ENTRIES = 0
-    if keyInput in inputDict:
+    paramName = group + "." + parameter
+    if paramName in inputDict:
         NUM_ENTRIES = max(
-            len(inputDict[keyInput]["default"]),
-            len(inputDict[keyInput]["type"]),
-            len(inputDict[keyInput]["explanation"]),
+            len(value)
+            for key, value in inputDict[paramName].items()
+            if key in ["defaultValue", "type", "explanation"]
         )
+    else:
+        logger.error(f"Missing input for parameter '{paramName}' in {cmdArgs['inputFile']}.")
+        continue
+
+    hasDVInput = "defaultValue" in inputDict[paramName]
+    hasPTInput = "type" in inputDict[paramName]
 
     parameterTypeName = entry["paramType"][0]
-    defaultValue = next((e for e in entry["defaultValue"] if e), "-")
-
     hasMultiplePT = not all(pt == parameterTypeName for pt in entry["paramType"])
-    hasMultipleDV = not all(
-        dv == (defaultValue if defaultValue != "-" else None) for dv in entry["defaultValue"]
-    )
+
+    defaultValue = next((e for e in entry["defaultValue"] if e), "-")
+    entry["defaultValue"] = [value if value is not None else "-" for value in entry["defaultValue"]]
+    hasMultipleDV = not all(dv == defaultValue for dv in entry["defaultValue"])
     if hasMultiplePT or hasMultipleDV:
-        writeLog = logger.error if NUM_ENTRIES == 0 else logger.debug
-        writeLog(
-            f"Found multiple occurrences of parameter {parameter}"
+        logger.debug(
+            f"\nFound multiple occurrences of parameter {paramName}"
             " with differing specifications: "
         )
         if hasMultiplePT:
-            writeLog(" -> Specified type names:")
-            for typeName in entry["paramType"]:
-                writeLog(f"        {typeName}")
-            if NUM_ENTRIES == 0:
-                writeLog(" ---> Please provide parameter type manually in input file!")
-            else:
-                parameterTypeName = inputDict[keyInput]["type"]
-                writeLog(
-                    f" ---> For the parameters list, {parameterTypeName}"
-                    " has been chosen. Type is from input file."
-                )
-        if hasMultipleDV:
-            writeLog(" -> Specified default values:")
-            for default in entry["defaultValue"]:
-                if default:
-                    writeLog(f"        {default}")
-                else:
-                    writeLog("        - (none given)")
-            if NUM_ENTRIES == 0:
-                writeLog(" ---> Please provide default value manually in input file!")
-            else:
-                defaultValue = inputDict[keyInput]["default"]
-                writeLog(
-                    f" ---> For the parameters list, {defaultValue}"
-                    " has been chosen. Default value is from input file."
-                )
+            logger.debug(" -> Specified type names:")
+            for typeName in list(dict.fromkeys(entry["paramType"])):
+                logger.debug(f"        {typeName}")
 
-    if NUM_ENTRIES == 0:
+        if hasMultipleDV:
+            logger.debug(" -> Specified default values:")
+            for default in list(dict.fromkeys(entry["defaultValue"])):
+                if default:
+                    logger.debug(f"        {default}")
+                else:
+                    logger.debug("        - (none given)")
+
+    if not (hasMultiplePT and hasMultipleDV) and (hasPTInput or hasDVInput):
+        logger.debug(f"\nFor parameter {paramName}:")
+    if hasPTInput:
+        parameterTypeName = inputDict[paramName]["type"]
+        logger.debug(
+            f" ---> For the parameters list, {parameterTypeName}"
+            " has been chosen. Type is from input file."
+        )
+    elif hasMultiplePT:
+        logger.debug(
+            f" ---> For the parameters list, {parameterTypeName}"
+            " has been chosen. Otherwise specify the type in input file."
+        )
+
+    if hasDVInput:
+        defaultValue = inputDict[paramName]["defaultValue"]
+        logger.debug(
+            f" ---> For the parameters list, {defaultValue}"
+            " has been chosen. Default value is from input file."
+        )
+    elif hasMultipleDV:
+        logger.debug(
+            f" ---> For the parameters list, {defaultValue}"
+            " has been chosen. Otherwise specify the value in input file."
+        )
+
+    explanationMsg = inputDict[paramName].get("explanation")
+    for i in range(NUM_ENTRIES):
+        # maybe fewer entries for some keys
+        if len(defaultValue) < i + 1:
+            defaultValue.append(defaultValue[i - 1])
+        if len(explanationMsg) < i + 1:
+            explanationMsg.append(explanationMsg[i - 1])
+        if len(parameterTypeName) < i + 1:
+            parameterTypeName.append(parameterTypeName[i - 1])
+
         tableEntryData.append(
             {
                 "group": group,
                 "name": parameter,
-                "type": parameterTypeName,
-                "default": defaultValue,
-                "explanation": "",
+                "type": parameterTypeName[i],
+                "default": defaultValue[i],
+                "explanation": explanationMsg[i],
             }
         )
-    else:
-        explanationMsg = inputDict[keyInput]["explanation"]
-        parameterTypeName = inputDict[keyInput]["type"]
-        defaultValue = inputDict[keyInput]["default"]
-        for i in range(NUM_ENTRIES):
-            # maybe fewer entries for some keys
-            if len(defaultValue) < i + 1:
-                defaultValue.append(defaultValue[i - 1])
-            if len(explanationMsg) < i + 1:
-                explanationMsg.append(explanationMsg[i - 1])
-            if len(parameterTypeName) < i + 1:
-                parameterTypeName.append(parameterTypeName[i - 1])
-
-            tableEntryData.append(
-                {
-                    "group": group,
-                    "name": parameter,
-                    "type": parameterTypeName[i],
-                    "default": defaultValue[i],
-                    "explanation": explanationMsg[i],
-                }
-            )
+    if NUM_ENTRIES > 1:
+        logger.debug("Parameter has multiple entries.")
 
 # generate actual table entries
 tableEntriesWithGroup = []
@@ -372,12 +394,12 @@ DEFAULT_VALUE_LENGTH = 15
 EXPLANATION_LENGTH = 150
 
 
-def tableEntry(groupEntry, paramName, paramTypeName, defaultParamValue, explanation):
+def tableEntry(groupEntry, param, paramTypeName, defaultParamValue, explanation):
     """Create a table entry for a parameter"""
     return (
         f" * "
         f"| {groupEntry.ljust(GROUP_ENTRY_LENGTH)} "
-        f"| {paramName.ljust(PARAM_NAME_LENGTH)} "
+        f"| {param.ljust(PARAM_NAME_LENGTH)} "
         f"| {paramTypeName.ljust(PARAM_TYPE_LENGTH)} "
         f"| {defaultParamValue.ljust(DEFAULT_VALUE_LENGTH)} "
         f"| {explanation.ljust(EXPLANATION_LENGTH)} |"
@@ -399,7 +421,7 @@ for data in tableEntryData:
 
     TABLE_ENTRY = tableEntry(
         groupEntry=groupName,
-        paramName=data["name"],
+        param=data["name"],
         paramTypeName=data["type"],
         defaultParamValue=data["default"],
         explanation=data["explanation"],
