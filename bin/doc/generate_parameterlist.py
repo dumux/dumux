@@ -297,17 +297,14 @@ for key in parameterDict:
     # and write the others in log for possible manual editing
     # determin multiple entries in input
     paramName = group + "." + parameter
-    NUM_ENTRIES = max(
-        len(value)
-        for key, value in inputDict[paramName].items()
-        if key in ["defaultValue", "type", "explanation"]
-    )
-
-    if NUM_ENTRIES < 1:
-        logger.error(
-            f"Input error for parameter '{paramName}' in {cmdArgs['inputFile']}."
-            + f" The length of the input is {NUM_ENTRIES}."
+    if paramName in inputDict:
+        NUM_ENTRIES = max(
+            len(value)
+            for key, value in inputDict[paramName].items()
+            if key in ["defaultValue", "type", "explanation"]
         )
+    else:
+        logger.error(f"Missing input for parameter '{paramName}' in {cmdArgs['inputFile']}.")
         continue
 
     hasDVInput = "defaultValue" in inputDict[paramName]
