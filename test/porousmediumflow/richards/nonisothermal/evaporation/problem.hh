@@ -171,11 +171,17 @@ public:
         NumEqVector values(0.0);
         const auto globalPos = scvf.ipGlobal();
         const auto& volVars = elemVolVars[scvf.insideScvIdx()];
-        Scalar boundaryLayerThickness = 0.0016;
+        Scalar boundaryLayerThickness = 0.00016;
 
         if(globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_)
         {
-             values[conti0EqIdx] = 1e-3;
+            Scalar massFracInside = volVars.massFraction(FluidSystem::phase1Idx, FluidSystem::comp0Idx);
+            Scalar massFracRef = 0.0;
+            Scalar evaporationRate = volVars.effectiveDiffusionCoefficient(FluidSystem::phase1Idx, FluidSystem::comp1Idx, FluidSystem::comp0Idx)
+                                     * (massFracInside - massFracRef)
+                                     / boundaryLayerThickness
+                                     * volVars.density(FluidSystem::phase1Idx);
+             values[conti0EqIdx] = evaporationRate;
              values[energyEqIdx] = FluidSystem::enthalpy( volVars.fluidState(), FluidSystem::gasPhaseIdx) * values[conti0EqIdx];
              values[energyEqIdx] += FluidSystem::thermalConductivity(volVars.fluidState(), FluidSystem::gasPhaseIdx)
                                     * (volVars.temperature() - temperatureInitial_)/boundaryLayerThickness;

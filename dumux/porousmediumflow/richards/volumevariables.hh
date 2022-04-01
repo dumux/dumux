@@ -122,6 +122,9 @@ public:
         // needed to make sure we don't compute unphysical capillary pressures and thus saturations
         minPc_ = fluidMatrixInteraction.endPointPc();
 
+        //update porosity before calculating the effective properties depending on it
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
+
         typename FluidSystem::ParameterCache paramCache;
         auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
         {
@@ -224,7 +227,6 @@ public:
         // specify the other parameters
         //////////
         relativePermeabilityWetting_ = fluidMatrixInteraction.krw(fluidState_.saturation(liquidPhaseIdx));
-        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
         EnergyVolVars::updateEffectiveThermalConductivity();
