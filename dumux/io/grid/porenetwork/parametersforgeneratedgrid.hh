@@ -37,6 +37,7 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/random.hh>
+#include <dumux/common/stringutilities.hh>
 #include <dumux/geometry/intersectspointgeometry.hh>
 #include <dumux/porenetwork/common/throatproperties.hh>
 #include <dumux/porenetwork/common/poreproperties.hh>
@@ -255,8 +256,8 @@ private:
     /*!
      * \brief Returns a list of boundary face priorities from user specified input or default values if no input is given
      *
-     * This essentially determines the index of a node on an edge or corner corner. For instance, a list of {0,1,2} will give highest priority
-     * to the "x"-faces and lowest to the "z-faces".
+     * This essentially determines the index of a node on an edge or corner. For instance in a 2D case, a list of {0,1,2,3} 
+     * will give highest priority to the "x-direction" and lowest to the "diagonal-direction".
      */
     BoundaryList getPriorityList_() const
     {
@@ -273,15 +274,15 @@ private:
                 }
                 // make sure that a priority for each direction is set
                 catch(Dune::RangeError& e) {
-                    DUNE_THROW(Dumux::ParameterException, "You must specifiy priorities for all directions (" << dimWorld << ") \n" << e.what());
+                    DUNE_THROW(Dumux::ParameterException, "You must specify priorities for all directions (" << dimWorld << ") \n" << e.what());
                 }
                 // make sure each direction is only set once
                 if (!isUnique_(priorityList))
-                    DUNE_THROW(Dumux::ParameterException, "You must specifiy priorities for all directions (duplicate directions)");
+                    DUNE_THROW(Dumux::ParameterException, "You must specify priorities for all directions (duplicate directions)");
 
                 //make sure that the directions are correct (ranging from 0 to dimWorld-1)
                 if (std::any_of(priorityList.begin(), priorityList.end(), []( const int i ){ return (i < 0 || i >= 2*dimWorld); }))
-                    DUNE_THROW(Dumux::ParameterException, "You must specifiy priorities for correct directions (0-" << 2*(dimWorld-1) << ")");
+                    DUNE_THROW(Dumux::ParameterException, "You must specify priorities for correct directions (0-" << 2*dimWorld-1 << ")");
             }
             return priorityList;
         }();
@@ -315,16 +316,46 @@ private:
 
         if (hasParamInGroup(paramGroup_, "Grid.BoundaryFaceMarker"))
         {
+            std::cout << "\n\n ****** \nWarning: Grid.BoundaryFaceMarker is deprecated and will be removed after 3.5. Use Grid.BoundaryPoreLabels instead. \n\n ******" << std::endl;
             try {
                 boundaryFaceMarker = getParamFromGroup<BoundaryList>(paramGroup_, "Grid.BoundaryFaceMarker");
             }
             catch (Dune::RangeError& e) {
-                DUNE_THROW(Dumux::ParameterException, "You must specifiy all boundaries faces: xmin xmax ymin ymax (zmin zmax). \n" << e.what());
+                DUNE_THROW(Dumux::ParameterException, "You must specify all boundaries faces: xmin xmax ymin ymax (zmin zmax). \n" << e.what());
             }
             if (std::none_of(boundaryFaceMarker.begin(), boundaryFaceMarker.end(), []( const int i ){ return i == 1; }))
                 DUNE_THROW(Dumux::ParameterException, "At least one face must have index 1");
             if (std::any_of(boundaryFaceMarker.begin(), boundaryFaceMarker.end(), []( const int i ){ return (i < 0 || i > 2*dimWorld); }))
                 DUNE_THROW(Dumux::ParameterException, "Face indices must range from 0 to " << 2*dimWorld );
+        }
+        else if (hasParamInGroup(paramGroup_, "Grid.BoundaryPoreLabels"))
+        {
+            const auto input = getParamFromGroup<std::vector<std::string>>(paramGroup_, "Grid.BoundaryPoreLabels");
+            for (const auto& entry : input)
+            {
+                const std::string errorMessage = "You must specify BoundaryPoreLabels in the format pos:num, where pos can be xMin, xMax, yMin, yMax, zMin, zMax and num is the corresponding label.\n"
+                                                 "Example (2D, defaults are used for the remaining boundaries): xMin:2 yMax:3\n";
+                if (entry.find(':') == std::string::npos)
+                    DUNE_THROW(Dumux::ParameterException, errorMessage);
+
+                static const std::map<std::string, int> labels = {{"xMin", 0}, {"xMax", 1}, {"yMin", 2}, {"yMax", 3}, {"zMin", 4}, {"zMax", 5}};
+                const auto splitEntry = split(entry, ":");
+                const std::string location = std::string(splitEntry[0].begin(), splitEntry[0].end());
+                int value = 0;
+                try {
+                    value = std::stoi(std::string(splitEntry[1].begin(), splitEntry[1].end()));
+                }
+                catch(...) {
+                    DUNE_THROW(Dumux::ParameterException, errorMessage);
+                }
+
+                if (splitEntry.size() != 2)
+                    DUNE_THROW(Dumux::ParameterException, errorMessage);
+                if (!labels.count(location))
+                    DUNE_THROW(Dumux::ParameterException, errorMessage);
+                else
+                    boundaryFaceMarker[labels.at(location)] = value;
+            }
         }
         return boundaryFaceMarker;
     }
@@ -590,7 +621,15 @@ private:
         const std::string prefix = subregionId < 0 ? "Grid." : "Grid.Subregion" + std::to_string(subregionId) + ".";
         const Scalar inputThroatLength = getParamFromGroup<Scalar>(paramGroup_, prefix + "ThroatLength", -1.0);
         // decide whether to substract the pore radii from the throat length or not
-        const bool substractRadiiFromThroatLength = getParamFromGroup<bool>(paramGroup_, prefix + "SubstractRadiiFromThroatLength", true);
+        // TODO remove if/else after 3.5 and use const bool subtractRadiiFromThroatLength = getParamFromGroup<bool>(paramGroup_, prefix + "SubtractPoreInscribedRadiiFromThroatLength", true);
+        bool subtractRadiiFromThroatLength = true;
+        if (hasParamInGroup(paramGroup_, prefix + "SubstractRadiiFromThroatLength"))
+        {
+            std::cout << "\n\n ****** \n Warning: SubstractRadiiFromThroatLength is deprecated and will be removed after 3.5. Use SubtractPoreInscribedRadiiFromThroatLength instead \n\n ******" << std::endl;
+            subtractRadiiFromThroatLength = getParamFromGroup<bool>(paramGroup_, prefix + "SubstractRadiiFromThroatLength");
+        }
+        else
+            subtractRadiiFromThroatLength = getParamFromGroup<bool>(paramGroup_, prefix + "SubtractPoreInscribedRadiiFromThroatLength", true);
 
         return [=](const Element& element)
         {
@@ -598,7 +637,7 @@ private:
                 return inputThroatLength;
 
             const Scalar delta = element.geometry().volume();
-            if (substractRadiiFromThroatLength)
+            if (subtractRadiiFromThroatLength)
             {
                 const std::array<Vertex, 2> vertices = {element.template subEntity<dim>(0), element.template subEntity<dim>(1)};
                 const Scalar result = delta - getParameter(vertices[0], "PoreInscribedRadius") - getParameter(vertices[1], "PoreInscribedRadius");

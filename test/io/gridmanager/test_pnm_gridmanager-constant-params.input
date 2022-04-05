@@ -10,7 +10,7 @@ PoreGeometry = Sphere
 ThroatInscribedRadius = 1e-6
 ThroatLength = 1e-4
 
-BoundaryFaceMarker = 2 3 1 1 1 1
+BoundaryPoreLabels = xMax:3 xMin:2 yMin:1 yMax:1 zMin:1 zMax:1 # xMin and xMax flipped for testing
 MinThroatLength = 1e-9
 DeletionProbability = 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
 RemoveThroatsOnBoundary = 0 1 2 3 4 5
@@ -33,7 +33,7 @@ PoreGeometry = Cube
 ThroatInscribedRadius = 1e-6
 ThroatLength = 1e-4
 
-BoundaryFaceMarker = 2 3 1 1
+BoundaryPoreLabels = xMin:2 xMax:3 yMin:1 yMax:1
 MinThroatLength = 1e-9
 DeletionProbability = 0.4 0.4 0.4 0.4
 RemoveThroatsOnBoundary = 0 1 2 3
@@ -56,7 +56,7 @@ PoreHeight = 1e-5
 ThroatInscribedRadius = 1e-6
 ThroatLength = 1e-4
 
-BoundaryFaceMarker = 1 1
+BoundaryPoreLabels = xMin:1 xMax:1
 
 [Dgf1D.Grid]
 File = constant-params-1d.dgf

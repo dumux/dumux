@@ -6,7 +6,7 @@ UpperRight = 1e-3 1e-3 1e-3
 NumPores = 4 4 4
 PoreInscribedRadius = 2e-5
 ThroatInscribedRadius = 2e-6
-BoundaryFaceMarker = 1 1 1 1 2 1
+BoundaryPoreLabels = xMin:1 xMax:1 yMin:1 yMax:1 zMin:2 zMax:1
 PriorityList = 4 5 0 1 2 3
 
 [Problem]
