@@ -16,7 +16,7 @@ PoreGeometry = Sphere
 ThroatCrossSectionShape = Square
 ParameterRandomNumberSeed = 1
 
-BoundaryFaceMarker = 1 2 3 4 5 6
+BoundaryPoreLabels = xMin:1 xMax:2 yMin:3 yMax:4 zMin:5 zMax:6
 MinThroatLength = 1e-10
 DeletionProbability = 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
 RemoveThroatsOnBoundary = 0 1 2 3 4 5
