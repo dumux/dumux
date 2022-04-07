@@ -63,8 +63,8 @@ public:
      * \brief Limit the friction for small water depth.
      *
      * We define a water depth minUpperH. If the water depth is
-     * smaller, we start to limit the friciton.
-     * So the friciton term get's not extreme large for small water
+     * smaller, we start to limit the friction.
+     * So the friction term get's not extreme large for small water
      * depths.
      *
      * ------------------------- minUpperH -----------
@@ -85,23 +85,22 @@ public:
      * For the limitation of the roughness height L = 0.0, T = 2.0 and E = 1.0 are choosen.
      * Therefore the calculation of the mobility is simplified significantly.
      *
-     * \param roughnessHeight roughness height of the representive structure (e.g. largest grain size).
+     * \param roughnessHeight roughness height of the representative structure (e.g. largest grain size).
      * \param waterDepth water depth.
      */
     Scalar limitRoughH(const Scalar roughnessHeight, const Scalar waterDepth) const
     {
-        using std::min;
-        using std::max;
+        using std::clamp;
 
-        Scalar mobilityMax = 1.0; //!< maximal mobility
+        const Scalar mobilityMax = 1.0; //!< maximal mobility
 
-        Scalar minUpperH = roughnessHeight * 2.0;
-        Scalar sw = min(waterDepth * (1.0/minUpperH),1.0);
-        sw = max(0.0,sw);
-        auto mobility = mobilityMax /(1 + (1.0-sw)*(1.0-sw));
+        const Scalar minUpperH = roughnessHeight * 2.0;
+        const Scalar sw = clamp(waterDepth * (1.0/minUpperH), 0.0, 1.0);
+        const Scalar mobility = mobilityMax /(1.0 + (1.0-sw)*(1.0-sw));
         return roughnessHeight * (1.0 - mobility);
     }
 
+    // virtual base class needs a virtual destructor
     virtual ~FrictionLaw() = default;
 };
 
