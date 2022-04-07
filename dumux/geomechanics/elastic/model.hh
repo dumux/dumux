@@ -19,7 +19,27 @@
 /*!
  * \file
  * \ingroup Elastic
- * \brief Defines a type tag and some properties for the elastic geomechanical model
+ * \brief A geomechanical model.
+ *
+ * This model describe the deformation of the solid body, using theory of linear elasticity:
+ \f[
+ \boldsymbol{\nabla}\cdot\boldsymbol{\sigma_s} + \mathbf{F} + \rho_s \mathbf{g} = \rho\ddot{\mathbf{u}}
+ \f]
+ * We assume the quasi-static conditions, so the acceleration term \f$ \rho\ddot{\mathbf{u}} \approx 0\f$.
+ *
+ * For isotropic materials, the stress tensor \f$ \boldsymbol{\sigma_s} \f$ can be calculated after Hookes' Law
+ \f[
+ {\boldsymbol {\sigma_s}}= \lambda \mathrm{tr}(\varepsilon)  \boldsymbol{\mathrm I}+ 2G \varepsilon,
+ \f]
+ * with
+ \f[
+ {\boldsymbol {\varepsilon }}={\frac {1}{2}}\left[{\boldsymbol {\nabla }}\mathbf {u} +({\boldsymbol {\nabla }}\mathbf {u} )^{\mathrm {T} }\right].
+ \f]
+ *
+ * Gravity can be enabled or disabled via the property system.
+ *
+ * The equations are discretized using a vertex-centered finite volume (box) scheme as spatial discretization. The time discretization is not needed due to the quasi-static conditions.
+ * PrimaryVariables are the displacements in each direction \f$ \mathbf{u} \f$.
  */
 #ifndef DUMUX_GEOMECHANICS_ELASTIC_MODEL_HH
 #define DUMUX_GEOMECHANICS_ELASTIC_MODEL_HH
