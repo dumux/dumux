@@ -8,9 +8,9 @@ UpperRight = 10 20
 Cells = 5 30
 
 [Problem]
-Name = test_richardsevaporation # name passed to the output routines
-OutputInterval = 5 # every 5th timestep an output file is written
-EnableGravity = 0 # disable gravity
+Name = test_richardsevaporation
+OutputInterval = 5
+EnableGravity = false
 UsePrimaryVariableSwitch = true
 
 [Newton]

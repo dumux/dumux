@@ -20,7 +20,7 @@
  * \file
  * \ingroup TracerTests
  * \brief Definition of a problem for the tracer problem:
- * A rotating velocity field mixes a tracer band in a porous groundwater reservoir.
+ * Two tracers are diluted by diffusion and constant two-phase saturation field.
  */
 
 #ifndef DUMUX_TRACER_MULTIPHASE_TEST_PROBLEM_HH
@@ -37,7 +37,7 @@ namespace Dumux {
 
 /*!
  * \ingroup TracerTests
- * \brief A problem for the multiphase tracer model
+ * \brief A problem, where two tracers are diluted by diffusion and constant two-phase saturation field.
  */
 template <class TypeTag>
 class TracerTest : public PorousMediumFlowProblem<TypeTag>

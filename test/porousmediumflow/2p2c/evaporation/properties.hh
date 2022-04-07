@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup TwoPTwoCTests
- * \brief The properties of a evaporation problem where two components with constant propierties mix and evaporate.
+ * \brief The properties of a evaporation problem where two components with constant properties mix and evaporate.
  */
 
 #ifndef DUMUX_EVAPORATION_CONSTANT_COMPONENT_PROPERTIES_HH

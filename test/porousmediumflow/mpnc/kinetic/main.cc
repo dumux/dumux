@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup MPNCTests
- * \brief Test for the three-phase box model.
+ * \brief Test for the mpnc box model.
  */
 #include <config.h>
 

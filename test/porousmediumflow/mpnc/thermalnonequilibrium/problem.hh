@@ -17,8 +17,8 @@
 /*!
  * \file
  * \ingroup MPNCTests
- * \brief Problem where hot, pure liquid water is injected from the left hand side into a initially
- *        isotherm domain.
+ * \brief Problem where hot, pure liquid water is injected from the left hand side into an initially
+ *        isothermal domain.
  *
  * The water is fully evaporated by a strong heat source.
  * A local thermal non-equilibrium model is used: i.e. two different (fluid, solid)

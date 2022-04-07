@@ -19,8 +19,7 @@
 /*!
  * \file
  * \ingroup TwoPNCMinTests
- * \brief The properties of the problem where water is injected in a for flushing precipitated salt
- *        clogging a gas reservoir.
+ * \brief The properties of the problem where water is injected in a for flushing precipitated salt clogging a gas reservoir.
  */
 #ifndef DUMUX_DISSOLUTION_PROPERTIES_HH
 #define DUMUX_DISSOLUTION_PROPERTIES_HH

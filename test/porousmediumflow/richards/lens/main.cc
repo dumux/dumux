@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup RichardsTests
- * \brief Test for the Richards box model.
+ * \brief Test for the Richards model.
  */
 
 #include <config.h>

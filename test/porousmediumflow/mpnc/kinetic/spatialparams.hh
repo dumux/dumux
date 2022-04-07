@@ -21,7 +21,7 @@
  * \ingroup MPNCTests
  * \brief Spatial parameters for the kinetic test-case of the mpnc model.
  *
- * "Poor-mans" coupling of free-flow and porous medium.
+ * "Poor-man's" coupling of free-flow and porous medium.
  */
 #ifndef DUMUX_EVAPORATION_ATMOSPHERE_SPATIALPARAMS_HH
 #define DUMUX_EVAPORATION_ATMOSPHERE_SPATIALPARAMS_HH

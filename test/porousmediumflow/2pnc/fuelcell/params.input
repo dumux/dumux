@@ -1,6 +1,4 @@
 # Parameter file for test case 2pnc.
-# Everything behind a '#' is a comment.
-# Type "./test_2pnc --help" for more information.
 
 [TimeLoop]
 DtInitial = 5e-1                 # [s] initial time step size

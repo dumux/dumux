@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup CO2Tests
- * \brief The properties of a problem, where CO2 is injected in a reservoir.
+ * \brief The properties of a problem, where CO2 is injected into a reservoir.
  */
 
 #ifndef DUMUX_HETEROGENEOUS_PROPERTIES_HH

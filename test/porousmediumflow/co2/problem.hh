@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup CO2Tests
- * \brief Definition of a problem, where CO2 is injected in a reservoir.
+ * \brief Definition of a problem, where CO2 is injected into a reservoir.
  */
 
 #ifndef DUMUX_HETEROGENEOUS_PROBLEM_HH
@@ -44,7 +44,7 @@ namespace Dumux {
 
 /*!
  * \ingroup CO2Tests
- * \brief Definition of a problem, where CO2 is injected in a reservoir.
+ * \brief Definition of a problem, where CO2 is injected into a reservoir.
  *
  * The domain is sized 200m times 100m and consists of four layers, a
  * permeable reservoir layer at the bottom, a barrier rock layer with reduced
@@ -56,19 +56,15 @@ namespace Dumux {
  *
  * The grid is unstructered and permeability and porosity for the elements are
  * read in from the grid file. The grid file also contains so-called boundary
- * IDs which can be used assigned during the grid creation in order to differentiate
+ * IDs which can be used during the grid creation in order to differentiate
  * between different parts of the boundary.
- * These boundary ids can be imported into the problem where the boundary
+ * These boundary IDs can be imported into the problem where the boundary
  * conditions can then be assigned accordingly.
  *
  * The model is able to use either mole or mass fractions. The property useMoles
  * can be set to either true or false in the problem file. Make sure that the
  * according units are used in the problem setup.
  * The default setting for useMoles is false.
- *
- * To run the simulation execute the following line in shell (works with the
- * box and cell centered spatial discretization method):
- * <tt>./test_ccco2 </tt> or <tt>./test_boxco2 </tt>
  */
 template <class TypeTag >
 class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>

@@ -56,10 +56,6 @@ namespace Dumux {
  \f]
  *
  * This problem uses the \ref RichardsModel and \ref NIModel model.
- *
- * To run the simulation execute the following line in shell: <br>
- * <tt>./test_boxrichardsniconduction -ParameterFile ./test_boxrichardsniconduction.input</tt> or <br>
- * <tt>./test_ccrichardsniconduction -ParameterFile ./test_ccrichardsniconduction.input</tt>
  */
 template <class TypeTag>
 class RichardsNIConductionProblem :public PorousMediumFlowProblem<TypeTag>

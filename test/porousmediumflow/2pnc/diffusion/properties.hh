@@ -19,8 +19,8 @@
 /*!
  * \file
  * \ingroup TwoPNCTests
- * \brief The properties of the problem where air is injected under a low permeable layer in a depth
- *        of 2700m.
+ * \brief The properties of a diffusion
+ *        problem which uses the isothermal 2p2c box model.
  */
 #ifndef DUMUX_TWOPNC_DIFFUSION_PROPERTIES_HH
 #define DUMUX_TWOPNC_DIFFUSION_PROPERTIES_HH

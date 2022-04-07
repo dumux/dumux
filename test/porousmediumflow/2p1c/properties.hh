@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup TwoPOneCTests
- * \brief Non-isothermal steam injection test problem for the 2p1cni model.
+ * \brief Properties of non-isothermal steam injection test problem for the 2p1cni model.
  */
 
 #ifndef DUMUX_STEAM_INJECTIONPROBLEM_PROPERTIES_HH

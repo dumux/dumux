@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup MPNCTests
- * \brief Test for the mpnc porous medium box flow model.
+ * \brief Test for the mpnc porous medium flow model.
  */
 #include <config.h>
 

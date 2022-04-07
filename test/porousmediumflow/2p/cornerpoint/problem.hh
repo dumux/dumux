@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \ingroup TwoPTests
- * \brief The properties for the 2p cornerpoint test.
+ * \brief The incompressible 2p cornerpoint test problem.
  */
 
 #ifndef DUMUX_TWOP_CORNERPOINT_TEST_PROBLEM_HH

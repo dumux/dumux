@@ -19,8 +19,7 @@
 /*!
  * \file
  * \ingroup TwoPNCTests
- * \brief Definition of the spatial parameters for the fuel cell
- *        problem which uses the isothermal/non-insothermal 2pnc box model.
+ * \brief Definition of the spatial parameters for water management in PEM fuel cells.
  */
 
 #ifndef DUMUX_FUELCELL_SPATIAL_PARAMS_HH
@@ -33,8 +32,7 @@
 namespace Dumux {
 /*!
  * \ingroup TwoPNCTests
- * \brief Definition of the spatial parameters for the FuelCell
- *        problem which uses the isothermal 2p2c box model.
+ * \brief Definition of the spatial parameters for water management in PEM fuel cells.
  */
 template<class GridGeometry, class Scalar>
 class FuelCellSpatialParams

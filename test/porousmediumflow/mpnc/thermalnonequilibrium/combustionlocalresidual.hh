@@ -182,7 +182,7 @@ public:
                             const  Scalar satW)
     {
         // using saturation as input (instead of from volVars)
-        // in order to make regularization (evaluation at different points) easyer
+        // in order to make regularization (evaluation at different points) easier
         const auto& fs = volVars.fluidState();
         const Scalar g( 9.81 );
         const Scalar gamma(0.0589);
@@ -195,7 +195,7 @@ public:
         const Scalar deltaRho = fs.density(0) - fs.density(1);
         const Scalar firstBracket = pow(g * deltaRho / gamma, 0.5);
         const Scalar cp = FluidSystem::heatCapacity(fs, 0);
-        // This use of Tsat is only justified if the fluid is always boiling (tsat equals boiling conditions)
+        // This use of Tsat is only justified if the fluid is always boiling (Tsat equals boiling conditions)
         // If a different state is to be simulated, please use the actual fluid temperature instead.
         const Scalar Tsat = FluidSystem::vaporTemperature(fs, 1 ) ;
         const Scalar deltaT = TSolid - Tsat;

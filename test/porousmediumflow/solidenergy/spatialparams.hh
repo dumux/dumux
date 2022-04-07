@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup OnePTests
+ * \ingroup SolidEnergyTests
  * \brief Definition of the spatial parameters for the solid energy test
  */
 #ifndef DUMUX_TEST_SOLIDENERGY_SPATIAL_PARAMS_HH

@@ -19,7 +19,8 @@
 /*!
  * \file
  * \ingroup ThreePWaterOilTests
- * \brief Non-isothermal SAGD problem.
+ * \brief Non-isothermal steam-assisted gravity
+ *        drainage (SAGD) problem.
  */
 
 #ifndef DUMUX_SAGDPROBLEM_HH
@@ -37,7 +38,8 @@ namespace Dumux {
 /*!
  * \file
  * \ingroup ThreePWaterOilTests
- * \brief Non-isothermal SAGD problem.
+ * \brief Non-isothermal steam-assisted gravity
+ *        drainage (SAGD) problem.
  */
 template <class TypeTag >
 class SagdProblem : public PorousMediumFlowProblem<TypeTag>

@@ -15,7 +15,7 @@ TemperatureLow = 290.00 # [Pa] low end for tabularization of fluid properties
 TemperatureHigh = 331.00 # [Pa] high end for tabularization of fluid properties
 
 [Problem]
-Name = co2 # [-] the name of the output files
+Name = co2
 EnableGravity = true
 DepthBOR = 1200# [m] depth below ground surface
 InjectionRate = 3e-3 # [kg/sq/s]

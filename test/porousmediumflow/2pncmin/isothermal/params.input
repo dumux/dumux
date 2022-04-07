@@ -1,6 +1,4 @@
 # Parameter file for test case 2pncmin.
-# Everything behind a '#' is a comment.
-# Type "./test_2pncmin --help" for more information.
 
 [TimeLoop]
 TEnd = 1e6                         # duration of the simulation [s]

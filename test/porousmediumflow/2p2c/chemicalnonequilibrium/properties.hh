@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup TwoPTwoCTests
- * \brief The properties of the problem where air is injected in a unsaturated porous medium.
+ * \brief The properties for the 2p2c chemical nonequilibrium problem.
  */
 
 #ifndef DUMUX_TWOPTWOC_NONEQUILIBRIUM_PROPERTIES_HH

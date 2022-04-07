@@ -42,13 +42,8 @@ namespace Dumux {
  * \ingroup RichardsTests
  *
  * \brief Test for the RichardsModel in combination with the NI model for evaporation
-
  * The result of the analytical solution is written into the vtu files.
  * This problem uses the \ref RichardsModel and \ref NIModel model.
- *
- * To run the simulation execute the following line in shell: <br>
- * <tt>./test_boxRichardsnievaporation -ParameterFile ./test_boxRichardsnievaporation.input</tt> or <br>
- * <tt>./test_ccRichardsnievaporation -ParameterFile ./test_ccRichardsnievaporation.input</tt>
  */
 template <class TypeTag>
 class RichardsNIEvaporationProblem : public PorousMediumFlowProblem<TypeTag>

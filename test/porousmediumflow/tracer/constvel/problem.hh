@@ -38,13 +38,9 @@ namespace Dumux {
  * \ingroup TracerTests
  *
  * \brief Definition of a problem for the tracer problem:
- * A lens of contaminant tracer is diluted by diffusion and a base groundwater flow
+ * A lens of contaminant tracer is diluted by diffusion and a rotating velocity field.
  *
  * This problem uses the \ref TracerModel model.
- *
- * To run the simulation execute the following line in shell:
- * <tt>./test_boxtracer -ParameterFile ./test_boxtracer.input</tt> or
- * <tt>./test_cctracer -ParameterFile ./test_cctracer.input</tt>
  */
 template <class TypeTag>
 class TracerTest : public PorousMediumFlowProblem<TypeTag>

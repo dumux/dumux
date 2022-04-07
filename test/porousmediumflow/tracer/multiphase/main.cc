@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup TracerTests
- * \brief Test for the tracer CC model.
+ * \brief Test for the tracer model.
  */
 #include <config.h>
 

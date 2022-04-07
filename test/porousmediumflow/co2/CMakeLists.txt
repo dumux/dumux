@@ -2,7 +2,7 @@ add_input_file_links()
 dune_symlink_to_source_files(FILES grids)
 
 # build target for the CO2 test problem
-# Ignore the porosity for all box models since it is defined element-wise in these test
+# Ignore the porosity for all box models since it is defined element-wise in these tests
 # but the default 2p2c implementation outputs porosity per vertex.
 # Depending on the order of the elements, the porosity would differ in these cases.
 

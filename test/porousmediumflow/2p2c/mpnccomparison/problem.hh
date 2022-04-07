@@ -19,9 +19,8 @@
 /*!
  * \file
  * \ingroup TwoPTwoCTests
- * \brief Problem where air is injected in a unsaturated porous medium.
+ * \brief Problem for the 2p2c mpnc comparison problem.
  *
- * This test compares a mpnc problem with a 2p2c problem.
  */
 
 #ifndef DUMUX_TWOPTWOC_MPNC_PROBLEM_HH
@@ -38,9 +37,8 @@ namespace Dumux {
 
 /*!
  * \ingroup TwoPTwoCTests
- * \brief Problem where air is injected in a unsaturated porous medium.
+ * \brief Problem for the 2p2c mpnc comparison problem.
  *
- * This test compares a mpnc problem with a 2p2c problem.
  */
 template <class TypeTag>
 class TwoPTwoCComparisonProblem : public PorousMediumFlowProblem<TypeTag>
@@ -78,10 +76,6 @@ public:
         name_ = getParam<std::string>("Problem.Name");
     }
 
-    /*!
-     * \name Problem parameters
-     */
-    // \{
 
     /*!
      * \brief Returns the problem name
@@ -92,7 +86,6 @@ public:
     { return name_; }
 
     /*!
-     * \name Boundary conditions
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment
      *
@@ -132,7 +125,6 @@ public:
         return values;
     }
 
-    // \}
 
     /*!
      * \brief Evaluates the initial value for a control volume.
@@ -147,7 +139,6 @@ public:
         return initial_(globalPos);
     }
 
-    // \}
 
 private:
     // the internal method for the initial condition

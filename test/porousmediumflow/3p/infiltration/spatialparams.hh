@@ -19,8 +19,7 @@
 /*!
  * \file
  * \ingroup ThreePTests
- * \brief Definition of the spatial parameters for the kuevette problem, which
- *        uses the three-phase fully implicit model.
+ * \brief Definition of the spatial parameters for the kuevette problem.
  */
 
 #ifndef DUMUX_INFILTRATION_THREEP_SPATIAL_PARAMS_HH

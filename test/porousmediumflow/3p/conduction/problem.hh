@@ -55,13 +55,7 @@ namespace Dumux {
   \f[
      T =T_{high} + (T_{init} - T_{high})erf \left(0.5\sqrt{\frac{x^2 S_{total}}{t \lambda_{eff}}}\right)
  \f]
- *
- * The result of the analytical solution is written into the vtu files.
  * This problem uses the \ref ThreePModel and \ref NIModel model.
- *
- * To run the simulation execute the following line in shell: <br>
- * <tt>./test_box3pniconduction -ParameterFile ./test_box3pniconduction.input</tt> or <br>
- * <tt>./test_cc3pniconduction -ParameterFile ./test_cc3pniconduction.input</tt>
  */
 template <class TypeTag>
 class ThreePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>

@@ -51,7 +51,7 @@ namespace Dumux {
  * at \f$[10; 20]m \times [0; 35]m \f$ with a lower permeablility of
  * \f$ K_1=K_0/1000\f$.
  *
- * Initially the whole domain is filled with nitrogen, the temperature
+ * Initially, the whole domain is filled with nitrogen, the temperature
  * is \f$25\symbol{23}C\f$ in the whole domain. The gas pressure in the
  * domain is 1 bar, except on the inlet (lower 10 meters of right hand
  * boundary) where the pressure is 2 bar.
@@ -61,10 +61,6 @@ namespace Dumux {
  * values as the initial condition.
  *
  * This problem uses the \ref MPNCModel.
- *
- * To run the simulation execute the following line in shell:
- * <tt>./test_boxmpnc -parameterFile test_boxmpnc.input</tt> or
- * <tt>./test_ccmpnc -parameterFile test_ccmpnc.input</tt>
  */
 template <class TypeTag>
 class ObstacleProblem

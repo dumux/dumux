@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup TracerTests
- * \brief  A 2p problem with multiple tracer bands in a porous groundwater reservoir with a lens
+ * \brief Multiple tracer bands are diluted by diffusion and two-phase flow.
  */
 #ifndef DUMUX_TWOP_TRACER_TEST_PROBLEM_HH
 #define DUMUX_TWOP_TRACER_TEST_PROBLEM_HH
@@ -32,14 +32,10 @@ namespace Dumux {
 /*!
  * \ingroup TracerTests
  *
- * \brief Definition of a problem, for the tracer problem:
- * A lens of contaminant tracer is diluted by diffusion and a base groundwater flow
+ * \brief Definition of the tracer problem:
+ * Multiple tracer bands are diluted by diffusion and two-phase flow.
  *
  * This problem uses the \ref TracerModel model.
- *
- * To run the simulation execute the following line in shell:
- * <tt>./test_2ptracer -ParameterFile ./params.input</tt> or
- * <tt>./test_2ptracer -ParameterFile ./params.input</tt>
  */
 template <class TypeTag>
 class TwoPTracerTestProblem : public PorousMediumFlowProblem<TypeTag>

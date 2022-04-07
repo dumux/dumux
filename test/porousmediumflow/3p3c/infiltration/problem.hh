@@ -56,15 +56,6 @@ namespace Dumux {
  * infiltration zone in the upper left part.
  *
  * This problem uses the \ref ThreePThreeCModel.
- *
- * This problem should typically be simulated for 30 days.
- * A good choice for the initial time step size is 60 s.
- * To adjust the simulation time it is necessary to edit the file test_box3p3c.input
- * or test_cc3p3c.input.
- *
- * To run the simulation execute the following line in shell:
- * <tt>./test_box3p3c test_box3p3c.input</tt> or
- * <tt>./test_cc3p3c test_cc3p3c.input</tt>
  *  */
 template <class TypeTag >
 class InfiltrationThreePThreeCProblem : public PorousMediumFlowProblem<TypeTag>

@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup TwoPTwoCTests
- * \brief Test for the 2p2cni CC model
+ * \brief Test for the 2p2c chemical nonequilibrium problem.
  */
 #include <config.h>
 

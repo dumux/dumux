@@ -35,29 +35,8 @@ namespace Dumux {
 
 /*!
  * \ingroup TwoPNCMinTests
- * \brief Problem where water is injected to flush precipitated salt in a gas
- * reservoir clogged due to precipitated salt.
+ * \brief Problem where water is injected to flush precipitated salt in a gas reservoir clogged due to precipitated salt.
  *
- * The domain is sized 10m times 20m and contains a vertical low-permeable layer
- * of precipitated salt near an extraction well.
- *
- * To flush this precipitated salt, water is injected through the gas extraction
- * well in order to dissolve the precipitated salt increasing the permeability
- * and thereby achieving high gas extraction rates later. Here, the system is
- * assumed to be isothermal.
- * Neumann no-flow boundary condition is applied at the top and bottom boundary
- * and Dirichlet boundary condition is used on the right and left sides.
- * The injected water phase migrates downwards due to increase in density as
- * the precipitated salt dissolves.
- *
- * The model uses mole fractions of dissolved components and volume fractions of
- * precipitated salt as primary variables. Make sure that the according units
- * are used in the problem set-up.
- *
- * This problem uses the \ref TwoPNCMinModel.
- *
- * To run the simulation execute the following line in shell:
- * <tt>./test_box2pncmin</tt>
  */
 template <class TypeTag>
 class DissolutionProblem : public PorousMediumFlowProblem<TypeTag>
@@ -162,10 +141,6 @@ public:
         timeStepSize_ = timeStepSize;
      }
 
-    /*!
-     * \name Problem parameters
-     */
-
 
     /*!
      * \brief The problem name.
@@ -174,11 +149,6 @@ public:
      */
     const std::string& name() const
     { return name_; }
-
-    /*!
-     * \name Boundary conditions
-     */
-    // \{
 
     /*!
      * \brief Specifies which kind of boundary condition should be
@@ -240,8 +210,6 @@ public:
      *
      * \param globalPos The global position
      *
-     * For this method, the \a values parameter stores primary
-     * variables.
      */
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
@@ -259,10 +227,6 @@ public:
         return priVars;
     }
 
-    /*!
-     * \name Volume terms
-     */
-    // \{
 
     /*!
      * \brief Evaluates the source term for all phases within a given
@@ -277,10 +241,6 @@ public:
      * \param elemVolVars All volume variables for the element
      * \param scv The subcontrolvolume
      *
-     * For this method, the \a values parameter stores the conserved quantity rate
-     * generated or annihilated per volume unit. Positive values mean
-     * that the conserved quantity is created, negative ones mean that it vanishes.
-     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
     NumEqVector source(const Element &element,
                    const FVElementGeometry& fvGeometry,
