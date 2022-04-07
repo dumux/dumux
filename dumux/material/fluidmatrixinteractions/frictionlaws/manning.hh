@@ -45,24 +45,24 @@ public:
     /*!
      * \brief Constructor
      *
-     * \param gravity Gravity constant [m/s^2]
-     * \param manningN Manning friction coefficient [-]
+     * \param gravity Gravity constant (in m/s^2)
+     * \param manningN Manning friction coefficient (in s/m^(1/3))
      */
     FrictionLawManning(const Scalar gravity, const Scalar manningN)
-        : gravity_(gravity), manningN_(manningN) {}
+    : gravity_(gravity), manningN_(manningN) {}
 
     /*!
-     * \brief Compute the shear stress.
+     * \brief Compute the bottom shear stress.
      *
      * \param volVars Volume variables
      *
-     * Compute the shear stress due to friction. The shear stress is not a tensor as know
-     * from contiuums mechanics, but a force projected on an area. Therefore it is a
-     * vector with two entries.
+     * Compute the bottom shear stress due to bottom friction.
+     * The bottom shear stress is a projection of the shear stress tensor onto the river bed.
+     * It can therefore be represented by a (tangent) vector with two entries.
      *
-     * \return shear stress [N/m^2]. First entry is the x-component, the second the y-component.
+     * \return shear stress in N/m^2. First entry is the x-component, the second the y-component.
      */
-    Dune::FieldVector<Scalar, 2> shearStress(const VolumeVariables& volVars) const final
+    Dune::FieldVector<Scalar, 2> bottomShearStress(const VolumeVariables& volVars) const final
     {
         using std::pow;
         using Dune::power;
@@ -70,16 +70,19 @@ public:
 
         Dune::FieldVector<Scalar, 2> shearStress(0.0);
 
-        Scalar roughnessHeight = power(25.68/(1.0/manningN_),6);
+        Scalar roughnessHeight = power(25.68/(1.0/manningN_), 6);
         roughnessHeight = this->limitRoughH(roughnessHeight, volVars.waterDepth());
-        const Scalar c = pow((volVars.waterDepth() + roughnessHeight),1.0/6.0) * 1.0/(manningN_);
-        const Scalar uv = hypot(volVars.velocity(0),volVars.velocity(1));
+        // c has units of m^(1/2)/s so c^2 has units of m/s^2
+        const Scalar c = pow(volVars.waterDepth() + roughnessHeight, 1.0/6.0) * 1.0/(manningN_);
+        const Scalar uv = hypot(volVars.velocity(0), volVars.velocity(1));
 
-        shearStress[0] = -gravity_/(c*c) * volVars.velocity(0) * uv;
-        shearStress[1] = -gravity_/(c*c) * volVars.velocity(1) * uv;
+        const Scalar dimensionlessFactor = gravity_/(c*c);
+        shearStress[0] = dimensionlessFactor * volVars.velocity(0) * uv * volVars.density();
+        shearStress[1] = dimensionlessFactor * volVars.velocity(1) * uv * volVars.density();
 
         return shearStress;
     }
+
 private:
     Scalar gravity_;
     Scalar manningN_;

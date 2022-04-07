@@ -101,6 +101,7 @@ The parameters describing your dispersion tensor can then be included in your `s
 - Porous medium flow models should now inherit from the new base spatial parameters that can be found in the folder `dumux/porousmediumflow/`, which allow users to overload the new `temperature` and `extrusionFactor` interfaces.
 - Free flow and pore network models now also expect the user problems to expose spatial parameters, in which `gravity`, `temperature` and `extrusionFactor` are defined. The respective problem interfaces have been deprecated.
 - The problem interfaces for fluid properties in the poroelastic model, namely `effectiveFluidDensity` and `effectivePorePressure`, have been deprecated and were moved to the spatial parameters.
+- The function `shearStress` in the class `FrictionLaw` and its child classes has been renamed to `bottomShearStress` and the return value has been changed. The function returns now the actual bottom shear stress and not the bottom shear stress term as it used in the shallow water model. The bottom shear stress term of the shallow water model is the bottom shear stress multiplied with minus one and normalised by the water density.
 
 ### New experimental features (possibly subject to backwards-incompatible changes in the future)
 

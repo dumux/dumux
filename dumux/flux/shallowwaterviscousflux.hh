@@ -87,6 +87,7 @@ public:
                             const typename FVElementGeometry::SubControlVolumeFace& scvf)
     {
         using Scalar = typename NumEqVector::value_type;
+        using FluidSystem = typename ElementVolumeVariables::VolumeVariables::FluidSystem;
 
         NumEqVector localFlux(0.0);
 
@@ -160,8 +161,8 @@ public:
                 {
                     // Get the bottom shear stress in the two adjacent cells
                     // Note that element is not needed in spatialParams().frictionLaw (should be removed). For now we simply pass the same element twice
-                    const auto& bottomShearStressInside = problem.spatialParams().frictionLaw(element, insideScv).shearStress(insideVolVars);
-                    const auto& bottomShearStressOutside = problem.spatialParams().frictionLaw(element, outsideScv).shearStress(outsideVolVars);
+                    const auto& bottomShearStressInside = problem.spatialParams().frictionLaw(element, insideScv).bottomShearStress(insideVolVars);
+                    const auto& bottomShearStressOutside = problem.spatialParams().frictionLaw(element, outsideScv).bottomShearStress(outsideVolVars);
                     const auto bottomShearStressInsideMag = bottomShearStressInside.two_norm();
                     const auto bottomShearStressOutsideMag = bottomShearStressOutside.two_norm();
 
@@ -172,7 +173,12 @@ public:
 
                     // Shear velocity possibly needed in mixing-length turbulence model in the computation of the diffusion flux
                     using std::sqrt;
-                    return sqrt(averageBottomShearStress);
+                    static_assert(!FluidSystem::isCompressible(0),
+                        "The shallow water model assumes incompressible fluids"
+                    );
+                    // Since the shallow water equations are incompressible, the density is constant.
+                    // Therefore, insideVolVars.density() is equal to outsideVolVars.density().
+                    return sqrt(averageBottomShearStress/insideVolVars.density());
                 }();
 
                 const auto turbViscosityV = turbConstV * (kappa/6.0) * ustar * averageDepth;
