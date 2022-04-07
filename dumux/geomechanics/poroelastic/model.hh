@@ -19,7 +19,32 @@
 /*!
  * \file
  * \ingroup PoroElastic
- * \brief Defines a type tag and some properties for the poroelastic geomechanical model
+ * \brief A poroelastic geomechanical model
+ *
+ * The adapted geomechanical model describes the deformation of the solid matrix filled with fluids, using linear poro-elasticity:
+ \f[
+ \boldsymbol{\nabla}\cdot\boldsymbol{\sigma} + \mathbf{F} + \rho \mathbf{g} = \rho\ddot{\mathbf{u}}
+ \f]
+ * where the density of the matrix \f$ \rho = \phi \sum_{\beta} S_{\beta} \rho_{\beta} + (1-\phi) \rho_s\f$.
+ *
+ * We assume the quasi-static conditions, so the acceleration term \f$ \rho\ddot{\mathbf{u}} \approx 0\f$.
+ *
+ * For isotropic materials, the stress tensor \f$ \boldsymbol{\sigma} \f$ can be calculated after Hookes' Law, including the effective fluid pressure.
+ \f[
+ {\boldsymbol {\sigma}}= \lambda \mathrm{tr}(\varepsilon) \boldsymbol{\mathrm I}+ 2G \varepsilon - \alpha p_{\mathrm{eff}} \boldsymbol{\mathrm I},
+ \f]
+ * with
+ \f[
+ {\boldsymbol {\varepsilon }}={\frac {1}{2}}\left[{\boldsymbol {\nabla }}\mathbf {u} +({\boldsymbol {\nabla }}\mathbf {u} )^{\mathrm {T} }\right],
+ \f]
+ * and
+ \f[
+ p_{\mathrm{eff}} = \sum_{\beta} S_{\beta} p_{\beta}.
+ \f]
+ * Gravity can be enabled or disabled via the property system.
+ *
+ * The equations are discretized using a vertex-centered finite volume (box) scheme as spatial discretization. The time discretization is not needed due to the quasi-static conditions.
+ * PrimaryVariables are the displacements in each direction \f$ \mathbf{u} \f$.
  */
 #ifndef DUMUX_GEOMECHANICS_POROELASTIC_MODEL_HH
 #define DUMUX_GEOMECHANICS_POROELASTIC_MODEL_HH
