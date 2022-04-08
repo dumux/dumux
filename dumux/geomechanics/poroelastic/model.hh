@@ -45,6 +45,8 @@
  *
  * The equations are discretized using a vertex-centered finite volume (box) scheme as spatial discretization. The time discretization is not needed due to the quasi-static conditions.
  * PrimaryVariables are the displacements in each direction \f$ \mathbf{u} \f$.
+ *
+ * Pay attention to the sign convention, where tension has a positive!
  */
 #ifndef DUMUX_GEOMECHANICS_POROELASTIC_MODEL_HH
 #define DUMUX_GEOMECHANICS_POROELASTIC_MODEL_HH
