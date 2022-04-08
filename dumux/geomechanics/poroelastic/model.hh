@@ -41,7 +41,7 @@
  \f[
  p_{\mathrm{eff}} = \sum_{\beta} S_{\beta} p_{\beta}.
  \f]
- * Gravity can be enabled or disabled via the property system.
+ * Gravity can be enabled or disabled via a runtime parameter.
  *
  * The equations are discretized using a vertex-centered finite volume (box) scheme as spatial discretization. The time discretization is not needed due to the quasi-static conditions.
  * PrimaryVariables are the displacements in each direction \f$ \mathbf{u} \f$.
