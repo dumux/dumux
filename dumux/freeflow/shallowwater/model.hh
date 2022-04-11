@@ -21,40 +21,48 @@
  * \ingroup ShallowWaterModel
  *
  * \brief A two-dimensional shallow water equations model
- * The two-dimensonal shallow water equations (SWEs) can be written as
+ *
+ * The two-dimensional shallow water equations (SWEs) can be written as:
  *
  * \f[
  * \frac{\partial \mathbf{U}}{\partial t} +
- * \frac{\partial \mathbf{F}}{\partial x} + \\
+ * \frac{\partial \mathbf{F}}{\partial x} +
  * \frac{\partial \mathbf{G}}{\partial y} - \mathbf{S_b} - \mathbf{S_f} = 0
  * \f]
  *
- * with  <B>U</B>, <B>F</B>, <B>G</B> are defined as
+ * The first equation is the water balance equation (volume balance) and the following two equations balance the
+ * momentum in x-direction and y-direction. \f$ \mathbf{U} \f$, \f$ \mathbf{F} \f$ and \f$ \mathbf{G} \f$ are defined as:
  *
  * \f[
  * \mathbf{U} = \begin{bmatrix} h \\ uh \\ vh \end{bmatrix},
- * \mathbf{F} = \begin{bmatrix} hu \\ hu^2  + \frac{1}{2} gh^2 \\ huv \end{bmatrix},
- * \mathbf{G} = \begin{bmatrix} hv \\ huv \\ hv^2  + \frac{1}{2} gh^2 \end{bmatrix}
+ * \mathbf{F} = \begin{bmatrix} hu \\ hu^2  + \frac{1}{2} gh^2 - \nu\frac{\partial uh}{\partial x} \\ huv - \nu\frac{\partial vh}{\partial x} \end{bmatrix},
+ * \mathbf{G} = \begin{bmatrix} hv \\ huv - \nu\frac{\partial uh}{\partial y} \\ hv^2  + \frac{1}{2} gh^2 - \nu\frac{\partial vh}{\partial y} \end{bmatrix}
  * \f]
  *
- * Z is the bedSurface, h the water depth, u the velocity in
- * x-direction and v the velocity in y-direction, g is the constant of gravity.
+ * \f$ h \f$ is the water depth (in \f$ m \f$), \f$ u \f$ the velocity in
+ * x-direction and \f$ v \f$ the velocity in y-direction (in \f$ ms^{-1} \f$). \f$ g \f$ is the constant of gravity (in \f$ ms^{-2} \f$).
+ * \f$ \nu \f$ is the effective turbulent viscosity (in \f$ m^2s^{-1} \f$).
+ * By default the shallow water model neglects the viscous terms, but they can be enabled by setting the parameter `ShallowWater.EnableViscousFlux = true`.
  *
- * The source terms for the bed friction <B>S_b</B> and bed slope
- * <B>S_f</B> are given as
+ * The source terms for bed slope \f$ \mathbf{S_b} \f$ and bottom friction \f$ \mathbf{S_f} \f$
+ * are given as:
  * \f[
  * \mathbf{S_b} = \begin{bmatrix} 0 \\ -gh \frac{\partial z}{\partial x}
  *                \\ -gh \frac{\partial z}{\partial y}\end{bmatrix},
- * \mathbf{S_f} = \begin{bmatrix} 0 \\ -ghS_{fx} \\ -ghS_{fy}\end{bmatrix}.
+ * \mathbf{S_f} = \begin{bmatrix} 0 \\ -\frac{\tau_{x}}{\rho} \\ -\frac{\tau_{y}}{\rho}\end{bmatrix}.
  * \f]
  *
- * A cell-centered finte volume method (cctpfa) is applied to solve the SWEs
- * in combination with a fully-implicit time discretization. For large time
- * step sizes (CFL > 1) this can lead to a strong semearing of sharp fronts.
- * This can be seen in the movement of short traveling waves (e.g. dam break
- * waves). Nevertheless the fully implicit time discretization showes often
- * no drawbacks in cases where no short waves are considered. Thus the model
- * can be a good choice for simulating flow in rivers and channels, where the
+ * \f$ z \f$ is the bed surface (in \f$ m \f$), \f$ \tau_{x} \f$ and \f$ \tau_{y} \f$  the bottom shear stress (in \f$ Nm^{-2} \f$) in x- an y-direction, respectively.
+ * \f$ \rho \f$ is the water density (in \f$ kgm^{-3} \f$). The bed slope source term \f$ \mathbf{S_b} \f$ is covered by the hydrostatic reconstruction
+ * within the flux computation and must therefore not be treated separately within the computation of the source terms.
+ * On the contrary, the bottom friction source term must be implemented in the problem (have a look at <a href="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/shallowwaterfriction/README.md" target="_blank">the shallow water example</a>).
+ *
+ * When using a fully implicit Euler time discretization, note the following:
+ * Large time step sizes (CFL > 1) can lead to a strong smearing of sharp fronts.
+ * This can be seen in the movement of fast traveling waves (e.g. dam break
+ * waves). Nevertheless, the fully implicit time discretization shows
+ * good results in cases where slowly moving waves are considered. Thus, the model
+ * is a good choice for simulating flow in rivers and channels, where the
  * fully-implicit discretization allows large time steps and reduces the
  * overall computation time drastically.
  *
