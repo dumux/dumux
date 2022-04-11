@@ -72,14 +72,90 @@ public:
     using type = StaggeredFreeFlowCouplingManager<Traits>;
 };
 
-// Select the fluid system
+//! A simple fluid system with one tracer component
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::ChannelNCTest>
+class ConstantFluidSystem : public FluidSystems::Base<GetPropType<TypeTag, Properties::Scalar>, ConstantFluidSystem<TypeTag>>
 {
-    using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
-    static constexpr int phaseIdx = H2OAir::liquidPhaseIdx;
-    using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Base = Dumux::FluidSystems::Base<Scalar, ConstantFluidSystem<TypeTag>>;
+
+public:
+    //! The number of components
+    static constexpr int numComponents = 2;
+    static constexpr int numPhases = 1;
+
+    //! Human readable component name (index compIdx) (for vtk output)
+    static std::string componentName(int compIdx)
+    { return "component_" + std::to_string(compIdx); }
+
+    //! Human readable phase name (index phaseIdx) (for velocity vtk output)
+    static std::string phaseName(int phaseIdx = 0)
+    { return "base"; }
+
+    //! Molar mass in kg/mol of the component with index compIdx
+    static Scalar molarMass(unsigned int compIdx)
+    { return 1.0; }
+
+    using Base::molarDensity;
+    template <class FluidState>
+    static Scalar molarDensity(const FluidState &fluidState, int phaseIdx)
+    { return 1.0; }
+
+    /*!
+    * \brief Returns the specific enthalpy \f$\mathrm{[J/kg]}\f$ of a component in the specified phase
+    * \param fluidState The fluid state
+    * \param phaseIdx The index of the phase
+    * \param componentIdx The index of the component
+    */
+    template <class FluidState>
+    static Scalar componentEnthalpy(const FluidState &fluidState,
+                                    int phaseIdx,
+                                    int componentIdx)
+    { return 1.0; }
+
+    using Base::binaryDiffusionCoefficient;
+    template <class FluidState>
+    static Scalar binaryDiffusionCoefficient(const FluidState &fluidState, int phaseIdx,
+                                             int compIIdx, int compJIdx)
+    {
+        static const Scalar diffCoeff = getParam<Scalar>("Component.DiffusionCoefficient", 1.0);
+        return diffCoeff;
+    }
+
+    using Base::density;
+    template <class FluidState>
+    static Scalar density(const FluidState &fluidState,
+                          const int phaseIdx = 0)
+    {
+        static const Scalar density = getParam<Scalar>("Component.LiquidDensity", 1.0);
+        return density;
+    }
+
+    using Base::viscosity;
+    template <class FluidState>
+    static Scalar viscosity(const FluidState &fluidState,
+                            const int phaseIdx)
+    {
+        static const Scalar nu = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
+        Scalar rho = density(fluidState,phaseIdx);
+        return rho * nu;
+    }
+
+    static constexpr bool isCompressible(int phaseIdx)
+    { return true; }
+
+    static constexpr bool viscosityIsConstant(int phaseIdx)
+    { return true; }
+
+    static constexpr bool isMiscible()
+    { return false; }
+
+    static void init()
+    {}
 };
+
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::ChannelNCTest> { using type = ConstantFluidSystem<TypeTag>; };
 
 template<class TypeTag>
 struct ReplaceCompEqIdx<TypeTag, TTag::ChannelNCTest> { static constexpr int value = 0; };
