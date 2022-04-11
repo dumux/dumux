@@ -39,8 +39,8 @@ namespace Dumux {
 
 /*!
  * \ingroup InputOutput
- * \brief Provides a grid manager with a method for creating vectors
- *        with coordinates for columns.
+ * \brief Provides a grid manager for creating a two-dimensional
+ *        grid with a horizontal and a vertical column.
  */
 template <class Grid>
 class ColumnGridManager
@@ -63,246 +63,111 @@ public:
 
         const bool verbose = getParamFromGroup<bool>(modelParamGroup, "Grid.Verbosity", false);
 
-        std::array<std::vector<Scalar>, dim> coordinates;
-
-        createVectors(coordinates, modelParamGroup, verbose);
-        gridPtr() = createColumnGrid(coordinates, modelParamGroup, verbose);
+        gridPtr() = createColumnGrid(modelParamGroup, verbose);
 
         loadBalance();
     }
 
     /*!
-     * \brief Create vectors containing coordinates of all points.
+     * \brief Creates a grid consisting of a horizontal and a vertical column.
      *
-     * All keys are expected to be in group GridParameterGroup.
-     * The following keys are recognized:
-     * - Cells : number of cells array for x-coordinate (Again, an added 0, 1 or 2 specifies x, y or z)
-     * - Grading : grading factor array for x-coordinate (Same here)
-     * - Verbosity : whether the grid construction should output to standard out
-     *
-     * The grading factor \f$ g \f$ specifies the ratio between the next and the current cell size:
-     * \f$ g = \frac{h_{i+1}}{h_i} \f$.
-     * Negative grading factors are converted to
-     * \f$ g = -\frac{1}{g_\textrm{negative}} \f$
-     * to avoid issues with imprecise fraction numbers.
-     */
-    static void createVectors(std::array<std::vector<Scalar>, dim> &coordinates,
-                              const std::string& modelParamGroup,
-                              bool verbose = false)
-    {
-        // The positions
-        std::array<std::vector<Scalar>, dim> positions;
-        for (int i = 0; i < dim; ++i)
-        {
-            positions[i] = getParamFromGroup<std::vector<Scalar>>(modelParamGroup, "Grid.Pos" + std::to_string(i));
-
-            if (!std::is_sorted(positions[i].begin(), positions[i].end()))
-                DUNE_THROW(Dune::GridError, "Make sure to specify a monotone increasing \"Positions\" array");
-
-            if(positions[i].size() < 2)
-                DUNE_THROW(Dune::GridError, "Make sure to specify position arrays with at least two entries (min and max value).");
-        }
-
-        // the number of cells (has a default)
-        std::array<std::vector<int>, dim> cells;
-        for (int i = 0; i < dim; ++i)
-        {
-            cells[i].resize(positions[i].size()-1, 1.0);
-            cells[i] = getParamFromGroup<std::vector<int>>(modelParamGroup, "Grid.Cells" +  std::to_string(i), cells[i]);
-            if (cells[i].size() + 1 != positions[i].size())
-                DUNE_THROW(Dune::RangeError, "Make sure to specify the correct length of \"Cells\" and \"Positions\" arrays");
-
-        }
-        std::cout << " positions" << std::endl;
-
-        // grading factor (has a default)
-        std::array<std::vector<Scalar>, dim> grading;
-        for (int i = 0; i < dim; ++i)
-        {
-            grading[i].resize(positions[i].size()-1, 1.0);
-            grading[i] = getParamFromGroup<std::vector<Scalar>>(modelParamGroup, "Grid.Grading" +  std::to_string(i), grading[i]);
-            if (grading[i].size() + 1 != positions[i].size())
-                DUNE_THROW(Dune::RangeError, "Make sure to specify the correct length of \"Grading\" and \"Positions\" arrays");
-        }
-
-        // make the grid
-        std::array<std::vector<Scalar>, dim> globalPositions;
-        using std::pow;
-        using Dune::power;
-        for (int dimIdx = 0; dimIdx < dim; dimIdx++)
-        {
-            // Each grid direction is subdivided into (numCells + 1) points
-            std::size_t numGlobalPositions = 1;
-            for (int zoneIdx = 0; zoneIdx < cells[dimIdx].size(); ++zoneIdx)
-                numGlobalPositions += cells[dimIdx][zoneIdx];
-
-            globalPositions[dimIdx].resize(numGlobalPositions);
-            std::size_t posIdx = 0;
-            for (int zoneIdx = 0; zoneIdx < cells[dimIdx].size(); ++zoneIdx)
-            {
-                const Scalar lower = positions[dimIdx][zoneIdx];
-                const Scalar upper = positions[dimIdx][zoneIdx+1];
-                const int numCells = cells[dimIdx][zoneIdx];
-                Scalar gradingFactor = grading[dimIdx][zoneIdx];
-                const Scalar length = upper - lower;
-                Scalar height = 1.0;
-                bool increasingCellSize = false;
-
-                if (verbose)
-                {
-                    std::cout << "dim " << dimIdx
-                              << " lower "  << lower
-                              << " upper "  << upper
-                              << " numCells "  << numCells
-                              << " grading "  << gradingFactor;
-                }
-
-                if (gradingFactor > 1.0)
-                    increasingCellSize = true;
-
-                // take absolute values and reverse cell size increment to achieve
-                // reverse behavior for negative values
-                if (gradingFactor < 0.0)
-                {
-                    using std::abs;
-                    gradingFactor = abs(gradingFactor);
-
-                    if (gradingFactor < 1.0)
-                        increasingCellSize = true;
-                }
-
-                const bool useGrading = Dune::FloatCmp::eq(gradingFactor, 1.0) ? false : true;
-
-                // if the grading factor is exactly 1.0 do equal spacing
-                if (!useGrading)
-                {
-                    height = 1.0 / numCells;
-                    if (verbose)
-                        std::cout << " -> h "  << height * length << std::endl;
-                }
-                // if grading factor is not 1.0, do power law spacing
-                else
-                {
-                    height = (1.0 - gradingFactor) / (1.0 - power(gradingFactor, numCells));
-
-                    if (verbose)
-                    {
-                        std::cout << " -> grading_eff "  << gradingFactor
-                                  << " h_min "  << height * power(gradingFactor, 0) * length
-                                  << " h_max "  << height * power(gradingFactor, numCells-1) * length
-                                  << std::endl;
-                    }
-                }
-
-                // the positions inside a global segment
-                Dune::DynamicVector<Scalar> localPositions(numCells, 0.0);
-                for (int i = 1; i < numCells; i++)
-                {
-                    Scalar hI = height;
-                    if (useGrading)
-                    {
-                        if (increasingCellSize)
-                            hI *= power(gradingFactor, i-1);
-
-                        else
-                            hI *= power(gradingFactor, numCells-i);
-                    }
-                    localPositions[i] = localPositions[i-1] + hI;
-                }
-
-                localPositions *= length;
-                localPositions += lower;
-
-                for (int i = 0; i < numCells; ++i)
-                    globalPositions[dimIdx][posIdx++] = localPositions[i];
-            }
-
-            globalPositions[dimIdx][posIdx] = positions[dimIdx].back();
-        }
-        for (int dimIdx = 0; dimIdx < dim; dimIdx++)
-        {
-            coordinates[dimIdx] = globalPositions[dimIdx];
-        }
-
-    }
-
-    /*!
-     * \brief Creates Cartesian grid from coordinates.
-     *
-     * \param coordinates Vector containing coordinates
      * \param modelParamGroup name of the model parameter group
      * \param verbose if the output should be verbose
      */
-    std::unique_ptr<Grid> createColumnGrid(std::array<std::vector<Scalar>, dim> &coordinates,
-                                         const std::string& modelParamGroup,
-                                         bool verbose = false)
+    std::unique_ptr<Grid> createColumnGrid(const std::string& modelParamGroup,
+                                           bool verbose = false)
     {
-        std::vector<Scalar> x = coordinates[0];
-        std::vector<Scalar> y = coordinates[1];
+        const auto columnX = getParamFromGroup<std::vector<Scalar>>(modelParamGroup, "Grid.HorizontalColumn");
+        const auto columnY = getParamFromGroup<std::vector<Scalar>>(modelParamGroup, "Grid.VerticalColumn");
+        const auto cells = getParamFromGroup<std::vector<unsigned>>(modelParamGroup, "Grid.Cells");
 
-        int maxy = y.size() - 1;
+        // grid size in each coordinate direction
+        const auto hX = (columnX[1] - columnX[0])/cells[0];
+        const auto hY = (columnY[1] - columnY[0])/cells[1];
+
+        // get the x-coordinate of the column intersection, by default the start of the horizontal column
+        auto intersectX = getParamFromGroup<Scalar>(modelParamGroup, "Grid.IntersectionX", columnX[0]);
+
+        // number of cells before the vertical column
+        const unsigned intersectIdx = (intersectX - columnX[0])/hX;
+
+        // evtl. adapt the intersection coordinate such that it coincides with a vertex location
+        intersectX = columnX[0] + intersectIdx*hX;
 
         GridFactory gridFactory;
         constexpr auto type = Dune::GeometryTypes::cube(dim);
 
-        for (int j = 0; j <= maxy; ++j)
+        // insert vertices for the horizontal column
+        for (auto i = 0u; i <= cells[0]; ++i)
         {
-            for (int i = 0; i <= x.size()- 1; ++i)
-            {
-                // transform into Cartesian coordinates
-                Dune::FieldVector <double, dim> v(0.0);
+            Dune::FieldVector <double, dim> v(0.0);
 
-                v[0] = x[i];
-                v[1] = y[j];
-                if(verbose)
-                    printCoordinate(v);
-                gridFactory.insertVertex(v);
-            }
+            // determine x-coordinate
+            v[0] = columnX[0] + i*hX;
+
+            // lower vertex in horizontal column
+            v[1] = columnY[0] - hY;
+            if(verbose)
+                printCoordinate(v);
+            gridFactory.insertVertex(v);
+
+            // upper vertex in horizontal column
+            v[1] = columnY[0];
+            if(verbose)
+                printCoordinate(v);
+            gridFactory.insertVertex(v);
         }
 
-        std::cout << "Filled node vector" << std::endl;
-
-        // assign nodes
-        unsigned int z = 0;
-        unsigned int t = 0;
-        unsigned int xSize = x.size();
-        for (int j = 0; j < y.size() - 1; ++j)
+        // insert vertices for the vertical column;
+        // the bottom two vertices have been inserted
+        // already above as part of the horizontal column
+        for (auto i = 1u; i <= cells[1]; ++i)
         {
-            if (j < maxy)
-            {
-                for (int i = 0; i < x.size() - 1; ++i)
-                {
-                    std::vector<unsigned int> vid({z, z+1, z+xSize, z+xSize+1});
-                    if (verbose)
-                        printIndices(vid);
+            Dune::FieldVector <double, dim> v(0.0);
 
-                    gridFactory.insertElement(type, vid);
-                    z++;
-                }
-                z++;
-            }
+            // determine y-coordinate
+            v[1] = columnY[0] + i*hY;
 
-            else
-            {
-                for (int i = 0; i < x.size() - 1; ++i)
-                {
+            // left vertex in vertical column
+            v[0] = intersectX;
+            if(verbose)
+                printCoordinate(v);
+            gridFactory.insertVertex(v);
 
-                    std::vector<unsigned int> vid({z, z+1, t, t+1});
-
-                    if (verbose)
-                        printIndices(vid);
-
-                    gridFactory.insertElement(type, vid);
-                    t++;
-                    z++;
-                }
-                t++;
-                z++;
-
-                if (verbose)
-                    std::cout << "assign nodes ends..." << std::endl;
-            }
+            // right vertex in vertical column
+            v[0] = intersectX + hX;
+            if(verbose)
+                printCoordinate(v);
+            gridFactory.insertVertex(v);
         }
+
+        // insert elements in horizontal column
+        for (auto i = 0u; i < cells[0]; ++i)
+        {
+            const std::vector<unsigned> vid({2*i, 2*i+2, 2*i+1, 2*i+3});
+            if (verbose)
+                printIndices(vid);
+
+            gridFactory.insertElement(type, vid);
+        }
+
+        // the indices of the lowest element of the vertical column
+        const auto offset = 2*cells[0];
+        const std::vector<unsigned> vid({2*intersectIdx+1, 2*intersectIdx+3, offset+2, offset+3});
+        if (verbose)
+            printIndices(vid);
+        gridFactory.insertElement(type, vid);
+
+        // insert remaining elements in vertical column
+        for (auto i = 1u; i < cells[1]; ++i)
+        {
+            const std::vector<unsigned> vid({offset+2*i, offset+2*i+1, offset+2*i+2, offset+2*i+3});
+            if (verbose)
+                printIndices(vid);
+
+            gridFactory.insertElement(type, vid);
+        }
+
         // return the grid pointer
         return std::unique_ptr<Grid>(gridFactory.createGrid());
     }
@@ -333,7 +198,7 @@ protected:
         std::cout << std::endl;
     }
 
-    static void printIndices(const std::vector<unsigned int>& vid)
+    static void printIndices(const std::vector<unsigned>& vid)
     {
         std::cout << "element vertex indices: ";
         for (int k = 0; k < vid.size(); ++k)

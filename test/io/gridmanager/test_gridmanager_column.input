@@ -1,15 +1,10 @@
 [Grid]
-Name = test
-#Positions and Cells for all Areas
-NumberOfAreas = 2
-Pos0 = 0 1
-Pos1 = 1 26
-Pos2 = 0 1000
-Pos3 = 0 1
+HorizontalColumn = 0.0 100.0 # left and right x-coordinate of the horizontal column
+VerticalColumn = 1.0 26.0 # bottom and top y-coordinate of the vertical column
 
-Cells0 = 1
-Cells1 = 25
-Cells2 = 1000
-Cells3 = 1
+IntersectionX = 0.0 # intersection x-coordinate, defaults to the left end of the horizontal column
+
+Cells = 100 25 # cells in the horizontal and the vertical column
 
 Verbosity = true
+Name = test
