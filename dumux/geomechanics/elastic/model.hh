@@ -21,27 +21,30 @@
  * \ingroup Elastic
  * \brief A geomechanical model.
  *
- * This model describe the deformation of the solid body, using theory of linear elasticity:
+ * This model describes the deformation of a solid body using the theory of linear elasticity.
+ * The momentum balance equation of the solid body can be expressed by
  \f[
- \boldsymbol{\nabla}\cdot\boldsymbol{\sigma_s} + \mathbf{F} + \rho_s \mathbf{g} = \rho\ddot{\mathbf{u}}
+ \nabla\cdot\boldsymbol{\sigma} + \rho \mathbf{g} = \rho\ddot{\mathbf{u}},
  \f]
- * We assume the quasi-static conditions, so the acceleration term \f$ \rho\ddot{\mathbf{u}} \approx 0\f$.
+ * where \f$ \boldsymbol{\sigma} \f$ is the stress tensor, \f$ \rho \f$ is the density of
+ * the solid, and \f$ \mathbf{u} = \mathbf{x} - \mathbf{x}_{\mathrm{initial}} \f$ is the displacement,
+ * defined as the difference in material points \f$ \mathbf{x} \f$ and \f$ \mathbf{x}_{\mathrm{initial}} \f$
+ * in the deformed and undeformed (initial) state, respectively. The model assumes quasi-static conditions,
+ * that is, the above momentum balance equation is solved under the assumption that the acceleration term
+ * \f$ \rho\ddot{\mathbf{u}} \approx 0\f$.
  *
- * For isotropic materials, the stress tensor \f$ \boldsymbol{\sigma_s} \f$ can be calculated after Hookes' Law
+ * Per default, Hookes' Law is used for expressing the stress tensor \f$ \boldsymbol{\sigma} \f$ as a function of the
+ * displacement:
  \f[
- {\boldsymbol {\sigma_s}}= \lambda \mathrm{tr}(\varepsilon)  \boldsymbol{\mathrm I}+ 2G \varepsilon,
+ \boldsymbol{\sigma} = \lambda\mathrm{tr}(\boldsymbol{\varepsilon}) \mathbf{I} + 2G \boldsymbol{\varepsilon},
  \f]
  * with
  \f[
- {\boldsymbol {\varepsilon }}={\frac {1}{2}}\left[{\boldsymbol {\nabla }}\mathbf {u} +({\boldsymbol {\nabla }}\mathbf {u} )^{\mathrm {T} }\right].
+ \boldsymbol{\varepsilon} = \frac{1}{2} \left[ \nabla\mathbf{u} + (\nabla\mathbf{u})^{\mathrm{T}} \right].
  \f]
  *
- * Gravity can be enabled or disabled via the property system.
- *
- * The equations are discretized using a vertex-centered finite volume (box) scheme as spatial discretization. The time discretization is not needed due to the quasi-static conditions.
+ * The equations are discretized using a vertex-centered finite volume (box) scheme as spatial discretization.
  * PrimaryVariables are the displacements in each direction \f$ \mathbf{u} \f$.
- *
- * Pay attention to the sign convention, where tension has a positive!
  */
 #ifndef DUMUX_GEOMECHANICS_ELASTIC_MODEL_HH
 #define DUMUX_GEOMECHANICS_ELASTIC_MODEL_HH
