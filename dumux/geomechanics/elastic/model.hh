@@ -21,13 +21,15 @@
  * \ingroup Elastic
  * \brief A geomechanical model.
  *
- * This model describe the deformation of the solid body, using theory of linear elasticity:
+ * This models describe the deformation of a solid body using the theory of linear elasticity:
  \f[
  \boldsymbol{\nabla}\cdot\boldsymbol{\sigma_s} + \mathbf{F} + \rho_s \mathbf{g} = \rho\ddot{\mathbf{u}}
  \f]
- * We assume the quasi-static conditions, so the acceleration term \f$ \rho\ddot{\mathbf{u}} \approx 0\f$.
+ * We assume quasi-static conditions, so the acceleration term \f$ \rho\ddot{\mathbf{u}} \approx 0\f$.
  *
- * For isotropic materials, the stress tensor \f$ \boldsymbol{\sigma_s} \f$ can be calculated after Hookes' Law
+ * The model uses Hookes' Law for expressing the stress tensor \f$ \boldsymbol{\sigma_s} \f$ as function of the
+ * displacement \f[ \mathbf{u} = \mathbf{x} - \mathbf{x}_{initial} \f], where \f[ \mathbf{x} \f] and \f[ \mathbf{x}_{initial} \f]
+ * denote material points in the deformed and initial (undeformed) state:
  \f[
  {\boldsymbol {\sigma_s}}= \lambda \mathrm{tr}(\varepsilon)  \boldsymbol{\mathrm I}+ 2G \varepsilon,
  \f]
@@ -38,7 +40,7 @@
  *
  * Gravity can be enabled or disabled via the property system.
  *
- * The equations are discretized using a vertex-centered finite volume (box) scheme as spatial discretization. The time discretization is not needed due to the quasi-static conditions.
+ * The equations are discretized using a vertex-centered finite volume (box) scheme as spatial discretization.
  * PrimaryVariables are the displacements in each direction \f$ \mathbf{u} \f$.
  *
  * Pay attention to the sign convention, where tension has a positive!
