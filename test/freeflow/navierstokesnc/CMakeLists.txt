@@ -1,3 +1,4 @@
 add_subdirectory(densitydrivenflow)
 add_subdirectory(channel)
 add_subdirectory(maxwellstefan)
+add_subdirectory(1pnc_column_test)

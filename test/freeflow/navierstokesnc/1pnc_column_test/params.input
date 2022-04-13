@@ -1,0 +1,32 @@
+[TimeLoop]
+DtInitial = 1e-2 # [s]
+TEnd = 2e5 #
+MaxTimeStepSize = 1e4
+
+[Grid]
+Positions0 = 0 0.23
+Positions1 = 0 5 6
+Cells0 = 23
+Cells1 = 500 200
+Grading0 = 1.0
+Grading1 = 1.0 1.0
+
+[Problem]
+Name = test_column_co2water_test # name passed to the output routines
+EnableGravity = true
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-8
+
+[Vtk]
+WriteFaceData = false
+AddVelocity = true
+
+[Brine]
+Salinity = 0.0 #this is only needed for the brineco2fluidsystem
+
+[SpatialParams]
+Temperature = 283.15 #K, here specify the temperature for isothermal models
+
+[FreeFlow]
+EnableUnsymmetrizedVelocityGradient = true
