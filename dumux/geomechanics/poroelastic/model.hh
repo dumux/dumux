@@ -21,32 +21,40 @@
  * \ingroup PoroElastic
  * \brief A poroelastic geomechanical model
  *
- * The adapted geomechanical model describes the deformation of the solid matrix filled with fluids, using linear poro-elasticity:
+ * This model describes the deformation of a porous medium using linear poro-elasticity.
+ * The momentum balance equation of the solid body can be expressed by
  \f[
- \boldsymbol{\nabla}\cdot\boldsymbol{\sigma} + \mathbf{F} + \rho \mathbf{g} = \rho\ddot{\mathbf{u}}
+ \nabla\cdot\boldsymbol{\sigma} + \rho_{\mathrm{pm}}\mathbf{g} = \rho_{\mathrm{pm}}\ddot{\mathbf{u}},
  \f]
- * where the density of the matrix \f$ \rho = \phi \sum_{\beta} S_{\beta} \rho_{\beta} + (1-\phi) \rho_s\f$.
+ * where \f$ \boldsymbol{\sigma} \f$ is the stress tensor,
+ * \f$ \rho_{\mathrm{pm}} = (1 - \phi) \rho_s + \phi \sum_{\alpha} S_\alpha \rho_\alpha \f$
+ * is the density of porous medium, expressed in terms of the porosity \f$ \phi \f$, the solid density
+ * \f$ \rho_s \f$ and the pore fluid phase densities \f$ \rho_\alpha \f$.
+ * The displacement \f$ \mathbf{u} = \mathbf{x} - \mathbf{x}_{\mathrm{initial}} \f$ is defined
+ * as the difference in material points \f$ \mathbf{x} \f$ and \f$ \mathbf{x}_{\mathrm{initial}} \f$
+ * in the deformed and undeformed (initial) state, respectively. The model assumes quasi-static conditions,
+ * that is, the above momentum balance equation is solved under the assumption that the acceleration term
+ * \f$ \rho_{\mathrm{pm}}\ddot{\mathbf{u}} \approx 0\f$.
  *
- * We assume the quasi-static conditions, so the acceleration term \f$ \rho\ddot{\mathbf{u}} \approx 0\f$.
- *
- * For isotropic materials, the stress tensor \f$ \boldsymbol{\sigma} \f$ can be calculated after Hookes' Law, including the effective fluid pressure.
+ * The stress tensor in the porous medium is given as follows:
  \f[
- {\boldsymbol {\sigma}}= \lambda \mathrm{tr}(\varepsilon) \boldsymbol{\mathrm I}+ 2G \varepsilon - \alpha p_{\mathrm{eff}} \boldsymbol{\mathrm I},
+ \boldsymbol{\sigma} = \boldsymbol{\sigma}_{\mathrm{eff}} - \alpha p_{\mathrm{eff}}\mathbf{I}.
+ \f]
+ * Per default, Hookes' Law is used for the effective stress in the solid skeleton:
+ \f[
+ \boldsymbol{\sigma} = \lambda\mathrm{tr}(\boldsymbol{\varepsilon}) \mathbf{I} + 2G \boldsymbol{\varepsilon},
  \f]
  * with
  \f[
- {\boldsymbol {\varepsilon }}={\frac {1}{2}}\left[{\boldsymbol {\nabla }}\mathbf {u} +({\boldsymbol {\nabla }}\mathbf {u} )^{\mathrm {T} }\right],
+ \boldsymbol{\varepsilon} = \frac{1}{2}\left[ \nabla\mathbf{u} + (\nabla\mathbf{u})^{\mathrm{T}} \right]
  \f]
- * and
+ * and the effective fluid pressure
  \f[
- p_{\mathrm{eff}} = \sum_{\beta} S_{\beta} p_{\beta}.
+ p_{\mathrm{eff}} = \sum_{\alpha} S_{\alpha} p_{\alpha}.
  \f]
- * Gravity can be enabled or disabled via a runtime parameter.
  *
- * The equations are discretized using a vertex-centered finite volume (box) scheme as spatial discretization. The time discretization is not needed due to the quasi-static conditions.
+ * The equations are discretized using a vertex-centered finite volume (box) scheme as spatial discretization.
  * PrimaryVariables are the displacements in each direction \f$ \mathbf{u} \f$.
- *
- * Pay attention to the sign convention, where tension has a positive!
  */
 #ifndef DUMUX_GEOMECHANICS_POROELASTIC_MODEL_HH
 #define DUMUX_GEOMECHANICS_POROELASTIC_MODEL_HH
