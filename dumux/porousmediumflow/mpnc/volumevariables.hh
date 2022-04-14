@@ -217,13 +217,14 @@ public:
         for (int phaseIdx = 0; phaseIdx < numFluidPhases(); ++phaseIdx) {
             // initial guess
             for (int compIdx = 0; compIdx < numFluidComps; ++compIdx) {
-                Scalar x_ij = 1.0/numFluidComps;
-
+                // sanity check to make sure we have non-zero fugacity coefficients
+                if (FluidSystem::fugacityCoefficient(fluidState, paramCache, phaseIdx, compIdx) == 0.0)
+                    DUNE_THROW(NumericalProblem, "MPNCVolumeVariables do not support fluidsystems with fugacity coefficients of 0");
+                
                 // set initial guess of the component's mole fraction
-                fluidState.setMoleFraction(phaseIdx,
-                                        compIdx,
-                                        x_ij);
+                fluidState.setMoleFraction(phaseIdx, compIdx, 1.0/numFluidComps);
             }
+
             // calculate the phase composition from the component
             // fugacities
             CompositionFromFugacities::guessInitial(fluidState, paramCache, phaseIdx, fug);
