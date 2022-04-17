@@ -29,10 +29,7 @@
 #include <dune/grid/io/file/gmshreader.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
-extern "C" {
-#include <stdint.h>
-#include <ptscotch.h>
-} // end extern C
+#include <dumux/parallel/scotchpartitioner.hh>
 
 template<class GV>
 void writeOutput(const std::string& name, const GV& gridView, int myRank)
@@ -48,146 +45,79 @@ void writeOutput(const std::string& name, const GV& gridView, int myRank)
     writer.write(name);
 }
 
-int main (int argc , char **argv)
+template<class GridView>
+typename Dumux::ScotchPartitioner<typename GridView::Grid::Rank>::Graph
+buildCCTpfaGraph(const GridView& gridView)
 {
-    // if terminal output is desired, e.g. for debugging,
-    // set to true, else false
-    bool printOutput = true;
+    constexpr int codimension = 0;
+    using Graph = typename Dumux::ScotchPartitioner<typename GridView::Grid::Rank>::Graph;
+    Graph graph(gridView.size(codimension));
 
-    // use MPI helper to initialize MPI
-    //
-    // This will be needed in order to set up the parallelization and dgraph structure.
-    // SCOTCH's dgraphs work analogously to the regular graph, but need some more inputs.
-    //
-    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
+    for (const auto& element : elements(gridView))
+    {
+        const auto eIdx = gridView.indexSet().index(element);
+        for (const auto& intersection : intersections(gridView, element))
+            if (intersection.neighbor())
+                graph[eIdx].push_back(gridView.indexSet().index(intersection.outside()));
+    }
 
-    // TODO add if rank == 0 around everything (read, graph, ...)
-    // but consider that load balance is outside of this if,
-    // consequently the input params need to be declared outside, too
+    return graph;
+}
 
-    // read mesh file
-    constexpr int dim = 2; // 3 for ball.msh example
+void test2D(int rank, std::size_t numProcessors)
+{
+    constexpr int dim = 2;
     using Grid = Dune::UGGrid<dim>;
     auto grid = std::shared_ptr<Grid>(Dune::GmshReader<Grid>::read("rectangle.msh"));
     const auto& gridView = grid->leafGridView();
-    writeOutput("before_loadbalance", gridView, mpiHelper.rank());
+    writeOutput("before_loadbalance_2d", gridView, rank);
 
     // create partition array (target rank for each node in graph)
-    std::vector<SCOTCH_Num> scotchPartitions;
-    if (mpiHelper.rank() == 0)
+    std::vector<Grid::Rank> partitions;
+    if (rank == 0)
     {
-        using Graph = std::vector<std::vector<int>>;
+        const auto graph = buildCCTpfaGraph(gridView);
+        Dumux::ScotchPartitioner<Grid::Rank>::partition(graph, numProcessors, partitions);
 
-        // create graph's nodes and edges from mesh
-        // (cell-centered methods)
-        constexpr int codimension = 0;
-        Graph graph(gridView.size(codimension));
-
-        // Displaying element indices
-        if (printOutput)
-            std::cout << "Element index:" << std::endl;
-
-        for (const auto& element : elements(gridView))
-        {
-            const auto eIdx = gridView.indexSet().index(element);
-            if (printOutput)
-                std::cout << eIdx << " ";
-
-            for (const auto& intersection : intersections(gridView, element))
-                if (intersection.neighbor())
-                    graph[eIdx].push_back( gridView.indexSet().index(intersection.outside()));
-        }
-
-        if (printOutput)
-            std::cout << std::endl;
-
-        // Number of local graph vertices (cells)
-        const SCOTCH_Num numNodes = graph.size();
-
-        // Data structures for graph input to SCOTCH (add 1 for case that
-        // graph size is zero)
-        std::vector<SCOTCH_Num> vertTab;
-        vertTab.reserve(numNodes + 1);
-        std::vector<SCOTCH_Num> edgeTab;
-        edgeTab.reserve(20*numNodes);
-
-        // Build local graph input for SCOTCH
-        // (graph vertices (cells) and
-        // number of edges connecting two vertices)
-        SCOTCH_Num numEdges = 0;
-        vertTab.push_back(0);
-        for (auto vertex = graph.begin(); vertex != graph.end(); ++vertex)
-        {
-            numEdges += vertex->size();
-            vertTab.push_back(vertTab.back() + vertex->size());
-            edgeTab.insert(edgeTab.end(), vertex->begin(), vertex->end());
-        }
-
-        // Shrink vectors to hopefully recover any unused memory
-        vertTab.shrink_to_fit();
-        edgeTab.shrink_to_fit();
-
-        // initialize graph
-        SCOTCH_Graph scotchGraph;
-        if (SCOTCH_graphInit(&scotchGraph) != 0)
-            DUNE_THROW(Dune::Exception, "Error initializing SCOTCH graph!");
-
-        // check graph's consistency (recommended before building)
-        if (SCOTCH_graphCheck(&scotchGraph) != 0)
-            DUNE_THROW(Dune::Exception, "Error within SCOTCH graph's consistency!");
-
-        // build graph
-        const SCOTCH_Num baseValue = 0;
-        if (SCOTCH_graphBuild(&scotchGraph, baseValue, numNodes, vertTab.data(), vertTab.data()+1, NULL, NULL, numEdges, edgeTab.data(), NULL))
-            DUNE_THROW(Dune::Exception, "Error building SCOTCH graph!");
-
-        // initialize strategy
-        SCOTCH_Strat scotchStrat;
-        if (SCOTCH_stratInit(&scotchStrat) != 0)
-            DUNE_THROW(Dune::Exception, "Error initializing SCOTCH strategy!");
-
-        // build strategy structure
-        // there is also a flag for a "focus" on load balancing called SCOTCH_STRATBALANCE
-        // numbers from scotch tests in repo (just to test, if this entire setup works)
-        const SCOTCH_Num flagValue = SCOTCH_STRATDEFAULT;
-        const SCOTCH_Num numProcessors = mpiHelper.size();
-        const double imbalanceRatio = 0.0;
-
-        if (SCOTCH_stratGraphMapBuild(&scotchStrat, flagValue, numProcessors, imbalanceRatio) != 0)
-            DUNE_THROW(Dune::Exception, "Error building SCOTCH strategy!");
-
-        // architecture and graphMap are created and called within graphPart
-        // if specific ones are desired, one has to call them separately and delete the graphPart function call
-        // compute partitioning
-        scotchPartitions.resize(numNodes);
-        if (SCOTCH_graphPart(&scotchGraph, numProcessors, &scotchStrat, scotchPartitions.data()) != 0)
-            DUNE_THROW(Dune::Exception, "Error computing SCOTCH graph mapping!");
-
-        // free memory
-        SCOTCH_graphExit(&scotchGraph);
-        SCOTCH_stratExit(&scotchStrat);
+        if (numProcessors == 2 || numProcessors == 4)
+            if (std::count(partitions.begin(), partitions.end(), 0) != std::count(partitions.begin(), partitions.end(), 1))
+                DUNE_THROW(Dune::Exception, "Unexpected unbalanced partition!");
     }
 
-    // Displaying computed graph partition array
-    if (printOutput && !scotchPartitions.empty())
-    {
-        std::cout << "Graph's partition array:" << std::endl;
-        for (int i = 0; i < scotchPartitions.size(); ++i)
-            std::cout << scotchPartitions[i] << " ";
-
-        std::cout << std::endl;
-    }
-
-    // convert number types
-    std::vector<Grid::Rank> partitions(
-        scotchPartitions.begin(), scotchPartitions.end()
-    );
-
-    // use UG interface to send element to target ranks
     grid->loadBalance(partitions, /*grid level=*/0);
+    writeOutput("after_loadbalance_2d", gridView, rank);
+}
 
-    // write grid out with ranks
-    writeOutput("after_loadbalance", gridView, mpiHelper.rank());
+void test3D(int rank, std::size_t numProcessors)
+{
+    constexpr int dim = 3;
+    using Grid = Dune::UGGrid<dim>;
+    auto grid = std::shared_ptr<Grid>(Dune::GmshReader<Grid>::read("ball.msh"));
+    const auto& gridView = grid->leafGridView();
+    writeOutput("before_loadbalance_3d", gridView, rank);
+
+    // create partition array (target rank for each node in graph)
+    std::vector<Grid::Rank> partitions;
+    if (rank == 0)
+    {
+        const auto graph = buildCCTpfaGraph(gridView);
+        Dumux::ScotchPartitioner<Grid::Rank>::partition(graph, numProcessors, partitions);
+
+        if (numProcessors == 2 || numProcessors == 4)
+            if (std::count(partitions.begin(), partitions.end(), 0) != std::count(partitions.begin(), partitions.end(), 1))
+                DUNE_THROW(Dune::Exception, "Unexpected unbalanced partition!");
+    }
+
+    grid->loadBalance(partitions, /*grid level=*/0);
+    writeOutput("after_loadbalance_3d", gridView, rank);
+}
+
+int main (int argc , char **argv)
+{
+    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
+
+    test2D(mpiHelper.rank(), mpiHelper.size());
+    test3D(mpiHelper.rank(), mpiHelper.size());
 
     return 0;
 }
