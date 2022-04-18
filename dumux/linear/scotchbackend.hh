@@ -30,6 +30,8 @@
 #include <vector>
 #include <iostream>
 
+#include <dune/common/exceptions.hh>
+
 #if HAVE_PTSCOTCH
 #if HAVE_MPI
 #include <mpi.h>
@@ -44,6 +46,110 @@ extern "C"
 #endif
 
 namespace Dumux {
+
+#if HAVE_PTSCOTCH
+
+/*!
+ * \file
+ * \ingroup Linear
+ * \brief A wrapper around a SCOTCH graph object
+ */
+template<class IndexType = int>
+class ScotchGraph
+{
+public:
+    //! a graph represented by an adjacency list
+    using Graph = std::vector<std::vector<IndexType>>;
+
+    ScotchGraph(const Graph& graph)
+    {
+        // Number of local graph vertices
+        const SCOTCH_Num numNodes = graph.size();
+
+        // Data structures for graph input to SCOTCH
+        // add 1 for case that graph size is zero
+        vertTab_.reserve(numNodes + 1);
+        edgeTab_.reserve(20*numNodes);
+
+        // Build local graph input for SCOTCH
+        // (number of graph vertices (cells),
+        //  number of edges connecting two vertices)
+        SCOTCH_Num numEdges = 0;
+        vertTab_.push_back(0);
+        for (auto vertex = graph.begin(); vertex != graph.end(); ++vertex)
+        {
+            numEdges += vertex->size();
+            vertTab_.push_back(vertTab_.back() + vertex->size());
+            edgeTab_.insert(edgeTab_.end(), vertex->begin(), vertex->end());
+        }
+
+        // Shrink vectors to hopefully recover any unused memory
+        vertTab_.shrink_to_fit();
+        edgeTab_.shrink_to_fit();
+
+        if (SCOTCH_graphInit(&scotchGraph_) != 0)
+            DUNE_THROW(Dune::Exception, "Error initializing SCOTCH graph!");
+
+        // check graph's consistency (recommended before building)
+        if (SCOTCH_graphCheck(&scotchGraph_) != 0)
+            DUNE_THROW(Dune::Exception, "Error within SCOTCH graph's consistency!");
+
+        // build graph
+        const SCOTCH_Num baseValue = 0; // C-style array indexing
+        if (SCOTCH_graphBuild(&scotchGraph_, baseValue, numNodes, vertTab_.data(), vertTab_.data()+1, NULL, NULL, numEdges, edgeTab_.data(), NULL))
+            DUNE_THROW(Dune::Exception, "Error building SCOTCH graph!");
+    }
+
+    //! Clean-up the graph
+    ~ScotchGraph()
+    {
+        SCOTCH_graphExit(&scotchGraph_);
+    }
+
+    //! Get the raw point to the data (to pass to C interface)
+    SCOTCH_Graph* data()
+    { return &scotchGraph_; }
+
+private:
+    SCOTCH_Graph scotchGraph_;
+    // we have to maintain these ourselves to keep the Scotch graph valid
+    std::vector<SCOTCH_Num> vertTab_;
+    std::vector<SCOTCH_Num> edgeTab_;
+};
+
+/*!
+ * \file
+ * \ingroup Linear
+ * \brief A wrapper around a SCOTCH strategy object
+ */
+class ScotchGraphOrderStrategy
+{
+public:
+    ScotchGraphOrderStrategy(const std::string& strategy = "")
+    {
+        if (SCOTCH_stratInit(&strategy_) != 0)
+            DUNE_THROW(Dune::Exception, "Error initializing SCOTCH strategy!");
+
+        // Set SCOTCH strategy (if provided)
+        if (!strategy.empty())
+            SCOTCH_stratGraphOrder(&strategy_, strategy.c_str());
+    }
+
+    //! Clean-up the strategy
+    ~ScotchGraphOrderStrategy()
+    {
+        SCOTCH_stratExit(&strategy_);
+    }
+
+    //! Get the raw point to the data (to pass to C interface)
+    SCOTCH_Strat* data()
+    { return &strategy_; }
+
+private:
+    SCOTCH_Strat strategy_;
+};
+
+#endif // HAVE_PTSCOTCH
 
 /*!
  * \file
@@ -84,85 +190,27 @@ public:
                                    std::string scotchStrategy = "")
     {
 #if HAVE_PTSCOTCH
-        // Number of local graph vertices (cells)
-        const SCOTCH_Num vertnbr = graph.size();
-
-        // Data structures for graph input to SCOTCH (add 1 for case that
-        // graph size is zero)
-        std::vector<SCOTCH_Num> verttab;
-        verttab.reserve(vertnbr + 1);
-        std::vector<SCOTCH_Num> edgetab;
-        edgetab.reserve(20*vertnbr);
-
-        // Build local graph input for SCOTCH
-        // (number of graph vertices (cells),
-        //  number of edges connecting two vertices)
-        SCOTCH_Num edgenbr = 0;
-        verttab.push_back(0);
-        typename Graph::const_iterator vertex;
-        for (vertex = graph.begin(); vertex != graph.end(); ++vertex)
-        {
-            edgenbr += vertex->size();
-            verttab.push_back(verttab.back() + vertex->size());
-            edgetab.insert(edgetab.end(), vertex->begin(), vertex->end());
-        }
-
-        // Shrink vectors to hopefully recover an unused memory
-        verttab.shrink_to_fit();
-        edgetab.shrink_to_fit();
-
-        // Create SCOTCH graph
-        SCOTCH_Graph scotchGraph;
-
-        // C-style array indexing
-        const SCOTCH_Num baseval = 0;
-
-        // Create SCOTCH graph and initialise
-        if (SCOTCH_graphInit(&scotchGraph) != 0)
-        {
-            std::cerr << "Error initializing SCOTCH graph!" << std::endl;
-            exit(1);
-        }
-
-        // Build SCOTCH graph
-        if (SCOTCH_graphBuild(&scotchGraph, baseval,
-                              vertnbr, &verttab[0], &verttab[1], NULL, NULL,
-                              edgenbr, &edgetab[0], NULL))
-        {
-            std::cerr << "Error building SCOTCH graph!" << std::endl;
-            exit(1);
-        }
-
-        // Re-ordering strategy
-        SCOTCH_Strat strat;
-        SCOTCH_stratInit(&strat);
-
-        // Set SCOTCH strategy (if provided)
-        if (!scotchStrategy.empty())
-        SCOTCH_stratGraphOrder(&strat, scotchStrategy.c_str());
+        ScotchGraph<IndexType> scotchGraph(graph);
+        ScotchGraphOrderStrategy strategy(scotchStrategy);
 
         // Vector to hold permutation vectors
-        std::vector<SCOTCH_Num> permutationIndices(vertnbr);
-        std::vector<SCOTCH_Num> inversePermutationIndices(vertnbr);
+        const auto graphSize = graph.size();
+        std::vector<SCOTCH_Num> permutationIndices(graphSize);
+        std::vector<SCOTCH_Num> inversePermutationIndices(graphSize);
 
         // Reset SCOTCH random number generator to produce deterministic partitions
         SCOTCH_randomReset();
 
         // Compute re-ordering
-        if (SCOTCH_graphOrder(&scotchGraph, &strat, permutationIndices.data(),
-                              inversePermutationIndices.data(), NULL, NULL, NULL))
-        {
-            std::cerr << "SCOTCH: Error during reordering graph!" << std::endl;
-            exit(1);
-        }
-
-        // Clean up SCOTCH objects
-        SCOTCH_graphExit(&scotchGraph);
-        SCOTCH_stratExit(&strat);
+        if (SCOTCH_graphOrder(
+            scotchGraph.data(), strategy.data(), permutationIndices.data(),
+            inversePermutationIndices.data(), NULL, NULL, NULL
+        ))
+            DUNE_THROW(Dune::Exception, "Error reordering SCOTCH graph!");
 
         // Copy permutation vectors
-        permutation.resize(vertnbr);
-        inversePermutation.resize(vertnbr);
+        permutation.resize(graphSize);
+        inversePermutation.resize(graphSize);
         std::copy(permutationIndices.begin(), permutationIndices.end(),
                   permutation.begin());
         std::copy(inversePermutationIndices.begin(), inversePermutationIndices.end(),
