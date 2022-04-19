@@ -13,6 +13,20 @@ Differences Between DuMu<sup>x</sup> 3.5 and DuMu<sup>x</sup> 3.4
 
 ### Improvements and Enhancements
 
+- __ParallelFor and multithreaded assembly__: For single domain applications using Box of CCTpfa discretization,
+  the possibility for multithreaded (thread-parallel) assembly has been added. It is using the newly added
+  `Dumux::parallelFor` interface. This features requires a backend to be available.
+  This can be either external backends (TBB, Kokkos) or a working C++ STL parallel algorithms setup.
+  The backend will be selected automatically, if found. You can also specify the backend by setting the
+  compiler definition `DUMUX_MULTITHREADING_BACKEND=TBB,Cpp,Kokkos,Serial`, where Serial forces to always run in serial.
+  For the assembly, you can explicitly turn multithreading off setting the runtime parameter `Assembly.Multithreading = false`.
+  If a backend is available and the discretization allows it, the default is multithreaded assembly.
+  When using TBB or Kokkos is it required (recommended) to use `Dumux::initialize` in the main file.
+
+- __initialize__: A new control function `Dumux::initialize` has been added which initializes shared and distributed
+  memory parallelism helpers. It is recommended (and may be required for multithreaded applications) to use `Dumux::initialize`
+  instead of manually initializing the `Dune::MPIHelper`.
+
 - __Discretization tags__: We introduced tags in the namespace `DiscretizationMethods` (with s) for each discretization method.
   These tags replace the `enum class DiscretizationMethod`. Tags have several advantages over the enum. Each tag is a named type
   (see `dumux/common/tag.hh`) so they can for example be used in tag dispatch. Moreover specializing with tags is extensible.
