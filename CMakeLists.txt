@@ -27,19 +27,19 @@ dune_enable_all_packages(MODULE_LIBRARIES dumux_fmt dumux_parameters)
 # enforce C++-17
 dune_require_cxx_standard(MODULE "DuMuX" VERSION 17)
 
+# option for enabling Python bindings
+option(DUMUX_ENABLE_PYTHONBINDINGS "Enable Python bindings" ${DUNE_ENABLE_PYTHONBINDINGS})
+
 add_subdirectory(cmake/modules)
 add_subdirectory(doc)
 add_subdirectory(dumux)
 add_subdirectory(test EXCLUDE_FROM_ALL)
 add_subdirectory(examples EXCLUDE_FROM_ALL)
 
-# from Dune 2.9 on Python bindings are enabled per default
-if(${dune-common_VERSION} VERSION_GREATER_EQUAL 2.9)
+# only add bindings folder if Python bindings are enabled
+if(DUMUX_ENABLE_PYTHONBINDINGS)
   add_subdirectory(python)
-else()
-  # with Dune 2.8, only if Python bindings are enabled
-  if(DUNE_ENABLE_PYTHONBINDINGS)
-    add_subdirectory(python)
+  if(${dune-common_VERSION} VERSION_LESS 2.9)
     dune_python_install_package(PATH "python")
   endif()
 endif()
