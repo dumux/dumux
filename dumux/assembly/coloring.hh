@@ -45,7 +45,7 @@ computeDofToElementMap(const GridGeometry& gg)
 {
     std::vector<std::vector<std::size_t>> dofToElements;
 
-    if constexpr (GridGeometry::discMethod == DiscretizationMethod::cctpfa)
+    if constexpr (GridGeometry::discMethod == DiscretizationMethods::cctpfa)
     {
         dofToElements.resize(gg.gridView().size(0));
         const auto& eMapper = gg.elementMapper();
@@ -58,7 +58,7 @@ computeDofToElementMap(const GridGeometry& gg)
         }
     }
 
-    else if constexpr (GridGeometry::discMethod == DiscretizationMethod::box)
+    else if constexpr (GridGeometry::discMethod == DiscretizationMethods::box)
     {
         static constexpr int dim = GridGeometry::GridView::dimension;
         dofToElements.resize(gg.gridView().size(dim));
@@ -73,7 +73,8 @@ computeDofToElementMap(const GridGeometry& gg)
 
     else
         DUNE_THROW(Dune::NotImplemented,
-            "Missing coloring scheme implementation for this discretization method");
+            "Missing coloring scheme implementation for this discretization method"
+        );
 
     return dofToElements;
 }
@@ -97,7 +98,7 @@ void addNeighborColors(const GridGeometry& gg,
                        const DofToElementMap& dofToElement,
                        std::vector<int>& neighborColors)
 {
-    if constexpr (GridGeometry::discMethod == DiscretizationMethod::cctpfa)
+    if constexpr (GridGeometry::discMethod == DiscretizationMethods::cctpfa)
     {
         // we modify neighbor elements during the assembly
         // check who else modifies these neighbor elements
@@ -117,7 +118,7 @@ void addNeighborColors(const GridGeometry& gg,
         }
     }
 
-    else if constexpr (GridGeometry::discMethod == DiscretizationMethod::box)
+    else if constexpr (GridGeometry::discMethod == DiscretizationMethods::box)
     {
         // we modify the vertex dofs of our element during the assembly
         // check who else modifies these vertex dofs
@@ -131,7 +132,8 @@ void addNeighborColors(const GridGeometry& gg,
 
     else
         DUNE_THROW(Dune::NotImplemented,
-            "Missing coloring scheme implementation for this discretization method");
+            "Missing coloring scheme implementation for this discretization method"
+        );
 }
 
 /*!
@@ -226,11 +228,11 @@ auto coloredElementSets(const GridGeometry& gg, int verbosity = 1)
 }
 
 //! Traits specifying if a given discretization tag supports coloring
-template<DiscretizationMethod discMethod>
+template<class DiscretizationMethod>
 struct SupportsColoring : public std::false_type {};
 
-template<> struct SupportsColoring<DiscretizationMethod::cctpfa> : public std::true_type {};
-template<> struct SupportsColoring<DiscretizationMethod::box> : public std::true_type {};
+template<> struct SupportsColoring<DiscretizationMethods::CCTpfa> : public std::true_type {};
+template<> struct SupportsColoring<DiscretizationMethods::Box> : public std::true_type {};
 
 } // end namespace Dumux
 

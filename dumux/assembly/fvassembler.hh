@@ -144,7 +144,7 @@ public:
     , isStationaryProblem_(true)
     {
         static_assert(isImplicit, "Explicit assembler for stationary problem doesn't make sense!");
-        enableMultithreading_ = SupportsColoring<GridGeometry::discMethod>::value
+        enableMultithreading_ = SupportsColoring<typename GridGeometry::DiscretizationMethod>::value
             && getParam<bool>("Assembly.Multithreading", DUMUX_MULTITHREADING_ASSEMBLY_DEFAULT);
 
         completeConfiguration_();
@@ -167,7 +167,7 @@ public:
     , prevSol_(&prevSol)
     , isStationaryProblem_(!timeLoop)
     {
-        enableMultithreading_ = SupportsColoring<GridGeometry::discMethod>::value
+        enableMultithreading_ = SupportsColoring<typename GridGeometry::DiscretizationMethod>::value
             && getParam<bool>("Assembly.Multithreading", DUMUX_MULTITHREADING_ASSEMBLY_DEFAULT);
 
         completeConfiguration_();
