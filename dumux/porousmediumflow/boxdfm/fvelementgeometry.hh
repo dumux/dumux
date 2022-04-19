@@ -61,10 +61,11 @@ class BoxDfmFVElementGeometry<GG, true>
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
     using GridIndexType = typename GridView::IndexSet::IndexType;
-    using Element = typename GridView::template Codim<0>::Entity;
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
 public:
+    //! export type of the element
+    using Element = typename GridView::template Codim<0>::Entity;
     //! Export type of subcontrol volume
     using SubControlVolume = typename GG::SubControlVolume;
     //! Export type of subcontrol volume face
@@ -199,7 +200,6 @@ class BoxDfmFVElementGeometry<GG, false>
     static constexpr int dimWorld = GridView::dimensionworld;
 
     using GridIndexType = typename GridView::IndexSet::IndexType;
-    using Element = typename GridView::template Codim<0>::Entity;
 
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
@@ -207,6 +207,8 @@ class BoxDfmFVElementGeometry<GG, false>
                                                 typename GG::SubControlVolume,
                                                 typename GG::SubControlVolumeFace>;
 public:
+    //! export type of the element
+    using Element = typename GridView::template Codim<0>::Entity;
     //! Export type of subcontrol volume
     using SubControlVolume = typename GG::SubControlVolume;
     //! Export type of subcontrol volume face
