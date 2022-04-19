@@ -42,6 +42,7 @@
 #include <dumux/freeflow/spatialparams.hh>
 #include <dumux/freeflow/turbulencemodel.hh>
 #include "dumux/freeflow/navierstokes/iofields.hh"
+#include "dumux/freeflow/navierstokes/mass/1p/indices.hh"
 #include <dumux/freeflow/navierstokes/energy/model.hh>
 #include <dumux/freeflow/navierstokes/scalarfluxvariablescachefiller.hh>
 #include <dumux/material/fluidstates/compositional.hh>
@@ -52,7 +53,6 @@
 #include "localresidual.hh"
 #include "volumevariables.hh"
 #include "fluxvariables.hh"
-#include "indices.hh"
 #include "iofields.hh"
 
 namespace Dumux {
@@ -67,13 +67,13 @@ template<int nComp, bool useM, int repCompEqIdx = nComp>
 struct NavierStokesMassOnePNCModelTraits
 {
     //! There are as many momentum balance equations as dimensions
-    //! and one mass balance equation.
+    //! and one mass balance equation for each component
     static constexpr int numEq() { return nComp; }
 
     //! The number of phases is 1
     static constexpr int numFluidPhases() { return 1; }
 
-    //! The number of components is 1
+    //! The number of components
     static constexpr int numFluidComponents() { return nComp; }
 
     //! Use moles or not
