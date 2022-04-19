@@ -8,11 +8,12 @@ UpperRight = 6.28 6.28
 Cells = 20 20
 
 [Problem]
-Name = test_ff_sincos
+Name = test_ff_navierstokes_sincos_stationary_convergence
 EnableGravity = false
 PrintErrors = true
 EnableInertiaTerms = true
-IsStationary = false
+IsStationary = true
+PrintConvergenceTestFile = true
 
 [Component]
 LiquidDensity = 1.0

@@ -1,0 +1,31 @@
+[Grid]
+LowerLeft = -1 -1
+UpperRight = 1 1
+Cells = 100 100
+
+[Problem]
+Name = test_ff_analytical_compositional
+EnableGravity = false
+EnableInertiaTerms = true
+PrintErrors = true
+PrintConvergenceTestFile = true
+ConstrainCell = true
+FunctionType = Sinusoidal
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 1.0
+DiffusionCoefficient = 1e-3
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-8
+
+[Newton]
+MaxSteps = 10
+MaxRelativeShift = 1e-8
+
+[Vtk]
+AddProcessRank = false
+
+[Flux]
+UpwindWeight = 1.0

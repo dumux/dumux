@@ -4,3 +4,4 @@
 add_subdirectory(densitydrivenflow)
 add_subdirectory(channel)
 add_subdirectory(maxwellstefan)
+add_subdirectory(analytical)
