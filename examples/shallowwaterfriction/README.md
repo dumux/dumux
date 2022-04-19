@@ -73,29 +73,27 @@ where $`\mathbf{U}`$, $`\mathbf{F}`$ and $`\mathbf{G}`$ defined as
 $`h`$ the water depth, $`u`$ the velocity in x-direction and $`v`$ the velocity in y-direction,
 $`g`$ is the constant of gravity.
 
-The source terms for the bed slope $`\mathbf{S_b}`$ and friction
+The source terms for bed slope $`\mathbf{S_b}`$ and bottom friction
 $`\mathbf{S_f}`$ are given as
 
 ```math
 \mathbf{S_b} = \begin{bmatrix} 0 \\ -gh \frac{\partial z}{\partial x}
                \\ -gh \frac{\partial z}{\partial y}\end{bmatrix},
-\mathbf{S_f} = \begin{bmatrix} 0 \\ghS_{fx} \\ghS_{fy}\end{bmatrix}.
+\mathbf{S_f} = \begin{bmatrix} 0 \\ -\frac{\tau_x}{\rho} \\ -\frac{\tau_y}{\rho} \end{bmatrix}.
 ```
 
-with the bedSurface $`z`$. $`S_{fx}`$ and $`S_{fy}`$ are the bed shear stess
-components in x- and y-direction, which are calculated by Manning's law.
+with the bed surface $`z`$. $`\rho`$ is the water density. $`\tau_x`$ and $`\tau_y`$ are the bottom shear stress components in x- an y-direction, respectively.
+The bottom shear stress is calculated by Manning's law.
 
 ### Mannings law
-The empirical Manning model specifies the bed shear stress by the following equations:
+The empirical Manning model specifies the bottom shear stress by the following equation
 
 ```math
-S_{fx} = \frac{n^2u}{R_{hy}^{4/3}} \sqrt(u^2 + v^2),
-
-S_{fy} = \frac{n^2v}{R_{hy}^{4/3}} \sqrt(u^2 + v^2)
+\mathbf{\tau} = \frac{n^2 g\rho}{h^{1/3}} \sqrt{u^2 + v^2} \begin{bmatrix} u \\ v \end{bmatrix}
 ```
 
-$`n`$ is Manning's friction value and $`R_{hy}`$ is the hydraulic radius,
-which is assumed to be equal to the water depth $`h`$.
+$`n`$ is Manning's friction value.
+In addition, the dumux shallow water model extends the water depth by a roughness hight to limit the friction for small water depth.
 
 ### Analytical solution
 Since normal flow conditions are assumed, the analytic solution is calculated using the equation
@@ -105,7 +103,8 @@ of Gauckler, Manning and Strickler:
 v_m = n^{-1} R_{hy}^{2/3} I_s^{1/2}
 ```
 
-Where the mean velocity $`v_m`$ is given as
+$`R_{hy}`$ is the hydraulic radius, which is assumed to be equal to the water depth $`h`$.
+The mean velocity $`v_m`$ is given as
 
 ```math
 v_m = \frac{q}{h}
