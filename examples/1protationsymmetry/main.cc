@@ -160,13 +160,13 @@ int main(int argc, char** argv) try
         gridGeometry->update(gridManager.grid().leafGridView());
         gridVariables->updateAfterGridAdaption(p);
 
-        p.resize(gridGeometry->numDofs());
-        updateAnalyticalSolution(pExact);
-
         // this recreates the linear system, i.e. the sizes of
         // the right hand side vector and the Jacobian matrix,
         // and its sparsity pattern.
-        assembler->setLinearSystem();
+        assembler->updateAfterGridAdaption();
+
+        p.resize(gridGeometry->numDofs());
+        updateAnalyticalSolution(pExact);
 
         // solve problem on refined grid
         solver.solve(p);
