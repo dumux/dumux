@@ -272,11 +272,7 @@ public:
         else if (jacobian_->buildMode() != JacobianMatrix::BuildMode::random)
             DUNE_THROW(Dune::NotImplemented, "Only BCRS matrices with random build mode are supported at the moment");
 
-        setJacobianPattern();
-        setResidualSize();
-
-        if (enableMultithreading_)
-            std::tie(elementSets_, std::ignore) = coloredElementSets(gridGeometry());
+        resize_();
     }
 
     /*!
@@ -289,16 +285,21 @@ public:
         jacobian_->setBuildMode(JacobianMatrix::random);
         residual_ = std::make_shared<SolutionVector>();
 
-        setJacobianPattern();
-        setResidualSize();
+        resize_();
+    }
 
-        if (enableMultithreading_)
-            std::tie(elementSets_, std::ignore) = coloredElementSets(gridGeometry());
+    /*!
+     * \brief Resizes jacobian and residual and recomputes colors
+     */
+    void updateAfterGridAdaption()
+    {
+        resize_();
     }
 
     /*!
      * \brief Resizes the jacobian and sets the jacobian' sparsity pattern.
      */
+    [[deprecated("Use updateAfterGridAdaption. Will be removed after release 3.5.")]]
     void setJacobianPattern()
     {
         // resize the jacobian and the residual
@@ -310,9 +311,13 @@ public:
 
         // export pattern to jacobian
         occupationPattern.exportIdx(*jacobian_);
+
+        // maybe recompute colors
+        computeColors_();
     }
 
     //! Resizes the residual
+    [[deprecated("Use updateAfterGridAdaption. Will be removed after release 3.5.")]]
     void setResidualSize()
     { residual_->resize(numDofs()); }
 
@@ -395,13 +400,48 @@ public:
     }
 
 private:
+    /*!
+     * \brief Resizes the jacobian and sets the jacobian' sparsity pattern.
+     */
+    void setJacobianPattern_()
+    {
+        // resize the jacobian and the residual
+        const auto numDofs = this->numDofs();
+        jacobian_->setSize(numDofs, numDofs);
+
+        // create occupation pattern of the jacobian
+        const auto occupationPattern = getJacobianPattern<isImplicit>(gridGeometry());
+
+        // export pattern to jacobian
+        occupationPattern.exportIdx(*jacobian_);
+    }
+
+    //! Resizes the residual
+    void setResidualSize_()
+    { residual_->resize(numDofs()); }
+
+    //! Computes the colors
+    void computeColors_()
+    {
+        if (enableMultithreading_)
+            std::tie(elementSets_, std::ignore) = coloredElementSets(gridGeometry());
+    }
+
+    //! Update with resizing the number of elements (e.g. grid adaption)
+    void resize_()
+    {
+        setJacobianPattern_();
+        setResidualSize_();
+        computeColors_();
+    }
+
     // reset the residual vector to 0.0
     void resetResidual_()
     {
         if(!residual_)
         {
             residual_ = std::make_shared<SolutionVector>();
-            setResidualSize();
+            setResidualSize_();
         }
 
         (*residual_) = 0.0;
@@ -415,7 +455,7 @@ private:
         {
             jacobian_ = std::make_shared<JacobianMatrix>();
             jacobian_->setBuildMode(JacobianMatrix::random);
-            setJacobianPattern();
+            setJacobianPattern_();
         }
 
         if (partialReassembler)
