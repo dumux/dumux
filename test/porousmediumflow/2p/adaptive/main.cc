@@ -174,6 +174,7 @@ int main(int argc, char** argv)
     // the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
+    gridGeometry->addObserver(assembler);
 
     // the linear solver
     using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
@@ -201,8 +202,6 @@ int main(int argc, char** argv)
             {
                 // Note that if we were using point sources, we would have to update the map here as well
                 xOld = x; //!< Overwrite the old solution with the new (resized & interpolated) one
-                assembler->setJacobianPattern(); //!< Tell the assembler to resize the matrix and set pattern
-                assembler->setResidualSize(); //!< Tell the assembler to resize the residual
                 gridVariables->updateAfterGridAdaption(x); //!< Initialize the secondary variables to the new (and "new old") solution
                 problem->computePointSourceMap(); //!< Update the point source map
             }
