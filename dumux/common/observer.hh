@@ -30,38 +30,45 @@
 
 namespace Dumux {
 
+// forward declaration
+template<class Subject>
+class Observers;
+
 //! Interface for observing classes
+template<class Subject>
 class Observer
 {
-    friend class Observers;
-    virtual void update() = 0;
+    friend class Observers<Subject>;
+    virtual void update_(const Subject&) = 0;
 public:
     virtual ~Observer() = default;
 };
 
 //! A list of observers to be used by an observee
+template<class Subject>
 class Observers
 {
+    using Obs = Observer<Subject>;
 public:
     //! attach a new observer
-    void attach(Observer* o)
+    void attach(Obs* o)
     {
         if (!observing_(o))
             observers_.push_back(o);
     }
 
     //! detach a given observer
-    void detach(Observer* o)
+    void detach(Obs* o)
     {
         observers_.remove(o);
     }
 
     //! notify all observers that the subject has been updated
-    void notifyAll() const
+    void notifyAll(const Subject& subject) const
     {
         std::for_each(
             observers_.begin(), observers_.end(),
-            [&](Observer* obs) { obs->update(); }
+            [&](Obs* obs) { obs->update_(subject); }
         );
     }
 
@@ -71,23 +78,25 @@ public:
     }
 
 private:
-    bool observing_(Observer* o) const
+    bool observing_(Obs* o) const
     {
         return std::any_of(
             observers_.begin(), observers_.end(),
-            [=](Observer* obs){ return obs == o; }
+            [=](Obs* obs){ return obs == o; }
         );
     }
 
-    std::list<Observer*> observers_;
+    std::list<Obs*> observers_;
 };
 
 //! Interface for classes that can be observed
+template<class Impl>
 class Observee
 {
+    using Obss = Observers<Impl>;
 public:
     Observee()
-    : observers_(std::make_unique<Observers>())
+    : observers_(std::make_unique<Obss>())
     {}
 
     ~Observee() noexcept(true)
@@ -102,13 +111,13 @@ public:
         }
     }
 
-    Observers& observers() const
+    Obss& observers() const
     {
         return *observers_;
     }
 
 private:
-    std::unique_ptr<Observers> observers_;
+    std::unique_ptr<Obss> observers_;
 };
 
 } // end namespace Dumux

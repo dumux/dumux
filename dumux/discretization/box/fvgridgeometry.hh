@@ -80,10 +80,10 @@ class BoxFVGridGeometry;
  */
 template<class Scalar, class GV, class Traits>
 class BoxFVGridGeometry<Scalar, GV, true, Traits>
-: public BaseGridGeometry<GV, Traits>
+: public ObservableGridGeometry<GV, Traits, BoxFVGridGeometry<Scalar, GV, true, Traits>>
 {
     using ThisType = BoxFVGridGeometry<Scalar, GV, true, Traits>;
-    using ParentType = BaseGridGeometry<GV, Traits>;
+    using ParentType = ObservableGridGeometry<GV, Traits, ThisType>;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
 
@@ -373,10 +373,10 @@ private:
  */
 template<class Scalar, class GV, class Traits>
 class BoxFVGridGeometry<Scalar, GV, false, Traits>
-: public BaseGridGeometry<GV, Traits>
+: public ObservableGridGeometry<GV, Traits, BoxFVGridGeometry<Scalar, GV, false, Traits>>
 {
     using ThisType = BoxFVGridGeometry<Scalar, GV, false, Traits>;
-    using ParentType = BaseGridGeometry<GV, Traits>;
+    using ParentType = ObservableGridGeometry<GV, Traits, ThisType>;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
 
     static const int dim = GV::dimension;

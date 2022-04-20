@@ -90,7 +90,7 @@ namespace Dumux {
  * \tparam isImplicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
 template<class TypeTag, DiffMethod diffMethod, bool isImplicit = true>
-class FVAssembler : public Observer
+class FVAssembler : public Observer<GetPropType<TypeTag, Properties::GridGeometry>>
 {
     using GridGeo = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeo::GridView;
@@ -390,7 +390,7 @@ public:
 
 private:
     //! Implementation of the observer update function
-    void update() override
+    void update_(const GridGeometry&) override
     {
         setJacobianPattern_();
         setResidualSize_();
