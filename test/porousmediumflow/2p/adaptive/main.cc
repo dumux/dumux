@@ -174,7 +174,6 @@ int main(int argc, char** argv)
     // the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
-    gridGeometry->addObserver(assembler);
 
     // the linear solver
     using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
