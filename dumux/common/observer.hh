@@ -24,53 +24,93 @@
 #ifndef DUMUX_COMMON_OBSERVER_HH
 #define DUMUX_COMMON_OBSERVER_HH
 
-#include <vector>
+#include <list>
 #include <memory>
 #include <algorithm>
 
 namespace Dumux {
 
 //! Interface for observing classes
-struct Observer
+class Observer
 {
-    virtual ~Observer() = default;
+    friend class Observers;
     virtual void update() = 0;
+public:
+    virtual ~Observer() = default;
 };
 
-using ObserverPointer = std::shared_ptr<Observer>;
-
-//! Interface for classes that can be observed
-class Observable
+//! A list of observers to be used by an observee
+class Observers
 {
 public:
-    virtual ~Observable() = default;
-
-    //! Register a new observer
-    void addObserver(const ObserverPointer& observer)
+    //! attach a new observer
+    void attach(Observer* o)
     {
-        if (!observesAlready_(observer))
-            observers_.push_back(observer);
+        if (!observing_(o))
+            observers_.push_back(o);
     }
 
-protected:
-    //! Allows parent classes to notify all observers after a change
-    void notifyAllObservers_() const
+    //! detach a given observer
+    void detach(Observer* o)
     {
-        std::for_each(observers_.begin(),
-                      observers_.end(),
-                      [] (auto& obs) { obs->update(); });
+        observers_.remove(o);
+    }
+
+    //! notify all observers that the subject has been updated
+    void notifyAll() const
+    {
+        std::for_each(
+            observers_.begin(), observers_.end(),
+            [&](Observer* obs) { obs->update(); }
+        );
+    }
+
+    bool empty() const
+    {
+        return observers_.empty();
     }
 
 private:
-    bool observesAlready_(const ObserverPointer& observer) const
+    bool observing_(Observer* o) const
     {
-        return std::any_of(observers_.begin(),
-                           observers_.end(),
-                           [&] (const auto& obs) { return obs == observer; });
+        return std::any_of(
+            observers_.begin(), observers_.end(),
+            [=](Observer* obs){ return obs == o; }
+        );
     }
 
-    std::vector<ObserverPointer> observers_;
+    std::list<Observer*> observers_;
+};
+
+//! Interface for classes that can be observed
+class Observee
+{
+public:
+    Observee()
+    : observers_(std::make_unique<Observers>())
+    {}
+
+    ~Observee() noexcept(true)
+    {
+        if (!observers_->empty())
+        {
+            std::cerr << "The list of observers is not empty! "
+                      << "Detach all observers before destroying the observee."
+                      << std::endl;
+
+            std::exit(1);
+        }
+    }
+
+    Observers& observers() const
+    {
+        return *observers_;
+    }
+
+private:
+    std::unique_ptr<Observers> observers_;
 };
 
 } // end namespace Dumux
+
 #endif
