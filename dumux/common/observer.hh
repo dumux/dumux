@@ -30,75 +30,16 @@
 
 namespace Dumux {
 
-// forward declaration
-template<class Subject>
-class Observers;
-
-//! Interface for observing classes
-template<class Subject>
-class Observer
-{
-    friend class Observers<Subject>;
-    virtual void update_(const Subject&) = 0;
-public:
-    virtual ~Observer() = default;
-};
-
-//! A list of observers to be used by an observee
-template<class Subject>
-class Observers
-{
-    using Obs = Observer<Subject>;
-public:
-    //! attach a new observer
-    void attach(Obs* o)
-    {
-        if (!observing_(o))
-            observers_.push_back(o);
-    }
-
-    //! detach a given observer
-    void detach(Obs* o)
-    {
-        observers_.remove(o);
-    }
-
-    //! notify all observers that the subject has been updated
-    void notifyAll(const Subject& subject) const
-    {
-        std::for_each(
-            observers_.begin(), observers_.end(),
-            [&](Obs* obs) { obs->update_(subject); }
-        );
-    }
-
-    bool empty() const
-    {
-        return observers_.empty();
-    }
-
-private:
-    bool observing_(Obs* o) const
-    {
-        return std::any_of(
-            observers_.begin(), observers_.end(),
-            [=](Obs* obs){ return obs == o; }
-        );
-    }
-
-    std::list<Obs*> observers_;
-};
+template<class Observer>
+struct ObserverUpdate;
 
 //! Interface for classes that can be observed
-template<class Impl>
+template<class Observer>
 class Observee
 {
-    using Obss = Observers<Impl>;
-    using Obs = Observer<Impl>;
+    using Observers = std::list<Observer*>;
 public:
-    Observee()
-    : observers_(std::make_unique<Obss>())
-    {}
+    Observee() : observers_(std::make_unique<Observers>()) {}
 
     ~Observee() noexcept(true)
     {
@@ -112,26 +53,38 @@ public:
         }
     }
 
-    void attach(Obs* o) const
+    void attach(Observer* o) const
     {
-       observers_->attach(o);
+        if (!observing_(o))
+            observers_->push_back(o);
     }
 
     //! detach a given observer
-    void detach(Obs* o) const
+    void detach(Observer* o) const
     {
-       observers_->detach(o);
+       observers_->remove(o);
     }
 
 protected:
     //! notify all observers that the subject has been updated
-    void notifyAllObservers_(const Impl& impl) const
+    void notifyAllObservers_() const
     {
-       observers_->notifyAll(impl);
+        std::for_each(
+            observers_->begin(), observers_->end(),
+            [](Observer* o){ ObserverUpdate<Observer>::update(o); }
+        );
     }
 
 private:
-    std::unique_ptr<Obss> observers_;
+    bool observing_(Observer* o) const
+    {
+        return std::any_of(
+            observers_->begin(), observers_->end(),
+            [=](Observer* obs){ return obs == o; }
+        );
+    }
+
+    std::unique_ptr<Observers> observers_;
 };
 
 } // end namespace Dumux

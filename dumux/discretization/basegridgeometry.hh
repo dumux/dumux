@@ -29,6 +29,7 @@
 
 #include <dune/grid/common/mcmgmapper.hh>
 
+#include <dumux/common/observer.hh>
 #include <dumux/common/deprecated.hh>
 #include <dumux/common/entitymap.hh>
 #include <dumux/common/indextraits.hh>
@@ -40,6 +41,19 @@
 
 namespace Dumux {
 
+struct GridGeometryObserver
+{
+    virtual void onGridGeometryUpdate_() = 0;
+    virtual ~GridGeometryObserver() = default;
+};
+
+template<>
+struct ObserverUpdate<GridGeometryObserver>
+{
+    static void update(GridGeometryObserver* o)
+    { o->onGridGeometryUpdate_(); };
+};
+
 /*!
  * \ingroup Discretization
  * \brief Base class for all finite volume grid geometries
@@ -47,7 +61,7 @@ namespace Dumux {
  * \tparam Traits traits class
  */
 template<class GV, class Traits>
-class BaseGridGeometry
+class BaseGridGeometry : public Observee<GridGeometryObserver>
 {
     using ElementMap = EntityMap<GV, 0>;
     using ElementSet = GridViewGeometricEntitySet<GV, 0, typename Traits::ElementMapper>;
@@ -267,6 +281,8 @@ private:
         //! reset bounding box tree and the element map until requested the next time
         boundingBoxTree_.release();
         elementMap_.reset();
+
+        this->notifyAllObservers_();
     }
 
     //! the process grid view
@@ -288,40 +304,6 @@ private:
 
     //! if the grid geometry has periodic boundaries
     bool periodic_ = false;
-};
-
-/*!
- * \ingroup Discretization
- * \brief Base class for all observable grid geometries
- * \tparam GV the grid view type
- * \tparam Traits traits class
- * \tparam The actual implementation
- */
-template<class GV, class Traits, class Impl>
-class ObservableGridGeometry : public BaseGridGeometry<GV, Traits>, public Observee<Impl>
-{
-    using ParentType = BaseGridGeometry<GV, Traits>;
-    using GridView = GV;
-public:
-    using ParentType::ParentType;
-
-    /*!
-     * \brief Update all fvElementGeometries (call this after grid adaption)
-     */
-    void update(const GridView& gridView)
-    {
-        ParentType::update(gridView);
-        this->notifyAllObservers_(static_cast<const Impl&>(*this));
-    }
-
-    /*!
-     * \brief Update all fvElementGeometries (call this after grid adaption)
-     */
-    void update(GridView&& gridView)
-    {
-        ParentType::update(std::move(gridView));
-        this->notifyAllObservers_(static_cast<const Impl&>(*this));
-    }
 };
 
 } // end namespace Dumux

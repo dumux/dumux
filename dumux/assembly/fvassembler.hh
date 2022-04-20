@@ -28,10 +28,10 @@
 
 #include <dune/istl/matrixindexset.hh>
 
-#include <dumux/common/observer.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/basegridgeometry.hh>
 #include <dumux/linear/parallelhelpers.hh>
 
 #include "jacobianpattern.hh"
@@ -90,7 +90,7 @@ namespace Dumux {
  * \tparam isImplicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
 template<class TypeTag, DiffMethod diffMethod, bool isImplicit = true>
-class FVAssembler : public Observer<GetPropType<TypeTag, Properties::GridGeometry>>
+class FVAssembler : public GridGeometryObserver
 {
     using GridGeo = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeo::GridView;
@@ -390,7 +390,7 @@ public:
 
 private:
     //! Implementation of the observer update function
-    void update_(const GridGeometry&) override
+    void onGridGeometryUpdate_() override
     {
         setJacobianPattern_();
         setResidualSize_();
