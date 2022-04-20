@@ -28,6 +28,7 @@
 
 #include <dune/istl/matrixindexset.hh>
 
+#include <dumux/common/observer.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
 #include <dumux/discretization/method.hh>
@@ -89,7 +90,7 @@ namespace Dumux {
  * \tparam isImplicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
 template<class TypeTag, DiffMethod diffMethod, bool isImplicit = true>
-class FVAssembler
+class FVAssembler : public Observer
 {
     using GridGeo = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeo::GridView;
@@ -258,8 +259,8 @@ public:
         else if (jacobian_->buildMode() != JacobianMatrix::BuildMode::random)
             DUNE_THROW(Dune::NotImplemented, "Only BCRS matrices with random build mode are supported at the moment");
 
-        setJacobianPattern();
-        setResidualSize();
+        setJacobianPattern_();
+        setResidualSize_();
     }
 
     /*!
@@ -272,13 +273,14 @@ public:
         jacobian_->setBuildMode(JacobianMatrix::random);
         residual_ = std::make_shared<SolutionVector>();
 
-        setJacobianPattern();
-        setResidualSize();
+        setJacobianPattern_();
+        setResidualSize_();
     }
 
     /*!
      * \brief Resizes the jacobian and sets the jacobian' sparsity pattern.
      */
+    [[deprecated("Will be removed after release 3.5.")]]
     void setJacobianPattern()
     {
         // resize the jacobian and the residual
@@ -293,6 +295,7 @@ public:
     }
 
     //! Resizes the residual
+    [[deprecated("Will be removed after release 3.5.")]]
     void setResidualSize()
     { residual_->resize(numDofs()); }
 
@@ -374,14 +377,41 @@ public:
         gridVariables().resetTimeStep(cursol);
     }
 
+    //! Implementation of the observer update function
+    void update() override
+    {
+        setJacobianPattern_();
+        setResidualSize_();
+    }
+
 private:
+    /*!
+     * \brief Resizes the jacobian and sets the jacobian' sparsity pattern.
+     */
+    void setJacobianPattern_()
+    {
+        // resize the jacobian and the residual
+        const auto numDofs = this->numDofs();
+        jacobian_->setSize(numDofs, numDofs);
+
+        // create occupation pattern of the jacobian
+        const auto occupationPattern = getJacobianPattern<isImplicit>(gridGeometry());
+
+        // export pattern to jacobian
+        occupationPattern.exportIdx(*jacobian_);
+    }
+
+    //! Resizes the residual
+    void setResidualSize_()
+    { residual_->resize(numDofs()); }
+
     // reset the residual vector to 0.0
     void resetResidual_()
     {
         if(!residual_)
         {
             residual_ = std::make_shared<SolutionVector>();
-            setResidualSize();
+            setResidualSize_();
         }
 
         (*residual_) = 0.0;
@@ -395,7 +425,7 @@ private:
         {
             jacobian_ = std::make_shared<JacobianMatrix>();
             jacobian_->setBuildMode(JacobianMatrix::random);
-            setJacobianPattern();
+            setJacobianPattern_();
         }
 
         if (partialReassembler)
