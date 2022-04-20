@@ -128,6 +128,7 @@ public:
     , isStationaryProblem_(true)
     {
         static_assert(isImplicit, "Explicit assembler for stationary problem doesn't make sense!");
+        gridGeometry_->observers().attach(this);
     }
 
     /*!
@@ -146,7 +147,17 @@ public:
     , timeLoop_(timeLoop)
     , prevSol_(&prevSol)
     , isStationaryProblem_(!timeLoop)
-    {}
+    {
+        gridGeometry_->observers().attach(this);
+    }
+
+    /*!
+     * \brief The destructor
+     */
+    ~FVAssembler()
+    {
+        gridGeometry_->observers().detach(this);
+    }
 
     /*!
      * \brief Assembles the global Jacobian of the residual
@@ -377,6 +388,7 @@ public:
         gridVariables().resetTimeStep(cursol);
     }
 
+private:
     //! Implementation of the observer update function
     void update() override
     {
@@ -384,7 +396,6 @@ public:
         setResidualSize_();
     }
 
-private:
     /*!
      * \brief Resizes the jacobian and sets the jacobian' sparsity pattern.
      */
