@@ -29,6 +29,7 @@
 
 #include <dune/grid/common/mcmgmapper.hh>
 
+#include <dumux/common/observer.hh>
 #include <dumux/common/deprecated.hh>
 #include <dumux/common/entitymap.hh>
 #include <dumux/common/indextraits.hh>
@@ -47,7 +48,7 @@ namespace Dumux {
  * \tparam Traits traits class
  */
 template<class GV, class Traits>
-class BaseGridGeometry
+class BaseGridGeometry : public Observable
 {
     using ElementMap = EntityMap<GV, 0>;
     using ElementSet = GridViewGeometricEntitySet<GV, 0, typename Traits::ElementMapper>;
@@ -267,6 +268,8 @@ private:
         //! reset bounding box tree and the element map until requested the next time
         boundingBoxTree_.release();
         elementMap_.reset();
+
+        this->notifyAllObservers_();
     }
 
     //! the process grid view
