@@ -48,7 +48,7 @@ namespace Dumux {
  * \tparam Traits traits class
  */
 template<class GV, class Traits>
-class BaseGridGeometry : public Observable
+class BaseGridGeometry : public Observee
 {
     using ElementMap = EntityMap<GV, 0>;
     using ElementSet = GridViewGeometricEntitySet<GV, 0, typename Traits::ElementMapper>;
@@ -269,7 +269,7 @@ private:
         boundingBoxTree_.release();
         elementMap_.reset();
 
-        this->notifyAllObservers_();
+        this->observers().notifyAll();
     }
 
     //! the process grid view
