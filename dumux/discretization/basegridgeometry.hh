@@ -311,7 +311,7 @@ public:
     void update(const GridView& gridView)
     {
         ParentType::update(gridView);
-        this->observers().notifyAll(static_cast<const Impl&>(*this));
+        this->notifyAllObservers_(static_cast<const Impl&>(*this));
     }
 
     /*!
@@ -320,7 +320,7 @@ public:
     void update(GridView&& gridView)
     {
         ParentType::update(std::move(gridView));
-        this->observers().notifyAll(static_cast<const Impl&>(*this));
+        this->notifyAllObservers_(static_cast<const Impl&>(*this));
     }
 };
 

@@ -128,7 +128,7 @@ public:
     , isStationaryProblem_(true)
     {
         static_assert(isImplicit, "Explicit assembler for stationary problem doesn't make sense!");
-        gridGeometry_->observers().attach(this);
+        gridGeometry_->attach(this);
     }
 
     /*!
@@ -148,7 +148,7 @@ public:
     , prevSol_(&prevSol)
     , isStationaryProblem_(!timeLoop)
     {
-        gridGeometry_->observers().attach(this);
+        gridGeometry_->attach(this);
     }
 
     /*!
@@ -156,7 +156,7 @@ public:
      */
     ~FVAssembler()
     {
-        gridGeometry_->observers().detach(this);
+        gridGeometry_->detach(this);
     }
 
     /*!

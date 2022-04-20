@@ -94,6 +94,7 @@ template<class Impl>
 class Observee
 {
     using Obss = Observers<Impl>;
+    using Obs = Observer<Impl>;
 public:
     Observee()
     : observers_(std::make_unique<Obss>())
@@ -111,9 +112,22 @@ public:
         }
     }
 
-    Obss& observers() const
+    void attach(Obs* o) const
     {
-        return *observers_;
+       observers_->attach(o);
+    }
+
+    //! detach a given observer
+    void detach(Obs* o) const
+    {
+       observers_->detach(o);
+    }
+
+protected:
+    //! notify all observers that the subject has been updated
+    void notifyAllObservers_(const Impl& impl) const
+    {
+       observers_->notifyAll(impl);
     }
 
 private:
