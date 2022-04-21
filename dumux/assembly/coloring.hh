@@ -182,17 +182,30 @@ namespace Dumux {
  * The greedy algorithm doesn't necessarily return the smallest
  * possible number of colors (that's a hard problem) but is fast
  *
+ * Returns a struct with access to the colors of each element (member colors)
+ * and vector of element seed sets of the same color (member sets)
+ *
  * \param gridGeometry the grid geometry
  * \param verbosity the verbosity level
  */
 template<class GridGeometry>
-auto coloredElementSets(const GridGeometry& gg, int verbosity = 1)
+auto computeColoring(const GridGeometry& gg, int verbosity = 1)
 {
     Dune::Timer timer;
 
-    using ElementSeed = typename GridGeometry::GridView::Grid::template Codim<0>::EntitySeed;;
-    std::deque<std::vector<ElementSeed>> elementSets;
-    std::vector<int> colors(gg.gridView().size(0), -1);
+    using ElementSeed = typename GridGeometry::GridView::Grid::template Codim<0>::EntitySeed;
+    struct Coloring
+    {
+        using Sets = std::deque<std::vector<ElementSeed>>;
+        using Colors = std::vector<int>;
+
+        Coloring(std::size_t size) : sets{}, colors(size, -1) {}
+
+        Sets sets;
+        Colors colors;
+    };
+
+    Coloring coloring(gg.gridView().size(0));
 
     // pre-reserve some memory for helper arrays to avoid reallocation
     std::vector<int> neighborColors; neighborColors.reserve(30);
@@ -205,26 +218,26 @@ auto coloredElementSets(const GridGeometry& gg, int verbosity = 1)
     {
         // compute neighbor colors based on discretization-dependent stencil
         neighborColors.clear();
-        Detail::addNeighborColors(gg, element, colors, dofToElement, neighborColors);
+        Detail::addNeighborColors(gg, element, coloring.colors, dofToElement, neighborColors);
 
         // find smallest color (positive integer) not in neighborColors
         const auto color = Detail::smallestAvailableColor(neighborColors, colorUsed);
 
         // assign color to element
-        colors[gg.elementMapper().index(element)] = color;
+        coloring.colors[gg.elementMapper().index(element)] = color;
 
         // add element to the set of elements with the same color
-        if (color < elementSets.size())
-            elementSets[color].push_back(element.seed());
+        if (color < coloring.sets.size())
+            coloring.sets[color].push_back(element.seed());
         else
-            elementSets.push_back(std::vector<ElementSeed>{ element.seed() });
+            coloring.sets.push_back(std::vector<ElementSeed>{ element.seed() });
     }
 
     if (verbosity > 0)
         std::cout << Fmt::format("Colored {} elements with {} colors in {} seconds.\n",
-                                 gg.gridView().size(0), elementSets.size(), timer.elapsed());
+                                 gg.gridView().size(0), coloring.sets.size(), timer.elapsed());
 
-    return std::make_tuple(elementSets, colors);
+    return coloring;
 }
 
 //! Traits specifying if a given discretization tag supports coloring
