@@ -26,7 +26,6 @@
 
 #include <vector>
 #include <deque>
-#include <tuple>
 #include <type_traits>
 #include <memory>
 
@@ -424,7 +423,7 @@ private:
     void computeColors_()
     {
         if (enableMultithreading_)
-            std::tie(elementSets_, std::ignore) = coloredElementSets(gridGeometry());
+            elementSets_ = computeColoring(gridGeometry()).sets;
     }
 
     //! Update with resizing the number of elements (e.g. grid adaption)
