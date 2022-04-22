@@ -33,6 +33,7 @@
 #include <dune/alugrid/grid.hh>
 #include <dune/foamgrid/foamgrid.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
@@ -128,8 +129,8 @@ auto makeBulkFVGridGeometry(const GridManager& gridManager,
 // main program
 int main (int argc, char *argv[])
 {
-    // maybe initialize mpi
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
 
     // parse command line argument parameters
     Dumux::Parameters::init(argc, argv);

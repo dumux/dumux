@@ -35,6 +35,7 @@
 
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/io/vtk/function.hh>
 #include <dumux/multidomain/facet/gridmanager.hh>
@@ -45,8 +46,8 @@
 
 int main (int argc, char *argv[])
 {
-    // maybe initialize mpi
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
 
     // parse command line argument parameters
     Dumux::Parameters::init(argc, argv);

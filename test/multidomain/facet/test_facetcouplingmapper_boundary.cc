@@ -32,6 +32,7 @@
 #include <dune/alugrid/grid.hh>
 #include <dune/foamgrid/foamgrid.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 #include <dumux/multidomain/facet/gridmanager.hh>
@@ -52,8 +53,8 @@ bool checkEquality(const Pos1& p1, const Pos2& p2, typename Pos1::value_type eps
 
 int main (int argc, char *argv[])
 {
-    // maybe initialize mpi
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
 
     // initialize parameter tree
     Dumux::Parameters::init(argc, argv);
