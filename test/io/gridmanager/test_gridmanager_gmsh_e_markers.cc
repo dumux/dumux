@@ -22,14 +22,15 @@
 #include <config.h>
 #include <iostream>
 
-#include <dune/common/parallel/mpihelper.hh>
+#include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
 
 #include "gridmanagertests.hh"
 
 int main(int argc, char** argv)
 {
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
 
     Dumux::Parameters::init(argc, argv, "test_gridmanager_gmsh_e_markers.input");
 

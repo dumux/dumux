@@ -26,11 +26,11 @@
 #if HAVE_DUNE_ALUGRID
 
 #include <dune/alugrid/grid.hh>
-#include <dune/common/parallel/mpihelper.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/boundaryflag.hh>
 #include <dumux/io/grid/gridmanager.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/cctpfa.hh>
 
@@ -64,7 +64,8 @@ int main(int argc, char** argv)
 {
     using namespace Dumux;
 
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    initialize(argc, argv);
 
     Parameters::init(argc, argv, "test_gmshboundaryflag.input");
 

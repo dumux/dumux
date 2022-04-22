@@ -2,9 +2,9 @@
 
 #include <array>
 
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
@@ -13,7 +13,8 @@ int main(int argc, char** argv)
 {
     using namespace Dumux;
 
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    initialize(argc, argv);
 
     Parameters::init([](Dune::ParameterTree& params)
     {

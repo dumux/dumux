@@ -23,6 +23,7 @@
  */
 #include "config.h"
 
+#include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
 #include <dumux/io/grid/gridmanager_sub.hh>
@@ -35,8 +36,8 @@ int main(int argc, char** argv)
 {
     using namespace Dumux;
 
-    // initialize MPI, finalize is done automatically on exit
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    initialize(argc, argv);
 
     // parse command line arguments
     Parameters::init(argc, argv);

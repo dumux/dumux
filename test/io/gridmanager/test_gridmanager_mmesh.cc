@@ -20,16 +20,16 @@
  */
 #include <config.h>
 
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/grid/io/file/vtk.hh>
+#include <dumux/common/initialize.hh>
 #include <dumux/io/grid/gridmanager_mmesh.hh>
 
 int main(int argc, char** argv)
 {
     using namespace Dumux;
 
-    // Initialize MPI, finalize is done automatically on exit.
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    initialize(argc, argv);
 
     // First set parameters
     Dumux::Parameters::init([](auto& params){

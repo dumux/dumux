@@ -22,7 +22,7 @@
 #include <config.h>
 #include <iostream>
 
-#include <dune/common/parallel/mpihelper.hh>
+#include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
 
 #include "gridmanagertests.hh"
@@ -30,8 +30,8 @@
 int main(int argc, char** argv)
 {
     using namespace Dumux;
-    // initialize MPI, finalize is done automatically on exit
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    initialize(argc, argv);
     Parameters::init(argc, argv, "test_gridmanager_gmsh_3d.input");
     const auto name = getParam<std::string>("Problem.Name");
     const auto refine = Dumux::getParam<bool>("Grid.Refine", true);
