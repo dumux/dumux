@@ -489,6 +489,8 @@ private:
         {
             if (enableMultithreading_)
             {
+                assert(elementSets_.size() > 0);
+
                 // make this element loop run in parallel
                 // for this we have to color the elements so that we don't get
                 // race conditions when writing into the global matrix
