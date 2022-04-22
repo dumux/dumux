@@ -88,8 +88,6 @@ public:
     {
         maxDepth_ = 400.0; // [m]
         FluidSystem::init();
-        totalMassProducedOil_ = 0.0;
-        totalMassProducedWater_ = 0.0;
     }
 
     /*!
@@ -210,8 +208,6 @@ public:
             values[contiWEqIdx] = qW;
             values[contiNEqIdx] = qN;
             values[energyEqIdx] = qE;
-            massProducedOil_ = qN;
-            massProducedWater_ = qW;
         }
         return values;
     }
@@ -252,11 +248,6 @@ private:
     static constexpr Scalar eps_ = 1e-6;
     Scalar pIn_;
     Scalar pOut_;
-    Scalar totalMassProducedOil_;
-    Scalar totalMassProducedWater_;
-
-    mutable Scalar massProducedOil_;
-    mutable Scalar massProducedWater_;
 
     std::string name_;
 };
