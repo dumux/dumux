@@ -158,7 +158,6 @@ conditions for the Navier-Stokes single-phase flow simulation.
 ```cpp
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/numeqvector.hh>
 ```
 
 Include the `NavierStokesProblem` class, the base
@@ -191,8 +190,10 @@ class LidDrivenCavityExampleProblem : public NavierStokesProblem<TypeTag>
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using PrimaryVariables = typename ParentType::PrimaryVariables;
-    using NumEqVector = typename ParentType::NumEqVector;
+    using InitialValues = typename ParentType::InitialValues;
+    using Sources = typename ParentType::Sources;
+    using DirichletValues = typename ParentType::DirichletValues;
+    using BoundaryFluxes = typename ParentType::BoundaryFluxes;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
@@ -235,9 +236,9 @@ The following function specifies the __values on Dirichlet boundaries__.
 We need to define values for the primary variables (velocity).
 
 ```cpp
-    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+    DirichletValues dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values(0.0);
+        DirichletValues values(0.0);
 
         if constexpr (ParentType::isMomentumProblem())
         {
@@ -254,13 +255,13 @@ We define a (zero) mass flux here.
 
 ```cpp
     template<class ElementVolumeVariables, class ElementFluxVariablesCache>
-    NumEqVector neumann(const Element& element,
-                        const FVElementGeometry& fvGeometry,
-                        const ElementVolumeVariables& elemVolVars,
-                        const ElementFluxVariablesCache& elemFluxVarsCache,
-                        const SubControlVolumeFace& scvf) const
+    BoundaryFluxes neumann(const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const ElementVolumeVariables& elemVolVars,
+                           const ElementFluxVariablesCache& elemFluxVarsCache,
+                           const SubControlVolumeFace& scvf) const
     {
-        NumEqVector values(0.0);
+        BoundaryFluxes values(0.0);
 
         if constexpr (!ParentType::isMomentumProblem())
         {
@@ -286,9 +287,9 @@ constraint for pressure__ in a single cell.
     { return !ParentType::isMomentumProblem(); }
 
     // Set a fixed pressure a the lower-left cell.
-    std::bitset<PrimaryVariables::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
+    std::bitset<DirichletValues::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
     {
-        std::bitset<PrimaryVariables::dimension> values;
+        std::bitset<DirichletValues::dimension> values;
 
         if constexpr (!ParentType::isMomentumProblem())
         {
@@ -301,8 +302,8 @@ constraint for pressure__ in a single cell.
     }
 
     // Specify the pressure value in the internal Dirichlet cell.
-    PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
-    { return PrimaryVariables(1.1e5); }
+    DirichletValues internalDirichlet(const Element& element, const SubControlVolume& scv) const
+    { return DirichletValues(1.1e5); }
 ```
 
 Setting a __reference pressure__ can help to improve the Newton convergence rate by making the numerical derivatives more exact.
@@ -318,9 +319,9 @@ This is related to floating point arithmetic as pressure values are usually much
 The following function defines the initial conditions.
 
 ```cpp
-    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
+    InitialValues initialAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values(0.0);
+        InitialValues values(0.0);
 
         if constexpr (!ParentType::isMomentumProblem())
             values[Indices::pressureIdx] = 1.0e+5;
@@ -365,6 +366,7 @@ the retrieval of input parameters specified in the input file or via the command
 ```cpp
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/initialize.hh>
 ```
 
 The following files contain the multi-domain Newton solver, the available linear solver backends and the assembler for the linear
@@ -449,8 +451,9 @@ int main(int argc, char** argv)
 {
     using namespace Dumux;
 
-    // The Dune MPIHelper must be instantiated for each program using Dune, it is finalized automatically on exit
-    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
+    const auto& mpiHelper = Dune::MPIHelper::instance();
 
     // parse command line arguments and input file
     Parameters::init(argc, argv);

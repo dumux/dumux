@@ -42,7 +42,6 @@
 #include <dumux/material/components/co2.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
-#include <dumux/material/components/co2tablereader.hh>
 #include <dumux/material/components/sodiumion.hh>
 #include <dumux/material/components/chlorideion.hh>
 #include <dumux/material/components/calciumion.hh>

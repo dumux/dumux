@@ -37,6 +37,7 @@
 // the retrieval of input parameters specified in the input file or via the command line.
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/initialize.hh>
 
 // The follwoing files contain the nonlinear Newtown method, the linear solver and the assembler
 #include <dumux/nonlinear/newtonsolver.hh>
@@ -68,8 +69,9 @@ int main(int argc, char** argv) try
 {
     using namespace Dumux;
 
-    // initialize MPI, finalize is done automatically on exit
-    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
+    const auto& mpiHelper = Dune::MPIHelper::instance();
 
     // parse command line arguments and input file
     Parameters::init(argc, argv);

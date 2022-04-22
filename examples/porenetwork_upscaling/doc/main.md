@@ -34,6 +34,7 @@ Pore-Network-Model to evaluate the upscaled Darcy permeability of a given networ
 
 #include <dumux/common/properties.hh> // for GetPropType
 #include <dumux/common/parameters.hh> // for getParam
+#include <dumux/common/initialize.hh>
 
 #include <dumux/linear/seqsolverbackend.hh> // for ILU0BiCGSTABBackend
 #include <dumux/linear/pdesolver.hh>        // for LinearPDESolver
@@ -59,6 +60,9 @@ Pore-Network-Model to evaluate the upscaled Darcy permeability of a given networ
 int main(int argc, char** argv) try
 {
     using namespace Dumux;
+
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
 
     // We parse the command line arguments.
     Parameters::init(argc, argv);

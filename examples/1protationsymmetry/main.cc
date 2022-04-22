@@ -27,8 +27,8 @@
 #include <config.h>
 
 #include <iostream>
-#include <dune/common/parallel/mpihelper.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/common/properties.hh> // for GetPropType
 #include <dumux/common/parameters.hh> // for getParam
 #include <dumux/common/integrate.hh>  // for integrateL2Error
@@ -51,8 +51,8 @@ int main(int argc, char** argv) try
 {
     using namespace Dumux;
 
-    // We initialize MPI. Finalization is done automatically on exit.
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
 
     // We parse the command line arguments.
     Parameters::init(argc, argv);
