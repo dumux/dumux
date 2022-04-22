@@ -10,9 +10,9 @@
 
 #include <dune/common/float_cmp.hh>
 #include <dune/common/exceptions.hh>
-#include <dune/common/parallel/mpihelper.hh>
 
 #include <dumux/io/format.hh>
+#include <dumux/common/initialize.hh>
 #include <dumux/common/variables.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
@@ -123,8 +123,8 @@ int main(int argc, char* argv[])
 {
     using namespace Dumux;
 
-    // maybe initialize MPI
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
 
     using Assembler = ScalarAssembler;
     using LinearSolver = ScalarLinearSolver;
