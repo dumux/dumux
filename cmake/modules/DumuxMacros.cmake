@@ -42,3 +42,45 @@ endif()
 
 find_package(OpenMP QUIET)
 include(AddOpenMPFlags)
+
+# test if we can use parallel algorithms
+check_cxx_symbol_exists(
+  "std::execution::par_unseq"
+  "execution"
+  DUMUX_HAVE_CXX_EXECUTION_POLICY
+)
+
+# setup multithreading backend
+if(NOT DUMUX_MULTITHREADING_BACKEND)
+  if(TBB_FOUND)
+    set(DUMUX_MULTITHREADING_BACKEND "TBB" CACHE STRING "The multithreading backend")
+    message(STATUS "Dumux multithreading backed: TBB")
+  elseif(OpenMP_FOUND)
+    set(DUMUX_MULTITHREADING_BACKEND "OpenMP" CACHE STRING "The multithreading backend")
+    message(STATUS "Dumux multithreading backed: OpenMP")
+  elseif(Kokkos_FOUND)
+    set(DUMUX_MULTITHREADING_BACKEND "Kokkos" CACHE STRING "The multithreading backend")
+    message(STATUS "Dumux multithreading backed: Kokkos")
+  elseif(DUMUX_HAVE_CXX_EXECUTION_POLICY)
+    set(DUMUX_MULTITHREADING_BACKEND "Cpp" CACHE STRING "The multithreading backend")
+    message(STATUS "Dumux multithreading backed: Cpp")
+  else()
+    set(DUMUX_MULTITHREADING_BACKEND "Serial" CACHE STRING "The multithreading backend")
+    message(STATUS "Dumux multithreading backed: Serial")
+  endif()
+
+# abort if a multithreading backend has been manually selected
+# but it is not available
+else()
+  if(DUMUX_MULTITHREADING_BACKEND STREQUAL "TBB" AND NOT TBB_FOUND)
+    message(FATAL_ERROR "Selected TBB as Dumux multithreading backed but TBB has not been found")
+  elseif(DUMUX_MULTITHREADING_BACKEND STREQUAL "OpenMP" AND NOT OpenMP_FOUND)
+    message(FATAL_ERROR "Selected OpenMP as Dumux multithreading backed but OpenMP has not been found")
+  elseif(DUMUX_MULTITHREADING_BACKEND STREQUAL "Kokkos" AND NOT Kokkos_FOUND)
+    message(FATAL_ERROR "Selected Kokkos as Dumux multithreading backed but Kokkos has not been found")
+  elseif(DUMUX_MULTITHREADING_BACKEND STREQUAL "Cpp" AND NOT DUMUX_HAVE_CXX_EXECUTION_POLICY)
+    message(FATAL_ERROR "Selected Cpp as Dumux multithreading backed but your compiler does not implement parallel STL")
+  else()
+    message(STATUS "Dumux multithreading backed: ${DUMUX_MULTITHREADING_BACKEND}")
+  endif()
+endif()
