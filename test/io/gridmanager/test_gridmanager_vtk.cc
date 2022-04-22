@@ -24,9 +24,9 @@
 #include <algorithm>
 #include <tuple>
 
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/grid/io/file/vtk.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/io/grid/gridmanager.hh>
 
@@ -88,7 +88,8 @@ void testVTKReader(const std::string& gridName)
 
 int main(int argc, char** argv)
 {
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
 
     Dumux::Parameters::init(argc, argv, "test_gridmanager_vtk.input");
 

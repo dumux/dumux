@@ -23,7 +23,6 @@
 #include <cmath>
 #include <string>
 
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/vtk.hh>
@@ -33,6 +32,7 @@
 #endif
 
 #include <dumux/io/grid/gridmanager_sub.hh>
+#include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
 
 
@@ -143,8 +143,8 @@ int main(int argc, char** argv)
 {
     using namespace Dumux;
 
-    // Initialize MPI, finalize is done automatically on exit.
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    initialize(argc, argv);
 
     // First read parameters from input file.
     Dumux::Parameters::init(argc, argv);

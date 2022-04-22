@@ -25,10 +25,10 @@
 #include <string>
 #include <iostream>
 
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/vtk.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/io/grid/cakegridmanager.hh>
 
@@ -76,8 +76,8 @@ void testCakeGridManager(const std::string& name)
 
 int main(int argc, char** argv)
 {
-    // initialize MPI, finalize is done automatically on exit
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
 
     // first read parameters from input file
     Dumux::Parameters::init(argc, argv, "test_gridmanager_cake.input");
