@@ -76,6 +76,14 @@
 /* Set if OpenMP was found */
 #cmakedefine HAVE_OPENMP ENABLE_OPENMP
 
+/* Set the DUMUX_MULTITHREADING_BACKEND */
+#ifndef DUMUX_MULTITHREADING_BACKEND
+#define DUMUX_MULTITHREADING_BACKEND ${DUMUX_MULTITHREADING_BACKEND}
+#endif
+
+/* Set HAVE_CPP_PARALLEL_ALGORITHMS if available */
+#cmakedefine HAVE_CPP_PARALLEL_ALGORITHMS 1
+
 /* end dumux
    Everything below here will be overwritten
 */

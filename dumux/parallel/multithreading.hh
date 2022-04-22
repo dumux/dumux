@@ -25,23 +25,8 @@
 #ifndef DUMUX_PARALLEL_MULTITHREADING_HH
 #define DUMUX_PARALLEL_MULTITHREADING_HH
 
-// clang doesn't implement this yet (April 2022) although technically a C++17 feature
-#define HAVE_CPP_PARALLEL_ALGORITHMS __cpp_lib_execution && __cpp_lib_execution >= 201603L && __cpp_lib_parallel_algorithm && __cpp_lib_parallel_algorithm >= 201603L
-
-// This variable can be set by the user
-// If not we select a default depending on what's available
 #ifndef DUMUX_MULTITHREADING_BACKEND
-    #if HAVE_TBB
-        #define DUMUX_MULTITHREADING_BACKEND TBB
-    #elif HAVE_OPENMP
-        #define DUMUX_MULTITHREADING_BACKEND OpenMP
-    #elif HAVE_KOKKOS
-        #define DUMUX_MULTITHREADING_BACKEND Kokkos
-    #elif HAVE_CPP_PARALLEL_ALGORITHMS
-        #define DUMUX_MULTITHREADING_BACKEND Cpp
-    #else
-        #define DUMUX_MULTITHREADING_BACKEND Serial
-    #endif
+#define DUMUX_MULTITHREADING_BACKEND Serial
 #endif
 
 namespace Dumux::Detail::Multithreading {
