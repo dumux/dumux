@@ -30,7 +30,10 @@
 #include <dune/common/test/iteratortest.hh>
 #include <dune/grid/utility/structuredgridfactory.hh>
 #include <dune/grid/yaspgrid.hh>
+
+#include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/intersectionmapper.hh>
 
 #include <dumux/common/intersectionmapper.hh>
 #include <dumux/common/defaultmappertraits.hh>
@@ -60,8 +63,9 @@ int main (int argc, char *argv[])
 {
     using namespace Dumux;
 
-    // maybe initialize mpi
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
+
     std::cout << "Checking the FVGeometries, SCVs and SCV faces" << std::endl;
 
     // parse command line arguments and input file

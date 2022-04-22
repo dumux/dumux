@@ -31,6 +31,7 @@
 #include <dune/grid/utility/structuredgridfactory.hh>
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/discretization/box/fvgridgeometry.hh>
 
 #ifndef DOXYGEN
@@ -50,8 +51,8 @@ int main (int argc, char *argv[])
 {
     using namespace Dumux;
 
-    // maybe initialize mpi
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    initialize(argc, argv);
 
     std::cout << "Checking the FVGeometries, SCVs and SCV faces" << std::endl;
 

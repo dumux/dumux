@@ -30,6 +30,7 @@
 
 // we use the 1p type tag here in order not to be obliged
 // to define grid flux vars cache & vol vars cache...
+#include <dumux/common/initialize.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/fvproblem.hh>
 #include <dumux/common/parameters.hh>
@@ -95,10 +96,10 @@ public:
 
 int main (int argc, char *argv[])
 {
-    Dune::MPIHelper::instance(argc, argv);
-
     using namespace Dumux;
-    Dumux::Parameters::init(argc, argv);
+
+    initialize(argc, argv);
+    Parameters::init(argc, argv);
 
     using TypeTag = Properties::TTag::GridVariablesTestBox;
     using Grid = GetPropType<TypeTag, Properties::Grid>;
