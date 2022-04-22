@@ -20,6 +20,7 @@
 #include <dune/python/pybind11/pybind11.h>
 #include <dune/python/pybind11/stl.h>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/python/common/timeloop.hh>
 
@@ -27,6 +28,11 @@ PYBIND11_MODULE(_common, module)
 {
     using namespace Dumux;
     using pybind11::operator""_a;
+
+    // maybe initialize MPI and/or multithreading backend
+    int argc = 0;
+    char **argv = NULL;
+    Dumux::initialize(argc, argv);
 
     // export time loop
     Python::registerTimeLoop<double>(module);
