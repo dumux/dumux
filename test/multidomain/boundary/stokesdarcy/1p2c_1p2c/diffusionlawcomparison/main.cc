@@ -31,6 +31,7 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/partial.hh>
@@ -52,8 +53,9 @@ int main(int argc, char** argv)
 {
     using namespace Dumux;
 
-    // initialize MPI, finalize is done automatically on exit
-    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
+    const auto& mpiHelper = Dune::MPIHelper::instance();
 
     // print dumux start message
     if (mpiHelper.rank() == 0)

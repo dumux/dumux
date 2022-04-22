@@ -31,6 +31,7 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
 #include <dumux/io/vtk/function.hh>
+#include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/multidomain/facet/gridmanager.hh>
 #include <dumux/multidomain/facet/codimonegridadapter.hh>
@@ -94,8 +95,8 @@ GlobalPosition getDisplacement(const GlobalPosition& pos)
 
 int main (int argc, char *argv[])
 {
-    // initialize mpi
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
 
     // initialize parameter tree
     Dumux::Parameters::init(argc, argv);
