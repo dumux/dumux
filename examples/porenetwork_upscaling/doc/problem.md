@@ -183,7 +183,6 @@ class UpscalingProblem : public PorousMediumFlowProblem<TypeTag>
 ```
 
 </details>
-
 ### The constructor of our problem.
 
 ```cpp

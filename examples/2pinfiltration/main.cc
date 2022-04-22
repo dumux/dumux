@@ -35,6 +35,7 @@
 // In Dumux, a property system is used to specify the model. For this, different properties are defined containing type definitions, values and methods. All properties are declared in the file properties.hh. Additionally, we include the parameter class, which manages the definition of input parameters by a default value, the inputfile or the command line.
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/initialize.hh>
 
 //We include the linear solver to be used to solve the linear system and the nonlinear  Newton's method
 #include <dumux/linear/amgbackend.hh>
@@ -72,8 +73,9 @@ int main(int argc, char** argv) try
     // we define the type tag for this problem
     using TypeTag = Properties::TTag::PointSourceExample;
 
-    //We initialize MPI, finalize is done automatically on exit
-    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
+    const auto& mpiHelper = Dune::MPIHelper::instance();
 
     //We parse command line arguments and input file
     Parameters::init(argc, argv);
@@ -239,12 +241,10 @@ int main(int argc, char** argv) try
             {
                 // We overwrite the old solution with the new (resized & interpolated) one
                 xOld = x;
-                 // We tell the assembler to resize the matrix and set pattern
-                assembler->setJacobianPattern();
-                // We tell the assembler to resize the residual
-                assembler->setResidualSize();
-                 // We initialize the secondary variables to the new (and "new old") solution
+                // We initialize the secondary variables to the new (and "new old") solution
                 gridVariables->updateAfterGridAdaption(x);
+                // We also need to update the assembler (sizes of residual and Jacobian change)
+                assembler->updateAfterGridAdaption();
                 // We update the point source map
                 problem->computePointSourceMap();
             }

@@ -28,9 +28,9 @@
 #include <iostream>
 // [[/exclude]]
 
-// These are DUNE helper classes related to parallel computations, time measurements and file I/O
-#include <dune/common/parallel/mpihelper.hh>
+// These time measurements and parallel backend initialization
 #include <dune/common/timer.hh>
+#include <dumux/common/initialize.hh>
 
 // The following headers include functionality related to property definition or retrieval, as well as
 // the retrieval of input parameters specified in the input file or via the command line.
@@ -69,8 +69,8 @@ int main(int argc, char** argv) try
 {
     using namespace Dumux;
 
-    // The Dune MPIHelper must be instantiated for each program using Dune
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
 
     // parse command line arguments and input file
     Parameters::init(argc, argv);

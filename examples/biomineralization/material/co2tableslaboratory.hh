@@ -30,7 +30,7 @@
 // [[codeblock]]
 
 #include <assert.h>
-#include <dumux/material/components/co2tablereader.hh>
+#include <test/porousmediumflow/co2/co2tablereader.hh>
 namespace Dumux::ICP {
 #include "co2valueslaboratory.inc"
 }// end namespace Dumux::ICP

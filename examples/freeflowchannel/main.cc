@@ -37,6 +37,7 @@
 // the retrieval of input parameters specified in the input file or via the command line.
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/initialize.hh>
 
 // The following files contain the non-linear Newton solver, the available linear solver backends and the assembler for the linear
 // systems arising from the staggered-grid discretization.
@@ -75,8 +76,9 @@ int main(int argc, char** argv) try
 {
     using namespace Dumux;
 
-    // The Dune MPIHelper must be instantiated for each program using Dune
-    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
+    const auto& mpiHelper = Dune::MPIHelper::instance();
 
     // parse command line arguments and input file
     Parameters::init(argc, argv);
