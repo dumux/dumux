@@ -29,6 +29,7 @@
 #include <dune/grid/io/file/gmshreader.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/parallel/scotchpartitioner.hh>
 
 template<class GV>
@@ -114,7 +115,9 @@ void test3D(int rank, std::size_t numProcessors)
 
 int main (int argc , char **argv)
 {
-    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
+    // initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
+    const auto& mpiHelper = Dune::MPIHelper::instance();
 
     test2D(mpiHelper.rank(), mpiHelper.size());
     test3D(mpiHelper.rank(), mpiHelper.size());
