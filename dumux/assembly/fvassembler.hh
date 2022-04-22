@@ -137,6 +137,8 @@ public:
         static_assert(isImplicit, "Explicit assembler for stationary problem doesn't make sense!");
         enableMultithreading_ = SupportsColoring<typename GridGeometry::DiscretizationMethod>::value
             && getParam<bool>("Assembly.Multithreading", true);
+
+        maybeComputeColors_();
     }
 
     /*!
@@ -158,6 +160,8 @@ public:
     {
         enableMultithreading_ = SupportsColoring<typename GridGeometry::DiscretizationMethod>::value
             && getParam<bool>("Assembly.Multithreading", true);
+
+        maybeComputeColors_();
     }
 
     /*!
@@ -271,7 +275,8 @@ public:
         else if (jacobian_->buildMode() != JacobianMatrix::BuildMode::random)
             DUNE_THROW(Dune::NotImplemented, "Only BCRS matrices with random build mode are supported at the moment");
 
-        resize_();
+        setResidualSize_();
+        setJacobianPattern_();
     }
 
     /*!
@@ -284,7 +289,8 @@ public:
         jacobian_->setBuildMode(JacobianMatrix::random);
         residual_ = std::make_shared<SolutionVector>();
 
-        resize_();
+        setResidualSize_();
+        setJacobianPattern_();
     }
 
     /*!
@@ -292,7 +298,9 @@ public:
      */
     void updateAfterGridAdaption()
     {
-        resize_();
+        setResidualSize_();
+        setJacobianPattern_();
+        maybeComputeColors_();
     }
 
     /*!
@@ -312,7 +320,7 @@ public:
         occupationPattern.exportIdx(*jacobian_);
 
         // maybe recompute colors
-        computeColors_();
+        maybeComputeColors_();
     }
 
     //! Resizes the residual
@@ -420,18 +428,10 @@ private:
     { residual_->resize(numDofs()); }
 
     //! Computes the colors
-    void computeColors_()
+    void maybeComputeColors_()
     {
         if (enableMultithreading_)
             elementSets_ = computeColoring(gridGeometry()).sets;
-    }
-
-    //! Update with resizing the number of elements (e.g. grid adaption)
-    void resize_()
-    {
-        setJacobianPattern_();
-        setResidualSize_();
-        computeColors_();
     }
 
     // reset the residual vector to 0.0
