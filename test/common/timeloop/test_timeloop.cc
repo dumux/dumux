@@ -10,11 +10,14 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/exceptions.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/common/timeloop.hh>
 
 int main(int argc, char* argv[])
 {
-    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
+    const auto& mpiHelper = Dune::MPIHelper::instance();
 
     //! Standard time loop
     double tStart = 0; double tEnd = 1; double dt = 0.1;

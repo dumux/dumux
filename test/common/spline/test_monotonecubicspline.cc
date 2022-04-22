@@ -28,7 +28,7 @@
 #include <functional>
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/parallel/mpihelper.hh>
+#include <dumux/common/initialize.hh>
 #include <dumux/common/math.hh>
 #include <dumux/common/monotonecubicspline.hh>
 #include <dumux/io/gnuplotinterface.hh>
@@ -43,7 +43,8 @@ std::vector<double> eval(const Function& f, const std::vector<double>& x)
 
 int main(int argc, char** argv)
 {
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
 
     const auto test = [](auto f, auto df, const auto& testPoints, const auto& samplePoints, const std::string& prefix)
     {
