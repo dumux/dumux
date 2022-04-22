@@ -6,7 +6,6 @@
 #include <type_traits>
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/fvector.hh>
 #include <dune/geometry/multilineargeometry.hh>
 
@@ -146,9 +145,6 @@ void performTests(std::vector<bool>& returns, const Quadrilateral& quad, const T
 
 int main (int argc, char *argv[])
 {
-    // maybe initialize mpi
-    Dune::MPIHelper::instance(argc, argv);
-
     // collect returns to determine exit code
     std::vector<bool> returns;
 

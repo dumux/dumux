@@ -1,10 +1,10 @@
 #include <config.h>
 
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/geometry/boundingboxtree.hh>
 #include <dumux/geometry/intersectingentities.hh>
 
@@ -35,7 +35,9 @@ void testIntersectingEntityCartesianGrid()
 
 int main(int argc, char* argv[])
 {
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
+
     testIntersectingEntityCartesianGrid<1>();
     testIntersectingEntityCartesianGrid<2>();
     testIntersectingEntityCartesianGrid<3>();
