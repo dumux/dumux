@@ -43,7 +43,6 @@
  \boldsymbol{\varepsilon} = \frac{1}{2} \left[ \nabla\mathbf{u} + (\nabla\mathbf{u})^{\mathrm{T}} \right].
  \f]
  *
- * The equations are discretized using a vertex-centered finite volume (box) scheme as spatial discretization.
  * PrimaryVariables are the displacements in each direction \f$ \mathbf{u} \f$.
  */
 #ifndef DUMUX_GEOMECHANICS_ELASTIC_MODEL_HH
