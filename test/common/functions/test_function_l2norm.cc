@@ -10,6 +10,7 @@
 #include <dune/functions/gridfunctions/discreteglobalbasisfunction.hh>
 
 #include <dumux/common/parameters.hh>
+#include <dumux/common/initialize.hh>
 #include <dumux/common/integrate.hh>
 #include <dumux/multidomain/glue.hh>
 #include <dumux/discretization/projection/projector.hh>
@@ -19,8 +20,8 @@
 
 int main (int argc, char *argv[])
 {
-    // maybe initialize mpi
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
 
     // initialize parameters
     Dumux::Parameters::init([](auto& p){
