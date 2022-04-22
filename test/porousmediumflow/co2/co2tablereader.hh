@@ -100,17 +100,6 @@ public:
 
     constexpr Scalar val(int i, int j) const
     {
-#if !defined NDEBUG
-        if (i < 0 || i >= Traits::numTempSteps ||
-            j < 0 || j >= Traits::numPressSteps) {
-            DUNE_THROW(NumericalProblem,
-                       "Attempt to access element ("
-                       << i << ", " << j
-                       << ") on a " << Traits::name << " table of size ("
-                       << Traits::numTempSteps << ", " << Traits::numPressSteps
-                       << ")\n");
-        }
-#endif
         return Traits::vals[i][j];
     }
 
