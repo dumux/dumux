@@ -6,13 +6,13 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/float_cmp.hh>
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/geometry/type.hh>
 #include <dune/geometry/multilineargeometry.hh>
 #include <dune/grid/common/gridfactory.hh>
 #include <dune/grid/io/file/gmshreader.hh>
 #include <dune/alugrid/grid.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/geometry/geometricentityset.hh>
 #include <dumux/geometry/intersectionentityset.hh>
 
@@ -20,8 +20,8 @@ int main (int argc, char *argv[])
 {
     using namespace Dumux;
 
-    // maybe initialize mpi
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
 
     ///////////////////////////////////////////////////////////////////////
     // Extract the boundary of a given grid and intersect it with the grid
