@@ -133,7 +133,6 @@ gridVars = GridVariables(problem=problem, model=model)
 assembler = FVAssembler(problem=problem, gridVariables=gridVars, model=model, diffMethod=diffMethod)
 sol = blockVector(assembler.numDofs)
 gridVars.init(sol)
-assembler.updateGridVariables(sol)
 print("numdofs", assembler.numDofs)
 
 # Assemble the Jacobian and the residual
