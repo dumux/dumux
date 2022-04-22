@@ -24,14 +24,11 @@
 
 #include <config.h>
 
-#include <ctime>
 #include <iostream>
 
 #include <dune/common/version.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/grid/io/file/vtk.hh>
-#include <dune/istl/io.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
