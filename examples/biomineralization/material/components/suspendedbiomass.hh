@@ -55,7 +55,7 @@ public:
     // Based on a cell mass of 2.5e-16, the molar mass of cells would be 1.5e8 kg/mol, but such high molar masses would lead to numerical problems.
     static Scalar molarMass()
     {
-        Scalar molarMass = getParam<Scalar>("BioCoefficients.SuspendedBiomassMolarMass", 1);
+        static Scalar molarMass = getParam<Scalar>("BioCoefficients.SuspendedBiomassMolarMass", 1);
         return molarMass;
     }
 };
