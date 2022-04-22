@@ -31,6 +31,7 @@
 #include <dune/grid/utility/structuredgridfactory.hh>
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/intersectionmapper.hh>
 #include <dumux/common/defaultmappertraits.hh>
@@ -57,8 +58,8 @@ int main (int argc, char *argv[])
 {
     using namespace Dumux;
 
-    // maybe initialize mpi
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    initialize(argc, argv);
 
     // parse command line arguments and input file
     Parameters::init(argc, argv);

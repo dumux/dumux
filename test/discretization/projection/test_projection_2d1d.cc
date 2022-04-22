@@ -41,6 +41,7 @@
 
 #include <dumux/io/container.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/initialize.hh>
 #include <dumux/common/integrate.hh>
 
 #include <dumux/discretization/box/fvgridgeometry.hh>
@@ -51,8 +52,8 @@
 
 int main (int argc, char *argv[])
 {
-    // maybe initialize mpi
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
 
     // initialize parameter tree
     Dumux::Parameters::init(argc, argv);

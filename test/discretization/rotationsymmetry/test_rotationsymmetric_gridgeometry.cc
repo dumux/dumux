@@ -24,13 +24,14 @@
 
 #include <iostream>
 
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/float_cmp.hh>
 #include <dune/geometry/quadraturerules.hh>
 
 #include <dune/grid/utility/structuredgridfactory.hh>
 #include <dune/grid/yaspgrid.hh>
+
+#include <dumux/common/initialize.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 #include <dumux/discretization/extrusion.hh>
 
@@ -91,8 +92,8 @@ int main (int argc, char *argv[])
 {
     using namespace Dumux;
 
-    // maybe initialize mpi
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    initialize(argc, argv);
 
     // test disc extrusion 1d->2d
     {
