@@ -146,6 +146,7 @@ test cpp:
   variables:
     OMPI_ALLOW_RUN_AS_ROOT: 1
     OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
+    DUMUX_NUM_THREADS: 4
   script:
     - |
       pushd build-cmake
@@ -168,6 +169,7 @@ test python:
   variables:
     OMPI_ALLOW_RUN_AS_ROOT: 1
     OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
+    DUMUX_NUM_THREADS: 4
   script:
     # restore Python virtual env from cache (job:configure artifacts) (Dune 2.9)
     - |
