@@ -38,6 +38,12 @@ void registerBoundaryTypes(pybind11::handle scope, pybind11::class_<BoundaryType
     using pybind11::operator""_a;
 
     cls.def(pybind11::init());
+    cls.def("__copy__",  [](const BoundaryTypes& self) {
+        return BoundaryTypes(self);
+    });
+    cls.def("__deepcopy__", [](const BoundaryTypes& self, pybind11::dict) {
+        return BoundaryTypes(self);
+    }, "memo"_a);
     cls.def("reset", &BoundaryTypes::reset);
     cls.def("setNeumann", &BoundaryTypes::setAllNeumann);
     cls.def("setDirichlet", &BoundaryTypes::setAllDirichlet);
