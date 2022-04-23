@@ -46,4 +46,18 @@ using ExecutionBackend = ExecutionBackends::DUMUX_MULTITHREADING_BACKEND;
 
 } // end namespace Dumux::Detail::Multithreading
 
+namespace Dumux::Multithreading {
+
+/*!
+ * \ingroup Parallel
+ * \brief Checking whether the backend is serial
+ */
+inline constexpr bool isSerial()
+{
+    using namespace Dumux::Detail::Multithreading;
+    return std::is_same_v<ExecutionBackends::Serial, ExecutionBackend>;
+};
+
+} // end namespace Dumux
+
 #endif
