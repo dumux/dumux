@@ -40,6 +40,7 @@
 #include <dumux/assembly/jacobianpattern.hh>
 #include <dumux/assembly/diffmethod.hh>
 
+#include <dumux/parallel/multithreading.hh>
 #include <dumux/parallel/parallel_for.hh>
 
 #include "boxlocalassembler.hh"
@@ -136,6 +137,7 @@ public:
     {
         static_assert(isImplicit, "Explicit assembler for stationary problem doesn't make sense!");
         enableMultithreading_ = SupportsColoring<typename GridGeometry::DiscretizationMethod>::value
+            && !Multithreading::isSerial()
             && getParam<bool>("Assembly.Multithreading", true);
 
         maybeComputeColors_();
@@ -159,6 +161,7 @@ public:
     , isStationaryProblem_(!timeLoop)
     {
         enableMultithreading_ = SupportsColoring<typename GridGeometry::DiscretizationMethod>::value
+            && !Multithreading::isSerial()
             && getParam<bool>("Assembly.Multithreading", true);
 
         maybeComputeColors_();
