@@ -1,8 +1,30 @@
+# pylint: skip-file
+# until that decorator bit can be removed again
+
 """Classes and function related to the assembly of linear systems"""
 
 from dune.generator.generator import SimpleGenerator
 from dune.common.hashit import hashIt
 from dumux.wrapping import cppWrapperCreator, cppWrapperClassAlias
+
+
+def decoratePre(pre):
+    def wrappedPre(*args, **kwargs):
+        preamble = pre(*args, **kwargs)
+        newPreamble = ""
+        for line in preamble.split("\n"):
+            newPreamble += line + "\n"
+            if line.startswith("#include <config.h>"):
+                newPreamble += "#undef DUMUX_MULTITHREADING_BACKEND\n"
+                newPreamble += "#define DUMUX_MULTITHREADING_BACKEND Serial\n"
+        return newPreamble
+
+    return wrappedPre
+
+
+myAttributes = vars(SimpleGenerator).copy()
+myAttributes["pre"] = decoratePre(myAttributes["pre"])
+MySimpleGenerator = type("MySimpleGenerator", (object,), myAttributes)
 
 
 @cppWrapperCreator
@@ -40,13 +62,20 @@ def _createFVAssembler(*, problem, gridVariables, model, diffMethod="numeric", i
     includes += ["dumux/python/assembly/fvassembler.hh"]
 
     moduleName = "fvassembler_" + hashIt(assemblerType)
-    generator = SimpleGenerator("FVAssembler", "Dumux::Python")
+    # remark: use SimpleGenerator again starting with dune 2.9
+    generator = MySimpleGenerator("FVAssembler", "Dumux::Python")
     module = generator.load(
         includes,
         assemblerType,
         moduleName,
         holder="std::shared_ptr",
         preamble=model.cppHeader,
+        # make sure the assembler is compiled with the Serial backend
+        # as currently the assembly in combination with Python is not thread-safe
+        # the following is nicer but only works with dune > 2.8
+        # extraCMake=[
+        #     "target_compile_definitions(TARGET PUBLIC DUMUX_MULTITHREADING_BACKEND=Serial)"
+        # ],
     )
     return module.FVAssembler(problem, problem.gridGeometry(), gridVariables)
 
