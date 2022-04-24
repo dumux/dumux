@@ -24,7 +24,10 @@
 #ifndef DUMUX_FV_ASSEMBLER_HH
 #define DUMUX_FV_ASSEMBLER_HH
 
+#include <vector>
+#include <deque>
 #include <type_traits>
+#include <memory>
 
 #include <dune/istl/matrixindexset.hh>
 
@@ -33,8 +36,13 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/linear/parallelhelpers.hh>
 
-#include "jacobianpattern.hh"
-#include "diffmethod.hh"
+#include <dumux/assembly/coloring.hh>
+#include <dumux/assembly/jacobianpattern.hh>
+#include <dumux/assembly/diffmethod.hh>
+
+#include <dumux/parallel/multithreading.hh>
+#include <dumux/parallel/parallel_for.hh>
+
 #include "boxlocalassembler.hh"
 #include "cclocalassembler.hh"
 #include "fclocalassembler.hh"
@@ -95,6 +103,7 @@ class FVAssembler
     using GridView = typename GridGeo::GridView;
     using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
     using Element = typename GridView::template Codim<0>::Entity;
+    using ElementSeed = typename GridView::Grid::template Codim<0>::EntitySeed;
     using TimeLoop = TimeLoopBase<GetPropType<TypeTag, Properties::Scalar>>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
@@ -127,6 +136,11 @@ public:
     , isStationaryProblem_(true)
     {
         static_assert(isImplicit, "Explicit assembler for stationary problem doesn't make sense!");
+        enableMultithreading_ = SupportsColoring<typename GridGeometry::DiscretizationMethod>::value
+            && !Multithreading::isSerial()
+            && getParam<bool>("Assembly.Multithreading", true);
+
+        maybeComputeColors_();
     }
 
     /*!
@@ -145,7 +159,13 @@ public:
     , timeLoop_(timeLoop)
     , prevSol_(&prevSol)
     , isStationaryProblem_(!timeLoop)
-    {}
+    {
+        enableMultithreading_ = SupportsColoring<typename GridGeometry::DiscretizationMethod>::value
+            && !Multithreading::isSerial()
+            && getParam<bool>("Assembly.Multithreading", true);
+
+        maybeComputeColors_();
+    }
 
     /*!
      * \brief Assembles the global Jacobian of the residual
@@ -258,8 +278,8 @@ public:
         else if (jacobian_->buildMode() != JacobianMatrix::BuildMode::random)
             DUNE_THROW(Dune::NotImplemented, "Only BCRS matrices with random build mode are supported at the moment");
 
-        setJacobianPattern();
-        setResidualSize();
+        setResidualSize_();
+        setJacobianPattern_();
     }
 
     /*!
@@ -272,13 +292,24 @@ public:
         jacobian_->setBuildMode(JacobianMatrix::random);
         residual_ = std::make_shared<SolutionVector>();
 
-        setJacobianPattern();
-        setResidualSize();
+        setResidualSize_();
+        setJacobianPattern_();
+    }
+
+    /*!
+     * \brief Resizes jacobian and residual and recomputes colors
+     */
+    void updateAfterGridAdaption()
+    {
+        setResidualSize_();
+        setJacobianPattern_();
+        maybeComputeColors_();
     }
 
     /*!
      * \brief Resizes the jacobian and sets the jacobian' sparsity pattern.
      */
+    [[deprecated("Use updateAfterGridAdaption. Will be removed after release 3.5.")]]
     void setJacobianPattern()
     {
         // resize the jacobian and the residual
@@ -290,9 +321,13 @@ public:
 
         // export pattern to jacobian
         occupationPattern.exportIdx(*jacobian_);
+
+        // maybe recompute colors
+        maybeComputeColors_();
     }
 
     //! Resizes the residual
+    [[deprecated("Use updateAfterGridAdaption. Will be removed after release 3.5.")]]
     void setResidualSize()
     { residual_->resize(numDofs()); }
 
@@ -375,13 +410,40 @@ public:
     }
 
 private:
+    /*!
+     * \brief Resizes the jacobian and sets the jacobian' sparsity pattern.
+     */
+    void setJacobianPattern_()
+    {
+        // resize the jacobian and the residual
+        const auto numDofs = this->numDofs();
+        jacobian_->setSize(numDofs, numDofs);
+
+        // create occupation pattern of the jacobian
+        const auto occupationPattern = getJacobianPattern<isImplicit>(gridGeometry());
+
+        // export pattern to jacobian
+        occupationPattern.exportIdx(*jacobian_);
+    }
+
+    //! Resizes the residual
+    void setResidualSize_()
+    { residual_->resize(numDofs()); }
+
+    //! Computes the colors
+    void maybeComputeColors_()
+    {
+        if (enableMultithreading_)
+            elementSets_ = computeColoring(gridGeometry()).sets;
+    }
+
     // reset the residual vector to 0.0
     void resetResidual_()
     {
         if(!residual_)
         {
             residual_ = std::make_shared<SolutionVector>();
-            setResidualSize();
+            setResidualSize_();
         }
 
         (*residual_) = 0.0;
@@ -395,7 +457,7 @@ private:
         {
             jacobian_ = std::make_shared<JacobianMatrix>();
             jacobian_->setBuildMode(JacobianMatrix::random);
-            setJacobianPattern();
+            setJacobianPattern_();
         }
 
         if (partialReassembler)
@@ -425,9 +487,26 @@ private:
         // try assembling using the local assembly function
         try
         {
-            // let the local assembler add the element contributions
-            for (const auto& element : elements(gridView()))
-                assembleElement(element);
+            if (enableMultithreading_)
+            {
+                assert(elementSets_.size() > 0);
+
+                // make this element loop run in parallel
+                // for this we have to color the elements so that we don't get
+                // race conditions when writing into the global matrix
+                // each color can be assembled using multiple threads
+                for (const auto& elements : elementSets_)
+                {
+                    Dumux::parallelFor(elements.size(), [&](const std::size_t i)
+                    {
+                        const auto element = gridView().grid().entity(elements[i]);
+                        assembleElement(element);
+                    });
+                }
+            }
+            else
+                for (const auto& element : elements(gridView()))
+                    assembleElement(element);
 
             // if we get here, everything worked well on this process
             succeeded = true;
@@ -495,6 +574,10 @@ private:
     //! shared pointers to the jacobian matrix and residual
     std::shared_ptr<JacobianMatrix> jacobian_;
     std::shared_ptr<SolutionVector> residual_;
+
+    //! element sets for parallel assembly
+    bool enableMultithreading_ = false;
+    std::deque<std::vector<ElementSeed>> elementSets_;
 };
 
 } // namespace Dumux

@@ -23,7 +23,6 @@
 #include <iostream>
 #include <memory>
 
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
@@ -37,12 +36,14 @@
 #include <dune/foamgrid/foamgrid.hh>
 #endif
 
+#include <dumux/common/initialize.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/io/vtk/vtkreader.hh>
 
 int main(int argc, char** argv)
 {
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
 
     if (argc != 3)
         DUNE_THROW(Dune::IOError, "Needs two arguments, the vtk file name and an output file base name");

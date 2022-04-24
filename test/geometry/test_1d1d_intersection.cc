@@ -4,7 +4,6 @@
 #include <algorithm>
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/fvector.hh>
 
 #include <dumux/geometry/geometryintersection.hh>
@@ -187,9 +186,6 @@ void testSegmentIntersections(std::vector<bool>& returns)
 
 int main (int argc, char *argv[])
 {
-    // maybe initialize mpi
-    Dune::MPIHelper::instance(argc, argv);
-
     // collect returns to determine exit code
     std::vector<bool> returns;
 

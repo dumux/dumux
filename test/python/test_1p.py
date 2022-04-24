@@ -129,12 +129,11 @@ problem = Problem()
 model["Problem"] = Property.fromInstance(problem)
 
 # Initialize the GridVariables and the Assembler
+sol = blockVector(gridGeometry.numDofs)
 gridVars = GridVariables(problem=problem, model=model)
-assembler = FVAssembler(problem=problem, gridVariables=gridVars, model=model, diffMethod=diffMethod)
-sol = blockVector(assembler.numDofs)
 gridVars.init(sol)
-assembler.updateGridVariables(sol)
-print("numdofs", assembler.numDofs)
+assembler = FVAssembler(problem=problem, gridVariables=gridVars, model=model, diffMethod=diffMethod)
+print("num dofs: ", assembler.numDofs)
 
 # Assemble the Jacobian and the residual
 assembler.assembleJacobianAndResidual(sol)

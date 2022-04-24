@@ -17,6 +17,7 @@
 #include <dune/istl/test/laplacian.hh>
 #include <dune/istl/paamg/test/anisotropic.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/linear/linearsolvertraits.hh>
@@ -55,7 +56,8 @@ int main(int argc, char* argv[])
 {
     using namespace Dumux;
 
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
 
     Parameters::init(argc, argv, "params.input");
 

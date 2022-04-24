@@ -87,7 +87,7 @@ public:
     // Based on a cell mass of 2.5e-16, the molar mass of cells would be 1.5e8 kg/mol, but biofilms are more than just cells and such high molar masses would lead to numerical problems.
     static Scalar molarMass()
     {
-        Scalar molarMass = getParam<Scalar>("BioCoefficients.BiofilmMolarMass", 1);
+        static Scalar molarMass = getParam<Scalar>("BioCoefficients.BiofilmMolarMass", 1);
         return molarMass;
     }
 
@@ -95,7 +95,7 @@ public:
     // It is typically highly variable for different biofilms, thus we read it from params.input or use the default value of 10 kg/m^3
     static Scalar solidDensity(Scalar temperature)
     {
-        Scalar rho = getParam<Scalar>("BioCoefficients.BiofilmDensity", 10);
+        static Scalar rho = getParam<Scalar>("BioCoefficients.BiofilmDensity", 10);
         return rho;
     }
 };

@@ -25,10 +25,10 @@
 
 #include <iostream>
 
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/vtk.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/io/grid/gridmanager.hh>
 #include <dumux/geometry/distancefield.hh>
@@ -135,8 +135,9 @@ int main(int argc, char** argv)
 {
     using namespace Dumux;
 
-    // initialize MPI, finalize is done automatically on exit
-    Dune::MPIHelper::instance(argc, argv);
+    // initialize MPI and multithreading environemnt
+    // finalize is done automatically on exit
+    initialize(argc, argv);
 
     // initialize params
     Parameters::init(argc, argv);

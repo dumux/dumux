@@ -39,6 +39,7 @@ the retrieval of input parameters specified in the input file or via the command
 ```cpp
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/initialize.hh>
 ```
 
 The following files contains the available linear solver backends, the non linear Newton Solver
@@ -76,8 +77,8 @@ We include the header file specifing the properties of this example
 
 ### The main function
 We will now discuss the main program flow implemented within the `main` function.
-At the beginning of each program using Dune, an instance of `Dune::MPIHelper` has to
-be created. Moreover, we parse the run-time arguments from the command line and the
+At the beginning of each program we initialize (e.g. potential parallel backends like MPI).
+Moreover, we parse the run-time arguments from the command line and the
 input file:
 
 ```cpp
@@ -85,8 +86,8 @@ int main(int argc, char** argv) try
 {
     using namespace Dumux;
 
-    // The Dune MPIHelper must be instantiated for each program using Dune
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
 
     // We parse command line arguments and input file
     Parameters::init(argc, argv);

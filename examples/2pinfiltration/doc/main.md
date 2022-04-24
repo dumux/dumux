@@ -42,6 +42,7 @@ In Dumux, a property system is used to specify the model. For this, different pr
 ```cpp
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/initialize.hh>
 ```
 
 We include the linear solver to be used to solve the linear system and the nonlinear  Newton's method
@@ -100,8 +101,9 @@ int main(int argc, char** argv) try
     // we define the type tag for this problem
     using TypeTag = Properties::TTag::PointSourceExample;
 
-    //We initialize MPI, finalize is done automatically on exit
-    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
+    const auto& mpiHelper = Dune::MPIHelper::instance();
 
     //We parse command line arguments and input file
     Parameters::init(argc, argv);
@@ -296,12 +298,10 @@ We start the time loop. In each time step before we start calculating a new solu
             {
                 // We overwrite the old solution with the new (resized & interpolated) one
                 xOld = x;
-                 // We tell the assembler to resize the matrix and set pattern
-                assembler->setJacobianPattern();
-                // We tell the assembler to resize the residual
-                assembler->setResidualSize();
-                 // We initialize the secondary variables to the new (and "new old") solution
+                // We initialize the secondary variables to the new (and "new old") solution
                 gridVariables->updateAfterGridAdaption(x);
+                // We also need to update the assembler (sizes of residual and Jacobian change)
+                assembler->updateAfterGridAdaption();
                 // We update the point source map
                 problem->computePointSourceMap();
             }

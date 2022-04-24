@@ -27,6 +27,8 @@
 #include <iomanip>
 #include <iostream>
 #include <string>
+#include <memory>
+#include <mutex>
 
 #include <dune/common/parametertree.hh>
 #include <dumux/common/exceptions.hh>
@@ -50,7 +52,11 @@ public:
      * \brief Create LoggingParameterTree from ParameterTree
      */
     LoggingParameterTree(const Dune::ParameterTree& params, const Dune::ParameterTree& defaultParams)
-    : params_(params), defaultParams_(defaultParams) {}
+    : params_(params)
+    , defaultParams_(defaultParams)
+    , usedRuntimeParams_(std::make_unique<Dune::ParameterTree>())
+    , usedDefaultParams_(std::make_unique<Dune::ParameterTree>())
+    {}
 
     /** \brief test for key
      *
@@ -164,10 +170,10 @@ public:
     void reportAll(std::ostream& stream = std::cout) const
     {
         stream << "\n# Runtime-specified parameters used:" << std::endl;
-        usedRuntimeParams_.report(stream);
+        usedRuntimeParams_->report(stream);
 
         stream << "\n# Global default parameters used:" << std::endl;
-        usedDefaultParams_.report(stream);
+        usedDefaultParams_->report(stream);
 
         const auto unusedParams = getUnusedKeys();
         if (!unusedParams.empty())
@@ -229,7 +235,7 @@ public:
         {
             // log that we used this parameter
             const auto returnValue = params_[key];
-            usedRuntimeParams_[key] = returnValue;
+            logUsedRuntimeParam_(key, returnValue);
             return returnValue;
         }
 
@@ -262,7 +268,7 @@ public:
         {
             // log that we used this parameter
             const auto returnValue = params_[compoundKey];
-            usedRuntimeParams_[compoundKey] = returnValue;
+            logUsedRuntimeParam_(compoundKey, returnValue);
             return returnValue;
         }
 
@@ -272,7 +278,7 @@ public:
         {
             // log that we used this parameter
             const auto returnValue = params_[compoundKey];
-            usedRuntimeParams_[compoundKey] = returnValue;
+            logUsedRuntimeParam_(compoundKey, returnValue);
             return returnValue;
         }
 
@@ -337,7 +343,7 @@ public:
         if (params_.hasKey(key))
         {
             // log that we used this parameter
-            usedRuntimeParams_[key] = params_[key];
+            logUsedRuntimeParam_(key, params_[key]);
             return params_.template get<T>(key);
         }
 
@@ -370,7 +376,7 @@ public:
         if (params_.hasKey(compoundKey))
         {
             // log that we used this parameter
-            usedRuntimeParams_[compoundKey] = params_[compoundKey];
+            logUsedRuntimeParam_(compoundKey, params_[compoundKey]);
             return params_.template get<T>(compoundKey);
         }
 
@@ -379,7 +385,7 @@ public:
         if (compoundKey != "")
         {
             // log that we used this parameter
-            usedRuntimeParams_[compoundKey] = params_[compoundKey];
+            logUsedRuntimeParam_(compoundKey, params_[compoundKey]);
             return params_.template get<T>(compoundKey);
         }
 
@@ -403,14 +409,14 @@ public:
         if (params_.hasKey(key))
         {
             // log that we used this parameter
-            usedRuntimeParams_[key] = params_[key];
+            logUsedRuntimeParam_(key, params_[key]);
             return params_.template get<T>(key);
         }
 
         else if(defaultParams_.hasKey(key))
         {
             // use the default
-            usedDefaultParams_[key] = defaultParams_[key];
+            logUsedDefaultParam_(key, defaultParams_[key]);
             return defaultParams_.template get<T>(key);
         }
 
@@ -441,7 +447,7 @@ public:
         if (params_.hasKey(compoundKey))
         {
             // log that we used this parameter
-            usedRuntimeParams_[compoundKey] = params_[compoundKey];
+            logUsedRuntimeParam_(compoundKey, params_[compoundKey]);
             return params_.template get<T>(compoundKey);
         }
 
@@ -450,7 +456,7 @@ public:
         if (compoundKey != "")
         {
             // log that we used this parameter
-            usedRuntimeParams_[compoundKey] = params_[compoundKey];
+            logUsedRuntimeParam_(compoundKey, params_[compoundKey]);
             return params_.template get<T>(compoundKey);
         }
 
@@ -461,7 +467,7 @@ public:
         if (params_.hasKey(key))
         {
             // log that we used this parameter
-            usedRuntimeParams_[key] = params_[key];
+            logUsedRuntimeParam_(key, params_[key]);
             return params_.template get<T>(key);
         }
 
@@ -469,7 +475,7 @@ public:
         else if(defaultParams_.hasKey(compoundKey))
         {
             // use the default
-            usedDefaultParams_[compoundKey] = defaultParams_[compoundKey];
+            logUsedDefaultParam_(compoundKey, defaultParams_[compoundKey]);
             return defaultParams_.template get<T>(compoundKey);
         }
 
@@ -480,14 +486,14 @@ public:
             if (compoundKey != "")
             {
                 // log that we used this parameter
-                usedDefaultParams_[compoundKey] = defaultParams_[compoundKey];
+                logUsedDefaultParam_(compoundKey, defaultParams_[compoundKey]);
                 return defaultParams_.template get<T>(compoundKey);
             }
 
             if(defaultParams_.hasKey(key))
             {
                 // use the default
-                usedDefaultParams_[key] = defaultParams_[key];
+                logUsedDefaultParam_(key, defaultParams_[key]);
                 return defaultParams_.template get<T>(key);
             }
 
@@ -522,7 +528,7 @@ private:
         // store keys which were not accessed
         const auto& keys = tree.getValueKeys();
         for (const auto& key : keys)
-            if (key != "ParameterFile" && !usedRuntimeParams_.hasKey(prefix + key))
+            if (key != "ParameterFile" && !usedRuntimeParams_->hasKey(prefix + key))
                 unusedParams.push_back(prefix + key);
 
         // recursively loop over all subtrees
@@ -531,12 +537,32 @@ private:
             findUnusedKeys_(tree.sub(key), unusedParams, prefix + key + ".");
     }
 
+    /** \brief Log the key value pair as used runtime param
+     */
+    void logUsedRuntimeParam_(const std::string& key, const std::string& value) const
+    {
+        std::scoped_lock lock{ usedRuntimeMutex_ };
+        usedRuntimeParams_->operator[](key) = value;
+    }
+
+    /** \brief Log the key value pair as used default param
+     */
+    void logUsedDefaultParam_(const std::string& key, const std::string& value) const
+    {
+        std::scoped_lock lock{ usedDefaultMutex_ };
+        usedDefaultParams_->operator[](key) = value;
+    }
+
     const Dune::ParameterTree& params_;
     const Dune::ParameterTree& defaultParams_;
 
-    // logging caches
-    mutable Dune::ParameterTree usedRuntimeParams_;
-    mutable Dune::ParameterTree usedDefaultParams_;
+    // logging caches (externally stored)
+    std::unique_ptr<Dune::ParameterTree> usedRuntimeParams_;
+    std::unique_ptr<Dune::ParameterTree> usedDefaultParams_;
+
+    // access to the caches have to be protected for thread-safety
+    mutable std::mutex usedRuntimeMutex_;
+    mutable std::mutex usedDefaultMutex_;
 };
 
 } // end namespace Dumux

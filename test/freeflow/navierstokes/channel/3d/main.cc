@@ -30,6 +30,7 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
@@ -56,8 +57,9 @@ int main(int argc, char** argv)
     using MomentumTypeTag = Properties::TTag::ThreeDChannelTestMomentum;
     using MassTypeTag = Properties::TTag::ThreeDChannelTestMass;
 
-    // initialize MPI, finalize is done automatically on exit
-    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    initialize(argc, argv);
+    const auto& mpiHelper = Dune::MPIHelper::instance();
 
     // print dumux start message
     if (mpiHelper.rank() == 0)

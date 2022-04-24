@@ -1,3 +1,5 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
  *   See the file COPYING for full copying permissions.                      *
  *                                                                           *
@@ -14,28 +16,48 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+
 /*!
  * \file
- *
- * \brief Test for gmsh interface of the grid creator
+ * \ingroup Parallel
+ * \brief Multithreading in Dumux
  */
-#include <config.h>
-#include <iostream>
+#ifndef DUMUX_PARALLEL_MULTITHREADING_HH
+#define DUMUX_PARALLEL_MULTITHREADING_HH
 
-#include <dumux/common/initialize.hh>
-#include <dumux/common/parameters.hh>
+#ifndef DUMUX_MULTITHREADING_BACKEND
+#define DUMUX_MULTITHREADING_BACKEND Serial
+#endif
 
-#include "gridmanagertests.hh"
+namespace Dumux::Detail::Multithreading {
 
-int main(int argc, char** argv)
+namespace ExecutionBackends {
+
+struct Serial {};
+struct Cpp {};
+struct TBB {};
+struct Kokkos {};
+struct OpenMP {};
+
+} // end namespace ExecutionBackends
+
+// set the execution backend type
+using ExecutionBackend = ExecutionBackends::DUMUX_MULTITHREADING_BACKEND;
+
+} // end namespace Dumux::Detail::Multithreading
+
+namespace Dumux::Multithreading {
+
+/*!
+ * \ingroup Parallel
+ * \brief Checking whether the backend is serial
+ */
+inline constexpr bool isSerial()
 {
-    // maybe initialize MPI and/or multithreading backend
-    Dumux::initialize(argc, argv);
+    using namespace Dumux::Detail::Multithreading;
+    return std::is_same_v<ExecutionBackends::Serial, ExecutionBackend>;
+};
 
-    Dumux::Parameters::init(argc, argv, "test_gridmanager_gmsh_e_markers.input");
+} // end namespace Dumux
 
-    auto name = Dumux::getParam<std::string>("Problem.Name");
-    Dumux::GridManagerTests<GRIDTYPE>::testElementMarkers("gmsh", name);
-
-    return 0;
-}
+#endif

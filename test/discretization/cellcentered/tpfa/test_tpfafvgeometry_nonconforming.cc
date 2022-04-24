@@ -33,6 +33,7 @@
 #include <dune/grid/utility/structuredgridfactory.hh>
 #include <dune/alugrid/grid.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/adaptive/markelements.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 
@@ -111,8 +112,8 @@ int main (int argc, char *argv[])
     using namespace Dumux;
     using namespace Dumux::Test;
 
-    // maybe initialize mpi
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    initialize(argc, argv);
 
     std::cout << "Checking the FVGeometries, SCVs and SCV faces on a non-conforming grid" << std::endl;
 

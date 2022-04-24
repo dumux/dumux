@@ -30,8 +30,8 @@ and compute the convergence rates.
 #include <config.h>
 
 #include <iostream>
-#include <dune/common/parallel/mpihelper.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/common/properties.hh> // for GetPropType
 #include <dumux/common/parameters.hh> // for getParam
 #include <dumux/common/integrate.hh>  // for integrateL2Error
@@ -56,8 +56,8 @@ int main(int argc, char** argv) try
 {
     using namespace Dumux;
 
-    // We initialize MPI. Finalization is done automatically on exit.
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
 
     // We parse the command line arguments.
     Parameters::init(argc, argv);
@@ -173,13 +173,13 @@ in the input file.
         gridGeometry->update(gridManager.grid().leafGridView());
         gridVariables->updateAfterGridAdaption(p);
 
-        p.resize(gridGeometry->numDofs());
-        updateAnalyticalSolution(pExact);
-
         // this recreates the linear system, i.e. the sizes of
         // the right hand side vector and the Jacobian matrix,
         // and its sparsity pattern.
-        assembler->setLinearSystem();
+        assembler->updateAfterGridAdaption();
+
+        p.resize(gridGeometry->numDofs());
+        updateAnalyticalSolution(pExact);
 
         // solve problem on refined grid
         solver.solve(p);

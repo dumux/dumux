@@ -26,11 +26,11 @@ The code documentation is structured as follows:
 
 ### Included header files
 <details><summary> Click to show includes</summary>
-These are DUNE helper classes related to parallel computations, time measurements and file I/O
+These time measurements and parallel backend initialization
 
 ```cpp
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
+#include <dumux/common/initialize.hh>
 ```
 
 The following headers include functionality related to property definition or retrieval, as well as
@@ -87,8 +87,8 @@ int main(int argc, char** argv) try
 {
     using namespace Dumux;
 
-    // The Dune MPIHelper must be instantiated for each program using Dune
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
 
     // parse command line arguments and input file
     Parameters::init(argc, argv);

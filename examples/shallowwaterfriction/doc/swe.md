@@ -298,20 +298,20 @@ Accordingly, the third entry of the `bottomFrictionSource` is equal to the secon
 
 ```cpp
     NumEqVector bottomFrictionSource(const Element& element,
-                                      const FVElementGeometry& fvGeometry,
-                                      const ElementVolumeVariables& elemVolVars,
-                                      const SubControlVolume &scv) const
+                                     const FVElementGeometry& fvGeometry,
+                                     const ElementVolumeVariables& elemVolVars,
+                                     const SubControlVolume &scv) const
     {
         NumEqVector bottomFrictionSource(0.0);
         const auto& volVars = elemVolVars[scv];
 
         // bottom shear stress vector
-        Dune::FieldVector<Scalar, 2> bottomShearStress = this->spatialParams().frictionLaw(element, scv).shearStress(volVars);
+        Dune::FieldVector<Scalar, 2> bottomShearStress = this->spatialParams().frictionLaw(element, scv).bottomShearStress(volVars);
 
         // source term due to bottom friction
         bottomFrictionSource[0] = 0.0;
-        bottomFrictionSource[1] = bottomShearStress[0];
-        bottomFrictionSource[2] = bottomShearStress[1];
+        bottomFrictionSource[1] = -bottomShearStress[0] / volVars.density();
+        bottomFrictionSource[2] = -bottomShearStress[1] / volVars.density();
 
         return bottomFrictionSource;
     }
@@ -461,11 +461,10 @@ surface has a non constant distribution.
 
 
 ### Include files
-We include the basic spatial parameters file for free flow, from which we will inherit.
+We include the basic spatial parameters file for finite volumes, from which we will inherit.
 
 ```cpp
 #include <dumux/freeflow/spatialparams.hh>
-
 ```
 
 We include all friction laws.
@@ -481,8 +480,9 @@ We include all friction laws.
 
 In the `RoughChannelSpatialParams` class, we define all functions needed to describe
 the rough channel for the shallow water problem.
-We inherit from the `FreeFlowSpatialParams` class, which is the base class
-for spatial parameters in the context of free-flow applications.
+We inherit from the `FVSpatialParams` class, which is the base class
+for spatial parameters in the context of
+applications using finite volume discretization schemes.
 
 ```cpp
 namespace Dumux {
@@ -490,7 +490,7 @@ namespace Dumux {
 template<class GridGeometry, class Scalar, class VolumeVariables>
 class RoughChannelSpatialParams
 : public FreeFlowSpatialParams<GridGeometry, Scalar,
-                         RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>>
+                               RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>>
 {
     // This convenience aliases will be used throughout this class
     using ThisType = RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>;

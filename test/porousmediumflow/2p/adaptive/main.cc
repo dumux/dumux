@@ -24,14 +24,12 @@
 
 #include <config.h>
 
-#include <ctime>
 #include <iostream>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/grid/io/file/vtk.hh>
-#include <dune/istl/io.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
@@ -68,8 +66,9 @@ int main(int argc, char** argv)
     // define the type tag for this problem
     using TypeTag = Properties::TTag::TYPETAG;
 
-    // initialize MPI, finalize is done automatically on exit
-    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
+    const auto& mpiHelper = Dune::MPIHelper::instance();
 
     // print dumux start message
     if (mpiHelper.rank() == 0)
@@ -201,9 +200,8 @@ int main(int argc, char** argv)
             {
                 // Note that if we were using point sources, we would have to update the map here as well
                 xOld = x; //!< Overwrite the old solution with the new (resized & interpolated) one
-                assembler->setJacobianPattern(); //!< Tell the assembler to resize the matrix and set pattern
-                assembler->setResidualSize(); //!< Tell the assembler to resize the residual
                 gridVariables->updateAfterGridAdaption(x); //!< Initialize the secondary variables to the new (and "new old") solution
+                assembler->updateAfterGridAdaption(); //!< Tell the assembler that the grid changed
                 problem->computePointSourceMap(); //!< Update the point source map
             }
         }

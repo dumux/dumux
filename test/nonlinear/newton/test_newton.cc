@@ -7,8 +7,9 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/float_cmp.hh>
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/istl/bvector.hh>
+
+#include <dumux/common/initialize.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
 /*
@@ -78,8 +79,8 @@ int main(int argc, char* argv[])
 {
     using namespace Dumux;
 
-    // maybe initialize MPI
-    Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
 
     // use the Newton solver to find a solution to a scalar equation
     using Assembler = MockScalarAssembler;

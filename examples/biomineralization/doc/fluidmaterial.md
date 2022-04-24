@@ -62,7 +62,7 @@ The real work (creating the tables) is done by some external program by Span and
 ```cpp
 
 #include <assert.h>
-#include <dumux/material/components/co2tablereader.hh>
+#include <test/porousmediumflow/co2/co2tablereader.hh>
 namespace Dumux::ICP {
 #include "co2valueslaboratory.inc"
 }// end namespace Dumux::ICP
@@ -114,7 +114,7 @@ public:
     // Based on a cell mass of 2.5e-16, the molar mass of cells would be 1.5e8 kg/mol, but such high molar masses would lead to numerical problems.
     static Scalar molarMass()
     {
-        Scalar molarMass = getParam<Scalar>("BioCoefficients.SuspendedBiomassMolarMass", 1);
+        static Scalar molarMass = getParam<Scalar>("BioCoefficients.SuspendedBiomassMolarMass", 1);
         return molarMass;
     }
 };
@@ -154,7 +154,6 @@ which are needed to model biomineralization.
 #include <dumux/material/components/co2.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
-#include <dumux/material/components/co2tablereader.hh>
 #include <dumux/material/components/sodiumion.hh>
 #include <dumux/material/components/chlorideion.hh>
 #include <dumux/material/components/calciumion.hh>

@@ -26,6 +26,7 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
@@ -40,41 +41,6 @@
 
 #include "properties.hh"
 
-/*!
- * \brief Provides an interface for customizing error messages associated with
- *        reading in parameters.
- *
- * \param progName  The name of the program, that was tried to be started.
- * \param errorMsg  The error message that was issued by the start function.
- *                  Comprises the thing that went wrong and a general help message.
- */
-void usage(const char *progName, const std::string &errorMsg)
-{
-    if (errorMsg.size() > 0) {
-        std::string errorMessageOut = "\nUsage: ";
-                    errorMessageOut += progName;
-                    errorMessageOut += " [options]\n";
-                    errorMessageOut += errorMsg;
-                    errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
-                                        "\t-TimeLoop.TEnd                  End of the simulation [s] \n"
-                                        "\t-TimeLoop.DtInitial            Initial timestep size [s] \n"
-                                        "\t-Grid.UpperRight                Upper right corner coordinates\n"
-                                        "\t-Grid.Cells                     Number of cells in respective coordinate directions\n"
-                                        "\t-Problem.Name                   Name for the vtk files \n"
-                                        "\t-Problem.PressureInitial        Initial Pressure [Pa] \n"
-                                        "\t-Problem.TemperatureInitial     Initial Temperature [K] \n"
-                                        "\t-Problem.VaporInitial           Initial vapor mole fraction [-] \n"
-                                        "\t-Problem.CaOInitial             Initial volumefraction of CaO [-] \n"
-                                        "\t-Problem.CaO2H2Initial          Initial volumefraction of Ca(OH)2 [-] \n"
-                                        "\t-Problem.BoundaryPressure       Pressure at the boundary [Pa] \n"
-                                        "\t-Problem.BoundaryTemperature    Temperature at the boundary [K] \n"
-                                        "\t-Problem.BoundaryMoleFraction   Vapor molefraction at the boundary [K] \n";
-
-        std::cout << errorMessageOut
-                  << "\n";
-    }
-}
-
 int main(int argc, char** argv)
 {
     using namespace Dumux;
@@ -85,15 +51,16 @@ int main(int argc, char** argv)
     ////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////
 
-    // initialize MPI, finalize is done automatically on exit
-    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
+    const auto& mpiHelper = Dune::MPIHelper::instance();
 
     // print dumux start message
     if (mpiHelper.rank() == 0)
         DumuxMessage::print(/*firstCall=*/true);
 
     // parse command line arguments and input file
-    Parameters::init(argc, argv, usage);
+    Parameters::init(argc, argv);
 
     //////////////////////////////////////////////////////////////////////
     // try to create a grid (from the given grid file or the input file)
