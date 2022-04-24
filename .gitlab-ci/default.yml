@@ -185,6 +185,7 @@ test python:
         source bin/testing/ci-setup-python-env.sh
         pushd build-cmake
           DUNE_LOG_LEVEL=DEBUG ctest --output-on-failure -L python
+          DUNE_LOG_LEVEL=DEBUG ctest --output-on-failure -L python
         popd
       else
         echo "No changes in the Python bindings/Python code detected: skipping tests."
