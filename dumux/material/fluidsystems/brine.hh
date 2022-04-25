@@ -456,7 +456,7 @@ public:
      * \param fluidState An abitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      *
-     * The thermal conductivity of brine is implemented based on the contribution of NaCl ($\lambda_{brine}$/$\lambda_{H_2O}$) of \cite{Yusufova1975} https://link.springer.com/content/pdf/10.1007/BF00867119.pdf, also discussed in \cite{Ozbek1980} https://docecity.com/thermal-conductivity-of-aqueous-sodium-chloride-acs-publicat-5f10766acba00.html
+     * The thermal conductivity of brine is implemented based on the contribution of NaCl (\f$\lambda_{brine}\f$/\f$\lambda_{H_2O}\f$) of \cite Yusufova1975 https://link.springer.com/content/pdf/10.1007/BF00867119.pdf, also discussed in \cite Ozbek1980 https://docecity.com/thermal-conductivity-of-aqueous-sodium-chloride-acs-publicat-5f10766acba00.html
      */
     template <class FluidState>
     static Scalar thermalConductivity(const FluidState& fluidState, int phaseIdx)
