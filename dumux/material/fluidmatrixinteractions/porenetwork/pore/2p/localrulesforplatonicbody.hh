@@ -170,8 +170,12 @@ struct TwoPLocalRulesPlatonicBody
     {
         assert(isPlatonicBody_(params.poreShape()));
 
-        using std::clamp;
-        sw = clamp(sw, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+        static const bool clampSw = getParam<bool>("SpatialParams.ClampSw", false);
+        if (clampSw)
+        {
+            using std::clamp;
+            sw = clamp(sw, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+        }
 
         const Scalar sigma = params.surfaceTension();
         const Scalar poreRadius = params.poreInscribedRadius();
@@ -315,31 +319,42 @@ private:
         // derivative is calculated numerically) in order to get the
         // saturation moving to the right direction if it
         // temporarily is in an 'illegal' range.
-        if (sw < pcLowSw_)
-            return pcLowSwPcValue_() + pcDerivativeLowSw_() * (sw - pcLowSw_);
-
-        if (sw <= pcHighSw_)
-            return {}; // standard
-        else if (sw < 1.0) // regularized part below sw = 1.0
+        static const bool regularizeLowSw = getParam<bool>("SpatialParams.RegularizeLowSw", false);
+        if (regularizeLowSw)
         {
-            using std::pow;
-            if (highSwRegularizationMethod_ == HighSwRegularizationMethod::powerLaw)
-                return pcHighSwPcValue_() * pow(((1.0-sw)/(1.0-pcHighSw_)), 1.0/3.0);
-
-            else if (highSwRegularizationMethod_ == HighSwRegularizationMethod::linear)
-            {
-                const Scalar slope = -pcHighSwPcValue_() / (1.0 - pcHighSw_);
-                return pcHighSwPcValue_() + (sw - pcHighSw_) * slope;
-            }
-
-            else if (highSwRegularizationMethod_ == HighSwRegularizationMethod::spline)
-                return pcSpline_().eval(sw);
-
-            else
-                DUNE_THROW(Dune::NotImplemented, "Regularization not method not implemented");
+            if (sw < pcLowSw_)
+                return pcLowSwPcValue_() + pcDerivativeLowSw_() * (sw - pcLowSw_);
         }
-        else // regularized part above sw = 1.0
-            return pcDerivativeHighSwEnd_()*(sw - 1.0);
+
+        static const bool regularizeHighSw = getParam<bool>("SpatialParams.RegularizeHighSw", false);
+        if (regularizeHighSw)
+        {
+            if (sw <= pcHighSw_)
+                return {}; // standard
+            else if (sw < 1.0) // regularized part below sw = 1.0
+            {
+                using std::pow;
+                if (highSwRegularizationMethod_ == HighSwRegularizationMethod::powerLaw)
+                    return pcHighSwPcValue_() * pow(((1.0-sw)/(1.0-pcHighSw_)), 1.0/3.0);
+
+                else if (highSwRegularizationMethod_ == HighSwRegularizationMethod::linear)
+                {
+                    const Scalar slope = -pcHighSwPcValue_() / (1.0 - pcHighSw_);
+                    return pcHighSwPcValue_() + (sw - pcHighSw_) * slope;
+                }
+
+                else if (highSwRegularizationMethod_ == HighSwRegularizationMethod::spline)
+                    return pcSpline_().eval(sw);
+
+                else
+                    DUNE_THROW(Dune::NotImplemented, "Regularization not method not implemented");
+            }
+            else // regularized part above sw = 1.0
+                return 0.0;
+                // return pcDerivativeHighSwEnd_()*(sw - 1.0);
+        }
+
+        return {};
     }
 
     /*!
@@ -347,34 +362,38 @@ private:
      */
     OptionalScalar<Scalar> sw(const Scalar pc) const
     {
-        if (pc <= 0.0)
+        static const bool regularizeHighSw = getParam<bool>("SpatialParams.RegularizeHighSw", false);
+        if (regularizeHighSw)
         {
-            if (pcHighSw_ >= 1.0)
-                return 1.0; // no regularization for high sw
-            else
-                return pc/pcDerivativeHighSwEnd_() + 1.0;
-        }
-
-        // low saturation
-        if (pc > pcLowSwPcValue_())
-            return (pc - pcLowSwPcValue_())/pcDerivativeLowSw_() + pcLowSw_;
-
-        // high saturation
-        else if (pc <= pcHighSwPcValue_())
-        {
-            if (highSwRegularizationMethod_ == HighSwRegularizationMethod::powerLaw)
+            if (pc <= 0.0)
             {
-                // invert power law
-                using Dune::power;
-                return power(pc/pcHighSwPcValue_(), 3) * (pcHighSw_ - 1.0) + 1.0;
+                if (pcHighSw_ >= 1.0)
+                    return 1.0; // no regularization for high sw
+                else
+                    return pc/pcDerivativeHighSwEnd_() + 1.0;
             }
 
-            else if (highSwRegularizationMethod_ == HighSwRegularizationMethod::linear)
-                return pc/pcDerivativeHighSwEnd_() + 1.0;
+            // low saturation
+            if (pc > pcLowSwPcValue_())
+                return (pc - pcLowSwPcValue_())/pcDerivativeLowSw_() + pcLowSw_;
 
-            else if (highSwRegularizationMethod_ == HighSwRegularizationMethod::spline)
-                // invert spline
-                return pcSpline_().intersectInterval(pcHighSw_, 1.0, 0.0, 0.0, 0.0, pc);
+            // high saturation
+            else if (pc <= pcHighSwPcValue_())
+            {
+                if (highSwRegularizationMethod_ == HighSwRegularizationMethod::powerLaw)
+                {
+                    // invert power law
+                    using Dune::power;
+                    return power(pc/pcHighSwPcValue_(), 3) * (pcHighSw_ - 1.0) + 1.0;
+                }
+
+                else if (highSwRegularizationMethod_ == HighSwRegularizationMethod::linear)
+                    return pc/pcDerivativeHighSwEnd_() + 1.0;
+
+                else if (highSwRegularizationMethod_ == HighSwRegularizationMethod::spline)
+                    // invert spline
+                    return pcSpline_().intersectInterval(pcHighSw_, 1.0, 0.0, 0.0, 0.0, pc);
+            }
         }
 
         // no regularization
@@ -389,24 +408,27 @@ private:
         if (sw <= pcLowSw_)
             return pcDerivativeLowSw_();
 
-        else if (sw >= 1.0)
-            return pcDerivativeHighSwEnd_();
-
-        else if (sw > pcHighSw_)
+        static const bool regularizeHighSw = getParam<bool>("SpatialParams.RegularizeHighSw", false);
+        if (regularizeHighSw)
         {
-            if (highSwRegularizationMethod_ == HighSwRegularizationMethod::powerLaw)
-            {
-                using std::pow;
-                return pcHighSwPcValue_()/3.0 * 1.0 /((pcHighSw_-1.0) * pow((sw-1.0)/(pcHighSw_-1.0), 2.0/3.0));
-            }
-
-            else if (highSwRegularizationMethod_ == HighSwRegularizationMethod::linear)
+            if (sw >= 1.0)
                 return pcDerivativeHighSwEnd_();
 
-            else
-                return pcSpline_().evalDerivative(sw);
-        }
+            else if (sw > pcHighSw_)
+            {
+                if (highSwRegularizationMethod_ == HighSwRegularizationMethod::powerLaw)
+                {
+                    using std::pow;
+                    return pcHighSwPcValue_()/3.0 * 1.0 /((pcHighSw_-1.0) * pow((sw-1.0)/(pcHighSw_-1.0), 2.0/3.0));
+                }
 
+                else if (highSwRegularizationMethod_ == HighSwRegularizationMethod::linear)
+                    return pcDerivativeHighSwEnd_();
+
+                else
+                    return pcSpline_().evalDerivative(sw);
+            }
+        }
         else
             return {}; // no regularization
     }
@@ -416,32 +438,36 @@ private:
      */
     OptionalScalar<Scalar> dsw_dpc(const Scalar pc) const
     {
-        if (pc <= 0.0)
+        static const bool regularizeHighSw = getParam<bool>("SpatialParams.RegularizeHighSw", false);
+        if (regularizeHighSw)
         {
-            if (pcHighSw_ >= 1.0)
-                return 0.0;
-            else
-                return 1.0/pcDerivativeHighSwEnd_();
-        }
-
-        // derivative of the inverse of the function is one over derivative of the function
-        else if (pc <= pcHighSwPcValue_())
-        {
-            if (highSwRegularizationMethod_ == HighSwRegularizationMethod::powerLaw)
+            if (pc <= 0.0)
             {
-                using Dune::power;
-                return (3.0*pcHighSw_ - 3.0) * power(pc, 2) / power(pcHighSwPcValue_(), 3);
+                if (pcHighSw_ >= 1.0)
+                    return 0.0;
+                else
+                    return 1.0/pcDerivativeHighSwEnd_();
             }
 
-            else if (highSwRegularizationMethod_ == HighSwRegularizationMethod::linear)
-                return 1.0/pcDerivativeHighSwEnd_();
+            // derivative of the inverse of the function is one over derivative of the function
+            else if (pc <= pcHighSwPcValue_())
+            {
+                if (highSwRegularizationMethod_ == HighSwRegularizationMethod::powerLaw)
+                {
+                    using Dune::power;
+                    return (3.0*pcHighSw_ - 3.0) * power(pc, 2) / power(pcHighSwPcValue_(), 3);
+                }
 
-            else
-                return 1.0/pcSpline_().evalDerivative(pcSpline_().intersectInterval(pcHighSw_, 1.0, 0.0, 0.0, 0.0, pc));
+                else if (highSwRegularizationMethod_ == HighSwRegularizationMethod::linear)
+                    return 1.0/pcDerivativeHighSwEnd_();
+
+                else
+                    return 1.0/pcSpline_().evalDerivative(pcSpline_().intersectInterval(pcHighSw_, 1.0, 0.0, 0.0, 0.0, pc));
+            }
+
+            else if (pc >= pcLowSwPcValue_())
+                return 1.0/pcDerivativeLowSw_();
         }
-
-        else if (pc >= pcLowSwPcValue_())
-            return 1.0/pcDerivativeLowSw_();
 
         else
             return {}; // no regularization
