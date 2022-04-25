@@ -185,7 +185,7 @@ namespace Dumux {
  * Returns a struct with access to the colors of each element (member colors)
  * and vector of element seed sets of the same color (member sets)
  *
- * \param gridGeometry the grid geometry
+ * \param gg the grid geometry
  * \param verbosity the verbosity level
  */
 template<class GridGeometry>
