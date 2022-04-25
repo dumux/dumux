@@ -654,7 +654,7 @@ public:
      * \note We assume an ideal mixture for the gas-phase thermal conductivity, as a first approximation.
      * In porous media, gas-phase thermal conductivities are negligible, as they are
      * orders of magnitude lower than the thermal conductivity in solid and liquids (gas: 0.0x compared to solid: x.).
-     * However, moisture can have a significant influce on the thermal conductivity of moist air, see e.g. \cite{Beirao2012},
+     * However, moisture can have a significant influce on the thermal conductivity of moist air, see e.g. \cite Beirao2012,
      * which could be relevant for free-flow systems.
      */
     template <class FluidState>

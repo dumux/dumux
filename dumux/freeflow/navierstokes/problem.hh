@@ -217,7 +217,7 @@ public:
      * \param element The element for which the Neumann boundary condition is set
      * \param fvGeometry The fvGeometry
      * \param elemVolVars The element volume variables
-     * \param elemFaceVars The element face variables
+     * \param elemFluxVarsCache The element flux variables cache
      * \param scvf The boundary sub control volume face
      */
     template<class ElementFluxVariablesCache>
