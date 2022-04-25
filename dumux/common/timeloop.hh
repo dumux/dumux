@@ -365,7 +365,11 @@ public:
         auto cpuTime = timer_.stop();
 
         if (verbose_)
+        {
             std::cout << Fmt::format("Simulation took {:.5g} seconds on {} processes.\n", cpuTime, comm.size());
+            std::ofstream logfile("simulationTime.log", std::ios::app);
+            logfile << cpuTime << "\n";
+        }
 
         if (comm.size() > 1)
             cpuTime = comm.sum(cpuTime);
