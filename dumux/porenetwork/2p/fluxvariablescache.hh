@@ -47,17 +47,22 @@ public:
     TwoPFluxVariablesCache()
     {
         deltaPc_ = getParam<Scalar>("Regularization.DeltaPc");
+        regularizeWithSaturation_ = getParam<bool>("Regularization.RegularizeWithSaturation");
         regularPcInterval_ = getParam<Scalar>("Regularization.IntervalPc");
         regularizationPosition_ = getParam<Scalar>("Regularization.Position");
+        regSaturationPercentage_ = getParam<Scalar>("Regularization.SwPercentage");
     }
 
     template<class Problem, class Element, class FVElementGeometry,
-             class ElementVolumeVariables, class SubControlVolumeFace>
+             class ElementVolumeVariables, class SubControlVolumeFace,
+             class ElemSol, class Scv>
     void update(const Problem& problem,
                 const Element& element,
                 const FVElementGeometry& fvGeometry,
                 const ElementVolumeVariables& elemVolVars,
                 const SubControlVolumeFace& scvf,
+                const ElemSol& elemSol,
+                const Scv& scv,
                 bool invaded)
     {
         const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
@@ -67,14 +72,33 @@ public:
         pcEntry_ = problem.spatialParams().pcEntry(element, elemVolVars);
         pcSnapoff_ = problem.spatialParams().pcSnapoff(element, elemVolVars);
 
-        // calculate boundary pressure values for invasion event
-        regularizationPcEntry_[0] = pcEntry_ + regularPcInterval_*(regularizationPosition_-1);
-        regularizationPcEntry_[1] = pcEntry_ + regularPcInterval_*regularizationPosition_;
-        regularizationPcEntry_[2] = regularizationPcEntry_[1] + deltaPc_;
+        if (!regularizeWithSaturation_)
+        {
+            // calculate boundary pressure values for invasion event
+            regularizationPcEntry_[0] = pcEntry_ + regularPcInterval_*(regularizationPosition_-1);
+            regularizationPcEntry_[1] = pcEntry_ + regularPcInterval_*regularizationPosition_;
 
-        // calculate boundary pressure values for snap-off event
-        regularizationPcSnapoff_[0] = pcSnapoff_ + regularPcInterval_*(regularizationPosition_-1);
-        regularizationPcSnapoff_[1] = pcSnapoff_ + regularPcInterval_*regularizationPosition_;
+            // calculate boundary pressure values for snap-off event
+            regularizationPcSnapoff_[0] = pcSnapoff_ - regularPcInterval_*regularizationPosition_;
+            regularizationPcSnapoff_[1] = pcSnapoff_ + regularPcInterval_*(1 - regularizationPosition_);
+        }
+        else
+        {
+            const auto& spatialParams = problem.spatialParams();
+            const auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
+            const auto swEntry = fluidMatrixInteraction.sw(pcEntry_);
+            const auto swRegEntry = swEntry - regSaturationPercentage_;
+            regularizationPcEntry_[0] = pcEntry_;
+            regularizationPcEntry_[1] = fluidMatrixInteraction.pc(swRegEntry);
+            const auto swSnapoff = fluidMatrixInteraction.sw(pcSnapoff_);
+            const auto swRegSnapoff = swSnapoff + regSaturationPercentage_;
+
+            regularizationPcSnapoff_[0] = fluidMatrixInteraction.pc(swRegSnapoff);
+            regularizationPcSnapoff_[1] = pcSnapoff_;
+        }
+
+
+        regularizationPcEntry_[2] = regularizationPcEntry_[1] + deltaPc_;
         regularizationPcSnapoff_[2] = regularizationPcSnapoff_[1] + deltaPc_;
 
         // curvature at right boundary
@@ -374,6 +398,7 @@ private:
     // regularization parameters
     Scalar deltaPc_; // the delta pc used to calculate derivatives
     Scalar regularPcInterval_, regularizationPosition_; // regularization width and position
+    Scalar regSaturationPercentage_;
     std::array<Scalar, 3> regularizationPcEntry_; // left and right Pc at interval for invasion
     std::array<Scalar, 3> regularizationPcSnapoff_; // left and right Pc at interval for snap-off
     std::array<Scalar, 2> curvatureRadiusEntry_; // curvature for entry
@@ -384,6 +409,7 @@ private:
     std::array<Scalar, 2> regularBoundaryWettingThroatAreaSnapoff_;
     std::array<Scalar, 2> regularBoundaryNonWettingThroatAreaEntry_;
     std::array<Scalar, 2> regularBoundaryNonWettingThroatAreaSnapoff_;
+    bool regularizeWithSaturation_;
 };
 
 } // end Dumux::PoreNetwork
