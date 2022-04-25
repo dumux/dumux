@@ -339,7 +339,7 @@ public:
     }
 
     /*!
-     * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ of water.
+     * \brief Thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ of water.
      *        source: http://webbook.nist.gov/cgi/fluid.cgi?ID=C7732185&Action=Page
      *        @ T= 372.76K (99.6°C) , p=0.1MPa)
      * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
@@ -351,7 +351,7 @@ public:
     }
 
     /*!
-     * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ of steam.
+     * \brief Thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ of steam.
      *        source: http://webbook.nist.gov/cgi/fluid.cgi?ID=C7732185&Action=Page
      *        @ T= 372.76K (99.6°C) , p=0.1MPa)
      * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
@@ -363,7 +363,7 @@ public:
     }
 
     /*!
-     * \brief Specific isobaric heat capacity of water steam \f$\mathrm{[J/(kg*K)}\f$.
+     * \brief Specific isobaric heat capacity of water steam \f$\mathrm{[J/(kg*K)]}\f$.
      *        source: http://webbook.nist.gov/cgi/fluid.cgi?ID=C7732185&Action=Page
      *        @ T= 372.76K (99.6°C) , p=0.1MPa)
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
