@@ -24,10 +24,11 @@
  * This model describes the deformation of a solid body using the theory of linear elasticity.
  * The momentum balance equation of the solid body can be expressed by
  \f[
- \nabla\cdot\boldsymbol{\sigma} + \rho \mathbf{g} = \rho\ddot{\mathbf{u}},
+ \nabla\cdot\boldsymbol{\sigma} + \rho \mathbf{g} + \mathbf{f} = \rho\ddot{\mathbf{u}},
  \f]
  * where \f$ \boldsymbol{\sigma} \f$ is the stress tensor, \f$ \rho \f$ is the density of
- * the solid, and \f$ \mathbf{u} = \mathbf{x} - \mathbf{x}_{\mathrm{initial}} \f$ is the displacement,
+ * the solid, \f$ \mathbf{f} \f$ in \f$ \mathrm{N/m^3} \f$  is the external force acting on the body per unit volume (e.g. magnetism),
+ * and \f$ \mathbf{u} = \mathbf{x} - \mathbf{x}_{\mathrm{initial}} \f$ is the displacement,
  * defined as the difference in material points \f$ \mathbf{x} \f$ and \f$ \mathbf{x}_{\mathrm{initial}} \f$
  * in the deformed and undeformed (initial) state, respectively. The model assumes quasi-static conditions,
  * that is, the above momentum balance equation is solved under the assumption that the acceleration term
@@ -43,7 +44,9 @@
  \boldsymbol{\varepsilon} = \frac{1}{2} \left[ \nabla\mathbf{u} + (\nabla\mathbf{u})^{\mathrm{T}} \right].
  \f]
  *
- * PrimaryVariables are the displacements in each direction \f$ \mathbf{u} \f$.
+ * Primary variables are the displacements in each direction \f$ \mathbf{u} \f$.
+ * Gravity can be enabled or disabled via a runtime parameter.
+ *
  */
 #ifndef DUMUX_GEOMECHANICS_ELASTIC_MODEL_HH
 #define DUMUX_GEOMECHANICS_ELASTIC_MODEL_HH
