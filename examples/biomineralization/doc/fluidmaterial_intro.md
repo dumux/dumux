@@ -24,7 +24,7 @@ For further specialization, the overview over the material subfolder is split in
 ## Fluids in the folder `material`
 
 As this example is about biomineralization involving many components with complex inteactions, some specific fluid material files are necessary.
-A CO_2-Table file provides tabulated CO_2 properties according to @Span1996 in `material/co2tableslaboratory.hh`
+A CO_2-Table file provides tabulated CO_2 properties according to @Span1996 in `material/co2tables.hh`
 In the component subfolder, `material/components/suspendedbiomass.hh` defines the component suspended biomass, which is the mobile form of biomass being transported suspended in the aqueous fluid phase.
 In the fluidsystem subfolder, the biomineralization fluidsystem `material/fluidsystems/biominsimplechemistry.hh` as well as
 the complex salinity brine adapter `material/fluidsystems/icpcomplexsalinitybrine.hh` can be found.
