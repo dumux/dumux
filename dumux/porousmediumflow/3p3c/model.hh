@@ -48,10 +48,6 @@
  *
  * Note that these balance equations are molar.
  *
- * All equations are discretized using a vertex-centered finite volume (box)
- * or cell-centered finite volume scheme as spatial
- * and the implicit Euler method as time discretization.
- *
  * The model uses commonly applied auxiliary conditions like
  * \f$S_w + S_n + S_g = 1\f$ for the saturations and
  * \f$x^w_\alpha + x^a_\alpha + x^c_\alpha = 1\f$ for the mole fractions.

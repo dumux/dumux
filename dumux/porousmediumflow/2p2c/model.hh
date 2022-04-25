@@ -46,10 +46,6 @@
  \alpha \in \{w, g\}
  \f}
  *
- * All equations are discretized using a vertex-centered finite volume (box)
- * or cell-centered finite volume scheme as spatial
- * and the implicit Euler method as time discretization.
- *
  * By using constitutive relations for the capillary pressure \f$p_c =
  * p_n - p_w\f$ and relative permeability \f$k_{r\alpha}\f$ and taking
  * advantage of the fact that \f$S_w + S_n = 1\f$ and \f$x^\kappa_w + x^\kappa_n = 1\f$, the number of
