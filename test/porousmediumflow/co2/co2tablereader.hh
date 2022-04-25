@@ -25,6 +25,7 @@
 #ifndef DUMUX_TABULATED_CO2_HH
 #define DUMUX_TABULATED_CO2_HH
 
+#warning "This header is deprecated and will be removed after release 3.5. Copy co2tables.hh and maybe adjust include 'inc' include to your needs."
 #include <dune/common/float_cmp.hh>
 #include <dumux/common/exceptions.hh>
 
