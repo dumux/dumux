@@ -31,6 +31,9 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/indices.hh>
 #include <dune/common/shared_ptr.hh>
+#include <dune/common/hybridutilities.hh>
+#include <dune/istl/multitypeblockvector.hh>
+
 #include <dumux/assembly/numericepsilon.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/typetraits/typetraits.hh>

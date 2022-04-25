@@ -32,6 +32,8 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/shared_ptr.hh>
+#include <dune/common/reservedvector.hh>
+#include <dune/grid/common/partitionset.hh>
 
 #include <dumux/common/tag.hh>
 #include <dumux/common/indextraits.hh>

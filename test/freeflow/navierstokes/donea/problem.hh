@@ -24,9 +24,12 @@
 #ifndef DUMUX_DONEA_TEST_PROBLEM_HH
 #define DUMUX_DONEA_TEST_PROBLEM_HH
 
+#include <dune/common/fmatrix.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
+#include <dumux/freeflow/navierstokes/mass/1p/advectiveflux.hh>
 
 namespace Dumux {
 

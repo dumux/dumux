@@ -24,6 +24,8 @@
 #ifndef FREEFLOW_RANS_BOUNDARY_TYPES_HH
 #define FREEFLOW_RANS_BOUNDARY_TYPES_HH
 
+#include <dune/common/exceptions.hh>
+
 #include <dumux/common/typetraits/typetraits.hh>
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 

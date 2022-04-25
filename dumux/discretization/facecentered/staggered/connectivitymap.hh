@@ -26,7 +26,8 @@
 
 #include <algorithm>
 #include <vector>
-
+#include <dune/grid/common/partitionset.hh>
+#include <dune/grid/common/gridenums.hh>
 #include <dumux/common/indextraits.hh>
 
 namespace Dumux {

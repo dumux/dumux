@@ -27,6 +27,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
+#include <dumux/common/deprecated.hh>
 #include <dumux/geomechanics/elastic/localresidual.hh>
 
 namespace Dumux {

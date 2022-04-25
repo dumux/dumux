@@ -31,6 +31,7 @@
 #include <dumux/common/deprecated.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/flux/referencesystemformulation.hh>
 
 namespace Dumux {

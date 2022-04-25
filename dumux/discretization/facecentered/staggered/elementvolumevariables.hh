@@ -29,6 +29,8 @@
 #include <vector>
 #include <utility>
 
+#include <dumux/discretization/elementsolution.hh>
+
 namespace Dumux {
 
 /*!

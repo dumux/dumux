@@ -24,6 +24,8 @@
 #ifndef DUMUX_SINCOS_TEST_PROBLEM_HH
 #define DUMUX_SINCOS_TEST_PROBLEM_HH
 
+#include <dune/common/fmatrix.hh>
+
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 
