@@ -27,10 +27,40 @@
 
 #include <dune/common/float_cmp.hh>
 
-// ## The CO2 tables (`co2tableslaboratory.hh`)
+// ## The CO2 tables (`co2tables.hh`)
 //
-// This file contains the __co2table class__ which forwards to tabulated properties of CO2 according to Span and Wagner 1996.
-// The real work (creating the tables) is done by some external program by Span and Wagner 1996 which provides the ready-to-use tables.
+// This file contains the __co2table class__ which forwards to tabulated properties of CO2.
+// The tables are generated using the NIST (National Institute of Standards
+// and Technology) Standard Reference Database Number 69
+// (https://doi.org/10.18434/T4D303).
+//
+// Copyright for NIST Standard Reference Data is governed by the Standard
+// Reference Data Act (https://www.nist.gov/srd/public-law).
+//
+// ######################################################################
+// In case you are using this the data generated with this script
+// please cite the following publications:
+//
+// P.J. Linstrom and W.G. Mallard, Eds.,
+// NIST Chemistry WebBook, NIST Standard Reference Database Number 69,
+// National Institute of Standards and Technology, Gaithersburg MD, 20899,
+// https://doi.org/10.18434/T4D303, (retrieved [insert date]).
+//
+// Span, Roland, and Wolfgang Wagner.
+// "A new equation of state for carbon dioxide covering
+// the fluid region from the triple‐point temperature
+// to 1100 K at pressures up to 800 MPa."
+// Journal of physical and chemical reference data 25.6 (1996): 1509-1596.
+// https://doi.org/10.1063/1.555991
+//
+// ######################################################################
+//
+// The density and the enthalpy are calculated using the equation of Span and
+// Wagner (2009 "A New Equation of State for Carbon Dioxide Covering the Fluid
+// Region from the Triple-Point Temperature to 1100 K at Pressures up to 800 MPa").
+// Therefore, the maximum pressure limit is the lowest of the following values:
+// * 800.0000 MPa
+// * The pressure at which a density of 1178.5 kg/m3 is reached.
 //
 // [[content]]
 //

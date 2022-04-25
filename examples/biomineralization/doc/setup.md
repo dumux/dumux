@@ -835,7 +835,7 @@ We include the necessary material files
 ```cpp
 #include <examples/biomineralization/material/fluidsystems/biominsimplechemistry.hh>
 #include <examples/biomineralization/material/solidsystems/biominsolids.hh>
-#include <examples/biomineralization/material/co2tableslaboratory.hh>
+#include <examples/biomineralization/material/co2tables.hh>
 ```
 
 We include the problem and spatial parameters headers used for this simulation.
@@ -886,7 +886,7 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::MICPColumnSimpleChemistry>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using CO2Tables = Dumux::ICP::CO2Tables;
+    using CO2Tables = BiomineralizationCO2Tables::CO2Tables;
     using H2OTabulated = Components::TabulatedComponent<Components::H2O<Scalar>>;
     using type = Dumux::FluidSystems::BioMinSimpleChemistryFluid<Scalar, CO2Tables, H2OTabulated>;
 };
