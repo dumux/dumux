@@ -47,9 +47,6 @@ v = - \frac{k_{r}}{\mu} \mathbf{K}
  \frac{\partial ( \varrho_\lambda \phi_\lambda )} {\partial t} = q_\lambda
 * \f]
 *
-* All equations are discretized using a vertex-centered finite volume (box)
-* or cell-centered finite volume scheme as spatial and the implicit Euler method as time
-* discretization.
 *
 * The primary variables are the pressure \f$p\f$ and the mole fractions of the
 * dissolved components \f$x^k\f$. The primary variable of the solid phases is the volume

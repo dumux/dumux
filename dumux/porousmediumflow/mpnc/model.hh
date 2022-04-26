@@ -80,11 +80,6 @@
  * \f[ \Phi(a,b) = \min \{a,  b \}\;, \f]
  * because of its piecewise linearity.
  *
- * These equations are then discretized using a fully-implicit vertex
- * centered finite volume scheme (often known as 'box'-scheme) for
- * spatial discretization and the implicit Euler method as temporal
- * discretization.
- *
  * The model assumes local thermodynamic equilibrium and uses the
  * following primary variables:
  * - The component fugacities \f$f^1, \dots, f^{N}\f$

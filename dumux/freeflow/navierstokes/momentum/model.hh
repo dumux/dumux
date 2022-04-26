@@ -41,8 +41,6 @@
  *
  * closes the system.
  *
- *
- * So far, only the staggered grid spatial discretization (for structured grids) is available.
  */
 
 #ifndef DUMUX_NAVIERSTOKES_MOMENTUM_MODEL_HH
