@@ -26,7 +26,7 @@ def createCMakeLists():
 
     # default to the dumux folder (relative path to the location of this script)
     if args["folder"] is None:
-        rootDir = os.path.dirname(os.path.abspath(__file__)) + "/../../dumux"
+        rootDir = os.path.dirname(os.path.abspath(__file__)) + "/../dumux"
     else:
         rootDir = args["folder"]
 
