@@ -1,9 +1,3 @@
-dune_symlink_to_source_files(FILES params.input convergencetest.py)
-dumux_add_test(NAME test_ff_stokes_channel_pipe
-               LABELS freeflow navierstokes
-               SOURCES main.cc
-               LABELS freeflow
-               CMAKE_GUARD HAVE_UMFPACK
-               COMMAND ./convergencetest.py
-               CMD_ARGS test_ff_stokes_channel_pipe params.input
-                                  -Problem.PrintConvergenceTestFile true)
+file(GLOB DUMUX_TEST_FREEFLOW_NAVIERSTOKES_CHANNEL_PIPE_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_TEST_FREEFLOW_NAVIERSTOKES_CHANNEL_PIPE_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/freeflow/navierstokes/channel/pipe)

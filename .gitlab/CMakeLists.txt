@@ -1,0 +1,2 @@
+add_subdirectory(issue_templates)
+add_subdirectory(merge_request_templates)

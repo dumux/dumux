@@ -1,2 +1,3 @@
-dumux_add_test(SOURCES test_solidsystems.cc
-              LABELS unit material)
+file(GLOB DUMUX_TEST_MATERIAL_SOLIDSYSTEMS_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_TEST_MATERIAL_SOLIDSYSTEMS_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/material/solidsystems)

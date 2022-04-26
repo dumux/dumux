@@ -1,2 +1,3 @@
-dumux_add_test(SOURCES test_fluidsystems.cc
-              LABELS unit material)
+file(GLOB DUMUX_TEST_MATERIAL_FLUIDSYSTEMS_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_TEST_MATERIAL_FLUIDSYSTEMS_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/material/fluidsystems)

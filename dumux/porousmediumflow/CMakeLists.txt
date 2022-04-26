@@ -22,6 +22,6 @@ add_subdirectory(richardsnc)
 add_subdirectory(solidenergy)
 add_subdirectory(tracer)
 
-file(GLOB DUMUX_POROUSMEDIUMFLOW_HEADERS *.hh *.inc)
-install(FILES ${DUMUX_POROUSMEDIUMFLOW_HEADERS}
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow)
+file(GLOB DUMUX_DUMUX_POROUSMEDIUMFLOW_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_DUMUX_POROUSMEDIUMFLOW_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/dumux/porousmediumflow)

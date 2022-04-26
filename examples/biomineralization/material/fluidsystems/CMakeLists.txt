@@ -1,5 +1,3 @@
-#install headers
-install(FILES
-biominsimplechemistry.hh
-icpcomplexsalinitybrine.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidsystems)
+file(GLOB DUMUX_EXAMPLES_BIOMINERALIZATION_MATERIAL_FLUIDSYSTEMS_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_EXAMPLES_BIOMINERALIZATION_MATERIAL_FLUIDSYSTEMS_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/examples/biomineralization/material/fluidsystems)

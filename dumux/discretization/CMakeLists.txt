@@ -6,6 +6,6 @@ add_subdirectory(porenetwork)
 add_subdirectory(projection)
 add_subdirectory(staggered)
 
-file(GLOB DUMUX_DISCRETIZATION_HEADERS *.hh *.inc)
-install(FILES ${DUMUX_DISCRETIZATION_HEADERS}
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization)
+file(GLOB DUMUX_DUMUX_DISCRETIZATION_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_DUMUX_DISCRETIZATION_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/dumux/discretization)

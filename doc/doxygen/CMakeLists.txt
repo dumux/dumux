@@ -1,2 +1,2 @@
-# shortcut for creating the Doxyfile.in and Doxyfile
-add_dumux_doxygen_target()
+add_subdirectory(extradoc)
+add_subdirectory(images)
