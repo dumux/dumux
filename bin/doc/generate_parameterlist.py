@@ -202,9 +202,9 @@ def getParameterListFromFile(fileName):
     if errors:
         # remove the known warnings
         for lineIdx in list(errors.keys()):
-            searchKey = os.path.basename(fileName) + "." + str(lineIdx)
+            searchKey = os.path.relpath(fileName, cmdArgs["root"])
             if searchKey in warningDict:
-                if errors[lineIdx]["line"] == warningDict[searchKey]["text"]:
+                if errors[lineIdx]["line"] in warningDict[searchKey]:
                     errors.pop(lineIdx)
 
         if len(errors) > 0:
@@ -310,12 +310,12 @@ for key in parameterDict:
     hasDVInput = "defaultValue" in inputDict[paramName]
     hasPTInput = "type" in inputDict[paramName]
 
-    parameterTypeName = entry["paramType"][0]
+    parameterTypeName = [entry["paramType"][0]]
     hasMultiplePT = not all(pt == parameterTypeName for pt in entry["paramType"])
 
-    defaultValue = next((e for e in entry["defaultValue"] if e), "-")
+    defaultValue = [next((e for e in entry["defaultValue"] if e), "-")]
     entry["defaultValue"] = [value if value is not None else "-" for value in entry["defaultValue"]]
-    hasMultipleDV = not all(dv == defaultValue for dv in entry["defaultValue"])
+    hasMultipleDV = not all(dv == defaultValue[0] for dv in entry["defaultValue"])
     if hasMultiplePT or hasMultipleDV:
         logger.debug(
             f"\nFound multiple occurrences of parameter {paramName}"
