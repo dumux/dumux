@@ -61,7 +61,6 @@
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/flux/fourierslaw.hh>
-#include <dumux/flux/fluxvariablescaching.hh>
 
 namespace Dumux {
 
@@ -203,12 +202,6 @@ public:
 //! The flux variables
 template<class TypeTag>
 struct FluxVariables<TypeTag, TTag::NavierStokesMomentum> { using type = NavierStokesMomentumFluxVariables<TypeTag>; };
-
-template<class TypeTag>
-struct FluxVariablesCache<TypeTag, TTag::NavierStokesMomentum> { using type = FluxVariablesCaching::EmptyCache<GetPropType<TypeTag, Properties::Scalar>>; };
-
-template<class TypeTag>
-struct FluxVariablesCacheFiller<TypeTag, TTag::NavierStokesMomentum> { using type = FluxVariablesCaching::EmptyCacheFiller; };
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::NavierStokesMomentum>

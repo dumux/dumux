@@ -201,14 +201,6 @@ public:
     >;
 };
 
-template<class TypeTag>
-struct FluxVariablesCache<TypeTag, TTag::NavierStokesMassOneP>
-{ using type = FluxVariablesCaching::EmptyCache<GetPropType<TypeTag, Properties::Scalar>>; };
-
-template<class TypeTag>
-struct FluxVariablesCacheFiller<TypeTag, TTag::NavierStokesMassOneP>
-{ using type = FluxVariablesCaching::EmptyCacheFiller; };
-
 // ! The specific I/O fields
 template<class TypeTag>
 struct IOFields<TypeTag, TTag::NavierStokesMassOneP> { using type = NavierStokesIOFields; };

@@ -55,8 +55,9 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using ElementFluxVarsCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
+    using GridFluxVariablesCache = GetPropType<TypeTag, Properties::GridFluxVariablesCache>;
+    using ElementFluxVarsCache = typename GridFluxVariablesCache::LocalView;
+    using FluxVariablesCache = typename GridFluxVariablesCache::FluxVariablesCache;
 
     //! Class that fills the cache corresponding to mpfa Darcy's Law
     class MpfaFouriersLawCacheFiller

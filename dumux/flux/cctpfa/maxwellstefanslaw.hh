@@ -61,8 +61,9 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethods::CCTpfa, re
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
+    using GridFluxVariablesCache = GetPropType<TypeTag, Properties::GridFluxVariablesCache>;
+    using ElementFluxVariablesCache = typename GridFluxVariablesCache::LocalView;
+    using FluxVariablesCache = typename GridFluxVariablesCache::FluxVariablesCache;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
     static const int dim = GridView::dimension;

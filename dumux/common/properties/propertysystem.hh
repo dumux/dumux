@@ -36,6 +36,10 @@ struct UndefinedProperty {};
 
 } // end namespace Dumux::Properties
 
+
+// hide from doxygen
+#ifndef DOXYGEN
+
 //! implementation details for template meta programming
 namespace Dumux::Properties::Detail {
 
@@ -124,21 +128,47 @@ struct GetDefined<TypeTag, Property, std::tuple<FirstTypeTag, Args...>>
                                      typename GetNextTypeTag<TypeTag, Property, std::tuple<FirstTypeTag, Args...>, void>::type>;
 };
 
-//! helper struct to extract get the Property specilization given a TypeTag, asserts that the property is defined
+//! helper struct to extract get the Property specialization given a TypeTag, asserts that the property is defined
 template<class TypeTag, template<class,class> class Property>
 struct GetPropImpl
 {
     using type = typename Detail::GetDefined<TypeTag, Property, std::tuple<TypeTag>>::type;
-    static_assert(!std::is_same<type, UndefinedProperty>::value, "Property is undefined!");
+    static_assert(!std::is_same_v<type, UndefinedProperty>, "Property is undefined!");
+};
+
+template<class TypeTag, template<class,class> class Property, class T>
+struct GetPropOrImpl
+{
+    using PT = typename Detail::GetDefined<TypeTag, Property, std::tuple<TypeTag>>::type;
+    struct OT { using type = T; }; // fake property wrapper
+    using type = std::conditional_t<std::is_same_v<PT, UndefinedProperty>, OT, PT>;
 };
 
 } // end namespace Dumux::Properties::Detail
+
+#endif // DOXYGEN
+
+namespace Dumux::Properties {
+
+//! whether the property is defined/specialized for TypeTag
+template<class TypeTag, template<class,class> class Property>
+inline constexpr bool hasDefinedType()
+{
+    using type = typename Detail::GetDefined<TypeTag, Property, std::tuple<TypeTag>>::type;
+    return !std::is_same_v<type, UndefinedProperty>;
+}
+
+} // end namespace Dumux::Properties
 
 namespace Dumux {
 
 //! get the type of a property
 template<class TypeTag, template<class,class> class Property>
 using GetProp = typename Properties::Detail::GetPropImpl<TypeTag, Property>::type;
+
+//! get the type of a property or the type T if the property is undefined
+template<class TypeTag, template<class,class> class Property, class T>
+using GetPropOr = typename Properties::Detail::GetPropOrImpl<TypeTag, Property, T>::type;
 
 // See the comment above.
 #ifdef __clang__
@@ -147,11 +177,15 @@ using GetProp = typename Properties::Detail::GetPropImpl<TypeTag, Property>::typ
 #endif
 //! get the type alias defined in the property
 template<class TypeTag, template<class,class> class Property>
-using GetPropType = typename Properties::Detail::GetPropImpl<TypeTag, Property>::type::type;
+using GetPropType = typename GetProp<TypeTag, Property>::type;
+
+//! get the type alias defined in the property or the type T if the property is undefined
+template<class TypeTag, template<class,class> class Property, class T>
+using GetPropTypeOr = typename GetPropOr<TypeTag, Property, T>::type;
 
 //! get the value data member of a property
 template<class TypeTag, template<class,class> class Property>
-constexpr auto getPropValue() { return Properties::Detail::GetPropImpl<TypeTag, Property>::type::value; }
+inline constexpr auto getPropValue() { return GetProp<TypeTag, Property>::value; }
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
