@@ -1,3 +1,22 @@
+Differences Between DuMu<sup>x</sup> 3.6 and DuMu<sup>x</sup> 3.5
+=============================================
+
+### General changes / structure
+
+### Improvements and Enhancements
+
+- __Discretization__: There is now defaults for `FluxVariablesCache` and `FluxVariablesCacheFiller` for box/cctpfa/ccmpfa/staggered
+that implement an empty cache (i.e. nothing is cached for the flux variables).
+
+- __Properties__: There is now a `GetPropOr` helper that evaluates to the property type if that type is specialized for the given TypeTag and a given type if not.
+
+### Immediate interface changes not allowing/requiring a deprecation period:
+
+### Deprecated properties/classes/functions/files, to be removed after 3.6:
+
+### New experimental features (possibly subject to backwards-incompatible changes in the future)
+
+
 Differences Between DuMu<sup>x</sup> 3.5 and DuMu<sup>x</sup> 3.4
 =============================================
 - __Requirements__: DuMux requires Dune >=2.8 and CMake >= 3.13. It was successfully tested with OPM 2021.10 (which in turn requires Dune <= 2.8), see also [patches](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/tree/master/patches).
