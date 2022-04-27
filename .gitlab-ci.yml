@@ -1,7 +1,7 @@
 stages:
   - check-status
-  - trigger
-  - downstream modules
+  - trigger dumux pipelines
+  - trigger downstream modules
 
 variables:
   IMAGE_REGISTRY_URL: $CI_REGISTRY/dumux-repositories/dumux-docker-ci
@@ -70,7 +70,7 @@ check-pipeline-status:
 
 # basic trigger job to start the test pipeline
 .base-trigger:
-  stage: trigger
+  stage: trigger dumux pipelines
   trigger:
     include: .gitlab-ci/default.yml
     strategy: depend
@@ -132,7 +132,7 @@ trigger lecture:
   - if: $CI_PIPELINE_SOURCE == "schedule"
   - if: $CI_PIPELINE_SOURCE == "pipeline"
   - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-  stage: downstream modules
+  stage: trigger downstream modules
   trigger:
     project: dumux-repositories/dumux-lecture
     branch: $DUMUX_CI_TRIGGER_LECTURE_BRANCH
