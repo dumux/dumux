@@ -44,6 +44,7 @@
 #include <dumux/discretization/method.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
+#include <dumux/io/format.hh>
 #include <dumux/io/grid/gridmanager_ug.hh>
 #include <dumux/io/grid/gridmanager_alu.hh>
 
@@ -108,6 +109,9 @@ int main(int argc, char** argv)
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
+    // output some stats
+    std::cout << Fmt::format("Process {} has {} elements.", mpiHelper.rank(), leafGridView.size(0)) << std::endl;
+
     // instantiate indicator & data transfer, read parameters for indicator
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     const Scalar refineTol = getParam<Scalar>("Adaptive.RefineTolerance");
@@ -151,6 +155,9 @@ int main(int argc, char** argv)
         gridVariables->updateAfterGridAdaption(x); //!< Initialize the secondary variables to the new (and "new old") solution
         problem->computePointSourceMap(); //!< Update the point source map
     }
+
+    // output some stats
+    std::cout << Fmt::format("Process {} has {} elements.", mpiHelper.rank(), leafGridView.size(0)) << std::endl;
 
     // get some time loop parameters
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -205,6 +212,9 @@ int main(int argc, char** argv)
                 problem->computePointSourceMap(); //!< Update the point source map
             }
         }
+
+        // output some stats
+        std::cout << Fmt::format("Process {} has {} elements.", mpiHelper.rank(), leafGridView.size(0)) << std::endl;
 
         // solve the non-linear system with time step control
         nonLinearSolver.solve(x, *timeLoop);

@@ -1,5 +1,5 @@
 [TimeLoop]
-DtInitial = 100 # [s]
+DtInitial = 1 # [s]
 TEnd = 100 # [s]
 
 [Grid]
@@ -30,6 +30,6 @@ Name = 2padaptive # name passed to the output routines
 RefineAtDirichletBC = 0
 RefineAtFluxBC = 1
 MinLevel = 0
-MaxLevel = 2
+MaxLevel = 1
 CoarsenTolerance = 1e-4
 RefineTolerance = 1e-4

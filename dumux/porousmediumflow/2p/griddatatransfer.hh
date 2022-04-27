@@ -144,7 +144,7 @@ public:
         for (auto level = grid.maxLevel(); level >= 0; level--)
         {
             auto fvGeometry = localView(*gridGeometry_);
-            for (const auto& element : elements(grid.levelGridView(level)))
+            for (const auto& element : elements(grid.levelGridView(level), Dune::Partitions::interior))
             {
                 // get map entry
                 auto& adaptedValues = adaptionMap_[element];
@@ -155,7 +155,7 @@ public:
                     fvGeometry.bindElement(element);
 
                     // store current element solution
-                    adaptedValues.u = ElementSolution(element, sol_, *gridGeometry_);
+                    adaptedValues.u = elementSolution(element, sol_, *gridGeometry_);
 
                     // compute mass in the scvs
                     for (const auto& scv : scvs(fvGeometry))
@@ -186,7 +186,7 @@ public:
                 // This element solution constructor uses the vertex mapper to obtain
                 // the privars at the vertices, thus, this works for non-leaf elements!
                 if(isBox && !element.isLeaf())
-                    adaptedValues.u = ElementSolution(element, sol_, *gridGeometry_);
+                    adaptedValues.u = elementSolution(element, sol_, *gridGeometry_);
             }
         }
     }
@@ -228,7 +228,7 @@ public:
 
         // iterate over leaf and reconstruct the solution
         auto fvGeometry = localView(*gridGeometry_);
-        for (const auto& element : elements(gridGeometry_->gridView().grid().leafGridView(), Dune::Partitions::interior))
+        for (const auto& element : elements(gridGeometry_->gridView(), Dune::Partitions::interior))
         {
             if (!element.isNew())
             {
@@ -293,10 +293,10 @@ public:
 
                 // find the ancestor element that existed on the old grid already
                 auto fatherElement = element.father();
-                while(fatherElement.isNew() && fatherElement.level() > 0)
+                while (fatherElement.isNew() && fatherElement.level() > 0)
                     fatherElement = fatherElement.father();
 
-                if(!isBox)
+                if (!isBox)
                 {
                     const auto& adaptedValuesFather = adaptionMap_[fatherElement];
 
@@ -341,10 +341,9 @@ public:
                     ElementSolution elemSolSon(element, sol_, *gridGeometry_);
                     const auto fatherGeometry = fatherElement.geometry();
                     for (const auto& scv : scvs(fvGeometry))
-                        elemSolSon[scv.localDofIndex()] = evalSolution(fatherElement,
-                                                                        fatherGeometry,
-                                                                        adaptedValuesFather.u,
-                                                                        scv.dofPosition());
+                        elemSolSon[scv.localDofIndex()] = evalSolution(
+                            fatherElement, fatherGeometry, adaptedValuesFather.u, scv.dofPosition()
+                        );
 
                     // compute mass & mass coeffients for the scvs (saturations are recalculated at the end)
                     const auto fatherElementVolume = Extrusion::volume(fatherGeometry);

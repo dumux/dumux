@@ -96,8 +96,8 @@ public:
         else if (hasParamInGroup(modelParamGroup, "Grid.File"))
         {
             makeGridFromFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"), modelParamGroup);
-            ParentType::maybeRefineGrid(modelParamGroup);
             ParentType::loadBalance();
+            ParentType::maybeRefineGrid(modelParamGroup);
             return;
         }
 
@@ -111,8 +111,8 @@ public:
             else
                 DUNE_THROW(Dune::IOError, "ALUGrid only supports Dune::cube or Dune::simplex as cell type!");
 
-            ParentType::maybeRefineGrid(modelParamGroup);
             ParentType::loadBalance();
+            ParentType::maybeRefineGrid(modelParamGroup);
         }
 
         // Didn't find a way to construct the grid
