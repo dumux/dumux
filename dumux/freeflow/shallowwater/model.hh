@@ -76,7 +76,6 @@
 
 #include <dumux/flux/shallowwaterflux.hh>
 #include <dumux/flux/shallowwaterviscousflux.hh>
-#include <dumux/flux/fluxvariablescaching.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
@@ -156,14 +155,6 @@ private:
 public:
     using type = ShallowWaterVolumeVariables<Traits>;
 };
-
-template<class TypeTag>
-struct FluxVariablesCache<TypeTag, TTag::ShallowWater>
-{ using type = FluxVariablesCaching::EmptyCache< GetPropType<TypeTag, Properties::Scalar> >; };
-
-template<class TypeTag>
-struct FluxVariablesCacheFiller<TypeTag, TTag::ShallowWater>
-{ using type = FluxVariablesCaching::EmptyCacheFiller; };
 
 template<class TypeTag>
 struct IOFields<TypeTag, TTag::ShallowWater>
