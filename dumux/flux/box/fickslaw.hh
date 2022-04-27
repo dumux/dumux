@@ -60,8 +60,9 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::Box, referenceSyste
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Extrusion = Extrusion_t<GridGeometry>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using FluxVarCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
+    using GridFluxVariablesCache = GetPropType<TypeTag, Properties::GridFluxVariablesCache>;
+    using ElementFluxVariablesCache = typename GridFluxVariablesCache::LocalView;
+    using FluxVarCache = typename GridFluxVariablesCache::FluxVariablesCache;
     using BalanceEqOpts = GetPropType<TypeTag, Properties::BalanceEqOpts>;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;

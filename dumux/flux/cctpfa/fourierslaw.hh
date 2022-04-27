@@ -55,8 +55,9 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementFluxVarsCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
+    using GridFluxVariablesCache = GetPropType<TypeTag, Properties::GridFluxVariablesCache>;
+    using ElementFluxVarsCache = typename GridFluxVariablesCache::LocalView;
+    using FluxVariablesCache = typename GridFluxVariablesCache::FluxVariablesCache;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;

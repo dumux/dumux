@@ -60,8 +60,9 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa, referenceSy
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
+    using GridFluxVariablesCache = GetPropType<TypeTag, Properties::GridFluxVariablesCache>;
+    using ElementFluxVariablesCache = typename GridFluxVariablesCache::LocalView;
+    using FluxVariablesCache = typename GridFluxVariablesCache::FluxVariablesCache;
     using BalanceEqOpts = GetPropType<TypeTag, Properties::BalanceEqOpts>;
 
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;

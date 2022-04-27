@@ -57,6 +57,7 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/flux/porenetwork/advection.hh>
+#include <dumux/flux/fluxvariablescaching.hh>
 
 #include <dumux/porenetwork/properties.hh>
 
@@ -130,7 +131,10 @@ struct GridFluxVariablesCache<TypeTag, TTag::PNMTwoP>
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluxVariablesCache = GetPropTypeOr<TypeTag,
+        Properties::FluxVariablesCache, FluxVariablesCaching::EmptyCache<Scalar>
+    >;
     using Traits = PoreNetwork::PNMTwoPDefaultGridFVCTraits<Problem, FluxVariablesCache>;
 public:
     using type = PoreNetwork::PNMTwoPGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache, Traits>;

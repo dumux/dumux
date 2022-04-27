@@ -52,8 +52,8 @@ class TwoPOneCDarcysLaw : public DarcysLaw<TypeTag>
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElemFluxVarCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using FluxVarCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
+    using GridFluxVariablesCache = GetPropType<TypeTag, Properties::GridFluxVariablesCache>;
+    using ElemFluxVarCache = typename GridFluxVariablesCache::LocalView;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
