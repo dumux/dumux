@@ -46,8 +46,9 @@ namespace Dumux::PoreNetwork {
  * \brief The base class for spatial parameters for pore-network models.
  */
 template<class GridGeometry, class Scalar, class LocalRules, class Implementation>
+class
 [[deprecated("Use PoreNetwork::TwoPSpatialParams from dumux/porenetwork/2p/spatialparams.hh instead. This class will be removed after 3.5.")]]
-class TwoPBaseSpatialParams
+TwoPBaseSpatialParams
 : public BaseSpatialParams<GridGeometry, Scalar, TwoPBaseSpatialParams<GridGeometry, Scalar, LocalRules, Implementation>>
 {
     using ParentType = BaseSpatialParams<GridGeometry, Scalar, TwoPBaseSpatialParams<GridGeometry, Scalar, LocalRules, Implementation>>;
@@ -209,8 +210,9 @@ private:
 
 // TODO docme
 template<class GridGeometry, class Scalar, class MaterialLawT>
+class
 [[deprecated("Use PoreNetwork::TwoPDefaultSpatialParams from dumux/porenetwork/2p/spatialparams.hh instead. This class will be removed after 3.5.")]]
-class TwoPDefaultSpatialParams : public TwoPBaseSpatialParams<GridGeometry, Scalar, MaterialLawT,
+TwoPDefaultSpatialParams : public TwoPBaseSpatialParams<GridGeometry, Scalar, MaterialLawT,
                                                               TwoPDefaultSpatialParams<GridGeometry, Scalar, MaterialLawT>>
 {
     using ParentType = TwoPBaseSpatialParams<GridGeometry, Scalar, MaterialLawT,

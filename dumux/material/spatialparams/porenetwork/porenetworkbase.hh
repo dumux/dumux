@@ -88,8 +88,9 @@ struct hasPorosityAtPos
  * \brief The base class for spatial parameters for pore-network models.
  */
 template<class GridGeometry, class Scalar, class Implementation>
+class
 [[deprecated("Use PoreNetwork::SpatialParams from dumux/porenetwork/common/spatialparams.hh instead. This class will be removed after 3.5.")]]
-class BaseSpatialParams
+BaseSpatialParams
 {
     using GridView = typename GridGeometry::GridView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
