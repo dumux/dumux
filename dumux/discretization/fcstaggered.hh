@@ -80,8 +80,13 @@ struct GridFluxVariablesCache<TypeTag, TTag::FaceCenteredStaggeredModel>
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
-    using FluxVariablesCacheFiller = GetPropType<TypeTag, Properties::FluxVariablesCacheFiller>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluxVariablesCache = GetPropTypeOr<TypeTag,
+        Properties::FluxVariablesCache, FluxVariablesCaching::EmptyCache<Scalar>
+    >;
+    using FluxVariablesCacheFiller = GetPropTypeOr<TypeTag,
+        Properties::FluxVariablesCacheFiller, FluxVariablesCaching::EmptyCacheFiller
+    >;
 public:
     using type = FaceCenteredStaggeredGridFluxVariablesCache<Problem, FluxVariablesCache, FluxVariablesCacheFiller, enableCache>;
 };

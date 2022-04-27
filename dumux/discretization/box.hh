@@ -45,6 +45,8 @@
 #include <dumux/discretization/box/gridvolumevariables.hh>
 #include <dumux/discretization/box/fvgridgeometry.hh>
 
+#include <dumux/flux/fluxvariablescaching.hh>
+
 namespace Dumux {
 namespace Properties {
 
@@ -85,7 +87,11 @@ struct GridFluxVariablesCache<TypeTag, TTag::BoxModel>
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
+
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluxVariablesCache = GetPropTypeOr<TypeTag,
+        Properties::FluxVariablesCache, FluxVariablesCaching::EmptyCache<Scalar>
+    >;
 public:
     using type = BoxGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache>;
 };
