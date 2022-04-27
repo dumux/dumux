@@ -27,7 +27,13 @@
 #include <algorithm>
 #include <cmath>
 #include <dune/common/math.hh>
+#include <dune/common/std/type_traits.hh>
+#include <dune/common/fmatrix.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/flux/facetensoraverage.hh>
+#include <dumux/flux/traits.hh>
 
 namespace Dumux {
 

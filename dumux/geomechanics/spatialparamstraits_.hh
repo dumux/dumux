@@ -23,8 +23,10 @@
  */
 #ifndef DUMUX_GEOMECHANICS_SPATIAL_PARAMS_TRAITS__HH
 #define DUMUX_GEOMECHANICS_SPATIAL_PARAMS_TRAITS__HH
-#ifndef DOXYGEN
 
+#include <utility>
+
+#ifndef DOXYGEN
 namespace Dumux::Detail {
 
 // helper struct detecting if the user-defined spatial params class has a lameParamsAtPos function

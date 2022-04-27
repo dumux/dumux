@@ -33,6 +33,8 @@
 // The single-phase flow Navier-Stokes equations are solved by coupling a momentum balance model to a mass balance model.
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
+#include <dumux/multidomain/traits.hh>
+#include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
 
 // We want to use `YaspGrid`, an implementation of the dune grid interface for structured grids:
 #include <dune/grid/yaspgrid.hh>

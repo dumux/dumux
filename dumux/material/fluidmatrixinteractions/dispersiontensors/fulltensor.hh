@@ -24,6 +24,9 @@
 #ifndef DUMUX_MATERIAL_FLUIDMATRIX_DISPERSIONTENSORS_FULLTENSOR_HH
 #define DUMUX_MATERIAL_FLUIDMATRIX_DISPERSIONTENSORS_FULLTENSOR_HH
 
+#include <dune/common/fmatrix.hh>
+#include <dumux/common/properties.hh>
+
 namespace Dumux {
 
 template<class TypeTag>

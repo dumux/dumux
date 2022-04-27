@@ -30,6 +30,8 @@
 #include <utility>
 #include <algorithm>
 
+#include <dune/common/exceptions.hh>
+
 namespace Dumux {
 
 /*!

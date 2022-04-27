@@ -31,6 +31,7 @@
 
 #include <dumux/common/indextraits.hh>
 #include <dune/common/iteratorrange.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 #include <dumux/discretization/facecentered/staggered/normalaxis.hh>
 #include <dumux/discretization/facecentered/staggered/consistentlyorientedgrid.hh>

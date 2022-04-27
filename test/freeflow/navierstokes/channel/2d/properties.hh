@@ -37,6 +37,7 @@
 #include <dumux/material/components/simpleh2o.hh>
 
 #include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
+#include <dumux/multidomain/traits.hh>
 
 #include "problem.hh"
 

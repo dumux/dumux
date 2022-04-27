@@ -24,6 +24,11 @@
 #ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKES_ANALYTICALSOLVECTORS_HH
 #define DUMUX_TEST_FREEFLOW_NAVIERSTOKES_ANALYTICALSOLVECTORS_HH
 
+#include <vector>
+#include <memory>
+#include <type_traits>
+#include <dune/common/fvector.hh>
+
 namespace Dumux {
 /*!
  * \ingroup NavierStokesTests

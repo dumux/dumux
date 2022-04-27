@@ -32,6 +32,7 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/indices.hh>
+#include <dune/common/float_cmp.hh>
 
 #include <dumux/assembly/numericepsilon.hh>
 #include <dumux/common/properties.hh>

@@ -23,7 +23,7 @@
  */
 #ifndef DUMUX_NAVIERSTOKES_STAGGERED_VELOCITYRECONSTRUCTION_HH
 #define DUMUX_NAVIERSTOKES_STAGGERED_VELOCITYRECONSTRUCTION_HH
-
+#include <algorithm>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {

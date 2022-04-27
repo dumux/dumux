@@ -32,6 +32,7 @@
 #include <dune/grid/io/file/vtk/basicwriter.hh>
 #include <dune/grid/io/file/vtk/function.hh>
 #include <dune/grid/io/file/vtk/skeletonfunction.hh>
+#include <dumux/common/parameters.hh>
 
 namespace Dumux::Detail {
 
