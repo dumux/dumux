@@ -1,134 +1,70 @@
 {
-    "cakegridmanager.hh.114": {
-        "text": "positions[i] = getParamFromGroup<std::vector<Scalar>>(modelParamGroup, \"Grid.Radial\" + std::to_string(i));"
-    },
-    "cakegridmanager.hh.119": {
-        "text": "positions[i] = getParamFromGroup<std::vector<Scalar>>(modelParamGroup, \"Grid.Angular\" + std::to_string(i));"
-    },
-    "cakegridmanager.hh.124": {
-        "text": "positions[i] = getParamFromGroup<std::vector<Scalar>>(modelParamGroup, \"Grid.Axial\" + std::to_string(i));"
-    },
-    "cakegridmanager.hh.145": {
-        "text": "cells[i] = getParamFromGroup<std::vector<int>>(modelParamGroup, \"Grid.Cells\" +  std::to_string(i), cells[i]);"
-    },
-    "cakegridmanager.hh.155": {
-        "text": "grading[i] = getParamFromGroup<std::vector<Scalar>>(modelParamGroup, \"Grid.Grading\" +  std::to_string(i), grading[i]);"
-    },
-    "gridmanager_yasp.hh.238": {
-        "text": "positions[i] = getParamFromGroup<std::vector<ctype>>(modelParamGroup, \"Grid.Positions\" + std::to_string(i));"
-    },
-    "gridmanager_yasp.hh.245": {
-        "text": "cells[i] = getParamFromGroup<std::vector<int>>(modelParamGroup, \"Grid.Cells\" + std::to_string(i), cells[i]);"
-    },
-    "gridmanager_yasp.hh.253": {
-        "text": "grading[i] = getParamFromGroup<std::vector<ctype>>(modelParamGroup, \"Grid.Grading\" + std::to_string(i), grading[i]);"
-    },
-    "structuredlatticegridcreator.hh.253": {
-        "text": "grading[i] = getParamFromGroup<std::vector<ctype>>(modelParamGroup, \"Grid.Grading\" + std::to_string(i), grading[i]);"
-    },
-    "structuredlatticegridcreator.hh.372": {
-        "text": "positions[i] = getParamFromGroup<std::vector<CoordScalar>>(paramGroup_, \"Grid.Positions\" + std::to_string(i), std::vector<CoordScalar>{});"
-    },
-    "structuredlatticegridcreator.hh.395": {
-        "text": "grading[i] = getParamFromGroup<std::vector<CoordScalar>>(paramGroup_, \"Grid.Grading\" + std::to_string(i), grading[i]);"
-    },
-    "loadsolution.hh.293": {
-        "text": "const auto pvName = getParamFromGroup<std::vector<std::string>>(paramGroup, paramNameWithState);"
-    },
-    "linearsolverparameters.hh.83": {
-        "text": "const auto value = getParam<std::string>(fullDumuxKey, \"\");"
-    },
-    "parametersforgeneratedgrid.hh.134": {
-        "text": "auto lowerLeft = getParamFromGroup<GlobalPosition>(paramGroup_, \"Grid.Subregion\" + std::to_string(i) + \".LowerLeft\");"
-    },
-    "parametersforgeneratedgrid.hh.135": {
-        "text": "auto upperRight = getParamFromGroup<GlobalPosition>(paramGroup_, \"Grid.Subregion\" + std::to_string(i) + \".UpperRight\");"
-    },
-    "parametersforgeneratedgrid.hh.401": {
-        "text": "const auto poreLabelsToSetFixedRadius = getParamFromGroup<std::vector<int>>(paramGroup_, prefix + \"PoreLabelsToSetFixedRadius\", std::vector<int>{});"
-    },
-    "parametersforgeneratedgrid.hh.402": {
-        "text": "const auto poreLabelsToApplyFactorForRadius = getParamFromGroup<std::vector<int>>(paramGroup_, prefix + \"PoreLabelsToApplyFactorForRadius\", std::vector<int>{});"
-    },
-    "parametersforgeneratedgrid.hh.403": {
-        "text": "const auto poreRadiusForLabel = getParamFromGroup<std::vector<Scalar>>(paramGroup_, prefix + \"FixedPoreRadiusForLabel\", std::vector<Scalar>{});"
-    },
-    "parametersforgeneratedgrid.hh.404": {
-        "text": "const auto poreRadiusFactorForLabel = getParamFromGroup<std::vector<Scalar>>(paramGroup_, prefix + \"PoreRadiusFactorForLabel\", std::vector<Scalar>{});"
-    },
-    "parametersforgeneratedgrid.hh.441": {
-        "text": "const Scalar fixedPoreRadius = getParamFromGroup<Scalar>(paramGroup_, prefix + \"PoreInscribedRadius\", -1.0);"
-    },
-    "parametersforgeneratedgrid.hh.446": {
-        "text": "const auto seed = getParamFromGroup<unsigned int>(paramGroup_, prefix + \"ParameterRandomNumberSeed\", std::random_device{}());"
-    },
-    "parametersforgeneratedgrid.hh.449": {
-        "text": "const auto type = getParamFromGroup<std::string>(paramGroup_, prefix + \"ParameterType\", \"lognormal\");"
-    },
-    "parametersforgeneratedgrid.hh.495": {
-        "text": "return std::array{getParamFromGroup<Scalar>(paramGroup_, prefix + paramName0),"
-    },
-    "parametersforgeneratedgrid.hh.496": {
-        "text": "getParamFromGroup<Scalar>(paramGroup_, prefix + paramName1)};"
-    },
-    "parametersforgeneratedgrid.hh.563": {
-        "text": "const Scalar inputThroatInscribedRadius = getParamFromGroup<Scalar>(paramGroup_, prefix + \"ThroatInscribedRadius\", -1.0);"
-    },
-        "parametersforgeneratedgrid.hh.566": {
-        "text": "const Scalar throatN = getParamFromGroup<Scalar>(paramGroup_, prefix + \"ThroatInscribedRadiusN\", 0.1);"
-    },
-        "parametersforgeneratedgrid.hh.591": {
-        "text": "const Scalar inputThroatLength = getParamFromGroup<Scalar>(paramGroup_, prefix + \"ThroatLength\", -1.0);"
-    },
-        "parametersforgeneratedgrid.hh.593": {
-        "text": "const bool substractRadiiFromThroatLength = getParamFromGroup<bool>(paramGroup_, prefix + \"SubstractRadiiFromThroatLength\", true);"
-    },
-    "parametersforgeneratedgrid.hh.563": {
-        "text": "const Scalar inputThroatInscribedRadius = getParamFromGroup<Scalar>(paramGroup_, prefix + \"ThroatInscribedRadius\", -1.0);"
-    },
-        "parametersforgeneratedgrid.hh.563": {
-        "text": "const Scalar inputThroatInscribedRadius = getParamFromGroup<Scalar>(paramGroup_, prefix + \"ThroatInscribedRadius\", -1.0);"
-    },
-    "velocitygradients.hh.281": {
-        "text": "static const bool unsymmetrizedGradientForBJ = getParamFromGroup<bool>(problem.paramGroup(),"
-    },
-    "velocitygradients.hh.341": {
-        "text": "static const bool unsymmetrizedGradientForBJ = getParamFromGroup<bool>(problem.paramGroup(),"
-    },
-    "fvspatialparams1pconstant.hh.52": {
-        "text": ", temperature_(getParam<Scalar>("
-    },
-    "fluxvariablescachefiller.hh.630": {
-        "text": "static const auto zeroD = getParamFromGroup<Scalar>("
-    },
-    "snappygridmanager.hh.325": {
-        "text": "static const auto couplingPlaneNormal = getParamFromGroup<GlobalPosition>(modelParamGroup,"
-    },
-    "snappygridmanager.hh.355": {
-        "text": "const ScalarVector upstreamPositions = getParamFromGroup<ScalarVector>(modelParamGroup, \"Grid.UpstreamPositions\" + std::to_string(i), ScalarVector{});"
-    },
-    "snappygridmanager.hh.364": {
-        "text": "const ScalarVector downstreamPositions = getParamFromGroup<ScalarVector>(modelParamGroup, \"Grid.DownstreamPositions\" + std::to_string(i), ScalarVector{});"
-    },
-    "snappygridmanager.hh.385": {
-        "text": "const ScalarVector normalPositions = getParamFromGroup<ScalarVector>(modelParamGroup, \"Grid.Positions\" + std::to_string(i), ScalarVector{});"
-    },
-    "snappygridmanager.hh.438": {
-        "text": "const IntVector cellsUpstream = getParamFromGroup<IntVector>(modelParamGroup_,"
-    },
-    "snappygridmanager.hh.463": {
-        "text": "const ScalarVector upstreamGrading = getParamFromGroup<ScalarVector>(modelParamGroup_, \"Grid.UpstreamGrading\"  + std::to_string(directionIndex), ScalarVector{});"
-    },
-    "snappygridmanager.hh.500": {
-        "text": "const IntVector downstreamcells = getParamFromGroup<IntVector>(modelParamGroup_,"
-    },
-    "snappygridmanager.hh.526": {
-        "text": "const ScalarVector downstreamGrading = getParamFromGroup<ScalarVector>(modelParamGroup_, \"Grid.DownstreamGrading\"  + std::to_string(directionIndex), ScalarVector{});"
-    },
-    "snappygridmanager.hh.631": {
-        "text": "const IntVector cellsNormal = getParamFromGroup<IntVector>(modelParamGroup_, \"Grid.Cells\"  + std::to_string(directionIndex));"
-    },
-    "snappygridmanager.hh.644": {
-        "text": "const ScalarVector normalGrading = getParamFromGroup<ScalarVector>(modelParamGroup_, \"Grid.Grading\"  + std::to_string(directionIndex), ScalarVector{});"
-    }
+    "dumux/io/grid/cakegridmanager.hh": [
+        "positions[i] = getParamFromGroup<std::vector<Scalar>>(modelParamGroup, \"Grid.Radial\" + std::to_string(i));",
+        "positions[i] = getParamFromGroup<std::vector<Scalar>>(modelParamGroup, \"Grid.Angular\" + std::to_string(i));",
+        "positions[i] = getParamFromGroup<std::vector<Scalar>>(modelParamGroup, \"Grid.Axial\" + std::to_string(i));",
+        "cells[i] = getParamFromGroup<std::vector<int>>(modelParamGroup, \"Grid.Cells\" +  std::to_string(i), cells[i]);",
+        "grading[i] = getParamFromGroup<std::vector<Scalar>>(modelParamGroup, \"Grid.Grading\" +  std::to_string(i), grading[i]);"
+    ],
+    "dumux/io/grid/gridmanager_yasp.hh": [
+        "positions[i] = getParamFromGroup<std::vector<ctype>>(modelParamGroup, \"Grid.Positions\" + std::to_string(i));",
+        "cells[i] = getParamFromGroup<std::vector<int>>(modelParamGroup, \"Grid.Cells\" + std::to_string(i), cells[i]);",
+        "grading[i] = getParamFromGroup<std::vector<ctype>>(modelParamGroup, \"Grid.Grading\" + std::to_string(i), grading[i]);"
+    ],
+    "dumux/io/grid/porenetwork/structuredlatticegridcreator.hh": [
+        "grading[i] = getParamFromGroup<std::vector<ctype>>(modelParamGroup, \"Grid.Grading\" + std::to_string(i), grading[i]);",
+        "positions[i] = getParamFromGroup<std::vector<CoordScalar>>(paramGroup_, \"Grid.Positions\" + std::to_string(i), std::vector<CoordScalar>{});",
+        "grading[i] = getParamFromGroup<std::vector<CoordScalar>>(paramGroup_, \"Grid.Grading\" + std::to_string(i), grading[i]);"
+    ],
+    "dumux/io/loadsolution.hh": [
+        "const auto pvName = getParamFromGroup<std::vector<std::string>>(paramGroup, paramNameWithState);"
+    ],
+    "dumux/linear/linearsolverparameters.hh": [
+        "const auto value = getParam<std::string>(fullDumuxKey, \"\");"
+    ],
+    "dumux/io/grid/porenetwork/parametersforgeneratedgrid.hh": [
+        "auto lowerLeft = getParamFromGroup<GlobalPosition>(paramGroup_, \"Grid.Subregion\" + std::to_string(i) + \".LowerLeft\");",
+        "auto upperRight = getParamFromGroup<GlobalPosition>(paramGroup_, \"Grid.Subregion\" + std::to_string(i) + \".UpperRight\");",
+        "const auto poreLabelsToSetFixedRadius = getParamFromGroup<std::vector<int>>(paramGroup_, prefix + \"PoreLabelsToSetFixedRadius\", std::vector<int>{});",
+        "const auto poreLabelsToApplyFactorForRadius = getParamFromGroup<std::vector<int>>(paramGroup_, prefix + \"PoreLabelsToApplyFactorForRadius\", std::vector<int>{});",
+        "const auto poreRadiusForLabel = getParamFromGroup<std::vector<Scalar>>(paramGroup_, prefix + \"FixedPoreRadiusForLabel\", std::vector<Scalar>{});",
+        "const auto poreRadiusFactorForLabel = getParamFromGroup<std::vector<Scalar>>(paramGroup_, prefix + \"PoreRadiusFactorForLabel\", std::vector<Scalar>{});",
+        "const Scalar fixedPoreRadius = getParamFromGroup<Scalar>(paramGroup_, prefix + \"PoreInscribedRadius\", -1.0);",
+        "const auto seed = getParamFromGroup<unsigned int>(paramGroup_, prefix + \"ParameterRandomNumberSeed\", std::random_device{}());",
+        "const auto type = getParamFromGroup<std::string>(paramGroup_, prefix + \"ParameterType\", \"lognormal\");",
+        "return std::array{getParamFromGroup<Scalar>(paramGroup_, prefix + paramName0),",
+        "getParamFromGroup<Scalar>(paramGroup_, prefix + paramName1)};",
+        "const Scalar inputThroatInscribedRadius = getParamFromGroup<Scalar>(paramGroup_, prefix + \"ThroatInscribedRadius\", -1.0);",
+        "const Scalar throatN = getParamFromGroup<Scalar>(paramGroup_, prefix + \"ThroatInscribedRadiusN\", 0.1);",
+        "const Scalar inputThroatLength = getParamFromGroup<Scalar>(paramGroup_, prefix + \"ThroatLength\", -1.0);",
+        "const bool substractRadiiFromThroatLength = getParamFromGroup<bool>(paramGroup_, prefix + \"SubstractRadiiFromThroatLength\", true);",
+        "// TODO remove if/else after 3.5 and use const bool subtractRadiiFromThroatLength = getParamFromGroup<bool>(paramGroup_, prefix + \"SubtractPoreInscribedRadiiFromThroatLength\", true);",
+        "subtractRadiiFromThroatLength = getParamFromGroup<bool>(paramGroup_, prefix + \"SubstractRadiiFromThroatLength\");",
+        "subtractRadiiFromThroatLength = getParamFromGroup<bool>(paramGroup_, prefix + \"SubtractPoreInscribedRadiiFromThroatLength\", true);"
+    ],
+    "dumux/freeflow/navierstokes/staggered/velocitygradients.hh": [
+        "static const bool unsymmetrizedGradientForBJ = getParamFromGroup<bool>(problem.paramGroup(),",
+        "static const bool unsymmetrizedGradientForBJ = getParamFromGroup<bool>(problem.paramGroup(),"
+    ],
+    "dumux/porousmediumflow/fvspatialparams1pconstant.hh": [
+        ", temperature_(getParam<Scalar>("
+    ],
+    "dumux/porousmediumflow/fluxvariablescachefiller.hh": [
+        "static const auto zeroD = getParamFromGroup<Scalar>("
+    ],
+    "dumux/multidomain/boundary/freeflowporenetwork/snappygridmanager.hh": [
+        "static const auto couplingPlaneNormal = getParamFromGroup<GlobalPosition>(modelParamGroup,",
+        "const ScalarVector upstreamPositions = getParamFromGroup<ScalarVector>(modelParamGroup, \"Grid.UpstreamPositions\" + std::to_string(i), ScalarVector{});",
+        "const ScalarVector downstreamPositions = getParamFromGroup<ScalarVector>(modelParamGroup, \"Grid.DownstreamPositions\" + std::to_string(i), ScalarVector{});",
+        "const ScalarVector normalPositions = getParamFromGroup<ScalarVector>(modelParamGroup, \"Grid.Positions\" + std::to_string(i), ScalarVector{});",
+        "const IntVector cellsUpstream = getParamFromGroup<IntVector>(modelParamGroup_,",
+        "const ScalarVector upstreamGrading = getParamFromGroup<ScalarVector>(modelParamGroup_, \"Grid.UpstreamGrading\"  + std::to_string(directionIndex), ScalarVector{});",
+        "const IntVector downstreamcells = getParamFromGroup<IntVector>(modelParamGroup_,",
+        "const ScalarVector downstreamGrading = getParamFromGroup<ScalarVector>(modelParamGroup_, \"Grid.DownstreamGrading\"  + std::to_string(directionIndex), ScalarVector{});",
+        "const IntVector cellsNormal = getParamFromGroup<IntVector>(modelParamGroup_, \"Grid.Cells\"  + std::to_string(directionIndex));",
+        "const ScalarVector normalGrading = getParamFromGroup<ScalarVector>(modelParamGroup_, \"Grid.Grading\"  + std::to_string(directionIndex), ScalarVector{});"
+    ],
+    "dumux/assembly/boxlocalassembler.hh": [
+        "static const bool updateAllVolVars = getParamFromGroup<bool>("
+    ]
 }

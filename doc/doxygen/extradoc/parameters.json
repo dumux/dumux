@@ -80,11 +80,17 @@
         ]
     },
     "-.KrnData": {
+        "type":[
+            "std::vector<Scalar>"
+        ],
         "explanation": [
             "Relative permeability for the non-wetting phase data for spline material law."
         ]
     },
     "-.KrwData": {
+        "type":[
+            "std::vector<Scalar>"
+        ],
         "explanation": [
             "Relative permeability for the wetting phase data for spline material law."
         ]
@@ -167,6 +173,9 @@
         ]
     },
     "-.PcData": {
+        "type": [
+            "std::vector<Scalar>"
+        ],
         "explanation": [
             "Capillary pressure data for spline material law."
         ]
@@ -232,11 +241,17 @@
         ]
     },
     "-.SplineSweInterval": {
+        "defaultValue": [
+            "std::array<double, 2>{{0.1, 1.0}"
+        ],
         "explanation": [
             "Effective wetting saturation interval for spline material law."
         ]
     },
     "-.SwData": {
+        "type": [
+            "std::vector<Scalar>"
+        ],
         "explanation": [
             "Wetting saturation pressure data for spline material law."
         ]
@@ -326,6 +341,11 @@
             "Whether to refine where source terms are specified"
         ]
     },
+    "Assembly.Multithreading": {
+        "explanation": [
+            "Whether to enable multi-threaded assembly"
+        ]
+    },
     "Assembly.NumericDifference.BaseEpsilon": {
         "explanation": [
             "The basic numeric epsilon used in the differentiation  for deflecting primary variables"
@@ -356,6 +376,11 @@
             "The salinity"
         ]
     },
+    "Component.EnthalpyOfVaporization": {
+        "explanation": [
+            "The enthalpy of the vaporization"
+        ]
+    },
     "Component.GasDensity": {
         "explanation": [
             "The density of the gas"
@@ -371,9 +396,19 @@
             "The dynamic viscosity of the gas"
         ]
     },
+    "Component.GasHeatCapacity": {
+        "explanation": [
+            "The heat capacity of the gas"
+        ]
+    },
     "Component.GasKinematicViscosity": {
         "explanation": [
             "The gas kinematic viscosity"
+        ]
+    },
+    "Component.GasThermalConductivity": {
+        "explanation": [
+            "The thermal conductivity of the gas"
         ]
     },
     "Component.HenryComponentInWater": {
@@ -444,6 +479,16 @@
     "Component.SolidThermalConductivity": {
         "explanation": [
             "Thermal conductivity of the component as a solid"
+        ]
+    },
+    "Component.TriplePressure": {
+        "explanation": [
+            "The triple pressure of the component"
+        ]
+    },
+    "Component.TripleTemperature": {
+        "explanation": [
+            "The triple temperature of the component"
         ]
     },
     "ElectroChemistry.ActivationBarrier": {
@@ -593,7 +638,7 @@
     },
     "FreeFlow.UseOldTransportingVelocity": {
         "explanation": [
-            ""
+            "whether to use the old transporting velocity"
         ]
     },
     "Grid.AddThroatVolumeToPoreVolume": {
@@ -635,6 +680,11 @@
             "With this, the boundary faces can be set in the format xmin xmax ymin ymax (zmin zmax)."
         ]
     },
+    "Grid.BoundaryPoreLabels": {
+        "explanation": [
+            "With this, the boundary faces can be set in the format xmin xmax ymin ymax (zmin zmax)."
+        ]
+    },
     "Grid.BoundarySegments": {
         "explanation": [
             "For the dune gmsh reader: Whether to insert boundary segments into the grid"
@@ -656,6 +706,12 @@
         ]
     },
     "Grid.Cells": {
+        "type": [
+            "std::array<unsigned int, dim>"
+        ],
+        "defaultValue": [
+            "{1, 1, 1}"
+        ],
         "explanation": [
             "The number of elements in a structured uniform grid in x, y and z direction"
         ]
@@ -687,12 +743,12 @@
             "To construct a 1D grid with just a coordinates vector"
         ]
     },
-    "Grid.CouplingNormal": {
+    "Grid.CouplinglineNormal": {
         "defaultValue": [
-            "[0...,1]"
+            "{0,0,1}"
         ],
         "explanation": [
-            ""
+            "The normal direction of the coupled interface"
         ],
         "mode": "manual",
         "type": [
@@ -700,6 +756,9 @@
         ]
     },
     "Grid.CouplingPlaneLowerLeft": {
+        "defaultValue": [
+            "Grid.LowerLeft"
+        ],
         "explanation": [
             "the lower left point of the coupling plane"
         ]
@@ -784,7 +843,7 @@
     },
     "Grid.GmshPhysicalEntityThreshold": {
         "explanation": [
-            ""
+            "Boundary element index threshold"
         ]
     },
     "Grid.Grading0/1/2": {
@@ -821,7 +880,7 @@
     },
     "Grid.MakeConsistentlyOriented": {
         "explanation": [
-            ""
+            "Whether to make sure that all element intersections follow the same local orientation and indexing no matter how the elements may be rotated or twisted."
         ]
     },
     "Grid.Marker": {
@@ -1687,7 +1746,7 @@
         ],
         "mode": "manual",
         "type": [
-            "SmootherArgs::RelaxationFactor"
+            "double"
         ]
     },
     "LinearSolver.Preconditioner.AmgStrengthMeasure": {
@@ -1776,7 +1835,7 @@
     },
     "LinearSolver.Preconditioner.Relaxation": {
         "defaultValue": [
-            "1"
+            "1.0"
         ],
         "explanation": [
             "The relaxation parameter for the preconditioner"
@@ -1884,6 +1943,9 @@
         ]
     },
     "MPFA.Q": {
+        "type": [
+            "CoordScalar = GridView::ctype"
+        ],
         "explanation": [
             "The quadrature point parameterizaion to be used on scvfs"
         ]
@@ -1893,7 +1955,7 @@
             "1e-16"
         ],
         "explanation": [
-            ""
+            "The threshold for zero effective diffusion coefficient, used for epsilon computation"
         ],
         "mode": "manual",
         "type": [
@@ -2041,11 +2103,17 @@
         ]
     },
     "Newton.ReassemblyMaxThreshold": {
+        "defaultValue": [
+            "1e2 * MaxRelativeShift"
+        ],
         "explanation": [
             "'maxEps' in reassembly threshold max( minEps, min(maxEps, omega*(currently achieved maximum relative shift)) ). Increasing/decreasing 'maxEps' leads to less/more reassembly if 'omega*shift' is large, i.e., for the first Newton iterations."
         ]
     },
     "Newton.ReassemblyMinThreshold": {
+        "defaultValue": [
+            "1e-1 * MaxRelativeShift"
+        ],
         "explanation": [
             "'minEps' in reassembly threshold max( minEps, min(maxEps, omega*(currently achieved maximum relative shift)) ). Increasing/decreasing 'minEps' leads to less/more reassembly if 'omega*shift' is small, i.e., for the last Newton iterations."
         ]
@@ -2140,6 +2208,11 @@
             "Set to true, if geometry consists of flat walls"
         ]
     },
+    "RANS.SSTModelVersion": {
+        "explanation": [
+            "the model version of the SST model"
+        ]
+    },
     "RANS.TurbulentPrandtlNumber": {
         "explanation": [
             "The turbulent Prandtl number"
@@ -2226,6 +2299,9 @@
         ]
     },
     "SpatialParams.Temperature": {
+        "defaultValue": [
+            "293.15"
+        ],
         "explanation": [
             "The temperature"
         ]
@@ -2246,6 +2322,9 @@
         ]
     },
     "Vtk.AddProcessRank": {
+        "defaultValue": [
+            "true"
+        ],
         "explanation": [
             "Whether to add a process rank"
         ]
