@@ -25,6 +25,7 @@
 #define DUMUX_FREEFLOW_TURBLENCEMODEL_HH
 
 #include <string>
+#include <dumux/common/exceptions.hh>
 
 namespace Dumux {
 

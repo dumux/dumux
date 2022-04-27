@@ -35,6 +35,7 @@
 #include <dune/common/timer.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/indices.hh>
+#include <dune/common/reservedvector.hh>
 #include <dune/geometry/axisalignedcubegeometry.hh>
 
 #include <dumux/geometry/diameter.hh>

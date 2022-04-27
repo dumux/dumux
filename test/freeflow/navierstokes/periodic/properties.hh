@@ -35,6 +35,7 @@
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 
 #include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
+#include <dumux/multidomain/traits.hh>
 
 #include <dumux/discretization/fcstaggered.hh>
 #include <dumux/discretization/cctpfa.hh>

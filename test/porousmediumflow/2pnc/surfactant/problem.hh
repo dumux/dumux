@@ -30,6 +30,7 @@
 #include <dumux/common/numeqvector.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
+#include <dumux/porousmediumflow/2p/formulation.hh>
 
 namespace Dumux {
 

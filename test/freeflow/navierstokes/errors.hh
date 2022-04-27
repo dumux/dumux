@@ -26,7 +26,9 @@
 
 #include <vector>
 #include <cmath>
+#include <fstream>
 #include <dune/common/indices.hh>
+#include <dune/common/fvector.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/io/format.hh>
 

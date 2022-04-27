@@ -37,6 +37,7 @@
 #include <dumux/material/components/constant.hh>
 
 #include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
+#include <dumux/multidomain/traits.hh>
 
 #include "problem.hh"
 

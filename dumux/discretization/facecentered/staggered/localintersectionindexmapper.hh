@@ -29,6 +29,7 @@
 #include <dune/common/float_cmp.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/common/math.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/discretization/facecentered/staggered/normalaxis.hh>
 #include <dumux/discretization/facecentered/staggered/consistentlyorientedgrid.hh>
 
