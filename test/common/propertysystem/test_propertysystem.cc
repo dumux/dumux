@@ -31,8 +31,7 @@
 
 #include <dumux/common/properties/propertysystem.hh>
 
-namespace Dumux {
-namespace Properties {
+namespace Dumux::Properties {
 
 // create some properties:
 // the first type tag is the actual TypeTag for which the property will be obtained
@@ -77,8 +76,7 @@ struct CoordinateType<TypeTag, TTag::Grid> { using type = GetPropType<TypeTag, S
 template<class TypeTag>
 struct UseTpfaFlux<TypeTag, TTag::CCTpfaDisc> { static constexpr bool value = true; };
 
-} // end namespace Properties
-} // end namespace Dumux
+} // end namespace Dumux::Properties
 
 int main(int argc, char* argv[])
 {
@@ -87,27 +85,40 @@ int main(int argc, char* argv[])
 
     {
         using Scalar = GetPropType<TTag::Base, Scalar>;
-        if (!std::is_same<Scalar, float>::value)
+        if (!std::is_same_v<Scalar, float>)
             DUNE_THROW(Dune::InvalidStateException, "Property Scalar in TTag::Base should be float but is " << Dune::className<Scalar>());
     }
     {
         using Scalar = GetPropType<TTag::OnePTest, Scalar>;
-        if (!std::is_same<Scalar, int>::value)
+        if (!std::is_same_v<Scalar, int>)
             DUNE_THROW(Dune::InvalidStateException, "Property Scalar in TTag::OnePTest should be int but is " << Dune::className<Scalar>());
     }
     {
         using Scalar = GetPropType<TTag::OnePModel, Scalar>;
-        if (!std::is_same<Scalar, double>::value)
-        DUNE_THROW(Dune::InvalidStateException, "Property Scalar in TTag::OnePModel should be double but is " << Dune::className<Scalar>());
+        if (!std::is_same_v<Scalar, double>)
+            DUNE_THROW(Dune::InvalidStateException, "Property Scalar in TTag::OnePModel should be double but is " << Dune::className<Scalar>());
+    }
+    {
+        static_assert(
+            !hasDefinedType<TTag::Base, CoordinateType>(),
+            "Property type should be undefined for TTag::Base"
+        );
+    }
+    {
+        using CoordinateType = GetPropTypeOr<TTag::Base, CoordinateType, double>;
+        static_assert(
+            std::is_same_v<CoordinateType, double>,
+            "Property is expected to default to double"
+        );
     }
     {
         using CoordinateType = GetPropType<TTag::OnePTest, CoordinateType>;
-        if (!std::is_same<CoordinateType, int>::value)
+        if (!std::is_same_v<CoordinateType, int>)
             DUNE_THROW(Dune::InvalidStateException, "Property CoordinateType in TTag::OnePTest should be int but is " << Dune::className<CoordinateType>());
     }
     {
         using CoordinateType = GetPropType<TTag::CCTpfaDisc, CoordinateType>;
-        if (!std::is_same<CoordinateType, float>::value)
+        if (!std::is_same_v<CoordinateType, float>)
             DUNE_THROW(Dune::InvalidStateException, "Property CoordinateType in TTag::CCTpfaDisc should be float but is " << Dune::className<CoordinateType>());
     }
     {
