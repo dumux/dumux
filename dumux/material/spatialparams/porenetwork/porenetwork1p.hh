@@ -36,8 +36,9 @@ namespace Dumux::PoreNetwork {
 * \brief The default class for spatial parameters for single-phase pore-network models.
 */
 template<class GridGeometry, class Scalar>
+class
 [[deprecated("Use PoreNetwork::OnePDefaultSpatialParams from dumux/porenetwork/1p/spatialparams.hh instead. This class will be removed after 3.5.")]]
-class OnePDefaultSpatialParams : public BaseSpatialParams<GridGeometry, Scalar,
+OnePDefaultSpatialParams : public BaseSpatialParams<GridGeometry, Scalar,
                                                           OnePDefaultSpatialParams<GridGeometry, Scalar>>
 {
     using ParentType = BaseSpatialParams<GridGeometry, Scalar,
