@@ -14,6 +14,18 @@ dumux_add_test(NAME test_2p_adaptive_tpfa
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_adaptive_tpfa-00001.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_adaptive_tpfa params.input -Problem.Name test_2p_adaptive_tpfa")
 
+# tpfa parallel
+dumux_add_test(NAME test_2p_adaptive_tpfa_parallel
+              TARGET test_2p_adaptive_tpfa
+              LABELS porousmediumflow 2p parallel
+              COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleAdaptiveTpfa
+              CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_adaptive_tpfa-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_2p_adaptive_tpfa_parallel-00001.pvtu
+                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_2p_adaptive_tpfa params.input -Problem.Name test_2p_adaptive_tpfa_parallel")
+
 # using tpfa and point source
 dumux_add_test(NAME test_2p_pointsource_adaptive_tpfa
               LABELS porousmediumflow 2p
