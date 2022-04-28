@@ -238,7 +238,7 @@ private:
         scvs_.resize(numScvs);
         scvfs_.reserve(numScvf);
         scvfIndicesOfScv_.resize(numScvs);
-        hasBoundaryScvf_.resize(numScvs, false);
+        hasBoundaryScvf_.assign(numScvs, false);
 
         // Build the scvs and scv faces
         GridIndexType scvfIdx = 0;
@@ -347,7 +347,7 @@ private:
             }
         }
 
-        // build the connectivity map for an effecient assembly
+        // build the connectivity map for an efficient assembly
         connectivityMap_.update(*this);
     }
 
