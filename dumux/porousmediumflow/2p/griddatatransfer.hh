@@ -155,7 +155,7 @@ public:
                     fvGeometry.bindElement(element);
 
                     // store current element solution
-                    adaptedValues.u = ElementSolution(element, sol_, *gridGeometry_);
+                    adaptedValues.u = elementSolution(element, sol_, *gridGeometry_);
 
                     // compute mass in the scvs
                     for (const auto& scv : scvs(fvGeometry))
@@ -186,7 +186,7 @@ public:
                 // This element solution constructor uses the vertex mapper to obtain
                 // the privars at the vertices, thus, this works for non-leaf elements!
                 if(isBox && !element.isLeaf())
-                    adaptedValues.u = ElementSolution(element, sol_, *gridGeometry_);
+                    adaptedValues.u = elementSolution(element, sol_, *gridGeometry_);
             }
         }
     }
@@ -228,7 +228,7 @@ public:
 
         // iterate over leaf and reconstruct the solution
         auto fvGeometry = localView(*gridGeometry_);
-        for (const auto& element : elements(gridGeometry_->gridView().grid().leafGridView(), Dune::Partitions::interior))
+        for (const auto& element : elements(gridGeometry_->gridView()))
         {
             if (!element.isNew())
             {
@@ -293,10 +293,10 @@ public:
 
                 // find the ancestor element that existed on the old grid already
                 auto fatherElement = element.father();
-                while(fatherElement.isNew() && fatherElement.level() > 0)
+                while (fatherElement.isNew() && fatherElement.level() > 0)
                     fatherElement = fatherElement.father();
 
-                if(!isBox)
+                if (!isBox)
                 {
                     const auto& adaptedValuesFather = adaptionMap_[fatherElement];
 
@@ -341,10 +341,9 @@ public:
                     ElementSolution elemSolSon(element, sol_, *gridGeometry_);
                     const auto fatherGeometry = fatherElement.geometry();
                     for (const auto& scv : scvs(fvGeometry))
-                        elemSolSon[scv.localDofIndex()] = evalSolution(fatherElement,
-                                                                        fatherGeometry,
-                                                                        adaptedValuesFather.u,
-                                                                        scv.dofPosition());
+                        elemSolSon[scv.localDofIndex()] = evalSolution(
+                            fatherElement, fatherGeometry, adaptedValuesFather.u, scv.dofPosition()
+                        );
 
                     // compute mass & mass coeffients for the scvs (saturations are recalculated at the end)
                     const auto fatherElementVolume = Extrusion::volume(fatherGeometry);
@@ -383,18 +382,6 @@ public:
         adaptionMap_.resize( typename PersistentContainer::Value() );
         adaptionMap_.shrinkToFit();
         adaptionMap_.fill( typename PersistentContainer::Value() );
-
-//! TODO: fix adaptive simulations in parallel
-//#if HAVE_MPI
-//        // communicate ghost data
-//        using SolutionTypes = typename GetProp<TypeTag, SolutionTypes>;
-//        using ElementMapper = typename SolutionTypes::ElementMapper;
-//        using DataHandle = VectorExchange<ElementMapper, std::vector<CellData> >;
-//        DataHandle dataHandle(problem.elementMapper(), this->cellDataGlobal());
-//        problem.gridView().template communicate<DataHandle>(dataHandle,
-//                                                            Dune::InteriorBorder_All_Interface,
-//                                                            Dune::ForwardCommunication);
-//#endif
     }
 
     /*!

@@ -42,7 +42,7 @@ bool markElements(Grid& grid, const Indicator& indicator, bool verbose = true)
     // mark elements according to indicator
     std::size_t refine = 0;
     std::size_t coarsen = 0;
-    for (const auto& element : elements(grid.leafGridView(), Dune::Partitions::interior))
+    for (const auto& element : elements(grid.leafGridView()))
     {
         const auto mark = indicator(element);
         if (mark > 0)

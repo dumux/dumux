@@ -31,8 +31,10 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/gridcapabilities.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/evalsolution.hh>
+#include <dumux/parallel/vectorcommdatahandle.hh>
 
 namespace Dumux {
 
@@ -117,10 +119,12 @@ public:
                    Scalar refineTol = 0.05,
                    Scalar coarsenTol = 0.001)
     {
+        const auto& gridView = gridGeometry_->gridView();
+
         //! Reset the indicator to a state that returns false for all elements
         refineBound_ = std::numeric_limits<Scalar>::max();
         coarsenBound_ = std::numeric_limits<Scalar>::lowest();
-        maxSaturationDelta_.assign(gridGeometry_->gridView().size(0), 0.0);
+        maxSaturationDelta_.assign(gridView.size(0), 0.0);
 
         //! maxLevel_ must be higher than minLevel_ to allow for refinement
         if (minLevel_ >= maxLevel_)
@@ -135,7 +139,7 @@ public:
         Scalar globalMin = std::numeric_limits<Scalar>::max();
 
         //! Calculate minimum and maximum saturation
-        for (const auto& element : elements(gridGeometry_->gridView()))
+        for (const auto& element : elements(gridView, Dune::Partitions::interior))
         {
             //! Index of the current leaf-element
             const auto globalIdxI = gridGeometry_->elementMapper().index(element);
@@ -152,7 +156,7 @@ public:
             globalMax = max(satI, globalMax);
 
             //! Calculate maximum delta in saturation for this cell
-            for (const auto& intersection : intersections(gridGeometry_->gridView(), element))
+            for (const auto& intersection : intersections(gridView, element))
             {
                 //! Only consider internal intersections
                 if (intersection.neighbor())
@@ -185,23 +189,27 @@ public:
         refineBound_ = refineTol*globalDelta;
         coarsenBound_ = coarsenTol*globalDelta;
 
-// TODO: fix adaptive simulations in parallel
-//#if HAVE_MPI
-//    // communicate updated values
-//    using DataHandle = VectorExchange<ElementMapper, ScalarSolutionType>;
-//    DataHandle dataHandle(problem_.elementMapper(), maxSaturationDelta_);
-//    problem_.gridView().template communicate<DataHandle>(dataHandle,
-//                                                         Dune::InteriorBorder_All_Interface,
-//                                                         Dune::ForwardCommunication);
-//
-//    using std::max;
-//    refineBound_ = problem_.gridView().comm().max(refineBound_);
-//    coarsenBound_ = problem_.gridView().comm().max(coarsenBound_);
-//
-//#endif
+#if HAVE_MPI
+        // communicate updated values
+        using DataHandle = VectorCommDataHandleMax<typename GridGeometry::ElementMapper, std::vector<Scalar>, 0>;
+        DataHandle dataHandle(gridGeometry_->elementMapper(), maxSaturationDelta_);
+        if constexpr (Detail::canCommunicate<typename GridGeometry::GridView::Traits::Grid, 0>)
+            gridView.template communicate<DataHandle>(
+                dataHandle, Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication
+            );
+        else
+            DUNE_THROW(
+                Dune::InvalidStateException,
+                "Cannot call calculate indicator on grid that cannot communicate codim-0-entities."
+            );
+
+        using std::max;
+        refineBound_ = gridView.comm().max(refineBound_);
+        coarsenBound_ = gridView.comm().max(coarsenBound_);
+#endif
 
         //! check if neighbors have to be refined too
-        for (const auto& element : elements(gridGeometry_->gridView(), Dune::Partitions::interior))
+        for (const auto& element : elements(gridView))
             if (this->operator()(element) > 0)
                 checkNeighborsRefine_(element);
     }
@@ -260,8 +268,11 @@ private:
             if (outside.level() < maxLevel_ && outside.level() < element.level())
             {
                 // ensure refinement for outside element
-                maxSaturationDelta_[gridGeometry_->elementMapper().index(outside)] = std::numeric_limits<Scalar>::max();
-                if(level < maxLevel_)
+                assert(outside.isLeaf());
+                maxSaturationDelta_[gridGeometry_->elementMapper().index(outside)]
+                    = std::numeric_limits<Scalar>::max();
+
+                if (level < maxLevel_)
                     checkNeighborsRefine_(outside, ++level);
             }
         }
