@@ -238,7 +238,7 @@ private:
         scvs_.resize(numScvs);
         scvfs_.reserve(numScvf);
         scvfIndicesOfScv_.resize(numScvs);
-        hasBoundaryScvf_.resize(numScvs, false);
+        hasBoundaryScvf_.assign(numScvs, false);
 
         // Build the scvs and scv faces
         GridIndexType scvfIdx = 0;
@@ -347,7 +347,7 @@ private:
             }
         }
 
-        // build the connectivity map for an effecient assembly
+        // build the connectivity map for an efficient assembly
         connectivityMap_.update(*this);
     }
 
@@ -531,7 +531,7 @@ private:
             neighborVolVarIndexSet.reserve(numLocalFaces);
 
             // for network grids there might be multiple intersection with the same geometryInInside
-            // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
+            // we identify those by the indexInInside for now (assumes conforming grids at branching facets)
             std::vector<NeighborVolVarIndices> outsideIndices;
             if (dim < dimWorld)
             {
@@ -590,7 +590,7 @@ private:
             neighborVolVarIndices_[eIdx] = neighborVolVarIndexSet;
         }
 
-        // build the connectivity map for an effecient assembly
+        // build the connectivity map for an efficient assembly
         connectivityMap_.update(*this);
     }
 
