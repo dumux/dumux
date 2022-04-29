@@ -2,7 +2,7 @@
 
 from dune.common import FieldVector
 from dune.grid import structuredGrid, gridFunction, OutputType
-from dumux.common import FVProblem, BoundaryTypes, TimeLoop
+from dumux.common import FVProblem, BoundaryTypes, TimeLoop, FVSpatialParams
 from dumux.discretization import GridGeometry
 import numpy as np
 
@@ -32,9 +32,16 @@ elementMapper = gridView.indexSet
 ##############################################
 # Define problem (inital/boundary condtions) #
 ##############################################
+# Define the spatial parameters
+@FVSpatialParams(gridGeometry=gridGeometry)
+class SpatialParams:
+    pass
 
 
-@FVProblem(gridGeometry)
+spatialParams = SpatialParams()
+
+
+@FVProblem(gridGeometry=gridGeometry, spatialParams=spatialParams)
 class Problem:
     numEq = 1
 

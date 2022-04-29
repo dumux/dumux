@@ -13,7 +13,9 @@ from ._common import *
 
 
 @cppWrapperCreator
-def _createFVProblemDecorator(gridGeometry, enableInternalDirichletConstraints=False):
+def _createFVProblemDecorator(
+    gridGeometry, spatialParams=None, enableInternalDirichletConstraints=False
+):
     """A problem decorator generator for Python problems
 
     from dumux.common import FVProblem
@@ -23,10 +25,13 @@ def _createFVProblemDecorator(gridGeometry, enableInternalDirichletConstraints=F
     """
 
     def createModule(numEq):
-        priVarType = f"Dune::FieldVector<double, {numEq}>"
         ggType = gridGeometry._typeName
+        spType = spatialParams._typeName
+        priVarType = f"Dune::FieldVector<double, {numEq}>"
         enableIntDirConstraint = "true" if enableInternalDirichletConstraints else "false"
-        problemType = f"Dumux::Python::FVProblem<{ggType}, {priVarType}, {enableIntDirConstraint}>"
+        problemType = (
+            f"Dumux::Python::FVProblem<{ggType}, {spType}, {priVarType}, {enableIntDirConstraint}>"
+        )
         includes = gridGeometry._includes + ["dumux/python/common/fvproblem.hh"]
         moduleName = "fvproblem_" + hashIt(problemType)
         holderType = f"std::shared_ptr<{problemType}>"
@@ -38,7 +43,7 @@ def _createFVProblemDecorator(gridGeometry, enableInternalDirichletConstraints=F
         module = createModule(cls.numEq)
 
         def createFVProblem():
-            return module.FVProblem(gridGeometry, cls())
+            return module.FVProblem(gridGeometry, spatialParams, cls())
 
         return createFVProblem
 
@@ -71,3 +76,39 @@ def _createBoundaryTypes(numEq=1):
 @cppWrapperClassAlias(creator=_createBoundaryTypes)
 class BoundaryTypes:
     """Class alias used to create a BoundaryTypes instance"""
+
+
+@cppWrapperCreator
+def _createFVSpatialParamsDecorator(gridGeometry):
+    """A spatial params decorator generator for Python spatial params
+
+    from dumux.common import FVSpatialParams
+    @FVSpatialParams(gridGeometry)
+    class MySpatialParams:
+        ...
+    """
+
+    def createModule():
+        ggType = gridGeometry._typeName
+        spatialParamsType = f"Dumux::Python::FVSpatialParams<{ggType}>"
+        includes = gridGeometry._includes + ["dumux/python/common/fvspatialparams.hh"]
+        moduleName = "fvspatialparams_" + hashIt(spatialParamsType)
+        holderType = f"std::shared_ptr<{spatialParamsType}>"
+        generator = SimpleGenerator("FVSpatialParams", "Dumux::Python")
+        module = generator.load(includes, spatialParamsType, moduleName, options=[holderType])
+        return module
+
+    def decorateFVSpatialParams(cls):
+        module = createModule()
+
+        def createFVSpatialParams():
+            return module.FVSpatialParams(gridGeometry, cls())
+
+        return createFVSpatialParams
+
+    return decorateFVSpatialParams
+
+
+@cppWrapperClassAlias(creator=_createFVSpatialParamsDecorator)
+class FVSpatialParams:
+    """Class alias used to decorate a Python Finite Volume Spatial Params"""
