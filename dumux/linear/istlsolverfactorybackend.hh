@@ -159,6 +159,21 @@ public:
     }
 
     /*!
+     * \brief Update the solver after grid adaption
+     *
+     * \param gridView the grid view on which we are performing the multi-grid
+     * \param dofMapper an index mapper for dof entities
+     */
+    void updateAfterGridAdaption(const typename LinearSolverTraits::GridView& gridView,
+                                 const typename LinearSolverTraits::DofMapper& dofMapper)
+    {
+#if HAVE_MPI
+        if (isParallel_)
+            parallelHelper_ = std::make_unique<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper);
+#endif
+    }
+
+    /*!
      * \brief Solve a linear system.
      *
      * \param A the matrix

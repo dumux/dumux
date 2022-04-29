@@ -202,6 +202,7 @@ int main(int argc, char** argv)
                 xOld = x; //!< Overwrite the old solution with the new (resized & interpolated) one
                 gridVariables->updateAfterGridAdaption(x); //!< Initialize the secondary variables to the new (and "new old") solution
                 assembler->updateAfterGridAdaption(); //!< Tell the assembler that the grid changed
+                linearSolver->updateAfterGridAdaption(leafGridView, gridGeometry->dofMapper()); //!< Tell the solver that the grid changed
                 problem->computePointSourceMap(); //!< Update the point source map
             }
         }
