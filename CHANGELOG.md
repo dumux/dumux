@@ -2,6 +2,8 @@ Differences Between DuMu<sup>x</sup> 3.5 and DuMu<sup>x</sup> 3.4
 =============================================
 - __Requirements__: DuMux requires Dune >=2.8 and CMake >= 3.13. It was successfully tested with OPM 2021.10 (which in turn requires Dune <= 2.8), see also [patches](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/tree/master/patches).
 
+### General changes / structure
+
 - __Sequential__: The old "sequential", "IMPES-style" models have not received updates in several years,
   are separate from the rest of the code base and increasingly became a maintenance burden. Deprecation warnings
   are emitted when using the sequential models since the DuMu<sup>x</sup> 3.0 release. For DuMu<sup>x</sup> 3.5,
@@ -10,6 +12,8 @@ Differences Between DuMu<sup>x</sup> 3.5 and DuMu<sup>x</sup> 3.4
   not receive much attention. See https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/merge_requests/2629
   for the state of current efforts. Further improvements and contributions (MRs) on this front
   are highly welcome (get in contact via the DuMu<sup>x</sup> mailing list).
+
+- We adopted a code of conduct, see `dumux/CODE_OF_CONDUCT.md`
 
 ### Improvements and Enhancements
 
@@ -27,6 +31,16 @@ Differences Between DuMu<sup>x</sup> 3.5 and DuMu<sup>x</sup> 3.4
   memory parallelism helpers. It is recommended (and may be required for multithreaded applications) to use `Dumux::initialize`
   instead of manually initializing the `Dune::MPIHelper`.
 
+- __Component__: `gasViscosityIsConstant` added to component interface
+
+- __Richards__: the `Richards` model now works together with the generic `FluidSystem::TwoPImmiscible` as long as a gas
+and a liquid phase are present.
+
+- __Richards__: Fixed a bug that creeped into the 1.5-phase model so it actually computes diffusion in the gas phase now.
+
+_ __Privarswitch__: Fixed a bug in the privar switch which did not fully reset the `switched` variable. This lead
+to a possibly increased number of Newton iterations.
+
 - __Discretization tags__: We introduced tags in the namespace `DiscretizationMethods` (with s) for each discretization method.
   These tags replace the `enum class DiscretizationMethod`. Tags have several advantages over the enum. Each tag is a named type
   (see `dumux/common/tag.hh`) so they can for example be used in tag dispatch. Moreover specializing with tags is extensible.
@@ -42,10 +56,13 @@ Differences Between DuMu<sup>x</sup> 3.5 and DuMu<sup>x</sup> 3.4
   features relative permeability that depend on the pressure gradient. The test only passes with the full Jacobian.
 
 - __Geometry__:
-    - Add implementation of sphere and bounding sphere approximation algorithms
-    - Add distance queries for Point->BoundingBoxTree
-    - Add DistanceField - a wrapper around a geometry set for fast distance queries
-    - Add WallDistance - a utility to compute distances to the domain boundary (e.g. for RANS wall functions)
+    - Added implementation of sphere and bounding sphere approximation algorithms
+    - Added distance queries for Point->BoundingBoxTree
+    - Added DistanceField - a wrapper around a geometry set for fast distance queries
+    - Added WallDistance - a utility to compute distances to the domain boundary (e.g. for RANS wall functions)
+    - Added 3D-3D intersections
+    - Added 2D-2D intersections in 3D
+    - Fixed a wrong epsilon for floating comparisons in the 2D-2D intersection algorithm
 
 - __Construction and update of GridGeometries changed__: Grid geometries are fully updated after construction.
  Additional call of update functions are therefore only needed after grid adaption. Calling the update functions after construction now leads to a performance penalty.
@@ -54,46 +71,65 @@ Differences Between DuMu<sup>x</sup> 3.5 and DuMu<sup>x</sup> 3.4
 
 - __Local views__: The bind function associated with the local view of the FVElementGeometry, the ElementVolumeVariables, and the ElementFluxVariablesCache have been simplified. Now it is possible to directly create each of these objects where they are already bound. The following are examples of each new call:
 
-```cpp
-const auto fvGeometry = localView(gridGeometry).bind(element);
-const auto elemVolVars = localView(gridVolVars).bind(element, fvGeometry, sol);
-const auto elemFluxVarsCache = localView(gridFluxVarsCache).bind(element, fvGeometry, elemVolVars);
-```
-This is also available for the `bind()` `bindElement()` and `bindScvf()` functions. The existing methods for binding will remain.
+    ```cpp
+    const auto fvGeometry = localView(gridGeometry).bind(element);
+    const auto elemVolVars = localView(gridVolVars).bind(element, fvGeometry, sol);
+    const auto elemFluxVarsCache = localView(gridFluxVarsCache).bind(element, fvGeometry, elemVolVars);
+    ```
+    This is also available for the `bind()` `bindElement()` and `bindScvf()` functions. The existing methods for binding will remain.
 
-Please note however that when working with element loops, separating construction and binding of the local view is more efficient, i.e.
+    Please note however that when working with element loops, separating construction and binding of the local view is more efficient, i.e.
 
-```cpp
-auto fvGeometry = localView(gridGeometry);
-for (const auto& element : elements(gridGeometry.gridView()))
-    fvGeometry.bind(element);
-```
+    ```cpp
+    auto fvGeometry = localView(gridGeometry);
+    for (const auto& element : elements(gridGeometry.gridView()))
+        fvGeometry.bind(element);
+    ```
 
-- __Embedded coupling__: Add a coupling manager for the 1D-3D projection based scheme with resolved interface introduced in Koch 2021 (https://arxiv.org/abs/2106.06358)
+- __Embedded coupling__: Add a coupling manager for the 1D-3D projection based scheme with resolved interface introduced in Koch 2022 (
+https://doi.org/10.1016/j.camwa.2022.01.021)
 
 - __RANS Boundary Types__: Wall boundaries for the RANS turbulence models can now be set using the `setWall` method in the `RANSBoundaryTypes` class. This replaces the old `isOnWall` and `isOnWallAtPos` functions.
 
 - __Dispersion__: Dispersion fluxes have been added as an option for the compositional and thermal one-phase porous medium flow models. These models use either a Scheidegger-type dispersion tensor, which is dependent on the velocity field and two length parameters, or a full and constant (_not_ solution-dependent, but possibly spatially varying) tensor that can be user defined in the spatial parameters. For compositional models coupled with flow models (e.g. 1pnc), using the Scheidegger-type dispersion tensor is only implemented for the box discretization method.
 
-To enable either thermal or compositional dispersion, please define these properties within your `properties.hh` header. For example:
-```cpp
-template<class TypeTag>
-struct EnableCompositionalDispersion<TypeTag, TTag::MyTest> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableThermalDispersion<TypeTag, TTag::MyTest> { static constexpr bool value = true; };
-```
+    To enable either thermal or compositional dispersion, please define these properties within your `properties.hh` header. For example:
+    ```cpp
+    template<class TypeTag>
+    struct EnableCompositionalDispersion<TypeTag, TTag::MyTest> { static constexpr bool value = true; };
+    template<class TypeTag>
+    struct EnableThermalDispersion<TypeTag, TTag::MyTest> { static constexpr bool value = true; };
+    ```
 
-To determine the type of dispersion tensor, please define the property `CompositionalDispersionModel` within your `properties.hh` header. Per default, the `ThermalDispersionModel` is set to the same model as the `CompositionalDispersionModel`, but this can be set specifically as well. For example:
-```cpp
-template<class TypeTag>
-struct CompositionalDispersionModel<TypeTag, TTag::MyTest> { using type = ScheideggersDispersionTensor<TypeTag>; };
-template<class TypeTag>
-struct ThermalDispersionModel<TypeTag, TTag::MyTest> { using type = FullDispersionTensor<TypeTag>; };
-```
+    To determine the type of dispersion tensor, please define the property `CompositionalDispersionModel` within your `properties.hh` header. Per default, the `ThermalDispersionModel` is set to the same model as the `CompositionalDispersionModel`, but this can be set specifically as well. For example:
+    ```cpp
+    template<class TypeTag>
+    struct CompositionalDispersionModel<TypeTag, TTag::MyTest> { using type = ScheideggersDispersionTensor<TypeTag>; };
+    template<class TypeTag>
+    struct ThermalDispersionModel<TypeTag, TTag::MyTest> { using type = FullDispersionTensor<TypeTag>; };
+    ```
 
-The parameters describing your dispersion tensor can then be included in your `spatialparameters.hh` file, and passed via input parameters. An example of this can be seen in the `test/porousmediumflow/1pnc/dispersion/` folder, and in the `test/porousmediumflow/tracer/constvel/` folders.
+    The parameters describing your dispersion tensor can then be included in your `spatialparameters.hh` file, and passed via input parameters. An example of this can be seen in the `test/porousmediumflow/1pnc/dispersion/` folder, and in the `test/porousmediumflow/tracer/constvel/` folders.
+
+- __Problem/Spatialparams interface__: The interface functions `extrusionFactor`/`extrusionFactorAtPos` and `temperature`/`temperatureAtPos` have been removed from the problem interface and added to the spatial params interface. There is now a default set
+for temperature (`293.15K`) which can be changed via the input file parameter `SpatialParams.Temperature`. For more
+flexibility overload the function in your spatial parameter class like usual.
+
+- __material/spatialparams__: The folder has been dissolved and the headers have been moved to other folders. For example,
+spatial parameter classes specific to porous medium flow problems have been moved to `dumux/porousmediumflow`. This is due
+to the realization that spatial parameters do more than defining the "material" (which refers to the porous medium).
+For example, free flow problem also have parameters that may spatially vary (such as the extrusion factor in an extruded domain).
+
+- Fixed `intersect` in `SplineCommon`
+
+- __Tensor average__: Added a function `faceTensorAverage` which performs a particular average of a tensor at interfaces.
+This replaces the interface `harmonicMean` in the spatial parameters.
+
+- __parallel__: Added a simple backend for using Scotch as partitioner for a grid read on one process (e.g. when using the
+Dune Gmsh or DGF readers). Repartitioning is not implemented yet.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
+
 - __Virtual interface of GridDataTransfer__: The `GridDataTransfer` abstract base class now required the Grid type as a template argument. Furthermore, the `store` and `reconstruct` interface functions do now expect the grid as a function argument. This allows to correctly update grid geometries and corresponding mapper (see "Construction and update of GridGeometries changed" above in the changelog)
 - `PengRobinsonMixture::computeMolarVolumes` has been removed without deprecation. It was used nowhere and did not translate.
 - __Coupling managers__: The coupling managers now store shared_ptrs of the subdomain solutions to be able to manage memory outside. There is compatibility interface that is deprecated but it won't allow for assignments
@@ -114,10 +150,36 @@ The parameters describing your dispersion tensor can then be included in your `s
 - the `temperature` and `extrusionFactor` interfaces in the problem class have been deprecated and have been moved to the spatial parameters.
 - Porous medium flow models should now inherit from the new base spatial parameters that can be found in the folder `dumux/porousmediumflow/`, which allow users to overload the new `temperature` and `extrusionFactor` interfaces.
 - Free flow and pore network models now also expect the user problems to expose spatial parameters, in which `gravity`, `temperature` and `extrusionFactor` are defined. The respective problem interfaces have been deprecated.
+- `harmonicMean` has been deprecated in the spatial params use new `faceTensorAverage`
 - The problem interfaces for fluid properties in the poroelastic model, namely `effectiveFluidDensity` and `effectivePorePressure`, have been deprecated and were moved to the spatial parameters.
 - The function `shearStress` in the class `FrictionLaw` and its child classes has been renamed to `bottomShearStress` and the return value has been changed. The function returns now the actual bottom shear stress and not the bottom shear stress term as it used in the shallow water model. The bottom shear stress term of the shallow water model is the bottom shear stress multiplied with minus one and normalised by the water density.
 
 ### New experimental features (possibly subject to backwards-incompatible changes in the future)
+
+- __Staggered grid__: The staggered grid implementation has been overhauled. Unfortunately, this overhaul has not been completed yet.
+Most of the Navier-Stokes tests now use the new implementation. The old implementation is still available and not deprecated yet,
+but will be phased out after the release. For now both implementation live next to each other in the code base.
+The new implementation is more closely built on the multidomain framework and now fully
+realizes the finite volume abstractions described in the Dumux paper. The first aspect means that mass and momentum are now
+separate sub-models of Navier-Stokes than can be (and are) discretized with different discretization methods and then coupled
+together via coupling managers. The implemented mass discretization is CCTpfa. The momentum discretization is a face-centered
+staggered finite volume scheme (FCSFV). The second aspect means that for the FCSFV scheme, subcontrol volumes and faces
+are now represented by corresponding classes in the code just like for CCTpfa, Box, CCMpfa.
+There is a problem class added that helps to implement both the mass and the momentum problem in one (templated) class.
+Boundary conditions are now clearly separated into mass and momentum boundary conditions.
+When the new implementation is fully adapted the documentation will be updated with it, this might take some time
+and is not included in this release yet.
+
+- __FF-PNM__: Added a model and test for coupling a porenetwork with a freeflow domain (see Weishaupt PhD: http://dx.doi.org/10.18419/opus-10932)
+
+- __Python bindings__: The Python bindings work with Dune master now, which features an improved way of installing them.
+The new way will be described better in the documentation once Dune 2.9 is release. Until then we refer to the
+documentation of Dune. The setup with Dune 2.9 is not compatible with the setup with Dune 2.8 but we made sure
+that Dumux 3.5 support both variants.
+
+- __Pore-network models__: The development continues and many smaller things have been improved.
+The PNM models remain experimental. The grid creator has been improved in usability. Added a
+convenience script to extract PNM with porespy and create a DGF grid usable with Dumux.
 
 ### Continuous integration
 
