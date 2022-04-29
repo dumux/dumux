@@ -24,10 +24,15 @@
 #ifndef DUMUX_DISCRETIZATION_FACECENTERED_STAGGERED_DRAWGRID_HH
 #define DUMUX_DISCRETIZATION_FACECENTERED_STAGGERED_DRAWGRID_HH
 
+#include <iostream>
 #include <fstream>
 #include <string>
+#include <array>
+#include <utility>
 
 #include <dune/common/exceptions.hh>
+
+#include <dumux/discretization/facecentered/staggered/normalaxis.hh>
 
 namespace Dumux {
 

@@ -35,6 +35,7 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
+#include <dumux/multidomain/embedded/couplingmanager1d3d_projection.hh>
 
 namespace Dumux {
 

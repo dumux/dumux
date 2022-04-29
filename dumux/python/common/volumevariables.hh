@@ -1,6 +1,7 @@
 #ifndef DUMUX_PYTHON_COMMON_VOLUMEVARIABLES_HH
 #define DUMUX_PYTHON_COMMON_VOLUMEVARIABLES_HH
 
+#include <dune/common/std/type_traits.hh>
 #include <dune/python/pybind11/pybind11.h>
 #include <dune/python/pybind11/stl.h>
 

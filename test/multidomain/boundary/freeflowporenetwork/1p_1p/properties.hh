@@ -24,6 +24,7 @@
 #ifndef DUMUX_PNMSTOKES_PROPERTIES_HH
 #define DUMUX_PNMSTOKES_PROPERTIES_HH
 
+#include <dune/foamgrid/foamgrid.hh>
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/material/fluidsystems/1pliquid.hh>

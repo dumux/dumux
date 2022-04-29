@@ -34,6 +34,7 @@
 
 #include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
 #include <dumux/freeflow/navierstokes/scalarfluxhelper.hh>
+#include <dumux/freeflow/navierstokes/mass/1p/advectiveflux.hh>
 
 namespace Dumux {
 

@@ -25,6 +25,7 @@
 #define DUMUX_PYTHON_POROUSMEDIUMFLOW_VELOCITYOUTPUT_HH
 
 #include <dune/python/pybind11/pybind11.h>
+#include <dune/python/common/typeregistry.hh>
 #include <dumux/porousmediumflow/velocityoutput.hh>
 
 namespace Dumux::Python {

@@ -26,6 +26,7 @@
 
 #include <array>
 #include <cassert>
+#include <dune/common/exceptions.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/facecentered/staggered/gridsupportsconcavecorners.hh>
 

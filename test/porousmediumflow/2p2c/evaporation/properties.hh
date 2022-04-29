@@ -36,6 +36,10 @@
 #include "constant2p2cfluidsystem.hh"
 #include "problem.hh"
 
+#ifndef WETTINGCOMPONENT
+#define WETTINGCOMPONENT Components::Constant<2,Scalar>
+#endif
+
 namespace Dumux::Properties {
 
 // Create new type tags

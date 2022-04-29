@@ -25,8 +25,9 @@
 #define DUMUX_TEST_2P3C_SURFACTANT_FLUIDSYSTEM_HH
 
 #include <cassert>
-
+#include <limits>
 #include <dune/common/exceptions.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/material/fluidsystems/base.hh>
 
 namespace Dumux::FluidSystems {
