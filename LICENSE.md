@@ -6,75 +6,78 @@ Copyright holders
 
 | Year       | Name                       |
 |------------|----------------------------|
-| 2016-2020  | Sina Ackermann             |
+| 2016-2022  | Sina Ackermann             |
 | 2010-2014  | Katherina Baber            |
 | 2015-2018  | Martin Beck                |
 | 2013-2021  | Beatrix Becker             |
 | 2014       | Markus Blatt               |
 | 2010       | Felix Bode                 |
-| 2020       | Ivan Buntic                |
+| 2020-2022  | Ivan Buntic                |
 | 2018-2021  | Samuel Burbulla            |
 | 2007-2011  | Yufei Cao                  |
-| 2018-2021  | Edward 'Ned' Coltman       |
+| 2018-2022  | Edward 'Ned' Coltman       |
 | 2011-2020  | Holger Class               |
 | 2008-2013  | Melanie Darcis             |
 | 2008-2009  | Onur Dogan                 |
-| 2015-2021  | Simon Emmert               |
+| 2015-2022  | Simon Emmert               |
 | 2009-2011  | Karin Erbertseder          |
 | 2009-2014  | Benjamin Faigle            |
 | 2013-2018  | Thomas Fetzer              |
-| 2007-2021  | Bernd Flemisch             |
+| 2007-2022  | Bernd Flemisch             |
 | 2007-2010  | Jochen Fritz               |
 | 2015-2016  | Georg Futter               |
-| 2015-2021  | Dennis Gläser              |
-| 2012-2021  | Christoph Grüninger        |
-| 2016-2021  | Katharina Heck             |
+| 2015-2022  | Dennis Gläser              |
+| 2012-2022  | Christoph Grüninger        |
+| 2016-2022  | Katharina Heck             |
 | 2017       | Rainer Helmig              |
-| 2015-2020  | Johannes Hommel            |
+| 2015-2022  | Johannes Hommel            |
 | 2012-2015  | Vishal Jambhekar           |
 | 2013-2014  | Muhammad Adil Javed        |
 | 2012-2017  | Alexander Kissinger        |
-| 2013-2021  | Timo Koch                  |
+| 2013-2022  | Timo Koch                  |
 | 2020-2021  | Tim Jupe                   |
-| 2020-2021  | Mathis Kelm                |
+| 2020-2022  | Mathis Kelm                |
 | 2017       | Kata Kurgyis               |
-| 2018-2021  | Theresa Schollenberger     |
+| 2018-2022  | Theresa Schollenberger     |
 | 2008-2012  | Andreas Lauser             |
 | 2018       | Giuliano Lombardo          |
-| 2018-2021  | Melanie Lipp               |
-| 2018-2021  | Farid Mohammadi            |
+| 2018-2022  | Melanie Lipp               |
+| 2018-2022  | Farid Mohammadi            |
 | 2008-2014  | Klaus Mosthaf              |
 | 2009-2014  | Philipp Nuske              |
 | 2014       | Mirka Papenheim            |
-| 2021       | Dmitry Pavlov              |
+| 2021-2022  | Dmitry Pavlov              |
 | 2021       | Frank Platzek              |
 | 2013-2014  | Dominik Riesterer          |
 | 2008       | Irina Rybak                |
 | 2019-2020  | Samuel Scherrer            |
-| 2013-2021  | Martin Schneider           |
+| 2013-2022  | Martin Schneider           |
 | 2009       | Anneli Schöniger           |
 | 2015-2016  | Natalie Schröder           |
 | 2010-2016  | Nicolas Schwenck           |
 | 2015-2021  | Gabriele Seitz             |
 | 2018       | Lincoln Sherpa             |
 | 2011       | Michael Sinsbeck           |
-| 2010,2019-2020  | Leopold Stadler       |
+| 2010,2019-2022  | Leopold Stadler       |
 | 2012-2014  | Alexandru Tatomir          |
 | 2013       | Katharina Türk             |
-| 2018-2021  | Martin Utz                 |
+| 2018-2022  | Martin Utz                 |
 | 2015-2017  | Larissa de Vries           |
 | 2019       | Andrea Vescovini           |
-| 2020-2021  | Maziar Veyskarami          |
+| 2020-2022  | Maziar Veyskarami          |
 | 2010-2014  | Lena Walter                |
-| 2020-2021  | Yue Wang                   |
-| 2018-2020  | Felix Weinhardt            |
-| 2015-2021  | Kilian Weishaupt           |
+| 2020-2022  | Yue Wang                   |
+| 2018-2022  | Felix Weinhardt            |
+| 2015-2022  | Kilian Weishaupt           |
 | 2010-2011  | David Werner               |
-| 2019-2020  | Roman Winter               |
+| 2019-2022  | Roman Winter               |
 | 2015       | Hao Wu                     |
-| 2020-2021  | Hanchuan Wu                |
+| 2020-2022  | Hanchuan Wu                |
 | 2008-2013  | Markus Wolff               |
 | 2013       | Tianyuan Zheng             |
+| 2021-2022  | Larissa Brencher           |
+| 2021-2022  | Stefanie Kiemle            |
+
 
 License
 -------
