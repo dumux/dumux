@@ -1,5 +1,8 @@
 add_python_targets(common
   __init__
+  boundarytypes
+  fvproblem
+  fvspatialparams
   properties
 )
 

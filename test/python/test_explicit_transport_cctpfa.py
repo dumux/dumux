@@ -29,12 +29,12 @@ gridGeometry = GridGeometry(gridView, discMethod="cctpfa")
 elementMapper = gridView.indexSet
 
 
-##############################################
-# Define problem (inital/boundary condtions) #
-##############################################
+################################################
+# Define problem (initial/boundary conditions) #
+################################################
 
 
-@FVProblem(gridGeometry)
+@FVProblem(gridGeometry=gridGeometry)
 class Problem:
     numEq = 1
 

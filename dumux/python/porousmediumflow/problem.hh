@@ -35,11 +35,11 @@ namespace Dumux::Python {
  * \ingroup PorousmediumflowModels
  * \brief A C++ wrapper for a Python PorousMediumFlow problem
  */
-template<class GridGeometry_, class PrimaryVariables, class SpatialParams_,
-         bool enableInternalDirichletConstraints>
-class PorousMediumFlowProblem : public FVProblem<GridGeometry_, PrimaryVariables, enableInternalDirichletConstraints>
+template<class GridGeometry_, class SpatialParams_, class PrimaryVariables, bool enableInternalDirichletConstraints>
+class PorousMediumFlowProblem
+: public Dumux::Python::FVProblem<GridGeometry_, SpatialParams_, PrimaryVariables, enableInternalDirichletConstraints>
 {
-    using ParentType = FVProblem<GridGeometry_, PrimaryVariables, enableInternalDirichletConstraints>;
+    using ParentType = Dumux::Python::FVProblem<GridGeometry_, SpatialParams_, PrimaryVariables, enableInternalDirichletConstraints>;
 public:
     using GridGeometry = GridGeometry_;
     using SpatialParams = SpatialParams_;
@@ -58,7 +58,7 @@ public:
     PorousMediumFlowProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                             std::shared_ptr<const SpatialParams> spatialParams,
                             pybind11::object pyProblem)
-    : ParentType(gridGeometry, pyProblem)
+    : ParentType(gridGeometry, spatialParams, pyProblem)
     , spatialParams_(spatialParams)
     {}
 
@@ -79,7 +79,7 @@ void registerPorousMediumFlowProblem(pybind11::handle scope, pybind11::class_<Pr
     using GridGeometry = typename Problem::GridGeometry;
     using SpatialParams = typename Problem::SpatialParams;
     cls.def(pybind11::init([](std::shared_ptr<const GridGeometry> gridGeometry,
-                              std::shared_ptr<const SpatialParams> spatialParams,
+                              std::shared_ptr<SpatialParams> spatialParams,
                               pybind11::object p){
         return std::make_shared<Problem>(gridGeometry, spatialParams, p);
     }));
@@ -109,7 +109,6 @@ void registerPorousMediumFlowProblem(pybind11::handle scope, pybind11::class_<Pr
     cls.def("sourceAtPos", &Problem::sourceAtPos);
     cls.def("initial", &Problem::template initial<Element>);
     cls.def("initial", &Problem::template initial<Vertex>);
-    cls.def("extrusionFactor", &Problem::template extrusionFactor<decltype(std::ignore)>);
     cls.def("gridGeometry", &Problem::gridGeometry);
     cls.def("spatialParams", &Problem::spatialParams);
 }

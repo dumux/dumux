@@ -9,8 +9,12 @@ from dumux.common import initParameters, printParameters, getParam
 from dumux.common import BoundaryTypes, Model, Property
 from dumux.discretization import GridGeometry, GridVariables
 from dumux.assembly import FVAssembler
-from dumux.porousmediumflow import PorousMediumFlowProblem, PorousMediumFlowVelocityOutput
-from dumux.material import FluidSystem, Component, OnePSpatialParams
+from dumux.porousmediumflow import (
+    PorousMediumFlowProblem,
+    PorousMediumFlowVelocityOutput,
+    FVSpatialParamsOneP,
+)
+from dumux.material import FluidSystem, Component
 from dumux.io import VtkOutputModule
 
 # Initialize parameters
@@ -52,7 +56,7 @@ model["FluidSystem"] = Property.fromInstance(onePLiquid)
 
 
 # Define the spatial parameters
-@OnePSpatialParams(gridGeometry=gridGeometry)
+@FVSpatialParamsOneP(gridGeometry=gridGeometry)
 class SpatialParams:
     dimWorld = gridGeometry.gridView.dimWorld
     lensLowerLeft = [0.2, 0.2]
@@ -80,13 +84,11 @@ class SpatialParams:
         return 0.4
 
 
-# and set them as a model property
 spatialParams = SpatialParams()
 model["SpatialParams"] = Property.fromInstance(spatialParams)
 
-
 # Define the problem
-@PorousMediumFlowProblem(gridGeometry, spatialParams)
+@PorousMediumFlowProblem(gridGeometry=gridGeometry, spatialParams=spatialParams)
 class Problem:
     numEq = 1
 
@@ -107,12 +109,6 @@ class Problem:
 
     def sourceAtPos(self, globalPos):
         return 0.0
-
-    def extrusionFactor(self, element, scv):
-        return 1.0
-
-    def temperatureAtPos(self, globalPos):
-        return 283.15
 
     def name(self):
         return "python_problem"
