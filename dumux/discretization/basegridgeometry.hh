@@ -26,6 +26,7 @@
 
 #include <utility>
 #include <type_traits>
+#include <mutex>
 
 #include <dune/grid/common/mcmgmapper.hh>
 
@@ -149,11 +150,14 @@ public:
      */
     const BoundingBoxTree& boundingBoxTree() const
     {
-        if(!boundingBoxTree_)
+        if (!boundingBoxTree_)
         {
-            elementMap(); // make sure the element map is built
-            boundingBoxTree_ = std::make_unique<BoundingBoxTree>
-                                    ( std::make_shared<ElementSet>(gridView_, elementMapper(), elementMap_) );
+            std::scoped_lock{ boundingBoxTreeMutex_ };
+            if (!boundingBoxTree_)
+                elementMap(); // make sure the element map is built
+                boundingBoxTree_ = std::make_unique<BoundingBoxTree>(
+                    std::make_shared<ElementSet>(gridView_, elementMapper(), elementMap_)
+                );
         }
 
         return *boundingBoxTree_;
@@ -164,8 +168,12 @@ public:
      */
     const ElementMap& elementMap() const
     {
-        if(!elementMap_)
-            elementMap_ = std::make_shared<ElementMap>(gridView_.grid(), elementMapper_);
+        if (!elementMap_)
+        {
+            std::scoped_lock{ elementMapMutex_ };
+            if (!elementMap_)
+                elementMap_ = std::make_shared<ElementMap>(gridView_.grid(), elementMapper_);
+        }
 
         return *elementMap_;
     }
@@ -278,9 +286,11 @@ private:
 
     //! the bounding box tree of the grid view for efficient element intersections
     mutable std::unique_ptr<BoundingBoxTree> boundingBoxTree_;
+    mutable std::mutex boundingBoxTreeMutex_;
 
     //! a map from element index to elements (needed in the bounding box tree and for assembling cell-centered discretization)
     mutable std::shared_ptr<ElementMap> elementMap_;
+    mutable std::mutex elementMapMutex_;
 
     //! the bounding box of the whole domain
     GlobalCoordinate bBoxMin_;
