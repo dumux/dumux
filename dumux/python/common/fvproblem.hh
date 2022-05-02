@@ -77,6 +77,11 @@ public:
             paramGroup_ = pyProblem.attr("paramGroup")().template cast<std::string>();
     }
 
+    FVProblem(std::shared_ptr<const GridGeometry> gridGeometry,
+              pybind11::object pyProblem)
+    : FVProblem(gridGeometry, std::make_shared<SpatialParams>(gridGeometry), pyProblem)
+    {}
+
     const std::string& name() const
     { return name_; }
 
@@ -257,6 +262,10 @@ void registerFVProblem(pybind11::handle scope, pybind11::class_<Problem, options
                               std::shared_ptr<SpatialParams> spatialParams,
                               pybind11::object p){
         return std::make_shared<Problem>(gridGeometry, spatialParams, p);
+    }));
+    cls.def(pybind11::init([](std::shared_ptr<const GridGeometry> gridGeometry,
+                              pybind11::object p){
+        return std::make_shared<Problem>(gridGeometry, p);
     }));
 
     cls.def_property_readonly("name", &Problem::name);

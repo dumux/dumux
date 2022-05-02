@@ -65,6 +65,15 @@ public:
             gravity_[dimWorld-1] = -9.81;
     }
 
+    FVSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : gridGeometry_(gridGeometry)
+    , pySpatialParameters_{}
+    , gravity_(0.0)
+    {
+        if (getParam<bool>("Problem.EnableGravity"))
+            gravity_[dimWorld-1] = -9.81;
+    }
+
     /*!
      * \brief Return how much the domain is extruded at a given sub-control volume.
      *
@@ -79,12 +88,16 @@ public:
                            const SubControlVolume& scv,
                            const ElementSolution& elemSol) const
     {
-        if (pybind11::hasattr(pySpatialParameters_, "extrusionFactor"))
-            return pySpatialParameters_.attr("extrusionFactor")(element, scv, elemSol).template cast<Scalar>();
-        else if (pybind11::hasattr(pySpatialParameters_, "extrusionFactorAtPos"))
-            return pySpatialParameters_.attr("extrusionFactorAtPos")(scv.dofPosition()).template cast<Scalar>();
-        else
-            return 1.0;
+        if (pySpatialParameters_)
+        {
+            if (pybind11::hasattr(pySpatialParameters_, "extrusionFactor"))
+                return pySpatialParameters_.attr("extrusionFactor")(element, scv, elemSol).template cast<Scalar>();
+            else if (pybind11::hasattr(pySpatialParameters_, "extrusionFactorAtPos"))
+                return pySpatialParameters_.attr("extrusionFactorAtPos")(scv.dofPosition()).template cast<Scalar>();
+        }
+
+        // default
+        return 1.0;
     }
 
     /*!
@@ -95,12 +108,16 @@ public:
                        const SubControlVolume& scv,
                        const ElementSolution& elemSol) const
     {
-        if (pybind11::hasattr(pySpatialParameters_, "temperature"))
-            return pySpatialParameters_.attr("temperature")(element, scv, elemSol).template cast<Scalar>();
-        else if (pybind11::hasattr(pySpatialParameters_, "temperatureAtPos"))
-            return pySpatialParameters_.attr("temperatureAtPos")(scv.dofPosition()).template cast<Scalar>();
-        else
-            return 283.15;
+        if (pySpatialParameters_)
+        {
+            if (pybind11::hasattr(pySpatialParameters_, "temperature"))
+                return pySpatialParameters_.attr("temperature")(element, scv, elemSol).template cast<Scalar>();
+            else if (pybind11::hasattr(pySpatialParameters_, "temperatureAtPos"))
+                return pySpatialParameters_.attr("temperatureAtPos")(scv.dofPosition()).template cast<Scalar>();
+        }
+
+        // default
+        return 283.15;
     }
 
     /*!

@@ -20,22 +20,14 @@ def PrintProblemTest(problem):
 ############################################################
 from dune.grid import structuredGrid
 from dumux.discretization import GridGeometry
-from dumux.common import BoundaryTypes, FVProblem, FVSpatialParams
+from dumux.common import BoundaryTypes, FVProblem
 
 gridView = structuredGrid([0, 0, 0], [1, 1, 1], [3, 3, 3])
 
 gridGeometry = GridGeometry(gridView, discMethod="box")
 
-# Define the spatial parameters
-@FVSpatialParams(gridGeometry=gridGeometry)
-class SpatialParams:
-    pass
 
-
-spatialParams = SpatialParams()
-
-
-@FVProblem(gridGeometry=gridGeometry, spatialParams=spatialParams)
+@FVProblem(gridGeometry=gridGeometry)
 class Problem:
     numEq = 2
 
