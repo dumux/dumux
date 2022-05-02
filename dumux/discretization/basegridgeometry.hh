@@ -73,7 +73,7 @@ public:
 
     /*!
      * \ingroup Discretization
-     * \brief Constructor computes the bouding box of the entire domain, for e.g. setting boundary conditions
+     * \brief Constructor computes the bounding box of the entire domain, for e.g. setting boundary conditions
      * \param gridView the grid view on which to construct the grid geometry
      */
     BaseGridGeometry(const GridView& gridView)
@@ -222,7 +222,7 @@ private:
             return VertexMapper(gridView);
     }
 
-    //! Compute the bouding box of the entire domain, for e.g. setting boundary conditions
+    //! Compute the bounding box of the entire domain, for e.g. setting boundary conditions
     void computeGlobalBoundingBox_()
     {
         // calculate the bounding box of the local partition of the grid view
@@ -261,7 +261,7 @@ private:
         else
             Deprecated::update(vertexMapper_);
 
-        //! Compute the bouding box of the entire domain, for e.g. setting boundary conditions
+        //! Compute the bounding box of the entire domain, for e.g. setting boundary conditions
         computeGlobalBoundingBox_();
 
         //! reset bounding box tree and the element map until requested the next time
@@ -276,7 +276,7 @@ private:
     ElementMapper elementMapper_;
     VertexMapper vertexMapper_;
 
-    //! the bounding box tree of the grid view for effecient element intersections
+    //! the bounding box tree of the grid view for efficient element intersections
     mutable std::unique_ptr<BoundingBoxTree> boundingBoxTree_;
 
     //! a map from element index to elements (needed in the bounding box tree and for assembling cell-centered discretization)
