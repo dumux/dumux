@@ -121,7 +121,11 @@ public:
 //! The flux variables cache
 template<class TypeTag>
 struct FluxVariablesCache<TypeTag, TTag::PNMTwoP>
-{ using type = PoreNetwork::TwoPFluxVariablesCache<GetPropType<TypeTag, Properties::AdvectionType>>; };
+{   private:
+        static constexpr bool isRegularized = REGULARIZED;
+    public:
+        using type = PoreNetwork::TwoPFluxVariablesCache<GetPropType<TypeTag, Properties::AdvectionType>, 4, isRegularized>;
+};
 
 //! The grid flux variables cache vector class
 template<class TypeTag>
@@ -158,9 +162,10 @@ private:
     using S = PoreNetwork::TransmissibilityPatzekSilin<Scalar>;
     using W = PoreNetwork::WettingLayerTransmissibility::RansohoffRadke<Scalar>;
     using N = PoreNetwork::NonWettingPhaseTransmissibility::BakkeOren<Scalar>;
+    static constexpr bool isRegularized = REGULARIZED;
 
 public:
-    using type = PoreNetwork::CreepingFlow<Scalar, S, W, N>;
+    using type = PoreNetwork::CreepingFlow<Scalar, isRegularized, S, W, N>;
 };
 
 template<class TypeTag>
