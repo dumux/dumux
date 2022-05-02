@@ -62,7 +62,7 @@ public:
     using BoundaryTypes = Dumux::BoundaryTypes<PrimaryVariables::dimension>;
 
     FVProblem(std::shared_ptr<const GridGeometry> gridGeometry,
-              std::shared_ptr<SpatialParams> spatialParams,
+              std::shared_ptr<const SpatialParams> spatialParams,
               pybind11::object pyProblem)
     : gridGeometry_(gridGeometry)
     , pyProblem_(pyProblem)
@@ -237,16 +237,12 @@ public:
     const SpatialParams& spatialParams() const
     { return *spatialParams_; }
 
-    //! Return a reference to the underlying spatial parameters
-    SpatialParams& spatialParams()
-    { return *spatialParams_; }
-
 private:
     std::shared_ptr<const GridGeometry> gridGeometry_;
     pybind11::object pyProblem_;
     std::string name_;
     std::string paramGroup_;
-    std::shared_ptr<SpatialParams> spatialParams_;
+    std::shared_ptr<const SpatialParams> spatialParams_;
 };
 
 // Python wrapper for the above FVProblem C++ class
@@ -259,7 +255,7 @@ void registerFVProblem(pybind11::handle scope, pybind11::class_<Problem, options
     using GridGeometry = typename Problem::GridGeometry;
     using SpatialParams = typename Problem::SpatialParams;
     cls.def(pybind11::init([](std::shared_ptr<const GridGeometry> gridGeometry,
-                              std::shared_ptr<SpatialParams> spatialParams,
+                              std::shared_ptr<const SpatialParams> spatialParams,
                               pybind11::object p){
         return std::make_shared<Problem>(gridGeometry, spatialParams, p);
     }));

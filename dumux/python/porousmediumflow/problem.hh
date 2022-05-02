@@ -56,7 +56,7 @@ public:
     using BoundaryTypes = Dumux::BoundaryTypes<PrimaryVariables::dimension>;
 
     PorousMediumFlowProblem(std::shared_ptr<const GridGeometry> gridGeometry,
-                            std::shared_ptr<SpatialParams> spatialParams,
+                            std::shared_ptr<const SpatialParams> spatialParams,
                             pybind11::object pyProblem)
     : ParentType(gridGeometry, spatialParams, pyProblem)
     , spatialParams_(spatialParams)
@@ -110,6 +110,7 @@ void registerPorousMediumFlowProblem(pybind11::handle scope, pybind11::class_<Pr
     cls.def("initial", &Problem::template initial<Element>);
     cls.def("initial", &Problem::template initial<Vertex>);
     cls.def("gridGeometry", &Problem::gridGeometry);
+    cls.def("spatialParams", &Problem::spatialParams);
 }
 
 } // end namespace Dumux::Python
