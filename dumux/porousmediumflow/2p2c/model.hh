@@ -19,55 +19,53 @@
 /*!
  * \file
  * \ingroup TwoPTwoCModel
- * \brief Adaption of the fully implicit scheme to the
- *        two-phase two-component fully implicit model.
+ * \brief Properties for a two-phase, two-component model for flow in porous media.
  *
  * This model implements two-phase two-component flow of two compressible and
  * partially miscible fluids \f$\alpha \in \{ w, n \}\f$ composed of the two components
- * \f$\kappa \in \{ w, a \}\f$. The standard multiphase Darcy
- * approach is used as the equation for the conservation of momentum:
+ * \f$\kappa \in \{ \kappa_w, \kappa_n \}\f$, where \f$\kappa_w\f$ and \f$\kappa_n\f$ are
+ * the main components of the wetting and nonwetting phases, respectively.
+ * The governing equations are the mass or the mole conservation equations of the two components,
+ * depending on the property <tt>UseMoles</tt>. The mass balance equations are given as:
  * \f[
- v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K}
- \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} \mathbf{g} \right)
- * \f]
+   \phi \frac{\partial (\sum_\alpha \rho_\alpha X_\alpha^\kappa S_\alpha)}{\partial t}
+   - \sum_\alpha \text{div} \left\{ \rho_\alpha X_\alpha^\kappa v_\alpha \right\}
+   - \sum_\alpha \text{div} \mathbf{F}_{\mathrm{diff, mass}, \alpha}^\kappa
+   - \sum_\alpha q_\alpha^\kappa = 0 \qquad \kappa \in \{\kappa_w, \kappa_n\} \, , \alpha \in \{w, n\},
+   \f]
+ * using the mass fractions \f$X_\alpha^\kappa\f$ and the mass densities \f$\rho_\alpha\f$, while
+ * the mole balance equations use the mole fractions \f$x_\alpha^\kappa\f$ and molar
+ * densities \f$\varrho_{m, \alpha}\f$:
+ * \f[
+   \phi \frac{\partial (\sum_\alpha \varrho_{m, \alpha} x_\alpha^\kappa S_\alpha)}{\partial t}
+   + \sum_\alpha \text{div} \left\{ \varrho_{m, \alpha} x_\alpha^\kappa v_\alpha \right\}
+   + \sum_\alpha \text{div} \mathbf{F}_{\mathrm{diff, mole}, \alpha}^\kappa
+   - \sum_\alpha q_\alpha^\kappa = 0 \qquad \kappa \in \{\kappa_w, \kappa_n\} \, , \alpha \in \{w, n\}.
+   \f]
+ * Boundary conditions and sources have to be defined by the user in the corresponding
+ * units. The default setting for the property <tt>UseMoles</tt> can be found in the 2pnc model.
  *
- * By inserting this into the equations for the conservation of the
- * components, one gets one transport equation for each component
- * \f{eqnarray*}
- && \phi \frac{\partial (\sum_\alpha \varrho_\alpha \frac{M^\kappa}{M_\alpha} x_\alpha^\kappa S_\alpha )}
- {\partial t}
- - \sum_\alpha  \text{div} \left\{ \varrho_\alpha \frac{M^\kappa}{M_\alpha} x_\alpha^\kappa
- \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K}
- (\textbf{grad}\, p_\alpha - \varrho_{\alpha}  \mathbf{g}) \right\}
- \nonumber \\ \nonumber \\
- &-& \sum_\alpha \text{div} \left\{ D_{\alpha,\text{pm}}^\kappa \varrho_{\alpha}
- \textbf{grad} X^\kappa_{\alpha} \right\}
- - \sum_\alpha q_\alpha^\kappa = 0 \qquad \kappa \in \{w, a\} \, ,
- \alpha \in \{w, g\}
- \f}
+ * Per default, the Darcy's and Fick's law are used for the fluid phase velocities and the
+ * diffusive fluxes, respectively. See dumux/flux/darcyslaw.hh and dumux/flux/fickslaw.hh
+ * for more details.
  *
- * By using constitutive relations for the capillary pressure \f$p_c =
- * p_n - p_w\f$ and relative permeability \f$k_{r\alpha}\f$ and taking
- * advantage of the fact that \f$S_w + S_n = 1\f$ and \f$x^\kappa_w + x^\kappa_n = 1\f$, the number of
- * unknowns can be reduced to two.
- * The used primary variables are, like in the two-phase model, either \f$p_w\f$ and \f$S_n\f$
- * or \f$p_n\f$ and \f$S_w\f$. The formulation which ought to be used can be
- * specified by setting the <tt>Formulation</tt> property to either
- * <tt>TwoPTwoCFormulation::pwsn</tt> or <tt>TwoPTwoCFormulation::pnsw</tt>. By
- * default, the model uses \f$p_w\f$ and \f$S_n\f$.
- * Moreover, the second primary variable depends on the phase state, since a
- * primary variable switch is included. The phase state is stored for all nodes
- * of the system.
- * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
- * problem file. Make sure that the according units are used in the problem setup. useMoles is set to true by default.
- * Following cases can be distinguished:
+ * By using constitutive relations for the capillary pressure \f$p_c = p_n - p_w\f$ and
+ * relative permeability \f$k_{r\alpha}\f$ and taking advantage of the fact that \f$S_w + S_n = 1\f$
+ * and \f$x^{\kappa_w}_\alpha + x^{\kappa_n}_\alpha = 1\f$, the number of unknowns can be reduced to two.
+ * In single-phase regimes, the used primary variables are either \f$p_w\f$ and \f$S_n\f$ (default)
+ * or \f$p_n\f$ and \f$S_w\f$. The formulation which ought to be used can be specified by setting
+ * the <tt>Formulation</tt> property to either
+ * <tt>TwoPTwoCFormulation::pwsn</tt> or <tt>TwoPTwoCFormulation::pnsw</tt>.
+ *
+ * In two-phase flow regimes the second primary variable depends on the phase state and is the mole or mass
+ * fraction (depending on the property <tt>UseMoles</tt>). The following cases can be distinguished:
  * <ul>
  *  <li> Both phases are present: The saturation is used (either \f$S_n\f$ or \f$S_w\f$, dependent on the chosen <tt>Formulation</tt>),
  *      as long as \f$ 0 < S_\alpha < 1\f$</li>.
- *  <li> Only wetting phase is present: The mole fraction of, e.g., air in the wetting phase \f$x^a_w\f$ is used,
- *      as long as the maximum mole fraction is not exceeded \f$(x^a_w<x^a_{w,max})\f$</li>
- *  <li> Only nonwetting phase is present: The mole fraction of, e.g., water in the nonwetting phase, \f$x^w_n\f$, is used,
- *      as long as the maximum mole fraction is not exceeded \f$(x^w_n<x^w_{n,max})\f$</li>
+ *  <li> Only wetting phase is present: The mole fraction of the nonwetting phase main component in the wetting phase \f$x^{\kappa_n}_w\f$ is used,
+ *      as long as the maximum mole fraction is not exceeded \f$(x^{\kappa_n}_w<x^{\kappa_n}_{w,max})\f$</li>
+ *  <li> Only nonwetting phase is present: The mole fraction of the wetting phase main component in the nonwetting phase, \f$x^{\kappa_w}_n\f$, is used,
+ *      as long as the maximum mole fraction is not exceeded \f$(x^{\kappa_w}_n<x^{\kappa_w}_{n,max})\f$</li>
  * </ul>
  */
 
