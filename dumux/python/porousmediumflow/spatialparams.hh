@@ -21,33 +21,32 @@
  * \brief TODO: docme!
  */
 
-#ifndef DUMUX_PYTHON_MATERIAL_SPATIAL_PARAMS_HH
-#define DUMUX_PYTHON_MATERIAL_SPATIAL_PARAMS_HH
+#ifndef DUMUX_PYTHON_POROUSMEDIUMFLOW_FVSPATIALPARAMS_1P_HH
+#define DUMUX_PYTHON_POROUSMEDIUMFLOW_FVSPATIALPARAMS_1P_HH
 
 #include <dune/python/pybind11/pybind11.h>
 #include <dune/python/pybind11/stl.h>
 
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/python/common/fvspatialparams.hh>
 
 namespace Dumux::Python {
 
-template<class GridGeometry, class Scalar, class PT>
+template<class GridGeometry_, class PT>
 class FVSpatialParamsOneP
-: public Dumux::FVSpatialParamsOneP<GridGeometry, Scalar, FVSpatialParamsOneP<GridGeometry, Scalar, PT>>
+: public Dumux::Python::FVSpatialParams<GridGeometry_>
 {
-    using ThisType = FVSpatialParamsOneP<GridGeometry, Scalar, PT>;
-    using ParentType = Dumux::FVSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
+    using ThisType = Dumux::Python::FVSpatialParamsOneP<GridGeometry_, PT>;
+    using ParentType = Dumux::Python::FVSpatialParams<GridGeometry_>;
+public:
+    using GridGeometry = GridGeometry_;
+    using Scalar = typename GridGeometry::GridView::ctype;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
-    using GlobalPosition = typename GridGeometry::GridView::template Codim<0>::Geometry::GlobalCoordinate;
-
-public:
-
     using PermeabilityType = PT;
 
     FVSpatialParamsOneP(std::shared_ptr<const GridGeometry> gridGeometry,
                         pybind11::object pySpatialParams)
-    : ParentType(gridGeometry)
+    : ParentType(gridGeometry, pySpatialParams)
     , pySpatialParams_(pySpatialParams)
     {}
 
@@ -64,8 +63,8 @@ public:
 
     template<class ElementSolution>
     Scalar porosity(const Element& element,
-                              const SubControlVolume& scv,
-                              const ElementSolution& elemSol) const
+                    const SubControlVolume& scv,
+                    const ElementSolution& elemSol) const
     {
         if (pybind11::hasattr(pySpatialParams_, "porosity"))
             return pySpatialParams_.attr("porosity")(element, scv, elemSol).template cast<Scalar>();
@@ -73,24 +72,41 @@ public:
             return pySpatialParams_.attr("porosityAtPos")(scv.center()).template cast<Scalar>();
     }
 
+    template<class SolidSystem, class ElementSolution>
+    Scalar inertVolumeFraction(const Element& element,
+                               const SubControlVolume& scv,
+                               const ElementSolution& elemSol,
+                               int compIdx) const
+
+    {
+        if (pybind11::hasattr(pySpatialParams_, "inertVolumeFraction"))
+            return pySpatialParams_.attr("inertVolumeFraction")(element, scv, elemSol, compIdx).template cast<Scalar>();
+        else if (pybind11::hasattr(pySpatialParams_, "inertVolumeFractionAtPos"))
+            return pySpatialParams_.attr("inertVolumeFractionAtPos")(scv.center(), compIdx).template cast<Scalar>();
+        else
+            return 1.0 - this->porosity(element, scv, elemSol);
+    }
+
+    static constexpr bool evaluatePermeabilityAtScvfIP()
+    { return false; }
+
 private:
     pybind11::object pySpatialParams_;
 };
 
-
-
-template <class SP, class... options>
-void registerOnePSpatialParams(pybind11::handle scope,
-                               pybind11::class_<SP, options...> cls)
+template <class SpatialParams, class... options>
+void registerFVSpatialParamsOneP(pybind11::handle scope, pybind11::class_<SpatialParams, options...> cls)
 {
     using pybind11::operator""_a;
-    using GridGeometry = std::decay_t<decltype(std::declval<SP>().gridGeometry())>;
+    using GridGeometry = typename SpatialParams::GridGeometry;
 
-    cls.def(pybind11::init([](std::shared_ptr<GridGeometry> gridGeometry, pybind11::object sp){
-        return std::make_shared<SP>(gridGeometry, sp);
+    cls.def(pybind11::init([](std::shared_ptr<const GridGeometry> gridGeometry, pybind11::object p){
+        return std::make_shared<SpatialParams>(gridGeometry, p);
     }));
 
-    cls.def("gravity", &SP::gravity);
+    cls.def("permeability", &SpatialParams::template permeability<decltype(std::ignore)>);
+    cls.def("porosity", &SpatialParams::template porosity<decltype(std::ignore)>);
+    cls.def("inertVolumeFraction", &SpatialParams::template inertVolumeFraction<decltype(std::ignore), decltype(std::ignore)>);
 }
 
 } // namespace Dumux::Python

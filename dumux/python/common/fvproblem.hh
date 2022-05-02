@@ -35,6 +35,7 @@
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/python/common/boundarytypes.hh>
+#include <dumux/python/common/fvspatialparams.hh>
 
 namespace Dumux::Python {
 
@@ -42,12 +43,13 @@ namespace Dumux::Python {
  * \ingroup Common
  * \brief A C++ wrapper for a Python problem
  */
-template<class GridGeometry_, class PrimaryVariables, bool enableInternalDirichletConstraints_>
+template<class GridGeometry_,  class SpatialParams_, class PrimaryVariables, bool enableInternalDirichletConstraints_>
 class FVProblem
 {
 public:
     using GridGeometry = GridGeometry_;
-    using Scalar = typename PrimaryVariables::value_type;
+    using SpatialParams = SpatialParams_;
+    using Scalar = typename GridGeometry::GridView::ctype;
     using NumEqVector = Dune::FieldVector<Scalar, PrimaryVariables::dimension>;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GridGeometry::LocalView;
@@ -60,11 +62,13 @@ public:
     using BoundaryTypes = Dumux::BoundaryTypes<PrimaryVariables::dimension>;
 
     FVProblem(std::shared_ptr<const GridGeometry> gridGeometry,
+              std::shared_ptr<const SpatialParams> spatialParams,
               pybind11::object pyProblem)
     : gridGeometry_(gridGeometry)
     , pyProblem_(pyProblem)
     , name_("python_problem")
     , paramGroup_("")
+    , spatialParams_(spatialParams)
     {
         if (pybind11::hasattr(pyProblem_, "name"))
             name_ = pyProblem.attr("name")().template cast<std::string>();
@@ -72,6 +76,11 @@ public:
         if (pybind11::hasattr(pyProblem_, "paramGroup"))
             paramGroup_ = pyProblem.attr("paramGroup")().template cast<std::string>();
     }
+
+    FVProblem(std::shared_ptr<const GridGeometry> gridGeometry,
+              pybind11::object pyProblem)
+    : FVProblem(gridGeometry, std::make_shared<SpatialParams>(gridGeometry), pyProblem)
+    {}
 
     const std::string& name() const
     { return name_; }
@@ -183,19 +192,6 @@ public:
         return pyProblem_.attr("initial")(entity).template cast<PrimaryVariables>();
     }
 
-    template<class ElementSolution>
-    Scalar extrusionFactor(const Element& element,
-                           const SubControlVolume& scv,
-                           const ElementSolution& elemSol) const
-    {
-        return pyProblem_.attr("extrusionFactor")(element, scv).template cast<Scalar>();
-    }
-
-    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
-    {
-        return pyProblem_.attr("temperatureAtPos")(globalPos).template cast<Scalar>();
-    }
-
     static constexpr bool enableInternalDirichletConstraints()
     { return enableInternalDirichletConstraints_; }
 
@@ -214,14 +210,39 @@ public:
             pyProblem_.attr("addSourceDerivatives")(block, element, fvGeometry, scv);
     }
 
+    [[deprecated("extrusionFactorAtPos() should now be defined in the spatial params. This interface will be removed after 3.5.")]]
+    Scalar extrusionFactorAtPos(const GlobalPosition &globalPos, double defaultValue = 1.0) const
+    { return 1.0; }
+
+    template<class ElementSolution>
+    [[deprecated("extrusionFactor() should now be defined in the spatial params. This interface will be removed after 3.5.")]]
+    Scalar extrusionFactor(const Element& element,
+                           const SubControlVolume& scv,
+                           const ElementSolution& elemSol,
+                           double defaultValue = 1.0) const
+    { return this->extrusionFactorAtPos(scv.center()); }
+
+    [[deprecated("temperatureAtPos() should now be defined in the spatial params. This interface will be removed after 3.5.")]]
+    Scalar temperatureAtPos(const GlobalPosition &globalPos, int defaultValue = 1) const
+    { return 293.0; }
+
+    [[deprecated("temperature() should now be defined in the spatial params. This interface will be removed after 3.5.")]]
+    Scalar temperature(int defaultValue = 1) const
+    { return this->temperature(GlobalPosition(0.0)); }
+
     const GridGeometry& gridGeometry() const
     { return *gridGeometry_; }
+
+    //! Return a reference to the underlying spatial parameters
+    const SpatialParams& spatialParams() const
+    { return *spatialParams_; }
 
 private:
     std::shared_ptr<const GridGeometry> gridGeometry_;
     pybind11::object pyProblem_;
     std::string name_;
     std::string paramGroup_;
+    std::shared_ptr<const SpatialParams> spatialParams_;
 };
 
 // Python wrapper for the above FVProblem C++ class
@@ -232,6 +253,12 @@ void registerFVProblem(pybind11::handle scope, pybind11::class_<Problem, options
     using namespace Dune::Python;
 
     using GridGeometry = typename Problem::GridGeometry;
+    using SpatialParams = typename Problem::SpatialParams;
+    cls.def(pybind11::init([](std::shared_ptr<const GridGeometry> gridGeometry,
+                              std::shared_ptr<const SpatialParams> spatialParams,
+                              pybind11::object p){
+        return std::make_shared<Problem>(gridGeometry, spatialParams, p);
+    }));
     cls.def(pybind11::init([](std::shared_ptr<const GridGeometry> gridGeometry,
                               pybind11::object p){
         return std::make_shared<Problem>(gridGeometry, p);
@@ -263,7 +290,6 @@ void registerFVProblem(pybind11::handle scope, pybind11::class_<Problem, options
     cls.def("sourceAtPos", &Problem::sourceAtPos);
     cls.def("initial", &Problem::template initial<Element>);
     cls.def("initial", &Problem::template initial<Vertex>);
-    cls.def("extrusionFactor", &Problem::template extrusionFactor<decltype(std::ignore)>);
 }
 
 } // end namespace Dumux::Python

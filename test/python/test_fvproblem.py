@@ -27,7 +27,7 @@ gridView = structuredGrid([0, 0, 0], [1, 1, 1], [3, 3, 3])
 gridGeometry = GridGeometry(gridView, discMethod="box")
 
 
-@FVProblem(gridGeometry)
+@FVProblem(gridGeometry=gridGeometry)
 class Problem:
     numEq = 2
 
