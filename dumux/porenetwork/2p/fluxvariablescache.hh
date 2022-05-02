@@ -31,7 +31,7 @@
 
 namespace Dumux::PoreNetwork {
 
-template<class AdvectionType, int maxNumCorners = 4, bool regularized = true>
+template<class AdvectionType, int maxNumCorners = 4, bool useRegularization = true>
 class TwoPFluxVariablesCache;
 /*!
  * \ingroup PNMTwoPModel

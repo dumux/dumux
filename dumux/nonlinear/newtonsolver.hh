@@ -1184,8 +1184,8 @@ private:
         using OriginalBlockType = Detail::BlockType<SolutionVector>;
         constexpr auto blockSize = Detail::blockSize<OriginalBlockType>();
 
-        std::cout << "\n";
-            Dune::printmatrix(std::cout, A, "Jacobian", "row");
+        // std::cout << "\n";
+        //     Dune::printmatrix(std::cout, A, "Jacobian", "row");
 
         // ++iterationNumber;
         // assert(false);

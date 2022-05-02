@@ -43,7 +43,7 @@ namespace Dumux::PoreNetwork {
  * \ingroup PoreNetworkFlux
  * \brief Hagen–Poiseuille-type flux law to describe the advective flux for pore-network models.
  */
-template<class ScalarT, bool isRegularized = true, class... TransmissibilityLawTypes>
+template<class ScalarT, bool useRegularization = true, class... TransmissibilityLawTypes>
 class CreepingFlow;
 
 template<class ScalarT, class... TransmissibilityLawTypes>
