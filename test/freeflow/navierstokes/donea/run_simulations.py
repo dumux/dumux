@@ -127,16 +127,21 @@ if __name__ == "__main__":
     removePreviousResults()
 
     testPrefix = "donea-momentum"
-    executables = ["test_ff_stokes_donea_momentum_diamond_simplex"]
-    gridArgs = [ [], ["-Grid.File ./grids/unstructured_simplex.msh"]]
-    gridNames = ["simplex-structured", "simplex-unstructured" ]
+    executables = ["test_ff_stokes_donea_momentum_diamond_simplex", "test_ff_stokes_donea_momentum_diamond_quad"]
+    gridArgsTests = [ [ [], ["-Grid.File ./grids/unstructured_simplex.msh"]],
+                      [ [], ["-Grid.File ./grids/unstructured_quad.msh"   ]] ]
+    gridNamesTests = [ ["simplex-structured", "simplex-unstructured" ],
+                       ["quad-structured", "quad-unstructured"       ] ]
 
     ##################################################
     # structured simplex grid
     ##################################################
 
-    for exe in executables:
+    for k in range(len(executables)):
+        exe = executables[k]
         compile(exe)
+        gridArgs = gridArgsTests[k]
+        gridNames = gridNamesTests[k]
         for i in range(len(gridArgs)):
             initializePlot()
             # weak symmetry
