@@ -71,6 +71,9 @@ public:
 
     struct Traits : public ParentType::Traits
     { using Grid = NoCommunicateGrid<dim>; };
+
+    const typename Traits::Grid& grid() const
+    { return static_cast<const typename Traits::Grid&>(ParentType::grid()); }
 };
 
 template<int dim>
