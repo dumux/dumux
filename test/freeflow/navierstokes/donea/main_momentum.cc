@@ -64,6 +64,8 @@ void printErrors(std::shared_ptr<Problem> problem,
                  const GridVariables& gridVariables,
                  const SolutionVector& x)
 {
+    using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
+    static constexpr int dim = GridGeometry::GridView::dimension;
     const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
 
     if (printErrors)
@@ -74,7 +76,7 @@ void printErrors(std::shared_ptr<Problem> problem,
 
         logFile << Fmt::format("{:.5e}", errors.time()) << ", ";
         logFile << problem->gridGeometry().numDofs() << ", ";
-        logFile << errors.hMax();
+        logFile << std::pow(errors.totalVolume() / problem->gridGeometry().numDofs(), 1.0/dim);
         writeError_(logFile, errors.l2Absolute());
         //writeError_(logFile, errors.l2Relative());
         //writeError_(logFile, errors.lInfAbsolute());
