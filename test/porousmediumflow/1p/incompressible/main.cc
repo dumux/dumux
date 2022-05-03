@@ -77,11 +77,22 @@ void writeMpfaVelocities(const GridGeometry& gridGeometry,
                          const Sol& x)
 {}
 
+template<class GridView, class Discretization, class Cache = std::false_type>
+struct DefaultGridGeometry {};
+
+template<class GridView, class Cache>
+struct DefaultGridGeometry<GridView, Dumux::DiscretizationMethods::CCTpfa, Cache>
+{
+    using type = Dumux::CCTpfaFVGridGeometry<GridView, Cache{}>;
+};
+
+template<class GridView, class Discretization, class Cache = std::false_type>
+using DefaultGridGeometry_t = typename DefaultGridGeometry<GridView, Discretization, Cache>::type;
+
+
 int main(int argc, char** argv)
 {
     using namespace Dumux;
-
-    using TypeTag = Properties::TTag::TYPETAG;
 
     // initialize Dumux (parallel helpers)
     // always call this before any other code
@@ -104,7 +115,7 @@ int main(int argc, char** argv)
     //////////////////////////////////////////////////////////////////////
     // try to create a grid (from the given grid file or the input file)
     /////////////////////////////////////////////////////////////////////
-    using Grid = GetPropType<TypeTag, Properties::Grid>;
+    using Grid = GRIDTYPE;
     GridManager<Grid> gridManager;
     gridManager.init();
 
@@ -115,8 +126,15 @@ int main(int argc, char** argv)
     Dune::Timer timer;
 
     // create the finite volume grid geometry
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = DefaultGridGeometry_t<Grid::LeafGridView, DiscretizationMethods::DISC_METHOD>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
+
+    struct T {
+        // using Grid = Grid;
+        using GridGeometry = GridGeometry;
+    };
+
+    using TypeTag = Properties::TTag::TYPETAG<T>;
 
     // the problem (boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;

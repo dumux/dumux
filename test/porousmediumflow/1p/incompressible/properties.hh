@@ -115,23 +115,32 @@ struct canCommunicate<Dumux::NoCommunicateGrid<dim>, codim>
 namespace Dumux::Properties {
 // Create new type tags
 namespace TTag {
-struct OnePIncompressible { using InheritsFrom = std::tuple<OneP>; };
-struct OnePIncompressibleTpfa { using InheritsFrom = std::tuple<OnePIncompressible, CCTpfaModel>; };
-struct OnePIncompressibleMpfa { using InheritsFrom = std::tuple<OnePIncompressible, CCMpfaModel>; };
-struct OnePIncompressibleBox { using InheritsFrom = std::tuple<OnePIncompressible, BoxModel>; };
+template<class T> struct OnePIncompressible { using InheritsFrom = std::tuple<OneP>; using Traits = T; };
+template<class T> struct OnePIncompressibleTpfa { using InheritsFrom = std::tuple<OnePIncompressible<T>, CCTpfaModel>; using Traits = T; };
+template<class T> struct OnePIncompressibleMpfa { using InheritsFrom = std::tuple<OnePIncompressible<T>, CCMpfaModel>; using Traits = T; };
+template<class T> struct OnePIncompressibleBox { using InheritsFrom = std::tuple<OnePIncompressible<T>, BoxModel>; using Traits = T; };
 } // end namespace TTag
 
 // Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePIncompressible> { using type = GRIDTYPE; };
+// template<class TypeTag, class T>
+// struct Grid<TypeTag, TTag::OnePIncompressible<T>>
+// {
+//     using type = typename TypeTag::Traits::Grid;
+// };
+
+template<class TypeTag, class T>
+struct GridGeometry<TypeTag, TTag::OnePIncompressible<T>>
+{
+    using type = typename TypeTag::Traits::GridGeometry;
+};
 
 // Set the problem type
-template<class TypeTag>
-struct Problem<TypeTag, TTag::OnePIncompressible> { using type = OnePTestProblem<TypeTag>; };
+template<class TypeTag, class T>
+struct Problem<TypeTag, TTag::OnePIncompressible<T>> { using type = OnePTestProblem<TypeTag>; };
 
 // set the spatial params
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::OnePIncompressible>
+template<class TypeTag, class T>
+struct SpatialParams<TypeTag, TTag::OnePIncompressible<T>>
 {
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -139,32 +148,32 @@ struct SpatialParams<TypeTag, TTag::OnePIncompressible>
 };
 
 // use the incompressible local residual (provides analytic jacobian)
-template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::OnePIncompressible> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
+template<class TypeTag, class T>
+struct LocalResidual<TypeTag, TTag::OnePIncompressible<T>> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
 
 // the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::OnePIncompressible>
+template<class TypeTag, class T>
+struct FluidSystem<TypeTag, TTag::OnePIncompressible<T>>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 };
 
 // Enable caching
-template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::OnePIncompressible> { static constexpr bool value = false; };
-template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::OnePIncompressible> { static constexpr bool value = false; };
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::OnePIncompressible> { static constexpr bool value = false; };
+template<class TypeTag, class T>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::OnePIncompressible<T>> { static constexpr bool value = false; };
+template<class TypeTag, class T>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::OnePIncompressible<T>> { static constexpr bool value = false; };
+template<class TypeTag, class T>
+struct EnableGridGeometryCache<TypeTag, TTag::OnePIncompressible<T>> { static constexpr bool value = false; };
 
 // define a TypeTag for a quad precision test
 #if HAVE_QUADMATH
 namespace TTag {
-struct OnePIncompressibleTpfaQuad { using InheritsFrom = std::tuple<OnePIncompressibleTpfa>; };
+template<class T> struct OnePIncompressibleTpfaQuad { using InheritsFrom = std::tuple<OnePIncompressibleTpfa<T>>; using Grid = G; };
 } // end namespace TTag
-template<class TypeTag>
-struct Scalar<TypeTag, TTag::OnePIncompressibleTpfaQuad> { using type = Dune::Float128; };
+template<class TypeTag, class T>
+struct Scalar<TypeTag, TTag::OnePIncompressibleTpfaQuad<T>> { using type = Dune::Float128; };
 #endif
 }
 #endif

@@ -31,14 +31,14 @@
 namespace Dumux::Properties {
 // Create new type tags
 namespace TTag {
-struct OnePInternalDirichlet {};
-struct OnePInternalDirichletTpfa { using InheritsFrom = std::tuple<OnePInternalDirichlet, OnePIncompressibleTpfa>; };
-struct OnePInternalDirichletBox { using InheritsFrom = std::tuple<OnePInternalDirichlet, OnePIncompressibleBox>; };
+template<class T> struct OnePInternalDirichlet {};
+template<class T> struct OnePInternalDirichletTpfa { using InheritsFrom = std::tuple<OnePInternalDirichlet<T>, OnePIncompressibleTpfa<T>>; using Traits = T; };
+template<class T> struct OnePInternalDirichletBox { using InheritsFrom = std::tuple<OnePInternalDirichlet<T>, OnePIncompressibleBox<T>>; using Traits = T; };
 } // end namespace TTag
 
 // Set the problem type
-template<class TypeTag>
-struct Problem<TypeTag, TTag::OnePInternalDirichlet>
+template<class TypeTag, class T>
+struct Problem<TypeTag, TTag::OnePInternalDirichlet<T>>
 { using type = OnePTestProblemInternalDirichlet<TypeTag>; };
 
 } // end namespace Dumux::Properties

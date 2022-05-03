@@ -3,15 +3,15 @@ dune_symlink_to_source_files(FILES grids)
 
 # using tpfa and analytical Jacobian
 add_executable(test_1p_incompressible_tpfa_anadiff EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_1p_incompressible_tpfa_anadiff PUBLIC "TYPETAG=OnePIncompressibleTpfa" "NUMDIFFMETHOD=DiffMethod::analytic")
+target_compile_definitions(test_1p_incompressible_tpfa_anadiff PUBLIC "TYPETAG=OnePIncompressibleTpfa" "DISC_METHOD=CCTpfa" "NUMDIFFMETHOD=DiffMethod::analytic")
 
 # using mpfa and analytical Jacobian
 add_executable(test_1p_incompressible_mpfa_anadiff EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_1p_incompressible_mpfa_anadiff PUBLIC "TYPETAG=OnePIncompressibleMpfa" "NUMDIFFMETHOD=DiffMethod::analytic")
+target_compile_definitions(test_1p_incompressible_mpfa_anadiff PUBLIC "TYPETAG=OnePIncompressibleMpfa" "DISC_METHOD=CCMpfa" "NUMDIFFMETHOD=DiffMethod::analytic")
 
 # using box and analytical Jacobian
 add_executable(test_1p_incompressible_box_anadiff EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_1p_incompressible_box_anadiff PUBLIC "TYPETAG=OnePIncompressibleBox" "NUMDIFFMETHOD=DiffMethod::analytic")
+target_compile_definitions(test_1p_incompressible_box_anadiff PUBLIC "TYPETAG=OnePIncompressibleBox" "DISC_METHOD=Box" "NUMDIFFMETHOD=DiffMethod::analytic")
 
 # using tpfa and analytical Jacobian
 dumux_add_test(NAME test_1p_incompressible_tpfa
@@ -28,7 +28,7 @@ dumux_add_test(NAME test_1p_incompressible_tpfa_quad
               LABELS porousmediumflow 1p
               SOURCES main.cc
               CMAKE_GUARD HAVE_QUADMATH
-              COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleTpfaQuad NUMDIFFMETHOD=DiffMethod::analytic
+              COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleTpfaQuad DISC_METHOD=CCTpfa NUMDIFFMETHOD=DiffMethod::analytic
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
@@ -61,7 +61,7 @@ dumux_add_test(NAME test_1p_incompressible_box
 dumux_add_test(NAME test_1p_incompressible_tpfa_numdiff
               LABELS porousmediumflow 1p
               SOURCES main.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleTpfa NUMDIFFMETHOD=DiffMethod::numeric
+              COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleTpfa DISC_METHOD=CCTpfa NUMDIFFMETHOD=DiffMethod::numeric
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
@@ -74,7 +74,7 @@ dumux_add_test(NAME test_1p_incompressible_tpfa_numdiff
 dumux_add_test(NAME test_1p_incompressible_box_numdiff
               LABELS porousmediumflow 1p
               SOURCES main.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleBox NUMDIFFMETHOD=DiffMethod::numeric
+              COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleBox DISC_METHOD=Box NUMDIFFMETHOD=DiffMethod::numeric
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_box-reference.vtu
@@ -122,7 +122,7 @@ dumux_add_test(NAME test_1p_incompressible_box_extrude_distorted
               SOURCES main.cc
               CMAKE_GUARD dune-uggrid_FOUND
               COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>
-              COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleBox NUMDIFFMETHOD=DiffMethod::analytic
+              COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleBox DISC_METHOD=Box NUMDIFFMETHOD=DiffMethod::analytic
               COMMAND ./test_1p_incompressible_box_extrude_distorted
               CMD_ARGS params.input -Problem.Name test_1p_incompressible_box_extrude_distorted
                                     -Problem.ExtrusionFactor 10
@@ -137,7 +137,7 @@ dumux_add_test(NAME test_1p_incompressible_mpfa_extrude_distorted
               SOURCES main.cc
               CMAKE_GUARD dune-uggrid_FOUND
               COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>
-              COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleMpfa NUMDIFFMETHOD=DiffMethod::analytic
+              COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleMpfa DISC_METHOD=CCMpfa NUMDIFFMETHOD=DiffMethod::analytic
               COMMAND ./test_1p_incompressible_mpfa_extrude_distorted
               CMD_ARGS params.input -Problem.Name test_1p_incompressible_mpfa_extrude_distorted
                                     -Problem.ExtrusionFactor 10
@@ -150,6 +150,6 @@ dumux_add_test(NAME test_1p_incompressible_mpfa_extrude_distorted
 dumux_add_test(NAME test_1p_incompressible_box_numdiff_no_communicate
                LABELS porousmediumflow 1p
                SOURCES main.cc
-               COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleBox NUMDIFFMETHOD=DiffMethod::numeric GRIDTYPE=Dumux::NoCommunicateGrid<2>
+               COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleBox DISC_METHOD=Box NUMDIFFMETHOD=DiffMethod::numeric GRIDTYPE=Dumux::NoCommunicateGrid<2>
                COMMAND ./test_1p_incompressible_box_numdiff_no_communicate
                CMD_ARGS -Grid.Overlap 0)
