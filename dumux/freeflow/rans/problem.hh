@@ -101,20 +101,7 @@ public:
      */
     RANSProblemBase(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
     : ParentType(gridGeometry, paramGroup)
-    { }
-
-    /*!
-     * \brief Update the static (solution independent) relations to the walls
-     *
-     * This function determines all element with a wall intersection,
-     * the wall distances and the relation to the neighboring elements.
-     */
-    void updateStaticWallProperties()
     {
-        using std::abs;
-        std::cout << "Update static wall properties. ";
-        calledUpdateStaticWallProperties = true;
-
         // update size and initial values of the global vectors
         wallElementIdx_.resize(this->gridGeometry().elementMapper().size());
         wallDistance_.resize(this->gridGeometry().elementMapper().size(), std::numeric_limits<Scalar>::max());
@@ -128,6 +115,23 @@ public:
         wallNormalAxis_.resize(this->gridGeometry().elementMapper().size(), fixedWallNormalAxis_);
         storedViscosity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
         storedDensity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
+
+        // re-initialize min and max values
+        velocityMaximum_.resize(this->gridGeometry().elementMapper().size(), DimVector(1e-16));
+        velocityMinimum_.resize(this->gridGeometry().elementMapper().size(), DimVector(std::numeric_limits<Scalar>::max()));
+    }
+
+    /*!
+     * \brief Update the static (solution independent) relations to the walls
+     *
+     * This function determines all element with a wall intersection,
+     * the wall distances and the relation to the neighboring elements.
+     */
+    void updateStaticWallProperties()
+    {
+        using std::abs;
+        std::cout << "Update static wall properties. ";
+        calledUpdateStaticWallProperties = true;
 
         if ( !(hasParamInGroup(this->paramGroup(), "RANS.IsFlatWallBounded")))
         {
