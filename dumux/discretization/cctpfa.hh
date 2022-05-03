@@ -53,16 +53,16 @@ namespace TTag {
 struct CCTpfaModel { using InheritsFrom = std::tuple<FiniteVolumeModel>; };
 } // end namespace TTag
 
-//! Set the default for the grid geometry
-template<class TypeTag>
-struct GridGeometry<TypeTag, TTag::CCTpfaModel>
-{
-private:
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
-    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
-public:
-    using type = CCTpfaFVGridGeometry<GridView, enableCache>;
-};
+// //! Set the default for the grid geometry
+// template<class TypeTag>
+// struct GridGeometry<TypeTag, TTag::CCTpfaModel>
+// {
+// private:
+//     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+//     using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+// public:
+//     using type = CCTpfaFVGridGeometry<GridView, enableCache>;
+// };
 
 //! The grid volume variables vector class
 template<class TypeTag>
