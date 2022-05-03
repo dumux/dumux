@@ -45,7 +45,44 @@
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/istlsolverfactorybackend.hh>
 
+#include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
+#include <test/freeflow/navierstokes/errors.hh>
+
 #include "properties_momentum.hh"
+
+namespace Dumux {
+
+template<class Error>
+void writeError_(std::ofstream& logFile, const Error& error, const std::string& format = "{:.5e}")
+{
+    for (const auto& e : error)
+        logFile << Fmt::format(", " + format, e);
+}
+
+template<class Problem, class GridVariables, class SolutionVector>
+void printErrors(std::shared_ptr<Problem> problem,
+                 const GridVariables& gridVariables,
+                 const SolutionVector& x)
+{
+    const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
+
+    if (printErrors)
+    {
+        NavierStokesTest::ErrorsSubProblem errors(problem, x);
+
+        std::ofstream logFile("errors.csv", std::ios::app);
+
+        logFile << Fmt::format("{:.5e}", errors.time()) << ", ";
+        logFile << problem->gridGeometry().numDofs() << ", ";
+        logFile << errors.hMax();
+        writeError_(logFile, errors.l2Absolute());
+        //writeError_(logFile, errors.l2Relative());
+        //writeError_(logFile, errors.lInfAbsolute());
+        //writeError_(logFile, errors.lInfRelative());
+
+        logFile << "\n";
+    }
+}
 
 template<class GridGeometry, class GridVariables, class SolutionVector>
 void updateVelocities(
@@ -110,6 +147,9 @@ void updateRank(
         rank[eIdxGlobal] = gridGeometry.gridView().comm().rank();
     }
 }
+
+} // end namespace Dumux
+
 
 int main(int argc, char** argv)
 {
@@ -196,9 +236,11 @@ int main(int argc, char** argv)
     ////////////////////////////////////////////////////////////
     // write VTK output
     ////////////////////////////////////////////////////////////
-    updateVelocities(velocity, faceVelocity, *gridGeometry, *gridVariables, x);
+    Dumux::updateVelocities(velocity, faceVelocity, *gridGeometry, *gridVariables, x);
     writer.write("donea_momentum" + discSuffix + "_1");
     faceVtk.write("donea_momentum_face" + discSuffix + rankSuffix + "_1", Dune::VTK::ascii);
+
+    Dumux::printErrors(problem, *gridVariables, x);
 
     ////////////////////////////////////////////////////////////
     // finalize, print parameters and Dumux message to say goodbye
