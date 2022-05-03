@@ -53,8 +53,8 @@ class ImbibitionProblem : public PorousMediumFlowProblem<TypeTag>
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using Labels = GetPropType<TypeTag, Properties::Labels>;
     enum {
-        pwIdx = Indices::pressureIdx,
-        snIdx = Indices::saturationIdx,
+        pIdx = Indices::pressureIdx,
+        sIdx = Indices::saturationIdx,
         nPhaseIdx = FluidSystem::phase1Idx,
 
 #if !ISOTHERMAL
@@ -143,13 +143,13 @@ public:
         // pw,inlet = pw,outlet = 1e5; pn,outlet = pw,outlet + pc(S=0) = pw,outlet; pn,inlet = pw,inlet + pc_
         if (isInletPore_(scv))
         {
-            values[pwIdx] = inletPressure_;
-            values[snIdx] = 1.0;
+            values[pIdx] = inletPressure_;
+            values[sIdx] = 1.0;
         }
         else if (isOutletPore_(scv))
         {
-            values[pwIdx] = inletPressure_;
-            values[snIdx] = 0.0;
+            values[pIdx] = inletPressure_;
+            values[sIdx] = 0.0;
         }
 
 #if !ISOTHERMAL
@@ -191,14 +191,14 @@ public:
     PrimaryVariables initial(const Vertex& vertex) const
     {
         PrimaryVariables values(0.0);
-        values[pwIdx] = inletPressure_;
+        values[pIdx] = inletPressure_;
 
         // get global index of pore
         const auto dofIdxGlobal = this->gridGeometry().vertexMapper().index(vertex);
         if (isInletPore_(dofIdxGlobal))
-            values[snIdx] = 1.0;
+            values[sIdx] = 1.0;
         else
-            values[snIdx] = 0.0;
+            values[sIdx] = 0.0;
 
 #if !ISOTHERMAL
         values[temperatureIdx] = 273.15 + 10;
