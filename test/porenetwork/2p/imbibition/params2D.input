@@ -50,8 +50,8 @@ Verbosity = true
 
 [SpatialParams]
 RegularizeLowSw = true
-RegularizeHighSw = false
+RegularizeHighSw = true
 HighSwRegularizationMethod = Spline
-RegularizationHighSw = 1.0
+RegularizationHighSw = 0.99
 RegularizationLowSw = 0.1
 

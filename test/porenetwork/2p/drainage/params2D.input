@@ -48,4 +48,11 @@ Verbosity = true
 #AccuracyCriterion = 0.99
 
 [SpatialParams]
+RegularizeLowSw = true
+RegularizeHighSw = true
 HighSwRegularizationMethod = Spline
+RegularizationHighSw = 0.99
+RegularizationLowSw = 0.1
+
+[Regularization]
+IntervalPc = 0.0
