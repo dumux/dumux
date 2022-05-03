@@ -1,6 +1,6 @@
 [Grid]
 UpperRight = 1 1
-Cells = 40 40
+Cells = 10 10
 Overlap = 1
 # when refining grid make sure overlap stays 1 (only 1 currently works)
 KeepPhysicalOverlap = true
@@ -11,6 +11,7 @@ Name = test_donea
 EnableGravity = false
 EnableInertiaTerms = false
 UseNeumann = true
+PrintErrors = true
 
 [Component]
 LiquidDensity = 1.0
