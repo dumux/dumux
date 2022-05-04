@@ -36,10 +36,10 @@
 //! Formatting tools in the style of std::format (C++20)
 namespace Dumux::Fmt {
 
-using fmt::format;
-using fmt::format_to;
-using fmt::format_to_n;
-using fmt::formatted_size;
+using Dumux::Detail::fmt::format;
+using Dumux::Detail::fmt::format_to;
+using Dumux::Detail::fmt::format_to_n;
+using Dumux::Detail::fmt::formatted_size;
 
 } // end namespace Dumux::Fmt
 
