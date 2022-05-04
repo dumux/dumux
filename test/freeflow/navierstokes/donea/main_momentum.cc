@@ -77,7 +77,12 @@ void printErrors(std::shared_ptr<Problem> problem,
         logFile << Fmt::format("{:.5e}", errors.time()) << ", ";
         logFile << problem->gridGeometry().numDofs() << ", ";
         logFile << std::pow(errors.totalVolume() / problem->gridGeometry().numDofs(), 1.0/dim);
-        writeError_(logFile, errors.l2Absolute());
+        const auto& componentErrors = errors.l2Absolute();
+        // Calculate L2-error for velocity field
+        Dune::FieldVector<double, 1> velError(0.0);
+        velError[0] = std::sqrt(componentErrors * componentErrors);
+
+        writeError_(logFile, velError);
         //writeError_(logFile, errors.l2Relative());
         //writeError_(logFile, errors.lInfAbsolute());
         //writeError_(logFile, errors.lInfRelative());
