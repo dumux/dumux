@@ -21,6 +21,8 @@ Installation
 Have a look at the [installation guide][3] or use the [DuMu<sup>x</sup> handbook][4],
 Chapter 2.
 
+* Install script testing pipeline: [![install script test pipeline](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-test-installation/badges/main/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-test-installation/-/pipelines?page=1&scope=all&ref=main)
+
 Documentation
 ==============
 
