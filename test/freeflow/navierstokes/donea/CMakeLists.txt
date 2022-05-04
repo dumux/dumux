@@ -1,5 +1,5 @@
 add_input_file_links()
-dune_symlink_to_source_files(FILES grids)
+dune_symlink_to_source_files(FILES grids run_simulations.py)
 
 # tests with staggered
 dumux_add_test(NAME test_ff_stokes_donea_momentum
