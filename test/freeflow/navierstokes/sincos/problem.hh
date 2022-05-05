@@ -76,6 +76,16 @@ public:
         useNeumann_ = getParam<bool>("Problem.UseNeumann", false);
     }
 
+    SincosTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry), time_(0.0)
+    {
+        isStationary_ = getParam<bool>("Problem.IsStationary");
+        rho_ = getParam<Scalar>("Component.LiquidDensity");
+        Scalar nu = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
+        mu_ = rho_*nu; // dynamic viscosity
+        useNeumann_ = getParam<bool>("Problem.UseNeumann", false);
+    }
+
     /*!
      * \brief Return the sources within the domain.
      *
@@ -306,6 +316,15 @@ public:
     {
         time_ = time;
     }
+
+    Scalar pressureAtPos(const GlobalPosition& globalPos) const
+    { return p_(globalPos[0],globalPos[1],time_); }
+
+    Scalar densityAtPos(const GlobalPosition& globalPos) const
+    { return rho_; }
+
+    Scalar effectiveViscosityAtPos(const GlobalPosition& globalPos) const
+    { return mu_; }
 
 private:
     Scalar f_(Scalar t) const
