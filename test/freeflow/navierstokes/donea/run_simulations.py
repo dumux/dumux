@@ -41,4 +41,4 @@ if __name__ == "__main__":
                   ["unsym", ["-FreeFlow.EnableUnsymmetrizedVelocityGradient", "true"]]
                  ]
 
-    runTestsAndPlotResults(testPrefix, executables, grids, methods, numRefinements)
+    runTestsAndPlotResults(testPrefix, "params.input", executables, grids, methods, numRefinements)
