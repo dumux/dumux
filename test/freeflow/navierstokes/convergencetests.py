@@ -94,24 +94,24 @@ def compile(exeName):
     subprocess.run(["make", exeName], check=True)
 
 
-def runConvergenceTest(exeName, outputName, numRefinements=5, extraArgs=[]):
+def runConvergenceTest(exeName, outputName, paramsFile, numRefinements=5, extraArgs=[]):
     for i in range(numRefinements):
         baseCall = [
-            "./" + exeName, "params.input",
+            "./" + exeName, paramsFile,
             "-Grid.Refinement", str(i),
             "-Vtk.OutputName", str(outputName)
         ] + extraArgs
         subprocess.run(" ".join(str(x) for x in baseCall), shell=True, executable='/bin/bash')
 
 def runConvergenceTestAndMoveToFolder(
-    exeName, folderName, outputName, numRefinements=5, extraArgs=[]
+    exeName, folderName, outputName, paramsFile, numRefinements=5, extraArgs=[]
 ):
     os.makedirs(folderName, exist_ok=True)
-    runConvergenceTest(exeName, outputName, numRefinements, extraArgs)
+    runConvergenceTest(exeName, outputName, paramsFile, numRefinements, extraArgs)
     moveResultsToSubFolder(folderName)
 
 def runTestsAndPlotResults(
-    testPrefix, executables, grids, methods, numRefinements
+    testPrefix, paramsFile, executables, grids, methods, numRefinements
 ):
     removePreviousResults()
 
@@ -130,7 +130,7 @@ def runTestsAndPlotResults(
                 outputName = folderName + "-" + method[0]
                 extraArgs = grid[1] + method[1]
                 runConvergenceTestAndMoveToFolder(
-                    exe, folderName, outputName, numRefinements, extraArgs
+                    exe, folderName, outputName, paramsFile, numRefinements, extraArgs
                 )
                 fileName = folderName + "/" + "errors.csv"
                 plotResultsFromSubFolder(fileName, 3, method[0])

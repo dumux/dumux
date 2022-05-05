@@ -1,25 +1,21 @@
 [Grid]
 LowerLeft = -0.5 -0.5
 UpperRight = 2 1.5
-Cells = 50 50
+Cells = 10 10
 
 [Problem]
 Name = test_kovasznay
 EnableGravity = false
-PrintErrors = false
+PrintErrors = true
 EnableInertiaTerms = true
 
 [Component]
 LiquidDensity = 1
-LiquidKinematicViscosity = 0.025
+LiquidKinematicViscosity = 1
 
 [ Newton ]
 MaxSteps = 10
 MaxRelativeShift = 1e-5
-
-[LinearSolver]
-ResidualReduction = 1e-5
-Preconditioner.Iterations = 3
 
 [Vtk]
 WriteFaceData = false

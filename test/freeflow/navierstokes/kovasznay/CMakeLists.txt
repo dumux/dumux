@@ -54,7 +54,7 @@ dumux_add_test(NAME test_ff_navierstokes_kovasznay_momentum_diamond_quad
                COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredDiamondModel
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_kovasznay_momentum_diamond_quad
-               CMD_ARGS params.input)
+               CMD_ARGS params_momentum.input)
 
 dumux_add_test(NAME test_ff_navierstokes_kovasznay_momentum_diamond_simplex
                SOURCES main_momentum.cc
@@ -64,7 +64,7 @@ dumux_add_test(NAME test_ff_navierstokes_kovasznay_momentum_diamond_simplex
                COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredDiamondModel
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_kovasznay_momentum_diamond_simplex
-               CMD_ARGS params.input)
+               CMD_ARGS params_momentum.input)
 
 dumux_add_test(NAME test_ff_navierstokes_kovasznay_momentum_staggered_quad
                SOURCES main_momentum.cc
@@ -74,7 +74,7 @@ dumux_add_test(NAME test_ff_navierstokes_kovasznay_momentum_staggered_quad
                COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredStaggeredModel
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentum
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_kovasznay_momentum_staggered_quad
-               CMD_ARGS params.input)
+               CMD_ARGS params_momentum.input)
 
 
-dune_symlink_to_source_files(FILES "params.input" "run_simulations.py")
+dune_symlink_to_source_files(FILES "params.input" "params_momentum.input" "run_simulations.py")
