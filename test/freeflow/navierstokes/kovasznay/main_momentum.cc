@@ -73,10 +73,14 @@ void printErrors(std::shared_ptr<Problem> problem,
         NavierStokesTest::ErrorsSubProblem errors(problem, x);
 
         std::ofstream logFile("errors.csv", std::ios::app);
+        auto totalVolume = errors.totalVolume();
+        // For the staggered scheme, the control volumes are overlapping
+        if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::fcstaggered)
+            totalVolume /= dim;
 
         logFile << Fmt::format("{:.5e}", errors.time()) << ", ";
         logFile << problem->gridGeometry().numDofs() << ", ";
-        logFile << std::pow(errors.totalVolume() / problem->gridGeometry().numDofs(), 1.0/dim);
+        logFile << std::pow(totalVolume / problem->gridGeometry().numDofs(), 1.0/dim);
         const auto& componentErrors = errors.l2Absolute();
         // Calculate L2-error for velocity field
         Dune::FieldVector<double, 1> velError(0.0);
