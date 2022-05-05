@@ -29,16 +29,23 @@ if __name__ == "__main__":
 
     numRefinements = int(args["num_refinements"])
 
-    testPrefix = "kovasznay-momentum"
-    executables = ["test_ff_navierstokes_kovasznay_momentum_diamond_simplex", "test_ff_navierstokes_kovasznay_momentum_diamond_quad"]
-    grids =    [
-                [ ["simplex-structured", []], ["simplex-unstructured", ["-Grid.File ../donea/grids/unstructured_simplex.msh"]] ],
-                [ ["quad-structured", []],    ["quad-unstructured",    ["-Grid.File ../donea/grids/unstructured_quad.msh"   ]] ]
+    testNames = ["kovasznay-momentum-simplex-structured",
+                 "kovasznay-momentum-simplex-unstructured",
+                 "kovasznay-momentum-quad-structured",
+                 "kovasznay-momentum-quad-unstructured"]
+
+    testRuns = [
+                [ ["test_ff_navierstokes_kovasznay_momentum_diamond_simplex", []] ],
+                [ ["test_ff_navierstokes_kovasznay_momentum_diamond_simplex", ["-Grid.File ../donea/grids/unstructured_simplex.msh"]] ],
+                [ ["test_ff_navierstokes_kovasznay_momentum_diamond_quad", []], ["test_ff_navierstokes_kovasznay_momentum_staggered_quad", []] ],
+                [ ["test_ff_navierstokes_kovasznay_momentum_diamond_quad", ["-Grid.File ../donea/grids/unstructured_quad.msh"   ]] ]
                ]
 
-    methods =    [
-                  ["weak-sym", []],
-                  ["unsym", ["-FreeFlow.EnableUnsymmetrizedVelocityGradient", "true"]]
-                 ]
+    subRuns = [
+                [ [ ["weak-sym", []], ["unsym", ["-FreeFlow.EnableUnsymmetrizedVelocityGradient", "true"]] ] ],
+                [ [ ["weak-sym", []], ["unsym", ["-FreeFlow.EnableUnsymmetrizedVelocityGradient", "true"]] ] ],
+                [ [ ["weak-sym", []], ["unsym", ["-FreeFlow.EnableUnsymmetrizedVelocityGradient", "true"]] ], [ ["staggered", []] ] ],
+                [ [ ["weak-sym", []], ["unsym", ["-FreeFlow.EnableUnsymmetrizedVelocityGradient", "true"]] ] ]
+              ]
 
-    runTestsAndPlotResults(testPrefix, "params_momentum.input", executables, grids, methods, numRefinements)
+    runTestsAndPlotResults(testNames, "params_momentum.input", testRuns, subRuns, numRefinements)
