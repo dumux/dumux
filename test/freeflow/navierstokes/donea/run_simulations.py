@@ -29,16 +29,23 @@ if __name__ == "__main__":
 
     numRefinements = int(args["num_refinements"])
 
-    testPrefix = "donea-momentum"
-    executables = ["test_ff_stokes_donea_momentum_diamond_simplex", "test_ff_stokes_donea_momentum_diamond_quad"]
-    grids =    [
-                [ ["simplex-structured", []], ["simplex-unstructured", ["-Grid.File ./grids/unstructured_simplex.msh"]] ],
-                [ ["quad-structured", []],    ["quad-unstructured",    ["-Grid.File ./grids/unstructured_quad.msh"   ]] ]
+    testNames = ["donea-momentum-simplex-structured",
+                 "donea-momentum-simplex-unstructured",
+                 "donea-momentum-quad-structured",
+                 "donea-momentum-quad-unstructured"]
+
+    testRuns = [
+                [ ["test_ff_stokes_donea_momentum_diamond_simplex", []] ],
+                [ ["test_ff_stokes_donea_momentum_diamond_simplex", ["-Grid.File ../donea/grids/unstructured_simplex.msh"]] ],
+                [ ["test_ff_stokes_donea_momentum_diamond_quad", []], ["test_ff_stokes_donea_momentum_staggered_quad", []] ],
+                [ ["test_ff_stokes_donea_momentum_diamond_quad", ["-Grid.File ../donea/grids/unstructured_quad.msh"   ]] ]
                ]
 
-    methods =    [
-                  ["weak-sym", []],
-                  ["unsym", ["-FreeFlow.EnableUnsymmetrizedVelocityGradient", "true"]]
-                 ]
+    subRuns = [
+                [ [ ["weak-sym", []], ["unsym", ["-FreeFlow.EnableUnsymmetrizedVelocityGradient", "true"]] ] ],
+                [ [ ["weak-sym", []], ["unsym", ["-FreeFlow.EnableUnsymmetrizedVelocityGradient", "true"]] ] ],
+                [ [ ["weak-sym", []], ["unsym", ["-FreeFlow.EnableUnsymmetrizedVelocityGradient", "true"]] ], [ ["staggered", []] ] ],
+                [ [ ["weak-sym", []], ["unsym", ["-FreeFlow.EnableUnsymmetrizedVelocityGradient", "true"]] ] ]
+              ]
 
-    runTestsAndPlotResults(testPrefix, "params.input", executables, grids, methods, numRefinements)
+    runTestsAndPlotResults(testNames, "params.input", testRuns, subRuns, numRefinements)
