@@ -27,9 +27,6 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/numeqvector.hh>
-
-#include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
 
 namespace Dumux {
@@ -47,23 +44,37 @@ class KovasznayTestProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
 
-    using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
+    using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using NumEqVector = typename ParentType::NumEqVector;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
+    using PrimaryVariables = typename ParentType::PrimaryVariables;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
-    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+    static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
+    using Element = typename FVElementGeometry::Element;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    static constexpr auto upwindSchemeOrder = getPropValue<TypeTag, Properties::UpwindSchemeOrder>();
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+
+    KovasznayTestProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
+    : ParentType(gridGeometry, couplingManager)
+    {
+        //std::cout<< "upwindSchemeOrder is: " << GridGeometry::upwindStencilOrder() << "\n";
+        rho_ = getParam<Scalar>("Component.LiquidDensity", 1.0);
+        kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
+        Scalar reynoldsNumber = 1.0 / kinematicViscosity_;
+        lambda_ = 0.5 * reynoldsNumber
+                        - std::sqrt(reynoldsNumber * reynoldsNumber * 0.25 + 4.0 * M_PI * M_PI);
+    }
+
 
     KovasznayTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
@@ -91,42 +102,10 @@ public:
     {
         BoundaryTypes values;
 
-        // set Dirichlet values for the velocity everywhere
-        values.setDirichlet(Indices::velocityXIdx);
-        values.setDirichlet(Indices::velocityYIdx);
+        // set Dirichlet values everywhere
+        values.setAllDirichlet();
 
         return values;
-    }
-
-    /*!
-     * \brief Returns whether a fixed Dirichlet value shall be used at a given cell.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param scv The sub control volume
-     * \param pvIdx The primary variable index in the solution vector
-     */
-    bool isDirichletCell(const Element& element,
-                         const FVElementGeometry& fvGeometry,
-                         const SubControlVolume& scv,
-                         int pvIdx) const
-    {
-        if constexpr (!ParentType::isMomentumProblem())
-        {
-            // set fixed pressure in all cells at the left boundary
-            auto isAtLeftBoundary = [&](const FVElementGeometry& fvGeometry)
-            {
-                if (fvGeometry.hasBoundaryScvf())
-                {
-                    for (const auto& scvf : scvfs(fvGeometry))
-                        if (scvf.boundary() && scvf.center()[0] < this->gridGeometry().bBoxMin()[0] + eps_)
-                            return true;
-                }
-                return false;
-            };
-            return (isAtLeftBoundary(fvGeometry) && pvIdx == Indices::pressureIdx);
-        }
-        return false;
     }
 
    /*!
@@ -140,6 +119,26 @@ public:
         return analyticalSolution(globalPos);
     }
 
+    /*!
+     * \brief Evaluates the boundary conditions for a Neumann control volume.
+     *
+     * \param element The element for which the Neumann boundary condition is set
+     * \param fvGeometry The fvGeometry
+     * \param elemVolVars The element volume variables
+     * \param elemFaceVars The element face variables
+     * \param scvf The boundary sub control volume face
+     */
+    template<class ElementVolumeVariables, class ElementFluxVariablesCache>
+    NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElementFluxVariablesCache& elemFluxVarsCache,
+                        const SubControlVolumeFace& scvf) const
+    {
+        NumEqVector values(0.0);
+        return values;
+    }
+
    /*!
      * \brief Returns the analytical solution of the problem at a given position.
      *
@@ -151,7 +150,7 @@ public:
         Scalar x = globalPos[0];
         Scalar y = globalPos[1];
 
-        PrimaryVariables values;
+        PrimaryVariables  values;
         if constexpr (ParentType::isMomentumProblem())
         {
             values[Indices::velocityXIdx] = 1.0 - std::exp(lambda_ * x) * std::cos(2.0 * M_PI * y);
@@ -185,7 +184,7 @@ public:
     { return rho_ * 0.5 * (1.0 - std::exp(2.0 * lambda_ * globalPos[0])); }
 
     Scalar densityAtPos(const GlobalPosition& globalPos) const
-    { return 1.0; }
+    { return rho_; }
 
     Scalar effectiveViscosityAtPos(const GlobalPosition& globalPos) const
     { return kinematicViscosity_; }
