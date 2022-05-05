@@ -1,12 +1,11 @@
 [Grid]
-File = ./grids/cube3d.msh
-Overlap = 1
-# when refining grid make sure overlap stays 1 (only 1 currently works)
-KeepPhysicalOverlap = true
-Refinement = 0
+#File = ./grids/cube3d.msh
+LowerLeft = 0 0 0
+UpperRight = 1 1 1
+Cells = 5 5 5
 
 [Problem]
-Name = test_donea # name passed to the output routines
+Name = test_trigonometric # name passed to the output routines
 EnableGravity = false
 EnableInertiaTerms = false
 PrintErrors = true

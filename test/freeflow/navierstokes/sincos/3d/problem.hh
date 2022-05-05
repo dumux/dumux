@@ -35,7 +35,7 @@ namespace Dumux {
  * \brief  Test problem for the staggered grid.
  */
 template <class TypeTag>
-class TrignometricTestProblem : public NavierStokesProblem<TypeTag>
+class TrigonometricTestProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
 
@@ -59,13 +59,13 @@ class TrignometricTestProblem : public NavierStokesProblem<TypeTag>
 public:
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    TrignometricTestProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
+    TrigonometricTestProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(gridGeometry, couplingManager)
     {
         mu_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
     }
 
-    TrignometricTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    TrigonometricTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
         mu_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
@@ -212,7 +212,7 @@ public:
     { return 1.0; }
 
     Scalar effectiveViscosityAtPos(const GlobalPosition& globalPos) const
-    { return 1.0; }
+    { return mu_; }
 
     //! Enable internal Dirichlet constraints
     static constexpr bool enableInternalDirichletConstraints()
