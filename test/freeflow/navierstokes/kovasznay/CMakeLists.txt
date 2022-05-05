@@ -43,4 +43,27 @@ dumux_add_test(NAME test_ff_navierstokes_kovasznay_higherorder_staircase
                              -Flux.TvdApproach Hou
                              -Flux.DifferencingScheme Vanleer")
 
-dune_symlink_to_source_files(FILES "params.input")
+
+# tests with diamond scheme
+# Stokes momentum only
+dumux_add_test(NAME test_ff_navierstokes_kovasznay_momentum_diamond_quad
+               SOURCES main_momentum.cc
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD dune-alugrid_FOUND
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
+               COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredDiamondModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_kovasznay_momentum_diamond_quad
+               CMD_ARGS params.input)
+
+dumux_add_test(NAME test_ff_navierstokes_kovasznay_momentum_diamond_simplex
+               SOURCES main_momentum.cc
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD dune-alugrid_FOUND
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::conforming>
+               COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredDiamondModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_kovasznay_momentum_diamond_simplex
+               CMD_ARGS params.input)
+
+dune_symlink_to_source_files(FILES "params.input" "run_simulations.py")
