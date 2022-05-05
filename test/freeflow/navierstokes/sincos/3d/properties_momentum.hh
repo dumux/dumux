@@ -21,8 +21,8 @@
  * \ingroup NavierStokesTests
  * \brief Test for the staggered grid (Navier-)Stokes model with analytical solution.
  */
-#ifndef DUMUX_DONEA_TEST_PROPERTIES_MOMENTUM_HH
-#define DUMUX_DONEA_TEST_PROPERTIES_MOMENTUM_HH
+#ifndef DUMUX_TRIGONOMETRIC_TEST_PROPERTIES_MOMENTUM_HH
+#define DUMUX_TRIGONOMETRIC_TEST_PROPERTIES_MOMENTUM_HH
 
 #ifndef ENABLECACHING
 #define ENABLECACHING true
@@ -59,26 +59,26 @@ namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
-struct TrignometricTestMomentum { using InheritsFrom = std::tuple<NAVIER_STOKES_MODEL, DISCRETIZATION_MODEL>; };
+struct TrigonometricTestMomentum { using InheritsFrom = std::tuple<NAVIER_STOKES_MODEL, DISCRETIZATION_MODEL>; };
 } // end namespace TTag
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::TrignometricTestMomentum>
+struct Problem<TypeTag, TTag::TrigonometricTestMomentum>
 {
-    using type = Dumux::TrignometricTestProblem<TypeTag>;
+    using type = Dumux::TrigonometricTestProblem<TypeTag>;
 };
 
 // the fluid system
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::TrignometricTestMomentum>
+struct FluidSystem<TypeTag, TTag::TrigonometricTestMomentum>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
 template<class TypeTag>
-struct FluxVariablesCache<TypeTag, TTag::TrignometricTestMomentum>
+struct FluxVariablesCache<TypeTag, TTag::TrigonometricTestMomentum>
 {
 private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -93,14 +93,14 @@ public:
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::TrignometricTestMomentum> { using type = GRIDTYPE; };
+struct Grid<TypeTag, TTag::TrigonometricTestMomentum> { using type = GRIDTYPE; };
 
 template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::TrignometricTestMomentum> { static constexpr bool value = ENABLECACHING; };
+struct EnableGridGeometryCache<TypeTag, TTag::TrigonometricTestMomentum> { static constexpr bool value = ENABLECACHING; };
 template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::TrignometricTestMomentum> { static constexpr bool value = ENABLECACHING; };
+struct EnableGridFluxVariablesCache<TypeTag, TTag::TrigonometricTestMomentum> { static constexpr bool value = ENABLECACHING; };
 template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::TrignometricTestMomentum> { static constexpr bool value = ENABLECACHING; };
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::TrigonometricTestMomentum> { static constexpr bool value = ENABLECACHING; };
 
 } // end namespace Dumux::Properties
 

@@ -133,8 +133,8 @@ int main(int argc, char** argv)
     using namespace Dumux;
 
     // define the type tags for this problem
-    using MomentumTypeTag = Properties::TTag::TrignometricTestMomentum;
-    using MassTypeTag = Properties::TTag::TrignometricTestMass;
+    using MomentumTypeTag = Properties::TTag::TrigonometricTestMomentum;
+    using MassTypeTag = Properties::TTag::TrigonometricTestMass;
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
