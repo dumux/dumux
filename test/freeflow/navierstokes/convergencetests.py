@@ -111,30 +111,29 @@ def runConvergenceTestAndMoveToFolder(
     moveResultsToSubFolder(folderName)
 
 def runTestsAndPlotResults(
-    testPrefix, paramsFile, executables, grids, methods, numRefinements
+    testNames, paramsFile, testRuns, subRuns, numRefinements
 ):
     removePreviousResults()
-
-    for k in range(len(executables)):
-        exe = executables[k]
-        compile(exe)
-        gridsExe = grids[k]
-        for i in range(len(gridsExe)):
-            grid = gridsExe[i]
-            initializePlot()
-            # weak symmetry
-            folderName = testPrefix + "-" + grid[0]
-
-            for j in range(len(methods)):
-                method = methods[j]
-                outputName = folderName + "-" + method[0]
-                extraArgs = grid[1] + method[1]
+    for l in range(len(testNames)):
+        initializePlot()
+        testName = testNames[l]
+        exes = testRuns[l]
+        for k in range(len(exes)):
+            exe = exes[k]
+            compile(exe[0])
+            testargs = exe[1]
+            folderName = testName
+            subRun = subRuns[l][k]
+            for j in range(len(subRun)):
+                run = subRun[j]
+                outputName = folderName + "-" + run[0]
+                extraArgs = testargs + run[1]
                 runConvergenceTestAndMoveToFolder(
-                    exe, folderName, outputName, paramsFile, numRefinements, extraArgs
+                    exe[0], folderName, outputName, paramsFile, numRefinements, extraArgs
                 )
                 fileName = folderName + "/" + "errors.csv"
-                plotResultsFromSubFolder(fileName, 3, method[0])
+                plotResultsFromSubFolder(fileName, 3, run[0])
 
-            plotReferenceCurve(fileName, 3)
-            setAxesLabels("$h_\mathrm{ref}$", "$e_{v}$")
-            savePlot(folderName + "/" + "vel-error-" + folderName + ".pdf")
+        plotReferenceCurve(fileName, 3)
+        setAxesLabels("$h_\mathrm{ref}$", "$e_{v}$")
+        savePlot(folderName + "/" + "vel-error-" + folderName + ".pdf")
