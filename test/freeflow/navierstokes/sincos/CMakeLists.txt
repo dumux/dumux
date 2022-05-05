@@ -1,5 +1,6 @@
 dune_symlink_to_source_files(FILES "convergencetest.py")
-dune_symlink_to_source_files(FILES "params.input")
+dune_symlink_to_source_files(FILES "params.input" "params_momentum.input")
+dune_symlink_to_source_files(FILES "run_simulations.py")
 
 add_subdirectory(3d)
 
@@ -51,3 +52,35 @@ dumux_add_test(NAME test_ff_navierstokes_sincos_uzawapreconditioner_factory
                              -Problem.Name test_ff_navierstokes_sincos_uzawapreconditioner
                              -Problem.IsStationary false
                              -Component.LiquidKinematicViscosity 0.1")
+
+# tests with diamond scheme
+# Stokes momentum only
+dumux_add_test(NAME test_ff_navierstokes_sincos_momentum_diamond_quad
+               SOURCES main_momentum.cc
+               LABELS freeflow navierstokes sincos
+               CMAKE_GUARD dune-alugrid_FOUND
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
+               COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredDiamondModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_sincos_momentum_diamond_quad
+               CMD_ARGS params_momentum.input)
+
+dumux_add_test(NAME test_ff_navierstokes_sincos_momentum_diamond_simplex
+               SOURCES main_momentum.cc
+               LABELS freeflow navierstokes sincos
+               CMAKE_GUARD dune-alugrid_FOUND
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::conforming>
+               COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredDiamondModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_sincos_momentum_diamond_simplex
+               CMD_ARGS params_momentum.input)
+
+dumux_add_test(NAME test_ff_navierstokes_sincos_momentum_staggered_quad
+               SOURCES main_momentum.cc
+               LABELS freeflow navierstokes sincos
+               CMAKE_GUARD dune-alugrid_FOUND
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
+               COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredStaggeredModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentum
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_sincos_momentum_staggered_quad
+               CMD_ARGS params_momentum.input)
