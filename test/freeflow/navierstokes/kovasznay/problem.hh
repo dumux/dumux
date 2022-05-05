@@ -68,7 +68,7 @@ public:
     KovasznayTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
-        std::cout<< "upwindSchemeOrder is: " << GridGeometry::upwindStencilOrder() << "\n";
+        //std::cout<< "upwindSchemeOrder is: " << GridGeometry::upwindStencilOrder() << "\n";
         rho_ = getParam<Scalar>("Component.LiquidDensity", 1.0);
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
         Scalar reynoldsNumber = 1.0 / kinematicViscosity_;
@@ -111,18 +111,22 @@ public:
                          const SubControlVolume& scv,
                          int pvIdx) const
     {
-        // set fixed pressure in all cells at the left boundary
-        auto isAtLeftBoundary = [&](const FVElementGeometry& fvGeometry)
+        if constexpr (!ParentType::isMomentumProblem())
         {
-            if (fvGeometry.hasBoundaryScvf())
+            // set fixed pressure in all cells at the left boundary
+            auto isAtLeftBoundary = [&](const FVElementGeometry& fvGeometry)
             {
-                for (const auto& scvf : scvfs(fvGeometry))
-                    if (scvf.boundary() && scvf.center()[0] < this->gridGeometry().bBoxMin()[0] + eps_)
-                        return true;
-            }
-            return false;
-        };
-        return (isAtLeftBoundary(fvGeometry) && pvIdx == Indices::pressureIdx);
+                if (fvGeometry.hasBoundaryScvf())
+                {
+                    for (const auto& scvf : scvfs(fvGeometry))
+                        if (scvf.boundary() && scvf.center()[0] < this->gridGeometry().bBoxMin()[0] + eps_)
+                            return true;
+                }
+                return false;
+            };
+            return (isAtLeftBoundary(fvGeometry) && pvIdx == Indices::pressureIdx);
+        }
+        return false;
     }
 
    /*!
@@ -148,9 +152,13 @@ public:
         Scalar y = globalPos[1];
 
         PrimaryVariables values;
-        values[Indices::pressureIdx] = rho_ * 0.5 * (1.0 - std::exp(2.0 * lambda_ * x));
-        values[Indices::velocityXIdx] = 1.0 - std::exp(lambda_ * x) * std::cos(2.0 * M_PI * y);
-        values[Indices::velocityYIdx] = 0.5 * lambda_ / M_PI * std::exp(lambda_ * x) * std::sin(2.0 * M_PI * y);
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            values[Indices::velocityXIdx] = 1.0 - std::exp(lambda_ * x) * std::cos(2.0 * M_PI * y);
+            values[Indices::velocityYIdx] = 0.5 * lambda_ / M_PI * std::exp(lambda_ * x) * std::sin(2.0 * M_PI * y);
+        }
+        else
+            values[Indices::pressureIdx] = pressureAtPos(globalPos);
 
         return values;
     }
@@ -169,13 +177,18 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values;
-        values[Indices::pressureIdx] = 0.0;
-        values[Indices::velocityXIdx] = 0.0;
-        values[Indices::velocityYIdx] = 0.0;
-
-        return values;
+        return analyticalSolution(globalPos, 0);
     }
+
+    //! TODO should these be spatial params?
+    Scalar pressureAtPos(const GlobalPosition& globalPos) const
+    { return rho_ * 0.5 * (1.0 - std::exp(2.0 * lambda_ * globalPos[0])); }
+
+    Scalar densityAtPos(const GlobalPosition& globalPos) const
+    { return 1.0; }
+
+    Scalar effectiveViscosityAtPos(const GlobalPosition& globalPos) const
+    { return kinematicViscosity_; }
 
 private:
     static constexpr Scalar eps_=1e-6;
