@@ -83,6 +83,14 @@ public:
         interpolateExactVelocity_ = getParam<bool>("Problem.InterpolateExactVelocity", false);
     }
 
+    AngeliTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
+    {
+        kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
+        useNeumann_ = getParam<bool>("Problem.UseNeumann", false);
+        interpolateExactVelocity_ = getParam<bool>("Problem.InterpolateExactVelocity", false);
+    }
+
     /*!
      * \name Boundary conditions
      */

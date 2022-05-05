@@ -10,7 +10,7 @@ Cells = 50 50
 [Problem]
 Name = test_angeli
 EnableGravity = false
-PrintErrors = false
+PrintErrors = true
 EnableInertiaTerms = true
 
 [Component]
