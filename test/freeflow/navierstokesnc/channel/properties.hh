@@ -154,8 +154,15 @@ public:
     {}
 };
 
+// Select the fluid system
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::ChannelNCTest> { using type = ConstantFluidSystem<TypeTag>; };
+struct FluidSystem<TypeTag, TTag::ChannelNCTest>
+{
+    using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
+    static constexpr int phaseIdx = H2OAir::liquidPhaseIdx;
+    using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
+};
+
 
 template<class TypeTag>
 struct ReplaceCompEqIdx<TypeTag, TTag::ChannelNCTest> { static constexpr int value = 0; };

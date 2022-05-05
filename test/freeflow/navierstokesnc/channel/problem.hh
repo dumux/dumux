@@ -32,7 +32,7 @@
 #include <dumux/freeflow/navierstokes/scalarfluxhelper.hh>
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
-#include <dumux/freeflow/navierstokes/problem.hh>
+#include <dumux/freeflow/navierstokes/massproblem.hh>
 
 namespace Dumux {
 
@@ -69,7 +69,6 @@ class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
-    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
@@ -78,13 +77,23 @@ class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
     static constexpr auto compIdx = 1;
 
 public:
-    ChannelNCTestProblem(std::shared_ptr<const GridGeometry> gridGeometry,
-                         std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(gridGeometry, couplingManager)
+    ChannelNCTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     , eps_(1e-6)
     {
         FluidSystem::init();
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
+    }
+
+    VelocityVector faceVelocity(const Element& element,
+                                const FVElementGeometry& fvGeometry,
+                                const SubControlVolumeFace& scvf) const
+    {
+        const Scalar velocity = oldStaggeredVelocity_[scvf.index()];
+        auto faceNormal = scvf.unitOuterNormal();
+        for (int i=0; i<faceNormal.size(); ++i)
+            faceNormal[i] = std::abs(faceNormal[i]);
+        return velocity * faceNormal;
     }
 
     /*!
@@ -107,25 +116,21 @@ public:
     {
         BoundaryTypes values;
 
-        if constexpr (ParentType::isMomentumProblem())
-        {
-            values.setDirichlet(Indices::velocityXIdx);
-            values.setDirichlet(Indices::velocityYIdx);
-
-            if (isOutlet_(globalPos))
-                values.setAllNeumann();
-        }
-        else
-        {
+        if (!isInlet_(globalPos))
             values.setAllNeumann();
 
-            if (isInlet_(globalPos))
-            {
-                values.setDirichlet(Indices::pressureIdx);
-                values.setDirichlet(Indices::conti0EqIdx + compIdx);
-                if constexpr (isNonisothermal)
-                    values.setDirichlet(Indices::temperatureIdx);
-            }
+        if (isInlet_(globalPos))
+        {
+            values.setDirichlet(Indices::pressureIdx);
+            values.setDirichlet(Indices::conti0EqIdx + compIdx);
+            if constexpr (isNonisothermal)
+                values.setDirichlet(Indices::temperatureIdx);
+        }
+
+        if (isOutlet_(globalPos))
+        {
+            values.setDirichlet(Indices::pressureIdx);
+            values.setDirichlet(Indices::conti0EqIdx + compIdx);
         }
 
         return values;
@@ -141,31 +146,31 @@ public:
         const auto& globalPos = scvf.ipGlobal();
         DirichletValues values = initialAtPos(globalPos);
 
-        if constexpr (!ParentType::isMomentumProblem())
+        // give the system some time so that the pressure can equilibrate, then start the injection of the tracer
+        if (isInlet_(globalPos))
         {
-            // give the system some time so that the pressure can equilibrate, then start the injection of the tracer
-            if (isInlet_(globalPos))
+            //values[Indices::pressureIdx] = this->couplingManager().cellPressure(element, scvf);
+            values[Indices::pressureIdx] = oldStaggeredMass_[scvf.insideScvIdx()][0];
+
+            if (time() >= 10.0 || inletVelocity_  < eps_)
             {
-                values[Indices::pressureIdx] = this->couplingManager().cellPressure(element, scvf);
-
-                if (time() >= 10.0 || inletVelocity_  < eps_)
+                Scalar moleFracTransportedComp = 1e-3;
+                if constexpr (useMoles)
+                    values[Indices::conti0EqIdx+compIdx] = moleFracTransportedComp;
+                else
                 {
-                    Scalar moleFracTransportedComp = 1e-3;
-                    if constexpr (useMoles)
-                        values[Indices::conti0EqIdx+compIdx] = moleFracTransportedComp;
-                    else
-                    {
-                        Scalar averageMolarMassPhase = moleFracTransportedComp * FluidSystem::molarMass(compIdx)
-                                                   + (1. - moleFracTransportedComp)  * FluidSystem::molarMass(1-compIdx);
-                        values[Indices::conti0EqIdx+compIdx] = moleFracTransportedComp * FluidSystem::molarMass(compIdx)
-                                                / averageMolarMassPhase;
-                    }
-
-                if constexpr (isNonisothermal)
-                    values[Indices::temperatureIdx] = 293.15;
+                    Scalar averageMolarMassPhase = moleFracTransportedComp * FluidSystem::molarMass(compIdx)
+                                               + (1. - moleFracTransportedComp)  * FluidSystem::molarMass(1-compIdx);
+                    values[Indices::conti0EqIdx+compIdx] = moleFracTransportedComp * FluidSystem::molarMass(compIdx)
+                                            / averageMolarMassPhase;
                 }
+
+            if constexpr (isNonisothermal)
+                values[Indices::temperatureIdx] = 293.15;
             }
         }
+        //if (isOutlet_(globalPos))
+        //    values[Indices::pressureIdx] = 1.1e+5;
 
         return values;
     }
@@ -188,22 +193,12 @@ public:
     {
         BoundaryFluxes values(0.0);
 
-        if constexpr (ParentType::isMomentumProblem())
-        {
-            using FluxHelper = NavierStokesMomentumBoundaryFluxHelper;
-            values = FluxHelper::fixedPressureMomentumFlux(*this, fvGeometry, scvf,
-                                                           elemVolVars, elemFluxVarsCache,
-                                                           referencePressure(element, fvGeometry, scvf), true /*zeroNormalVelocityGradient*/);
-        }
-        else
-        {
-            const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
-            values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
+        const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
+        values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
 
-            using FluxHelper = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>;
-            if (isOutlet_(scvf.ipGlobal()))
-                values = FluxHelper::scalarOutflowFlux( *this, element, fvGeometry, scvf, elemVolVars);
-        }
+        using FluxHelper = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>;
+        if (isOutlet_(scvf.ipGlobal()))
+            values = FluxHelper::scalarOutflowFlux( *this, element, fvGeometry, scvf, elemVolVars);
 
         return values;
     }
@@ -217,17 +212,9 @@ public:
     {
         InitialValues values(0.0);
 
-        if constexpr (ParentType::isMomentumProblem())
-        {
-            // parabolic velocity profile
-            values[Indices::velocityXIdx] = parabolicProfile(globalPos[1], inletVelocity_);
-        }
-        else
-        {
-            values[Indices::pressureIdx] = 1.1e+5;
-            if constexpr (isNonisothermal)
-                values[Indices::temperatureIdx] = 283.15;
-        }
+        values[Indices::pressureIdx] = 1.1e+5;
+        if constexpr (isNonisothermal)
+            values[Indices::temperatureIdx] = 283.15;
 
         return values;
     }
@@ -253,7 +240,7 @@ public:
 
     //! Enable internal Dirichlet constraints
     static constexpr bool enableInternalDirichletConstraints()
-    { return !ParentType::isMomentumProblem(); }
+    { return false; }
 
     /*!
      * \brief Tag a degree of freedom to carry internal Dirichlet constraints.
@@ -268,6 +255,13 @@ public:
     std::bitset<DirichletValues::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
     {
         std::bitset<DirichletValues::dimension> values;
+        for (const auto& intersection : intersections(this->gridGeometry().gridView(), element))
+        {
+            const auto center = intersection.geometry().center();
+            if (intersection.boundary() && center[0]
+                    < this->gridGeometry().bBoxMin()[0] + eps_)
+                values.set(0);
+        }
         return values;
     }
 
@@ -277,7 +271,15 @@ public:
      * \param scv The sub-control volume
      */
     DirichletValues internalDirichlet(const Element& element, const SubControlVolume& scv) const
-    { return DirichletValues(1.1e5); }
+    //{ return DirichletValues(1.1e+5); }
+    { return DirichletValues(oldStaggeredMass_[scv.dofIndex()][0]); }
+
+    void setOldStaggered(Dune::FieldVector<Scalar, 5000> oldStaggeredVelocity,
+            Dune::FieldVector<Dune::FieldVector<Scalar, 2>, 1250> oldStaggeredMass)
+    {
+        oldStaggeredVelocity_ = oldStaggeredVelocity;
+        oldStaggeredMass_ = oldStaggeredMass;
+    }
 
 private:
     bool isInlet_(const GlobalPosition& globalPos) const
@@ -289,6 +291,8 @@ private:
     const Scalar eps_;
     Scalar inletVelocity_;
     TimeLoopPtr timeLoop_;
+    Dune::FieldVector<Scalar, 5000> oldStaggeredVelocity_;
+    Dune::FieldVector<Dune::FieldVector<Scalar, 2>, 1250> oldStaggeredMass_;
 };
 } // end namespace Dumux
 

@@ -36,8 +36,9 @@ dumux_add_test(NAME test_ff_stokes2c_advection
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
-                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes2c_advection-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c_advection-00009.vtu
+                             --files
+                             ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes2c_advection_reference-00002.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c_advection-00002.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c params_advection.input
                              -Problem.Name test_ff_stokes2c_advection")
 

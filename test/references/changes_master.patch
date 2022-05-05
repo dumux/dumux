@@ -1,0 +1,67 @@
+diff --git a/dumux/io/staggeredvtkoutputmodule.hh b/dumux/io/staggeredvtkoutputmodule.hh
+index 3435cfbb7..3a56d3825 100644
+--- a/dumux/io/staggeredvtkoutputmodule.hh
++++ b/dumux/io/staggeredvtkoutputmodule.hh
+@@ -96,7 +96,7 @@ public:
+                                                                 "Use StaggeredVtkOutputModule<GridVariables, decltype(sol)> when calling the constructor.");
+ 
+         // enable velocity output per default
+-        this->addVelocityOutput(std::make_shared<StaggeredFreeFlowVelocityOutput<GridVariables, SolutionVector>>(gridVariables, sol));
++        //this->addVelocityOutput(std::make_shared<StaggeredFreeFlowVelocityOutput<GridVariables, SolutionVector>>(gridVariables, sol));
+         writeFaceVars_ = getParamFromGroup<bool>(paramGroup, "Vtk.WriteFaceData", false);
+         coordinatesInitialized_ = false;
+     }
+diff --git a/test/freeflow/navierstokesnc/channel/main.cc b/test/freeflow/navierstokesnc/channel/main.cc
+index c60a13c49..bef541cde 100644
+--- a/test/freeflow/navierstokesnc/channel/main.cc
++++ b/test/freeflow/navierstokesnc/channel/main.cc
+@@ -125,12 +125,37 @@ int main(int argc, char** argv)
+     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
+     NewtonSolver nonLinearSolver(assembler, linearSolver);
+ 
++    std::ofstream fout;
++    int timestep = 0;
+     // time loop
+     timeLoop->start(); do
+     {
+         // solve the non-linear system with time step control
+         nonLinearSolver.solve(x, *timeLoop);
+ 
++        // write result to be used by new staggered
++        fout.open("old_velocity_" + std::to_string(timestep) + ".txt");
++        auto fvGeometry = localView(problem->gridGeometry());
++        auto elemFaceVars = localView(gridVariables->curGridFaceVars());
++        for (const auto& element : elements(problem->gridGeometry().gridView()))
++        {
++            fvGeometry.bind(element);
++            elemFaceVars.bindElement(element, fvGeometry, x);
++            for (const auto& scvf : scvfs(fvGeometry))
++            {
++               const Scalar velocity = elemFaceVars[scvf].velocitySelf();
++               fout << std::setprecision(20) << velocity << std::endl;
++            }
++        }
++        fout.close();
++        fout.open("old_mass_" + std::to_string(timestep) + ".txt");
++        for (const auto& entry : x[GridGeometry::cellCenterIdx()])
++        {
++            fout << std::setprecision(20) << entry << std::endl;
++        }
++        fout.close();
++        ++timestep;
++
+         // make the new solution the old solution
+         xOld = x;
+         gridVariables->advanceTimeStep();
+diff --git a/test/freeflow/navierstokesnc/channel/params_advection.input b/test/freeflow/navierstokesnc/channel/params_advection.input
+index 0312d9855..beb306f31 100644
+--- a/test/freeflow/navierstokesnc/channel/params_advection.input
++++ b/test/freeflow/navierstokesnc/channel/params_advection.input
+@@ -1,6 +1,6 @@
+ [TimeLoop]
+ DtInitial = 5 # [s]
+-TEnd = 400 # [s]
++TEnd = 20 # [s]
+ 
+ [Grid]
+ UpperRight = 5 1
