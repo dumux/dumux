@@ -1,0 +1,47 @@
+{
+    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+    "@type": "SoftwareSourceCode",
+    "license": "https://spdx.org/licenses/GPL-3.0+",
+    "codeRepository": "https://git.iws.uni-stuttgart.de/dumux-repositories/dumux",
+    "contIntegration": "https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines",
+    "dateCreated": "2007-03-01",
+    "datePublished": "2009-07-01",
+    "dateModified": "2022-05-13",
+    "downloadUrl": "https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/archive/3.5.0/dumux-3.5.0.tar.gz",
+    "issueTracker": "https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/issues",
+    "name": "DuMux",
+    "version": "3.5",
+    "identifier": "https://doi.org/10.5281/zenodo.2479594",
+    "description": "DuMux is an open-source simulator for flow and transport processes in and around porous media. It is a research code written in C++ based on Dune (Distributed and Unified Numerics Environment). Its main intention is to provide a sustainable and consistent framework for the implementation and application of porous media model concepts and constitutive relations.",
+    "applicationCategory": "Environmental Engineering",
+    "releaseNotes": "https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/releases/3.5.0",
+    "developmentStatus": "active",
+    "referencePublication": "https://doi.org/10.1016/j.camwa.2020.02.012",
+    "keywords": [
+        "porous media"
+    ],
+    "programmingLanguage": [
+        "C++",
+        "Python"
+    ],
+    "operatingSystem": [
+        "Linux",
+        "macOS"
+    ],
+    "softwareRequirements": [
+        "https://dumux.org/installation/"
+    ],
+    "author": [
+        {
+            "@type": "Person",
+            "@id": "https://orcid.org/ 0000-0001-8188-620X",
+            "givenName": "Bernd",
+            "familyName": "Flemisch",
+            "email": "bernd@iws.uni-stuttgart.de",
+            "affiliation": {
+                "@type": "Organization",
+                "name": "University of Stuttgart"
+            }
+        }
+    ]
+}
