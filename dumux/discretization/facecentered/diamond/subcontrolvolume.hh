@@ -60,10 +60,15 @@ struct FaceCenteredDiamondScvGeometryTraits
     using CornerStorage = typename ScvMLGTraits<Scalar>::template CornerStorage<dim, dimWorld>::Type;
     using GlobalPosition = typename CornerStorage::value_type;
 
-    static Dune::GeometryType geometryType()
+    static Dune::GeometryType geometryType(const CornerStorage& corners)
     {
         if constexpr (dim == 3)
-            return Dune::GeometryTypes::pyramid;
+            switch (corners.size())
+            {
+                case 4: return Dune::GeometryTypes::simplex(dim);
+                case 5: return Dune::GeometryTypes::pyramid;
+                default: DUNE_THROW(Dune::InvalidStateException, "Unknown scv geometry!");
+            }
         else
             return Dune::GeometryTypes::simplex(dim);
     }
@@ -94,7 +99,7 @@ public:
                                         const GridIndexType eIdx,
                                         const bool boundary)
     : corners_(corners)
-    , geometry_(Geometry(T::geometryType(), corners_))
+    , geometry_(Geometry(T::geometryType(corners_), corners_))
     , center_(geometry_.value().center())
     , dofPosition_(dofPosition)
     , volume_(geometry_.value().volume())
