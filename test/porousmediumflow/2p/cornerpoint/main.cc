@@ -48,6 +48,7 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/cpgridmanager.hh>
+#include <dumux/io/format.hh>
 
 #include "properties.hh"
 
@@ -79,6 +80,8 @@ int main(int argc, char** argv)
 
     // we compute on the leaf grid view
     const auto& leafGridView = gridManager.grid().leafGridView();
+
+    std::cout << Fmt::format("Initialized cornerpoint grid with {} elements\n", leafGridView.size(0));
 
     // create the finite volume grid geometry
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
