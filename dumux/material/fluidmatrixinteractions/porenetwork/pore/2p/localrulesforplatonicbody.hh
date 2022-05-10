@@ -286,6 +286,9 @@ public:
         S pcHighSw() const
         { return pcHighSw_; }
 
+        S pcHighSwEnd() const
+        { return pcHighSwEnd_; }
+
         /*!
          * \brief Set the regularization method for high saturations.
          */
@@ -301,6 +304,7 @@ public:
 private:
         S pcLowSw_ = 0.01;
         S pcHighSw_ = 0.99;
+        S pcHighSwEnd_ = 1.0;
         HighSwRegularizationMethod highSwRegularizationMethod_ = HighSwRegularizationMethod::linear;
     };
 
@@ -331,7 +335,7 @@ private:
         {
             if (sw <= pcHighSw_)
                 return {}; // standard
-            else if (sw < 1.0) // regularized part below sw = 1.0
+            else if (sw < pcHighSwEnd_) // regularized part below sw = 1.0
             {
                 using std::pow;
                 if (highSwRegularizationMethod_ == HighSwRegularizationMethod::powerLaw)
@@ -533,7 +537,10 @@ private:
         pcLowSw_ = !isnan(pcLowSwInput) ? pcLowSwInput : params.pcLowSw();
 
         static const auto pcHighSwInput = getParamFromGroup<Scalar>(paramGroup, "RegularizationHighSw", std::numeric_limits<Scalar>::quiet_NaN());
+        static const auto pcHighSwInputEnd = getParamFromGroup<Scalar>(paramGroup, "RegularizationHighSwEnd", std::numeric_limits<Scalar>::quiet_NaN());
+
         pcHighSw_ = !isnan(pcHighSwInput) ? pcHighSwInput : params.pcHighSw();
+        pcHighSwEnd_ = !isnan(pcHighSwInputEnd) ? pcHighSwInputEnd : params.pcHighSwEnd();
 
         baseLawParamsPtr_ = &m->basicParams();
 
@@ -588,14 +595,14 @@ private:
             const auto slopes = highSwSplineZeroSlope_ ? std::array{0.0, 0.0}
                                                        : std::array{BaseLaw::dpc_dsw(pcHighSw_, *baseLawParamsPtr_), pcDerivativeHighSwEnd_()};
 
-            optionalPcSpline_ = Spline<Scalar>(pcHighSw_, 1.0, // x0, x1
+            optionalPcSpline_ = Spline<Scalar>(pcHighSw_, pcHighSwEnd_, // x0, x1
                                                pcHighSwPcValue_(), 0, // y0, y1
                                                slopes[0], slopes[1]); // m0, m1
         }
         return optionalPcSpline_.value();
     }
 
-    Scalar pcLowSw_, pcHighSw_;
+    Scalar pcLowSw_, pcHighSw_, pcHighSwEnd_;
     mutable OptionalScalar<Scalar> optionalPcLowSwPcValue_, optionalPcDerivativeLowSw_;
     mutable OptionalScalar<Scalar> optionalPcHighSwPcValue_;
     HighSwRegularizationMethod highSwRegularizationMethod_;
