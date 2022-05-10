@@ -30,8 +30,8 @@
  without including the above copyright and permission notices.
  */
 
-#ifndef FMT_FORMAT_H_
-#define FMT_FORMAT_H_
+#ifndef DUMUX_FMT_FORMAT_H_
+#define DUMUX_FMT_FORMAT_H_
 
 #include <algorithm>
 #include <cerrno>
