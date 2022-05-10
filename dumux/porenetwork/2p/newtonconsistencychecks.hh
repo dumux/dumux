@@ -119,7 +119,7 @@ public:
                 const Scalar satOld = prevElemVolVars[scv].saturation(0);
                 using std::abs;
                 const Scalar deltaS = abs(satNew - satOld);
-                static const bool considerRelativeShift = getParamFromGroup<Scalar>(problem.paramGroup(), "Newton.SaturationChangeIsRelative", false);
+                static const bool considerRelativeShift = getParamFromGroup<bool>(problem.paramGroup(), "Newton.SaturationChangeIsRelative", false);
 
                 if (considerRelativeShift)
                 {

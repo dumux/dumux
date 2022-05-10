@@ -470,7 +470,7 @@ public:
 
     Scalar yPlusThreshold() const
     {
-        static const Scalar yPlusThreshold = getParamFromGroup<Scalar>(this->paramGroup(), "KEpsilon.YPlusThreshold", 30);
+        static const Scalar yPlusThreshold = getParamFromGroup<Scalar>(this->paramGroup(), "KEpsilon.YPlusThreshold", 30.0);
         return yPlusThreshold;
     }
 
