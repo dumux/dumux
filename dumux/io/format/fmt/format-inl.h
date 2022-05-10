@@ -5,8 +5,8 @@
 //
 // For the license information refer to format.h.
 
-#ifndef FMT_FORMAT_INL_H_
-#define FMT_FORMAT_INL_H_
+#ifndef DUMUX_FMT_FORMAT_INL_H_
+#define DUMUX_FMT_FORMAT_INL_H_
 
 #include <cassert>
 #include <cctype>
@@ -29,8 +29,8 @@
 
 // Dummy implementations of strerror_r and strerror_s called if corresponding
 // system functions are not available.
-inline fmt::detail::null<> strerror_r(int, char*, ...) { return {}; }
-inline fmt::detail::null<> strerror_s(char*, size_t, ...) { return {}; }
+inline Dumux::Detail::fmt::detail::null<> strerror_r(int, char*, ...) { return {}; }
+inline Dumux::Detail::fmt::detail::null<> strerror_s(char*, size_t, ...) { return {}; }
 
 FMT_BEGIN_NAMESPACE
 namespace detail {

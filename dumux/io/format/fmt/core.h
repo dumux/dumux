@@ -5,8 +5,8 @@
 //
 // For the license information refer to format.h.
 
-#ifndef FMT_CORE_H_
-#define FMT_CORE_H_
+#ifndef DUMUX_FMT_CORE_H_
+#define DUMUX_FMT_CORE_H_
 
 #include <cstdio>  // std::FILE
 #include <cstring>
@@ -201,7 +201,7 @@
       }
 #  endif
 #  define FMT_BEGIN_NAMESPACE \
-    namespace fmt {           \
+    namespace Dumux::Detail::fmt {           \
     FMT_INLINE_NAMESPACE v7 {
 #endif
 
@@ -292,7 +292,7 @@ FMT_NORETURN FMT_API void assert_fail(const char* file, int line,
 #    define FMT_ASSERT(condition, message)                                    \
       ((condition) /* void() fails with -Winvalid-constexpr on clang 4.0.1 */ \
            ? (void)0                                                          \
-           : ::fmt::detail::assert_fail(__FILE__, __LINE__, (message)))
+           : Dumux::Detail::fmt::detail::assert_fail(__FILE__, __LINE__, (message)))
 #  endif
 #endif
 
