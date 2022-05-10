@@ -87,7 +87,7 @@ public:
                          TwoPMaterialLaw::EffToAbs::sweToSw(sweInterval[1], this->effToAbsParams()) }};
         swIntervalPc_ = {{ TwoPMaterialLaw::pc(swInterval_[1]),
                            TwoPMaterialLaw::pc(swInterval_[0]) }};
-        numSwSamples_ = getParamFromGroup<Scalar>(paramGroup, "SplineNumSwSamples", 30);
+        numSwSamples_ = getParamFromGroup<std::size_t>(paramGroup, "SplineNumSwSamples", 30);
 
         pcSpline_ = makeSweSpline_(
             [&](const Scalar s){ return TwoPMaterialLaw::pc(s); },
