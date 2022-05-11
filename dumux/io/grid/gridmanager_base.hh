@@ -39,6 +39,7 @@
 #include <dune/grid/common/gridfactory.hh>
 #include <dune/grid/utility/structuredgridfactory.hh>
 
+#include <dumux/common/typetraits/typetraits.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/io/vtk/vtkreader.hh>
@@ -73,10 +74,11 @@ public:
      */
     void init(const std::string& modelParamGroup = "")
     {
-        DUNE_THROW(Dune::NotImplemented,
-                    "The header with the GridManager specialization for grid type " << Dune::className<Grid>()
-                    << " is not included or no specialization has been implemented!"
-                    << " In case of the latter, consider providing your own GridManager.");
+        static_assert(AlwaysFalse<GridType>::value,
+            "The header with the GridManager specialization for your grid type is not included "
+            "or no specialization has been implemented!"
+            " In case of the latter, consider providing your own GridManager."
+        );
     }
 
     /*!
@@ -129,7 +131,7 @@ public:
 
         return gridData_;
     }
-    
+
     /*!
      * \brief Check whether there is data associated with the grid
      */
