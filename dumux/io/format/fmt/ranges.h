@@ -9,8 +9,8 @@
 // All Rights Reserved
 // {fmt} support for ranges, containers and types tuple interface.
 
-#ifndef FMT_RANGES_H_
-#define FMT_RANGES_H_
+#ifndef DUMUX_FMT_RANGES_H_
+#define DUMUX_FMT_RANGES_H_
 
 #include <initializer_list>
 #include <type_traits>
