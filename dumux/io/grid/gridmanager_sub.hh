@@ -267,7 +267,7 @@ private:
 
         // check if the marker is customized, per default
         // we mark all cells that are encoded as 0
-        const bool marked = getParamFromGroup<bool>(paramGroup, "Grid.Marker", 0);
+        const bool marked = getParamFromGroup<bool>(paramGroup, "Grid.Marker", false);
 
         // Create the selector
         auto elementSelector = [this, &img, &marked](const auto& element)
