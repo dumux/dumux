@@ -455,10 +455,10 @@ private:
 
     std::shared_ptr<const Problem> problem_;
 
-    ErrorVector l2Absolute_{0.0};
-    ErrorVector l2Relative_{0.0};
-    ErrorVector lInfAbsolute_{0.0};
-    ErrorVector lInfRelative_{0.0};
+    ErrorVector l2Absolute_;
+    ErrorVector l2Relative_;
+    ErrorVector lInfAbsolute_;
+    ErrorVector lInfRelative_;
     Scalar time_;
     Scalar hMax_;
     Scalar totalVolume_;
