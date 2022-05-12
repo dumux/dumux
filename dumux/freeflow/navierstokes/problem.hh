@@ -806,13 +806,21 @@ public:
     void applyInitialSolution(SolutionVector& sol) const
     {
         static_assert(GridGeometry::discMethod == DiscretizationMethods::fcdiamond);
+        sol.resize(this->gridGeometry().numDofs());
+        std::vector<bool> dofHandled(this->gridGeometry().numDofs(), false);
         auto fvGeometry = localView(this->gridGeometry());
-
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             fvGeometry.bindElement(element);
             for (const auto& scv : scvs(fvGeometry))
-                sol[scv.dofIndex()] =  asImp_().initial(scv);
+            {
+                const auto dofIdx = scv.dofIndex();
+                if (!dofHandled[dofIdx])
+                {
+                    dofHandled[dofIdx] = true;
+                    sol[dofIdx] = asImp_().initial(scv);
+                }
+            }
         }
     }
 
