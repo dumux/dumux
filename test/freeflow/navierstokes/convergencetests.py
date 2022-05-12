@@ -8,24 +8,25 @@ from argparse import ArgumentParser
 import numpy as np
 import matplotlib.pyplot as plt
 
-def initializePlot():
-    plt.figure()
+def initializePlot(pltIdx=1):
+    plt.figure(pltIdx)
     plt.clf()
 
-
-def plotResultsFromSubFolder(fileName, idx, label):
+def plotResultsFromSubFolder(fileName, idx, label, pltIdx=1):
+    plt.figure(pltIdx)
     errors = np.genfromtxt(fileName, delimiter=',',skip_header=0, dtype=float)
-    h = errors[:,2]
-    values = errors[:,idx]
+    h = errors[:,idx[0]]
+    values = errors[:,idx[1]]
     plt.loglog(h, values, label=label, marker='o')
     plt.legend()
     plt.grid(True)
 
 
-def plotReferenceCurve(fileName, idx):
+def plotReferenceCurve(fileName, idx, pltIdx=1):
+    plt.figure(pltIdx)
     errors = np.genfromtxt(fileName, delimiter=',',skip_header=0, dtype=float)
-    h = errors[:,2]
-    values = errors[:,idx]
+    h = errors[:,idx[0]]
+    values = errors[:,idx[1]]
     referenceValue = values[0]/1.2
     plt.loglog(h,
               [referenceValue*h[i]*h[i] / (h[0]*h[0]) for i in range(len(values))],
@@ -110,12 +111,11 @@ def runConvergenceTestAndMoveToFolder(
     runConvergenceTest(exeName, outputName, paramsFile, numRefinements, extraArgs)
     moveResultsToSubFolder(folderName)
 
-def runTestsAndPlotResults(
+def runTests(
     testNames, paramsFile, testRuns, subRuns, numRefinements
 ):
     removePreviousResults()
     for l in range(len(testNames)):
-        initializePlot()
         testName = testNames[l]
         exes = testRuns[l]
         for k in range(len(exes)):
@@ -126,14 +126,31 @@ def runTestsAndPlotResults(
             subRun = subRuns[l][k]
             for j in range(len(subRun)):
                 run = subRun[j]
-                outputName = folderName + "-" + run[0]
-                extraArgs = testargs + run[1]
+                outputName = run[0][0] + "-" + run[0][1]
+                extraArgs = testargs + run[1] + ["-Problem.Name " + outputName]
                 runConvergenceTestAndMoveToFolder(
                     exe[0], folderName, outputName, paramsFile, numRefinements, extraArgs
                 )
-                fileName = folderName + "/" + "errors.csv"
-                plotResultsFromSubFolder(fileName, 3, run[0])
 
-        plotReferenceCurve(fileName, 3)
-        setAxesLabels("$h_\mathrm{ref}$", "$e_{v}$")
-        savePlot(folderName + "/" + "vel-error-" + folderName + ".pdf")
+def plotResults(
+    testNames, testRuns, subRuns, indices
+):
+    for l in range(len(testNames)):
+        for m in range(len(indices)):
+            initializePlot(m+1)
+        testName = testNames[l]
+        exes = testRuns[l]
+        for k in range(len(exes)):
+            folderName = testName
+            subRun = subRuns[l][k]
+            for j in range(len(subRun)):
+                run = subRun[j]
+                outputName = run[0][0] + "-" + run[0][1]
+                fileName = folderName + "/" + outputName + ".csv"
+                for m in range(len(indices)):
+                    plotResultsFromSubFolder(fileName, indices[m][0], run[0][1]+ "_" + indices[m][1],m+1)
+
+        for m in range(len(indices)):
+            plotReferenceCurve(fileName, indices[m][0], m+1)
+            setAxesLabels("$h_\mathrm{ref}$", "$e_{" + indices[m][1] + "}$")
+            savePlot(folderName + "/" + indices[m][1] + "-error-" + folderName + ".pdf")
