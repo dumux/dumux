@@ -22,17 +22,17 @@ def plotResultsFromSubFolder(fileName, idx, label, pltIdx=1):
     plt.grid(True)
 
 
-def plotReferenceCurve(fileName, idx, pltIdx=1):
+def plotReferenceCurve(fileName, idx, order=2, pltIdx=1):
     plt.figure(pltIdx)
     errors = np.genfromtxt(fileName, delimiter=',',skip_header=0, dtype=float)
     h = errors[:,idx[0]]
     values = errors[:,idx[1]]
     referenceValue = values[0]/1.2
     plt.loglog(h,
-              [referenceValue*h[i]*h[i] / (h[0]*h[0]) for i in range(len(values))],
+              [referenceValue*np.power(h[i]/h[0], order) for i in range(len(values))],
               marker="*",
               linestyle="--",
-              label="$\mathcal{O}(h^2)$")
+              label="$\mathcal{O}(h^"+str(order)+")$")
     plt.legend()
 
 
@@ -95,17 +95,16 @@ def compile(exeName):
     subprocess.run(["make", exeName], check=True)
 
 
-def runConvergenceTest(exeName, outputName, paramsFile, numRefinements=5, extraArgs=[]):
+def runConvergenceTest(exeName, outputName, paramsFile, numRefinements, extraArgs):
     for i in range(numRefinements):
         baseCall = [
             "./" + exeName, paramsFile,
-            "-Grid.Refinement", str(i),
             "-Vtk.OutputName", str(outputName)
-        ] + extraArgs
+        ] + extraArgs(i)
         subprocess.run(" ".join(str(x) for x in baseCall), shell=True, executable='/bin/bash')
 
 def runConvergenceTestAndMoveToFolder(
-    exeName, folderName, outputName, paramsFile, numRefinements=5, extraArgs=[]
+    exeName, folderName, outputName, paramsFile, numRefinements, extraArgs
 ):
     os.makedirs(folderName, exist_ok=True)
     runConvergenceTest(exeName, outputName, paramsFile, numRefinements, extraArgs)
@@ -127,9 +126,11 @@ def runTests(
             for j in range(len(subRun)):
                 run = subRun[j]
                 outputName = run[0][0] + "-" + run[0][1]
-                extraArgs = testargs + run[1] + ["-Problem.Name " + outputName]
+                def args(ref):
+                    return [testargs(ref)] + run[1] + ["-Problem.Name " + outputName]
+                # extraArgs = testargs + run[1] + ["-Problem.Name " + outputName]
                 runConvergenceTestAndMoveToFolder(
-                    exe[0], folderName, outputName, paramsFile, numRefinements, extraArgs
+                    exe[0], folderName, outputName, paramsFile, numRefinements, args
                 )
 
 def plotResults(
@@ -151,6 +152,21 @@ def plotResults(
                     plotResultsFromSubFolder(fileName, indices[m][0], run[0][1]+ "_" + indices[m][1],m+1)
 
         for m in range(len(indices)):
-            plotReferenceCurve(fileName, indices[m][0], m+1)
+            plotReferenceCurve(fileName, indices[m][0], indices[m][2], m+1)
             setAxesLabels("$h_\mathrm{ref}$", "$e_{" + indices[m][1] + "}$")
             savePlot(folderName + "/" + indices[m][1] + "-error-" + folderName + ".pdf")
+
+def plotResultsFromFiles(
+    files, labels, indices
+):
+    for l in range(len(files)):
+        for m in range(len(indices)):
+            initializePlot(m+1)
+        fileName = files[l][0] + "/" + files[l][1] + ".csv"
+        for m in range(len(indices)):
+            plotResultsFromSubFolder(fileName, indices[m][0], labels[l][1] + "_" + indices[m][1],m+1)
+
+        for m in range(len(indices)):
+            plotReferenceCurve(fileName, indices[m][0], indices[m][2], m+1)
+            setAxesLabels("$h_\mathrm{ref}$", "$e_{" + indices[m][1] + "}$")
+            savePlot(files[l][0] + "/" + indices[m][1] + "-error-" + labels[l][0] + ".pdf")
