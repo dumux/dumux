@@ -24,6 +24,9 @@
 #ifndef DUMUX_SINCOS_TEST_PROBLEM_HH
 #define DUMUX_SINCOS_TEST_PROBLEM_HH
 
+#include <dune/geometry/quadraturerules.hh>
+#include <dune/localfunctions/lagrange/pqkfactory.hh>
+
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
@@ -57,6 +60,7 @@ class SincosTestProblem : public NavierStokesProblem<TypeTag>
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using FVElementGeometry = typename GridGeometry::LocalView;
 
+    static constexpr auto dim = GridGeometry::GridView::dimension;
     static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
     using Element = typename FVElementGeometry::Element;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -87,29 +91,60 @@ public:
     }
 
     /*!
-     * \brief Return the sources within the domain.
+     * \brief Evaluate the source term for all phases within a given
+     *        sub-control-volume.
      *
-     * \param globalPos The global position
+     * This is the method for the case where the source term is
+     * potentially solution dependent and requires some quantities that
+     * are specific to the fully-implicit method.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars All volume variables for the element
+     * \param scv The sub control volume
+     *
+     * For this method, the return parameter stores the conserved quantity rate
+     * generated or annihilate per volume unit. Positive values mean
+     * that the conserved quantity is created, negative ones mean that it vanishes.
+     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
-    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
+    template<class ElementVolumeVariables>
+    NumEqVector source(const Element &element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolume &scv) const
     {
         NumEqVector source(0.0);
         if constexpr (ParentType::isMomentumProblem())
         {
-            const Scalar x = globalPos[0];
-            const Scalar y = globalPos[1];
-            const Scalar t = time_;
-
-            source[Indices::momentumXBalanceIdx] = rho_*dtU_(x,y,t) - 2.0*mu_*dxxU_(x,y,t) - mu_*dyyU_(x,y,t) - mu_*dxyV_(x,y,t) + dxP_(x,y,t);
-            source[Indices::momentumYBalanceIdx] = rho_*dtV_(x,y,t) - 2.0*mu_*dyyV_(x,y,t) - mu_*dxyU_(x,y,t) - mu_*dxxV_(x,y,t) + dyP_(x,y,t);
-
-            if (this->enableInertiaTerms())
+            const auto f = [&](const GlobalPosition& globalPos)
             {
-                source[Indices::momentumXBalanceIdx] += rho_*dxUU_(x,y,t) + rho_*dyUV_(x,y,t);
-                source[Indices::momentumYBalanceIdx] += rho_*dxUV_(x,y,t) + rho_*dyVV_(x,y,t);
-            }
-        }
+                const Scalar x = globalPos[0];
+                const Scalar y = globalPos[1];
+                const Scalar t = time_;
+                NumEqVector val(0.0);
+                val[Indices::momentumXBalanceIdx] = rho_*dtU_(x,y,t) - 2.0*mu_*dxxU_(x,y,t) - mu_*dyyU_(x,y,t) - mu_*dxyV_(x,y,t) + dxP_(x,y,t);
+                val[Indices::momentumYBalanceIdx] = rho_*dtV_(x,y,t) - 2.0*mu_*dyyV_(x,y,t) - mu_*dxyU_(x,y,t) - mu_*dxxV_(x,y,t) + dyP_(x,y,t);
 
+                if (this->enableInertiaTerms())
+                {
+                    val[Indices::momentumXBalanceIdx] += rho_*dxUU_(x,y,t) + rho_*dyUV_(x,y,t);
+                    val[Indices::momentumYBalanceIdx] += rho_*dxUV_(x,y,t) + rho_*dyVV_(x,y,t);
+                }
+
+                return val;
+            };
+
+            const auto geometry = scv.geometry();
+            const auto& quad = Dune::QuadratureRules<Scalar, dim>::rule(geometry.type(), 4);
+
+            for(auto&& qp : quad)
+            {
+                auto globalPos = geometry.global(qp.position());
+                source += f(globalPos)*qp.weight()*geometry.integrationElement(qp.position());
+            }
+            source /= scv.volume();
+        }
         return source;
     }
 
@@ -189,7 +224,7 @@ public:
      * \param scv The sub-control volume
      */
     PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
-    { return PrimaryVariables(analyticalSolution(scv.center())[Indices::pressureIdx]); }
+    { return PrimaryVariables(analyticalSolution(scv.dofPosition())[Indices::pressureIdx]); }
 
     /*!
      * \brief Returns Dirichlet boundary values at a given position.

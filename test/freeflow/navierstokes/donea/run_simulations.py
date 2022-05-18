@@ -30,19 +30,31 @@ if __name__ == "__main__":
 
     numRefinements = int(args["num_refinements"])
 
+    def refinement(ref):
+        return " -Grid.Refinement " + str(ref)
+
+    def delaunay(ref):
+        return "-Grid.File ../donea/grids/delaunay_" + str(ref) + ".msh"
+
+    def unstructuredSimplex(ref):
+        return "-Grid.File ../donea/grids/unstructured_simplex.msh " + refinement(ref)
+
+    def unstructuredQuad(ref):
+        return "-Grid.File ../donea/grids/unstructured_quad.msh " + refinement(ref)
+
     ########### only momentum balance ###########
     #############################################
 
-    # testNames = ["donea-momentum-simplex-structured",
+    # testNames = ["donea-momentum-simplex-delaunay",
     #              "donea-momentum-simplex-unstructured",
     #              "donea-momentum-quad-structured",
     #              "donea-momentum-quad-unstructured"]
 
     # testRuns = [
-    #             [ ["test_ff_stokes_donea_momentum_diamond_simplex", []] ],
-    #             [ ["test_ff_stokes_donea_momentum_diamond_simplex", ["-Grid.File ../donea/grids/unstructured_simplex.msh"]] ],
-    #             [ ["test_ff_stokes_donea_momentum_diamond_quad", []], ["test_ff_stokes_donea_momentum_staggered_quad", []] ],
-    #             [ ["test_ff_stokes_donea_momentum_diamond_quad", ["-Grid.File ../donea/grids/unstructured_quad.msh"   ]] ]
+    #             [ ["test_ff_stokes_donea_momentum_diamond_simplex", delaunay] ],
+    #             [ ["test_ff_stokes_donea_momentum_diamond_simplex", unstructuredSimplex] ],
+    #             [ ["test_ff_stokes_donea_momentum_diamond_quad", refinement], ["test_ff_stokes_donea_momentum_staggered_quad", refinement] ],
+    #             [ ["test_ff_stokes_donea_momentum_diamond_quad", unstructuredQuad] ]
     #            ]
 
     # subRuns = [
@@ -58,24 +70,25 @@ if __name__ == "__main__":
     ########### full navier-stokes ###########
     ##########################################
 
-    testNames = ["donea-simplex-structured",
+    method = "tpfa"
+    testNames = ["donea-simplex-delaunay",
                  "donea-simplex-unstructured",
                  "donea-quad-structured",
                  "donea-quad-unstructured"]
 
     testRuns = [
-                [ ["test_ff_stokes_donea_diamond_tpfa_simplex", []] ],
-                [ ["test_ff_stokes_donea_diamond_tpfa_simplex", ["-Grid.File ../donea/grids/unstructured_simplex.msh"]] ],
-                [ ["test_ff_stokes_donea_diamond_tpfa_quad", []], ["test_ff_stokes_donea", []] ],
-                [ ["test_ff_stokes_donea_diamond_tpfa_quad", ["-Grid.File ../donea/grids/unstructured_quad.msh"   ]] ]
+                [ ["test_ff_stokes_donea_diamond_"+method+"_simplex", delaunay] ],
+                [ ["test_ff_stokes_donea_diamond_"+method+"_simplex", unstructuredSimplex] ],
+                [ ["test_ff_stokes_donea_diamond_"+method+"_quad", refinement], ["test_ff_stokes_donea", refinement] ],
+                [ ["test_ff_stokes_donea_diamond_"+method+"_quad", unstructuredQuad] ]
                ]
 
     subRuns = [
-                [ [ [["donea_diamond_tpfa_simplex_struct",   "weak-sym"], []], [["donea_diamond_tpfa_simplex_struct",   "unsym"], ["-FreeFlow.EnableUnsymmetrizedVelocityGradient true"]] ] ],
-                [ [ [["donea_diamond_tpfa_simplex_unstruct", "weak-sym"], []], [["donea_diamond_tpfa_simplex_unstruct", "unsym"], ["-FreeFlow.EnableUnsymmetrizedVelocityGradient true"]] ] ],
-                [ [ [["donea_diamond_tpfa_quad_struct",      "weak-sym"], []], [["donea_diamond_tpfa_quad_struct",      "unsym"], ["-FreeFlow.EnableUnsymmetrizedVelocityGradient true"]] ], [ [["donea_staggered_tpfa_quad_struct",   "staggered"], []] ] ],
-                [ [ [["donea_diamond_tpfa_quad_unstruct",    "weak-sym"], []], [["donea_diamond_tpfa_quad_unstruct",    "unsym"], ["-FreeFlow.EnableUnsymmetrizedVelocityGradient true"]] ] ]
+                [ [ [["donea_diamond_"+method+"_simplex_struct",   "weak-sym"], []], [["donea_diamond_"+method+"_simplex_struct",   "unsym"], ["-FreeFlow.EnableUnsymmetrizedVelocityGradient true"]] ] ],
+                [ [ [["donea_diamond_"+method+"_simplex_unstruct", "weak-sym"], []], [["donea_diamond_"+method+"_simplex_unstruct", "unsym"], ["-FreeFlow.EnableUnsymmetrizedVelocityGradient true"]] ] ],
+                [ [ [["donea_diamond_"+method+"_quad_struct",      "weak-sym"], []], [["donea_diamond_"+method+"_quad_struct",      "unsym"], ["-FreeFlow.EnableUnsymmetrizedVelocityGradient true"]] ], [ [["donea_staggered_tpfa_quad_struct",   "staggered"], []] ] ],
+                [ [ [["donea_diamond_"+method+"_quad_unstruct",    "weak-sym"], []], [["donea_diamond_"+method+"_quad_unstruct",    "unsym"], ["-FreeFlow.EnableUnsymmetrizedVelocityGradient true"]] ] ]
               ]
 
     runTests(testNames, "params.input", testRuns, subRuns, numRefinements)
-    plotResults(testNames, testRuns, subRuns, [[[2,5],"p"], [[4,6],"v"] ])
+    plotResults(testNames, testRuns, subRuns, [[[2,5],"p",1], [[4,6],"v",2] ])

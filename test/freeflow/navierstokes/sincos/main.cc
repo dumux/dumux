@@ -38,6 +38,7 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/io/grid/gridmanager_yasp.hh>
+#include <dumux/io/grid/gridmanager_alu.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
@@ -53,6 +54,52 @@
 #include <test/freeflow/navierstokes/errors.hh>
 
 #include "properties.hh"
+
+namespace Dumux {
+
+template<class Error>
+void writeError_(std::ofstream& logFile, const Error& error, const std::string& format = "{:.5e}")
+{
+    for (const auto& e : error)
+        logFile << Fmt::format(", " + format, e);
+}
+
+template<class MassProblem, class MomentumProblem, class SolutionVector>
+void printErrors(std::shared_ptr<MassProblem> massProblem,
+                 std::shared_ptr<MomentumProblem> momentumProblem,
+                 const SolutionVector& x)
+{
+    using GridGeometry = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>;
+    static constexpr int dim = GridGeometry::GridView::dimension;
+    const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
+
+    if (printErrors)
+    {
+        NavierStokesTest::Errors errors(momentumProblem, massProblem, x);
+
+        std::ofstream logFile(momentumProblem->name() + ".csv", std::ios::app);
+        auto totalVolume = errors.totalVolume();
+
+        logFile << Fmt::format("{:.5e}", errors.time()) << ", ";
+        logFile << massProblem->gridGeometry().numDofs() << ", ";
+        logFile << std::pow(totalVolume / massProblem->gridGeometry().numDofs(), 1.0/dim) << ", ";
+        logFile << momentumProblem->gridGeometry().numDofs() << ", ";
+        logFile << std::pow(totalVolume / momentumProblem->gridGeometry().numDofs(), 1.0/dim);
+
+        auto componentErrors = errors.l2Absolute();
+        // Calculate L2-error for velocity field
+        Dune::FieldVector<double, 2> l2errors(0.0);
+        l2errors[0] = componentErrors[0];
+        componentErrors[0] = 0;
+        l2errors[1] = std::sqrt(componentErrors * componentErrors);
+
+        writeError_(logFile, l2errors);
+
+        logFile << "\n";
+    }
+}
+
+} // end namespace Dumux
 
 template<class MomentumProblem>
 auto createSource(const MomentumProblem& momentumProblem)
@@ -115,7 +162,7 @@ int main(int argc, char** argv)
 
     // the coupling manager
     using Traits = MultiDomainTraits<MomentumTypeTag, MassTypeTag>;
-    using CouplingManager = StaggeredFreeFlowCouplingManager<Traits>;
+    using CouplingManager = GetPropType<MassTypeTag, Properties::CouplingManager>;
     auto couplingManager = std::make_shared<CouplingManager>();
 
     // get some time loop parameters
@@ -198,12 +245,6 @@ int main(int argc, char** argv)
     using NewtonSolver = Dumux::MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
-    // the discrete L2 and Linfity errors
-    const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
-    const bool printConvergenceTestFile = getParam<bool>("Problem.PrintConvergenceTestFile", false);
-    NavierStokesTest::Errors errors(momentumProblem, massProblem, x);
-    NavierStokesTest::ErrorCSVWriter errorCSVWriter(momentumProblem, massProblem);
-
     if (isStationary)
     {
         // linearize & solve
@@ -211,14 +252,7 @@ int main(int argc, char** argv)
         nonLinearSolver.solve(x);
 
         // print discrete L2 and Linfity errors
-        if (printErrors || printConvergenceTestFile)
-        {
-            errors.update(x);
-            errorCSVWriter.printErrors(errors);
-
-            if (printConvergenceTestFile)
-                convergenceTestAppendErrors(momentumProblem, massProblem, errors);
-        }
+        printErrors(massProblem, momentumProblem, x);
 
         // write vtk output
         analyticalSolVectors.update();
@@ -248,12 +282,12 @@ int main(int argc, char** argv)
             momentumGridVariables->advanceTimeStep();
             massGridVariables->advanceTimeStep();
 
-            // print discrete L2 and Linfity errors
-            if (printErrors)
-            {
-                errors.update(x, timeLoop->time() + timeLoop->timeStepSize());
-                errorCSVWriter.printErrors(errors);
-            }
+            // // print discrete L2 and Linfity errors
+            // if (printErrors)
+            // {
+            //     errors.update(x, timeLoop->time() + timeLoop->timeStepSize());
+            //     errorCSVWriter.printErrors(errors);
+            // }
 
             // advance to the time loop to the next step
             timeLoop->advanceTimeStep();

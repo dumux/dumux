@@ -5,21 +5,21 @@ TEnd = 1.0 # [s]
 [Grid]
 LowerLeft = 0 0
 UpperRight = 6.28 6.28
-Cells = 20 20
+Cells = 10 10
 
 [Problem]
 Name = test_ff_sincos
 EnableGravity = false
 PrintErrors = true
 EnableInertiaTerms = true
-IsStationary = false
+IsStationary = true
 
 [Component]
 LiquidDensity = 1.0
 LiquidKinematicViscosity = 0.1
 
 [Assembly]
-NumericDifference.BaseEpsilon = 1e-8
+NumericDifference.BaseEpsilon = 1e-4
 
 [Newton]
 MaxSteps = 10
@@ -38,7 +38,7 @@ UpwindWeight = 0.5
 
 [LinearSolver]
 Type = restartedflexiblegmressolver
-Verbosity = 1
+Verbosity = 0
 GMResRestart = 50
 
 [LinearSolver.Preconditioner]
@@ -48,3 +48,7 @@ Iterations = 5
 
 [SpatialParams]
 Temperature = 298.0
+
+[FreeFlow]
+EnableUnsymmetrizedVelocityGradient = false
+EnableWeakSymmetry = true
