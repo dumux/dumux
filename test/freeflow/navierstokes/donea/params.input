@@ -10,8 +10,9 @@ Refinement = 0
 Name = test_donea
 EnableGravity = false
 EnableInertiaTerms = false
-UseNeumann = true
+UseNeumann = false
 PrintErrors = true
+RandomInitialGuess = false
 
 [Component]
 LiquidDensity = 1.0
@@ -24,7 +25,7 @@ MaxRelativeShift = 1e-8
 [LinearSolver]
 Type = cgsolver
 ResidualReduction = 1e-13
-Verbosity = 1
+Verbosity = 0
 Velocity.UseDirectSolver = true
 
 [LinearSolver.Preconditioner]

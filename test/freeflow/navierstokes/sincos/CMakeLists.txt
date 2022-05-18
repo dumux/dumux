@@ -54,7 +54,7 @@ dumux_add_test(NAME test_ff_navierstokes_sincos_uzawapreconditioner_factory
                              -Component.LiquidKinematicViscosity 0.1")
 
 # tests with diamond scheme
-# Stokes momentum only
+# navier-stokes momentum only
 dumux_add_test(NAME test_ff_navierstokes_sincos_momentum_diamond_quad
                SOURCES main_momentum.cc
                LABELS freeflow navierstokes sincos
@@ -84,3 +84,52 @@ dumux_add_test(NAME test_ff_navierstokes_sincos_momentum_staggered_quad
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentum
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_sincos_momentum_staggered_quad
                CMD_ARGS params_momentum.input)
+
+# full Navier-Stokes equations
+dumux_add_test(NAME test_ff_navierstokes_sincos_diamond_tpfa_quad
+               SOURCES main.cc
+               LABELS freeflow navierstokes sincos
+               CMAKE_GUARD dune-alugrid_FOUND
+               COMPILE_DEFINITIONS LINEARSOLVER=UMFPackBackend
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
+               COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION_MODEL=FaceCenteredDiamondModel
+               COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=CCTpfaModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_sincos_diamond_tpfa_quad
+               CMD_ARGS params.input -Problem.UseNeumann true)
+
+dumux_add_test(NAME test_ff_navierstokes_sincos_diamond_box_quad
+               SOURCES main.cc
+               LABELS freeflow navierstokes sincos
+               CMAKE_GUARD dune-alugrid_FOUND
+               COMPILE_DEFINITIONS LINEARSOLVER=UMFPackBackend
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
+               COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION_MODEL=FaceCenteredDiamondModel
+               COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=BoxModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_sincos_diamond_box_quad
+               CMD_ARGS params.input)
+
+dumux_add_test(NAME test_ff_navierstokes_sincos_diamond_tpfa_simplex
+               SOURCES main.cc
+               LABELS freeflow navierstokes sincos
+               CMAKE_GUARD dune-alugrid_FOUND
+               COMPILE_DEFINITIONS LINEARSOLVER=UMFPackBackend
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::conforming>
+               COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION_MODEL=FaceCenteredDiamondModel
+               COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=CCTpfaModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_sincos_diamond_tpfa_simplex
+               CMD_ARGS params.input)
+
+dumux_add_test(NAME test_ff_navierstokes_sincos_diamond_box_simplex
+               SOURCES main.cc
+               LABELS freeflow navierstokes sincos
+               CMAKE_GUARD dune-alugrid_FOUND
+               COMPILE_DEFINITIONS LINEARSOLVER=UMFPackBackend
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::conforming>
+               COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION_MODEL=FaceCenteredDiamondModel
+               COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=BoxModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_sincos_diamond_box_simplex
+               CMD_ARGS params.input)
