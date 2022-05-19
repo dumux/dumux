@@ -1,6 +1,8 @@
 default:
   image: $IMAGE
-
+  retry:
+    max: 2
+    when: runner_system_failure
 
 stages:
   - configure
