@@ -53,7 +53,6 @@ class FaceCenteredStaggeredLocalIntersectionIndexMapper<GridView, false>
     using Element = typename GridView::template Codim<0>::Entity;
     static constexpr auto numElementFaces = GridView::Grid::dimension * 2;
 public:
-
     void update(const GridView& gv, const Element& element)
     {
         static const bool makeConsistentlyOriented = getParam<bool>("Grid.MakeConsistentlyOriented", true);
@@ -85,8 +84,8 @@ public:
     { return refToRealMap_[localIsIdx]; }
 
 private:
-    std::array<SmallLocalIndexType, numElementFaces> realToRefMap_;
-    std::array<SmallLocalIndexType, numElementFaces> refToRealMap_;
+    std::array<SmallLocalIndexType, numElementFaces> realToRefMap_ = {};
+    std::array<SmallLocalIndexType, numElementFaces> refToRealMap_ = {};
 };
 
 /*!

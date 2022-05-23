@@ -25,7 +25,7 @@
 #define DUMUX_TEST_2P3C_SURFACTANT_MATERIALLAW_HH
 
 #include <algorithm>
-#include <dune/common/power.hh>
+#include <dune/common/math.hh>
 
 namespace Dumux::FluidMatrix {
 

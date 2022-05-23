@@ -46,7 +46,7 @@
 #include "problem_2p.hh"
 #include "problem_poroelastic.hh"
 
-#include "co2tables_el2p.hh"
+#include "test/porousmediumflow/co2/co2tables.hh"
 
 namespace Dumux::Properties {
 
@@ -60,7 +60,7 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::TwoPSub>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::BrineCO2<Scalar, El2P::CO2Tables>;
+    using type = FluidSystems::BrineCO2<Scalar, GeneratedCO2Tables::CO2Tables>;
 };
 
 // Set the grid type
@@ -95,7 +95,7 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::PoroElasticSub>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::BrineCO2<Scalar, El2P::CO2Tables>;
+    using type = FluidSystems::BrineCO2<Scalar, GeneratedCO2Tables::CO2Tables>;
 };
 
 // The spatial parameters property
