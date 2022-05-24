@@ -91,7 +91,8 @@ int main(int argc, char** argv)
 
     // grid function with the exact solution
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto analyticSol = [] (const auto x) { return Problem::exact(x); };
+    const auto periodLength = getParam<Scalar>("Problem.ExactSolPeriodLength");
+    auto analyticSol = [&] (const auto& x) { return Problem::exact(x, periodLength); };
     const auto gfAnalyticFine = makeAnalyticGridViewFunction(analyticSol, finestBasis.gridView());
 
     // run simulations with coarser grids and compute errors
