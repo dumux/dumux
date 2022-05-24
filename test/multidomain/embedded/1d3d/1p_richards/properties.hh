@@ -57,6 +57,7 @@
 
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/embedded/couplingmanager1d3d_average.hh>
+#include <dumux/multidomain/embedded/couplingmanager1d3d_surface.hh>
 #include <dumux/multidomain/embedded/couplingmanager1d3d_projection.hh>
 
 #include "problem_soil.hh"

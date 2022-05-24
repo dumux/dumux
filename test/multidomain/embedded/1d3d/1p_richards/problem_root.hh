@@ -33,12 +33,9 @@
 
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/multidomain/embedded/couplingmanager1d3d_projection.hh>
+
 namespace Dumux {
 
-/*!
- * \ingroup EmbeddedTests
- * \brief Exact solution 1D-3D.
- */
 template <class TypeTag>
 class RootProblem : public PorousMediumFlowProblem<TypeTag>
 {
@@ -72,6 +69,7 @@ public:
         // read parameters from input file
         name_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
         transpirationRate_ = getParam<Scalar>("BoundaryConditions.TranspirationRate");
+        initialPressure_ = getParam<Scalar>("BoundaryConditions.InitialRootPressure", 0.0);
     }
 
     /*!
@@ -135,10 +133,9 @@ public:
         if (scvf.center()[2] + eps_ > this->gridGeometry().bBoxMax()[2])
         {
             const auto r = this->spatialParams().radius(scvf.insideScvIdx());
-            values[Indices::conti0EqIdx] = transpirationRate_/(M_PI*r*r)/scvf.area();
+            values[Indices::conti0EqIdx] = transpirationRate_/(M_PI*r*r*scvf.area());
         }
         return values;
-
     }
 
     // \}
@@ -217,7 +214,7 @@ public:
      * variables.
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
-    { return PrimaryVariables(0.0); }
+    { return { initialPressure_ }; }
 
     // \}
 
@@ -260,7 +257,7 @@ public:
     { return *couplingManager_; }
 
 private:
-    Scalar transpirationRate_;
+    Scalar transpirationRate_, initialPressure_;
 
     static constexpr Scalar eps_ = 1.5e-7;
     std::string name_;

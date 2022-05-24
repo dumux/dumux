@@ -1,4 +1,12 @@
-dune_symlink_to_source_files(FILES "params.input" "params_projection.input" "tinyroot.dgf" "tinyroot_3d.msh")
+dune_symlink_to_source_files(FILES
+    "params.input"
+    "params_projection.input"
+    "tinyroot.dgf"
+    "tinyroot_3d.msh"
+    "single_root.dgf"
+    "single_root_3d.msh"
+    "params_single_root_benchmark.input"
+)
 
 dumux_add_test(NAME test_md_embedded_1d3d_1p_richards_tpfatpfa
               LABELS multidomain multidomain_embedded 1p richards
@@ -29,6 +37,22 @@ dumux_add_test(NAME test_md_embedded_1d3d_1p_richards_tpfabox
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded_1d3d_1p_richards_tpfabox_3d-00004.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded_1d3d_1p_richards_tpfabox params.input \
                                    -Vtk.OutputName test_md_embedded_1d3d_1p_richards_tpfabox")
+
+# Benchmark case with single root in a quad (C1.1 Schnepf et al (2020) https://doi.org/10.3389/fpls.2020.00316)
+dumux_add_test(NAME test_md_embedded_1d3d_1p_richards_tpfabox_benchmark
+               LABELS multidomain multidomain_embedded 1p richards
+               SOURCES main.cc
+               COMPILE_DEFINITIONS COUPLINGMODE=Surface SOILTYPETAG=SoilBox SOILGRID=Dune::ALUGrid<3,3,Dune::simplex,Dune::conforming>
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               TIMEOUT 1500
+               CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded_1d3d_1p_richards_tpfabox_benchmark_1d-reference.vtp
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded_1d3d_1p_richards_tpfabox_benchmark_1d-00004.vtp
+                                ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded_1d3d_1p_richards_tpfabox_benchmark_3d-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded_1d3d_1p_richards_tpfabox_3d-00004.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded_1d3d_1p_richards_tpfabox_benchmark params_single_root_benchmark.input \
+                                   -Vtk.OutputName test_md_embedded_1d3d_1p_richards_tpfabox_benchmark")
 
 # Test for the projection coupling manager (a resolved root soil interface 1D-3D method)
 dumux_add_test(NAME test_md_embedded_1d3d_1p_richards_proj

@@ -54,11 +54,12 @@ public:
 
     SoilSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
-    , pcKrSwCurve_("Soil.SpatialParams")
+    , paramGroup_(getParam<std::string>("Soil.SpatialParams.Group", "Soil.SpatialParams"))
+    , pcKrSwCurve_(paramGroup_)
     {
         // perm and poro
-        permeability_ = getParam<Scalar>("Soil.SpatialParams.Permeability");
-        porosity_ = getParam<Scalar>("Soil.SpatialParams.Porosity");
+        permeability_ = getParam<Scalar>(paramGroup_ + ".Permeability");
+        porosity_ = getParam<Scalar>(paramGroup_ + ".Porosity");
     }
 
     /*!
@@ -102,6 +103,7 @@ public:
     }
 
 private:
+    const std::string paramGroup_;
     const PcKrSwCurve pcKrSwCurve_;
     Scalar permeability_;
     Scalar porosity_;

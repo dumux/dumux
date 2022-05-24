@@ -84,7 +84,7 @@ public:
             else // assume DGFParamIndicesSurfaceModel
             {
                 const Scalar rootLength = element.geometry().volume();
-                const Scalar rootSurface = gridData_->parameters(level0element)[DGFParamIndicesSurfaceModel::surfaceIdx]/(1 << element.level());
+                const Scalar rootSurface = params[DGFParamIndicesSurfaceModel::surfaceIdx]/(1 << element.level());
                 radii_[eIdx] = rootSurface / rootLength / 2.0 / M_PI;
             }
         }

@@ -1,0 +1,81 @@
+[MixedDimension]
+NumCircleSegments = 50
+IntegrationOrder = 1
+
+[Flux]
+UpwindWeight = 1.0
+
+[TimeLoop]
+DtInitial = 3600 # [s]
+TEnd = 1e6 # [s]
+EpisodeLength = 43200 # [s]
+
+[Root.Grid]
+File = single_root.dgf
+Refinement = 7
+
+[Soil.Grid]
+File = single_root_3d.msh
+
+[Problem]
+EnableGravity = false
+EndWhenCriticalCollarPressureIsReached = true
+
+[SpatialParams]
+Temperature = 283.15
+
+[Vtk]
+OutputName = test_md_embedded1d3d_1p_richards_benchmark
+
+[Soil]
+Problem.Name = 3d
+SpatialParams.Group = Soil.SpatialParams.Loam
+
+[Soil.SpatialParams.Clay]
+Name = Clay
+Swr = 0.25
+Snr = 0.0
+VanGenuchtenPcLowSweThreshold = 0.0
+VanGenuchtenPcHighSweThreshold = 1.0
+VanGenuchtenKrwHighSweThreshold = 1.0
+VanGenuchtenAlpha = 1.01936799e-4
+VanGenuchtenN = 1.1
+VanGenuchtenL = 0.5
+Porosity = 0.40
+Permeability = 1.1798241e-13
+
+[Soil.SpatialParams.Loam]
+Name = Loam
+Swr = 0.18604651162
+Snr = 0.0
+VanGenuchtenPcLowSweThreshold = 0.0
+VanGenuchtenPcHighSweThreshold = 1.0
+VanGenuchtenKrwHighSweThreshold = 1.0
+VanGenuchtenAlpha = 4.07747197e-4
+VanGenuchtenN = 1.6
+VanGenuchtenL = 0.5
+Porosity = 0.43
+Permeability = 5.8991203e-13
+
+[Root]
+SpatialParams.Kx = 1e-13
+SpatialParams.Kr = 1e-10
+Problem.Name = 1d
+
+[BoundaryConditions]
+InitialSoilPressure = 90190 # -100cm pressure head -> 90190 Pa
+InitialRootPressure = 90190
+# to save some cells in 3D we make the domain 0.1 cm high instead of 1cm
+# the (limit) solution is invariant with respect to height
+# 0.05 cm/day -> 0.0005/86400 m/s * 2.0 * pi * 0.0002m * 0.001m * 1000kg/s = 7.2722052e-12 kg/s
+# 0.1 cm/day -> 0.001/86400 m/s * 2.0 * pi * 0.0002m * 0.001m * 1000kg/s = 1.454441e-11 kg/s
+TranspirationRate = 1.454441e-11
+
+[Newton]
+MaxRelativeShift = 1e-5
+
+[Assembly.NumericDifference]
+BaseEpsilon = 1e-3
+
+[LinearSolver]
+MaxIterations = 300

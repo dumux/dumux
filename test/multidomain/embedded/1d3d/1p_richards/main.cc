@@ -35,8 +35,11 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
+
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/assembly/fvassembler.hh>
+
+#include <dumux/io/format.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/grid/gridmanager_foam.hh>
@@ -48,12 +51,25 @@
 
 #include "properties.hh"
 
+namespace Dumux {
+
 template<class CouplingManager, class Writer>
 void addElementMarkerForProjection(const CouplingManager& couplingManager, Writer& w)
 {
     if constexpr(CouplingManager::couplingMode == Dumux::Embedded1d3dCouplingMode::projection)
         w.addField(couplingManager.bulkElementMarker(), "element marker");
 }
+
+/*!
+ * \brief convert pressure head in cm to pressure in Pa
+ */
+template<class Scalar>
+inline Scalar headToPressure(const Scalar head, const Scalar pRef = 1.0e5, const Scalar density = 1.0e3)
+{
+    return pRef + head / 100.0 * density * 9.81;
+}
+
+} // end namespace Dumux
 
 int main(int argc, char** argv)
 {
@@ -144,7 +160,7 @@ int main(int argc, char** argv)
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     const auto episodeLength = getParam<Scalar>("TimeLoop.EpisodeLength");
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+    const auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // intialize the vtk output module
     using BulkSolutionVector = std::decay_t<decltype(sol[bulkIdx])>;
@@ -175,16 +191,59 @@ int main(int argc, char** argv)
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+    MultiDomainNewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+
+    // optional simulation end criterion
+    bool endWhenCriticalCollarPressureIsReached
+        = getParam<bool>("Problem.EndWhenCriticalCollarPressureIsReached", false);
+    const auto collarElementIndex = [&]
+    {
+        auto fvGeometry = localView(*lowDimFvGridGeometry);
+        for (const auto& element : elements(lowDimGridView))
+        {
+            fvGeometry.bindElement(element);
+            for (const auto& scvf : scvfs(fvGeometry))
+                if (scvf.center()[2] + 1e-8 > lowDimFvGridGeometry->bBoxMax()[2])
+                    return fvGeometry.scv(scvf.insideScvIdx()).dofIndex();
+        }
+
+        DUNE_THROW(Dune::Exception, "Could not find root collar element!");
+    }();
 
     // time loop
     timeLoop->setPeriodicCheckPoint(episodeLength);
     timeLoop->start();
-    while (!timeLoop->finished())
+    bool finished = timeLoop->finished();
+    while (!finished)
     {
         // solve the non-linear system with time step control
         nonLinearSolver.solve(sol, *timeLoop);
+
+        // possibly try again with different time step size
+        // if we want to end the simulation when the critical
+        // collar pressure is reached
+        if (endWhenCriticalCollarPressureIsReached)
+        {
+            // output root pressure
+            auto collarPressure = sol[lowDimIdx][collarElementIndex][0];
+            const auto criticalCollarPressure = headToPressure(-15000);
+            while (collarPressure < 1.001*criticalCollarPressure || collarPressure > 1.1e5)
+            {
+                oldSol = sol;
+                assembler->resetTimeStep(sol);
+                const auto dt = timeLoop->timeStepSize() * 0.5;
+                timeLoop->setTimeStepSize(dt);
+                std::cout << Fmt::format("Retry with time step size: {} s", dt) << std::endl;
+                nonLinearSolver.solve(sol, *timeLoop);
+                collarPressure = sol[lowDimIdx][collarElementIndex][0];
+            }
+
+            std::cout << Fmt::format("Root-soil interface pressure: {} Pa", collarPressure) << std::endl;
+
+            // check if we are done
+            if (collarPressure <= criticalCollarPressure)
+               finished = true;
+        }
 
         // make the new solution the old solution
         oldSol = sol;
@@ -199,7 +258,7 @@ int main(int argc, char** argv)
         lowDimProblem->computeSourceIntegral(sol[lowDimIdx], *lowDimGridVariables);
 
         // write vtk output
-        if (timeLoop->isCheckPoint() || timeLoop->finished())
+        if (timeLoop->isCheckPoint() || timeLoop->finished() || finished)
         {
             bulkVtkWriter.write(timeLoop->time());
             lowDimVtkWriter.write(timeLoop->time());
@@ -210,9 +269,18 @@ int main(int argc, char** argv)
 
         // set new dt as suggested by newton controller
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+
+        // update loop variable
+        finished |= timeLoop->finished();
     }
 
     timeLoop->finalize(mpiHelper.getCommunication());
+
+    if (endWhenCriticalCollarPressureIsReached)
+        std::cout << Fmt::format(
+            "It took {} days until the critical collar pressure was reached\n",
+            timeLoop->time()/(60*60*24)
+        );
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
@@ -226,4 +294,4 @@ int main(int argc, char** argv)
     }
 
     return 0;
-} // end main
+}
