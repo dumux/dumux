@@ -1,7 +1,7 @@
 [Problem]
 Name = 1p_convergence
 SourceIntegrationOrder = 3
-ExactSolPeriodLength = 2.0
+ExactSolPeriodLength = 6.2831
 EnableGravity = false
 
 [Grid]
