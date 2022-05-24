@@ -125,11 +125,12 @@ SolutionStorage<TypeTag> solveRefinementLevel(int numCells)
         using Scalar = GetPropType<TypeTag, Properties::Scalar>;
         std::vector<Scalar> exact(gridGeometry->numDofs());
         auto fvGeometry = localView(*gridGeometry);
+        const auto periodLength = getParam<Scalar>("Problem.ExactSolPeriodLength");
         for (const auto& element : elements(gridGeometry->gridView()))
         {
             fvGeometry.bindElement(element);
             for (const auto& scv : scvs(fvGeometry))
-                exact[scv.dofIndex()] = problem->exact(scv.dofPosition());
+                exact[scv.dofIndex()] = problem->exact(scv.dofPosition(), periodLength);
         }
 
         vtkWriter.addField(exact, "p_exact");
