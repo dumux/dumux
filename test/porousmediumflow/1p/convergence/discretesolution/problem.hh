@@ -119,14 +119,12 @@ public:
             const auto x = p[0];
             const auto y = p[1];
 
-            const auto preFactor = -1.0 * periodLength_ * periodLength_ * M_PI * M_PI;
-            const auto preFactorArg = periodLength_ * M_PI;
-            const auto sineTerm = sin(preFactorArg * x);
-            const auto cosTerm = cos(preFactorArg * y);
-            const auto secondDeriv = preFactor * sineTerm * cosTerm;
+            const auto sineTerm = sin(periodLength_*x);
+            const auto cosTerm = cos(periodLength_*y);
+            const auto secondDeriv = -1.0*periodLength_*periodLength_*sineTerm*cosTerm;
 
             // derivative in x and y are identical
-            source -= 2.0 * k * secondDeriv * qp.weight() * eg.integrationElement(qp.position());
+            source -= 2.0*k*secondDeriv*qp.weight()*eg.integrationElement(qp.position());
         }
 
         source /= eg.volume();
@@ -145,9 +143,7 @@ public:
         using std::cos;
         using std::sin;
 
-        const auto preFactorArg = periodLength * M_PI;
-        const auto u = sin(preFactorArg * x) * cos(preFactorArg * y);
-
+        const auto u = sin(periodLength*x)*cos(periodLength*y);
         return PrimaryVariables(u);
     }
 
