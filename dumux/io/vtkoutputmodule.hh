@@ -88,6 +88,7 @@ public:
         const auto coordPrecision = Dumux::Vtk::stringToPrecision(getParamFromGroup<std::string>(paramGroup, "Vtk.CoordPrecision", precisionString));
         writer_ = std::make_shared<Dune::VTKWriter<GridView>>(gridGeometry.gridView(), dm, coordPrecision);
         sequenceWriter_ = std::make_unique<Dune::VTKSequenceWriter<GridView>>(writer_, name);
+        addProcessRank_ = getParamFromGroup<bool>(this->paramGroup(), "Vtk.AddProcessRank", true);
     }
 
     virtual ~VtkOutputModuleBase() = default;
@@ -210,16 +211,15 @@ private:
         //////////////////////////////////////////////////////////////
 
         // process rank
-        static bool addProcessRank = getParamFromGroup<bool>(this->paramGroup(), "Vtk.AddProcessRank");
         std::vector<int> rank;
 
        //! Abort if no data was registered
-        if (!fields_.empty() || addProcessRank)
+        if (!fields_.empty() || addProcessRank_)
         {
             const auto numCells = gridGeometry_.gridView().size(0);
 
             // maybe allocate space for the process rank
-            if (addProcessRank)
+            if (addProcessRank_)
             {
                 rank.resize(numCells);
 
@@ -235,7 +235,7 @@ private:
             //////////////////////////////////////////////////////////////
 
             // the process rank
-            if (addProcessRank)
+            if (addProcessRank_)
                 this->sequenceWriter().addCellData(Field(gridGeometry_.gridView(), gridGeometry_.elementMapper(), rank, "process rank", 1, 0).get());
 
             // also register additional (non-standardized) user fields if any
@@ -288,6 +288,8 @@ private:
     std::unique_ptr<Dune::VTKSequenceWriter<GridView>> sequenceWriter_;
 
     std::vector<Field> fields_; //!< Registered scalar and vector fields
+
+    bool addProcessRank_ = true;
 };
 
 /*!
@@ -344,7 +346,10 @@ public:
     , gridVariables_(gridVariables)
     , sol_(sol)
     , velocityOutput_(std::make_shared<VelocityOutputType>())
-    {}
+    {
+        enableVelocityOutput_ = getParamFromGroup<bool>(this->paramGroup(), "Vtk.AddVelocity", false);
+        addProcessRank_ = getParamFromGroup<bool>(this->paramGroup(), "Vtk.AddProcessRank", true);
+    }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     //! Methods to conveniently add primary and secondary variables upon initialization
@@ -408,7 +413,6 @@ private:
         std::vector<VelocityVector> velocity(velocityOutput_->numFluidPhases());
 
         // process rank
-        static bool addProcessRank = getParamFromGroup<bool>(this->paramGroup(), "Vtk.AddProcessRank");
         std::vector<double> rank;
 
         // volume variable data
@@ -420,7 +424,7 @@ private:
             || !volVarVectorDataInfo_.empty()
             || !this->fields().empty()
             || velocityOutput_->enableOutput()
-            || addProcessRank)
+            || addProcessRank_)
         {
             const auto numCells = gridGeometry().gridView().size(0);
             const auto numDofs = numDofs_();
@@ -443,7 +447,7 @@ private:
             }
 
             // maybe allocate space for the process rank
-            if (addProcessRank) rank.resize(numCells);
+            if (addProcessRank_) rank.resize(numCells);
 
             auto fvGeometry = localView(gridGeometry());
             auto elemVolVars = localView(gridVariables_.curGridVolVars());
@@ -492,7 +496,7 @@ private:
                 }
 
                 //! the rank
-                if (addProcessRank)
+                if (addProcessRank_)
                     rank[eIdxGlobal] = static_cast<double>(gridGeometry().gridView().comm().rank());
             }
 
@@ -541,7 +545,7 @@ private:
             }
 
             // the process rank
-            if (addProcessRank)
+            if (addProcessRank_)
                 this->sequenceWriter().addCellData(Field(gridGeometry().gridView(), gridGeometry().elementMapper(), rank, "process rank", 1, 0).get());
 
             // also register additional (non-standardized) user fields if any
@@ -580,8 +584,7 @@ private:
         //////////////////////////////////////////////////////////////
 
         // check the velocity output
-        bool enableVelocityOutput = getParamFromGroup<bool>(this->paramGroup(), "Vtk.AddVelocity");
-        if (enableVelocityOutput == true && !velocityOutput_->enableOutput())
+        if (enableVelocityOutput_ && !velocityOutput_->enableOutput())
             std::cerr << "Warning! Velocity output was enabled in the input file"
                       << " but no velocity output policy was set for the VTK output module:"
                       << " There will be no velocity output."
@@ -590,7 +593,6 @@ private:
         std::vector<VelocityVector> velocity(velocityOutput_->numFluidPhases());
 
         // process rank
-        static bool addProcessRank = getParamFromGroup<bool>(this->paramGroup(), "Vtk.AddProcessRank");
         std::vector<double> rank;
 
         // volume variable data (indexing: volvardata/element/localcorner)
@@ -604,7 +606,7 @@ private:
             || !volVarVectorDataInfo_.empty()
             || !this->fields().empty()
             || velocityOutput_->enableOutput()
-            || addProcessRank)
+            || addProcessRank_)
         {
             const auto numCells = gridGeometry().gridView().size(0);
             const auto numDofs = numDofs_();
@@ -627,7 +629,7 @@ private:
             }
 
             // maybe allocate space for the process rank
-            if (addProcessRank) rank.resize(numCells);
+            if (addProcessRank_) rank.resize(numCells);
 
             for (const auto& element : elements(gridGeometry().gridView(), Dune::Partitions::interior))
             {
@@ -683,7 +685,7 @@ private:
                 }
 
                 //! the rank
-                if (addProcessRank)
+                if (addProcessRank_)
                     rank[eIdxGlobal] = static_cast<double>(gridGeometry().gridView().comm().rank());
             }
 
@@ -719,7 +721,7 @@ private:
             }
 
             // the process rank
-            if (addProcessRank)
+            if (addProcessRank_)
                 this->sequenceWriter().addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), rank, "process rank", 1, 0).get() );
 
             // also register additional (non-standardized) user fields if any
@@ -755,6 +757,8 @@ private:
     std::vector<VolVarVectorDataInfo> volVarVectorDataInfo_; //!< Registered volume variables (vector)
 
     std::shared_ptr<VelocityOutput> velocityOutput_; //!< The velocity output policy
+    bool enableVelocityOutput_ = false;
+    bool addProcessRank_ = true;
 };
 
 } // end namespace Dumux
