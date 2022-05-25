@@ -51,7 +51,7 @@ Run dunecontrol which will setup both C++ and Python bindings and modules.
 This section is rather new and experimental. Please help improving
 this documentation in the future.
 
-Checkout the `releases/2.8` branch of the Dune core modules and DuMu<sup>x</sup>
+Checkout the `releases/2.8` branch of the Dune core modules and DuMu<sup>x</sup> 3.5
 
 ```
 git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-common
@@ -59,7 +59,7 @@ git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-geometry
 git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-grid
 git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-localfunctions
 git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-istl
-git clone -b releases/2.8 https://git.iws.uni-stuttgart.de/dumux-repositories/dumux
+git clone -b releases/3.5 https://git.iws.uni-stuttgart.de/dumux-repositories/dumux
 
 cp dumux/cmake.opts .
 ```
