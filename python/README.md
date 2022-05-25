@@ -11,11 +11,11 @@ and newly merged Dumux commits on GitLab. Python bindings require Python 3.
 
 ##  Installation
 
-Python bindings are part of the dune core modules >= version 2.7.
+Python bindings are part of the dune core modules >= version 2.8.
 We recommend to use the Dune modules on the master branch to try out
 Python bindings.
 
-### Example development setup
+### Example development setup (Dune 2.9-git)
 
 This section is rather new and experimental. Please help improving
 this documentation in the future.
@@ -29,6 +29,37 @@ git clone https://gitlab.dune-project.org/core/dune-grid
 git clone https://gitlab.dune-project.org/core/dune-localfunctions
 git clone https://gitlab.dune-project.org/core/dune-istl
 git clone https://git.iws.uni-stuttgart.de/dumux-repositories/dumux
+```
+
+Create and activate a new virutal environment in which the
+Python modules will be installed in editable mode (symlinked)
+
+```
+python3 -m venv venv
+source ./venv/bin/activate
+```
+
+Run dunecontrol which will setup both C++ and Python bindings and modules.
+
+```
+./dune-common/bin/dunecontrol --opts=cmake.opts all
+```
+
+
+### Example development setup (Dune 2.8)
+
+This section is rather new and experimental. Please help improving
+this documentation in the future.
+
+Checkout the `releases/2.8` branch of the Dune core modules and DuMu<sup>x</sup>
+
+```
+git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-common
+git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-geometry
+git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-grid
+git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-localfunctions
+git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-istl
+git clone -b releases/2.8 https://git.iws.uni-stuttgart.de/dumux-repositories/dumux
 
 cp dumux/cmake.opts .
 ```
@@ -54,6 +85,10 @@ export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so
 ```
 
 Replace the path with the path to the MPI library on your system.
+
+
+### Running a test
+
 Run your first DuMu<sup>x</sup> Python test
 
 ```
@@ -69,6 +104,7 @@ You can run all currently existing DuMu<sup>x</sup> Python tests with
 cd dumux/build-cmake
 ctest -L python
 ```
+
 ##  Development
 
 All Python files should be linted by the tool [`black`](https://pypi.org/project/black/).
