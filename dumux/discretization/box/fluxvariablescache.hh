@@ -25,7 +25,6 @@
 #define DUMUX_DISCRETIZATION_BOX_FLUXVARIABLES_CACHE_HH
 
 #include <dune/common/fvector.hh>
-#include <dune/localfunctions/lagrange/pqkfactory.hh>
 
 namespace Dumux {
 
@@ -49,8 +48,7 @@ class BoxFluxVariablesCache
     static const int dimWorld = GridView::dimensionworld;
 
     using CoordScalar = typename GridView::ctype;
-    using FeCache = Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
-    using FeLocalBasis = typename FeCache::FiniteElementType::Traits::LocalBasisType;
+    using FeLocalBasis = typename GridGeometry::FeCache::FiniteElementType::Traits::LocalBasisType;
     using ShapeJacobian = typename FeLocalBasis::Traits::JacobianType;
     using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
     using JacobianInverseTransposed = typename Element::Geometry::JacobianInverseTransposed;
