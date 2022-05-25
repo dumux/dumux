@@ -52,6 +52,9 @@ Verbosity = true
 RegularizeLowSw = true
 RegularizeHighSw = true
 HighSwRegularizationMethod = Spline
-RegularizationHighSw = 0.99
+RegularizationHighSw = 0.9999
 RegularizationLowSw = 0.1
+
+[Regularization]
+IntervalPc = 1e1
 
