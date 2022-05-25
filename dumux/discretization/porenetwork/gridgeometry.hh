@@ -30,7 +30,7 @@
 #include <functional>
 
 #include <dune/common/exceptions.hh>
-#include <dune/localfunctions/lagrange/pqkfactory.hh>
+#include <dune/localfunctions/lagrange/lagrangelfecache.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/common/indextraits.hh>
@@ -525,7 +525,7 @@ public:
     //! export dof mapper type
     using DofMapper = typename Traits::VertexMapper;
     //! export the finite element cache type
-    using FeCache = Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
+    using FeCache = Dune::LagrangeLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
     //! export the grid view type
     using GridView = GV;
 
@@ -742,7 +742,7 @@ public:
     //! export dof mapper type
     using DofMapper = typename Traits::VertexMapper;
     //! export the finite element cache type
-    using FeCache = Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
+    using FeCache = Dune::LagrangeLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
     //! export the grid view type
     using GridView = GV;
 
