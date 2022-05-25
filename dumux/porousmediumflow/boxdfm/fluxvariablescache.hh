@@ -26,8 +26,6 @@
 #ifndef DUMUX_POROUSMEDIUM_BOXDFM_FLUXVARIABLESCACHE_HH
 #define DUMUX_POROUSMEDIUM_BOXDFM_FLUXVARIABLESCACHE_HH
 
-#include <dune/localfunctions/lagrange/pqkfactory.hh>
-
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
@@ -45,9 +43,10 @@ class BoxDfmFluxVariablesCache
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -59,8 +58,7 @@ class BoxDfmFluxVariablesCache
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
 
-    using FeCache = Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
-    using FeLocalBasis = typename FeCache::FiniteElementType::Traits::LocalBasisType;
+    using FeLocalBasis = typename GridGeometry::FeCache::FiniteElementType::Traits::LocalBasisType;
     using ShapeJacobian = typename FeLocalBasis::Traits::JacobianType;
     using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
     using JacobianInverseTransposed = typename Element::Geometry::JacobianInverseTransposed;
