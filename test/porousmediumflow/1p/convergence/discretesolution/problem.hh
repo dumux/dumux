@@ -65,7 +65,10 @@ public:
      */
     OnePTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
-    {}
+    {
+        periodLength_ = getParam<Scalar>("Problem.ExactSolPeriodLength");
+        sourceIntegrationOrder_ = getParam<Scalar>("Problem.SourceIntegrationOrder");
+    }
 
     /*!
      * \brief Specifies which kind of boundary condition should be
@@ -85,7 +88,7 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        return exact(globalPos);
+        return exact(globalPos, periodLength_);
     }
 
     /*!
@@ -101,15 +104,13 @@ public:
                         const ElementVolumeVariables &elemVolVars,
                         const SubControlVolume &scv) const
     {
-        static const auto order = getParam<Scalar>("Problem.SourceIntegrationOrder");
-        static const auto periodLength = getParam<Scalar>("Problem.ExactSolPeriodLength");
         const auto &k = this->spatialParams().permeabilityAtPos(scv.center());
 
         using std::cos;
         using std::sin;
 
         const auto eg = element.geometry();
-        const auto rule = Dune::QuadratureRules<Scalar, GridView::dimension>::rule(eg.type(), order);
+        const auto rule = Dune::QuadratureRules<Scalar, GridView::dimension>::rule(eg.type(), sourceIntegrationOrder_);
 
         Scalar source = 0.0;
         for (auto qp : rule)
@@ -118,14 +119,12 @@ public:
             const auto x = p[0];
             const auto y = p[1];
 
-            const auto preFactor = -1.0 * periodLength * periodLength * M_PI * M_PI;
-            const auto preFactorArg = periodLength * M_PI;
-            const auto sineTerm = sin(preFactorArg * x);
-            const auto cosTerm = cos(preFactorArg * y);
-            const auto secondDeriv = preFactor * sineTerm * cosTerm;
+            const auto sineTerm = sin(periodLength_*x);
+            const auto cosTerm = cos(periodLength_*y);
+            const auto secondDeriv = -1.0*periodLength_*periodLength_*sineTerm*cosTerm;
 
             // derivative in x and y are identical
-            source -= 2.0 * k * secondDeriv * qp.weight() * eg.integrationElement(qp.position());
+            source -= 2.0*k*secondDeriv*qp.weight()*eg.integrationElement(qp.position());
         }
 
         source /= eg.volume();
@@ -136,7 +135,7 @@ public:
      * \brief Returns the exact solution at a position.
      * \param globalPos The center of the finite volume for which it is to be set.
      */
-    static PrimaryVariables exact(const GlobalPosition& globalPos)
+    static PrimaryVariables exact(const GlobalPosition& globalPos, const Scalar periodLength)
     {
         const auto x = globalPos[0];
         const auto y = globalPos[1];
@@ -144,12 +143,13 @@ public:
         using std::cos;
         using std::sin;
 
-        static const auto periodLength = getParam<Scalar>("Problem.ExactSolPeriodLength");
-        const auto preFactorArg = periodLength * M_PI;
-        const auto u = sin(preFactorArg * x) * cos(preFactorArg * y);
-
+        const auto u = sin(periodLength*x)*cos(periodLength*y);
         return PrimaryVariables(u);
     }
+
+private:
+    Scalar periodLength_;
+    Scalar sourceIntegrationOrder_;
 };
 
 } // end namespace Dumux
