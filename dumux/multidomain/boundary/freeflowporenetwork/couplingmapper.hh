@@ -142,7 +142,7 @@ public:
                 const auto allCoupledFreeFlowElements = intersectingEntities(std::move(poreIntersectionGeometry), ffMomentumGridGeometry.boundingBoxTree());
 
 
-                for (const auto ffElementInfo : allCoupledFreeFlowElements)
+                for (const auto& ffElementInfo : allCoupledFreeFlowElements)
                 {
                     const auto freeFlowElementIndex = ffElementInfo.second();
                     pnmElementToFreeFlowElementsMap_[pnmElementIdx].push_back(freeFlowElementIndex);
