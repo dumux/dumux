@@ -27,6 +27,7 @@
 #include <iterator>
 #include <algorithm>
 #include <type_traits>
+#include <memory>
 
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
@@ -175,16 +176,15 @@ PrimaryVariables evalSolution(const Element& element,
         using CoordScalar = typename Element::Geometry::GlobalCoordinate::value_type;
         static constexpr int dim = Element::Geometry::mydimension;
 
-        //! The box scheme always uses linear Ansatz functions
-        using FeCache = Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
-        using ShapeValue = typename FeCache::FiniteElementType::Traits::LocalBasisType::Traits::RangeType;
-
-        // obtain local finite element basis
-        FeCache feCache;
-        const auto& localBasis = feCache.get(geometry.type()).localBasis();
+        // The box scheme always uses linear Ansatz functions
+        using FEFactory = Dune::PQkLocalFiniteElementFactory<CoordScalar, Scalar, dim, 1>;
+        using FiniteElement = typename FEFactory::FiniteElementType;
+        std::unique_ptr<FiniteElement> fe(FEFactory::create(geometry.type()));
+        const auto& localBasis = fe->localBasis();
 
         // evaluate the shape functions at the scv center
         const auto localPos = geometry.local(globalPos);
+        using ShapeValue = typename FiniteElement::Traits::LocalBasisType::Traits::RangeType;
         std::vector< ShapeValue > shapeValues;
         localBasis.evaluateFunction(localPos, shapeValues);
 
