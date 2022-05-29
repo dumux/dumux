@@ -176,7 +176,15 @@ public:
         }
     }
 
+    template<class SubControlVolumeFace>
+    static SmallLocalIndexType localIndexOutsideScvfWithSameIntegrationPoint(const SubControlVolumeFace& scvf)
+    {
+        const SmallLocalIndexType offset = (dim == 2) ? 3 : 5;
+        return isOdd_(scvf.localIndex()) ? scvf.localIndex() - offset : scvf.localIndex() + offset;
+    }
+
     template<class FVElementGeometry, class SubControlVolumeFace>
+    [[deprecated("The interface outsideScvfWithSameIntegrationPoint() is deprecated and the function is moved to the FVElementGeometry. Use the new interface localIndexOutsideScvfWithSameIntegrationPoint() instead. Will be removed after 3.5")]]
     static const SubControlVolumeFace& outsideScvfWithSameIntegrationPoint(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
     {
         const auto& lateralOrthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);

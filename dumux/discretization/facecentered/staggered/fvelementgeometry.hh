@@ -204,7 +204,22 @@ public:
 
     //! Returns the the scvf of neighbor element with the same integration point and unit outer normal
     const SubControlVolumeFace& outsideScvfWithSameIntegrationPoint(const SubControlVolumeFace& scvf) const
-    { return GG::GeometryHelper::outsideScvfWithSameIntegrationPoint(*this, scvf); }
+    {
+        const auto& lateralOrthogonalScvf = this->lateralOrthogonalScvf(scvf);
+        assert(!lateralOrthogonalScvf.boundary());
+
+        const auto otherLocalIdx = GG::GeometryHelper::localIndexOutsideScvfWithSameIntegrationPoint(scvf);
+
+        auto outsideFVGeometry = localView(gridGeometry());
+        const auto outsideElementIdx = scv(lateralOrthogonalScvf.outsideScvIdx()).elementIndex();
+        outsideFVGeometry.bindElement(gridGeometry().element(outsideElementIdx));
+
+        for (const auto& otherScvf : scvfs(outsideFVGeometry))
+            if (otherScvf.localIndex() == otherLocalIdx)
+                return otherScvf;
+
+        DUNE_THROW(Dune::InvalidStateException, "No outside scvf found");
+    }
 
 private:
 
@@ -399,8 +414,24 @@ public:
     { return GG::GeometryHelper::scvfIntegrationPointInConcaveCorner(*this, scvf); }
 
     //! Returns the the scvf of neighbor element with the same integration point and unit outer normal
-    const SubControlVolumeFace& outsideScvfWithSameIntegrationPoint(const SubControlVolumeFace& scvf) const
-    { return GG::GeometryHelper::outsideScvfWithSameIntegrationPoint(*this, scvf); }
+    //! Todo: this code can likely be improved, we don't need to build all of the outside geometry if we know how to build scvf.
+    SubControlVolumeFace outsideScvfWithSameIntegrationPoint(const SubControlVolumeFace& scvf) const
+    {
+        const SubControlVolumeFace& lateralOrthogonalScvf = this->lateralOrthogonalScvf(scvf);
+        assert(!lateralOrthogonalScvf.boundary());
+
+        const auto otherLocalIdx = GG::GeometryHelper::localIndexOutsideScvfWithSameIntegrationPoint(scvf);
+
+        auto outsideFVGeometry = localView(gridGeometry());
+        const auto outsideElementIdx = scv(lateralOrthogonalScvf.outsideScvIdx()).elementIndex();
+        outsideFVGeometry.bindElement(gridGeometry().element(outsideElementIdx));
+
+        for (const auto& otherScvf : scvfs(outsideFVGeometry))
+            if (otherScvf.localIndex() == otherLocalIdx)
+                return otherScvf;
+
+        DUNE_THROW(Dune::InvalidStateException, "No outside scvf found");
+    }
 
 private:
     //! Binding of an element preparing the geometries of the whole stencil
