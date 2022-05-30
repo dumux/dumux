@@ -1,5 +1,5 @@
 dune_symlink_to_source_files(FILES "convergencetest.py")
-dune_symlink_to_source_files(FILES "params.input")
+dune_symlink_to_source_files(FILES "params.input" "params_stokes.input")
 
 dumux_add_test(NAME test_ff_navierstokes_sincos
               SOURCES main.cc
@@ -49,3 +49,13 @@ dumux_add_test(NAME test_ff_navierstokes_sincos_uzawapreconditioner_factory
                              -Problem.Name test_ff_navierstokes_sincos_uzawapreconditioner
                              -Problem.IsStationary false
                              -Component.LiquidKinematicViscosity 0.1")
+
+
+set(_SOLVER_NAME "IncompressibleStokesSolver<typename Assembler::JacobianMatrix, typename Assembler::ResidualType")
+dumux_add_test(NAME test_ff_stokes_sincos_incompressible_solver
+               SOURCES main.cc
+               LABELS freeflow
+               TIMEOUT 5000
+               COMPILE_DEFINITIONS LINEARSOLVER=${_SOLVER_NAME}>
+               COMMAND ./convergencetest.py
+               CMD_ARGS test_ff_stokes_sincos_incompressible_solver params_stokes.input)
