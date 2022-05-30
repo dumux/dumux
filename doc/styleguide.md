@@ -81,12 +81,12 @@ This style guide is taken, modified and enhanced from [DUNE](https://dune-projec
      * Optional detailed description of the function
      * over several lines.
      *
-     * \tparam paramType Very short description of paramType
+     * \tparam ParamType Very short description of paramType
      * \param paramName Very short description of paramName
      * \return returnName Very short description of returnName
      */
-    template<typename paramType>
-    paramType functionName(const paramType& paramName)
+    template<typename ParamType>
+    ParamType functionName(const paramType& paramName)
     {
       ...
       return returnName
