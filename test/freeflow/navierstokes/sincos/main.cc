@@ -44,6 +44,7 @@
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/istlsolverfactorybackend.hh>
+#include <dumux/linear/incompressiblestokessolver.hh>
 
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
@@ -120,16 +121,6 @@ int main(int argc, char** argv)
     using CouplingManager = StaggeredFreeFlowCouplingManager<Traits>;
     auto couplingManager = std::make_shared<CouplingManager>();
 
-    // get some time loop parameters
-    using Scalar = GetPropType<MomentumTypeTag, Properties::Scalar>;
-    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-
-    // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dt, tEnd);
-    timeLoop->setMaxTimeStepSize(maxDt);
-
     // the problem (initial and boundary conditions)
     using MomentumProblem = GetPropType<MomentumTypeTag, Properties::Problem>;
     auto momentumProblem = std::make_shared<MomentumProblem>(momentumGridGeometry, couplingManager);
@@ -177,24 +168,59 @@ int main(int argc, char** argv)
 
     // the assembler with time loop for instationary problem
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
-    auto assembler = isStationary ?
-        std::make_shared<Assembler>(
+    std::shared_ptr<Assembler> assembler;
+    using Scalar = GetPropType<MomentumTypeTag, Properties::Scalar>;
+    std::shared_ptr<TimeLoop<Scalar>> timeLoop;
+    if (isStationary)
+    {
+        assembler = std::make_shared<Assembler>(
             std::make_tuple(momentumProblem, massProblem),
             std::make_tuple(momentumGridGeometry, massGridGeometry),
             std::make_tuple(momentumGridVariables, massGridVariables),
             couplingManager
-        )
-        :
-        std::make_shared<Assembler>(
+        );
+    }
+    else
+    {
+        // get some time loop parameters
+        const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+        const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+        const auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+
+        // instantiate time loop
+        timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dt, tEnd);
+        timeLoop->setMaxTimeStepSize(maxDt);
+
+        assembler = std::make_shared<Assembler>(
             std::make_tuple(momentumProblem, massProblem),
             std::make_tuple(momentumGridGeometry, massGridGeometry),
             std::make_tuple(momentumGridVariables, massGridVariables),
             couplingManager, timeLoop, xOld
         );
+    }
 
     // the linear solver
     using LinearSolver = LINEARSOLVER;
-    auto linearSolver = std::make_shared<LinearSolver>();
+    std::shared_ptr<LinearSolver> linearSolver;
+    if constexpr (std::is_default_constructible_v<LinearSolver>)
+        linearSolver = std::make_shared<LinearSolver>();
+    else
+    {
+        // we assume that we are using the Incompressible Stokes solver
+        auto params = LinearSolverParameters<LinearSolverTraits<MassGridGeometry>>::createParameterTree();
+        params["Component.LiquidDensity"] = getParam<std::string>("Component.LiquidDensity");
+        params["Component.LiquidKinematicViscosity"] = getParam<std::string>("Component.LiquidKinematicViscosity");
+        params["preconditioner.UseBlockTriangular"] = getParam<std::string>("LinearSolver.Preconditioner.UseBlockTriangular", "false");
+        params["preconditioner.UseFullSchurComplement"] = getParam<std::string>("LinearSolver.Preconditioner.UseFullSchurComplement", "false");
+        params["preconditioner.UseDirectVelocitySolver"] = getParam<std::string>("LinearSolver.Preconditioner.UseDirectVelocitySolver", "false");
+        const auto [massMatrix, dirichletDofs]
+            = computeIncompressibleStokesMassMatrixAndDirichletDofs<SolutionVector>(
+                leafGridView,
+                *massGridGeometry, massIdx,
+                *momentumGridGeometry, *momentumProblem, momentumIdx
+            );
+        linearSolver = std::make_shared<LinearSolver>(massMatrix, dirichletDofs, params);
+    }
 
     // the non-linear solver
     using NewtonSolver = Dumux::MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
