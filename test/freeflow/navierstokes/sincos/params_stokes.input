@@ -1,0 +1,44 @@
+[Grid]
+LowerLeft = 0 0
+UpperRight = 6.28 6.28
+Cells = 150 150
+
+[Problem]
+Name = test_ff_stokes_sincos_incompressible_solver
+EnableGravity = false
+PrintErrors = true
+PrintConvergenceTestFile = true
+EnableInertiaTerms = false
+IsStationary = true
+UseNeumann = true
+
+[Component]
+LiquidDensity = 1000
+LiquidKinematicViscosity = 1e-3
+
+[Assembly.NumericDifference]
+PriVarMagnitude = 1.0
+BaseEpsilon = 1e-4
+
+[Newton]
+MaxSteps = 2
+TargetSteps = 2
+MaxRelativeShift = 1e-5
+
+[Vtk]
+WriteFaceData = false
+AddProcessRank = false
+
+[LinearSolver]
+Verbosity = 1
+
+[LinearSolver.Preconditioner]
+UseDirectVelocitySolver = false
+UseFullSchurComplement = false
+Iterations = 1
+AmgSmootherIterations = 1
+AmgCriterionSymmetric = true
+AmgMaxLevel = 6
+
+[SpatialParams]
+Temperature = 298.0
