@@ -67,7 +67,7 @@ public:
     { return b_; }
 
     //! Get the corners of the intersection geometry
-    std::vector<GlobalPosition> corners() const
+    const std::vector<GlobalPosition>& corners() const
     { return corners_; }
 
     /*!
