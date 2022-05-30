@@ -16,3 +16,6 @@ Permeability = 1e-10 # [m^2]
 [Component]
 LiquidKinematicViscosity = 1e-6
 LiquidDensity = 1e3
+
+[Vtk]
+AddVelocity = true

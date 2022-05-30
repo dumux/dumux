@@ -30,6 +30,7 @@ and compute the convergence rates.
 #include <config.h>
 
 #include <iostream>
+#include <vector>
 
 #include <dumux/common/initialize.hh>
 #include <dumux/common/properties.hh> // for GetPropType
@@ -90,22 +91,30 @@ int main(int argc, char** argv) try
 
     // We define a function to update the discrete analytical solution vector
     // using the exactSolution() function in the problem
-    const auto updateAnalyticalSolution = [&](auto& pExact)
+    const auto updateAnalyticalSolution = [&](auto& pExact, auto& vExact)
     {
         pExact.resize(gridGeometry->numDofs());
+        vExact.resize(gridGeometry->elementMapper().size());
+
         for (const auto& element : elements(gridGeometry->gridView()))
         {
             auto fvGeometry = localView(*gridGeometry);
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
+            {
                 pExact[scv.dofIndex()] = problem->exactSolution(scv.dofPosition());
+            }
+            const auto eIdx = gridGeometry->elementMapper().index(element);
+            vExact[eIdx] = problem->exactVelocity(element.geometry().center());
         }
     };
 
     // instantiate and initialize the discrete and exact solution vectors
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector p(gridGeometry->numDofs());
-    SolutionVector pExact; updateAnalyticalSolution(pExact);
+    SolutionVector pExact;
+    std::vector<double> vExact;
+    updateAnalyticalSolution(pExact, vExact);
 
     // instantiate and initialize the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
@@ -119,6 +128,10 @@ int main(int argc, char** argv) try
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, p, problem->name());
     GetPropType<TypeTag, Properties::IOFields>::initOutputModule(vtkWriter);
     vtkWriter.addField(pExact, "pExact"); // add the exact solution to the output fields
+    vtkWriter.addField(vExact, "vExact"); // add the exact velocity to the output fields
+
+    using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
+    vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
 ```
 
 ### Instantiate the solver
@@ -179,7 +192,7 @@ in the input file.
         assembler->updateAfterGridAdaption();
 
         p.resize(gridGeometry->numDofs());
-        updateAnalyticalSolution(pExact);
+        updateAnalyticalSolution(pExact, vExact);
 
         // solve problem on refined grid
         solver.solve(p);
