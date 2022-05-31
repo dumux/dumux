@@ -17,16 +17,24 @@ This style guide is taken, modified and enhanced from [DUNE](https://dune-projec
 
 ## C++
 
+### Comments
+
+* All comments must be written in English.
+* Please write only comments that describe the __why__ of a piece of code, not the __how__!
+  The __how__ should be obsolete if you write the code as expressive as possible. For instance, by:
+    - using descriptive variable names
+    - splitting large functions up into several well-named smaller functions that describe the individual steps.
+      Make sure that these smaller functions are in the `private` scope of your class in case they are not meant
+      to be part of the public interface. In the case of free functions, you may put them into the `Detail` namespace.
+* If your code makes assumptions of any kind (the data it operates on, physical assumptions, etc.), please state 
+  them clearly either as comment or documentation (see section on `Documentation`).
+
+
 ### Documentation
 
-* Please document freely what each part of your code _should_ do. Document assumptions.
-* All comments/documentation in English.
-* We proclaim the Doc-Me dogma, which means whatever you do, please document it at least with
-
-    ```c++
-    //! \todo Please doc me!
-    ```
-
+* All documentation must be written in English.
+* If your code is based on anything published in a book or paper, make sure to properly cite it in the documentation!
+* Document any assumptions that go into your code (see section on `Comments`)
 * We use Doxygen to generate documentation from the source code. Detailed instructions can be found [here](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/doc/doxygen/README.md).
 
     ```c++
@@ -43,7 +51,6 @@ This style guide is taken, modified and enhanced from [DUNE](https://dune-projec
     ```
 
 * Files always contain the following documentation header before the headerguard:
-
     ```c++
     /*!
      * \file
@@ -53,7 +60,6 @@ This style guide is taken, modified and enhanced from [DUNE](https://dune-projec
     #ifndef DUMUX_HEADERGUARD_HH
     #define DUMUX_HEADERGUARD_HH
     ```
-
     where `GroupName` is a doxygen module group, click [here](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/doc/doxygen/modules.txt) for an overview of existing groups.
 
 * Each class should be documented using the following style:
@@ -71,6 +77,8 @@ This style guide is taken, modified and enhanced from [DUNE](https://dune-projec
     template<class T>
     class MyClass {};
     ```
+
+    You may omit the description of the template arguments if they are obvious.
 
 * Each free function and class member function should be documented using the following style:
 
@@ -92,6 +100,8 @@ This style guide is taken, modified and enhanced from [DUNE](https://dune-projec
       return returnName
     }
     ```
+
+    You may omit the description of the parameters if they are obvious.
 
 * Also document non-obvious function parameters at call site:
 
@@ -173,14 +183,12 @@ This style guide is taken, modified and enhanced from [DUNE](https://dune-projec
 * Comment closing curly brackets uniquely.
 
     ```c++
-    namespace Dumux {
-    namespace Properties {
+    namespace Dumux::Properties {
 
     bool here = true;
         bool nothere = false; // not like this
 
-    } // end namespace Properties
-    } // end namespace Dumux
+    } // end namespace Dumux::Properties
     ```
 
 * Use a `Detail` namespace for hiding implementation details, e.g. for template meta programming.
@@ -244,8 +252,7 @@ This style guide is taken, modified and enhanced from [DUNE](https://dune-projec
 ## CMake
 
 * Use named arguments only.
-* TODO
 
 ## Python
 
-* TODO
+* Style enforced by `black`, `pylint`, `flake8`
