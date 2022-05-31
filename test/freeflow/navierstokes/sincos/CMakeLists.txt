@@ -56,6 +56,7 @@ dumux_add_test(NAME test_ff_stokes_sincos_incompressible_solver
                SOURCES main.cc
                LABELS freeflow
                TIMEOUT 5000
+               CMAKE_GUARD HAVE_UMFPACK
                COMPILE_DEFINITIONS LINEARSOLVER=${_SOLVER_NAME}>
                COMMAND ./convergencetest.py
                CMD_ARGS test_ff_stokes_sincos_incompressible_solver params_stokes.input)
