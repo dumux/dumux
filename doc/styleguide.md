@@ -26,7 +26,7 @@ This style guide is taken, modified and enhanced from [DUNE](https://dune-projec
     - splitting large functions up into several well-named smaller functions that describe the individual steps.
       Make sure that these smaller functions are in the `private` scope of your class in case they are not meant
       to be part of the public interface. In the case of free functions, you may put them into the `Detail` namespace.
-* If your code makes any assumptions of any kind (the data it operates on, physical assumptions, etc.), please state 
+* If your code makes assumptions of any kind (the data it operates on, physical assumptions, etc.), please state 
   them clearly either as comment or documentation (see section on `Documentation`).
 
 
