@@ -97,7 +97,7 @@ public:
         {
             fvGeometry.bindElement(element);
             auto elemSol = elementSolution(element, sol, fvGeometry.gridGeometry());
-            const auto& scv = fvGeometry.scv(0);
+            const auto& dummyScv = fvGeometry.scv(0); //! We assume local pc(Sw) law same for each pore which is not true
             auto eIdx = gridGeometry.elementMapper().index(element);
 
             // bind the geometries and volume variables to the element (all the elements in stencil)
@@ -105,7 +105,11 @@ public:
             elemVolVars.bind(element, fvGeometry, sol);
 
             for (auto&& scvf : scvfs(fvGeometry))
-                cache(eIdx, scvf.index()).update(problem(), element, fvGeometry, elemVolVars, scvf, elemSol, scv, invasionState().invaded(element));
+                #if PLOTCONDUCTIVITY
+                    cache(eIdx, scvf.index()).update(problem(), element, fvGeometry, elemVolVars, scvf, invasionState().invaded(element));
+                #else
+                    cache(eIdx, scvf.index()).update(problem(), element, fvGeometry, elemVolVars, scvf, dummyScv, invasionState().invaded(element));
+                #endif
         }
     }
 

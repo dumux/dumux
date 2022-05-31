@@ -114,7 +114,7 @@ public:
                     if constexpr (GridFluxVariablesCache::cachingEnabled)
                     {
                         const auto eIdx = problem_.gridGeometry().elementMapper().index(element);
-                        gridFluxVarsCache.cache(eIdx, scvf.index()).update(problem_, element, fvGeometry, elemVolVars, scvf, invadedCurrentIteration_[eIdx]);
+                        // gridFluxVarsCache.cache(eIdx, scvf.index()).update(problem_, element, fvGeometry, elemVolVars, scvf, invadedCurrentIteration_[eIdx]);
                     }
                 }
             }

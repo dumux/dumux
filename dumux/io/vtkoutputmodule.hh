@@ -482,14 +482,14 @@ private:
                     }
                 }
 
-                // velocity output
-                if (velocityOutput_->enableOutput())
-                {
-                    const auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
+                // // velocity output
+                // if (velocityOutput_->enableOutput())
+                // {
+                //     const auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
 
-                    for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
-                        velocityOutput_->calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
-                }
+                //     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
+                //         velocityOutput_->calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
+                // }
 
                 //! the rank
                 if (addProcessRank)
@@ -673,14 +673,14 @@ private:
                     }
                 }
 
-                // velocity output
-                if (velocityOutput_->enableOutput())
-                {
-                    const auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
+                // // velocity output
+                // if (velocityOutput_->enableOutput())
+                // {
+                //     const auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
 
-                    for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
-                        velocityOutput_->calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
-                }
+                //     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
+                //         velocityOutput_->calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
+                // }
 
                 //! the rank
                 if (addProcessRank)

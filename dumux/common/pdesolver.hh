@@ -86,9 +86,11 @@ public:
      * \param assembler pointer to the assembler of the linear system
      * \param linearSolver pointer to the solver of the resulting linear system
      */
-    PDESolver(std::shared_ptr<Assembler> assembler,
+    PDESolver(std::shared_ptr<Assembler> assemblerReg,
+              std::shared_ptr<Assembler> assemblerUnreg,
               std::shared_ptr<LinearSolver> linearSolver)
-    : assembler_(assembler)
+    : assemblerReg_(assemblerReg)
+    , assemblerUnreg_(assemblerUnreg)
     , linearSolver_(linearSolver)
     {}
 
@@ -118,14 +120,27 @@ public:
     /*!
      * \brief Access the assembler
      */
-    const Assembler& assembler() const
-    { return *assembler_; }
+    const Assembler& assemblerReg() const
+    { return *assemblerReg_; }
 
     /*!
      * \brief Access the assembler
      */
-    Assembler& assembler()
-    { return *assembler_; }
+    Assembler& assemblerReg()
+    { return *assemblerReg_; }
+
+
+    /*!
+     * \brief Access the assembler
+     */
+    const Assembler& assemblerUnreg() const
+    { return *assemblerUnreg_; }
+
+    /*!
+     * \brief Access the assembler
+     */
+    Assembler& assemblerUnreg()
+    { return *assemblerUnreg_; }
 
     /*!
      * \brief Access the linear solver
@@ -163,7 +178,8 @@ protected:
     }
 
 private:
-    std::shared_ptr<Assembler> assembler_;
+    std::shared_ptr<Assembler> assemblerReg_;
+    std::shared_ptr<Assembler> assemblerUnreg_;
     std::shared_ptr<LinearSolver> linearSolver_;
 };
 

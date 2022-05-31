@@ -68,8 +68,12 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
 
 public:
     template<class SpatialParams>
-    DrainageProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<SpatialParams> spatialParams)
+    DrainageProblem(std::shared_ptr<const GridGeometry> gridGeometry
+    , std::shared_ptr<SpatialParams> spatialParams
+    , double regularPcInterval)
     : ParentType(gridGeometry, spatialParams)
+    , regularPcInterval_(regularPcInterval)
+
     {
         vtpOutputFrequency_ = getParam<int>("Problem.VtpOutputFrequency");
         useFixedPressureAndSaturationBoundary_ = getParam<bool>("Problem.UseFixedPressureAndSaturationBoundary", false);
@@ -193,7 +197,11 @@ public:
 
     // \}
 
+    const double regularizationInterval() const
+    { return regularPcInterval_; }
+
 private:
+    double regularPcInterval_;
 
     bool isInletPore_(const SubControlVolume& scv) const
     {

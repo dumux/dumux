@@ -137,7 +137,7 @@ public:
 
             if (phaseIdx == wPhaseIdx)
             {
-                if (!invaded) // not invaded in last time step
+                if (!invaded) // invasion
                 {
                     if ( pc < invasionLeft )
                         return Kw1p;
@@ -154,7 +154,7 @@ public:
                     else
                         return Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
                 }
-                else // invaded in last time step
+                else // snapoff
                 {
                     if (pc > snapoffRight)
                         return Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);

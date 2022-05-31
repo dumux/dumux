@@ -242,11 +242,12 @@ public:
     /*!
      * \brief The Constructor
      */
-    NewtonSolver(std::shared_ptr<Assembler> assembler,
+    NewtonSolver(std::shared_ptr<Assembler> assemblerReg,
+                 std::shared_ptr<Assembler> assemblerUnreg,
                  std::shared_ptr<LinearSolver> linearSolver,
                  const Communication& comm = Dune::MPIHelper::getCommunication(),
                  const std::string& paramGroup = "")
-    : ParentType(assembler, linearSolver)
+    : ParentType(assemblerReg, assemblerUnreg, linearSolver)
     , endIterMsgStream_(std::ostringstream::out)
     , comm_(comm)
     , paramGroup_(paramGroup)
@@ -255,7 +256,8 @@ public:
         initParams_(paramGroup);
 
         // set the linear system (matrix & residual) in the assembler
-        this->assembler().setLinearSystem();
+        this->assemblerReg().setLinearSystem();
+        this->assemblerUnreg().setLinearSystem();
 
         // set a different default for the linear solver residual reduction
         // within the Newton the linear solver doesn't need to solve too exact
@@ -263,7 +265,7 @@ public:
 
         // initialize the partial reassembler
         if (enablePartialReassembly_)
-            partialReassembler_ = std::make_unique<Reassembler>(this->assembler());
+            partialReassembler_ = std::make_unique<Reassembler>(this->assemblerReg());
     }
 
     //! the communicator for parallel runs
@@ -340,7 +342,7 @@ public:
     {
         if constexpr (!assemblerExportsVariables)
         {
-            if (this->assembler().isStationaryProblem())
+            if (this->assemblerReg().isStationaryProblem())
                 DUNE_THROW(Dune::InvalidStateException, "Using time step control with stationary problem makes no sense!");
         }
 
@@ -360,8 +362,8 @@ public:
                 else
                 {
                     // set solution to previous solution & reset time step
-                    Backend::update(vars, this->assembler().prevSol());
-                    this->assembler().resetTimeStep(Backend::dofs(vars));
+                    Backend::update(vars, this->assemblerUnreg().prevSol());
+                    this->assemblerReg().resetTimeStep(Backend::dofs(vars));
 
                     if (verbosity_ >= 1)
                     {
@@ -421,11 +423,11 @@ public:
         // write the initial residual if a convergence writer was set
         if (convergenceWriter_)
         {
-            this->assembler().assembleResidual(initVars);
+            this->assemblerUnreg().assembleResidual(initVars);
 
             // dummy vector, there is no delta before solving the linear system
             auto delta = Backend::zeros(Backend::size(initSol));
-            convergenceWriter_->write(initSol, delta, this->assembler().residual());
+            convergenceWriter_->write(initSol, delta, this->assemblerUnreg().residual());
         }
 
         if (enablePartialReassembly_)
@@ -484,7 +486,7 @@ public:
      */
     virtual void assembleLinearSystem(const Variables& vars)
     {
-        assembleLinearSystem_(this->assembler(), vars);
+        assembleLinearSystem_(this->assemblerReg(), vars);
 
         if (enablePartialReassembly_)
             partialReassembler_->report(comm_, endIterMsgStream_);
@@ -503,7 +505,7 @@ public:
      */
     void solveLinearSystem(SolutionVector& deltaU)
     {
-        auto& b = this->assembler().residual();
+        auto& b = this->assemblerUnreg().residual();
 
         try
         {
@@ -604,7 +606,7 @@ public:
                                                shift_*reassemblyShiftWeight_));
 
             updateDistanceFromLastLinearization_(uLastIter, deltaU);
-            partialReassembler_->computeColors(this->assembler(),
+            partialReassembler_->computeColors(this->assemblerReg(),
                                                distanceFromLastLinearization_,
                                                reassemblyThreshold);
 
@@ -645,7 +647,7 @@ public:
             if constexpr (assemblerExportsVariables)
                 priVarSwitchAdapter_->invoke(Backend::dofs(vars), vars);
             else // this assumes assembly with solution (i.e. Variables=SolutionVector)
-                priVarSwitchAdapter_->invoke(vars, this->assembler().gridVariables());
+                priVarSwitchAdapter_->invoke(vars, this->assemblerReg().gridVariables());
         }
 
         ++numSteps_;
@@ -883,7 +885,10 @@ protected:
         Backend::update(vars, uCurrentIter);
 
         if constexpr (!assemblerExportsVariables)
-            this->assembler().updateGridVariables(Backend::dofs(vars));
+        {
+            this->assemblerReg().updateGridVariables(Backend::dofs(vars));
+            this->assemblerUnreg().updateGridVariables(Backend::dofs(vars));
+        }
     }
 
     void computeResidualReduction_(const Variables& vars)
@@ -893,17 +898,17 @@ protected:
         if constexpr (Detail::hasNorm<LinearSolver, SolutionVector>())
         {
             if constexpr (!assemblerExportsVariables)
-                this->assembler().assembleResidual(Backend::dofs(vars));
+                this->assemblerUnreg().assembleResidual(Backend::dofs(vars));
             else
-                this->assembler().assembleResidual(vars);
-            residualNorm_ = this->linearSolver().norm(this->assembler().residual());
+                this->assemblerUnreg().assembleResidual(vars);
+            residualNorm_ = this->linearSolver().norm(this->assemblerUnreg().residual());
         }
         else
         {
             if constexpr (!assemblerExportsVariables)
-                residualNorm_ = this->assembler().residualNorm(Backend::dofs(vars));
+                residualNorm_ = this->assemblerUnreg().residualNorm(Backend::dofs(vars));
             else
-                residualNorm_ = this->assembler().residualNorm(vars);
+                residualNorm_ = this->assemblerUnreg().residualNorm(vars);
         }
 
         reduction_ = residualNorm_;
@@ -1003,8 +1008,6 @@ private:
                 // set the delta vector to zero before solving the linear system!
                 deltaU = 0;
 
-                // std::cout << " Before solving the equation the solution is : " << vars << std::endl;
-
                 solveLinearSystem(deltaU);
                 solveTimer.stop();
 
@@ -1021,7 +1024,7 @@ private:
                 newtonUpdate(vars, uLastIter, deltaU);
                 updateTimer.stop();
 
-                std::cout << "The solution vector (Pw, Sn) is : " << vars << std::endl;
+                // std::cout << "The solution vector (Pw, Sn) is : " << vars << std::endl;
                 // tell the solver that we're done with this iteration
                 newtonEndStep(vars, uLastIter);
 
@@ -1030,8 +1033,8 @@ private:
                 // if a convergence writer was specified compute residual and write output
                 if (convergenceWriter_)
                 {
-                    this->assembler().assembleResidual(vars);
-                    convergenceWriter_->write(Backend::dofs(vars), deltaU, this->assembler().residual());
+                    this->assemblerUnreg().assembleResidual(vars);
+                    convergenceWriter_->write(Backend::dofs(vars), deltaU, this->assemblerUnreg().residual());
                 }
 
                 // detect if the method has converged
@@ -1082,7 +1085,7 @@ private:
     auto assembleLinearSystem_(const A& assembler, const Variables& vars)
     -> typename std::enable_if_t<decltype(isValid(Detail::supportsPartialReassembly())(assembler))::value, void>
     {
-        this->assembler().assembleJacobianAndResidual(vars, partialReassembler_.get());
+        this->assemblerReg().assembleJacobianAndResidual(vars, partialReassembler_.get());
     }
 
     //! assembleLinearSystem_ for assemblers that don't support partial reassembly
@@ -1090,7 +1093,7 @@ private:
     auto assembleLinearSystem_(const A& assembler, const Variables& vars)
     -> typename std::enable_if_t<!decltype(isValid(Detail::supportsPartialReassembly())(assembler))::value, void>
     {
-        this->assembler().assembleJacobianAndResidual(vars);
+        this->assemblerReg().assembleJacobianAndResidual(vars);
     }
 
     /*!
@@ -1152,9 +1155,9 @@ private:
         // std::cout << " the residual is :  " << this->assembler().residual() << std::endl;
         int iterN = 1;
         return solveLinearSystemImpl_(this->linearSolver(),
-                                      this->assembler().jacobian(),
+                                      this->assemblerReg().jacobian(),
                                       deltaU,
-                                      this->assembler().residual(),
+                                      this->assemblerUnreg().residual(),
                                       iterN);
     }
 
@@ -1184,8 +1187,8 @@ private:
         using OriginalBlockType = Detail::BlockType<SolutionVector>;
         constexpr auto blockSize = Detail::blockSize<OriginalBlockType>();
 
-        std::cout << "\n";
-            Dune::printmatrix(std::cout, A, "Jacobian", "row");
+        // std::cout << "\n";
+        //     Dune::printmatrix(std::cout, A, "Jacobian", "row");
 
         // ++iterationNumber;
         // assert(false);
@@ -1204,8 +1207,8 @@ private:
         //     for (int j = 0; j<3; ++j)
         //         std::cout << A[i][j] << std::endl;
         // }
-        std::cout << "the solution is : " << x << "\n";
-        std::cout << "residual is : " << b << std::endl;
+        // std::cout << "the solution is : " << x << "\n";
+        // std::cout << "residual is : " << b << std::endl;
 
         return converged;
     }

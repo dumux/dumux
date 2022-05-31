@@ -49,20 +49,6 @@ class TwoPNewtonSolver : public Dumux::NewtonSolver<Assembler, LinearSolver>
 public:
     using ParentType::ParentType;
 
-    void newtonBegin(Variables &vars)
-    {
-        auto upwindNewtonInitial = getParam<bool>("Newton.UpwindInitial", false);
-        if (upwindNewtonInitial)
-        {
-            auto& gridVariables = this->assembler().gridVariables();
-            auto& invasionState = gridVariables.gridFluxVarsCache().invasionState();
-            auto& uCurrentIter = Backend::dofs(vars);
-            invasionState.updateForFirstStep(uCurrentIter, gridVariables.curGridVolVars(),
-                                         gridVariables.gridFluxVarsCache());
-        }
-        ParentType::newtonBegin(vars);
-    }
-
     /*!
      * \brief Called after each Newton update
      *
@@ -75,7 +61,7 @@ public:
         // call the method of the base class
         ParentType::newtonEnd(uCurrentIter, uLastIter);
 
-        auto& gridVariables = this->assembler().gridVariables();
+        auto& gridVariables = this->assemblerReg().gridVariables();
         auto& invasionState = gridVariables.gridFluxVarsCache().invasionState();
 
         invasionState.update(uCurrentIter, gridVariables.curGridVolVars(), gridVariables.gridFluxVarsCache());
@@ -85,7 +71,7 @@ public:
         if (newtonConverged())
         {
             NewtonConsistencyChecks<typename Assembler::GridVariables, SolutionVector> checks;
-            checks.performChecks(gridVariables, uCurrentIter, this->assembler().prevSol());
+            checks.performChecks(gridVariables, uCurrentIter, this->assemblerReg().prevSol());
         }
     }
 
@@ -110,7 +96,7 @@ public:
     void newtonFail(SolutionVector& u) final
     {
         ParentType::newtonFail(u);
-        auto& gridVariables = this->assembler().gridVariables();
+        auto& gridVariables = this->assemblerReg().gridVariables();
         gridVariables.gridFluxVarsCache().invasionState().reset();
         lastIterationWasChopped_ = false;
     }
@@ -121,7 +107,7 @@ public:
     //  */
     void newtonSucceed() final
     {
-        auto& gridVariables = this->assembler().gridVariables();
+        auto& gridVariables = this->assemblerReg().gridVariables();
         gridVariables.gridFluxVarsCache().invasionState().advance();
     }
 
@@ -151,7 +137,7 @@ private:
         {
             lastIterationWasChopped_ = true;
             // clamp saturation change to at most 20% per iteration
-            const auto& gridGeometry = this->assembler().gridGeometry();
+            const auto& gridGeometry = this->assemblerReg().gridGeometry();
             auto fvGeometry = localView(gridGeometry);
             for (const auto& element : elements(gridGeometry.gridView()))
             {
@@ -162,7 +148,7 @@ private:
                     auto dofIdxGlobal = scv.dofIndex();
 
                     // calculate the old wetting phase saturation
-                    const auto& spatialParams = this->assembler().problem().spatialParams();
+                    const auto& spatialParams = this->assemblerReg().problem().spatialParams();
                     const auto elemSol = elementSolution(element, uCurrentIter, gridGeometry);
 
                     const auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);

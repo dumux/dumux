@@ -21,6 +21,7 @@ AddVelocity = 1
 MaxSteps = 10
 TargetSteps = 4
 MaxRelativeShift = 1e-5
+NewtonOutputFilename = inexact_newton.log
 
 [InvasionState]
 Verbosity = true
@@ -28,3 +29,6 @@ Verbosity = true
 
 [SpatialParams]
 HighSwRegularizationMethod = Spline
+
+[Regularization]
+RegularizationIntervalOne = 0.02

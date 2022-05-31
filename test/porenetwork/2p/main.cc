@@ -84,13 +84,19 @@ int main(int argc, char** argv)
 
     // the problem (boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(gridGeometry, spatialParams);
+
+    const double regularizePcIntervalOne = getParam<double>("Regularization.RegularizationIntervalOne");
+    const double regularizePcIntervalTwo = 0.0;
+
+    auto problem = std::make_shared<Problem>(gridGeometry, spatialParams, regularizePcIntervalOne);
+    auto problemRef = std::make_shared<Problem>(gridGeometry, spatialParams, regularizePcIntervalTwo);
 
     // the solution vector
     using GridView = typename GridGeometry::GridView;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x(leafGridView.size(GridView::dimension));
     problem->applyInitialSolution(x);
+    problemRef->applyInitialSolution(x);
     auto xOld = x;
 
     // the grid variables
@@ -123,6 +129,7 @@ int main(int argc, char** argv)
     // the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
+    auto assemblerRef = std::make_shared<Assembler>(problemRef, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
     using LinearSolver = UMFPackBackend;
@@ -130,7 +137,7 @@ int main(int argc, char** argv)
 
     // the non-linear solver
     using NewtonSolver = PoreNetwork::TwoPNewtonSolver<Assembler, LinearSolver>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver);
+    NewtonSolver nonLinearSolver(assembler, assemblerRef, linearSolver);
 
     // time loop
     timeLoop->start(); do
