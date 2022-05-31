@@ -183,14 +183,12 @@ This style guide is taken, modified and enhanced from [DUNE](https://dune-projec
 * Comment closing curly brackets uniquely.
 
     ```c++
-    namespace Dumux {
-    namespace Properties {
+    namespace Dumux::Properties {
 
     bool here = true;
         bool nothere = false; // not like this
 
-    } // end namespace Properties
-    } // end namespace Dumux
+    } // end namespace Dumux::Properties
     ```
 
 * Use a `Detail` namespace for hiding implementation details, e.g. for template meta programming.
@@ -254,8 +252,7 @@ This style guide is taken, modified and enhanced from [DUNE](https://dune-projec
 ## CMake
 
 * Use named arguments only.
-* TODO
 
 ## Python
 
-* TODO
+* Style enforced by `black`, `pylint`, `flake8`
