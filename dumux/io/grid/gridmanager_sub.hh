@@ -26,6 +26,7 @@
 
 #include <memory>
 #include <utility>
+#include <algorithm>
 
 #include <dune/common/shared_ptr.hh>
 #include <dune/common/concept.hh>
@@ -234,8 +235,56 @@ public:
                 DUNE_THROW(Dune::IOError, "The SubGridManager doesn't support image files with extension: *." << ext);
 
         }
+        else if (hasParamInGroup(paramGroup, "Grid.BinaryMask"))
+        {
+            const auto maskFileName = getParamFromGroup<std::string>(paramGroup, "Grid.BinaryMask");
+            std::ifstream mask(maskFileName, std::ios_base::binary);
+            std::vector<char> buffer(std::istreambuf_iterator<char>(mask), std::istreambuf_iterator<char>{});
+            const auto cells = getParamFromGroup<std::array<int, dim>>(paramGroup, "Grid.Cells");
+            if (std::accumulate(cells.begin(), cells.end(), 1, std::multiplies<int>{}) != buffer.size())
+                DUNE_THROW(Dune::IOError, "Grid dimensions doesn't match number of cells specified");
+
+            using GlobalPosition = typename ParentType::Grid::template Codim<0>::Geometry::GlobalCoordinate;
+            const auto lowerLeft = GlobalPosition(0.0);
+            const auto upperRight = [&]{
+                if (hasParamInGroup(paramGroup, "Grid.PixelDimensions"))
+                {
+                    auto upperRight = getParamFromGroup<GlobalPosition>(paramGroup, "Grid.PixelDimensions");
+                    for (int i = 0; i < upperRight.size(); ++i)
+                        upperRight[i] *= cells[i];
+                    upperRight += lowerLeft;
+                    return upperRight;
+                }
+                else
+                    return getParamFromGroup<GlobalPosition>(paramGroup, "Grid.UpperRight");
+            }();
+
+            // make sure there is no grid refinement specified
+            if (getParamFromGroup<int>(paramGroup, "Grid.Refinement", 0) > 0)
+                DUNE_THROW(Dune::IOError,
+                    "Binary mask doesn't work together with Grid.Refinement."
+                    << " Use grid.globalRefine() after grid construction."
+                );
+
+            // construct the host grid
+            this->initHostGrid_(lowerLeft, upperRight, cells, paramGroup);
+
+            // check if the marker is customized, per default
+            // we use all cells that are encoded as 0
+            const char marker = getParamFromGroup<char>(paramGroup, "Grid.Marker", 0);
+            const auto elementSelector = [&](const auto& element)
+            {
+                const auto eIdx = this->hostGrid_().leafGridView().indexSet().index(element);
+                return buffer[eIdx] != marker;
+            };
+
+            // create the grid
+            this->gridPtr() = this->createGrid_(this->hostGrid_(), elementSelector, paramGroup);
+            this->loadBalance();
+        }
         else
-            DUNE_THROW(Dune::IOError, "SubGridManager couldn't construct element selector. Specify Grid.Image in the input file!");
+            DUNE_THROW(Dune::IOError, "SubGridManager couldn't construct element selector."
+                << " Specify Grid.Image or Grid.BinaryMask in the input file!");
     }
 
 private:
