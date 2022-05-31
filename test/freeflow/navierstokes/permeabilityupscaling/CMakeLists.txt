@@ -1,0 +1,8 @@
+# SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+dune_symlink_to_source_files(FILES "params.input" "sphere.raw")
+dumux_add_test(NAME test_ff_stokes_permeability_upscaling
+               SOURCES main.cc
+               LABELS freeflow navierstokes
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-subgrid_FOUND )")
