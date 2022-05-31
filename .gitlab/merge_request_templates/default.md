@@ -26,3 +26,15 @@ Before you request a review from someone, make sure to revise the following poin
 - [ ] is the code you changed and/or the new code you wrote covered in the test suite? (if not, extend the existing tests or write new ones)
 - [ ] does your change affect public interfaces or behavior, or, does it introduce a new feature? If so, document the change in `CHANGELOG.md`.
 - [ ] is the list of the header includes complete? ("include what you use")
+- [ ] all files have to end with a `\n` character. Make sure there is no `\ No newline at end of file` comment in "Changes" of this MR.
+- [ ] (if not applicable remove) are newly introduced or modified physical values/functions backed up with a scientific reference (including doi) in the docs?
+- [ ] (if not applicable remove) if the examples are modified, is the documentation regenerated (using [`generate_example_docs.py`](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/generate_example_docs.py))
+
+<!--
+The following aspects might also come up during review:
+
+* Does the change reduce the performance of the code (more CPU time or more memory) and is this justified by the benefits
+* Does the change improve the performance? (if yes, add this aspect to the MR description)
+* Is the code is a gross violation of programming best practices such as [DRY (don't repeat yourself / code duplication)](https://de.wikipedia.org/wiki/Don%E2%80%99t_repeat_yourself), [the SOLID principles](https://en.wikipedia.org/wiki/SOLID), or the [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines)?
+* Is the code well-documented, concise, easily readable? (e.g. variables are well-named, the logic is split into small & well-named functions)
+-->
