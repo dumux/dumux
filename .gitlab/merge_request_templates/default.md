@@ -35,6 +35,6 @@ The following aspects might also come up during review:
 
 * Does the change reduce the performance of the code (more CPU time or more memory) and is this justified by the benefits
 * Does the change improve the performance? (if yes, add this aspect to the MR description)
-* Is the code is a gross violation of programming best practices such as [DRY (don't repeat yourself / code duplication)](https://de.wikipedia.org/wiki/Don%E2%80%99t_repeat_yourself), [the SOLID principles](https://en.wikipedia.org/wiki/SOLID), or the [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines)?
+* Is the code is a gross violation of programming best practices such as DRY (don't repeat yourself / code duplication, see https://de.wikipedia.org/wiki/Don%E2%80%99t_repeat_yourself, the SOLID principles (https://en.wikipedia.org/wiki/SOLID), or the C++ Core Guidelines (https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines)?
 * Is the code well-documented, concise, easily readable? (e.g. variables are well-named, the logic is split into small & well-named functions)
 -->
