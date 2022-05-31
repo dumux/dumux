@@ -34,6 +34,7 @@
 #include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/parameters.hh>
+#include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/flux/traits.hh>
@@ -69,6 +70,7 @@ template<class GridVariables, class FluxVariables>
 class PorousMediumFlowVelocity
 {
     using GridGeometry = typename GridVariables::GridGeometry;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
@@ -161,7 +163,7 @@ public:
                 Scalar localArea = scvfReferenceArea_(geomType, scvf.index());
                 Scalar flux = fluxVars.advectiveFlux(phaseIdx, upwindTerm) / localArea;
                 const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-                flux /= insideVolVars.extrusionFactor();
+                flux /= insideVolVars.extrusionFactor() * Extrusion::area(scvf) / scvf.area();
                 tmpVelocity *= flux;
 
                 const int eIdxGlobal = gridGeometry_.elementMapper().index(element);
@@ -206,7 +208,7 @@ public:
                 Scalar localArea = scvfReferenceArea_(geomType, scvf.index());
                 Scalar flux = fluxVars.advectiveFlux(phaseIdx, upwindTerm) / localArea;
                 const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-                flux /= insideVolVars.extrusionFactor();
+                flux /= insideVolVars.extrusionFactor() * Extrusion::area(scvf) / scvf.area();
 
                 // transform the volume flux into a velocity vector
                 Velocity tmpVelocity = localNormal;
