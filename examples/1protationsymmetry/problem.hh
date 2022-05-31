@@ -57,6 +57,7 @@ public:
         // fluid properties
         k_ = getParam<Scalar>("SpatialParams.Permeability");
         nu_ = getParam<Scalar>("Component.LiquidKinematicViscosity");
+        rho_ = getParam<Scalar>("Component.LiquidDensity");
 
         // The inner radius r1 can be determined from the grid
         r1_ = gridGeometry->bBoxMin()[0];
@@ -64,7 +65,6 @@ public:
         // boundary conditions
         q1_ = getParam<Scalar>("Problem.Q1"); // mass flux into the domain at r1 in kg/s/m
         p1_ = getParam<Scalar>("Problem.P1"); // pressure at the inner boundary at r1
-
     }
     // [[/codeblock]]
 
@@ -108,9 +108,16 @@ public:
         return p;
     }
 
+    const Scalar exactVelocity(const GlobalPosition& globalPos) const
+    {
+        const auto r = globalPos[0];
+        const auto v = q1_/(2*M_PI)/rho_/r;
+        return v;
+    }
+
 private:
     // private data members required for the analytical solution
-    Scalar q1_, k_, nu_, r1_, p1_;
+    Scalar q1_, k_, nu_, r1_, p1_, rho_;
 };
 
 } // end namespace Dumux
