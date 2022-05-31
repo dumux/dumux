@@ -1,0 +1,48 @@
+[Grid]
+BinaryMask = sphere.raw
+Cells = 13 11 15
+PixelDimensions = 2 2 2
+
+[Problem]
+Name = test_stokes_upscaling
+EnableGravity = false
+EnableInertiaTerms = false
+
+[Component]
+# this test requires a unit fluid
+LiquidDensity = 1
+LiquidKinematicViscosity = 1
+
+[Assembly.NumericDifference]
+PriVarMagnitude = 1
+BaseEpsilon = 1
+
+[LinearSolver]
+Verbosity = 1
+MaxIterations = 500
+ResidualReduction = 1e-9
+UseDirectSolver = false
+
+[LinearSolver.Preconditioner]
+Verbosity = 0
+UseDirectVelocitySolver = false
+UseBlockTriangular = false
+UseFullSchurComplement = false
+Iterations = 1
+AmgSmootherIterations = 1
+AmgCriterionSymmetric = true
+AmgMaxLevel = 10
+AmgDefaultAggregationDimension = 3
+AmgMinAggregateSize = 3
+AmgMaxAggregateSize = 3
+
+[Newton]
+MinSteps = 1
+EnableAbsoluteResidualCriterion = true
+MaxAbsoluteResidual = 1e-5
+
+[Vtk]
+WriteFaceData = false
+
+[FluxOverPlane]
+Verbose = true
