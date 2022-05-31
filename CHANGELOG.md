@@ -5,6 +5,8 @@ Differences Between DuMu<sup>x</sup> 3.6 and DuMu<sup>x</sup> 3.5
 
 ### Improvements and Enhancements
 
+- __IO and subgrid__: There is now a `BinaryMask` reader that reads a raw binary file masking a cuboid domain. Can be used to simulate e.g. on microCT images directly. Using `Dune::SubGrid` wrapping a `Dune::YaspGrid` supply `Grid.BinaryMask`, `Grid.Cells` and `Grid.PixelDimensions` (the binary file doesn't have any header this information could be deduced from)
+
 - __Discretization__: There is now defaults for `FluxVariablesCache` and `FluxVariablesCacheFiller` for box/cctpfa/ccmpfa/staggered
 that implement an empty cache (i.e. nothing is cached for the flux variables).
 
