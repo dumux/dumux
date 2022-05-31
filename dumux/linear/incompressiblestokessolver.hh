@@ -105,6 +105,11 @@ public:
         }
         else
         {
+            // add unity in case parts of the domain do not have Neumann BC for velocity
+            for (auto rowIt = A_[_0][_0].begin(), rowEndIt = A_[_0][_0].end(); rowIt != rowEndIt; ++rowIt)
+                if (dirichletConstraints[_0][rowIt.index()][0] < 0.5) // don't add identity operator for Dirichlet dofs
+                    A_[_0][_0][rowIt.index()][rowIt.index()] += viscosity_*massMatrix_[_0][rowIt.index()][0];
+
             auto op = std::make_shared<LinearOperator>(A_[_0][_0]);
             velPre_ = std::make_unique<AMGSolverVelocity>(op, params);
         }
