@@ -61,7 +61,7 @@ and a liquid phase are present.
 
 - __Richards__: Fixed a bug that creeped into the 1.5-phase model so it actually computes diffusion in the gas phase now.
 
-- __Richards__: Fixed a bug that checked that the fluid viscosity is _not_ constant where as the check should have asserted that it is constant
+- __Richards__: Fixed a bug that checked that the fluid viscosity is _not_ constant whereas the check should have asserted that it is constant
 
 - __Fluidsystems__: Implemented `viscosityIsConstant(int phaseIdx)` for `H2OAir`
 
