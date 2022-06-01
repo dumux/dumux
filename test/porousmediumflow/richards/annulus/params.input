@@ -1,0 +1,62 @@
+[Problem]
+EnableGravity = false
+Name = test_richards_annulus
+InnerFlux = 0.1 # 0.05 # cm/day
+InitialPressureHeadInCm = -100.0
+EnableOuterNeumann = true
+EnableInnerNeumann = false
+
+[Grid]
+Cells0 = 300
+Grading0 = 0.95
+Positions0 = 0.02e-2 0.6e-2
+RefinementSteps = 3
+
+[Flux]
+UpwindWeight = 0.5
+
+[Newton]
+MaxRelativeShift = 1e-7
+
+[SpatialParams]
+SoilType = Clay # Loam # Sand
+Temperature = 283.15
+
+[SpatialParams.Clay]
+Name = Clay
+Swr = 0.25
+Snr = 0.0
+VanGenuchtenPcLowSweThreshold = 0.0
+VanGenuchtenPcHighSweThreshold = 1.0
+VanGenuchtenKrwHighSweThreshold = 1.0
+VanGenuchtenAlpha = 1.01936799e-4
+VanGenuchtenN = 1.1
+VanGenuchtenL = 0.5
+Porosity = 0.40
+Permeability = 1.1798241e-13
+
+[SpatialParams.Loam]
+Name = Loam
+Swr = 0.18604651162
+Snr = 0.0
+VanGenuchtenPcLowSweThreshold = 0.0
+VanGenuchtenPcHighSweThreshold = 1.0
+VanGenuchtenKrwHighSweThreshold = 1.0
+VanGenuchtenAlpha = 4.07747197e-4
+VanGenuchtenN = 1.6
+VanGenuchtenL = 0.5
+Porosity = 0.43
+Permeability = 5.8991203e-13
+
+[SpatialParams.Sand]
+Name = Sand
+Swr = 0.10465116279
+Snr = 0.0
+VanGenuchtenPcLowSweThreshold = 0.0
+VanGenuchtenPcHighSweThreshold = 1.0
+VanGenuchtenKrwHighSweThreshold = 1.0
+VanGenuchtenAlpha = 1.52905199e-3
+VanGenuchtenN = 3.0
+VanGenuchtenL = 0.5
+Porosity = 0.43
+Permeability = 1.1798241e-11
