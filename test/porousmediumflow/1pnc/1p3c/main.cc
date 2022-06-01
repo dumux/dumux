@@ -100,12 +100,6 @@ int main(int argc, char** argv)
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
-    // get some time loop parameters
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-    auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-
     // intialize the vtk output module
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
@@ -115,8 +109,13 @@ int main(int argc, char** argv)
     vtkWriter.write(0.0);
 
     // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dt, tEnd);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    const auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
+    timeLoop->setPeriodicCheckPoint(tEnd/5.0);
 
     // the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
@@ -144,7 +143,8 @@ int main(int argc, char** argv)
         timeLoop->advanceTimeStep();
 
         // write vtk output
-        vtkWriter.write(timeLoop->time());
+        if (timeLoop->isCheckPoint())
+            vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
