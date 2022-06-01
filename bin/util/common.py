@@ -298,7 +298,7 @@ def mostRecentCommonCommitWithRemote(modFolderPath, branchFilter=isPersistentBra
             return branches[0], rev
 
     raise RuntimeError(
-        "Could not find suitable ancestor commit" " on a branch that matches the given filter"
+        "Could not find suitable ancestor commit on a branch that matches the given filter"
     )
 
 

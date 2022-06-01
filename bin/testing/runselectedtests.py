@@ -109,7 +109,7 @@ if __name__ == "__main__":
 
     if args["config"] and args["all"]:
         sys.exit(
-            "Error: both `config` and `all` specified. " "Please set only one of these arguments."
+            "Error: both `config` and `all` specified. Please set only one of these arguments."
         )
 
     # prepare build and test flags
