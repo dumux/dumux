@@ -49,8 +49,6 @@ public:
                               IOName::density());
         out.addVolumeVariable([](const auto& volVars){ return volVars.viscosity(0); },
                               IOName::viscosity());
-        out.addVolumeVariable([](const auto& volVars){ return volVars.pressure(0) - 1e5; },
-                              "delp");
 
         for (int i = 0; i < VolumeVariables::numFluidComponents(); ++i)
            out.addVolumeVariable([i](const auto& volVars){ return volVars.moleFraction(0, i); },
