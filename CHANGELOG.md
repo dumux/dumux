@@ -63,7 +63,7 @@ and a liquid phase are present.
 
 - __Richards__: Fixed a bug that checked that the fluid viscosity is _not_ constant where as the check should have asserted that it is constant
 
-- __Fluidsystems__: Implemented `isViscosityConstant()` for `H2OAir`
+- __Fluidsystems__: Implemented `viscosityIsConstant(int phaseIdx)` for `H2OAir`
 
 _ __Privarswitch__: Fixed a bug in the privar switch which did not fully reset the `switched` variable. This lead
 to a possibly increased number of Newton iterations.
