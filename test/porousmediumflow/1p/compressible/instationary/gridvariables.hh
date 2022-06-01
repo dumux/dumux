@@ -25,7 +25,7 @@
 #ifndef DUMUX_COMPRESSIBLE_ONEP_TEST_GRID_VARIABLES_HH
 #define DUMUX_COMPRESSIBLE_ONEP_TEST_GRID_VARIABLES_HH
 
-#include <dumux/discretization/gridvariables.hh>
+#include <dumux/experimental/discretization/gridvariables.hh>
 
 namespace Dumux::OnePCompressibleTest {
 

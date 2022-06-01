@@ -27,7 +27,7 @@
 #include <utility>
 #include <memory>
 
-#include <dumux/common/variables.hh>
+#include <dumux/experimental/common/variables.hh>
 
 namespace Dumux::Experimental {
 

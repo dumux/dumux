@@ -1,6 +1,7 @@
 add_subdirectory(common)
 add_subdirectory(geomechanics)
 add_subdirectory(geometry)
+add_subdirectory(experimental)
 add_subdirectory(flux)
 add_subdirectory(freeflow)
 add_subdirectory(io)
@@ -12,7 +13,6 @@ add_subdirectory(parallel)
 add_subdirectory(porenetwork)
 add_subdirectory(porousmediumflow)
 add_subdirectory(discretization)
-add_subdirectory(timestepping)
 
 
 # if Python bindings are enabled, include Python binding tests

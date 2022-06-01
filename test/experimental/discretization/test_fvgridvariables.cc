@@ -36,7 +36,7 @@
 #include <dumux/common/parameters.hh>
 
 #include <dumux/discretization/box.hh>
-#include <dumux/discretization/fvgridvariables.hh>
+#include <dumux/experimental/discretization/fvgridvariables.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/fvspatialparams1pconstant.hh>

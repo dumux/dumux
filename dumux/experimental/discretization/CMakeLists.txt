@@ -1,0 +1,3 @@
+file(GLOB DUMUX_DISCRETIZATION_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_DISCRETIZATION_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/experimental/discretization)
