@@ -267,7 +267,7 @@ public:
                       "richards/localresidual.hh: Analytic Jacobian not implemented for the water diffusion in air version!");
         static_assert(!FluidSystem::isCompressible(0),
                       "richards/localresidual.hh: Analytic Jacobian only supports incompressible fluids!");
-        static_assert(!FluidSystem::viscosityIsConstant(0),
+        static_assert(FluidSystem::viscosityIsConstant(0),
                       "richards/localresidual.hh: Analytic Jacobian only supports fluids with constant viscosity!");
 
         // get references to the two participating vol vars & parameters
@@ -343,7 +343,7 @@ public:
                       "richards/localresidual.hh: Analytic Jacobian not implemented for the water diffusion in air version!");
         static_assert(!FluidSystem::isCompressible(0),
                       "richards/localresidual.hh: Analytic Jacobian only supports incompressible fluids!");
-        static_assert(!FluidSystem::viscosityIsConstant(0),
+        static_assert(FluidSystem::viscosityIsConstant(0),
                       "richards/localresidual.hh: Analytic Jacobian only supports fluids with constant viscosity!");
 
         // get references to the two participating vol vars & parameters
@@ -441,7 +441,7 @@ public:
                       "richards/localresidual.hh: Analytic Jacobian not implemented for the water diffusion in air version!");
         static_assert(!FluidSystem::isCompressible(0),
                       "richards/localresidual.hh: Analytic Jacobian only supports incompressible fluids!");
-        static_assert(!FluidSystem::viscosityIsConstant(0),
+        static_assert(FluidSystem::viscosityIsConstant(0),
                       "richards/localresidual.hh: Analytic Jacobian only supports fluids with constant viscosity!");
 
 

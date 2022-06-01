@@ -172,6 +172,25 @@ public:
 
     /*!
      * \brief Returns true if and only if a fluid phase is assumed to
+     *        have a constant viscosity.
+     *
+     * \param phaseIdx The index of the fluid phase to consider
+     */
+    static constexpr bool viscosityIsConstant(int phaseIdx)
+    {
+        // water decides for the liquid phase
+        if (phaseIdx == liquidPhaseIdx)
+            return H2O::liquidViscosityIsConstant();
+        // air decides if policy is enabled
+        else if (phaseIdx == gasPhaseIdx && Policy::useAirViscosityAsGasMixtureViscosity())
+            return Air::gasViscosityIsConstant();
+        // in general it depends on the mixture
+        else
+            return false;
+    }
+
+    /*!
+     * \brief Returns true if and only if a fluid phase is assumed to
      *        be an ideal gas.
      *
      * \param phaseIdx The index of the fluid phase to consider
