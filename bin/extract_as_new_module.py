@@ -127,7 +127,8 @@ def detectNewModule():
     """
 
     print("\nDetecting the newly created module")
-    newModule = max([d for d in os.listdir() if os.path.isdir(d)], key=os.path.getmtime)
+    directories = [d for d in os.listdir() if os.path.isdir(d)]
+    newModule = max(directories, key=os.path.getmtime)
 
     isCorrectModule = queryYesNo(
         f"Found '{newModule}' to be the new module. Is this correct?", default=None
@@ -281,7 +282,7 @@ def guideFolderDeletion(modulePath, candidates):
 
     deleted = []
     if queryYesNo(
-        "Do you want to remove some of them " "(by choosing 'no' they are all preserved)?",
+        "Do you want to remove some of them (by choosing 'no' they are all preserved)?",
         default="no",
     ):
         for folder in foldersWithoutSources:

@@ -65,9 +65,7 @@ if __name__ == "__main__":
     print("*" * 54)
 
     if os.path.exists("docker"):
-        print(
-            "\nA docker folder already exists. " "Continue anyway? - will be overwritten - [y/N]\n"
-        )
+        print("\nA docker folder already exists. Continue anyway? - will be overwritten - [y/N]\n")
         delete = input()
         if delete in ("y", "Y"):
             shutil.rmtree("docker")
