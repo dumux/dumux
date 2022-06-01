@@ -1,10 +1,11 @@
 [TimeLoop]
-DtInitial = 1 # [s]
+DtInitial = 15 # [s]
 TEnd = 3600 # [s]
+MaxTimeStepSize = 25 # [s]
 
 [Grid]
-UpperRight = 1 1
-Cells = 30 30
+UpperRight = 1 0.03
+Cells = 30 1
 
 [Problem]
 Name = maxwellstefan_1pnc # name passed to the output routines
