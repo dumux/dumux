@@ -175,9 +175,9 @@ def convertPVTUToVTU(pvturoot, filename):
 
         # add all the data arrays
         for i, dataArray in enumerate(cellDataArrays):
-            rootCellDataArrays[i].text += " " + cellDataArrays[i].text
+            rootCellDataArrays[i].text += " " + dataArray.text
         for i, dataArray in enumerate(pointDataArrays):
-            rootPointDataArrays[i].text += " " + pointDataArrays[i].text
+            rootPointDataArrays[i].text += " " + dataArray.text
 
         # update the number of cells and points
         newNumPoints = int(piece.findall(".//Piece")[0].attrib["NumberOfPoints"]) + rootNumPoints
@@ -531,7 +531,7 @@ def sortVTKByCoordinates(root1, root2, verbose, convertedFromParallelVtu=False):
 
             # first compare by coordinates, if the same compare largestCellMidPointForVertex
             def vertexCompare(valueA, valueB, largestCellMidPoint, bBoxMax, bBoxMin):
-                epsilon = math.sqrt(sum([(a - b) ** 2 for a, b in zip(bBoxMax, bBoxMin)])) * 1e-7
+                epsilon = math.sqrt(sum((a - b) ** 2 for (a, b) in zip(bBoxMax, bBoxMin))) * 1e-7
                 res = floatVecCompare(valueA[1], valueB[1], epsilon)
                 if res != 0:
                     return res
