@@ -33,6 +33,10 @@ Differences Between DuMu<sup>x</sup> 3.5 and DuMu<sup>x</sup> 3.4
 
 - __Component__: `gasViscosityIsConstant` added to component interface
 
+- __1pnc__: `delp` has been removed from the default vtk output fields in an attempt to streamline output between models.
+All information present in `delp` is present in `p` and `delp` has generally a reduced precision that also leads to some
+problems in automated testing.
+
 - __Richards__: the `Richards` model now works together with the generic `FluidSystem::TwoPImmiscible` as long as a gas
 and a liquid phase are present.
 
