@@ -12,6 +12,9 @@ that implement an empty cache (i.e. nothing is cached for the flux variables).
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
+- __Experimental features__: All headers with experimental features have been moved into the folder `dumux/experimental`.
+  Correspondingly, all unit tests for those features have been moved to `test/experimental`.
+
 ### Deprecated properties/classes/functions/files, to be removed after 3.6:
 
 ### New experimental features (possibly subject to backwards-incompatible changes in the future)
