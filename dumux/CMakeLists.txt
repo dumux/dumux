@@ -14,7 +14,6 @@ add_subdirectory(nonlinear)
 add_subdirectory(parallel)
 add_subdirectory(porenetwork)
 add_subdirectory(porousmediumflow)
-add_subdirectory(timestepping)
 
 # if Python bindings are enabled, include necessary sub directories.
 if(DUMUX_ENABLE_PYTHONBINDINGS)

@@ -13,12 +13,12 @@
 
 #include <dumux/io/format.hh>
 #include <dumux/common/initialize.hh>
-#include <dumux/common/variables.hh>
+#include <dumux/experimental/common/variables.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
-#include <dumux/timestepping/timelevel.hh>
-#include <dumux/timestepping/multistagemethods.hh>
-#include <dumux/timestepping/multistagetimestepper.hh>
+#include <dumux/experimental/timestepping/timelevel.hh>
+#include <dumux/experimental/timestepping/multistagemethods.hh>
+#include <dumux/experimental/timestepping/multistagetimestepper.hh>
 
 /*
    This tests the time integration methods by solving the
