@@ -208,7 +208,7 @@ public:
         const auto& lateralOrthogonalScvf = this->lateralOrthogonalScvf(scvf);
         assert(!lateralOrthogonalScvf.boundary());
 
-        const auto otherLocalIdx = GG::GeometryHelper::localIndexOutsideScvfWithSameIntegrationPoint(scvf);
+        const auto otherLocalIdx = GG::GeometryHelper::localIndexOutsideScvfWithSameIntegrationPoint(scvf, scv(scvf.insideScvIdx()));
 
         auto outsideFVGeometry = localView(gridGeometry());
         const auto outsideElementIdx = scv(lateralOrthogonalScvf.outsideScvIdx()).elementIndex();
@@ -420,7 +420,7 @@ public:
         const SubControlVolumeFace& lateralOrthogonalScvf = this->lateralOrthogonalScvf(scvf);
         assert(!lateralOrthogonalScvf.boundary());
 
-        const auto otherLocalIdx = GG::GeometryHelper::localIndexOutsideScvfWithSameIntegrationPoint(scvf);
+        const auto otherLocalIdx = GG::GeometryHelper::localIndexOutsideScvfWithSameIntegrationPoint(scvf, scv(scvf.insideScvIdx()));
 
         auto outsideFVGeometry = localView(gridGeometry());
         const auto outsideElementIdx = scv(lateralOrthogonalScvf.outsideScvIdx()).elementIndex();
