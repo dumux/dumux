@@ -8,6 +8,8 @@ Differences Between DuMu<sup>x</sup> 3.6 and DuMu<sup>x</sup> 3.5
 - __Discretization__: There is now defaults for `FluxVariablesCache` and `FluxVariablesCacheFiller` for box/cctpfa/ccmpfa/staggered
 that implement an empty cache (i.e. nothing is cached for the flux variables).
 
+- __Solver / Stokes__: Add `IncompressibleStokesSolver` and iterative solver based on an approximative Schur complement preconditioner. The solver exploits symmetry of the system matrix.
+
 - __Properties__: There is now a `GetPropOr` helper that evaluates to the property type if that type is specialized for the given TypeTag and a given type if not.
 
 - __1d3d__: Fixed a bug in the extended source stencil which didn't respect a user-defined epsilon for numeric differentiation
