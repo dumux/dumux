@@ -242,13 +242,21 @@ private:
     template<class Img>
     void createGridFromImage_(const Img& img, const std::string& paramGroup)
     {
+        using GlobalPosition = typename ParentType::Grid::template Codim<0>::Geometry::GlobalCoordinate;
+        const bool repeated = hasParamInGroup(paramGroup,"Grid.Repeat");
+
         // get the number of cells
-        const std::array<int, dim> cells{static_cast<int>(img.header().nCols), static_cast<int>(img.header().nRows)};
+        const std::array<int, dim> imageDimensions{static_cast<int>(img.header().nCols), static_cast<int>(img.header().nRows)};
+        std::array<int, dim> cells{imageDimensions[0], imageDimensions[1]};
+
+        std::array<int, dim> repeatsDefault; repeatsDefault.fill(1);
+        const auto numRepeats = getParamFromGroup<std::array<int, dim>>(paramGroup, "Grid.Repeat", repeatsDefault);
+        for (int i = 0; i < dim; i++)
+            cells[i] = cells[i] * numRepeats[i];
 
         // get the corner coordinates
         const auto [lowerLeft, upperRight] = [&]()
         {
-            using GlobalPosition = typename ParentType::Grid::template Codim<0>::Geometry::GlobalCoordinate;
             const auto lowerLeft = getParamFromGroup<GlobalPosition>(paramGroup, "Grid.LowerLeft", GlobalPosition(0.0));
             if (hasParamInGroup(paramGroup, "Grid.PixelDimensions"))
             {
@@ -269,8 +277,27 @@ private:
         // we mark all cells that are encoded as 0
         const bool marked = getParamFromGroup<bool>(paramGroup, "Grid.Marker", false);
 
-        // Create the selector
-        auto elementSelector = [this, &img, &marked](const auto& element)
+        // Create the element selector for a single image
+        const auto elementSelector = [&](const auto& element)
+        {
+            auto eIdx = this->hostGrid_().leafGridView().indexSet().index(element);
+
+            // if the hostgrid was refined, get the index of the original, un-refined
+            // host grid element which fits with the image's indices
+            if (element.hasFather())
+            {
+                auto level0Element = element.father();
+                while (level0Element.hasFather())
+                    level0Element = level0Element.father();
+
+                assert(level0Element.level() == 0);
+                eIdx = this->hostGrid_().levelGridView(0).indexSet().index(level0Element);
+            }
+            return img[eIdx] == marked;
+        };
+
+        // Create the element selector for a repeated image
+        const auto repeatedElementSelector = [&](const auto& element)
         {
             auto eIdx = this->hostGrid_().leafGridView().indexSet().index(element);
 
@@ -286,11 +313,22 @@ private:
                 eIdx = this->hostGrid_().levelGridView(0).indexSet().index(level0Element);
             }
 
-            return img[eIdx] == marked;
+            // figure out the size of the repeat, and the size of the target repeated grid
+            const int numCols = imageDimensions[0];
+            const int numRows = imageDimensions[1];
+
+            // map the eIdx to the original img index
+            const int repeatUnitIndex = eIdx % (numCols * numRepeats[0] * numRows);
+            const int imgI = repeatUnitIndex % numCols;
+            const int imgJ = repeatUnitIndex / (numCols * numRepeats[0]);
+            return img[ (imgJ * numCols + imgI) ] == marked;
         };
 
         // create the grid
-        this->gridPtr() = this->createGrid_(this->hostGrid_(), elementSelector, paramGroup);
+        if (repeated)
+            this->gridPtr() = this->createGrid_(this->hostGrid_(), repeatedElementSelector, paramGroup);
+        else
+            this->gridPtr() = this->createGrid_(this->hostGrid_(), elementSelector, paramGroup);
 
         this->loadBalance();
     }
