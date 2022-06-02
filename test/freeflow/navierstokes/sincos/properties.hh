@@ -24,13 +24,46 @@
 #ifndef DUMUX_SINCOS_TEST_PROPERTIES_HH
 #define DUMUX_SINCOS_TEST_PROPERTIES_HH
 
-#include <dune/grid/yaspgrid.hh>
+#ifndef ENABLECACHING
+#define ENABLECACHING true
+#endif
 
-#include <dumux/freeflow/navierstokes/momentum/model.hh>
-#include <dumux/freeflow/navierstokes/mass/1p/model.hh>
+#ifndef GRIDTYPE
+#if HAVE_DUNE_ALUGRID
+#define GRIDTYPE Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
+#else
+#define GRIDTYPE Dune::YaspGrid<2>
+#endif
+#endif
+
+#ifndef NAVIER_STOKES_MODEL
+#define NAVIER_STOKES_MODEL NavierStokesMomentum
+#endif
+
+#ifndef MOMENTUM_DISCRETIZATION_MODEL
+#define MOMENTUM_DISCRETIZATION_MODEL FaceCenteredStaggeredModel
+#endif
+
+#ifndef MASS_DISCRETIZATION_MODEL
+#define MASS_DISCRETIZATION_MODEL CCTpfaModel
+#endif
+
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#else
+#include <dune/grid/yaspgrid.hh>
+#endif
+
+#include <dumux/flux/fluxvariablescaching.hh>
 
 #include <dumux/discretization/fcstaggered.hh>
+#include <dumux/discretization/fcdiamond.hh>
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/box.hh>
+
+#include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/diamond/model.hh>
+#include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -44,35 +77,47 @@ namespace Dumux::Properties {
 // Create new type tags
 namespace TTag {
 struct SincosTest {};
-struct SincosTestMomentum { using InheritsFrom = std::tuple<SincosTest, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
-struct SincosTestMass { using InheritsFrom = std::tuple<SincosTest, NavierStokesMassOneP, CCTpfaModel>; };
+struct SincosTestMomentum { using InheritsFrom = std::tuple<SincosTest, NAVIER_STOKES_MODEL, MOMENTUM_DISCRETIZATION_MODEL>; };
+struct SincosTestMass { using InheritsFrom = std::tuple<SincosTest, NavierStokesMassOneP, MASS_DISCRETIZATION_MODEL>; };
 } // end namespace TTag
 
-// the fluid system
+template<class TypeTag>
+struct Problem<TypeTag, TTag::SincosTest>
+{ using type = SincosTestProblem<TypeTag>; };
+
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::SincosTest>
 {
-private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
-// Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::SincosTest> { using type = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
+struct Grid<TypeTag, TTag::SincosTest>
+{ using type = GRIDTYPE; };
+
+template<class TypeTag>
+struct EnableGridGeometryCache<TypeTag, TTag::SincosTest> { static constexpr bool value = ENABLECACHING; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::SincosTest> { static constexpr bool value = ENABLECACHING; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::SincosTest> { static constexpr bool value = ENABLECACHING; };
+
+template<class TypeTag>
+struct FluxVariablesCache<TypeTag, TTag::SincosTestMomentum>
+{
+private:
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+public:
+    using type = std::conditional_t<
+        GridGeometry::discMethod == DiscretizationMethods::fcdiamond,
+        FaceCenteredDiamondFluxVariablesCache<Scalar, GridGeometry>,
+        FluxVariablesCaching::EmptyCache<Scalar>
+    >;
+};
 
 // Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::SincosTest> { using type = SincosTestProblem<TypeTag> ; };
-
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::SincosTest> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::SincosTest> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::SincosTest> { static constexpr bool value = true; };
-
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::SincosTest>
 {

@@ -45,7 +45,55 @@
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/istlsolverfactorybackend.hh>
 
+#include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
+#include <test/freeflow/navierstokes/errors.hh>
+
 #include "properties_momentum.hh"
+
+namespace Dumux {
+
+template<class Error>
+void writeError_(std::ofstream& logFile, const Error& error, const std::string& format = "{:.5e}")
+{
+    for (const auto& e : error)
+        logFile << Fmt::format(", " + format, e);
+}
+
+template<class Problem, class GridVariables, class SolutionVector>
+void printErrors(std::shared_ptr<Problem> problem,
+                 const GridVariables& gridVariables,
+                 const SolutionVector& x)
+{
+    using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
+    static constexpr int dim = GridGeometry::GridView::dimension;
+    const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
+
+    if (printErrors)
+    {
+        NavierStokesTest::ErrorsSubProblem errors(problem, x);
+
+        std::ofstream logFile(problem->name() + ".csv", std::ios::app);
+        auto totalVolume = errors.totalVolume();
+        // For the staggered scheme, the control volumes are overlapping
+        if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::fcstaggered)
+            totalVolume /= dim;
+
+        logFile << Fmt::format("{:.5e}", errors.time()) << ", ";
+        logFile << problem->gridGeometry().numDofs() << ", ";
+        logFile << std::pow(totalVolume / problem->gridGeometry().numDofs(), 1.0/dim);
+        const auto& componentErrors = errors.l2Absolute();
+        // Calculate L2-error for velocity field
+        Dune::FieldVector<double, 1> velError(0.0);
+        velError[0] = std::sqrt(componentErrors * componentErrors);
+
+        writeError_(logFile, velError);
+        //writeError_(logFile, errors.l2Relative());
+        //writeError_(logFile, errors.lInfAbsolute());
+        //writeError_(logFile, errors.lInfRelative());
+
+        logFile << "\n";
+    }
+}
 
 template<class GridGeometry, class GridVariables, class SolutionVector>
 void updateVelocities(
@@ -110,6 +158,9 @@ void updateRank(
         rank[eIdxGlobal] = gridGeometry.gridView().comm().rank();
     }
 }
+
+} // end namespace Dumux
+
 
 int main(int argc, char** argv)
 {
@@ -196,9 +247,11 @@ int main(int argc, char** argv)
     ////////////////////////////////////////////////////////////
     // write VTK output
     ////////////////////////////////////////////////////////////
-    updateVelocities(velocity, faceVelocity, *gridGeometry, *gridVariables, x);
+    Dumux::updateVelocities(velocity, faceVelocity, *gridGeometry, *gridVariables, x);
     writer.write("donea_momentum" + discSuffix + "_1");
     faceVtk.write("donea_momentum_face" + discSuffix + rankSuffix + "_1", Dune::VTK::ascii);
+
+    Dumux::printErrors(problem, *gridVariables, x);
 
     ////////////////////////////////////////////////////////////
     // finalize, print parameters and Dumux message to say goodbye

@@ -1,0 +1,39 @@
+[Grid]
+#File = ./grids/cube3d.msh
+LowerLeft = 0 0 0
+UpperRight = 1 1 1
+Cells = 5 5 5
+
+[Problem]
+Name = test_trigonometric # name passed to the output routines
+EnableGravity = false
+EnableInertiaTerms = false
+PrintErrors = true
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 1.0
+
+[Newton]
+MaxSteps = 10
+MaxRelativeShift = 1e-8
+
+[LinearSolver]
+Type = cgsolver
+ResidualReduction = 1e-13
+Verbosity = 1
+Velocity.UseDirectSolver = true
+
+[LinearSolver.Preconditioner]
+Type = amg
+AmgAccumulationMode = atOnce
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-1
+
+[FreeFlow]
+EnableUnsymmetrizedVelocityGradient = false
+EnableWeakSymmetry = true
+
+[SpatialParams]
+Temperature = 298.0

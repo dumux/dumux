@@ -91,7 +91,7 @@ public:
     {
         if constexpr (ParentType::isMomentumProblem())
         {
-            NumEqVector source;
+            NumEqVector source(0.0);
             const Scalar x = globalPos[0];
             const Scalar y = globalPos[1];
 
@@ -133,10 +133,7 @@ public:
                     values.setAllDirichlet();
             }
             else
-            {
-                values.setDirichlet(Indices::velocityXIdx);
-                values.setDirichlet(Indices::velocityYIdx);
-            }
+                values.setAllDirichlet();
         }
         else
             values.setNeumann(Indices::conti0EqIdx);
@@ -202,7 +199,7 @@ public:
      */
     PrimaryVariables analyticalSolution(const GlobalPosition& globalPos, Scalar time = 0.0) const
     {
-        PrimaryVariables values;
+        PrimaryVariables values(0.0);
 
         if constexpr (ParentType::isMomentumProblem())
         {
@@ -259,7 +256,8 @@ public:
 
             bool onBoundary = false;
             for (const auto& scvf : scvfs(fvGeometry))
-                onBoundary = std::max(onBoundary, scvf.boundary());
+                if(fvGeometry.scv(scvf.insideScvIdx()).dofIndex() == scv.dofIndex())
+                    onBoundary = std::max(onBoundary, scvf.boundary());
 
             if (onBoundary)
                 values.set(0);

@@ -870,29 +870,6 @@ public:
                    const SubControlVolumeFace<freeFlowMomentumIndex>& scvf,
                    const bool considerPreviousTimeStep = false) const
     {
-        assert(!(considerPreviousTimeStep && !isTransient_));
-        bindCouplingContext_(Dune::index_constant<freeFlowMomentumIndex>(), element, fvGeometry.elementIndex());
-        const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& insideMassScv = momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
-
-        const auto rho = [&](const auto& elemVolVars)
-        {
-            if (scvf.boundary())
-                return elemVolVars[insideMassScv].density();
-            else
-            {
-                const auto& outsideMomentumScv = fvGeometry.scv(scvf.outsideScvIdx());
-                const auto& outsideMassScv = momentumCouplingContext_[0].fvGeometry.scv(outsideMomentumScv.elementIndex());
-                // TODO distance weighting
-                return 0.5*(elemVolVars[insideMassScv].density() + elemVolVars[outsideMassScv].density());
-            }
-        };
-
-        return considerPreviousTimeStep ? rho(momentumCouplingContext_[0].prevElemVolVars)
-                                        : rho(momentumCouplingContext_[0].curElemVolVars);
-
-
-
         assert(!(considerPreviousTimeStep && !this->isTransient_));
         bindCouplingContext_(Dune::index_constant<freeFlowMomentumIndex>(), element, fvGeometry.elementIndex());
 

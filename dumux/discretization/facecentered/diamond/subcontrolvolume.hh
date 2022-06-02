@@ -60,10 +60,15 @@ struct FaceCenteredDiamondScvGeometryTraits
     using CornerStorage = typename ScvMLGTraits<Scalar>::template CornerStorage<dim, dimWorld>::Type;
     using GlobalPosition = typename CornerStorage::value_type;
 
-    static Dune::GeometryType geometryType()
+    static Dune::GeometryType geometryType(const CornerStorage& corners)
     {
         if constexpr (dim == 3)
-            return Dune::GeometryTypes::pyramid;
+            switch (corners.size())
+            {
+                case 4: return Dune::GeometryTypes::simplex(dim);
+                case 5: return Dune::GeometryTypes::pyramid;
+                default: DUNE_THROW(Dune::InvalidStateException, "Unknown scv geometry!");
+            }
         else
             return Dune::GeometryTypes::simplex(dim);
     }
@@ -94,10 +99,10 @@ public:
                                         const GridIndexType eIdx,
                                         const bool boundary)
     : corners_(corners)
-    , geometry_(Geometry(T::geometryType(), corners_))
-    , center_(geometry_.value().center())
+    , geometry_(Geometry(T::geometryType(corners_), corners_))
+    , center_(geometry_.center())
     , dofPosition_(dofPosition)
-    , volume_(geometry_.value().volume())
+    , volume_(geometry_.volume())
     , globalIndex_(globalIndex)
     , indexInElement_(indexInElement)
     , dofIdx_(dofIdx)
@@ -115,6 +120,13 @@ public:
 
     Scalar volume() const
     { return volume_; }
+
+    //! The geometry of the sub control volume
+    // e.g. for integration
+    const Geometry& geometry() const
+    {
+        return geometry_;
+    }
 
     GridIndexType dofIndex() const
     { return dofIdx_; }
@@ -136,7 +148,7 @@ public:
 
 private:
     CornerStorage corners_;
-    std::optional<Geometry> geometry_;
+    Geometry geometry_;
     GlobalPosition center_;
     GlobalPosition dofPosition_;
     Scalar volume_;

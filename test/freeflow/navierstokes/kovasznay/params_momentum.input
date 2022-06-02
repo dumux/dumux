@@ -1,0 +1,27 @@
+[Grid]
+LowerLeft = -0.5 -0.5
+UpperRight = 2 1.5
+Cells = 10 10
+
+[Problem]
+Name = test_kovasznay
+EnableGravity = false
+PrintErrors = true
+EnableInertiaTerms = true
+
+[Component]
+LiquidDensity = 1
+LiquidKinematicViscosity = 1
+
+[ Newton ]
+MaxSteps = 10
+MaxRelativeShift = 1e-5
+
+[Vtk]
+WriteFaceData = false
+
+[Flux]
+UpwindWeight = 0.5
+
+[SpatialParams]
+Temperature = 298.0
