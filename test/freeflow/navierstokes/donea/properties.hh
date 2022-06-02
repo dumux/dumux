@@ -54,6 +54,8 @@
 #include <dune/grid/yaspgrid.hh>
 #endif
 
+#include <dumux/flux/fluxvariablescaching.hh>
+
 #include <dumux/discretization/fcstaggered.hh>
 #include <dumux/discretization/fcdiamond.hh>
 #include <dumux/discretization/cctpfa.hh>
@@ -100,6 +102,20 @@ template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::DoneaTest> { static constexpr bool value = ENABLECACHING; };
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::DoneaTest> { static constexpr bool value = ENABLECACHING; };
+
+template<class TypeTag>
+struct FluxVariablesCache<TypeTag, TTag::DoneaTestMomentum>
+{
+private:
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+public:
+    using type = std::conditional_t<
+        GridGeometry::discMethod == DiscretizationMethods::fcdiamond,
+        FaceCenteredDiamondFluxVariablesCache<Scalar, GridGeometry>,
+        FluxVariablesCaching::EmptyCache<Scalar>
+    >;
+};
 
 // Set the problem property
 template<class TypeTag>

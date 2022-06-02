@@ -3,7 +3,7 @@ dune_symlink_to_source_files(FILES grids)
 
 # tests with staggered
 dumux_add_test(NAME test_ff_stokes_donea_momentum
-               LABELS freeflow navierstokes
+               LABELS freeflow navierstokes donea
                SOURCES main_momentum.cc
                CMAKE_GUARD HAVE_UMFPACK
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -13,7 +13,7 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum")
 
 dumux_add_test(NAME test_ff_stokes_donea_momentum_parallel
-               LABELS freeflow navierstokes
+               LABELS freeflow navierstokes donea
                TARGET test_ff_stokes_donea_momentum
                CMAKE_GUARD "( HAVE_UMFPACK AND HAVE_MPI AND ( DUNE_ISTL_VERSION VERSION_GREATER_EQUAL 2.8 ) )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -23,7 +23,7 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_parallel
                              --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum")
 
 dumux_add_test(NAME test_ff_stokes_donea_nocaching
-              LABELS freeflow navierstokes
+              LABELS freeflow navierstokes donea
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
               COMPILE_DEFINITIONS ENABLECACHING=false
@@ -35,7 +35,7 @@ dumux_add_test(NAME test_ff_stokes_donea_nocaching
                              -Problem.Name test_ff_stokes_donea_nocaching -Problem.UseNeumann false")
 
 dumux_add_test(NAME test_ff_stokes_donea_donut_nocaching
-              LABELS freeflow navierstokes
+              LABELS freeflow navierstokes donea
               TARGET test_ff_stokes_donea_nocaching
               CMAKE_GUARD "( dune-alugrid_FOUND AND HAVE_UMFPACK )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -47,7 +47,7 @@ dumux_add_test(NAME test_ff_stokes_donea_donut_nocaching
                              -Problem.Name test_ff_stokes_donea_donut_nocaching -Problem.UseNeumann false")
 
 dumux_add_test(NAME test_ff_stokes_donea_donut_twisted_nocaching
-              LABELS freeflow navierstokes
+              LABELS freeflow navierstokes donea
               TARGET test_ff_stokes_donea_nocaching
               CMAKE_GUARD "( dune-alugrid_FOUND AND HAVE_UMFPACK )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -60,7 +60,7 @@ dumux_add_test(NAME test_ff_stokes_donea_donut_twisted_nocaching
                              --zeroThreshold {"connectivity":1e6})
 
 dumux_add_test(NAME test_ff_stokes_donea
-              LABELS freeflow navierstokes
+              LABELS freeflow navierstokes donea
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
               COMPILE_DEFINITIONS ENABLECACHING=true
@@ -72,7 +72,7 @@ dumux_add_test(NAME test_ff_stokes_donea
                              -Problem.Name test_ff_stokes_donea -Problem.UseNeumann false")
 
 dumux_add_test(NAME test_ff_stokes_donea_donut
-               LABELS freeflow navierstokes
+               LABELS freeflow navierstokes donea
                TARGET test_ff_stokes_donea
                CMAKE_GUARD "( dune-alugrid_FOUND AND HAVE_UMFPACK )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -84,7 +84,7 @@ dumux_add_test(NAME test_ff_stokes_donea_donut
                                -Problem.Name test_ff_stokes_donea_donut -Problem.UseNeumann false")
 
 dumux_add_test(NAME test_ff_stokes_donea_donut_twisted
-               LABELS freeflow navierstokes
+               LABELS freeflow navierstokes donea
                TARGET test_ff_stokes_donea
                CMAKE_GUARD "( dune-alugrid_FOUND AND HAVE_UMFPACK )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -100,7 +100,7 @@ dumux_add_test(NAME test_ff_stokes_donea_donut_twisted
 # Stokes momentum only
 dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_quad
                SOURCES main_momentum.cc
-               LABELS freeflow navierstokes
+               LABELS freeflow navierstokes donea
                CMAKE_GUARD dune-alugrid_FOUND
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
                COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredDiamondModel
@@ -110,55 +110,61 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_quad
 
 dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_simplex
                SOURCES main_momentum.cc
-               LABELS freeflow navierstokes
+               LABELS freeflow navierstokes donea
                CMAKE_GUARD dune-alugrid_FOUND
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::conforming>
                COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredDiamondModel
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_diamond_simplex
-               CMD_ARGS params.input -Problem.UseNeumann true -FreeFlow.EnableUnsymmetrizedVelocityGradient true)
+               CMD_ARGS params.input -Problem.UseNeumann true -FreeFlow.EnableUnsymmetrizedVelocityGradient false)
 
 # full Stokes equations
 dumux_add_test(NAME test_ff_stokes_donea_diamond_tpfa_quad
                SOURCES main.cc
-               LABELS freeflow navierstokes
+               LABELS freeflow navierstokes donea
                CMAKE_GUARD dune-alugrid_FOUND
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
                COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION_MODEL=FaceCenteredDiamondModel
                COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=CCTpfaModel
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_diamond_tpfa_quad
-               CMD_ARGS params.input -Problem.UseNeumann false)
+               CMD_ARGS params.input -Problem.UseNeumann true)
+
+dumux_add_test(NAME test_ff_stokes_donea_diamond_tpfa_quad_unstructured
+               TARGET test_ff_stokes_donea_diamond_tpfa_quad
+               LABELS freeflow navierstokes donea
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_diamond_tpfa_quad
+               CMD_ARGS params.input -Problem.UseNeumann true -Grid.File ./grids/unstructured_quad.msh -Grid.Refinement 2)
 
 dumux_add_test(NAME test_ff_stokes_donea_diamond_box_quad
                SOURCES main.cc
-               LABELS freeflow navierstokes
+               LABELS freeflow navierstokes donea
                CMAKE_GUARD dune-alugrid_FOUND
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
                COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION_MODEL=FaceCenteredDiamondModel
                COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=BoxModel
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_diamond_box_quad
-               CMD_ARGS params.input -Problem.UseNeumann false)
+               CMD_ARGS params.input -Problem.UseNeumann true)
 
 dumux_add_test(NAME test_ff_stokes_donea_diamond_tpfa_simplex
                SOURCES main.cc
-               LABELS freeflow navierstokes
+               LABELS freeflow navierstokes donea
                CMAKE_GUARD dune-alugrid_FOUND
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::conforming>
                COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION_MODEL=FaceCenteredDiamondModel
                COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=CCTpfaModel
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_diamond_tpfa_simplex
-               CMD_ARGS params.input -Problem.UseNeumann false -FreeFlow.EnableUnsymmetrizedVelocityGradient true)
+               CMD_ARGS params.input -Problem.UseNeumann true -FreeFlow.EnableUnsymmetrizedVelocityGradient false)
 
 dumux_add_test(NAME test_ff_stokes_donea_diamond_box_simplex
                SOURCES main.cc
-               LABELS freeflow navierstokes
+               LABELS freeflow navierstokes donea
                CMAKE_GUARD dune-alugrid_FOUND
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::conforming>
                COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION_MODEL=FaceCenteredDiamondModel
                COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=BoxModel
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_diamond_box_simplex
-               CMD_ARGS params.input -Problem.UseNeumann false -FreeFlow.EnableUnsymmetrizedVelocityGradient true)
+               CMD_ARGS params.input -Problem.UseNeumann true -FreeFlow.EnableUnsymmetrizedVelocityGradient false)

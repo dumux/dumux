@@ -199,31 +199,24 @@ public:
         //TODO Boundary handling
         const auto& fvGeometry = this->fvGeometry();
         const auto& elemVolVars = this->elemVolVars();
-        const auto& geometry = this->element().geometry();
         const auto& scvf = this->scvFace();
-        const auto ipLocal = geometry.local(scvf.ipGlobal());
-
-        const auto& localBasis = fvGeometry.feLocalBasis();
-
-        // TODO cache these values
-        const auto jacInvT = geometry.jacobianInverseTransposed(ipLocal);
-        std::vector<ShapeJacobian> shapeJacobian;
-        localBasis.evaluateJacobian(ipLocal, shapeJacobian);
-
-        // compute the gradN at for every scv/dof
-        std::vector<GlobalPosition> gradN(fvGeometry.numScv(), GlobalPosition(0));
-        for (const auto& scv: scvs(fvGeometry))
-            jacInvT.mv(shapeJacobian[scv.localDofIndex()][0], gradN[scv.indexInElement()]);
+        const auto& fluxVarCache = this->elemFluxVarsCache()[scvf];
 
         Tensor gradV(0.0);
-        for (int dir = 0; dir < dim; ++dir)
-            for (const auto& scv : scvs(fvGeometry))
-                gradV[dir].axpy(elemVolVars[scv].velocity(dir), gradN[scv.indexInElement()]);
+        for (const auto& scv : scvs(fvGeometry))
+        {
+            const auto& volVars = elemVolVars[scv];
+            for (int dir = 0; dir < dim; ++dir)
+                gradV[dir].axpy(volVars.velocity(dir), fluxVarCache.gradN(scv.indexInElement()));
+        }
 
         static const bool enableUnsymmetrizedVelocityGradient
             = getParamFromGroup<bool>(this->problem().paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
 
-        result = enableUnsymmetrizedVelocityGradient ? mv(gradV,scvf.unitOuterNormal()) : mv(gradV + getTransposed(gradV),scvf.unitOuterNormal());
+        const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(this->element());
+        result = enableUnsymmetrizedVelocityGradient ?
+            mv(gradV, scvf.unitOuterNormal())
+            : 2.0*mv(gradV - this->elemFluxVarsCache()[eIdx].avgSkewGradV, scvf.unitOuterNormal());
 
         const auto mu = this->problem().effectiveViscosity(this->element(), this->fvGeometry(), this->scvFace());
         result *= -mu * Extrusion::area(scvf) * extrusionFactor_(elemVolVars, scvf);
@@ -270,7 +263,6 @@ private:
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
         return harmonicMean(insideVolVars.extrusionFactor(), outsideVolVars.extrusionFactor());
     }
-
 
     const Problem* problemPtr_;                             //!< Pointer to the problem
     const Element* elementPtr_;                             //!< Pointer to the element at hand

@@ -31,6 +31,9 @@
 namespace Dumux {
 
 //! A class to create sub control volume and sub control volume face geometries per element
+//! TODO optimize storage requirements/memory allocation:
+//!  - get rid of all std::vectors
+//!  - only store points once (see box helper)
 template <class GridView, class ScvType, class ScvfType>
 class HyperPyramidGeometryHelper
 {
@@ -53,15 +56,16 @@ class HyperPyramidGeometryHelper
 public:
     HyperPyramidGeometryHelper(const Element& element)
     {
+        // TODO we only need the geometry here
         const auto elementGeom = element.geometry();
         center_ = elementGeom.center();
         const auto refElement = referenceElement(elementGeom);
 
         // loop over all codim-1 entities / facets
         // and connect facet vertices to center point for scvs
-        pScv_.resize(element.subEntities(1));
-        scvDofPos_.resize(element.subEntities(1));
-        for(int idx=0; idx<element.subEntities(1); ++idx)
+        pScv_.resize(refElement.size(1));
+        scvDofPos_.resize(refElement.size(1));
+        for(int idx=0; idx<refElement.size(1); ++idx)
         {
             const auto numVertices = refElement.size(idx, 1, dim);
             pScv_[idx].reserve(numVertices + 1);
@@ -77,12 +81,12 @@ public:
 
         // loop over all codim-2 entities (edges in 3D, vertices in 2D)
         // and connect its vertices to center point for scvfs
-        numInteriorScvf_ = element.subEntities(2);
+        numInteriorScvf_ = refElement.size(2);
         pScvf_.resize(numInteriorScvf_);
         for(int idx=0; idx<numInteriorScvf_; ++idx)
         {
             const auto numVertices = refElement.size(idx, 2, dim);
-            pScvf_[idx].reserve(numVertices);
+            pScvf_[idx].reserve(numVertices + 1);
             for (int localVIdx = 0; localVIdx < numVertices; ++localVIdx)
             {
                 const auto vIdx = refElement.subEntity(idx, 2, localVIdx, dim);
@@ -109,11 +113,7 @@ public:
     //! Create the sub control volume face geometries on the boundary
     ScvfCornerStorage getBoundaryScvfCorners(const Intersection& is) const
     {
-        ScvfCornerStorage corners;
-        std::copy(pScv_[is.indexInInside()].begin(), pScv_[is.indexInInside()].end()-1,
-                  std::back_inserter(corners));
-
-        return corners;
+        return { pScv_[is.indexInInside()].begin(), pScv_[is.indexInInside()].end()-1 };
     }
 
     typename ScvPairStorage::value_type getFaceScvPair(LocalScvfIndexType localScvfIdx)

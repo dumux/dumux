@@ -140,7 +140,7 @@ public:
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
     {
-        return gridGeometry().feCache().get(elemGeometryType_).localBasis();
+        return gridGeometry().feCache().get(element_->type()).localBasis();
     }
 
     //! number of sub control volumes in this fv element geometry
@@ -159,16 +159,37 @@ public:
     bool hasBoundaryScvf() const
     { return gridGeometry().hasBoundaryScvf(eIdx_); }
 
+    /*!
+     * \brief bind the local view (r-value overload)
+     * This overload is called when an instance of this class is a temporary in the usage context
+     * This allows a usage like this: `const auto view = localView(...).bind(element);`
+     */
+    ThisType bind(const Element& element) &&
+    {
+        this->bindElement(element);
+        return std::move(*this);
+    }
+
     //! Binding of an element, called by the local jacobian to prepare element assembly
-    void bind(const Element& element)
+    void bind(const Element& element) &
     {
         this->bindElement(element);
     }
 
-    //! Bind only element-local
-    void bindElement(const Element& element)
+    /*!
+     * \brief bind the local view (r-value overload)
+     * This overload is called when an instance of this class is a temporary in the usage context
+     * This allows a usage like this: `const auto view = localView(...).bindElement(element);`
+     */
+    ThisType bindElement(const Element& element) &&
     {
-        elemGeometryType_ = element.type();
+        this->bindElement(element);
+        return std::move(*this);
+    }
+
+    //! Bind only element-local
+    void bindElement(const Element& element) &
+    {
         element_ = element;
         eIdx_ = gridGeometry().elementMapper().index(element);
     }
@@ -203,7 +224,6 @@ private:
         return gridGeometry().scvfIndicesOfElement(eIdx_);
     }
 
-    Dune::GeometryType elemGeometryType_;
     std::optional<Element> element_;
     GridIndexType eIdx_;
     const GridGeometry* gridGeometryPtr_;
@@ -213,6 +233,7 @@ private:
 template<class GG>
 class FaceCenteredDiamondFVElementGeometry<GG, /*cachingEnabled*/false>
 {
+    using ThisType = FaceCenteredDiamondFVElementGeometry<GG, /*cachingEnabled*/false>;
     using GridView = typename GG::GridView;
 
     static constexpr std::size_t maxNumScvfs = 16; // TODO 3D
@@ -278,12 +299,22 @@ public:
         return Dune::IteratorRange<IteratorType>(g.scvs_.begin(), g.scvs_.end());
     }
 
+    /*!
+     * \brief bind the local view (r-value overload)
+     * This overload is called when an instance of this class is a temporary in the usage context
+     * This allows a usage like this: `const auto view = localView(...).bind(element);`
+     */
+    ThisType bind(const Element& element) &&
+    {
+        this->bindElement(element);
+        return std::move(*this);
+    }
+
     //! Binding of an element preparing the geometries of the whole stencil
     //! called by the local jacobian to prepare element assembly
-    void bind(const Element& element)
+    void bind(const Element& element) &
     {
         // TODO!
-        elemGeometryType_ = element.type();
     }
 
     //! The grid geometry we are a restriction of
@@ -308,7 +339,6 @@ private:
     std::array<SubControlVolume, numElementFaces> scvs_;
     std::array<std::size_t, numElementFaces> globalToLocalScvIdx_;
 
-    Dune::GeometryType elemGeometryType_;
     const GridGeometry* gridGeometryPtr_;
 };
 
