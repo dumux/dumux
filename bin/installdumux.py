@@ -8,8 +8,16 @@ import sys
 import argparse
 import subprocess
 import textwrap
-from distutils.spawn import find_executable
-from distutils.version import LooseVersion
+from shutil import which
+
+
+class _Version:
+    def __init__(self, version: str) -> None:
+        self._version = [int(v) for v in version.strip(" ").strip("\n").split(".")]
+
+    def __lt__(self, other) -> bool:
+        return all(v1 < v2 for v1, v2 in zip(self._version, other._version))
+
 
 parser = argparse.ArgumentParser(
     prog="installdumux",
@@ -42,7 +50,7 @@ def checkCppVersion():
     """Check compiler version"""
     requiredversion = "7"
     result = subprocess.check_output(["g++", "-dumpversion"]).decode().strip()
-    if LooseVersion(result) < LooseVersion(requiredversion):
+    if _Version(result) < _Version(requiredversion):
         print("-- An error occured while checking for prerequistes.")
         raise Exception(
             f"g++ greater than or equal to {requiredversion} "
@@ -103,11 +111,11 @@ showMessage("(1/3) Checking all prerequistes: " + " ".join(programs) + "...")
 
 # check some prerequistes
 for program in programs:
-    if find_executable(program) is None:
+    if which(program) is None:
         print("-- An error occured while checking for prerequistes.")
         raise Exception(f"Program {program} has not been found.")
 
-if find_executable("paraview") is None:
+if which("paraview") is None:
     print(
         "-- Warning: paraview seems to be missing. You may not be able to view simulation results!"
     )
@@ -169,7 +177,7 @@ showMessage("(3/3) Step completed. Succesfully configured and built dune and dum
 #################################################################
 #################################################################
 TEST_PATH = "dumux/dumux/build-cmake/test/porousmediumflow/1p"
-if dumuxBranch == "master" or LooseVersion(args["dumux_version"]) > LooseVersion("3.3"):
+if dumuxBranch == "master" or _Version(args["dumux_version"]) > _Version("3.3"):
     TEST_PATH += "/isothermal"
 else:
     TEST_PATH += "/implicit/isothermal"
