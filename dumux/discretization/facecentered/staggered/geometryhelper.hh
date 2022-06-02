@@ -176,11 +176,16 @@ public:
         }
     }
 
-    template<class SubControlVolumeFace>
-    static SmallLocalIndexType localIndexOutsideScvfWithSameIntegrationPoint(const SubControlVolumeFace& scvf)
+    template<class SubControlVolumeFace, class SubControlVolume>
+    static SmallLocalIndexType localIndexOutsideScvfWithSameIntegrationPoint(const SubControlVolumeFace& scvf,
+                                                                             const SubControlVolume& scv)
     {
+        // In 2D there are 3 non-boundary faces per scv. In 3D, there are 5.
+        // This number of scvfs per scv is used as an offset to find the indexes in the outside half-scv.
         const SmallLocalIndexType offset = (dim == 2) ? 3 : 5;
-        return isOdd_(scvf.localIndex()) ? scvf.localIndex() - offset : scvf.localIndex() + offset;
+        // For half-scvs with odd indexes, the outside half-scv has scvf local indexes with + offset.
+        // For half-scvs with even indexes, the outside half-scv has scvf local indexes have a - offset.
+        return isOdd_(scv.indexInElement()) ? scvf.localIndex() - offset : scvf.localIndex() + offset;
     }
 
     template<class FVElementGeometry, class SubControlVolumeFace>
