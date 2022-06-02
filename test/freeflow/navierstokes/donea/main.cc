@@ -54,75 +54,45 @@
 
 namespace Dumux {
 
-template<class MassGridProblem, class MomentumProblem, class CouplingManager, class SolutionVector, class AnalyticSolVecs>
-void printErrors(std::shared_ptr<MassGridProblem> massProblem,
-                 std::shared_ptr<MomentumProblem> momentumProblem,
-                 std::shared_ptr<CouplingManager> couplingManager,
-                 const SolutionVector& x,
-                 const AnalyticSolVecs& analyticalSolVectors)
+template<class Error>
+void writeError_(std::ofstream& logFile, const Error& error, const std::string& format = "{:.5e}")
 {
+    for (const auto& e : error)
+        logFile << Fmt::format(", " + format, e);
+}
+
+template<class MassProblem, class MomentumProblem, class SolutionVector>
+void printErrors(std::shared_ptr<MassProblem> massProblem,
+                 std::shared_ptr<MomentumProblem> momentumProblem,
+                 const SolutionVector& x)
+{
+    using GridGeometry = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>;
+    static constexpr int dim = GridGeometry::GridView::dimension;
     const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
-    const bool printConvergenceTestFile = getParam<bool>("Problem.PrintConvergenceTestFile", false);
-    constexpr auto momentumIdx = CouplingManager::freeFlowMomentumIndex;
-    constexpr auto massIdx = CouplingManager::freeFlowMassIndex;
 
-    if (printErrors || printConvergenceTestFile)
+    if (printErrors)
     {
-        using MomentumGridGeometry = std::decay_t<decltype(momentumProblem->gridGeometry())>;
-        if constexpr (MomentumGridGeometry::discMethod == DiscretizationMethods::fcstaggered)
-        {
-            // print discrete L2 and Linfity errors
-            NavierStokesTest::Errors errors(momentumProblem, massProblem, x);
-            NavierStokesTest::ErrorCSVWriter csvWriter(
-                momentumProblem, massProblem, std::to_string(x[massIdx].size())
-            );
-            csvWriter.printErrors(errors);
+        NavierStokesTest::Errors errors(momentumProblem, massProblem, x);
 
-            if (printConvergenceTestFile)
-                NavierStokesTest::convergenceTestAppendErrors(momentumProblem, massProblem, errors);
-        }
-        else if (MomentumGridGeometry::discMethod == DiscretizationMethods::fcdiamond)
-        {
-            // convert format to solution vector type
-            const auto& vOnFace = analyticalSolVectors.analyticalVelocitySolutionOnFace();
-            const auto& pOnDof = analyticalSolVectors.analyticalPressureSolution();
-            auto analyticVel = x[momentumIdx];
-            auto analyticPressure = x[massIdx];
-            auto momFVGeometry = localView(momentumProblem->gridGeometry());
-            auto massFVGeometry = localView(massProblem->gridGeometry());
-            for (const auto& element : elements(massProblem->gridGeometry().gridView()))
-            {
-                momFVGeometry.bindElement(element);
-                for (const auto& scv : scvs(momFVGeometry))
-                    analyticVel[scv.dofIndex()] = vOnFace[scv.dofIndex()];
+        std::ofstream logFile(momentumProblem->name() + ".csv", std::ios::app);
+        auto totalVolume = errors.totalVolume();
 
-                massFVGeometry.bindElement(element);
-                for (const auto& scv : scvs(massFVGeometry))
-                    analyticPressure[scv.dofIndex()] = pOnDof[scv.dofIndex()];
-            }
+        logFile << Fmt::format("{:.5e}", errors.time()) << ", ";
+        logFile << massProblem->gridGeometry().numDofs() << ", ";
+        logFile << std::pow(totalVolume / massProblem->gridGeometry().numDofs(), 1.0/dim) << ", ";
+        logFile << momentumProblem->gridGeometry().numDofs() << ", ";
+        logFile << std::pow(totalVolume / momentumProblem->gridGeometry().numDofs(), 1.0/dim);
 
-            const auto l2ErrorVel = integrateL2Error(
-                momentumProblem->gridGeometry(), x[momentumIdx], analyticVel, 3
-            );
+        auto componentErrors = errors.l2Absolute();
+        // Calculate L2-error for velocity field
+        Dune::FieldVector<double, 2> l2errors(0.0);
+        l2errors[0] = componentErrors[0];
+        componentErrors[0] = 0;
+        l2errors[1] = std::sqrt(componentErrors * componentErrors);
 
-            auto zeroVel = analyticVel; zeroVel = 0.0;
-            const auto l2ErrorNormalizerVel = integrateL2Error(
-                momentumProblem->gridGeometry(), zeroVel, analyticVel, 3
-            );
+        writeError_(logFile, l2errors);
 
-            std::cout << "Velocity L2 error: " << l2ErrorVel/l2ErrorNormalizerVel << std::endl;
-
-            const auto l2ErrorPressure = integrateL2Error(
-                massProblem->gridGeometry(), x[massIdx], analyticPressure, 3
-            );
-
-            auto zeroP = analyticPressure; zeroP = 0.0;
-            const auto l2ErrorNormalizerP = integrateL2Error(
-                massProblem->gridGeometry(), zeroP, analyticPressure, 3
-            );
-
-            std::cout << "Pressure L2 error: " << l2ErrorPressure/l2ErrorNormalizerP << std::endl;
-        }
+        logFile << "\n";
     }
 }
 
@@ -244,8 +214,7 @@ int main(int argc, char** argv)
 
     // initialize the vtk output module
     using IOFields = GetPropType<MassTypeTag, Properties::IOFields>;
-    std::string discSuffix = std::string("_") + MomentumGridGeometry::DiscretizationMethod::name();
-    VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name() + discSuffix);
+    VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name());
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
 
@@ -263,8 +232,8 @@ int main(int argc, char** argv)
                                                  couplingManager);
 
     // the linear solver
-    using LinearSolver = IncompressibleStokesSolver<typename Assembler::JacobianMatrix, typename Assembler::ResidualType>;
-    auto linearSolver = std::make_shared<LinearSolver>(*couplingManager);
+    using LinearSolver = Dumux::UMFPackBackend;
+    auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
@@ -274,7 +243,7 @@ int main(int argc, char** argv)
     nonLinearSolver.solve(x);
 
     // maybe print errors
-    printErrors(massProblem, momentumProblem, couplingManager, x, analyticalSolVectors);
+    printErrors(massProblem, momentumProblem, x);
 
     // write vtk output
     vtkWriter.write(1.0);

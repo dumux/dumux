@@ -72,7 +72,7 @@ void printErrors(std::shared_ptr<Problem> problem,
     {
         NavierStokesTest::ErrorsSubProblem errors(problem, x);
 
-        std::ofstream logFile("errors.csv", std::ios::app);
+        std::ofstream logFile(problem->name() + ".csv", std::ios::app);
         auto totalVolume = errors.totalVolume();
         // For the staggered scheme, the control volumes are overlapping
         if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::fcstaggered)
