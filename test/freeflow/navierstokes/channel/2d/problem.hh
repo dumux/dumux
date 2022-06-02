@@ -84,7 +84,6 @@ public:
     ChannelTestProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(gridGeometry, couplingManager)
     {
-        inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
         dynamicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0)
                             * getParam<Scalar>("Component.LiquidDensity", 1.0);
 
@@ -100,7 +99,6 @@ public:
         else
             DUNE_THROW(Dune::InvalidStateException, outletBC + " is not a valid outlet boundary condition");
 
-        useVelocityProfile_ = getParam<bool>("Problem.UseVelocityProfile", false);
         outletPressure_ = getParam<Scalar>("Problem.OutletPressure", 1.1e5);
     }
 
@@ -362,12 +360,8 @@ private:
     }
 
     static constexpr Scalar eps_=1e-6;
-    Scalar inletVelocity_;
     Scalar dynamicViscosity_;
     Scalar outletPressure_;
-    OutletCondition outletCondition_;
-    bool useVelocityProfile_;
-    Scalar time_;
 };
 } // end namespace Dumux
 

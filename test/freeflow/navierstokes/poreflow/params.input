@@ -1,0 +1,25 @@
+[Image.Grid]
+LowerLeft = 0 0
+UpperRight = 1 1
+Image = ./poreflow.pbm
+
+[Problem]
+Name = test_ff_poreflow
+OutletPressure = 0.0
+PressureDifference = 100.0
+EnableGravity = false
+EnableInertiaTerms = true
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 1.0
+
+[ Newton ]
+MaxSteps = 10
+MaxRelativeShift = 1e-8
+
+[Vtk]
+WriteFaceData = false
+
+[SpatialParams]
+Temperature = 283.15
