@@ -1,7 +1,6 @@
 stages:
   - check-status
   - trigger dumux pipelines
-  - trigger downstream modules
 
 variables:
   IMAGE_REGISTRY_URL: $CI_REGISTRY/dumux-repositories/dumux-docker-ci
@@ -61,8 +60,8 @@ check-pipeline-status:
       fi
 
 ###################################################################################
-# Stage 1: trigger the Dumux test pipelines                                       #
-# In this stage, we trigger the test pipeline with different configurations, i.e. #
+# trigger the Dumux test pipelines                                                #
+# we trigger the test pipeline with different configurations, i.e.                #
 # different Dune versions, compilers, etc. Within merge requests, we create three #
 # test pipelines including two different compilers and a full and minimal setup   #
 # of dependencies. In all other situations, additional test jobs are created.     #
@@ -122,9 +121,9 @@ full-dune-master-clang:
     IMAGE: $IMAGE_REGISTRY_URL/full:dune-master-clang-ubuntu-20.04
 
 
-#########################################################
-# Stage 2: trigger test pipelines of downstream modules #
-#########################################################
+################################################
+# trigger test pipelines of downstream modules #
+################################################
 
 # trigger lecture test
 trigger lecture:
@@ -132,7 +131,8 @@ trigger lecture:
   - if: $CI_PIPELINE_SOURCE == "schedule"
   - if: $CI_PIPELINE_SOURCE == "pipeline"
   - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-  stage: trigger downstream modules
+    when: manual
+  stage: trigger dumux pipelines
   trigger:
     project: dumux-repositories/dumux-lecture
     branch: $DUMUX_CI_TRIGGER_LECTURE_BRANCH
