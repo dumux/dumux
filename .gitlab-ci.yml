@@ -60,8 +60,8 @@ check-pipeline-status:
       fi
 
 ###################################################################################
-# trigger the Dumux test pipelines                                       #
-# we trigger the test pipeline with different configurations, i.e. #
+# trigger the Dumux test pipelines                                                #
+# we trigger the test pipeline with different configurations, i.e.                #
 # different Dune versions, compilers, etc. Within merge requests, we create three #
 # test pipelines including two different compilers and a full and minimal setup   #
 # of dependencies. In all other situations, additional test jobs are created.     #
@@ -121,9 +121,9 @@ full-dune-master-clang:
     IMAGE: $IMAGE_REGISTRY_URL/full:dune-master-clang-ubuntu-20.04
 
 
-#########################################################
+################################################
 # trigger test pipelines of downstream modules #
-#########################################################
+################################################
 
 # trigger lecture test
 trigger lecture:
