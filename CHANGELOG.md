@@ -31,73 +31,21 @@ Differences Between DuMu<sup>x</sup> 3.5 and DuMu<sup>x</sup> 3.4
   memory parallelism helpers. It is recommended (and may be required for multithreaded applications) to use `Dumux::initialize`
   instead of manually initializing the `Dune::MPIHelper`.
 
+- __Problem/Spatialparams interface__: The interface functions `extrusionFactor`/`extrusionFactorAtPos` and `temperature`/`temperatureAtPos` have been removed from the problem interface and added to the spatial params interface. There is now a default set
+for temperature (`293.15K`) which can be changed via the input file parameter `SpatialParams.Temperature`. For more
+flexibility overload the function in your spatial parameter class like usual.
+
+- __material/spatialparams__: The folder has been dissolved and the headers have been moved to other folders. For example,
+spatial parameter classes specific to porous medium flow problems have been moved to `dumux/porousmediumflow`. This is due
+to the realization that spatial parameters do more than defining the "material" (which refers to the porous medium).
+For example, free flow problem also have parameters that may spatially vary (such as the extrusion factor in an extruded domain).
+
+- __Tensor average__: Added a function `faceTensorAverage` which performs a particular average of a tensor at interfaces.
+This replaces the interface `harmonicMean` in the spatial parameters.
+
 - __Component__: `gasViscosityIsConstant` added to component interface
 
-- __1pnc__: `delp` has been removed from the default vtk output fields in an attempt to streamline output between models.
-All information present in `delp` is present in `p` and `delp` has generally a reduced precision that also leads to some
-problems in automated testing.
-
-- __Richards__: the `Richards` model now works together with the generic `FluidSystem::TwoPImmiscible` as long as a gas
-and a liquid phase are present.
-
-- __Richards__: Fixed a bug that creeped into the 1.5-phase model so it actually computes diffusion in the gas phase now.
-
-- __Richards__: Fixed a bug that checked that the fluid viscosity is _not_ constant whereas the check should have asserted that it is constant
-
 - __Fluidsystems__: Implemented `viscosityIsConstant(int phaseIdx)` for `H2OAir`
-
-_ __Privarswitch__: Fixed a bug in the privar switch which did not fully reset the `switched` variable. This lead
-to a possibly increased number of Newton iterations.
-
-- __Discretization tags__: We introduced tags in the namespace `DiscretizationMethods` (with s) for each discretization method.
-  These tags replace the `enum class DiscretizationMethod`. Tags have several advantages over the enum. Each tag is a named type
-  (see `dumux/common/tag.hh`) so they can for example be used in tag dispatch. Moreover specializing with tags is extensible.
-  For example we specialize the template `DarcysLawImplementation` for each discretization. When using the enum no new discretization
-  methods can be added without changing `enum class DiscretizationMethod`. With tags you can make your own tag and specialize a
-  class for that tag. This means new discretization methods can be developed in a modular fashion. The introduction of tags
-  involves a couple of non-backwards-compatible changes, mostly in implementation classes that shouldn't affect most users (see below).
-
-- __Box__: The box scheme now supports the case that volume variables depend on all dofs in the element. In that case, previously
-  only a Jacobian approximation was assembled. As computing the added derivatives causes a significant
-  overhead in the assembly, the feature is disabled per default. To enable the full Jacobian in this case set the parameter
-  `Assembly.BoxVolVarsDependOnAllElementDofs = true`. The new feature is tested in the new test `test_2p3c_surfactant` which
-  features relative permeability that depend on the pressure gradient. The test only passes with the full Jacobian.
-
-- __Geometry__:
-    - Added implementation of sphere and bounding sphere approximation algorithms
-    - Added distance queries for Point->BoundingBoxTree
-    - Added DistanceField - a wrapper around a geometry set for fast distance queries
-    - Added WallDistance - a utility to compute distances to the domain boundary (e.g. for RANS wall functions)
-    - Added 3D-3D intersections
-    - Added 2D-2D intersections in 3D
-    - Fixed a wrong epsilon for floating comparisons in the 2D-2D intersection algorithm
-
-- __Construction and update of GridGeometries changed__: Grid geometries are fully updated after construction.
- Additional call of update functions are therefore only needed after grid adaption. Calling the update functions after construction now leads to a performance penalty.
-
-- __Cake grid creator__: The cake grid creator can now be used in parallel simulations
-
-- __Local views__: The bind function associated with the local view of the FVElementGeometry, the ElementVolumeVariables, and the ElementFluxVariablesCache have been simplified. Now it is possible to directly create each of these objects where they are already bound. The following are examples of each new call:
-
-    ```cpp
-    const auto fvGeometry = localView(gridGeometry).bind(element);
-    const auto elemVolVars = localView(gridVolVars).bind(element, fvGeometry, sol);
-    const auto elemFluxVarsCache = localView(gridFluxVarsCache).bind(element, fvGeometry, elemVolVars);
-    ```
-    This is also available for the `bind()` `bindElement()` and `bindScvf()` functions. The existing methods for binding will remain.
-
-    Please note however that when working with element loops, separating construction and binding of the local view is more efficient, i.e.
-
-    ```cpp
-    auto fvGeometry = localView(gridGeometry);
-    for (const auto& element : elements(gridGeometry.gridView()))
-        fvGeometry.bind(element);
-    ```
-
-- __Embedded coupling__: Add a coupling manager for the 1D-3D projection based scheme with resolved interface introduced in Koch 2022 (
-https://doi.org/10.1016/j.camwa.2022.01.021)
-
-- __RANS Boundary Types__: Wall boundaries for the RANS turbulence models can now be set using the `setWall` method in the `RANSBoundaryTypes` class. This replaces the old `isOnWall` and `isOnWallAtPos` functions.
 
 - __Dispersion__: Dispersion fluxes have been added as an option for the compositional and thermal one-phase porous medium flow models. These models use either a Scheidegger-type dispersion tensor, which is dependent on the velocity field and two length parameters, or a full and constant (_not_ solution-dependent, but possibly spatially varying) tensor that can be user defined in the spatial parameters. For compositional models coupled with flow models (e.g. 1pnc), using the Scheidegger-type dispersion tensor is only implemented for the box discretization method.
 
@@ -119,33 +67,87 @@ https://doi.org/10.1016/j.camwa.2022.01.021)
 
     The parameters describing your dispersion tensor can then be included in your `spatialparameters.hh` file, and passed via input parameters. An example of this can be seen in the `test/porousmediumflow/1pnc/dispersion/` folder, and in the `test/porousmediumflow/tracer/constvel/` folders.
 
-- __Problem/Spatialparams interface__: The interface functions `extrusionFactor`/`extrusionFactorAtPos` and `temperature`/`temperatureAtPos` have been removed from the problem interface and added to the spatial params interface. There is now a default set
-for temperature (`293.15K`) which can be changed via the input file parameter `SpatialParams.Temperature`. For more
-flexibility overload the function in your spatial parameter class like usual.
+- __Embedded coupling__: Add a coupling manager for the 1D-3D projection based scheme with resolved interface introduced in Koch 2022 (
+https://doi.org/10.1016/j.camwa.2022.01.021)
 
-- __material/spatialparams__: The folder has been dissolved and the headers have been moved to other folders. For example,
-spatial parameter classes specific to porous medium flow problems have been moved to `dumux/porousmediumflow`. This is due
-to the realization that spatial parameters do more than defining the "material" (which refers to the porous medium).
-For example, free flow problem also have parameters that may spatially vary (such as the extrusion factor in an extruded domain).
+- __RANS Boundary Types__: Wall boundaries for the RANS turbulence models can now be set using the `setWall` method in the `RANSBoundaryTypes` class. This replaces the old `isOnWall` and `isOnWallAtPos` functions.
+
+- __Discretization tags__: We introduced tags in the namespace `DiscretizationMethods` (with s) for each discretization method.
+  These tags replace the `enum class DiscretizationMethod`. Tags have several advantages over the enum. Each tag is a named type
+  (see `dumux/common/tag.hh`) so they can for example be used in tag dispatch. Moreover specializing with tags is extensible.
+  For example we specialize the template `DarcysLawImplementation` for each discretization. When using the enum no new discretization
+  methods can be added without changing `enum class DiscretizationMethod`. With tags you can make your own tag and specialize a
+  class for that tag. This means new discretization methods can be developed in a modular fashion. The introduction of tags
+  involves a couple of non-backwards-compatible changes, mostly in implementation classes that shouldn't affect most users (see below).
+
+- __Box__: The box scheme now supports the case that volume variables depend on all dofs in the element. In that case, previously
+  only a Jacobian approximation was assembled. As computing the added derivatives causes a significant
+  overhead in the assembly, the feature is disabled per default. To enable the full Jacobian in this case set the parameter
+  `Assembly.BoxVolVarsDependOnAllElementDofs = true`. The new feature is tested in the new test `test_2p3c_surfactant` which
+  features relative permeability that depend on the pressure gradient. The test only passes with the full Jacobian.
+
+- __Local views__: The bind function associated with the local view of the FVElementGeometry, the ElementVolumeVariables, and the ElementFluxVariablesCache have been simplified. Now it is possible to directly create each of these objects where they are already bound. The following are examples of each new call:
+
+    ```cpp
+    const auto fvGeometry = localView(gridGeometry).bind(element);
+    const auto elemVolVars = localView(gridVolVars).bind(element, fvGeometry, sol);
+    const auto elemFluxVarsCache = localView(gridFluxVarsCache).bind(element, fvGeometry, elemVolVars);
+    ```
+    This is also available for the `bind()` `bindElement()` and `bindScvf()` functions. The existing methods for binding will remain.
+
+    Please note however that when working with element loops, separating construction and binding of the local view is more efficient, i.e.
+
+    ```cpp
+    auto fvGeometry = localView(gridGeometry);
+    for (const auto& element : elements(gridGeometry.gridView()))
+        fvGeometry.bind(element);
+    ```
+
+- __Construction and update of GridGeometries changed__: Grid geometries are fully updated after construction. Additional call of update functions are therefore only needed after grid adaption. Calling the update functions after construction now leads to a performance penalty.
+
+- __Geometry__:
+    - Added implementation of sphere and bounding sphere approximation algorithms
+    - Added distance queries for Point->BoundingBoxTree
+    - Added DistanceField - a wrapper around a geometry set for fast distance queries
+    - Added WallDistance - a utility to compute distances to the domain boundary (e.g. for RANS wall functions)
+    - Added 3D-3D intersections
+    - Added 2D-2D intersections in 3D
+    - Fixed a wrong epsilon for floating comparisons in the 2D-2D intersection algorithm
+
+- __Parallel grid partitioning__: Added a simple backend for using Scotch as partitioner for a grid read on one process (e.g. when using the Dune Gmsh or DGF readers). Repartitioning is not implemented yet.
+
+- __Cake grid creator__: The cake grid creator can now be used in parallel simulations
+
+- __Privarswitch__: Fixed a bug in the privar switch which did not fully reset the `switched` variable. This lead
+to a possibly increased number of Newton iterations.
+
+- __1pnc__: `delp` has been removed from the default vtk output fields in an attempt to streamline output between models.
+All information present in `delp` is present in `p` and `delp` has generally a reduced precision that also leads to some
+problems in automated testing.
+
+- __Richards__: the `Richards` model now works together with the generic `FluidSystem::TwoPImmiscible` as long as a gas
+and a liquid phase are present.
+
+- __Richards__: Fixed a bug that creeped into the 1.5-phase model so it actually computes diffusion in the gas phase now.
+
+- __Richards__: Fixed a bug that checked that the fluid viscosity is _not_ constant whereas the check should have asserted that it is constant
 
 - Fixed `intersect` in `SplineCommon`
 
-- __Tensor average__: Added a function `faceTensorAverage` which performs a particular average of a tensor at interfaces.
-This replaces the interface `harmonicMean` in the spatial parameters.
-
-- __parallel__: Added a simple backend for using Scotch as partitioner for a grid read on one process (e.g. when using the
-Dune Gmsh or DGF readers). Repartitioning is not implemented yet.
-
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
-- __Virtual interface of GridDataTransfer__: The `GridDataTransfer` abstract base class now required the Grid type as a template argument. Furthermore, the `store` and `reconstruct` interface functions do now expect the grid as a function argument. This allows to correctly update grid geometries and corresponding mapper (see "Construction and update of GridGeometries changed" above in the changelog)
-- `PengRobinsonMixture::computeMolarVolumes` has been removed without deprecation. It was used nowhere and did not translate.
-- __Coupling managers__: The coupling managers now store shared_ptrs of the subdomain solutions to be able to manage memory outside. There is compatibility interface that is deprecated but it won't allow for assignments
-  of the form `this->curSol() = sol;` since curSol returns a MultiTypeVector of references. If assignment is needed for some reason, use a hybrid loop over all subdomain indices.
-- __ShallowWaterViscousFlux__: The template argument `PrimaryVariables` has been removed without deprecation. It was not needed.
 - __Discretization tags__: The following classes have changed from a template argument of type `DiscretizationMethod` (an `enum`) to
   class type template arguments and are now specialized for tags: `TwoPScvSaturationReconstruction`, `ScvfToScvBoundaryTypes`, `ProblemTraits`, `FluxStencil`, `EffectiveStressLaw`, `HookesLaw`, `FacetCouplingManager`, `FacetCouplingMapper`. Moreover this affects the following helper classes: `IsFicksLaw`, `CheckOverlapSize`, `PartialReassemblerEngine`, `SubDomainAssemblerType`. Finally, this change has been made for many implementation classes. These should not have been used directly anyway, so we do not explicitly list them here. Examples are `DarcysLawImplementation`, `LinearSolverTraitsImpl`. See !2844 for more details.
   If you face a compiler error from these changes, contact us. Most like the solution is to simply try replacing occurrences of `DiscretizationMethod` with the corresponding tag from `DiscretizationMethods`, or types `DiscretizationMethod` in template arguments by generic `class`.
+
+- __Coupling managers__: The coupling managers now store shared_ptrs of the subdomain solutions to be able to manage memory outside. There is compatibility interface that is deprecated but it won't allow for assignments
+  of the form `this->curSol() = sol;` since curSol returns a MultiTypeVector of references. If assignment is needed for some reason, use a hybrid loop over all subdomain indices.
+
+- __Virtual interface of GridDataTransfer__: The `GridDataTransfer` abstract base class now required the Grid type as a template argument. Furthermore, the `store` and `reconstruct` interface functions do now expect the grid as a function argument. This allows to correctly update grid geometries and corresponding mapper (see "Construction and update of GridGeometries changed" above in the changelog)
+
+- `PengRobinsonMixture::computeMolarVolumes` has been removed without deprecation. It was used nowhere and did not translate.
+
+- __ShallowWaterViscousFlux__: The template argument `PrimaryVariables` has been removed without deprecation. It was not needed.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.5:
 
