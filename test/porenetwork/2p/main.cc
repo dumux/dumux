@@ -137,9 +137,6 @@ int main(int argc, char** argv)
     // time loop
     timeLoop->start(); do
     {
-        // set previous solution for storage evaluations
-        assembler->setPreviousSolution(xOld);
-
         // try solving the non-linear system
         nonLinearSolver.solve(x, *timeLoop);
 
