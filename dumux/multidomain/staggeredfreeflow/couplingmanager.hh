@@ -34,7 +34,6 @@
 #include <dune/common/indices.hh>
 #include <dune/common/float_cmp.hh>
 
-#include <dumux/assembly/numericepsilon.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/typetraits/typetraits.hh>
 #include <dumux/multidomain/couplingmanager.hh>
