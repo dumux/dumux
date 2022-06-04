@@ -24,7 +24,9 @@
 
 #include <config.h>
 
+#include <algorithm>
 #include <iostream>
+
 #include <dune/common/parallel/mpihelper.hh>
 
 #include <dumux/common/initialize.hh>
@@ -129,11 +131,7 @@ int main(int argc, char** argv)
     updateRank(rank, *gridGeometry);
 
     std::vector<std::size_t> dofIdx(x.size());
-    for (const auto& facet : facets(gridGeometry->gridView()))
-    {
-        const auto idx = gridGeometry->gridView().indexSet().index(facet);
-        dofIdx[idx] = idx;
-    }
+    std::iota(dofIdx.begin(), dofIdx.end(), 0);
 
     Dune::VTKWriter<typename GridGeometry::GridView> writer(gridGeometry->gridView());
     using Field = Vtk::template Field<typename GridGeometry::GridView>;
