@@ -1,5 +1,13 @@
 add_input_file_links(FILES params.input)
 
+dune_precompile_solverfactory(
+  NAME dumux_testistlsolverfactory
+  OPERATORS
+  "Dune::MatrixAdapter<Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1>>,Dune::BlockVector<Dune::FieldVector<double,1>>,Dune::BlockVector<Dune::FieldVector<double,1>>>"
+  #"Dune::MatrixAdapter<Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1>>,Dune::BlockVector<Dumux::SwitchablePrimaryVariables<Dune::FieldVector<double,1>,int>>,Dune::BlockVector<Dumux::SwitchablePrimaryVariables<Dune::FieldVector<double,1>,int>>>"
+  INCLUDES "dune/istl/bcrsmatrix.hh" "dune/istl/paamg/amg.hh" "dune/istl/solvers.hh" "dune/istl/preconditioners.hh" "dune/common/fmatrix.hh" "dune/common/fvector.hh" "dumux/porousmediumflow/compositional/switchableprimaryvariables.hh"
+)
+
 # isothermal tests
 add_executable(test_richards_lens_tpfa EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_richards_lens_tpfa PUBLIC TYPETAG=RichardsLensCC PUBLIC DIFFMETHOD=DiffMethod::numeric)
@@ -7,10 +15,13 @@ target_compile_definitions(test_richards_lens_tpfa PUBLIC TYPETAG=RichardsLensCC
 add_executable(test_richards_lens_mpfa EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_richards_lens_mpfa PUBLIC TYPETAG=RichardsLensCCMpfa PUBLIC DIFFMETHOD=DiffMethod::numeric)
 
-add_executable(test_richards_lens_box EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_richards_lens_box PUBLIC TYPETAG=RichardsLensBox PUBLIC DIFFMETHOD=DiffMethod::numeric)
-
-dumux_add_test(TARGET test_richards_lens_box
+# add_executable(test_richards_lens_box EXCLUDE_FROM_ALL main.cc)
+# target_compile_definitions(test_richards_lens_box PUBLIC TYPETAG=RichardsLensBox PUBLIC DIFFMETHOD=DiffMethod::numeric)
+set(CMAKE_BUILD_TYPE Debug)
+dumux_add_test(NAME test_richards_lens_box
+              SOURCES main.cc
+              COMPILE_DEFINITIONS TYPETAG=RichardsLensBox DIFFMETHOD=DiffMethod::numeric
+              LINK_LIBRARIES dumux_testistlsolverfactory
               LABELS porousmediumflow richards
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy

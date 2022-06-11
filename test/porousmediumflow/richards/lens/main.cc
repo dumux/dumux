@@ -56,6 +56,13 @@
 #define DIFFMETHOD DiffMethod::numeric
 #endif
 
+extern int dumux_testistlsolverfactory;
+
+
+// namespace Dune {
+// extern template int initSolverFactories<Dune::MatrixAdapter<Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1>>,Dune::BlockVector<Dune::FieldVector<double,1>>,Dune::BlockVector<Dune::FieldVector<double,1>>>>();
+// }
+
 ////////////////////////
 // the main function
 ////////////////////////
@@ -63,12 +70,16 @@ int main(int argc, char** argv)
 {
     using namespace Dumux;
 
+
     // define the type tag for this problem
     using TypeTag = Properties::TTag::TYPETAG;
 
     // initialize Dumux (parallel helpers)
     // always call this before any other code
     Dumux::initialize(argc, argv);
+
+    //std::cout << "vaue: " << dumux_testistlsolverfactory << std::endl;
+    // Dune::initSolverFactories<Dune::MatrixAdapter<Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1>>,Dune::BlockVector<Dune::FieldVector<double,1>>,Dune::BlockVector<Dune::FieldVector<double,1>>>>();
 
     // get an instance of the MPI helper
     const auto& mpiHelper = Dune::MPIHelper::instance();

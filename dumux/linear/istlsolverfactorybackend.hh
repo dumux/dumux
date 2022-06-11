@@ -261,8 +261,8 @@ private:
         using LinearOperator = typename ParallelTraits::LinearOperator;
         using ScalarProduct = typename ParallelTraits::ScalarProduct;
 
-        if (firstCall_)
-            initSolverFactories<Matrix, LinearOperator>();
+        // if (firstCall_)
+        //     initSolverFactories<Matrix, LinearOperator>();
 
         std::shared_ptr<Comm> comm;
         std::shared_ptr<LinearOperator> linearOperator;
@@ -288,8 +288,8 @@ private:
         using LinearOperator = typename Traits::LinearOperator;
         auto linearOperator = std::make_shared<LinearOperator>(A);
 
-        if (firstCall_)
-            initSolverFactories<Matrix, LinearOperator>();
+        // if (firstCall_)
+        //     initSolverFactories<Matrix, LinearOperator>();
 
         // construct solver
         auto solver = getSolverFromFactory_(linearOperator);
@@ -301,7 +301,9 @@ private:
     template<class LinearOperator>
     auto getSolverFromFactory_(std::shared_ptr<LinearOperator>& fop)
     {
-        try { return Dune::getSolverFromFactory(fop, params_); }
+        try {
+            return Dune::getSolverFromFactory(fop, params_);
+        }
         catch(Dune::Exception& e)
         {
             std::cerr << "Could not create solver with factory" << std::endl;
