@@ -26,6 +26,7 @@
 
 #include <dune/grid/yaspgrid.hh>
 #include <dune/subgrid/subgrid.hh>
+#include <dune/alugrid/grid.hh>
 
 #include <dumux/discretization/fcstaggered.hh>
 #include <dumux/discretization/cctpfa.hh>
@@ -61,8 +62,9 @@ template<class TypeTag>
 struct Grid<TypeTag, TTag::ThreeDChannelTest>
 {
     static constexpr int dim = 3;
-    using HostGrid = Dune::YaspGrid<dim, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, dim> >;
-    using type = Dune::SubGrid<HostGrid::dimension, HostGrid>;
+    using Host = Dune::YaspGrid<dim, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, dim> >;
+    using Sub = Dune::SubGrid<Host::dimension, Host>;
+    using type = Dune::ALUGrid<dim, dim, Dune::cube, Dune::nonconforming>;
 };
 
 // Set the problem property

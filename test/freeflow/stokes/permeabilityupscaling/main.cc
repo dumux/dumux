@@ -46,6 +46,32 @@
 
 #include "properties.hh"
 
+template<class GridTraits>
+void readGrid(Dune::GridFactory<typename GridTraits::type>& gridFactory)
+{
+    using Sub = typename GridTraits::Sub;
+    Dumux::GridManager<Sub> gridManager; gridManager.init();
+    const auto& leafGridView = gridManager.grid().leafGridView();
+
+    using Grid = typename GridTraits::type;
+    {
+        std::vector<Dune::FieldVector<double, 3>> verts(leafGridView.size(Grid::dimension));
+        for (const auto& vertex : vertices(leafGridView))
+            verts[leafGridView.indexSet().index(vertex)] = vertex.geometry().corner(0);
+
+        for (const auto& v : verts)
+            gridFactory.insertVertex(v);
+    }
+
+    std::vector<unsigned int> cornerIndices(8);
+    for (const auto& element : elements(leafGridView))
+    {
+        for (int j = 0; j < 8; ++j)
+            cornerIndices[j] = leafGridView.indexSet().subIndex(element, j, Grid::dimension);
+        gridFactory.insertElement(Dune::GeometryTypes::hexahedron, cornerIndices);
+    }
+}
+
 int main(int argc, char** argv)
 {
     using namespace Dumux;
@@ -67,29 +93,41 @@ int main(int argc, char** argv)
 
     // create a grid
     using Scalar = GetPropType<MassTypeTag, Properties::Scalar>;
-    using Grid = GetPropType<MassTypeTag, Properties::Grid>;
-    Dumux::GridManager<Grid> gridManager;
-    gridManager.init();
+    using GridTraits = GetProp<MassTypeTag, Properties::Grid>;
+    using Grid = typename GridTraits::type;
+    Dune::GridFactory<Grid> gridFactory;
+    readGrid<GridTraits>(gridFactory);
+    std::shared_ptr<Grid> grid(gridFactory.createGrid(true, false, "grid.dgf"));
+    grid->loadBalance();
 
     // we compute on the leaf grid view
-    const auto& leafGridView = gridManager.grid().leafGridView();
+    const auto& leafGridView = grid->leafGridView();
 
     // create the finite volume grid geometry
+    std::cout << "step 0.0" << std::endl;
     using MomentumGridGeometry = GetPropType<MomentumTypeTag, Properties::GridGeometry>;
     auto momentumGridGeometry = std::make_shared<MomentumGridGeometry>(leafGridView);
+    std::cout << "step 0.5" << std::endl;
+
     using MassGridGeometry = GetPropType<MassTypeTag, Properties::GridGeometry>;
     auto massGridGeometry = std::make_shared<MassGridGeometry>(leafGridView);
+
+    std::cout << "step 1" << std::endl;
 
     // the coupling manager
     using Traits = MultiDomainTraits<MomentumTypeTag, MassTypeTag>;
     using CouplingManager = StaggeredFreeFlowCouplingManager<Traits>;
     auto couplingManager = std::make_shared<CouplingManager>();
 
+    std::cout << "step 2" << std::endl;
+
     // the problems (boundary conditions)
     using MomentumProblem = GetPropType<MomentumTypeTag, Properties::Problem>;
     auto momentumProblem = std::make_shared<MomentumProblem>(momentumGridGeometry, couplingManager);
     using MassProblem = GetPropType<MassTypeTag, Properties::Problem>;
     auto massProblem = std::make_shared<MassProblem>(massGridGeometry, couplingManager);
+
+    std::cout << "step 3" << std::endl;
 
     // the solution vector
     constexpr auto momentumIdx = CouplingManager::freeFlowMomentumIndex;
@@ -100,22 +138,30 @@ int main(int argc, char** argv)
     x[massIdx].resize(massGridGeometry->numDofs());
     x = 0.0;
 
+    std::cout << "step 4" << std::endl;
+
     // the grid variables
     using MomentumGridVariables = GetPropType<MomentumTypeTag, Properties::GridVariables>;
     auto momentumGridVariables = std::make_shared<MomentumGridVariables>(momentumProblem, momentumGridGeometry);
     using MassGridVariables = GetPropType<MassTypeTag, Properties::GridVariables>;
     auto massGridVariables = std::make_shared<MassGridVariables>(massProblem, massGridGeometry);
 
+    std::cout << "step 5" << std::endl;
+
     // compute coupling stencil and afterwards initialize grid variables (need coupling information)
     couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x);
     massGridVariables->init(x[massIdx]);
     momentumGridVariables->init(x[momentumIdx]);
+
+    std::cout << "step 6" << std::endl;
 
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(std::make_tuple(momentumProblem, massProblem),
                                                  std::make_tuple(momentumGridGeometry, massGridGeometry),
                                                  std::make_tuple(momentumGridVariables, massGridVariables),
                                                  couplingManager);
+
+    std::cout << "step 7" << std::endl;
 
     // initialize the vtk output module
     using IOFields = GetPropType<MassTypeTag, Properties::IOFields>;

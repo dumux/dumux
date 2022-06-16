@@ -158,9 +158,6 @@ public:
     , intersectionMapper_(gridView)
     {
         // Check if the overlap size is what we expect
-        if (!CheckOverlapSize<DiscretizationMethod>::isValid(gridView))
-            DUNE_THROW(Dune::InvalidStateException, "The staggered discretization method needs at least an overlap of 1 for parallel computations. "
-                                                     << " Set the parameter \"Grid.Overlap\" in the input file.");
 
         update_();
     }
@@ -368,7 +365,7 @@ private:
                     Dumux::normalAxis(intersectionUnitOuterNormal),
                     this->elementMapper().index(element),
                     onDomainBoundary_(intersection)
-                 );
+                );
 
                 // the frontal sub control volume face at the element center
                 scvfs_.emplace_back(elementGeometry,

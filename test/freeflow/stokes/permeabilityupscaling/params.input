@@ -1,7 +1,9 @@
 [Grid]
 BinaryMask = sphere.raw
 Cells = 13 11 15
+UpperRight = 1 1 1
 PixelDimensions = 2 2 2
+Overlap = 1
 
 [Problem]
 Name = test_stokes_upscaling
