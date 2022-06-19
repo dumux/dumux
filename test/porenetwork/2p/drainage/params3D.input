@@ -41,7 +41,7 @@ AddVelocity = 1
 MaxSteps = 10
 TargetSteps = 4
 MaxRelativeShift = 1e-5
-NewtonOutputFilename = Whatever
+NewtonOutputFilename = 3D_Drainage_NewtonIteration.log
 
 [InvasionState]
 Verbosity = true
