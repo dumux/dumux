@@ -69,7 +69,10 @@ public:
         const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
         throatCrossSectionShape_ = fvGeometry.gridGeometry().throatCrossSectionShape(eIdx);
         throatShapeFactor_ = fvGeometry.gridGeometry().throatShapeFactor(eIdx);
-        pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+        if (!invaded)
+            pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+        else
+            pc_ = std::min(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
         pcEntry_ = problem.spatialParams().pcEntry(element, elemVolVars);
         pcSnapoff_ = problem.spatialParams().pcSnapoff(element, elemVolVars);
 
@@ -166,7 +169,10 @@ public:
         const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
         throatCrossSectionShape_ = fvGeometry.gridGeometry().throatCrossSectionShape(eIdx);
         throatShapeFactor_ = fvGeometry.gridGeometry().throatShapeFactor(eIdx);
-        pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+        if (!invaded)
+            pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+        else
+            pc_ = std::min(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
         pcEntry_ = problem.spatialParams().pcEntry(element, elemVolVars);
         pcSnapoff_ = problem.spatialParams().pcSnapoff(element, elemVolVars);
 
