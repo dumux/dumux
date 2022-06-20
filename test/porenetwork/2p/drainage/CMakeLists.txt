@@ -3,7 +3,7 @@ add_input_file_links()
 dumux_add_test(NAME test_pnm_2pDraigange_2d_regularized
                SOURCES main.cc
                LABELS porenetwork
-               COMPILE_DEFINITIONS ISOTHERMAL=1 DIM=2 REGULARIZED=1
+               COMPILE_DEFINITIONS ISOTHERMAL=1 DIM=2 REGULARIZED=1 REGULARIZEWITHPRESSURE=1
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                CMD_ARGS      --script fuzzy
@@ -14,7 +14,7 @@ dumux_add_test(NAME test_pnm_2pDraigange_2d_regularized
 dumux_add_test(NAME test_pnm_2pDraigange_3d_regularized
                SOURCES main.cc
                LABELS porenetwork
-               COMPILE_DEFINITIONS ISOTHERMAL=1 DIM=3 REGULARIZED=1
+               COMPILE_DEFINITIONS ISOTHERMAL=1 DIM=3 REGULARIZED=1 REGULARIZEWITHPRESSURE=1
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                CMD_ARGS      --script fuzzy
