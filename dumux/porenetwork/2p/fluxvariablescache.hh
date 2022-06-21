@@ -169,15 +169,30 @@ public:
         const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
         throatCrossSectionShape_ = fvGeometry.gridGeometry().throatCrossSectionShape(eIdx);
         throatShapeFactor_ = fvGeometry.gridGeometry().throatShapeFactor(eIdx);
-        if (!invaded)
-            pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
-        else
-            pc_ = std::min(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
         pcEntry_ = problem.spatialParams().pcEntry(element, elemVolVars);
         pcSnapoff_ = problem.spatialParams().pcSnapoff(element, elemVolVars);
-
         const auto& spatialParams = problem.spatialParams();
-        const auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
+
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+        auto pcInsidePore = insideVolVars.capillaryPressure();
+        auto pcOutsidePore = outsideVolVars.capillaryPressure();
+        const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
+
+        if (  (!invaded &&  pcInsidePore > pcOutsidePore) || (invaded && pcInsidePore < pcOutsidePore) )
+        {
+            pc_ = pcInsidePore;
+
+            const auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, insideScv, elemSol);
+        }
+        else
+        {
+            pc_ = pcOutsidePore;
+            const auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, outsideScv, elemSol);
+        }
+
         const auto swEntry = fluidMatrixInteraction.sw(pcEntry_);
         const auto swRegEntry = swEntry - regSaturationPercentage_;
 
@@ -261,6 +276,7 @@ public:
             );
         }
     }
+
 #endif
 
     /*!
