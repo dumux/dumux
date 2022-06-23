@@ -57,4 +57,9 @@ RegularizationLowSw = 0.1
 
 [Regularization]
 IntervalPc = 1e1
+SwPercentage = 0.0
+
+
+[InvasionState]
+BlockNonwettingPhaseAtThroatLabel = -10
 
