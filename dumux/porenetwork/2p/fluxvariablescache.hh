@@ -53,7 +53,7 @@ public:
         regularizeWithSaturation_ = getParam<bool>("Regularization.RegularizeWithSaturation", false);
         regularPcInterval_ = getParam<Scalar>("Regularization.IntervalPc", 1e2);
         regularizationPosition_ = getParam<Scalar>("Regularization.Position", 1.0);
-        regSaturationPercentage_ = getParam<Scalar>("Regularization.SwPercentage", 1.0);
+        regSaturationPercentage_ = getParam<Scalar>("Regularization.SwPercentage", 0.01);
     }
 
     template<class Problem, class Element, class FVElementGeometry,
