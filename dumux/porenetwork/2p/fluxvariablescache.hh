@@ -72,6 +72,8 @@ public:
         pcSnapoff_ = problem.spatialParams().pcSnapoff(element, elemVolVars);
         const auto& spatialParams = problem.spatialParams();
 
+        pcMax_ = pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
@@ -97,9 +99,9 @@ public:
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             saturationEpsilon_[phaseIdx] = false;
-            if ( insideVolVars.pressure(phaseIdx) >  outsideVolVars.pressure(phaseIdx) || insideVolVars.saturation(phaseIdx) < 1e-3) //insideScv is upstream
+            if ( insideVolVars.pressure(phaseIdx) >  outsideVolVars.pressure(phaseIdx) && insideVolVars.saturation(phaseIdx) < 1e-3) //insideScv is upstream
                 saturationEpsilon_[phaseIdx] = true;
-            else if ( outsideVolVars.pressure(phaseIdx) >  insideVolVars.pressure(phaseIdx) || outsideVolVars.saturation(phaseIdx) < 1e-3) //outsideScv is upstream
+            else if ( outsideVolVars.pressure(phaseIdx) >  insideVolVars.pressure(phaseIdx) && outsideVolVars.saturation(phaseIdx) < 1e-3) //outsideScv is upstream
                 saturationEpsilon_[phaseIdx] = true;
         }
 
@@ -260,7 +262,7 @@ public:
      * \brief Returns the curvature radius within the throat.
      */
     Scalar curvatureRadius() const
-    { return surfaceTension_ / pc_;}
+    { return surfaceTension_ / pcMax_; }
 
     /*!
      * \brief Returns the cross-sectional area of a wetting layer within
@@ -396,6 +398,7 @@ private:
     Scalar pcEntry_;
     Scalar pcSnapoff_;
     Scalar pc_;
+    Scalar pcMax_;
 
     Scalar surfaceTension_;
     bool invaded_;
