@@ -77,6 +77,7 @@ public:
         poreInscribedRadius_ = problem.spatialParams().poreInscribedRadius(element, scv, elemSol);
         poreVolume_ = problem.gridGeometry().poreVolume(scv.dofIndex()) * this->porosity();
         surfaceTension_ = problem.spatialParams().surfaceTension(element, scv, elemSol);
+        timeStepSize_ = problem.timeLoop().timeStepSize();
     }
 
     /*!
@@ -97,10 +98,22 @@ public:
     Scalar surfaceTension() const
     { return surfaceTension_; }
 
+    Scalar timeStepSize() const
+    {
+        return timeStepSize_;
+    }
+
+    Scalar waterVolume() const
+    {
+        Scalar waterSaturation = this->saturation(0);
+        return waterSaturation * poreVolume_;
+    }
+
 protected:
     Scalar poreInscribedRadius_;
     Scalar poreVolume_;
     Scalar surfaceTension_;
+    Scalar timeStepSize_;
 };
 
 } // end namespace Dumux::PoreNetwork

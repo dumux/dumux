@@ -212,6 +212,16 @@ public:
 
     // \}
 
+    void setTimeLoop(std::shared_ptr<TimeLoop<Scalar>> loop)
+    {
+        timeLoop_ = loop;
+    }
+
+    TimeLoop<Scalar>& timeLoop() const
+    {
+        return *timeLoop_;
+    }
+
 private:
 
     bool isInletPore_(const SubControlVolume& scv) const
@@ -235,6 +245,7 @@ private:
     Scalar inletPressure_;
     Scalar source_;
     std::string problemName_;
+    std::shared_ptr<TimeLoop<Scalar>> timeLoop_;
 };
 } //end namespace Dumux
 

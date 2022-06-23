@@ -109,6 +109,12 @@ int main(int argc, char** argv)
     if (Parameters::getTree().hasKey("Restart") || Parameters::getTree().hasKey("TimeLoop.Restart"))
         restartTime = getParam<Scalar>("TimeLoop.Restart");
 
+    // instantiate time loop
+    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
+    timeLoop->setMaxTimeStepSize(maxDt);
+
+    problem->setTimeLoop(timeLoop);
+
     // intialize the vtk output module
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     PoreNetwork::VtkOutputModule<GridVariables, GetPropType<TypeTag, Properties::FluxVariables>, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
@@ -116,9 +122,6 @@ int main(int argc, char** argv)
 
     vtkWriter.write(0.0);
 
-    // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
-    timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;

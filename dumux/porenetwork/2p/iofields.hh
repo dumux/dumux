@@ -46,6 +46,10 @@ public:
 
         CommonIOFields::initOutputModule(out);
 
+        out.addVolumeVariable([](const auto& volVars){ return volVars.timeStepSize(); }, "dt");
+
+        out.addVolumeVariable([](const auto& volVars){ return volVars.waterVolume(); }, "waterVolume");
+
         out.addFluxVariable([](const auto& fluxVars, const auto& fluxVarsCache)
                               { return fluxVarsCache.pcEntry(); }, "pcEntry");
 
