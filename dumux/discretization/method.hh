@@ -48,89 +48,40 @@ namespace DiscretizationMethods {
 
 struct CCTpfa : public Utility::Tag<CCTpfa> {
     static std::string name() { return "cctpfa"; }
-
-    //conversion operator
-    [[deprecated("Conversion to enum is deprecated. Will be removed after 3.5. Use tags.")]]
-    constexpr operator DiscretizationMethod() const
-    {
-        return DiscretizationMethod::cctpfa;
-    }
 };
 
 
 struct CCMpfa : public Utility::Tag<CCMpfa> {
     static std::string name() { return "ccmpfa"; }
-
-    //conversion operator
-    [[deprecated("Conversion to enum is deprecated. Will be removed after 3.5. Use tags.")]]
-    constexpr operator DiscretizationMethod() const
-    {
-        return DiscretizationMethod::ccmpfa;
-    }
 };
 
 
 struct Box : public Utility::Tag<Box> {
     static std::string name() { return "box"; }
-
-    //conversion operator
-    [[deprecated("Conversion to enum is deprecated. Will be removed after 3.5. Use tags.")]]
-    constexpr operator DiscretizationMethod() const
-    {
-        return DiscretizationMethod::box;
-    }
 };
 
 
 
 struct Staggered : public Utility::Tag<Staggered> {
     static std::string name() { return "staggered"; }
-
-    //conversion operator
-    [[deprecated("Conversion to enum is deprecated. Will be removed after 3.5. Use tags.")]]
-    constexpr operator DiscretizationMethod() const
-    {
-        return DiscretizationMethod::staggered;
-    }
 };
 
 
 
 struct FEM : public Utility::Tag<FEM> {
     static std::string name() { return "fem"; }
-
-    //conversion operator
-    [[deprecated("Conversion to enum is deprecated. Will be removed after 3.5. Use tags.")]]
-    constexpr operator DiscretizationMethod() const
-    {
-        return DiscretizationMethod::fem;
-    }
 };
 
 
 
 struct FCStaggered : public Utility::Tag<FCStaggered> {
     static std::string name() { return "fcstaggered"; }
-
-    //conversion operator
-    [[deprecated("Conversion to enum is deprecated. Will be removed after 3.5. Use tags.")]]
-    constexpr operator DiscretizationMethod() const
-    {
-        return DiscretizationMethod::fcstaggered;
-    }
 };
 
 
 
 struct None : public Utility::Tag<None> {
     static std::string name() { return "none"; }
-
-    //conversion operator
-    [[deprecated("Conversion to enum is deprecated. Will be removed after 3.5. Use tags.")]]
-    constexpr operator DiscretizationMethod() const
-    {
-        return DiscretizationMethod::none;
-    }
 };
 
 
@@ -143,49 +94,6 @@ inline constexpr FCStaggered fcstaggered{};
 inline constexpr None none{};
 
 } // end namespace DiscretizationMethods
-
-/*!
- * \brief Convert discretization method to string
- * \ingroup Discretization
- */
-[[deprecated("Use discretization tags and their name attribute. Will be removed after 3.5")]]
-inline std::string toString(DiscretizationMethod m)
-{
-    switch (m)
-    {
-        case DiscretizationMethod::box: return "box";
-        case DiscretizationMethod::cctpfa: return "cctpfa";
-        case DiscretizationMethod::ccmpfa: return "ccmpfa";
-        case DiscretizationMethod::fcstaggered: return "fcstaggered";
-        case DiscretizationMethod::fem: return "fem";
-        case DiscretizationMethod::staggered: return "staggered";
-        default: return "none";
-    }
-}
-
-/*!
- * \brief Write discretization method to stream
- * \ingroup Discretization
- */
-[[deprecated("Use discretization tags which also support operator <<. Will be removed after 3.5")]]
-inline std::ostream& operator<<(std::ostream& stream, DiscretizationMethod m)
-{
-    // get rid of deprecation warning in the transition period
-    const auto toStringImpl = [](DiscretizationMethod m){
-        switch (m)
-        {
-            case DiscretizationMethod::box: return "box";
-            case DiscretizationMethod::cctpfa: return "cctpfa";
-            case DiscretizationMethod::ccmpfa: return "ccmpfa";
-            case DiscretizationMethod::fcstaggered: return "fcstaggered";
-            case DiscretizationMethod::fem: return "fem";
-            case DiscretizationMethod::staggered: return "staggered";
-            default: return "none";
-        }
-    };
-    stream << toStringImpl(m); return stream;
-}
-
 } // end namespace Dumux
 
 #endif
