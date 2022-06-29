@@ -52,6 +52,25 @@ namespace Deprecated {
 #pragma clang diagnostic pop
 #endif  // __clang__
 
+template<class CO2Impl>
+    struct BrineCO2Helper{
+        template<class CO2Arg>
+        using TabulatedDensityDetector = decltype(std::declval<CO2Arg>().tabulatedDensity);
+        static constexpr bool rawCO2Table = Dune::Std::is_detected<TabulatedDensityDetector,
+                                                                   CO2Impl >::value;
+
+        template< typename T>
+        [[deprecated("Passing just CO2Tables to define a BrineCO2 fluidsystem/binarycoefficient is deprecated. Use Components::CO2<Scalar, CO2Tables> as template parameter instead.")]]
+        static constexpr void DefiningBrineCO2WithCO2Table() {}
+
+        static constexpr bool isRawTable()
+        {
+            if constexpr (rawCO2Table)
+                DefiningBrineCO2WithCO2Table<CO2Impl>();
+            return rawCO2Table;
+        }
+    };
+
 } // end namespace Deprecated
 #endif
 

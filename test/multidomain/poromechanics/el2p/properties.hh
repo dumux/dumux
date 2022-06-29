@@ -35,6 +35,7 @@
 #include <dumux/geomechanics/poroelastic/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
+#include <dumux/material/components/co2.hh>
 #include <dumux/material/fluidsystems/brineco2.hh>
 
 #include <dumux/multidomain/traits.hh>
@@ -60,7 +61,7 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::TwoPSub>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::BrineCO2<Scalar, GeneratedCO2Tables::CO2Tables>;
+    using type = FluidSystems::BrineCO2<Scalar, Components::CO2<Scalar, GeneratedCO2Tables::CO2Tables>>;
 };
 
 // Set the grid type
@@ -95,7 +96,7 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::PoroElasticSub>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::BrineCO2<Scalar, GeneratedCO2Tables::CO2Tables>;
+    using type = FluidSystems::BrineCO2<Scalar, Components::CO2<Scalar, GeneratedCO2Tables::CO2Tables>>;
 };
 
 // The spatial parameters property

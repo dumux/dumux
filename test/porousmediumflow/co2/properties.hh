@@ -33,6 +33,7 @@
 #include <dumux/porousmediumflow/co2/model.hh>
 
 #include <dumux/material/components/tabulatedcomponent.hh>
+#include <dumux/material/components/co2.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/fluidsystems/brineco2.hh>
 
@@ -80,7 +81,7 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::Heterogeneous>
 {
     using type = FluidSystems::BrineCO2<GetPropType<TypeTag, Properties::Scalar>,
-                                        GeneratedCO2Tables::CO2Tables,
+                                        Components::CO2<GetPropType<TypeTag, Properties::Scalar>, GeneratedCO2Tables::CO2Tables>,
                                         Components::TabulatedComponent<Components::H2O<GetPropType<TypeTag, Properties::Scalar>>>,
                                         FluidSystems::BrineCO2DefaultPolicy</*constantSalinity=*/true, /*simpleButFast=*/true>>;
 };
@@ -130,7 +131,7 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::HeterogeneousNI>
 {
     using type = FluidSystems::BrineCO2<GetPropType<TypeTag, Properties::Scalar>,
-                                        GeneratedCO2Tables::CO2Tables,
+                                        Components::CO2<GetPropType<TypeTag, Properties::Scalar>, GeneratedCO2Tables::CO2Tables>,
                                         Components::TabulatedComponent<Components::H2O<GetPropType<TypeTag, Properties::Scalar>>>,
                                         FluidSystems::BrineCO2DefaultPolicy</*constantSalinity=*/true, /*simpleButFast=*/true>>;
 };

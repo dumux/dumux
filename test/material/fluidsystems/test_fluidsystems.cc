@@ -61,7 +61,8 @@
 #include <dumux/material/fluidstates/saturationoverlay.hh>
 #include <dumux/material/fluidstates/temperatureoverlay.hh>
 
-// for co2, include the tables of the co2 test
+// for co2, include the tabulated co2 component and the tables of the co2 test
+#include <dumux/material/components/co2.hh>
 #include <test/porousmediumflow/co2/co2tables.hh>
 
 int main()
@@ -159,40 +160,40 @@ int main()
     // that is why checkFluidSystem() needs to be called with "false" here.
     // Also see the checkFluidSystem documentation.
     {   using H2OType = Components::SimpleH2O<Scalar>;
-        using FluidSystem = FluidSystems::BrineCO2< Scalar, GeneratedCO2Tables::CO2Tables,
+        using FluidSystem = FluidSystems::BrineCO2< Scalar, Components::CO2<Scalar, GeneratedCO2Tables::CO2Tables>,
                                                     H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/true> >;
         Parameters::init([](auto& params){ params["Brine.Salinity"] = "0.3"; });
         success += checkFluidSystem<Scalar, FluidSystem>( false ); }
     {   using H2OType = Components::SimpleH2O<Scalar>;
-        using FluidSystem = FluidSystems::BrineCO2< Scalar, GeneratedCO2Tables::CO2Tables,
+        using FluidSystem = FluidSystems::BrineCO2< Scalar, Components::CO2<Scalar, GeneratedCO2Tables::CO2Tables>,
                                                     H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/false> >;
         success += checkFluidSystem<Scalar, FluidSystem>( false ); }
     {   using H2OType = Components::H2O<Scalar>;
-        using FluidSystem = FluidSystems::BrineCO2< Scalar, GeneratedCO2Tables::CO2Tables,
+        using FluidSystem = FluidSystems::BrineCO2< Scalar, Components::CO2<Scalar, GeneratedCO2Tables::CO2Tables>,
                                                     H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/true> >;
         Parameters::init([](auto& params){ params["Brine.Salinity"] = "0.3"; });
         success += checkFluidSystem<Scalar, FluidSystem>( false ); }
     {   using H2OType = Components::H2O<Scalar>;
-        using FluidSystem = FluidSystems::BrineCO2< Scalar, GeneratedCO2Tables::CO2Tables,
+        using FluidSystem = FluidSystems::BrineCO2< Scalar, Components::CO2<Scalar, GeneratedCO2Tables::CO2Tables>,
                                                     H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/false> >;
         success += checkFluidSystem<Scalar, FluidSystem>( false ); }
     {   using H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>;
-        using FluidSystem = FluidSystems::BrineCO2< Scalar, GeneratedCO2Tables::CO2Tables,
+        using FluidSystem = FluidSystems::BrineCO2< Scalar, Components::CO2<Scalar, GeneratedCO2Tables::CO2Tables>,
                                                     H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/true> >;
         Parameters::init([](auto& params){ params["Brine.Salinity"] = "0.3"; });
         success += checkFluidSystem<Scalar, FluidSystem>( false ); }
     {   using H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>;
-        using FluidSystem = FluidSystems::BrineCO2< Scalar, GeneratedCO2Tables::CO2Tables,
+        using FluidSystem = FluidSystems::BrineCO2< Scalar, Components::CO2<Scalar, GeneratedCO2Tables::CO2Tables>,
                                                     H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/false> >;
         success += checkFluidSystem<Scalar, FluidSystem>( false ); }
     {   using H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>;
-        using FluidSystem = FluidSystems::BrineCO2< Scalar, GeneratedCO2Tables::CO2Tables,
+        using FluidSystem = FluidSystems::BrineCO2< Scalar, Components::CO2<Scalar, GeneratedCO2Tables::CO2Tables>,
                                                     H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/true,
                                                     /*fastButSimplifiedRelations*/true> >;
         Parameters::init([](auto& params){ params["Brine.Salinity"] = "0.3"; });
         success += checkFluidSystem<Scalar, FluidSystem>( false ); }
     {   using H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>;
-        using FluidSystem = FluidSystems::BrineCO2< Scalar, GeneratedCO2Tables::CO2Tables,
+        using FluidSystem = FluidSystems::BrineCO2< Scalar, Components::CO2<Scalar, GeneratedCO2Tables::CO2Tables>,
                                                     H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/false,
                                                     /*fastButSimplifiedRelations*/true> >;
         success += checkFluidSystem<Scalar, FluidSystem>( false ); }
