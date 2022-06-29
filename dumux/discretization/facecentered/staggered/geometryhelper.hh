@@ -187,7 +187,7 @@ public:
         // For half-scvs with even indexes, the outside half-scv has scvf local indexes have a - offset.
         return isOdd_(scv.indexInElement()) ? scvf.localIndex() - offset : scvf.localIndex() + offset;
     }
-
+/*
     template<class FVElementGeometry, class SubControlVolumeFace>
     static const SubControlVolumeFace& localIndexOutsideScvfWithSameIntegrationPoint(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
     {
@@ -208,7 +208,7 @@ public:
         }
 
         DUNE_THROW(Dune::InvalidStateException, "No outside scvf found");
-    }
+    }*/
 
     const GridView& gridView() const
     { return gridView_; }
