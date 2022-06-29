@@ -88,15 +88,6 @@ public:
     }
 
     /*!
-     * \brief Update all fvElementGeometries (do this again after grid adaption)
-     */
-    [[deprecated("Use update(gridView) instead! Will be removed after release 3.5.")]]
-    void update()
-    {
-        update_();
-    }
-
-    /*!
      * \brief Update all fvElementGeometries (call this after grid adaption)
      */
     void update(const GridView& gridView)

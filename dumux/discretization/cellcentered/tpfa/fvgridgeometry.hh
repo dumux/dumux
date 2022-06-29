@@ -160,13 +160,6 @@ public:
     std::size_t numDofs() const
     { return this->gridView().size(0); }
 
-    //! update all fvElementGeometries (do this again after grid adaption)
-    [[deprecated("Use update(gridView) instead! Will be removed after release 3.5.")]]
-    void update()
-    {
-        ParentType::update();
-        update_();
-    }
 
     //! update all fvElementGeometries (call this after grid adaption)
     void update(const GridView& gridView)
@@ -466,14 +459,6 @@ public:
     //! The total number of degrees of freedom
     std::size_t numDofs() const
     { return this->gridView().size(0); }
-
-    //! update all fvElementGeometries (do this again after grid adaption)
-    [[deprecated("Use update(gridView) instead! Will be removed after release 3.5.")]]
-    void update()
-    {
-        ParentType::update();
-        update_();
-    }
 
     //! update all fvElementGeometries (call this after grid adaption)
     void update(const GridView& gridView)

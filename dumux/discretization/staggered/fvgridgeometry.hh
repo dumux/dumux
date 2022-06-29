@@ -286,15 +286,6 @@ public:
     std::size_t numFaceDofs() const
     { return this->gridView().size(1); }
 
-    //! update all fvElementGeometries (do this again after grid adaption)
-    [[deprecated("Use update(gridView) instead! Will be removed after release 3.5.")]]
-    void update()
-    {
-        ParentType::update();
-        updateIntersectionMapper_();
-        update_();
-    }
-
     //! update all fvElementGeometries (call this after grid adaption)
     void update(const GridView& gridView)
     {
@@ -552,14 +543,6 @@ public:
         update_();
     }
 
-    //! update all fvElementGeometries (do this again after grid adaption)
-    [[deprecated("Use update(gridView) instead! Will be removed after release 3.5.")]]
-    void update()
-    {
-        ParentType::update();
-        updateIntersectionMapper_();
-        update_();
-    }
 
     //! update all fvElementGeometries (call this after grid adaption)
     void update(const GridView& gridView)
