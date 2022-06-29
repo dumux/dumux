@@ -314,21 +314,7 @@ private:
         boundaryFaceMarker[0] = 1;
         boundaryFaceMarker[1] = 1;
 
-        if (hasParamInGroup(paramGroup_, "Grid.BoundaryFaceMarker"))
-        {
-            std::cout << "\n\n ****** \nWarning: Grid.BoundaryFaceMarker is deprecated and will be removed after 3.5. Use Grid.BoundaryPoreLabels instead. \n\n ******" << std::endl;
-            try {
-                boundaryFaceMarker = getParamFromGroup<BoundaryList>(paramGroup_, "Grid.BoundaryFaceMarker");
-            }
-            catch (Dune::RangeError& e) {
-                DUNE_THROW(Dumux::ParameterException, "You must specify all boundaries faces: xmin xmax ymin ymax (zmin zmax). \n" << e.what());
-            }
-            if (std::none_of(boundaryFaceMarker.begin(), boundaryFaceMarker.end(), []( const int i ){ return i == 1; }))
-                DUNE_THROW(Dumux::ParameterException, "At least one face must have index 1");
-            if (std::any_of(boundaryFaceMarker.begin(), boundaryFaceMarker.end(), []( const int i ){ return (i < 0 || i > 2*dimWorld); }))
-                DUNE_THROW(Dumux::ParameterException, "Face indices must range from 0 to " << 2*dimWorld );
-        }
-        else if (hasParamInGroup(paramGroup_, "Grid.BoundaryPoreLabels"))
+        if (hasParamInGroup(paramGroup_, "Grid.BoundaryPoreLabels"))
         {
             const auto input = getParamFromGroup<std::vector<std::string>>(paramGroup_, "Grid.BoundaryPoreLabels");
             for (const auto& entry : input)
@@ -621,15 +607,7 @@ private:
         const std::string prefix = subregionId < 0 ? "Grid." : "Grid.Subregion" + std::to_string(subregionId) + ".";
         const Scalar inputThroatLength = getParamFromGroup<Scalar>(paramGroup_, prefix + "ThroatLength", -1.0);
         // decide whether to substract the pore radii from the throat length or not
-        // TODO remove if/else after 3.5 and use const bool subtractRadiiFromThroatLength = getParamFromGroup<bool>(paramGroup_, prefix + "SubtractPoreInscribedRadiiFromThroatLength", true);
-        bool subtractRadiiFromThroatLength = true;
-        if (hasParamInGroup(paramGroup_, prefix + "SubstractRadiiFromThroatLength"))
-        {
-            std::cout << "\n\n ****** \n Warning: SubstractRadiiFromThroatLength is deprecated and will be removed after 3.5. Use SubtractPoreInscribedRadiiFromThroatLength instead \n\n ******" << std::endl;
-            subtractRadiiFromThroatLength = getParamFromGroup<bool>(paramGroup_, prefix + "SubstractRadiiFromThroatLength");
-        }
-        else
-            subtractRadiiFromThroatLength = getParamFromGroup<bool>(paramGroup_, prefix + "SubtractPoreInscribedRadiiFromThroatLength", true);
+        const bool subtractRadiiFromThroatLength = getParamFromGroup<bool>(paramGroup_, prefix + "SubtractPoreInscribedRadiiFromThroatLength", true);
 
         return [=](const Element& element)
         {
