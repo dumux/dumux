@@ -27,7 +27,7 @@
 
 namespace Dumux {
 
-template < class MobilityType, class FluidState, class  FluidMatrixInteraction>
+template < class MobilityType, class FluidState, class FluidMatrixInteraction>
 void updateMobility(MobilityType mobility,
                     const FluidState& fluidState,
                     const FluidMatrixInteraction& fluidMatrixInteraction)
@@ -35,13 +35,33 @@ void updateMobility(MobilityType mobility,
     const int wPhaseIdx = fluidState.wettingPhase();
     const int nPhaseIdx = 1 - wPhaseIdx;
 
-    mobility[wPhaseIdx] =
-            fluidMatrixInteraction.krw(fluidState.saturation(wPhaseIdx))
-            / fluidState.viscosity(wPhaseIdx);
+    mobility[wPhaseIdx] = fluidMatrixInteraction.krw(fluidState.saturation(wPhaseIdx))
+                        / fluidState.viscosity(wPhaseIdx);
 
-    mobility[nPhaseIdx] =
-            fluidMatrixInteraction.krn(fluidState.saturation(wPhaseIdx))
-            / fluidState.viscosity(nPhaseIdx);
+    mobility[nPhaseIdx] = fluidMatrixInteraction.krn(fluidState.saturation(wPhaseIdx))
+                        / fluidState.viscosity(nPhaseIdx);
+}
+
+template <class MobilityType, class FluidState, class FluidMatrixInteraction>
+void updateMobilityMP(MobilityType mobility,
+                      const FluidState& fluidState,
+                      const FluidMatrixInteraction& fluidMatrixInteraction,
+                      const int& wPhaseIdx,
+                      const int& nPhaseIdx,
+                      const int& numFluidPhases)
+{
+    const auto sw = fluidState.saturation(wPhaseIdx);
+    const auto sn = fluidState.saturation(nPhaseIdx);
+
+    // update the mobilities
+    for (int phaseIdx = 0; phaseIdx < numFluidPhases; ++phaseIdx)
+    {
+        mobility[phaseIdx] = fluidMatrixInteraction.kr(phaseIdx, sw, sn)
+                            / fluidState.viscosity(phaseIdx);
+    }
+
+}
+
 }
 
 } // end namespace Dumux

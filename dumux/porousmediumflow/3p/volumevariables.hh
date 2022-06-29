@@ -30,6 +30,7 @@
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
+#include <dumux/porousmediumflow/constraintsolvers/mobility.hh>
 
 namespace Dumux {
 
@@ -47,7 +48,9 @@ class ThreePVolumeVariables
 
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using PermeabilityType = typename Traits::PermeabilityType;
+    using ModelTraits = typename Traits::ModelTraits;
     using Idx = typename Traits::ModelTraits::Indices;
+
     using FS = typename Traits::FluidSystem;
     static constexpr int numFluidComps = ParentType::numFluidComponents();
 
@@ -91,16 +94,9 @@ public:
         ParentType::update(elemSol, problem, element, scv);
         completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
 
-        const auto sw = fluidState_.saturation(wPhaseIdx);
-        const auto sn = fluidState_.saturation(nPhaseIdx);
-
-        // mobilities
-        const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
-        for (int phaseIdx = 0; phaseIdx < ParentType::numFluidPhases(); ++phaseIdx)
-        {
-            mobility_[phaseIdx] = fluidMatrixInteraction.kr(phaseIdx, sw, sn)
-                                  / fluidState_.viscosity(phaseIdx);
-        }
+        updateMobilityMP(mobility_, fluidState_,
+                         problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol),
+                         wPhaseIdx, nPhaseIdx, ModelTraits::numFluidPhases());
 
         // porosity
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);

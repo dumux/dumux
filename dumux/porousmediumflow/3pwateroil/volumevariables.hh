@@ -36,6 +36,7 @@
 #include <dumux/material/constants.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
+#include <dumux/porousmediumflow/constraintsolvers/mobility.hh>
 
 #include <dumux/common/optionalscalar.hh>
 #include <dumux/common/exceptions.hh>
@@ -721,19 +722,11 @@ public:
         }
 
         const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
-        for (int phaseIdx = 0; phaseIdx < numPs; ++phaseIdx)
-        {
-            // Mobilities
-            const Scalar mu =
-                FluidSystem::viscosity(fluidState_,
-                                       phaseIdx);
-            fluidState_.setViscosity(phaseIdx,mu);
 
-            const Scalar kr = fluidMatrixInteraction.kr(phaseIdx,
-                                 fluidState_.saturation(wPhaseIdx),
-                                 fluidState_.saturation(nPhaseIdx));
-            mobility_[phaseIdx] = kr / mu;
-        }
+        for (int phaseIdx = 0; phaseIdx < ModelTraits::numFluidPhases(); ++phaseIdx)
+            fluidState_.setViscosity(phaseIdx, FluidSystem::viscosity(fluidState_, phaseIdx));
+
+        updateMobilityMP(mobility_, fluidState_, fluidMatrixInteraction, wPhaseIdx, nPhaseIdx, ModelTraits::numFluidPhases());
 
         // material dependent parameters for NAPL adsorption (only if law is provided)
         if constexpr (Detail::hasAdsorptionModel<std::decay_t<decltype(fluidMatrixInteraction)>>())

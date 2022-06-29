@@ -34,6 +34,7 @@
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 #include <dumux/common/optionalscalar.hh>
+#include <dumux/porousmediumflow/constraintsolvers/mobility.hh>
 
 #include "primaryvariableswitch.hh"
 
@@ -539,19 +540,9 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
 
         for (int phaseIdx = 0; phaseIdx < ModelTraits::numFluidPhases(); ++phaseIdx)
-        {
-            // mobilities
-            const Scalar mu =
-                FluidSystem::viscosity(fluidState_,
-                                       paramCache,
-                                       phaseIdx);
-            fluidState_.setViscosity(phaseIdx,mu);
+            fluidState_.setViscosity(phaseIdx, FluidSystem::viscosity(fluidState_, paramCache, phaseIdx));
 
-            const Scalar kr = fluidMatrixInteraction.kr(phaseIdx,
-                                 fluidState_.saturation(wPhaseIdx),
-                                 fluidState_.saturation(nPhaseIdx));
-            mobility_[phaseIdx] = kr / mu;
-        }
+        updateMobilityMP(mobility_, fluidState_, fluidMatrixInteraction, wPhaseIdx, nPhaseIdx, ModelTraits::numFluidPhases());
 
         // material dependent parameters for NAPL adsorption (only if law is provided)
         if constexpr (Detail::hasAdsorptionModel<std::decay_t<decltype(fluidMatrixInteraction)>>())
