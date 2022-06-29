@@ -196,13 +196,6 @@ public:
      *
      * \param scvf The sub control volume face.
      */
-    [[deprecated("The isOnWall and IsOnWallAtPos functions will be removed after release 3.5. "
-                 "Please use the Rans specific boundarytypes, and mark wall boundaries with the setWall() function.")]]
-    bool isOnWall(const SubControlVolumeFace& scvf) const
-    {
-        return asImp_().isOnWallAtPos(scvf.center());
-    }
-
     bool isFlatWallBounded() const
     {
         static const bool hasAlignedWalls = hasAlignedWalls_();
