@@ -31,6 +31,8 @@
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 #include <dumux/porousmediumflow/2p/formulation.hh>
 
+#include <dumux/porousmediumflow/constraintsolvers/mobility.hh>
+
 namespace Dumux {
 
 /*!
@@ -96,16 +98,7 @@ public:
         const auto& spatialParams = problem.spatialParams();
         const auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
 
-        const int wPhaseIdx = fluidState_.wettingPhase();
-        const int nPhaseIdx = 1 - wPhaseIdx;
-
-        mobility_[wPhaseIdx] =
-            fluidMatrixInteraction.krw(fluidState_.saturation(wPhaseIdx))
-            / fluidState_.viscosity(wPhaseIdx);
-
-        mobility_[nPhaseIdx] =
-            fluidMatrixInteraction.krn(fluidState_.saturation(wPhaseIdx))
-            / fluidState_.viscosity(nPhaseIdx);
+        updateMobility(mobility_, fluidState_, fluidMatrixInteraction);
 
         // porosity calculation over inert volumefraction
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);

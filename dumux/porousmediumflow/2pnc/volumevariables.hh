@@ -41,6 +41,7 @@
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 
 #include <dumux/porousmediumflow/2p/formulation.hh>
+#include <dumux/porousmediumflow/constraintsolvers/mobility.hh>
 
 #include "primaryvariableswitch.hh"
 
@@ -143,12 +144,7 @@ public:
         const auto& spatialParams = problem.spatialParams();
         const auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
 
-        const int wPhaseIdx = fluidState_.wettingPhase();
-        const int nPhaseIdx = 1 - wPhaseIdx;
-
-        // mobilities -> require wetting phase saturation as parameter!
-        mobility_[wPhaseIdx] = fluidMatrixInteraction.krw(saturation(wPhaseIdx))/fluidState_.viscosity(wPhaseIdx);
-        mobility_[nPhaseIdx] = fluidMatrixInteraction.krn(saturation(wPhaseIdx))/fluidState_.viscosity(nPhaseIdx);
+        updateMobility(mobility_, fluidState_, fluidMatrixInteraction);
 
         //update porosity before calculating the effective properties depending on it
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
