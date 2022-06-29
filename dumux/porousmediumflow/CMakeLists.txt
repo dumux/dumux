@@ -21,6 +21,7 @@ add_subdirectory(richards)
 add_subdirectory(richardsnc)
 add_subdirectory(solidenergy)
 add_subdirectory(tracer)
+add_subdirectory(constraintsolvers)
 
 file(GLOB DUMUX_POROUSMEDIUMFLOW_HEADERS *.hh *.inc)
 install(FILES ${DUMUX_POROUSMEDIUMFLOW_HEADERS}
