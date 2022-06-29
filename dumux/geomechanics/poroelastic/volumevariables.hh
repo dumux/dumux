@@ -24,7 +24,6 @@
 #ifndef DUMUX_POROELASTIC_VOLUME_VARIABLES_HH
 #define DUMUX_POROELASTIC_VOLUME_VARIABLES_HH
 
-#include <dumux/common/deprecated.hh>
 #include <dumux/discretization/evalgradients.hh>
 
 namespace Dumux {
@@ -70,7 +69,7 @@ public:
                 const Scv& scv)
     {
         priVars_ = elemSol[scv.localDofIndex()];
-        extrusionFactor_ = Deprecated::extrusionFactor(problem, element, scv, elemSol);
+        extrusionFactor_ = problem.spatialParams().extrusionFactor(element, scv, elemSol);
 
         //! set the volume fractions of the solid components
         updateSolidVolumeFractions_(elemSol, problem, element, scv);
@@ -151,7 +150,7 @@ private:
     template< class Problem, class Element, class Scv, class ElemSol,
               bool enableEB = enableEnergyBalance, typename std::enable_if_t<!enableEB, bool> = 0 >
     void setSolidTemperature_(const Problem& problem, const Element& element, const Scv& scv, const ElemSol& elemSol)
-    { solidState_.setTemperature(Deprecated::temperature(problem, element, scv, elemSol)); }
+    { solidState_.setTemperature(problem.spatialParams().temperature(element, scv, elemSol)); }
 
     // data members
     Scalar extrusionFactor_;
