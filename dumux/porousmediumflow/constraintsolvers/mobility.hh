@@ -62,6 +62,21 @@ void updateMobilityMP(MobilityType mobility,
 
 }
 
+template <class MobilityType, class RelativePermeabilityType, class FluidState, class FluidMatrixInteraction>
+void updateMobilityMPNC(MobilityType mobility,
+                        RelativePermeabilityType relativePermeability,
+                        const FluidState& fluidState,
+                        const FluidMatrixInteraction& fluidMatrixInteraction,
+                        const int& wPhaseIdx,
+                        const int& numFluidPhases)
+{
+    // update the relative permeabilities
+    const auto relPerm = fluidMatrixInteraction.relativePermeabilities(fluidState, wPhaseIdx);
+    std::copy(relPerm.begin(), relPerm.end(), relativePermeability.begin());
+
+    // update the mobilities
+    for (int phaseIdx = 0; phaseIdx < numFluidPhases; ++phaseIdx)
+        mobility[phaseIdx] = relativePermeability[phaseIdx] / fluidState.viscosity(phaseIdx);
 }
 
 } // end namespace Dumux

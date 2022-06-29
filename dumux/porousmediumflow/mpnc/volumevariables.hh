@@ -32,6 +32,7 @@
 #include <dumux/material/constraintsolvers/compositionfromfugacities.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
+#include <dumux/porousmediumflow/constraintsolvers/mobility.hh>
 
 #include "pressureformulation.hh"
 
@@ -112,11 +113,12 @@ public:
         const auto& spatialParams = problem.spatialParams();
         const int wPhaseIdx = spatialParams.template wettingPhase<FluidSystem>(element, scv, elemSol);
         const auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
-        const auto relPerm = fluidMatrixInteraction.relativePermeabilities(fluidState_, wPhaseIdx);
-        std::copy(relPerm.begin(), relPerm.end(), relativePermeability_.begin());
+        updateMobilityMPNC(mobility_, relativePermeability_, fluidState_,
+                           fluidMatrixInteraction, wPhaseIdx, ModelTraits::numFluidPhases());
 
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState_);
+
 
         // porosity
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
@@ -220,7 +222,7 @@ public:
                 // sanity check to make sure we have non-zero fugacity coefficients
                 if (FluidSystem::fugacityCoefficient(fluidState, paramCache, phaseIdx, compIdx) == 0.0)
                     DUNE_THROW(NumericalProblem, "MPNCVolumeVariables do not support fluidsystems with fugacity coefficients of 0");
-                
+
                 // set initial guess of the component's mole fraction
                 fluidState.setMoleFraction(phaseIdx, compIdx, 1.0/numFluidComps);
             }
@@ -370,9 +372,7 @@ public:
      *        \param phaseIdx The local index of the phases
      */
     Scalar mobility(const unsigned int phaseIdx) const
-    {
-        return relativePermeability(phaseIdx)/fluidState_.viscosity(phaseIdx);
-    }
+    { return mobility_[phaseIdx]; }
 
     /*!
      * \brief Returns the viscosity of a given phase within
@@ -477,6 +477,7 @@ public:
 protected:
     Scalar porosity_; //!< Effective porosity within the control volume
     std::array<Scalar, ModelTraits::numFluidPhases()> relativePermeability_; //!< Effective relative permeability within the control volume
+    std::array<Scalar, ModelTraits::numFluidPhases()> mobility_; //!< Phasewise mobility within the control volume
     PermeabilityType permeability_;
 
     //! Mass fractions of each component within each phase
@@ -550,8 +551,9 @@ public:
         const auto& spatialParams = problem.spatialParams();
         const int wPhaseIdx = spatialParams.template wettingPhase<FluidSystem>(element, scv, elemSol);
         const auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
-        const auto relPerm = fluidMatrixInteraction.relativePermeabilities(fluidState_, wPhaseIdx);
-        std::copy(relPerm.begin(), relPerm.end(), relativePermeability_.begin());
+
+        updateMobilityMPNC(mobility_, relativePermeability_, fluidState_,
+                           fluidMatrixInteraction, wPhaseIdx, ModelTraits::numFluidPhases());
 
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState_);
@@ -850,9 +852,7 @@ public:
      *        \param phaseIdx The local index of the phases
      */
     Scalar mobility(const unsigned int phaseIdx) const
-    {
-        return relativePermeability(phaseIdx)/fluidState_.viscosity(phaseIdx);
-    }
+    { return mobility_[phaseIdx]; }
 
     /*!
      * \brief Returns the viscosity of a given phase within
@@ -956,6 +956,7 @@ public:
 
 protected:
     std::array<Scalar, ModelTraits::numFluidPhases()> relativePermeability_; //!< Effective relative permeability within the control volume
+    std::array<Scalar, ModelTraits::numFluidPhases()> mobility_; //!< Phasewise mobility within the control volume
     PermeabilityType permeability_;
     std::array<std::array<Scalar, numFluidComps>, numFluidPhases()> xEquil_;
 
