@@ -1,6 +1,7 @@
 add_subdirectory(functions)
 add_subdirectory(integrate)
 add_subdirectory(math)
+add_subdirectory(metadata)
 add_subdirectory(parameters)
 add_subdirectory(propertysystem)
 add_subdirectory(spline)
