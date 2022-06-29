@@ -32,6 +32,8 @@
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 
+#include <dumux/porousmediumflow/constraintsolvers/onepncfluidstate.hh>
+#include <dumux/porousmediumflow/constraintsolvers/effectivediffusioncoefficient.hh>
 namespace Dumux {
 
 /*!
@@ -50,20 +52,14 @@ class OnePNCVolumeVariables
 {
     using ParentType = PorousMediumFlowVolumeVariables<Traits>;
     using EnergyVolVars = EnergyVolumeVariables<Traits, OnePNCVolumeVariables<Traits> >;
-    using Scalar = typename Traits::PrimaryVariables::value_type;
     using PermeabilityType = typename Traits::PermeabilityType;
     using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
     using Idx = typename Traits::ModelTraits::Indices;
     static constexpr int numFluidComps = ParentType::numFluidComponents();
     using DiffusionCoefficients = typename Traits::DiffusionType::DiffusionCoefficientsContainer;
 
-    enum
-    {
-        // pressure primary variable index
-        pressureIdx = Idx::pressureIdx
-    };
-
 public:
+    using Scalar = typename Traits::PrimaryVariables::value_type;
     //! Export fluid state type
     using FluidState = typename Traits::FluidState;
     //! Export fluid system type
@@ -74,9 +70,14 @@ public:
     using SolidState = typename Traits::SolidState;
     //! Export type of solid system
     using SolidSystem = typename Traits::SolidSystem;
-
     //! Returns whether moles or masses are balanced
     static constexpr bool useMoles() { return Traits::ModelTraits::useMoles(); }
+
+    enum
+    {
+        // pressure primary variable index
+        pressureIdx = Idx::pressureIdx
+    };
 
     /*!
      * \brief Updates all quantities for a given control volume.
@@ -95,7 +96,7 @@ public:
     {
         ParentType::update(elemSol, problem, element, scv);
 
-        completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
+        completeFluidState(*this,elemSol, problem, element, scv, fluidState_, solidState_, pressureIdx, numFluidComps, useMoles());
 
         // calculate the remaining quantities
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
@@ -103,72 +104,7 @@ public:
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
         EnergyVolVars::updateEffectiveThermalConductivity();
 
-        auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
-        {
-            return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx, compJIdx);
-        };
-
-        effectiveDiffCoeff_.update(getEffectiveDiffusionCoefficient);
-    }
-
-    /*!
-     * \brief Sets complete fluid state.
-     *
-     * \param elemSol A vector containing all primary variables connected to the element
-     * \param problem The object specifying the problem which ought to
-     *                be simulated
-     * \param element An element which contains part of the control volume
-     * \param scv The sub-control volume
-     * \param fluidState A container with the current (physical) state of the fluid
-     * \param solidState A container with the current (physical) state of the solid
-     */
-    template<class ElemSol, class Problem, class Element, class Scv>
-    void completeFluidState(const ElemSol &elemSol,
-                            const Problem& problem,
-                            const Element& element,
-                            const Scv &scv,
-                            FluidState& fluidState,
-                            SolidState& solidState)
-    {
-        EnergyVolVars::updateTemperature(elemSol, problem, element, scv, fluidState, solidState);
-        fluidState.setSaturation(0, 1.0);
-
-        const auto& priVars = elemSol[scv.localDofIndex()];
-        fluidState.setPressure(0, priVars[pressureIdx]);
-
-        // Set fluid state mole fractions
-        if (useMoles())
-        {
-            Scalar sumMoleFracNotMainComp = 0;
-            for (int compIdx = 1; compIdx < numFluidComps; ++compIdx)
-            {
-                fluidState.setMoleFraction(0, compIdx, priVars[compIdx]);
-                sumMoleFracNotMainComp += priVars[compIdx];
-            }
-            fluidState.setMoleFraction(0, 0, 1.0 - sumMoleFracNotMainComp);
-        }
-        else
-        {
-            // for mass fractions we only have to set numComponents-1 mass fractions
-            // the fluid state will internally compute the remaining mass fraction
-            for (int compIdx = 1; compIdx < numFluidComps; ++compIdx)
-                fluidState.setMassFraction(0, compIdx, priVars[compIdx]);
-        }
-
-        typename FluidSystem::ParameterCache paramCache;
-        paramCache.updateAll(fluidState);
-
-        Scalar rho = FluidSystem::density(fluidState, paramCache, 0);
-        Scalar rhoMolar = FluidSystem::molarDensity(fluidState, paramCache, 0);
-        Scalar mu = FluidSystem::viscosity(fluidState, paramCache, 0);
-
-        fluidState.setDensity(0, rho);
-        fluidState.setMolarDensity(0, rhoMolar);
-        fluidState.setViscosity(0, mu);
-
-        // compute and set the enthalpy
-        Scalar h = EnergyVolVars::enthalpy(fluidState, paramCache, 0);
-        fluidState.setEnthalpy(0, h);
+        updateEffDiffCoeff<EffDiffModel>(*this, effectiveDiffCoeff_);
     }
 
     /*!
