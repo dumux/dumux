@@ -27,7 +27,7 @@
 
 namespace Dumux {
 
-template < class MobilityType, class FluidState, class FluidMatrixInteraction>
+template <class MobilityType, class FluidState, class FluidMatrixInteraction>
 void updateMobility(MobilityType mobility,
                     const FluidState& fluidState,
                     const FluidMatrixInteraction& fluidMatrixInteraction)
@@ -35,9 +35,11 @@ void updateMobility(MobilityType mobility,
     const int wPhaseIdx = fluidState.wettingPhase();
     const int nPhaseIdx = 1 - wPhaseIdx;
 
+    // update the wetting phase mobility
     mobility[wPhaseIdx] = fluidMatrixInteraction.krw(fluidState.saturation(wPhaseIdx))
                         / fluidState.viscosity(wPhaseIdx);
 
+    // update the non-wetting phase mobility
     mobility[nPhaseIdx] = fluidMatrixInteraction.krn(fluidState.saturation(wPhaseIdx))
                         / fluidState.viscosity(nPhaseIdx);
 }
