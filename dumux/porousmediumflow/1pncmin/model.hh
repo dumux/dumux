@@ -24,13 +24,10 @@
 * This model implements one-phase n-component flow of a compressible fluid composed of
 * the n components \f$\kappa \f$ in combination with mineral precipitation and dissolution
 * of the solid phases. The standard multi-phase Darcy
-* approach is used as the equation for the conservation of momentum:
-* \f[
-v = - \frac{k_{r}}{\mu} \mathbf{K}
-\left(\text{grad}\, p - \varrho_{f} \mathbf{g} \right)
-* \f]
+* approach is used as the equation for the conservation of momentum.
+* For details on Darcy's law see dumux/flux/darcyslaw.hh.
 *
-* By inserting this into the equations for the conservation of the
+* By inserting Darcy's law into the equations for the conservation of the
 * components, one gets one transport equation for each component
 * \f[
  \frac{\partial ( \varrho_f X^\kappa \phi  )}
