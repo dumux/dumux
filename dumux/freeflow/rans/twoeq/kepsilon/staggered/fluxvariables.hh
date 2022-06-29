@@ -149,28 +149,6 @@ public:
 
         const auto bcTypes = problem.boundaryTypes(element, scvf);
 
-        // Remove this check after release 3.5. IsOnWall Interface is deprecated
-        if constexpr (Deprecated::hasIsOnWall<Problem, GlobalPosition>())
-        {
-            // Remove this part
-            if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::turbulentKineticEnergyEqIdx)
-                                    || bcTypes.isSymmetry()
-                                    || problem.isOnWall(scvf))))
-            {
-                if (!(insideVolVars.isMatchingPoint() && outsideVolVars.isMatchingPoint())
-                    || !(insideVolVars.isMatchingPoint() && outsideVolVars.inNearWallRegion())
-                    || !(insideVolVars.inNearWallRegion() && outsideVolVars.isMatchingPoint()))
-                {
-                    flux[turbulentKineticEnergyEqIdx]
-                        += coeff_k / distance
-                        * (insideVolVars.turbulentKineticEnergy() - outsideVolVars.turbulentKineticEnergy())
-                        * Extrusion::area(scvf);
-                }
-            }
-        }
-        else
-        {
-            // Keep this part
             if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::turbulentKineticEnergyEqIdx)
                                     || bcTypes.isSymmetry()
                                     || bcTypes.hasWall())))
@@ -185,7 +163,7 @@ public:
                         * Extrusion::area(scvf);
                 }
             }
-        }
+//         }
 
         if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::dissipationEqIdx)
                                || bcTypes.isSymmetry())))

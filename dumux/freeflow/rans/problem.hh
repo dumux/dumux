@@ -334,19 +334,9 @@ private:
             fvGeometry.bindElement(element);
             for (const auto& scvf : scvfs(fvGeometry))
             {
-                // Remove this check after release 3.5. IsOnWall Interface is deprecated
-                if constexpr (Deprecated::hasIsOnWall<Implementation, GlobalPosition>())
-                {
-                    // Remove this part
-                    if (!scvf.boundary() && asImp_().isOnWall(scvf)) // only search for walls at a global boundary
-                        wallFaceAxis.push_back(scvf.directionIndex());
-                }
-                else
-                {
                     // Keep this part
                     if (!scvf.boundary() && asImp_().boundaryTypes(element, scvf).hasWall())  // only search for walls at a global boundary
                         wallFaceAxis.push_back(scvf.directionIndex());
-                }
             }
         }
 
@@ -378,23 +368,11 @@ private:
      */
     void findWallDistances_()
     {
-        // Remove this check after release 3.5. IsOnWall Interface is deprecated
-        if constexpr (Deprecated::hasIsOnWall<Implementation, GlobalPosition>())
-        {
-            WallDistance wallInformation(this->gridGeometry(), WallDistance<GridGeometry>::atElementCenters,
-                [this] (const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
-                { return asImp_().isOnWall(scvf); });
-            wallDistance_ = wallInformation.wallDistance();
-            storeWallElementAndDirectionIndex_(wallInformation.wallData());
-        }
-        else
-        {
             WallDistance wallInformation(this->gridGeometry(), WallDistance<GridGeometry>::atElementCenters,
                 [this] (const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
                 { return asImp_().boundaryTypes(fvGeometry.element(), scvf).hasWall(); });
             wallDistance_ = wallInformation.wallDistance();
             storeWallElementAndDirectionIndex_(wallInformation.wallData());
-        }
     }
 
     template <class WallData>
