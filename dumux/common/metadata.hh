@@ -36,7 +36,7 @@
 #include <dune/common/concept.hh>
 #include <dune/grid/common/gridview.hh>
 
-#include "dumux/io/json/json.hpp"
+#include "dumux/io/json.hh"
 
 #include "dumux/common/properties/propertysystem.hh"
 #include "dumux/common/typetraits/utility.hh"
@@ -121,7 +121,7 @@ namespace Detail {
  */
 class Metadata {
 
-    using JsonTree = nlohmann::json;
+    using JsonTree = Dumux::Json::JsonTree;
 
 public:
     /*!
@@ -233,7 +233,7 @@ template<class TypeTag, class Collector>
 auto collectTypeTags(Collector& collector)
 {
     auto& obj = collector["TTags"];
-    obj = nlohmann::json::array();
+    obj = Dumux::Json::JsonTree::array();
     Detail::collectTypeTagsFromTuple<std::tuple<TypeTag>>(obj);
 }
 
