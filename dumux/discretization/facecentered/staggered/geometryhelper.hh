@@ -189,8 +189,7 @@ public:
     }
 
     template<class FVElementGeometry, class SubControlVolumeFace>
-    [[deprecated("The interface outsideScvfWithSameIntegrationPoint() is deprecated and the function is moved to the FVElementGeometry. Use the new interface localIndexOutsideScvfWithSameIntegrationPoint() instead. Will be removed after 3.5")]]
-    static const SubControlVolumeFace& outsideScvfWithSameIntegrationPoint(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
+    static const SubControlVolumeFace& localIndexOutsideScvfWithSameIntegrationPoint(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
     {
         const auto& lateralOrthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
         assert(!lateralOrthogonalScvf.boundary());
