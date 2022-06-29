@@ -96,10 +96,10 @@ class MultiDomainFVGridGeometry
             std::get<i>(gridGeometries_)->update(std::forward<Arg>(arg));
     }
 
-    // remove this after 3.5
-    template<std::size_t i>
-    using GV = typename MDTraits::template SubDomain<i>::GridGeometry::GridView;
-    using GVTuple = typename MDTraits::template Tuple<GV>;
+//     // remove this after 3.5
+//     template<std::size_t i>
+//     using GV = typename MDTraits::template SubDomain<i>::GridGeometry::GridView;
+//     using GVTuple = typename MDTraits::template Tuple<GV>;
 
 public:
     //! export base types of the stored type
@@ -112,12 +112,6 @@ public:
 
     //! export type of tuple of pointers
     using TupleType = typename MDTraits::template Tuple<PtrType>;
-
-    /*!
-     * \brief The default constructor
-     */
-    [[deprecated("Will be removed after release 3.5. Use variadic constructor!")]]
-    MultiDomainFVGridGeometry() = default;
 
     /*!
      * \brief Construct grid geometries for all subdomains
@@ -152,20 +146,6 @@ public:
     {}
 
     /*!
-     * \brief Construct wrapper from a tuple of grid views
-     */
-    [[deprecated("Will be removed after release 3.5. Use variadic constructor!")]]
-    MultiDomainFVGridGeometry(GVTuple gvTuple)
-    {
-        using namespace Dune::Hybrid;
-        forEach(std::make_index_sequence<numSubDomains>{}, [&](auto&& id)
-        {
-            constexpr auto i = std::decay_t<decltype(id)>::value;
-            this->construct_<i>(std::get<i>(gvTuple));
-        });
-    }
-
-    /*!
      * \brief Update all grid geometries (do this e.g. after grid adaption)
      * \param args a list of arguments to pass to the update functions
      *
@@ -189,19 +169,6 @@ public:
         });
     }
 
-    /*!
-     * \brief Update all grid geometries (do this again after grid adaption)
-     */
-    [[deprecated("Will be removed after release 3.5. Use variadic update!")]]
-    void update()
-    {
-        using namespace Dune::Hybrid;
-        forEach(std::make_index_sequence<numSubDomains>{}, [&](auto&& id)
-        {
-            elementAt(gridGeometries_, id)->update();
-        });
-    }
-
     //! return the grid geometry for domain with index i
     template<std::size_t i>
     const Type<i>& operator[] (Dune::index_constant<i>) const
@@ -221,20 +188,6 @@ public:
     template<std::size_t i>
     PtrType<i>& get(Dune::index_constant<i> id = Dune::index_constant<i>{})
     { return std::get<i>(gridGeometries_); }
-
-    //! set the pointer for sub domain i
-    template<std::size_t i>
-    [[deprecated("Will be removed after release 3.5. Use one of the constructors instead.")]]
-    void set(PtrType<i> p, Dune::index_constant<i> id = Dune::index_constant<i>{})
-    { std::get<i>(gridGeometries_) = p; }
-
-    /*!
-     * \brief return the grid variables tuple we are wrapping
-     * \note the copy is not expensive since it is a tuple of shared pointers
-     */
-    [[deprecated("Use asTuple. Will be removed after release 3.5")]]
-    TupleType getTuple()
-    { return gridGeometries_; }
 
     /*!
      * \brief Access the underlying tuple representation

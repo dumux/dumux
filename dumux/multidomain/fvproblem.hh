@@ -63,12 +63,6 @@ public:
     using TupleType = typename MDTraits::template Tuple<PtrType>;
 
     /*!
-     * \brief The default constructor
-     */
-    [[deprecated("Will be removed after release 3.5. Use one of the constructors instead.")]]
-    MultiDomainFVProblem() = default;
-
-    /*!
      * \brief Contruct the problem
      * \param gridGeometries a tuple of grid geometry shared pointers
      */
@@ -122,20 +116,6 @@ public:
     template<std::size_t i>
     PtrType<i>& get(Dune::index_constant<i> id = Dune::index_constant<i>{})
     { return std::get<i>(problems_); }
-
-    //! set the pointer for sub domain i
-    template<std::size_t i>
-    [[deprecated("Will be removed after release 3.5. Use one of the constructors instead.")]]
-    void set(PtrType<i> p, Dune::index_constant<i> id = Dune::index_constant<i>{})
-    { Dune::Hybrid::elementAt(problems_, Dune::index_constant<i>{}) = p; }
-
-    /*!
-     * \brief return the grid variables tuple we are wrapping
-     * \note the copy is not expensive since it is a tuple of shared pointers
-     */
-    [[deprecated("Use asTuple. Will be removed after release 3.5")]]
-    TupleType getTuple()
-    { return problems_; }
 
     /*!
      * \brief Access the underlying tuple representation
