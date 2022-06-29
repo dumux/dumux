@@ -10,6 +10,8 @@ that implement an empty cache (i.e. nothing is cached for the flux variables).
 
 - __Properties__: There is now a `GetPropOr` helper that evaluates to the property type if that type is specialized for the given TypeTag and a given type if not.
 
+- __1d3d__: Fixed a bug in the extended source stencil which didn't respect a user-defined epsilon for numeric differentiation
+
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
 - __Experimental features__: All headers with experimental features have been moved into the folder `dumux/experimental`.
