@@ -37,20 +37,20 @@ namespace Dumux {
 * \param fluidState A container with the current (physical) state of the fluid
 * \param solidState A container with the current (physical) state of the solid
 */
-template<class Volvars, class ElemSol, class Problem, class Element, class Scv, class FluidState, class SolidState>
-void completeFluidState(Volvars& volVars,
+template<class VolVars, class ElemSol, class Problem, class Element, class Scv, class FluidState, class SolidState>
+void completeFluidState(VolVars& volVars,
                         const ElemSol &elemSol,
                         const Problem& problem,
                         const Element& element,
                         const Scv &scv,
                         FluidState& fluidState,
-                        SolidState& solidState,
-                        const int& pressureIdx,
-                        const int& numFluidComps,
-                        const bool& useMoles = true)
+                        SolidState& solidState)
 {
-    using Scalar = typename Volvars::Scalar;
-    using FluidSystem = typename Volvars::FluidSystem;
+    using Scalar = typename VolVars::Scalar;
+    using FluidSystem = typename VolVars::FluidSystem;
+    static constexpr int numFluidComps = VolVars::numFluidComps;
+    static constexpr int pressureIdx = VolVars::pressureIdx;
+    static constexpr bool useMoles = VolVars::useMoles();
     volVars.updateTemperature(elemSol, problem, element, scv, fluidState, solidState);
     fluidState.setSaturation(0, 1.0);
 
