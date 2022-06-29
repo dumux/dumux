@@ -535,49 +535,6 @@ public:
                    "an initial() or an initialAtPos() method.");
     }
 
-    /*!
-     * \brief Return how much the domain is extruded at a given sub-control volume.
-     *
-     * This means the factor by which a lower-dimensional (1D or 2D)
-     * entity needs to be expanded to get a full dimensional cell. The
-     * default is 1.0 which means that 1D problems are actually
-     * thought as pipes with a cross section of 1 m^2 and 2D problems
-     * are assumed to extend 1 m to the back.
-     *
-     * \note The default value was introduced to make the deprecation phase easier
-     */
-    template<class ElementSolution>
-    [[deprecated("extrusionFactor() should now be defined in the spatial params. This interface will be removed after 3.5.")]]
-    Scalar extrusionFactor(const Element& element,
-                           const SubControlVolume& scv,
-                           const ElementSolution& elemSol,
-                           double defaultValue = 1.0) const
-    {
-        // forward to generic interface
-        return asImp_().extrusionFactorAtPos(scv.center());
-    }
-
-    /*!
-     * \brief Return how much the domain is extruded at a given position.
-     *
-     * This means the factor by which a lower-dimensional (1D or 2D)
-     * entity needs to be expanded to get a full dimensional cell. The
-     * default is 1.0 which means that 1D problems are actually
-     * thought as pipes with a cross section of 1 m^2 and 2D problems
-     * are assumed to extend 1 m to the back.
-     *
-     * \note The default value was introduced to make the deprecation phase easier
-     */
-    [[deprecated("extrusionFactorAtPos() should now be defined in the spatial params. This interface will be removed after 3.5.")]]
-    Scalar extrusionFactorAtPos(const GlobalPosition &globalPos, double defaultValue = 1.0) const
-    {
-        // As a default, i.e. if the user's problem does not overload
-        // any extrusion factor method, return 1.0
-        return 1.0;
-    }
-
-    // \}
-
     //! The finite volume grid geometry
     const GridGeometry& gridGeometry() const
     { return *gridGeometry_; }
