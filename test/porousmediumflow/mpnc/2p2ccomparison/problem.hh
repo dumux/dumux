@@ -32,7 +32,7 @@
 #include <dumux/common/numeqvector.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
+#include <dumux/porousmediumflow/mpnc/initialconditionhelper.hh>
 
 namespace Dumux {
 
@@ -200,12 +200,10 @@ private:
         fs.setPressure(liquidPhaseIdx,
                        fs.pressure(gasPhaseIdx) + pc[liquidPhaseIdx] - pc[gasPhaseIdx]);
 
-        // make the fluid state consistent with local thermodynamic
-        // equilibrium
-        using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
+        using InitialHelper = MPNCInitialConditionHelper<Scalar, FluidSystem>;
 
         ParameterCache paramCache;
-        MiscibleMultiPhaseComposition::solve(fs, paramCache);
+        InitialHelper::solveFluidStateForMPNCInitialCondition(fs, paramCache, 0);
 
         ///////////
         // assign the primary variables

@@ -34,7 +34,7 @@
 #include <dumux/common/numeqvector.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/material/constraintsolvers/computefromreferencephase.hh>
+#include <dumux/porousmediumflow/mpnc/initialconditionhelper.hh>
 
 namespace Dumux {
 
@@ -269,13 +269,12 @@ private:
                        + (pc[otherPhaseIdx] - pc[refPhaseIdx]));
 
         // make the fluid state consistent with local thermodynamic
-        // equilibrium
-        using ComputeFromReferencePhase = ComputeFromReferencePhase<Scalar, FluidSystem>;
+        // equilibrium using the initialhelper that selects the correct constraintsolver
+        using InitialHelper = MPNCInitialConditionHelper<Scalar, FluidSystem>;
 
         ParameterCache paramCache;
-        ComputeFromReferencePhase::solve(fs,
-                                         paramCache,
-                                         refPhaseIdx);
+        InitialHelper::solveFluidStateForMPNCInitialCondition(fs, paramCache, refPhaseIdx);
+
 
         ///////////
         // assign the primary variables
