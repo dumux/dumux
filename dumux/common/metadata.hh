@@ -173,6 +173,22 @@ private:
     JsonTree tree_;
 };
 
+//! reads a json file into a tree
+template<class Collector>
+void readJsonFile(Collector& collector, std::string fileName)
+{
+    std::ifstream i(fileName + ".json");
+    i >> collector.getTree();
+}
+
+//! writes a json tree to file
+template<class Collector>
+void writeJsonFile(const Collector& collector, std::string fileName)
+{
+    std::ofstream o(fileName + ".json");
+    o << std::setw(4) << collector.getTree() << std::endl;
+}
+
 //! prints json tree
 template<class Collector>
 void print(const Collector& collector)
@@ -237,6 +253,6 @@ auto collectTypeTags(Collector& collector)
     Detail::collectTypeTagsFromTuple<std::tuple<TypeTag>>(obj);
 }
 
-} // end namespace Dumux
+} // end namespace Dumux::MetaData
 
 #endif
