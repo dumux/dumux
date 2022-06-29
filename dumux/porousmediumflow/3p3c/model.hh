@@ -25,13 +25,10 @@
  * This model implements three-phase three-component flow of three fluid phases
  * \f$\alpha \in \{ water, gas, NAPL \}\f$ each composed of up to three components
  * \f$\kappa \in \{ water, air, contaminant \}\f$. The standard multiphase Darcy
- * approach is used as the equation for the conservation of momentum:
- * \f[
- v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K}
- \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} \mathbf{g} \right)
- * \f]
+ * approach is used as the equation for the conservation of momentum.
+ * For details on Darcy's law see dumux/flux/darcyslaw.hh.
  *
- * By inserting this into the equations for the conservation of the
+ * By inserting Darcy's law into the equations for the conservation of the
  * components, one transport equation for each component is obtained as
  * \f{eqnarray*}
  && \phi \frac{\partial (\sum_\alpha \varrho_{\alpha,mol} x_\alpha^\kappa

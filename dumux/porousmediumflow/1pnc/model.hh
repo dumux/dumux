@@ -23,14 +23,9 @@
  *
  * This model implements a one-phase flow of a compressible fluid, that consists
  * of n components, using a standard Darcy approach as the equation for the
- * conservation of momentum:
- \f[
- v = - \frac{\textbf K}{\mu}
- \left(\textbf{grad}\, p - \varrho {\textbf g} \right)
- \f]
- *
+ * conservation of momentum. For details on Darcy's law see dumux/flux/darcyslaw.hh.
  * Gravity can be enabled or disabled via the property system.
- * By inserting this into the continuity equation, one gets
+ * By inserting Darcy's law into the continuity equation, one gets
  \f[
  \phi\frac{\partial \varrho}{\partial t} - \text{div} \left\{
    \varrho \frac{\textbf K}{\mu}  \left(\textbf{grad}\, p - \varrho {\textbf g} \right)

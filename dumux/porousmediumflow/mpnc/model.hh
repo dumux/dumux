@@ -30,7 +30,7 @@
  *
  * The momentum approximation can be selected via "BaseFluxVariables":
  * Darcy (ImplicitDarcyFluxVariables) and Forchheimer (ImplicitForchheimerFluxVariables)
- * relations are available for all Box models.
+ * relations are available for all Box models. For details on Darcy's law see dumux/flux/darcyslaw.hh.
  *
  * By inserting this into the equations for the conservation of the
  * mass of each component, one gets one mass-continuity equation for
