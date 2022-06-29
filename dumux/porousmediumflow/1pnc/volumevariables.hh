@@ -55,7 +55,6 @@ class OnePNCVolumeVariables
     using PermeabilityType = typename Traits::PermeabilityType;
     using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
     using Idx = typename Traits::ModelTraits::Indices;
-    static constexpr int numFluidComps = ParentType::numFluidComponents();
     using DiffusionCoefficients = typename Traits::DiffusionType::DiffusionCoefficientsContainer;
 
 public:
@@ -64,6 +63,8 @@ public:
     using FluidState = typename Traits::FluidState;
     //! Export fluid system type
     using FluidSystem = typename Traits::FluidSystem;
+    //! Export components number
+    static constexpr int numFluidComps = ParentType::numFluidComponents();
     //! Export indices
     using Indices = typename Traits::ModelTraits::Indices;
     //! Export type of solid state
@@ -96,7 +97,7 @@ public:
     {
         ParentType::update(elemSol, problem, element, scv);
 
-        completeFluidState(*this,elemSol, problem, element, scv, fluidState_, solidState_, pressureIdx, numFluidComps, useMoles());
+        completeFluidState(*this,elemSol, problem, element, scv, fluidState_, solidState_);
 
         // calculate the remaining quantities
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
