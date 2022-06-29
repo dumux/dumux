@@ -195,7 +195,7 @@ auto collectMetaData(Collector& collector, const GridGeometry& gg, bool hideTemp
     auto& obj = collector["GridGeometry"];
     obj["Type"] = Metadata::className(gg, hideTemplates);
     obj["IsPeriodic"] = gg.isPeriodic();
-    obj["DiscretisationMethod"] = toString(GridGeometry::discMethod);
+    obj["DiscretisationMethod"] = GridGeometry::discMethod.name();
     obj["NumScvs"] = gg.numScv();
     obj["NumScvfs"] = gg.numScvf();
     obj["SumBoundaryScvfs"] = gg.numBoundaryScvf();
