@@ -178,7 +178,7 @@ and a liquid phase are present.
 - `update()` functions of grid geometries, which do not receive the `gridView`, are deprecated, use `update(gridView)` instead.
 - `enum class DiscretizationMethod` and associated functions, to be replaced by tags
 - `test_dumux.sh` is deprecated.
-- `compareparameters.sh` is deprecated, use `getparameterlist.py` instead.
+- `compareparameters.sh` is deprecated, use `generate_parameterlist.py` instead.
 - `replace_property_macros.sh` is removed.
 - `isOnWallAtPos` and `isOnWall` are no longer used in the RANS models to designate wall boundaries. These boundaries are now directly set in the RANSBoundaryTypes using the setWall() function.
 - the `temperature` and `extrusionFactor` interfaces in the problem class have been deprecated and have been moved to the spatial parameters.
