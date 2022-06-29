@@ -55,10 +55,6 @@ public:
      */
     virtual Dune::FieldVector<Scalar, 2> bottomShearStress(const VolumeVariables& volVars) const = 0;
 
-    [[deprecated("Use bottomShearStress. Note that the unit and sign of the return value is different. Will be removed after release 3.5")]]
-    virtual Dune::FieldVector<Scalar, 2> shearStress(const VolumeVariables& volVars) const
-    { auto bss = bottomShearStress(volVars); bss /= -volVars.density(); return bss; }
-
     /*!
      * \brief Limit the friction for small water depth.
      *
