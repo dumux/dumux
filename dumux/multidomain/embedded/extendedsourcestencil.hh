@@ -32,6 +32,8 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numericdifferentiation.hh>
+#include <dumux/assembly/numericepsilon.hh>
+
 #include <dumux/discretization/method.hh>
 
 namespace Dumux::EmbeddedCoupling {
@@ -117,6 +119,7 @@ public:
         {
             auto partialDerivs = origResidual;
             const auto origPriVars = curSolI[dofIndex];
+            auto priVars = origPriVars;
 
             // calculate derivatives w.r.t to the privars at the dof at hand
             for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
@@ -124,19 +127,20 @@ public:
                 // reset partial derivatives
                 partialDerivs = 0.0;
 
-                auto evalResiduals = [&](Scalar priVar)
+                const auto evalResiduals = [&](const Scalar priVar)
                 {
                     // update the coupling context (solution vector and recompute element residual)
-                    auto priVars = origPriVars;
                     priVars[pvIdx] = priVar;
                     couplingManager.updateCouplingContext(domainI, localAssemblerI, domainI, dofIndex, priVars, pvIdx);
                     return localAssemblerI.evalLocalSourceResidual(elementI);
                 };
 
                 // derive the residuals numerically
-                static const int numDiffMethod = getParam<int>("Assembly.NumericDifferenceMethod");
-                NumericDifferentiation::partialDerivative(evalResiduals, curSolI[dofIndex][pvIdx],
-                                                          partialDerivs, origResidual, numDiffMethod);
+                static const NumericEpsilon<Scalar, numEq> eps_{localAssemblerI.problem().paramGroup()};
+                static const int numDiffMethod = getParamFromGroup<int>(localAssemblerI.problem().paramGroup(), "Assembly.NumericDifferenceMethod");
+                NumericDifferentiation::partialDerivative(
+                    evalResiduals, priVars[pvIdx], partialDerivs, origResidual, eps_(priVars[pvIdx], pvIdx), numDiffMethod
+                );
 
                 // update the global stiffness matrix with the current partial derivatives
                 for (const auto& scvJ : scvs(localAssemblerI.fvGeometry()))
@@ -150,6 +154,9 @@ public:
                         A[scvJ.dofIndex()][dofIndex][eqIdx][pvIdx] += partialDerivs[scvJ.indexInElement()][eqIdx];
                     }
                 }
+
+                // restore the current element solution
+                priVars[pvIdx] = origPriVars[pvIdx];
 
                 // restore the original coupling context
                 couplingManager.updateCouplingContext(domainI, localAssemblerI, domainI, dofIndex, origPriVars, pvIdx);
