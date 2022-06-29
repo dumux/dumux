@@ -36,6 +36,8 @@
 
 #include "primaryvariableswitch.hh"
 
+#include <dumux/porousmediumflow/constraintsolvers/mobility.hh>
+
 namespace Dumux {
 
 /*!
@@ -52,6 +54,7 @@ class TwoPOneCVolumeVariables
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using PermeabilityType = typename Traits::PermeabilityType;
     using FS = typename Traits::FluidSystem;
+    using ModelTraits = typename Traits::ModelTraits;
     using Idx = typename Traits::ModelTraits::Indices;
     static constexpr int numFluidComps = ParentType::numFluidComponents();
 
@@ -129,6 +132,8 @@ public:
 
         const auto& spatialParams = problem.spatialParams();
         const auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
+
+        updateMobility(mobility_, fluidState_, fluidMatrixInteraction);
 
         // Second instance of a parameter cache.
         // Could be avoided if diffusion coefficients also
@@ -368,7 +373,8 @@ public:
      */
     Scalar mobility(const int phaseIdx) const
     {
-        return relativePermeability_[phaseIdx]/fluidState_.viscosity(phaseIdx);
+        // return relativePermeability_[phaseIdx]/fluidState_.viscosity(phaseIdx);
+        return mobility_[phaseIdx];
     }
 
     /*!
@@ -409,7 +415,7 @@ protected:
 private:
     Scalar pc_;                     // The capillary pressure
     PermeabilityType permeability_; // Effective permeability within the control volume
-
+    Scalar mobility_[ModelTraits::numFluidPhases()]; // Effective mobility within the control volume
     // Relative permeability within the control volume
     std::array<Scalar, numFluidPhases> relativePermeability_;
 };
