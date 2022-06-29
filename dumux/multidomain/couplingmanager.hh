@@ -359,32 +359,6 @@ protected:
     const SubSolutionVector<i>& curSol(Dune::index_constant<i> domainIdx) const
     { return *std::get<i>(curSols_); }
 
-    /*!
-     * \brief the solution vector of the coupled problem
-     * \note in case of numeric differentiation the solution vector always carries the deflected solution
-     *       The type returned does not allow assignment from a "regular" MultiTypeBlockVector (not holding references).
-     *       curSol() = x;  won't compile. Use couplingManager.updateSolution(x) instead or (better) use the new curSol(idx) interface.
-     */
-    [[deprecated("This function returns a Dune::MultiTypeBlockVector<SubDomainSolutionVector&, ....> (i.e. storing references). "
-                 "Use curSol(domainIdx) to get a reference to the corresponding subdomain solution vector. Will be removed after 3.5")]]
-    decltype(auto) curSol()
-    {
-        return Detail::toRef(curSols_, std::make_index_sequence<Traits::numSubDomains>());
-    }
-
-    /*!
-     * \brief the solution vector of the coupled problem
-     * \note in case of numeric differentiation the solution vector always carries the deflected solution
-     *       The type returned does not allow assignment from a "regular" MultiTypeBlockVector (not holding references)
-     *       curSol() = x; // won't compile. Use couplingManager.updateSolution(x) instead or (better) use the new curSol(idx) interface.
-     */
-    [[deprecated("This function returns a Dune::MultiTypeBlockVector<SubDomainSolutionVector&, ....> (i.e. storing references). "
-                 "Use curSol(domainIdx) to get a reference to the corresponding subdomain solution vector. Will be removed after 3.5")]]
-    decltype(auto) curSol() const
-    {
-        return Detail::toRef(curSols_, std::make_index_sequence<Traits::numSubDomains>());
-    }
-
 private:
     /*!
      * \brief A tuple of shared_ptr's to solution vectors of the subproblems

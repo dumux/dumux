@@ -129,10 +129,6 @@ public:
     using GridView = GV;
 
     //! Constructor
-    [[deprecated("Use BoxFacetCouplingFVGridGeometry(gridView, facetGridView, codimOneGridAdapter) instead! Will be removed after release 3.5.")]]
-    BoxFacetCouplingFVGridGeometry(const GridView& gridView)
-    : ParentType(gridView) {}
-
     template<class FacetGridView, class CodimOneGridAdapter>
     BoxFacetCouplingFVGridGeometry(const GridView& gridView,
                                    const FacetGridView& facetGridView,
@@ -163,28 +159,6 @@ public:
     //! The total number of degrees of freedom
     std::size_t numDofs() const
     { return this->vertexMapper().size(); }
-
-    /*!
-     * \brief update all fvElementGeometries (do this again after grid adaption)
-     * \note This assumes conforming grids!
-     *
-     * \param facetGridView The grid view of a (dim-1)-dimensional grid conforming
-     *                      with the facets of this grid view, indicating on which facets
-     *                      nodal dofs should be enriched.
-     * \param codimOneGridAdapter Adapter class that allows access to information on the d-
-     *                            dimensional grid for entities of the (d-1)-dimensional grid
-     * \param verbose Verbosity level for vertex enrichment
-     */
-    template<class FacetGridView, class CodimOneGridAdapter>
-    [[deprecated("Use update(gridView, facetGridView, codimOneGridAdapter) instead! Will be removed after release 3.5.")]]
-    void update(const FacetGridView& facetGridView,
-                const CodimOneGridAdapter& codimOneGridAdapter,
-                bool verbose = false)
-    {
-        // first update the parent (mappers etc)
-        ParentType::update();
-        update_(facetGridView, codimOneGridAdapter, verbose);
-    }
 
     /*!
      * \brief update all fvElementGeometries (call this after grid adaption)
@@ -443,12 +417,6 @@ public:
     using GridView = GV;
 
     //! Constructor
-    [[deprecated("Use BoxFacetCouplingFVGridGeometry(gridView, facetGridView, codimOneGridAdapter) instead! Will be removed after release 3.5.")]]
-    BoxFacetCouplingFVGridGeometry(const GridView gridView)
-    : ParentType(gridView)
-    , facetMapper_(gridView, Dune::mcmgLayout(Dune::template Codim<1>()))
-    {}
-
     template<class FacetGridView, class CodimOneGridAdapter>
     BoxFacetCouplingFVGridGeometry(const GridView& gridView,
                                    const FacetGridView& facetGridView,
@@ -481,29 +449,6 @@ public:
     //! The total number of degrees of freedom
     std::size_t numDofs() const
     { return this->vertexMapper().size(); }
-
-    /*!
-     * \brief update all fvElementGeometries (do this again after grid adaption)
-     * \note This assumes conforming grids!
-     *
-     * \param facetGridView The grid view of a (dim-1)-dimensional grid conforming
-     *                      with the facets of this grid view, indicating on which facets
-     *                      nodal dofs should be enriched.
-     * \param codimOneGridAdapter Adapter class that allows access to information on the d-
-     *                            dimensional grid for entities of the (d-1)-dimensional grid
-     * \param verbose Verbosity level
-     */
-    template<class FacetGridView, class CodimOneGridAdapter>
-    [[deprecated("Use update(gridView, facetGridView, codimOneGridAdapter) instead! Will be removed after release 3.5.")]]
-    void update(const FacetGridView& facetGridView,
-                const CodimOneGridAdapter& codimOneGridAdapter,
-                bool verbose = false)
-    {
-        // first update the parent (mappers etc)
-        ParentType::update();
-        updateFacetMapper_();
-        update_(facetGridView, codimOneGridAdapter, verbose);
-    }
 
     /*!
      * \brief update all fvElementGeometries (call this after grid adaption)
