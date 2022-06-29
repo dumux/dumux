@@ -306,31 +306,6 @@ public:
         maybeComputeColors_();
     }
 
-    /*!
-     * \brief Resizes the jacobian and sets the jacobian' sparsity pattern.
-     */
-    [[deprecated("Use updateAfterGridAdaption. Will be removed after release 3.5.")]]
-    void setJacobianPattern()
-    {
-        // resize the jacobian and the residual
-        const auto numDofs = this->numDofs();
-        jacobian_->setSize(numDofs, numDofs);
-
-        // create occupation pattern of the jacobian
-        const auto occupationPattern = getJacobianPattern<isImplicit>(gridGeometry());
-
-        // export pattern to jacobian
-        occupationPattern.exportIdx(*jacobian_);
-
-        // maybe recompute colors
-        maybeComputeColors_();
-    }
-
-    //! Resizes the residual
-    [[deprecated("Use updateAfterGridAdaption. Will be removed after release 3.5.")]]
-    void setResidualSize()
-    { residual_->resize(numDofs()); }
-
     //! Returns the number of degrees of freedom
     std::size_t numDofs() const
     { return gridGeometry_->numDofs(); }

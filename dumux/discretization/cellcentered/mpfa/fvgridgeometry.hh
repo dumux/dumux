@@ -173,13 +173,6 @@ public:
     constexpr bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const
     { return false; }
 
-    //! update all fvElementGeometries (do this again after grid adaption)
-    [[deprecated("Use update(gridView) instead! Will be removed after release 3.5.")]]
-    void update()
-    {
-        ParentType::update();
-        update_();
-    }
 
     //! update all fvElementGeometries (call this after grid adaption)
     void update(const GridView& gridView)
@@ -573,13 +566,6 @@ public:
     bool isGhostVertex(GridIndexType vIdxGlobal) const
     { return isGhostVertex_[vIdxGlobal]; }
 
-    //! Updates all finite volume geometries of the grid. Has to be called again after grid adaption.
-    [[deprecated("Use update(gridView) instead! Will be removed after release 3.5.")]]
-    void update()
-    {
-        ParentType::update();
-        update_();
-    }
 
     //! update all fvElementGeometries (call this after grid adaption)
     void update(const GridView& gridView)
