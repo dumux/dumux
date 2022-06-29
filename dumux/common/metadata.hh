@@ -119,7 +119,7 @@ namespace Detail {
  * \brief Class to collect metadata
  * \todo Doc me!
  */
-class Metadata {
+class Collector {
 
     using JsonTree = Dumux::Json::JsonTree;
 
@@ -184,7 +184,7 @@ template<class Collector, class TypeTag, DiffMethod diffmethod, bool isImplicit>
 void collectMetaData(Collector& collector, const FVAssembler<TypeTag, diffmethod, isImplicit>& a, bool hideTemplates = true)
 {
     auto& obj = collector["Assembler"];
-    obj["Type"] = Metadata::className(a, hideTemplates);
+    obj["Type"] = Collector::className(a, hideTemplates);
     obj["Stationary"] = a.isStationaryProblem();
 }
 
@@ -193,7 +193,7 @@ auto collectMetaData(Collector& collector, const GridGeometry& gg, bool hideTemp
 -> typename std::enable_if_t<Dune::models<Concept::GridGeometry, GridGeometry>()>
 {
     auto& obj = collector["GridGeometry"];
-    obj["Type"] = Metadata::className(gg, hideTemplates);
+    obj["Type"] = Collector::className(gg, hideTemplates);
     obj["IsPeriodic"] = gg.isPeriodic();
     obj["DiscretisationMethod"] = GridGeometry::discMethod.name();
     obj["NumScvs"] = gg.numScv();
@@ -207,10 +207,10 @@ auto collectMetaData(Collector& collector, const GridVariables& gv, bool hideTem
 -> typename std::enable_if_t<Dune::models<Concept::GridVariables, GridVariables>()>
 {
     auto& obj = collector["GridVariables"];
-    obj["Type"] = Metadata::className(gv, hideTemplates);
-    obj["GridVolumeVariables"]["Type"] = Metadata::className<typename GridVariables::GridVolumeVariables>(hideTemplates);
-    obj["VolumeVariables"]["Type"] = Metadata::className<typename GridVariables::VolumeVariables>(hideTemplates);
-    obj["GridFluxVariablesCache"]["Type"] = Metadata::className<typename GridVariables::GridFluxVariablesCache>(hideTemplates);
+    obj["Type"] = Collector::className(gv, hideTemplates);
+    obj["GridVolumeVariables"]["Type"] = Collector::template className<typename GridVariables::GridVolumeVariables>(hideTemplates);
+    obj["VolumeVariables"]["Type"] = Collector::template className<typename GridVariables::VolumeVariables>(hideTemplates);
+    obj["GridFluxVariablesCache"]["Type"] = Collector::template className<typename GridVariables::GridFluxVariablesCache>(hideTemplates);
 }
 
 template<class Collector, class GridView>
@@ -218,11 +218,11 @@ auto collectMetaData(Collector& collector, const GridView& gridView, bool hideTe
 -> typename std::enable_if_t<Dune::models<Concept::GridView, GridView>()>
 {
     auto& obj = collector["GridView"];
-    obj["Type"] = Metadata::className(gridView, hideTemplates);
+    obj["Type"] = Collector::className(gridView, hideTemplates);
     obj["dimension"] = GridView::dimension;
     obj["dimensionWorld"] = GridView::dimensionworld;
     obj["conforming"] = GridView::conforming;
-    //obj["Grid"]["Type"] = Metadata::className(gridView.grid(), hideTemplates);
+    //obj["Grid"]["Type"] = Collector::className(gridView.grid(), hideTemplates);
     for(int codim = 0; codim < GridView::dimension; ++codim)
        obj["numEntities"]["codim " + std::to_string(codim) ] = gridView.size(codim);
 
