@@ -541,12 +541,9 @@ public:
                 ++numLinearSolverBreakdowns_; // we keep correct count for process 0
             }
         }
-        catch (const Dune::Exception &e) {
-            // make sure all processes converged
-            int converged = 0;
-            if (comm_.size() > 1)
-                converged = comm_.min(converged);
-
+        catch (const Dune::Exception &e)
+        {
+            // NumericalProblem might trigger a retry 
             NumericalProblem p;
             p.message(e.what());
             throw p;
