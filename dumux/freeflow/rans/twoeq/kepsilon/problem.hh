@@ -27,7 +27,6 @@
 #include <numeric>
 
 #include <dumux/common/properties.hh>
-#include <dumux/common/deprecated.hh>
 #include <dumux/common/staggeredfvproblem.hh>
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/staggered/elementsolution.hh>

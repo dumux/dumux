@@ -26,7 +26,6 @@
 
 #include <numeric>
 #include <dumux/common/properties.hh>
-#include <dumux/common/deprecated.hh>
 #include <dumux/flux/fluxvariablesbase.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>

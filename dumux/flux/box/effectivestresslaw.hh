@@ -28,7 +28,6 @@
 #include <dumux/flux/effectivestresslaw.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>
-#include <dumux/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -100,7 +99,7 @@ public:
 
         // obtain biot coefficient and effective pore pressure
         const auto biotCoeff = problem.spatialParams().biotCoefficient(element, fvGeometry, elemVolVars, fluxVarsCache);
-        const auto effPress = Deprecated::effectivePorePressure(problem, element, fvGeometry, elemVolVars, fluxVarsCache);
+        const auto effPress = problem.spatialParams().effectivePorePressure(element, fvGeometry, elemVolVars, fluxVarsCache);
 
         // subtract pore pressure from the diagonal entries
         const auto bcp = biotCoeff*effPress;
