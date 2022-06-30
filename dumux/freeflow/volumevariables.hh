@@ -107,7 +107,7 @@ public:
                               const Element &element,
                               const SubControlVolume &scv)
     {
-        return problem.spatialParams().temperature(problem, element, scv, elemSol);
+        return problem.spatialParams().temperature(element, scv, elemSol);
     }
 
     //! The phase enthalpy is zero for isothermal models

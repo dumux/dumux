@@ -96,11 +96,6 @@ class MultiDomainFVGridGeometry
             std::get<i>(gridGeometries_)->update(std::forward<Arg>(arg));
     }
 
-//     // remove this after 3.5
-//     template<std::size_t i>
-//     using GV = typename MDTraits::template SubDomain<i>::GridGeometry::GridView;
-//     using GVTuple = typename MDTraits::template Tuple<GV>;
-
 public:
     //! export base types of the stored type
     template<std::size_t i>

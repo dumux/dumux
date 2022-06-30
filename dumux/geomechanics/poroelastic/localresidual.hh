@@ -27,7 +27,6 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
-#include <dumux/common/deprecated.hh>
 #include <dumux/geomechanics/elastic/localresidual.hh>
 
 namespace Dumux {
@@ -92,7 +91,7 @@ public:
             // compute average density
             const auto& vv = elemVolVars[scv];
             const auto phi = vv.porosity();
-            const auto rhoFluid = Deprecated::effectiveFluidDensity(problem, element, scv);
+            const auto rhoFluid = problem.spatialParams().effectiveFluidDensity(element, scv);
             const auto rhoAverage = phi*rhoFluid + (1.0 - phi*vv.solidDensity());
 
             // add body force
