@@ -27,7 +27,7 @@
 #include <vector>
 #include <type_traits>
 
-#include <dumux/parallel/localview.hh>
+#include <dumux/parallel/parallel_for.hh>
 
 // make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
