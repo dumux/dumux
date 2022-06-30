@@ -26,6 +26,8 @@
 
 #include <type_traits>
 
+#include <dumux/parallel/parallel_for.hh>
+
 // make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/box/elementvolumevariables.hh>
@@ -78,20 +80,19 @@ public:
     void update(const GridGeometry& gridGeometry, const SolutionVector& sol)
     {
         volumeVariables_.resize(gridGeometry.gridView().size(0));
-        auto fvGeometry = localView(gridGeometry);
-        for (const auto& element : elements(gridGeometry.gridView()))
+        Dumux::parallelFor(gridGeometry.gridView().size(0), [&, &problem = problem()](const std::size_t eIdx)
         {
-            auto eIdx = gridGeometry.elementMapper().index(element);
-            fvGeometry.bindElement(element);
+            const auto element = gridGeometry.element(eIdx);
+            const auto fvGeometry = localView(gridGeometry).bindElement(element);
 
             // get the element solution
             auto elemSol = elementSolution(element, sol, gridGeometry);
 
             // update the volvars of the element
             volumeVariables_[eIdx].resize(fvGeometry.numScv());
-            for (auto&& scv : scvs(fvGeometry))
-                volumeVariables_[eIdx][scv.indexInElement()].update(elemSol, problem(), element, scv);
-        }
+            for (const auto& scv : scvs(fvGeometry))
+                volumeVariables_[eIdx][scv.indexInElement()].update(elemSol, problem, element, scv);
+        });
     }
 
     template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
