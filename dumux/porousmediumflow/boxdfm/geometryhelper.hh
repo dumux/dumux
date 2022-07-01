@@ -25,10 +25,34 @@
 #ifndef DUMUX_POROUSMEDIUMFLOW_BOXDFM_GEOMETRY_HELPER_HH
 #define DUMUX_POROUSMEDIUMFLOW_BOXDFM_GEOMETRY_HELPER_HH
 
+#include <dune/common/fvector.hh>
+#include <dune/common/reservedvector.hh>
+#include <dune/geometry/multilineargeometry.hh>
+
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 
-namespace Dumux
+namespace Dumux {
+
+template <class ct>
+struct BoxDfmMLGeometryTraits : public Dune::MultiLinearGeometryTraits<ct>
 {
+    // we use static vectors to store the corners as we know
+    // the number of corners in advance (2^(mydim) corners (1<<(mydim))
+    // However, on fracture scvs the number might be smaller (use ReservedVector)
+    template< int mydim, int cdim >
+    struct CornerStorage
+    {
+        using Type = Dune::ReservedVector< Dune::FieldVector< ct, cdim >, (1<<(mydim)) >;
+    };
+
+    // we know all scvfs will have the same geometry type
+    template< int mydim >
+    struct hasSingleGeometryType
+    {
+        static const bool v = true;
+        static const unsigned int topologyId = Dune::GeometryTypes::cube(mydim).id();
+    };
+};
 
 //! Create sub control volumes and sub control volume face geometries
 template<class GridView, int dim, class ScvType, class ScvfType>
@@ -64,14 +88,15 @@ public:
     typename ScvfType::Traits::GlobalPosition
     fractureNormal(const ScvfCornerStorage& p,
                    const Intersection& is,
-                   unsigned int edgeIndexInIntersection = 0) const
+                   unsigned int edgeIndexInIntersection) const
     {
-        const auto refElement = referenceElement(this->elementGeometry_);
-        const auto vIdxLocal0 = refElement.subEntity(is.indexInInside(), 1, 0, dim);
-        const auto vIdxLocal1 = refElement.subEntity(is.indexInInside(), 1, 1, dim);
-        auto n = this->elementGeometry_.corner(vIdxLocal1) - this->elementGeometry_.corner(vIdxLocal0);
-        n /= n.two_norm();
-        return n;
+        const auto& geo = this->elementGeometry();
+        const auto ref = referenceElement(geo);
+        const auto v0 = ref.subEntity(is.indexInInside(), 1, 0, dim);
+        const auto v1 = ref.subEntity(is.indexInInside(), 1, 1, dim);
+        auto normal = geo.corner(v1) - geo.corner(v0);
+        normal /= normal.two_norm();
+        return normal;
     }
 };
 
@@ -98,7 +123,8 @@ public:
                                              const typename Intersection::Geometry& isGeom,
                                              unsigned int edgeIndexInIntersection) const
     {
-        const auto refElement = referenceElement(this->elementGeometry_);
+        const auto& geo = this->elementGeometry();
+        const auto refElement = referenceElement(geo);
         const auto faceRefElem = referenceElement(isGeom);
 
         // create point vector for this geometry
@@ -112,7 +138,7 @@ public:
         for (int i = 0; i < faceRefElem.size(1); ++i)
         {
             const auto edgeIdxLocal = refElement.subEntity(idxInInside, 1, i, dim-1);
-            pi[i+1] = this->p_[edgeIdxLocal+this->corners_+1];
+            pi[i+1] = geo.global(refElement.position(edgeIdxLocal, dim-1));
         }
 
         // proceed according to number of corners
@@ -157,11 +183,12 @@ public:
 
     //! get fracture scvf normal vector
     typename ScvfType::Traits::GlobalPosition
-    fractureNormal(const ScvfCornerStorage& p,
+    fractureNormal(const ScvfCornerStorage& scvfCorners,
                    const Intersection& is,
                    unsigned int edgeIndexInIntersection) const
     {
-        const auto refElement = referenceElement(this->elementGeometry_);
+        const auto& geo = this->elementGeometry();
+        const auto refElement = referenceElement(geo);
 
         // first get the intersection corners (maximum "4" is for quadrilateral face)
         typename ScvfType::Traits::GlobalPosition c[4];
@@ -170,7 +197,7 @@ public:
         for (int i = 0; i < corners; ++i)
         {
             const auto vIdxLocal = refElement.subEntity(is.indexInInside(), 1, i, dim);
-            c[i] = this->elementGeometry_.corner(vIdxLocal);
+            c[i] = geo.corner(vIdxLocal);
         }
 
         // compute edge vector depending on number of corners
@@ -197,8 +224,8 @@ public:
         } ();
 
         // compute lower edge of the scvf
-        assert(p.size() == 2);
-        const auto scvfEdge = p[1]-p[0];
+        assert(scvfCorners.size() == 2);
+        const auto scvfEdge = scvfCorners[1]-scvfCorners[0];
 
         // compute scvf normal via 2 cross products
         const auto faceN = crossProduct(gridEdge, scvfEdge);
