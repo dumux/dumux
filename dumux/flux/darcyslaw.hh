@@ -19,12 +19,12 @@
 /*!
  * \file
  * \ingroup Flux
- * \brief
+ * \brief Advective fluxes according to Darcy's law
  *
- * Darcy's law describes the advective flux in porous media on the macro-scale and is valid for Reynolds numbers below 1.
+ * Darcy's law describes the advective flux in porous media on the macro-scale and is valid in the creeping flow regime (Reynolds number << 1).
  * The advective flux characterizes the bulk flow for each fluid phase including all components in case of compositional flow.
  * It is driven by the potential gradient \f$\textbf{grad}\, p - \varrho {\textbf g}\f$,
- * accounting for both pressure difference and gravitation.
+ * accounting for both pressure-driven and gravitationally-driven flow.
  * The velocity is proportional to the potential gradient with the proportional factor \f$\frac{\textbf K}{\mu}\f$,
  * including the intrinsic permeability of the porous medium, and the viscosity µ of the fluid phase. For one-phase flow it is:
  * \f[
@@ -32,7 +32,7 @@
  * \left(\textbf{grad}\, p - \varrho {\mathbf g} \right)
  * \f]
  * This equation can be extended to calculate the velocity \f$v_\alpha\f$ of phase \f$\alpha\f$ in the case of multi-phase
- * flow by considering the relative permeability \f$k_{r\alpha}\f$:
+ * flow by introducing a relative permeability \f$k_{r\alpha}\f$ restricting flow in the presence of other phases:
  * \f[
  * v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K}
  * \left(\text{grad}\, p_\alpha - \varrho_{\alpha} \mathbf{g} \right)
