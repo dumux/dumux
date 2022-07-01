@@ -26,13 +26,10 @@
  * partially miscible fluids \f$\alpha \in \{ w, n \}\f$ composed of the n components
  * \f$\kappa \in \{ w, n,\cdots \}\f$ in combination with mineral precipitation and dissolution.
  * The solid phases. The standard multiphase Darcy
- * approach is used as the equation for the conservation of momentum:
- * \f[
- * v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K}
- * \left(\text{grad}\, p_\alpha - \varrho_{\alpha} \mathbf{g} \right)
- * \f]
+ * approach is used as the equation for the conservation of momentum.
+ * For details on Darcy's law see dumux/flux/darcyslaw.hh.
  *
- * By inserting this into the equations for the conservation of the
+ * By inserting Darcy's law into the equations for the conservation of the
  * components, one gets one transport equation for each component
  * \f{eqnarray*}{
  * && \frac{\partial (\sum_\alpha \varrho_\alpha X_\alpha^\kappa \phi S_\alpha )}

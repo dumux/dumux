@@ -22,13 +22,9 @@
  * \brief A single-phase, isothermal flow model using the fully implicit scheme.
  *
  * Single-phase, isothermal flow model, which uses a standard Darcy approach as the
- * equation for the conservation of momentum:
- * \f[
- v = - \frac{\textbf K}{\mu}
- \left(\textbf{grad}\, p - \varrho {\textbf g} \right)
- * \f]
+ * equation for the conservation of momentum. For details on Darcy's law see dumux/flux/darcyslaw.hh.
  *
- * and solves the mass continuity equation:
+ * Furthermore, it solves the mass continuity equation:
  * \f[
  \phi \frac{\partial \varrho}{\partial t} + \text{div} \left\lbrace
  - \varrho \frac{\textbf K}{\mu} \left( \textbf{grad}\, p -\varrho {\textbf g} \right) \right\rbrace = q,

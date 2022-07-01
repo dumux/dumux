@@ -24,13 +24,10 @@
  * This model implements three-phase flow of three fluid phases
  * \f$\alpha \in \{ water, gas, NAPL \}\f$.
  * The standard multiphase Darcy
- * approach is used as the equation for the conservation of momentum, i.e.
- \f[
- v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \textbf{K}
- \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} {\textbf g} \right)
- \f]
+ * approach is used as the equation for the conservation of momentum.
+ * For details on Darcy's law see dumux/flux/darcyslaw.hh.
  *
- * By inserting this into the equations for the conservation
+ * By inserting Darcy's law into the equations for the conservation
  * of the phase mass, one gets
  \f[
  \phi \frac{\partial \varrho_\alpha S_\alpha}{\partial t}

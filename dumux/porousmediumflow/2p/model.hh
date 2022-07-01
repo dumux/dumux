@@ -23,13 +23,10 @@
  *
  * This model implements two-phase flow of two immiscible fluids
  * \f$\alpha \in \{ w, n \}\f$ using a standard multi-phase Darcy
- * approach as the equation for the conservation of momentum, i.e.
- \f[
- v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \textbf{K}
- \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} {\textbf g} \right)
- \f]
+ * approach as the equation for the conservation of momentum.
+ * For details on Darcy's law see dumux/flux/darcyslaw.hh.
  *
- * By inserting this into the equation for the conservation of the
+ * By inserting Darcy's law into the equations for the conservation of the
  * phase mass, one gets
  \f[
  \phi \frac{\partial \varrho_\alpha S_\alpha}{\partial t}
