@@ -26,10 +26,6 @@
 
 #include <vector>
 
-#if HAVE_TBB
-#include <tbb/tbb.h>
-#endif
-
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/shared_ptr.hh>
 #include <dune/common/reservedvector.hh>
@@ -37,6 +33,7 @@
 
 #include <dumux/common/tag.hh>
 #include <dumux/common/indextraits.hh>
+#include <dumux/parallel/parallel_for.hh>
 #include <dumux/geometry/distancefield.hh>
 
 namespace Dumux {
@@ -308,16 +305,11 @@ private:
     template<class Kernel>
     void runKernel_(std::size_t size, const Kernel& kernel)
     {
-#if HAVE_TBB
-        // parallelize with tbb if we have enough work (enough evaluation points)
+        // parallelize, if we have enough work (enough evaluation points)
         if (size > 10000)
-            tbb::parallel_for(std::size_t(0), size, [&](std::size_t i){ kernel(i); });
+            Dumux::parallelFor(size, [&](const std::size_t i){ kernel(i); });
         else
             for (std::size_t i = 0; i < size; ++i) kernel(i);
-
-#else
-        for (std::size_t i = 0; i < size; ++i) kernel(i);
-#endif
     }
 
     std::vector<Scalar> distance_;
