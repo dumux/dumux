@@ -48,33 +48,12 @@ struct BoxDefaultScvfGeometryTraits
     using Grid = typename GridView::Grid;
     static constexpr int dim = Grid::dimension;
     static constexpr int dimWorld = Grid::dimensionworld;
-
-    // we use geometry traits that use static corner vectors to and a fixed geometry type
-    template <class ct>
-    struct ScvfMLGTraits : public Dune::MultiLinearGeometryTraits<ct>
-    {
-        // we use static vectors to store the corners as we know
-        // the number of corners in advance (2^(dim-1) corners (1<<(dim-1))
-        template< int mydim, int cdim >
-        struct CornerStorage
-        {
-            using Type = std::array< Dune::FieldVector< ct, cdim >, (1<<(dim-1)) >;
-        };
-
-        // we know all scvfs will have the same geometry type
-        template< int mydim >
-        struct hasSingleGeometryType
-        {
-            static const bool v = true;
-            static const unsigned int topologyId = Dune::GeometryTypes::cube(mydim).id();
-        };
-    };
-
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using Scalar = typename Grid::ctype;
-    using Geometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld, ScvfMLGTraits<Scalar>>;
-    using CornerStorage = typename ScvfMLGTraits<Scalar>::template CornerStorage<dim-1, dimWorld>::Type;
+    using GeometryTraits = BoxMLGeometryTraits<Scalar>;
+    using Geometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld, GeometryTraits>;
+    using CornerStorage = typename GeometryTraits::template CornerStorage<dim-1, dimWorld>::Type;
     using GlobalPosition = typename CornerStorage::value_type;
     using BoundaryFlag = Dumux::BoundaryFlag<Grid>;
 };

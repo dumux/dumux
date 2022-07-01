@@ -29,11 +29,10 @@
 
 #include <dune/geometry/type.hh>
 #include <dune/geometry/multilineargeometry.hh>
-#include <dune/common/reservedvector.hh>
 
 #include <dumux/common/boundaryflag.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
-#include <dumux/discretization/box/boxgeometryhelper.hh>
+#include <dumux/porousmediumflow/boxdfm/geometryhelper.hh>
 
 namespace Dumux {
 
@@ -53,34 +52,12 @@ struct BoxDfmDefaultScvfGeometryTraits
     using Grid = typename GridView::Grid;
     static constexpr int dim = Grid::dimension;
     static constexpr int dimWorld = Grid::dimensionworld;
-
-    // we use geometry traits that use static corner vectors to and a fixed geometry type
-    template <class ct>
-    struct ScvfMLGTraits : public Dune::MultiLinearGeometryTraits<ct>
-    {
-        // we use static vectors to store the corners as we know
-        // the number of corners in advance (2^(dim-1) corners (1<<(dim-1))
-        // However, on fracture scvs the number might be smaller (use ReservedVector)
-        template< int mydim, int cdim >
-        struct CornerStorage
-        {
-            using Type = Dune::ReservedVector< Dune::FieldVector< ct, cdim >, (1<<(dim-1)) >;
-        };
-
-        // we know all scvfs will have the same geometry type
-        template< int mydim >
-        struct hasSingleGeometryType
-        {
-            static const bool v = true;
-            static const unsigned int topologyId = Dune::GeometryTypes::cube(mydim).id();
-        };
-    };
-
     using GridIndexType = typename Grid::LeafGridView::IndexSet::IndexType;
     using LocalIndexType = unsigned int;
     using Scalar = typename Grid::ctype;
-    using Geometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld, ScvfMLGTraits<Scalar>>;
-    using CornerStorage = typename ScvfMLGTraits<Scalar>::template CornerStorage<dim-1, dimWorld>::Type;
+    using GeometryTraits = BoxDfmMLGeometryTraits<Scalar>;
+    using Geometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld, GeometryTraits>;
+    using CornerStorage = typename GeometryTraits::template CornerStorage<dim-1, dimWorld>::Type;
     using GlobalPosition = typename CornerStorage::value_type;
     using BoundaryFlag = Dumux::BoundaryFlag<Grid>;
 };
