@@ -28,7 +28,6 @@
 
 #include <dune/common/fmatrix.hh>
 #include <dumux/common/properties.hh>
-#include <dumux/common/deprecated.hh>
 #include <dumux/common/staggeredfvproblem.hh>
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/method.hh>
@@ -333,11 +332,8 @@ private:
         {
             fvGeometry.bindElement(element);
             for (const auto& scvf : scvfs(fvGeometry))
-            {
-                    // Keep this part
                     if (!scvf.boundary() && asImp_().boundaryTypes(element, scvf).hasWall())  // only search for walls at a global boundary
                         wallFaceAxis.push_back(scvf.directionIndex());
-            }
         }
 
         // Returns if all wall directions are the same
@@ -351,14 +347,11 @@ private:
             auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scvf : scvfs(fvGeometry))
-                if constexpr (!Deprecated::hasIsOnWall<Implementation, GlobalPosition>())
-                    if (asImp_().boundaryTypes(element, scvf).hasWall())
-                        return;
+                if (asImp_().boundaryTypes(element, scvf).hasWall())
+                    return;
         }
-
-        // If reached, no walls were found, throw exception. Remove check after 3.5
-        if constexpr (!Deprecated::hasIsOnWall<Implementation, GlobalPosition>())
-            DUNE_THROW(Dune::InvalidStateException, "No walls are are specified with the setWall() function");
+        // If reached, no walls were found using the boundary types has wall function.
+        DUNE_THROW(Dune::InvalidStateException, "No walls are are specified with the setWall() function");
     }
 
     /*!
