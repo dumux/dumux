@@ -27,6 +27,8 @@
 #include <memory>
 #include <utility>
 #include <algorithm>
+#include <stack>
+#include <vector>
 
 #include <dune/common/shared_ptr.hh>
 #include <dune/common/concept.hh>
@@ -244,6 +246,8 @@ public:
             if (std::accumulate(cells.begin(), cells.end(), 1, std::multiplies<int>{}) != buffer.size())
                 DUNE_THROW(Dune::IOError, "Grid dimensions doesn't match number of cells specified");
 
+            postProcessBinaryMask_(buffer, cells, paramGroup);
+
             using GlobalPosition = typename ParentType::Grid::template Codim<0>::Geometry::GlobalCoordinate;
             const auto lowerLeft = GlobalPosition(0.0);
             const auto upperRight = [&]{
@@ -283,8 +287,21 @@ public:
             this->loadBalance();
         }
         else
-            DUNE_THROW(Dune::IOError, "SubGridManager couldn't construct element selector."
-                << " Specify Grid.Image or Grid.BinaryMask in the input file!");
+        {
+            std::cerr << "No element selector provided and Grid.Image or Grid.BinaryMask not found" << std::endl;
+            std::cerr << "Constructing sub-grid with all elements of the host grid" << std::endl;
+
+            // create host grid
+            using GlobalPosition = typename ParentType::Grid::template Codim<0>::Geometry::GlobalCoordinate;
+            const auto lowerLeft = getParamFromGroup<GlobalPosition>(paramGroup, "Grid.LowerLeft", GlobalPosition(0.0));
+            const auto upperRight = getParamFromGroup<GlobalPosition>(paramGroup, "Grid.UpperRight");
+            const auto cells = getParamFromGroup<std::array<int, dim>>(paramGroup, "Grid.Cells");
+            this->initHostGrid_(lowerLeft, upperRight, cells, paramGroup);
+            const auto elementSelector = [](const auto& element){ return true; };
+            // create the grid
+            this->gridPtr() = this->createGrid_(this->hostGrid_(), elementSelector, paramGroup);
+            this->loadBalance();
+        }
     }
 
 private:
@@ -342,6 +359,97 @@ private:
         this->gridPtr() = this->createGrid_(this->hostGrid_(), elementSelector, paramGroup);
 
         this->loadBalance();
+    }
+
+private:
+    void postProcessBinaryMask_(std::vector<char>& mask, const std::array<int, dim>& cells, const std::string& paramGroup) const
+    {
+        if (hasParamInGroup(paramGroup, "Grid.KeepOnlyConnected"))
+        {
+            std::vector<int> marker(mask.size(), 0);
+
+            const std::string direction = getParamFromGroup<std::string>(paramGroup, "Grid.KeepOnlyConnected");
+            if (direction == "Y")
+            {
+                std::cout << "Keeping only cells connected to both boundaries in y-direction" << std::endl;
+                for (unsigned int i = 0; i < cells[0]; ++i)
+                    for (unsigned int k = 0; k < cells[2]; ++k)
+                        fill_(mask, marker, cells, i, 0, k, 1);
+
+                for (unsigned int i = 0; i < cells[0]; ++i)
+                    for (unsigned int k = 0; k < cells[2]; ++k)
+                        fill_(mask, marker, cells, i, cells[1]-1, k, 2);
+            }
+            else if (direction == "Z")
+            {
+                std::cout << "Keeping only cells connected to both boundaries in z-direction" << std::endl;
+                for (unsigned int i = 0; i < cells[0]; ++i)
+                    for (unsigned int j = 0; j < cells[1]; ++j)
+                        fill_(mask, marker, cells, i, j, 0, 1);
+
+                for (unsigned int i = 0; i < cells[0]; ++i)
+                    for (unsigned int j = 0; j < cells[1]; ++j)
+                        fill_(mask, marker, cells, i, j, cells[2]-1, 2);
+            }
+            else
+            {
+                std::cout << "Keeping only cells connected to both boundaries in x-direction" << std::endl;
+                for (unsigned int j = 0; j < cells[1]; ++j)
+                    for (unsigned int k = 0; k < cells[2]; ++k)
+                        fill_(mask, marker, cells, 0, j, k, 1);
+
+                for (unsigned int j = 0; j < cells[1]; ++j)
+                    for (unsigned int k = 0; k < cells[2]; ++k)
+                        fill_(mask, marker, cells, cells[0]-1, j, k, 2);
+            }
+
+            for (unsigned int i = 0; i < cells[0]; ++i)
+            {
+                for (unsigned int j = 0; j < cells[1]; ++j)
+                {
+                    for (unsigned int k = 0; k < cells[2]; ++k)
+                    {
+                        const auto ijk = getIJK_(i, j, k, cells);
+                        if (marker[ijk] < 2)
+                            mask[ijk] = false;
+                    }
+                }
+            }
+        }
+    }
+
+    void fill_(std::vector<char>& mask, std::vector<int>& marker, const std::array<int, dim>& cells,
+               unsigned int i, unsigned int j, unsigned int k, int m) const
+    {
+        std::stack<std::tuple<unsigned int, unsigned int, unsigned int>> st;
+        st.push(std::make_tuple(i, j, k));
+        while(!st.empty())
+        {
+            std::tie(i, j, k) = st.top();
+            st.pop();
+
+            if (i >= cells[0] || j >= cells[1] || k >= cells[2])
+                continue;
+
+            const auto ijk = getIJK_(i, j, k, cells);
+            if (!mask[ijk] || marker[ijk] >= m)
+               continue;
+
+            marker[ijk] += 1;
+
+            // we rely on -1 wrapping over for unsigned int = 0
+            st.push(std::make_tuple(i+1, j, k));
+            st.push(std::make_tuple(i-1, j, k));
+            st.push(std::make_tuple(i, j+1, k));
+            st.push(std::make_tuple(i, j-1, k));
+            st.push(std::make_tuple(i, j, k+1));
+            st.push(std::make_tuple(i, j, k-1));
+        }
+    }
+
+    int getIJK_(int i, int j, int k, const std::array<int, dim>& cells) const
+    {
+        return i + j*cells[0] + k*cells[0]*cells[1];
     }
 };
 
