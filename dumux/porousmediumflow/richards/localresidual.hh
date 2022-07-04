@@ -464,13 +464,6 @@ public:
         )
             problem.addRobinFluxDerivatives(derivativeMatrices, element, fvGeometry, curElemVolVars, elemFluxVarsCache, scvf);
     }
-
-private:
-    Implementation *asImp_()
-    { return static_cast<Implementation *> (this); }
-
-    const Implementation *asImp_() const
-    { return static_cast<const Implementation *> (this); }
 };
 
 } // end namespace Dumux
