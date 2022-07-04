@@ -134,6 +134,15 @@ int main(int argc, char** argv)
         NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
         nonLinearSolver.solve(x);
     }
+    else if (getParam<bool>("LinearSolver.UseUzawa", false))
+    {
+        using LinearSolver = UzawaBiCGSTABBackend<LinearSolverTraits<MassGridGeometry>>;
+        auto linearSolver = std::make_shared<LinearSolver>();
+        // the non-linear solver
+        using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+        NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+        nonLinearSolver.solve(x);
+    }
     else
     {
         using LinearSolver = IncompressibleStokesSolver<typename Assembler::JacobianMatrix, typename Assembler::ResidualType>;
