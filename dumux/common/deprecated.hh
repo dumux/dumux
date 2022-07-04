@@ -51,13 +51,6 @@ template<class Mapper, class GridView>
 static constexpr bool hasUpdateGridView()
 { return Dune::Std::is_detected<GridViewDetector, Mapper, GridView>::value; }
 
-template <typename Problem, typename GlobalPosition>
-using HasIsOnWallDetector = decltype(std::declval<Problem>().isOnWallAtPos(std::declval<GlobalPosition>()));
-
-template<class Problem, typename GlobalPosition>
-static constexpr bool hasIsOnWall()
-{ return Dune::Std::is_detected<HasIsOnWallDetector, Problem, GlobalPosition>::value; }
-
 template <typename ModelTraits>
 using HasEnableCompositionalDispersionDetector = decltype(ModelTraits::enableCompositionalDispersion());
 
