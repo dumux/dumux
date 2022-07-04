@@ -19,8 +19,7 @@
 /*!
  * \file
  * \ingroup Components
- * \brief A much simpler (and thus potentially less buggy) version of
- *        pure water.
+ * \brief A simple implementation of pure water
  */
 #ifndef DUMUX_SIMPLE_H2O_HH
 #define DUMUX_SIMPLE_H2O_HH
@@ -38,7 +37,7 @@ namespace Dumux::Components {
 
 /*!
  * \ingroup Components
- * \brief A simple version of pure water
+ * \brief A simple implementation of pure water
  *
  * \tparam Scalar The type used for scalar values
  */
@@ -49,8 +48,6 @@ class SimpleH2O
 , public Components::Gas<Scalar, SimpleH2O<Scalar> >
 {
     using IdealGas = Dumux::IdealGas<Scalar>;
-
-    static const Scalar R;  // specific gas constant of water
 
 public:
     /*!
@@ -169,7 +166,7 @@ public:
         static const Scalar tRef = getParam<Scalar>("SimpleH2O.ReferenceTemperature", 293.15) - 273.15;
 
         using std::pow;
-        static const Scalar vaporizationEnthalpy = A + B*tRef + C*(pow(tRef,1.5)) + D*(pow(tRef,2.5)) + E*(pow(tRef,3));
+        static const Scalar vaporizationEnthalpy = A + B*tRef + C*(pow(tRef, 1.5)) + D*(pow(tRef, 2.5)) + E*(pow(tRef, 3));
         return vaporizationEnthalpy;
     }
 
@@ -191,7 +188,7 @@ public:
         // 1/molarMass: conversion from [J/(mol K)] to [J/(kg K)]
         // R*T/molarMass: pressure *spec. volume for an ideal gas
         return gasEnthalpy(temperature, pressure)
-                - 1/molarMass()*IdealGas::R*temperature;
+                - 1.0/molarMass()*IdealGas::R*temperature;
     }
 
     /*!
@@ -279,7 +276,7 @@ public:
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
-        return 1000.;
+        return 1000.0;
     }
 
     /*!
@@ -378,9 +375,6 @@ public:
 
 template <class Scalar>
 struct IsAqueous<SimpleH2O<Scalar>> : public std::true_type {};
-
-template <class Scalar>
-const Scalar Components::SimpleH2O<Scalar>::R = Constants<Scalar>::R / 18e-3;
 
 } // end namespace Dumux::Components
 
