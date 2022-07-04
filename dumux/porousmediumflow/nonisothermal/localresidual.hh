@@ -39,7 +39,6 @@ class EnergyLocalResidualImplementation<TypeTag, false>
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
 
 public:
     static void fluidPhaseStorage(NumEqVector& storage,
@@ -79,8 +78,10 @@ public:
      * \param fluxVars The flux variables.
      * \param phaseIdx The phase index
      */
+    template<class FluxHelper, class FluxContext>
     static void heatConvectionFlux(NumEqVector& flux,
-                                   FluxVariables& fluxVars,
+                                   const FluxHelper& fluxHelper,
+                                   const FluxContext& context,
                                    int phaseIdx)
     {}
 
@@ -90,8 +91,10 @@ public:
      * \param flux The flux
      * \param fluxVars The flux variables.
      */
+    template<class FluxHelper, class FluxContext>
     static void heatConductionFlux(NumEqVector& flux,
-                                   FluxVariables& fluxVars)
+                                   const FluxHelper& fluxHelper,
+                                   const FluxContext& context)
     {}
 
     /*!
@@ -100,8 +103,10 @@ public:
      * \param flux The flux
      * \param fluxVars The flux variables.
      */
+    template<class FluxHelper, class FluxContext>
     static void heatDispersionFlux(NumEqVector& flux,
-                                   FluxVariables& fluxVars)
+                                   const FluxHelper& fluxHelper,
+                                   const FluxContext& context)
     {}
 };
 
@@ -118,7 +123,6 @@ class EnergyLocalResidualImplementation<TypeTag, true>
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
@@ -179,11 +183,13 @@ public:
      * \brief The advective phase energy fluxes
      *
      * \param flux The flux
-     * \param fluxVars The flux variables.
+     * \param fluxHelper The flux helper (computes fluxes)
+     * \param fluxContext Variables for flux computation
      * \param phaseIdx The phase index
      */
     static void heatConvectionFlux(NumEqVector& flux,
-                                   FluxVariables& fluxVars,
+                                   const FluxHelper& fluxHelper,
+                                   const FluxContext& fluxContext,
                                    int phaseIdx)
     {
         // this implementation of the potential energy contribution is only correct
@@ -196,19 +202,21 @@ public:
                 * (volVars.enthalpy(phaseIdx) - gravityPotential);
         };
 
-        flux[energyEqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
+        flux[energyEqIdx] += fluxHelper.advectiveFlux(phaseIdx, upwindTerm, fluxContext);
     }
 
     /*!
      * \brief The diffusive energy fluxes
      *
      * \param flux The flux
-     * \param fluxVars The flux variables.
+     * \param fluxHelper The flux helper (computes fluxes)
+     * \param fluxContext Variables for flux computation
      */
     static void heatConductionFlux(NumEqVector& flux,
-                                   FluxVariables& fluxVars)
+                                   const FluxHelper& fluxHelper,
+                                   const FluxContext& fluxContext)
     {
-        flux[energyEqIdx] += fluxVars.heatConductionFlux();
+        flux[energyEqIdx] += fluxHelper.heatConductionFlux(fluxContext);
     }
 
     /*!
@@ -217,14 +225,12 @@ public:
      * \param flux The flux
      * \param fluxVars The flux variables.
      */
-    static void heatDispersionFlux(NumEqVector& flux,
-                                   FluxVariables& fluxVars)
+    static void heatDispersionFlux([[maybe_unused]] NumEqVector& flux,
+                                   [[maybe_unused]] const FluxHelper& fluxHelper,
+                                   [[maybe_unused]] const FluxContext& fluxContext)
     {
-
         if constexpr (ModelTraits::enableThermalDispersion())
-        {
-            flux[energyEqIdx] += fluxVars.thermalDispersionFlux();
-        }
+            flux[energyEqIdx] += fluxHelper.thermalDispersionFlux(fluxContext);
     }
 
 
