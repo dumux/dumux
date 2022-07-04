@@ -28,6 +28,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/promotiontraits.hh>
 #include <dune/geometry/multilineargeometry.hh>
+#include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/math.hh>
 #include <dumux/geometry/intersectspointgeometry.hh>
@@ -848,8 +849,6 @@ public:
 
 private:
     static constexpr ctype eps_ = 1.5e-7; // base epsilon for floating point comparisons
-    using ReferenceElementsGeo1 = typename Dune::ReferenceElements<ctype, dim1>;
-    using ReferenceElementsGeo2 = typename Dune::ReferenceElements<ctype, dim2>;
 
 public:
     /*!
@@ -922,8 +921,8 @@ public:
             const bool resultIsGeo2 = (points.size() - numPoints1) == geo2.corners();
             if (!resultIsGeo2)
             {
-                const auto referenceElement1 = ReferenceElementsGeo1::general(geo1.type());
-                const auto referenceElement2 = ReferenceElementsGeo2::general(geo2.type());
+                const auto referenceElement1 = referenceElement(geo1);
+                const auto referenceElement2 = referenceElement(geo2);
 
                 // add intersections of edges
                 using SegGeometry = Dune::MultiLinearGeometry<ctype, 1, dimworld>;
