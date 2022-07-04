@@ -504,6 +504,7 @@ public:
     void solveLinearSystem(SolutionVector& deltaU)
     {
         auto& b = this->assembler().residual();
+        bool converged = false;
 
         try
         {
@@ -525,31 +526,30 @@ public:
 
             // solve by calling the appropriate implementation depending on whether the linear solver
             // is capable of handling MultiType matrices or not
-            bool converged = solveLinearSystem_(deltaU);
-
-            // make sure all processes converged
-            int convergedRemote = converged;
-            if (comm_.size() > 1)
-                convergedRemote = comm_.min(converged);
-
-            if (!converged) {
-                DUNE_THROW(NumericalProblem, "Linear solver did not converge");
-                ++numLinearSolverBreakdowns_;
-            }
-            else if (!convergedRemote) {
-                DUNE_THROW(NumericalProblem, "Linear solver did not converge on a remote process");
-                ++numLinearSolverBreakdowns_; // we keep correct count for process 0
-            }
+            converged = solveLinearSystem_(deltaU);
         }
-        catch (const Dune::Exception &e) {
-            // make sure all processes converged
-            int converged = 0;
-            if (comm_.size() > 1)
-                converged = comm_.min(converged);
+        catch (const Dune::Exception &e)
+        {
+            if (verbosity_ >= 1)
+                std::cout << "Newton: Caught exception from the linear solver: \"" << e.what() << "\"\n";
 
-            NumericalProblem p;
-            p.message(e.what());
-            throw p;
+            converged = false;
+        }
+
+        // make sure all processes converged
+        int convergedRemote = converged;
+        if (comm_.size() > 1)
+            convergedRemote = comm_.min(converged);
+
+        if (!converged)
+        {
+            DUNE_THROW(NumericalProblem, "Linear solver did not converge");
+            ++numLinearSolverBreakdowns_;
+        }
+        else if (!convergedRemote)
+        {
+            DUNE_THROW(NumericalProblem, "Linear solver did not converge on a remote process");
+            ++numLinearSolverBreakdowns_; // we keep correct count for process 0
         }
     }
 
