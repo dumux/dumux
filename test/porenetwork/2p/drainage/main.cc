@@ -117,11 +117,11 @@ int main(int argc, char** argv)
 
     // intialize the vtk output module
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
+    typedef PoreNetwork::VtkOutputModule<GridVariables, GetPropType<TypeTag, Properties::FluxVariables>, SolutionVector> VtkWriter;
     PoreNetwork::VtkOutputModule<GridVariables, GetPropType<TypeTag, Properties::FluxVariables>, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     IOFields::initOutputModule(vtkWriter); //! Add model specific output fields
-
+    vtkWriter.addField(gridGeometry->poreVolume(), "poreVolume", VtkWriter::FieldType::vertex);
     vtkWriter.write(0.0);
-
 
     // the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
