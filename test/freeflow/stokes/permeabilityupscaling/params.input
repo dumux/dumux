@@ -1,12 +1,27 @@
+[Test]
+DisableChecks = true
+
 [Grid]
-BinaryMask = sphere.raw
-Cells = 13 11 15
-PixelDimensions = 2 2 2
+BinaryMask = ATA_Sample1_crop_small.raw
+Cells = 100 100 100
+PixelDimensions = 1e-5 1e-5 1e-5
+KeepOnlyConnected = X
+RegionFile = ATA_Sample1_crop_small_segmentation_regions.txt
+
+[PNM.Grid]
+File = ATA_Sample1_crop_small.dgf
+PoreGeometry = Sphere
+ThroatCrossSectionShape = Square
 
 [Problem]
 Name = test_stokes_upscaling
 EnableGravity = false
 EnableInertiaTerms = false
+PressureGradient = 1
+SideLength = 1e-3 1e-3 1e-3
+
+[FreeFlow]
+EnableUnsymmetrizedVelocityGradient = false
 
 [Component]
 # this test requires a unit fluid
@@ -18,23 +33,29 @@ PriVarMagnitude = 1
 BaseEpsilon = 1
 
 [LinearSolver]
-Verbosity = 1
-MaxIterations = 500
-ResidualReduction = 1e-9
+Verbosity = 2
+MaxIterations = 1000
+ResidualReduction = 1e-8
 UseDirectSolver = false
+UseUzawa = false
+GMResRestart = 100
 
 [LinearSolver.Preconditioner]
-Verbosity = 0
+DetermineRelaxationFactor = false
+Relaxation = 1e15
+IterativeSolverForA = amg
+Verbosity = 2
 UseDirectVelocitySolver = false
-UseBlockTriangular = false
+UseBlockTriangular = true
 UseFullSchurComplement = false
-Iterations = 1
+Iterations = 3
 AmgSmootherIterations = 1
 AmgCriterionSymmetric = true
-AmgMaxLevel = 10
+AmgMaxLevel = 100
 AmgDefaultAggregationDimension = 3
 AmgMinAggregateSize = 3
 AmgMaxAggregateSize = 3
+TwoLevelIterations = 0
 
 [Newton]
 MinSteps = 1

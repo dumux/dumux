@@ -83,6 +83,7 @@ class SeqUzawa : public Dune::Preconditioner<X,Y>
 
     using A = std::decay_t<decltype(std::declval<M>()[Dune::Indices::_0][Dune::Indices::_0])>;
     using U = std::decay_t<decltype(std::declval<X>()[Dune::Indices::_0])>;
+    using XP = std::decay_t<decltype(std::declval<X>()[Dune::Indices::_1])>;
 
     using Comm = Dune::Amg::SequentialInformation;
     using LinearOperator = Dune::MatrixAdapter<A, U, U>;
@@ -108,8 +109,10 @@ public:
      * \param params Collection of paramters.
      */
 #if DUNE_VERSION_GTE(DUNE_ISTL,2,8)
-    SeqUzawa(const std::shared_ptr<const Dune::AssembledLinearOperator<M,X,Y>>& op, const Dune::ParameterTree& params)
+    SeqUzawa(const std::shared_ptr<const Dune::AssembledLinearOperator<M,X,Y>>& op, const Dune::ParameterTree& params,
+             std::shared_ptr<Dune::InverseOperator<XP, XP>> twoLevelSolver)
     : matrix_(op->getmat())
+    , twoLevelSolver_(twoLevelSolver)
 #else
     SeqUzawa(const M& mat, const Dune::ParameterTree& params)
     : matrix_(mat)
@@ -119,6 +122,8 @@ public:
     , verbosity_(params.get<int>("verbosity"))
     , paramGroup_(params.get<std::string>("ParameterGroup"))
     , useDirectVelocitySolverForA_(getParamFromGroup<bool>(paramGroup_, "LinearSolver.Preconditioner.DirectSolverForA", false))
+    , useTwoLevelMethod_(getParamFromGroup<bool>(paramGroup_, "LinearSolver.Preconditioner.UseTwoLevelMethod", false))
+    , relaxTwoLevel_(getParamFromGroup<double>(paramGroup_, "LinearSolver.Preconditioner.RelaxationTwoLevelMethod", 1.0))
     {
         const bool determineRelaxationFactor = getParamFromGroup<bool>(paramGroup_, "LinearSolver.Preconditioner.DetermineRelaxationFactor", true);
 
@@ -136,7 +141,8 @@ public:
     /*!
      * \brief Prepare the preconditioner.
      */
-    virtual void pre(X& x, Y& b) {}
+    virtual void pre(X& x, Y& b)
+    {}
 
     /*!
      * \brief Apply the preconditioner
@@ -171,7 +177,7 @@ public:
         // the actual Uzawa iteration
         for (std::size_t k = 0; k < numIterations_; ++k)
         {
-            // u_k+1 = u_k + Q_A^−1*(f − (A*u_k + B*p_k)),
+            // u_k+1 = u_k + Q_A^−1*(f − A*u_k - B*p_k),
             auto uRhs = f;
             A.mmv(u, uRhs);
             B.mmv(p, uRhs);
@@ -179,17 +185,37 @@ public:
             applySolverForA_(uIncrement, uRhs);
             u += uIncrement;
 
-            // p_k+1 = p_k + omega*(g - C*u_k+1 - D*p_k)
-            auto pIncrement = g;
-            C.mmv(u, pIncrement);
-            D.mmv(p, pIncrement);
-            pIncrement *= relaxationFactor_;
-            p += pIncrement;
+            // p_k+1 = p_k + Q_D^-1*(g - C*u_k+1 - D*p_k)
+            // Q_D^-1 ~= relaxationFactor_
+            auto pRhs = g;
+            C.mmv(u, pRhs);
+            D.mmv(p, pRhs);
+
+            if (useTwoLevelMethod_ && !(k%4))
+            {
+                // (1) project into PNM space
+                // (2) coarse grid PNM solve
+                // (3) prolong to pressure space
+                auto pIncrement = p;
+                Dune::InverseOperatorResult res;
+                twoLevelSolver_->apply(pIncrement, pRhs, res);
+                pIncrement *= relaxTwoLevel_;
+                p += pIncrement;
+            }
+            // apply inverse pressure block (relaxationFactor_)
+            // i.e. approximation of Schur complement
+            else
+            {
+                auto pIncrement = pRhs;
+                pIncrement *= relaxationFactor_;
+                p += pIncrement;
+            }
 
             if (verbosity_ > 1)
             {
                 std::cout << "Uzawa iteration " << k
-                << ", residual: " << uRhs.two_norm() + pIncrement.two_norm()/relaxationFactor_ << std::endl;
+                << ", residual: " << uRhs.two_norm() + pRhs.two_norm()
+                << " (u: " << uRhs.two_norm() << ", p: " << pRhs.two_norm() << ")" << std::endl;
             }
         }
     }
@@ -210,8 +236,16 @@ private:
     void initAMG_(const Dune::ParameterTree& params)
     {
         using namespace Dune::Indices;
-        auto linearOperator = std::make_shared<LinearOperator>(matrix_[_0][_0]);
-        amgSolverForA_ = std::make_unique<AMGSolverForA>(linearOperator, params);
+        const std::string solv = getParamFromGroup<std::string>(paramGroup_, "LinearSolver.Preconditioner.IterativeSolverForA", "ilu");
+        if (solv == "amg"){
+            auto linearOperator = std::make_shared<LinearOperator>(matrix_[_0][_0]);
+            precondA_ = std::make_unique<AMGSolverForA>(linearOperator, params);
+        } else if (solv == "ilu") {
+            precondA_ = std::make_unique<Dune::SeqILU<A, U, U>>(matrix_[_0][_0], params);
+        } else if (solv == "ssor") {
+            precondA_ = std::make_unique<Dune::SeqSSOR<A, U, U>>(matrix_[_0][_0], params);
+        } else
+            DUNE_THROW(Dune::Exception, "Unknown solver " << solv);
     }
 
     void initUMFPack_()
@@ -308,14 +342,15 @@ private:
         }
         else
         {
-            amgSolverForA_->pre(sol, rhs);
-            amgSolverForA_->apply(sol, rhs);
-            amgSolverForA_->post(sol);
+            precondA_->pre(sol, rhs);
+            precondA_->apply(sol, rhs);
+            precondA_->post(sol);
         }
     }
 
     //! \brief The matrix we operate on.
     const M& matrix_;
+    std::shared_ptr<Dune::InverseOperator<XP, XP>> twoLevelSolver_;
     //! \brief The number of steps to do in apply
     const std::size_t numIterations_;
     //! \brief The relaxation factor to use
@@ -323,12 +358,15 @@ private:
     //! \brief The verbosity level
     const int verbosity_;
 
-    std::unique_ptr<AMGSolverForA> amgSolverForA_;
+    std::unique_ptr<Dune::Preconditioner<U, U>> precondA_;
 #if HAVE_UMFPACK
     std::unique_ptr<Dune::UMFPack<A>> umfPackSolverForA_;
 #endif
+
     const std::string paramGroup_;
     const bool useDirectVelocitySolverForA_;
+    bool useTwoLevelMethod_;
+    double relaxTwoLevel_;
 };
 
 DUMUX_REGISTER_PRECONDITIONER("uzawa", Dumux::MultiTypeBlockMatrixPreconditionerTag, Dune::defaultPreconditionerBlockLevelCreator<Dumux::SeqUzawa, 1>());

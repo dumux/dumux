@@ -28,6 +28,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 
+#include <dumux/io/container.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_sub.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
@@ -45,6 +46,245 @@
 #include <dumux/freeflow/navierstokes/fluxoveraxisalignedsurface.hh>
 
 #include "properties.hh"
+
+#include <dumux/linear/pdesolver.hh>
+#include <dumux/io/grid/porenetwork/gridmanager.hh>
+#include <dumux/porenetwork/common/pnmvtkoutputmodule.hh>
+#include <dumux/porenetwork/common/boundaryflux.hh>
+#include <dumux/assembly/fvassembler.hh>
+
+#include "pnm/properties.hh"
+
+std::vector<double> solvePNM()
+{
+    using namespace Dumux;
+    using TypeTag = Properties::TTag::PNMUpscaling;
+
+    // grid
+    using GridManager = PoreNetwork::GridManager<3>;
+    GridManager gridManager;
+    gridManager.init("PNM");
+    const auto& leafGridView = gridManager.grid().leafGridView();
+    auto gridData = gridManager.getGridData();
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView, *gridData);
+
+    // problem
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
+    auto spatialParams = std::make_shared<SpatialParams>(gridGeometry);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    auto problem = std::make_shared<Problem>(gridGeometry, spatialParams, "PNM");
+
+    // instantiate and initialize the discrete and exact solution vectors
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    SolutionVector x(gridGeometry->numDofs());
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
+    gridVariables->init(x);
+
+    using VtkOutputFields = GetPropType<TypeTag, Properties::IOFields>;
+    using VtkWriter = PoreNetwork::VtkOutputModule<GridVariables, GetPropType<TypeTag, Properties::FluxVariables>, SolutionVector>;
+    VtkWriter vtkWriter(*gridVariables, x, problem->name());
+    VtkOutputFields::initOutputModule(vtkWriter);
+    vtkWriter.addField(gridGeometry->poreVolume(), "poreVolume", Vtk::FieldType::vertex);
+    vtkWriter.addField(gridGeometry->throatShapeFactor(), "throatShapeFactor", Vtk::FieldType::element);
+    vtkWriter.addField(gridGeometry->throatCrossSectionalArea(), "throatCrossSectionalArea", Vtk::FieldType::element);
+    std::vector<int> regionLabel(gridGeometry->numDofs(), -1);
+    for (const auto& vertex : vertices(leafGridView))
+    {
+        const auto vIdx = leafGridView.indexSet().index(vertex);
+        const auto& params = gridData->parameters(vertex);
+        regionLabel[vIdx] = params[3];
+    }
+    vtkWriter.addField(regionLabel, "regionLabel", Vtk::FieldType::vertex);
+
+    // assemble & solve
+    using Assembler = FVAssembler<TypeTag, DiffMethod::analytic>;
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
+    using LinearSolver = UMFPackBackend;
+    auto linearSolver = std::make_shared<LinearSolver>();
+    LinearPDESolver<Assembler, LinearSolver> solver(assembler,  linearSolver);
+    solver.setVerbose(false);
+
+    using GlobalPosition = typename GridGeometry::GlobalCoordinate;
+    const auto sideLengths = getParam<GlobalPosition>("Problem.SideLength");
+    problem->setSideLengths(sideLengths); // for setting correct pressure gradient
+    problem->setDirection(0); // x-direction
+    solver.solve(x);
+    vtkWriter.write(0);
+
+    const int maxLabel = *std::max_element(regionLabel.begin(), regionLabel.end());
+    std::vector<double> pnmPressures(maxLabel + 1, 0.0);
+    for (const auto& vertex : vertices(leafGridView))
+    {
+        const auto vIdx = leafGridView.indexSet().index(vertex);
+        pnmPressures[regionLabel[vIdx]] = x[vIdx][0];
+    }
+
+    return pnmPressures;
+}
+
+template<class Vector, class PNMMatrix>
+class TwoLevelSolver : public Dune::InverseOperator<Vector, Vector>
+{
+public:
+    TwoLevelSolver(const PNMMatrix& m, std::shared_ptr<Dumux::UMFPackBackend> umfpack,
+                   const std::vector<int>& regionMarker, const std::vector<int>& pnmRegionMarker)
+    : M_(m)
+    , pnmSolver_(umfpack)
+    , regionMarker_(regionMarker)
+    , pnmRegionMarker_(pnmRegionMarker)
+    , maxMarker_(std::max(
+        *std::max_element(pnmRegionMarker.begin(), pnmRegionMarker.end()),
+        *std::max_element(regionMarker.begin(), regionMarker.end())
+    ))
+    {}
+
+    void apply (Vector& x, Vector& b, Dune::InverseOperatorResult& res) override
+    {
+        auto bPNM = b; bPNM.resize(M_.N()); bPNM = 0.0;
+        auto xPNM = bPNM;
+
+        // project rhs to coarse grid
+        std::vector<double> labeledVector(maxMarker_ + 1, 0.0);
+        for (std::size_t eIdx = 0; eIdx < b.size(); ++eIdx)
+            labeledVector[regionMarker_[eIdx]] += b[eIdx];
+
+        // write entries for each region in the right place
+        for (std::size_t vIdx = 0; vIdx < M_.N(); ++vIdx)
+            bPNM[vIdx] = labeledVector[pnmRegionMarker_[vIdx]];
+
+        // solve
+        pnmSolver_->solve(M_, xPNM, bPNM);
+
+        // prolongation of update
+        for (std::size_t vIdx = 0; vIdx < M_.N(); ++vIdx)
+            labeledVector[pnmRegionMarker_[vIdx]] = xPNM[vIdx];
+
+        for (std::size_t eIdx = 0; eIdx < x.size(); ++eIdx)
+            x[eIdx] = labeledVector[regionMarker_[eIdx]];
+    }
+
+    void apply (Vector& x, Vector& b, double reduction, Dune::InverseOperatorResult& res) override
+    {
+        DUNE_THROW(Dune::NotImplemented, "axpy");
+    };
+
+private:
+    const PNMMatrix& M_;
+    std::shared_ptr<Dumux::UMFPackBackend> pnmSolver_;
+    const std::vector<int>& regionMarker_;
+    const std::vector<int>& pnmRegionMarker_;
+    int maxMarker_;
+};
+
+auto makePNMSolverComponents()
+{
+    using namespace Dumux;
+    using TypeTag = Properties::TTag::PNMUpscaling;
+
+    // grid
+    using GridManager = PoreNetwork::GridManager<3>;
+    GridManager gridManager;
+    gridManager.init("PNM");
+    const auto& leafGridView = gridManager.grid().leafGridView();
+    auto gridData = gridManager.getGridData();
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView, *gridData);
+
+    // problem
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
+    auto spatialParams = std::make_shared<SpatialParams>(gridGeometry);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    auto problem = std::make_shared<Problem>(gridGeometry, spatialParams, "PNM");
+
+    // instantiate and initialize the discrete and exact solution vectors
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    SolutionVector x(gridGeometry->numDofs());
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
+    gridVariables->init(x);
+
+    using VtkOutputFields = GetPropType<TypeTag, Properties::IOFields>;
+    using VtkWriter = PoreNetwork::VtkOutputModule<GridVariables, GetPropType<TypeTag, Properties::FluxVariables>, SolutionVector>;
+    VtkWriter vtkWriter(*gridVariables, x, problem->name());
+    VtkOutputFields::initOutputModule(vtkWriter);
+    vtkWriter.addField(gridGeometry->poreVolume(), "poreVolume", Vtk::FieldType::vertex);
+    vtkWriter.addField(gridGeometry->throatShapeFactor(), "throatShapeFactor", Vtk::FieldType::element);
+    vtkWriter.addField(gridGeometry->throatCrossSectionalArea(), "throatCrossSectionalArea", Vtk::FieldType::element);
+    std::vector<int> regionLabel(gridGeometry->numDofs(), -1);
+    for (const auto& vertex : vertices(leafGridView))
+    {
+        const auto vIdx = leafGridView.indexSet().index(vertex);
+        const auto& params = gridData->parameters(vertex);
+        regionLabel[vIdx] = params[3];
+    }
+    vtkWriter.addField(regionLabel, "regionLabel", Vtk::FieldType::vertex);
+
+    // assemble & solve
+    using Assembler = FVAssembler<TypeTag, DiffMethod::analytic>;
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
+    using JacobianMatrix = typename Assembler::JacobianMatrix;
+    using Residual = typename Assembler::ResidualType;
+    auto jac = std::make_shared<JacobianMatrix>();
+    auto res = std::make_shared<Residual>();
+    assembler->setLinearSystem(jac, res);
+    using GlobalPosition = typename GridGeometry::GlobalCoordinate;
+    const auto sideLengths = getParam<GlobalPosition>("Problem.SideLength");
+    problem->setSideLengths(sideLengths); // for setting correct pressure gradient
+    problem->setDirection(0); // x-direction
+    assembler->assembleJacobianAndResidual(x);
+
+    using LinearSolver = UMFPackBackend;
+    auto linearSolver = std::make_shared<LinearSolver>();
+    linearSolver->setVerbosity(0);
+
+    return std::make_tuple(jac, linearSolver, std::move(regionLabel));
+}
+
+namespace Dumux {
+
+/*!
+ * \ingroup Linear
+ * \brief A Uzawa preconditioned BiCGSTAB solver for saddle-point problems
+ */
+template <class LinearSolverTraits, class TwoLevelSolver>
+class MyUzawaBiCGSTABBackend : public LinearSolver
+{
+public:
+    MyUzawaBiCGSTABBackend(std::shared_ptr<TwoLevelSolver> twoLevelSolver)
+    : LinearSolver()
+    , twoLevelSolver_(twoLevelSolver)
+    {}
+
+    template<class Matrix, class Vector>
+    bool solve(const Matrix& A, Vector& x, const Vector& b)
+    {
+        using Preconditioner = SeqUzawa<Matrix, Vector, Vector>;
+        using Solver = Dune::BiCGSTABSolver<Vector>;
+        static const auto solverParams = LinearSolverParameters<LinearSolverTraits>::createParameterTree(this->paramGroup());
+
+        // make a linear operator from a matrix
+        using MatrixAdapter = Dune::MatrixAdapter<Matrix, Vector, Vector>;
+        const auto linearOperator = std::make_shared<MatrixAdapter>(A);
+        auto precond = std::make_shared<Preconditioner>(linearOperator, solverParams.sub("preconditioner"), twoLevelSolver_);
+
+        Solver solver(linearOperator, precond, solverParams);
+        Vector bTmp(b);
+        Dune::InverseOperatorResult result;
+        solver.apply(x, bTmp, result);
+        return result.converged;
+    }
+
+    std::string name() const
+    {
+        return "Uzawa preconditioned BiCGSTAB solver";
+    }
+private:
+    std::shared_ptr<TwoLevelSolver> twoLevelSolver_;
+};
+
+} // end namespace Dumux
 
 int main(int argc, char** argv)
 {
@@ -71,6 +311,8 @@ int main(int argc, char** argv)
     Dumux::GridManager<Grid> gridManager;
     gridManager.init();
 
+    gridManager.grid().globalRefine(getParam<int>("Grid.RefineLevel", 0));
+
     // we compute on the leaf grid view
     const auto& leafGridView = gridManager.grid().leafGridView();
 
@@ -91,6 +333,19 @@ int main(int argc, char** argv)
     using MassProblem = GetPropType<MassTypeTag, Properties::Problem>;
     auto massProblem = std::make_shared<MassProblem>(massGridGeometry, couplingManager);
 
+    // read regions (map from host grid to pore space grid)
+    const std::string regionFileName = getParam<std::string>("Grid.RegionFile");
+    const auto regionMarkerHost = readFileToContainer<std::vector<int>>(regionFileName);
+    std::vector<int> regionMarker(leafGridView.size(0), -1);
+    for (const auto& element : elements(leafGridView))
+    {
+        const auto eIdx = massGridGeometry->elementMapper().index(element);
+        const auto hostEIdx = gridManager.grid().getHostGrid().leafGridView().indexSet().index(
+            gridManager.grid().getHostEntity<0>(element)
+        );
+        regionMarker[eIdx] = regionMarkerHost[hostEIdx];
+    }
+
     // the solution vector
     constexpr auto momentumIdx = CouplingManager::freeFlowMomentumIndex;
     constexpr auto massIdx = CouplingManager::freeFlowMassIndex;
@@ -99,6 +354,14 @@ int main(int argc, char** argv)
     x[momentumIdx].resize(momentumGridGeometry->numDofs());
     x[massIdx].resize(massGridGeometry->numDofs());
     x = 0.0;
+
+    // // initial guess for pressure with PNM
+    // auto pnmPressures = solvePNM();
+    // for (const auto& element : elements(leafGridView))
+    // {
+    //     const auto eIdx = massGridGeometry->elementMapper().index(element);
+    //     x[massIdx][eIdx] = pnmPressures[regionMarker[eIdx]];
+    // }
 
     // the grid variables
     using MomentumGridVariables = GetPropType<MomentumTypeTag, Properties::GridVariables>;
@@ -122,6 +385,7 @@ int main(int argc, char** argv)
     VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name());
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
+    vtkWriter.addField(regionMarker, "region");
     vtkWriter.write(0.0);
 
     // solve
@@ -136,8 +400,17 @@ int main(int argc, char** argv)
     }
     else if (getParam<bool>("LinearSolver.UseUzawa", false))
     {
-        using LinearSolver = UzawaBiCGSTABBackend<LinearSolverTraits<MassGridGeometry>>;
-        auto linearSolver = std::make_shared<LinearSolver>();
+        auto solverComponents = makePNMSolverComponents();
+        auto pnmMatrix = std::get<0>(solverComponents);
+        auto pnmSolver = std::get<1>(solverComponents);
+        auto pnmRegionLabels = std::get<2>(solverComponents);
+
+        using Vector = std::decay_t<decltype(x[massIdx])>;
+        using Matrix = std::decay_t<decltype(*pnmMatrix)>;
+        auto twoLevelSolver = std::make_shared<TwoLevelSolver<Vector, Matrix>>(*pnmMatrix, pnmSolver, regionMarker, pnmRegionLabels);
+
+        using LinearSolver = MyUzawaBiCGSTABBackend<LinearSolverTraits<MassGridGeometry>, TwoLevelSolver<Vector, Matrix>>;
+        auto linearSolver = std::make_shared<LinearSolver>(twoLevelSolver);
         // the non-linear solver
         using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
         NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
@@ -216,12 +489,15 @@ int main(int argc, char** argv)
     // note that for the test the geometry is very coarse to minimize runtime
     // therefore these reference values are just regression test references
     // computed with this test at the time it was set up
-    const auto KRef = 3.43761e-13;
-    const auto phiRef = 0.439627;
-    if (Dune::FloatCmp::ne(K, KRef, 1e-5))
-        DUNE_THROW(Dune::Exception, "Permeability " << K << " doesn't match reference " << KRef << " by " << K-KRef);
-    if (Dune::FloatCmp::ne(phi, phiRef, 1e-5))
-        DUNE_THROW(Dune::Exception, "Porosity " << phi << " doesn't match reference " << phiRef << " by " << phi-phiRef);
+    if (!getParam<bool>("Test.DisableChecks", false))
+    {
+        const auto KRef = 3.43761e-13;
+        const auto phiRef = 0.439627;
+        if (Dune::FloatCmp::ne(K, KRef, 1e-5))
+            DUNE_THROW(Dune::Exception, "Permeability " << K << " doesn't match reference " << KRef << " by " << K-KRef);
+        if (Dune::FloatCmp::ne(phi, phiRef, 1e-5))
+            DUNE_THROW(Dune::Exception, "Porosity " << phi << " doesn't match reference " << phiRef << " by " << phi-phiRef);
+    }
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

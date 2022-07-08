@@ -1,0 +1,15 @@
+[Problem]
+EnableGravity = false
+Name = upscaling_pnm
+PressureGradient = 1
+Directions = 0 1 2
+Epsilon = 1e-3
+
+[Grid]
+File = ATA_Sample1_crop_small.dgf
+PoreGeometry = Sphere
+ThroatCrossSectionShape = Square
+
+[Component]
+LiquidKinematicViscosity = 1
+LiquidDensity = 1
