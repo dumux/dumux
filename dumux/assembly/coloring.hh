@@ -28,6 +28,7 @@
 #include <deque>
 #include <iostream>
 #include <tuple>
+#include <algorithm>
 
 #include <dune/common/timer.hh>
 #include <dune/common/exceptions.hh>
@@ -41,33 +42,71 @@ namespace Dumux::Detail {
 //! Compute a map from dof indices to element indices (helper data for coloring algorithm)
 template <class GridGeometry>
 std::vector<std::vector<std::size_t>>
-computeDofToElementMap(const GridGeometry& gg)
+computeConnectedElements(const GridGeometry& gg)
 {
-    std::vector<std::vector<std::size_t>> dofToElements;
+    std::vector<std::vector<std::size_t>> connectedElements;
 
     if constexpr (GridGeometry::discMethod == DiscretizationMethods::cctpfa)
     {
-        dofToElements.resize(gg.gridView().size(0));
+        connectedElements.resize(gg.gridView().size(0));
         const auto& eMapper = gg.elementMapper();
         for (const auto& element : elements(gg.gridView()))
         {
             const auto eIdx = eMapper.index(element);
             for (const auto& intersection : intersections(gg.gridView(), element))
                 if (intersection.neighbor())
-                    dofToElements[eMapper.index(intersection.outside())].push_back(eIdx);
+                    connectedElements[eMapper.index(intersection.outside())].push_back(eIdx);
         }
     }
 
     else if constexpr (GridGeometry::discMethod == DiscretizationMethods::box)
     {
         static constexpr int dim = GridGeometry::GridView::dimension;
-        dofToElements.resize(gg.gridView().size(dim));
+        connectedElements.resize(gg.gridView().size(dim));
         const auto& vMapper = gg.vertexMapper();
         for (const auto& element : elements(gg.gridView()))
         {
             const auto eIdx = gg.elementMapper().index(element);
             for (int i = 0; i < element.subEntities(dim); i++)
-                dofToElements[vMapper.subIndex(element, i, dim)].push_back(eIdx);
+                connectedElements[vMapper.subIndex(element, i, dim)].push_back(eIdx);
+        }
+    }
+
+    else if constexpr (
+        GridGeometry::discMethod == DiscretizationMethods::fcstaggered
+        || GridGeometry::discMethod == DiscretizationMethods::ccmpfa
+    )
+    {
+        // for MPFA-O schemes the assembly of each element residual touches all vertex neighbors
+        // for face-centered staggered it is all codim-2 neighbors (vertex neighbors in 2D, edge neighbors in 3D)
+        // but we use vertex neighbors also in 3D for simplicity
+        std::vector<std::vector<std::size_t>> vToElements;
+        static constexpr int dim = GridGeometry::GridView::dimension;
+        vToElements.resize(gg.gridView().size(dim));
+        const auto& vMapper = gg.vertexMapper();
+        for (const auto& element : elements(gg.gridView()))
+        {
+            const auto eIdx = gg.elementMapper().index(element);
+            for (int i = 0; i < element.subEntities(dim); i++)
+                vToElements[vMapper.subIndex(element, i, dim)].push_back(eIdx);
+        }
+
+        connectedElements.resize(gg.gridView().size(0));
+        for (const auto& element : elements(gg.gridView()))
+        {
+            const auto eIdx = gg.elementMapper().index(element);
+            for (int i = 0; i < element.subEntities(dim); i++)
+            {
+                const auto& e = vToElements[vMapper.subIndex(element, i, dim)];
+                connectedElements[eIdx].insert(connectedElements[eIdx].end(), e.begin(), e.end());
+            }
+
+            // make unique
+            std::sort(connectedElements[eIdx].begin(), connectedElements[eIdx].end());
+            connectedElements[eIdx].erase(
+                std::unique(connectedElements[eIdx].begin(), connectedElements[eIdx].end()),
+                connectedElements[eIdx].end()
+            );
         }
     }
 
@@ -76,7 +115,7 @@ computeDofToElementMap(const GridGeometry& gg)
             "Missing coloring scheme implementation for this discretization method"
         );
 
-    return dofToElements;
+    return connectedElements;
 }
 
 /*!
@@ -88,17 +127,21 @@ computeDofToElementMap(const GridGeometry& gg)
  * \param gridGeometry the grid geometry
  * \param element the element we want to color
  * \param colors a vector of current colors for each element (not assigned: -1)
- * \param dofToElement a map from dof indices to element indices
+ * \param connectedElements a map from implementation-defined indices to element indices
  * \param neighborColors a vector to add the colors of neighbor nodes to
  */
-template<class GridGeometry, class DofToElementMap>
+template<class GridGeometry, class ConnectedElements>
 void addNeighborColors(const GridGeometry& gg,
                        const typename GridGeometry::LocalView::Element& element,
                        const std::vector<int>& colors,
-                       const DofToElementMap& dofToElement,
+                       const ConnectedElements& connectedElements,
                        std::vector<int>& neighborColors)
 {
-    if constexpr (GridGeometry::discMethod == DiscretizationMethods::cctpfa)
+    if constexpr (
+        GridGeometry::discMethod == DiscretizationMethods::cctpfa
+        || GridGeometry::discMethod == DiscretizationMethods::ccmpfa
+        || GridGeometry::discMethod == DiscretizationMethods::fcstaggered
+    )
     {
         // we modify neighbor elements during the assembly
         // check who else modifies these neighbor elements
@@ -112,7 +155,7 @@ void addNeighborColors(const GridGeometry& gg,
                 neighborColors.push_back(colors[nIdx]);
 
                 // neighbor-neighbors
-                for (const auto nnIdx : dofToElement[eMapper.index(intersection.outside())])
+                for (const auto nnIdx : connectedElements[eMapper.index(intersection.outside())])
                     neighborColors.push_back(colors[nnIdx]);
             }
         }
@@ -126,7 +169,7 @@ void addNeighborColors(const GridGeometry& gg,
         static constexpr int dim = GridGeometry::GridView::dimension;
         // direct vertex neighbors
         for (int i = 0; i < element.subEntities(dim); i++)
-            for (auto eIdx : dofToElement[vMapper.subIndex(element, i, dim)])
+            for (auto eIdx : connectedElements[vMapper.subIndex(element, i, dim)])
                 neighborColors.push_back(colors[eIdx]);
     }
 
@@ -212,13 +255,13 @@ auto computeColoring(const GridGeometry& gg, int verbosity = 1)
     std::vector<bool> colorUsed; colorUsed.reserve(30);
 
     // dof to element map to speed up neighbor search
-    const auto dofToElement = Detail::computeDofToElementMap(gg);
+    const auto connectedElements = Detail::computeConnectedElements(gg);
 
     for (const auto& element : elements(gg.gridView()))
     {
         // compute neighbor colors based on discretization-dependent stencil
         neighborColors.clear();
-        Detail::addNeighborColors(gg, element, coloring.colors, dofToElement, neighborColors);
+        Detail::addNeighborColors(gg, element, coloring.colors, connectedElements, neighborColors);
 
         // find smallest color (positive integer) not in neighborColors
         const auto color = Detail::smallestAvailableColor(neighborColors, colorUsed);
@@ -245,7 +288,9 @@ template<class DiscretizationMethod>
 struct SupportsColoring : public std::false_type {};
 
 template<> struct SupportsColoring<DiscretizationMethods::CCTpfa> : public std::true_type {};
+template<> struct SupportsColoring<DiscretizationMethods::CCMpfa> : public std::true_type {};
 template<> struct SupportsColoring<DiscretizationMethods::Box> : public std::true_type {};
+template<> struct SupportsColoring<DiscretizationMethods::FCStaggered> : public std::true_type {};
 
 } // end namespace Dumux
 
