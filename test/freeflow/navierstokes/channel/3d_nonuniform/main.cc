@@ -191,7 +191,9 @@ int main(int argc, char** argv)
     vtkWriter.write(1.0);
 
     // compute influx and outflux
+    couplingManager->updateSolution(x);
     momentumProblem->computeFluxes(x[momentumIdx]);
+    momentumProblem->computeWallShearStress(x[momentumIdx], *momentumGridVariables, *couplingManager, *assembler);
 
     timer.stop();
     const auto& comm = Dune::MPIHelper::getCollectiveCommunication();

@@ -9,6 +9,7 @@ Name = test_channel # name passed to the output routines
 DeltaP = 1
 EnableGravity = false
 EnableInertiaTerms = false
+RandomInitialGuess = false
 
 [Component]
 LiquidDensity = 1e3
@@ -20,6 +21,10 @@ NumericDifference.BaseEpsilon = 1e-5
 [Newton]
 MaxSteps = 10
 MaxRelativeShift = 1e-8
+
+[LinearSolver]
+SymmetrizeDirichlet = false
+UseDirectSolver = true
 
 [MatrixConverter]
 DeletePatternEntriesBelowAbsThreshold = 1e-12
