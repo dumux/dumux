@@ -28,7 +28,7 @@
 
 #include <dune/common/indices.hh>
 #include <dune/common/hybridutilities.hh>
-#include <dune/grid/common/gridenums.hh> // for GhostEntity
+#include <dune/grid/common/gridenums.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -247,8 +247,11 @@ class SubDomainFaceCenteredLocalAssembler;
  */
 template<std::size_t id, class TypeTag, class Assembler>
 class SubDomainFaceCenteredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>
-: public SubDomainFaceCenteredLocalAssemblerBase<id, TypeTag, Assembler,
-             SubDomainFaceCenteredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, true>, DiffMethod::numeric, /*implicit=*/true>
+: public SubDomainFaceCenteredLocalAssemblerBase<
+    id, TypeTag, Assembler,
+    SubDomainFaceCenteredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, true>,
+    DiffMethod::numeric, /*implicit=*/true
+>
 {
     using ThisType = SubDomainFaceCenteredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>;
     using ParentType = SubDomainFaceCenteredLocalAssemblerBase<id, TypeTag, Assembler, ThisType, DiffMethod::numeric, /*implicit=*/true>;
@@ -412,6 +415,59 @@ public:
             }
         }
     }
+};
+
+/*!
+ * \ingroup Assembly
+ * \ingroup StaggeredDiscretization
+ * \ingroup MultiDomain
+ * \brief Face-centered staggered scheme multi domain local assembler using numeric differentiation and explicit time discretization
+ */
+template<std::size_t id, class TypeTag, class Assembler>
+class SubDomainFaceCenteredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/false>
+: public SubDomainFaceCenteredLocalAssemblerBase<
+    id, TypeTag, Assembler,
+    SubDomainFaceCenteredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, false>,
+    DiffMethod::numeric, /*implicit=*/false
+>
+{
+    using ThisType = SubDomainFaceCenteredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/false>;
+    using ParentType = SubDomainFaceCenteredLocalAssemblerBase<id, TypeTag, Assembler, ThisType, DiffMethod::numeric, /*implicit=*/false>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    static constexpr auto domainI = Dune::index_constant<id>();
+public:
+    using ParentType::ParentType;
+    //! export element residual vector type
+    using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
+
+    /*!
+     * \brief Update the coupling context for coupled models.
+     */
+    template<class ElemSol>
+    void maybeUpdateCouplingContext(const SubControlVolume& scv, ElemSol& elemSol, const int pvIdx)
+    {
+        this->couplingManager().updateCouplingContext(domainI, *this, domainI, scv.dofIndex(), elemSol[scv.localDofIndex()], pvIdx);
+    }
+
+    /*!
+     * \brief Update the additional domain derivatives for coupled models.
+     */
+    template<class JacobianMatrixDiagBlock, class GridVariables>
+    void maybeEvalAdditionalDomainDerivatives(const ElementResidualVector& origResiduals, const JacobianMatrixDiagBlock& A, GridVariables& gridVariables)
+    {}
+
+    /*!
+     * \brief Computes the derivatives with respect to the given element and adds them
+     *        to the global matrix.
+     */
+    template<std::size_t otherId, class JacobianBlock, class GridVariables>
+    void assembleJacobianCoupling(Dune::index_constant<otherId> domainJ, JacobianBlock& A,
+                                  const ElementResidualVector& res, GridVariables& gridVariables)
+    {}
 };
 
 } // end namespace Dumux
