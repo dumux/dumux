@@ -289,7 +289,8 @@ public:
  * \brief An assembler for Jacobian and residual contribution per element (Face-centered methods)
  * \tparam TypeTag The TypeTag
  * \tparam diffMethod The differentiation method to residual compute derivatives
- * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
+ * \tparam implicit Specifies whether the time discretization is implicit or not (i.e. explicit)
+ * \tparam Implementation The actual implementation, if void this class is the actual implementation
  */
 template<class TypeTag, class Assembler, DiffMethod diffMethod = DiffMethod::numeric, bool implicit = true, class Implementation = void>
 class FaceCenteredLocalAssembler;
@@ -301,8 +302,11 @@ class FaceCenteredLocalAssembler;
  */
 template<class TypeTag, class Assembler, class Implementation>
 class FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true, Implementation>
-: public FaceCenteredLocalAssemblerBase<TypeTag, Assembler,
-                                        Detail::NonVoidOrDefault_t<Implementation, FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true, Implementation>>, true>
+: public FaceCenteredLocalAssemblerBase<
+    TypeTag, Assembler,
+    Detail::NonVoidOrDefault_t<Implementation, FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true, Implementation>>,
+    /*implicit=*/true
+>
 {
     using ThisType = FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true, Implementation>;
     using ParentType = FaceCenteredLocalAssemblerBase<TypeTag, Assembler, Detail::NonVoidOrDefault_t<Implementation, ThisType>, true>;
@@ -340,7 +344,6 @@ public:
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
         const auto& curSol = this->asImp_().curSol();
-
         auto&& curElemVolVars = this->curElemVolVars();
 
         // get the vector of the actual element residuals
@@ -511,24 +514,27 @@ public:
  * \ingroup FaceCenteredStaggeredDiscretization
  * \brief TODO docme
  */
-template<class TypeTag, class Assembler>
-class FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/false>
-: public FaceCenteredLocalAssemblerBase<TypeTag, Assembler,
-            FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false>, false>
+template<class TypeTag, class Assembler, class Implementation>
+class FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/false, Implementation>
+: public FaceCenteredLocalAssemblerBase<
+    TypeTag, Assembler,
+    Detail::NonVoidOrDefault_t<Implementation, FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false, Implementation>>,
+    /*implicit=*/false
+>
 {
-    using ThisType = FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false>;
-    using ParentType = FaceCenteredLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
+    using ThisType = FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false, Implementation>;
+    using ParentType = FaceCenteredLocalAssemblerBase<TypeTag, Assembler, Detail::NonVoidOrDefault_t<Implementation, ThisType>, false>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Element = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView::template Codim<0>::Entity;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
-    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
-    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 
     enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
 
 public:
+    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
+    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
     using ParentType::ParentType;
 
     /*!
@@ -545,12 +551,13 @@ public:
             DUNE_THROW(Dune::NotImplemented, "partial reassembly for explicit time discretization");
 
         // get some aliases for convenience
+        const auto& problem = this->asImp_().problem();
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& curSol = this->curSol();
+        const auto& curSol = this->asImp_().curSol();
         auto&& curElemVolVars = this->curElemVolVars();
 
-        // get the vecor of the acutal element residuals
+        // get the vector of the actual element residuals
         const auto origResiduals = this->evalLocalResidual();
         const auto origStorageResiduals = this->evalLocalStorageResidual();
 
@@ -569,7 +576,7 @@ public:
         ElementResidualVector partialDerivs(element.subEntities(1));
 
         // calculation of the derivatives
-        for (auto&& scv : scvs(fvGeometry))
+        for (const auto& scv : scvs(fvGeometry))
         {
             // dof index and corresponding actual pri vars
             const auto dofIdx = scv.dofIndex();
@@ -585,13 +592,13 @@ public:
                 {
                     // auto partialDerivsTmp = partialDerivs;
                     elemSol[scv.localDofIndex()][pvIdx] = priVar;
-                    curVolVars.update(elemSol, this->problem(), element, scv);
+                    curVolVars.update(elemSol, problem, element, scv);
                     return this->evalLocalStorageResidual();
                 };
 
                 // derive the residuals numerically
-                static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
-                static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
+                static const NumericEpsilon<Scalar, numEq> eps_{problem.paramGroup()};
+                static const int numDiffMethod = getParamFromGroup<int>(problem.paramGroup(), "Assembly.NumericDifferenceMethod");
                 NumericDifferentiation::partialDerivative(evalStorage, elemSol[scv.localDofIndex()][pvIdx], partialDerivs, origStorageResiduals,
                                                           eps_(elemSol[scv.localDofIndex()][pvIdx], pvIdx), numDiffMethod);
 
@@ -610,7 +617,6 @@ public:
 
                 // restore the original element solution
                 elemSol[scv.localDofIndex()][pvIdx] = curSol[scv.dofIndex()][pvIdx];
-                // TODO additional dof dependencies
             }
         }
         return origResiduals;
@@ -622,22 +628,25 @@ public:
  * \ingroup FaceCenteredStaggeredDiscretization
  * \brief TODO docme
  */
-template<class TypeTag, class Assembler>
-class FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/true>
-: public FaceCenteredLocalAssemblerBase<TypeTag, Assembler,
-            FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, true>, true>
+template<class TypeTag, class Assembler, class Implementation>
+class FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/true, Implementation>
+: public FaceCenteredLocalAssemblerBase<
+    TypeTag, Assembler,
+    FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, true, Implementation>,
+    /*implicit=*/true
+>
 {
-    using ThisType = FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, true>;
-    using ParentType = FaceCenteredLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
+    using ThisType = FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, true, Implementation>;
+    using ParentType = FaceCenteredLocalAssemblerBase<TypeTag, Assembler, Detail::NonVoidOrDefault_t<Implementation, ThisType>, true>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
-    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 
     enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
 
 public:
+    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
+    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
     using ParentType::ParentType;
 
     /*!
@@ -656,7 +665,7 @@ public:
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& problem = this->problem();
+        const auto& problem = this->asImp_().problem();
         const auto& curElemVolVars = this->curElemVolVars();
         const auto& elemFluxVarsCache = this->elemFluxVarsCache();
 
@@ -742,22 +751,25 @@ public:
  * \ingroup FaceCenteredStaggeredDiscretization
  * \brief TODO docme
  */
-template<class TypeTag, class Assembler>
-class FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/false>
-: public FaceCenteredLocalAssemblerBase<TypeTag, Assembler,
-            FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, false>, false>
+template<class TypeTag, class Assembler, class Implementation>
+class FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/false, Implementation>
+: public FaceCenteredLocalAssemblerBase<
+    TypeTag, Assembler,
+    FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, false, Implementation>,
+    /*implicit=*/false
+>
 {
-    using ThisType = FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, false>;
-    using ParentType = FaceCenteredLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
+    using ThisType = FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, false, Implementation>;
+    using ParentType = FaceCenteredLocalAssemblerBase<TypeTag, Assembler, Detail::NonVoidOrDefault_t<Implementation, ThisType>, false>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
-    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 
     enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
 
 public:
+    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
+    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
     using ParentType::ParentType;
 
     /*!
@@ -776,7 +788,7 @@ public:
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& problem = this->problem();
+        const auto& problem = this->asImp_().problem();
         const auto& curElemVolVars = this->curElemVolVars();
 
         // get the vector of the actual element residuals
