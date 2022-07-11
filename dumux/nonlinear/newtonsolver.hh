@@ -526,8 +526,7 @@ public:
             // solve by calling the appropriate implementation depending on whether the linear solver
             // is capable of handling MultiType matrices or not
             bool converged = solveLinearSystem_(deltaU);
-            // std::cout << "\n";
-            // std::cout << "the solution vector is : " << deltaU << std::endl;
+
 
             // make sure all processes converged
             int convergedRemote = converged;
@@ -1003,8 +1002,6 @@ private:
                 // set the delta vector to zero before solving the linear system!
                 deltaU = 0;
 
-                // std::cout << " Before solving the equation the solution is : " << vars << std::endl;
-
                 solveLinearSystem(deltaU);
                 solveTimer.stop();
 
@@ -1021,11 +1018,8 @@ private:
                 newtonUpdate(vars, uLastIter, deltaU);
                 updateTimer.stop();
 
-                std::cout << "The solution vector (Pw, Sn) is : " << vars << std::endl;
                 // tell the solver that we're done with this iteration
                 newtonEndStep(vars, uLastIter);
-
-                // std::cout << " The solution vector after this iteration is : " << vars << std::endl;
 
                 // if a convergence writer was specified compute residual and write output
                 if (convergenceWriter_)
@@ -1148,14 +1142,10 @@ private:
 
     virtual bool solveLinearSystem_(SolutionVector& deltaU)
     {
-        // std::cout << "\n";
-        // std::cout << " the residual is :  " << this->assembler().residual() << std::endl;
-        int iterN = 1;
         return solveLinearSystemImpl_(this->linearSolver(),
                                       this->assembler().jacobian(),
                                       deltaU,
-                                      this->assembler().residual(),
-                                      iterN);
+                                      this->assembler().residual());
     }
 
     /*!
@@ -1172,8 +1162,7 @@ private:
     solveLinearSystemImpl_(LinearSolver& ls,
                            JacobianMatrix& A,
                            SolutionVector& x,
-                           SolutionVector& b,
-                           int& iterationNumber)
+                           SolutionVector& b)
     {
         //! Copy into a standard block vector.
         //! This is necessary for all model _not_ using a FieldVector<Scalar, blockSize> as
@@ -1184,11 +1173,6 @@ private:
         using OriginalBlockType = Detail::BlockType<SolutionVector>;
         constexpr auto blockSize = Detail::blockSize<OriginalBlockType>();
 
-        // std::cout << "\n";
-        //     Dune::printmatrix(std::cout, A, "Jacobian", "row");
-
-        // ++iterationNumber;
-        // assert(false);
         using BlockType = Dune::FieldVector<Scalar, blockSize>;
         Dune::BlockVector<BlockType> xTmp; xTmp.resize(Backend::size(b));
         Dune::BlockVector<BlockType> bTmp(xTmp);
@@ -1196,16 +1180,6 @@ private:
         Detail::assign(bTmp, b);
         const int converged = ls.solve(A, xTmp, bTmp);
         Detail::assign(x, xTmp);
-
-        // std::cout << "The Jacobian is " << "\n";
-        // for (int i = 0; i<3; ++i)
-        // {
-        //     std::cout<<"\n";
-        //     for (int j = 0; j<3; ++j)
-        //         std::cout << A[i][j] << std::endl;
-        // }
-        std::cout << "the solution is : " << x << "\n";
-        std::cout << "residual is : " << b << std::endl;
 
         return converged;
     }
