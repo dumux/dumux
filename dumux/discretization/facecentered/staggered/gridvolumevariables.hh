@@ -27,6 +27,8 @@
 #include <vector>
 #include <type_traits>
 
+#include <dumux/parallel/parallel_for.hh>
+
 // make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/facecentered/staggered/elementsolution.hh>
@@ -78,20 +80,16 @@ public:
     template<class GridGeometry, class SolutionVector>
     void update(const GridGeometry& gridGeometry, const SolutionVector& sol)
     {
-        const auto numScv = gridGeometry.numScv();
-        volumeVariables_.resize(numScv);
-
-        for (const auto& element : elements(gridGeometry.gridView()))
+        volumeVariables_.resize(gridGeometry.numScv());
+        Dumux::parallelFor(gridGeometry.gridView().size(0), [&, &problem = problem()](const std::size_t eIdx)
         {
-            auto fvGeometry = localView(gridGeometry);
-            fvGeometry.bindElement(element);
+            const auto element = gridGeometry.element(eIdx);
+            const auto fvGeometry = localView(gridGeometry).bindElement(element);
+            const auto elemSol = elementSolution(element, sol, gridGeometry);
 
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                const auto elemSol = elementSolution(element, sol, gridGeometry);
-                volumeVariables_[scv.index()].update(elemSol, problem(), element, scv);
-            }
-        }
+            for (const auto& scv : scvs(fvGeometry))
+                volumeVariables_[scv.index()].update(elemSol, problem, element, scv);
+        });
     }
 
     const VolumeVariables& volVars(const std::size_t scvIdx) const
