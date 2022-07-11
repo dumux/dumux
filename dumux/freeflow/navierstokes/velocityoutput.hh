@@ -90,7 +90,7 @@ private:
         const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
         const auto getFaceVelocity = [&](const FVElementGeometry& fvG, const auto& scvf)
         {
-            return elemVolVars.gridVolVars().problem().faceVelocity(element, fvGeometry, scvf);
+            return elemVolVars.gridVolVars().problem().faceVelocity(fvG.element(), fvG, scvf);
         };
 
         velocity[eIdx] = StaggeredVelocityReconstruction::cellCenterVelocity(getFaceVelocity, fvGeometry);
