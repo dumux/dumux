@@ -4,7 +4,8 @@ DisableChecks = true
 [Grid]
 BinaryMask = ATA_Sample1_crop_small.raw
 Cells = 100 100 100
-PixelDimensions = 1e-5 1e-5 1e-5
+#PixelDimensions = 1e-5 1e-5 1e-5
+PixelDimensions = 1 1 1
 KeepOnlyConnected = X
 RegionFile = ATA_Sample1_crop_small_segmentation_regions.txt
 
@@ -18,7 +19,10 @@ Name = test_stokes_upscaling
 EnableGravity = false
 EnableInertiaTerms = false
 PressureGradient = 1
-SideLength = 1e-3 1e-3 1e-3
+UsePNMInitialPressure = false
+#SideLength = 1e-3 1e-3 1e-3
+ArtificialCompressibility = 0.03
+CFL = 0.1
 
 [FreeFlow]
 EnableUnsymmetrizedVelocityGradient = false
@@ -39,6 +43,7 @@ ResidualReduction = 1e-8
 UseDirectSolver = false
 UseUzawa = false
 GMResRestart = 100
+#PrintMatrix = true
 
 [LinearSolver.Preconditioner]
 DetermineRelaxationFactor = false
@@ -64,6 +69,7 @@ MaxAbsoluteResidual = 1e-5
 
 [Vtk]
 WriteFaceData = false
+OutputInterval = 10
 
 [FluxOverPlane]
 Verbose = true
