@@ -178,35 +178,29 @@ public:
             return result;
 
         // get the velocity gradient at the normal face's integration point
-        const auto gradV = VelocityGradients::velocityGradient(fvGeometry, scvf, elemVolVars, this->elemBcTypes(), false);
-
-        GlobalPosition gradVn(0.0);
-        gradV.mv(scvf.unitOuterNormal(), gradVn);
-        const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-        const Scalar velocityGrad_ii = gradVn[scv.dofAxis()];
+        const auto velGradII = VelocityGradients::velocityGradII(fvGeometry, scvf, elemVolVars);
 
         static const bool enableUnsymmetrizedVelocityGradient
-        = getParamFromGroup<bool>(this->problem().paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
-        const Scalar factor = enableUnsymmetrizedVelocityGradient ? 1.0 : 2.0;
+            = getParamFromGroup<bool>(this->problem().paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
+        static const Scalar factor = enableUnsymmetrizedVelocityGradient ? 1.0 : 2.0;
 
         const auto mu = this->problem().effectiveViscosity(this->element(), this->fvGeometry(), this->scvFace());
-        result -= factor * mu * velocityGrad_ii * Extrusion::area(scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
+        result -= factor * mu * velGradII * Extrusion::area(scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor() * scvf.directionSign();
 
         static const bool enableDilatationTerm = getParamFromGroup<bool>(this->problem().paramGroup(), "FreeFlow.EnableDilatationTerm", false);
         if (enableDilatationTerm)
         {
-            Scalar divergence = 0.0;
+            Scalar divergence = velGradII;
             for (const auto& scv : scvs(fvGeometry))
             {
-                const auto frontalScvf  = *(scvfs(fvGeometry, scv).begin());
-                assert(frontalScvf.isFrontal() && !frontalScvf.boundary());
-                divergence += VelocityGradients::velocityGradII(fvGeometry, frontalScvf, elemVolVars);
+                const auto otherFrontalScvf = *(scvfs(fvGeometry, scv).begin());
+                assert(otherFrontalScvf.isFrontal() && !otherFrontalScvf.boundary());
+                if (otherFrontalScvf.index() != scvf.index())
+                    divergence += VelocityGradients::velocityGradII(fvGeometry, otherFrontalScvf, elemVolVars);
             }
-            // std::cout << "divergence at " << scvf.center() << " is " << divergence << std::endl;
-            // std::cout << std::setprecision(15) << "old term " << factor * mu * velocityGrad_ii * scvf.area() * elemVolVars[scvf.insideScvIdx()].extrusionFactor() << ", div term " << 2.0/3.0 * mu * divergence * scvf.directionSign() * scvf.area() * elemVolVars[scvf.insideScvIdx()].extrusionFactor() << std::endl;
+
             result += 2.0/3.0 * mu * divergence * scvf.directionSign() * Extrusion::area(scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
         }
-
 
         return result;
     }
