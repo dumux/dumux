@@ -316,13 +316,8 @@ public:
         paramCache.updateAll(fluidState);
         for (int phaseIdx = 0; phaseIdx < ModelTraits::numFluidPhases(); ++phaseIdx)
         {
-            Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
-            Scalar rhoMolar = FluidSystem::molarDensity(fluidState, paramCache, phaseIdx);
             Scalar mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
             Scalar h = EnergyVolVars::enthalpy(fluidState, paramCache, phaseIdx);
-
-            fluidState.setDensity(phaseIdx, rho);
-            fluidState.setMolarDensity(phaseIdx, rhoMolar);
             fluidState.setViscosity(phaseIdx, mu);
             fluidState.setEnthalpy(phaseIdx, h);
         }
