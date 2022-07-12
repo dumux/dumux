@@ -146,10 +146,12 @@ public:
                 {
                     if ( pc < invasionLeft )
                         return Kw1p;
+                    // the regularization interval is [pce, pce + reg]
                     else if ( pc < invasionRight )
                     {
                         auto entryKw = Transmissibility::entryWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
                         auto slopeEntry =  Transmissibility::dKwdPcEntry(element, fvGeometry, scvf, fluxVarsCache);
+                        // TODO: only the slope for circlular throat is 0.0!
                         const auto slopes =  std::array{0.0, slopeEntry};
                         auto optionalKnSpline_ = Spline<Scalar>(invasionLeft, invasionRight,// x0, x1
                                                                 Kw1p, entryKw, // y0, y1
@@ -161,21 +163,22 @@ public:
                 }
                 else // invaded in last time step
                 {
-                    if (pc > snapoffRight)
-                        return Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
-                    else if (pc > snapoffLeft)
+                    // the regularization interval is [pcs - reg, pcs]
+                    if (pc < snapoffLeft)
+                        return Kw1p;    // snapoff occurs
+                    else if (pc < snapoffRight) // reg interval
                     {
-                        // const auto slopeForPcEntry = Transmissibility::dKn_daNw_entry(element, fvGeometry, scvf, fluxVarsCache)*0.0;
-                        auto snapoffKn = Transmissibility::snapoffWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                        auto snapoffKw = Transmissibility::snapoffWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
                         auto slopeSnapoff = Transmissibility::dKwdPcSnapoff(element, fvGeometry, scvf, fluxVarsCache);
-                        const auto slopes =  std::array{slopeSnapoff, 0.0};
-                        auto optionalKnSpline_ = Spline<Scalar>(snapoffRight, snapoffLeft, // x0, x1
-                                                                snapoffKn, Kw1p, // y0, y1
+                        const auto slopes =  std::array{0.0, slopeSnapoff};
+                        auto optionalKnSpline_ = Spline<Scalar>(snapoffLeft, snapoffRight , // x0, x1
+                                                                Kw1p, snapoffKw, // y0, y1
                                                                 slopes[0], slopes[1]); // m0, m1
                         return optionalKnSpline_.eval(pc);
+
                     }
                     else
-                        return Kw1p;
+                        return Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache); //2p
                 }
             }
             else // non-wetting phase
@@ -184,6 +187,7 @@ public:
                     return 0.0;
                 if (!invaded)
                 {
+                    // the regularization interval is [pce, pce + reg]
                     if (pc < invasionLeft)
                         return 0.0;
                     else if (pc < invasionRight)
@@ -201,20 +205,21 @@ public:
                 }
                 else
                 {
-                    if (pc > snapoffRight)
-                        return Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
-                    else if (pc > snapoffLeft)
+                    // the regularzazion interval is [pcs - reg, pcs]
+                    if (pc < snapoffLeft)
+                        return 0.0;
+                    else if (pc < snapoffRight)
                     {
                         auto snapoffKn = Transmissibility::snapoffNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
                         auto slopeSnapoff = Transmissibility::dKndPcSnapoff(element, fvGeometry, scvf, fluxVarsCache);
                         const auto slopes =  std::array{slopeSnapoff, 0.0};
-                        auto optionalKnSpline_ = Spline<Scalar>(snapoffRight, snapoffLeft, // x0, x1
-                                                                snapoffKn, 0.0, // y0, y1
-                                                                slopes[0], slopes[1]); // m0, m1
+                        auto optionalKnSpline_ = Spline<Scalar>(snapoffLeft, snapoffRight, // x0, x1
+                                                                0.0, snapoffKn, // y0, y1
+                                                                slopes[1], slopes[0]); // m0, m1
                         return optionalKnSpline_.eval(pc);
                     }
                     else
-                        return 0.0;
+                        return  Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
                 }
             }
         }

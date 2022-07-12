@@ -50,12 +50,12 @@ public:
     TwoPFluxVariablesCache()
     {
         deltaPc_ = getParam<Scalar>("Regularization.DeltaPc", 1e-8);
-        regularizeWithSaturation_ = getParam<bool>("Regularization.RegularizeWithSaturation", false);
         regularPcInterval_ = getParam<Scalar>("Regularization.IntervalPc", 1e2);
         regularizationPosition_ = getParam<Scalar>("Regularization.Position", 1.0);
         regSaturationPercentage_ = getParam<Scalar>("Regularization.SwPercentage", 0.01);
     }
 
+#if REGULARIZEWITHPRESSURE
     template<class Problem, class Element, class FVElementGeometry,
              class ElementVolumeVariables, class SubControlVolumeFace>
     void update(const Problem& problem,
@@ -68,48 +68,19 @@ public:
         const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
         throatCrossSectionShape_ = fvGeometry.gridGeometry().throatCrossSectionShape(eIdx);
         throatShapeFactor_ = fvGeometry.gridGeometry().throatShapeFactor(eIdx);
-        pcEntry_ = problem.spatialParams().pcEntry(element, elemVolVars);
-        pcSnapoff_ = problem.spatialParams().pcSnapoff(element, elemVolVars);
-        const auto& spatialParams = problem.spatialParams();
-
-        pcMax_ = pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
-
-        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
-        auto pcInsidePore = insideVolVars.capillaryPressure();
-        auto pcOutsidePore = outsideVolVars.capillaryPressure();
-        const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
-
-        auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, outsideScv, elemSol);
-
-        if (  (!invaded &&  pcInsidePore > pcOutsidePore) || (invaded && pcInsidePore < pcOutsidePore) )
-            fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, insideScv, elemSol);
-
         if (!invaded)
             pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
         else
             pc_ = std::min(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+        pcEntry_ = problem.spatialParams().pcEntry(element, elemVolVars);
+        pcSnapoff_ = problem.spatialParams().pcSnapoff(element, elemVolVars);
 
-        const auto swEntry = fluidMatrixInteraction.sw(pcEntry_);
-        const auto swRegEntry = swEntry - regSaturationPercentage_;
-
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-        {
-            saturationEpsilon_[phaseIdx] = false;
-            if ( insideVolVars.pressure(phaseIdx) >  outsideVolVars.pressure(phaseIdx) && insideVolVars.saturation(phaseIdx) < 1e-3) //insideScv is upstream
-                saturationEpsilon_[phaseIdx] = true;
-            else if ( outsideVolVars.pressure(phaseIdx) >  insideVolVars.pressure(phaseIdx) && outsideVolVars.saturation(phaseIdx) < 1e-3) //outsideScv is upstream
-                saturationEpsilon_[phaseIdx] = true;
-        }
-
-        regularizationPcEntry_[0] = pcEntry_;
-        regularizationPcEntry_[1] = fluidMatrixInteraction.pc(swRegEntry);
-        const auto swSnapoff = fluidMatrixInteraction.sw(pcSnapoff_);
-        const auto swRegSnapoff = swSnapoff + regSaturationPercentage_;
-        regularizationPcSnapoff_[0] = fluidMatrixInteraction.pc(swRegSnapoff);
-        regularizationPcSnapoff_[1] = pcSnapoff_;
+        // calculate boundary pressure values for invasion event
+        regularizationPcEntry_[0] = pcEntry_ + regularPcInterval_*(regularizationPosition_-1);
+        regularizationPcEntry_[1] = pcEntry_ + regularPcInterval_*regularizationPosition_;
+        // calculate boundary pressure values for snap-off event
+        regularizationPcSnapoff_[0] = pcSnapoff_ - regularPcInterval_*regularizationPosition_;
+        regularizationPcSnapoff_[1] = pcSnapoff_ + regularPcInterval_*(1 - regularizationPosition_);
         regularizationPcEntry_[2] = regularizationPcEntry_[1] + deltaPc_;
         regularizationPcSnapoff_[2] = regularizationPcSnapoff_[1] + deltaPc_;
 
@@ -126,6 +97,7 @@ public:
 
         // get the non-wetting phase index
         using FluidSystem = typename ElementVolumeVariables::VolumeVariables::FluidSystem;
+        const auto& spatialParams = problem.spatialParams();
         nPhaseIdx_ = 1 - spatialParams.template wettingPhase<FluidSystem>(element, elemVolVars);
         // take the average surface tension of both adjacent pores TODO: is this correct?
         surfaceTension_ = 0.5*(elemVolVars[0].surfaceTension() + elemVolVars[1].surfaceTension());
@@ -182,6 +154,146 @@ public:
             );
         }
     }
+
+#else
+
+    template<class Problem, class Element, class FVElementGeometry,
+             class ElementVolumeVariables, class SubControlVolumeFace>
+    void update(const Problem& problem,
+                const Element& element,
+                const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars,
+                const SubControlVolumeFace& scvf,
+                bool invaded)
+    {
+        const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
+        throatCrossSectionShape_ = fvGeometry.gridGeometry().throatCrossSectionShape(eIdx);
+        throatShapeFactor_ = fvGeometry.gridGeometry().throatShapeFactor(eIdx);
+        pcEntry_ = problem.spatialParams().pcEntry(element, elemVolVars);
+        pcSnapoff_ = problem.spatialParams().pcSnapoff(element, elemVolVars);
+        // take the average surface tension of both adjacent pores TODO: is this correct?
+        surfaceTension_ = 0.5*(elemVolVars[0].surfaceTension() + elemVolVars[1].surfaceTension());
+
+        const auto& spatialParams = problem.spatialParams();
+        // get the non-wetting phase index
+        using FluidSystem = typename ElementVolumeVariables::VolumeVariables::FluidSystem;
+        nPhaseIdx_ = 1 - spatialParams.template wettingPhase<FluidSystem>(element, elemVolVars);
+
+        pcMax_ = pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+        auto pcInsidePore = insideVolVars.capillaryPressure();
+        auto pcOutsidePore = outsideVolVars.capillaryPressure();
+        const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
+
+        auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, outsideScv, elemSol);
+
+        if (  (!invaded &&  pcInsidePore > pcOutsidePore) || (invaded && pcInsidePore < pcOutsidePore) )
+            fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, insideScv, elemSol);
+
+        if (!invaded)
+            pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+        else
+            pc_ = std::min(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+
+        const auto swEntry = fluidMatrixInteraction.sw(pcEntry_);
+        // swRegEntry is the left interval boundary (smaller sw) corresponds to higher pc (right interval boundary)
+        const auto swRegEntry = swEntry - regSaturationPercentage_;
+
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            saturationEpsilon_[phaseIdx] = false;
+            if ( insideVolVars.pressure(phaseIdx) >  outsideVolVars.pressure(phaseIdx) && insideVolVars.saturation(phaseIdx) < 1e-3) //insideScv is upstream
+                saturationEpsilon_[phaseIdx] = true;
+            else if ( outsideVolVars.pressure(phaseIdx) >  insideVolVars.pressure(phaseIdx) && outsideVolVars.saturation(phaseIdx) < 1e-3) //outsideScv is upstream
+                saturationEpsilon_[phaseIdx] = true;
+        }
+
+        regularizationPcEntry_[0] = pcEntry_;                               // left pc boundary for reg inv
+        regularizationPcEntry_[1] = fluidMatrixInteraction.pc(swRegEntry);  // right pc boundary for reg inv
+
+        const auto swSnapoff = fluidMatrixInteraction.sw(pcSnapoff_);
+        // swRegSnapoff is the right interval boundary corresponds to the left pc boundary
+        const auto swRegSnapoff = swSnapoff + regSaturationPercentage_;
+        regularizationPcSnapoff_[0] = fluidMatrixInteraction.pc(swRegSnapoff);  // left pc boundary for reg snap
+        regularizationPcSnapoff_[1] = pcSnapoff_;                               // right pc boundary for reg snap
+        regularizationPcEntry_[2] = regularizationPcEntry_[1] + deltaPc_;      // use the right one plus epsilon for deravative
+        regularizationPcSnapoff_[2] = regularizationPcSnapoff_[1] + deltaPc_;
+
+        // since the interval is [pce, pce + pcreg], the derivative for Kn at left is known as 0
+        // Also for Kw, since the absolution value is Kw1p, the derivative left is also known as 0
+        // Therefore we need info on the right side (2p)
+        curvatureRadiusEntry_[0] = surfaceTension_/regularizationPcEntry_[1];
+        curvatureRadiusEntry_[1] = surfaceTension_/regularizationPcEntry_[2];
+
+
+        // the interval is [pcs - reg, pcs], for pc < pcs, Kn = 0 , Kw = Kw1p.
+        // Therefore we still need info on the pc right side (2p).
+        curvatureRadiusSnapoff_[0] = surfaceTension_/regularizationPcSnapoff_[1];
+        curvatureRadiusSnapoff_[1] = surfaceTension_/regularizationPcSnapoff_[2];
+
+        throatInscribedRadius_ = problem.spatialParams().throatInscribedRadius(element, elemVolVars);
+        throatLength_ = problem.spatialParams().throatLength(element, elemVolVars);
+        invaded_ = invaded;
+        poreToPoreDistance_ = element.geometry().volume();
+
+
+        const auto& cornerHalfAngles = spatialParams.cornerHalfAngles(element);
+
+        wettingLayerArea_.clear(); wettingLayerArea_.resize(cornerHalfAngles.size());
+        const Scalar totalThroatCrossSectionalArea = spatialParams.throatCrossSectionalArea(element, elemVolVars);
+        entryWettingLayerArea_.clear(); entryWettingLayerArea_.resize(cornerHalfAngles.size());
+        snapoffWettingLayerArea_.clear(); snapoffWettingLayerArea_.resize(cornerHalfAngles.size());
+        deltaPcEntryWettingLayerArea_.clear(); deltaPcEntryWettingLayerArea_.resize(cornerHalfAngles.size());
+        deltaPcSnapoffWettingLayerArea_.clear(); deltaPcSnapoffWettingLayerArea_.resize(cornerHalfAngles.size());
+
+        const Scalar theta = spatialParams.contactAngle(element, elemVolVars);
+        for (int i = 0; i< cornerHalfAngles.size(); ++i)
+        {
+            wettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(curvatureRadius(), theta, cornerHalfAngles[i]);
+            entryWettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(curvatureRadiusEntry(0), theta, cornerHalfAngles[i]);
+            deltaPcEntryWettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(curvatureRadiusEntry(1), theta, cornerHalfAngles[i]);
+            snapoffWettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(curvatureRadiusSnapoff(0), theta, cornerHalfAngles[i]);
+            deltaPcSnapoffWettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(curvatureRadiusSnapoff(1), theta, cornerHalfAngles[i]);
+        }
+
+        // make sure the wetting phase area does not exceed the total cross-section area
+        throatCrossSectionalArea_[wPhaseIdx()] = std::min(
+            std::accumulate(wettingLayerArea_.begin(), wettingLayerArea_.end(), 0.0),
+            totalThroatCrossSectionalArea
+        );
+        throatCrossSectionalArea_[nPhaseIdx()] = totalThroatCrossSectionalArea - throatCrossSectionalArea_[wPhaseIdx()];
+
+        // return wetting area for regularization boundary for invasion
+        regularBoundaryWettingThroatAreaEntry_[0] = std::min(std::accumulate(entryWettingLayerArea_.begin(), entryWettingLayerArea_.end(), 0.0), totalThroatCrossSectionalArea);
+        regularBoundaryWettingThroatAreaEntry_[1] = std::min(std::accumulate(deltaPcEntryWettingLayerArea_.begin(), deltaPcEntryWettingLayerArea_.end(), 0.0), totalThroatCrossSectionalArea);
+        regularBoundaryNonWettingThroatAreaEntry_[0] = totalThroatCrossSectionalArea - regularBoundaryWettingThroatAreaEntry_[0];
+        regularBoundaryNonWettingThroatAreaEntry_[1] = totalThroatCrossSectionalArea - regularBoundaryWettingThroatAreaEntry_[1];
+
+        // returns non wetting throat area for regularization boundary for snap-off
+        regularBoundaryWettingThroatAreaSnapoff_[0] = std::min(std::accumulate(snapoffWettingLayerArea_.begin(), snapoffWettingLayerArea_.end(), 0.0), totalThroatCrossSectionalArea);
+        regularBoundaryWettingThroatAreaSnapoff_[1] = std::min(std::accumulate(deltaPcSnapoffWettingLayerArea_.begin(), deltaPcSnapoffWettingLayerArea_.end(), 0.0), totalThroatCrossSectionalArea);
+        regularBoundaryNonWettingThroatAreaSnapoff_[0] = totalThroatCrossSectionalArea - regularBoundaryWettingThroatAreaSnapoff_[0];
+        regularBoundaryNonWettingThroatAreaSnapoff_[1] = totalThroatCrossSectionalArea - regularBoundaryWettingThroatAreaSnapoff_[1];
+
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            singlePhaseCache_.fill(problem, element, fvGeometry, scvf, elemVolVars, *this, phaseIdx);
+            nonWettingPhaseCache_.fill(problem, element, fvGeometry, scvf, elemVolVars, *this, phaseIdx);
+            wettingLayerCache_.fill(problem, element, fvGeometry, scvf, elemVolVars, *this, phaseIdx);
+        }
+
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            transmissibility_[phaseIdx] = AdvectionType::calculateTransmissibility(
+                problem, element, fvGeometry, scvf, elemVolVars, *this, phaseIdx
+            );
+        }
+    }
+#endif
 
     bool saturationEpsilon(const int phaseIdx) const
     { return saturationEpsilon_[phaseIdx]; }
@@ -388,19 +500,19 @@ public:
 private:
     Throat::Shape throatCrossSectionShape_;
     Scalar throatShapeFactor_;
-    std::array<Scalar, numPhases> transmissibility_;
-    std::array<Scalar, numPhases> throatCrossSectionalArea_;
-    std::array<bool, numPhases> saturationEpsilon_;
-
-    Scalar throatLength_;
-    Scalar throatInscribedRadius_;
     Scalar pcEntry_;
     Scalar pcSnapoff_;
     Scalar pc_;
     Scalar pcMax_;
-
     Scalar surfaceTension_;
+    Scalar throatLength_;
+    Scalar throatInscribedRadius_;
     bool invaded_;
+
+    std::array<Scalar, numPhases> transmissibility_;
+    std::array<Scalar, numPhases> throatCrossSectionalArea_;
+    std::array<bool, numPhases> saturationEpsilon_;
+
     NumCornerVector wettingLayerArea_;
 
     std::size_t nPhaseIdx_;
@@ -424,7 +536,6 @@ private:
     std::array<Scalar, 2> regularBoundaryWettingThroatAreaSnapoff_;
     std::array<Scalar, 2> regularBoundaryNonWettingThroatAreaEntry_;
     std::array<Scalar, 2> regularBoundaryNonWettingThroatAreaSnapoff_;
-    bool regularizeWithSaturation_;
 };
 
 
