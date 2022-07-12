@@ -570,16 +570,17 @@ private:
         if constexpr (CouplingManagerSupportsMultithreadedAssembly<CouplingManager>::value)
         {
             if (enableMultithreading_)
+            {
                 couplingManager_->assembleMultithreaded(domainId, assembleElement);
+                return;
+            }
         }
 
         // fallback for coupling managers that don't support multithreaded assembly (yet)
-        else
-        {
-            // let the local assembler add the element contributions
-            for (const auto& element : elements(gridView(domainId)))
-                assembleElement(element);
-        }
+        // or if multithreaded assembly is disabled
+        // let the local assembler add the element contributions
+        for (const auto& element : elements(gridView(domainId)))
+            assembleElement(element);
     }
 
     // get diagonal block pattern
