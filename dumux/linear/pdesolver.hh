@@ -148,6 +148,9 @@ public:
             std::cout.flush();
         }
 
+        std::cout << "Residual before update: " << this->assembler().residual().two_norm() << std::endl;
+        std::cout << "Update norm: " << deltaU.two_norm() << std::endl;
+
         // update the current solution and secondary variables
         updateTimer.start();
         uCurrentIter -= deltaU;
