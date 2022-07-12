@@ -130,6 +130,47 @@ public:
         return values;
     }
 
+    /*!
+     * \brief Returns the density at a given sub control volume face.
+     * \note  Overload this if a fixed density shall be prescribed.
+     */
+    Scalar density(const Element& element,
+                   const FVElementGeometry& fvGeometry,
+                   const SubControlVolumeFace& scvf) const
+    {
+        return density_;
+    }
+
+    /*!
+     * \brief Returns the density at a given sub control volume.
+     * \note  Overload this if a fixed density shall be prescribed.
+     */
+    Scalar density(const Element& element,
+                   const SubControlVolume& scv,
+                   const bool isPreviousTimeStep = false) const
+    {
+        return density_;
+    }
+
+    auto insideAndOutsideDensity(const Element& element,
+                                 const FVElementGeometry& fvGeometry,
+                                 const SubControlVolumeFace& scvf,
+                                 const bool isPreviousTimeStep = false) const
+    {
+        return std::make_pair(density_, density_);
+    }
+
+    /*!
+     * \brief Returns the effective dynamic viscosity at a given sub control volume face.
+     * \note  Overload this if a fixed viscosity shall be prescribed.
+     */
+    Scalar effectiveViscosity(const Element& element,
+                              const FVElementGeometry& fvGeometry,
+                              const SubControlVolumeFace& scvf) const
+    {
+        return viscosity_;
+    }
+
 private:
 
     bool isInlet_(const GlobalPosition& globalPos) const
@@ -140,6 +181,8 @@ private:
 
     static constexpr Scalar eps_ = 1e-8;
     Scalar deltaP_;
+    Scalar density_ = 1.0;
+    Scalar viscosity_ = 1.0;
 };
 
 } // end namespace Dumux
