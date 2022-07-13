@@ -308,12 +308,19 @@ public:
     }
 
     //! Create the sub control volume face geometries on the boundary
+    ScvfCornerStorage getBoundaryScvfCorners(unsigned int localFacetIndex,
+                                             unsigned int) const
+    {
+        return ScvfCornerStorage{{ geo_.corner(localFacetIndex) }};
+    }
+
+    //! Create the sub control volume face geometries on the boundary
+    [[deprecated("Will be removed after release 3.6. Use other signature.")]]
     ScvfCornerStorage getBoundaryScvfCorners(const Intersection& is,
                                              const typename Intersection::Geometry& geometry,
                                              unsigned int indexInIntersection) const
     {
-        const auto localFacetIndex = is.indexInInside();
-        return ScvfCornerStorage{{ geo_.corner(localFacetIndex) }};
+        return getBoundaryScvfCorners(is.indexInInside(), indexInIntersection);
     }
 
     //! get scvf normal vector
@@ -408,18 +415,24 @@ public:
     }
 
     //! Create the sub control volume face geometries on the boundary
-    ScvfCornerStorage getBoundaryScvfCorners(const Intersection& is,
-                                             const typename Intersection::Geometry& isGeometry,
-                                             unsigned int indexInIntersection) const
+    ScvfCornerStorage getBoundaryScvfCorners(unsigned int localFacetIndex,
+                                             unsigned int indexInFacet) const
     {
-        const auto localFacetIndex = is.indexInInside();
-        constexpr int facetCodim = 1;
-
         // we have to use the corresponding facet geometry as the intersection geometry
         // might be rotated or flipped. This makes sure that the corners (dof location)
         // and corresponding scvfs are sorted in the same way
         using Corners = Detail::ScvCorners<Dune::GeometryTypes::line>;
-        return Detail::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo_, localFacetIndex, facetCodim, Corners::keys[indexInIntersection]);
+        constexpr int facetCodim = 1;
+        return Detail::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo_, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
+    }
+
+    //! Create the sub control volume face geometries on the boundary
+    [[deprecated("Will be removed after release 3.6. Use other signature.")]]
+    ScvfCornerStorage getBoundaryScvfCorners(const Intersection& is,
+                                             const typename Intersection::Geometry& isGeometry,
+                                             unsigned int indexInIntersection) const
+    {
+        return getBoundaryScvfCorners(is.indexInInside(), indexInIntersection);
     }
 
     //! get scvf normal vector for dim == 2, dimworld == 3
@@ -569,11 +582,9 @@ public:
     }
 
     //! Create the sub control volume face geometries on the boundary
-    ScvfCornerStorage getBoundaryScvfCorners(const Intersection& is,
-                                             const typename Intersection::Geometry& isGeometry,
-                                             unsigned int indexInIntersection) const
+    ScvfCornerStorage getBoundaryScvfCorners(unsigned localFacetIndex,
+                                             unsigned int indexInFacet) const
     {
-        const auto localFacetIndex = is.indexInInside();
         constexpr int facetCodim = 1;
 
         // we have to use the corresponding facet geometry as the intersection geometry
@@ -584,17 +595,26 @@ public:
         if (type == Dune::GeometryTypes::triangle)
         {
             using Corners = Detail::ScvCorners<Dune::GeometryTypes::triangle>;
-            return Detail::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo_, localFacetIndex, facetCodim, Corners::keys[indexInIntersection]);
+            return Detail::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo_, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
         }
         else if (type == Dune::GeometryTypes::quadrilateral)
         {
             using Corners = Detail::ScvCorners<Dune::GeometryTypes::quadrilateral>;
-            return Detail::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo_, localFacetIndex, facetCodim, Corners::keys[indexInIntersection]);
+            return Detail::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo_, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
         }
         else
             DUNE_THROW(Dune::NotImplemented, "Box boundary scvf geometries for dim=" << dim
                                                             << " dimWorld=" << dimWorld
                                                             << " type=" << type);
+    }
+
+    //! Create the sub control volume face geometries on the boundary
+    [[deprecated("Will be removed after release 3.6. Use other signature.")]]
+    ScvfCornerStorage getBoundaryScvfCorners(const Intersection& is,
+                                             const typename Intersection::Geometry& isGeometry,
+                                             unsigned int indexInIntersection) const
+    {
+        return getBoundaryScvfCorners(is.indexInInside(), indexInIntersection);
     }
 
     //! get scvf normal vector
