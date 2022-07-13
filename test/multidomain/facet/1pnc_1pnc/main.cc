@@ -191,6 +191,9 @@ int main(int argc, char** argv)
     using NewtonSolver = Dumux::MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     auto newtonSolver = std::make_shared<NewtonSolver>(assembler, linearSolver, couplingManager);
 
+    // switch to write intermediate time step results
+    bool writeOutputForIntermediateTimeSteps = getParam<bool>("Vtk.WriteOutputForIntermediateTimeSteps", false);
+
     // time loop
     timeLoop->start(); do
     {
@@ -212,8 +215,12 @@ int main(int argc, char** argv)
         timeLoop->setTimeStepSize(newtonSolver->suggestTimeStepSize(timeLoop->timeStepSize()));
 
         // write vtk output
-        bulkVtkWriter.write(timeLoop->time());
-        facetVtkWriter.write(timeLoop->time());
+        if (writeOutputForIntermediateTimeSteps || timeLoop->finished())
+        {
+            bulkVtkWriter.write(timeLoop->time());
+            facetVtkWriter.write(timeLoop->time());
+        }
+
     } while (!timeLoop->finished());
 
     return 0;
