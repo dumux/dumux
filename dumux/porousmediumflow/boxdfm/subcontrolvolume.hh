@@ -144,7 +144,7 @@ public:
     , facetIdx_(elemLocalFacetIdx)
     {
         // copy corners
-        auto corners = geometryHelper.getBoundaryScvfCorners(intersection, isGeometry, indexInIntersection);
+        auto corners = geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), indexInIntersection);
         const auto numCorners = corners.size();
         corners_.resize(numCorners);
         for (unsigned int i = 0; i < numCorners; ++i)

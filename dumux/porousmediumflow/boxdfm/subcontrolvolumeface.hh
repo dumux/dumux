@@ -124,7 +124,7 @@ public:
                                LocalIndexType indexInIntersection,
                                GridIndexType scvfIndex,
                                std::vector<LocalIndexType>&& scvIndices)
-    : corners_(geometryHelper.getBoundaryScvfCorners(intersection, isGeometry, indexInIntersection))
+    : corners_(geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), indexInIntersection))
     , center_(0.0)
     , unitOuterNormal_(intersection.centerUnitOuterNormal())
     , area_(geometryHelper.scvfArea(corners_))
@@ -149,7 +149,7 @@ public:
                                GridIndexType scvfIndex,
                                std::vector<LocalIndexType>&& scvIndices,
                                bool boundary)
-    : corners_(geometryHelper.getFractureScvfCorners(intersection, isGeometry, indexInIntersection))
+    : corners_(geometryHelper.getFractureScvfCorners(intersection.indexInInside(), indexInIntersection))
     , center_(0.0)
     , scvfIndex_(scvfIndex)
     , scvIndices_(std::move(scvIndices))
