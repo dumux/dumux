@@ -76,12 +76,15 @@ public:
     using ParentType::ParentType;
 
     //! Get the corners of the (d-1)-dimensional fracture scvf
-    //! The second argument is for compatibility reasons with the 3d case!
     ScvfCornerStorage getFractureScvfCorners(const Intersection& is,
                                              const typename Intersection::Geometry& isGeom,
                                              unsigned int idxOnIntersection = 0) const
-    { return ScvfCornerStorage({isGeom.center()}); }
-
+    {
+        const auto localFacetIndex = is.indexInInside();
+        const auto& geo = this->elementGeometry();
+        const auto ref = referenceElement(geo);
+        return ScvfCornerStorage({ geo.global(ref.position(localFacetIndex, 1)) });
+    }
 
     //! get fracture scvf normal vector (simply the unit vector of the edge)
     //! The third argument is for compatibility reasons with the 3d case!
@@ -123,62 +126,29 @@ public:
                                              const typename Intersection::Geometry& isGeom,
                                              unsigned int edgeIndexInIntersection) const
     {
+        const auto localFacetIndex = is.indexInInside();
+        constexpr int facetCodim = 1;
+
+        // we have to use the corresponding facet geometry as the intersection geometry
+        // might be rotated or flipped. This makes sure that the corners (dof location)
+        // and corresponding scvfs are sorted in the same way
+        using Dune::referenceElement;
         const auto& geo = this->elementGeometry();
-        const auto refElement = referenceElement(geo);
-        const auto faceRefElem = referenceElement(isGeom);
-
-        // create point vector for this geometry
-        typename ScvfType::Traits::GlobalPosition pi[9];
-
-        // the facet center
-        pi[0] = isGeom.center();
-
-        // facet edge midpoints
-        const auto idxInInside = is.indexInInside();
-        for (int i = 0; i < faceRefElem.size(1); ++i)
+        const auto type = referenceElement(geo).type(localFacetIndex, facetCodim);
+        if (type == Dune::GeometryTypes::triangle)
         {
-            const auto edgeIdxLocal = refElement.subEntity(idxInInside, 1, i, dim-1);
-            pi[i+1] = geo.global(refElement.position(edgeIdxLocal, dim-1));
+            using Corners = Detail::ScvfCorners<Dune::GeometryTypes::triangle>;
+            return Detail::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo, localFacetIndex, facetCodim, Corners::keys[edgeIndexInIntersection]);
         }
-
-        // proceed according to number of corners
-        const auto corners = isGeom.corners();
-        switch (corners)
+        else if (type == Dune::GeometryTypes::quadrilateral)
         {
-            case 3: // triangle
-            {
-                //! Only build the maps the first time we encounter a triangle
-                static const std::uint8_t fo = 1; //!< face offset in point vector p
-                static const std::uint8_t map[3][2] =
-                {
-                    {fo+0, 0},
-                    {0, fo+1},
-                    {fo+2, 0}
-                };
-
-                return ScvfCornerStorage{ {pi[map[edgeIndexInIntersection][0]],
-                                           pi[map[edgeIndexInIntersection][1]]} };
-            }
-            case 4: // quadrilateral
-            {
-                //! Only build the maps the first time we encounter a quadrilateral
-                static const std::uint8_t fo = 1; //!< face offset in point vector p
-                static const std::uint8_t map[4][2] =
-                {
-                    {0, fo+0},
-                    {fo+1, 0},
-                    {fo+2, 0},
-                    {0, fo+3}
-                };
-
-                return ScvfCornerStorage{ {pi[map[edgeIndexInIntersection][0]],
-                                           pi[map[edgeIndexInIntersection][1]]} };
+            using Corners = Detail::ScvfCorners<Dune::GeometryTypes::quadrilateral>;
+            return Detail::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo, localFacetIndex, facetCodim, Corners::keys[edgeIndexInIntersection]);
         }
-        default:
+        else
             DUNE_THROW(Dune::NotImplemented, "Box fracture scvf geometries for dim=" << dim
-                                                                << " dimWorld=" << dimWorld
-                                                                << " corners=" << corners);
-        }
+                                                            << " dimWorld=" << dimWorld
+                                                            << " type=" << type);
     }
 
     //! get fracture scvf normal vector
