@@ -75,6 +75,10 @@ public:
         useFixedPressureAndSaturationBoundary_ = getParam<bool>("Problem.UseFixedPressureAndSaturationBoundary", false);
         pc_ = getParam<Scalar>("Problem.CapillaryPressure");
         source_ = getParam<Scalar>("Problem.Source");
+#if !ISOTHERMAL
+        inletTemperature_ = getParam<Scalar>("Problem.InletTemperature", 288.15);
+        outletTemperature_ = getParam<Scalar>("Problem.OutletTemperature", 283.15);
+#endif
     }
 
     /*!
@@ -146,10 +150,10 @@ public:
         if (isInletPore_(scv))
         {
             values.setState(Indices::bothPhases);
-            values[Indices::temperatureIdx] = 273.15 + 15;
+            values[Indices::temperatureIdx] = inletTemperature_;
         }
         else
-            values[Indices::temperatureIdx] = 273.15 + 10;
+            values[Indices::temperatureIdx] = outletTemperature_;
 #endif
         return values;
     }
@@ -232,6 +236,10 @@ private:
     bool useFixedPressureAndSaturationBoundary_;
     Scalar pc_;
     Scalar source_;
+#if !ISOTHERMAL
+    Scalar inletTemperature_;
+    Scalar outletTemperature_;
+#endif
 };
 } //end namespace Dumux
 

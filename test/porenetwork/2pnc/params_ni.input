@@ -3,7 +3,7 @@ DtInitial = 1e-5 # [s]
 TEnd = 0.01 # [s]
 
 [Grid]
-File = ../1p/grids/pnm_converted.dgf
+File = ./grids/1dGrid.dgf
 PoreGeometry = Cube
 ThroatCrossSectionShape = Square
 
@@ -14,6 +14,8 @@ CapillaryPressure = 5000
 EnableGravity = false
 UseFixedPressureAndSaturationBoundary = false
 Source = 1e-2
+InletTemperature = 288.15
+OutletTemperature = 283.15
 
 [Vtk]
 AddVelocity = 1
