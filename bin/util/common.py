@@ -273,7 +273,7 @@ def hasUntrackedFiles(pathToRepo="."):
 
 def isPersistentBranch(branchName):
     """Check if a branch is what we consider persistent (default protected branches)"""
-    if branchName == "origin/master":
+    if branchName in ("origin/master", "origin/main"):
         return True
     if branchName.startswith("origin/releases/"):
         return True
