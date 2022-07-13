@@ -76,14 +76,21 @@ public:
     using ParentType::ParentType;
 
     //! Get the corners of the (d-1)-dimensional fracture scvf
+    ScvfCornerStorage getFractureScvfCorners(unsigned int localFacetIndex,
+                                             unsigned int) const
+    {
+        const auto& geo = this->elementGeometry();
+        const auto ref = referenceElement(geo);
+        return ScvfCornerStorage({ geo.global(ref.position(localFacetIndex, 1)) });
+    }
+
+    //! Get the corners of the (d-1)-dimensional fracture scvf
+    [[deprecated("Will be removed after release 3.6. Use other signature.")]]
     ScvfCornerStorage getFractureScvfCorners(const Intersection& is,
                                              const typename Intersection::Geometry& isGeom,
                                              unsigned int idxOnIntersection = 0) const
     {
-        const auto localFacetIndex = is.indexInInside();
-        const auto& geo = this->elementGeometry();
-        const auto ref = referenceElement(geo);
-        return ScvfCornerStorage({ geo.global(ref.position(localFacetIndex, 1)) });
+        return getFractureScvfCorners(is.indexInInside(), idxOnIntersection);
     }
 
     //! get fracture scvf normal vector (simply the unit vector of the edge)
@@ -122,11 +129,9 @@ public:
     using ParentType::ParentType;
 
     //! Create the sub control volume face geometries on an intersection marked as fracture
-    ScvfCornerStorage getFractureScvfCorners(const Intersection& is,
-                                             const typename Intersection::Geometry& isGeom,
-                                             unsigned int edgeIndexInIntersection) const
+    ScvfCornerStorage getFractureScvfCorners(unsigned int localFacetIndex,
+                                             unsigned int indexInFacet) const
     {
-        const auto localFacetIndex = is.indexInInside();
         constexpr int facetCodim = 1;
 
         // we have to use the corresponding facet geometry as the intersection geometry
@@ -138,17 +143,26 @@ public:
         if (type == Dune::GeometryTypes::triangle)
         {
             using Corners = Detail::ScvfCorners<Dune::GeometryTypes::triangle>;
-            return Detail::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo, localFacetIndex, facetCodim, Corners::keys[edgeIndexInIntersection]);
+            return Detail::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
         }
         else if (type == Dune::GeometryTypes::quadrilateral)
         {
             using Corners = Detail::ScvfCorners<Dune::GeometryTypes::quadrilateral>;
-            return Detail::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo, localFacetIndex, facetCodim, Corners::keys[edgeIndexInIntersection]);
+            return Detail::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
         }
         else
             DUNE_THROW(Dune::NotImplemented, "Box fracture scvf geometries for dim=" << dim
                                                             << " dimWorld=" << dimWorld
                                                             << " type=" << type);
+    }
+
+    //! Create the sub control volume face geometries on an intersection marked as fracture
+    [[deprecated("Will be removed after release 3.6. Use other signature.")]]
+    ScvfCornerStorage getFractureScvfCorners(const Intersection& is,
+                                             const typename Intersection::Geometry& isGeom,
+                                             unsigned int edgeIndexInIntersection) const
+    {
+        return getFractureScvfCorners(is.indexInInside(), edgeIndexInIntersection);
     }
 
     //! get fracture scvf normal vector
