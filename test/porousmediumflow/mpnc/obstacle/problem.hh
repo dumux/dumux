@@ -270,26 +270,11 @@ private:
 
         // make the fluid state consistent with local thermodynamic
         // equilibrium using the initialhelper that selects the correct constraintsolver
-        using InitialHelper = MPNCInitialConditionHelper<Scalar, FluidSystem>;
 
         ParameterCache paramCache;
-        InitialHelper::solveFluidStateForMPNCInitialCondition(fs, paramCache, refPhaseIdx);
 
-
-        ///////////
-        // assign the primary variables
-        ///////////
-
-        // all N component fugacities
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            values[fug0Idx + compIdx] = fs.fugacity(refPhaseIdx, compIdx);
-
-        // first M - 1 saturations
-        for (int phaseIdx = 0; phaseIdx < numPhases - 1; ++phaseIdx)
-            values[s0Idx + phaseIdx] = fs.saturation(phaseIdx);
-
-        // first pressure
-        values[p0Idx] = fs.pressure(/*phaseIdx=*/0);
+        using InitialHelper = MPNCInitialConditionHelper<Scalar, PrimaryVariables, FluidSystem, ModelTraits>;
+        values = InitialHelper::solveForPrimaryVariables(fs, paramCache, MPNCInitialConditions::NotAllPhasesPresent{.refPhaseIdx = refPhaseIdx});
         return values;
     }
 

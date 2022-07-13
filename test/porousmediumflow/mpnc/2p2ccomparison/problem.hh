@@ -200,25 +200,11 @@ private:
         fs.setPressure(liquidPhaseIdx,
                        fs.pressure(gasPhaseIdx) + pc[liquidPhaseIdx] - pc[gasPhaseIdx]);
 
-        using InitialHelper = MPNCInitialConditionHelper<Scalar, FluidSystem>;
-
         ParameterCache paramCache;
-        InitialHelper::solveFluidStateForMPNCInitialCondition(fs, paramCache, 0);
 
-        ///////////
-        // assign the primary variables
-        ///////////
+        using InitialHelper = MPNCInitialConditionHelper<Scalar, PrimaryVariables, FluidSystem, GetPropType<TypeTag, Properties::ModelTraits>>;
+        values = InitialHelper::solveForPrimaryVariables(fs, paramCache, MPNCInitialConditions::AllPhasesPresent{.refPhaseIdx = 0});
 
-        // all N component fugacities
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            values[fug0Idx + compIdx] = fs.fugacity(gasPhaseIdx, compIdx);
-
-        // first M - 1 saturations
-        for (int phaseIdx = 0; phaseIdx < numPhases - 1; ++phaseIdx)
-            values[s0Idx + phaseIdx] = fs.saturation(phaseIdx);
-
-        // first pressure
-        values[p0Idx] = fs.pressure(/*phaseIdx=*/0);
         return values;
     }
 

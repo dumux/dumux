@@ -36,8 +36,7 @@
 #include <dumux/common/numeqvector.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/mpnc/pressureformulation.hh>
-#include <dumux/material/constraintsolvers/computefromreferencephase.hh>
+#include <dumux/porousmediumflow/mpnc/initialconditionhelper.hh>
 
 namespace Dumux {
 
@@ -88,11 +87,6 @@ class CombustionProblemOneComponent: public PorousMediumFlowProblem<TypeTag>
     enum {nCompIdx = FluidSystem::N2Idx};
 
     static constexpr auto numPhases = ModelTraits::numFluidPhases();
-
-    // formulations
-    static constexpr auto pressureFormulation = ModelTraits::pressureFormulation();
-    static constexpr auto mostWettingFirst = MpNcPressureFormulation::mostWettingFirst;
-    static constexpr auto leastWettingFirst = MpNcPressureFormulation::leastWettingFirst;
 
 public:
     CombustionProblemOneComponent(std::shared_ptr<const GridGeometry> gridGeometry)
@@ -293,13 +287,6 @@ private:
 
         S[nPhaseIdx] = 1. - S[wPhaseIdx];
 
-        //////////////////////////////////////
-        // Set saturation
-        //////////////////////////////////////
-        for (int i = 0; i < numPhases - 1; ++i) {
-            priVars[s0Idx + i] = S[i];
-        }
-
         FluidState fluidState;
 
         Scalar thisTemperature = TInitial_;
@@ -312,11 +299,6 @@ private:
             fluidState.setTemperature(thisTemperature );
 
         }
-        //////////////////////////////////////
-        // Set temperature
-        //////////////////////////////////////
-        priVars[energyEq0Idx] = thisTemperature;
-        priVars[energyEqSolidIdx] = thisTemperature;
 
         //obtain pc according to saturation
         const int wettingPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
@@ -331,22 +313,6 @@ private:
 
         for (int phaseIdx=0; phaseIdx<numPhases; phaseIdx++)
         fluidState.setPressure(phaseIdx, p[phaseIdx]);
-
-        //////////////////////////////////////
-        // Set pressure
-        //////////////////////////////////////
-        if(pressureFormulation == mostWettingFirst) {
-            // This means that the pressures are sorted from the most wetting to the least wetting-1 in the primary variables vector.
-            // For two phases this means that there is one pressure as primary variable: pw
-            priVars[p0Idx] = p[wPhaseIdx];
-        }
-        else if(pressureFormulation == leastWettingFirst) {
-            // This means that the pressures are sorted from the least wetting to the most wetting-1 in the primary variables vector.
-            // For two phases this means that there is one pressure as primary variable: pn
-            priVars[p0Idx] = p[nPhaseIdx];
-        }
-        else
-            DUNE_THROW(Dune::InvalidStateException, "CombustionProblemOneComponent does not support the chosen pressure formulation.");
 
         fluidState.setMoleFraction(wPhaseIdx, wCompIdx, 1.0);
         fluidState.setMoleFraction(wPhaseIdx, nCompIdx, 0.0);
@@ -363,19 +329,17 @@ private:
             refPhaseIdx = wPhaseIdx;
         }
 
-        // obtain fugacities
-        using ComputeFromReferencePhase = ComputeFromReferencePhase<Scalar, FluidSystem>;
         ParameterCache paramCache;
-        ComputeFromReferencePhase::solve(fluidState,
-                                         paramCache,
-                                         refPhaseIdx);
+        // obtain fugacities and the primary variables for chemical equilibrium
+        using InitialHelper = MPNCInitialConditionHelper<Scalar, PrimaryVariables, FluidSystem, ModelTraits>;
+        priVars = InitialHelper::solveForPrimaryVariables(fluidState, paramCache, MPNCInitialConditions::NotAllPhasesPresent{.refPhaseIdx = refPhaseIdx});
 
         //////////////////////////////////////
-        // Set fugacities
+        // additionally set the temperature for thermal non-equilibrium for the phases
         //////////////////////////////////////
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-            priVars[conti00EqIdx + compIdx] = fluidState.fugacity(refPhaseIdx,compIdx);
-        }
+        priVars[energyEq0Idx] = thisTemperature;
+        priVars[energyEqSolidIdx] = thisTemperature;
+
         return priVars;
     }
 

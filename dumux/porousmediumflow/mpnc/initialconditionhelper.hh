@@ -18,54 +18,107 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup NavierStokesModel
- * \brief Navier Stokes scalar boundary flux helper
+ * \ingroup MPNCModel
+ * \brief A helper function to get the correct initial conditions by updating the fluidstate for the MPNC model
  */
 #ifndef DUMUX_MPNC_INITIALCONDITION_HELPER_HH
 #define DUMUX_MPNC_INITIALCONDITION_HELPER_HH
 
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
+
 namespace Dumux {
 
-/*!
- * \ingroup MPNCModel
- * \brief A helper function to get the correct initial conditions by updating the fluidstate for the MPNC model
- */
-template <class Scalar, class FluidSystem>
+namespace MPNCInitialConditions{
+
+    struct AllPhasesPresent { int refPhaseIdx; };
+    struct NotAllPhasesPresent { int refPhaseIdx; };
+}
+
+template <class Scalar, class PrimaryVariables, class FluidSystem, class ModelTraits>
 struct MPNCInitialConditionHelper
 {
 
-    /*!
-     * \brief Return the area-specific outflow fluxes for all scalar balance equations.
-     *        This should only be used of flow reversal does never occur.
-     *        A (deactivable) warning is emitted otherwise.
-     */
-    template<class FluidState, class ParameterCache>
-    static void solveFluidStateForMPNCInitialCondition(FluidState &fluidState,
-                                                       ParameterCache &paramCache,
-                                                       int refPhaseIdx)
+    template<class FluidState, class ParamCache>
+    static auto solveForPrimaryVariables(FluidState& fluidState,
+                                         ParamCache& paramCache,
+                                         const MPNCInitialConditions::AllPhasesPresent& allPhases)
     {
-        if (fluidState.saturation(0) < 1.0 && fluidState.saturation(0) > 0)
-        {
-            // make the fluid state consistent with local thermodynamic
-            // equilibrium
-            using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
 
-            ParameterCache paramCache;
-            MiscibleMultiPhaseComposition::solve(fluidState, paramCache);
-        }
-        else
-        {
-            using ComputeFromReferencePhase = ComputeFromReferencePhase<Scalar, FluidSystem>;
+        // make the fluid state consistent with local thermodynamic equilibrium
+        using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
 
-            ParameterCache paramCache;
-            ComputeFromReferencePhase::solve(fluidState,
-                                             paramCache,
-                                             refPhaseIdx);
-        }
+        MiscibleMultiPhaseComposition::solve(fluidState, paramCache, allPhases.refPhaseIdx);
+
+        static constexpr auto numComponents = FluidSystem::numComponents;
+        static constexpr auto numPhases = FluidSystem::numPhases;
+        static constexpr auto fug0Idx = ModelTraits::Indices::fug0Idx;
+        static constexpr auto s0Idx = ModelTraits::Indices::s0Idx;
+        static constexpr auto p0Idx = ModelTraits::Indices::p0Idx;
+
+        PrimaryVariables values(0.0);
+        // all N component fugacities
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                values[fug0Idx + compIdx] = fluidState.fugacity(0, compIdx);
+
+            // first M - 1 saturations
+            for (int phaseIdx = 0; phaseIdx < numPhases - 1; ++phaseIdx)
+                values[s0Idx + phaseIdx] = fluidState.saturation(phaseIdx);
+
+        static constexpr auto pressureFormulation = ModelTraits::pressureFormulation();
+            // first pressure
+            if(pressureFormulation == MpNcPressureFormulation::mostWettingFirst)
+                values[p0Idx] = fluidState.pressure(/*phaseIdx=*/0);
+            else if(pressureFormulation == MpNcPressureFormulation::leastWettingFirst)
+                values[p0Idx] = fluidState.pressure(numPhases-1);
+            else
+                DUNE_THROW(Dune::InvalidStateException,"unknown pressure formulation");
+            return values;
+
     }
+
+    template<class FluidState, class ParamCache>
+    static auto solveForPrimaryVariables(FluidState& fluidState,
+                                         ParamCache& paramCache,
+                                         const MPNCInitialConditions::NotAllPhasesPresent& notAllPhases)
+    {
+
+        // make the fluid state consistent with local thermodynamic equilibrium
+        using ComputeFromReferencePhase = ComputeFromReferencePhase<Scalar, FluidSystem>;
+
+        ComputeFromReferencePhase::solve(fluidState,
+                                     paramCache,
+                                     notAllPhases.refPhaseIdx);
+
+        static constexpr auto numComponents = FluidSystem::numComponents;
+        static constexpr auto numPhases = FluidSystem::numPhases;
+        static constexpr auto fug0Idx = ModelTraits::Indices::fug0Idx;
+        static constexpr auto s0Idx = ModelTraits::Indices::s0Idx;
+        static constexpr auto p0Idx = ModelTraits::Indices::p0Idx;
+
+        PrimaryVariables values(0.0);
+        // all N component fugacities
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                values[fug0Idx + compIdx] = fluidState.fugacity(0, compIdx);
+
+            // first M - 1 saturations
+            for (int phaseIdx = 0; phaseIdx < numPhases - 1; ++phaseIdx)
+                values[s0Idx + phaseIdx] = fluidState.saturation(phaseIdx);
+
+            static constexpr auto pressureFormulation = ModelTraits::pressureFormulation();
+            // first pressure
+            if(pressureFormulation == MpNcPressureFormulation::mostWettingFirst)
+                values[p0Idx] = fluidState.pressure(/*phaseIdx=*/0);
+            else if(pressureFormulation == MpNcPressureFormulation::leastWettingFirst)
+                values[p0Idx] = fluidState.pressure(numPhases-1);
+            else
+                DUNE_THROW(Dune::InvalidStateException,"unknown pressure formulation");
+            return values;
+
+    }
+
 };
+
 
 } // end namespace Dumux
 

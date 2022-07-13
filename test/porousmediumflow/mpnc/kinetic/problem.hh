@@ -42,10 +42,8 @@
 
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/mpnc/pressureformulation.hh>
-#include <dumux/porousmediumflow/mpnc/initialconditionhelper.hh>
 #include <dumux/material/binarycoefficients/h2o_n2.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
-
 
 namespace Dumux {
 
@@ -97,7 +95,7 @@ class EvaporationAtmosphereProblem: public PorousMediumFlowProblem<TypeTag>
     enum { numEnergyEqSolid = ModelTraits::numEnergyEqSolid() };
 
     static constexpr bool enableChemicalNonEquilibrium = getPropValue<TypeTag, Properties::EnableChemicalNonEquilibrium>();
-    using InitialHelper = MPNCInitialConditionHelper<Scalar, FluidSystem>;
+    using ConstraintSolver = MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
 
     // formulations
     static constexpr auto pressureFormulation = ModelTraits::pressureFormulation();
@@ -207,10 +205,8 @@ public:
         fluidState.setTemperature(liquidPhaseIdx, TInitial_ ); // this value is a good one, TInject does not work
 
         // This solves the system of equations defining x=x(p,T)
-        using ConstraintSolver = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
         ConstraintSolver::solve(fluidState,
                                 dummyCache) ;
-
 
         // Now let's make the air phase less than fully saturated with water
         fluidState.setMoleFraction(gasPhaseIdx, wCompIdx, fluidState.moleFraction(gasPhaseIdx, wCompIdx)*percentOfEquil_ ) ;
@@ -356,8 +352,10 @@ private:
         for (int phaseIdx=0; phaseIdx<numPhases; phaseIdx++)
              equilibriumFluidState.setPressure(phaseIdx, p[phaseIdx]);
 
-        ParameterCache paramCache;
-        InitialHelper::solveFluidStateForMPNCInitialCondition(equilibriumFluidState, paramCache, 0);
+         // This solves the system of equations defining x=x(p,T)
+        ParameterCache dummyCache;
+        ConstraintSolver::solve(equilibriumFluidState,
+                                dummyCache) ;
 
         FluidState dryFluidState(equilibriumFluidState);
         // Now let's make the air phase less than fully saturated with vapor
