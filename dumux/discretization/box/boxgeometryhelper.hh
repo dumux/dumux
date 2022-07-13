@@ -231,6 +231,7 @@ S keyToCornerStorageImpl(const Geo& geo, const KeyArray& key, std::index_sequenc
 {
     using Dune::referenceElement;
     const auto ref = referenceElement(geo);
+    // key is a pair of a local sub-entity index (first) and the sub-entity's codim (second)
     return { geo.global(ref.position(key[I].first, key[I].second))... };
 }
 
@@ -239,6 +240,26 @@ template<class S, class Geo, class T, std::size_t N, class Indices = std::make_i
 S keyToCornerStorage(const Geo& geo, const std::array<T, N>& key)
 {
     return keyToCornerStorageImpl<S>(geo, key, Indices{});
+}
+
+// convert key array to global corner storage
+// for the i-th sub-entity of codim c (e.g. the i-th facet/codim-1-entity for boundaries)
+template<class S, class Geo, class KeyArray, std::size_t... I>
+S subEntityKeyToCornerStorageImpl(const Geo& geo, unsigned int i, unsigned int c, const KeyArray& key, std::index_sequence<I...>)
+{
+    using Dune::referenceElement;
+    const auto ref = referenceElement(geo);
+    // subEntity gives the subEntity number with respect to the codim-0 reference element
+    // key is a pair of a local sub-entity index (first) and the sub-entity's codim (second) but here w.r.t. the sub-entity i/c
+    return { geo.global(ref.position(ref.subEntity(i, c, key[I].first, c+key[I].second), c+key[I].second))... };
+}
+
+// convert key array to global corner storage
+// for the i-th sub-entity of codim c (e.g. the i-th facet/codim-1-entity for boundaries)
+template<class S, class Geo, class T, std::size_t N, class Indices = std::make_index_sequence<N>>
+S subEntityKeyToCornerStorage(const Geo& geo, unsigned int i, unsigned int c, const std::array<T, N>& key)
+{
+    return subEntityKeyToCornerStorageImpl<S>(geo, i, c, key, Indices{});
 }
 
 } // end namespace Detail
@@ -291,7 +312,8 @@ public:
                                              const typename Intersection::Geometry& geometry,
                                              unsigned int indexInIntersection) const
     {
-        return ScvfCornerStorage{{geometry.corner(0)}};
+        const auto localFacetIndex = is.indexInInside();
+        return ScvfCornerStorage{{ geo_.corner(localFacetIndex) }};
     }
 
     //! get scvf normal vector
@@ -390,15 +412,14 @@ public:
                                              const typename Intersection::Geometry& isGeometry,
                                              unsigned int indexInIntersection) const
     {
-        const auto refElement = referenceElement(geo_);
+        const auto localFacetIndex = is.indexInInside();
+        constexpr int facetCodim = 1;
 
-        const auto vIdxLocal = refElement.subEntity(is.indexInInside(), 1, indexInIntersection, dim);
-        if (indexInIntersection == 0)
-            return ScvfCornerStorage({ geo_.global(refElement.position(vIdxLocal, dim)), isGeometry.center() });
-        else if (indexInIntersection == 1)
-            return ScvfCornerStorage({ isGeometry.center(), geo_.global(refElement.position(vIdxLocal, dim)) });
-        else
-            DUNE_THROW(Dune::InvalidStateException, "local index exceeds the number of corners of 2d intersections");
+        // we have to use the corresponding facet geometry as the intersection geometry
+        // might be rotated or flipped. This makes sure that the corners (dof location)
+        // and corresponding scvfs are sorted in the same way
+        using Corners = Detail::ScvCorners<Dune::GeometryTypes::line>;
+        return Detail::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo_, localFacetIndex, facetCodim, Corners::keys[indexInIntersection]);
     }
 
     //! get scvf normal vector for dim == 2, dimworld == 3
@@ -552,73 +573,28 @@ public:
                                              const typename Intersection::Geometry& isGeometry,
                                              unsigned int indexInIntersection) const
     {
-        const auto refElement = referenceElement(geo_);
-        const auto faceRefElem = referenceElement(isGeometry);
+        const auto localFacetIndex = is.indexInInside();
+        constexpr int facetCodim = 1;
 
-        GlobalPosition pi[9];
-        auto corners = isGeometry.corners();
-
-        // the facet center
-        pi[0] = isGeometry.center();
-
-        // corners
-        const auto idxInInside = is.indexInInside();
-        for (int i = 0; i < corners; ++i)
+        // we have to use the corresponding facet geometry as the intersection geometry
+        // might be rotated or flipped. This makes sure that the corners (dof location)
+        // and corresponding scvfs are sorted in the same way
+        using Dune::referenceElement;
+        const auto type = referenceElement(geo_).type(localFacetIndex, facetCodim);
+        if (type == Dune::GeometryTypes::triangle)
         {
-            const auto vIdxLocal = refElement.subEntity(idxInInside, 1, i, dim);
-            pi[i+1] = geo_.corner(vIdxLocal);
+            using Corners = Detail::ScvCorners<Dune::GeometryTypes::triangle>;
+            return Detail::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo_, localFacetIndex, facetCodim, Corners::keys[indexInIntersection]);
         }
-
-        // edge midpoints
-        for (int i = 0; i < faceRefElem.size(1); ++i)
+        else if (type == Dune::GeometryTypes::quadrilateral)
         {
-            const auto edgeIdxLocal = refElement.subEntity(idxInInside, 1, i, dim-1);
-            pi[i+corners+1] = geo_.global(refElement.position(edgeIdxLocal, dim-1));
+            using Corners = Detail::ScvCorners<Dune::GeometryTypes::quadrilateral>;
+            return Detail::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo_, localFacetIndex, facetCodim, Corners::keys[indexInIntersection]);
         }
-
-        // procees according to number of corners
-        switch (corners)
-        {
-        case 3: // triangle
-        {
-            //! Only build the maps the first time we encounter a triangle
-            static const std::uint8_t vo = 1; //!< vertex offset in point vector pi
-            static const std::uint8_t eo = 4; //!< edge offset in point vector pi
-            static const std::uint8_t map[3][4] =
-            {
-                {vo+0, eo+0, eo+1, 0},
-                {vo+1, eo+2, eo+0, 0},
-                {vo+2, eo+1, eo+2, 0}
-            };
-
-            return ScvfCornerStorage{ {pi[map[indexInIntersection][0]],
-                                       pi[map[indexInIntersection][1]],
-                                       pi[map[indexInIntersection][2]],
-                                       pi[map[indexInIntersection][3]]} };
-        }
-        case 4: // quadrilateral
-        {
-            //! Only build the maps the first time we encounter a quadrilateral
-            static const std::uint8_t vo = 1; //!< vertex offset in point vector pi
-            static const std::uint8_t eo = 5; //!< edge offset in point vector pi
-            static const std::uint8_t map[4][4] =
-            {
-                {vo+0, eo+2, eo+0, 0},
-                {vo+1, eo+1, eo+2, 0},
-                {vo+2, eo+0, eo+3, 0},
-                {vo+3, eo+3, eo+1, 0}
-            };
-
-            return ScvfCornerStorage{ {pi[map[indexInIntersection][0]],
-                                       pi[map[indexInIntersection][1]],
-                                       pi[map[indexInIntersection][2]],
-                                       pi[map[indexInIntersection][3]]} };
-        }
-        default:
-            DUNE_THROW(Dune::NotImplemented, "Box scvf boundary geometries for dim=" << dim
+        else
+            DUNE_THROW(Dune::NotImplemented, "Box boundary scvf geometries for dim=" << dim
                                                             << " dimWorld=" << dimWorld
-                                                            << " corners=" << corners);
-        }
+                                                            << " type=" << type);
     }
 
     //! get scvf normal vector
