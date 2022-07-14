@@ -100,20 +100,6 @@ int main (int argc, char *argv[])
         for (auto&& scv : scvs(fvGeometry))
         {
             std::cout << "-- scv " << scv.localDofIndex() << " center at: " << scv.center() << " , volume: " << scv.volume()  << std::endl;
-
-            const auto scvGeo = fvGeometry.geometry(scv);
-
-            if ((scv.center() - scvGeo.center()).two_norm2() > 1e-15)
-                DUNE_THROW(Dune::Exception,
-                    "scv.center() and fvGeometry.geometry(scv).center() do not match! "
-                    << scv.center() << " :: " << scvGeo.center()
-                );
-
-            if (std::abs(scv.volume() - scvGeo.volume()) > 1e-7)
-                DUNE_THROW(Dune::Exception,
-                    "scv.volume() and fvGeometry.geometry(scv).volume() do not match! "
-                    << scv.volume() << " :: " << scvGeo.volume()
-                );
         }
 
         auto range2 = scvfs(fvGeometry);
@@ -125,21 +111,6 @@ int main (int argc, char *argv[])
         for (auto&& scvf : scvfs(fvGeometry))
         {
             std::cout << "-- scvf " << scvf.index() << " ip at: " << scvf.ipGlobal() << " normal: " << scvf.unitOuterNormal();
-
-            const auto scvfGeo = fvGeometry.geometry(scvf);
-
-            if ((scvf.ipGlobal() - scvfGeo.center()).two_norm2() > 1e-15)
-                DUNE_THROW(Dune::Exception,
-                    "scvf.ipGlobal() and fvGeometry.geometry(scvf).center() do not match! "
-                    << scvf.ipGlobal() << " :: " << scvfGeo.center()
-                );
-
-            if (std::abs(scvf.area() - scvfGeo.volume()) > 1e-7)
-                DUNE_THROW(Dune::Exception,
-                    "scvf.area() and fvGeometry.geometry(scvf).volume() do not match! "
-                    << scvf.area() << " :: " << scvfGeo.volume()
-                );
-
             if (scvf.boundary())
             {
                 ++boundaryCount;
