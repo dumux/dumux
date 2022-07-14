@@ -28,10 +28,6 @@
 
 #include <optional>
 #include <utility>
-#include <unordered_map>
-#include <array>
-#include <vector>
-
 #include <dune/geometry/type.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
@@ -63,10 +59,6 @@ class BoxFVElementGeometry<GG, true>
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
-
-    using GeometryHelper = BoxGeometryHelper<GridView, dim,
-                                             typename GG::SubControlVolume,
-                                             typename GG::SubControlVolumeFace>;
 public:
     //! export the element type
     using Element = typename GridView::template Codim<0>::Entity;
@@ -192,20 +184,6 @@ public:
     //! Returns whether one of the geometry's scvfs lies on a boundary
     bool hasBoundaryScvf() const
     { return gridGeometry().hasBoundaryScvf(eIdx_); }
-
-    //! Geometry of a sub control volume
-    typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
-    {
-        assert(isBound());
-        return gridGeometryPtr_->geometry(element(), scv);
-    }
-
-    //! Geometry of a sub control volume face
-    typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
-    {
-        assert(isBound());
-        return gridGeometryPtr_->geometry(element(), scvf);
-    }
 
 private:
     const GridGeometry* gridGeometryPtr_;
@@ -353,32 +331,7 @@ public:
     bool hasBoundaryScvf() const
     { return hasBoundaryScvf_; }
 
-    //! Geometry of a sub control volume
-    typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
-    {
-        assert(isBound());
-        const auto geo = element().geometry();
-        return { Dune::GeometryTypes::cube(dim), GeometryHelper(geo).getScvCorners(scv.indexInElement()) };
-    }
-
-    //! Geometry of a sub control volume face
-    typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
-    {
-        assert(isBound());
-        const auto geo = element().geometry();
-        if (scvf.boundary())
-        {
-            const auto localBoundaryIndex = scvf.index() - numInnerScvf_(element());
-            const auto& key = scvfBoundaryGeometryKeys_[localBoundaryIndex];
-            return { Dune::GeometryTypes::cube(dim-1), GeometryHelper(geo).getBoundaryScvfCorners(key[0], key[1]) };
-        }
-        else
-            return { Dune::GeometryTypes::cube(dim-1), GeometryHelper(geo).getScvfCorners(scvf.index()) };
-    }
-
 private:
-    unsigned int numInnerScvf_(const Element& element) const
-    { return (dim==1) ? 1 : element.subEntities(dim-1); }
 
     void makeElementGeometries_()
     {
@@ -396,7 +349,7 @@ private:
         scvs_.resize(elementGeometry.corners());
         for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
         {
-            // get associated dof index
+            // get asssociated dof index
             const auto dofIdxGlobal = gridGeometry().vertexMapper().subIndex(element, scvLocalIdx, dim);
 
             // add scv to the local container
@@ -407,9 +360,8 @@ private:
         }
 
         // construct the sub control volume faces
-        const auto numInnerScvf = numInnerScvf_(element);
+        const auto numInnerScvf = (dim==1) ? 1 : element.subEntities(dim-1);
         scvfs_.resize(numInnerScvf);
-        scvfBoundaryGeometryKeys_.clear();
 
         LocalIndexType scvfLocalIdx = 0;
         for (; scvfLocalIdx < numInnerScvf; ++scvfLocalIdx)
@@ -448,11 +400,6 @@ private:
                                         std::move(localScvIndices),
                                         true);
 
-                    scvfBoundaryGeometryKeys_.emplace_back(std::array<LocalIndexType, 2>{{
-                        static_cast<LocalIndexType>(intersection.indexInInside()),
-                        static_cast<LocalIndexType>(isScvfLocalIdx)
-                    }});
-
                     // increment local counter
                     scvfLocalIdx++;
                 }
@@ -470,7 +417,6 @@ private:
     //! vectors to store the geometries locally after binding an element
     std::vector<SubControlVolume> scvs_;
     std::vector<SubControlVolumeFace> scvfs_;
-    std::vector<std::array<LocalIndexType, 2>> scvfBoundaryGeometryKeys_;
 
     bool hasBoundaryScvf_ = false;
 };

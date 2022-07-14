@@ -316,7 +316,7 @@ public:
                     constexpr int dim = GridGeometry::GridView::dimension;
                     Dune::ReservedVector<std::size_t, 1<<dim> scvIndices;
                     for (const auto& scv : scvs(fvGeometry))
-                        if (intersectsPointGeometry(globalPos, fvGeometry.geometry(scv)))
+                        if (intersectsPointGeometry(globalPos, scv.geometry()))
                             scvIndices.push_back(scv.indexInElement());
 
                     // for all scvs that tested positive add the point sources
