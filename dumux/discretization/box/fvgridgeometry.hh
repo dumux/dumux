@@ -28,6 +28,8 @@
 
 #include <utility>
 #include <unordered_map>
+#include <array>
+#include <vector>
 
 #include <dune/localfunctions/lagrange/lagrangelfecache.hh>
 
@@ -199,11 +201,36 @@ public:
     bool hasBoundaryScvf(GridIndexType eIdx) const
     { return hasBoundaryScvf_[eIdx]; }
 
+    //! Geometry of a sub control volume
+    typename SubControlVolume::Traits::Geometry geometry(const Element& element, const SubControlVolume& scv) const
+    {
+        assert(isBound());
+        const auto geo = element.geometry();
+        return { Dune::GeometryTypes::cube(dim), GeometryHelper(geo).getScvCorners(scv.indexInElement()) };
+    }
+
+    //! Geometry of a sub control volume face
+    typename SubControlVolumeFace::Traits::Geometry geometry(const Element& element, const SubControlVolumeFace& scvf) const
+    {
+        assert(isBound());
+        const auto eIdx = this->elementMapper().index(element);
+        const auto geo = element.geometry();
+        if (scvf.boundary())
+        {
+            const auto localBoundaryIndex = scvf.index() - numInnerScvf_(element);
+            const auto& key = scvfBoundaryGeometryKeys_.at(eIdx)[localBoundaryIndex];
+            return { Dune::GeometryTypes::cube(dim-1), GeometryHelper(geo).getBoundaryScvfCorners(key[0], key[1]) };
+        }
+        else
+            return { Dune::GeometryTypes::cube(dim-1), GeometryHelper(geo).getScvfCorners(scvf.index()) };
+    }
+
 private:
     void update_()
     {
         scvs_.clear();
         scvfs_.clear();
+        scvfBoundaryGeometryKeys_.clear();
 
         auto numElements = this->gridView().size(0);
         scvs_.resize(numElements);
@@ -287,6 +314,11 @@ private:
                                                   std::move(localScvIndices),
                                                   true);
 
+                        scvfBoundaryGeometryKeys_[eIdx].emplace_back(std::array<LocalIndexType, 2>{{
+                            static_cast<LocalIndexType>(intersection.indexInInside()),
+                            static_cast<LocalIndexType>(isScvfLocalIdx)
+                        }});
+
                         // increment local counter
                         scvfLocalIdx++;
                     }
@@ -347,10 +379,15 @@ private:
             DUNE_THROW(Dune::NotImplemented, "Periodic boundaries for box method for parallel simulations!");
     }
 
+    unsigned int numInnerScvf_(const Element& element) const
+    { return (dim==1) ? 1 : element.subEntities(dim-1); }
+
     const FeCache feCache_;
 
     std::vector<std::vector<SubControlVolume>> scvs_;
     std::vector<std::vector<SubControlVolumeFace>> scvfs_;
+    std::unordered_map<GridIndexType, std::vector<std::array<LocalIndexType, 2>>> scvfBoundaryGeometryKeys_;
+
     // TODO do we need those?
     std::size_t numScv_;
     std::size_t numScvf_;
