@@ -306,15 +306,6 @@ public:
             {
                 // loop over all concerned elements
                 auto fvGeometry = localView(gridGeometry);
-
-                // TODO fix this for box by adding the fvGeometry interface
-                const auto getGeo = [](const auto& fvGeometry, const auto& scv){
-                    if constexpr (GridGeometry::discMethod == DiscretizationMethods::box)
-                        return scv.geometry();
-                    else
-                        return fvGeometry.geometry(scv);
-                };
-
                 for (const auto eIdx : entities)
                 {
                     // check in which subcontrolvolume(s) we are
@@ -326,7 +317,7 @@ public:
                     constexpr int dim = GridGeometry::GridView::dimension;
                     Dune::ReservedVector<std::size_t, 1<<dim> scvIndices;
                     for (const auto& scv : scvs(fvGeometry))
-                        if (intersectsPointGeometry(globalPos, getGeo(fvGeometry, scv)))
+                        if (intersectsPointGeometry(globalPos, fvGeometry.geometry(scv)))
                             scvIndices.push_back(scv.indexInElement());
 
                     // for all scvs that tested positive add the point sources
