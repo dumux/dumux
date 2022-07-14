@@ -28,6 +28,8 @@
 
 #include <utility>
 #include <unordered_map>
+#include <array>
+#include <vector>
 
 #include <dune/localfunctions/lagrange/lagrangelfecache.hh>
 
@@ -192,11 +194,17 @@ public:
     bool hasBoundaryScvf(GridIndexType eIdx) const
     { return hasBoundaryScvf_[eIdx]; }
 
+    //! Returns a key of local indices to obtain boundary scvf geometries
+    //! Used by the local view
+    const std::vector<std::array<LocalIndexType, 2>>& scvfBoundaryGeometryKeys(GridIndexType eIdx) const
+    { return scvfBoundaryGeometryKeys_.at(eIdx); }
+
 private:
     void update_()
     {
         scvs_.clear();
         scvfs_.clear();
+        scvfBoundaryGeometryKeys_.clear();
 
         auto numElements = this->gridView().size(0);
         scvs_.resize(numElements);
@@ -280,6 +288,11 @@ private:
                                                   std::move(localScvIndices),
                                                   true);
 
+                        scvfBoundaryGeometryKeys_[eIdx].emplace_back(std::array<LocalIndexType, 2>{{
+                            static_cast<LocalIndexType>(intersection.indexInInside()),
+                            static_cast<LocalIndexType>(isScvfLocalIdx)
+                        }});
+
                         // increment local counter
                         scvfLocalIdx++;
                     }
@@ -344,6 +357,8 @@ private:
 
     std::vector<std::vector<SubControlVolume>> scvs_;
     std::vector<std::vector<SubControlVolumeFace>> scvfs_;
+    std::unordered_map<GridIndexType, std::vector<std::array<LocalIndexType, 2>>> scvfBoundaryGeometryKeys_;
+
     // TODO do we need those?
     std::size_t numScv_;
     std::size_t numScvf_;
