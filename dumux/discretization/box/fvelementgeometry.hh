@@ -80,8 +80,9 @@ public:
     static constexpr std::size_t maxNumElementScvs = (1<<dim);
 
     //! Constructor
-    BoxFVElementGeometry(const GridGeometry& gridGeometry)
-    : gridGeometryPtr_(&gridGeometry) {}
+    BoxFVElementGeometry(const typename GridGeometry::Cache& ggCache)
+    : ggCache_(&ggCache)
+    {}
 
     //! Get a sub control volume with a local scv index
     const SubControlVolume& scv(LocalIndexType scvIdx) const
@@ -187,7 +188,7 @@ public:
 
     //! The grid geometry we are a restriction of
     const GridGeometry& gridGeometry() const
-    { return *gridGeometryPtr_; }
+    { return ggCache_->gridGeometry(); }
 
     //! Returns whether one of the geometry's scvfs lies on a boundary
     bool hasBoundaryScvf() const
@@ -197,18 +198,18 @@ public:
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
     {
         assert(isBound());
-        return gridGeometryPtr_->geometry(element(), scv);
+        return gridGeometry().geometry(element(), scv);
     }
 
     //! Geometry of a sub control volume face
     typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
     {
         assert(isBound());
-        return gridGeometryPtr_->geometry(element(), scvf);
+        return gridGeometry().geometry(element(), scvf);
     }
 
 private:
-    const GridGeometry* gridGeometryPtr_;
+    const typename GridGeometry::Cache* ggCache_;
     GridIndexType eIdx_;
 
     std::optional<Element> element_;

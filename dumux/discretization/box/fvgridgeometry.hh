@@ -98,6 +98,17 @@ class BoxFVGridGeometry<Scalar, GV, true, Traits>
                                              typename Traits::SubControlVolume,
                                              typename Traits::SubControlVolumeFace>;
 
+    class BoxFVGridGeometryCache
+    {
+    public:
+        BoxFVGridGeometryCache(const BoxFVGridGeometry& gg)
+        : gridGeometry_(&gg)
+
+        const BoxFVGridGeometry& gridGeometry() const
+        { return *gridGeometry_; }
+    private:
+        const BoxFVGridGeometry* gridGeometry_;
+    };
 public:
     //! export the discretization method this geometry belongs to
     using DiscretizationMethod = DiscretizationMethods::Box;
@@ -118,9 +129,14 @@ public:
     //! export the grid view type
     using GridView = GV;
 
+    //! the cache type (only the caching implementation has this)
+    //! this alias should only be used by the local view implementation
+    using Cache = BoxFVGridGeometryCache;
+
     //! Constructor
     BoxFVGridGeometry(const GridView gridView)
     : ParentType(gridView)
+    , cache_(*this)
     {
         update_();
     }
@@ -224,6 +240,10 @@ public:
         else
             return { Dune::GeometryTypes::cube(dim-1), GeometryHelper(geo).getScvfCorners(scvf.index()) };
     }
+
+    //! local view of this object, we pass the cache too
+    friend inline LocalView localView(const BoxFVGridGeometry& gg)
+    { return { gg.cache_ }; }
 
 private:
     void update_()
@@ -399,6 +419,9 @@ private:
 
     // a map for periodic boundary vertices
     std::unordered_map<GridIndexType, GridIndexType> periodicVertexMap_;
+
+    // everything cached that is not part of the global interface (this class) and is needed in the local view
+    Cache cache_;
 };
 
 /*!
