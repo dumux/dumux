@@ -201,10 +201,29 @@ public:
     bool hasBoundaryScvf(GridIndexType eIdx) const
     { return hasBoundaryScvf_[eIdx]; }
 
-    //! Returns a key of local indices to obtain boundary scvf geometries
-    //! Used by the local view
-    const std::vector<std::array<LocalIndexType, 2>>& scvfBoundaryGeometryKeys(GridIndexType eIdx) const
-    { return scvfBoundaryGeometryKeys_.at(eIdx); }
+    //! Geometry of a sub control volume
+    typename SubControlVolume::Traits::Geometry geometry(const Element& element, const SubControlVolume& scv) const
+    {
+        assert(isBound());
+        const auto geo = element.geometry();
+        return { Dune::GeometryTypes::cube(dim), GeometryHelper(geo).getScvCorners(scv.indexInElement()) };
+    }
+
+    //! Geometry of a sub control volume face
+    typename SubControlVolumeFace::Traits::Geometry geometry(const Element& element, const SubControlVolumeFace& scvf) const
+    {
+        assert(isBound());
+        const auto eIdx = this->elementMapper().index(element);
+        const auto geo = element.geometry();
+        if (scvf.boundary())
+        {
+            const auto localBoundaryIndex = scvf.index() - numInnerScvf_(element);
+            const auto& key = scvfBoundaryGeometryKeys_.at(eIdx)[localBoundaryIndex];
+            return { Dune::GeometryTypes::cube(dim-1), GeometryHelper(geo).getBoundaryScvfCorners(key[0], key[1]) };
+        }
+        else
+            return { Dune::GeometryTypes::cube(dim-1), GeometryHelper(geo).getScvfCorners(scvf.index()) };
+    }
 
 private:
     void update_()
@@ -359,6 +378,9 @@ private:
         if (this->isPeriodic() && this->gridView().comm().size() > 1)
             DUNE_THROW(Dune::NotImplemented, "Periodic boundaries for box method for parallel simulations!");
     }
+
+    unsigned int numInnerScvf_(const Element& element) const
+    { return (dim==1) ? 1 : element.subEntities(dim-1); }
 
     const FeCache feCache_;
 
