@@ -197,29 +197,17 @@ public:
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
     {
         assert(isBound());
-        const auto geo = element().geometry();
-        return { Dune::GeometryTypes::cube(dim), GeometryHelper(geo).getScvCorners(scv.indexInElement()) };
+        return gridGeometryPtr_->geometry(element(), scv);
     }
 
     //! Geometry of a sub control volume face
     typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
     {
         assert(isBound());
-        const auto geo = element().geometry();
-        if (scvf.boundary())
-        {
-            const auto localBoundaryIndex = scvf.index() - numInnerScvf_(element());
-            const auto& key = gridGeometryPtr_->scvfBoundaryGeometryKeys(eIdx_)[localBoundaryIndex];
-            return { Dune::GeometryTypes::cube(dim-1), GeometryHelper(geo).getBoundaryScvfCorners(key[0], key[1]) };
-        }
-        else
-            return { Dune::GeometryTypes::cube(dim-1), GeometryHelper(geo).getScvfCorners(scvf.index()) };
+        return gridGeometryPtr_->geometry(element(), scvf);
     }
 
 private:
-    unsigned int numInnerScvf_(const Element& element) const
-    { return (dim==1) ? 1 : element.subEntities(dim-1); }
-
     const GridGeometry* gridGeometryPtr_;
     GridIndexType eIdx_;
 
