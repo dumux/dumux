@@ -8,7 +8,6 @@ add_subdirectory(fluidstates)
 add_subdirectory(fluidsystems)
 add_subdirectory(solidstates)
 add_subdirectory(solidsystems)
-add_subdirectory(spatialparams)
 
 file(GLOB DUMUX_MATERIAL_HEADERS *.hh *.inc)
 install(FILES ${DUMUX_MATERIAL_HEADERS}
