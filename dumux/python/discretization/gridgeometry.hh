@@ -133,15 +133,11 @@ void registerGridGeometry(pybind11::handle scope, pybind11::class_<GG, Options..
     using GridView = typename GG::GridView;
 
     cls.def(pybind11::init([](const GridView& gridView){
-        auto gg = std::make_shared<GG>(gridView);
-        // remove this once the interface is changed on the C++ side (see #1056)
-        gg->update();
-        return gg;
+        return std::make_shared<GG>(gridView);
     }), "gridView"_a);
 
-    // update this once the interface is changed on the C++ side (see #1056)
     cls.def("update", [](GG& self, const GridView& gridView){
-        return self.update();
+        return self.update(gridView);
     }, "gridView"_a);
 
     cls.def_property_readonly("numDofs", &GG::numDofs);
