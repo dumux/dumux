@@ -347,7 +347,7 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tr
     enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
     enum { dim = GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension };
 
-    static constexpr bool enableGridFluxVarsCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
+    static constexpr bool enableGridFluxVarsCache = GetPropType<TypeTag, Properties::GridVariables>::GridFluxVariablesCache::cachingEnabled;
 
 public:
 

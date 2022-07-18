@@ -498,7 +498,7 @@ class SubDomainStaggeredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numer
     using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
-    static constexpr bool enableGridFluxVarsCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
+    static constexpr bool enableGridFluxVarsCache = GetPropType<TypeTag, Properties::GridVariables>::GridFluxVariablesCache::cachingEnabled;
     static constexpr int maxNeighbors = 4*(2*ModelTraits::dim());
     static constexpr auto domainI = Dune::index_constant<id>();
     static constexpr auto cellCenterId = GridGeometry::cellCenterIdx();
@@ -1003,7 +1003,7 @@ private:
 
     FaceVariables& getFaceVarAccess_(GridFaceVariables& gridFaceVariables, ElementFaceVariables& elemFaceVars, const SubControlVolumeFace& scvf)
     {
-        if constexpr (getPropValue<TypeTag, Properties::EnableGridFaceVariablesCache>())
+        if constexpr (GetPropType<TypeTag, Properties::GridVariables>::GridFaceVariables::cachingEnabled)
             return gridFaceVariables.faceVars(scvf.index());
         else
             return elemFaceVars[scvf];

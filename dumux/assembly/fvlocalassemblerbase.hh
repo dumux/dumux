@@ -312,11 +312,11 @@ protected:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 
-    template<class T = TypeTag, typename std::enable_if_t<!getPropValue<T, Properties::EnableGridVolumeVariablesCache>(), int> = 0>
+    template<class T = TypeTag, typename std::enable_if_t<!GetPropType<T, Properties::GridVariables>::GridVolumeVariables::cachingEnabled, int> = 0>
     VolumeVariables& getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
     { return elemVolVars[scv]; }
 
-    template<class T = TypeTag, typename std::enable_if_t<getPropValue<T, Properties::EnableGridVolumeVariablesCache>(), int> = 0>
+    template<class T = TypeTag, typename std::enable_if_t<GetPropType<T, Properties::GridVariables>::GridVolumeVariables::cachingEnabled, int> = 0>
     VolumeVariables& getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
     { return gridVolVars.volVars(scv); }
 

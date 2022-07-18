@@ -87,7 +87,7 @@ class PoroMechanicsCouplingManager : public virtual CouplingManager< MDTraits >
                   "Porous medium flow problem must be discretized with a cell-centered scheme for this coupling manager!");
 
     //! this does not work for enabled grid volume variables caching (update of local view in context has no effect)
-    static_assert(!getPropValue<SubDomainTypeTag<PMFlowId>, Properties::EnableGridVolumeVariablesCache>(),
+    static_assert(!GetPropType<SubDomainTypeTag<PMFlowId>, Properties::GridVariables>::GridVolumeVariables::cachingEnabled,
                   "Poromechanics framework does not yet work for enabled grid volume variables caching");
 
     //! Types used for coupling stencils
