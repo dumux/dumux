@@ -49,6 +49,22 @@ def buildCommandAndDir(testConfig, buildTreeRoot="."):
     return command, directory
 
 
+def getTestHeaders(buildCommand, buildDirectory):
+    # detect headers included in this test
+    # -MM skips headers from system directories
+    # -H  prints the name(+path) of each used header
+    # for some reason g++ writes to stderr
+    headers = subprocess.run(
+        buildCommand + ["-MM", "-H"],
+        stderr=PIPE,
+        stdout=PIPE,
+        cwd=buildDirectory,
+        encoding="ascii",
+        check=False,
+    ).stderr.splitlines()
+    return [h.lstrip(". ") for h in headers]
+
+
 def isAffectedTest(testConfigFile, changedFiles, buildTreeRoot="."):
     """check if a test is affected by changes in the given files"""
     with open(testConfigFile) as configFile:
@@ -62,20 +78,7 @@ def isAffectedTest(testConfigFile, changedFiles, buildTreeRoot="."):
     # next we use the compiler to detect changed header files
     command, directory = buildCommandAndDir(testConfig, buildTreeRoot)
     mainFile = command[-1]
-
-    # detect headers included in this test
-    # -MM skips headers from system directories
-    # -H  prints the name(+path) of each used header
-    # for some reason g++ writes to stderr
-    headers = subprocess.run(
-        command + ["-MM", "-H"],
-        stderr=PIPE,
-        stdout=PIPE,
-        cwd=directory,
-        encoding="ascii",
-        check=False,
-    ).stderr.splitlines()
-    headers = [h.lstrip(". ") for h in headers]
+    headers = getTestHeaders(command, directory)
     headers.append(mainFile)
 
     if hasCommonMember(changedFiles, headers):
