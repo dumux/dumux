@@ -209,9 +209,7 @@ public:
 
     //! \brief Returns the \f$ \beta_{\omega} \f$ constant
     const Scalar betaOmega() const
-    {
-        return 0.0708;
-    }
+    { return 0.0708; }
 
     /*!
      * \brief Return the turbulent Prandtl number \f$ [-] \f$ which is used to convert
@@ -332,8 +330,8 @@ private:
         {
             fvGeometry.bindElement(element);
             for (const auto& scvf : scvfs(fvGeometry))
-                    if (!scvf.boundary() && asImp_().boundaryTypes(element, scvf).hasWall())  // only search for walls at a global boundary
-                        wallFaceAxis.push_back(scvf.directionIndex());
+                if (!scvf.boundary() && asImp_().boundaryTypes(element, scvf).hasWall())  // only search for walls at a global boundary
+                    wallFaceAxis.push_back(scvf.directionIndex());
         }
 
         // Returns if all wall directions are the same
@@ -547,7 +545,6 @@ private:
                     velocityGradients_[elementIdx][velCompIdx][axisIdx]
                         = (ccVelocity(neighborIdx, velCompIdx) - bjsVelocityAverage[axisIdx])
                         / (cellCenter(neighborIdx)[axisIdx] - normalNormCoordinate[axisIdx]);
-
                 }
             }
         }

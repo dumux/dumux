@@ -312,8 +312,8 @@ public:
         auto bcTypes = asImp_().boundaryTypes(element, localSubFace);
 
         return bcTypes.hasWall()
-        && bcTypes.isDirichlet(eqIdx)
-        && isMatchingPoint(elementIdx);
+            && bcTypes.isDirichlet(eqIdx)
+            && isMatchingPoint(elementIdx);
     }
 
     //! \brief Returns an additional wall function momentum flux (only needed for RANS models)

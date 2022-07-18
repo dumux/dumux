@@ -187,28 +187,6 @@ public:
         // For half-scvs with even indexes, the outside half-scv has scvf local indexes have a - offset.
         return isOdd_(scv.indexInElement()) ? scvf.localIndex() - offset : scvf.localIndex() + offset;
     }
-/*
-    template<class FVElementGeometry, class SubControlVolumeFace>
-    static const SubControlVolumeFace& localIndexOutsideScvfWithSameIntegrationPoint(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
-    {
-        const auto& lateralOrthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
-        assert(!lateralOrthogonalScvf.boundary());
-
-        const int offset = (dim == 2) ? 3 : 5;
-        const auto otherLocalIdx = isOdd_(scvf.localIndex()) ? scvf.localIndex() - offset : scvf.localIndex() + offset;
-
-        auto outsideFVGeometry = localView(fvGeometry.gridGeometry());
-        const auto outsideElementIdx = fvGeometry.scv(lateralOrthogonalScvf.outsideScvIdx()).elementIndex();
-        outsideFVGeometry.bindElement(fvGeometry.gridGeometry().element(outsideElementIdx));
-
-        for (const auto& otherScvf : scvfs(outsideFVGeometry))
-        {
-            if (otherScvf.localIndex() == otherLocalIdx)
-                return otherScvf;
-        }
-
-        DUNE_THROW(Dune::InvalidStateException, "No outside scvf found");
-    }*/
 
     const GridView& gridView() const
     { return gridView_; }

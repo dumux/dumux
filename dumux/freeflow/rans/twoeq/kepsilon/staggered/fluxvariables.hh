@@ -148,24 +148,23 @@ public:
 
         const auto bcTypes = problem.boundaryTypes(element, scvf);
 
-            if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::turbulentKineticEnergyEqIdx)
-                                    || bcTypes.isSymmetry()
-                                    || bcTypes.hasWall())))
+        if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::turbulentKineticEnergyEqIdx)
+            || bcTypes.isSymmetry()
+            || bcTypes.hasWall())))
+        {
+            if (!(insideVolVars.isMatchingPoint() && outsideVolVars.isMatchingPoint())
+                || !(insideVolVars.isMatchingPoint() && outsideVolVars.inNearWallRegion())
+                || !(insideVolVars.inNearWallRegion() && outsideVolVars.isMatchingPoint()))
             {
-                if (!(insideVolVars.isMatchingPoint() && outsideVolVars.isMatchingPoint())
-                    || !(insideVolVars.isMatchingPoint() && outsideVolVars.inNearWallRegion())
-                    || !(insideVolVars.inNearWallRegion() && outsideVolVars.isMatchingPoint()))
-                {
-                    flux[turbulentKineticEnergyEqIdx]
-                        += coeff_k / distance
-                        * (insideVolVars.turbulentKineticEnergy() - outsideVolVars.turbulentKineticEnergy())
-                        * Extrusion::area(scvf);
-                }
+                flux[turbulentKineticEnergyEqIdx]
+                    += coeff_k / distance
+                    * (insideVolVars.turbulentKineticEnergy() - outsideVolVars.turbulentKineticEnergy())
+                    * Extrusion::area(scvf);
             }
-//         }
+        }
 
         if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::dissipationEqIdx)
-                               || bcTypes.isSymmetry())))
+            || bcTypes.isSymmetry())))
         {
             flux[dissipationEqIdx]
                 += coeff_e / distance
