@@ -161,7 +161,7 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tru
 
     using FluxStencil = Dumux::FluxStencil<FVElementGeometry>;
     static constexpr int maxElementStencilSize = GridGeometry::maxElementStencilSize;
-    static constexpr bool enableGridFluxVarsCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
+    static constexpr bool enableGridFluxVarsCache = GetPropType<TypeTag, Properties::GridVariables>::GridFluxVariablesCache::cachingEnabled;
 
 public:
 

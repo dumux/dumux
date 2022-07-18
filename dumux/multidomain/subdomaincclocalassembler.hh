@@ -307,8 +307,8 @@ class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*i
     enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
     enum { dim = GridView::dimension };
 
-    static constexpr bool enableGridFluxVarsCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
-    static constexpr bool enableGridVolVarsCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
+    static constexpr bool enableGridFluxVarsCache = GetPropType<TypeTag, Properties::GridVariables>::GridFluxVariablesCache::cachingEnabled;
+    static constexpr bool enableGridVolVarsCache = GetPropType<TypeTag, Properties::GridVariables>::GridVolumeVariables::cachingEnabled;
     static constexpr int maxElementStencilSize = GridGeometry::maxElementStencilSize;
     static constexpr auto domainI = Dune::index_constant<id>();
 

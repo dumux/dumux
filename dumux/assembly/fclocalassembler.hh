@@ -321,7 +321,7 @@ class FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*impl
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 
     static constexpr auto numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
-    static constexpr bool enableGridFluxVarsCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
+    static constexpr bool enableGridFluxVarsCache = GetPropType<TypeTag, Properties::GridVariables>::GridFluxVariablesCache::cachingEnabled;
 
 public:
 
