@@ -170,7 +170,7 @@ public:
         // evaluate the volume terms (storage + source terms)
         // forward to the local residual specialized for the discretization methods
         for (auto&& scv : scvs(fvGeometry))
-            asImp().evalSource(residual, this->problem(), element, fvGeometry, elemVolVars, scv, elemFluxVarsCache);
+            asImp().evalSource(residual, this->problem(), element, fvGeometry, elemVolVars, scv);
 
         // forward to the local residual specialized for the discretization methods
         for (auto&& scvf : scvfs(fvGeometry))
@@ -217,34 +217,16 @@ public:
      *       in the user interface of the problem
      *
      */
-    // NumEqVector computeSource(const Problem& problem,
-    //                           const Element& element,
-    //                           const FVElementGeometry& fvGeometry,
-    //                           const ElementVolumeVariables& elemVolVars,
-    //                           const SubControlVolume &scv) const
-    // {
-    //     NumEqVector source(0.0);
-
-    //     // add contributions from volume flux sources
-    //     source += problem.source(element, fvGeometry, elemVolVars, scv);
-
-    //     // add contribution from possible point sources
-    //     source += problem.scvPointSources(element, fvGeometry, elemVolVars, scv);
-
-    //     return source;
-    // }
-
     NumEqVector computeSource(const Problem& problem,
                               const Element& element,
                               const FVElementGeometry& fvGeometry,
                               const ElementVolumeVariables& elemVolVars,
-                              const SubControlVolume &scv,
-                              const ElementFluxVariablesCache& elemFluxVarsCache) const
+                              const SubControlVolume &scv) const
     {
         NumEqVector source(0.0);
 
         // add contributions from volume flux sources
-        source += problem.source(element, fvGeometry, elemVolVars, scv, elemFluxVarsCache);
+        source += problem.source(element, fvGeometry, elemVolVars, scv);
 
         // add contribution from possible point sources
         source += problem.scvPointSources(element, fvGeometry, elemVolVars, scv);
@@ -349,12 +331,11 @@ public:
                     const Element& element,
                     const FVElementGeometry& fvGeometry,
                     const ElementVolumeVariables& curElemVolVars,
-                    const SubControlVolume& scv,
-                    const ElementFluxVariablesCache& elemFluxVarsCache) const
+                    const SubControlVolume& scv) const
     {
         //! Compute source with the model specific storage residual
         const auto& curVolVars = curElemVolVars[scv];
-        NumEqVector source = asImp().computeSource(problem, element, fvGeometry, curElemVolVars, scv, elemFluxVarsCache);
+        NumEqVector source = asImp().computeSource(problem, element, fvGeometry, curElemVolVars, scv);
         source *= Extrusion::volume(scv)*curVolVars.extrusionFactor();
 
         //! subtract source from local rate (sign convention in user interface)

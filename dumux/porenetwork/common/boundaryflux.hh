@@ -241,7 +241,7 @@ private:
                     // Technicaly, the PNM considers source terms instead of Neumann BCs.
                     if (!bcTypes.isDirichlet(eqIdx))
                     {
-                        auto source = localResidual_.computeSource(localResidual_.problem(), element, fvGeometry, curElemVolVars, scv, elemFluxVarsCache);
+                        auto source = localResidual_.computeSource(localResidual_.problem(), element, fvGeometry, curElemVolVars, scv);
                         source *= scv.volume() * curElemVolVars[scv].extrusionFactor();
                         flux[eqIdx] = source[eqIdx];
                     }

@@ -319,12 +319,11 @@ public:
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
-    template<class ElementVolumeVariables, class ElementFluxCache>
+    template<class ElementVolumeVariables>
     NumEqVector source(const Element &element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
-                       const SubControlVolume &scv,
-                       const ElementFluxCache& elementFluxCache) const
+                       const SubControlVolume &scv) const
     {
         // forward to solution independent, fully-implicit specific interface
         return asImp_().sourceAtPos(scv.center());
