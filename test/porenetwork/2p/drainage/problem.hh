@@ -76,6 +76,10 @@ public:
         pc_ = getParam<Scalar>("Problem.CapillaryPressure");
         source_ = getParam<Scalar>("Problem.Source", 0.0);
         problemName_ = getParam<std::string>("Problem.Name");
+#if !ISOTHERMAL
+        inletTemperature_ = getParam<Scalar>("Problem.InletTemperature", 288.15);
+        outletTemperature_ = getParam<Scalar>("Problem.OutletTemperature", 283.15);
+#endif
     }
 
     /*!
@@ -147,9 +151,9 @@ public:
 
 #if !ISOTHERMAL
         if (isInletPore_(scv))
-            values[temperatureIdx] = 273.15 + 15;
+            values[temperatureIdx] = inletTemperature_;
         else
-            values[temperatureIdx] = 273.15 + 10;
+            values[temperatureIdx] = outletTemperature_;
 #endif
         return values;
     }
@@ -194,7 +198,7 @@ public:
             values[snIdx] = 0.0;
 
 #if !ISOTHERMAL
-        values[temperatureIdx] = 273.15 + 10;
+        values[temperatureIdx] = inletTemperature_;
 #endif
         return values;
     }
@@ -238,6 +242,10 @@ private:
     Scalar source_;
     std::string problemName_;
     std::shared_ptr<TimeLoop<Scalar>> timeLoop_;
+#if !ISOTHERMAL
+    Scalar inletTemperature_;
+    Scalar outletTemperature_;
+#endif
 };
 } //end namespace Dumux
 
