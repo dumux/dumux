@@ -963,6 +963,49 @@ public:
 
 /*!
  * \ingroup Linear
+ * \brief A Uzawa preconditioned BiCGSTAB solver for saddle-point problems
+ */
+template <class LinearSolverTraits, class M, class X>
+class ModUzawaBiCGSTABBackend : public LinearSolver
+{
+    using P = std::decay_t<decltype(std::declval<M>()[Dune::Indices::_1][Dune::Indices::_1])>;
+    using V = std::decay_t<decltype(std::declval<X>()[Dune::Indices::_1])>;
+public:
+    ModUzawaBiCGSTABBackend(const std::shared_ptr<const Dune::AssembledLinearOperator<P,V,V>>& pop, const std::string& paramGroup = "")
+    : LinearSolver(paramGroup)
+    , pop_(pop)
+    {}
+
+    bool solve(const M& A, X& x, const X& b)
+    {
+        using Preconditioner = ModSeqUzawa<M, X, X>;
+        using Solver = Dune::BiCGSTABSolver<X>;
+        static const auto params = LinearSolverParameters<LinearSolverTraits>::createParameterTree(this->paramGroup());
+
+        // make a linear operator from a matrix
+        using MatrixAdapter = Dune::MatrixAdapter<M, X, X>;
+        const auto linearOperator = std::make_shared<MatrixAdapter>(A);
+        auto precond = std::make_shared<Preconditioner>(linearOperator, pop_, params.sub("preconditioner"));
+        Solver solver(linearOperator, precond, params);
+
+        X bTmp(b);
+
+        Dune::InverseOperatorResult result;
+        solver.apply(x, bTmp, result);
+
+        return result.converged;
+    }
+
+    std::string name() const
+    {
+        return "Modified Uzawa preconditioned BiCGSTAB solver";
+    }
+private:
+    std::shared_ptr<const Dune::AssembledLinearOperator<P,V,V>> pop_;
+};
+
+/*!
+ * \ingroup Linear
  * \brief A simple ilu0 block diagonal preconditioner
  */
 template<class M, class X, class Y, int blockLevel = 2>

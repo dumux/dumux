@@ -1,4 +1,6 @@
 [Grid]
+#BinaryMask = ATA_Sample1_crop_small.raw
+#Cells = 100 100 100
 BinaryMask = sphere.raw
 Cells = 13 11 15
 PixelDimensions = 2 2 2
@@ -7,27 +9,27 @@ PixelDimensions = 2 2 2
 Name = test_stokes_upscaling
 EnableGravity = false
 EnableInertiaTerms = false
+Alpha = 0.0
+Beta = 1.0
+#DomainLength = 1e-3
+DomainLength = 26e-6
 
 [Component]
 # this test requires a unit fluid
 LiquidDensity = 1
-LiquidKinematicViscosity = 1
+LiquidDynamicViscosity = 1
 
 [Assembly.NumericDifference]
 PriVarMagnitude = 1
-BaseEpsilon = 1
+BaseEpsilon = 0.1
 
 [LinearSolver]
-Verbosity = 1
-MaxIterations = 500
-ResidualReduction = 1e-9
-UseDirectSolver = false
+Verbosity = 2
+MaxIterations = 2000
+ResidualReduction = 1e-8
 
 [LinearSolver.Preconditioner]
-Verbosity = 0
-UseDirectVelocitySolver = false
-UseBlockTriangular = false
-UseFullSchurComplement = false
+Verbosity = 2
 Iterations = 1
 AmgSmootherIterations = 1
 AmgCriterionSymmetric = true
@@ -39,7 +41,7 @@ AmgMaxAggregateSize = 3
 [Newton]
 MinSteps = 1
 EnableAbsoluteResidualCriterion = true
-MaxAbsoluteResidual = 1e-5
+MaxAbsoluteResidual = 1e3
 
 [Vtk]
 WriteFaceData = false

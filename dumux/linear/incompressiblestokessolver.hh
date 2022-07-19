@@ -64,13 +64,31 @@ class IncompressibleStokesPreconditioner : public Dune::Preconditioner<Vector, V
     template<std::size_t i>
     using SubVector = std::decay_t<decltype(std::declval<Vector>()[Dune::index_constant<i>{}])>;
 
+    template<std::size_t i, std::size_t j>
+    using SubMatrix = std::decay_t<decltype(std::declval<Matrix>()[Dune::index_constant<i>{}][Dune::index_constant<j>{}])>;
+
     using A = std::decay_t<decltype(std::declval<Matrix>()[Dune::Indices::_0][Dune::Indices::_0])>;
     using U = std::decay_t<decltype(std::declval<Vector>()[Dune::Indices::_0])>;
 
     using Comm = Dune::Amg::SequentialInformation;
     using LinearOperator = Dune::MatrixAdapter<A, U, U>;
     using Smoother = Dune::SeqSSOR<A, U, U>;
-    using AMGSolverVelocity = Dune::Amg::AMG<LinearOperator, U, Smoother, Comm>;
+    using AMGSolverVelocity = Dune::Amg::AMG<
+        LinearOperator,
+        U,
+        Smoother,
+        Comm
+    >;
+
+
+    using D = std::decay_t<decltype(std::declval<Matrix>()[Dune::Indices::_1][Dune::Indices::_1])>;
+    using V = std::decay_t<decltype(std::declval<Vector>()[Dune::Indices::_1])>;
+    using AMGSolverPressure = Dune::Amg::AMG<
+        Dune::MatrixAdapter<D, V, V>,
+        V,
+        Dune::SeqSSOR<D, V, V>,
+        Comm
+    >;
 
 public:
     using domain_type = Vector;
@@ -82,8 +100,9 @@ public:
                                        const Vector& massMatrix,
                                        const Vector& dirichletConstraints,
                                        const Dune::ParameterTree& params,
-                                       double density, double viscosity)
-    : A_(A), massMatrix_(massMatrix), params_(params), density_(density), viscosity_(viscosity)
+                                       double density, double viscosity,
+                                       std::shared_ptr<Dune::MatrixAdapter<SubMatrix<1,1>, SubVector<1>, SubVector<1>>> pressureOp)
+    : A_(A), massMatrix_(massMatrix), pressureOp_(pressureOp), params_(params), density_(density), viscosity_(viscosity)
     {
         using namespace Dune::Indices;
 
@@ -112,6 +131,24 @@ public:
 
             auto op = std::make_shared<LinearOperator>(A_[_0][_0]);
             velPre_ = std::make_unique<AMGSolverVelocity>(op, params);
+        }
+
+        useDirectPressureSolver_ = params.get<bool>("UseDirectPressureSolver", false);
+        if (useDirectPressureSolver_)
+        {
+#if HAVE_UMFPACK
+            using DSPressure = Dune::UMFPack<std::decay_t<decltype(A[_1][_1])>>;
+            const auto pressVerbosity = params.get<int>("Verbosity", 0);
+            directPressureOp_ = std::make_unique<DSPressure>(pressureOp_->getmat(), pressVerbosity);
+            using Precond = Dune::InverseOperator2Preconditioner<Dune::InverseOperator<SubVector<1>, SubVector<1>>>;
+            pressurePre_ = std::make_unique<Precond>(*directPressureOp_);
+#else
+            DUNE_THROW(Dune::Exception, "Direct solver requested but UMFPackBackend has not been found on your system.");
+#endif
+        }
+        else
+        {
+            pressurePre_ = std::make_unique<AMGSolverPressure>(pressureOp_, params);
         }
     }
 
@@ -190,9 +227,13 @@ private:
         }
 
         // invert pressure block (1/mu*I)^{-1}
-        v[_1] = dTmp[_1];
-        for (std::size_t i = 0; i < v[_1].size(); ++i)
-            v[_1][i] *= viscosity_/massMatrix_[_1][i][0];
+        // v[_1] = dTmp[_1];
+        // for (std::size_t i = 0; i < v[_1].size(); ++i)
+        //     v[_1][i] *= viscosity_/massMatrix_[_1][i][0];
+
+        pressurePre_->pre(v[_1], dTmp[_1]);
+        pressurePre_->apply(v[_1], dTmp[_1]);
+        pressurePre_->post(v[_1]);
 
         return v;
     }
@@ -227,9 +268,16 @@ private:
 
     Matrix A_;
     const Vector& massMatrix_;
+
     std::unique_ptr<Dune::Preconditioner<SubVector<0>, SubVector<0>>> velPre_;
     std::unique_ptr<Dune::InverseOperator<SubVector<0>, SubVector<0>>> directVelOp_;
+
+    std::shared_ptr<Dune::MatrixAdapter<SubMatrix<1,1>, SubVector<1>, SubVector<1>>> pressureOp_;
+    std::unique_ptr<Dune::Preconditioner<SubVector<1>, SubVector<1>>> pressurePre_;
+    std::unique_ptr<Dune::InverseOperator<SubVector<1>, SubVector<1>>> directPressureOp_;
+
     bool useDirectVelocitySolver_;
+    bool useDirectPressureSolver_;
     bool useFullSchurComplementPreconditioner_, useBlockTriangularPreconditioner_;
     const Dune::ParameterTree& params_;
     double density_, viscosity_;
@@ -245,6 +293,11 @@ template<class Matrix, class Vector>
 class IncompressibleStokesSolver
 : public LinearSolver
 {
+    template<std::size_t i>
+    using SubVector = std::decay_t<decltype(std::declval<Vector>()[Dune::index_constant<i>{}])>;
+
+    template<std::size_t i, std::size_t j>
+    using SubMatrix = std::decay_t<decltype(std::declval<Matrix>()[Dune::index_constant<i>{}][Dune::index_constant<j>{}])>;
 public:
     /*!
      * \brief Constructor
@@ -252,14 +305,15 @@ public:
      * \param dirichletDofs vector that marks the Dirichlet dofs with a 1.0 and all other dofs with 0.0
      * \param params a parameter tree passed along to the iterative solvers
      *
-     * The parameter tree requires the (constant) viscosity in the key "Component.LiquidKinematicViscosity"
+     * The parameter tree requires the (constant) viscosity in the key "Component.LiquidDynamicViscosity"
      * and the (constant) density in the key "Component.LiquidDensity"
      */
-    IncompressibleStokesSolver(const Vector& massMatrix, const Vector& dirichletDofs, const Dune::ParameterTree& params)
-    : massMatrix_(massMatrix), dirichletDofs_(dirichletDofs), params_(params)
+    IncompressibleStokesSolver(const Vector& massMatrix, const Vector& dirichletDofs, const Dune::ParameterTree& params,
+        std::shared_ptr<Dune::MatrixAdapter<SubMatrix<1,1>, SubVector<1>, SubVector<1>>> pressureOp)
+    : massMatrix_(massMatrix), dirichletDofs_(dirichletDofs), params_(params), pressureOp_(pressureOp)
     {
         density_ = params.get<double>("Component.LiquidDensity");
-        viscosity_ = params.get<double>("Component.LiquidKinematicViscosity")*density_;
+        viscosity_ = params.get<double>("Component.LiquidDynamicViscosity");
         useBlockTriangularPreconditioner_ = params.get<bool>("preconditioner.UseBlockTriangular", false);
         useFullSchurComplementPreconditioner_ = params.get<bool>("preconditioner.UseFullSchurComplement", false);
     }
@@ -317,7 +371,7 @@ private:
     bool applyIterativeSolver_(const Matrix& A, Vector& x, const Vector& b)
     {
         auto preconditioner = std::make_shared<IncompressibleStokesPreconditioner<Matrix, Vector>>(
-            A, massMatrix_, dirichletDofs_, params_.sub("preconditioner"), density_, viscosity_
+            A, massMatrix_, dirichletDofs_, params_.sub("preconditioner"), density_, viscosity_, pressureOp_
         );
 
         auto op = std::make_shared<Dune::MatrixAdapter<Matrix, Vector, Vector>>(A);
@@ -341,6 +395,7 @@ private:
     const Vector massMatrix_;
     const Vector dirichletDofs_;
     const Dune::ParameterTree params_;
+    std::shared_ptr<Dune::MatrixAdapter<SubMatrix<1,1>, SubVector<1>, SubVector<1>>> pressureOp_;
 };
 
 /*!

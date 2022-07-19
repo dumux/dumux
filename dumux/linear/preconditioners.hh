@@ -333,6 +333,147 @@ private:
 
 DUMUX_REGISTER_PRECONDITIONER("uzawa", Dumux::MultiTypeBlockMatrixPreconditionerTag, Dune::defaultPreconditionerBlockLevelCreator<Dumux::SeqUzawa, 1>());
 
+template<class M, class X, class Y, int l = 1>
+class ModSeqUzawa : public Dune::Preconditioner<X,Y>
+{
+    static_assert(Dumux::isMultiTypeBlockMatrix<M>::value && M::M() == 2 && M::N() == 2, "SeqUzawa expects a 2x2 MultiTypeBlockMatrix.");
+    static_assert(l== 1, "SeqUzawa expects a block level of 1.");
+
+    using A = std::decay_t<decltype(std::declval<M>()[Dune::Indices::_0][Dune::Indices::_0])>;
+    using U = std::decay_t<decltype(std::declval<X>()[Dune::Indices::_0])>;
+
+    using Comm = Dune::Amg::SequentialInformation;
+    using VelLinearOperator = Dune::MatrixAdapter<A, U, U>;
+    using VelSmoother = Dune::SeqSSOR<A, U, U>;
+    using AMGSolverForA = Dune::Amg::AMG<VelLinearOperator, U, VelSmoother, Comm>;
+
+    using P = std::decay_t<decltype(std::declval<M>()[Dune::Indices::_1][Dune::Indices::_1])>;
+    using V = std::decay_t<decltype(std::declval<X>()[Dune::Indices::_1])>;
+
+    using PressLinearOperator = Dune::MatrixAdapter<P, V, V>;
+    using PressSmoother = Dune::SeqSSOR<P, V, V>;
+    using AMGSolverForP = Dune::Amg::AMG<PressLinearOperator, V, PressSmoother, Comm>;
+
+
+public:
+    //! \brief The matrix type the preconditioner is for.
+    using matrix_type = M;
+    //! \brief The domain type of the preconditioner.
+    using domain_type = X;
+    //! \brief The range type of the preconditioner.
+    using range_type = Y;
+    //! \brief The field type of the preconditioner.
+    using field_type = typename X::field_type;
+    //! \brief Scalar type underlying the field_type.
+    using scalar_field_type = Dune::Simd::Scalar<field_type>;
+
+    /*!
+     * \brief Constructor
+     *
+     * \param mat The matrix to operate on.
+     * \param params Collection of paramters.
+     */
+    ModSeqUzawa(const std::shared_ptr<const Dune::AssembledLinearOperator<M,X,Y>>& op,
+                const std::shared_ptr<const Dune::AssembledLinearOperator<P,V,V>>& pop,
+                const Dune::ParameterTree& params)
+    : matrix_(op->getmat())
+    , pmatrix_(pop->getmat())
+    , verbosity_(params.get<int>("verbosity"))
+    , paramGroup_(params.get<std::string>("ParameterGroup"))
+    {
+        initAMG_(params);
+    }
+
+    /*!
+     * \brief Prepare the preconditioner.
+     */
+    virtual void pre(X& x, Y& b) {}
+
+    /*!
+     * \brief Apply the preconditioner
+     *
+     * \param update The update to be computed.
+     * \param currentDefect The current defect.
+     */
+    virtual void apply(X& update, const Y& currentDefect)
+    {
+        using namespace Dune::Indices;
+
+        auto& C = matrix_[_1][_0];
+
+        const auto& f = currentDefect[_0];
+        const auto& g = currentDefect[_1];
+        auto& u = update[_0];
+        auto& p = update[_1];
+
+        // the Uzawa iteration
+
+        // u_k+1 = u_k + Q_A^−1*f,
+        auto uRhs = f;
+        auto uIncrement = u;
+        applySolverForA_(uIncrement, uRhs);
+        u += uIncrement;
+
+        // p_k+1 = p_k + Q_P^-1*(g - C*u_k+1)
+        auto pRhs = g;
+        C.mmv(u, pRhs);
+        auto pIncrement = p;
+        applySolverForP_(pIncrement, pRhs);
+        p += pIncrement;
+    }
+
+    /*!
+     * \brief Clean up.
+     */
+    virtual void post(X& x) {}
+
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual Dune::SolverCategory::Category category() const
+    {
+        return Dune::SolverCategory::sequential;
+    }
+
+private:
+
+    void initAMG_(const Dune::ParameterTree& params)
+    {
+        using namespace Dune::Indices;
+        auto lopV = std::make_shared<VelLinearOperator>(matrix_[_0][_0]);
+        amgSolverForA_ = std::make_unique<AMGSolverForA>(lopV, params);
+
+        auto lopP = std::make_shared<PressLinearOperator>(pmatrix_);
+        amgSolverForP_ = std::make_unique<AMGSolverForP>(lopP, params);
+    }
+
+    template<class Sol, class Rhs>
+    void applySolverForA_(Sol& sol, Rhs& rhs) const
+    {
+        amgSolverForA_->pre(sol, rhs);
+        amgSolverForA_->apply(sol, rhs);
+        amgSolverForA_->post(sol);
+    }
+
+    template<class Sol, class Rhs>
+    void applySolverForP_(Sol& sol, Rhs& rhs) const
+    {
+        amgSolverForP_->pre(sol, rhs);
+        amgSolverForP_->apply(sol, rhs);
+        amgSolverForP_->post(sol);
+    }
+
+    //! \brief The matrix we operate on.
+    const M& matrix_;
+    //! \brief The matrix we operate on.
+    const P& pmatrix_;
+    //! \brief The verbosity level
+    const int verbosity_;
+
+    std::unique_ptr<AMGSolverForA> amgSolverForA_;
+    std::unique_ptr<AMGSolverForP> amgSolverForP_;
+    const std::string paramGroup_;
+};
+
+
 } // end namespace Dumux
 
 #endif
