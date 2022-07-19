@@ -101,7 +101,7 @@ class BoxFVGridGeometry<Scalar, GV, true, Traits>
     class BoxFVGridGeometryCache
     {
     public:
-        BoxFVGridGeometryCache(const BoxFVGridGeometry& gg)
+        explicit BoxFVGridGeometryCache(const BoxFVGridGeometry& gg)
         : gridGeometry_(&gg)
 
         const BoxFVGridGeometry& gridGeometry() const
