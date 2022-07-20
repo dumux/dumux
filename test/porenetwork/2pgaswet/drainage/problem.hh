@@ -53,9 +53,9 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using Labels = GetPropType<TypeTag, Properties::Labels>;
     enum {
-        pwIdx = Indices::pressureIdx,
-        snIdx = Indices::saturationIdx,
-        nPhaseIdx = FluidSystem::phase1Idx,
+        pIdx = Indices::pressureIdx,
+        sIdx = Indices::saturationIdx,
+        nPhaseIdx = FluidSystem::phase0Idx,
 
 #if !ISOTHERMAL
         temperatureIdx = Indices::temperatureIdx,
@@ -141,13 +141,15 @@ public:
                                const SubControlVolume& scv) const
     {
         PrimaryVariables values(0.0);
-        values[pwIdx] = 1e5;
-        values[snIdx] = 0.0;
+        values[pIdx] = 1e5;
+        values[sIdx] = 1.0;
 
         // If a global phase pressure difference (pn,inlet - pw,outlet) is specified and the saturation shall also be fixed, apply:
         // pw,inlet = pw,outlet = 1e5; pn,outlet = pw,outlet + pc(S=0) = pw,outlet; pn,inlet = pw,inlet + pc_
         if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
-            values[snIdx] = 1.0 - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).sw(pc_);
+            values[sIdx] = 1.0 - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).sw(pc_);
+        else if (isOutletPore_(scv))
+            values[sIdx] = 0.2;
 
 #if !ISOTHERMAL
         if (isInletPore_(scv))
@@ -178,7 +180,7 @@ public:
         // we can instead only fix the non-wetting phase pressure and allow the wetting phase saturation to changle freely
         // by applying a Nitsche-type boundary condition which tries to minimize the difference between the present pn and the given value
         if (!useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
-            values[snIdx] = source_/scv.volume();//(elemVolVars[scv].pressure(nPhaseIdx) - (1e5 + pc_)) * 1e1;
+            values[sIdx - 1] = source_/scv.volume();//(elemVolVars[scv].pressure(nPhaseIdx) - (1e5 + pc_)) * 1e1;
 
         return values;
     }
@@ -188,14 +190,16 @@ public:
     PrimaryVariables initial(const Vertex& vertex) const
     {
         PrimaryVariables values(0.0);
-        values[pwIdx] = 1e5;
+        values[pIdx] = 1e5;
 
         // get global index of pore
         const auto dofIdxGlobal = this->gridGeometry().vertexMapper().index(vertex);
         if (isInletPore_(dofIdxGlobal))
-            values[snIdx] = 0.5;
+            values[sIdx] = 0.5;
+        else if (isOutletPore_(dofIdxGlobal))
+            values[sIdx] = 0.2;
         else
-            values[snIdx] = 0.0;
+            values[sIdx] = 1.0;
 
 #if !ISOTHERMAL
         values[temperatureIdx] = inletTemperature_;
@@ -234,6 +238,11 @@ private:
     bool isOutletPore_(const SubControlVolume& scv) const
     {
         return this->gridGeometry().poreLabel(scv.dofIndex()) == Labels::outlet;
+    }
+
+    bool isOutletPore_(const std::size_t dofIdxGlobal) const
+    {
+        return this->gridGeometry().poreLabel(dofIdxGlobal) == Labels::outlet;
     }
 
     int vtpOutputFrequency_;

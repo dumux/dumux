@@ -1,7 +1,7 @@
 [TimeLoop]
 DtInitial = 1e-5 # [s]
 MaxTimeStepSize = 1e1
-TEnd = 1.5e3 # [s]
+TEnd = 3e-1 # [s]
 
 [Grid]
 File = ./grids/pnm_grid1D.dgf
@@ -32,7 +32,8 @@ VtpOutputFrequency = -1 # Write every n-th time step. 0 only writes a file if an
 EnableGravity = false
 CapillaryPressure = 5000
 UseFixedPressureAndSaturationBoundary = false
-Source = 5e-15
+Source = 5e-3
+InletPressure = 1e5
 InletTemperature = 283.15
 OutletTemperature = 298.15
 
@@ -43,7 +44,7 @@ AddVelocity = 1
 MaxSteps = 10
 TargetSteps = 4
 MaxRelativeShift = 1e-5
-NewtonOutputFilename = 1D_Drainage_NewtonIteration.log
+NewtonOutputFilename = Whatever
 
 [InvasionState]
 Verbosity = true
@@ -63,4 +64,3 @@ IntervalPc = 1e1
 SolidHeatCapacity = 1.0 # for compatibility
 SolidDensity = 1.0 # for compatibility
 SolidThermalConductivity = 1.0 # for compatibility
-

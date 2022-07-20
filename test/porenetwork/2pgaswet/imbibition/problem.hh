@@ -32,10 +32,10 @@
 namespace Dumux {
 
 template <class TypeTag>
-class DrainageProblem;
+class ImbibitionProblem;
 
 template <class TypeTag>
-class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
+class ImbibitionProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -53,8 +53,8 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using Labels = GetPropType<TypeTag, Properties::Labels>;
     enum {
-        pwIdx = Indices::pressureIdx,
-        snIdx = Indices::saturationIdx,
+        pIdx = Indices::pressureIdx,
+        sIdx = Indices::saturationIdx,
         nPhaseIdx = FluidSystem::phase1Idx,
 
 #if !ISOTHERMAL
@@ -68,14 +68,16 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
 
 public:
     template<class SpatialParams>
-    DrainageProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<SpatialParams> spatialParams)
+    ImbibitionProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<SpatialParams> spatialParams)
     : ParentType(gridGeometry, spatialParams)
     {
         vtpOutputFrequency_ = getParam<int>("Problem.VtpOutputFrequency");
         useFixedPressureAndSaturationBoundary_ = getParam<bool>("Problem.UseFixedPressureAndSaturationBoundary", false);
         pc_ = getParam<Scalar>("Problem.CapillaryPressure");
+        inletPressure_ = getParam<Scalar>("Problem.InletPressure");
         source_ = getParam<Scalar>("Problem.Source", 0.0);
         problemName_ = getParam<std::string>("Problem.Name");
+
 #if !ISOTHERMAL
         inletTemperature_ = getParam<Scalar>("Problem.InletTemperature", 288.15);
         outletTemperature_ = getParam<Scalar>("Problem.OutletTemperature", 283.15);
@@ -124,7 +126,7 @@ public:
         BoundaryTypes bcTypes;
 
         // If a global phase pressure difference (pn,inlet - pw,outlet) with fixed saturations is specified, use a Dirichlet BC here
-        if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
+        if (isInletPore_(scv))
             bcTypes.setAllDirichlet();
         else if (isOutletPore_(scv))
             bcTypes.setAllDirichlet();
@@ -141,13 +143,19 @@ public:
                                const SubControlVolume& scv) const
     {
         PrimaryVariables values(0.0);
-        values[pwIdx] = 1e5;
-        values[snIdx] = 0.0;
 
         // If a global phase pressure difference (pn,inlet - pw,outlet) is specified and the saturation shall also be fixed, apply:
         // pw,inlet = pw,outlet = 1e5; pn,outlet = pw,outlet + pc(S=0) = pw,outlet; pn,inlet = pw,inlet + pc_
-        if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
-            values[snIdx] = 1.0 - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).sw(pc_);
+        if (isInletPore_(scv))
+        {
+            values[pIdx] = inletPressure_;
+            values[sIdx] = 1.0;
+        }
+        else if (isOutletPore_(scv))
+        {
+            values[pIdx] = inletPressure_;
+            values[sIdx] = 0.0;
+        }
 
 #if !ISOTHERMAL
         if (isInletPore_(scv))
@@ -177,8 +185,8 @@ public:
         // If we do not want to use global phase pressure difference with fixed saturations and pressures,
         // we can instead only fix the non-wetting phase pressure and allow the wetting phase saturation to changle freely
         // by applying a Nitsche-type boundary condition which tries to minimize the difference between the present pn and the given value
-        if (!useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
-            values[snIdx] = source_/scv.volume();//(elemVolVars[scv].pressure(nPhaseIdx) - (1e5 + pc_)) * 1e1;
+        // if (!useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
+        //     values[snIdx] = source_;//(elemVolVars[scv].pressure(nPhaseIdx) - (1e5 + pc_)) * 1e1;
 
         return values;
     }
@@ -188,14 +196,14 @@ public:
     PrimaryVariables initial(const Vertex& vertex) const
     {
         PrimaryVariables values(0.0);
-        values[pwIdx] = 1e5;
+        values[pIdx] = inletPressure_;
 
         // get global index of pore
         const auto dofIdxGlobal = this->gridGeometry().vertexMapper().index(vertex);
         if (isInletPore_(dofIdxGlobal))
-            values[snIdx] = 0.5;
+            values[sIdx] = 1.0;
         else
-            values[snIdx] = 0.0;
+            values[sIdx] = 0.0;
 
 #if !ISOTHERMAL
         values[temperatureIdx] = inletTemperature_;
@@ -205,7 +213,7 @@ public:
 
     //!  Evaluate the initial invasion state of a pore throat
     bool initialInvasionState(const Element& element) const
-    { return false; }
+    { return true; }
 
     // \}
 
@@ -239,6 +247,7 @@ private:
     int vtpOutputFrequency_;
     bool useFixedPressureAndSaturationBoundary_;
     Scalar pc_;
+    Scalar inletPressure_;
     Scalar source_;
     std::string problemName_;
     std::shared_ptr<TimeLoop<Scalar>> timeLoop_;
