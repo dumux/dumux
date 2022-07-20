@@ -26,6 +26,13 @@ variables:
 configure:
   stage: configure
   script:
+    - |
+      pushd /dune/modules/dune-common
+      git fetch --unshallow
+      git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+      git fetch origin
+      git checkout bugfix/fix_cmake_metadata_path
+      popd
     - dunecontrol --opts=$DUNE_OPTS_FILE --current configure
     - dunecontrol --opts=$DUNE_OPTS_FILE --current make -j8
     # cache state of the Dune virtual env for Python if it exists (Dune 2.9)
