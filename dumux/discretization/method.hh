@@ -70,6 +70,11 @@ struct FCDiamond : public Utility::Tag<FCDiamond>
 
 
 
+struct Cvfe : public Utility::Tag<Cvfe> 
+{ static std::string name() { return "cvfe"; } };
+
+
+
 struct None : public Utility::Tag<None> {
     static std::string name() { return "none"; }
 };
@@ -82,6 +87,7 @@ inline constexpr Staggered staggered{};
 inline constexpr FEM fem{};
 inline constexpr FCStaggered fcstaggered{};
 inline constexpr FCDiamond fcdiamond{};
+inline constexpr Cvfe cvfe{};
 inline constexpr None none{};
 
 } // end namespace Dumux::DiscretizationMethods
