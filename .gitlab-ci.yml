@@ -142,3 +142,14 @@ trigger lecture:
     DUMUX_MERGE_REQUEST_TARGET_BRANCH: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
     DUMUX_COMMIT_SHA: $CI_COMMIT_SHA
     DUMUX_REFERENCE_SHA: $CI_REFERENCE_SHA
+
+################################################
+# enable secrets security check                #
+################################################
+include:
+  - template: Security/Secret-Detection.gitlab-ci.yml
+
+secret_detection:
+  stage: check-status
+  rules:
+    - when: always
