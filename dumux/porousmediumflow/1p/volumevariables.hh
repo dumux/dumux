@@ -65,7 +65,7 @@ public:
     //! Export type of solid system
     using SolidSystem = typename Traits::SolidSystem;
     //! Export type of initial fluid state
-    using InitialFS = InitialFluidState<Scalar, FluidSystem, FluidState, EnergyVolVars>;
+    using InitialFS = InitialImmiscibleFluidState<Scalar, FluidSystem, FluidState>;
 
     /*!
      * \brief Updates all quantities for a given control volume.
@@ -85,13 +85,11 @@ public:
         ParentType::update(elemSol, problem, element, scv);
 
         // create an intermediate fluid state
-        FluidState initFS;
-        initFS.setSaturation(/*phaseIdx=*/0, 1.);
-        initFS.setPressure(/*phaseIdx=*/0, this->priVar(Indices::pressureIdx));
-        EnergyVolVars::updateTemperature(elemSol, problem, element, scv, initFS, solidState_);
+        InitialFS initfs(this->priVar(Indices::pressureIdx));
+        EnergyVolVars::updateTemperature(elemSol, problem, element, scv, initfs, solidState_);
 
-        // porosity
-        fluidState_ = InitialFS::completeFluidState(initFS);
+        // complete fluid state
+        initfs.template completeFluidState<EnergyVolVars>(fluidState_);
 
         // porosity and permeability
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);

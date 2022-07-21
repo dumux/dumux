@@ -26,9 +26,13 @@
 #define DUMUX_1P_INITIAL_FLUIDSTATE_HH
 
 namespace Dumux{
-template<class Scalar, class FluidSystem, class FluidState, class EnergyVolVars>
-class InitialFluidState
+template<class Scalar, class FluidSystem, class FluidState>
+class InitialImmiscibleFluidState
 {
+    static_assert(std::is_same_v<FluidState, ImmiscibleFluidState<Scalar,FluidSystem>>);
+    static constexpr int numPhases = FluidSystem::numPhases;
+
+    using Array = typename std::array<Scalar, numPhases>;
 public:
     /*!
      * \brief complete the fluid state from an initial state.
@@ -36,26 +40,47 @@ public:
      * \param initFS
      * \return FluidState
      */
-    static FluidState completeFluidState(const FluidState& initFS)
+
+    InitialImmiscibleFluidState(const Scalar& p)
     {
-        FluidState fluidState(initFS);
+        saturation_[0] = 1.0;
+        pressure_[0] = p;
+    }
+
+    void setTemperature(const std::size_t& phaseIdx, const Scalar& value)
+    {
+        temperature_[phaseIdx] = value;
+    }
+
+    template<class EnergyVolumeVariables>
+    void completeFluidState(FluidState& fs)
+    {
+        for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
+        {
+            fs.setPressure(phaseIdx,pressure_[phaseIdx]);
+            fs.setSaturation(phaseIdx, saturation_[phaseIdx]);
+            fs.setTemperature(phaseIdx, temperature_[phaseIdx]);
+        }
 
         typename FluidSystem::ParameterCache paramCache;
-        paramCache.updatePhase(fluidState, /*phaseIdx=*/0);
+        paramCache.updatePhase(fs, /*phaseIdx=*/0);
 
-        Scalar value = FluidSystem::density(fluidState, paramCache, /*phaseIdx=*/0);
-        fluidState.setDensity(/*phaseIdx=*/0, value);
+        Scalar value = FluidSystem::density(fs, paramCache, /*phaseIdx=*/0);
+        fs.setDensity(/*phaseIdx=*/0, value);
 
-        value = FluidSystem::viscosity(fluidState, paramCache, /*phaseIdx=*/0);
-        fluidState.setViscosity(/*phaseIdx=*/0, value);
+        value = FluidSystem::viscosity(fs, paramCache, /*phaseIdx=*/0);
+        fs.setViscosity(/*phaseIdx=*/0, value);
 
         // compute and set the enthalpy
-        value = EnergyVolVars::enthalpy(fluidState, paramCache, /*phaseIdx=*/0);
-        fluidState.setEnthalpy(/*phaseIdx=*/0, value);
-
-        return fluidState;
+        value = EnergyVolumeVariables::enthalpy(fs, paramCache, /*phaseIdx=*/0);
+        fs.setEnthalpy(/*phaseIdx=*/0, value);
     }
+
+private:
+    Array pressure_ = {};
+    Array saturation_ = {};
+    Array temperature_ = {};
 };
-}
+} //namespace dumux
 
 #endif

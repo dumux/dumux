@@ -116,6 +116,23 @@ public:
         solidState.setTemperature(T);
     }
 
+    template<class ElemSol, class Problem, class Element, class Scv, class MyFluidState>
+    void updateTemperature(const ElemSol& elemSol,
+                           const Problem& problem,
+                           const Element& element,
+                           const Scv& scv,
+                           MyFluidState& fluidState,
+                           SolidState& solidState)
+    {
+        // retrieve temperature from solution vector, all phases have the same temperature
+        Scalar T = Deprecated::temperature(problem, element, scv, elemSol);
+        for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+        {
+            fluidState.setTemperature(phaseIdx, T);
+        }
+        solidState.setTemperature(T);
+    }
+
     template<class ElemSol, class Problem, class Element, class Scv>
     void updateSolidEnergyParams(const ElemSol &elemSol,
                                  const Problem& problem,
