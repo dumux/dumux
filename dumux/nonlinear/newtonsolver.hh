@@ -243,10 +243,11 @@ public:
      * \brief The Constructor
      */
     NewtonSolver(std::shared_ptr<Assembler> assembler,
+                 std::shared_ptr<Assembler> assemblerRef,
                  std::shared_ptr<LinearSolver> linearSolver,
                  const Communication& comm = Dune::MPIHelper::getCommunication(),
                  const std::string& paramGroup = "")
-    : ParentType(assembler, linearSolver)
+    : ParentType(assembler, assemblerRef, linearSolver)
     , endIterMsgStream_(std::ostringstream::out)
     , comm_(comm)
     , paramGroup_(paramGroup)
