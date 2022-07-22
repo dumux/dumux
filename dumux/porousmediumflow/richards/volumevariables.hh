@@ -262,16 +262,14 @@ public:
 
         // set the wetting pressure
         using std::max;
-        Scalar minPc = fluidMatrixInteraction.pc(1.0);
         fluidState.setPressure(liquidPhaseIdx, priVars[Indices::pressureIdx]);
-        fluidState.setPressure(gasPhaseIdx, max(problem.nonwettingReferencePressure(), fluidState.pressure(liquidPhaseIdx) + minPc));
+        fluidState.setPressure(gasPhaseIdx, max(problem.nonwettingReferencePressure(), fluidState.pressure(liquidPhaseIdx) + minPc_));
 
         // compute the capillary pressure to compute the saturation
         // make sure that we the capillary pressure is not smaller than the minimum pc
         // this would possibly return unphysical values from regularized material laws
         using std::max;
-        const Scalar pc = max(fluidMatrixInteraction.endPointPc(),
-                              problem.nonwettingReferencePressure() - fluidState.pressure(liquidPhaseIdx));
+        const Scalar pc = max(minPc_, problem.nonwettingReferencePressure() - fluidState.pressure(liquidPhaseIdx));
         const Scalar sw = fluidMatrixInteraction.sw(pc);
         fluidState.setSaturation(liquidPhaseIdx, sw);
         fluidState.setSaturation(gasPhaseIdx, 1.0-sw);
