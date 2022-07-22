@@ -61,11 +61,11 @@ public:
     using ParentType::ParentType;
 
     /*!
-     * \brief Evaluatex the rate of change of all conservation
+     * \brief Evaluate the rate of change of all conservation
      *        quantites (e.g. phase mass) within a sub-control
      *        volume of a finite volume element for the immiscible models.
      *
-     * \param problem TODO docme!
+     * \param problem the problem
      * \param scv The sub control volume
      * \param volVars The current or previous volVars
      * \note This function should not include the source and sink terms.
@@ -97,7 +97,7 @@ public:
 
 
     /*!
-     * \brief Evaluatex the mass flux over a face of a sub control volume.
+     * \brief Evaluate the mass flux over a face of a sub control volume.
      *
      * \param problem The problem
      * \param element The element
