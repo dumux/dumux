@@ -52,7 +52,6 @@ public:
         deltaPc_ = getParam<Scalar>("Regularization.DeltaPc", 1e-8);
         regularPcInterval_ = getParam<Scalar>("Regularization.IntervalPc", 1e2);
         regularizationPosition_ = getParam<Scalar>("Regularization.Position", 1.0);
-        regSaturationPercentage_ = getParam<Scalar>("Regularization.SwPercentage", 0.01);
     }
 
 #if REGULARIZEWITHPRESSURE
@@ -166,6 +165,7 @@ public:
                 const SubControlVolumeFace& scvf,
                 bool invaded)
     {
+        const auto regSaturationPercentage_ = problem.regularizeSwInterval();
         const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
         throatCrossSectionShape_ = fvGeometry.gridGeometry().throatCrossSectionShape(eIdx);
         throatShapeFactor_ = fvGeometry.gridGeometry().throatShapeFactor(eIdx);
