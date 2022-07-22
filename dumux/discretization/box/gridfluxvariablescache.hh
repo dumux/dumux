@@ -24,6 +24,8 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_GRID_FLUXVARSCACHE_HH
 #define DUMUX_DISCRETIZATION_BOX_GRID_FLUXVARSCACHE_HH
 
+#include <dumux/parallel/parallel_for.hh>
+
 // make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/box/elementfluxvariablescache.hh>
@@ -88,20 +90,17 @@ public:
         if (forceUpdate)
         {
             fluxVarsCache_.resize(gridGeometry.gridView().size(0));
-            auto fvGeometry = localView(gridGeometry);
-            auto elemVolVars = localView(gridVolVars);
-            for (const auto& element : elements(gridGeometry.gridView()))
+            Dumux::parallelFor(gridGeometry.gridView().size(0), [&, &problem = problem()](const std::size_t eIdx)
             {
-                auto eIdx = gridGeometry.elementMapper().index(element);
-
-                // bind the geometries and volume variables to the element (all the elements in stencil)
-                fvGeometry.bind(element);
-                elemVolVars.bind(element, fvGeometry, sol);
+                // Prepare the geometries within the elements of the stencil
+                const auto element = gridGeometry.element(eIdx);
+                const auto fvGeometry = localView(gridGeometry).bind(element);
+                const auto elemVolVars = localView(gridVolVars).bind(element, fvGeometry, sol);
 
                 fluxVarsCache_[eIdx].resize(fvGeometry.numScvf());
-                for (auto&& scvf : scvfs(fvGeometry))
-                    cache(eIdx, scvf.index()).update(problem(), element, fvGeometry, elemVolVars, scvf);
-            }
+                for (const auto& scvf : scvfs(fvGeometry))
+                    cache(eIdx, scvf.index()).update(problem, element, fvGeometry, elemVolVars, scvf);
+            });
         }
     }
 
