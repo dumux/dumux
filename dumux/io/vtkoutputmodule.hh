@@ -667,11 +667,11 @@ private:
 
                         // get the scalar-valued data
                         for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
-                            volVarScalarData[i][scv.elementIndex()][scv.localDofIndex()] = volVarScalarDataInfo_[i].get(volVars);
+                            volVarScalarData[i][eIdxGlobal][scv.localDofIndex()] = volVarScalarDataInfo_[i].get(volVars);
 
                         // get the vector-valued data
                         for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
-                            volVarVectorData[i][scv.elementIndex()][scv.localDofIndex()] = volVarVectorDataInfo_[i].get(volVars);
+                            volVarVectorData[i][eIdxGlobal][scv.localDofIndex()] = volVarVectorDataInfo_[i].get(volVars);
                     }
                 }
 
