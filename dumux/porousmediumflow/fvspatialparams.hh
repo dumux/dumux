@@ -29,7 +29,6 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/math.hh>
-#include <dumux/flux/facetensoraverage.hh> // remove include after release 3.5
 #include <dumux/common/fvporousmediumspatialparams.hh>
 #include <dumux/common/typetraits/isvalid.hh>
 
@@ -81,37 +80,6 @@ public:
          *        (Nield, Bejan, Convection in porous media, 2006, p. 10 \cite nield2006 )
          */
         forchCoeffDefault_ = getParam<Scalar>("SpatialParams.ForchCoeff", 0.55);
-    }
-
-    /*!
-     * \brief Harmonic average of a discontinuous scalar field at discontinuity interface
-     *        (for compatibility reasons with the function below)
-     * \return the averaged scalar
-     * \param T1 first scalar parameter
-     * \param T2 second scalar parameter
-     * \param normal The unit normal vector of the interface
-     */
-    [[deprecated("Use Dumux::faceTensorAverage from dumux/flux/facetensoraverage.hh instead. This function will be removed after 3.5.")]]
-    Scalar harmonicMean(const Scalar T1,
-                        const Scalar T2,
-                        const GlobalPosition& normal) const
-    { return Dumux::harmonicMean(T1, T2); }
-
-    /*!
-     * \brief Harmonic average of a discontinuous tensorial field at discontinuity interface
-     * \note We do a harmonic average of the part normal to the interface (alpha*I) and
-     *       an arithmetic average of the tangential part (T - alpha*I).
-     * \return the averaged tensor
-     * \param T1 first tensor
-     * \param T2 second tensor
-     * \param normal The unit normal vector of the interface
-     */
-    [[deprecated("Use Dumux::faceTensorAverage from dumux/flux/facetensoraverage.hh instead. This function will be removed after 3.5.")]]
-    DimWorldMatrix harmonicMean(const DimWorldMatrix& T1,
-                                const DimWorldMatrix& T2,
-                                const GlobalPosition& normal) const
-    {
-        return faceTensorAverage(T1, T2, normal);
     }
 
     /*!

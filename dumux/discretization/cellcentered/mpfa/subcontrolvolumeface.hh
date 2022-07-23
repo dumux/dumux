@@ -123,38 +123,6 @@ public:
      * \param q The parameterization of the quadrature point on the scvf for flux calculation
      * \param boundary Boolean to specify whether or not the scvf is on a boundary
      */
-    template<class MpfaHelper>
-    [[deprecated("Use constructor taking an intersection instead. Will be removed after release 3.5")]]
-    CCMpfaSubControlVolumeFace(const MpfaHelper& helper,
-                               CornerStorage&& corners,
-                               GlobalPosition&& unitOuterNormal,
-                               GridIndexType vIdxGlobal,
-                               unsigned int vIdxLocal,
-                               GridIndexType scvfIndex,
-                               GridIndexType insideScvIdx,
-                               const OutsideGridIndexStorage& outsideScvIndices,
-                               Scalar q,
-                               bool boundary)
-    : boundary_(boundary)
-    , vertexIndex_(vIdxGlobal)
-    , scvfIndex_(scvfIndex)
-    , insideScvIdx_(insideScvIdx)
-    , outsideScvIndices_(outsideScvIndices)
-    , vIdxInElement_(vIdxLocal)
-    , corners_(std::move(corners))
-    , center_(0.0)
-    , unitOuterNormal_(std::move(unitOuterNormal))
-    {
-          // compute the center of the scvf
-          for (const auto& corner : corners_)
-              center_ += corner;
-          center_ /= corners_.size();
-
-          // use helper class to obtain area & integration point
-          ipGlobal_ = helper.getScvfIntegrationPoint(corners_, q);
-          area_ = helper.computeScvfArea(corners_);
-    }
-
     //! Construction with given intersection
     template<class MpfaHelper, class Intersection>
     CCMpfaSubControlVolumeFace(const MpfaHelper& helper,

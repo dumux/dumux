@@ -29,7 +29,6 @@
 #include <type_traits>
 #include <dune/common/std/type_traits.hh>
 
-#include <dumux/common/deprecated.hh>
 #include <dumux/material/solidsystems/1csolid.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
 
@@ -109,7 +108,7 @@ public:
                            SolidState& solidState)
     {
         // retrieve temperature from solution vector, all phases have the same temperature
-        Scalar T = Deprecated::temperature(problem, element, scv, elemSol);
+        Scalar T = problem.spatialParams().temperature(element, scv, elemSol);
         for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
         {
             fluidState.setTemperature(phaseIdx, T);

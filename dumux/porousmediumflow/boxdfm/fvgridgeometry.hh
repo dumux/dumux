@@ -135,10 +135,6 @@ public:
     using GridView = GV;
 
     //! Constructor
-    [[deprecated("Use BoxDfmFVGridGeometry(gridView, fractureGridAdapter) instead! Will be removed after release 3.5.")]]
-    BoxDfmFVGridGeometry(const GridView gridView)
-    : ParentType(gridView) {}
-
     template< class FractureGridAdapter >
     BoxDfmFVGridGeometry(const GridView gridView, const FractureGridAdapter& fractureGridAdapter)
     : ParentType(gridView)
@@ -167,15 +163,6 @@ public:
     //! The total number of degrees of freedom
     std::size_t numDofs() const
     { return this->gridView().size(dim); }
-
-    //! Update all fvElementGeometries (do this again after grid adaption)
-    template< class FractureGridAdapter >
-    [[deprecated("Use update(gridView) instead! Will be removed after release 3.5.")]]
-    void update(const FractureGridAdapter& fractureGridAdapter)
-    {
-        ParentType::update();
-        update_(fractureGridAdapter);
-    }
 
     //! update all fvElementGeometries (call this after grid adaption)
     template< class FractureGridAdapter >
@@ -467,12 +454,6 @@ public:
     using GridView = GV;
 
     //! Constructor
-    [[deprecated("Use BoxDfmFVGridGeometry(gridView, fractureGridAdapter) instead! Will be removed after release 3.5.")]]
-    BoxDfmFVGridGeometry(const GridView gridView)
-    : ParentType(gridView)
-    , facetMapper_(gridView, Dune::mcmgLayout(Dune::template Codim<1>()))
-    {}
-
     template< class FractureGridAdapter >
     BoxDfmFVGridGeometry(const GridView gridView, const FractureGridAdapter& fractureGridAdapter)
     : ParentType(gridView)
@@ -502,16 +483,6 @@ public:
     //! The total number of degrees of freedom
     std::size_t numDofs() const
     { return this->gridView().size(dim); }
-
-    //! Update all fvElementGeometries (do this again after grid adaption)
-    template< class FractureGridAdapter >
-    [[deprecated("Use update(gridView) instead! Will be removed after release 3.5.")]]
-    void update(const FractureGridAdapter& fractureGridAdapter)
-    {
-        ParentType::update();
-        updateFacetMapper_();
-        update_(fractureGridAdapter);
-    }
 
     //! update all fvElementGeometries (call this after grid adaption)
     template< class FractureGridAdapter >

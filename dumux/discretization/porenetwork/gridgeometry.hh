@@ -530,13 +530,6 @@ public:
     using GridView = GV;
 
     //! Constructor
-    [[deprecated("Use GridGeometry(gridView, gridData) instead! Will be removed after release 3.5.")]]
-    GridGeometry(const GridView gridView)
-    : ParentType(gridView)
-    {
-        static_assert(GridView::dimension == 1, "Porenetwork model only allow GridView::dimension == 1!");
-    }
-
     template<class GridData>
     GridGeometry(const GridView& gridView, const GridData& gridData)
     : ParentType(gridView)
@@ -566,15 +559,6 @@ public:
     //! The total number of degrees of freedom
     std::size_t numDofs() const
     { return this->vertexMapper().size(); }
-
-    //! update all fvElementGeometries (do this again after grid adaption)
-    template<class GridData>
-    [[deprecated("Use update(gridView, gridData) instead! Will be removed after release 3.5.")]]
-    void update(const GridData& gridData)
-    {
-        ParentType::update();
-        update_(gridData);
-    }
 
     //! update all fvElementGeometries (call this after grid adaption)
     template<class GridData>
@@ -747,13 +731,6 @@ public:
     using GridView = GV;
 
     //! Constructor
-    [[deprecated("Use GridGeometry(gridView, gridData) instead! Will be removed after release 3.5.")]]
-    GridGeometry(const GridView gridView)
-    : ParentType(gridView)
-    {
-        static_assert(GridView::dimension == 1, "Porenetwork model only allow GridView::dimension == 1!");
-    }
-
     template<class GridData>
     GridGeometry(const GridView& gridView, const GridData& gridData)
     : ParentType(gridView)
@@ -784,15 +761,6 @@ public:
     //! The total number of degrees of freedom
     std::size_t numDofs() const
     { return this->vertexMapper().size(); }
-
-    //! update all fvElementGeometries (do this again after grid adaption)
-    template<class GridData>
-    [[deprecated("Use update(gridView, gridData) instead! Will be removed after release 3.5.")]]
-    void update(const GridData& gridData)
-    {
-        ParentType::update();
-        update_(gridData);
-    }
 
     //! update all fvElementGeometries (call this after grid adaption)
     template<class GridData>

@@ -188,29 +188,6 @@ public:
         return isOdd_(scv.indexInElement()) ? scvf.localIndex() - offset : scvf.localIndex() + offset;
     }
 
-    template<class FVElementGeometry, class SubControlVolumeFace>
-    [[deprecated("The interface outsideScvfWithSameIntegrationPoint() is deprecated and the function is moved to the FVElementGeometry. Use the new interface localIndexOutsideScvfWithSameIntegrationPoint() instead. Will be removed after 3.5")]]
-    static const SubControlVolumeFace& outsideScvfWithSameIntegrationPoint(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
-    {
-        const auto& lateralOrthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
-        assert(!lateralOrthogonalScvf.boundary());
-
-        const int offset = (dim == 2) ? 3 : 5;
-        const auto otherLocalIdx = isOdd_(scvf.localIndex()) ? scvf.localIndex() - offset : scvf.localIndex() + offset;
-
-        auto outsideFVGeometry = localView(fvGeometry.gridGeometry());
-        const auto outsideElementIdx = fvGeometry.scv(lateralOrthogonalScvf.outsideScvIdx()).elementIndex();
-        outsideFVGeometry.bindElement(fvGeometry.gridGeometry().element(outsideElementIdx));
-
-        for (const auto& otherScvf : scvfs(outsideFVGeometry))
-        {
-            if (otherScvf.localIndex() == otherLocalIdx)
-                return otherScvf;
-        }
-
-        DUNE_THROW(Dune::InvalidStateException, "No outside scvf found");
-    }
-
     const GridView& gridView() const
     { return gridView_; }
 

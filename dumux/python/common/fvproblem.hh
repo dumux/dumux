@@ -210,26 +210,6 @@ public:
             pyProblem_.attr("addSourceDerivatives")(block, element, fvGeometry, scv);
     }
 
-    [[deprecated("extrusionFactorAtPos() should now be defined in the spatial params. This interface will be removed after 3.5.")]]
-    Scalar extrusionFactorAtPos(const GlobalPosition &globalPos, double defaultValue = 1.0) const
-    { return 1.0; }
-
-    template<class ElementSolution>
-    [[deprecated("extrusionFactor() should now be defined in the spatial params. This interface will be removed after 3.5.")]]
-    Scalar extrusionFactor(const Element& element,
-                           const SubControlVolume& scv,
-                           const ElementSolution& elemSol,
-                           double defaultValue = 1.0) const
-    { return this->extrusionFactorAtPos(scv.center()); }
-
-    [[deprecated("temperatureAtPos() should now be defined in the spatial params. This interface will be removed after 3.5.")]]
-    Scalar temperatureAtPos(const GlobalPosition &globalPos, int defaultValue = 1) const
-    { return 293.0; }
-
-    [[deprecated("temperature() should now be defined in the spatial params. This interface will be removed after 3.5.")]]
-    Scalar temperature(int defaultValue = 1) const
-    { return this->temperature(GlobalPosition(0.0)); }
-
     const GridGeometry& gridGeometry() const
     { return *gridGeometry_; }
 

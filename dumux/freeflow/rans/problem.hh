@@ -28,7 +28,6 @@
 
 #include <dune/common/fmatrix.hh>
 #include <dumux/common/properties.hh>
-#include <dumux/common/deprecated.hh>
 #include <dumux/common/staggeredfvproblem.hh>
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/method.hh>
@@ -196,13 +195,6 @@ public:
      *
      * \param scvf The sub control volume face.
      */
-    [[deprecated("The isOnWall and IsOnWallAtPos functions will be removed after release 3.5. "
-                 "Please use the Rans specific boundarytypes, and mark wall boundaries with the setWall() function.")]]
-    bool isOnWall(const SubControlVolumeFace& scvf) const
-    {
-        return asImp_().isOnWallAtPos(scvf.center());
-    }
-
     bool isFlatWallBounded() const
     {
         static const bool hasAlignedWalls = hasAlignedWalls_();
@@ -217,9 +209,7 @@ public:
 
     //! \brief Returns the \f$ \beta_{\omega} \f$ constant
     const Scalar betaOmega() const
-    {
-        return 0.0708;
-    }
+    { return 0.0708; }
 
     /*!
      * \brief Return the turbulent Prandtl number \f$ [-] \f$ which is used to convert
@@ -340,21 +330,8 @@ private:
         {
             fvGeometry.bindElement(element);
             for (const auto& scvf : scvfs(fvGeometry))
-            {
-                // Remove this check after release 3.5. IsOnWall Interface is deprecated
-                if constexpr (Deprecated::hasIsOnWall<Implementation, GlobalPosition>())
-                {
-                    // Remove this part
-                    if (!scvf.boundary() && asImp_().isOnWall(scvf)) // only search for walls at a global boundary
-                        wallFaceAxis.push_back(scvf.directionIndex());
-                }
-                else
-                {
-                    // Keep this part
-                    if (!scvf.boundary() && asImp_().boundaryTypes(element, scvf).hasWall())  // only search for walls at a global boundary
-                        wallFaceAxis.push_back(scvf.directionIndex());
-                }
-            }
+                if (!scvf.boundary() && asImp_().boundaryTypes(element, scvf).hasWall())  // only search for walls at a global boundary
+                    wallFaceAxis.push_back(scvf.directionIndex());
         }
 
         // Returns if all wall directions are the same
@@ -368,14 +345,11 @@ private:
             auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scvf : scvfs(fvGeometry))
-                if constexpr (!Deprecated::hasIsOnWall<Implementation, GlobalPosition>())
-                    if (asImp_().boundaryTypes(element, scvf).hasWall())
-                        return;
+                if (asImp_().boundaryTypes(element, scvf).hasWall())
+                    return;
         }
-
-        // If reached, no walls were found, throw exception. Remove check after 3.5
-        if constexpr (!Deprecated::hasIsOnWall<Implementation, GlobalPosition>())
-            DUNE_THROW(Dune::InvalidStateException, "No walls are are specified with the setWall() function");
+        // If reached, no walls were found using the boundary types has wall function.
+        DUNE_THROW(Dune::InvalidStateException, "No walls are are specified with the setWall() function");
     }
 
     /*!
@@ -385,23 +359,11 @@ private:
      */
     void findWallDistances_()
     {
-        // Remove this check after release 3.5. IsOnWall Interface is deprecated
-        if constexpr (Deprecated::hasIsOnWall<Implementation, GlobalPosition>())
-        {
-            WallDistance wallInformation(this->gridGeometry(), WallDistance<GridGeometry>::atElementCenters,
-                [this] (const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
-                { return asImp_().isOnWall(scvf); });
-            wallDistance_ = wallInformation.wallDistance();
-            storeWallElementAndDirectionIndex_(wallInformation.wallData());
-        }
-        else
-        {
-            WallDistance wallInformation(this->gridGeometry(), WallDistance<GridGeometry>::atElementCenters,
-                [this] (const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
-                { return asImp_().boundaryTypes(fvGeometry.element(), scvf).hasWall(); });
-            wallDistance_ = wallInformation.wallDistance();
-            storeWallElementAndDirectionIndex_(wallInformation.wallData());
-        }
+        WallDistance wallInformation(this->gridGeometry(), WallDistance<GridGeometry>::atElementCenters,
+            [this] (const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
+            { return asImp_().boundaryTypes(fvGeometry.element(), scvf).hasWall(); });
+        wallDistance_ = wallInformation.wallDistance();
+        storeWallElementAndDirectionIndex_(wallInformation.wallData());
     }
 
     template <class WallData>
@@ -583,7 +545,6 @@ private:
                     velocityGradients_[elementIdx][velCompIdx][axisIdx]
                         = (ccVelocity(neighborIdx, velCompIdx) - bjsVelocityAverage[axisIdx])
                         / (cellCenter(neighborIdx)[axisIdx] - normalNormCoordinate[axisIdx]);
-
                 }
             }
         }

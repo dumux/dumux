@@ -164,21 +164,6 @@ public:
         }
     }
 
-    /*!
-     * \brief Deprecated overload
-     */
-    template<std::size_t i, class LocalAssemblerI, class SolutionVector, class JacobianMatrixDiagBlock, class GridVariables>
-    [[deprecated("Use signature without curSol. Will be removed after release 3.5")]]
-    void evalAdditionalDomainDerivatives(CouplingManager& couplingManager,
-                                         Dune::index_constant<i> domainI,
-                                         const LocalAssemblerI& localAssemblerI,
-                                         const SolutionVector& curSol,
-                                         JacobianMatrixDiagBlock& A,
-                                         GridVariables& gridVariables) const
-    {
-        evalAdditionalDomainDerivatives(couplingManager, domainI, localAssemblerI, A, gridVariables);
-    }
-
     //! clear the internal data
     void clear() { sourceStencils_.clear(); }
 

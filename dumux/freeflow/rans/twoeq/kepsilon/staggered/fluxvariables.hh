@@ -26,7 +26,6 @@
 
 #include <numeric>
 #include <dumux/common/properties.hh>
-#include <dumux/common/deprecated.hh>
 #include <dumux/flux/fluxvariablesbase.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>
@@ -149,46 +148,23 @@ public:
 
         const auto bcTypes = problem.boundaryTypes(element, scvf);
 
-        // Remove this check after release 3.5. IsOnWall Interface is deprecated
-        if constexpr (Deprecated::hasIsOnWall<Problem, GlobalPosition>())
+        if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::turbulentKineticEnergyEqIdx)
+            || bcTypes.isSymmetry()
+            || bcTypes.hasWall())))
         {
-            // Remove this part
-            if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::turbulentKineticEnergyEqIdx)
-                                    || bcTypes.isSymmetry()
-                                    || problem.isOnWall(scvf))))
+            if (!(insideVolVars.isMatchingPoint() && outsideVolVars.isMatchingPoint())
+                || !(insideVolVars.isMatchingPoint() && outsideVolVars.inNearWallRegion())
+                || !(insideVolVars.inNearWallRegion() && outsideVolVars.isMatchingPoint()))
             {
-                if (!(insideVolVars.isMatchingPoint() && outsideVolVars.isMatchingPoint())
-                    || !(insideVolVars.isMatchingPoint() && outsideVolVars.inNearWallRegion())
-                    || !(insideVolVars.inNearWallRegion() && outsideVolVars.isMatchingPoint()))
-                {
-                    flux[turbulentKineticEnergyEqIdx]
-                        += coeff_k / distance
-                        * (insideVolVars.turbulentKineticEnergy() - outsideVolVars.turbulentKineticEnergy())
-                        * Extrusion::area(scvf);
-                }
-            }
-        }
-        else
-        {
-            // Keep this part
-            if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::turbulentKineticEnergyEqIdx)
-                                    || bcTypes.isSymmetry()
-                                    || bcTypes.hasWall())))
-            {
-                if (!(insideVolVars.isMatchingPoint() && outsideVolVars.isMatchingPoint())
-                    || !(insideVolVars.isMatchingPoint() && outsideVolVars.inNearWallRegion())
-                    || !(insideVolVars.inNearWallRegion() && outsideVolVars.isMatchingPoint()))
-                {
-                    flux[turbulentKineticEnergyEqIdx]
-                        += coeff_k / distance
-                        * (insideVolVars.turbulentKineticEnergy() - outsideVolVars.turbulentKineticEnergy())
-                        * Extrusion::area(scvf);
-                }
+                flux[turbulentKineticEnergyEqIdx]
+                    += coeff_k / distance
+                    * (insideVolVars.turbulentKineticEnergy() - outsideVolVars.turbulentKineticEnergy())
+                    * Extrusion::area(scvf);
             }
         }
 
         if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::dissipationEqIdx)
-                               || bcTypes.isSymmetry())))
+            || bcTypes.isSymmetry())))
         {
             flux[dissipationEqIdx]
                 += coeff_e / distance
