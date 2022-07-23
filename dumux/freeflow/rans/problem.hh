@@ -359,11 +359,11 @@ private:
      */
     void findWallDistances_()
     {
-            WallDistance wallInformation(this->gridGeometry(), WallDistance<GridGeometry>::atElementCenters,
-                [this] (const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
-                { return asImp_().boundaryTypes(fvGeometry.element(), scvf).hasWall(); });
-            wallDistance_ = wallInformation.wallDistance();
-            storeWallElementAndDirectionIndex_(wallInformation.wallData());
+        WallDistance wallInformation(this->gridGeometry(), WallDistance<GridGeometry>::atElementCenters,
+            [this] (const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
+            { return asImp_().boundaryTypes(fvGeometry.element(), scvf).hasWall(); });
+        wallDistance_ = wallInformation.wallDistance();
+        storeWallElementAndDirectionIndex_(wallInformation.wallData());
     }
 
     template <class WallData>
