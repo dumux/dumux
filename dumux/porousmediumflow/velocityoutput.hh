@@ -46,8 +46,6 @@ class PorousMediumFlowVelocityOutput : public VelocityOutput<GridVariables>
     using ParentType = VelocityOutput<GridVariables>;
     using GridGeometry = typename GridVariables::GridGeometry;
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolume = typename GridGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
@@ -55,16 +53,7 @@ class PorousMediumFlowVelocityOutput : public VelocityOutput<GridVariables>
     using VolumeVariables = typename GridVariables::VolumeVariables;
     using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
     using FluidSystem = typename VolumeVariables::FluidSystem;
-    using Scalar = typename GridVariables::Scalar;
 
-    static constexpr int dim = GridView::dimension;
-    static constexpr int dimWorld = GridView::dimensionworld;
-    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethods::box;
-    static constexpr int dofCodim = isBox ? dim : 0;
-
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-
-    using Problem = typename GridVolumeVariables::Problem;
     using VelocityBackend = PorousMediumFlowVelocity<GridVariables, FluxVariables>;
 
 public:
