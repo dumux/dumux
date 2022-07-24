@@ -125,8 +125,11 @@ int main(int argc, char** argv)
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
-    // intialize the vtk output module
-    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
+    // initialize the vtk output module
+    constexpr bool isDiamond = GridGeometry::discMethod == DiscretizationMethods::fcdiamond;
+    const auto mode = isDiamond ? Dune::VTK::nonconforming : Dune::VTK::conforming;
+    using VTKOut = VtkOutputModule<GridVariables, SolutionVector>;
+    VTKOut vtkWriter(*gridVariables, x, problem->name(), "", mode);
     using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
