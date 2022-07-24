@@ -59,7 +59,6 @@ public:
 
         hasDirichlet_ = false;
         hasNeumann_ = false;
-        hasOutflow_ = false;
 
         for (const auto& scv : scvs(fvGeometry))
         {
@@ -104,7 +103,6 @@ protected:
     std::vector< BoundaryTypes > vertexBCTypes_;
     bool hasDirichlet_ = false;
     bool hasNeumann_ = false;
-    bool hasOutflow_ = false;
 };
 
 } // namespace Dumux
