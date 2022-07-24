@@ -54,28 +54,22 @@
 #include "../internaldirichlet/properties.hh"
 
 //! Function to write out the scv-wise velocities (overload for mpfa)
-template<class GridGeometry, class GridVariables, class Sol,
-         std::enable_if_t<GridGeometry::discMethod == Dumux::DiscretizationMethods::ccmpfa, int> = 0>
+template<class GridGeometry, class GridVariables, class Sol>
 void writeMpfaVelocities(const GridGeometry& gridGeometry,
                          const GridVariables& gridVariables,
                          const Sol& x)
 {
-    using Scalar = typename GridVariables::Scalar;
-    using GlobalPos = typename GridGeometry::SubControlVolume::GlobalPosition;
+    if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::ccmpfa)
+    {
+        using Scalar = typename GridVariables::Scalar;
+        using GlobalPos = typename GridGeometry::SubControlVolume::GlobalPosition;
 
-    const auto velocities = Dumux::CCMpfaScvGradients::computeVelocities(gridGeometry, gridVariables, x, /*phaseIdx*/0);
-    Dumux::PointCloudVtkWriter<Scalar, GlobalPos> writer(velocities.first);
-    writer.addPointData(velocities.second, "velocity (m/s)");
-    writer.write("mpfa_scv_velocities");
+        const auto velocities = Dumux::CCMpfaScvGradients::computeVelocities(gridGeometry, gridVariables, x, /*phaseIdx*/0);
+        Dumux::PointCloudVtkWriter<Scalar, GlobalPos> writer(velocities.first);
+        writer.addPointData(velocities.second, "velocity (m/s)");
+        writer.write("mpfa_scv_velocities");
+    }
 }
-
-//! Function to write out the scv-wise velocities (overload for NOT mpfa)
-template<class GridGeometry, class GridVariables, class Sol,
-         std::enable_if_t<GridGeometry::discMethod != Dumux::DiscretizationMethods::ccmpfa, int> = 0>
-void writeMpfaVelocities(const GridGeometry& gridGeometry,
-                         const GridVariables& gridVariables,
-                         const Sol& x)
-{}
 
 int main(int argc, char** argv)
 {
