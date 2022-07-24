@@ -88,7 +88,7 @@ class PorousMediumFlowVelocity
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
     static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethods::box;
-    static constexpr int dofCodim = isBox ? dim : 0;
+    static constexpr bool isDiamond = GridGeometry::discMethod == DiscretizationMethods::fcdiamond;
     static constexpr bool stationaryVelocityField = FluxTraits::hasStationaryVelocityField();
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -232,6 +232,8 @@ public:
                 velocity[vIdxGlobal] += scvVelocity;
             }
         }
+        else if constexpr (isDiamond)
+            DUNE_THROW(Dune::NotImplemented, "Velocity output with diamond discretization");
         else
         {
             // For the number of scvfs per facet (mpfa) we simply obtain the number of

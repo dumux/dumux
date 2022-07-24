@@ -51,5 +51,6 @@
 #include <dumux/flux/box/darcyslaw.hh>
 #include <dumux/flux/cctpfa/darcyslaw.hh>
 #include <dumux/flux/ccmpfa/darcyslaw.hh>
+#include <dumux/flux/fcdiamond/darcyslaw.hh>
 
 #endif

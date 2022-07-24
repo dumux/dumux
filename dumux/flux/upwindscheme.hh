@@ -208,6 +208,11 @@ template<class GridGeometry>
 class UpwindSchemeImpl<GridGeometry, DiscretizationMethods::CCMpfa>
 : public UpwindSchemeImpl<GridGeometry, DiscretizationMethods::CCTpfa> {};
 
+//! Upwind scheme for face-centered diamond schemes
+template<class GridGeometry>
+class UpwindSchemeImpl<GridGeometry, DiscretizationMethods::FCDiamond>
+: public UpwindSchemeImpl<GridGeometry, DiscretizationMethods::Box> {};
+
 } // end namespace Dumux
 
 #endif
