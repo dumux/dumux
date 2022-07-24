@@ -60,10 +60,12 @@ template<class GridGeometry>
 class VtkOutputModuleBase
 {
     using GridView = typename GridGeometry::GridView;
-    using Field = Vtk::template Field<GridView>;
     static constexpr int dim = GridView::dimension;
 
 public:
+    //! the type of Field that can be added to this writer
+    using Field = Vtk::template Field<GridView>;
+
     //! export field type
     struct [[deprecated("use Vtk::FieldType instead")]] FieldType
     {
@@ -164,6 +166,15 @@ public:
             fields_.emplace_back(gridGeometry_.gridView(), gridGeometry_.elementMapper(), v, name, nComp, 0, dm_, precision);
         else
             fields_.emplace_back(gridGeometry_.gridView(), gridGeometry_.vertexMapper(), v, name, nComp, dim, dm_, precision);
+    }
+
+    /*!
+     * \brief Add a scalar or vector valued vtk field
+     * \param field The parameters passed on to the field constructor
+     */
+    void addField(Field&& field)
+    {
+        fields_.push_back(std::move(field));
     }
 
     //! Write the data for this timestep to file in four steps
@@ -328,11 +339,12 @@ class VtkOutputModule : public VtkOutputModuleBase<typename GridVariables::GridG
 
     struct VolVarScalarDataInfo { std::function<Scalar(const VV&)> get; std::string name; Dumux::Vtk::Precision precision_; };
     struct VolVarVectorDataInfo { std::function<VolVarsVector(const VV&)> get; std::string name; Dumux::Vtk::Precision precision_; };
-    using Field = Vtk::template Field<GridView>;
 
     using VelocityOutputType = Dumux::VelocityOutput<GridVariables>;
 
 public:
+    //! the type of Field that can be added to this writer
+    using Field = Vtk::template Field<GridView>;
     //! export type of the volume variables for the outputfields
     using VolumeVariables = VV;
 
@@ -451,7 +463,6 @@ private:
 
             auto fvGeometry = localView(gridGeometry());
             auto elemVolVars = localView(gridVariables_.curGridVolVars());
-
             for (const auto& element : elements(gridGeometry().gridView(), Dune::Partitions::interior))
             {
                 const auto eIdxGlobal = gridGeometry().elementMapper().index(element);
