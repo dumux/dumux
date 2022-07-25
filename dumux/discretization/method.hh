@@ -80,6 +80,11 @@ struct FCStaggered : public Utility::Tag<FCStaggered> {
 
 
 
+struct FCDiamond : public Utility::Tag<FCDiamond>
+{ static std::string name() { return "fcdiamond"; } };
+
+
+
 struct None : public Utility::Tag<None> {
     static std::string name() { return "none"; }
 };
@@ -91,6 +96,7 @@ inline constexpr Box box{};
 inline constexpr Staggered staggered{};
 inline constexpr FEM fem{};
 inline constexpr FCStaggered fcstaggered{};
+inline constexpr FCDiamond fcdiamond{};
 inline constexpr None none{};
 
 } // end namespace DiscretizationMethods

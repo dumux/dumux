@@ -60,10 +60,12 @@ template<class GridGeometry>
 class VtkOutputModuleBase
 {
     using GridView = typename GridGeometry::GridView;
-    using Field = Vtk::template Field<GridView>;
     static constexpr int dim = GridView::dimension;
 
 public:
+    //! the type of Field that can be added to this writer
+    using Field = Vtk::template Field<GridView>;
+
     //! export field type
     struct [[deprecated("use Vtk::FieldType instead")]] FieldType
     {
@@ -164,6 +166,15 @@ public:
             fields_.emplace_back(gridGeometry_.gridView(), gridGeometry_.elementMapper(), v, name, nComp, 0, dm_, precision);
         else
             fields_.emplace_back(gridGeometry_.gridView(), gridGeometry_.vertexMapper(), v, name, nComp, dim, dm_, precision);
+    }
+
+    /*!
+     * \brief Add a scalar or vector valued vtk field
+     * \param field The parameters passed on to the field constructor
+     */
+    void addField(Field&& field)
+    {
+        fields_.push_back(std::move(field));
     }
 
     //! Write the data for this timestep to file in four steps
@@ -324,15 +335,18 @@ class VtkOutputModule : public VtkOutputModuleBase<typename GridVariables::GridG
     using VolVarsVector = Dune::FieldVector<Scalar, dimWorld>;
 
     static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethods::box;
-    static constexpr int dofCodim = isBox ? dim : 0;
+    static constexpr bool isDiamond = GridGeometry::discMethod == DiscretizationMethods::fcdiamond;
+    // this refers to dofs of the output basis
+    static constexpr int dofCodim = (isBox || isDiamond) ? dim : 0;
 
     struct VolVarScalarDataInfo { std::function<Scalar(const VV&)> get; std::string name; Dumux::Vtk::Precision precision_; };
     struct VolVarVectorDataInfo { std::function<VolVarsVector(const VV&)> get; std::string name; Dumux::Vtk::Precision precision_; };
-    using Field = Vtk::template Field<GridView>;
 
     using VelocityOutputType = Dumux::VelocityOutput<GridVariables>;
 
 public:
+    //! the type of Field that can be added to this writer
+    using Field = Vtk::template Field<GridView>;
     //! export type of the volume variables for the outputfields
     using VolumeVariables = VV;
 
@@ -451,7 +465,6 @@ private:
 
             auto fvGeometry = localView(gridGeometry());
             auto elemVolVars = localView(gridVariables_.curGridVolVars());
-
             for (const auto& element : elements(gridGeometry().gridView(), Dune::Partitions::interior))
             {
                 const auto eIdxGlobal = gridGeometry().elementMapper().index(element);
@@ -468,10 +481,9 @@ private:
                     elemVolVars.bindElement(element, fvGeometry, sol_);
                 }
 
-                if (!volVarScalarDataInfo_.empty()
-                    || !volVarVectorDataInfo_.empty())
+                if (!volVarScalarDataInfo_.empty() || !volVarVectorDataInfo_.empty())
                 {
-                    for (auto&& scv : scvs(fvGeometry))
+                    for (const auto& scv : scvs(fvGeometry))
                     {
                         const auto dofIdxGlobal = scv.dofIndex();
                         const auto& volVars = elemVolVars[scv];
@@ -576,8 +588,11 @@ private:
     {
         const Dune::VTK::DataMode dm = Dune::VTK::nonconforming;
 
-        if(!isBox)
-            DUNE_THROW(Dune::InvalidStateException, "Non-conforming output makes no sense for cell-centered schemes!");
+        // only supports finite-element-like discretization schemes
+        if(!isBox && !isDiamond)
+            DUNE_THROW(Dune::NotImplemented,
+                "Non-conforming output for discretization scheme " << GridGeometry::discMethod
+            );
 
         //////////////////////////////////////////////////////////////
         //! (1) Assemble all variable fields and add to writer
@@ -586,16 +601,16 @@ private:
         // check the velocity output
         if (enableVelocityOutput_ && !velocityOutput_->enableOutput())
             std::cerr << "Warning! Velocity output was enabled in the input file"
-                      << " but no velocity output policy was set for the VTK output module:"
-                      << " There will be no velocity output."
-                      << " Use the addVelocityOutput member function of the VTK output module." << std::endl;
+                    << " but no velocity output policy was set for the VTK output module:"
+                    << " There will be no velocity output."
+                    << " Use the addVelocityOutput member function of the VTK output module." << std::endl;
         using VelocityVector = typename VelocityOutput::VelocityVector;
         std::vector<VelocityVector> velocity(velocityOutput_->numFluidPhases());
 
         // process rank
         std::vector<double> rank;
 
-        // volume variable data (indexing: volvardata/element/localcorner)
+        // volume variable data (indexing: volvardata/element/localindex)
         using ScalarDataContainer = std::vector< std::vector<Scalar> >;
         using VectorDataContainer = std::vector< std::vector<VolVarsVector> >;
         std::vector< ScalarDataContainer > volVarScalarData;
@@ -609,7 +624,7 @@ private:
             || addProcessRank_)
         {
             const auto numCells = gridGeometry().gridView().size(0);
-            const auto numDofs = numDofs_();
+            const auto outputSize = numDofs_();
 
             // get fields for all volume variables
             if (!volVarScalarDataInfo_.empty())
@@ -621,30 +636,22 @@ private:
             {
                 for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
                 {
-                    if(isBox && dim == 1)
+                    if((isBox && dim == 1) || isDiamond)
                         velocity[phaseIdx].resize(numCells);
                     else
-                        velocity[phaseIdx].resize(numDofs);
+                        velocity[phaseIdx].resize(outputSize);
                 }
             }
 
             // maybe allocate space for the process rank
             if (addProcessRank_) rank.resize(numCells);
 
+            // now we go element-local to extract values at local dof locations
+            auto fvGeometry = localView(gridGeometry());
+            auto elemVolVars = localView(gridVariables_.curGridVolVars());
             for (const auto& element : elements(gridGeometry().gridView(), Dune::Partitions::interior))
             {
                 const auto eIdxGlobal = gridGeometry().elementMapper().index(element);
-                const auto numCorners = element.subEntities(dim);
-
-                auto fvGeometry = localView(gridGeometry());
-                auto elemVolVars = localView(gridVariables_.curGridVolVars());
-
-                // resize element-local data containers
-                for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
-                    volVarScalarData[i][eIdxGlobal].resize(numCorners);
-                for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
-                    volVarVectorData[i][eIdxGlobal].resize(numCorners);
-
                 // If velocity output is enabled we need to bind to the whole stencil
                 // otherwise element-local data is sufficient
                 if (velocityOutput_->enableOutput())
@@ -658,10 +665,16 @@ private:
                     elemVolVars.bindElement(element, fvGeometry, sol_);
                 }
 
-                if (!volVarScalarDataInfo_.empty()
-                    || !volVarVectorDataInfo_.empty())
+                const auto numLocalDofs = fvGeometry.numScv();
+                // resize element-local data containers
+                for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
+                    volVarScalarData[i][eIdxGlobal].resize(numLocalDofs);
+                for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
+                    volVarVectorData[i][eIdxGlobal].resize(numLocalDofs);
+
+                if (!volVarScalarDataInfo_.empty() || !volVarVectorDataInfo_.empty())
                 {
-                    for (auto&& scv : scvs(fvGeometry))
+                    for (const auto& scv : scvs(fvGeometry))
                     {
                         const auto& volVars = elemVolVars[scv];
 
@@ -679,7 +692,6 @@ private:
                 if (velocityOutput_->enableOutput())
                 {
                     const auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
-
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
                         velocityOutput_->calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
                 }
@@ -694,46 +706,60 @@ private:
             //////////////////////////////////////////////////////////////
 
             // volume variables if any
+            static constexpr int dofLocCodim = isDiamond ? 1 : dim;
             for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
-                this->sequenceWriter().addVertexData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), volVarScalarData[i],
-                                                     volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/dim, /*nonconforming*/dm, this->precision()).get() );
+                this->sequenceWriter().addVertexData(Field(
+                    gridGeometry().gridView(), gridGeometry().elementMapper(),
+                    volVarScalarData[i], volVarScalarDataInfo_[i].name,
+                    /*numComp*/1, /*codim*/dofLocCodim, /*nonconforming*/dm, this->precision()
+                ).get());
 
             for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
-                this->sequenceWriter().addVertexData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), volVarVectorData[i],
-                                                     volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/dim, /*nonconforming*/dm, this->precision()).get() );
+                this->sequenceWriter().addVertexData(Field(
+                    gridGeometry().gridView(), gridGeometry().elementMapper(),
+                    volVarVectorData[i], volVarVectorDataInfo_[i].name,
+                    /*numComp*/dimWorld, /*codim*/dofLocCodim, /*nonconforming*/dm, this->precision()
+                ).get());
 
             // the velocity field
             if (velocityOutput_->enableOutput())
             {
                 // node-wise velocities
-                if (dim > 1)
+                if (dim > 1 && !isDiamond)
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
-                        this->sequenceWriter().addVertexData( Field(gridGeometry().gridView(), gridGeometry().vertexMapper(), velocity[phaseIdx],
-                                                             "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
-                                                             /*numComp*/dimWorld, /*codim*/dim, dm, this->precision()).get() );
+                        this->sequenceWriter().addVertexData(Field(
+                            gridGeometry().gridView(), gridGeometry().vertexMapper(), velocity[phaseIdx],
+                            "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
+                            /*numComp*/dimWorld, /*codim*/dofLocCodim, dm, this->precision()
+                        ).get());
 
                 // cell-wise velocities
                 else
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
-                        this->sequenceWriter().addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), velocity[phaseIdx],
-                                                           "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
-                                                           /*numComp*/dimWorld, /*codim*/0,dm, this->precision()).get());
+                        this->sequenceWriter().addCellData(Field(
+                            gridGeometry().gridView(), gridGeometry().elementMapper(), velocity[phaseIdx],
+                            "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
+                            /*numComp*/dimWorld, /*codim*/0, dm, this->precision()
+                        ).get());
             }
+        }
 
-            // the process rank
-            if (addProcessRank_)
-                this->sequenceWriter().addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), rank, "process rank", 1, 0).get() );
+        // the process rank
+        if (addProcessRank_)
+            this->sequenceWriter().addCellData(Field(
+                gridGeometry().gridView(), gridGeometry().elementMapper(),
+                rank, "process rank", /*numComp*/1, /*codim*/0
+            ).get());
 
-            // also register additional (non-standardized) user fields if any
-            for (auto&& field : this->fields())
-            {
-                if (field.codim() == 0)
-                    this->sequenceWriter().addCellData(field.get());
-                else if (field.codim() == dim)
-                    this->sequenceWriter().addVertexData(field.get());
-                else
-                    DUNE_THROW(Dune::RangeError, "Cannot add wrongly sized vtk scalar field!");
-            }
+        // also register additional (non-standardized) user fields if any
+        for (const auto& field : this->fields())
+        {
+            if (field.codim() == 0)
+                this->sequenceWriter().addCellData(field.get());
+            else if (field.codim() == dim || field.codim() == 1)
+                this->sequenceWriter().addVertexData(field.get());
+            else
+                DUNE_THROW(Dune::RangeError, "Cannot add wrongly sized vtk scalar field!");
         }
 
         //////////////////////////////////////////////////////////////
@@ -748,7 +774,12 @@ private:
     }
 
     //! return the number of dofs, we only support vertex and cell data
-    std::size_t numDofs_() const { return dofCodim == dim ? gridGeometry().vertexMapper().size() : gridGeometry().elementMapper().size(); }
+    std::size_t numDofs_() const
+    {
+        return dofCodim == dim ?
+            gridGeometry().vertexMapper().size()
+            : gridGeometry().elementMapper().size();
+    }
 
     const GridVariables& gridVariables_;
     const SolutionVector& sol_;

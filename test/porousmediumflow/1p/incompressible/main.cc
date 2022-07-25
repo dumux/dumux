@@ -54,28 +54,22 @@
 #include "../internaldirichlet/properties.hh"
 
 //! Function to write out the scv-wise velocities (overload for mpfa)
-template<class GridGeometry, class GridVariables, class Sol,
-         std::enable_if_t<GridGeometry::discMethod == Dumux::DiscretizationMethods::ccmpfa, int> = 0>
+template<class GridGeometry, class GridVariables, class Sol>
 void writeMpfaVelocities(const GridGeometry& gridGeometry,
                          const GridVariables& gridVariables,
                          const Sol& x)
 {
-    using Scalar = typename GridVariables::Scalar;
-    using GlobalPos = typename GridGeometry::SubControlVolume::GlobalPosition;
+    if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::ccmpfa)
+    {
+        using Scalar = typename GridVariables::Scalar;
+        using GlobalPos = typename GridGeometry::SubControlVolume::GlobalPosition;
 
-    const auto velocities = Dumux::CCMpfaScvGradients::computeVelocities(gridGeometry, gridVariables, x, /*phaseIdx*/0);
-    Dumux::PointCloudVtkWriter<Scalar, GlobalPos> writer(velocities.first);
-    writer.addPointData(velocities.second, "velocity (m/s)");
-    writer.write("mpfa_scv_velocities");
+        const auto velocities = Dumux::CCMpfaScvGradients::computeVelocities(gridGeometry, gridVariables, x, /*phaseIdx*/0);
+        Dumux::PointCloudVtkWriter<Scalar, GlobalPos> writer(velocities.first);
+        writer.addPointData(velocities.second, "velocity (m/s)");
+        writer.write("mpfa_scv_velocities");
+    }
 }
-
-//! Function to write out the scv-wise velocities (overload for NOT mpfa)
-template<class GridGeometry, class GridVariables, class Sol,
-         std::enable_if_t<GridGeometry::discMethod != Dumux::DiscretizationMethods::ccmpfa, int> = 0>
-void writeMpfaVelocities(const GridGeometry& gridGeometry,
-                         const GridVariables& gridVariables,
-                         const Sol& x)
-{}
 
 int main(int argc, char** argv)
 {
@@ -131,8 +125,11 @@ int main(int argc, char** argv)
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
-    // intialize the vtk output module
-    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
+    // initialize the vtk output module
+    constexpr bool isDiamond = GridGeometry::discMethod == DiscretizationMethods::fcdiamond;
+    const auto mode = isDiamond ? Dune::VTK::nonconforming : Dune::VTK::conforming;
+    using VTKOut = VtkOutputModule<GridVariables, SolutionVector>;
+    VTKOut vtkWriter(*gridVariables, x, problem->name(), "", mode);
     using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;

@@ -67,8 +67,7 @@ dumux_add_test(NAME test_1p_incompressible_tpfa_numdiff
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_tpfa_numdiff-00001.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_tpfa_numdiff params.input
-                                                                                  -Problem.Name test_1p_incompressible_tpfa_numdiff
-                                                                                  -Assembly.NumericDifference.PriVarMagnitude 1e5")
+                                                                                  -Problem.Name test_1p_incompressible_tpfa_numdiff")
 
 # using box and numeric differentiation
 dumux_add_test(NAME test_1p_incompressible_box_numdiff
@@ -80,8 +79,33 @@ dumux_add_test(NAME test_1p_incompressible_box_numdiff
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_box_numdiff-00001.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_box_numdiff params.input
-                                                                                  -Problem.Name test_1p_incompressible_box_numdiff
-                                                                                  -Assembly.NumericDifference.PriVarMagnitude 1e5")
+                                                                                  -Problem.Name test_1p_incompressible_box_numdiff")
+
+# using fc diamond and numeric differentiation
+dumux_add_test(NAME test_1p_incompressible_fcdiamond_numdiff
+               LABELS porousmediumflow 1p
+               SOURCES main.cc
+               COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleFCDiamond NUMDIFFMETHOD=DiffMethod::numeric
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_fcdiamond-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_fcdiamond_numdiff-00001.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_fcdiamond_numdiff params.input
+                                                                                -Problem.Name test_1p_incompressible_fcdiamond_numdiff")
+
+# using fc diamond and numeric differentiation with ug
+dumux_add_test(NAME test_1p_incompressible_fcdiamond_numdiff_ug
+               LABELS porousmediumflow 1p
+               SOURCES main.cc
+               CMAKE_GUARD dune-uggrid_FOUND
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>
+               COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleFCDiamond NUMDIFFMETHOD=DiffMethod::numeric
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_fcdiamond-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_fcdiamond_numdiff_ug-00001.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_fcdiamond_numdiff_ug params.input
+                                                                                -Problem.Name test_1p_incompressible_fcdiamond_numdiff_ug")
 
 # using tpfa and analytical Jacobian with extrusion factor
 dumux_add_test(NAME test_1p_incompressible_tpfa_extrude

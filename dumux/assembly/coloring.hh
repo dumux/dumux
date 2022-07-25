@@ -110,6 +110,10 @@ computeConnectedElements(const GridGeometry& gg)
         }
     }
 
+    // nothing has to be precomputed here as only immediate face neighbors are connected
+    else if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcdiamond)
+        return connectedElements;
+
     else
         DUNE_THROW(Dune::NotImplemented,
             "Missing coloring scheme implementation for this discretization method"
@@ -171,6 +175,16 @@ void addNeighborColors(const GridGeometry& gg,
         for (int i = 0; i < element.subEntities(dim); i++)
             for (auto eIdx : connectedElements[vMapper.subIndex(element, i, dim)])
                 neighborColors.push_back(colors[eIdx]);
+    }
+
+    else if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcdiamond)
+    {
+        // we modify neighbor faces during the assembly
+        // check who else modifies these neighbor elements
+        const auto& eMapper = gg.elementMapper();
+        for (const auto& intersection : intersections(gg.gridView(), element))
+            if (intersection.neighbor())
+                neighborColors.push_back(colors[eMapper.index(intersection.outside())]);
     }
 
     else
@@ -291,6 +305,7 @@ template<> struct SupportsColoring<DiscretizationMethods::CCTpfa> : public std::
 template<> struct SupportsColoring<DiscretizationMethods::CCMpfa> : public std::true_type {};
 template<> struct SupportsColoring<DiscretizationMethods::Box> : public std::true_type {};
 template<> struct SupportsColoring<DiscretizationMethods::FCStaggered> : public std::true_type {};
+template<> struct SupportsColoring<DiscretizationMethods::FCDiamond> : public std::true_type {};
 
 } // end namespace Dumux
 
