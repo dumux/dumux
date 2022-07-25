@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup MPNCModel
- * \brief A helper function to get the correct initial conditions by updating the fluidstate for the MPNC model
+ * \brief A helper function to get the correct initial conditions by updating the fluidstate and defining the primary variables needed for equilibrium mpnc models for the MPNC model
  */
 #ifndef DUMUX_MPNC_INITIALCONDITION_HELPER_HH
 #define DUMUX_MPNC_INITIALCONDITION_HELPER_HH
@@ -58,23 +58,24 @@ struct MPNCInitialConditionHelper
 
         PrimaryVariables values(0.0);
         // all N component fugacities
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                values[fug0Idx + compIdx] = fluidState.fugacity(0, compIdx);
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            values[fug0Idx + compIdx] = fluidState.fugacity(0, compIdx);
 
-            // first M - 1 saturations
-            for (int phaseIdx = 0; phaseIdx < numPhases - 1; ++phaseIdx)
-                values[s0Idx + phaseIdx] = fluidState.saturation(phaseIdx);
+        // first M - 1 saturations
+        for (int phaseIdx = 0; phaseIdx < numPhases - 1; ++phaseIdx)
+            values[s0Idx + phaseIdx] = fluidState.saturation(phaseIdx);
 
         static constexpr auto pressureFormulation = ModelTraits::pressureFormulation();
-            // first pressure
-            if(pressureFormulation == MpNcPressureFormulation::mostWettingFirst)
-                values[p0Idx] = fluidState.pressure(/*phaseIdx=*/0);
-            else if(pressureFormulation == MpNcPressureFormulation::leastWettingFirst)
-                values[p0Idx] = fluidState.pressure(numPhases-1);
-            else
-                DUNE_THROW(Dune::InvalidStateException,"unknown pressure formulation");
-            return values;
 
+        // first pressure
+        if(pressureFormulation == MpNcPressureFormulation::mostWettingFirst)
+            values[p0Idx] = fluidState.pressure(/*phaseIdx=*/0);
+        else if(pressureFormulation == MpNcPressureFormulation::leastWettingFirst)
+            values[p0Idx] = fluidState.pressure(numPhases-1);
+        else
+            DUNE_THROW(Dune::InvalidStateException,"unknown pressure formulation");
+
+        return values;
     }
 
     template<class FluidState, class ParamCache>
@@ -98,25 +99,24 @@ struct MPNCInitialConditionHelper
 
         PrimaryVariables values(0.0);
         // all N component fugacities
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                values[fug0Idx + compIdx] = fluidState.fugacity(0, compIdx);
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            values[fug0Idx + compIdx] = fluidState.fugacity(0, compIdx);
 
-            // first M - 1 saturations
-            for (int phaseIdx = 0; phaseIdx < numPhases - 1; ++phaseIdx)
-                values[s0Idx + phaseIdx] = fluidState.saturation(phaseIdx);
+        // first M - 1 saturations
+        for (int phaseIdx = 0; phaseIdx < numPhases - 1; ++phaseIdx)
+            values[s0Idx + phaseIdx] = fluidState.saturation(phaseIdx);
 
-            static constexpr auto pressureFormulation = ModelTraits::pressureFormulation();
-            // first pressure
-            if(pressureFormulation == MpNcPressureFormulation::mostWettingFirst)
-                values[p0Idx] = fluidState.pressure(/*phaseIdx=*/0);
-            else if(pressureFormulation == MpNcPressureFormulation::leastWettingFirst)
-                values[p0Idx] = fluidState.pressure(numPhases-1);
-            else
-                DUNE_THROW(Dune::InvalidStateException,"unknown pressure formulation");
-            return values;
+        static constexpr auto pressureFormulation = ModelTraits::pressureFormulation();
+        // first pressure
+        if(pressureFormulation == MpNcPressureFormulation::mostWettingFirst)
+            values[p0Idx] = fluidState.pressure(/*phaseIdx=*/0);
+        else if(pressureFormulation == MpNcPressureFormulation::leastWettingFirst)
+            values[p0Idx] = fluidState.pressure(numPhases-1);
+        else
+            DUNE_THROW(Dune::InvalidStateException,"unknown pressure formulation");
 
+        return values;
     }
-
 };
 
 
