@@ -257,6 +257,7 @@ public:
 
         // set the linear system (matrix & residual) in the assembler
         this->assembler().setLinearSystem();
+        this->assemblerRef().setLinearSystem();
 
         // set a different default for the linear solver residual reduction
         // within the Newton the linear solver doesn't need to solve too exact
@@ -362,7 +363,9 @@ public:
                 {
                     // set solution to previous solution & reset time step
                     Backend::update(vars, this->assembler().prevSol());
+                    Backend::update(vars, this->assemblerRef().prevSol());
                     this->assembler().resetTimeStep(Backend::dofs(vars));
+                    this->assemblerRef().resetTimeStep(Backend::dofs(vars));
 
                     if (verbosity_ >= 1)
                     {
@@ -504,7 +507,7 @@ public:
      */
     void solveLinearSystem(SolutionVector& deltaU)
     {
-        auto& b = this->assembler().residual();
+        auto& b = this->assemblerRef().residual();
 
         try
         {
@@ -1078,6 +1081,7 @@ private:
     -> typename std::enable_if_t<decltype(isValid(Detail::supportsPartialReassembly())(assembler))::value, void>
     {
         this->assembler().assembleJacobianAndResidual(vars, partialReassembler_.get());
+        this->assemblerRef().assembleJacobianAndResidual(vars, partialReassembler_.get());
     }
 
     //! assembleLinearSystem_ for assemblers that don't support partial reassembly
@@ -1086,6 +1090,7 @@ private:
     -> typename std::enable_if_t<!decltype(isValid(Detail::supportsPartialReassembly())(assembler))::value, void>
     {
         this->assembler().assembleJacobianAndResidual(vars);
+        this->assemblerRef().assembleJacobianAndResidual(vars);
     }
 
     /*!
@@ -1146,7 +1151,7 @@ private:
         return solveLinearSystemImpl_(this->linearSolver(),
                                       this->assembler().jacobian(),
                                       deltaU,
-                                      this->assembler().residual());
+                                      this->assemblerRef().residual());
     }
 
     /*!
