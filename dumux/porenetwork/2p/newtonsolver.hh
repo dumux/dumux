@@ -61,7 +61,7 @@ public:
         // call the method of the base class
         ParentType::newtonEnd(uCurrentIter, uLastIter);
 
-        auto& gridVariables = this->assembler().gridVariables();
+        auto& gridVariables = this->assemblerRef().gridVariables();
         auto& invasionState = gridVariables.gridFluxVarsCache().invasionState();
 
         invasionState.update(uCurrentIter, gridVariables.curGridVolVars(), gridVariables.gridFluxVarsCache());
@@ -74,7 +74,7 @@ public:
     void newtonFail(SolutionVector& u) final
     {
         ParentType::newtonFail(u);
-        auto& gridVariables = this->assembler().gridVariables();
+        auto& gridVariables = this->assemblerRef().gridVariables();
         gridVariables.gridFluxVarsCache().invasionState().reset();
     }
 
@@ -84,7 +84,7 @@ public:
     //  */
     void newtonSucceed() final
     {
-        auto& gridVariables = this->assembler().gridVariables();
+        auto& gridVariables = this->assemblerRef().gridVariables();
         gridVariables.gridFluxVarsCache().invasionState().advance();
     }
 
