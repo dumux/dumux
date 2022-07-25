@@ -57,7 +57,6 @@ struct FaceCenteredDiamondDefaultGridGeometryTraits : public DefaultMapperTraits
     using SubControlVolume = FaceCenteredDiamondSubControlVolume<GridView>;
     using SubControlVolumeFace = FaceCenteredDiamondSubControlVolumeFace<GridView>;
     using DofMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
-    using GeometryHelper = DiamondGeometryHelper<GridView, SubControlVolume, SubControlVolumeFace>;
 
     template<class GridGeometry, bool enableCache>
     using LocalView = FaceCenteredDiamondFVElementGeometry<GridGeometry, enableCache>;
@@ -78,8 +77,7 @@ class FaceCenteredDiamondFVGridGeometry
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::SmallLocalIndex;
     using Element = typename GV::template Codim<0>::Entity;
-
-    using DofMapper = typename Traits::DofMapper;
+    using GeometryHelper = DiamondGeometryHelper<GV, typename Traits::SubControlVolume, typename Traits::SubControlVolumeFace>;
 
     using Scalar = typename GV::ctype;
 
@@ -102,8 +100,8 @@ public:
     using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
     //! export the grid view type
     using GridView = GV;
-    //! export the geometry helper type
-    using GeometryHelper = typename Traits::GeometryHelper;
+    //! export the dof mapper type
+    using DofMapper = typename Traits::DofMapper;
     //! export the type of extrusion
     using Extrusion = Extrusion_t<Traits>;
     //! export the finite element cache type

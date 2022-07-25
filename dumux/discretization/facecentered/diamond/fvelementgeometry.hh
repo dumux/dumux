@@ -27,11 +27,11 @@
 #include <type_traits>
 
 #include <dune/common/reservedvector.hh>
+#include <dune/common/iteratorrange.hh>
 
 #include <dumux/common/indextraits.hh>
-#include <dune/common/iteratorrange.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
-#include <bitset>
+#include <dumux/discretization/facecentered/diamond/geometryhelper.hh>
 
 namespace Dumux {
 
@@ -55,6 +55,8 @@ class FaceCenteredDiamondFVElementGeometry<GG, /*cachingEnabled*/true>
     using LocalIndexType = typename IndexTraits<GridView>::SmallLocalIndex;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GGCache = typename GG::Cache;
+    using GeometryHelper = DiamondGeometryHelper<GridView, typename GG::SubControlVolume, typename GG::SubControlVolumeFace>;
+
 public:
     //! export type of subcontrol volume face
     using SubControlVolume = typename GG::SubControlVolume;
@@ -174,6 +176,17 @@ public:
     //! The bound element index
     std::size_t elementIndex() const
     { return eIdx_; }
+
+    //! Geometry of a sub control volume
+    typename SubControlVolume::Traits::Geometry geometry(const Element& element, const SubControlVolume& scv) const
+    {
+        assert(isBound());
+        const auto geo = element.geometry();
+        return {
+            SubControlVolume::Traits::geometryType(),
+            GeometryHelper(geo).getScvCorners(scv.indexInElement())
+        };
+    }
 
 private:
     std::optional<Element> element_;
