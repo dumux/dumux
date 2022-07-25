@@ -301,10 +301,20 @@ public:
             // split the source values equally among all concerned entities
             source.setEmbeddings(entities.size()*source.embeddings());
 
-            if constexpr (GridGeometry::discMethod == DiscretizationMethods::box)
+            if constexpr (GridGeometry::discMethod == DiscretizationMethods::box
+                || GridGeometry::discMethod == DiscretizationMethods::fcdiamond)
             {
                 // loop over all concerned elements
                 auto fvGeometry = localView(gridGeometry);
+
+                // TODO fix this for box by adding the fvGeometry interface
+                const auto getGeo = [](const auto& fvGeometry, const auto& scv){
+                    if constexpr (GridGeometry::discMethod == DiscretizationMethods::box)
+                        return scv.geometry();
+                    else
+                        return fvGeometry.geometry(scv);
+                };
+
                 for (const auto eIdx : entities)
                 {
                     // check in which subcontrolvolume(s) we are
@@ -316,7 +326,7 @@ public:
                     constexpr int dim = GridGeometry::GridView::dimension;
                     Dune::ReservedVector<std::size_t, 1<<dim> scvIndices;
                     for (const auto& scv : scvs(fvGeometry))
-                        if (intersectsPointGeometry(globalPos, scv.geometry()))
+                        if (intersectsPointGeometry(globalPos, getGeo(fvGeometry, scv)))
                             scvIndices.push_back(scv.indexInElement());
 
                     // for all scvs that tested positive add the point sources
