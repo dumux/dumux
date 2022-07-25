@@ -648,7 +648,10 @@ public:
             if constexpr (assemblerExportsVariables)
                 priVarSwitchAdapter_->invoke(Backend::dofs(vars), vars);
             else // this assumes assembly with solution (i.e. Variables=SolutionVector)
+            {
                 priVarSwitchAdapter_->invoke(vars, this->assembler().gridVariables());
+                priVarSwitchAdapter_->invoke(vars, this->assemblerRef().gridVariables());
+            }
         }
 
         ++numSteps_;
@@ -886,7 +889,10 @@ protected:
         Backend::update(vars, uCurrentIter);
 
         if constexpr (!assemblerExportsVariables)
+        {
             this->assembler().updateGridVariables(Backend::dofs(vars));
+            this->assemblerRef().updateGridVariables(Backend::dofs(vars));
+        }
     }
 
     void computeResidualReduction_(const Variables& vars)
@@ -896,17 +902,32 @@ protected:
         if constexpr (Detail::hasNorm<LinearSolver, SolutionVector>())
         {
             if constexpr (!assemblerExportsVariables)
+            {
                 this->assembler().assembleResidual(Backend::dofs(vars));
+                this->assemblerRef().assembleResidual(Backend::dofs(vars));
+            }
             else
+            {
                 this->assembler().assembleResidual(vars);
-            residualNorm_ = this->linearSolver().norm(this->assembler().residual());
+                this->assemblerRef().assembleResidual(vars);
+            }
+            {
+                residualNorm_ = this->linearSolver().norm(this->assembler().residual());
+                residualNorm_ = this->linearSolver().norm(this->assemblerRef().residual());
+            }
         }
         else
         {
             if constexpr (!assemblerExportsVariables)
+            {
                 residualNorm_ = this->assembler().residualNorm(Backend::dofs(vars));
+                residualNorm_ = this->assemblerRef().residualNorm(Backend::dofs(vars));
+            }
             else
+            {
                 residualNorm_ = this->assembler().residualNorm(vars);
+                residualNorm_ = this->assemblerRef().residualNorm(vars);
+            }
         }
 
         reduction_ = residualNorm_;
