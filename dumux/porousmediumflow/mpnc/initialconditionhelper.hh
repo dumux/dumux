@@ -31,9 +31,10 @@ namespace Dumux {
 
 namespace MPNCInitialConditions{
 
-    struct AllPhasesPresent { int refPhaseIdx; };
-    struct NotAllPhasesPresent { int refPhaseIdx; };
-}
+struct AllPhasesPresent { int refPhaseIdx; };
+struct NotAllPhasesPresent { int refPhaseIdx; };
+
+} // namespace MPNCInitialConditions
 
 template <class Scalar, class PrimaryVariables, class FluidSystem, class ModelTraits>
 struct MPNCInitialConditionHelper
@@ -118,7 +119,6 @@ struct MPNCInitialConditionHelper
         return values;
     }
 };
-
 
 } // end namespace Dumux
 
