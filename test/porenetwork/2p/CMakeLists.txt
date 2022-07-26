@@ -1,4 +1,5 @@
 add_subdirectory(static)
+dune_symlink_to_source_files(FILES grids)
 
 add_input_file_links()
 

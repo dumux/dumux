@@ -68,7 +68,7 @@ int main(int argc, char** argv)
     // try to create a grid (from the given grid file or the input file)
     /////////////////////////////////////////////////////////////////////
 
-    using GridManager = Dumux::PoreNetwork::GridManager<3>;
+    using GridManager = Dumux::PoreNetwork::GridManager<2>;
     GridManager gridManager;
     gridManager.init();
 

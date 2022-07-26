@@ -1,0 +1,58 @@
+[TimeLoop]
+DtInitial = 1e-5 # [s]
+MaxTimeStepSize = 1e1
+TEnd = 1.5e3 # [s]
+
+[Grid]
+File = ./grids/pnm_grid1D.dgf
+PoreGeometry = Cube
+ThroatCrossSectionShape = Square
+
+#[Grid]
+#UpperRight = 4e-4 4e-4
+#LowerLeft = 0 0
+#NumPores = 5 5
+#ParameterType = lognormal
+#MeanPoreInscribedRadius = 1e-5
+#StandardDeviationPoreInscribedRadius = 0.0 #4e-6
+#PoreGeometry = Cube
+#ThroatCrossSectionShape = Square
+#ParameterRandomNumberSeed = 1
+#BoundaryFaceMarker = 2 3 1 1
+#MinThroatLength = 1e-10
+#DeletionProbability = 0.0 0.0 1 1
+#RemoveThroatsOnBoundary = 0 1
+#CapPoresOnBoundaries = 0 1 2 3
+#Sanitize = true
+#DeletionRandomNumberSeed = 33
+
+[Problem]
+Name = test_pnm_2p_1d
+VtpOutputFrequency = -1 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occured. -1 writes every step
+EnableGravity = false
+CapillaryPressure = 5000
+UseFixedPressureAndSaturationBoundary = false
+Source = 5e-15
+
+[Vtk]
+AddVelocity = 1
+
+[Newton]
+MaxSteps = 10
+TargetSteps = 4
+MaxRelativeShift = 1e-5
+NewtonOutputFilename = 1D_Drainage_NewtonIteration.log
+
+[InvasionState]
+Verbosity = true
+#AccuracyCriterion = 0.99
+
+[SpatialParams]
+RegularizeLowSw = true
+RegularizeHighSw = true
+HighSwRegularizationMethod = Spline
+RegularizationHighSw = 0.9999
+RegularizationLowSw = 0.1
+
+[Regularization]
+IntervalPc = 1e1

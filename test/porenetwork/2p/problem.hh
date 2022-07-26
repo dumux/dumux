@@ -74,6 +74,11 @@ public:
         vtpOutputFrequency_ = getParam<int>("Problem.VtpOutputFrequency");
         useFixedPressureAndSaturationBoundary_ = getParam<bool>("Problem.UseFixedPressureAndSaturationBoundary", false);
         pc_ = getParam<Scalar>("Problem.CapillaryPressure");
+        source_ = getParam<Scalar>("Problem.Source", 0.0);
+#if !ISOTHERMAL
+        inletTemperature_ = getParam<Scalar>("Problem.InletTemperature", 288.15);
+        outletTemperature_ = getParam<Scalar>("Problem.OutletTemperature", 283.15);
+#endif
     }
 
     /*!
@@ -135,9 +140,9 @@ public:
 
 #if !ISOTHERMAL
         if (isInletPore_(scv))
-            values[temperatureIdx] = 273.15 + 15;
+            values[temperatureIdx] = inletTemperature_;
         else
-            values[temperatureIdx] = 273.15 + 10;
+            values[temperatureIdx] = outletTemperature_;
 #endif
         return values;
     }
@@ -162,7 +167,7 @@ public:
         // we can instead only fix the non-wetting phase pressure and allow the wetting phase saturation to changle freely
         // by applying a Nitsche-type boundary condition which tries to minimize the difference between the present pn and the given value
         if (!useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
-            values[snIdx] = (elemVolVars[scv].pressure(nPhaseIdx) - (1e5 + pc_)) * 1e8;
+            values[snIdx] = source_/scv.volume();//(elemVolVars[scv].pressure(nPhaseIdx) - (1e5 + pc_)) * 1e1;
 
         return values;
     }
@@ -178,11 +183,13 @@ public:
         const auto dofIdxGlobal = this->gridGeometry().vertexMapper().index(vertex);
         if (isInletPore_(dofIdxGlobal))
             values[snIdx] = 0.5;
+        else if (outInletPore_(dofIdxGlobal))
+            values[snIdx] = 0.1;
         else
             values[snIdx] = 0.0;
 
 #if !ISOTHERMAL
-        values[temperatureIdx] = 273.15 + 10;
+        values[temperatureIdx] = inletTemperature_;
 #endif
         return values;
     }
@@ -210,9 +217,19 @@ private:
         return this->gridGeometry().poreLabel(scv.dofIndex()) == Labels::outlet;
     }
 
+    bool outInletPore_(const std::size_t dofIdxGlobal) const
+    {
+        return this->gridGeometry().poreLabel(dofIdxGlobal) == Labels::outlet;
+    }
+
     int vtpOutputFrequency_;
     bool useFixedPressureAndSaturationBoundary_;
     Scalar pc_;
+    Scalar source_;
+#if !ISOTHERMAL
+    Scalar inletTemperature_;
+    Scalar outletTemperature_;
+#endif
 };
 } //end namespace Dumux
 
