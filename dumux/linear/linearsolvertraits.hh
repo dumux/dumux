@@ -151,9 +151,6 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::FCStaggered>
         DofMapper(const typename GridGeometry::GridView& gridView)
         : gridView_(gridView) {}
 
-        auto index(const typename GridGeometry::GridView::Intersection& intersection) const
-        { return gridView_.indexSet().index(intersection); }
-
         template<class Entity>
         auto index(const Entity& e) const
         { return gridView_.indexSet().index(e); }
@@ -164,6 +161,9 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::FCStaggered>
     private:
         typename GridGeometry::GridView gridView_;
     };
+
+    static DofMapper dofMapper(const GridGeometry& gg)
+    { return { gg.gridView() }; }
 
     using Grid = typename GridGeometry::GridView::Traits::Grid;
     static constexpr int dofCodim = 1;
@@ -179,6 +179,24 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::FCStaggered>
         assert(gridView.overlapSize(0) > 0);
         return false;
     }
+};
+
+//! Face-centered diamond scheme: use overlapping or non-overlapping model depending on the grid
+template<class GridGeometry>
+struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::FCDiamond>
+: public LinearSolverTraitsBase<GridGeometry>
+{
+    using DofMapper = typename GridGeometry::DofMapper;
+    using Grid = typename GridGeometry::GridView::Traits::Grid;
+    static constexpr int dofCodim = 1;
+    static constexpr bool canCommunicate = Dumux::Detail::canCommunicate<Grid, dofCodim>;
+
+    static const DofMapper& dofMapper(const GridGeometry& gg)
+    { return { gg.dofMapper() }; }
+
+    template<class GridView>
+    static bool isNonOverlapping(const GridView& gridView)
+    { return gridView.overlapSize(0) == 0; }
 };
 
 //! Cell-centered mpfa: use overlapping model
