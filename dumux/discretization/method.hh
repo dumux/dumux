@@ -29,22 +29,7 @@
 
 #include <dumux/common/tag.hh>
 
-namespace Dumux {
-
-/*!
- * \brief The available discretization methods in Dumux
- * \ingroup Discretization
- * \note Use none if specifying a discretization method is required but
- *       the class in question is not specific to a a discretization method
- *       or the classification is non-applicable
- */
-enum class DiscretizationMethod
-{
-    none, box, cctpfa, ccmpfa, staggered, fem, fcstaggered
-};
-
-
-namespace DiscretizationMethods {
+namespace Dumux::DiscretizationMethods {
 
 struct CCTpfa : public Utility::Tag<CCTpfa> {
     static std::string name() { return "cctpfa"; }
@@ -99,7 +84,6 @@ inline constexpr FCStaggered fcstaggered{};
 inline constexpr FCDiamond fcdiamond{};
 inline constexpr None none{};
 
-} // end namespace DiscretizationMethods
-} // end namespace Dumux
+} // end namespace Dumux::DiscretizationMethods
 
 #endif
