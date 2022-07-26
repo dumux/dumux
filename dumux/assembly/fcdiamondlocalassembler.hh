@@ -144,8 +144,27 @@ public:
             maybeAssembleCouplingBlocks(residual);
         }
         else
-            DUNE_THROW(Dune::NotImplemented, "Ghost elements not supported");
+        {
+            const auto numLocalFaces = this->element().subEntities(1);
+            for (int i = 0; i < numLocalFaces; ++i)
+            {
+                // do not change the non-ghost vertices
+                const auto face = this->element().template subEntity<1>(i);
+                if (face.partitionType() == Dune::InteriorEntity || face.partitionType() == Dune::BorderEntity)
+                    continue;
 
+                // set main diagonal entries for the vertex
+                const auto dofIndex = gridGeometry.dofMapper().index(face);
+
+                typedef typename JacobianMatrix::block_type BlockType;
+                BlockType &J = jac[dofIndex][dofIndex];
+                for (int j = 0; j < BlockType::rows; ++j)
+                    J[j][j] = 1.0;
+
+                // set residual for the vertex
+                res[dofIndex] = 0;
+            }
+        }
 
         auto applyDirichlet = [&] (const auto& scvI,
                                    const auto& dirichletValues,
@@ -390,14 +409,14 @@ public:
                 {
                     // update the volume variables and compute element residual
                     elemSol[scv.localDofIndex()][pvIdx] = priVar;
-                    deflectionHelper.deflect(elemSol, scv, this->problem());
+                    deflectionHelper.deflect(elemSol, scv, problem);
                     this->asImp_().maybeUpdateCouplingContext(scv, elemSol, pvIdx);
                     return this->evalLocalResidual();
                 };
 
                 // derive the residuals numerically
-                static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
-                static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
+                static const NumericEpsilon<Scalar, numEq> eps_{problem.paramGroup()};
+                static const int numDiffMethod = getParamFromGroup<int>(problem.paramGroup(), "Assembly.NumericDifferenceMethod");
                 NumericDifferentiation::partialDerivative(evalResiduals, elemSol[scv.localDofIndex()][pvIdx], partialDerivs, origResiduals,
                                                           eps_(elemSol[scv.localDofIndex()][pvIdx], pvIdx), numDiffMethod);
 
@@ -468,9 +487,10 @@ public:
             DUNE_THROW(Dune::NotImplemented, "partial reassembly for explicit time discretization");
 
         // get some aliases for convenience
+        const auto& problem = this->asImp_().problem();
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& curSol = this->curSol();
+        const auto& curSol = this->asImp_().curSol();
         auto&& curElemVolVars = this->curElemVolVars();
 
         // get the vecor of the acutal element residuals
@@ -508,13 +528,13 @@ public:
                 {
                     // auto partialDerivsTmp = partialDerivs;
                     elemSol[scv.localDofIndex()][pvIdx] = priVar;
-                    curVolVars.update(elemSol, this->problem(), element, scv);
+                    curVolVars.update(elemSol, problem, element, scv);
                     return this->evalLocalStorageResidual();
                 };
 
                 // derive the residuals numerically
-                static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
-                static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
+                static const NumericEpsilon<Scalar, numEq> eps_{problem.paramGroup()};
+                static const int numDiffMethod = getParamFromGroup<int>(problem.paramGroup(), "Assembly.NumericDifferenceMethod");
                 NumericDifferentiation::partialDerivative(evalStorage, elemSol[scv.localDofIndex()][pvIdx], partialDerivs, origStorageResiduals,
                                                           eps_(elemSol[scv.localDofIndex()][pvIdx], pvIdx), numDiffMethod);
 
@@ -579,7 +599,7 @@ public:
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& problem = this->problem();
+        const auto& problem = this->asImp_().problem();
         const auto& curElemVolVars = this->curElemVolVars();
         const auto& elemFluxVarsCache = this->elemFluxVarsCache();
 
@@ -699,7 +719,7 @@ public:
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& problem = this->problem();
+        const auto& problem = this->asImp_().problem();
         const auto& curElemVolVars = this->curElemVolVars();
 
         // get the vector of the actual element residuals
