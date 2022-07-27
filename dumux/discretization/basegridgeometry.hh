@@ -29,7 +29,6 @@
 
 #include <dune/grid/common/mcmgmapper.hh>
 
-#include <dumux/common/deprecated.hh>
 #include <dumux/common/entitymap.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/geometry/boundingboxtree.hh>
@@ -228,15 +227,8 @@ private:
     void update_()
     {
         // Update the mappers
-        if constexpr (Deprecated::hasUpdateGridView<ElementMapper, GridView>())
-            elementMapper_.update(gridView_);
-        else
-            Deprecated::update(elementMapper_);
-
-        if constexpr (Deprecated::hasUpdateGridView<VertexMapper, GridView>())
-            vertexMapper_.update(gridView_);
-        else
-            Deprecated::update(vertexMapper_);
+        elementMapper_.update(gridView_);
+        vertexMapper_.update(gridView_);
 
         // Compute the bounding box of the entire domain, for e.g. setting boundary conditions
         computeGlobalBoundingBox_();

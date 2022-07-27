@@ -44,38 +44,10 @@ namespace Deprecated {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif // __clang__
-template <class Mapper, class GridView>
-using GridViewDetector = decltype(std::declval<Mapper>().update(std::declval<GridView>()));
-
-template<class Mapper, class GridView>
-static constexpr bool hasUpdateGridView()
-{ return Dune::Std::is_detected<GridViewDetector, Mapper, GridView>::value; }
-
-template <typename ModelTraits>
-using HasEnableCompositionalDispersionDetector = decltype(ModelTraits::enableCompositionalDispersion());
-
-template<class ModelTraits>
-static constexpr bool hasEnableCompositionalDispersion()
-{ return Dune::Std::is_detected<HasEnableCompositionalDispersionDetector, ModelTraits>::value; }
-
-template <typename ModelTraits>
-using HasEnableThermalDispersionDetector = decltype(ModelTraits::enableThermalDispersion());
-
-template<class ModelTraits>
-static constexpr bool hasEnableThermalDispersion()
-{ return Dune::Std::is_detected<HasEnableThermalDispersionDetector, ModelTraits>::value; }
 
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif  // __clang__
-
-// helper class to print deprecated message
-template <class Mapper>
-#if DUNE_VERSION_GTE(DUNE_GRID,2,8)
-[[deprecated("The interface mapper.update() is deprecated. All mappers now have to implement `update(gridView)` instead (with a gridView as argument). Only mappers with the new interface will be support for dune-grid 2.7 is dropped.")]]
-#endif
-void update(Mapper& mapper)
-{ mapper.update(); };
 
 } // end namespace Deprecated
 #endif

@@ -28,7 +28,6 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
-#include <dumux/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -211,15 +210,11 @@ public:
     static void heatDispersionFlux(NumEqVector& flux,
                                    FluxVariables& fluxVars)
     {
-        if constexpr (Deprecated::hasEnableThermalDispersion<ModelTraits>())
+
+        if constexpr (ModelTraits::enableThermalDispersion())
         {
-            if constexpr (ModelTraits::enableThermalDispersion())
-            {
-                flux[energyEqIdx] += fluxVars.thermalDispersionFlux();
-            }
+            flux[energyEqIdx] += fluxVars.thermalDispersionFlux();
         }
-        else
-            enableThermalDispersionMissing_<ModelTraits>();
     }
 
 
@@ -238,14 +233,6 @@ public:
                                     const ElementVolumeVariables& elemVolVars,
                                     const SubControlVolume &scv)
     {}
-
-private:
-
-    template <class T = ModelTraits>
-    [[deprecated("All non-isothermal models must specify if thermal dispersion is enabled."
-                 "Please add enableThermalDispersion to the ModelTraits in your model header.")]]
-    static void enableThermalDispersionMissing_() {}
-
 };
 
 } // end namespace Dumux

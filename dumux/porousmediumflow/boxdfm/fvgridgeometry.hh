@@ -36,7 +36,6 @@
 #include <dune/geometry/multilineargeometry.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
-#include <dumux/common/deprecated.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/common/defaultmappertraits.hh>
 #include <dumux/discretization/basegridgeometry.hh>
@@ -527,10 +526,7 @@ private:
 
     void updateFacetMapper_()
     {
-        if constexpr (Deprecated::hasUpdateGridView<typename Traits::FacetMapper, GridView>())
-            facetMapper_.update(this->gridView());
-        else
-            Deprecated::update(facetMapper_);
+        facetMapper_.update(this->gridView());
     }
 
     template< class FractureGridAdapter >
