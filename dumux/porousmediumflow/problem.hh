@@ -49,39 +49,6 @@ public:
 
     //! Use constructors of the base class
     using ParentType::ParentType;
-
-    /*!
-     * \name Physical parameters for porous media problems
-     */
-    // \{
-
-    /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ at a given global position.
-     *
-     * This is not specific to the discretization. By default it just
-     * calls temperature().
-     *
-     * \param globalPos The position in global coordinates where the temperature should be specified.
-     * \param deprecationHelper The deprecation helper.
-     * \note The deprecation helper int was introduced to facilitate the deprecation phase, by checking
-     *       if users have overloaded this function.
-     */
-    [[deprecated("temperature should now be defined in the spatial params with temperature(globalPos)")]]
-    Scalar temperatureAtPos(const GlobalPosition &globalPos, int deprecationHelper = 0) const
-    { return this->asImp_().temperature(); }
-
-    /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ for an isothermal problem.
-     * \note The deprecation helper int was introduced to facilitate the deprecation phase, by checking
-     *       if users have overloaded this function.
-     */
-    [[deprecated("temperature should now be defined in the spatial params with temperature(globalPos)")]]
-    Scalar temperature(int deprecationHelper = 0) const
-    {
-        DUNE_THROW(Dune::NotImplemented, "temperature() method not implemented by the user problem");
-    }
-
-    // \}
 };
 
 } // end namespace Dumux

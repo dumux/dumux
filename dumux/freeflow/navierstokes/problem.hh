@@ -971,28 +971,6 @@ public:
         DUNE_THROW(Dune::NotImplemented, "velocityAtPos not implemented");
     }
 
-    /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ at a given global position.
-     *
-     * This is not specific to the discretization. By default it just
-     * calls temperature().
-     *
-     * \param globalPos The position in global coordinates where the temperature should be specified.
-     * \param deprecationHelper The deprecation helper
-     */
-    [[deprecated("temperature should now be defined in the spatial params with temperature(globalPos)")]]
-    Scalar temperatureAtPos(const GlobalPosition& globalPos, int deprecationHelper = 0) const
-    { return asImp_().temperature(); }
-
-    /*!
-     * \brief Returns the temperature within the domain.
-     */
-    [[deprecated("temperature should now be defined in the spatial params with temperature(globalPos)")]]
-    Scalar temperature(int deprecationHelper = 0) const
-    {
-        DUNE_THROW(Dune::NotImplemented, "temperature() method not implemented by the actual problem");
-    }
-
     const CouplingManager& couplingManager() const
     {
         if constexpr (isCoupled_)
@@ -1072,27 +1050,6 @@ public:
         enableInertiaTerms_ = getParamFromGroup<bool>(paramGroup, "Problem.EnableInertiaTerms");
     }
 
-    /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ at a given global position.
-     *
-     * This is not specific to the discretization. By default it just
-     * calls temperature().
-     *
-     * \param globalPos The position in global coordinates where the temperature should be specified.
-     * \param deprecationHelper The deprecation helper
-     */
-    [[deprecated("temperature should now be defined in the spatial params with temperature(globalPos)")]]
-    Scalar temperatureAtPos(const GlobalPosition &globalPos, int deprecationHelper = 0) const
-    { return asImp_().temperature(); }
-
-    /*!
-     * \brief Returns the temperature within the domain.
-     *
-     * This method MUST be overwritten by the actual problem.
-     */
-    [[deprecated("temperature should now be defined in the spatial params with temperature(globalPos)")]]
-    Scalar temperature(int deprecationHelper = 0) const
-    { DUNE_THROW(Dune::NotImplemented, "temperature() method not implemented by the actual problem"); }
 
     /*!
      * \brief Returns the acceleration due to gravity.
