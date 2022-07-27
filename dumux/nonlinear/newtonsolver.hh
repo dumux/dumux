@@ -209,12 +209,12 @@ using BlockType = typename BlockTypeHelper<SolutionVector, Dune::IsNumber<Soluti
  *       defaults of the reference solver, derive your solver from
  *       this class and simply overload the required methods.
  */
-template <class Assembler, class LinearSolver,
+template <class Problem, class Assembler, class LinearSolver,
           class Reassembler = PartialReassembler<Assembler>,
           class Comm = Dune::Communication<Dune::MPIHelper::MPICommunicator> >
-class NewtonSolver : public PDESolver<Assembler, LinearSolver>
+class NewtonSolver : public PDESolver<Problem, Assembler, LinearSolver>
 {
-    using ParentType = PDESolver<Assembler, LinearSolver>;
+    using ParentType = PDESolver<Problem, Assembler, LinearSolver>;
 
 protected:
     using Backend = VariablesBackend<typename ParentType::Variables>;
@@ -242,12 +242,13 @@ public:
     /*!
      * \brief The Constructor
      */
-    NewtonSolver(std::shared_ptr<Assembler> assembler,
+    NewtonSolver(std::shared_ptr<Problem> problemRef,
+                 std::shared_ptr<Assembler> assembler,
                  std::shared_ptr<Assembler> assemblerRef,
                  std::shared_ptr<LinearSolver> linearSolver,
                  const Communication& comm = Dune::MPIHelper::getCommunication(),
                  const std::string& paramGroup = "")
-    : ParentType(assembler, assemblerRef, linearSolver)
+    : ParentType(problemRef, assembler, assemblerRef, linearSolver)
     , endIterMsgStream_(std::ostringstream::out)
     , comm_(comm)
     , paramGroup_(paramGroup)
@@ -417,7 +418,10 @@ public:
             if constexpr (assemblerExportsVariables)
                 priVarSwitchAdapter_->initialize(Backend::dofs(initVars), initVars);
             else // this assumes assembly with solution (i.e. Variables=SolutionVector)
+            {
                 priVarSwitchAdapter_->initialize(initVars, this->assembler().gridVariables());
+                priVarSwitchAdapter_->initialize(initVars, this->assemblerRef().gridVariables());
+            }
         }
 
         const auto& initSol = Backend::dofs(initVars);
@@ -489,6 +493,7 @@ public:
     virtual void assembleLinearSystem(const Variables& vars)
     {
         assembleLinearSystem_(this->assembler(), vars);
+        assembleLinearSystem_(this->assemblerRef(), vars);
 
         if (enablePartialReassembly_)
             partialReassembler_->report(comm_, endIterMsgStream_);
@@ -970,6 +975,7 @@ private:
     {
         try
         {
+            this->problemRef().resetRegInterval();
             // newtonBegin may manipulate the solution
             newtonBegin(vars);
 
@@ -987,6 +993,12 @@ private:
             bool converged = false;
             while (newtonProceed(vars, converged))
             {
+                if (numSteps_ == targetSteps_)
+                {
+                    this->problemRef().setRegInterval();
+                    std::cout << "Now the reg interval to caluclate residual is: " << this->problemRef().regularizeSwInterval() << std::endl;
+                }
+
                 // notify the solver that we're about to start
                 // a new iteration
                 newtonBeginStep(vars);

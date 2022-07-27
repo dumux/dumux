@@ -36,14 +36,14 @@ namespace Dumux::PoreNetwork {
  * which allows the newton method to abort quicker if the solution is
  * way out of bounds.
  */
-template<class Assembler, class LinearSolver,
+template<class Problem, class Assembler, class LinearSolver,
          template<class, class> class NewtonConsistencyChecks = TwoPNewtonConsistencyChecks>
-class TwoPNewtonSolver : public Dumux::NewtonSolver<Assembler, LinearSolver>
+class TwoPNewtonSolver : public Dumux::NewtonSolver<Problem, Assembler, LinearSolver>
 {
-    using ParentType =  Dumux::NewtonSolver<Assembler, LinearSolver>;
+    using ParentType =  Dumux::NewtonSolver<Problem, Assembler, LinearSolver>;
     using ConstSolutionVector = typename Assembler::ResidualType;
     using SolutionVector = std::remove_const_t<ConstSolutionVector>;
-    using Variables = typename PDESolver<Assembler, LinearSolver>::Variables;
+    using Variables = typename PDESolver<Problem, Assembler, LinearSolver>::Variables;
     using Backend = VariablesBackend<Variables>;
 
 public:
@@ -100,11 +100,6 @@ public:
         gridVariablesRef.gridFluxVarsCache().invasionState().advance();
     }
 
-    void setIndex(std::vector<bool> poreindex)
-    { preIndex_ = poreindex; }
-
-private:
-    std::vector<bool> preIndex_; // return the pore indicies which are predicted to be invaded
 };
 
 } // end namespace Dumux::PoreNetwork

@@ -67,7 +67,7 @@ using AssemblerVariables = typename VariablesChooser<Assembler>::Type;
  * \tparam A Assembler for linearized system of the PDE
  * \tparam LS Linear system solver
  */
-template<class A, class LS>
+template<class P, class A, class LS>
 class PDESolver
 {
     using Scalar = typename A::Scalar;
@@ -77,6 +77,7 @@ public:
     //! export the assembler and linear solver types
     using Assembler = A;
     using LinearSolver = LS;
+    using Problem = P;
 
     //! export the type of variables that represent a numerical solution
     using Variables = Detail::AssemblerVariables<Assembler>;
@@ -86,10 +87,12 @@ public:
      * \param assembler pointer to the assembler of the linear system
      * \param linearSolver pointer to the solver of the resulting linear system
      */
-    PDESolver(std::shared_ptr<Assembler> assembler,
+    PDESolver(std::shared_ptr<Problem> problemRef,
+              std::shared_ptr<Assembler> assembler,
               std::shared_ptr<Assembler> assemblerRef,
               std::shared_ptr<LinearSolver> linearSolver)
-    : assembler_(assembler)
+    : problemRef_(problemRef)
+    , assembler_(assembler)
     , assemblerRef_(assemblerRef)
     , linearSolver_(linearSolver)
     {}
@@ -147,6 +150,18 @@ public:
     const LinearSolver& linearSolver() const
     { return *linearSolver_; }
 
+    /*!
+     * \brief Access the problemRef
+     */
+    Problem& problemRef()
+    { return *problemRef_; }
+
+    /*!
+     * \brief Access the problemRef
+     */
+    const Problem& problemRef() const
+    { return *problemRef_; }
+
 protected:
 
     /*!
@@ -177,6 +192,7 @@ protected:
     }
 
 private:
+    std::shared_ptr<Problem> problemRef_;
     std::shared_ptr<Assembler> assembler_;
     std::shared_ptr<Assembler> assemblerRef_;
     std::shared_ptr<LinearSolver> linearSolver_;
