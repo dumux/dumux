@@ -61,7 +61,7 @@ class MPNCComparisonProblem
     using Element = typename GridView::template Codim<0>::Entity;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
-    using ParameterCache = typename FluidSystem::ParameterCache;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static constexpr auto numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numFluidPhases();
     static constexpr auto numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numFluidComponents();
@@ -181,31 +181,23 @@ private:
     // the internal method for the initial condition
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values(0.0);
-        FluidState fs;
+        MPNCInitialConditionHelper<
+            PrimaryVariables, FluidState, FluidSystem, ModelTraits
+        > helper;
 
-       // set the fluid temperatures
-        fs.setTemperature(this->spatialParams().temperatureAtPos(globalPos));
+        const Scalar liquidPhaseSaturation = 0.8;
+        const Scalar gasPhasePressure = 1e5;
+        helper.setTemperature(this->spatialParams().temperatureAtPos(globalPos));
+        helper.setSaturation(liquidPhaseIdx, liquidPhaseSaturation);
+        helper.setSaturation(gasPhaseIdx, 1.0 - liquidPhaseSaturation);
+        helper.setPressure(gasPhaseIdx, gasPhasePressure);
 
-        // set water saturation
-        fs.setSaturation(liquidPhaseIdx, 0.8);
-        fs.setSaturation(gasPhaseIdx, 1.0 - fs.saturation(liquidPhaseIdx));
-        // set pressure of the gas phase
-        fs.setPressure(gasPhaseIdx, 1e5);
-        // calulate the capillary pressure
-        const auto& fm =
-            this->spatialParams().fluidMatrixInteractionAtPos(globalPos);
+        const auto& fm = this->spatialParams().fluidMatrixInteractionAtPos(globalPos);
         const int wPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
-        const auto pc = fm.capillaryPressures(fs, wPhaseIdx);
-        fs.setPressure(liquidPhaseIdx,
-                       fs.pressure(gasPhaseIdx) + pc[liquidPhaseIdx] - pc[gasPhaseIdx]);
+        const auto pc = fm.capillaryPressures(helper.fluidState(), wPhaseIdx);
+        helper.setPressure(liquidPhaseIdx, gasPhasePressure + pc[liquidPhaseIdx] - pc[gasPhaseIdx]);
 
-        ParameterCache paramCache;
-
-        using InitialHelper = MPNCInitialConditionHelper<Scalar, PrimaryVariables, FluidSystem, GetPropType<TypeTag, Properties::ModelTraits>>;
-        values = InitialHelper::solveForPrimaryVariables(fs, paramCache, MPNCInitialConditions::AllPhasesPresent{.refPhaseIdx = 0});
-
-        return values;
+        return helper.solveForPrimaryVariables(MPNCInitialConditions::AllPhasesPresent{.refPhaseIdx = 0});
     }
 
     bool onInlet_(const GlobalPosition &globalPos) const

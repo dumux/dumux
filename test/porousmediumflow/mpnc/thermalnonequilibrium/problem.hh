@@ -274,72 +274,53 @@ private:
     // the internal method for the initial condition
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables priVars(0.0);
         const Scalar curPos = globalPos[0];
-        const Scalar slope = (SwBoundary_-SwOneComponentSys_) / (this->spatialParams().lengthPM());
+        const Scalar slope = (SwBoundary_ - SwOneComponentSys_)/this->spatialParams().lengthPM();
         Scalar S[numPhases];
         const Scalar thisSaturation = SwOneComponentSys_ + curPos * slope;
 
         S[wPhaseIdx] = SwBoundary_;
-        if (inPM_(globalPos) ) {
+        if (inPM_(globalPos) )
             S[wPhaseIdx] = thisSaturation;
-        }
-
         S[nPhaseIdx] = 1. - S[wPhaseIdx];
-
-        FluidState fluidState;
 
         Scalar thisTemperature = TInitial_;
         if(onRightBoundary_(globalPos))
-        thisTemperature = TRight_;
+            thisTemperature = TRight_;
 
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            fluidState.setSaturation(phaseIdx, S[phaseIdx]);
-
-            fluidState.setTemperature(thisTemperature );
-
+        MPNCInitialConditionHelper<PrimaryVariables, FluidState, FluidSystem, ModelTraits> helper;
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            helper.setSaturation(phaseIdx, S[phaseIdx]);
+            helper.setTemperature(thisTemperature);
         }
 
         //obtain pc according to saturation
         const int wettingPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
         const auto& fm = this->spatialParams().fluidMatrixInteractionAtPos(globalPos);
-        const auto capPress = fm.capillaryPressures(fluidState, wettingPhaseIdx);
-
+        const auto capPress = fm.capillaryPressures(helper.fluidState(), wettingPhaseIdx);
         Scalar p[numPhases];
 
         using std::abs;
         p[wPhaseIdx] = pnInitial_ - abs(capPress[wPhaseIdx]);
         p[nPhaseIdx] = p[wPhaseIdx] + abs(capPress[wPhaseIdx]);
+        for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
+            helper.setPressure(phaseIdx, p[phaseIdx]);
 
-        for (int phaseIdx=0; phaseIdx<numPhases; phaseIdx++)
-        fluidState.setPressure(phaseIdx, p[phaseIdx]);
+        helper.setMoleFraction(wPhaseIdx, wCompIdx, 1.0);
+        helper.setMoleFraction(wPhaseIdx, nCompIdx, 0.0);
+        helper.setMoleFraction(nPhaseIdx, wCompIdx, 1.0);
+        helper.setMoleFraction(nPhaseIdx, nCompIdx, 0.0);
 
-        fluidState.setMoleFraction(wPhaseIdx, wCompIdx, 1.0);
-        fluidState.setMoleFraction(wPhaseIdx, nCompIdx, 0.0);
+       const int refPhaseIdx = inPM_(globalPos) ? wPhaseIdx : nPhaseIdx;
 
-        fluidState.setMoleFraction(nPhaseIdx, wCompIdx, 1.0);
-        fluidState.setMoleFraction(nPhaseIdx, nCompIdx, 0.0);
+       auto priVars = helper.solveForPrimaryVariables(
+           MPNCInitialConditions::NotAllPhasesPresent{.refPhaseIdx = refPhaseIdx}
+       );
 
-       int refPhaseIdx;
-
-        // on right boundary: reference is gas
-        refPhaseIdx = nPhaseIdx;
-
-        if(inPM_(globalPos)) {
-            refPhaseIdx = wPhaseIdx;
-        }
-
-        ParameterCache paramCache;
-        // obtain fugacities and the primary variables for chemical equilibrium
-        using InitialHelper = MPNCInitialConditionHelper<Scalar, PrimaryVariables, FluidSystem, ModelTraits>;
-        priVars = InitialHelper::solveForPrimaryVariables(fluidState, paramCache, MPNCInitialConditions::NotAllPhasesPresent{.refPhaseIdx = refPhaseIdx});
-
-        //////////////////////////////////////
         // additionally set the temperature for thermal non-equilibrium for the phases
-        //////////////////////////////////////
         priVars[energyEq0Idx] = thisTemperature;
         priVars[energyEqSolidIdx] = thisTemperature;
-
         return priVars;
     }
 

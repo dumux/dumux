@@ -80,7 +80,6 @@ class ObstacleProblem
     using Element = typename GridView::template Codim<0>::Entity;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
-    using ParameterCache = typename FluidSystem::ParameterCache;
 
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
@@ -216,66 +215,49 @@ private:
     // the internal method for the initial condition
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values(0.0);
-        FluidState fs;
+        MPNCInitialConditionHelper<
+            PrimaryVariables, FluidState, FluidSystem, ModelTraits
+        > helper;
 
-        int refPhaseIdx;
-        int otherPhaseIdx;
+        int refPhaseIdx, otherPhaseIdx;
+        Scalar refPhasePressure, refPhaseSaturation;
 
-        // set the fluid temperatures
-        fs.setTemperature(this->spatialParams().temperatureAtPos(globalPos));
-
+        helper.setTemperature(this->spatialParams().temperatureAtPos(globalPos));
         if (onInlet_(globalPos))
         {
             // only liquid on inlet
             refPhaseIdx = liquidPhaseIdx;
             otherPhaseIdx = gasPhaseIdx;
+            refPhasePressure = 2e5;
+            refPhaseSaturation = 1.0;
 
-            // set liquid saturation
-            fs.setSaturation(liquidPhaseIdx, 1.0);
-
-            // set pressure of the liquid phase
-            fs.setPressure(liquidPhaseIdx, 2e5);
-
-            // set the liquid composition to pure water
-            fs.setMoleFraction(liquidPhaseIdx, N2Idx, 0.0);
-            fs.setMoleFraction(liquidPhaseIdx, H2OIdx, 1.0);
+            helper.setSaturation(liquidPhaseIdx, refPhaseSaturation);
+            helper.setPressure(liquidPhaseIdx, refPhasePressure);
+            helper.setMoleFraction(liquidPhaseIdx, N2Idx, 0.0);
+            helper.setMoleFraction(liquidPhaseIdx, H2OIdx, 1.0);
         }
         else {
             // elsewhere, only gas
             refPhaseIdx = gasPhaseIdx;
             otherPhaseIdx = liquidPhaseIdx;
+            refPhasePressure = 1e5;
+            refPhaseSaturation = 1.0;
 
-            // set gas saturation
-            fs.setSaturation(gasPhaseIdx, 1.0);
-
-            // set pressure of the gas phase
-            fs.setPressure(gasPhaseIdx, 1e5);
-
-            // set the gas composition to 99% nitrogen and 1% steam
-            fs.setMoleFraction(gasPhaseIdx, N2Idx, 0.99);
-            fs.setMoleFraction(gasPhaseIdx, H2OIdx, 0.01);
+            helper.setSaturation(gasPhaseIdx, refPhaseSaturation);
+            helper.setPressure(gasPhaseIdx, refPhasePressure);
+            helper.setMoleFraction(gasPhaseIdx, N2Idx, 0.99);
+            helper.setMoleFraction(gasPhaseIdx, H2OIdx, 0.01);
         }
 
-        // set the other saturation
-        fs.setSaturation(otherPhaseIdx, 1.0 - fs.saturation(refPhaseIdx));
-
-        // calculate the capillary pressure
+        helper.setSaturation(otherPhaseIdx, 1.0 - refPhaseSaturation);
         const auto fluidMatrixInteraction = this->spatialParams().fluidMatrixInteractionAtPos(globalPos);
         const int wPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
-        const auto pc = fluidMatrixInteraction.capillaryPressures(fs, wPhaseIdx);
-        fs.setPressure(otherPhaseIdx,
-                       fs.pressure(refPhaseIdx)
-                       + (pc[otherPhaseIdx] - pc[refPhaseIdx]));
+        const auto pc = fluidMatrixInteraction.capillaryPressures(helper.fluidState(), wPhaseIdx);
+        helper.setPressure(otherPhaseIdx, refPhasePressure + (pc[otherPhaseIdx] - pc[refPhaseIdx]));
 
-        // make the fluid state consistent with local thermodynamic
-        // equilibrium using the initialhelper that selects the correct constraintsolver
-
-        ParameterCache paramCache;
-
-        using InitialHelper = MPNCInitialConditionHelper<Scalar, PrimaryVariables, FluidSystem, ModelTraits>;
-        values = InitialHelper::solveForPrimaryVariables(fs, paramCache, MPNCInitialConditions::NotAllPhasesPresent{.refPhaseIdx = refPhaseIdx});
-        return values;
+        return helper.solveForPrimaryVariables(
+            MPNCInitialConditions::NotAllPhasesPresent{.refPhaseIdx = refPhaseIdx}
+        );
     }
 
     bool onInlet_(const GlobalPosition &globalPos) const
