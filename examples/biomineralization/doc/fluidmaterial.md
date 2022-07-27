@@ -30,7 +30,7 @@ For further specialization, the overview over the material subfolder is split in
 ## Fluids in the folder `material`
 
 As this example is about biomineralization involving many components with complex inteactions, some specific fluid material files are necessary.
-A CO_2-Table file provides tabulated CO_2 properties according to @Span1996 in `material/co2tables.hh`
+This example uses a simplified version of CO<sub>2</sub> mostly based on an ideal gas assumption.
 In the component subfolder, `material/components/suspendedbiomass.hh` defines the component suspended biomass, which is the mobile form of biomass being transported suspended in the aqueous fluid phase.
 In the fluidsystem subfolder, the biomineralization fluidsystem `material/fluidsystems/biominsimplechemistry.hh` as well as
 the complex salinity brine adapter `material/fluidsystems/icpcomplexsalinitybrine.hh` can be found.
@@ -43,184 +43,6 @@ adapts the brine fluidsystem (dumux/dumux/material/fluidsystems/brine.hh) expect
 The subsequent documentation is structured as follows:
 
 [[_TOC_]]
-
-
-[@Span1996]: https://aip.scitation.org/doi/abs/10.1063/1.555991 "A new equation of state for carbon dioxide covering the fluid region from the triple-point temperature to 1100 K at pressures up to 800 MPa"
-
-
-
-```cpp
-/*!
- * \file
- * \ingroup Components
- * \brief A reader and tables for CO$_2$ tabulated material laws that depend
- *        on pressure and temperature.
- */
-
-
-#include <dune/common/float_cmp.hh>
-```
-
-## The CO2 tables (`co2tables.hh`)
-
-This file contains the __co2table class__ which forwards to tabulated properties of CO2.
-The tables are generated using the NIST (National Institute of Standards
-and Technology) Standard Reference Database Number 69
-(https://doi.org/10.18434/T4D303).
-
-Copyright for NIST Standard Reference Data is governed by the Standard
-Reference Data Act (https://www.nist.gov/srd/public-law).
-
-######################################################################
-In case you are using this the data generated with this script
-please cite the following publications:
-
-P.J. Linstrom and W.G. Mallard, Eds.,
-NIST Chemistry WebBook, NIST Standard Reference Database Number 69,
-National Institute of Standards and Technology, Gaithersburg MD, 20899,
-https://doi.org/10.18434/T4D303, (retrieved [insert date]).
-
-Span, Roland, and Wolfgang Wagner.
-"A new equation of state for carbon dioxide covering
-the fluid region from the triple‐point temperature
-to 1100 K at pressures up to 800 MPa."
-Journal of physical and chemical reference data 25.6 (1996): 1509-1596.
-https://doi.org/10.1063/1.555991
-
-######################################################################
-
-The density and the enthalpy are calculated using the equation of Span and
-Wagner (2009 "A New Equation of State for Carbon Dioxide Covering the Fluid
-Region from the Triple-Point Temperature to 1100 K at Pressures up to 800 MPa").
-Therefore, the maximum pressure limit is the lowest of the following values:
-* 800.0000 MPa
-* The pressure at which a density of 1178.5 kg/m3 is reached.
-
-
-<details open>
-<summary><b>Click to hide/show the file documentation</b> (or inspect the [source code](../material/co2tables.hh))</summary>
-
-
-
-```cpp
-
-namespace Dumux::BiomineralizationCO2Tables {
-
-/*!
- * \ingroup Components
- * \brief A generic template for tabulated material laws that depend
- *        on two parameters.
- */
-template <class Traits>
-class TabulatedProperties
-{
-    using Scalar = typename Traits::Scalar;
-
-    static constexpr auto numTempSteps = Traits::numTempSteps;
-    static constexpr auto numPressSteps = Traits::numPressSteps;
-
-public:
-    TabulatedProperties() = default;
-
-    constexpr Scalar minTemp() const { return Traits::minTemp; }
-    constexpr Scalar maxTemp() const { return Traits::maxTemp; }
-    constexpr Scalar minPress() const { return Traits::minPress; }
-    constexpr Scalar maxPress() const { return Traits::maxPress; }
-
-    constexpr bool applies(Scalar temperature, Scalar pressure) const
-    {
-        return minTemp() <= temperature && temperature <= maxTemp() &&
-               minPress() <= pressure && pressure <= maxPress();
-    }
-
-    constexpr Scalar at(Scalar temperature, Scalar pressure) const
-    {
-        if (!applies(temperature, pressure))
-        {
-            if (temperature<minTemp()) temperature = minTemp();
-            else if (temperature>maxTemp()) temperature = maxTemp();
-
-            if (pressure<minPress()) pressure = minPress();
-            else if (pressure>maxPress()) pressure = maxPress();
-        }
-
-        const int i = findTempIdx_(temperature);
-        const int j = findPressIdx_(pressure);
-
-        const Scalar tempAtI = temperatureAt_(i);
-        const Scalar tempAtI1 = temperatureAt_(i + 1);
-        const Scalar pressAtI = pressureAt_(j);
-        const Scalar pressAtI1 = pressureAt_(j + 1);
-
-        const Scalar alpha = (temperature - tempAtI)/(tempAtI1 - tempAtI);
-        const Scalar beta = (pressure - pressAtI)/(pressAtI1 - pressAtI);
-
-        // bi-linear interpolation
-        const Scalar lowresValue =
-            (1-alpha)*(1-beta)*val(i, j) +
-            (1-alpha)*(  beta)*val(i, j + 1) +
-            (  alpha)*(1-beta)*val(i + 1, j) +
-            (  alpha)*(  beta)*val(i + 1, j + 1);
-
-        // return the weighted sum of the low- and high-resolution values
-        return lowresValue;
-    }
-
-    constexpr Scalar val(int i, int j) const
-    { return Traits::vals[i][j]; }
-
-private:
-    constexpr int findTempIdx_(Scalar temperature) const
-    {
-        if (Dune::FloatCmp::eq<Scalar>(temperature, maxTemp()))
-            return numTempSteps - 2;
-
-        const int result = static_cast<int>((temperature - minTemp())/(maxTemp() - minTemp())*(numTempSteps - 1));
-
-        using std::clamp;
-        return clamp(result, 0, numTempSteps - 2);
-    }
-
-    constexpr int findPressIdx_(Scalar pressure) const
-    {
-        if (Dune::FloatCmp::eq<Scalar>(pressure, maxPress()))
-            return numPressSteps - 2;
-
-        const int result = static_cast<int>((pressure - minPress())/(maxPress() - minPress())*(numPressSteps - 1));
-
-        using std::clamp;
-        return clamp(result, 0, numPressSteps - 2);
-    }
-
-    constexpr Scalar temperatureAt_(int i) const
-    { return i*(maxTemp() - minTemp())/(numTempSteps - 1) + minTemp(); }
-
-    constexpr Scalar pressureAt_(int j) const
-    { return j*(maxPress() - minPress())/(numPressSteps - 1) + minPress(); }
-};
-
-#ifndef DOXYGEN // hide from doxygen
-// the real work is done by some external program which provides
-// ready-to-use tables.
-#include "co2values.inc"
-
-
-using TabulatedDensity = TabulatedProperties<TabulatedDensityTraits>;
-using TabulatedEnthalpy = TabulatedProperties<TabulatedEnthalpyTraits>;
-
-// this class collects all the tabulated quantities in one convenient place
-struct CO2Tables
-{
-   static constexpr inline TabulatedEnthalpy tabulatedEnthalpy = {};
-   static constexpr inline TabulatedDensity tabulatedDensity = {};
-};
-
-} // end namespace Dumux::GeneratedCO2Tables
-```
-
-
-</details>
-
 
 
 ## The suspended biomass component (`suspendedbiomass.hh`)
@@ -337,12 +159,12 @@ We enter the namespace Dumux. All Dumux functions and classes are in a namespace
 namespace Dumux::FluidSystems {
 
 template <class Scalar,
-          class CO2Table,
+          class CO2Impl = Components::SimpleCO2<Scalar>,
           class H2OType = Components::TabulatedComponent<Components::H2O<Scalar>> >
 class BioMinSimpleChemistryFluid
-: public Base<Scalar, BioMinSimpleChemistryFluid<Scalar, CO2Table, H2OType> >
+: public Base<Scalar, BioMinSimpleChemistryFluid<Scalar, CO2Impl, H2OType> >
 {
-    using ThisType = BioMinSimpleChemistryFluid<Scalar, CO2Table, H2OType>;
+    using ThisType = BioMinSimpleChemistryFluid<Scalar, CO2Impl, H2OType>;
     using Base = Dumux::FluidSystems::Base<Scalar, ThisType>;
     using IdealGas = Dumux::IdealGas<Scalar>;
 ```
@@ -354,7 +176,7 @@ With the following function we define what phases and components will be used by
 ```cpp
 public:
     // We use convenient declarations that we derive from the property system
-    typedef Components::CO2<Scalar, CO2Table> CO2;
+    using CO2 = CO2Impl;
     using H2O = H2OType;
     // export the underlying brine fluid system for the liquid phase, as brine is used as a "pseudo component"
     using Brine = Dumux::FluidSystems::ICPComplexSalinityBrine<Scalar, H2OType>;
@@ -367,7 +189,7 @@ public:
     using SuspendedBiomass = Components::SuspendedBiomass<Scalar>;
 
     // We define the binary coefficients file, which accounts for the interactions of the main fluids in our setup, water/brine and CO2
-    using Brine_CO2 = BinaryCoeff::Brine_CO2<Scalar, CO2Table, true>;
+    using Brine_CO2 = BinaryCoeff::Brine_CO2<Scalar, CO2Impl, true>;
 
     // the type of parameter cache objects. this fluid system does not
     // cache anything, so it uses Dumux::NullParameterCache

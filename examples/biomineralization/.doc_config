@@ -21,7 +21,6 @@
 
     "doc/fluidmaterial.md" : [
         "doc/fluidmaterial_intro.md",
-        "material/co2tables.hh",
         "material/components/suspendedbiomass.hh",
         "material/fluidsystems/biominsimplechemistry.hh",
         "material/fluidsystems/icpcomplexsalinitybrine.hh"

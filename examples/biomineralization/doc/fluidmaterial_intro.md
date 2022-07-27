@@ -24,7 +24,7 @@ For further specialization, the overview over the material subfolder is split in
 ## Fluids in the folder `material`
 
 As this example is about biomineralization involving many components with complex inteactions, some specific fluid material files are necessary.
-A CO_2-Table file provides tabulated CO_2 properties according to @Span1996 in `material/co2tables.hh`
+This example uses a simplified version of CO<sub>2</sub> mostly based on an ideal gas assumption.
 In the component subfolder, `material/components/suspendedbiomass.hh` defines the component suspended biomass, which is the mobile form of biomass being transported suspended in the aqueous fluid phase.
 In the fluidsystem subfolder, the biomineralization fluidsystem `material/fluidsystems/biominsimplechemistry.hh` as well as
 the complex salinity brine adapter `material/fluidsystems/icpcomplexsalinitybrine.hh` can be found.
@@ -37,6 +37,3 @@ adapts the brine fluidsystem (dumux/dumux/material/fluidsystems/brine.hh) expect
 The subsequent documentation is structured as follows:
 
 [[_TOC_]]
-
-
-[@Span1996]: https://aip.scitation.org/doi/abs/10.1063/1.555991 "A new equation of state for carbon dioxide covering the fluid region from the triple-point temperature to 1100 K at pressures up to 800 MPa"

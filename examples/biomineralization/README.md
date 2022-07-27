@@ -120,9 +120,8 @@ We will discuss the different parts of the code in detail subsequently.
         ├── fluidsystems/
         │   ├── biominsimplechemistry.hh
         │   └── icpcomplexsalinitybrine.hh
-        ├── solidsystems/
-        │   └── biominsolids.hh
-        └── co2tables.hh
+        └── solidsystems/
+            └── biominsolids.hh
 ```
 
 In order to define a simulation setup in DuMu<sup>x</sup>, you need to implement compile-time settings,
@@ -149,7 +148,6 @@ Similar strategies might be useful when simulating experimental setups with boun
 
 __Part 4__ discusses the code concerned with the fluid (files in the folder `material/`),
 especially the multi-component fluidsystems.
-The CO<sub>2</sub> properties are stored in the CO<sub>2</sub> tables in the subfolder `material` (`co2tables.hh`,`co2values.inc`).
 
 __Part 5__ discusses the code concerned with the solid properties (files in the folder `material/`),
 especially the multi-component solidsystems and variable solid volume fractions.
