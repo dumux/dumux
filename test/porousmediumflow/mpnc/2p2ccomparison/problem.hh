@@ -181,23 +181,23 @@ private:
     // the internal method for the initial condition
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
-        MPNCInitialConditionHelper<
-            PrimaryVariables, FluidState, FluidSystem, ModelTraits
-        > helper;
-
         const Scalar liquidPhaseSaturation = 0.8;
         const Scalar gasPhasePressure = 1e5;
-        helper.setTemperature(this->spatialParams().temperatureAtPos(globalPos));
-        helper.setSaturation(liquidPhaseIdx, liquidPhaseSaturation);
-        helper.setSaturation(gasPhaseIdx, 1.0 - liquidPhaseSaturation);
-        helper.setPressure(gasPhaseIdx, gasPhasePressure);
+
+        FluidState fs;
+        fs.setTemperature(this->spatialParams().temperatureAtPos(globalPos));
+        fs.setSaturation(liquidPhaseIdx, liquidPhaseSaturation);
+        fs.setSaturation(gasPhaseIdx, 1.0 - liquidPhaseSaturation);
+        fs.setPressure(gasPhaseIdx, gasPhasePressure);
 
         const auto& fm = this->spatialParams().fluidMatrixInteractionAtPos(globalPos);
         const int wPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
-        const auto pc = fm.capillaryPressures(helper.fluidState(), wPhaseIdx);
-        helper.setPressure(liquidPhaseIdx, gasPhasePressure + pc[liquidPhaseIdx] - pc[gasPhaseIdx]);
+        const auto pc = fm.capillaryPressures(fs, wPhaseIdx);
+        fs.setPressure(liquidPhaseIdx, gasPhasePressure + pc[liquidPhaseIdx] - pc[gasPhaseIdx]);
 
-        return helper.solveForPrimaryVariables(MPNCInitialConditions::AllPhasesPresent{.refPhaseIdx = 0});
+        MPNCInitialConditionHelper<PrimaryVariables, FluidSystem, ModelTraits> helper;
+        helper.solve(fs, MPNCInitialConditions::AllPhasesPresent{.refPhaseIdx = 0});
+        return helper.getPrimaryVariables(fs);
     }
 
     bool onInlet_(const GlobalPosition &globalPos) const

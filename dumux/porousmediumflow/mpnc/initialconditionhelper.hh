@@ -36,10 +36,7 @@ struct NotAllPhasesPresent { int refPhaseIdx; };
 
 } // namespace MPNCInitialConditions
 
-template<class PrimaryVariables,
-         class FluidState,
-         class FluidSystem,
-         class ModelTraits>
+template<class PrimaryVariables, class FluidSystem, class ModelTraits>
 class MPNCInitialConditionHelper
 {
     using Scalar = typename PrimaryVariables::value_type;
@@ -47,66 +44,29 @@ class MPNCInitialConditionHelper
     using NotAllPhasesPresent = MPNCInitialConditions::NotAllPhasesPresent;
 
 public:
-    const FluidState& fluidState() const
-    { return fluidState_; }
-
-    void setPressure(int phaseIdx, Scalar value)
-    { fluidState_.setPressure(phaseIdx, value); }
-
-    void setSaturation(int phaseIdx, Scalar value)
-    { fluidState_.setSaturation(phaseIdx, value); }
-
-    void setTemperature(Scalar value)
-    { fluidState_.setTemperature(value); }
-
-    void setMoleFraction(int phaseIdx, int compIdx, Scalar value)
-    { fluidState_.setMoleFraction(phaseIdx, compIdx, value); }
-
-    PrimaryVariables solveForPrimaryVariables(const AllPhasesPresent& allPhases)
+    template<class FluidState>
+    void solve(FluidState& fs, const AllPhasesPresent& allPhases) const
     {
-        PrimaryVariables priVars(0.0);
-
-        // make the fluid state consistent with local thermodynamic equilibrium
         typename FluidSystem::ParameterCache paramCache;
-        MiscibleMultiPhaseComposition<Scalar, FluidSystem>::solve(fluidState_,
+        MiscibleMultiPhaseComposition<Scalar, FluidSystem>::solve(fs,
                                                                   paramCache,
                                                                   allPhases.refPhaseIdx);
-
-        static constexpr auto numComponents = FluidSystem::numComponents;
-        static constexpr auto numPhases = FluidSystem::numPhases;
-        static constexpr auto fug0Idx = ModelTraits::Indices::fug0Idx;
-        static constexpr auto s0Idx = ModelTraits::Indices::s0Idx;
-        static constexpr auto p0Idx = ModelTraits::Indices::p0Idx;
-
-        // all N component fugacities
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            priVars[fug0Idx + compIdx] = fluidState_.fugacity(0, compIdx);
-
-        // first M - 1 saturations
-        for (int phaseIdx = 0; phaseIdx < numPhases - 1; ++phaseIdx)
-            priVars[s0Idx + phaseIdx] = fluidState_.saturation(phaseIdx);
-
-        static constexpr auto pressureFormulation = ModelTraits::pressureFormulation();
-        if (pressureFormulation == MpNcPressureFormulation::mostWettingFirst)
-            priVars[p0Idx] = fluidState_.pressure(/*phaseIdx=*/0);
-        else if (pressureFormulation == MpNcPressureFormulation::leastWettingFirst)
-            priVars[p0Idx] = fluidState_.pressure(numPhases-1);
-        else
-            DUNE_THROW(Dune::InvalidStateException,"unknown pressure formulation");
-
-        return priVars;
     }
 
-    PrimaryVariables solveForPrimaryVariables(const NotAllPhasesPresent& notAllPhases)
+    template<class FluidState>
+    void solve(FluidState& fs, const NotAllPhasesPresent& notAllPhases) const
+    {
+        typename FluidSystem::ParameterCache paramCache;
+        ComputeFromReferencePhase<Scalar, FluidSystem>::solve(fs,
+                                                              paramCache,
+                                                              notAllPhases.refPhaseIdx);
+    }
+
+    template<class FluidState>
+    PrimaryVariables getPrimaryVariables(const FluidState& fs) const
     {
         PrimaryVariables priVars(0.0);
 
-        // make the fluid state consistent with local thermodynamic equilibrium
-        typename FluidSystem::ParameterCache paramCache;
-        ComputeFromReferencePhase<Scalar, FluidSystem>::solve(fluidState_,
-                                                              paramCache,
-                                                              notAllPhases.refPhaseIdx);
-
         static constexpr auto numComponents = FluidSystem::numComponents;
         static constexpr auto numPhases = FluidSystem::numPhases;
         static constexpr auto fug0Idx = ModelTraits::Indices::fug0Idx;
@@ -115,25 +75,22 @@ public:
 
         // all N component fugacities
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            priVars[fug0Idx + compIdx] = fluidState_.fugacity(0, compIdx);
+            priVars[fug0Idx + compIdx] = fs.fugacity(0, compIdx);
 
         // first M - 1 saturations
         for (int phaseIdx = 0; phaseIdx < numPhases - 1; ++phaseIdx)
-            priVars[s0Idx + phaseIdx] = fluidState_.saturation(phaseIdx);
+            priVars[s0Idx + phaseIdx] = fs.saturation(phaseIdx);
 
         static constexpr auto pressureFormulation = ModelTraits::pressureFormulation();
         if (pressureFormulation == MpNcPressureFormulation::mostWettingFirst)
-            priVars[p0Idx] = fluidState_.pressure(/*phaseIdx=*/0);
+            priVars[p0Idx] = fs.pressure(/*phaseIdx=*/0);
         else if (pressureFormulation == MpNcPressureFormulation::leastWettingFirst)
-            priVars[p0Idx] = fluidState_.pressure(numPhases-1);
+            priVars[p0Idx] = fs.pressure(numPhases-1);
         else
             DUNE_THROW(Dune::InvalidStateException,"unknown pressure formulation");
 
         return priVars;
     }
-
-private:
-    FluidState fluidState_;
 };
 
 } // end namespace Dumux

@@ -288,35 +288,35 @@ private:
         if(onRightBoundary_(globalPos))
             thisTemperature = TRight_;
 
-        MPNCInitialConditionHelper<PrimaryVariables, FluidState, FluidSystem, ModelTraits> helper;
+        FluidState fs;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            helper.setSaturation(phaseIdx, S[phaseIdx]);
-            helper.setTemperature(thisTemperature);
+            fs.setSaturation(phaseIdx, S[phaseIdx]);
+            fs.setTemperature(thisTemperature);
         }
 
         //obtain pc according to saturation
         const int wettingPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
         const auto& fm = this->spatialParams().fluidMatrixInteractionAtPos(globalPos);
-        const auto capPress = fm.capillaryPressures(helper.fluidState(), wettingPhaseIdx);
+        const auto capPress = fm.capillaryPressures(fs, wettingPhaseIdx);
         Scalar p[numPhases];
 
         using std::abs;
         p[wPhaseIdx] = pnInitial_ - abs(capPress[wPhaseIdx]);
         p[nPhaseIdx] = p[wPhaseIdx] + abs(capPress[wPhaseIdx]);
         for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
-            helper.setPressure(phaseIdx, p[phaseIdx]);
+            fs.setPressure(phaseIdx, p[phaseIdx]);
 
-        helper.setMoleFraction(wPhaseIdx, wCompIdx, 1.0);
-        helper.setMoleFraction(wPhaseIdx, nCompIdx, 0.0);
-        helper.setMoleFraction(nPhaseIdx, wCompIdx, 1.0);
-        helper.setMoleFraction(nPhaseIdx, nCompIdx, 0.0);
+        fs.setMoleFraction(wPhaseIdx, wCompIdx, 1.0);
+        fs.setMoleFraction(wPhaseIdx, nCompIdx, 0.0);
+        fs.setMoleFraction(nPhaseIdx, wCompIdx, 1.0);
+        fs.setMoleFraction(nPhaseIdx, nCompIdx, 0.0);
 
-       const int refPhaseIdx = inPM_(globalPos) ? wPhaseIdx : nPhaseIdx;
+        const int refPhaseIdx = inPM_(globalPos) ? wPhaseIdx : nPhaseIdx;
 
-       auto priVars = helper.solveForPrimaryVariables(
-           MPNCInitialConditions::NotAllPhasesPresent{.refPhaseIdx = refPhaseIdx}
-       );
+        MPNCInitialConditionHelper<PrimaryVariables, FluidSystem, ModelTraits> helper;
+        helper.solve(fs, MPNCInitialConditions::NotAllPhasesPresent{.refPhaseIdx = refPhaseIdx});
+        auto priVars = helper.getPrimaryVariables(fs);
 
         // additionally set the temperature for thermal non-equilibrium for the phases
         priVars[energyEq0Idx] = thisTemperature;
