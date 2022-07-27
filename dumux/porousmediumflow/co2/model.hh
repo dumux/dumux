@@ -30,7 +30,6 @@
 #include "volumevariables.hh"
 
 /*!
- * \file
  * \ingroup CO2Model
  * \brief Adaption of the non-isothermal two-phase two-component flow model to problems with CO2
  *

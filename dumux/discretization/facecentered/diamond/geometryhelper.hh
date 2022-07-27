@@ -259,7 +259,6 @@ struct InsideOutsideScv<IndexType, Dune::GeometryTypes::hexahedron>
 } // end namespace Detail::FCDiamond
 
 /*!
- * \file
  * \ingroup DiamondDiscretization
  * \brief Helper class to construct SCVs and SCVFs for the diamond scheme
  */

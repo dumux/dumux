@@ -31,7 +31,6 @@
 namespace Dumux {
 
 /*!
- * \file
  * \ingroup FaceCenteredStaggeredDiscretization
  * \brief Returns the normal axis index of a unit vector (0 = x, 1 = y, 2 = z)
  */

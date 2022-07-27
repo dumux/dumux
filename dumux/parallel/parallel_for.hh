@@ -163,7 +163,6 @@ private:
 namespace Dumux {
 
 /*!
- * \file
  * \ingroup Parallel
  * \brief A parallel for loop (multithreading)
  * \param count the number of work tasks to perform

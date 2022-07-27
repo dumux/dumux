@@ -57,7 +57,6 @@ private:
 };
 
 /*!
- * \file
  * \ingroup Common
  * \brief Boundary flag to store e.g. in sub control volume faces
  * \note Can be specialized for each grid manager (in the gridmanager headers)

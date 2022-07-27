@@ -36,7 +36,6 @@
 namespace Dumux {
 
 /*!
- * \file
  * \ingroup PoroElastic
  * \brief Coupling manager for porous medium flow problems coupled to a poro-mechanical problem
  *
