@@ -1,0 +1,31 @@
+[Grid]
+File = channel_quad.msh
+Verbosity = 1
+DomainMarkers = true # read domain markers (gmsh physical entities)
+BoundarySegments = true # read boundary markers (gmsh physical entities)
+
+[Problem]
+Name = test_channel
+DeltaP = 1
+EnableGravity = false
+EnableInertiaTerms = false
+
+[FreeFlow]
+EnableUnsymmetrizedVelocityGradient = true
+
+[Component]
+LiquidDensity = 1000
+LiquidDynamicViscosity = 1e-3
+
+[Mass.Assembly.NumericDifference]
+PriVarMagnitude = 1.0
+BaseEpsilon = 0.1
+
+[Momentum.Assembly.NumericDifference]
+PriVarMagnitude = 1.0 1.0 1.0
+BaseEpsilon = 0.1
+
+[Newton]
+MinSteps = 1
+EnableAbsoluteResidualCriterion = true
+MaxAbsoluteResidual = 1e-5
