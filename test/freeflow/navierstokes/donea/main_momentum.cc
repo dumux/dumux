@@ -26,13 +26,17 @@
 
 #include <algorithm>
 #include <iostream>
+#include <vector>
 
 #include <dune/common/parallel/mpihelper.hh>
+#include <dune/common/fvector.hh>
 
 #include <dumux/common/initialize.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+
+#include <dumux/discretization/evalsolution.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 
@@ -47,7 +51,51 @@
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/istlsolverfactorybackend.hh>
 
+#include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
+#include <test/freeflow/navierstokes/errors.hh>
+
 #include "properties_momentum.hh"
+
+namespace Dumux {
+
+template<class Error>
+void writeError_(std::ofstream& logFile, const Error& error, const std::string& format = "{:.5e}")
+{
+    for (const auto& e : error)
+        logFile << Fmt::format(", " + format, e);
+}
+
+template<class Problem, class GridVariables, class SolutionVector>
+void printErrors(std::shared_ptr<Problem> problem,
+                 const GridVariables& gridVariables,
+                 const SolutionVector& x)
+{
+    using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
+    static constexpr int dim = GridGeometry::GridView::dimension;
+    const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
+
+    if (printErrors)
+    {
+        NavierStokesTest::ErrorsSubProblem errors(problem, x);
+
+        std::ofstream logFile(problem->name() + ".csv", std::ios::app);
+        auto totalVolume = errors.totalVolume();
+        // For the staggered scheme, the control volumes are overlapping
+        if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::fcstaggered)
+            totalVolume /= dim;
+
+        logFile << Fmt::format("{:.5e}", errors.time()) << ", ";
+        logFile << problem->gridGeometry().numDofs() << ", ";
+        logFile << std::pow(totalVolume / problem->gridGeometry().numDofs(), 1.0/dim);
+        const auto& componentErrors = errors.l2Absolute();
+        // Calculate L2-error for velocity field
+        Dune::FieldVector<double, 1> velError(0.0);
+        velError[0] = std::sqrt(componentErrors * componentErrors);
+
+        writeError_(logFile, velError);
+        logFile << "\n";
+    }
+}
 
 template<class GridGeometry, class GridVariables, class SolutionVector>
 void updateVelocities(
@@ -59,17 +107,35 @@ void updateVelocities(
 ){
     auto fvGeometry = localView(gridGeometry);
     auto elemVolVars = localView(gridVariables.curGridVolVars());
+
+    using ShapeValue = typename Dune::FieldVector<double, 1>;
+    std::vector<ShapeValue> shapeValues;
+
     for (const auto& element : elements(gridGeometry.gridView()))
     {
         fvGeometry.bind(element);
         elemVolVars.bind(element, fvGeometry, x);
+        const auto eIdx = gridGeometry.elementMapper().index(element);
 
-        for (const auto& scv : scvs(fvGeometry))
+        if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::fcstaggered)
         {
-            const auto& vars = elemVolVars[scv];
-            velocity[scv.elementIndex()][scv.dofAxis()] += 0.5*vars.velocity();
-            faceVelocity[scv.dofIndex()][scv.dofAxis()] = vars.velocity();
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                const auto& vars = elemVolVars[scv];
+                velocity[eIdx][scv.dofAxis()] += 0.5*vars.velocity();
+                faceVelocity[scv.dofIndex()][scv.dofAxis()] = vars.velocity();
+            }
         }
+        else if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::fcdiamond)
+        {
+            const auto elemGeo = element.geometry();
+            const auto elemSol = elementSolution(element, x, gridGeometry);
+            velocity[eIdx] = evalSolution(element, elemGeo, gridGeometry, elemSol, elemGeo.center());
+            for (const auto& scv : scvs(fvGeometry))
+                faceVelocity[scv.dofIndex()] = elemVolVars[scv].velocity();
+        }
+        else
+            DUNE_THROW(Dune::Exception, "Unknown discretization type: " << GridGeometry::discMethod);
     }
 }
 
@@ -84,6 +150,9 @@ void updateRank(
         rank[eIdxGlobal] = gridGeometry.gridView().comm().rank();
     }
 }
+
+} // end namespace Dumux
+
 
 int main(int argc, char** argv)
 {
@@ -133,6 +202,9 @@ int main(int argc, char** argv)
     std::vector<std::size_t> dofIdx(x.size());
     std::iota(dofIdx.begin(), dofIdx.end(), 0);
 
+    std::string baseName = problem->name();
+    std::string discSuffix = std::string("_") + GridGeometry::DiscretizationMethod::name();
+    std::string rankSuffix = std::string("_") + std::to_string(gridGeometry->gridView().comm().rank());
     Dune::VTKWriter<typename GridGeometry::GridView> writer(gridGeometry->gridView());
     using Field = Vtk::template Field<typename GridGeometry::GridView>;
     writer.addCellData(Field(
@@ -140,7 +212,7 @@ int main(int argc, char** argv)
         "velocity", /*numComp*/2, /*codim*/0
     ).get());
     writer.addCellData(rank, "rank");
-    writer.write("donea_momentum_0");
+    writer.write(baseName + discSuffix + "_0");
 
     ConformingIntersectionWriter faceVtk(gridGeometry->gridView());
     faceVtk.addField(dofIdx, "dofIdx");
@@ -149,26 +221,27 @@ int main(int argc, char** argv)
         const auto& facet = is.inside().template subEntity <1> (is.indexInInside());
         return facet.partitionType();
     }, "partitionType");
-    faceVtk.write("donea_momentum_face_0_" + std::to_string(gridGeometry->gridView().comm().rank()), Dune::VTK::ascii);
+    faceVtk.write(baseName + "_face" + discSuffix + rankSuffix + "_0", Dune::VTK::ascii);
 
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>>;
-    const auto dofMapper = LinearSolverTraits<GridGeometry>::DofMapper(gridGeometry->gridView());
+    const auto& dofMapper = LinearSolverTraits<GridGeometry>::dofMapper(*gridGeometry);
     auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), dofMapper);
 
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
-
     nonLinearSolver.solve(x);
 
     ////////////////////////////////////////////////////////////
     // write VTK output
     ////////////////////////////////////////////////////////////
-    updateVelocities(velocity, faceVelocity, *gridGeometry, *gridVariables, x);
-    writer.write("donea_momentum_1");
-    faceVtk.write("donea_momentum_face_1_" + std::to_string(gridGeometry->gridView().comm().rank()), Dune::VTK::ascii);
+    Dumux::updateVelocities(velocity, faceVelocity, *gridGeometry, *gridVariables, x);
+    writer.write(baseName + discSuffix + "_1");
+    faceVtk.write(baseName + "_face" + discSuffix + rankSuffix + "_1", Dune::VTK::ascii);
+
+    Dumux::printErrors(problem, *gridVariables, x);
 
     ////////////////////////////////////////////////////////////
     // finalize, print parameters and Dumux message to say goodbye

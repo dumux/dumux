@@ -1,0 +1,26 @@
+[Grid]
+Positions0 = 0 0.1e-3 # [m]
+Positions1 = 0 1.0e-3 # [m]
+Cells0 = 10 # [-]
+Cells1 = 100 # [-]
+Grading0 = 1
+Grading1 = 1
+
+[Problem]
+Name = test_ff_stokes_channel_pipe
+MeanInletVelocity = 0.1 # [m/s]
+EnableGravity = false
+EnableInertiaTerms = false
+
+[FreeFlow]
+EnableUnsymmetrizedVelocityGradient = true
+
+[Component]
+LiquidKinematicViscosity = 1e-6
+LiquidDensity = 1000
+
+[Assembly]
+NumericDifference.BaseEpsilon =  1e-3
+
+[SpatialParams]
+Temperature = 293.15

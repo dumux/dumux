@@ -552,6 +552,344 @@ private:
     std::shared_ptr<CouplingManager> couplingManager_;
 };
 
+/*!
+ * \brief Navier-Stokes default problem implementation for FCDiamond discretizations
+ */
+template<class TypeTag>
+class NavierStokesProblemImpl<TypeTag, DiscretizationMethods::FCDiamond>
+: public FVProblemWithSpatialParams<TypeTag>
+{
+    using ParentType = FVProblemWithSpatialParams<TypeTag>;
+    using Implementation = GetPropType<TypeTag, Properties::Problem>;
+
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
+    using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+
+    using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
+    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
+    using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+
+public:
+    //! These types are used in place of the typical NumEqVector type.
+    //! In the numeqvector assembly type, only one equation per DOF (face) is considered
+    //! while the type here provides one entry for each world dimension.
+    using InitialValues = Dune::FieldVector<Scalar, dimWorld>;
+    using Sources = Dune::FieldVector<Scalar, dimWorld>;
+    using DirichletValues = Dune::FieldVector<Scalar, dimWorld>;
+    using BoundaryFluxes = Dune::FieldVector<Scalar, dimWorld>;
+
+    //! Export the boundary types.
+    using BoundaryTypes = NavierStokesMomentumBoundaryTypes<ModelTraits::dim()>;
+
+    //! This problem is used for the momentum balance model.
+    static constexpr bool isMomentumProblem() { return true; }
+
+    /*!
+     * \brief The constructor
+     * \param gridGeometry The finite volume grid geometry
+     * \param couplingManager A coupling manager (in case this problem is a coupled "mass-momentum"/full Navier-Stokes problem)
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
+     */
+    NavierStokesProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry,
+                            std::shared_ptr<CouplingManager> couplingManager,
+                            const std::string& paramGroup = "")
+    : ParentType(gridGeometry, paramGroup)
+    , gravity_(0.0)
+    , couplingManager_(couplingManager)
+    {
+        if (getParamFromGroup<bool>(paramGroup, "Problem.EnableGravity"))
+            gravity_[dim-1]  = -9.81;
+
+        enableInertiaTerms_ = getParamFromGroup<bool>(paramGroup, "Problem.EnableInertiaTerms");
+    }
+
+    /*!
+     * \brief The constructor for usage without a coupling manager
+     * \param gridGeometry The finite volume grid geometry
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
+     */
+    NavierStokesProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry,
+                            const std::string& paramGroup = "")
+    : NavierStokesProblemImpl(gridGeometry, {}, paramGroup)
+    {}
+
+    /*!
+     * \brief Evaluate the source term for all phases within a given
+     *        sub-control-volume.
+     *
+     * This is the method for the case where the source term is
+     * potentially solution dependent and requires some quantities that
+     * are specific to the fully-implicit method.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars All volume variables for the element
+     * \param scv The sub control volume
+     *
+     * For this method, the return parameter stores the conserved quantity rate
+     * generated or annihilate per volume unit. Positive values mean
+     * that the conserved quantity is created, negative ones mean that it vanishes.
+     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
+     */
+    template<class ElementVolumeVariables>
+    Sources source(const Element &element,
+                   const FVElementGeometry& fvGeometry,
+                   const ElementVolumeVariables& elemVolVars,
+                   const SubControlVolume &scv) const
+    {
+        // forward to solution independent, fully-implicit specific interface
+        return asImp_().sourceAtPos(scv.center());
+    }
+
+    /*!
+     * \brief Evaluate the source term for all phases within a given
+     *        sub-control-volume.
+     *
+     * \param globalPos The position of the center of the finite volume
+     *            for which the source term ought to be
+     *            specified in global coordinates
+     *
+     * For this method, the values parameter stores the conserved quantity rate
+     * generated or annihilate per volume unit. Positive values mean
+     * that the conserved quantity is created, negative ones mean that it vanishes.
+     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
+     */
+    Sources sourceAtPos(const GlobalPosition &globalPos) const
+    {
+        //! As a default, i.e. if the user's problem does not overload any source method
+        //! return 0.0 (no source terms)
+        return Sources(0.0);
+    }
+
+    /*!
+     * \brief Specifies which kind of boundary condition should be
+     *        used for which equation on a given boundary segment.
+     *
+     * \param element The finite element
+     * \param scvf The sub control volume face
+     */
+    BoundaryTypes boundaryTypes(const Element &element,
+                                const SubControlVolumeFace &scvf) const
+    {
+        // Forward it to the method which only takes the global coordinate.
+        // We evaluate the boundary type at the center of the sub control volume face
+        // in order to avoid ambiguities at domain corners.
+        return asImp_().boundaryTypesAtPos(scvf.center());
+    }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        control volume face.
+     *
+     * \param element The finite element
+     * \param scvf the sub control volume face
+     * \note used for cell-centered discretization schemes
+     */
+    DirichletValues dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
+    {
+        return asImp_().dirichletAtPos(scvf.ipGlobal());
+    }
+
+    /*!
+     * \brief Returns the acceleration due to gravity.
+     *
+     * If the <tt>Problem.EnableGravity</tt> parameter is true, this means
+     * \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$, else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$
+     */
+    const GravityVector& gravity() const
+    { return gravity_; }
+
+    /*!
+     * \brief Returns whether inertia terms should be considered.
+     */
+    bool enableInertiaTerms() const
+    { return enableInertiaTerms_; }
+
+    /*!
+     * \brief Returns a reference pressure
+     *        This pressure is subtracted from the actual pressure for the momentum balance
+     *        which potentially helps to improve numerical accuracy by avoiding issues related do floating point arithmetic.
+     * \note  Overload this for reference pressures other than zero.
+     */
+    Scalar referencePressure() const
+    { return 0.0; }
+
+    /*!
+     * \brief Returns the pressure at a given sub control volume face.
+     * \note  Overload this if a fixed pressure shall be prescribed (e.g., given by an analytical solution).
+     */
+    Scalar pressure(const Element& element,
+                    const FVElementGeometry& fvGeometry,
+                    const SubControlVolumeFace& scvf) const
+    {
+        if constexpr (std::is_empty_v<CouplingManager>)
+            return asImp_().pressureAtPos(scvf.ipGlobal());
+        else
+            return couplingManager_->pressure(element, fvGeometry, scvf);
+    }
+
+    /*!
+     * \brief Returns the pressure at a given sub control volume.
+     * \note  Overload this if a fixed pressure shall be prescribed (e.g., given by an analytical solution).
+     */
+    Scalar pressure(const Element& element,
+                    const FVElementGeometry& fvGeometry,
+                    const SubControlVolume& scv,
+                    const bool isPreviousTimeStep = false) const
+    {
+        if constexpr (std::is_empty_v<CouplingManager>)
+            return asImp_().pressureAtPos(scv.dofPosition());
+        else
+            return couplingManager_->pressure(element, fvGeometry, scv, isPreviousTimeStep);
+    }
+
+    /*!
+     * \brief Returns the pressure at a given position.
+     */
+    Scalar pressureAtPos(const GlobalPosition&) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "pressureAtPos not implemented");
+    }
+
+    /*!
+     * \brief Returns the density at a given sub control volume face.
+     * \note  Overload this if a fixed density shall be prescribed.
+     */
+    Scalar density(const Element& element,
+                   const FVElementGeometry& fvGeometry,
+                   const SubControlVolumeFace& scvf) const
+    {
+        if constexpr (std::is_empty_v<CouplingManager>)
+            return asImp_().densityAtPos(scvf.ipGlobal());
+        else
+            return couplingManager_->density(element, fvGeometry, scvf);
+    }
+
+    /*!
+     * \brief Returns the density at a given sub control volume.
+     * \note  Overload this if a fixed density shall be prescribed.
+     */
+    Scalar density(const Element& element,
+                   const FVElementGeometry& fvGeometry,
+                   const SubControlVolume& scv,
+                   const bool isPreviousTimeStep = false) const
+    {
+        if constexpr (std::is_empty_v<CouplingManager>)
+            return asImp_().densityAtPos(scv.dofPosition());
+        else
+            return couplingManager_->density(element, fvGeometry, scv, isPreviousTimeStep);
+    }
+
+
+    /*!
+     * \brief Returns the density at a given position.
+     */
+    Scalar densityAtPos(const GlobalPosition&) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "densityAtPos not implemented");
+    }
+
+    /*!
+     * \brief Returns the effective dynamic viscosity at a given sub control volume face.
+     * \note  Overload this if a fixed viscosity shall be prescribed.
+     */
+    Scalar effectiveViscosity(const Element& element,
+                              const FVElementGeometry& fvGeometry,
+                              const SubControlVolumeFace& scvf) const
+    {
+        if constexpr (std::is_empty_v<CouplingManager>)
+            return asImp_().effectiveViscosityAtPos(scvf.ipGlobal());
+        else
+            return couplingManager_->effectiveViscosity(element, fvGeometry, scvf);
+    }
+
+    /*!
+     * \brief Returns the effective dynamic viscosity at a given sub control volume.
+     * \note  Overload this if a fixed viscosity shall be prescribed.
+     */
+    Scalar effectiveViscosity(const Element& element,
+                              const FVElementGeometry& fvGeometry,
+                              const SubControlVolume& scv) const
+    {
+        if constexpr (std::is_empty_v<CouplingManager>)
+            return asImp_().effectiveViscosityAtPos(scv.dofPosition());
+        else
+            return couplingManager_->effectiveViscosity(element, fvGeometry, scv);
+    }
+
+    /*!
+     * \brief Returns the effective dynamic viscosity at a given position.
+     */
+    Scalar effectiveViscosityAtPos(const GlobalPosition&) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "effectiveViscosityAtPos not implemented");
+    }
+
+    /*!
+     * \brief Applies the initial solution for all degrees of freedom of the grid.
+     * \param sol the initial solution vector
+     */
+    template<class SolutionVector>
+    void applyInitialSolution(SolutionVector& sol) const
+    {
+        static_assert(GridGeometry::discMethod == DiscretizationMethods::fcdiamond);
+        sol.resize(this->gridGeometry().numDofs());
+        std::vector<bool> dofHandled(this->gridGeometry().numDofs(), false);
+        auto fvGeometry = localView(this->gridGeometry());
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            fvGeometry.bindElement(element);
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                const auto dofIdx = scv.dofIndex();
+                if (!dofHandled[dofIdx])
+                {
+                    dofHandled[dofIdx] = true;
+                    sol[dofIdx] = asImp_().initial(scv);
+                }
+            }
+        }
+    }
+
+    /*!
+     * \brief Evaluate the initial value at an sub control volume
+     */
+    InitialValues initial(const SubControlVolume& scv) const
+    {
+        static_assert(GridGeometry::discMethod == DiscretizationMethods::fcdiamond);
+        return asImp_().initialAtPos(scv.dofPosition());
+    }
+
+private:
+    //! Returns the implementation of the problem (i.e. static polymorphism)
+    Implementation &asImp_()
+    { return *static_cast<Implementation *>(this); }
+
+    //! \copydoc asImp_()
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation *>(this); }
+
+    GravityVector gravity_;
+    bool enableInertiaTerms_;
+    std::shared_ptr<CouplingManager> couplingManager_ = {};
+};
+
 template<class TypeTag>
 class NavierStokesProblemImpl<TypeTag, DiscretizationMethods::CCTpfa>
 : public FVProblemWithSpatialParams<TypeTag>

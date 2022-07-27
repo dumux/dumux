@@ -26,11 +26,10 @@
 
 #include <vector>
 #include <cmath>
-#include <fstream>
 #include <dune/common/indices.hh>
-#include <dune/common/fvector.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/io/format.hh>
+#include <dumux/geometry/diameter.hh>
 
 namespace Dumux {
 
@@ -197,7 +196,7 @@ public:
         // print auxiliary file with the number of dofs
         std::ofstream logFileDofs(name_ + "_dofs.csv", std::ios::trunc);
         logFileDofs << "cc dofs, face dofs, all dofs\n"
-                    << numCCDofs << numFaceDofs << numCCDofs + numFaceDofs << "\n";
+                    << numCCDofs << ", " << numFaceDofs << ", " << numCCDofs + numFaceDofs << "\n";
 
         // clear error file
         std::ofstream logFile(name_ + ".csv", std::ios::trunc);
@@ -301,24 +300,25 @@ void convergenceTestAppendErrors(std::shared_ptr<Problem> problem,
 namespace NavierStokesTest {
 
 /*!
- * \brief Compute errors between an analytical solution and the numerical approximation
+ * \brief Compute errors between an analytical solution and the numerical approximation for momentum eq.
  */
-template<class MomentumProblem, class MassProblem, class Scalar = double>
-class Errors
+template<class Problem, class Scalar = double>
+class ErrorsSubProblem
 {
+    static constexpr bool isMomentumProblem = Problem::isMomentumProblem();
     static constexpr int dim
-        = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>::GridView::dimension;
+    = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>::GridView::dimension;
 
-    using ErrorVector = Dune::FieldVector<Scalar, dim+1>;
+    using ErrorVector = typename std::conditional_t< isMomentumProblem,
+                                                     Dune::FieldVector<Scalar, dim>,
+                                                     Dune::FieldVector<Scalar, 1> >;
 
 public:
     template<class SolutionVector>
-    Errors(std::shared_ptr<const MomentumProblem> momentumProblem,
-           std::shared_ptr<const MassProblem> massProblem,
+    ErrorsSubProblem(std::shared_ptr<const Problem> problem,
            const SolutionVector& curSol,
            Scalar time = 0.0)
-    : momentumProblem_(momentumProblem)
-    , massProblem_(massProblem)
+    : problem_(problem)
     { calculateErrors_(curSol, time); }
 
     /*!
@@ -343,6 +343,12 @@ public:
     //! Time corresponding to the error (returns 0 per default)
     Scalar time() const { return time_; }
 
+    //! Maximum diameter of primal grid elements
+    Scalar hMax() const { return hMax_; }
+
+    //! Volume of domain
+    Scalar totalVolume() const { return totalVolume_; }
+
 private:
     template<class SolutionVector>
     void calculateErrors_(const SolutionVector& curSol, Scalar time)
@@ -351,7 +357,8 @@ private:
         time_ = time;
 
         // calculate helping variables
-        Scalar totalVolume = 0.0;
+        totalVolume_ = 0.0;
+        hMax_ = 0.0;
 
         ErrorVector sumReference(0.0);
         ErrorVector sumError(0.0);
@@ -360,54 +367,66 @@ private:
 
         using namespace Dune::Indices;
 
-        // velocity errors
+        auto fvGeometry = localView(problem_->gridGeometry());
+        for (const auto& element : elements(problem_->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(momentumProblem_->gridGeometry());
-            for (const auto& element : elements(momentumProblem_->gridGeometry().gridView()))
+            hMax_ = std::max(hMax_, diameter(element.geometry()));
+            fvGeometry.bindElement(element);
+            for (const auto& scv : scvs(fvGeometry))
             {
-                fvGeometry.bindElement(element);
-                for (const auto& scv : scvs(fvGeometry))
+                using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
+                using Extrusion = Extrusion_t<GridGeometry>;
+                totalVolume_ += Extrusion::volume(scv);
+
+                // velocity errors
+                if constexpr (isMomentumProblem)
                 {
-                    using GridGeometry = std::decay_t<decltype(std::declval<MassProblem>().gridGeometry())>;
-                    using Extrusion = Extrusion_t<GridGeometry>;
+                    if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcstaggered)
+                    {
+                        // compute the velocity errors
+                        using Indices = typename Problem::Indices;
+                        const auto velIdx = Indices::velocity(scv.dofAxis());
+                        const auto analyticalSolution
+                            = problem_->analyticalSolution(scv.dofPosition(), time)[velIdx];
+                        const auto numericalSolution
+                            = curSol[scv.dofIndex()][0];
 
-                    // compute the pressure errors
-                    using Indices = typename MomentumProblem::Indices;
-                    const auto velIdx = Indices::velocity(scv.dofAxis());
-                    const auto analyticalSolution
-                        = momentumProblem_->analyticalSolution(scv.dofPosition(), time)[velIdx];
-                    const auto numericalSolution
-                        = curSol[_0][scv.dofIndex()][0];
+                        const Scalar vError = absDiff_(analyticalSolution, numericalSolution);
+                        const Scalar vReference = absDiff_(analyticalSolution, 0.0);
 
-                    const Scalar vError = absDiff_(analyticalSolution, numericalSolution);
-                    const Scalar vReference = absDiff_(analyticalSolution, 0.0);
+                        maxError[velIdx] = std::max(maxError[velIdx], vError);
+                        maxReference[velIdx] = std::max(maxReference[velIdx], vReference);
+                        sumError[velIdx] += vError * vError * Extrusion::volume(scv);
+                        sumReference[velIdx] += vReference * vReference * Extrusion::volume(scv);
+                    }
+                    else if (GridGeometry::discMethod == DiscretizationMethods::fcdiamond)
+                    {
+                        for (int dirIdx = 0; dirIdx < dim; ++dirIdx)
+                        {
+                            const auto analyticalSolution
+                                = problem_->analyticalSolution(scv.dofPosition(), time)[dirIdx];
+                            const auto numericalSolution
+                                = curSol[scv.dofIndex()][dirIdx];
 
-                    maxError[velIdx+1] = std::max(maxError[velIdx+1], vError);
-                    maxReference[velIdx+1] = std::max(maxReference[velIdx+1], vReference);
-                    sumError[velIdx+1] += vError * vError * Extrusion::volume(scv);
-                    sumReference[velIdx+1] += vReference * vReference * Extrusion::volume(scv);
+                            const Scalar vError = absDiff_(analyticalSolution, numericalSolution);
+                            const Scalar vReference = absDiff_(analyticalSolution, 0.0);
+
+                            maxError[dirIdx] = std::max(maxError[dirIdx], vError);
+                            maxReference[dirIdx] = std::max(maxReference[dirIdx], vReference);
+                            sumError[dirIdx] += vError * vError * Extrusion::volume(scv);
+                            sumReference[dirIdx] += vReference * vReference * Extrusion::volume(scv);
+                        }
+                    }
                 }
-            }
-        }
-
-        // pressure errors
-        {
-            auto fvGeometry = localView(massProblem_->gridGeometry());
-            for (const auto& element : elements(massProblem_->gridGeometry().gridView()))
-            {
-                fvGeometry.bindElement(element);
-                for (const auto& scv : scvs(fvGeometry))
+                // pressure errors
+                else
                 {
-                    using GridGeometry = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>;
-                    using Extrusion = Extrusion_t<GridGeometry>;
-                    totalVolume += Extrusion::volume(scv);
-
                     // compute the pressure errors
-                    using Indices = typename MassProblem::Indices;
+                    using Indices = typename Problem::Indices;
                     const auto analyticalSolution
-                        = massProblem_->analyticalSolution(scv.dofPosition(), time)[Indices::pressureIdx];
+                        = problem_->analyticalSolution(scv.dofPosition(), time)[Indices::pressureIdx];
                     const auto numericalSolution
-                        = curSol[_1][scv.dofIndex()][Indices::pressureIdx];
+                        = curSol[scv.dofIndex()][Indices::pressureIdx];
 
                     const Scalar pError = absDiff_(analyticalSolution, numericalSolution);
                     const Scalar pReference = absDiff_(analyticalSolution, 0.0);
@@ -423,7 +442,7 @@ private:
         // calculate errors
         for (int i = 0; i < ErrorVector::size(); ++i)
         {
-            l2Absolute_[i] = std::sqrt(sumError[i] / totalVolume);
+            l2Absolute_[i] = std::sqrt(sumError[i] / totalVolume_);
             l2Relative_[i] = std::sqrt(sumError[i] / sumReference[i]);
             lInfAbsolute_[i] = maxError[i];
             lInfRelative_[i] = maxError[i] / maxReference[i];
@@ -434,15 +453,115 @@ private:
     T absDiff_(const T& a, const T& b) const
     { using std::abs; return abs(a-b); }
 
-    std::shared_ptr<const MomentumProblem> momentumProblem_;
-    std::shared_ptr<const MassProblem> massProblem_;
+    std::shared_ptr<const Problem> problem_;
 
     ErrorVector l2Absolute_;
     ErrorVector l2Relative_;
     ErrorVector lInfAbsolute_;
     ErrorVector lInfRelative_;
     Scalar time_;
+    Scalar hMax_;
+    Scalar totalVolume_;
 };
+
+/*!
+ * \brief Compute errors between an analytical solution and the numerical approximation
+ */
+template<class MomentumProblem, class MassProblem, class Scalar = double>
+class Errors
+{
+    static constexpr int dim
+        = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>::GridView::dimension;
+
+    using ErrorVector = Dune::FieldVector<Scalar, dim+1>;
+
+public:
+    template<class SolutionVector>
+    Errors(std::shared_ptr<const MomentumProblem> momentumProblem,
+           std::shared_ptr<const MassProblem> massProblem,
+           const SolutionVector& curSol,
+           Scalar time = 0.0)
+    : momentumErrors_(momentumProblem, curSol[Dune::Indices::_0], time)
+    , massErrors_(massProblem, curSol[Dune::Indices::_1], time)
+    { update(curSol, time); }
+
+    /*!
+     * \brief Computes errors between an analytical solution and the numerical approximation
+     *
+     * \param curSol The current solution vector
+     * \param time The current time
+     */
+    template<class SolutionVector>
+    void update(const SolutionVector& curSol, Scalar time = 0.0)
+    {
+        momentumErrors_.update(curSol[Dune::Indices::_0], time);
+        massErrors_.update(curSol[Dune::Indices::_1], time);
+
+        time_ = time;
+
+        const auto&  l2AbsoluteMomentum = momentumErrors_.l2Absolute();
+        const auto&  l2RelativeMomentum = momentumErrors_.l2Relative();
+        const auto&  lInfAbsoluteMomentum = momentumErrors_.lInfAbsolute();
+        const auto&  lInfRelativeMomentum = momentumErrors_.lInfRelative();
+
+        const auto&  l2AbsoluteMass = massErrors_.l2Absolute();
+        const auto&  l2RelativeMass = massErrors_.l2Relative();
+        const auto&  lInfAbsoluteMass = massErrors_.lInfAbsolute();
+        const auto&  lInfRelativeMass = massErrors_.lInfRelative();
+
+        l2Absolute_[0] = l2AbsoluteMass[0];
+        l2Relative_[0] = l2RelativeMass[0];
+        lInfAbsolute_[0] = lInfAbsoluteMass[0];
+        lInfRelative_[0] = lInfRelativeMass[0];
+
+        std::copy( l2AbsoluteMomentum.begin(), l2AbsoluteMomentum.end(), l2Absolute_.begin() + 1 );
+        std::copy( l2RelativeMomentum.begin(), l2RelativeMomentum.end(), l2Relative_.begin() + 1 );
+        std::copy( lInfAbsoluteMomentum.begin(), lInfAbsoluteMomentum.end(), lInfAbsolute_.begin() + 1 );
+        std::copy( lInfRelativeMomentum.begin(), lInfRelativeMomentum.end(), lInfRelative_.begin() + 1 );
+
+        hMax_ = massErrors_.hMax();
+        totalVolume_ = massErrors_.totalVolume();
+    }
+
+    //! The (absolute) discrete l2 error
+    const ErrorVector& l2Absolute() const { return l2Absolute_; }
+    //! The relative discrete l2 error (relative to the discrete l2 norm of the reference solution)
+    const ErrorVector& l2Relative() const { return l2Relative_; }
+    //! The (absolute) discrete l-infinity error
+    const ErrorVector& lInfAbsolute() const { return lInfAbsolute_; }
+    //! The relative discrete l-infinity error (relative to the discrete loo norm of the reference solution)
+    const ErrorVector& lInfRelative() const { return lInfRelative_; }
+
+    //! Time corresponding to the error (returns 0 per default)
+    Scalar time() const { return time_; }
+
+    //! Maximum diameter of primal grid elements
+    Scalar hMax() const { return hMax_; }
+
+    //! Volume of domain
+    Scalar totalVolume() const { return totalVolume_; }
+
+private:
+    ErrorsSubProblem<MomentumProblem, Scalar> momentumErrors_;
+    ErrorsSubProblem<MassProblem, Scalar> massErrors_;
+
+    ErrorVector l2Absolute_;
+    ErrorVector l2Relative_;
+    ErrorVector lInfAbsolute_;
+    ErrorVector lInfRelative_;
+
+    Scalar time_;
+    Scalar hMax_;
+    Scalar totalVolume_;
+};
+
+template<class Problem, class SolutionVector>
+ErrorsSubProblem(std::shared_ptr<Problem>, SolutionVector&&)
+-> ErrorsSubProblem<Problem>;
+
+template<class Problem, class SolutionVector, class Scalar>
+ErrorsSubProblem(std::shared_ptr<Problem>, SolutionVector&&, Scalar)
+-> ErrorsSubProblem<Problem, Scalar>;
 
 template<class MomentumProblem, class MassProblem, class SolutionVector>
 Errors(std::shared_ptr<MomentumProblem>, std::shared_ptr<MassProblem>, SolutionVector&&)
@@ -474,7 +593,7 @@ public:
         // print auxiliary file with the number of dofs
         std::ofstream logFileDofs(name_ + "_dofs.csv", std::ios::trunc);
         logFileDofs << "cc dofs, face dofs, all dofs\n"
-                    << numCCDofs << numFaceDofs << numCCDofs + numFaceDofs << "\n";
+                    << numCCDofs << ", " << numFaceDofs << ", " << numCCDofs + numFaceDofs << "\n";
 
         // clear error file
         std::ofstream logFile(name_ + ".csv", std::ios::trunc);
@@ -509,7 +628,7 @@ private:
         using MomIndices = typename MomentumProblem::Indices;
         logFile << Fmt::format(", " + format, error[MassIndices::pressureIdx]);
         for (int dirIdx = 0; dirIdx < dim; ++dirIdx)
-            logFile << Fmt::format(", " + format, error[MomIndices::velocity(dirIdx)]);
+            logFile << Fmt::format(", " + format, error[MomIndices::velocity(dirIdx)+1]);
     }
 
     std::string name_;
@@ -570,6 +689,50 @@ void convergenceTestAppendErrors(std::shared_ptr<MomentumProblem> momentumProble
     const auto logFileName = massProblem->name() + ".log";
     std::ofstream logFile(logFileName, std::ios::app);
     convergenceTestAppendErrors(logFile, momentumProblem, massProblem, errors);
+}
+
+/*!
+ * \brief Append errors to the log file during a convergence test
+ */
+template<class MomentumProblem>
+void convergenceTestAppendErrorsMomentum(std::ofstream& logFile,
+                                         std::shared_ptr<MomentumProblem> problem,
+                                         const ErrorsSubProblem<MomentumProblem>& errors)
+{
+    const auto numFaceDofs = problem->gridGeometry().numDofs();
+
+    logFile << Fmt::format(
+        "[ConvergenceTest] numFaceDofs = {}",
+        numFaceDofs
+    );
+
+    const auto print = [&](const auto& e, const std::string& name){
+        using MomIndices = typename MomentumProblem::Indices;
+        logFile << Fmt::format(
+            " {0}(vx) = {1} {0}(vy) = {2}",
+            name, e[MomIndices::velocityXIdx], e[MomIndices::velocityYIdx]
+        );
+    };
+
+    print(errors.l2Absolute(), "L2Abs");
+    print(errors.l2Relative(), "L2Rel");
+    print(errors.lInfAbsolute(), "LinfAbs");
+    print(errors.lInfRelative(), "LinfRel");
+
+    logFile << "\n";
+}
+
+
+/*!
+ * \brief Append errors to the log file during a convergence test
+ */
+template<class MomentumProblem>
+void convergenceTestAppendErrorsMomentum(std::shared_ptr<MomentumProblem> problem,
+                                         const ErrorsSubProblem<MomentumProblem>& errors)
+{
+    const auto logFileName = problem->name() + ".log";
+    std::ofstream logFile(logFileName, std::ios::app);
+    convergenceTestAppendErrorsMomentum(logFile, problem, errors);
 }
 
 } // end namespace NavierStokesTest

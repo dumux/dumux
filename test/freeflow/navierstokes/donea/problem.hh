@@ -96,7 +96,7 @@ public:
     {
         if constexpr (ParentType::isMomentumProblem())
         {
-            Sources source;
+            Sources source(0.0);
             const Scalar x = globalPos[0];
             const Scalar y = globalPos[1];
 
@@ -138,10 +138,7 @@ public:
                     values.setAllDirichlet();
             }
             else
-            {
-                values.setDirichlet(Indices::velocityXIdx);
-                values.setDirichlet(Indices::velocityYIdx);
-            }
+                values.setAllDirichlet();
         }
         else
             values.setNeumann(Indices::conti0EqIdx);
@@ -205,7 +202,7 @@ public:
      */
     DirichletValues analyticalSolution(const GlobalPosition& globalPos, Scalar time = 0.0) const
     {
-        DirichletValues values;
+        DirichletValues values(0.0);
 
         if constexpr (ParentType::isMomentumProblem())
         {
@@ -262,7 +259,8 @@ public:
 
             bool onBoundary = false;
             for (const auto& scvf : scvfs(fvGeometry))
-                onBoundary = std::max(onBoundary, scvf.boundary());
+                if (fvGeometry.scv(scvf.insideScvIdx()).dofIndex() == scv.dofIndex())
+                    onBoundary = std::max(onBoundary, scvf.boundary());
 
             if (onBoundary)
                 values.set(0);
@@ -284,7 +282,7 @@ public:
      * \param scv The sub-control volume
      */
     DirichletValues internalDirichlet(const Element& element, const SubControlVolume& scv) const
-    { return DirichletValues(analyticalSolution(scv.center())[Indices::pressureIdx]); }
+    { return DirichletValues(analyticalSolution(scv.dofPosition())[Indices::pressureIdx]); }
 
 private:
     Scalar p_(Scalar x) const
