@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup DiamondDiscretization
- * \copydoc Dumux::DiamondFVElementGeometry
+ * \copydoc Dumux::FaceCenteredDiamondFVElementGeometry
  */
 #ifndef DUMUX_DISCRETIZATION_FACECENTERED_DIAMOND_FV_ELEMENT_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_FACECENTERED_DIAMOND_FV_ELEMENT_GEOMETRY_HH
