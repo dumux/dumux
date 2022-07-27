@@ -93,9 +93,8 @@ public:
 
     //! Update the invasion state of all throats. This is done after each Newton step by a call from the Newton solver.
     template<class SolutionVector, class GridVolumeVariables, class GridFluxVariablesCache>
-    bool update(const SolutionVector& sol, const GridVolumeVariables& gridVolVars, GridFluxVariablesCache& gridFluxVarsCache)
+    void update(const SolutionVector& sol, const GridVolumeVariables& gridVolVars, GridFluxVariablesCache& gridFluxVarsCache)
     {
-        hasChangedInCurrentIteration_ = false;
         auto fvGeometry = localView(problem_.gridGeometry());
         auto elemVolVars = localView(gridVolVars);
         auto elemFluxVarsCache = localView(gridFluxVarsCache);
@@ -110,7 +109,6 @@ public:
                 // checks if invasion or snap-off occured after Newton iteration step
                 if (const auto invasionResult = invasionSwitch_(element, elemVolVars, elemFluxVarsCache[scvf]); invasionResult)
                 {
-                    hasChangedInCurrentIteration_ = true;
                     if constexpr (GridFluxVariablesCache::cachingEnabled)
                     {
                         const auto eIdx = problem_.gridGeometry().elementMapper().index(element);
@@ -120,13 +118,11 @@ public:
             }
         }
         numThroatsInvaded_ = std::count(invadedCurrentTimeStep_.begin(), invadedCurrentTimeStep_.end(), true);
-        return hasChangedInCurrentIteration_;
     }
 
     //! Restore the old invasion state after a Newton iteration has failed.
     void reset()
     {
-        hasChangedInCurrentIteration_ = false;
         invadedCurrentTimeStep_ = invadedPreviousTimeStep_;
     }
 
@@ -134,9 +130,7 @@ public:
     bool hasChanged() const
     { return hasChangedComparedToPreviousTimestep_; }
 
-    //! Return whether an invasion or snap-off occurred anywhere during the current Newton iteration.
-    bool hasChangedInCurrentIteration() const
-    { return hasChangedInCurrentIteration_; }
+
 
     //! This is called after the Newton method has successfully finished one time step.
     void advance()
@@ -186,7 +180,7 @@ public:
 
 private:
 
-    //! The switch for determining the invasion state of a pore throat. Called at the end of each Newton step.
+    //! The switch for determining the invasion state of a pore throat. Called at the end of each time step
     template<class Element, class ElementVolumeVariables, class FluxVariablesCache>
     auto invasionSwitch_(const Element& element,
                          const ElementVolumeVariables& elemVolVars,
@@ -294,7 +288,6 @@ private:
 
     std::vector<bool> invadedCurrentTimeStep_;
     std::vector<bool> invadedPreviousTimeStep_;
-    bool hasChangedInCurrentIteration_ = false;
     bool hasChangedComparedToPreviousTimestep_ = false;
     std::size_t numThroatsInvaded_;
     bool verbose_;
