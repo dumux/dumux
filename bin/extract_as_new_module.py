@@ -15,7 +15,7 @@ import textwrap
 import itertools
 import glob
 import multiprocessing as mp
-from distutils.dir_util import copy_tree
+from shutil import copytree
 from pathlib import Path
 from functools import partial
 
@@ -145,7 +145,7 @@ def detectNewModule():
 def copySubFolders(subFolder, oldPath, newPath):
     """Copy folders from old path to new path"""
     for sub in subFolder:
-        copy_tree(os.path.join(oldPath, sub), os.path.join(newPath, sub))
+        copytree(os.path.join(oldPath, sub), os.path.join(newPath, sub))
 
 
 def addFoldersToCMakeLists(modulePath, subFolder):
