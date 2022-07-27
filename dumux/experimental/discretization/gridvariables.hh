@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Experimental
  * \ingroup Discretization
  * \brief Base class for grid variables
  */
@@ -32,6 +33,7 @@
 namespace Dumux::Experimental {
 
 /*!
+ * \ingroup Experimental
  * \ingroup Discretization
  * \brief Base class for grid variables.
  * \tparam GG The grid geometry type

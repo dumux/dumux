@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Experimental
  * \ingroup Common
  * \copydoc Dumux::Experimental::Variables
  */
@@ -32,6 +33,7 @@
 namespace Dumux::Experimental {
 
 /*!
+ * \ingroup Experimental
  * \ingroup Common
  * \brief Class that represents the variables of a model.
  *        We assume that models are formulated on the basis of primary and

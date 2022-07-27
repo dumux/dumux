@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Experimental
  * \ingroup TimeStepping
  * \brief Parameters for different multistage time stepping methods
  * \note See e.g. https://en.wikipedia.org/wiki/List_of_Runge%E2%80%93Kutta_methods
