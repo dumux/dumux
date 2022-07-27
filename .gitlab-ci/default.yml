@@ -21,13 +21,17 @@ workflow:
 variables:
   MR_TARGET_BRANCH_NAME: ""
   REFERENCE_SHA: ""
+  CXX_MAX_STANDARD: "17"
 
 
 configure:
   stage: configure
   script:
-    - dunecontrol --opts=$DUNE_OPTS_FILE --current configure
-    - dunecontrol --opts=$DUNE_OPTS_FILE --current make -j8
+    - |
+      echo "source ${DUNE_OPTS_FILE}" > opts_file.opts
+      echo "CMAKE_FLAGS=\"\${CMAKE_FLAGS} -DCXX_MAX_STANDARD=${CXX_MAX_STANDARD}\"" >> opts_file.opts
+    - dunecontrol --opts=opts_file.opts --current configure
+    - dunecontrol --opts=opts_file.opts --current make -j8
     # cache state of the Dune virtual env for Python if it exists (Dune 2.9)
     - |
       if [ -d "/dune/modules/dune-common/build-cmake/dune-env" ]; then
