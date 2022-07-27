@@ -107,11 +107,6 @@ full-dune-latest-release-clang:
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-clang-ubuntu-20.04
 
-full-dune-master-gcc:
-  extends: .base-trigger
-  variables:
-    IMAGE: $IMAGE_REGISTRY_URL/full:dune-master-gcc-ubuntu-20.04
-
 full-dune-master-gcc-cpp-20:
   extends: .base-trigger
   variables:
@@ -125,6 +120,10 @@ full-dune-master-clang:
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/full:dune-master-clang-ubuntu-20.04
 
+full-dune-master-gcc:
+  extends: .non-mr-trigger
+  variables:
+    IMAGE: $IMAGE_REGISTRY_URL/full:dune-master-gcc-ubuntu-20.04
 
 ################################################
 # trigger test pipelines of downstream modules #
