@@ -1,0 +1,57 @@
+[Grid]
+#File = cylinder_channel.msh
+LowerLeft = 0 0
+UpperRight = 1 1
+Cells = 10 10
+
+[Problem]
+Name = benchmark_stationary
+EnableGravity = false
+EnableInertiaTerms = false
+Alpha = 0.1
+Beta = 2.0
+
+[FreeFlow]
+EnableUnsymmetrizedVelocityGradient = true
+
+[Flux]
+UpwindWeight = 0.5
+
+[Component]
+LiquidDensity = 1
+LiquidDynamicViscosity = 1e-3
+
+[Mass.Assembly.NumericDifference]
+PriVarMagnitude = 1e-2
+BaseEpsilon = 100
+
+[Momentum.Assembly.NumericDifference]
+PriVarMagnitude = 0.2 0.2
+BaseEpsilon = 100
+
+[LinearSolver]
+Type = bicgstab
+Verbosity = 2
+MaxIterations = 500
+ResidualReduction = 1e-8
+GMResRestart = 30
+SymmetrizeDirichlet = true
+DirectSolverForVelocity = false
+AmgForPressure = true
+
+[LinearSolver.Preconditioner]
+Verbosity = 0
+AmgDefaultAggregationDimension = 2
+AmgMinAggregateSize = 2
+AmgMaxAggregateSize = 4
+AmgPreSmoothingSteps = 2
+AmgPostSmoothingSteps = 2
+AmgAdditive = false
+AmgGamma = 1 # 1: V-cycle 2: W-cycle
+AmgCriterionSymmetric = true
+MassMatrixWeight = 2.0
+
+[Newton]
+MinSteps = 1
+EnableAbsoluteResidualCriterion = true
+MaxAbsoluteResidual = 1e-7
