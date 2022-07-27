@@ -28,6 +28,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
 #include <dumux/discretization/cvfe/fluxvariablescache.hh>
+#include <dumux/discretization/pq1bubble/fluxvariablescache.hh>
 
 namespace Dumux {
 
@@ -57,6 +58,17 @@ using PorousMediumFluxVariablesCache = PorousMediumFluxVariablesCacheImplementat
 template<class TypeTag, class DM>
 class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::CVFE<DM>>
 : public CVFEFluxVariablesCache<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::GridGeometry>>
+{
+public:
+    //! export type used for scalar values
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+};
+
+//! We also store discretization-related quantities for the pq1bubble method. Thus, we need no
+//! physics-dependent specialization and simply inherit from the physics-independent implementation.
+template<class TypeTag>
+class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::PQ1Bubble>
+: public PQ1BubbleFluxVariablesCache<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::GridGeometry>>
 {
 public:
     //! export type used for scalar values
