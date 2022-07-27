@@ -334,9 +334,20 @@ def runGitCommand(path, cmd):
     callFromPath(path)(runCommand)(cmd)
 
 
-def pushRepository(modulePath, remoteURL, defaultBranch="main"):
+def getActiveBranchName(modulePath):
+    """Converted from https://stackoverflow.com/a/62724213"""
+    headDir = Path(modulePath) / ".git" / "HEAD"
+    with headDir.open("r") as f: content = f.read().splitlines()
+
+    for line in content:
+        if line[0:4] == "ref:":
+            return line.partition("refs/heads/")[2]
+
+
+def pushRepository(modulePath, remoteURL):
     """Push to the main branch of the new repository"""
-    runGitCommand(modulePath, f"git push -u {remoteURL} {defaultBranch}")
+    branchName = getActiveBranchName(modulePath)
+    runGitCommand(modulePath, f"git push -u {remoteURL} {branchName}")
 
 
 def guideRepositoryInitialization(modulePath):
@@ -347,7 +358,7 @@ def guideRepositoryInitialization(modulePath):
     )
     remoteURL = None if not hasRepo else queryEmptyRemoteURL()
 
-    runGitCommand(modulePath, "git init --initial-branch=main")
+    runGitCommand(modulePath, "git init")
     runGitCommand(modulePath, "git add .")
     runGitCommand(modulePath, 'git commit -m "Initial commit"')
 
