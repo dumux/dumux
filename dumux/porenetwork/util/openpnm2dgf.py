@@ -323,6 +323,7 @@ def writeDGF(filename, net, geo, policy):
             outputfile.write(
                 " ".join([str(v if idx > 1 else int(v)) for idx, v in enumerate(elementData[i])])
             )
+            outputfile.write("\n")
         outputfile.write("\n\n#\n")
         outputfile.write("BOUNDARYDOMAIN\ndefault 1\n#")
 
