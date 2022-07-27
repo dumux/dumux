@@ -66,14 +66,6 @@ public:
     //! the type of Field that can be added to this writer
     using Field = Vtk::template Field<GridView>;
 
-    //! export field type
-    struct [[deprecated("use Vtk::FieldType instead")]] FieldType
-    {
-        static constexpr auto element = Vtk::FieldType::element;
-        static constexpr auto vertex = Vtk::FieldType::vertex;
-        static constexpr auto automatic = Vtk::FieldType::automatic;
-    };
-
     VtkOutputModuleBase(const GridGeometry& gridGeometry,
                         const std::string& name,
                         const std::string& paramGroup = "",
