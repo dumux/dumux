@@ -477,11 +477,11 @@ public:
     /*!
      * \brief Execute assembly kernel in parallel
      *
-     * \param domainId the domain index of domain i
+     * \param domainI the domain index of domain i
      * \param assembleElement kernel function to execute for one element
      */
     template<std::size_t i, class AssembleElementFunc>
-    void assembleMultithreaded(Dune::index_constant<i> domainId, AssembleElementFunc&& assembleElement) const
+    void assembleMultithreaded(Dune::index_constant<i> domainI, AssembleElementFunc&& assembleElement) const
     {
         if (elementSets_.empty())
             DUNE_THROW(Dune::InvalidStateException, "Call computeColorsForAssembly before assembling in parallel!");
