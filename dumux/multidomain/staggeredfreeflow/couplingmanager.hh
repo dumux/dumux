@@ -479,7 +479,7 @@ public:
     /*!
      * \brief Execute assembly kernel in parallel
      *
-     * \param domainI the domain index of domain i
+     * \param domainId the domain index of domain i
      * \param assembleElement kernel function to execute for one element
      */
     template<std::size_t i, class AssembleElementFunc>

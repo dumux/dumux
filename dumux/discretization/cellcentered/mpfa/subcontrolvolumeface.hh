@@ -114,7 +114,7 @@ public:
      *
      * \param helper The helper class for mpfa schemes
      * \param corners The corners of the scv face
-     * \param unitOuterNormal The unit outer normal vector of the scvf
+     * \param intersection The intersection
      * \param vIdxGlobal The global vertex index the scvf is connected to
      * \param vIdxLocal The element-local vertex index the scvf is connected to
      * \param scvfIndex The global index of this scv face
