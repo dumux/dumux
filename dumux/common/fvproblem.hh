@@ -72,6 +72,7 @@ class FVProblem
                                      std::vector<PointSource> >;
 
     static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethods::box;
+    static constexpr bool isPQ1Bubble = GridGeometry::discMethod == DiscretizationMethods::pq1bubble;
     static constexpr bool isStaggered = GridGeometry::discMethod == DiscretizationMethods::staggered;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -142,7 +143,7 @@ public:
     auto boundaryTypes(const Element &element,
                        const SubControlVolume &scv) const
     {
-        if (!isBox)
+        if (!isBox && !isPQ1Bubble)
             DUNE_THROW(Dune::InvalidStateException,
                        "boundaryTypes(..., scv) called for cell-centered method.");
 
@@ -160,7 +161,7 @@ public:
     auto boundaryTypes(const Element &element,
                        const SubControlVolumeFace &scvf) const
     {
-        if (isBox)
+        if (isBox || isPQ1Bubble)
             DUNE_THROW(Dune::InvalidStateException,
                        "boundaryTypes(..., scvf) called for box method.");
 
@@ -194,7 +195,7 @@ public:
     PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
     {
         // forward it to the method which only takes the global coordinate
-        if (isBox)
+        if (isBox || isPQ1Bubble)
         {
             DUNE_THROW(Dune::InvalidStateException, "dirichlet(scvf) called for box method.");
         }
@@ -213,7 +214,7 @@ public:
     PrimaryVariables dirichlet(const Element &element, const SubControlVolume &scv) const
     {
         // forward it to the method which only takes the global coordinate
-        if (!isBox && !isStaggered)
+        if (!isBox && !isStaggered && !isPQ1Bubble)
         {
             DUNE_THROW(Dune::InvalidStateException, "dirichlet(scv) called for other than box or staggered method.");
         }
