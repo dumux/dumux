@@ -24,7 +24,7 @@
  *
  * In addition to the momentum and mass/mole balance equations, this model also solves the <B> energy balance equation </B>:
  * \f[
- *    \frac{\partial (\varrho  v)}{\partial t}
+ *    \frac{\partial (\varrho  u)}{\partial t}
  *    + \nabla \cdot \left( \varrho h {\boldsymbol{v}}
  *    - \lambda_\text{eff} \textbf{grad}\, T \right) - q_T = 0
  * \f]
