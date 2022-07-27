@@ -72,19 +72,19 @@ class CombustionProblemOneComponent: public PorousMediumFlowProblem<TypeTag>
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
-    enum {dimWorld = GridView::dimensionworld};
-    enum {numComponents = ModelTraits::numFluidComponents()};
-    enum {s0Idx = Indices::s0Idx};
-    enum {p0Idx = Indices::p0Idx};
-    enum {conti00EqIdx = Indices::conti0EqIdx};
-    enum {energyEq0Idx = Indices::energyEqIdx};
-    enum {numEnergyEqFluid = ModelTraits::numEnergyEqFluid()};
-    enum {numEnergyEqSolid = ModelTraits::numEnergyEqSolid()};
-    enum {energyEqSolidIdx = energyEq0Idx + numEnergyEqFluid + numEnergyEqSolid - 1};
-    enum {wPhaseIdx = FluidSystem::wPhaseIdx};
-    enum {nPhaseIdx = FluidSystem::nPhaseIdx};
-    enum {wCompIdx = FluidSystem::H2OIdx};
-    enum {nCompIdx = FluidSystem::N2Idx};
+    static constexpr int dimWorld = GridView::dimensionworld;
+    static constexpr int numComponents = ModelTraits::numFluidComponents();
+    static constexpr int s0Idx = Indices::s0Idx;
+    static constexpr int p0Idx = Indices::p0Idx;
+    static constexpr int conti00EqIdx = Indices::conti0EqIdx;
+    static constexpr int energyEq0Idx = Indices::energyEqIdx;
+    static constexpr int numEnergyEqFluid = ModelTraits::numEnergyEqFluid();
+    static constexpr int numEnergyEqSolid = ModelTraits::numEnergyEqSolid();
+    static constexpr int energyEqSolidIdx = energyEq0Idx + numEnergyEqFluid + numEnergyEqSolid - 1;
+    static constexpr int wPhaseIdx = FluidSystem::wPhaseIdx;
+    static constexpr int nPhaseIdx = FluidSystem::nPhaseIdx;
+    static constexpr int wCompIdx = FluidSystem::H2OIdx;
+    static constexpr int nCompIdx = FluidSystem::N2Idx;
 
     static constexpr auto numPhases = ModelTraits::numFluidPhases();
 

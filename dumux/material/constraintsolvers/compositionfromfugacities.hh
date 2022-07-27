@@ -51,8 +51,7 @@ namespace Dumux {
 template <class Scalar, class FluidSystem>
 class CompositionFromFugacities
 {
-    enum { numComponents = FluidSystem::numComponents };
-
+    static constexpr int numComponents = FluidSystem::numComponents;
     using ParameterCache = typename FluidSystem::ParameterCache;
 
 public:
