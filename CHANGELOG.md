@@ -3,6 +3,8 @@ Differences Between DuMu<sup>x</sup> 3.6 and DuMu<sup>x</sup> 3.5
 
 ### General changes / structure
 
+- __Testing/CI__: Dumux is now tested with C++20 flag enabled in addition to C++17 (which is still the minimum requirement)
+
 ### Improvements and Enhancements
 
 - __Discretization__: There is now defaults for `FluxVariablesCache` and `FluxVariablesCacheFiller` for box/cctpfa/ccmpfa/staggered
