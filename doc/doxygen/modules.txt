@@ -305,6 +305,16 @@
      * \defgroup FaceCenteredStaggeredDiscretization Face-centered staggered FV scheme
      * \brief A staggered finite volume scheme with degrees of freedom at cell-centers and facets. In this implementation, momentum control volumes exist.
      */
+        /*!
+         * \ingroup FaceCenteredStaggeredDiscretization
+         * \defgroup FaceCenteredStaggeredDiamondDiscretization
+         * \brief Face-centered finite-volume scheme based on non-conforming finite-element spaces.
+         */
+        /*!
+         * \ingroup FaceCenteredStaggeredDiscretization
+         * \defgroup FaceCenteredStaggeredStaggeredDiscretization
+         * \brief Finite-volume marker-and-cell scheme.
+         */
     /*!
      * \ingroup Discretization
      * \defgroup StaggeredDiscretization Staggered FV scheme
@@ -320,6 +330,11 @@
      * \defgroup PoreNetworkDiscretization Pore network model discretization
      * \brief The pore-network model discretization.
      */
+/* ***************** Experimental ******************/
+/*!
+ * \defgroup Experimental Experimental
+ * \brief Experimental features.
+ */
 /* ***************** Flux ******************/
 /*!
  * \defgroup Flux Flux
@@ -345,6 +360,11 @@
          * \defgroup CCMpfaFlux Flux related to the cell-centered multi-point flux approximation schemes
          * \brief Flux related to the cell-centered multi-point flux approximation schemes
          */
+   /*!
+     * \ingroup Flux
+     * \defgroup FaceCenteredDiamondFlux Flux related to the face-centered diamond scheme
+     * \brief Flux related to the face-centered diamond scheme
+     */
     /*!
      * \ingroup Flux
      * \defgroup PoreNetworkFlux Flux related to the pore network models
@@ -500,16 +520,6 @@
      *  decision since the thermodynamic state of the system is expressed by
      *  a solid state!
      */
-    /*!
-     * \ingroup Material
-     * \defgroup SpatialParameters Spatial Parameters
-     * \brief Parameters of the porous matrix and other parameter varying with position (e.g. porosity)
-     *
-     * All parameters which depend on the matrix and
-     * therefore on the position within the model domain are defined as spatial
-     * parameters. For example permeability, porosity etc.
-     *
-     */
 
 /* ***************** Adaptive ******************/
 /*!
@@ -635,9 +645,3 @@
       *
       * For a detailed model description see porenetwork/2p/model.hh
       */
-
- /* ***************** TimeStepping ******************/
- /*!
-  * \defgroup TimeStepping Time stepping
-  * \brief The time stepping
-  */
