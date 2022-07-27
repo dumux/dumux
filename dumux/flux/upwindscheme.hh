@@ -213,6 +213,11 @@ template<class GridGeometry>
 class UpwindSchemeImpl<GridGeometry, DiscretizationMethods::FCDiamond>
 : public UpwindSchemeImpl<GridGeometry, DiscretizationMethods::Box> {};
 
+//! Upwind scheme for control-volume finite-element schemes
+template<class GridGeometry>
+class UpwindSchemeImpl<GridGeometry, DiscretizationMethods::Cvfe>
+: public UpwindSchemeImpl<GridGeometry, DiscretizationMethods::Box> {};
+
 } // end namespace Dumux
 
 #endif
