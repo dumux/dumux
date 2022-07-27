@@ -50,6 +50,14 @@ public:
     using VelocityVector = std::vector<Dune::FieldVector<Scalar, dimWorld>>;
 
     /*!
+    * \brief A container for possible velocity data types
+    */
+    enum class FieldType : unsigned int
+    {
+        element, vertex, undefined
+    };
+
+    /*!
      * \brief Default constructor
      */
     VelocityOutput() = default;
@@ -62,6 +70,9 @@ public:
 
     //! returns the phase name of a given phase index
     virtual std::string phaseName(int phaseIdx) const { return "none"; }
+
+    //! returns the field type
+    virtual FieldType fieldType() const { return FieldType::undefined; }
 
     //! returns the number of phases
     virtual int numFluidPhases() const { return 0; }
