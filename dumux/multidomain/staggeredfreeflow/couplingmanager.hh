@@ -162,7 +162,6 @@ public:
 
     /*!
      * \ingroup MultiDomain
-     * \ingroup StaggeredDiscretization
      * \brief evaluates the element residual of a coupled element of domain i which depends on the variables
      *        at the degree of freedom with index dofIdxGlobalJ of domain j
      *
@@ -416,7 +415,6 @@ public:
 
     /*!
      * \ingroup MultiDomain
-     * \ingroup StaggeredDiscretization
      * \brief updates all data and variables that are necessary to evaluate the residual of the element of domain i
      *        this is called whenever one of the primary variables that the element residual depends on changes in domain j
      *
@@ -483,7 +481,7 @@ public:
      * \param assembleElement kernel function to execute for one element
      */
     template<std::size_t i, class AssembleElementFunc>
-    void assembleMultithreaded(Dune::index_constant<i> domainId, AssembleElementFunc&& assembleElement) const
+    void assembleMultithreaded(Dune::index_constant<i> domainI, AssembleElementFunc&& assembleElement) const
     {
         if (elementSets_.empty())
             DUNE_THROW(Dune::InvalidStateException, "Call computeColorsForAssembly before assembling in parallel!");

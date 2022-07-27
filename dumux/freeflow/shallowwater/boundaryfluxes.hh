@@ -130,7 +130,7 @@ std::array<Scalar, 3> fixedDischargeBoundary(const Scalar dischargeBoundary,
 /*!
  * \brief Compute the viscosity/diffusive flux at a rough wall boundary using no-slip formulation.
  *
- * \param alphaWall Roughness parameter: alphaWall=0.0 means full slip, alphaWall=1.0 means no slip, 0.0<alphaWall<1.0 means partial slip [-]
+ * \param alphaWall Roughness parameter: alphaWall=0.0 means full slip, alphaWall=1.0 means no slip, \f$0.0<\text{alphaWall}<1.0\f$ means partial slip [-]
  * \param turbulentViscosity Turbulent viscosity [m^2/s]
  * \param state Primary variables (water depth, velocities)
  * \param cellCenterToBoundaryFaceCenter Cell-center to boundary distance

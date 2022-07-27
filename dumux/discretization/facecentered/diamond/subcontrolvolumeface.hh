@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup DiamondDiscretization
- * \copydoc Dumux::FreeFlowDiamondSubControlVolumeFace
+ * \copydoc Dumux::FaceCenteredDiamondSubControlVolumeFace
  */
 #ifndef DUMUX_DISCRETIZATION_FACECENTERED_DIAMOND_SUBCONTROLVOLUMEFACE_HH
 #define DUMUX_DISCRETIZATION_FACECENTERED_DIAMOND_SUBCONTROLVOLUMEFACE_HH
