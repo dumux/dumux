@@ -1,0 +1,30 @@
+[Grid]
+File = cylinder_channel.msh
+
+[Problem]
+Name = benchmark_stationary
+EnableGravity = false
+EnableInertiaTerms = true
+
+[FreeFlow]
+EnableUnsymmetrizedVelocityGradient = true
+
+[Flux]
+UpwindWeight = 0.5
+
+[Component]
+LiquidDensity = 1
+LiquidDynamicViscosity = 1e-3
+
+[Mass.Assembly.NumericDifference]
+PriVarMagnitude = 1e-2
+BaseEpsilon = 0.01
+
+[Momentum.Assembly.NumericDifference]
+PriVarMagnitude = 0.2 0.2
+BaseEpsilon = 0.01
+
+[Newton]
+MinSteps = 1
+EnableAbsoluteResidualCriterion = true
+MaxAbsoluteResidual = 1e-8
