@@ -334,7 +334,7 @@ def runGitCommand(path, cmd):
     callFromPath(path)(runCommand)(cmd)
 
 
-def pushRepository(modulePath, remoteURL, defaultBranch="master"):
+def pushRepository(modulePath, remoteURL, defaultBranch="main"):
     """Push to the main branch of the new repository"""
     runGitCommand(modulePath, f"git push -u {remoteURL} {defaultBranch}")
 
@@ -347,7 +347,7 @@ def guideRepositoryInitialization(modulePath):
     )
     remoteURL = None if not hasRepo else queryEmptyRemoteURL()
 
-    runGitCommand(modulePath, "git init")
+    runGitCommand(modulePath, "git init --initial-branch=main")
     runGitCommand(modulePath, "git add .")
     runGitCommand(modulePath, 'git commit -m "Initial commit"')
 
