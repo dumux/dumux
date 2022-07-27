@@ -328,6 +328,7 @@ class VtkOutputModule : public VtkOutputModuleBase<typename GridVariables::GridG
 
     static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethods::box;
     static constexpr bool isDiamond = GridGeometry::discMethod == DiscretizationMethods::fcdiamond;
+    static constexpr bool isCvfe = GridGeometry::discMethod == DiscretizationMethods::cvfe;
     // this refers to dofs of the output basis
     static constexpr int dofCodim = (isBox || isDiamond) ? dim : 0;
 
@@ -516,14 +517,25 @@ private:
             //////////////////////////////////////////////////////////////
 
             // volume variables if any
-            if (isBox)
+            if (isBox || isCvfe)
             {
                 for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
-                    this->sequenceWriter().addVertexData( Field(gridGeometry().gridView(), gridGeometry().vertexMapper(), volVarScalarData[i],
+                    this->sequenceWriter().addVertexData( Field(gridGeometry().gridView(), gridGeometry().dofMapper(), volVarScalarData[i],
                                                          volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/dim, dm, this->precision()).get() );
                 for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
-                    this->sequenceWriter().addVertexData( Field(gridGeometry().gridView(), gridGeometry().vertexMapper(), volVarVectorData[i],
+                    this->sequenceWriter().addVertexData( Field(gridGeometry().gridView(), gridGeometry().dofMapper(), volVarVectorData[i],
                                                          volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/dim, dm, this->precision()).get() );
+
+                if(isCvfe)
+                {
+                    for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
+                        this->sequenceWriter().addCellData( Field(gridGeometry().gridView(), gridGeometry().dofMapper(), volVarScalarData[i],
+                                                        volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/0,dm, this->precision()).get() );
+                    for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
+                        this->sequenceWriter().addCellData( Field(gridGeometry().gridView(), gridGeometry().dofMapper(), volVarVectorData[i],
+                                                        volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/0,dm, this->precision()).get() );
+                }
+
             }
             else
             {
@@ -776,9 +788,12 @@ private:
     //! return the number of dofs, we only support vertex and cell data
     std::size_t numDofs_() const
     {
-        return dofCodim == dim ?
-            gridGeometry().vertexMapper().size()
-            : gridGeometry().elementMapper().size();
+        if(isCvfe)
+            return gridGeometry().dofMapper().size();
+        else
+            return dofCodim == dim ?
+                gridGeometry().vertexMapper().size()
+                : gridGeometry().elementMapper().size();
     }
 
     const GridVariables& gridVariables_;
