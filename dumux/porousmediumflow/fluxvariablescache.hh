@@ -29,6 +29,7 @@
 #include <dumux/flux/fluxvariablescaching.hh>
 #include <dumux/discretization/box/fluxvariablescache.hh>
 #include <dumux/discretization/facecentered/diamond/fluxvariablescache.hh>
+#include <dumux/discretization/cvfe/fluxvariablescache.hh>
 
 namespace Dumux {
 
@@ -69,6 +70,17 @@ public:
 template<class TypeTag>
 class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::FCDiamond>
 : public FaceCenteredDiamondFluxVariablesCache<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::GridGeometry>>
+{
+public:
+    //! export type used for scalar values
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+};
+
+//! We also store discretization-related quantities for the cvfe method. Thus, we need no
+//! physics-dependent specialization and simply inherit from the physics-independent implementation.
+template<class TypeTag>
+class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::Cvfe>
+: public CvfeFluxVariablesCache<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::GridGeometry>>
 {
 public:
     //! export type used for scalar values
