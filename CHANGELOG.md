@@ -23,6 +23,9 @@ that implement an empty cache (i.e. nothing is cached for the flux variables).
 - __Experimental features__: All headers with experimental features have been moved into the folder `dumux/experimental`.
   Correspondingly, all unit tests for those features have been moved to `test/experimental`.
 
+- __Stokes/Darcy__: In the coupling manager, the diffusion coefficient coupling type had a mode `Arithmetic` misspelled
+  with an additional letter. The spelling has been corrected. The incorrect spelling will lead now lead to an error.
+
 ### Deprecated properties/classes/functions/files, to be removed after 3.6:
 
 ### New experimental features (possibly subject to backwards-incompatible changes in the future)
