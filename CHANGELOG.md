@@ -5,6 +5,8 @@ Differences Between DuMu<sup>x</sup> 3.6 and DuMu<sup>x</sup> 3.5
 
 - __Testing/CI__: Dumux is now tested with C++20 flag enabled in addition to C++17 (which is still the minimum requirement)
 
+- __Testing/CI__: The CI system now checks for common spelling mistakes using the `codespell` tool.
+
 ### Improvements and Enhancements
 
 - __Discretization__: There is now defaults for `FluxVariablesCache` and `FluxVariablesCacheFiller` for box/cctpfa/ccmpfa/staggered
@@ -414,7 +416,7 @@ Differences Between DuMu<sup>x</sup> 3.2 and DuMu<sup>x</sup> 3.1
 - __Runtime variable output precision e.g. Float64__: The VtkOutputModule has been adapted to allow easy changes of the vtk output precision. It is now possible to specify output precision in the input file using `Vtk.Precision` followed by either `Float32`, `Float64`, `UInt32`, `UInt8` or `Int32`. `Float32` stays the default. We especially advice the use of `Float64` when working with restart files.
 An additional new option is `Vtk.CoordPrecision` which changes the precision of the coordinates only and uses the default of `Vtk.Precision`.
 
-- __Effective Laws and Diffusion Coefficients__: The effective laws interface has been changed within !1684. The interface for these laws has been unified, and all coefficents are to be stored in containers that fit to the model. These quantities should then be added in the volumeVariables, meaning all effective quantities would be accessible from the volumevariables.
+- __Effective Laws and Diffusion Coefficients__: The effective laws interface has been changed within !1684. The interface for these laws has been unified, and all coefficients are to be stored in containers that fit to the model. These quantities should then be added in the volumeVariables, meaning all effective quantities would be accessible from the volumevariables.
 
 - __Examples__: The documentation of the examples has been improved further, focusing on readability and convenience. Further, three additional examples are included the folder `examples`. To get an overview, point your browser to https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/tree/master/examples.
 
@@ -546,7 +548,7 @@ Differences Between DuMu<sup>x</sup> 3.1 and DuMu<sup>x</sup> 3.0
 ### Immediate interface changes not allowing/requiring a deprecation period
 
 - `NewtonConvergenceWriter`'s first template argument has changed from `GridView` to `FVGridGeometry`. This allows to call the `resize()` method after a grid change without any arguments.
-  Here is an example how to instatiate the convergence writer:
+  Here is an example how to instantiate the convergence writer:
   ```
   using NewtonConvergenceWriter = Dumux::NewtonConvergenceWriter<FVGridGeometry, SolutionVector>;
   auto convergenceWriter = std::make_shared<NewtonConvergenceWriter>(*fvGridGeometry);
@@ -682,7 +684,7 @@ Differences Between DuMu<sup>x</sup> 2.12 and DuMu<sup>x</sup> 3.0
   there are a number of available `CouplingManager` class implementations:
     - _Boundary:_ coupling across sub-domain boundaries
     - _Embedded:_ Coupling between a bulk domain and an embedded lower-dimensional sub-domain which has an independent grid
-    - _Facet:_ Coupling betweeen a bulk domain and a codimension-one sub-domain, which is conforming with the element facets of the bulk domain
+    - _Facet:_ Coupling between a bulk domain and a codimension-one sub-domain, which is conforming with the element facets of the bulk domain
 - __Free-flow models:__ The previous Navier-Stokes model using the box method has been replaced by one that employs a staggered grid discretization.
   The new method does not  require any stabilization techniques while those were necessary for the box method in order to avoid spurious oscillations.
   The free-flow models in DuMu<sup>x</sup> 3.0 consider single phase flow with or without component/energy transport. So far, only regular Cartesian grids are supported
@@ -803,7 +805,7 @@ Differences Between DuMu<sup>x</sup> 2.10 and DuMu<sup>x</sup> 2.11
       problem file.
     - In the TwoPNC (and, consequently the TwoPNCMin) models, the old formulations
       pgSl, plSg as well as pnSw and pwSg have been replaced by the pnsw and pwsn,
-      to satify the naming convention and be consistent with TwoPTwoC.
+      to satisfy the naming convention and be consistent with TwoPTwoC.
     - In the TwoPTwoC model, the indices are no longer dependent on the
       formulation. Further, the values of "nPhaseOnly" and "bothPhases"
       have been harmonized with those in TwoPNC
@@ -1238,7 +1240,7 @@ Differences Between DuMu<sup>x</sup> 2.6 and DuMu<sup>x</sup> 2.7
     test/multidomain/README for details.
 
   - The 2.3 branch of dune-alugrid has no CMake support, use dune-alugrid master
-    respectivly 2.4. Or you can fall back to Autotools or use legacy ALUGrid
+    respectively 2.4. Or you can fall back to Autotools or use legacy ALUGrid
     1.52.
 
 * IMPROVEMENTS and ENHANCEMENTS:
@@ -1442,7 +1444,7 @@ Differences Between DuMu<sup>x</sup> 2.5 and DuMu<sup>x</sup> 2.6
     changed to the integer property NumEnergyEquations.
 
 * Deprecated way of setting command line parameters, to be removed after 2.6:
-  - To set paramaters from the command line, the notation --parameterFile=NAME
+  - To set parameters from the command line, the notation --parameterFile=NAME
     is deprecated. Use from now on -ParameterFile NAME.
 
 * Deprecated CLASSES/FILES, to be removed after 2.6:
@@ -1510,7 +1512,7 @@ Differences Between DuMu<sup>x</sup> 2.3 and DuMu<sup>x</sup> 2.4
 
   - All two-component models (1p2c, 2p2c, 2p2cni, co2, co2ni) can now be used
     with either mole or mass fractions. The property useMoles has to be set in
-    the problem file and the boundary conditions have to be choosen accordingly.
+    the problem file and the boundary conditions have to be chosen accordingly.
     . 1p2c, 2p2c, 2p2cni use MOLE fractions by default.
     . co2, co2ni use MASS fractions by default.
     . For completeness: 3p3c, 3p3cni and mpnc use MOLE fractions only.
@@ -2009,7 +2011,7 @@ Notable Differences Between DuMu<sup>x</sup> 2.0 and DuMu<sup>x</sup> 2.1
   - The too large assemble() methods have been split into submethods
     getStorage(), getFlux() etc. By this, inheritance of classes has
     been improved and code duplication was reduced.
-  - The conceptual seperation of the "VariableClass" (central
+  - The conceptual separation of the "VariableClass" (central
     infrastructure), data storage, transport model and pressure model
     has been improved.
   - More of infrastructure is now shared with the implicit models
