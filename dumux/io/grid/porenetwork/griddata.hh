@@ -30,6 +30,7 @@
 #include <type_traits>
 #include <unordered_map>
 #include <vector>
+#include <fstream>
 
 #include <dune/common/exceptions.hh>
 #include <dune/grid/common/gridfactory.hh>
@@ -245,9 +246,9 @@ public:
 
             std::string msg;
             if (paramName.find("Throat") != std::string::npos)
-                msg = "Make sure to include it in the vector of parameter names ElementParameters = " + paramName + " ... ...";
+                msg = "Make sure to include it in the vector of parameter names as a comment in the DGF file: Element Parameters = ... " + paramName + " ...";
             else if (paramName.find("Pore") != std::string::npos)
-                msg = "Make sure to include it in the vector of parameter names VertexParameters = " + paramName + " ... ...";
+                msg = "Make sure to include it in the vector of parameter names as a comment in the DGF file: Vertex Parameters = ... " + paramName + " ...";
 
             DUNE_THROW(Dumux::ParameterException, paramName << " not set in the grid file. \n" << msg << "\n" << list.str());
         }
@@ -329,16 +330,14 @@ private:
         else // DGF grid data
         {
             // treat vertex parameter names
-            if (auto dgfFileVertexParameterNames = dgfFileParameterNames_("Vertex"); dgfFileVertexParameterNames.empty())
+            vertexParameterNames_ = dgfFileParameterNames_("Vertex");
+            if (vertexParameterNames_.empty())
                 DUNE_THROW(Dune::InvalidStateException, "No vertex parameter names specified in dgf file. Set '% Vertex parameters: Param1 Param2 ...'");
-            else
-                vertexParameterNames_ = std::move(dgfFileVertexParameterNames);
 
             // treat element parameter names
-            if (auto dgfFileElementParameterNames =  dgfFileParameterNames_("Element"); dgfFileElementParameterNames.empty())
+            elementParameterNames_ = dgfFileParameterNames_("Element");
+            if (elementParameterNames_.empty())
                 DUNE_THROW(Dune::InvalidStateException, "No element parameter names specified in dgf file. Set '% Element parameters: Param1 Param2 ...'");
-            else
-                elementParameterNames_ = std::move(dgfFileElementParameterNames);
 
             // make sure that the number of specified parameters matches with the dgf file
             if (const auto& someElement = *(elements(gridView_()).begin()); elementParameterNames_.size() != dgfGrid_.nofParameters(someElement))
@@ -381,24 +380,25 @@ private:
 
     StringVector dgfFileParameterNames_(const std::string& entity) const
     {
-        std::ifstream gridFile(getParamFromGroup<std::string>(paramGroup_, "Grid.File"));
-        std::string line;
-        while (getline(gridFile, line))
+        StringVector paramNames;
         {
-            if (line.find(entity + " parameters:", 0) != std::string::npos)
+            std::ifstream gridFile(getParamFromGroup<std::string>(paramGroup_, "Grid.File"));
+            for (std::string line; std::getline(gridFile, line); )
             {
-                std::string args = line.substr(line.find(":")+1, std::string::npos);
-                StringVector paramNames;
-                std::istringstream iss(args);
-                std::string item;
-                while (std::getline(iss, item, ' '))
-                    if (!item.empty())
-                        *std::back_inserter(paramNames)++ = item;
+                // handle Windows file endings (if any)
+                line.erase( std::remove(line.begin(), line.end(), '\r'), line.end() );
 
-                return paramNames;
+                // extract parameter names
+                if (line.find(entity + " parameters:", 0) != std::string::npos)
+                {
+                    std::istringstream iss(line.substr(line.find(":")+1, std::string::npos));
+                    for (std::string item; std::getline(iss, item, ' '); )
+                        if (!item.empty())
+                            paramNames.push_back(item);
+                }
             }
         }
-        return StringVector();
+        return paramNames;
     }
 
     /*!
