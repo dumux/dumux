@@ -81,7 +81,7 @@ struct EffectiveDiffusivityModel<TypeTag, TTag::DarcyOnePTwoC>
 template<class TypeTag>
 struct Grid<TypeTag, TTag::DarcyOnePTwoC> { using type = Dune::YaspGrid<2>; };
 
-// Set the spatial paramaters type
+// Set the spatial parameters type
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::DarcyOnePTwoC>
 {

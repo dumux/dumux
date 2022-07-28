@@ -224,7 +224,7 @@ public:
                 }
             }
 
-            // otherwise crate boundary scvf ...
+            // otherwise create boundary scvf ...
             else if (scvf.boundary())
             {
                 if (problem.boundaryTypes(element, scvf).hasOnlyDirichlet())

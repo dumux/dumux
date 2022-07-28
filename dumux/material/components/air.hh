@@ -132,7 +132,7 @@ public:
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of Air at a given pressure and temperature.
      *
-     * Criticial specific volume calculated by \f$V_c = (R*T_c)/p_c\f$.
+     * Critical specific volume calculated by \f$V_c = (R*T_c)/p_c\f$.
      *
      * Reid et al. (1987, pp 396-397, 667) \cite reid1987 <BR>
      * Poling et al. (2001, pp 9.7-9.8) \cite poling2001 <BR>
@@ -172,7 +172,7 @@ public:
         using std::sqrt;
         const Scalar mu = 40.785 * Fc * sqrt(M * temperature)/(cbrt(Vc * Vc) * Omega_v);
 
-        // convertion from micro poise to Pa s
+        // conversion from micro poise to Pa s
         return mu/1.0e6/10.0;
     }
 

@@ -48,7 +48,7 @@ public:
     , seeds_(std::move(seeds))
     {}
 
-    //! constructor with all entites of codim
+    //! constructor with all entities of codim
     template<class Mapper>
     EntityMap(const Grid& grid, const Mapper& mapper)
     : grid_(grid)

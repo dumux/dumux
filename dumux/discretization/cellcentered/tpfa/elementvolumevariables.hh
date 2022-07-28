@@ -36,7 +36,7 @@ namespace Dumux {
 /*!
  * \ingroup CCTpfaDiscretization
  * \brief The local (stencil) volume variables class for cell centered tpfa models
- * \note The class is specilized for versions with and without caching
+ * \note The class is specialized for versions with and without caching
  * \tparam GVV the grid volume variables type
  * \tparam cachingEnabled if the cache is enabled
  */

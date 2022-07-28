@@ -58,7 +58,7 @@ public:
         comp1Idx = FluidSystem::comp1Idx
     };
 
-    /*! \name Acess functions */
+    /*! \name Access functions */
     //@{
     /*!
      * \brief Returns the saturation \f$S_\alpha\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[-]}\f$.

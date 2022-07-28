@@ -30,7 +30,7 @@ namespace Dumux {
 
 /*!
  * \ingroup Common
- * \brief Struture to define the index types used for grid and local indices.
+ * \brief Structure to define the index types used for grid and local indices.
  * \tparam GridView The grid view type
  */
 template<class GridView>

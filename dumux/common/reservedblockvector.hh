@@ -55,7 +55,7 @@ public:
 
     ~ReservedBlockVector() = default;
 
-    //! assigment from scalar
+    //! assignment from scalar
     ReservedBlockVector& operator= (const typename BlockType::field_type& v)
     {
        std::fill(this->begin(), this->end(), v);

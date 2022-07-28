@@ -75,7 +75,7 @@ struct Grid<TypeTag, TTag::DarcyOnePThreeC> { using type = Dune::YaspGrid<2>; };
 template<class TypeTag>
 struct MolecularDiffusionType<TypeTag, TTag::DarcyOnePThreeC> { using type = MaxwellStefansLaw<TypeTag>; };
 
-// Set the spatial paramaters type
+// Set the spatial parameters type
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::DarcyOnePThreeC>
 {

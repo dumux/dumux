@@ -144,7 +144,7 @@ public:
             else
             {
                 // turbulence model based on mixing length
-                // Compute the turbulent viscosity using a combined horizonal/vertical mixing length approach
+                // Compute the turbulent viscosity using a combined horizontal/vertical mixing length approach
                 // Turbulence coefficients: vertical (Elder like) and horizontal (Smagorinsky like)
                 static const auto turbConstV = getParamFromGroup<Scalar>(problem.paramGroup(), "ShallowWater.VerticalCoefficientOfMixingLengthModel", 1.0);
                 static const auto turbConstH = getParamFromGroup<Scalar>(problem.paramGroup(), "ShallowWater.HorizontalCoefficientOfMixingLengthModel", 0.1);

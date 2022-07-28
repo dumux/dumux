@@ -242,7 +242,7 @@ public:
 private:
 
     template <class T = ModelTraits>
-    [[deprecated("All non-isothermal models must specifiy if thermal dispersion is enabled."
+    [[deprecated("All non-isothermal models must specify if thermal dispersion is enabled."
                  "Please add enableThermalDispersion to the ModelTraits in your model header.")]]
     static void enableThermalDispersionMissing_() {}
 

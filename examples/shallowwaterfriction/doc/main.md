@@ -67,7 +67,7 @@ in `gridmanager.hh`.
 #include <dumux/io/grid/gridmanager_yasp.hh>
 ```
 
-We include the header file specifing the properties of this example
+We include the header file specifying the properties of this example
 
 ```cpp
 #include "properties.hh"

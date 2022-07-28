@@ -59,9 +59,9 @@ def transformCode(code, rules, codeFileName):
     # Enable toggling content between [[content]] and [[/content]]
     def wrapContentIntoDetails(token):
         beginDetails = "//\n// <details open>\n"
-        summmary = "// <summary><b>Click to hide/show the file documentation</b> (or inspect the [source code]({}))</summary>\n//\n".format(codeFileName)
+        summary = "// <summary><b>Click to hide/show the file documentation</b> (or inspect the [source code]({}))</summary>\n//\n".format(codeFileName)
         endDetails = "\n//\n// </details>\n"
-        return beginDetails + summmary + token[0] + endDetails
+        return beginDetails + summary + token[0] + endDetails
     wrapContent = parseTaggedContent("content", action=wrapContentIntoDetails)
     code = wrapContent.transformString(code)
 

@@ -55,7 +55,7 @@ namespace Dumux {
  *       then be interpreted as boundary segments. Use respective physical entity
  *       indexing in your grid file in that case.
  *
- * \tparam BulkGrid The type of the highest-dimensional grid in the hierachy
+ * \tparam BulkGrid The type of the highest-dimensional grid in the hierarchy
  * \tparam numGrids The number of grids to be considered in the hierarchy
  */
 template <class BulkGrid, int numGrids>

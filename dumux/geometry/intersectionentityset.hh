@@ -48,7 +48,7 @@ namespace Dumux {
 
 /*!
  * \ingroup Geometry
- * \brief A class representing the intersection entites two geometric entity sets
+ * \brief A class representing the intersection entities two geometric entity sets
  */
 template<class DomainEntitySet, class TargetEntitySet>
 class IntersectionEntitySet

@@ -59,7 +59,7 @@ public:
     using Data = std::unordered_map<std::string, std::vector<double>>;
 
     /*!
-     * \brief The contructor creates a tinyxml2::XMLDocument from file
+     * \brief The constructor creates a tinyxml2::XMLDocument from file
      */
     explicit VTKReader(const std::string& fileName)
     {
@@ -143,7 +143,7 @@ public:
      * \brief Read a grid from a vtk/vtu/vtp file, ignoring cell and point data
      * \note use this signature if the factory might be needed outside to interpret the data via the factory's insertion indices
      * \param verbose if the output should be verbose
-     * \param factory the (emtpy) grid factory
+     * \param factory the (empty) grid factory
      */
     template<class Grid>
     std::unique_ptr<Grid> readGrid(Dune::GridFactory<Grid>& factory, bool verbose = false) const
@@ -160,7 +160,7 @@ public:
     /*!
      * \brief Read a grid from a vtk/vtu/vtp file, reading all cell and point data
      * \note the factory will be needed outside to interpret the data via the factory's insertion indices
-     * \param factory the (emtpy) grid factory
+     * \param factory the (empty) grid factory
      * \param cellData the cell data arrays to be filled
      * \param pointData the point data arrays to be filled
      * \param verbose if the output should be verbose
@@ -211,7 +211,7 @@ private:
 
     /*!
      * \brief Read a grid from a vtk/vtu/vtp file
-     * \param factory the (emtpy) grid factory
+     * \param factory the (empty) grid factory
      * \param verbose if the output should be verbose
      */
     template<class Grid>

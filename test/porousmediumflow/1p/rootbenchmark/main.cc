@@ -82,7 +82,7 @@ int main(int argc, char** argv)
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     vtkWriter.addVolumeVariable([](const auto& v) { return v.pressure(); }, "p (Pa)");
     vtkWriter.addVolumeVariable([](const auto& v) { return 100*(v.pressure() - 1e5)/(1000*9.81); }, "psi (cm)");

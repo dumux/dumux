@@ -849,7 +849,7 @@ private:
  * http://faculty.cse.tamu.edu/davis/suitesparse.html
  *
  * You can choose from one of the following ordering strategies using the input
- * paramter "LinearSolver.UMFPackOrdering":
+ * parameter "LinearSolver.UMFPackOrdering":
  * \verbatim
  * 0: UMFPACK_ORDERING_CHOLMOD
  * 1: UMFPACK_ORDERING_AMD (default)

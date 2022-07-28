@@ -96,7 +96,7 @@ public:
     using Glucose = Components::Glucose<Scalar>;
     using SuspendedBiomass = Components::SuspendedBiomass<Scalar>;
 
-    // We define the binary coefficents file, which accounts for the interactions of the main fluids in our setup, water/brine and CO2
+    // We define the binary coefficients file, which accounts for the interactions of the main fluids in our setup, water/brine and CO2
     using Brine_CO2 = BinaryCoeff::Brine_CO2<Scalar, CO2Table, true>;
 
     // the type of parameter cache objects. this fluid system does not
@@ -199,7 +199,7 @@ public:
         switch (compIdx) {
             case H2OIdx: return H2O::molarMass();
             // actually, the molar mass of brine is only needed for diffusion
-            // but since chloride and sodium are accounted for seperately
+            // but since chloride and sodium are accounted for separately
             // only the molar mass of water is returned.
             case TCIdx: return CO2::molarMass();
             case CaIdx: return Ca::molarMass();
@@ -299,7 +299,7 @@ public:
         assert(temperature > 0);
         assert(pressure > 0);
 
-        // calulate the equilibrium composition for the given
+        // calculate the equilibrium composition for the given
         // temperature and pressure.
         Scalar xgH2O, xlH2O;
         Scalar xlCO2, xgCO2;

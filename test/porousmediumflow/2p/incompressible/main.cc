@@ -121,7 +121,7 @@ int main(int argc, char** argv)
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
 
     // use non-conforming output for the test with interface solver

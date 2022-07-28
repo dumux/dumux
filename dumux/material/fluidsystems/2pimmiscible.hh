@@ -73,7 +73,7 @@ public:
 
     static constexpr int phase0Idx = 0; //!< index of the first phase
     static constexpr int phase1Idx = 1; //!< index of the second phase
-    static constexpr int comp0Idx = 0; //!< index of the frist component
+    static constexpr int comp0Idx = 0; //!< index of the first component
     static constexpr int comp1Idx = 1; //!< index of the second component
 
     /****************************************
@@ -415,7 +415,7 @@ public:
      * \param phaseIdx Index of the fluid phase
      * \param compIdx index of the component
      *
-     * Molecular diffusion of a compoent \f$\mathrm{\kappa}\f$ is caused by a
+     * Molecular diffusion of a component \f$\mathrm{\kappa}\f$ is caused by a
      * gradient of the chemical potential and follows the law
      *
      * \f[ J = - D \mathbf{grad} \mu_\kappa \f]

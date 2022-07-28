@@ -41,11 +41,11 @@ is applied for the outflow. Normal flow is assumed, therefore the water
 depth at the right border is calculated using the equation
 of Gauckler, Manning and Strickler.
 
-### Initial conditons
+### Initial conditions
 The initial water depth is set to 1 m, which is slightly higher than the normal flow
 water depth (0.87 m). Therefore, we expect a decreasing
 water level during the simulation until the normal flow condition is reached in
-the entire model domain. The inital velocity is set to zero.
+the entire model domain. The initial velocity is set to zero.
 
 ## Model description
 As mentioned above, this examples uses the shallow water equations (SWEs) to solve the problem.

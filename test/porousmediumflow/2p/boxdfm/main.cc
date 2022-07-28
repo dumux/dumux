@@ -112,7 +112,7 @@ int main(int argc, char** argv)
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     using VtkOutputModule = BoxDfmVtkOutputModule<GridVariables, SolutionVector, FractureGrid>;
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     VtkOutputModule vtkWriter(*gridVariables, x, problem->name(), fractureGridAdapter, "", Dune::VTK::nonconforming);

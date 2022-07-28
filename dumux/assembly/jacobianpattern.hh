@@ -128,7 +128,7 @@ auto getJacobianPattern(const GridGeometry& gridGeometry)
     const auto& connectivityMap = gridGeometry.connectivityMap();
 
     auto fvGeometry = localView(gridGeometry);
-    // evaluate the acutal pattern
+    // evaluate the actual pattern
     for (const auto& element : elements(gridGeometry.gridView()))
     {
         if(gridGeometry.isCellCenter())

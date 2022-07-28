@@ -63,7 +63,7 @@ public:
     using TupleType = typename MDTraits::template Tuple<PtrType>;
 
     /*!
-     * \brief Contruct the problem
+     * \brief Construct the problem
      * \param gridGeometries a tuple of grid geometry shared pointers
      */
     MultiDomainFVProblem(MultiDomainFVGridGeometry<MDTraits> gridGeometries)
@@ -131,7 +131,7 @@ public:
 
 private:
 
-    //! a tuple of pointes to all grid variables
+    //! a tuple of points to all grid variables
     TupleType problems_;
 };
 

@@ -243,7 +243,7 @@ int main(int argc, char** argv)
         bulkGridVariables->init(x[bulkId]);
         lowDimGridVariables->init(x[lowDimId]);
 
-        // intialize the vtk output module
+        // initialize the vtk output module
         const auto bulkDM = BulkFVGridGeometry::discMethod == DiscretizationMethods::box ? Dune::VTK::nonconforming : Dune::VTK::conforming;
         using BulkSolutionVector = std::decay_t<decltype(x[bulkId])>;
         using LowDimSolutionVector = std::decay_t<decltype(x[lowDimId])>;
@@ -337,7 +337,7 @@ int main(int argc, char** argv)
     bulkGridVariables->init(x[bulkId]);
     lowDimGridVariables->init(x[lowDimId]);
 
-    // intialize the vtk output modules
+    // initialize the vtk output modules
     const auto bulkDM = BulkFVGridGeometry::discMethod == DiscretizationMethods::box ? Dune::VTK::nonconforming : Dune::VTK::conforming;
     using BulkSolutionVector = std::decay_t<decltype(x[bulkId])>;
     using LowDimSolutionVector = std::decay_t<decltype(x[lowDimId])>;

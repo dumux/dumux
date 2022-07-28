@@ -289,7 +289,7 @@ class Embedded1d3dCouplingManager;
  *
  * The network is represented as a line segment network. The bulk domain explicitly resolves the wall
  * of the tube network (e.g. blood vessel wall, outer root wall), so this generally requires an unstructured grid.
- * The coupling term coupling the PDEs on the network and in the bulk domain is intergrated over the
+ * The coupling term coupling the PDEs on the network and in the bulk domain is integrated over the
  * coupling surface and each integration point couples to quantities evaluated at the closest point on the graph.
  * There is a unique mapping from every point on the virtual tube surface to the tube centerline, therefore
  * this coupling is determined by mapping to the closest point on the virtual surface and then evaluating
@@ -322,7 +322,7 @@ class Embedded1d3dCouplingManager;
  *   - MixedDimension.Projection.CoupledAngleFactor
  *         angle threshold in which to search for coupled elements (angle in radians from surface normal vector, default 0.3)
  *   - MixedDimension.Projection.ConsiderFacesWithinBoundingBoxCoupled
- *         determines if all 3D boundary facets within the mesh bounding box should be consideres as coupling faces
+ *         determines if all 3D boundary facets within the mesh bounding box should be considered as coupling faces
  *   - MixedDimension.Projection.CoupledBoundingBoxShrinkingFactor
  *         if ConsiderFacesWithinBoundingBoxCoupled=true shrink the bounding box in all directions by this factor
  *

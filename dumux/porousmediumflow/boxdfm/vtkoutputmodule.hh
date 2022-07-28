@@ -134,7 +134,7 @@ private:
         //! (1) Assemble all variable fields and add to writer
         //////////////////////////////////////////////////////////////
 
-        // instatiate the velocity output
+        // instantiate the velocity output
         std::vector<typename ParentType::VelocityOutput::VelocityVector> velocity;
 
         // process rank
@@ -306,7 +306,7 @@ private:
         //! (1) Assemble all variable fields and add to writer
         //////////////////////////////////////////////////////////////
 
-        // instatiate the velocity output
+        // instantiate the velocity output
         std::vector<typename ParentType::VelocityOutput::VelocityVector> velocity;
 
         // process rank

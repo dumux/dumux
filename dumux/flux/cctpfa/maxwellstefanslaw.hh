@@ -229,7 +229,7 @@ private:
     {
         ReducedComponentMatrix reducedDiffusionMatrix(0.0);
 
-        //this is to not devide by 0 if the saturation in 0 and the effectiveDiffusionCoefficient becomes zero due to that
+        //this is to not divide by 0 if the saturation in 0 and the effectiveDiffusionCoefficient becomes zero due to that
         if(Dune::FloatCmp::eq<Scalar>(volVars.saturation(phaseIdx), 0))
             return reducedDiffusionMatrix;
 

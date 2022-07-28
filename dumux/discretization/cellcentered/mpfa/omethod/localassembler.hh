@@ -20,7 +20,7 @@
  * \file
  * \ingroup CCMpfaDiscretization
  * \brief Class for the assembly of the local systems of equations
- *        involved in the transmissibility computaion in an mpfa-o type manner.
+ *        involved in the transmissibility computation in an mpfa-o type manner.
  */
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_O_LOCAL_ASSEMBLER_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_O_LOCAL_ASSEMBLER_HH

@@ -466,7 +466,7 @@ public:
      * \param phaseIdx Index of the fluid phase
      * \param compIdx index of the component
      *
-     * Molecular diffusion of a compoent \f$\mathrm{\kappa}\f$ is caused by a
+     * Molecular diffusion of a component \f$\mathrm{\kappa}\f$ is caused by a
      * gradient of the chemical potential and follows the law
      *
      * \f[ J = - D \mathbf{grad} \mu_\kappa \f]

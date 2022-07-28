@@ -42,7 +42,7 @@ using GetPVSwitchMultiDomain = Dune::Std::detected_or<int, DetectPVSwitchMultiDo
 /*!
  * \ingroup Nonlinear
  * \ingroup MultiDomain
- * \brief Newton sover for coupled problems
+ * \brief Newton solver for coupled problems
  */
 template <class Assembler, class LinearSolver, class CouplingManager,
           class Reassembler = DefaultPartialReassembler,

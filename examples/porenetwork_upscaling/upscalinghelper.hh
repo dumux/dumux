@@ -46,7 +46,7 @@ struct UpscalingHelper
         // get the domain side lengths from the problem
         auto sideLengths = problem.sideLengths();
 
-        // create temporary stringstream with fixed scientifc formatting without affecting std::cout
+        // create temporary stringstream with fixed scientific formatting without affecting std::cout
         std::ostream tmp(std::cout.rdbuf());
         tmp << std::fixed << std::scientific;
         static constexpr char dirNames[] = "xyz";

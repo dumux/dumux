@@ -146,7 +146,7 @@ int main(int argc, char** argv)
     const auto episodeLength = getParam<Scalar>("TimeLoop.EpisodeLength");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     using BulkSolutionVector = std::decay_t<decltype(sol[bulkIdx])>;
     VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, sol[bulkIdx], bulkProblem->name());
     GetPropType<BulkTypeTag, Properties::IOFields>::initOutputModule(bulkVtkWriter);

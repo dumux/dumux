@@ -244,7 +244,7 @@ public:
     { return gravity_; }
 
     /*!
-     * \brief Returns whether intertia terms should be considered.
+     * \brief Returns whether inertia terms should be considered.
      */
     bool enableInertiaTerms() const
     { return enableInertiaTerms_; }
@@ -273,7 +273,7 @@ public:
 
     /*!
      * \brief Returns a reference pressure at a given sub control volume face.
-     *        This pressure is substracted from the actual pressure for the momentum balance
+     *        This pressure is subtracted from the actual pressure for the momentum balance
      *        which potentially helps to improve numerical accuracy by avoiding issues related do floating point arithmetic.
      * \note  Overload this for reference pressures other than zero.
      */
@@ -1109,7 +1109,7 @@ public:
     bool enableInertiaTerms() const
     { return enableInertiaTerms_; }
 
-    //! Applys the initial face solution (velocities on the faces). Specialization for staggered grid discretization.
+    //! Applies the initial face solution (velocities on the faces). Specialization for staggered grid discretization.
     template <class SolutionVector, class G = GridGeometry>
     typename std::enable_if<G::discMethod == DiscretizationMethods::staggered, void>::type
     applyInitialFaceSolution(SolutionVector& sol,

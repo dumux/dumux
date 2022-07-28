@@ -321,7 +321,7 @@ private:
             directions[11] = "12: (-1, 1, 1)\n";
             directions[12] = "13: (-1, -1, 1)\n";
         }
-        DUNE_THROW(ParameterException, "You must specifiy probabilities for all directions (" << numDirections_() << ") \n" << directions << "\nExample (3D):\n\n"
+        DUNE_THROW(ParameterException, "You must specify probabilities for all directions (" << numDirections_() << ") \n" << directions << "\nExample (3D):\n\n"
         << "DeletionProbability = 0.5 0.5 0 0 0 0 0 0 0 0 0 0 0 \n\n"
         << "deletes approximately 50% of all throats in x and y direction, while no deletion in any other direction takes place.\n" );
     }

@@ -131,7 +131,7 @@ int main(int argc, char** argv)
     bulkGridVariables->init(x[bulkId]);
     lowDimGridVariables->init(x[lowDimId]);
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     using BulkSolutionVector = std::decay_t<decltype(x[bulkId])>;
     using LowDimSolutionVector = std::decay_t<decltype(x[lowDimId])>;
     VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, x[bulkId], bulkProblem->name(), "Bulk");

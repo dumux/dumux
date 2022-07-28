@@ -125,7 +125,7 @@ int main(int argc, char** argv)
     const Scalar finalPc = getParam<Scalar>("Problem.FinalPc");
     const bool allowDraingeOfOutlet = getParam<bool>("Problem.AllowDraingeOfOutlet", false);
 
-    // helper function to evalute the entry capillary pressure
+    // helper function to evaluate the entry capillary pressure
     auto getPcEntry = [&](const std::size_t eIdx)
     {
         const Scalar throatRadius =  gridGeometry->throatInscribedRadius(eIdx);

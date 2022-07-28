@@ -34,7 +34,7 @@
  * \ingroup CO2Model
  * \brief Adaption of the non-isothermal two-phase two-component flow model to problems with CO2
  *
- *  TODO: Put a doxgyen link refernce here
+ *  TODO: Put a doxgyen link reference here
  *  See TwoPTwoCModel for reference to the equations used.
  *  The CO2 model is derived from the 2p2c model. In the CO2 model the phase switch criterion
  *  is different from the 2p2c model.

@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup CCMpfaDiscretization
- * \brief Class roviding functionality for the reconstruction of the
+ * \brief Class providing functionality for the reconstruction of the
  *        gradients in the sub-control volumes involved in mpfa schemes.
  */
 #ifndef DUMUX_CC_MPFA_SCV_GRADIENTS_HH
@@ -38,7 +38,7 @@ namespace Dumux {
 
 /*!
  * \ingroup CCMpfaDiscretization
- * \brief Class roviding functionality for the reconstruction of the
+ * \brief Class providing functionality for the reconstruction of the
  *        gradients in the sub-control volumes involved in mpfa schemes.
  */
 class CCMpfaScvGradients
@@ -178,7 +178,7 @@ private:
                 if (!vertexHandled[gridGeometry.vertexMapper().subIndex(element, i, dim)])
                     allFinished = false;
 
-            // bind views only if there is unfinished buisness
+            // bind views only if there is unfinished business
             if (allFinished)
                 continue;
 

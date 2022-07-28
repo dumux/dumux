@@ -70,7 +70,7 @@ public:
                                const std::string& paramGroup = "")
     {
         //correction to account for actually relevant reaction area
-        //current density has to be devided by the half length of the box
+        //current density has to be divided by the half length of the box
         //\todo Do we have multiply with the electrochemically active surface area (ECSA) here instead?
         static Scalar gridYMax = getParamFromGroup<GlobalPosition>(paramGroup, "Grid.UpperRight")[1];
         static Scalar nCellsY = getParamFromGroup<GlobalPosition>(paramGroup, "Grid.Cells")[1];

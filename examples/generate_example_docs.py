@@ -11,7 +11,7 @@ if sys.version_info[0] < 3:
 from convert_code_to_doc import *
 
 class Navigation:
-    """Add nagivation bars to examples with subpages"""
+    """Add navigation bars to examples with subpages"""
 
     def __init__(self, config, dir):
         # read and check the configuration

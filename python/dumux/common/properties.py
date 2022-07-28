@@ -141,7 +141,7 @@ def listTypeTags():
     """List all available TypeTags/Models that can be inherited from"""
 
     print("\n**********************************\n")
-    print("The following TypeTags are availabe:")
+    print("The following TypeTags are available:")
     for key, value in _typeTags.items():
         print(key, ":", value["description"])
     print("\n**********************************")

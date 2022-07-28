@@ -76,11 +76,11 @@ void permutatePointsAndTest(const std::vector<GlobalPosition>& cornerPoints,
                 std::cout << printCorners();
                 std::cout << std::endl;
 
-                std::cout << "actual area: " << area << ", area after permuation: " << quad.volume() << std::endl;
+                std::cout << "actual area: " << area << ", area after permutation: " << quad.volume() << std::endl;
             }
 
             if (!Dune::FloatCmp::eq(quad.volume(), area))
-                DUNE_THROW(Dune::InvalidStateException, "Area of quadrilateral after permuation of input points is wrong");
+                DUNE_THROW(Dune::InvalidStateException, "Area of quadrilateral after permutation of input points is wrong");
 
             if (verbose)
                 std::cout  << "checking point intersection: \n";

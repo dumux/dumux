@@ -89,7 +89,7 @@ private:
         std::size_t dofIdx;
         std::size_t freeFlowMassScvfIdx;
         std::size_t porousMediumScvfIdx;
-        mutable VelocityVector velocity; // velocity needs to be set externally, not availabe in this class
+        mutable VelocityVector velocity; // velocity needs to be set externally, not available in this class
     };
 
     struct PorousMediumCouplingContext
@@ -100,7 +100,7 @@ private:
         std::size_t dofIdx;
         std::size_t porousMediumScvfIdx;
         std::size_t freeFlowMassScvfIdx;
-        mutable VelocityVector velocity; // velocity needs to be set externally, not availabe in this class
+        mutable VelocityVector velocity; // velocity needs to be set externally, not available in this class
     };
 
     using CouplingMapper = DarcyDarcyBoundaryCouplingMapper<MDTraits>; // TODO rename/generalize class

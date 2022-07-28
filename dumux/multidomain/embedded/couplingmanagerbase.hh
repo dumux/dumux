@@ -234,7 +234,7 @@ public:
      */
     void computePointSourceData(std::size_t order = 1, bool verbose = false)
     {
-        // initilize the maps
+        // initialize the maps
         // do some logging and profiling
         Dune::Timer watch;
         std::cout << "Initializing the point sources..." << std::endl;

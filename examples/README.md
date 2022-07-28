@@ -34,7 +34,7 @@ You learn how to
 
 * solve a two-phase flow in porous media problem with two immiscible phases
 * set boundary conditions and a simple injection well
-* implement a problem with heterogenous material parameters
+* implement a problem with heterogeneous material parameters
 * use adaptive grid refinement around the saturation front
 
 </td>

@@ -223,7 +223,7 @@ public:
     using SubControlVolume = typename GG::SubControlVolume;
     //! export type of subcontrol volume face
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
-    //! export type of finite volume grid geometrys
+    //! export type of finite volume grid geometries
     using GridGeometry = GG;
     //! the maximum number of scvs per element
     static constexpr std::size_t maxNumElementScvs = 1;
@@ -234,7 +234,7 @@ public:
     CCMpfaFVElementGeometry(const GridGeometry& gridGeometry)
     : gridGeometryPtr_(&gridGeometry) {}
 
-    //! Get an elment sub control volume with a global scv index
+    //! Get an element sub control volume with a global scv index
     //! We separate element and neighbor scvs to speed up mapping
     const SubControlVolume& scv(GridIndexType scvIdx) const
     {

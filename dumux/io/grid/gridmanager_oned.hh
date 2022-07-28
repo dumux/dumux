@@ -120,7 +120,7 @@ private:
         else if (refType == "Copy")
             ParentType::grid().setRefinementType(Dune::OneDGrid::RefinementType::COPY);
         else
-            DUNE_THROW(Dune::IOError, "OneGrid only supports 'Local' or 'Copy' as refinment type. Not '"<< refType<<"'!");
+            DUNE_THROW(Dune::IOError, "OneGrid only supports 'Local' or 'Copy' as refinement type. Not '"<< refType<<"'!");
 
         // Check if should refine the grid
         ParentType::maybeRefineGrid(modelParamGroup);

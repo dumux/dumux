@@ -97,11 +97,11 @@ public:
     , elementIndex_(elementIndex)
     {}
 
-    //! The copy constrcutor
+    //! The copy constructor
     CCSubControlVolume(const CCSubControlVolume& other)
     { deepCopy_(other); }
 
-    //! The move constrcutor
+    //! The move constructor
     CCSubControlVolume(CCSubControlVolume&& other) = default;
 
     //! The copy assignment operator

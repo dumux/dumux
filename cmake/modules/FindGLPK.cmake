@@ -4,7 +4,7 @@
 # Variables used by this module which you may want to set:
 # GLPK_ROOT         Path list to search for GLPK
 #
-# Sets the follwing variable:
+# Sets the following variable:
 #
 # GLPK_FOUND           True if GLPK available and usable.
 # GLPK_INCLUDE_DIRS    Path to the GLPK include dirs.
@@ -83,7 +83,7 @@ if(GLPK_FOUND)
   set(GLPK_DUNE_LIBRARIES ${GLPK_LIBRARIES}
     CACHE STRING "Libraries used by DUNE when linking GLPK programs")
 else(GLPK_FOUND)
-  # log errornous result
+  # log erroneous result
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
     "Determining location of GLPK failed:\n"
     "Include directory: ${GLPK_INCLUDE_DIRS}\n"

@@ -108,7 +108,7 @@ public:
                 if (!is.neighbor())
                     continue;
 
-                // if facet has been handled already, skip rest (necesary for e.g. Dune::FoamGrid)
+                // if facet has been handled already, skip rest (necessary for e.g. Dune::FoamGrid)
                 if (std::find(handledFacets.begin(), handledFacets.end(), is.indexInInside()) != handledFacets.end())
                     continue;
 

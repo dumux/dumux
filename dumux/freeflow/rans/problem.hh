@@ -84,7 +84,7 @@ class RANSProblemBase : public NavierStokesProblem<TypeTag>
 
     struct WallElementInformation
     {
-        // store the element indicies for all elements with an intersection on the wall
+        // store the element indices for all elements with an intersection on the wall
         unsigned int wallElementIdx;
         // for each wall element, store the faces normal axis
         unsigned int wallFaceNormalAxis;
@@ -373,7 +373,7 @@ private:
         if (!(GridGeometry::discMethod == DiscretizationMethods::staggered))
             DUNE_THROW(Dune::NotImplemented, "The wall direction Index can only be calculated for quadrilateral structured grids");
 
-        // If isFlatWallBounded, the corresonding wall element is stored for each element
+        // If isFlatWallBounded, the corresponding wall element is stored for each element
         if (isFlatWallBounded())
         {
             wallNormalAxis_.resize(wallData.size());
@@ -398,7 +398,7 @@ private:
     }
 
     /*!
-     * \brief Store all direct neighbor indicies for each element
+     * \brief Store all direct neighbor indices for each element
      */
     void findNeighborIndices_()
     {

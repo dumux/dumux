@@ -101,7 +101,7 @@ def runMakeInstallScript():
     deps = addDependencyVersions(deps, cmdArgs.get("ignoreuntracked", False))
     printFoundVersionInfo(deps)
 
-    printProgressInfo(["Making patches for unpublished & uncommited changes"])
+    printProgressInfo(["Making patches for unpublished & uncommitted changes"])
     deps = addDependencyPatches(deps)
 
     # actual script generation

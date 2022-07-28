@@ -54,7 +54,7 @@ if len(sys.argv) == 1:
 parser = argparse.ArgumentParser(
     prog="installexternal",
     usage="./installexternal.py [OPTIONS] PACKAGES",
-    description="This script downloads extenstions for dumux and dune \
+    description="This script downloads extensions for dumux and dune \
                                      and installs some External Libraries and Modules.",
 )
 parser.register("action", "store_choice", ChoicesAction)
@@ -273,7 +273,7 @@ def installExternal(parameters):
                 # Clone from repo
                 gitClone(EXTERNAL_URLS[package], branch)
                 # Save message to be shown at the end
-                finalMessage.append(f"{package} has been sucessfully cloned.")
+                finalMessage.append(f"{package} has been successfully cloned.")
         else:
             if tarball:
                 finalMessage.append(f"{package} has been already installed.")

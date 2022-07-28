@@ -14,7 +14,7 @@ Others can be used to perform post-processing tasks after simulation data has be
   	\begin{itemize}
   		\item The script \texttt{createdockerimage.py} can help to create a docker image to put your work in a container for simple delivery.
 		\item In order to extract the content and dependencies within your model, \texttt{extractmodulepart.py} will collect all headers used to run a specified test and collect them all in a functioning external module.
-		\item To document the exact versions that have been used, the scripts \texttt{getusedversions.py} is available to search each through an existing simulation dumux suite and find the branch, commit hash, and commit date of the current implemention. 
+		\item To document the exact versions that have been used, the scripts \texttt{getusedversions.py} is available to search each through an existing simulation dumux suite and find the branch, commit hash, and commit date of the current implementation. 
 		\item The script \texttt{create\_cmakelists.py} can be used to integrate new header files to the dune/dumux cmake system.
 		\item In order to produce an installscript that will install your repository and its dependencies on another computer, the \texttt{makeinstallscript.py} is available. This script will collect all of the dependencies and their versions using the \texttt{getmoduleinfo.py} and the other scripts listed above and write a script to install a new version in the same configuration. In the past it has been recommended to run the script \texttt{test\_dumux.sh} to ensure that the final dunecontrol and compilation pass have worked. 
   	\end{itemize} 
@@ -24,13 +24,13 @@ Others can be used to perform post-processing tasks after simulation data has be
 Data visualization and post processing is an integral part of any exercise in simulation. A few scripts are available to begin with in the \texttt{postprocessing/} subdirectory. 
 \begin{itemize}
 	\item Paraview data collection scripts: Although there are many tools available within the open-source visualization program paraview (see \ref{ssec:paraview}), performing consistent data collection from your simulations can be tedious when analyzing many output files. The scripts \texttt{exportscreenshot2d.py}, \texttt{extractlinedata.py}, and \texttt{extractpointdataovertime.py} are each scripts that can help to perform paraview data collection commands consistently and each produce easy to use \texttt{.csv} files or images. 
-	\item Error convergence script: When evaluting errors to a reference solution across grid refinements, the L2 error is typically evaluated. A script to help perform this is available in \texttt{l2error.py}.
+	\item Error convergence script: When evaluating errors to a reference solution across grid refinements, the L2 error is typically evaluated. A script to help perform this is available in \texttt{l2error.py}.
 \end{itemize}
 
 \subsection{Testing Scripts:} \label{ssec:testingScripts}
 In order to ensure consistency when developing in dumux, developers are encouraged to introduce unit tests and reference tests that can be run to ensure new code introductions do not break existing functions. While existing simulations should each test something when the \texttt{ctest} command is called, a few scripts exist in the \texttt{testing/} subdirectory to make this simple to develop and quick to evaluate.
 \begin{itemize}
-	\item Run tests: In order to automatically find and run tests that fit a specific critera, the scripts \texttt{findtests.py}, \texttt{runtest.py} and \texttt{runselectedtests.py} each are available. These are each used to automate the testing process.  
+	\item Run tests: In order to automatically find and run tests that fit a specific criteria, the scripts \texttt{findtests.py}, \texttt{runtest.py} and \texttt{runselectedtests.py} each are available. These are each used to automate the testing process.  
 	\item Reference Solution Comparisons: The scripts \texttt{fuzzycomparevtu.py} and \texttt{fuzzycomparedata.py} are both used to compare simulation results against reference simulation results. When running a test, one can use these files to compare the output from the test against reference simulation results. Should these results differ, the difference for each field is shown. These scripts are typically directly called during testing. 
 \end{itemize}
 

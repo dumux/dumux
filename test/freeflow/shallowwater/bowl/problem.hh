@@ -44,7 +44,7 @@ namespace Dumux {
  * (e.g. 150x150 cells) in combination with a large time step size. Using the new limiting
  * (UpwindFluxLimiting = true) will help to improve the convergence for such cases.
  *
- * This test uses a low mesh resoultion and only ensures that UpwindFluxLimiting for the mobility
+ * This test uses a low mesh resolution and only ensures that UpwindFluxLimiting for the mobility
  * works. For low mesh resolution the solution is very diffusive so that the oscillation is dampened.
  * This gets better with grid refinement (not tested here).
  *

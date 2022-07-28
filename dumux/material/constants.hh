@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Material
- * \brief A central place for various physical constants occuring in
+ * \brief A central place for various physical constants occurring in
  *        some equations.
  */
 #ifndef DUMUX_CONSTANTS_HH
@@ -31,7 +31,7 @@ namespace Dumux {
 
 /*!
  * \ingroup Material
- * \brief A central place for various physical constants occuring in
+ * \brief A central place for various physical constants occurring in
  *        some equations.
  */
 template<class Scalar>

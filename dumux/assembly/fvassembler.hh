@@ -459,7 +459,7 @@ private:
     /*!
      * \brief A method assembling something per element
      * \note Handles exceptions for parallel runs
-     * \throws NumericalProblem on all processes if something throwed during assembly
+     * \throws NumericalProblem on all processes if an exception is thrown during assembly
      */
     template<typename AssembleElementFunc>
     void assemble_(AssembleElementFunc&& assembleElement) const
@@ -494,7 +494,7 @@ private:
             // if we get here, everything worked well on this process
             succeeded = true;
         }
-        // throw exception if a problem ocurred
+        // throw exception if a problem occurred
         catch (NumericalProblem &e)
         {
             std::cout << "rank " << gridView().comm().rank()

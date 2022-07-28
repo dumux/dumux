@@ -137,7 +137,7 @@ public:
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars The volume variables of the current element
      * \param scvf The sub control volume face to compute the flux on
-     * \param elemFluxVarsCache The cache related to flux compuation
+     * \param elemFluxVarsCache The cache related to flux computation
      */
     NumEqVector computeFlux(const Problem& problem,
                             const Element& element,
@@ -249,7 +249,7 @@ protected:
     { return static_cast<const Implementation *> (this); }
 
     template <class T = ModelTraits>
-    [[deprecated("All compositional models must specifiy if dispersion is enabled."
+    [[deprecated("All compositional models must specify if dispersion is enabled."
                  "Please add enableCompositionalDispersion to the ModelTraits in your model header.")]]
     void enableCompositionalDispersionMissing_() const {}
 };

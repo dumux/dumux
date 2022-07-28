@@ -33,7 +33,7 @@
 
 namespace Dumux {
 
-//! forward declaration of the method-specific implemetation
+//! forward declaration of the method-specific implementation
 template<class TypeTag, class DiscretizationMethod, ReferenceSystemFormulation referenceSystem>
 class FicksLawImplementation;
 
@@ -82,7 +82,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa, referenceSy
                          const SubControlVolumeFace& scvf,
                          const FluxVariablesCacheFiller& fluxVarsCacheFiller)
         {
-            // get interaction volume related data from the filler class & upate the cache
+            // get interaction volume related data from the filler class & update the cache
             if (fvGeometry.gridGeometry().vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
                 scvfFluxVarsCache.updateDiffusion(fluxVarsCacheFiller.secondaryInteractionVolume(),
                                                   fluxVarsCacheFiller.secondaryIvLocalFaceData(),

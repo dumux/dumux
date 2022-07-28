@@ -93,7 +93,7 @@ public:
     }
 
     /*!
-     * \brief Function to set the minumum/maximum allowed levels.
+     * \brief Function to set the minimum/maximum allowed levels.
      *
      * \param minLevel The minimum level
      * \param maxLevel The maximum level

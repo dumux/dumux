@@ -44,7 +44,7 @@ namespace Dumux {
  * or \cite Pebesma1998a).
  *
  * To use this class, execute the installexternal.py from your DuMuX root
- * directory or donwload, unpack and install the tarball from the gstat-website.
+ * directory or download, unpack and install the tarball from the gstat-website.
  * Then rerun cmake (in the second case set GSTAT_ROOT in your input file to the
  * path where gstat is installed).
  */

@@ -188,7 +188,7 @@ public:
         auto&& curElemVolVars = this->curElemVolVars();
         auto&& elemFluxVarsCache = this->elemFluxVarsCache();
 
-        // get stencil informations
+        // get stencil information
         const auto globalI = gridGeometry.elementMapper().index(element);
         const auto& connectivityMap = gridGeometry.connectivityMap();
         const auto numNeighbors = connectivityMap[globalI].size();
@@ -242,7 +242,7 @@ public:
         // element solution container to be deflected
         auto elemSol = elementSolution(element, curSol, gridGeometry);
 
-        // derivatives in the neighbors with repect to the current elements
+        // derivatives in the neighbors with respect to the current elements
         // in index 0 we save the derivative of the element residual with respect to it's own dofs
         Residuals partialDerivs(numNeighbors + 1);
 
@@ -280,7 +280,7 @@ public:
 
             // Correct derivative for ghost elements, i.e. set a 1 for the derivative w.r.t. the
             // current primary variable and a 0 elsewhere. As we always solve for a delta of the
-            // solution with repect to the initial one, this results in a delta of 0 for ghosts.
+            // solution with respect to the initial one, this results in a delta of 0 for ghosts.
             if (this->elementIsGhost())
             {
                 partialDerivs[0] = 0.0;
@@ -428,7 +428,7 @@ public:
 
         NumEqVector partialDeriv;
 
-        // derivatives in the neighbors with repect to the current elements
+        // derivatives in the neighbors with respect to the current elements
         for (int pvIdx = 0; pvIdx < numEq; ++pvIdx)
         {
             // reset derivatives of element dof with respect to itself
@@ -453,7 +453,7 @@ public:
             }
 
             // for ghost elements we assemble a 1.0 where the primary variable and zero everywhere else
-            // as we always solve for a delta of the solution with repect to the initial solution this
+            // as we always solve for a delta of the solution with respect to the initial solution this
             // results in a delta of zero for ghosts
             else partialDeriv[pvIdx] = 1.0;
 

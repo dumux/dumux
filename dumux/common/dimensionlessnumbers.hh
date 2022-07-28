@@ -37,7 +37,7 @@ namespace Dumux {
 
 /*!
  * \brief A container for possible values of the property for selecting which Nusselt parametrization to choose.
- *        The actual value is set vie the property NusseltFormulation
+ *        The actual value is set via the property NusseltFormulation
  */
 enum class NusseltFormulation
 {
@@ -46,7 +46,7 @@ enum class NusseltFormulation
 
 /*!
  * \brief A container for possible values of the property for selecting which Sherwood parametrization to choose.
- *        The actual value is set vie the property SherwoodFormulation
+ *        The actual value is set via the property SherwoodFormulation
  */
 enum class SherwoodFormulation
 {

@@ -68,7 +68,7 @@ public:
     using SolidSystem = typename Traits::SolidSystem;
     //! Export indices
     using Indices = typename Traits::ModelTraits::Indices;
-    //! Export phase acess indices
+    //! Export phase access indices
     static constexpr int liquidPhaseIdx = 0;
     static constexpr int gasPhaseIdx = 1;
 
@@ -344,7 +344,7 @@ public:
      *        fluid phase within the finite volume.
      *
      * The water content is defined as the fraction of
-     * the saturation devided by the porosity
+     * the saturation divided by the porosity
 
      * \param phaseIdx The index of the fluid phase
      * \note this function is here as a convenience to the user to not have to
@@ -419,7 +419,7 @@ private:
 
     Scalar relativePermeabilityWetting_; // the relative permeability of the wetting phase
     SolidState solidState_;
-    PermeabilityType permeability_; // the instrinsic permeability
+    PermeabilityType permeability_; // the intrinsic permeability
     Scalar pn_; // the reference nonwetting pressure
     Scalar minPc_; // the minimum capillary pressure (entry pressure)
 };

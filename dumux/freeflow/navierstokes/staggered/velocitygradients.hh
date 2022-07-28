@@ -366,7 +366,7 @@ private:
 
     /*!
      * \brief Get the location of the lateral staggered face's center.
-     *        Only needed for boundary conditions if the current scvf or the lateral one is on a bounary.
+     *        Only needed for boundary conditions if the current scvf or the lateral one is on a boundary.
      *
      * \verbatim
      *      --------#######o                 || frontal face of staggered half-control-volume

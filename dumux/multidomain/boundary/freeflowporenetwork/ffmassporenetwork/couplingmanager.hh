@@ -85,7 +85,7 @@ private:
     {
         SubControlVolume<poreNetworkIndex> scv;
         VolumeVariables<poreNetworkIndex> volVars;
-        mutable VelocityVector velocity; // velocity needs to be set externally, not availabe in this class
+        mutable VelocityVector velocity; // velocity needs to be set externally, not available in this class
     };
 
     struct PoreNetworkCouplingContext
@@ -93,7 +93,7 @@ private:
         SubControlVolume<freeFlowMassIndex> scv;
         SubControlVolumeFace<freeFlowMassIndex> scvf;
         VolumeVariables<freeFlowMassIndex> volVars;
-        mutable VelocityVector velocity; // velocity needs to be set externally, not availabe in this class
+        mutable VelocityVector velocity; // velocity needs to be set externally, not available in this class
     };
 
     using CouplingMapper = StaggeredFreeFlowPoreNetworkCouplingMapper;

@@ -68,7 +68,7 @@ public:
     using TupleType = typename MDTraits::template Tuple<PtrType>;
 
     /*!
-     * \brief Contruct the grid variables
+     * \brief Construct the grid variables
      * \param gridGeometries a multidomain wrapper of a grid geometry tuple
      * \param problems a multidomain wrapper of a problem tuple
      */
@@ -179,7 +179,7 @@ public:
 
 private:
 
-    //! a tuple of pointes to all grid variables
+    //! a tuple of points to all grid variables
     TupleType gridVars_;
 };
 

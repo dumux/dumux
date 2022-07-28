@@ -365,7 +365,7 @@ private:
         });
     }
 
-    //! If specified in the problem, a fixed Dirichlet value can be assigned to cell centered unknows such as pressure
+    //! If specified in the problem, a fixed Dirichlet value can be assigned to cell centered unknowns such as pressure
     template<class JacobianMatrixRow>
     void incorporateDirichletCells_(JacobianMatrixRow& jacRow)
     {
@@ -789,7 +789,7 @@ public:
         // get some aliases for convenience
         const auto& element = this->element();
 
-        // get stencil informations
+        // get stencil information
         const auto& stencil = this->couplingManager().couplingStencil(domainI, element, domainJ);
 
         if (stencil.empty())
@@ -928,7 +928,7 @@ public:
             // set the actual dof index
             const auto faceGlobalI = scvf.dofIndex();
 
-            // get stencil informations
+            // get stencil information
             const auto& stencil = this->couplingManager().couplingStencil(domainI, scvf, domainJ);
 
             if (stencil.empty())

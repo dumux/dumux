@@ -415,7 +415,7 @@ public:
         // actual element. In the actual element we evaluate the derivative of the entire residual.     //
         //////////////////////////////////////////////////////////////////////////////////////////////////
 
-        // get the vecor of the acutal element residuals
+        // get the vecor of the actual element residuals
         const auto origResiduals = this->evalLocalResidual();
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -506,7 +506,7 @@ public:
         auto&& curElemVolVars = this->curElemVolVars();
         auto&& elemFluxVarsCache = this->elemFluxVarsCache();
 
-        // get element stencil informations
+        // get element stencil information
         const auto& stencil = this->couplingManager().couplingStencil(domainI, element, domainJ);
 
         // convenience lambda for call to update self

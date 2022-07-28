@@ -123,7 +123,7 @@ public:
                 // handle residual and matrix entries for parallel runs
                 for (const auto& scv : scvs(this->fvGeometry()))
                 {
-                    // set the matrix entries of all DOFs withing the overlap region (except the border DOF)
+                    // set the matrix entries of all DOFs within the overlap region (except the border DOF)
                     // to 1.0 and the residual entries to 0.0
                     const auto& facet = this->element().template subEntity <1> (scv.indexInElement());
                     if (facet.partitionType() > Dune::BorderEntity) // TODO is this always guaranteed to be correct?
@@ -493,7 +493,7 @@ public:
         const auto& curSol = this->asImp_().curSol();
         auto&& curElemVolVars = this->curElemVolVars();
 
-        // get the vecor of the acutal element residuals
+        // get the vecor of the actual element residuals
         const auto origResiduals = this->evalLocalResidual();
         const auto origStorageResiduals = this->evalLocalStorageResidual();
 
@@ -603,7 +603,7 @@ public:
         const auto& curElemVolVars = this->curElemVolVars();
         const auto& elemFluxVarsCache = this->elemFluxVarsCache();
 
-        // get the vecor of the acutal element residuals
+        // get the vecor of the actual element residuals
         const auto origResiduals = this->evalLocalResidual();
 
         //////////////////////////////////////////////////////////////////////////////////////////////////

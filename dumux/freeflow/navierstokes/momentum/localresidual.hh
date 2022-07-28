@@ -279,7 +279,7 @@ public:
         }
         else if (scvf.boundary())
         {
-            // Here, the lateral face does lie on a boundary. Retrive the Neumann flux component for
+            // Here, the lateral face does lie on a boundary. Retrieve the Neumann flux component for
             // the corresponding scvs' DOF orientation.
             //
             //

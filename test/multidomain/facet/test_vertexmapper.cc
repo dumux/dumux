@@ -45,7 +45,7 @@
 #define FACETGRIDTYPE Dune::FoamGrid<2, 3>
 #endif
 
-// returns a ficticious displacement for a given position
+// returns a fictitious displacement for a given position
 template<class GlobalPosition>
 GlobalPosition getDisplacement(const GlobalPosition& pos)
 {
@@ -140,7 +140,7 @@ int main (int argc, char *argv[])
     if (bulkDim == 2 && numDofsAfter != 180)
         DUNE_THROW(Dune::InvalidStateException, "2d test: Number of dofs after enrichment is expected to be 180 but is " << numDofsAfter);
 
-    // vector for output of ficticious displacement
+    // vector for output of fictitious displacement
     static constexpr int bulkDimWorld = BulkGrid::dimensionworld;
     using Displacement = Dune::FieldVector<double, bulkDimWorld>;
     std::vector< Displacement > displacement(mapper.size(), Displacement(0.0));

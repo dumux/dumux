@@ -80,7 +80,7 @@ public:
     // #### Generation of the random permeability field
     // We generate a random permeability field upon construction of the spatial parameters class
     // using lognormal distributions. The mean values for the permeability inside and outside of a
-    // low-permeable lens (given by the coorinates `lensLowerLeft_` and `lensUpperRight_`) are defined
+    // low-permeable lens (given by the coordinates `lensLowerLeft_` and `lensUpperRight_`) are defined
     // in the variables  `permeabilityLens_` and `permeability_`. The respective values are obtained
     // from the input file making use of the free function `getParam`. We use a standard deviarion
     // of 10% here and compute permeabily values for all elements of the computational grid.
@@ -136,7 +136,7 @@ public:
     // use the overload
     // `porosity(const Element&, const SubControlVolume&, const ElementSolution&)`
     // that is defined in the base class `FVPorousMediumFlowSpatialParamsOneP`. Per default, this
-    // fowards to the `porosityAtPos` function per default, which we overload here.
+    // forwards to the `porosityAtPos` function per default, which we overload here.
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.2; }
 

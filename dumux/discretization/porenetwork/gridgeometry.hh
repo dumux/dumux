@@ -643,7 +643,7 @@ private:
                 // get the corners
                 auto corners = std::array{elementGeometry.corner(scvLocalIdx), elementGeometry.center()};
 
-                // get the fractional volume asssociated with the scv
+                // get the fractional volume associated with the scv
                 const auto volume = this->poreVolume(dofIdxGlobal) / this->coordinationNumber(dofIdxGlobal);
 
                 scvs_[eIdx][scvLocalIdx] = SubControlVolume(dofIdxGlobal,
@@ -682,7 +682,7 @@ private:
     std::size_t numScv_;
     std::size_t numScvf_;
 
-    // vertices on the boudary
+    // vertices on the boundary
     std::vector<bool> boundaryDofIndices_;
     std::vector<bool> hasBoundaryScvf_;
 };
@@ -834,7 +834,7 @@ private:
     std::size_t numScv_;
     std::size_t numScvf_;
 
-    // vertices on the boudary
+    // vertices on the boundary
     std::vector<bool> boundaryDofIndices_;
 };
 

@@ -70,10 +70,10 @@ public:
         outerRadius_ = gridGeometry->bBoxMax()[0];
 
         // boundary conditions (volumetric flow rate in m^2/s, pressure/psi in Pa)
-        const auto fi = getParam<Scalar>("Problem.InnerFlux", 0.1); // positive means outflow (cm/day)
-        innerFlowRate_ = fi*2*M_PI*innerRadius_*0.01/(24*60*60);
-        const auto fo = getParam<Scalar>("Problem.OuterFlux", 0.0); // positive means outflow (cm/day)
-        outerFlowRate_ = fo*2*M_PI*outerRadius_*0.01/(24*60*60);
+        const auto innerFlux = getParam<Scalar>("Problem.InnerFlux", 0.1); // positive means outflow (cm/day)
+        innerFlowRate_ = innerFlux*2*M_PI*innerRadius_*0.01/(24*60*60);
+        const auto outerFlux = getParam<Scalar>("Problem.OuterFlux", 0.0); // positive means outflow (cm/day)
+        outerFlowRate_ = outerFlux*2*M_PI*outerRadius_*0.01/(24*60*60);
 
         const auto innerPressureHead = getParam<Scalar>("Problem.InnerPressureHeadInCm", -15000);
         const auto innerPressure = headToPressure(innerPressureHead);

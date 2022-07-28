@@ -308,7 +308,7 @@ int main(int argc, char** argv)
     if (mpiHelper.rank() == 0)
         DumuxMessage::print(/*firstCall=*/true);
 
-    // initialize ther parameters
+    // initialize the parameters
     auto parameters = [](auto& params)
     {
         params["Problem.Name"] = "test";

@@ -128,7 +128,7 @@ int main(int argc, char** argv)
 
     const bool writeVtk = getParam<bool>("Vtk.EnableVtkOutput", true);
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     using BulkSolutionVector = std::decay_t<decltype(sol[bulkIdx])>;
     VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, sol[bulkIdx], bulkProblem->name());
     GetPropType<BulkTypeTag, Properties::IOFields>::initOutputModule(bulkVtkWriter);
@@ -218,7 +218,7 @@ int main(int argc, char** argv)
     auto norm3D = L2Norm<double>::computeErrorNorm(*bulkProblem, sol[bulkIdx], order);
     norm3D /= L2Norm<double>::computeNormalization(*bulkProblem, order);
 
-    // ouput result to terminal
+    // output result to terminal
     std::cout << "-----------------------------------------------------\n";
     std::cout << " L2_p1d: " << norm1D << " hmax_1d: " << hMaxLowDim << '\n'
               << " L2_p3d: " << norm3D << " hmax_3d: " << hMaxBulk << '\n'

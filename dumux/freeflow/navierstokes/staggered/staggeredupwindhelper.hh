@@ -105,7 +105,7 @@ public:
     {}
 
     /*!
-     * \brief Returns the momentum in the frontal directon.
+     * \brief Returns the momentum in the frontal direction.
      *
      *        Checks if the model has higher order methods enabled and if the scvf in
      *        question is far enough from the boundary such that higher order methods can be employed.
@@ -134,7 +134,7 @@ public:
     }
 
     /*!
-     * \brief Returns the momentum in the lateral directon.
+     * \brief Returns the momentum in the lateral direction.
      *
      *        Evaluates which face is upstream.
      *        Checks if the model has higher order methods enabled and if the scvf in

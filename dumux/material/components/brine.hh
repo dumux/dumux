@@ -355,7 +355,7 @@ public:
     * \brief The pressure of steam in \f$\mathrm{[Pa]}\f$ at a given density and temperature.
     *
     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-    * \param density denstiy of component in \f$\mathrm{[kg/m^3]}\f$
+    * \param density density of component in \f$\mathrm{[kg/m^3]}\f$
     */
    static Scalar gasPressure(Scalar temperature, Scalar density)
    { return H2O::gasPressure(temperature, density); }

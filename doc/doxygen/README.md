@@ -11,7 +11,7 @@ The Doxygen for a **file** should look like this:
 ```
 It should always contain the `\file` first.
 The `\ingroup` gives a Group that is as **precise** as possible and is part of the `modules.txt`
-The `\brief` is a **short comment**  on what happens in the file. Alternatively a `\copybrief` could be used. **Make sure the copybrief links to the correct section and is not ambigous!**
+The `\brief` is a **short comment**  on what happens in the file. Alternatively a `\copybrief` could be used. **Make sure the copybrief links to the correct section and is not ambiguous!**
 Additional text could be added similar to the function description.
 
 A class could look like this:

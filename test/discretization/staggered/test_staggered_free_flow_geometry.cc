@@ -93,14 +93,14 @@ int main (int argc, char *argv[])
     auto leafGridView = grid->leafGridView();
     GridGeometry gridGeometry(leafGridView);
 
-    std::cout << "Abbreviatons:\n"
-              << "pos - postition of face center\n"
+    std::cout << "Abbreviations:\n"
+              << "pos - position of face center\n"
               << "fIdx - face index\n"
               << "dofIdx (self/oppo.) - dofIdx on face (self/opposite)\n"
               << "norm in/out - dofIdx on face normal to own face (within own element / in adjacent element)\n"
               << "par - dofIdx on face parallel to own face\n"
-              << "normDist - distance bewteen the dofs on the faces normal the own face\n"
-              << "parDist - distance bewteen the dof on the parallel face and the one on the own face\n"
+              << "normDist - distance between the dofs on the faces normal the own face\n"
+              << "parDist - distance between the dof on the parallel face and the one on the own face\n"
               << "norm in/out - dofIdx on face normal to own face (within own element / in adjacent element)" << std::endl;
 
     // iterate over elements. For every element get fv geometry and loop over scvs and scvfaces

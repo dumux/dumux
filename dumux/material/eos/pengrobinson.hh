@@ -182,7 +182,7 @@ public:
         // ignore the first two results if the smallest
         // compressibility factor is <= 0.0. (this means that if we
         // would get negative molar volumes for the liquid phase, we
-        // consider the liquid phase non-existant.)
+        // consider the liquid phase non-existent.)
         // Note that invertCubicPolynomial sorts the roots in ascending order
         if (numSol > 1 && Z[0] <= 0.0) {
             Z[0] = Z[numSol - 1];
@@ -435,7 +435,7 @@ protected:
 
         // Newton method to find first root
 
-        // if the values which we got on Vmin and Vmax are usefull, we
+        // if the values which we got on Vmin and Vmax are useful, we
         // will reuse them as initial value, else we will start 10%
         // above the covolume
         Scalar V = b*1.1;

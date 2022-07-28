@@ -344,7 +344,7 @@ private:
         using LocalIndexType = typename SubControlVolumeFace::Traits::LocalIndexType;
         for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
         {
-            // get asssociated dof index
+            // get associated dof index
             const auto dofIdxGlobal = gridGeometry().vertexMapper().subIndex(element, scvLocalIdx, dim);
 
             // add scv to the local container

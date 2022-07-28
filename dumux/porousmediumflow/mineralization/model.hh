@@ -38,7 +38,7 @@ namespace Dumux {
 /*!
  * \ingroup MineralizationModel
  * \brief Specifies a number properties of
- *        models that consider mineralization proceses.
+ *        models that consider mineralization processes.
  *
  * \ţparam NonMinTraits traits class of the underlying model
  *                      not considering mineralization.

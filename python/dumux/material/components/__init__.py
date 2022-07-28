@@ -17,7 +17,7 @@ _components = {
 
 def listComponents():
     """List all available component names"""
-    print("The following components are availabe:")
+    print("The following components are available:")
     print(_components.keys())
 
 

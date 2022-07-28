@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Linear
- * \brief A helper classe that converts a Dune::MultiTypeBlockMatrix into a plain Dune::BCRSMatrix
+ * \brief A helper class that converts a Dune::MultiTypeBlockMatrix into a plain Dune::BCRSMatrix
  */
 #ifndef DUMUX_MATRIX_CONVERTER
 #define DUMUX_MATRIX_CONVERTER
@@ -38,7 +38,7 @@ namespace Dumux {
 
 /*!
  * \ingroup Linear
- * \brief A helper classe that converts a Dune::MultiTypeBlockMatrix into a plain Dune::BCRSMatrix
+ * \brief A helper class that converts a Dune::MultiTypeBlockMatrix into a plain Dune::BCRSMatrix
  * TODO: allow block sizes for BCRSMatrix other than 1x1 ?
  *
  */
@@ -197,7 +197,7 @@ private:
 
 /*!
  * \ingroup Linear
- * \brief A helper classe that converts a Dune::MultiTypeBlockVector into a plain Dune::BlockVector and transfers back values
+ * \brief A helper class that converts a Dune::MultiTypeBlockVector into a plain Dune::BlockVector and transfers back values
  */
 template<class MultiTypeBlockVector, class Scalar=double>
 class VectorConverter
@@ -233,7 +233,7 @@ public:
     }
 
     /*!
-     * \brief Copys the entries of a Dune::BlockVector to a Dune::MultiTypeBlockVector
+     * \brief Copies the entries of a Dune::BlockVector to a Dune::MultiTypeBlockVector
      *
      * \param x The multitype blockvector where the values are copied to
      * \param y The regular blockvector where the values are copied from

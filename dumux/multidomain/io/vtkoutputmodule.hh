@@ -40,7 +40,7 @@ namespace Dumux {
  * \ingroup MultiDomain
  * \brief A multidomain wrapper for multiple vtk output modules
  * \tparam MDTraits The multidomain traits
- * \tparam Module An output module class template that takes GridVariables and SolutionVector as arugments
+ * \tparam Module An output module class template that takes GridVariables and SolutionVector as arguments
  */
 template<class MDTraits, template<class GV, class S> class Module = Dumux::VtkOutputModule>
 class MultiDomainVtkOutputModule
@@ -76,7 +76,7 @@ public:
     MultiDomainVtkOutputModule() = default;
 
     /*!
-     * \brief Contruct the vtk output modules
+     * \brief Construct the vtk output modules
      * \param gridVars a tuple of grid variables
      * \param sol the multidomain solution vector
      * \param name the base name for the vtk output
@@ -135,7 +135,7 @@ public:
 
 private:
 
-    //! a tuple of pointes to all vtk output modules
+    //! a tuple of points to all vtk output modules
     typename MDTraits::template Tuple<PtrType> vtkOutputModule_;
 };
 

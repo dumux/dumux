@@ -139,7 +139,7 @@ int main(int argc, char** argv)
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     StaggeredVtkOutputModule<StokesGridVariables, Traits::SolutionVector> stokesVtkWriter(*stokesGridVariables, sol, stokesProblem->name());
     GetPropType<StokesTypeTag, Properties::IOFields>::initOutputModule(stokesVtkWriter);
     stokesVtkWriter.write(0.0);

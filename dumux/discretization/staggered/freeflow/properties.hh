@@ -61,7 +61,7 @@ struct NumEqFace<TypeTag, TTag::StaggeredFreeFlowModel> { static constexpr int v
 /*!
  * \brief  For free flow models, we take the number of "physical" equations
  *         (e.g. 4 for a 3D NavierStokes problem, 3 velocity components and pressure)
- *         and substract the number of dimensions. This yields the number of equations to be
+ *         and subtract the number of dimensions. This yields the number of equations to be
  *         solved on the cell centers. Works also for non-isothermal models.
  */
 template<class TypeTag>

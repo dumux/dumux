@@ -348,7 +348,7 @@ public:
         {
             temperature = 275;
             Dune::dgrave << "Temperature below 275K in viscosity function:"
-                    << "Regularizing tempereature to 275K. " << std::endl;
+                    << "Regularizing temperature to 275K. " << std::endl;
         }
 
 

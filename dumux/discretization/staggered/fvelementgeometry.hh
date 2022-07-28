@@ -120,7 +120,7 @@ public:
         return scvf(this->gridGeometry().localToGlobalScvfIndex(eIdx, localScvfIdx));
     }
 
-    //! Get an elment sub control volume with a global scv index
+    //! Get an element sub control volume with a global scv index
     //! We separate element and neighbor scvs to speed up mapping
     const SubControlVolume& scv(GridIndexType scvIdx) const
     {

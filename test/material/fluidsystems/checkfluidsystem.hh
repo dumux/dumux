@@ -380,7 +380,7 @@ int checkFluidState(const BaseFluidState &fs)
 //     std::cout << collectedWarnings;
     if (collectedErrors.empty()) // success
     {
-        std::cout << "... successfull" << std::endl;
+        std::cout << "... successful" << std::endl;
         std::cout << "----------------------------------" << std::endl;
         return 0;
     }

@@ -54,7 +54,7 @@ public:
     }
 
     /*!
-     * \brief Computes the derivative of a function with repect to a function parameter
+     * \brief Computes the derivative of a function with respect to a function parameter
      * \note Overload using default epsilon computation
      */
     template<class Function, class Scalar, class FunctionEvalType>
@@ -65,14 +65,14 @@ public:
     { partialDerivative(function, x0, derivative, fx0, epsilon(x0), numericDifferenceMethod); }
 
     /*!
-     * \brief Computes the derivative of a function with repect to a function parameter
+     * \brief Computes the derivative of a function with respect to a function parameter
      * \param function The function to derive
      * \param x0 The parameter at which the derivative is ought to be evaluated
      * \param derivative The partial derivative (output)
      * \param fx0 The result of the function evaluated at x0
      * \param eps The numeric epsilon used in the differentiation
      * \param numericDifferenceMethod The numeric difference method
-     *        (1: foward differences (default), 0: central differences, -1: backward differences)
+     *        (1: forward differences (default), 0: central differences, -1: backward differences)
      */
     template<class Function, class Scalar, class FunctionEvalType>
     static void partialDerivative(const Function& function, Scalar x0,

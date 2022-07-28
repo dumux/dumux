@@ -31,7 +31,7 @@ git clone https://gitlab.dune-project.org/core/dune-istl
 git clone https://git.iws.uni-stuttgart.de/dumux-repositories/dumux
 ```
 
-Create and activate a new virutal environment in which the
+Create and activate a new virtual environment in which the
 Python modules will be installed in editable mode (symlinked)
 
 ```

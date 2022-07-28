@@ -329,7 +329,7 @@ public:
 
     /*!
      * \brief Returns a reference pressure at a given sub control volume face.
-     *        This pressure is substracted from the actual pressure for the momentum balance
+     *        This pressure is subtracted from the actual pressure for the momentum balance
      *        which potentially helps to improve numerical accuracy by avoiding issues related do floating point arithmetic.
      */
     Scalar referencePressure(const Element& element,

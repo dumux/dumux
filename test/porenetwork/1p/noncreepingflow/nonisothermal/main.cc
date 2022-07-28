@@ -106,7 +106,7 @@ int main(int argc, char** argv)
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     Dumux::PoreNetwork::VtkOutputModule<GridVariables, GetPropType<TypeTag, Properties::FluxVariables>, SolutionVector>
         vtkWriter(*gridVariables, x, problem->name());

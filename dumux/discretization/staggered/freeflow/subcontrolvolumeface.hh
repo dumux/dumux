@@ -204,7 +204,7 @@ public:
         return area_;
     }
 
-    //! Returns bolean if the sub control volume face is on the boundary
+    //! Returns boolean if the sub control volume face is on the boundary
     bool boundary() const
     {
         return boundary_;
@@ -442,7 +442,7 @@ public:
             // pairData(localSubFaceIdx).parallelCellWidths[0]) will return 0.0 if the subface perpendicular the scvf lies on a boundary
         else
         {
-            assert((parallelDegreeIdx == 1) && "Only the width of the first two parallel cells (indicies 0 and 1) is stored for each scvf.");
+            assert((parallelDegreeIdx == 1) && "Only the width of the first two parallel cells (indices 0 and 1) is stored for each scvf.");
             return (pairData(localSubFaceIdx).parallelCellWidths[0] + pairData(localSubFaceIdx).parallelCellWidths[1]) * 0.5;
         }
     }

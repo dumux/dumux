@@ -431,7 +431,7 @@ public:
      * \brief Returns the water content of a fluid phase within the finite volume.
      *
      * The water content is defined as the fraction of
-     * the saturation devided by the porosity.
+     * the saturation divided by the porosity.
 
      * \param phaseIdx The index of the fluid phase
      * \note this function is here as a convenience to the user to not have to

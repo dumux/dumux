@@ -561,7 +561,7 @@ private:
     /*!
      * \brief A method assembling something per element
      * \note Handles exceptions for parallel runs
-     * \throws NumericalProblem on all processes if something throwed during assembly
+     * \throws NumericalProblem on all processes if an exception is thrown during assembly
      * TODO: assemble in parallel
      */
     template<std::size_t i, class AssembleElementFunc>
@@ -604,7 +604,7 @@ private:
                                                         domainJ, gridGeometry(domainJ));
     }
 
-    // build periodic contraints into the system matrix
+    // build periodic constraints into the system matrix
     template<std::size_t i, class JacRow, class Sol, class GG>
     void enforcePeriodicConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Sol& res, const GG& gridGeometry, const Sol& curSol)
     {

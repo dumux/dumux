@@ -43,7 +43,7 @@ namespace Dumux {
  *        can be used in the context of models where a sub-domain lives on the
  *        facets of a bulk grid.
  *
- * \tparam Embeddings Class containing the embedments of entites between grids of codim 1
+ * \tparam Embeddings Class containing the embedments of entities between grids of codim 1
  * \tparam bulkGridId The grid id of the d-dimensional grid within the hierarchy
  * \tparam facetGridId The grid id of the (d-1)-dimensional grid within the hierarchy
  */
@@ -139,7 +139,7 @@ public:
     /*!
      * \brief Returns the index within the d-dimensional grid of a vertex
      *        of the (d-1)-dimensional grid.
-     * \note  Leads to undefined behaviour if called for a vertex which doens't
+     * \note  Leads to undefined behaviour if called for a vertex which doesn't
      *        exist on the d-dimensional grid
      */
     BulkIndexType bulkGridVertexIndex(const FacetGridVertex& v) const

@@ -120,7 +120,7 @@ int main(int argc, char** argv)
     onePGridVariables->init(x[onePId]);
     poroMechGridVariables->init(x[poroMechId]);
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     using OnePVtkOutputModule = Dumux::VtkOutputModule<OnePGridVariables, GetPropType<OnePTypeTag, Properties::SolutionVector>>;
     using PoroMechVtkOutputModule = Dumux::VtkOutputModule<PoroMechGridVariables, GetPropType<PoroMechTypeTag, Properties::SolutionVector>>;
     OnePVtkOutputModule onePVtkWriter(*onePGridVariables, x[onePId], onePProblem->name());

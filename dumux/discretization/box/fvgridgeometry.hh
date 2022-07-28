@@ -349,7 +349,7 @@ private:
     std::size_t numScvf_;
     std::size_t numBoundaryScvf_;
 
-    // vertices on the boudary
+    // vertices on the boundary
     std::vector<bool> boundaryDofIndices_;
     std::vector<bool> hasBoundaryScvf_;
 
@@ -554,7 +554,7 @@ private:
     std::size_t numScvf_;
     std::size_t numBoundaryScvf_;
 
-    // vertices on the boudary
+    // vertices on the boundary
     std::vector<bool> boundaryDofIndices_;
 
     // a map for periodic boundary vertices

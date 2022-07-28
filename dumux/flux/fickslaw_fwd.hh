@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Flux
- * \brief Fick's law specilized for different discretization schemes.
+ * \brief Fick's law specialized for different discretization schemes.
  *        This file contains the data which is required to calculate
  *        diffusive mass fluxes due to molecular diffusion with Fick's law.
  */

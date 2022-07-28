@@ -157,7 +157,7 @@ private:
         else if (refType == "Copy")
             ParentType::grid().setRefinementType(Dune::UGGrid<dim>::RefinementType::COPY);
         else
-            DUNE_THROW(Dune::IOError, "UGGrid only supports 'Local' or 'Copy' as refinment type. Not '"<< refType<<"'!");
+            DUNE_THROW(Dune::IOError, "UGGrid only supports 'Local' or 'Copy' as refinement type. Not '"<< refType<<"'!");
 
         // Set closure type
         const auto closureType = getParamFromGroup<std::string>(modelParamGroup, "Grid.ClosureType", "Green");

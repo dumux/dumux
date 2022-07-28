@@ -127,7 +127,7 @@ int main(int argc, char** argv)
     const auto maxDT = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.Dt");
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     using TwoPVtkOutputModule = Dumux::VtkOutputModule<TwoPGridVariables, GetPropType<TwoPTypeTag, Properties::SolutionVector>>;
     using PoroMechVtkOutputModule = Dumux::VtkOutputModule<PoroMechGridVariables, GetPropType<PoroMechTypeTag, Properties::SolutionVector>>;
     TwoPVtkOutputModule twoPVtkWriter(*twoPGridVariables, x[twoPId], twoPProblem->name());

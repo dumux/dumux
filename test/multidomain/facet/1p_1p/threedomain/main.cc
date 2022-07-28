@@ -176,7 +176,7 @@ int main(int argc, char** argv)
     GridVariables gridVars(gridGeometry.asTuple(), problem.asTuple());
     gridVars.init(x);
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     const std::array<std::string, 3> vtkOutputNames{{problem[bulkId].name(), problem[facetId].name(), problem[edgeId].name()}};
     MultiDomainVtkOutputModule<Traits> vtkWriter(gridVars.asTuple(), x, vtkOutputNames);
     vtkWriter.initDefaultOutputFields();

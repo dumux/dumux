@@ -125,7 +125,7 @@ int main(int argc, char** argv)
     auto darcyGridVariables = std::make_shared<DarcyGridVariables>(darcyProblem, darcyFvGridGeometry);
     darcyGridVariables->init(sol[darcyIdx]);
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     StaggeredVtkOutputModule<StokesGridVariables, decltype(stokesSol)> stokesVtkWriter(*stokesGridVariables, stokesSol, stokesProblem->name());
     GetPropType<StokesTypeTag, Properties::IOFields>::initOutputModule(stokesVtkWriter);
     stokesVtkWriter.write(0.0);

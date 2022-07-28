@@ -118,7 +118,7 @@ inline Dune::ReservedVector<Scalar, 4> cornerHalfAngles(Shape shape)
             return Dune::ReservedVector<Scalar, 4>{};
         }
         case Shape::polygon: DUNE_THROW(Dune::InvalidStateException, "Corner half angles for polygons must be calculated explicitly");
-        default: DUNE_THROW(Dune::InvalidStateException, "Unkown shape");
+        default: DUNE_THROW(Dune::InvalidStateException, "Unknown shape");
         // TODO implement angles for scaleneTriangle as given by Valvatne & Blunt (2004)
     }
 }
@@ -167,7 +167,7 @@ inline Scalar shapeFactor(Shape shape, const Scalar inscribedRadius)
         case Shape::circle: return shapeFactorCircle<Scalar>();
         case Shape::twoPlates: return 0.0; // TODO is this a good idea?
         case Shape::polygon: DUNE_THROW(Dune::InvalidStateException, "The shape factor for a polygon has to be defined by the input data");
-        default: DUNE_THROW(Dune::InvalidStateException, "Unkown shape");
+        default: DUNE_THROW(Dune::InvalidStateException, "Unknown shape");
     }
 }
 

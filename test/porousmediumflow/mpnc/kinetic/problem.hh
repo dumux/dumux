@@ -21,7 +21,7 @@
  * \ingroup MPNCTests
  * \brief Problem showcasing the capabilities of the kinetic model.
  *
- * The whole domain is porous medium, but the upper half has properties mimicing
+ * The whole domain is porous medium, but the upper half has properties mimicking
  * the ones of a free-flow domain.
  * This way a poor man's coupling approach is accomplished: Without the
  * complications of coupling, the main characteristics of a porous and a free-flow
@@ -308,7 +308,7 @@ private:
         // capillary pressure Params
         FluidState equilibriumFluidState;
 
-        //set saturation to inital values, this needs to be done in order for the fluidState to tell me pc
+        //set saturation to initial values, this needs to be done in order for the fluidState to tell me pc
         for (int phaseIdx = 0; phaseIdx < numPhases ; ++phaseIdx)
         {
             equilibriumFluidState.setSaturation(phaseIdx, S[phaseIdx]);
@@ -322,7 +322,7 @@ private:
 
         Scalar p[numPhases];
         if (this->spatialParams().inPM_(globalPos)){
-            // Use homogenous pressure in the domain and let the newton find the pressure distribution
+            // Use homogeneous pressure in the domain and let the newton find the pressure distribution
             using std::abs;
             p[liquidPhaseIdx] = pnInitial_  - abs(capPress[liquidPhaseIdx]);
             p[gasPhaseIdx] = p[liquidPhaseIdx] + abs(capPress[liquidPhaseIdx]);

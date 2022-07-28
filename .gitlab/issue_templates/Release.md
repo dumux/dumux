@@ -35,7 +35,7 @@ __Hard Feature Freeze!__
 - [ ]  Update all install scripts and the install text in the handbook
 - [ ]  Header check (run `make headercheck`)
 - [ ]  Re-generate parameter list (`bin/doc/generate_parameterlist.py`) and check log file (maybe manual updates to `bin/doc/docextra/parameters.json` are needed)
-- [ ]  Make sure the CMakeLists.txt in `dumux` subfolder are up-to-date (generated with `bin/utils/create_cmakelists.py`, dumux `make install` should result in a useable installed dumux version)
+- [ ]  Make sure the CMakeLists.txt in `dumux` subfolder are up-to-date (generated with `bin/utils/create_cmakelists.py`, dumux `make install` should result in a usable installed dumux version)
 - [ ]  Create release branches
 - [ ]  Configure CI to test release branch
 - [ ]  Local Testing (different compilers and dependency setups)

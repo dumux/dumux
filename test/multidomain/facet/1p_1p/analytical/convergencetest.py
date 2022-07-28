@@ -98,7 +98,7 @@ for permIndex in range(0, len(k)):
 
     # test is failed if the rate in the matrix is lower than 1.9
     if abs(matrix_rates[len(matrix_rates)-1]) < 1.9:
-        sys.stderr.write("\n\nComputed a convergence rate of " + str(abs(matrix_rates[len(matrix_rates)-1])) + ", which is below the treshold of 1.9. Test fails...\n")
+        sys.stderr.write("\n\nComputed a convergence rate of " + str(abs(matrix_rates[len(matrix_rates)-1])) + ", which is below the threshold of 1.9. Test fails...\n")
         sys.exit(1)
 
     # write last output for the matrix

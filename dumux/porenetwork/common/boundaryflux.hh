@@ -235,7 +235,7 @@ private:
                 NumEqVector flux(0.0);
                 for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
                 {
-                    // Check the type of the boudary condition.
+                    // Check the type of the boundary condition.
                     // If BC is Dirichlet type, the flux is equal to the local residual of the element's scv on the boundary.
                     // Otherwise the flux is either zero or equal to a source term at the element's scv on the boundary.
                     // Technicaly, the PNM considers source terms instead of Neumann BCs.
@@ -249,7 +249,7 @@ private:
                         flux[eqIdx] = residual[scv.indexInElement()][eqIdx];
                 }
 
-                // The flux must be substracted:
+                // The flux must be subtracted:
                 // On an inlet boundary, the flux part of the local residual will be positive, since all fluxes will leave the SCV towards to interior domain.
                 // For the domain itself, however, the sign has to be negative, since mass is entering the system.
                 boundaryFluxes_[scv.dofIndex()] -= flux;

@@ -20,7 +20,7 @@ include(AddKokkosFlags)
 # possibly link against TBB
 # even if an older version is found
 # otherwise we get linker errors
-# beacuse of inconsistencies with
+# because of inconsistencies with
 # dune-common's TBB setup
 find_package(TBB)
 include(AddTBBFlags)

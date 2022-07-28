@@ -41,7 +41,7 @@ public:
     using Scalar = double;
 
     /*!
-     * \brief Contruct the solver
+     * \brief Construct the solver
      * \note Read parameters from the parameter tree
      *       - LinearSolver.Verbosity the verbosity level of the linear solver
      *       - LinearSolver.MaxIterations the maximum iterations of the solver

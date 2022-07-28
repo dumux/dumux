@@ -120,7 +120,7 @@ public:
         //problem
         name_ = getParam<std::string>("Problem.Name");
 
-        //inital conditions
+        //initial conditions
         initPressure_      = getParam<Scalar>("Problem.InitialPressure");
         initGasSaturation_      = getParam<Scalar>("Problem.InitialGasSaturation");
         initSalinity_          = getParam<Scalar>("Problem.InitialSalinity");
@@ -335,7 +335,7 @@ public:
         Scalar moleFracNaCl_Max_wPhase = massToMoleFrac_(massFracNaCl_Max_wPhase);
         Scalar saltPorosity = this->spatialParams().minimalPorosity(element, scv);
 
-        // precipitation of amount of salt whic hexeeds the solubility limit
+        // precipitation of amount of salt which hexeeds the solubility limit
         using std::abs;
         Scalar precipSalt = volVars.porosity() * volVars.molarDensity(liquidPhaseIdx)
                                                * volVars.saturation(liquidPhaseIdx)

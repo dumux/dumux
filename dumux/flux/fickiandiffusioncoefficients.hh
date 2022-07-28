@@ -47,7 +47,7 @@ public:
     void update(const DiffCoeffFunc& computeDiffCoeff)
     {
         // fill the diffusion coefficient, only compute the ones we need, see getIndex_ doc
-        // the first component index "compIIdx" is always the main compnent index (phaseIdx)
+        // the first component index "compIIdx" is always the main component index (phaseIdx)
         // if we have less components than phases we need to limit the index
         // this last case only occurs for 3p2c, there are no other special cases (2p1c doesn't have diffusion, max. number of phases is 3)
         static_assert(numPhases <= numComponents || (numPhases == 3 && numComponents == 2),

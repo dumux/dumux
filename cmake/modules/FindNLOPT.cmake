@@ -4,7 +4,7 @@
 # Variables used by this module which you may want to set:
 # NLOPT_ROOT         Path list to search for NLOPT
 #
-# Sets the follwing variable:
+# Sets the following variable:
 #
 # NLOPT_FOUND           True if NLOPT available and usable.
 # NLOPT_INCLUDE_DIRS    Path to the NLOPT include dirs.
@@ -84,7 +84,7 @@ if(NLOPT_FOUND)
   set(NLOPT_DUNE_LIBRARIES ${NLOPT_LIBRARIES}
     CACHE STRING "Libraries used by DUNE when linking NLOPT programs")
 else(NLOPT_FOUND)
-  # log errornous result
+  # log erroneous result
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
     "Determining location of NLOPT failed:\n"
     "Include directory: ${NLOPT_INCLUDE_DIRS}\n"

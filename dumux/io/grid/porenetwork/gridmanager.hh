@@ -190,7 +190,7 @@ public:
         // evaluate the coordination numbers to check if all pores are connected to at least one throat
         gridData_->getCoordinationNumbers();
 
-        // for dgf grid, copy the data to peristent containers
+        // for dgf grid, copy the data to persistent containers
         if (enableDgfGridPointer_)
             gridData_->copyDgfData();
 

@@ -135,7 +135,7 @@ int main(int argc, char** argv)
 {
     using namespace Dumux;
 
-    // initialize MPI and multithreading environemnt
+    // initialize MPI and multithreading environment
     // finalize is done automatically on exit
     initialize(argc, argv);
 

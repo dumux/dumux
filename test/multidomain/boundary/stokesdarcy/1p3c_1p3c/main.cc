@@ -144,7 +144,7 @@ int main(int argc, char** argv)
     auto darcyGridVariables = std::make_shared<DarcyGridVariables>(darcyProblem, darcyFvGridGeometry);
     darcyGridVariables->init(sol[darcyIdx]);
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     const auto stokesName = getParam<std::string>("Problem.Name") + "_" + stokesProblem->name();
     const auto darcyName = getParam<std::string>("Problem.Name") + "_" + darcyProblem->name();
 

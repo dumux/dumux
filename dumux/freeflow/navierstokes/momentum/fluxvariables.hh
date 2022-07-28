@@ -295,7 +295,7 @@ public:
         // The pressure contribution calculated above might have a much larger numerical value compared to the viscous or inertial forces.
         // This may lead to numerical inaccuracies due to loss of significance (cancellantion) for the final residual value.
         // In the end, we are only interested in a pressure difference between the two relevant faces so we can
-        // substract a reference value from the actual pressure contribution. Assuming an axisparallel cartesian grid,
+        // subtract a reference value from the actual pressure contribution. Assuming an axisparallel cartesian grid,
         // scvf.area() will have the same value at both opposing faces such that the reference pressure contribution
         // cancels out in the final residual which combines the pressure contribution of two adjacent elements
         // We explicitly do extrude the area here because that might yield different results in both elements.

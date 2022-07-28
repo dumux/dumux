@@ -66,7 +66,7 @@ class PointSourceProblem : public PorousMediumFlowProblem<TypeTag>
     // [[/details]]
     //
     // In the constructor of the class, we call the parent type's constructor
-    // and read the intial values for the primary variables from a text file.
+    // and read the initial values for the primary variables from a text file.
     // The function `readFileToContainer` is implemented in the header `dumux/io/container.hh`.
 public:
     PointSourceProblem(std::shared_ptr<const GridGeometry> gridGeometry)
@@ -166,7 +166,7 @@ public:
     // The `PointSource` constructor takes two arguments.
     // The first argument is a coordinate array containing the position in space,
     // the second argument is an array of source value for each equation (in units of $`kg/s`$).
-    // Recall that the first eqution is the water phase mass balance
+    // Recall that the first equation is the water phase mass balance
     // and the second equation is the DNAPL phase mass balance.
     void addPointSources(std::vector<PointSource>& pointSources) const
     {

@@ -182,7 +182,7 @@ int main(int argc, char** argv)
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     using SolutionVector0 = std::decay_t<decltype(sol[domain0Idx])>;
     VtkOutputModule<GridVariables0, SolutionVector0> vtkWriter0(*gridVariables0, sol[domain0Idx], problem0->name());
     GetPropType<SubTypeTag0, Properties::IOFields>::initOutputModule(vtkWriter0);

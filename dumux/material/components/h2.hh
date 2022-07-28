@@ -227,7 +227,7 @@ public:
             2.16178*exp(- 2.43787*Tstar);
         Scalar mu = 40.785*Fc*sqrt(M*temperature)/(pow(Vc, 2./3)*Omega_v);
 
-        // convertion from micro poise to Pa s
+        // conversion from micro poise to Pa s
         return mu/1e6 / 10;
     }
 };

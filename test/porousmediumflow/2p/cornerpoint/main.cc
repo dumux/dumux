@@ -109,7 +109,7 @@ int main(int argc, char** argv)
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name(),
                                                              "", Dune::VTK::conforming);

@@ -115,7 +115,7 @@ int main(int argc, char** argv)
 
     // initialize the coupling stencils
     couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x);
-    // intializing the gridvariables requires the coupling manager to be set up
+    // initializing the gridvariables requires the coupling manager to be set up
     momentumGridVariables->init(x[momentumIdx]);
     massGridVariables->init(x[massIdx]);
 

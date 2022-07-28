@@ -1,5 +1,5 @@
 # Dumux wrapper for the module that provides tools for testing the Dune way.
-# We have a wrapper to have to possibily of supporting multiple Dune versions.
+# We have a wrapper to have to possibly of supporting multiple Dune versions.
 #
 # .. cmake_function:: dumux_add_test
 #
@@ -146,7 +146,7 @@
 #       first time a test with that label is added.  In some situations it can
 #       depend on the values of cmake cache variables whether a test is added,
 #       and then it can happen that the :code:`build_${target}_tests` target
-#       exists only sometimes.  If your workflow relies on the existance of
+#       exists only sometimes.  If your workflow relies on the existence of
 #       these targets, even if building them just returns successfully without
 #       doing anything, you can ensure they exist by calling
 #       :ref:`dune_declare_test_label` unconditionally.  The label

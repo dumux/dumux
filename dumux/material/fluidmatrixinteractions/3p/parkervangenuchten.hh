@@ -814,9 +814,9 @@ private:
     /*!
      * \brief The regularized capillary pressure-saturation curve for the gas and nonwetting phase
      * regularized part:
-     *  - low saturation:  extend the \f$\mathrm{p_{cgn}(S_{te})}\f$ curve with the slope at the regularization point (i.e. no kink).
+     *  - low saturation:  extend the \f$\mathrm{p_{cgn}(S_{teff})}\f$ curve with the slope at the regularization point (i.e. no kink).
      *  - high saturation: connect the high regularization point with
-     *                     with a spline and continue linearly for \f$\mathrm{S_{te} > 1}\f$
+     *                     with a spline and continue linearly for \f$\mathrm{S_{teff} > 1}\f$
      * \param ste Effective total liquid (sw + sn) saturation
      */
     OptionalScalar<Scalar> pcgn(Scalar ste) const

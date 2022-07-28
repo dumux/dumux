@@ -20,7 +20,7 @@
  * \file
  * \ingroup ConstraintSolvers
  * \brief Determines the fluid composition given the component
- *        fugacities and an arbitary equation of state.
+ *        fugacities and an arbitrary equation of state.
  */
 #ifndef DUMUX_COMPOSITION_FROM_FUGACITIES_HH
 #define DUMUX_COMPOSITION_FROM_FUGACITIES_HH

@@ -119,7 +119,7 @@ int main(int argc, char** argv)
     assembler->assembleJacobianAndResidual(x);
     solver.reuseMatrix();
 
-    //! intialize the vtk output module
+    //! initialize the vtk output module
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));

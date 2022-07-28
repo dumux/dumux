@@ -57,7 +57,7 @@ public:
     static constexpr int liquidPhaseIdx = 0; //!< index of the liquid phase
     static constexpr int phase0Idx = liquidPhaseIdx; //!< index of the only phase
 
-    static constexpr int comp0Idx = 0; //!< index of the frist component
+    static constexpr int comp0Idx = 0; //!< index of the first component
     static constexpr int comp1Idx = 1; //!< index of the second component
     static constexpr int mainCompIdx = comp0Idx; //!< index of the main component
     static constexpr int secondCompIdx = comp1Idx; //!< index of the secondary component

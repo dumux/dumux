@@ -105,7 +105,7 @@ public:
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
      *
-     * \return The instrinsic permeability
+     * \return The intrinsic permeability
      */
     template<class ElementSolution>
     PermeabilityType permeability(const Element& element,

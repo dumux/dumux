@@ -57,7 +57,7 @@ public:
     /*!
      * \brief Default constructor for a spline.
      *
-     * To specfiy the acutal curve, use one of the set() methods.
+     * To specfiy the actual curve, use one of the set() methods.
      */
     Spline()
     { };
@@ -139,7 +139,7 @@ public:
     /*!
      * \brief Default constructor for a spline.
      *
-     * To specfiy the acutal curve, use one of the set() methods.
+     * To specfiy the actual curve, use one of the set() methods.
      */
     Spline()
     { }

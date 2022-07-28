@@ -5,7 +5,7 @@
 # Koch et al (2020) JCP
 # https://doi.org/10.1016/j.jcp.2020.109370
 #
-# The scipt also prints a table with errors and
+# The script also prints a table with errors and
 # convergence rates
 """
 

@@ -62,7 +62,7 @@ std::vector<std::string_view> tokenize(std::string_view str, std::string_view de
 }
 
 /*
- * \brief Split a string at a given seperator string
+ * \brief Split a string at a given separator string
  * \ingroup Common
  * \param str a string to be split
  * \param delim a set of delimiter characters separating the tokens

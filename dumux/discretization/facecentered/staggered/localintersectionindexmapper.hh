@@ -42,7 +42,7 @@ class FaceCenteredStaggeredLocalIntersectionIndexMapper;
 
 /*!
  * \ingroup FaceCenteredStaggeredDiscretization
- * \brief Provides a mapping of local intersecton indices (indexInInside)
+ * \brief Provides a mapping of local intersection indices (indexInInside)
  *        such that the local indices always follow the order of a reference element,
  *        regardless of how the element is oriented.
  */
@@ -90,7 +90,7 @@ private:
 
 /*!
  * \ingroup FaceCenteredStaggeredDiscretization
- * \brief Provides a mapping of local intersecton indices (indexInInside)
+ * \brief Provides a mapping of local intersection indices (indexInInside)
  *        such that the local indices always follow the order of a reference element,
  *        regardless of how the element in oriented.
  * \note This specialization is used for grids not supporting rotated elements.
@@ -119,7 +119,7 @@ public:
 
 /*!
  * \ingroup FaceCenteredStaggeredDiscretization
- * \brief Provides a mapping of local intersecton indices (indexInInside)
+ * \brief Provides a mapping of local intersection indices (indexInInside)
  *        such that the local indices always follow the order of a reference element,
  *        regardless of how the element is oriented. Does not do anything for grids
  *        not supporting rotated elements (such as Dune::YaspGrid).

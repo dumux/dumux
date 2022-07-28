@@ -127,7 +127,7 @@ public:
 
         // We are done, log output
         std::cout << "Computed bounding box tree with " << numBoundingBoxes()
-                  << " nodes for " << numLeaves << " grid entites in "
+                  << " nodes for " << numLeaves << " grid entities in "
                   << timer.stop() << " seconds." << std::endl;
     }
 

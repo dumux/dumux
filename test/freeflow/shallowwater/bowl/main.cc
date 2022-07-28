@@ -178,7 +178,7 @@ int main(int argc, char** argv)
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
-    // intialize the vtk output module and analytical solution
+    // initialize the vtk output module and analytical solution
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables,x, problem->name());
     auto exactSolution = computeAnalyticalSolution<SolutionVector>(0.0, *problem);
     const auto exactWaterDepth = SolutionComponent<SolutionVector, 0>(exactSolution);

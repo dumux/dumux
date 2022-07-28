@@ -94,7 +94,7 @@ struct Grid<TypeTag, TTag::DarcyOnePTwoC> { using type = Dune::YaspGrid<2>; };
 template<class TypeTag>
 struct MolecularDiffusionType<TypeTag, TTag::DarcyOnePTwoC> { using type = DIFFUSIONTYPE; };
 
-// Set the spatial paramaters type
+// Set the spatial parameters type
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::DarcyOnePTwoC>
 {

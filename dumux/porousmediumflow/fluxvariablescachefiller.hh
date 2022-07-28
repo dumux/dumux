@@ -366,7 +366,7 @@ private:
         static constexpr bool isSecondary = MpfaHelper::considerSecondaryIVs()
                                             && std::is_same_v<InteractionVolume, SecondaryInteractionVolume>;
 
-        // First we upate data which are not dependent on the physical processes.
+        // First we update data which are not dependent on the physical processes.
         // We store pointers to the other flux var caches, so that we have to obtain
         // this data only once and can use it again in the sub-cache fillers.
         const auto numGlobalScvfs = iv.localFaceData().size();
@@ -414,7 +414,7 @@ private:
             // ifs are evaluated at compile time and are optimized away
             if (std::is_same_v<PrimaryInteractionVolume, SecondaryInteractionVolume>)
             {
-                // we cannot make a disctinction, thus we set both pointers
+                // we cannot make a distinction, thus we set both pointers
                 primaryLocalFaceData_ = &(iv.localFaceData()[i]);
                 secondaryLocalFaceData_ = &(iv.localFaceData()[i]);
             }
@@ -462,7 +462,7 @@ private:
                     // ifs are evaluated at compile time and are optimized away
                     if constexpr (std::is_same_v<PrimaryInteractionVolume, SecondaryInteractionVolume>)
                     {
-                        // we cannot make a disctinction, thus we set both pointers
+                        // we cannot make a distinction, thus we set both pointers
                         primaryLocalFaceData_ = &(iv.localFaceData()[i]);
                         secondaryLocalFaceData_ = &(iv.localFaceData()[i]);
                     }
@@ -502,7 +502,7 @@ private:
             // ifs are evaluated at compile time and are optimized away
             if constexpr (std::is_same_v<PrimaryInteractionVolume, SecondaryInteractionVolume>)
             {
-                // we cannot make a disctinction, thus we set both pointers
+                // we cannot make a distinction, thus we set both pointers
                 primaryLocalFaceData_ = &(iv.localFaceData()[i]);
                 secondaryLocalFaceData_ = &(iv.localFaceData()[i]);
             }

@@ -80,7 +80,7 @@ public:
     void setIntegrationElement(const Scalar ie)
     { integrationElement_ = ie; }
 
-    //! The index of the element this intergration point source is associated with
+    //! The index of the element this integration point source is associated with
     std::size_t elementIndex() const
     { return elementIndex_; }
 
@@ -141,7 +141,7 @@ public:
                         if (intersectsPointGeometry(globalPos, scv.geometry()))
                             scvIndices.push_back(scv.indexInElement());
 
-                    // for all scvs that where tested positiv add the point sources
+                    // for all scvs that where tested positive add the point sources
                     // to the element/scv to point source map
                     for (auto scvIdx : scvIndices)
                     {

@@ -429,7 +429,7 @@ public:
      *       the primary variables at the degree of freedom location with index dofIdxGlobalJ
      * \note  the element whose residual is to be evaluated can be retrieved from the local assembler
      *        as localAssemblerI.element()
-     * \note  per default, we udpate the solution vector, if the element residual of domain i depends on more than
+     * \note  per default, we update the solution vector, if the element residual of domain i depends on more than
      *        the primary variables of domain j update the other dependent data here by overloading this function
      */
     template<std::size_t i, std::size_t j, class LocalAssemblerI>

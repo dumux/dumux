@@ -118,7 +118,7 @@ int main(int argc, char** argv)
                                                  std::make_tuple(momentumGridVariables, massGridVariables),
                                                  couplingManager);
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     using IOFields = GetPropType<MassTypeTag, Properties::IOFields>;
     VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name());
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
