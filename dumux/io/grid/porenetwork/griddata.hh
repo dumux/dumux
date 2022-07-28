@@ -246,9 +246,9 @@ public:
 
             std::string msg;
             if (paramName.find("Throat") != std::string::npos)
-                msg = "Make sure to include it in the vector of parameter names ElementParameters = " + paramName + " ... ...";
+                msg = "Make sure to include it in the vector of parameter names as a comment in the DGF file: Element Parameters = ... " + paramName + " ...";
             else if (paramName.find("Pore") != std::string::npos)
-                msg = "Make sure to include it in the vector of parameter names VertexParameters = " + paramName + " ... ...";
+                msg = "Make sure to include it in the vector of parameter names as a comment in the DGF file: Vertex Parameters = ... " + paramName + " ...";
 
             DUNE_THROW(Dumux::ParameterException, paramName << " not set in the grid file. \n" << msg << "\n" << list.str());
         }
