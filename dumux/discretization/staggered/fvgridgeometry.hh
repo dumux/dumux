@@ -26,7 +26,6 @@
 
 #include <utility>
 
-#include <dumux/common/deprecated.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/basegridgeometry.hh>
 #include <dumux/discretization/checkoverlapsize.hh>
@@ -369,10 +368,7 @@ private:
 
     void updateIntersectionMapper_()
     {
-        if constexpr (Deprecated::hasUpdateGridView<IntersectionMapper, GridView>())
-            intersectionMapper_.update(this->gridView());
-        else
-            Deprecated::update(intersectionMapper_);
+        intersectionMapper_.update(this->gridView());
     }
 
     void update_()
@@ -647,10 +643,7 @@ private:
 
     void updateIntersectionMapper_()
     {
-        if constexpr (Deprecated::hasUpdateGridView<IntersectionMapper, GridView>())
-            intersectionMapper_.update(this->gridView());
-        else
-            Deprecated::update(intersectionMapper_);
+        intersectionMapper_.update(this->gridView());
     }
 
     void update_()

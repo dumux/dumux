@@ -31,7 +31,6 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numeqvector.hh>
-#include <dumux/common/deprecated.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/flux/referencesystemformulation.hh>
@@ -181,19 +180,14 @@ public:
             }
         }
 
-        if constexpr (Deprecated::hasEnableCompositionalDispersion<ModelTraits>())
+        if constexpr (ModelTraits::enableCompositionalDispersion())
         {
-            if constexpr (ModelTraits::enableCompositionalDispersion())
+            const auto dispersionFluxes = fluxVars.compositionalDispersionFlux(phaseIdx);
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
-                const auto dispersionFluxes = fluxVars.compositionalDispersionFlux(phaseIdx);
-                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                {
-                    flux[compIdx] += dispersionFluxes[compIdx];
-                }
+                flux[compIdx] += dispersionFluxes[compIdx];
             }
         }
-        else
-            enableCompositionalDispersionMissing_<ModelTraits>();
 
         return flux;
     }
@@ -406,12 +400,6 @@ public:
     {
         // TODO maybe forward to the problem?
     }
-
-private:
-    template <class T = ModelTraits>
-    [[deprecated("All compositional models must specify if dispersion is enabled."
-                 "Please add enableCompositionalDispersion to the ModelTraits in your model header.")]]
-    void enableCompositionalDispersionMissing_() const {}
 };
 
 } // end namespace Dumux

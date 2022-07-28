@@ -33,7 +33,6 @@
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/localfunctions/lagrange/lagrangelfecache.hh>
 
-#include <dumux/common/deprecated.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>
@@ -518,10 +517,7 @@ private:
 
     void updateFacetMapper_()
     {
-        if constexpr (Deprecated::hasUpdateGridView<typename Traits::FacetMapper, GridView>())
-            facetMapper_.update(this->gridView());
-        else
-            Deprecated::update(facetMapper_);
+        facetMapper_.update(this->gridView());
     }
 
     template<class FacetGridView, class CodimOneGridAdapter>

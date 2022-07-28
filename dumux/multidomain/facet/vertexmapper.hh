@@ -228,12 +228,6 @@ public:
         initialize_();
     }
 
-    [[deprecated("Use update(gridView) instead! Will be removed after release 2.8.")]]
-    void update()
-    {
-        initialize_();
-    }
-
     /*!
      * \brief Enriches the dof map subject to a (dim-1)-dimensional grid.
      * \note This assumes conforming grids!
