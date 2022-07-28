@@ -450,7 +450,7 @@ protected:
     /*!
      * \brief Make the linear system of equations Mx = d which results
      *        in the moments of the natural spline.
-     * Stoer 2005: Numerische Mathematik 1, p. 111 \cite stoer2005
+     * Stoer2005: Numerische Mathematik 1, p. 111 \cite stoer2005
      */
     template <class Vector, class Matrix>
     void makeNaturalSystem_(Matrix &M, Vector &d)
@@ -489,7 +489,7 @@ protected:
     // segment index
     Scalar eval_(Scalar x, int i) const
     {
-        // See: J. Stoer: "Numerische Mathematik 1", 9th edition,
+        // See: Stoer2005 "Numerische Mathematik 1", 9th edition,
         // Springer, 2005, p. 109
         Scalar h_i1 = h_(i + 1);
         Scalar x_i = x - x_(i);
@@ -515,7 +515,7 @@ protected:
     // and the segment index
     Scalar evalDerivative_(Scalar x, int i) const
     {
-        // See: J. Stoer: "Numerische Mathematik 1", 9th edition,
+        // See: Stoer2005 "Numerische Mathematik 1", 9th edition,
         // Springer, 2005, p. 109
         Scalar h_i1 = h_(i + 1);
         Scalar x_i = x - x_(i);
@@ -545,7 +545,7 @@ protected:
     int monotonic_(int i, Scalar x0, Scalar x1) const
     {
         // shift the interval so that it is consistent with the
-        // definitions by Stoer
+        // definitions by Stoer2005
         x0 = x0 - x_(i);
         x1 = x1 - x_(i);
 
@@ -606,7 +606,7 @@ protected:
         // filter the intersections outside of the specified interval
         int k = 0;
         for (int j = 0; j < n; ++j) {
-            sol[j] += x_(segIdx); // add the offset of the interval. For details see Stoer
+            sol[j] += x_(segIdx); // add the offset of the interval. For details see Stoer2005
             if (x0 <= sol[j] && sol[j] <= x1) {
                 sol[k] = sol[j];
                 ++k;
@@ -661,22 +661,22 @@ protected:
     Scalar moment_(int i) const
     { return asImp_().moment_(i); }
 
-    // returns the coefficient in front of the x^0 term. In Stoer this
+    // returns the coefficient in front of the x^0 term. In Stoer2005 this
     // is delta.
     Scalar a_(int i) const
     { return (moment_(i+1) - moment_(i))/(6*h_(i+1)); }
 
-    // returns the coefficient in front of the x^2 term In Stoer this
+    // returns the coefficient in front of the x^2 term In Stoer2005 this
     // is gamma.
     Scalar b_(int i) const
     { return moment_(i)/2; }
 
-    // returns the coefficient in front of the x^1 term. In Stoer this
+    // returns the coefficient in front of the x^1 term. In Stoer2005 this
     // is beta.
     Scalar c_(int i) const
     { return (y_(i+1) - y_(i))/h_(i + 1) - h_(i+1)/6*(2*moment_(i) + moment_(i+1)); }
 
-    // returns the coefficient in front of the x^0 term. In Stoer this
+    // returns the coefficient in front of the x^0 term. In Stoer2005 this
     // is alpha.
     Scalar d_(int i) const
     { return y_(i); }
