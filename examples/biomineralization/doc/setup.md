@@ -202,11 +202,11 @@ Here, the number of injections and the corresponding parameters are defined base
         // We get the number of injections and the injection data file name from params.input
         numInjections_ = getParam<int>("Injection.NumInjections");
 
-        // We resize the permeability vector contaning the permeabilities for the additional output
+        // We resize the permeability vector containing the permeabilities for the additional output
         permeability_.resize(gridGeometry->numDofs());
 
         // We read from the injection data file which injection type we have in each episode.
-        // We will use this in the Neumann boundary condition to set time dependend, changing boundary conditions.
+        // We will use this in the Neumann boundary condition to set time dependent, changing boundary conditions.
         // We do this similarly to the episode ends in the main file.
         const auto injType = readFileToContainer<std::vector<int>>("injection_type.dat");
         // translate integer to InjectionProcess type
@@ -230,7 +230,7 @@ and print an error message if the test fails
     }
 ```
 
-In the follwing, functions to set the time, time step size and the index of the episode
+In the following, functions to set the time, time step size and the index of the episode
 are declared which are used the time loop in main.cc
 
 ```cpp
@@ -335,7 +335,7 @@ Since we have multiple injections durng the whole simulation period, the Neumann
         // injProcess == 1 codes for an injection of mineralization medium containing urea and calcium chloride.
         // Thus, we add BC terms for those components.
         // Additionally, we need to adjust the amount of water injected due to the high concentration of other components injected.
-        // Finally, we need to adapt the injected NaCorr concentration to account fo the lower pH.
+        // Finally, we need to adapt the injected NaCorr concentration to account for the lower pH.
         else if (injProcess == InjectionProcess::mineralization)
         {
             values[conti0EqIdx + wCompIdx] = - waterFlux * 0.8716 * densityW_ /FluidSystem::molarMass(wCompIdx);    //0.8716 factor accounts for less water per volume due to relatively high solute concentrations!
@@ -506,7 +506,7 @@ The permeability is added to the vtk output
     }
 ```
 
-### Declaring all necessary variables and private fuctions
+### Declaring all necessary variables and private functions
 The internal methods are defined here
 
 ```cpp
@@ -540,7 +540,7 @@ private:
 ```
 
 The remainder of the class contains an epsilon value used for floating point comparisons
-and parameters needed to describe the chemical processess.
+and parameters needed to describe the chemical processes.
 Additionally the problem name, the peremability vector as well as some time-parameters are declared
 <details><summary> Click to show private members</summary>
 eps is used as a small value for the definition of the boundary conditions
@@ -679,7 +679,7 @@ We include the laws for changing permeability based on porosity change according
 ### The spatial parameters class
 In the `ICPSpatialParams` class, we define all functions needed to describe
 the porous medium, e.g. porosity and permeability.
-We inherit from the `FVPorousMediumFlowSpatialParamsMP` class which is the base class for spatial paramters using finite volume discretization schemes.
+We inherit from the `FVPorousMediumFlowSpatialParamsMP` class which is the base class for spatial parameters using finite volume discretization schemes.
 
 ```cpp
 namespace Dumux {
@@ -854,7 +854,7 @@ and inherit the `properties` specialized for the type tags `TwoPNCMin` and `BoxM
 This way, most of the `properties` required for this simulations
 using the box scheme are conveniently specialized for our new `TypeTag`.
 However, some properties depend on user choices and no meaningful default value can be set.
-Those properties will be adressed later in this file.
+Those properties will be addressed later in this file.
 
 ```cpp
 namespace Dumux::Properties {
@@ -868,7 +868,7 @@ struct MICPColumnSimpleChemistry { using InheritsFrom = std::tuple<TwoPNCMin, Bo
 ### Property specializations
 
 In the following piece of code, mandatory `properties` for which no meaningful
-dafault can be set, are specialized for our type tag `MICPColumnSimpleChemistry`.
+default can be set, are specialized for our type tag `MICPColumnSimpleChemistry`.
 
 ```cpp
 // We set the grid to a 1D Yasp Grid

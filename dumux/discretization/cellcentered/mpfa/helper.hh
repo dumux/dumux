@@ -559,7 +559,7 @@ public:
 
         // mpfa methods have to have overlapping cells
         if (gridView.overlapSize(0) == 0)
-            DUNE_THROW(Dune::InvalidStateException, "Grid no overlaping cells. This is required by mpfa methods in parallel.");
+            DUNE_THROW(Dune::InvalidStateException, "Grid no overlapping cells. This is required by mpfa methods in parallel.");
 
         for (const auto& element : elements(gridView))
         {

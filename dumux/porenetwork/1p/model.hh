@@ -174,6 +174,6 @@ struct ModelTraits<TypeTag, TTag::PNMOnePNI> { using type = PorousMediumFlowNIMo
 template<class TypeTag>
 struct ThermalConductivityModel<TypeTag, TTag::PNMOnePNI> { using type = ThermalConductivityAverage<GetPropType<TypeTag, Properties::Scalar>>; };
 
-} // end namespace Dumux::Properies
+} // end namespace Dumux::Properties
 
 #endif

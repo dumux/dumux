@@ -136,7 +136,7 @@ void completeReferenceFluidState(FluidState &fs,
     // calculate the other saturation
     fs.setSaturation(otherPhaseIdx, 1.0 - fs.saturation(refPhaseIdx));
 
-    // calulate the capillary pressure
+    // calculate the capillary pressure
     const auto pc = material.capillaryPressures(fs, /*wPhaseIdx=*/0);
     fs.setPressure(otherPhaseIdx,
                    fs.pressure(refPhaseIdx)
@@ -271,7 +271,7 @@ int main()
     // set pressure of the liquid phase
     fsRef.setPressure(liquidPhaseIdx, 1e6);
 
-    // calulate the capillary pressure
+    // calculate the capillary pressure
     const auto pc = material2.capillaryPressures(fsRef, /*wPhaseIdx=*/0);
     fsRef.setPressure(gasPhaseIdx,
                       fsRef.pressure(liquidPhaseIdx)

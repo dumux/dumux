@@ -173,7 +173,7 @@ auto integrateL2Error(const GridGeometry& gg,
  * \param gv the grid view
  * \param f the grid function
  * \param order the order of the quadrature rule
- * \note overload for a Dune::Funtions::GridFunction
+ * \note overload for a Dune::Functions::GridFunction
  */
 template<class GridView, class F,
          typename std::enable_if_t<Detail::hasLocalFunction<F>(), int> = 0>
@@ -212,7 +212,7 @@ auto integrateGridFunction(const GridView& gv,
  * \param f the first function
  * \param g the second function
  * \param order the order of the quadrature rule
- * \note overload for a Dune::Funtions::GridFunction
+ * \note overload for a Dune::Functions::GridFunction
  * \note dune functions currently doesn't support composing two functions
  */
 template<class GridView, class F, class G,

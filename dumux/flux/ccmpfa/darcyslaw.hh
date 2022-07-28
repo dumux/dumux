@@ -74,7 +74,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
                          const SubControlVolumeFace& scvf,
                          const FluxVariablesCacheFiller& fluxVarsCacheFiller)
         {
-            // get interaction volume related data from the filler class & upate the cache
+            // get interaction volume related data from the filler class & update the cache
             if (fvGeometry.gridGeometry().vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
                 scvfFluxVarsCache.updateAdvection(fluxVarsCacheFiller.secondaryInteractionVolume(),
                                                   fluxVarsCacheFiller.secondaryIvLocalFaceData(),

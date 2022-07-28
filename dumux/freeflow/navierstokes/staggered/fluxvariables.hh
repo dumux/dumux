@@ -297,7 +297,7 @@ public:
         for (int localSubFaceIdx = 0; localSubFaceIdx < numSubFaces; ++localSubFaceIdx)
         {
             const auto eIdx = scvf.insideScvIdx();
-            // Get the face normal to the face the dof lives on. The staggered sub face conincides with half of this lateral face.
+            // Get the face normal to the face the dof lives on. The staggered sub face coincides with half of this lateral face.
             const auto& lateralFace = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
 
             // Create a boundaryTypes object (will be empty if not at a boundary).
@@ -321,7 +321,7 @@ public:
                 lateralFaceBoundaryTypes.emplace(problem.boundaryTypes(element, lateralFace));
             }
 
-            // If the current scvf is on a bounary and if there is a Neumann or Beavers-Joseph-(Saffmann) BC for the stress in tangential direction,
+            // If the current scvf is on a boundary and if there is a Neumann or Beavers-Joseph-(Saffmann) BC for the stress in tangential direction,
             // assign this value for the lateral momentum flux. No further calculations are required. We assume that all lateral faces
             // have the same type of BC (Neumann or Beavers-Joseph-(Saffmann)), but we sample the value at their actual positions.
             if (currentScvfBoundaryTypes)
@@ -616,7 +616,7 @@ private:
 
     /*!
      * \brief Get the location of the lateral staggered face's center.
-     *        Only needed for boundary conditions if the current scvf or the lateral one is on a bounary.
+     *        Only needed for boundary conditions if the current scvf or the lateral one is on a boundary.
      *
      * \verbatim
      *      --------#######o                 || frontal face of staggered half-control-volume
@@ -635,7 +635,7 @@ private:
 
     /*!
      * \brief Get the location of the lateral staggered sub control volume face center.
-     *        Only needed for boundary conditions if the current scvf or the lateral one is on a bounary.
+     *        Only needed for boundary conditions if the current scvf or the lateral one is on a boundary.
      *
      * \verbatim
      *      --------###o####                 || frontal face of staggered half-control-volume

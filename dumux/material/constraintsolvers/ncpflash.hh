@@ -91,7 +91,7 @@ public:
     using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
 
     /*!
-     * \brief Contruct a new flash
+     * \brief Construct a new flash
      * \param wettingPhaseIdx the phase index of the wetting phase
      */
     explicit NcpFlash(int wettingPhaseIdx = 0)

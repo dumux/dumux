@@ -71,11 +71,11 @@ public:
     void init(const std::string& modelParamGroup = "", bool adaptiveRestart = false)
     {
         // restarting an adaptive grid using Dune's BackupRestoreFacility
-        // TODO: the part after first || is backward compatibilty with old sequential models remove once sequential adpative restart is replaced
+        // TODO: the part after first || is backward compatibility with old sequential models remove once sequential adpative restart is replaced
         if (adaptiveRestart || hasParam("Restart") || hasParam("TimeManager.Restart"))
         {
             auto restartTime = getParamFromGroup<double>(modelParamGroup, "TimeLoop.Restart", 0.0);
-            // TODO: backward compatibilty with old sequential models remove once sequential adpative restart is replaced
+            // TODO: backward compatibility with old sequential models remove once sequential adpative restart is replaced
             if (hasParam("Restart") || hasParam("TimeManager.Restart"))
             {
                 restartTime = getParamFromGroup<double>("TimeManager", "Restart");

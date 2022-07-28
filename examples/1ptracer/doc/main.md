@@ -209,7 +209,7 @@ problem defined in `problem_1p.hh`. Let us now write this solution to a VTK file
 We use the results of the 1p problem to calculate the volume fluxes across all sub-control volume
 faces of the discretization and store them in the vector `volumeFlux`. In order to do so, we iterate
 over all elements of the grid, and in each element compute the volume fluxes for all sub-control volume
-faces embeded in that element.
+faces embedded in that element.
 
 ```cpp
     using Scalar =  GetPropType<OnePTypeTag, Properties::Scalar>; // type for scalar values

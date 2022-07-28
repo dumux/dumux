@@ -155,7 +155,7 @@ class from which we will derive.
 #include <dumux/freeflow/shallowwater/problem.hh>
 ```
 
-In addition, we need the boundaryflux header, which handels the flux over
+In addition, we need the boundaryflux header, which handles the flux over
 the model boundaries.
 
 ```cpp
@@ -279,7 +279,7 @@ The bottom friction is a source term and therefore handled by the `source` funct
 
         NumEqVector source (0.0);
 
-        // Since the bed slope source term is handels within the flux computation,
+        // Since the bed slope source term is handles within the flux computation,
         // in this model the bottom friction is the only source term.
         source += bottomFrictionSource(element, fvGeometry, elemVolVars, scv);
 
@@ -334,7 +334,7 @@ because we use a weak imposition.
 In the following function we implement the __Neumann boundary conditions__.
 Due to the weak imposition we calculate the flux at the boundary with a Riemann solver.
 This needs the state of a virtual cell outside of the boundary (`boundaryStateVariables`),
-wich is calculated with the Riemann invariants
+which is calculated with the Riemann invariants
 (see: Yoon and Kang, "Finite Volume Model for Two-Dimensional Shallow Water Flows on Unstructured Grids").
 
 ```cpp

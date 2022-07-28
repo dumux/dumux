@@ -358,7 +358,7 @@
     },
     "Assembly.NumericDifferenceMethod": {
         "explanation": [
-            "The numeric difference method (1: foward differences (default), 0: central differences, -1: backward differences)"
+            "The numeric difference method (1: forward differences (default), 0: central differences, -1: backward differences)"
         ]
     },
     "BinaryCoefficients.GasDiffCoeff": {
@@ -463,7 +463,7 @@
     },
     "Component.ReferenceTemperature": {
         "explanation": [
-            "The reference termperature in \\f$\\mathrm{[K]}\\f$ used when calculating the specific internal energy of a constant component as a liquid."
+            "The reference temperature in \\f$\\mathrm{[K]}\\f$ used when calculating the specific internal energy of a constant component as a liquid."
         ]
     },
     "Component.SolidDensity": {
@@ -638,7 +638,7 @@
     },
     "FreeFlow.UseOldTransportingVelocity": {
         "explanation": [
-            "whether to use the old transporting velocity"
+            "Whether to use the old transporting velocity"
         ]
     },
     "Grid.AddThroatVolumeToPoreVolume": {
@@ -648,7 +648,7 @@
     },
     "Grid.AllowIntersectingDiagonals": {
         "explanation": [
-            "Wether to allow diagonals to intersect in the context of the generation of a structured-lattice pore-network."
+            "Whether to allow diagonals to intersect in the context of the generation of a structured-lattice pore-network."
         ]
     },
     "Grid.Angular0/1/2": {
@@ -770,7 +770,7 @@
     },
     "Grid.DeletionProbability": {
         "explanation": [
-            "For a non-regular lattice, you must specifiy deletion probabilities for deleting throats in all directions. For example (3D): DeletionProbability = 0.5 0.5 0 0 0 0 0 0 0 0 0 0 0 deletes approximately 50% of all throats in x and y direction, while no deletion in any other direction takes place. In 2D four values are required (x (1,0),y (0,1) and two diagnals through cell midpoint (1,1),(1,-1)). In 3D thirteen values are required (x(1,0,0),y(0,1,0),z(0,0,1), six face diagonals (1,1,0),(1,-1,0),(1,0,1),(1,0,-1),(0,1,1),(0,1,-1) and four diagonals through cell midpoint (1,1,1),(1,1,-1),(-1,1,1),(-1,-1,1)."
+            "For a non-regular lattice, you must specify deletion probabilities for deleting throats in all directions. For example (3D): DeletionProbability = 0.5 0.5 0 0 0 0 0 0 0 0 0 0 0 deletes approximately 50% of all throats in x and y direction, while no deletion in any other direction takes place. In 2D four values are required (x (1,0),y (0,1) and two diagnals through cell midpoint (1,1),(1,-1)). In 3D thirteen values are required (x(1,0,0),y(0,1,0),z(0,0,1), six face diagonals (1,1,0),(1,-1,0),(1,0,1),(1,0,-1),(0,1,1),(0,1,-1) and four diagonals through cell midpoint (1,1,1),(1,1,-1),(-1,1,1),(-1,-1,1)."
         ]
     },
     "Grid.DeletionRandomNumberSeed": {
@@ -1015,7 +1015,7 @@
             "std::vector<int>{}"
         ],
         "explanation": [
-            "Lables of pores of pores bodies not belonging to a subregion which should be treated by applying a factor for the radius."
+            "Labels of pores of pores bodies not belonging to a subregion which should be treated by applying a factor for the radius."
         ],
         "mode": "manual",
         "type": [
@@ -1027,7 +1027,7 @@
             "std::vector<int>{}"
         ],
         "explanation": [
-            "Lables of pores of pores bodies not belonging to a subregion which should be treated by setting a fixed radius."
+            "Labels of pores of pores bodies not belonging to a subregion which should be treated by setting a fixed radius."
         ],
         "mode": "manual",
         "type": [
@@ -1228,7 +1228,7 @@
             "std::vector<int>{}"
         ],
         "explanation": [
-            "Lables of pores of pores bodies within this subregion which should be treated by applying a factor for the radius, case with subregions."
+            "Labels of pores of pores bodies within this subregion which should be treated by applying a factor for the radius, case with subregions."
         ],
         "mode": "manual",
         "type": [
@@ -1240,7 +1240,7 @@
             "std::vector<int>{}"
         ],
         "explanation": [
-            "Lables of pores of pores bodies within this subregion which should be treated by setting a fixed radius."
+            "Labels of pores of pores bodies within this subregion which should be treated by setting a fixed radius."
         ],
         "mode": "manual",
         "type": [
@@ -1276,7 +1276,7 @@
             "true"
         ],
         "explanation": [
-            "Decide whether to substract the pore radii from the throat length or not for a pore throat belonging to this subregion."
+            "Decide whether to subtract the pore radii from the throat length or not for a pore throat belonging to this subregion."
         ],
         "mode": "manual",
         "type": [
@@ -1336,7 +1336,7 @@
             "true"
         ],
         "explanation": [
-            "Decide whether to substract the pore radii from the throat length or not for a pore throat not belonging to a subregion."
+            "Decide whether to subtract the pore radii from the throat length or not for a pore throat not belonging to a subregion."
         ],
         "mode": "manual",
         "type": [
@@ -1379,7 +1379,7 @@
     },
     "Grid.ThroatLength": {
         "explanation": [
-            "A user-specified fixed throat lenght."
+            "A user-specified fixed throat length."
         ]
     },
     "Grid.ThroatShapeFactor": {
@@ -1514,7 +1514,7 @@
             "-"
         ],
         "explanation": [
-            "If and how data is agglomerated on coarser level to fewer processors. (\"atOnce\": do agglomeration once and to one process; \"successive\": Multiple agglomerations to fewer proceses until all data is on one process; \"none\": Do no agglomeration at all and solve coarse level iteratively)."
+            "If and how data is agglomerated on coarser level to fewer processors. (\"atOnce\": do agglomeration once and to one process; \"successive\": Multiple agglomerations to fewer processes until all data is on one process; \"none\": Do no agglomeration at all and solve coarse level iteratively)."
         ],
         "mode": "manual",
         "type": [
@@ -1984,12 +1984,12 @@
     },
     "MixedDimension.NumCircleSegments": {
         "explanation": [
-            "The number of circle segements in the context of integration points."
+            "The number of circle segments in the context of integration points."
         ]
     },
     "MixedDimension.Projection.ConsiderFacesWithinBoundingBoxCoupled": {
         "explanation": [
-            "determines if all 3D boundary facets within the mesh bounding box should be consideres as coupling "
+            "determines if all 3D boundary facets within the mesh bounding box should be considered as coupling "
         ]
     },
     "MixedDimension.Projection.CoupledAngleFactor": {
@@ -2069,7 +2069,7 @@
     },
     "Newton.LineSearchMinRelaxationFactor": {
         "explanation": [
-            "A minimum relaxation factor for the line serach process."
+            "A minimum relaxation factor for the line search process."
         ]
     },
     "Newton.MaxAbsoluteResidual": {

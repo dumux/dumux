@@ -58,7 +58,7 @@ public:
 
     /*!
      * \brief Constructor
-     * \note Reads the folloing parameters from the parameter tree
+     * \note Reads the following parameters from the parameter tree
      *       - Adaptive.MinLevel The minimum refinement level
      *       - Adaptive.MaxLevel The maximum refinement level
      *       - Adaptive.RefineAtDirichletBC If to refine at Dirichlet boundaries (default: true)
@@ -100,7 +100,7 @@ public:
     }
 
     /*!
-     * \brief Function to set the minumum/maximum allowed levels.
+     * \brief Function to set the minimum/maximum allowed levels.
      */
     void setLevels(std::size_t minLevel, std::size_t maxLevel)
     {

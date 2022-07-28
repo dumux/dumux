@@ -104,7 +104,7 @@ int main(int argc, char** argv)
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
     auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields

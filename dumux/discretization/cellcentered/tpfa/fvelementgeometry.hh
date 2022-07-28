@@ -83,7 +83,7 @@ public:
     CCTpfaFVElementGeometry(const GridGeometry& gridGeometry)
     : gridGeometryPtr_(&gridGeometry) {}
 
-    //! Get an elment sub control volume with a global scv index
+    //! Get an element sub control volume with a global scv index
     //! We separate element and neighbor scvs to speed up mapping
     const SubControlVolume& scv(GridIndexType scvIdx) const
     {
@@ -235,7 +235,7 @@ public:
     CCTpfaFVElementGeometry(const GridGeometry& gridGeometry)
     : gridGeometryPtr_(&gridGeometry) {}
 
-    //! Get an elment sub control volume with a global scv index
+    //! Get an element sub control volume with a global scv index
     //! We separate element and neighbor scvs to speed up mapping
     const SubControlVolume& scv(GridIndexType scvIdx) const
     {
@@ -475,7 +475,7 @@ private:
         const auto& neighborVolVarIndices = gridGeometry().neighborVolVarIndices(eIdx);
 
         // for network grids there might be multiple intersection with the same geometryInInside
-        // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
+        // we identify those by the indexInInside for now (assumes conforming grids at branching facets)
         // here we keep track of them
         std::vector<bool> handledScvf;
         if (dim < dimWorld)
@@ -527,7 +527,7 @@ private:
         const auto& neighborVolVarIndices = gridGeometry().neighborVolVarIndices(eIdx);
 
         // for network grids there might be multiple intersection with the same geometryInInside
-        // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
+        // we identify those by the indexInInside for now (assumes conforming grids at branching facets)
         // here we keep track of them
         std::vector<bool> handledScvf;
         if (dim < dimWorld)

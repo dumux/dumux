@@ -34,7 +34,7 @@ namespace Dumux {
 /*!
  * \ingroup BoxDiscretization
  * \brief The local (stencil) volume variables class for box models
- * \note The class is specilized for versions with and without caching
+ * \note The class is specialized for versions with and without caching
  * \tparam GVV the grid volume variables type
  * \tparam cachingEnabled if the cache is enabled
  */

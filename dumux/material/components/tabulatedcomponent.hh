@@ -906,7 +906,7 @@ private:
             return max(pressMax_, vaporPressure_[tempIdx] * 1.1);
     }
 
-    //! returns the minumum tabulized gas pressure at a given temperature index
+    //! returns the minimum tabulized gas pressure at a given temperature index
     static Scalar minGasPressure_(int tempIdx)
     {
         using std::min;

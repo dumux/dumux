@@ -312,7 +312,7 @@ int main(int argc, char** argv)
 
     const bool outputVtk = getParam<bool>("Problem.EnableVtkOutput", true);
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     using BulkSolutionVector = std::decay_t<decltype(sol[bulkIdx])>;
     VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, sol[bulkIdx], bulkProblem->name());
     GetPropType<BulkTypeTag, Properties::IOFields>::initOutputModule(bulkVtkWriter);

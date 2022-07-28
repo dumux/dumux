@@ -329,13 +329,13 @@ private:
         // construct the sub control volumes
         for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
         {
-            // get asssociated dof index
+            // get associated dof index
             const auto dofIdxGlobal = gridGeometry().vertexMapper().subIndex(element, scvLocalIdx, dim);
 
             // get the corners
             auto corners = std::array{elementGeometry.corner(scvLocalIdx), elementGeometry.center()};
 
-            // get the fractional volume asssociated with the scv
+            // get the fractional volume associated with the scv
             const auto volume = gridGeometry().poreVolume(dofIdxGlobal) / gridGeometry().coordinationNumber(dofIdxGlobal);
 
             // add scv to the local container

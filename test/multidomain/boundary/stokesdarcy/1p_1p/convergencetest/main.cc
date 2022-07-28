@@ -243,7 +243,7 @@ int main(int argc, char** argv)
     auto darcyGridVariables = std::make_shared<DarcyGridVariables>(darcyProblem, darcyGridGeometry);
     darcyGridVariables->init(sol[darcyIdx]);
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     using Scalar = typename Traits::Scalar;
     StaggeredVtkOutputModule<FreeFlowGridVariables, decltype(freeFlowSol)> freeFlowVtkWriter(*freeFlowGridVariables, freeFlowSol, freeFlowProblem->name());
     GetPropType<FreeFlowTypeTag, Properties::IOFields>::initOutputModule(freeFlowVtkWriter);

@@ -124,7 +124,7 @@ struct RansohoffRadke
 
 namespace NonWettingPhaseTransmissibility {
 
-//! TODO: evalute and maybe remove
+//! TODO: evaluate and maybe remove
 template<class Scalar>
 struct Mogensen
 {
@@ -147,7 +147,7 @@ struct Mogensen
     }
 };
 
-//! TODO: evalute and maybe remove
+//! TODO: evaluate and maybe remove
 template<class Scalar, class SinglePhaseTransmissibilityLaw>
 struct Valvatne
 {

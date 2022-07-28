@@ -338,9 +338,9 @@ public:
         // specialization for 2 fluid phases
         const auto &volVars = elemVolVars[scv];
 
-        const Scalar awn = volVars.interfacialArea(phase0Idx, phase1Idx);
-        const Scalar aws = volVars.interfacialArea(phase0Idx, sPhaseIdx);
-        const Scalar ans = volVars.interfacialArea(phase1Idx, sPhaseIdx);
+        const Scalar areaWN = volVars.interfacialArea(phase0Idx, phase1Idx);
+        const Scalar areaWS = volVars.interfacialArea(phase0Idx, sPhaseIdx);
+        const Scalar areaNS = volVars.interfacialArea(phase1Idx, sPhaseIdx);
 
         const Scalar Tw = volVars.temperatureFluid(phase0Idx);
         const Scalar Tn = volVars.temperatureFluid(phase1Idx);
@@ -361,9 +361,9 @@ public:
         const Scalar nusseltWS = volVars.nusseltNumber(phase0Idx);
         const Scalar nusseltNS = volVars.nusseltNumber(phase1Idx);
 
-        const Scalar wettingToNonwettingEnergyExchange = factorEnergyTransfer * (Tw - Tn) / characteristicLength * awn * lambdaWN * nusseltWN  ;
-        const Scalar wettingToSolidEnergyExchange = factorEnergyTransfer * (Tw - Ts) / characteristicLength * aws * lambdaWS * nusseltWS  ;
-        const Scalar nonwettingToSolidEnergyExchange = factorEnergyTransfer * (Tn - Ts) / characteristicLength * ans * lambdaNS * nusseltNS  ;
+        const Scalar wettingToNonwettingEnergyExchange = factorEnergyTransfer * (Tw - Tn) / characteristicLength * areaWN * lambdaWN * nusseltWN  ;
+        const Scalar wettingToSolidEnergyExchange = factorEnergyTransfer * (Tw - Ts) / characteristicLength * areaWS * lambdaWS * nusseltWS  ;
+        const Scalar nonwettingToSolidEnergyExchange = factorEnergyTransfer * (Tn - Ts) / characteristicLength * areaNS * lambdaNS * nusseltNS  ;
 
         for(int phaseIdx = 0; phaseIdx < numEnergyEqFluid+numEnergyEqSolid; ++phaseIdx)
         {
@@ -410,7 +410,7 @@ public:
                 switch (phaseIdx)
                 {
                 case phase0Idx:
-                //sum up the transfered energy by the components into the wetting phase
+                // sum up the transferred energy by the components into the wetting phase
                     for(int compIdx = 0; compIdx < numComponents; ++compIdx)
                     {
                         const unsigned int eqIdx = conti0EqIdx + compIdx + phaseIdx*numComponents;
@@ -420,7 +420,7 @@ public:
                     }
                 break;
                 case phase1Idx:
-                //sum up the transfered energy by the components into the nonwetting phase
+                // sum up the transferred energy by the components into the nonwetting phase
                     for(int compIdx =0; compIdx<numComponents; ++compIdx)
                     {
                         const unsigned int eqIdx = conti0EqIdx + compIdx + phaseIdx*numComponents;

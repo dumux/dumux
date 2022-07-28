@@ -37,7 +37,7 @@
 #include <dumux/adaptive/markelements.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 
-#ifndef DOXGEN
+#ifndef DOXYGEN
 namespace Dumux {
 namespace Test {
 

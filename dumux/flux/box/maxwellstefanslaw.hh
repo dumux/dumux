@@ -164,7 +164,7 @@ private:
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
-        //this is to not devide by 0 if the saturation in 0 and the effectiveDiffusionCoefficient becomes zero due to that
+        //this is to not divide by 0 if the saturation in 0 and the effectiveDiffusionCoefficient becomes zero due to that
         if(Dune::FloatCmp::eq<Scalar>(insideVolVars.saturation(phaseIdx), 0) || Dune::FloatCmp::eq<Scalar>(outsideVolVars.saturation(phaseIdx), 0))
             return reducedDiffusionMatrix;
 
@@ -184,7 +184,7 @@ private:
             // the resulting averaged diffusion tensor
             const auto tin = faceTensorAverage(tinInside, tinOutside, scvf.unitOuterNormal());
 
-            //begin the entrys of the diffusion matrix of the diagonal
+            // begin with the entries of the diffusion matrix of the diagonal
             reducedDiffusionMatrix[compIIdx][compIIdx] += xi*avgMolarMass/(tin*Mn);
 
             // now set the rest of the entries (off-diagonal and additional entries for diagonal)

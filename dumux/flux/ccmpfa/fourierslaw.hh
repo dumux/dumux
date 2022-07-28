@@ -74,7 +74,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
                          const SubControlVolumeFace& scvf,
                          const FluxVariablesCacheFiller& fluxVarsCacheFiller)
         {
-          // get interaction volume from the flux vars cache filler & upate the cache
+          // get interaction volume from the flux vars cache filler & update the cache
           if (fvGeometry.gridGeometry().vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
               scvfFluxVarsCache.updateHeatConduction(fluxVarsCacheFiller.secondaryInteractionVolume(),
                                                      fluxVarsCacheFiller.secondaryIvLocalFaceData(),

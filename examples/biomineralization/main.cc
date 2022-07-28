@@ -39,7 +39,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/initialize.hh>
 
-// The follwoing files contain the nonlinear Newtown method, the linear solver and the assembler
+// The following files contain the nonlinear Newtown method, the linear solver and the assembler
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/linear/amgbackend.hh>
 #include <dumux/assembly/fvassembler.hh>
@@ -120,7 +120,7 @@ int main(int argc, char** argv) try
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
-    // We intialize the vtk output module. Each model has a predefined model specific output with relevant parameters for that model.
+    // We initialize the vtk output module. Each model has a predefined model specific output with relevant parameters for that model.
     // [[codeblock]]
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;

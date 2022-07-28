@@ -80,7 +80,7 @@ public:
      *
      * \param problem The problem
      * \param scv The sub control volume
-     * \param volVars The primary and secondary varaibles on the scv
+     * \param volVars The primary and secondary variables on the scv
      */
     NumEqVector computeStorage(const Problem& problem,
                                const SubControlVolume& scv,
@@ -125,7 +125,7 @@ public:
      * \param fvGeometry The finite volume geometry context
      * \param elemVolVars The volume variables for all flux stencil elements
      * \param scvf The sub control volume face
-     * \param elemFluxVarsCache The cache related to flux compuation
+     * \param elemFluxVarsCache The cache related to flux computation
      */
     NumEqVector computeFlux(const Problem& problem,
                             const Element& element,
@@ -409,7 +409,7 @@ public:
 
 private:
     template <class T = ModelTraits>
-    [[deprecated("All compositional models must specifiy if dispersion is enabled."
+    [[deprecated("All compositional models must specify if dispersion is enabled."
                  "Please add enableCompositionalDispersion to the ModelTraits in your model header.")]]
     void enableCompositionalDispersionMissing_() const {}
 };

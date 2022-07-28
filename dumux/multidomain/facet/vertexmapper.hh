@@ -120,7 +120,7 @@ public:
                         vertexIndices[i] = codimOneGridAdapter.bulkGridVertexIndex( codimOneElement.template subEntity<dim-1>(vIdxLocal) );
                     }
 
-                    // if any of the vertices is on an immersed boudnary, we must not enrich any of them
+                    // if any of the vertices is on an immersed boundary, we must not enrich any of them
                     if (std::any_of(vertexIndices.begin(), vertexIndices.end(), [&isOnBoundary] (auto idx) { return !isOnBoundary[idx]; }))
                         std::for_each(vertexIndices.begin(), vertexIndices.end(), [&vertexMarkers] (auto idx) { vertexMarkers[idx] = false; });
                 }

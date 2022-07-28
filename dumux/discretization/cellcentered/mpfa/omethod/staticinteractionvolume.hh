@@ -148,7 +148,7 @@ public:
     struct DirichletData
     {
         GridIndexType volVarIndex() const
-        { DUNE_THROW(Dune::InvalidStateException, "Static interaction volume cannot be used on bounaries!"); }
+        { DUNE_THROW(Dune::InvalidStateException, "Static interaction volume cannot be used on boundaries!"); }
     };
 
     //! publicly state the mpfa-scheme this interaction volume is associated with

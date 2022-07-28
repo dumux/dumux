@@ -22,7 +22,7 @@
  *
  * \brief A single-phase, multi-component k-omega model
  *
- * For a detailed model decription see dumux/freeflow/compositional/navierstokesncmodel.hh
+ * For a detailed model description see dumux/freeflow/compositional/navierstokesncmodel.hh
  */
 
 #ifndef DUMUX_KOMEGA_NC_MODEL_HH

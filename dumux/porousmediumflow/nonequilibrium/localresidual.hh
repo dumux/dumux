@@ -86,7 +86,7 @@ public:
         source += problem.scvPointSources(element, fvGeometry, elemVolVars, scv);
 
         // Call the (kinetic) Energy module, for the source term.
-        // it has to be called from here, because the mass transfered has to be known.
+        // it has to be called from here, because the mass transferred has to be known.
         if constexpr(ModelTraits::enableThermalNonEquilibrium())
         {
             EnergyLocalResidual::computeSourceEnergy(source,
@@ -184,7 +184,7 @@ public:
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars The volume variables of the current element
      * \param scvf The sub control volume face to compute the flux on
-     * \param elemFluxVarsCache The cache related to flux compuation
+     * \param elemFluxVarsCache The cache related to flux computation
      */
     NumEqVector computeFlux(const Problem& problem,
                             const Element& element,
@@ -305,7 +305,7 @@ public:
         if constexpr (ModelTraits::enableThermalNonEquilibrium())
         {
             // Call the (kinetic) Energy module, for the source term.
-            // it has to be called from here, because the mass transfered has to be known.
+            // it has to be called from here, because the mass transferred has to be known.
             EnergyLocalResidual::computeSourceEnergy(source,
                                                      element,
                                                      fvGeometry,

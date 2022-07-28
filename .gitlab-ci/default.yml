@@ -78,6 +78,15 @@ pylint-flake8 (python):
     - job: configure
       artifacts: true
 
+codespell:
+  stage: linting
+  script:
+    - codespell --version
+    - codespell --skip="*format/fmt/,*build-cmake*,*.png,*.svg,*.eps,*.bib,*.tex,patches,.git"
+  needs:
+    - job: configure
+      artifacts: true
+
 
 select tests:
   stage: select

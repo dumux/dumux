@@ -113,7 +113,7 @@ public:
         if (hasParam("Problem.SandGrainRoughness"))
             calculateRoughnessLength_(curSol);
 
-        // update routine for specfic models
+        // update routine for specific models
         if (eddyViscosityModel().compare("baldwinLomax") == 0)
             updateBaldwinLomaxProperties();
     }

@@ -57,19 +57,19 @@ struct FreeFlowPorousMediumCouplingOptions
      */
     enum class DiffusionCoefficientAveragingType
     {
-        harmonic, arithmethic, ffOnly, pmOnly
+        harmonic, arithmetic, ffOnly, pmOnly
     };
 
     /*!
-     * \brief Convenience function to convert user input given as std::string to the corresponding enum class used for chosing the type
+     * \brief Convenience function to convert user input given as std::string to the corresponding enum class used for choosing the type
      *        of averaging of the diffusion/conduction parameter at the interface between the two domains.
      */
     static DiffusionCoefficientAveragingType stringToEnum(DiffusionCoefficientAveragingType, const std::string& diffusionCoefficientAveragingType)
     {
         if (diffusionCoefficientAveragingType == "Harmonic")
             return DiffusionCoefficientAveragingType::harmonic;
-        else if (diffusionCoefficientAveragingType == "Arithmethic")
-            return DiffusionCoefficientAveragingType::arithmethic;
+        else if (diffusionCoefficientAveragingType == "Arithmetic")
+            return DiffusionCoefficientAveragingType::arithmetic;
         else if (diffusionCoefficientAveragingType == "FreeFlowOnly")
             return DiffusionCoefficientAveragingType::ffOnly;
         else if (diffusionCoefficientAveragingType == "PorousMediumOnly")
@@ -236,7 +236,7 @@ protected:
             return harmonicMean(avgQuantityI, avgQuantityJ, insideDistance, outsideDistance)
                    / totalDistance;
         }
-        else if(diffCoeffAvgType == DiffusionCoefficientAveragingType::arithmethic)
+        else if(diffCoeffAvgType == DiffusionCoefficientAveragingType::arithmetic)
         {
             return arithmeticMean(avgQuantityI, avgQuantityJ, insideDistance, outsideDistance)
                    / totalDistance;
@@ -262,7 +262,7 @@ protected:
     }
 
     /*!
-     * \brief Returns the conductive energy flux acorss the interface.
+     * \brief Returns the conductive energy flux across the interface.
      */
     template<std::size_t i, std::size_t j, bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
     Scalar conductiveEnergyFlux_(Dune::index_constant<i> domainI,

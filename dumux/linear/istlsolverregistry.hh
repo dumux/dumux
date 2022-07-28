@@ -33,7 +33,7 @@
  * Use this macro in namespace Dumux.
  * Example:
  * DUMUX_REGISTER_PRECONDITIONER("mypreconditioner", Dumux::MultiTypeBlockMatrixPreconditionerTag, Dune::defaultPreconditionerBlockLevelCreator<Dumux::MyPreconditioner, 1>());
- * Expicitly specifying the namespaces is required.
+ * Explicitly specifying the namespaces is required.
  * Set parameter Preconditioner.Type to "mypreconditioner" to use it through the factory.
  *
  * In the macro implementation, the final static_assert forces implementers

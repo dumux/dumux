@@ -560,7 +560,7 @@ public:
         /* compute the diffusion coefficient
          * \note This is the part of the diffusion coefficient determined by the fluid state, e.g.
          *       important if they are tabularized. In the diffusive flux computation (e.g. Fick's law)
-         *       this gets converted into an effecient coefficient depending on saturation and porosity.
+         *       this gets converted into an efficient coefficient depending on saturation and porosity.
          *       We can then add a normalized tensorial component
          *       e.g. obtained from DTI from the spatial params (currently not implemented)
          */

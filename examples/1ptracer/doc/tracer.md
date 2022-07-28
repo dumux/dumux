@@ -135,7 +135,7 @@ This way, most of the properties required for tracer transport simulations using
 the cell centered finite volume scheme with two-point-flux approximation are
 conveniently specialized for our new type tag.
 However, some properties depend on user choices and no meaningful default value
-can be set. Those properties will be adressed later in this file.
+can be set. Those properties will be addressed later in this file.
 
 ```cpp
 namespace Properties {
@@ -193,7 +193,7 @@ Moreover, we specialize several properties related to efficiency optimizations
 <details><summary> Click to show caching properties</summary>
 
 ```cpp
-// In Dumux, one has the option to activate/deactive the grid-wide caching of geometries
+// In Dumux, one has the option to activate/deactivate the grid-wide caching of geometries
 // and variables. If active, the CPU time can be significantly reduced as less dynamic
 // memory allocation procedures are necessary. Per default, grid-wide caching is disabled
 // to ensure minimal memory requirements, however, in this example we want to active all

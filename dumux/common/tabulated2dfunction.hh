@@ -40,7 +40,7 @@ namespace Dumux {
  * divided into \f$m\f$ and \f$n\f$ sub-intervals and the values of
  * \f$f(x_i, y_j)\f$ need to be provided. Here, \f$x_i\f$ and
  * \f$y_j\f$ are the largest positions of the \f$i\f$-th and
- * \f$j\f$-th intervall. Between these sampling points this tabulation
+ * \f$j\f$-th interval. Between these sampling points this tabulation
  * class uses linear interpolation.
  */
 template<class Scalar>
@@ -108,7 +108,7 @@ public:
      * \brief Return the interval index of a given position on the x-axis.
      *
      * This method returns a *floating point* number. The integer part
-     * should be interpreted as intervall, the decimal places are the
+     * should be interpreted as interval, the decimal places are the
      * position of the x value between the i-th and the (i+1)-th
      * sample point.
      */
@@ -122,7 +122,7 @@ public:
      * \brief Return the interval index of a given position on the y-axis.
      *
      * This method returns a *floating point* number. The integer part
-     * should be interpreted as intervall, the decimal places are the
+     * should be interpreted as interval, the decimal places are the
      * position of the y value between the j-th and the (j+1)-th
      * sample point.
      */

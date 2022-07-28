@@ -83,7 +83,7 @@ public:
     }
 
     /*!
-     * \brief Checks if the relative shift of saturation  between to consecutive time steps is below a given treshold.
+     * \brief Checks if the relative shift of saturation  between to consecutive time steps is below a given threshold.
      */
     void checkRelativeSaturationShift(const GridVariables& gridVariables, const SolutionVector& uCurrentIter, const SolutionVector& prevSol) const
     {

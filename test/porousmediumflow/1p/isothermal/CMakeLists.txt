@@ -55,7 +55,7 @@ dumux_add_test(NAME test_1p_forchheimer_box
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_forchheimer_box params_forchheimer.input -Problem.Name test_1p_forchheimer_box"
                         --zeroThreshold {"velocity_liq \(m/s\)":1e-12})
 
-# a gstat test (becaue it's a random permeability field we can't test against a reference solution)
+# a gstat test (because it's a random permeability field we can't test against a reference solution)
 dumux_add_test(NAME test_1p_gstat
               LABELS porousmediumflow 1p
               SOURCES main.cc

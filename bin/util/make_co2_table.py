@@ -75,7 +75,7 @@ parser.add_argument(
     required=True,
     type=int,
     help="The number of temperature sampling points."
-    "min_temp ist the first sampling point, max_temp the last.",
+    "min_temp is the first sampling point, max_temp the last.",
 )
 parser.add_argument(
     "-p1", "--min_press", required=True, type=float, help="The minimum pressure in Pascal."
@@ -89,7 +89,7 @@ parser.add_argument(
     required=True,
     type=int,
     help="The number of pressure sampling points."
-    "min_press ist the first sampling point, max_press the last.",
+    "min_press is the first sampling point, max_press the last.",
 )
 cmdArgs = vars(parser.parse_args())
 

@@ -124,7 +124,7 @@ public:
     int getBoundaryDomainMarker(const typename Grid<id>::LeafGridView::Intersection& is) const
     { return std::get<id>(gridDataPtrTuple_)->getBoundaryDomainMarker(is); }
 
-    //! Returns the boundary marker for a given bounday segment index
+    //! Returns the boundary marker for a given boundary segment index
     template<std::size_t id>
     int getBoundaryDomainMarker(int boundarySegmentIndex) const
     { return std::get<id>(gridDataPtrTuple_)->getBoundaryDomainMarker(boundarySegmentIndex); }

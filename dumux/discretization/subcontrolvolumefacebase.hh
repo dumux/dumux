@@ -68,7 +68,7 @@ public:
         return asImp_().area();
     }
 
-    //! returns bolean if the sub control volume face is on the boundary
+    //! returns boolean if the sub control volume face is on the boundary
     bool boundary() const
     {
         return asImp_().boundary();

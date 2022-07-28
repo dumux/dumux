@@ -240,7 +240,7 @@ public:
     }
 
     /*!
-     * \brief If internal Dirichlet contraints are enabled
+     * \brief If internal Dirichlet constraints are enabled
      * Enables / disables internal (non-boundary) Dirichlet constraints. If this is overloaded
      * to return true, the assembler calls problem.hasInternalDirichletConstraint(element, scv).
      * This means you have to implement the following member function
@@ -460,7 +460,7 @@ public:
 
                 // we do an update e.g. used for TimeDependentPointSource
                 pointSource.update(asImp_(), element, fvGeometry, elemVolVars, scv);
-                // call convienience problem interface function
+                // call convenience problem interface function
                 asImp_().pointSource(pointSource, element, fvGeometry, elemVolVars, scv);
                 // at last take care about multiplying with the correct volume
                 pointSource /= volume*pointSource.embeddings();

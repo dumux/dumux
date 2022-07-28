@@ -43,7 +43,7 @@
 // ### The spatial parameters class
 // In the `ICPSpatialParams` class, we define all functions needed to describe
 // the porous medium, e.g. porosity and permeability.
-// We inherit from the `FVPorousMediumFlowSpatialParamsMP` class which is the base class for spatial paramters using finite volume discretization schemes.
+// We inherit from the `FVPorousMediumFlowSpatialParamsMP` class which is the base class for spatial parameters using finite volume discretization schemes.
 
 // [[codeblock]]
 namespace Dumux {

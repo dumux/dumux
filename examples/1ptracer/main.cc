@@ -171,7 +171,7 @@ int main(int argc, char** argv) try
     // We use the results of the 1p problem to calculate the volume fluxes across all sub-control volume
     // faces of the discretization and store them in the vector `volumeFlux`. In order to do so, we iterate
     // over all elements of the grid, and in each element compute the volume fluxes for all sub-control volume
-    // faces embeded in that element.
+    // faces embedded in that element.
     // [[codeblock]]
     using Scalar =  GetPropType<OnePTypeTag, Properties::Scalar>; // type for scalar values
     std::vector<Scalar> volumeFlux(gridGeometry->numScvf(), 0.0);

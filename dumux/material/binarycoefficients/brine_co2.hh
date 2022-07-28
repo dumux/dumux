@@ -266,7 +266,7 @@ private:
     }
 
     /*!
-     * \brief Returns the paramater A for the calculation of
+     * \brief Returns the parameter A for the calculation of
      * them mutual solubility in the water-CO2 system.
      * Given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 <BR>
      *
@@ -286,7 +286,7 @@ private:
     }
 
     /*!
-     * \brief Returns the paramater B for the calculation of
+     * \brief Returns the parameter B for the calculation of
      * the mutual solubility in the water-CO2 system.
      * Given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 <BR>
      *

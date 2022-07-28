@@ -432,7 +432,7 @@ public:
         const auto& curSol = this->curSol();
         auto&& curElemVolVars = this->curElemVolVars();
 
-        // get the vecor of the acutal element residuals
+        // get the vecor of the actual element residuals
         const auto origResiduals = this->evalLocalResidual();
         const auto origStorageResiduals = this->evalLocalStorageResidual();
 
@@ -540,7 +540,7 @@ public:
         const auto& curElemVolVars = this->curElemVolVars();
         const auto& elemFluxVarsCache = this->elemFluxVarsCache();
 
-        // get the vecor of the acutal element residuals
+        // get the vecor of the actual element residuals
         const auto origResiduals = this->evalLocalResidual();
 
         //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -658,7 +658,7 @@ public:
         const auto& problem = this->problem();
         const auto& curElemVolVars = this->curElemVolVars();
 
-        // get the vecor of the acutal element residuals
+        // get the vecor of the actual element residuals
         const auto origResiduals = this->evalLocalResidual();
 
         //////////////////////////////////////////////////////////////////////////////////////////////////

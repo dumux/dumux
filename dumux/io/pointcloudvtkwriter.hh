@@ -90,7 +90,7 @@ class PointCloudVtkWriter
         }
 
         /*!
-        * \brief Allows random acces to data
+        * \brief Allows random access to data
         *
         * \param idx The index
         */

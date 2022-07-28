@@ -346,7 +346,7 @@ public:
                                                                         adaptedValuesFather.u,
                                                                         scv.dofPosition());
 
-                    // compute mass & mass coeffients for the scvs (saturations are recalculated at the end)
+                    // compute mass & mass coefficients for the scvs (saturations are recalculated at the end)
                     const auto fatherElementVolume = Extrusion::volume(fatherGeometry);
                     for (const auto& scv : scvs(fvGeometry))
                     {

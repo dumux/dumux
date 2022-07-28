@@ -111,7 +111,7 @@ int main(int argc, char** argv)
     if (Parameters::getTree().hasKey("Restart") || Parameters::getTree().hasKey("TimeLoop.Restart"))
         restartTime = getParam<Scalar>("TimeLoop.Restart");
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     PoreNetwork::VtkOutputModule<GridVariables, GetPropType<TypeTag, Properties::FluxVariables>, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     IOFields::initOutputModule(vtkWriter); //! Add model specific output fields

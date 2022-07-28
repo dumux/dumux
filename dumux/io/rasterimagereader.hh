@@ -80,7 +80,7 @@ public:
         Result() = delete;
 
         /*!
-         * \brief Contruct from data and header by copy
+         * \brief Construct from data and header by copy
          */
         Result(const std::vector<T>& data, const HeaderData& header)
         : Parent(data)
@@ -88,7 +88,7 @@ public:
         {}
 
         /*!
-         * \brief Contruct from data and header by move
+         * \brief Construct from data and header by move
          */
         Result(std::vector<T>&& data, HeaderData&& header)
         : Parent(std::move(data))
@@ -264,7 +264,7 @@ public:
                 headerData.nCols = std::stoi(std::string(tokens[0]));
                 headerData.nRows = std::stoi(std::string(tokens[1]));
 
-                // Grayscale images additionaly contain a maxium value in the header.
+                // Grayscale images additionally contain a maximum value in the header.
                 if (isGrayScale_(magicNumber))
                 {
                     std::getline(infile, inputLine);

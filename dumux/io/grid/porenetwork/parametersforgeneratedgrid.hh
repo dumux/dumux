@@ -606,7 +606,7 @@ private:
         // adapt the parameter name if there are subregions
         const std::string prefix = subregionId < 0 ? "Grid." : "Grid.Subregion" + std::to_string(subregionId) + ".";
         const Scalar inputThroatLength = getParamFromGroup<Scalar>(paramGroup_, prefix + "ThroatLength", -1.0);
-        // decide whether to substract the pore radii from the throat length or not
+        // decide whether to subtract the pore radii from the throat length or not
         const bool subtractRadiiFromThroatLength = getParamFromGroup<bool>(paramGroup_, prefix + "SubtractPoreInscribedRadiiFromThroatLength", true);
 
         return [=](const Element& element)

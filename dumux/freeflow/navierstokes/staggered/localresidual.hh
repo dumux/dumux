@@ -290,7 +290,7 @@ public:
             }
             else if(bcTypes.isSymmetry())
             {
-                // for symmetry boundary conditions, there is no flow accross the boundary and
+                // for symmetry boundary conditions, there is no flow across the boundary and
                 // we therefore treat it like a Dirichlet boundary conditions with zero velocity
                 const Scalar velocity = elemFaceVars[scvf].velocitySelf();
                 const Scalar fixedValue = 0.0;

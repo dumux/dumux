@@ -95,7 +95,7 @@ namespace Dumux {
 /*!
  * \ingroup ThreePThreeCModel
  * \brief Specifies a number properties of two-phase models.
- * \param useCS if we are using the contraint solver
+ * \param useCS if we are using the constraint solver
  */
 template<bool useCS, bool useMol>
 struct ThreePThreeCModelTraits

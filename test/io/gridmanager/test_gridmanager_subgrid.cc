@@ -108,7 +108,7 @@ void testSubGrid(const std::string& hostGridName)
         vtkWriter.write("subgrid_right");
     }
 
-    // create without contructing host grid first
+    // create without constructing host grid first
     {
         std::cout << "Constructing SubGrid from lambda without specifying host grid" << std::endl;
 

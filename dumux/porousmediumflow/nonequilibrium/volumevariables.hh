@@ -181,9 +181,9 @@ public:
         const Scalar Sw = fluidState.saturation(phase0Idx);
 
         const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
-        const auto awn = fluidMatrixInteraction.wettingNonwettingInterface().area(Sw, pc);
-        const auto ans = fluidMatrixInteraction.nonwettingSolidInterface().area(Sw, pc);
-        interfacialArea_[phase0Idx][phase1Idx] = awn;
+        const auto areaWN = fluidMatrixInteraction.wettingNonwettingInterface().area(Sw, pc);
+        const auto areaNS = fluidMatrixInteraction.nonwettingSolidInterface().area(Sw, pc);
+        interfacialArea_[phase0Idx][phase1Idx] = areaWN;
         interfacialArea_[phase1Idx][phase0Idx] = interfacialArea_[phase0Idx][phase1Idx];
         interfacialArea_[phase0Idx][phase0Idx] = 0.0;
 
@@ -195,7 +195,7 @@ public:
             // I know the solid surface from the pore network. But it is more consistent to use the fit value.
             const Scalar pcMax = fluidMatrixInteraction.wettingNonwettingInterface().basicParams().pcMax();
             const auto solidSurface = fluidMatrixInteraction.nonwettingSolidInterface().area(/*Sw=*/0., pcMax);
-            interfacialArea_[phase0Idx][sPhaseIdx] = solidSurface - ans;
+            interfacialArea_[phase0Idx][sPhaseIdx] = solidSurface - areaNS;
         }
         else
             interfacialArea_[phase0Idx][sPhaseIdx] = fluidMatrixInteraction.wettingSolidInterface().area(Sw, pc);
@@ -203,7 +203,7 @@ public:
         interfacialArea_[sPhaseIdx][phase0Idx] = interfacialArea_[phase0Idx][sPhaseIdx];
         interfacialArea_[sPhaseIdx][sPhaseIdx] = 0.0;
 
-        interfacialArea_[phase1Idx][sPhaseIdx] = ans;
+        interfacialArea_[phase1Idx][sPhaseIdx] = areaNS;
         interfacialArea_[sPhaseIdx][phase1Idx] = interfacialArea_[phase1Idx][sPhaseIdx];
         interfacialArea_[phase1Idx][phase1Idx] = 0.0;
     }
@@ -717,7 +717,7 @@ public:
         interfacialArea_[phase1Idx][phase0Idx] = interfacialArea_[phase0Idx][phase1Idx];
         interfacialArea_[phase0Idx][phase0Idx] = 0.;
 
-        const auto ans = fluidMatrixInteraction.nonwettingSolidInterface().area(Sw, pc);
+        const auto areaNS = fluidMatrixInteraction.nonwettingSolidInterface().area(Sw, pc);
 
         // Switch for using a a_{wn} relations that has some "maximum capillary pressure" as parameter.
         // That value is obtained by regularization of the pc(Sw) function.
@@ -727,7 +727,7 @@ public:
             // I know the solid surface from the pore network. But it is more consistent to use the fit value.
             const Scalar pcMax = fluidMatrixInteraction.wettingNonwettingInterface().basicParams().pcMax();
             const auto solidSurface = fluidMatrixInteraction.nonwettingSolidInterface().area(/*Sw=*/0., pcMax);
-            interfacialArea_[phase0Idx][sPhaseIdx] = solidSurface - ans;
+            interfacialArea_[phase0Idx][sPhaseIdx] = solidSurface - areaNS;
         }
         else
             interfacialArea_[phase0Idx][sPhaseIdx] = fluidMatrixInteraction.wettingSolidInterface().area(Sw, pc);
@@ -735,7 +735,7 @@ public:
         interfacialArea_[sPhaseIdx][phase0Idx] = interfacialArea_[phase0Idx][sPhaseIdx];
         interfacialArea_[sPhaseIdx][sPhaseIdx] = 0.;
 
-        interfacialArea_[phase1Idx][sPhaseIdx] = ans;
+        interfacialArea_[phase1Idx][sPhaseIdx] = areaNS;
         interfacialArea_[sPhaseIdx][phase1Idx] = interfacialArea_[phase1Idx][sPhaseIdx];
         interfacialArea_[phase1Idx][phase1Idx] = 0.;
     }

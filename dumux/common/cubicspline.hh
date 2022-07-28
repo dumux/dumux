@@ -50,7 +50,7 @@ public:
     CubicSpline() = default;
 
     /*!
-     * \brief Contruct a natural cubic spline from the control points (x[i], y[i])
+     * \brief Construct a natural cubic spline from the control points (x[i], y[i])
      * \param x a vector of x-coordinates
      * \param y a vector of y-coordinates
      */

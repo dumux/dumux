@@ -640,7 +640,7 @@ public:
      * \brief Calculate the molecular diffusion coefficient for a
      *        component in a fluid phase \f$\mathrm{[mol^2 * s / (kg*m^3)]}\f$
      *
-     * Molecular diffusion of a compoent \f$\kappa\f$ is caused by a
+     * Molecular diffusion of a component \f$\kappa\f$ is caused by a
      * gradient of the chemical potential and follows the law
      *
      * \f[ J = - D \mathbf{grad} \mu_\kappa \f]

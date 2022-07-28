@@ -105,7 +105,7 @@ public:
      * \brief Constructor
      *
      * \param mat The matrix to operate on.
-     * \param params Collection of paramters.
+     * \param params Collection of parameters.
      */
 #if DUNE_VERSION_GTE(DUNE_ISTL,2,8)
     SeqUzawa(const std::shared_ptr<const Dune::AssembledLinearOperator<M,X,Y>>& op, const Dune::ParameterTree& params)

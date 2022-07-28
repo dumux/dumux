@@ -106,7 +106,7 @@ int main(int argc, char** argv)
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
@@ -146,7 +146,7 @@ int main(int argc, char** argv)
         timeLoop->advanceTimeStep();
 
         // write vtk output
-        // if episode length was specificied output only at the end of episodes
+        // if episode length was specified output only at the end of episodes
         if (!hasParam("TimeLoop.EpisodeLength") || timeLoop->isCheckPoint() || timeLoop->finished() || timeLoop->timeStepIndex() == 1)
             vtkWriter.write(timeLoop->time());
 

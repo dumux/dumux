@@ -61,7 +61,7 @@
 // using the cell centered finite volume scheme with two-point-flux approximation
 // are conveniently specialized for our new type tag.
 // However, some properties depend on user choices and no meaningful default value can be set.
-// Those properties will be adressed later in this file.
+// Those properties will be addressed later in this file.
 // [[codeblock]]
 // We enter the namespace Dumux::Properties in order to import the entire Dumux namespace for general use:
 namespace Dumux::Properties {
@@ -124,7 +124,7 @@ struct LocalResidual<TypeTag, TTag::IncompressibleTest> { using type = OnePIncom
 // throughout the simulation.
 // [[details]] caching properties
 //
-// In Dumux, one has the option to activate/deactive the grid-wide caching of
+// In Dumux, one has the option to activate/deactivate the grid-wide caching of
 // geometries and variables. If active, the CPU time can be significantly reduced
 // as less dynamic memory allocation procedures are necessary. Per default, grid-wide
 // caching is disabled to ensure minimal memory requirements, however, in this example we

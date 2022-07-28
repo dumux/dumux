@@ -1356,7 +1356,7 @@ public:
         {
             const auto p0 = points[0];
             const auto normal = crossProduct(points[1] - p0, points[2] - p0);
-            // include the normal in eps (intead of norm*norm) since the normal can become very small
+            // include the normal in eps (instead of norm*norm) since the normal can become very small
             // if the first three points are very close together
             const auto epsCoplanar = normal.two_norm()*norm*eps_;
             for (int i = 3; i < points.size(); ++i)

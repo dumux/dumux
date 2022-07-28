@@ -88,7 +88,7 @@ void Parameters::init(int argc, char **argv,
     defaultParams(defaultParamTree_());
     applyGlobalDefaults_(defaultParamTree_());
 
-    // parse paramters from the command line
+    // parse parameters from the command line
     const auto commandLineArgs = parseCommandLine(argc, argv);
     mergeTree_(paramTree_(), commandLineArgs);
 

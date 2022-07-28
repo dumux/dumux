@@ -50,7 +50,7 @@ namespace Dumux {
 /*!
  * \ingroup FacetCoupling
  * \brief The default traits for the finite volume grid geometry
- *        of the box scheme with coupling occuring across the element facets.
+ *        of the box scheme with coupling occurring across the element facets.
  *        Defines the scv and scvf types and the mapper types.
  * \tparam the grid view type
  */

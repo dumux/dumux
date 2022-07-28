@@ -133,7 +133,7 @@ public:
      * \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$,
      * else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$.
      *
-     * \param pos the spatial position at which to evaulate the gravity vector
+     * \param pos the spatial position at which to evaluate the gravity vector
      */
     const GravityVector& gravity(const GlobalPosition& pos) const
     { return gravity_; }

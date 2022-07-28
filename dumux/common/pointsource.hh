@@ -271,7 +271,7 @@ private:
 /*!
  * \ingroup Common
  * \brief A helper class calculating a sub control volume to point source map
- * This class uses the bounding box tree implementation to indentify in which
+ * This class uses the bounding box tree implementation to identify in which
  * sub control volume(s) a point source falls.
  */
 class BoundingBoxTreePointSourceHelper

@@ -181,7 +181,7 @@ public:
         }
 
         // at this point we communicate the yellow vertices to the
-        // neighboring processes because a neigbor process may not see
+        // neighboring processes because a neighbor process may not see
         // the red vertex for yellow border vertices
         VectorCommDataHandleMin<VertexMapper, std::vector<EntityColor>, dim>
             minHandle(vertexMapper, vertexColor_);

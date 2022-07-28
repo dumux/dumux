@@ -107,7 +107,7 @@ public:
 
             for (auto&& scvf : scvfs(fvGeometry))
             {
-                // checks if invasion or snap-off occured after Newton iteration step
+                // checks if invasion or snap-off occurred after Newton iteration step
                 if (const auto invasionResult = invasionSwitch_(element, elemVolVars, elemFluxVarsCache[scvf]); invasionResult)
                 {
                     hasChangedInCurrentIteration_ = true;
@@ -269,7 +269,7 @@ private:
                 }
                 else
                 {
-                    std::cout << "Snap-off occured at throat " << eIdx << " from pore "  << vIdx << " :";
+                    std::cout << "Snap-off occurred at throat " << eIdx << " from pore "  << vIdx << " :";
                     std::cout << " pc: " << *pcMax;
                     std::cout << ", pcSnapoff: " << spatialParams.pcSnapoff(element, elemVolVars);
                     std::cout << ", sw: " << sw[result.localScvIdxWithCriticalPc] << std::endl;

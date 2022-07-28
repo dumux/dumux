@@ -176,7 +176,7 @@ template<class TypeTag, class MyTypeTag>
 struct Formulation { using type = UndefinedProperty; };                         //!< The formulation of the model
 // TODO: is this useful? -> everything is a constraint solver just a different type
 template<class TypeTag, class MyTypeTag>
-struct UseConstraintSolver { using type = UndefinedProperty; };                 //!< Whether to use a contraint solver for computing the secondary variables
+struct UseConstraintSolver { using type = UndefinedProperty; };                 //!< Whether to use a constraint solver for computing the secondary variables
 
 // When using the box method in a multi-phase context, an interface solver might be necessary
 template<class TypeTag, class MyTypeTag>

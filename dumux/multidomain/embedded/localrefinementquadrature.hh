@@ -46,7 +46,7 @@ namespace Dumux {
  *
  * This can be used, e.g. for low-order integration of the coupling term
  * in the projection scheme over the interface facets.
- * Each facet may be coupled to mulitple 1D elements.
+ * Each facet may be coupled to multiple 1D elements.
  * See Koch (2021) https://arxiv.org/abs/2106.06358 which also describes this algorithm.
  */
 template<class Geometry, class IndicatorFunction>

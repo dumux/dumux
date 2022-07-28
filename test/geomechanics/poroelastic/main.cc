@@ -141,7 +141,7 @@ int main(int argc, char** argv)
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
-    // intialize the vtk output module and output fields
+    // initialize the vtk output module and output fields
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     using VtkOutputModule = Dumux::VtkOutputModule<GridVariables, SolutionVector>;
     VtkOutputModule vtkWriter(*gridVariables, x, problem->name());

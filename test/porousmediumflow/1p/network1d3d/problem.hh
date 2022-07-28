@@ -174,7 +174,7 @@ public:
             source[conti0EqIdx] = K/volVars.viscosity()*volVars.density()
                                     *4.0*4.0*M_PI*M_PI*sin(4.0*M_PI*globalPos[2]);
         else
-            // the "/3.0" stems from the coordindate transformations on the lower branches
+            // the "/3.0" stems from the coordinate transformations on the lower branches
             source[conti0EqIdx] = K/volVars.viscosity()*volVars.density()
                                     *4.0*4.0*M_PI*M_PI*sin(4.0*M_PI*globalPos[2])/3.0;
 

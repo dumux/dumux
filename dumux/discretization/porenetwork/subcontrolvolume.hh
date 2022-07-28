@@ -80,7 +80,7 @@ public:
     //! The default constructor
     PNMSubControlVolume() = default;
 
-    // the contructor in the box case
+    // the constructor in the box case
     template<class Corners>
     PNMSubControlVolume(GridIndexType dofIndex,
                         LocalIndexType scvIdx,

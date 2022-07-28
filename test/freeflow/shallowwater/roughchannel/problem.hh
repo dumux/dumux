@@ -40,7 +40,7 @@ namespace Dumux {
  *
  * At the left border a discharge
  * boundary condition is applied and at the right border a water depth boundary condition.
- * All other boundaries are set to no-flow. Normal flow is assumed, therefor the water depth
+ * All other boundaries are set to no-flow. Normal flow is assumed, therefore the water depth
  * at the right border can be calculated with the formular of Gaukler-Manning-Strickler.
  *
  * \f[
@@ -122,7 +122,7 @@ public:
         return pow(abs(discharge)*manningN/sqrt(bedSlope), 0.6);
     }
 
-    //! Udpate the analytical solution
+    //! Update the analytical solution
     void updateAnalyticalSolution()
     {
         using std::abs;

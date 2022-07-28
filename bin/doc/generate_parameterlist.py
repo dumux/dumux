@@ -113,7 +113,7 @@ def getEnclosedContent(string, openKey, closeKey):
     # cut off everything before the first occurrence of openKey
     string = openKey + string.partition(openKey)[2]
 
-    # get content between mathing pair
+    # get content between matching pair
     rest = string.partition(closeKey)
     result, rest = rest[0] + closeKey, rest[2]
     while result.count(openKey) != result.count(closeKey):
@@ -295,7 +295,7 @@ for key in parameterDict:
     # we prefer the default value from input
     # otherwise use the first entry that is not None
     # and write the others in log for possible manual editing
-    # determin multiple entries in input
+    # determine multiple entries in input
     paramName = group + "." + parameter
     if paramName in inputDict:
         NUM_ENTRIES = max(
@@ -445,7 +445,7 @@ HEADER = """/*!
  *\\file
  *\\ingroup Parameter
  *
- *\\brief List of currently useable run-time parameters
+ *\\brief List of currently usable run-time parameters
  *
  * The listed run-time parameters are available in general,
  * but we point out that a certain model might not be able

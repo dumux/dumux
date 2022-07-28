@@ -198,7 +198,7 @@ public:
     }
 
 
-    //! Applys the initial cell center solution
+    //! Applies the initial cell center solution
     template<class SolutionVector>
     void applyInitialCellCenterSolution(SolutionVector& sol,
                                         const SubControlVolume& scv,
@@ -212,7 +212,7 @@ public:
             sol[cellCenterIdx][scv.dofIndex()][pvIdx] = initSol[pvIdx + offset];
     }
 
-    //! Applys the initial face solution
+    //! Applies the initial face solution
     template<class SolutionVector>
     void applyInitialFaceSolution(SolutionVector& sol,
                                   const SubControlVolumeFace& scvf,

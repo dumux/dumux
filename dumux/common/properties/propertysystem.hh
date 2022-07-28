@@ -140,8 +140,8 @@ template<class TypeTag, template<class,class> class Property, class T>
 struct GetPropOrImpl
 {
     using PT = typename Detail::GetDefined<TypeTag, Property, std::tuple<TypeTag>>::type;
-    struct OT { using type = T; }; // fake property wrapper
-    using type = std::conditional_t<std::is_same_v<PT, UndefinedProperty>, OT, PT>;
+    struct WrapperT { using type = T; }; // fake property wrapper
+    using type = std::conditional_t<std::is_same_v<PT, UndefinedProperty>, WrapperT, PT>;
 };
 
 } // end namespace Dumux::Properties::Detail

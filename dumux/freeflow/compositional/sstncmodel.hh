@@ -22,7 +22,7 @@
  *
  * \brief A single-phase, multi-component SST model
  *
- * For a detailed model decription see dumux/freeflow/compositional/navierstokesncmodel.hh
+ * For a detailed model description see dumux/freeflow/compositional/navierstokesncmodel.hh
  */
 
 #ifndef DUMUX_SST_NC_MODEL_HH

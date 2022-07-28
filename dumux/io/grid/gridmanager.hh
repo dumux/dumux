@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup InputOutput
- * \brief Convience header that includes all grid manager specializations
+ * \brief Convenience header that includes all grid manager specializations
  *
  * \todo add Petrel grids with dune-cornerpoint
  */

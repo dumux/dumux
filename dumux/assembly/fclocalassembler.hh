@@ -128,7 +128,7 @@ public:
                     if (facet.partitionType() == Dune::BorderEntity)
                         res[scv.dofIndex()] += residual[scv.localDofIndex()];
 
-                    // set the matrix entries of all DOFs withing the overlap region (except the border DOF)
+                    // set the matrix entries of all DOFs within the overlap region (except the border DOF)
                     // to 1.0 and the residual entries to 0.0
                     else
                     {
@@ -669,7 +669,7 @@ public:
         const auto& curElemVolVars = this->curElemVolVars();
         const auto& elemFluxVarsCache = this->elemFluxVarsCache();
 
-        // get the vecor of the acutal element residuals
+        // get the vecor of the actual element residuals
         const auto origResiduals = this->evalLocalResidual();
 
         //////////////////////////////////////////////////////////////////////////////////////////////////

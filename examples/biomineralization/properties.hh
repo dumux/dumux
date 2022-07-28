@@ -62,7 +62,7 @@
 // This way, most of the `properties` required for this simulations
 // using the box scheme are conveniently specialized for our new `TypeTag`.
 // However, some properties depend on user choices and no meaningful default value can be set.
-// Those properties will be adressed later in this file.
+// Those properties will be addressed later in this file.
 // [[codeblock]]
 namespace Dumux::Properties {
 
@@ -75,7 +75,7 @@ struct MICPColumnSimpleChemistry { using InheritsFrom = std::tuple<TwoPNCMin, Bo
 // ### Property specializations
 //
 // In the following piece of code, mandatory `properties` for which no meaningful
-// dafault can be set, are specialized for our type tag `MICPColumnSimpleChemistry`.
+// default can be set, are specialized for our type tag `MICPColumnSimpleChemistry`.
 
 // [[codeblock]]
 // We set the grid to a 1D Yasp Grid

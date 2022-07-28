@@ -246,7 +246,7 @@ private:
             scvfsIndexSet.reserve(element.subEntities(1));
 
             // for network grids there might be multiple intersection with the same geometryInInside
-            // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
+            // we identify those by the indexInInside for now (assumes conforming grids at branching facets)
             using ScvfGridIndexStorage = typename SubControlVolumeFace::Traits::GridIndexStorage;
             std::vector<ScvfGridIndexStorage> outsideIndices;
             if (dim < dimWorld)

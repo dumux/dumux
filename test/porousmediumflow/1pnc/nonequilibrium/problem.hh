@@ -46,7 +46,7 @@ namespace Dumux {
  * Initially, the domain is filled with water and a specified nitrogen fraction
  *
  * At the right side warmer water is injected via a Neumann boundary and at the left side
- * Dirichlet values are set to the inital conditions.
+ * Dirichlet values are set to the initial conditions.
  *
  * This problem uses the \ref OnePNCModel model.
  */

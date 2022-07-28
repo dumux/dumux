@@ -9,7 +9,7 @@ ThroatCrossSectionShape = Square
 
 [Problem]
 Name = test_pnm2pni
-VtpOutputFrequency = 1 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occured
+VtpOutputFrequency = 1 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occurred
 CapillaryPressure = 5000
 EnableGravity = false
 

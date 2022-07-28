@@ -109,7 +109,7 @@ int main(int argc, char** argv) try
     problem->computePointSourceMap();
      // [[/codeblock]]
 
-    // We initialize the solution vector and then use the solution vector to intialize the `gridVariables`.
+    // We initialize the solution vector and then use the solution vector to initialize the `gridVariables`.
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x;
     problem->applyInitialSolution(x);

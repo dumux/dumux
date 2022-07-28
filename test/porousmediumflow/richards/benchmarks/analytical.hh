@@ -171,7 +171,7 @@ private:
         return (waterContentSurface_ - waterContentInitial_)*integral(waterContent);
     }
 
-    // tranformed coordinate
+    // transformed coordinate
     double eta(double x /*in cm*/, double t /*in days*/) const
     {
         return std::fabs(x) - (conductivitySurface_ - conductivityInitial_)/(waterContentSurface_ - waterContentInitial_)*t;

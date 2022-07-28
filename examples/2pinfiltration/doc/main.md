@@ -142,7 +142,7 @@ In the problem, we define the boundary and initial conditions and compute the po
     problem->computePointSourceMap();
 ```
 
-We initialize the solution vector and then use the solution vector to intialize the `gridVariables`.
+We initialize the solution vector and then use the solution vector to initialize the `gridVariables`.
 
 ```cpp
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;

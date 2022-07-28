@@ -358,7 +358,7 @@ public:
                 for (auto x : pointsOnLine)
                     std::cout << x.pos << std::endl;
 
-                // check for user-defined addtional points in the upstream area
+                // check for user-defined additional points in the upstream area
                 const ScalarVector upstreamPositions = getParamFromGroup<ScalarVector>(modelParamGroup, "Grid.UpstreamPositions" + std::to_string(i), ScalarVector{});
 
                 addUpstreamPositions_(i, upstreamPositions, positions, pointsOnLine);
@@ -367,7 +367,7 @@ public:
                 addCouplingPositions_(i, positions, pointsOnLine, interFacePositions, lowerLeft, upperRight);
                 addCouplingCells_(i, cells, pointsOnLine);
 
-                // check for user-defined addtional points in the downstream area
+                // check for user-defined additional points in the downstream area
                 const ScalarVector downstreamPositions = getParamFromGroup<ScalarVector>(modelParamGroup, "Grid.DownstreamPositions" + std::to_string(i), ScalarVector{});
 
                 addDownstreamPositions_(i, downstreamPositions, positions, upperRight);

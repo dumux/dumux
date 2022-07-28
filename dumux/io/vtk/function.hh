@@ -180,7 +180,7 @@ private:
  *        This expects the data to be organized by a two-dimensional field storing for
  *        each element the element-local nodal values. This can be used for the output
  *        of fields that are non-conforming due to e.g. constitutive relationships and
- *        where no extra degrees of freedom exist to disply the discontinuities.
+ *        where no extra degrees of freedom exist to display the discontinuities.
  *
  * \tparam GridView The Dune grid view type
  * \tparam Mapper The type used for mapping elements to indices in the field

@@ -86,7 +86,7 @@ public:
     //! The default constructor
     BoxSubControlVolume() = default;
 
-    // the contructor in the box case
+    // the constructor in the box case
     template<class GeometryHelper>
     BoxSubControlVolume(const GeometryHelper& geometryHelper,
                         LocalIndexType scvIdx,

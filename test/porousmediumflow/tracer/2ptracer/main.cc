@@ -115,7 +115,7 @@ int main(int argc, char** argv)
     auto twoPGridVariables = std::make_shared<TwoPGridVariables>(twoPProblem, gridGeometry);
     twoPGridVariables->init(p);
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     using TwoPIOFields = GetPropType<TwoPTypeTag, Properties::IOFields>;
 
     // use non-conforming output for the test with interface solver

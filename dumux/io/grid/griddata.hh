@@ -219,7 +219,7 @@ public:
 
     /*!
      * \brief Create a data handle for communication of the data in parallel simulations
-     * \note this data hande is the default
+     * \note this data handle is the default
      */
     template<bool ug = Detail::isUG<Grid>::value, typename std::enable_if_t<!ug, int> = 0>
     DataHandle createGmshDataHandle()
@@ -229,7 +229,7 @@ public:
 
     /*!
      * \brief Create a data handle for communication of the data in parallel simulations
-     * \note this data hande is the specialized for UGGrid since UGGrid can't communicate element data (yet)
+     * \note this data handle is the specialized for UGGrid since UGGrid can't communicate element data (yet)
      */
     template<bool ug = Detail::isUG<Grid>::value, typename std::enable_if_t<ug, int> = 0>
     DataHandle createGmshDataHandle()

@@ -116,10 +116,10 @@ private:
         using std::sqrt;
         const Scalar satLiquidPhysical = max<Scalar>(0.0, satLiquid);
         // geometric mean, using ls^(1-p)*l^p = ls*(l/ls)^p
-        const Scalar lSat = lambdaSolid * pow(lambdaLiquid / lambdaSolid, porosity);
-        const Scalar lDry = lambdaSolid * pow(lambdaGas / lambdaSolid, porosity);
+        const Scalar lambdaSaturated = lambdaSolid * pow(lambdaLiquid / lambdaSolid, porosity);
+        const Scalar lambdaDry = lambdaSolid * pow(lambdaGas / lambdaSolid, porosity);
 
-        return lDry + sqrt(satLiquidPhysical) * (lSat - lDry);
+        return lambdaDry + sqrt(satLiquidPhysical) * (lambdaSaturated - lambdaDry);
     }
 };
 

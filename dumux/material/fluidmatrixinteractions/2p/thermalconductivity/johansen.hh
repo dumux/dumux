@@ -118,11 +118,11 @@ private:
         const Scalar rhoBulk = rhoSolid*porosity;
 
         using std::pow;
-        const Scalar lSat = lambdaSolid * pow(lambdaW / lambdaSolid, porosity);
-        const Scalar lDry = (0.135*rhoBulk + 64.7)/(rhoSolid - 0.947*rhoBulk);
+        const Scalar lambdaSaturated = lambdaSolid * pow(lambdaW / lambdaSolid, porosity);
+        const Scalar lambdaDry = (0.135*rhoBulk + 64.7)/(rhoSolid - 0.947*rhoBulk);
         const Scalar Ke = (kappa*satW)/(1+(kappa-1)*satW);// Kersten number, equation 13
 
-        return lDry + Ke * (lSat - lDry); // equation 14
+        return lambdaDry + Ke * (lambdaSaturated - lambdaDry); // equation 14
     }
 };
 } // end namespace Dumux

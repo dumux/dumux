@@ -168,7 +168,7 @@ int main (int argc, char *argv[])
     intersectionWriter.addField(dofIndices, "dofIdx");
     intersectionWriter.write("staggered");
 
-    // Check indicies for all dofs called in the stencil. Center element, scv local index 1 (global index 49)
+    // Check indices for all dofs called in the stencil. Center element, scv local index 1 (global index 49)
     for (const auto& element : elements(leafGridView))
     {
         auto eIdx = gridGeometry.elementMapper().index(element);
@@ -193,9 +193,9 @@ int main (int argc, char *argv[])
                         if constexpr (useHigherOrder)
                         {
                             // do higher order stuff
-//    PSUEDO                if(scvf.hasForwardNeighbor())
+//    PSEUDO                if(scvf.hasForwardNeighbor())
 //    CODE                      std::cout << "-- -- The \"forward\" velocity is located at scv " << scvf.forwardScvIdx() << "\n";
-//    PSUEDO                if(scvf.hasBackwardNeighbor())
+//    PSEUDO                if(scvf.hasBackwardNeighbor())
 //    CODE                      std::cout << "-- -- The \"backward\" velocity is located at scv " << scvf.backwardScvIdx() << "\n";
                         }
                     }
@@ -206,7 +206,7 @@ int main (int argc, char *argv[])
                         if(!scvf.isLateral())
                             continue;
 
-                        // Write out the indicies for the transported velocity calculation
+                        // Write out the indices for the transported velocity calculation
                         std::string firstOrSecond = (latCount < 1) ? "first" : "second";
                         std::cout << "-- -- The " << firstOrSecond << "lateral scvf has the index " << scvf.index() << "\n";
                         std::cout << "-- -- - The \"inner\" transported velocity is located at scv " << scvf.insideScvIdx() << "\n";
@@ -214,14 +214,14 @@ int main (int argc, char *argv[])
                         if constexpr (useHigherOrder)
                         {
                             // do higher order stuff for transported velocity
-//  PSUEDO                  if (scvf.hasSecondParallelNeighbor())
+//  PSEUDO                  if (scvf.hasSecondParallelNeighbor())
 //  CODE                        std::cout << "-- -- - The \"second outer\" transported velocity is located at scv " << scvf.secondOuterScvIdx() << "\n";
 
                             // const auto& firstParallelScv = fvGeometry.scv(scvf.outsideScvIdx());
                         }
-                        // Write out the indicies for the transporting velocity calculation
+                        // Write out the indices for the transporting velocity calculation
                         const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
-                        std::cout << "-- -- - The orthagonal scvf has the index " << orthogonalScvf.index() << "\n";
+                        std::cout << "-- -- - The orthogonal scvf has the index " << orthogonalScvf.index() << "\n";
                         std::cout << "-- -- - The \"inner transporting velocity is located at scv " << orthogonalScvf.insideScvIdx() << "\n";
                         std::cout << "-- -- - The \"outer transporting velocity is located at scv " << orthogonalScvf.outsideScvIdx() << "\n";
                         latCount++;

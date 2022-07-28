@@ -184,7 +184,7 @@ int main(int argc, char** argv)
     auto lowDimGridVariables = std::make_shared<LowDimGridVariables>(lowDimProblem, lowDimFvGridGeometry);
     lowDimGridVariables->init(sol[lowDimIdx]);
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     using BulkSolutionVector = std::decay_t<decltype(sol[bulkIdx])>;
     VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, sol[bulkIdx], bulkProblem->name());
     GetPropType<BulkTypeTag, Properties::IOFields>::initOutputModule(bulkVtkWriter);
@@ -206,7 +206,7 @@ int main(int argc, char** argv)
     using LinearSolver = BlockDiagILU0BiCGSTABSolver;
     auto linearSolver = std::make_shared<LinearSolver>();
 
-    // assemble & solve & udpate
+    // assemble & solve & update
     const auto solverType = getParam<std::string>("Problem.SolverType", "linear");
     if (solverType == "linear")
         assembleSolveUpdate(assembler, linearSolver, couplingManager, sol, SolverTag::Linear{});

@@ -135,7 +135,7 @@ int main(int argc, char** argv)
     massGridVariables->init(x[massIdx]);
     momentumGridVariables->init(x[momentumIdx]);
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     using IOFields = GetPropType<MassTypeTag, Properties::IOFields>;
     VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name());
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields

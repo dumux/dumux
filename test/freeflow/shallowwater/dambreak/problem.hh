@@ -89,7 +89,7 @@ public:
         return exactVelocityX_;
     }
 
-    //! Udpate the analytical solution
+    //! Update the analytical solution
     template<class SolutionVector, class GridVariables>
     void updateAnalyticalSolution(const SolutionVector& curSol,
                                   const GridVariables& gridVariables,
@@ -161,7 +161,7 @@ public:
     }
 
     /*!
-     * \brief Specifies the neumann bounday
+     * \brief Specifies the neumann boundary
      * \param element
      * \param fvGeometry
      * \param elemVolVars

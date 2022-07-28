@@ -182,7 +182,7 @@ public:
         return area_;
     }
 
-    //! Returns bolean if the sub control volume face is on the boundary
+    //! Returns boolean if the sub control volume face is on the boundary
     bool boundary() const
     {
         return boundary_;

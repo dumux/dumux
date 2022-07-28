@@ -137,7 +137,7 @@ class BrineCO2
     //!
     //! depending on the implementation this is either brine (pseudo-component) or H2O
     static constexpr int BrineOrH2OIdx = 0;
-    //! if the implementation considers NaCl as a real compoent, it gets the index 2
+    //! if the implementation considers NaCl as a real component, it gets the index 2
     static constexpr int NaClIdx = 2;
 
 public:
@@ -478,7 +478,7 @@ public:
             assert(T > 0);
             assert(pl > 0 && pg > 0);
 
-            // calulate the equilibrium composition for given T & p
+            // calculate the equilibrium composition for given T & p
             Scalar xlH2O, xgH2O;
             Scalar xlCO2, xgCO2;
             const Scalar salinity = useConstantSalinity ? ConstantSalinityBrine::salinity()
@@ -530,7 +530,7 @@ public:
         Scalar xgH2O;
         Scalar xlCO2;
 
-        // calulate the equilibrium composition for given T & p
+        // calculate the equilibrium composition for given T & p
         const Scalar salinity = useConstantSalinity ? ConstantSalinityBrine::salinity()
                                                     : fluidState.massFraction(liquidPhaseIdx, NaClIdx);
         Brine_CO2::calculateMoleFractions(T, p, salinity, /*knowgasPhaseIdx=*/-1, xlCO2, xgH2O);
@@ -549,7 +549,7 @@ public:
      * \brief Calculate the molecular diffusion coefficient for a
      *        component in a fluid phase \f$\mathrm{[mol^2 * s / (kg*m^3)]}\f$
      *
-     * Molecular diffusion of a compoent \f$\mathrm{\kappa}\f$ is caused by a
+     * Molecular diffusion of a component \f$\mathrm{\kappa}\f$ is caused by a
      * gradient of the chemical potential and follows the law
      *
      * \f[ J = - D \textbf{grad} mu_\kappa \f]

@@ -90,7 +90,7 @@ int main(int argc, char** argv)
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     auto vtkWriter = std::make_shared<VtkOutputModule<GridVariables, SolutionVector>>(*gridVariables, x, problem->name());
     vtkWriter->addVolumeVariable([](const auto& volVars){ return volVars.saturation(0)*volVars.porosity(); }, "water content");
     vtkWriter->addVolumeVariable([](const auto& volVars){ return volVars.saturation(0); }, "saturation");

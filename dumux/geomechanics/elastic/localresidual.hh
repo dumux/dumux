@@ -85,7 +85,7 @@ public:
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars The volume variables of the current element
      * \param scvf The sub control volume face to compute the flux on
-     * \param elemFluxVarsCache The cache related to flux compuation
+     * \param elemFluxVarsCache The cache related to flux computation
      */
     NumEqVector computeFlux(const Problem& problem,
                             const Element& element,

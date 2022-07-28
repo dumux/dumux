@@ -202,7 +202,7 @@ public:
     //\}
 
     /*
-     * \brief helper aliases to contruct derived tuple types
+     * \brief helper aliases to construct derived tuple types
      */
     //\{
 

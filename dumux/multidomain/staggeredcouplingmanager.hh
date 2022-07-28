@@ -119,7 +119,7 @@ public:
         static_assert(AlwaysFalse<Dune::index_constant<i>>::value,
                       "The coupling manager does not implement the couplingStencil() function" );
 
-        return CouplingStencil(); // supress compiler warning of function having no return statement
+        return CouplingStencil(); // suppress compiler warning of function having no return statement
     }
 
     /*!
@@ -221,7 +221,7 @@ public:
                         "  Face.Assembly.NumericDifference.PriVarMagnitude = mFace\n"
                         "  CellCenter.Assembly.NumericDifference.BaseEpsilon = eCC_0 ... eCC_numEqCellCenter-1\n"
                         "  Face.Assembly.NumericDifference.BaseEpsilon = eFace_0 ... eFace_numEqFace-1\n\n"
-                        "Wrong numer of values set for " << prefix  << " (has " << numEq << " primary variable(s))\n\n" << e);
+                        "Wrong number of values set for " << prefix  << " (has " << numEq << " primary variable(s))\n\n" << e);
         }
 
     }

@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Geometry
- * \brief Algorithms that finds which geometric entites intersect
+ * \brief Algorithms that finds which geometric entities intersect
  */
 #ifndef DUMUX_GEOMETRY_INTERSECTING_ENTITIES_HH
 #define DUMUX_GEOMETRY_INTERSECTING_ENTITIES_HH

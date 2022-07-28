@@ -230,7 +230,7 @@ private:
             return 1.0;
         else if (S <= 0.0)
             return 0;
-        // check wether the permeability needs to be regularized
+        // check whether the permeability needs to be regularized
         else if (S < lowS)
             return splineLowS_.eval(S);
         else if (S > highS)

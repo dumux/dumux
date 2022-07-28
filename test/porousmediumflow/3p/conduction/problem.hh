@@ -108,7 +108,7 @@ public:
         return temperatureExact_;
     }
 
-    //! Udpate the analytical temperature
+    //! Update the analytical temperature
     void updateExactTemperature(const SolutionVector& curSol, Scalar time)
     {
         const auto someElement = *(elements(this->gridGeometry().gridView()).begin());

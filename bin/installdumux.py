@@ -51,7 +51,7 @@ def checkCppVersion():
     requiredversion = "7"
     result = subprocess.check_output(["g++", "-dumpversion"]).decode().strip()
     if _Version(result) < _Version(requiredversion):
-        print("-- An error occured while checking for prerequistes.")
+        print("-- An error occurred while checking for prerequistes.")
         raise Exception(
             f"g++ greater than or equal to {requiredversion} "
             "is required for dumux releases >=3.2!"
@@ -112,7 +112,7 @@ showMessage("(1/3) Checking all prerequistes: " + " ".join(programs) + "...")
 # check some prerequistes
 for program in programs:
     if which(program) is None:
-        print("-- An error occured while checking for prerequistes.")
+        print("-- An error occurred while checking for prerequistes.")
         raise Exception(f"Program {program} has not been found.")
 
 if which("paraview") is None:
@@ -169,7 +169,7 @@ showMessage(
 # run dunecontrol
 runCommand(command=["./dune-common/bin/dunecontrol", "--opts=dumux/cmake.opts", "all"])
 
-showMessage("(3/3) Step completed. Succesfully configured and built dune and dumux.")
+showMessage("(3/3) Step completed. Successfully configured and built dune and dumux.")
 
 #################################################################
 #################################################################

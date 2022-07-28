@@ -198,7 +198,7 @@ public:
 
 private:
 
-    //! a tuple of pointes to all grid variables
+    //! a tuple of points to all grid variables
     TupleType gridGeometries_;
 };
 

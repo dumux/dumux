@@ -37,7 +37,7 @@ p_w=pwBottom+0.5*(pwTop-pwBottom)*(1+tanh(5*globalPos1-15+time/10));            
 
 %% Sättigung
 %S_w=0.7;
-%S_w=(p_n-p_w-MaxPc)/(EntryPc-MaxPc);        %Lineares Modell
+%S_w=(p_n-p_w-MaxPc)/(EntryPc-MaxPc);        %Lineares Model
 %S_w=((p_n-p_w)/p_d)^(-lambda));              %Brooks-Corey-Modell nicht regularisiert
 
 % S_w=@(p_w) ( ...
@@ -67,7 +67,7 @@ S_w=@(p_c) ( ...
 ezplot(S_w,[0,5000]);
 %% Permeabilität
 %Krw=max(min(S_w,1.0),0.0);
-%K=K_int*S_w;                          %Lineares Modell
+%K=K_int*S_w;                          %Lineares Model
 K=K_int*S_w(p_c)^(2/lambda+3);              %Brooks-Corey-Modell
 
 %% Richards-Quellterm

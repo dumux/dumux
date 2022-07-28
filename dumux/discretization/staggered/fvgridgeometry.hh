@@ -701,7 +701,7 @@ private:
             neighborVolVarIndices_[eIdx] = neighborVolVarIndexSet;
         }
 
-        // build the connectivity map for an effecient assembly
+        // build the connectivity map for an efficient assembly
         connectivityMap_.update(*this);
     }
 

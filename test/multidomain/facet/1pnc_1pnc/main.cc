@@ -156,7 +156,7 @@ int main(int argc, char** argv)
     bulkGridVariables->init(x[bulkId]);
     facetGridVariables->init(x[facetId]);
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     using BulkSolutionVector = std::decay_t<decltype(x[bulkId])>;
     using FacetSolutionVector = std::decay_t<decltype(x[facetId])>;
     VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, x[bulkId], bulkProblem->name(), "Bulk");

@@ -75,20 +75,20 @@ public:
             if(compIdx == phaseIdx)
                 continue;
 
-            auto insideD = getDiffusionCoefficient_(phaseIdx, compIdx, insideVolVars);
-            auto outsideD = getDiffusionCoefficient_(phaseIdx, compIdx, outsideVolVars);
+            auto insideDiffCoeff = getDiffusionCoefficient_(phaseIdx, compIdx, insideVolVars);
+            auto outsideDiffCoeff = getDiffusionCoefficient_(phaseIdx, compIdx, outsideVolVars);
 
             // scale by extrusion factor
-            insideD *= insideVolVars.extrusionFactor();
-            outsideD *= outsideVolVars.extrusionFactor();
+            insideDiffCoeff *= insideVolVars.extrusionFactor();
+            outsideDiffCoeff *= outsideVolVars.extrusionFactor();
 
             // the resulting averaged diffusion coefficient
-            const auto D = harmonicMean(insideD, outsideD);
+            const auto diffCoeff = harmonicMean(insideDiffCoeff, outsideDiffCoeff);
 
             const Scalar insideMoleFraction = massOrMoleFraction(insideVolVars, referenceSystem, phaseIdx, compIdx);
             const Scalar outsideMoleFraction = massOrMoleFraction(outsideVolVars, referenceSystem, phaseIdx, compIdx);
 
-            componentFlux[compIdx] = density * (insideMoleFraction - outsideMoleFraction) / throatLength * D * phaseCrossSectionalArea;
+            componentFlux[compIdx] = density * (insideMoleFraction - outsideMoleFraction) / throatLength * diffCoeff * phaseCrossSectionalArea;
             componentFlux[phaseIdx] -= componentFlux[compIdx];
         }
         return componentFlux;

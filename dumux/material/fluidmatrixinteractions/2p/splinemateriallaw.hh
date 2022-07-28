@@ -63,7 +63,7 @@ public:
 
     /*!
      * \brief We are always regularized in the sense that we replace
-     *        the orginal curve by a cubic spline
+     *        the original curve by a cubic spline
      */
     static constexpr bool isRegularized()
     { return true; }

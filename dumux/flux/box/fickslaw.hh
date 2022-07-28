@@ -119,11 +119,11 @@ public:
                 if (compIdx == FluidSystem::getMainComponent(phaseIdx))
                     continue;
 
-            const auto D = averageDiffusionCoefficient_(phaseIdx, compIdx, insideVolVars, outsideVolVars, problem, scvf);
+            const auto diffCoeff = averageDiffusionCoefficient_(phaseIdx, compIdx, insideVolVars, outsideVolVars, problem, scvf);
 
             // compute the diffusive flux
             const auto massOrMoleFrac = [&](const SubControlVolume& scv){ return massOrMoleFraction(elemVolVars[scv], referenceSystem, phaseIdx, compIdx); };
-            componentFlux[compIdx] = discreteFlux_(fvGeometry, scvf, fluxVarsCache, massOrMoleFrac, D, rho);
+            componentFlux[compIdx] = discreteFlux_(fvGeometry, scvf, fluxVarsCache, massOrMoleFrac, diffCoeff, rho);
 
             // if the main component is balanced subtract the same flux from there (conservation)
             if constexpr (!FluidSystem::isTracerFluidSystem())
@@ -158,11 +158,11 @@ public:
                 if (compIdx == FluidSystem::getMainComponent(phaseIdx))
                     continue;
 
-            const auto D = averageDiffusionCoefficient_(phaseIdx, compIdx, insideVolVars, outsideVolVars, problem, scvf);
+            const auto diffCoeff = averageDiffusionCoefficient_(phaseIdx, compIdx, insideVolVars, outsideVolVars, problem, scvf);
 
             ti[compIdx].resize(fvGeometry.numScv());
             for (auto&& scv : scvs(fvGeometry))
-                ti[compIdx][scv.indexInElement()] = -rho*vtmv(scvf.unitOuterNormal(), D, fluxVarCache.gradN(scv.indexInElement()))*Extrusion::area(scvf);
+                ti[compIdx][scv.indexInElement()] = -rho*vtmv(scvf.unitOuterNormal(), diffCoeff, fluxVarCache.gradN(scv.indexInElement()))*Extrusion::area(scvf);
         }
 
         return ti;
@@ -175,14 +175,14 @@ private:
                                                const SubControlVolumeFace& scvf)
     {
         // effective diffusion tensors
-        auto [insideD, outsideD] = diffusionCoefficientsAtInterface_(phaseIdx, compIdx, insideVV, outsideVV);
+        auto [insideDiffCoeff, outsideDiffCoeff] = diffusionCoefficientsAtInterface_(phaseIdx, compIdx, insideVV, outsideVV);
 
         // scale by extrusion factor
-        insideD *= insideVV.extrusionFactor();
-        outsideD *= outsideVV.extrusionFactor();
+        insideDiffCoeff *= insideVV.extrusionFactor();
+        outsideDiffCoeff *= outsideVV.extrusionFactor();
 
         // the resulting averaged diffusion tensor
-        return faceTensorAverage(insideD, outsideD, scvf.unitOuterNormal());
+        return faceTensorAverage(insideDiffCoeff, outsideDiffCoeff, scvf.unitOuterNormal());
     }
 
     static std::pair<Scalar, Scalar>
@@ -192,15 +192,15 @@ private:
         if constexpr (!FluidSystem::isTracerFluidSystem())
         {
             const auto mainCompIdx = FluidSystem::getMainComponent(phaseIdx);
-            const auto insideD = insideVV.effectiveDiffusionCoefficient(phaseIdx, mainCompIdx, compIdx);
-            const auto outsideD = outsideVV.effectiveDiffusionCoefficient(phaseIdx, mainCompIdx, compIdx);
-            return { std::move(insideD), std::move(outsideD) };
+            const auto insideDiffCoeff = insideVV.effectiveDiffusionCoefficient(phaseIdx, mainCompIdx, compIdx);
+            const auto outsideDiffCoeff = outsideVV.effectiveDiffusionCoefficient(phaseIdx, mainCompIdx, compIdx);
+            return { std::move(insideDiffCoeff), std::move(outsideDiffCoeff) };
         }
         else
         {
-            const auto insideD = insideVV.effectiveDiffusionCoefficient(0, 0, compIdx);
-            const auto outsideD = outsideVV.effectiveDiffusionCoefficient(0, 0, compIdx);
-            return { std::move(insideD), std::move(outsideD) };
+            const auto insideDiffCoeff = insideVV.effectiveDiffusionCoefficient(0, 0, compIdx);
+            const auto outsideDiffCoeff = outsideVV.effectiveDiffusionCoefficient(0, 0, compIdx);
+            return { std::move(insideDiffCoeff), std::move(outsideDiffCoeff) };
         }
     }
 

@@ -272,7 +272,7 @@ private:
             scvfIndexSet.reserve(MpfaHelper::getNumLocalScvfs(elementGeometry.type()));
 
             // for network grids there might be multiple intersection with the same geometryInInside
-            // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
+            // we identify those by the indexInInside for now (assumes conforming grids at branching facets)
             std::vector<ScvfOutsideGridIndexStorage> outsideIndices;
             if (dim < dimWorld)
             {
@@ -660,7 +660,7 @@ private:
             neighborVolVarIndexSet.reserve(numLocalFaces);
 
             // for network grids there might be multiple intersections with the same geometryInInside
-            // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
+            // we identify those by the indexInInside for now (assumes conforming grids at branching facets)
             std::vector<ScvfOutsideGridIndexStorage> outsideIndices;
             if (dim < dimWorld)
             {

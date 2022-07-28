@@ -60,7 +60,7 @@ public:
      *
      * We define a water depth minUpperH. If the water depth is
      * smaller, we start to limit the friction.
-     * So the friction term get's not extreme large for small water
+     * So the friction term gets not extreme large for small water
      * depths.
      *
      * ------------------------- minUpperH -----------
@@ -74,11 +74,11 @@ public:
      *
      * For the limiting the LET model is used, which is usually applied in the
      * porous media flow to limit the permeability due to the saturation. It employs
-     * the three empirical paramaters L, E and T, which describe the limiting curve (mobility).
+     * the three empirical parameters L, E and T, which describe the limiting curve (mobility).
      *
      * auto mobility = (mobility_max * pow(sw,L))/(pow(sw,L) + E * pow(1.0-sw,T));
      *
-     * For the limitation of the roughness height L = 0.0, T = 2.0 and E = 1.0 are choosen.
+     * For the limitation of the roughness height L = 0.0, T = 2.0 and E = 1.0 are chosen.
      * Therefore the calculation of the mobility is simplified significantly.
      *
      * \param roughnessHeight roughness height of the representative structure (e.g. largest grain size).

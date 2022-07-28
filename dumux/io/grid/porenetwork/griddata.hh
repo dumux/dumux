@@ -343,11 +343,11 @@ private:
             // make sure that the number of specified parameters matches with the dgf file
             if (const auto& someElement = *(elements(gridView_()).begin()); elementParameterNames_.size() != dgfGrid_.nofParameters(someElement))
                 DUNE_THROW(Dune::InvalidStateException, "Number of user-specified element parameters (" << elementParameterNames_.size()
-                            << ") does not match number of element paramters in dgf file (" << dgfGrid_.nofParameters(someElement) << ")");
+                            << ") does not match number of element parameters in dgf file (" << dgfGrid_.nofParameters(someElement) << ")");
 
             if (const auto& someVertex = *(vertices(gridView_()).begin()); vertexParameterNames_.size() != dgfGrid_.nofParameters(someVertex))
                 DUNE_THROW(Dune::InvalidStateException, "Number of user-specified vertex parameters (" << vertexParameterNames_.size()
-                            << ") does not match number of vertex paramters in dgf file (" << dgfGrid_.nofParameters(someVertex) << ")");
+                            << ") does not match number of vertex parameters in dgf file (" << dgfGrid_.nofParameters(someVertex) << ")");
         }
 
         for (int i = 0; i < vertexParameterNames_.size(); ++i)
@@ -367,7 +367,7 @@ private:
      * \brief Initializes and returns a container for vertex (codim dim) or element (codim 0) data
      *
      * \param grid The grid
-     * \param numParams The number of paramters
+     * \param numParams The number of parameters
      * \param codim The codimension
      */
     auto makeParamContainer_(const Grid& grid, int numParams, int codim) const

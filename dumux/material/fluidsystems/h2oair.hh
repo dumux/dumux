@@ -88,9 +88,9 @@ public:
     static constexpr int phase0Idx = liquidPhaseIdx; //!< index of the first phase
     static constexpr int phase1Idx = gasPhaseIdx; //!< index of the second phase
 
-    static constexpr int H2OIdx = 0; //!< index of the frist component
+    static constexpr int H2OIdx = 0; //!< index of the first component
     static constexpr int AirIdx = 1; //!< index of the second component
-    static constexpr int comp0Idx = H2OIdx; //!< index of the frist component
+    static constexpr int comp0Idx = H2OIdx; //!< index of the first component
     static constexpr int comp1Idx = AirIdx; //!< index of the second component
     static constexpr int liquidCompIdx = H2OIdx; //!< index of the liquid component
     static constexpr int gasCompIdx = AirIdx; //!< index of the gas component

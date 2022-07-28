@@ -19,7 +19,7 @@ you access to the documentation by category.
 
 \section params Parameters
 
-An overview of all availabe parameters is given in \ref parameterlist.txt.
+An overview of all available parameters is given in \ref parameterlist.txt.
 
 \section features Features
 

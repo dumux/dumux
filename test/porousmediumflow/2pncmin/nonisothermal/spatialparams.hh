@@ -20,7 +20,7 @@
  * \file
  * \ingroup TwoPNCMinTests
  * \brief Spatial parameters for the salinization problem, where evaporation
- * from a porous medium saturated wit brine and air leads to precipitation of salt.
+ * from a porous medium saturated with brine and air leads to precipitation of salt.
  */
 
 #ifndef DUMUX_SALINIZATION_SPATIAL_PARAMETERS_HH
@@ -36,7 +36,7 @@ namespace Dumux {
 /*!
  * \ingroup TwoPNCMinTests
  * \brief Spatial parameters for the salinization problem, where evaporation
- * from a porous medium saturated wit brine and air leads to precipitation of salt.
+ * from a porous medium saturated with brine and air leads to precipitation of salt.
  */
 template<class GridGeometry, class Scalar>
 class SalinizationSpatialParams

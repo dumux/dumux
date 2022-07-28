@@ -738,7 +738,7 @@ public:
             assert(it != couplingElementStencil.end());
             const auto idxInContext = std::distance(couplingElementStencil.begin(), it);
 
-            // get neighboring bulk element from the bulk context (is the same elemet as first entry in low dim context)
+            // get neighboring bulk element from the bulk context (is the same element as first entry in low dim context)
             const auto& bulkElement = this->problem(bulkId).gridGeometry().element(bulkContext_.elementIdx);
             const auto& bulkFvGeometry = *lowDimContext_.bulkFvGeometries[0];
 

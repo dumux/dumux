@@ -80,7 +80,7 @@ public:
      */
     template <class GridImp, class IntersectionImp>
     const Dune::DGFBoundaryParameter::type& parameters(const Dune::Intersection<GridImp, IntersectionImp>& intersection) const
-    { return hostGridData_->paramters(intersection); }
+    { return hostGridData_->parameters(intersection); }
 
     /*!
      * \brief Computes and returns the label of a given throat

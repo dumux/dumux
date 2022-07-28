@@ -156,7 +156,7 @@ public:
         const auto& frontalInternalScvf = (*scvfs(fvGeometry, scv).begin());
         momentumFlux[scvf.normalAxis()] -= 2*VelocityGradients::velocityGradII(fvGeometry, frontalInternalScvf, elemVolVars) * pnmViscosity;
 
-        // We do NOT consider the intertia term here. If included, Newton convergence decreases drastically and the solution even does not converge to a reference solution.
+        // We do NOT consider the inertia term here. If included, Newton convergence decreases drastically and the solution even does not converge to a reference solution.
         // We furthermore assume creeping flow within the boundary layer thus neglecting this term is physically justified.
 
         momentumFlux[scvf.normalAxis()] *= scvf.directionSign();
