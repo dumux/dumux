@@ -32,7 +32,7 @@
 #include <dumux/common/numeqvector.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
+#include <dumux/porousmediumflow/mpnc/initialconditionhelper.hh>
 
 namespace Dumux {
 
@@ -61,7 +61,7 @@ class MPNCComparisonProblem
     using Element = typename GridView::template Codim<0>::Entity;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
-    using ParameterCache = typename FluidSystem::ParameterCache;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static constexpr auto numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numFluidPhases();
     static constexpr auto numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numFluidComponents();
@@ -181,47 +181,23 @@ private:
     // the internal method for the initial condition
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values(0.0);
+        const Scalar liquidPhaseSaturation = 0.8;
+        const Scalar gasPhasePressure = 1e5;
+
         FluidState fs;
-
-       // set the fluid temperatures
         fs.setTemperature(this->spatialParams().temperatureAtPos(globalPos));
+        fs.setSaturation(liquidPhaseIdx, liquidPhaseSaturation);
+        fs.setSaturation(gasPhaseIdx, 1.0 - liquidPhaseSaturation);
+        fs.setPressure(gasPhaseIdx, gasPhasePressure);
 
-        // set water saturation
-        fs.setSaturation(liquidPhaseIdx, 0.8);
-        fs.setSaturation(gasPhaseIdx, 1.0 - fs.saturation(liquidPhaseIdx));
-        // set pressure of the gas phase
-        fs.setPressure(gasPhaseIdx, 1e5);
-        // calulate the capillary pressure
-        const auto& fm =
-            this->spatialParams().fluidMatrixInteractionAtPos(globalPos);
+        const auto& fm = this->spatialParams().fluidMatrixInteractionAtPos(globalPos);
         const int wPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
         const auto pc = fm.capillaryPressures(fs, wPhaseIdx);
-        fs.setPressure(liquidPhaseIdx,
-                       fs.pressure(gasPhaseIdx) + pc[liquidPhaseIdx] - pc[gasPhaseIdx]);
+        fs.setPressure(liquidPhaseIdx, gasPhasePressure + pc[liquidPhaseIdx] - pc[gasPhaseIdx]);
 
-        // make the fluid state consistent with local thermodynamic
-        // equilibrium
-        using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
-
-        ParameterCache paramCache;
-        MiscibleMultiPhaseComposition::solve(fs, paramCache);
-
-        ///////////
-        // assign the primary variables
-        ///////////
-
-        // all N component fugacities
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            values[fug0Idx + compIdx] = fs.fugacity(gasPhaseIdx, compIdx);
-
-        // first M - 1 saturations
-        for (int phaseIdx = 0; phaseIdx < numPhases - 1; ++phaseIdx)
-            values[s0Idx + phaseIdx] = fs.saturation(phaseIdx);
-
-        // first pressure
-        values[p0Idx] = fs.pressure(/*phaseIdx=*/0);
-        return values;
+        MPNCInitialConditionHelper<PrimaryVariables, FluidSystem, ModelTraits> helper;
+        helper.solve(fs, MPNCInitialConditions::AllPhasesPresent{.refPhaseIdx = 0});
+        return helper.getPrimaryVariables(fs);
     }
 
     bool onInlet_(const GlobalPosition &globalPos) const

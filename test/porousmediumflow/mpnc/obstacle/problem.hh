@@ -34,7 +34,7 @@
 #include <dumux/common/numeqvector.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/material/constraintsolvers/computefromreferencephase.hh>
+#include <dumux/porousmediumflow/mpnc/initialconditionhelper.hh>
 
 namespace Dumux {
 
@@ -80,7 +80,6 @@ class ObstacleProblem
     using Element = typename GridView::template Codim<0>::Entity;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
-    using ParameterCache = typename FluidSystem::ParameterCache;
 
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
@@ -216,28 +215,21 @@ private:
     // the internal method for the initial condition
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values(0.0);
+        int refPhaseIdx, otherPhaseIdx;
+        Scalar refPhasePressure, refPhaseSaturation;
+
         FluidState fs;
-
-        int refPhaseIdx;
-        int otherPhaseIdx;
-
-        // set the fluid temperatures
         fs.setTemperature(this->spatialParams().temperatureAtPos(globalPos));
-
         if (onInlet_(globalPos))
         {
             // only liquid on inlet
             refPhaseIdx = liquidPhaseIdx;
             otherPhaseIdx = gasPhaseIdx;
+            refPhasePressure = 2e5;
+            refPhaseSaturation = 1.0;
 
-            // set liquid saturation
-            fs.setSaturation(liquidPhaseIdx, 1.0);
-
-            // set pressure of the liquid phase
-            fs.setPressure(liquidPhaseIdx, 2e5);
-
-            // set the liquid composition to pure water
+            fs.setSaturation(liquidPhaseIdx, refPhaseSaturation);
+            fs.setPressure(liquidPhaseIdx, refPhasePressure);
             fs.setMoleFraction(liquidPhaseIdx, N2Idx, 0.0);
             fs.setMoleFraction(liquidPhaseIdx, H2OIdx, 1.0);
         }
@@ -245,53 +237,24 @@ private:
             // elsewhere, only gas
             refPhaseIdx = gasPhaseIdx;
             otherPhaseIdx = liquidPhaseIdx;
+            refPhasePressure = 1e5;
+            refPhaseSaturation = 1.0;
 
-            // set gas saturation
-            fs.setSaturation(gasPhaseIdx, 1.0);
-
-            // set pressure of the gas phase
-            fs.setPressure(gasPhaseIdx, 1e5);
-
-            // set the gas composition to 99% nitrogen and 1% steam
+            fs.setSaturation(gasPhaseIdx, refPhaseSaturation);
+            fs.setPressure(gasPhaseIdx, refPhasePressure);
             fs.setMoleFraction(gasPhaseIdx, N2Idx, 0.99);
             fs.setMoleFraction(gasPhaseIdx, H2OIdx, 0.01);
         }
 
-        // set the other saturation
-        fs.setSaturation(otherPhaseIdx, 1.0 - fs.saturation(refPhaseIdx));
-
-        // calculate the capillary pressure
+        fs.setSaturation(otherPhaseIdx, 1.0 - refPhaseSaturation);
         const auto fluidMatrixInteraction = this->spatialParams().fluidMatrixInteractionAtPos(globalPos);
         const int wPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
         const auto pc = fluidMatrixInteraction.capillaryPressures(fs, wPhaseIdx);
-        fs.setPressure(otherPhaseIdx,
-                       fs.pressure(refPhaseIdx)
-                       + (pc[otherPhaseIdx] - pc[refPhaseIdx]));
+        fs.setPressure(otherPhaseIdx, refPhasePressure + (pc[otherPhaseIdx] - pc[refPhaseIdx]));
 
-        // make the fluid state consistent with local thermodynamic
-        // equilibrium
-        using ComputeFromReferencePhase = ComputeFromReferencePhase<Scalar, FluidSystem>;
-
-        ParameterCache paramCache;
-        ComputeFromReferencePhase::solve(fs,
-                                         paramCache,
-                                         refPhaseIdx);
-
-        ///////////
-        // assign the primary variables
-        ///////////
-
-        // all N component fugacities
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            values[fug0Idx + compIdx] = fs.fugacity(refPhaseIdx, compIdx);
-
-        // first M - 1 saturations
-        for (int phaseIdx = 0; phaseIdx < numPhases - 1; ++phaseIdx)
-            values[s0Idx + phaseIdx] = fs.saturation(phaseIdx);
-
-        // first pressure
-        values[p0Idx] = fs.pressure(/*phaseIdx=*/0);
-        return values;
+        MPNCInitialConditionHelper<PrimaryVariables, FluidSystem, ModelTraits> helper;
+        helper.solve(fs, MPNCInitialConditions::NotAllPhasesPresent{.refPhaseIdx = refPhaseIdx});
+        return helper.getPrimaryVariables(fs);
     }
 
     bool onInlet_(const GlobalPosition &globalPos) const

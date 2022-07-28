@@ -36,8 +36,7 @@
 #include <dumux/common/numeqvector.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/mpnc/pressureformulation.hh>
-#include <dumux/material/constraintsolvers/computefromreferencephase.hh>
+#include <dumux/porousmediumflow/mpnc/initialconditionhelper.hh>
 
 namespace Dumux {
 
@@ -73,26 +72,21 @@ class CombustionProblemOneComponent: public PorousMediumFlowProblem<TypeTag>
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
-    enum {dimWorld = GridView::dimensionworld};
-    enum {numComponents = ModelTraits::numFluidComponents()};
-    enum {s0Idx = Indices::s0Idx};
-    enum {p0Idx = Indices::p0Idx};
-    enum {conti00EqIdx = Indices::conti0EqIdx};
-    enum {energyEq0Idx = Indices::energyEqIdx};
-    enum {numEnergyEqFluid = ModelTraits::numEnergyEqFluid()};
-    enum {numEnergyEqSolid = ModelTraits::numEnergyEqSolid()};
-    enum {energyEqSolidIdx = energyEq0Idx + numEnergyEqFluid + numEnergyEqSolid - 1};
-    enum {wPhaseIdx = FluidSystem::wPhaseIdx};
-    enum {nPhaseIdx = FluidSystem::nPhaseIdx};
-    enum {wCompIdx = FluidSystem::H2OIdx};
-    enum {nCompIdx = FluidSystem::N2Idx};
+    static constexpr int dimWorld = GridView::dimensionworld;
+    static constexpr int numComponents = ModelTraits::numFluidComponents();
+    static constexpr int s0Idx = Indices::s0Idx;
+    static constexpr int p0Idx = Indices::p0Idx;
+    static constexpr int conti00EqIdx = Indices::conti0EqIdx;
+    static constexpr int energyEq0Idx = Indices::energyEqIdx;
+    static constexpr int numEnergyEqFluid = ModelTraits::numEnergyEqFluid();
+    static constexpr int numEnergyEqSolid = ModelTraits::numEnergyEqSolid();
+    static constexpr int energyEqSolidIdx = energyEq0Idx + numEnergyEqFluid + numEnergyEqSolid - 1;
+    static constexpr int wPhaseIdx = FluidSystem::wPhaseIdx;
+    static constexpr int nPhaseIdx = FluidSystem::nPhaseIdx;
+    static constexpr int wCompIdx = FluidSystem::H2OIdx;
+    static constexpr int nCompIdx = FluidSystem::N2Idx;
 
     static constexpr auto numPhases = ModelTraits::numFluidPhases();
-
-    // formulations
-    static constexpr auto pressureFormulation = ModelTraits::pressureFormulation();
-    static constexpr auto mostWettingFirst = MpNcPressureFormulation::mostWettingFirst;
-    static constexpr auto leastWettingFirst = MpNcPressureFormulation::leastWettingFirst;
 
 public:
     CombustionProblemOneComponent(std::shared_ptr<const GridGeometry> gridGeometry)
@@ -280,102 +274,53 @@ private:
     // the internal method for the initial condition
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables priVars(0.0);
         const Scalar curPos = globalPos[0];
-        const Scalar slope = (SwBoundary_-SwOneComponentSys_) / (this->spatialParams().lengthPM());
+        const Scalar slope = (SwBoundary_ - SwOneComponentSys_)/this->spatialParams().lengthPM();
         Scalar S[numPhases];
         const Scalar thisSaturation = SwOneComponentSys_ + curPos * slope;
 
         S[wPhaseIdx] = SwBoundary_;
-        if (inPM_(globalPos) ) {
+        if (inPM_(globalPos) )
             S[wPhaseIdx] = thisSaturation;
-        }
-
         S[nPhaseIdx] = 1. - S[wPhaseIdx];
-
-        //////////////////////////////////////
-        // Set saturation
-        //////////////////////////////////////
-        for (int i = 0; i < numPhases - 1; ++i) {
-            priVars[s0Idx + i] = S[i];
-        }
-
-        FluidState fluidState;
 
         Scalar thisTemperature = TInitial_;
         if(onRightBoundary_(globalPos))
-        thisTemperature = TRight_;
+            thisTemperature = TRight_;
 
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            fluidState.setSaturation(phaseIdx, S[phaseIdx]);
-
-            fluidState.setTemperature(thisTemperature );
-
+        FluidState fs;
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            fs.setSaturation(phaseIdx, S[phaseIdx]);
+            fs.setTemperature(thisTemperature);
         }
-        //////////////////////////////////////
-        // Set temperature
-        //////////////////////////////////////
-        priVars[energyEq0Idx] = thisTemperature;
-        priVars[energyEqSolidIdx] = thisTemperature;
 
         //obtain pc according to saturation
         const int wettingPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
         const auto& fm = this->spatialParams().fluidMatrixInteractionAtPos(globalPos);
-        const auto capPress = fm.capillaryPressures(fluidState, wettingPhaseIdx);
-
+        const auto capPress = fm.capillaryPressures(fs, wettingPhaseIdx);
         Scalar p[numPhases];
 
         using std::abs;
         p[wPhaseIdx] = pnInitial_ - abs(capPress[wPhaseIdx]);
         p[nPhaseIdx] = p[wPhaseIdx] + abs(capPress[wPhaseIdx]);
+        for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
+            fs.setPressure(phaseIdx, p[phaseIdx]);
 
-        for (int phaseIdx=0; phaseIdx<numPhases; phaseIdx++)
-        fluidState.setPressure(phaseIdx, p[phaseIdx]);
+        fs.setMoleFraction(wPhaseIdx, wCompIdx, 1.0);
+        fs.setMoleFraction(wPhaseIdx, nCompIdx, 0.0);
+        fs.setMoleFraction(nPhaseIdx, wCompIdx, 1.0);
+        fs.setMoleFraction(nPhaseIdx, nCompIdx, 0.0);
 
-        //////////////////////////////////////
-        // Set pressure
-        //////////////////////////////////////
-        if(pressureFormulation == mostWettingFirst) {
-            // This means that the pressures are sorted from the most wetting to the least wetting-1 in the primary variables vector.
-            // For two phases this means that there is one pressure as primary variable: pw
-            priVars[p0Idx] = p[wPhaseIdx];
-        }
-        else if(pressureFormulation == leastWettingFirst) {
-            // This means that the pressures are sorted from the least wetting to the most wetting-1 in the primary variables vector.
-            // For two phases this means that there is one pressure as primary variable: pn
-            priVars[p0Idx] = p[nPhaseIdx];
-        }
-        else
-            DUNE_THROW(Dune::InvalidStateException, "CombustionProblemOneComponent does not support the chosen pressure formulation.");
+        const int refPhaseIdx = inPM_(globalPos) ? wPhaseIdx : nPhaseIdx;
 
-        fluidState.setMoleFraction(wPhaseIdx, wCompIdx, 1.0);
-        fluidState.setMoleFraction(wPhaseIdx, nCompIdx, 0.0);
+        MPNCInitialConditionHelper<PrimaryVariables, FluidSystem, ModelTraits> helper;
+        helper.solve(fs, MPNCInitialConditions::NotAllPhasesPresent{.refPhaseIdx = refPhaseIdx});
+        auto priVars = helper.getPrimaryVariables(fs);
 
-        fluidState.setMoleFraction(nPhaseIdx, wCompIdx, 1.0);
-        fluidState.setMoleFraction(nPhaseIdx, nCompIdx, 0.0);
-
-       int refPhaseIdx;
-
-        // on right boundary: reference is gas
-        refPhaseIdx = nPhaseIdx;
-
-        if(inPM_(globalPos)) {
-            refPhaseIdx = wPhaseIdx;
-        }
-
-        // obtain fugacities
-        using ComputeFromReferencePhase = ComputeFromReferencePhase<Scalar, FluidSystem>;
-        ParameterCache paramCache;
-        ComputeFromReferencePhase::solve(fluidState,
-                                         paramCache,
-                                         refPhaseIdx);
-
-        //////////////////////////////////////
-        // Set fugacities
-        //////////////////////////////////////
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-            priVars[conti00EqIdx + compIdx] = fluidState.fugacity(refPhaseIdx,compIdx);
-        }
+        // additionally set the temperature for thermal non-equilibrium for the phases
+        priVars[energyEq0Idx] = thisTemperature;
+        priVars[energyEqSolidIdx] = thisTemperature;
         return priVars;
     }
 
