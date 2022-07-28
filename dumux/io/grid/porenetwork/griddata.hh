@@ -30,6 +30,7 @@
 #include <type_traits>
 #include <unordered_map>
 #include <vector>
+#include <fstream>
 
 #include <dune/common/exceptions.hh>
 #include <dune/grid/common/gridfactory.hh>
