@@ -538,8 +538,8 @@ private:
 /*!
  * \brief Navier-Stokes default problem implementation for FCDiamond discretizations
  */
-template<class TypeTag>
-class NavierStokesMomentumProblemImpl<TypeTag, DiscretizationMethods::FCDiamond>
+template<class TypeTag, class DM>
+class NavierStokesMomentumProblemImpl<TypeTag, DiscretizationMethods::CVFE<DM>>
 : public FVProblemWithSpatialParams<TypeTag>
 {
     using ParentType = FVProblemWithSpatialParams<TypeTag>;
@@ -567,6 +567,10 @@ class NavierStokesMomentumProblemImpl<TypeTag, DiscretizationMethods::FCDiamond>
     using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+
+    static constexpr bool isVertexCentered
+        = GridGeometry::discMethod == DiscretizationMethods::box
+        || GridGeometry::discMethod == DiscretizationMethods::pq1bubble;
 
 public:
     //! These types are used in place of the typical NumEqVector type.
@@ -665,28 +669,67 @@ public:
      *        used for which equation on a given boundary segment.
      *
      * \param element The finite element
-     * \param scvf The sub control volume face
+     * \param scv The sub control volume
      */
-    BoundaryTypes boundaryTypes(const Element &element,
-                                const SubControlVolumeFace &scvf) const
+    BoundaryTypes boundaryTypes(const Element& element,
+                                const SubControlVolume& scv) const
     {
-        // Forward it to the method which only takes the global coordinate.
-        // We evaluate the boundary type at the center of the sub control volume face
-        // in order to avoid ambiguities at domain corners.
-        return asImp_().boundaryTypesAtPos(scvf.center());
+        if (!isVertexCentered)
+            DUNE_THROW(Dune::InvalidStateException,
+                       "boundaryTypes(..., scv) called for for a non vertex-centered method.");
+
+        // forward it to the method which only takes the global coordinate
+        return asImp_().boundaryTypesAtPos(scv.dofPosition());
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
+     * \brief Specifies which kind of boundary condition should be
+     *        used for which equation on a given boundary segment.
+     *
+     * \param element The finite element
+     * \param scvf The sub control volume face
+     */
+    BoundaryTypes boundaryTypes(const Element& element,
+                                const SubControlVolumeFace& scvf) const
+    {
+        if (isVertexCentered)
+            DUNE_THROW(Dune::InvalidStateException,
+                       "boundaryTypes(..., scvf) called for a vertex-centered method.");
+
+        // forward it to the method which only takes the global coordinate
+        return asImp_().boundaryTypesAtPos(scvf.ipGlobal());
+    }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a Dirichlet
+     *        control volume.
+     *
+     * \param element The finite element
+     * \param scv the sub control volume
+     */
+    DirichletValues dirichlet(const Element& element, const SubControlVolume& scv) const
+    {
+        // forward it to the method which only takes the global coordinate
+        if (!isVertexCentered)
+            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scv) called for a non vertex-centered method.");
+        else
+            return asImp_().dirichletAtPos(scv.dofPosition());
+    }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a Dirichlet
      *        control volume face.
      *
      * \param element The finite element
      * \param scvf the sub control volume face
-     * \note used for cell-centered discretization schemes
      */
-    DirichletValues dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
+    DirichletValues dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
     {
-        return asImp_().dirichletAtPos(scvf.ipGlobal());
+        // forward it to the method which only takes the global coordinate
+        if (isVertexCentered)
+            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scvf) called for vertex-centered method.");
+        else
+            return asImp_().dirichletAtPos(scvf.ipGlobal());
     }
 
     /*!
@@ -831,7 +874,7 @@ public:
     template<class SolutionVector>
     void applyInitialSolution(SolutionVector& sol) const
     {
-        static_assert(GridGeometry::discMethod == DiscretizationMethods::fcdiamond);
+        static_assert(GridGeometry::discMethod == DiscretizationMethods::CVFE<DM>{});
         sol.resize(this->gridGeometry().numDofs());
         std::vector<bool> dofHandled(this->gridGeometry().numDofs(), false);
         auto fvGeometry = localView(this->gridGeometry());
@@ -855,7 +898,7 @@ public:
      */
     InitialValues initial(const SubControlVolume& scv) const
     {
-        static_assert(GridGeometry::discMethod == DiscretizationMethods::fcdiamond);
+        static_assert(GridGeometry::discMethod == DiscretizationMethods::CVFE<DM>{});
         return asImp_().initialAtPos(scv.dofPosition());
     }
 
