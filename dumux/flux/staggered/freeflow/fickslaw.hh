@@ -123,25 +123,25 @@ public:
 
             const Scalar massOrMoleFractionInside = massOrMoleFraction(insideVolVars, referenceSystem, phaseIdx, compIdx);
             const Scalar massOrMoleFractionOutside =  massOrMoleFraction(outsideVolVars, referenceSystem, phaseIdx, compIdx);
-            const Scalar insideD = getEffectiveDiffusionCoefficient_(insideVolVars, phaseIdx, compIdx) * insideVolVars.extrusionFactor();
+            const Scalar insideDiffCoeff = getEffectiveDiffusionCoefficient_(insideVolVars, phaseIdx, compIdx) * insideVolVars.extrusionFactor();
 
             if (scvf.boundary())
             {
-                flux[compIdx] = insideDensity * insideD
+                flux[compIdx] = insideDensity * insideDiffCoeff
                                 * (massOrMoleFractionInside - massOrMoleFractionOutside) / insideDistance;
             }
             else
             {
                 const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
-                const Scalar outsideD = getEffectiveDiffusionCoefficient_(outsideVolVars, phaseIdx, compIdx)
+                const Scalar outsideDiffCoeff = getEffectiveDiffusionCoefficient_(outsideVolVars, phaseIdx, compIdx)
                                       * outsideVolVars.extrusionFactor();
                 const Scalar outsideDistance = (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
                 const Scalar outsideDensity = massOrMolarDensity(outsideVolVars, referenceSystem, phaseIdx);
 
                 const Scalar avgDensity = 0.5*(insideDensity + outsideDensity);
-                const Scalar avgD = harmonicMean(insideD, outsideD, insideDistance, outsideDistance);
+                const Scalar avgDiffCoeff = harmonicMean(insideDiffCoeff, outsideDiffCoeff, insideDistance, outsideDistance);
 
-                flux[compIdx] = avgDensity * avgD
+                flux[compIdx] = avgDensity * avgDiffCoeff
                                 * (massOrMoleFractionInside - massOrMoleFractionOutside) / (insideDistance + outsideDistance);
             }
         }

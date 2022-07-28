@@ -239,9 +239,9 @@ public:
                 return vv.effectiveDiffusionCoefficient(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);
         };
 
-        const auto insideD = getDiffCoeff(insideVolVars);
+        const auto insideDiffCoeff = getDiffCoeff(insideVolVars);
 
-        const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, insideD, insideVolVars.extrusionFactor());
+        const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, insideDiffCoeff, insideVolVars.extrusionFactor());
 
         // for the boundary (dirichlet) or at branching points we only need ti
         Scalar tij;
@@ -254,16 +254,16 @@ public:
             const auto outsideScvIdx = scvf.outsideScvIdx();
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            const auto outsideD = getDiffCoeff(outsideVolVars);
+            const auto outsideDiffCoeff = getDiffCoeff(outsideVolVars);
 
             Scalar tj;
             if constexpr (dim == dimWorld)
                 // assume the normal vector from outside is anti parallel so we save flipping a vector
-                tj = -1.0*computeTpfaTransmissibility(scvf, outsideScv, outsideD, outsideVolVars.extrusionFactor());
+                tj = -1.0*computeTpfaTransmissibility(scvf, outsideScv, outsideDiffCoeff, outsideVolVars.extrusionFactor());
             else
                 tj = computeTpfaTransmissibility(fvGeometry.flipScvf(scvf.index()),
                                                  outsideScv,
-                                                 outsideD,
+                                                 outsideDiffCoeff,
                                                  outsideVolVars.extrusionFactor());
 
             // check if we are dividing by zero!
