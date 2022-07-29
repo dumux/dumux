@@ -235,7 +235,7 @@ public:
     }
 
     /*!
-     * \brief Calculate the source term of the equation
+     * \brief Calculate the flux term of the equation
      *
      * \param problem The problem to solve
      * \param element The DUNE Codim<0> entity for which the residual
@@ -343,18 +343,15 @@ public:
     }
 
     /*!
-     * \brief Compute the source local residual, i.e. the deviation of the
-     *        source term from zero and add to the residual
-     * \note This is implemented for different discretization schemes
+     * \brief Compute the flux local residual, i.e. the deviation of the
+     *        flux term from zero.
      *
-     * \param residual The residual vector to fill
      * \param problem The problem to solve
      * \param element The DUNE Codim<0> entity for which the residual
      *                ought to be calculated
      * \param fvGeometry The finite-volume geometry of the element
      * \param elemVolVars The volume averaged variables for all
-     *                    sub-control volumes of the element at the current  time level
-     * \param elemBcTypes the boundary types for the boundary entities of an elements
+     *                       sub-control volumes of the element at the current  time level
      * \param elemFluxVarsCache The flux variable caches for the element stencil
      * \param scvf The sub control volume face the flux term is integrated over
      */
