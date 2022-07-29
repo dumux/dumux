@@ -112,33 +112,8 @@ public:
         else if (!this->elementIsGhost())
         {
             const auto residual = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables, partialReassembler); // forward to the internal implementation
-
-            if (this->element().partitionType() == Dune::InteriorEntity)
-            {
-                for (const auto& scv : scvs(this->fvGeometry()))
-                    res[scv.dofIndex()] += residual[scv.localDofIndex()];
-            }
-            else
-            {
-                // handle residual and matrix entries for parallel runs
-                for (const auto& scv : scvs(this->fvGeometry()))
-                {
-                    // set the matrix entries of all DOFs within the overlap region (except the border DOF)
-                    // to 1.0 and the residual entries to 0.0
-                    const auto& facet = this->element().template subEntity <1> (scv.indexInElement());
-                    if (facet.partitionType() > Dune::BorderEntity) // TODO is this always guaranteed to be correct?
-                    {
-                        const auto idx = gridGeometry.gridView().indexSet().index(facet);
-                        jac[idx][idx] = 1.0;
-                        res[idx] = 0;
-                    }
-
-                    // make sure that the residual at border entities is consistent by adding the
-                    // the contribution from the neighboring overlap element's scv
-                    if (facet.partitionType() == Dune::BorderEntity)
-                        res[scv.dofIndex()] += residual[scv.localDofIndex()];
-                }
-            }
+            for (const auto& scv : scvs(this->fvGeometry()))
+                res[scv.dofIndex()] += residual[scv.localDofIndex()];
 
             // assemble the coupling blocks for coupled models (does nothing if not coupled)
             maybeAssembleCouplingBlocks(residual);
@@ -148,12 +123,12 @@ public:
             const auto numLocalFaces = this->element().subEntities(1);
             for (int i = 0; i < numLocalFaces; ++i)
             {
-                // do not change the non-ghost vertices
+                // do not change the non-ghost entities
                 const auto face = this->element().template subEntity<1>(i);
                 if (face.partitionType() == Dune::InteriorEntity || face.partitionType() == Dune::BorderEntity)
                     continue;
 
-                // set main diagonal entries for the vertex
+                // set main diagonal entries for the face
                 const auto dofIndex = gridGeometry.dofMapper().index(face);
 
                 typedef typename JacobianMatrix::block_type BlockType;
@@ -161,7 +136,7 @@ public:
                 for (int j = 0; j < BlockType::rows; ++j)
                     J[j][j] = 1.0;
 
-                // set residual for the vertex
+                // set residual for the face
                 res[dofIndex] = 0;
             }
         }
