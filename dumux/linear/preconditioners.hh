@@ -29,14 +29,17 @@
 #include <dune/common/indices.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/paamg/amg.hh>
+#include <dune/istl/gsetc.hh>
 
 #if HAVE_UMFPACK
 #include <dune/istl/umfpack.hh>
 #endif
 
+#include <dumux/assembly/coloring.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/typetraits/matrix.hh>
 #include <dumux/linear/istlsolverregistry.hh>
+#include <dumux/parallel/parallel_for.hh>
 
 namespace Dumux {
 
@@ -327,6 +330,363 @@ private:
 
 DUMUX_REGISTER_PRECONDITIONER("uzawa", Dumux::MultiTypeBlockMatrixPreconditionerTag, Dune::defaultPreconditionerBlockLevelCreator<Dumux::SeqUzawa, 1>());
 
+
+/*! \brief Multi-threaded Jacobi preconditioner
+ *
+ *  \tparam M The matrix type to operate on
+ *  \tparam X Type of the update
+ *  \tparam Y Type of the defect
+ *  \tparam l The block level to invert. Default is 1
+ */
+template<class M, class X, class Y, int l=1>
+class ParMTJac : public Dune::Preconditioner<X,Y>
+{
+public:
+    //! \brief The matrix type the preconditioner is for.
+    typedef M matrix_type;
+    //! \brief The domain type of the preconditioner.
+    typedef X domain_type;
+    //! \brief The range type of the preconditioner.
+    typedef Y range_type;
+    //! \brief The field type of the preconditioner.
+    typedef typename X::field_type field_type;
+    //! \brief scalar type underlying the field_type
+    typedef Dune::Simd::Scalar<field_type> scalar_field_type;
+    //! \brief real scalar type underlying the field_type
+    typedef typename Dune::FieldTraits<scalar_field_type>::real_type real_field_type;
+
+    //! \brief Constructor.
+    ParMTJac (const M& A, int n, real_field_type w)
+    : _A_(A), numSteps_(n), relaxationFactor_(w)
+    { Dune::CheckIfDiagonalPresent<M,l>::check(_A_); }
+
+    ParMTJac (const std::shared_ptr<const Dune::AssembledLinearOperator<M,X,Y>>& A, const Dune::ParameterTree& configuration)
+    : ParMTJac(A->getmat(), configuration)
+    {}
+
+    ParMTJac (const M& A, const Dune::ParameterTree& configuration)
+    : ParMTJac(A, configuration.get<int>("iterations",1), configuration.get<real_field_type>("relaxation",1.0))
+    {}
+
+    void pre (X&, Y&) override {}
+
+    void apply (X& update, const Y& defect) override
+    {
+        X xOld(update);
+        const auto& A = _A_;
+
+        for (int k=0; k<numSteps_; k++)
+        {
+            if (k > 0)
+                xOld = update;
+
+            Dumux::parallelFor(A.N(), [&](const std::size_t i)
+            {
+                auto& row = A[i];
+                auto v = update[i];
+                auto rhs = defect[i];
+                const auto endColIt = row.end();
+                auto colIt = row.begin();
+
+                for (; colIt.index()<i; ++colIt)
+                    colIt->mmv(xOld[colIt.index()], rhs);
+                const auto diag = colIt;
+                for (; colIt != endColIt; ++colIt)
+                    colIt->mmv(xOld[colIt.index()], rhs);
+
+                Dune::algmeta_itsteps<l-1, typename M::block_type>::dbjac(
+                    *diag, v, rhs, relaxationFactor_
+                );
+
+                update[i].axpy(relaxationFactor_, v);
+            });
+        }
+    }
+
+    void post (X&) override {}
+
+    //! Category of the preconditioner (see SolverCategory::Category)
+    Dune::SolverCategory::Category category() const override
+    { return Dune::SolverCategory::sequential; }
+
+private:
+    const M& _A_;
+    int numSteps_;
+    real_field_type relaxationFactor_;
+};
+
+DUMUX_REGISTER_PRECONDITIONER("par_mt_jac", Dune::PreconditionerTag, Dune::defaultPreconditionerBlockLevelCreator<Dumux::ParMTJac>());
+
+
+namespace Detail::Preconditioners {
+
+// compute coloring for parallel sweep
+template<class M>
+void computeColorsForMatrixSweep_(const M& matrix, std::deque<std::vector<std::size_t>>& coloredIndices)
+{
+    // allocate some temporary memory
+    std::vector<int> colors(matrix.N(), -1);
+    std::vector<int> neighborColors; neighborColors.reserve(30);
+    std::vector<bool> colorUsed; colorUsed.reserve(30);
+
+    // a row that has my row index in their column set cannot have the same color
+    // TODO this assumes a symmetric matrix pattern
+    for (std::size_t i = 0; i < colors.size(); ++i)
+    {
+        neighborColors.clear();
+        auto& row = matrix[i];
+        const auto endColIt = row.end();
+        for (auto colIt = row.begin(); colIt != endColIt; ++colIt)
+            neighborColors.push_back(colors[colIt.index()]);
+
+        const auto c = Detail::smallestAvailableColor(neighborColors, colorUsed);
+        colors[i] = c;
+
+        // add element to the set of elements with the same color
+        if (c < coloredIndices.size())
+            coloredIndices[c].push_back(i);
+        else
+            coloredIndices.emplace_back(1, i);
+    }
+}
+
+// parallel SOR kernel (relaxed Gauss-Seidel)
+template<bool forward, int l, class M, class X, class Y, class K>
+void parallelBlockSOR_(const M& A, X& update, const Y& b, const K& relaxationFactor,
+                       const std::deque<std::vector<std::size_t>>& coloredIndices)
+{
+    for (int color = 0; color < coloredIndices.size(); ++color)
+    {
+        const auto c = forward ? color : coloredIndices.size()-1-color;
+        const auto& rowIndices = coloredIndices[c];
+        Dumux::parallelFor(rowIndices.size(), [&](const std::size_t k)
+        {
+            const auto i = rowIndices[k];
+            auto& row = A[i];
+            auto v = update[i];
+            auto rhs = b[i];
+            const auto endColIt = row.end();
+            auto colIt = row.begin();
+
+            for (; colIt.index()<i; ++colIt)
+                colIt->mmv(update[colIt.index()], rhs);
+            const auto diag = colIt;
+            for (; colIt != endColIt; ++colIt)
+                colIt->mmv(update[colIt.index()], rhs);
+
+            if constexpr (forward)
+                Dune::algmeta_itsteps<l-1,typename M::block_type>::bsorf(
+                    *diag, v, rhs, relaxationFactor
+                );
+            else
+                Dune::algmeta_itsteps<l-1,typename M::block_type>::bsorb(
+                    *diag, v, rhs, relaxationFactor
+                );
+
+            update[i].axpy(relaxationFactor, v);
+        });
+    }
+}
+
+} // end namespace Detail
+
+/*! \brief Multi-threaded SOR preconditioner using coloring
+ *
+ *  \tparam M The matrix type to operate on
+ *  \tparam X Type of the update
+ *  \tparam Y Type of the defect
+ *  \tparam l The block level to invert. Default is 1
+ */
+template<class M, class X, class Y, int l=1>
+class ParMTSOR : public Dune::Preconditioner<X,Y>
+{
+public:
+    //! \brief The matrix type the preconditioner is for.
+    typedef M matrix_type;
+    //! \brief The domain type of the preconditioner.
+    typedef X domain_type;
+    //! \brief The range type of the preconditioner.
+    typedef Y range_type;
+    //! \brief The field type of the preconditioner.
+    typedef typename X::field_type field_type;
+    //! \brief scalar type underlying the field_type
+    typedef Dune::Simd::Scalar<field_type> scalar_field_type;
+    //! \brief real scalar type underlying the field_type
+    typedef typename Dune::FieldTraits<scalar_field_type>::real_type real_field_type;
+
+    //! \brief Constructor.
+    ParMTSOR (const M& A, int n, real_field_type w)
+    : _A_(A), numSteps_(n), relaxationFactor_(w)
+    {
+        Dune::CheckIfDiagonalPresent<M,l>::check(_A_);
+        Detail::Preconditioners::computeColorsForMatrixSweep_(_A_, colors_);
+    }
+
+    ParMTSOR (const std::shared_ptr<const Dune::AssembledLinearOperator<M,X,Y>>& A, const Dune::ParameterTree& configuration)
+    : ParMTSOR(A->getmat(), configuration)
+    {}
+
+    ParMTSOR (const M& A, const Dune::ParameterTree& configuration)
+    : ParMTSOR(A, configuration.get<int>("iterations",1), configuration.get<real_field_type>("relaxation",1.0))
+    {}
+
+    void pre (X&, Y&) override {}
+
+    void apply (X& v, const Y& d) override
+    {
+        this->template apply<true>(v,d);
+    }
+
+    template<bool forward>
+    void apply(X& v, const Y& d)
+    {
+        for (int i=0; i<numSteps_; i++)
+            Detail::Preconditioners::parallelBlockSOR_<forward, l>(_A_, v, d, relaxationFactor_, colors_);
+    }
+
+    void post (X&) override {}
+
+    //! Category of the preconditioner (see SolverCategory::Category)
+    Dune::SolverCategory::Category category() const override
+    { return Dune::SolverCategory::sequential; }
+
+private:
+    const M& _A_;
+    int numSteps_;
+    real_field_type relaxationFactor_;
+
+    //! for each color a vector of row indices that can be dealt with in parallel
+    std::deque<std::vector<std::size_t>> colors_;
+};
+
+DUMUX_REGISTER_PRECONDITIONER("par_mt_sor", Dune::PreconditionerTag, Dune::defaultPreconditionerBlockLevelCreator<Dumux::ParMTSOR>());
+
+
+/*! \brief Multithreaded SSOR preconditioner using coloring
+ *
+ *  \tparam M The matrix type to operate on
+ *  \tparam X Type of the update
+ *  \tparam Y Type of the defect
+ *  \tparam l The block level to invert. Default is 1
+ */
+template<class M, class X, class Y, int l=1>
+class ParMTSSOR : public Dune::Preconditioner<X,Y>
+{
+public:
+    //! \brief The matrix type the preconditioner is for.
+    typedef M matrix_type;
+    //! \brief The domain type of the preconditioner.
+    typedef X domain_type;
+    //! \brief The range type of the preconditioner.
+    typedef Y range_type;
+    //! \brief The field type of the preconditioner.
+    typedef typename X::field_type field_type;
+    //! \brief scalar type underlying the field_type
+    typedef Dune::Simd::Scalar<field_type> scalar_field_type;
+    //! \brief real scalar type underlying the field_type
+    typedef typename Dune::FieldTraits<scalar_field_type>::real_type real_field_type;
+
+    //! \brief Constructor.
+    ParMTSSOR (const M& A, int n, real_field_type w)
+    : _A_(A), numSteps_(n), relaxationFactor_(w)
+    {
+        Dune::CheckIfDiagonalPresent<M,l>::check(_A_);
+        Detail::Preconditioners::computeColorsForMatrixSweep_(_A_, colors_);
+    }
+
+    ParMTSSOR (const std::shared_ptr<const Dune::AssembledLinearOperator<M,X,Y>>& A, const Dune::ParameterTree& configuration)
+    : ParMTSSOR(A->getmat(), configuration)
+    {}
+
+    ParMTSSOR (const M& A, const Dune::ParameterTree& configuration)
+    : ParMTSSOR(A, configuration.get<int>("iterations",1), configuration.get<real_field_type>("relaxation",1.0))
+    {}
+
+    void pre (X&, Y&) override {}
+
+    void apply (X& v, const Y& d) override
+    {
+        for (int i=0; i<numSteps_; i++)
+        {
+            Detail::Preconditioners::parallelBlockSOR_<true, l>(_A_, v, d, relaxationFactor_, colors_);
+            Detail::Preconditioners::parallelBlockSOR_<false, l>(_A_, v, d, relaxationFactor_, colors_);
+        }
+    }
+
+    void post (X&) override {}
+
+    //! Category of the preconditioner (see SolverCategory::Category)
+    Dune::SolverCategory::Category category() const override
+    { return Dune::SolverCategory::sequential; }
+
+private:
+    const M& _A_;
+    int numSteps_;
+    real_field_type relaxationFactor_;
+
+    //! for each color a vector of row indices that can be dealt with in parallel
+    std::deque<std::vector<std::size_t>> colors_;
+};
+
+DUMUX_REGISTER_PRECONDITIONER("par_mt_ssor", Dune::PreconditionerTag, Dune::defaultPreconditionerBlockLevelCreator<Dumux::ParMTSSOR>());
+
 } // end namespace Dumux
+
+namespace Dune::Amg {
+
+// make it possible to use Dumux::ParMTJac as AMG smoother
+template<class M, class X, class Y, int l>
+struct ConstructionTraits<Dumux::ParMTJac<M,X,Y,l> >
+{
+    using Arguments = DefaultConstructionArgs<SeqJac<M,X,Y,l> >;
+    static inline std::shared_ptr<Dumux::ParMTJac<M,X,Y,l>> construct(Arguments& args)
+    {
+        return std::make_shared<Dumux::ParMTJac<M,X,Y,l>>(
+            args.getMatrix(), args.getArgs().iterations, args.getArgs().relaxationFactor
+        );
+    }
+};
+
+// make it possible to use Dumux::ParMTSOR as AMG smoother
+template<class M, class X, class Y, int l>
+struct ConstructionTraits<Dumux::ParMTSOR<M,X,Y,l> >
+{
+    using Arguments = DefaultConstructionArgs<SeqSOR<M,X,Y,l> >;
+    static inline std::shared_ptr<Dumux::ParMTSOR<M,X,Y,l>> construct(Arguments& args)
+    {
+        return std::make_shared<Dumux::ParMTSOR<M,X,Y,l>>(
+            args.getMatrix(), args.getArgs().iterations, args.getArgs().relaxationFactor
+        );
+    }
+};
+
+template<class M, class X, class Y, int l>
+struct SmootherApplier<Dumux::ParMTSOR<M,X,Y,l> >
+{
+    typedef Dumux::ParMTSOR<M,X,Y,l> Smoother;
+    typedef typename Smoother::range_type Range;
+    typedef typename Smoother::domain_type Domain;
+
+    static void preSmooth(Smoother& smoother, Domain& v, Range& d)
+    { smoother.template apply<true>(v,d); }
+
+    static void postSmooth(Smoother& smoother, Domain& v, Range& d)
+    { smoother.template apply<false>(v,d); }
+};
+
+// make it possible to use Dumux::ParMTSSOR as AMG smoother
+template<class M, class X, class Y, int l>
+struct ConstructionTraits<Dumux::ParMTSSOR<M,X,Y,l> >
+{
+    using Arguments = DefaultConstructionArgs<SeqSSOR<M,X,Y,l> >;
+    static inline std::shared_ptr<Dumux::ParMTSSOR<M,X,Y,l>> construct(Arguments& args)
+    {
+        return std::make_shared<Dumux::ParMTSSOR<M,X,Y,l>>(
+            args.getMatrix(), args.getArgs().iterations, args.getArgs().relaxationFactor
+        );
+    }
+};
+
+} // end namespace Dune::Amg
 
 #endif
