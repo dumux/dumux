@@ -25,9 +25,10 @@ variables:
   CXX_MAX_STANDARD: "17"
 
 
-blob:
-  stage: configure
+faillll:
+  state: configure
   script: exit 1
+  image: alpine/curl
 
 
 configure:
@@ -222,8 +223,8 @@ test python:
 
 slack-webhook:
   stage: report
+  image: alpine/curl
   when: on_failure
   script:
     - |
-      curl -X POST -H "Content-type: application/json" \
-      --data "{\"text\":\"Pipeline failed\"}" https://hooks.slack.com/services/$DUMUX_SLACK_TOKEN
+      curl -X POST -H "Content-type: application/json" --data "{\"text\":\"Pipeline failed\"}" https://hooks.slack.com/services/$DUMUX_SLACK_TOKEN
