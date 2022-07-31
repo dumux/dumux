@@ -26,7 +26,7 @@ variables:
 
 
 faillll:
-  state: configure
+  stage: configure
   script: exit 1
   image: alpine/curl
 
