@@ -222,6 +222,8 @@ test python:
 
 slack-webhook:
   stage: report
-  script:
-    - curl -X POST -H "Content-type: application/json" --data "{\"text\":\"Pipeline failed\"}" https://hooks.slack.com/services/$DUMUX_SLACK_TOKEN
   when: on_failure
+  script:
+    - |
+      curl -X POST -H "Content-type: application/json" \
+      --data "{\"text\":\"Pipeline failed\"}" https://hooks.slack.com/services/$DUMUX_SLACK_TOKEN
