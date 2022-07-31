@@ -10,6 +10,7 @@ stages:
   - select
   - build
   - test
+  - report
 
 
 workflow:
@@ -22,6 +23,11 @@ variables:
   MR_TARGET_BRANCH_NAME: ""
   REFERENCE_SHA: ""
   CXX_MAX_STANDARD: "17"
+
+
+blob:
+  stage: configure
+  script: exit 1
 
 
 configure:
@@ -212,3 +218,10 @@ test python:
       artifacts: true
     - job: select tests
       artifacts: true
+
+
+slack-webhook:
+  stage: report
+  script:
+    - curl -X POST -H "Content-type: application/json" --data "{\"text\":\"Pipeline failed\"}" https://hooks.slack.com/services/$DUMUX_SLACK_TOKEN
+  when: on_failure
