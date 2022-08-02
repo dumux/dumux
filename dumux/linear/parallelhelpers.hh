@@ -19,8 +19,7 @@
 /*!
  * \file
  * \ingroup Linear
- * \brief Provides a helper class for nonoverlapping
- *        decomposition.
+ * \brief Provides a helper class for nonoverlapping decomposition
  */
 #ifndef DUMUX_LINEAR_PARALLELHELPERS_HH
 #define DUMUX_LINEAR_PARALLELHELPERS_HH
@@ -47,7 +46,7 @@ class ParallelISTLHelper
 {
     using GridView = typename LinearSolverTraits::GridView;
     using DofMapper = typename LinearSolverTraits::DofMapper;
-    enum { dofCodim = LinearSolverTraits::dofCodim };
+    static constexpr int dofCodim = LinearSolverTraits::dofCodim;
 
     // TODO: this is some large number (replace by limits?)
     static constexpr std::size_t ghostMarker_ = 1<<24;
@@ -88,8 +87,8 @@ class ParallelISTLHelper
      * Can be used to mark ghost cells.
      */
     class GhostGatherScatter
-        : public BaseGatherScatter,
-          public Dune::CommDataHandleIF<GhostGatherScatter,std::size_t>
+    : public BaseGatherScatter
+    , public Dune::CommDataHandleIF<GhostGatherScatter, std::size_t>
     {
     public:
         using DataType = std::size_t;
@@ -98,7 +97,8 @@ class ParallelISTLHelper
         using BaseGatherScatter::size;
 
         GhostGatherScatter(std::vector<std::size_t>& ranks, const DofMapper& mapper)
-        : BaseGatherScatter(mapper), ranks_(ranks)
+        : BaseGatherScatter(mapper)
+        , ranks_(ranks)
         {}
 
         template<class MessageBuffer, class EntityType>
@@ -130,8 +130,8 @@ class ParallelISTLHelper
      * Used to compute an owner rank for each unknown.
      */
     class InteriorBorderGatherScatter
-        : public BaseGatherScatter,
-          public Dune::CommDataHandleIF<InteriorBorderGatherScatter,std::size_t>
+    : public BaseGatherScatter
+    , public Dune::CommDataHandleIF<InteriorBorderGatherScatter, std::size_t>
     {
     public:
         using DataType = std::size_t;
@@ -140,9 +140,13 @@ class ParallelISTLHelper
         using BaseGatherScatter::size;
 
         InteriorBorderGatherScatter(std::vector<std::size_t>& ranks, const DofMapper& mapper)
-        : BaseGatherScatter(mapper), ranks_(ranks)
+        : BaseGatherScatter(mapper)
+        , ranks_(ranks)
         {}
 
+        /*!
+         * \brief Pack data (to be send to other processes) from this process to message buffer
+         */
         template<class MessageBuffer, class EntityType>
         void gather(MessageBuffer& buff, const EntityType& e) const
         {
@@ -152,14 +156,21 @@ class ParallelISTLHelper
             buff.write(data);
         }
 
+        /*!
+         * \brief Unpack data (received from other process) from message buffer to this process
+         */
         template<class MessageBuffer, class EntityType>
         void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
         {
             std::size_t x;
             buff.read(x);
             auto& data = ranks_[this->index(e)];
+
+            // we leave ghost unchanged
+            // for other dofs, the process with the lowest rank
+            // is assigned to be the (unique) owner
             using std::min;
-            data = this->isNeitherInteriorNorBorderEntity(e) ? x : min(data,x);
+            data = this->isNeitherInteriorNorBorderEntity(e) ? x : min(data, x);
         }
     private:
         std::vector<std::size_t>& ranks_;
@@ -170,8 +181,8 @@ class ParallelISTLHelper
      *
      */
     struct NeighbourGatherScatter
-        : public BaseGatherScatter,
-          public Dune::CommDataHandleIF<NeighbourGatherScatter,int>
+    : public BaseGatherScatter
+    , public Dune::CommDataHandleIF<NeighbourGatherScatter, int>
     {
         using DataType = int;
         using BaseGatherScatter::contains;
@@ -179,7 +190,9 @@ class ParallelISTLHelper
         using BaseGatherScatter::size;
 
         NeighbourGatherScatter(const DofMapper& mapper, int rank, std::set<int>& neighbours)
-        : BaseGatherScatter(mapper), rank_(rank), neighbours_(neighbours)
+        : BaseGatherScatter(mapper)
+        , rank_(rank)
+        , neighbours_(neighbours)
         {}
 
         template<class MessageBuffer, class EntityType>
@@ -206,8 +219,8 @@ class ParallelISTLHelper
      *
      */
     struct SharedGatherScatter
-        : public BaseGatherScatter,
-          public Dune::CommDataHandleIF<SharedGatherScatter,int>
+    : public BaseGatherScatter
+    , public Dune::CommDataHandleIF<SharedGatherScatter, int>
     {
         using DataType = int;
         using BaseGatherScatter::contains;
@@ -215,7 +228,8 @@ class ParallelISTLHelper
         using BaseGatherScatter::size;
 
         SharedGatherScatter(std::vector<int>& shared, const DofMapper& mapper)
-        : BaseGatherScatter(mapper), shared_(shared)
+        : BaseGatherScatter(mapper)
+        , shared_(shared)
         {}
 
         template<class MessageBuffer, class EntityType>
@@ -243,8 +257,8 @@ class ParallelISTLHelper
      */
     template<typename GlobalIndex>
     struct GlobalIndexGatherScatter
-        : public BaseGatherScatter,
-          public Dune::CommDataHandleIF<GlobalIndexGatherScatter<GlobalIndex>, GlobalIndex>
+    : public BaseGatherScatter
+    , public Dune::CommDataHandleIF<GlobalIndexGatherScatter<GlobalIndex>, GlobalIndex>
     {
         using DataType = GlobalIndex;
         using BaseGatherScatter::contains;
@@ -252,7 +266,8 @@ class ParallelISTLHelper
         using BaseGatherScatter::size;
 
         GlobalIndexGatherScatter(std::vector<GlobalIndex>& globalIndices, const DofMapper& mapper)
-        : BaseGatherScatter(mapper), globalIndices_(globalIndices)
+        : BaseGatherScatter(mapper)
+        , globalIndices_(globalIndices)
         {}
 
         template<class MessageBuffer, class EntityType>
@@ -282,17 +297,27 @@ public:
         if constexpr (Detail::canCommunicate<typename GridView::Traits::Grid, dofCodim>)
             initGhostsAndOwners_();
         else
-            DUNE_THROW(Dune::InvalidStateException, "Cannot initialize parallel helper for a grid that cannot communicate codim-" << dofCodim << "-entities.");
+            DUNE_THROW(Dune::InvalidStateException,
+                "Cannot initialize parallel helper for a grid that cannot communicate codim-" << dofCodim << "-entities."
+            );
     }
 
     bool isGhost(std::size_t i) const
     { return isGhost_[i] == ghostMarker_; }
 
+    bool isOwned(std::size_t i) const
+    { return isOwned_[i] == 1; }
+
     /*!
-     * \brief Creates a parallel index set
+     * \brief Creates a parallel index set for a communicator
+     * \param comm The OwnerOverlapCopyCommunication communicators
      *
-     * \tparam Comm The type of the OwnerOverlapCopyCommunication
-     * communicators.
+     * The parallel index set contains for each dof index,
+     * the triplet (globalIndex, (localIndex, attribute))
+     * where attribute is owner, overlap or copy. Each dof
+     * is uniquely owned by exactly one process. This allows
+     * to apply local operators additively to get a global operator
+     * without communication.
      */
     template<class Comm>
     void createParallelIndexSet(Comm& comm) const
@@ -307,7 +332,6 @@ public:
 
             // First find out which dofs we share with other processors
             std::vector<int> isShared(mapper_.size(), false);
-
             SharedGatherScatter sgs(isShared, mapper_);
             gridView_.communicate(sgs, Dune::All_All_Interface, Dune::ForwardCommunication);
 
@@ -325,13 +349,13 @@ public:
             const int rank = gridView_.comm().rank();
             auto start = std::accumulate(counts.begin(), counts.begin() + rank, GlobalIndex(0));
 
+            // starting from start (offset), number global indices owned by this process consecutively
             std::vector<GlobalIndex> globalIndices(mapper_.size(), std::numeric_limits<GlobalIndex>::max());
-
             for (std::size_t i = 0; i < globalIndices.size(); ++i)
             {
                 if (isOwned_[i] == 1 && isShared[i])
                 {
-                    globalIndices[i] = start; // GlobalIndex does not implement postfix ++
+                    globalIndices[i] = start;
                     ++start;
                 }
             }
@@ -340,7 +364,8 @@ public:
             GlobalIndexGatherScatter<GlobalIndex> gigs(globalIndices, mapper_);
             gridView_.communicate(gigs, Dune::All_All_Interface, Dune::ForwardCommunication);
 
-            resizeIndexSet_(comm, globalIndices);
+            // put the information into the parallel index set
+            resizeAndFillIndexSet_(comm, globalIndices);
 
             // Compute neighbours using communication
             std::set<int> neighbours;
@@ -351,7 +376,9 @@ public:
             comm.remoteIndices().template rebuild<false>();
         }
         else
-            DUNE_THROW(Dune::InvalidStateException, "Cannot build parallel index set for a grid that cannot communicate codim-" << dofCodim << "-entities.");
+            DUNE_THROW(Dune::InvalidStateException,
+                "Cannot build parallel index set for a grid that cannot communicate codim-" << dofCodim << "-entities."
+            );
     }
 
     //! Return the dofMapper
@@ -363,19 +390,31 @@ public:
     { return gridView_; }
 
 private:
+     /*!
+     * \brief Initialize ghost and owner flags
+     *
+     * All dofs on ghost entities are marked.
+     * All dofs are assigned a unique owner process. This will help us to create a unique partition
+     * and unique representations of a vector according to Definition 2.5 in Blatt and Bastian (2009)
+     * https://doi.org/10.1504/IJCSE.2008.021112
+     */
     void initGhostsAndOwners_()
     {
         const auto rank = gridView_.comm().rank();
         isOwned_.assign(mapper_.size(), rank);
+
         // find out about ghosts
         GhostGatherScatter ggs(isOwned_, mapper_);
 
         if (gridView_.comm().size() > 1)
             gridView_.communicate(ggs, Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
 
+        // isGhost_ contains rank when the dof is not on a ghost entity (interior or border)
+        // and ghostMarker_ when the dof is on a ghost
         isGhost_ = isOwned_;
 
-        // partition interior/border
+        // partition interior/border uniquely
+        // after the communication each dof is assigned to one unique owner process rank
         InteriorBorderGatherScatter dh(isOwned_, mapper_);
 
         if (gridView_.comm().size() > 1)
@@ -387,10 +426,12 @@ private:
     }
 
     template<class Comm, class GlobalIndices>
-    void resizeIndexSet_(Comm& comm, const GlobalIndices& globalIndices) const
+    void resizeAndFillIndexSet_(Comm& comm, const GlobalIndices& globalIndices) const
     {
         comm.indexSet().beginResize();
 
+        // add triplets characterizing each dof in the parallel index set
+        // (globalIndex, (localIndex, attribute)) where attribute is owner, overlap or copy
         for (std::size_t localIndex = 0; localIndex < globalIndices.size(); ++localIndex)
         {
             const auto globalIndex = globalIndices[localIndex];
@@ -410,9 +451,9 @@ private:
     Dune::OwnerOverlapCopyAttributeSet::AttributeSet
     getAttribute_(const Comm& comm, const bool isOwned, const bool isGhost) const
     {
-        if (isOwned)
+        if (isOwned) // this process owns the dof (uniquely)
             return Dune::OwnerOverlapCopyAttributeSet::owner;
-        else if (isGhost && (comm.category() == static_cast<int>(Dune::SolverCategory::nonoverlapping)) )
+        else if (isGhost && (comm.category() == Dune::SolverCategory::nonoverlapping) )
             return Dune::OwnerOverlapCopyAttributeSet::overlap;
         else
             return Dune::OwnerOverlapCopyAttributeSet::copy;
@@ -420,8 +461,10 @@ private:
 
     const GridView gridView_; //!< the grid view
     const DofMapper& mapper_; //!< the dof mapper
-    std::vector<std::size_t> isOwned_; //!< vector to identify unique decomposition
-    std::vector<std::size_t> isGhost_; //!< vector to identify ghost dofs
+    //! vector to identify unique decomposition (1: this rank owns the dof; 0: owned by remote process)
+    std::vector<std::size_t> isOwned_;
+    //!< vector to identify ghost dofs (ghostMarker_: this dof is on a ghost entity; contains and unspecified value otherwise)
+    std::vector<std::size_t> isGhost_;
 
 }; // class ParallelISTLHelper
 
@@ -455,16 +498,17 @@ private:
 
 /*!
  * \ingroup Linear
- * \brief Helper class for adding up matrix entries on border.
+ * \brief Helper class for adding up matrix entries for border entities
+ *
+ * Border means all degrees of freedom located
+ * on lower-dimensional entities (faces, edges, vertices)
+ * that form the the process boundary
  */
-template<class Matrix, class GridView, class DofMapper, int dofCodim>
+template<class Matrix, class GridView,
+         class RowDofMapper, int rowDofCodim>
 class ParallelMatrixHelper
 {
-    static constexpr int dim = GridView::dimension;
-    using Grid = typename GridView::Traits::Grid;
-    using BlockType = typename Matrix::block_type;
-    using IDS = typename Grid::Traits::GlobalIdSet;
-    using IdType = typename IDS::IdType;
+    using IdType = typename GridView::Traits::Grid::Traits::GlobalIdSet::IdType;
 
     /*!
      * \brief A DataHandle class to exchange matrix sparsity patterns.
@@ -487,30 +531,40 @@ class ParallelMatrixHelper
      *  The MatrixPatternExchange class will find these entries and fills a vector "sparsity",
      *  that contains all missing connections.
      */
-    template<class IsGhostFunc>
+    template<class ColIsGhostFunc>
     struct MatrixPatternExchange
-    : public Dune::CommDataHandleIF<MatrixPatternExchange<IsGhostFunc>, IdType>
+    : public Dune::CommDataHandleIF<MatrixPatternExchange<ColIsGhostFunc>, IdType>
     {
         //! Export type of data for message buffer
         using DataType = IdType;
 
-        MatrixPatternExchange(const DofMapper& mapper,
+        /*!
+         * \brief Construct a new sparsity pattern exchange handle
+         *
+         * \param rowEntityMapper an index mapper for entities associated with row entities
+         * \param globalToLocal DOC ME
+         * \param localToGlobal DOC ME
+         * \param A the matrix for which we want to extend the pattern
+         * \param[out] sparsityPattern the extended sparsity pattern
+         * \param isGhostColumDof a function that returns whether a given column index is associated with a ghost entity
+         */
+        MatrixPatternExchange(const RowDofMapper& rowEntityMapper,
                               const std::map<IdType,int>& globalToLocal,
                               const std::map<int,IdType>& localToGlobal,
                               Matrix& A,
-                              std::vector<std::set<int>>& sparsity,
-                              const IsGhostFunc& isGhost)
-        : mapper_(mapper), idToIndex_(globalToLocal), indexToID_(localToGlobal)
-        , sparsity_(sparsity), A_(A), isGhost_(isGhost)
+                              std::vector<std::set<int>>& sparsityPattern,
+                              const ColIsGhostFunc& isGhostColumDof)
+        : rowEntityMapper_(rowEntityMapper), idToIndex_(globalToLocal), indexToID_(localToGlobal)
+        , sparsityPattern_(sparsityPattern), A_(A), isGhostColumDof_(isGhostColumDof)
         {
-            sparsity_.resize(A.N());
+            sparsityPattern_.resize(A.N());
         }
 
         /*!
          * \brief Returns true if data for given valid codim should be communicated
          */
         bool contains (int dim, int codim) const
-        { return (codim == dofCodim); }
+        { return (codim == rowDofCodim); }
 
         //! returns true if size per entity of given dim and codim is a constant
         bool fixedSize(int dim, int codim) const
@@ -522,102 +576,9 @@ class ParallelMatrixHelper
         template<class EntityType>
         std::size_t size(EntityType& e) const
         {
-            const auto rowIdx = mapper_.index(e);
-            std::size_t  n = 0;
-            for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
-                if (indexToID_.count(colIt.index()))
-                    n++;
+            const auto rowIdx = rowEntityMapper_.index(e);
 
-            return n;
-        }
-
-        /*!
-         * \brief Pack data from user to message buffer
-         */
-        template<class MessageBuffer, class EntityType>
-        void gather(MessageBuffer& buff, const EntityType& e) const
-        {
-            const auto rowIdx = mapper_.index(e);
-            for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
-            {
-                auto it = indexToID_.find(colIt.index());
-                if (it != indexToID_.end())
-                    buff.write(it->second);
-            }
-        }
-
-        /*!
-         * \brief Unpack data from message buffer to user
-         */
-        template<class MessageBuffer, class EntityType>
-        void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
-        {
-            const auto rowIdx = mapper_.index(e);
-            for (std::size_t k = 0; k < n; k++)
-            {
-                IdType id;
-                buff.read(id);
-                // only add entries corresponding to border entities
-                const auto it = idToIndex_.find(id);
-                if (it != idToIndex_.end())
-                {
-                    const auto colIdx = it->second;
-                    if (!sparsity_[rowIdx].count(colIdx) && !isGhost_(colIdx))
-                        sparsity_[rowIdx].insert(colIdx);
-                }
-            }
-        }
-
-    private:
-        const DofMapper& mapper_;
-        const std::map<IdType,int>& idToIndex_;
-        const std::map<int,IdType>& indexToID_;
-        std::vector<std::set<int>>& sparsity_;
-        Matrix& A_;
-        const IsGhostFunc& isGhost_;
-
-    }; // class MatrixPatternExchange
-
-    //! Local matrix blocks associated with the global id set
-    struct MatrixEntry
-    {
-        IdType first;
-        BlockType second;
-        MatrixEntry (const IdType& f, const BlockType& s) : first(f), second(s) {}
-        MatrixEntry () {}
-    };
-
-    //! A DataHandle class to exchange matrix entries
-    struct MatrixEntryExchange
-    : public Dune::CommDataHandleIF<MatrixEntryExchange, MatrixEntry>
-    {
-        //! Export type of data for message buffer
-        using DataType = MatrixEntry;
-
-        MatrixEntryExchange(const DofMapper& mapper,
-                            const std::map<IdType,int>& globalToLocal,
-                            const std::map<int,IdType>& localToGlobal,
-                            Matrix& A)
-        : mapper_(mapper), idToIndex_(globalToLocal), indexToID_(localToGlobal), A_(A)
-        {}
-
-        /*!
-         * \brief Returns true if data for given valid codim should be communicated
-         */
-        bool contains(int dim, int codim) const
-        { return (codim == dofCodim); }
-
-        //! returns true if size per entity of given dim and codim is a constant
-        bool fixedSize(int dim, int codim) const
-        { return false; }
-
-        /*!
-         * \brief How many objects of type DataType have to be sent for a given entity
-         */
-        template<class EntityType>
-        std::size_t size(EntityType& e) const
-        {
-            const auto rowIdx = mapper_.index(e);
+            // all column entity indices of this row that are in the index set
             std::size_t n = 0;
             for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
                 if (indexToID_.count(colIt.index()))
@@ -632,13 +593,12 @@ class ParallelMatrixHelper
         template<class MessageBuffer, class EntityType>
         void gather(MessageBuffer& buff, const EntityType& e) const
         {
-            const auto rowIdx = mapper_.index(e);
+            const auto rowIdx = rowEntityMapper_.index(e);
+
+            // send all column entity ids of this row that are in the index set
             for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
-            {
-                auto it = indexToID_.find(colIt.index());
-                if (it != indexToID_.end())
-                    buff.write(MatrixEntry(it->second,*colIt));
-            }
+                if (auto it = indexToID_.find(colIt.index()); it != indexToID_.end())
+                    buff.write(it->second);
         }
 
         /*!
@@ -647,36 +607,132 @@ class ParallelMatrixHelper
         template<class MessageBuffer, class EntityType>
         void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
         {
-            const auto rowIdx = mapper_.index(e);
+            const auto rowIdx = rowEntityMapper_.index(e);
             for (std::size_t k = 0; k < n; k++)
             {
-                MatrixEntry m;
-                buff.read(m);
-                // only add entries corresponding to border entities
-                auto it = idToIndex_.find(m.first);
-                if (it != idToIndex_.end())
-                    if (A_[rowIdx].find(it->second) != A_[rowIdx].end())
-                        A_[rowIdx][it->second] += m.second;
+                // receive n column entity IDs
+                IdType id;
+                buff.read(id);
+
+                // only add entries that are contained in the index set
+                if (const auto it = idToIndex_.find(id); it != idToIndex_.end())
+                {
+                    const auto colIdx = it->second; // get local column index
+                    // add this entry (if it doesn't exist yet)
+                    // (and only if the column dof is not associated with a ghost entity)
+                    if (!isGhostColumDof_(colIdx))
+                        // std::set takes care that each index only is inserted once
+                        sparsityPattern_[rowIdx].insert(colIdx);
+                }
             }
         }
 
     private:
-        const DofMapper& mapper_;
-        const std::map<IdType,int>& idToIndex_;
-        const std::map<int,IdType>& indexToID_;
+        const RowDofMapper& rowEntityMapper_;
+        const std::map<IdType, int>& idToIndex_;
+        const std::map<int, IdType>& indexToID_;
+        std::vector<std::set<int>>& sparsityPattern_;
+        Matrix& A_;
+        const ColIsGhostFunc& isGhostColumDof_;
+
+    }; // class MatrixPatternExchange
+
+    //! Local matrix blocks associated with the global id set
+    struct MatrixEntry
+    {
+        IdType first;
+        typename Matrix::block_type second;
+    };
+
+    //! A DataHandle class to exchange matrix entries
+    struct MatrixEntryExchange
+    : public Dune::CommDataHandleIF<MatrixEntryExchange, MatrixEntry>
+    {
+        //! Export type of data for message buffer
+        using DataType = MatrixEntry;
+
+        MatrixEntryExchange(const RowDofMapper& rowEntityMapper,
+                            const std::map<IdType, int>& globalToLocal,
+                            const std::map<int, IdType>& localToGlobal,
+                            Matrix& A)
+        : rowEntityMapper_(rowEntityMapper), idToIndex_(globalToLocal), indexToID_(localToGlobal), A_(A)
+        {}
+
+        /*!
+         * \brief Returns true if data for given valid codim should be communicated
+         */
+        bool contains(int dim, int codim) const
+        { return (codim == rowDofCodim); }
+
+        //! returns true if size per entity of given dim and codim is a constant
+        bool fixedSize(int dim, int codim) const
+        { return false; }
+
+        /*!
+         * \brief How many objects of type DataType have to be sent for a given entity
+         */
+        template<class EntityType>
+        std::size_t size(EntityType& e) const
+        {
+            const auto rowIdx = rowEntityMapper_.index(e);
+            std::size_t n = 0;
+            for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+                if (indexToID_.count(colIt.index()))
+                    n++;
+
+            return n;
+        }
+
+        /*!
+         * \brief Pack data from user to message buffer
+         */
+        template<class MessageBuffer, class EntityType>
+        void gather(MessageBuffer& buff, const EntityType& e) const
+        {
+            const auto rowIdx = rowEntityMapper_.index(e);
+            // send all matrix entries for which the column index is in the index set
+            for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+                if (auto it = indexToID_.find(colIt.index()); it != indexToID_.end())
+                    buff.write(MatrixEntry{ it->second, *colIt });
+        }
+
+        /*!
+         * \brief Unpack data from message buffer to user
+         */
+        template<class MessageBuffer, class EntityType>
+        void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
+        {
+            const auto rowIdx = rowEntityMapper_.index(e);
+            for (std::size_t k = 0; k < n; k++)
+            {
+                MatrixEntry m;
+                buff.read(m);
+                const auto& [colDofID, matrixBlock] = m; // unpack
+
+                // only add entries in the index set and for which A has allocated memory
+                if (auto it = idToIndex_.find(colDofID); it != idToIndex_.end())
+                    if (A_[rowIdx].find(it->second) != A_[rowIdx].end())
+                        A_[rowIdx][it->second] += matrixBlock;
+            }
+        }
+
+    private:
+        const RowDofMapper& rowEntityMapper_;
+        const std::map<IdType, int>& idToIndex_;
+        const std::map<int, IdType>& indexToID_;
         Matrix& A_;
 
     }; // class MatrixEntryExchange
 
 public:
 
-    ParallelMatrixHelper(const GridView& gridView, const DofMapper& mapper)
+    ParallelMatrixHelper(const GridView& gridView, const RowDofMapper& mapper)
     : gridView_(gridView), mapper_(mapper)
     {
         idToIndex_.clear();
         indexToID_.clear();
 
-        for (const auto& entity : entities(gridView_, Dune::Codim<dofCodim>()))
+        for (const auto& entity : entities(gridView_, Dune::Codim<rowDofCodim>()))
         {
             if (entity.partitionType() == Dune::BorderEntity)
             {
@@ -692,74 +748,94 @@ public:
     /*!
      * \brief communicates values for the sparsity pattern of the new matrix.
      * \param A Matrix to operate on.
-     * \param isGhost Function returning if is ghost.
+     * \param isGhost Function returning if a column dof index is on a ghost entity
      */
     template<class IsGhostFunc>
     void extendMatrix(Matrix& A, const IsGhostFunc& isGhost)
     {
-        if constexpr (Detail::canCommunicate<Grid, dofCodim>)
+        if constexpr (Detail::canCommunicate<typename GridView::Grid, rowDofCodim>)
         {
             if (gridView_.comm().size() <= 1)
                 return;
 
-            Matrix tmp(A);
-            std::size_t nnz = 0;
-            // get entries from other processes
-            std::vector<std::set<int>> sparsity;
-            MatrixPatternExchange<IsGhostFunc> datahandle(mapper_, idToIndex_, indexToID_, A, sparsity, isGhost);
-            gridView_.communicate(datahandle, Dune::InteriorBorder_InteriorBorder_Interface,
-                                            Dune::ForwardCommunication);
-            // add own entries, count number of nonzeros
+            // make a copy of the matrix as originally assembled
+            Matrix matrixAsAssembled(A);
+
+            // first get entries in sparsity pattern from other processes
+            std::size_t numNonZeroEntries = 0;
+            std::vector<std::set<int>> sparsityPattern; // column indices for every row
+            MatrixPatternExchange<IsGhostFunc> dataHandle(mapper_, idToIndex_, indexToID_, A, sparsityPattern, isGhost);
+            gridView_.communicate(
+                dataHandle, Dune::InteriorBorder_InteriorBorder_Interface, Dune::ForwardCommunication
+            );
+
+            // add own entries to the sparsity pattern and count number of non-zeros
             for (auto rowIt = A.begin(); rowIt != A.end(); ++rowIt)
             {
-                for (auto colIt = A[rowIt.index()].begin(); colIt != A[rowIt.index()].end(); ++colIt)
-                    if (!sparsity[rowIt.index()].count(colIt.index()))
-                        sparsity[rowIt.index()].insert(colIt.index());
+                const auto colEndIt = A[rowIt.index()].end();
+                for (auto colIt = rowIt->begin(); colIt != colEndIt; ++colIt)
+                    if (!sparsityPattern[rowIt.index()].count(colIt.index()))
+                        sparsityPattern[rowIt.index()].insert(colIt.index());
 
-                nnz += sparsity[rowIt.index()].size();
+                numNonZeroEntries += sparsityPattern[rowIt.index()].size();
             }
 
-            A.setSize(tmp.N(), tmp.N(), nnz);
+            // insert any additional entries into the matrix
+            A.setSize(matrixAsAssembled.N(), matrixAsAssembled.M(), numNonZeroEntries);
             A.setBuildMode(Matrix::row_wise);
             auto citer = A.createbegin();
-            for (auto i = sparsity.begin(), end = sparsity.end(); i!=end; ++i, ++citer)
-            {
+            for (auto i = sparsityPattern.begin(), end = sparsityPattern.end(); i!=end; ++i, ++citer)
                 for (auto si = i->begin(), send = i->end(); si!=send; ++si)
                     citer.insert(*si);
-            }
 
-            // set matrix old values
+            // reset matrix to contain original values
             A = 0;
-            for (auto rowIt = tmp.begin(); rowIt != tmp.end(); ++rowIt)
-                for (auto colIt = tmp[rowIt.index()].begin(); colIt != tmp[rowIt.index()].end(); ++colIt)
-                    A[rowIt.index()][colIt.index()] = tmp[rowIt.index()][colIt.index()];
+            const auto rowEndIt = matrixAsAssembled.end();
+            for (auto rowIt = matrixAsAssembled.begin(); rowIt != rowEndIt; ++rowIt)
+                for (auto colIt = matrixAsAssembled[rowIt.index()].begin(); colIt != matrixAsAssembled[rowIt.index()].end(); ++colIt)
+                    A[rowIt.index()][colIt.index()] = *colIt;
+
+            // The matrix A has now a possible extended sparsity pattern but any additional entries are
+            // initialized to zero and have to be filled by the sumEntries function
         }
         else
-            DUNE_THROW(Dune::InvalidStateException, "Cannot call extendMatrix for a grid that cannot communicate codim-" << dofCodim << "-entities.");
+            DUNE_THROW(Dune::InvalidStateException, "Cannot call extendMatrix for a grid that cannot communicate codim-" << rowDofCodim << "-entities.");
     }
 
     /*!
-     * \brief Sums up the entries corresponding to border vertices.
-     * \param A Matrix to operate on.
+     * \brief Sums up the entries corresponding to border entities (usually vertices or faces)
+     * \param A Matrix to operate on
+     *
+     * The idea is as follows: (Blatt and Bastian (2009) https://doi.org/10.1504/IJCSE.2008.021112)
+     * The local matrix operator stores for each row that corresponds to a dof (uniquely) owned by this process
+     * the full row of the global operator with the same entries as the global operator.
+
+     * This, together with some masking procedure (end of Section 2.4.1) allows to compute a matrix-vector product
+     * given a consistent vector representation such that the result is in a valid representation. Each valid
+     * representation can be transformed to a additive unique representation by setting all entries for
+     * dofs that are not (uniquely) owned by the process to zero.
      */
     void sumEntries(Matrix& A)
     {
-        if constexpr (Detail::canCommunicate<Grid, dofCodim>)
+        if constexpr (Detail::canCommunicate<typename GridView::Grid, rowDofCodim>)
         {
             if (gridView_.comm().size() <= 1)
                 return;
 
-            MatrixEntryExchange datahandle(mapper_, idToIndex_, indexToID_, A);
-            gridView_.communicate(datahandle, Dune::InteriorBorder_InteriorBorder_Interface,
-                                            Dune::ForwardCommunication);
+            MatrixEntryExchange dataHandle(mapper_, idToIndex_, indexToID_, A);
+            gridView_.communicate(
+                dataHandle, Dune::InteriorBorder_InteriorBorder_Interface, Dune::ForwardCommunication
+            );
         }
         else
-            DUNE_THROW(Dune::InvalidStateException, "Cannot call sumEntries for a grid that cannot communicate codim-" << dofCodim << "-entities.");
+            DUNE_THROW(Dune::InvalidStateException,
+                "Cannot call sumEntries for a grid that cannot communicate codim-" << rowDofCodim << "-entities."
+            );
     }
 
 private:
     const GridView gridView_;
-    const DofMapper& mapper_;
+    const RowDofMapper& mapper_;
     std::map<IdType, int> idToIndex_;
     std::map<int, IdType> indexToID_;
 
