@@ -26,6 +26,8 @@
 
 #include <dune/common/fvector.hh>
 
+#include <dumux/discretization/cvfe/lagrangebubblesbasis.hh>
+
 namespace Dumux {
 
 /*!
@@ -70,44 +72,8 @@ public:
         ipGlobal_ = scvf.ipGlobal();
         const auto ipLocal = geometry.local(ipGlobal_);
         jacInvT_ = geometry.jacobianInverseTransposed(ipLocal);
-        localBasis.evaluateJacobian(ipLocal, shapeJacobian_);
-        localBasis.evaluateFunction(ipLocal, shapeValues_); // shape values for rho
 
-        std::vector<ShapeValue> shapeValuesC;
-        localBasis.evaluateFunction(geometry.local(element.geometry().center()), shapeValuesC); // shape values for rho
-
-        // We add the contribution of the bubble function
-        ShapeValue bubbleVal(1.0);
-        for(auto v : shapeValues_)
-            bubbleVal *= v;
-
-        ShapeValue bubbleValC(1.0);
-        for(auto v : shapeValuesC)
-            bubbleValC *= v;
-
-        for(int i=0; i<shapeValues_.size(); i++)
-            shapeValues_[i] -= shapeValuesC[i]*bubbleVal/bubbleValC;
-
-        ShapeJacobian bubbleJac(0.0);
-        for(int i=0; i<shapeJacobian_.size(); i++)
-        {
-            ShapeJacobian jacVal = shapeJacobian_[i];
-            for(int j=0; j<shapeValues_.size(); j++)
-                if( i!= j)
-                    jacVal *= shapeValues_[j];
-            bubbleJac += jacVal;
-        }
-        bubbleJac /= bubbleValC;
-
-        for(int i=0; i<shapeJacobian_.size(); i++)
-        {
-            ShapeJacobian val = bubbleJac;
-            val *= shapeValuesC[i];
-            shapeJacobian_[i] -= val;
-        }
-
-        shapeValues_.push_back(bubbleVal/bubbleValC);
-        shapeJacobian_.push_back(bubbleJac);
+        BubbleLocalBasis::evaluateFunctionAndJacobianWithBubble(geometry, localBasis, ipLocal, shapeValues_, shapeJacobian_);
 
         // compute the gradN at for every scv/dof
         gradN_.resize(fvGeometry.numScv());
