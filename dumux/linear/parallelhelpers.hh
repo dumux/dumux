@@ -845,7 +845,188 @@ private:
     const RowDofMapper& mapper_;
     std::map<IdType, int> idToIndex_;
     std::map<int, IdType> indexToID_;
+};
 
+/*!
+ * \ingroup Linear
+ * \brief Helper class for adding up coupling matrix entries for border entities
+ *
+ * Border means all degrees of freedom located
+ * on lower-dimensional entities (faces, edges, vertices)
+ * that form the the process boundary
+ *
+ * In the coupling matrix, the coupled dofs might not correspond to dofs
+ * located on an entity of the same codimension.
+ */
+template<class Matrix, class GridView,
+         class RowDofMapper, int rowDofCodim,
+         class ColDofMapper, int colDofCodim>
+class ParallelCouplingMatrixHelper
+{
+    static_assert(colDofCodim == 0, "Currently only implemented for element data");
+    using IdType = typename GridView::Traits::Grid::Traits::GlobalIdSet::IdType;
+
+    //! Local matrix blocks associated with the global id set
+    struct MatrixEntry
+    {
+        IdType first;
+        typename Matrix::block_type second;
+    };
+
+    //! A DataHandle class to exchange matrix entries
+    struct MatrixEntryExchange
+    : public Dune::CommDataHandleIF<MatrixEntryExchange, MatrixEntry>
+    {
+        //! Export type of data for message buffer
+        using DataType = MatrixEntry;
+
+        MatrixEntryExchange(const RowDofMapper& rowEntityMapper,
+                            const std::map<IdType, int>& globalToLocalColumnIndex,
+                            const std::map<int, IdType>& localToGlobalColumnIndex,
+                            Matrix& A)
+        : rowEntityMapper_(rowEntityMapper), idToIndex_(globalToLocalColumnIndex), indexToID_(localToGlobalColumnIndex), A_(A)
+        {}
+
+        /*!
+         * \brief Returns true if data for given valid codim should be communicated
+         */
+        bool contains(int dim, int codim) const
+        { return (codim == rowDofCodim); }
+
+        //! returns true if size per entity of given dim and codim is a constant
+        bool fixedSize(int dim, int codim) const
+        { return false; }
+
+        /*!
+         * \brief How many objects of type DataType have to be sent for a given entity
+         */
+        template<class EntityType>
+        std::size_t size(EntityType& e) const
+        {
+            const auto rowIdx = rowEntityMapper_.index(e);
+            std::size_t n = 0;
+            for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+                if (indexToID_.count(colIt.index()))
+                    n++;
+
+            return n;
+        }
+
+        /*!
+         * \brief Pack data from user to message buffer
+         */
+        template<class MessageBuffer, class EntityType>
+        void gather(MessageBuffer& buff, const EntityType& e) const
+        {
+            const auto rowIdx = rowEntityMapper_.index(e);
+            // send all matrix entries for which the column index is in the index set
+            for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+                if (auto it = indexToID_.find(colIt.index()); it != indexToID_.end())
+                    buff.write(MatrixEntry{ it->second, *colIt });
+        }
+
+        /*!
+         * \brief Unpack data from message buffer to user
+         */
+        template<class MessageBuffer, class EntityType>
+        void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
+        {
+            const auto rowIdx = rowEntityMapper_.index(e);
+            for (std::size_t k = 0; k < n; k++)
+            {
+                MatrixEntry m;
+                buff.read(m);
+                const auto& [colDofID, matrixBlock] = m; // unpack
+
+                // only add entries in the index set and for which A has allocated memory
+                if (auto it = idToIndex_.find(colDofID); it != idToIndex_.end())
+                    if (auto colIt = A_[rowIdx].find(it->second); colIt != A_[rowIdx].end())
+                        (*colIt) += matrixBlock;
+            }
+        }
+
+    private:
+        const RowDofMapper& rowEntityMapper_;
+        const std::map<IdType, int>& idToIndex_;
+        const std::map<int, IdType>& indexToID_;
+        Matrix& A_;
+
+    }; // class MatrixEntryExchange
+
+public:
+
+    ParallelCouplingMatrixHelper(const GridView& gridView, const RowDofMapper& mapper)
+    : gridView_(gridView), rowEntityMapper_(mapper)
+    {}
+
+    /*!
+     * \brief Sums up the entries corresponding to border entities (usually vertices or faces)
+     * \param A Matrix to operate on
+     *
+     * The idea is as follows: (Blatt and Bastian (2009) https://doi.org/10.1504/IJCSE.2008.021112)
+     * The local matrix operator stores for each row that corresponds to a dof (uniquely) owned by this process
+     * the full row of the global operator with the same entries as the global operator.
+     *
+     * This, together with some masking procedure (end of Section 2.4.1) allows to compute a matrix-vector product
+     * given a consistent vector representation such that the result is in a valid representation. Each valid
+     * representation can be transformed to a additive unique representation by setting all entries for
+     * dofs that are not (uniquely) owned by the process to zero.
+     *
+     * As we do this here for all processes, in the operator, we have to mask out the rows
+     * that correspond to non-owned dofs on border entities when applying the operator.
+     * This is the job of the Dune::NonoverlappingSchwarzOperator.
+     */
+    template <class CouplingGG>
+    void sumEntries(Matrix& A, const CouplingGG& couplingGG)
+    {
+        if constexpr (Detail::canCommunicate<typename GridView::Grid, rowDofCodim>)
+        {
+            if (gridView_.comm().size() <= 1)
+                return;
+
+            std::map<IdType, int> globalToLocalColumnIndex;
+            std::map<int, IdType> localToGlobalColumnIndex;
+            std::vector<bool> handledDof(gridView_.size(rowDofCodim), false);
+
+            for (const auto& element : elements(gridView_))
+            {
+                for (int i = 0; i < element.subEntities(rowDofCodim); ++i)
+                {
+                    const auto entity = element.template subEntity<rowDofCodim>(i);
+                    if (entity.partitionType() == Dune::BorderEntity)
+                    {
+                        const auto localRowIdx = rowEntityMapper_.index(entity);
+                        if (!handledDof[localRowIdx])
+                        {
+                            for (auto colIt = A[localRowIdx].begin(); colIt != A[localRowIdx].end(); ++colIt)
+                            {
+                                static_assert(colDofCodim == 0, "Only element as column dofs supported so far");
+                                const int eIdx = colIt.index();
+                                IdType globalId = gridView_.grid().globalIdSet().id(couplingGG.element(eIdx));
+                                globalToLocalColumnIndex.emplace(globalId, eIdx);
+                                localToGlobalColumnIndex.emplace(eIdx, globalId);
+                            }
+
+                            handledDof[localRowIdx] = true;
+                        }
+                    }
+                }
+            }
+
+            MatrixEntryExchange dataHandle(rowEntityMapper_, globalToLocalColumnIndex, localToGlobalColumnIndex, A);
+            gridView_.communicate(
+                dataHandle, Dune::InteriorBorder_InteriorBorder_Interface, Dune::ForwardCommunication
+            );
+        }
+        else
+            DUNE_THROW(Dune::InvalidStateException,
+                "Cannot call sumEntries for a grid that cannot communicate codim-" << rowDofCodim << "-entities."
+            );
+    }
+
+private:
+    const GridView gridView_;
+    const RowDofMapper& rowEntityMapper_;
 };
 
 /*!
