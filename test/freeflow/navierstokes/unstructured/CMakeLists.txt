@@ -23,3 +23,15 @@ dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_dfg_benchmark_stationary-00001.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary params.input
                              -Problem.Name test_ff_stokes_dfg_benchmark_stationary -Problem.EnableInertiaTerms false -LinearSolver.UseIterativeSolver true")
+
+# Stokes version of the test (no inertia) in parallel
+dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_parallel
+               TARGET test_ff_navierstokes_dfg_benchmark_stationary
+               LABELS freeflow navierstokes
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND AND HAVE_MPI )"
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS      --script fuzzy --zeroThreshold {"process rank":100}
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_dfg_benchmark_stationary.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/s0003-test_ff_stokes_dfg_benchmark_stationary-00001.pvtu
+                             --command "${MPIEXEC} -np 3 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary params.input
+                             -Problem.Name test_ff_stokes_dfg_benchmark_stationary -Problem.EnableInertiaTerms false -LinearSolver.UseIterativeSolver true")
