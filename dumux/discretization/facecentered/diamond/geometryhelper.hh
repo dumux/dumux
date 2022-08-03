@@ -154,12 +154,12 @@ struct ScvfCorners<Dune::GeometryTypes::tetrahedron>
 
     using Key = std::pair<std::uint8_t, std::uint8_t>; // (i, codim)
     static constexpr std::array<std::array<Key, 3>, 6> keys = {{
-        { Key{0, 2}, Key{1, 2}, Key{0, 0} },
-        { Key{2, 2}, Key{0, 2}, Key{0, 0} },
-        { Key{1, 2}, Key{2, 2}, Key{0, 0} },
-        { Key{0, 2}, Key{3, 2}, Key{0, 0} },
-        { Key{1, 2}, Key{3, 2}, Key{0, 0} },
-        { Key{2, 2}, Key{3, 2}, Key{0, 0} }
+        { Key{0, 3}, Key{1, 3}, Key{0, 0} },
+        { Key{2, 3}, Key{0, 3}, Key{0, 0} },
+        { Key{1, 3}, Key{2, 3}, Key{0, 0} },
+        { Key{0, 3}, Key{3, 3}, Key{0, 0} },
+        { Key{1, 3}, Key{3, 3}, Key{0, 0} },
+        { Key{2, 3}, Key{3, 3}, Key{0, 0} }
     }};
 };
 
@@ -171,18 +171,18 @@ struct ScvfCorners<Dune::GeometryTypes::hexahedron>
 
     using Key = std::pair<std::uint8_t, std::uint8_t>; // (i, codim)
     static constexpr std::array<std::array<Key, 4>, 12> keys = {{
-        { Key{0, 2}, Key{4, 2}, Key{0, 0} },
-        { Key{1, 2}, Key{5, 2}, Key{0, 0} },
-        { Key{2, 2}, Key{6, 2}, Key{0, 0} },
-        { Key{3, 2}, Key{7, 2}, Key{0, 0} },
-        { Key{0, 2}, Key{2, 2}, Key{0, 0} },
-        { Key{1, 2}, Key{3, 2}, Key{0, 0} },
-        { Key{0, 2}, Key{1, 2}, Key{0, 0} },
-        { Key{2, 2}, Key{3, 2}, Key{0, 0} },
-        { Key{4, 2}, Key{6, 2}, Key{0, 0} },
-        { Key{5, 2}, Key{7, 2}, Key{0, 0} },
-        { Key{4, 2}, Key{5, 2}, Key{0, 0} },
-        { Key{6, 2}, Key{7, 2}, Key{0, 0} }
+        { Key{0, 3}, Key{4, 3}, Key{0, 0} },
+        { Key{1, 3}, Key{5, 3}, Key{0, 0} },
+        { Key{2, 3}, Key{6, 3}, Key{0, 0} },
+        { Key{3, 3}, Key{7, 3}, Key{0, 0} },
+        { Key{0, 3}, Key{2, 3}, Key{0, 0} },
+        { Key{1, 3}, Key{3, 3}, Key{0, 0} },
+        { Key{0, 3}, Key{1, 3}, Key{0, 0} },
+        { Key{2, 3}, Key{3, 3}, Key{0, 0} },
+        { Key{4, 3}, Key{6, 3}, Key{0, 0} },
+        { Key{5, 3}, Key{7, 3}, Key{0, 0} },
+        { Key{4, 3}, Key{5, 3}, Key{0, 0} },
+        { Key{6, 3}, Key{7, 3}, Key{0, 0} }
     }};
 };
 
@@ -393,7 +393,7 @@ public:
         normal /= normal.two_norm();
 
         const auto ref = referenceElement(geo_);
-        GlobalPosition v = facetCenter_(scvPair[1], ref) - facetCenter_(scvPair[0], ref);
+        const auto v = facetCenter_(scvPair[1], ref) - facetCenter_(scvPair[0], ref);
 
         const auto s = v*normal;
         if (std::signbit(s))
@@ -411,7 +411,7 @@ public:
         normal /= normal.two_norm();
 
         const auto ref = referenceElement(geo_);
-        GlobalPosition v = facetCenter_(scvPair[1], ref) - facetCenter_(scvPair[0], ref);
+        const auto v = facetCenter_(scvPair[1], ref) - facetCenter_(scvPair[0], ref);
 
         const auto s = v*normal;
         if (std::signbit(s))
