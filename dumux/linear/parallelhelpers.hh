@@ -279,7 +279,7 @@ class ParallelISTLHelperImpl<LinearSolverTraits, true>
             DataType x;
             buff.read(x);
             using std::min;
-            auto& data = globalIndices_[this->index(e)];
+            DataType& data = globalIndices_[this->index(e)];
             data = min(data, x);
         }
     private:
@@ -745,15 +745,22 @@ public:
         idToIndex_.clear();
         indexToID_.clear();
 
-        for (const auto& entity : entities(gridView_, Dune::Codim<rowDofCodim>()))
+        std::vector<bool> handledDof(gridView_.size(rowDofCodim), false);
+        for (const auto& element : elements(gridView_))
         {
-            if (entity.partitionType() == Dune::BorderEntity)
+            for (int i = 0; i < element.subEntities(rowDofCodim); ++i)
             {
-                const int localIdx = mapper_.index(entity);
-                IdType dofIdxGlobal = gridView_.grid().globalIdSet().id(entity);
-
-                idToIndex_.emplace(dofIdxGlobal, localIdx);
-                indexToID_.emplace(localIdx, dofIdxGlobal);
+                const auto entity = element.template subEntity<rowDofCodim>(i);
+                if (entity.partitionType() == Dune::BorderEntity)
+                {
+                    const auto localRowIdx = mapper_.index(entity);
+                    if (!handledDof[localRowIdx])
+                    {
+                        IdType dofIdxGlobal = gridView_.grid().globalIdSet().id(entity);
+                        idToIndex_.emplace(dofIdxGlobal, localRowIdx);
+                        indexToID_.emplace(localRowIdx, dofIdxGlobal);
+                    }
+                }
             }
         }
     }
