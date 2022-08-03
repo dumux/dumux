@@ -72,15 +72,14 @@ dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diam
                              -Problem.Name test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond -Problem.EnableInertiaTerms true
                              -Grid.File cylinder_channel_quad.msh")
 
-# Stokes version of the test (no inertia)
-dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond
-               TARGET test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond
+# Stokes version of the test (no inertia) in parallel
+dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa_parallel
+               TARGET test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa
                LABELS freeflow navierstokes
-               CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND AND HAVE_MPI )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-               CMD_ARGS      --script fuzzy
-                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond-00001.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond params.input
-                             -Problem.Name test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond -Problem.EnableInertiaTerms false
-                             -Grid.File cylinder_channel_quad.msh")
+               CMD_ARGS      --script fuzzy --zeroThreshold {"process rank":100}
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_dfg_benchmark_stationary_diamond.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/s0003-test_ff_stokes_dfg_benchmark_stationary_diamond_tpfa_parallel-00001.pvtu
+                             --command "${MPIEXEC} -np 3 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa params.input
+                             -Problem.Name test_ff_stokes_dfg_benchmark_stationary_diamond_tpfa_parallel -Problem.EnableInertiaTerms false -LinearSolver.UseIterativeSolver true")
